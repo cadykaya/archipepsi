@@ -52,6 +52,7 @@ func _ready() -> void:
 	_source_identity_package()
 	_pressure_valve()
 	_archive_provenance()
+	await _the_travel_panel()
 
 	if failures == 0:
 		print("GODOT HUD TESTS OK")
@@ -59,6 +60,98 @@ func _ready() -> void:
 	else:
 		print("GODOT HUD TESTS: %d failures" % failures)
 		get_tree().quit(1)
+
+# --- the station travel panel ---------------------------------------------
+
+## PRESSING E OPENS A CHOICE, AND CHOOSING IS WHAT MOVES YOU.
+##
+## The owner's note after the playtest: warp stations "should really have
+## a menu popup instead of just warping me instantly". Pressing a reached
+## station used to teleport you to whichever reached station came next in
+## build order, so travel was a cycle you learned by riding it.
+##
+## What this holds, in the order the panel can break it: opening moves
+## nobody, cancel moves nobody, a choice moves you ONCE, an unreached
+## station is never on the list, and nothing on it edits a loadout.
+func _button_texts(panel: StationPanel) -> Array[String]:
+	var out: Array[String] = []
+	for node in panel.find_children("*", "Button", true, false):
+		out.append((node as Button).text)
+	return out
+
+func _the_travel_panel() -> void:
+	var panel := StationPanel.new()
+	add_child(panel)
+	await get_tree().process_frame
+	var moved: Array[String] = []
+	var home: Array[String] = []
+	panel.warp_chosen.connect(
+			func(f: String, t: String) -> void: moved.append(f + "->" + t))
+	panel.return_to_hub_chosen.connect(
+			func() -> void: home.append("hub"))
+
+	# Two reached and one that is not. `travel_options` is the
+	# controller's rule; the panel renders what it is handed, so the
+	# unreached one is simply absent from what is handed over.
+	var options: Array = [
+		{"id": "st:entrance", "label": "ENTRANCE", "here": true},
+		{"id": "st:hall", "label": "HALL", "here": false},
+	]
+	panel.open("st:entrance", "ENTRANCE", options)
+	_check(panel.visible, "the panel did not open")
+	_check(moved.is_empty(),
+			"opening the panel moved the player: %s" % str(moved))
+	var texts := _button_texts(panel)
+	var joined := " | ".join(texts)
+	_check(joined.contains("HALL"),
+			"the reached station elsewhere is not offered: %s" % joined)
+	_check(not joined.contains("EXIT") and not joined.contains("st:"),
+			"a station that was never reached is on the list, or a raw "
+			+ "id is: %s" % joined)
+	_check(joined.contains("you are here"),
+			"the station being stood at is missing from its own panel: "
+			+ "%s" % joined)
+	# AND IT NEVER OFFERS A LOADOUT. The in-Zone loadout station is
+	# deferred and pinned; travel-and-save must not reopen it by the
+	# back door of a menu.
+	for banned: String in ["LOADOUT", "EQUIP", "SLOT", "ECHO"]:
+		_check(not joined.to_upper().contains(banned),
+				"the travel panel offers '%s', which is loadout editing "
+				% banned + "and is deferred: %s" % joined)
+
+	# CANCEL MOVES NOBODY.
+	panel.close()
+	_check(not panel.visible, "the panel stayed open after close")
+	_check(moved.is_empty() and home.is_empty(),
+			"closing the panel travelled: %s %s" % [str(moved), str(home)])
+
+	# A CHOICE MOVES YOU ONCE, however many times it is pressed.
+	panel.open("st:entrance", "ENTRANCE", options)
+	panel._choose("st:hall")
+	panel._choose("st:hall")
+	panel._choose("st:exit")
+	_check(moved.size() == 1 and moved[0] == "st:entrance->st:hall",
+			"a destination chosen once produced %s" % str(moved))
+	_check(not panel.visible, "the panel stayed open after a choice")
+
+	# AND THE STATION YOU ARE STANDING AT IS NOT TRAVEL.
+	moved.clear()
+	panel.open("st:entrance", "ENTRANCE", options)
+	panel._choose("st:entrance")
+	_check(moved.is_empty(),
+			"warping to the station you are standing at is travel: %s"
+			% str(moved))
+
+	# RETURN TO HUB IS ONE EVENT, and it is the pause menu's own
+	# handler: `leave_zone` after the resume anchor is remembered, never
+	# `abandon_zone`.
+	panel.open("st:entrance", "ENTRANCE", options)
+	panel._go_home()
+	panel._go_home()
+	_check(home.size() == 1,
+			"Return to Hub fired %d times for one press" % home.size())
+	panel.queue_free()
+	await get_tree().process_frame
 
 # --- §7.1: the safe palette, held to numbers ------------------------------
 

@@ -5674,40 +5674,85 @@ func _test_warp_stations_are_placed_and_only_link_reached_ones() -> void:
 			"%d stations placed; the entrance, the exit and at least one "
 			% stations.size() + "large room should each have one")
 	# NOTHING IS A DESTINATION UNTIL IT IS REACHED.
-	var cycled := {}
-	var reached_order: Array[String] = []
-	var lookup := func(from_id: String) -> String:
-		if reached_order.size() < 2:
-			return ""
-		var at := reached_order.find(from_id)
-		if at < 0:
-			return reached_order[0]
-		return reached_order[(at + 1) % reached_order.size()]
+	#
+	# THE MECHANISM MOVED AND THE RULE DID NOT. Pressing E on a working
+	# station used to warp at once to the next reached one, so this
+	# asked the PROMPT whether there was anywhere to go. E now opens a
+	# travel panel, and `WarpStation.travel_options` is the one place
+	# eligibility is decided -- so the same three questions are asked of
+	# that instead. Nothing here was relaxed: a lone reached station
+	# still offers no travel, and an unreached station is still never a
+	# destination.
 	for raw: Variant in stations:
 		var station: WarpStation = raw
-		station.cycle = lookup
 		_check(not station.is_reached(),
 				"station '%s' was reached before anyone stood in it"
 				% station.station_id)
 		_check(station.interact_prompt().find("ACTIVATE") >= 0,
 				"an unreached station offers '%s' rather than activation"
 				% station.interact_prompt())
+	var none_yet := WarpStation.travel_options(stations, "")
+	_check(none_yet.is_empty(),
+			"%d destination(s) offered before any station was reached"
+			% none_yet.size())
 	# One reached: still nowhere to go.
 	var first: WarpStation = stations[0]
 	first.mark_reached()
-	reached_order.append(first.station_id)
-	_check(first.interact_prompt().find("no other station") >= 0,
-			"a lone reached station offered a warp: '%s'"
-			% first.interact_prompt())
-	# Two reached: each names the other.
+	var alone := WarpStation.travel_options(stations, first.station_id)
+	_check(alone.size() == 1 and bool((alone[0] as Dictionary)["here"]),
+			"a lone reached station offers travel to somewhere other "
+			+ "than itself: %s" % str(alone))
+	# Two reached: the other one is a destination, and only the other.
 	var second: WarpStation = stations[1]
 	second.mark_reached()
-	reached_order.append(second.station_id)
-	_check(first.interact_prompt().find("WARP TO") >= 0,
-			"two stations are reached and the first offers no warp")
-	cycled[first.station_id] = true
+	var pair := WarpStation.travel_options(stations, first.station_id)
+	_check(pair.size() == 2,
+			"two stations are reached and %d are offered" % pair.size())
+	var away := 0
+	for raw_option: Variant in pair:
+		var option: Dictionary = raw_option
+		if not bool(option["here"]):
+			away += 1
+			_check(str(option["id"]) == second.station_id,
+					"the destination offered is '%s', which is not the "
+					% str(option["id"]) + "station that was reached")
+	_check(away == 1,
+			"%d station(s) other than the current one are offered; "
+			% away + "exactly the one reached elsewhere should be")
 	_check(second.is_reached() and first.is_reached(),
 			"reached-ness is monotone and one of them lost it")
+	# AND PRESSING IT WARPS NOBODY. The panel is asked for; the warp
+	# happens only when something is chosen on it.
+	var warps: Array[String] = []
+	var panels: Array[String] = []
+	first.warp_requested.connect(
+			func(f: String, t: String) -> void: warps.append(f + "->" + t))
+	first.panel_requested.connect(
+			func(f: String) -> void: panels.append(f))
+	first.interact(null)
+	_check(warps.is_empty(),
+			"pressing a reached station warped the player without "
+			+ "asking: %s" % str(warps))
+	_check(panels.size() == 1,
+			"pressing a reached station raised %d panel request(s), "
+			% panels.size() + "not one")
+	# AND A BROKEN ONE STILL REFUSES, panel included.
+	var broken := WarpStation.create("st:probe", "PROBE", "signal", "c009")
+	add_child(broken)
+	var broken_panels: Array[String] = []
+	broken.panel_requested.connect(
+			func(f: String) -> void: broken_panels.append(f))
+	broken.interact(null)
+	_check(broken_panels.is_empty(),
+			"a broken station opened a travel panel, which is a repair "
+			+ "skipped")
+	_check(WarpStation.travel_options([broken], "st:probe").is_empty(),
+			"a broken station is offered as a destination")
+	_check(broken.repair(),
+			"the puzzle no longer repairs the station it is for")
+	_check(not WarpStation.travel_options([broken], "x").is_empty(),
+			"a repaired station is still not a destination")
+	broken.queue_free()
 	# AND IT NEVER OFFERS A LOADOUT. The deferral of in-Zone loadout
 	# stations is pinned, and travel-and-save must not quietly reopen it.
 	for raw: Variant in stations:

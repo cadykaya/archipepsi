@@ -10,6 +10,11 @@ const REWARD_SPACING := 4.0
 ## leaving the Zone, which is why leaving resets objectives (§14.3).
 
 signal exit_requested
+
+## A reached, working station wants a destination chosen. Carries the
+## station's id, its label and the eligible destinations.
+signal travel_panel_requested(from_id: String, from_label: String,
+		options: Array)
 ## The bridge refused this Zone's layout; it is not safe to play.
 signal layout_refused(zone_id: String)
 ## The player moved into a different chamber's bounds — the rule engine's
@@ -312,9 +317,7 @@ func setup(zone_dict: Dictionary) -> void:
 		var station: WarpStation = raw_station
 		station.reached.connect(_on_station_reached)
 		station.warp_requested.connect(_on_warp_requested)
-		# The station asks the controller where E goes, rather than each
-		# station keeping its own copy of who has been reached.
-		station.cycle = _next_reached
+		station.panel_requested.connect(_on_station_panel_requested)
 		# ALREADY ONLINE FROM A PREVIOUS VISIT. Reached-ness is progress
 		# and progress is monotone, so a station a player switched on
 		# before they walked out does not switch off behind them.
@@ -797,18 +800,23 @@ func _repair_station_for(activity_id: String) -> void:
 ## stations have been reached" is one fact and a copy per station is
 ## several. Returns "" when this is the only one reached, which is what
 ## the prompt reads to say so rather than offering a warp to itself.
-func _next_reached(from_id: String) -> String:
-	var order: Array[String] = []
-	for raw: Variant in _stations:
-		var station: WarpStation = raw
-		if station.is_reached():
-			order.append(station.station_id)
-	if order.size() < 2:
-		return ""
-	var at := order.find(from_id)
-	if at < 0:
-		return order[0]
-	return order[(at + 1) % order.size()]
+## A WORKING STATION WAS PRESSED, so somebody should be asked where to.
+##
+## The controller does not own a screen; it says what the options are
+## and `Main` puts them on one. `travel_options` is the single
+## eligibility rule and lives on `WarpStation`, so this cannot grow a
+## second opinion about which stations are destinations.
+func _on_station_panel_requested(from_id: String) -> void:
+	var station := _station_by_id(from_id)
+	if station == null or not station.is_reached() or station.is_broken():
+		return
+	travel_panel_requested.emit(from_id, station.label_text,
+			WarpStation.travel_options(_stations, from_id))
+
+## Selecting a destination on that panel. ONE warp, through the path a
+## station press used to take, so nothing about arriving changed.
+func warp_to(from_id: String, to_id: String) -> void:
+	_on_warp_requested(from_id, to_id)
 
 ## The keys and the opened locks, for whoever is carrying progress out.
 func keys_held() -> Dictionary:
