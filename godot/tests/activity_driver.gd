@@ -58,6 +58,8 @@ func _run() -> void:
 	await _test_a_timed_activity_can_run_out_of_time()
 	await _test_a_reset_is_deterministic()
 	await _test_a_plate_that_releases_breaks_the_circuit()
+	await _test_a_counted_hit_and_a_failure_reach_a_consumer()
+	await _test_a_completion_reaches_its_presentation_consumer()
 	await _test_a_plate_holds_long_enough_to_reach_the_next()
 	await _test_completion_sends_one_local_reward_and_nothing_else()
 	await _test_solving_it_twice_is_one_reward()
@@ -155,6 +157,86 @@ func _solve(runtime: ActivityRuntime) -> void:
 		await _drive(element)
 
 # --- the success path, per family ----------------------------------------
+
+## A BANK THAT REMEMBERS WHAT IT WAS ASKED FOR.
+##
+## `Tones.play` looks its argument up and returns silently when the name
+## is absent, so a test that asserts "play() was called" proves nothing
+## about whether a sound happened. This records the NAMES, and the
+## companion Python check (`test_tone_references.py`) proves each one
+## exists in the real bank -- the two together are the claim.
+class RecordingBank extends Tones:
+	var heard: Array[String] = []
+	func play(kind: String, pitch := 1.0) -> void:
+		heard.append(kind)
+		super.play(kind, pitch)
+
+class RecordingHud extends Hud:
+	var toasts: Array[String] = []
+	func toast(text: String, color := Color.WHITE,
+			seconds := 3.5) -> void:
+		toasts.append(text)
+		super.toast(text, color, seconds)
+
+## COUNTED ACTIONS AND FAILURES, DRIVEN THROUGH REAL TRIGGERS.
+##
+## The playtest shot seven targets and could not tell whether anything
+## had happened. `_on_set` updated a world label and played nothing, and
+## `failed` had no listener anywhere in the project.
+func _test_a_counted_hit_and_a_failure_reach_a_consumer() -> void:
+	var bank := RecordingBank.new()
+	add_child(bank)
+	var runtime := _make("target_challenge", 3)
+	runtime.tones = bank
+	# One real hit, through the trigger a weapon uses.
+	await _drive(runtime.elements[0])
+	_check(bank.heard.has("confirm"),
+			"a counted hit is audible at the moment it counts (heard %s)"
+			% str(bank.heard))
+	# AND A FAILURE SAYS SO. A timed activity that runs out clears every
+	# element; before this the only report was the geometry going dark.
+	var timed := _make("switch_sequence", 3, 0.35)
+	var told: Array[String] = []
+	timed.failed.connect(func(_id: String, reason: String) -> void:
+		told.append(reason))
+	await _drive(timed.elements[0])
+	await _physics(40)
+	_check(told.size() >= 1,
+			"and a timed activity that runs out emits `failed` for a "
+			+ "consumer to report (%s)" % str(told))
+	bank.queue_free()
+
+## AND THE CONSUMER ITSELF, exercised rather than assumed.
+##
+## `ZoneController._on_activity_completed` is the presentation consumer:
+## it toasts, it asks the bank for a chime, and it repairs the room's
+## station. It asked for `"secret_found"`, which the bank does not
+## define, so the chime was silent from the day it was written. This
+## drives the handler and reads what it asked for.
+func _test_a_completion_reaches_its_presentation_consumer() -> void:
+	var bank := RecordingBank.new()
+	var hud := RecordingHud.new()
+	var zone := ZoneController.new()
+	add_child(zone)
+	zone.tones = bank
+	zone.hud = hud
+	zone.add_child(bank)
+	zone.add_child(hud)
+	zone._on_activity_completed("probe_activity", 4.25, 1)
+	_check(hud.toasts.size() == 1
+			and hud.toasts[0].contains("COMPLETE"),
+			"a completed activity reaches the screen (%s)"
+			% str(hud.toasts))
+	_check(bank.heard.size() == 1,
+			"and asks the bank for exactly one chime (%s)"
+			% str(bank.heard))
+	_check(bank.heard.size() == 1 and bank.heard[0] == "secret",
+			"and asks for a name the bank actually defines -- "
+			+ "`secret_found` is an `epsilon_voice` line id and was "
+			+ "silent here (%s)" % str(bank.heard))
+	zone.queue_free()
+	await get_tree().process_frame
+
 
 func _test_every_kind_can_actually_be_finished() -> void:
 	"""Scored implies playable.

@@ -79,6 +79,10 @@ const IDENTITY := {
 signal completed(activity_id: String, seconds: float, attempts: int)
 signal failed(activity_id: String, reason: String)
 signal state_changed(state: State)
+## What the activity currently reads, for a screen the player is looking
+## at rather than a label they may have walked away from. Emitted
+## wherever `_say` is, so the two never disagree.
+signal progressed(text: String)
 
 var activity_id := "activity"
 var kind := "switch_sequence"
@@ -103,6 +107,9 @@ var elements: Array[ActivityElement] = []
 
 var _set_order: Array[int] = []
 var _clock := 0.0
+## The tone bank, injected by `ZoneController` exactly as it injects one
+## into itself. Null in a bare harness, and every call is guarded.
+var tones: Node = null
 var _active_seconds := 0.0
 var _result_left := 0.0
 var _label: Label3D
@@ -264,6 +271,12 @@ func _on_triggered(element: ActivityElement) -> void:
 		_succeed()
 	else:
 		_say(_progress_text())
+		# DID THAT COUNT? The progress text already changed, on a label
+		# that may be across the room from the element just hit. A cue
+		# at the moment of the hit is the part the player can receive
+		# while looking at what they shot.
+		if tones != null and tones.has_method("play"):
+			tones.play("confirm")
 
 func _on_released(_element: ActivityElement) -> void:
 	if state != State.ACTIVE:
@@ -372,6 +385,7 @@ func _go(next: State) -> void:
 	state_changed.emit(state)
 
 func _say(text: String) -> void:
+	progressed.emit(text)
 	if _label == null:
 		return
 	_label.text = text

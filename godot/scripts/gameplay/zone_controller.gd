@@ -105,6 +105,9 @@ var _chambers: Array = []      # {chamber, objective, satisfied, enemies,
                                #  reward, goal_area}
 var _exit_portal: ExitPortal
 var _zone_anchors := {}
+## What the activity being played currently reads, mirrored onto the
+## objective line. Empty when no attempt is in progress.
+var _activity_note := ""
 
 ## `room_id -> world AABB`, from the committed layout.
 var room_bounds := {}
@@ -425,6 +428,19 @@ func setup(zone_dict: Dictionary) -> void:
 				# element. A key toasts and a lock toasts; finishing a
 				# puzzle did not.
 				runtime.completed.connect(_on_activity_completed)
+				# AND SO DOES FAILURE. `failed` had no listener either,
+				# so running out of time silently reset every element
+				# and the player was left to infer it from the geometry
+				# going dark. The playtest reported exactly that.
+				runtime.failed.connect(_on_activity_failed)
+				# AND ONTO THE SCREEN WHILE IT IS BEING PLAYED. The
+				# activity's own label sits above where it starts, which
+				# is not where a player shooting its third target is
+				# looking. The objective line is already on screen.
+				runtime.progressed.connect(_on_activity_progressed)
+				# The per-hit cue needs the bank the same way completion
+				# does; the runtime is what knows a hit COUNTED.
+				runtime.tones = tones
 				# WHICH ROOM A PUZZLE IS IN, so a broken station in that
 				# room can be repaired by solving it. Kept here rather
 				# than re-derived from the activity id, because the id
@@ -645,8 +661,33 @@ func _on_activity_completed(activity_id: String, seconds: float,
 				% [activity_id.to_upper(), seconds],
 				Color(0.55, 0.95, 0.75), 3.0)
 	if tones != null and tones.has_method("play"):
-		tones.play("secret_found")
+		# "secret", not "secret_found". The bank keys its chime as
+		# `secret`; `secret_found` is a line id in `epsilon_voice.gd`,
+		# and an identifier carried between two systems with different
+		# vocabularies made `Tones.play` look up a name that is not
+		# there and return silently. A solved activity has been mute
+		# ever since. `test_every_tone_a_caller_asks_for_exists` now
+		# refuses the next one of these.
+		tones.play("secret")
+	_activity_note = ""
 	_repair_station_for(activity_id)
+
+## AND THE OTHER OUTCOME, which had no listener at all.
+##
+## An attempt that runs out of time clears every element and returns the
+## activity to IDLE. With nothing watching `failed`, the only report was
+## the geometry going dark, which reads as a bug rather than a reset --
+## the owner's words for this were "the game told me nothing".
+func _on_activity_progressed(text: String) -> void:
+	_activity_note = text if text != "DONE" else ""
+
+func _on_activity_failed(activity_id: String, reason: String) -> void:
+	_activity_note = ""
+	if hud != null:
+		hud.toast("%s FAILED   %s" % [activity_id.to_upper(), reason],
+				Color(1.0, 0.55, 0.45), 3.0)
+	if tones != null and tones.has_method("play"):
+		tones.play("denied")
 
 ## A solved puzzle switches on the broken station in its own room.
 ##
@@ -1229,10 +1270,16 @@ func _process(delta: float) -> void:
 			best_rank = rank
 			best_distance = distance
 
+	var line := ""
 	if total > 0:
-		hud.set_objective_text("CHECKS %d/%d CLAIMED" % [claimed, total])
-	else:
-		hud.set_objective_text("")
+		line = "CHECKS %d/%d CLAIMED" % [claimed, total]
+	# THE ACTIVITY IN HAND, alongside the Zone's standing count. Cleared
+	# the moment it completes or fails, so the line never advertises an
+	# attempt that is over.
+	if _activity_note != "":
+		line = ("%s   ·   %s" % [line, _activity_note]) if line != "" \
+				else _activity_note
+	hud.set_objective_text(line)
 
 	# A long stretch with nothing claimed usually means the player is lost
 	# or exploring; either way it is the one moment a designer's aside is
