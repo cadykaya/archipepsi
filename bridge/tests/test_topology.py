@@ -1219,3 +1219,45 @@ def test_a_multi_door_room_carries_the_branch_instead():
     assert topology.reachability(out).ok, topology.reachability(out).errors
 
 
+
+
+def test_every_return_lands_in_a_room_that_also_holds_content():
+    """A STRUCTURAL FACT the engine lane depends on, pinned here.
+
+    `_branch_routes` only sends a branch to a room worth going to — one
+    carrying a Check or a key — so a branch destination ALWAYS holds
+    content, and the return device always lands in a room that also has
+    a reward pedestal or a key spot in it. Measured across the five
+    journey inputs: 8 of 8 return rooms in every one.
+
+    That means "does the return pad interfere with reaching the
+    content?" is never a question some Zone happens to avoid. It arises
+    in every branch room of every Zone, and `ChamberBuilders._clear_spot`
+    reconciling the return spot against the pedestal and the key spots
+    is load-bearing every single time rather than occasionally.
+
+    Pinned because the relationship is a CONSEQUENCE of the worthwhile
+    rule, not a decision anybody wrote down: relax that rule and returns
+    quietly start landing in empty rooms, and a clearance defect the
+    engine lane is hunting would stop reproducing for reasons nothing
+    records.
+    """
+    # HALF THE ROOMS CARRY NOTHING, or relaxing the rule changes no
+    # outcome and this control passes over its own subject. It did, on
+    # the first attempt: twelve rooms all carrying a reward made the
+    # sabotage a no-op.
+    caps = topology._shell_sockets()
+    chambers = [_arena(f"c{i:03d}",
+                       reward=(89100000 + i) if i % 2 else None)
+                for i in range(1, 15)]
+    z = _zone(chambers)
+    out = topology.apply(z, topology.compose_with_branch(list(z.chambers), caps))
+    assert out.plugs, "this control needs a Zone that branches"
+    byid = {c.id: c for c in out.chambers}
+    empty = [p.room_id for p in out.plugs
+             if not (getattr(byid[p.room_id], "reward_ids", ())
+                     or getattr(byid[p.room_id], "keys", ()))]
+    assert not empty, (
+        f"a return landed in a room with nothing in it: {empty}; the "
+        "worthwhile rule changed and the engine's clearance question "
+        "no longer arises everywhere")
