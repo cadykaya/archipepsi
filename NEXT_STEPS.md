@@ -1,5 +1,66 @@
 # Archipepsi — build state
 
+## 2026-09-13 (integration) — one tree, and the pad out of the way
+
+Prod `5251abd`. Bridge lane merged at `089dc64`, art lane at `1a9f1c9`.
+Both lanes had built truthful procedural capacity and the attempt
+discriminator against an EARLIER checkpoint of the other, so neither
+branch's report described the combined tree. This is that tree.
+
+### The reconciliation
+
+`C.PROCEDURAL_SOCKET_CAPACITY` is the one capacity declaration and it
+keeps the MEASURED table — `platform_path` AND `tower`, both measured
+solid at the side wall with one control per chamber type.
+`SIDELESS_PROCEDURAL_TYPES`, which covered `platform_path` alone, is
+gone rather than kept beside it; restoring the tower's side doors during
+the merge would have restored doors the engine does not build.
+`procedural_sockets_for` projects that one map into four readers: the
+composer, the load-time invariant, the bridge's acceptance-time refusal
+(which therefore now covers the tower too) and the engine via
+`constants.gd`. Dess's reserve-destination replacement in
+`_branch_routes`, its regression tests and its required-destination
+behaviour are kept as they stand.
+
+The attempt discriminator resolved to ONE field and ONE guard: the
+digest is content identity, `layout_refusals` is the attempt ordinal, an
+old result charges nothing, a genuine new failure charges its own
+attempt, and the client reads both from ONE snapshot at build start —
+which is the path `main.gd::_to_zone` actually walks.
+
+770 joined doors across the 26 committed fixtures, 0 beyond capacity.
+Derived artifacts regenerated from the combined source; the original
+fixtures kept and the graph changes recorded rather than expected values
+edited.
+
+### The three findings this batch measured
+
+1. **The return pad stood between the arrival and the content.** Every
+   branch destination whose journey failed to reach what it holds had
+   the device within a body's width of the straight line to it;
+   the one that succeeded had it 7.67 m clear.
+   `RoomAudit.clear_of_content_path` fixed it (0.41 m → 2.50 m,
+   0.15 m → 2.57 m, journey `content` 2 → 3).
+2. **What counts as the content** is the room's own station by id, not
+   the nominal `reward_position` (6–10 m away in every fixture) and not
+   "the first interactable in the room" (tree order over a subtree a
+   replay does not reproduce).
+3. **The replay control was comparing a reservation against a settle.**
+   It read the replayed device the instant `setup()` returned; the
+   settle lands two physics frames later and is awaited by nothing. It
+   now waits on `ZoneController.measured_placement`, and so proves the
+   stronger property: a cold restart SETTLES the device to the same
+   point, not merely reserves it there.
+
+### What is still open
+
+The three ordinary-journey failures are all "valid route, the automated
+steering cannot follow it" — none is an invalid route and none is pad
+interference. Overlap reconciliation, the pending authored-room proof,
+and the 1-of-8 re-selection result (the old 8-of-8 was planned through
+doors that do not exist) stay on the backlog. See
+`docs/AGENT_FRONTIER.md` for the measured tables.
+
 ## 2026-09-13 (later) — Dess's carrier, five Zones, and the theme pack
 
 Bridge lane merged at `0ec9e8e`, art lane at `19e271b`.
