@@ -70,7 +70,53 @@ func _run() -> void:
 
 	await _the_menu_is_actually_on_screen(main)
 	await _every_panel_opens_in_the_middle()
+	await _the_real_consumer_handles_an_exit(main)
 	_finish()
+
+## THE EXIT, HANDLED BY THE CONSUMER THAT ACTUALLY HANDLES IT.
+##
+## `integration_driver` takes the real portal and proves the player
+## survives the teardown, which is where the playtest crash lived. What
+## it cannot do is run `main.gd::_on_exit_zone`: a driver is added as a
+## child of `Main` and `Main` returns BEFORE `boot()`, so `menu`, `hud`
+## and `world` are null and `_to_hub()` would dereference all three.
+##
+## This file is the one that boots for real, so this is where the
+## consumer half belongs -- wired the way `main.gd` wires it, fired the
+## way the portal fires it, and asked what the player is left holding.
+func _the_real_consumer_handles_an_exit(main: Node) -> void:
+	var zone := ZoneController.new()
+	zone.zone_id = "zone_boot_probe"
+	(main.get("world") as Node3D).add_child(zone)
+	main.set("zone", zone)
+	main.set("view", 2)                     # View.ZONE
+	# EXACTLY main.gd's wiring, not a call to the handler.
+	zone.exit_requested.connect(Callable(main, "_on_exit_zone"))
+	await get_tree().process_frame
+	zone.exit_requested.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	_check(int(main.get("view")) == 1,
+			"taking the exit leaves the player in the HUB view (view %d)"
+			% int(main.get("view")))
+	var hub: Variant = main.get("hub")
+	_check(hub != null and is_instance_valid(hub as Object),
+			"and a Hub exists to have arrived in")
+	_check((main.get("hud") as CanvasLayer).visible,
+			"and the HUD is on")
+	# CONTINUED USABILITY: the Hub the player landed in can start the
+	# next Zone. A transition that arrives somewhere inert is not an
+	# arrival.
+	if hub != null and is_instance_valid(hub as Object):
+		_check((hub as Node).has_signal("enter_zone_requested")
+				and (hub as Node).is_connected("enter_zone_requested",
+					Callable(main, "_on_enter_zone")),
+				"and asking that Hub for another Zone reaches main.gd, "
+				+ "so the campaign can continue")
+	_check(not is_instance_valid(zone)
+			or not (zone as Node).is_inside_tree(),
+			"and the Zone that was exited is gone from the world")
 
 ## The other thing nine green suites never checked: WHERE a control
 ## lands. The title screen shipped with its panel anchored so that its
