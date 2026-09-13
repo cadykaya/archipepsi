@@ -154,6 +154,34 @@ is chosen for the property under test.
    control. Whether the composer should find more room is topology
    tuning and is the bridge lane's.
 
+### 0.3 FOLLOW-THROUGH — see `docs/BATCH_0_3_FOLLOWTHROUGH_HANDOFF.md`
+
+**Demonstrated.** The exit is now handled by the consumer that actually
+handles it: `boot_driver` boots Main for real, wires a ZoneController the
+way `main.gd` does, fires the signal the way the portal does, and asserts
+the HUB view, a live Hub, the HUD on, the Zone gone, and that the Hub can
+still start another Zone. Breaking `_to_hub()` fails four of five.
+
+**Closed.** The Dictionary cast, and a wrong attribution with it: it was
+recorded as `active_zone().is_empty()` on the refusal path, but
+`active_zone()` cannot throw — it returns `{}` for a non-Dictionary by
+construction. The real cast was in the TEST harness,
+`.get("zone", {}) as Dictionary`, where a PENDING_GENERATION record
+carries a null. **The Makefile exemption is deleted, not scoped**, the
+run log has zero script errors, and the crash control still exits 2.
+
+**Open, and not generalised.** Ascent success is NOT stair comfort:
+descending a 0.4 m tread is still a free-fall and the control reports the
+airborne count rather than asserting one. And the exact traversal case is
+NOT recovered — the owner's `.diagnostic-582e954` is on their Windows
+machine, not in this container; a copy is requested, the original
+untouched. Until then the reproduction is APPROXIMATE (matching room ids
+and shells does not establish identical placement), the required crossing
+is untested with either kit, and the exit approach/seam is untested and
+kept separate from the transition. The discarded lattice establishes a
+failed instrument only — not a safe Zone, and not a verdict against
+geometric searches.
+
 ### BOUNDED 0.3 REPAIR BATCH — see `docs/BATCH_0_3_REPAIR_HANDOFF.md`
 
 Required traversal and activity feedback, from the first human playtest.
