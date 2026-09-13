@@ -987,6 +987,7 @@ class CampaignEngine:
         await self._emit(ZoneReady(
             type="zone_ready", zone=composed,
             proposal_id=layout_check.proposal_digest(composed),
+            attempt=self.save.zone_by_id(composed.zone_id).layout_refusals,
             used_fallback=outcome.used_fallback))
         await self.broadcast_snapshot()
 
@@ -1035,6 +1036,7 @@ class CampaignEngine:
         await self._emit(ZoneReady(
             type="zone_ready", zone=regraphed,
             proposal_id=layout_check.proposal_digest(regraphed),
+            attempt=self.save.zone_by_id(rec.zone_id).layout_refusals,
             used_fallback=self.save.zone_by_id(rec.zone_id).used_fallback))
         await self.broadcast_snapshot()
         return True
@@ -1302,6 +1304,26 @@ class CampaignEngine:
                          "arrived after %s replaced it; ignored",
                          intent.zone_id, intent.proposal_id, current)
                 return
+
+        # AND WHICH ATTEMPT IT IS ABOUT, which the digest cannot say.
+        #
+        # `proposal_digest` is content identity and identical content
+        # hashes identically — correct, and exactly why it cannot tell
+        # two attempts apart. After a refusal the campaign asks the
+        # provider again and a deterministic one returns the same Zone,
+        # so the previous attempt's result matches the current proposal
+        # and is charged as a fresh failure. Measured before this guard:
+        # one real refusal became two, and the duplicate cost a third of
+        # the Zone's whole recovery budget.
+        #
+        # The ordinal is read from `layout_refusals` at offer time, so
+        # there is no second counter to keep in step and nothing is
+        # folded into the digest. Absent behaves as today.
+        if intent.attempt is not None and intent.attempt != rec.layout_refusals:
+            log.info("zone %s: a layout_result for attempt %d arrived "
+                     "during attempt %d; ignored", intent.zone_id,
+                     intent.attempt, rec.layout_refusals)
+            return
 
         # A RESULT FOR A ZONE THAT ALREADY GAVE UP IS STALE, and stale is
         # not an error: a client retrying after a dropped connection is

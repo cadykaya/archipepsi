@@ -1596,6 +1596,21 @@ class LayoutResult(Strict):
     type: Literal["layout_result"]
     zone_id: str = _ID
     layout: dict
+    #: Which ATTEMPT this result is about, echoed from `ZoneReady`.
+    #:
+    #: `proposal_id` cannot answer this: two attempts at identical
+    #: content carry the same digest, so a duplicate delivery of the
+    #: first attempt's result -- a client retrying after a dropped
+    #: connection, which the handler treats as the ordinary case --
+    #: passes the content guard and is charged as a second failure.
+    #: Measured: one real refusal became two, and three duplicates
+    #: exhaust a Zone that never failed three times.
+    #:
+    #: None means a client that does not send it, and behaves exactly as
+    #: it does today. Absent is "cannot be checked", never "stale" --
+    #: the same rule `proposal_id` follows.
+    attempt: int | None = Field(default=None, ge=0,
+                                le=MAX_LAYOUT_REFUSALS)
     #: Which PROPOSAL this result is about — `layout.proposal_digest` of
     #: the Zone as it was when the client started this build, echoed
     #: back from `ZoneReady`.
@@ -1881,6 +1896,22 @@ class ZoneReady(Strict):
     #: starts building and echo back on `layout_result`. See
     #: `LayoutResult.proposal_id`.
     proposal_id: str = Field(default="", max_length=16)
+    #: WHICH ATTEMPT this offer is, for the client to capture beside
+    #: `proposal_id` and echo on `layout_result`.
+    #:
+    #: `proposal_id` is CONTENT identity and stays that way: identical
+    #: content hashes identically, which is correct and is what makes it
+    #: useless for telling two attempts apart. After a refusal the
+    #: campaign asks the provider again, and a deterministic provider
+    #: hands back the same Zone -- same rooms, same graph, same digest.
+    #: A result from the previous attempt then matches the current
+    #: proposal exactly and is indistinguishable from a fresh failure.
+    #:
+    #: The ordinal is `ZoneRecord.layout_refusals` at the moment of the
+    #: offer, so it is READ from the lifecycle rather than being a
+    #: second counter to keep in step. It is not part of the digest and
+    #: must never be folded into it.
+    attempt: int = Field(default=0, ge=0, le=MAX_LAYOUT_REFUSALS)
     #: The committed layout, when this Zone already has one. Present on
     #: a re-entry and absent on a first generation, which is exactly the
     #: difference between replaying a layout and solving one.

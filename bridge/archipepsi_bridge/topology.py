@@ -23,12 +23,12 @@ try:
     from .schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from .schemas import mechanics as M
-    from .schemas.zone import PROCEDURAL_SOCKETS, Zone
+    from .schemas.zone import Zone, procedural_sockets_for
 except ImportError:  # pragma: no cover
     from schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from schemas import mechanics as M
-    from schemas.zone import PROCEDURAL_SOCKETS, Zone
+    from schemas.zone import Zone, procedural_sockets_for
 
 #: What a chain needs from any room: a way in and a way out.
 #:
@@ -210,11 +210,13 @@ def _sockets_for(chamber, shell_sockets: dict[str, tuple[str, ...]]
     walling up geometry an artist had cut, with nothing anywhere saying
     so.
 
-    A procedural room declares four because
-    `chamber_builders.procedural_sockets` names four.
+    A procedural room declares what its TYPE can hold:
+    `procedural_sockets_for` is the one declaration, shared with the
+    Zone's own Invariant 8 so the planner and the validator cannot
+    disagree about how many doors a room has.
     """
     if not chamber.shell_id:
-        return PROCEDURAL_SOCKETS
+        return procedural_sockets_for(chamber.type)
     declared = shell_sockets.get(chamber.shell_id)
     if declared is None:
         # BACKSTOP, unreachable through acceptance: `validate_zone`
@@ -515,8 +517,25 @@ def _branch_routes(chambers, caps, required=(), barred=()
     # TYPE and not "it has a pit": these are the rooms the engine
     # actually refused, by name.
     barred_ids = set(barred)
-    chosen = [c for c in interior
-              if worthwhile(c) and c.id not in barred_ids][-affordable:]
+    eligible = [c for c in interior
+                if worthwhile(c) and c.id not in barred_ids]
+    chosen = eligible[-affordable:]
+    #: Worthwhile rooms the budget did not pick, far end first — the same
+    #: preference `chosen` applies.
+    #:
+    #: A DESTINATION THAT CAN FIND NO JUNCTION IS REPLACED, NOT DROPPED.
+    #: Which rooms are worth going to and which rooms can hold a doorway
+    #: are different facts, and the budget was spent on the first without
+    #: consulting the second: a destination whose every predecessor was
+    #: full simply fell back onto the spine and the Zone came back with
+    #: fewer branches than it could carry. Measured when `platform_path`
+    #: stopped advertising side doorways it cannot hold — barring one
+    #: room then cost a 23-room Zone up to five of its eight branches,
+    #: none of them for want of a worthwhile room to go to.
+    #:
+    #: This spends no more budget: a replacement takes the failed
+    #: destination's place, never an extra one.
+    reserve = list(reversed(eligible[:max(0, len(eligible) - affordable)]))
     # Required leaves first, then the budget's picks, in Zone order so
     # the junction search below still walks backwards from each.
     taken_ids = {c.id for c in must}
@@ -545,7 +564,37 @@ def _branch_routes(chambers, caps, required=(), barred=()
     depth: dict[str, int] = {c.id: 0 for c in chambers}
     routes: list[BranchRoute] = []
 
-    for destination in destinations:
+    #: Zone order, so each junction search still walks backwards from its
+    #: destination. Replacements re-enter here and are re-sorted.
+    pending = sorted(destinations, key=lambda c: order.index(c.id))
+    required_ids = {c.id for c in must}
+
+    def _replace(failed) -> bool:
+        """Swap a destination that found no junction for one that might.
+
+        A required leaf is never swapped: it declares no `exit`, so
+        refusing to branch it leaves it with every opening sealed. That
+        is a composition refusal for `compose_with_branch` to raise, not
+        a branch to quietly move elsewhere.
+        """
+        if failed.id in required_ids:
+            return False
+        taken.discard(failed.id)
+        while reserve:
+            nxt = reserve.pop(0)
+            if nxt.id in taken or nxt.id in {r.destination.id
+                                             for r in routes}:
+                continue
+            taken.add(nxt.id)
+            pending.append(nxt)
+            pending.sort(key=lambda c: order.index(c.id))
+            notes.append("room '%s' takes the branch room '%s' could not"
+                         % (nxt.id, failed.id))
+            return True
+        return False
+
+    while pending:
+        destination = pending.pop(0)
         # NESTING: a junction may be a room already reached by a branch,
         # which is what makes a branch off a branch possible at all.
         # Ordered by position so the choice is stable, and restricted to
@@ -570,6 +619,7 @@ def _branch_routes(chambers, caps, required=(), barred=()
             notes.append("room '%s' stays on the spine: no room before "
                          "it has a socket to spare within %d of the spine"
                          % (destination.id, MAX_SIDE_DEPTH))
+            _replace(destination)
             continue
 
         # THE NEAREST ROOM BEFORE IT, WALKING BACK. Nearest first is what
@@ -598,6 +648,7 @@ def _branch_routes(chambers, caps, required=(), barred=()
             notes.append("room '%s' stays on the spine: all %d room(s) "
                          "before it have only an elevated wall spare"
                          % (destination.id, len(candidates)))
+            _replace(destination)
             continue
         used[junction.id].add(socket)
         depth[destination.id] = depth[junction.id] + 1
