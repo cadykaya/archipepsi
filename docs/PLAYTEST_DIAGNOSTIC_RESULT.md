@@ -220,6 +220,48 @@ Note that this class has bitten before and was fixed once: the
 `platform_path` comment records "twenty-three activity elements across
 five rooms were standing on nothing."
 
+## THIRD FINDING: nothing tests the seam where a connector meets a room
+
+Owner, on a black region wrapping the exit doorway: *"exit doorway also
+has holes in it."* Third visual report this session that cannot be
+settled by eye — and unlike the floating ones, this one resolved into a
+COVERAGE finding that stands whether or not that particular patch is a
+hole.
+
+`test_chambers._test_no_chamber_leaks_off_its_centre_line` is the seal
+probe. Its cases are built like this:
+
+```gdscript
+"corridor":      ChamberBuilders.corridor({...}),
+"arena":         ChamberBuilders.arena({...}),
+"platform_path": ChamberBuilders.platform_path({...}),
+```
+
+**Each chamber ALONE** — no neighbours, no connectors, nothing attached.
+It proves a room is sealed by itself. It cannot prove a room is sealed
+where a connector meets it.
+
+**The joins have no seal coverage at all**, and every room in every Zone
+reaches every other room through one. The suite tests the pieces and
+never the assembly.
+
+This may be the visible end of a backlog item already recorded. From
+`zone_builder.gd`:
+
+> the join exemption and the validator's rule have to be reconciled
+> together — **corridor adjacency keeps a tolerance**, rooms do not —
+> and that is a router change with its own measurements
+
+A tolerance at the join is exactly how a crack appears around a
+connector mouth. The frontier's "overlap reconciliation" item and this
+report may be one thing seen from two ends.
+
+**The fix is small and worth doing first.** The zone audit already
+builds whole assembled Zones from the five generated fixtures. Running
+the existing centre-line leak probe against THOSE, instead of against
+lone chambers, covers every join in the game — and would have caught
+this before a player saw it.
+
 ## The principle: a big room is opportunity, not content
 
 Owner, in session:

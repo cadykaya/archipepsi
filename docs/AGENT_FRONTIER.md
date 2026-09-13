@@ -198,6 +198,18 @@ of content a small room cannot hold. `topology.SPINE_SHARE` already
 records the unresolved half of this ("rooms behaved like enlarged
 corridors"); the principle is the other half.
 
+**Nothing tests the seam where a connector meets a room.** The seal
+probe `_test_no_chamber_leaks_off_its_centre_line` builds each chamber
+ALONE — no neighbours, no connectors — so it proves a room is sealed by
+itself and never that it is sealed where something joins it. Every room
+reaches every other room through a join; the suite tests the pieces and
+never the assembly. The zone audit already builds whole assembled Zones
+from the five fixtures, so pointing the existing probe at those covers
+every join in the game. Likely the visible end of the recorded overlap
+item: `zone_builder` notes that "corridor adjacency keeps a tolerance,
+rooms do not", and a tolerance at the join is how a crack appears around
+a connector mouth.
+
 ### The rest of the diagnostic playtest — same document
 
 **The return pad repair is confirmed by a human.** The owner found a
