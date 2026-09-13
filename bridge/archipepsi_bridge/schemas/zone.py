@@ -33,47 +33,32 @@ except ImportError:  # pragma: no cover
         EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
         ZoneKeySpec)
 
-#: The four joining sockets every procedural room declares, matching
+#: Every joining socket name a procedural room can be given, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
 #: own set in the catalog; these are the ones the bridge can check
 #: without one.
+#:
+#: **THE VOCABULARY, NOT THE CAPACITY.** Which of these a room can really
+#: be joined through depends on its producer —
+#: `C.PROCEDURAL_SOCKET_CAPACITY` says which, and
+#: `procedural_sockets_for` is how to ask. This tuple stays the full set
+#: because a SAVED Zone may name any of them: a campaign composed before
+#: the capacity was measured holds `platform_path` rooms with side doors,
+#: and refusing those names here would refuse to LOAD those saves.
 PROCEDURAL_SOCKETS = ("entry", "exit", "side_left", "side_right")
 
-#: The two a procedural room of ANY type can hold: the course through it.
-#: `chamber_builders._perimeter` cuts these from its two-door default and
-#: needs no assignment to do it.
-PROCEDURAL_THROUGH_SOCKETS = ("entry", "exit")
-
-#: Chamber types whose PROCEDURAL build cannot hold a side doorway.
-#:
-#: `chamber_builders.procedural_sockets` places a side socket at the
-#: middle of the side wall. That is the shape of a FLAT room and is false
-#: of a platform course, where the middle of the side wall is over the
-#: kill pit and below the walkway. The engine says so at the site and
-#: `zone_01`'s `c008` refused its layout for exactly that. Relocating the
-#: socket onto the start ledge was MEASURED and does not help -- the
-#: branch then cannot be placed at all -- so the honest repair is to stop
-#: OFFERING the doorway, not to move it.
-#:
-#: A statement about the PRESENT PROCEDURAL PRODUCER. Not a rule against
-#: branching platform rooms, and nothing at all about an authored shell
-#: that shares the type: a shell declares its own openings and
-#: `topology._sockets_for` reads them instead of this.
-SIDELESS_PROCEDURAL_TYPES = ("platform_path",)
-
-
 def procedural_sockets_for(chamber_type: str) -> tuple[str, ...]:
-    """The joining sockets a PROCEDURAL room of this type can hold.
+    """Which sockets a procedural room of this type can be JOINED through.
 
-    THE ONE DECLARATION. `topology._sockets_for` offers these and
-    Invariant 8 audits against them, so the planner and the validator
-    cannot drift into declaring different numbers of doors. Drift is
-    exactly what the flat four-door advertisement was: a composer
-    assigning a side door the engine would never cut.
+    The one projection of `C.PROCEDURAL_SOCKET_CAPACITY`, so the
+    composer, this schema and the engine cannot each have their own
+    answer. An authored shell never comes here: it declares its own
+    openings and `topology._sockets_for` reads them, which is why a shell
+    that happens to share a chamber type is not held to a procedural
+    producer's limits.
     """
-    if chamber_type in SIDELESS_PROCEDURAL_TYPES:
-        return PROCEDURAL_THROUGH_SOCKETS
-    return PROCEDURAL_SOCKETS
+    return tuple(C.PROCEDURAL_SOCKET_CAPACITY.get(chamber_type,
+                                                  PROCEDURAL_SOCKETS))
 
 #: The per-room anchors the engine resolves, as `room:<room_id>:<kind>`.
 #:
@@ -959,6 +944,21 @@ class Zone(Strict):
         # Invariant 8: a procedural room's unused joining sockets are
         # declared SEALED, never left unmentioned. "Unmentioned" is
         # exactly how an unaudited hole gets into a wall.
+        #
+        # TWO SETS, AND THEY ARE DIFFERENT SETS. The NAME must be one a
+        # procedural room can be given — the full vocabulary, because a
+        # Zone composed before the capacity was measured holds
+        # `platform_path` rooms with side doors and those saves must
+        # still load. What must be MENTIONED is only what the room's
+        # producer can carry: a `platform_path` composed today names
+        # `entry` and `exit`, and demanding two more from it would be
+        # demanding it declare doors it cannot build.
+        #
+        # So this permits both shapes and neither is silence. What stops
+        # a NEW proposal joining through a side the producer does not
+        # build is `topology._sockets_for`, which never offers one, and
+        # `_the_composer_assigns_only_what_a_room_carries` there, which
+        # fails loudly if that ever drifts.
         for c in self.chambers:
             if not c.doors or getattr(c, "shell_id", None):
                 continue
@@ -968,19 +968,10 @@ class Zone(Strict):
                 raise ValueError(
                     f"chamber '{c.id}' assigns socket(s) {sorted(unknown)} "
                     "that a procedural room does not declare")
-            # Audited against what this room's OWN TYPE can hold, not
-            # against the four a flat room has, so a `platform_path`
-            # owes a mention for `entry` and `exit` and nothing else.
-            #
-            # A socket the type cannot hold is NOT refused here, and
-            # deliberately. This validator runs on load, and every Zone
-            # composed before the capacity was corrected assigned side
-            # doors to platform courses -- refusing them here would make
-            # a save holding one unreadable rather than repairable. The
-            # refusal belongs where a proposal is judged and repaired:
-            # `validate_zone`, `_a_room_may_not_use_a_doorway_it_cannot_hold`.
-            supported = procedural_sockets_for(c.type)
-            silent = set(supported) - named
+            # A socket the type cannot hold is not refused HERE, on
+            # purpose: this runs on load. `validate_zone` refuses it
+            # where a proposal is judged and repaired.
+            silent = set(procedural_sockets_for(c.type)) - named
             if silent:
                 raise ValueError(
                     f"chamber '{c.id}' leaves joining socket(s) "

@@ -550,7 +550,8 @@ static func door_plan(chamber: Dictionary, width: float,
 		depth: float, exit_at := Vector3.INF) -> Array:
 	var out: Array = []
 	var placed := {}
-	for socket: Variant in procedural_sockets(width, depth, exit_at):
+	for socket: Variant in procedural_sockets(width, depth, exit_at,
+			str(chamber.get("type", ""))):
 		var s: Dictionary = socket
 		placed[str(s["name"])] = s
 	for raw: Variant in chamber.get("doors", []):
@@ -600,18 +601,21 @@ static func door_plan(chamber: Dictionary, width: float,
 ##
 ## Left defaulted, this is the flat table exactly as it was.
 static func procedural_sockets(width: float, depth: float,
-		exit_at := Vector3.INF) -> Array:
+		exit_at := Vector3.INF, chamber_type := "") -> Array:
 	var way_out := exit_at if exit_at.is_finite() else Vector3(0, 0, depth)
 	# AND THE SIDES ARE AT THE MIDDLE OF THE SIDE WALL, which is the
-	# shape of a FLAT room and is FALSE of `platform_path`: there the
-	# middle of the side wall is over the kill pit and below the
-	# walkway. That room declares two doorways it cannot hold, and
-	# `zone_01`'s `c008` refuses its layout for exactly that. The fix is
-	# not a `side_at` here -- measured: moving the socket onto the start
-	# ledge carves honestly and then the branch off `c008` cannot be
-	# placed at all. See the note in `platform_path`.
+	# shape of a FLAT room and FALSE of the two producers that CLIMB:
+	# `platform_path`'s side wall there is over its kill pit and below
+	# its walkway, and `tower`'s is behind its spiral. Both answer a side
+	# assignment with a solid wall, so neither NAMES one --
+	# `Constants.PROCEDURAL_SOCKET_CAPACITY` is the one declaration of
+	# that, shared with `topology._sockets_for` and `Zone`'s socket
+	# invariant. Advertising a doorway this builder does not cut is what
+	# refused a default-scale Zone's whole layout.
 	var sides := Vector3(0, 0, depth / 2.0)
-	return [
+	var carried: Variant = Constants.PROCEDURAL_SOCKET_CAPACITY.get(
+			chamber_type)
+	var out: Array = [
 		{"name": "entry", "kind": "doorway", "position": Vector3(0, 0, 0),
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 180.0},
 		{"name": "exit", "kind": "doorway",
@@ -624,6 +628,13 @@ static func procedural_sockets(width: float, depth: float,
 			"position": Vector3(width / 2.0, sides.y, sides.z),
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": -90.0},
 	]
+	if typeof(carried) != TYPE_ARRAY:
+		return out
+	var kept: Array = []
+	for raw: Variant in out:
+		if (carried as Array).has(str((raw as Dictionary)["name"])):
+			kept.append(raw)
+	return kept
 
 ## A place in this room nothing has claimed yet.
 ##
@@ -740,8 +751,10 @@ static func _clear_spot(width: float, depth: float, claimed: Array,
 ## The lock slab and the door probe both need to know where an opening
 ## is, and a second derivation of that is how the two come to disagree.
 static func socket_placed(socket_id: String, width: float,
-		depth: float, exit_at := Vector3.INF) -> Dictionary:
-	for raw: Variant in procedural_sockets(width, depth, exit_at):
+		depth: float, exit_at := Vector3.INF,
+		chamber_type := "") -> Dictionary:
+	for raw: Variant in procedural_sockets(width, depth, exit_at,
+			chamber_type):
 		var s: Dictionary = raw
 		if str(s["name"]) == socket_id:
 			return s
@@ -755,12 +768,24 @@ static func socket_placed(socket_id: String, width: float,
 ## and every existing procedural room composing exactly as before.
 static func cut_plan(chamber: Dictionary) -> Dictionary:
 	var out := {}
+	var carried: Variant = Constants.PROCEDURAL_SOCKET_CAPACITY.get(
+			str(chamber.get("type", "")))
 	for raw: Variant in chamber.get("doors", []):
 		if typeof(raw) != TYPE_DICTIONARY:
 			continue
 		var door: Dictionary = raw
 		var id := str(door.get("socket_id", ""))
 		if id == "":
+			continue
+		# A SAVED ZONE MAY STILL NAME A SOCKET THIS PRODUCER CANNOT
+		# BUILD, and cutting it because the door says so would be the
+		# advertisement made real in the wrong direction. A campaign
+		# composed before the capacity was measured holds
+		# `platform_path` rooms with side doors; they load, they build
+		# as the room this producer actually makes, and the layout is
+		# refused and recomposed rather than quietly carved.
+		if typeof(carried) == TYPE_ARRAY \
+				and not (carried as Array).has(id):
 			continue
 		out[id] = str(door.get("usage", "USED")) != "SEALED"
 	# AND NOTHING OVERRIDES IT, the Zone's front door included.

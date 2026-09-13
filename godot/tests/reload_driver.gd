@@ -438,6 +438,33 @@ func _resume() -> void:
 	zone.player.global_position = from_at + Vector3.UP * 0.6
 	for _i in 12:
 		await get_tree().physics_frame
+	# THROUGH THE DOORWAY, not through the wall beside it.
+	#
+	# This walked a straight line from one arrival to the other, and the
+	# two rooms are joined by a door in a wall: the line crosses that
+	# wall everywhere except at the opening. PHASE 2 could not run until
+	# the socket capacity was corrected, so the leg ran for the first
+	# time and the body got to 11.6 m and stopped -- against the wall,
+	# which is exactly where a straight line puts it.
+	#
+	# So the door is a WAYPOINT, the way `graph_driver._walk_into` has
+	# always treated it. The claim is unchanged and is still walked on
+	# foot: the doorway the key opened is passable.
+	var mouth := _doorway_in_world(zone, str(notes["lock"]))
+	if mouth != Vector3.INF:
+		await _walk(zone.player, mouth)
+		# AND THROUGH IT. Steering AT the opening puts a capsule against
+		# the frame -- measured, wedged 0.75 m short of the near wall
+		# with the doorway as the goal. The second waypoint is a few
+		# metres INSIDE, along the line from the opening to the middle
+		# of the room it opens onto, so the body is aimed through the
+		# gap rather than at it.
+		if box.has_volume():
+			var inward := (box.position + box.size / 2.0) - mouth
+			inward.y = 0.0
+			if inward.length() > 0.01:
+				await _walk(zone.player,
+						mouth + inward.normalized() * 3.5, box)
 	var walk := await _walk(zone.player, to_at, box)
 	# INSIDE THE ROOM, not within a metre of a point in it.
 	#
@@ -485,6 +512,28 @@ func _record_for(zone_id: String) -> Dictionary:
 ## from the dead end they just walked into -- while the finger is still
 ## on the key. Without this the walk kept going from the Zone start and
 ## reported a position twelve rooms away as where the walk ended.
+## Where a `room/socket` doorway stands, in world space.
+##
+## Off the room's OWN door plan -- the same `doors` array the aperture
+## probe measures -- so the waypoint is the opening the engine built and
+## not a second derivation of where one ought to be.
+func _doorway_in_world(zone: ZoneController, lock_id: String) -> Vector3:
+	var parts := lock_id.split("/")
+	if parts.size() != 2:
+		return Vector3.INF
+	for raw: Variant in zone.offer_rooms:
+		var entry: Dictionary = raw
+		if str((entry["chamber"] as Dictionary).get("id", "")) != parts[0]:
+			continue
+		for raw_door: Variant in (entry["build"] as Dictionary) \
+				.get("doors", []):
+			var door: Dictionary = raw_door
+			if str(door.get("socket_id", "")) == parts[1]:
+				return (entry["xform"] as Transform3D) \
+						* (door.get("position", Vector3.ZERO) as Vector3)
+	return Vector3.INF
+
+
 func _walk(player: Player, goal: Vector3,
 		stop_inside := AABB()) -> Dictionary:
 	var closest := INF
@@ -504,7 +553,20 @@ func _walk(player: Player, goal: Vector3,
 		if flat.length() <= ARRIVED:
 			break
 		player.rotation.y = atan2(-flat.x, -flat.y)
+		# A BODY PRESSED AGAINST SOMETHING TRIES TO CLIMB IT, which is
+		# what `graph_driver._walk` has always done and this walker
+		# never learned. PHASE 2 could not run until the socket capacity
+		# was corrected, so this leg ran for the first time and ended
+		# 11.6 m short after 202 frames -- wedged, not out of budget
+		# (`WALK_FRAMES` is 900). The claim under test is that the
+		# doorway the key opened is passable; how a harness gets a
+		# capsule over a crate on the way is not part of it.
 		still = still + 1 if (here - last).length() < 0.012 else 0
+		if still == 24 and player.is_on_floor():
+			Input.action_press("jump", 1.0)
+			await get_tree().physics_frame
+			Input.action_release("jump")
+			still = 0
 		last = here
 		if still > 90:
 			break

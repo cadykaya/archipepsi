@@ -1596,21 +1596,6 @@ class LayoutResult(Strict):
     type: Literal["layout_result"]
     zone_id: str = _ID
     layout: dict
-    #: Which ATTEMPT this result is about, echoed from `ZoneReady`.
-    #:
-    #: `proposal_id` cannot answer this: two attempts at identical
-    #: content carry the same digest, so a duplicate delivery of the
-    #: first attempt's result -- a client retrying after a dropped
-    #: connection, which the handler treats as the ordinary case --
-    #: passes the content guard and is charged as a second failure.
-    #: Measured: one real refusal became two, and three duplicates
-    #: exhaust a Zone that never failed three times.
-    #:
-    #: None means a client that does not send it, and behaves exactly as
-    #: it does today. Absent is "cannot be checked", never "stale" --
-    #: the same rule `proposal_id` follows.
-    attempt: int | None = Field(default=None, ge=0,
-                                le=MAX_LAYOUT_REFUSALS)
     #: Which PROPOSAL this result is about — `layout.proposal_digest` of
     #: the Zone as it was when the client started this build, echoed
     #: back from `ZoneReady`.
@@ -1626,6 +1611,32 @@ class LayoutResult(Strict):
     #: it does today. Absent means "cannot be checked", never "stale".
     proposal_id: str | None = Field(default=None, min_length=16,
                                     max_length=16, pattern=r"^[0-9a-f]{16}$")
+    #: WHICH ATTEMPT at that proposal — `ZoneRecord.layout_refusals` as
+    #: it stood when the client started this build.
+    #:
+    #: `proposal_id` is CONTENT identity and stays that: two proposals
+    #: with identical bytes hash identically, which is correct and is
+    #: also why it cannot separate two tries at the same content.
+    #: Measured live: a refusal sends a Zone back to Epsilon, the
+    #: deterministic provider composes the SAME content again, and the
+    #: replaced build's late result then arrives carrying an id that
+    #: still matches — spending the replacement's refusal budget on a
+    #: failure already charged once.
+    #:
+    #: So the discriminator sits at the lifecycle boundary instead, and
+    #: it is a quantity the record already keeps and already sends: a
+    #: refusal is exactly what ends an attempt and begins the next, and
+    #: `layout_refusals` rides on `active_zone` in every snapshot. No new
+    #: identity, no change to what a digest means.
+    #:
+    #: A result whose attempt is BEHIND the record's is ignored. A result
+    #: from the CURRENT attempt is current however many times it arrives:
+    #: a client resending after a dropped connection is the ordinary
+    #: case and is the same evidence, not a second charge.
+    #:
+    #: Optional, so a client that sends none behaves exactly as it does
+    #: today.
+    attempt: int | None = Field(default=None, ge=0, le=99)
 
 
 class KeyCollected(Strict):
@@ -1896,22 +1907,6 @@ class ZoneReady(Strict):
     #: starts building and echo back on `layout_result`. See
     #: `LayoutResult.proposal_id`.
     proposal_id: str = Field(default="", max_length=16)
-    #: WHICH ATTEMPT this offer is, for the client to capture beside
-    #: `proposal_id` and echo on `layout_result`.
-    #:
-    #: `proposal_id` is CONTENT identity and stays that way: identical
-    #: content hashes identically, which is correct and is what makes it
-    #: useless for telling two attempts apart. After a refusal the
-    #: campaign asks the provider again, and a deterministic provider
-    #: hands back the same Zone -- same rooms, same graph, same digest.
-    #: A result from the previous attempt then matches the current
-    #: proposal exactly and is indistinguishable from a fresh failure.
-    #:
-    #: The ordinal is `ZoneRecord.layout_refusals` at the moment of the
-    #: offer, so it is READ from the lifecycle rather than being a
-    #: second counter to keep in step. It is not part of the digest and
-    #: must never be folded into it.
-    attempt: int = Field(default=0, ge=0, le=MAX_LAYOUT_REFUSALS)
     #: The committed layout, when this Zone already has one. Present on
     #: a re-entry and absent on a first generation, which is exactly the
     #: difference between replaying a layout and solving one.

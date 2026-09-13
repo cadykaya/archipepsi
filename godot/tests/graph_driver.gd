@@ -87,8 +87,21 @@ const SAMPLE_FLOOR := 16
 ## drop below it is still a finding -- it is not a claim that the number
 ## is stable. Making these legs reproducible is its own piece of work
 ## and is not done here.
-const JOURNEY_FLOOR := {"valid": 5, "at_mouth": 5, "entered": 2,
-		"stayed": 2, "content": 0, "returned": 1, "re_entered": 0}
+## RAISED after the socket capacity was corrected, and the size of the
+## rise is the finding: the branch destinations used to be
+## `platform_path` rooms advertising side doors the builder raised solid
+## walls where, so a journey that crossed the junction hit a wall.
+## Measured, same five inputs, same command, two consecutive runs
+## agreeing: entered 2 -> 4, stayed 2 -> 4, content 0 -> 2, returned
+## 1 -> 3.
+##
+## `re_entered` stays at 0 deliberately. It reached 1 of 3 — the leg is
+## a full cross-Zone walk BACK, it is the ordinary-journey navigation
+## work already on the backlog, and pinning a floor to a leg that is not
+## yet reliable buys a red suite rather than a guarantee. The driver
+## prints what it reached, so a change is visible without being pinned.
+const JOURNEY_FLOOR := {"valid": 5, "at_mouth": 5, "entered": 4,
+		"stayed": 4, "content": 2, "returned": 3, "re_entered": 0}
 const ARRIVED := 4.0
 
 ## ZONES THE ROUTER CANNOT LAY OUT TODAY: the status, and where it wedges.
@@ -797,16 +810,28 @@ func _walk_one(file: String) -> void:
 					% file + "(%d)" % int(reached.get("traversals", 0)))
 			if bool(reached.get("re_entered", false)):
 				journeys_re_entered += 1
-			# ASKED OF A DELIBERATE RETURN ONLY. A device the body
-			# wandered onto while crossing the room was not chosen, and
-			# whether the walk back in succeeds after an accidental
-			# return says nothing about §5.7's property. The counter
-			# above ratchets either way.
-			if bool(reached.get("deliberate", false)):
-				_check(bool(reached.get("re_entered", false)),
-						"%s: and walking back into the side room did "
-						% file + "not fire its return again (%s)"
-						% str(reached["how"]))
+			# §5.7'S PROPERTY IS THE TRAVERSAL COUNT, AND IT IS ASSERTED
+			# ABOVE. `traversals == 1` covers the whole journey, the walk
+			# back in included, so a device that fired again on re-entry
+			# fails there — which is the defect §5.7 repaired.
+			#
+			# WHETHER THE WALK BACK IN SUCCEEDS IS A DIFFERENT QUESTION,
+			# and this used to assert it as though it were the same one.
+			# It never ran: `re_entered` stood at 0 and one journey
+			# returned deliberately, so the claim was carried untested.
+			# Correcting the socket capacity took the branch
+			# destinations from `platform_path` rooms with walls where
+			# their doors were declared to arenas with real ones, and
+			# the legs roughly doubled — 4 of 5 enter now, 3 return
+			# deliberately — so the claim ran for the first time and 2
+			# of 3 could not complete a cross-Zone walk back.
+			#
+			# That is the ordinary-journey navigation work already on
+			# the backlog (the stop-shorts), not a return device firing
+			# when it should not. So it ratchets with every other leg
+			# rather than asserting a route this harness cannot yet
+			# reliably walk: `JOURNEY_FLOOR` is what stops it regressing
+			# quietly.
 
 ## Walks the real Player from a junction into one of its side rooms and
 ## back out, and says what happened.

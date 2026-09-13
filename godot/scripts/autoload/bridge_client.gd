@@ -258,6 +258,22 @@ func proposal_for(zone_id: String) -> String:
 			return from_snapshot
 	return str(_offer_proposals.get(zone_id, ""))
 
+## WHICH ATTEMPT at that proposal the bridge is on, for this Zone.
+##
+## `ZoneRecord.layout_refusals` — a quantity the record already keeps and
+## already sends, on the same `active_zone` the build is made from. A
+## refusal ends one attempt and begins the next, so the count IS the
+## ordinal; `proposal_id` cannot serve, because two tries at identical
+## content hash identically and are supposed to.
+##
+## `-1` when this bridge holds no record for the Zone, which the
+## controller sends as nothing at all.
+func attempt_for(zone_id: String) -> int:
+	var record := active_zone()
+	if zone_id == "" or str(record.get("zone_id", "")) != zone_id:
+		return -1
+	return int(record.get("layout_refusals", 0))
+
 ## The folded component set. The BRIDGE folds; nothing here re-derives it.
 func mechanics() -> Dictionary:
 	var m: Variant = snapshot.get("mechanics")

@@ -23,12 +23,14 @@ try:
     from .schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from .schemas import mechanics as M
-    from .schemas.zone import Zone, procedural_sockets_for
+    from .schemas.zone import (PROCEDURAL_SOCKETS, Zone,
+                               procedural_sockets_for)
 except ImportError:  # pragma: no cover
     from schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from schemas import mechanics as M
-    from schemas.zone import Zone, procedural_sockets_for
+    from schemas.zone import (PROCEDURAL_SOCKETS, Zone,
+                              procedural_sockets_for)
 
 #: What a chain needs from any room: a way in and a way out.
 #:
@@ -210,10 +212,12 @@ def _sockets_for(chamber, shell_sockets: dict[str, tuple[str, ...]]
     walling up geometry an artist had cut, with nothing anywhere saying
     so.
 
-    A procedural room declares what its TYPE can hold:
-    `procedural_sockets_for` is the one declaration, shared with the
-    Zone's own Invariant 8 so the planner and the validator cannot
-    disagree about how many doors a room has.
+    A procedural room declares what its PRODUCER can build, which is
+    four for a flat room and two for the ones that climb — see
+    `C.PROCEDURAL_SOCKET_CAPACITY`. It was four for all of them, so a
+    branch was hung off a `platform_path`'s side, the engine raised a
+    solid wall there, and the bridge refused the whole layout for a door
+    this lane had assigned to an opening that does not exist.
     """
     if not chamber.shell_id:
         return procedural_sockets_for(chamber.type)
@@ -968,8 +972,43 @@ def compose_with_branch(chambers, shell_sockets=None,
                sum(1 for r in routes if r.locked), len(spine)),))
 
 
+def _refuse_doors_beyond_capacity(zone, product: GraphProduct) -> None:
+    """No door this composer assigns may name a socket the room cannot
+    carry.
+
+    True by construction — every assignment comes from `_sockets_for` —
+    and asserted anyway, because "true by construction" is what the flat
+    socket table was for years while `platform_path` raised a solid wall
+    where `side_left` was supposed to be. An authored shell is held to
+    its OWN declarations, not to a procedural producer's limits.
+
+    A `ValueError`, not a `GraphRefusal`: a refusal is an answer about a
+    Zone, and this is a statement about this module. If it ever fires,
+    the composer and the builder have drifted apart again and the right
+    outcome is a stack trace rather than a recomposition that hides it.
+    """
+    for c in zone.chambers:
+        if c.shell_id:
+            # AN AUTHORED SHELL ANSWERS FOR ITSELF. Its openings are in
+            # its catalogue entry, `_sockets_for` reads them there, and
+            # holding it to a procedural producer's limits because it
+            # shares a chamber type is the mistake this guard exists to
+            # prevent in the other direction.
+            continue
+        supported = set(procedural_sockets_for(c.type))
+        for door in product.doors.get(c.id, ()):
+            if door.usage == "SEALED" or door.socket_id in supported:
+                continue
+            raise ValueError(
+                f"composer assigned '{door.socket_id}' ({door.usage}) in "
+                f"room '{c.id}', which carries {sorted(supported)}; a "
+                "door on a socket the producer does not build is a hole "
+                "the engine will measure as solid")
+
+
 def apply(zone, product: GraphProduct):
     """Return `zone` carrying `product`. The input is never mutated."""
+    _refuse_doors_beyond_capacity(zone, product)
     chambers = []
     for c in zone.chambers:
         chambers.append(c.model_copy(update={
