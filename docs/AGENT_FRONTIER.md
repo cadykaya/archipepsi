@@ -154,7 +154,30 @@ is chosen for the property under test.
    control. Whether the composer should find more room is topology
    tuning and is the bridge lane's.
 
-### The diagnostic playtest RAN — see `docs/PLAYTEST_DIAGNOSTIC_RESULT.md`
+### THE DIAGNOSTIC PLAYTEST FOUND AN UNDECLARED CAPABILITY GATE
+
+**Read `docs/PLAYTEST_DIAGNOSTIC_RESULT.md` before planning any batch.**
+The owner reached an AP Check on a ledge that is, after trying,
+unreachable without a teleport Echo. That is the one thing this
+project's rules say may never happen: a physical gate the matching AP
+location logic does not declare. Archipelago's item pool is Signal Key,
+two fillers and Victory — **Echoes are not AP items**, so AP has no
+vocabulary for the gate and believes the Check reachable.
+
+`graph.Edge.capability` is the guard built for exactly this, and it
+watches EDGES. This gate is INSIDE a room, where nothing measures
+traversal at all: `reachability` proves "every Check in a reachable
+ROOM" and `RoomAudit` proves the spot has floor and headroom, and a
+pedestal across an uncrossable gap passes both.
+
+The fix keeps what the owner liked, because AP's claim covers Checks and
+not local rewards: a capability gate in front of a LOCAL REWARD is safe,
+in front of an AP CHECK it is a deadlock — for the other player whose
+progression item lands there. The composer cannot tell the difference
+today. **Within-room reachability is the missing measurement, and it is
+this lane's.**
+
+### The rest of the diagnostic playtest — same document
 
 **The return pad repair is confirmed by a human.** The owner found a
 branch destination, read the `RETURN` sign before reaching it, crossed
