@@ -219,6 +219,14 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 		# found a wall from one that did not without re-deriving the
 		# solve. A decline is a placement outcome, not a silent one.
 		element.set_meta("mounted", mounted)
+		# AND THE SPACE IT ACTUALLY CLAIMS. A mounted target is turned,
+		# so its 0.9 m span runs along the wall and its 0.2 m thickness
+		# across it -- the opposite of `rules["size"]`. `_footprints`
+		# reads this rather than the family's nominal size, because that
+		# list becomes `occupied` for the NEXT activity in the same
+		# room: understating the along-wall extent by 0.7 m is a second
+		# activity placed into the first one.
+		element.set_meta("claimed_size", claimed)
 		taken.append(_footprint(spot, claimed))
 		built.append(element)
 	return built
@@ -502,11 +510,17 @@ static func _collides(at: Vector3, size: Vector3,
 	return false
 
 ## What this activity claimed, in room space, for the next one to avoid.
+## THE SPACE EACH ELEMENT CLAIMED, for the next activity in this room.
+##
+## Per element rather than from the family's nominal size: a mounted
+## `SHOT` target is turned, so its extents are swapped, and `_row`
+## records what each one actually took.
 static func _footprints(built: Array[ActivityElement],
 		size: Vector3) -> Array[AABB]:
 	var out: Array[AABB] = []
 	for element in built:
-		out.append(_footprint(element.position, size))
+		var claimed: Vector3 = element.get_meta("claimed_size", size)
+		out.append(_footprint(element.position, claimed))
 	return out
 
 ## The space an element claims, a little wider than its mesh so two

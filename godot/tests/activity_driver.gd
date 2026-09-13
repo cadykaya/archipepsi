@@ -788,6 +788,28 @@ func _test_targets_are_mounted_on_real_walls() -> void:
 	_check(sides.size() >= 2,
 			"every mounted target went on the same wall (%s): the rule "
 			% str(sides.keys()) + "is not solving both")
+	# AND THE SPACE IT CLAIMS IS THE SPACE IT TAKES. `footprints` becomes
+	# `occupied` for the next activity in the same room, so a turned
+	# target reported at its UNROTATED extents understates its
+	# along-wall span by 0.7 m -- which is a second activity placed
+	# into the first one.
+	var claimed: Array = (probe["built"] as Dictionary)["footprints"]
+	_check(claimed.size() == elements.size(),
+			"%d footprints for %d elements"
+			% [claimed.size(), elements.size()])
+	for i in elements.size():
+		var element: ActivityElement = elements[i]
+		if not bool(element.get_meta("mounted", false)):
+			continue
+		var box: AABB = claimed[i]
+		_check(box.size.z > box.size.x,
+				"a mounted target claims %s: it is turned, so its long "
+				% str(box.size) + "axis runs ALONG the wall")
+		# ROOM SPACE, like the solver: `_footprint` is built from the
+		# element's LOCAL position, and this probe's room sits 600 m out.
+		_check(box.has_point(element.position),
+				"a mounted target's claimed box %s does not contain it "
+				% str(box) + "at %s" % str(element.position))
 	(probe["root"] as Node3D).queue_free()
 	await get_tree().process_frame
 
