@@ -173,6 +173,47 @@ number. Some short spurs, some real side paths.
 `topology.py` is the bridge lane's file. Recorded for Dess; the engine
 lane is not changing it.
 
+### 4-ter. Activity density is capped by count, never by room size
+
+Owner, in session, on a small L-shaped corridor: *"there is so much
+bullshit goin on in this room lol, we got the touch a popsicles game
+and two races in this tiny L hallway."*
+
+Three activities: one `switch_sequence` (its elements are
+0.6 x 1.2 x 0.3 blocks -- "popsicles" is a fair reading) and two
+`timed_run`. That is the schema maximum, in the smallest room allowed
+to hold it:
+
+```python
+activities: tuple[ActivityPrimitive, ...] = Field(default=(), max_length=3)
+```
+
+**A flat count with no relationship to floor area.** A corridor is
+allowed exactly what a large arena is allowed.
+
+Ten lines above it in the same file, the Checks cap carries the thought
+this one is missing:
+
+> Bounded low on purpose. Two or three Checks in a GENUINELY LARGE ROOM
+> correspond to distinct activities; fifteen in one room is the
+> warehouse of pedestals CAMPAIGN_SCALE.md 5 forbids, and this is the
+> cheap structural half of preventing it.
+
+So the schema already knows size ought to bound density, states it in
+prose for Checks, and does not apply it to activities.
+
+**A second defect underneath the first, and not an area problem.**
+`timed_run` is the one family with `roles: true` -- start and goal
+elements. Two of them in one space puts two `START` gates in view with
+nothing saying which goal belongs to which start. That reads as noise in
+a room of any size.
+
+Split across lanes: the `max_length=3` cap is the bridge lane's
+(`schemas/zone.py`). Whether the engine should REFUSE to place three
+activities in a corridor-sized room, and whether two role-using
+activities may share a space at all, is the engine lane's
+(`generation/activities.gd`).
+
 ### 5. The warp station warps instead of offering a choice
 
 `WarpStation.interact()` marks the station reached on first touch;
