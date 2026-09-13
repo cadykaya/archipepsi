@@ -442,14 +442,10 @@ static func create() -> Player:
 	# Snap matched to the step the body can now climb, so ground within
 	# one step stays underfoot on slopes and small undulations.
 	#
-	# MEASURED LIMIT, recorded rather than claimed away: this does NOT
-	# make walking down a tread stop being a short fall. With
-	# `floor_snap_length` at 1.0, `velocity.y` at 0 and `up_direction`
-	# at +Y -- every precondition Godot documents -- a body walking off
-	# a 0.4 m tread at 7 m/s still leaves the floor and free-falls the
-	# drop. Descending a staircase is therefore still a series of small
-	# falls; the ASCENT half of this defect is fixed and controlled, the
-	# descent half is open. See the batch handoff.
+	# It does NOT on its own make walking down a tread stop being a
+	# short fall -- every precondition Godot documents was already met
+	# and the body fell anyway. `_follow_the_step_down` is what fixes
+	# that half, and the comment there records why the snap cannot.
 	player.floor_snap_length = float(Constants.MAX_VERTICAL_STEP)
 	var camera := Camera3D.new()
 	camera.name = "Camera3D"
@@ -745,7 +741,9 @@ func _physics_process(delta: float) -> void:
 	var falling_speed := -velocity.y
 	var was_airborne := not is_on_floor()
 	_climb_a_step_the_law_promises(delta)
+	_note_a_step_down_ahead(delta)
 	move_and_slide()
+	_follow_the_step_down()
 	_shove_what_i_walked_into()
 	if was_airborne and is_on_floor():
 		_resolve_pending_slam()
@@ -923,6 +921,114 @@ func _climb_a_step_the_law_promises(delta: float) -> void:
 	if rise <= 0.01 or rise > step + 0.001:
 		return
 	global_position += Vector3.UP * rise
+
+
+## AND THE SAME STEP, WALKED DOWN.
+##
+## The ascent above was only half the defect, and the other half read
+## like a Godot bug for a batch: `floor_snap_length` is
+## `MAX_VERTICAL_STEP`, `velocity.y` is zero, `up_direction` is +Y and
+## the motion mode is grounded -- every precondition Godot's own floor
+## snap documents -- and a body walking off a 0.4 m tread still left
+## the floor and free-fell the drop.
+##
+## MEASURED, not reasoned about. A probe in `_physics_process` printed
+## the state on the frame contact was lost and then called
+## `apply_floor_snap()` by hand:
+##
+##     lost floor y=0.741 vy=+0.0000 down_hit=true trav=0.109
+##       after apply_floor_snap: floor=false y=0.741 (moved 0.000)
+##
+## Ground was 0.341 m below and the cast stopped at 0.109 m, because
+## the body has NOT yet cleared the tread it is leaving: the capsule's
+## lower hemisphere is still within its radius of that tread's top
+## edge, and a straight-down cast from where the body ended hits THE
+## EDGE. 0.109 m is the exact capsule-against-corner solution for this
+## geometry, so the number named its own cause. The normal off an edge
+## is 55 degrees from vertical -- past `floor_max_angle` -- so the snap
+## classifies the staircase as a wall and refuses, and the body falls.
+## Raising `floor_snap_length` can never help: the obstruction is
+## 0.1 m away, not 1 m.
+##
+## So the drop is measured from a probe placed a radius PAST the edge,
+## where the cast reaches real ground, and the body is then walked down
+## by that much over the following frames -- through `move_and_collide`,
+## so it rides the edge rather than clipping through it, and with
+## `velocity.y` held at zero so no fall accumulates into the landing.
+##
+## WHAT THIS DELIBERATELY DOES NOT DO. There is no adhesion: the budget
+## comes from a surface that was actually found, within one step, at a
+## standable angle, and a body beside a pit finds nothing and falls as
+## before. A rising body is never pulled down -- a jump, a launch pad,
+## a rail and a swing each clear the budget on sight. And the limit is
+## `MAX_VERTICAL_STEP`, the same number the ascent uses, so the rule is
+## the symmetric one: what you can walk up, you can walk down.
+func _note_a_step_down_ahead(delta: float) -> void:
+	if not is_on_floor():
+		return
+	# A DELIBERATE DEPARTURE OWNS THE BODY. The jump has already set
+	# `velocity.y` by the time this runs, so a rising body is visible
+	# here and is never a descent.
+	if velocity.y > 0.0 or _launch_flight or _rider != null \
+			or _swing_time > 0.0:
+		_step_down_left = 0.0
+		return
+	var wish := Vector3(_walk_intent.x, 0.0, _walk_intent.z) * delta
+	if wish.length_squared() < 0.000001:
+		return
+	var step := float(Constants.MAX_VERTICAL_STEP)
+	# PAST THE LIP, for the same reason the ascent probes past it: a
+	# cast from where the body stands hits the edge it is standing on.
+	var reach := wish.normalized() * (Constants.PLAYER_RADIUS + 0.05)
+	# SOMETHING AHEAD IS THE ASCENT'S CASE, not this one.
+	if test_move(global_transform, reach):
+		return
+	var ahead := global_transform.translated(reach)
+	var probe := KinematicCollision3D.new()
+	if not test_move(ahead, Vector3.DOWN * (step + 0.05), probe):
+		return                     # nothing within a step: a real drop
+	var drop := probe.get_travel().length()
+	# The ground continues under the body, or it falls away further than
+	# a step does. Neither is a stair.
+	if drop <= 0.02 or drop > step:
+		return
+	# A SURFACE THAT CANNOT BE STOOD ON IS NOT A TREAD, and a thing the
+	# player is meant to shove is not one either.
+	if probe.get_normal().angle_to(Vector3.UP) > floor_max_angle:
+		return
+	if probe.get_collider() is ManipulableBody:
+		return
+	_step_down_left = drop + 0.05
+
+
+## The other half of the pair, after the walk has happened.
+func _follow_the_step_down() -> void:
+	if is_on_floor():
+		_step_down_left = 0.0
+		return
+	if _step_down_left <= 0.0:
+		return
+	if velocity.y > 0.0 or _launch_flight or _rider != null \
+			or _swing_time > 0.0:
+		_step_down_left = 0.0
+		return
+	# ONLY ONTO SOMETHING. `move_and_collide` travels the WHOLE distance
+	# when nothing stops it, so an unchecked call at the lip of a pit
+	# would teleport the body a metre down into it.
+	if not test_move(global_transform, Vector3.DOWN * _step_down_left):
+		_step_down_left = 0.0
+		return
+	var before := global_position.y
+	move_and_collide(Vector3.DOWN * _step_down_left)
+	var travelled := before - global_position.y
+	_step_down_left -= travelled
+	# The drop is WALKED. Without this the frames spent riding the edge
+	# would accumulate speed and arrive as a fall, which is the thump
+	# and the camera dip this whole function exists to remove.
+	velocity.y = 0.0
+	apply_floor_snap()
+	if is_on_floor() or travelled < 0.001 or _step_down_left <= 0.01:
+		_step_down_left = 0.0
 
 
 func camera_ray(distance: float, spread_dir: Vector3 = Vector3.ZERO) -> Dictionary:
@@ -1158,6 +1264,11 @@ func _shove_what_i_walked_into() -> void:
 ## How hard the player is trying to walk this frame, in m/s, before the
 ## world has had its say. Zero whenever they are not walking.
 var _walk_intent := Vector3.ZERO
+
+## HOW MUCH OF A STEP THE BODY STILL OWES, walking down one. Zero
+## except for the two or three frames a descent actually takes; see
+## `_note_a_step_down_ahead`.
+var _step_down_left := 0.0
 
 ## The mass the player shoves WITH.
 ##
