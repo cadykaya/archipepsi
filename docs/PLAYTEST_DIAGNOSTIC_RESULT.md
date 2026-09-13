@@ -26,53 +26,74 @@ Cyberfunk)`); local keys present and readable.
 
 ## Defects
 
-### 1. What a room puts in front of you is not physically validated
+### 1. Activity elements are mounted to nothing
 
-Confirmed in the session on two different families, and they are two
-different bugs with one shared cause.
+Seen in two rooms (7 targets, then 3), so systematic.
 
-**Ground props sit at an ASSUMED floor height.** In
-`chamber_builders.gd` the ground-socket foot is
-
-```gdscript
-var foot := Vector3(side * width * 0.32, 0.0, depth * t)
-```
-
-That `0.0` is hardcoded, and `content_instantiator` only lifts the
-object by half its own height on top of it. The socket asks whether the
-spot is OCCUPIED (`box_hits` against solids and reserved regions) and
-never asks what height the floor is at that `(x, z)`. Any room whose
-walkable surface is not a flat plane at local y = 0 gets props hanging
-in the air. The owner found an orange reactive barrel with nothing
-under it and confirmed it by walking around it.
-
-**Activity elements are grounded but unmounted.** This one is NOT a
-height bug: `activities.gd` searches for a real surface (`_best_surface`)
-and parks the element above it — "`height` is how far above the surface
-the rules park this element". So a target is honestly 2.2 m above a
-genuine floor. What is missing is the WALL.
+This is NOT a height bug. `activities.gd` searches for a real surface
+(`_best_surface`) and parks the element above it — "`height` is how far
+above the surface the rules park this element" — so a target sits an
+honest 2.2 m above a genuine floor. What is missing is the WALL.
 `ActivityElement._build_target` adds a 0.5 m stalk whose stated purpose
 is
 
 > The stalk that holds it off the wall, so it reads as MOUNTED
 > equipment rather than as a decal painted on the plaster.
 
-and nothing in placement requires a wall behind it. The geometry
-promises a mount the placement never provides. Seen in two rooms
-(7 targets, then 3), so systematic.
+and nothing in placement requires a wall behind it. So the element is
+correctly grounded and still visually claims to be bolted to something
+that is not there. The fix is a wall-adjacency requirement in the
+element search, or dropping the stalk from the geometry.
 
-**The shared cause is the useful statement.** This engine already owns
-the rule "is there really a surface here, and room to stand on it" —
-`RoomAudit.arrival_is_supported` and `Placement.clearance` — and applies
-it to arrivals and return anchors. It is not applied to props or to
-activity elements. That asymmetry is exactly why the return pad was
-repaired this batch and these were not: **physical validation covers
-where the player lands and not what the room puts in front of them.**
+### 1-bis. Nothing casts a shadow, so "is it on the floor" is unanswerable
 
-Fixing the drums means giving a ground socket a surface query instead of
-a constant. Fixing the targets means adding a wall-adjacency requirement
-to the element search, or dropping the stalk from the geometry. They are
-separate changes.
+**The cause of the retraction below, and the more important finding.**
+
+Every room light is an `OmniLight3D` built by `chamber_builders._light`
+with `light.shadow_enabled = false`, and the player's flashlight
+(`player.gd`) is the same. Unlike nearly everything else in this
+codebase the line carries no comment, so there is no recorded reason —
+plausibly cost, since these are omni lights several to a room and omni
+shadows are the expensive kind, but nobody wrote it down.
+
+With no contact shadow, no form shading and flat single-colour prop
+materials, a grounded object and a floating one are visually identical.
+The owner's words: *"nothing does, and theyre so smooth and single
+textured that it was hard to tell."*
+
+**The consequence is what matters: placement defects of this class are
+undetectable by eye in this build.** The activity targets were only
+catchable because the stalk gives them away. Anything without a
+giveaway silhouette can sit a metre off the floor and no playtest will
+ever find it. That makes shadowing a DIAGNOSTIC PREREQUISITE rather
+than a polish item — the engine lane cannot ask a human to eyeball
+grounding until it exists.
+
+Not necessarily full shadow maps. A contact/blob decal under grounded
+props, or shadows on a chosen subset of lights, may buy the whole
+diagnostic value. Costed design is the art lane's with the engine, and
+is not decided here.
+
+#### Retracted: the hazard drums
+
+An earlier revision of this page reported the reactive barrels as
+floating too, and generalised both into "physical validation covers
+where the player lands and not what the room puts in front of them."
+**The owner retracted the observation on a closer look: the drums are
+not floating.** The generalisation went with it.
+
+Recorded because the mistake is instructive. The code reading that
+prompted it was real — `chamber_builders`'s ground-socket foot is the
+constant `Vector3(side * width * 0.32, 0.0, depth * t)`, and the socket
+asks whether a spot is occupied without ever asking what height the
+floor is at that `(x, z)`. But if a room's walkable surface IS at local
+y = 0, that constant is the right answer and there is no defect. A code
+smell was promoted to a confirmed bug on one screenshot.
+
+**Left as an unverified assumption, not a finding.** Whether any
+built room puts its walkable surface somewhere other than local y = 0
+is answerable by probe and has not been probed. Do that before touching
+the socket.
 
 ### 2. An activity gives no feedback of any kind
 
@@ -126,6 +147,31 @@ the open beside the activity that ought to earn it.
 
 **This is an owner decision, not an engine defect.** Recorded here so
 the argument is not lost.
+
+### 4-bis. Branch depth: the dial is at its cap, and the ask is variance
+
+Owner, in session: *"the game's branches are a little too small, one
+junction with a warp point led to a small hallway and then the dead end
+room. it's ok if this happens but i don't want that to be the norm."*
+
+`topology.MAX_SIDE_DEPTH = 2` — "how far off the spine a side path may
+run, counted in rooms." Hallway-then-dead-end IS depth 2, so the
+session met the cap rather than found a bug. The constant's own note
+asks for exactly this input:
+
+> Provisional tuning, and nothing more. Not a design law and not a
+> physical cost. [...] So this stays at 2 for now because it produces a
+> distribution worth reading, and it is a dial rather than a verdict.
+> Raise it, remove it, or keep it on play evidence — not to avoid a
+> shape.
+
+**The ask is a DISTRIBUTION, not a larger number.** "I don't want that
+to be the norm" is not answered by raising the cap to 4, which could
+produce uniformly-four-deep branches — the same complaint with a bigger
+number. Some short spurs, some real side paths.
+
+`topology.py` is the bridge lane's file. Recorded for Dess; the engine
+lane is not changing it.
 
 ### 5. The warp station warps instead of offering a choice
 

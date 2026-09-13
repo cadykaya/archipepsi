@@ -162,16 +162,27 @@ the room to its content and its station, and took the device home
 deliberately. It never fired by accident. The measurement said
 0.41 m -> 2.50 m of clearance; the walk says that clearance is enough.
 
-Three defects and three design gaps came back with it, and the first
-defect is the one that matters to this lane: **physical validation
-covers where the player lands and not what the room puts in front of
-them.** A ground socket's foot is the constant `0.0` — an ASSUMED floor
-— so a room whose surface is not a flat plane at local y = 0 hangs its
-props in the air, confirmed on a reactive barrel. Activity elements are
-honestly grounded by `activities.gd`'s surface search but carry a stalk
-built to enter a wall that placement never requires. The engine already
-owns the rule (`arrival_is_supported`, `Placement.clearance`) and spends
-it only on arrivals and return anchors.
+**The finding that reframes the rest: nothing in a Zone casts a
+shadow.** Every room light is an `OmniLight3D` with
+`shadow_enabled = false` and no comment saying why; the flashlight too.
+With flat prop materials and no contact shadow, a grounded object and a
+floating one are pixel-identical — which is why the owner reported the
+hazard drums as floating and then retracted it on a closer look. The
+generalisation this lane built on that report was retracted with it: the
+ground socket's constant `0.0` foot is a real, unprobed assumption, not
+a demonstrated defect.
+
+The consequence is a constraint on this lane's own method: **placement
+defects of this class are undetectable by eye in this build**, so
+shadowing is a diagnostic prerequisite rather than polish. What still
+stands unaided is the activity element — honestly grounded by
+`activities.gd`'s surface search, carrying a stalk built to enter a wall
+that placement never requires, and catchable only because the stalk
+gives it away.
+
+Branch depth went to the bridge lane: `MAX_SIDE_DEPTH = 2` is at its cap
+and its own note asks to be settled on play evidence, but the owner's
+ask is a distribution, not a larger number.
 
 The cheapest and largest-felt item is **defect 2**: an activity gives
 the player no feedback of any kind, while `scripts/ui/tones.gd` already
