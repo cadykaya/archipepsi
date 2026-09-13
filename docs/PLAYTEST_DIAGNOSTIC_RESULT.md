@@ -1022,3 +1022,45 @@ transition, activity feedback) and deserves its own measurement rather
 than a guess bolted onto a repair batch. The integration guard therefore
 fails on any script error EXCEPT this known message, so a new crash is
 caught while this one stays visible and recorded.
+
+## Attempted and NOT established: required-target reachability
+
+The repair batch tried to measure what the review and this page both ask
+for — with the equipment the game guarantees, can a player reach every
+Check and the exit? — and **the instrument did not work. No conclusion
+about reachability is drawn from it, and it was removed rather than
+kept.**
+
+What was built: a lattice of standable points over every placed piece of
+the played proposal, connected under the implemented movement law (step
+up to `MAX_VERTICAL_STEP`, a 1.33 m jump apex from
+`JUMP_VELOCITY² / 2·GRAVITY`), flooded from the Zone arrival, then asked
+whether any reachable point lies near each Check and the exit portal.
+
+Three runs, each fixing a real flaw in the previous one:
+
+| run | nodes | reachable | Checks unreachable | flaw found |
+|---|---:|---:|---:|---|
+| 1 | 5800 | 72 | 15 | sampled room bounds only, so connectors held no points and every room was an island |
+| 2 | 6112 | 648 | 13 | added every placed piece; still islanded |
+| 3 | 11524 | 1362 | 12 | `player_stands_here` demands `PLAYER_HEIGHT + 0.6` headroom — a PLACEMENT predicate — so ordinary corridors held no points; replaced with a capsule fit |
+
+**Run 3 still claims 12 of 15 Checks and the exit are unreachable in a
+layout the owner cleared completely, most of it without the Whistle.**
+The probe is therefore wrong, not the Zone.
+
+The remaining flaw is most likely doorway sampling: a lattice point must
+land inside a `DOOR_WIDTH` gap AND leave room for a 0.8 m body, so
+crossings are hit-or-miss at any spacing, and tightening the lattice
+until the number agrees with the known answer would produce a tool that
+only confirms what was already believed.
+
+**This is the direct evidence for the open question in the review.**
+Codex asked whether a geometric flood-fill is the right shape for S1 and
+whether a cheaper decisive test exists. On this attempt: a flood-fill
+over a lattice is NOT it, and the failure mode is exactly the one to
+watch for — an instrument that can be tuned toward the expected answer.
+
+What a next attempt should probably do instead: drive the real controller
+along specific candidate routes, as the review proposed, and treat a
+timeout as "not established by this attempt" rather than as impossible.
