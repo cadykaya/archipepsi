@@ -1,5 +1,44 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — owner-away follow-up 02 — 2026-09-13
+
+**`claude/archipepsi-echoes-continuation-b1adno`**, from `eb14a38`.
+Full handoff: `docs/FOLLOWUP_02_HANDOFF.md`. Ten-minute replay route:
+`docs/REVIEW_ROUTE_0_3.md`. Read those, not this.
+
+**Both fixture leads closed, and both were my instruments.** The Check
+2.6 m "below the floor" sits on its producer's own end ledge with
+0.00 m under it — the walker was standing in the secret alcove above
+it, because the start rule cast from three metres up and took the first
+surface. 6 of 6 sampled Checks reach now. `c001/side_left` is declared
+`SEALED` with no edge; all 22 SEALED sockets measure solid. The 6-metre
+partner proxy is gone, replaced by every declared door measured against
+its own usage on the assembled Zone, with a counterpart that mislabels
+a real opening.
+
+**Mounting asks the geometry now.** As shipped it put 27 of 27 SHOT
+elements on walls it never looked for. It needs a wall behind the
+stalk, floor under the mount, and floor to shoot from; 11 of 27 mount
+in the diagnostic Zone and every decline is printed by room.
+
+**The station panel reaches `main.gd`'s real consumers** — one warp,
+no stale warp after the Zone is left, `leave_zone` never
+`abandon_zone`, and closing it releases only its own modal claim.
+
+**D (the opt-in quieter-generation comparison) is Dess's and is not
+started here.** `origin/claude/archipepsi-amalgam-bridge` is still at
+`afbdb7d`. `fallback.ACTIVITY_KINDS`, the compatibility tests and
+`tools/family_retirement.py` are ready for it; station repair routes
+are the thing to watch on integration.
+
+**Waiting on the owner.** A private copy of `.diagnostic-582e954`'s
+slot JSON; stair comfort; whether the unmounted target look is an
+acceptable fallback; whether the F5 schematic is the map; the budget
+shape.
+
+**The heartbeat is PAUSED.** Turn it back on when there is a task.
+
+
 ## ENGINE LANE — the owner-away batch — 2026-09-13
 
 **`claude/archipepsi-echoes-continuation-b1adno`**, from `b914d98`.

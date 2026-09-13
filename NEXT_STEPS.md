@@ -1,5 +1,78 @@
 # Archipepsi — build state
 
+## 2026-09-13 (engine) — owner-away follow-up 02
+
+From `eb14a38`, items A/B/C of
+`ARCHIPEPSI_OWNER_AWAY_FOLLOWUP_02.md`. D is the bridge lane's.
+Handoff: `docs/FOLLOWUP_02_HANDOFF.md`.
+
+### Both fixture leads were the instrument, and both are now controls
+
+The Check reported 2.6 m below the floor sits at `platform_path`'s own
+`reward_position` with solid ground 0.00 m under it; the walker was in
+the SECRET ALCOVE above it, which `_secret_alcove` places over the end
+ledge specifically so a base kit cannot reach it. `_standable_start`
+cast from three metres above the doorway and took the first surface it
+met. It now takes the floor the doorway OPENS ONTO -- the cast starts
+one step above the door's own height and a surface further than
+`MAX_VERTICAL_STEP` away is refused.
+
+`c001/side_left` is declared SEALED with `edge_id: null`. The "leak
+candidate" came from a 6-metre partner proxy; the declaration was never
+consulted. Every declared door is now measured against its own usage on
+the ASSEMBLED Zone -- the gap
+`RoomAudit._assigned_doors_match_their_usage` leaves, because it asks a
+room from the room's own transform and a cap is placed by the layout.
+
+Both findings are retracted and replaced by controls that would catch
+the real defect: ground under a reward, a base kit reaching the
+interaction position, the reward's own interaction running there, the
+room being LEAVABLE (a dead-end `platform_path` whose reward sits
+beyond an unjumpable gap is a softlock), and no SEALED socket open.
+
+### Mounting had no evidence and now has three kinds
+
+`_wall_spot` took `width / 2 - WALL_MARGIN` for the wall plane, which
+is the declared ENVELOPE rather than a wall. Measured on the real Zone
+it mounted 27 of 27 SHOT elements on walls nothing had looked for.
+
+Walls are built by `_box`, which gives them a collision hull, and
+`all_solid_boxes` reads hulls WITHOUT the architecture filter it
+applies to meshes -- so the wall is in `solids` and can be asked for. A
+mount now needs a wall behind the stalk, floor under it (a thin column,
+so it cannot find the wall and call that a floor), and floor a few
+strides out to shoot from. 11 of 27 mount; declines are printed by
+chamber type and room.
+
+The surface-vouched exclusion is gone: rooms are asked rather than
+skipped by category.
+
+### Three probe bugs worth remembering
+
+`godot-activity`'s mount probe had no walls and moved its root 600 m
+out BEFORE composing, so every gathered solid was at x ~ 600 while
+every candidate spot was at x ~ 9 -- `can_place` could never refuse
+anything. Production composes at the origin and places afterwards.
+
+The firing test first read the room's vouched `stand` patches on the
+assumption that only a platform course vouches any; an arena vouches
+them too, so every arena target was refused by a rule reading a list it
+had misunderstood.
+
+And `traverse_driver` rolled its own full-size capsule for "is this
+doorway blocked", disagreeing with the controller on two USED doors.
+`RoomAudit._blocker` is 2 cm slimmer on purpose and ignores placed
+content on purpose; using it, all 44 passable sockets agree.
+
+### Delivery shape
+
+`docs/REVIEW_ROUTE_0_3.md` is a ten-minute route through one Zone with
+real room ids -- the campaign is deterministic, so they are the rooms
+the owner will be in. Screenshots include the UNMOUNTED fallback beside
+the mounted cases, because a review that only sees the rooms that said
+yes is a review of half the feature.
+
+
 ## 2026-09-13 (engine) — the owner-away batch
 
 Worked from `ARCHIPEPSI_PROD_AWAY_WORK_QUEUE.md` and the four-item
