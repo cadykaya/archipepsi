@@ -162,11 +162,21 @@ the room to its content and its station, and took the device home
 deliberately. It never fired by accident. The measurement said
 0.41 m -> 2.50 m of clearance; the walk says that clearance is enough.
 
-Three defects and three design gaps came back with it. The next
-engine-lane item is **defect 2**, the cheapest and largest-felt: an
-activity gives the player no feedback of any kind, while
-`scripts/ui/tones.gd` already holds `confirm`, `denied`, `goal` and
-`reward` and the activity code calls none of them.
+Three defects and three design gaps came back with it, and the first
+defect is the one that matters to this lane: **physical validation
+covers where the player lands and not what the room puts in front of
+them.** A ground socket's foot is the constant `0.0` — an ASSUMED floor
+— so a room whose surface is not a flat plane at local y = 0 hangs its
+props in the air, confirmed on a reactive barrel. Activity elements are
+honestly grounded by `activities.gd`'s surface search but carry a stalk
+built to enter a wall that placement never requires. The engine already
+owns the rule (`arrival_is_supported`, `Placement.clearance`) and spends
+it only on arrivals and return anchors.
+
+The cheapest and largest-felt item is **defect 2**: an activity gives
+the player no feedback of any kind, while `scripts/ui/tones.gd` already
+holds `confirm`, `denied`, `goal` and `reward` and the activity code
+calls none of them.
 
 ### For the next owner playtest
 

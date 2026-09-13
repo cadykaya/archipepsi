@@ -26,22 +26,53 @@ Cyberfunk)`); local keys present and readable.
 
 ## Defects
 
-### 1. Activity elements are built to mount on a wall and placed in mid-air
+### 1. What a room puts in front of you is not physically validated
 
-Seen in two rooms (7 targets, then 3). `ActivityElement._build_target`
-adds a 0.5 m stalk whose stated purpose is
+Confirmed in the session on two different families, and they are two
+different bugs with one shared cause.
+
+**Ground props sit at an ASSUMED floor height.** In
+`chamber_builders.gd` the ground-socket foot is
+
+```gdscript
+var foot := Vector3(side * width * 0.32, 0.0, depth * t)
+```
+
+That `0.0` is hardcoded, and `content_instantiator` only lifts the
+object by half its own height on top of it. The socket asks whether the
+spot is OCCUPIED (`box_hits` against solids and reserved regions) and
+never asks what height the floor is at that `(x, z)`. Any room whose
+walkable surface is not a flat plane at local y = 0 gets props hanging
+in the air. The owner found an orange reactive barrel with nothing
+under it and confirmed it by walking around it.
+
+**Activity elements are grounded but unmounted.** This one is NOT a
+height bug: `activities.gd` searches for a real surface (`_best_surface`)
+and parks the element above it — "`height` is how far above the surface
+the rules park this element". So a target is honestly 2.2 m above a
+genuine floor. What is missing is the WALL.
+`ActivityElement._build_target` adds a 0.5 m stalk whose stated purpose
+is
 
 > The stalk that holds it off the wall, so it reads as MOUNTED
 > equipment rather than as a decal painted on the plaster.
 
-The geometry is right; the PLACEMENT is not. Elements are dropped at
-the family's height wherever the room has space, stalk pointing at
-nothing. The art says "bolted to a wall" while the placement says
-"floating". The player read the contradiction unprompted.
+and nothing in placement requires a wall behind it. The geometry
+promises a mount the placement never provides. Seen in two rooms
+(7 targets, then 3), so systematic.
 
-Systematic, not a one-off. **Open: does this affect anything else that
-mounts** — hazard drums were seen apparently floating in the same
-session and are not yet confirmed.
+**The shared cause is the useful statement.** This engine already owns
+the rule "is there really a surface here, and room to stand on it" —
+`RoomAudit.arrival_is_supported` and `Placement.clearance` — and applies
+it to arrivals and return anchors. It is not applied to props or to
+activity elements. That asymmetry is exactly why the return pad was
+repaired this batch and these were not: **physical validation covers
+where the player lands and not what the room puts in front of them.**
+
+Fixing the drums means giving a ground socket a surface query instead of
+a constant. Fixing the targets means adding a wall-adjacency requirement
+to the element search, or dropping the stalk from the geometry. They are
+separate changes.
 
 ### 2. An activity gives no feedback of any kind
 
