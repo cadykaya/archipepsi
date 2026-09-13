@@ -63,6 +63,7 @@ func _run() -> void:
 	await _test_a_key_says_what_it_opened()
 	await _test_a_key_that_opened_nothing_says_which_nothing()
 	await _test_a_resumed_zone_re_announces_no_old_unlock()
+	await _test_two_activities_in_a_room_share_one_station()
 	await _test_a_plate_holds_long_enough_to_reach_the_next()
 	await _test_completion_sends_one_local_reward_and_nothing_else()
 	await _test_solving_it_twice_is_one_reward()
@@ -244,6 +245,65 @@ func _test_a_completion_reaches_its_presentation_consumer() -> void:
 	zone.queue_free()
 	await get_tree().process_frame
 
+
+## TWO PUZZLES IN A ROOM ARE TWO WAYS INTO ONE CONSEQUENCE.
+##
+## A station's repair is attached to a ROOM, so the first activity
+## solved in that room repairs it and every later one finds it already
+## repaired. Both said "<ID> COMPLETE" and nothing else, so the
+## difference was invisible: a player who solved the second puzzle had
+## no way to learn whether it had done anything, and kept looking for a
+## payoff that was not there.
+##
+## This is the truthful-feedback half only. Nothing here grants a
+## reward, marks an activity complete, makes one compulsory or changes
+## when a station repairs. Turning these into declared alternative
+## solutions is a design proposal and stays one.
+func _test_two_activities_in_a_room_share_one_station() -> void:
+	var hud := RecordingHud.new()
+	var zone := ZoneController.new()
+	add_child(zone)
+	zone.hud = hud
+	zone.add_child(hud)
+	var station := WarpStation.create("st:hall", "HALL", "signal", "c007")
+	zone.add_child(station)
+	zone.set("_stations", [station])
+	zone.set("_activity_room", {"c007_0": "c007", "c007_1": "c007",
+			"c009_0": "c009"})
+	_check(station.is_broken(),
+			"the probe station did not start broken, so there is nothing "
+			+ "to repair")
+
+	zone._on_activity_completed("c007_0", 4.0, 1)
+	var first: String = hud.toasts[hud.toasts.size() - 1]
+	_check(first.contains("ONLINE"),
+			"the first activity in a room did not report bringing its "
+			+ "station online (%s)" % first)
+	_check(not station.is_broken(),
+			"the first activity did not actually repair the station")
+	var after_first := hud.toasts.size()
+
+	zone._on_activity_completed("c007_1", 6.0, 1)
+	var second: String = hud.toasts[hud.toasts.size() - 1]
+	_check(second.contains("already online"),
+			"the second activity in the same room said '%s', which is "
+			% second + "what the first said: a player cannot tell that "
+			+ "it was an alternative route into a consequence they "
+			+ "already have")
+	_check(hud.toasts.size() == after_first + 1,
+			"one completion produced %d cards"
+			% (hud.toasts.size() - after_first))
+
+	# A ROOM WITH NO STATION SAYS NOTHING EXTRA, so the line above is a
+	# fact about this room rather than a decoration on every completion.
+	zone._on_activity_completed("c009_0", 3.0, 1)
+	var elsewhere: String = hud.toasts[hud.toasts.size() - 1]
+	_check(not elsewhere.contains("ONLINE")
+			and not elsewhere.contains("already online"),
+			"an activity in a room with no station reported a station "
+			+ "consequence: %s" % elsewhere)
+	zone.queue_free()
+	await get_tree().process_frame
 
 ## WHAT A KEY ACTUALLY DID, IN ONE LINE.
 ##

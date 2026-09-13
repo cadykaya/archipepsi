@@ -744,9 +744,21 @@ func gates_not_yet_open() -> Dictionary:
 ## that was missing -- telling the player it happened.
 func _on_activity_completed(activity_id: String, seconds: float,
 		_attempts: int) -> void:
+	# THE CONSEQUENCE FIRST, so the one message can carry it.
+	#
+	# A room may hold more than one activity and they SHARE the station
+	# in it: the first solved repairs it and every later one finds it
+	# already online. Before this, all of them said the same
+	# "<ID> COMPLETE" and the difference was invisible -- so a player
+	# who solved the second puzzle in a room had no way to learn whether
+	# it had done anything. This says which it was. It grants nothing
+	# extra, marks nothing complete and makes nothing compulsory; the
+	# local reward each activity already sends is untouched.
+	var consequence := _repair_station_for(activity_id)
 	if hud != null:
-		hud.toast("%s COMPLETE   %.1fs"
-				% [activity_id.to_upper(), seconds],
+		hud.toast("%s COMPLETE   %.1fs%s"
+				% [activity_id.to_upper(), seconds,
+				"" if consequence == "" else "   " + consequence],
 				Color(0.55, 0.95, 0.75), 3.0)
 	if tones != null and tones.has_method("play"):
 		# "secret", not "secret_found". The bank keys its chime as
@@ -758,7 +770,6 @@ func _on_activity_completed(activity_id: String, seconds: float,
 		# refuses the next one of these.
 		tones.play("secret")
 	_activity_note = ""
-	_repair_station_for(activity_id)
 
 ## AND THE OTHER OUTCOME, which had no listener at all.
 ##
@@ -782,17 +793,32 @@ func _on_activity_failed(activity_id: String, reason: String) -> void:
 ## Only its own room: a Zone with two puzzled station rooms must not have
 ## one puzzle light both, which is the failure a room-blind match would
 ## produce and the reason the room is carried at all.
-func _repair_station_for(activity_id: String) -> void:
+## Returns what to TELL the player about it, or "" when this room has no
+## station to repair. Three answers, and the second is the one that was
+## missing: this activity repaired it, this activity found it already
+## repaired, or there was never one here.
+func _repair_station_for(activity_id: String) -> String:
 	var room := str(_activity_room.get(activity_id, ""))
 	if room == "":
-		return
+		return ""
 	for raw: Variant in _stations:
 		var station: WarpStation = raw
-		if station.repair_room != room or not station.repair():
+		if station.repair_room != room:
 			continue
-		# Repair activates, so the station is now reached and the rest of
-		# the reached bookkeeping has to happen exactly as it would have.
-		_station_came_online(station.station_id, "STATION REPAIRED")
+		if station.repair():
+			# Repair activates, so the station is now reached and the
+			# rest of the reached bookkeeping has to happen exactly as
+			# it would have. The note is EMPTY because the completion
+			# toast above is carrying it -- two cards for one event is
+			# the burst this batch removed from key pickups.
+			_station_came_online(station.station_id, "")
+			return "STATION %s ONLINE" % station.label_text.to_upper()
+		# ALREADY ONLINE, and saying so is the whole point. These
+		# activities are alternative ways into the same consequence, and
+		# a player who cannot tell that from an independent one with its
+		# own payoff will keep looking for a payoff that is not there.
+		return "%s was already online" % station.label_text.to_upper()
+	return ""
 
 ## The next reached station after this one, wrapping.
 ##
@@ -1069,7 +1095,7 @@ func _station_came_online(station_id: String, note: String) -> void:
 	resume_anchor = station_id
 	BridgeClient.send_intent({"type": "station_reached",
 			"zone_id": zone_id, "station_id": station_id})
-	if hud != null:
+	if hud != null and note != "":
 		hud.toast(note, Color(0.45, 1.0, 0.8), 2.5)
 
 ## Travel only. A station provides travel and save and NOT loadout
