@@ -105,6 +105,27 @@ static func _link(root: Node3D, built: Array[ActivityElement],
 ## element the player walks into on the way past.
 ## How many alternates the solver tries before it accepts a crowded spot.
 const PLACEMENT_TRIES := 24
+
+## HOW FAR THE TARGET'S HARDWARE REACHES BACK, from the element origin.
+##
+## `ActivityElement._build_target` hangs a 0.5 m stalk centred 0.3 m
+## behind the face, so the hardware ends 0.55 m back. Mounting puts the
+## origin exactly that far off the wall plane, and the stalk lands on
+## the wall instead of in the air behind a target hanging in the middle
+## of the room -- which is what the owner saw: "they have pegs and they
+## should be sticking out of the walls".
+const MOUNT_STALK := 0.55
+
+## Clear of a doorway, beside the door's own half width.
+##
+## A side socket sits at the middle of a side wall (`_perimeter`), so
+## the middle of a side wall is the one place on it a target may not go.
+## A row that hung one there would be a shooting gallery across a door.
+const MOUNT_DOOR_CLEAR := 0.6
+
+## Steps the wall search takes along the wall, looking for room.
+const MOUNT_STEP := 0.6
+const MOUNT_TRIES := 16
 ## Grid resolution for the last-resort sweep, per axis.
 const GRID_STEPS := 9
 
@@ -154,7 +175,33 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 				side * (inner + (outer - inner) * t),
 				near + (far - near) * t,
 				height, size, inner, outer, near, far, taken)
-		if not surface.is_empty():
+		var yaw := 0.0
+		var claimed := size
+		var mounted := false
+		# A TARGET GOES ON THE WALL, and tries the other wall before it
+		# gives up on walls altogether.
+		#
+		# ONLY WHERE THE FLAT SOLVE ALREADY STANDS. A room that VOUCHED
+		# walkable surfaces did so because its floor plan is not its
+		# floor -- a `platform_path`'s bounds reach forty metres down
+		# into a kill pit -- and the wall at `width/2` of such a room is
+		# a wall over nothing. The first version of this mounted there
+		# anyway and `godot-zone-audit` caught it at once: six elements
+		# in `c006` with nothing to stand on under them, which is the
+		# exact defect `_best_surface` exists to prevent. Where a room
+		# declares surfaces, the surface solve is untouched.
+		if trigger == ActivityElement.SHOT and surface.is_empty():
+			var wall := _wall_spot(side, near + (far - near) * t, width,
+					depth, size, height, taken, solids)
+			if wall.is_empty():
+				wall = _wall_spot(-side, near + (far - near) * t, width,
+						depth, size, height, taken, solids)
+			if not wall.is_empty():
+				spot = wall["position"]
+				yaw = float(wall["yaw"])
+				claimed = wall["size"]
+				mounted = true
+		if not mounted and not surface.is_empty():
 			# THE OFFER MAY BE DECLINED. A surface that cannot produce a
 			# physically valid point for THIS element is not used for it,
 			# and the flat solve stands -- an element is never forced into
@@ -167,9 +214,77 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 				trigger, i, size, tint, role, i + 1 if ordered else 0)
 		root.add_child(element)
 		element.position = spot
-		taken.append(_footprint(spot, size))
+		element.rotation.y = yaw
+		# SAID OUT LOUD ON THE ELEMENT, so a suite can tell a target that
+		# found a wall from one that did not without re-deriving the
+		# solve. A decline is a placement outcome, not a silent one.
+		element.set_meta("mounted", mounted)
+		taken.append(_footprint(spot, claimed))
 		built.append(element)
 	return built
+
+## A SHOT TARGET GOES ON A WALL.
+##
+## The row solve above spreads every element across the room's floor
+## plan, which is right for a switch you walk to and a plate you stand
+## on, and wrong for the one element nobody ever touches. A target at
+## `height` 2.2 with nothing behind it is a 0.9 m square floating at
+## head height on a stalk that holds it off nothing.
+##
+## So a `SHOT` element is offered a wall first. The side walls, not the
+## ends: the entry and the exit are where the player comes in, the row
+## already keeps `THRESHOLD_CLEARANCE` off both, and a target across a
+## doorway is worse than a target in the air. The element turns to face
+## the room, so its 0.9 m span now runs ALONG the wall and its 0.2 m
+## thickness across it, and the origin sits `MOUNT_STALK` off the wall
+## plane so the hardware meets the plaster.
+##
+## THE OFFER MAY BE DECLINED, exactly as `_spot_on_surface`'s is. A wall
+## with no legal span left -- crowded, or nothing but doorway -- returns
+## `{}` and the flat solve stands. An element is never dropped and never
+## forced into geometry to honour an offer.
+##
+## WHAT THIS DOES NOT CLAIM. It solves against the room's OWN declared
+## envelope, `width` and `depth`, in the room's own frame -- so a room
+## placed at any yaw in the Zone mounts correctly, because the element
+## is a child of it. A room whose interior wall is not parallel to its
+## own axes is not handled here and is not pretended to be: such a wall
+## reaches the composer only as an axis-aligned solid, and the honest
+## thing is that this rule reads the declaration rather than guessing at
+## the mesh. `_clear_of_geometry` still refuses a mounted spot that a
+## solid occupies, so the worst case is a decline and not a target
+## inside a pillar.
+static func _wall_spot(side: float, ideal_z: float, width: float,
+		depth: float, size: Vector3, height: float,
+		taken: Array[AABB], solids: Array[AABB]) -> Dictionary:
+	var plane := width / 2.0 - AffordanceFeatures.WALL_MARGIN
+	var x := side * (plane - MOUNT_STALK)
+	# Turned to face the room: the face normal is local +Z.
+	var yaw := PI / 2.0 if side < 0.0 else -PI / 2.0
+	# Rotated, so the extents swap: `size.x` now runs along the wall.
+	var along := size.x / 2.0
+	var lo := AffordanceFeatures.THRESHOLD_CLEARANCE + along
+	var hi := maxf(lo, depth - AffordanceFeatures.THRESHOLD_CLEARANCE
+			- along)
+	if hi <= lo:
+		return {}
+	var door := depth / 2.0
+	var bar := ChamberBuilders.DOOR_WIDTH / 2.0 + MOUNT_DOOR_CLEAR + along
+	var turned := Vector3(size.z, size.y, size.x)
+	for attempt in MOUNT_TRIES:
+		# Outward from the ideal, alternating, so a row keeps its order
+		# and its spread rather than piling up at one end.
+		var step := float((attempt + 1) / 2) * MOUNT_STEP
+		var z := ideal_z + (step if attempt % 2 == 0 else -step)
+		if z < lo or z > hi:
+			continue
+		if absf(z - door) < bar:
+			continue
+		var spot := Vector3(x, height, z)
+		if not can_place(spot, turned, height, taken, solids):
+			continue
+		return {"position": spot, "yaw": yaw, "size": turned}
+	return {}
 
 ## The vouched surface with the most room left on it, or {} if the room
 ## offered none this element can legally sit on.

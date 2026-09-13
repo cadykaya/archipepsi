@@ -71,6 +71,10 @@ func _run() -> void:
 	await _test_a_capability_you_have_equipped_is_playable()
 	await _test_a_touch_element_is_reached_by_a_real_player_body()
 	await _test_a_shot_element_is_reached_by_a_real_weapon()
+	await _test_targets_are_mounted_on_real_walls()
+	await _test_a_mounted_target_is_shootable_from_the_lane()
+	await _test_a_blocked_shot_is_a_blocked_shot()
+	await _test_a_wall_with_no_room_declines_the_mount()
 	await _test_the_real_zone_builder_actually_builds_activities()
 	await _test_a_zone_built_activity_is_drivable()
 	await _test_no_element_is_buried_in_a_wall()
@@ -632,6 +636,209 @@ func _test_a_shot_element_is_reached_by_a_real_weapon() -> void:
 			"Static Pulse did not register on a target_challenge element")
 	player.queue_free()
 	runtime.get_parent().queue_free()
+	await get_tree().process_frame
+
+# --- targets belong on walls --------------------------------------------
+
+## "THEY HAVE PEGS AND THEY SHOULD BE STICKING OUT OF THE WALLS."
+##
+## The owner's note, looking at a `target_challenge` in the first
+## juncture. `ActivityElement._build_target` hangs a 0.5 m stalk off the
+## back of every target so it reads as MOUNTED equipment -- and `_row`
+## placed them by the same floor-plan solve it uses for switches and
+## plates, so the stalk held them off nothing in the middle of the room.
+##
+## `_wall_spot` offers a side wall. These are the four things that offer
+## has to be: on the wall, facing the room, clear of the doorway, and
+## still shootable from where a player stands.
+## CLEAR OF EVERY OTHER ROOM IN THIS FILE, and that is load bearing
+## rather than tidy. Every other probe here builds at the origin and the
+## roots outlive their own test by a frame, so the first version of the
+## shooting control fired at a target from an earlier activity standing
+## in the same place -- the shot landed, on somebody else's element, and
+## the control reported the room unshootable.
+const MOUNT_PROBE_AT := Vector3(600.0, 0.0, 0.0)
+
+func _target_room(count := 3, width := 20.0,
+		depth := 18.0) -> Dictionary:
+	var root := Node3D.new()
+	add_child(root)
+	root.global_position = MOUNT_PROBE_AT
+	# A FLOOR, because "shootable from a supported position" is the
+	# claim. Without one the probe player free-falls while it aims, and
+	# a shot taken from 1 m below where a player would stand is not
+	# evidence about anything a player can do.
+	var ground := StaticBody3D.new()
+	var gshape := CollisionShape3D.new()
+	var gbox := BoxShape3D.new()
+	gbox.size = Vector3(width + 8.0, 1.0, depth + 16.0)
+	gshape.shape = gbox
+	ground.add_child(gshape)
+	root.add_child(ground)
+	ground.position = Vector3(0.0, -0.5, depth / 2.0)
+	var built := Activities.build(root, {
+		"kind": "target_challenge", "element_count": count,
+		"time_limit": 0.0, "ordered": false, "requires": [],
+	}, "concrete_facility", width, depth, "room_mount", "mount_probe")
+	activities_built += 1
+	return {"root": root, "built": built, "width": width, "depth": depth}
+
+func _test_targets_are_mounted_on_real_walls() -> void:
+	var probe := _target_room()
+	var width: float = probe["width"]
+	var depth: float = probe["depth"]
+	var elements: Array = (probe["built"] as Dictionary)["elements"]
+	var plane := width / 2.0 - AffordanceFeatures.WALL_MARGIN
+	var mounted := 0
+	var sides := {}
+	var in_door := 0
+	for raw: Variant in elements:
+		var element: ActivityElement = raw
+		if not bool(element.get_meta("mounted", false)):
+			continue
+		mounted += 1
+		sides[signf(element.position.x)] = true
+		# ON THE WALL: the origin sits exactly the stalk's reach off the
+		# wall plane, so the hardware lands on the plaster.
+		_check(absf(absf(element.position.x)
+				- (plane - Activities.MOUNT_STALK)) < 0.01,
+				"a mounted target sits %.2f m from the room's centre "
+				% absf(element.position.x) + "and the wall plane is at "
+				+ "%.2f m: it is not against anything" % plane)
+		# FACING THE ROOM: local +Z is the target face, so the face
+		# normal has to point back toward the centre line.
+		var facing := element.global_transform.basis.z.normalized()
+		_check(facing.x * signf(element.position.x) < -0.9,
+				"a mounted target faces %s from x %.1f, which is into "
+				% [str(facing), element.position.x] + "the wall")
+		# NOT ACROSS A DOORWAY. A side socket sits at the middle of a
+		# side wall; a shooting gallery across it is worse than one in
+		# the air.
+		if absf(element.position.z - depth / 2.0) \
+				< ChamberBuilders.DOOR_WIDTH / 2.0:
+			in_door += 1
+	_check(mounted == elements.size(),
+			"%d of %d targets in an ordinary arena found a wall"
+			% [mounted, elements.size()])
+	_check(in_door == 0,
+			"%d mounted target(s) sit across the side doorway" % in_door)
+	# DIFFERENT ORIENTATIONS, not one wall used three times: the row
+	# alternates sides, and a mount that only ever solved the left wall
+	# would pass every check above.
+	_check(sides.size() >= 2,
+			"every mounted target went on the same wall (%s): the rule "
+			% str(sides.keys()) + "is not solving both")
+	(probe["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+func _test_a_mounted_target_is_shootable_from_the_lane() -> void:
+	"""MOUNTED IS ONLY HALF OF IT. A target flush against a wall that
+	no standing player can hit is a worse puzzle than one in the air,
+	so this fires the real weapon from the walking lane -- the space
+	every builder keeps clear -- rather than from beside the target."""
+	var probe := _target_room(2)
+	var elements: Array = (probe["built"] as Dictionary)["elements"]
+	var player := Player.create()
+	add_child(player)
+	await _physics(2)
+	# COUNTED AT THE MOMENT THE SHOT LANDS, not by reading `is_set`
+	# afterwards. The last target of a `target_challenge` COMPLETES the
+	# activity, which resets every element -- so the shot that finished
+	# the puzzle read as the one shot that missed.
+	var landed := {}
+	for raw_e: Variant in elements:
+		var e: ActivityElement = raw_e
+		e.triggered.connect(func(who: ActivityElement) -> void:
+			landed[who.get_instance_id()] = true)
+	var hit := 0
+	for raw: Variant in elements:
+		var element: ActivityElement = raw
+		if not bool(element.get_meta("mounted", false)):
+			continue
+		# ON THE CENTRE LINE, at the target's own depth: a place the
+		# room guarantees is walkable and where a player would stand.
+		player.global_position = MOUNT_PROBE_AT \
+				+ Vector3(0.0, 0.1, element.position.z)
+		await _physics(12)                       # settle onto the floor
+		_check(player.is_on_floor(),
+				"the firing position for %s is not on the floor: a shot "
+				% element.name + "taken while falling proves nothing")
+		player.camera.look_at(element.global_position, Vector3.UP)
+		player._fire_static_pulse()
+		# LONG ENOUGH FOR THE WEAPON. `STATIC_PULSE_COOLDOWN` is a third
+		# of a second; four frames between shots meant the second target
+		# was never fired at, and the control read that as a target that
+		# could not be hit.
+		await _physics(30)
+		if landed.has(element.get_instance_id()):
+			hit += 1
+			real_shots_landed += 1
+	_check(hit == elements.size(),
+			"%d of %d wall-mounted targets could be shot from the "
+			% [hit, elements.size()] + "walking lane with the Static "
+			+ "Pulse")
+	player.queue_free()
+	(probe["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+func _test_a_blocked_shot_is_a_blocked_shot() -> void:
+	"""THE COUNTERPART, so the check above can fail for the right
+	reason. Put a slab between the lane and the wall and the same shot
+	must NOT register -- otherwise 'shootable from the lane' is a
+	property of the test rather than of the room."""
+	var probe := _target_room(1)
+	var elements: Array = (probe["built"] as Dictionary)["elements"]
+	var element: ActivityElement = elements[0]
+	var root: Node3D = probe["root"]
+	var slab := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.4, 4.0, 6.0)
+	shape.shape = box
+	slab.add_child(shape)
+	root.add_child(slab)
+	slab.global_position = MOUNT_PROBE_AT + Vector3(
+			element.position.x * 0.5, element.position.y,
+			element.position.z)
+	var player := Player.create()
+	add_child(player)
+	await _physics(2)
+	player.global_position = MOUNT_PROBE_AT \
+			+ Vector3(0.0, 0.1, element.position.z)
+	await _physics(12)
+	player.camera.look_at(element.global_position, Vector3.UP)
+	player._fire_static_pulse()
+	await _physics(2)
+	_check(not element.is_set,
+			"a shot through a 4 m slab reached the target, so the "
+			+ "shootability check above proves nothing")
+	player.queue_free()
+	root.queue_free()
+	await get_tree().process_frame
+
+func _test_a_wall_with_no_room_declines_the_mount() -> void:
+	"""NO LEGAL MOUNTING POSITION IS A PLACEMENT OUTCOME.
+
+	A room whose side walls are entirely doorway and threshold has no
+	span to hang anything on. The offer is declined, the flat solve
+	stands, and -- the part that matters -- every element asked for is
+	still built. An activity that silently lost a required element
+	would be a Zone that cannot be finished."""
+	# Shallow enough that `THRESHOLD_CLEARANCE` at both ends and the
+	# doorway bar in the middle leave nothing between them.
+	var probe := _target_room(3, 20.0, 5.0)
+	var elements: Array = (probe["built"] as Dictionary)["elements"]
+	_check(elements.size() == 3,
+			"a room with no mountable wall built %d of 3 elements"
+			% elements.size())
+	var mounted := 0
+	for raw: Variant in elements:
+		if bool((raw as ActivityElement).get_meta("mounted", false)):
+			mounted += 1
+	_check(mounted == 0,
+			"%d target(s) were mounted on a wall that is all doorway"
+			% mounted)
+	(probe["root"] as Node3D).queue_free()
 	await get_tree().process_frame
 
 # --- the game reaches them at all ---------------------------------------

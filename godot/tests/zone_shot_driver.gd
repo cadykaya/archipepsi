@@ -174,6 +174,23 @@ func _run() -> void:
 					room_bounds.get(runtime.room_id, AABB()))
 			shot += 1
 
+	# AT PLAYER HEIGHT, for the one question a three-quarter shot cannot
+	# answer: does a target read as MOUNTED from where somebody stands.
+	# The owner's note was made walking into a room, not orbiting it.
+	var eyed := {}
+	for runtime in runtimes:
+		if runtime.kind != "target_challenge" or runtime.elements.is_empty():
+			continue
+		if eyed.has(runtime.room_id):
+			continue
+		eyed[runtime.room_id] = true
+		await _shoot_at_eye_height(camera, runtime,
+				"eye_%s_%s" % [runtime.kind, runtime.activity_id],
+				room_bounds.get(runtime.room_id, AABB()))
+		shot += 1
+		if eyed.size() >= 3:
+			break
+
 	print("  wrote %d shots to %s"
 			% [shot, ProjectSettings.globalize_path(OUT_DIR)])
 	print("GODOT ZONE SHOTS OK")
@@ -285,6 +302,37 @@ func _shoot(camera: Camera3D, runtime: ActivityRuntime, name: String,
 	print("    %s  (%d elements, subject %.1fm, camera %.1fm out)"
 			% [name, runtime.elements.size(), radius * 2.0,
 			camera.global_position.distance_to(centre)])
+
+## WHAT A PLAYER SEES, standing in the room.
+##
+## Eye height, on the room's own centre line -- the walking lane every
+## builder keeps clear -- at the activity's depth, looking at it. The
+## three-quarter shots above are for judging a silhouette; this is for
+## judging whether a wall-mounted target reads as fixed to the wall,
+## which is a question about the angle a person actually stands at.
+func _shoot_at_eye_height(camera: Camera3D, runtime: ActivityRuntime,
+		name: String, room: AABB) -> void:
+	var box := _extent(runtime)
+	if box.size == Vector3.ZERO or room.size == Vector3.ZERO:
+		return
+	var centre := box.get_center()
+	var floor_y := room.position.y + 1.0
+	var eye := Vector3(room.get_center().x,
+			floor_y + Constants.PLAYER_EYE_HEIGHT, centre.z)
+	# Back off along the room's long axis if the subject is right on top
+	# of the lane point, so the frame has something in it.
+	if eye.distance_to(centre) < 3.0:
+		eye.z = clampf(centre.z - 5.0, room.position.z + CAMERA_MARGIN,
+				room.end.z - CAMERA_MARGIN)
+	camera.global_position = eye
+	camera.look_at(centre, Vector3.UP)
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	image.save_png(ProjectSettings.globalize_path(
+			"%s/%s.png" % [OUT_DIR, name]))
+	print("    %s  (eye height %.2f m, %.1f m from the subject)"
+			% [name, Constants.PLAYER_EYE_HEIGHT,
+			eye.distance_to(centre)])
 
 ## One element, close enough to judge its outline.
 func _close_up(camera: Camera3D, element: ActivityElement, name: String,
