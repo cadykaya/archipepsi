@@ -491,12 +491,24 @@ func _standable_start(door_at: Vector3, goal: Vector3) -> Dictionary:
 	var dir := Vector3.ZERO
 	if flat.length() > 0.01:
 		dir = flat.normalized()
+	var step_law := float(Constants.MAX_VERTICAL_STEP)
 	for step: float in [0.0, 1.0, 1.75, 2.5, 3.25]:
 		var probe := door_at + dir * step
-		var ground: Variant = _ground_under(space, probe)
+		var ground: Variant = _ground_under(space, probe, door_at.y)
 		if ground == null:
 			continue
 		var at: Vector3 = ground
+		# THE FLOOR THIS DOORWAY OPENS ONTO, not any surface above it.
+		#
+		# This cost a whole finding. The first version cast from 3 m
+		# above the probe and took the first hit, so at `c021/exit` it
+		# found the SECRET ALCOVE -- a shelf `_secret_alcove` puts above
+		# the end ledge precisely so a base kit cannot reach it -- stood
+		# the walker in it, and reported the Check on the ledge 2.65 m
+		# below as "off the level the walker reached". The Check was on
+		# solid ground the whole time.
+		if absf(at.y - door_at.y) > step_law:
+			continue
 		if RoomAudit.player_stands_here(at + Vector3.UP * 0.05,
 				Transform3D.IDENTITY, space):
 			return {"at": at + Vector3.UP * 0.05, "inward": step}
@@ -504,10 +516,18 @@ func _standable_start(door_at: Vector3, goal: Vector3) -> Dictionary:
 
 ## The floor under a point, or null. Cast from well above so a start
 ## inside a doorway's own lintel still finds the ground below it.
-func _ground_under(space: PhysicsDirectSpaceState3D,
-		at: Vector3) -> Variant:
+## `from_y` is the height the caller believes the floor is near -- a
+## doorway's own y. The cast starts one step above it rather than three
+## metres above the probe, so a shelf over the doorway is not mistaken
+## for the doorway's floor.
+func _ground_under(space: PhysicsDirectSpaceState3D, at: Vector3,
+		from_y := INF) -> Variant:
+	var top := at + Vector3.UP * 3.0
+	if from_y < INF:
+		top = Vector3(at.x, from_y + float(Constants.MAX_VERTICAL_STEP),
+				at.z)
 	var query := PhysicsRayQueryParameters3D.create(
-			at + Vector3.UP * 3.0, at + Vector3.DOWN * 8.0)
+			top, at + Vector3.DOWN * 8.0)
 	query.collide_with_areas = false
 	var hit := space.intersect_ray(query)
 	if hit.is_empty():
@@ -784,6 +804,146 @@ func _the_exit_is_approached_and_addressable() -> void:
 			"and a player standing at it can address it: the game's own "
 			+ "interact ray finds the portal")
 
+## A CHECK BELOW THE FLOOR THE WALKER REACHED: which of the three?
+##
+## The previous batch reported `Reward_89100126` 2.6 m below the floor
+## the walker stood on, and was careful not to call it a defect. It is
+## not one, and the reason is worth keeping rather than deleting with
+## the finding:
+##
+## The reward sits at `platform_path`'s own `reward_position` -- the END
+## LEDGE, the highest flat ground in the chamber and the last thing the
+## mandatory route touches -- with solid floor directly under it. What
+## was 2.6 m above it was the walker, standing in the SECRET ALCOVE,
+## which `_secret_alcove` puts over that ledge precisely so a base kit
+## cannot reach it. `_standable_start` had cast down from three metres
+## above the doorway and taken the first surface it found.
+##
+## So this control holds the three things that make it a destination
+## rather than a defect, on the real assembly: the reward has ground
+## under it, a base-kit body reaches the position a player interacts
+## from, and the room it is in can be left again. A room whose only
+## edge is its entry and whose reward sits beyond a gap nothing can
+## jump back across is a softlock, and that is the failure this would
+## catch if the producer ever drifted into it.
+func _a_lower_check_is_a_destination_or_a_defect() -> void:
+	var space := get_viewport().world_3d.direct_space_state
+	var subject: RewardObject = null
+	for check: RewardObject in _required_checks():
+		if _room_type_of(_room_holding(check.global_position)) \
+				== "platform_path":
+			subject = check
+			break
+	if subject == null:
+		_note("no platform_path Check in this fixture to examine")
+		return
+	var at := subject.global_position
+	var rid := _room_holding(at)
+	# 1. GROUND UNDER IT. "Floating" is a measurement, not an impression.
+	var under: Variant = _ground_under(space, at, at.y + 0.5)
+	_check(under != null,
+			"%s in %s has ground under it -- which is what decides "
+			% [subject.name, rid] + "whether it is floating")
+	if under != null:
+		var g: Vector3 = under
+		_note("%s in %s (platform_path) at y %.2f, ground at y %.2f "
+				% [subject.name, rid, at.y, g.y]
+				+ "-- %.2f m under it" % (at.y - g.y))
+		_check(at.y - g.y < 1.0,
+				"and stands on it rather than over it (%.2f m up)"
+				% (at.y - g.y))
+	# 2. THE POSITION A PLAYER INTERACTS FROM, reached by a base kit.
+	var door := _nearest_doorway(at)
+	if door.is_empty():
+		_check(false, "%s: its room declares no doorway" % rid)
+		return
+	var start := _standable_start(door["at"] as Vector3, at)
+	if start.is_empty():
+		_check(false, "%s: %s offers nowhere to stand at its own level"
+				% [rid, str(door["name"])])
+		return
+	_reset_the_walker()
+	var run := await _walk(_zone, start["at"], at, subject, _walker, true)
+	_note("%s  kit=base(walk+jump)  from=%s+%.1fm  -> %s  closest %.2f m"
+			% [subject.name, str(door["name"]), float(start["inward"]),
+			str(run["outcome"]), float(run["closest"])])
+	_check(str(run["outcome"]) == "REACHED",
+			"a base kit reaches %s from its own room's doorway (%s)"
+			% [subject.name, str(run["outcome"])])
+	_check(bool(run["addressable"]),
+			"and the game's own interact ray finds it from where the "
+			+ "player stands")
+	# 3. AND THE REAL INTERACTION, through the reward's own path. It
+	#    refuses offline, which is the CORRECT refusal and is what this
+	#    asserts -- the send itself belongs to the live-bridge suites.
+	var prompt := subject.interact_prompt()
+	_check(prompt != "",
+			"and it offers that player a prompt")
+	_note("its prompt reads '%s'" % prompt)
+	subject.interact(_walker)
+	_check(is_instance_valid(subject),
+			"and the real interaction runs from the real position "
+			+ "without taking the reward with it")
+	# 4. CAN THE ROOM BE LEFT? `platform_path`'s exit is often SEALED, so
+	#    the way back is the way in, over the gap the course crossed.
+	var back := _the_way_back_from(space, at, rid)
+	_check(back >= 0.0,
+			"and the room can be left again: a base kit has somewhere "
+			+ "to go back to (%s)" % ("continuous floor" if back == 0.0
+			else "a %.2f m gap, inside the %.2f m jump"
+			% [back, Constants.max_safe_gap(0.0)]))
+
+## Which chamber type a room id is, from the controller's own records.
+func _room_type_of(rid: String) -> String:
+	if rid == "":
+		return ""
+	for record: Dictionary in _zone.get("_chambers"):
+		var chamber: Dictionary = record.get("chamber", {})
+		if str(chamber.get("id", "")) == rid:
+			return str(chamber.get("type", ""))
+	return ""
+
+## The gap to the nearest surface on the way back out of the room, or
+## -1.0 when nothing is within a base-kit jump.
+##
+## Measured rather than read off a declaration: what matters is what the
+## body would land on. Probed along the room's own long axis, back
+## toward its centre, because that is the direction the course came
+## from.
+func _the_way_back_from(space: PhysicsDirectSpaceState3D, at: Vector3,
+		rid: String) -> float:
+	if not _zone.room_bounds.has(rid):
+		return -1.0
+	var box: AABB = _zone.room_bounds[rid]
+	var inward := box.get_center() - at
+	inward.y = 0.0
+	if inward.length() < 0.01:
+		return -1.0
+	inward = inward.normalized()
+	var reach := Constants.max_safe_gap(0.0)
+	# Walk outward until the floor STOPS. While it continues there is no
+	# gap to jump and the way back is simply walking.
+	var d := 0.5
+	while d <= reach:
+		var probe := at + inward * d
+		if _ground_under(space, probe, at.y + 1.4) == null:
+			break
+		d += 0.5
+	if d > reach:
+		return 0.0                      # floor all the way: no gap
+	# Then on across the gap, looking for the far side. The BUDGET IS
+	# THE GAP, not the total: the first version capped `d` at the jump
+	# reach, so a ledge two metres deep left four probes for a gap that
+	# starts where the ledge ends, and reported "nothing back there" for
+	# a landing well inside the envelope.
+	var edge := d
+	while d <= edge + reach:
+		var probe := at + inward * d
+		if _ground_under(space, probe, at.y + 1.4) != null:
+			return d - edge
+		d += 0.5
+	return -1.0
+
 # --- 4. assembled joins -----------------------------------------------
 
 ## IS A DECLARED DOORWAY AN OPENING YOU CAN WALK THROUGH?
@@ -928,6 +1088,7 @@ func _run() -> void:
 		await _routes_to_required_checks()
 		_the_exit_has_somewhere_to_stand_around_it()
 		await _the_exit_is_approached_and_addressable()
+		await _a_lower_check_is_a_destination_or_a_defect()
 		var joins := await _joins_are_walked_through()
 		await _a_bricked_up_join_refuses_the_walker(joins)
 	if _zone != null:
