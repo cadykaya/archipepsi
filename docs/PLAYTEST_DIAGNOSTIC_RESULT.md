@@ -100,6 +100,77 @@ visibly at `2/4`, that looks like the intended solution and gates
 nothing. Finding 4 below, in its most damaging form: not merely an
 activity that does nothing, but one placed where it reads as the answer.
 
+## The owner's fix for it: Forge, and one decision it still needs
+
+Raised in the same session, after learning that 288 of a default-scale
+campaign's 450 items are Epsilon Static and the visual cap is 18:
+
+> static should let the player re randomize a zone, or craft new echoes,
+> that way a player who is not in an archipelago can either GET an item
+> that gives a double jump, or teleport, or grapple, or a new weapon,
+> etc. OR they can have epsilon use the static to re create a zone [...]
+> this completely fixes the issues with progression gating
+
+**Most of this is already designed and simply not built.**
+`04_EPSILON_IS_THE_CONTENT.md` §18 specifies **Forge**, pinned entire
+into `06_THE_AMALGAM.md` §18.1–18.5:
+
+| Conversion | Input | Output | Static |
+|---|---|---|---:|
+| Consolidate | 5 Mod ranks | 1 `USEFUL` host of a chosen category | 10 |
+| Elevate | 5 `USEFUL` hosts | 1 `HIGH` host of a chosen category | 40 |
+| Recompose | 1 host | the same host, recomposed at its tier | 25 |
+| Reclaim | 1 host | 2 Mod ranks | 0 |
+
+Hub-only, inputs destroyed, two-press confirmation, no respec tax. The
+spec already names the problem this session rediscovered by playing:
+
+> Epsilon Static is Forge's currency. This is the sink Designs 1-3 all
+> note it lacks, and it resolves the awkwardness of a received item type
+> with no use.
+
+**Implementation status: none.** No protocol message, no Hub surface, no
+engine code. Static accumulates and is spent on nothing.
+
+### Why it nearly closes the gate problem
+
+Static is an AP ITEM. Archipelago can count it. So "this Check requires
+enough Static to Elevate" is a rule AP can express — which is exactly
+what it cannot do for a randomly generated Echo. That is the load-bearing
+insight and it is the owner's.
+
+### The one decision it still needs
+
+§18.2 bounds what the player steers: the output's CATEGORY (Weapon,
+Ability, Gear), the territory for Gear, and up to two preserved atoms —
+"Nothing else." So 40 Static buys *a* `HIGH` Ability, not a double jump,
+and AP still cannot prove the player can cross the gap. Preservation does
+not rescue it: preserving a `double_jump` atom requires already holding
+one, which is the gate in question.
+
+**Open question for the owner: may a Forge conversion target a SEMANTIC
+CAPABILITY?** Not a stat — one of the four names in
+`mechanics.ACTIVITY_CAPABILITIES`: `ranged_hit`, `cross_long_gap`,
+`grapple`, `blink`. That vocabulary is already defined as "IDENTITY, not
+qualification. Is this a dash at all?" — Boolean, about names.
+
+Reading: "give me something that crosses gaps" steers a broad family and
+sits INSIDE Player Authority §26.3; "give me a 12 m dash on a 3 s
+cooldown" types exact stats and sits outside it. If the first is allowed,
+the chain closes: AP declares the requirement, AP proves obtainability
+through a countable item, solo players get a deterministic route to every
+capability, and the gate this session found becomes legal rather than a
+deadlock.
+
+### Genuinely new: Zone recomposition
+
+`Recompose` re-rolls a HOST — an item. **Epsilon spending Static to
+recompose a whole ZONE is a fifth conversion nobody has written down.**
+Raised here first. Not specified, not costed, not assessed against the
+committed-manifest rules (a recomposed Zone is a new proposal against an
+existing campaign, which is the checkpoint's attempt-discriminator
+territory).
+
 ## Defects
 
 ### 1. Activity elements are mounted to nothing
