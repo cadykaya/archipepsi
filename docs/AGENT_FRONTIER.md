@@ -1,5 +1,179 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the combined checkpoint, and the pad is out of the way — 2026-09-13
+
+**`claude/archipepsi-echoes-continuation-b1adno`**, bridge lane merged at
+`089dc64`, art lane at `1a9f1c9`. Read this first.
+
+Both lanes had built truthful capacity and the attempt discriminator
+against an earlier checkpoint of the other, so neither branch's report
+described the combined tree. This is that tree, reconciled and re-run.
+
+### One capacity authority, one attempt guard
+
+`C.PROCEDURAL_SOCKET_CAPACITY` is the single declaration and keeps the
+MEASURED table — **`platform_path` AND `tower`**, the two producers that
+climb, each measured solid at the site with one control per chamber
+type. `SIDELESS_PROCEDURAL_TYPES` is gone. `procedural_sockets_for`
+projects the one map into four readers: the composer
+(`topology._sockets_for`), the load-time invariant, Dess's
+acceptance-time refusal in `validate_zone` — which now covers the tower
+too — and the ENGINE through `constants.gd`. Dess's branch-reserve
+replacement in `_branch_routes` and its regression tests are kept.
+
+The attempt discriminator is one field and one guard: bound by
+`MAX_LAYOUT_REFUSALS` where `layout_refusals` saturates, refusing a
+mismatch in **either** direction. The client still takes the ordinal and
+the digest from ONE read of the snapshot at build start, which is the
+path `main.gd::_to_zone` actually walks.
+
+**Across all 26 committed fixtures: 770 joined doors, 0 beyond
+capacity.** Returns hold at 8 in all five controls; the sample is
+160 → 159 (one Zone's `c019` stopped being a dead end, so it needs no
+return), dead ends 141 → 141, no Zone reduced to a bare chain.
+
+### The return pad no longer stands in front of the content
+
+**The finding, measured on the merged tree before any repair:**
+
+| Zone | pad off the arrival→content line | reached the content |
+|---|---|---|
+| `zone_01` `c018` | 7.67 m | yes |
+| `zone_02` `c011` | **0.41 m** | NO — "took the return home by wandering onto it" |
+| `zone_03` `c011` | **0.15 m** | NO |
+
+Every journey that failed to reach its room's content had the device
+within a body's width of the straight line to it; the one that succeeded
+had it seven metres clear. `clear_of_arrival` had always kept the pad off
+the spot a body appears on and said nothing about the metres between
+that spot and the reward.
+
+`RoomAudit.clear_of_content_path` is that rule, with the same margin as
+the arrival — trigger plus a capsule — applied to the current anchor and
+to every candidate.
+
+**What counts as "the content" is the room's own warp station,
+`st:<room id>`, read out of the build's station list.** Not the
+producer's nominal `reward_position`: measured across all five generated
+fixtures, the interactable the player's own probe actually stops at is
+6 to 10 m from that nominal spot (`zone_02` `c011`:
+`(15.2, 36.5, 131.45)` against `(8.8, 36.5, 134.97)`), so guarding the
+nominal line guards a line nobody walks. And not "the first node with
+`interact()` in the room", which is what it asked first: that is tree
+order over a subtree whose membership is not the same on a replay,
+because a key the player already carries is not rebuilt — and a return
+anchor is committed geometry, so the point it is settled against has to
+be a function of the committed layout alone. Every room measured gave
+its own station under either rule, so asking for it by id changed no
+measurement and removed the hazard.
+
+**Result: 0.41 m → 2.50 m, 0.15 m → 2.57 m, and `zone_02` went from
+"could NOT reach anything it holds" to "reached what it holds, and took
+the return device home deliberately."** Journey `content` 2 → 3, stable
+over four runs; `JOURNEY_FLOOR` raised.
+
+### The settle has to survive a cold restart, and now it is proved to
+
+A pad that moves is only a repair if the move is reproducible. The
+return journey's replay control read the replayed device the instant
+`setup()` returned and compared it against a SETTLED anchor — and
+`_publish_layout` settles two physics frames later and is awaited by
+nothing. While the settle moved nothing this went unnoticed; the moment
+it started moving pads off the content line, the control reported a
+4.1 m difference that was entirely its own timing.
+
+It now waits on `ZoneController.measured_placement` — the controller's
+own statement that it has measured — before reading. Settled against
+settled, a fresh controller replaying the committed manifest puts the
+device at `(-112.84, 31.57, -76.00)`, which is where the accepted build
+stood it, to within the control's 0.01 m. The control says the stronger
+thing now: not that the RESERVATION replays, but that the SETTLE does.
+
+### What the remaining journey failures actually are
+
+Diagnosed per route on the merged tree, bounded, no navigation bot:
+
+| journey | class | evidence |
+|---|---|---|
+| `zone_04` `c009` → `c010` | **valid route, steering cannot follow** | the branch door `c009/side_left` measures OPEN; the body leaves the junction arrival and stops ~9 m in. The corridor carries `moving_platform` and `powered_door` — traversal the harness neither rides nor solves. |
+| `zone_03` `c009` → `c011` | **valid route, steering cannot follow** | pad now 2.57 m clear; the room is an ordinary arena; the straight line from arrival to content has no standing room at t ≥ 0.6, i.e. furniture. Reachable around it, not through it. |
+| re-entry, 3 deliberate returns | **steering** | a full cross-Zone walk BACK; floored at 0 and unchanged. |
+
+**No remaining failure is an invalid or unreachable route, and none is
+pad interference.** Every non-SEALED door on both routes measures as a
+hole; every SEALED one measures solid. The one closed slab found is a
+`PoweredDoorChain` on `c009/side_right` — a powered door before its
+puzzle is solved, which is the door working.
+
+### Suites on the combined commit
+
+**Python** — `make test`: **1526 passed, 627 subtests passed**, 0
+failed. `make test-schemas`: 131 passed. The v0.8 packet check: prose
+matches the models across 11 documents. Every run below was serialised —
+nothing else was touching the tree while it ran, which matters here
+because `make godot-zone-audit` rewrites the capture fixtures the
+placement contract reads.
+
+**Godot, offline** — `godot-zone-audit`, `-test`, `-room`,
+`-room-contract`, `-content`, `-activity`, `-graphs`, `-physics`,
+`-movement`, `-boot`, `-hud`, `-rules`, `-lab`, `-legible`, `-stats`,
+`-verbs`, `-affordance`, `-blink`, `-playtest3a`.
+
+**Godot, live bridge** — all three, and they are three different things:
+
+| target | what it is |
+|---|---|
+| `godot-integration` | a whole campaign to `ALL_CHECKS_CLEARED` at prototype scale |
+| `godot-return-journey` | one Zone at DEFAULT scale: candidate layout → bridge acceptance → player traversal and deliberate return → **scene reconstruction** (a fresh `ZoneController` replaying the committed manifest inside one running process) |
+| `godot-reload` | **both processes restart** — the Godot client exits, the bridge is killed and restarted from its own save file, and a fresh client resumes. PHASE 1 (2 checks) + PHASE 2 (18 checks) |
+
+All three exited 0 on the tree below.
+
+**The recovery that actually ran** in the return journey was
+*re-selection stood down; the Zone was refused and composed again* — the
+other designed recovery, not host re-selection. Host re-selection has
+its own bridge controls in `test_amalgam_end_to_end.py`, where the host
+is chosen for the property under test.
+
+### NOT closed, and still on the backlog
+
+1. **Overlap reconciliation** — the join/collar distinction, the separate
+   "router found a candidate" vs "bridge accepted it" publication, and
+   the bounds diagnosis for the four large-shell failures. The four
+   reverted attempts are recorded in `zone_builder.gd`.
+2. **The ordinary journey's steering** — the three failures above. They
+   need a route-following harness or hand-verification, not a general
+   navigation bot, and none of them is a defect in the game.
+3. **The pending authored-room proof** — registry seam, one-neighbour
+   Terminus, onward branch with its real departure, rotated placement.
+   No asset is promoted for it.
+4. **Re-selection is tight**: 1 of 8 hosts on a default-scale Zone can be
+   barred with the arrangement preserved, where the flat four-door table
+   claimed 8 of 8 through doors that did not exist. Branch preservation
+   is untouched; the stand-down is the approved outcome and has its own
+   control. Whether the composer should find more room is topology
+   tuning and is the bridge lane's.
+
+### For the next owner playtest
+
+Ready for a **diagnostic** playtest, not a verdict on the backlog.
+
+Run `./start-archipepsi.sh` (or `Start Archipepsi (Windows).bat`), leave
+that window open, launch Godot and press **MOCK CAMPAIGN**. No
+Archipelago server and no seed are needed.
+
+**Existing saves are untouched.** A normal run writes to `bridge/saves/`;
+every test target in this batch used `ARCHIPEPSI_SAVE_DIR` pointed at its
+own throwaway directory (`.integration-saves/`, `.journey-saves/`,
+`.reload-saves/`), all gitignored, and none of them reads or writes
+`bridge/saves/`.
+
+What to expect, and what is known: Zones build, are accepted, and
+reconstruct across a full two-process restart. Branch destinations are
+reachable and their returns work. The three steering failures above are
+harness limitations, so a human walking those routes is exactly the
+evidence this lane does not have.
+
 ## ENGINE LANE — the advertised capacity is the built capacity, and the whole journey runs — 2026-09-13
 
 **`claude/archipepsi-echoes-continuation-b1adno`**, bridge lane merged at

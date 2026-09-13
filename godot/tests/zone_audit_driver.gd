@@ -85,6 +85,7 @@ func _run() -> void:
 	await _the_placement_outcomes_are_distinguishable()
 	await _a_corridor_is_searched_down_its_length()
 	await _a_side_door_the_composer_assigned_is_a_hole()
+	await _the_return_never_stands_between_arrival_and_content()
 	await _a_room_names_only_the_openings_it_builds()
 
 	var zone := _load_zone()
@@ -1307,3 +1308,78 @@ func _a_room_names_only_the_openings_it_builds() -> void:
 	_check(flat >= 3 and capped >= 2,
 			"%d producer(s) carry four sockets and %d carry two; the "
 			% [flat, capped] + "control needs both kinds to mean anything")
+
+
+## THE PAD IS NOT IN THE WAY OF WHAT THE ROOM HOLDS.
+##
+## `clear_of_arrival` keeps the device off the spot a body appears on.
+## It says nothing about the metres between that spot and the room's
+## reward -- and a device in the middle of those sends the player home
+## on the way to the thing they came for.
+##
+## MEASURED on the five generated controls, before the rule existed:
+##
+## | Zone | pad off the arrival->content line | reached the content |
+## |---|---|---|
+## | `zone_01` `c018` | 7.67 m | yes |
+## | `zone_02` `c011` | **0.41 m** | NO -- "took the return home by wandering onto it" |
+## | `zone_03` `c011` | **0.15 m** | NO |
+##
+## Every journey that failed to reach its room's content had the pad
+## within a body's width of the straight line to it; the one that
+## succeeded had it seven metres clear. That is the whole finding, and
+## it is not a steering failure: the device is in the way.
+##
+## The content is the node the PLAYER'S OWN PROBE would find -- something
+## with `interact()` inside the room's envelope -- and not the producer's
+## nominal `reward_position`, which is a different point: on `zone_02`'s
+## `c011` the two are seven metres apart, so guarding the nominal line
+## guards a line nobody walks.
+func _the_return_never_stands_between_arrival_and_content() -> void:
+	var checked := 0
+	for file: String in ["zone_01.json", "zone_02.json", "zone_03.json",
+			"zone_04.json", "zone_05.json"]:
+		var path := "res://tests/fixtures/generated/%s" % file
+		if not FileAccess.file_exists(path):
+			_check(false, "%s is missing; run `make zone-fixtures`" % path)
+			return
+		var parsed: Variant = JSON.parse_string(
+				FileAccess.get_file_as_string(path))
+		if typeof(parsed) != TYPE_DICTIONARY:
+			_check(false, "%s did not parse as a Zone" % file)
+			continue
+		var built := ZoneBuilder.build(parsed as Dictionary)
+		if built.has("failed"):
+			_check(false, "%s did not lay out: %s"
+					% [file, str(built["failed"])])
+			continue
+		add_child(built["root"] as Node3D)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		# THE PRODUCTION SEQUENCE: the settle inside `measure_layout` is
+		# what moves a badly reserved pad, so a check that reads the
+		# anchors without measuring reads the builder's first guess and
+		# not what the player gets.
+		RoomAudit.measure_layout(built,
+				get_viewport().world_3d.direct_space_state)
+		var anchors: Dictionary = built["anchors"]
+		for raw: Variant in (parsed as Dictionary).get("plugs", []):
+			var plug: Dictionary = raw
+			var rid := str(plug.get("room_id", ""))
+			var arrival: Variant = anchors.get("room:%s:arrival" % rid)
+			var pad: Variant = anchors.get("room:%s:return" % rid)
+			var content := RoomAudit.content_of(built, rid)
+			if arrival == null or pad == null or not content.is_finite():
+				continue
+			checked += 1
+			_check(RoomAudit.clear_of_content_path(pad, arrival, content),
+					"%s: %s's return stands on the way from its arrival "
+					% [file, rid] + "to what it holds (pad %v, arrival "
+					% pad + "%v, content %v)" % [arrival, content])
+		(built["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(checked >= 5,
+			"%d branch destination(s) with an arrival, a return and "
+			% checked + "something to reach were measured; a control "
+			+ "that finds none has not run")
+

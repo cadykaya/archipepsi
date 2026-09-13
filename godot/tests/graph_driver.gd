@@ -100,8 +100,15 @@ const SAMPLE_FLOOR := 16
 ## work already on the backlog, and pinning a floor to a leg that is not
 ## yet reliable buys a red suite rather than a guarantee. The driver
 ## prints what it reached, so a change is visible without being pinned.
+## `content` rose 2 -> 3 when the return pad stopped standing on the
+## line from the arrival to what the room holds
+## (`RoomAudit.clear_of_content_path`). `zone_02`'s `c011` went from
+## "could NOT reach anything it holds ... took the return home by
+## wandering onto it" to "reached what it holds, and took the return
+## device home deliberately" -- the same Zone, the same walk, the device
+## moved 0.41 m -> 2.50 m off that line.
 const JOURNEY_FLOOR := {"valid": 5, "at_mouth": 5, "entered": 4,
-		"stayed": 4, "content": 2, "returned": 3, "re_entered": 0}
+		"stayed": 4, "content": 3, "returned": 3, "re_entered": 0}
 const ARRIVED := 4.0
 
 ## ZONES THE ROUTER CANNOT LAY OUT TODAY: the status, and where it wedges.

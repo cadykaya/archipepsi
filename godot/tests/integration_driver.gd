@@ -1424,6 +1424,24 @@ func _test_reselection_and_return_journey() -> bool:
 	c.setup(replayed.get("zone"))
 	_check(c.layout_failed == "",
 			"the committed manifest was replayed (%s)" % c.layout_failed)
+	# LET THE REPLAY REACH THE POINT THE ACCEPTED BUILD WAS READ AT.
+	#
+	# `stood_at` is a SETTLED anchor: `_publish_layout` waits for the
+	# physics to exist, measures, and `RoomAudit._settle_return_anchors`
+	# moves the device off anything it should not be standing on. That
+	# happens two physics frames after `setup` returns and is not
+	# awaited by it, so reading the device here read the builder's first
+	# reservation and compared it against a settled one -- and once the
+	# settle started moving pads off the arrival-to-content line, the
+	# two genuinely differed by 4.1 m. `measured_placement` is the
+	# controller's own statement that it has measured; waiting on it
+	# compares like with like, and makes this control say the stronger
+	# thing: the SETTLE is reproducible from the committed layout, not
+	# merely the reservation.
+	if not await _await_condition("the replay measured its own layout",
+			func() -> bool:
+				return not c.measured_placement.is_empty()):
+		return false
 	var replug := _a_return_in(c, host_b)
 	_check(replug != null,
 			"and the return device is back, in the same room (%s)"

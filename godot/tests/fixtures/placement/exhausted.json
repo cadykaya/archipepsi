@@ -191,6 +191,7 @@
    "policy": {
     "clearance": 1.8,
     "inside": "committed bounds less 0.6 m",
+    "off_content_path": 1.8,
     "offsets": [
      2.5,
      -2.5,

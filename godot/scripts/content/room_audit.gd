@@ -584,8 +584,10 @@ static func _settle_return_anchors(build: Dictionary,
 		# arrival, well inside its own trigger, was left exactly where
 		# it was and reported `plug_clear = false`. The candidate was
 		# repairable and the room was barred for it.
+		var content := content_of(build, rid)
 		if arrival_is_supported(space, anchors[name]) \
-				and clear_of_arrival(anchors[name], from):
+				and clear_of_arrival(anchors[name], from) \
+				and clear_of_content_path(anchors[name], from, content):
 			_say_placement(report, build, rid, {
 					"outcome": PLACEMENT_PLACED, "repaired": false,
 					"searched": 0, "probed": 0,
@@ -637,7 +639,8 @@ static func _settle_return_anchors(build: Dictionary,
 					continue
 				examined += 1
 				if arrival_is_supported(space, at) \
-						and clear_of_arrival(at, from):
+						and clear_of_arrival(at, from) \
+						and clear_of_content_path(at, from, content):
 					moved = at
 					best_gap = gap
 		if moved != Vector3.INF:
@@ -678,7 +681,8 @@ static func _settle_return_anchors(build: Dictionary,
 					continue
 				examined += 1
 				if arrival_is_supported(space, at) \
-						and clear_of_arrival(at, from):
+						and clear_of_arrival(at, from) \
+						and clear_of_content_path(at, from, content):
 					moved = at
 					break
 		if moved == Vector3.INF:
@@ -711,6 +715,7 @@ static func _settle_return_anchors(build: Dictionary,
 					"searched": searched, "probed": examined,
 					"policy": {"offsets": RETURN_OFFSETS,
 						"clearance": clearance,
+						"off_content_path": clearance,
 						"inside": "committed bounds less 0.6 m"}})
 			continue
 		_stand_the_device(build, anchors, name, rid, moved)
@@ -802,6 +807,83 @@ static func clear_of_arrival(at: Vector3, arrival: Vector3) -> bool:
 	var above := arrival.y >= at.y + ReturnPlug.HEIGHT
 	var below := arrival.y + Constants.PLAYER_HEIGHT <= at.y
 	return apart or above or below
+
+## AND THE PAD MUST NOT STAND ON THE WAY TO WHAT THE ROOM HOLDS.
+##
+## `clear_of_arrival` keeps the device off the spot a body appears on,
+## which is the §5.7 defect. It says nothing about the eight metres
+## between that spot and the room's reward -- and a device in the middle
+## of those sends the player home on the way to the thing they came for.
+##
+## MEASURED, on the merged tree, five journeys through real branch
+## destinations:
+##
+## | Zone | pad off the arrival->content line | reached the content |
+## |---|---|---|
+## | `zone_01` `c018` | 7.67 m | yes |
+## | `zone_02` `c011` | **0.41 m** | NO -- "took the return home by wandering onto it" |
+## | `zone_03` `c011` | **0.15 m** | NO |
+##
+## The correlation is the whole finding: every journey that failed to
+## reach its room's content had the pad within a body's width of the
+## straight line to it, and the one that succeeded had it seven metres
+## clear. Not a steering failure and not an unreachable route -- the
+## device is in the way.
+##
+## The same margin as the arrival: the trigger plus a capsule. A body
+## walking that line must be able to pass the device without entering
+## it. Rooms with no content declared are unconstrained, which is what
+## `content == Vector3.INF` means.
+static func clear_of_content_path(at: Vector3, arrival: Vector3,
+		content: Vector3) -> bool:
+	if not content.is_finite() or not arrival.is_finite():
+		return true
+	var a := Vector2(arrival.x, arrival.z)
+	var c := Vector2(content.x, content.z)
+	var p := Vector2(at.x, at.z)
+	var seg := c - a
+	if seg.length_squared() < 0.0001:
+		return true
+	var t := clampf((p - a).dot(seg) / seg.length_squared(), 0.0, 1.0)
+	return (a + seg * t).distance_to(p) \
+			>= ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
+
+## Where the thing a player came to this room FOR actually stands, in
+## world space, or `INF` when the room holds nothing to reach.
+##
+## **The room's own warp station, by its id.** Two facts decide this.
+##
+## The first is that the nominal `reward_position` is not where the
+## player goes: measured across the five generated fixtures, the
+## interactable the player's own probe stops at is six to ten metres
+## from the producer's nominal reward spot -- on `zone_02`'s `c011`,
+## `(15.2, 36.5, 131.45)` against `(8.8, 36.5, 134.97)`. Guarding the
+## line to the nominal spot guards a line nobody walks. In every room
+## measured, the node that probe stops at is that room's station.
+##
+## The second is that a return anchor is COMMITTED GEOMETRY. It is
+## settled once, written into the manifest, and a cold restart has to
+## lay it down in the same place. So the point this guards against has
+## to be a function of the committed layout and nothing else. The first
+## version of this asked the scene "what is the first node with
+## `interact()` inside this room" -- tree order over a subtree whose
+## membership is NOT the same on a replay, because a key the player is
+## already carrying is not rebuilt. Every room measured answered with
+## its own station either way; this asks for that station directly, by
+## the id the builder gave it, so the answer cannot depend on what else
+## happens to be standing in the room or on what order it was added in.
+static func content_of(build: Dictionary, rid: String) -> Vector3:
+	var want := "st:%s" % rid
+	for raw: Variant in build.get("stations", []):
+		if not is_instance_valid(raw as Object):
+			continue
+		var station := raw as Node3D
+		if station == null or not station.is_inside_tree():
+			continue
+		if str(station.get("station_id")) != want:
+			continue
+		return station.global_position
+	return Vector3.INF
 
 static func aperture_polarity(room: Dictionary, to_world: Transform3D,
 		space: PhysicsDirectSpaceState3D) -> Dictionary:
