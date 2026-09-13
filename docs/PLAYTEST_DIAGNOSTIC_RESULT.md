@@ -262,6 +262,53 @@ the existing centre-line leak probe against THOSE, instead of against
 lone chambers, covers every join in the game — and would have caught
 this before a player saw it.
 
+## FOURTH FINDING: `pressure_routing` is unsolvable by construction
+
+Owner, on a room labelled "PRESSURE ROUTING / hold all 2 pads at once":
+*"ok this is impossible."* **Literally, not figuratively.** Three facts
+combine:
+
+1. `pressure_routing` is the one family with `simultaneous: true`, and
+   the rules table spells out what that means: "simultaneous success
+   needs every element set AT ONCE, so an element releasing is a failure
+   rather than nothing."
+2. **Only the player can press a plate.**
+   `ActivityElement._on_body_entered` gates on
+   `body.is_in_group("player")`. No crate, no enemy, no droppable
+   object — there is exactly one thing in the game with weight.
+3. Placement **deliberately** separates elements:
+   `activities._spot_on_surface` avoids `taken` regions, so two pads are
+   never adjacent.
+
+One body, two pads that must be held in the same instant, placed apart
+on purpose, and nothing else in the world can hold one down. The family
+is unsolvable whenever it appears with more than one element, which is
+every time it appears at all.
+
+**This belongs beside the undeclared capability gate, not beside the
+taste notes.** Same shape: content validated as PLACED and never as
+COMPLETABLE. Nothing in the engine or the bridge asks whether a
+generated puzzle has a solution.
+
+### Owner decision, recorded
+
+Scrap `timed_run` and `pressure_routing`; keep the pressure plate as a
+button that does something.
+
+Noted for whoever executes it: this leaves two families, and
+`switch_sequence` is the hardcoded fallback
+(`RULES.get(kind, RULES["switch_sequence"])`), so nothing breaks
+structurally. But CS7 was the batch that cut the family list down to
+"primitives that actually exist", and this halves it again — worth
+confirming deliberately rather than on the back of one impossible room.
+
+**The keep is a real feature, and it is the second request for it.** "A
+pressure plate as a button that does something" is `switch_sequence`'s
+structure with a `STAND` trigger rather than `TOUCH` — a plate that
+opens the wall hiding the last target. That is the inter-element
+dependency the owner sketched two rooms earlier, arriving a second time
+by a different route.
+
 ## The principle: a big room is opportunity, not content
 
 Owner, in session:

@@ -198,6 +198,17 @@ of content a small room cannot hold. `topology.SPINE_SHARE` already
 records the unresolved half of this ("rooms behaved like enlarged
 corridors"); the principle is the other half.
 
+**`pressure_routing` is unsolvable by construction.** It is the one
+family with `simultaneous: true` ("an element releasing is a failure
+rather than nothing"); only the player can press a plate
+(`_on_body_entered` gates on the player group, and nothing else in the
+game has weight); and placement deliberately separates elements. One
+body cannot hold two separated pads at once, so the family has no
+solution whenever it appears with more than one element. **Same shape as
+the undeclared capability gate: content validated as PLACED and never as
+COMPLETABLE.** Owner has asked to scrap this family and `timed_run`, and
+to keep the plate as a button that gates something.
+
 **Nothing tests the seam where a connector meets a room.** The seal
 probe `_test_no_chamber_leaks_off_its_centre_line` builds each chamber
 ALONE — no neighbours, no connectors — so it proves a room is sealed by
