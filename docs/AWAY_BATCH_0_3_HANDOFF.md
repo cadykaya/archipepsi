@@ -2,7 +2,9 @@
 
 **Branch:** `claude/archipepsi-echoes-continuation-b1adno`
 **Started from:** `b914d98`
-**Tested revision:** _filled in below, at the bottom, after the run_
+**Tested revision:** `b3d583d` — everything in §8 ran on that commit,
+serially, with nothing edited during the run. This document's
+verification table is a later documentation-only commit on top of it.
 
 One batch, worked from `ARCHIPEPSI_PROD_AWAY_WORK_QUEUE.md` plus the
 four-item first block. Read the three lists first — **done**, **blocked**,
@@ -406,5 +408,45 @@ should stay green through whatever you pick.
 
 ## 8. Verification
 
-Everything below ran serially on the tested revision, on Linux, with
-Godot 4.5.1 headless (`zone-shots` under xvfb).
+All of it ran **serially** on `b3d583d`, on Linux, with Godot 4.5.1
+headless (`zone-shots` under xvfb). Serially on purpose: an earlier
+overlapping run produced one transient `test_playtest_baseline`
+failure that was a race between my own runs and not a defect — it
+passes alone and it passes here.
+
+| | |
+|---|---|
+| `pytest bridge/tests` | **1389 passed** |
+| `pytest apworld/tests` | **39 passed, 627 subtests** |
+| `make test-schemas` | **131 passed** |
+| 20 offline Godot suites | all green |
+| `godot-integration`, `godot-return-journey`, `godot-reload` | all green (live mock bridge) |
+
+The numbers this batch is actually about:
+
+```
+godot-physics (68 checks)
+  stays with the treads: 1 airborne frame of 40, where a free fall
+    down two 0.4 m treads spends 20
+  a 2.5 m ledge is a FALL, not a step down: 24 airborne of 45
+  a jump taken at the lip of a tread still rises: peak 1.80 from 0.40
+  a 20-degree ramp: feet on it the whole way, 0 airborne of 45
+
+godot-traverse (12 checks)
+  the base kit reaches 5 of 6 sampled Checks from their own doorway
+  0 BLOCKED by geometry
+  1 Check off the level the walker reached -- needs your eye
+  the exit: 3 of 16 bearings standable (placement), approach REACHED
+  joins: 3 of 6 walked through; a 6 m slab across one REFUSES the
+    walker, so those walks are about the geometry
+```
+
+### What was NOT verified, stated rather than implied
+
+- **Windows.** No `cmd.exe` here. The `.bat` files were read, not run.
+- **Comfort.** Every claim above is mechanical.
+- **Your Zone.** No fixture here reproduces it and none pretends to.
+- **Anything beyond the sample.** `godot-traverse` walked six Checks,
+  one exit and six doorways in one assembled Zone. It is a sample, not
+  a certificate, and a straight-line walker that does not arrive has
+  measured its own route choice.
