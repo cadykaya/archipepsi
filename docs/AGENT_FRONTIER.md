@@ -154,6 +154,20 @@ is chosen for the property under test.
    control. Whether the composer should find more room is topology
    tuning and is the bridge lane's.
 
+### The diagnostic playtest RAN — see `docs/PLAYTEST_DIAGNOSTIC_RESULT.md`
+
+**The return pad repair is confirmed by a human.** The owner found a
+branch destination, read the `RETURN` sign before reaching it, crossed
+the room to its content and its station, and took the device home
+deliberately. It never fired by accident. The measurement said
+0.41 m -> 2.50 m of clearance; the walk says that clearance is enough.
+
+Three defects and three design gaps came back with it. The next
+engine-lane item is **defect 2**, the cheapest and largest-felt: an
+activity gives the player no feedback of any kind, while
+`scripts/ui/tones.gd` already holds `confirm`, `denied`, `goal` and
+`reward` and the activity code calls none of them.
+
 ### For the next owner playtest
 
 Ready for a **diagnostic** playtest, not a verdict on the backlog.
