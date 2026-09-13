@@ -171,6 +171,120 @@ committed-manifest rules (a recomposed Zone is a new proposal against an
 existing campaign, which is the checkpoint's attempt-discriminator
 territory).
 
+## SECOND FINDING: `MAX_VERTICAL_STEP` is a fiction the player body never implements
+
+Owner: *"I should be able to walk up the stairs, not need to jump up
+them."* They are right, and the codebase already knows. From
+`chamber_builders.gd`:
+
+> `move_and_slide` does not climb steps (**there is no step-up anywhere
+> in `player.gd`; `MAX_VERTICAL_STEP` is a constant validation reasons
+> with, not one the body implements**), so a 0.35 m kerb stops a walking
+> player dead. That contradicts this file's own claim that a ramp is
+> base-kit traversal in both directions, which is what
+> `NO REQUIREMENT BEFORE GUARANTEE` rests on for geometry.
+
+`MAX_VERTICAL_STEP = 1.0` decides that geometry is walkable. **The
+player's real step-up height is zero.** Every rise must be jumped.
+
+**This is the same disease as the undeclared capability gate**: a layer
+that decides what is reachable reasons with a number the physics does
+not honour. One such disagreement hands another player a deadlock; this
+one makes stairs annoying. They are the same defect in different
+clothes, and nobody has counted how much geometry was blessed by that
+constant.
+
+Someone hit this before and worked around it locally, by notching a gap
+in one deck lip where a ramp lands. The root cause is untouched. Either
+the body implements step-up, or validation stops claiming it —
+**the two must not continue to disagree.**
+
+## The shadow finding is now blocking diagnosis, not just looks
+
+Second "X is floating" report of the session: a Check pedestal, after
+the hazard drums. The drums were reported, confirmed in code, written
+up, committed, and retracted.
+
+**Neither report can be settled by eye, because nothing casts a shadow.**
+This is finding 1-bis cashing out as a concrete cost: two reports, zero
+resolutions, and a real risk of a third wasted fix.
+
+`RoomAudit.player_stands_here` already asks exactly the right question —
+downward ray, height tolerance against the declared spot, standing
+clearance — so the probe is cheap. **Run it over every content spot in
+the generated fixtures and count.** Until then, treat "it looks like it
+is floating" as unresolved rather than as a finding. The floating Check
+is therefore NOT logged as a defect here.
+
+Note that this class has bitten before and was fixed once: the
+`platform_path` comment records "twenty-three activity elements across
+five rooms were standing on nothing."
+
+## The principle: a big room is opportunity, not content
+
+Owner, in session:
+
+> big rooms are not fun on their own, they give really really good
+> opportunities for fun. that distinction matters
+
+**It matters because it rules out the obvious fix.** Three findings on
+this page are the same shape — activities capped at 3 regardless of
+floor area, lights fixed at 3 regardless of floor area, Checks capped by
+count with a comment admitting size ought to matter. The composer varies
+room dimensions and the builders fill them with constants. The naive
+repair is to make each constant a function of area.
+
+**That repair is wrong by this principle.** Six lights and five targets
+in a row is still a room with nothing to do in it. Scaling density
+treats size AS content, which is exactly the mistake.
+
+What size actually buys is the ability to hold KINDS of content a small
+room cannot: verticality, long sightlines, concealment, a puzzle whose
+parts are separated, more than one route to the same objective. A small
+room cannot hold a button on one wall that opens another wall. A large
+one can, and today does not.
+
+The codebase reached the same observation from the other side, in
+`topology.SPINE_SHARE`:
+
+> The complaint this composer was built after was never about graph
+> shape: it was that ROOMS BEHAVED LIKE ENLARGED CORRIDORS, with little
+> reason to occupy or revisit them. That is a question about what is IN
+> a room, and no value of this constant answers it.
+
+That finding has been recorded and unresolved. The owner's principle is
+the missing half: it says what a fix must aim at, and what it must not.
+
+**Guidance for whoever takes the density batch: do not scale the
+constants. Give the builders a vocabulary for what a large room can do
+that a small one cannot, and let size select between them.**
+
+## What the activity system cannot express
+
+Owner, on a large room holding one enemy and a target row:
+
+> imagine if you had them in cool spots that were hard to see, a box on
+> one end of the room and a button somewhere that opens a wall revealing
+> the last target, now you need to find all of them, figure the block
+> puzzle out, and then figure out the best route to hit all of them
+
+Today `activities.gd` calls `_best_surface` — **singular**. It picks one
+surface and lines the elements along it, which is precisely why three
+targets end up in a row in the middle of a walkway in a large room.
+
+The sketch needs three things that do not exist:
+
+1. **Multi-surface distribution** — elements spread across a room rather
+   than along the best single surface.
+2. **Inter-element dependency** — one element gating the reveal of
+   another (the button and the hidden target).
+3. **Line of sight as a placement input** — "hard to see" is currently
+   not a concept placement can reason about.
+
+Recorded as the target the activity system would have to grow into, not
+as tuning. "Three targets in a row on a walkway" is what a system with
+no opinion about space produces.
+
 ## Defects
 
 ### 1. Activity elements are mounted to nothing

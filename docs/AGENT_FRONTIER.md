@@ -177,6 +177,27 @@ progression item lands there. The composer cannot tell the difference
 today. **Within-room reachability is the missing measurement, and it is
 this lane's.**
 
+### Two more from the same session, both load-bearing
+
+**`MAX_VERTICAL_STEP` is a fiction.** `chamber_builders.gd` records it
+already: "there is no step-up anywhere in `player.gd`;
+`MAX_VERTICAL_STEP` is a constant validation reasons with, not one the
+body implements." Validation blesses geometry as walkable at up to 1.0 m
+while the player's real step-up is ZERO and a 0.35 m kerb stops them. The
+same disease as the capability gate — a layer deciding reachability from
+a number the physics does not honour. Either the body implements step-up
+or validation stops claiming it.
+
+**Do not fix the density findings by scaling the constants.** Owner: "big
+rooms are not fun on their own, they give really really good
+opportunities for fun. that distinction matters." Activities, lights and
+Checks are all capped by flat count against variable room dimensions, and
+the naive repair — make each a function of area — treats size AS content
+and produces a better-lit room with nothing to do in it. Size buys KINDS
+of content a small room cannot hold. `topology.SPINE_SHARE` already
+records the unresolved half of this ("rooms behaved like enlarged
+corridors"); the principle is the other half.
+
 ### The rest of the diagnostic playtest — same document
 
 **The return pad repair is confirmed by a human.** The owner found a
