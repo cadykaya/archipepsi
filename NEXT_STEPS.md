@@ -1,5 +1,246 @@
 # Archipepsi — build state
 
+## 2026-09-13 (engine) — owner-away follow-up 02
+
+From `eb14a38`, items A/B/C of
+`ARCHIPEPSI_OWNER_AWAY_FOLLOWUP_02.md`. D is the bridge lane's.
+Handoff: `docs/FOLLOWUP_02_HANDOFF.md`.
+
+### Both fixture leads were the instrument, and both are now controls
+
+The Check reported 2.6 m below the floor sits at `platform_path`'s own
+`reward_position` with solid ground 0.00 m under it; the walker was in
+the SECRET ALCOVE above it, which `_secret_alcove` places over the end
+ledge specifically so a base kit cannot reach it. `_standable_start`
+cast from three metres above the doorway and took the first surface it
+met. It now takes the floor the doorway OPENS ONTO -- the cast starts
+one step above the door's own height and a surface further than
+`MAX_VERTICAL_STEP` away is refused.
+
+`c001/side_left` is declared SEALED with `edge_id: null`. The "leak
+candidate" came from a 6-metre partner proxy; the declaration was never
+consulted. Every declared door is now measured against its own usage on
+the ASSEMBLED Zone -- the gap
+`RoomAudit._assigned_doors_match_their_usage` leaves, because it asks a
+room from the room's own transform and a cap is placed by the layout.
+
+Both findings are retracted and replaced by controls that would catch
+the real defect: ground under a reward, a base kit reaching the
+interaction position, the reward's own interaction running there, the
+room being LEAVABLE (a dead-end `platform_path` whose reward sits
+beyond an unjumpable gap is a softlock), and no SEALED socket open.
+
+### Mounting had no evidence and now has three kinds
+
+`_wall_spot` took `width / 2 - WALL_MARGIN` for the wall plane, which
+is the declared ENVELOPE rather than a wall. Measured on the real Zone
+it mounted 27 of 27 SHOT elements on walls nothing had looked for.
+
+Walls are built by `_box`, which gives them a collision hull, and
+`all_solid_boxes` reads hulls WITHOUT the architecture filter it
+applies to meshes -- so the wall is in `solids` and can be asked for. A
+mount now needs a wall behind the stalk, floor under it (a thin column,
+so it cannot find the wall and call that a floor), and floor a few
+strides out to shoot from. 11 of 27 mount; declines are printed by
+chamber type and room.
+
+The surface-vouched exclusion is gone: rooms are asked rather than
+skipped by category.
+
+### Three probe bugs worth remembering
+
+`godot-activity`'s mount probe had no walls and moved its root 600 m
+out BEFORE composing, so every gathered solid was at x ~ 600 while
+every candidate spot was at x ~ 9 -- `can_place` could never refuse
+anything. Production composes at the origin and places afterwards.
+
+The firing test first read the room's vouched `stand` patches on the
+assumption that only a platform course vouches any; an arena vouches
+them too, so every arena target was refused by a rule reading a list it
+had misunderstood.
+
+And `traverse_driver` rolled its own full-size capsule for "is this
+doorway blocked", disagreeing with the controller on two USED doors.
+`RoomAudit._blocker` is 2 cm slimmer on purpose and ignores placed
+content on purpose; using it, all 44 passable sockets agree.
+
+### Delivery shape
+
+`docs/REVIEW_ROUTE_0_3.md` is a ten-minute route through one Zone with
+real room ids -- the campaign is deterministic, so they are the rooms
+the owner will be in. Screenshots include the UNMOUNTED fallback beside
+the mounted cases, because a review that only sees the rooms that said
+yes is a review of half the feature.
+
+
+## 2026-09-13 (engine) — the owner-away batch
+
+Worked from `ARCHIPEPSI_PROD_AWAY_WORK_QUEUE.md` and the four-item
+first block, from `b914d98`. The combined handoff with the numbers, the
+screenshots and the replay checklist is
+`docs/AWAY_BATCH_0_3_HANDOFF.md`; this is the project record of what
+moved and why.
+
+### The stair descent, and why a snap length could never have fixed it
+
+The open half of last batch's step defect. Every precondition Godot's
+floor snap documents was met and the body fell anyway, so it was
+CHARACTERISED before it was touched — a per-frame trajectory plus a
+probe on the frame contact was lost:
+
+    lost floor y=0.741 vy=+0.0000 down_hit=true trav=0.109
+      after apply_floor_snap: floor=false y=0.741 (moved 0.000)
+
+Ground was 0.341 m below; the cast stopped at 0.109 m, which is exactly
+the capsule-against-corner solution for a 0.4 m radius clearing a
+0.4 m tread. The body has not cleared the tread it is LEAVING, so the
+snap hits that tread's own top edge, reads a 55-degree normal as a
+wall, and refuses. The obstruction is 0.1 m away; no snap length
+reaches past it.
+
+`Player._note_a_step_down_ahead` / `_follow_the_step_down` measure the
+drop from a probe a radius PAST the edge and walk the body down it with
+`velocity.y` held at zero. The limit is `MAX_VERTICAL_STEP`, the same
+number the ascent uses, so the rule is the symmetric one: what you can
+walk up, you can walk down. 1 airborne frame of 40 against 10, with a
+2.5 m ledge (24 frames, 9.2 m/s), a jump at a tread's lip (peak 1.80 m)
+and a 20-degree ramp (0 frames) as the three comparisons that stop it
+being adhesion.
+
+### `make godot-traverse`, and the lattice that was deleted twice
+
+Two attempts to answer "which targets are reachable" by flood-filling
+sample points gave three different wrong answers about a Zone the owner
+had cleared by playing it, and were removed rather than tuned. This
+drives the REAL controller along a NAMED route instead and reports five
+outcomes, only one of which asserts:
+
+    REACHED / BLOCKED / OFF_LEVEL / LOST / UNRESOLVED
+
+Calibrated first: it must cross a corridor, be stopped by a 4 m wall
+AND NAME IT, and climb a staircase. Four wrong verdicts were caught by
+reading WHY rather than the count — a doorway position is a point in
+the door plane and not a place to stand; a mid-jump body is not a
+stuck one; an offline layout verdict holds the player forever; and a
+Check 2.6 m below a walkway is the owner's "the check is floating", not
+a wall.
+
+It is a sample of one assembled Zone. It does not reproduce the
+owner's, and it is not a reachability proof.
+
+### Targets on walls, and the offer that may be declined
+
+`ActivityElement._build_target` always drew a mount stalk; `_row` placed
+targets with the floor-plan solve it uses for switches, so the stalk
+held them off nothing. `Activities._wall_spot` offers a side wall (never
+an end wall: that is where the player comes in), turns the element to
+face the room and sets the origin exactly the stalk's reach off the wall
+plane.
+
+The offer follows `_spot_on_surface`'s discipline — a wall with no legal
+span declines and the flat solve stands, with every element still built.
+A room that VOUCHED walkable surfaces is not offered a wall at all:
+`godot-zone-audit` caught the first version putting six elements over a
+`platform_path`'s forty-metre pit, which is the exact defect
+`_best_surface` exists to prevent.
+
+### Travel, save and what each word actually means
+
+`WarpStation.interact` raised a warp; it now raises `panel_requested`
+and `WarpStation.travel_options` is the single eligibility rule both the
+controller and the suites call. Return to Hub is wired because
+`Main._on_return_to_hub` already does exactly what the label promises —
+`leave_zone` after the resume anchor, keys, locks and stations are
+remembered, so the Zone goes dormant. Save is NOT wired, because
+tracing it showed `station_reached` already commits through
+`store.write_save`: there is no second operation, and a button that did
+nothing would be worse than none.
+
+### The family retirement is measured, not done
+
+`tools/family_retirement.py`, twelve default-scale Zones: 161
+activities removed, 176 more of the two that stay, with rooms, enemies
+and Checks unchanged. The composer cycles a fixed list, so a shorter
+list is the same content made of two families. The only bridge-side
+edit is a pure hoist to `fallback.ACTIVITY_KINDS`; the change itself
+needs a budget policy choice and belongs to the bridge lane.
+
+### Test integrity, on the things this touched
+
+Three existing guards went red and each was answered by preserving its
+purpose rather than lowering it. `godot-zone-audit`'s "nothing to stand
+on" caught the wall mount over a pit and the mount was narrowed.
+`test_packaging`'s binary manifest caught the committed screenshots and
+`docs/evidence/` was registered as first-party. The station contract
+test asked the PROMPT whether there was anywhere to go; it now asks
+`travel_options`, with four assertions the old shape could not make.
+
+A transient `test_playtest_baseline` failure during the batch was a
+race between overlapping verification runs of my own, not a defect;
+the final run was serialized.
+
+
+## 2026-09-13 (integration) — one tree, and the pad out of the way
+
+Prod `5251abd`. Bridge lane merged at `089dc64`, art lane at `1a9f1c9`.
+Both lanes had built truthful procedural capacity and the attempt
+discriminator against an EARLIER checkpoint of the other, so neither
+branch's report described the combined tree. This is that tree.
+
+### The reconciliation
+
+`C.PROCEDURAL_SOCKET_CAPACITY` is the one capacity declaration and it
+keeps the MEASURED table — `platform_path` AND `tower`, both measured
+solid at the side wall with one control per chamber type.
+`SIDELESS_PROCEDURAL_TYPES`, which covered `platform_path` alone, is
+gone rather than kept beside it; restoring the tower's side doors during
+the merge would have restored doors the engine does not build.
+`procedural_sockets_for` projects that one map into four readers: the
+composer, the load-time invariant, the bridge's acceptance-time refusal
+(which therefore now covers the tower too) and the engine via
+`constants.gd`. Dess's reserve-destination replacement in
+`_branch_routes`, its regression tests and its required-destination
+behaviour are kept as they stand.
+
+The attempt discriminator resolved to ONE field and ONE guard: the
+digest is content identity, `layout_refusals` is the attempt ordinal, an
+old result charges nothing, a genuine new failure charges its own
+attempt, and the client reads both from ONE snapshot at build start —
+which is the path `main.gd::_to_zone` actually walks.
+
+770 joined doors across the 26 committed fixtures, 0 beyond capacity.
+Derived artifacts regenerated from the combined source; the original
+fixtures kept and the graph changes recorded rather than expected values
+edited.
+
+### The three findings this batch measured
+
+1. **The return pad stood between the arrival and the content.** Every
+   branch destination whose journey failed to reach what it holds had
+   the device within a body's width of the straight line to it;
+   the one that succeeded had it 7.67 m clear.
+   `RoomAudit.clear_of_content_path` fixed it (0.41 m → 2.50 m,
+   0.15 m → 2.57 m, journey `content` 2 → 3).
+2. **What counts as the content** is the room's own station by id, not
+   the nominal `reward_position` (6–10 m away in every fixture) and not
+   "the first interactable in the room" (tree order over a subtree a
+   replay does not reproduce).
+3. **The replay control was comparing a reservation against a settle.**
+   It read the replayed device the instant `setup()` returned; the
+   settle lands two physics frames later and is awaited by nothing. It
+   now waits on `ZoneController.measured_placement`, and so proves the
+   stronger property: a cold restart SETTLES the device to the same
+   point, not merely reserves it there.
+
+### What is still open
+
+The three ordinary-journey failures are all "valid route, the automated
+steering cannot follow it" — none is an invalid route and none is pad
+interference. Overlap reconciliation, the pending authored-room proof,
+and the 1-of-8 re-selection result (the old 8-of-8 was planned through
+doors that do not exist) stay on the backlog. See
+`docs/AGENT_FRONTIER.md` for the measured tables.
+
 ## 2026-09-13 (later) — Dess's carrier, five Zones, and the theme pack
 
 Bridge lane merged at `0ec9e8e`, art lane at `19e271b`.

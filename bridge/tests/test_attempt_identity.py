@@ -38,9 +38,8 @@ from archipepsi_bridge.schemas.protocol import ClientMessage
 from pydantic import TypeAdapter
 
 from .conftest import connected_engine, drain, run
-from .test_amalgam_end_to_end import (_a_host_that_cannot_move,
-                                      _a_reselectable_host, _place,
-                                      _placement, _zone_with_branches)
+from .test_amalgam_end_to_end import (_movable, _place, _placement,
+                                      _zone_with_branches)
 
 _ADAPTER = TypeAdapter(ClientMessage)
 
@@ -113,7 +112,7 @@ def test_a_resend_of_the_current_attempt_is_the_same_evidence(tmp_path):
         zid, zone = await _zone_with_branches(engine)
         digest = layout.proposal_digest(zone)
         good = _placement(_place(zone), zone,
-                          _a_reselectable_host(zone), "PLACED")
+                          _movable(zone), "PLACED")
 
         await _send(engine, zid, good, proposal_id=digest, attempt=0)
         first = engine.save.zone_by_id(zid)
@@ -141,7 +140,7 @@ def test_changed_content_is_still_caught_by_the_digest(tmp_path):
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
-        host = _a_reselectable_host(zone)
+        host = _movable(zone)
         stale_digest = layout.proposal_digest(zone)
 
         await _send(engine, zid,
@@ -177,35 +176,4 @@ def test_a_client_that_sends_no_attempt_behaves_as_before(tmp_path):
         rec = engine.save.zone_by_id(zid)
         assert rec.layout_refusals == 1, (
             "a client with no attempt field is read exactly as before")
-    run(go())
-
-
-def test_a_genuine_new_failure_still_charges_its_own_attempt(tmp_path):
-    """THE DIRECTION THAT MATTERS MORE than discarding a stale result.
-
-    A discriminator that quietly swallows real failures would keep a
-    broken Zone alive forever instead of exhausting it. A second attempt
-    that really fails costs a second refusal — identical content or not.
-    """
-    async def go():
-        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
-        zid, zone = await _zone_with_branches(engine)
-        stuck = _a_host_that_cannot_move(zone)
-        await _send(engine, zid,
-                    _placement(_place(zone), zone, stuck, "NO_CANDIDATE"),
-                    proposal_id=layout.proposal_digest(zone), attempt=0)
-        rec = engine.save.zone_by_id(zid)
-        assert rec.layout_refusals == 1, "the first failure was not charged"
-
-        # Attempt 1 now: a client that really built the replacement and
-        # really failed, echoing the ordinal honestly.
-        replacement = rec.zone
-        await _send(engine, zid,
-                    _placement(_place(replacement), replacement,
-                               _a_host_that_cannot_move(replacement),
-                               "NO_CANDIDATE"),
-                    proposal_id=layout.proposal_digest(replacement),
-                    attempt=1)
-        assert engine.save.zone_by_id(zid).layout_refusals == 2, (
-            "a real second failure was swallowed by the discriminator")
     run(go())

@@ -174,6 +174,45 @@ func _run() -> void:
 					room_bounds.get(runtime.room_id, AABB()))
 			shot += 1
 
+	# AT PLAYER HEIGHT, for the one question a three-quarter shot cannot
+	# answer: does a target read as MOUNTED from where somebody stands.
+	# The owner's note was made walking into a room, not orbiting it.
+	# ONE OF EACH, not three of the best case. Mounting is an offer a
+	# room may decline -- it needs a real wall, floor under the mount
+	# and somewhere to shoot from -- and a review that only ever sees
+	# the rooms that said yes is a review of half the feature.
+	var eyed := {}
+	var want := {"MOUNTED": 2, "UNMOUNTED": 1}
+	for runtime in runtimes:
+		if runtime.kind != "target_challenge" or runtime.elements.is_empty():
+			continue
+		if eyed.has(runtime.room_id):
+			continue
+		var mounted := false
+		for element in runtime.elements:
+			if bool(element.get_meta("mounted", false)):
+				mounted = true
+				break
+		var label := "MOUNTED" if mounted else "UNMOUNTED"
+		if int(want.get(label, 0)) <= 0:
+			continue
+		want[label] = int(want[label]) - 1
+		eyed[runtime.room_id] = true
+		await _shoot_at_eye_height(camera, runtime,
+				"eye_%s_%s_%s" % [label.to_lower(), runtime.kind,
+				runtime.activity_id],
+				room_bounds.get(runtime.room_id, AABB()))
+		shot += 1
+
+	# THE NAVIGATION-SCHEMATIC PROTOTYPE, photographed so it can be
+	# JUDGED. It is review-only and nothing in the game reads it; what
+	# the owner needs in order to decide anything about a map is a
+	# picture of what the existing facts can actually draw.
+	await _shoot_the_schematic(zone as Dictionary, room_bounds)
+	shot += 1
+	await _shoot_the_station_panel()
+	shot += 1
+
 	print("  wrote %d shots to %s"
 			% [shot, ProjectSettings.globalize_path(OUT_DIR)])
 	print("GODOT ZONE SHOTS OK")
@@ -285,6 +324,118 @@ func _shoot(camera: Camera3D, runtime: ActivityRuntime, name: String,
 	print("    %s  (%d elements, subject %.1fm, camera %.1fm out)"
 			% [name, runtime.elements.size(), radius * 2.0,
 			camera.global_position.distance_to(centre)])
+
+## WHAT A PLAYER SEES, standing in the room.
+##
+## Eye height, on the room's own centre line -- the walking lane every
+## builder keeps clear -- at the activity's depth, looking at it. The
+## three-quarter shots above are for judging a silhouette; this is for
+## judging whether a wall-mounted target reads as fixed to the wall,
+## which is a question about the angle a person actually stands at.
+func _shoot_at_eye_height(camera: Camera3D, runtime: ActivityRuntime,
+		name: String, room: AABB) -> void:
+	if runtime.elements.is_empty() or room.size == Vector3.ZERO:
+		return
+	# ONE ELEMENT, not the row's bounding box. A `target_challenge` in a
+	# sixty-metre hall spreads its targets the width of the room, so the
+	# merged centre is the empty middle -- the first framing stood six
+	# metres from that and looked at nothing, 29 m from either target.
+	# The question this shot answers is "does a target read as mounted",
+	# and that is a question about one target.
+	var subject: ActivityElement = runtime.elements[0]
+	var centre := subject.global_position
+	# THE FLOOR UNDER THE TARGET, found rather than assumed.
+	#
+	# `room.position.y + 1.0` takes the bottom of the room's AABB for
+	# its floor, and the Hall's bounds reach forty metres down -- so the
+	# camera was put twenty metres below the level and reported itself
+	# 29 m from a target six metres away.
+	var floor_y := centre.y - 2.2
+	var space := get_viewport().world_3d.direct_space_state
+	var probe := PhysicsRayQueryParameters3D.create(
+			centre, centre + Vector3.DOWN * 12.0)
+	probe.collide_with_areas = false
+	var ground := space.intersect_ray(probe)
+	if not ground.is_empty():
+		floor_y = (ground["position"] as Vector3).y
+	# SIX METRES IN FRONT OF THE SUBJECT, toward the middle of the room.
+	#
+	# Not the room's centre line: `c006` is forty-one metres wide, so
+	# standing on its axis put the camera 28.6 m from a target on the
+	# side wall and framed the opposite wall instead. A player walks up
+	# to the thing they are looking at.
+	var toward := Vector3(room.get_center().x - centre.x, 0.0,
+			room.get_center().z - centre.z)
+	if toward.length() < 0.1:
+		toward = Vector3(0.0, 0.0, -1.0)
+	var eye := centre + toward.normalized() * 6.0
+	eye.y = floor_y + Constants.PLAYER_EYE_HEIGHT
+	eye = Vector3(
+			clampf(eye.x, room.position.x + CAMERA_MARGIN,
+				room.end.x - CAMERA_MARGIN),
+			eye.y,
+			clampf(eye.z, room.position.z + CAMERA_MARGIN,
+				room.end.z - CAMERA_MARGIN))
+	camera.global_position = eye
+	camera.look_at(centre, Vector3.UP)
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	image.save_png(ProjectSettings.globalize_path(
+			"%s/%s.png" % [OUT_DIR, name]))
+	print("    %s  (eye height %.2f m, %.1f m from the subject, %s)"
+			% [name, Constants.PLAYER_EYE_HEIGHT, eye.distance_to(centre),
+			"mounted" if bool(subject.get_meta("mounted", false))
+			else "not mounted"])
+
+## The travel panel, open, over a real room.
+##
+## The owner asked for a menu instead of an instant warp and has not
+## seen one. Rendered with two reached stations and the one being stood
+## at, which is the ordinary case -- not an empty panel and not a list
+## of everything in the Zone.
+func _shoot_the_station_panel() -> void:
+	var panel := StationPanel.new()
+	add_child(panel)
+	await get_tree().process_frame
+	panel.open("st:entrance", "ENTRANCE", [
+		{"id": "st:entrance", "label": "ENTRANCE", "here": true},
+		{"id": "st:hall", "label": "HALL", "here": false},
+		{"id": "st:exit", "label": "EXIT", "here": false}])
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	image.save_png(ProjectSettings.globalize_path(
+			"%s/station_travel_panel.png" % OUT_DIR))
+	print("    station_travel_panel  (2 destinations, 1 'you are here')")
+	panel.queue_free()
+
+## The schematic, with a PLAUSIBLE WALK behind it.
+##
+## Six rooms along the spine, which is roughly where the owner got to
+## before they said they were lost. Chosen rather than generated: the
+## question is what the panel looks like part-way through a Zone, and a
+## fully-explored one would not answer it.
+func _shoot_the_schematic(zone: Dictionary, room_bounds: Dictionary) -> void:
+	var nav := NavSchematic.new()
+	add_child(nav)
+	var walked := {}
+	var ids: Array = room_bounds.keys()
+	ids.sort()
+	for i in mini(6, ids.size()):
+		walked[str(ids[i])] = true
+	var here := str(ids[mini(5, ids.size() - 1)]) if not ids.is_empty() \
+			else ""
+	nav.visible = true
+	nav.show_zone(walked, room_bounds, zone.get("edges", []), {},
+			{"st:entrance": true}, here)
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	image.save_png(ProjectSettings.globalize_path(
+			"%s/nav_schematic_prototype.png" % OUT_DIR))
+	print("    nav_schematic_prototype  (%d of %d rooms walked)"
+			% [walked.size(), room_bounds.size()])
+	nav.queue_free()
 
 ## One element, close enough to judge its outline.
 func _close_up(camera: Camera3D, element: ActivityElement, name: String,

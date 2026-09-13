@@ -23,14 +23,12 @@ try:
     from .schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from .schemas import mechanics as M
-    from .schemas.zone import (PROCEDURAL_SOCKETS, Zone,
-                               procedural_sockets_for)
+    from .schemas.zone import Zone, procedural_sockets_for
 except ImportError:  # pragma: no cover
     from schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from schemas import mechanics as M
-    from schemas.zone import (PROCEDURAL_SOCKETS, Zone,
-                              procedural_sockets_for)
+    from schemas.zone import Zone, procedural_sockets_for
 
 #: What a chain needs from any room: a way in and a way out.
 #:
@@ -212,12 +210,15 @@ def _sockets_for(chamber, shell_sockets: dict[str, tuple[str, ...]]
     walling up geometry an artist had cut, with nothing anywhere saying
     so.
 
-    A procedural room declares what its PRODUCER can build, which is
-    four for a flat room and two for the ones that climb — see
-    `C.PROCEDURAL_SOCKET_CAPACITY`. It was four for all of them, so a
-    branch was hung off a `platform_path`'s side, the engine raised a
-    solid wall there, and the bridge refused the whole layout for a door
-    this lane had assigned to an opening that does not exist.
+    A procedural room declares what its TYPE can hold:
+    `procedural_sockets_for` is the one declaration — projected from
+    `C.PROCEDURAL_SOCKET_CAPACITY`, shared with the Zone's own Invariant
+    8 and with the ENGINE through `constants.gd`, so the planner, the
+    validator and the builder cannot disagree about how many doors a
+    room has. It was four for every type, so a branch was hung off a
+    `platform_path`'s side, the engine raised a solid wall there, and
+    the bridge refused the whole layout for a door this lane had
+    assigned to an opening that does not exist.
     """
     if not chamber.shell_id:
         return procedural_sockets_for(chamber.type)

@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -464,6 +464,15 @@ godot-physics: godot-import
 	fi; \
 	exit $$status
 
+godot-traverse: godot-import   # walking to things, with the real controller
+	@out=$$($(GODOT) --headless --path godot -- --traverse-test 2>&1); \
+	status=$$?; printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: a test that crashed is not a test that passed"; \
+	  exit 1; \
+	fi; \
+	exit $$status
+
 godot-reload: godot-import
 	rm -rf $(RELOAD_SAVES) $(HOME)/.local/share/godot/app_userdata/Archipepsi/reload_notes.json
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RELOAD_SAVES) \
@@ -497,8 +506,18 @@ godot-integration: godot-import   # full loop through a live mock bridge, fresh 
 	kill -0 $$BRIDGE_PID 2>/dev/null || { \
 	  echo "bridge did not start (port already serving? see the traceback above)"; \
 	  exit 1; }; \
-	$(GODOT) --headless --path godot -- --integration-test; \
-	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS
+	$(GODOT) --headless --path godot -- --integration-test \
+	  > /tmp/archipepsi-integration.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID; \
+	cat /tmp/archipepsi-integration.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	if grep -q "SCRIPT ERROR" /tmp/archipepsi-integration.log; then \
+	  echo "-- a script error was raised: a run that crashed and still"; \
+	  echo "-- printed OK is not a pass. The exit-portal crash reached"; \
+	  echo "-- ALL_CHECKS_CLEARED and reported OK before this guard."; \
+	  grep "SCRIPT ERROR" /tmp/archipepsi-integration.log | sort -u; \
+	  exit 1; \
+	fi
 
 # THE RE-SELECTION JOURNEY, at the scale its subject needs.
 #

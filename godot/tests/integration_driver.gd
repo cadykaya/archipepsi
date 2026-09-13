@@ -929,9 +929,20 @@ func _test_a_failed_zone_is_discarded_and_its_checks_come_back() -> bool:
 		if not await _await_condition("a Zone to falsify in round %d"
 					% round_number,
 				func() -> bool:
-					return BridgeClient.hub_mode() == "ZONE_FAILED" \
-						or not (BridgeClient.active_zone().get("zone", {})
-							as Dictionary).is_empty(), 40.0):
+					# `active_zone()` is safe -- it returns {} for a
+					# non-Dictionary. `.get("zone")` is NOT: a record in
+					# PENDING_GENERATION carries a null there, and
+					# `null as Dictionary` throws "Invalid cast: could
+					# not convert value to 'Dictionary'". That error was
+					# printed on every run of this suite and ignored,
+					# because nothing failed a run on a script error
+					# until this batch.
+					if BridgeClient.hub_mode() == "ZONE_FAILED":
+						return true
+					var pending: Variant = BridgeClient.active_zone() \
+							.get("zone")
+					return typeof(pending) == TYPE_DICTIONARY \
+						and not (pending as Dictionary).is_empty(), 40.0):
 			return false
 		if BridgeClient.hub_mode() == "ZONE_FAILED":
 			break
@@ -1424,6 +1435,24 @@ func _test_reselection_and_return_journey() -> bool:
 	c.setup(replayed.get("zone"))
 	_check(c.layout_failed == "",
 			"the committed manifest was replayed (%s)" % c.layout_failed)
+	# LET THE REPLAY REACH THE POINT THE ACCEPTED BUILD WAS READ AT.
+	#
+	# `stood_at` is a SETTLED anchor: `_publish_layout` waits for the
+	# physics to exist, measures, and `RoomAudit._settle_return_anchors`
+	# moves the device off anything it should not be standing on. That
+	# happens two physics frames after `setup` returns and is not
+	# awaited by it, so reading the device here read the builder's first
+	# reservation and compared it against a settled one -- and once the
+	# settle started moving pads off the arrival-to-content line, the
+	# two genuinely differed by 4.1 m. `measured_placement` is the
+	# controller's own statement that it has measured; waiting on it
+	# compares like with like, and makes this control say the stronger
+	# thing: the SETTLE is reproducible from the committed layout, not
+	# merely the reservation.
+	if not await _await_condition("the replay measured its own layout",
+			func() -> bool:
+				return not c.measured_placement.is_empty()):
+		return false
 	var replug := _a_return_in(c, host_b)
 	_check(replug != null,
 			"and the return device is back, in the same room (%s)"
@@ -1943,17 +1972,53 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 				_check(not (str(entry.get("component", {}).get(
 						"component_id", "")) in BridgeClient.slots().values()),
 						"a trait never occupies a slot")
-	# What `main.gd::_on_exit_zone` does when a Zone ends, and the reason
-	# this is here: the driver builds its own ZoneController and never
-	# takes the real exit path, so CS10's timing intent had NO automated
-	# coverage at all. Playtest 2.5 is the only thing that has ever
-	# exercised it -- the same shape as the playtest-1 boot crash, where a
-	# suite substituted for the code it was meant to protect.
+	# THE REAL EXIT, TAKEN RATHER THAN SIMULATED.
+	#
+	# This used to jump straight to the timing intent with a comment
+	# admitting the driver "never takes the real exit path". The first
+	# human playtest then cleared every Check, walked into the portal,
+	# and the game CRASHED -- `camera_ray` read `.direct_space_state`
+	# off a null `get_world_3d()` on the first frame after the player
+	# left the tree with the Zone. A suite that reaches
+	# ALL_CHECKS_CLEARED through intents cannot see that, because the
+	# portal is the one thing it never touches.
+	#
+	# So the portal is interacted with the way a player interacts with
+	# it, and the frames AFTER it are stepped with the player detached,
+	# which is the state the crash lived in.
+	var left := []
+	controller.exit_requested.connect(func() -> void: left.append(true))
+	var leaver := Player.create()
+	controller.add_child(leaver)
+	await get_tree().physics_frame
+	controller._exit_portal.interact(leaver)
+	await get_tree().process_frame
+	_check(left.size() == 1,
+			"EXIT: interacting with the portal asks to leave the Zone "
+			+ "(%d request(s))" % left.size())
+	# The teardown `main.gd::_on_exit_zone` performs, in its order: the
+	# timing intent, then the Zone goes.
 	var timing: Dictionary = controller.playtime.to_intent(
 			str(zone_dict.get("zone_id", "")), true)
 	if not timing.is_empty():
 		BridgeClient.send_intent(timing)
+	controller.remove_child(leaver)
 	controller.queue_free()
+	await get_tree().process_frame
+	# AND THE FRAMES AFTER IT. The player is out of the tree and its
+	# world is gone; this is exactly where the crash was.
+	for _i in 12:
+		await get_tree().physics_frame
+	_check(is_instance_valid(leaver),
+			"EXIT: and the player survives the frames after the Zone "
+			+ "is torn down")
+	_check(leaver.camera_ray(3.0).is_empty(),
+			"EXIT: with its probe answering empty rather than reading a "
+			+ "world that is not there")
+	_check(str(BridgeClient.hub_mode()) != "",
+			"EXIT: and the campaign still reports a mode (%s)"
+			% str(BridgeClient.hub_mode()))
+	leaver.free()
 	await get_tree().process_frame
 	return true
 

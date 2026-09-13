@@ -130,6 +130,7 @@ jobs:
           make godot-zone-audit
           make godot-legible
           make godot-physics
+          make godot-traverse
 
       - name: Whole campaign, headlessly
         run: make godot-integration

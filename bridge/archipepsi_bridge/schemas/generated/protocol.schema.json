@@ -495,6 +495,20 @@
             "title": "Layout",
             "type": "object"
           },
+          "attempt": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt"
+          },
           "proposal_id": {
             "anyOf": [
               {
@@ -509,20 +523,6 @@
             ],
             "default": null,
             "title": "Proposal Id"
-          },
-          "attempt": {
-            "anyOf": [
-              {
-                "maximum": 99,
-                "minimum": 0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Attempt"
           }
         },
         "required": [
@@ -5831,6 +5831,13 @@
             "maxLength": 16,
             "title": "Proposal Id",
             "type": "string"
+          },
+          "attempt": {
+            "default": 0,
+            "maximum": 3,
+            "minimum": 0,
+            "title": "Attempt",
+            "type": "integer"
           },
           "manifest": {
             "anyOf": [

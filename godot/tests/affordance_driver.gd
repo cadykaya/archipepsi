@@ -62,6 +62,7 @@ func _run() -> void:
 	await _pull_pickup_cannot_reach_an_ap_reward()
 	await _readouts_only_show_what_is_owned()
 	await _readouts_change_nothing()
+	await _a_player_who_has_left_the_world_does_not_probe_it()
 	_the_suite_actually_exercised_something()
 
 	if failures == 0:
@@ -76,6 +77,45 @@ func _run() -> void:
 ## The whole fraction space, at several room widths. `resolve_position` is
 ## the only thing standing between "Epsilon picked 0.5, 0.5" and a feature
 ## in the doorway, so it is swept rather than sampled.
+## THE EXIT PORTAL CRASHED THE GAME, and this is why it cannot again.
+##
+## Taking the portal removes the Zone and the player with it, but a
+## queued frame still arrives. `camera_ray` read `.direct_space_state`
+## off `get_world_3d()` without asking whether there was a world --
+## "Invalid access to property or key 'direct_space_state' on a base
+## object of type 'null instance'" -- and `_physics_process` called
+## `move_and_slide` on a body whose space was freed. Measured on a
+## played Zone with every Check claimed: **the portal that ends a Zone
+## ended the process instead**, which is the single most important
+## transition in the game.
+##
+## The interact probe and every shot run through `camera_ray` each
+## frame, so the first frame after the portal fires is the one that
+## crashes. An empty result is what "nothing is there" already means to
+## every caller, so the guard costs nothing and changes no behaviour
+## inside the tree.
+func _a_player_who_has_left_the_world_does_not_probe_it() -> void:
+	var player := Player.create()
+	add_child(player)
+	await get_tree().physics_frame
+	_check(player.is_inside_tree(),
+			"the control needs a player in the tree to start from")
+	# OUT OF THE TREE, exactly as the portal leaves it.
+	remove_child(player)
+	_check(not player.is_inside_tree(),
+			"and the player is detached, as the portal leaves it")
+	var probed := player.camera_ray(3.0)
+	_check(probed.is_empty(),
+			"a detached player's camera ray answers an empty result "
+			+ "rather than reading a world that is not there (%s)"
+			% str(probed))
+	# AND A QUEUED PHYSICS FRAME IS SURVIVED, not crashed on.
+	player._physics_process(0.016)
+	_check(true, "and a queued physics frame on a detached body is "
+			+ "survived rather than crashed on")
+	player.free()
+	await get_tree().process_frame
+
 func _features_stay_out_of_the_lane() -> void:
 	var lane := AffordanceFeatures.LANE_HALF_WIDTH
 	var checked := 0

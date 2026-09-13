@@ -159,6 +159,28 @@ def fallback_zone_attempt(request: ZoneGenerationRequest) -> tuple[dict, int]:
     return last, 7
 
 
+#: Which activity families this provider composes from, and the order it
+#: cycles them in.
+#:
+#: HOISTED OUT OF `_build_to_budget`, WITH NOTHING ELSE CHANGED. It was a
+#: literal inside the loop, which made "what would retiring a family
+#: cost" a question nobody could ask without editing the composer. The
+#: owner has asked for the two standalone drills -- `timed_run` and
+#: `pressure_routing` -- to stop being generated, and
+#: `tools/family_retirement.py` measures that against this list before
+#: anybody changes it.
+#:
+#: THIS IS NOT THAT CHANGE. The list ships exactly as it was, because
+#: the composer picks by `kinds[(guard + len(acts)) % len(kinds)]`:
+#: removing two of four does not remove content, it doubles how often
+#: the other two come up, and the budget it cannot spend on an activity
+#: it spends on enemies. Both are outcomes the owner asked against, so
+#: the retirement needs a policy choice about what fills the budget --
+#: and that choice is the bridge lane's to make.
+ACTIVITY_KINDS: tuple[str, ...] = (
+    "switch_sequence", "target_challenge", "pressure_routing", "timed_run")
+
+
 def _max_enemy_groups(chamber_type: str) -> int:
     """How many enemy GROUPS this chamber type accepts.
 
@@ -351,8 +373,7 @@ def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
         current = sum(room_value(_AsChamber(c)) for c in chambers)
         return current + extra <= high
 
-    kinds = ["switch_sequence", "target_challenge", "pressure_routing",
-             "timed_run"]
+    kinds = list(ACTIVITY_KINDS)
     ceiling = min(room_budget, room_high)
 
     #: How rich an ORDINARY room is allowed to get while there is still

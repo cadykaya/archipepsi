@@ -15,6 +15,10 @@ playtest-2.5/
 # packages share it deliberately: the Zone is generated once and stored,
 # so `none`, `rail` and `launch` are three visits to one level.
 playtest-3ab/
+# Diagnostic campaign slots. One folder per slot, never committed: they
+# are somebody's save, and `.diagnostic-582e954` in particular is the
+# owner's own and is not ours to publish.
+.diagnostic-*/
 # Where YOUR Godot lives. A fact about one machine, not about the
 # project -- committing it hands everyone else a path that is not there.
 godot-path.txt
