@@ -497,8 +497,19 @@ godot-integration: godot-import   # full loop through a live mock bridge, fresh 
 	kill -0 $$BRIDGE_PID 2>/dev/null || { \
 	  echo "bridge did not start (port already serving? see the traceback above)"; \
 	  exit 1; }; \
-	$(GODOT) --headless --path godot -- --integration-test; \
-	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS
+	$(GODOT) --headless --path godot -- --integration-test \
+	  > /tmp/archipepsi-integration.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID; \
+	cat /tmp/archipepsi-integration.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	if grep "SCRIPT ERROR" /tmp/archipepsi-integration.log \
+	     | grep -qv "could not convert value to 'Dictionary'"; then \
+	  echo "-- a script error was raised: a run that crashed and still"; \
+	  echo "-- printed OK is not a pass. The exit-portal crash reached"; \
+	  echo "-- ALL_CHECKS_CLEARED and reported OK before this guard."; \
+	  grep "SCRIPT ERROR" /tmp/archipepsi-integration.log | sort -u; \
+	  exit 1; \
+	fi
 
 # THE RE-SELECTION JOURNEY, at the scale its subject needs.
 #

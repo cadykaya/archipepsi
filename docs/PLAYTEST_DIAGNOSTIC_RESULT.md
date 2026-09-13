@@ -999,3 +999,26 @@ the activity label; what failed was its presentation.
 
 **Superseded by finding 2** above. The completion path calls
 `tones.play("secret_found")`, a name the tone bank does not define.
+
+## Found while repairing, recorded not fixed: a cast on the refusal path
+
+`godot-integration` had never failed on a `SCRIPT ERROR`, so a run that
+crashed could still print OK -- which is how the exit-portal crash
+reached `ALL_CHECKS_CLEARED` with a green suite. The target now fails on
+one, and that immediately surfaced a **pre-existing** error the suite had
+been printing and ignoring:
+
+```
+SCRIPT ERROR: Invalid cast: could not convert value to 'Dictionary'.
+   at _await_verdict (zone_controller.gd:817)
+```
+
+It fires on the deliberate negative control that falsifies a layout:
+`BridgeClient.active_zone().is_empty()` is evaluated when the Zone has
+gone away, and `active_zone()` does not return a Dictionary then.
+
+**Not fixed here.** It is outside this batch (required routes, the exit
+transition, activity feedback) and deserves its own measurement rather
+than a guess bolted onto a repair batch. The integration guard therefore
+fails on any script error EXCEPT this known message, so a new crash is
+caught while this one stays visible and recorded.

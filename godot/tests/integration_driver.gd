@@ -1961,17 +1961,53 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 				_check(not (str(entry.get("component", {}).get(
 						"component_id", "")) in BridgeClient.slots().values()),
 						"a trait never occupies a slot")
-	# What `main.gd::_on_exit_zone` does when a Zone ends, and the reason
-	# this is here: the driver builds its own ZoneController and never
-	# takes the real exit path, so CS10's timing intent had NO automated
-	# coverage at all. Playtest 2.5 is the only thing that has ever
-	# exercised it -- the same shape as the playtest-1 boot crash, where a
-	# suite substituted for the code it was meant to protect.
+	# THE REAL EXIT, TAKEN RATHER THAN SIMULATED.
+	#
+	# This used to jump straight to the timing intent with a comment
+	# admitting the driver "never takes the real exit path". The first
+	# human playtest then cleared every Check, walked into the portal,
+	# and the game CRASHED -- `camera_ray` read `.direct_space_state`
+	# off a null `get_world_3d()` on the first frame after the player
+	# left the tree with the Zone. A suite that reaches
+	# ALL_CHECKS_CLEARED through intents cannot see that, because the
+	# portal is the one thing it never touches.
+	#
+	# So the portal is interacted with the way a player interacts with
+	# it, and the frames AFTER it are stepped with the player detached,
+	# which is the state the crash lived in.
+	var left := []
+	controller.exit_requested.connect(func() -> void: left.append(true))
+	var leaver := Player.create()
+	controller.add_child(leaver)
+	await get_tree().physics_frame
+	controller._exit_portal.interact(leaver)
+	await get_tree().process_frame
+	_check(left.size() == 1,
+			"EXIT: interacting with the portal asks to leave the Zone "
+			+ "(%d request(s))" % left.size())
+	# The teardown `main.gd::_on_exit_zone` performs, in its order: the
+	# timing intent, then the Zone goes.
 	var timing: Dictionary = controller.playtime.to_intent(
 			str(zone_dict.get("zone_id", "")), true)
 	if not timing.is_empty():
 		BridgeClient.send_intent(timing)
+	controller.remove_child(leaver)
 	controller.queue_free()
+	await get_tree().process_frame
+	# AND THE FRAMES AFTER IT. The player is out of the tree and its
+	# world is gone; this is exactly where the crash was.
+	for _i in 12:
+		await get_tree().physics_frame
+	_check(is_instance_valid(leaver),
+			"EXIT: and the player survives the frames after the Zone "
+			+ "is torn down")
+	_check(leaver.camera_ray(3.0).is_empty(),
+			"EXIT: with its probe answering empty rather than reading a "
+			+ "world that is not there")
+	_check(str(BridgeClient.hub_mode()) != "",
+			"EXIT: and the campaign still reports a mode (%s)"
+			% str(BridgeClient.hub_mode()))
+	leaver.free()
 	await get_tree().process_frame
 	return true
 
