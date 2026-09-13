@@ -154,6 +154,37 @@ is chosen for the property under test.
    control. Whether the composer should find more room is topology
    tuning and is the bridge lane's.
 
+### BOUNDED 0.3 REPAIR BATCH — see `docs/BATCH_0_3_REPAIR_HANDOFF.md`
+
+Required traversal and activity feedback, from the first human playtest.
+No bridge contract moved; `MAX_VERTICAL_STEP` is unchanged and has no
+Python readers.
+
+**Repaired.** The body now implements the step-up its own movement law
+had only ever asserted, so a pedestal is walked rather than jumped —
+the treatment the generator already builds towers around, with cover
+(1.4 m), barrels (1.1 m) and anything the player is meant to SHOVE
+refused. The activity completion chime asked the tone bank for
+`secret_found` against a bank keyed `secret` and was therefore silent
+since it was written; failure had no listener at all; a counted hit made
+no sound; and the countdown that already existed sat on a label across
+the room. All four now reach the player, and a Python check refuses the
+next unresolvable tone name.
+
+**Covered.** The real exit portal is now taken rather than simulated —
+`integration_driver` admitted in a comment that it "never takes the real
+exit path", which is why the crash reached a green suite. And
+`godot-integration` now fails on a SCRIPT ERROR, which it never did:
+verified clean-0 / crash-2.
+
+**Open, and named rather than implied.** Descending a tread is still a
+fall — `floor_snap_length` is set and Godot drops the body anyway.
+Required-target reachability is UNMEASURED: the lattice flood-fill built
+for it called 12 of 15 Checks unreachable in a layout the owner cleared,
+so it was removed rather than tuned toward the known answer. That is
+direct evidence on the review's open question — a geometric flood-fill
+is not the cheaper decisive test.
+
 ### START HERE AFTER THE PLAYTEST
 
 **The record was corrected on 2026-09-13 after an independent review.**
