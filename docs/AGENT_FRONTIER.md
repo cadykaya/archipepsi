@@ -1111,7 +1111,13 @@ alone. Reconciled to edge-keyed `PLACED` / `NO_EVIDENCE` /
 `NO_CANDIDATE`, with MEASURED-vs-REPAIRED kept as diagnostic detail and
 `CANDIDATE_REJECTED` dropped for having no producer. A report keyed by
 something else is now REFUSED rather than read as an older payload,
-which is how the mismatch stayed silent. Prod's half is two lines; until
+which is how the mismatch stayed silent. The decoder had three further
+holes, each measured: the key guard refused only when NONE of the keys
+matched, so a room-keyed NO_CANDIDATE rode in beside a valid record;
+`or {}` read an empty list as absence; and a non-container raised
+TypeError out of the validator. Absent is a sentinel now, supplied must
+be a dict, every key must name a plug, **a supplied report must cover
+every plug**, and every record must validate. Prod's half is two lines; until
 it lands, absence means the check does not apply.
 
 **STALE PROPOSALS ARE CLOSED.** `proposal_id` on `zone_ready`, echoed on

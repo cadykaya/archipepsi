@@ -1628,14 +1628,36 @@ alongside `searched`. `CANDIDATE_REJECTED` is gone: nothing produced it,
 and a word with no producer is the mirror of the vocabulary-with-no-
 consumer this project keeps finding.
 
-**Three kinds of absence, kept apart.** *Absent* is a payload that
-predates the field: the existing anchor, support and clearance rules
-still govern acceptance, every older valid payload stays valid, and
-absence is **never** `NO_CANDIDATE`. *Present and malformed* — a record
-that is not a record, or an outcome outside the set — is refused, and
-must not masquerade as an older client. *A report keyed by something
-else* is refused loudly: that is precisely how the two shapes passed
-each other, every lookup missing and every plug reading as legacy.
+**ABSENT OR SUPPLIED, and supplied is the KEY being there — never its
+truthiness.** The decoder had three holes, each measured:
+
+* the key guard refused only when **none** of the supplied keys matched
+  a plug, so one valid edge-keyed record carried an unrelated
+  room-keyed `NO_CANDIDATE` in beside it — exactly the payload a
+  half-migrated engine sends;
+* `result.get("plug_placement") or {}` read an **empty list** as
+  absence;
+* a non-container reached `set()` and raised **`TypeError`** out of a
+  validator whose whole job is to turn bad evidence into a sentence.
+
+Absence is now a sentinel, not a value, so an explicit
+`"plug_placement": null` is supplied-and-unreadable rather than legacy.
+The rules, in order:
+
+1. **Absent** — the key is not there. The check does not apply; the
+   anchor, support and clearance rules still govern; every older valid
+   payload stays valid; absence is **never** `NO_CANDIDATE`.
+2. **Supplied must be a dictionary.** Anything else is refused.
+3. **Every supplied key names a plug of this Zone.** A stray key is
+   refused even beside correct ones.
+4. **A supplied report covers every plug.** *The coverage rule*: an
+   entry quietly missing would otherwise take the legacy path for that
+   one plug, in a client that plainly does send reports. Partial is not
+   older.
+5. **Every record and outcome validates**, and a malformed one never
+   masquerades as a client that never sent one.
+
+Nothing in this block raises; every shape becomes a refusal sentence.
 
 Support and clearance are both the engine's, and route accessibility is
 the existing physical journey work — not re-derived here.
