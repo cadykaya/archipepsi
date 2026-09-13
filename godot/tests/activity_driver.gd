@@ -723,7 +723,6 @@ func _target_room(count := 3, width := 20.0,
 		depth := 18.0) -> Dictionary:
 	var root := Node3D.new()
 	add_child(root)
-	root.global_position = MOUNT_PROBE_AT
 	# A FLOOR, because "shootable from a supported position" is the
 	# claim. Without one the probe player free-falls while it aims, and
 	# a shot taken from 1 m below where a player would stand is not
@@ -736,11 +735,39 @@ func _target_room(count := 3, width := 20.0,
 	ground.add_child(gshape)
 	root.add_child(ground)
 	ground.position = Vector3(0.0, -0.5, depth / 2.0)
+	# AND REAL SIDE WALLS. This probe used to be a floor and an
+	# activity, which was enough while mounting trusted the room's
+	# declared envelope for where a wall would be. It does not any more
+	# -- `_wall_behind` asks the geometry -- so a probe room with no
+	# walls correctly gets no mounts, and the fixture has to be a room
+	# rather than a plane.
+	for wall_side: float in [-1.0, 1.0]:
+		var wall := StaticBody3D.new()
+		var wshape := CollisionShape3D.new()
+		var wbox := BoxShape3D.new()
+		wbox.size = Vector3(0.5, 6.0, depth + 4.0)
+		wshape.shape = wbox
+		wall.add_child(wshape)
+		root.add_child(wall)
+		wall.position = Vector3(wall_side * (width / 2.0 + 0.25), 3.0,
+				depth / 2.0)
 	var built := Activities.build(root, {
 		"kind": "target_challenge", "element_count": count,
 		"time_limit": 0.0, "ordered": false, "requires": [],
 	}, "concrete_facility", width, depth, "room_mount", "mount_probe")
 	activities_built += 1
+	# MOVED AFTER COMPOSING, and that ordering is load bearing.
+	#
+	# `Activities.build` gathers the room's solids off the root it is
+	# handed and solves in ROOM space -- which is the same space, because
+	# production composes a chamber while its root is still at the origin
+	# and detached, and `ZoneBuilder` places it afterwards. This probe
+	# moved the root out to 600 m FIRST, so every gathered box was at
+	# x ~ 600 while every candidate spot was at x ~ 9: `can_place` could
+	# never find anything in the way and `_wall_behind` could never find
+	# a wall. Composing at the origin and moving after is what production
+	# does, and it is what makes this probe's answers mean anything.
+	root.global_position = MOUNT_PROBE_AT
 	return {"root": root, "built": built, "width": width, "depth": depth}
 
 func _test_targets_are_mounted_on_real_walls() -> void:

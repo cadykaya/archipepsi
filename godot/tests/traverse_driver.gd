@@ -946,6 +946,60 @@ func _the_way_back_from(space: PhysicsDirectSpaceState3D, at: Vector3,
 
 # --- 4. assembled joins -----------------------------------------------
 
+## WHICH ROOMS COULD HANG A TARGET, AND WHICH COULD NOT.
+##
+## Mounting is an OFFER that may be declined: it needs a real wall
+## behind the stalk, floor under the mount, and -- where the room
+## vouched its walkable surfaces -- one of them facing the target close
+## enough to shoot from. A room that answers no to any of those keeps
+## the older floor-plan placement.
+##
+## This is the census the decline rate is read from, by chamber type,
+## across the whole assembled Zone. It asserts only that the feature
+## reaches the real game at all; every decline is PRINTED, because an
+## unmounted target in a room that cannot support one is a documented
+## limitation and not a silent fallback.
+func _where_targets_mounted_and_where_they_did_not() -> void:
+	var mounted := {}
+	var declined := {}
+	var seen := 0
+	for node in _zone.find_children("*", "", true, false):
+		if not (node is ActivityElement):
+			continue
+		var element: ActivityElement = node
+		if element.trigger != ActivityElement.SHOT:
+			continue
+		seen += 1
+		var rid := _room_holding(element.global_position)
+		var kind := _room_type_of(rid)
+		if kind == "":
+			kind = "(outside any room's bounds)"
+		if bool(element.get_meta("mounted", false)):
+			mounted[kind] = int(mounted.get(kind, 0)) + 1
+		else:
+			var where: Array = declined.get(kind, [])
+			if not where.has(rid):
+				where.append(rid)
+			declined[kind] = where
+	var total := 0
+	for kind: Variant in mounted:
+		total += int(mounted[kind])
+	var by_kind: Array[String] = []
+	for kind: Variant in mounted:
+		by_kind.append("%s x%d" % [str(kind), int(mounted[kind])])
+	_note("%d SHOT elements in the Zone; %d mounted on a wall (%s)"
+			% [seen, total, "none" if by_kind.is_empty()
+			else ", ".join(by_kind)])
+	for kind: Variant in declined:
+		var rooms: Array = declined[kind]
+		_note("DECLINED in %s: %s -- kept the floor-plan placement "
+				% [str(kind), ", ".join(PackedStringArray(rooms))]
+				+ "because the room offers no wall with floor under it "
+				+ "and something to shoot from")
+	_check(seen == 0 or total > 0,
+			"wall mounting reaches the real Zone: %d of %d SHOT "
+			% [total, seen] + "elements found a wall")
+
 ## A SEALED SOCKET IS A WALL, AND THE DECLARATION SAYS WHICH ONES ARE.
 ##
 ## The previous batch flagged `c001/side_left` as a leak candidate on a
@@ -1258,6 +1312,7 @@ func _run() -> void:
 		await _the_exit_is_approached_and_addressable()
 		await _a_lower_check_is_a_destination_or_a_defect()
 		_every_sealed_door_is_solid()
+		_where_targets_mounted_and_where_they_did_not()
 		var joins := await _joins_are_walked_through()
 		await _a_bricked_up_join_refuses_the_walker(joins)
 	if _zone != null:

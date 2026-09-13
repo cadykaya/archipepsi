@@ -181,16 +181,20 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 		# A TARGET GOES ON THE WALL, and tries the other wall before it
 		# gives up on walls altogether.
 		#
-		# ONLY WHERE THE FLAT SOLVE ALREADY STANDS. A room that VOUCHED
-		# walkable surfaces did so because its floor plan is not its
-		# floor -- a `platform_path`'s bounds reach forty metres down
-		# into a kill pit -- and the wall at `width/2` of such a room is
-		# a wall over nothing. The first version of this mounted there
-		# anyway and `godot-zone-audit` caught it at once: six elements
-		# in `c006` with nothing to stand on under them, which is the
-		# exact defect `_best_surface` exists to prevent. Where a room
-		# declares surfaces, the surface solve is untouched.
-		if trigger == ActivityElement.SHOT and surface.is_empty():
+		# A ROOM THAT VOUCHED SURFACES IS NOT EXCLUDED, IT IS ASKED.
+		#
+		# It used to be excluded outright, because a `platform_path`'s
+		# bounds reach forty metres down and the wall at `width/2` is a
+		# wall over a kill pit -- `godot-zone-audit` caught the first
+		# version putting six elements in `c006` with nothing under
+		# them. That exclusion was the right call with no way to tell a
+		# real wall from a nominal one. There is one now, and a
+		# firing-position test to go with it, so the two questions that
+		# actually decide it are asked directly: is there a wall, and is
+		# there anywhere to shoot it from. A room that answers no to
+		# either still falls through to the surface solve, which is
+		# untouched.
+		if trigger == ActivityElement.SHOT:
 			var wall := _wall_spot(side, near + (far - near) * t, width,
 					depth, size, height, taken, solids)
 			if wall.is_empty():
@@ -291,8 +295,93 @@ static func _wall_spot(side: float, ideal_z: float, width: float,
 		var spot := Vector3(x, height, z)
 		if not can_place(spot, turned, height, taken, solids):
 			continue
+		# IS THERE ACTUALLY A WALL BEHIND THE STALK?
+		#
+		# The first version took `width / 2 - WALL_MARGIN` as the wall
+		# plane and never looked. That is the room's declared ENVELOPE,
+		# which is where a wall would be -- not evidence that one is.
+		# Every wall is built by `_box` and `_box` gives it a collision
+		# hull; `all_solid_boxes` reads hulls WITHOUT the architecture
+		# filter it applies to meshes, so the wall really is in `solids`
+		# and can be asked for.
+		if not _wall_behind(spot, side, size, solids):
+			continue
+		# AND FLOOR UNDER IT, whatever the room declared.
+		#
+		# `c006` is the authored Hall -- an arena, not a platform course,
+		# so nothing vouched surfaces for it -- and the wall probe found
+		# real geometry at its envelope while the floor stopped short of
+		# it. `godot-zone-audit` reported two of its four targets with
+		# nothing under them. A wall is only half of a mounting surface;
+		# the other half is somewhere for the person shooting it to be.
+		if not _floor_under(spot, height, solids):
+			continue
+		# AND SOMEWHERE TO SHOOT IT FROM. A mount on a real wall over a
+		# kill pit is a target nobody can address.
+		#
+		# MEASURED, NOT DECLARED. The first version asked the room's
+		# vouched `stand` patches, on the assumption that only a
+		# platform course vouches any -- and an arena vouches them too,
+		# so every arena target was refused by a rule reading a list it
+		# had misunderstood. Floor is floor: this asks the same solids
+		# the wall test asks.
+		if not _floor_in_front(spot, side, height, solids):
+			continue
 		return {"position": spot, "yaw": yaw, "size": turned}
 	return {}
+
+## Room architecture immediately behind a mounted target.
+##
+## A slab reaching from the stalk's tip outward, so what it asks is
+## "does this stalk end on something" rather than "is the envelope wide
+## enough". Deliberately shallow: a pillar is a mounting surface and a
+## wall is a mounting surface, and neither is the point -- what is
+## refused is a stalk ending in air.
+static func _wall_behind(spot: Vector3, side: float, size: Vector3,
+		solids: Array[AABB]) -> bool:
+	if solids.is_empty():
+		return false
+	var tip := spot.x + side * MOUNT_STALK
+	var reach := 0.9
+	var lo := minf(tip, tip + side * reach)
+	var box := AABB(
+			Vector3(lo, spot.y - size.y / 2.0, spot.z - size.x / 2.0),
+			Vector3(reach, size.y, size.x))
+	return ChamberBuilders.box_hits(box, solids)
+
+## Is there floor below a mount, within reach of the player who shoots it?
+##
+## A thin column under the target's own footprint, from just below it
+## down past the height the rules park it at. Thin on purpose: it must
+## not find the WALL the target is hanging on and call that a floor,
+## which is the mistake that makes a shelf over a pit look supported.
+static func _floor_under(spot: Vector3, height: float,
+		solids: Array[AABB]) -> bool:
+	if solids.is_empty():
+		return false
+	var drop := height + RoomAudit.GROUND_REACH
+	var column := AABB(
+			Vector3(spot.x - 0.15, spot.y - drop, spot.z - 0.15),
+			Vector3(0.3, drop - 0.1, 0.3))
+	return ChamberBuilders.box_hits(column, solids)
+
+## Somewhere in front of the target with floor under it.
+##
+## Sampled a few strides out into the room, at the same walking plane
+## the mount was found on. What it rules out is the case the queue named
+## by hand: a real wall over a kill pit, where the stalk lands on
+## something and the person shooting it cannot.
+##
+## The far sample is well inside the Static Pulse's forty metres. A shot
+## from across the room is legal and is not what a usable firing
+## position means.
+static func _floor_in_front(spot: Vector3, side: float, height: float,
+		solids: Array[AABB]) -> bool:
+	for out: float in [2.0, 3.5, 5.0, 7.0]:
+		var at := Vector3(spot.x - side * out, spot.y, spot.z)
+		if _floor_under(at, height, solids):
+			return true
+	return false
 
 ## The vouched surface with the most room left on it, or {} if the room
 ## offered none this element can legally sit on.
