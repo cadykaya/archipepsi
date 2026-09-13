@@ -262,6 +262,66 @@ the existing centre-line leak probe against THOSE, instead of against
 lone chambers, covers every join in the game — and would have caught
 this before a player saw it.
 
+## TESTED AND CLEARED: the exit portal is not stranded
+
+The owner, holding all 15 Checks: *"im like 70% certain that the exit is
+attached to the room in in right now, its just inaccessible."* Severity
+if true would have topped this page — an unreachable exit means a Zone
+cannot be completed and the campaign cannot advance. **So it was
+measured rather than argued, and it came back negative.**
+
+### What was measured
+
+A temporary probe built all five generated fixtures and sampled sixteen
+positions around each exit portal (eight bearings at 2 m and 3 m),
+asking `RoomAudit.player_stands_here` at each.
+
+```
+zone_01  5/16  ["0@2","0@3","45@3","180@2","180@3"]
+zone_02  5/16  ["90@2","90@3","270@2","270@3","315@3"]
+zone_03  5/16  ["0@2","0@3","180@2","180@3","225@3"]
+zone_04  5/16  ["0@2","0@3","45@3","180@2","180@3"]
+zone_05  5/16  ["90@2","90@3","135@3","270@2","270@3"]
+```
+
+Every portal has standable ground around it, and the pattern is the
+right one: standable on two OPPOSITE bearings — front and back — and not
+on the sides, which is a portal correctly set into a doorway. Five out
+of five.
+
+**A first version of this probe returned `false` for all five and was
+discarded before it was reported.** It had tested the portal's own
+origin, and `ExitPortal extends StaticBody3D` with a collider box
+centred at `(0, 2.0, 0)`, while `player_stands_here` runs its stance
+query with `collide_with_areas = false`. The portal was colliding with
+itself. A uniform 5/5 result across five different room layouts was the
+tell.
+
+### The likely explanation for what the owner saw
+
+The EXIT tracker reports a straight-line bearing and distance. "EXIT
+16m" through the wall the player is facing reads as inaccessible when
+there is no map to show the route around. **This is the map finding
+again, not a new defect.**
+
+### What survives, as a latent risk and not a defect
+
+`zone_builder` places the portal at a hardcoded offset —
+`portal.position = cursor + _rot(yaw, Vector3(0, 0, 6.5))` — and
+**nothing validates it.** `room_audit.gd` contains no portal checks at
+all: the audit that validates arrivals, return anchors, content spots
+and every aperture never looks at the exit.
+
+Five fixtures land it correctly. Nothing guarantees the sixth does, and
+this is the one object whose misplacement makes a Zone uncompletable.
+The `platform_path` builder already warns that "every consumer that
+treated its BOUNDS as a room laid content out over the void"; the portal
+is still such a consumer.
+
+**Cheap fix, worth taking:** the probe above, kept as a control. It is
+sixteen `player_stands_here` calls per Zone and it converts the most
+expensive possible failure from unmonitored to caught.
+
 ## FIFTH FINDING: a Metroidvania with no map, and a station that can never be repaired
 
 Owner, late in the session: *"im lost. i realize we have made a 3d
