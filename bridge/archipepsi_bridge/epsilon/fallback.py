@@ -122,7 +122,8 @@ def fallback_zone_attempt(request: ZoneGenerationRequest) -> tuple[dict, int]:
             seeded, locations, budget, request.unlocked_affordances,
             zone_index=n,
             catalog=request.catalog.get("room_shells", {}),
-            rules=request.catalog.get("room_shell_rules", {}))
+            rules=request.catalog.get("room_shell_rules", {}),
+            kinds=request.constraints.get("activity_kinds"))
         return {
             "schema_version": 7,
             "zone_id": request.zone_id,
@@ -230,7 +231,7 @@ def _content_room(rng, index: int, lean: bool, step: float,
 
 
 def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
-                     catalog=None, rules=None) -> list[dict]:
+                     catalog=None, rules=None, kinds=None) -> list[dict]:
     """Rooms enough to hold the Checks, then content enough to be a level.
 
     Two passes on purpose. The first places what the campaign REQUIRES --
@@ -373,7 +374,27 @@ def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
         current = sum(room_value(_AsChamber(c)) for c in chambers)
         return current + extra <= high
 
-    kinds = list(ACTIVITY_KINDS)
+    # COMPOSE FROM WHAT THIS REQUEST OFFERED, in this composer's own
+    # cycle order.
+    #
+    # `constraints["activity_kinds"]` has always been on the request and
+    # this provider always ignored it: the offer and the thing offered
+    # from were two spellings of one fact that nothing compared. They
+    # also disagree. The request lists the schema's order
+    # (`Z.ActivityKind.__args__`) and this module lists its own, and the
+    # picker is `kinds[(guard + len(acts)) % len(kinds)]` -- ORDER
+    # DECIDES WHICH FAMILY EACH SLOT GETS. Reading the request's list
+    # directly moved the played Zone's digest `fe2b014761fbb449` ->
+    # `d3f1025fedf2dff2` on a request that had narrowed nothing, which
+    # is a generation change smuggled in as a refactor.
+    #
+    # So the offer says WHICH families are permitted and this module
+    # keeps saying in what order it cycles them. Filtering the local
+    # order by the offered set leaves an un-narrowed request composing
+    # exactly what it composed before, digest included.
+    offered = set(kinds) if kinds else None
+    kinds = [k for k in ACTIVITY_KINDS
+             if offered is None or k in offered] or list(ACTIVITY_KINDS)
     ceiling = min(room_budget, room_high)
 
     #: How rich an ORDINARY room is allowed to get while there is still
