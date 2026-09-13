@@ -41,7 +41,7 @@ func _run() -> void:
 	# Everything a view transition dereferences without checking.
 	for field: String in ["world", "tones", "menu", "hud", "resource_pool",
 			"rule_runtime", "reveal", "inventory", "shop", "pause_menu",
-			"debug"]:
+			"debug", "station_panel", "nav"]:
 		_check(main.get(field) != null,
 				"boot() left '%s' null; anything that touches it crashes "
 				% field + "on the first transition")
@@ -71,6 +71,7 @@ func _run() -> void:
 	await _the_menu_is_actually_on_screen(main)
 	await _every_panel_opens_in_the_middle()
 	await _the_real_consumer_handles_an_exit(main)
+	await _the_travel_panel_reaches_the_real_consumers(main)
 	_finish()
 
 ## THE EXIT, HANDLED BY THE CONSUMER THAT ACTUALLY HANDLES IT.
@@ -117,6 +118,111 @@ func _the_real_consumer_handles_an_exit(main: Node) -> void:
 	_check(not is_instance_valid(zone)
 			or not (zone as Node).is_inside_tree(),
 			"and the Zone that was exited is gone from the world")
+
+## THE STATION PANEL, THROUGH main.gd's OWN WIRING.
+##
+## `godot-hud` drives the panel itself; this is the other half, and the
+## half a panel actually breaks in: does the changed interface still
+## reach the consumers that were already there. Nothing here calls a
+## handler by name that `main.gd` does not connect -- the signals are
+## connected exactly as `_to_zone` connects them, so a rename or a
+## dropped connection fails here rather than in somebody's session.
+func _the_travel_panel_reaches_the_real_consumers(main: Node) -> void:
+	var panel: CanvasLayer = main.get("station_panel")
+	if panel == null:
+		return
+	var zone := ZoneController.new()
+	zone.zone_id = "zone_panel_probe"
+	(main.get("world") as Node3D).add_child(zone)
+	main.set("zone", zone)
+	main.set("view", 2)                     # View.ZONE
+	zone.travel_panel_requested.connect(
+			Callable(main, "_on_travel_panel_requested"))
+	panel.warp_chosen.connect(Callable(main, "_on_station_warp_chosen"))
+	panel.return_to_hub_chosen.connect(Callable(main, "_on_return_to_hub"))
+	panel.closed.connect(Callable(main, "_update_modal"))
+	await get_tree().process_frame
+
+	# 1. A STATION ASKING REACHES THE SCREEN, and moves nobody.
+	zone.travel_panel_requested.emit("st:entrance", "ENTRANCE", [
+		{"id": "st:entrance", "label": "ENTRANCE", "here": true},
+		{"id": "st:hall", "label": "HALL", "here": false}])
+	await get_tree().process_frame
+	_check(panel.visible,
+			"a station asking for a destination opens the panel through "
+			+ "main.gd's own wiring")
+	_check(int(main.get("view")) == 2,
+			"and opening it does not leave the Zone (view %d)"
+			% int(main.get("view")))
+
+	# 2. IT HOLDS THE PLAYER, through the same named modal claim every
+	#    other panel uses -- so it cannot release somebody else's.
+	var body: Player = zone.player
+	if body != null:
+		_check(body.input_frozen,
+				"and the open panel holds the player (holds %s)"
+				% str(body.holds()))
+		body.hold("probe")
+		panel.close()
+		await get_tree().process_frame
+		_check(body.holds().has("probe"),
+				"and closing it releases only its OWN claim: another "
+				+ "holder's claim survives (holds %s)" % str(body.holds()))
+		body.release("probe")
+		await get_tree().process_frame
+
+	# 3. A CHOICE REACHES THE ZONE, once.
+	var moved: Array[String] = []
+	zone.station_warped.connect(
+			func(f: String, t: String) -> void: moved.append(f + "->" + t))
+	panel.open("st:entrance", "ENTRANCE", [
+		{"id": "st:entrance", "label": "ENTRANCE", "here": true},
+		{"id": "st:hall", "label": "HALL", "here": false}])
+	panel._choose("st:hall")
+	await get_tree().process_frame
+	_check(moved.size() == 1,
+			"a destination chosen on the panel reaches the Zone's warp "
+			+ "once (%s)" % str(moved))
+
+	# 4. AND A CHOICE AFTER THE ZONE IS GONE REACHES NOTHING. A panel
+	#    that outlived its Zone would hand a stale warp to a freed
+	#    controller.
+	moved.clear()
+	main.set("view", 1)                     # View.HUB
+	panel.open("st:entrance", "ENTRANCE", [
+		{"id": "st:hall", "label": "HALL", "here": false}])
+	panel._choose("st:hall")
+	await get_tree().process_frame
+	_check(moved.is_empty(),
+			"and a choice made after the Zone is left warps nobody (%s)"
+			% str(moved))
+
+	# 5. RETURN TO HUB IS THE PAUSE MENU'S OWN HANDLER. Same function,
+	#    so the resume path it already had is the resume path this has:
+	#    `leave_zone`, never `abandon_zone`.
+	main.set("view", 2)
+	BridgeClient.sent_intents.clear()
+	panel.open("st:entrance", "ENTRANCE", [
+		{"id": "st:entrance", "label": "ENTRANCE", "here": true}])
+	panel._go_home()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var kinds: Array[String] = []
+	for raw: Variant in BridgeClient.sent_intents:
+		kinds.append(str((raw as Dictionary).get("type", "")))
+	_check(kinds.has("leave_zone"),
+			"Return to Hub sends `leave_zone`, which is what keeps the "
+			+ "Zone where it is (%s)" % str(kinds))
+	_check(not kinds.has("abandon_zone"),
+			"and never `abandon_zone`, which would throw it away (%s)"
+			% str(kinds))
+	_check(int(main.get("view")) == 1,
+			"and it arrives in the Hub (view %d)" % int(main.get("view")))
+	_check(not panel.visible,
+			"and the panel is closed behind it")
+	if is_instance_valid(zone):
+		zone.queue_free()
+	await get_tree().process_frame
 
 ## The other thing nine green suites never checked: WHERE a control
 ## lands. The title screen shipped with its panel anchored so that its

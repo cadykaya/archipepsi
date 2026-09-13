@@ -15,6 +15,12 @@ signal exit_requested
 ## station's id, its label and the eligible destinations.
 signal travel_panel_requested(from_id: String, from_label: String,
 		options: Array)
+
+## A destination was chosen and taken. Announced rather than inferred:
+## `godot-boot` has to be able to see that the panel's choice reached
+## THIS controller, and reading the player's position cannot tell a warp
+## from a fall.
+signal station_warped(from_id: String, to_id: String)
 ## The bridge refused this Zone's layout; it is not safe to play.
 signal layout_refused(zone_id: String)
 ## The player moved into a different chamber's bounds — the rule engine's
@@ -854,6 +860,7 @@ func _on_station_panel_requested(from_id: String) -> void:
 ## station press used to take, so nothing about arriving changed.
 func warp_to(from_id: String, to_id: String) -> void:
 	_on_warp_requested(from_id, to_id)
+	station_warped.emit(from_id, to_id)
 
 ## The keys and the opened locks, for whoever is carrying progress out.
 func keys_held() -> Dictionary:
