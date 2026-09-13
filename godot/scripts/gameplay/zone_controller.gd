@@ -180,6 +180,21 @@ var _portal_was_locked := true
 var _quiet_time := 0.0
 var _last_claimed := -1
 var _current_chamber := -1
+
+## WHICH ROOMS THE PLAYER HAS ACTUALLY BEEN IN, this session.
+##
+## Not a map and not persisted. `_track_chamber` already decides which
+## chamber the body is in every frame; this remembers the answers so an
+## unlock message can name a place the player has SEEN without naming
+## one they have not. `docs/AGENT_FRONTIER.md` has no exploration
+## authority and this does not become one -- on a reload it starts
+## empty, and an unlock message then says "somewhere in this Zone"
+## rather than inventing a room the player may not remember.
+var _rooms_entered := {}
+
+## Locks opened since the last time anybody asked. `_on_lock_opened`
+## fills it; `_on_key_collected` drains it into ONE message.
+var _opened_since := []
 ## Which chamber the in-flight encounter is being timed for, latched on
 ## the first blow so walking next door does not retarget the count. -1
 ## when no fight is running.
@@ -325,6 +340,10 @@ func setup(zone_dict: Dictionary) -> void:
 		if locks_carried.has("%s/%s" % [lock.room_id, lock.socket_id]):
 			lock.open()
 	_open_what_the_keys_allow()
+	# A RESUME IS NOT AN EVENT. Everything opened above was opened by a
+	# key the player already had, so announcing it would greet a
+	# returning player with a list of doors they opened last night.
+	_opened_since.clear()
 
 	player = Player.create()
 	add_child(player)
@@ -585,10 +604,10 @@ func _on_key_collected(key_id: String) -> void:
 	_keys_held[key_id] = true
 	BridgeClient.send_intent({"type": "key_collected",
 			"zone_id": zone_id, "key_id": key_id})
-	if hud != null:
-		hud.toast("%s KEY" % key_id.to_upper(),
-				ZoneKey.tint(key_id), 3.0)
+	_opened_since.clear()
 	_open_what_the_keys_allow()
+	if hud != null:
+		hud.toast(_what_that_key_did(key_id), ZoneKey.tint(key_id), 4.5)
 
 ## Every lock the held keys AND capabilities admit, opened at once.
 ##
@@ -626,10 +645,76 @@ func _on_lock_opened(room: String, socket: String) -> void:
 	if _locks_open.has(ref):
 		return
 	_locks_open[ref] = true
+	_opened_since.append(room)
 	BridgeClient.send_intent({"type": "lock_opened",
 			"zone_id": zone_id, "room_id": room, "socket_id": socket})
-	if hud != null:
-		hud.toast("UNLOCKED", Color(0.6, 1.0, 0.7), 2.5)
+	# NO TOAST HERE, deliberately. This fires once per LOCK, and one key
+	# opening three doors sent three identical "UNLOCKED" cards with no
+	# room on any of them -- which is how the owner finished a playtest
+	# holding three keys and reporting they had "found no door that uses
+	# them". The message is assembled once, by `_on_key_collected`, out
+	# of what this collected.
+
+## The room id of a chamber index, for the entered-rooms set.
+func _room_id_of(index: int) -> String:
+	if index < 0 or index >= _chambers.size():
+		return ""
+	var chamber: Dictionary = _chambers[index].get("chamber", {})
+	return str(chamber.get("id", ""))
+
+## HOW TO NAME A PLACE THE PLAYER HAS BEEN, and how not to name one
+## they have not.
+##
+## A room id is not a label -- the owner read `c018` off a return pad
+## and asked what c018 was -- so the chamber's own `type` carries the
+## meaning and the id stays for precision. A room the player has NOT
+## entered gets neither: naming it would hand out the shape of a route
+## they have not found, and this feature is worth less than that.
+func _room_label(room_id: String) -> String:
+	if room_id == "" or not _rooms_entered.has(room_id):
+		return ""
+	for record: Dictionary in _chambers:
+		var chamber: Dictionary = record.get("chamber", {})
+		if str(chamber.get("id", "")) != room_id:
+			continue
+		var kind := str(chamber.get("type", "")).replace("_", " ")
+		return "the %s (%s)" % [kind, room_id] if kind != "" else room_id
+	return room_id
+
+## WHAT THAT KEY ACTUALLY DID, in one line.
+##
+## Four truthful answers and no fifth. A key that opened nothing says
+## so, and says WHICH of the two nothings it was, because "no door here
+## answers to this" and "the door it opens is already open" send a
+## player to two different places.
+func _what_that_key_did(key_id: String) -> String:
+	var name := "%s KEY" % key_id.to_upper()
+	if _opened_since.is_empty():
+		var here := 0
+		for raw: Variant in _zone_locks:
+			if is_instance_valid(raw) and (raw as LockedDoor).key_id \
+					== key_id:
+				here += 1
+		if here == 0:
+			return "%s   nothing in this Zone is locked with it" % name
+		return "%s   its door here is already open" % name
+	# One room may hold more than one lock this key opened; the player
+	# cares about PLACES, not about socket count.
+	var named: Array[String] = []
+	var unseen := 0
+	for room: Variant in _opened_since:
+		var label := _room_label(str(room))
+		if label == "":
+			unseen += 1
+		elif not named.has(label):
+			named.append(label)
+	if named.is_empty():
+		return "%s   opened %d door%s elsewhere in this Zone" \
+				% [name, unseen, "" if unseen == 1 else "s"]
+	var where := ", ".join(named)
+	if unseen > 0:
+		where += " and %d elsewhere" % unseen
+	return "%s   opened the way in %s" % [name, where]
 
 ## Gates the player cannot open yet, as "room/socket" -> what is missing.
 ##
@@ -1236,6 +1321,7 @@ func _track_chamber() -> void:
 		if bounds.has_point(player.global_position):
 			if index != _current_chamber:
 				_current_chamber = index
+				_rooms_entered[_room_id_of(index)] = true
 				playtime.enter_chamber(index)
 				playtime.enter_chamber_activities(index)
 				chamber_entered.emit(index)

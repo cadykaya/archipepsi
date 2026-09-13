@@ -60,6 +60,9 @@ func _run() -> void:
 	await _test_a_plate_that_releases_breaks_the_circuit()
 	await _test_a_counted_hit_and_a_failure_reach_a_consumer()
 	await _test_a_completion_reaches_its_presentation_consumer()
+	await _test_a_key_says_what_it_opened()
+	await _test_a_key_that_opened_nothing_says_which_nothing()
+	await _test_a_resumed_zone_re_announces_no_old_unlock()
 	await _test_a_plate_holds_long_enough_to_reach_the_next()
 	await _test_completion_sends_one_local_reward_and_nothing_else()
 	await _test_solving_it_twice_is_one_reward()
@@ -234,6 +237,114 @@ func _test_a_completion_reaches_its_presentation_consumer() -> void:
 			"and asks for a name the bank actually defines -- "
 			+ "`secret_found` is an `epsilon_voice` line id and was "
 			+ "silent here (%s)" % str(bank.heard))
+	zone.queue_free()
+	await get_tree().process_frame
+
+
+## WHAT A KEY ACTUALLY DID, IN ONE LINE.
+##
+## The playtest ended with the owner holding three keys and reporting
+## they had "found no door that uses them". Both halves of the reason
+## were in this code: the pickup toast said `RED KEY` and nothing else,
+## and every lock that opened sent its OWN `UNLOCKED` card with no room
+## on it -- so one key opening three doors was four cards, none of which
+## named a place.
+##
+## `zone_controller` no longer toasts per lock. One message is assembled
+## from what opened, and this is what says so.
+func _key_zone(rooms: Array) -> ZoneController:
+	var hud := RecordingHud.new()
+	var zone := ZoneController.new()
+	add_child(zone)
+	zone.hud = hud
+	zone.add_child(hud)
+	# The chamber records the labeller reads. Built here rather than by
+	# a whole Zone because the question is what the message SAYS, and a
+	# generated Zone would decide the room names for us.
+	var chambers: Array = []
+	for entry: Variant in rooms:
+		var room: Dictionary = entry
+		chambers.append({"chamber": {"id": room["id"],
+				"type": room["type"]}})
+	zone.set("_chambers", chambers)
+	return zone
+
+func _lock_in(zone: ZoneController, room: String, key: String) -> void:
+	var lock := LockedDoor.create(room, "entry", key, "gold", 3.0, 3.0)
+	zone.add_child(lock)
+	lock.opened.connect(Callable(zone, "_on_lock_opened"))
+	var locks: Array = zone.get("_zone_locks")
+	locks.append(lock)
+	zone.set("_zone_locks", locks)
+
+func _test_a_key_says_what_it_opened() -> void:
+	var zone := _key_zone([{"id": "c004", "type": "arena"},
+			{"id": "c009", "type": "treasure_room"}])
+	var hud: RecordingHud = zone.hud
+	_lock_in(zone, "c004", "red")
+	_lock_in(zone, "c009", "red")
+	# The player has BEEN to c004 and not to c009.
+	zone.set("_rooms_entered", {"c004": true})
+	zone._on_key_collected("red")
+	_check(hud.toasts.size() == 1,
+			"one key that opens two doors is ONE message, not three "
+			+ "(%d: %s)" % [hud.toasts.size(), str(hud.toasts)])
+	var said: String = hud.toasts[0] if not hud.toasts.is_empty() else ""
+	_check(said.contains("the arena (c004)"),
+			"and it names the room the player has been in, by what the "
+			+ "room IS and not only by its id (%s)" % said)
+	_check(not said.contains("c009")
+			and not said.contains("treasure"),
+			"and never names the room they have NOT been in -- an "
+			+ "unlock message is not a map (%s)" % said)
+	_check(said.contains("1 elsewhere"),
+			"but does say there is one, so the count is still true (%s)"
+			% said)
+	zone.queue_free()
+	await get_tree().process_frame
+
+func _test_a_key_that_opened_nothing_says_which_nothing() -> void:
+	# NOTHING IN THIS ZONE ANSWERS TO IT.
+	var bare := _key_zone([{"id": "c001", "type": "corridor"}])
+	var bare_hud: RecordingHud = bare.hud
+	bare._on_key_collected("gold")
+	_check(not bare_hud.toasts.is_empty()
+			and bare_hud.toasts[0].contains("nothing in this Zone"),
+			"a key no lock here wants says so (%s)" % str(bare_hud.toasts))
+	bare.queue_free()
+	# AND ITS DOOR IS ALREADY OPEN, which sends a player somewhere else
+	# entirely and so may not share a message with the case above.
+	var done := _key_zone([{"id": "c002", "type": "arena"}])
+	var done_hud: RecordingHud = done.hud
+	_lock_in(done, "c002", "gold")
+	var locks: Array = done.get("_zone_locks")
+	(locks[0] as LockedDoor).open()
+	done.set("_opened_since", [])
+	done._on_key_collected("gold")
+	_check(not done_hud.toasts.is_empty()
+			and done_hud.toasts[0].contains("already open"),
+			"and a key whose door is already open says THAT instead "
+			+ "(%s)" % str(done_hud.toasts))
+	done.queue_free()
+	await get_tree().process_frame
+
+func _test_a_resumed_zone_re_announces_no_old_unlock() -> void:
+	## A LOAD IS NOT AN EVENT. Restoring a campaign opens every lock the
+	## carried keys allow, and each of those would have sent a card --
+	## greeting a returning player with a list of doors they opened last
+	## night. `setup` clears the batch after the restore for this reason.
+	var zone := _key_zone([{"id": "c004", "type": "arena"}])
+	var hud: RecordingHud = zone.hud
+	_lock_in(zone, "c004", "red")
+	var locks: Array = zone.get("_zone_locks")
+	(locks[0] as LockedDoor).open()          # as a restore would
+	_check(hud.toasts.is_empty(),
+			"a lock opening on its own reaches no screen: the message "
+			+ "belongs to the pickup (%s)" % str(hud.toasts))
+	var pending: Array = zone.get("_opened_since")
+	_check(pending.size() == 1,
+			"but it IS recorded, so a pickup can report it (%s)"
+			% str(pending))
 	zone.queue_free()
 	await get_tree().process_frame
 
