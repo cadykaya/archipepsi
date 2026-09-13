@@ -191,6 +191,13 @@ func _run() -> void:
 		if eyed.size() >= 3:
 			break
 
+	# THE NAVIGATION-SCHEMATIC PROTOTYPE, photographed so it can be
+	# JUDGED. It is review-only and nothing in the game reads it; what
+	# the owner needs in order to decide anything about a map is a
+	# picture of what the existing facts can actually draw.
+	await _shoot_the_schematic(zone as Dictionary, room_bounds)
+	shot += 1
+
 	print("  wrote %d shots to %s"
 			% [shot, ProjectSettings.globalize_path(OUT_DIR)])
 	print("GODOT ZONE SHOTS OK")
@@ -333,6 +340,34 @@ func _shoot_at_eye_height(camera: Camera3D, runtime: ActivityRuntime,
 	print("    %s  (eye height %.2f m, %.1f m from the subject)"
 			% [name, Constants.PLAYER_EYE_HEIGHT,
 			eye.distance_to(centre)])
+
+## The schematic, with a PLAUSIBLE WALK behind it.
+##
+## Six rooms along the spine, which is roughly where the owner got to
+## before they said they were lost. Chosen rather than generated: the
+## question is what the panel looks like part-way through a Zone, and a
+## fully-explored one would not answer it.
+func _shoot_the_schematic(zone: Dictionary, room_bounds: Dictionary) -> void:
+	var nav := NavSchematic.new()
+	add_child(nav)
+	var walked := {}
+	var ids: Array = room_bounds.keys()
+	ids.sort()
+	for i in mini(6, ids.size()):
+		walked[str(ids[i])] = true
+	var here := str(ids[mini(5, ids.size() - 1)]) if not ids.is_empty() \
+			else ""
+	nav.visible = true
+	nav.show_zone(walked, room_bounds, zone.get("edges", []), {},
+			{"st:entrance": true}, here)
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	image.save_png(ProjectSettings.globalize_path(
+			"%s/nav_schematic_prototype.png" % OUT_DIR))
+	print("    nav_schematic_prototype  (%d of %d rooms walked)"
+			% [walked.size(), room_bounds.size()])
+	nav.queue_free()
 
 ## One element, close enough to judge its outline.
 func _close_up(camera: Camera3D, element: ActivityElement, name: String,

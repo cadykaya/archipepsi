@@ -53,6 +53,7 @@ func _ready() -> void:
 	_pressure_valve()
 	_archive_provenance()
 	await _the_travel_panel()
+	_the_navigation_schematic()
 
 	if failures == 0:
 		print("GODOT HUD TESTS OK")
@@ -152,6 +153,56 @@ func _the_travel_panel() -> void:
 			"Return to Hub fired %d times for one press" % home.size())
 	panel.queue_free()
 	await get_tree().process_frame
+
+# --- the navigation-schematic prototype -----------------------------------
+
+## "I'M LOST. I REALIZE WE HAVE MADE A 3D METROIDVANIA WITH NO MAP."
+##
+## The owner is right and the answer is a design decision they have not
+## made. `NavSchematic` is the smallest thing that can be LOOKED AT
+## instead: review-only, on the F3/F4 debug route, and nothing in the
+## game reads it.
+##
+## The picture is for the owner to judge. What is asserted here is the
+## one rule that makes it safe to look at at all -- it can only ever
+## show a room the player has walked, and only ever a link between two
+## of them. A prototype that leaked the shape of an unfound route would
+## be the map question answered badly rather than left open.
+func _the_navigation_schematic() -> void:
+	var bounds := {
+		"c001": AABB(Vector3(0, 0, 0), Vector3(10, 4, 10)),
+		"c002": AABB(Vector3(20, 0, 0), Vector3(10, 4, 10)),
+		"c003": AABB(Vector3(40, 0, 0), Vector3(10, 4, 10)),
+	}
+	var edges: Array = [
+		{"edge_id": "e1", "room_a": "c001", "room_b": "c002",
+			"realization": "JOINED"},
+		{"edge_id": "e2", "room_a": "c002", "room_b": "c003",
+			"realization": "JOINED"},
+		{"edge_id": "e3", "room_a": "c001", "room_b": "c003",
+			"realization": "DOOR_ONLY"},
+	]
+	var walked := NavSchematic.visible_rooms({"c001": true, "c002": true},
+			bounds)
+	var want: Array[String] = ["c001", "c002"]
+	_check(walked == want,
+			"the schematic shows %s, and c003 has not been walked"
+			% str(walked))
+	var links := NavSchematic.visible_links(edges, walked)
+	_check(links.size() == 1 and (links[0] as Array) == ["c001", "c002"],
+			"the schematic drew %s: a link with an unwalked end is the "
+			% str(links) + "shape of a route the player has not found")
+	# A ROOM THE LAYOUT CANNOT PLACE IS NOT ON IT EITHER, so a stale id
+	# cannot put a dot at the origin.
+	var stale := NavSchematic.visible_rooms(
+			{"c001": true, "c099": true}, bounds)
+	var only: Array[String] = ["c001"]
+	_check(stale == only,
+			"a room with no bounds was placed anyway: %s" % str(stale))
+	# AND NOTHING WALKED IS NOTHING SHOWN, which is what a reload gives
+	# it: the entered set is session-only by construction.
+	_check(NavSchematic.visible_rooms({}, bounds).is_empty(),
+			"an empty session drew rooms")
 
 # --- §7.1: the safe palette, held to numbers ------------------------------
 

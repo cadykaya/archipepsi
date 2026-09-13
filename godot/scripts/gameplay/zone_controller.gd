@@ -658,6 +658,17 @@ func _on_lock_opened(room: String, socket: String) -> void:
 	# them". The message is assembled once, by `_on_key_collected`, out
 	# of what this collected.
 
+## WHICH ROOMS HAVE BEEN WALKED, for a reader that is not this file.
+##
+## A copy, so nothing outside can grow the set. Session-only by
+## construction: `_rooms_entered` starts empty on every `setup`.
+func rooms_entered() -> Dictionary:
+	return _rooms_entered.duplicate()
+
+## Which room the body is in right now, or "".
+func current_room() -> String:
+	return _room_id_of(_current_chamber)
+
 ## The room id of a chamber index, for the entered-rooms set.
 func _room_id_of(index: int) -> String:
 	if index < 0 or index >= _chambers.size():

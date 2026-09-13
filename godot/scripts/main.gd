@@ -17,6 +17,9 @@ var shop: ShopUI
 var station_panel: StationPanel
 var pause_menu: PauseMenu
 var debug: DebugOverlay
+## F5, review-only. See `nav_schematic.gd`: not a map feature, and
+## nothing in the game reads it.
+var nav: NavSchematic
 var tones: Tones
 
 var _entering_zone := false
@@ -225,6 +228,8 @@ func boot() -> void:
 	add_child(station_panel)
 	debug = DebugOverlay.new()
 	add_child(debug)
+	nav = NavSchematic.new()
+	add_child(nav)
 
 	menu.connect_pressed.connect(_on_menu_connect)
 	menu.mock_pressed.connect(_on_menu_mock)
@@ -275,6 +280,7 @@ func _on_menu_mock() -> void:
 func _on_snapshot(_snapshot: Dictionary) -> void:
 	menu.refresh()
 	debug.refresh()
+	_refresh_nav()
 	_refresh_banner()
 	var mode := BridgeClient.hub_mode()
 	match view:
@@ -742,6 +748,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		debug.toggle()
 	if event.is_action_pressed("activity_labels"):
 		_toggle_activity_labels()
+	if event.is_action_pressed("nav_schematic"):
+		nav.toggle()
+		_refresh_nav()
 	if view == View.MENU:
 		return
 	if event.is_action_pressed("pause"):
@@ -800,6 +809,19 @@ func _highlighted_slot() -> String:
 	if hub != null and hub.player != null:
 		return hub.player.highlighted_slot
 	return "echo_a"
+
+## Hand the schematic the facts it draws. Read, never stored: every one
+## of these is owned by `ZoneController` and this takes a copy for one
+## frame of drawing.
+func _refresh_nav() -> void:
+	if nav == null or not nav.visible:
+		return
+	if view != View.ZONE or zone == null or not is_instance_valid(zone):
+		nav.show_zone({}, {}, [], {}, {}, "")
+		return
+	nav.show_zone(zone.rooms_entered(), zone.room_bounds,
+			zone.zone.get("edges", []), zone.gates_not_yet_open(),
+			zone.stations_reached(), zone.current_room())
 
 func _update_modal() -> void:
 	var modal: bool = pause_menu.visible or inventory.visible \
