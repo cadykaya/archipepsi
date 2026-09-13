@@ -370,11 +370,21 @@ game is built on a convention whose instrument it has never shipped.
 
 ### The three unused keys are the same finding
 
-Keys do not auto-open locks — the save carries them separately (`the
-save carries the key 'blue'` / `the save carries the opened lock
-'c005/side_right'`) and opened doors stay open. So three keys means
-three findable doors exist. The player simply has no instrument capable
-of finding them. Not a key bug; the map finding again.
+**Corrected 2026-09-13 (Codex review, verified).** An earlier revision
+of this passage said keys do NOT auto-open locks, reasoning from keys
+and opened locks occupying separate save fields, and told the owner
+three keys meant three closed doors were waiting. **That was wrong and
+the reassurance was unfounded.** `ZoneController._open_what_the_keys_
+allow()` is called immediately on pickup (and again on load), and
+matching locks are asked to open.
+
+So a door may already have changed before the player returns to look at
+it. **This strengthens the navigation finding rather than softening
+it:** the player needs to learn WHAT CHANGED, not merely that a key
+counter went up. An acknowledgement naming the door that opened, tied to
+a place already discovered, is the shape of the gap — the automatic
+opening is present in the controller; how it should be presented is a
+design question and is not decided here.
 
 ## FOURTH FINDING: nothing checks that a `pressure_routing` route exists
 
@@ -411,9 +421,15 @@ narrower than the retracted one and it is the one the evidence supports.
 The owner called an earlier two-pad room impossible. Two pads on a 28 m
 budget should be trivial, which points at finding 2 rather than at
 placement: **the only signal that a plate is still holding is a glow
-energy change** (`SET_ENERGY` 3.2 against `IDLE_ENERGY` 0.9). No sound,
-no countdown, no held-state readout. A player steps off, nothing says
-the plate is still down, and they reasonably conclude it released.
+energy change** (`SET_ENERGY` 3.2 against `IDLE_ENERGY` 0.9), with no
+sound and no per-plate readout of the hold remaining. A player steps
+off, nothing says the plate is still down, and they reasonably conclude
+it released.
+
+*(The ACTIVITY's countdown does exist and is sent to its label — see
+finding 3 as corrected. What is absent is a signal for the individual
+plate's four-second hold, which is the state the player was actually
+reasoning about.)*
 
 That is the cost of the silent-activity finding stated properly: not
 "the room lacked polish" but **"the room was solvable and the game hid
@@ -473,223 +489,6 @@ Structural note: dropping both leaves two families, and
 already cut the list to "primitives that actually exist". Note also that
 `STAND` is used by `pressure_routing` alone, so cutting the family
 without keeping the trigger would orphan it.
-
-## FIFTH FINDING: a Metroidvania with no map, and a station that can never be repaired
-
-Owner, late in the session: *"im lost. i realize we have made a 3d
-metroidvania with no map. i have 3 keys but ive found no door that uses
-them [...] im at another pressure pads room thats impossible so i cant
-warp back but also its the end of a branch and has no warp back, this
-makes me as the player think there is more to this room."*
-
-### The compound soft-lock
-
-Two findings on this page combine into something neither shows alone:
-
-* `zone_builder` gives a room with ANY activities a station created
-  **broken** (`rid if puzzled else ""`).
-* `zone_controller` repairs that station **only** when that room's
-  activity is solved.
-* a `pressure_routing` room whose pads exceed the 28 m route budget
-  (finding 4, as corrected) has **no solution**.
-
-Therefore a room whose activity cannot be completed holds a save point
-that can **never** come online, and the Zone's warp network is
-permanently incomplete. Not a movement trap — the player can walk back
-out the way they came — but a permanent false promise. **Conditional on
-the generated layout, not universal** — which makes it harder to find,
-not less real.
-
-**The damage is the promise, and the owner named it precisely.** A
-broken station tells the player there is more here. An unsolvable puzzle
-makes that a claim the game can never honour, and a conscientious player
-correctly refuses to leave. An unsolvable activity does not merely waste
-a puzzle; **it strands the player against a lie.**
-
-### There is no map
-
-Confirmed: no minimap, no compass, nothing in `hud.gd`. The only
-wayfinding in the game is the single CHECK tracker with a bearing and a
-distance.
-
-And the game is structurally a Metroidvania: local keys, colour-coded
-locks (`BRANCH_COLOURS`), branches off a spine, warp stations to
-backtrack between, dead ends that send the player home. **Every
-structural element of the genre, and none of the supporting UI.**
-
-That is the diagnosis for "I'm lost." The Zones are not confusing; the
-game is built on a convention whose instrument it has never shipped.
-
-### The three unused keys are the same finding
-
-Keys do not auto-open locks — the save carries them separately (`the
-save carries the key 'blue'` / `the save carries the opened lock
-'c005/side_right'`) and opened doors stay open. So three keys means
-three findable doors exist. The player simply has no instrument capable
-of finding them. Not a key bug; the map finding again.
-
-## FOURTH FINDING: nothing checks that a `pressure_routing` route exists
-
-**Corrected.** An earlier revision of this page claimed the family was
-"unsolvable by construction". That was wrong, it reached the frontier
-head, and it is retracted here in full. The error: the owner said "this
-is impossible" and this lane converted a player's experience into a
-mechanical claim without reading the mechanism — the same mistake as the
-retracted hazard drums, twice in one session.
-
-**Plates linger.** `ActivityElement._on_body_exited` sets
-`_hold_left = Constants.PLATE_HOLD_SECONDS`, and `PLATE_HOLD_SECONDS`
-is `4.0`. Stepping off starts a four-second timer, not an instant
-release. At `WALK_SPEED = 7.0` that is a **28 metre travel budget**, and
-`pressure_routing` is exactly what its name says: a ROUTING puzzle.
-Success needs every plate set at once, so the whole path from leaving
-the first plate to standing on the last must fit inside four seconds.
-
-### The actual defect
-
-**Solvability is a function of pad layout against that 28 m budget, and
-nothing checks which layout was generated.** Five pads about 7 m apart
-is tight and fair. Five pads scattered across a large arena is sixty
-metres of walking and cannot be done. `activities._spot_on_surface`
-places elements to avoid overlapping each other and has no notion of a
-route between them, or of a time budget.
-
-This stays in the same family as the undeclared capability gate:
-**content validated as PLACED and never as COMPLETABLE.** The claim is
-narrower than the retracted one and it is the one the evidence supports.
-
-### The two-pad room was probably legibility, not layout
-
-The owner called an earlier two-pad room impossible. Two pads on a 28 m
-budget should be trivial, which points at finding 2 rather than at
-placement: **the only signal that a plate is still holding is a glow
-energy change** (`SET_ENERGY` 3.2 against `IDLE_ENERGY` 0.9). No sound,
-no countdown, no held-state readout. A player steps off, nothing says
-the plate is still down, and they reasonably conclude it released.
-
-That is the cost of the silent-activity finding stated properly: not
-"the room lacked polish" but **"the room was solvable and the game hid
-it."**
-
-### Owner decision, recorded
-
-Scrap `timed_run` and `pressure_routing`; keep the pressure plate as a
-button that does something.
-
-**Worth re-deciding with the corrected facts.** `pressure_routing` is a
-coherent design — a route puzzle against a timer — that the player could
-not read because nothing reports plate state or remaining time. Whether
-it survives is the owner's call, but it should be made against a working
-version rather than an illegible one. `timed_run` is unaffected by this
-correction.
-
-Noted either way: dropping both leaves two families, and
-`switch_sequence` is the hardcoded fallback
-(`RULES.get(kind, RULES["switch_sequence"])`), so nothing breaks
-structurally. CS7 already cut the list to "primitives that actually
-exist".
-
-**The keep is a real feature and the second request for it.** A
-`STAND`-triggered element that gates the reveal of another is the
-inter-element dependency the owner sketched two rooms earlier.
-
-## FIFTH FINDING: a Metroidvania with no map, and a station that can never be repaired
-
-Owner, late in the session: *"im lost. i realize we have made a 3d
-metroidvania with no map. i have 3 keys but ive found no door that uses
-them [...] im at another pressure pads room thats impossible so i cant
-warp back but also its the end of a branch and has no warp back, this
-makes me as the player think there is more to this room."*
-
-### The compound soft-lock
-
-Two findings on this page combine into something neither shows alone:
-
-* `zone_builder` gives a room with ANY activities a station created
-  **broken** (`rid if puzzled else ""`).
-* `zone_controller` repairs that station **only** when that room's
-  activity is solved.
-* `pressure_routing` with more than one element has **no solution**.
-
-Therefore a room whose activity is `pressure_routing` holds a save point
-that can **never** come online, and the Zone's warp network is
-permanently incomplete. Not a movement trap — the player can walk back
-out the way they came — but a permanent false promise.
-
-**The damage is the promise, and the owner named it precisely.** A
-broken station tells the player there is more here. An unsolvable puzzle
-makes that a claim the game can never honour, and a conscientious player
-correctly refuses to leave. An unsolvable activity does not merely waste
-a puzzle; **it strands the player against a lie.**
-
-### There is no map
-
-Confirmed: no minimap, no compass, nothing in `hud.gd`. The only
-wayfinding in the game is the single CHECK tracker with a bearing and a
-distance.
-
-And the game is structurally a Metroidvania: local keys, colour-coded
-locks (`BRANCH_COLOURS`), branches off a spine, warp stations to
-backtrack between, dead ends that send the player home. **Every
-structural element of the genre, and none of the supporting UI.**
-
-That is the diagnosis for "I'm lost." The Zones are not confusing; the
-game is built on a convention whose instrument it has never shipped.
-
-### The three unused keys are the same finding
-
-Keys do not auto-open locks — the save carries them separately (`the
-save carries the key 'blue'` / `the save carries the opened lock
-'c005/side_right'`) and opened doors stay open. So three keys means
-three findable doors exist. The player simply has no instrument capable
-of finding them. Not a key bug; the map finding again.
-
-## FOURTH FINDING: `pressure_routing` is unsolvable by construction
-
-Owner, on a room labelled "PRESSURE ROUTING / hold all 2 pads at once":
-*"ok this is impossible."* **Literally, not figuratively.** Three facts
-combine:
-
-1. `pressure_routing` is the one family with `simultaneous: true`, and
-   the rules table spells out what that means: "simultaneous success
-   needs every element set AT ONCE, so an element releasing is a failure
-   rather than nothing."
-2. **Only the player can press a plate.**
-   `ActivityElement._on_body_entered` gates on
-   `body.is_in_group("player")`. No crate, no enemy, no droppable
-   object — there is exactly one thing in the game with weight.
-3. Placement **deliberately** separates elements:
-   `activities._spot_on_surface` avoids `taken` regions, so two pads are
-   never adjacent.
-
-One body, two pads that must be held in the same instant, placed apart
-on purpose, and nothing else in the world can hold one down. The family
-is unsolvable whenever it appears with more than one element, which is
-every time it appears at all.
-
-**This belongs beside the undeclared capability gate, not beside the
-taste notes.** Same shape: content validated as PLACED and never as
-COMPLETABLE. Nothing in the engine or the bridge asks whether a
-generated puzzle has a solution.
-
-### Owner decision, recorded
-
-Scrap `timed_run` and `pressure_routing`; keep the pressure plate as a
-button that does something.
-
-Noted for whoever executes it: this leaves two families, and
-`switch_sequence` is the hardcoded fallback
-(`RULES.get(kind, RULES["switch_sequence"])`), so nothing breaks
-structurally. But CS7 was the batch that cut the family list down to
-"primitives that actually exist", and this halves it again — worth
-confirming deliberately rather than on the back of one impossible room.
-
-**The keep is a real feature, and it is the second request for it.** "A
-pressure plate as a button that does something" is `switch_sequence`'s
-structure with a `STAND` trigger rather than `TOUCH` — a plate that
-opens the wall hiding the last target. That is the inter-element
-dependency the owner sketched two rooms earlier, arriving a second time
-by a different route.
 
 ## The principle: a big room is opportunity, not content
 
@@ -831,7 +630,27 @@ the socket.
 
 `scripts/ui/tones.gd` already synthesizes a tone bank — `confirm`,
 `denied`, `goal`, `reward`, `secret`, `hit`, no audio files shipped —
-and `activity_element.gd` and `activity_runtime.gd` call **none of it**.
+and `activity_element.gd` and `activity_runtime.gd` call none of it for
+SET, HIT or FAILED.
+
+**Corrected and narrowed 2026-09-13 (Codex review, verified).** The
+completion path is not silent by omission. `ZoneController.
+_on_activity_completed` does call `tones.play("secret_found")` — and the
+tone bank defines `"secret"`, not `"secret_found"`. `Tones.play` does
+`_players.get(kind)` and returns silently when the name is absent, so
+the call resolves to nothing. `"secret_found"` IS a valid id, in
+`epsilon_voice.gd`: an identifier was carried between two systems with
+different vocabularies.
+
+So the completion cue is one wrong string rather than four missing call
+sites. **This is a source-traced defect and a plausible contributor to
+the missing completion cue; it is not an independently reproduced
+explanation for every sound the owner did not hear.**
+
+The test it argues for is behavioural rather than textual: *does
+completing an activity reach a real feedback consumer?* Asserting that
+the code contains `tones.play()` would have passed while this defect was
+live.
 
 So: no cue on a correct hit, none on completion, none on failure, none
 on a wrong element. The player shot seven targets in one room and could
@@ -841,16 +660,23 @@ nothing."*
 The wiring is four call sites into a bank that already exists. This is
 the cheapest item on this page and probably the largest felt difference.
 
-### 3. A timed activity has no visible clock
+### 3. A timed activity's clock exists; its presentation failed
 
-`time_limit` is real and enforced — expiry calls `_reset_attempt()` and
-silently resets every element. But the only place the limit appears is
-the static sign, baked into the label at build time. Nothing counts
-down. Once the player stops reading signage, a timed activity is
-indistinguishable from an untimed one until it silently resets.
+**Corrected 2026-09-13 (Codex review, verified).** An earlier revision
+said the limit appears only on a static sign and nothing counts down.
+**That was wrong.** `ActivityRuntime._process()` decrements `_clock`
+every frame and calls `_say(_progress_text())`, and `_progress_text()`
+appends `"   %.1fs"` while the activity is ACTIVE. A live countdown to
+one decimal is produced and sent to the activity's label.
 
-Nor is a sequence requirement legible: nothing says whether order
-matters.
+**The owner's observation stands: the game did not communicate the
+timing.** What is corrected is the diagnosis. The next step is to
+inspect the existing display's position, visibility, grouping and
+behaviour — not to add a second timer beside the one already running.
+
+Likewise not established: whether a sequence requirement is legible.
+Recorded as an open question rather than as a defect.
+
 
 ## Design gaps recorded, not implemented
 
@@ -1024,3 +850,152 @@ placement and AP logic, or none of it.
 
 The owner also observed that the game as it stands is too hard for a
 new player. Recorded; no batch attached.
+
+## Source findings from the independent review (Codex, 2026-09-13)
+
+Verified against the tree by the engine lane. **These are source-traced
+findings and stated risks, not gameplay behaviour reproduced after the
+proposed changes.** That distinction is the point of this section.
+
+### 7. The content score rewards ingredients, not their arrangement
+
+`content_value.room_value` scores an activity as
+`ACTIVITY_BASE_VALUE = 6`, plus `ACTIVITY_PER_ELEMENT = 3` each, plus
+`ACTIVITY_TIMED_BONUS = 4`, plus `ACTIVITY_ORDERED_BONUS = 3`. Verified
+at `content_value.py` lines 91-94 and 152-158.
+
+| illustrative activity | points |
+|---|---:|
+| three elements, untimed, any order | 15 |
+| seven elements, timed, ordered | 34 |
+
+**Demonstrated:** the arithmetic above, and that no term in `room_value`
+refers to an activity's spatial relationship to the room or to what
+completing it causes.
+
+**Stated risk, NOT reproduced:** retiring the disliked families drops a
+Zone under its budget band, and the generator buys the difference in
+more targets or enemies — the same clutter in different objects. The
+test proposed is to observe whether removal causes substitution, then
+play the result. Recorded as a risk to check, not a predicted outcome.
+
+The review's recommendation, recorded and not acted on: keep the budget
+as a rough guard against empty or overloaded generation, and stop
+treating it as a measure of how much worthwhile play a room delivers. A
+quiet connecting corridor can be good pacing and does not need a
+minigame to justify itself.
+
+### 8. Several activities can share one station repair, which happens once
+
+`WarpStation.repair()` returns `false` when the station is already
+repaired, and `ZoneController._repair_station_for` skips on exactly
+that. Verified at `warp_station.gd` 143-145 and `zone_controller.gd`
+660-663.
+
+**Demonstrated:** in a room with several independent activities and one
+broken station, the first completion consumes the consequence; later
+completions cannot repair it again and receive only the generic toast.
+
+**Not demonstrated:** that this explains the specific rooms the owner
+played. It does show why wiring *all* activities to station repair
+would not answer the "puzzles that do nothing" complaint.
+
+**Refinement to the owner's principle, recorded.** "Nothing should do
+nothing" does not mean every activity must be mandatory. An unused
+alternative is not meaningless — it offered a choice. What it should not
+do is keep advertising unfinished business after the shared problem has
+already been solved. Three coherent designs exist (one larger mechanism
+with several parts; alternative solutions to one shared problem; genuinely
+independent activities with separate reasons); choosing between them is a
+design decision and is not made here.
+
+## Two recommendations accepted from the review
+
+Recorded as recommendations. **Neither selects a validator architecture
+nor expands the current checkpoint's acceptance.**
+
+1. **A minimal sound-reference check belongs with the feedback repair.**
+   Every tone name a caller requests should be asserted to exist in the
+   bank. That single assertion would have caught `secret_found` at build
+   time, where a textual check for the presence of `tones.play()` would
+   not.
+
+2. **Broader required-target reachability evidence belongs with external
+   multiworld readiness**, not with the one-gap regression. One
+   playthrough found one Check behind a gate Archipelago cannot declare;
+   nothing has counted how many exist. That count is a condition on
+   entering a seed with other players' games, and is tracked there rather
+   than attached to this checkpoint's finish line.
+
+## Where live assistance changed the playtest
+
+Recorded so the behavioural evidence is read correctly.
+
+During the pressure-plate room the engine lane told the owner the
+activity was impossible and that its station could never be repaired.
+**Both statements were wrong** (see finding 4 as corrected). The owner
+supplied contrary evidence, the four-second plate linger was found, and
+the explanation was retracted.
+
+**The owner's stopping cannot be read as independent evidence that the
+activity was impossible, or that they were unwilling to experiment.**
+They stopped because they were told to.
+
+**What survives unaffected:** the owner later completed the activity
+using the Warp Whistle, and their verdict that it was not enjoyable
+stands on its own. A suggested solution producing success is evidence
+the mechanism works; it is not evidence of spontaneous discovery.
+
+Also worth keeping visible: this session used mock Archipelago and
+fallback Epsilon, and covered one Zone. It is evidence about that
+experience, not about live interpretation quality or sustained campaign
+appeal.
+
+## Superseded explanations, preserved
+
+Kept because a record that hides its wrong turns teaches the next reader
+nothing. **None of the text below is current.** Each points to what
+replaced it.
+
+### SUPERSEDED — "`pressure_routing` is unsolvable by construction"
+
+Written and committed on 2026-09-13, then retracted the same session.
+**Superseded by finding 4 above**, "nothing checks that a
+`pressure_routing` route exists".
+
+> `pressure_routing` is the one family with `simultaneous: true` [...]
+> Only the player can press a plate [...] Placement deliberately
+> separates elements [...] One body, two pads that must be held in the
+> same instant, placed apart on purpose, and nothing else in the world
+> can hold one down. The family is unsolvable whenever it appears with
+> more than one element.
+
+**Why it was wrong:** plates linger. `_on_body_exited` sets
+`_hold_left = PLATE_HOLD_SECONDS`, which is `4.0`, giving a 28 m travel
+budget at `WALK_SPEED = 7.0`. The family is a routing puzzle, as its
+name says. The error was converting the owner's "this is impossible"
+into a mechanical claim without reading the mechanism.
+
+### SUPERSEDED — "the hazard drums are floating"
+
+Reported, confirmed from code, committed, then retracted the same
+session on a closer look by the owner. **Superseded by finding 1-bis**:
+nothing casts a shadow, so grounding is not judgeable by eye. The
+ground socket's constant `0.0` foot remains an unverified assumption and
+is explicitly not a finding.
+
+### SUPERSEDED — "keys do not auto-open locks"
+
+**Superseded by the correction under "The three unused keys"** above.
+`_open_what_the_keys_allow()` runs on pickup; matching locks are asked
+to open.
+
+### SUPERSEDED — "a timed activity has no visible clock"
+
+**Superseded by finding 3** above. The countdown exists and is sent to
+the activity label; what failed was its presentation.
+
+### SUPERSEDED — "the activity code calls none of `tones.gd`"
+
+**Superseded by finding 2** above. The completion path calls
+`tones.play("secret_found")`, a name the tone bank does not define.

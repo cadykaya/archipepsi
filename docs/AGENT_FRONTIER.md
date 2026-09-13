@@ -156,6 +156,23 @@ is chosen for the property under test.
 
 ### START HERE AFTER THE PLAYTEST
 
+**The record was corrected on 2026-09-13 after an independent review.**
+Five claims were wrong and are fixed in place, with the superseded text
+preserved and labelled at the end of
+`docs/PLAYTEST_DIAGNOSTIC_RESULT.md`: the timed-activity **countdown
+already exists** (presentation failed, not existence); activity
+completion **requests a tone name the bank does not define**
+(`secret_found` against `secret`); **keys immediately try to open
+matching locks** (`_open_what_the_keys_allow()`), so a door may change
+before the player returns to see it; the **content score rewards stated
+ingredients rather than their arrangement or consequence**; and
+**several activities can share one station repair, which happens once**.
+
+The synthesis's closing claim that "what is missing is not features but
+proof" is withdrawn. Correctness and enjoyment are separate obligations:
+a room can be provably completable and still be dull, and no validator
+supplies the missing design.
+
 `docs/PLAYTEST_SESSION_SYNTHESIS.md` — what happened, what it taught us,
 every problem in severity order, and five proposed solutions.
 `docs/PLAYTEST_DIAGNOSTIC_RESULT.md` is the raw log behind it, including
@@ -250,7 +267,9 @@ BROKEN and repairs only on that activity's completion.
 
 The owner's two-pad room, reported impossible, was more likely
 legibility: the only signal a plate is still holding is a glow energy
-change (3.2 against 0.9), with no sound and no countdown. The silent
+change (3.2 against 0.9), with no sound. (The countdown exists and is
+sent to the label — see the corrected finding 3; it did not reach the
+player.) The silent
 activity finding is not a polish item — **a room was solvable and the
 game hid it.**
 
@@ -296,10 +315,12 @@ Branch depth went to the bridge lane: `MAX_SIDE_DEPTH = 2` is at its cap
 and its own note asks to be settled on play evidence, but the owner's
 ask is a distribution, not a larger number.
 
-The cheapest and largest-felt item is **defect 2**: an activity gives
-the player no feedback of any kind, while `scripts/ui/tones.gd` already
-holds `confirm`, `denied`, `goal` and `reward` and the activity code
-calls none of them.
+The cheapest and largest-felt item is **defect 2**, activity feedback
+that does not reach the player — narrowed by the independent review and
+verified: the completion path DOES call `tones.play("secret_found")`,
+and the bank defines `"secret"`, so `Tones.play` finds no player and
+returns silently. Set, hit and failed have no call at all. So the
+completion cue is one wrong string and the rest is missing wiring.
 
 ### For the next owner playtest
 

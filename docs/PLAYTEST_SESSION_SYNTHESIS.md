@@ -98,9 +98,10 @@ what was true:
   one retracted, neither settleable by eye. The engine lane had to
   refuse a finding the owner had offered in good faith.
 - **A plate's only held-state signal is a glow energy change** (3.2
-  against 0.9), no sound, no countdown. A solvable two-pad room read as
+  against 0.9), with no sound. A solvable two-pad room read as
   impossible, and this lane then wrote up "unsolvable by construction"
-  and had to retract it.
+  and had to retract it. (The activity's countdown does exist — see
+  problem 9 as corrected; it did not reach the player.)
 - **The EXIT tracker gives a bearing through walls**, which with no map
   reads as "the exit is inaccessible."
 
@@ -227,10 +228,18 @@ says what a fix must aim at.
 **Legibility — these blocked diagnosis, not just enjoyment**
 
 7. **Nothing casts a shadow.** Grounding is unjudgeable by eye.
-8. **Activities are silent.** `tones.gd` already holds `confirm`,
-   `denied`, `goal`, `reward`; the activity code calls none of it.
-9. **No countdown on a timed activity**, and no held-state readout on a
-   plate.
+8. **Activity feedback does not reach the player.** *Corrected after
+   independent review.* The completion path is not silent by omission:
+   `_on_activity_completed` calls `tones.play("secret_found")` and the
+   bank defines `"secret"`, so the call resolves to nothing. Set, hit and
+   failed have no call at all. The completion cue is one wrong string;
+   the rest is missing wiring.
+9. **A timed activity's countdown exists and is not landing.**
+   *Corrected after independent review.* `_process` ticks `_clock` and
+   `_progress_text` appends `"   %.1fs"` while active. The clock is
+   produced and sent to the label. What failed is its presentation, not
+   its existence. Whether a sequence requirement is legible is an open
+   question, not an established defect.
 10. **No map**, in a game with keys, locks, branches, warps and
     backtracking.
 
@@ -245,6 +254,20 @@ says what a fix must aim at.
 17. 288 of 450 items are Static, against a visual cap of 18; Forge
     designed and unbuilt.
 18. Too hard for a new player.
+
+**From the independent review — source-traced, not reproduced in play**
+
+19. **The content score rewards ingredients, not arrangement.** An
+    activity scores 6 + 3/element + 4 timed + 3 ordered, with no term for
+    spatial relationship or consequence. *Stated risk, not observed:*
+    retiring the disliked families could drop a Zone under budget and be
+    compensated with more targets or enemies — the same clutter in
+    different objects. Worth checking before and after retirement.
+20. **Several activities can share a station repair that happens once.**
+    `repair()` returns false when already repaired. In a room with
+    several activities and one broken station the first completion
+    consumes the consequence. Wiring every activity to station repair
+    would therefore not answer the "puzzles that do nothing" complaint.
 
 ---
 
@@ -361,11 +384,49 @@ without the deadlock. The composer needs S1 to tell the two apart.
 
 ---
 
-## 8. The one-line version
+## 7-bis. Two recommendations accepted from the independent review
 
-**The game works. What is missing is not features but proof — nothing
-in this project has ever asked whether what it generated can be
-finished, and nothing in the game has ever been obliged to tell the
-player what is true.** Every problem above is one of those two, and
-every solution above is one of those two being fixed once rather than
-per-symptom.
+Recorded as recommendations. **Neither selects a validator architecture
+nor expands this checkpoint's acceptance.**
+
+1. **A minimal sound-reference check belongs with the feedback repair** —
+   assert that every tone name a caller requests exists in the bank. That
+   alone would have caught `secret_found` at build time; a textual check
+   for the presence of `tones.play()` would not.
+2. **Broader required-target reachability evidence belongs with external
+   multiworld readiness**, not with the one-gap regression. One
+   playthrough found one Check behind a gate Archipelago cannot declare
+   and nothing has counted how many exist. That count is a condition on
+   entering a seed with other players' games, tracked there rather than
+   attached to this checkpoint.
+
+## 8. What this adds up to
+
+**Two different failures ran through this session and the first version
+of this document collapsed them into one.** It closed by saying "what is
+missing is not features but proof". That is wrong, and wrong in a way
+that could do damage: it would license attaching a large validation
+project to this checkpoint and treating the enjoyment problem as
+addressed.
+
+Correctness and enjoyment are separate obligations:
+
+- **Correctness.** A Check behind a gate Archipelago cannot declare, a
+  route to the exit nobody verified, a step law the body does not
+  implement, a join no test covers, a crash on the transition that ends a
+  Zone. Proof is the right instrument for these, and they are the ones
+  that can damage a stranger's game.
+- **Enjoyment.** Seven targets in a row, a warp that fires without
+  asking, enemies with no job, a puzzle whose reward sits unlocked
+  beside it. **A room can be provably completable and still be dull.**
+  No validator supplies the missing design.
+
+The next version should be better on both, and should not treat more
+objects, more restrictions and more completion markers as substitutes for
+a better room.
+
+*Section 7's five solutions are Prod's, written before the independent
+review. Section 7 has not been rewritten; read it alongside the review's
+five, and note that S5's claim that capability targeting closes the AP
+problem is incomplete — Elevate also consumes five `USEFUL` hosts, so
+"enough Static" does not imply the recipe can be performed.*

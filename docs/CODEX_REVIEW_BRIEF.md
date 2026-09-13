@@ -11,8 +11,20 @@ the first time. It produced eighteen problems, one crash (fixed), two
 retractions, and a set of design decisions. **You are being asked to
 review all of it and produce 3–5 solutions of your own.**
 
-The point is not ratification. A second reviewer who agrees with the
-first is worth nothing. **Where you disagree, say so and say why.**
+**Independent confirmation is a real result.** A reviewer who checks the
+path, finds the claimed repair addresses it, and says "close this one"
+has done the more valuable thing. Disagreement is not a required output
+and manufactured disagreement is not independence — insisting on it
+produces a loop where each review invents a more sophisticated concern
+and nothing is ever allowed to be finished.
+
+What is wanted is fewer unresolved questions that matter to the player.
+Where you do disagree, say so and say why; where you confirm, say that
+plainly too.
+
+*(An earlier revision of this brief said "a second reviewer who agrees
+with the first is worth nothing". That instruction was wrong and is
+withdrawn.)*
 
 ## Read in this order
 
@@ -42,6 +54,19 @@ it. Four were wrong:
 | the exit portal is stranded | **WRONG** — probed; 5/5 fixtures have standable ground around it |
 | the exit room has no doors | **WRONG** — an empty cut plan means defaults hold, not solid walls |
 | `camera_ray` crashes on a detached player | **CORRECT** — and the only one verified against the defect before being believed |
+
+Three further errors were found in the write-up by the independent
+review and verified: **the countdown already exists**; **activity
+completion requests `secret_found`, a name the tone bank does not
+define**; and **keys DO immediately try to open matching locks**
+(`_open_what_the_keys_allow()`). All three are corrected in the record.
+
+A note on method, since the first draft of this brief over-corrected:
+"reading code is unreliable, probing is reliable" was itself too broad.
+The review found two real things by reading source. The difference is
+what the reading is FOR — finding a design consequence of code that does
+what it says is reliable; promoting the first plausible mechanism for an
+observed symptom to a confirmed cause is not.
 
 Every probe that was actually run returned a correct answer in minutes.
 **Treat any claim in these documents that is not backed by a printed
@@ -80,8 +105,12 @@ Push hardest on these, where Prod is least confident:
    gates in front of AP Checks, allow them in front of local rewards."
    Both are plausible and neither is obviously right. A third option
    would be valuable.
-3. **Legibility as a schema obligation (S3)** may be over-engineering. Is
-   "wire four `Tones.play` calls and add a countdown" the whole job?
+3. **Legibility as a schema obligation (S3)** may be over-engineering.
+   Note that the countdown already exists and the completion tone is one
+   wrong string (`secret_found` against a bank defining `secret`), so the
+   job is smaller than the first draft assumed — but a check asserting
+   every requested tone name resolves in the bank would have caught that
+   at build time, where a textual check for `tones.play()` would not.
 4. **The activity system** is being cut from four families to two on the
    owner's ruling, with a plan to keep the plate's 4-second linger as a
    gating mechanic. Is that the right cut? What should replace what is
