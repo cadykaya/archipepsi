@@ -7737,10 +7737,18 @@ func _test_a_real_player_walks_a_generated_junction_and_its_branch() \
 ##
 ## Listed here so that the day one of these climbs becomes a walk the
 ## test says the list is stale rather than quietly passing.
-const KNOWN_JUMPED_WALKS := {
-	"shell_span_basin/basin_south_to_deck": true,
-	"shell_span_basin/basin_north_to_deck": true,
-}
+##
+## **THAT DAY ARRIVED, and the list is empty because of it.** The
+## movement change this note asked for landed: `player.gd` implements
+## the step-up that `MAX_VERTICAL_STEP` had only ever asserted, so a
+## staircase declared `kind: "walk"` is now walked instead of jumped
+## sixteen times. Both basin ramps reported themselves stale on the
+## first run after it, which is exactly what this ledger was for.
+##
+## Emptying it makes the assertion STRONGER, not weaker: these two
+## routes must now complete without a jump like any other declared
+## walk, and a regression in the step-up puts them straight back here.
+const KNOWN_JUMPED_WALKS := {}
 
 ## ARTY'S SPAN REPAIR, WALKED BY THE ACTUAL PLAYER.
 ##
