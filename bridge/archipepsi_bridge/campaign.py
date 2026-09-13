@@ -987,6 +987,7 @@ class CampaignEngine:
         await self._emit(ZoneReady(
             type="zone_ready", zone=composed,
             proposal_id=layout_check.proposal_digest(composed),
+            attempt=self.save.zone_by_id(composed.zone_id).layout_refusals,
             used_fallback=outcome.used_fallback))
         await self.broadcast_snapshot()
 
@@ -1035,6 +1036,7 @@ class CampaignEngine:
         await self._emit(ZoneReady(
             type="zone_ready", zone=regraphed,
             proposal_id=layout_check.proposal_digest(regraphed),
+            attempt=self.save.zone_by_id(rec.zone_id).layout_refusals,
             used_fallback=self.save.zone_by_id(rec.zone_id).used_fallback))
         await self.broadcast_snapshot()
         return True
@@ -1302,30 +1304,30 @@ class CampaignEngine:
                          "arrived after %s replaced it; ignored",
                          intent.zone_id, intent.proposal_id, current)
                 return
-        # AND THE SAME CONTENT, TRIED TWICE, IS TWO ATTEMPTS.
+        # AND WHICH ATTEMPT IT IS ABOUT, which the digest cannot say.
         #
-        # `proposal_digest` is content identity and stays that. The
-        # deterministic provider recomposes the SAME Zone after a
-        # refusal, so the digest legitimately matches across the
-        # replacement — measured live, `4c1cd2d5405eeadf` on both sides
-        # — and the replaced build's late result was read as current: it
-        # spent the replacement's refusal budget on a failure already
-        # charged, and any verdict it drew would have reached the
-        # replacement's player, who is being held for a different build.
+        # `proposal_digest` is content identity and identical content
+        # hashes identically — correct, and exactly why it cannot tell
+        # two attempts apart. After a refusal the campaign asks the
+        # provider again and a deterministic one returns the same Zone,
+        # so the previous attempt's result matches the current proposal
+        # and is charged as a fresh failure. Measured before this guard:
+        # one real refusal became two, and the duplicate cost a third of
+        # the Zone's whole recovery budget.
         #
-        # A refusal is what ends one attempt and begins the next, so the
-        # refusal count IS the attempt ordinal. Behind it is stale.
-        # Equal to it is current, however many times it arrives: a
-        # client resending after a dropped connection is the ordinary
-        # case and is the same evidence.
+        # The ordinal is read from `layout_refusals` at offer time, so
+        # there is no second counter to keep in step and nothing is
+        # folded into the digest. Absent behaves as today.
         #
-        # Ahead of it cannot happen from this bridge and is NOT dropped:
-        # discarding a build because the client seems to know something
-        # we do not would strand it. It is logged and taken.
-        if intent.attempt is not None and intent.attempt < rec.layout_refusals:
-            log.info("zone %s: a layout_result from attempt %d arrived "
-                     "after attempt %d began; ignored",
-                     intent.zone_id, intent.attempt, rec.layout_refusals)
+        # MISMATCH IN EITHER DIRECTION, and not merely "behind". A
+        # result from an attempt this Zone has moved past is stale; a
+        # result claiming an attempt the bridge has not reached was
+        # built against a state this bridge does not hold, and charging
+        # a refusal against the wrong attempt is the harm either way.
+        if intent.attempt is not None and intent.attempt != rec.layout_refusals:
+            log.info("zone %s: a layout_result for attempt %d arrived "
+                     "during attempt %d; ignored", intent.zone_id,
+                     intent.attempt, rec.layout_refusals)
             return
 
         # A RESULT FOR A ZONE THAT ALREADY GAVE UP IS STALE, and stale is

@@ -47,16 +47,32 @@ except ImportError:  # pragma: no cover
 #: and refusing those names here would refuse to LOAD those saves.
 PROCEDURAL_SOCKETS = ("entry", "exit", "side_left", "side_right")
 
-
 def procedural_sockets_for(chamber_type: str) -> tuple[str, ...]:
-    """Which sockets a procedural room of this type can be JOINED through.
+    """The joining sockets a PROCEDURAL room of this type can hold.
 
-    The one projection of `C.PROCEDURAL_SOCKET_CAPACITY`, so the
-    composer, this schema and the engine cannot each have their own
-    answer. An authored shell never comes here: it declares its own
-    openings and `topology._sockets_for` reads them, which is why a shell
-    that happens to share a chamber type is not held to a procedural
-    producer's limits.
+    **THE ONE DECLARATION**, projected from
+    `C.PROCEDURAL_SOCKET_CAPACITY` so the composer, this schema, the
+    acceptance validator and the ENGINE cannot each have their own
+    answer — the capacity is exported to `constants.gd`, which is what
+    stops the builder and the planner drifting into different numbers of
+    doors. Drift is exactly what the flat four-door advertisement was: a
+    composer assigning a side door the engine would never cut.
+
+    `chamber_builders.procedural_sockets` places a side socket at the
+    middle of the side wall. That is the shape of a FLAT room and is
+    false of the two producers that CLIMB — on a platform course the
+    middle of the side wall is over the kill pit and below the walkway,
+    and a tower's is behind its spiral. Both were measured at the site,
+    one control per chamber type, and `zone_01`'s `c008` refused its
+    layout for exactly that. Relocating the socket onto the start ledge
+    was MEASURED and does not help: the branch then cannot be placed at
+    all. So the honest repair is to stop OFFERING the doorway, not to
+    move it.
+
+    A statement about the PRESENT PROCEDURAL PRODUCERS. Not a rule
+    against branching platform rooms, and nothing at all about an
+    authored shell that shares the type: a shell declares its own
+    openings and `topology._sockets_for` reads them instead of this.
     """
     return tuple(C.PROCEDURAL_SOCKET_CAPACITY.get(chamber_type,
                                                   PROCEDURAL_SOCKETS))
@@ -969,7 +985,19 @@ class Zone(Strict):
                 raise ValueError(
                     f"chamber '{c.id}' assigns socket(s) {sorted(unknown)} "
                     "that a procedural room does not declare")
-            silent = set(procedural_sockets_for(c.type)) - named
+            # Audited against what this room's OWN TYPE can hold, not
+            # against the four a flat room has, so a `platform_path`
+            # owes a mention for `entry` and `exit` and nothing else.
+            #
+            # A socket the type cannot hold is NOT refused here, and
+            # deliberately. This validator runs on load, and every Zone
+            # composed before the capacity was corrected assigned side
+            # doors to platform courses -- refusing them here would make
+            # a save holding one unreadable rather than repairable. The
+            # refusal belongs where a proposal is judged and repaired:
+            # `validate_zone`, `_a_room_may_not_use_a_doorway_it_cannot_hold`.
+            supported = procedural_sockets_for(c.type)
+            silent = set(supported) - named
             if silent:
                 raise ValueError(
                     f"chamber '{c.id}' leaves joining socket(s) "
@@ -1064,6 +1092,38 @@ def validate_zone(
     accepted components; nothing the provider sent is read as a score.
     """
     errors: list[str] = []
+
+    # A ROOM MAY NOT USE A DOORWAY ITS BUILD CANNOT HOLD.
+    #
+    # `procedural_sockets_for` is the one declaration; the composer
+    # offers from it and this refuses a proposal that went around it. A
+    # procedural `platform_path` that assigns `side_left` is asking for
+    # a hole in a wall whose middle is over the kill pit -- the engine
+    # measures that and refuses the whole layout, which costs a round
+    # trip and reports the failure as a placement problem rather than as
+    # the composition problem it is.
+    #
+    # Here and not in the Zone's own Invariant 8, because that validator
+    # runs on LOAD: every Zone composed before the capacity was
+    # corrected carries these doors, and a save holding one must stay
+    # readable. A proposal, by contrast, is exactly the thing this
+    # function exists to reject and repair.
+    #
+    # An AUTHORED shell is not asked. It declares its own openings in
+    # the catalog and `shell_rules` audits those; sharing a chamber type
+    # with a procedural room says nothing about what an artist cut.
+    for chamber in zone.chambers:
+        if getattr(chamber, "shell_id", None) or not chamber.doors:
+            continue
+        can_hold = procedural_sockets_for(chamber.type)
+        overreach = sorted({d.socket_id for d in chamber.doors
+                            if d.socket_id not in can_hold
+                            and d.usage != "SEALED"})
+        if overreach:
+            errors.append(
+                f"chamber '{chamber.id}' is a procedural '{chamber.type}' "
+                f"and uses joining socket(s) {overreach} its build cannot "
+                f"hold; it offers {list(can_hold)}")
 
     # Enemy counts scale with the Zone's content budget: a longer level
     # holds more enemies OVER TIME. `MAX_ENEMIES_ACTIVE` is what bounds

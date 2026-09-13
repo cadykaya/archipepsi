@@ -1123,3 +1123,123 @@ def test_a_leaf_is_only_a_dead_end_when_it_has_one_neighbour():
         "a leaf that hosts a branch is not a dead end")
     # It still carries a return, because it is still a destination.
     assert any(pl.room_id == host.id for pl in hosting.plugs)
+
+
+# --- truthful connection capacity ----------------------------------------
+#
+# A procedural `platform_path` advertised four joining sockets because
+# every procedural room did. Its sides are placed at the middle of the
+# side wall, which is the shape of a FLAT room: on a platform course that
+# point is over the kill pit and below the walkway, so the engine refuses
+# the layout. `procedural_sockets_for` is the one declaration both the
+# composer and `validate_zone` read, and these four controls are the
+# distinctions it has to keep apart.
+
+
+def _platform(rid: str) -> dict:
+    return {"id": rid, "type": "platform_path", "segment_count": 5,
+            "gap_size": 2.0, "vertical_step": 0.5}
+
+
+def test_a_platform_course_is_used_as_a_through_room(tmp_path=None):
+    """THE COURSE IS PRESERVED. Entry and exit are what it really has,
+    and the repair takes nothing away from traversal."""
+    from archipepsi_bridge.schemas.zone import procedural_sockets_for
+    assert procedural_sockets_for("platform_path") == ("entry", "exit")
+    z = _zone([_arena("c001", reward=89100001), _platform("c002"),
+               _arena("c003", reward=89100003)])
+    out = topology.apply(z, topology.compose_chain(list(z.chambers)))
+    mid = [c for c in out.chambers if c.id == "c002"][0]
+    used = {d.socket_id for d in mid.doors if d.usage != "SEALED"}
+    assert used == {"entry", "exit"}, used
+    assert mid.door_degree == 2
+    assert topology.reachability(out).ok
+
+
+def test_a_platform_course_may_be_a_destination_carrying_a_return():
+    """A PLUG SPENDS NO SOCKET, so the supported return-device role is
+    untouched by the capacity correction: a two-socket room is still a
+    legal dead end with a way home."""
+    caps = topology._shell_sockets()
+    z = _zone([_arena(f"c{i:03d}", reward=89100000 + i) for i in range(1, 6)]
+              + [_platform("c006")])
+    course = [c for c in z.chambers if c.id == "c006"][0]
+    assert topology.capacity_of(course, caps) == 2
+    prod = topology.compose_with_branch(list(z.chambers), caps)
+    out = topology.apply(z, prod)
+    hosts = {p.room_id for p in out.plugs}
+    if "c006" in hosts:
+        course = [c for c in out.chambers if c.id == "c006"][0]
+        used = {d.socket_id for d in course.doors if d.usage != "SEALED"}
+        assert not any(s.startswith("side") for s in used), used
+
+
+def test_a_side_departure_from_a_platform_course_is_refused():
+    """THE INVALID REQUEST. Not refused on load — an old save carries
+    these and must stay readable — but refused where a proposal is
+    judged, with a concise error for the repair request."""
+    from archipepsi_bridge.schemas.zone import validate_zone
+    z = _zone([_arena("c001", reward=89100001), _platform("c002"),
+               _arena("c003", reward=89100003)])
+    out = topology.apply(z, topology.compose_chain(list(z.chambers)))
+    # The edge is real; only the SOCKET it leaves by is one the course
+    # cannot hold. Inventing a door instead would trip a different rule
+    # (a USED door names an edge) and prove nothing about capacity.
+    # `exit` stays MENTIONED, as sealed, so Invariant 8 is satisfied and
+    # the only thing wrong with this Zone is the doorway it claims.
+    smuggled = out.model_dump()
+    for c in smuggled["chambers"]:
+        if c["id"] != "c002":
+            continue
+        doors = []
+        for d in c["doors"]:
+            d = dict(d)
+            if d["socket_id"] == "exit" and d["usage"] != "SEALED":
+                d["socket_id"] = "side_left"
+                doors.append(d)
+                doors.append({"socket_id": "exit", "usage": "SEALED"})
+            else:
+                doors.append(d)
+        c["doors"] = doors
+    reopened = Zone.model_validate(smuggled)  # LOADS: a save stays readable
+    errors = validate_zone(
+        reopened, expected_zone_id=reopened.zone_id,
+        allocated_location_ids=list(reopened.reward_location_ids),
+        owned_echo_ids=[])
+    assert any("side_left" in e and "cannot hold" in e for e in errors), errors
+
+
+def test_a_multi_door_room_carries_the_branch_instead():
+    """PRESERVED BY MOVING IT, not by dropping it. The junction lands on
+    a room with the capacity to hold a doorway."""
+    caps = topology._shell_sockets()
+    chambers = [_arena("c001", reward=89100001), _arena("c002", reward=89100002),
+                _platform("c003"), _arena("c004", reward=89100004),
+                _platform("c005"), _arena("c006", reward=89100006),
+                _arena("c007", reward=89100007), _arena("c008", reward=89100008)]
+    z = _zone(chambers)
+    out = topology.apply(z, topology.compose_with_branch(list(z.chambers), caps))
+    assert out.plugs, "this control needs a Zone that branches"
+    byid = {c.id: c for c in out.chambers}
+    for c in out.chambers:
+        used = {d.socket_id for d in c.doors if d.usage != "SEALED"}
+        if c.type == "platform_path":
+            assert not any(s.startswith("side") for s in used), (c.id, used)
+    junctions = [c.id for c in out.chambers if c.door_degree >= 3]
+    assert junctions, "the branch was dropped rather than moved"
+    assert all(byid[j].type != "platform_path" for j in junctions), junctions
+    assert topology.reachability(out).ok, topology.reachability(out).errors
+
+
+def test_an_authored_shell_is_read_from_its_own_declaration():
+    """A procedural restriction is about the PROCEDURAL BUILD. A shell
+    declares its own openings, and sharing a chamber type with a
+    procedural room says nothing about what an artist cut."""
+    caps = {"shell_made_up": ("entry", "exit", "branch_east")}
+    z = _zone([_arena("c001", reward=89100001),
+               dict(_platform("c002"), shell_id="shell_made_up"),
+               _arena("c003", reward=89100003)])
+    course = [c for c in z.chambers if c.id == "c002"][0]
+    assert topology._sockets_for(course, caps) == (
+        "entry", "exit", "branch_east")
+    assert topology.capacity_of(course, caps) == 3

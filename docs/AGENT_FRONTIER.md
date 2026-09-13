@@ -152,6 +152,78 @@ reconstruction blockers and the identity questions; it does not close
 the backlog above, and none of it is the human playtest acceptance 0.3
 still owes.
 
+## BRIDGE LANE — a room offers the doors it can hold — 2026-09-13
+
+**Merged with the engine lane at `74f6878`.** Read this first on a
+wake-up.
+
+**THE FOUR-DOOR ADVERTISEMENT WAS NOT TRUE, AND THREE PATHS BELIEVED
+IT.** `PROCEDURAL_SOCKETS` named four joining sockets for every
+procedural room whatever its type, so a `platform_path` offered
+`side_left`/`side_right` — sockets `chamber_builders.procedural_sockets`
+places at the middle of the side wall, which on a platform course is
+over the kill pit and below the walkway. The engine says so at the site
+and measured that relocating them does not help. Measured here before
+repair: **28 chambers across 22 committed fixtures carried a used side
+door on a platform course**, `c008` of the played Zone among them —
+the room `zone_01` refuses its layout for.
+
+`schemas/zone.procedural_sockets_for` is now the ONE declaration.
+`topology._sockets_for` offers from it and `validate_zone` refuses a
+proposal that went around it, so the planner and the validator cannot
+drift into declaring different numbers of doors. An AUTHORED shell is
+never asked: it declares its own openings and sharing a chamber type
+with a procedural room says nothing about what an artist cut.
+
+**The refusal is at ACCEPTANCE, not on load.** Every Zone composed
+before this carries these doors; refusing them in the Zone's own
+Invariant 8 would make a save holding one unreadable instead of
+repairable. Invariant 8 audits what the type CAN hold and tolerates a
+mention of what it cannot; `validate_zone` — the function whose whole
+job is errors for a repair request — is where a new proposal is turned
+back.
+
+**BRANCHING IS PRESERVED BY MOVING JUNCTIONS, NOT BY DROPPING THEM.**
+The junction search already walked back through candidates; the
+DESTINATION did not. The budget picked which rooms were worth going to
+without consulting which rooms could hold a doorway, so a destination
+whose every predecessor was full simply fell back onto the spine.
+`_branch_routes` now keeps a reserve and replaces a failed destination
+rather than spending a branch on nothing. Regenerating the played Zone:
+**same 23 rooms, same types, same 30 edges, same 8 plugs** — the two
+branches that hung off `c008` moved to `c002` and `c005`.
+
+**WHAT GOT HARDER, REPORTED RATHER THAN HIDDEN.** With honest capacity,
+re-selection after an unhostable host is rarer: of the played Zone's
+eight plug rooms, **one** can move its branch while preserving the
+arrangement; the other seven stand down to the ordinary bounded layout
+refusal. That is the approved outcome — branch removal to make a device
+requirement go away is not — but it means the regraph recovery fires far
+less often than it did against the advertisement. Tuning was NOT lowered
+to hide it: `SPINE_SHARE` and `MAX_SIDE_DEPTH` are untouched.
+
+**TWO ATTEMPTS AT IDENTICAL CONTENT ARE NOW TELLABLE APART.**
+`proposal_digest` stays content identity and identical content still
+hashes identically — correct, and exactly why it cannot discriminate
+attempts. After a refusal the campaign asks the provider again and a
+deterministic one returns the same Zone, so the previous attempt's
+result matched the current proposal. Measured: **one real refusal became
+two**, and three duplicate deliveries would exhaust a Zone that never
+failed three times. `ZoneReady.attempt` / `LayoutResult.attempt` carry
+the ordinal, read from `layout_refusals` at offer time so there is no
+second counter and nothing is folded into the digest. Absent behaves as
+today. A real second failure is still charged — sabotage-proven in both
+directions.
+
+**What this batch does NOT close.** The engine legs — the four player
+crossings, `godot-return-journey`, `godot-zone-audit` — need a Godot
+binary and none is present in this container; they are the engine lane's
+and are NOT claimed here. The captured placement payloads are interface
+evidence and are labelled as such in `test_placement_contract.py`: they
+prove the wire shape and the recovery each outcome reaches, never that a
+Zone's physical layout is acceptable or that a player crossed it.
+
+
 ## ENGINE LANE — one placement contract, one proposal identity, and the door that blocks acceptance — 2026-09-12
 
 **`claude/archipepsi-echoes-continuation-b1adno`**, bridge lane merged at

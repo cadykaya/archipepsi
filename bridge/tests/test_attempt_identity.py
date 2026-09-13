@@ -38,8 +38,8 @@ from archipepsi_bridge.schemas.protocol import ClientMessage
 from pydantic import TypeAdapter
 
 from .conftest import connected_engine, drain, run
-from .test_amalgam_end_to_end import (_a_reselectable_host, _place,
-                                      _placement, _zone_with_branches)
+from .test_amalgam_end_to_end import (_movable, _place, _placement,
+                                      _zone_with_branches)
 
 _ADAPTER = TypeAdapter(ClientMessage)
 
@@ -112,7 +112,7 @@ def test_a_resend_of_the_current_attempt_is_the_same_evidence(tmp_path):
         zid, zone = await _zone_with_branches(engine)
         digest = layout.proposal_digest(zone)
         good = _placement(_place(zone), zone,
-                          _a_reselectable_host(zone), "PLACED")
+                          _movable(zone), "PLACED")
 
         await _send(engine, zid, good, proposal_id=digest, attempt=0)
         first = engine.save.zone_by_id(zid)
@@ -140,7 +140,7 @@ def test_changed_content_is_still_caught_by_the_digest(tmp_path):
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
-        host = _a_reselectable_host(zone)
+        host = _movable(zone)
         stale_digest = layout.proposal_digest(zone)
 
         await _send(engine, zid,

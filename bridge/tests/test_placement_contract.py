@@ -44,6 +44,19 @@ payloads, the compatibility rule, and the reselection they feed. The
 decoder's own shape rules — a container that is not a mapping, a report
 whose keys name nothing this Zone has, a mixed report — are
 `test_amalgam_end_to_end.py`'s, on the lane that owns the decoder.
+
+**And what these payloads are NOT.** They are INTERFACE evidence: they
+prove the engine's placement report crosses the wire in a shape this
+validator reads, and that each outcome reaches the recovery it belongs
+to. They are not physical-layout acceptance. A captured
+`plug_placement` says what the engine measured about return devices; it
+says nothing about whether every room in that Zone was built, whether
+the player can cross it, or whether the rest of the manifest holds
+together. `layout.validate` judges those from the whole layout, and a
+player walking the Zone is what judges the crossing. Reading a green
+run here as "the layout is accepted" is the same confusion in a new
+place: a subsystem proving its own interface and being mistaken for the
+game.
 """
 
 from __future__ import annotations
