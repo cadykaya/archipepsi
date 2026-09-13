@@ -210,16 +210,25 @@ station can NEVER come online and the warp network is permanently
 incomplete. A broken station is a promise; an unsolvable puzzle makes it
 one the game can never keep.
 
-**`pressure_routing` is unsolvable by construction.** It is the one
-family with `simultaneous: true` ("an element releasing is a failure
-rather than nothing"); only the player can press a plate
-(`_on_body_entered` gates on the player group, and nothing else in the
-game has weight); and placement deliberately separates elements. One
-body cannot hold two separated pads at once, so the family has no
-solution whenever it appears with more than one element. **Same shape as
-the undeclared capability gate: content validated as PLACED and never as
-COMPLETABLE.** Owner has asked to scrap this family and `timed_run`, and
-to keep the plate as a button that gates something.
+**Nothing checks that a `pressure_routing` route exists.** An earlier
+revision of this section called the family "unsolvable by construction";
+that was WRONG and is retracted. Plates linger —
+`PLATE_HOLD_SECONDS = 4.0`, so at `WALK_SPEED = 7.0` the puzzle carries a
+28 m travel budget and is exactly the routing puzzle its name says.
+The real defect is narrower: whether a route fits inside that budget
+depends on the layout the composer happened to produce, and nothing
+checks it. Five pads at 7 m apart is fair; five scattered across a large
+arena cannot be done. Still the same family as the capability gate —
+**content validated as PLACED and never as COMPLETABLE** — and a room
+whose activity cannot be completed also holds a warp station that can
+never be repaired, because a station in a room with activities starts
+BROKEN and repairs only on that activity's completion.
+
+The owner's two-pad room, reported impossible, was more likely
+legibility: the only signal a plate is still holding is a glow energy
+change (3.2 against 0.9), with no sound and no countdown. The silent
+activity finding is not a polish item — **a room was solvable and the
+game hid it.**
 
 **Nothing tests the seam where a connector meets a room.** The seal
 probe `_test_no_chamber_leaks_off_its_centre_line` builds each chamber
