@@ -897,9 +897,20 @@ func _test_an_exhausted_layout_is_refused_not_overlapped() -> void:
 					"enemies": [{"archetype": "melee", "count": 2}]})
 	var build := ZoneBuilder.build({"zone_id": "zone_spiral",
 			"theme": "concrete_facility", "chambers": chambers})
-	_check(build.has("failed"),
-			"a chain that closes on itself was laid out anyway, which "
-			+ "means something was placed on top of something else")
+	# REFUSED OR CLEAN, AND NOT "REFUSED" ON ITS OWN.
+	#
+	# This demanded a refusal, and the message said why: a spiral laid
+	# out anyway "means something was placed on top of something else".
+	# That was true of a router that returned the FIRST pose it found
+	# and never revisited an earlier room. The bounded placement ladder
+	# does revisit: when a room wedges, the room it joined to takes the
+	# next pose its own search already offered, and this spiral now
+	# solves. So the claim is the one the message always named -- NOTHING
+	# IS EVER LAID THROUGH ANYTHING -- asked of whichever answer comes
+	# back. Demanding the refusal instead would be demanding the router
+	# stay worse.
+	print("    spiral: %s" % ("refused (%s)" % str(build["failed"])
+			if build.has("failed") else "laid out"))
 	if build.has("failed"):
 		_check(not build.has("root"),
 				"a failed build still handed back a scene to attach")

@@ -686,6 +686,22 @@ FEATURE_MIN_WIDTH = {
 #: generator can check before choosing a tag.
 MIN_FEATURE_CHAMBER_WIDTH = min(FEATURE_MIN_WIDTH.values())
 
+#: Affordance tags a campaign may offer having interpreted NOTHING.
+#:
+#: Two under §13.1, and three since 2026-09-12: `powered_door` is a crate
+#: the player shoves with their own body onto a plate, which needs no
+#: primitive and no stat. Listed rather than inferred, so adding one is a
+#: decision somebody made rather than a side effect of an empty registry
+#: entry.
+#:
+#: **HERE, AND NOT IN A TEST FILE.** This lived in
+#: `bridge/tests/test_affordances.py` while `integration_driver.gd` kept
+#: its own hand-written pair of the same fact — so the day `powered_door`
+#: joined the kit, the engine offered it correctly and the client suite
+#: failed the Zone for offering it. One definition, exported, read by
+#: both sides.
+BASE_KIT_TAGS = ("bounce_pad", "moving_platform", "powered_door")
+
 # --------------------------------------------------------------------------
 # Shop
 # --------------------------------------------------------------------------

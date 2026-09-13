@@ -341,8 +341,26 @@ void fragment() {
 ## that reads it.
 const ZONE_ENTERABLE_MODES := ["ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT"]
 
+## Which Zone the discard affordance acts on, or empty.
+##
+## ONE FACT, READ IN ONE PLACE. `AMALGAM_BRIDGE.md` §5.7b: the bridge
+## populates `discard_zone_id` in `ZONE_FAILED` and NOWHERE ELSE, and a
+## non-empty value IS the offer -- there is no companion boolean, the
+## way `revisitable` has none. Everything on this side that would offer
+## the player a way INTO that Zone asks here, and nothing asks the
+## headline or the prompt: presentation text is not a state.
+##
+## Deliberately a different field from `resume_zone_id`, which the
+## bridge leaves EMPTY in `ZONE_FAILED`: a consumer holding this id
+## cannot accidentally resume with it.
+static func discard_target() -> String:
+	return str(BridgeClient.hub().get("discard_zone_id", ""))
+
 func _on_portal_activated() -> void:
 	var mode := BridgeClient.hub_mode()
+	# ZONE_FAILED IS NOT IN EITHER LIST, and the bridge asserts that.
+	# Nothing to enter and nothing to generate: the only move is the
+	# console standing next to this one.
 	if mode in ZONE_ENTERABLE_MODES:
 		enter_zone_requested.emit()
 		return
@@ -360,6 +378,13 @@ func _on_portal_activated() -> void:
 ## from a test either.
 func portal() -> HubPortal:
 	return _portal
+
+## The abandon console, for the same reason the portal is exposed: a
+## suite asks what a player standing in the room can DO, and reaching
+## into the child list by name is how a test comes to pass against a
+## node that has been renamed.
+func abandon_console() -> Node3D:
+	return _abandon
 
 func _on_finale_activated() -> void:
 	BridgeClient.send_intent({"type": "request_next_zone", "finale": true})
@@ -794,6 +819,19 @@ class HubPortal extends StaticBody3D:
 				# all -- the way back was wired and invisible.
 				_prompt = "[E] RETURN TO ZONE"
 				_label.text = "ZONE WAITING"
+			"ZONE_FAILED":
+				# AND THE MODE WHERE THERE IS NOTHING TO RETURN TO.
+				# `AMALGAM_BRIDGE.md` §5.7a defect 1, owner's decision: a
+				# Zone that was NEVER ACCEPTED and has spent its layout
+				# attempts is not enterable. Before Dess split this out
+				# of ZONE_DORMANT the portal lit up over it and offered
+				# "RETURN TO ZONE" -- into geometry the validator had
+				# refused three times. Entering succeeded, the client
+				# sent a layout, it was refused, and round it went.
+				_enabled = false
+				_prompt = "ZONE CANNOT BE BUILT — DISCARD IT AT THE " \
+						+ "CONSOLE"
+				_label.text = "ZONE UNBUILDABLE"
 			"GENERATING":
 				_prompt = "EPSILON IS DESIGNING…"
 				_label.text = "GENERATING"
@@ -900,6 +938,7 @@ class SimpleStation extends StaticBody3D:
 
 class AbandonConsole extends StaticBody3D:
 	var _visible_modes := ["GENERATING", "ZONE_READY", "ZONE_ACTIVE"]
+	var _exhausted := false
 	var _zone_id := ""
 	var _armed := false
 	var _label: Label3D
@@ -927,16 +966,37 @@ class AbandonConsole extends StaticBody3D:
 		add_child(_label)
 
 	func refresh(mode: String, active_zone: Dictionary) -> void:
-		visible = mode in _visible_modes
-		_zone_id = str(active_zone.get("zone_id", ""))
-		if not visible:
+		# TWO TARGETS, ONE CONSOLE, AND THE MODE DECIDES WHICH.
+		#
+		# `discard_zone_id` is populated in `ZONE_FAILED` and NOWHERE
+		# else, so resolving the target from it unconditionally would
+		# leave this console showing its prompt and doing nothing in the
+		# three modes it has always served -- `active_zone` is what
+		# names the Zone in those, and it is empty in `ZONE_FAILED`,
+		# which is why the second field exists at all. Each mode keeps
+		# the lookup that is valid in it.
+		var failed := mode == "ZONE_FAILED"
+		_exhausted = failed
+		visible = mode in _visible_modes or failed
+		var was := _zone_id
+		_zone_id = HubController.discard_target() if failed \
+				else str(active_zone.get("zone_id", ""))
+		# A CONFIRMATION IS ABOUT ONE ZONE. Armed for `zone_004` and
+		# still armed when the console is looking at `zone_005`, the
+		# next press discards a Zone the player never agreed to -- so
+		# the arming falls the moment its target moves or goes away.
+		if not visible or _zone_id == "" or _zone_id != was:
 			_armed = false
-		_label.text = "ABANDON ZONE" if not _armed \
+		_label.text = ("DISCARD UNBUILDABLE ZONE" if _exhausted
+				else "ABANDON ZONE") if not _armed \
 				else "CONFIRM ABANDON?\nUnclaimed Checks return to the pool"
 
 	func interact_prompt() -> String:
-		return "[E] CONFIRM ABANDON — unclaimed Checks return to the pool" \
-				if _armed else "[E] ABANDON HELD ZONE"
+		if _armed:
+			return "[E] CONFIRM ABANDON — unclaimed Checks return to " \
+					+ "the pool"
+		return "[E] DISCARD UNBUILDABLE ZONE" if _exhausted \
+				else "[E] ABANDON HELD ZONE"
 
 	func interact(_player: Node) -> void:
 		if _zone_id == "":

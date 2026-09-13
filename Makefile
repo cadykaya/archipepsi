@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -222,6 +222,26 @@ godot-graphs: godot-import
 zone-fixtures:
 	cd bridge && $(PY) tools/dump_zones.py --count 5
 
+# THE DECLARED SAMPLE, wider than the five preserved controls: the first
+# twenty consecutive ordinary Zones of a real campaign at DEFAULT_CONFIG,
+# of which those five are exactly the prefix. Composed, and then the
+# manifests judged by the bridge's own validator -- LAYOUT_OK from the
+# router is not acceptance, and only one of the two is measured in the
+# engine. Every result is printed, refusals included.
+zone-sample: godot-import
+	cd bridge && $(PY) tools/dump_zones.py --count 20 \
+	  --out ../godot/tests/fixtures/sample
+	@out=$$($(GODOT) --headless --path godot -- --graphs --sample 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT GRAPH TESTS OK" || exit 1
+	@echo "-- and the bridge's own verdict on each emitted manifest --"
+	@echo "   REPORT ONLY: an unplayed Zone's doorways are probed without"
+	@echo "   the setup a played Zone gets, so door-polarity refusals here"
+	@echo "   are about this harness. Acceptance is gated live, by"
+	@echo "   godot-integration. The manifest-only class this once caught"
+	@echo "   -- room overlap -- the router now refuses itself."
+	-cd bridge && $(PY) tools/check_sample_layouts.py
+
 godot-movement: godot-import   # P3.0 rails, launch pads, and the offer seam
 	@out=$$($(GODOT) --headless --path godot -- --movement-test 2>&1); \
 	status=$$?; echo "$$out" | grep -v "^$$"; \
@@ -236,8 +256,14 @@ godot-playtest3a: godot-import  # 3A: a real player rides an authored rail
 	fi; \
 	exit $$status
 
+# Also the producer of `godot/tests/fixtures/placement/*.json` -- the
+# engine payloads `bridge/tests/test_placement_contract.py` runs through
+# the real validator. `ARCHIPEPSI_CAPTURE_COMMIT` is what lets each
+# capture record the tree it was measured from; the driver says
+# "unknown" rather than inventing one when it is not set.
 godot-zone-audit: godot-import
-	@out=$$($(GODOT) --headless --path godot -- --zone-audit 2>&1); \
+	@out=$$(ARCHIPEPSI_CAPTURE_COMMIT=$$(git rev-parse --short=12 HEAD 2>/dev/null) \
+	  $(GODOT) --headless --path godot -- --zone-audit 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT ZONE AUDIT OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
@@ -360,6 +386,7 @@ godot-affordance: godot-import # world affordances, local rewards, readouts
 # counter climbed forever, "coins were genuinely spent" passed on coins an
 # earlier run had spent, and the shop assertion failed at random.
 INTEGRATION_SAVES := $(CURDIR)/.integration-saves
+JOURNEY_SAVES := $(CURDIR)/.journey-saves
 
 # The S2/S5 action-runner suite: press, release, cancel and death, with a
 # real player over a real floor.
@@ -471,4 +498,28 @@ godot-integration: godot-import   # full loop through a live mock bridge, fresh 
 	  echo "bridge did not start (port already serving? see the traceback above)"; \
 	  exit 1; }; \
 	$(GODOT) --headless --path godot -- --integration-test; \
+	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS
+
+# THE RE-SELECTION JOURNEY, at the scale its subject needs.
+#
+# Same driver, same live bridge, one control: an unhostable host
+# measured by the engine, barred, re-selected, a late result from the
+# proposal that was replaced, acceptance, a walk onto the return device
+# and a restart that replays it. `godot-integration` runs at PROTOTYPE
+# scale, where a Zone is three rooms -- and three rooms carry no branch,
+# so they carry no return device and there is no host to bar. Measured:
+# four consecutive Zones with no plug at all. So the bridge here is
+# started at `--mock-scale=default`, which is the size the composer
+# actually branches at.
+godot-return-journey: godot-import
+	rm -rf $(JOURNEY_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(JOURNEY_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; \
+	  exit 1; }; \
+	$(GODOT) --headless --path godot -- --integration-test \
+	  --return-journey; \
 	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS

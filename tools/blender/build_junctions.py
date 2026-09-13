@@ -145,6 +145,12 @@ class Room:
         self.sockets = []
         #: side -> (centre along the wall) for every doorway cut.
         self.doors = {}
+        #: Boxes whose lettering must read the right way round.
+        self.readable = []
+        #: (name, side, along) per doorway socket, in declaration order --
+        #: the source `arrivals()` derives from, so a region and the
+        #: socket it belongs to cannot come from two different places.
+        self.doorways = []
 
     # -- geometry -------------------------------------------------------
     def slab(self, tag, x0, x1, z0, z1, top, thick=0.70, role="floor",
@@ -157,10 +163,22 @@ class Room:
             self.snames.append(tag)
         return stone
 
-    def block(self, tag, size_xyz, centre_xyz, role="wall", collide=None):
+    def block(self, tag, size_xyz, centre_xyz, role="wall", collide=None,
+              readable=False):
+        """`readable` marks a piece whose TEXT has to read the right way.
+
+        The axis-aligned projection ignores the normal's sign, so half of
+        every pair of opposite faces shows its stencil reversed. The box
+        is recorded here and `common.uv_read_right` flips U back inside
+        it after the projection -- on this piece and nothing else.
+        """
         self.parts.append(_paint(brushkit.block(
             "%s_%s" % (self.name, tag), size_xyz, centre_xyz), self.name,
             role, collide))
+        if readable:
+            self.readable.append((
+                tuple(centre_xyz[i] - size_xyz[i] / 2.0 for i in range(3)),
+                tuple(centre_xyz[i] + size_xyz[i] / 2.0 for i in range(3))))
 
     def shell(self, doors):
         """Four walls, a roof, and an aperture wherever `doors` says.
@@ -335,9 +353,25 @@ class Room:
                           along - DOOR_W / 2.0, along + DOOR_W / 2.0,
                           0.0, 1.0, declare=False)
 
+    def place(self, socket_name, kind, x, z, surface_id, height=0.3):
+        """A point the RUNTIME puts something at.
+
+        `cover`, `reactive` and `enemy_high` each name a consumer that runs
+        today -- DestructibleCover, ReactiveBarrel and the ranged-enemy
+        placement loop. A room that declares none of them has volumes the
+        composer can fill with enemies and nowhere to put the things that
+        make the encounter a fight rather than a corridor with enemies in
+        it. These three shells declared none, which is why the first
+        furnished preview had nothing to furnish with.
+        """
+        self.sockets.append(roomcontract.socket(
+            socket_name, kind, (x, roomkit.y(z), height),
+            surface_id=surface_id))
+
     def socket_at(self, socket_name, side, along, surface_id):
         """A doorway socket on the OUTER face of its wall."""
         half_w = self.w / 2.0
+        self.doorways.append((socket_name, side, along))
         if side == "south":
             pos, yaw = (along, 0.0, 0.0), 180.0
         elif side == "north":
@@ -350,6 +384,50 @@ class Room:
             socket_name, "doorway",
             (pos[0], roomkit.y(pos[2]), pos[1]), yaw=yaw,
             width=DOOR_W, height=DOOR_H, surface_id=surface_id))
+
+
+    def arrivals(self, reach=3.0, height=2.0, width=DOOR_W):
+        """ONE `player_entry` REGION PER DOORWAY, NAMED AFTER IT.
+
+        `ContentInstantiator._player_entry` resolves the arrival region
+        by NAME against the socket the chain arrives through -- the same
+        `socket_for_edge(entry, chamber, "arrive_edge")` lookup
+        `_entry_offset` uses, so the region and the attachment point
+        cannot come from different doors. A shell that declares one
+        unnamed region is read as every shell that predates the rule:
+        the four-door junction entered from the side vouched for the
+        space in front of its FRONT door.
+
+        So the name is the contract, and it is the socket's name exactly.
+        Art's half is nothing more than that -- and nothing less, because
+        a region named anything else falls through to the fallback and
+        the room is back to one answer for four openings.
+
+        `reach` is measured inward from the socket's own plane, which is
+        the wall's OUTER face. At 3.0 m with a 2.4 m box the region spans
+        1.8-4.2 m in, clear of a 0.60 m wall by 1.20 m.
+
+        The first one emitted is the entry's, because `_player_entry`
+        falls back to the FIRST region when the composer names no
+        arriving socket -- which is the behaviour these rooms had when
+        they declared a single region called `arrival`, preserved
+        deliberately rather than by accident.
+        """
+        half_w = self.w / 2.0
+        out = []
+        for name, side, along in self.doorways:
+            if side == "south":
+                x, z = along, reach
+            elif side == "north":
+                x, z = along, self.d - reach
+            elif side == "east":
+                x, z = half_w - reach, along
+            else:
+                x, z = -half_w + reach, along
+            out.append(roomcontract.volume(
+                name, "player_entry", (x, roomkit.y(z), height / 2.0),
+                (width, width, height)))
+        return out
 
 
 def _groove_floor(room, spine_x, spine_z, arms):
@@ -446,9 +524,12 @@ def triad():
     r.socket_at("entry", "south", mid_x, "spine_ws")
     r.socket_at("exit", "north", mid_x, "spine_wn")
     r.socket_at("branch_east", "east", mid_z, "arm_east")
+    r.place("cover_0", "cover", -3.4, 9.6, "spine_ws")
+    r.place("cover_1", "cover", 3.4, 16.4, "spine_en")
+    r.place("reactive_0", "reactive", 8.4, 15.2, "arm_east")
+    r.place("high_0", "enemy_high", 10.4, 10.8, "arm_east", height=2.8)
     volumes = [
-        roomcontract.volume("arrival", "player_entry",
-                            (0.0, roomkit.y(3.0), 1.0), (DOOR_W, 2.4, 2.0)),
+        *r.arrivals(),
         # ON THE SORTING FLOOR, not in a corner and not in a doorway. A
         # shell with no enemy_spawn gets its enemies scattered over the
         # largest declared surface, which for this room would be the whole
@@ -478,30 +559,45 @@ def cross():
     in_x = r.w / 2.0 - WALL
     z0, z1 = WALL, r.d - WALL
     half = GROOVE_W / 2.0
-    #: The plan: a square ambulatory round a plant block, with a 8 m arm
-    #: to each of the four doors. The corners are mass, so you never see
-    #: all four ways at once -- you learn this room by walking it, which
-    #: is the difference between a crossroads and a hall with four doors.
-    hub, arm, plant = 9.0, 4.0, 4.0
+    hub, arm = 9.0, 4.0
+    #: THE PLANT SITS OFF CENTRE, and that is the whole room.
+    #:
+    #: Centred, it left a 5 m ambulatory all the way round -- a corridor
+    #: bent into a square. Furnishing it did not help and was not supposed
+    #: to: the props stood correctly at every declared point and the space
+    #: between them was still 5 m of passage with nowhere to be. The
+    #: preview that proved it is in the report.
+    #:
+    #: Shifted north-east by 2.5 m the same block makes two different
+    #: places out of one uniform one: a 7.5 m WORKING BAY on the south and
+    #: west, wide enough to fight and to hold what the runtime puts here,
+    #: and a 2.5 m SERVICE PASSAGE on the north and east, which is a
+    #: squeeze past the machine. The four doors do not move.
+    #:
+    #: So the two ways on differ because the PLACE differs -- one opens
+    #: into the bay, one is a gap behind the plant -- rather than because
+    #: something is painted a different colour.
+    px0, px1 = -1.5, 6.5
+    pz0, pz1 = 13.5, 21.5
 
     r.slab("bed", -in_x, in_x, z0, z1, -GROOVE_D, 1.0, declare=False)
-    # The ambulatory: a ring of four panels round the plant.
-    r.slab("amb_south", -hub, hub, r.d / 2.0 - hub, mid - plant, 0.0, 0.20)
-    r.slab("amb_north", -hub, hub, mid + plant, r.d / 2.0 + hub, 0.0, 0.20)
-    r.slab("amb_west", -hub, -plant, mid - plant, mid + plant, 0.0, 0.20)
-    r.slab("amb_east", plant, hub, mid - plant, mid + plant, 0.0, 0.20)
+    # The ambulatory is the hub minus the plant, in four rectangles: two
+    # of the bay and two of the passage.
+    r.slab("bay_west", -hub, px0, r.d / 2.0 - hub, r.d / 2.0 + hub, 0.0, 0.20)
+    r.slab("bay_south", px0, hub, r.d / 2.0 - hub, pz0, 0.0, 0.20)
+    r.slab("pass_east", px1, hub, pz0, pz1, 0.0, 0.20)
+    r.slab("pass_north", px0, hub, pz1, r.d / 2.0 + hub, 0.0, 0.20)
     # Four arms, each split by the groove that runs down it to its door.
     for tag, a0, a1 in (("s", z0, r.d / 2.0 - hub),
                         ("n", r.d / 2.0 + hub, z1)):
         r.slab("arm_%s_w" % tag, -arm, -half, a0, a1, 0.0, 0.20)
         r.slab("arm_%s_e" % tag, half, arm, a0, a1, 0.0, 0.20)
     for tag, sign in (("w", -1.0), ("e", 1.0)):
-        x0, x1 = ((hub, in_x) if sign > 0 else (-in_x, -hub))
-        r.slab("arm_%s_s" % tag, x0, x1, mid - arm, mid - half, 0.0, 0.20)
-        r.slab("arm_%s_n" % tag, x0, x1, mid + half, mid + arm, 0.0, 0.20)
+        ax0, ax1 = ((hub, in_x) if sign > 0 else (-in_x, -hub))
+        r.slab("arm_%s_s" % tag, ax0, ax1, mid - arm, mid - half, 0.0, 0.20)
+        r.slab("arm_%s_n" % tag, ax0, ax1, mid + half, mid + arm, 0.0, 0.20)
 
-    # The corners, and the shoulders beside the north and south arms.
-    for tag, x0, x1, za, zb in (
+    for tag, fx0, fx1, za, zb in (
             ("fill_sw", -in_x, -hub, z0, mid - arm),
             ("fill_se", hub, in_x, z0, mid - arm),
             ("fill_nw", -in_x, -hub, mid + arm, z1),
@@ -510,37 +606,125 @@ def cross():
             ("fill_s_e", arm, hub, z0, r.d / 2.0 - hub),
             ("fill_n_w", -hub, -arm, r.d / 2.0 + hub, z1),
             ("fill_n_e", arm, hub, r.d / 2.0 + hub, z1)):
-        r.fill(tag, x0, x1, za, zb)
+        r.fill(tag, fx0, fx1, za, zb)
 
     r.ceiling_relief(beams_z=(4.0, 26.0), soffit=1.4, band=3.6)
 
-    # --- the plant block: walked around, never over -------------------
-    r.block("plant", (plant * 2.0, plant * 2.0, 5.4),
-            (0.0, roomkit.y(mid), 2.7))
-    for j, (cx, cz) in enumerate(((-plant, mid - plant), (plant, mid - plant),
-                                  (-plant, mid + plant), (plant, mid + plant))):
-        r.block("plant_stack_%d" % j, (0.8, 0.8, 8.0),
-                (cx, roomkit.y(cz), 4.0), "trim", "wall")
-
-    # --- four bays on the ambulatory, four jobs -----------------------
+    # --- the plant, and the face it presents to the bay ----------------
+    #: THE PLANT WAS MADE OF WALL, and that was the second presentation
+    #: failure whole: the block was painted in the room's ARCHITECTURE
+    #: material, so from inside either route the machine was
+    #: indistinguishable from the shell it stood in and the space read as
+    #: a corridor again. The plan was already right; the surface lied.
+    #:
+    #: `trim` is the theme's ribbed PLATING and at this theme's 32
+    #: texels/m it tiles at machine scale -- 4 m, so ribs at roughly
+    #: 0.4 m pitch across an 8 m face. `accent` was the other candidate
+    #: and is wrong for a mass this size: it is the theme's LABELLED
+    #: panel, and an 8 m face would repeat its stencil four times. It
+    #: stays where it belongs, on the fittings you are meant to read.
+    #:
+    #: This is the object saying what it is. It is not a second colour
+    #: chosen to make two sides of the room look different -- the two
+    #: sides differ by width, by what stands on them and by where the
+    #: machine faces, and they would still differ if this block were
+    #: painted like the walls. It just would not be legible.
+    pw, pd = px1 - px0, pz1 - pz0
+    pcx, pcz = (px0 + px1) / 2.0, (pz0 + pz1) / 2.0
+    r.block("plant", (pw, pd, 5.4), (pcx, roomkit.y(pcz), 2.7),
+            "trim", "wall")
+    # A wall meets the floor flush. A MACHINE STANDS ON A BASE, and the
+    # base proud of the body is the tell you read first, from any angle.
     #
-    # ALL OF IT AGAINST THE OUTER WALL. The first version stood the desk
-    # in the middle of the south ambulatory and a body walking west to
-    # east climbed onto it and stopped -- `run_route_walk.sh` found it,
-    # at (-6.51, 1.05, 8.01). The ambulatory is the room's only
-    # circulation and furniture does not get to stand in it.
-    r.block("desk", (3.0, 0.9, 1.05),                 # S: a control desk
-            (-6.4, roomkit.y(6.6), 0.525), "trim", "wall")
-    for j, cx in enumerate((5.2, 7.0)):               # S: a pipe bank
-        r.block("pipe_%d" % j, (0.6, 0.6, 6.4),
-                (cx, roomkit.y(6.5), 3.2), "trim", "wall")
-    for j, cx in enumerate((-7.4, -5.0)):             # N: racking
-        r.block("rack_%d" % j, (1.8, 0.9, 2.4),
-                (cx, roomkit.y(23.4), 1.2), "trim", "wall")
-    r.block("sump_lip", (3.6, 3.6, 0.10),             # N: a grating
-            (6.6, roomkit.y(21.8), 0.05), "accent", "trim")
-    # Headers over the four arm mouths, so each one reads as a way out
-    # rather than as a gap.
+    # ON THE BAY SIDE ONLY, and that is measured, not styled. Run all the
+    # way round at 0.30 m proud it took the 2.50 m passage to 2.20 m --
+    # which fits a 0.80 m body fine in the straight, and caught it at both
+    # of the passage's turns: the route walk jumped at (6.9, 12.7) and
+    # (7.3, 21.5), the plinth's two outside corners, where a body cutting
+    # the corner meets a 0.40 m kerb against a 0.12 m walk-up.
+    #
+    # A bund on the south and west is also the truer object. This side
+    # drains -- the sump is out in the bay at (-6, 9.6) -- so the kerb
+    # belongs where the floor is kerbed, and the service side stays a bare
+    # squeeze past bare plating. Same tell, on the side you look at the
+    # machine from, where the working face already is.
+    r.block("plant_bund_s", (pw + 0.3, 0.3, 0.40),
+            ((px0 - 0.3 + px1) / 2.0, roomkit.y(pz0 - 0.15), 0.20),
+            "trim", "wall")
+    r.block("plant_bund_w", (0.3, pd, 0.40),
+            (px0 - 0.15, roomkit.y(pcz), 0.20), "trim", "wall")
+    # ... and a machine has a TOP. Set back 0.9 m all round so the
+    # silhouette steps instead of running flat into the 8 m ceiling, which
+    # is the other half of why the old block read as a partition.
+    r.block("plant_hood", (pw - 1.8, pd - 1.8, 1.2),
+            (pcx, roomkit.y(pcz), 6.0), "trim", "wall")
+    # THE RISERS STAND ON THE PLANT, not beside it. Centred on the
+    # corners and run floor-to-roof they put a 0.40 m post into the
+    # ambulatory at each corner, and in a 2.50 m passage that is only felt
+    # at the turns -- which is exactly where the route walk snagged, at
+    # (6.9, 12.7) and (7.3, 21.5), both of them a body wrapping a corner
+    # into a post. They also stopped reading as risers the moment the
+    # plant became plating: same material, same face, so below the deck
+    # they were pilasters on a wall.
+    #
+    # Inset to the plant's own corners and started at the deck they are
+    # four stacks rising off the machine past its hood, the passage turns
+    # are square, and the silhouette from across the room is unchanged.
+    for j, (cx, cz) in enumerate(((px0 + 0.4, pz0 + 0.4),
+                                  (px1 - 0.4, pz0 + 0.4),
+                                  (px0 + 0.4, pz1 - 0.4),
+                                  (px1 - 0.4, pz1 - 0.4))):
+        r.block("plant_stack_%d" % j, (0.8, 0.8, 2.6),
+                (cx, roomkit.y(cz), 6.7), "trim", "wall")
+    # THE WORKING FACE. The bay is not an empty wide bit -- it is the side
+    # of the machine somebody actually works on, so the desk, the access
+    # hatch and the pipe heads are all on this face and none is on the
+    # passage side. That is what tells you which side you are on.
+    # Tight against the face. At 3.4 m it reached x -4.4 and a body walking
+    # the bay's own line at x -5 passed it with 0.2 m to spare.
+    # Against a dark ribbed body the fittings have to be the light thing,
+    # which is also the truth: labelled panels where you are meant to
+    # read, pale pipework where the machine is plumbed.
+    r.block("desk", (2.6, 0.9, 1.05),
+            (px0 - 0.95, roomkit.y(pz0 + 2.0), 0.525), "accent", "wall")
+    r.block("hatch", (0.35, 2.6, 2.6),
+            (px0 - 0.18, roomkit.y(pz0 + 4.4), 1.3), "accent", "wall")
+    for j, cz in enumerate((pz0 + 1.0, pz0 + 6.2)):
+        r.block("pipe_head_%d" % j, (0.9, 0.9, 3.2),
+                (px0 - 0.55, roomkit.y(cz), 1.6), "wall", "wall")
+    # THE FACE YOU MEET FROM THE DOOR. The entry arm is on x 0 and the
+    # plant's south face spans x -1.5..6.5, so this is what is dead ahead
+    # at 7.5 m -- and bare, it was the single biggest reason the room read
+    # as a wall with a gap either side. A gauge board is the one thing a
+    # plant's public face carries.
+    r.block("gauge_board", (3.2, 0.22, 1.5),
+            (2.1, roomkit.y(pz0 - 0.11), 2.05), "accent", "wall",
+            readable=True)
+    # THE OPPOSITE-FACING CASE, and it is a test fixture as much as a
+    # placard: a sign has two faces and the projection mirrors exactly
+    # one of them, so a repair proved on a single south-facing board
+    # proves nothing about the north-facing one. The service passage
+    # gets the same panel on the plant's other face, and the pair is
+    # rendered together.
+    r.block("placard", (3.2, 0.22, 1.5),
+            (2.5, roomkit.y(pz1 + 0.11), 2.05), "accent", "wall",
+            readable=True)
+    # The machine is PLUMBED, and it is plumbed west. Two trunk lines
+    # leave the body at 5.6 m -- clear of the 3.2 m doors and the 4.8 m
+    # arm headers -- and run the length of the bay into the west wall.
+    # They cost no floor, they give the wide side a ceiling the narrow
+    # side does not have, and they point the way the room is organised.
+    for j, cz in enumerate((16.0, 17.8)):
+        r.block("trunk_%d" % j, (px0 + 0.3 - (-in_x), 0.6, 0.6),
+                ((px0 + 0.3 + -in_x) / 2.0, roomkit.y(cz), 5.6),
+                "wall", "wall")
+    # The sump the bay drains to, and where the runtime's reward stands.
+    r.block("sump_lip", (4.0, 4.0, 0.10),
+            (-6.0, roomkit.y(9.6), 0.05), "accent", "trim")
+    # The passage side carries service gear only, at passage scale.
+    for j, cz in enumerate((pz0 + 2.0, pz0 + 5.6)):
+        r.block("duct_%d" % j, (0.5, 1.6, 0.6),
+                (hub - 0.35, roomkit.y(cz), 5.2), "wall", "wall")
     for tag, sx, sz, size in (("s", 0.0, r.d / 2.0 - hub, (9.0, 0.5, 1.0)),
                               ("n", 0.0, r.d / 2.0 + hub, (9.0, 0.5, 1.0)),
                               ("w", -hub, mid, (0.5, 9.0, 1.0)),
@@ -552,20 +736,33 @@ def cross():
     r.socket_at("exit", "north", 0.0, "arm_n_w")
     r.socket_at("branch_east", "east", mid, "arm_e_s")
     r.socket_at("branch_west", "west", mid, "arm_w_s")
+    # Cover on the two long sides of the ambulatory, diagonally opposed so
+    # a fight round the plant has something to break line of sight against
+    # on either approach. Barrels sit where barrels sit: against the
+    # machine they serve.
+    # Cover in the bay, where a fight has room to use it; a barrel by the
+    # working face; the passage gets one and no more, because two would
+    # block it.
+    r.place("cover_0", "cover", -4.4, 11.4, "bay_west")
+    r.place("cover_1", "cover", 2.6, 8.6, "bay_south")
+    r.place("reactive_0", "reactive", -3.0, 16.2, "bay_west")
+    r.place("reactive_1", "reactive", 7.7, 18.6, "pass_east")
     volumes = [
-        roomcontract.volume("arrival", "player_entry",
-                            (0.0, roomkit.y(3.0), 1.0), (DOOR_W, 2.4, 2.0)),
+        *r.arrivals(),
         # TWO, one per side of the plant, because a single box that spanned
         # the ambulatory would also cover the machine standing in it.
-        roomcontract.volume("fight_west", "enemy_spawn",
-                            (-6.5, roomkit.y(mid), 1.0), (4.6, 7.6, 2.0)),
-        roomcontract.volume("fight_east", "enemy_spawn",
-                            (6.5, roomkit.y(mid), 1.0), (4.6, 7.6, 2.0)),
-        roomcontract.volume("north_bay", "objective",
-                            (6.4, roomkit.y(21.6), 1.0), (3.6, 3.6, 2.0)),
+        # THE BAY IS THE FIGHT. The passage gets a second, smaller one so
+        # a composer can put something behind the machine, but they are
+        # not two halves of the same room any more and the volumes say so.
+        roomcontract.volume("fight_bay", "enemy_spawn",
+                            (-5.0, roomkit.y(12.0), 1.0), (7.0, 11.0, 2.0)),
+        roomcontract.volume("fight_passage", "enemy_spawn",
+                            (7.7, roomkit.y(17.5), 1.0), (2.0, 6.0, 2.0)),
+        roomcontract.volume("sump", "objective",
+                            (-6.0, roomkit.y(9.6), 1.0), (4.0, 4.0, 2.0)),
         roomcontract.volume("plant", "no_build",
-                            (0.0, roomkit.y(mid), 2.7),
-                            (plant * 2.0, plant * 2.0, 5.4)),
+                            ((px0 + px1) / 2.0, roomkit.y((pz0 + pz1) / 2.0),
+                             2.7), (px1 - px0, pz1 - pz0, 5.4)),
     ]
     return r, volumes, "medium", ("junction", "branching")
 
@@ -625,9 +822,15 @@ def terminus():
     r.socket_at("entry", "south", 0.0, "approach_w")
     r.socket_at("branch_east", "east", side_z, "chamber_e")
     r.socket_at("branch_west", "west", side_z, "chamber_w")
+    r.place("cover_0", "cover", -4.6, 13.4, "chamber_w")
+    r.place("cover_1", "cover", 4.6, 13.4, "chamber_e")
+    # NOT (-6.6, 19.6): that is `drum_0`'s own centre, so a runtime
+    # ReactiveBarrel would have stood inside an authored drum. Found
+    # deriving the arrival regions, and it is the same class of defect --
+    # a declared point that nothing had measured against the geometry.
+    r.place("reactive_0", "reactive", -4.6, 19.4, "chamber_w")
     volumes = [
-        roomcontract.volume("arrival", "player_entry",
-                            (0.0, roomkit.y(3.0), 1.0), (DOOR_W, 2.4, 2.0)),
+        *r.arrivals(),
         roomcontract.volume("fight", "enemy_spawn",
                             (0.0, roomkit.y(14.5), 1.0), (12.0, 6.0, 2.0)),
         # THE DESTINATION'S USABLE SPACE, and deliberately not a Check.
@@ -674,6 +877,8 @@ def main():
         obj = common.join(r.parts, r.name)
         common.uv_project_world(obj, materials.ARCH_DENSITY,
                                 materials.ARCH_SIZE)
+        if r.readable:
+            common.uv_read_right(obj, r.readable)
         entry = common.export_glb(obj, "%s/%s.glb" % (OUT, cid), "room",
                                   tier="architecture",
                                   texture_size=materials.ARCH_SIZE,

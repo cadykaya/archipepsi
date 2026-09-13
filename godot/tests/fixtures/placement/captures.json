@@ -1,0 +1,169 @@
+{
+ "captures": [
+  {
+   "edge_id": "p:c005:start",
+   "file": "supported.json",
+   "outcome": "PLACED",
+   "proposal": "a platform_path destination whose builder-reserved spot already supports a body and clears the arrival",
+   "room_id": "c005",
+   "zone": {
+    "chambers": [
+     {
+      "activities": [],
+      "enemies": [],
+      "features": [],
+      "id": "c004",
+      "length": 14.0,
+      "type": "corridor",
+      "width": 7.9
+     },
+     {
+      "activities": [],
+      "enemies": [],
+      "features": [],
+      "id": "c005",
+      "type": "platform_path"
+     }
+    ],
+    "plugs": [
+     {
+      "destination": "zone_start",
+      "device": "pad",
+      "edge_id": "p:c005:start",
+      "room_id": "c005",
+      "source_anchor": "room:c005:return"
+     }
+    ],
+    "theme": "concrete_facility",
+    "zone_id": "zpit"
+   }
+  },
+  {
+   "edge_id": "p:c005:start",
+   "file": "repaired.json",
+   "outcome": "PLACED",
+   "proposal": "an arena destination whose return anchor is moved onto the arrival's own clearance, so the reserved spot is standable and unusable and the search must find another",
+   "room_id": "c005",
+   "zone": {
+    "chambers": [
+     {
+      "activities": [],
+      "enemies": [],
+      "features": [],
+      "id": "c004",
+      "length": 14.0,
+      "type": "corridor",
+      "width": 7.9
+     },
+     {
+      "activities": [],
+      "depth": 18.0,
+      "enemies": [],
+      "features": [],
+      "id": "c005",
+      "objective": "reach_exit",
+      "type": "arena",
+      "wall_height": 6.0,
+      "width": 18.0
+     }
+    ],
+    "plugs": [
+     {
+      "destination": "zone_start",
+      "device": "pad",
+      "edge_id": "p:c005:start",
+      "room_id": "c005",
+      "source_anchor": "room:c005:return"
+     }
+    ],
+    "theme": "concrete_facility",
+    "zone_id": "zplace"
+   }
+  },
+  {
+   "edge_id": "p:c005:start",
+   "file": "no_evidence.json",
+   "outcome": "NO_EVIDENCE",
+   "proposal": "the same arena with its arrival anchor unpublished, so there is nothing to measure clearance against",
+   "room_id": "c005",
+   "zone": {
+    "chambers": [
+     {
+      "activities": [],
+      "enemies": [],
+      "features": [],
+      "id": "c004",
+      "length": 14.0,
+      "type": "corridor",
+      "width": 7.9
+     },
+     {
+      "activities": [],
+      "depth": 18.0,
+      "enemies": [],
+      "features": [],
+      "id": "c005",
+      "objective": "reach_exit",
+      "type": "arena",
+      "wall_height": 6.0,
+      "width": 18.0
+     }
+    ],
+    "plugs": [
+     {
+      "destination": "zone_start",
+      "device": "pad",
+      "edge_id": "p:c005:start",
+      "room_id": "c005",
+      "source_anchor": "room:c005:return"
+     }
+    ],
+    "theme": "concrete_facility",
+    "zone_id": "zplace"
+   }
+  },
+  {
+   "edge_id": "p:c005:start",
+   "file": "exhausted.json",
+   "outcome": "NO_CANDIDATE",
+   "proposal": "the platform_path destination with its declared stands removed and its envelope lifted 60 m, so every candidate the bounded search enumerates is over the void",
+   "room_id": "c005",
+   "zone": {
+    "chambers": [
+     {
+      "activities": [],
+      "enemies": [],
+      "features": [],
+      "id": "c004",
+      "length": 14.0,
+      "type": "corridor",
+      "width": 7.9
+     },
+     {
+      "activities": [],
+      "enemies": [],
+      "features": [],
+      "id": "c005",
+      "type": "platform_path"
+     }
+    ],
+    "plugs": [
+     {
+      "destination": "zone_start",
+      "device": "pad",
+      "edge_id": "p:c005:start",
+      "room_id": "c005",
+      "source_anchor": "room:c005:return"
+     }
+    ],
+    "theme": "concrete_facility",
+    "zone_id": "zpit"
+   }
+  }
+ ],
+ "controller_digest": "ac005ffe8690accf",
+ "read_by": "bridge/tests/test_placement_contract.py",
+ "reproduce": "make godot-zone-audit",
+ "source_commit": "031b693e137d",
+ "written_by": "godot/tests/zone_audit_driver.gd"
+}

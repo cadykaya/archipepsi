@@ -476,6 +476,18 @@ func _on_enter_zone() -> void:
 		zid = str(BridgeClient.active_zone().get("zone_id", ""))
 	if zid == "":
 		return
+	# AND NOT BACK INTO THE ONE THAT CANNOT BE BUILT.
+	#
+	# `AMALGAM_BRIDGE.md` §5.7a defect 1. The Hub's portal already
+	# refuses to offer this, and this is the second lock: an
+	# `enter_zone` that arrives from anywhere else -- a stale prompt, a
+	# queued input, a driver -- must not restart the refusal loop the
+	# owner's decision closes.
+	if BridgeClient.hub_mode() == "ZONE_FAILED" \
+			or zid == HubController.discard_target():
+		hud.toast("That Zone cannot be built. Discard it at the console.",
+				Color(0.9, 0.5, 0.3))
+		return
 	_entering_zone = true
 	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zid})
 

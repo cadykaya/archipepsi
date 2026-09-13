@@ -29,6 +29,7 @@ from archipepsi_bridge.schemas import zone as Z
 from pydantic import TypeAdapter
 from .test_providers import zone_request
 
+from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas.constants import (
     FEATURE_MIN_WIDTH as C_MIN_WIDTH)
 
@@ -53,12 +54,13 @@ def test_every_tag_declares_what_makes_it_interactable():
 
 #: The tags a campaign that has interpreted nothing can still use.
 #:
-#: Two under §13.1, and three since 2026-09-12: `powered_door` is a crate
-#: the player shoves with their own body onto a plate, which needs no
-#: primitive and no stat. Listed here rather than inferred, so adding one
-#: is a decision somebody made rather than a side effect of an empty
-#: registry entry.
-BASE_KIT_TAGS = ("bounce_pad", "moving_platform", "powered_door")
+#: MOVED TO `schemas/constants.py`, where it exports and the CLIENT can
+#: read it too. `integration_driver.gd` kept a hand-written copy of this
+#: pair, so the day `powered_door` joined the kit the engine offered it
+#: correctly and the client suite failed the Zone for offering it.
+#: Imported rather than restated, because restating it is what went
+#: wrong.
+BASE_KIT_TAGS = tuple(C.BASE_KIT_TAGS)
 
 
 def test_the_base_kit_tags_need_nothing_and_the_rest_need_something():

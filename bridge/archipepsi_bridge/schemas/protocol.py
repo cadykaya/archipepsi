@@ -1345,6 +1345,23 @@ class CampaignSnapshot(Strict):
     local_rewards: tuple[EarnedLocalReward, ...] = ()
 
     active_zone: ZoneRecord | None = None
+    #: The identity of the proposal `active_zone` holds, for the client
+    #: to capture when it starts a build and echo on `layout_result`.
+    #:
+    #: **THE CARRIER THE GAME ACTUALLY READS.** `main.gd::_to_zone` is
+    #: driven by the snapshot and builds from
+    #: `BridgeClient.active_zone()["zone"]`; it never reads `zone_ready`,
+    #: which nothing in the client is connected to. `zone_ready` carries
+    #: the same identity for the offer, and there are paths where it is
+    #: the only one that does not reach a build — a cold restart into a
+    #: Zone that was generated but never committed gets a snapshot and
+    #: no offer at all, and a client with nothing to bind would send
+    #: nothing and be read as one that predates the field.
+    #:
+    #: Not two copies of a fact: both are `layout.proposal_digest` of the
+    #: same record, derived on every send and stored nowhere, so they
+    #: cannot disagree. `""` when no Zone is held.
+    active_proposal_id: str = Field(default="", max_length=16)
     completed_zone_count: int = Field(default=0, ge=0)
     shop: ShopState = Field(default_factory=ShopState)
     pending_checks: tuple[PendingCheck, ...] = ()

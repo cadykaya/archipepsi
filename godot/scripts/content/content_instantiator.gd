@@ -697,6 +697,18 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		# the arrival has to be safe in.
 		"player_entry": _player_entry(entry, chamber),
 		"exit_offset": _exit_offset(entry, size, chamber),
+		# DOES THIS ROOM HAVE A DEPARTURE AT ALL?
+		#
+		# `_exit_offset` answers "where", and for a shell with no way
+		# onward it answers with the far face of the envelope -- a
+		# fictional departure through a back wall. That is fine as a
+		# number and wrong as a fact: a DESTINATION shell (the Terminus
+		# has `entry`, `branch_east` and `branch_west` and no `exit`) is
+		# a room the chain must stop at, not a room the chain walks
+		# through into solid geometry. So the fact travels separately,
+		# and `zone_builder` refuses a Zone that asks a destination to
+		# be a through-room rather than inventing the door.
+		"has_departure": _has_departure(entry, chamber),
 		"bounds": AABB(
 			Vector3(-size.x / 2.0, -FLOOR_ALLOWANCE, 0.0),
 			Vector3(size.x, size.y + FLOOR_ALLOWANCE, size.z)),
@@ -1044,6 +1056,27 @@ static func _player_entry(entry: Dictionary,
 		if fallback.is_empty():
 			fallback = region
 	return fallback
+
+## Whether this shell offers a way onward at all: an ASSIGNED departure
+## through the door the composer named, or a declared `exit`/`end_b`
+## socket. Neither is not a shell to walk through.
+##
+## A shell that declares NO sockets is the pre-ruling case and keeps the
+## old answer: the whole authored-shell contract post-dates it, every
+## procedural builder is in it, and a room that never declared a
+## doorway cannot be said to have withheld one.
+static func _has_departure(entry: Dictionary,
+		chamber: Dictionary = {}) -> bool:
+	if not socket_for_edge(entry, chamber, "depart_edge").is_empty():
+		return true
+	var declared := false
+	for socket: Variant in entry.get("sockets", []):
+		if typeof(socket) != TYPE_DICTIONARY:
+			continue
+		declared = true
+		if str((socket as Dictionary).get("name", "")) in ["exit", "end_b"]:
+			return true
+	return not declared
 
 static func _exit_offset(entry: Dictionary, size: Vector3,
 		chamber: Dictionary = {}) -> Vector3:

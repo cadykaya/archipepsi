@@ -18,6 +18,9 @@ signal chamber_entered(index: int)
 
 var zone: Dictionary = {}
 var zone_id := ""
+## The proposal this controller is building, captured by `setup` and
+## echoed on `layout_result`. `""` when the bridge offered none.
+var proposal_id := ""
 var player: Player
 var tones: Tones = null          # set by main; null in headless tests
 var hud: Hud = null              # set by main; null in headless tests
@@ -128,6 +131,12 @@ var layout_verdict := ""
 ## the falsification actually carved something rather than pass on
 ## somebody else's refusal.
 var measured_apertures := {}
+## The placement outcome this client measured and sent, per plug
+## `edge_id` (`AMALGAM_BRIDGE.md` §5.9). Kept for the same reason as
+## `measured_apertures`: a suite that drives a room to `NO_CANDIDATE`
+## has to be able to say the ENGINE reported it, rather than reading a
+## bar off the bridge and calling that a measurement.
+var measured_placement := {}
 ## How long to hold before treating silence as a refusal.
 const VERDICT_TIMEOUT := 10.0
 
@@ -176,6 +185,31 @@ const _QUIET_BEFORE_ASIDE := 75.0
 func setup(zone_dict: Dictionary) -> void:
 	zone = zone_dict
 	zone_id = zone.get("zone_id", "")
+	# WHICH PROPOSAL THIS BUILD IS OF, taken NOW and not when the result
+	# is sent (`AMALGAM_BRIDGE.md` §5.9).
+	#
+	# `_publish_layout` awaits physics frames and then settles every
+	# physics package, which is long enough for Epsilon to compose new
+	# content or for `reselect_hosts` to regraph this Zone onto other
+	# hosts. Reading the current identity at send time would hand this
+	# build the REPLACEMENT's id -- and the bridge would then spend the
+	# replacement's refusal budget on an old build's verdict, bar the
+	# replacement's rooms, or commit a layout of the Zone it replaced.
+	# Captured here, the old build carries the old id however long it
+	# takes to come back, and is ignored outright.
+	proposal_id = BridgeClient.proposal_for(zone_id)
+	# AND AN OMISSION IS NEVER SILENT. Absent on the wire means "cannot
+	# be checked" -- the documented behaviour for a client older than
+	# the field -- so a current client that binds nothing looks exactly
+	# like one. If the bridge held this Zone and offered no identity for
+	# it, that is a carrier that did not reach the build path and it is
+	# said out loud rather than discovered later as an unexplained
+	# acceptance.
+	if proposal_id == "" and zone_id != "" \
+			and str(BridgeClient.active_zone().get("zone_id", "")) == zone_id:
+		push_warning("zone: %s is being built with no proposal identity; "
+				% zone_id + "a late result for it cannot be told from a "
+				+ "current one (AMALGAM_BRIDGE.md 5.9)")
 	var theme: String = zone.get("theme", "void_glitch")
 	# A COMMITTED MANIFEST IS REPLAYED, NOT RE-SOLVED. `ZoneReady` carries
 	# one on every visit after the first, and laying those transforms back
@@ -654,6 +688,18 @@ func _publish_layout(build: Dictionary) -> void:
 		return
 	_measure_layout_evidence(build)
 	await _certify_physics(build)
+	# THE BOUNDARY BETWEEN CERTIFYING AND SENDING.
+	#
+	# `_certify_physics` gives up the moment the Zone leaves the tree,
+	# which stopped it measuring freed nodes -- and then returned here,
+	# where the next line sent the half-measured result anyway. A Zone
+	# torn down during settling published a PARTIAL certification under
+	# a committed Zone's name, and `_await_verdict` below then sat in a
+	# frame loop belonging to a Zone nobody is in, holding and releasing
+	# a player who has been replaced. The discarded attempt has to be
+	# discarded here too.
+	if not is_inside_tree():
+		return
 	send_layout_result(build)
 	await _await_verdict()
 
@@ -672,7 +718,11 @@ func _await_verdict() -> void:
 	if (zone.get("edges", []) as Array).is_empty():
 		layout_verdict = "UNCERTIFIED"
 		return
-	if player != null:
+	# `!= null` IS NOT ALIVE. A freed Node is not null in GDScript -- it
+	# is a reference that answers every comparison and errors on every
+	# call -- so a Zone torn down while its verdict was outstanding put
+	# a hold on, or took one off, a player that no longer exists.
+	if is_instance_valid(player):
 		player.hold(LAYOUT_HOLD)
 	# THE PREVIOUS ANSWER IS NOT THIS ONE.
 	#
@@ -696,7 +746,7 @@ func _await_verdict() -> void:
 				"layout_state", ""))
 		if state == "ACCEPTED":
 			layout_verdict = state
-			if player != null:
+			if is_instance_valid(player):
 				# ONLY THIS CLAIM. Clearing the boolean here released a
 				# pause the player had opened while they waited.
 				player.release(LAYOUT_HOLD)
@@ -713,6 +763,13 @@ func _await_verdict() -> void:
 			layout_refused.emit(zone_id)
 			return
 		await get_tree().process_frame
+		# THE ZONE THIS VERDICT IS ABOUT CAN GO AWAY MID-WAIT. Carrying
+		# on would announce a refusal for a Zone nobody is in, and
+		# `layout_refused` is what sends the player back to the Hub --
+		# from a Zone they have already left, past the replacement they
+		# are now standing in.
+		if not is_inside_tree():
+			return
 		waited += get_process_delta_time()
 	# NO VERDICT IS NOT AN ACCEPTANCE. A bridge that never answers leaves
 	# the player frozen forever, which is worse than the Zone they are
@@ -769,14 +826,16 @@ func _certify_physics(build: Dictionary) -> void:
 ## answer and is not what this reports.
 func _measure_layout_evidence(build: Dictionary) -> void:
 	var space := get_world_3d().direct_space_state
-	var apertures := {}
+	# ONE MEASUREMENT, SHARED. `RoomAudit.measure_layout` is what a
+	# played Zone and an offline harness both ask, so a manifest sent
+	# from either carries the same evidence measured the same way.
+	var evidence := RoomAudit.measure_layout(build, space)
+	var apertures: Dictionary = evidence["apertures"]
 	for entry: Dictionary in build.get("chambers", []):
 		var rid := str((entry["chamber"] as Dictionary).get("id", ""))
 		var measured := RoomAudit.aperture_polarity(
 				entry["build"] as Dictionary,
 				entry["xform"] as Transform3D, space)
-		for socket: String in measured:
-			apertures["%s/%s" % [rid, socket]] = bool(measured[socket])
 		# AND WHAT IS STANDING IN THE ONES THAT DISAGREE.
 		#
 		# The bridge refuses the whole layout on "door 'c002/entry' is
@@ -801,11 +860,10 @@ func _measure_layout_evidence(build: Dictionary) -> void:
 						+ "name")))
 	build["apertures"] = apertures
 	measured_apertures = apertures
-	var arrival_ok := {}
-	for name: String in build.get("anchors", {}):
-		arrival_ok[name] = RoomAudit.arrival_is_supported(space,
-				(build["anchors"] as Dictionary)[name])
-	build["arrival_ok"] = arrival_ok
+	build["arrival_ok"] = evidence["arrival_ok"]
+	build["plug_clear"] = evidence["plug_clear"]
+	build["plug_placement"] = evidence["plug_placement"]
+	measured_placement = evidence["plug_placement"]
 
 ## Can a body ARRIVE here? Not "is this space empty".
 ##
@@ -822,9 +880,19 @@ func _measure_layout_evidence(build: Dictionary) -> void:
 func send_layout_result(build: Dictionary) -> void:
 	if zone_id == "":
 		return
-	BridgeClient.send_intent({"type": "layout_result",
-			"zone_id": zone_id,
-			"layout": ZoneBuilder.layout_to_json(build)})
+	var message := {"type": "layout_result", "zone_id": zone_id,
+			"layout": ZoneBuilder.layout_to_json(build)}
+	# THE IDENTITY THIS BUILD STARTED WITH, and never the current one.
+	#
+	# Omitted only when the bridge offered none: `LayoutResult` makes it
+	# optional so a client older than the field behaves as it always
+	# did, and "absent" means "cannot be checked", never "stale". A
+	# client that HAD one and left it off would be indistinguishable
+	# from that older client, which is why this reads the captured field
+	# rather than asking again.
+	if proposal_id != "":
+		message["proposal_id"] = proposal_id
+	BridgeClient.send_intent(message)
 
 ## Which stations are online, for whoever is carrying progress out.
 func stations_reached() -> Dictionary:

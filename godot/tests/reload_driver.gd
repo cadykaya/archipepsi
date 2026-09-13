@@ -52,6 +52,20 @@ func _finish(code: int) -> void:
 	get_tree().quit(1 if (code != 0 or _failures > 0) else 0)
 
 
+## WHAT THE BRIDGE ACTUALLY SAID, so a phase failure names a reason.
+## The controller records the verdict it acted on and the engine records
+## why a layout could not be built; a timeout that prints neither sends
+## the next person to the log file.
+func _say_why(zone: ZoneController) -> void:
+	if zone == null:
+		print("    (no controller: the Zone was never built)")
+		return
+	print("    verdict '%s'; engine said '%s'; the bridge's Zone is in "
+			% [zone.layout_verdict, zone.layout_failed]
+			+ "state '%s' with %d refusal(s)"
+			% [str(BridgeClient.active_zone().get("layout_state", "?")),
+				int(BridgeClient.active_zone().get("layout_refusals", 0))])
+
 static func phase_from_cmdline() -> String:
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with(PHASE_FLAG):
@@ -188,11 +202,22 @@ func _record() -> void:
 			40.0):
 		_finish(1)
 		return
-	if not await _await("the bridge accepts the layout",
+	# WHICH PHASE FAILED, NAMED. "timed out waiting for the bridge
+	# accepts the layout" is the same sentence whether a FRESH Zone
+	# could not be built and accepted or an existing MANIFEST could not
+	# be laid back down, and those are different repairs in different
+	# lanes. This is the first: a fresh proposal, initial acceptance.
+	if not await _await("PHASE 1 (initial build + acceptance): the "
+				+ "bridge accepts the freshly composed layout",
 			func() -> bool: return main.zone.layout_verdict == "ACCEPTED",
 			20.0):
+		print("  PHASE 1 FAILED -- a fresh proposal was not accepted. "
+				+ "Nothing about manifest reconstruction is measured by "
+				+ "this run.")
+		_say_why(main.zone as ZoneController)
 		_finish(1)
 		return
+	print("  PHASE 1 OK -- a fresh proposal was built and accepted")
 	var zone := main.zone as ZoneController
 
 	# COLLECT THE KEY AND OPEN THE LOCK, on the real objects. The walk
@@ -351,8 +376,13 @@ func _resume() -> void:
 			"the Zone was REPLAYED from its manifest: %d route search(es) "
 			% (ZoneBuilder.searches - searches_before)
 			+ "ran, and a committed layout is rebuilt rather than solved")
-	if not await _await("the replayed layout is accepted",
+	if not await _await("PHASE 2 (reconstruction of an existing "
+				+ "manifest): the replayed layout is accepted",
 			func() -> bool: return zone.layout_verdict == "ACCEPTED", 20.0):
+		print("  PHASE 2 FAILED -- the committed manifest could not be "
+				+ "laid back down and accepted. Phase 1 passed, so a "
+				+ "fresh proposal is fine and reconstruction is not.")
+		_say_why(zone)
 		_finish(1)
 		return
 
