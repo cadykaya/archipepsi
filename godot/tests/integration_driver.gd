@@ -920,6 +920,21 @@ func _test_a_failed_zone_is_discarded_and_its_checks_come_back() -> bool:
 	for round_number in 6:
 		if BridgeClient.hub_mode() == "ZONE_FAILED":
 			break
+		# WAIT FOR A ZONE TO FALSIFY. A refusal sends the record to
+		# PENDING_GENERATION with `zone` cleared, and the recompose lands
+		# a moment later -- so a round that started inside that window
+		# read a null Zone, found no door in it, and reported "nothing to
+		# falsify" for a Zone that was merely not back yet. A race, not a
+		# shape: it surfaced when composition timing shifted under it.
+		if not await _await_condition("a Zone to falsify in round %d"
+					% round_number,
+				func() -> bool:
+					return BridgeClient.hub_mode() == "ZONE_FAILED" \
+						or not (BridgeClient.active_zone().get("zone", {})
+							as Dictionary).is_empty(), 40.0):
+			return false
+		if BridgeClient.hub_mode() == "ZONE_FAILED":
+			break
 		if BridgeClient.hub_mode() == "ZONE_READY":
 			BridgeClient.send_intent({"type": "enter_zone",
 					"zone_id": failed_id})
@@ -1191,50 +1206,98 @@ func _test_reselection_and_return_journey() -> bool:
 			"the engine measured the shrunk host and reported "
 			+ "NO_CANDIDATE -- the one outcome that may bar a host "
 			+ "(%s)" % str(told.get(edge, {})))
-	if not await _await_condition("the bridge bars the host and offers a "
-			+ "re-selected Zone",
+	# ---- BRIDGE CONTROL 2: the bridge recovers, and says how ---------
+	#
+	# TWO RECOVERIES, AND WHICH ONE IS NOT THIS CONTROL'S TO CHOOSE.
+	# `_reselect_hosts` moves the branch when the same arrangement can
+	# be rebuilt without it, and STANDS DOWN when it cannot -- the
+	# ordinary bounded refusal takes the Zone back to Epsilon instead.
+	# Both are designed, both are reported, and which one a given host
+	# gets is a property of that Zone's spare capacity, not of this
+	# harness. Measured on a default-scale Zone after the capacity was
+	# corrected: 1 of 8 hosts can be re-selected with the branch count
+	# preserved, where the flat four-socket table claimed 8 of 8 by
+	# planning routes through walls.
+	#
+	# So this asserts the RECOVERY and names the path. Re-selection's
+	# own properties -- the bar recorded, the branch moved, the count
+	# preserved -- are bridge controls and live in
+	# `test_amalgam_end_to_end.py`, where the host can be chosen for the
+	# property under test. What only this control can establish is that
+	# a real engine measurement reached a real campaign and a
+	# replacement came back.
+	if not await _await_condition("the bridge recovers the Zone",
 			func() -> bool:
 				var az := BridgeClient.active_zone()
-				return (az.get("unhostable_rooms", []) as Array).has(host), 30.0):
+				if az.is_empty():
+					return false
+				# THREE WAYS TO SEE A RECOVERY, and the third is the
+				# one this batch added: a deterministic recompose can
+				# return byte-identical content, so the digest does not
+				# move and only the ATTEMPT says a new try has begun.
+				return (az.get("unhostable_rooms", []) as Array).has(host) \
+					or BridgeClient.proposal_for(zone_id) != proposal_a \
+					or BridgeClient.attempt_for(zone_id) > attempt_a, 60.0):
 		a.queue_free()
 		return false
-	_check((BridgeClient.active_zone().get("unhostable_rooms", [])
-				as Array) == [host],
-			"and it barred exactly the room the engine named (%s)"
-			% str(BridgeClient.active_zone().get("unhostable_rooms", [])))
+	var barred_host := (BridgeClient.active_zone().get(
+			"unhostable_rooms", []) as Array).has(host)
+	print("  RECOVERY: %s" % ("the host was barred and the branch "
+			+ "re-selected" if barred_host
+			else "re-selection stood down; the Zone was refused and "
+			+ "composed again, which is the other designed recovery"))
 
-	# ---- BRIDGE CONTROL 2: the replacement is a different proposal ----
-	if not await _await_condition("the re-selected Zone is offered",
+	if not await _await_condition("the replacement is offered",
 			func() -> bool:
 				return BridgeClient.hub_mode() == "ZONE_READY" \
 					and str(BridgeClient.active_zone().get(
-						"zone_id", "")) == zone_id, 30.0):
+						"zone_id", "")) == zone_id, 40.0):
 		a.queue_free()
 		return false
 	var replacement := BridgeClient.active_zone()
 	var proposal_b := BridgeClient.proposal_for(zone_id)
 	var host_b := _first_plug_host(replacement.get("zone"))
-	_check(proposal_b != "" and proposal_b != proposal_a,
-			"the re-selected Zone is a different proposal (%s vs %s)"
-			% [proposal_a, proposal_b])
 	_check(_room_ids(replacement.get("zone")) == rooms_a,
-			"and it reuses every room name -- the content is kept and "
-			+ "only the GRAPH is replaced, so an identity over room "
-			+ "names would not have moved (%s)" % str(rooms_a))
-	_check(host_b != "" and host_b != host,
-			"and the branch moved to another host (%s, was %s)"
-			% [host_b, host])
+			"the replacement keeps the CONTENT -- the same rooms, the "
+			+ "same Checks (%s)" % str(rooms_a))
 	_check(_plug_count(replacement.get("zone"))
 				== _plug_count(record.get("zone")),
 			"and the branch count is preserved: %d returns before and "
 			% _plug_count(record.get("zone"))
 			+ "%d after" % _plug_count(replacement.get("zone")))
+	if barred_host:
+		_check((BridgeClient.active_zone().get("unhostable_rooms", [])
+					as Array) == [host],
+				"and exactly the room the engine named is barred (%s)"
+				% str(BridgeClient.active_zone().get("unhostable_rooms",
+					[])))
+		_check(host_b != "" and host_b != host,
+				"and the branch moved to another host (%s, was %s)"
+				% [host_b, host])
+		_check(proposal_b != "" and proposal_b != proposal_a,
+				"and the re-graphed Zone is a different proposal "
+				+ "(%s vs %s)" % [proposal_a, proposal_b])
+	else:
+		# IDENTICAL CONTENT, RE-COMPOSED. The fallback provider is
+		# deterministic, so the replacement may hash exactly as the
+		# original did -- which is correct, and is why the ATTEMPT is
+		# what separates them here.
+		_check(BridgeClient.attempt_for(zone_id) > attempt_a,
+				"and the attempt moved on (%d, was %d), which is what "
+				% [BridgeClient.attempt_for(zone_id), attempt_a]
+				+ "separates two tries at content that hashes the same")
 
 	# ---- BRIDGE CONTROL 3: A reports late, and nothing moves ---------
 	_check(a.proposal_id == proposal_a and a.attempt == attempt_a,
 			"A still carries the identity AND the attempt it started "
 			+ "with; an old coroutine must never acquire the "
 			+ "replacement's (%s, attempt %d)" % [a.proposal_id, a.attempt])
+	_check(a.proposal_id != proposal_b
+				or a.attempt != BridgeClient.attempt_for(zone_id),
+			"and at least one of the two tells it apart from the "
+			+ "replacement -- the digest when the content changed, the "
+			+ "attempt when it did not")
+	var attempt_b := BridgeClient.attempt_for(zone_id)
 	var before := int(BridgeClient.active_zone().get("layout_refusals", -1))
 	var state_before := str(BridgeClient.active_zone().get(
 			"layout_state", ""))
@@ -1274,6 +1337,9 @@ func _test_reselection_and_return_journey() -> bool:
 	_check(_first_plug_host(BridgeClient.active_zone().get("zone"))
 				== host_b,
 			"and changed none of its graph")
+	_check(BridgeClient.attempt_for(zone_id) == attempt_b,
+			"and did not advance its attempt (%d, was %d)"
+			% [BridgeClient.attempt_for(zone_id), attempt_b])
 	_check(verdicts.is_empty(),
 			"and drew no verdict at all: a stale result the bridge "
 			+ "ignores cannot release the hold its replacement's player "
@@ -1331,6 +1397,13 @@ func _test_reselection_and_return_journey() -> bool:
 	# is not what a placement control is about, so the body starts where
 	# a player entering that room arrives.
 	var walked := await _the_return_carries_a_body_home(b, host_b)
+	# WHERE THE ACCEPTED BUILD PUT THE DEVICE, read while that build is
+	# still alive. A typed `ZoneController` parameter is type-checked
+	# BEFORE the function body runs, so asking a freed controller is a
+	# script error and not something `is_instance_valid` can catch
+	# inside the callee.
+	var stood_at: Vector3 = b._zone_anchors.get(
+			"room:%s:return" % host_b, Vector3.INF)
 	b.queue_free()
 	await get_tree().process_frame
 
@@ -1355,12 +1428,11 @@ func _test_reselection_and_return_journey() -> bool:
 	_check(replug != null,
 			"and the return device is back, in the same room (%s)"
 			% host_b)
-	if replug != null:
-		var was: Vector3 = _return_anchor(b, host_b)
-		_check(replug.global_position.distance_to(was) < 0.01
-					or was == Vector3.INF,
-				"and at the same place: %v, and it was %v"
-				% [replug.global_position, was])
+	if replug != null and stood_at != Vector3.INF:
+		_check(replug.global_position.distance_to(stood_at) < 0.01,
+				"and at the same place a cold restart replays it to: "
+				+ "%v, and the accepted build stood it at %v"
+				% [replug.global_position, stood_at])
 	_check(str(BridgeClient.active_zone().get("layout_state", ""))
 				== "ACCEPTED",
 			"and the Zone is still accepted after the replay")
@@ -1473,12 +1545,6 @@ func _a_return_in(controller: ZoneController, host: String) -> ReturnPlug:
 		if str(plug.get_meta("room_id", "")) == host:
 			return plug
 	return null
-
-func _return_anchor(controller: ZoneController, host: String) -> Vector3:
-	if not is_instance_valid(controller):
-		return Vector3.INF
-	return controller._zone_anchors.get("room:%s:return" % host,
-			Vector3.INF)
 
 ## The room the first return plug in a Zone proposal stands in.
 func _first_plug_host(zone: Variant) -> String:

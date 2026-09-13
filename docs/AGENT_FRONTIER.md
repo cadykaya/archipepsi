@@ -1,5 +1,157 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the advertised capacity is the built capacity, and the whole journey runs — 2026-09-13
+
+**`claude/archipepsi-echoes-continuation-b1adno`**, bridge lane merged at
+`2330017`, art lane at `1a9f1c9`. Read this first.
+
+### A room is offered only the doorways its producer builds
+
+`PROCEDURAL_SOCKETS` named four openings for every procedural room, so
+`compose_with_branch` hung a branch off a `platform_path`'s `side_left`
+exactly as it would off an arena's — and that producer raises a solid
+wall there, over its kill pit and below its walkway. A declared `USED`
+door the engine measures as solid refuses the WHOLE layout, which is why
+a default-scale Zone could not be accepted at all.
+
+**Measured, one control per chamber type**, each a real two-room Zone
+with all four sockets assigned, asking three things of every side the
+producer agrees to name: is the aperture a hole, is there floor a metre
+inside it, and does the room name it at all. *An open aperture with
+nothing under it is not a door.*
+
+| producer | side doorways | note |
+|---|---|---|
+| `corridor` | hole + floor | cuts them since last batch |
+| `arena` | hole + floor | keeps its crates out of them |
+| `treasure_room` | hole + floor | |
+| **`platform_path`** | **solid, no floor** | the middle of its side wall is over its pit |
+| **`tower`** | **solid** | the other producer that climbs |
+
+`C.PROCEDURAL_SOCKET_CAPACITY` is that measurement — **one declaration,
+three consumers**, because fixing the planner alone is the
+two-vocabulary defect this project keeps finding: the composer
+(`topology._sockets_for`), the schema (`Zone`'s socket invariant) and
+the engine (`ChamberBuilders.procedural_sockets`, via `constants.gd`).
+`topology.apply` raises loudly if a product ever assigns beyond capacity
+again, and an authored shell answers from its own catalogue entry
+throughout. **It is a statement about today's producers**: a side-landing
+variant simply comes out of the map.
+
+**Old saves still load.** The NAME vocabulary stays four, because a
+campaign composed before this was measured holds `platform_path` rooms
+with side doors and `ZoneRecord.zone` is a typed `Zone`. What a room must
+MENTION is what it carries. Such a Zone loads, is refused on the aperture
+the engine no longer cuts, and is recomposed.
+
+### Branching is preserved, and the journeys roughly doubled
+
+| | before | after |
+|---|---|---|
+| sample returns (20 Zones) | 160 | 159 |
+| sample dead ends | 141 | 141 |
+| Zones left as a bare chain | — | none |
+| journey `entered` / 5 | 2 | **4** |
+| journey `stayed` | 2 | **4** |
+| journey `content` | 0 | **2** |
+| journey `returned` | 1 | **3** |
+
+The one lost return is `zone_13`'s `c019`, which stopped being a dead end
+(7 → 6) and therefore needs none. Every junction role lost was a
+`platform_path`; every one gained was an arena. The journey legs are the
+same five inputs, the same command, three consecutive runs agreeing —
+the destinations used to be rooms that advertised a door and raised a
+wall. `JOURNEY_FLOOR` is raised to that.
+
+**The five and the sample are retained.**
+`godot/tests/fixtures/generated-before-capacity/`,
+`sample-before-capacity/` and `played_zone-before-capacity.json` keep
+what they were; the live fixtures are regenerated from the same source
+inputs with the same commands. Nothing was swapped for a luckier seed.
+
+### Two tries at identical content are two attempts
+
+`layout.proposal_digest` is CONTENT identity and stays that: identical
+bytes hash identically, which is correct and is exactly why it cannot
+separate two tries at the same content. Measured live — the
+deterministic provider recomposes the same Zone after a refusal, the
+digest matched on both sides, and the replaced build's late result spent
+the replacement's budget.
+
+So the discriminator is at the lifecycle boundary and is a quantity the
+record already keeps and already sends: `LayoutResult.attempt` is
+`ZoneRecord.layout_refusals` as it stood when the build started. A
+refusal is what ends one attempt and begins the next. **The two cover
+different cases and neither replaces the other** — re-selection changes
+the graph without spending a refusal, so the digest catches it; a
+recompose keeps the content and spends one, so the ordinal catches that.
+
+**Permitted reuse, stated:** a result from the CURRENT attempt is current
+however many times it arrives. A client resending after a dropped
+connection is the same evidence, not a second charge. Only a result from
+an attempt the Zone has moved past is discarded.
+
+### The whole journey, driven — `make godot-return-journey`
+
+| stage | result |
+|---|---|
+| candidate layout | the engine measures `NO_CANDIDATE`, 80 candidates searched |
+| bridge acceptance | recovery taken and named; content kept; returns 8 → 8; attempt 0 → 1 |
+| the replaced build reports late | no budget, no state, no commit, no bar, no graph change, no attempt, **no verdict** |
+| the replacement | accepted, manifest committed |
+| player traversal | arrival does not fire the device; the pad raises exactly one traversal for `p:c011:start` |
+| deliberate return | the production consumer puts the body at the Zone start, **0.0 m** |
+| cold reconstruction | the manifest replays; the device is back in `c011` at `(-114.137787, 31.570000, -72.089989)`, the same place to six decimals |
+
+**Both recoveries are designed and the control names which ran.**
+`_reselect_hosts` moves the branch when the arrangement can be rebuilt
+without the barred room and stands down when it cannot; the ordinary
+bounded refusal then takes the Zone back to Epsilon. Re-selection's own
+properties are bridge controls in `test_amalgam_end_to_end.py`, where the
+host can be chosen for the property under test.
+
+### Suites, at this commit
+
+`godot-zone-audit`, `-test`, `-room`, `-room-contract`, `-content`,
+`-activity`, `-graphs`, `-physics`, `-movement`, `-boot`,
+`godot-integration`, `godot-return-journey` — **OK**.
+
+**`godot-reload` is GREEN for the first time**, both phases: PHASE 1
+(2 checks) builds and accepts a fresh default-scale proposal, and PHASE 2
+(18 checks) — manifest reconstruction, never reached before — passes.
+Getting there took three harness corrections in its walker, each
+measured: it walked a straight line between two rooms joined by a door
+(11.6 m short, against the wall), it steered AT the opening rather than
+through it (3.8 m, wedged 0.75 m from the near wall), and it never
+climbed what it was pressed against.
+
+### NOT closed by this batch, and still on the backlog
+
+1. **Overlap reconciliation.** The join/collar distinction, the separate
+   "router found a candidate" vs "bridge accepted it" publication, and
+   the bounds diagnosis for the four large-shell failures. The four
+   reverted attempts are recorded in `zone_builder.gd`.
+2. **The ordinary journey.** `re_entered` reached 1 of 3 and is floored
+   at 0 deliberately: it is a full cross-Zone walk BACK and is not yet
+   reliable. The fall at waypoint 0 and the stop-shorts are unchanged.
+3. **The pending-room integration proof.** Registry seam, one-neighbour
+   Terminus with unused openings closed, onward branch with its real
+   departure, rotated placement.
+4. **Re-selection got tighter, and it is reported rather than hidden.**
+   On a default-scale Zone, 8 of 8 hosts could be barred and re-selected
+   with the branch count preserved under the flat table; **1 of 8** can
+   under the measured capacity. The old number was not robustness — it
+   was re-selection planning routes through walls the engine then
+   measured as solid. Branch preservation is untouched and
+   `_reselect_hosts` stands down as designed. Whether the composer
+   should find more room to manoeuvre is topology tuning and is the
+   bridge lane's.
+
+**0.3 is not complete.** This batch closes the acceptance and
+reconstruction blockers and the identity questions; it does not close
+the backlog above, and none of it is the human playtest acceptance 0.3
+still owes.
+
 ## ENGINE LANE — one placement contract, one proposal identity, and the door that blocks acceptance — 2026-09-12
 
 **`claude/archipepsi-echoes-continuation-b1adno`**, bridge lane merged at
