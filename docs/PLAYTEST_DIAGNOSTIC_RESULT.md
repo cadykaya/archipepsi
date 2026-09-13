@@ -262,6 +262,57 @@ the existing centre-line leak probe against THOSE, instead of against
 lone chambers, covers every join in the game — and would have caught
 this before a player saw it.
 
+## FIFTH FINDING: a Metroidvania with no map, and a station that can never be repaired
+
+Owner, late in the session: *"im lost. i realize we have made a 3d
+metroidvania with no map. i have 3 keys but ive found no door that uses
+them [...] im at another pressure pads room thats impossible so i cant
+warp back but also its the end of a branch and has no warp back, this
+makes me as the player think there is more to this room."*
+
+### The compound soft-lock
+
+Two findings on this page combine into something neither shows alone:
+
+* `zone_builder` gives a room with ANY activities a station created
+  **broken** (`rid if puzzled else ""`).
+* `zone_controller` repairs that station **only** when that room's
+  activity is solved.
+* `pressure_routing` with more than one element has **no solution**.
+
+Therefore a room whose activity is `pressure_routing` holds a save point
+that can **never** come online, and the Zone's warp network is
+permanently incomplete. Not a movement trap — the player can walk back
+out the way they came — but a permanent false promise.
+
+**The damage is the promise, and the owner named it precisely.** A
+broken station tells the player there is more here. An unsolvable puzzle
+makes that a claim the game can never honour, and a conscientious player
+correctly refuses to leave. An unsolvable activity does not merely waste
+a puzzle; **it strands the player against a lie.**
+
+### There is no map
+
+Confirmed: no minimap, no compass, nothing in `hud.gd`. The only
+wayfinding in the game is the single CHECK tracker with a bearing and a
+distance.
+
+And the game is structurally a Metroidvania: local keys, colour-coded
+locks (`BRANCH_COLOURS`), branches off a spine, warp stations to
+backtrack between, dead ends that send the player home. **Every
+structural element of the genre, and none of the supporting UI.**
+
+That is the diagnosis for "I'm lost." The Zones are not confusing; the
+game is built on a convention whose instrument it has never shipped.
+
+### The three unused keys are the same finding
+
+Keys do not auto-open locks — the save carries them separately (`the
+save carries the key 'blue'` / `the save carries the opened lock
+'c005/side_right'`) and opened doors stay open. So three keys means
+three findable doors exist. The player simply has no instrument capable
+of finding them. Not a key bug; the map finding again.
+
 ## FOURTH FINDING: `pressure_routing` is unsolvable by construction
 
 Owner, on a room labelled "PRESSURE ROUTING / hold all 2 pads at once":

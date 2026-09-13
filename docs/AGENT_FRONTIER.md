@@ -198,6 +198,18 @@ of content a small room cannot hold. `topology.SPINE_SHARE` already
 records the unresolved half of this ("rooms behaved like enlarged
 corridors"); the principle is the other half.
 
+**The game is a Metroidvania with no map, and an unsolvable puzzle
+strands the player against a promise.** No minimap, no compass, nothing
+in `hud.gd` but one CHECK tracker — against local keys, colour-coded
+locks, branches off a spine, warp stations to backtrack between and dead
+ends that send you home. The owner got lost holding three unused keys.
+Worse, the two findings below compound: a room with ANY activity gets a
+station created BROKEN, that station repairs only when the room's
+activity is solved, and `pressure_routing` has no solution — so such a
+station can NEVER come online and the warp network is permanently
+incomplete. A broken station is a promise; an unsolvable puzzle makes it
+one the game can never keep.
+
 **`pressure_routing` is unsolvable by construction.** It is the one
 family with `simultaneous: true` ("an element releasing is a failure
 rather than nothing"); only the player can press a plate
