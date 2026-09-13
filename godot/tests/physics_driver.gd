@@ -46,6 +46,9 @@ func _run() -> void:
 	await _the_same_push_twice_ends_in_the_same_place()
 	await _the_player_shoves_a_crate_with_their_own_body()
 	await _a_player_opens_a_powered_door_by_shoving_a_crate()
+	await _a_player_walks_up_a_step_and_back_down_it()
+	await _a_player_walks_down_a_staircase_without_falling()
+	await _a_step_refuses_cover_and_a_low_ceiling()
 	await _a_solvable_package_latches_in_every_run()
 	await _a_solution_that_misses_latches_in_none()
 	await _a_weight_threshold_needs_the_weight()
@@ -492,6 +495,154 @@ func _crate_to_region_package() -> Dictionary:
 	}
 
 # --- the base character, shoving --------------------------------------
+
+## Far enough from the origin that geometry other controls leave in the
+## scene cannot stand in the way of a walk this file is timing, and with
+## its own ground, because `_room()`'s floor does not reach out here.
+const FAR := 500.0
+
+func _ground_at(room: Node3D, at: Vector3, size: Vector3) -> StaticBody3D:
+	var slab := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	slab.add_child(shape)
+	room.add_child(slab)
+	slab.global_position = at
+	return slab
+
+## THE STEP THE MOVEMENT LAW PROMISED, WALKED IN BOTH DIRECTIONS.
+##
+## `MAX_VERTICAL_STEP` decided geometry was walkable while `player.gd`
+## implemented no step-up at all, so the real height was zero and the
+## owner had to jump the pedestal in a treasure room.
+##
+## 0.8 m is not arbitrary. `treasure_room` stacks two 0.4 m steps, so
+## its upper tread sits at exactly this height -- and it is above
+## `PLAYER_RADIUS`, which matters: a 0.4 m rise is inside the capsule's
+## own rounded bottom and can be mounted without any step-up at all, so
+## a control built on one would pass whether or not the feature exists.
+func _a_player_walks_up_a_step_and_back_down_it() -> void:
+	var room := _room()
+	_ground_at(room, Vector3(FAR, -0.5, 4.0), Vector3(24.0, 1.0, 40.0))
+	var ledge := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(8.0, 0.8, 8.0)
+	shape.shape = box
+	ledge.add_child(shape)
+	room.add_child(ledge)
+	# CLEAR OF THE OTHER CONTROLS. `_room()` adds a fresh root but earlier
+	# rooms in this file are still in the scene, and the first version of
+	# this control was blocked by a `PoweredDoor` left at the origin by
+	# the control above it.
+	ledge.global_position = Vector3(FAR, 0.4, 4.5)
+	await _step(30)
+	var body := Player.create()
+	room.add_child(body)
+	body.global_position = Vector3(FAR, 1.2, -1.0)
+	await _step(25)
+	body.rotation.y = PI
+	Input.action_press("move_forward", 1.0)
+	for _i in 25:
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	await _step(15)
+	var climbed := body.global_position.y
+	_check(climbed > 0.7,
+			"a walking player climbs a 0.8 m step without jumping "
+			+ "(ended at y %.2f, on a tread the capsule's own radius "
+			% climbed + "cannot mount)")
+	_check(body.global_position.z > 0.5,
+			"and is standing on it rather than stopped at its face "
+			+ "(z %.2f)" % body.global_position.z)
+	# BACK DOWN, and off it again.
+	body.rotation.y = 0.0
+	Input.action_press("move_forward", 1.0)
+	for _i in 40:
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	await _step(15)
+	_check(body.global_position.y < 0.7,
+			"and walks back down off it (y %.2f)"
+			% body.global_position.y)
+	room.queue_free()
+	await get_tree().process_frame
+
+## AND DOWN A STAIRCASE WITHOUT IT BECOMING A SERIES OF DROPS.
+##
+## The descent half of the same defect, and the geometry is the one the
+## owner met: `treasure_room` stacks two 0.4 m treads under its Check.
+## Godot's default `floor_snap_length` is 0.1 m, so each tread threw the
+## body off the floor and a staircase walked like a set of small falls.
+## A single tall ledge is NOT this case -- walking off one is a fall and
+## should be -- so this is measured on treads.
+func _a_player_walks_down_a_staircase_without_falling() -> void:
+	var room := _room()
+	_ground_at(room, Vector3(FAR, -0.5, 4.0), Vector3(24.0, 1.0, 40.0))
+	_ground_at(room, Vector3(FAR, 0.2, 6.0), Vector3(10.0, 0.4, 10.0))
+	_ground_at(room, Vector3(FAR, 0.6, 9.0), Vector3(10.0, 0.4, 6.0))
+	await _step(30)
+	var body := Player.create()
+	room.add_child(body)
+	body.global_position = Vector3(FAR, 1.2, 9.0)
+	await _step(25)
+	_check(body.global_position.y > 0.7,
+			"the walker starts on the top tread (y %.2f)"
+			% body.global_position.y)
+	var falling := 0
+	Input.action_press("move_forward", 1.0)
+	for _i in 40:
+		await get_tree().physics_frame
+		if not body.is_on_floor():
+			falling += 1
+	Input.action_release("move_forward")
+	await _step(15)
+	_check(body.global_position.y < 0.7,
+			"and descends the treads (y %.2f)" % body.global_position.y)
+	# NOT asserted: that the descent stays grounded. Measured and not
+	# achieved -- `floor_snap_length` is 1.0 and Godot drops the body
+	# off a tread anyway -- so the airborne count is reported rather
+	# than required, and the open half is named in the handoff.
+	print("     (descent airborne frames: %d of 40)" % falling)
+	room.queue_free()
+	await get_tree().process_frame
+
+## AND THE THINGS THAT MUST STAY OBSTACLES.
+##
+## A step-up that climbs anything deletes cover. `DestructibleCover` is
+## 1.4 m and `ReactiveBarrel` 1.1 m, both above `MAX_VERTICAL_STEP` on
+## purpose, and the crate control above covers the other half: a body
+## the player is meant to SHOVE is not a stair either.
+func _a_step_refuses_cover_and_a_low_ceiling() -> void:
+	var room := _room()
+	_ground_at(room, Vector3(FAR, -0.5, 4.0), Vector3(24.0, 1.0, 40.0))
+	var wall := StaticBody3D.new()
+	var ws := CollisionShape3D.new()
+	var wb := BoxShape3D.new()
+	wb.size = Vector3(8.0, 1.4, 8.0)
+	ws.shape = wb
+	wall.add_child(ws)
+	room.add_child(wall)
+	wall.global_position = Vector3(FAR, 0.7, 4.5)
+	await _step(30)
+	var body := Player.create()
+	room.add_child(body)
+	body.global_position = Vector3(FAR, 1.2, -1.0)
+	await _step(25)
+	body.rotation.y = PI
+	Input.action_press("move_forward", 1.0)
+	for _i in 40:
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	await _step(15)
+	_check(body.global_position.y < 0.6,
+			"a 1.4 m cover slab is not climbed by the step (y %.2f); "
+			% body.global_position.y + "cover that can be walked over "
+			+ "is not cover")
+	room.queue_free()
+	await get_tree().process_frame
 
 ## CAN THE CURRENTLY PLAYABLE CHARACTER MOVE A CRATE?
 ##

@@ -439,6 +439,18 @@ static func create() -> Player:
 	shape.shape = capsule
 	shape.position = Vector3(0, Constants.PLAYER_HEIGHT / 2.0, 0)
 	player.add_child(shape)
+	# Snap matched to the step the body can now climb, so ground within
+	# one step stays underfoot on slopes and small undulations.
+	#
+	# MEASURED LIMIT, recorded rather than claimed away: this does NOT
+	# make walking down a tread stop being a short fall. With
+	# `floor_snap_length` at 1.0, `velocity.y` at 0 and `up_direction`
+	# at +Y -- every precondition Godot documents -- a body walking off
+	# a 0.4 m tread at 7 m/s still leaves the floor and free-falls the
+	# drop. Descending a staircase is therefore still a series of small
+	# falls; the ASCENT half of this defect is fixed and controlled, the
+	# descent half is open. See the batch handoff.
+	player.floor_snap_length = float(Constants.MAX_VERTICAL_STEP)
 	var camera := Camera3D.new()
 	camera.name = "Camera3D"
 	camera.position = Vector3(0, Constants.PLAYER_EYE_HEIGHT, 0)
@@ -732,6 +744,7 @@ func _physics_process(delta: float) -> void:
 
 	var falling_speed := -velocity.y
 	var was_airborne := not is_on_floor()
+	_climb_a_step_the_law_promises(delta)
 	move_and_slide()
 	_shove_what_i_walked_into()
 	if was_airborne and is_on_floor():
@@ -828,6 +841,89 @@ static func camera_feel_offset(phase: float, weight: float,
 	return Vector3(sin(phase) * BOB_SWAY * weight * motion,
 			sin(phase * 2.0) * BOB_RISE * weight * motion - dip * motion,
 			0.0)
+
+## THE STEP THE MOVEMENT LAW ALREADY PROMISED.
+##
+## `MAX_VERTICAL_STEP` was a number the generator built levels around and
+## the body never honoured. `chamber_builders` says so where it raises a
+## tower -- "each platform rises `step_rise` <= MAX_VERTICAL_STEP, so the
+## mandatory route up is base-kit" -- and this file's own gallery lip
+## carries the other half of the evidence: "there is no step-up anywhere
+## in `player.gd` [...] so a 0.35 m kerb stops a walking player dead",
+## worked around there by notching a gap in the lip rather than by
+## giving the body the step.
+##
+## Measured on the played proposal: pedestal steps rise 0.4 m, the
+## gallery deck lip 0.35 m, tower platforms `step_rise`. All of them
+## were jumps. `DestructibleCover` is 1.4 m and `ReactiveBarrel` 1.1 m,
+## both above the limit, so cover stays cover -- the step does not turn
+## a firefight into a stroll over the crates.
+##
+## Godot's `CharacterBody3D` has no automatic step-up, so this is the
+## usual three-probe form: is the foot blocked, is there room to rise,
+## is there room to stand once risen. Nothing moves unless all three
+## agree, and the body is lifted only as far as the surface it found --
+## never the full limit on faith.
+func _climb_a_step_the_law_promises(delta: float) -> void:
+	if not is_on_floor():
+		return
+	# WHAT THE PLAYER IS TRYING TO DO, not what the wall left of it.
+	#
+	# The first version read `velocity`, and `move_and_slide` has already
+	# resolved that against the obstacle by the time the next frame
+	# arrives: pressed against a 0.8 m ledge the body reported a single
+	# frame of intent and then zero, so the probe below almost never ran
+	# and the step looked unimplemented. `_walk_intent` is the field this
+	# file already keeps for the question "what are they trying to walk
+	# into" -- `_shove_what_i_walked_into` reads it for the same reason.
+	var wish := Vector3(_walk_intent.x, 0.0, _walk_intent.z) * delta
+	if wish.length_squared() < 0.000001:
+		return
+	# 1. IS THE FOOT ACTUALLY BLOCKED? A clear path needs no step, and
+	#    lifting the body on an open floor is how a step-up turns into a
+	#    hover.
+	if not test_move(global_transform, wish):
+		return
+	var step := float(Constants.MAX_VERTICAL_STEP)
+	# 2. IS THERE ROOM TO RISE? This is the headroom test: a body under a
+	#    low ceiling may not step, which keeps a crawl space a crawl
+	#    space rather than a staircase.
+	if test_move(global_transform, Vector3.UP * step):
+		return
+	var lifted := global_transform.translated(Vector3.UP * step)
+	# PAST THE LIP, NOT UP TO IT. One frame of walking is about 0.12 m
+	# and the capsule's axis sits `PLAYER_RADIUS` behind its leading
+	# surface, so probing one frame ahead tests a column of air in front
+	# of the step and reports "nothing under the landing" while standing
+	# against a perfectly good tread. The landing is probed from where
+	# the BODY would stand, which is a radius past the edge it is
+	# touching.
+	var reach := wish.normalized() * (Constants.PLAYER_RADIUS + 0.05)
+	# 3. AND ROOM TO STAND ONCE RISEN, at the place the move would end.
+	if test_move(lifted, reach):
+		return
+	# WHERE THE SURFACE ACTUALLY IS. Drop back down from the lifted spot
+	# and take the rise the floor gives, so a 0.4 m pedestal costs 0.4 m
+	# and not the whole limit.
+	var ahead := lifted.translated(reach)
+	var probe := KinematicCollision3D.new()
+	if not test_move(ahead, Vector3.DOWN * (step + 0.05), probe):
+		return                     # nothing under it: that is a ledge
+	# A THING YOU ARE MEANT TO PUSH IS NOT A STAIR.
+	#
+	# The first version of this climbed a 60 kg crate instead of shoving
+	# it, and `physics_driver` caught it: three seconds of walking moved
+	# the crate 0.01 m because the player was standing on top of it. The
+	# step reads STATIC level geometry; anything the game hands the
+	# player as manipulable stays an obstacle for
+	# `_shove_what_i_walked_into` to deal with.
+	if probe.get_collider() is ManipulableBody:
+		return
+	var rise := step - probe.get_travel().length()
+	if rise <= 0.01 or rise > step + 0.001:
+		return
+	global_position += Vector3.UP * rise
+
 
 func camera_ray(distance: float, spread_dir: Vector3 = Vector3.ZERO) -> Dictionary:
 	var from := camera.global_position
