@@ -929,9 +929,20 @@ func _test_a_failed_zone_is_discarded_and_its_checks_come_back() -> bool:
 		if not await _await_condition("a Zone to falsify in round %d"
 					% round_number,
 				func() -> bool:
-					return BridgeClient.hub_mode() == "ZONE_FAILED" \
-						or not (BridgeClient.active_zone().get("zone", {})
-							as Dictionary).is_empty(), 40.0):
+					# `active_zone()` is safe -- it returns {} for a
+					# non-Dictionary. `.get("zone")` is NOT: a record in
+					# PENDING_GENERATION carries a null there, and
+					# `null as Dictionary` throws "Invalid cast: could
+					# not convert value to 'Dictionary'". That error was
+					# printed on every run of this suite and ignored,
+					# because nothing failed a run on a script error
+					# until this batch.
+					if BridgeClient.hub_mode() == "ZONE_FAILED":
+						return true
+					var pending: Variant = BridgeClient.active_zone() \
+							.get("zone")
+					return typeof(pending) == TYPE_DICTIONARY \
+						and not (pending as Dictionary).is_empty(), 40.0):
 			return false
 		if BridgeClient.hub_mode() == "ZONE_FAILED":
 			break

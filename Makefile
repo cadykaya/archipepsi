@@ -502,8 +502,7 @@ godot-integration: godot-import   # full loop through a live mock bridge, fresh 
 	STATUS=$$?; kill $$BRIDGE_PID; \
 	cat /tmp/archipepsi-integration.log; \
 	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
-	if grep "SCRIPT ERROR" /tmp/archipepsi-integration.log \
-	     | grep -qv "could not convert value to 'Dictionary'"; then \
+	if grep -q "SCRIPT ERROR" /tmp/archipepsi-integration.log; then \
 	  echo "-- a script error was raised: a run that crashed and still"; \
 	  echo "-- printed OK is not a pass. The exit-portal crash reached"; \
 	  echo "-- ALL_CHECKS_CLEARED and reported OK before this guard."; \

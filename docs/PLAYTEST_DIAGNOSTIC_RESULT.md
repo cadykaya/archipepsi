@@ -1000,28 +1000,39 @@ the activity label; what failed was its presentation.
 **Superseded by finding 2** above. The completion path calls
 `tones.play("secret_found")`, a name the tone bank does not define.
 
-## Found while repairing, recorded not fixed: a cast on the refusal path
+## Closed: the Dictionary cast, and a wrong attribution corrected
 
 `godot-integration` had never failed on a `SCRIPT ERROR`, so a run that
 crashed could still print OK -- which is how the exit-portal crash
-reached `ALL_CHECKS_CLEARED` with a green suite. The target now fails on
-one, and that immediately surfaced a **pre-existing** error the suite had
-been printing and ignoring:
+reached `ALL_CHECKS_CLEARED` with a green suite. Making the target fail
+on one surfaced a pre-existing error the suite had been printing and
+ignoring, and a temporary exemption was added for it.
 
+**The first attribution of that error was wrong and is corrected here.**
+It was recorded as `BridgeClient.active_zone().is_empty()` evaluated on
+the refusal path in `zone_controller._await_verdict`. `active_zone()` is
+already defensive -- `return zone if typeof(zone) == TYPE_DICTIONARY
+else {}` -- so it cannot throw, and that guess was made from a
+backtrace line number without reading the producer.
+
+**The demonstrated cast was in the TEST HARNESS**, at
+`integration_driver.gd:932`:
+
+```gdscript
+not (BridgeClient.active_zone().get("zone", {}) as Dictionary).is_empty()
 ```
-SCRIPT ERROR: Invalid cast: could not convert value to 'Dictionary'.
-   at _await_verdict (zone_controller.gd:817)
-```
 
-It fires on the deliberate negative control that falsifies a layout:
-`BridgeClient.active_zone().is_empty()` is evaluated when the Zone has
-gone away, and `active_zone()` does not return a Dictionary then.
+`active_zone()` is safe; `.get("zone")` is not. A record in
+`PENDING_GENERATION` carries a null there, and `null as Dictionary`
+throws. The loop now tests `typeof(...) == TYPE_DICTIONARY` before
+casting.
 
-**Not fixed here.** It is outside this batch (required routes, the exit
-transition, activity feedback) and deserves its own measurement rather
-than a guess bolted onto a repair batch. The integration guard therefore
-fails on any script error EXCEPT this known message, so a new crash is
-caught while this one stays visible and recorded.
+**Repaired, and the exemption is deleted rather than scoped.** The
+integration run log now contains zero `SCRIPT ERROR` lines, the
+Makefile guard is a plain `grep -q "SCRIPT ERROR"` with no exception of
+any kind, and the crash-reintroduction control still fails the build:
+clean tree exits 0, `camera_ray` guard removed exits 2.
+
 
 ## Attempted and NOT established: required-target reachability
 
