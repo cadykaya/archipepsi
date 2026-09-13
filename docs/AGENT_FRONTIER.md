@@ -154,6 +154,30 @@ is chosen for the property under test.
    control. Whether the composer should find more room is topology
    tuning and is the bridge lane's.
 
+### START HERE AFTER THE PLAYTEST
+
+`docs/PLAYTEST_SESSION_SYNTHESIS.md` — what happened, what it taught us,
+every problem in severity order, and five proposed solutions.
+`docs/PLAYTEST_DIAGNOSTIC_RESULT.md` is the raw log behind it, including
+two retractions. `docs/CODEX_REVIEW_BRIEF.md` briefs an independent
+reviewer.
+
+**Fixed already: taking the exit portal crashed the game.** `camera_ray`
+read `.direct_space_state` off a null `get_world_3d()` on the first
+frame after the portal removed the player from the tree, and
+`_physics_process` called `move_and_slide` on a freed space. The most
+important transition in the game ended the process instead. No suite
+caught it because none has ever taken the portal — the integration run
+reaches `ALL_CHECKS_CLEARED` through intents. Fixed and controlled at
+`cd620f0`, verified by removing the fix and watching the suite exit 2.
+
+**The finding that organises the rest: the suite proves the pieces and
+never the assembly.** A Check behind a jump gap passed "the room is
+reachable". Stairs that must be jumped passed "the step is under 1.0 m".
+Holes at a doorway passed "each chamber is sealed". The portal crash
+passed "the campaign reaches ALL_CHECKS_CLEARED". All four were green on
+the commit that contained them.
+
 ### THE DIAGNOSTIC PLAYTEST FOUND AN UNDECLARED CAPABILITY GATE
 
 **Read `docs/PLAYTEST_DIAGNOSTIC_RESULT.md` before planning any batch.**
