@@ -946,6 +946,177 @@ func _the_way_back_from(space: PhysicsDirectSpaceState3D, at: Vector3,
 
 # --- 4. assembled joins -----------------------------------------------
 
+## A SEALED SOCKET IS A WALL, AND THE DECLARATION SAYS WHICH ONES ARE.
+##
+## The previous batch flagged `c001/side_left` as a leak candidate on a
+## PROXY -- "no other room's doorway within 6 m" -- and said so. The
+## proxy is gone: the Zone declares, per room and per socket, whether a
+## door is `USED`, `LOCKED` or `SEALED`, and `c001/side_left` is SEALED
+## with `edge_id: null`. It is not a join that went missing. It is a
+## socket the graph never used, and a socket the graph never used has
+## to be solid.
+##
+## `RoomAudit._assigned_doors_match_their_usage` already asks exactly
+## this, in exactly these words -- but of a room, from its own
+## transform, in the room-contract suite. Nothing asked it of the
+## ASSEMBLED Zone, where a cap is placed by the layout rather than by
+## the room. That is the gap this closes, and it is why a proxy was
+## reaching for the answer in the first place.
+func _every_sealed_door_is_solid() -> void:
+	var found := _measure_doors_against(_zone.zone.get("chambers", []))
+	_note("%d SEALED sockets and %d passable ones measured on the "
+			% [int(found["sealed_seen"]), int(found["open_seen"])]
+			+ "assembled Zone")
+	var leaking: Array = found["sealed_open"]
+	# THE ONE THAT ASSERTS. A sealed socket a body walks out of is the
+	# Zone leaking into the void, which is what the owner met.
+	_check(leaking.is_empty(),
+			"every SEALED socket is solid (%s)"
+			% ("none open" if leaking.is_empty()
+			else "OPEN: " + ", ".join(PackedStringArray(leaking))))
+	# The other direction is already `_publish_layout`'s warning and the
+	# bridge's refusal, so it is reported rather than duplicated here.
+	var stuck: Array = found["open_solid"]
+	if not stuck.is_empty():
+		_note("passable sockets measuring solid: %s"
+				% ", ".join(PackedStringArray(stuck)))
+
+	# AND THE DELIBERATELY BROKEN COUNTERPART, on the SAME assembly.
+	#
+	# The declaration is mutated rather than the geometry: a door that
+	# is genuinely open but declared SEALED is exactly the shape of the
+	# defect, and flipping a label cannot accidentally leave a hole in a
+	# Zone the other controls are still walking. If this does not report
+	# the door it was told to lie about, the sweep above is measuring
+	# nothing.
+	var lied := _with_usage_flipped(_zone.zone.get("chambers", []),
+			"c001", "exit", "SEALED")
+	var broken := _measure_doors_against(lied["chambers"])
+	var caught: Array = broken["sealed_open"]
+	_check(lied["flipped"] != "",
+			"a passable socket was found to mislabel (%s)"
+			% str(lied["flipped"]))
+	_check(caught.has(str(lied["flipped"])),
+			"and calling %s SEALED while it is still an opening is "
+			% str(lied["flipped"]) + "reported (%s)"
+			% ("caught" if caught.has(str(lied["flipped"]))
+			else "MISSED: " + str(caught)))
+
+## The doors of a declared chamber list, measured against the assembled
+## geometry. Takes the chambers so the counterpart above can hand it a
+## copy with one label changed.
+func _measure_doors_against(chambers: Array) -> Dictionary:
+	var space := get_viewport().world_3d.direct_space_state
+	var sealed_open: Array[String] = []
+	var open_solid: Array[String] = []
+	var sealed_seen := 0
+	var open_seen := 0
+	for raw_chamber: Variant in chambers:
+		var chamber: Dictionary = raw_chamber
+		var rid := str(chamber.get("id", ""))
+		if not _zone.room_bounds.has(rid):
+			continue
+		var box: AABB = _zone.room_bounds[rid]
+		for raw_door: Variant in chamber.get("doors", []):
+			var door: Dictionary = raw_door
+			var socket := str(door.get("socket_id", ""))
+			var key := "%s/%s" % [rid, socket]
+			if not _doors.has(key):
+				continue
+			var at: Vector3 = _doors[key]
+			var want_open := str(door.get("usage", "")) != "SEALED"
+			var blocked := _doorway_is_blocked(space, at, box)
+			if want_open:
+				open_seen += 1
+				if blocked:
+					open_solid.append("%s (%s)"
+							% [key, str(door.get("usage", ""))])
+			else:
+				sealed_seen += 1
+				if not blocked:
+					sealed_open.append(key)
+	return {"sealed_open": sealed_open, "open_solid": open_solid,
+			"sealed_seen": sealed_seen, "open_seen": open_seen}
+
+## A copy of the chamber list with one door relabelled. Prefers the
+## named socket; falls back to the first passable socket that actually
+## measures open, so the counterpart still has something to lie about
+## if the fixture changes.
+func _with_usage_flipped(chambers: Array, want_room: String,
+		want_socket: String, usage: String) -> Dictionary:
+	var space := get_viewport().world_3d.direct_space_state
+	var out: Array = []
+	var flipped := ""
+	var fallback := ""
+	for raw_chamber: Variant in chambers:
+		var chamber: Dictionary = (raw_chamber as Dictionary).duplicate(true)
+		var rid := str(chamber.get("id", ""))
+		var doors: Array = chamber.get("doors", [])
+		for i in doors.size():
+			var door: Dictionary = doors[i]
+			var socket := str(door.get("socket_id", ""))
+			var key := "%s/%s" % [rid, socket]
+			if str(door.get("usage", "")) == "SEALED" \
+					or not _doors.has(key) \
+					or not _zone.room_bounds.has(rid):
+				continue
+			if _doorway_is_blocked(space, _doors[key],
+					_zone.room_bounds[rid]):
+				continue
+			if fallback == "":
+				fallback = key
+			if rid == want_room and socket == want_socket:
+				door["usage"] = usage
+				flipped = key
+		out.append(chamber)
+	if flipped == "" and fallback != "":
+		for raw_chamber: Variant in out:
+			var chamber: Dictionary = raw_chamber
+			for raw_door: Variant in chamber.get("doors", []):
+				var door: Dictionary = raw_door
+				if "%s/%s" % [str(chamber.get("id", "")),
+						str(door.get("socket_id", ""))] == fallback:
+					door["usage"] = usage
+					flipped = fallback
+	return {"chambers": out, "flipped": flipped}
+
+## Would a standing body be stopped in this doorway?
+##
+## The same two-sample stance `RoomAudit.aperture_polarity` uses -- in
+## the doorway and one stride inside it -- so this cannot disagree with
+## the room-contract suite about what "blocked" means. Taken in WORLD
+## space, because an assembled Zone's caps belong to the layout and not
+## to any one room's transform.
+func _doorway_is_blocked(space: PhysicsDirectSpaceState3D, at: Vector3,
+		box: AABB) -> bool:
+	var middle := box.get_center()
+	var away := Vector3(at.x - middle.x, 0.0, at.z - middle.z)
+	var inward := Vector3(-signf(away.x), 0.0, 0.0)
+	if absf(away.x) < absf(away.z):
+		inward = Vector3(0.0, 0.0, -signf(away.z))
+	var floor_y := at.y
+	var down := PhysicsRayQueryParameters3D.create(
+			at + Vector3.UP * 1.0, at + Vector3.DOWN * 1.0)
+	down.collide_with_areas = false
+	var ground := space.intersect_ray(down)
+	if not ground.is_empty():
+		floor_y = (ground["position"] as Vector3).y
+	var stance := Vector3(0.0,
+			floor_y - at.y + Constants.PLAYER_HEIGHT / 2.0 + 0.05, 0.0)
+	# `RoomAudit._blocker`, NOT a second capsule of my own. The first
+	# version rolled its own full-size query and reported `c007/exit`
+	# and `c022/exit` -- both USED and both fine -- as solid, because
+	# the audit's capsule is deliberately 2 cm slimmer than the player
+	# (so an opening built exactly to the minimum is not refused by
+	# float error) and deliberately ignores PLACED CONTENT (so a prop
+	# standing in a doorway is not the doorway being walled up). Two
+	# definitions of "blocked" is how this suite and the bridge's own
+	# refusal come to disagree about the same door.
+	for step: float in [0.0, 0.45]:
+		if RoomAudit._blocker(space, at + inward * step + stance) != null:
+			return true
+	return false
+
 ## IS A DECLARED DOORWAY AN OPENING YOU CAN WALK THROUGH?
 ##
 ## The owner walked a Zone with holes at its entrances and an exit room
@@ -964,7 +1135,6 @@ func _joins_are_walked_through() -> Array[Dictionary]:
 	keys.sort()
 	var through := 0
 	var refused := 0
-	var leaks := 0
 	for key: Variant in keys:
 		if sample.size() >= 6:
 			break
@@ -997,29 +1167,19 @@ func _joins_are_walked_through() -> Array[Dictionary]:
 		sample.append({"key": str(key), "door": door, "inward": inward,
 				"start": start["at"], "goal": goal, "ok": ok,
 				"outcome": str(run["outcome"])})
-		var partner := _partner_doorway(str(key), door)
-		if str(run["outcome"]) == "LOST" and partner == "":
-			leaks += 1
 		_note("join %s [%s]: 2.5 m inside -> 2.5 m outside -> %s"
-				% [str(key), ("joins " + partner) if partner != ""
-				else "NO PARTNER", str(run["outcome"])]
+				% [str(key), _usage_of(str(key)), str(run["outcome"])]
 				+ ("" if str(run["blocker"]) == ""
 				else "  by " + str(run["blocker"])))
 	_check(through > 0,
 			"%d of %d sampled declared doorways are walked through "
 			% [through, sample.size()] + "by a body with the base kit")
-	# INTENDED OPENING, ACCEPTABLE CONTACT, OR A LEAK. A socket with no
-	# partner doorway near it is not joined to anything, so what is
-	# 2.5 m outside it is the void -- and a body that WALKS OUT of one
-	# and falls is the owner's hole, not a walker artifact. Reported
-	# rather than asserted, because "no partner within 6 m" is a PROXY
-	# for "unjoined": the join list is not on the controller, and a
-	# proxy that fails a suite is a proxy that gets believed.
-	if leaks > 0:
-		_note("%d sampled socket(s) have no partner doorway within 6 m "
-				% leaks + "AND let the walker out into a fall. That is "
-				+ "a leak candidate, not a proven one -- the partner "
-				+ "test is a proxy for the join list")
+	# NO LEAK COUNTER HERE ANY MORE. It used to guess at one from "no
+	# other doorway within 6 m", which named `c001/side_left` as a leak
+	# candidate -- and the declaration says that socket is SEALED with
+	# no edge, and `_every_sealed_door_is_solid` measures it solid. A
+	# walk that does not get through a sealed socket is the sealed
+	# socket working.
 	if refused > 0:
 		unresolved += refused
 		_note("%d sampled doorway(s) did not admit the walker. A "
@@ -1027,17 +1187,25 @@ func _joins_are_walked_through() -> Array[Dictionary]:
 				+ "route; carried as UNRESOLVED, not as a hole")
 	return sample
 
-## IS ANYTHING JOINED TO THIS SOCKET? A proxy, and labelled as one: the
-## nearest doorway belonging to another room, if it is close enough to
-## be the far side of the same join.
-func _partner_doorway(key: String, at: Vector3) -> String:
+## WHAT THE ZONE SAYS THIS SOCKET IS, rather than what a distance
+## measurement guesses. `USED` carries its edge; `SEALED` and `LOCKED`
+## say so plainly.
+func _usage_of(key: String) -> String:
 	var rid := key.split("/")[0]
-	for other: Variant in _doors:
-		if str(other).begins_with(rid + "/"):
+	var socket := key.split("/")[1]
+	for raw_chamber: Variant in _zone.zone.get("chambers", []):
+		var chamber: Dictionary = raw_chamber
+		if str(chamber.get("id", "")) != rid:
 			continue
-		if (_doors[other] as Vector3).distance_to(at) <= 6.0:
-			return str(other)
-	return ""
+		for raw_door: Variant in chamber.get("doors", []):
+			var door: Dictionary = raw_door
+			if str(door.get("socket_id", "")) != socket:
+				continue
+			var usage := str(door.get("usage", "?"))
+			var edge := str(door.get("edge_id", ""))
+			return usage if edge == "" or edge == "<null>" \
+					else "%s %s" % [usage, edge]
+	return "undeclared"
 
 ## AND THE SAME DOORWAY, BRICKED UP.
 ##
@@ -1089,6 +1257,7 @@ func _run() -> void:
 		_the_exit_has_somewhere_to_stand_around_it()
 		await _the_exit_is_approached_and_addressable()
 		await _a_lower_check_is_a_destination_or_a_defect()
+		_every_sealed_door_is_solid()
 		var joins := await _joins_are_walked_through()
 		await _a_bricked_up_join_refuses_the_walker(joins)
 	if _zone != null:
