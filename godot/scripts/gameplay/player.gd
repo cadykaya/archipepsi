@@ -589,6 +589,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.rotation.x = clampf(camera.rotation.x, -PI / 2.0, PI / 2.0)
 
 func _physics_process(delta: float) -> void:
+	# A BODY THAT HAS LEFT THE WORLD DOES NOT MOVE THROUGH IT.
+	#
+	# Taking the exit portal removes the Zone, and this body goes with
+	# it -- but a queued physics frame still arrives, and `move_and_slide`
+	# on a body whose space has been freed is "Parameter
+	# `body->get_space()` is null", which is a hard crash on the most
+	# important transition in the game. Measured on a played Zone with
+	# every Check claimed: the portal that ends a Zone ended the process
+	# instead.
+	if not is_inside_tree() or get_world_3d() == null:
+		return
 	_pulse_cooldown = maxf(0.0, _pulse_cooldown - delta)
 	if _dead:
 		return
@@ -826,7 +837,18 @@ func camera_ray(distance: float, spread_dir: Vector3 = Vector3.ZERO) -> Dictiona
 	var to := from + dir * distance
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.exclude = [get_rid()]
-	return get_world_3d().direct_space_state.intersect_ray(query)
+	# THE SAME DEPARTURE, ASKED A DIFFERENT WAY. `get_world_3d()` is
+	# null for a node outside the tree, and this line read
+	# `.direct_space_state` off it without asking -- "Invalid access to
+	# property or key 'direct_space_state' on a base object of type
+	# 'null instance'". The interact probe and every shot run through
+	# here each frame, so the first frame after the portal fires is the
+	# one that crashes. An empty result is what "nothing is there"
+	# already means to every caller.
+	var world := get_world_3d()
+	if world == null:
+		return {}
+	return world.direct_space_state.intersect_ray(query)
 
 func _spawn_tracer(hit: Dictionary) -> void:
 	var from := camera.global_position \
