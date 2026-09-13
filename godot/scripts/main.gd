@@ -810,6 +810,17 @@ func _highlighted_slot() -> String:
 		return hub.player.highlighted_slot
 	return "echo_a"
 
+## WHILE IT IS OPEN, and only then.
+##
+## `_on_snapshot` refreshes it too, but a snapshot arrives when the
+## BRIDGE has something to say -- so walking from one room to the next
+## would not have moved the "you are here" dot until something else
+## happened. The panel is a prototype somebody holds open and walks
+## around with; it has to keep up with the walking.
+func _process(_delta: float) -> void:
+	if nav != null and nav.visible:
+		_refresh_nav()
+
 ## Hand the schematic the facts it draws. Read, never stored: every one
 ## of these is owned by `ZoneController` and this takes a copy for one
 ## frame of drawing.

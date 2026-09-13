@@ -1,5 +1,112 @@
 # Archipepsi — build state
 
+## 2026-09-13 (engine) — the owner-away batch
+
+Worked from `ARCHIPEPSI_PROD_AWAY_WORK_QUEUE.md` and the four-item
+first block, from `b914d98`. The combined handoff with the numbers, the
+screenshots and the replay checklist is
+`docs/AWAY_BATCH_0_3_HANDOFF.md`; this is the project record of what
+moved and why.
+
+### The stair descent, and why a snap length could never have fixed it
+
+The open half of last batch's step defect. Every precondition Godot's
+floor snap documents was met and the body fell anyway, so it was
+CHARACTERISED before it was touched — a per-frame trajectory plus a
+probe on the frame contact was lost:
+
+    lost floor y=0.741 vy=+0.0000 down_hit=true trav=0.109
+      after apply_floor_snap: floor=false y=0.741 (moved 0.000)
+
+Ground was 0.341 m below; the cast stopped at 0.109 m, which is exactly
+the capsule-against-corner solution for a 0.4 m radius clearing a
+0.4 m tread. The body has not cleared the tread it is LEAVING, so the
+snap hits that tread's own top edge, reads a 55-degree normal as a
+wall, and refuses. The obstruction is 0.1 m away; no snap length
+reaches past it.
+
+`Player._note_a_step_down_ahead` / `_follow_the_step_down` measure the
+drop from a probe a radius PAST the edge and walk the body down it with
+`velocity.y` held at zero. The limit is `MAX_VERTICAL_STEP`, the same
+number the ascent uses, so the rule is the symmetric one: what you can
+walk up, you can walk down. 1 airborne frame of 40 against 10, with a
+2.5 m ledge (24 frames, 9.2 m/s), a jump at a tread's lip (peak 1.80 m)
+and a 20-degree ramp (0 frames) as the three comparisons that stop it
+being adhesion.
+
+### `make godot-traverse`, and the lattice that was deleted twice
+
+Two attempts to answer "which targets are reachable" by flood-filling
+sample points gave three different wrong answers about a Zone the owner
+had cleared by playing it, and were removed rather than tuned. This
+drives the REAL controller along a NAMED route instead and reports five
+outcomes, only one of which asserts:
+
+    REACHED / BLOCKED / OFF_LEVEL / LOST / UNRESOLVED
+
+Calibrated first: it must cross a corridor, be stopped by a 4 m wall
+AND NAME IT, and climb a staircase. Four wrong verdicts were caught by
+reading WHY rather than the count — a doorway position is a point in
+the door plane and not a place to stand; a mid-jump body is not a
+stuck one; an offline layout verdict holds the player forever; and a
+Check 2.6 m below a walkway is the owner's "the check is floating", not
+a wall.
+
+It is a sample of one assembled Zone. It does not reproduce the
+owner's, and it is not a reachability proof.
+
+### Targets on walls, and the offer that may be declined
+
+`ActivityElement._build_target` always drew a mount stalk; `_row` placed
+targets with the floor-plan solve it uses for switches, so the stalk
+held them off nothing. `Activities._wall_spot` offers a side wall (never
+an end wall: that is where the player comes in), turns the element to
+face the room and sets the origin exactly the stalk's reach off the wall
+plane.
+
+The offer follows `_spot_on_surface`'s discipline — a wall with no legal
+span declines and the flat solve stands, with every element still built.
+A room that VOUCHED walkable surfaces is not offered a wall at all:
+`godot-zone-audit` caught the first version putting six elements over a
+`platform_path`'s forty-metre pit, which is the exact defect
+`_best_surface` exists to prevent.
+
+### Travel, save and what each word actually means
+
+`WarpStation.interact` raised a warp; it now raises `panel_requested`
+and `WarpStation.travel_options` is the single eligibility rule both the
+controller and the suites call. Return to Hub is wired because
+`Main._on_return_to_hub` already does exactly what the label promises —
+`leave_zone` after the resume anchor, keys, locks and stations are
+remembered, so the Zone goes dormant. Save is NOT wired, because
+tracing it showed `station_reached` already commits through
+`store.write_save`: there is no second operation, and a button that did
+nothing would be worse than none.
+
+### The family retirement is measured, not done
+
+`tools/family_retirement.py`, twelve default-scale Zones: 161
+activities removed, 176 more of the two that stay, with rooms, enemies
+and Checks unchanged. The composer cycles a fixed list, so a shorter
+list is the same content made of two families. The only bridge-side
+edit is a pure hoist to `fallback.ACTIVITY_KINDS`; the change itself
+needs a budget policy choice and belongs to the bridge lane.
+
+### Test integrity, on the things this touched
+
+Three existing guards went red and each was answered by preserving its
+purpose rather than lowering it. `godot-zone-audit`'s "nothing to stand
+on" caught the wall mount over a pit and the mount was narrowed.
+`test_packaging`'s binary manifest caught the committed screenshots and
+`docs/evidence/` was registered as first-party. The station contract
+test asked the PROMPT whether there was anywhere to go; it now asks
+`travel_options`, with four assertions the old shape could not make.
+
+A transient `test_playtest_baseline` failure during the batch was a
+race between overlapping verification runs of my own, not a defect;
+the final run was serialized.
+
+
 ## 2026-09-13 (integration) — one tree, and the pad out of the way
 
 Prod `5251abd`. Bridge lane merged at `089dc64`, art lane at `1a9f1c9`.

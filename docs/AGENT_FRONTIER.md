@@ -1,5 +1,48 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the owner-away batch — 2026-09-13
+
+**`claude/archipepsi-echoes-continuation-b1adno`**, from `b914d98`.
+Full handoff: `docs/AWAY_BATCH_0_3_HANDOFF.md`. Read that, not this.
+
+**Done.** Stair descent repaired and its boundary proven (1 airborne
+frame of 40, against 10; a 2.5 m ledge still falls at 9.2 m/s; a jump
+at a tread's lip still peaks at 1.80 m; a ramp is unchanged). A new
+`make godot-traverse` drives the real controller along named routes and
+reports five outcomes of which only BLOCKED asserts — 5 of 6 sampled
+Checks reached and addressable on the base kit, 0 blocked, 1 OFF_LEVEL.
+Exit placement and exit approach measured separately. A diagnostic
+launcher that pins default scale and a named save slot. Targets mounted
+on real walls and shot from the walking lane. Stations open a travel
+panel instead of teleporting. Key pickups say what they opened, once.
+An activity says whether it was the one that brought its station
+online.
+
+**Blocked, with numbers.** Retiring `timed_run` and `pressure_routing`
+removes 161 activities and returns 176 more of the two that stay
+(`python -m tools.family_retirement`). The composer cycles a fixed
+family list, so a shorter list is the same content made of two
+families. It needs a policy choice about what fills the budget and the
+composer is the bridge lane's file; the only edit made there is a pure
+hoist to `fallback.ACTIVITY_KINDS`. The compatibility conditions are
+fixed in place first.
+
+**Prototype, review only.** `NavSchematic` on F5: rooms walked this
+session, the Zone's own declared edges between two of them, locks,
+stations, you-are-here. No stored topology, no persistence, no bearing
+arrow.
+
+**Waiting on the owner.** A private copy of `.diagnostic-582e954`'s
+slot JSON — the exact Whistle crossing and the original exit seam stay
+unresolved without it, and the original is not to be touched. Plus
+comfort of the stairs, whether a Check 2.6 m below its walkway is a
+bug, the `c001/side_left` leak candidate, and which budget shape the
+retirement takes.
+
+**The heartbeat is PAUSED.** The authorised list is done or blocked on
+the owner. Turn it back on when there is a task.
+
+
 ## ENGINE LANE — the combined checkpoint, and the pad is out of the way — 2026-09-13
 
 **`claude/archipepsi-echoes-continuation-b1adno`**, bridge lane merged at
