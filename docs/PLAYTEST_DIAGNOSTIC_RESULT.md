@@ -214,6 +214,47 @@ activities in a corridor-sized room, and whether two role-using
 activities may share a space at all, is the engine lane's
 (`generation/activities.gd`).
 
+### 4-quater. An enemy has no idle state to put behaviour into
+
+Owner, in session: *"enemies like dont move unless they see you, they
+dont roam or do stuff. what is their function? why are they here? [...]
+their whole purpose cant be to remain motionless until the legendary
+protagonist shows up, thats immersion breaking. theres a reason why
+every enemy exists and theres things for them to do when youre not
+around in half life even."*
+
+Confirmed structurally, and it is worse than missing animation. Every
+behaviour in `Enemy._physics_process` lives inside one branch:
+
+```gdscript
+if distance <= aggro:
+    ...notice, turn, chase, attack...
+```
+
+There is no `else`. Outside `ENEMY_AGGRO_RADIUS` an enemy runs gravity,
+ticks statuses, and resolves a slam already in flight. That is the
+complete list. `_has_noticed` is a one-way boolean whose only job is to
+fire the "aggro" bark once. **There is no idle state, no patrol, no
+roam, and no state machine to hang one on.**
+
+**Why it matters more here than in an authored shooter.** A Half-Life
+grunt patrols and calls to another grunt, which sells that the space
+existed before the player did. A generated Zone has no authored fiction
+doing that work, so inhabited-looking behaviour is one of the few tools
+that can make a room composed forty seconds ago feel like a place.
+
+**The cost is placement, not AI.** Enemies sit under a cluster
+placement contract: the composer reserves regions and puts ranged units
+on high ground on purpose. An enemy that roams LEAVES that region --
+onto a Check pedestal, into a return pad's trigger volume, off the high
+ground that justified a ranged archetype. Any roaming behaviour needs a
+leash: a home region, a composer-emitted patrol route, or a rule that
+wandering stays inside the reserved cluster. That is the part that
+would consume a batch, and it touches `MAX_ENEMIES_ACTIVE` and the
+return-pad clearance work this checkpoint just finished.
+
+Engine lane. Not started; recorded with its real cost attached.
+
 ### 5. The warp station warps instead of offering a choice
 
 `WarpStation.interact()` marks the station reached on first touch;
