@@ -1078,6 +1078,41 @@ async def _zone_with_branches(engine):
     return zid, zone
 
 
+def _a_reselectable_host(zone) -> str:
+    """A branch host whose barring leaves the same arrangement behind.
+
+    **Not `plugs[0]`, and the difference is a measurement.** Re-selection
+    stands down rather than hand back a Zone with FEWER branches, so a
+    test that bars an arbitrary host is a test of whichever outcome that
+    host happens to produce. Measured on a default-scale Zone: with the
+    flat four-socket table, all 8 of 8 hosts could be barred and
+    re-selected; with `C.PROCEDURAL_SOCKET_CAPACITY` telling the truth
+    about the two producers that climb, **1 of 8** can. The old number
+    was not robustness, it was re-selection planning routes through
+    walls the engine then measured as solid.
+
+    So the room under test is chosen for the property the test is about,
+    and the count is asserted: a Zone where NO host can be re-selected
+    would make every re-selection test below vacuous, and that is a
+    finding rather than a green run.
+    """
+    from archipepsi_bridge import topology
+    want = len(zone.plugs)
+    keep = []
+    for plug in zone.plugs:
+        try:
+            re_graphed = topology.compose_with_branch(
+                list(zone.chambers), barred=(plug.room_id,))
+        except Exception:
+            continue
+        if len(re_graphed.plugs) == want:
+            keep.append(plug.room_id)
+    assert keep, (
+        f"no host of this {want}-branch Zone can be barred without "
+        "costing a branch, so re-selection cannot be exercised at all")
+    return keep[0]
+
+
 async def _offer(engine, zid, layout):
     await engine.handle_layout_result(_ADAPTER.validate_python(
         {"type": "layout_result", "zone_id": zid, "layout": layout}))
@@ -1140,7 +1175,7 @@ def test_only_a_finished_search_bars_the_room(tmp_path):
         sink = Collector(engine)
         zid, zone = await _zone_with_branches(engine)
         held = set(engine.save.zone_by_id(zid).allocated_location_ids)
-        refused = zone.plugs[0].room_id
+        refused = _a_reselectable_host(zone)
         want = len(zone.plugs)
 
         await _offer(engine, zid, _placement(
@@ -1263,7 +1298,7 @@ def test_the_same_room_twice_does_not_re_select(tmp_path):
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
-        room = zone.plugs[0].room_id
+        room = _a_reselectable_host(zone)
         await _offer(engine, zid, _placement(
             _place(zone), zone, room, "NO_CANDIDATE"))
         rec = engine.save.zone_by_id(zid)
@@ -1280,7 +1315,7 @@ def test_the_unhostable_set_survives_a_reload(tmp_path):
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
-        room = zone.plugs[0].room_id
+        room = _a_reselectable_host(zone)
         await _offer(engine, zid, _placement(
             _place(zone), zone, room, "NO_CANDIDATE"))
 
@@ -1301,7 +1336,7 @@ def test_a_fresh_proposal_remembers_nothing_about_the_replaced_one(tmp_path):
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
-        room = zone.plugs[0].room_id
+        room = _a_reselectable_host(zone)
         await _offer(engine, zid, _placement(
             _place(zone), zone, room, "NO_CANDIDATE"))
         assert engine.save.zone_by_id(zid).unhostable_rooms == (room,)
@@ -1494,7 +1529,7 @@ def test_a_late_result_from_a_replaced_proposal_changes_nothing(tmp_path):
 
         # B replaces A: the engine could not host A's first destination.
         await _offer(engine, zid, _placement(
-            _place(zone_a), zone_a, zone_a.plugs[0].room_id, "NO_CANDIDATE"))
+            _place(zone_a), zone_a, _a_reselectable_host(zone_a), "NO_CANDIDATE"))
         rec_b = engine.save.zone_by_id(zid)
         id_b = _build_id(engine, zid)
         assert id_b != id_a, "the replacement has its own identity"
@@ -1611,7 +1646,7 @@ def test_the_offer_carries_the_identity_the_client_captures(tmp_path):
         # A re-selection offers a NEW identity, so a build started on the
         # first one cannot claim the second.
         await _offer(engine, zid, _placement(
-            _place(zone), zone, zone.plugs[0].room_id, "NO_CANDIDATE"))
+            _place(zone), zone, _a_reselectable_host(zone), "NO_CANDIDATE"))
         again = [m for m in sink.of_type("zone_ready")
                  if m.zone.zone_id == zid]
         assert len(again) == 2

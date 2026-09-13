@@ -1611,6 +1611,32 @@ class LayoutResult(Strict):
     #: it does today. Absent means "cannot be checked", never "stale".
     proposal_id: str | None = Field(default=None, min_length=16,
                                     max_length=16, pattern=r"^[0-9a-f]{16}$")
+    #: WHICH ATTEMPT at that proposal — `ZoneRecord.layout_refusals` as
+    #: it stood when the client started this build.
+    #:
+    #: `proposal_id` is CONTENT identity and stays that: two proposals
+    #: with identical bytes hash identically, which is correct and is
+    #: also why it cannot separate two tries at the same content.
+    #: Measured live: a refusal sends a Zone back to Epsilon, the
+    #: deterministic provider composes the SAME content again, and the
+    #: replaced build's late result then arrives carrying an id that
+    #: still matches — spending the replacement's refusal budget on a
+    #: failure already charged once.
+    #:
+    #: So the discriminator sits at the lifecycle boundary instead, and
+    #: it is a quantity the record already keeps and already sends: a
+    #: refusal is exactly what ends an attempt and begins the next, and
+    #: `layout_refusals` rides on `active_zone` in every snapshot. No new
+    #: identity, no change to what a digest means.
+    #:
+    #: A result whose attempt is BEHIND the record's is ignored. A result
+    #: from the CURRENT attempt is current however many times it arrives:
+    #: a client resending after a dropped connection is the ordinary
+    #: case and is the same evidence, not a second charge.
+    #:
+    #: Optional, so a client that sends none behaves exactly as it does
+    #: today.
+    attempt: int | None = Field(default=None, ge=0, le=99)
 
 
 class KeyCollected(Strict):

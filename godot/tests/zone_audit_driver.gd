@@ -85,6 +85,7 @@ func _run() -> void:
 	await _the_placement_outcomes_are_distinguishable()
 	await _a_corridor_is_searched_down_its_length()
 	await _a_side_door_the_composer_assigned_is_a_hole()
+	await _a_room_names_only_the_openings_it_builds()
 
 	var zone := _load_zone()
 	if zone.is_empty():
@@ -1104,13 +1105,11 @@ func _write_audit() -> void:
 ##   the way it has always kept clear of the exit lane.
 ## * `platform_path` raises two solid slabs and cannot honestly cut
 ##   them -- the declared position is over its kill pit and below its
-##   walkway. WAIVED HERE, diagnosed in that builder, and the remaining
-##   answers are compositional.
-##
-## The waiver is by ROOM TYPE and it is not a pass: the count is
-## asserted, so the day a `platform_path` stops being offered a side
-## door, or starts being able to hold one, this goes red and says so.
-const SIDE_DOOR_WAIVER := "platform_path"
+##   walkway. CLOSED AT THE SOURCE: it no longer ADVERTISES them.
+##   `Constants.PROCEDURAL_SOCKET_CAPACITY` says which producers carry
+##   which sockets, the composer offers only those, and this Zone no
+##   longer assigns one. The waiver that used to stand here counted two
+##   and now counts none, which is how it said so.
 
 func _a_side_door_the_composer_assigned_is_a_hole() -> void:
 	const ZONE := "res://tests/fixtures/generated/zone_01.json"
@@ -1132,20 +1131,28 @@ func _a_side_door_the_composer_assigned_is_a_hole() -> void:
 	var measured: Dictionary = RoomAudit.measure_layout(build,
 			get_viewport().world_3d.direct_space_state)["apertures"]
 	var checked := 0
-	var waived := 0
+	var beyond: Array = []
 	for raw: Variant in build.get("chambers", []):
 		var entry: Dictionary = raw
 		var chamber: Dictionary = entry["chamber"]
 		var rid := str(chamber.get("id", ""))
 		var kind := str(chamber.get("type", ""))
+		var carried: Variant = Constants.PROCEDURAL_SOCKET_CAPACITY.get(
+				kind)
 		for raw_door: Variant in chamber.get("doors", []):
 			var door: Dictionary = raw_door
 			var socket := str(door.get("socket_id", ""))
 			if not socket.begins_with("side") \
 					or str(door.get("usage", "")) == "SEALED":
 				continue
-			if kind == SIDE_DOOR_WAIVER:
-				waived += 1
+			# NO ROOM IS ASSIGNED A DOOR ITS PRODUCER DOES NOT BUILD.
+			# The composer is what guarantees this; measured here on a
+			# Zone the composer really made, because a guarantee checked
+			# only where it is written is the seam this project keeps
+			# finding.
+			if typeof(carried) == TYPE_ARRAY \
+					and not (carried as Array).has(socket):
+				beyond.append("%s/%s (%s)" % [rid, socket, kind])
 				continue
 			checked += 1
 			_check(bool(measured.get("%s/%s" % [rid, socket], false)),
@@ -1156,10 +1163,147 @@ func _a_side_door_the_composer_assigned_is_a_hole() -> void:
 	_check(checked >= 4,
 			"zone_01 offered %d assigned side door(s) to measure; a "
 			% checked + "control that measures none has not run")
-	_check(waived == 2,
-			"%d side door(s) waived as `%s`, and 2 were before. This "
-			% [waived, SIDE_DOOR_WAIVER] + "is an OPEN DEFECT with a "
-			+ "count, not an exemption: if it has moved, the fix or the "
-			+ "regression is real and belongs in the frontier")
+	_check(beyond.is_empty(),
+			"this Zone assigns %s, which the producer does not build; "
+			% str(beyond) + "the capacity and the composer have drifted "
+			+ "apart again")
 	(build["root"] as Node3D).queue_free()
 	await get_tree().process_frame
+
+
+## WHAT EACH PROCEDURAL PRODUCER CAN ACTUALLY BE JOINED THROUGH.
+##
+## `Constants.PROCEDURAL_SOCKET_CAPACITY` is a claim about geometry, and
+## a claim about geometry is worth exactly what a physics query says it
+## is. One control per chamber type, each a real two-room Zone with ALL
+## FOUR sockets assigned, and three questions of every side door the
+## producer agrees to name:
+##
+## 1. is the aperture a HOLE (`RoomAudit.measure_layout`);
+## 2. is there FLOOR a metre inside it (`arrival_is_supported`, which is
+##    ground within a step AND room to stand);
+## 3. and does the room name it at all.
+##
+## **An open aperture with nothing under it is not a door.** That is the
+## whole finding: `platform_path` advertised two, and the middle of its
+## side wall is over its kill pit and below its walkway. `tower` is the
+## other room that climbs and answers the same way. Both are held here
+## to naming NOTHING they cannot build, so the day one grows a landing
+## the control says the capacity may change rather than letting it drift.
+func _a_room_names_only_the_openings_it_builds() -> void:
+	var kinds: Array = [
+		{"id": "c005", "type": "corridor", "length": 14.0, "width": 7.9},
+		{"id": "c005", "type": "arena", "width": 18.0, "depth": 18.0,
+				"wall_height": 6.0, "objective": "reach_exit"},
+		{"id": "c005", "type": "platform_path"},
+		{"id": "c005", "type": "tower"},
+		{"id": "c005", "type": "treasure_room"},
+	]
+	var flat := 0
+	var capped := 0
+	for kind: Dictionary in kinds:
+		var room: Dictionary = kind.duplicate()
+		room["enemies"] = []
+		room["activities"] = []
+		room["features"] = []
+		# EVERY SOCKET ASSIGNED, including the two under test. A room
+		# that carries fewer simply reports fewer doors; nothing here
+		# asks it to refuse the assignment, because refusing is the
+		# COMPOSER's job and this is about what the builder makes.
+		room["doors"] = [
+			{"socket_id": "entry", "usage": "USED",
+				"edge_id": "e:c004:c005"},
+			{"socket_id": "exit", "usage": "SEALED"},
+			{"socket_id": "side_left", "usage": "USED"},
+			{"socket_id": "side_right", "usage": "USED"}]
+		var built := ZoneBuilder.build({
+			"zone_id": "zcap", "theme": "concrete_facility",
+			"chambers": [
+				{"id": "c004", "type": "corridor", "length": 14.0,
+						"width": 7.9, "enemies": [], "activities": [],
+						"features": [], "doors": [
+							{"socket_id": "entry", "usage": "USED"},
+							{"socket_id": "exit", "usage": "USED",
+								"edge_id": "e:c004:c005"},
+							{"socket_id": "side_left", "usage": "SEALED"},
+							{"socket_id": "side_right", "usage": "SEALED"}]},
+				room,
+			],
+			"edges": [{"edge_id": "e:c004:c005", "room_a": "c004",
+					"room_b": "c005", "realization": "JOINED",
+					"direction": "A_TO_B"}],
+		})
+		var kind_name := str(kind["type"])
+		if built.has("failed"):
+			_check(false, "the %s capacity fixture did not lay out: %s"
+					% [kind_name, str(built["failed"])])
+			continue
+		add_child(built["root"] as Node3D)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var space := get_viewport().world_3d.direct_space_state
+		var apertures: Dictionary = RoomAudit.measure_layout(built,
+				space)["apertures"]
+		var declared: Array = []
+		for raw: Variant in built.get("chambers", []):
+			var entry: Dictionary = raw
+			if str((entry["chamber"] as Dictionary).get("id", "")) != "c005":
+				continue
+			var xform: Transform3D = entry["xform"]
+			for raw_door: Variant in (entry["build"] as Dictionary) \
+					.get("doors", []):
+				var door: Dictionary = raw_door
+				var socket := str(door.get("socket_id", ""))
+				var local: Vector3 = door.get("position", Vector3.ZERO)
+				if not socket.begins_with("side"):
+					# THE SPINE IS UNTOUCHED, and saying so is half the
+					# point: correcting the advertised capacity must not
+					# cost a climbing room its real traversal. Its entry
+					# and its exit are holes with ground inside them, for
+					# every producer, before and after.
+					var step := Vector3(0.0, 0.0,
+							1.0 if local.z <= 0.0 else -1.0)
+					_check(bool(apertures.get("c005/%s" % socket, false))
+								== (str(door.get("usage", "")) != "SEALED"),
+							"a %s's '%s' is built the way it is declared"
+							% [kind_name, socket])
+					if str(door.get("usage", "")) != "SEALED":
+						_check(RoomAudit.arrival_is_supported(space,
+									xform * (local + step)),
+								"and a body a metre inside %s/%s has "
+								% [kind_name, socket] + "ground under it")
+					continue
+				declared.append(socket)
+				_check(bool(apertures.get("c005/%s" % socket, false)),
+						"a %s names '%s' and the builder cut a hole "
+						% [kind_name, socket] + "there")
+				# A METRE IN FROM THE WALL, which is where a body
+				# crossing this doorway puts its feet. An aperture with
+				# nothing under it is a hole, not a door.
+				var inward := Vector3(-signf(local.x) * 1.0, 0.0, 0.0)
+				_check(RoomAudit.arrival_is_supported(space,
+							xform * (local + inward)),
+						"and a body standing a metre inside %s/%s has "
+						% [kind_name, socket] + "ground under it and "
+						+ "room to stand")
+		var carried: Variant = Constants.PROCEDURAL_SOCKET_CAPACITY.get(
+				kind_name)
+		if typeof(carried) == TYPE_ARRAY:
+			capped += 1
+			_check(declared.is_empty(),
+					"a %s is declared as carrying %s, so it must name "
+					% [kind_name, str(carried)] + "NO side doorway at "
+					+ "all -- it named %s" % str(declared))
+		else:
+			flat += 1
+			_check(declared.size() == 2,
+					"a %s carries all four sockets, so both sides are "
+					% kind_name + "named and measured (%s)" % str(declared))
+		(built["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	# THE SHAPE OF THE ANSWER, so neither half can quietly empty out. A
+	# run where everything is capped proves nothing about doors, and one
+	# where nothing is proves nothing about the capacity.
+	_check(flat >= 3 and capped >= 2,
+			"%d producer(s) carry four sockets and %d carry two; the "
+			% [flat, capped] + "control needs both kinds to mean anything")

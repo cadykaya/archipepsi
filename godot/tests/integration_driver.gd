@@ -1165,9 +1165,14 @@ func _test_reselection_and_return_journey() -> bool:
 				+ "control proves nothing")
 		a.queue_free()
 		return false
+	var attempt_a := BridgeClient.attempt_for(zone_id)
 	_check(a.proposal_id == proposal_a,
 			"the controller bound the identity of the proposal it is "
 			+ "building (%s) and it bound %s" % [proposal_a, a.proposal_id])
+	_check(a.attempt == attempt_a and a.attempt >= 0,
+			"and the ATTEMPT that identity belongs to (%d), which is "
+			% attempt_a + "what separates two tries at the same content "
+			+ "-- it bound %d" % a.attempt)
 	# `_publish_layout` is deferred -- two physics frames, then the
 	# settle -- so the evidence is not on the controller the instant
 	# `setup` returns. Waited for rather than read: the first version of
@@ -1226,10 +1231,10 @@ func _test_reselection_and_return_journey() -> bool:
 			+ "%d after" % _plug_count(replacement.get("zone")))
 
 	# ---- BRIDGE CONTROL 3: A reports late, and nothing moves ---------
-	_check(a.proposal_id == proposal_a,
-			"A still carries the identity it started with; an old "
-			+ "coroutine must never acquire the replacement's (%s)"
-			% a.proposal_id)
+	_check(a.proposal_id == proposal_a and a.attempt == attempt_a,
+			"A still carries the identity AND the attempt it started "
+			+ "with; an old coroutine must never acquire the "
+			+ "replacement's (%s, attempt %d)" % [a.proposal_id, a.attempt])
 	var before := int(BridgeClient.active_zone().get("layout_refusals", -1))
 	var state_before := str(BridgeClient.active_zone().get(
 			"layout_state", ""))
@@ -1289,6 +1294,9 @@ func _test_reselection_and_return_journey() -> bool:
 	_check(b.proposal_id == proposal_b,
 			"the replacement's build bound its own identity (%s) and "
 			% proposal_b + "bound %s" % b.proposal_id)
+	_check(b.attempt == BridgeClient.attempt_for(zone_id),
+			"and its own attempt (%d vs %d)"
+			% [b.attempt, BridgeClient.attempt_for(zone_id)])
 	var accepted := await _await_condition("the replacement is accepted",
 			func() -> bool:
 				return str(BridgeClient.active_zone().get(

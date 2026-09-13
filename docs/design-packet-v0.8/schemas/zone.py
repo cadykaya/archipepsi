@@ -33,11 +33,33 @@ except ImportError:  # pragma: no cover
         EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
         ZoneKeySpec)
 
-#: The four joining sockets every procedural room declares, matching
+#: Every joining socket name a procedural room can be given, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
 #: own set in the catalog; these are the ones the bridge can check
 #: without one.
+#:
+#: **THE VOCABULARY, NOT THE CAPACITY.** Which of these a room can really
+#: be joined through depends on its producer —
+#: `C.PROCEDURAL_SOCKET_CAPACITY` says which, and
+#: `procedural_sockets_for` is how to ask. This tuple stays the full set
+#: because a SAVED Zone may name any of them: a campaign composed before
+#: the capacity was measured holds `platform_path` rooms with side doors,
+#: and refusing those names here would refuse to LOAD those saves.
 PROCEDURAL_SOCKETS = ("entry", "exit", "side_left", "side_right")
+
+
+def procedural_sockets_for(chamber_type: str) -> tuple[str, ...]:
+    """Which sockets a procedural room of this type can be JOINED through.
+
+    The one projection of `C.PROCEDURAL_SOCKET_CAPACITY`, so the
+    composer, this schema and the engine cannot each have their own
+    answer. An authored shell never comes here: it declares its own
+    openings and `topology._sockets_for` reads them, which is why a shell
+    that happens to share a chamber type is not held to a procedural
+    producer's limits.
+    """
+    return tuple(C.PROCEDURAL_SOCKET_CAPACITY.get(chamber_type,
+                                                  PROCEDURAL_SOCKETS))
 
 #: The per-room anchors the engine resolves, as `room:<room_id>:<kind>`.
 #:
@@ -923,6 +945,21 @@ class Zone(Strict):
         # Invariant 8: a procedural room's unused joining sockets are
         # declared SEALED, never left unmentioned. "Unmentioned" is
         # exactly how an unaudited hole gets into a wall.
+        #
+        # TWO SETS, AND THEY ARE DIFFERENT SETS. The NAME must be one a
+        # procedural room can be given — the full vocabulary, because a
+        # Zone composed before the capacity was measured holds
+        # `platform_path` rooms with side doors and those saves must
+        # still load. What must be MENTIONED is only what the room's
+        # producer can carry: a `platform_path` composed today names
+        # `entry` and `exit`, and demanding two more from it would be
+        # demanding it declare doors it cannot build.
+        #
+        # So this permits both shapes and neither is silence. What stops
+        # a NEW proposal joining through a side the producer does not
+        # build is `topology._sockets_for`, which never offers one, and
+        # `_the_composer_assigns_only_what_a_room_carries` there, which
+        # fails loudly if that ever drifts.
         for c in self.chambers:
             if not c.doors or getattr(c, "shell_id", None):
                 continue
@@ -932,7 +969,7 @@ class Zone(Strict):
                 raise ValueError(
                     f"chamber '{c.id}' assigns socket(s) {sorted(unknown)} "
                     "that a procedural room does not declare")
-            silent = set(PROCEDURAL_SOCKETS) - named
+            silent = set(procedural_sockets_for(c.type)) - named
             if silent:
                 raise ValueError(
                     f"chamber '{c.id}' leaves joining socket(s) "

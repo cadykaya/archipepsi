@@ -509,6 +509,20 @@
             ],
             "default": null,
             "title": "Proposal Id"
+          },
+          "attempt": {
+            "anyOf": [
+              {
+                "maximum": 99,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt"
           }
         },
         "required": [

@@ -21,6 +21,16 @@ var zone_id := ""
 ## The proposal this controller is building, captured by `setup` and
 ## echoed on `layout_result`. `""` when the bridge offered none.
 var proposal_id := ""
+## WHICH ATTEMPT at that proposal this build is -- the Zone's refusal
+## count when `setup` started, echoed with the result.
+##
+## `proposal_id` is CONTENT identity, and two tries at the same content
+## hash the same: the deterministic provider recomposes the same Zone
+## after a refusal, so a replaced build's late result still matches.
+## What separates them is the attempt it belongs to, and a refusal is
+## exactly what ends one attempt and begins the next. `-1` when the
+## bridge holds no record to read it from.
+var attempt := -1
 var player: Player
 var tones: Tones = null          # set by main; null in headless tests
 var hud: Hud = null              # set by main; null in headless tests
@@ -198,6 +208,10 @@ func setup(zone_dict: Dictionary) -> void:
 	# Captured here, the old build carries the old id however long it
 	# takes to come back, and is ignored outright.
 	proposal_id = BridgeClient.proposal_for(zone_id)
+	# THE SAME CARRIER AND THE SAME MOMENT. Both are read here, off the
+	# record the build is being made from, so the content identity and
+	# the attempt it belongs to cannot come from two different states.
+	attempt = BridgeClient.attempt_for(zone_id)
 	# AND AN OMISSION IS NEVER SILENT. Absent on the wire means "cannot
 	# be checked" -- the documented behaviour for a client older than
 	# the field -- so a current client that binds nothing looks exactly
@@ -892,6 +906,8 @@ func send_layout_result(build: Dictionary) -> void:
 	# rather than asking again.
 	if proposal_id != "":
 		message["proposal_id"] = proposal_id
+	if attempt >= 0:
+		message["attempt"] = attempt
 	BridgeClient.send_intent(message)
 
 ## Which stations are online, for whoever is carrying progress out.

@@ -1302,6 +1302,31 @@ class CampaignEngine:
                          "arrived after %s replaced it; ignored",
                          intent.zone_id, intent.proposal_id, current)
                 return
+        # AND THE SAME CONTENT, TRIED TWICE, IS TWO ATTEMPTS.
+        #
+        # `proposal_digest` is content identity and stays that. The
+        # deterministic provider recomposes the SAME Zone after a
+        # refusal, so the digest legitimately matches across the
+        # replacement — measured live, `4c1cd2d5405eeadf` on both sides
+        # — and the replaced build's late result was read as current: it
+        # spent the replacement's refusal budget on a failure already
+        # charged, and any verdict it drew would have reached the
+        # replacement's player, who is being held for a different build.
+        #
+        # A refusal is what ends one attempt and begins the next, so the
+        # refusal count IS the attempt ordinal. Behind it is stale.
+        # Equal to it is current, however many times it arrives: a
+        # client resending after a dropped connection is the ordinary
+        # case and is the same evidence.
+        #
+        # Ahead of it cannot happen from this bridge and is NOT dropped:
+        # discarding a build because the client seems to know something
+        # we do not would strand it. It is logged and taken.
+        if intent.attempt is not None and intent.attempt < rec.layout_refusals:
+            log.info("zone %s: a layout_result from attempt %d arrived "
+                     "after attempt %d began; ignored",
+                     intent.zone_id, intent.attempt, rec.layout_refusals)
+            return
 
         # A RESULT FOR A ZONE THAT ALREADY GAVE UP IS STALE, and stale is
         # not an error: a client retrying after a dropped connection is

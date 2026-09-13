@@ -142,20 +142,6 @@
      "edge_id": "e:c003:c004",
      "key_id": null,
      "colour": null
-    },
-    {
-     "socket_id": "side_left",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
-    },
-    {
-     "socket_id": "side_right",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
     }
    ],
    "arrive_edge": "e:c002:c003",
@@ -457,20 +443,6 @@
      "edge_id": "e:c008:c009",
      "key_id": null,
      "colour": null
-    },
-    {
-     "socket_id": "side_left",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
-    },
-    {
-     "socket_id": "side_right",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
     }
    ],
    "arrive_edge": "e:c007:c008",
@@ -714,20 +686,6 @@
     },
     {
      "socket_id": "exit",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
-    },
-    {
-     "socket_id": "side_left",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
-    },
-    {
-     "socket_id": "side_right",
      "usage": "SEALED",
      "edge_id": null,
      "key_id": null,
@@ -1021,20 +979,6 @@
      "edge_id": null,
      "key_id": null,
      "colour": null
-    },
-    {
-     "socket_id": "side_left",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
-    },
-    {
-     "socket_id": "side_right",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
     }
    ],
    "arrive_edge": "e:c014:c017",
@@ -1245,20 +1189,6 @@
     },
     {
      "socket_id": "exit",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
-    },
-    {
-     "socket_id": "side_left",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
-    },
-    {
-     "socket_id": "side_right",
      "usage": "SEALED",
      "edge_id": null,
      "key_id": null,
