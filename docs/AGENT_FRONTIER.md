@@ -43,8 +43,17 @@ to the code. Left unchanged, recorded as a decision.
 **The strictly matched no-compensation comparison remains incomplete.**
 Recorded, not worked around.
 
+**Verified at `6329cfa`:** one clean run, 28 targets green, final exit 0
+(bridge 1412, apworld 39 + 627 subtests, schemas 131, 25 Godot targets
+including both integration loops). Numbers and limits in the integration
+page, §8.
+
 **Waiting on Dess:** the `_accepts` correction. Nothing here depends on
 it; their 12-of-12 acceptance figure does.
+
+**The heartbeat stays PAUSED.** The authorised list is done and the run
+is green. Turn it back on when there is a task -- integrating Dess's
+re-report is the obvious next one.
 
 
 ## ENGINE LANE — owner-away follow-up 02 — 2026-09-13

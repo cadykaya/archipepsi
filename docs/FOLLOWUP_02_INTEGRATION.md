@@ -2,7 +2,8 @@
 
 **Branch:** `claude/archipepsi-echoes-continuation-b1adno`
 **Merged from the bridge lane:** `fdac6ab`
-**Tested revision:** _§8, after the run_
+**Tested revision:** `6329cfa` — every number in §8 is that
+tree, clean, with nothing else running against it.
 
 Dess built the variant. This is Prod integrating it: the opt-in that
 selects it, what selecting it turned out to actually require, what it
@@ -243,7 +244,64 @@ you.
 
 ## 8. Verification
 
-_§8, after the run_
+One run on a clean tree at **`6329cfa`** (`0 dirty`).
+**28 targets, 28 green, final exit 0.**
+
+| | |
+|---|---|
+| bridge | **1412 passed** (119 s) |
+| apworld | **39 passed, 627 subtests** |
+| schemas | **131 passed** |
+| Godot | **25 targets**, including both integration loops |
+
+| | |
+|---|---|
+| `godot-physics` | OK (**68 checks**) |
+| `godot-traverse` | OK (**23 checks**) |
+| `godot-reload` | OK (**2**, then **18 checks**) |
+
+Carried forward from the engine work earlier in this batch, unchanged:
+22 SEALED sockets and 44 passable ones measured on the assembled Zone,
+every SEALED one solid; **15 of 27** SHOT elements mounted on a wall;
+29 activities audited with **0 structural failures**.
+
+The variant loop's log shows the clamp doing its job rather than hiding:
+
+```
+WARNING QUIET GENERATION: zone zone_015 asked for 144, which is below
+the contract floor of 200. Clamping to the floor -- this Zone's band is
+equal to the baseline's, so it is filter-only, NOT the lower-budget
+variant. The comparison wants a campaign at default scale.
+```
+
+### Two failures from an earlier attempt, and what they were
+
+The first attempt at this run reported two, and one was mine:
+
+- **`test_ci_runs_every_godot_suite_the_makefile_defines`** — a real
+  gap. `godot-integration-quiet` existed as a Makefile target and
+  nowhere in CI, so the variant loop would have been green locally and
+  unwatched on every push. Fixed, and it is in the run above.
+- **`test_a_playtime_record_says_which_build_played_it`** — `tree:
+  clean` against `tree: dirty`. I was editing this page while that run
+  was in flight, which changed `build_metadata()` under it. My own
+  race, not a defect; the run above was started on a committed tree and
+  nothing touched it.
+
+### What this run does not establish
+
+- **Neither mode has an end-to-end client/bridge run at default
+  scale.** §6 — the harness fails there for the baseline too.
+- **The variant was exercised live only with its band clamped**, so the
+  loop above proves the family narrowing survives a real campaign, not
+  the lower band.
+- **Windows.** No `cmd.exe` here; neither `.bat` has ever been executed.
+  Both delegate every decision to Python, where it is tested — the new
+  one adds only `--quiet` in front of the caller's own options.
+- **Five Zones per arm** is a sample, not a certificate. The 3-of-5
+  router refusals are a strong signal, not a rate.
+- **Your Zone.** Nothing here reproduces `.diagnostic-582e954`, and
+  nothing has touched it.
 
 ---
 
