@@ -21,6 +21,28 @@ var _error_count := 0
 var _affordances_seen := 0
 var _local_rewards_earned := 0
 
+## HOW OFTEN THE ENGINE SENT A LAYOUT BACK, and how often a Zone spent
+## every attempt it had. Counted rather than left in the printed log,
+## because "let ordinary bounded recovery run and report the refusals"
+## is a question with a number for an answer.
+var _layout_refusals := 0
+var _zones_exhausted := 0
+
+## AND THE THIRD OUTCOME, which is neither of those.
+##
+## `ZoneController.setup` has two ways to not produce a playable Zone
+## and they are not the same event. A CERTIFICATION refusal happens
+## after a successful build: the client measures what it placed, sends
+## it, and the bridge refuses it -- `layout_verdict` goes REFUSED, the
+## Zone is composed again, and `MAX_LAYOUT_REFUSALS` bounds the loop.
+## A ROUTER refusal happens during the build: `ZoneBuilder` cannot place
+## a room clear of the others, `setup` sets `layout_failed` and returns,
+## and NOTHING IS SENT -- so the bridge never learns, no verdict ever
+## arrives, and the recovery above never begins. Counted separately
+## because reporting it as "a verdict timed out" describes the symptom
+## and hides the cause.
+var _router_refusals := 0
+
 func _check(condition: bool, message: String) -> void:
 	if condition:
 		print("  ok: " + message)
@@ -74,6 +96,11 @@ func _run() -> void:
 	# `--mock-scale=default`, and runs that one control. Same harness,
 	# same helpers, same live bridge; the only difference is the size of
 	# the Zones the campaign hands out.
+	if OS.get_cmdline_user_args().has("--variant-live"):
+		var survived := await _test_the_variant_at_the_scale_it_is_for()
+		_finish(0 if survived and failures == 0 else 1)
+		return
+
 	if OS.get_cmdline_user_args().has("--return-journey"):
 		var travelled := await _test_reselection_and_return_journey()
 		print("  %d assertion failure(s) in the re-selection journey"
@@ -1810,6 +1837,24 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 		controller = ZoneController.new()
 		get_tree().root.add_child(controller)
 		controller.setup(zone_dict)
+		# A ROUTER REFUSAL IS NOT A SLOW VERDICT. Waiting on
+		# `layout_verdict` here would spend the whole timeout on a Zone
+		# that never sent anything, and then report the wait rather than
+		# the reason. Said plainly instead, and the loop stops: there is
+		# no recovery on this path to go round again for.
+		if controller.layout_failed != "":
+			_router_refusals += 1
+			print("zone %s: THE ROUTER REFUSED THE BUILD -- %s"
+					% [str(record.get("zone_id", "")),
+						controller.layout_failed])
+			print("       nothing was sent to the bridge, so no verdict "
+					+ "is coming and the bounded recovery that handles a")
+			print("       certification refusal never starts. This Zone "
+					+ "is a dead end for the player.")
+			controller.queue_free()
+			controller = null
+			await get_tree().process_frame
+			break
 		# THE CONTROLLER'S OWN VERDICT, WAITED FOR.
 		#
 		# This sampled `layout_state` off the shared snapshot after
@@ -1830,6 +1875,7 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 			return false
 		if controller.layout_verdict != "REFUSED":
 			break
+		_layout_refusals += 1
 		print("zone %s: layout refused, composing again (attempt %d)"
 				% [str(record.get("zone_id", "")), attempt + 1])
 		controller.queue_free()
@@ -1849,6 +1895,7 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 			return false
 		if BridgeClient.hub_mode() == "ZONE_FAILED":
 			var lost := str(BridgeClient.hub().get("discard_zone_id", ""))
+			_zones_exhausted += 1
 			print("zone %s: exhausted its layout attempts; discarding"
 					% lost)
 			BridgeClient.send_intent({"type": "abandon_zone",
@@ -1862,7 +1909,19 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 		record = BridgeClient.active_zone()
 		zone_dict = record.get("zone", {})
 	if controller == null:
-		_check(false, "every layout this client sent was refused")
+		if _router_refusals > 0:
+			# REPORTED, NOT ASSERTED HERE. Returning false is already
+			# what fails an ordinary run -- every caller treats it that
+			# way -- and the parked probe in
+			# `_test_the_variant_at_the_scale_it_is_for` is the one
+			# caller for which this outcome is the recorded expectation
+			# rather than a surprise. Asserting as well would make that
+			# probe fail for reproducing exactly what it exists to
+			# reproduce.
+			print("       the bridge was never told, so there is no "
+					+ "path back from a router refusal")
+		else:
+			_check(false, "every layout this client sent was refused")
 		return false
 	# THE ACCEPTED CONTROL, asserted rather than assumed. Everything
 	# after this line reads as a Zone that is being played; the thing
@@ -2281,3 +2340,100 @@ func _lab_built_and_changed_nothing() -> bool:
 	hub.queue_free()
 	await get_tree().process_frame
 	return ok and before == after
+
+
+## THE LOWER-BUDGET VARIANT, AT DEFAULT SCALE, LIVE.
+##
+## Bounded on purpose: ONE Zone, through the machinery that already
+## exists. `--mock-scale=default` is the scale the comparison is for and
+## the only scale where the variant's band is genuinely lower -- at
+## prototype scale it clamps to the contract floor and what runs is the
+## family narrowing, which is a different thing wearing the same name.
+##
+## Nothing is arranged. The campaign starts fresh and asks for its first
+## Zone; at this scale and with this flag that is the Zone the offline
+## census already measured as a router refusal, so the refusal case
+## arrives by itself rather than being placed. No seed is chosen, no
+## budget is touched, no validation is loosened, and the router is not
+## rewritten -- the point is to watch ORDINARY BOUNDED RECOVERY do
+## whatever it does and write down the result.
+##
+## What is reported, in the order the owner asked for it:
+##   1. how many layouts the engine refused;
+##   2. whether a Zone was eventually accepted and entered, or spent
+##      every attempt it had;
+##   3. and where entry succeeded, whether it could be left and resumed.
+##
+## The third is not extra: a variant Zone that can be entered but not
+## resumed is not playable, and `_play_one_zone(true)` runs
+## `_test_leave_and_resume` inside itself, so the leave/resume assertions
+## are the same ones the ordinary loop makes.
+func _test_the_variant_at_the_scale_it_is_for() -> bool:
+	_check(BridgeClient.snapshot.get("scouted", []).size() > 30,
+			"this is the default-scale campaign the variant is for "
+			+ "(%d locations scouted, prototype is 30)"
+			% BridgeClient.snapshot.get("scouted", []).size())
+
+	var before_certification := _layout_refusals
+	var before_exhausted := _zones_exhausted
+	var before_router := _router_refusals
+	var played := await _play_one_zone(true)
+
+	var certification := _layout_refusals - before_certification
+	var exhausted := _zones_exhausted - before_exhausted
+	var router := _router_refusals - before_router
+	print("  -- the variant, live, at default scale --")
+	print("     layouts the ROUTER refused at build time: %d" % router)
+	print("     layouts the BRIDGE refused after certification: %d"
+			% certification)
+	print("     Zones that spent every attempt: %d" % exhausted)
+	if played:
+		print("     outcome: a Zone was accepted, entered, left and "
+				+ "resumed")
+	elif router > 0:
+		print("     outcome: BLOCKED at the router, and not by running "
+				+ "out of attempts -- the recovery never began")
+	else:
+		print("     outcome: no Zone reached a playable state")
+
+	# THIS IS A REPRODUCTION, AND IT IS PARKED.
+	#
+	# Two outcomes are coherent and both pass, because the point of the
+	# probe is to SAY which one happened on this tree, not to insist on
+	# one of them:
+	#
+	#   * BLOCKED AT THE ROUTER -- the recorded blocker. `setup` returns
+	#     early on a build the router cannot place, nothing is sent, and
+	#     the recovery that handles a certification refusal never gets
+	#     to start. PRE-EXISTING AND NOT THE VARIANT'S DOING: it is the
+	#     same dead end on normal generation, and 3 of 5 against 0 of 5
+	#     in the offline census is the variant making a rare thing
+	#     likely, not a new fault.
+	#
+	#   * PLAYED THROUGH -- accepted, entered, left and resumed, with
+	#     however many certification refusals the bounded loop spent on
+	#     the way. If this starts happening, the parking is stale and
+	#     the page that records it should be revisited.
+	#
+	# What does NOT pass is an outcome with no cause: a Zone that
+	# neither played nor named a reason. That is the instrument failing,
+	# and it is the failure worth being loud about.
+	if router > 0 and not played:
+		print("     PARKED: this is the recorded blocker, reproduced.")
+		print("     Reproduce: make godot-integration-variant-live")
+		print("     Not variant-specific -- a router refusal is a dead")
+		print("     end on normal generation too; the variant just")
+		print("     reaches one often. Fixing it means reporting an")
+		print("     infeasible build to the bridge, which is a protocol")
+		print("     change across both lanes and is NOT made here.")
+		return true
+	if played:
+		return true
+	_check(false,
+			"no Zone played and no reason was named: %d router "
+			% router
+			+ "refusal(s), %d certification refusal(s), %d exhausted. "
+			% [certification, exhausted]
+			+ "An outcome with no cause is this probe failing, not the "
+			+ "variant.")
+	return false

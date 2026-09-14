@@ -1,5 +1,77 @@
 # Archipepsi — build state
 
+## 2026-09-14 (engine) — the variant, live at default scale
+
+Merged `fc7b6fb`. Dess's `_accepts` correction now judges the output
+against the originating request; its two rejection controls were
+retained, and re-verified here WITHOUT editing the module -- the same
+two sabotaged Zones were validated twice, once with the corrected
+argument set and once with the one it used before:
+
+    untouched              corrected=accepted  old=accepted
+    unoffered shell        corrected=REFUSED   old=accepted
+    allocation mismatch    corrected=REFUSED   old=accepted
+
+So the controls are decisive and the re-reported 12/12 is a measurement.
+
+### Two stages, and they were never in conflict
+
+Bridge validation asks whether a proposal is STRUCTURALLY SOUND; the
+engine's layout router asks whether the rooms can be PHYSICALLY PLACED.
+12/12 validated and 3/5 placed are answers to different questions. The
+earlier framing here -- "the two sides disagreeing" -- was wrong and is
+corrected. The station averages are over SUCCESSFUL BUILDS ONLY: five
+baseline, two variant.
+
+### The bounded default-scale live check, and what it found
+
+`make godot-integration-variant-live`: one Zone, default scale, variant
+on, through the machinery that already exists. Nothing arranged -- the
+campaign takes the Zone it is given, which is the one the offline census
+already measured as a router refusal.
+
+THE BAND IS GENUINELY LOWER: the bridge asks for 720 of the 1000 this
+campaign would normally spend, and the target FAILS if that line is
+missing or if the clamp warning appears, so a run that measured the
+family narrowing cannot be reported as the variant.
+
+AND ORDINARY BOUNDED RECOVERY NEVER STARTED: 1 router refusal at build
+time, 0 certification refusals, 0 Zones exhausted, entry never reached,
+so leave/resume was never exercised.
+
+`ZoneController.setup` has two ways to not produce a playable Zone and
+only one has a recovery. A CERTIFICATION refusal happens after a
+successful build: the client sends `layout_result`, the bridge refuses,
+the Zone is recomposed, `MAX_LAYOUT_REFUSALS` bounds it. A ROUTER
+refusal happens during the build: `ZoneBuilder` cannot place a room,
+`setup` records `layout_failed` and returns, and NOTHING IS SENT. The
+bridge never learns. `layout_failed` has no consumer anywhere in the
+engine.
+
+PRE-EXISTING AND NOT VARIANT-SPECIFIC. A router refusal is the same dead
+end on normal generation; the variant reaches one often (3 of 5) where
+the baseline reaches one rarely (0 of 5). Fixing it means a way for the
+client to say "I could not lay this out", which is a protocol change
+across both lanes -- not made, and not decided while the owner is away.
+
+The driver now separates the two refusals rather than reporting a router
+refusal as a verdict timeout, which is what it did before and which
+described the symptom while hiding the cause.
+
+### Parked, with the reproduction
+
+The probe passes by REPORTING the blocker, prints how to reproduce it,
+and will also pass if a Zone ever plays through; it fails only on an
+outcome with no cause. The ordinary diagnostic replay is untouched.
+
+### The startup intermittency stays open
+
+Does not reproduce here -- 5x alone, 3x the whole file, every full-suite
+run. That does not resolve Dess's 2-of-3 failures in another container.
+The fixed `TEST_PORT` was a HYPOTHESIS and was never observed; recorded
+as one. No waiver, no owner decision requested, nothing changed.
+
+
 ## 2026-09-14 (engine) — integrating the lower-budget variant
 
 Merged the bridge lane at `fdac6ab` and integrated item D. Full page:

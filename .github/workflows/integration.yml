@@ -138,6 +138,14 @@ jobs:
       - name: The same campaign with the lower-budget variant selected
         run: make godot-integration-quiet
 
+      # PARKED, AND WATCHED. This probe passes by REPORTING the router
+      # dead end rather than by hiding it, so running it in CI is what
+      # keeps the parking honest: if the blocker is ever fixed the
+      # output changes here, and if the band ever starts clamping the
+      # target fails outright.
+      - name: The lower-budget variant at the scale it is for
+        run: make godot-integration-variant-live
+
       - name: A campaign reopened in a second process
         run: make godot-reload
 

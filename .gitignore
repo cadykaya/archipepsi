@@ -24,6 +24,7 @@ playtest-3ab/
 godot-path.txt
 .integration-saves/
 .integration-saves-quiet/
+.integration-saves-variant/
 .journey-saves/
 .reload-saves/
 generation_archive/

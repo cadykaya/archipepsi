@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-integration-quiet godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -284,6 +284,50 @@ godot-integration-quiet: godot-import
 	  exit 1; \
 	fi
 
+# THE VARIANT AT THE SCALE IT IS FOR, live and bounded.
+#
+# One Zone, default scale, variant on -- the only combination where the
+# band is genuinely lower rather than clamped to the contract floor. The
+# campaign starts fresh and takes what it is given, so the router
+# refusal the offline census measured arrives on its own; ordinary
+# bounded recovery then does whatever it does and the driver writes down
+# the refusals, the outcome, and the leave/resume.
+#
+# THE BRIDGE LOG IS CHECKED TOO, and that is the half the client cannot
+# answer: only the bridge knows what band it asked for. A run whose log
+# shows the clamp warning is a run that measured the family narrowing
+# and not the variant, so it fails here rather than being reported as
+# one.
+godot-integration-variant-live: godot-import
+	rm -rf $(VARIANT_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(VARIANT_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --quiet-generation \
+	  > /tmp/archipepsi-variant-bridge.log 2>&1 & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; \
+	  cat /tmp/archipepsi-variant-bridge.log; exit 1; }; \
+	$(GODOT) --headless --path godot -- --integration-test \
+	  --variant-live > /tmp/archipepsi-variant-live.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID; \
+	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" \
+	  /tmp/archipepsi-variant-live.log; \
+	echo "-- what the bridge asked for --"; \
+	grep "QUIET GENERATION" /tmp/archipepsi-variant-bridge.log \
+	  | sed 's/^.*archipepsi.campaign //' | head -6; \
+	if grep -q "below the contract floor" \
+	    /tmp/archipepsi-variant-bridge.log; then \
+	  echo "-- the band was CLAMPED, so this run measured the family"; \
+	  echo "-- narrowing and not the lower-budget variant."; \
+	  exit 1; \
+	fi; \
+	grep -q "QUIET GENERATION" /tmp/archipepsi-variant-bridge.log || { \
+	  echo "-- the bridge never narrowed anything: the flag did not"; \
+	  echo "-- reach generation, so nothing here is about the variant."; \
+	  exit 1; }; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi
+
 godot-movement: godot-import   # P3.0 rails, launch pads, and the offer seam
 	@out=$$($(GODOT) --headless --path godot -- --movement-test 2>&1); \
 	status=$$?; echo "$$out" | grep -v "^$$"; \
@@ -432,6 +476,10 @@ INTEGRATION_SAVES := $(CURDIR)/.integration-saves
 # two modes compose different Zones and a single campaign holding
 # both would make the comparison unreadable.
 QUIET_SAVES := $(CURDIR)/.integration-saves-quiet
+# And the default-scale live check's own folder, kept apart again so
+# a bounded one-Zone probe never lands in a campaign anyone is
+# reading.
+VARIANT_SAVES := $(CURDIR)/.integration-saves-variant
 JOURNEY_SAVES := $(CURDIR)/.journey-saves
 
 # The S2/S5 action-runner suite: press, release, cancel and death, with a

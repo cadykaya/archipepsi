@@ -1,5 +1,44 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the variant, live at default scale — 2026-09-14
+
+Merged the bridge lane at `fc7b6fb` (the acceptance correction; its two
+rejection controls retained and re-verified decisive here without
+editing the module). Full page: **`docs/FOLLOWUP_02_INTEGRATION.md`**,
+§6a.
+
+**THE VARIANT IS PARKED WITH ITS REPRODUCTION:
+`make godot-integration-variant-live`.** One Zone, default scale,
+variant on, nothing arranged. The band is genuinely lower -- the bridge
+asks for **720 of 1000**, and the target fails if the clamp warning
+appears -- and then ordinary bounded recovery NEVER STARTS: 1 router
+refusal at build time, 0 certification refusals, 0 exhausted.
+
+**Why: `ZoneController.setup` has two refusal paths and only one has a
+recovery.** A certification refusal happens after a successful build,
+goes to the bridge, and is bounded by `MAX_LAYOUT_REFUSALS`. A ROUTER
+refusal happens during the build -- `setup` records `layout_failed` and
+returns, nothing is sent, no verdict ever comes. `layout_failed` has no
+consumer anywhere in the engine. **Pre-existing, not variant-specific**:
+the same dead end on normal generation, which the variant reaches often
+(3 of 5) and the baseline rarely (0 of 5). Fixing it is a protocol
+change across both lanes and was NOT made.
+
+**Two stages, not a contradiction.** Bridge validation asks whether a
+proposal is sound; the router asks whether the rooms can be placed.
+12/12 validated and 3/5 placed are answers to different questions -- my
+earlier "the two sides disagreeing" was wrong. The station averages are
+over successful builds only: five baseline, two variant.
+
+**`test_startup` stays OPEN.** It does not reproduce here (5x alone, 3x
+the file, every full-suite run), and that does not resolve Dess's 2-of-3
+failures elsewhere. The fixed `TEST_PORT` is a HYPOTHESIS, never
+observed; no waiver, and no owner decision is being asked for.
+
+**The ordinary diagnostic replay is unaffected** and stays available
+whatever happens to the variant.
+
+
 ## ENGINE LANE — follow-up 02 integration — 2026-09-14
 
 **`claude/archipepsi-echoes-continuation-b1adno`**, merged from the

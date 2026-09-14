@@ -154,8 +154,11 @@ and counts the `WarpStation` nodes that come out:
 | baseline | 5 of 5 | 109 | 96 | 49 | 39 | 10 |
 | lower-budget | **2 of 5** | 46 | 27 | 20 | 12 | 8 |
 
-Those totals are over different numbers of Zones, so **per composed
-Zone** is the comparison that means something:
+Those totals are over different numbers of Zones — **five baseline
+builds and two variant builds**, the ones that placed — so **per
+composed Zone** is the comparison that means something. The
+denominators are what they are; these averages describe successful
+builds only and say nothing about the three that did not place:
 
 | per composed Zone | rooms | with an activity | stations | broken | working |
 |---|---|---|---|---|---|
@@ -176,19 +179,31 @@ its own room's `activities` array is non-empty, and its `repair_room` is
 that same room, so the promise cannot be made without something behind
 it. It is asserted on real Zones anyway.
 
-**The finding is the first column.** Three of five variant manifests are
-**refused by the engine's layout router**, every one the same shape:
+**The finding is the first column** — and it belongs to a different
+stage, which I reported badly the first time.
+
+**Two stages, two questions.** Bridge validation asks *is this proposal
+structurally sound* — the right Checks, only offered shells, a budget
+inside its band. The engine's layout router asks *can these rooms be
+physically placed without overlapping*. A proposal can be perfectly
+sound and still have no arrangement that fits. So **12/12 validated and
+3/5 router-refused do not contradict each other**, and my earlier
+framing of "the two sides disagreeing" was wrong.
+
+| stage | what it asks | baseline | lower-budget |
+|---|---|---|---|
+| bridge validation (`validate_zone`) | is the proposal sound | 12/12 | **12/12** |
+| engine layout router (`ZoneBuilder`) | can the rooms be placed | 5/5 placed | **2/5 placed** |
+
+All three refusals are the same shape:
 
 > `branch room 'c018' off 'c017' could not be placed clear of the 19
 > room(s) already standing`
 
-Baseline: none refused. I ruled this out as an artefact of my own
-instrument by reversing the census order — identical numbers — and all
-five variant manifests had already been **accepted by `validate_zone`**
-on the bridge. So this is the two sides disagreeing, not a bad manifest.
-Live, such a Zone costs a repair round rather than being fatal; but it
-is a real quality difference, and it points the same way the +17 rooms
-does.
+Not an artefact of my instrument: reversing the census order gives
+identical numbers. The third stage — what happens live, when ordinary
+bounded recovery gets its turn — is §6a, and it is the one that
+matters.
 
 ---
 
@@ -217,28 +232,94 @@ census above, which builds real default-scale manifests.
 
 ---
 
-## 7. The startup failure, re-run rather than waived
+## 6a. The bounded default-scale live check
 
-Dess reported `test_startup`'s second-bridge case failing and set it
-aside as reproducing on the earlier head. Re-run here on the combined
-tree, as you asked:
+`make godot-integration-variant-live`. **One Zone**, default scale,
+variant on, through the machinery that already exists — no 450-Check
+campaign, no solver. Nothing is arranged: the campaign starts fresh and
+takes the Zone it is given, which at this scale with this flag is the
+same `zone_001` the offline census measured as a router refusal. No seed
+was chosen, `0.72` was not touched, no validation was loosened, and the
+router was not rewritten.
+
+**The band is genuinely lower, not clamped.** From the bridge's own log:
+
+```
+QUIET GENERATION: zone zone_001 asks for 720 of the 1000 this campaign
+would normally spend, and offers switch_sequence, target_challenge
+```
+
+720 of 1000. The target fails if that line is absent or if the clamp
+warning appears, so a run that measured the family narrowing cannot be
+reported as a run that measured the variant.
+
+**What ordinary bounded recovery did: it never started.**
 
 | | |
 |---|---|
-| the case alone, 5× | **5 passed** |
-| the whole file, 3× | **14 passed, 3×** |
-| inside the full suite | passed, twice |
+| layouts the **router** refused at build time | **1** |
+| layouts the **bridge** refused after certification | 0 |
+| Zones that spent every attempt | 0 |
+| outcome | **blocked at the router** — not exhaustion |
+| leave / resume | not reached; entry never succeeded |
 
-It does not reproduce. **Not waived — and the mechanism that would
-produce it is named:** `TEST_PORT` is a fixed constant
-(`C.BRIDGE_PORT + 40`), and the case binds `TEST_PORT + 1` and then
-spawns a real second bridge at it. Two pytest sessions on one machine,
-or any leftover process on 38331, collide and the case fails for a
-reason that has nothing to do with the code under test. That is a real
-weakness in the test's port allocation. I have **not** changed it — a
-test-infrastructure change was not in scope and fixing it blind could
-mask a genuine failure — so it is on the list below as a decision for
-you.
+**Why, exactly.** `ZoneController.setup` has two ways to not produce a
+playable Zone, and only one of them has a recovery:
+
+- a **certification** refusal happens *after* a successful build — the
+  client measures what it placed, sends `layout_result`, the bridge
+  refuses it, the Zone is composed again, and `MAX_LAYOUT_REFUSALS`
+  bounds the loop. This works.
+- a **router** refusal happens *during* the build — `ZoneBuilder` cannot
+  place a room clear of the others, `setup` records `layout_failed` and
+  returns. **Nothing is sent.** The bridge never learns, no verdict ever
+  arrives, and the bounded recovery never begins. `layout_failed` has no
+  consumer anywhere in the engine.
+
+**This is pre-existing and not the variant's doing.** A router refusal
+is the same dead end on normal generation; the variant reaches one often
+(3 of 5) where the baseline reaches one rarely (0 of 5). Fixing it means
+giving the client a way to tell the bridge "I could not lay this out",
+which is a protocol change across both lanes — **not made here**, and
+not something to decide while you are away.
+
+**So the variant is parked, with its reproduction.** The target passes
+by *reporting* the blocker rather than by hiding it, and says so in its
+output; it will also pass if a Zone ever plays through, and fails only
+on an outcome with no cause. `make godot-integration-variant-live`
+reproduces it in about a minute.
+
+**Recommendation: not yet for owner play at default scale.** The
+ordinary diagnostic replay is unaffected and stays available.
+
+---
+
+## 7. The startup intermittency — open
+
+Dess reported `test_startup`'s second-bridge case failing and measured
+it as **intermittent**: 2 of 3 full-suite runs in their container, 5 of
+5 passing in isolation. Re-run here on the combined tree:
+
+| | |
+|---|---|
+| the case alone, 5× | 5 passed |
+| the whole file, 3× | 14 passed, 3× |
+| inside the full suite | passed, every run |
+
+**It does not reproduce here, and that does not resolve it.** Passing in
+one container says nothing about the one it failed in; an intermittent
+failure that two environments disagree about is still an intermittent
+failure. **Not waived.**
+
+I had previously named `TEST_PORT` being a fixed constant as the
+mechanism. That was a **hypothesis**, not an identification — I never
+observed a collision, only reasoned that one could occur — and it is
+recorded as such. **No decision about test ports is being asked of
+you**, and nothing was changed.
+
+**Status: open.** It needs to be caught in the environment where it
+actually fails, with whatever holds the port at that moment identified,
+before anyone can say what it is.
 
 ---
 
@@ -307,24 +388,35 @@ The first attempt at this run reported two, and one was mine:
 
 ## 9. Left for you
 
-- **Whether the variant is worth pursuing at all**, given that it cannot
-  currently be the matched comparison you asked for. The honest options
-  are (a) review it as a lower-budget variant and judge it on those
-  terms, (b) decouple the three derivations in the composer so rooms and
-  enemies hold still — a real generation change, not an experiment, or
-  (c) drop it.
-- **The three refused-by-the-router Zones.** Worth a decision: is a
-  variant that needs a repair round on 3 of 5 Zones acceptable for a
-  review build?
-- **`test_startup`'s fixed port**, per §7.
+**The variant is parked, not abandoned.** It is an opt-in experimental
+candidate, normal generation is untouched, no budget policy is selected,
+and the ordinary diagnostic replay works exactly as it did — so nothing
+here waits on a decision from you.
+
+When you want to decide:
+
+- **The router dead end (§6a)** is the thing standing between the
+  variant and owner play. It is *not* the variant's fault and fixing it
+  helps normal generation too, but it needs a way for the client to tell
+  the bridge "I could not lay this out" — a protocol change across both
+  lanes. I did not make it, and it is the one I would want your go-ahead
+  on before either lane starts.
+- **Whether the variant is worth pursuing at all**, given it cannot
+  currently be the matched comparison. Honestly: (a) review it as a
+  lower-budget variant on those terms once §6a is unblocked, (b)
+  decouple the three derivations in the composer so rooms and enemies
+  hold still — a real generation change, or (c) drop it.
 - **The budget shape**, still unselected. Nothing here enables a policy.
 - Everything still open from the previous page: your save, stair
   comfort, the unmounted target look, whether the F5 schematic is the
   map.
 
-**Waiting on Dess:** the `_accepts` correction you asked them for.
-Nothing in this page depends on it — every number here comes from the
-engine census, the live loops, or my own Python integration tests, none
-of which go through `quiet_preview.py`. But the **12 of 12 accepted**
-figure in their report does, and my 3-of-5 router refusals point the
-other way, so their re-report is worth reading beside this.
+**Not asking you anything:** `test_startup` (§7) is an open
+intermittency for whoever next reproduces it, not a policy question.
+
+**Dess's `_accepts` correction is integrated** (`fc7b6fb`). Their two
+rejection controls are retained, and I re-verified independently that
+they are decisive rather than decorative: the same two sabotaged Zones
+they build pass the old argument set and are refused by the corrected
+one. The re-reported **12/12 is now a measurement** — and §5 explains
+why it never contradicted the 3-of-5 router refusals.
