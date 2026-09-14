@@ -1,4 +1,15 @@
-# Item D — the quieter-generation preview, and the policy it needed
+# Item D — a lower-budget generation variant, and the policy it needed
+
+> **Status, owner ruling 2026-09-14.** Kept as an **opt-in experimental
+> candidate**. Normal generation is unchanged and no permanent budget
+> policy is selected. This is a **lower-budget generation variant** — it
+> composes different rooms and comes out `+17` rooms and `+27` enemies —
+> **not "the same level with only the drills removed"**. The strictly
+> matched no-compensation comparison **remains incomplete**; §4 records
+> exactly what would have to change to complete it.
+>
+> **Revision 2 (2026-09-14)** corrects the acceptance column, which the
+> first revision reported wrongly. See §2a.
 
 **Dess, bridge lane — 2026-09-13.** Follow-up 02 item D, on the current
 Production tree. Integration and screenshots are Prod's.
@@ -79,9 +90,45 @@ by construction and leave the acceptance column carrying no information.
 score falls 28%, which tracks the measured 27.4% share — the removed
 content stayed removed.
 
-**Acceptance is real, not arranged.** 12 of 12 pass ordinary
-`validate_zone` against the band they were built for. Nothing here
-post-edits an accepted Zone and no validation is disabled.
+**Acceptance — see §2a.** The first revision of this report claimed
+"12/12 accepted" on a check that could not fail. The number survives the
+correction, but the earlier claim did not deserve to be believed.
+
+---
+
+## 2a. The acceptance column was not measuring acceptance
+
+Owner finding, and it is correct. `tools/quiet_preview.py::_accepts` had
+three defects, all of which flattered the result:
+
+| defect | effect |
+|---|---|
+| `expected_zone_id=z.zone_id` | read off the **generated Zone**, so the check compared the output with itself and could never fail |
+| `allocated_location_ids=list(z.reward_location_ids)` | same — an allocation mismatch was undetectable by construction |
+| `[e for e in errs if "shell" not in e]` | a whole class of real refusals discarded to keep a column clean |
+
+So "12 of 12 accepted" was very nearly content-free, and I reported it as
+evidence. It is now judged against the **originating request**, with the
+same argument set `playtest.py` and `replay_archive.py` use — the id the
+request asked for, the locations it allocated, the affordances and
+capabilities it granted, and the shells it actually offered via
+`shells.offer_of(request)`. **Nothing is filtered.** The tool also prints
+why any Zone was refused.
+
+**Re-reported honestly: still 12 of 12, and now the number means
+something.** No Zone in any arm is refused against its own request.
+
+**Two controls prove the check can say no**, because a corrected check
+that still cannot fail is the same vacuous check in a new costume:
+
+- a chamber naming a shell the request never offered → refused;
+- a Check the request never allocated → refused.
+
+Both fail if `_accepts` is reverted to its old form — sabotage-verified.
+The first attempt at the shell control was itself wrong: it smuggled in
+`shell_corner_left`, which the default catalogue **does** offer (twelve
+legal ids), so it proved nothing. It now asks the offer what is absent
+rather than assuming.
 
 ---
 
@@ -107,7 +154,7 @@ where stations go.
 
 ---
 
-## 4. The boundary, recorded rather than improvised
+## 4. The boundary — the matched comparison is INCOMPLETE
 
 The policy removes the family substitution. It does **not** hold rooms
 and enemies constant: the preview arm is **+17 rooms and +27 enemies**.
@@ -120,7 +167,11 @@ across rooms. Lowering the band necessarily loosens the per-room cap and
 buys more rooms and more enemies with what it saves. **Holding them
 constant means decoupling those three derivations in the shipped
 composer**, which is a generation change this experiment may not make.
-Delivered with the difference reported instead.
+Delivered with the difference reported instead, and **the strictly
+matched no-compensation comparison is recorded as incomplete rather than
+claimed.** What this variant demonstrates is narrower than what was
+asked: the family substitution is gone, the room and enemy compensation
+is not.
 
 The same coupling has a second consequence: the provider seeds its rng
 with the budget (`random.Random(f".../{n}/{budget}")`), so the preview
@@ -162,13 +213,22 @@ than one.
   campaign setting changed; `CampaignScale.zone_budget` is untouched.
 - **No new contract.** `constraints` was already caller-settable.
 
-**Tests:** `make test` — **1517 passed, 6 skipped, 1 failed**. The
-failure is `test_startup.py::test_a_second_bridge_says_so_in_words_rather_than_a_traceback`,
-which **reproduces identically on the engine head unmodified** (checked
-in a worktree of that commit): binding `127.0.0.1:38331` fails with no
-listener and no bridge process visible. Environment-dependent in this
-container, pre-existing, not caused by this work. `check_packet` green.
-Five new controls, the load-bearing one sabotage-proven.
+**Tests:** `make test` — **1520 passed, 6 skipped, 0 failed** on the
+current tree.
+
+**The startup-test failure stays visible rather than waived.**
+`test_startup.py::test_a_second_bridge_says_so_in_words_rather_than_a_traceback`
+is **intermittent**, not fixed: it failed 2 of 3 full-suite runs in this
+container, passed the third, and passes **5 of 5 in isolation**. It also
+reproduces on the engine head unmodified, checked in a worktree of that
+commit — but that is context, not a reason to dismiss it. The symptom is
+binding `127.0.0.1:38331` while no listener and no bridge process is
+visible, which points at port contention with another test in the same
+run rather than at this work. **Unresolved, and it should be re-run on
+the combined tree during integration.**
+
+`check_packet` green. Seven controls, the load-bearing ones
+sabotage-proven.
 
 ---
 
