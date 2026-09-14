@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+; NOT CONTENT. A graybox test fixture, used only by `make godot-content`
+; to exercise the S13 authored-scene path end to end. It is deliberately
+; the dumbest legal shell: a box with a collider. No manifest under
+; `content/registry/` references it, so it never reaches a real zone.
+
+[sub_resource type="BoxMesh" id="BoxMesh_fixture"]
+size = Vector3(6, 3.6, 10)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fixture"]
+size = Vector3(6, 3.6, 10)
+
+[node name="ShellGrayboxFixture" type="Node3D"]
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 5)
+mesh = SubResource("BoxMesh_fixture")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="Collision" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 5)
+shape = SubResource("BoxShape3D_fixture")

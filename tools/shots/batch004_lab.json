@@ -1,0 +1,45 @@
+{
+  "_comment": [
+    "Batch 004 -- the Echo Lab fixtures. Every shot on a 50 mm lens at a",
+    "three-quarter, plus the two graduated fixtures square-on because what",
+    "they are FOR is being read straight."
+  ],
+  "defaults": { "size": [1280, 900], "lens": 50, "ambient": 0.22 },
+  "shots": [
+    { "name": "L_lab_dummy", "scene": "model:batch004/lab/lab_dummy.glb",
+      "frame": 0.74, "azimuth": 24, "elevation": 6,
+      "caption": "LAB DUMMY - TEST EQUIPMENT, NOT AN ENEMY",
+      "note": "SYMMETRIC POST, NO OPTIC, FACILITY PLATE - NOT ENEMY SKIN",
+      "variants": ["silhouette"] },
+
+    { "name": "L_lab_hazard", "scene": "model:batch004/lab/lab_hazard.glb",
+      "frame": 0.7, "azimuth": 28, "elevation": 10,
+      "caption": "LAB HAZARD - THE ONE PERMANENT TELEGRAPH",
+      "note": "HAZARD ORANGE BELONGS HERE AND NOWHERE ON AN ENEMY" },
+
+    { "name": "L_lab_moving_target",
+      "scene": "model:batch004/lab/lab_moving_target.glb",
+      "frame": 0.7, "azimuth": 30, "elevation": 8,
+      "caption": "MOVING TARGET - FACE TURNED 8 DEG OFF SQUARE" },
+
+    { "name": "L_lab_reset_pad", "scene": "model:batch004/lab/lab_reset_pad.glb",
+      "frame": 0.62, "azimuth": 20, "elevation": 34,
+      "caption": "RESET PAD - LIT AT THE EDGE, READ FROM ABOVE" },
+
+    { "name": "L_lab_notice_board",
+      "scene": "model:batch004/lab/lab_notice_board.glb",
+      "frame": 0.7, "azimuth": 18, "elevation": 6,
+      "caption": "NOTICE BOARD - A HOUSING. THE MESSAGE IS THE GAME'S" },
+
+    { "name": "L_lab_height_markers",
+      "scene": "model:batch004/lab/lab_height_markers.glb",
+      "frame": 0.9, "azimuth": 90, "elevation": 2, "lens": 35,
+      "caption": "HEIGHT BANDS - STEP 1.00 M AND JUMP APEX 1.33 M CALLED OUT",
+      "note": "EVERY OTHER MARK IS A PLAIN METRE TICK" },
+
+    { "name": "L_lab_runway_measure",
+      "scene": "model:batch004/lab/lab_runway_measure.glb",
+      "frame": 0.8, "azimuth": 12, "elevation": 30, "lens": 35,
+      "caption": "RUNWAY MODULE - JUMP FLAT REACH 4.67 M FALLS AT 0.67 IN" }
+  ]
+}

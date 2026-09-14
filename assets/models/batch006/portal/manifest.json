@@ -1,0 +1,26 @@
+{
+  "portal_core_locked": {
+    "anchor": "module_floor",
+    "path": "batch006/portal/portal_core_locked.glb",
+    "size": [
+      2.38,
+      0.2,
+      3.314
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 108
+  },
+  "portal_core_unlocked": {
+    "anchor": "module_floor",
+    "path": "batch006/portal/portal_core_unlocked.glb",
+    "size": [
+      2.383,
+      0.171,
+      3.289
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 108
+  }
+}

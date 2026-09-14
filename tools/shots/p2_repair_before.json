@@ -1,0 +1,95 @@
+{
+  "_comment": [
+    "P2 REPAIR COMPARISON -- BEFORE.",
+    "",
+    "`shell_tower_collapsed` and `shell_tower_spiral` are the only two",
+    "shells with an intentional visible change in P2. The deck was a",
+    "0.50 m slab across the back 4 m of every tower and it sat over the",
+    "last rungs of both climbs; `_deck_well` cuts it out of the column",
+    "the climb comes up.",
+    "",
+    "BEFORE renders a798b2c, AFTER renders 1d22cef, and every camera is",
+    "identical between the two files. Nothing is restaged, relit or",
+    "reframed to flatter the repair -- what ships is what is shown."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "backdrop": "none",
+    "game_lens": true,
+    "ambient": 0.24,
+    "key_energy": 0.7
+  },
+  "shots": [
+    {
+      "name": "X_collapsed_over_before",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        17.0,
+        -6.0
+      ],
+      "yaw": 180,
+      "pitch": -72,
+      "caption": "COLLAPSED DECK PLAN - BEFORE",
+      "note": "THE DECK FOOTPRINT, FROM THE F3 REVIEW'S OWN CAMERA",
+      "scene": "model:batch018/shells/shell_tower_collapsed.glb"
+    },
+    {
+      "name": "X_collapsed_arrive_before",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        2.8,
+        6.0,
+        -7.0
+      ],
+      "yaw": 239.5,
+      "pitch": -15.1,
+      "caption": "COLLAPSED CLIMB ARRIVAL - BEFORE",
+      "note": "THE LAST RUNG, LOOKING AT WHERE THE CLIMB LANDS",
+      "scene": "model:batch018/shells/shell_tower_collapsed.glb"
+    },
+    {
+      "name": "X_spiral_over_before",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        20.0,
+        -6.0
+      ],
+      "yaw": 180,
+      "pitch": -72,
+      "caption": "SPIRAL DECK PLAN - BEFORE",
+      "note": "THE DECK FOOTPRINT, FROM THE F3 REVIEW'S OWN CAMERA",
+      "scene": "model:batch018/shells/shell_tower_spiral.glb"
+    },
+    {
+      "name": "X_spiral_arrive_before",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        -4.3,
+        9.0,
+        -5.0
+      ],
+      "yaw": 129.8,
+      "pitch": -11.6,
+      "caption": "SPIRAL CLIMB ARRIVAL - BEFORE",
+      "note": "THE LAST RUNG, LOOKING AT WHERE THE CLIMB LANDS",
+      "scene": "model:batch018/shells/shell_tower_spiral.glb"
+    }
+  ]
+}

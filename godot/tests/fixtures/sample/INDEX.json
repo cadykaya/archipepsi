@@ -1,0 +1,783 @@
+[
+ {
+  "rooms": 23,
+  "edges": 22,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 11,
+   "3": 5
+  },
+  "junctions": [
+   "c002",
+   "c005",
+   "c009",
+   "c014",
+   "c018"
+  ],
+  "dead_ends": [
+   "c001",
+   "c012",
+   "c015",
+   "c017",
+   "c020",
+   "c021",
+   "c023"
+  ],
+  "locked_doors": [
+   "c005/side_right",
+   "c011/side_right",
+   "c014/side_left",
+   "c014/side_right"
+  ],
+  "features": [
+   "c001:bounce_pad",
+   "c001:moving_platform",
+   "c001:powered_door"
+  ],
+  "file": "zone_01.json",
+  "zone_id": "zone_001"
+ },
+ {
+  "rooms": 23,
+  "edges": 22,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 12,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c009",
+   "c013",
+   "c016",
+   "c018"
+  ],
+  "dead_ends": [
+   "c001",
+   "c012",
+   "c015",
+   "c017",
+   "c020",
+   "c021",
+   "c023"
+  ],
+  "locked_doors": [
+   "c016/side_left",
+   "c016/side_right",
+   "c018/side_left",
+   "c018/side_right"
+  ],
+  "features": [
+   "c013:moving_platform",
+   "c013:powered_door",
+   "c016:bounce_pad"
+  ],
+  "file": "zone_02.json",
+  "zone_id": "zone_002"
+ },
+ {
+  "rooms": 23,
+  "edges": 22,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 12,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c009",
+   "c013",
+   "c014",
+   "c018"
+  ],
+  "dead_ends": [
+   "c001",
+   "c012",
+   "c015",
+   "c017",
+   "c020",
+   "c021",
+   "c023"
+  ],
+  "locked_doors": [
+   "c013/side_right",
+   "c014/side_right",
+   "c018/side_left",
+   "c018/side_right"
+  ],
+  "features": [
+   "c004:moving_platform",
+   "c004:powered_door",
+   "c013:bounce_pad"
+  ],
+  "file": "zone_03.json",
+  "zone_id": "zone_003"
+ },
+ {
+  "rooms": 20,
+  "edges": 19,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 9,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c008",
+   "c009",
+   "c010",
+   "c014"
+  ],
+  "dead_ends": [
+   "c001",
+   "c011",
+   "c012",
+   "c015",
+   "c016",
+   "c019",
+   "c020"
+  ],
+  "locked_doors": [
+   "c008/side_left",
+   "c014/side_left",
+   "c014/side_right",
+   "c018/side_left"
+  ],
+  "features": [
+   "c005:bounce_pad",
+   "c009:moving_platform",
+   "c009:powered_door"
+  ],
+  "file": "zone_04.json",
+  "zone_id": "zone_004"
+ },
+ {
+  "rooms": 20,
+  "edges": 19,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 8,
+   "2": 6,
+   "3": 6
+  },
+  "junctions": [
+   "c002",
+   "c004",
+   "c006",
+   "c008",
+   "c012",
+   "c016"
+  ],
+  "dead_ends": [
+   "c001",
+   "c010",
+   "c011",
+   "c014",
+   "c015",
+   "c018",
+   "c019",
+   "c020"
+  ],
+  "locked_doors": [
+   "c004/side_right",
+   "c006/side_right",
+   "c012/side_left",
+   "c012/side_right"
+  ],
+  "features": [
+   "c001:bounce_pad",
+   "c001:moving_platform",
+   "c001:powered_door"
+  ],
+  "file": "zone_05.json",
+  "zone_id": "zone_005"
+ },
+ {
+  "rooms": 19,
+  "edges": 18,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 8,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c006",
+   "c008",
+   "c009",
+   "c016"
+  ],
+  "dead_ends": [
+   "c001",
+   "c010",
+   "c012",
+   "c014",
+   "c015",
+   "c018",
+   "c019"
+  ],
+  "locked_doors": [
+   "c006/side_left",
+   "c013/side_right",
+   "c016/side_left",
+   "c017/side_left"
+  ],
+  "features": [
+   "c006:moving_platform",
+   "c006:powered_door",
+   "c016:bounce_pad"
+  ],
+  "file": "zone_06.json",
+  "zone_id": "zone_006"
+ },
+ {
+  "rooms": 23,
+  "edges": 22,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 12,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c009",
+   "c010",
+   "c011",
+   "c015"
+  ],
+  "dead_ends": [
+   "c001",
+   "c012",
+   "c014",
+   "c017",
+   "c018",
+   "c021",
+   "c023"
+  ],
+  "locked_doors": [
+   "c009/side_left",
+   "c015/side_left",
+   "c015/side_right",
+   "c020/side_left"
+  ],
+  "features": [
+   "c010:moving_platform",
+   "c010:powered_door",
+   "c022:bounce_pad"
+  ],
+  "file": "zone_07.json",
+  "zone_id": "zone_007"
+ },
+ {
+  "rooms": 19,
+  "edges": 18,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 8,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c006",
+   "c008",
+   "c009",
+   "c013"
+  ],
+  "dead_ends": [
+   "c001",
+   "c010",
+   "c012",
+   "c014",
+   "c015",
+   "c018",
+   "c019"
+  ],
+  "locked_doors": [
+   "c006/side_left",
+   "c013/side_left",
+   "c013/side_right",
+   "c017/side_left"
+  ],
+  "features": [
+   "c001:moving_platform",
+   "c001:powered_door",
+   "c006:bounce_pad"
+  ],
+  "file": "zone_08.json",
+  "zone_id": "zone_008"
+ },
+ {
+  "rooms": 20,
+  "edges": 19,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 9,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c006",
+   "c008",
+   "c012",
+   "c016"
+  ],
+  "dead_ends": [
+   "c001",
+   "c011",
+   "c014",
+   "c015",
+   "c018",
+   "c019",
+   "c020"
+  ],
+  "locked_doors": [
+   "c006/side_right",
+   "c012/side_right",
+   "c016/side_left",
+   "c016/side_right"
+  ],
+  "features": [
+   "c001:bounce_pad",
+   "c005:moving_platform",
+   "c005:powered_door"
+  ],
+  "file": "zone_09.json",
+  "zone_id": "zone_009"
+ },
+ {
+  "rooms": 19,
+  "edges": 18,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 8,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c005",
+   "c008",
+   "c009",
+   "c013"
+  ],
+  "dead_ends": [
+   "c001",
+   "c010",
+   "c012",
+   "c014",
+   "c015",
+   "c018",
+   "c019"
+  ],
+  "locked_doors": [
+   "c005/side_right",
+   "c013/side_left",
+   "c013/side_right",
+   "c017/side_left"
+  ],
+  "features": [
+   "c001:bounce_pad",
+   "c001:moving_platform",
+   "c001:powered_door"
+  ],
+  "file": "zone_10.json",
+  "zone_id": "zone_010"
+ },
+ {
+  "rooms": 19,
+  "edges": 18,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 8,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c004",
+   "c005",
+   "c008",
+   "c012"
+  ],
+  "dead_ends": [
+   "c001",
+   "c010",
+   "c013",
+   "c014",
+   "c017",
+   "c018",
+   "c019"
+  ],
+  "locked_doors": [
+   "c004/side_left",
+   "c005/side_right",
+   "c012/side_right",
+   "c015/side_right"
+  ],
+  "features": [
+   "c001:bounce_pad",
+   "c001:moving_platform",
+   "c001:powered_door"
+  ],
+  "file": "zone_11.json",
+  "zone_id": "zone_011"
+ },
+ {
+  "rooms": 20,
+  "edges": 19,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 8,
+   "2": 7,
+   "3": 4,
+   "4": 1
+  },
+  "junctions": [
+   "c004",
+   "c005",
+   "c006",
+   "c008",
+   "c017"
+  ],
+  "dead_ends": [
+   "c001",
+   "c010",
+   "c011",
+   "c014",
+   "c015",
+   "c016",
+   "c019",
+   "c020"
+  ],
+  "locked_doors": [
+   "c004/side_right",
+   "c005/side_right",
+   "c017/side_left",
+   "c018/side_left"
+  ],
+  "features": [
+   "c005:moving_platform",
+   "c005:powered_door",
+   "c017:bounce_pad"
+  ],
+  "file": "zone_12.json",
+  "zone_id": "zone_012"
+ },
+ {
+  "rooms": 20,
+  "edges": 19,
+  "plugs": 7,
+  "degree_histogram": {
+   "1": 6,
+   "2": 11,
+   "3": 2,
+   "4": 1
+  },
+  "junctions": [
+   "c004",
+   "c006",
+   "c008"
+  ],
+  "dead_ends": [
+   "c001",
+   "c011",
+   "c014",
+   "c015",
+   "c018",
+   "c020"
+  ],
+  "locked_doors": [
+   "c004/side_left",
+   "c006/side_left",
+   "c012/side_left",
+   "c016/side_right"
+  ],
+  "features": [
+   "c001:bounce_pad",
+   "c001:moving_platform",
+   "c001:powered_door"
+  ],
+  "file": "zone_13.json",
+  "zone_id": "zone_013"
+ },
+ {
+  "rooms": 20,
+  "edges": 19,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 9,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c006",
+   "c008",
+   "c010",
+   "c017"
+  ],
+  "dead_ends": [
+   "c001",
+   "c011",
+   "c012",
+   "c015",
+   "c016",
+   "c019",
+   "c020"
+  ],
+  "locked_doors": [
+   "c006/side_right",
+   "c014/side_left",
+   "c017/side_left",
+   "c018/side_left"
+  ],
+  "features": [
+   "c017:bounce_pad",
+   "c017:moving_platform",
+   "c017:powered_door"
+  ],
+  "file": "zone_14.json",
+  "zone_id": "zone_014"
+ },
+ {
+  "rooms": 19,
+  "edges": 18,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 9,
+   "3": 1,
+   "4": 2
+  },
+  "junctions": [
+   "c006",
+   "c008",
+   "c015"
+  ],
+  "dead_ends": [
+   "c001",
+   "c010",
+   "c013",
+   "c014",
+   "c017",
+   "c018",
+   "c019"
+  ],
+  "locked_doors": [
+   "c006/side_left",
+   "c006/side_right",
+   "c015/side_left",
+   "c015/side_right"
+  ],
+  "features": [
+   "c001:bounce_pad",
+   "c006:moving_platform",
+   "c006:powered_door"
+  ],
+  "file": "zone_15.json",
+  "zone_id": "zone_015"
+ },
+ {
+  "rooms": 23,
+  "edges": 22,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 12,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c009",
+   "c011",
+   "c015",
+   "c019"
+  ],
+  "dead_ends": [
+   "c001",
+   "c012",
+   "c014",
+   "c017",
+   "c018",
+   "c021",
+   "c023"
+  ],
+  "locked_doors": [
+   "c015/side_left",
+   "c015/side_right",
+   "c019/side_left",
+   "c020/side_left"
+  ],
+  "features": [
+   "c019:bounce_pad",
+   "c019:moving_platform",
+   "c019:powered_door"
+  ],
+  "file": "zone_16.json",
+  "zone_id": "zone_016"
+ },
+ {
+  "rooms": 19,
+  "edges": 18,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 8,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c005",
+   "c008",
+   "c009",
+   "c016"
+  ],
+  "dead_ends": [
+   "c001",
+   "c010",
+   "c012",
+   "c014",
+   "c015",
+   "c018",
+   "c019"
+  ],
+  "locked_doors": [
+   "c005/side_left",
+   "c013/side_right",
+   "c016/side_left",
+   "c017/side_left"
+  ],
+  "features": [
+   "c001:moving_platform",
+   "c001:powered_door",
+   "c016:bounce_pad"
+  ],
+  "file": "zone_17.json",
+  "zone_id": "zone_017"
+ },
+ {
+  "rooms": 20,
+  "edges": 19,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 9,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c006",
+   "c008",
+   "c012",
+   "c016"
+  ],
+  "dead_ends": [
+   "c001",
+   "c011",
+   "c014",
+   "c015",
+   "c018",
+   "c019",
+   "c020"
+  ],
+  "locked_doors": [
+   "c006/side_left",
+   "c012/side_right",
+   "c016/side_left",
+   "c016/side_right"
+  ],
+  "features": [
+   "c001:bounce_pad",
+   "c005:moving_platform",
+   "c005:powered_door"
+  ],
+  "file": "zone_18.json",
+  "zone_id": "zone_018"
+ },
+ {
+  "rooms": 19,
+  "edges": 18,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 8,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c004",
+   "c008",
+   "c009",
+   "c013"
+  ],
+  "dead_ends": [
+   "c001",
+   "c010",
+   "c012",
+   "c014",
+   "c015",
+   "c018",
+   "c019"
+  ],
+  "locked_doors": [
+   "c004/side_left",
+   "c013/side_left",
+   "c013/side_right",
+   "c017/side_right"
+  ],
+  "features": [
+   "c001:bounce_pad",
+   "c001:moving_platform",
+   "c001:powered_door"
+  ],
+  "file": "zone_19.json",
+  "zone_id": "zone_019"
+ },
+ {
+  "rooms": 19,
+  "edges": 18,
+  "plugs": 8,
+  "degree_histogram": {
+   "1": 7,
+   "2": 8,
+   "3": 3,
+   "4": 1
+  },
+  "junctions": [
+   "c005",
+   "c008",
+   "c012",
+   "c015"
+  ],
+  "dead_ends": [
+   "c001",
+   "c010",
+   "c013",
+   "c014",
+   "c017",
+   "c018",
+   "c019"
+  ],
+  "locked_doors": [
+   "c005/side_left",
+   "c012/side_right",
+   "c015/side_left",
+   "c015/side_right"
+  ],
+  "features": [
+   "c001:bounce_pad",
+   "c001:moving_platform",
+   "c001:powered_door"
+  ],
+  "file": "zone_20.json",
+  "zone_id": "zone_020"
+ }
+]

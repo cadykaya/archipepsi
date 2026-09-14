@@ -72,6 +72,11 @@ func _sweep_zone(kind: String, theme: String) -> void:
 		"chambers": [_chamber_spec(kind)],
 	}
 	var build := ZoneBuilder.build(zone)
+	# A routing failure is a result, not a Zone: reading `root` off one
+	# is a script error and a hung run.
+	if build.has("failed"):
+		push_error("zone could not be laid out: %s" % str(build["failed"]))
+		return
 
 	var holder := BlinkZoneStub.new()
 	holder.name = "ZoneStub_%s_%s" % [kind, theme]

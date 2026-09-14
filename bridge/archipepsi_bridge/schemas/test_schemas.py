@@ -31,6 +31,7 @@ try:
     from . import transitions as T
     from .protocol import (
         ZONE_HELD_MODES, ZONE_REQUEST_MODES, CampaignSave, CampaignSnapshot,
+        ZoneHandle,
         ClientMessage, HubStatus, PendingCheck, ScoutedLocation, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -49,6 +50,7 @@ except ImportError:  # pragma: no cover
     import transitions as T
     from protocol import (
         ZONE_HELD_MODES, ZONE_REQUEST_MODES, CampaignSave, CampaignSnapshot,
+        ZoneHandle,
         ClientMessage, HubStatus, PendingCheck, ScoutedLocation, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -109,9 +111,23 @@ def test_gravity_echoes_can_only_ever_help():
     assert C.GRAVITY_MULT_MAX <= 1.0
 
 
-def test_worst_legal_zone_is_not_a_plinkfest():
-    ttk = C.worst_case_zone_ttk()
-    assert ttk < C.WORST_CASE_ZONE_TTK_BUDGET
+def test_worst_legal_encounter_is_not_a_plinkfest():
+    """Per ENCOUNTER, not per Zone (CAMPAIGN_SCALE.md 8).
+
+    "The whole level equals 40 seconds of shooting" was a real statement
+    about difficulty while a Zone was six rooms. At forty minutes it caps
+    a production Zone at roughly the combat of one arena, which is not a
+    difficulty rule any more -- it is a length rule wearing one.
+
+    What the player actually experiences is a fight, so the fight is what
+    is bounded.
+    """
+    ttk = C.worst_case_encounter_ttk()
+    assert ttk < C.WORST_CASE_ENCOUNTER_TTK_BUDGET, (
+        f"the worst legal single encounter needs {ttk:.0f}s of sustained "
+        "Static Pulse; that is a plinkfest whatever the Zone is worth")
+    # ...and not trivially short either, or the bound proves nothing.
+    assert ttk > 5.0, f"the worst legal encounter is over in {ttk:.0f}s"
 
 
 def test_reference_echo_beats_static_pulse_by_the_stated_margin():
@@ -282,10 +298,14 @@ def test_valid_platform_path_and_treasure_room_parse():
 def test_per_chamber_enemy_cap_is_enforced():
     """v0.4 bounded each GROUP at 8 and allowed 4 groups, so one chamber
     could legally hold 14 while the prose and Epsilon's constraints said 8."""
+    over = C.MAX_ENEMIES_PER_CHAMBER + 2
+    half = over // 2
     bad = _zone()
     bad["chambers"][1]["enemies"] = [
-        {"archetype": "melee", "count": 7}, {"archetype": "ranged", "count": 7}]
-    with pytest.raises(ValidationError, match="limit is 8"):
+        {"archetype": "melee", "count": half},
+        {"archetype": "ranged", "count": over - half}]
+    with pytest.raises(ValidationError,
+                       match=f"limit is {C.MAX_ENEMIES_PER_CHAMBER}"):
         Zone.model_validate(bad)
 
 
@@ -304,16 +324,56 @@ def test_kill_all_requires_enemies():
         Zone.model_validate(bad)
 
 
-def test_zone_enemy_and_brute_budgets():
+def test_zone_enemy_and_brute_budgets_scale_with_the_zone():
+    """The caps moved from the model to `validate_zone` and became
+    budget-relative (CAMPAIGN_SCALE.md 8).
+
+    They could not stay in the model: how many enemies a Zone may hold by
+    DESIGN depends on its content budget, which is campaign config and
+    invisible from inside a Zone. What stayed in the model is the engine
+    ceiling, which is absolute.
+    """
+    over = C.max_enemies_per_zone(C.PROTOTYPE_CONFIG.zone_budget) + 2
     bad = _zone()
-    bad["chambers"][1]["enemies"] = [{"archetype": "melee", "count": 8}]
-    bad["chambers"][2]["enemies"] = [{"archetype": "melee", "count": 8}]
-    with pytest.raises(ValidationError, match="limit is 14"):
-        Zone.model_validate(bad)
+    bad["chambers"][1]["enemies"] = [{"archetype": "melee", "count": over // 2}]
+    bad["chambers"][2]["enemies"] = [
+        {"archetype": "melee", "count": over - over // 2}]
+    zone = Zone.model_validate(bad)          # legal to BUILD
+    errors = validate_zone(
+        zone, expected_zone_id=zone.zone_id,
+        allocated_location_ids=list(zone.reward_location_ids),
+        owned_echo_ids=[])
+    assert any("enemies, limit is" in e for e in errors), errors
+
+    # ...and the same Zone is fine once it is paid for. This is the half
+    # that matters: the rule scales rather than merely refusing more.
+    roomy = validate_zone(
+        zone, expected_zone_id=zone.zone_id,
+        allocated_location_ids=list(zone.reward_location_ids),
+        owned_echo_ids=[], zone_budget=C.DEFAULT_CONFIG.zone_budget)
+    assert not any("enemies, limit is" in e for e in roomy), roomy
+
     bad2 = _zone()
     bad2["chambers"][1]["enemies"] = [{"archetype": "brute", "count": 2}]
-    with pytest.raises(ValidationError, match="brutes"):
-        Zone.model_validate(bad2)
+    brute_errors = validate_zone(
+        Zone.model_validate(bad2), expected_zone_id="zone_001",
+        allocated_location_ids=[], owned_echo_ids=[])
+    assert any("brutes" in e for e in brute_errors), brute_errors
+
+
+def test_the_engine_ceiling_is_absolute_and_stays_in_the_model():
+    """A design wanting more than the machine can hold is wrong about the
+    machine, not about its budget -- so this refuses at construction, with
+    no budget consulted."""
+    huge = _zone()
+    huge["chambers"][1]["enemies"] = [
+        {"archetype": "melee", "count": C.MAX_ENEMIES_PER_ENCOUNTER}]
+    # Build a Zone past the engine cap by repetition rather than by one
+    # enormous group, since a group is bounded on its own.
+    assert C.MAX_ENEMIES_SPAWNED_CAP > C.max_enemies_per_zone(
+        C.ZONE_BUDGET_MAX), (
+        "the engine ceiling is below the largest budgeted Zone, so the "
+        "design cap can never be the binding one")
 
 
 def test_featured_echo_ids_are_shaped_ids_not_free_text():
@@ -874,14 +934,33 @@ def test_terminal_states_release_their_locations():
 
 
 def test_the_goal_check_is_reserved_to_the_finale():
-    with pytest.raises(ValidationError, match="reserved for the finale"):
-        ZoneRecord(zone_id="z", state="PENDING_GENERATION",
-                   allocated_location_ids=[89100029, C.GOAL_LOCATION_ID],
-                   target_game="G", generation_index=1)
-    with pytest.raises(ValidationError, match="holds exactly"):
+    """The rule is unchanged; where it is enforced is not.
+
+    Which id is the goal depends on `location_count`, so a ZoneRecord
+    cannot decide it alone -- it enforces the half that is scale-free
+    (a finale holds exactly ONE location), and `CampaignSave` pins that
+    one to the campaign's own goal (CAMPAIGN_SCALE.md 2).
+    """
+    with pytest.raises(ValidationError, match="exactly one location"):
         ZoneRecord(zone_id="z", state="PENDING_GENERATION", is_finale=True,
-                   allocated_location_ids=[89100029],
+                   allocated_location_ids=[89100028, 89100029],
                    target_game="G", generation_index=1)
+
+    def save_with(record):
+        return CampaignSave(seed_name="S", team=0, slot_id=1,
+                            slot_name="Skyiah", zones=[record],
+                            active_zone_id="z")
+
+    with pytest.raises(ValidationError, match="reserved for the finale"):
+        save_with(ZoneRecord(
+            zone_id="z", state="PENDING_GENERATION",
+            allocated_location_ids=[89100029, C.GOAL_LOCATION_ID],
+            target_game="G", generation_index=1))
+    with pytest.raises(ValidationError, match="holds exactly"):
+        save_with(ZoneRecord(
+            zone_id="z", state="PENDING_GENERATION", is_finale=True,
+            allocated_location_ids=[89100029],
+            target_game="G", generation_index=1))
 
 
 def test_zone_record_rejects_junk():
@@ -992,6 +1071,14 @@ def _hub(**over):
     generation_in_progress and accepts_zone_request are all derived."""
     base = dict(mode="ZONE_AVAILABLE", headline="x")
     base.update(over)
+    # ZONE_FAILED IS THE MODE THAT NAMES A ZONE TO DISCARD, and the
+    # invariant is an iff — so a helper that left the field empty could
+    # not build the mode at all, and every census below would have
+    # stopped covering it. Supplied here rather than skipped, which is
+    # what `test_naming_a_zone_and_lighting_the_portal_are_one_decision`
+    # refuses to let happen quietly.
+    if base["mode"] == "ZONE_FAILED":
+        base.setdefault("discard_zone_id", "zone_001")
     return HubStatus(**base)
 
 
@@ -1341,48 +1428,77 @@ def test_every_location_bearing_field_is_classified():
         f"classified field(s) that no longer exist: {sorted(classified - found)}")
 
 
-def test_forbidden_paths_exclude_the_goal_in_the_exported_schema():
-    """Not just in a Python validator.
+def test_every_location_field_spans_the_stable_universe():
+    """What the exported schema can and cannot say, stated honestly.
 
-    The bound must be a plain range so it survives into
-    `protocol.schema.json` and `constants.gd` — Godot and the provider see
-    the same restriction the bridge enforces.
+    Until campaign scale became an option, every acquisition-capable
+    field was typed `... le=89100029` and every mirror `... le=89100030`,
+    so "no acquisition path can express the goal" survived into
+    `protocol.schema.json` and `constants.gd` as a plain range.
+
+    It cannot any more. The goal is the last of however many locations
+    this campaign has, so a static bound cannot name it, and every field
+    is bounded by the 600-id UNIVERSE instead -- a save has to be able to
+    hold whichever prefix its own seed was generated with
+    (CAMPAIGN_SCALE.md 3).
+
+    What replaces it is a `CampaignSave` validator, which knows the
+    scale, plus a named refusal on the purchase intent in the engine. So
+    what the exported schema still guarantees is only the universe bound,
+    and this test says so rather than asserting a range that is no longer
+    there. `test_no_acquisition_path_accepts_the_goal` covers the rule.
     """
     models = _protocol_models()
-    for cls_name, field in GOAL_FORBIDDEN:
-        assert _declared_max(models[cls_name], field) == \
-            C.LAST_NON_FINALE_LOCATION_ID, f"{cls_name}.{field} admits the goal"
-    for cls_name, field in GOAL_PERMITTED:
-        assert _declared_max(models[cls_name], field) == C.LAST_LOCATION_ID, \
-            f"{cls_name}.{field} should span the whole location range"
+    for cls_name, field in GOAL_PERMITTED | GOAL_FORBIDDEN:
+        assert _declared_max(models[cls_name], field) == C.LAST_UNIVERSE_ID, \
+            f"{cls_name}.{field} does not span the stable location universe"
 
 
 def test_no_acquisition_path_accepts_the_goal():
-    """Every way a location can be reserved, stocked, priced, sold or claimed
-    outside the finale Zone, exercised with Check 030."""
-    goal = C.GOAL_LOCATION_ID
-    stock_rest = dict(cost=6, item_name="x", recipient_name="y",
-                      recipient_game="z")
+    """Every way a location can be reserved, stocked, priced, sold or
+    claimed outside the finale Zone, at TWO campaign sizes.
 
-    with pytest.raises(ValidationError):            # shop stock
-        ShopStockItem(location_id=goal, **stock_rest)
+    Two sizes on purpose. A rule that reads a constant passes at the
+    prototype and reserves an ordinary Check everywhere else, which is
+    exactly the bug this covers.
+    """
+    for scale, goal in (
+            (P.CampaignScale(), C.PROTOTYPE_CONFIG.goal_location_id),
+            (P.CampaignScale(location_count=450, zone_target_checks=15,
+                             zone_budget=1000),
+             C.DEFAULT_CONFIG.goal_location_id)):
+        stock_rest = dict(cost=6, item_name="x", recipient_name="y",
+                          recipient_game="z")
 
-    with pytest.raises(ValidationError):            # purchase intent
-        ClientAdapter.validate_python(
-            {"type": "buy_shop_stock", "location_id": goal})
+        def save(**kw):
+            return CampaignSave(seed_name="S", team=0, slot_id=1,
+                                slot_name="Skyiah", scale=scale, **kw)
 
-    with pytest.raises(ValidationError, match="never be purchased"):
-        PendingCheck(transaction_id="t", location_id=goal,
-                     source="shop", shop_cost=6)
+        with pytest.raises(ValidationError, match="never be purchased"):
+            save(shop=P.ShopState(stock=[ShopStockItem(location_id=goal,
+                                                       **stock_rest)]))
 
-    with pytest.raises(ValidationError, match="reserved for the finale"):
-        ZoneRecord(zone_id="z", state="PENDING_GENERATION",
-                   allocated_location_ids=[goal], target_game="G",
-                   generation_index=1)
+        with pytest.raises(ValidationError, match="never be purchased"):
+            save(coins_spent=6,
+                 pending_checks=[PendingCheck(
+                     transaction_id="t", location_id=goal, source="shop",
+                     shop_cost=6)])
 
-    # ... and the one path that legitimately may.
-    ok = PendingCheck(transaction_id="t", location_id=goal, source="zone")
-    assert ok.shop_cost == 0
+        with pytest.raises(ValidationError, match="reserved for the finale"):
+            save(zones=[ZoneRecord(
+                zone_id="z", state="PENDING_GENERATION",
+                allocated_location_ids=[goal], target_game="G",
+                generation_index=1)], active_zone_id="z")
+
+        # ... and the one path that legitimately may.
+        ok = PendingCheck(transaction_id="t", location_id=goal, source="zone")
+        assert ok.shop_cost == 0
+
+    # The purchase INTENT is refused by the engine, by name, rather than
+    # by a range that can no longer express the rule -- see
+    # `tests/test_campaign.py::test_23_shop_cannot_stock_goal`.
+    ClientAdapter.validate_python(
+        {"type": "buy_shop_stock", "location_id": C.GOAL_LOCATION_ID})
 
 
 def test_the_allocator_helper_never_offers_the_goal():
@@ -1402,7 +1518,13 @@ def test_the_allocator_helper_never_offers_the_goal():
 
 
 def test_the_non_finale_range_tracks_the_goal():
-    """The range trick only works while the goal is the last id."""
+    """The range trick only works while the goal is the last id.
+
+    Still true of the PROTOTYPE constants, which is all these are now.
+    The live rule reads `CampaignConfig`, and the same property is pinned
+    there for every configurable size by
+    `tests/test_campaign_config.py`.
+    """
     assert C.LAST_NON_FINALE_LOCATION_ID == C.GOAL_LOCATION_ID - 1
     assert C.GOAL_LOCATION_ID == C.LAST_LOCATION_ID
     assert len(C.eligible_location_ids(C.TIER_COUNT)) == C.LOCATION_COUNT - 1
@@ -1484,7 +1606,11 @@ def test_a_zone_check_is_never_charged_and_a_shop_check_always_is():
 
 #: Every HubMode, sorted into exactly one bucket.
 MODE_BUCKETS = {
-    "holds_a_zone": ("GENERATING", "ZONE_READY", "ZONE_ACTIVE"),
+    # ZONE_FAILED holds a Zone: it never laid out, it still reserves its
+    # Checks, and discarding it is an explicit act with a cost. What it
+    # is NOT is enterable — see `ZONE_ENTERABLE_MODES`.
+    "holds_a_zone": ("GENERATING", "ZONE_READY", "ZONE_ACTIVE",
+                     "ZONE_DORMANT", "ZONE_FAILED"),
     "may_request":  ("ZONE_AVAILABLE", "FINALE_ONLY"),
     "idle":         ("NO_CAMPAIGN", "WAITING_FOR_AP", "ALL_CHECKS_CLEARED"),
 }
@@ -1561,10 +1687,22 @@ def test_every_non_terminal_zone_state_pins_exactly_one_hub_mode():
     so it is where they are made to agree."""
     want = {"PENDING_GENERATION": "GENERATING",
             "GENERATED": "ZONE_READY", "ACTIVE": "ZONE_ACTIVE"}
+    #: DORMANT is never the ACTIVE Zone -- it still reserves its Checks
+    #: and the player is in the Hub -- and it does pin a mode:
+    #: ZONE_DORMANT, which says the campaign holds a Zone that nobody is
+    #: standing in. An earlier version of this comment said it pinned no
+    #: mode and left going back as "an affordance"; no affordance was
+    #: built, and the Hub offered to design a new Zone instead.
+    never_active = {"DORMANT"}
     states = [s for s in typing_args_of_zone_state()
-              if s not in P.TERMINAL_ZONE_STATES]
+              if s not in P.TERMINAL_ZONE_STATES and s not in never_active]
     assert set(states) == set(want), (
         f"unclassified ZoneState(s): {set(states) ^ set(want)}")
+
+    for state in never_active:
+        rec = _record(state=state)
+        with pytest.raises(ValidationError, match="not the active Zone"):
+            _snapshot(active_zone=rec, hub=_hub(mode="ZONE_ACTIVE"))
 
     for state, mode in want.items():
         rec = (ZoneRecord(zone_id="zone_001", state=state,
@@ -1581,21 +1719,121 @@ def test_every_non_terminal_zone_state_pins_exactly_one_hub_mode():
                 _snapshot(active_zone=rec, hub=_hub(mode=other))
 
 
+def typing_args_of_hub_mode():
+    import typing
+    return typing.get_args(P.HubMode)
+
+
 def typing_args_of_zone_state():
     import typing
     return typing.get_args(P.ZoneState)
 
 
-def test_a_mode_that_claims_a_zone_must_have_one():
-    for mode in MODE_BUCKETS["holds_a_zone"]:
+def test_a_mode_that_says_you_are_standing_in_a_zone_must_have_one():
+    """OCCUPIED, not held. A dormant Zone is held and unoccupied at once
+    — it reserves its Checks and the player is in the Hub — and the two
+    questions used one list until that made the state impossible to
+    describe."""
+    for mode in P.ZONE_OCCUPIED_MODES:
         with pytest.raises(ValidationError, match="active_zone is null"):
             _snapshot(hub=_hub(mode=mode))
+
+
+def test_zone_dormant_holds_a_zone_without_anyone_standing_in_it():
+    """The mode that did not exist, and the softlock it cost.
+
+    A Zone walked out of still reserves its Checks, so the campaign must
+    not start another; and nobody is in it, so `active_zone` is null.
+    Without a mode that says both, the Hub fell through to
+    ZONE_AVAILABLE, offered to design a new Zone, and the bridge refused
+    that with "still holds locations" — no way back in short of
+    abandoning the Zone and losing its Checks and its progress.
+    """
+    ok = _snapshot(hub=_hub(mode="ZONE_DORMANT"))
+    assert ok.hub.mode == "ZONE_DORMANT"
+    assert "ZONE_DORMANT" in P.ZONE_HELD_MODES, "it blocks generation"
+    assert "ZONE_DORMANT" not in P.ZONE_OCCUPIED_MODES, "nobody is in it"
+    assert "ZONE_DORMANT" not in P.ZONE_REQUEST_MODES, (
+        "requesting a Zone here is the call the bridge refuses")
+    # And it still may not be presented as the active Zone.
+    with pytest.raises(ValidationError, match="not the active Zone"):
+        _snapshot(active_zone=_record(state="DORMANT"),
+                  hub=_hub(mode="ZONE_DORMANT"))
+
+
+def test_naming_a_zone_and_lighting_the_portal_are_one_decision():
+    """**The bug this exists for.** `ZONE_DORMANT` was added to a new
+    constant while `portal_enabled` kept reading the old one, so the Hub
+    said "your Zone is waiting", `resume_zone_id` said which one, and
+    the button was greyed out. Two spellings of one fact.
+
+    Asserted off the model rather than restated: every mode that lights
+    the portal without Archipelago is a mode that can name a Zone, and a
+    mode that cannot name one must not light it.
+    """
+    def any_hub(**kw):
+        # Some modes will not construct bare: FINALE_ONLY needs its
+        # thresholds met, ALL_CHECKS_CLEARED refuses them. Try both
+        # rather than hand-listing, so a new mode joins this test by
+        # existing.
+        # ALL_CHECKS_CLEARED additionally implies the goal was sent.
+        for extra in ({}, {"goal_sent": True, "postgame": True}):
+            for build in (_hub, _unlocked):
+                try:
+                    return build(**kw, **extra)
+                except ValidationError:
+                    continue
+        raise AssertionError(
+            f"no way to construct a hub in {kw}; a mode this test cannot "
+            "build is a mode it silently stops covering")
+
+    for mode in typing_args_of_hub_mode():
+        h = (any_hub(mode=mode, resume_zone_id="zone_001")
+             if mode in P.ZONE_ENTERABLE_MODES else any_hub(mode=mode))
+        if mode in P.ZONE_ENTERABLE_MODES:
+            assert h.portal_enabled, (
+                f"{mode} enters a local Zone and the portal is dark")
+            assert mode in P.ZONE_HELD_MODES, (
+                f"{mode} enters a Zone, so the campaign holds one")
+            assert mode not in P.ZONE_REQUEST_MODES, (
+                f"{mode} enters a Zone; requesting a new one is refused")
+        else:
+            assert not h.resume_zone_id, (
+                f"{mode} names a Zone the portal will not enter")
+
+
+def test_entering_a_local_zone_does_not_need_archipelago():
+    """A Zone that already exists is local. Walking back into one during
+    an outage is exactly the case the portal must stay lit for, and a
+    dormant Zone is the one a returning player most needs."""
+    for mode in P.ZONE_ENTERABLE_MODES:
+        offline = _hub(mode=mode, resume_zone_id="zone_001",
+                       ap_online=False)
+        assert offline.portal_enabled, (
+            f"{mode} is a local Zone; an Archipelago outage must not "
+            "shut the door on it")
+        assert not offline.accepts_zone_request
+
+
+def test_a_long_campaign_can_offer_every_zone_it_finished():
+    """`revisitable` carried a 64-entry cap that `CampaignSave.zones`
+    does not have, so a campaign finishing 65 Zones had its whole
+    snapshot REFUSED — a long game breaking on a bound nobody chose."""
+    many = tuple(ZoneHandle(zone_id=f"zone_{i:03d}", display_name=f"Z{i}")
+                 for i in range(1, 130))
+    h = _hub(mode="ZONE_AVAILABLE", revisitable=many)
+    assert len(h.revisitable) == 129
+    assert h.revisitable[0].zone_id == "zone_001"
 
 
 def test_a_terminal_zone_is_never_presented_as_active():
     """COMPLETE and ABANDONED reserve nothing. Showing one as the active Zone
     is how a released allocation looks like a held one."""
-    for state in P.TERMINAL_ZONE_STATES:
+    # VISITING is terminal for ALLOCATION and occupied for presentation:
+    # the player is standing in a finished Zone. It is the one terminal
+    # state that legitimately appears as the active Zone.
+    for state in (s for s in P.TERMINAL_ZONE_STATES
+                  if s not in P.OCCUPIED_ZONE_STATES):
         with pytest.raises(ValidationError, match="reserves nothing"):
             _snapshot(active_zone=_record(state=state),
                       hub=_hub(mode="ZONE_AVAILABLE"))

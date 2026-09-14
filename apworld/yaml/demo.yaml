@@ -7,6 +7,19 @@ Archipepsi:
   accessibility: full
   progression_balancing: 50
 
+  # Campaign scale (CAMPAIGN_SCALE.md). These are the defaults; they are
+  # written out here because a player who never sees the option never
+  # knows the campaign is adjustable.
+  #
+  #   location_count      30..600   Checks in this campaign (last = goal)
+  #   zone_target_checks   1..30    Checks allocated to an ordinary Zone
+  #   zone_budget        200..2000  content a Zone must actually contain
+  #
+  # 449 ordinary Checks at 15 per Zone is about 30 Zones plus the finale.
+  location_count: 450
+  zone_target_checks: 15
+  zone_budget: 1000
+
   # The POC exists to demonstrate other players finding our currency.
   non_local_items:
     - Epsilon Coin

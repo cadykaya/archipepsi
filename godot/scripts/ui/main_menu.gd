@@ -14,10 +14,27 @@ var _epsilon: Label
 
 func _ready() -> void:
 	layer = 4
+	# A CenterContainer filling the screen, with the panel inside it.
+	#
+	# The panel used to carry `set_anchors_preset(PRESET_CENTER)` alone,
+	# which moves the ANCHORS to the middle and leaves the offsets at
+	# zero -- so the panel's top-left corner landed dead centre and it
+	# grew down and right, putting QUIT off the bottom of the window.
+	# `PRESET_CENTER` centres a control only when the matching `-size/2`
+	# offsets go with it.
+	#
+	# A CenterContainer is used instead of `set_anchors_and_offsets_
+	# preset(..., PRESET_MODE_KEEP_SIZE)` because it re-centres when the
+	# window is resized; the offset form is computed once, from whatever
+	# the size happened to be at `_ready`.
+	var centre := CenterContainer.new()
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(centre)
+
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(460, 200)
-	add_child(panel)
+	centre.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)

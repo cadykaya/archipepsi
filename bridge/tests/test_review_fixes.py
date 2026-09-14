@@ -10,7 +10,7 @@ from archipepsi_bridge import transactions as TX
 from archipepsi_bridge.mock_ap import MockServerState
 from archipepsi_bridge.schemas import constants as C
 
-from .conftest import connected_engine, drain, run
+from .conftest import enter_zone, connected_engine, drain, run
 from .test_campaign import TIER0
 
 ALL_LOCATIONS = set(range(C.FIRST_LOCATION_ID, C.LAST_LOCATION_ID + 1))
@@ -53,7 +53,7 @@ def test_stuck_last_location_releases_without_wedging(tmp_path):
         await engine._generation_task
         zone = engine.save.active_zone
         assert list(zone.allocated_location_ids) == [89100001]
-        await engine.handle_enter_zone(zone.zone_id)
+        await enter_zone(engine, zone.zone_id)
         await TX.claim_check(engine, zone.zone_id, 89100001)
         assert engine.save.pending_checks
 

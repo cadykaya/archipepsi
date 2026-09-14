@@ -14,6 +14,7 @@ import logging
 import uuid
 from collections import defaultdict
 from pathlib import Path
+from pydantic import ValidationError
 
 from .ap_backend import APBackend, APData, ScoutInfo
 from .epsilon import (
@@ -26,16 +27,23 @@ from .epsilon.requests import (
 from .schemas import constants as C
 from .schemas import transitions as T
 from .schemas.mechanics import (
-    Mechanics, derive_mechanics, owned_affordance_tags)
+    Mechanics, derive_mechanics, owned_affordance_tags, owned_capabilities)
 from .epsilon.concepts import preferred_modes, read_concepts
 from .schemas.echo import (
     COMPLEXITY_BUDGETS, over_soft_budget, upgradable_field_info)
 from .schemas.protocol import (
+    CampaignScale,
     BridgeError, CampaignSave, CampaignSnapshot, EarnedLocalReward, HubStatus,
-    Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneReady,
-    ZoneRecord,
+    Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneHandle,
+    ZoneReady, ZoneRecord,
 )
+from .schemas import protocol as P
+from .echo_projection import detail_examples, history_view
+from . import instrumentation
+from . import layout as layout_check
+from . import quiet
 from . import store
+from . import topology
 
 log = logging.getLogger("archipepsi.campaign")
 
@@ -172,14 +180,73 @@ def _relevance_hint(mechanics) -> str:
     return "; ".join(parts)[:C.MAX_TEXT_LEN]
 
 
+def _with_graph(zone, barred=()):
+    """A composed Zone, carrying the topology its chamber order implied.
+
+    Branching when the Zone can carry it and a plain chain when it
+    cannot: `compose_with_branch` returns the chain unchanged rather
+    than forcing a junction into a Zone with nowhere to put one.
+
+    **Refuses rather than ships a Zone you cannot get around.** The
+    graph is proved here — the exit reachable, `R` a subset of `E`,
+    every Check in a reachable room, every key obtainable without
+    passing its own lock — because a Zone that fails this has no
+    business reaching a save. A failure falls back to the chain, which
+    is the topology that shipped before graphs existed and is reachable
+    by construction.
+    """
+    product = topology.compose_with_branch(list(zone.chambers),
+                                           barred=barred)
+    # A COMPOSITION THAT DID NOT HAPPEN IS NOT A ZONE.
+    #
+    # This used to read the refusal paths as ordinary empty products and
+    # hand the result back as a good Zone: `apply` drops `notes`,
+    # `reachability` cannot tell an edge-less refusal from the legacy
+    # chain it must keep accepting, and the only thing that noticed was
+    # the `Zone` schema refusing doors-without-edges when `accept_zone`
+    # rebuilt the record — a pydantic error out of a background task.
+    # The reason is a code now, and it is read rather than logged.
+    if product.refused:
+        raise topology.GraphRefused(product.refusal)
+    composed = topology.apply(zone, product)
+    verdict = topology.reachability(composed)
+    if verdict.ok:
+        return composed
+    log.warning("zone %s: branch graph refused (%s); composing the chain",
+                zone.zone_id, "; ".join(verdict.errors[:2]))
+    chain = topology.apply(zone, topology.compose_chain(list(zone.chambers)))
+    chain_verdict = topology.reachability(chain)
+    if chain_verdict.ok:
+        return chain
+    # EVEN THE CHAIN DOES NOT GET AROUND. A defect in the chambers, not
+    # in the graph — and returning the ungraphed Zone made a failed NEW
+    # composition indistinguishable from a genuine legacy save, which is
+    # the one shape that must keep loading. Refused explicitly instead.
+    raise topology.GraphRefused(topology.GraphRefusal(
+        "chain_unreachable",
+        "even the plain chain does not get around this Zone: "
+        + "; ".join(chain_verdict.errors[:2])))
+
+
 class CampaignEngine:
     def __init__(self, *, provider, provider_name: str,
                  save_dir: Path | None = None,
-                 archive_dir: Path | None = None):
+                 archive_dir: Path | None = None,
+                 quiet_generation: bool = False):
         self.provider = provider
         self.provider_name = provider_name
         self.save_dir = save_dir or store.DEFAULT_SAVE_DIR
         self.archive_dir = archive_dir
+
+        #: OPT-IN, AND OFF. The quieter-generation preview (`quiet.py`,
+        #: follow-up 02 item D) narrows two keys of the request that
+        #: every Zone already carries. Default `False` is the whole
+        #: promise that normal generation composes what it always
+        #: composed: with this flag down, `_zone_request` does not call
+        #: into `quiet` at all and the request is byte-for-byte the one
+        #: that shipped. It is a PREVIEW for review, not a budget
+        #: ruling, and no campaign setting reads it.
+        self.quiet_generation = quiet_generation
 
         self.backend: APBackend | None = None
         self.save: CampaignSave | None = None
@@ -199,6 +266,10 @@ class CampaignEngine:
         #: Which Zone `_generation_task` is building, so a resume can tell
         #: "already running" from "a different Zone".
         self._generating_zone_id: str | None = None
+        #: Identity of the Echo log every connected client already holds,
+        #: so a broadcast can elide a log nobody's copy of is stale for.
+        #: See `_log_identity` for why it is a tuple and not a length.
+        self._broadcast_log_identity: tuple | None = None
 
     # ------------------------------------------------------------------
     # Plumbing
@@ -208,18 +279,103 @@ class CampaignEngine:
     def ap(self) -> APData:
         return self.backend.data if self.backend else APData()
 
+    def _build_metadata(self) -> dict:
+        """What this build is, resolved once per process.
+
+        Stamped on every playtime record so a run before authored art and
+        a run after it can be told apart -- which is the only thing that
+        makes the pre-art baseline comparable to anything. Cached because
+        it shells out to git and a Zone ending is not the moment for that.
+        """
+        if CampaignEngine._build_cache is None:
+            from .version import build_metadata
+            CampaignEngine._build_cache = build_metadata()
+        return CampaignEngine._build_cache
+
+    #: Process-wide: the build does not change while the bridge runs.
+    _build_cache: dict | None = None
+
+    @property
+    def config(self) -> C.CampaignConfig:
+        """This campaign's scale — the single place the engine asks.
+
+        The SAVE wins, because a campaign in progress keeps the shape it
+        was created with; a seed's scale is only consulted before there
+        is a save. Neither means the current default: a run that predates
+        the options is a prototype campaign, and reinterpreting it as a
+        450-location one strands every Check it has (CAMPAIGN_SCALE.md 2).
+        """
+        if self.save is not None:
+            return self.save.scale.config()
+        return self.ap.campaign_scale or C.PROTOTYPE_CONFIG
+
     def _apply(self, new_save: CampaignSave) -> None:
-        """Replace the campaign and persist atomically. The only write path."""
-        self.save = new_save
+        """Replace the campaign and persist atomically. The only write path.
+
+        Persist BEFORE assigning. The other order looks equivalent and is
+        not: a write that raises leaves the campaign running on state
+        that was never saved, so memory and disk disagree until restart.
+
+        Playtest 1 is what that costs. A Windows-only fsync error fired
+        inside `start_generation`, so the mode advanced to GENERATING in
+        memory, the save never landed, and the generation task after this
+        call never launched -- leaving a Hub whose portal answered "a
+        Zone cannot be started right now (mode GENERATING)" forever, for
+        a generation that was not running and never would.
+
+        Assigning last means a failed save is just a failed save: the
+        campaign is exactly where it was, and the player can press the
+        button again.
+        """
         if self._save_path is not None:
             store.write_save(self._save_path, new_save)
+        self.save = new_save
 
     async def _emit(self, message) -> None:
         if self.emit is not None:
             await self.emit(message)
 
+    def _log_identity(self) -> tuple | None:
+        """What identifies the Echo log a client is holding.
+
+        Not its length: `self.save` is replaced wholesale — a different
+        campaign, a reload, a switch to `None` — and two different logs
+        can be the same length. The campaign key pins WHICH campaign and
+        `next_interpretation_seq` pins how far it has been written, and
+        that counter is monotone within a campaign and never reused, so
+        equality here really does mean "the same log, unchanged".
+        """
+        save = self.save
+        if save is None:
+            return None
+        return (save.seed_name, save.team, save.slot_id,
+                save.next_interpretation_seq, len(save.interpretations))
+
     async def broadcast_snapshot(self) -> None:
-        await self._emit(self.snapshot())
+        """One snapshot to every client, with the lifetime Echo log left
+        out when it has not changed since the last one.
+
+        A late campaign's log is ~390 KiB of a ~400 KiB snapshot, and a
+        snapshot goes out on every state change — a Check, a Zone
+        transition, a coin. The log only ever grows at the end, so re-
+        sending all of it to say "a coin was spent" was the single
+        largest thing on the wire and the least informative.
+
+        Correctness rests on two facts and nothing else: every client is
+        sent a COMPLETE snapshot the moment it connects (`server.py`) and
+        again for every `hello`, and elision requires the log identity to
+        be exactly equal to the one at the last complete broadcast. Any
+        change at all — an appended Echo, a different campaign, a
+        campaign cleared — is inequality, and inequality sends the log.
+        """
+        snap = self.snapshot()
+        identity = self._log_identity()
+        if identity is not None and identity == self._broadcast_log_identity:
+            snap = snap.model_copy(update={
+                "interpretations": (), "interpretations_complete": False})
+        else:
+            self._broadcast_log_identity = identity
+        await self._emit(snap)
 
     async def _notify(self, kind: str, title: str, lines=(),
                       location_id=None, echo_id=None) -> None:
@@ -251,7 +407,7 @@ class CampaignEngine:
     def zone_candidates(self, *, ignore_stock: bool = False) -> set[int]:
         """§10.4: the ordinary-Zone candidate pool. Starts from
         `eligible_location_ids()` — the goal-free function — always."""
-        pool = set(C.eligible_location_ids(self.ap.signal_keys))
+        pool = set(self.config.eligible_location_ids(self.ap.signal_keys))
         pool &= self.ap.missing
         pool -= self._held_location_ids()
         pool -= self._pending_location_ids()
@@ -293,17 +449,21 @@ class CampaignEngine:
                                        save.slot_id, save.generation_counter,
                                        track))
 
-        picked = shuffled(target)[:C.ZONE_MAX_CHECKS]
-        if len(picked) < C.ZONE_MIN_CHECKS:
+        # This campaign's shape, not the prototype's. Allocating three
+        # Checks in a campaign configured for fifteen is a 450-location
+        # run played at prototype density (CAMPAIGN_SCALE.md 2, 4).
+        config = save.scale.config()
+        picked = shuffled(target)[:config.zone_target_checks]
+        if len(picked) < config.zone_min_checks:
             for track in scan:
                 if track == target:
                     continue
                 for loc in shuffled(track):
                     if loc not in picked:
                         picked.append(loc)
-                    if len(picked) >= C.ZONE_MIN_CHECKS:
+                    if len(picked) >= config.zone_min_checks:
                         break
-                if len(picked) >= C.ZONE_MIN_CHECKS:
+                if len(picked) >= config.zone_min_checks:
                     break
         if len(picked) == 1 and len(pool) > 1:
             raise IntentError(
@@ -315,9 +475,22 @@ class CampaignEngine:
     # ------------------------------------------------------------------
 
     def _finale_progress(self) -> int:
+        config = self.config
         return len(self.ap.checked
-                   & set(range(C.FIRST_NON_FINALE_LOCATION_ID,
-                               C.LAST_NON_FINALE_LOCATION_ID + 1)))
+                   & set(range(config.first_location_id,
+                               config.goal_location_id)))
+
+
+    def _dormant_zone(self):
+        """The Zone the player walked out of, if there is one.
+
+        At most one Zone is unfinished at a time — it holds its Checks
+        and blocks generation until it is finished or abandoned — so
+        `next` is a choice between one candidate and none. Ordered by
+        the save's own zone order so two calls never disagree.
+        """
+        return next((r for r in self.save.zones if r.state == "DORMANT"),
+                    None)
 
     def hub_status(self) -> HubStatus:
         ap = self.ap
@@ -326,7 +499,11 @@ class CampaignEngine:
         base = dict(ap_online=ap.connected and ap.synced,
                     goal_sent=bool(self.save and self.save.goal_sent),
                     postgame=bool(self.save and self.save.goal_sent),
-                    signal_keys=keys, finale_progress=progress)
+                    signal_keys=keys, finale_progress=progress,
+                    # The Hub RENDERS this. Left at its default, a
+                    # 450-location campaign told the player it needed 24
+                    # of 449 while the gate actually wanted 360.
+                    finale_required=self.config.finale_required_checks())
 
         if self.save is None:
             return HubStatus(mode="NO_CAMPAIGN", headline="NOT CONNECTED",
@@ -334,26 +511,59 @@ class CampaignEngine:
                              ap_online=base["ap_online"], signal_keys=keys,
                              finale_progress=progress)
 
+        # WHICH ZONE THE PORTAL IS HOLDING.
+        #
+        # `active_zone` is only the Zone the player is standing in, and
+        # `rest_zone` clears it — so a Zone walked out of was invisible
+        # here, the Hub reported ZONE_AVAILABLE, and the portal offered
+        # to design a new one. The bridge then refused that with "still
+        # holds locations". A player who walked out and restarted had no
+        # way back in short of abandoning the Zone.
         az = self.save.active_zone
-        if az is not None:
-            mode = {"PENDING_GENERATION": "GENERATING",
-                    "GENERATED": "ZONE_READY",
-                    "ACTIVE": "ZONE_ACTIVE"}[az.state]
+        held = az or self._dormant_zone()
+        base["revisitable"] = tuple(
+            ZoneHandle(zone_id=r.zone_id,
+                       display_name=r.zone.display_name if r.zone else "")
+            for r in reversed(self.save.zones)
+            if r.state == "COMPLETE")
+        if held is not None:
+            mode = P.hub_mode_for(held)
             headline, detail = {
                 "GENERATING": ("EPSILON IS DESIGNING",
                                "A Zone is being generated. Hold."),
                 "ZONE_READY": ("ZONE READY",
-                               az.zone.display_name if az.zone else ""),
+                               held.zone.display_name if held.zone else ""),
                 "ZONE_ACTIVE": ("ZONE IN PROGRESS",
                                 "Step back through the portal to resume."),
+                "ZONE_DORMANT": ("ZONE WAITING",
+                                 f"{held.zone.display_name} — you left "
+                                 "with work unfinished."
+                                 if held.zone else
+                                 "You left a Zone with work unfinished."),
+                "ZONE_FAILED": ("ZONE FAILED TO BUILD",
+                                "It could not be laid out. Discard it to "
+                                "return its Checks to the pool."),
             }[mode]
+            # THE OFFER IS TO DISCARD, NOT TO ENTER. `resume_zone_id`
+            # stays empty for a Zone that cannot be entered: its whole
+            # meaning is "which Zone the portal enters", and filling it
+            # here is how the portal came to light up over a Zone it
+            # could not open.
+            failed = mode == "ZONE_FAILED"
+            name = held.zone.display_name if held.zone else ""
             return HubStatus(mode=mode, headline=headline, detail=detail,
-                             holding_finale=az.is_finale, **base)
+                             holding_finale=(az is not None
+                                             and az.is_finale),
+                             resume_zone_id="" if failed else held.zone_id,
+                             resume_zone_name="" if failed else name,
+                             discard_zone_id=held.zone_id if failed else "",
+                             discard_zone_name=name if failed else "",
+                             **base)
 
-        finale_unlocked = (progress >= C.FINALE_REQUIRED_OTHER_CHECKS
+        finale_unlocked = (progress >= self.config.finale_required_checks()
                           and keys >= C.FINALE_REQUIRED_SIGNAL_KEYS)
-        goal_missing = C.GOAL_LOCATION_ID in ap.missing
-        all_checked = len(ap.checked) >= C.LOCATION_COUNT
+        goal_missing = self.config.goal_location_id in ap.missing
+        all_checked = len(ap.checked) >= self.config.location_count
 
         if all_checked:
             return HubStatus(mode="ALL_CHECKS_CLEARED",
@@ -429,6 +639,7 @@ class CampaignEngine:
             static_glitch_units=ap.static_received
             * C.STATIC_GLITCH_UNITS_PER_ITEM,
             interpretations=save.interpretations if save else (),
+            interpretation_count=len(save.interpretations) if save else 0,
             # Folded here, once, and sent. The client never folds: a second
             # implementation of this is a second source of truth for the one
             # thing that has to be identical everywhere.
@@ -436,6 +647,13 @@ class CampaignEngine:
             slots=save.slots if save else SlotAssignment(),
             local_rewards=save.local_rewards if save else (),
             active_zone=save.active_zone if save else None,
+            # Derived here on every send, from the record just above it,
+            # so the identity and the content it identifies cannot come
+            # apart in flight. See `CampaignSnapshot.active_proposal_id`.
+            active_proposal_id=(
+                layout_check.proposal_digest(save.active_zone.zone)
+                if save and save.active_zone
+                and save.active_zone.zone is not None else ""),
             completed_zone_count=save.completed_zone_count if save else 0,
             shop=save.shop if save else ShopState(),
             pending_checks=save.pending_checks if save else (),
@@ -491,16 +709,41 @@ class CampaignEngine:
             games = sorted({s.track_key for s in ap.scouts.values()})
             order = C.deterministic_shuffle(
                 games, *C.track_order_seed(ap.seed_name, ap.team, ap.slot_id))
+            # The scale the SEED was generated with. None means the seed
+            # predates the options, which is the prototype campaign and
+            # not the current default (CAMPAIGN_SCALE.md 2).
+            scale = ap.campaign_scale or C.PROTOTYPE_CONFIG
             fresh = CampaignSave(
                 seed_name=ap.seed_name, team=ap.team, slot_id=ap.slot_id,
                 slot_name=_clamp_ap_string(ap.slot_name),
-                track_order=tuple(order))
+                track_order=tuple(order),
+                scale=CampaignScale(
+                    location_count=scale.location_count,
+                    zone_target_checks=scale.zone_target_checks,
+                    zone_budget=scale.zone_budget))
             self._apply(fresh)
-            log.info("created campaign %s (track order: %s)",
-                     self._save_path.name, " → ".join(order))
+            log.info("created campaign %s at %d locations / %d per Zone / "
+                     "%d budget (track order: %s)",
+                     self._save_path.name, scale.location_count,
+                     scale.zone_target_checks, scale.zone_budget,
+                     " → ".join(order))
         elif self.save is None:
+            # A campaign in progress keeps the scale it was created with.
+            # If the seed now reports a different one, the save and the
+            # seed are describing different campaigns -- resizing a run
+            # underneath a player would strand every Check outside the
+            # new range, so this is reported and the SAVE wins.
+            if (ap.campaign_scale is not None
+                    and existing.scale.config() != ap.campaign_scale):
+                log.error(
+                    "campaign scale mismatch: the save is %d locations and "
+                    "the seed says %d. Keeping the save's scale; this "
+                    "campaign was generated against different options.",
+                    existing.scale.location_count,
+                    ap.campaign_scale.location_count)
             self.save = existing
-            log.info("loaded campaign %s", self._save_path.name)
+            log.info("loaded campaign %s at %d locations",
+                     self._save_path.name, existing.scale.location_count)
 
         self._low_coin_warned = False
         await self.on_items_updated(notify=False)
@@ -559,6 +802,23 @@ class CampaignEngine:
     # Zone generation
     # ------------------------------------------------------------------
 
+    def _echo_summaries(self) -> tuple:
+        """The BOUNDED detail examples, as `EchoSummary`.
+
+        One helper, used by both provider paths. They used to build the
+        same summary twice, over the whole log, in two places -- which is
+        how one of them (`existing_echoes`) stayed unbounded after the
+        other was noticed.
+        """
+        save = self.save
+        return tuple(
+            EchoSummary(
+                echo_id=e.echo_id, display_name=e.display_name,
+                kinds=tuple(sorted({op.component.kind for op in e.operations
+                                    if op.op == "create"})),
+                tags=tuple(e.tags), description=e.description)
+            for e in detail_examples(save.interpretations))
+
     def _zone_request(self, record: ZoneRecord) -> ZoneGenerationRequest:
         save = self.save
         ap = self.ap
@@ -584,14 +844,73 @@ class CampaignEngine:
                 summaries.append(ZoneSummary(
                     name=z.zone.display_name, theme=z.zone.theme,
                     target_game=z.target_game))
-        echoes = tuple(
-            EchoSummary(
-                echo_id=e.echo_id, display_name=e.display_name,
-                kinds=tuple(sorted({op.component.kind for op in e.operations
-                                    if op.op == "create"})),
-                tags=tuple(e.tags), description=e.description)
-            for e in save.interpretations)
-        return ZoneGenerationRequest(
+        # BOUNDED. This used to be every interpretation: ~29 at the
+        # prototype's thirty locations and ~449 at the 450 default, which
+        # is 96 KB and roughly 24,000 tokens of Echo summaries in front
+        # of every Zone prompt. The complete history still reaches the
+        # provider -- as derived state and an accumulated-influence
+        # aggregate, in `echo_history` below -- so nothing is forgotten;
+        # only the DETAIL is a sample.
+        echoes = self._echo_summaries()
+        zone_budget = save.scale.config().zone_budget_for(
+            len(record.allocated_location_ids))
+        if self.quiet_generation:
+            # NARROWED HERE, BEFORE THE REQUEST IS BUILT, because this
+            # one number is the only budget the rest of the system
+            # reads. `fallback_zone_attempt` composes from
+            # `request.campaign.zone_budget` and `generate_zone_validated`
+            # ACCEPTS against the same field -- so narrowing only
+            # `constraints["zone_budget"]`, which is the same fact spelled
+            # for a prompt, changes nothing at all and silently delivers
+            # the filter-only arm: the families gone and their share
+            # handed straight back as more of what remains. Measured: a
+            # Zone asked for 72% of the band came out at 917 against a
+            # 648-792 band, which is the baseline size.
+            #
+            # Setting it here instead lets the request's own validator
+            # derive the WHOLE constraints block from the narrowed
+            # number, so the room envelope, the enemy caps and the
+            # per-room soft cap are internally consistent and a live
+            # Epsilon is told the same budget it will be judged against.
+            # That consistency is also what makes the preview +17 rooms
+            # and +27 enemies (docs/reports/2026-09-13-quieter-
+            # generation-preview.md): one number derives all three.
+            # Reported, not compensated for -- decoupling them is a
+            # change to the shipped composer that an experiment may not
+            # make.
+            asked = quiet.preview_budget(zone_budget)
+            # AND THE CONTRACT'S OWN FLOOR IS STILL THE FLOOR.
+            #
+            # `CampaignContext.zone_budget` is bounded `ge=ZONE_BUDGET_MIN`,
+            # and at the prototype's scale a Zone's budget IS that
+            # minimum -- so 72% of it is 144 against a floor of 200 and
+            # the request cannot be built at all. Unclamped, that was not
+            # a refusal anyone could read: generation raised
+            # `ValidationError` inside the generation task, the client
+            # waited for a ZONE_READY that never came, and the whole run
+            # ended in a timeout with the cause fifteen frames down a
+            # bridge log.
+            #
+            # Clamped, and SAID OUT LOUD, because a clamp that bites is
+            # the compensation arm wearing the variant's name: the
+            # families are still narrowed but the band is not really
+            # lower, which is exactly the comparison the owner rejected.
+            # The fraction itself is not touched to make this pass.
+            if asked < C.ZONE_BUDGET_MIN:
+                log.warning(
+                    "QUIET GENERATION: zone %s asked for %d, which is "
+                    "below the contract floor of %d. Clamping to the "
+                    "floor -- this Zone's band is %s the baseline's, so "
+                    "it is %s, NOT the lower-budget variant. The "
+                    "comparison wants a campaign at default scale.",
+                    record.zone_id, asked, C.ZONE_BUDGET_MIN,
+                    "equal to" if C.ZONE_BUDGET_MIN >= zone_budget
+                    else "nearer",
+                    "filter-only" if C.ZONE_BUDGET_MIN >= zone_budget
+                    else "a partial reduction")
+                asked = C.ZONE_BUDGET_MIN
+            zone_budget = asked
+        request = ZoneGenerationRequest(
             zone_id=record.zone_id,
             generation_id=(f"{save.seed_name}-{save.team}-{save.slot_id}-"
                            f"{record.zone_id}")[:160],
@@ -602,17 +921,53 @@ class CampaignEngine:
                 target_game=_clamp_ap_string(record.target_game),
                 is_finale=record.is_finale,
                 static_glitch_units=ap.static_received,
-                completed_zone_summaries=tuple(summaries[-6:])),
+                completed_zone_summaries=tuple(summaries[-6:]),
+                # A Zone is built for the content its Checks are worth.
+                # The last Zone of a campaign holds whatever divides out
+                # -- often one Check -- and asking for a full-length
+                # level around it would demand content the Zone has no
+                # reason to contain (CAMPAIGN_SCALE.md 5).
+                zone_budget=zone_budget),
             player=PlayerContext(
                 signal_keys=ap.signal_keys,
                 coins_available=max(0, ap.coins_received - save.coins_spent),
-                echoes=echoes),
+                echoes=echoes,
+                # The whole history, bounded. `echoes` above is a dozen
+                # examples; this is what stops a late Zone composing as
+                # though the first four hundred never happened.
+                echo_history=history_view(save.interpretations,
+                                          save.derive())),
             locations=tuple(locations),
             # §13: only what this campaign can actually interact with.
             # Over OWNED mechanics, never the loadout — a Zone whose
             # contents depended on the slots at generation time would lie
             # about itself the moment the player changed them.
-            unlocked_affordances=owned_affordance_tags(save.derive()))
+            unlocked_affordances=owned_affordance_tags(save.derive()),
+            # NO REQUIREMENT BEFORE GUARANTEE (owner ruling 2026-08-30).
+            # Computed here, from the fold, because this is where the
+            # authoritative campaign state lives. Case C -- a capability
+            # the Zone itself establishes before the requirement -- has
+            # no producer yet, so nothing is passed for it and the
+            # guarantee rests on the permanent baseline and what the
+            # campaign already owns.
+            guaranteed_capabilities=owned_capabilities(save.derive()))
+        if not self.quiet_generation:
+            return request
+        # AND THE OTHER HALF: which families may be composed from. The
+        # band above is a number the provider derives everything from;
+        # this is an offer, and `fallback._build_to_budget` filters its
+        # own cycle order by it. Same provider, same `validate_zone`,
+        # same acceptance path -- a preview is an ordinary request with
+        # a smaller band and a shorter menu.
+        narrowed = dict(request.constraints)
+        narrowed["activity_kinds"] = list(quiet.preview_kinds())
+        log.info("QUIET GENERATION: zone %s asks for %d of the %d this "
+                 "campaign would normally spend, and offers %s",
+                 record.zone_id, zone_budget,
+                 save.scale.config().zone_budget_for(
+                     len(record.allocated_location_ids)),
+                 ", ".join(quiet.preview_kinds()))
+        return request.model_copy(update={"constraints": narrowed})
 
     def _start_generation_task(self, zone_id: str) -> None:
         """Start the provider call for `zone_id`, unless one is in flight.
@@ -669,12 +1024,10 @@ class CampaignEngine:
                 archive_dir=self.archive_dir)
         except Exception:
             log.exception("generation failed past fallback for %s", zone_id)
-            self.last_generation_error = "generation failed past fallback"
-            self._apply(T.abandon_zone(self.save, zone_id))
-            await self._notify("zone_abandoned", "GENERATION FAILED",
-                               ("The Zone could not be built; its Checks "
-                                "returned to the pool.",))
-            await self.broadcast_snapshot()
+            await self._generation_failed(
+                zone_id, "generation failed past fallback",
+                "The Zone could not be built; its Checks returned to the "
+                "pool.")
             return
 
         self.last_generation_error = outcome.error
@@ -689,14 +1042,127 @@ class CampaignEngine:
                      "discarding this outcome", zone_id,
                      current.state if current else "gone")
             return
-        self._apply(T.accept_zone(self.save, outcome.value,
+        # THE GRAPH IS PRODUCED HERE, once, before the Zone is accepted.
+        #
+        # A composed Zone arrives with its chambers and no topology, so
+        # this is where the list stops being the graph: `compose_*`
+        # emits the edges, the door assignments, the keys and the plugs,
+        # and `reachability` refuses a Zone the player could not get
+        # around before anything is stored. Doing it after acceptance
+        # would mean a Zone existed in a save with an unproved graph.
+        try:
+            composed = _with_graph(outcome.value)
+        except topology.GraphRefused as exc:
+            # THE SAME BOUNDED RECOVERY a failed generation already has,
+            # because this IS a Zone that could not be built. Nothing is
+            # accepted, no `zone_ready` is emitted, the locations go back
+            # to the pool through `abandon_zone` and no other path, and
+            # the Hub can ask for the next Zone.
+            log.error("zone %s: composition refused (%s) %s", zone_id,
+                      exc.refusal.code, exc.refusal.detail)
+            await self._generation_failed(
+                zone_id, f"composition refused: {exc.refusal.code}",
+                "The Zone could not be assembled; its Checks returned to "
+                "the pool.")
+            return
+        self._apply(T.accept_zone(self.save, composed,
                                   used_fallback=outcome.used_fallback))
         if outcome.used_fallback and self.provider_name != "fallback":
             await self._notify("fallback_used", "EPSILON OFFLINE — FALLBACK USED",
                                (outcome.error or "",))
-        await self._emit(ZoneReady(type="zone_ready", zone=outcome.value,
-                                   used_fallback=outcome.used_fallback))
+        await self._emit(ZoneReady(
+            type="zone_ready", zone=composed,
+            proposal_id=layout_check.proposal_digest(composed),
+            attempt=self.save.zone_by_id(composed.zone_id).layout_refusals,
+            used_fallback=outcome.used_fallback))
         await self.broadcast_snapshot()
+
+    async def _reselect_hosts(self, rec, rooms) -> bool:
+        """Recompose this Zone's graph with `rooms` barred as hosts.
+
+        Returns whether it was done. False falls through to the ordinary
+        layout refusal — which is the honest answer when the rooms are
+        ones this Zone has already been told about, or when the Zone
+        cannot be composed at all without them.
+        """
+        barred = tuple(sorted(set(rec.unhostable_rooms) | set(rooms)))
+        try:
+            regraphed = _with_graph(rec.zone, barred=barred)
+        except topology.GraphRefused as exc:
+            # Barring the room left a Zone that cannot be composed —
+            # a leaf with nowhere to hang, most likely. That is the
+            # composition refusal it already has, not this path.
+            log.info("zone %s: barring %s leaves it uncomposable (%s)",
+                     rec.zone_id, list(rooms), exc.refusal.code)
+            return False
+        # THE ARRANGEMENT IS PRESERVED OR THIS IS NOT THE REPAIR.
+        #
+        # Re-selection moves a branch to a supported host. Quietly
+        # handing back a Zone with FEWER branches is a different thing —
+        # branch removal to make a device requirement go away — and it
+        # is not an approved outcome here. When no reassignment of the
+        # same arrangement exists, this stands down and the ordinary
+        # bounded layout refusal takes it, which is a distinct result
+        # with its own recovery.
+        want = len(rec.zone.plugs)
+        if len(regraphed.plugs) != want:
+            log.info("zone %s: barring %s leaves %d branch(es) of %d; "
+                     "not re-selecting", rec.zone_id, list(rooms),
+                     len(regraphed.plugs), want)
+            return False
+        try:
+            self._apply(T.reselect_hosts(self.save, rec.zone_id, rooms,
+                                         regraphed))
+        except ValueError as exc:
+            log.info("zone %s: not re-selecting (%s)", rec.zone_id, exc)
+            return False
+        log.info("zone %s: %s cannot host a return; recomposed with "
+                 "%d branch(es)", rec.zone_id, list(rooms),
+                 len(regraphed.plugs))
+        await self._emit(ZoneReady(
+            type="zone_ready", zone=regraphed,
+            proposal_id=layout_check.proposal_digest(regraphed),
+            attempt=self.save.zone_by_id(rec.zone_id).layout_refusals,
+            used_fallback=self.save.zone_by_id(rec.zone_id).used_fallback))
+        await self.broadcast_snapshot()
+        return True
+
+    async def _generation_failed(self, zone_id: str, error: str,
+                                 detail: str) -> None:
+        """A Zone that could not be built, handled the one supported way.
+
+        One function rather than two copies, because the recovery is the
+        same whether the provider failed or the composer refused: give
+        the Checks back, say so, and leave the Hub able to ask for the
+        next Zone. Accounting is `abandon_zone`'s and only its.
+        """
+        self.last_generation_error = error
+        self._apply(T.abandon_zone(self.save, zone_id))
+        await self._notify("zone_abandoned", "GENERATION FAILED", (detail,))
+        await self.broadcast_snapshot()
+
+    # ------------------------------------------------------------------
+    # Local instrumentation (CAMPAIGN_SCALE.md 13)
+    # ------------------------------------------------------------------
+
+    def record_zone_timing(self, timing) -> None:
+        """Append what the Zone actually cost. Local file, never a request.
+
+        Not a state transition: nothing in the campaign reads it back, no
+        snapshot carries it and no rule depends on it. It exists so the
+        40-minute Zone can stop being a target and start being a
+        measurement -- and so a content budget that turns out to buy four
+        minutes of play can be seen to.
+
+        Deliberately silent about failure. A Zone the player just finished
+        must not be lost because a log file could not be opened.
+        """
+        if self.save is None:
+            return
+        record = instrumentation.build_record(self.save, timing,
+                                              self._build_metadata())
+        if record is not None:
+            instrumentation.append_record(self.save_dir, record)
 
     async def handle_request_next_zone(self, finale: bool) -> None:
         if self.save is None:
@@ -708,11 +1174,11 @@ class CampaignEngine:
         if finale:
             if not hub.finale_offered:
                 raise IntentError("the finale is not offered right now")
-            if C.GOAL_LOCATION_ID not in self.ap.missing:
+            if self.config.goal_location_id not in self.ap.missing:
                 raise IntentError("the finale is already resolved")
-            goal_scout = self.ap.scouts.get(C.GOAL_LOCATION_ID)
+            goal_scout = self.ap.scouts.get(self.config.goal_location_id)
             target = goal_scout.track_key if goal_scout else "Archipepsi"
-            ids: list[int] = [C.GOAL_LOCATION_ID]
+            ids: list[int] = [self.config.goal_location_id]
         else:
             ids, target = self._select_zone_locations()
         zone_id = f"zone_{self.save.generation_counter + 1:03d}"
@@ -727,22 +1193,77 @@ class CampaignEngine:
     # ------------------------------------------------------------------
 
     async def handle_enter_zone(self, zone_id: str) -> None:
+        """Walk in. A Zone that has been placed before is REPLAYED.
+
+        Re-entry sends the committed manifest back down, so the engine
+        lays the same pieces in the same places rather than searching
+        again. That is where the determinism actually comes from: not
+        from two machines rediscovering a layout, but from one machine
+        writing it down once.
+        """
         self._require_save()
         try:
             self._apply(T.enter_zone(self.save, zone_id))
         except ValueError as exc:
             raise IntentError(str(exc)) from exc
+        rec = self.save.zone_by_id(zone_id)
+        if rec is not None and rec.zone is not None \
+                and rec.manifest is not None:
+            # A REPLAY carries its identity too. The Zone is committed,
+            # so a result about it takes the committed path either way —
+            # but a re-entry that is about to rebuild should echo what
+            # it rebuilt, not nothing.
+            await self._emit(ZoneReady(
+                type="zone_ready", zone=rec.zone,
+                proposal_id=layout_check.proposal_digest(rec.zone),
+                used_fallback=rec.used_fallback,
+                manifest=rec.manifest))
         await self.broadcast_snapshot()
 
+    async def _put_the_zone_down(self, zone_id: str) -> None:
+        """Leave a Zone without finishing or abandoning it.
+
+        The Zone keeps everything — its committed layout, its Check
+        identities, which of them are claimed, and the player's
+        progress. **Returning unclaimed Checks to the allocator is
+        abandonment's behaviour and only abandonment's**; it is an
+        explicit act with an explicit cost, never the consequence of
+        walking out of a door.
+
+        Reconciling afterwards is what keeps the relaxed exit honest: a
+        Zone whose last Check confirms while the player is in the Hub
+        still completes, so leaving early costs a walk back rather than
+        the Check.
+        """
+        rec = self.save.zone_by_id(zone_id) if self.save else None
+        if rec is not None and rec.state in ("ACTIVE", "VISITING"):
+            try:
+                self._apply(T.rest_zone(self.save, zone_id))
+            except ValueError as exc:
+                # Checks in flight: the Zone stays where it is and the
+                # next reconcile pass settles it. Refusing the intent
+                # would strand the player in a Zone they have left.
+                log.info("zone %s stays active on leave: %s", zone_id, exc)
+
     async def handle_leave_zone(self, zone_id: str) -> None:
-        """Pause-menu Return to Hub. No persistent change; Godot resets
-        transient state itself."""
+        """Pause-menu Return to Hub. The Zone goes dormant, not away."""
         self._require_save()
+        await self._put_the_zone_down(zone_id)
+        await self.reconcile()
         await self.broadcast_snapshot()
 
     async def handle_exit_zone(self, zone_id: str) -> None:
-        """Pure travel. Completion is driven by Check confirmation."""
+        """Out through the exit portal.
+
+        **The exit does not require every Check.** Reaching it completes
+        the route; the Zone goes dormant with whatever is outstanding
+        still allocated to it, and the player can come back. That
+        relaxation is only safe because re-entry works — shipping it
+        without `DORMANT` would convert a forgone reward into a stranded
+        one.
+        """
         self._require_save()
+        await self._put_the_zone_down(zone_id)
         await self.reconcile()
         await self.broadcast_snapshot()
 
@@ -776,6 +1297,183 @@ class CampaignEngine:
             description=intent.description[:C.MAX_TEXT_LEN],
             source_zone_id=active,
             best_seconds=intent.best_seconds)))
+        await self.broadcast_snapshot()
+
+    async def handle_progress(self, intent) -> None:
+        """Zone progress the engine reports: a key, a lock, a station.
+
+        **Closing a path that was open and dropped.** The engine has been
+        sending `key_collected` and `lock_opened` since the slice landed
+        and nothing received them, so a key survived exactly as long as
+        the process did.
+
+        The Zone is taken from the intent rather than from
+        `active_zone_id`: progress belongs to the place it happened in,
+        and a player who left for the Hub mid-report should not have a
+        key land in whichever Zone is current.
+
+        **Idempotent, and quietly so.** Every target set is monotone, so
+        the same event twice is one event. A resend after a dropped
+        connection is the normal case and must never be an error.
+        """
+        if self.save is None:
+            raise IntentError("no campaign loaded")
+        if self.save.zone_by_id(intent.zone_id) is None:
+            raise IntentError(
+                f"no Zone '{intent.zone_id}' in this campaign")
+        before = self.save
+        # AN UNKNOWN IDENTITY IS A REFUSED INTENT, NOT A CRASH. The
+        # transitions raise `ValueError` for an illegal request, as their
+        # module says; without this the generic arm in `server.py` caught
+        # them, logged a traceback for every one, and answered
+        # "ValueError: ..." — a refusal dressed as a bridge fault, which
+        # is noise that hides the real ones. A `ValidationError` is NOT
+        # translated: that one means this module built an invalid save
+        # and is a bug rather than a bad message.
+        try:
+            if intent.type == "key_collected":
+                nxt = T.record_key(self.save, intent.zone_id, intent.key_id)
+            elif intent.type == "latch_fired":
+                nxt = T.record_latch(self.save, intent.zone_id,
+                                     intent.package_id, intent.latch_id)
+            elif intent.type == "lock_opened":
+                nxt = T.record_lock(self.save, intent.zone_id,
+                                    intent.room_id, intent.socket_id)
+            else:
+                nxt = T.record_station(self.save, intent.zone_id,
+                                       intent.station_id)
+        except ValidationError:
+            raise
+        except ValueError as exc:
+            raise IntentError(str(exc)) from exc
+        if nxt is before:
+            return          # already recorded; nothing to save or announce
+        self._apply(nxt)
+        await self.broadcast_snapshot()
+
+    async def handle_layout_result(self, intent) -> None:
+        """The engine placed a Zone; decide whether to commit it.
+
+        **Validate, then commit.** A layout that passes becomes the
+        accepted immutable manifest and is replayed forever after; one
+        that fails is refused and never acquires a digest, so nothing
+        downstream can mistake an unchecked layout for a checked one.
+
+        A Zone whose topology is still its chamber order returns
+        LEGACY_UNCERTIFIED and stores nothing — there are no edges for
+        the evidence to be about, and pretending otherwise would let an
+        old save look newly certified.
+        """
+        if self.save is None:
+            raise IntentError("no campaign loaded")
+        rec = self.save.zone_by_id(intent.zone_id)
+        if rec is None or rec.zone is None:
+            raise IntentError(
+                f"no generated Zone '{intent.zone_id}' to place")
+        # A RESULT FOR A PROPOSAL THAT NO LONGER EXISTS IS NOT ABOUT
+        # THIS ZONE, and must touch nothing of the one that replaced it.
+        #
+        # The client captures `proposal_id` from `zone_ready` when it
+        # STARTS a build and echoes it here, so an old build carries the
+        # old id however long it takes to come back. Without this a late
+        # result spends the replacement's refusal budget, bars the
+        # replacement's rooms, or commits a layout of the Zone it
+        # replaced. Ignored outright: nothing counted, nothing barred,
+        # nothing committed, and the record left exactly as it is.
+        #
+        # A client that sends no id behaves as it does today. Absent
+        # means "cannot be checked", never "stale".
+        if intent.proposal_id is not None:
+            current = layout_check.proposal_digest(rec.zone)
+            if intent.proposal_id != current:
+                log.info("zone %s: a layout_result for proposal %s "
+                         "arrived after %s replaced it; ignored",
+                         intent.zone_id, intent.proposal_id, current)
+                return
+        # AND WHICH ATTEMPT IT IS ABOUT, which the digest cannot say.
+        #
+        # `proposal_digest` is content identity and identical content
+        # hashes identically — correct, and exactly why it cannot tell
+        # two attempts apart. After a refusal the campaign asks the
+        # provider again and a deterministic one returns the same Zone,
+        # so the previous attempt's result matches the current proposal
+        # and is charged as a fresh failure. Measured before this guard:
+        # one real refusal became two, and the duplicate cost a third of
+        # the Zone's whole recovery budget.
+        #
+        # The ordinal is read from `layout_refusals` at offer time, so
+        # there is no second counter to keep in step and nothing is
+        # folded into the digest. Absent behaves as today.
+        #
+        # MISMATCH IN EITHER DIRECTION, and not merely "behind". A
+        # result from an attempt this Zone has moved past is stale; a
+        # result claiming an attempt the bridge has not reached was
+        # built against a state this bridge does not hold, and charging
+        # a refusal against the wrong attempt is the harm either way.
+        if intent.attempt is not None and intent.attempt != rec.layout_refusals:
+            log.info("zone %s: a layout_result for attempt %d arrived "
+                     "during attempt %d; ignored", intent.zone_id,
+                     intent.attempt, rec.layout_refusals)
+            return
+
+        # A RESULT FOR A ZONE THAT ALREADY GAVE UP IS STALE, and stale is
+        # not an error: a client retrying after a dropped connection is
+        # the ordinary case. Nothing is composed again, nothing is
+        # notified again, and the save does not move. Without this the
+        # handler kept notifying LAYOUT REFUSED and kept asking the
+        # provider for a Zone the bridge had already stopped composing.
+        if rec.layout_exhausted:
+            log.info("zone %s already exhausted its layout attempts; "
+                     "ignoring a stale result", intent.zone_id)
+            return
+        verdict = layout_check.validate(rec.zone, intent.layout)
+        if verdict.legacy:
+            log.info("zone %s has no graph; layout not certified",
+                     intent.zone_id)
+            return
+        if not verdict.accepted:
+            log.warning("zone %s layout refused (%s): %s", intent.zone_id,
+                        verdict.status, "; ".join(verdict.errors[:3]))
+            # A HOST THE ENGINE CANNOT STAND THE RETURN IN IS NOT A LOST
+            # ZONE. The engine measured and said "not in this room"; the
+            # content and the Checks are fine, and only the choice of
+            # destination was wrong. Recompose the GRAPH with that room
+            # barred and send it back to be laid out.
+            #
+            # Fresh proposals only, and `reselect_hosts` enforces it: a
+            # Zone holding a committed manifest is a solved Zone the
+            # player may be part-way through, and it keeps what it has.
+            # The three recoveries stay separate — this one, the
+            # abandon-on-composition-refusal, and the held-Zone discard.
+            if verdict.unhostable_rooms and rec.manifest is None:
+                if await self._reselect_hosts(rec, verdict.unhostable_rooms):
+                    return
+            # A REFUSAL HAS TO CHANGE SOMETHING. This used to log, notify
+            # and leave the Zone ACTIVE, so the client kept playing a
+            # Zone the validator had just said does not hold together and
+            # kept claiming its Checks against it. The Zone goes DORMANT
+            # and stops being the active one; its allocated locations are
+            # untouched, because giving them back is `abandon_zone`'s
+            # behaviour and only its.
+            self._apply(T.refuse_layout(self.save, intent.zone_id))
+            await self._notify(
+                "zone_abandoned", "LAYOUT REFUSED",
+                tuple(verdict.errors[:3]) or (verdict.status,))
+            # COMPOSE IT AGAIN, against the ids it already holds. This is
+            # the same recovery a crash mid-generation gets, and it is
+            # why a refusal costs the seed nothing: `refuse_layout` puts
+            # the record back to PENDING_GENERATION and this runs the
+            # provider for it. After MAX_LAYOUT_REFUSALS it stops asking
+            # and the record is DORMANT instead.
+            again = self.save.zone_by_id(intent.zone_id)
+            if again is not None and again.state == "PENDING_GENERATION":
+                self._start_generation_task(intent.zone_id)
+            await self.broadcast_snapshot()
+            return
+        self._apply(T.commit_layout(self.save, intent.zone_id,
+                                    verdict.manifest))
+        log.info("zone %s layout committed (%s)", intent.zone_id,
+                 verdict.manifest["manifest_digest"])
         await self.broadcast_snapshot()
 
     async def handle_slot_action(
@@ -828,10 +1526,12 @@ class CampaignEngine:
             return
         candidates = sorted(self.shop_candidates()
                             | self._stocked_location_ids())
-        # Leave at least SHOP_MIN_REMAINING_AFTER_STOCK for the next Zone.
+        # Leave one Zone's worth of Checks for the next Zone -- this
+        # campaign's Zone, not the prototype's three, or the shop can
+        # strip a fifteen-Check Zone down to a fifth of its length.
         zone_pool_size = len(self.zone_candidates(ignore_stock=True))
         n = min(C.SHOP_STOCK_SIZE, len(candidates),
-                max(0, zone_pool_size - C.SHOP_MIN_REMAINING_AFTER_STOCK))
+                max(0, zone_pool_size - save.scale.config().shop_reserve))
         shuffled = C.deterministic_shuffle(
             candidates, *C.shop_stock_seed(save.seed_name, save.team,
                                            save.slot_id, count))
@@ -872,14 +1572,11 @@ class CampaignEngine:
                 recipient_name=_clamp_ap_string(s.recipient_name),
                 item_flags=s.flags),
             player_state=EchoPlayerState(
-                existing_echoes=tuple(
-                    EchoSummary(
-                        echo_id=e.echo_id, display_name=e.display_name,
-                        kinds=tuple(sorted({op.component.kind
-                                            for op in e.operations
-                                            if op.op == "create"})),
-                        tags=tuple(e.tags), description=e.description)
-                    for e in save.interpretations),
+                # The SAME bounded projection the Zone path uses. Two
+                # subtly different summaries is how one of them stays
+                # unbounded after the other is fixed.
+                existing_echoes=self._echo_summaries(),
+                echo_history=history_view(save.interpretations, mechanics),
                 signal_keys=self.ap.signal_keys,
                 coins_available=max(
                     0, self.ap.coins_received - save.coins_spent),

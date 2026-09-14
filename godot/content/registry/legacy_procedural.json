@@ -1,0 +1,490 @@
+{
+ "schema_version": 1,
+ "pack": "legacy_procedural",
+ "description": "The game as it is today: procedural placeholders, each marked so nothing mistakes one for authored content.",
+ "entries": [
+  {
+   "id": "shell_corridor_proc",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "Corridor (procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "corridor",
+    "transit",
+    "narrow"
+   ],
+   "size": [
+    12.0,
+    3.6,
+    5.0
+   ],
+   "clearances": {
+    "ceiling": 3.6,
+    "lane_half_width": 2.0
+   },
+   "sockets": [
+    {
+     "name": "entry",
+     "kind": "corridor_end",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "yaw": 180.0,
+     "width": 2.4,
+     "height": 3.2
+    },
+    {
+     "name": "exit",
+     "kind": "corridor_end",
+     "position": [
+      0.0,
+      0.0,
+      12.0
+     ],
+     "yaw": 0.0,
+     "width": 2.4,
+     "height": 3.2
+    }
+   ],
+   "volumes": [
+    {
+     "name": "arrival",
+     "kind": "player_entry",
+     "center": [
+      0.0,
+      1.0,
+      1.5
+     ],
+     "size": [
+      3.0,
+      2.0,
+      2.0
+     ]
+    }
+   ],
+   "cost": 8
+  },
+  {
+   "id": "shell_arena_proc",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "Arena (procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "arena",
+    "combat",
+    "open"
+   ],
+   "size": [
+    18.0,
+    6.0,
+    20.0
+   ],
+   "clearances": {
+    "ceiling": 6.0
+   },
+   "sockets": [
+    {
+     "name": "entry",
+     "kind": "doorway",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "yaw": 180.0,
+     "width": 2.4,
+     "height": 3.2
+    },
+    {
+     "name": "exit",
+     "kind": "doorway",
+     "position": [
+      0.0,
+      0.0,
+      20.0
+     ],
+     "yaw": 0.0,
+     "width": 2.4,
+     "height": 3.2
+    }
+   ],
+   "volumes": [
+    {
+     "name": "arrival",
+     "kind": "player_entry",
+     "center": [
+      0.0,
+      1.0,
+      2.0
+     ],
+     "size": [
+      4.0,
+      2.0,
+      3.0
+     ]
+    },
+    {
+     "name": "floor",
+     "kind": "enemy_spawn",
+     "center": [
+      0.0,
+      1.0,
+      11.0
+     ],
+     "size": [
+      14.0,
+      2.0,
+      12.0
+     ]
+    }
+   ],
+   "cost": 20
+  },
+  {
+   "id": "shell_platform_path_proc",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "Platform path (procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "platforming",
+    "gaps",
+    "vertical"
+   ],
+   "size": [
+    10.0,
+    8.0,
+    24.0
+   ],
+   "clearances": {
+    "ceiling": 8.0
+   },
+   "sockets": [
+    {
+     "name": "entry",
+     "kind": "doorway",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "yaw": 180.0,
+     "width": 2.4,
+     "height": 3.2
+    },
+    {
+     "name": "exit",
+     "kind": "doorway",
+     "position": [
+      0.0,
+      4.0,
+      24.0
+     ],
+     "yaw": 0.0,
+     "width": 2.4,
+     "height": 3.2
+    }
+   ],
+   "volumes": [
+    {
+     "name": "arrival",
+     "kind": "player_entry",
+     "center": [
+      0.0,
+      1.0,
+      1.5
+     ],
+     "size": [
+      3.0,
+      2.0,
+      2.0
+     ]
+    }
+   ],
+   "cost": 16
+  },
+  {
+   "id": "shell_tower_proc",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "Tower (procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "tower",
+    "ascent",
+    "vertical"
+   ],
+   "size": [
+    14.0,
+    18.0,
+    14.0
+   ],
+   "clearances": {
+    "ceiling": 18.0
+   },
+   "sockets": [
+    {
+     "name": "entry",
+     "kind": "doorway",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "yaw": 180.0,
+     "width": 2.4,
+     "height": 3.2
+    },
+    {
+     "name": "exit",
+     "kind": "doorway",
+     "position": [
+      0.0,
+      14.0,
+      0.0
+     ],
+     "yaw": 0.0,
+     "width": 2.4,
+     "height": 3.2
+    }
+   ],
+   "volumes": [
+    {
+     "name": "arrival",
+     "kind": "player_entry",
+     "center": [
+      0.0,
+      1.0,
+      2.0
+     ],
+     "size": [
+      3.0,
+      2.0,
+      2.0
+     ]
+    }
+   ],
+   "cost": 24
+  },
+  {
+   "id": "shell_treasure_room_proc",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "Treasure room (procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "reward",
+    "quiet",
+    "terminus"
+   ],
+   "size": [
+    12.0,
+    5.0,
+    12.0
+   ],
+   "clearances": {
+    "ceiling": 5.0
+   },
+   "sockets": [
+    {
+     "name": "entry",
+     "kind": "doorway",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "yaw": 180.0,
+     "width": 2.4,
+     "height": 3.2
+    },
+    {
+     "name": "exit",
+     "kind": "doorway",
+     "position": [
+      0.0,
+      0.0,
+      12.0
+     ],
+     "yaw": 0.0,
+     "width": 2.4,
+     "height": 3.2
+    }
+   ],
+   "volumes": [
+    {
+     "name": "arrival",
+     "kind": "player_entry",
+     "center": [
+      0.0,
+      1.0,
+      1.5
+     ],
+     "size": [
+      3.0,
+      2.0,
+      2.0
+     ]
+    },
+    {
+     "name": "reward",
+     "kind": "objective",
+     "center": [
+      0.0,
+      1.0,
+      6.0
+     ],
+     "size": [
+      3.0,
+      3.0,
+      3.0
+     ]
+    }
+   ],
+   "cost": 12
+  },
+  {
+   "id": "connector_straight_proc",
+   "level": 1,
+   "category": "connector",
+   "display_name": "Straight connector (procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "connector",
+    "transit"
+   ],
+   "size": [
+    4.0,
+    3.6,
+    5.0
+   ],
+   "sockets": [
+    {
+     "name": "end_a",
+     "kind": "corridor_end",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "yaw": 180.0,
+     "width": 2.4,
+     "height": 3.2
+    },
+    {
+     "name": "end_b",
+     "kind": "corridor_end",
+     "position": [
+      0.0,
+      0.0,
+      5.0
+     ],
+     "yaw": 0.0,
+     "width": 2.4,
+     "height": 3.2
+    }
+   ],
+   "cost": 3
+  },
+  {
+   "id": "fixture_light_concrete_facility_proc",
+   "level": 2,
+   "category": "fixture",
+   "display_name": "Light housing (concrete_facility, procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "light_housing",
+    "concrete_facility"
+   ],
+   "size": [
+    0.8,
+    0.1,
+    0.4
+   ]
+  },
+  {
+   "id": "fixture_light_rusted_industrial_proc",
+   "level": 2,
+   "category": "fixture",
+   "display_name": "Light housing (rusted_industrial, procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "light_housing",
+    "rusted_industrial"
+   ],
+   "size": [
+    0.8,
+    0.1,
+    0.4
+   ]
+  },
+  {
+   "id": "fixture_light_neon_transit_proc",
+   "level": 2,
+   "category": "fixture",
+   "display_name": "Light housing (neon_transit, procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "light_housing",
+    "neon_transit"
+   ],
+   "size": [
+    0.8,
+    0.1,
+    0.4
+   ]
+  },
+  {
+   "id": "fixture_light_gothic_stone_proc",
+   "level": 2,
+   "category": "fixture",
+   "display_name": "Light housing (gothic_stone, procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "light_housing",
+    "gothic_stone"
+   ],
+   "size": [
+    0.8,
+    0.1,
+    0.4
+   ]
+  },
+  {
+   "id": "fixture_light_temple_ruin_proc",
+   "level": 2,
+   "category": "fixture",
+   "display_name": "Light housing (temple_ruin, procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "light_housing",
+    "temple_ruin"
+   ],
+   "size": [
+    0.8,
+    0.1,
+    0.4
+   ]
+  },
+  {
+   "id": "fixture_light_void_glitch_proc",
+   "level": 2,
+   "category": "fixture",
+   "display_name": "Light housing (void_glitch, procedural)",
+   "procedural_fallback": true,
+   "semantic_tags": [
+    "light_housing",
+    "void_glitch"
+   ],
+   "size": [
+    0.8,
+    0.1,
+    0.4
+   ]
+  }
+ ]
+}

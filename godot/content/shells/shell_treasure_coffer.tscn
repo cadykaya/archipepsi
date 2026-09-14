@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://content/shells/shell_treasure_coffer.glb" id="1_5apy3"]
+
+[node name="shell_treasure_coffer" type="Node3D"]
+
+[node name="Mesh" type="Node3D" parent="." instance=ExtResource("1_5apy3")]
+
+[node name="floor_to_step_high_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+
+[node name="floor_to_step_high_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 2.9)

@@ -1,0 +1,1029 @@
+"""Blender-side scaffolding for the Archipepsi art lane.
+
+Every builder in `tools/blender/build_*.py` runs inside Blender and imports
+this. It owns the boring, dangerous parts: scene state, units, materials,
+UV projection, export, and the assertions that fail a build rather than
+letting a wrong asset reach a review sheet.
+
+Three principles it exists to enforce, all of them paid for by somebody else
+first:
+
+**Art as code.** No `.blend` file is the source of truth for anything. A
+model is a Python script plus this module, and `check_art_current.sh`
+rebuilds every one of them and fails if the committed `.glb` moved.
+
+**Measure, do not estimate.** `uv_texel_density()` reads the real unwrap and
+the real world area. mario-3's estimate here was wrong by a factor of six,
+which made every painted cluster smaller than a texel.
+
+**Assert on the effect.** A builder that "sets flat shading" can silently
+stop doing it. `assert_flat()` looks at the polygons.
+"""
+
+from __future__ import annotations
+
+import math
+import os
+import sys
+
+import bmesh
+import bpy
+from mathutils import Vector
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import engine_truth  # noqa: E402
+import palette as pal  # noqa: E402
+
+REPO_ROOT = engine_truth.REPO_ROOT
+
+# --- the theme this run builds ------------------------------------------
+#
+# Theme-pack gap 4. Every builder held `THEME = "concrete_facility"` as a
+# module constant, so a second theme of an existing room meant editing 45
+# files or waiting for a runtime binder nobody has written yet. It is an
+# argument now:
+#
+#   blender -b --python tools/blender/build_rooms.py -- --theme temple_ruin
+#   ART_THEME=temple_ruin blender -b --python tools/blender/build_rooms.py
+#
+# TWO PROPERTIES MATTER MORE THAN THE FEATURE.
+#
+# 1. THE DEFAULT IS UNCHANGED. Omit the argument and the build is
+#    byte-identical to what shipped -- `check_art_current.sh` rebuilds all
+#    52 builders and compares against git, so this is checked rather than
+#    hoped for.
+#
+# 2. A NON-DEFAULT RUN CANNOT TOUCH A SHIPPED ASSET. The output directories
+#    redirect under `assets/themed/<theme>/`, and `export_glb` refuses to
+#    write outside them. Without that, one `--theme` typo silently replaces
+#    twelve approved shells with differently-painted ones, `git diff` shows
+#    binary churn across the whole pack, and the only thing standing
+#    between the repository and that is somebody remembering. The redirect
+#    is not a convenience; it is the reason this is safe to add at all.
+DEFAULT_THEME = "concrete_facility"
+
+
+def _requested_theme():
+    """(theme, was it asked for) -- and the second half is load-bearing.
+
+    "Which theme" and "did somebody choose one" are different questions,
+    and answering only the first got this wrong: `--theme
+    concrete_facility` names the default, so a check of the NAME reads it
+    as no choice at all. `build_plenum` then stayed rusted industrial
+    through a run that explicitly asked for concrete, which is the
+    opposite of what the argument is for -- and the run would have written
+    the shipped tree while doing it, because isolation was keyed on the
+    same wrong question.
+
+    So the flag being PRESENT is what decides both, and the name only says
+    which theme. Blender puts everything after `--` into `sys.argv`, so a
+    builder run through Blender and one run through plain Python read the
+    same flag.
+    """
+    argv = sys.argv
+    if "--" in argv:
+        argv = argv[argv.index("--") + 1:]
+    for i, token in enumerate(argv):
+        if token == "--theme" and i + 1 < len(argv):
+            return argv[i + 1], True
+        if token.startswith("--theme="):
+            return token.split("=", 1)[1], True
+    from_env = os.environ.get("ART_THEME")
+    if from_env:
+        return from_env, True
+    return DEFAULT_THEME, False
+
+
+def theme():
+    """The theme this run builds. Refuses a name the palette does not know.
+
+    A typo must not build: `--theme temple_ruins` would otherwise paint
+    every surface from a silently empty table and export an asset nobody
+    could tell from a real one by looking at it.
+    """
+    name, _ = _requested_theme()
+    known = pal.theme_names()
+    if name not in known:
+        raise SystemExit(
+            "theme '%s' is not one the palette knows. It has: %s"
+            % (name, ", ".join(sorted(known))))
+    return name
+
+
+THEME = theme()
+
+#: Did somebody ASK for a theme, rather than get the default by saying
+#: nothing? Everything below keys on this and not on the theme's name --
+#: see `_requested_theme`.
+THEME_EXPLICIT = _requested_theme()[1]
+
+
+def theme_for(house):
+    """For a builder whose own house theme is not the pack default.
+
+    `build_plenum` is rusted industrial by authorial choice, not by
+    inheriting a default, so a run that asked for nothing has to keep it --
+    the byte-identity of the shipped shell depends on that. A run that
+    asked for a theme overrides it, INCLUDING a run that asked for
+    `concrete_facility`: naming the default is still naming one.
+    """
+    return THEME if THEME_EXPLICIT else house
+
+if not THEME_EXPLICIT:
+    MODEL_DIR = os.path.join(REPO_ROOT, "assets", "models")
+    TEXTURE_DIR = os.path.join(REPO_ROOT, "assets", "textures")
+else:
+    # Scratch, and deliberately not beside the shipped pack: a second theme
+    # is evidence that the pipeline works, not an asset. Nothing exports
+    # from here, nothing is reviewed here, and no manifest names it.
+    _THEMED = os.path.join(REPO_ROOT, "assets", "themed", THEME)
+    MODEL_DIR = os.path.join(_THEMED, "models")
+    TEXTURE_DIR = os.path.join(_THEMED, "textures")
+    # `log` is defined below this block, so the prefix is spelled out.
+    print("[art] building theme '%s' into assets/themed/%s/ -- the shipped "
+          "pack is not written by this run" % (THEME, THEME))
+
+DIM = engine_truth.dimensions()
+BUDGETS = pal.budgets()
+
+
+def log(message):
+    print("[art] %s" % message)
+
+
+# ----------------------------------------------------------------------
+# scene
+# ----------------------------------------------------------------------
+
+def reset_scene():
+    """A clean, unit-correct scene.
+
+    Godot and Blender agree on metres, and both call +Y up for a glTF, so
+    the only real risk is a stale datablock from a previous build in the
+    same Blender session. Purge rather than trust.
+    """
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    scene = bpy.context.scene
+    scene.unit_settings.system = "METRIC"
+    scene.unit_settings.scale_length = 1.0
+    for block in (bpy.data.meshes, bpy.data.materials, bpy.data.images,
+                  bpy.data.objects):
+        for item in list(block):
+            if item.users == 0:
+                block.remove(item)
+
+
+# ----------------------------------------------------------------------
+# materials
+# ----------------------------------------------------------------------
+
+def make_material(name, hex_color, roughness=0.9, emission_hex=None,
+                  emission_strength=1.0):
+    """A flat, unlit-leaning material. Albedo only.
+
+    No normal, roughness or AO maps anywhere in this project. The era did
+    not have them and they fight the flat read: a normal-mapped brick wall
+    is unmistakably a 2010s wall no matter what resolution its albedo is.
+    """
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = pal.rgba(hex_color)
+    bsdf.inputs["Roughness"].default_value = roughness
+    bsdf.inputs["Metallic"].default_value = 0.0
+    if emission_hex:
+        bsdf.inputs["Emission Color"].default_value = pal.rgba(emission_hex)
+        bsdf.inputs["Emission Strength"].default_value = emission_strength
+    return mat
+
+
+def make_textured_material(name, image, roughness=0.9):
+    """Albedo texture, NEAREST filtering, mipmaps on.
+
+    NEAREST is not a preference. `godot/scripts/generation/textures.gd`
+    generates the procedural half of the game at `texture_filter = NEAREST`,
+    so an authored asset that imports with linear filtering makes the seam
+    between authored and procedural content the most visible thing in the
+    room. Blender sets `Closest`, glTF carries sampler NEAREST, and the
+    Godot import is asserted separately by the preview project.
+    """
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    tree = mat.node_tree
+    bsdf = tree.nodes["Principled BSDF"]
+    bsdf.inputs["Roughness"].default_value = roughness
+    bsdf.inputs["Metallic"].default_value = 0.0
+    tex = tree.nodes.new("ShaderNodeTexImage")
+    tex.image = image
+    tex.interpolation = "Closest"
+    tex.location = (-360, 240)
+    tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+    return mat
+
+
+def make_signal_material(name, dark_hex, bright_hex, saturation=0.92,
+                         roughness=0.3):
+    """A lit surface whose COLOUR survives being lit.
+
+    Godot adds `emission * emission_strength` on top of albedo, so an
+    emissive material built the obvious way -- bright albedo, bright
+    emission, strength above 1 -- clips every channel and renders white.
+    Every lit cue in Batch 001 did exactly that on its first render: the
+    enemy's eye, which is the ONE cue on the figure and the thing that says
+    which way it is facing, came out as a white bar with no hue at all.
+
+    The first fix was a dark albedo under a bright emission, at a strength
+    picked by hand. That was better and still wrong -- Epsilon's core, a
+    much larger surface than an eye, clipped again at the strength an eye
+    was happy with, because a hand-picked strength is a guess about a sum
+    nobody computed.
+
+    So `saturation` SOLVED for the strength instead: at 1.0 the brightest
+    channel of `albedo + strength * emission` lands exactly at 1.0. That
+    still rendered the Epsilon installation's veins as YELLOW BARS, and the
+    reason is the third and last one: **that sum is the unlit sum.** The
+    surface is also lit, and `albedo * irradiance` is the term the solve
+    left out. `identity` is a green whose albedo alone clips its green
+    channel under a facility light, so green had nowhere left to go, every
+    photon of emission went into red, and the hue walked to yellow-white --
+    which in this palette is the telegraph colour. Green says whose this is
+    and orange says what is about to happen; a green that renders orange
+    inverts the one rule the colour language has.
+
+    So the solve now budgets for the light as well, and the light is not a
+    number art gets to choose: `engine_truth.lighting()` reads the
+    brightest `light_energy` in `THEME_MATERIALS` and the brightest
+    `ambient_light_energy` on the engine's environments. Under that
+    irradiance:
+
+    * the albedo is SCALED DOWN until its lit contribution is at most half
+      the budget -- the glow has to be the majority of the surface, or the
+      thing is a painted panel that happens to be near a lamp; and
+    * the strength is then solved against what is left.
+
+    The hue is still the caller's palette colour: scaling darkens the
+    albedo without moving it off its hue, so the unlit read is a near-black
+    tint of the family and the lit read is the family's brightest step.
+    """
+    dark = pal.rgb(dark_hex)
+    bright = pal.rgb(bright_hex)
+    lit = pal.lighting()["max_irradiance"]
+
+    # 1. The albedo may spend at most half the budget once lit. This is not
+    #    a taste number: at more than half, `albedo * light` outweighs the
+    #    emission and the surface reads as lit-from-outside.
+    worst = max(d * lit for d in dark)
+    scale = min(1.0, 0.5 / worst) if worst > 1e-6 else 1.0
+    albedo = tuple(d * scale for d in dark)
+
+    # 2. Solve per channel for where `albedo * light + s * emission` reaches
+    #    1.0, and take the tightest -- that is the channel that would clip
+    #    first and turn the colour white.
+    headroom = min(
+        ((1.0 - a * lit) / b) if b > 1e-6 else 1e6
+        for a, b in zip(albedo, bright))
+    strength = max(0.05, headroom * saturation)
+
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = tuple(albedo) + (1.0,)
+    bsdf.inputs["Roughness"].default_value = roughness
+    bsdf.inputs["Metallic"].default_value = 0.0
+    bsdf.inputs["Emission Color"].default_value = pal.rgba(bright_hex)
+    bsdf.inputs["Emission Strength"].default_value = strength
+    return mat
+
+
+def assign(obj, material):
+    obj.data.materials.clear()
+    obj.data.materials.append(material)
+    return obj
+
+
+# ----------------------------------------------------------------------
+# shading
+# ----------------------------------------------------------------------
+
+def shade_flat(obj):
+    for poly in obj.data.polygons:
+        poly.use_smooth = False
+    return obj
+
+
+def assert_flat(obj, asset_name):
+    """Flat shading is the whole look, so it is checked, not intended.
+
+    A builder can stop calling `shade_flat` and nothing else notices: the
+    export succeeds, the triangle count is unchanged, and the asset simply
+    goes soft.
+    """
+    smooth = sum(1 for poly in obj.data.polygons if poly.use_smooth)
+    if smooth:
+        raise AssertionError(
+            "%s: %d of %d polygons are smooth-shaded. Archipepsi's hard "
+            "surfaces are flat-shaded without exception -- the faceted read "
+            "is the 1998 grammar, and a smooth-shaded prism is a modern "
+            "prism." % (asset_name, smooth, len(obj.data.polygons)))
+
+
+# ----------------------------------------------------------------------
+# budgets
+# ----------------------------------------------------------------------
+
+def triangle_count(obj):
+    mesh = obj.data
+    mesh.calc_loop_triangles()
+    return len(mesh.loop_triangles)
+
+
+def assert_budget(obj, asset_name, category):
+    ceilings = BUDGETS["max_triangles"]
+    if category not in ceilings:
+        raise KeyError(
+            "%s: no triangle ceiling for category '%s'. Categories are %s. A "
+            "new category is a budget decision, not a spelling."
+            % (asset_name, category, ", ".join(sorted(ceilings))))
+    count = triangle_count(obj)
+    limit = ceilings[category]
+    if count > limit:
+        raise AssertionError(
+            "%s: %d triangles against the %s ceiling of %d. Over budget means "
+            "DELETE geometry and paint it instead -- never optimise the mesh, "
+            "and never raise the ceiling to fit one asset."
+            % (asset_name, count, category, limit))
+    return count
+
+
+def assert_segments(count, radius, asset_name, organic=False):
+    """The radial cap does more work than the triangle cap."""
+    if organic:
+        limit = BUDGETS["max_radial_segments_enemy"]
+    elif radius > BUDGETS["large_radius_threshold"]:
+        limit = BUDGETS["max_radial_segments_large"]
+    else:
+        limit = BUDGETS["max_radial_segments"]
+    if count > limit:
+        raise AssertionError(
+            "%s: %d radial segments at radius %.2f m, cap is %d. A cylinder "
+            "with more sides is a cylinder that has stopped being 1998."
+            % (asset_name, count, radius, limit))
+    return count
+
+
+# ----------------------------------------------------------------------
+# UVs and texel density
+# ----------------------------------------------------------------------
+
+def uv_project_world(obj, texels_per_metre, texture_size):
+    """Axis-aligned planar projection at a fixed world density.
+
+    This is the single most important rule in the toolchain and it is the
+    one place Archipepsi deliberately does NOT do what mario-3 does.
+
+    mario-3 unwraps props with `smart_project`, which is right for discrete
+    objects. Archipepsi's architecture is not discrete: Epsilon abuts wall
+    modules against each other, and two modules with independent UV islands
+    show a texture discontinuity at every seam -- a visible break in the
+    grain, exactly where a 1998 level would have had none.
+
+    A 1998 editor projected the texture onto each brush face along that
+    face's dominant axis, at a fixed world scale. That is literally what
+    makes the look, and it is what this does: every face is projected from
+    whichever world axis it most faces, at `texels_per_metre`, so a wall
+    tiles seamlessly into the wall next to it whatever order they are
+    placed in.
+    """
+    mesh = obj.data
+    if not mesh.uv_layers:
+        mesh.uv_layers.new(name="UVMap")
+    uv_layer = mesh.uv_layers.active.data
+    scale = texels_per_metre / float(texture_size)
+
+    for poly in mesh.polygons:
+        normal = poly.normal
+        axis = max(range(3), key=lambda i: abs(normal[i]))
+        # Pick the two world axes that are NOT the dominant one, in a fixed
+        # order, so the projection is deterministic rather than dependent on
+        # face winding.
+        if axis == 0:      # face points along X -> project ZY
+            uy, ux = 1, 2
+        elif axis == 1:    # face points along Y (floor/ceiling) -> project XZ
+            uy, ux = 2, 0
+        else:              # face points along Z -> project XY
+            uy, ux = 1, 0
+        for loop_index in poly.loop_indices:
+            world = obj.matrix_world @ mesh.vertices[
+                mesh.loops[loop_index].vertex_index].co
+            uv_layer[loop_index].uv = (world[ux] * scale, world[uy] * scale)
+    return obj
+
+
+def uv_read_right(obj, boxes):
+    """Make LETTERING read the right way round, on named pieces only.
+
+    `uv_project_world` projects every face from the world axis it most
+    faces and IGNORES THE NORMAL'S SIGN -- a +Z face and a -Z face get
+    the same UVs, so one of the pair is seen reversed. That is deliberate
+    and load-bearing: it is what makes a wall tile seamlessly into the
+    wall beside it whatever order the modules are placed in, and flipping
+    it globally would re-cut every surface in the library.
+
+    It only COSTS anything where a texture carries text or a directional
+    mark, which in this theme is the `accent` panel's stencil band. So
+    this is the bounded repair: after the projection, flip U back about
+    each face's own span, for faces inside one of `boxes` and nowhere
+    else.
+
+    Flipping about the face's own span leaves the texel density and the
+    tile the face lands in exactly as projected -- the letters turn
+    round, the scale does not move, and no surface outside the boxes is
+    touched at all.
+
+    `boxes` is a list of `(min_xyz, max_xyz)` in the object's own space.
+    A box, not a name, because this runs AFTER the join and the pieces
+    have stopped being separate objects by then.
+    """
+    mesh = obj.data
+    if not mesh.uv_layers:
+        return obj
+    uv_layer = mesh.uv_layers.active.data
+    touched = 0
+    for poly in mesh.polygons:
+        centre = poly.center
+        inside = False
+        for lo, hi in boxes:
+            if all(lo[i] - 1e-4 <= centre[i] <= hi[i] + 1e-4
+                   for i in range(3)):
+                inside = True
+                break
+        if not inside:
+            continue
+        # ONE SIGN ONLY, and this is the whole reason the helper is not
+        # "flip everything in the box". A sign has two faces; the
+        # projection mirrors exactly one of them. Flipping both turns the
+        # mirrored one round and turns the correct one backwards, which
+        # is what a placard facing the other way would have shown -- so
+        # the rule is keyed on the dominant normal's SIGN and the pair
+        # comes out reading the same way.
+        normal = poly.normal
+        axis = max(range(3), key=lambda i: abs(normal[i]))
+        if normal[axis] <= 0.0:
+            continue
+        us = [uv_layer[i].uv[0] for i in poly.loop_indices]
+        lo_u, hi_u = min(us), max(us)
+        span = lo_u + hi_u
+        for loop_index in poly.loop_indices:
+            uv = uv_layer[loop_index].uv
+            uv_layer[loop_index].uv = (span - uv[0], uv[1])
+        # ORIENTATION CHANGED, SIZE DID NOT. Mirroring about the face's
+        # own span cannot move the span, and saying so out loud is the
+        # difference between "the letters turn round" and "the texture is
+        # still mapped at the intended size" -- two claims, and only the
+        # first is obvious from a picture.
+        after = [uv_layer[i].uv[0] for i in poly.loop_indices]
+        if abs((max(after) - min(after)) - (hi_u - lo_u)) > 1e-6:
+            raise SystemExit(
+                "uv_read_right: the flip changed a face's U span from "
+                "%.6f to %.6f, so it changed the texel scale as well as "
+                "the direction." % (hi_u - lo_u, max(after) - min(after)))
+        touched += 1
+    if touched == 0:
+        raise SystemExit(
+            "uv_read_right: no face fell inside any of the %d box(es) "
+            "given, so the flip did nothing and the caller believes it "
+            "did something." % len(boxes))
+    return obj
+
+
+def uv_unwrap_prop(obj, angle_limit_deg=66.0, island_margin=0.02):
+    """`smart_project`, for discrete objects that never tile against anything."""
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.uv.smart_project(angle_limit=math.radians(angle_limit_deg),
+                             island_margin=island_margin)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    obj.select_set(False)
+    return obj
+
+
+def uv_texel_density(obj, texture_size):
+    """Measured texels per world metre. Never estimated.
+
+    Returns (median, minimum, maximum) across the object's polygons,
+    weighted by nothing -- the median is what the asset reads as, and the
+    spread is what tells you a single face was projected from the wrong
+    axis.
+    """
+    mesh = obj.data
+    if not mesh.uv_layers:
+        return (0.0, 0.0, 0.0)
+    uv_layer = mesh.uv_layers.active.data
+    densities = []
+    for poly in mesh.polygons:
+        world_area = poly.area * _scale_factor(obj)
+        if world_area <= 1e-9:
+            continue
+        uvs = [Vector(uv_layer[i].uv) for i in poly.loop_indices]
+        uv_area = 0.0
+        for i in range(1, len(uvs) - 1):
+            a, b, c = uvs[0], uvs[i], uvs[i + 1]
+            uv_area += abs((b - a).cross(c - a)) / 2.0
+        if uv_area <= 1e-12:
+            continue
+        texel_area = uv_area * texture_size * texture_size
+        densities.append(math.sqrt(texel_area / world_area))
+    if not densities:
+        return (0.0, 0.0, 0.0)
+    densities.sort()
+    return (densities[len(densities) // 2], densities[0], densities[-1])
+
+
+def _scale_factor(obj):
+    scale = obj.matrix_world.to_scale()
+    return abs(scale.x * scale.y)
+
+
+def assert_texel_density(obj, asset_name, tier, texture_size):
+    """Fail the build if an asset's real density leaves its tier's band."""
+    band = BUDGETS["texel_density"][tier]
+    median, low, high = uv_texel_density(obj, texture_size)
+    if not band["min"] <= median <= band["max"]:
+        raise AssertionError(
+            "%s: measured %.1f texels/m (tier '%s' wants %d-%d, target %d) on "
+            "a %dpx map. Change the TEXTURE SIZE, not the UVs -- the UVs are "
+            "a world-scale projection and moving them breaks tiling against "
+            "the next module."
+            % (asset_name, median, tier, band["min"], band["max"],
+               band["target"], texture_size))
+    return median, low, high
+
+
+# ----------------------------------------------------------------------
+# mesh helpers
+# ----------------------------------------------------------------------
+
+def mesh_from_bmesh(bm, name):
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    return obj
+
+
+def join(objects, name):
+    """Join into one object. The first object's transform wins.
+
+    Paint functions downstream receive WORLD coordinates, because `join`
+    adopts the active object's origin and mesh-local Z can be metres off
+    what a builder thinks it is. mario-3 spent two rebuilds on that.
+    """
+    objects = [o for o in objects if o is not None]
+    if not objects:
+        raise ValueError("join(%s): nothing to join" % name)
+    if len(objects) == 1:
+        objects[0].name = name
+        return objects[0]
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in objects:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = objects[0]
+    bpy.ops.object.join()
+    joined = bpy.context.view_layer.objects.active
+    joined.name = name
+    joined.data.name = name
+    return joined
+
+
+#: Where an asset's origin sits, and therefore what "place it at y = 0"
+#: means. Declaring this per asset is not bookkeeping -- getting it wrong is
+#: invisible in every turntable shot and catastrophic in a room.
+#:
+#: The first composed room proved it. Every asset went through a single
+#: `set_origin_floor_centre`, which puts the origin at the geometry's own
+#: LOWEST point. For a crate that is right. For a pipe run built at 2.55 m
+#: it dropped the pipe to ankle height; for a ceiling bay it moved the
+#: downstand beams ABOVE the ceiling plane, where they were invisible from
+#: inside the room -- so the room rendered with a flat lid and the one piece
+#: of structure that was supposed to stop it reading as a lid was hidden
+#: behind it. Nothing failed. Every sheet still passed.
+ANCHORS = ("floor", "ceiling", "wall", "module_floor", "centre")
+
+
+def set_origin(obj, anchor="floor"):
+    """Move the geometry so the origin means what `anchor` says it means.
+
+    floor         X/Y centred, lowest point at Z 0.  A crate, a terminal, a
+                  wall panel -- anything that stands on the ground.
+    ceiling       X/Y centred, HIGHEST point at Z 0.  A ceiling bay, a
+                  hanging light, a grapple anchor. The asset occupies
+                  negative Z, so placing it at the ceiling height puts it
+                  where it belongs.
+    wall          X centred, lowest point at Z 0, and the BACK face at Y 0,
+                  so placing it on a wall plane sits it flush.
+    module_floor  X/Y centred, Z LEFT ALONE.  For a module whose height
+                  within its bay is part of what it is -- a pipe run at
+                  2.55 m is at 2.55 m, and re-basing it to its own lowest
+                  point is what put the pipes on the floor.
+    centre        all three centred.
+    """
+    if anchor not in ANCHORS:
+        raise ValueError("set_origin: anchor must be one of %s, got '%s'"
+                         % (", ".join(ANCHORS), anchor))
+    bbox = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    min_x, max_x = min(v.x for v in bbox), max(v.x for v in bbox)
+    min_y, max_y = min(v.y for v in bbox), max(v.y for v in bbox)
+    min_z, max_z = min(v.z for v in bbox), max(v.z for v in bbox)
+    mid_x, mid_y = (min_x + max_x) / 2.0, (min_y + max_y) / 2.0
+
+    if anchor == "floor":
+        shift = Vector((mid_x, mid_y, min_z))
+    elif anchor == "ceiling":
+        shift = Vector((mid_x, mid_y, max_z))
+    elif anchor == "wall":
+        shift = Vector((mid_x, max_y, min_z))
+    elif anchor == "module_floor":
+        shift = Vector((mid_x, mid_y, 0.0))
+    else:
+        shift = Vector((mid_x, mid_y, (min_z + max_z) / 2.0))
+
+    for vertex in obj.data.vertices:
+        vertex.co -= shift
+    obj.location = (0.0, 0.0, 0.0)
+    return obj
+
+
+def set_origin_group(objects, anchor="floor"):
+    """`set_origin` for an asset that arrives as more than one object.
+
+    An asset's anchor belongs to the WHOLE asset. `set_origin` computes its
+    shift from one object's bounding box and moves only that object's
+    vertices, so an addressable part built beside the body -- a conduit's
+    state band, a switch's indicator lens -- keeps its old coordinates and
+    ends up displaced by exactly the shift the body received.
+
+    Measured, and it is why this exists: `mach_wall_switch`'s `state_lens`
+    was authored 2 cm proud of the plate and exported sitting 7 cm INSIDE
+    the housing, so the first switch render had no visible indicator in any
+    of its three states. The body's own `set_origin` had moved the body and
+    left the lens behind.
+    """
+    if anchor not in ANCHORS:
+        raise ValueError("set_origin_group: anchor must be one of %s, got "
+                         "'%s'" % (", ".join(ANCHORS), anchor))
+    bbox = [o.matrix_world @ Vector(corner)
+            for o in objects for corner in o.bound_box]
+    min_x, max_x = min(v.x for v in bbox), max(v.x for v in bbox)
+    min_y, max_y = min(v.y for v in bbox), max(v.y for v in bbox)
+    min_z, max_z = min(v.z for v in bbox), max(v.z for v in bbox)
+    mid_x, mid_y = (min_x + max_x) / 2.0, (min_y + max_y) / 2.0
+    if anchor == "floor":
+        shift = Vector((mid_x, mid_y, min_z))
+    elif anchor == "ceiling":
+        shift = Vector((mid_x, mid_y, max_z))
+    elif anchor == "wall":
+        shift = Vector((mid_x, max_y, min_z))
+    elif anchor == "module_floor":
+        shift = Vector((mid_x, mid_y, 0.0))
+    else:
+        shift = Vector((mid_x, mid_y, (min_z + max_z) / 2.0))
+    for obj in objects:
+        if getattr(obj.data, "vertices", None) is None:  # noqa: E501
+            # An Empty -- a hinge, a marker. It has no vertices to move, so
+            # the shift lands on its location instead. Without this branch a
+            # pivot silently stays where the unshifted body used to be.
+            obj.location = tuple(Vector(obj.location) - shift)
+            continue
+        for vertex in obj.data.vertices:
+            vertex.co -= shift
+        obj.location = (0.0, 0.0, 0.0)
+    # THE SHIFT, not the objects. A caller that recorded a position in the
+    # authoring frame -- an attachment point, a pivot -- has to move it by
+    # exactly this, exactly once, or the metadata describes a different
+    # object from the one that shipped.
+    return shift
+
+
+def set_origin_floor_centre(obj):
+    """Kept as the common case. Prefer `set_origin(obj, anchor)`."""
+    return set_origin(obj, "floor")
+
+
+def measure(obj):
+    """(width_x, depth_y, height_z) in metres. Arithmetic beats staring."""
+    bbox = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return (
+        max(v.x for v in bbox) - min(v.x for v in bbox),
+        max(v.y for v in bbox) - min(v.y for v in bbox),
+        max(v.z for v in bbox) - min(v.z for v in bbox),
+    )
+
+
+def runtime_size(size):
+    """An authoring-axis size in the frame a loader sees.
+
+    Blender is Z-up and glTF is Y-UP BY DEFINITION, so the exporter maps
+    (x, y, z) to (x, z, -y) on the way out. For a SIZE -- three unsigned
+    extents -- that is (x, y, z) -> (x, z, y): the height becomes the second
+    component and the depth becomes the third.
+
+    Measured, and it is why this is a named function rather than a line at
+    each call site: Batch 043 first recorded `size_runtime_y_up` as
+    {x: w, y_up: d, z: h} straight off the authoring triple, which is the
+    authoring frame relabelled. `phys_power_cell` shipped declaring
+    0.34 / 0.34 / 0.60 against an actual 0.34 / 0.60 / 0.34, and
+    `phys_plate` declared 1.80 / 0.92 / 0.145 against 1.80 / 0.145 / 0.92.
+    Both are plausible-looking numbers for the wrong axes, which is exactly
+    the shape of error a comment cannot catch and a checker can --
+    `tools/content/verify_exported_geometry.py` now does.
+    """
+    x, y, z = size
+    return [round(x, 3), round(z, 3), round(y, 3)]
+
+
+def measure_group(objects):
+    """(width_x, depth_y, height_z) over several objects at once.
+
+    Objects with no geometry -- hinges and other Empties -- are skipped. An
+    Empty's `bound_box` is eight copies of its origin, which would drag the
+    declared size out to include a point that is not part of the asset.
+    """
+    bbox = [o.matrix_world @ Vector(corner)
+            for o in objects if getattr(o.data, "vertices", None) is not None
+            for corner in o.bound_box]
+    return (
+        max(v.x for v in bbox) - min(v.x for v in bbox),
+        max(v.y for v in bbox) - min(v.y for v in bbox),
+        max(v.z for v in bbox) - min(v.z for v in bbox),
+    )
+
+
+def assert_budget_group(objects, asset_name, category):
+    """The category ceiling against the SUM of an asset's exported nodes.
+
+    Splitting a mesh into addressable parts must not buy triangles. The
+    ceiling is a property of the thing that arrives in the level, and how
+    many nodes it arrives as is an integration convenience.
+    """
+    ceilings = BUDGETS["max_triangles"]
+    if category not in ceilings:
+        raise KeyError(
+            "%s: no triangle ceiling for category '%s'. Categories are %s. A "
+            "new category is a budget decision, not a spelling."
+            % (asset_name, category, ", ".join(sorted(ceilings))))
+    count = sum(triangle_count(o) for o in objects
+                if getattr(o.data, "vertices", None) is not None)
+    limit = ceilings[category]
+    if count > limit:
+        raise AssertionError(
+            "%s: %d triangles across %d node(s) against the %s ceiling of "
+            "%d. Over budget means DELETE geometry and paint it instead -- "
+            "never optimise the mesh, and never raise the ceiling to fit one "
+            "asset." % (asset_name, count, len(objects), category, limit))
+    return count
+
+
+def assert_parts_touch(body, parts, asset_name, tolerance=0.002):
+    """Every addressable fitting must be physically CONNECTED to the body.
+
+    A grip that floats above its case, or a pad that hovers off its face, is
+    a modelling error the renders will show and the manifest will not -- and
+    it is easy to make, because a fitting is usually positioned against a
+    NOMINAL dimension (`h`, the class height) rather than against the body's
+    actual top, which sits wherever the last piece put it.
+
+    Measured, and it is why this exists: `phys_key_component`'s carry grip
+    was placed at `h + 0.002` while the case topped out at 0.231, so the
+    handle exported 43 mm in the air. `phys_weighted`'s push pads floated
+    10 mm off the posts they were meant to sit on. Both passed every other
+    check in the pipeline.
+
+    CONNECTED, not touching-the-body. A D-handle is a chain: the crossbar
+    rests on two posts and the posts rest on the case, and the bar never
+    meets the case at all. A first version of this check compared every part
+    against the body alone and refused a perfectly sound handle. So it
+    floods outward from the body instead, and a part is connected if it
+    meets anything already connected.
+
+    The test is an axis-aligned box overlap inflated by `tolerance`, which
+    is a LOWER BOUND on contact: two boxes can overlap while the shapes
+    inside them do not. It catches gross floats -- which is what it is for
+    -- and it is not a proof of surface contact.
+    """
+    def box(obj):
+        # From the VERTICES, not `bound_box`. Blender caches `bound_box`
+        # against the depsgraph, and `set_origin_group` moves vertices in
+        # place -- so a box read straight after an origin shift can be the
+        # box from before it. That stale read is what made this assertion
+        # fire on a conduit band that was sitting exactly where it should.
+        pts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+        return ([min(p[i] for p in pts) for i in range(3)],
+                [max(p[i] for p in pts) for i in range(3)])
+
+    def overlap(a, b):
+        for i in range(3):
+            if a[0][i] > b[1][i] + tolerance or a[1][i] < b[0][i] - tolerance:
+                return False
+        return True
+
+    meshy = [p for p in parts
+             if getattr(p.data, "vertices", None) is not None]
+    boxes = {p.name: box(p) for p in meshy}
+    connected = {"__body__": box(body)}
+    pending = list(meshy)
+    grew = True
+    while grew:
+        grew = False
+        for part in list(pending):
+            if any(overlap(boxes[part.name], b)
+                   for b in connected.values()):
+                connected[part.name] = boxes[part.name]
+                pending.remove(part)
+                grew = True
+    if pending:
+        detail = []
+        for part in pending:
+            lo, hi = boxes[part.name]
+            blo, bhi = connected["__body__"]
+            gaps = []
+            for i, axis in enumerate("XYZ"):
+                if lo[i] > bhi[i] + tolerance:
+                    gaps.append("%s +%.4f m" % (axis, lo[i] - bhi[i]))
+                elif hi[i] < blo[i] - tolerance:
+                    gaps.append("%s -%.4f m" % (axis, blo[i] - hi[i]))
+            detail.append("%s (%s from the body, and touching no connected "
+                          "fitting)" % (part.name, ", ".join(gaps) or "inside "
+                                        "the body's box on every axis"))
+        raise AssertionError(
+            "%s: %d fitting(s) are not connected to the body: %s. A handle a "
+            "hand cannot reach and a pad a device cannot press are the same "
+            "defect -- position fittings against the body's MEASURED extent, "
+            "never against the class's nominal height."
+            % (asset_name, len(pending), "; ".join(detail)))
+    return len(meshy)
+
+
+def top_of(obj):
+    """The highest world Z of an object's geometry. What a fitting sits on.
+
+    From the vertices for the same reason `assert_parts_touch` does: a
+    cached `bound_box` can predate an in-place origin shift.
+    """
+    return max((obj.matrix_world @ v.co).z for v in obj.data.vertices)
+
+
+def world_box(obj):
+    """(min, max) world-space corners, read from the vertices."""
+    pts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+    return ([min(p[i] for p in pts) for i in range(3)],
+            [max(p[i] for p in pts) for i in range(3)])
+
+
+def assert_fits(obj, asset_name, max_size, why):
+    """Fail if an asset is bigger than the mechanical box it must live in.
+
+    Collision and traversal truth are Godot's. An asset that outgrows its
+    footprint does not get the footprint changed -- it gets smaller.
+    """
+    size = measure(obj)
+    for axis, actual, limit in zip("XYZ", size, max_size):
+        if limit is not None and actual > limit + 1e-4:
+            raise AssertionError(
+                "%s: %.3f m on %s against a limit of %.3f m. %s Godot owns "
+                "this dimension; shrink the asset, never the clearance."
+                % (asset_name, actual, axis, limit, why))
+    return size
+
+
+# ----------------------------------------------------------------------
+# export
+# ----------------------------------------------------------------------
+
+def _refuse_shipped_path(out_path, kind):
+    """A non-default theme must not be able to write a shipped asset.
+
+    Both writers below route through here. The redirect above already
+    points MODEL_DIR and TEXTURE_DIR at the scratch tree, so this can only
+    fire if somebody rebuilds one of those constants or passes an absolute
+    `relative_path` -- which is exactly the kind of accident that would
+    otherwise replace twelve approved shells and be noticed as binary
+    churn in a diff, days later.
+    """
+    if not THEME_EXPLICIT:
+        return
+    shipped = os.path.join(REPO_ROOT, "assets", kind) + os.sep
+    if os.path.abspath(out_path).startswith(os.path.abspath(shipped)):
+        raise SystemExit(
+            "theme '%s' tried to write the SHIPPED %s at %s. A non-default "
+            "theme builds into assets/themed/ and nowhere else."
+            % (THEME, kind, out_path))
+
+
+def export_glb(obj, relative_path, category, tier=None, texture_size=None,
+               check_flat=True, anchor="floor", collision=(), parts=()):
+    """Write a .glb, after every assertion that can be made has been made.
+
+    `collision` is the collision-only twins from `roomcollision.build`.
+    They ride along in the export and are excluded from EVERY assertion
+    and from `measure`, because a collider is not part of the asset's
+    triangle budget, its texel density or its declared size -- and the
+    manifest that Production reads is built from those numbers. Rooms
+    that gained collision must not appear to have changed shape.
+
+    `parts` are VISIBLE child objects exported as their own named nodes
+    beside `obj`. They exist for one reason: a region a runtime has to
+    DRIVE -- a conduit's flow band, a switch's state lens -- must arrive
+    in Godot as something a script can fetch by name, not only as a
+    material slot on one merged mesh. Batch 028's kit declared a state
+    region and exported it merged, so the only handle a runtime has on it
+    today is `set_surface_override_material`; that can recolour the region
+    and nothing else. A part can be hidden, moved, scaled, lit and shaded
+    on its own.
+
+    Unlike `collision`, parts are real art: their triangles count against
+    the same category ceiling as the body, they are asserted flat, their
+    texel density is checked, and `measure` covers the union. An
+    addressable region is not a budget loophole.
+    """
+    name = os.path.basename(relative_path)
+    parts = list(parts)
+    meshy = [p for p in parts if getattr(p.data, "vertices", None) is not None]
+    if check_flat:
+        assert_flat(obj, name)
+        for part in meshy:
+            assert_flat(part, "%s/%s" % (name, part.name))
+    tris = assert_budget_group([obj] + parts, name, category)
+    density = None
+    if tier and texture_size:
+        density = assert_texel_density(obj, name, tier, texture_size)
+        for part in meshy:
+            assert_texel_density(part, "%s/%s" % (name, part.name),
+                                 tier, texture_size)
+
+    out_path = os.path.join(MODEL_DIR, relative_path)
+    _refuse_shipped_path(out_path, "models")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    for part in parts:
+        part.select_set(True)
+    for collider in collision:
+        collider.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.export_scene.gltf(
+        filepath=out_path,
+        export_format="GLB",
+        use_selection=True,
+        export_apply=True,
+        export_texcoords=True,
+        export_normals=True,
+        export_materials="EXPORT",
+        export_image_format="AUTO",
+        export_yup=True,
+    )
+    size = measure_group([obj] + parts)
+    if density:
+        log("%-40s %4d tris  %5.2f x %5.2f x %5.2f m  %5.1f texels/m "
+            "(spread %.1f-%.1f)%s"
+            % (relative_path, tris, size[0], size[1], size[2],
+               density[0], density[1], density[2],
+               "" if not collision else "  +%d colliders" % len(collision)))
+    else:
+        log("%-40s %4d tris  %5.2f x %5.2f x %5.2f m%s"
+            % (relative_path, tris, size[0], size[1], size[2],
+               "" if not collision
+               else "  +%d colliders" % len(collision)))
+    # `size` STAYS IN AUTHORING (BLENDER) AXES: (width X, depth Y, height Z).
+    #
+    # Every batch's manifest and `check_docs_metrics.py` already read this
+    # field with that meaning, so it is not re-based here. A caller that
+    # wants the frame a loader actually sees calls `runtime_size()` and
+    # records the result under its own name -- see Batch 043's two builders.
+    entry = {"path": relative_path, "triangles": tris, "anchor": anchor,
+             "size": [round(v, 3) for v in size],
+             "size_axes": "authoring (Blender) Z-up: width X, depth Y, "
+                          "height Z. NOT runtime axes -- see runtime_size()",
+             "texel_density": None if not density else round(density[0], 1)}
+    if collision:
+        # Recorded only when there IS collision, so every asset that
+        # never had any keeps the manifest entry it already had.
+        entry["colliders"] = len(collision)
+    if parts:
+        # The names a runtime can actually fetch. Written into the manifest
+        # so integration reads the contract instead of opening the .glb.
+        entry["parts"] = [part.name for part in parts]
+    return entry
+
+
+def save_texture(image, relative_path):
+    out_path = os.path.join(TEXTURE_DIR, relative_path)
+    _refuse_shipped_path(out_path, "textures")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    image.filepath_raw = out_path
+    image.file_format = "PNG"
+    image.save()
+    return relative_path

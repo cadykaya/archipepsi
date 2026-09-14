@@ -21,6 +21,367 @@ const CORRIDOR_HEIGHT := 3.6
 const PROP_FOOTPRINT := 1.4
 const BRUTE_LANE := 2.6
 
+## A mesh at least this wide on both floor axes is architecture -- a
+## floor slab, a ceiling, a wall, a band's deck -- not furniture. Room
+## content is placed INSIDE the room, so treating the room itself as an
+## obstacle would leave every solver with nowhere legal to go. Regions of
+## architecture that content must nonetheless avoid are declared as
+## `reserved` sockets instead.
+const ROOM_SCALE_SOLID := 6.0
+
+## How wide a band's access ramp is. Named because the deck's lip has to
+## leave a gap exactly this wide, and two literals drift apart.
+const RAMP_WIDTH := 2.6
+
+## Floor a `back` band leaves between itself and the exit wall.
+##
+## The player is 0.8 m across; this is that plus room to turn and walk,
+## so the doorway always has ground in front of it at room level.
+const BAND_DOOR_MARGIN := 2.0
+
+## Every piece of furniture-scale solid geometry under `node`, in that
+## node's own space.
+##
+## ONE derivation, called by the builder to vouch for its sockets and by
+## `ContentInstantiator` to place activities. Two derivations of one fact
+## is how they disagree, and this project has already paid for a builder
+## that knew a physical fact its composer did not.
+##
+## THE TRANSFORM IS ACCUMULATED BY HAND, and it has to be. The obvious
+## version uses `mesh.global_transform`, which for a node OUTSIDE THE
+## SCENE TREE does not accumulate -- and a chamber is built detached and
+## added later, so every prop came back at its own local offset near the
+## origin. The boxes looked plausible, intersected nothing, and the
+## solver silently did nothing at all.
+static func solid_boxes(node: Node,
+		xform := Transform3D.IDENTITY) -> Array[AABB]:
+	var out: Array[AABB] = []
+	_gather_solids(node, xform, out, false)
+	return out
+
+## EVERYTHING solid under `node`, unfiltered, meshes AND colliders.
+##
+## The same traversal and the same hand-accumulated transform as
+## `solid_boxes` -- one derivation of where solid geometry is, with the
+## caller saying which subset of it their question needs. Two gathers
+## would be two chances to disagree.
+##
+## TWO THINGS THE FILTERED LIST CANNOT ANSWER, and both are the
+## clearance question:
+##
+##   * ROOM-SCALE geometry is architecture to an occupancy solver -- a
+##     room that counted its own floor as an obstacle would leave
+##     content nowhere legal to go -- but a deck 2.0 m over a walkway is
+##     room-scale AND is exactly what stops a player standing under it.
+##     A clearance volume is bounded ABOVE the surface, so the floor is
+##     excluded by geometry rather than by a size rule.
+##   * an AUTHORED shell is one merged `MeshInstance3D` for the whole
+##     room, so mesh AABBs describe nothing inside it. Its interior is
+##     described by its collision hulls, which is why they are read
+##     here: without them the composer places against an authored room
+##     it cannot see, which is the "the builder knows a physical fact
+##     the composer does not" defect this project has now paid for four
+##     times.
+static func all_solid_boxes(node: Node,
+		xform := Transform3D.IDENTITY) -> Array[AABB]:
+	var out: Array[AABB] = []
+	_gather_solids(node, xform, out, true)
+	return out
+
+static func _gather_solids(node: Node, xform: Transform3D,
+		out: Array[AABB], everything: bool) -> void:
+	var here := xform
+	if node is Node3D:
+		here = xform * (node as Node3D).transform
+	if node is MeshInstance3D:
+		var box: AABB = here * (node as MeshInstance3D).get_aabb()
+		# THE ARCHITECTURE FILTER APPLIES ON BOTH PATHS (3B). `everything`
+		# meant "also read collision hulls", and it ALSO switched this
+		# filter off -- two unrelated things behind one flag. The cost
+		# was invisible until authored shells actually built: an authored
+		# shell is ONE merged mesh for the whole room, so its single AABB
+		# is the room, and with the filter off every interior spot was
+		# "inside geometry". `Activities._best_surface` then found zero
+		# usable points on all twelve declared surfaces of the Hall, fell
+		# back to the flat solve, and put 22 elements at the corners of
+		# the bounding box where there is no floor. Treating the room
+		# itself as an obstacle leaves every solver with nowhere legal
+		# to go, which is what this constant has always said.
+		#
+		# The hulls are NOT filtered: they are per-piece and describe the
+		# real interior, and a deck over a walkway is decisive for
+		# clearance even though it is room-scale.
+		if box.size.x < ROOM_SCALE_SOLID and box.size.z < ROOM_SCALE_SOLID:
+			out.append(box)
+	if everything and node is CollisionShape3D:
+		var shape := (node as CollisionShape3D).shape
+		if shape != null:
+			var mesh := shape.get_debug_mesh()
+			if mesh != null:
+				out.append(here * mesh.get_aabb())
+	for child in node.get_children():
+		_gather_solids(child, here, out, everything)
+
+## The floor rectangle a band occupies, in room space (x, z).
+##
+## ONE derivation. `arena` has to carve its floor slab where a PIT goes
+## and `_elevation_band` has to build the recess there, and the two
+## computing the same rectangle separately is how a pit came to be a
+## sealed basement under an intact floor: the recess was dug and the slab
+## above it was never opened, so the real-Zone audit measured the pit's
+## surface at 0.00 m in a room that declared it at -1.66 m.
+static func band_rect(band: Dictionary, width: float,
+		depth: float) -> Rect2:
+	var coverage := clampf(float(band.get("coverage", 0.35)), 0.2, 0.55)
+	var side := str(band.get("side", "left"))
+	# The band occupies a strip against one wall. `back` runs the room's
+	# width at the far end; `left`/`right` run its depth.
+	var span_z := depth * coverage if side == "back" else depth
+	# A `back` band leaves a LANE as well as a walkway. `left` and
+	# `right` are partial in the axis the player crosses, so there is
+	# always floor to walk past them; `back` used to span the whole
+	# width, which makes it a wall across the room whichever kind it is
+	# -- a deck you must climb, or a moat you fall into and cannot leave
+	# on the far side, since a band has exactly one ramp and it returns
+	# you to the side you entered from.
+	var span_x := (width - BAND_DOOR_MARGIN) if side == "back" \
+			else width * coverage
+	var centre_x := 0.0
+	var centre_z := depth / 2.0
+	match side:
+		"left":
+			centre_x = -(width - span_x) / 2.0
+		"right":
+			centre_x = (width - span_x) / 2.0
+		_:
+			# NOT FLUSH TO THE FAR WALL. `back` means the far end of the
+			# room, and the far wall is the one the exit is cut into --
+			# so a band pushed right up against it lands on top of the
+			# room's own way out. A gallery laid its deck over the
+			# doorway (Zone 1's `c015`: 1.46 m of clearance under the
+			# slab, 1.34 m over it, for a 1.8 m capsule) and a pit took
+			# the floor away in front of it instead. Both are the same
+			# mistake, and one margin answers both: leave a walkway at
+			# the exit wall, at room level, wide enough to stand and
+			# walk in.
+			centre_z = depth - span_z / 2.0 - BAND_DOOR_MARGIN
+			centre_x = -BAND_DOOR_MARGIN / 2.0
+	return Rect2(centre_x - span_x / 2.0, centre_z - span_z / 2.0,
+			span_x, span_z)
+
+## The room's floor slab, with a rectangle left OPEN where a pit goes.
+##
+## Built as up to four slabs around the hole rather than one slab and a
+## hope. `_carve_gap` never removed the base slab and the Echo Lab has no
+## gap because of it; a pit under an intact floor is that bug wearing a
+## different name, and it shipped in this batch until the audit measured
+## the surface instead of trusting the description.
+static func _floor_with_hole(root: Node3D, width: float, depth: float,
+		mat: Material, hole: Variant) -> void:
+	var full := Vector3(width, 0.5, depth)
+	var at := Vector3(0, -0.25, depth / 2.0)
+	if hole == null:
+		_box(root, full, at, mat)
+		return
+	var rect: Rect2 = hole
+	var left := -width / 2.0
+	var right := width / 2.0
+	# Front and back strips run the full width; the side strips fill what
+	# is left beside the hole. A zero-width strip is simply not built.
+	for strip: Array in [
+			[left, right, 0.0, rect.position.y],
+			[left, right, rect.end.y, depth],
+			[left, rect.position.x, rect.position.y, rect.end.y],
+			[rect.end.x, right, rect.position.y, rect.end.y]]:
+		var sx: float = strip[1] - strip[0]
+		var sz: float = strip[3] - strip[2]
+		if sx <= 0.01 or sz <= 0.01:
+			continue
+		_box(root, Vector3(sx, 0.5, sz),
+				Vector3(strip[0] + sx / 2.0, -0.25, strip[2] + sz / 2.0),
+				mat)
+
+## How much room a Check needs, and why it is not a taste number.
+##
+## `Reward` builds a 1.4 m interaction box over a 0.75 m-radius pedestal,
+## and the player has to be able to stand at it and shoot it. So the
+## clearance is the pedestal plus the player's own capsule on each side,
+## derived from both rather than typed -- if either grows, this grows.
+const REWARD_PEDESTAL := 1.5
+const REWARD_PEDESTAL_HEIGHT := 2.6
+
+## How far apart `ZoneController` spaces a room's Checks along +Z. One
+## derivation: a room with three Checks reserves room for three.
+const REWARD_ROW_SPACING := 4.0
+
+## The volume a room's Checks and the space to use them occupy.
+##
+## THE BUG THIS EXISTS FOR. An arena scattered three cover boxes at
+## random through the middle half of the room and `reward_position` was a
+## fixed point on the centre line, so nothing ever stopped one landing on
+## the other -- and `ZoneController` places the pedestal at that anchor
+## with no clearance test at all. Two of four arenas in the P1
+## conformance suite spawned a Check inside a crate.
+##
+## Declared as a `reserved` region rather than fixed by moving one prop,
+## because that makes it true for everything downstream at once: the
+## builder's own props avoid it here, and occupancy keeps activities and
+## environmental objects out of it for free.
+static func reward_clearance(chamber: Dictionary, at: Vector3) -> AABB:
+	var count := 1 if chamber.get("reward_location_id") != null else 0
+	count += (chamber.get("additional_reward_location_ids", []) as Array
+			).size()
+	# AT LEAST ONE, always. `reward_position` is the room's promise about
+	# where a Check goes, and a room does not get to assume the campaign
+	# will not give it one -- the allocator decides that, later, and by
+	# then the crate is built. A room that ends up with no Check has paid
+	# three square metres for a promise it kept.
+	count = maxi(count, 1)
+	var span := REWARD_PEDESTAL + Constants.PLAYER_RADIUS * 4.0
+	var along := REWARD_ROW_SPACING * float(count - 1) + span
+	return AABB(
+			Vector3(at.x - span / 2.0, at.y, at.z - span / 2.0),
+			Vector3(span, REWARD_PEDESTAL_HEIGHT, along))
+
+## The room's first choice for a prop, or the nearest free spot to it.
+##
+## No randomness: the caller has already rolled where it WANTS the prop,
+## and a room with nothing in the way gets exactly that. The sweep only
+## runs when the first choice would bury something the room reserved,
+## and it returns the ideal when the room genuinely has no space --
+## a missing prop is a room that quietly got emptier, and the Zone audit
+## reports a buried Check either way.
+static func _free_prop_spot(ideal: Vector3, size: Vector3, width: float,
+		depth: float, taken: Array[AABB]) -> Vector3:
+	if not box_hits(AABB(ideal - size / 2.0, size), taken):
+		return ideal
+	var lo_x := -width / 2.0 + 2.5
+	var hi_x := width / 2.0 - 2.5
+	var lo_z := depth * 0.25
+	var hi_z := depth * 0.75
+	var best := ideal
+	var best_away := INF
+	for xi in 9:
+		for zi in 9:
+			var at := Vector3(
+					lerpf(lo_x, hi_x, float(xi) / 8.0), size.y / 2.0,
+					lerpf(lo_z, hi_z, float(zi) / 8.0))
+			if box_hits(AABB(at - size / 2.0, size), taken):
+				continue
+			var away := at.distance_to(ideal)
+			if away < best_away:
+				best_away = away
+				best = at
+	return best
+
+## Where an arena's Checks go, out of the way of its own band.
+##
+## The default is the point the room has always used. It moves only when
+## something the room already RESERVED is standing there -- a `back`
+## gallery at 0.41 coverage reaches z = 0.59..1.0 of the room and its
+## access ramp reaches most of the rest, and the pedestal anchor sat in
+## both. That is the same bug as the crate, one room feature further
+## out, and the same answer: the builder knows where it put the band, so
+## the builder is what moves the anchor.
+##
+## `taken` is what `_elevation_band` DECLARED, handed in rather than
+## recomputed here. The first version re-derived `band_rect` and missed
+## the ramp entirely, which is the second derivation this project keeps
+## paying for.
+##
+## Deterministic and ordered, never random: the same Zone must lay out
+## the same room on every machine, and a Check that wanders is a Check
+## the replay cannot find.
+static func _reward_anchor(chamber: Dictionary, width: float,
+		depth: float, taken: Array[AABB]) -> Vector3:
+	var ideal := Vector3(0, 0, depth * 0.72)
+	if taken.is_empty():
+		return ideal
+	var span := REWARD_PEDESTAL + Constants.PLAYER_RADIUS * 4.0
+	# Down the middle first, then out to either side: a Check on the
+	# centre line is the room's own convention and worth keeping when it
+	# can be kept.
+	var reach := maxf(width / 2.0 - WALL_THICKNESS - span / 2.0, 0.0)
+	for at: Vector3 in [ideal,
+			Vector3(0, 0, depth * 0.45),
+			Vector3(-reach * 0.65, 0, depth * 0.72),
+			Vector3(reach * 0.65, 0, depth * 0.72),
+			Vector3(-reach * 0.65, 0, depth * 0.45),
+			Vector3(reach * 0.65, 0, depth * 0.45),
+			Vector3(0, 0, depth * 0.28)]:
+		var claim := AABB(
+				Vector3(at.x - span / 2.0, 0.0, at.z - span / 2.0),
+				Vector3(span, REWARD_PEDESTAL_HEIGHT, span))
+		if not box_hits(claim, taken):
+			return at
+	# Then a deterministic sweep of the whole legal floor, nearest to the
+	# ideal first. The seven candidates above are the room's preferences
+	# and they run out: a 12 x 10 arena with a 0.45-coverage band and its
+	# ramp has none of them free, and a Check has to go SOMEWHERE it
+	# fits. Same shape as `Activities._free_spot` -- ideal, then a grid,
+	# and the ideal again only if the room really is full.
+	var lo_x := -reach
+	var hi_x := reach
+	var lo_z := span / 2.0 + WALL_THICKNESS
+	var hi_z := maxf(lo_z, depth - span / 2.0 - WALL_THICKNESS)
+	var best := ideal
+	var best_away := INF
+	for xi in 9:
+		for zi in 9:
+			var at := Vector3(lerpf(lo_x, hi_x, float(xi) / 8.0), 0.0,
+					lerpf(lo_z, hi_z, float(zi) / 8.0))
+			var claim := AABB(
+					Vector3(at.x - span / 2.0, 0.0, at.z - span / 2.0),
+					Vector3(span, REWARD_PEDESTAL_HEIGHT, span))
+			if box_hits(claim, taken):
+				continue
+			var away := at.distance_to(ideal)
+			if away < best_away:
+				best_away = away
+				best = at
+	return best
+
+## The footprint a ground socket vouches for.
+##
+## Read off the objects themselves rather than restated here, so making a
+## crate bigger moves the sockets instead of quietly invalidating them.
+static func _ground_socket_size(kind: String) -> Vector3:
+	match kind:
+		"cover":
+			return DestructibleCover.SIZE
+		"reactive":
+			return ReactiveBarrel.SIZE
+	return Vector3.ONE
+
+## Does `box` share space with anything in `boxes`?
+static func box_hits(box: AABB, boxes: Array[AABB]) -> bool:
+	for other in boxes:
+		if box.intersects(other):
+			return true
+	return false
+
+## Point a Label3D so its READABLE face looks toward `toward`.
+##
+## The one convention for world-space text. A Label3D draws on its local
+## XY plane and reads correctly only from its local +Z side -- which is
+## the OPPOSITE of the -Z that a Node3D calls "forward". So writing
+## `rotation.y` by hand has a right answer and a plausible wrong one that
+## differ by a sign, and both look equally deliberate in review.
+##
+## Playtest 1 found ten Hub signs on the wrong side of that sign. Every
+## one of them was correct as state, as geometry and as protocol, which
+## is why nine green suites had nothing to say about it. `make
+## godot-legible` now checks the built room instead.
+##
+## Pass the direction from the sign to whoever must read it. Vertical
+## component is dropped: wall text stays upright.
+static func face_label(label: Label3D, toward: Vector3) -> void:
+	var flat := Vector3(toward.x, 0.0, toward.z)
+	if flat.length() < 0.0001:
+		return
+	# rotation.y = t sends local +Z to (sin t, 0, cos t).
+	label.rotation.y = atan2(flat.x, flat.z)
+
 static func _box(parent: Node3D, size: Vector3, position: Vector3,
 		material: Material, collide := true) -> MeshInstance3D:
 	var mesh_instance := MeshInstance3D.new()
@@ -41,10 +402,19 @@ static func _box(parent: Node3D, size: Vector3, position: Vector3,
 	return mesh_instance
 
 static func _wedge(parent: Node3D, size: Vector3, position: Vector3,
-		material: Material, y_rotation := 0.0) -> MeshInstance3D:
+		material: Material, y_rotation := 0.0,
+		apex_at := 0.5) -> MeshInstance3D:
 	## A PrismMesh ramp, collidable via ConvexPolygonShape.
+	##
+	## `apex_at` is `PrismMesh.left_to_right`. The default 0.5 is a
+	## SYMMETRIC RIDGE -- it climbs and then descends -- which is what
+	## every existing caller wants from a wedge-shaped prop. A RAMP needs
+	## 0.0 or 1.0, and the first version of the elevation band did not
+	## say so: the band's "ramp" was a ridge whose far face was a 2.2 m
+	## wall, and the reachability probe measured exactly that.
 	var mesh_instance := MeshInstance3D.new()
 	var prism := PrismMesh.new()
+	prism.left_to_right = apex_at
 	prism.size = size
 	mesh_instance.mesh = prism
 	mesh_instance.position = position
@@ -89,24 +459,370 @@ static func _light(parent: Node3D, position: Vector3, theme: String,
 	light.omni_range = range_override if range_override > 0.0 else 12.0
 	light.shadow_enabled = false
 	parent.add_child(light)
-	# The fixture itself: a crude glowing slab.
+	# The HOUSING. Authored per theme where one exists, procedural where
+	# it does not (art requirement 3a): six themes used to share one
+	# `concrete_facility` slab because this was a hardcoded BoxMesh with
+	# no way to ask for anything else.
+	#
+	# The light above is built either way. Illumination is engine-owned;
+	# a housing is what it hangs in.
+	var authored := ContentInstantiator.light_housing(theme)
+	if authored != null:
+		authored.name = "LightFixture"
+		authored.position = position + Vector3(0, -0.05, 0)
+		parent.add_child(authored)
+		return
+
 	var fixture := MeshInstance3D.new()
+	# Named so a test can find it. Identifying a light fixture by its
+	# size and material is how a check goes quietly wrong when either
+	# changes.
+	fixture.name = "LightFixture"
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(0.8, 0.1, 0.4)
 	fixture.mesh = mesh
-	fixture.position = position + Vector3(0, 0.15, 0)
+	# HANGS BELOW the light, not above it. Callers put lights just under
+	# the ceiling -- an arena's sit at `height - 0.3` -- and a fixture
+	# raised 0.15 above that ended up inside the ceiling slab with its
+	# faces exactly coplanar, which is the shimmer playtest 2 saw along
+	# the ceiling strips. Below, a fixture cannot reach the roof no
+	# matter how tight the caller places the lamp.
+	fixture.position = position + Vector3(0, -0.05, 0)
 	fixture.material_override = ThemeMaterials.glow_material(
 			ThemeMaterials.light_color(theme), 1.4)
 	parent.add_child(fixture)
 
 ## Walls around a rectangular room with door gaps at entrance/exit centers.
 ## `exit_gap_y` raises the exit door's sill — a tower exits at its summit.
+#: WHERE A BODY ARRIVES IN A PROCEDURAL ROOM, in its own local frame.
+#:
+#: `ZoneBuilder._furnish_room` has used this number as a fallback since
+#: before a producer could declare anything, and the arena now returns it
+#: as its `player_entry` so the room that reserves the space and the room
+#: that reports the arrival cannot drift apart.
+const PROCEDURAL_ARRIVAL := Vector3(0, 0, 3.0)
+
+## One end wall with a doorway in it, at whatever height the doorway sits.
+##
+## `_perimeter` does this inline for its own two ends. The builders that
+## raise their own walls -- `corridor`, `platform_path`, `corner` -- had
+## no such thing, so they simply had no ends and no ceiling, and playtest
+## 2 bounced out through the hole. A wall nobody raises is not a wall
+## anybody notices missing: the bounds Dictionary still reads right, the
+## exit socket is still in the right place, and every assertion passes.
+## `cut` IS THE DOOR ASSIGNMENT'S ANSWER, and it defaults to the
+## behaviour this had before it took one: a doorway, always.
+##
+## `_perimeter` has honoured `cut_plan` since the composer started
+## assigning doors, and the producers that raise their own walls never
+## learned to -- so `platform_path` carved an exit whatever the graph
+## said, and a Zone whose last room SEALS its exit came back with a hole
+## in the end wall over open ground. The bridge named it: "door
+## 'c004/exit' is SEALED and the engine measured it as a hole".
+static func _end_wall(root: Node3D, width: float, height: float, z: float,
+		wall: Material, gap_y := 0.0, cut := true) -> void:
+	if not cut:
+		_box(root, Vector3(width, height, WALL_THICKNESS),
+				Vector3(0, height / 2.0, z), wall)
+		return
+	var side := (width - DOOR_WIDTH) / 2.0
+	if side > 0.01:
+		for sign_x: float in [-1.0, 1.0]:
+			_box(root, Vector3(side, height, WALL_THICKNESS),
+					Vector3(sign_x * (DOOR_WIDTH + side) / 2.0,
+					height / 2.0, z), wall)
+	if gap_y > 0.0:
+		_box(root, Vector3(DOOR_WIDTH, gap_y, WALL_THICKNESS),
+				Vector3(0, gap_y / 2.0, z), wall)
+	var lintel := gap_y + DOOR_HEIGHT
+	if height > lintel:
+		_box(root, Vector3(DOOR_WIDTH, height - lintel, WALL_THICKNESS),
+				Vector3(0, lintel + (height - lintel) / 2.0, z), wall)
+
+## Every assigned door, resolved to a place and an EXPECTED ANSWER.
+##
+## The audit cannot ask "is this opening a hole" without being told which
+## answer is correct, and the answer comes from the DECLARATION and never
+## from the geometry. A `SEALED` door is not skipped: it is measured with
+## the expectation inverted, so a sealed door that is accidentally a hole
+## fails exactly as loudly as a used door that is accidentally a wall.
+static func door_plan(chamber: Dictionary, width: float,
+		depth: float, exit_at := Vector3.INF) -> Array:
+	var out: Array = []
+	var placed := {}
+	for socket: Variant in procedural_sockets(width, depth, exit_at,
+			str(chamber.get("type", ""))):
+		var s: Dictionary = socket
+		placed[str(s["name"])] = s
+	for raw: Variant in chamber.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		var id := str(door.get("socket_id", ""))
+		if not placed.has(id):
+			continue
+		var usage := str(door.get("usage", "USED"))
+		var at: Dictionary = placed[id]
+		out.append({
+			"socket_id": id,
+			"usage": usage,
+			"position": at["position"],
+			# LOCKED carves; the lock is a placement over a real hole,
+			# not an uncut wall. Passability is the geometry's question
+			# and the key's answer is the runtime's.
+			"passable": usage != "SEALED",
+		})
+	return out
+
+## THE FOUR JOINING SOCKETS OF A PROCEDURAL ROOM, named and placed.
+##
+## An authored shell declares its openings in its manifest. A procedural
+## room had none to declare: `_perimeter` cut a front and a back hole and
+## nothing named them, so there was no id for a composer to assign an
+## edge to and no third opening to assign at all.
+##
+## These are STABLE IDS, not ordinals, and the first two keep the names
+## the two-door path has always used -- so an assignment naming `entry`
+## means what it has always meant and an unassigned room still builds
+## through the legacy path unchanged.
+## `exit_at` IS THE PRODUCER'S OWN WAY OUT, and passing it is how a room
+## whose exit is not at floor level gets a socket where its hole is.
+##
+## The table below is the shape of a FLAT room: four openings around a
+## rectangle, all at y = 0. That is true of an arena and a corridor and
+## false of the two producers that climb. `platform_path` carves its exit
+## at `rise` and `tower` carves its at the summit -- both say so, in
+## `exit_offset`, and have since they were written -- and the socket
+## table said y = 0 anyway. So a generated Zone laid its next corridor at
+## the foot of a wall whose hole was metres above it, the aperture probe
+## read the wall, and the bridge refused the layout twice over: "edge
+## 'e:c003:c004' is broken between socket_a and piece 0: 2.560 m apart;
+## door 'c003/exit' is USED and the engine measured it as solid".
+##
+## Left defaulted, this is the flat table exactly as it was.
+static func procedural_sockets(width: float, depth: float,
+		exit_at := Vector3.INF, chamber_type := "") -> Array:
+	var way_out := exit_at if exit_at.is_finite() else Vector3(0, 0, depth)
+	# AND THE SIDES ARE AT THE MIDDLE OF THE SIDE WALL, which is the
+	# shape of a FLAT room and FALSE of the two producers that CLIMB:
+	# `platform_path`'s side wall there is over its kill pit and below
+	# its walkway, and `tower`'s is behind its spiral. Both answer a side
+	# assignment with a solid wall, so neither NAMES one --
+	# `Constants.PROCEDURAL_SOCKET_CAPACITY` is the one declaration of
+	# that, shared with `topology._sockets_for` and `Zone`'s socket
+	# invariant. Advertising a doorway this builder does not cut is what
+	# refused a default-scale Zone's whole layout.
+	var sides := Vector3(0, 0, depth / 2.0)
+	var carried: Variant = Constants.PROCEDURAL_SOCKET_CAPACITY.get(
+			chamber_type)
+	var out: Array = [
+		{"name": "entry", "kind": "doorway", "position": Vector3(0, 0, 0),
+			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 180.0},
+		{"name": "exit", "kind": "doorway",
+			"position": way_out,
+			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 0.0},
+		{"name": "side_left", "kind": "doorway",
+			"position": Vector3(-width / 2.0, sides.y, sides.z),
+			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 90.0},
+		{"name": "side_right", "kind": "doorway",
+			"position": Vector3(width / 2.0, sides.y, sides.z),
+			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": -90.0},
+	]
+	if typeof(carried) != TYPE_ARRAY:
+		return out
+	var kept: Array = []
+	for raw: Variant in out:
+		if (carried as Array).has(str((raw as Dictionary)["name"])):
+			kept.append(raw)
+	return kept
+
+## A place in this room nothing has claimed yet.
+##
+## Deterministic: the same room and the same id give the same spot on
+## every run, which Law 47c needs. Candidates walk a ring inward from the
+## room's quarter points so a key lands in the open rather than against a
+## wall, and the first clear one wins.
+## THE SPACE A RETURN DEVICE TAKES, and a body's room to stand clear of
+## it. `ReturnPlug.RADIUS` is the trigger; a player at the edge of it is
+## already inside, so the claim is the trigger plus a capsule plus a
+## little, and `plug_clear` is then a measurement that can come back
+## true rather than a hope.
+static func return_clearance(at: Vector3) -> AABB:
+	var reach := ReturnPlug.RADIUS + Constants.PLAYER_RADIUS + 0.6
+	return AABB(at - Vector3(reach, 0.0, reach),
+			Vector3(reach * 2.0, ReturnPlug.HEIGHT, reach * 2.0))
+
+## Where a room's return device goes, in room-local space.
+##
+## A room that reserved one when it was built says so and that is the
+## answer. A room that did not -- an authored shell, or any builder that
+## does not run the dense path -- gets one found the same way, against
+## everything the build DOES declare it put somewhere: the arrival, the
+## reward pedestal and every key spot. Reconstructed rather than
+## invented; the alternative is an offset, and an offset is what §5.7
+## is about.
+static func return_spot(build: Dictionary, chamber: Dictionary) -> Vector3:
+	if build.has("return_spot"):
+		return build["return_spot"]
+	# A ROOM THAT SAYS WHICH SQUARE METRES HOLD WEIGHT IS BELIEVED.
+	#
+	# `platform_path` is rising islands over a kill pit, and a spot
+	# chosen by sampling its ENVELOPE is a spot in the void: the reload
+	# fixture's `c012` refused its layout every time for "a standing
+	# capsule does not fit at 'room:c012:return'", and no lattice of
+	# offsets was going to find ground that is mostly not there. The
+	# room already declares its `stand` surfaces -- the same vocabulary
+	# that stopped activity elements being laid out over the pit -- so
+	# the return takes the LAST one wide enough to hold the device,
+	# which is the end ledge and is as far from the arrival as the room
+	# goes.
+	var best := Vector3.INF
+	# A CAPSULE HAS TO FIT, NOT THE TRIGGER. `ReturnPlug.RADIUS` is the
+	# volume that FIRES; what has to be held up is a player, and a
+	# trigger may overhang the ledge it stands on. Demanding the trigger
+	# fit skipped every surface `platform_path` has -- its end ledge is
+	# about three metres deep and its islands two and a half -- so the
+	# room declared exactly the ground it holds and none of it counted.
+	var reach := Constants.PLAYER_RADIUS + 0.6
+	for raw: Variant in build.get("sockets", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var surface: Dictionary = raw
+		if str(surface.get("kind", "")) != "stand":
+			continue
+		var extent: Vector3 = surface.get("extent", Vector3.ZERO)
+		if extent.x < reach * 2.0 or extent.z < reach * 2.0:
+			continue
+		best = surface.get("position", Vector3.ZERO)
+	if best != Vector3.INF:
+		return best
+	var box: AABB = build.get("bounds", AABB())
+	var claimed: Array[AABB] = []
+	var arrive: Vector3 = (build.get("player_entry", {}) as Dictionary) \
+			.get("position", PROCEDURAL_ARRIVAL)
+	claimed.append(AABB(arrive - Vector3(0.8, 0.0, 0.8),
+			Vector3(1.6, Constants.PLAYER_HEIGHT + 0.2, 1.6)))
+	if build.has("reward_position"):
+		claimed.append(reward_clearance(chamber,
+				build["reward_position"] as Vector3))
+	for raw: Variant in build.get("key_spots", []):
+		var spot: Dictionary = raw
+		claimed.append(AABB(
+				(spot["position"] as Vector3) - Vector3(0.8, 0.0, 0.8),
+				Vector3(1.6, 2.0, 1.6)))
+	# `_clear_spot` samples x in +/- 0.34 of width and z in 0.2..0.8 of
+	# depth, both measured from a room whose origin is its entry face;
+	# an authored shell's envelope can start somewhere else, so the spot
+	# is carried back onto the envelope it was measured against.
+	var at := _clear_spot(box.size.x, box.size.z, claimed,
+			hash("return:" + str(chamber.get("id", "c"))))
+	# THE ARRIVAL'S HEIGHT, NOT THE ENVELOPE'S FLOOR.
+	#
+	# An envelope's bottom is not a room's floor: a shell with a sunken
+	# bay or a plinth starts its box below the surface a body stands on,
+	# and a return anchor down there is inside the geometry. The bridge
+	# refuses the whole layout for it -- "the engine reports a standing
+	# capsule does not fit at 'room:c003:return'", three times running,
+	# and that Zone went to ZONE_FAILED in a live campaign. The arrival
+	# is where the room itself says a body stands, so its height is the
+	# one height in the room known to work.
+	return Vector3(at.x + box.position.x + box.size.x / 2.0, arrive.y,
+			at.z + box.position.z)
+
+static func _clear_spot(width: float, depth: float, claimed: Array,
+		seed_value: int) -> Vector3:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for _try in 24:
+		var at := Vector3(
+				rng.randf_range(-width * 0.34, width * 0.34), 0.0,
+				depth * rng.randf_range(0.2, 0.8))
+		var box := AABB(at - Vector3(0.9, 0.0, 0.9),
+				Vector3(1.8, 2.0, 1.8))
+		if not box_hits(box, claimed):
+			return at
+	# Nowhere clear: the room's middle, which at least is not inside a
+	# wall. A room this full is a composition problem and the audit is
+	# what reports it -- inventing a spot outside the room would hide it.
+	return Vector3(0, 0, depth / 2.0)
+
+## One procedural joining socket by id, or empty.
+##
+## The lock slab and the door probe both need to know where an opening
+## is, and a second derivation of that is how the two come to disagree.
+static func socket_placed(socket_id: String, width: float,
+		depth: float, exit_at := Vector3.INF,
+		chamber_type := "") -> Dictionary:
+	for raw: Variant in procedural_sockets(width, depth, exit_at,
+			chamber_type):
+		var s: Dictionary = raw
+		if str(s["name"]) == socket_id:
+			return s
+	return {}
+
+## Which of a room's joining sockets are cut, from its door assignments.
+##
+## `USED` and `LOCKED` carve; `SEALED` does not. An unassigned room
+## returns an EMPTY dictionary, which `_perimeter` reads as "use the old
+## two-door behaviour" -- the property that keeps every existing shell
+## and every existing procedural room composing exactly as before.
+static func cut_plan(chamber: Dictionary) -> Dictionary:
+	var out := {}
+	var carried: Variant = Constants.PROCEDURAL_SOCKET_CAPACITY.get(
+			str(chamber.get("type", "")))
+	for raw: Variant in chamber.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		var id := str(door.get("socket_id", ""))
+		if id == "":
+			continue
+		# A SAVED ZONE MAY STILL NAME A SOCKET THIS PRODUCER CANNOT
+		# BUILD, and cutting it because the door says so would be the
+		# advertisement made real in the wrong direction. A campaign
+		# composed before the capacity was measured holds
+		# `platform_path` rooms with side doors; they load, they build
+		# as the room this producer actually makes, and the layout is
+		# refused and recomposed rather than quietly carved.
+		if typeof(carried) == TYPE_ARRAY \
+				and not (carried as Array).has(id):
+			continue
+		out[id] = str(door.get("usage", "USED")) != "SEALED"
+	# AND NOTHING OVERRIDES IT, the Zone's front door included.
+	#
+	# This used to force the head of the spine's `entry` open -- "the
+	# player walks in through exactly there, from the Zone start" --
+	# against a `DoorAssignment` that says SEALED. The Zone start is
+	# `Vector3(0, 0.8, 1.2)` in the head room's own frame: the player
+	# arrives ONE POINT TWO METRES INSIDE, past the entry wall, and
+	# nothing is built outside it at all. So the override carved a hole
+	# in the Zone's outer wall opening onto nothing, which is the
+	# playtest-2 defect the end walls exist to close ("playtest 2 bounced
+	# out through the hole"), and it did it by overruling the one lane
+	# that owns which doors exist.
+	#
+	# An empty plan still means no composer spoke, and `_perimeter` still
+	# falls back to its two-door defaults for a room with no assignment.
+	return out
+
 static func _perimeter(root: Node3D, width: float, depth: float,
 		height: float, theme: String, door_in := true, door_out := true,
-		exit_gap_y := 0.0) -> void:
+		exit_gap_y := 0.0, left_gap_z := 0.0, left_gap_width := 0.0,
+		left_gap_height := 0.0, ceiling := true,
+		cut := {}) -> void:
 	var wall := ThemeMaterials.wall_mat(theme)
 	var half_w := width / 2.0
 	var side := (width - DOOR_WIDTH) / 2.0
+	# AN ASSIGNMENT OVERRIDES THE OLD FLAGS, and its absence changes
+	# nothing. `cut` is the door plan; empty means no composer spoke and
+	# the two-door defaults stand.
+	if not cut.is_empty():
+		door_in = bool(cut.get("entry", false))
+		door_out = bool(cut.get("exit", false))
+		if bool(cut.get("side_left", false)) and left_gap_width <= 0.0:
+			left_gap_z = depth / 2.0
+			left_gap_width = DOOR_WIDTH
+			left_gap_height = DOOR_HEIGHT
 	# Front wall (z=0) with optional door gap.
 	if door_in:
 		_box(root, Vector3(side, height, WALL_THICKNESS),
@@ -139,11 +855,50 @@ static func _perimeter(root: Node3D, width: float, depth: float,
 	else:
 		_box(root, Vector3(width, height, WALL_THICKNESS),
 				Vector3(0, height / 2.0, depth), wall)
-	# Side walls.
-	_box(root, Vector3(WALL_THICKNESS, height, depth),
-			Vector3(-half_w, height / 2.0, depth / 2.0), wall)
-	_box(root, Vector3(WALL_THICKNESS, height, depth),
-			Vector3(half_w, height / 2.0, depth / 2.0), wall)
+	# Side walls. The left one can carry a real opening -- segments with a
+	# hole, not a dark rectangle painted onto a solid slab. Playtest 1
+	# walked into the Echo Lab's "doorway" and hit the wall behind it.
+	if left_gap_width > 0.0:
+		_side_wall_with_gap(root, -half_w, height, depth, wall,
+				left_gap_z, left_gap_width, left_gap_height)
+	else:
+		_box(root, Vector3(WALL_THICKNESS, height, depth),
+				Vector3(-half_w, height / 2.0, depth / 2.0), wall)
+	if bool(cut.get("side_right", false)):
+		_side_wall_with_gap(root, half_w, height, depth, wall,
+				depth / 2.0, DOOR_WIDTH, DOOR_HEIGHT)
+	else:
+		_box(root, Vector3(WALL_THICKNESS, height, depth),
+				Vector3(half_w, height / 2.0, depth / 2.0), wall)
+	# A ceiling, by DEFAULT. This built four walls and called itself a
+	# perimeter, so every chamber that did not add its own roof was open
+	# to the void -- and one that jumps (bounce pad, platform, blink)
+	# leaves the level through it. Callers that raise their own ceiling
+	# pass `false` rather than stacking two coplanar slabs.
+	if ceiling:
+		_box(root, Vector3(width, WALL_THICKNESS, depth),
+				Vector3(0, height, depth / 2.0), wall)
+
+## A side wall in three pieces, leaving a hole you can actually walk
+## through. Split rather than subtracted: `_box` is both the mesh and the
+## collider, so a gap has to be an absence of boxes.
+static func _side_wall_with_gap(root: Node3D, wall_x: float, height: float,
+		depth: float, wall: Material, gap_z: float, gap_w: float,
+		gap_h: float) -> void:
+	var near_depth := (gap_z - gap_w / 2.0)
+	if near_depth > 0.01:
+		_box(root, Vector3(WALL_THICKNESS, height, near_depth),
+				Vector3(wall_x, height / 2.0, near_depth / 2.0), wall)
+	var far_start := gap_z + gap_w / 2.0
+	if depth - far_start > 0.01:
+		_box(root, Vector3(WALL_THICKNESS, height, depth - far_start),
+				Vector3(wall_x, height / 2.0,
+				far_start + (depth - far_start) / 2.0), wall)
+	# Lintel: the wall above the opening, so the room still has a ceiling
+	# line and the gap reads as a door rather than a missing wall.
+	if height > gap_h:
+		_box(root, Vector3(WALL_THICKNESS, height - gap_h, gap_w),
+				Vector3(wall_x, gap_h + (height - gap_h) / 2.0, gap_z), wall)
 
 # ---------------------------------------------------------------------------
 # Greebles: the detail pass that makes a box read as 1998 level design.
@@ -280,9 +1035,15 @@ static func _theme_props(root: Node3D, theme: String,
 				# Hanging signage with authored transit nonsense.
 				var signs := ["PLATFORM ε", "EXIT →", "← EXIT", "NO SIGNAL",
 						"MIND THE STATIC", "TRANSFER: EVERYWHERE"]
+				# ONE x for the plate and its text. This drew
+				# `randf_range` twice, so the sign hung in one place and
+				# its words in another -- the text was never on its own
+				# plate, which is the "sign is off centre" from playtest
+				# 1. Two draws from the same call read as one value at a
+				# glance, and the second is a different number.
+				var sign_x := rng.randf_range(-wall_x * 0.4, wall_x * 0.4)
 				_box(root, Vector3(1.6, 0.5, 0.08),
-						Vector3(rng.randf_range(-wall_x * 0.4, wall_x * 0.4),
-							height - 0.7, z),
+						Vector3(sign_x, height - 0.7, z),
 						ThemeMaterials.glow_material(
 							Color(ThemeMaterials.spec(theme)["accent_color"]),
 							1.3), false)
@@ -291,10 +1052,19 @@ static func _theme_props(root: Node3D, theme: String,
 				sign_label.font_size = 34
 				sign_label.pixel_size = 0.004
 				sign_label.modulate = Color(0.08, 0.09, 0.12)
-				sign_label.position = Vector3(
-						rng.randf_range(-wall_x * 0.4, wall_x * 0.4),
-						height - 0.7, z - 0.05)
-				sign_label.rotation.y = PI
+				sign_label.position = Vector3(sign_x, height - 0.7, z - 0.05)
+				# `face_label` takes a vector pointing TOWARD THE VIEWER
+				# -- that is how the Hub calls it. A chamber is entered at
+				# z = 0 and walked toward +z, so the viewer is always on
+				# the sign's -Z side, which is `Vector3.FORWARD`.
+				#
+				# This passed `Vector3.BACK` and rendered every transit
+				# sign as its own reflection. Playtest 1 found exactly
+				# this in the Hub and it was fixed there; the guard was
+				# then built around the Hub, so the Zone kept the bug for
+				# two more playtests. `godot-legible` walks a built
+				# chamber now as well as the Hub.
+				face_label(sign_label, Vector3.FORWARD)
 				root.add_child(sign_label)
 			"temple_ruin":
 				# Root tendrils crawling down the wall, or a column stump.
@@ -429,10 +1199,39 @@ static func _secret_alcove(root: Node3D, theme: String, side: float,
 	trigger.add_to_group(SECRET_GROUP)
 	root.add_child(trigger)
 
+## Where a crate may stand along a wall that has a doorway in it, given
+## where it wanted to stand.
+##
+## The doorway is at `depth / 2` and `DOOR_WIDTH` across; a crate blocks
+## it when its own half-width plus a body's radius reaches into that
+## span. Pushed to whichever edge of the band is nearer and clamped to
+## the wall run; `NAN` when the wall is too short to hold the crate
+## anywhere clear, in which case the room simply does not get that
+## crate. A doorway that cannot be walked through is worth more than a
+## box beside it.
+static func _clear_of_side_door(along: float, size: float,
+		depth: float) -> float:
+	var keep := DOOR_WIDTH / 2.0 + size / 2.0 + Constants.PLAYER_RADIUS
+	var middle := depth / 2.0
+	if absf(along - middle) >= keep:
+		return along
+	var near := middle - keep
+	var far := middle + keep
+	var low := 2.0
+	var high := depth - 2.0
+	if along < middle and near >= low:
+		return near
+	if far <= high:
+		return far
+	if near >= low:
+		return near
+	return NAN
+
 ## Corner buttresses, perimeter crates and a hazard strip for room-like
 ## spaces. Crates hug the walls so the arena floor stays fightable.
 static func _greeble_room(root: Node3D, width: float, depth: float,
-		height: float, theme: String, rng: RandomNumberGenerator) -> void:
+		height: float, theme: String, rng: RandomNumberGenerator,
+		cut := {}) -> void:
 	var trim := ThemeMaterials.trim_mat(theme)
 	var accent := ThemeMaterials.accent_mat(theme)
 	for corner_x in [-1.0, 1.0]:
@@ -445,10 +1244,32 @@ static func _greeble_room(root: Node3D, width: float, depth: float,
 		var size := rng.randf_range(0.7, 1.3)
 		var crate_position: Vector3
 		if against_x:
+			# A SIDE-HUGGING CRATE MUST NOT STAND IN A SIDE DOORWAY.
+			#
+			# The back-wall branch below has kept clear of the exit lane
+			# since it was written -- "a 1.3 m crate is taller than
+			# MAX_VERTICAL_STEP, so it must never block a door" -- and
+			# this branch never learned the same thing, because when it
+			# was written a procedural room had two doors and neither
+			# was in a side wall. `PROCEDURAL_SOCKETS` is four now.
+			# Measured on `zone_01`: a 0.95 m crate 0.45 m inside
+			# `c011/side_right`, a 0.78 m crate inside `c018/side_left`,
+			# both USED or LOCKED, both refusing the whole layout on
+			# aperture polarity.
+			#
+			# ROLLED FIRST, THEN MOVED, so the rng stream is untouched
+			# and a room with no side door is byte-identical to what it
+			# was. The same shape as `_free_prop_spot`.
+			var wall_sign := -1.0 if rng.randf() < 0.5 else 1.0
+			var along := rng.randf_range(2.0, depth - 2.0)
+			var socket := "side_left" if wall_sign < 0.0 else "side_right"
+			if bool(cut.get(socket, false)):
+				along = _clear_of_side_door(along, size, depth)
+			if is_nan(along):
+				continue
 			crate_position = Vector3(
-					(-1.0 if rng.randf() < 0.5 else 1.0)
-					* (width / 2.0 - size / 2.0 - 0.4),
-					size / 2.0, rng.randf_range(2.0, depth - 2.0))
+					wall_sign * (width / 2.0 - size / 2.0 - 0.4),
+					size / 2.0, along)
 		else:
 			# Back wall — keep clear of the exit door lane (a 1.3 m crate is
 			# taller than MAX_VERTICAL_STEP, so it must never block a door).
@@ -459,9 +1280,19 @@ static func _greeble_room(root: Node3D, width: float, depth: float,
 		var crate := _box(root, Vector3(size, size, size), crate_position,
 				accent, true)
 		crate.rotation.y = rng.randf_range(-0.2, 0.2)
-	# Hazard strip across the entrance threshold.
-	_box(root, Vector3(DOOR_WIDTH + 0.8, 0.02, 0.6),
-			Vector3(0, 0.02, 0.6), ThemeMaterials.hazard_mat(theme), false)
+	# There WAS a hazard strip across every room's threshold here.
+	#
+	# Owner ruling 2026-08-28 (art requirement 20): hazard orange is
+	# reserved for hazard and warning semantics. A threshold marking can
+	# be legitimate caution language where there is a step or a lip;
+	# applied to every room unconditionally it was decoration in the
+	# loudest colour the palette has, and spending it on ordinary
+	# architecture is how it stops meaning anything.
+	#
+	# Nothing replaces it. If playtesting shows thresholds need marking,
+	# it is solved with a non-hazard channel -- neutral architectural
+	# contrast, light placement, a trim or value change, or the future
+	# approved signage language -- not by putting the orange back.
 	_theme_props(root, theme, rng, width, depth, height)
 
 # ---------------------------------------------------------------------------
@@ -504,13 +1335,51 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	_box(root, Vector3(width, 0.5, length),
 			Vector3(0, -0.25, length / 2.0), ThemeMaterials.floor_mat(theme))
 	var wall := ThemeMaterials.wall_mat(theme)
-	_box(root, Vector3(WALL_THICKNESS, height, length),
-			Vector3(-width / 2.0, height / 2.0, length / 2.0), wall)
-	_box(root, Vector3(WALL_THICKNESS, height, length),
-			Vector3(width / 2.0, height / 2.0, length / 2.0), wall)
+	# THE SIDES ARE CUT WHEN THE COMPOSER ASSIGNED THEM, and they were
+	# not.
+	#
+	# `PROCEDURAL_SOCKETS` is four for every procedural room, so
+	# `compose_with_branch` hangs branches off a corridor's `side_left`
+	# and `side_right` exactly as it does off an arena's -- and this
+	# builder raised two solid slabs and `door_plan` then declared a
+	# doorway in the middle of each. Measured on `zone_01`: `c013/
+	# side_left` USED and the engine measured it as solid, and the
+	# bridge refuses the whole layout for it (rule 5, aperture
+	# polarity). `_perimeter` has honoured the cut plan for years; a
+	# corridor raises its own walls and never learned to.
+	var corridor_cut := cut_plan(chamber)
+	for wall_x: float in [-width / 2.0, width / 2.0]:
+		var socket := "side_left" if wall_x < 0.0 else "side_right"
+		if bool(corridor_cut.get(socket, false)):
+			_side_wall_with_gap(root, wall_x, height, length, wall,
+					length / 2.0, DOOR_WIDTH, DOOR_HEIGHT)
+		else:
+			_box(root, Vector3(WALL_THICKNESS, height, length),
+					Vector3(wall_x, height / 2.0, length / 2.0), wall)
 	_box(root, Vector3(width, WALL_THICKNESS, length),
 			Vector3(0, height, length / 2.0),
 			ThemeMaterials.trim_mat(theme))
+	# Ends, with a doorway through each.
+	#
+	# The playtest-2 fix named the three builders that raise their own
+	# walls and therefore had no ends -- `corridor`, `platform_path`,
+	# `corner` -- and then gave ends to two of them. A corridor stayed
+	# open across its FULL WIDTH at both mouths, which nothing noticed
+	# because a corridor in the middle of a chain has a neighbour parked
+	# against each end. The two places it shows are the two places a
+	# neighbour is narrower or absent: a wide corridor meeting a 4 m
+	# connector leaves metres of open wall either side of the seam, and
+	# the FIRST chamber of a Zone has nothing in front of it at all.
+	# That second one is what playtest 2.5 walked up to.
+	#
+	# Inset by half a wall so the geometry stays inside the bounds this
+	# builder declares. Two pieces then meet back-to-back at the seam
+	# rather than occupying the same slab -- the difference between a
+	# door frame and a z-fight.
+	_end_wall(root, width, height, WALL_THICKNESS / 2.0, wall, 0.0,
+			bool(corridor_cut.get("entry", true)))
+	_end_wall(root, width, height, length - WALL_THICKNESS / 2.0, wall,
+			0.0, bool(corridor_cut.get("exit", true)))
 	# Pipes along one wall: the load-bearing GoldSrc prop.
 	var pipe := MeshInstance3D.new()
 	var cylinder := CylinderMesh.new()
@@ -543,33 +1412,393 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 			"room_height": height,
 			"reward_position": Vector3(0, 0, length / 2.0)}
 
+## ROOM GRAMMAR v0: a second walkable height inside an ordinary room.
+##
+## Returns the SOCKETS it created -- positions on real surfaces that
+## composition may place things onto.
+##
+## Sockets are the answer to the bug class this project keeps paying for:
+## THE BUILDER KNOWS PHYSICAL FACTS THE COMPOSER DOES NOT. Activities
+## landed inside props, in mid-air and on top of each other, and each was
+## fixed afterwards by handing the composer more information. A socket is
+## a point the builder VOUCHES FOR, so anything placed on one is
+## supported and clear by construction rather than by a later audit.
+static func _elevation_band(root: Node3D, band: Dictionary, width: float,
+		depth: float, theme: String) -> Array:
+	var kind := str(band.get("kind", "gallery"))
+	var rise := float(band.get("rise", 2.0))
+	var coverage := clampf(float(band.get("coverage", 0.35)), 0.2, 0.55)
+	var side := str(band.get("side", "left"))
+	var access := str(band.get("access", "ramp"))
+	var deck := ThemeMaterials.floor_mat(theme)
+	var trim := ThemeMaterials.trim_mat(theme)
+	var sockets: Array = []
+
+	var rect := band_rect(band, width, depth)
+	var span_x := rect.size.x
+	var span_z := rect.size.y
+	var centre_x := rect.get_center().x
+	var centre_z := rect.get_center().y
+
+	var surface := rise if kind == "gallery" else -rise
+	if kind == "gallery":
+		# The deck, and a lip so the edge reads from below rather than
+		# being a texture change you notice by falling off it.
+		_box(root, Vector3(span_x, 0.4, span_z),
+				Vector3(centre_x, rise - 0.2, centre_z), deck)
+		# WITH A GAP WHERE THE RAMP LANDS. The lip is 0.35 m of solid
+		# trim along the deck's inner edge, and the ramp arrives at that
+		# same edge -- so it ran across the top of the only way up.
+		# `move_and_slide` does not climb steps (there is no step-up
+		# anywhere in `player.gd`; `MAX_VERTICAL_STEP` is a constant
+		# validation reasons with, not one the body implements), so a
+		# 0.35 m kerb stops a walking player dead. That contradicts this
+		# file's own claim that a ramp is base-kit traversal in both
+		# directions, which is what `NO REQUIREMENT BEFORE GUARANTEE`
+		# rests on for geometry.
+		var edge_x := centre_x + (span_x / 2.0 - 0.12) * (
+				1.0 if side == "left" else -1.0)
+		var edge_z := centre_z - span_z / 2.0 + 0.12
+		var gap := RAMP_WIDTH + 0.6
+		if side == "back":
+			# The lip runs along X; the ramp crosses it at `centre_x`.
+			for edge: float in [-1.0, 1.0]:
+				var length := maxf(0.0, (span_x - gap) / 2.0)
+				if length <= 0.01:
+					continue
+				_box(root, Vector3(length, 0.35, 0.25),
+						Vector3(centre_x + edge * (gap + length) / 2.0,
+							rise + 0.17, edge_z), trim)
+		else:
+			# The lip runs along Z; the ramp crosses it at `centre_z`.
+			for edge: float in [-1.0, 1.0]:
+				var length := maxf(0.0, (span_z - gap) / 2.0)
+				if length <= 0.01:
+					continue
+				_box(root, Vector3(0.25, 0.35, length),
+						Vector3(edge_x, rise + 0.17,
+							centre_z + edge * (gap + length) / 2.0), trim)
+	else:
+		# A pit is a hole, so the floor slab is not carved -- the walls
+		# of the recess are built and the deck is dropped. Carving the
+		# base slab is what `_carve_gap` never actually did, and a pit
+		# with a floor across it is not a pit.
+		_box(root, Vector3(span_x, 0.4, span_z),
+				Vector3(centre_x, -rise - 0.2, centre_z), deck)
+		# FOUR SIDES, NOT THREE. The fourth was left out because the
+		# room's own perimeter is already there -- but `_perimeter`
+		# builds its walls from y = 0 UP, and a recess goes DOWN. So on
+		# whichever face the recess met a room wall rather than another
+		# lining, there was nothing at all below the floor and the pit
+		# was open to the void. A `left` band spans the full depth, so
+		# that was both of its ends; Zone 1's `c005` is the one the
+		# playtest reported as a missing wall.
+		# WITH A GAP WHERE THE RAMP LANDS, for the same reason the
+		# gallery's lip has one: the ramp now descends from the rim
+		# INTO the recess, and the lining on that rim is exactly where
+		# it arrives. A full-length lining turns the top of the only way
+		# out into a 1.66 m wall.
+		var mouth := RAMP_WIDTH + 0.6
+		var run_z := side == "back"
+		for wall: Array in [
+				[Vector3(0.3, rise, span_z), Vector3(
+					centre_x + span_x / 2.0, -rise / 2.0, centre_z),
+					not run_z and side == "left"],
+				[Vector3(0.3, rise, span_z), Vector3(
+					centre_x - span_x / 2.0, -rise / 2.0, centre_z),
+					not run_z and side == "right"],
+				[Vector3(span_x, rise, 0.3), Vector3(
+					centre_x, -rise / 2.0, centre_z - span_z / 2.0),
+					run_z],
+				[Vector3(span_x, rise, 0.3), Vector3(
+					centre_x, -rise / 2.0, centre_z + span_z / 2.0),
+					false]]:
+			var size: Vector3 = wall[0]
+			var at: Vector3 = wall[1]
+			if not bool(wall[2]):
+				_box(root, size, at, trim)
+				continue
+			# The ramp crosses this face. Build it either side.
+			for edge: float in [-1.0, 1.0]:
+				if run_z:
+					var length := maxf(0.0, (span_x - mouth) / 2.0)
+					if length <= 0.01:
+						continue
+					_box(root, Vector3(length, rise, 0.3),
+							at + Vector3(
+								edge * (mouth + length) / 2.0, 0, 0), trim)
+				else:
+					var length := maxf(0.0, (span_z - mouth) / 2.0)
+					if length <= 0.01:
+						continue
+					_box(root, Vector3(0.3, rise, length),
+							at + Vector3(
+								0, 0, edge * (mouth + length) / 2.0), trim)
+
+	# ACCESS. A ramp is base-kit traversal in both directions, which is
+	# what keeps NO REQUIREMENT BEFORE GUARANTEE true of geometry: a band
+	# holding anything required must be reachable by movement the
+	# campaign is guaranteed to have, and walking always is.
+	#
+	# The run is three times the rise, so the slope is the same gentle
+	# angle whatever the band's height -- a fixed-length ramp gets
+	# steeper as the band rises, and there is no reason to make the tall
+	# ones the hard ones.
+	var run := maxf(3.0, absf(rise) * 3.0)
+	var width_of_ramp := RAMP_WIDTH
+	# The prism's slope runs along its X and its apex sits at -X, so the
+	# apex end is placed against the deck's inner edge and the ramp is
+	# turned to face it.
+	#
+	# WHICH SIDE OF THE BAND'S EDGE THE RAMP SITS ON IS THE WHOLE
+	# DIFFERENCE between the two kinds, and it used to be unwritten.
+	# A gallery's deck is ABOVE the floor, so its ramp climbs to the
+	# edge from OUTSIDE the deck's footprint. A pit's deck is BELOW it,
+	# so its ramp must descend from the edge INTO the recess -- inside
+	# the footprint. Only the facing was flipped for a pit (`turn`), and
+	# the position was left on the gallery's side of the edge, which put
+	# every pit's only way out on the far side of its own wall. Zone 1's
+	# `c005` shipped that way and could not be left on foot.
+	var reach := (-run / 2.0) if kind == "pit" else (run / 2.0)
+	var ramp_at := Vector3.ZERO
+	var turn := 0.0
+	match side:
+		"left":
+			ramp_at = Vector3(centre_x + span_x / 2.0 + reach,
+					surface / 2.0, centre_z)
+		"right":
+			ramp_at = Vector3(centre_x - span_x / 2.0 - reach,
+					surface / 2.0, centre_z)
+			turn = PI
+		_:
+			# +PI/2, NOT -PI/2. The prism's tall end is at its local -X,
+			# and a `back` band's deck is at +Z of the ramp -- so the
+			# quarter turn has to carry -X onto +Z. Turned the other way
+			# the ramp climbed AWAY from the deck it serves, leaving a
+			# 1.86 m step off the floor at its foot and a descent into
+			# nothing at its head. Zone 1's `c015` had this and the
+			# sealed doorway at once, and for the same reason: no
+			# fixture in the suite ever built a `back` band.
+			ramp_at = Vector3(centre_x,
+					surface / 2.0, centre_z - span_z / 2.0 - reach)
+			turn = PI / 2.0
+	var size := Vector3(run, absf(rise), width_of_ramp)
+	# A pit's ramp descends, so its high end faces the ROOM rather than
+	# the deck: the same wedge, turned the other way.
+	if kind == "pit":
+		turn += PI
+	_wedge(root, size, ramp_at, deck, turn, 0.0)
+	# WHERE THE WAY UP IS. Emitted as a socket so nothing has to rederive
+	# it: a test walking "toward the band" found the gallery's edge and
+	# reported a 2.2 m step, which is a correct measurement of the wrong
+	# surface. The builder knows where the ramp is; saying so is cheaper
+	# than every caller guessing.
+	sockets.append({"kind": "access",
+			"position": Vector3(ramp_at.x, 0.0, ramp_at.z),
+			"along": "z" if side == "back" else "x",
+			"length": run})
+	# AND THE RAMP IS SPOKEN FOR TOO. A 3-to-1 ramp is over six metres
+	# long, which is exactly the size at which `solid_boxes` stops
+	# calling something furniture and starts calling it architecture --
+	# so the one obstacle in the room nobody could see was the way up.
+	# Two activity elements of the played Zone's c015 were inside it.
+	# Architecture that content must avoid is DECLARED, never inferred.
+	var ramp_span := Vector3(run, 0.0, width_of_ramp)
+	if side == "back":
+		ramp_span = Vector3(width_of_ramp, 0.0, run)
+	ramp_span.y = maxf(absf(rise), 2.4) * 2.0
+	sockets.append({"kind": "reserved", "name": "band_ramp",
+			"position": Vector3(ramp_at.x, 0.0, ramp_at.z),
+			"extent": ramp_span})
+
+	# Sockets ON the band's deck, inset so nothing sits on the lip.
+	var inset := 1.1
+	for t: float in [0.3, 0.7]:
+		var socket_x := centre_x
+		var socket_z := centre_z
+		if side == "back":
+			socket_x = -span_x / 2.0 + inset + (span_x - inset * 2.0) * t
+		else:
+			socket_z = centre_z - span_z / 2.0 + inset \
+					+ (span_z - inset * 2.0) * t
+		sockets.append({"kind": "enemy_high",
+				"position": Vector3(socket_x, surface + 0.2, socket_z)})
+	# ACROSS THE RAMP, NEVER ALONG IT. A `left` or `right` band's ramp
+	# runs along X at `centre_z`, so offsetting this socket in Z steps off
+	# it. A `back` band's ramp runs along Z at `centre_x` -- so the same
+	# Z offset walks straight down the middle of it, which is where a
+	# pit's ramp now is. (The line this replaces chose between 1.0 and
+	# 1.0, so the `back` case it was reaching for was never written.)
+	var cover_at := Vector3(centre_x, surface + 0.4,
+			centre_z + span_z * 0.18)
+	if side == "back":
+		cover_at = Vector3(centre_x + (width_of_ramp / 2.0 + 1.4),
+				surface + 0.4, centre_z)
+	sockets.append({"kind": "cover", "position": cover_at})
+	# THE FOOTPRINT IS SPOKEN FOR at ground level. A gallery's deck is a
+	# floor when you are on it and a ceiling when you are under it, and
+	# ground-level composition has to treat it as neither: the space
+	# below it belongs to the band. Said here rather than inferred,
+	# because "the builder knows physical facts the composer does not" is
+	# the bug class this whole contract exists to end -- the first run
+	# with bands put six activity elements inside a deck.
+	sockets.append({"kind": "reserved", "name": "band_deck",
+			"position": Vector3(centre_x, 0.0, centre_z),
+			"extent": Vector3(span_x, maxf(absf(rise), 2.4) * 2.0, span_z)})
+	return sockets
+
 static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 	var width := float(chamber.get("width", 16.0))
 	var depth := float(chamber.get("depth", 16.0))
 	var wall_height := float(chamber.get("wall_height", 5.0))
 	var root := Node3D.new()
-	_box(root, Vector3(width, 0.5, depth),
-			Vector3(0, -0.25, depth / 2.0), ThemeMaterials.floor_mat(theme))
-	_perimeter(root, width, depth, wall_height, theme)
+	# The floor goes down FIRST and has to know about a pit already: the
+	# recess is dug later, and a slab laid across the whole room before
+	# that is a lid.
+	var declared: Variant = chamber.get("elevation")
+	var hole: Variant = null
+	if typeof(declared) == TYPE_DICTIONARY \
+			and str((declared as Dictionary).get("kind", "")) == "pit":
+		hole = band_rect(declared as Dictionary, width, depth)
+	_floor_with_hole(root, width, depth, ThemeMaterials.floor_mat(theme),
+			hole)
+	# WHERE THE EXIT LEAVES FROM, which a `back` band decides.
+	#
+	# `band_rect` takes a width and a depth and NO door position, and
+	# `back` means "against the far wall" -- which is the wall the exit
+	# is cut into. So a back gallery lays its full-width deck across the
+	# room's own exit, and `_perimeter`'s default sill of 0.0 then put
+	# the opening underneath it: 1.46 m of clearance under the slab and
+	# 1.34 m over it, for a capsule 1.8 m tall with no crouch. Zone 1's
+	# `c015` had no walking exit at all.
+	#
+	# The deck is not an obstruction, it is the approach: the ramp
+	# climbs to it and it reaches the far wall. So the door goes WHERE
+	# THE DECK IS, which is what `exit_gap_y` has always been for and
+	# what a tower already does with its summit.
+	_perimeter(root, width, depth, wall_height, theme, true, true,
+			0.0, 0.0, 0.0, 0.0, true, cut_plan(chamber))
+	# ROOM GRAMMAR v0's band, built BEFORE anything is scattered.
+	#
+	# It used to go in near the end, which was fine while nothing else
+	# needed to know where it was. The Check's space does: a `back`
+	# gallery at 0.41 coverage reaches z = 0.59..1.0 of the room and its
+	# access ramp reaches most of the rest, and the pedestal anchor sat
+	# in both. Reordering rather than recomputing the band's footprint
+	# somewhere else is the point -- `_elevation_band` already DECLARES
+	# its deck and its ramp as `reserved`, and a second derivation of a
+	# fact one function already owns is how the two come to disagree.
+	# Nothing here consumes randomness, so the room is unchanged by the
+	# move.
+	var sockets: Array = []
+	var band: Variant = chamber.get("elevation")
+	if typeof(band) == TYPE_DICTIONARY:
+		sockets = _elevation_band(root, band as Dictionary, width, depth,
+				theme)
+
+	# WHERE THE CHECKS GO, decided before anything is scattered.
+	#
+	# The room's own props used to be placed first and the reward anchor
+	# announced afterwards, so a crate could stand exactly where the
+	# pedestal was going to. Computing the anchor first and refusing to
+	# build a prop inside it is the same move the ground sockets make:
+	# the builder knows both facts, so the builder is what reconciles
+	# them.
+	var claimed: Array[AABB] = []
+	for socket: Dictionary in sockets:
+		if str(socket.get("kind", "")) == "reserved":
+			var at: Vector3 = socket["position"]
+			var extent: Vector3 = socket["extent"]
+			claimed.append(AABB(at - extent * 0.5, extent))
+	# AND THE PLACE A BODY ARRIVES IS RESERVED BEFORE ANYTHING ELSE IS.
+	#
+	# Same defect as the pedestal and the key, one room feature further
+	# out. Cover rolls at `z` in `depth * [0.25, 0.75]` and is up to
+	# 2.4 m deep, so in a 13.3 m arena a crate reaches back to z = 2.1 --
+	# over the arrival at z = 3.0 -- and a player entering the room
+	# appeared inside a box. The bridge named it: "the engine reports a
+	# standing capsule does not fit at 'room:c002:arrival'".
+	#
+	# First in the list, so the reward anchor and the keys avoid it too:
+	# a pedestal on the doorstep is the same room.
+	claimed.append(AABB(PROCEDURAL_ARRIVAL - Vector3(0.8, 0.0, 0.8),
+			Vector3(1.6, Constants.PLAYER_HEIGHT + 0.2, 1.6)))
+	var reward_at := _reward_anchor(chamber, width, depth, claimed)
+	var reward_box := reward_clearance(chamber, reward_at)
+	if reward_box.size != Vector3.ZERO:
+		claimed.append(reward_box)
+	# A KEY'S SPACE IS RESERVED THE SAME WAY THE CHECK'S IS.
+	#
+	# The first version placed Zone keys from `ZoneBuilder`, after the
+	# room was finished, at an anchor nothing had reserved -- so the
+	# room's own cover crates scattered on top of them and the key stood
+	# inside a box. That is the defect P2 already fixed once for the
+	# reward pedestal, arriving again through a new door: the builder
+	# knows where it put its furniture, so the builder is what reconciles
+	# them.
+	var key_spots: Array = []
+	for raw_key: Variant in chamber.get("keys", []):
+		if typeof(raw_key) != TYPE_DICTIONARY:
+			continue
+		var spec: Dictionary = raw_key
+		var spot := _clear_spot(width, depth, claimed,
+				hash(str(spec.get("key_id", "k")) + str(chamber.get("id", ""))))
+		claimed.append(AABB(spot - Vector3(0.8, 0.0, 0.8),
+				Vector3(1.6, 2.0, 1.6)))
+		key_spots.append({"key_id": str(spec.get("key_id", "")),
+				"colour": str(spec.get("colour", "gold")),
+				"position": spot})
+	# AND THE RETURN DEVICE'S SPACE, RESERVED THE SAME WAY. `AMALGAM
+	# _BRIDGE.md` §5.7: the plug used to stand on `room:<rid>:arrival`,
+	# which is where a body entering the room is put, so walking into a
+	# side destination fired the return on the first frame and walking
+	# back in fired it again. An offset from the arrival is not the
+	# repair -- it lands in a crate, in a wall, or outside the room. The
+	# builder knows where it put its furniture, so the builder reserves
+	# this too, before the cover crates roll.
+	var return_at := _clear_spot(width, depth, claimed,
+			hash("return:" + str(chamber.get("id", "c"))))
+	claimed.append(return_clearance(return_at))
 	# Crude cover: a few boxes and a wedge.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(str(chamber.get("id", "c")) + theme)
 	for i in 3:
 		var size := Vector3(rng.randf_range(1.2, 2.4), rng.randf_range(0.8, 2.0),
 				rng.randf_range(1.2, 2.4))
-		_box(root, size, Vector3(
+		# ONE roll, then a deterministic sweep. Rolling alternates was
+		# the obvious fix and the wrong one: it moves the rng stream, so
+		# every prop in every room without a conflict would have shifted
+		# too. Taking the room's own first choice and then searching
+		# WITHOUT randomness leaves an unconflicted room byte-identical
+		# to what it was, and it is the same shape as
+		# `Activities._free_spot` -- ideal, then a grid, and the ideal
+		# again only if the room really is full.
+		#
+		# Cover is not deleted near a Check. It is placed where a Check
+		# is not.
+		var ideal := Vector3(
 				rng.randf_range(-width / 2.0 + 2.5, width / 2.0 - 2.5),
 				size.y / 2.0,
-				rng.randf_range(depth * 0.25, depth * 0.75)),
-				ThemeMaterials.accent_mat(theme))
-	_wedge(root, Vector3(2.2, 1.2, 2.2), Vector3(width * 0.25, 0.6, depth * 0.6),
-			ThemeMaterials.floor_mat(theme), rng.randf_range(0.0, TAU))
+				rng.randf_range(depth * 0.25, depth * 0.75))
+		var at := _free_prop_spot(ideal, size, width, depth, claimed)
+		_box(root, size, at, ThemeMaterials.accent_mat(theme))
+		claimed.append(AABB(at - size / 2.0, size))
+	var wedge_at := Vector3(width * 0.25, 0.6, depth * 0.6)
+	var wedge_size := Vector3(2.2, 1.2, 2.2)
+	# The wedge has one home and no alternates; when that home is inside
+	# the Check's space the wedge is the thing that yields.
+	if not box_hits(AABB(wedge_at - wedge_size / 2.0, wedge_size), claimed):
+		_wedge(root, wedge_size, wedge_at,
+				ThemeMaterials.floor_mat(theme), rng.randf_range(0.0, TAU))
+	else:
+		rng.randf_range(0.0, TAU)   # keep the stream identical either way
 	for corner in [Vector3(-width / 2.0 + 2, wall_height - 0.5, 2),
 			Vector3(width / 2.0 - 2, wall_height - 0.5, depth - 2)]:
 		_light(root, corner, theme, 16.0)
 	_light(root, Vector3(0, wall_height - 0.5, depth / 2.0), theme, 18.0)
 	var greeble_rng := _greeble_rng(chamber, theme)
-	_greeble_room(root, width, depth, wall_height, theme, greeble_rng)
+	_greeble_room(root, width, depth, wall_height, theme, greeble_rng,
+			cut_plan(chamber))
 	# Roughly one arena in three gets a ledge you cannot walk to. It holds
 	# nothing but one of Epsilon's notes; see `_secret_alcove`.
 	if greeble_rng.randf() < 0.34:
@@ -577,21 +1806,95 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 				-1.0 if greeble_rng.randf() < 0.5 else 1.0, width / 2.0,
 				greeble_rng.randf_range(3.0, maxf(3.2, depth - 3.0)),
 				wall_height, greeble_rng)
+	var lowest := -1.0
+	if typeof(band) == TYPE_DICTIONARY \
+			and str((band as Dictionary).get("kind", "")) == "pit":
+		lowest = -float((band as Dictionary).get("rise", 2.0)) - 1.0
+
+	# The Check's space, said out loud. Declaring it rather than merely
+	# avoiding it is what makes it true for the composer as well: nothing
+	# reads `reward_position`, so an activity element or a barrel could
+	# stand on the pedestal and no rule anywhere would object.
+	if reward_box.size != Vector3.ZERO:
+		sockets.append({"kind": "reserved", "name": "reward_lane",
+				"position": reward_box.get_center(),
+				"extent": reward_box.size})
+
+	# Ground sockets, for the things a room stands on its floor. Kept out
+	# of the walking lane the same way affordances and activities are --
+	# and, unlike the first version of this loop, VOUCHED FOR.
+	#
+	# A socket is a promise that the point is on real floor and clear of
+	# what is already there. Offering six fixed spots and hoping was the
+	# same mistake the pressure plates made: three of the six landed
+	# inside the room's own crates and, in a room with a gallery, inside
+	# the gallery's solid mass. The builder knows where it put those, so
+	# the builder is the one that can answer.
+	var solids := solid_boxes(root)
+	# WHAT THIS ROOM HAS ALREADY SPOKEN FOR, both kinds.
+	#
+	# `claimed` holds the Check's pedestal box and every key's space,
+	# and the pedestal is built by the instantiator AFTER this runs --
+	# so `solid_boxes` cannot see it and a ground socket offered here
+	# could be, and was, inside it. `reserved` holds the band's declared
+	# regions. Checking one and not the other is why an 18 x 12 arena
+	# offered a `cover` socket standing in its own Check.
+	var reserved: Array[AABB] = claimed.duplicate()
+	for socket: Dictionary in sockets:
+		if str(socket.get("kind", "")) == "reserved":
+			var at: Vector3 = socket["position"]
+			var extent: Vector3 = socket["extent"]
+			reserved.append(AABB(at - extent * 0.5, extent))
+	for t: float in [0.28, 0.52, 0.76]:
+		for side: float in [-1.0, 1.0]:
+			var kind := "cover" if t > 0.4 else "reactive"
+			var size := _ground_socket_size(kind)
+			var foot := Vector3(side * width * 0.32, 0.0, depth * t)
+			# Padded, so an object does not merely graze a crate.
+			var claim := AABB(foot - Vector3(size.x / 2.0 + 0.25, 0.0,
+					size.z / 2.0 + 0.25),
+					Vector3(size.x + 0.5, size.y, size.z + 0.5))
+			if box_hits(claim, solids) or box_hits(claim, reserved):
+				continue
+			sockets.append({"kind": kind, "position": foot,
+					"extent": size})
+			solids.append(claim)
+
 	var spawns: Array = []
 	var index := 0
+	# RANGED UNITS TAKE THE HIGH GROUND. The measured problem: twenty-eight
+	# of the played Zone's forty-one enemies were ranged, in flat boxes,
+	# with no height to shoot from -- which makes a ranged enemy a melee
+	# enemy that misses. This is placement, not AI: the archetypes and
+	# their behaviour are untouched.
+	var high: Array = []
+	for socket: Dictionary in sockets:
+		if str(socket.get("kind", "")) == "enemy_high":
+			high.append(socket["position"])
+	var taken_high := 0
 	for group: Dictionary in chamber.get("enemies", []):
 		for i in int(group.get("count", 0)):
-			var angle := TAU * float(index) / 8.0
-			spawns.append({"archetype": group["archetype"],
-					"position": Vector3(cos(angle) * width * 0.3, 0.2,
-							depth / 2.0 + sin(angle) * depth * 0.3)})
+			var at: Vector3
+			if str(group["archetype"]) == "ranged" and taken_high < high.size():
+				at = high[taken_high]
+				taken_high += 1
+			else:
+				var angle := TAU * float(index) / 8.0
+				at = Vector3(cos(angle) * width * 0.3, 0.2,
+						depth / 2.0 + sin(angle) * depth * 0.3)
+			spawns.append({"archetype": group["archetype"], "position": at})
 			index += 1
 	return {"root": root, "exit_offset": Vector3(0, 0, depth),
-			"bounds": AABB(Vector3(-width / 2.0, -1, 0),
-					Vector3(width, wall_height + 1, depth)),
+			"doors": door_plan(chamber, width, depth),
+			"player_entry": {"position": PROCEDURAL_ARRIVAL},
+			"key_spots": key_spots,
+			"return_spot": return_at,
+			"bounds": AABB(Vector3(-width / 2.0, lowest, 0),
+					Vector3(width, wall_height - lowest, depth)),
 			"enemy_spawns": spawns,
+			"sockets": sockets,
 			"room_height": wall_height,
-			"reward_position": Vector3(0, 0, depth * 0.72)}
+			"reward_position": reward_at}
 
 static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 	var segments := int(chamber.get("segment_count", 4))
@@ -605,9 +1908,24 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 	var wall_height := rise + 6.0
 	var root := Node3D.new()
 	var floor_mat := ThemeMaterials.floor_mat(theme)
+	# WHERE THE FLOOR ACTUALLY IS, said out loud as it is built.
+	#
+	# A `platform_path` has no floor. It has a start ledge, a handful of
+	# rising islands and an end ledge, with a kill pit under everything
+	# else -- and every consumer that treated its BOUNDS as a room laid
+	# content out over the void. Twenty-three activity elements across
+	# five rooms were standing on nothing, which is the defect this
+	# vocabulary exists to end: the builder knows which square metres
+	# hold weight, so the builder is what says so.
+	var stands: Array = []
+	var stands_traversal: Array = []
+	var ledge_span := width - WALL_THICKNESS * 2.0
 	# Start ledge.
 	_box(root, Vector3(width, 0.5, ledge),
 			Vector3(0, -0.25, ledge / 2.0), floor_mat)
+	stands.append({"kind": "stand",
+			"position": Vector3(0, 0.0, ledge / 2.0),
+			"extent": Vector3(ledge_span, 0.0, ledge)})
 	# Platforms, rising by `step` each. Crude prism feet make them read as
 	# brushwork rather than floating tiles.
 	for i in segments:
@@ -617,20 +1935,92 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 				Vector3(0, y - 0.3, z), floor_mat)
 		_wedge(root, Vector3(platform * 0.7, 0.5, platform * 0.7),
 				Vector3(0, y - 0.75, z), ThemeMaterials.trim_mat(theme))
+		# Offered like any other surface, and refused by the same rule
+		# that refuses a crate in a doorway: a 2.5 m island cannot keep
+		# BRUTE_LANE clear beside anything, and it is the MANDATORY
+		# ROUTE over a kill pit. Said as a measurement rather than as a
+		# special case, so the day a builder makes a wide platform, the
+		# wide platform is usable.
+		stands.append({"kind": "stand",
+				"position": Vector3(0, y, z),
+				"extent": Vector3(platform, 0.0, platform)})
 	# End ledge at full rise.
 	_box(root, Vector3(width, 0.5, ledge),
 			Vector3(0, rise - 0.25, total - ledge / 2.0), floor_mat)
+	stands.append({"kind": "stand",
+			"position": Vector3(0, rise, total - ledge / 2.0),
+			"extent": Vector3(ledge_span, 0.0, ledge)})
+	# AND THE JUMPS, in the contract's own words.
+	#
+	# This room has always had mandatory jumps and has never said so out
+	# loud: `gap_size` is bounded by `max_safe_gap(vertical_step)` in the
+	# schema, and nothing downstream could see that a jump existed. An
+	# authored shell declares its traversal, so the procedural producer
+	# that actually HAS traversal should declare it too -- otherwise the
+	# audit measures the movement law on one producer and takes the
+	# other's word for it, which is the asymmetry the contract exists to
+	# end. Endpoints are the real edges, so the span the audit measures
+	# is the gap itself and not the gap plus an inset.
+	for i in segments + 1:
+		var from_z := ledge + (gap + platform) * float(i)
+		stands_traversal.append({
+			"name": "hop_%d" % i,
+			"kind": "gap",
+			"mandatory": true,
+			"start": Vector3(0, step * float(i), from_z),
+			"end": Vector3(0, step * float(mini(i + 1, segments)),
+					from_z + gap),
+		})
 	# The pit: deep enough that a fall passes FALL_KILL_Y.
 	_box(root, Vector3(width, 0.5, total),
 			Vector3(0, Constants.FALL_KILL_Y - 6.0, total / 2.0),
 			ThemeMaterials.hazard_mat(theme), false)
-	# Side walls, full height.
+	# SIDE WALLS, FULL HEIGHT AND SOLID -- AND THIS ROOM STILL DECLARES
+	# TWO SIDE DOORWAYS IT CANNOT HOLD. **OPEN DEFECT, diagnosed, not
+	# fixed here.**
+	#
+	# `PROCEDURAL_SOCKETS` is four for every procedural room, so
+	# `compose_with_branch` hangs branches off a `platform_path`'s sides
+	# exactly as it does off an arena's, and `door_plan` then declares a
+	# doorway in the middle of each of these slabs. Measured on
+	# `zone_01`: `c008/side_left` USED and `c008/side_right` LOCKED,
+	# both solid, and the bridge refuses the whole layout on aperture
+	# polarity (rule 5). That is the `godot-reload` PHASE 1 refusal and
+	# the one that stops a default-scale Zone being accepted at all.
+	#
+	# CARVING HERE IS NOT THE FIX. The declared position is the middle
+	# of the side wall, which for this room is over the kill pit and
+	# BELOW the walkway: a hole onto nothing. Measured alternative:
+	# moving the side socket onto the start ledge (the one place this
+	# room has floor at y = 0 beside a wall) carves honestly and then
+	# `zone_01` fails to lay out at all -- "branch room 'c014' off
+	# 'c008' could not be placed clear of the 29 room(s) already
+	# standing" -- because the branch mouth moved to the room's entry
+	# end. The remaining answers are compositional: the composer stops
+	# offering a climbing room's sides as junctions, or the room grows a
+	# landing at the opening. Neither is a wall this builder can cut.
 	var wall := ThemeMaterials.wall_mat(theme)
 	_box(root, Vector3(WALL_THICKNESS, wall_height + 40.0, total),
 			Vector3(-width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
 	_box(root, Vector3(WALL_THICKNESS, wall_height + 40.0, total),
 			Vector3(width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
-	for i in maxi(2, segments / 2):
+	var path_cut := cut_plan(chamber)
+	# Ends and a ceiling. There were none: the lights below hung off
+	# nothing, and the chamber was open to the void sideways of its own
+	# doorways. The exit doorway is raised by `rise` because that is
+	# where the path leaves from.
+	_end_wall(root, width, wall_height, 0.0, wall, 0.0,
+			bool(path_cut.get("entry", true)))
+	_end_wall(root, width, wall_height, total, wall, rise,
+			bool(path_cut.get("exit", true)))
+	_box(root, Vector3(width, WALL_THICKNESS, total),
+			Vector3(0, wall_height, total / 2.0),
+			ThemeMaterials.trim_mat(theme))
+	# Half the segments, rounded down: an odd count gets the smaller
+	# half, which is what the layout wants.
+	@warning_ignore("integer_division")
+	var pairs := maxi(2, segments / 2)
+	for i in pairs:
 		_light(root, Vector3(0, rise + 4.0,
 				total * (float(i) + 0.5) / maxf(2.0, segments / 2.0)), theme,
 				18.0)
@@ -658,6 +2048,8 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 			"bounds": AABB(Vector3(-width / 2.0, -40, 0),
 					Vector3(width, wall_height + 41.0, total)),
 			"enemy_spawns": spawns,
+			"sockets": stands,
+			"traversal": stands_traversal,
 			"room_height": wall_height,
 			"reward_position": Vector3(0, rise, total - ledge / 2.0),
 			"goal_area_position": Vector3(0, rise + 1.0, total - ledge)}
@@ -685,7 +2077,8 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 	var tower_rng := _greeble_rng(chamber, theme)
 	var wants_secret := tower_rng.randf() < 0.34
 	var shaft_height := total_rise + (6.5 if wants_secret else 5.0)
-	_perimeter(root, side, side, shaft_height, theme, true, true, summit)
+	_perimeter(root, side, side, shaft_height, theme, true, true, summit,
+			0.0, 0.0, 0.0, true, cut_plan(chamber))
 
 	# Central column, so the shaft reads as a structure and blocks
 	# straight-line ranged fire across it.
@@ -701,7 +2094,12 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 		Vector3(inset, 0, side - margin), Vector3(inset, 0, margin),
 	]
 	var platform_count := int(ceil(total_rise / step_rise))
-	var spacing := 2.4
+	# The furthest a base jump may be ASKED to reach when landing
+	# `step_rise` higher. This was a typed 2.4 against a bound of 2.0 --
+	# the same bound `platform_path.gap_size` is held to in the schema,
+	# so the engine was breaking a rule it imposes on Epsilon. Derived,
+	# not typed, so it cannot drift from the movement constants again.
+	var spacing := Constants.max_safe_gap(step_rise)
 	var leg := 0
 	var leg_progress := 0.0
 	var platform_positions: Array[Vector3] = []
@@ -757,6 +2155,11 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 					Vector3(side, shaft_height + 1.0, side + 2.2)),
 			"enemy_spawns": spawns,
 			"room_height": shaft_height,
+			# The ascent, so a test can MEASURE the mandatory jumps
+			# rather than infer them from the source. Reading the code
+			# proves the spacing is derived; reading the positions proves
+			# the geometry that came out of it is walkable.
+			"platforms": platform_positions,
 			"reward_position": Vector3(-2.0, top_y, side - 2.0)}
 
 ## A 90° corner piece for non-linear layouts. Entrance on local z=0 facing
@@ -794,10 +2197,14 @@ static func corner(turn: int, theme: String) -> Dictionary:
 	_box(root, Vector3(WALL_THICKNESS, H, S),
 			Vector3(-exit_x, H / 2.0, S / 2.0), wall)
 	_light(root, Vector3(0, H - 0.3, S / 2.0), theme)
-	# A corner marker: hazard stripe on the turn's inner wall.
-	_box(root, Vector3(0.06, 1.0, 2.0),
-			Vector3(-exit_x * 0.92, 1.4, S / 2.0),
-			ThemeMaterials.hazard_mat(theme), false)
+	# There WAS a hazard stripe on the turn's inner wall here, purely to
+	# say "the corridor bends".
+	#
+	# Owner ruling 2026-08-28 (art requirement 20): REMOVE IT. *A corridor
+	# turns here* is not a hazard, and hazard orange stays reserved for
+	# things that hurt you. The turn's own form does the work -- the
+	# opening, the jamb reveal, the light above it -- and if playtesting
+	# shows turns need more wayfinding it gets a non-hazard channel.
 	# Step the cursor a full wall thickness past the exit wall's center
 	# plane: the next chamber's own front wall then butts against this
 	# one's outer face instead of occupying the same slab (coincident
@@ -814,7 +2221,8 @@ static func treasure_room(chamber: Dictionary, theme: String) -> Dictionary:
 	var root := Node3D.new()
 	_box(root, Vector3(side, 0.5, side),
 			Vector3(0, -0.25, side / 2.0), ThemeMaterials.floor_mat(theme))
-	_perimeter(root, side, side, height, theme)
+	_perimeter(root, side, side, height, theme, true, true, 0.0,
+			0.0, 0.0, 0.0, true, cut_plan(chamber))
 	_box(root, Vector3(side, WALL_THICKNESS, side),
 			Vector3(0, height, side / 2.0), ThemeMaterials.trim_mat(theme))
 	# The one warm room in the building.

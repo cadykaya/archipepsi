@@ -1,0 +1,3021 @@
+{
+  "batch": "043",
+  "authored": "2026-09-11",
+  "art_revision": "4f088acb91a710089ccdd8f35d3ddcbd21e5b595",
+  "glyph_revision": "6c80b6315912a70b44c28d566ddff608eafa234a",
+  "design_revision": "a20bf55",
+  "design_sections": [
+    "06 §15.2",
+    "05 §15.1-15.8",
+    "05 §33.7-33.9",
+    "06 §33.10"
+  ],
+  "status": "PROPOSAL -- not approved, not bound to runtime, no mechanic implemented",
+  "native_sizes": {
+    "glyph": [
+      16,
+      16
+    ],
+    "marker": [
+      32,
+      32
+    ],
+    "tick": [
+      8,
+      8
+    ]
+  },
+  "tick_origin": [
+    23,
+    23
+  ],
+  "glyph_origin_in_marker": [
+    8,
+    8
+  ],
+  "colour": {
+    "scheme": "neutral -- ink / lit / dim",
+    "ink": "#14171c",
+    "lit": "#eef1f4",
+    "dim": "#7a828c",
+    "spent": "#4a5058",
+    "family_hue": "NOT ASSIGNED. See DECISIONS_FOR_OWNER.md item 1.",
+    "tick": "#ffd45c (`send`) -- PROPOSED reuse, see item 2"
+  },
+  "depletion": {
+    "rule": "the frame's own outer edge is the track; paint the first `remaining` fraction lit and the rest dim",
+    "tracks": {
+      "frame_kinetic": [
+        [
+          16,
+          4
+        ],
+        [
+          17,
+          4
+        ],
+        [
+          18,
+          4
+        ],
+        [
+          19,
+          4
+        ],
+        [
+          20,
+          4
+        ],
+        [
+          21,
+          4
+        ],
+        [
+          22,
+          5
+        ],
+        [
+          23,
+          6
+        ],
+        [
+          24,
+          7
+        ],
+        [
+          25,
+          8
+        ],
+        [
+          26,
+          9
+        ],
+        [
+          27,
+          10
+        ],
+        [
+          27,
+          11
+        ],
+        [
+          27,
+          12
+        ],
+        [
+          27,
+          13
+        ],
+        [
+          27,
+          14
+        ],
+        [
+          27,
+          15
+        ],
+        [
+          30,
+          16
+        ],
+        [
+          29,
+          16
+        ],
+        [
+          28,
+          16
+        ],
+        [
+          26,
+          16
+        ],
+        [
+          27,
+          17
+        ],
+        [
+          27,
+          18
+        ],
+        [
+          27,
+          19
+        ],
+        [
+          27,
+          20
+        ],
+        [
+          27,
+          21
+        ],
+        [
+          26,
+          22
+        ],
+        [
+          25,
+          23
+        ],
+        [
+          24,
+          24
+        ],
+        [
+          23,
+          25
+        ],
+        [
+          22,
+          26
+        ],
+        [
+          21,
+          27
+        ],
+        [
+          20,
+          27
+        ],
+        [
+          19,
+          27
+        ],
+        [
+          18,
+          27
+        ],
+        [
+          17,
+          27
+        ],
+        [
+          16,
+          27
+        ],
+        [
+          15,
+          27
+        ],
+        [
+          14,
+          27
+        ],
+        [
+          13,
+          27
+        ],
+        [
+          12,
+          27
+        ],
+        [
+          11,
+          27
+        ],
+        [
+          10,
+          27
+        ],
+        [
+          9,
+          26
+        ],
+        [
+          8,
+          25
+        ],
+        [
+          7,
+          24
+        ],
+        [
+          6,
+          23
+        ],
+        [
+          5,
+          22
+        ],
+        [
+          4,
+          21
+        ],
+        [
+          4,
+          20
+        ],
+        [
+          4,
+          19
+        ],
+        [
+          4,
+          18
+        ],
+        [
+          4,
+          17
+        ],
+        [
+          5,
+          16
+        ],
+        [
+          3,
+          16
+        ],
+        [
+          2,
+          16
+        ],
+        [
+          4,
+          15
+        ],
+        [
+          4,
+          14
+        ],
+        [
+          4,
+          13
+        ],
+        [
+          4,
+          12
+        ],
+        [
+          4,
+          11
+        ],
+        [
+          4,
+          10
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          7,
+          7
+        ],
+        [
+          8,
+          6
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          11,
+          4
+        ],
+        [
+          12,
+          4
+        ],
+        [
+          13,
+          4
+        ],
+        [
+          14,
+          4
+        ],
+        [
+          15,
+          4
+        ]
+      ],
+      "frame_cognitive": [
+        [
+          16,
+          2
+        ],
+        [
+          17,
+          2
+        ],
+        [
+          18,
+          2
+        ],
+        [
+          19,
+          2
+        ],
+        [
+          20,
+          3
+        ],
+        [
+          21,
+          3
+        ],
+        [
+          22,
+          3
+        ],
+        [
+          23,
+          4
+        ],
+        [
+          24,
+          5
+        ],
+        [
+          25,
+          6
+        ],
+        [
+          26,
+          7
+        ],
+        [
+          27,
+          8
+        ],
+        [
+          28,
+          9
+        ],
+        [
+          28,
+          10
+        ],
+        [
+          28,
+          11
+        ],
+        [
+          29,
+          12
+        ],
+        [
+          29,
+          13
+        ],
+        [
+          29,
+          14
+        ],
+        [
+          29,
+          15
+        ],
+        [
+          29,
+          16
+        ],
+        [
+          29,
+          17
+        ],
+        [
+          29,
+          18
+        ],
+        [
+          29,
+          19
+        ],
+        [
+          28,
+          20
+        ],
+        [
+          28,
+          21
+        ],
+        [
+          28,
+          22
+        ],
+        [
+          27,
+          23
+        ],
+        [
+          26,
+          24
+        ],
+        [
+          25,
+          25
+        ],
+        [
+          24,
+          26
+        ],
+        [
+          23,
+          27
+        ],
+        [
+          22,
+          28
+        ],
+        [
+          21,
+          28
+        ],
+        [
+          20,
+          28
+        ],
+        [
+          19,
+          29
+        ],
+        [
+          18,
+          29
+        ],
+        [
+          17,
+          29
+        ],
+        [
+          16,
+          29
+        ],
+        [
+          15,
+          29
+        ],
+        [
+          14,
+          29
+        ],
+        [
+          13,
+          29
+        ],
+        [
+          12,
+          29
+        ],
+        [
+          11,
+          28
+        ],
+        [
+          10,
+          28
+        ],
+        [
+          9,
+          28
+        ],
+        [
+          8,
+          27
+        ],
+        [
+          7,
+          26
+        ],
+        [
+          6,
+          25
+        ],
+        [
+          5,
+          24
+        ],
+        [
+          4,
+          23
+        ],
+        [
+          3,
+          22
+        ],
+        [
+          3,
+          21
+        ],
+        [
+          3,
+          20
+        ],
+        [
+          2,
+          19
+        ],
+        [
+          2,
+          18
+        ],
+        [
+          2,
+          17
+        ],
+        [
+          2,
+          16
+        ],
+        [
+          2,
+          15
+        ],
+        [
+          2,
+          14
+        ],
+        [
+          2,
+          13
+        ],
+        [
+          2,
+          12
+        ],
+        [
+          3,
+          11
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          9,
+          3
+        ],
+        [
+          10,
+          3
+        ],
+        [
+          11,
+          3
+        ],
+        [
+          12,
+          2
+        ],
+        [
+          13,
+          2
+        ],
+        [
+          14,
+          2
+        ],
+        [
+          15,
+          2
+        ]
+      ],
+      "frame_permission": [
+        [
+          16,
+          3
+        ],
+        [
+          16,
+          6
+        ],
+        [
+          17,
+          3
+        ],
+        [
+          17,
+          6
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          6
+        ],
+        [
+          19,
+          3
+        ],
+        [
+          20,
+          3
+        ],
+        [
+          19,
+          6
+        ],
+        [
+          21,
+          3
+        ],
+        [
+          20,
+          6
+        ],
+        [
+          22,
+          3
+        ],
+        [
+          21,
+          6
+        ],
+        [
+          23,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          22,
+          6
+        ],
+        [
+          25,
+          3
+        ],
+        [
+          23,
+          6
+        ],
+        [
+          26,
+          3
+        ],
+        [
+          24,
+          6
+        ],
+        [
+          27,
+          3
+        ],
+        [
+          25,
+          6
+        ],
+        [
+          25,
+          7
+        ],
+        [
+          25,
+          8
+        ],
+        [
+          25,
+          9
+        ],
+        [
+          25,
+          10
+        ],
+        [
+          25,
+          11
+        ],
+        [
+          25,
+          12
+        ],
+        [
+          25,
+          13
+        ],
+        [
+          25,
+          14
+        ],
+        [
+          25,
+          15
+        ],
+        [
+          25,
+          16
+        ],
+        [
+          25,
+          17
+        ],
+        [
+          25,
+          18
+        ],
+        [
+          25,
+          19
+        ],
+        [
+          25,
+          20
+        ],
+        [
+          25,
+          21
+        ],
+        [
+          25,
+          22
+        ],
+        [
+          25,
+          23
+        ],
+        [
+          25,
+          24
+        ],
+        [
+          25,
+          25
+        ],
+        [
+          27,
+          28
+        ],
+        [
+          24,
+          25
+        ],
+        [
+          26,
+          28
+        ],
+        [
+          23,
+          25
+        ],
+        [
+          25,
+          28
+        ],
+        [
+          22,
+          25
+        ],
+        [
+          24,
+          28
+        ],
+        [
+          23,
+          28
+        ],
+        [
+          21,
+          25
+        ],
+        [
+          22,
+          28
+        ],
+        [
+          20,
+          25
+        ],
+        [
+          21,
+          28
+        ],
+        [
+          19,
+          25
+        ],
+        [
+          20,
+          28
+        ],
+        [
+          19,
+          28
+        ],
+        [
+          18,
+          25
+        ],
+        [
+          18,
+          28
+        ],
+        [
+          17,
+          25
+        ],
+        [
+          17,
+          28
+        ],
+        [
+          16,
+          25
+        ],
+        [
+          16,
+          28
+        ],
+        [
+          15,
+          28
+        ],
+        [
+          15,
+          25
+        ],
+        [
+          14,
+          28
+        ],
+        [
+          14,
+          25
+        ],
+        [
+          13,
+          28
+        ],
+        [
+          13,
+          25
+        ],
+        [
+          12,
+          28
+        ],
+        [
+          11,
+          28
+        ],
+        [
+          12,
+          25
+        ],
+        [
+          10,
+          28
+        ],
+        [
+          11,
+          25
+        ],
+        [
+          9,
+          28
+        ],
+        [
+          10,
+          25
+        ],
+        [
+          8,
+          28
+        ],
+        [
+          7,
+          28
+        ],
+        [
+          9,
+          25
+        ],
+        [
+          6,
+          28
+        ],
+        [
+          8,
+          25
+        ],
+        [
+          5,
+          28
+        ],
+        [
+          7,
+          25
+        ],
+        [
+          4,
+          28
+        ],
+        [
+          6,
+          25
+        ],
+        [
+          6,
+          24
+        ],
+        [
+          6,
+          23
+        ],
+        [
+          6,
+          22
+        ],
+        [
+          6,
+          21
+        ],
+        [
+          6,
+          20
+        ],
+        [
+          6,
+          19
+        ],
+        [
+          6,
+          18
+        ],
+        [
+          6,
+          17
+        ],
+        [
+          6,
+          16
+        ],
+        [
+          6,
+          15
+        ],
+        [
+          6,
+          14
+        ],
+        [
+          6,
+          13
+        ],
+        [
+          6,
+          12
+        ],
+        [
+          6,
+          11
+        ],
+        [
+          6,
+          10
+        ],
+        [
+          6,
+          9
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          8,
+          6
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          9,
+          6
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          10,
+          6
+        ],
+        [
+          9,
+          3
+        ],
+        [
+          11,
+          6
+        ],
+        [
+          10,
+          3
+        ],
+        [
+          12,
+          6
+        ],
+        [
+          11,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          13,
+          6
+        ],
+        [
+          13,
+          3
+        ],
+        [
+          14,
+          6
+        ],
+        [
+          14,
+          3
+        ],
+        [
+          15,
+          6
+        ],
+        [
+          15,
+          3
+        ]
+      ],
+      "frame_material": [
+        [
+          16,
+          2
+        ],
+        [
+          17,
+          2
+        ],
+        [
+          18,
+          2
+        ],
+        [
+          19,
+          2
+        ],
+        [
+          20,
+          2
+        ],
+        [
+          21,
+          3
+        ],
+        [
+          22,
+          4
+        ],
+        [
+          23,
+          4
+        ],
+        [
+          24,
+          5
+        ],
+        [
+          24,
+          6
+        ],
+        [
+          27,
+          7
+        ],
+        [
+          26,
+          8
+        ],
+        [
+          28,
+          8
+        ],
+        [
+          27,
+          9
+        ],
+        [
+          28,
+          10
+        ],
+        [
+          28,
+          11
+        ],
+        [
+          27,
+          12
+        ],
+        [
+          29,
+          12
+        ],
+        [
+          29,
+          13
+        ],
+        [
+          29,
+          14
+        ],
+        [
+          29,
+          15
+        ],
+        [
+          30,
+          16
+        ],
+        [
+          29,
+          17
+        ],
+        [
+          29,
+          18
+        ],
+        [
+          29,
+          19
+        ],
+        [
+          28,
+          20
+        ],
+        [
+          27,
+          21
+        ],
+        [
+          27,
+          22
+        ],
+        [
+          28,
+          23
+        ],
+        [
+          27,
+          23
+        ],
+        [
+          26,
+          24
+        ],
+        [
+          26,
+          25
+        ],
+        [
+          25,
+          26
+        ],
+        [
+          24,
+          26
+        ],
+        [
+          23,
+          27
+        ],
+        [
+          22,
+          27
+        ],
+        [
+          19,
+          28
+        ],
+        [
+          19,
+          29
+        ],
+        [
+          18,
+          28
+        ],
+        [
+          17,
+          29
+        ],
+        [
+          16,
+          30
+        ],
+        [
+          15,
+          30
+        ],
+        [
+          14,
+          30
+        ],
+        [
+          14,
+          29
+        ],
+        [
+          13,
+          28
+        ],
+        [
+          13,
+          27
+        ],
+        [
+          12,
+          28
+        ],
+        [
+          11,
+          29
+        ],
+        [
+          10,
+          28
+        ],
+        [
+          9,
+          28
+        ],
+        [
+          8,
+          27
+        ],
+        [
+          7,
+          27
+        ],
+        [
+          7,
+          26
+        ],
+        [
+          6,
+          25
+        ],
+        [
+          5,
+          24
+        ],
+        [
+          4,
+          23
+        ],
+        [
+          4,
+          22
+        ],
+        [
+          4,
+          21
+        ],
+        [
+          3,
+          20
+        ],
+        [
+          2,
+          20
+        ],
+        [
+          2,
+          19
+        ],
+        [
+          4,
+          18
+        ],
+        [
+          2,
+          18
+        ],
+        [
+          2,
+          17
+        ],
+        [
+          2,
+          13
+        ],
+        [
+          3,
+          12
+        ],
+        [
+          3,
+          11
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          4,
+          9
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          9,
+          4
+        ],
+        [
+          10,
+          3
+        ],
+        [
+          11,
+          2
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          13,
+          4
+        ],
+        [
+          13,
+          2
+        ],
+        [
+          14,
+          2
+        ],
+        [
+          15,
+          1
+        ]
+      ],
+      "frame_compound": [
+        [
+          16,
+          1
+        ],
+        [
+          16,
+          3
+        ],
+        [
+          17,
+          1
+        ],
+        [
+          17,
+          3
+        ],
+        [
+          18,
+          1
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          19,
+          1
+        ],
+        [
+          19,
+          3
+        ],
+        [
+          20,
+          2
+        ],
+        [
+          20,
+          4
+        ],
+        [
+          21,
+          2
+        ],
+        [
+          21,
+          4
+        ],
+        [
+          22,
+          2
+        ],
+        [
+          23,
+          3
+        ],
+        [
+          22,
+          5
+        ],
+        [
+          23,
+          5
+        ],
+        [
+          24,
+          4
+        ],
+        [
+          25,
+          4
+        ],
+        [
+          24,
+          6
+        ],
+        [
+          26,
+          5
+        ],
+        [
+          25,
+          7
+        ],
+        [
+          27,
+          6
+        ],
+        [
+          27,
+          7
+        ],
+        [
+          26,
+          8
+        ],
+        [
+          26,
+          9
+        ],
+        [
+          28,
+          8
+        ],
+        [
+          29,
+          9
+        ],
+        [
+          27,
+          10
+        ],
+        [
+          29,
+          10
+        ],
+        [
+          27,
+          11
+        ],
+        [
+          29,
+          11
+        ],
+        [
+          28,
+          12
+        ],
+        [
+          30,
+          12
+        ],
+        [
+          28,
+          13
+        ],
+        [
+          30,
+          13
+        ],
+        [
+          28,
+          14
+        ],
+        [
+          30,
+          14
+        ],
+        [
+          28,
+          15
+        ],
+        [
+          30,
+          15
+        ],
+        [
+          30,
+          16
+        ],
+        [
+          28,
+          16
+        ],
+        [
+          30,
+          17
+        ],
+        [
+          28,
+          17
+        ],
+        [
+          30,
+          18
+        ],
+        [
+          28,
+          18
+        ],
+        [
+          30,
+          19
+        ],
+        [
+          28,
+          19
+        ],
+        [
+          29,
+          20
+        ],
+        [
+          27,
+          20
+        ],
+        [
+          29,
+          21
+        ],
+        [
+          27,
+          21
+        ],
+        [
+          29,
+          22
+        ],
+        [
+          28,
+          23
+        ],
+        [
+          26,
+          22
+        ],
+        [
+          26,
+          23
+        ],
+        [
+          27,
+          24
+        ],
+        [
+          27,
+          25
+        ],
+        [
+          25,
+          24
+        ],
+        [
+          26,
+          26
+        ],
+        [
+          24,
+          25
+        ],
+        [
+          25,
+          27
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          23,
+          26
+        ],
+        [
+          22,
+          26
+        ],
+        [
+          23,
+          28
+        ],
+        [
+          22,
+          29
+        ],
+        [
+          21,
+          27
+        ],
+        [
+          21,
+          29
+        ],
+        [
+          20,
+          27
+        ],
+        [
+          20,
+          29
+        ],
+        [
+          19,
+          28
+        ],
+        [
+          19,
+          30
+        ],
+        [
+          18,
+          28
+        ],
+        [
+          18,
+          30
+        ],
+        [
+          17,
+          28
+        ],
+        [
+          17,
+          30
+        ],
+        [
+          16,
+          28
+        ],
+        [
+          16,
+          30
+        ],
+        [
+          15,
+          30
+        ],
+        [
+          15,
+          28
+        ],
+        [
+          14,
+          30
+        ],
+        [
+          14,
+          28
+        ],
+        [
+          13,
+          30
+        ],
+        [
+          13,
+          28
+        ],
+        [
+          12,
+          30
+        ],
+        [
+          12,
+          28
+        ],
+        [
+          11,
+          29
+        ],
+        [
+          11,
+          27
+        ],
+        [
+          10,
+          29
+        ],
+        [
+          10,
+          27
+        ],
+        [
+          9,
+          29
+        ],
+        [
+          8,
+          28
+        ],
+        [
+          9,
+          26
+        ],
+        [
+          8,
+          26
+        ],
+        [
+          7,
+          27
+        ],
+        [
+          6,
+          27
+        ],
+        [
+          7,
+          25
+        ],
+        [
+          5,
+          26
+        ],
+        [
+          6,
+          24
+        ],
+        [
+          4,
+          25
+        ],
+        [
+          4,
+          24
+        ],
+        [
+          5,
+          23
+        ],
+        [
+          5,
+          22
+        ],
+        [
+          3,
+          23
+        ],
+        [
+          2,
+          22
+        ],
+        [
+          4,
+          21
+        ],
+        [
+          2,
+          21
+        ],
+        [
+          4,
+          20
+        ],
+        [
+          2,
+          20
+        ],
+        [
+          3,
+          19
+        ],
+        [
+          1,
+          19
+        ],
+        [
+          3,
+          18
+        ],
+        [
+          1,
+          18
+        ],
+        [
+          3,
+          17
+        ],
+        [
+          1,
+          17
+        ],
+        [
+          3,
+          16
+        ],
+        [
+          1,
+          16
+        ],
+        [
+          1,
+          15
+        ],
+        [
+          3,
+          15
+        ],
+        [
+          1,
+          14
+        ],
+        [
+          3,
+          14
+        ],
+        [
+          1,
+          13
+        ],
+        [
+          3,
+          13
+        ],
+        [
+          1,
+          12
+        ],
+        [
+          3,
+          12
+        ],
+        [
+          2,
+          11
+        ],
+        [
+          4,
+          11
+        ],
+        [
+          2,
+          10
+        ],
+        [
+          4,
+          10
+        ],
+        [
+          2,
+          9
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          9,
+          2
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          2
+        ],
+        [
+          11,
+          4
+        ],
+        [
+          11,
+          2
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          1
+        ],
+        [
+          13,
+          3
+        ],
+        [
+          13,
+          1
+        ],
+        [
+          14,
+          3
+        ],
+        [
+          14,
+          1
+        ],
+        [
+          15,
+          3
+        ],
+        [
+          15,
+          1
+        ]
+      ]
+    }
+  },
+  "frames": [
+    {
+      "id": "frame_kinetic",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/frame_kinetic.png",
+      "family": "KINETIC",
+      "treatment": "angular",
+      "why": "An octagon with four spikes on the axes. Every transition is a corner and the silhouette is pointed: nothing else in the set has a straight run meeting another straight run.",
+      "track_pixels": 73
+    },
+    {
+      "id": "frame_cognitive",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/frame_cognitive.png",
+      "family": "COGNITIVE",
+      "treatment": "rounded",
+      "why": "One continuous circle. No corner, no break, no protrusion -- it is the only closed smooth curve in the set, and it is recognised by what it does NOT have.",
+      "track_pixels": 76
+    },
+    {
+      "id": "frame_permission",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/frame_permission.png",
+      "family": "PERMISSION",
+      "treatment": "barred",
+      "why": "A square clamped between a lintel and a sill that run wider than it does. The overhang is the tell: at native size the silhouette is wider than it is tall, and no other frame is. The first version ran the bars to the tile edge and three PERMISSION markers side by side fused into one continuous rail -- the overhang has to be visible AND bounded, so it stops two pixels short.",
+      "track_pixels": 124
+    },
+    {
+      "id": "frame_material",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/frame_material.png",
+      "family": "MATERIAL",
+      "treatment": "irregular",
+      "why": "A loop that has been eaten: the radius wanders by a pixel and a half and three arcs are missing entirely. Irregularity has to be structural, not noisy -- one stray pixel reads as a mistake, a wandering radius reads as corrosion.",
+      "track_pixels": 85
+    },
+    {
+      "id": "frame_compound",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/frame_compound.png",
+      "family": "COMPOUND",
+      "treatment": "doubled",
+      "why": "PROPOSED, NOT SPECIFIED. §15.5 gives the eight compounds no frame of their own and §33.7 names four family treatments, so a compound would otherwise have to borrow a parent's frame and lie about its family. TWO concentric rings: it belongs to no family, and it is visibly two of something, which is the true statement about it. The first version was one ring with four diagonal spurs and it was indistinguishable from COGNITIVE at native size -- the spurs read as noise on the outline rather than as structure.",
+      "track_pixels": 156
+    }
+  ],
+  "glyphs": [
+    {
+      "id": "glyph_lightened",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_lightened.png",
+      "kind": "status",
+      "family": "KINETIC",
+      "sentence": "Lighter than it should be.",
+      "targets": [
+        "actor",
+        "object",
+        "player"
+      ],
+      "duration_s": 8,
+      "chance": 0.4
+    },
+    {
+      "id": "glyph_anchored",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_anchored.png",
+      "kind": "status",
+      "family": "KINETIC",
+      "sentence": "Fixed in place.",
+      "targets": [
+        "actor",
+        "object",
+        "player"
+      ],
+      "duration_s": 4,
+      "chance": 0.3
+    },
+    {
+      "id": "glyph_slippery",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_slippery.png",
+      "kind": "status",
+      "family": "KINETIC",
+      "sentence": "Nothing holds.",
+      "targets": [
+        "object",
+        "surface",
+        "player"
+      ],
+      "duration_s": 10,
+      "chance": 0.45
+    },
+    {
+      "id": "glyph_confused",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_confused.png",
+      "kind": "status",
+      "family": "COGNITIVE",
+      "sentence": "Cannot tell friend from foe.",
+      "targets": [
+        "actor"
+      ],
+      "duration_s": 5,
+      "chance": 0.3
+    },
+    {
+      "id": "glyph_turncoat",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_turncoat.png",
+      "kind": "status",
+      "family": "COGNITIVE",
+      "sentence": "Fighting for you now.",
+      "targets": [
+        "actor"
+      ],
+      "duration_s": 8,
+      "chance": 0.15
+    },
+    {
+      "id": "glyph_blinded",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_blinded.png",
+      "kind": "status",
+      "family": "COGNITIVE",
+      "sentence": "Cannot see past arm's reach.",
+      "targets": [
+        "actor"
+      ],
+      "duration_s": 6,
+      "chance": 0.35
+    },
+    {
+      "id": "glyph_exposed",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_exposed.png",
+      "kind": "status",
+      "family": "COGNITIVE",
+      "sentence": "Nothing is covering it.",
+      "targets": [
+        "actor"
+      ],
+      "duration_s": 6,
+      "chance": 0.35
+    },
+    {
+      "id": "glyph_silenced",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_silenced.png",
+      "kind": "status",
+      "family": "PERMISSION",
+      "sentence": "No special moves.",
+      "targets": [
+        "actor"
+      ],
+      "duration_s": 6,
+      "chance": 0.3
+    },
+    {
+      "id": "glyph_rooted",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_rooted.png",
+      "kind": "status",
+      "family": "PERMISSION",
+      "sentence": "Cannot walk.",
+      "targets": [
+        "actor"
+      ],
+      "duration_s": 5,
+      "chance": 0.35
+    },
+    {
+      "id": "glyph_phased",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_phased.png",
+      "kind": "status",
+      "family": "PERMISSION",
+      "sentence": "Passes through.",
+      "targets": [
+        "actor",
+        "object",
+        "surface",
+        "player"
+      ],
+      "duration_s": 6,
+      "chance": 0.25
+    },
+    {
+      "id": "glyph_burning",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_burning.png",
+      "kind": "status",
+      "family": "MATERIAL",
+      "sentence": "On fire, and setting fire.",
+      "targets": [
+        "actor",
+        "object",
+        "surface",
+        "volume",
+        "player"
+      ],
+      "duration_s": 6,
+      "chance": 0.35,
+      "requires_trait": "burnable"
+    },
+    {
+      "id": "glyph_conductive",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_conductive.png",
+      "kind": "status",
+      "family": "MATERIAL",
+      "sentence": "Carries a current.",
+      "targets": [
+        "actor",
+        "object",
+        "surface",
+        "player"
+      ],
+      "duration_s": 10,
+      "chance": 0.4,
+      "requires_trait": "conductive_material"
+    },
+    {
+      "id": "glyph_brittle",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_brittle.png",
+      "kind": "status",
+      "family": "MATERIAL",
+      "sentence": "About to give.",
+      "targets": [
+        "object",
+        "surface"
+      ],
+      "duration_s": 8,
+      "chance": 0.35
+    },
+    {
+      "id": "glyph_updraft",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_updraft.png",
+      "kind": "compound",
+      "family": "COMPOUND",
+      "sentence": "Rising on its own heat.",
+      "targets": [
+        "actor",
+        "object"
+      ],
+      "duration_s": 5,
+      "components": [
+        "lightened",
+        "burning"
+      ]
+    },
+    {
+      "id": "glyph_grounded",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_grounded.png",
+      "kind": "compound",
+      "family": "COMPOUND",
+      "sentence": "Earthed. Current flows through it and past it.",
+      "targets": [
+        "actor",
+        "object",
+        "surface"
+      ],
+      "duration_s": 8,
+      "components": [
+        "anchored",
+        "conductive"
+      ]
+    },
+    {
+      "id": "glyph_spreading",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_spreading.png",
+      "kind": "compound",
+      "family": "COMPOUND",
+      "sentence": "The fire is travelling.",
+      "targets": [
+        "surface",
+        "object"
+      ],
+      "duration_s": 8,
+      "components": [
+        "slippery",
+        "burning"
+      ]
+    },
+    {
+      "id": "glyph_arc_path",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_arc_path.png",
+      "kind": "compound",
+      "family": "COMPOUND",
+      "sentence": "A current runs along it.",
+      "targets": [
+        "surface"
+      ],
+      "duration_s": 10,
+      "components": [
+        "slippery",
+        "conductive"
+      ]
+    },
+    {
+      "id": "glyph_suspended",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_suspended.png",
+      "kind": "compound",
+      "family": "COMPOUND",
+      "sentence": "Held out of the world.",
+      "targets": [
+        "actor",
+        "object"
+      ],
+      "duration_s": 6,
+      "components": [
+        "anchored",
+        "phased"
+      ]
+    },
+    {
+      "id": "glyph_shatterpoint",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_shatterpoint.png",
+      "kind": "compound",
+      "family": "COMPOUND",
+      "sentence": "One good hit.",
+      "targets": [
+        "object",
+        "surface"
+      ],
+      "duration_s": 6,
+      "components": [
+        "anchored",
+        "brittle"
+      ]
+    },
+    {
+      "id": "glyph_helpless",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_helpless.png",
+      "kind": "compound",
+      "family": "COMPOUND",
+      "sentence": "Lost, and out of tricks.",
+      "targets": [
+        "actor"
+      ],
+      "duration_s": 7,
+      "components": [
+        "confused",
+        "silenced"
+      ]
+    },
+    {
+      "id": "glyph_floundering",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_floundering.png",
+      "kind": "compound",
+      "family": "COMPOUND",
+      "sentence": "Blind and sliding.",
+      "targets": [
+        "actor"
+      ],
+      "duration_s": 6,
+      "components": [
+        "blinded",
+        "slippery"
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "marker_lightened",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_lightened.png",
+      "frame": "frame_kinetic",
+      "family": "KINETIC"
+    },
+    {
+      "id": "marker_anchored",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_anchored.png",
+      "frame": "frame_kinetic",
+      "family": "KINETIC"
+    },
+    {
+      "id": "marker_slippery",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_slippery.png",
+      "frame": "frame_kinetic",
+      "family": "KINETIC"
+    },
+    {
+      "id": "marker_confused",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_confused.png",
+      "frame": "frame_cognitive",
+      "family": "COGNITIVE"
+    },
+    {
+      "id": "marker_turncoat",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_turncoat.png",
+      "frame": "frame_cognitive",
+      "family": "COGNITIVE"
+    },
+    {
+      "id": "marker_blinded",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_blinded.png",
+      "frame": "frame_cognitive",
+      "family": "COGNITIVE"
+    },
+    {
+      "id": "marker_exposed",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_exposed.png",
+      "frame": "frame_cognitive",
+      "family": "COGNITIVE"
+    },
+    {
+      "id": "marker_silenced",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_silenced.png",
+      "frame": "frame_permission",
+      "family": "PERMISSION"
+    },
+    {
+      "id": "marker_rooted",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_rooted.png",
+      "frame": "frame_permission",
+      "family": "PERMISSION"
+    },
+    {
+      "id": "marker_phased",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_phased.png",
+      "frame": "frame_permission",
+      "family": "PERMISSION"
+    },
+    {
+      "id": "marker_burning",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_burning.png",
+      "frame": "frame_material",
+      "family": "MATERIAL"
+    },
+    {
+      "id": "marker_conductive",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_conductive.png",
+      "frame": "frame_material",
+      "family": "MATERIAL"
+    },
+    {
+      "id": "marker_brittle",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_brittle.png",
+      "frame": "frame_material",
+      "family": "MATERIAL"
+    },
+    {
+      "id": "marker_updraft",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_updraft.png",
+      "frame": "frame_compound",
+      "family": "COMPOUND"
+    },
+    {
+      "id": "marker_grounded",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_grounded.png",
+      "frame": "frame_compound",
+      "family": "COMPOUND"
+    },
+    {
+      "id": "marker_spreading",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_spreading.png",
+      "frame": "frame_compound",
+      "family": "COMPOUND"
+    },
+    {
+      "id": "marker_arc_path",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_arc_path.png",
+      "frame": "frame_compound",
+      "family": "COMPOUND"
+    },
+    {
+      "id": "marker_suspended",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_suspended.png",
+      "frame": "frame_compound",
+      "family": "COMPOUND"
+    },
+    {
+      "id": "marker_shatterpoint",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_shatterpoint.png",
+      "frame": "frame_compound",
+      "family": "COMPOUND"
+    },
+    {
+      "id": "marker_helpless",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_helpless.png",
+      "frame": "frame_compound",
+      "family": "COMPOUND"
+    },
+    {
+      "id": "marker_floundering",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_floundering.png",
+      "frame": "frame_compound",
+      "family": "COMPOUND"
+    }
+  ],
+  "hints": [
+    {
+      "id": "hint_updraft_needs_lightened",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_updraft_needs_lightened.png",
+      "compound": "updraft",
+      "missing": "lightened",
+      "present": "burning"
+    },
+    {
+      "id": "hint_updraft_needs_burning",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_updraft_needs_burning.png",
+      "compound": "updraft",
+      "missing": "burning",
+      "present": "lightened"
+    },
+    {
+      "id": "hint_grounded_needs_anchored",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_grounded_needs_anchored.png",
+      "compound": "grounded",
+      "missing": "anchored",
+      "present": "conductive"
+    },
+    {
+      "id": "hint_grounded_needs_conductive",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_grounded_needs_conductive.png",
+      "compound": "grounded",
+      "missing": "conductive",
+      "present": "anchored"
+    },
+    {
+      "id": "hint_spreading_needs_slippery",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_spreading_needs_slippery.png",
+      "compound": "spreading",
+      "missing": "slippery",
+      "present": "burning"
+    },
+    {
+      "id": "hint_spreading_needs_burning",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_spreading_needs_burning.png",
+      "compound": "spreading",
+      "missing": "burning",
+      "present": "slippery"
+    },
+    {
+      "id": "hint_arc_path_needs_slippery",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_arc_path_needs_slippery.png",
+      "compound": "arc_path",
+      "missing": "slippery",
+      "present": "conductive"
+    },
+    {
+      "id": "hint_arc_path_needs_conductive",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_arc_path_needs_conductive.png",
+      "compound": "arc_path",
+      "missing": "conductive",
+      "present": "slippery"
+    },
+    {
+      "id": "hint_suspended_needs_anchored",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_suspended_needs_anchored.png",
+      "compound": "suspended",
+      "missing": "anchored",
+      "present": "phased"
+    },
+    {
+      "id": "hint_suspended_needs_phased",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_suspended_needs_phased.png",
+      "compound": "suspended",
+      "missing": "phased",
+      "present": "anchored"
+    },
+    {
+      "id": "hint_shatterpoint_needs_anchored",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_shatterpoint_needs_anchored.png",
+      "compound": "shatterpoint",
+      "missing": "anchored",
+      "present": "brittle"
+    },
+    {
+      "id": "hint_shatterpoint_needs_brittle",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_shatterpoint_needs_brittle.png",
+      "compound": "shatterpoint",
+      "missing": "brittle",
+      "present": "anchored"
+    },
+    {
+      "id": "hint_helpless_needs_confused",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_helpless_needs_confused.png",
+      "compound": "helpless",
+      "missing": "confused",
+      "present": "silenced"
+    },
+    {
+      "id": "hint_helpless_needs_silenced",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_helpless_needs_silenced.png",
+      "compound": "helpless",
+      "missing": "silenced",
+      "present": "confused"
+    },
+    {
+      "id": "hint_floundering_needs_blinded",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_floundering_needs_blinded.png",
+      "compound": "floundering",
+      "missing": "blinded",
+      "present": "slippery"
+    },
+    {
+      "id": "hint_floundering_needs_slippery",
+      "native": [
+        48,
+        32
+      ],
+      "png": "png/hint_floundering_needs_slippery.png",
+      "compound": "floundering",
+      "missing": "slippery",
+      "present": "blinded"
+    }
+  ],
+  "extras": [
+    {
+      "id": "marker_tick",
+      "native": [
+        8,
+        8
+      ],
+      "png": "png/marker_tick.png"
+    },
+    {
+      "id": "example_slippery_38pct_player",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/example_slippery_38pct_player.png"
+    },
+    {
+      "id": "deplete_kinetic",
+      "native": [
+        256,
+        32
+      ],
+      "png": "png/deplete_kinetic.png"
+    },
+    {
+      "id": "deplete_cognitive",
+      "native": [
+        256,
+        32
+      ],
+      "png": "png/deplete_cognitive.png"
+    },
+    {
+      "id": "deplete_permission",
+      "native": [
+        256,
+        32
+      ],
+      "png": "png/deplete_permission.png"
+    },
+    {
+      "id": "deplete_material",
+      "native": [
+        256,
+        32
+      ],
+      "png": "png/deplete_material.png"
+    },
+    {
+      "id": "deplete_compound",
+      "native": [
+        256,
+        32
+      ],
+      "png": "png/deplete_compound.png"
+    },
+    {
+      "id": "atlas_markers",
+      "native": [
+        256,
+        96
+      ],
+      "png": "png/atlas_markers.png"
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+#!/usr/bin/env sh
+# Prove the exported pack against BOTH of Production's validators.
+#
+#   tools/verify_content_pack.sh
+#
+# TWO validators, because this is a DUAL-LANGUAGE contract and they do not
+# police the same things:
+#
+#   schemas/content.py    strict pydantic: `extra="forbid"`, length limits
+#   content_registry.gd   does the scene EXIST, does the fallback chain end
+#
+# The first version of this script ran only the GDScript half. The pack
+# passed it, and Production's Python gate rejected it on three counts -- a
+# 231-character pack description against a 160 limit, plus `source_asset` and
+# `source_batch_review`, two fields `ContentEntry` forbids outright. That is
+# how a broken pack reached an integration attempt. Verifying one side of a
+# two-sided contract is verifying nothing.
+#
+# It also simulates the OTHER HALF of the handoff: Production renaming its six
+# procedural `fixture_light_<theme>` ids to `<id>_proc` so the authored pack
+# can take the canonical ids. Those two halves are ONE atomic change -- the
+# registry refuses a duplicate id, so landing either half alone fails at load.
+#
+# Production's files are fetched read-only at run time into a throwaway
+# harness and deleted on exit. Nothing from the gameplay branch is committed
+# to the art branch, and that branch is never written to.
+set -e
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+GODOT="${GODOT:-$ROOT/.tools/godot}"
+PROD="${PROD_REF:-origin/claude/archipepsi-echoes-continuation-b1adno}"
+H="$ROOT/godot/_harness"
+[ -x "$GODOT" ] || { echo "verify-content: no godot at $GODOT" >&2; exit 2; }
+
+cleanup() {
+  rm -rf "$H"
+  rm -f "$ROOT/godot/content/registry/legacy_procedural.json"
+}
+trap cleanup EXIT
+cleanup
+mkdir -p "$H"
+
+# Production's validator, adapted in exactly two mechanical ways and no more:
+#
+#   1. `class_name ContentRegistry` is stripped and the file is PRELOADED by
+#      path instead, because Godot's global class cache does not register a
+#      script dropped into the project between runs. Stripping the line
+#      leaves three dangling self-references, all inside the static-singleton
+#      convenience `shared()` that this test never calls, so those three are
+#      rewritten and nothing else is. The transform asserts that no
+#      self-reference survived.
+#   2. The six CLUSTER_* constants are inlined, because a `-s` script context
+#      has no autoloads. The pack declares no cluster, so that branch only
+#      has to compile.
+#
+# Every rule that RUNS -- `_load_manifest`, `_accept`, `resolve`,
+# `_check_cross_references` -- is Production's, unedited.
+#      P2-C ADDED A SECOND AUTOLOAD REFERENCE. `eda4fd9` validates
+#      `fits_floors` against `Constants.TOWER_MIN_FLOORS/MAX_FLOORS`, and
+#      the harness broke on it -- a compile error, not a failed rule, so
+#      it would have read as "the validator is unhappy" if the log had
+#      not been looked at. The inlined constants are now READ FROM
+#      PRODUCTION'S OWN `constants.gd` rather than retyped, so the next
+#      one to move cannot silently make this harness test a different
+#      number than the game does.
+git show "$PROD:godot/scripts/autoload/constants.gd" > "$H/prod_constants.gd"
+git show "$PROD:godot/scripts/content/content_registry.gd" | python3 -c '
+import re, sys
+s = sys.stdin.read()
+with open(sys.argv[1]) as fh:
+    src = fh.read()
+wanted = sorted(set(re.findall(r"Constants\.([A-Z][A-Z0-9_]*)", s)))
+inlined = []
+for name in wanted:
+    hit = re.search(r"^const %s\s*(?::\s*\w+\s*)?:?=\s*(.+)$" % name,
+                    src, re.M)
+    if hit is None:
+        raise SystemExit(
+            "verify-content: Production references Constants.%s and its "
+            "own constants.gd does not define it" % name)
+    inlined.append("const %s = %s" % (name, hit.group(1).split("#")[0].strip()))
+s = s.replace("class_name ContentRegistry\n", "")
+s = s.replace("extends RefCounted",
+              "extends RefCounted\n" + "\n".join(inlined) + "\n", 1)
+s = s.replace("Constants.", "")
+s = s.replace("static var _shared: ContentRegistry = null", "static var _shared = null")
+s = s.replace("static func shared() -> ContentRegistry:", "static func shared() -> Object:")
+s = s.replace("_shared = ContentRegistry.new()",
+              "_shared = (load(\"res://_harness/content_registry.gd\") as GDScript).new()")
+assert "ContentRegistry" not in s, "a self-reference survived the transform"
+assert "Constants." not in s, "an autoload reference survived the transform"
+sys.stdout.write(s)' "$H/prod_constants.gd" > "$H/content_registry.gd"
+
+# No self-references, so only the class_name line goes.
+git show "$PROD:godot/scripts/content/visual_ownership.gd" \
+  | sed 's/^class_name VisualOwnership$//' > "$H/visual_ownership.gd"
+
+# Production's own manifest, VERBATIM.
+#
+# This used to simulate the other half of the handoff by renaming the six
+# procedural `fixture_light_<theme>` ids to `<id>_proc`. That simulation is
+# retired: Production has LANDED the rename, so its manifest already carries
+# the `_proc` ids and renaming again produced `_proc_proc` -- a fallback
+# chain pointing at ids no pack defines. A simulation of a state that has
+# since become real is not a simulation, it is a second, wrong copy.
+git show "$PROD:godot/content/registry/legacy_procedural.json" \
+  > "$ROOT/godot/content/registry/legacy_procedural.json"
+
+# 1. PYTHON. First, because it is the cheaper gate and the one that was
+#    missing. Both manifests are present, so `build_registry` also checks the
+#    cross-pack rules against the real post-handoff state.
+echo "[verify] --- Production's Python ContentManifest ---"
+python3 "$ROOT/tools/content/verify_manifest.py" "$PROD"
+
+# 2. GDSCRIPT.
+echo "[verify] --- Production's GDScript ContentRegistry ---"
+cp "$ROOT/tools/content/verify_pack.gd" "$H/verify.gd"
+xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" \
+  -s _harness/verify.gd 2>&1 | grep -E "^\[verify\]|SCRIPT ERROR" || true
+
+# 3. COLLISION. Not Production's validator -- ours, and the reason it
+# exists is that neither of theirs can catch this. A shell with perfect
+# metadata and no colliders passes both checks above and then measures as
+# 625 findings of "nothing is there", which is what happened at eda4fd9.
+# Loads the real shipped .tscn, counts real CollisionShape3Ds, and fires
+# RoomAudit's own probe at every declared surface. Reports; never PASSes.
+echo "[verify] --- collision in the shipped scenes (art-side evidence) ---"
+cp "$ROOT/tools/content/verify_collision.gd" "$H/collision.gd"
+xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" \
+  -s _harness/collision.gd 2>&1 | grep -E "^\[collision\]|SCRIPT ERROR" || true
+
+# 4. SCENE / MANIFEST PARITY. The generated `.tscn` carries the traversal
+# markers `ShellValidator` measures a segment FROM, so a scene that was
+# not regenerated after a manifest change quietly certifies the room that
+# used to exist rather than failing. That happened: the hall was repaired
+# at `3b7bb02`, `export_content_pack.py` wrote the manifest, nobody ran
+# `export_content_pack.sh` to wrap the scenes, and Production found four
+# declarations disagreeing with their markers at `94d562d`.
+#
+# Cheap, and it runs here so the two-command export cannot silently be
+# half-done again.
+echo "[verify] --- scene markers against the manifest ---"
+python3 "$ROOT/tools/content/verify_markers.py"
+
+# 5. THE FLIGHT SURFACES, MEASURED FROM THEIR TRIANGLES. Every other
+# check in this file -- and every gate in the build -- reads collider
+# AABBs, and the AABB of a sloped wedge is the box it was cut from. So a
+# chain of wedges sloping the WRONG WAY presented exactly the boxes a
+# flood wants, one per 0.9 m, while the surface underfoot sawtoothed:
+# down 0.35-0.70 m between apparent treads, then up about 1.40 against a
+# `MAX_VERTICAL_STEP` of 1.0. Art passed it; Production put a real
+# capsule on it at `67add07` and it did not survive.
+#
+# An AABB cannot see a slope. This reads the collider TRIANGLES out of
+# the shipped `.glb` and drops a 0.10 m grid of downward rays through
+# them, which is four times finer than the player radius, so a dip
+# cannot hide between two samples.
+echo "[verify] --- flight surfaces, from the collider triangles ---"
+python3 "$ROOT/tools/content/measure_flights.py"
+
+# 6. RETIRED. `ShellValidator` used to be run here against the shipped
+# scenes, transformed out of Production's source. `b37fe07` rewrote that
+# file -- it now reaches `ChamberBuilders.all_solid_boxes` and
+# `TraversalLaw` as well as `RoomContract`, `ContentInstantiator` and
+# `Constants` -- and the transform's own assertion caught the breakage
+# rather than silently no-opping, which is the one thing it was built to
+# do. Regex-patching four files of somebody else's source to borrow one
+# rule is not a maintainable way to hold a contract.
+#
+# NOTHING IS LOST BY RETIRING IT, and that is checked rather than hoped:
+#
+#   the traversal law   `tools/blender/traversallaw.py` mirrors the same
+#                       flood over the same collision hulls, at BUILD
+#                       time, and gates the export. It reproduced all
+#                       three of Production's `shell_hall_transit`
+#                       findings by name before the hall was touched.
+#   the envelope        `preflight_shells.py`, which reads
+#                       `RoomContract.WALL_ALLOWANCE` from Production's
+#                       own constants rather than assuming it.
+#   the sockets         `preflight_shells.py`, same run.
+#
+# A check that runs in the build beats a check that runs after the
+# export, because it is the one that can stop the mistake.
+
+# 7. THE OFFERS, MEASURED AGAINST THE COLLISION THEY LIVE IN. Rails,
+# launches and grapple points are DECLARATIONS -- three points and a
+# name -- and until this existed nothing checked that the room they name
+# would let a player use them. It does not: the audit at `802732d` found
+# a rail riding 1.99 m inside a pylon, three collar bands with the ride
+# 0.17 m inside them, a launch target four metres inside a machine and a
+# grapple anchor with 0.76 m of air under it.
+#
+# Rails are measured on the BAKED CURVE, not the control polygon --
+# every one of those rails had legal control points and a Catmull-Rom
+# that cut the corner. Launch arcs are measured as the FOOT's path, per
+# the owner's ruling, so a target on a floor face reads as the landing
+# surface it is rather than as a buried point. Production's own
+# constants are read out of its source rather than retyped.
+echo "[verify] --- declared offers against real collision ---"
+python3 "$ROOT/tools/content/measure_offers.py"
+
+# 8. AND THE SAME GATE, RUN AGAINST THE ART IT WAS BUILT FROM. A gate
+# that has only ever seen art that passes it has not been shown to do
+# anything. This replays the audited pack out of git and FAILS unless
+# every one of those findings comes back, by collider name and to the
+# centimetre -- so the seven repairs cannot be quietly undone, and the
+# gate cannot quietly stop measuring.
+echo "[verify] --- the audited pack, replayed ---"
+python3 "$ROOT/tools/content/replay_audited.py"

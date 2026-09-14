@@ -19,6 +19,10 @@ var snapshot: Dictionary = {}
 ## quote Epsilon back at the player. Client-side only; lost on restart.
 var last_completed_zone: Dictionary = {}
 var _held_zone: Dictionary = {}
+## `zone_id -> proposal_id`, from every offer this client has seen.
+## The fallback carrier for `proposal_for`; see it for why the snapshot
+## comes first.
+var _offer_proposals: Dictionary = {}
 
 var _socket := WebSocketPeer.new()
 var _retry_delay := 0.5
@@ -30,6 +34,17 @@ func _ready() -> void:
 
 func _open() -> void:
 	_socket = WebSocketPeer.new()
+	# Before `connect_to_url`, which is when the buffer is allocated.
+	#
+	# The default is 64 KiB and an oversized message is NOT truncated:
+	# the peer closes with 1009 "message too big", reconnects, receives
+	# the same snapshot, and closes again forever while the game says
+	# BRIDGE OFFLINE. A 450-location campaign's connect snapshot is
+	# 110 KB -- 105 KB of it the 450 scouted locations -- so production
+	# scale could not connect at all, while the prototype's 8.5 KB
+	# always fitted. `test_snapshot_size.py` measures the worst case
+	# against this number so the next growth fails a test instead.
+	_socket.inbound_buffer_size = Constants.WS_INBOUND_BUFFER_BYTES
 	var url := "ws://%s:%d" % [Constants.BRIDGE_HOST, Constants.BRIDGE_PORT]
 	var err := _socket.connect_to_url(url)
 	_was_connecting = err == OK
@@ -88,6 +103,7 @@ func _handle(raw: String) -> void:
 			pass
 		"campaign_snapshot":
 			var previous_count := int(snapshot.get("completed_zone_count", 0))
+			_reattach_echo_log(message)
 			snapshot = message
 			if int(message.get("completed_zone_count", 0)) > previous_count \
 					and not _held_zone.is_empty():
@@ -100,7 +116,16 @@ func _handle(raw: String) -> void:
 				_held_zone = zone_content
 			snapshot_received.emit(message)
 		"zone_ready":
-			zone_ready_received.emit(message.get("zone", {}),
+			# THE OFFER'S IDENTITY, kept per Zone. `AMALGAM_BRIDGE.md`
+			# §5.9 asks the client to capture `proposal_id` when it
+			# STARTS a build; this is the fallback carrier for a bridge
+			# that puts it only on the offer. The snapshot is the one
+			# the build path actually reads -- see `proposal_for`.
+			var offered: Dictionary = message.get("zone", {})
+			var offer_id := str(message.get("proposal_id", ""))
+			if offer_id != "":
+				_offer_proposals[str(offered.get("zone_id", ""))] = offer_id
+			zone_ready_received.emit(offered,
 					bool(message.get("used_fallback", false)))
 		"notification":
 			notification_received.emit(message)
@@ -111,7 +136,87 @@ func _handle(raw: String) -> void:
 		_:
 			push_warning("unknown bridge message type")
 
+## True while this client has asked for a full snapshot because the Echo
+## log it holds did not match the length the bridge reported. Cleared by
+## the complete snapshot that answers, so one desync costs one `hello`
+## and not one per snapshot forever.
+var _echo_log_resync_pending := false
+
+## How many snapshots arrived WITHOUT the Echo log because it had not
+## changed since the last one. A diagnostic, and what the integration
+## driver asserts against: a full campaign in which this stays zero is
+## not exercising the elision at all, so a broken reattach would pass.
+var elided_snapshot_count := 0
+
+## True if the Echo log this client holds ever got SHORTER within one
+## campaign. It cannot legitimately: the log is lifetime history and only
+## ever grows at the end. A shrink means an elided log was not put back,
+## and that is invisible from the outside — the archive just looks short,
+## and looks right again on the next snapshot that carries the log. This
+## is the only cheap way to catch it, so it is checked continuously
+## rather than at the end of a run.
+var echo_log_shrank := false
+var _echo_log_high_water := 0
+var _echo_log_campaign := ""
+
+## Restores an Echo log the bridge left out of this snapshot.
+##
+## The log is LIFETIME history — ~390 KiB of a late campaign's ~400 KiB
+## snapshot — and it only ever grows at the end, so the bridge stops
+## re-sending it once every client has it and sets
+## `interpretations_complete` false instead. Putting the cached list back
+## before anything reads the snapshot means every consumer of
+## `interpretations` still just reads `interpretations`: there is one Echo
+## log on this side, not a list and a cache that can disagree.
+##
+## `interpretation_count` is sent either way, so a client that somehow
+## missed an append can SEE that it did rather than quietly rendering a
+## short archive. It asks for the whole thing back; `hello` is answered
+## with a complete snapshot.
+func _reattach_echo_log(message: Dictionary) -> void:
+	# Absent means an older bridge that always sends the log — the default
+	# is the old behaviour, so nothing here changes for it.
+	if not bool(message.get("interpretations_complete", true)):
+		message["interpretations"] = snapshot.get("interpretations", [])
+		elided_snapshot_count += 1
+	else:
+		_echo_log_resync_pending = false
+	# Within one campaign the log only grows. Across campaigns it starts
+	# over, so a reset is only legitimate when the campaign changed too.
+	var campaign := "%s/%s/%s" % [message.get("seed_name", ""),
+			message.get("team", 0), message.get("slot_id", 0)]
+	if campaign != _echo_log_campaign:
+		_echo_log_campaign = campaign
+		_echo_log_high_water = 0
+	var size: int = (message.get("interpretations", []) as Array).size()
+	if size < _echo_log_high_water:
+		echo_log_shrank = true
+		push_warning("Echo log shrank from %d to %d within one campaign"
+				% [_echo_log_high_water, size])
+	_echo_log_high_water = maxi(_echo_log_high_water, size)
+
+	if not message.has("interpretation_count"):
+		return
+	var claimed := int(message.get("interpretation_count", 0))
+	var held: Array = message.get("interpretations", [])
+	if claimed == held.size() or _echo_log_resync_pending:
+		return
+	push_warning("Echo log out of step: bridge says %d, holding %d" % [
+			claimed, held.size()])
+	_echo_log_resync_pending = true
+	send_intent({"type": "hello", "client_version": "0.1.0"})
+
 ## Convenience accessors over the last snapshot -----------------------------
+
+## The lifetime Echo log. Complete whether or not this snapshot carried it.
+func interpretations() -> Array:
+	return snapshot.get("interpretations", [])
+
+func echo_by_id(echo_id: String) -> Dictionary:
+	for echo: Dictionary in interpretations():
+		if str(echo.get("echo_id", "")) == echo_id:
+			return echo
+	return {}
 
 func hub() -> Dictionary:
 	return snapshot.get("hub", {})
@@ -122,6 +227,52 @@ func hub_mode() -> String:
 func active_zone() -> Dictionary:
 	var zone: Variant = snapshot.get("active_zone")
 	return zone if typeof(zone) == TYPE_DICTIONARY else {}
+
+## WHICH PROPOSAL THIS ZONE IS RIGHT NOW (`AMALGAM_BRIDGE.md` §5.9).
+##
+## Captured by `ZoneController.setup` when it STARTS a build and echoed
+## on that build's `layout_result`, so a result arriving after Epsilon
+## replaced the content or `reselect_hosts` regraphed it is recognised
+## as being about a Zone that no longer exists -- and spends none of the
+## replacement's budget, bars none of its rooms and commits nothing.
+##
+## THE SNAPSHOT FIRST, because the snapshot is what the build path
+## reads. `main.gd::_to_zone` builds from
+## `BridgeClient.active_zone()["zone"]`; nothing in this client is
+## connected to `zone_ready_received` at all. A cold restart into a Zone
+## that was generated and never committed gets a snapshot and no offer,
+## so an implementation that only remembered offers would bind nothing
+## on exactly the path a restart takes.
+##
+## The offer is the fallback, for a bridge that carries the identity
+## there and not on the snapshot. `""` means this bridge sends no
+## identity -- older than the field -- and the client then sends none,
+## which is the documented legacy behaviour and NOT a silent omission:
+## `ZoneController.proposal_id` is empty and says so.
+func proposal_for(zone_id: String) -> String:
+	if zone_id == "":
+		return ""
+	if str(active_zone().get("zone_id", "")) == zone_id:
+		var from_snapshot := str(snapshot.get("active_proposal_id", ""))
+		if from_snapshot != "":
+			return from_snapshot
+	return str(_offer_proposals.get(zone_id, ""))
+
+## WHICH ATTEMPT at that proposal the bridge is on, for this Zone.
+##
+## `ZoneRecord.layout_refusals` — a quantity the record already keeps and
+## already sends, on the same `active_zone` the build is made from. A
+## refusal ends one attempt and begins the next, so the count IS the
+## ordinal; `proposal_id` cannot serve, because two tries at identical
+## content hash identically and are supposed to.
+##
+## `-1` when this bridge holds no record for the Zone, which the
+## controller sends as nothing at all.
+func attempt_for(zone_id: String) -> int:
+	var record := active_zone()
+	if zone_id == "" or str(record.get("zone_id", "")) != zone_id:
+		return -1
+	return int(record.get("layout_refusals", 0))
 
 ## The folded component set. The BRIDGE folds; nothing here re-derives it.
 func mechanics() -> Dictionary:

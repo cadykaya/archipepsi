@@ -11,10 +11,10 @@ static func spawn(parent: Node, at: Vector3, radius: float,
 	if parent == null:
 		return
 	var blast := Blast.new()
-	var mesh := SphereMesh.new()
-	mesh.radius = radius
-	mesh.height = radius * 2.0
-	blast.mesh = mesh
+	var sphere := SphereMesh.new()
+	sphere.radius = radius
+	sphere.height = radius * 2.0
+	blast.mesh = sphere
 	blast.material_override = ThemeMaterials.glow_material(
 			color.lightened(0.2), 3.0)
 	parent.add_child(blast)

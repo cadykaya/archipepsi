@@ -60,6 +60,12 @@ const FOOTPRINT := {
 	"wind_volume": {"half_width": 0.8, "half_depth": 0.8, "height": 6.0},
 	"bounce_pad": {"half_width": 0.6, "half_depth": 0.6, "height": 7.0},
 	"moving_platform": {"half_width": 0.8, "half_depth": 0.8, "height": 5.2},
+	# THE ONE FEATURE THAT IS A CHAIN RATHER THAN AN OBJECT. It needs a
+	# RUN: somewhere the crate starts, the plate it is shoved onto, the
+	# door beyond, and the alcove the door closes. All of that is along
+	# depth, deliberately -- laid across the width it would need a 12 m
+	# room and would be offered to almost nothing.
+	"powered_door": {"half_width": 0.8, "half_depth": 3.5, "height": 3.6},
 }
 
 ## Note text per tag, so a feature that yields a note says something about
@@ -72,6 +78,7 @@ const _NOTES := {
 	"wind_volume": "The updraft is free. The landing is yours.",
 	"bounce_pad": "No item required. Just enthusiasm.",
 	"moving_platform": "It goes there, then it comes back. Forever.",
+	"powered_door": "The crate is the key. I lost the other kind.",
 }
 
 ## The narrowest chamber that can host this tag: lane, the feature's own
@@ -208,6 +215,8 @@ static func _build(root: Node3D, tag: String, theme: String,
 			return _wind_volume(root, theme, origin, height, reward_id, note)
 		"bounce_pad":
 			return _bounce_pad(root, theme, origin, height, reward_id, note)
+		"powered_door":
+			return _powered_door(root, theme, origin, reward_id, note)
 		"moving_platform":
 			return _moving_platform(root, theme, origin, height, reward_id, note)
 	# An unknown tag is drift between the schema and this file, not a Zone
@@ -263,7 +272,7 @@ static func _grapple_anchor(root: Node3D, theme: String, origin: Vector3,
 	ring.position = Vector3(0, plate_y - 0.3, 0)
 	ring.rotation.x = PI / 2.0
 	ring.material_override = ThemeMaterials.glow_material(
-			Color(0.95, 0.8, 0.4), 1.8)
+			Constants.AFFORDANCE_SIGNAL, 1.8)
 	anchor.add_child(ring)
 	_solid(anchor, Vector3(1.0, 0.25, 1.0), Vector3(0, plate_y, 0),
 			ThemeMaterials.trim_mat(theme))
@@ -295,7 +304,11 @@ static func _breakable_wall(root: Node3D, theme: String, origin: Vector3,
 				Vector3(0, 1.3, end_z * 1.2), wall)
 	var panel := AffordanceNodes.BreakablePanel.new()
 	panel.position = Vector3(side * -0.65, 1.3, 0)
-	panel.tint = ThemeMaterials.hazard_mat(theme).albedo_color
+	# Was `hazard_mat`. A breakable wall is an OPPORTUNITY, not a
+	# warning, and hazard orange is reserved for things that hurt you
+	# (art requirements 15 and 20). The damage channel is unaffected:
+	# it rides emission ENERGY, not hue.
+	panel.tint = Constants.AFFORDANCE_SIGNAL
 	nook.add_child(panel)
 	_reward(nook, "breakable_wall", Vector3(0, 0.9, 0), reward_id, note)
 	return nook
@@ -303,7 +316,7 @@ static func _breakable_wall(root: Node3D, theme: String, origin: Vector3,
 ## A shallow pool. Buoyant and draggy: you sink slowly, you swim slowly,
 ## and you can always get out — `Player.MIN_VOLUME_SPEED_SCALE` is the
 ## floor that makes "always" structural.
-static func _water_volume(root: Node3D, theme: String, origin: Vector3,
+static func _water_volume(root: Node3D, _theme: String, origin: Vector3,
 		reward_id: String, note: String) -> Node3D:
 	var pool := AffordanceNodes.Volume.new()
 	pool.influence = {
@@ -311,7 +324,7 @@ static func _water_volume(root: Node3D, theme: String, origin: Vector3,
 		"drag": 2.4, "terminal_fall": 3.5,
 	}
 	pool.extents = Vector3(1.5, 2.2, 1.5)
-	pool.tint = Color(0.35, 0.75, 0.95)
+	pool.tint = Constants.AFFORDANCE_SIGNAL
 	pool.position = origin + Vector3(0, 1.1, 0)
 	root.add_child(pool)
 	var basin := MeshInstance3D.new()
@@ -320,43 +333,157 @@ static func _water_volume(root: Node3D, theme: String, origin: Vector3,
 	basin.mesh = basin_mesh
 	basin.position = origin + Vector3(0, 2.15, 0)
 	basin.material_override = ThemeMaterials.glow_material(
-			Color(0.4, 0.8, 1.0), 0.5)
+			Constants.AFFORDANCE_SIGNAL, 0.5)
 	root.add_child(basin)
 	_reward(root, "water_volume", origin + Vector3(0, 0.6, 0), reward_id, note)
 	return pool
 
-## A grind rail: a beam with a low-friction lane over it, so a dash along
-## it carries much further than a dash on the floor.
-static func _rail(root: Node3D, theme: String, origin: Vector3,
-		depth: float, reward_id: String, note: String) -> Node3D:
+## How high above the rail's own origin the beam sits, and how far above
+## the beam the ride volume's centre is. Named because the mesh and the
+## volume both derive from them; they used to be two sets of literals
+## sitting next to each other.
+const RAIL_BEAM_Y := 1.1
+const RAIL_RIDE_Y := 2.0
+const RAIL_BEAM_THICKNESS := 0.35
+
+## The AUTHORITATIVE geometric path of a rail, in root-local space
+## (art requirement 16).
+##
+## Owner ruling 2026-08-28: `ride_path` is *the authoritative geometric
+## path shared by visual mesh and runtime riding geometry* — *"do not
+## independently hand-author visual rail and collision/ride path."* The
+## beam mesh and the ride volume used to be two hand-written boxes with
+## different centres and different sizes that happened to share one
+## `length`, which is precisely two authorings of one thing.
+##
+## A POLYLINE, not a segment, even though today it holds two points. The
+## ruling confirmed *one ride volume per straight polyline segment* as
+## the integration direction, so a curved authored rail arrives as more
+## points and needs no new code — only the wider footprint, which is
+## recorded as future expansion rather than a blocker.
+static func rail_ride_path(origin: Vector3) -> PackedVector3Array:
+	return rail_path(origin).segments()
+
+## THE rail, as the one path object everything reads (P3.0).
+##
+## `rail_ride_path` above is kept and now DERIVES from this, so the
+## corridor rail's shape is stated once and every existing caller gets
+## the same two points it always got. What changed is that those points
+## are no longer the only shape expressible: `RailPath` holds a
+## `Curve3D`, and an authored `rail_route` offer arrives as more control
+## points through `RailPath.from_points` with no new code here.
+static func rail_path(origin: Vector3) -> RailPath:
 	# Bounded by the footprint's own half_depth, so the beam cannot reach
 	# past a doorway that `resolve_position` kept its origin clear of.
 	var length := 2.0 * float(FOOTPRINT["rail"]["half_depth"]) - 1.0
-	var beam := _solid(root, Vector3(0.35, 0.35, length),
-			origin + Vector3(0, 1.1, 0),
-			ThemeMaterials.glow_material(Color(0.9, 0.7, 0.95), 1.2))
-	for end_z in [-1.0, 1.0]:
-		_solid(root, Vector3(0.25, 1.1, 0.25),
-				origin + Vector3(0, 0.55, end_z * length / 2.0),
+	var half := length / 2.0
+	return RailPath.from_points(PackedVector3Array([
+		origin + Vector3(0, RAIL_BEAM_Y, -half),
+		origin + Vector3(0, RAIL_BEAM_Y, half),
+	]))
+
+## A grind rail: a beam with a low-friction lane over it, so a dash along
+## it carries much further than a dash on the floor. Both are swept along
+## `rail_ride_path`, so they cannot drift apart.
+static func _rail(root: Node3D, theme: String, origin: Vector3,
+		_depth: float, reward_id: String, note: String) -> Node3D:
+	var path := rail_ride_path(origin)
+	var built := build_rail_along(root, path)
+	var beam: Node3D = built["beams"][0] if not built["beams"].is_empty() \
+			else null
+
+	# Posts at the path's ENDS, wherever the path put them.
+	for end_point: Vector3 in [path[0], path[path.size() - 1]]:
+		_solid(root, Vector3(0.25, RAIL_BEAM_Y, 0.25),
+				Vector3(end_point.x, origin.y + RAIL_BEAM_Y / 2.0,
+					end_point.z),
 				ThemeMaterials.trim_mat(theme), false)
 
-	var lane := AffordanceNodes.Volume.new()
-	# A real grind: near-frictionless along the rail and a touch of lift, so
-	# a dash carries. The previous influence was `{drag: 0.0, speed_scale:
-	# 1.0}` — both the identity element of how the player merges them, so
-	# the rail's whole point did nothing at all.
-	lane.influence = {"friction_scale": 0.05, "speed_scale": 1.25,
-			"gravity_scale": 0.85}
-	lane.extents = Vector3(1.1, 1.4, length)
-	lane.tint = Color(0.9, 0.7, 0.95)
-	lane.visible_shell = false
-	lane.position = origin + Vector3(0, 2.0, 0)
-	root.add_child(lane)
-
-	# On the rail, at its far end: riding it IS how you reach this.
-	_reward(root, "rail", origin + Vector3(0, 1.6, length / 2.0 - 0.6),
+	# On the rail, at its far end: riding it IS how you reach this. Taken
+	# from the path rather than recomputed from `length`.
+	var far: Vector3 = path[path.size() - 1]
+	var approach := (far - path[path.size() - 2]).normalized()
+	_reward(root, "rail", far + Vector3(0, 0.5, 0) - approach * 0.6,
 			reward_id, note)
 	return beam
+
+## Sweep a rail's mesh and its ride volumes along one path.
+##
+## Separated out so it can be exercised with a MULTI-SEGMENT path. The
+## footprint only allows a straight rail today, which means the whole
+## polyline claim is untestable through `_rail` -- a two-point path has
+## one segment, and a hardcoded length is indistinguishable from a
+## derived one when there is only one of them. This is the seam a curved
+## authored rail arrives through, so this is what gets tested.
+##
+## Returns `{"beams": [MeshInstance3D], "lanes": [Volume]}`, one of each
+## per segment.
+static func build_rail_along(root: Node3D,
+		path: PackedVector3Array) -> Dictionary:
+	return build_rail(root, RailPath.from_points(path))
+
+## Sweep a rail's mesh and its ride volumes along THE path object (P3.0).
+##
+## `build_rail_along` above is kept for the callers that hold a polyline
+## and now delegates here, so there is still exactly one sweep. What this
+## adds is that every lane it builds CARRIES the path: the player catches
+## the authoritative curve rather than the box that approximates it, and
+## a rail that curves is ridden along the curve rather than along the
+## chord of whichever box they happened to touch.
+##
+## A DEGENERATE PATH IS REFUSED HERE. Building a rail nobody can ride and
+## discovering it when a player touches it is the shape of defect this
+## project keeps paying for, so the shape is checked where it is built.
+static func build_rail(root: Node3D, rail: RailPath) -> Dictionary:
+	var beams: Array = []
+	var lanes: Array = []
+	var refusals := rail.violations("rail")
+	if not refusals.is_empty():
+		push_warning("rail refused: %s" % "; ".join(refusals))
+		return {"beams": beams, "lanes": lanes, "refused": refusals}
+	var path := rail.segments()
+	for i in path.size() - 1:
+		var a: Vector3 = path[i]
+		var b: Vector3 = path[i + 1]
+		var midpoint := (a + b) * 0.5
+		var run := (b - a).length()
+		var segment := _solid(root,
+				Vector3(RAIL_BEAM_THICKNESS, RAIL_BEAM_THICKNESS, run),
+				midpoint,
+				ThemeMaterials.glow_material(Constants.AFFORDANCE_SIGNAL, 1.2))
+		_aim_along(segment, a, b)
+		beams.append(segment)
+
+		# One ride volume per straight segment -- the shape the ruling
+		# confirmed. Built from the SAME two points as the mesh above it,
+		# so a rail that turns turns underfoot as well as on screen.
+		var lane := AffordanceNodes.Volume.new()
+		# A real grind: near-frictionless along the rail and a touch of
+		# lift, so a dash carries. The previous influence was
+		# `{drag: 0.0, speed_scale: 1.0}` -- both the identity element of
+		# how the player merges them, so the rail's whole point did
+		# nothing at all.
+		lane.influence = {"friction_scale": 0.05, "speed_scale": 1.25,
+				"gravity_scale": 0.85}
+		lane.extents = Vector3(1.1, 1.4, run)
+		lane.tint = Constants.AFFORDANCE_SIGNAL
+		lane.visible_shell = false
+		# THE path, not a copy of its numbers.
+		lane.rail = rail
+		lane.position = midpoint + Vector3(0, RAIL_RIDE_Y - RAIL_BEAM_Y, 0)
+		root.add_child(lane)
+		_aim_along(lane, a, b)
+		lanes.append(lane)
+	return {"beams": beams, "lanes": lanes}
+
+## Point a node's local -Z along a path segment. A no-op for the straight
+## rail the footprint currently allows, and the thing that makes a curved
+## one work without touching anything above.
+static func _aim_along(node: Node3D, from: Vector3, to: Vector3) -> void:
+	var run := to - from
+	if run.length() < 0.001:
+		return
+	node.rotation.y = atan2(run.x, run.z)
 
 ## An updraft with a perch. Lift only — it can carry you up, never hold
 ## you down.
@@ -370,7 +497,7 @@ static func _wind_volume(root: Node3D, theme: String, origin: Vector3,
 			"terminal_fall": 6.0}
 	var column_height := height - CEILING_GAP
 	column.extents = Vector3(1.5, column_height, 1.5)
-	column.tint = Color(0.7, 0.95, 0.9)
+	column.tint = Constants.AFFORDANCE_SIGNAL
 	column.position = origin + Vector3(0, column_height / 2.0, 0)
 	root.add_child(column)
 	for ring in range(1, 4):
@@ -381,7 +508,7 @@ static func _wind_volume(root: Node3D, theme: String, origin: Vector3,
 		mark.mesh = torus
 		mark.position = origin + Vector3(0, float(ring) * 1.2, 0)
 		mark.material_override = ThemeMaterials.glow_material(
-				Color(0.7, 0.95, 0.9), 0.7)
+				Constants.AFFORDANCE_SIGNAL, 0.7)
 		root.add_child(mark)
 	# Toward the room's centre, never blindly +x: a perch that always went
 	# right sat outside the wall on one side and in the walking lane on the
@@ -405,7 +532,7 @@ static func _bounce_pad(root: Node3D, theme: String, origin: Vector3,
 		height: float, reward_id: String, note: String) -> Node3D:
 	var pad := AffordanceNodes.BouncePad.new()
 	pad.position = origin
-	pad.tint = ThemeMaterials.accent_mat(theme).albedo_color
+	pad.tint = Constants.AFFORDANCE_SIGNAL
 	root.add_child(pad)
 	# Under the ceiling, and inside the arc the pad actually produces: at
 	# LAUNCH 16 and GRAVITY 24 the apex is 5.33 m, so a reward hung at 4.6
@@ -425,7 +552,7 @@ static func _moving_platform(root: Node3D, theme: String, origin: Vector3,
 	var top := height - CEILING_GAP - 1.9    # room to stand at the top
 	platform.travel = Vector3(0, clampf(top - 0.4, 1.6, 3.6), 0)
 	platform.position = origin + Vector3(0, 0.4, 0)
-	platform.tint = ThemeMaterials.trim_mat(theme).albedo_color
+	platform.tint = Constants.AFFORDANCE_SIGNAL
 	root.add_child(platform)
 	# Beside the platform's top, not above it: the reward is what riding it
 	# reaches, and one directly overhead is one you cannot stand under.
@@ -457,3 +584,87 @@ static func _solid(parent: Node3D, size: Vector3, at: Vector3,
 	body.position = at
 	parent.add_child(body)
 	return body
+
+## THE ENVIRONMENTAL-AGENCY CHAIN: a crate, a plate, a signal, a door.
+##
+## `06_THE_AMALGAM.md` §5.4a's requirement made of supported parts and
+## nothing else. A `ManipulableBody` the player shoves with their own
+## body, a `PoweredLink` whose plate adds up what is standing on it, and
+## a door that is open exactly while the signal is high. No key, no
+## activity, no station, no joint, no attachment sensor.
+##
+## **It is an affordance, and that is what makes it safe.** §13.2 says a
+## feature may never lie on the mandatory path, host an AP reward, an
+## exit or an objective -- enforced by `validate_zone`, not by intention
+## -- so a player who cannot or will not shove the crate loses a note and
+## nothing else. That is also why this could be built without inventing a
+## capability gate: there is no gate, by construction.
+##
+## The layout, in the rig's own frame, along +Z:
+##
+##     z -3.0   the crate, where a player walking in meets it
+##     z -0.8   the plate
+##     z  1.1   the door
+##     z  1.1..3.2  the alcove, with the note at the back
+##
+## **The plate is 1.9 m SHORT of the doorway**, so the crate that opens
+## the door is never standing in it. The player goes round the crate
+## using the room's own width, and the only thing that has to be
+## player-wide is the 1.2 m opening.
+##
+## The whole rig is 1.6 m across on purpose. `required_width` is
+## `2 * (lane + 2 * half_width + margin)`, so a wider chain would widen
+## every corridor the fallback hangs features on -- and at 1.2 m of reach
+## it did: 9.5 m corridors, and `played_zone` stopped composing at room
+## c022 for want of space. A feature that costs the Zone its layout is
+## not optional content.
+static func _powered_door(root: Node3D, theme: String, origin: Vector3,
+		reward_id: String, note: String) -> Node3D:
+	var rig := Node3D.new()
+	rig.name = "PoweredDoorChain"
+	rig.position = origin
+	root.add_child(rig)
+	var wall := ThemeMaterials.wall_mat(theme)
+	# The alcove: two sides, a back and a roof, so what the door closes
+	# is a room rather than a patch of floor to walk around. The opening
+	# between the inner faces is 1.2 m for a 0.8 m body.
+	for side: float in [-1.0, 1.0]:
+		_solid(rig, Vector3(0.2, 3.1, 2.1),
+				Vector3(side * 0.7, 1.55, 2.15), wall)
+	_solid(rig, Vector3(1.6, 3.1, 0.2), Vector3(0, 1.55, 3.2), wall)
+	_solid(rig, Vector3(1.6, 0.2, 2.1), Vector3(0, 3.1, 2.15), wall)
+	# THE LINK: its origin is the plate, and the door is named relative
+	# to it, so the two cannot drift apart by being positioned twice.
+	var link := PoweredLink.create(theme, Vector3(0.0, 0.0, 1.9),
+			CRATE_MASS_KG * 0.6)
+	link.position = Vector3(0.0, 0.0, -0.8)
+	rig.add_child(link)
+	# THE CRATE. Lighter than the manipulation envelope's 120 kg on
+	# purpose: this is a body shoved by a body, not a host qualifying
+	# against §29.3.2, and the two must not be confused.
+	var crate := ManipulableBody.create("%s_crate" % reward_id,
+			CRATE_MASS_KG, Vector3(0.7, 0.7, 0.7))
+	crate.position = Vector3(0.0, 0.45, -3.0)
+	rig.add_child(crate)
+	# THE CONSEQUENCE, behind the door. A note is a local reward and
+	# rides the same validated path every other one does, so taking it
+	# persists and taking it twice does not.
+	_reward(rig, "powered_door", Vector3(0.0, 0.9, 2.6), reward_id, note)
+	return rig
+
+## What the crate weighs, and therefore what the plate asks for (60% of
+## it, so a crate nudged most of the way on still counts and a player
+## standing there alone does not).
+##
+## MEASURED, not chosen. A walking player delivers about
+## `WALK_SPEED * SHOVE_MASS_KG` newtons into whatever they lean on, and
+## the crate resists with `envelope_friction() * m * g`. At 100 kg the
+## first run of this chain moved the crate far enough to stall the
+## player and not far enough to reach the plate: the walk gave up 2.95 m
+## short with nothing on it. At 60 kg the net is about 5 m/s^2, which is
+## a crate that visibly slides when you walk into it.
+##
+## It is well under the manipulation envelope's 120 kg on purpose. This
+## is a body shoved by a body; a host qualifying against §29.3.2 is a
+## different question and must not be confused with this one.
+const CRATE_MASS_KG := 60.0

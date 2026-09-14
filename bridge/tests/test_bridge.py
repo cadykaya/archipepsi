@@ -3,6 +3,8 @@ test_providers.py."""
 
 from __future__ import annotations
 
+import builtins
+
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -19,7 +21,7 @@ from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas.protocol import CampaignSave
 from archipepsi_bridge.server import BridgeServer
 
-from .conftest import (
+from .conftest import (enter_zone, 
     BlockedProvider, Collector, connected_engine, drain, make_engine, run,
 )
 
@@ -54,6 +56,24 @@ def test_3_scout_packet():
     assert msg["create_as_hint"] == 0
     assert sorted(msg["locations"]) == list(ALL_LOCATION_IDS)
     assert len(msg["locations"]) == 30
+
+
+def test_3b_the_scout_packet_covers_the_whole_seed():
+    """A fixed range scouts the first thirty of a 450-location seed.
+
+    The bridge then never learns what is on Check 031, so the allocator
+    never offers it and a 450-location campaign stops at 30
+    (CAMPAIGN_SCALE.md 2, 3).
+    """
+    for config in (C.DEFAULT_CONFIG,
+                   C.CampaignConfig(location_count=90,
+                                    zone_target_checks=5, zone_budget=400),
+                   C.PROTOTYPE_CONFIG):
+        msg = scout_message(config)
+        assert len(msg["locations"]) == config.location_count
+        assert max(msg["locations"]) == config.goal_location_id
+    # No scale at all is the prototype, never the current default.
+    assert scout_message(None)["locations"] == list(ALL_LOCATION_IDS)
 
 
 # -- 4: recipient-game resolution ------------------------------------------
@@ -140,7 +160,7 @@ def test_8_pending_still_missing_is_resent(tmp_path):
         await engine.handle_request_next_zone(False)
         await engine._generation_task
         zone = engine.save.active_zone
-        await engine.handle_enter_zone(zone.zone_id)
+        await enter_zone(engine, zone.zone_id)
         loc = zone.allocated_location_ids[0]
         await TX.claim_check(engine, zone.zone_id, loc)
         assert engine.save.pending_checks           # in flight, unconfirmed
@@ -167,7 +187,7 @@ def test_9_checked_pending_finalizes_without_event(tmp_path):
         await engine.handle_request_next_zone(False)
         await engine._generation_task
         zone = engine.save.active_zone
-        await engine.handle_enter_zone(zone.zone_id)
+        await enter_zone(engine, zone.zone_id)
         loc = zone.allocated_location_ids[0]
         await TX.claim_check(engine, zone.zone_id, loc)
         assert engine.save.pending_checks
@@ -192,7 +212,7 @@ def test_10_claim_already_checked_finalizes_immediately(tmp_path):
         await engine.handle_request_next_zone(False)
         await engine._generation_task
         zone = engine.save.active_zone
-        await engine.handle_enter_zone(zone.zone_id)
+        await enter_zone(engine, zone.zone_id)
         loc = zone.allocated_location_ids[0]
         backend.server.checked.add(loc)
         backend._sync_from_server()
@@ -304,10 +324,26 @@ def test_17b_interrupted_tmp_write_leaves_previous_loadable(tmp_path,
     s1 = CampaignSave(seed_name="Seed", team=0, slot_id=1, slot_name="Skyiah")
     store.write_save(path, s1)
 
-    def explode(fd):
-        raise OSError("simulated crash during fsync")
+    # Injected at the WRITE, not at fsync. fsync is deliberately
+    # non-fatal now (`store._flush`): a refused flush costs a durability
+    # margin, not the campaign, so failing it no longer simulates a
+    # crash. An interrupted tmp write is what this test is named for and
+    # is the stronger scenario anyway -- a half-written payload on disk.
+    real_open = builtins.open
 
-    monkeypatch.setattr(os, "fsync", explode)
+    def dies_partway(file, *args, **kwargs):
+        handle = real_open(file, *args, **kwargs)
+        if str(file).endswith(".tmp"):
+            real_write = handle.write
+
+            def write_then_die(chunk):
+                real_write(chunk[:len(chunk) // 2])
+                raise OSError("simulated crash during the tmp write")
+
+            handle.write = write_then_die
+        return handle
+
+    monkeypatch.setattr(builtins, "open", dies_partway)
     with pytest.raises(OSError):
         store.write_save(path, CampaignSave(
             seed_name="Seed", team=0, slot_id=1, slot_name="Skyiah",

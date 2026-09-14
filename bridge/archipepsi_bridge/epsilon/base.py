@@ -24,6 +24,7 @@ from ..schemas.echo import (
     EchoInterpretation, budget_errors, target_errors,
     validate_interpretation)
 from ..schemas.mechanics import EMPTY_MECHANICS
+from .. import shells as _shells
 from ..schemas.zone import Zone, validate_zone
 from . import capabilities as CAP
 from .fallback import fallback_echo, fallback_zone
@@ -162,7 +163,25 @@ async def generate_zone_validated(
             owned_echo_ids=owned_echo_ids,
             # I12, from the request the provider was given: what it was
             # told it could place is exactly what it is held to.
-            owned_affordance_tags=request.unlocked_affordances),
+            owned_affordance_tags=request.unlocked_affordances,
+            guaranteed_capabilities=request.guaranteed_capabilities,
+            # The shells this request OFFERED, so a Zone naming one that
+            # was not on the menu is refused. Taken from the request
+            # rather than recomputed, for the same reason the affordance
+            # tags are: what the provider was told is exactly what it is
+            # held to.
+            # ...unpacked by `shells.offer_of` rather than here, so the
+            # generator's self-check and the tests are held to exactly
+            # this offer. 3B added the unflattened catalog and each
+            # shell's own constraints: membership in the flat list says a
+            # shell was offered; those say whether it fits THIS chamber.
+            **_shells.offer_of(request),
+            # ...and the same for how much content it was asked for. The
+            # budget is what bounds the enemy count, so accepting against
+            # the default instead held a 1000-point Zone to a 200-point
+            # Zone's limits and rejected every real level
+            # (CAMPAIGN_SCALE.md 5, 6).
+            zone_budget=request.campaign.zone_budget),
         build_fallback=fallback_zone, archive_dir=archive_dir,
         timeout=timeout)
 

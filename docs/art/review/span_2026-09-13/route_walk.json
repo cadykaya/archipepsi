@@ -1,0 +1,350 @@
+{
+  "basin_north_to_deck": {
+    "arrived_within": 1.2,
+    "completed": true,
+    "ended_at": [
+      1.17,
+      14.0,
+      73.92
+    ],
+    "highest_y": 14.53,
+    "jumped_at": [
+      [
+        11.9,
+        0.0,
+        88.8,
+        1
+      ],
+      [
+        11.9,
+        0.9,
+        87.8,
+        1
+      ],
+      [
+        11.9,
+        1.8,
+        86.8,
+        1
+      ],
+      [
+        11.9,
+        2.6,
+        85.8,
+        1
+      ],
+      [
+        11.9,
+        3.5,
+        84.8,
+        1
+      ],
+      [
+        11.9,
+        4.4,
+        83.8,
+        1
+      ],
+      [
+        11.9,
+        5.3,
+        82.8,
+        1
+      ],
+      [
+        11.9,
+        6.1,
+        81.8,
+        1
+      ],
+      [
+        11.9,
+        7.0,
+        80.8,
+        1
+      ],
+      [
+        11.9,
+        7.9,
+        79.8,
+        1
+      ],
+      [
+        11.9,
+        8.8,
+        78.8,
+        1
+      ],
+      [
+        11.9,
+        9.6,
+        77.8,
+        1
+      ],
+      [
+        11.9,
+        10.5,
+        76.8,
+        1
+      ],
+      [
+        11.9,
+        11.4,
+        75.8,
+        1
+      ],
+      [
+        11.9,
+        12.3,
+        74.8,
+        1
+      ],
+      [
+        9.8,
+        13.1,
+        73.8,
+        2
+      ]
+    ],
+    "jumps": 16,
+    "waypoints_reached": 3,
+    "waypoints_total": 3
+  },
+  "basin_south_to_deck": {
+    "arrived_within": 1.2,
+    "completed": true,
+    "ended_at": [
+      1.17,
+      14.0,
+      16.08
+    ],
+    "highest_y": 14.53,
+    "jumped_at": [
+      [
+        11.9,
+        0.0,
+        1.2,
+        1
+      ],
+      [
+        11.9,
+        0.9,
+        2.2,
+        1
+      ],
+      [
+        11.9,
+        1.8,
+        3.2,
+        1
+      ],
+      [
+        11.9,
+        2.6,
+        4.2,
+        1
+      ],
+      [
+        11.9,
+        3.5,
+        5.2,
+        1
+      ],
+      [
+        11.9,
+        4.4,
+        6.2,
+        1
+      ],
+      [
+        11.9,
+        5.3,
+        7.2,
+        1
+      ],
+      [
+        11.9,
+        6.1,
+        8.2,
+        1
+      ],
+      [
+        11.9,
+        7.0,
+        9.2,
+        1
+      ],
+      [
+        11.9,
+        7.9,
+        10.2,
+        1
+      ],
+      [
+        11.9,
+        8.8,
+        11.2,
+        1
+      ],
+      [
+        11.9,
+        9.6,
+        12.2,
+        1
+      ],
+      [
+        11.9,
+        10.5,
+        13.2,
+        1
+      ],
+      [
+        11.9,
+        11.4,
+        14.2,
+        1
+      ],
+      [
+        11.9,
+        12.3,
+        15.2,
+        1
+      ],
+      [
+        9.8,
+        13.1,
+        16.2,
+        2
+      ]
+    ],
+    "jumps": 16,
+    "waypoints_reached": 3,
+    "waypoints_total": 3
+  },
+  "cross entry to exit, through the bay": {
+    "arrived_within": 0.5,
+    "completed": true,
+    "ended_at": [
+      -0.26,
+      0.0,
+      28.23
+    ],
+    "highest_y": 0.1,
+    "jumped_at": [],
+    "jumps": 0,
+    "waypoints_reached": 4,
+    "waypoints_total": 4
+  },
+  "cross entry to exit, through the passage": {
+    "arrived_within": 0.5,
+    "completed": true,
+    "ended_at": [
+      0.03,
+      -0.04,
+      28.19
+    ],
+    "highest_y": 0.04,
+    "jumped_at": [],
+    "jumps": 0,
+    "waypoints_reached": 5,
+    "waypoints_total": 5
+  },
+  "cross entry to the east branch": {
+    "arrived_within": 1.2,
+    "completed": true,
+    "ended_at": [
+      12.56,
+      0.0,
+      14.45
+    ],
+    "highest_y": 0.04,
+    "jumped_at": [],
+    "jumps": 0,
+    "waypoints_reached": 3,
+    "waypoints_total": 3
+  },
+  "cross entry to the sump": {
+    "arrived_within": 1.2,
+    "completed": true,
+    "ended_at": [
+      -4.93,
+      0.1,
+      9.11
+    ],
+    "highest_y": 0.11,
+    "jumped_at": [],
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  },
+  "terminus entry to the prize": {
+    "arrived_within": 1.2,
+    "completed": true,
+    "ended_at": [
+      0.0,
+      -0.05,
+      16.8
+    ],
+    "highest_y": 0.04,
+    "jumped_at": [],
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  },
+  "terminus entry to the west door": {
+    "arrived_within": 1.2,
+    "completed": true,
+    "ended_at": [
+      -6.55,
+      0.0,
+      15.43
+    ],
+    "highest_y": 0.04,
+    "jumped_at": [],
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  },
+  "triad entry to exit": {
+    "arrived_within": 1.2,
+    "completed": true,
+    "ended_at": [
+      0.0,
+      -0.05,
+      23.45
+    ],
+    "highest_y": 0.04,
+    "jumped_at": [],
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  },
+  "triad entry to the east branch": {
+    "arrived_within": 1.2,
+    "completed": true,
+    "ended_at": [
+      10.42,
+      0.0,
+      12.89
+    ],
+    "highest_y": 0.04,
+    "jumped_at": [],
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  },
+  "triad entry to the west bay": {
+    "arrived_within": 1.2,
+    "completed": true,
+    "ended_at": [
+      -8.43,
+      0.0,
+      12.78
+    ],
+    "highest_y": 0.04,
+    "jumped_at": [],
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  }
+}

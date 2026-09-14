@@ -107,8 +107,12 @@ jobs:
       - name: Godot project imports
         run: make godot-import
 
+      - name: Preflight
+        run: make doctor
+
       - name: Headless Godot suites
         run: |
+          make godot-boot
           make godot-test
           make godot-hud
           make godot-rules
@@ -117,9 +121,33 @@ jobs:
           make godot-affordance
           make godot-verbs
           make godot-blink
+          make godot-content
+          make godot-activity
+          make godot-room
+          make godot-room-contract
+          make godot-graphs
+          make godot-movement
+          make godot-zone-audit
+          make godot-legible
+          make godot-physics
+          make godot-traverse
 
       - name: Whole campaign, headlessly
         run: make godot-integration
+
+      - name: The same campaign with the lower-budget variant selected
+        run: make godot-integration-quiet
+
+      # PARKED, AND WATCHED. This probe passes by REPORTING the router
+      # dead end rather than by hiding it, so running it in CI is what
+      # keeps the parking honest: if the blocker is ever fixed the
+      # output changes here, and if the band ever starts clamping the
+      # target fails outright.
+      - name: The lower-budget variant at the scale it is for
+        run: make godot-integration-variant-live
+
+      - name: A campaign reopened in a second process
+        run: make godot-reload
 
       - name: Build metadata
         if: always()

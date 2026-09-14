@@ -1,0 +1,129 @@
+{
+  "_comment": [
+    "Archipepsi art budgets. GENERATED -- regenerate with:",
+    "    python3 tools/blender/derive_budgets.py --write",
+    "",
+    "Every number here is derived in tools/blender/derive_budgets.py,",
+    "which prints the arithmetic and names the visible failure each",
+    "constraint prevents. Nothing was inherited from another project:",
+    "mario-3's ceilings, texture sizes and densities answer questions",
+    "Archipepsi does not ask.",
+    "",
+    "The game dimensions the derivation stands on are read live from",
+    "the engineering branch through tools/blender/engine_truth.py, so",
+    "these numbers move when the game moves."
+  ],
+  "texel_density": {
+    "architecture": {
+      "target": 32,
+      "min": 24,
+      "max": 40
+    },
+    "prop": {
+      "target": 64,
+      "min": 48,
+      "max": 80
+    },
+    "hero": {
+      "target": 96,
+      "min": 80,
+      "max": 128
+    },
+    "viewmodel_deferred": {
+      "target": 256,
+      "min": 192,
+      "max": 320
+    }
+  },
+  "texture_size": {
+    "default": 64,
+    "max_batch001": 128,
+    "min": 32,
+    "allowed": [
+      32,
+      64,
+      128
+    ]
+  },
+  "max_triangles": {
+    "architecture_module": 250,
+    "prop": 300,
+    "interactable": 900,
+    "hero": 1200,
+    "enemy": 700,
+    "landmark": 2500,
+    "room": 12000
+  },
+  "max_triangles_room": 12000,
+  "max_radial_segments": 8,
+  "max_radial_segments_large": 12,
+  "large_radius_threshold": 1.5,
+  "max_radial_segments_enemy": 10,
+  "architecture_bevel": 0.0,
+  "prop_bevel_fraction": [
+    0.015,
+    0.03
+  ],
+  "prop_bevel_min_size": 0.5,
+  "min_value_separation": 0.1,
+  "min_interactable_separation": 0.18,
+  "max_families_per_asset": 4,
+  "enemy_review_distance_m": 18.0,
+  "enemy_aggro_px_1080p": 48.0,
+  "check_review_distance_m": 39.6,
+  "check_far_px_1080p": 35.5,
+  "min_feature_fraction": 0.08,
+  "min_feature_screen_px": 2.0,
+  "dimensions": {
+    "arena_span_max": 28.0,
+    "arena_span_min": 10.0,
+    "arena_wall_height_max": 8.0,
+    "arena_wall_height_min": 4.0,
+    "brute_lane": 2.6,
+    "brute_reach": 2.5,
+    "camera_fov_deg": 90.0,
+    "corridor_height": 3.6,
+    "corridor_length_max": 30.0,
+    "corridor_length_min": 6.0,
+    "corridor_width_max": 10.0,
+    "corridor_width_min": 4.0,
+    "door_height": 3.2,
+    "door_width": 2.4,
+    "enemy_aggro_radius": 18.0,
+    "fall_kill_y": -30.0,
+    "jump_apex": 1.3333333333333333,
+    "jump_flat_reach": 4.666666666666666,
+    "max_vertical_step": 1.0,
+    "melee_reach": 2.0,
+    "min_platform_size": 2.5,
+    "path_gap_min": 0.5,
+    "path_ledge": 4.0,
+    "path_segment_max": 8,
+    "path_segment_min": 3,
+    "path_vertical_step_min": 0.0,
+    "path_width": 8.0,
+    "player_diameter": 0.8,
+    "player_eye_height": 1.6,
+    "player_height": 1.8,
+    "player_radius": 0.4,
+    "proc_texture_default": 64,
+    "proc_texture_max": 128,
+    "prop_footprint": 1.4,
+    "pulse_range": 40.0,
+    "reach_standing": 2.9333333333333336,
+    "safe_base_jump_gap": 2.6,
+    "secret_ledge_depth": 1.8,
+    "secret_ledge_thickness": 0.3,
+    "secret_ledge_width": 2.4,
+    "secret_lip_max": 4.2,
+    "secret_lip_min": 3.05,
+    "secret_underside_min": 2.75,
+    "tallest_actor": 2.6,
+    "tower_floors_max": 5,
+    "tower_floors_min": 2,
+    "tower_per_floor": 3.0,
+    "tower_side": 12.0,
+    "walk_speed": 7.0,
+    "wall_thickness": 0.4
+  }
+}
