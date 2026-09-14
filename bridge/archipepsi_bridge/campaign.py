@@ -41,6 +41,7 @@ from .schemas import protocol as P
 from .echo_projection import detail_examples, history_view
 from . import instrumentation
 from . import layout as layout_check
+from . import quiet
 from . import store
 from . import topology
 
@@ -230,11 +231,22 @@ def _with_graph(zone, barred=()):
 class CampaignEngine:
     def __init__(self, *, provider, provider_name: str,
                  save_dir: Path | None = None,
-                 archive_dir: Path | None = None):
+                 archive_dir: Path | None = None,
+                 quiet_generation: bool = False):
         self.provider = provider
         self.provider_name = provider_name
         self.save_dir = save_dir or store.DEFAULT_SAVE_DIR
         self.archive_dir = archive_dir
+
+        #: OPT-IN, AND OFF. The quieter-generation preview (`quiet.py`,
+        #: follow-up 02 item D) narrows two keys of the request that
+        #: every Zone already carries. Default `False` is the whole
+        #: promise that normal generation composes what it always
+        #: composed: with this flag down, `_zone_request` does not call
+        #: into `quiet` at all and the request is byte-for-byte the one
+        #: that shipped. It is a PREVIEW for review, not a budget
+        #: ruling, and no campaign setting reads it.
+        self.quiet_generation = quiet_generation
 
         self.backend: APBackend | None = None
         self.save: CampaignSave | None = None
@@ -840,7 +852,65 @@ class CampaignEngine:
         # aggregate, in `echo_history` below -- so nothing is forgotten;
         # only the DETAIL is a sample.
         echoes = self._echo_summaries()
-        return ZoneGenerationRequest(
+        zone_budget = save.scale.config().zone_budget_for(
+            len(record.allocated_location_ids))
+        if self.quiet_generation:
+            # NARROWED HERE, BEFORE THE REQUEST IS BUILT, because this
+            # one number is the only budget the rest of the system
+            # reads. `fallback_zone_attempt` composes from
+            # `request.campaign.zone_budget` and `generate_zone_validated`
+            # ACCEPTS against the same field -- so narrowing only
+            # `constraints["zone_budget"]`, which is the same fact spelled
+            # for a prompt, changes nothing at all and silently delivers
+            # the filter-only arm: the families gone and their share
+            # handed straight back as more of what remains. Measured: a
+            # Zone asked for 72% of the band came out at 917 against a
+            # 648-792 band, which is the baseline size.
+            #
+            # Setting it here instead lets the request's own validator
+            # derive the WHOLE constraints block from the narrowed
+            # number, so the room envelope, the enemy caps and the
+            # per-room soft cap are internally consistent and a live
+            # Epsilon is told the same budget it will be judged against.
+            # That consistency is also what makes the preview +17 rooms
+            # and +27 enemies (docs/reports/2026-09-13-quieter-
+            # generation-preview.md): one number derives all three.
+            # Reported, not compensated for -- decoupling them is a
+            # change to the shipped composer that an experiment may not
+            # make.
+            asked = quiet.preview_budget(zone_budget)
+            # AND THE CONTRACT'S OWN FLOOR IS STILL THE FLOOR.
+            #
+            # `CampaignContext.zone_budget` is bounded `ge=ZONE_BUDGET_MIN`,
+            # and at the prototype's scale a Zone's budget IS that
+            # minimum -- so 72% of it is 144 against a floor of 200 and
+            # the request cannot be built at all. Unclamped, that was not
+            # a refusal anyone could read: generation raised
+            # `ValidationError` inside the generation task, the client
+            # waited for a ZONE_READY that never came, and the whole run
+            # ended in a timeout with the cause fifteen frames down a
+            # bridge log.
+            #
+            # Clamped, and SAID OUT LOUD, because a clamp that bites is
+            # the compensation arm wearing the variant's name: the
+            # families are still narrowed but the band is not really
+            # lower, which is exactly the comparison the owner rejected.
+            # The fraction itself is not touched to make this pass.
+            if asked < C.ZONE_BUDGET_MIN:
+                log.warning(
+                    "QUIET GENERATION: zone %s asked for %d, which is "
+                    "below the contract floor of %d. Clamping to the "
+                    "floor -- this Zone's band is %s the baseline's, so "
+                    "it is %s, NOT the lower-budget variant. The "
+                    "comparison wants a campaign at default scale.",
+                    record.zone_id, asked, C.ZONE_BUDGET_MIN,
+                    "equal to" if C.ZONE_BUDGET_MIN >= zone_budget
+                    else "nearer",
+                    "filter-only" if C.ZONE_BUDGET_MIN >= zone_budget
+                    else "a partial reduction")
+                asked = C.ZONE_BUDGET_MIN
+            zone_budget = asked
+        request = ZoneGenerationRequest(
             zone_id=record.zone_id,
             generation_id=(f"{save.seed_name}-{save.team}-{save.slot_id}-"
                            f"{record.zone_id}")[:160],
@@ -857,8 +927,7 @@ class CampaignEngine:
                 # -- often one Check -- and asking for a full-length
                 # level around it would demand content the Zone has no
                 # reason to contain (CAMPAIGN_SCALE.md 5).
-                zone_budget=save.scale.config().zone_budget_for(
-                    len(record.allocated_location_ids))),
+                zone_budget=zone_budget),
             player=PlayerContext(
                 signal_keys=ap.signal_keys,
                 coins_available=max(0, ap.coins_received - save.coins_spent),
@@ -882,6 +951,23 @@ class CampaignEngine:
             # guarantee rests on the permanent baseline and what the
             # campaign already owns.
             guaranteed_capabilities=owned_capabilities(save.derive()))
+        if not self.quiet_generation:
+            return request
+        # AND THE OTHER HALF: which families may be composed from. The
+        # band above is a number the provider derives everything from;
+        # this is an offer, and `fallback._build_to_budget` filters its
+        # own cycle order by it. Same provider, same `validate_zone`,
+        # same acceptance path -- a preview is an ordinary request with
+        # a smaller band and a shorter menu.
+        narrowed = dict(request.constraints)
+        narrowed["activity_kinds"] = list(quiet.preview_kinds())
+        log.info("QUIET GENERATION: zone %s asks for %d of the %d this "
+                 "campaign would normally spend, and offers %s",
+                 record.zone_id, zone_budget,
+                 save.scale.config().zone_budget_for(
+                     len(record.allocated_location_ids)),
+                 ", ".join(quiet.preview_kinds()))
+        return request.model_copy(update={"constraints": narrowed})
 
     def _start_generation_task(self, zone_id: str) -> None:
         """Start the provider call for `zone_id`, unless one is in flight.
