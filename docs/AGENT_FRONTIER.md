@@ -1,5 +1,49 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the saved level, walked — 2026-09-14
+
+The owner's full bundle arrived: proposal, COMMITTED MANIFEST, `.bak`
+and playtime log. Worked from a disposable copy; **not committed,
+originals unmodified**, checksums verified. Full page:
+**`docs/PLAYED_SESSION_FINDINGS.md`**.
+
+**THE GEOMETRY CHECK NOBODY HAD RUN.** The fixture carries a proposal
+and NO manifest, so every engine measurement this batch SOLVED the
+layout afresh -- the right rooms in an arrangement nothing had compared
+to the played one. `godot-traverse` now builds the saved proposal twice,
+re-solved and replaying the committed placement, and compares every room
+transform: **worst room 0.000 m across all 24 records.** The earlier
+measurements were on the played geometry after all -- verified rather
+than assumed. The walker takes `--zone-json=` and `--manifest-json=` and
+replays a saved level; **24 of 24 checks pass on it**.
+
+**CHECK 126 IS c021, confirmed by the game.** Base kit reaches the
+pedestal from `c021`'s own doorway on the committed placement and the
+prompt reads `[E] CLAIM CHECK 126`. `89100120` is allocated NOWHERE in
+the save. A render of `c021` is in `docs/evidence/owner-save/`: the four
+switches sit spread along the platform course over the drop, which makes
+the 792 s on `c021_0` at least plausible -- correlation, not diagnosis.
+
+**TWO WHISTLES, AND 126 IS THE UPGRADE.** First acquired at seq 4 from
+CHECK 019 at 14 m; CHECK 126 at seq 5 IS the +6.0. So whatever crossing
+reached 126 used AT MOST the 14 m Whistle. This page previously quoted
+only the final 20 m -- right number, wrong moment, corrected.
+
+**AND THE BASE-KIT CLAIM IS NOW EVIDENCE.** It was derived from declared
+`gap_size` values, which say nothing about built geometry. Re-answered
+by walking the committed placement: 6 of 6 sampled Checks REACHED, 0
+BLOCKED, `Reward_89100126` addressable and its room leavable across a
+measured 2.00 m gap. Six of fifteen sampled -- not a proof about all.
+
+**Exit approach on the saved `e:__exit__`:** REACHED from `c023`, the
+interact ray finds the portal, 3 of 16 bearings standable. `c023`'s
+ordinary exit is SEALED while the synthetic join exists; both facts
+preserved, neither is a verdict.
+
+**The elapsed 4770 s is not play time** -- the session included
+discussion and assistance. Re-worded wherever it implied otherwise.
+
+
 ## ENGINE LANE — the owner's own session, read — 2026-09-14
 
 A private copy of the `.diagnostic-582e954` slot JSON, its `.bak` and a

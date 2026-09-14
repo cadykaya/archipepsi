@@ -431,17 +431,50 @@ var _walker: Player = null
 ## have reported perfect traversal of a Zone containing nothing to
 ## traverse to.
 func _load_the_real_zone() -> bool:
-	var text := FileAccess.get_file_as_string(ZONE_JSON)
+	# WHICH PROPOSAL, AND WHETHER A COMMITTED PLACEMENT COMES WITH IT.
+	#
+	# `played_zone.json` by default, re-solved, which is what this file
+	# has always walked. `--zone-json=` and `--manifest-json=` point it
+	# at a saved level instead -- an owner's uploaded campaign, read from
+	# a disposable copy outside the repository, never committed.
+	#
+	# THE MANIFEST IS THE POINT WHEN THERE IS ONE. A proposal says what
+	# the Zone contains; the manifest says where every room actually
+	# WENT. Walking a re-solved layout and calling it the played level is
+	# only right while the two agree, and nothing had ever checked that
+	# -- `_the_committed_placement_is_what_was_played` does, below.
+	var which := ZONE_JSON
+	var manifest_path := ""
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--zone-json="):
+			which = arg.substr("--zone-json=".length())
+		elif arg.begins_with("--manifest-json="):
+			manifest_path = arg.substr("--manifest-json=".length())
+	var text := FileAccess.get_file_as_string(which)
 	if text.is_empty():
-		_check(false, "%s is missing" % ZONE_JSON)
+		_check(false, "%s is missing" % which)
 		return false
 	var parsed: Variant = JSON.parse_string(text)
 	if typeof(parsed) != TYPE_DICTIONARY:
-		_check(false, "%s did not parse to a Zone" % ZONE_JSON)
+		_check(false, "%s did not parse to a Zone" % which)
 		return false
 	var zone: Dictionary = parsed
+	var manifest := {}
+	if manifest_path != "":
+		var mtext := FileAccess.get_file_as_string(manifest_path)
+		var mparsed: Variant = JSON.parse_string(mtext)
+		if typeof(mparsed) != TYPE_DICTIONARY:
+			_check(false, "%s did not parse to a manifest" % manifest_path)
+			return false
+		manifest = mparsed
+		print("  -- walking a SAVED level: %s" % which.get_file())
+		print("     replaying its committed placement from %s"
+				% manifest_path.get_file())
+		await _the_committed_placement_is_what_was_played(zone, manifest)
 	_zone = ZoneController.new()
 	add_child(_zone)
+	if not manifest.is_empty():
+		_zone.committed_manifest = manifest
 	_zone.setup(zone)
 	for _i in 12:
 		await get_tree().physics_frame
@@ -1320,3 +1353,82 @@ func _run() -> void:
 		_zone.queue_free()
 		await get_tree().process_frame
 	_finish()
+
+
+## DID THE LAYOUT I HAVE BEEN WALKING GO WHERE THE PLAYED ONE WENT?
+##
+## This file, and every other engine measurement in this batch, built
+## `played_zone.json` by SOLVING its layout afresh. A proposal says what
+## a Zone contains; a manifest says where each room actually ended up,
+## and the fixture carries no manifest at all -- so "measured on the
+## level that was played" was true of the CONTENT and merely assumed of
+## the GEOMETRY.
+##
+## The owner's save carries both. Built twice from the same proposal --
+## once re-solved, once replaying the committed placement -- and the
+## room transforms compared. Reported either way: agreement retrospectively
+## justifies the earlier measurements, disagreement retracts them.
+func _the_committed_placement_is_what_was_played(
+		zone: Dictionary, manifest: Dictionary) -> void:
+	var fresh := ZoneBuilder.build(zone)
+	var replay := ZoneBuilder.build(zone, "", 0.0,
+			ZoneBuilder.layout_from_json(manifest))
+	for out: Dictionary in [fresh, replay]:
+		if not out.has("root"):
+			_check(false, "a build of the saved proposal failed: %s"
+					% str(out.get("failed", out.get("status", "?"))))
+			return
+	var a: Dictionary = ZoneBuilder.layout_to_json(fresh).get("rooms", {})
+	var b: Dictionary = ZoneBuilder.layout_to_json(replay).get("rooms", {})
+	(fresh["root"] as Node3D).free()
+	(replay["root"] as Node3D).free()
+
+	var moved: Array[String] = []
+	var worst := 0.0
+	for rid: String in manifest.get("rooms", {}) as Dictionary:
+		var saved: Dictionary = (manifest["rooms"] as Dictionary)[rid]
+		if not a.has(rid):
+			moved.append("%s (absent from the re-solved build)" % rid)
+			continue
+		var solved_at := _as_vec((a[rid] as Dictionary).get("position"))
+		var saved_at := _as_vec(saved.get("position"))
+		var gap := solved_at.distance_to(saved_at)
+		worst = maxf(worst, gap)
+		if gap > 0.01:
+			moved.append("%s by %.2f m" % [rid, gap])
+	# AND THE REPLAY REALLY REPLAYED. A replay that quietly re-solved
+	# would make the comparison above meaningless in the flattering
+	# direction.
+	var replay_worst := 0.0
+	for rid: String in manifest.get("rooms", {}) as Dictionary:
+		if b.has(rid):
+			replay_worst = maxf(replay_worst, _as_vec(
+					(b[rid] as Dictionary).get("position")).distance_to(
+					_as_vec(((manifest["rooms"] as Dictionary)[rid]
+							as Dictionary).get("position"))))
+	# PHRASED AS THE ASSERTION, because `_check` prints its message
+	# after "ok:" when it passes -- a failure-worded message there reads
+	# as the engine cheerfully announcing the defect.
+	_check(replay_worst <= 0.01,
+			"the replay reproduces the committed placement (worst room "
+			+ "%.3f m), so what is walked below IS the played geometry"
+			% replay_worst)
+
+	if moved.is_empty():
+		print("     re-solving the saved proposal reproduces the "
+				+ "committed placement exactly (worst room %.3f m)" % worst)
+	else:
+		print("     RE-SOLVING DOES NOT REPRODUCE THE PLAYED PLACEMENT:")
+		for line: String in moved:
+			print("       %s" % line)
+		print("     ...so measurements taken on a re-solved "
+				+ "`played_zone.json` were of a DIFFERENT arrangement of "
+				+ "the same rooms. The walk below uses the saved one.")
+
+func _as_vec(raw: Variant) -> Vector3:
+	if raw is Vector3:
+		return raw
+	var arr: Array = raw if raw is Array else []
+	if arr.size() < 3:
+		return Vector3.ZERO
+	return Vector3(float(arr[0]), float(arr[1]), float(arr[2]))

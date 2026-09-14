@@ -1,72 +1,166 @@
 # The owner's own session, read
 
-**Source:** a private copy of the `.diagnostic-582e954` slot JSON, its
-`.bak`, and one `playtime.jsonl` record, shared 2026-09-14.
-**Not committed.** The saves stay private; only the measurements taken
-from them are written down here, and the originals were never modified.
+**Source:** the owner's uploaded bundle — the `.diagnostic-582e954`
+slot JSON, its `.bak`, and one `playtime.jsonl` — worked from a
+disposable copy outside the repository. **Not committed. Originals not
+modified.** Checksums verified against the bundle's own `SHA256SUMS.txt`
+and against the loose copies shared earlier: same bytes.
 
-**Build played:** `582e954da8e7`, Windows, `tree: dirty`, Python 3.14.4.
-
----
-
-## The fixture everything was measured on IS this Zone
-
-`godot/tests/fixtures/played_zone.json` hashes to **`fe2b014761fbb449`**,
-and so does the `zone_digest` in the playtime record. The same sixteen
-characters.
-
-So the whole of this run's engine work was measured on the level that
-was actually played, not a lookalike: the `Reward_89100126` approach in
-`c021`, the mounting census, the unmounted-target shot in `c007`, the
-sealed-door sweep, the station panel, the F5 schematic.
+**Build played:** `582e954da8e7`, Windows, Python 3.14.4, **`tree:
+dirty`** — provenance, not a diagnosis. The bundle carries no
+uncommitted diff, so matching this checkout to that commit cannot prove
+the historical code was identical.
 
 ---
 
-## The two questions the save was waiting to answer
+## The fixture is that Zone, and so is its geometry
 
-**The Whistle crossing.** The `.bak` and the live save differ in exactly
-**one field**:
+Two separate claims, and only the first was ever checked.
+
+**The content.** The uploaded proposal at `/zones/0/zone` is
+**byte-identical** to `godot/tests/fixtures/played_zone.json` as parsed
+JSON, and both hash to `fe2b014761fbb449` — the `zone_digest` in the
+playtime record.
+
+**The placement, which is new.** The save also carries the *committed
+manifest* at `/zones/0/manifest`, and **the fixture carries none**. So
+every engine measurement this batch built the Zone by SOLVING its layout
+afresh: the right rooms, but an arrangement nobody had checked against
+the played one.
+
+Checked now. `godot-traverse` builds the saved proposal twice — once
+re-solved, once replaying the committed manifest — and compares every
+room transform:
+
+> **re-solving reproduces the committed placement exactly: worst room
+> 0.000 m**, across all 24 room records.
+
+So the earlier measurements were on the played geometry after all. That
+is a verified result rather than the assumption it had been, and the
+walker now replays the manifest regardless:
+
+```
+make godot-traverse                      # the fixture, re-solved, as before
+godot --headless --path godot -- --traverse-test \
+      --zone-json=<copy>/proposal.json \
+      --manifest-json=<copy>/manifest.json
+```
+
+**24 of 24 checks pass on the saved level.**
+
+---
+
+## CHECK 126 is in c021, and CHECK 120 does not exist
+
+**Confirmed by the game, not by a lookup.** Walking the committed
+placement with the real controller, the base kit reaches the pedestal
+from `c021`'s own doorway and the interact prompt reads:
+
+> `[E] CLAIM CHECK 126`
+
+`c021` is a procedural `platform_path`: 3 segments, declared `gap_size`
+2.03, `vertical_step` 0.51, objective `platform_to_goal`, entry `USED`
+and exit `SEALED`, with return plug `p:c021:start` and one four-element
+untimed `switch_sequence`. The render below is that room, built from the
+owner's own proposal.
+
+**`89100120` is allocated nowhere in this save.** Checked directly
+against the proposal's chambers. Any earlier "CHECK 120" wording was not
+an identifier and nothing should be inferred from it.
+
+![c021](evidence/owner-save/c021_switch_sequence_over_the_pit.png)
+
+The four switches sit **on the platform segments, spread across the
+gaps** — so touching all four means crossing the course, over the drop,
+with the activity timer already running. That is consistent with the 792
+active seconds the record shows for `c021_0`, and it is a correlation,
+not a diagnosis.
+
+---
+
+## The Whistle: two different Whistles, and 126 is the upgrade
+
+The `.bak` and the live save differ in **exactly one field**:
 
 ```
 slots.mobility   act_l89100076 (Fresh Rep, dash)
               -> act_l89100019 (Warp Whistle, blink)
 ```
 
-Everything else — every interpretation, every local reward, the whole
-Zone manifest and its progress — is byte-identical. So the `.bak` is the
-moment before the Whistle went into the mobility slot.
+Everything else — every interpretation, the proposal, the manifest, the
+progress — is equal. The `.bak` is the moment before the Whistle went
+into the slot. It is not a second layout, and restoring it would not
+produce different geometry.
 
-Resolved after its four upgrades, the equipped Whistle is
-`blink, range 20.0 m, cooldown 2.10 s, clearance 0.4` (from 14.0 m /
-2.50 s). The dash it replaced was `force 20.0, cooldown 2.0`.
+**But the final Whistle is not the Whistle that reached CHECK 126**, and
+this matters for any crossing question:
 
-**AND NOTHING IN THAT ZONE NEEDED IT.** Every declared gap is inside the
-base kit:
+| seq | from | effect | range | cooldown |
+|---|---|---|---|---|
+| 4 | CHECK 019 | **first acquired** | 14.0 | 2.50 |
+| 5 | **CHECK 126** | range +6.0 | **20.0** | 2.50 |
+| 9 | CHECK 042 | cooldown −0.2 | 20.0 | 2.30 |
+| 10 | CHECK 147 | cooldown −0.2 | 20.0 | **2.10** |
 
-| room | gap | step | base-kit allowance |
-|---|---|---|---|
-| `c003` | 2.31 m | 0.51 | 2.40 m |
-| `c008` | 2.08 m | 0.51 | 2.40 m |
-| `c021` | 2.03 m | 0.51 | 2.40 m |
-| `c012` | 1.73 m | 0.51 | 2.40 m |
-| `c017` | 1.73 m | 0.51 | 2.40 m |
+CHECK 126 *is* the +6. Whatever crossing reached it was made with **at
+most the 14 m Whistle**, never the 20 m one. An earlier version of this
+page quoted only the final 20 m figure; that was the right number for
+the wrong moment.
 
-Five rooms declare a gap, **none exceeds the allowance**. The Whistle
-was a convenience, not a key, and the Zone stayed base-kit solvable —
-which is the property that is not allowed to break.
+Fresh Rep's recorded primitive is **`dash`** — no jump-height trait is
+recorded for it. An apparent assisted jump would still need controller
+measurement.
 
-**`Reward_89100126`.** It is in the save as a collected Echo (Warp
-Whistle Mk 2, `+6.0` range). The Check this lane reported as "2.6 m
-below the floor" and then retracted was reached by the player. The
-retraction was right.
+**Was the Whistle needed?** Earlier I answered this from the *declared*
+`gap_size` values, which is not evidence about built geometry. Answered
+properly now, by walking the committed placement with the real
+controller and the base kit only:
+
+> **6 of 6 sampled Checks REACHED, 0 BLOCKED**, including
+> `Reward_89100126` from `c021`'s own doorway (closest 1.20 m,
+> addressable, prompt shown, real `interact()` runs). The room can be
+> left again across a **2.00 m** measured gap, inside the 2.60 m
+> base-kit jump.
+
+So on the played geometry the sampled routes do not need the Whistle.
+That is six sampled Checks walked, not a proof about all fifteen, and it
+says nothing about how a human would choose to move.
+
+**`Reward_89100126` sits on ground at y 1.53 with 0.00 m under it.** The
+Check this lane once reported 2.6 m below the floor, and retracted, was
+reached by the player and is reachable by the walker. The retraction was
+right.
+
+---
+
+## The exit approach, on the saved join
+
+Walked on the manifest's own `e:__exit__` (`c023` → `exit`, synthetic):
+
+- the exit portal is **REACHED** from `c023`'s nearest doorway (10.5 m,
+  closest 2.10 m) and the game's interact ray finds it;
+- **3 of 16** bearings at 2.5 m around the portal are standable — that
+  is placement evidence, not a route;
+- `c023`'s ordinary exit is declared **SEALED** while the manifest also
+  carries the synthetic exit join. **Both facts stand**; neither alone
+  is a leak or an obstruction, and the route and the transition logic
+  are separate subjects.
+
+All 22 SEALED sockets on the assembled Zone measure solid, and the
+deliberately mislabelled control is still caught.
 
 ---
 
 ## What the session says about the two retired families
 
-79.5 minutes in one Zone. **23.2 of them inside an activity** — 29%.
-28 of 29 activities completed, 4 deaths, `zone_value` 911 against a
-1000 budget.
+4770 seconds of elapsed time on one Zone, 1391 of them inside an
+activity. **That elapsed figure is not play time**: the owner says the
+session included discussion and assistance, so it is not evidence of
+difficulty or frustration and is not read as any here. 28 of 29
+activities completed, 4 deaths, `zone_value` 911 against a 1000 budget.
+
+The per-activity numbers below are a different matter — they are the
+activity's own timer, and they are what the families were doing.
 
 | family | n | completed instantly | median | max | needed a retry |
 |---|---|---|---|---|---|
@@ -102,14 +196,18 @@ the budget by 28% addresses neither.
 
 ## Two other things worth seeing
 
-**`c021_0` ran its active timer for 792 seconds** — 13 minutes on a
-four-element `switch_sequence`. `c021` is the `platform_path` over a
-40 m drop that holds `Reward_89100126`. Whatever happened there, it was
-not four switches' worth of time.
+**`c021_0` ran its active timer for 792 seconds** on a four-element
+`switch_sequence`. The render above shows why that is at least
+plausible: the four switches are spread along the platform course over
+the drop, so the activity is a traversal with a timer on it rather than
+four switches in a room. Still a correlation — the record cannot
+separate a defect from a player taking their time, or from the session's
+discussion.
 
-**Only 29% of the session was inside an activity.** The other 56 minutes
-were spent getting places. The three longest rooms after the arena are
-all `platform_path`.
+**The three longest rooms after the arena are all `platform_path`.** Per
+the caveat above, the room timers include whatever else the session
+contained, so this is a place to look rather than a measurement of
+traversal cost.
 
 ---
 
@@ -118,7 +216,13 @@ all `platform_path`.
 - **Why** `timed_run` completes at 0.00 s, and **why** the `c023` plate
   needed 23 attempts. Both are reproducible-looking, neither is
   diagnosed, and neither was chased here — that would be new work.
-- Whether the 792 s in `c021` is a defect or a player taking their time.
-  The record cannot tell the difference.
+- Whether the 792 s in `c021` is a defect, a course that simply takes
+  that long, or time the session spent not playing. The record cannot
+  separate them.
+- **Whether the sampled six generalise.** Six of fifteen Checks were
+  walked. The other nine are unwalked, not proven unreachable.
+- **The `c023` exit seam.** SEALED ordinary exit plus a synthetic join
+  is preserved as two facts; which one the production reconstruction
+  path follows was not traced.
 - Anything about the variant's router blocker, which is unrelated and
   documented in `docs/FOLLOWUP_02_INTEGRATION.md` §6a.
