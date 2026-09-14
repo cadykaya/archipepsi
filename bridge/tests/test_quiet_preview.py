@@ -130,3 +130,64 @@ def test_the_retired_families_stay_legal_everywhere_they_already_are():
         owned_echo_ids=[],
         zone_budget=C.DEFAULT_CONFIG.zone_budget) if "shell" not in e]
     assert not errs, errs
+
+
+# --- the acceptance column has to be able to say no ------------------------
+#
+# `quiet_preview._accepts` read `expected_zone_id` and
+# `allocated_location_ids` off the GENERATED Zone, so both compared the
+# output with itself and could not fail, and it dropped every error
+# containing "shell". The row said 12/12 and measured almost nothing.
+#
+# These two hand it the cases it must refuse. A corrected check that
+# still cannot fail is the same vacuous check in a new costume.
+
+def _pair(index=0):
+    """A generated Zone and the request that asked for it."""
+    from tools.quiet_preview import _compose
+    return _compose(1, C.DEFAULT_CONFIG)[0]
+
+
+def test_a_shell_the_request_never_offered_is_refused():
+    from tools.quiet_preview import _accepts
+    zone, req = _pair()
+    ok, _ = _accepts(zone, req)
+    assert ok, "the untouched Zone should pass; the control needs a baseline"
+
+    # NOT `shell_corner_left`: the default catalogue offers twelve legal
+    # shells and that is one of them, so the first attempt at this
+    # control smuggled in a shell the request HAD offered and proved
+    # nothing. Asked of the offer rather than assumed.
+    from archipepsi_bridge import shells as _shells
+    offered = set(_shells.offer_of(req)["legal_shell_ids"])
+    bogus = "shell_never_offered"
+    assert bogus not in offered, offered
+    smuggled = {**zone, "chambers": [
+        {**c, "shell_id": bogus} if i == 0 else c
+        for i, c in enumerate(zone["chambers"])]}
+    ok, errs = _accepts(smuggled, req)
+    assert not ok, "a shell nobody offered was accepted"
+    assert any("shell" in e for e in errs), errs
+
+
+def test_an_allocation_mismatch_is_refused():
+    from tools.quiet_preview import _accepts
+    zone, req = _pair()
+    allocated = {loc.location_id for loc in req.locations}
+    stranger = max(allocated) + 1
+
+    swapped = []
+    moved = False
+    for c in zone["chambers"]:
+        if not moved and c.get("reward_location_id") is not None:
+            swapped.append({**c, "reward_location_id": stranger})
+            moved = True
+        else:
+            swapped.append(c)
+    assert moved, "this control needs a Zone that carries a Check"
+    assert stranger not in allocated
+
+    ok, errs = _accepts({**zone, "chambers": swapped}, req)
+    assert not ok, "a Check the request never allocated was accepted"
+    assert any(str(stranger) in e or "alloc" in e.lower() or "location" in e.lower()
+               for e in errs), errs

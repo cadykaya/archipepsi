@@ -1,4 +1,9 @@
-"""The quieter-generation PREVIEW, measured against the same twelve cases.
+"""A LOWER-BUDGET GENERATION VARIANT, measured against the same twelve cases.
+
+**Not "the same level with the drills removed".** The preview arm asks
+for a smaller band, so it composes different rooms and comes out with
+more of them. It reduces the family substitution and does NOT meet the
+strictly matched no-compensation comparison, which remains incomplete.
 
 Follow-up 02 item D. `family_retirement.py` measured what narrowing the
 family list does ON ITS OWN -- 161 retired activities came back as 176
@@ -42,6 +47,7 @@ if str(ROOT) not in sys.path:
 
 from archipepsi_bridge import quiet                          # noqa: E402
 from archipepsi_bridge import content_value as CV            # noqa: E402
+from archipepsi_bridge import shells                         # noqa: E402
 from archipepsi_bridge.epsilon import fallback               # noqa: E402
 from archipepsi_bridge.schemas import constants as C         # noqa: E402
 from archipepsi_bridge.schemas.zone import Zone, validate_zone  # noqa: E402
@@ -75,16 +81,35 @@ def _per_room(zone: dict) -> collections.Counter:
         len(c.get("activities") or ()) for c in zone["chambers"])
 
 
-def _accepts(zone: dict, budget: int) -> bool:
+def _accepts(zone: dict, req) -> tuple[bool, list[str]]:
+    """Judge the OUTPUT against the REQUEST that asked for it.
+
+    **This was wrong, and the wrongness flattered the result.** It read
+    `expected_zone_id` and `allocated_location_ids` off the generated
+    Zone, so both checks compared the output with itself and could not
+    fail; and it dropped every error containing "shell", which is a
+    whole class of real refusal thrown away to make a column look
+    clean. A 12/12 acceptance row measured almost nothing.
+
+    The same argument set `playtest.py` and `replay_archive.py` use --
+    the ids the request asked for, the locations it allocated, the
+    affordances and capabilities it granted, and the shells it actually
+    offered via `shells.offer_of`. Nothing is filtered: an error here is
+    an error.
+    """
     try:
         z = Zone.model_validate(zone)
-    except Exception:
-        return False
+    except Exception as exc:                       # pragma: no cover
+        return False, [f"does not parse: {exc}"]
     errs = validate_zone(
-        z, expected_zone_id=z.zone_id,
-        allocated_location_ids=list(z.reward_location_ids),
-        owned_echo_ids=[], zone_budget=budget)
-    return not [e for e in errs if "shell" not in e]
+        z, expected_zone_id=req.zone_id,
+        allocated_location_ids=[loc.location_id for loc in req.locations],
+        owned_echo_ids=[e.echo_id for e in req.player.echoes],
+        owned_affordance_tags=req.unlocked_affordances,
+        guaranteed_capabilities=req.guaranteed_capabilities,
+        **shells.offer_of(req),
+        zone_budget=req.campaign.zone_budget)
+    return (not errs), list(errs)
 
 
 def _arm(name, pairs, budget):
@@ -92,6 +117,7 @@ def _arm(name, pairs, budget):
     rooms = acts = enemies = checks = repairs = score = 0
     per_room: collections.Counter = collections.Counter()
     accepted = 0
+    refusals: collections.Counter = collections.Counter()
     for zone, _req in pairs:
         c = _census(zone)
         fams.update(c["families"])
@@ -102,11 +128,15 @@ def _arm(name, pairs, budget):
         repairs += c["rooms_with_a_puzzle"]
         score += _score(zone)
         per_room.update(_per_room(zone))
-        accepted += 1 if _accepts(zone, budget) else 0
+        ok, errs = _accepts(zone, _req)
+        accepted += 1 if ok else 0
+        for e in errs:
+            refusals[e.split(":")[0].split(",")[0][:58]] += 1
     return {"name": name, "families": fams, "rooms": rooms,
             "activities": acts, "enemies": enemies, "checks": checks,
             "repairs": repairs, "score": score, "per_room": per_room,
-            "accepted": accepted, "n": len(pairs), "budget": budget}
+            "accepted": accepted, "n": len(pairs), "budget": budget,
+            "refusals": refusals}
 
 
 def main() -> int:
@@ -163,6 +193,18 @@ def main() -> int:
     print(f"    preview leaves {base['repairs'] - prev['repairs']} fewer "
           "repairable rooms than the baseline;\n    the engine lane must "
           "not place a repair-gated station in one of them.")
+
+    print("\n  WHY A ZONE WAS REFUSED, if any were")
+    any_refusal = False
+    for a in arms:
+        if not a["refusals"]:
+            continue
+        any_refusal = True
+        print(f"    {a['name']}:")
+        for msg, n in a["refusals"].most_common(6):
+            print(f"      x{n:<3d} {msg}")
+    if not any_refusal:
+        print("    none; every arm was accepted against its own request")
 
     print("\n  SUBSTITUTION CHECK (the thing the owner asked against)")
     kept = [k for k in base["families"] if k not in quiet.RETIRED_FAMILIES]

@@ -1,4 +1,17 @@
-"""The quieter-generation PREVIEW: a policy choice, and an opt-in path.
+"""A LOWER-BUDGET GENERATION VARIANT, offered opt-in for comparison.
+
+**Read the label first, because it is the finding.** This is NOT "the
+same level with only the drills removed". It asks for a smaller band, so
+it composes DIFFERENT ROOMS, and it comes out `+17` rooms and `+27`
+enemies against the baseline over the twelve cases. Owner ruling,
+2026-09-14: kept as an opt-in experimental candidate, labelled this way,
+with those measurements preserved. **The strictly matched
+no-compensation comparison remains INCOMPLETE** -- see the boundary
+below for exactly what would have to change to complete it, and that
+change is not made here.
+
+What it does deliver is the narrower claim: the activity-family
+substitution the owner asked against is gone.
 
 **What this is.** Follow-up 02 item D. Skyiah played the two standalone
 drills -- `timed_run` and `pressure_routing` -- and asked for a playable
