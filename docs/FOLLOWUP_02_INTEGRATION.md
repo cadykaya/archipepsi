@@ -1,8 +1,8 @@
 # Follow-up 02 — integration: the lower-budget generation variant
 
 **Branch:** `claude/archipepsi-echoes-continuation-b1adno`
-**Merged from the bridge lane:** `fdac6ab`
-**Tested revision:** `6329cfa` — every number in §8 is that
+**Merged from the bridge lane:** `fdac6ab`, then `fc7b6fb`
+**Tested revision:** `a820ca3` — every number in §8 is that
 tree, clean, with nothing else running against it.
 
 Dess built the variant. This is Prod integrating it: the opt-in that
@@ -325,15 +325,19 @@ before anyone can say what it is.
 
 ## 8. Verification
 
-One run on a clean tree at **`6329cfa`** (`0 dirty`).
-**28 targets, 28 green, final exit 0.**
+One run on a clean tree at **`a820ca3`** (`0 dirty`).
+**29 targets, 29 green, final exit 0.**
 
 | | |
 |---|---|
-| bridge | **1412 passed** (119 s) |
+| bridge | **1414 passed** (130 s) |
 | apworld | **39 passed, 627 subtests** |
 | schemas | **131 passed** |
-| Godot | **25 targets**, including both integration loops |
+| Godot | **26 targets**, including all three integration loops |
+
+The parked probe is one of them, and it is green because it reproduced
+its blocker and said so — 1 router refusal, 0 certification refusals, 0
+exhausted, band at 720 of 1000. §6a.
 
 | | |
 |---|---|
@@ -381,6 +385,9 @@ The first attempt at this run reported two, and one was mine:
   one adds only `--quiet` in front of the caller's own options.
 - **Five Zones per arm** is a sample, not a certificate. The 3-of-5
   router refusals are a strong signal, not a rate.
+- **The live check is one Zone**, bounded on purpose. It establishes
+  that the band really drops and that this refusal has no recovery; it
+  does not measure how often a variant campaign would stall.
 - **Your Zone.** Nothing here reproduces `.diagnostic-582e954`, and
   nothing has touched it.
 

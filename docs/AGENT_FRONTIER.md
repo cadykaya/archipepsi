@@ -38,6 +38,17 @@ observed; no waiver, and no owner decision is being asked for.
 **The ordinary diagnostic replay is unaffected** and stays available
 whatever happens to the variant.
 
+**Verified at `a820ca3`:** one clean run, 29 targets green, final exit 0
+(bridge 1414, apworld 39 + 627 subtests, schemas 131, 26 Godot targets
+including all three integration loops). Numbers and limits in the
+integration page, §8.
+
+**The heartbeat stays PAUSED.** The authorised list is done: Dess's
+correction is in, the variant is parked with its reproduction, and the
+run is green. Turn it back on when there is a task -- unblocking the
+router dead end is the obvious next one, and it needs an owner
+go-ahead because it crosses both lanes.
+
 
 ## ENGINE LANE — follow-up 02 integration — 2026-09-14
 
