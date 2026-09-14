@@ -48,10 +48,21 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(
 			ProjectSettings.globalize_path(OUT_DIR))
 
-	var text := FileAccess.get_file_as_string(ZONE_JSON)
+	# WHICH ZONE TO PHOTOGRAPH. `played_zone.json` by default -- the
+	# Zone every other shot in the evidence folder is of -- and any
+	# manifest on request, so the lower-budget variant can be seen
+	# beside the baseline instead of described.
+	var which := ZONE_JSON
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--zone-json="):
+			which = arg.substr("--zone-json=".length())
+	if which != ZONE_JSON:
+		print("SHOTS: photographing %s" % which)
+
+	var text := FileAccess.get_file_as_string(which)
 	var zone: Variant = JSON.parse_string(text)
 	if typeof(zone) != TYPE_DICTIONARY:
-		print("SHOTS: could not read %s" % ZONE_JSON)
+		print("SHOTS: could not read %s" % which)
 		get_tree().quit(1)
 		return
 
