@@ -40,6 +40,10 @@ slot JSON; stair comfort; whether the unmounted target look is an
 acceptable fallback; whether the F5 schematic is the map; the budget
 shape.
 
+**Verified at `e39bbca`:** one clean run, 27 targets green, final exit
+0 (bridge 1389, apworld 39 + 627 subtests, schemas 131, 24 Godot
+targets). Numbers and limits in the handoff, §6.
+
 **The heartbeat is PAUSED.** Turn it back on when there is a task.
 
 

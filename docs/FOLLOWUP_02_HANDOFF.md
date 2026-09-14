@@ -2,7 +2,8 @@
 
 **Branch:** `claude/archipepsi-echoes-continuation-b1adno`
 **Started from:** `eb14a38` (runtime verification at `b3d583d`)
-**Tested revision:** _§6, after the run_
+**Tested revision:** `e39bbca` — every number in §6 is that tree.
+This page is the documentation commit on top of it.
 
 Worked from `ARCHIPEPSI_OWNER_AWAY_FOLLOWUP_02.md`, items **A**, **B**
 and **C**. **D belongs to Dess** and is untouched here — see §3.
@@ -224,3 +225,75 @@ engine-visible, and `_repair_station_for` is where it would show.
 ---
 
 ## 6. Verification
+
+One run, on a clean tree at **`e39bbca`**, 2026-09-13 23:42–23:59 UTC.
+**27 targets, 27 green, final exit 0.** Nothing was committed while it
+ran — the last two times a baseline failed here it was because I moved
+the commit out from under `build_metadata()` mid-test, and that is my
+race, not the suite's.
+
+| | |
+|---|---|
+| bridge | **1389 passed** (124 s) |
+| apworld | **39 passed, 627 subtests** |
+| schemas | **131 passed** |
+| Godot | **24 targets** — 23 drivers assert, `godot-import` is the asset-import prerequisite |
+
+The three drivers that count their own checks:
+
+| | |
+|---|---|
+| `godot-physics` | OK (**68 checks**) — the descent repair and its boundaries |
+| `godot-traverse` | OK (**23 checks**) — the real-controller walker |
+| `godot-reload` | OK (**2**, then **18 checks**) |
+
+### What the instruments measured this run
+
+**Doors.** 22 SEALED sockets and 44 passable ones on the assembled
+Zone. Every SEALED socket measured solid; the deliberately broken
+counterpart (`c001/exit` with its usage flipped) was caught. The
+doorway probe is `RoomAudit._blocker`, the controller's own capsule —
+not a second opinion about whether a body fits.
+
+**Mounting.** 27 SHOT elements in the Zone, **15 on walls**, all in
+arenas. Declines printed by room and chamber type: `c002`, `c006`
+(arena), `c007`, `c022` (corridor). Four controls decisive: a target
+over a real gap mounted and hit from 9 m with the real Static Pulse; a
+room with no wall declined; a wall with nowhere to stand in front of it
+declined; a shot through a 4 m slab missed.
+
+**The lower Check.** `Reward_89100126` in `c021` sits at y 1.53 with
+ground at y 1.53 — **0.00 m** between them. A base kit reaches it from
+its own room's doorway, the game's own interact ray finds it from where
+the player stands, and the room can be left again across a 2.00 m gap,
+inside the 2.60 m jump.
+
+**Activities.** 29 audited, **0 structural failures**, 3 placement
+notes.
+
+`godot/tests/fixtures/placement/captures.json` is re-stamped to
+`e39bbca` by this run — same payload bytes, controller digest
+`1b7ae5d3560020ac`, still rebuilt by `make godot-zone-audit`.
+
+### What this run does not establish
+
+- **Comfort.** The stair fall is gone as a measurement — **1 airborne
+  frame of 40** descending two 0.4 m treads, where a free fall spends
+  20; a 2.5 m ledge still falls (24 of 45, at 9.2 m/s), so the rule did
+  not quietly become adhesion; a slope is walked down with feet on it
+  the whole way (0 of 45). Whether the result *feels* right on a
+  gamepad is yours. Zero airborne frames was never the definition.
+- **Windows.** No `cmd.exe` in this container. The `.bat` files have
+  never been executed here; every decision they make lives in Python,
+  where it is tested.
+- **Your Zone.** Nothing here reproduces `.diagnostic-582e954`. The
+  Whistle crossing waits for the private slot file; your original is
+  untouched.
+- **One Zone.** `godot-traverse` walks a single assembled proposal, and
+  3 of its routes ended UNRESOLVED — a straight-line walker that does
+  not arrive has measured its own route choice, not the Zone. It is a
+  sample, not a certificate.
+- **Quieter generation.** Not built, not measured. §3.
+
+Environment: Godot 4.5.1.stable.official, Python 3.11.15, Archipelago
+0.6.7.
