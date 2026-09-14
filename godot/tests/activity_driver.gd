@@ -76,6 +76,9 @@ func _run() -> void:
 	await _test_a_mounted_target_is_shootable_from_the_lane()
 	await _test_a_blocked_shot_is_a_blocked_shot()
 	await _test_a_wall_with_no_room_declines_the_mount()
+	await _test_a_target_over_a_gap_is_mounted_and_shootable()
+	await _test_a_room_with_no_wall_declines_the_mount()
+	await _test_a_wall_with_nowhere_to_shoot_from_declines()
 	await _test_the_real_zone_builder_actually_builds_activities()
 	await _test_a_zone_built_activity_is_drivable()
 	await _test_no_element_is_buried_in_a_wall()
@@ -948,6 +951,177 @@ func _test_a_wall_with_no_room_declines_the_mount() -> void:
 			"%d target(s) were mounted on a wall that is all doorway"
 			% mounted)
 	(probe["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## A TARGET OVER A GAP IS STILL A TARGET.
+##
+## The correction that produced this: a wall-mounted shootable target
+## does NOT require floor directly beneath it. Nobody stands under one.
+## A first cut required ground below the mount -- the question a
+## floor-placed element is owed -- and it would refuse a perfectly
+## ordinary target hanging over a walkway recess.
+##
+## So: a room whose floor stops six metres short of the right-hand wall.
+## The mount is over the gap; the firing position is on the floor that
+## remains. Both halves are then exercised for real -- the mount has to
+## happen, and the Static Pulse has to reach it from a body standing on
+## that floor.
+func _gapped_room(width := 20.0, depth := 18.0) -> Dictionary:
+	var root := Node3D.new()
+	add_child(root)
+	# Floor from the left wall to x = +4: the last six metres in front
+	# of the right wall are a hole.
+	var ground := StaticBody3D.new()
+	var gshape := CollisionShape3D.new()
+	var gbox := BoxShape3D.new()
+	gbox.size = Vector3(width / 2.0 + 4.0, 1.0, depth + 4.0)
+	gshape.shape = gbox
+	ground.add_child(gshape)
+	root.add_child(ground)
+	ground.position = Vector3(-width / 4.0 + 2.0 - 2.0, -0.5, depth / 2.0)
+	# ONE wall, on the far side of the gap.
+	var wall := StaticBody3D.new()
+	var wshape := CollisionShape3D.new()
+	var wbox := BoxShape3D.new()
+	wbox.size = Vector3(0.5, 6.0, depth + 4.0)
+	wshape.shape = wbox
+	wall.add_child(wshape)
+	root.add_child(wall)
+	wall.position = Vector3(width / 2.0 + 0.25, 3.0, depth / 2.0)
+	var built := Activities.build(root, {
+		"kind": "target_challenge", "element_count": 1,
+		"time_limit": 0.0, "ordered": false, "requires": [],
+	}, "concrete_facility", width, depth, "room_gap", "gap_probe")
+	activities_built += 1
+	root.global_position = MOUNT_PROBE_AT
+	return {"root": root, "built": built, "width": width, "depth": depth}
+
+func _test_a_target_over_a_gap_is_mounted_and_shootable() -> void:
+	var probe := _gapped_room()
+	var elements: Array = (probe["built"] as Dictionary)["elements"]
+	var element: ActivityElement = elements[0]
+	_check(bool(element.get_meta("mounted", false)),
+			"a target on a real wall with a gap under it is mounted: "
+			+ "nobody stands beneath a wall target")
+	if not bool(element.get_meta("mounted", false)):
+		(probe["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+		return
+	_check(element.position.x > 0.0,
+			"and it is on the wall that exists (x %.2f)"
+			% element.position.x)
+	# NOTHING UNDER IT, which is the point of the fixture.
+	var space := get_viewport().world_3d.direct_space_state
+	var under := PhysicsRayQueryParameters3D.create(
+			element.global_position,
+			element.global_position + Vector3.DOWN * 3.0)
+	under.collide_with_areas = false
+	_check(space.intersect_ray(under).is_empty(),
+			"and the fixture really does leave a gap under it, or this "
+			+ "control is not about a gap")
+
+	# AND THE SHOT, from a body standing on the floor that remains.
+	var player := Player.create()
+	add_child(player)
+	await _physics(2)
+	var stand := MOUNT_PROBE_AT + Vector3(0.0, 0.1, element.position.z)
+	player.global_position = stand
+	await _physics(12)
+	_check(player.is_on_floor(),
+			"the firing position is supported (y %.2f)"
+			% player.global_position.y)
+	var landed := {}
+	element.triggered.connect(func(who: ActivityElement) -> void:
+		landed[who.get_instance_id()] = true)
+	player.camera.look_at(element.global_position, Vector3.UP)
+	player._fire_static_pulse()
+	await _physics(4)
+	_check(landed.has(element.get_instance_id()),
+			"and the Static Pulse reaches it across the gap from there "
+			+ "(%.1f m)" % stand.distance_to(element.global_position))
+	if landed.has(element.get_instance_id()):
+		real_shots_landed += 1
+	player.queue_free()
+	(probe["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+func _test_a_room_with_no_wall_declines_the_mount() -> void:
+	"""THE MISSING-WALL COUNTERPART. A floor and no walls: the stalk
+	would end in air, so there is no mount and the older placement
+	stands. Every element asked for is still built."""
+	var root := Node3D.new()
+	add_child(root)
+	var ground := StaticBody3D.new()
+	var gshape := CollisionShape3D.new()
+	var gbox := BoxShape3D.new()
+	gbox.size = Vector3(40.0, 1.0, 40.0)
+	gshape.shape = gbox
+	ground.add_child(gshape)
+	root.add_child(ground)
+	ground.position = Vector3(0.0, -0.5, 9.0)
+	var built := Activities.build(root, {
+		"kind": "target_challenge", "element_count": 3,
+		"time_limit": 0.0, "ordered": false, "requires": [],
+	}, "concrete_facility", 20.0, 18.0, "room_nowall", "nowall_probe")
+	activities_built += 1
+	root.global_position = MOUNT_PROBE_AT
+	var elements: Array = (built as Dictionary)["elements"]
+	_check(elements.size() == 3,
+			"a room with no wall built %d of 3 elements" % elements.size())
+	var mounted := 0
+	for raw: Variant in elements:
+		if bool((raw as ActivityElement).get_meta("mounted", false)):
+			mounted += 1
+	_check(mounted == 0,
+			"%d target(s) were mounted in a room with no walls at all"
+			% mounted)
+	root.queue_free()
+	await get_tree().process_frame
+
+func _test_a_wall_with_nowhere_to_shoot_from_declines() -> void:
+	"""THE UNUSABLE-FIRING-POSITION COUNTERPART, and the case the
+	original brief named by hand: a real wall over a kill pit. The wall
+	is there and the stalk would land on it, and there is nowhere in
+	front of it a body can stand -- so there is no mount."""
+	var root := Node3D.new()
+	add_child(root)
+	# Floor only on the FAR side of the room, eleven metres from the
+	# wall: past every firing sample.
+	var ground := StaticBody3D.new()
+	var gshape := CollisionShape3D.new()
+	var gbox := BoxShape3D.new()
+	gbox.size = Vector3(6.0, 1.0, 22.0)
+	gshape.shape = gbox
+	ground.add_child(gshape)
+	root.add_child(ground)
+	ground.position = Vector3(-13.0, -0.5, 9.0)
+	var wall := StaticBody3D.new()
+	var wshape := CollisionShape3D.new()
+	var wbox := BoxShape3D.new()
+	wbox.size = Vector3(0.5, 6.0, 22.0)
+	wshape.shape = wbox
+	wall.add_child(wshape)
+	root.add_child(wall)
+	wall.position = Vector3(10.25, 3.0, 9.0)
+	var built := Activities.build(root, {
+		"kind": "target_challenge", "element_count": 2,
+		"time_limit": 0.0, "ordered": false, "requires": [],
+	}, "concrete_facility", 20.0, 18.0, "room_pit", "pit_probe")
+	activities_built += 1
+	root.global_position = MOUNT_PROBE_AT
+	var elements: Array = (built as Dictionary)["elements"]
+	_check(elements.size() == 2,
+			"a room with an unusable wall built %d of 2 elements"
+			% elements.size())
+	var mounted := 0
+	for raw: Variant in elements:
+		if bool((raw as ActivityElement).get_meta("mounted", false)):
+			mounted += 1
+	_check(mounted == 0,
+			"%d target(s) were mounted on a wall with nowhere in front "
+			% mounted + "of it to stand -- which is a target nobody can "
+			+ "shoot")
+	root.queue_free()
 	await get_tree().process_frame
 
 # --- the game reaches them at all ---------------------------------------

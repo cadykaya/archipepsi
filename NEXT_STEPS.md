@@ -1,5 +1,100 @@
 # Archipepsi — build state
 
+## 2026-09-14 (engine) — integrating the lower-budget variant
+
+Merged the bridge lane at `fdac6ab` and integrated item D. Full page:
+`docs/FOLLOWUP_02_INTEGRATION.md`.
+
+### Selecting the variant was the work, and it was not wired
+
+The owner's note -- "separate save folders alone do not select quieter
+mode" -- was right twice over. There was no flag at all, and once there
+was one it still did nothing: `quiet.preview_constraints` narrows
+`constraints["zone_budget"]`, and NOTHING COMPOSES FROM THAT KEY. Both
+`fallback_zone_attempt` and `generate_zone_validated` read
+`request.campaign.zone_budget`; the constraints entry is the same fact
+spelled for a prompt. A Zone asked for 72% of the band came out at 917
+against a 648-792 band, which is the baseline size -- the filter-only
+arm wearing the variant's name, and precisely the compensation the
+comparison exists to avoid.
+
+The band is now set before the request is built, so the whole
+constraints block derives from one consistent number and a live Epsilon
+would be told the budget it is judged against. That immediately
+uncovered the second one: `CampaignContext.zone_budget` is bounded
+`ge=ZONE_BUDGET_MIN` (200), the prototype's per-Zone budget IS 200, and
+72% of it is 144 -- so the request could not be constructed, generation
+raised `ValidationError` inside its task, and the client sat waiting for
+a `ZONE_READY` that never came. Clamped to the floor, and logged per
+Zone at WARNING, because a clamp that bites leaves the families narrowed
+and the band unchanged, which is filter-only again and must never be
+silent. `0.72` was not touched.
+
+### Two slots, and a marker so they cannot be mixed
+
+`--quiet` on the diagnostic launcher picks slot `quiet` and writes a
+`.quiet-generation` marker into it on first start. Every later run reads
+the marker: an ordinary run aimed at a variant slot is refused, and a
+variant run aimed at an ordinary slot is refused, before anything is
+opened, created or started. The owner's `.diagnostic-582e954` has no
+marker, so it reads as the ordinary campaign it is and cannot be
+continued in variant mode.
+
+`write_text` left the launcher's blanket destructive-call ban to make
+room for that marker, and did not leave unguarded: the ban is replaced
+by the stronger statement it stood for -- exactly one write in the
+module, inside `mark_quiet` -- plus a behavioural control that a
+campaign already in the slot survives a marking byte-for-byte.
+
+### Stations counted, not inferred from activity rooms
+
+Five real manifests of each variant, built by `ZoneBuilder`, counting
+`WarpStation` nodes:
+
+    baseline      5 of 5 composed; 109 rooms, 96 with an activity,
+                  49 stations, 39 broken, 10 working
+    lower-budget  2 of 5 composed;  46 rooms, 27 with an activity,
+                  20 stations, 12 broken,  8 working
+
+No station in either starts broken in a room with no activity to repair
+it, and entrance and exit are whole in both -- one expression in
+`zone_builder.gd` makes the empty promise inexpressible, and it is
+asserted on real Zones anyway.
+
+THE FINDING IS THE FIRST COLUMN. Three of five variant manifests are
+refused by the engine's layout router, all the same shape: a branch room
+that could not be placed clear of the rooms already standing. Baseline:
+none. Not my instrument -- reversing the census order gives identical
+numbers -- and all five had already been accepted by `validate_zone` on
+the bridge, so it is the two sides disagreeing.
+
+### Both loops, and what they do not cover
+
+`godot-integration-quiet` runs the whole client/bridge loop with the
+flag on; both modes pass. At prototype scale the clamp means that
+exercises the family narrowing and not the lower band, and default scale
+is not an option because the harness fails there for the BASELINE too
+(30 locations scouted, then a verdict that never arrives). Default scale
+is covered in Python and by the station census instead.
+
+### The startup case, re-run rather than waived
+
+`test_startup`'s second-bridge case: 5x alone, 3x the whole file, twice
+inside the full suite -- passes every time. Not waived. The mechanism
+that would fail it is named: `TEST_PORT` is a fixed constant and the
+case binds `TEST_PORT + 1` and spawns a real second bridge there, so any
+colliding process on 38331 fails it for reasons unrelated to the code
+under test. Left unchanged; it is a decision for the owner, not a sweep
+to start.
+
+### Recorded, not worked around
+
+The strictly matched no-compensation comparison is still incomplete.
+The variant reduces the family substitution; it does not isolate the
+drills, because one budget number derives the room envelope, the enemy
+caps and the per-room soft cap. +17 rooms, +27 enemies, different rooms.
+
+
 ## 2026-09-13 (engine) — owner-away follow-up 02
 
 From `eb14a38`, items A/B/C of
@@ -30,7 +125,7 @@ interaction position, the reward's own interaction running there, the
 room being LEAVABLE (a dead-end `platform_path` whose reward sits
 beyond an unjumpable gap is a softlock), and no SEALED socket open.
 
-### Mounting had no evidence and now has three kinds
+### Mounting had no evidence, and then had one requirement too many
 
 `_wall_spot` took `width / 2 - WALL_MARGIN` for the wall plane, which
 is the declared ENVELOPE rather than a wall. Measured on the real Zone
@@ -38,11 +133,30 @@ it mounted 27 of 27 SHOT elements on walls nothing had looked for.
 
 Walls are built by `_box`, which gives them a collision hull, and
 `all_solid_boxes` reads hulls WITHOUT the architecture filter it
-applies to meshes -- so the wall is in `solids` and can be asked for. A
-mount now needs a wall behind the stalk, floor under it (a thin column,
-so it cannot find the wall and call that a floor), and floor a few
-strides out to shoot from. 11 of 27 mount; declines are printed by
-chamber type and room.
+applies to meshes -- so the wall is in `solids` and can be asked for.
+
+A mount needs TWO things: a real wall behind the stalk, and somewhere a
+body can stand and shoot it from (floor AND standing headroom at a
+sample out in front). It does NOT need floor under the mount. A first
+cut required that and it was wrong -- nobody stands beneath a wall
+target, and the requirement refuses an ordinary one hanging over a
+walkway recess. It is the question a FLOOR-PLACED element is owed.
+Correcting it moved the count from 11 to 15 of 27.
+
+THE OTHER CONSUMER WAS CORRECTED IN THE SAME PASS, which is the part
+that would otherwise have been left answering the wrong question.
+`zone_audit_driver._has_ground` required ground beneath every element;
+it still does for floor-placed ones, and a MOUNTED element is instead
+required to have a standable position with clear line of sight inside
+weapon range -- via `RoomAudit.player_stands_here`, so there is no
+second notion of "a body fits". That is strictly more than the floor
+test asked.
+
+Four controls, each verified decisive: a target over a real gap
+(mounted, and hit with the real Static Pulse from a supported position
+9 m away), a room with no walls, a wall with nowhere to stand in front
+of it, and a shot through a slab. Each decline case asserts the element
+count, so a refusal never quietly loses a target. No quota.
 
 The surface-vouched exclusion is gone: rooms are asked rather than
 skipped by category.

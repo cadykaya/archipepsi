@@ -71,6 +71,19 @@ def main() -> None:
              "generated BRIDGE_PORT). Two Archipepsi slots in one "
              "multiworld need two bridges, and on one machine they need "
              "two ports.")
+    parser.add_argument(
+        "--quiet-generation", action="store_true",
+        help="OPT-IN LOWER-BUDGET GENERATION VARIANT (follow-up 02 item "
+             "D), for review. New Zones are offered neither standalone "
+             "drill family and are built to a smaller band, so their "
+             "share is not handed back as more of what remains. It is "
+             "NOT the same level with two drills removed: the smaller "
+             "band also buys more rooms and more enemies, and composes "
+             "different rooms. Off by default -- a bridge started "
+             "without this flag composes exactly what it always "
+             "composed. Retired families stay in the schema and any "
+             "Zone already holding one still plays. Use a separate save "
+             "slot; the diagnostic launcher's --quiet does.")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
@@ -84,7 +97,8 @@ def main() -> None:
         provider=make_provider(provider_name),
         provider_name=provider_name,
         save_dir=args.save_dir,
-        archive_dir=args.archive_dir)
+        archive_dir=args.archive_dir,
+        quiet_generation=args.quiet_generation)
     server = BridgeServer(engine, ap_default=args.ap,
                           mock_config=MOCK_SCALES[args.mock_scale],
                           **({} if args.port is None
@@ -170,6 +184,31 @@ def _ap_line(args) -> str:
             f"{config.zone_target_checks} Checks per Zone)")
 
 
+def _quiet_line(args) -> str:
+    """Said out loud, or not said at all.
+
+    A variant that changes what Zones are made of must never be a thing
+    you find out about from the level design. Off is silent -- the
+    ordinary bridge has nothing to declare -- and on says what it is,
+    in the owner's own terms: A LOWER-BUDGET GENERATION VARIANT, not the
+    same level with the drills removed. The difference is measured and
+    printed rather than left for someone to notice.
+    """
+    if not getattr(args, "quiet_generation", False):
+        return ""
+    from . import quiet
+    return ("    generation  LOWER-BUDGET VARIANT (opt-in preview)\n"
+            f"                band {int(quiet.PREVIEW_BUDGET_FRACTION * 100)}%"
+            f" of normal; no "
+            + " or ".join(quiet.RETIRED_FAMILIES) + " offered\n"
+            "                NOT the same level with two drills removed:\n"
+            "                measured at +17 rooms and +27 enemies over "
+            "twelve cases,\n"
+            "                and it composes different rooms\n"
+            "                (committed Zones and old saves are "
+            "unaffected)\n")
+
+
 def _announce(engine, server, provider_name: str, args) -> None:
     """Four lines, before the event loop starts.
 
@@ -202,6 +241,7 @@ def _announce(engine, server, provider_name: str, args) -> None:
         f"    archipelago {_ap_line(args)}\n"
         f"    epsilon     {epsilon}\n"
         f"    saves       {save_dir}\n"
+        f"{_quiet_line(args)}"
         f"{_zone_line(args, provider_name)}",
         flush=True)
     if not save_dir.exists():

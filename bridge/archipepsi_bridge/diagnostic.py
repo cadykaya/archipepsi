@@ -50,6 +50,20 @@ SLOT_PREFIX = ".diagnostic-"
 #: default that moved with HEAD would start a new campaign every commit.
 DEFAULT_SLOT = "current"
 
+#: The slot the LOWER-BUDGET VARIANT resumes. A different name on
+#: purpose: the two modes genuinely compose different Zones -- different
+#: rooms, not the same rooms with two drills taken out -- so sharing one
+#: folder would put both into a single campaign history and make the
+#: comparison unreadable.
+QUIET_DEFAULT_SLOT = "quiet"
+
+#: Written into a slot the first time a quieter run starts in it, and
+#: read on every later run. A slot REMEMBERS which mode made it, so
+#: `--quiet` cannot be pointed at an ordinary campaign (the owner's
+#: `.diagnostic-582e954` among them) and an ordinary run cannot be
+#: pointed at a quieter one. Its content is the note, not a format.
+QUIET_MARKER = ".quiet-generation"
+
 #: The configuration this entry point exists to pin. Every one of these
 #: was wrong or absent in the run that prompted it.
 FIXED_ARGS = ("--ap=mock", "--epsilon=fallback", "--mock-scale=default")
@@ -57,7 +71,8 @@ FIXED_ARGS = ("--ap=mock", "--epsilon=fallback", "--mock-scale=default")
 #: Arguments the caller may not pass through, because this entry point is
 #: the thing that decides them. Passing `--mock-scale=prototype` here
 #: would reintroduce exactly the confusion it exists to remove.
-RESERVED = ("--ap", "--epsilon", "--mock-scale", "--save-dir")
+RESERVED = ("--ap", "--epsilon", "--mock-scale", "--save-dir",
+            "--quiet-generation")
 
 
 def repo_root() -> Path:
@@ -107,6 +122,60 @@ def slot_is_occupied(path: Path) -> bool:
     one printed word.
     """
     return path.is_dir() and any(path.iterdir())
+
+
+def slot_mode(path: Path) -> str:
+    """What this slot was made as: `"quiet"` or `"normal"`.
+
+    An EMPTY slot has no mode yet and answers `"normal"`, which is only
+    ever compared against when the slot is occupied -- see
+    `refuse_mode_mismatch`. A slot that predates the marker (every slot
+    that exists today, the owner's included) therefore reads as the
+    ordinary campaign it is.
+    """
+    return "quiet" if (path / QUIET_MARKER).exists() else "normal"
+
+
+def refuse_mode_mismatch(path: Path, want_quiet: bool) -> None:
+    """Refuse to continue a campaign in the other mode. Never converts.
+
+    THE SAVE IS NOT TOUCHED EITHER WAY. This raises before anything is
+    created, started or written, because the failure it prevents is the
+    one that cannot be undone: a quieter run appending Zones to a
+    campaign that was recorded as ordinary evidence.
+    """
+    if not slot_is_occupied(path):
+        return
+    have = slot_mode(path)
+    want = "quiet" if want_quiet else "normal"
+    if have == want:
+        return
+    other = "without --quiet" if have == "normal" else "with --quiet"
+    raise ValueError(
+        f"{path.name} already holds a {have.upper()} campaign and this "
+        f"run is {want.upper()}.\n"
+        f"  Nothing has been read, written or started.\n"
+        f"  Resume it {other}, or choose another slot with --slot NAME.\n"
+        f"  The two modes compose different Zones; mixing them into one "
+        f"campaign is what this refuses.")
+
+
+def mark_quiet(path: Path) -> None:
+    """Record that this slot is the quieter one. Written once, on start."""
+    marker = path / QUIET_MARKER
+    if marker.exists():
+        return
+    marker.write_text(
+        "This diagnostic slot holds a LOWER-BUDGET GENERATION VARIANT "
+        "campaign (follow-up 02 item D).\n"
+        "Zones composed here were offered fewer activity families AND "
+        "built to a smaller band,\n"
+        "which also gave them more rooms and more enemies than the "
+        "baseline would have.\n"
+        "They are not the baseline Zones with two drills removed.\n"
+        "Resume it with the same launcher switch. Deleting this file "
+        "does not convert the campaign;\n"
+        "it only removes the guard that keeps the two modes apart.\n")
 
 
 def fresh_slot_name(root: Path | None = None,
@@ -178,19 +247,33 @@ def missing_prerequisites() -> list[str]:
     return missing
 
 
-def describe(slot: str, path: Path, resuming: bool) -> str:
+def describe(slot: str, path: Path, resuming: bool,
+             quiet_generation: bool = False) -> str:
     """The three facts the run that prompted this could not answer: which
-    build, which scale, and which folder."""
+    build, which scale, and which folder -- and, since follow-up 02, a
+    fourth: whether this campaign is the quieter preview."""
     meta = build_metadata()
     state = "RESUMING an existing campaign" if resuming \
         else "NEW campaign (this folder is empty)"
+    title = "DIAGNOSTIC CAMPAIGN (LOWER-BUDGET VARIANT)" \
+        if quiet_generation else "DIAGNOSTIC CAMPAIGN"
+    mode = ("    generation  LOWER-BUDGET VARIANT (opt-in preview)\n"
+            "                two drill families not offered, their share "
+            "not\n"
+            "                spent elsewhere -- and a smaller band that "
+            "also buys\n"
+            "                MORE rooms, MORE enemies, and DIFFERENT "
+            "rooms.\n"
+            "                Not the same level with the drills removed.\n"
+            if quiet_generation else "")
     return (
-        "\n  ARCHIPEPSI - DIAGNOSTIC CAMPAIGN\n"
-        "  ================================\n"
+        f"\n  ARCHIPEPSI - {title}\n"
+        "  " + "=" * (len(title) + 12) + "\n"
         f"    build       {meta['commit']} on {meta['branch']} "
         f"({meta['tree']} tree)\n"
         "    campaign    MOCK, default scale (450 locations)\n"
         "    epsilon     fallback (deterministic)\n"
+        + mode +
         f"    slot        {slot}\n"
         f"    save folder {path}\n"
         f"    state       {state}\n")
@@ -210,6 +293,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="start a campaign in a fresh slot named for this revision. "
              "Never reuses a slot that already has saves in it.")
     parser.add_argument(
+        "--quiet", action="store_true",
+        help="run the LOWER-BUDGET GENERATION VARIANT (follow-up 02 "
+             f"item D) in its own slot, {QUIET_DEFAULT_SLOT!r} by "
+             "default. New Zones are offered neither standalone drill "
+             "family and are built to a smaller band. NOT the same "
+             "level with the drills removed -- it also composes more "
+             "rooms, more enemies and different rooms. A slot remembers "
+             "which mode made it and this refuses to mix them, so an "
+             "ordinary campaign cannot be continued here.")
+    parser.add_argument(
         "--list", action="store_true",
         help="list the diagnostic slots on disk and exit")
     parser.add_argument(
@@ -223,12 +316,23 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def resolve(args, root: Path | None = None) -> tuple[str, Path, bool]:
-    """Slot name, folder and whether it is a resume."""
+    """Slot name, folder and whether it is a resume.
+
+    `--quiet` changes only the DEFAULT: an explicit `--slot` is still
+    the slot you asked for, and `--new` still names itself for the
+    revision. What keeps the two modes apart is the marker check below,
+    not the name, because a name is advice and a marker is a fact.
+    """
+    want_quiet = getattr(args, "quiet", False)
     if args.new:
         slot = fresh_slot_name(root)
+        if want_quiet:
+            slot = f"{slot}-quiet"
     else:
-        slot = args.slot or DEFAULT_SLOT
+        slot = args.slot or (QUIET_DEFAULT_SLOT if want_quiet
+                             else DEFAULT_SLOT)
     path = slot_dir(slot, root)
+    refuse_mode_mismatch(path, want_quiet)
     return slot, path, slot_is_occupied(path)
 
 
@@ -262,7 +366,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\n  {exc}\n")
         return 2
 
-    print(describe(slot, path, resuming))
+    print(describe(slot, path, resuming, args.quiet))
 
     from .schemas import constants as C
     port = args.port or C.BRIDGE_PORT
@@ -278,7 +382,13 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     extra = [] if args.port is None else [f"--port={args.port}"]
+    # THE LAUNCHER DECIDES THIS ONE. `--quiet-generation` is in
+    # `RESERVED`, so it cannot arrive as a pass-through and end up on a
+    # run whose slot and banner say ordinary; the only way to it is the
+    # `--quiet` switch that also chose the slot and checked the marker.
     argv_out = bridge_argv(path, extra)
+    if args.quiet:
+        argv_out.append("--quiet-generation")
     if args.dry_run:
         print("  Would run:\n    " + " ".join(argv_out[1:]) + "\n")
         return 0
@@ -287,6 +397,8 @@ def main(argv: list[str] | None = None) -> int:
     # a refused port that left an empty folder behind would turn the next
     # run's honest "NEW campaign" into a lie.
     path.mkdir(parents=True, exist_ok=True)
+    if args.quiet:
+        mark_quiet(path)
 
     from .__main__ import main as bridge_main
     sys.argv = argv_out

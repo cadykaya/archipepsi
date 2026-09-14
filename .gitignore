@@ -23,6 +23,7 @@ playtest-3ab/
 # project -- committing it hands everyone else a path that is not there.
 godot-path.txt
 .integration-saves/
+.integration-saves-quiet/
 .journey-saves/
 .reload-saves/
 generation_archive/

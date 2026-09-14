@@ -2,7 +2,8 @@
 
 **Branch:** `claude/archipepsi-echoes-continuation-b1adno`
 **Started from:** `eb14a38` (runtime verification at `b3d583d`)
-**Tested revision:** _§6, after the run_
+**Tested revision:** `e39bbca` — every number in §6 is that tree.
+This page is the documentation commit on top of it.
 
 Worked from `ARCHIPEPSI_OWNER_AWAY_FOLLOWUP_02.md`, items **A**, **B**
 and **C**. **D belongs to Dess** and is untouched here — see §3.
@@ -79,29 +80,52 @@ establish a wall behind the stalk."* Correct, and worse than it sounds:
 measured on the real Zone, the mount as shipped put **27 of 27** SHOT
 elements on walls it had never looked for.
 
-Three things are asked now, all of the same real geometry:
+**Two** things are asked, and only two, both of the same real geometry:
 
-1. **a wall behind the stalk** — every wall is built by `_box`, which
-   gives it a collision hull, and `all_solid_boxes` reads hulls without
-   the architecture filter it applies to meshes, so the wall really is
-   in `solids`;
-2. **floor under the mount** — a thin column under the target's own
-   footprint, thin on purpose so it cannot find the wall and call that
-   a floor;
-3. **somewhere to shoot it from** — floor sampled a few strides out,
-   which is the case the queue named by hand: a real wall over a kill
-   pit.
+1. **a real wall behind the stalk** — every wall is built by `_box`,
+   which gives it a collision hull, and `all_solid_boxes` reads hulls
+   without the architecture filter it applies to meshes, so the wall
+   really is in `solids`;
+2. **somewhere a body can stand and shoot it from** — sampled out into
+   the room, each sample needing floor *and* standing headroom. That is
+   the case the brief named by hand: a real wall over a **kill pit** is
+   a target nobody can address.
 
-On the assembled Zone: **11 of 27 mount**, all in arenas. Every decline
-is printed by chamber type and room — `c002`, `c006` (arena) and
-`c007`, `c022` (6.8 m corridors, where the along-wall window left after
-the threshold clearances lies entirely inside the side doorway's
-keep-out). **Unmounted is a documented limitation, not a silent
-fallback.**
+**Not floor under the mount.** A first cut required it and that was
+wrong: nobody stands beneath a wall target, and the requirement refuses
+a perfectly ordinary one hanging over a walkway recess. It is the
+question a *floor-placed* element is owed.
+
+Correcting it moved the count from 11 to **15 of 27**, all in arenas.
+Every decline is printed by chamber type and room — `c002`, `c006`
+(arena) and `c007`, `c022` (6.8 m corridors, where the along-wall
+window left after the threshold clearances lies entirely inside the
+side doorway's keep-out). **Unmounted is a documented limitation, not
+a silent fallback, and there is no quota.**
+
+**The other consumer was corrected in the same pass**, which is the
+part that would otherwise have been left answering the wrong question.
+`godot-zone-audit` required ground beneath every element. It still does
+for floor-placed ones; a **mounted** element is instead required to
+have a standable position with clear line of sight inside weapon range,
+using `RoomAudit.player_stands_here` so there is no second notion of
+"a body fits". That is strictly more than the floor test ever asked.
+
+Four controls, each verified decisive:
+
+| control | what it proves |
+|---|---|
+| a target over a real gap | mounted, and hit with the real Static Pulse from a supported position 9 m away |
+| a room with no walls | declines, and still builds all 3 elements |
+| a wall with nowhere to stand in front of it | declines, and still builds both elements |
+| a shot through a 4 m slab | misses |
+
+Preserved through the change: player clearance (`RoomAudit.HEADROOM`),
+shot range, the door keep-out, the element count in every decline case,
+and the rotated footprint each element claims.
 
 The surface-vouched exclusion is gone with it: rooms are no longer
-skipped by category, they are asked the three questions, and a
-`platform_path` answers no to the floor ones on its own.
+skipped by category, they are asked the two questions.
 
 ### C — the panel reaches the real consumers
 
@@ -130,7 +154,7 @@ wipes first.
 |---|---|
 | mounted, player height | `evidence/away-batch-0.3/eye_mounted_target_challenge_c002_0.png` |
 | mounted, second room | `evidence/away-batch-0.3/eye_mounted_target_challenge_c018_0.png` |
-| **the limitation** | `evidence/away-batch-0.3/eye_unmounted_target_challenge_c006_0.png` |
+| **the limitation** | `evidence/away-batch-0.3/eye_unmounted_target_challenge_c007_0.png` |
 | the travel panel, open | `evidence/away-batch-0.3/station_travel_panel.png` |
 | the F5 schematic | `evidence/away-batch-0.3/nav_schematic_prototype.png` |
 
@@ -176,7 +200,7 @@ engine-visible, and `_repair_station_for` is where it would show.
   The exact Whistle crossing and the original exit seam stay unresolved
   until a **private copy** of the slot JSON exists. Nothing here claims
   any fixture reproduces them.
-- **16 of 27 targets do not mount** in the diagnostic Zone. Every one is
+- **12 of 27 targets do not mount** in the diagnostic Zone. Every one is
   named. Whether the unmounted look is an acceptable fallback or wants
   a floor stand is an art and design call.
 - **`c001/side_left`'s walk still reports LOST.** The sweep says that
@@ -201,3 +225,75 @@ engine-visible, and `_repair_station_for` is where it would show.
 ---
 
 ## 6. Verification
+
+One run, on a clean tree at **`e39bbca`**, 2026-09-13 23:42–23:59 UTC.
+**27 targets, 27 green, final exit 0.** Nothing was committed while it
+ran — the last two times a baseline failed here it was because I moved
+the commit out from under `build_metadata()` mid-test, and that is my
+race, not the suite's.
+
+| | |
+|---|---|
+| bridge | **1389 passed** (124 s) |
+| apworld | **39 passed, 627 subtests** |
+| schemas | **131 passed** |
+| Godot | **24 targets** — 23 drivers assert, `godot-import` is the asset-import prerequisite |
+
+The three drivers that count their own checks:
+
+| | |
+|---|---|
+| `godot-physics` | OK (**68 checks**) — the descent repair and its boundaries |
+| `godot-traverse` | OK (**23 checks**) — the real-controller walker |
+| `godot-reload` | OK (**2**, then **18 checks**) |
+
+### What the instruments measured this run
+
+**Doors.** 22 SEALED sockets and 44 passable ones on the assembled
+Zone. Every SEALED socket measured solid; the deliberately broken
+counterpart (`c001/exit` with its usage flipped) was caught. The
+doorway probe is `RoomAudit._blocker`, the controller's own capsule —
+not a second opinion about whether a body fits.
+
+**Mounting.** 27 SHOT elements in the Zone, **15 on walls**, all in
+arenas. Declines printed by room and chamber type: `c002`, `c006`
+(arena), `c007`, `c022` (corridor). Four controls decisive: a target
+over a real gap mounted and hit from 9 m with the real Static Pulse; a
+room with no wall declined; a wall with nowhere to stand in front of it
+declined; a shot through a 4 m slab missed.
+
+**The lower Check.** `Reward_89100126` in `c021` sits at y 1.53 with
+ground at y 1.53 — **0.00 m** between them. A base kit reaches it from
+its own room's doorway, the game's own interact ray finds it from where
+the player stands, and the room can be left again across a 2.00 m gap,
+inside the 2.60 m jump.
+
+**Activities.** 29 audited, **0 structural failures**, 3 placement
+notes.
+
+`godot/tests/fixtures/placement/captures.json` is re-stamped to
+`e39bbca` by this run — same payload bytes, controller digest
+`1b7ae5d3560020ac`, still rebuilt by `make godot-zone-audit`.
+
+### What this run does not establish
+
+- **Comfort.** The stair fall is gone as a measurement — **1 airborne
+  frame of 40** descending two 0.4 m treads, where a free fall spends
+  20; a 2.5 m ledge still falls (24 of 45, at 9.2 m/s), so the rule did
+  not quietly become adhesion; a slope is walked down with feet on it
+  the whole way (0 of 45). Whether the result *feels* right on a
+  gamepad is yours. Zero airborne frames was never the definition.
+- **Windows.** No `cmd.exe` in this container. The `.bat` files have
+  never been executed here; every decision they make lives in Python,
+  where it is tested.
+- **Your Zone.** Nothing here reproduces `.diagnostic-582e954`. The
+  Whistle crossing waits for the private slot file; your original is
+  untouched.
+- **One Zone.** `godot-traverse` walks a single assembled proposal, and
+  3 of its routes ended UNRESOLVED — a straight-line walker that does
+  not arrive has measured its own route choice, not the Zone. It is a
+  sample, not a certificate.
+- **Quieter generation.** Not built, not measured. §3.
+
+Environment: Godot 4.5.1.stable.official, Python 3.11.15, Archipelago
+0.6.7.

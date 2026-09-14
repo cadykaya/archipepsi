@@ -12,6 +12,8 @@ those lines are checked by eye.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from archipepsi_bridge import diagnostic as D
@@ -169,11 +171,55 @@ def test_nothing_here_deletes(tmp_path):
         elif isinstance(func, ast.Name):
             called.add(func.id)
     for destructive in ("rmtree", "unlink", "remove", "rmdir", "replace",
-                        "move", "truncate", "write_text", "write_bytes",
-                        "open"):
+                        "move", "truncate", "write_bytes", "open"):
         assert destructive not in called, destructive
     # And the one filesystem call it DOES make is the one that creates.
     assert "mkdir" in called
+
+
+def test_the_only_write_in_the_module_is_the_mode_marker():
+    """`write_text` LEFT the blanket ban, and did not leave unguarded.
+
+    It was on that list because writing is how a save gets truncated.
+    Follow-up 02 gave the launcher one thing to write -- the marker that
+    remembers a slot is the quieter one -- so the ban is replaced by the
+    stronger statement it was standing in for: there is exactly one
+    write in this module, it is inside `mark_quiet`, and it writes the
+    marker path and nothing else. A second write appearing anywhere
+    fails here, which is what the blanket ban was for.
+    """
+    import ast
+    import inspect
+
+    tree = ast.parse(inspect.getsource(D))
+    writers = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        for inner in ast.walk(node):
+            if (isinstance(inner, ast.Call)
+                    and isinstance(inner.func, ast.Attribute)
+                    and inner.func.attr == "write_text"):
+                writers.append((node.name, ast.unparse(inner.func.value)))
+    assert writers == [("mark_quiet", "marker")], writers
+
+
+def test_marking_a_slot_quiet_does_not_touch_what_is_already_in_it(tmp_path):
+    """THE BEHAVIOUR, not the spelling. A campaign in the slot comes
+    through a marking byte-for-byte, and only the marker appears."""
+    slot = tmp_path / ".diagnostic-quiet"
+    slot.mkdir()
+    (slot / "campaign.json").write_text('{"zones": 3}')
+    (slot / "archipepsi.log").write_text("a log line\n")
+    before = {f.name: f.read_bytes() for f in slot.iterdir()}
+
+    D.mark_quiet(slot)
+    D.mark_quiet(slot)                   # twice: writing once is the point
+
+    after = {f.name: f.read_bytes() for f in slot.iterdir()}
+    assert set(after) - set(before) == {D.QUIET_MARKER}
+    for name, blob in before.items():
+        assert after[name] == blob, name
 
 
 # --- what it says before it starts ------------------------------------
@@ -228,3 +274,110 @@ def test_listing_slots_says_which_and_where(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "582e954" in out
     assert "1 file(s)" in out
+
+
+# --- the quieter preview, and the wall between the two modes -----------
+#
+# Follow-up 02 item D is an OPT-IN comparison. What matters here is not
+# that it composes differently -- `test_quiet_preview.py` owns that --
+# but that choosing it cannot reach an ordinary campaign, and that an
+# ordinary run cannot wander into a quieter one.
+
+def test_quiet_is_off_unless_asked_for():
+    """THE DEFAULT IS THE SHIPPED GAME. A plain run passes nothing."""
+    args = D.build_parser().parse_args([])
+    assert args.quiet is False
+    assert "--quiet-generation" not in D.bridge_argv(Path("/tmp/slot"))
+
+
+def test_quiet_gets_its_own_slot_by_default(tmp_path):
+    """Two modes, two folders. Sharing one would put Zones composed two
+    different ways into a single campaign history."""
+    normal, npath, _ = D.resolve(_args(slot=None, new=False, quiet=False),
+                                 tmp_path)
+    quiet, qpath, _ = D.resolve(_args(slot=None, new=False, quiet=True),
+                                tmp_path)
+    assert normal == D.DEFAULT_SLOT and quiet == D.QUIET_DEFAULT_SLOT
+    assert npath != qpath
+
+
+def test_a_fresh_quiet_slot_says_so_in_its_name(tmp_path):
+    """`--new --quiet` is named for the revision like any other, plus
+    the one word that stops it being mistaken for the ordinary one."""
+    slot, _, _ = D.resolve(_args(slot=None, new=True, quiet=True), tmp_path)
+    assert slot.endswith("-quiet")
+
+
+def test_a_quiet_run_refuses_an_ordinary_campaign(tmp_path):
+    """THE OWNER'S SAVE IS THE CASE THIS EXISTS FOR.
+
+    `.diagnostic-582e954` holds an ordinary campaign and has no marker,
+    so it reads as ordinary -- and a quieter run pointed at it is
+    refused before anything is opened, created or started.
+    """
+    owned = tmp_path / ".diagnostic-582e954"
+    owned.mkdir()
+    (owned / "campaign.json").write_text('{"zones": 12}')
+    blob = (owned / "campaign.json").read_bytes()
+
+    with pytest.raises(ValueError, match="already holds a NORMAL campaign"):
+        D.resolve(_args(slot="582e954", new=False, quiet=True), tmp_path)
+
+    assert (owned / "campaign.json").read_bytes() == blob
+    assert not (owned / D.QUIET_MARKER).exists()
+    assert set(p.name for p in owned.iterdir()) == {"campaign.json"}
+
+
+def test_an_ordinary_run_refuses_a_quieter_campaign(tmp_path):
+    """AND THE OTHER WAY. A preview campaign is not quietly continued
+    as a normal one, which would leave one history holding both."""
+    slot = tmp_path / f"{D.SLOT_PREFIX}{D.QUIET_DEFAULT_SLOT}"
+    slot.mkdir()
+    (slot / "campaign.json").write_text("{}")
+    D.mark_quiet(slot)
+
+    with pytest.raises(ValueError, match="already holds a QUIET campaign"):
+        D.resolve(_args(slot=D.QUIET_DEFAULT_SLOT, new=False, quiet=False),
+                  tmp_path)
+
+    # ... and resuming it in its own mode is fine.
+    name, path, resuming = D.resolve(
+        _args(slot=D.QUIET_DEFAULT_SLOT, new=False, quiet=True), tmp_path)
+    assert resuming and path == slot and name == D.QUIET_DEFAULT_SLOT
+
+
+def test_an_empty_slot_belongs_to_whichever_mode_arrives(tmp_path):
+    """A mode is a property of a campaign, not of a folder name. An
+    empty `quiet` slot is not yet a quieter campaign."""
+    slot = tmp_path / f"{D.SLOT_PREFIX}{D.QUIET_DEFAULT_SLOT}"
+    slot.mkdir()
+    assert D.slot_mode(slot) == "normal"
+    D.resolve(_args(slot=D.QUIET_DEFAULT_SLOT, new=False, quiet=False),
+              tmp_path)          # does not raise
+
+
+def test_quiet_generation_cannot_be_passed_through(tmp_path):
+    """The launcher decides it, so it cannot arrive as an extra and land
+    on a run whose slot and banner both say ordinary."""
+    with pytest.raises(ValueError, match="cannot"):
+        D.bridge_argv(tmp_path / "slot", ["--quiet-generation"])
+
+
+def test_the_banner_says_which_generation_is_running(tmp_path):
+    """A variant that changes what Zones are made of is never something
+    you find out about from the level design -- AND IT SAYS WHAT IT IS.
+
+    The owner's correction, pinned: this is a lower-budget generation
+    variant, not the baseline level with two drills taken out. A banner
+    that claimed the smaller thing would be the more flattering lie, so
+    the three ways it actually differs are all named here.
+    """
+    plain = D.describe("current", tmp_path, False, False)
+    preview = D.describe("quiet", tmp_path, False, True)
+    assert "QUIET" not in plain.upper()
+    assert "LOWER-BUDGET" not in plain.upper()
+    assert "LOWER-BUDGET VARIANT" in preview
+    assert "spent elsewhere" in preview
+    assert "MORE rooms" in preview and "MORE enemies" in preview
+    assert "DIFFERENT rooms" in preview
+    assert "Not the same level with the drills removed." in preview

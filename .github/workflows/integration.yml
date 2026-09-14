@@ -135,6 +135,9 @@ jobs:
       - name: Whole campaign, headlessly
         run: make godot-integration
 
+      - name: The same campaign with the lower-budget variant selected
+        run: make godot-integration-quiet
+
       - name: A campaign reopened in a second process
         run: make godot-reload
 

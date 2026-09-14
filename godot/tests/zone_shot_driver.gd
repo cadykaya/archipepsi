@@ -31,6 +31,12 @@ func _ready() -> void:
 
 func _run() -> void:
 	await get_tree().process_frame
+	# ONE RUN'S OUTPUT, not an archive. Shots are named for what they
+	# SHOW -- `eye_mounted_...`, `eye_unmounted_...` -- so when the rule
+	# that decides which rooms mount changes, yesterday's names stay on
+	# disk describing a placement the game no longer makes, and get
+	# copied into an evidence folder beside today's. Cleared first.
+	_clear_output()
 	BridgeClient.snapshot = {
 		"type": "campaign_snapshot",
 		"mechanics": {"owned": [], "aliases": [], "links": [],
@@ -42,10 +48,21 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(
 			ProjectSettings.globalize_path(OUT_DIR))
 
-	var text := FileAccess.get_file_as_string(ZONE_JSON)
+	# WHICH ZONE TO PHOTOGRAPH. `played_zone.json` by default -- the
+	# Zone every other shot in the evidence folder is of -- and any
+	# manifest on request, so the lower-budget variant can be seen
+	# beside the baseline instead of described.
+	var which := ZONE_JSON
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--zone-json="):
+			which = arg.substr("--zone-json=".length())
+	if which != ZONE_JSON:
+		print("SHOTS: photographing %s" % which)
+
+	var text := FileAccess.get_file_as_string(which)
 	var zone: Variant = JSON.parse_string(text)
 	if typeof(zone) != TYPE_DICTIONARY:
-		print("SHOTS: could not read %s" % ZONE_JSON)
+		print("SHOTS: could not read %s" % which)
 		get_tree().quit(1)
 		return
 
@@ -217,6 +234,17 @@ func _run() -> void:
 			% [shot, ProjectSettings.globalize_path(OUT_DIR)])
 	print("GODOT ZONE SHOTS OK")
 	get_tree().quit(0)
+
+## Empty the shot directory, so what is in it is this run's.
+func _clear_output() -> void:
+	var path := ProjectSettings.globalize_path(OUT_DIR)
+	DirAccess.make_dir_recursive_absolute(path)
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return
+	for name: String in dir.get_files():
+		if name.ends_with(".png"):
+			dir.remove(name)
 
 func _runtimes_under(node: Node, out: Array[ActivityRuntime]) -> void:
 	if node is ActivityRuntime:

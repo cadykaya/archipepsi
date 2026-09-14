@@ -1,5 +1,61 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — follow-up 02 integration — 2026-09-14
+
+**`claude/archipepsi-echoes-continuation-b1adno`**, merged from the
+bridge lane at `fdac6ab`. Full page:
+**`docs/FOLLOWUP_02_INTEGRATION.md`**. Read that, not this.
+
+**The variant is selectable now, and selecting it needed two fixes.**
+Separate save folders did not select it, and neither did the switch as
+first wired: both `fallback_zone_attempt` and `generate_zone_validated`
+read `request.campaign.zone_budget`, so narrowing
+`constraints["zone_budget"]` changed nothing and delivered the
+filter-only arm (a Zone asked for 72% arrived at 917 against 648-792).
+Setting the band before the request is built fixed that and then crashed
+at the low end -- 72% of the prototype's 200 is 144 against a floor of
+200 -- so it is clamped to the floor and said out loud per Zone, because
+a clamp that bites is filter-only again. `0.72` is untouched.
+
+**Labelled as the owner asked: a LOWER-BUDGET GENERATION VARIANT**, not
+the same level with two drills removed. +17 rooms, +27 enemies and
+different rooms, carried in the banner, the launcher, `--help` and the
+slot marker rather than left to be discovered.
+
+**Stations counted, not inferred.** Five real manifests of each variant
+built by `ZoneBuilder`: baseline 5 of 5 composed, 49 stations, 39
+broken; variant **2 of 5 composed**, 20 stations, 12 broken. No station
+in either starts broken in a room with no activity, and entrance and
+exit are whole in both. The finding is the first column: three variant
+manifests are refused by the engine's layout router (a branch room that
+cannot be placed clear), all three accepted by `validate_zone` first.
+
+**Both loops run.** `godot-integration` and the new
+`godot-integration-quiet` both pass -- at prototype scale, where the
+clamp makes it family-narrowing only. Default scale is not available in
+that harness: it fails there for the baseline too.
+
+**`test_startup`'s second-bridge case does not reproduce** (5x alone, 3x
+the file, twice in the suite). Not waived: `TEST_PORT` is a fixed
+constant and a colliding process on 38331 fails it for reasons unrelated
+to the code. Left unchanged, recorded as a decision.
+
+**The strictly matched no-compensation comparison remains incomplete.**
+Recorded, not worked around.
+
+**Verified at `6329cfa`:** one clean run, 28 targets green, final exit 0
+(bridge 1412, apworld 39 + 627 subtests, schemas 131, 25 Godot targets
+including both integration loops). Numbers and limits in the integration
+page, §8.
+
+**Waiting on Dess:** the `_accepts` correction. Nothing here depends on
+it; their 12-of-12 acceptance figure does.
+
+**The heartbeat stays PAUSED.** The authorised list is done and the run
+is green. Turn it back on when there is a task -- integrating Dess's
+re-report is the obvious next one.
+
+
 ## ENGINE LANE — owner-away follow-up 02 — 2026-09-13
 
 **`claude/archipepsi-echoes-continuation-b1adno`**, from `eb14a38`.
@@ -17,9 +73,13 @@ its own usage on the assembled Zone, with a counterpart that mislabels
 a real opening.
 
 **Mounting asks the geometry now.** As shipped it put 27 of 27 SHOT
-elements on walls it never looked for. It needs a wall behind the
-stalk, floor under the mount, and floor to shoot from; 11 of 27 mount
-in the diagnostic Zone and every decline is printed by room.
+elements on walls it never looked for. It needs a real wall behind the
+stalk and somewhere a body can stand and shoot it from -- NOT floor
+under the mount, which is the question a floor-placed element is owed
+and which a first cut wrongly required. 15 of 27 mount in the
+diagnostic Zone; every decline is printed by room, and there is no
+quota. `godot-zone-audit` was corrected in the same pass: a mounted
+element owes a standable firing position, not ground beneath it.
 
 **The station panel reaches `main.gd`'s real consumers** — one warp,
 no stale warp after the Zone is left, `leave_zone` never
@@ -35,6 +95,10 @@ are the thing to watch on integration.
 slot JSON; stair comfort; whether the unmounted target look is an
 acceptable fallback; whether the F5 schematic is the map; the budget
 shape.
+
+**Verified at `e39bbca`:** one clean run, 27 targets green, final exit
+0 (bridge 1389, apworld 39 + 627 subtests, schemas 131, 24 Godot
+targets). Numbers and limits in the handoff, §6.
 
 **The heartbeat is PAUSED.** Turn it back on when there is a task.
 

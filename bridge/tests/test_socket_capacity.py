@@ -124,6 +124,31 @@ def test_a_climbing_room_is_never_offered_a_side_branch(climber):
     assert "c004" in {c.id for c in out.chambers}
 
 
+@pytest.mark.parametrize("climber", [_path, _tower], ids=["platform", "tower"])
+def test_a_climbing_room_is_still_walked_THROUGH(climber):
+    """AND THE COURSE IS PRESERVED. Losing the two side advertisements
+    must not cost a climbing room its place on the spine: it is still
+    entered, still left, and the Zone is still reachable through it.
+
+    `test_topology.py` carried this for `platform_path` before the
+    capacity moved here; it is restored with both producers because the
+    engine lane walks one of these rooms for real (`godot-traverse`
+    reaches a Check inside a composed `platform_path`), and "the repair
+    took nothing away from traversal" is the half of the correction that
+    nothing else asserts directly.
+    """
+    z = Zone(zone_id="z1", display_name="T", target_game="T",
+             theme="void_glitch",
+             chambers=(_arena("c001", reward=89100001), climber("c002"),
+                       _arena("c003", reward=89100003)))
+    out = topology.apply(z, topology.compose_chain(list(z.chambers)))
+    mid = next(c for c in out.chambers if c.id == "c002")
+    used = {d.socket_id for d in mid.doors if d.usage != "SEALED"}
+    assert used == {"entry", "exit"}, used
+    assert mid.door_degree == 2
+    assert topology.reachability(out).ok, topology.reachability(out).errors
+
+
 def test_the_composer_cannot_assign_a_door_the_producer_will_not_build():
     """`topology.apply`'s guard, sabotaged.
 

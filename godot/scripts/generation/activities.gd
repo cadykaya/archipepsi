@@ -306,26 +306,25 @@ static func _wall_spot(side: float, ideal_z: float, width: float,
 		# and can be asked for.
 		if not _wall_behind(spot, side, size, solids):
 			continue
-		# AND FLOOR UNDER IT, whatever the room declared.
+		# NOT "floor under it". Nobody stands beneath a wall target.
 		#
-		# `c006` is the authored Hall -- an arena, not a platform course,
-		# so nothing vouched surfaces for it -- and the wall probe found
-		# real geometry at its envelope while the floor stopped short of
-		# it. `godot-zone-audit` reported two of its four targets with
-		# nothing under them. A wall is only half of a mounting surface;
-		# the other half is somewhere for the person shooting it to be.
-		if not _floor_under(spot, height, solids):
-			continue
-		# AND SOMEWHERE TO SHOOT IT FROM. A mount on a real wall over a
-		# kill pit is a target nobody can address.
+		# A first cut required ground directly below the mount, which is
+		# the question a FLOOR-PLACED element is owed and the wrong one
+		# here: it refuses a perfectly ordinary target hanging over a
+		# walkway recess, and it is not what makes a mount usable. What
+		# does is the wall above and a place to stand and shoot from,
+		# which is the next test.
+		# AND SOMEWHERE TO STAND AND SHOOT IT FROM. This is the second
+		# requirement in full: a real wall over a KILL PIT is a target
+		# nobody can address, and a real wall over a GAP with a walkway
+		# seven metres out is a perfectly ordinary one.
 		#
-		# MEASURED, NOT DECLARED. The first version asked the room's
-		# vouched `stand` patches, on the assumption that only a
-		# platform course vouches any -- and an arena vouches them too,
-		# so every arena target was refused by a rule reading a list it
-		# had misunderstood. Floor is floor: this asks the same solids
-		# the wall test asks.
-		if not _floor_in_front(spot, side, height, solids):
+		# MEASURED, NOT DECLARED. An earlier cut asked the room's vouched
+		# `stand` patches on the assumption that only a platform course
+		# vouches any -- an arena vouches them too, so every arena target
+		# was refused by a rule reading a list it had misunderstood.
+		# Floor is floor: this asks the same solids the wall test asks.
+		if not _firing_position(spot, side, height, solids):
 			continue
 		return {"position": spot, "yaw": yaw, "size": turned}
 	return {}
@@ -349,12 +348,12 @@ static func _wall_behind(spot: Vector3, side: float, size: Vector3,
 			Vector3(reach, size.y, size.x))
 	return ChamberBuilders.box_hits(box, solids)
 
-## Is there floor below a mount, within reach of the player who shoots it?
+## Floor below a point, within a player's reach of it.
 ##
-## A thin column under the target's own footprint, from just below it
-## down past the height the rules park it at. Thin on purpose: it must
-## not find the WALL the target is hanging on and call that a floor,
-## which is the mistake that makes a shelf over a pit look supported.
+## A thin column under the point's own footprint. Thin on purpose: it
+## must not find the WALL beside it and call that a floor. Asked of a
+## FIRING POSITION, never of the mount -- nobody stands under a wall
+## target.
 static func _floor_under(spot: Vector3, height: float,
 		solids: Array[AABB]) -> bool:
 	if solids.is_empty():
@@ -365,23 +364,41 @@ static func _floor_under(spot: Vector3, height: float,
 			Vector3(0.3, drop - 0.1, 0.3))
 	return ChamberBuilders.box_hits(column, solids)
 
-## Somewhere in front of the target with floor under it.
+## A place a player can STAND and shoot this target from.
 ##
-## Sampled a few strides out into the room, at the same walking plane
-## the mount was found on. What it rules out is the case the queue named
-## by hand: a real wall over a kill pit, where the stalk lands on
-## something and the person shooting it cannot.
+## Sampled out into the room on the target's own side. Each sample needs
+## two things, both measured against the same solids the wall test
+## reads: floor under it, and room for a standing body above that floor
+## -- a slot under a deck with 1.2 m of headroom is not a firing
+## position.
 ##
-## The far sample is well inside the Static Pulse's forty metres. A shot
+## The far sample is well inside the Static Pulse's forty metres: a shot
 ## from across the room is legal and is not what a usable firing
-## position means.
-static func _floor_in_front(spot: Vector3, side: float, height: float,
+## position means. The near one is outside the target's own footprint,
+## because standing inside a thing is not standing at it.
+static func _firing_position(spot: Vector3, side: float, height: float,
 		solids: Array[AABB]) -> bool:
-	for out: float in [2.0, 3.5, 5.0, 7.0]:
+	for out: float in [2.0, 3.5, 5.0, 7.0, 9.0]:
 		var at := Vector3(spot.x - side * out, spot.y, spot.z)
-		if _floor_under(at, height, solids):
+		if not _floor_under(at, height, solids):
+			continue
+		if _has_headroom(at, height, solids):
 			return true
 	return false
+
+## Room for a standing body on the floor a sample found.
+##
+## `RoomAudit.HEADROOM` rather than a number of its own: the composer
+## builds to exactly what the audit measures, or one of them is wrong.
+## The same reason `_clear_of_geometry` uses it.
+static func _has_headroom(at: Vector3, height: float,
+		solids: Array[AABB]) -> bool:
+	var stand := Placement.clearance(
+			Vector3(at.x, at.y - height, at.z),
+			Vector3(Constants.PLAYER_RADIUS * 2.0, 0.0,
+				Constants.PLAYER_RADIUS * 2.0),
+			RoomAudit.HEADROOM)
+	return not ChamberBuilders.box_hits(stand, solids)
 
 ## The vouched surface with the most room left on it, or {} if the room
 ## offered none this element can legally sit on.
