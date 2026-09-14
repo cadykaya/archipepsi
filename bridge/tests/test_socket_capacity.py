@@ -45,6 +45,19 @@ def _path(rid: str) -> dict:
             "gap_size": 2.0, "vertical_step": 0.5}
 
 
+def _tower(rid: str) -> dict:
+    """THE OTHER ROOM IN THE TABLE.
+
+    `PROCEDURAL_SOCKET_CAPACITY` names two producers that climb, and
+    every control here exercised only one of them. A table entry nothing
+    is ever handed is the same shape of gap as the flat socket table it
+    replaced: correct, and never asked the case that would fail it.
+    """
+    return {"id": rid, "type": "tower", "floors": C.TOWER_MIN_FLOORS,
+            "objective": "reach_reward",
+            "reward_location_id": 89100099}
+
+
 def _composed(climbing_at: int | None = 3):
     """A real composed Zone, optionally with one room that climbs."""
     chambers = [_arena(f"c{i:03d}", reward=89100000 + i) for i in range(1, 9)]
@@ -91,11 +104,15 @@ def test_the_capacity_is_one_declaration_three_paths_read():
 
 # --- composition ----------------------------------------------------------
 
-def test_a_climbing_room_is_never_offered_a_side_branch():
+@pytest.mark.parametrize("climber", [_path, _tower], ids=["platform", "tower"])
+def test_a_climbing_room_is_never_offered_a_side_branch(climber):
     """The room stays in the Zone and stays on the spine; what it loses
-    is the advertisement, not its place."""
+    is the advertisement, not its place.
+
+    Both producers in the table, because the entry for `tower` was
+    declared and never exercised through the composer."""
     chambers = [_arena(f"c{i:03d}", reward=89100000 + i) for i in range(1, 9)]
-    chambers[3] = _path("c004")
+    chambers[3] = climber("c004")
     z = Zone(zone_id="z1", display_name="T", target_game="T",
              theme="void_glitch", chambers=tuple(chambers))
     out = topology.apply(z, topology.compose_with_branch(list(z.chambers)))

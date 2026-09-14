@@ -1125,35 +1125,23 @@ def test_a_leaf_is_only_a_dead_end_when_it_has_one_neighbour():
     assert any(pl.room_id == host.id for pl in hosting.plugs)
 
 
-# --- truthful connection capacity ----------------------------------------
+# --- what the composer DOES with a truthful capacity ----------------------
 #
-# A procedural `platform_path` advertised four joining sockets because
-# every procedural room did. Its sides are placed at the middle of the
-# side wall, which is the shape of a FLAT room: on a platform course that
-# point is over the kill pit and below the walkway, so the engine refuses
-# the layout. `procedural_sockets_for` is the one declaration both the
-# composer and `validate_zone` read, and these four controls are the
-# distinctions it has to keep apart.
+# The declaration itself — `C.PROCEDURAL_SOCKET_CAPACITY`, its three
+# readers, tower as well as `platform_path`, and an old save that still
+# names four sockets — is `test_socket_capacity.py`'s. It owns that fact
+# and covers it wider than this file did.
+#
+# What is here is what the COMPOSER does once the capacity tells the
+# truth: a room that cannot hold a side doorway is still a legal
+# destination with a return (a plug spends no socket), the branch MOVES
+# to a room that can hold it rather than being dropped, and a proposal
+# that assigns one anyway is refused where proposals are repaired.
 
 
 def _platform(rid: str) -> dict:
     return {"id": rid, "type": "platform_path", "segment_count": 5,
             "gap_size": 2.0, "vertical_step": 0.5}
-
-
-def test_a_platform_course_is_used_as_a_through_room(tmp_path=None):
-    """THE COURSE IS PRESERVED. Entry and exit are what it really has,
-    and the repair takes nothing away from traversal."""
-    from archipepsi_bridge.schemas.zone import procedural_sockets_for
-    assert procedural_sockets_for("platform_path") == ("entry", "exit")
-    z = _zone([_arena("c001", reward=89100001), _platform("c002"),
-               _arena("c003", reward=89100003)])
-    out = topology.apply(z, topology.compose_chain(list(z.chambers)))
-    mid = [c for c in out.chambers if c.id == "c002"][0]
-    used = {d.socket_id for d in mid.doors if d.usage != "SEALED"}
-    assert used == {"entry", "exit"}, used
-    assert mid.door_degree == 2
-    assert topology.reachability(out).ok
 
 
 def test_a_platform_course_may_be_a_destination_carrying_a_return():
@@ -1231,15 +1219,45 @@ def test_a_multi_door_room_carries_the_branch_instead():
     assert topology.reachability(out).ok, topology.reachability(out).errors
 
 
-def test_an_authored_shell_is_read_from_its_own_declaration():
-    """A procedural restriction is about the PROCEDURAL BUILD. A shell
-    declares its own openings, and sharing a chamber type with a
-    procedural room says nothing about what an artist cut."""
-    caps = {"shell_made_up": ("entry", "exit", "branch_east")}
-    z = _zone([_arena("c001", reward=89100001),
-               dict(_platform("c002"), shell_id="shell_made_up"),
-               _arena("c003", reward=89100003)])
-    course = [c for c in z.chambers if c.id == "c002"][0]
-    assert topology._sockets_for(course, caps) == (
-        "entry", "exit", "branch_east")
-    assert topology.capacity_of(course, caps) == 3
+
+
+def test_every_return_lands_in_a_room_that_also_holds_content():
+    """A STRUCTURAL FACT the engine lane depends on, pinned here.
+
+    `_branch_routes` only sends a branch to a room worth going to — one
+    carrying a Check or a key — so a branch destination ALWAYS holds
+    content, and the return device always lands in a room that also has
+    a reward pedestal or a key spot in it. Measured across the five
+    journey inputs: 8 of 8 return rooms in every one.
+
+    That means "does the return pad interfere with reaching the
+    content?" is never a question some Zone happens to avoid. It arises
+    in every branch room of every Zone, and `ChamberBuilders._clear_spot`
+    reconciling the return spot against the pedestal and the key spots
+    is load-bearing every single time rather than occasionally.
+
+    Pinned because the relationship is a CONSEQUENCE of the worthwhile
+    rule, not a decision anybody wrote down: relax that rule and returns
+    quietly start landing in empty rooms, and a clearance defect the
+    engine lane is hunting would stop reproducing for reasons nothing
+    records.
+    """
+    # HALF THE ROOMS CARRY NOTHING, or relaxing the rule changes no
+    # outcome and this control passes over its own subject. It did, on
+    # the first attempt: twelve rooms all carrying a reward made the
+    # sabotage a no-op.
+    caps = topology._shell_sockets()
+    chambers = [_arena(f"c{i:03d}",
+                       reward=(89100000 + i) if i % 2 else None)
+                for i in range(1, 15)]
+    z = _zone(chambers)
+    out = topology.apply(z, topology.compose_with_branch(list(z.chambers), caps))
+    assert out.plugs, "this control needs a Zone that branches"
+    byid = {c.id: c for c in out.chambers}
+    empty = [p.room_id for p in out.plugs
+             if not (getattr(byid[p.room_id], "reward_ids", ())
+                     or getattr(byid[p.room_id], "keys", ()))]
+    assert not empty, (
+        f"a return landed in a room with nothing in it: {empty}; the "
+        "worthwhile rule changed and the engine's clearance question "
+        "no longer arises everywhere")
