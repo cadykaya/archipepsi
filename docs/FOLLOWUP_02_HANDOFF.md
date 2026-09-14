@@ -196,10 +196,13 @@ engine-visible, and `_repair_station_for` is where it would show.
 
 ## 4. Unresolved, with the reason
 
-- **Your diagnostic save.** `.diagnostic-582e954` is on your machine.
-  The exact Whistle crossing and the original exit seam stay unresolved
-  until a **private copy** of the slot JSON exists. Nothing here claims
-  any fixture reproduces them.
+- **Your diagnostic save.** ~~Unresolved until a private copy exists.~~
+  **RESOLVED 2026-09-14** — a private copy arrived. The Whistle crossing
+  is answered, and `played_zone.json` turns out to be that exact Zone
+  (same digest, `fe2b014761fbb449`), so everything on this page was
+  measured on the level you played. See
+  `docs/PLAYED_SESSION_FINDINGS.md`. The saves are not committed and
+  your originals were not modified.
 - **12 of 27 targets do not mount** in the diagnostic Zone. Every one is
   named. Whether the unmounted look is an acceptable fallback or wants
   a floor stand is an art and design call.
@@ -286,9 +289,10 @@ notes.
 - **Windows.** No `cmd.exe` in this container. The `.bat` files have
   never been executed here; every decision they make lives in Python,
   where it is tested.
-- **Your Zone.** Nothing here reproduces `.diagnostic-582e954`. The
-  Whistle crossing waits for the private slot file; your original is
-  untouched.
+- ~~**Your Zone.** Nothing here reproduces `.diagnostic-582e954`.~~
+  **Superseded 2026-09-14:** it turns out everything here was measured
+  on it. `played_zone.json` and your playtime record carry the same
+  `zone_digest`.
 - **One Zone.** `godot-traverse` walks a single assembled proposal, and
   3 of its routes ended UNRESOLVED — a straight-line walker that does
   not arrive has measured its own route choice, not the Zone. It is a

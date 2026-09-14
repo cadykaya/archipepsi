@@ -1,5 +1,42 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the owner's own session, read — 2026-09-14
+
+A private copy of the `.diagnostic-582e954` slot JSON, its `.bak` and a
+`playtime.jsonl` arrived. **Not committed, originals untouched.** Full
+page: **`docs/PLAYED_SESSION_FINDINGS.md`**.
+
+**`played_zone.json` IS that Zone** -- same `zone_digest`,
+`fe2b014761fbb449`. Every engine measurement this run (the `c021` Check
+approach, the mounting census, the `c007` unmounted shot, the sealed
+sweep, the panel) was taken on the level actually played.
+
+**The Whistle crossing is answered.** The `.bak` and the live save
+differ in exactly ONE field -- `slots.mobility`, Fresh Rep (dash) ->
+Warp Whistle (blink, 20.0 m after four upgrades, cooldown 2.10). And
+NOTHING IN THAT ZONE NEEDED IT: five rooms declare a gap, the widest
+2.31 m against a 2.40 m base-kit allowance. Convenience, not a key; the
+Zone stayed base-kit solvable.
+
+**`Reward_89100126` is in the save as a collected Echo.** The Check this
+lane reported as unreachable and then retracted was reached. The
+retraction was right.
+
+**THE TWO RETIRED FAMILIES ARE BROKEN, WHICH IS NOT WHAT THE VARIANT
+FIXES.** `timed_run` completed with 0.00 active seconds 5 times of 9 --
+median zero. `pressure_routing`: one activity needed 23 ATTEMPTS for
+2.72 s of work, one needed 3, one was entered and never completed (the
+Zone's only failure). The variant removes these two to cut content
+VOLUME; the session says they should go because they DO NOT WORK. Two
+different problems, and a 28% budget cut addresses neither. Not chased
+-- diagnosing them is new work.
+
+**Other numbers worth a look:** 79.5 minutes in one Zone, only 29% of it
+inside an activity; the room holding the 23-attempt plate ate 17.7
+minutes for 43 points; `c021_0`'s active timer ran 792 s on four
+switches.
+
+
 ## ENGINE LANE — the variant, live at default scale — 2026-09-14
 
 Merged the bridge lane at `fc7b6fb` (the acceptance correction; its two
@@ -185,8 +222,9 @@ session, the Zone's own declared edges between two of them, locks,
 stations, you-are-here. No stored topology, no persistence, no bearing
 arrow.
 
-**Waiting on the owner.** A private copy of `.diagnostic-582e954`'s
-slot JSON — the exact Whistle crossing and the original exit seam stay
+**Waiting on the owner.** ~~A private copy of `.diagnostic-582e954`'s
+slot JSON~~ — ARRIVED 2026-09-14, see the top entry — the original exit
+seam stays
 unresolved without it, and the original is not to be touched. Plus
 comfort of the stairs, whether a Check 2.6 m below its walkway is a
 bug, the `c001/side_left` leak candidate, and which budget shape the

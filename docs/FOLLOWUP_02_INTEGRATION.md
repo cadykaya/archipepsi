@@ -388,8 +388,11 @@ The first attempt at this run reported two, and one was mine:
 - **The live check is one Zone**, bounded on purpose. It establishes
   that the band really drops and that this refusal has no recovery; it
   does not measure how often a variant campaign would stall.
-- **Your Zone.** Nothing here reproduces `.diagnostic-582e954`, and
-  nothing has touched it.
+- ~~**Your Zone.** Nothing here reproduces `.diagnostic-582e954`.~~
+  **Superseded 2026-09-14:** `played_zone.json` carries the same
+  `zone_digest` as your playtime record, so the engine measurements were
+  taken on your Zone all along. Your save is still untouched and still
+  uncommitted (`docs/PLAYED_SESSION_FINDINGS.md`).
 
 ---
 

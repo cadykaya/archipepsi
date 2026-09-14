@@ -1,5 +1,63 @@
 # Archipepsi — build state
 
+## 2026-09-14 (engine) — reading the owner's own session
+
+A private copy of the `.diagnostic-582e954` slot JSON, its `.bak` and a
+`playtime.jsonl` arrived. NOT COMMITTED and the originals untouched;
+only the measurements are written down, in
+`docs/PLAYED_SESSION_FINDINGS.md`.
+
+### The fixture was the Zone all along
+
+`godot/tests/fixtures/played_zone.json` hashes to `fe2b014761fbb449` and
+so does the playtime record's `zone_digest`. Every engine measurement
+this run was taken on the level actually played.
+
+### Both save-blocked questions are answered
+
+The `.bak` and the live save differ in EXACTLY ONE FIELD --
+`slots.mobility`, `act_l89100076` (Fresh Rep, dash) to `act_l89100019`
+(Warp Whistle, blink). Resolved through its four upgrades the Whistle is
+range 20.0 m, cooldown 2.10 s, clearance 0.4.
+
+AND NOTHING IN THAT ZONE NEEDED IT. Five rooms declare a gap -- 2.31,
+2.08, 2.03, 1.73, 1.73 m -- against a 2.40 m base-kit allowance at their
+0.51 m step. None exceeds it. The Whistle was a convenience and the Zone
+stayed base-kit solvable, which is the property that may not break.
+
+`Reward_89100126` is in the save as a collected Echo. The Check reported
+as unreachable and then retracted was reached by the player.
+
+### The retired families are BROKEN, which is a different finding
+
+    family              n  instant  median      max  retried
+    pressure_routing    5        1    2.72     7.14        2
+    switch_sequence     7        0    6.33   792.65        0
+    target_challenge    8        0    2.25   257.82        0
+    timed_run           9        5    0.00     9.14        1
+
+`timed_run` completed with ZERO active seconds five times out of nine;
+its median is zero. `pressure_routing`: `c023_0` took 23 ATTEMPTS for
+2.72 s of active time, `c011_0` took 3, and `c015_0` was entered and
+never completed -- the Zone's only failure. Three of five misbehaved,
+and the room holding the 23-attempt plate ate 1060 s (17.7 minutes, a
+fifth of the session) for 43 points of content.
+
+THIS IS NOT WHAT THE VARIANT FIXES. The variant retires those two to cut
+content VOLUME. The session says they should go because they DO NOT
+WORK. Different problems, different remedies; a 28% budget cut addresses
+neither, and the budget cut is what produces the router refusals.
+
+Not chased. Diagnosing why a timed_run completes at 0.00 s and why a
+plate needs 23 attempts is new work and was not started.
+
+### Also visible
+
+79.5 minutes in one Zone, 29% of it inside an activity. `c021_0`'s
+active timer ran 792 s on a four-element switch sequence, in the
+`platform_path` over the 40 m drop that holds `Reward_89100126`.
+
+
 ## 2026-09-14 (engine) — the variant, live at default scale
 
 Merged `fc7b6fb`. Dess's `_accepts` correction now judges the output
