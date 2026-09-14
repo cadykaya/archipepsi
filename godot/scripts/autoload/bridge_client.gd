@@ -19,6 +19,10 @@ var snapshot: Dictionary = {}
 ## quote Epsilon back at the player. Client-side only; lost on restart.
 var last_completed_zone: Dictionary = {}
 var _held_zone: Dictionary = {}
+## `zone_id -> proposal_id`, from every offer this client has seen.
+## The fallback carrier for `proposal_for`; see it for why the snapshot
+## comes first.
+var _offer_proposals: Dictionary = {}
 
 var _socket := WebSocketPeer.new()
 var _retry_delay := 0.5
@@ -112,7 +116,16 @@ func _handle(raw: String) -> void:
 				_held_zone = zone_content
 			snapshot_received.emit(message)
 		"zone_ready":
-			zone_ready_received.emit(message.get("zone", {}),
+			# THE OFFER'S IDENTITY, kept per Zone. `AMALGAM_BRIDGE.md`
+			# §5.9 asks the client to capture `proposal_id` when it
+			# STARTS a build; this is the fallback carrier for a bridge
+			# that puts it only on the offer. The snapshot is the one
+			# the build path actually reads -- see `proposal_for`.
+			var offered: Dictionary = message.get("zone", {})
+			var offer_id := str(message.get("proposal_id", ""))
+			if offer_id != "":
+				_offer_proposals[str(offered.get("zone_id", ""))] = offer_id
+			zone_ready_received.emit(offered,
 					bool(message.get("used_fallback", false)))
 		"notification":
 			notification_received.emit(message)
@@ -214,6 +227,52 @@ func hub_mode() -> String:
 func active_zone() -> Dictionary:
 	var zone: Variant = snapshot.get("active_zone")
 	return zone if typeof(zone) == TYPE_DICTIONARY else {}
+
+## WHICH PROPOSAL THIS ZONE IS RIGHT NOW (`AMALGAM_BRIDGE.md` §5.9).
+##
+## Captured by `ZoneController.setup` when it STARTS a build and echoed
+## on that build's `layout_result`, so a result arriving after Epsilon
+## replaced the content or `reselect_hosts` regraphed it is recognised
+## as being about a Zone that no longer exists -- and spends none of the
+## replacement's budget, bars none of its rooms and commits nothing.
+##
+## THE SNAPSHOT FIRST, because the snapshot is what the build path
+## reads. `main.gd::_to_zone` builds from
+## `BridgeClient.active_zone()["zone"]`; nothing in this client is
+## connected to `zone_ready_received` at all. A cold restart into a Zone
+## that was generated and never committed gets a snapshot and no offer,
+## so an implementation that only remembered offers would bind nothing
+## on exactly the path a restart takes.
+##
+## The offer is the fallback, for a bridge that carries the identity
+## there and not on the snapshot. `""` means this bridge sends no
+## identity -- older than the field -- and the client then sends none,
+## which is the documented legacy behaviour and NOT a silent omission:
+## `ZoneController.proposal_id` is empty and says so.
+func proposal_for(zone_id: String) -> String:
+	if zone_id == "":
+		return ""
+	if str(active_zone().get("zone_id", "")) == zone_id:
+		var from_snapshot := str(snapshot.get("active_proposal_id", ""))
+		if from_snapshot != "":
+			return from_snapshot
+	return str(_offer_proposals.get(zone_id, ""))
+
+## WHICH ATTEMPT at that proposal the bridge is on, for this Zone.
+##
+## `ZoneRecord.layout_refusals` — a quantity the record already keeps and
+## already sends, on the same `active_zone` the build is made from. A
+## refusal ends one attempt and begins the next, so the count IS the
+## ordinal; `proposal_id` cannot serve, because two tries at identical
+## content hash identically and are supposed to.
+##
+## `-1` when this bridge holds no record for the Zone, which the
+## controller sends as nothing at all.
+func attempt_for(zone_id: String) -> int:
+	var record := active_zone()
+	if zone_id == "" or str(record.get("zone_id", "")) != zone_id:
+		return -1
+	return int(record.get("layout_refusals", 0))
 
 ## The folded component set. The BRIDGE folds; nothing here re-derives it.
 func mechanics() -> Dictionary:

@@ -14,8 +14,12 @@ var hud: Hud
 var reveal: RevealLayer
 var inventory: InventoryLayer
 var shop: ShopUI
+var station_panel: StationPanel
 var pause_menu: PauseMenu
 var debug: DebugOverlay
+## F5, review-only. See `nav_schematic.gd`: not a map feature, and
+## nothing in the game reads it.
+var nav: NavSchematic
 var tones: Tones
 
 var _entering_zone := false
@@ -62,8 +66,11 @@ const DRIVERS := {
 	"--zone-shots": preload("res://tests/zone_shot_driver.gd"),
 	"--room-test": preload("res://tests/room_driver.gd"),
 	"--room-contract": preload("res://tests/room_contract_driver.gd"),
+	"--graphs": preload("res://tests/graph_driver.gd"),
 	"--movement-test": preload("res://tests/movement_driver.gd"),
 	"--playtest3a-test": preload("res://tests/playtest3a_driver.gd"),
+	"--physics-test": preload("res://tests/physics_driver.gd"),
+	"--traverse-test": preload("res://tests/traverse_driver.gd"),
 }
 
 func _ready() -> void:
@@ -217,8 +224,12 @@ func boot() -> void:
 	add_child(shop)
 	pause_menu = PauseMenu.new()
 	add_child(pause_menu)
+	station_panel = StationPanel.new()
+	add_child(station_panel)
 	debug = DebugOverlay.new()
 	add_child(debug)
+	nav = NavSchematic.new()
+	add_child(nav)
 
 	menu.connect_pressed.connect(_on_menu_connect)
 	menu.mock_pressed.connect(_on_menu_mock)
@@ -226,6 +237,15 @@ func boot() -> void:
 	reveal.reveal_finished.connect(_update_modal)
 	inventory.closed.connect(_update_modal)
 	shop.closed.connect(_update_modal)
+	station_panel.closed.connect(_update_modal)
+	station_panel.warp_chosen.connect(_on_station_warp_chosen)
+	# THE ONE OPTION WITH SEMANTICS ALREADY BEHIND IT. The pause menu's
+	# own Return to Hub is this same handler: `leave_zone` after the
+	# resume anchor, keys, locks and reached stations are remembered, so
+	# the Zone goes DORMANT and the portal offers it back. Nothing new
+	# is invented here and `abandon_zone` is not reachable from a
+	# station.
+	station_panel.return_to_hub_chosen.connect(_on_return_to_hub)
 	pause_menu.resumed.connect(_update_modal)
 	pause_menu.return_to_hub_requested.connect(_on_return_to_hub)
 	pause_menu.abandon_confirmed.connect(_on_abandon)
@@ -260,6 +280,7 @@ func _on_menu_mock() -> void:
 func _on_snapshot(_snapshot: Dictionary) -> void:
 	menu.refresh()
 	debug.refresh()
+	_refresh_nav()
 	_refresh_banner()
 	var mode := BridgeClient.hub_mode()
 	match view:
@@ -338,7 +359,26 @@ func _on_bridge_error(err: Dictionary) -> void:
 # -- view transitions -------------------------------------------------------
 
 func _clear_world() -> void:
+	# A PANEL CANNOT OUTLIVE THE ZONE IT BELONGS TO. A travel panel left
+	# open across a teardown would sit over the Hub offering warps into a
+	# controller that no longer exists, and its Return to Hub would send
+	# a second `leave_zone`.
+	if station_panel != null:
+		station_panel.close()
 	for child in world.get_children():
+		# OUT OF THE TREE NOW, not at the end of the frame.
+		#
+		# `queue_free` is deferred: the old world's colliders stay
+		# registered with the physics server until the frame ends, and
+		# the new one is built AND MEASURED before that. Both worlds are
+		# built around the origin, so the Hub's floor stood in the hall's
+		# entry doorway and `_measure_layout_evidence` reported
+		# `c002/entry` solid -- the bridge refused the layout, three
+		# times over, and the Zone never opened.
+		#
+		# `remove_child` is immediate and unregisters the colliders;
+		# `queue_free` still runs, so nothing leaks.
+		world.remove_child(child)
 		child.queue_free()
 	hub = null
 	zone = null
@@ -449,12 +489,32 @@ func _toggle_shop() -> void:
 	_update_modal()
 
 func _on_enter_zone() -> void:
-	var active := BridgeClient.active_zone()
-	if active.is_empty():
+	# WHICH ZONE, from the Hub rather than from `active_zone`.
+	#
+	# A DORMANT Zone is not the active one -- `active_zone_id` is cleared
+	# when the player walks out -- so reading `active_zone()` returned
+	# nothing and this returned early, which is why there was no way back
+	# into a Zone you had left. `resume_zone_id` is the bridge saying
+	# which Zone the portal leads to, in every mode that has one.
+	var zid := str(BridgeClient.hub().get("resume_zone_id", ""))
+	if zid == "":
+		zid = str(BridgeClient.active_zone().get("zone_id", ""))
+	if zid == "":
+		return
+	# AND NOT BACK INTO THE ONE THAT CANNOT BE BUILT.
+	#
+	# `AMALGAM_BRIDGE.md` §5.7a defect 1. The Hub's portal already
+	# refuses to offer this, and this is the second lock: an
+	# `enter_zone` that arrives from anywhere else -- a stale prompt, a
+	# queued input, a driver -- must not restart the refusal loop the
+	# owner's decision closes.
+	if BridgeClient.hub_mode() == "ZONE_FAILED" \
+			or zid == HubController.discard_target():
+		hud.toast("That Zone cannot be built. Discard it at the console.",
+				Color(0.9, 0.5, 0.3))
 		return
 	_entering_zone = true
-	BridgeClient.send_intent({"type": "enter_zone",
-			"zone_id": active.get("zone_id", "")})
+	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zid})
 
 func _to_zone(zone_dict: Dictionary) -> void:
 	_clear_world()
@@ -524,6 +584,7 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.setup(Slice1Fixture.decorate(zone_dict) if _slice1 else zone_dict)
 	zone.exit_requested.connect(_on_exit_zone)
 	zone.layout_refused.connect(_on_layout_refused)
+	zone.travel_panel_requested.connect(_on_travel_panel_requested)
 	hud.bind_player(zone.player)
 	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	zone.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
@@ -603,7 +664,24 @@ func _send_zone_timing(completed: bool) -> void:
 	if not intent.is_empty():
 		BridgeClient.send_intent(intent)
 
+## A station asked for a destination. The panel renders what the
+## controller says is eligible and decides nothing itself.
+func _on_travel_panel_requested(from_id: String, from_label: String,
+		options: Array) -> void:
+	if view != View.ZONE:
+		return
+	station_panel.open(from_id, from_label, options)
+	_update_modal()
+
+## ONE WARP, and only into the Zone that asked. A panel left open across
+## a Zone teardown would otherwise send a choice to a freed controller.
+func _on_station_warp_chosen(from_id: String, to_id: String) -> void:
+	if view == View.ZONE and zone != null and is_instance_valid(zone):
+		zone.warp_to(from_id, to_id)
+	_update_modal()
+
 func _on_return_to_hub() -> void:
+	station_panel.close()
 	pause_menu.close()
 	if view == View.ZONE:
 		_send_zone_timing(false)
@@ -670,6 +748,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		debug.toggle()
 	if event.is_action_pressed("activity_labels"):
 		_toggle_activity_labels()
+	if event.is_action_pressed("nav_schematic"):
+		nav.toggle()
+		_refresh_nav()
 	if view == View.MENU:
 		return
 	if event.is_action_pressed("pause"):
@@ -729,19 +810,48 @@ func _highlighted_slot() -> String:
 		return hub.player.highlighted_slot
 	return "echo_a"
 
+## WHILE IT IS OPEN, and only then.
+##
+## `_on_snapshot` refreshes it too, but a snapshot arrives when the
+## BRIDGE has something to say -- so walking from one room to the next
+## would not have moved the "you are here" dot until something else
+## happened. The panel is a prototype somebody holds open and walks
+## around with; it has to keep up with the walking.
+func _process(_delta: float) -> void:
+	if nav != null and nav.visible:
+		_refresh_nav()
+
+## Hand the schematic the facts it draws. Read, never stored: every one
+## of these is owned by `ZoneController` and this takes a copy for one
+## frame of drawing.
+func _refresh_nav() -> void:
+	if nav == null or not nav.visible:
+		return
+	if view != View.ZONE or zone == null or not is_instance_valid(zone):
+		nav.show_zone({}, {}, [], {}, {}, "")
+		return
+	nav.show_zone(zone.rooms_entered(), zone.room_bounds,
+			zone.zone.get("edges", []), zone.gates_not_yet_open(),
+			zone.stations_reached(), zone.current_room())
+
 func _update_modal() -> void:
 	var modal: bool = pause_menu.visible or inventory.visible \
-			or shop.visible or reveal.visible
+			or shop.visible or reveal.visible or station_panel.visible
 	var player: Player = null
 	if hub != null:
 		player = hub.player
 	elif zone != null:
 		player = zone.player
 	if player != null:
-		player.input_frozen = modal
+		# A NAMED CLAIM, not the boolean. `player.input_frozen = modal`
+		# cleared an acceptance hold every time the inventory closed.
+		if modal:
+			player.hold("modal")
+		else:
+			player.release("modal")
 	hud.set_crosshair_visible(not modal)
 	if view == View.MENU or pause_menu.visible or inventory.visible \
-			or shop.visible:
+			or shop.visible or station_panel.visible:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-playtest3a godot-zone-audit zone-shots godot-boot godot-legible godot-integration godot-reload
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-integration-quiet godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -200,6 +200,90 @@ godot-room-contract: godot-import
 # Placement findings print as NOTEs and do not fail: they are written down
 # in `docs/ZONE_ACTIVITY_AUDIT.md` and a target that goes red on a known
 # open defect is a target people learn to ignore.
+# SEVERAL ordinary generated Zones, composed and walked.
+#
+# `godot-room-contract` proves a great deal about ONE Zone, which is one
+# shape the composer happened to make. This walks a run of consecutive
+# Zones from a real campaign: does each compose, what shape is it, which
+# branches were physically placed, and can the real `Player` reach a side
+# destination and get back. No topology is preferred -- what is measured
+# is whether the shape the composer chose can be built and walked.
+godot-graphs: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --graphs 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT GRAPH TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The generated Zones `godot-graphs` walks, regenerated from the engine
+# rather than edited. Five consecutive Zones of a real campaign.
+zone-fixtures:
+	cd bridge && $(PY) tools/dump_zones.py --count 5
+
+# THE DECLARED SAMPLE, wider than the five preserved controls: the first
+# twenty consecutive ordinary Zones of a real campaign at DEFAULT_CONFIG,
+# of which those five are exactly the prefix. Composed, and then the
+# manifests judged by the bridge's own validator -- LAYOUT_OK from the
+# router is not acceptance, and only one of the two is measured in the
+# engine. Every result is printed, refusals included.
+zone-sample: godot-import
+	cd bridge && $(PY) tools/dump_zones.py --count 20 \
+	  --out ../godot/tests/fixtures/sample
+	@out=$$($(GODOT) --headless --path godot -- --graphs --sample 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT GRAPH TESTS OK" || exit 1
+	@echo "-- and the bridge's own verdict on each emitted manifest --"
+	@echo "   REPORT ONLY: an unplayed Zone's doorways are probed without"
+	@echo "   the setup a played Zone gets, so door-polarity refusals here"
+	@echo "   are about this harness. Acceptance is gated live, by"
+	@echo "   godot-integration. The manifest-only class this once caught"
+	@echo "   -- room overlap -- the router now refuses itself."
+	-cd bridge && $(PY) tools/check_sample_layouts.py
+
+# THE SAME LOOP, WITH THE OPT-IN VARIANT TURNED ON. The owner's ask is
+# that BOTH modes are exercised through real build and acceptance, not
+# just the one that ships -- so this is `godot-integration` with the one
+# flag added and its own save folder. A variant that generates Zones the
+# engine refuses fails here rather than in a review session.
+#
+# PROTOTYPE SCALE, exactly like the baseline target, because that is
+# what this harness is written for: `--mock-scale=default` fails here
+# for the BASELINE too ("30 locations scouted", then a layout verdict
+# that never arrives), so running the variant at default scale would
+# compare it against a harness rather than against the baseline.
+#
+# The consequence is worth stating rather than burying: at prototype
+# scale a Zone's budget is already ZONE_BUDGET_MIN, so the variant's
+# band is clamped to the floor and what this exercises is the FAMILY
+# NARROWING, not the lower band. The bridge logs that per Zone. Default
+# scale is covered in Python instead -- `test_quiet_integration.py`
+# generates and accepts a default-scale variant Zone through the same
+# provider and the same validate_zone -- and in the engine by the
+# station census in `godot-room-contract`, which builds five real
+# manifests of each variant.
+godot-integration-quiet: godot-import
+	rm -rf $(QUIET_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(QUIET_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --quiet-generation & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving? see the traceback above)"; \
+	  exit 1; }; \
+	$(GODOT) --headless --path godot -- --integration-test \
+	  > /tmp/archipepsi-integration-quiet.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID; \
+	cat /tmp/archipepsi-integration-quiet.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	if grep -q "SCRIPT ERROR" /tmp/archipepsi-integration-quiet.log; then \
+	  echo "-- a script error was raised: a run that crashed and still"; \
+	  echo "-- printed OK is not a pass."; \
+	  grep "SCRIPT ERROR" /tmp/archipepsi-integration-quiet.log | sort -u; \
+	  exit 1; \
+	fi
+
 godot-movement: godot-import   # P3.0 rails, launch pads, and the offer seam
 	@out=$$($(GODOT) --headless --path godot -- --movement-test 2>&1); \
 	status=$$?; echo "$$out" | grep -v "^$$"; \
@@ -214,8 +298,14 @@ godot-playtest3a: godot-import  # 3A: a real player rides an authored rail
 	fi; \
 	exit $$status
 
+# Also the producer of `godot/tests/fixtures/placement/*.json` -- the
+# engine payloads `bridge/tests/test_placement_contract.py` runs through
+# the real validator. `ARCHIPEPSI_CAPTURE_COMMIT` is what lets each
+# capture record the tree it was measured from; the driver says
+# "unknown" rather than inventing one when it is not set.
 godot-zone-audit: godot-import
-	@out=$$($(GODOT) --headless --path godot -- --zone-audit 2>&1); \
+	@out=$$(ARCHIPEPSI_CAPTURE_COMMIT=$$(git rev-parse --short=12 HEAD 2>/dev/null) \
+	  $(GODOT) --headless --path godot -- --zone-audit 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT ZONE AUDIT OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
@@ -238,6 +328,26 @@ zone-shots: godot-import
 	@xvfb-run -a -s "-screen 0 1600x1000x24" $(GODOT) --path godot \
 	  --rendering-driver opengl3 -- --zone-shots 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# Which refusals has anything ever triggered? Mutes one at a time and
+# reports the survivors. See bridge/tools/mutate.py for what a survivor
+# means -- it is not automatically a missing test.
+mutate-bridge:
+	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/layout.py \
+	  "c.fail(" tests/test_layout.py tests/test_physics_carrier.py
+	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/topology.py \
+	  "errors.append(" tests/test_topology.py
+	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/schemas/physics.py \
+	  "errors.append(" tests/test_physics_contract.py || \
+	  { echo "(the empty-latch backstop is an expected survivor -- see"; \
+	    echo " AMALGAM_BRIDGE.md 4.1a case 2)"; }
+
+# The shared package-digest vectors, generated from the production
+# serializer rather than edited. Regenerating is a CONTRACT CHANGE: the
+# engine lane must re-run its side against the new file. See
+# docs/AMALGAM_BRIDGE.md 6.2a.
+physics-vectors:
+	cd bridge && $(PY) tools/physics_vectors.py
 
 # The audit's fixture, regenerated from the engine rather than edited.
 zone-fixture:
@@ -318,6 +428,11 @@ godot-affordance: godot-import # world affordances, local rewards, readouts
 # counter climbed forever, "coins were genuinely spent" passed on coins an
 # earlier run had spent, and the shop assertion failed at random.
 INTEGRATION_SAVES := $(CURDIR)/.integration-saves
+# The lower-budget variant's own folder. A SEPARATE one, because the
+# two modes compose different Zones and a single campaign holding
+# both would make the comparison unreadable.
+QUIET_SAVES := $(CURDIR)/.integration-saves-quiet
+JOURNEY_SAVES := $(CURDIR)/.journey-saves
 
 # The S2/S5 action-runner suite: press, release, cancel and death, with a
 # real player over a real floor.
@@ -376,6 +491,34 @@ RELOAD_SAVES := $(CURDIR)/.reload-saves
 #
 # `--mock-scale default` because a locked branch needs a Zone big enough
 # to spare a room, and the prototype's thirty locations do not make one.
+# BOTH SIDES RESTART. The bridge used to stay up across the two Godot
+# processes, so "the campaign loads from disk" was the CLIENT loading
+# from a bridge that still had everything in memory. It is stopped and
+# started again between the phases now, against the same save directory,
+# so the only thing that crosses the restart is the file on disk.
+# THE PHYSICS SUBSTRATE (`docs/AMALGAM_BRIDGE.md` §6.3): a rigid body
+# that rests and can be pushed, and one verb resolving to force, range
+# and mass. Its own target because it is the only suite that steps
+# physics for hundreds of frames, and folding it into `godot-content`
+# would make a fast contract suite slow for everybody.
+godot-physics: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --physics-test 2>&1); \
+	status=$$?; printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: a test that crashed is not a test that passed"; \
+	  exit 1; \
+	fi; \
+	exit $$status
+
+godot-traverse: godot-import   # walking to things, with the real controller
+	@out=$$($(GODOT) --headless --path godot -- --traverse-test 2>&1); \
+	status=$$?; printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: a test that crashed is not a test that passed"; \
+	  exit 1; \
+	fi; \
+	exit $$status
+
 godot-reload: godot-import
 	rm -rf $(RELOAD_SAVES) $(HOME)/.local/share/godot/app_userdata/Archipepsi/reload_notes.json
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RELOAD_SAVES) \
@@ -388,7 +531,14 @@ godot-reload: godot-import
 	RECORD=$$?; \
 	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" /tmp/reload-record.log | tail -25; \
 	if [ $$RECORD -ne 0 ]; then kill $$BRIDGE_PID; exit $$RECORD; fi; \
-	echo "-- second process --"; \
+	echo "-- both processes restart: the bridge too, from its own save --"; \
+	kill $$BRIDGE_PID; wait $$BRIDGE_PID 2>/dev/null || true; \
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RELOAD_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "the restarted bridge did not come back"; exit 1; }; \
 	$(GODOT) --headless --path godot -- --reload-phase=resume > /tmp/reload-resume.log 2>&1; \
 	RESUME=$$?; \
 	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" /tmp/reload-resume.log | tail -30; \
@@ -402,5 +552,39 @@ godot-integration: godot-import   # full loop through a live mock bridge, fresh 
 	kill -0 $$BRIDGE_PID 2>/dev/null || { \
 	  echo "bridge did not start (port already serving? see the traceback above)"; \
 	  exit 1; }; \
-	$(GODOT) --headless --path godot -- --integration-test; \
+	$(GODOT) --headless --path godot -- --integration-test \
+	  > /tmp/archipepsi-integration.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID; \
+	cat /tmp/archipepsi-integration.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	if grep -q "SCRIPT ERROR" /tmp/archipepsi-integration.log; then \
+	  echo "-- a script error was raised: a run that crashed and still"; \
+	  echo "-- printed OK is not a pass. The exit-portal crash reached"; \
+	  echo "-- ALL_CHECKS_CLEARED and reported OK before this guard."; \
+	  grep "SCRIPT ERROR" /tmp/archipepsi-integration.log | sort -u; \
+	  exit 1; \
+	fi
+
+# THE RE-SELECTION JOURNEY, at the scale its subject needs.
+#
+# Same driver, same live bridge, one control: an unhostable host
+# measured by the engine, barred, re-selected, a late result from the
+# proposal that was replaced, acceptance, a walk onto the return device
+# and a restart that replays it. `godot-integration` runs at PROTOTYPE
+# scale, where a Zone is three rooms -- and three rooms carry no branch,
+# so they carry no return device and there is no host to bar. Measured:
+# four consecutive Zones with no plug at all. So the bridge here is
+# started at `--mock-scale=default`, which is the size the composer
+# actually branches at.
+godot-return-journey: godot-import
+	rm -rf $(JOURNEY_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(JOURNEY_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; \
+	  exit 1; }; \
+	$(GODOT) --headless --path godot -- --integration-test \
+	  --return-journey; \
 	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS

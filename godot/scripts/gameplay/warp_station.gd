@@ -17,6 +17,9 @@ extends StaticBody3D
 
 signal reached(station_id: String)
 signal warp_requested(from_id: String, to_id: String)
+## A WORKING, REACHED STATION WAS PRESSED. The controller answers with
+## a panel; this node no longer decides where the player goes.
+signal panel_requested(station_id: String)
 
 const HEIGHT := 2.6
 const RADIUS := 1.1
@@ -42,9 +45,6 @@ var label_text := ""
 ## to. The entrance station is never broken, so a Zone always has one
 ## save point from the moment it is entered.
 var repair_room := ""
-## Set by the controller: the stations this player has reached, in the
-## order they were placed, so the prompt can name where E goes next.
-var cycle: Callable = Callable()
 
 var _ring: MeshInstance3D
 var _post: MeshInstance3D
@@ -169,17 +169,28 @@ func mark_reached() -> void:
 func is_reached() -> bool:
 	return _is_reached
 
-## WHERE E GOES, named before it is pressed.
+## WHICH STATIONS ARE DESTINATIONS, from one place.
 ##
-## A destination the player can read beats a menu they have to learn, and
-## it keeps the whole feature inside the interact contract the rest of
-## the game already uses. Pressing again at the destination continues
-## round the reached set, so every reached station is two or three
-## presses from every other.
-func _next() -> String:
-	if cycle.is_null():
-		return ""
-	return str(cycle.call(station_id))
+## Static, and taking the list, so the controller and a suite ask the
+## same function rather than each keeping a notion of eligibility. The
+## rule is one line and the whole of §30.12.4's travel: a REACHED
+## station in this Zone is a destination and nothing else is.
+##
+## The station being stood at is included and marked `here`. A travel
+## list that silently omitted where you are reads as a station missing
+## from the Zone; the panel shows it and refuses to travel to it.
+static func travel_options(stations: Array, from_id: String) -> Array:
+	var out: Array = []
+	for raw: Variant in stations:
+		if not is_instance_valid(raw):
+			continue
+		var station: WarpStation = raw
+		if not station.is_reached():
+			continue
+		out.append({"id": station.station_id,
+				"label": station.label_text,
+				"here": station.station_id == from_id})
+	return out
 
 func interact_prompt() -> String:
 	if _is_broken:
@@ -189,10 +200,7 @@ func interact_prompt() -> String:
 		return "%s — BROKEN: solve this room's puzzle" % label_text
 	if not _is_reached:
 		return "[E] ACTIVATE %s" % label_text
-	var to := _next()
-	if to == "":
-		return "%s — no other station reached yet" % label_text
-	return "[E] WARP TO %s" % to.to_upper()
+	return "[E] TRAVEL FROM %s" % label_text
 
 func interact(_player: Node) -> void:
 	if _is_broken:
@@ -201,7 +209,8 @@ func interact(_player: Node) -> void:
 		mark_reached()
 		reached.emit(station_id)
 		return
-	var to := _next()
-	if to == "":
-		return
-	warp_requested.emit(station_id, to)
+	# NO TELEPORT ON PRESS. This used to read `_next()` and warp there
+	# at once, so travel was a cycle a player learned by riding it and
+	# there was no way to look before going. `warp_requested` is still
+	# how a warp happens -- the panel raises it once, on a choice.
+	panel_requested.emit(station_id)

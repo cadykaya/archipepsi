@@ -105,6 +105,27 @@ static func _link(root: Node3D, built: Array[ActivityElement],
 ## element the player walks into on the way past.
 ## How many alternates the solver tries before it accepts a crowded spot.
 const PLACEMENT_TRIES := 24
+
+## HOW FAR THE TARGET'S HARDWARE REACHES BACK, from the element origin.
+##
+## `ActivityElement._build_target` hangs a 0.5 m stalk centred 0.3 m
+## behind the face, so the hardware ends 0.55 m back. Mounting puts the
+## origin exactly that far off the wall plane, and the stalk lands on
+## the wall instead of in the air behind a target hanging in the middle
+## of the room -- which is what the owner saw: "they have pegs and they
+## should be sticking out of the walls".
+const MOUNT_STALK := 0.55
+
+## Clear of a doorway, beside the door's own half width.
+##
+## A side socket sits at the middle of a side wall (`_perimeter`), so
+## the middle of a side wall is the one place on it a target may not go.
+## A row that hung one there would be a shooting gallery across a door.
+const MOUNT_DOOR_CLEAR := 0.6
+
+## Steps the wall search takes along the wall, looking for room.
+const MOUNT_STEP := 0.6
+const MOUNT_TRIES := 16
 ## Grid resolution for the last-resort sweep, per axis.
 const GRID_STEPS := 9
 
@@ -154,7 +175,37 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 				side * (inner + (outer - inner) * t),
 				near + (far - near) * t,
 				height, size, inner, outer, near, far, taken)
-		if not surface.is_empty():
+		var yaw := 0.0
+		var claimed := size
+		var mounted := false
+		# A TARGET GOES ON THE WALL, and tries the other wall before it
+		# gives up on walls altogether.
+		#
+		# A ROOM THAT VOUCHED SURFACES IS NOT EXCLUDED, IT IS ASKED.
+		#
+		# It used to be excluded outright, because a `platform_path`'s
+		# bounds reach forty metres down and the wall at `width/2` is a
+		# wall over a kill pit -- `godot-zone-audit` caught the first
+		# version putting six elements in `c006` with nothing under
+		# them. That exclusion was the right call with no way to tell a
+		# real wall from a nominal one. There is one now, and a
+		# firing-position test to go with it, so the two questions that
+		# actually decide it are asked directly: is there a wall, and is
+		# there anywhere to shoot it from. A room that answers no to
+		# either still falls through to the surface solve, which is
+		# untouched.
+		if trigger == ActivityElement.SHOT:
+			var wall := _wall_spot(side, near + (far - near) * t, width,
+					depth, size, height, taken, solids)
+			if wall.is_empty():
+				wall = _wall_spot(-side, near + (far - near) * t, width,
+						depth, size, height, taken, solids)
+			if not wall.is_empty():
+				spot = wall["position"]
+				yaw = float(wall["yaw"])
+				claimed = wall["size"]
+				mounted = true
+		if not mounted and not surface.is_empty():
 			# THE OFFER MAY BE DECLINED. A surface that cannot produce a
 			# physically valid point for THIS element is not used for it,
 			# and the flat solve stands -- an element is never forced into
@@ -167,9 +218,187 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 				trigger, i, size, tint, role, i + 1 if ordered else 0)
 		root.add_child(element)
 		element.position = spot
-		taken.append(_footprint(spot, size))
+		element.rotation.y = yaw
+		# SAID OUT LOUD ON THE ELEMENT, so a suite can tell a target that
+		# found a wall from one that did not without re-deriving the
+		# solve. A decline is a placement outcome, not a silent one.
+		element.set_meta("mounted", mounted)
+		# AND THE SPACE IT ACTUALLY CLAIMS. A mounted target is turned,
+		# so its 0.9 m span runs along the wall and its 0.2 m thickness
+		# across it -- the opposite of `rules["size"]`. `_footprints`
+		# reads this rather than the family's nominal size, because that
+		# list becomes `occupied` for the NEXT activity in the same
+		# room: understating the along-wall extent by 0.7 m is a second
+		# activity placed into the first one.
+		element.set_meta("claimed_size", claimed)
+		taken.append(_footprint(spot, claimed))
 		built.append(element)
 	return built
+
+## A SHOT TARGET GOES ON A WALL.
+##
+## The row solve above spreads every element across the room's floor
+## plan, which is right for a switch you walk to and a plate you stand
+## on, and wrong for the one element nobody ever touches. A target at
+## `height` 2.2 with nothing behind it is a 0.9 m square floating at
+## head height on a stalk that holds it off nothing.
+##
+## So a `SHOT` element is offered a wall first. The side walls, not the
+## ends: the entry and the exit are where the player comes in, the row
+## already keeps `THRESHOLD_CLEARANCE` off both, and a target across a
+## doorway is worse than a target in the air. The element turns to face
+## the room, so its 0.9 m span now runs ALONG the wall and its 0.2 m
+## thickness across it, and the origin sits `MOUNT_STALK` off the wall
+## plane so the hardware meets the plaster.
+##
+## THE OFFER MAY BE DECLINED, exactly as `_spot_on_surface`'s is. A wall
+## with no legal span left -- crowded, or nothing but doorway -- returns
+## `{}` and the flat solve stands. An element is never dropped and never
+## forced into geometry to honour an offer.
+##
+## WHAT THIS DOES NOT CLAIM. It solves against the room's OWN declared
+## envelope, `width` and `depth`, in the room's own frame -- so a room
+## placed at any yaw in the Zone mounts correctly, because the element
+## is a child of it. A room whose interior wall is not parallel to its
+## own axes is not handled here and is not pretended to be: such a wall
+## reaches the composer only as an axis-aligned solid, and the honest
+## thing is that this rule reads the declaration rather than guessing at
+## the mesh. `_clear_of_geometry` still refuses a mounted spot that a
+## solid occupies, so the worst case is a decline and not a target
+## inside a pillar.
+static func _wall_spot(side: float, ideal_z: float, width: float,
+		depth: float, size: Vector3, height: float,
+		taken: Array[AABB], solids: Array[AABB]) -> Dictionary:
+	var plane := width / 2.0 - AffordanceFeatures.WALL_MARGIN
+	var x := side * (plane - MOUNT_STALK)
+	# Turned to face the room: the face normal is local +Z.
+	var yaw := PI / 2.0 if side < 0.0 else -PI / 2.0
+	# Rotated, so the extents swap: `size.x` now runs along the wall.
+	var along := size.x / 2.0
+	var lo := AffordanceFeatures.THRESHOLD_CLEARANCE + along
+	var hi := maxf(lo, depth - AffordanceFeatures.THRESHOLD_CLEARANCE
+			- along)
+	if hi <= lo:
+		return {}
+	var door := depth / 2.0
+	var bar := ChamberBuilders.DOOR_WIDTH / 2.0 + MOUNT_DOOR_CLEAR + along
+	var turned := Vector3(size.z, size.y, size.x)
+	for attempt in MOUNT_TRIES:
+		# Outward from the ideal, alternating, so a row keeps its order
+		# and its spread rather than piling up at one end.
+		var step := float((attempt + 1) / 2) * MOUNT_STEP
+		var z := ideal_z + (step if attempt % 2 == 0 else -step)
+		if z < lo or z > hi:
+			continue
+		if absf(z - door) < bar:
+			continue
+		var spot := Vector3(x, height, z)
+		if not can_place(spot, turned, height, taken, solids):
+			continue
+		# IS THERE ACTUALLY A WALL BEHIND THE STALK?
+		#
+		# The first version took `width / 2 - WALL_MARGIN` as the wall
+		# plane and never looked. That is the room's declared ENVELOPE,
+		# which is where a wall would be -- not evidence that one is.
+		# Every wall is built by `_box` and `_box` gives it a collision
+		# hull; `all_solid_boxes` reads hulls WITHOUT the architecture
+		# filter it applies to meshes, so the wall really is in `solids`
+		# and can be asked for.
+		if not _wall_behind(spot, side, size, solids):
+			continue
+		# NOT "floor under it". Nobody stands beneath a wall target.
+		#
+		# A first cut required ground directly below the mount, which is
+		# the question a FLOOR-PLACED element is owed and the wrong one
+		# here: it refuses a perfectly ordinary target hanging over a
+		# walkway recess, and it is not what makes a mount usable. What
+		# does is the wall above and a place to stand and shoot from,
+		# which is the next test.
+		# AND SOMEWHERE TO STAND AND SHOOT IT FROM. This is the second
+		# requirement in full: a real wall over a KILL PIT is a target
+		# nobody can address, and a real wall over a GAP with a walkway
+		# seven metres out is a perfectly ordinary one.
+		#
+		# MEASURED, NOT DECLARED. An earlier cut asked the room's vouched
+		# `stand` patches on the assumption that only a platform course
+		# vouches any -- an arena vouches them too, so every arena target
+		# was refused by a rule reading a list it had misunderstood.
+		# Floor is floor: this asks the same solids the wall test asks.
+		if not _firing_position(spot, side, height, solids):
+			continue
+		return {"position": spot, "yaw": yaw, "size": turned}
+	return {}
+
+## Room architecture immediately behind a mounted target.
+##
+## A slab reaching from the stalk's tip outward, so what it asks is
+## "does this stalk end on something" rather than "is the envelope wide
+## enough". Deliberately shallow: a pillar is a mounting surface and a
+## wall is a mounting surface, and neither is the point -- what is
+## refused is a stalk ending in air.
+static func _wall_behind(spot: Vector3, side: float, size: Vector3,
+		solids: Array[AABB]) -> bool:
+	if solids.is_empty():
+		return false
+	var tip := spot.x + side * MOUNT_STALK
+	var reach := 0.9
+	var lo := minf(tip, tip + side * reach)
+	var box := AABB(
+			Vector3(lo, spot.y - size.y / 2.0, spot.z - size.x / 2.0),
+			Vector3(reach, size.y, size.x))
+	return ChamberBuilders.box_hits(box, solids)
+
+## Floor below a point, within a player's reach of it.
+##
+## A thin column under the point's own footprint. Thin on purpose: it
+## must not find the WALL beside it and call that a floor. Asked of a
+## FIRING POSITION, never of the mount -- nobody stands under a wall
+## target.
+static func _floor_under(spot: Vector3, height: float,
+		solids: Array[AABB]) -> bool:
+	if solids.is_empty():
+		return false
+	var drop := height + RoomAudit.GROUND_REACH
+	var column := AABB(
+			Vector3(spot.x - 0.15, spot.y - drop, spot.z - 0.15),
+			Vector3(0.3, drop - 0.1, 0.3))
+	return ChamberBuilders.box_hits(column, solids)
+
+## A place a player can STAND and shoot this target from.
+##
+## Sampled out into the room on the target's own side. Each sample needs
+## two things, both measured against the same solids the wall test
+## reads: floor under it, and room for a standing body above that floor
+## -- a slot under a deck with 1.2 m of headroom is not a firing
+## position.
+##
+## The far sample is well inside the Static Pulse's forty metres: a shot
+## from across the room is legal and is not what a usable firing
+## position means. The near one is outside the target's own footprint,
+## because standing inside a thing is not standing at it.
+static func _firing_position(spot: Vector3, side: float, height: float,
+		solids: Array[AABB]) -> bool:
+	for out: float in [2.0, 3.5, 5.0, 7.0, 9.0]:
+		var at := Vector3(spot.x - side * out, spot.y, spot.z)
+		if not _floor_under(at, height, solids):
+			continue
+		if _has_headroom(at, height, solids):
+			return true
+	return false
+
+## Room for a standing body on the floor a sample found.
+##
+## `RoomAudit.HEADROOM` rather than a number of its own: the composer
+## builds to exactly what the audit measures, or one of them is wrong.
+## The same reason `_clear_of_geometry` uses it.
+static func _has_headroom(at: Vector3, height: float,
+		solids: Array[AABB]) -> bool:
+	var stand := Placement.clearance(
+			Vector3(at.x, at.y - height, at.z),
+			Vector3(Constants.PLAYER_RADIUS * 2.0, 0.0,
+				Constants.PLAYER_RADIUS * 2.0),
+			RoomAudit.HEADROOM)
+	return not ChamberBuilders.box_hits(stand, solids)
 
 ## The vouched surface with the most room left on it, or {} if the room
 ## offered none this element can legally sit on.
@@ -387,11 +616,17 @@ static func _collides(at: Vector3, size: Vector3,
 	return false
 
 ## What this activity claimed, in room space, for the next one to avoid.
+## THE SPACE EACH ELEMENT CLAIMED, for the next activity in this room.
+##
+## Per element rather than from the family's nominal size: a mounted
+## `SHOT` target is turned, so its extents are swapped, and `_row`
+## records what each one actually took.
 static func _footprints(built: Array[ActivityElement],
 		size: Vector3) -> Array[AABB]:
 	var out: Array[AABB] = []
 	for element in built:
-		out.append(_footprint(element.position, size))
+		var claimed: Vector3 = element.get_meta("claimed_size", size)
+		out.append(_footprint(element.position, claimed))
 	return out
 
 ## The space an element claims, a little wider than its mesh so two

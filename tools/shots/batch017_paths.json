@@ -1,0 +1,159 @@
+{
+  "_comment": [
+    "Batch 017 -- the platform-path shell family.",
+    "",
+    "Two frames each: from the start ledge, which is where the player is",
+    "asked to read the route, and from inside it.",
+    "",
+    "CAMERA FRAME (L-52): every `eye` is the manifest anchor with x and z",
+    "negated, because the runner yaws the MODEL and leaves the camera in",
+    "world space.",
+    "",
+    "key_energy is down to 0.70 and ambient up to 0.24. The bench rig is built for a subject on a backdrop, where the key clears the model; a shaft with no ceiling lets it hit one wall square-on, and the first pass rendered the right-hand wall pure white (L-56).",
+    "The _start cameras stand 1.4 m onto a 4 m ledge, not at its lip: at the engine's 90 deg fov the bottom of the frame is only 1.6 m ahead, so a camera on the edge renders the ledge it is standing on as empty void."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "ambient": 0.24,
+    "backdrop": "none",
+    "game_lens": true,
+    "key_energy": 0.7
+  },
+  "shots": [
+    {
+      "name": "P_ascent_start",
+      "scene": "model:batch017/shells/shell_path_ascent.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.4
+      ],
+      "yaw": 180,
+      "pitch": -5,
+      "caption": "ASCENT - 5 PLATFORMS, EACH A FULL 1.00 M HIGHER",
+      "note": "MAX_VERTICAL_STEP DROPS THE REACH TO 2.00 M. BUILT AT 1.80"
+    },
+    {
+      "name": "P_ascent_mid",
+      "scene": "model:batch017/shells/shell_path_ascent.glb",
+      "eye": [
+        0,
+        3.0,
+        -15.65
+      ],
+      "yaw": 180,
+      "pitch": -7,
+      "caption": "ON THE THIRD PLATFORM, TWO TO GO",
+      "note": "THE WALL STUB IS THE FLOOR THAT USED TO BE HERE"
+    },
+    {
+      "name": "P_stagger_start",
+      "scene": "model:batch017/shells/shell_path_stagger.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.4
+      ],
+      "yaw": 180,
+      "pitch": -5,
+      "caption": "STAGGER - 6 PLATFORMS, ALTERNATING 1.6 M EITHER SIDE",
+      "note": "MEASURED JUMP 2.31 M AGAINST A 2.40 M BOUND AT STEP 0.50"
+    },
+    {
+      "name": "P_stagger_mid",
+      "scene": "model:batch017/shells/shell_path_stagger.glb",
+      "eye": [
+        -1.6,
+        2.0,
+        -21.55
+      ],
+      "yaw": 180,
+      "pitch": -7,
+      "caption": "MID-ROUTE, LOOKING AT THE NEXT DIAGONAL",
+      "note": "EVERY JUMP TURNS YOU. NO TWO ARE THE SAME ANGLE"
+    },
+    {
+      "name": "P_spans_start",
+      "scene": "model:batch017/shells/shell_path_spans.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.4
+      ],
+      "yaw": 180,
+      "pitch": -5,
+      "caption": "SPANS - 3 BEAMS, FLAT, VERTICAL_STEP 0.00",
+      "note": "A CROSSING, NOT A CLIMB. THE FAR LEDGE IS VISIBLE FROM HERE"
+    },
+    {
+      "name": "P_spans_back",
+      "scene": "model:batch017/shells/shell_path_spans.glb",
+      "eye": [
+        0,
+        0,
+        -23.1
+      ],
+      "yaw": 0,
+      "pitch": -6,
+      "caption": "FROM THE END LEDGE, WHERE THE ENEMIES WAIT",
+      "note": "PLATFORM_PATH() SPAWNS ON THIS LEDGE, NEVER ON THE ROUTE"
+    },
+    {
+      "name": "P_ascent_over",
+      "scene": "model:batch017/shells/shell_path_ascent.glb",
+      "eye": [
+        0,
+        13.0,
+        7.0
+      ],
+      "yaw": 180,
+      "pitch": -30,
+      "game_lens": true,
+      "caption": "THE WHOLE CLIMB, FROM ABOVE THE START",
+      "note": "5 SEGMENTS, 31.3 M END TO END, EXITING 5.0 M UP"
+    },
+    {
+      "name": "P_stagger_over",
+      "scene": "model:batch017/shells/shell_path_stagger.glb",
+      "eye": [
+        0,
+        12.0,
+        8.0
+      ],
+      "yaw": 180,
+      "pitch": -26,
+      "game_lens": true,
+      "caption": "THE WHOLE ROUTE, FROM ABOVE THE START",
+      "note": "THE ALTERNATION IS THE DESIGN. IT ONLY READS FROM HERE"
+    },
+    {
+      "name": "P_spans_over",
+      "scene": "model:batch017/shells/shell_path_spans.glb",
+      "eye": [
+        0,
+        10.0,
+        6.0
+      ],
+      "yaw": 180,
+      "pitch": -30,
+      "game_lens": true,
+      "caption": "THE WHOLE CROSSING, FROM ABOVE THE START",
+      "note": "3 BEAMS, FLAT, 25.1 M. NOTHING IS CLIMBED"
+    }
+  ]
+}

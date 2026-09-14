@@ -1,5 +1,619 @@
 # Archipepsi — build state
 
+## 2026-09-14 (engine) — integrating the lower-budget variant
+
+Merged the bridge lane at `fdac6ab` and integrated item D. Full page:
+`docs/FOLLOWUP_02_INTEGRATION.md`.
+
+### Selecting the variant was the work, and it was not wired
+
+The owner's note -- "separate save folders alone do not select quieter
+mode" -- was right twice over. There was no flag at all, and once there
+was one it still did nothing: `quiet.preview_constraints` narrows
+`constraints["zone_budget"]`, and NOTHING COMPOSES FROM THAT KEY. Both
+`fallback_zone_attempt` and `generate_zone_validated` read
+`request.campaign.zone_budget`; the constraints entry is the same fact
+spelled for a prompt. A Zone asked for 72% of the band came out at 917
+against a 648-792 band, which is the baseline size -- the filter-only
+arm wearing the variant's name, and precisely the compensation the
+comparison exists to avoid.
+
+The band is now set before the request is built, so the whole
+constraints block derives from one consistent number and a live Epsilon
+would be told the budget it is judged against. That immediately
+uncovered the second one: `CampaignContext.zone_budget` is bounded
+`ge=ZONE_BUDGET_MIN` (200), the prototype's per-Zone budget IS 200, and
+72% of it is 144 -- so the request could not be constructed, generation
+raised `ValidationError` inside its task, and the client sat waiting for
+a `ZONE_READY` that never came. Clamped to the floor, and logged per
+Zone at WARNING, because a clamp that bites leaves the families narrowed
+and the band unchanged, which is filter-only again and must never be
+silent. `0.72` was not touched.
+
+### Two slots, and a marker so they cannot be mixed
+
+`--quiet` on the diagnostic launcher picks slot `quiet` and writes a
+`.quiet-generation` marker into it on first start. Every later run reads
+the marker: an ordinary run aimed at a variant slot is refused, and a
+variant run aimed at an ordinary slot is refused, before anything is
+opened, created or started. The owner's `.diagnostic-582e954` has no
+marker, so it reads as the ordinary campaign it is and cannot be
+continued in variant mode.
+
+`write_text` left the launcher's blanket destructive-call ban to make
+room for that marker, and did not leave unguarded: the ban is replaced
+by the stronger statement it stood for -- exactly one write in the
+module, inside `mark_quiet` -- plus a behavioural control that a
+campaign already in the slot survives a marking byte-for-byte.
+
+### Stations counted, not inferred from activity rooms
+
+Five real manifests of each variant, built by `ZoneBuilder`, counting
+`WarpStation` nodes:
+
+    baseline      5 of 5 composed; 109 rooms, 96 with an activity,
+                  49 stations, 39 broken, 10 working
+    lower-budget  2 of 5 composed;  46 rooms, 27 with an activity,
+                  20 stations, 12 broken,  8 working
+
+No station in either starts broken in a room with no activity to repair
+it, and entrance and exit are whole in both -- one expression in
+`zone_builder.gd` makes the empty promise inexpressible, and it is
+asserted on real Zones anyway.
+
+THE FINDING IS THE FIRST COLUMN. Three of five variant manifests are
+refused by the engine's layout router, all the same shape: a branch room
+that could not be placed clear of the rooms already standing. Baseline:
+none. Not my instrument -- reversing the census order gives identical
+numbers -- and all five had already been accepted by `validate_zone` on
+the bridge, so it is the two sides disagreeing.
+
+### Both loops, and what they do not cover
+
+`godot-integration-quiet` runs the whole client/bridge loop with the
+flag on; both modes pass. At prototype scale the clamp means that
+exercises the family narrowing and not the lower band, and default scale
+is not an option because the harness fails there for the BASELINE too
+(30 locations scouted, then a verdict that never arrives). Default scale
+is covered in Python and by the station census instead.
+
+### The startup case, re-run rather than waived
+
+`test_startup`'s second-bridge case: 5x alone, 3x the whole file, twice
+inside the full suite -- passes every time. Not waived. The mechanism
+that would fail it is named: `TEST_PORT` is a fixed constant and the
+case binds `TEST_PORT + 1` and spawns a real second bridge there, so any
+colliding process on 38331 fails it for reasons unrelated to the code
+under test. Left unchanged; it is a decision for the owner, not a sweep
+to start.
+
+### Recorded, not worked around
+
+The strictly matched no-compensation comparison is still incomplete.
+The variant reduces the family substitution; it does not isolate the
+drills, because one budget number derives the room envelope, the enemy
+caps and the per-room soft cap. +17 rooms, +27 enemies, different rooms.
+
+
+## 2026-09-13 (engine) — owner-away follow-up 02
+
+From `eb14a38`, items A/B/C of
+`ARCHIPEPSI_OWNER_AWAY_FOLLOWUP_02.md`. D is the bridge lane's.
+Handoff: `docs/FOLLOWUP_02_HANDOFF.md`.
+
+### Both fixture leads were the instrument, and both are now controls
+
+The Check reported 2.6 m below the floor sits at `platform_path`'s own
+`reward_position` with solid ground 0.00 m under it; the walker was in
+the SECRET ALCOVE above it, which `_secret_alcove` places over the end
+ledge specifically so a base kit cannot reach it. `_standable_start`
+cast from three metres above the doorway and took the first surface it
+met. It now takes the floor the doorway OPENS ONTO -- the cast starts
+one step above the door's own height and a surface further than
+`MAX_VERTICAL_STEP` away is refused.
+
+`c001/side_left` is declared SEALED with `edge_id: null`. The "leak
+candidate" came from a 6-metre partner proxy; the declaration was never
+consulted. Every declared door is now measured against its own usage on
+the ASSEMBLED Zone -- the gap
+`RoomAudit._assigned_doors_match_their_usage` leaves, because it asks a
+room from the room's own transform and a cap is placed by the layout.
+
+Both findings are retracted and replaced by controls that would catch
+the real defect: ground under a reward, a base kit reaching the
+interaction position, the reward's own interaction running there, the
+room being LEAVABLE (a dead-end `platform_path` whose reward sits
+beyond an unjumpable gap is a softlock), and no SEALED socket open.
+
+### Mounting had no evidence, and then had one requirement too many
+
+`_wall_spot` took `width / 2 - WALL_MARGIN` for the wall plane, which
+is the declared ENVELOPE rather than a wall. Measured on the real Zone
+it mounted 27 of 27 SHOT elements on walls nothing had looked for.
+
+Walls are built by `_box`, which gives them a collision hull, and
+`all_solid_boxes` reads hulls WITHOUT the architecture filter it
+applies to meshes -- so the wall is in `solids` and can be asked for.
+
+A mount needs TWO things: a real wall behind the stalk, and somewhere a
+body can stand and shoot it from (floor AND standing headroom at a
+sample out in front). It does NOT need floor under the mount. A first
+cut required that and it was wrong -- nobody stands beneath a wall
+target, and the requirement refuses an ordinary one hanging over a
+walkway recess. It is the question a FLOOR-PLACED element is owed.
+Correcting it moved the count from 11 to 15 of 27.
+
+THE OTHER CONSUMER WAS CORRECTED IN THE SAME PASS, which is the part
+that would otherwise have been left answering the wrong question.
+`zone_audit_driver._has_ground` required ground beneath every element;
+it still does for floor-placed ones, and a MOUNTED element is instead
+required to have a standable position with clear line of sight inside
+weapon range -- via `RoomAudit.player_stands_here`, so there is no
+second notion of "a body fits". That is strictly more than the floor
+test asked.
+
+Four controls, each verified decisive: a target over a real gap
+(mounted, and hit with the real Static Pulse from a supported position
+9 m away), a room with no walls, a wall with nowhere to stand in front
+of it, and a shot through a slab. Each decline case asserts the element
+count, so a refusal never quietly loses a target. No quota.
+
+The surface-vouched exclusion is gone: rooms are asked rather than
+skipped by category.
+
+### Three probe bugs worth remembering
+
+`godot-activity`'s mount probe had no walls and moved its root 600 m
+out BEFORE composing, so every gathered solid was at x ~ 600 while
+every candidate spot was at x ~ 9 -- `can_place` could never refuse
+anything. Production composes at the origin and places afterwards.
+
+The firing test first read the room's vouched `stand` patches on the
+assumption that only a platform course vouches any; an arena vouches
+them too, so every arena target was refused by a rule reading a list it
+had misunderstood.
+
+And `traverse_driver` rolled its own full-size capsule for "is this
+doorway blocked", disagreeing with the controller on two USED doors.
+`RoomAudit._blocker` is 2 cm slimmer on purpose and ignores placed
+content on purpose; using it, all 44 passable sockets agree.
+
+### Delivery shape
+
+`docs/REVIEW_ROUTE_0_3.md` is a ten-minute route through one Zone with
+real room ids -- the campaign is deterministic, so they are the rooms
+the owner will be in. Screenshots include the UNMOUNTED fallback beside
+the mounted cases, because a review that only sees the rooms that said
+yes is a review of half the feature.
+
+
+## 2026-09-13 (engine) — the owner-away batch
+
+Worked from `ARCHIPEPSI_PROD_AWAY_WORK_QUEUE.md` and the four-item
+first block, from `b914d98`. The combined handoff with the numbers, the
+screenshots and the replay checklist is
+`docs/AWAY_BATCH_0_3_HANDOFF.md`; this is the project record of what
+moved and why.
+
+### The stair descent, and why a snap length could never have fixed it
+
+The open half of last batch's step defect. Every precondition Godot's
+floor snap documents was met and the body fell anyway, so it was
+CHARACTERISED before it was touched — a per-frame trajectory plus a
+probe on the frame contact was lost:
+
+    lost floor y=0.741 vy=+0.0000 down_hit=true trav=0.109
+      after apply_floor_snap: floor=false y=0.741 (moved 0.000)
+
+Ground was 0.341 m below; the cast stopped at 0.109 m, which is exactly
+the capsule-against-corner solution for a 0.4 m radius clearing a
+0.4 m tread. The body has not cleared the tread it is LEAVING, so the
+snap hits that tread's own top edge, reads a 55-degree normal as a
+wall, and refuses. The obstruction is 0.1 m away; no snap length
+reaches past it.
+
+`Player._note_a_step_down_ahead` / `_follow_the_step_down` measure the
+drop from a probe a radius PAST the edge and walk the body down it with
+`velocity.y` held at zero. The limit is `MAX_VERTICAL_STEP`, the same
+number the ascent uses, so the rule is the symmetric one: what you can
+walk up, you can walk down. 1 airborne frame of 40 against 10, with a
+2.5 m ledge (24 frames, 9.2 m/s), a jump at a tread's lip (peak 1.80 m)
+and a 20-degree ramp (0 frames) as the three comparisons that stop it
+being adhesion.
+
+### `make godot-traverse`, and the lattice that was deleted twice
+
+Two attempts to answer "which targets are reachable" by flood-filling
+sample points gave three different wrong answers about a Zone the owner
+had cleared by playing it, and were removed rather than tuned. This
+drives the REAL controller along a NAMED route instead and reports five
+outcomes, only one of which asserts:
+
+    REACHED / BLOCKED / OFF_LEVEL / LOST / UNRESOLVED
+
+Calibrated first: it must cross a corridor, be stopped by a 4 m wall
+AND NAME IT, and climb a staircase. Four wrong verdicts were caught by
+reading WHY rather than the count — a doorway position is a point in
+the door plane and not a place to stand; a mid-jump body is not a
+stuck one; an offline layout verdict holds the player forever; and a
+Check 2.6 m below a walkway is the owner's "the check is floating", not
+a wall.
+
+It is a sample of one assembled Zone. It does not reproduce the
+owner's, and it is not a reachability proof.
+
+### Targets on walls, and the offer that may be declined
+
+`ActivityElement._build_target` always drew a mount stalk; `_row` placed
+targets with the floor-plan solve it uses for switches, so the stalk
+held them off nothing. `Activities._wall_spot` offers a side wall (never
+an end wall: that is where the player comes in), turns the element to
+face the room and sets the origin exactly the stalk's reach off the wall
+plane.
+
+The offer follows `_spot_on_surface`'s discipline — a wall with no legal
+span declines and the flat solve stands, with every element still built.
+A room that VOUCHED walkable surfaces is not offered a wall at all:
+`godot-zone-audit` caught the first version putting six elements over a
+`platform_path`'s forty-metre pit, which is the exact defect
+`_best_surface` exists to prevent.
+
+### Travel, save and what each word actually means
+
+`WarpStation.interact` raised a warp; it now raises `panel_requested`
+and `WarpStation.travel_options` is the single eligibility rule both the
+controller and the suites call. Return to Hub is wired because
+`Main._on_return_to_hub` already does exactly what the label promises —
+`leave_zone` after the resume anchor, keys, locks and stations are
+remembered, so the Zone goes dormant. Save is NOT wired, because
+tracing it showed `station_reached` already commits through
+`store.write_save`: there is no second operation, and a button that did
+nothing would be worse than none.
+
+### The family retirement is measured, not done
+
+`tools/family_retirement.py`, twelve default-scale Zones: 161
+activities removed, 176 more of the two that stay, with rooms, enemies
+and Checks unchanged. The composer cycles a fixed list, so a shorter
+list is the same content made of two families. The only bridge-side
+edit is a pure hoist to `fallback.ACTIVITY_KINDS`; the change itself
+needs a budget policy choice and belongs to the bridge lane.
+
+### Test integrity, on the things this touched
+
+Three existing guards went red and each was answered by preserving its
+purpose rather than lowering it. `godot-zone-audit`'s "nothing to stand
+on" caught the wall mount over a pit and the mount was narrowed.
+`test_packaging`'s binary manifest caught the committed screenshots and
+`docs/evidence/` was registered as first-party. The station contract
+test asked the PROMPT whether there was anywhere to go; it now asks
+`travel_options`, with four assertions the old shape could not make.
+
+A transient `test_playtest_baseline` failure during the batch was a
+race between overlapping verification runs of my own, not a defect;
+the final run was serialized.
+
+
+## 2026-09-13 (integration) — one tree, and the pad out of the way
+
+Prod `5251abd`. Bridge lane merged at `089dc64`, art lane at `1a9f1c9`.
+Both lanes had built truthful procedural capacity and the attempt
+discriminator against an EARLIER checkpoint of the other, so neither
+branch's report described the combined tree. This is that tree.
+
+### The reconciliation
+
+`C.PROCEDURAL_SOCKET_CAPACITY` is the one capacity declaration and it
+keeps the MEASURED table — `platform_path` AND `tower`, both measured
+solid at the side wall with one control per chamber type.
+`SIDELESS_PROCEDURAL_TYPES`, which covered `platform_path` alone, is
+gone rather than kept beside it; restoring the tower's side doors during
+the merge would have restored doors the engine does not build.
+`procedural_sockets_for` projects that one map into four readers: the
+composer, the load-time invariant, the bridge's acceptance-time refusal
+(which therefore now covers the tower too) and the engine via
+`constants.gd`. Dess's reserve-destination replacement in
+`_branch_routes`, its regression tests and its required-destination
+behaviour are kept as they stand.
+
+The attempt discriminator resolved to ONE field and ONE guard: the
+digest is content identity, `layout_refusals` is the attempt ordinal, an
+old result charges nothing, a genuine new failure charges its own
+attempt, and the client reads both from ONE snapshot at build start —
+which is the path `main.gd::_to_zone` actually walks.
+
+770 joined doors across the 26 committed fixtures, 0 beyond capacity.
+Derived artifacts regenerated from the combined source; the original
+fixtures kept and the graph changes recorded rather than expected values
+edited.
+
+### The three findings this batch measured
+
+1. **The return pad stood between the arrival and the content.** Every
+   branch destination whose journey failed to reach what it holds had
+   the device within a body's width of the straight line to it;
+   the one that succeeded had it 7.67 m clear.
+   `RoomAudit.clear_of_content_path` fixed it (0.41 m → 2.50 m,
+   0.15 m → 2.57 m, journey `content` 2 → 3).
+2. **What counts as the content** is the room's own station by id, not
+   the nominal `reward_position` (6–10 m away in every fixture) and not
+   "the first interactable in the room" (tree order over a subtree a
+   replay does not reproduce).
+3. **The replay control was comparing a reservation against a settle.**
+   It read the replayed device the instant `setup()` returned; the
+   settle lands two physics frames later and is awaited by nothing. It
+   now waits on `ZoneController.measured_placement`, and so proves the
+   stronger property: a cold restart SETTLES the device to the same
+   point, not merely reserves it there.
+
+### What is still open
+
+The three ordinary-journey failures are all "valid route, the automated
+steering cannot follow it" — none is an invalid route and none is pad
+interference. Overlap reconciliation, the pending authored-room proof,
+and the 1-of-8 re-selection result (the old 8-of-8 was planned through
+doors that do not exist) stay on the backlog. See
+`docs/AGENT_FRONTIER.md` for the measured tables.
+
+## 2026-09-13 (later) — Dess's carrier, five Zones, and the theme pack
+
+Bridge lane merged at `0ec9e8e`, art lane at `19e271b`.
+
+### The package travels on the carrier the bridge built
+
+Dess landed `PlacedPackage` while this lane was building a parallel
+`layout["physics"]` key. Hers binds the package to the Zone, the room
+and the declared content it realizes, and commits it into the manifest
+under the same digest; the parallel key did none of that. So it is gone
+rather than kept beside hers: `ChainCertificate` emits
+`layout["packages"]`, with the `ReplayEvidence` inside the package where
+`PhysicsPackage` already has a field for it.
+
+**Three checks were added to her `_packages`, and the reason is worth
+keeping.** `check_physics_content` skips every package that is not
+load-bearing — correctly, since its subject is progression guarantees —
+and a `powered_door` chain guards a note. So on its own it would have
+accepted every chain in silence, which is this project's recurring
+defect in its purest form. `_certified_features` asks the three it
+skips: the inverted probe (a declared chain with no package offered),
+the evidence gate (the same `evidence_fault`, asked of the packages it
+passes over), and §13.2 (an optional feature's package may not be
+load-bearing).
+
+A chain the engine could not build or could not replay is **not
+offered**, and the absence is what refuses the layout. Warned loudly
+engine-side, refused bridge-side by the count. Dropping it quietly would
+build the room and leave the mechanism inert.
+
+### Five ordinary Zones, and no preferred shape
+
+`bridge/tools/dump_zones.py` writes a run of consecutive Zones from a
+real campaign; `make zone-fixtures` regenerates them and
+`make godot-graphs` walks them. Each is composed, its shape reported,
+and the real `Player` sent into a side destination and back.
+
+What the composer makes today, measured rather than assumed:
+
+| | rooms | joined edges | degrees | junctions | dead ends |
+|---|---|---|---|---|---|
+| zone_01–03 | 23 | 22 | 1×7, 2×12, 3×3, 4×1 | 4 | 7 |
+| zone_04 | 20 | 19 | 1×7, 2×9, 3×3, 4×1 | 4 | 7 |
+| zone_05 | 20 | 19 | 1×8, 2×7, 3×4, 4×1 | 5 | 8 |
+
+**No topology is preferred and none is ruled out.** Hub-and-spoke,
+shallow branches, deep nesting, several branches off one junction, dead
+ends — all legal. Nothing in this lane scores one against another; what
+is measured is whether the shape the composer chose can be built and
+walked.
+
+### The theme pack binds
+
+`ThemePack` answers `(theme, role)` with one fallback hop, checks
+`sha256_16` where the source bytes are readable, drives `uv1_scale` from
+`covers_m`, and never binds a universal role. `ThemeMaterials._material`
+asks it and falls back to `ProcTextures`. A real built room: **22
+surfaces painted from Arty's export, 3 from the procedural fallback.**
+
+**The hazard contradiction, reconciled.** The descriptor said `hazard`
+was required AND that a pack must not paint its own;
+`ASSET_INVENTORY.md` says why the treatment is shared. Satisfying
+clause 3 meant breaking the rule clause 3 existed to protect. The split:
+`floor`, `wall`, `trim`, `accent` need authored pixels per theme;
+`hazard` is required at runtime and resolved from the shared material in
+every theme. Nothing is removed from the runtime; a per-pack obligation
+that could only be met by making the shared signal six signals is.
+Arty owns the descriptor wording. Four controls run beside the binding
+proof — a required role removed, a digest that does not match, a role
+with no fallback, and a pack that paints the universal role.
+
+### Still open
+
+* Art's half of §11.3: a `player_entry` volume named per opening.
+* The three Batch 044 junction shells are `review: "pending"`, not
+  exported to `godot/content/`, and not selectable. **The owner reviews
+  them; this lane does not write `pass`**, and a four-connection asset
+  is not yet a four-neighbour room in a generated Zone.
+* `latch_fired` from the engine when a player satisfies a declared
+  latch. The chain's consequence today is the local reward behind the
+  door, on the validated path every reward takes.
+* The Span's two basin climbs are completed only by jumping (13 times
+  each). Not silently fixed by raising the global step height; the
+  bounded engine-or-geometry decision is a design call, and Arty owns
+  any geometry half of it.
+
+
+## 2026-09-13 — the chain certifies, and the junction is walked
+
+`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane
+merged at `603e876` and the art lane at `19e271b`. Read
+`docs/AGENT_FRONTIER.md` first; this is the longer version.
+
+### The environmental-agency chain, closed
+
+A physical crate, a plate, a live signal, a powered door, and the
+**currently playable character** performing it. Three things had to be
+true and none of them was:
+
+* **A body has to be able to move a body.** `CharacterBody3D` does not
+  push a `RigidBody3D`: `move_and_slide` resolves the contact by sliding
+  the character. `Player._shove_what_i_walked_into` applies the impulse,
+  and it took three attempts to find the right quantity — `velocity`
+  read after the slide is zero by construction, the velocity carried
+  into the slide is near-zero once the player is pressed against the
+  crate, and `_walk_intent` (direction × speed) is the one that stays
+  constant while leaning. 60 kg moves 7.10 m in three seconds; 900 kg
+  moves 0.00 m.
+* **The chain has to be in a Zone ordinary generation emits.**
+  `powered_door` is the eighth `AffordanceTag`, base-kit, §13.2-bound so
+  it can never lie on the mandatory path or host a Check. The fallback
+  composer declares one per Zone and `AffordanceFeatures` builds it.
+* **The outcome has to stop when a link is removed.** `godot-physics`
+  walks the same line with the crate gone and the door stays shut.
+
+The proof is split on purpose: `godot-physics` proves the
+player-performed chain on a flat floor with no force call by the test,
+`godot-room-contract` proves ordinary generation emits it and the built
+chain gates. Steering a crude walker down a corridor it shares with a
+crate produced findings about the steering, four times.
+
+### The carrier, reconciled rather than added
+
+`ZoneController._measure_mechanisms` measured the same physical fact and
+put a four-word verdict in `build["mechanisms"]` — a key
+`layout_to_json` never forwarded. `ChainCertificate` replaces it with
+the contract's own models on the carrier that already reaches the
+bridge: `layout_result.layout["physics"]`, one entry per declared
+feature, each a `PhysicsPackage` and the `ReplayEvidence` of replaying
+it three times at exactly the manipulation envelope.
+
+**It replays in the room, on the real chain** — the room's own crate and
+plate, reset between runs, put back afterwards. A reconstruction on a
+clean floor agrees with the generator by construction; the failure worth
+catching is a pylon between the crate and the plate, and the suite drops
+a slab there and requires the certificate to stop.
+
+`layout.validate` is the acceptance consumer. `physics.evidence_fault`
+is one function with two callers so the question cannot grow two
+answers — `check_physics_content` could not have done this alone: it
+skips packages that are not load-bearing, and these deliberately are
+not. Not written into the manifest: a manifest replays byte-identically
+forever and a scene digest is re-measured every entry.
+`AMALGAM_BRIDGE.md` §5.6a.
+
+### Branching, as a journey
+
+Ordinary generation now produces **four junctions and eight rooms off
+the spine**, and the first Zone with two branches off one junction would
+not compose. The branch mouth came from `ChamberBuilders.socket_placed`
+— the procedural socket table — and `c008` answered a 17.9 m chamber
+with a 41 × 60 m authored shell, so the mouth landed inside the junction
+and every route failed at the first connector.
+`ZoneBuilder.branch_mouth` reads the room's own door plan now, whichever
+producer wrote it, and derives outward from the room's envelope rather
+than from the name `side_left`. `09_ROOM_CONTRACT.md` §11.8.
+
+The real `Player` then walks it: across the interior of a
+four-neighbour junction between the two openings that matter, into a
+side destination that is not the next room on the route, and back out.
+The branching test that used to pin one junction and one branch room now
+counts the structure — a test that names `c020` fails on the day the
+composer makes four branches, for a reason that is not about branching.
+
+### Two restrictions lifted, one handed back
+
+* §11.4 (branch mouth) — **lifted**, above.
+* §11.3 (arrival per socket) — **the engine half is lifted**:
+  `_player_entry` resolves by the socket the chain arrives through,
+  using `socket_for_edge(entry, chamber, "arrive_edge")`, the same
+  lookup `_entry_offset` uses. Art's half is naming each `player_entry`
+  volume after the opening it serves, and is the only half left.
+* The doorway-spawn nudge moved to the **runtime placement path**, where
+  every producer's spawns become a body. The four procedural builders
+  never had it.
+
+### Arty's Span repair, with the actual Player
+
+The art lane's evidence is a capsule and says so. The real `Player`
+walks the repaired routes now. The mandatory deck route walks; the two
+basin climbs are completed **only by jumping**, which is a finding about
+a sixteen-riser staircase declared `kind: "walk"` and not a defect this
+batch fixes — `move_and_slide` has no step-up anywhere and that is the
+law. `KNOWN_JUMPED_WALKS` records it so the day it becomes a walk the
+test says the list is stale.
+
+### Not done, and named
+
+* The three Batch 044 junction shells (`shell_junction_triad`,
+  `shell_junction_cross`, `shell_bay_terminus`) are `review: "pending"`,
+  are not exported to `godot/content/`, and are not selectable. The
+  owner reviews them; this lane does not write `pass`.
+* Art's half of §11.3.
+* The fun verdict is a human's.
+
+
+## 2026-09-12 (later) — the merged Zone opens, and the physics has a runtime
+
+`claude/archipepsi-echoes-continuation-b1adno`, from the art merge
+`dfad94c`. Read `docs/AGENT_FRONTIER.md` first; this is the longer
+version.
+
+**The generated Zone opens again.** `make godot-integration` had been red
+since the art lane merged: `zone_001` refused three times on *door
+'c002/entry' is USED and the engine measured it as solid*, and the client
+never left the Hub. The door was not solid — an **enemy was standing in
+it**. `_enemy_spawns` fell back to `Vector3.ZERO` for a shell that
+declares no `enemy_spawn` volume, and a shell's local origin is not its
+centre, it is the wall the entry doorway is cut into. Ten enemies, one
+2.4 m opening, and the comment beside that fallback said "the room's
+centre" while the code said the origin.
+
+Three things were wrong: the placement (fixed — largest declared
+standable surface, and every spawn pushed out of any doorway it lands
+in), the probe (`aperture_polarity` is architectural and already looks
+past a crate, a lock and the player; an enemy is placed content by the
+same reasoning), and the report (the engine names the collider now).
+
+**And the census had never measured a door.** `_chamber_for` built every
+registry shell with no `doors` at all, so two probes ran over an empty
+list and printed a clean sheet for twelve shells. The census declares
+every doorway socket now, and a second test places each shell in a real
+furnished three-room Zone **in all six themes** and reads the apertures
+the way `ZoneController` reads them before putting them on the wire.
+
+**The unresolved crossings are closed.** The body walks the join's
+committed chain now, doorway to doorway, instead of steering straight at
+an arrival through whatever stands between: 21 JOINED edges measured, 21
+crossed, 0 not, including the five level changes the flood cannot grid
+and used to skip. `KNOWN_UNWALKED_JOINS` is identity → reason and is
+empty, enforced in both directions.
+
+**The way back into a Zone is real on both sides of a restart.**
+`ZONE_ENTERABLE_MODES` and `ZONE_ENTER_MODES` were two lists for one
+question and they drifted, so the portal showed `ZONE_DORMANT`'s prompt
+and refused to fire. One list now. `make godot-reload` restarts the
+**bridge** too, so "the campaign loads from disk" is the bridge loading
+from disk, and the second process presses the real portal.
+
+**A committed Zone survives a refused replay.** `refuse_layout` cleared
+`zone` and `manifest` whatever the Zone was, so a rejected replay sent a
+*different* Zone back under the same id holding the same Checks, with the
+player's keys recorded against rooms that no longer existed.
+
+**The physics contract has a runtime.** All three levels of
+`docs/AMALGAM_BRIDGE.md` §6 run: the nine shared digest vectors agree
+byte for byte in both lanes, `SceneDigest` names the scene a replay ran
+against (falsified four ways), and `ReplayHarness` replays a package
+three times at exactly the envelope and reports what latched per run.
+Building it found that §29.3.2 promised something the substrate refused —
+Godot's default friction of 1.0 resists a 120 kg body with 1176 N against
+700 N of push. `make godot-physics`, 36 checks, in CI.
+
+**Still open.** Nothing in a campaign authors a physics package, so no
+Zone has produced replay evidence. `shell_span_basin`'s pylon is Arty's
+open item and is a ROOM finding, not a join one. Procedural
+`ChamberBuilders` spawn placement is not covered by the doorway rule;
+only the authored-shell path is.
+
 ## 2026-09-12 — the layout exchange is connected end to end
 
 `claude/archipepsi-amalgam-slice1`. Acceptance gating was in place and no
@@ -24,13 +638,12 @@ What runs now:
   geometry's: every join the flood refuses is handed to a real `Player`
   first. Five of eight were the prober; three are geometry.
 
-Open, and both named: `shell_hall_transit`, `shell_plenum_helix` and
-`shell_span_basin` are withheld until Art moves their `exit` doorway back
-onto their body (`docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`),
-which is what currently leaves a generated Zone with no authored movement
-offer. And a DORMANT Zone has no Hub affordance to re-enter it — the
-`enter_zone` intent works, the portal has no mode that sends it. That one
-is the bridge's `HubMode` vocabulary: `docs/AMALGAM_SLICE1.md` §5q.
+~~Open, and both named: three shells withheld over their `exit` doorway,
+and a DORMANT Zone with no Hub affordance to re-enter it.~~ **Both closed
+later the same day — see the section above.** The doorway question was
+settled by the assembled crossing rather than by another threshold, and
+the portal's missing mode turned out to be one constant reading a stale
+list.
 
 ## Where this is
 **The full v0.7 POC (Phases 0–7) is complete and green**, and the build has

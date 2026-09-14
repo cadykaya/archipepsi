@@ -31,6 +31,7 @@ try:
     from . import transitions as T
     from .protocol import (
         ZONE_HELD_MODES, ZONE_REQUEST_MODES, CampaignSave, CampaignSnapshot,
+        ZoneHandle,
         ClientMessage, HubStatus, PendingCheck, ScoutedLocation, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -49,6 +50,7 @@ except ImportError:  # pragma: no cover
     import transitions as T
     from protocol import (
         ZONE_HELD_MODES, ZONE_REQUEST_MODES, CampaignSave, CampaignSnapshot,
+        ZoneHandle,
         ClientMessage, HubStatus, PendingCheck, ScoutedLocation, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -1069,6 +1071,14 @@ def _hub(**over):
     generation_in_progress and accepts_zone_request are all derived."""
     base = dict(mode="ZONE_AVAILABLE", headline="x")
     base.update(over)
+    # ZONE_FAILED IS THE MODE THAT NAMES A ZONE TO DISCARD, and the
+    # invariant is an iff — so a helper that left the field empty could
+    # not build the mode at all, and every census below would have
+    # stopped covering it. Supplied here rather than skipped, which is
+    # what `test_naming_a_zone_and_lighting_the_portal_are_one_decision`
+    # refuses to let happen quietly.
+    if base["mode"] == "ZONE_FAILED":
+        base.setdefault("discard_zone_id", "zone_001")
     return HubStatus(**base)
 
 
@@ -1596,7 +1606,11 @@ def test_a_zone_check_is_never_charged_and_a_shop_check_always_is():
 
 #: Every HubMode, sorted into exactly one bucket.
 MODE_BUCKETS = {
-    "holds_a_zone": ("GENERATING", "ZONE_READY", "ZONE_ACTIVE"),
+    # ZONE_FAILED holds a Zone: it never laid out, it still reserves its
+    # Checks, and discarding it is an explicit act with a cost. What it
+    # is NOT is enterable — see `ZONE_ENTERABLE_MODES`.
+    "holds_a_zone": ("GENERATING", "ZONE_READY", "ZONE_ACTIVE",
+                     "ZONE_DORMANT", "ZONE_FAILED"),
     "may_request":  ("ZONE_AVAILABLE", "FINALE_ONLY"),
     "idle":         ("NO_CAMPAIGN", "WAITING_FOR_AP", "ALL_CHECKS_CLEARED"),
 }
@@ -1673,11 +1687,12 @@ def test_every_non_terminal_zone_state_pins_exactly_one_hub_mode():
     so it is where they are made to agree."""
     want = {"PENDING_GENERATION": "GENERATING",
             "GENERATED": "ZONE_READY", "ACTIVE": "ZONE_ACTIVE"}
-    #: DORMANT pins no mode ON PURPOSE. It is the one non-terminal state
-    #: that is never the active Zone -- it still reserves its Checks and
-    #: the player is in the Hub -- so the Hub shows no Zone in play and
-    #: going back is an affordance rather than a mode. A ZONE_DORMANT
-    #: mode would put a Zone on screen that nobody is standing in.
+    #: DORMANT is never the ACTIVE Zone -- it still reserves its Checks
+    #: and the player is in the Hub -- and it does pin a mode:
+    #: ZONE_DORMANT, which says the campaign holds a Zone that nobody is
+    #: standing in. An earlier version of this comment said it pinned no
+    #: mode and left going back as "an affordance"; no affordance was
+    #: built, and the Hub offered to design a new Zone instead.
     never_active = {"DORMANT"}
     states = [s for s in typing_args_of_zone_state()
               if s not in P.TERMINAL_ZONE_STATES and s not in never_active]
@@ -1704,15 +1719,111 @@ def test_every_non_terminal_zone_state_pins_exactly_one_hub_mode():
                 _snapshot(active_zone=rec, hub=_hub(mode=other))
 
 
+def typing_args_of_hub_mode():
+    import typing
+    return typing.get_args(P.HubMode)
+
+
 def typing_args_of_zone_state():
     import typing
     return typing.get_args(P.ZoneState)
 
 
-def test_a_mode_that_claims_a_zone_must_have_one():
-    for mode in MODE_BUCKETS["holds_a_zone"]:
+def test_a_mode_that_says_you_are_standing_in_a_zone_must_have_one():
+    """OCCUPIED, not held. A dormant Zone is held and unoccupied at once
+    — it reserves its Checks and the player is in the Hub — and the two
+    questions used one list until that made the state impossible to
+    describe."""
+    for mode in P.ZONE_OCCUPIED_MODES:
         with pytest.raises(ValidationError, match="active_zone is null"):
             _snapshot(hub=_hub(mode=mode))
+
+
+def test_zone_dormant_holds_a_zone_without_anyone_standing_in_it():
+    """The mode that did not exist, and the softlock it cost.
+
+    A Zone walked out of still reserves its Checks, so the campaign must
+    not start another; and nobody is in it, so `active_zone` is null.
+    Without a mode that says both, the Hub fell through to
+    ZONE_AVAILABLE, offered to design a new Zone, and the bridge refused
+    that with "still holds locations" — no way back in short of
+    abandoning the Zone and losing its Checks and its progress.
+    """
+    ok = _snapshot(hub=_hub(mode="ZONE_DORMANT"))
+    assert ok.hub.mode == "ZONE_DORMANT"
+    assert "ZONE_DORMANT" in P.ZONE_HELD_MODES, "it blocks generation"
+    assert "ZONE_DORMANT" not in P.ZONE_OCCUPIED_MODES, "nobody is in it"
+    assert "ZONE_DORMANT" not in P.ZONE_REQUEST_MODES, (
+        "requesting a Zone here is the call the bridge refuses")
+    # And it still may not be presented as the active Zone.
+    with pytest.raises(ValidationError, match="not the active Zone"):
+        _snapshot(active_zone=_record(state="DORMANT"),
+                  hub=_hub(mode="ZONE_DORMANT"))
+
+
+def test_naming_a_zone_and_lighting_the_portal_are_one_decision():
+    """**The bug this exists for.** `ZONE_DORMANT` was added to a new
+    constant while `portal_enabled` kept reading the old one, so the Hub
+    said "your Zone is waiting", `resume_zone_id` said which one, and
+    the button was greyed out. Two spellings of one fact.
+
+    Asserted off the model rather than restated: every mode that lights
+    the portal without Archipelago is a mode that can name a Zone, and a
+    mode that cannot name one must not light it.
+    """
+    def any_hub(**kw):
+        # Some modes will not construct bare: FINALE_ONLY needs its
+        # thresholds met, ALL_CHECKS_CLEARED refuses them. Try both
+        # rather than hand-listing, so a new mode joins this test by
+        # existing.
+        # ALL_CHECKS_CLEARED additionally implies the goal was sent.
+        for extra in ({}, {"goal_sent": True, "postgame": True}):
+            for build in (_hub, _unlocked):
+                try:
+                    return build(**kw, **extra)
+                except ValidationError:
+                    continue
+        raise AssertionError(
+            f"no way to construct a hub in {kw}; a mode this test cannot "
+            "build is a mode it silently stops covering")
+
+    for mode in typing_args_of_hub_mode():
+        h = (any_hub(mode=mode, resume_zone_id="zone_001")
+             if mode in P.ZONE_ENTERABLE_MODES else any_hub(mode=mode))
+        if mode in P.ZONE_ENTERABLE_MODES:
+            assert h.portal_enabled, (
+                f"{mode} enters a local Zone and the portal is dark")
+            assert mode in P.ZONE_HELD_MODES, (
+                f"{mode} enters a Zone, so the campaign holds one")
+            assert mode not in P.ZONE_REQUEST_MODES, (
+                f"{mode} enters a Zone; requesting a new one is refused")
+        else:
+            assert not h.resume_zone_id, (
+                f"{mode} names a Zone the portal will not enter")
+
+
+def test_entering_a_local_zone_does_not_need_archipelago():
+    """A Zone that already exists is local. Walking back into one during
+    an outage is exactly the case the portal must stay lit for, and a
+    dormant Zone is the one a returning player most needs."""
+    for mode in P.ZONE_ENTERABLE_MODES:
+        offline = _hub(mode=mode, resume_zone_id="zone_001",
+                       ap_online=False)
+        assert offline.portal_enabled, (
+            f"{mode} is a local Zone; an Archipelago outage must not "
+            "shut the door on it")
+        assert not offline.accepts_zone_request
+
+
+def test_a_long_campaign_can_offer_every_zone_it_finished():
+    """`revisitable` carried a 64-entry cap that `CampaignSave.zones`
+    does not have, so a campaign finishing 65 Zones had its whole
+    snapshot REFUSED — a long game breaking on a bound nobody chose."""
+    many = tuple(ZoneHandle(zone_id=f"zone_{i:03d}", display_name=f"Z{i}")
+                 for i in range(1, 130))
+    h = _hub(mode="ZONE_AVAILABLE", revisitable=many)
+    assert len(h.revisitable) == 129
+    assert h.revisitable[0].zone_id == "zone_001"
 
 
 def test_a_terminal_zone_is_never_presented_as_active():

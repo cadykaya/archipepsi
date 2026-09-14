@@ -16,10 +16,35 @@ from __future__ import annotations
 import pytest
 
 from archipepsi_bridge import layout, topology
+from archipepsi_bridge.schemas import physics
 from archipepsi_bridge.schemas.zone import Zone
+from .conftest import certified_chain
 
 STEP = 40.0          # how far apart the fixture puts consecutive rooms
 DEPTH = 15.0
+
+
+
+def _piece(entry, exit, kind: str = "CONNECTOR", turn: int = 0) -> dict:
+    """A chain piece in the shape `zone_builder` emits one.
+
+    **Pose as well as endpoints, and the kind.** `malformed_pieces` in
+    the engine refuses a committed chain whose pieces carry no
+    `position`/`yaw`, an unknown `kind`, or a CORNER with no `turn` —
+    and when it refuses, the Zone returns LAYOUT_INFEASIBLE and does not
+    open. A fixture that omits them is testing a payload the engine
+    never sends and could not replay; these helpers are older than the
+    seam, which is not a reason to let production evidence be optional.
+    """
+    piece = {"kind": kind, "position": list(entry), "yaw": 0.0,
+             "entry": list(entry), "exit": list(exit),
+             "bounds": {"position": [entry[0] - 2.0, 0.0,
+                                     min(entry[2], exit[2])],
+                        "size": [4.0, 4.0,
+                                 abs(exit[2] - entry[2]) or 0.1]}}
+    if kind == "CORNER":
+        piece["turn"] = turn or 1
+    return piece
 
 
 def _arena(rid: str, width: float = 16.0, reward: int | None = None) -> dict:
@@ -36,6 +61,28 @@ def _zone(n: int = 8) -> Zone:
                             for i in range(1, n + 1)))
     return topology.apply(z, topology.compose_with_branch(list(z.chambers)))
 
+
+def _with_exit(zone, result: dict, pieces: int = 2) -> dict:
+    """The two entries the engine appends to every Zone it builds.
+
+    Folded into `_ok_result` rather than bolted on by the few tests that
+    remembered: every finished build carries them, so a fixture without
+    them is not a complete layout and must not be usable as the control
+    for one.
+    """
+    tail = zone.chambers[-1].id
+    z0 = len(zone.chambers) * STEP
+    a = (len(zone.chambers) - 1) * STEP + DEPTH
+    result["rooms"]["exit"] = {
+        "position": [0.0, 0.0, z0], "yaw": 0.0,
+        "bounds": {"position": [-8.0, 0.0, z0],
+                   "size": [16.0, 5.0, DEPTH]}}
+    pts = [[0.0, 0.0, a + (z0 - a) * i / pieces] for i in range(pieces + 1)]
+    result["joins"]["e:__exit__"] = {
+        "room_a": tail, "room_b": "exit", "synthetic": True,
+        "socket_a": [0.0, 0.0, a], "socket_b": [0.0, 0.0, z0],
+        "chain": [_piece(pts[i], pts[i + 1]) for i in range(pieces)]}
+    return result
 
 def _ok_result(zone) -> dict:
     """A complete, sound layout: every room placed, every edge routed.
@@ -75,32 +122,43 @@ def _ok_result(zone) -> dict:
         joins[e.edge_id] = {
             "socket_a": [0.0, 0.0, a_face],
             "socket_b": [0.0, 0.0, b_face],
-            "chain": [{"kind": "CONNECTOR",
-                       "entry": [0.0, 0.0, a_face],
-                       "exit": [0.0, 0.0, b_face],
-                       "bounds": {"position": [-2.0, 0.0, a_face],
-                                  "size": [4.0, 4.0, b_face - a_face]}}],
+            "chain": [_piece([0.0, 0.0, a_face], [0.0, 0.0, b_face])],
         }
 
+    plug_clear = {}
     for p in zone.plugs:
         anchors.setdefault(p.source_anchor, [0.0, 0.0, 1.0])
         anchors.setdefault(p.destination, [0.0, 0.0, 0.0])
         arrival_ok.setdefault(p.source_anchor, True)
         arrival_ok.setdefault(p.destination, True)
+        # THE ENGINE MEASURES THIS; the stand-in reports a pass. A body
+        # at the room's arrival is outside the device's trigger volume.
+        plug_clear[p.edge_id] = True
 
-    return {"status": "LAYOUT_OK", "rooms": rooms, "joins": joins,
-            "anchors": anchors, "arrival_ok": arrival_ok,
-            "apertures": apertures, "stations": []}
+    out = {"status": "LAYOUT_OK", "rooms": rooms, "joins": joins,
+           "anchors": anchors, "arrival_ok": arrival_ok,
+           "plug_clear": plug_clear,
+           "apertures": apertures, "stations": []}
+    return _with_exit(zone, out)
 
 
 # --- the happy path -------------------------------------------------------
 
 def test_a_complete_layout_is_accepted_and_gets_a_digest():
+    """**The accepted real-payload control.** `_ok_result` is shaped the
+    way `zone_builder.layout_to_json` shapes one — pieces with a pose and
+    a kind, the appended exit room, its approach under the reserved edge
+    id — so every refusal below is measured against something the engine
+    could actually have sent. A validator that only ever refuses is as
+    broken as one that only ever accepts."""
     z = _zone()
     v = layout.validate(z, _ok_result(z))
     assert v.accepted, v.errors
     assert v.manifest["manifest_digest"]
-    assert set(v.manifest["rooms"]) == {c.id for c in z.chambers}
+    # The chambers AND the engine's exit room. A manifest holding only
+    # the declared rooms leaves the last leg to be searched for again.
+    assert set(v.manifest["rooms"]) == {c.id for c in z.chambers} | {"exit"}
+    assert "e:__exit__" in v.manifest["joins"]
 
 
 def test_the_digest_pins_the_route_and_not_only_the_rooms():
@@ -109,6 +167,7 @@ def test_the_digest_pins_the_route_and_not_only_the_rooms():
     moved = _ok_result(z)
     eid = next(iter(moved["joins"]))
     moved["joins"][eid]["chain"][0]["kind"] = "CORNER"
+    moved["joins"][eid]["chain"][0]["turn"] = 1
     other = layout.validate(z, moved).manifest["manifest_digest"]
     assert base != other, (
         "a manifest that ignores the chain cannot replay it, and would "
@@ -133,6 +192,7 @@ def test_a_zone_with_no_graph_is_not_certified_here():
     ("joins", "no join evidence"),
     ("arrival_ok", "no measured arrival verdict"),
     ("anchors", "was not resolved"),
+    ("plug_clear", "carries no measured clearance"),
 ])
 def test_dropping_a_whole_evidence_map_is_refused(drop, expect):
     z = _zone()
@@ -337,3 +397,712 @@ def test_two_inbound_joined_edges_make_room_keyed_evidence_ambiguous():
     v = layout.validate(doubled, _ok_result(doubled))
     assert not v.accepted
     assert any("key by edge_id" in e for e in v.errors)
+
+
+# --- the walk's inductive step, and four refusals nothing was reading -----
+#
+# Mutation testing found these: neuter the refusal, run the suite, and it
+# stayed green. Every one is reachable and every one was unmeasured. The
+# multi-piece cases matter most — the fixture above puts ONE piece in each
+# chain, so `piece n -> piece n+1`, the step that makes the walk a walk,
+# had never been exercised at all.
+
+def _split(result: dict, eid: str, pieces: int) -> None:
+    """Replace a chain's single piece with `pieces` collinear ones."""
+    j = result["joins"][eid]
+    # The WHOLE span, first entry to last exit — splitting only the
+    # first piece silently shortens a multi-piece chain and the walk
+    # then, correctly, refuses a fixture that was meant to be sound.
+    a, b = j["chain"][0]["entry"], j["chain"][-1]["exit"]
+    pts = [[a[k] + (b[k] - a[k]) * i / pieces for k in range(3)]
+           for i in range(pieces + 1)]
+    j["chain"] = [_piece(pts[i], pts[i + 1]) for i in range(pieces)]
+
+
+def test_a_sound_multi_piece_chain_is_accepted():
+    """The control. A walk that refuses every corridor of more than one
+    segment is not a walk, and the real engine emits several."""
+    z = _zone()
+    good = _ok_result(z)
+    for eid in good["joins"]:
+        _split(good, eid, 4)
+    v = layout.validate(z, good)
+    assert v.accepted, v.errors
+
+
+def test_a_break_in_the_middle_of_a_chain_is_refused():
+    """Not the last hop. The fixture's single-piece chains only ever
+    tested `last.exit -> socket_b`; a corridor can come apart anywhere,
+    and a walk that only checks its own ends is not walking."""
+    z = _zone()
+    bad = _ok_result(z)
+    eid = next(iter(bad["joins"]))
+    _split(bad, eid, 4)
+    bad["joins"][eid]["chain"][2]["entry"] = [0.0, 0.0, -500.0]
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("piece 2" in e and "broken between" in e for e in v.errors), (
+        v.errors)
+
+
+def test_a_chain_piece_that_is_not_a_piece_is_refused():
+    z = _zone()
+    bad = _ok_result(z)
+    eid = next(iter(bad["joins"]))
+    _split(bad, eid, 3)
+    bad["joins"][eid]["chain"][1] = "a corridor, honest"
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("piece 1 is not a piece" in e for e in v.errors), v.errors
+
+
+def test_a_socket_that_does_not_lie_on_its_room_is_refused():
+    """The chain stays continuous and the rooms stay put; only the
+    doorway has left the wall it is cut into. Continuity cannot see it —
+    the route is perfectly connected, to nothing."""
+    z = _zone()
+    bad = _ok_result(z)
+    eid = next(iter(bad["joins"]))
+    j = bad["joins"][eid]
+    away = [500.0, 0.0, j["socket_a"][2]]
+    j["socket_a"] = away
+    j["chain"][0]["entry"] = away
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("does not lie on room" in e for e in v.errors), v.errors
+
+
+def test_a_join_reported_for_an_edge_the_zone_does_not_have_is_refused():
+    """Evidence about something that is not in this Zone is evidence the
+    validator cannot check, and unchecked evidence must not ride along
+    into the manifest."""
+    z = _zone()
+    bad = _ok_result(z)
+    bad["joins"]["e:phantom"] = {"socket_a": [0.0, 0.0, 0.0],
+                                 "socket_b": [0.0, 0.0, 0.0], "chain": []}
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("not\na JOINED edge".replace("\n", " ") in e
+               for e in v.errors), v.errors
+
+
+def test_a_layout_that_places_a_room_this_zone_never_declared_is_refused():
+    z = _zone()
+    bad = _ok_result(z)
+    bad["rooms"]["c999"] = {
+        "position": [0.0, 0.0, -5000.0], "yaw": 0.0,
+        "bounds": {"position": [-8.0, 0.0, -5000.0],
+                   "size": [16.0, 5.0, DEPTH]}}
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("unknown room 'c999'" in e for e in v.errors), v.errors
+
+
+def test_a_room_placed_without_a_yaw_is_refused():
+    """A room's facing is not optional. Absent yaw is a room the engine
+    placed and did not orient, and every socket on it is then in an
+    unknown place — see the door-polarity and socket-on-room checks,
+    which read positions this rotation decides."""
+    z = _zone()
+    bad = _ok_result(z)
+    bad["rooms"]["c002"].pop("yaw")
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("reports no yaw" in e for e in v.errors), v.errors
+
+
+def test_a_chain_that_is_not_a_list_is_refused():
+    """`"chain": {...}` is not one piece and `"chain": "corridor"` is
+    not a route. Walking either by iteration would read a dict's keys
+    or a string's characters and call the result continuity."""
+    z = _zone()
+    for shape in ({"kind": "CONNECTOR"}, "corridor", 3):
+        bad = _ok_result(z)
+        eid = next(iter(bad["joins"]))
+        bad["joins"][eid]["chain"] = shape
+        v = layout.validate(z, bad)
+        assert not v.accepted, shape
+        assert any("not a list of pieces" in e for e in v.errors), v.errors
+
+
+def test_a_door_measurement_that_is_not_a_boolean_is_refused():
+    """`"passable"` and `1` and `None`-in-a-list are not measurements.
+    A truthy string would pass an `if measured:` polarity test for a
+    SEALED door, which is the exact case the inverted probe exists for."""
+    z = _zone()
+    ref = next(f"{c.id}/{d.socket_id}" for c in z.chambers for d in c.doors)
+    for measured in ("passable", 1, 0.0, [], {"open": True}):
+        bad = _ok_result(z)
+        bad["apertures"][ref] = measured
+        v = layout.validate(z, bad)
+        assert not v.accepted, measured
+        assert any("not a boolean" in e for e in v.errors), v.errors
+
+
+# --- the engine's own rooms, which "reserved" was excusing from every
+# --- check ----------------------------------------------------------------
+#
+# `zone_builder` appends an exit room nobody declared and files its
+# approach under `e:__exit__`, plus `r:<room>` for the first room on the
+# spine. The validator knew the names and did nothing else with them:
+# the exit room's transform was never parsed, so it never reached
+# `boxes` and neither the overlap check nor 1b could see it, and the
+# reserved joins were `continue`d straight past the walk. An exit room
+# with no bounds, an exit room inside `c001`, and an exit corridor
+# ending ten kilometres away were all ACCEPTED — and the manifest
+# replays exactly that.
+
+def test_the_engines_exit_room_and_approach_are_accepted():
+    """The control. These are legitimate and must not be refused."""
+    z = _zone()
+    v = layout.validate(z, _ok_result(z))
+    assert v.accepted, v.errors
+    assert "e:__exit__" in v.manifest["joins"], (
+        "the last leg has to be in the manifest or re-entry re-solves it")
+
+
+def test_a_break_in_the_middle_of_the_exit_approach_is_refused():
+    z = _zone()
+    bad = _with_exit(z, _ok_result(z), pieces=3)
+    bad["joins"]["e:__exit__"]["chain"][1]["entry"] = [0.0, 0.0, -9999.0]
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("broken between" in e for e in v.errors), v.errors
+
+
+def test_an_exit_approach_with_no_chain_is_refused():
+    z = _zone()
+    bad = _ok_result(z)
+    bad["joins"]["e:__exit__"].pop("chain")
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("reports no chain" in e for e in v.errors), v.errors
+
+
+@pytest.mark.parametrize("shape", [{"kind": "CONNECTOR"}, "corridor", 7])
+def test_an_exit_approach_whose_chain_is_not_a_list_is_refused(shape):
+    z = _zone()
+    bad = _ok_result(z)
+    bad["joins"]["e:__exit__"]["chain"] = shape
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("not a list of pieces" in e for e in v.errors), v.errors
+
+
+def test_an_exit_approach_piece_that_is_not_a_piece_is_refused():
+    z = _zone()
+    bad = _ok_result(z)
+    bad["joins"]["e:__exit__"]["chain"][1] = "a corridor, honest"
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("piece 1 is not a piece" in e for e in v.errors), v.errors
+
+
+def test_an_exit_approach_to_a_room_that_was_not_placed_is_refused():
+    z = _zone()
+    bad = _ok_result(z)
+    bad["rooms"].pop("exit")
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("does not place" in e for e in v.errors), v.errors
+
+
+def test_an_exit_room_with_no_bounds_is_refused():
+    """It is a body in the world; without a box nothing can say whether
+    it is standing inside `c001`."""
+    z = _zone()
+    bad = _ok_result(z)
+    bad["rooms"]["exit"].pop("bounds")
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("reports no bounds" in e for e in v.errors), v.errors
+
+
+def test_an_exit_room_that_overlaps_a_chamber_is_refused():
+    z = _zone()
+    bad = _ok_result(z)
+    # Same box as the first chamber: two rooms in one place.
+    bad["rooms"]["exit"]["position"] = [0.0, 0.0, 0.0]
+    bad["rooms"]["exit"]["bounds"] = {"position": [-8.0, 0.0, 0.0],
+                                      "size": [16.0, 5.0, DEPTH]}
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("overlap" in e for e in v.errors), v.errors
+
+
+def test_the_first_rooms_approach_is_filed_under_its_reserved_key():
+    """`r:<room>` is how the engine files a corridor no edge names —
+    nothing joins INTO the first room on the spine. It is a real
+    approach and gets walked like one; `room_a` is empty by design and
+    an empty name is not a missing one."""
+    z = _zone()
+    first = z.chambers[0].id
+    good = _ok_result(z)
+    good["joins"][f"r:{first}"] = {
+        "room_a": "", "room_b": first, "synthetic": True,
+        "socket_a": [0.0, 0.0, 0.0], "socket_b": [0.0, 0.0, 3.0],
+        "chain": [_piece([0.0, 0.0, -6.0], [0.0, 0.0, -3.0]),
+                  _piece([0.0, 0.0, -3.0], [0.0, 0.0, 0.0])]}
+    assert layout.validate(z, good).accepted
+
+    bad = _ok_result(z)
+    bad["joins"][f"r:{first}"] = dict(good["joins"][f"r:{first}"])
+    bad["joins"][f"r:{first}"]["chain"] = [
+        _piece([0.0, 0.0, -6.0], [0.0, 0.0, -3.0]),
+        _piece([0.0, 0.0, 500.0], [0.0, 0.0, 0.0])]
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("broken between" in e for e in v.errors), v.errors
+
+
+def test_a_reserved_join_that_is_not_a_join_is_refused():
+    """`"e:__exit__": null` and `"e:__exit__": "yes"` are not approaches.
+    Reading either as one would look for a chain on a string."""
+    z = _zone()
+    for shape in (None, "yes", 3, ["chain"]):
+        bad = _ok_result(z)
+        bad["joins"]["e:__exit__"] = shape
+        v = layout.validate(z, bad)
+        assert not v.accepted, shape
+        assert any("is not a join" in e for e in v.errors), v.errors
+
+
+# --- a complete, connected route, and a piece the engine can rebuild ------
+#
+# The first repair walked each reserved chain's own links and called that
+# a verified route. It is not: a corridor can be flawless piece to piece
+# and still stop in open space, and the reserved pair could simply be
+# left out. Codex found four cases that still accepted, and they are the
+# four below plus the piece contract they travel with.
+#
+# The piece contract is not invented here. It is
+# `zone_builder.gd::malformed_pieces` — the guard the engine runs before
+# replaying a committed chain, which returns LAYOUT_INFEASIBLE when it
+# trips. A manifest the bridge accepts and the engine cannot rebuild is a
+# Zone that dies on re-entry.
+
+def test_a_layout_with_no_exit_room_at_all_is_refused():
+    """Codex 1. Every finished build appends one; a payload without it
+    did not come from a build that finished."""
+    z = _zone()
+    bad = _ok_result(z)
+    bad["rooms"].pop("exit")
+    bad["joins"].pop("e:__exit__")
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("places no 'exit' room" in e for e in v.errors), v.errors
+
+
+def test_an_exit_room_with_no_approach_filed_is_refused():
+    """Codex 2. The room is placed and nothing records how to reach it,
+    so re-entry has to search for the last leg — the one thing a
+    committed layout promises never to do."""
+    z = _zone()
+    bad = _ok_result(z)
+    bad["joins"].pop("e:__exit__")
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("files no 'e:__exit__' approach" in e for e in v.errors), \
+        v.errors
+
+
+def test_an_exit_approach_whose_last_piece_ends_far_away_is_refused():
+    """Codex 3, and the exact case an earlier report claimed was already
+    refused when it was not. Not a break in the middle — the chain is
+    continuous through itself and simply does not arrive."""
+    z = _zone()
+    bad = _ok_result(z)
+    bad["joins"]["e:__exit__"]["chain"][-1]["exit"] = [0.0, 0.0, 10000.0]
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("broken between" in e and "the end" in e for e in v.errors), \
+        v.errors
+
+
+def test_a_reserved_chain_that_arrives_nowhere_is_refused():
+    """The `r:<room>` half of the same hole. Its endpoints are not the
+    two ends of the chain, so it is anchored rather than walked — but a
+    corridor that ends in open space is still not an approach."""
+    z = _zone()
+    first = z.chambers[0].id
+    bad = _ok_result(z)
+    bad["joins"][f"r:{first}"] = {
+        "room_a": "", "room_b": first, "synthetic": True,
+        "socket_a": [0.0, 0.0, 0.0], "socket_b": [0.0, 0.0, 3.0],
+        "chain": [_piece([0.0, 0.0, 900.0], [0.0, 0.0, 903.0]),
+                  _piece([0.0, 0.0, 903.0], [0.0, 0.0, 906.0])]}
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("ends outside room" in e for e in v.errors), v.errors
+
+
+@pytest.mark.parametrize("eid", ["e:__exit__", "spine"])
+def test_a_piece_of_a_kind_the_engine_cannot_rebuild_is_refused(eid):
+    """Codex 4, and the same rule on an ordinary edge. `malformed_pieces`
+    rebuilds CONNECTOR and CORNER; anything else is a chain the engine
+    refuses to replay, so it must not be committed as one it can."""
+    z = _zone()
+    bad = _ok_result(z)
+    key = eid if eid == "e:__exit__" else next(
+        k for k in bad["joins"] if k.startswith("e:c"))
+    bad["joins"][key]["chain"][0]["kind"] = "NOT_A_PIECE"
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("has kind 'NOT_A_PIECE'" in e for e in v.errors), v.errors
+
+
+@pytest.mark.parametrize("drop", ["position", "yaw"])
+def test_a_piece_committing_no_pose_is_refused(drop):
+    """The engine replays from `position` and `yaw`. A piece carrying
+    endpoints alone proves the route connects and cannot be laid back
+    down, which is the half of a manifest that matters on re-entry."""
+    z = _zone()
+    bad = _ok_result(z)
+    key = next(k for k in bad["joins"] if k.startswith("e:c"))
+    bad["joins"][key]["chain"][0].pop(drop)
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("commits no pose" in e for e in v.errors), v.errors
+
+
+@pytest.mark.parametrize("turn", [None, 0, "left", True])
+def test_a_corner_that_does_not_bend_is_refused(turn):
+    """A corner is defined by which way it turns. Rebuilt without it the
+    chain after the corner lands somewhere else entirely — and `True` is
+    not a turn, however well it indexes."""
+    z = _zone()
+    bad = _ok_result(z)
+    key = next(k for k in bad["joins"] if k.startswith("e:c"))
+    bad["joins"][key]["chain"][0]["kind"] = "CORNER"
+    if turn is None:
+        bad["joins"][key]["chain"][0].pop("turn", None)
+    else:
+        bad["joins"][key]["chain"][0]["turn"] = turn
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("does not bend" in e for e in v.errors), v.errors
+
+
+# --- the chains a room declared, as the engine certified them ------------
+#
+# `AMALGAM_BRIDGE.md` §5.6a. The composer declares INTENT -- an ordinary
+# optional affordance -- and the engine builds the crate, the plate, the
+# signal and the door, replays the chain three times at exactly the
+# manipulation envelope, and sends the `PhysicsPackage` and the
+# `ReplayEvidence` back in the layout proposal. These are the cases
+# where that claim is not one the bridge may accept.
+
+def _chain_zone(n: int = 8) -> Zone:
+    """A Zone whose second room is a corridor carrying a chain.
+
+    Wide, because `FEATURE_MIN_WIDTH` refuses a `powered_door` in a
+    corridor too narrow to host the alcove, and this fixture has to be
+    a Zone the composer could actually have produced.
+    """
+    chambers: list = [_arena(f"c{i:03d}", reward=89100000 + i)
+                      for i in range(1, n + 1)]
+    chambers[1] = {"id": "c002", "type": "corridor", "length": 14.0,
+                   "width": 9.0, "reward_location_id": 89100002,
+                   "features": [{"tag": "powered_door", "at": (0.5, 0.5)}]}
+    z = Zone(zone_id="z1", display_name="T", target_game="T",
+             theme="void_glitch", chambers=tuple(chambers))
+    return topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+
+
+def _certified(zone) -> dict:
+    result = _ok_result(zone)
+    result["packages"] = [certified_chain("c002", 0, zone.zone_id)]
+    return result
+
+
+def test_a_certified_chain_is_accepted():
+    zone = _chain_zone()
+    assert layout.validate(zone, _certified(zone)).accepted
+
+
+def test_a_declared_chain_the_layout_never_mentions_is_refused():
+    """The inverted probe, for features.
+
+    A room that declares a `powered_door` and reports nothing about it
+    has either failed to build it and not said so or built it and not
+    replayed it. Silence used to read as "no chains here".
+    """
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"] = []
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("declares 1 'powered_door' chain" in e
+               for e in v.errors), v.errors
+
+
+def test_a_chain_the_engine_declined_to_build_is_still_refused():
+    """`AffordanceFeatures.fits` dropping a tag is a legal outcome for
+    the ENGINE and not an acceptable layout.
+
+    A corridor too narrow for the rig is not a defect; a Zone whose
+    composer asked for a chain and whose engine built nothing is a Zone
+    whose content was quietly downgraded, and committing its manifest
+    would leave the room built and the mechanism absent with nothing
+    anywhere saying so. The engine warns and offers no package; the
+    count disagrees and the layout is refused, which sends the Zone
+    back to be composed into a room that can host it.
+    """
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"] = []
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("the layout offers 0" in e for e in v.errors), v.errors
+
+
+def test_a_chain_built_and_not_replayed_is_refused():
+    zone = _chain_zone()
+    result = _certified(zone)
+    del result["packages"][0]["package"]["evidence"]
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("carries no replay evidence" in e for e in v.errors), v.errors
+
+
+def test_evidence_for_a_different_chain_is_refused():
+    """The defect the content digest closes, at this consumer.
+
+    One room's certificate pasted onto another room's chain is the case
+    where every field is well-formed and the claim is about something
+    else.
+    """
+    zone = _chain_zone()
+    result = _certified(zone)
+    other = certified_chain("c003", 0, zone.zone_id)
+    result["packages"][0]["package"]["evidence"] = \
+        other["package"]["evidence"]
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("recorded for" in e for e in v.errors), v.errors
+
+
+def test_a_chain_replayed_against_a_changed_scene_is_refused():
+    """Move one collider and the evidence is about a room that is gone."""
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"][0]["package"]["setup"]["scene_digest"] = "f" * 16
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("has changed since its replay" in e for e in v.errors), \
+        v.errors
+
+
+@pytest.mark.parametrize("runs", [1, 2, 4])
+def test_a_chain_replayed_other_than_three_times_is_refused(runs):
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"][0]["package"]["evidence"]["per_run_latched"] = \
+        [["plate_loaded"]] * runs
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("check 20 replays three" in e for e in v.errors), v.errors
+
+
+def test_a_chain_that_latched_in_only_two_of_three_runs_is_refused():
+    """Three runs, one of which did nothing, is not three successes."""
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"][0]["package"]["evidence"]["per_run_latched"] = \
+        [["plate_loaded"], [], ["plate_loaded"]]
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("did not latch in every run" in e for e in v.errors), \
+        v.errors
+
+
+def test_a_chain_replayed_by_a_stronger_provider_is_refused():
+    """Above the envelope proves a strong host can do it, not the claim."""
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"][0]["package"]["evidence"]["provider_force_n"] = \
+        2000.0
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("not at the envelope" in e for e in v.errors), v.errors
+
+
+def test_a_chain_offered_for_another_room_is_refused():
+    """A package valid in itself and attached to the wrong thing."""
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"][0]["room_id"] = "c003"
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("realizes" in e or "declares" in e
+               for e in v.errors), v.errors
+
+
+def test_a_load_bearing_chain_is_refused_however_good_its_evidence():
+    """§13.2: a feature may never lie on the mandatory path.
+
+    The evidence here is perfect. What is refused is the package
+    claiming a route depends on an optional affordance, which is the
+    opposite of what the affordance contract promises.
+    """
+    zone = _chain_zone()
+    result = _certified(zone)
+    package = result["packages"][0]["package"]
+    package["vector_latches"] = [0]
+    package["required_latches"] = ["plate_loaded"]
+    evidence = package.pop("evidence")
+    evidence["content_digest"] = physics.package_digest(
+        physics.PhysicsPackage(**package))
+    package["evidence"] = evidence
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("load-bearing" in e for e in v.errors), v.errors
+
+
+def test_a_chain_certifying_a_room_this_zone_never_declared_is_refused():
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"].append(certified_chain("c999", 0, zone.zone_id))
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("does not have" in e for e in v.errors), v.errors
+
+
+def test_two_chains_sharing_a_package_id_are_refused():
+    """A latch is `package_id/latch_id`, so the pair has to be unique."""
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"].append(certified_chain("c002", 0, zone.zone_id))
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("share the id" in e or "declares 1" in e
+               for e in v.errors), v.errors
+
+
+# --- the return stands clear of the way in --------------------------------
+#
+# `ReturnPlug` is an Area3D firing on `body_entered`, and the composer
+# anchored it at the room's arrival — the exact spot `zone_builder`
+# stands a body entering the room. Every side destination sent the
+# player home on the first frame, and again on every re-entry. The
+# engine lane found it in the integrated build; this is the bridge half
+# of the repair.
+
+def _branched():
+    """A Zone with a real branch, and its layout."""
+    from archipepsi_bridge import topology
+    z = _zone()
+    out = topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+    assert out.plugs, "this fixture exists to have a plug in it"
+    return out, _ok_result(out)
+
+
+def test_the_composer_anchors_a_return_away_from_the_arrival():
+    """The repair itself, at the producer."""
+    out, _ = _branched()
+    for pl in out.plugs:
+        assert pl.source_anchor == f"room:{pl.room_id}:return"
+        assert pl.source_anchor != f"room:{pl.room_id}:arrival"
+        # AND THE DESTINATION SEMANTICS ARE UNCHANGED. The repair moves
+        # where the device stands, never where it sends you.
+        assert pl.destination == "zone_start"
+
+
+def test_a_return_anchored_on_the_arrival_is_refused():
+    """The defect, named where it can be caught.
+
+    Not on the model: `ZoneRecord.zone` is a typed `Zone`, so refusing
+    this spelling there would refuse to LOAD every save that already
+    holds a branched Zone. A committed manifest never runs `validate`
+    again, so an accepted layout keeps the devices it was certified
+    with and an uncommitted Zone is refused and recomposed.
+    """
+    out, result = _branched()
+    trapped = out.model_copy(update={"plugs": tuple(
+        pl.model_copy(update={
+            "source_anchor": f"room:{pl.room_id}:arrival"})
+        for pl in out.plugs)})
+    result = _ok_result(trapped)
+    v = layout.validate(trapped, result)
+    assert not v.accepted and v.manifest is None
+    assert any("where a body entering that room arrives" in e
+               for e in v.errors), v.errors
+
+
+def test_a_return_the_engine_did_not_place_is_refused():
+    """A missing anchor. `zone_builder` warns and SKIPS the plug, which
+    would leave a dead end with no way out and a Zone that still said
+    LAYOUT_OK — so the refusal has to be here."""
+    out, result = _branched()
+    gone = out.plugs[0].source_anchor
+    result["anchors"].pop(gone)
+    result["arrival_ok"].pop(gone, None)
+    v = layout.validate(out, result)
+    assert not v.accepted
+    assert any(f"'{gone}' was not resolved" in e for e in v.errors), v.errors
+
+
+def test_a_return_with_no_measured_clearance_is_refused():
+    """A distinct anchor is not evidence the device is clear of the
+    arrival. Whether a body standing at the arrival is inside the
+    trigger volume is a physics query, and only the engine answers it."""
+    out, result = _branched()
+    result["plug_clear"].pop(out.plugs[0].edge_id)
+    v = layout.validate(out, result)
+    assert not v.accepted
+    assert any("carries no measured clearance" in e for e in v.errors)
+
+
+def test_a_return_the_engine_measures_as_overlapping_is_refused():
+    out, result = _branched()
+    result["plug_clear"][out.plugs[0].edge_id] = False
+    v = layout.validate(out, result)
+    assert not v.accepted
+    assert any("would fire on the way in" in e for e in v.errors), v.errors
+
+
+def test_a_clearance_verdict_that_is_not_a_verdict_is_refused():
+    """A coordinate where a boolean belongs is how "measured" comes to
+    mean "mentioned"."""
+    out, result = _branched()
+    result["plug_clear"][out.plugs[0].edge_id] = [0.0, 0.0, 3.0]
+    v = layout.validate(out, result)
+    assert not v.accepted
+    assert any("not a boolean" in e for e in v.errors), v.errors
+
+
+def test_the_return_anchor_survives_the_wire_and_stays_out_of_the_manifest_it_was_not_in():
+    """Serialized, re-parsed, and committed under the anchor the
+    composer chose — and an ALREADY COMMITTED manifest is untouched by
+    any of this."""
+    import json
+    out, result = _branched()
+    wire = json.loads(out.model_dump_json())
+    back = Zone.model_validate(wire)
+    assert back == out
+    for spec in wire["plugs"]:
+        assert spec["source_anchor"].endswith(":return")
+        assert spec["destination"] == "zone_start"
+
+    v = layout.validate(back, result)
+    assert v.accepted, v.errors
+    committed = {p["edge_id"]: p["source_anchor"] for p in v.manifest["plugs"]}
+    assert committed == {pl.edge_id: pl.source_anchor for pl in out.plugs}
+    # The manifest is built from the ZONE's plugs, so nothing here
+    # repositions a device: a Zone certified with the old anchor keeps
+    # the old anchor in the layout it was certified with.
+    assert all(a.endswith(":return") for a in committed.values())
+
+
+def test_an_old_committed_zone_still_loads():
+    """The reason this rule is not on the model.
+
+    A save holding a branched Zone anchored at `:arrival` has to keep
+    parsing, or the repair costs the player their campaign.
+    """
+    out, _ = _branched()
+    old = out.model_copy(update={"plugs": tuple(
+        pl.model_copy(update={
+            "source_anchor": f"room:{pl.room_id}:arrival"})
+        for pl in out.plugs)})
+    assert Zone.model_validate(old.model_dump()) == old

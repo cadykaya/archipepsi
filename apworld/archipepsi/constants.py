@@ -673,11 +673,34 @@ FEATURE_MIN_WIDTH = {
     "wind_volume": 7.9,
     "bounce_pad": 7.1,
     "moving_platform": 7.9,
+    # The chain needs a run, and it is laid along DEPTH. Deliberately
+    # equal to the widest tag that already existed rather than larger: a
+    # wider one widens every corridor the fallback hangs features on, and
+    # at 9.5 it did -- `played_zone` stopped composing for want of space
+    # at its twenty-second room. Optional content that costs the Zone its
+    # layout is not optional.
+    "powered_door": 7.9,
 }
 
 #: The narrowest chamber that can host ANY feature — the cheapest thing a
 #: generator can check before choosing a tag.
 MIN_FEATURE_CHAMBER_WIDTH = min(FEATURE_MIN_WIDTH.values())
+
+#: Affordance tags a campaign may offer having interpreted NOTHING.
+#:
+#: Two under §13.1, and three since 2026-09-12: `powered_door` is a crate
+#: the player shoves with their own body onto a plate, which needs no
+#: primitive and no stat. Listed rather than inferred, so adding one is a
+#: decision somebody made rather than a side effect of an empty registry
+#: entry.
+#:
+#: **HERE, AND NOT IN A TEST FILE.** This lived in
+#: `bridge/tests/test_affordances.py` while `integration_driver.gd` kept
+#: its own hand-written pair of the same fact — so the day `powered_door`
+#: joined the kit, the engine offered it correctly and the client suite
+#: failed the Zone for offering it. One definition, exported, read by
+#: both sides.
+BASE_KIT_TAGS = ("bounce_pad", "moving_platform", "powered_door")
 
 # --------------------------------------------------------------------------
 # Shop
@@ -856,6 +879,39 @@ BAND_RAMP_RUN_FACTOR = 3.0
 
 #: The shortest ramp built at all, however small the rise.
 BAND_RAMP_MIN_RUN = 3.0
+
+#: Which joining sockets a procedural room of each type can actually be
+#: JOINED through, when its producer can carry fewer than the four
+#: `PROCEDURAL_SOCKETS` names. A type absent from here carries all four.
+#:
+#: **A STATEMENT ABOUT TODAY'S PRODUCERS, not a rule about room shapes.**
+#: The socket table is the shape of a FLAT room -- four openings around a
+#: rectangle, all at floor level -- and the two producers that CLIMB are
+#: not that shape. Measured in `godot-zone-audit`, one control per type:
+#: `corridor`, `arena` and `treasure_room` answer a side assignment with
+#: a hole and floor inside it; `platform_path` and `tower` answer with a
+#: solid wall, and for `platform_path` there is no floor there either --
+#: the middle of its side wall is over its kill pit and below its
+#: walkway.
+#:
+#: Advertising a door a producer does not build is not a cosmetic lie: a
+#: declared `USED` door the engine measures as solid refuses the WHOLE
+#: layout (`AMALGAM_BRIDGE.md` 5.9, rule 5), which is what stopped a
+#: default-scale Zone being accepted at all.
+#:
+#: ONE DECLARATION, THREE CONSUMERS. `topology._sockets_for` will not
+#: offer these rooms a side; `Zone`'s socket invariant asks them to
+#: mention only what they carry; and `constants.gd` exports this to
+#: `ChamberBuilders.procedural_sockets`, so the engine names the same
+#: openings the composer assigns. A fix in one of the three and not the
+#: others is the two-vocabulary defect again.
+#:
+#: A supported side-landing variant would remove a room from this map;
+#: nothing here forbids one.
+PROCEDURAL_SOCKET_CAPACITY = {
+    "platform_path": ("entry", "exit"),
+    "tower": ("entry", "exit"),
+}
 
 PROCEDURAL_ARENA_MIN_SPAN = 10.0
 PROCEDURAL_ARENA_MAX_SPAN = 28.0

@@ -10,6 +10,17 @@ const REWARD_SPACING := 4.0
 ## leaving the Zone, which is why leaving resets objectives (§14.3).
 
 signal exit_requested
+
+## A reached, working station wants a destination chosen. Carries the
+## station's id, its label and the eligible destinations.
+signal travel_panel_requested(from_id: String, from_label: String,
+		options: Array)
+
+## A destination was chosen and taken. Announced rather than inferred:
+## `godot-boot` has to be able to see that the panel's choice reached
+## THIS controller, and reading the player's position cannot tell a warp
+## from a fall.
+signal station_warped(from_id: String, to_id: String)
 ## The bridge refused this Zone's layout; it is not safe to play.
 signal layout_refused(zone_id: String)
 ## The player moved into a different chamber's bounds — the rule engine's
@@ -18,6 +29,19 @@ signal chamber_entered(index: int)
 
 var zone: Dictionary = {}
 var zone_id := ""
+## The proposal this controller is building, captured by `setup` and
+## echoed on `layout_result`. `""` when the bridge offered none.
+var proposal_id := ""
+## WHICH ATTEMPT at that proposal this build is -- the Zone's refusal
+## count when `setup` started, echoed with the result.
+##
+## `proposal_id` is CONTENT identity, and two tries at the same content
+## hash the same: the deterministic provider recomposes the same Zone
+## after a refusal, so a replaced build's late result still matches.
+## What separates them is the attempt it belongs to, and a refusal is
+## exactly what ends one attempt and begins the next. `-1` when the
+## bridge holds no record to read it from.
+var attempt := -1
 var player: Player
 var tones: Tones = null          # set by main; null in headless tests
 var hud: Hud = null              # set by main; null in headless tests
@@ -92,9 +116,20 @@ var _chambers: Array = []      # {chamber, objective, satisfied, enemies,
                                #  reward, goal_area}
 var _exit_portal: ExitPortal
 var _zone_anchors := {}
+## What the activity being played currently reads, mirrored onto the
+## objective line. Empty when no attempt is in progress.
+var _activity_note := ""
 
 ## `room_id -> world AABB`, from the committed layout.
 var room_bounds := {}
+## `"<room_id>/<socket_id>" -> world position of that doorway.`
+##
+## The builder already computes this so the lock slab and the door probe
+## cannot disagree about where a socket is; a suite walking a real body
+## from one opening of a junction to another needs the same answer, and
+## deriving it a second time from room bounds is how the third answer
+## starts. Empty on a Zone with no door assignments.
+var door_positions := {}
 ## MONOTONE, and that is what makes a resume safe. A Zone's key set and
 ## its opened-lock set only ever grow, so a reload can never put the
 ## player back behind a door they already opened.
@@ -113,8 +148,26 @@ var committed_manifest := {}
 ## What the bridge said about the layout this session sent, for a caller
 ## or a suite to read: "", "ACCEPTED", "LAYOUT_REFUSED", ...
 var layout_verdict := ""
+
+## The aperture polarity this client measured and sent, `room/socket ->
+## is a hole`. Kept because it is the evidence behind the bridge's
+## refusal, and a suite that falsifies a door needs to be able to say
+## the falsification actually carved something rather than pass on
+## somebody else's refusal.
+var measured_apertures := {}
+## The placement outcome this client measured and sent, per plug
+## `edge_id` (`AMALGAM_BRIDGE.md` §5.9). Kept for the same reason as
+## `measured_apertures`: a suite that drives a room to `NO_CANDIDATE`
+## has to be able to say the ENGINE reported it, rather than reading a
+## bar off the bridge and calling that a measurement.
+var measured_placement := {}
 ## How long to hold before treating silence as a refusal.
 const VERDICT_TIMEOUT := 10.0
+
+## The name this controller holds the player under while a graph Zone's
+## layout is unaccepted. Its own claim, so a menu opening and closing
+## beside it changes nothing.
+const LAYOUT_HOLD := "layout_verdict"
 ## Every Check this Zone holds, from its own chambers.
 var _zone_locations: Array[int] = []
 ## PROGRESS CARRIED IN, set before `setup` by whoever is remembering.
@@ -138,6 +191,21 @@ var _portal_was_locked := true
 var _quiet_time := 0.0
 var _last_claimed := -1
 var _current_chamber := -1
+
+## WHICH ROOMS THE PLAYER HAS ACTUALLY BEEN IN, this session.
+##
+## Not a map and not persisted. `_track_chamber` already decides which
+## chamber the body is in every frame; this remembers the answers so an
+## unlock message can name a place the player has SEEN without naming
+## one they have not. `docs/AGENT_FRONTIER.md` has no exploration
+## authority and this does not become one -- on a reload it starts
+## empty, and an unlock message then says "somewhere in this Zone"
+## rather than inventing a room the player may not remember.
+var _rooms_entered := {}
+
+## Locks opened since the last time anybody asked. `_on_lock_opened`
+## fills it; `_on_key_collected` drains it into ONE message.
+var _opened_since := []
 ## Which chamber the in-flight encounter is being timed for, latched on
 ## the first blow so walking next door does not retarget the count. -1
 ## when no fight is running.
@@ -156,6 +224,35 @@ const _QUIET_BEFORE_ASIDE := 75.0
 func setup(zone_dict: Dictionary) -> void:
 	zone = zone_dict
 	zone_id = zone.get("zone_id", "")
+	# WHICH PROPOSAL THIS BUILD IS OF, taken NOW and not when the result
+	# is sent (`AMALGAM_BRIDGE.md` §5.9).
+	#
+	# `_publish_layout` awaits physics frames and then settles every
+	# physics package, which is long enough for Epsilon to compose new
+	# content or for `reselect_hosts` to regraph this Zone onto other
+	# hosts. Reading the current identity at send time would hand this
+	# build the REPLACEMENT's id -- and the bridge would then spend the
+	# replacement's refusal budget on an old build's verdict, bar the
+	# replacement's rooms, or commit a layout of the Zone it replaced.
+	# Captured here, the old build carries the old id however long it
+	# takes to come back, and is ignored outright.
+	proposal_id = BridgeClient.proposal_for(zone_id)
+	# THE SAME CARRIER AND THE SAME MOMENT. Both are read here, off the
+	# record the build is being made from, so the content identity and
+	# the attempt it belongs to cannot come from two different states.
+	attempt = BridgeClient.attempt_for(zone_id)
+	# AND AN OMISSION IS NEVER SILENT. Absent on the wire means "cannot
+	# be checked" -- the documented behaviour for a client older than
+	# the field -- so a current client that binds nothing looks exactly
+	# like one. If the bridge held this Zone and offered no identity for
+	# it, that is a carrier that did not reach the build path and it is
+	# said out loud rather than discovered later as an unexplained
+	# acceptance.
+	if proposal_id == "" and zone_id != "" \
+			and str(BridgeClient.active_zone().get("zone_id", "")) == zone_id:
+		push_warning("zone: %s is being built with no proposal identity; "
+				% zone_id + "a late result for it cannot be told from a "
+				+ "current one (AMALGAM_BRIDGE.md 5.9)")
 	var theme: String = zone.get("theme", "void_glitch")
 	# A COMMITTED MANIFEST IS REPLAYED, NOT RE-SOLVED. `ZoneReady` carries
 	# one on every visit after the first, and laying those transforms back
@@ -202,6 +299,7 @@ func setup(zone_dict: Dictionary) -> void:
 	for rid: String in build.get("rooms", {}) as Dictionary:
 		room_bounds[rid] = (build["rooms"] as Dictionary)[rid].get(
 				"bounds", AABB())
+	door_positions = (build.get("doors", {}) as Dictionary).duplicate()
 	for raw: Variant in build.get("plugs", []):
 		var plug: ReturnPlug = raw
 		plug.traversed.connect(_on_plug_traversed)
@@ -225,9 +323,7 @@ func setup(zone_dict: Dictionary) -> void:
 		var station: WarpStation = raw_station
 		station.reached.connect(_on_station_reached)
 		station.warp_requested.connect(_on_warp_requested)
-		# The station asks the controller where E goes, rather than each
-		# station keeping its own copy of who has been reached.
-		station.cycle = _next_reached
+		station.panel_requested.connect(_on_station_panel_requested)
 		# ALREADY ONLINE FROM A PREVIOUS VISIT. Reached-ness is progress
 		# and progress is monotone, so a station a player switched on
 		# before they walked out does not switch off behind them.
@@ -253,9 +349,23 @@ func setup(zone_dict: Dictionary) -> void:
 		if locks_carried.has("%s/%s" % [lock.room_id, lock.socket_id]):
 			lock.open()
 	_open_what_the_keys_allow()
+	# A RESUME IS NOT AN EVENT. Everything opened above was opened by a
+	# key the player already had, so announcing it would greet a
+	# returning player with a list of doors they opened last night.
+	_opened_since.clear()
 
 	player = Player.create()
 	add_child(player)
+	# THE HOLD GOES ON HERE, not when the verdict wait begins.
+	#
+	# `_publish_layout` awaits two physics frames before it measures and
+	# sends, and `_await_verdict` only ran after that -- so a graph Zone
+	# handed the player two live frames before anyone had checked its
+	# geometry. Two frames is a jump. The claim is made the moment the
+	# body exists and is dropped by the verdict, so there is no window at
+	# all.
+	if not (zone.get("edges", []) as Array).is_empty():
+		player.hold(LAYOUT_HOLD)
 	# RESUME AT THE STATION, when there is one to resume to.
 	#
 	# `handle_leave_zone` is already non-destructive on the bridge --
@@ -346,6 +456,19 @@ func setup(zone_dict: Dictionary) -> void:
 				# element. A key toasts and a lock toasts; finishing a
 				# puzzle did not.
 				runtime.completed.connect(_on_activity_completed)
+				# AND SO DOES FAILURE. `failed` had no listener either,
+				# so running out of time silently reset every element
+				# and the player was left to infer it from the geometry
+				# going dark. The playtest reported exactly that.
+				runtime.failed.connect(_on_activity_failed)
+				# AND ONTO THE SCREEN WHILE IT IS BEING PLAYED. The
+				# activity's own label sits above where it starts, which
+				# is not where a player shooting its third target is
+				# looking. The objective line is already on screen.
+				runtime.progressed.connect(_on_activity_progressed)
+				# The per-hit cue needs the bank the same way completion
+				# does; the runtime is what knows a hit COUNTED.
+				runtime.tones = tones
 				# WHICH ROOM A PUZZLE IS IN, so a broken station in that
 				# room can be repaired by solving it. Kept here rather
 				# than re-derived from the activity id, because the id
@@ -353,10 +476,32 @@ func setup(zone_dict: Dictionary) -> void:
 				# with it from a distance is how the two drift apart.
 				_activity_room[runtime.activity_id] = runtime.room_id
 
+		# NOBODY SPAWNS IN A DOORWAY, WHOEVER BUILT THE ROOM.
+		#
+		# `ContentInstantiator._enemy_spawns` pushes an authored room's
+		# spawns clear of its openings, and the procedural builders --
+		# four of them, each laying its own ring of spawn points --
+		# never did: `Vector3(cos(a) * width * 0.3, ...)` clears the
+		# wall by `0.2 * width`, which is 1.2 m in a six-metre room and
+		# smaller than the doorway it has to clear. One enemy standing
+		# in `c002/entry` is what turned `godot-integration` red for
+		# three runs, and that one was in an authored room.
+		#
+		# Applied HERE, in the runtime placement path, because this is
+		# the one place every producer's spawns become a body. A room
+		# whose producer already cleared them is unchanged: the nudge is
+		# a no-op on a point that is already out of every doorway.
+		var mouths: Array = []
+		for plan: Variant in result.get("doors", []):
+			mouths.append((plan as Dictionary).get("position",
+					Vector3.ZERO))
+		var middle: Vector3 = (result["bounds"] as AABB).position \
+				+ (result["bounds"] as AABB).size / 2.0
 		for spawn: Dictionary in result.get("enemy_spawns", []):
 			var enemy := Enemy.create(spawn["archetype"], theme)
 			add_child(enemy)
-			enemy.global_position = xform * spawn["position"]
+			enemy.global_position = xform * ContentInstantiator \
+					.out_of_any_doorway(spawn["position"], mouths, middle)
 			record["enemies"].append(enemy)
 			enemy.enemy_died.connect(_on_enemy_died.bind(record))
 
@@ -468,10 +613,10 @@ func _on_key_collected(key_id: String) -> void:
 	_keys_held[key_id] = true
 	BridgeClient.send_intent({"type": "key_collected",
 			"zone_id": zone_id, "key_id": key_id})
-	if hud != null:
-		hud.toast("%s KEY" % key_id.to_upper(),
-				ZoneKey.tint(key_id), 3.0)
+	_opened_since.clear()
 	_open_what_the_keys_allow()
+	if hud != null:
+		hud.toast(_what_that_key_did(key_id), ZoneKey.tint(key_id), 4.5)
 
 ## Every lock the held keys AND capabilities admit, opened at once.
 ##
@@ -509,10 +654,87 @@ func _on_lock_opened(room: String, socket: String) -> void:
 	if _locks_open.has(ref):
 		return
 	_locks_open[ref] = true
+	_opened_since.append(room)
 	BridgeClient.send_intent({"type": "lock_opened",
 			"zone_id": zone_id, "room_id": room, "socket_id": socket})
-	if hud != null:
-		hud.toast("UNLOCKED", Color(0.6, 1.0, 0.7), 2.5)
+	# NO TOAST HERE, deliberately. This fires once per LOCK, and one key
+	# opening three doors sent three identical "UNLOCKED" cards with no
+	# room on any of them -- which is how the owner finished a playtest
+	# holding three keys and reporting they had "found no door that uses
+	# them". The message is assembled once, by `_on_key_collected`, out
+	# of what this collected.
+
+## WHICH ROOMS HAVE BEEN WALKED, for a reader that is not this file.
+##
+## A copy, so nothing outside can grow the set. Session-only by
+## construction: `_rooms_entered` starts empty on every `setup`.
+func rooms_entered() -> Dictionary:
+	return _rooms_entered.duplicate()
+
+## Which room the body is in right now, or "".
+func current_room() -> String:
+	return _room_id_of(_current_chamber)
+
+## The room id of a chamber index, for the entered-rooms set.
+func _room_id_of(index: int) -> String:
+	if index < 0 or index >= _chambers.size():
+		return ""
+	var chamber: Dictionary = _chambers[index].get("chamber", {})
+	return str(chamber.get("id", ""))
+
+## HOW TO NAME A PLACE THE PLAYER HAS BEEN, and how not to name one
+## they have not.
+##
+## A room id is not a label -- the owner read `c018` off a return pad
+## and asked what c018 was -- so the chamber's own `type` carries the
+## meaning and the id stays for precision. A room the player has NOT
+## entered gets neither: naming it would hand out the shape of a route
+## they have not found, and this feature is worth less than that.
+func _room_label(room_id: String) -> String:
+	if room_id == "" or not _rooms_entered.has(room_id):
+		return ""
+	for record: Dictionary in _chambers:
+		var chamber: Dictionary = record.get("chamber", {})
+		if str(chamber.get("id", "")) != room_id:
+			continue
+		var kind := str(chamber.get("type", "")).replace("_", " ")
+		return "the %s (%s)" % [kind, room_id] if kind != "" else room_id
+	return room_id
+
+## WHAT THAT KEY ACTUALLY DID, in one line.
+##
+## Four truthful answers and no fifth. A key that opened nothing says
+## so, and says WHICH of the two nothings it was, because "no door here
+## answers to this" and "the door it opens is already open" send a
+## player to two different places.
+func _what_that_key_did(key_id: String) -> String:
+	var name := "%s KEY" % key_id.to_upper()
+	if _opened_since.is_empty():
+		var here := 0
+		for raw: Variant in _zone_locks:
+			if is_instance_valid(raw) and (raw as LockedDoor).key_id \
+					== key_id:
+				here += 1
+		if here == 0:
+			return "%s   nothing in this Zone is locked with it" % name
+		return "%s   its door here is already open" % name
+	# One room may hold more than one lock this key opened; the player
+	# cares about PLACES, not about socket count.
+	var named: Array[String] = []
+	var unseen := 0
+	for room: Variant in _opened_since:
+		var label := _room_label(str(room))
+		if label == "":
+			unseen += 1
+		elif not named.has(label):
+			named.append(label)
+	if named.is_empty():
+		return "%s   opened %d door%s elsewhere in this Zone" \
+				% [name, unseen, "" if unseen == 1 else "s"]
+	var where := ", ".join(named)
+	if unseen > 0:
+		where += " and %d elsewhere" % unseen
+	return "%s   opened the way in %s" % [name, where]
 
 ## Gates the player cannot open yet, as "room/socket" -> what is missing.
 ##
@@ -539,30 +761,81 @@ func gates_not_yet_open() -> Dictionary:
 ## that was missing -- telling the player it happened.
 func _on_activity_completed(activity_id: String, seconds: float,
 		_attempts: int) -> void:
+	# THE CONSEQUENCE FIRST, so the one message can carry it.
+	#
+	# A room may hold more than one activity and they SHARE the station
+	# in it: the first solved repairs it and every later one finds it
+	# already online. Before this, all of them said the same
+	# "<ID> COMPLETE" and the difference was invisible -- so a player
+	# who solved the second puzzle in a room had no way to learn whether
+	# it had done anything. This says which it was. It grants nothing
+	# extra, marks nothing complete and makes nothing compulsory; the
+	# local reward each activity already sends is untouched.
+	var consequence := _repair_station_for(activity_id)
 	if hud != null:
-		hud.toast("%s COMPLETE   %.1fs"
-				% [activity_id.to_upper(), seconds],
+		hud.toast("%s COMPLETE   %.1fs%s"
+				% [activity_id.to_upper(), seconds,
+				"" if consequence == "" else "   " + consequence],
 				Color(0.55, 0.95, 0.75), 3.0)
 	if tones != null and tones.has_method("play"):
-		tones.play("secret_found")
-	_repair_station_for(activity_id)
+		# "secret", not "secret_found". The bank keys its chime as
+		# `secret`; `secret_found` is a line id in `epsilon_voice.gd`,
+		# and an identifier carried between two systems with different
+		# vocabularies made `Tones.play` look up a name that is not
+		# there and return silently. A solved activity has been mute
+		# ever since. `test_every_tone_a_caller_asks_for_exists` now
+		# refuses the next one of these.
+		tones.play("secret")
+	_activity_note = ""
+
+## AND THE OTHER OUTCOME, which had no listener at all.
+##
+## An attempt that runs out of time clears every element and returns the
+## activity to IDLE. With nothing watching `failed`, the only report was
+## the geometry going dark, which reads as a bug rather than a reset --
+## the owner's words for this were "the game told me nothing".
+func _on_activity_progressed(text: String) -> void:
+	_activity_note = text if text != "DONE" else ""
+
+func _on_activity_failed(activity_id: String, reason: String) -> void:
+	_activity_note = ""
+	if hud != null:
+		hud.toast("%s FAILED   %s" % [activity_id.to_upper(), reason],
+				Color(1.0, 0.55, 0.45), 3.0)
+	if tones != null and tones.has_method("play"):
+		tones.play("denied")
 
 ## A solved puzzle switches on the broken station in its own room.
 ##
 ## Only its own room: a Zone with two puzzled station rooms must not have
 ## one puzzle light both, which is the failure a room-blind match would
 ## produce and the reason the room is carried at all.
-func _repair_station_for(activity_id: String) -> void:
+## Returns what to TELL the player about it, or "" when this room has no
+## station to repair. Three answers, and the second is the one that was
+## missing: this activity repaired it, this activity found it already
+## repaired, or there was never one here.
+func _repair_station_for(activity_id: String) -> String:
 	var room := str(_activity_room.get(activity_id, ""))
 	if room == "":
-		return
+		return ""
 	for raw: Variant in _stations:
 		var station: WarpStation = raw
-		if station.repair_room != room or not station.repair():
+		if station.repair_room != room:
 			continue
-		# Repair activates, so the station is now reached and the rest of
-		# the reached bookkeeping has to happen exactly as it would have.
-		_station_came_online(station.station_id, "STATION REPAIRED")
+		if station.repair():
+			# Repair activates, so the station is now reached and the
+			# rest of the reached bookkeeping has to happen exactly as
+			# it would have. The note is EMPTY because the completion
+			# toast above is carrying it -- two cards for one event is
+			# the burst this batch removed from key pickups.
+			_station_came_online(station.station_id, "")
+			return "STATION %s ONLINE" % station.label_text.to_upper()
+		# ALREADY ONLINE, and saying so is the whole point. These
+		# activities are alternative ways into the same consequence, and
+		# a player who cannot tell that from an independent one with its
+		# own payoff will keep looking for a payoff that is not there.
+		return "%s was already online" % station.label_text.to_upper()
+	return ""
 
 ## The next reached station after this one, wrapping.
 ##
@@ -570,18 +843,24 @@ func _repair_station_for(activity_id: String) -> void:
 ## stations have been reached" is one fact and a copy per station is
 ## several. Returns "" when this is the only one reached, which is what
 ## the prompt reads to say so rather than offering a warp to itself.
-func _next_reached(from_id: String) -> String:
-	var order: Array[String] = []
-	for raw: Variant in _stations:
-		var station: WarpStation = raw
-		if station.is_reached():
-			order.append(station.station_id)
-	if order.size() < 2:
-		return ""
-	var at := order.find(from_id)
-	if at < 0:
-		return order[0]
-	return order[(at + 1) % order.size()]
+## A WORKING STATION WAS PRESSED, so somebody should be asked where to.
+##
+## The controller does not own a screen; it says what the options are
+## and `Main` puts them on one. `travel_options` is the single
+## eligibility rule and lives on `WarpStation`, so this cannot grow a
+## second opinion about which stations are destinations.
+func _on_station_panel_requested(from_id: String) -> void:
+	var station := _station_by_id(from_id)
+	if station == null or not station.is_reached() or station.is_broken():
+		return
+	travel_panel_requested.emit(from_id, station.label_text,
+			WarpStation.travel_options(_stations, from_id))
+
+## Selecting a destination on that panel. ONE warp, through the path a
+## station press used to take, so nothing about arriving changed.
+func warp_to(from_id: String, to_id: String) -> void:
+	_on_warp_requested(from_id, to_id)
+	station_warped.emit(from_id, to_id)
 
 ## The keys and the opened locks, for whoever is carrying progress out.
 func keys_held() -> Dictionary:
@@ -600,6 +879,19 @@ func _publish_layout(build: Dictionary) -> void:
 	if not is_inside_tree():
 		return
 	_measure_layout_evidence(build)
+	await _certify_physics(build)
+	# THE BOUNDARY BETWEEN CERTIFYING AND SENDING.
+	#
+	# `_certify_physics` gives up the moment the Zone leaves the tree,
+	# which stopped it measuring freed nodes -- and then returned here,
+	# where the next line sent the half-measured result anyway. A Zone
+	# torn down during settling published a PARTIAL certification under
+	# a committed Zone's name, and `_await_verdict` below then sat in a
+	# frame loop belonging to a Zone nobody is in, holding and releasing
+	# a player who has been replaced. The discarded attempt has to be
+	# discarded here too.
+	if not is_inside_tree():
+		return
 	send_layout_result(build)
 	await _await_verdict()
 
@@ -618,26 +910,58 @@ func _await_verdict() -> void:
 	if (zone.get("edges", []) as Array).is_empty():
 		layout_verdict = "UNCERTIFIED"
 		return
-	if player != null:
-		player.input_frozen = true
+	# `!= null` IS NOT ALIVE. A freed Node is not null in GDScript -- it
+	# is a reference that answers every comparison and errors on every
+	# call -- so a Zone torn down while its verdict was outstanding put
+	# a hold on, or took one off, a player that no longer exists.
+	if is_instance_valid(player):
+		player.hold(LAYOUT_HOLD)
+	# THE PREVIOUS ANSWER IS NOT THIS ONE.
+	#
+	# A refusal sends the Zone back to be composed again, and the client
+	# enters the recomposed Zone and sends a new layout -- while its own
+	# snapshot is still carrying `REFUSED` from the round before. This
+	# loop read that, announced "layout refused; leaving", and left a
+	# Zone the bridge committed a quarter of a second later, with the
+	# acceptance hold still on the player.
+	#
+	# `layout_refusals` counts what the validator has rejected for this
+	# Zone, so a REFUSED that has not incremented it is the old answer
+	# and is waited past. An ACCEPTED needs no such guard: the only way
+	# to be holding a stale one is to be re-entering a Zone whose layout
+	# really was accepted, which is the replay path and is the truth.
+	var before := int(BridgeClient.active_zone().get(
+			"layout_refusals", 0))
 	var waited := 0.0
 	while waited < VERDICT_TIMEOUT:
 		var state := str(BridgeClient.active_zone().get(
 				"layout_state", ""))
 		if state == "ACCEPTED":
 			layout_verdict = state
-			if player != null:
-				player.input_frozen = false
+			if is_instance_valid(player):
+				# ONLY THIS CLAIM. Clearing the boolean here released a
+				# pause the player had opened while they waited.
+				player.release(LAYOUT_HOLD)
 			return
+		var refusals := int(BridgeClient.active_zone().get(
+				"layout_refusals", 0))
 		# A refusal clears the active Zone, so the record stops being
 		# there at all -- which is the same news arriving a different way.
-		if state == "REFUSED" or (BridgeClient.active_zone().is_empty()
-				and waited > 0.25):
+		if (state == "REFUSED" and refusals > before) \
+				or (BridgeClient.active_zone().is_empty()
+					and waited > 0.25):
 			layout_verdict = "REFUSED"
 			push_warning("zone: %s layout refused; leaving" % zone_id)
 			layout_refused.emit(zone_id)
 			return
 		await get_tree().process_frame
+		# THE ZONE THIS VERDICT IS ABOUT CAN GO AWAY MID-WAIT. Carrying
+		# on would announce a refusal for a Zone nobody is in, and
+		# `layout_refused` is what sends the player back to the Hub --
+		# from a Zone they have already left, past the replacement they
+		# are now standing in.
+		if not is_inside_tree():
+			return
 		waited += get_process_delta_time()
 	# NO VERDICT IS NOT AN ACCEPTANCE. A bridge that never answers leaves
 	# the player frozen forever, which is worse than the Zone they are
@@ -647,6 +971,45 @@ func _await_verdict() -> void:
 			% [zone_id, VERDICT_TIMEOUT])
 	layout_refused.emit(zone_id)
 
+## THE CHAINS THIS ZONE BUILT, CERTIFIED. `AMALGAM_BRIDGE.md` §5.6a.
+##
+## `apertures` says a doorway is a hole; nothing said whether a
+## `powered_door` feature's crate can actually be put on its plate in
+## the room the composer placed it in. Both are failures a Zone can ship
+## with, and neither is visible to the bridge, which has no geometry.
+##
+## **The engine certifies; the composer only asked.** A chamber declares
+## `features: [{tag: "powered_door"}]` and that is intent. What goes on
+## the wire here is a `PhysicsPackage` the engine built and the
+## `ReplayEvidence` of replaying it three times at exactly the
+## manipulation envelope -- the contract's own models, carried in the
+## layout proposal that is already committed with the manifest, so
+## nothing needed a second carrier.
+##
+## The previous version of this was a four-word verdict in a key called
+## `mechanisms` that `layout_to_json` never forwarded. It measured
+## something real and told nobody.
+func _certify_physics(build: Dictionary) -> void:
+	var out: Array = []
+	var rooms: Dictionary = build.get("rooms", {})
+	for raw: Variant in build.get("chambers", []):
+		var entry: Dictionary = raw
+		var chamber: Dictionary = entry["chamber"]
+		var rid := str(chamber.get("id", ""))
+		var placed: Dictionary = rooms.get(rid, {})
+		var bounds: AABB = placed.get("bounds", AABB())
+		# THE ZONE CAN GO AWAY WHILE THIS RUNS. Certifying a chain takes
+		# seconds and `_publish_layout` is not awaited by anything, so a
+		# Zone freed mid-certification leaves this loop measuring nodes
+		# that no longer exist.
+		if not is_inside_tree():
+			return
+		for certified: Variant in await ChainCertificate.of_room(
+				get_tree(), zone_id, chamber, entry["node"] as Node3D,
+				bounds):
+			out.append(certified)
+	build["packages"] = out
+
 ## Aperture polarity and arrival verdicts, measured and attached.
 ##
 ## `apertures` is ARCHITECTURAL: a `LOCKED` door reads as a hole because
@@ -655,20 +1018,44 @@ func _await_verdict() -> void:
 ## answer and is not what this reports.
 func _measure_layout_evidence(build: Dictionary) -> void:
 	var space := get_world_3d().direct_space_state
-	var apertures := {}
+	# ONE MEASUREMENT, SHARED. `RoomAudit.measure_layout` is what a
+	# played Zone and an offline harness both ask, so a manifest sent
+	# from either carries the same evidence measured the same way.
+	var evidence := RoomAudit.measure_layout(build, space)
+	var apertures: Dictionary = evidence["apertures"]
 	for entry: Dictionary in build.get("chambers", []):
 		var rid := str((entry["chamber"] as Dictionary).get("id", ""))
 		var measured := RoomAudit.aperture_polarity(
 				entry["build"] as Dictionary,
 				entry["xform"] as Transform3D, space)
-		for socket: String in measured:
-			apertures["%s/%s" % [rid, socket]] = bool(measured[socket])
+		# AND WHAT IS STANDING IN THE ONES THAT DISAGREE.
+		#
+		# The bridge refuses the whole layout on "door 'c002/entry' is
+		# USED and the engine measured it as solid", and that sentence
+		# names the door and nothing else -- so a Zone that would not
+		# open gave nobody a suspect. The engine is the only side that
+		# can see the geometry, so it is the side that says what it saw.
+		var blockers := RoomAudit.aperture_blockers(
+				entry["build"] as Dictionary,
+				entry["xform"] as Transform3D, space)
+		for raw_door: Variant in (entry["chamber"] as Dictionary) \
+				.get("doors", []):
+			var door: Dictionary = raw_door
+			var socket := str(door.get("socket_id", ""))
+			if str(door.get("usage", "")) == "SEALED":
+				continue
+			if bool(measured.get(socket, true)):
+				continue
+			push_warning("zone: door '%s/%s' is %s and measures solid: "
+					% [rid, socket, str(door.get("usage", ""))]
+					+ str(blockers.get(socket, "nothing the probe could "
+						+ "name")))
 	build["apertures"] = apertures
-	var arrival_ok := {}
-	for name: String in build.get("anchors", {}):
-		arrival_ok[name] = RoomAudit.arrival_is_supported(space,
-				(build["anchors"] as Dictionary)[name])
-	build["arrival_ok"] = arrival_ok
+	measured_apertures = apertures
+	build["arrival_ok"] = evidence["arrival_ok"]
+	build["plug_clear"] = evidence["plug_clear"]
+	build["plug_placement"] = evidence["plug_placement"]
+	measured_placement = evidence["plug_placement"]
 
 ## Can a body ARRIVE here? Not "is this space empty".
 ##
@@ -685,9 +1072,21 @@ func _measure_layout_evidence(build: Dictionary) -> void:
 func send_layout_result(build: Dictionary) -> void:
 	if zone_id == "":
 		return
-	BridgeClient.send_intent({"type": "layout_result",
-			"zone_id": zone_id,
-			"layout": ZoneBuilder.layout_to_json(build)})
+	var message := {"type": "layout_result", "zone_id": zone_id,
+			"layout": ZoneBuilder.layout_to_json(build)}
+	# THE IDENTITY THIS BUILD STARTED WITH, and never the current one.
+	#
+	# Omitted only when the bridge offered none: `LayoutResult` makes it
+	# optional so a client older than the field behaves as it always
+	# did, and "absent" means "cannot be checked", never "stale". A
+	# client that HAD one and left it off would be indistinguishable
+	# from that older client, which is why this reads the captured field
+	# rather than asking again.
+	if proposal_id != "":
+		message["proposal_id"] = proposal_id
+	if attempt >= 0:
+		message["attempt"] = attempt
+	BridgeClient.send_intent(message)
 
 ## Which stations are online, for whoever is carrying progress out.
 func stations_reached() -> Dictionary:
@@ -714,7 +1113,7 @@ func _station_came_online(station_id: String, note: String) -> void:
 	resume_anchor = station_id
 	BridgeClient.send_intent({"type": "station_reached",
 			"zone_id": zone_id, "station_id": station_id})
-	if hud != null:
+	if hud != null and note != "":
 		hud.toast(note, Color(0.45, 1.0, 0.8), 2.5)
 
 ## Travel only. A station provides travel and save and NOT loadout
@@ -974,6 +1373,7 @@ func _track_chamber() -> void:
 		if bounds.has_point(player.global_position):
 			if index != _current_chamber:
 				_current_chamber = index
+				_rooms_entered[_room_id_of(index)] = true
 				playtime.enter_chamber(index)
 				playtime.enter_chamber_activities(index)
 				chamber_entered.emit(index)
@@ -1008,10 +1408,16 @@ func _process(delta: float) -> void:
 			best_rank = rank
 			best_distance = distance
 
+	var line := ""
 	if total > 0:
-		hud.set_objective_text("CHECKS %d/%d CLAIMED" % [claimed, total])
-	else:
-		hud.set_objective_text("")
+		line = "CHECKS %d/%d CLAIMED" % [claimed, total]
+	# THE ACTIVITY IN HAND, alongside the Zone's standing count. Cleared
+	# the moment it completes or fails, so the line never advertises an
+	# attempt that is over.
+	if _activity_note != "":
+		line = ("%s   ·   %s" % [line, _activity_note]) if line != "" \
+				else _activity_note
+	hud.set_objective_text(line)
 
 	# A long stretch with nothing claimed usually means the player is lost
 	# or exploring; either way it is the one moment a designer's aside is

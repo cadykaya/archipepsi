@@ -434,6 +434,46 @@
         "title": "KeyCollected",
         "type": "object"
       },
+      "LatchFired": {
+        "additionalProperties": false,
+        "description": "A physics latch satisfied in the world.\n\n**Idempotent by `package_id/latch_id`, because a latch is monotone.**\nDesign 2 \u00a75.7 says a satisfied latch is never re-evaluated, so the\nsame latch twice is one latch and a resend after a dropped\nconnection is the normal case rather than an error.\n\n**Validated against the packages the manifest accepted, not against\nthe message.** `record_key` once took any `key_id` the engine sent\nand wrote it into monotone save data; the identity of a latch is\nchecked the same way a key's is now \u2014 against what the Zone's\ncommitted layout actually holds \u2014 because a latch nobody placed\nwould otherwise become permanent state describing nothing.",
+        "properties": {
+          "type": {
+            "const": "latch_fired",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "package_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Package Id",
+            "type": "string"
+          },
+          "latch_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Latch Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "package_id",
+          "latch_id"
+        ],
+        "title": "LatchFired",
+        "type": "object"
+      },
       "LayoutResult": {
         "additionalProperties": false,
         "description": "What the engine placed, offered to the bridge for validation.\n\nNested rather than flattened: the payload is the engine's shape and\nit grows as the engine measures more, so carrying it whole keeps\nthis message from needing a field per measurement. `layout.validate`\nis what types it, and it is strict about every part it reads.\n\n**Offered, not committed.** Only a layout that passes validation\nbecomes a manifest; a failing one is refused and never acquires a\ndigest.",
@@ -454,6 +494,35 @@
             "additionalProperties": true,
             "title": "Layout",
             "type": "object"
+          },
+          "attempt": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt"
+          },
+          "proposal_id": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "minLength": 16,
+                "pattern": "^[0-9a-f]{16}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Proposal Id"
           }
         },
         "required": [
@@ -752,6 +821,7 @@
         "grant_local_reward": "#/$defs/GrantLocalReward",
         "hello": "#/$defs/Hello",
         "key_collected": "#/$defs/KeyCollected",
+        "latch_fired": "#/$defs/LatchFired",
         "layout_result": "#/$defs/LayoutResult",
         "leave_zone": "#/$defs/LeaveZone",
         "lock_opened": "#/$defs/LockOpened",
@@ -821,6 +891,9 @@
       },
       {
         "$ref": "#/$defs/StationReached"
+      },
+      {
+        "$ref": "#/$defs/LatchFired"
       },
       {
         "$ref": "#/$defs/LayoutResult"
@@ -1153,7 +1226,8 @@
               "rail",
               "wind_volume",
               "bounce_pad",
-              "moving_platform"
+              "moving_platform",
+              "powered_door"
             ],
             "title": "Tag",
             "type": "string"
@@ -1368,6 +1442,36 @@
             "maxItems": 8,
             "title": "Doors",
             "type": "array"
+          },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
           },
           "keys": {
             "default": [],
@@ -1894,6 +1998,12 @@
             ],
             "default": null
           },
+          "active_proposal_id": {
+            "default": "",
+            "maxLength": 16,
+            "title": "Active Proposal Id",
+            "type": "string"
+          },
           "completed_zone_count": {
             "default": 0,
             "minimum": 0,
@@ -2179,6 +2289,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -2385,6 +2525,8 @@
             "anyOf": [
               {
                 "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
                 "type": "string"
               },
               {
@@ -2398,6 +2540,8 @@
             "anyOf": [
               {
                 "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -3062,6 +3206,8 @@
               "GENERATING",
               "ZONE_READY",
               "ZONE_ACTIVE",
+              "ZONE_DORMANT",
+              "ZONE_FAILED",
               "ZONE_AVAILABLE",
               "FINALE_ONLY",
               "WAITING_FOR_AP",
@@ -3100,6 +3246,38 @@
             "default": false,
             "title": "Holding Finale",
             "type": "boolean"
+          },
+          "resume_zone_id": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Resume Zone Id",
+            "type": "string"
+          },
+          "resume_zone_name": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Resume Zone Name",
+            "type": "string"
+          },
+          "discard_zone_id": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Discard Zone Id",
+            "type": "string"
+          },
+          "discard_zone_name": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Discard Zone Name",
+            "type": "string"
+          },
+          "revisitable": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneHandle"
+            },
+            "title": "Revisitable",
+            "type": "array"
           },
           "signal_keys": {
             "default": 0,
@@ -3842,6 +4020,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -4886,6 +5094,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -5130,6 +5368,36 @@
             "maxItems": 8,
             "title": "Doors",
             "type": "array"
+          },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
           },
           "keys": {
             "default": [],
@@ -5430,6 +5698,29 @@
         "title": "Zone",
         "type": "object"
       },
+      "ZoneHandle": {
+        "additionalProperties": false,
+        "description": "Enough to offer a Zone and no more: what to send, what to show.",
+        "properties": {
+          "zone_id": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "display_name": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Display Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_id"
+        ],
+        "title": "ZoneHandle",
+        "type": "object"
+      },
       "ZoneKeySpec": {
         "additionalProperties": false,
         "description": "A Zone-local key. Not an Archipelago item, and never one.\n\nNo location id, never scouted, never sent, does not survive the Zone.\nIt is a lock state on generated geometry, which is what buys\nmetroidvania structure with zero multiworld risk.",
@@ -5494,6 +5785,15 @@
             "title": "Reached Stations",
             "type": "array"
           },
+          "latched": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Latched",
+            "type": "array"
+          },
           "resume_anchor": {
             "anyOf": [
               {
@@ -5525,6 +5825,19 @@
           "used_fallback": {
             "title": "Used Fallback",
             "type": "boolean"
+          },
+          "proposal_id": {
+            "default": "",
+            "maxLength": 16,
+            "title": "Proposal Id",
+            "type": "string"
+          },
+          "attempt": {
+            "default": 0,
+            "maximum": 3,
+            "minimum": 0,
+            "title": "Attempt",
+            "type": "integer"
           },
           "manifest": {
             "anyOf": [
@@ -5604,6 +5917,15 @@
             "minimum": 0,
             "title": "Layout Refusals",
             "type": "integer"
+          },
+          "unhostable_rooms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Unhostable Rooms",
+            "type": "array"
           },
           "allocated_location_ids": {
             "items": {
@@ -6013,7 +6335,8 @@
               "rail",
               "wind_volume",
               "bounce_pad",
-              "moving_platform"
+              "moving_platform",
+              "powered_door"
             ],
             "title": "Tag",
             "type": "string"
@@ -6228,6 +6551,36 @@
             "maxItems": 8,
             "title": "Doors",
             "type": "array"
+          },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
           },
           "keys": {
             "default": [],
@@ -6732,6 +7085,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -6938,6 +7321,8 @@
             "anyOf": [
               {
                 "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
                 "type": "string"
               },
               {
@@ -6951,6 +7336,8 @@
             "anyOf": [
               {
                 "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -7615,6 +8002,8 @@
               "GENERATING",
               "ZONE_READY",
               "ZONE_ACTIVE",
+              "ZONE_DORMANT",
+              "ZONE_FAILED",
               "ZONE_AVAILABLE",
               "FINALE_ONLY",
               "WAITING_FOR_AP",
@@ -7653,6 +8042,38 @@
             "default": false,
             "title": "Holding Finale",
             "type": "boolean"
+          },
+          "resume_zone_id": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Resume Zone Id",
+            "type": "string"
+          },
+          "resume_zone_name": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Resume Zone Name",
+            "type": "string"
+          },
+          "discard_zone_id": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Discard Zone Id",
+            "type": "string"
+          },
+          "discard_zone_name": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Discard Zone Name",
+            "type": "string"
+          },
+          "revisitable": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneHandle"
+            },
+            "title": "Revisitable",
+            "type": "array"
           },
           "signal_keys": {
             "default": 0,
@@ -8316,6 +8737,36 @@
             "maxItems": 8,
             "title": "Doors",
             "type": "array"
+          },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
           },
           "keys": {
             "default": [],
@@ -9361,6 +9812,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -9605,6 +10086,36 @@
             "maxItems": 8,
             "title": "Doors",
             "type": "array"
+          },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
           },
           "keys": {
             "default": [],
@@ -9905,6 +10416,29 @@
         "title": "Zone",
         "type": "object"
       },
+      "ZoneHandle": {
+        "additionalProperties": false,
+        "description": "Enough to offer a Zone and no more: what to send, what to show.",
+        "properties": {
+          "zone_id": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "display_name": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Display Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_id"
+        ],
+        "title": "ZoneHandle",
+        "type": "object"
+      },
       "ZoneKeySpec": {
         "additionalProperties": false,
         "description": "A Zone-local key. Not an Archipelago item, and never one.\n\nNo location id, never scouted, never sent, does not survive the Zone.\nIt is a lock state on generated geometry, which is what buys\nmetroidvania structure with zero multiworld risk.",
@@ -9967,6 +10501,15 @@
               "type": "string"
             },
             "title": "Reached Stations",
+            "type": "array"
+          },
+          "latched": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Latched",
             "type": "array"
           },
           "resume_anchor": {
@@ -10042,6 +10585,15 @@
             "minimum": 0,
             "title": "Layout Refusals",
             "type": "integer"
+          },
+          "unhostable_rooms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Unhostable Rooms",
+            "type": "array"
           },
           "allocated_location_ids": {
             "items": {
@@ -10277,6 +10829,12 @@
           }
         ],
         "default": null
+      },
+      "active_proposal_id": {
+        "default": "",
+        "maxLength": 16,
+        "title": "Active Proposal Id",
+        "type": "string"
       },
       "completed_zone_count": {
         "default": 0,

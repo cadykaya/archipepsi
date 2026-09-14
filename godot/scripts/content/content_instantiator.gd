@@ -47,6 +47,11 @@ const BUILD_PROCEDURAL := "procedural"
 const SPAN_TOLERANCE := 0.005
 
 const REASON_NO_SHELL := "no_authored_shell_for_type"
+
+## The meta key an adopted shell's root carries, naming which shell it
+## is. Read by `SceneDigest`, which cannot ask the builder after the
+## fact.
+const SHELL_META := "authored_shell"
 const REASON_UNKNOWN := "unknown_shell_id"
 const REASON_MALFORMED := "malformed_shell_id"
 const REASON_INCOMPATIBLE := "incompatible_shell"
@@ -659,6 +664,15 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 	# later would leave a window in which the shell is a hole.
 	var doors := authored_door_plan(entry, chamber)
 	_place_closures(root, doors, size)
+	# AND STAMPED ON THE SCENE, not only in the answer.
+	#
+	# `authored_shell` below tells the CALLER which shell answered, which
+	# is no use to anything holding the node afterwards -- `SceneDigest`
+	# has to say which authored geometry a replay ran against and had
+	# nothing in the tree to read. A procedural room has sockets, meshes
+	# and hulls like any other, so nothing about the SHAPE distinguishes
+	# one; a consumer that wants to know has to be told.
+	root.set_meta(SHELL_META, str(entry.get("id", "")))
 	var result := {
 		"root": root,
 		# WHICH SHELL ACTUALLY ANSWERED, stamped by the only code that
@@ -681,8 +695,20 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		# from where the rooms join. The connector is a transform on the
 		# envelope and may sit outside it; this is the interior region
 		# the arrival has to be safe in.
-		"player_entry": _player_entry(entry),
+		"player_entry": _player_entry(entry, chamber),
 		"exit_offset": _exit_offset(entry, size, chamber),
+		# DOES THIS ROOM HAVE A DEPARTURE AT ALL?
+		#
+		# `_exit_offset` answers "where", and for a shell with no way
+		# onward it answers with the far face of the envelope -- a
+		# fictional departure through a back wall. That is fine as a
+		# number and wrong as a fact: a DESTINATION shell (the Terminus
+		# has `entry`, `branch_east` and `branch_west` and no `exit`) is
+		# a room the chain must stop at, not a room the chain walks
+		# through into solid geometry. So the fact travels separately,
+		# and `zone_builder` refuses a Zone that asks a destination to
+		# be a through-room rather than inventing the door.
+		"has_departure": _has_departure(entry, chamber),
 		"bounds": AABB(
 			Vector3(-size.x / 2.0, -FLOOR_ALLOWANCE, 0.0),
 			Vector3(size.x, size.y + FLOOR_ALLOWANCE, size.z)),
@@ -995,17 +1021,62 @@ static func _entry_offset(entry: Dictionary,
 ## since S12 and was read by NOTHING -- a vocabulary word with no
 ## consumer, which is how three rooms came to declare an arrival region
 ## that no probe ever looked at.
-static func _player_entry(entry: Dictionary) -> Dictionary:
+## **RESOLVED PER ARRIVING SOCKET** (`09_ROOM_CONTRACT.md` §11.3).
+## The restriction this lifts was real and was the engine's: a room had
+## ONE arrival region however many openings it had, so a four-door
+## junction entered from the side vouched for the space in front of its
+## front door. A shell names a region after the socket it belongs to and
+## that one is used; a shell with a single unnamed region is every shell
+## that exists today and is unchanged.
+##
+## Which socket the chain arrives by is the composer's answer, carried
+## on `arrive_edge` and resolved through `socket_for_edge` -- the same
+## lookup `_entry_offset` uses, so the region and the attachment point
+## cannot come from different doors.
+static func _player_entry(entry: Dictionary,
+		chamber: Dictionary = {}) -> Dictionary:
+	var arriving := ""
+	var assigned := socket_for_edge(entry, chamber, "arrive_edge")
+	if not assigned.is_empty():
+		arriving = str(assigned.get("name", ""))
+	var fallback := {}
 	for volume: Variant in entry.get("volumes", []):
 		if typeof(volume) != TYPE_DICTIONARY:
 			continue
 		var v: Dictionary = volume
-		if str(v.get("kind", "")) == "player_entry":
-			return {
-				"position": _vector(v.get("center", []), Vector3.ZERO),
-				"extent": _vector(v.get("size", []), Vector3.ONE),
-			}
-	return {}
+		if str(v.get("kind", "")) != "player_entry":
+			continue
+		var region := {
+			"position": _vector(v.get("center", []), Vector3.ZERO),
+			"extent": _vector(v.get("size", []), Vector3.ONE),
+		}
+		var named := str(v.get("name", ""))
+		if named != "" and arriving != "" and named == arriving:
+			return region
+		if fallback.is_empty():
+			fallback = region
+	return fallback
+
+## Whether this shell offers a way onward at all: an ASSIGNED departure
+## through the door the composer named, or a declared `exit`/`end_b`
+## socket. Neither is not a shell to walk through.
+##
+## A shell that declares NO sockets is the pre-ruling case and keeps the
+## old answer: the whole authored-shell contract post-dates it, every
+## procedural builder is in it, and a room that never declared a
+## doorway cannot be said to have withheld one.
+static func _has_departure(entry: Dictionary,
+		chamber: Dictionary = {}) -> bool:
+	if not socket_for_edge(entry, chamber, "depart_edge").is_empty():
+		return true
+	var declared := false
+	for socket: Variant in entry.get("sockets", []):
+		if typeof(socket) != TYPE_DICTIONARY:
+			continue
+		declared = true
+		if str((socket as Dictionary).get("name", "")) in ["exit", "end_b"]:
+			return true
+	return not declared
 
 static func _exit_offset(entry: Dictionary, size: Vector3,
 		chamber: Dictionary = {}) -> Vector3:
@@ -1144,10 +1215,33 @@ static func _band_misfit(entry: Dictionary, chamber: Dictionary) -> String:
 	return "provides %s elevation band(s) and this chamber declares a '%s'" \
 			% [named, kind]
 
+## How close to a doorway's centre counts as standing IN it: half the
+## 2.4 m opening plus a body's radius. A capsule nearer than this is in
+## the gap or across its edge.
+const IN_THE_DOORWAY := ChamberBuilders.DOOR_WIDTH / 2.0 \
+		+ Constants.PLAYER_RADIUS
+
 ## Enemy placement stays the generator's decision; the shell only says
-## WHERE it is safe to put one. An authored shell with no `enemy_spawn`
-## volume gets its enemies at the room's centre, which is what a
-## builder-provided room would have done.
+## WHERE it is safe to put one.
+##
+## THE FALLBACK WAS THE DOORWAY, AND IT SAID IT WAS THE CENTRE. This
+## used to read "an authored shell with no `enemy_spawn` volume gets its
+## enemies at the room's centre, which is what a builder-provided room
+## would have done" -- and then wrote `Vector3.ZERO`. A shell's local
+## origin is not its centre: it is the z = 0 wall, which is the wall the
+## ENTRY DOORWAY is cut into.
+##
+## So the hall, given ten enemies and no `enemy_spawn` volume, stood
+## every one of them in its own 2.4 m entry. `aperture_polarity` read
+## the doorway as solid, the bridge refused the layout on "door
+## 'c002/entry' is USED and the engine measured it as solid", and
+## `zone_001` was recomposed three times and never opened.
+##
+## The centre this always meant is `_objective`'s, and the better answer
+## is the largest surface the shell itself declares standable. Either
+## way nobody is left in an opening: a spawn inside one is pushed toward
+## the middle of the room until it is out, because a player body-blocked
+## in the only door is a defect whether or not a probe trips over it.
 static func _enemy_spawns(entry: Dictionary, chamber: Dictionary) -> Array:
 	var zones: Array = []
 	for volume: Variant in entry.get("volumes", []):
@@ -1155,27 +1249,97 @@ static func _enemy_spawns(entry: Dictionary, chamber: Dictionary) -> Array:
 			continue
 		if str((volume as Dictionary).get("kind", "")) == "enemy_spawn":
 			zones.append(volume)
+	var middle := _room_middle(entry)
+	if zones.is_empty():
+		zones.append(_fallback_spawn_zone(entry, middle))
+	var doorways: Array[Vector3] = []
+	for raw: Variant in entry.get("sockets", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var socket: Dictionary = raw
+		if str((socket as Dictionary).get("kind", "")) != "doorway":
+			continue
+		doorways.append(_vector((socket as Dictionary).get("position", []),
+				Vector3.ZERO))
 
 	var spawns: Array = []
 	var index := 0
 	for group: Dictionary in chamber.get("enemies", []):
 		for i in int(group.get("count", 0)):
-			var at := Vector3.ZERO
-			if not zones.is_empty():
-				var zone: Dictionary = zones[index % zones.size()]
-				var centre := _vector(zone.get("center", []), Vector3.ZERO)
-				var extent := _vector(zone.get("size", []), Vector3.ZERO)
-				# Spread deterministically inside the declared volume: the
-				# same seed must lay out the same room on every machine.
-				at = centre + Vector3(
-					fposmod(float(index) * 1.7, maxf(extent.x, 0.01))
-							- extent.x / 2.0,
-					0.0,
-					fposmod(float(index) * 2.3, maxf(extent.z, 0.01))
-							- extent.z / 2.0)
-			spawns.append({"archetype": group["archetype"], "position": at})
+			var zone: Dictionary = zones[index % zones.size()]
+			var centre := _vector(zone.get("center", []), middle)
+			var extent := _vector(zone.get("size", []), Vector3.ZERO)
+			# Spread deterministically inside the declared volume: the
+			# same seed must lay out the same room on every machine.
+			var at := centre + Vector3(
+				fposmod(float(index) * 1.7, maxf(extent.x, 0.01))
+						- extent.x / 2.0,
+				0.0,
+				fposmod(float(index) * 2.3, maxf(extent.z, 0.01))
+						- extent.z / 2.0)
+			spawns.append({"archetype": group["archetype"],
+					"position": out_of_any_doorway(at, doorways, middle)})
 			index += 1
 	return spawns
+
+## The middle of the room, by the one convention this file already uses
+## for "somewhere in the room and not at its wall".
+static func _room_middle(entry: Dictionary) -> Vector3:
+	var size := _vector(entry.get("size", []), Vector3(10.0, 4.0, 10.0))
+	return Vector3(0.0, 0.0, size.z / 2.0)
+
+## Where enemies go in a shell that declares no `enemy_spawn` volume:
+## spread over the largest surface it says a body can stand on, inset by
+## a body's radius so the spread cannot hang one over the lip. A shell
+## with no surfaces at all gets the middle of its envelope.
+static func _fallback_spawn_zone(entry: Dictionary,
+		middle: Vector3) -> Dictionary:
+	var size := _vector(entry.get("size", []), Vector3(10.0, 4.0, 10.0))
+	var best := {"center": [middle.x, middle.y, middle.z],
+			"size": [size.x / 2.0, 0.0, size.z / 2.0]}
+	var widest := 0.0
+	for raw: Variant in entry.get("surfaces", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var surface: Dictionary = raw
+		var extent := _pair(surface.get("extent", []))
+		var area := extent.x * extent.y
+		if area <= widest:
+			continue
+		widest = area
+		var centre := _vector(surface.get("center", []), middle)
+		best = {"center": [centre.x, centre.y, centre.z],
+				"size": [maxf(extent.x - 2.0 * Constants.PLAYER_RADIUS,
+						0.5), 0.0,
+					maxf(extent.y - 2.0 * Constants.PLAYER_RADIUS, 0.5)]}
+	return best
+
+## NOBODY SPAWNS IN A DOORWAY.
+##
+## The opening is the only way through the room, so a body standing in
+## it is a player stuck in a door. Pushed from the doorway toward the
+## middle of the room, which is a direction that always exists because a
+## doorway is cut into a wall. Bounded, because two doorways close
+## together could otherwise pass a body back and forth.
+static func out_of_any_doorway(at: Vector3, doorways: Array,
+		middle: Vector3) -> Vector3:
+	var here := at
+	for _tries in 8:
+		var worst := -1.0
+		var mouth := Vector3.ZERO
+		for raw: Variant in doorways:
+			var door: Vector3 = raw
+			var apart := Vector2(here.x - door.x, here.z - door.z).length()
+			if apart < IN_THE_DOORWAY and (worst < 0.0 or apart < worst):
+				worst = apart
+				mouth = door
+		if worst < 0.0:
+			return here
+		var away := Vector3(middle.x - mouth.x, 0.0, middle.z - mouth.z)
+		if away.length() < 0.01:
+			away = Vector3(0.0, 0.0, 1.0)
+		here += away.normalized() * (IN_THE_DOORWAY - worst + 0.1)
+	return here
 
 static func _objective(entry: Dictionary, size: Vector3) -> Vector3:
 	for volume: Variant in entry.get("volumes", []):

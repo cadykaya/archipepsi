@@ -56,6 +56,8 @@ func _run() -> void:
 	_every_refusal_says_which_one_it_was()
 	_a_fallback_room_never_reports_itself_authored()
 	_godot_decides_the_shared_cases_the_way_they_say()
+	_the_physics_digest_vectors_agree_with_the_bridge()
+	await _a_scene_digest_changes_when_the_scene_does()
 	_cleanup()
 	# Both awaited. A function containing `await` called WITHOUT one
 	# returns at its first suspend, and the suite goes on to print OK
@@ -95,6 +97,9 @@ func _run() -> void:
 	_reduced_motion_actually_reaches_zero()
 	_preferences_never_enter_campaign_truth()
 	_the_postgame_has_somewhere_to_attach()
+	_the_theme_pack_binds_authored_pixels()
+	_a_missing_required_texture_falls_back_and_says_so()
+	_a_built_room_is_painted_from_the_pack()
 	if failures == 0:
 		print("GODOT CONTENT TESTS OK")
 		get_tree().quit(0)
@@ -1720,3 +1725,382 @@ func _cluster_is_accepted(entry: Dictionary) -> bool:
 	var reg := ContentRegistry.new()
 	reg._accept("probe_pack", entry.duplicate(true))
 	return reg.entries.has(str(entry.get("id", "")))
+
+
+## LEVEL 1 OF THREE: THE TWO LANES BUILD THE SAME BYTES.
+##
+## `package_digest` is what a replay's evidence is filed under. The
+## engine computes it over the package it is about to replay; the bridge
+## recomputes it over the package it is about to accept. A disagreement
+## means evidence about one package read as evidence about another, and
+## since neither lane can see the other's serializer, the only thing that
+## catches a drift is a shared vector run through both.
+##
+## **CONSTRUCTED, NEVER COPIED.** Every vector carries the `canonical`
+## string beside its package, and hashing that string would prove the
+## file is self-consistent and nothing at all about this code. Each
+## package is built into a `PhysicsPackage` and serialized by this lane's
+## own writer, and BOTH the bytes and the digest are compared -- a digest
+## check alone cannot say whether two implementations built different
+## objects or serialized the same object differently.
+##
+## This says nothing about `scene_digest` describing a real scene (level
+## 2) and nothing about anything being replayable (level 3). There is no
+## physics runtime. `docs/AMALGAM_BRIDGE.md` §6.2b.
+func _the_physics_digest_vectors_agree_with_the_bridge() -> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/physics_digest_vectors.json")
+	var fixture: Variant = JSON.parse_string(text)
+	if typeof(fixture) != TYPE_DICTIONARY:
+		_check(false, "the physics digest vectors did not parse")
+		return
+	var vectors: Array = (fixture as Dictionary).get("vectors", [])
+	_check(vectors.size() >= 9,
+			"%d physics digest vectors; the shared set is nine"
+			% vectors.size())
+	var agreed := 0
+	for raw: Variant in vectors:
+		var vector: Dictionary = raw
+		var name := str(vector.get("name", "?"))
+		var errors: Array[String] = []
+		var package := PhysicsPackage.from_dict(
+				vector.get("package", {}) as Dictionary, errors)
+		if package == null:
+			_check(false, "vector '%s' would not build: %s"
+					% [name, str(errors)])
+			continue
+		# THE BYTES FIRST. A digest that matches over different bytes is
+		# a collision and a digest that differs tells you nothing about
+		# WHERE; this says which character.
+		var mine := package.canonical_text()
+		var theirs := str(vector.get("canonical", ""))
+		if mine != theirs:
+			_check(false, "vector '%s' serializes differently:\n"
+					% name + "    bridge: %s\n    engine: %s\n    %s"
+					% [theirs, mine, _first_difference(theirs, mine)])
+			continue
+		_check(package.digest() == str(vector.get("digest", "")),
+				"vector '%s' hashes to %s and the bridge says %s"
+				% [name, package.digest(), str(vector.get("digest", ""))])
+		agreed += 1
+	print("  PHYSICS DIGEST %d of %d vectors agree byte for byte"
+			% [agreed, vectors.size()])
+	# AND THE SERIALIZER IS NOT A CONSTANT. Every vector agreeing would
+	# also be true of a writer that returned the stored string, so one
+	# package is changed in the smallest way the contract admits and the
+	# digest has to move with it.
+	var first: Dictionary = (vectors[0] as Dictionary).get("package", {})
+	var moved: Dictionary = first.duplicate(true)
+	((moved["setup"] as Dictionary)["bodies"] as Array)[0]["mass_kg"] = 80.5
+	var errors: Array[String] = []
+	var changed := PhysicsPackage.from_dict(moved, errors)
+	_check(changed != null and changed.digest()
+				!= str((vectors[0] as Dictionary).get("digest", "")),
+			"half a kilogram changed nothing in the digest, so the "
+			+ "serializer is not reading the package")
+	# AND A FIELD THIS LANE DOES NOT MODEL IS REFUSED, not dropped: a
+	# producer that silently ignores a new field digests less than the
+	# bridge hashes.
+	var extra: Dictionary = first.duplicate(true)
+	extra["restitution"] = 0.4
+	var complaints: Array[String] = []
+	_check(PhysicsPackage.from_dict(extra, complaints) == null
+				and not complaints.is_empty(),
+			"a package carrying a field this lane does not model was "
+			+ "accepted, so its digest would be computed over less than "
+			+ "the bridge hashes")
+
+## Where two canonical strings first part company, for a reader.
+func _first_difference(a: String, b: String) -> String:
+	var limit := mini(a.length(), b.length())
+	for i in limit:
+		if a[i] != b[i]:
+			return ("first differ at %d: ...%s... vs ...%s..."
+					% [i, a.substr(maxi(0, i - 20), 45),
+						b.substr(maxi(0, i - 20), 45)])
+	return "identical for %d characters; one is longer (%d vs %d)" \
+			% [limit, a.length(), b.length()]
+
+
+## LEVEL 2: THE DIGEST NAMES THE SCENE IT RAN AGAINST.
+##
+## A constant passes the bridge. Sixteen hex characters is all it can
+## see, so `"0123456789abcdef"` folds into `package_digest` exactly as a
+## real digest does and nothing on that side will ever tell them apart.
+## That makes the falsification the engine lane's, and this is it: a
+## digest is only evidence if changing the scene changes it.
+##
+## Three properties, and the second is what makes the first mean
+## anything. The same scene digests the same however its nodes were
+## added; a collider moved by a MILLIMETRE digests differently; and a
+## move a tenth of the quantum does not, because a digest that churns on
+## single-precision noise invalidates evidence nothing changed about.
+func _a_scene_digest_changes_when_the_scene_does() -> void:
+	var bounds := AABB(Vector3(-20, -5, -20), Vector3(40, 20, 40))
+	var first := _digest_room(false)
+	add_child(first["root"] as Node3D)
+	await get_tree().physics_frame
+	var baseline := SceneDigest.of_room(first["root"] as Node3D, bounds,
+			first["bodies"] as Array)
+	_check(baseline.length() == 16
+				and baseline == baseline.to_lower()
+				and baseline.is_valid_hex_number(false),
+			"a scene digest is sixteen lowercase hex characters, and "
+			+ "this is '%s'" % baseline)
+
+	# THE SAME ROOM, BUILT IN A DIFFERENT ORDER. Scene-tree order is not
+	# stable across saves, so an unordered digest makes the same scene
+	# digest differently on reload -- which reads as "the room changed"
+	# every time anybody loads it.
+	var shuffled := _digest_room(true)
+	add_child(shuffled["root"] as Node3D)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(shuffled["root"] as Node3D, bounds,
+				shuffled["bodies"] as Array) == baseline,
+			"the same room built in a different node order digested "
+			+ "differently, so every reload would invalidate its own "
+			+ "evidence")
+
+	# A MILLIMETRE. `EPSILON_JOIN` is 1e-3 m, so this is the smallest
+	# move anything in this game reasons about.
+	var wall := (first["root"] as Node3D).get_node("obstacle") as Node3D
+	var was := wall.position
+	wall.position = was + Vector3(0.001, 0.0, 0.0)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(first["root"] as Node3D, bounds,
+				first["bodies"] as Array) != baseline,
+			"a collider moved a millimetre left the digest unchanged, "
+			+ "so it is a constant with extra steps")
+
+	# AND A TENTH OF THE QUANTUM DOES NOT MOVE IT.
+	wall.position = was + Vector3(SceneDigest.QUANTUM / 10.0, 0.0, 0.0)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(first["root"] as Node3D, bounds,
+				first["bodies"] as Array) == baseline,
+			"a move a tenth of the quantum changed the digest, so it "
+			+ "churns on single-precision noise and invalidates "
+			+ "evidence nothing changed about")
+
+	# AND THE BODY'S OWN STATE IS IN IT. Mass is the contract's and is
+	# already in `package_digest`; the starting VELOCITY is not, and a
+	# crate that begins the replay moving is a different experiment.
+	wall.position = was
+	var crate := (first["bodies"] as Array)[0] as RigidBody3D
+	crate.linear_velocity = Vector3(0.5, 0.0, 0.0)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(first["root"] as Node3D, bounds,
+				first["bodies"] as Array) != baseline,
+			"a body that starts the replay moving digested the same as "
+			+ "one at rest")
+	(first["root"] as Node3D).queue_free()
+	(shuffled["root"] as Node3D).queue_free()
+
+## A small room with a floor, an obstacle and one crate. `shuffled` adds
+## the same nodes in the opposite order, which is the only difference.
+func _digest_room(shuffled: bool) -> Dictionary:
+	var root := Node3D.new()
+	root.name = "digest_room"
+	var pieces: Array[Node3D] = [
+		_solid("floor", Vector3(0, -0.5, 0), Vector3(40, 1, 40)),
+		_solid("obstacle", Vector3(3, 1, 0), Vector3(1, 2, 4)),
+		_solid("ledge", Vector3(-6, 0.5, 2), Vector3(2, 1, 2)),
+	]
+	if shuffled:
+		pieces.reverse()
+	for piece: Node3D in pieces:
+		root.add_child(piece)
+	var crate := RigidBody3D.new()
+	crate.name = "crate_a"
+	crate.mass = 80.0
+	crate.position = Vector3(0, 1, 0)
+	# FROZEN, because a digest is of the SETUP.
+	#
+	# The first version of this left the crate falling, so the baseline
+	# and every comparison were taken at different points of its arc and
+	# two of the four properties failed -- a statement about the test,
+	# not about the digest. A replay harness builds the setup, digests
+	# it, and THEN steps; a body already moving when the digest is taken
+	# means the digest is of a moment nobody can reproduce.
+	crate.freeze = true
+	crate.freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	var shape := CollisionShape3D.new()
+	shape.name = "hull"
+	var box := BoxShape3D.new()
+	box.size = Vector3(1, 1, 1)
+	shape.shape = box
+	crate.add_child(shape)
+	root.add_child(crate)
+	return {"root": root, "bodies": [crate]}
+
+func _solid(named: String, at: Vector3, size: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = named
+	body.position = at
+	var shape := CollisionShape3D.new()
+	shape.name = "hull"
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	body.add_child(shape)
+	return body
+
+# --- the authored theme pack, actually bound -----------------------------
+
+## DOES A PLAYED ROOM USE ARTY'S PIXELS, OR IS IT FALLING BACK?
+##
+## "The Zone still builds" is true of a pack that binds nothing at all,
+## which is why it is not the claim. `ThemeMaterials.is_authored` asks
+## where the albedo came from, and these ask it of a material a builder
+## actually made.
+##
+## **And the control is here too.** Four of them: a required role removed
+## from the descriptor, a digest that does not match, a role with no
+## fallback, and the universal role a pack must never paint. A binder
+## nobody has watched fail is a binder nobody can trust.
+func _the_theme_pack_binds_authored_pixels() -> void:
+	ThemePack.clear_descriptor()
+	ThemeMaterials.reset_cache()
+	_check(ThemePack.bound(),
+			"the exported pack at %s is there and parses"
+			% ThemePack.DESCRIPTOR)
+	if not ThemePack.bound():
+		return
+	var theme := "concrete_facility"
+	var floor_mat := ThemeMaterials.floor_mat(theme)
+	var wall_mat := ThemeMaterials.wall_mat(theme)
+	_check(ThemeMaterials.is_authored(floor_mat),
+			"'%s' floor is painted from the exported pack (%s)"
+			% [theme, "" if floor_mat.albedo_texture == null
+				else str(floor_mat.albedo_texture.resource_path)])
+	_check(ThemeMaterials.is_authored(wall_mat),
+			"'%s' wall is painted from the exported pack (%s)"
+			% [theme, "" if wall_mat.albedo_texture == null
+				else str(wall_mat.albedo_texture.resource_path)])
+	# AND IT IS THE FILE THE DESCRIPTOR NAMES, not merely some texture.
+	_check(floor_mat.albedo_texture != null
+				and str(floor_mat.albedo_texture.resource_path)
+					== "res://content/theme/%s_floor.png" % theme,
+			"and it is the file the descriptor names")
+	# EVERY THEME, so this is not one row that happens to work.
+	var bound_themes := 0
+	for other: String in (ThemePack.descriptor().get("themes", []) as Array):
+		if ThemeMaterials.is_authored(ThemeMaterials.floor_mat(other)):
+			bound_themes += 1
+	_check(bound_themes >= 6,
+			"%d of the six exported themes bind an authored floor"
+			% bound_themes)
+
+	# HAZARD IS UNIVERSAL. Not per-theme, in any theme, however the pack
+	# is built -- `ASSET_INVENTORY.md` says a theme-tinted hazard stripe
+	# is one the player has to re-learn.
+	for other: String in (ThemePack.descriptor().get("themes", []) as Array):
+		_check(ThemePack.texture_for(other, "hazard") == null,
+				"'%s' resolves hazard from the shared material and not "
+				% other + "from the pack")
+		_check(not ThemeMaterials.is_authored(
+					ThemeMaterials.hazard_mat(other)),
+				"and `hazard_mat` is the shared one in '%s'" % other)
+
+	# ONE HOP, THROUGH THE DESCRIPTOR'S OWN TABLE. `wall_ribbed` is
+	# shipped by one theme; every other theme's request lands on `wall`.
+	var ribbed := ThemePack.texture_for("gothic_stone", "wall_ribbed")
+	_check(ribbed != null
+				and str(ribbed.resource_path).ends_with(
+					"gothic_stone_wall.png"),
+			"a role a theme does not ship falls back exactly once, to "
+			+ "the role the descriptor names (%s)"
+			% ("null" if ribbed == null else str(ribbed.resource_path)))
+	# AND `glass: null` MEANS NO FALLBACK.
+	_check(ThemePack.texture_for("gothic_stone", "glass") == null,
+			"a role the descriptor gives no fallback for is a refusal "
+			+ "rather than a lookup that lands somewhere nobody chose")
+
+## THE CONTROL: a required authored texture is missing, and the
+## documented fallback is what happens.
+##
+## Produced by installing a descriptor with the row removed, because
+## deleting a shipped file is not something a test may do and a control
+## that cannot be run is not a control.
+func _a_missing_required_texture_falls_back_and_says_so() -> void:
+	var real := ThemePack.descriptor().duplicate(true)
+	if real.is_empty():
+		return
+	var theme := "concrete_facility"
+	var broken := real.duplicate(true)
+	(broken["textures"] as Dictionary).erase("%s/floor" % theme)
+	ThemePack.use_descriptor(broken)
+	ThemeMaterials.reset_cache()
+	_check(not ThemeMaterials.is_authored(ThemeMaterials.floor_mat(theme)),
+			"a theme that ships no floor falls back to the procedural "
+			+ "texture rather than painting nothing")
+	_check(ThemePack.disqualified(theme) == ["floor"],
+			"and the engine can say which role disqualified it: %s"
+			% str(ThemePack.disqualified(theme)))
+	# THE REST OF THE PACK STILL BINDS. Contract clause 3: a missing
+	# role disqualifies THAT ROLE, not the pack and not the theme.
+	_check(ThemeMaterials.is_authored(ThemeMaterials.wall_mat(theme)),
+			"and the same theme's wall is still painted from the pack")
+
+	# AND A DIGEST THAT DOES NOT MATCH IS NOT BOUND (clause 4).
+	var stale := real.duplicate(true)
+	((stale["textures"] as Dictionary)["%s/wall" % theme]
+			as Dictionary)["sha256_16"] = "0000000000000000"
+	ThemePack.use_descriptor(stale)
+	ThemeMaterials.reset_cache()
+	_check(not ThemeMaterials.is_authored(ThemeMaterials.wall_mat(theme)),
+			"a texture whose digest does not match its descriptor row "
+			+ "is not bound, which is what makes the row a claim")
+
+	# AND A PACK THAT PAINTS THE UNIVERSAL ROLE IS REFUSED.
+	var painted := real.duplicate(true)
+	(painted["textures"] as Dictionary)["%s/hazard" % theme] = {
+		"covers_m": 4.0, "size_px": 128, "sha256_16": "0000000000000000",
+		"texture": "theme/%s_accent.png" % theme,
+	}
+	ThemePack.use_descriptor(painted)
+	ThemeMaterials.reset_cache()
+	_check(ThemePack.refusals(theme) == ["hazard"],
+			"a pack shipping its own hazard is refused rather than "
+			+ "bound: %s" % str(ThemePack.refusals(theme)))
+	_check(ThemePack.texture_for(theme, "hazard") == null,
+			"and the shared material is still what answers")
+
+	ThemePack.clear_descriptor()
+	ThemeMaterials.reset_cache()
+
+## AND A ROOM A PLAYER STANDS IN IS PAINTED WITH IT.
+##
+## The two above are about the binder. This is about a room: build one
+## through the ordinary content path and count the surfaces whose albedo
+## came from the pack. A binder that answers correctly and is never asked
+## by a builder would pass both of the others.
+func _a_built_room_is_painted_from_the_pack() -> void:
+	ThemePack.clear_descriptor()
+	ThemeMaterials.reset_cache()
+	var chamber := {
+		"id": "painted", "type": "arena", "width": 16.0, "depth": 14.0,
+		"wall_height": 5.0, "objective": "kill_all", "enemies": [],
+		"activities": [], "features": [],
+	}
+	var built := ContentInstantiator.build_chamber(chamber,
+			"concrete_facility")
+	var root: Node3D = built["root"]
+	var authored := 0
+	var fell_back := 0
+	for node: Node in root.find_children("*", "MeshInstance3D", true,
+			false):
+		var mesh := node as MeshInstance3D
+		var material := mesh.material_override as StandardMaterial3D
+		if material == null or material.albedo_texture == null:
+			continue
+		if ThemeMaterials.is_authored(material):
+			authored += 1
+		else:
+			fell_back += 1
+	print("  THEME a built room: %d surface(s) painted from the pack, "
+			% authored + "%d from the procedural fallback" % fell_back)
+	_check(authored > 0,
+			"a room built through the ordinary content path is painted "
+			+ "with the exported pack, not only falling back (%d "
+			% authored + "authored, %d procedural)" % fell_back)
+	root.free()

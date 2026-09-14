@@ -34,6 +34,7 @@ try:
     from . import constants as C
     from .echo import EchoInterpretation
     from .protocol import (
+        MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
         CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
@@ -44,6 +45,7 @@ except ImportError:  # pragma: no cover
     import constants as C
     from echo import EchoInterpretation
     from protocol import (
+        MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
         CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
@@ -135,8 +137,13 @@ def accept_zone(save: CampaignSave, zone: Zone, *,
     rec = _require_zone(save, zone.zone_id)
     if rec.state != "PENDING_GENERATION":
         raise ValueError(f"Zone '{zone.zone_id}' is {rec.state}, not pending")
+    # A FRESH PROPOSAL REMEMBERS NOTHING ABOUT THE OLD ONE. Room ids
+    # repeat across generations — `c004` in this Zone is not the `c004`
+    # the engine measured in the last one — so a placement verdict
+    # against replaced content is not evidence about the replacement.
     return _rebuild(save, zones=_replace_zone(
         save, zone.zone_id, state="GENERATED", zone=zone.model_dump(),
+        unhostable_rooms=(),
         used_fallback=used_fallback))
 
 
@@ -159,6 +166,17 @@ def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     if rec.state not in REVISITABLE_ZONE_STATES:
         raise ValueError(
             f"Zone '{zone_id}' is {rec.state}; nothing to enter")
+    # A ZONE THAT NEVER LAID OUT IS NOT ENTERABLE (owner decision,
+    # 2026-09-12). It is DORMANT like any other, and the only thing
+    # behind the portal is geometry the validator has already refused
+    # three times: entering it gets the layout refused again and puts it
+    # straight back. Refused here rather than only in the Hub, so a
+    # replayed intent or a debug command cannot route around it.
+    if rec.layout_exhausted:
+        raise ValueError(
+            f"Zone '{zone_id}' never laid out after "
+            f"{rec.layout_refusals} attempts; it cannot be entered. "
+            "Discard it to release its Checks.")
     # A FINISHED ZONE IS VISITED, NOT RE-ENTERED. Sending it back through
     # ACTIVE would make it reserve its old locations again — colliding
     # with whatever Zone is genuinely in flight, and re-opening Checks
@@ -290,12 +308,6 @@ def commit_layout(save: CampaignSave, zone_id: str,
                                         layout_state="ACCEPTED"))
 
 
-#: How many refused layouts a Zone gets before it stops being composed
-#: again. Three, because a second attempt is an ordinary bad roll and a
-#: fourth is a defect nothing here can fix by trying harder.
-MAX_LAYOUT_REFUSALS = 3
-
-
 def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
     """The validator rejected this Zone's geometry. Compose it again.
 
@@ -316,7 +328,17 @@ def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
     **And it stops.** A client that refuses every layout would otherwise
     compose forever, so after `MAX_LAYOUT_REFUSALS` the Zone goes DORMANT
     instead: still holding its locations, out of the player's way, and
-    waiting for a human rather than spinning.
+    waiting for the player to discard it. `ZoneRecord.layout_exhausted`
+    is that state, `hub_mode_for` turns it into `ZONE_FAILED`, and the
+    Hub offers ABANDON rather than a way back into geometry it already
+    refused. Nothing abandons it automatically: that releases the Zone's
+    locations, which is the player's call and has a cost.
+
+    **A COMMITTED Zone is preserved, not recomposed.** A refused replay
+    of an already-accepted layout is a different situation: the Zone was
+    solved once, the manifest is the thing every later load replays, and
+    the player's progress is recorded against its rooms. That Zone goes
+    DORMANT with its manifest, its content and its progress intact.
 
     Idempotent in the sense that matters: a second refusal counts once
     more and does the same thing.
@@ -324,7 +346,54 @@ def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
     rec = _require_zone(save, zone_id)
     if rec.state in TERMINAL_ZONE_STATES:
         return save
-    tries = rec.layout_refusals + 1
+    # A STALE RESULT FOR A ZONE THAT ALREADY GAVE UP CHANGES NOTHING.
+    #
+    # The budget stopped the RECOMPOSING and not the counting: a client
+    # that kept sending `layout_result` kept incrementing a field bounded
+    # at 99, and the hundredth refusal raised `ValidationError` out of
+    # this function — a schema exception where a domain refusal belongs.
+    # Reachable because the Hub then offered the failed Zone as a way
+    # back in, so the loop had somewhere to come from.
+    #
+    # Ignored rather than refused, because a resend after a dropped
+    # connection is the ordinary case and never an error — the same
+    # reasoning `_progress` is written under.
+    if rec.layout_exhausted:
+        return save
+    # SATURATING, not wrapping and not unbounded. Past the budget the
+    # count answers no question anyone asks: it is spent either way, and
+    # the alternative is a persisted field that grows until it leaves
+    # its own bounds.
+    tries = min(rec.layout_refusals + 1, MAX_LAYOUT_REFUSALS)
+    # A COMMITTED ZONE IS NOT RECOMPOSED.
+    #
+    # The recovery below clears `zone` and `manifest` whatever the Zone
+    # was — so a refused REPLAY of an already-accepted layout threw the
+    # committed manifest away and sent the Zone back to be composed
+    # again: a DIFFERENT Zone, under the same id, holding the same
+    # Checks, with the player's collected keys and opened locks still
+    # recorded against rooms that no longer exist.
+    #
+    # Law 47c: the layout is solved once and committed, and every later
+    # load replays it. `commit_layout` already refuses to replace a
+    # committed manifest; this is the other door into the same room.
+    # Regeneration recovery is for a FRESH proposal, and a saved Zone is
+    # not one.
+    #
+    # So a Zone that has committed a manifest keeps it, keeps its
+    # content and keeps its progress. The refusal still counts, still
+    # takes the Zone out of the player's hands, and still stops it being
+    # played against geometry the validator rejected — what it does not
+    # do is quietly replace the Zone they were halfway through.
+    if rec.manifest is not None:
+        return _rebuild(save,
+                        zones=_replace_zone(save, zone_id,
+                                            state="DORMANT",
+                                            layout_state="REFUSED",
+                                            layout_refusals=tries),
+                        active_zone_id=None
+                        if save.active_zone_id == zone_id
+                        else save.active_zone_id)
     if tries < MAX_LAYOUT_REFUSALS:
         return _rebuild(save,
                         zones=_replace_zone(save, zone_id,
@@ -350,6 +419,58 @@ def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
                     active_zone_id=None if clear else save.active_zone_id)
 
 
+def reselect_hosts(save: CampaignSave, zone_id: str, rooms,
+                   zone: Zone) -> CampaignSave:
+    """The engine could not host a required return; try other rooms.
+
+    **A different host, not a different Zone.** A branch destination is
+    a dead end and takes a return device, and whether a body can stand
+    somewhere in that room is a measurement only the engine takes.
+    Until now the answer "not in this room" cost the whole Zone: the
+    layout was refused, the record went back to PENDING_GENERATION, and
+    Epsilon composed a different Zone against the same Checks. Measured
+    in a live campaign: a Zone exhausted on a return-location failure.
+
+    So the content and the allocation stay exactly as they are and only
+    the GRAPH changes — `zone` is the same chambers recomposed with
+    those rooms barred as destinations. The branch is not dropped and
+    branching is not suppressed; it moves.
+
+    **Only a fresh proposal.** A record holding a committed manifest is
+    a solved Zone the player may be part-way through, and Law 47c says
+    every later load replays it; that one keeps its manifest and is
+    handled by `refuse_layout`. This raises rather than quietly doing
+    the wrong thing to it.
+
+    **Monotone, which is what makes it terminate.** Every refused room
+    accumulates, so no host is offered twice and the composer cannot
+    oscillate between two of them. The set is finite, so the worst case
+    is a Zone with fewer branches — or none, which is the chain it was
+    always allowed to be — rather than a Zone that is lost.
+    """
+    rec = _require_zone(save, zone_id)
+    if rec.manifest is not None:
+        raise ValueError(
+            f"Zone '{zone_id}' has a committed manifest; a solved Zone "
+            "is replayed, never recomposed")
+    if rec.state in TERMINAL_ZONE_STATES:
+        raise ValueError(f"Zone '{zone_id}' is {rec.state}")
+    known = set(rec.unhostable_rooms)
+    fresh = {str(r) for r in rooms} - known
+    if not fresh:
+        raise ValueError(
+            f"Zone '{zone_id}' was already told about {sorted(known)}; "
+            "re-selecting on the same rooms would not terminate")
+    if zone.zone_id != zone_id:
+        raise ValueError(
+            f"recomposed zone '{zone.zone_id}' is not '{zone_id}'")
+    return _rebuild(save, zones=_replace_zone(
+        save, zone_id, state="GENERATED", zone=zone.model_dump(),
+        layout_state="UNCERTIFIED",
+        unhostable_rooms=tuple(sorted(known | fresh))),
+        active_zone_id=zone_id)
+
+
 def record_key(save: CampaignSave, zone_id: str, key_id: str) -> CampaignSave:
     """A Zone-local key collected. Idempotent by `key_id`."""
     def known(rec):
@@ -360,6 +481,59 @@ def record_key(save: CampaignSave, zone_id: str, key_id: str) -> CampaignSave:
                 + (f"; it holds {sorted(declared)}" if declared
                    else " and holds none"))
     return _progress(save, zone_id, lambda p: p.with_key(key_id), known)
+
+
+def _accepted_packages(rec: ZoneRecord) -> dict[str, set[str]]:
+    """`package_id -> declared latch ids`, from the COMMITTED manifest.
+
+    The manifest and not the Zone, because a package is a physical fact
+    the engine measured and the bridge accepted — `AMALGAM_BRIDGE.md`
+    §5.6 option 2. A Zone whose layout has not been committed has no
+    accepted packages at all, which is the honest answer: nothing has
+    been measured, so nothing can have latched.
+    """
+    manifest = rec.manifest or {}
+    out: dict[str, set[str]] = {}
+    for entry in manifest.get("packages") or ():
+        pkg = entry.get("package") or {}
+        out[str(entry.get("package_id"))] = {
+            str(c.get("latch_id"))
+            for c in (pkg.get("latch_conditions") or ())}
+    return out
+
+
+def record_latch(save: CampaignSave, zone_id: str, package_id: str,
+                 latch_id: str) -> CampaignSave:
+    """A physics latch fired. Idempotent by `package_id/latch_id`.
+
+    **The live signal is not the state.** What is persisted is the
+    approved consequence: the event is checked against the packages the
+    committed manifest accepted, and only then does it join a monotone
+    set that survives a reload. Design 2 §5.7 says a satisfied latch is
+    never cleared by reset or death, and quitting is a reset.
+
+    Refused rather than recorded when the package is not one this Zone's
+    layout accepted, or when it is and does not declare that latch. A
+    latch nobody placed would otherwise become permanent save data
+    describing nothing — and monotone sets never give anything back.
+    """
+    def known(rec):
+        packages = _accepted_packages(rec)
+        if package_id not in packages:
+            raise ValueError(
+                f"Zone '{zone_id}' accepted no physics package "
+                f"'{package_id}'"
+                + (f"; it holds {sorted(packages)}" if packages
+                   else " and its committed layout holds none"))
+        declared = packages[package_id]
+        if latch_id not in declared:
+            raise ValueError(
+                f"package '{package_id}' in Zone '{zone_id}' declares no "
+                f"latch '{latch_id}'"
+                + (f"; it declares {sorted(declared)}" if declared
+                   else " and declares none"))
+    ref = f"{package_id}/{latch_id}"
+    return _progress(save, zone_id, lambda p: p.with_latch(ref), known)
 
 
 def record_lock(save: CampaignSave, zone_id: str, room_id: str,
@@ -503,6 +677,29 @@ def claim_zone_check(save: CampaignSave, *, zone_id: str, location_id: int,
     rec = _require_zone(save, zone_id)
     if rec.state != "ACTIVE":
         raise ValueError(f"Zone '{zone_id}' is {rec.state}, not ACTIVE")
+    # ACTIVE IS NOT ACCEPTED, and the gap between them is a real window.
+    #
+    # A graph Zone goes ACTIVE the moment the player walks in and stays
+    # UNCERTIFIED until its layout comes back and is validated. That gap
+    # is where the client is holding the player still, and it is exactly
+    # when a reward that fires on its own -- a timer, a kill, an activity
+    # completing -- would have claimed against geometry nobody had
+    # checked. `refuse_layout` then puts the Zone back to be composed
+    # again, and the Check has already gone to Archipelago and cannot be
+    # recalled. The refusal test proved what happens AFTER a rejection;
+    # this is the waiting period.
+    #
+    # A ZONE WITH NO `edges` IS EXEMPT, explicitly rather than by
+    # accident. It is the pre-graph shape, it sends no `layout_result`,
+    # and its `layout_state` is UNCERTIFIED forever -- so requiring
+    # acceptance of it would make every legacy Zone unplayable.
+    # `ZoneController._await_verdict` draws the line in the same place.
+    if rec.zone is not None and rec.zone.edges \
+            and rec.layout_state != "ACCEPTED":
+        raise ValueError(
+            f"Zone '{zone_id}' has not had its layout accepted "
+            f"(layout_state {rec.layout_state}); a graph Zone cannot "
+            "claim a Check against geometry the bridge has not validated")
     if location_id not in rec.allocated_location_ids:
         raise ValueError(f"Zone '{zone_id}' does not hold {location_id}")
     if any(p.location_id == location_id for p in save.pending_checks):
@@ -688,6 +885,7 @@ TRANSITIONS = (
     release_location, claim_zone_check, buy_shop_stock, confirm_check,
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
-    rest_zone, record_key, record_lock, record_station,
+    rest_zone, record_key, record_latch, record_lock, record_station,
+    reselect_hosts,
     commit_layout, refuse_layout,
 )

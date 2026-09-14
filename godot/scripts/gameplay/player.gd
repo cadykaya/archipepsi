@@ -57,7 +57,42 @@ const BOB_SWAY := 0.020
 const LAND_DIP_MAX := 0.15
 
 var hp: float = Constants.PLAYER_MAX_HP
-var input_frozen := false
+## NAMED REASONS THIS BODY IS BEING HELD STILL.
+##
+## `input_frozen` was one boolean with two owners: `Main._update_modal`
+## wrote it on every menu open and close, and `ZoneController` wrote it
+## while waiting for the bridge's layout verdict. Whichever wrote last
+## won, so closing the inventory released an acceptance hold and an
+## acceptance released a pause. A hold is not a state, it is a CLAIM,
+## and claims compose.
+var _holds := {}
+
+## Held while ANY claim stands. Read by everything that was reading the
+## boolean; assigning it still works and takes the unnamed claim, which
+## is what a test or a single-reason caller wants.
+var input_frozen: bool:
+	get:
+		return not _holds.is_empty()
+	set(value):
+		if value:
+			_holds["direct"] = true
+		else:
+			_holds.erase("direct")
+
+## Claim this body, under a name only this holder uses.
+func hold(reason: String) -> void:
+	_holds[reason] = true
+
+## Drop one claim. The body moves again when the last one goes.
+func release(reason: String) -> void:
+	_holds.erase(reason)
+
+## Which claims stand, for a test or a diagnostic that needs to say why.
+func holds() -> Array:
+	var out: Array = _holds.keys()
+	out.sort()
+	return out
+
 var gravity_mult := 1.0
 var speed_mult := 1.0
 ## The rest of the S5 derived stat stack, refreshed every physics frame
@@ -404,6 +439,14 @@ static func create() -> Player:
 	shape.shape = capsule
 	shape.position = Vector3(0, Constants.PLAYER_HEIGHT / 2.0, 0)
 	player.add_child(shape)
+	# Snap matched to the step the body can now climb, so ground within
+	# one step stays underfoot on slopes and small undulations.
+	#
+	# It does NOT on its own make walking down a tread stop being a
+	# short fall -- every precondition Godot documents was already met
+	# and the body fell anyway. `_follow_the_step_down` is what fixes
+	# that half, and the comment there records why the snap cannot.
+	player.floor_snap_length = float(Constants.MAX_VERTICAL_STEP)
 	var camera := Camera3D.new()
 	camera.name = "Camera3D"
 	camera.position = Vector3(0, Constants.PLAYER_EYE_HEIGHT, 0)
@@ -554,6 +597,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.rotation.x = clampf(camera.rotation.x, -PI / 2.0, PI / 2.0)
 
 func _physics_process(delta: float) -> void:
+	# A BODY THAT HAS LEFT THE WORLD DOES NOT MOVE THROUGH IT.
+	#
+	# Taking the exit portal removes the Zone, and this body goes with
+	# it -- but a queued physics frame still arrives, and `move_and_slide`
+	# on a body whose space has been freed is "Parameter
+	# `body->get_space()` is null", which is a hard crash on the most
+	# important transition in the game. Measured on a played Zone with
+	# every Check claimed: the portal that ends a Zone ended the process
+	# instead.
+	if not is_inside_tree() or get_world_3d() == null:
+		return
 	_pulse_cooldown = maxf(0.0, _pulse_cooldown - delta)
 	if _dead:
 		return
@@ -657,6 +711,9 @@ func _physics_process(delta: float) -> void:
 					control * 0.4)
 			velocity.z = lerpf(velocity.z, direction.z * speed,
 					control * 0.4)
+		# HOW HARD THEY ARE TRYING TO WALK, which is not how fast they
+		# are going. See `_shove_what_i_walked_into`.
+		_walk_intent = Vector3(direction.x * speed, 0.0, direction.z * speed)
 
 		if Input.is_action_pressed("fire_pulse"):
 			_fire_static_pulse()
@@ -679,10 +736,15 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = lerpf(velocity.x, 0.0, 0.2)
 		velocity.z = lerpf(velocity.z, 0.0, 0.2)
+		_walk_intent = Vector3.ZERO
 
 	var falling_speed := -velocity.y
 	var was_airborne := not is_on_floor()
+	_climb_a_step_the_law_promises(delta)
+	_note_a_step_down_ahead(delta)
 	move_and_slide()
+	_follow_the_step_down()
+	_shove_what_i_walked_into()
 	if was_airborne and is_on_floor():
 		_resolve_pending_slam()
 	_update_footsteps(delta, falling_speed)
@@ -778,6 +840,197 @@ static func camera_feel_offset(phase: float, weight: float,
 			sin(phase * 2.0) * BOB_RISE * weight * motion - dip * motion,
 			0.0)
 
+## THE STEP THE MOVEMENT LAW ALREADY PROMISED.
+##
+## `MAX_VERTICAL_STEP` was a number the generator built levels around and
+## the body never honoured. `chamber_builders` says so where it raises a
+## tower -- "each platform rises `step_rise` <= MAX_VERTICAL_STEP, so the
+## mandatory route up is base-kit" -- and this file's own gallery lip
+## carries the other half of the evidence: "there is no step-up anywhere
+## in `player.gd` [...] so a 0.35 m kerb stops a walking player dead",
+## worked around there by notching a gap in the lip rather than by
+## giving the body the step.
+##
+## Measured on the played proposal: pedestal steps rise 0.4 m, the
+## gallery deck lip 0.35 m, tower platforms `step_rise`. All of them
+## were jumps. `DestructibleCover` is 1.4 m and `ReactiveBarrel` 1.1 m,
+## both above the limit, so cover stays cover -- the step does not turn
+## a firefight into a stroll over the crates.
+##
+## Godot's `CharacterBody3D` has no automatic step-up, so this is the
+## usual three-probe form: is the foot blocked, is there room to rise,
+## is there room to stand once risen. Nothing moves unless all three
+## agree, and the body is lifted only as far as the surface it found --
+## never the full limit on faith.
+func _climb_a_step_the_law_promises(delta: float) -> void:
+	if not is_on_floor():
+		return
+	# WHAT THE PLAYER IS TRYING TO DO, not what the wall left of it.
+	#
+	# The first version read `velocity`, and `move_and_slide` has already
+	# resolved that against the obstacle by the time the next frame
+	# arrives: pressed against a 0.8 m ledge the body reported a single
+	# frame of intent and then zero, so the probe below almost never ran
+	# and the step looked unimplemented. `_walk_intent` is the field this
+	# file already keeps for the question "what are they trying to walk
+	# into" -- `_shove_what_i_walked_into` reads it for the same reason.
+	var wish := Vector3(_walk_intent.x, 0.0, _walk_intent.z) * delta
+	if wish.length_squared() < 0.000001:
+		return
+	# 1. IS THE FOOT ACTUALLY BLOCKED? A clear path needs no step, and
+	#    lifting the body on an open floor is how a step-up turns into a
+	#    hover.
+	if not test_move(global_transform, wish):
+		return
+	var step := float(Constants.MAX_VERTICAL_STEP)
+	# 2. IS THERE ROOM TO RISE? This is the headroom test: a body under a
+	#    low ceiling may not step, which keeps a crawl space a crawl
+	#    space rather than a staircase.
+	if test_move(global_transform, Vector3.UP * step):
+		return
+	var lifted := global_transform.translated(Vector3.UP * step)
+	# PAST THE LIP, NOT UP TO IT. One frame of walking is about 0.12 m
+	# and the capsule's axis sits `PLAYER_RADIUS` behind its leading
+	# surface, so probing one frame ahead tests a column of air in front
+	# of the step and reports "nothing under the landing" while standing
+	# against a perfectly good tread. The landing is probed from where
+	# the BODY would stand, which is a radius past the edge it is
+	# touching.
+	var reach := wish.normalized() * (Constants.PLAYER_RADIUS + 0.05)
+	# 3. AND ROOM TO STAND ONCE RISEN, at the place the move would end.
+	if test_move(lifted, reach):
+		return
+	# WHERE THE SURFACE ACTUALLY IS. Drop back down from the lifted spot
+	# and take the rise the floor gives, so a 0.4 m pedestal costs 0.4 m
+	# and not the whole limit.
+	var ahead := lifted.translated(reach)
+	var probe := KinematicCollision3D.new()
+	if not test_move(ahead, Vector3.DOWN * (step + 0.05), probe):
+		return                     # nothing under it: that is a ledge
+	# A THING YOU ARE MEANT TO PUSH IS NOT A STAIR.
+	#
+	# The first version of this climbed a 60 kg crate instead of shoving
+	# it, and `physics_driver` caught it: three seconds of walking moved
+	# the crate 0.01 m because the player was standing on top of it. The
+	# step reads STATIC level geometry; anything the game hands the
+	# player as manipulable stays an obstacle for
+	# `_shove_what_i_walked_into` to deal with.
+	if probe.get_collider() is ManipulableBody:
+		return
+	var rise := step - probe.get_travel().length()
+	if rise <= 0.01 or rise > step + 0.001:
+		return
+	global_position += Vector3.UP * rise
+
+
+## AND THE SAME STEP, WALKED DOWN.
+##
+## The ascent above was only half the defect, and the other half read
+## like a Godot bug for a batch: `floor_snap_length` is
+## `MAX_VERTICAL_STEP`, `velocity.y` is zero, `up_direction` is +Y and
+## the motion mode is grounded -- every precondition Godot's own floor
+## snap documents -- and a body walking off a 0.4 m tread still left
+## the floor and free-fell the drop.
+##
+## MEASURED, not reasoned about. A probe in `_physics_process` printed
+## the state on the frame contact was lost and then called
+## `apply_floor_snap()` by hand:
+##
+##     lost floor y=0.741 vy=+0.0000 down_hit=true trav=0.109
+##       after apply_floor_snap: floor=false y=0.741 (moved 0.000)
+##
+## Ground was 0.341 m below and the cast stopped at 0.109 m, because
+## the body has NOT yet cleared the tread it is leaving: the capsule's
+## lower hemisphere is still within its radius of that tread's top
+## edge, and a straight-down cast from where the body ended hits THE
+## EDGE. 0.109 m is the exact capsule-against-corner solution for this
+## geometry, so the number named its own cause. The normal off an edge
+## is 55 degrees from vertical -- past `floor_max_angle` -- so the snap
+## classifies the staircase as a wall and refuses, and the body falls.
+## Raising `floor_snap_length` can never help: the obstruction is
+## 0.1 m away, not 1 m.
+##
+## So the drop is measured from a probe placed a radius PAST the edge,
+## where the cast reaches real ground, and the body is then walked down
+## by that much over the following frames -- through `move_and_collide`,
+## so it rides the edge rather than clipping through it, and with
+## `velocity.y` held at zero so no fall accumulates into the landing.
+##
+## WHAT THIS DELIBERATELY DOES NOT DO. There is no adhesion: the budget
+## comes from a surface that was actually found, within one step, at a
+## standable angle, and a body beside a pit finds nothing and falls as
+## before. A rising body is never pulled down -- a jump, a launch pad,
+## a rail and a swing each clear the budget on sight. And the limit is
+## `MAX_VERTICAL_STEP`, the same number the ascent uses, so the rule is
+## the symmetric one: what you can walk up, you can walk down.
+func _note_a_step_down_ahead(delta: float) -> void:
+	if not is_on_floor():
+		return
+	# A DELIBERATE DEPARTURE OWNS THE BODY. The jump has already set
+	# `velocity.y` by the time this runs, so a rising body is visible
+	# here and is never a descent.
+	if velocity.y > 0.0 or _launch_flight or _rider != null \
+			or _swing_time > 0.0:
+		_step_down_left = 0.0
+		return
+	var wish := Vector3(_walk_intent.x, 0.0, _walk_intent.z) * delta
+	if wish.length_squared() < 0.000001:
+		return
+	var step := float(Constants.MAX_VERTICAL_STEP)
+	# PAST THE LIP, for the same reason the ascent probes past it: a
+	# cast from where the body stands hits the edge it is standing on.
+	var reach := wish.normalized() * (Constants.PLAYER_RADIUS + 0.05)
+	# SOMETHING AHEAD IS THE ASCENT'S CASE, not this one.
+	if test_move(global_transform, reach):
+		return
+	var ahead := global_transform.translated(reach)
+	var probe := KinematicCollision3D.new()
+	if not test_move(ahead, Vector3.DOWN * (step + 0.05), probe):
+		return                     # nothing within a step: a real drop
+	var drop := probe.get_travel().length()
+	# The ground continues under the body, or it falls away further than
+	# a step does. Neither is a stair.
+	if drop <= 0.02 or drop > step:
+		return
+	# A SURFACE THAT CANNOT BE STOOD ON IS NOT A TREAD, and a thing the
+	# player is meant to shove is not one either.
+	if probe.get_normal().angle_to(Vector3.UP) > floor_max_angle:
+		return
+	if probe.get_collider() is ManipulableBody:
+		return
+	_step_down_left = drop + 0.05
+
+
+## The other half of the pair, after the walk has happened.
+func _follow_the_step_down() -> void:
+	if is_on_floor():
+		_step_down_left = 0.0
+		return
+	if _step_down_left <= 0.0:
+		return
+	if velocity.y > 0.0 or _launch_flight or _rider != null \
+			or _swing_time > 0.0:
+		_step_down_left = 0.0
+		return
+	# ONLY ONTO SOMETHING. `move_and_collide` travels the WHOLE distance
+	# when nothing stops it, so an unchecked call at the lip of a pit
+	# would teleport the body a metre down into it.
+	if not test_move(global_transform, Vector3.DOWN * _step_down_left):
+		_step_down_left = 0.0
+		return
+	var before := global_position.y
+	move_and_collide(Vector3.DOWN * _step_down_left)
+	var travelled := before - global_position.y
+	_step_down_left -= travelled
+	# The drop is WALKED. Without this the frames spent riding the edge
+	# would accumulate speed and arrive as a fall, which is the thump
+	# and the camera dip this whole function exists to remove.
+	velocity.y = 0.0
+	apply_floor_snap()
+	if is_on_floor() or travelled < 0.001 or _step_down_left <= 0.01:
+		_step_down_left = 0.0
+
+
 func camera_ray(distance: float, spread_dir: Vector3 = Vector3.ZERO) -> Dictionary:
 	var from := camera.global_position
 	var dir := -camera.global_transform.basis.z
@@ -786,7 +1039,18 @@ func camera_ray(distance: float, spread_dir: Vector3 = Vector3.ZERO) -> Dictiona
 	var to := from + dir * distance
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.exclude = [get_rid()]
-	return get_world_3d().direct_space_state.intersect_ray(query)
+	# THE SAME DEPARTURE, ASKED A DIFFERENT WAY. `get_world_3d()` is
+	# null for a node outside the tree, and this line read
+	# `.direct_space_state` off it without asking -- "Invalid access to
+	# property or key 'direct_space_state' on a base object of type
+	# 'null instance'". The interact probe and every shot run through
+	# here each frame, so the first frame after the portal fires is the
+	# one that crashes. An empty result is what "nothing is there"
+	# already means to every caller.
+	var world := get_world_3d()
+	if world == null:
+		return {}
+	return world.direct_space_state.intersect_ray(query)
 
 func _spawn_tracer(hit: Dictionary) -> void:
 	var from := camera.global_position \
@@ -946,3 +1210,71 @@ func _update_swing(delta: float) -> void:
 	var along := velocity.dot(rope)
 	if along < 0.0:
 		velocity -= rope * along * 0.5
+
+## WALKING INTO A CRATE MOVES IT, and every player can do it.
+##
+## `CharacterBody3D` does not push a `RigidBody3D`: `move_and_slide`
+## resolves the collision by sliding the character and leaves the body
+## where it was. Without this a crate is a wall that happens to have
+## mass, and the only thing in the build that could move one was a
+## harness calling `apply_central_force` -- which proves the physics and
+## nothing about the game.
+##
+## **NO CAPABILITY, NO VERB, NO ECHO.** This is the base character
+## shoving something with their body, available to every player from the
+## first Zone. `Manipulation`'s envelope is a different question --
+## whether a HOST qualifies to be relied on by content authored at
+## §29.3.2's minimum -- and it stays where it is. Routing an ordinary
+## shove through it would have made a crate an undeclared capability
+## gate, which is the one thing the environmental-agency chain must not
+## become.
+##
+## The impulse is the momentum the character was carrying into the
+## contact, scaled by how much of it was into the body rather than along
+## it. A player who walks past a crate does not fling it.
+##
+## **IT IS THE INTENT, NOT THE ACHIEVED VELOCITY**, and two wrong
+## versions got here. Reading `velocity` after `move_and_slide` gives
+## zero by construction: resolving the contact is exactly what removes
+## the component heading into the body. Reading it BEFORE the slide is
+## better and still wrong — a player already pressed against a crate is
+## being held there, so their velocity into it is near zero on every
+## frame after the first, and a three-second push moved a 60 kg crate
+## 0.07 m.
+##
+## What is constant while somebody leans on something is how hard they
+## are trying to walk, and that is `_walk_intent`. It is what a shove
+## should be proportional to, and it is what a person means by pushing.
+func _shove_what_i_walked_into() -> void:
+	for i in get_slide_collision_count():
+		var hit := get_slide_collision(i)
+		var body := hit.get_collider() as ManipulableBody
+		if body == null or body.constrained or body.freeze:
+			continue
+		# INTO the body, not along its face. `get_normal` points back at
+		# the character, so the push direction is its negation.
+		var into := -hit.get_normal()
+		var speed := _walk_intent.dot(into)
+		if speed <= 0.0:
+			continue
+		body.sleeping = false
+		body.apply_central_impulse(
+				into * speed * SHOVE_MASS_KG * get_physics_process_delta_time())
+
+## How hard the player is trying to walk this frame, in m/s, before the
+## world has had its say. Zero whenever they are not walking.
+var _walk_intent := Vector3.ZERO
+
+## HOW MUCH OF A STEP THE BODY STILL OWES, walking down one. Zero
+## except for the two or three frames a descent actually takes; see
+## `_note_a_step_down_ahead`.
+var _step_down_left := 0.0
+
+## The mass the player shoves WITH.
+##
+## A character controller has no mass -- it is kinematic -- so the
+## momentum it delivers has to be stated. Set to the player's own
+## plausible mass: a body shoves a crate about as well as it would in
+## life, a 500 kg block barely moves, and nothing here can be tuned into
+## a capability by accident.
+const SHOVE_MASS_KG := 80.0

@@ -40,7 +40,7 @@ a claim it could not keep:
 
 from __future__ import annotations
 
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal, Union, get_args
 
 from pydantic import (
     BaseModel, ConfigDict, Field, computed_field, model_validator,
@@ -164,6 +164,20 @@ class ZoneProgress(Strict):
     opened_locks: tuple[str, ...] = ()
     #: Warp stations reached.
     reached_stations: tuple[str, ...] = ()
+    #: Physics latches that have fired, as `package_id/latch_id`.
+    #:
+    #: Design 2 §5.7: once satisfied, never re-evaluated, never cleared
+    #: by reset or death — and **quitting is a reset**, which is the
+    #: whole reason this is persisted rather than held in the runtime.
+    #: The engine's live `latch_fired` signal is not state; what becomes
+    #: state is the APPROVED consequence, recorded only after the event
+    #: has been checked against the packages the committed manifest
+    #: accepted.
+    #:
+    #: Global identity, never a bare `latch_id`: two packages may both
+    #: call a latch `bridge_down`. See `physics.latch_ref`.
+    latched: tuple[str, ...] = Field(default=(), max_length=32)
+
     #: The station a re-entering player returns to. The one field that is
     #: a POSITION rather than progress: it is overwritten rather than
     #: accumulated, and losing it costs a walk rather than a run.
@@ -181,6 +195,10 @@ class ZoneProgress(Strict):
             return self
         return self.model_copy(update={
             "opened_locks": tuple(sorted({*self.opened_locks, ref}))})
+
+    def with_latch(self, ref: str) -> "ZoneProgress":
+        return self if ref in self.latched else self.model_copy(update={
+            "latched": tuple(sorted({*self.latched, ref}))})
 
     def with_station(self, station_id: str) -> "ZoneProgress":
         if station_id in self.reached_stations:
@@ -237,6 +255,45 @@ class ZoneRecord(Strict):
     #: not stuck -- but a Zone that cannot be composed soundly must stop
     #: trying, or a client that refuses every layout spins forever.
     layout_refusals: int = Field(default=0, ge=0, le=99)
+
+    #: Rooms the engine measured and could not stand this Zone's
+    #: required return device in.
+    #:
+    #: **The engine's verdict, accumulated.** A branch destination is a
+    #: dead end and takes a return; whether a body can stand somewhere
+    #: in that room, clear of the arrival, is physical and only the
+    #: engine answers it. `played_zone`'s `c012` is a `platform_path`
+    #: over a kill pit where four measured placements found nothing, and
+    #: the whole Zone used to be discarded for it.
+    #:
+    #: Monotone, so the composer cannot be handed the same host twice
+    #: and cannot oscillate between two of them — which is what makes
+    #: re-selection terminate. Not a room type and not a flag the bridge
+    #: sets: every id here was refused by a measurement.
+    unhostable_rooms: tuple[str, ...] = Field(default=(), max_length=64)
+
+    @property
+    def layout_exhausted(self) -> bool:
+        """Every layout attempt failed, and none was ever accepted.
+
+        **Three existing facts, read together; no fourth field.** No
+        manifest means nothing was ever committed. `REFUSED` means the
+        last attempt was rejected rather than merely pending. The
+        spent budget means the bridge has stopped composing it again.
+
+        This is the state the Hub must not offer as a way back in, and
+        it is deliberately NOT any of:
+
+        * a **committed** Zone whose replay was later refused — that one
+          has a manifest, keeps it, and stays re-enterable;
+        * a Zone with attempts **still left**, which goes back to
+          `PENDING_GENERATION` and is composed again;
+        * a Zone **temporarily pending** a layout, which has refused
+          nothing yet.
+        """
+        return (self.manifest is None
+                and self.layout_state == "REFUSED"
+                and self.layout_refusals >= MAX_LAYOUT_REFUSALS)
     #: `_LOC`, not `_NON_FINALE_LOC`: the finale Zone legitimately holds the
     #: goal. `_finale_owns_the_goal` below splits the two cases — this is the
     #: ONE model in the packet allowed to carry Check 030 on an
@@ -885,11 +942,73 @@ HubMode = Literal[
     "GENERATING",        # a Zone is PENDING_GENERATION; nothing to enter yet
     "ZONE_READY",        # a Zone is GENERATED but not yet entered
     "ZONE_ACTIVE",       # a Zone is ACTIVE; portal resumes it
+    "ZONE_DORMANT",      # a Zone was left with work outstanding; portal returns
+    "ZONE_FAILED",       # no layout was ever accepted; the offer is to discard
     "ZONE_AVAILABLE",    # portal generates a new ordinary Zone
     "FINALE_ONLY",       # finale unlocked and nothing ordinary remains
     "WAITING_FOR_AP",    # nothing eligible; other players hold progression
     "ALL_CHECKS_CLEARED",  # everything done; postgame, nothing left to play
 ]
+
+#: How many refused layouts a Zone gets before it stops being composed
+#: again. Three, because a second attempt is an ordinary bad roll and a
+#: fourth is a defect nothing here can fix by trying harder.
+#:
+#: Defined here rather than in `transitions`, which imports it, because
+#: `ZoneRecord.layout_exhausted` reads it too and a budget spelled twice
+#: is a budget that can disagree with itself about being spent.
+MAX_LAYOUT_REFUSALS = 3
+
+
+#: Zone state -> Hub mode, **total over `ZoneState` by assertion**.
+#:
+#: This was three entries in a dict literal inside `hub_status`, and
+#: adding `VISITING` to the lifecycle without adding it here made every
+#: snapshot raise `KeyError: 'VISITING'` the moment a player walked back
+#: into a finished Zone. A partial map over a closed vocabulary is a
+#: crash waiting for the next member; the assertion below is what makes
+#: adding one impossible to forget, and it fires at import rather than
+#: in front of a player.
+ZONE_STATE_HUB_MODE: dict[str, HubMode] = {
+    "PENDING_GENERATION": "GENERATING",
+    "GENERATED": "ZONE_READY",
+    "ACTIVE": "ZONE_ACTIVE",
+    "DORMANT": "ZONE_DORMANT",
+    # A revisit is the same experience as a first visit: the player is
+    # in a Zone. It differs in accounting, not in what the Hub should
+    # say about where they are — the snapshot invariant already said so,
+    # and `hub_status` raised KeyError instead of implementing it.
+    "VISITING": "ZONE_ACTIVE",
+    # Neither is a Zone the Hub is holding: COMPLETE and ABANDONED both
+    # release the player back to the Hub, and a COMPLETE Zone is offered
+    # through `revisitable` rather than as the one Zone in hand.
+    "COMPLETE": "",
+    "ABANDONED": "",
+}
+
+
+assert set(ZONE_STATE_HUB_MODE) == set(get_args(ZoneState)), (
+    "every ZoneState needs a Hub mode or an explicit empty one; a state "
+    "missing from this map raises KeyError on the next snapshot")
+
+
+def hub_mode_for(record) -> str:
+    """The Hub mode a held Zone shows. **The only place that decides.**
+
+    `ZONE_STATE_HUB_MODE` answers "what does this state normally show",
+    and one case needs more than the state: a Zone whose every layout
+    attempt was refused and which never had a manifest is DORMANT like
+    any other, and it must not be offered as a way back in.
+
+    **Derived, never stored.** There is no `FAILED` `ZoneState` and
+    there must not be: `state` plus `layout_state` plus "is there a
+    manifest" already answer the question, and a fourth field recording
+    the same fact is a fact that can disagree with itself.
+    """
+    if getattr(record, "layout_exhausted", False):
+        return "ZONE_FAILED"
+    return ZONE_STATE_HUB_MODE[record.state]
+
 
 #: The only two modes in which a `request_next_zone` intent is legal. Every
 #: other mode either already holds a Zone or has nothing to allocate. Both
@@ -898,11 +1017,62 @@ HubMode = Literal[
 ZONE_REQUEST_MODES = ("ZONE_AVAILABLE", "FINALE_ONLY")
 
 #: Modes in which the campaign already has a Zone and must not start another.
-ZONE_HELD_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
+#:
+#: **`ZONE_DORMANT` belongs here and did not exist**, which is the whole
+#: softlock: a Zone walked out of still reserves its Checks and still
+#: blocks generation, but nothing said so, and the Hub fell through to
+#: ZONE_AVAILABLE and offered to design a new one. The bridge then
+#: refused with "still holds locations" and there was no way back in.
+#: `ZONE_FAILED` is held too: the Zone still reserves its Checks, which
+#: is exactly why discarding it is an explicit act with a cost rather
+#: than something the bridge does on the player's behalf.
+ZONE_HELD_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE",
+                   "ZONE_DORMANT", "ZONE_FAILED")
 
-#: Modes with something the player can walk into right now. Entering one of
-#: these needs no Archipelago round-trip: the Zone already exists locally.
-ZONE_ENTERABLE_MODES = ("ZONE_READY", "ZONE_ACTIVE")
+#: Modes in which the player is STANDING IN a Zone, so `active_zone` is
+#: non-null. Not the same question as `ZONE_HELD_MODES`, and conflating
+#: the two is what made a dormant Zone impossible to describe: it is
+#: held and unoccupied at once, which the single list could not say.
+ZONE_OCCUPIED_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
+
+#: **THE LIST `portal_enabled` READS, AND THEREFORE THE LIST THE GAME
+#: OBEYS.** There is one, and this is it.
+#:
+#: Both lanes found the same defect independently, from opposite ends.
+#: `ZONE_DORMANT` was added to one of two near-identically named
+#: constants and `portal_enabled` read the other, so the portal went
+#: dark over a Zone the Hub was naming: the mode said "your Zone is
+#: waiting", `resume_zone_id` said which one, and the button was greyed
+#: out. From the engine side it looked like a portal that showed the
+#: mode's prompt and refused to fire. Neither half was wrong, which is
+#: why nothing caught it.
+#:
+#: Two spellings of one fact is how the lanes come to disagree. The
+#: proposed collapse was `ZONE_ENTERABLE_MODES = ZONE_ENTER_MODES`; an
+#: alias is still two names, a reader who greps the other one finds a
+#: definition and may add to it, and the aliasing only holds while
+#: nobody rebinds either. So `ZONE_ENTER_MODES` is gone rather than kept
+#: equal to this by hand, and the engine's `HubController` spells it the
+#: same way.
+#: **`ZONE_FAILED` is deliberately absent.** That is the whole of the
+#: repair on this side: the Hub used to advertise RETURN TO ZONE over a
+#: Zone whose geometry the validator had refused three times, the player
+#: walked in, the layout was refused again, and it went dormant once
+#: more. The only affordance on screen was the loop.
+ZONE_ENTERABLE_MODES = ("ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT")
+
+assert set(ZONE_ENTERABLE_MODES) <= set(get_args(HubMode))
+assert set(ZONE_HELD_MODES) <= set(get_args(HubMode))
+assert "ZONE_FAILED" not in ZONE_ENTERABLE_MODES + ZONE_REQUEST_MODES, (
+    "a Zone that never laid out is neither enterable nor a reason to "
+    "start another; it is a Zone to discard")
+
+
+class ZoneHandle(Strict):
+    """Enough to offer a Zone and no more: what to send, what to show."""
+
+    zone_id: str = Field(min_length=1, max_length=C.MAX_AP_STRING_LEN)
+    display_name: str = Field(default="", max_length=C.MAX_TEXT_LEN)
 
 
 class HubStatus(Strict):
@@ -943,6 +1113,51 @@ class HubStatus(Strict):
     #: Whether the Zone currently held IS the finale. Checked against
     #: `active_zone.is_finale` on the snapshot.
     holding_finale: bool = False
+
+    #: WHICH Zone the portal enters, when `mode` is one of
+    #: `ZONE_ENTERABLE_MODES`. Empty otherwise.
+    #:
+    #: **The Hub could not name a dormant Zone before this existed.**
+    #: `rest_zone` clears `active_zone_id` — nobody is standing in the
+    #: Zone any more — so the consumer's `active_zone()` came back empty
+    #: and the portal had nothing to send `enter_zone` about. The Hub
+    #: then reported ZONE_AVAILABLE and offered to design a new Zone,
+    #: which the bridge refused with "still holds locations": a softlock
+    #: reachable by walking out of a Zone and restarting, with the only
+    #: escape being to abandon it and lose the Checks and the progress.
+    resume_zone_id: str = Field(default="", max_length=C.MAX_AP_STRING_LEN)
+    resume_zone_name: str = Field(default="", max_length=C.MAX_TEXT_LEN)
+
+    #: WHICH Zone the discard affordance acts on, in `ZONE_FAILED` only.
+    #: Empty otherwise, and a non-empty value IS the offer — there is no
+    #: separate boolean, for the same reason `revisitable` has none.
+    #:
+    #: **A separate name from `resume_zone_id`, deliberately.** This Zone
+    #: must not be entered, and a single id field whose safety depended
+    #: on the reader also checking the mode is precisely how the portal
+    #: came to light up over a Zone it could not enter. A consumer
+    #: holding `discard_zone_id` cannot accidentally resume with it.
+    #:
+    #: The Hub already has the control: `hub.gd`'s `AbandonConsole`,
+    #: with its confirm step and "unclaimed Checks return to the pool".
+    #: It reads `BridgeClient.active_zone()` for the id, which is empty
+    #: for a Zone nobody is standing in — so this is what it needs.
+    discard_zone_id: str = Field(default="", max_length=C.MAX_AP_STRING_LEN)
+    discard_zone_name: str = Field(default="", max_length=C.MAX_TEXT_LEN)
+
+    #: Finished Zones the player may walk back into, newest first.
+    #:
+    #: Separate from `resume_zone_id` because they are different offers:
+    #: at most one Zone is unfinished and blocks generation, while any
+    #: number of COMPLETE ones stay open and block nothing. A revisit
+    #: reserves no locations and counts no completion twice.
+    #: Uncapped, deliberately. `CampaignSave.zones` has no limit, and
+    #: this is derived from it, so any bound here is an invented one: a
+    #: campaign that finished 65 Zones had its whole snapshot REFUSED,
+    #: which is a long game breaking on arithmetic nobody chose. A
+    #: `ZoneHandle` is an id and a name, so even several hundred is
+    #: noise beside the fold the same message already carries.
+    revisitable: tuple[ZoneHandle, ...] = ()
 
     #: The two operands of the finale gate, and the two thresholds.
     signal_keys: int = Field(default=0, ge=0)
@@ -1030,6 +1245,25 @@ class HubStatus(Strict):
             raise ValueError("postgame requires goal_sent")
         if self.mode == "ALL_CHECKS_CLEARED" and not self.goal_sent:
             raise ValueError("every Check cleared implies the goal was sent")
+        # `discard_zone_id` IS `ZONE_FAILED` AND NOTHING ELSE, because
+        # the Hub's abandon console resolves its target conditionally on
+        # exactly that: a consumer that swapped its existing lookup for
+        # this one unconditionally would show a prompt, arm a
+        # confirmation and send nothing in the three modes it already
+        # serves. Stated as an invariant rather than as a sentence in a
+        # handoff, because the handoff said it and said it wrongly.
+        #
+        # `resume_zone_id` gets NO matching rule. It is legitimately set
+        # in GENERATING — the Hub names the Zone being designed — which
+        # is not in `ZONE_ENTERABLE_MODES`, so the symmetric-looking
+        # invariant is simply false. Written here once, refused by 128
+        # tests, and left as a note so nobody adds it again for the
+        # pleasure of the symmetry.
+        if bool(self.discard_zone_id) != (self.mode == "ZONE_FAILED"):
+            raise ValueError(
+                f"discard_zone_id is set in {self.mode}; it names the "
+                "Zone the Hub offers to discard because it cannot be "
+                "entered, which is ZONE_FAILED and nothing else")
         return self
 
 
@@ -1111,6 +1345,23 @@ class CampaignSnapshot(Strict):
     local_rewards: tuple[EarnedLocalReward, ...] = ()
 
     active_zone: ZoneRecord | None = None
+    #: The identity of the proposal `active_zone` holds, for the client
+    #: to capture when it starts a build and echo on `layout_result`.
+    #:
+    #: **THE CARRIER THE GAME ACTUALLY READS.** `main.gd::_to_zone` is
+    #: driven by the snapshot and builds from
+    #: `BridgeClient.active_zone()["zone"]`; it never reads `zone_ready`,
+    #: which nothing in the client is connected to. `zone_ready` carries
+    #: the same identity for the offer, and there are paths where it is
+    #: the only one that does not reach a build — a cold restart into a
+    #: Zone that was generated but never committed gets a snapshot and
+    #: no offer at all, and a client with nothing to bind would send
+    #: nothing and be read as one that predates the field.
+    #:
+    #: Not two copies of a fact: both are `layout.proposal_digest` of the
+    #: same record, derived on every send and stored nowhere, so they
+    #: cannot disagree. `""` when no Zone is held.
+    active_proposal_id: str = Field(default="", max_length=16)
     completed_zone_count: int = Field(default=0, ge=0)
     shop: ShopState = Field(default_factory=ShopState)
     pending_checks: tuple[PendingCheck, ...] = ()
@@ -1208,32 +1459,32 @@ class CampaignSnapshot(Strict):
             )
         # DORMANT is the one non-terminal state that is never the active
         # Zone: it still reserves its Checks, and the player is in the
-        # Hub. It therefore pins NO hub mode -- the Hub shows no Zone in
-        # play, and going back is a separate affordance rather than a
-        # mode. Inventing a ZONE_DORMANT mode would put a Zone on screen
-        # that nobody is standing in.
+        # Hub. That half stands.
+        #
+        # **The other half of this comment was wrong and cost a
+        # softlock.** It said DORMANT "pins NO hub mode" and that
+        # "inventing a ZONE_DORMANT mode would put a Zone on screen that
+        # nobody is standing in", with going back left as "a separate
+        # affordance". No affordance was ever built. What shipped was a
+        # Hub reporting ZONE_AVAILABLE over a Zone holding fifteen
+        # Checks, a portal offering to design a new one, and a bridge
+        # refusing that with "still holds locations" — reachable by
+        # walking out of a Zone and restarting, escapable only by
+        # abandoning it. ZONE_DORMANT does not put a Zone on screen;
+        # it puts a DOOR on screen, which is what the player needs.
         if az is not None and az.state == "DORMANT":
             raise ValueError(
                 f"active_zone '{az.zone_id}' is DORMANT; it is yours and "
                 "you are not in it, so it is not the active Zone"
             )
 
-        expected = {
-            "PENDING_GENERATION": "GENERATING",
-            "GENERATED": "ZONE_READY",
-            "ACTIVE": "ZONE_ACTIVE",
-            # A revisit is the same experience as a first visit: the
-            # player is in a Zone. It differs in accounting, not in what
-            # the Hub should say about where they are.
-            "VISITING": "ZONE_ACTIVE",
-        }
         if az is None:
-            if self.hub.mode in ZONE_HELD_MODES:
+            if self.hub.mode in ZONE_OCCUPIED_MODES:
                 raise ValueError(
                     f"mode {self.hub.mode} claims a Zone but active_zone is null"
                 )
         else:
-            want = expected[az.state]
+            want = ZONE_STATE_HUB_MODE[az.state]
             if self.hub.mode != want:
                 raise ValueError(
                     f"active_zone is {az.state}, so mode must be {want}, "
@@ -1345,6 +1596,52 @@ class LayoutResult(Strict):
     type: Literal["layout_result"]
     zone_id: str = _ID
     layout: dict
+    #: Which ATTEMPT this result is about, echoed from `ZoneReady`.
+    #:
+    #: `proposal_id` cannot answer this: two attempts at identical
+    #: content carry the same digest, so a duplicate delivery of the
+    #: first attempt's result -- a client retrying after a dropped
+    #: connection, which the handler treats as the ordinary case --
+    #: passes the content guard and is charged as a second failure.
+    #: Measured: one real refusal became two, and three duplicates
+    #: exhaust a Zone that never failed three times.
+    #:
+    #: WHERE THE CLIENT READS IT. `ZoneReady` carries it for the offer,
+    #: but `main.gd::_to_zone` builds from
+    #: `BridgeClient.active_zone()["zone"]` -- the campaign SNAPSHOT --
+    #: and nothing in the client is connected to `zone_ready_received`.
+    #: `ZoneRecord.layout_refusals` rides on that same record, so
+    #: `ZoneController.setup` takes the ordinal and the proposal digest
+    #: from one read of one message, at the moment the build starts, and
+    #: `send_layout_result` echoes what was captured rather than what is
+    #: current. A cold restart into a Zone that was generated and never
+    #: committed gets a snapshot and no offer at all, which is the path
+    #: an offer-only carrier would bind nothing on.
+    #:
+    #: Bounded by `MAX_LAYOUT_REFUSALS` because that is where the count
+    #: saturates; past it the Zone is exhausted and no further attempt
+    #: is offered.
+    #:
+    #: None means a client that does not send it, and behaves exactly as
+    #: it does today. Absent is "cannot be checked", never "stale" --
+    #: the same rule `proposal_id` follows.
+    attempt: int | None = Field(default=None, ge=0,
+                                le=MAX_LAYOUT_REFUSALS)
+    #: Which PROPOSAL this result is about — `layout.proposal_digest` of
+    #: the Zone as it was when the client started this build, echoed
+    #: back from `ZoneReady`.
+    #:
+    #: A Zone can be replaced while a build is in flight: Epsilon
+    #: composes new content after a refusal, and `reselect_hosts`
+    #: regraphs the same content onto different hosts. A result that
+    #: arrives afterwards is about a Zone that no longer exists, and
+    #: without this it would spend the replacement's refusal budget, bar
+    #: the replacement's rooms, or commit a layout of what it replaced.
+    #:
+    #: Optional, so a client that does not send one behaves exactly as
+    #: it does today. Absent means "cannot be checked", never "stale".
+    proposal_id: str | None = Field(default=None, min_length=16,
+                                    max_length=16, pattern=r"^[0-9a-f]{16}$")
 
 
 class KeyCollected(Strict):
@@ -1363,6 +1660,29 @@ class KeyCollected(Strict):
     zone_id: str = _ID
     key_id: str = Field(min_length=1, max_length=24,
                         pattern=r"^[a-z0-9_]+$")
+
+
+class LatchFired(Strict):
+    """A physics latch satisfied in the world.
+
+    **Idempotent by `package_id/latch_id`, because a latch is monotone.**
+    Design 2 §5.7 says a satisfied latch is never re-evaluated, so the
+    same latch twice is one latch and a resend after a dropped
+    connection is the normal case rather than an error.
+
+    **Validated against the packages the manifest accepted, not against
+    the message.** `record_key` once took any `key_id` the engine sent
+    and wrote it into monotone save data; the identity of a latch is
+    checked the same way a key's is now — against what the Zone's
+    committed layout actually holds — because a latch nobody placed
+    would otherwise become permanent state describing nothing.
+    """
+    type: Literal["latch_fired"]
+    zone_id: str = _ID
+    package_id: str = Field(min_length=1, max_length=32,
+                            pattern=r"^[a-z0-9_]+$")
+    latch_id: str = Field(min_length=1, max_length=32,
+                          pattern=r"^[a-z0-9_]+$")
 
 
 class LockOpened(Strict):
@@ -1567,7 +1887,8 @@ ClientMessage = Annotated[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
         SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
-        ZoneTiming, KeyCollected, LockOpened, StationReached, LayoutResult,
+        ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
+        LayoutResult,
     ],
     Field(discriminator="type"),
 ]
@@ -1587,10 +1908,39 @@ class ZoneReady(Strict):
     type: Literal["zone_ready"]
     zone: Zone
     used_fallback: bool
+    #: The identity of THIS proposal, for the client to capture when it
+    #: starts building and echo back on `layout_result`. See
+    #: `LayoutResult.proposal_id`.
+    proposal_id: str = Field(default="", max_length=16)
+    #: WHICH ATTEMPT this offer is, for the client to capture beside
+    #: `proposal_id` and echo on `layout_result`.
+    #:
+    #: `proposal_id` is CONTENT identity and stays that way: identical
+    #: content hashes identically, which is correct and is what makes it
+    #: useless for telling two attempts apart. After a refusal the
+    #: campaign asks the provider again, and a deterministic provider
+    #: hands back the same Zone -- same rooms, same graph, same digest.
+    #: A result from the previous attempt then matches the current
+    #: proposal exactly and is indistinguishable from a fresh failure.
+    #:
+    #: The ordinal is `ZoneRecord.layout_refusals` at the moment of the
+    #: offer, so it is READ from the lifecycle rather than being a
+    #: second counter to keep in step. It is not part of the digest and
+    #: must never be folded into it.
+    attempt: int = Field(default=0, ge=0, le=MAX_LAYOUT_REFUSALS)
     #: The committed layout, when this Zone already has one. Present on
     #: a re-entry and absent on a first generation, which is exactly the
     #: difference between replaying a layout and solving one.
     manifest: dict | None = None
+
+    #: **Progress is NOT here, and that is deliberate.**
+    #:
+    #: It was, for one commit. `ZoneRecord.progress` already crosses in
+    #: every snapshot, and `main.gd::_to_zone` — driven by `_on_snapshot`
+    #: rather than by this message — reads it from
+    #: `BridgeClient.active_zone()`. Adding it here made a second carrier
+    #: for one fact on a different message, which is how two lanes come
+    #: to disagree about what a player did. One carrier: the record.
 
 
 NotificationKind = Literal[

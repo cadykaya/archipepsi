@@ -1,5 +1,6 @@
 # GENERATED FILE - do not edit.
-# Source: schemas/constants.py. Regenerate with `python export.py`.
+# Source: schemas/constants.py and the manipulation envelope in
+# schemas/physics.py. Regenerate with `python export.py`.
 #
 # Godot reads its gameplay numbers from here so the engine cannot
 # drift from the bounds the Python validator enforces.
@@ -15,6 +16,7 @@ const AUTHORED_AREA_BUDGET = 4000.0
 const BAND_DOOR_MARGIN = 2.0
 const BAND_RAMP_MIN_RUN = 3.0
 const BAND_RAMP_RUN_FACTOR = 3.0
+const BASE_KIT_TAGS = ["bounce_pad", "moving_platform", "powered_door"]
 const BRIDGE_HOST = "127.0.0.1"
 const BRIDGE_PORT = 38290
 const BRUTES_PER_BUDGET_POINT = 0.005
@@ -44,7 +46,7 @@ const ENEMY_ROLES = ["melee", "ranged", "brute", "charger", "bulwark", "scuttler
 const EPSILON_COIN_COUNT = 10
 const EPSILON_STATIC_COUNT = 18
 const FALL_KILL_Y = -30.0
-const FEATURE_MIN_WIDTH = {"grapple_anchor": 7.5, "breakable_wall": 7.5, "water_volume": 7.9, "rail": 6.7, "wind_volume": 7.9, "bounce_pad": 7.1, "moving_platform": 7.9}
+const FEATURE_MIN_WIDTH = {"grapple_anchor": 7.5, "breakable_wall": 7.5, "water_volume": 7.9, "rail": 6.7, "wind_volume": 7.9, "bounce_pad": 7.1, "moving_platform": 7.9, "powered_door": 7.9}
 const FINALE_REQUIRED_FRACTION = 0.8
 const FINALE_REQUIRED_OTHER_CHECKS = 24
 const FINALE_REQUIRED_SIGNAL_KEYS = 2
@@ -108,6 +110,7 @@ const PROCEDURAL_ARENA_MAX_HEIGHT = 8.0
 const PROCEDURAL_ARENA_MAX_SPAN = 28.0
 const PROCEDURAL_ARENA_MIN_HEIGHT = 4.0
 const PROCEDURAL_ARENA_MIN_SPAN = 10.0
+const PROCEDURAL_SOCKET_CAPACITY = {"platform_path": ["entry", "exit"], "tower": ["entry", "exit"]}
 const PROVIDER_TIMEOUT_SECONDS = 60.0
 const RANGED_PROJECTILE_SPEED = 14.0
 const REFERENCE_ECHO_COOLDOWN = 0.8
@@ -165,6 +168,10 @@ const ZONE_MIN_CHECKS = 2
 const ZONE_TARGET_CHECKS = 3
 const ZONE_TARGET_CHECKS_MAX = 30
 const ZONE_TARGET_CHECKS_MIN = 1
+const ENVELOPE_FORCE_N = 700.0
+const ENVELOPE_RANGE_M = 20.0
+const ENVELOPE_MASS_KG = 120.0
+const MANIPULATE_VERBS = ["HOLD", "PULL", "PUSH"]
 
 ## Largest gap a MANDATORY jump may span, landing this much
 ## higher. The joint bound: gap and step maxed independently is

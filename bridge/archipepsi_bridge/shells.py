@@ -159,12 +159,36 @@ def is_offerable(entry: ContentEntry) -> bool:
         return False
     if entry.review == "pending":
         return False
+    # NO LONGER A GATE, and the reason is measured.
+    #
+    # This refused a shell whose doorway stood proud of `size`. Two
+    # measurements on 2026-09-12 killed the rule from both sides.
+    # `shell_corner_left`'s exit sits exactly ON its envelope face and
+    # 0.40 m past its own FLOOR, because the floor is inset by a wall;
+    # `shell_yard_gantry`'s sits 0.40 m past the envelope. The step a
+    # body walks over is the same 0.40 m in both, and the envelope
+    # disagrees about which is which. And Arty's threshold repair carries
+    # the yard's floor out as MESH -- not a declared surface, not in
+    # `size` -- so no manifest rule can see the repair at all.
+    #
+    # THE AUTHORITY IS THE ASSEMBLED CROSSING, measured in the engine:
+    # `room_contract_driver._test_every_shell_doorway_is_crossed_by_a_real_body`
+    # builds each shell through the production importer, lays a connector
+    # stub at each doorway the way `ZoneBuilder` does, and walks a real
+    # `Player` out. All 24 authored doorways cross, 3.05-3.11 m past the
+    # socket with 0.08 m of dip; a stub detached by 2.0 m drops the body
+    # 5.87 m, which is what proves the measurement can fail.
+    #
+    # What stays here is the REPORT. A doorway metres off its body is
+    # still worth saying out loud, and `doorways_off_the_body` still says
+    # it -- it just no longer decides, because it cannot see floor.
     adrift = doorways_off_the_body(entry)
     if adrift:
-        log.warning("shell '%s' is not offerable: %s", entry.id,
-                    "; ".join(f"doorway '{n}' is {m:.2f} m off the body"
-                              for n, m in sorted(adrift.items())))
-        return False
+        log.info("shell '%s' declares a doorway off its envelope: %s "
+                 "(a report, not a refusal -- the crossing test decides)",
+                 entry.id,
+                 "; ".join(f"'{n}' by {m:.2f} m"
+                           for n, m in sorted(adrift.items())))
     return not entry.procedural_fallback
 
 
@@ -224,6 +248,49 @@ def field(chamber, name: str):
     return getattr(chamber, name, None)
 
 
+#: Socket kinds a corridor may actually join to.
+#:
+#: The Python mirror of `connector_grammar.gd`'s `JOINABLE`. A shell's
+#: CAPACITY is how many of these it declares, and it is read here rather
+#: than assumed: `topology.AUTHORED_SOCKETS` used to hardcode
+#: `("entry", "exit")` on the true-but-brittle ground that all twelve
+#: authored shells declare exactly those two. True today; a three-door
+#: shell would have been read as a two-door one, and no amount of
+#: composer support would have made it usable.
+JOINABLE_SOCKET_KINDS = ("doorway", "corridor_end")
+
+
+def joinable_sockets(entry: ContentEntry) -> tuple[str, ...]:
+    """The stable socket identities this content offers a corridor.
+
+    Names, not a count: the composer assigns edges to named sockets and
+    the engine resolves those names against the imported scene, so a
+    capacity expressed as a number would leave the composer inventing
+    which openings it meant. Sorted, so two runs assign the same way.
+    """
+    return tuple(sorted(s.name for s in entry.sockets
+                        if s.kind in JOINABLE_SOCKET_KINDS))
+
+
+def sockets_by_shell(registry: dict[str, ContentEntry] | None = None,
+                     ) -> dict[str, tuple[str, ...]]:
+    """`shell_id -> its joinable socket names`, for the composer."""
+    reg = registry if registry is not None else load_registry()
+    return {cid: joinable_sockets(entry) for cid, entry in reg.items()}
+
+
+def declared_sockets(rule: dict) -> tuple[str, ...]:
+    """The same thing off the WIRE rule, which is what a generator has.
+
+    `offered_for` exists because a generator that reads the registry can
+    name a shell the request never offered. Capacity has the same
+    problem one level down: a generator choosing a shell for a room that
+    will branch has to be able to see which shells can carry a branch,
+    and until `rule_of` carried the names it could not.
+    """
+    return tuple(rule.get("joinable", ()))
+
+
 def rule_of(entry: ContentEntry) -> dict:
     """The constraint row for one shell: what it is, and what it fits.
 
@@ -240,6 +307,13 @@ def rule_of(entry: ContentEntry) -> dict:
         rule["provides_elevation"] = sorted(entry.provides_elevation)
     if entry.size:
         rule["size"] = [float(v) for v in entry.size]
+    # CAPACITY, ON THE WIRE. Without it the offer says what a shell fits
+    # and not how many ways out it has, so nothing choosing a shell can
+    # choose one that branches -- and a composer taught about three-door
+    # rooms would still never be handed one.
+    joinable = joinable_sockets(entry)
+    if joinable:
+        rule["joinable"] = list(joinable)
     return rule
 
 

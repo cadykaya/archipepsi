@@ -122,7 +122,8 @@ def fallback_zone_attempt(request: ZoneGenerationRequest) -> tuple[dict, int]:
             seeded, locations, budget, request.unlocked_affordances,
             zone_index=n,
             catalog=request.catalog.get("room_shells", {}),
-            rules=request.catalog.get("room_shell_rules", {}))
+            rules=request.catalog.get("room_shell_rules", {}),
+            kinds=request.constraints.get("activity_kinds"))
         return {
             "schema_version": 7,
             "zone_id": request.zone_id,
@@ -157,6 +158,28 @@ def fallback_zone_attempt(request: ZoneGenerationRequest) -> tuple[dict, int]:
             return candidate, salt
         last = candidate
     return last, 7
+
+
+#: Which activity families this provider composes from, and the order it
+#: cycles them in.
+#:
+#: HOISTED OUT OF `_build_to_budget`, WITH NOTHING ELSE CHANGED. It was a
+#: literal inside the loop, which made "what would retiring a family
+#: cost" a question nobody could ask without editing the composer. The
+#: owner has asked for the two standalone drills -- `timed_run` and
+#: `pressure_routing` -- to stop being generated, and
+#: `tools/family_retirement.py` measures that against this list before
+#: anybody changes it.
+#:
+#: THIS IS NOT THAT CHANGE. The list ships exactly as it was, because
+#: the composer picks by `kinds[(guard + len(acts)) % len(kinds)]`:
+#: removing two of four does not remove content, it doubles how often
+#: the other two come up, and the budget it cannot spend on an activity
+#: it spends on enemies. Both are outcomes the owner asked against, so
+#: the retirement needs a policy choice about what fills the budget --
+#: and that choice is the bridge lane's to make.
+ACTIVITY_KINDS: tuple[str, ...] = (
+    "switch_sequence", "target_challenge", "pressure_routing", "timed_run")
 
 
 def _max_enemy_groups(chamber_type: str) -> int:
@@ -208,7 +231,7 @@ def _content_room(rng, index: int, lean: bool, step: float,
 
 
 def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
-                     catalog=None, rules=None) -> list[dict]:
+                     catalog=None, rules=None, kinds=None) -> list[dict]:
     """Rooms enough to hold the Checks, then content enough to be a level.
 
     Two passes on purpose. The first places what the campaign REQUIRES --
@@ -351,8 +374,27 @@ def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
         current = sum(room_value(_AsChamber(c)) for c in chambers)
         return current + extra <= high
 
-    kinds = ["switch_sequence", "target_challenge", "pressure_routing",
-             "timed_run"]
+    # COMPOSE FROM WHAT THIS REQUEST OFFERED, in this composer's own
+    # cycle order.
+    #
+    # `constraints["activity_kinds"]` has always been on the request and
+    # this provider always ignored it: the offer and the thing offered
+    # from were two spellings of one fact that nothing compared. They
+    # also disagree. The request lists the schema's order
+    # (`Z.ActivityKind.__args__`) and this module lists its own, and the
+    # picker is `kinds[(guard + len(acts)) % len(kinds)]` -- ORDER
+    # DECIDES WHICH FAMILY EACH SLOT GETS. Reading the request's list
+    # directly moved the played Zone's digest `fe2b014761fbb449` ->
+    # `d3f1025fedf2dff2` on a request that had narrowed nothing, which
+    # is a generation change smuggled in as a refactor.
+    #
+    # So the offer says WHICH families are permitted and this module
+    # keeps saying in what order it cycles them. Filtering the local
+    # order by the offered set leaves an un-narrowed request composing
+    # exactly what it composed before, digest included.
+    offered = set(kinds) if kinds else None
+    kinds = [k for k in ACTIVITY_KINDS
+             if offered is None or k in offered] or list(ACTIVITY_KINDS)
     ceiling = min(room_budget, room_high)
 
     #: How rich an ORDINARY room is allowed to get while there is still
@@ -758,16 +800,25 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
              and not c.get("objective")]
     if not plain:
         return
-    # Widen enough for the WIDEST tag this Zone will actually place, and
-    # never past the schema's corridor cap. A single conservative width
-    # would refuse a rail from a corridor it fits in perfectly well.
+    # WIDEN THE CORRIDOR THAT RECEIVES A FEATURE, TO THAT FEATURE'S OWN
+    # MINIMUM — not every plain corridor to the widest tag in the set.
+    #
+    # This used to widen them all, in advance, to whichever tag needed
+    # most. Every corridor in the Zone paid for the biggest feature
+    # whether it hosted one or not, and the cost is not abstract: the
+    # engine's route search places rooms from the previous one under a
+    # bounded policy, and on 2026-09-12 an EIGHTH affordance tag pushed
+    # `played_zone` past what it could lay out — `LAYOUT_INFEASIBLE`,
+    # exhausted, at the twenty-second of twenty-three rooms. Raising
+    # `MAX_ROUTE_TURNS` from 2 to 3 did not help; the Zone was simply
+    # bigger than it needed to be.
+    #
+    # Widening per assignment also removes the "too narrow, skip it"
+    # branch below, which was the old shape's other cost: a corridor that
+    # happened to draw 6.0 m silently dropped its feature.
     wanted = [t for t in unlocked if t in C.FEATURE_MIN_WIDTH]
     if not wanted:
         return
-    widest = min(MAX_CORRIDOR_WIDTH,
-                 max(C.FEATURE_MIN_WIDTH[t] for t in wanted))
-    for chamber in plain:
-        chamber["width"] = max(float(chamber.get("width", 5.0)), widest)
     # Deal round-robin so a run that unlocks five tags does not stack all
     # five in the first corridor. Both loops are ordered, so the same
     # campaign lays out the same Zone twice — the fallback is the
@@ -784,20 +835,20 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
         offset = zone_index % len(ordered)
         ordered = ordered[offset:] + ordered[:offset]
     for index, tag in enumerate(ordered):
-        chamber = plain[index % len(plain)]
-        # A tag the corridor cannot hold is skipped rather than emitted
-        # for the validator to refuse: the fallback's job is to always
-        # produce something acceptable.
-        if float(chamber["width"]) < C.FEATURE_MIN_WIDTH.get(
-                tag, C.MIN_FEATURE_CHAMBER_WIDTH):
+        need = C.FEATURE_MIN_WIDTH.get(tag, C.MIN_FEATURE_CHAMBER_WIDTH)
+        # A tag wider than a corridor may ever be is skipped rather than
+        # emitted for the validator to refuse: the fallback's job is to
+        # always produce something acceptable.
+        if need > MAX_CORRIDOR_WIDTH:
             continue
-        features = list(chamber.get("features", []))
+        chamber = _feature_host(plain, index, need)
         # The schema's per-chamber cap is the only cap there is; when the
         # plain chambers are full the remaining tags simply do not appear
         # in this Zone. They are optional content, so dropping one costs
         # nothing — and the next Zone deals from the same ordered set.
-        if len(features) >= 3:
+        if chamber is None:
             continue
+        features = list(chamber.get("features", []))
         # Off-centre and staggered down the length. The builder pushes a
         # feature clear of the walking lane whatever it is handed, but
         # asking for the lane and relying on that would be writing a bug
@@ -806,6 +857,38 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
         along = 0.3 + 0.2 * (index // 2 % 3)
         features.append({"tag": tag, "at": (lateral, along)})
         chamber["features"] = features
+
+
+def _feature_host(plain: list[dict], index: int,
+                  need: float) -> dict | None:
+    """Which corridor takes this feature, preferring one already wide
+    enough for it.
+
+    **WIDENING A CORRIDOR IS NOT FREE, AND THE COST IS NOT THE METRES.**
+    A corridor drawn at 6.0 m is exactly the size `shell_corner_left` and
+    `shell_corner_right` adopt, so widening one takes its corner shell
+    away — and `_select_authored_shells`' "not the same shell twice
+    running" rule then flips the turn of EVERY corner after it. On
+    2026-09-12 that turned `played_zone`'s last corner the wrong way and
+    the engine reported the Zone unroutable at its twenty-second room of
+    twenty-three, with the same total floor area as before. Raising
+    `MAX_ROUTE_TURNS` did not help; the Zone was not too big, it was
+    wound the wrong way.
+
+    Python cannot see layout, which is exactly why it should not disturb
+    it to hang a note. So a corridor that already fits is preferred, and
+    one is widened only when no other corridor can take the tag at all.
+    """
+    roomy = [c for c in plain
+             if float(c.get("width", 5.0)) >= need
+             and len(c.get("features", []) or ()) < 3]
+    if roomy:
+        return roomy[index % len(roomy)]
+    chamber = plain[index % len(plain)]
+    if len(chamber.get("features", []) or ()) >= 3:
+        return None
+    chamber["width"] = max(float(chamber.get("width", 5.0)), need)
+    return chamber
 
 
 # ---------------------------------------------------------------------------

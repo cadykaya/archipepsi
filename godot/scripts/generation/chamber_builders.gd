@@ -550,7 +550,8 @@ static func door_plan(chamber: Dictionary, width: float,
 		depth: float, exit_at := Vector3.INF) -> Array:
 	var out: Array = []
 	var placed := {}
-	for socket: Variant in procedural_sockets(width, depth, exit_at):
+	for socket: Variant in procedural_sockets(width, depth, exit_at,
+			str(chamber.get("type", ""))):
 		var s: Dictionary = socket
 		placed[str(s["name"])] = s
 	for raw: Variant in chamber.get("doors", []):
@@ -600,21 +601,40 @@ static func door_plan(chamber: Dictionary, width: float,
 ##
 ## Left defaulted, this is the flat table exactly as it was.
 static func procedural_sockets(width: float, depth: float,
-		exit_at := Vector3.INF) -> Array:
+		exit_at := Vector3.INF, chamber_type := "") -> Array:
 	var way_out := exit_at if exit_at.is_finite() else Vector3(0, 0, depth)
-	return [
+	# AND THE SIDES ARE AT THE MIDDLE OF THE SIDE WALL, which is the
+	# shape of a FLAT room and FALSE of the two producers that CLIMB:
+	# `platform_path`'s side wall there is over its kill pit and below
+	# its walkway, and `tower`'s is behind its spiral. Both answer a side
+	# assignment with a solid wall, so neither NAMES one --
+	# `Constants.PROCEDURAL_SOCKET_CAPACITY` is the one declaration of
+	# that, shared with `topology._sockets_for` and `Zone`'s socket
+	# invariant. Advertising a doorway this builder does not cut is what
+	# refused a default-scale Zone's whole layout.
+	var sides := Vector3(0, 0, depth / 2.0)
+	var carried: Variant = Constants.PROCEDURAL_SOCKET_CAPACITY.get(
+			chamber_type)
+	var out: Array = [
 		{"name": "entry", "kind": "doorway", "position": Vector3(0, 0, 0),
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 180.0},
 		{"name": "exit", "kind": "doorway",
 			"position": way_out,
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 0.0},
 		{"name": "side_left", "kind": "doorway",
-			"position": Vector3(-width / 2.0, 0, depth / 2.0),
+			"position": Vector3(-width / 2.0, sides.y, sides.z),
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 90.0},
 		{"name": "side_right", "kind": "doorway",
-			"position": Vector3(width / 2.0, 0, depth / 2.0),
+			"position": Vector3(width / 2.0, sides.y, sides.z),
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": -90.0},
 	]
+	if typeof(carried) != TYPE_ARRAY:
+		return out
+	var kept: Array = []
+	for raw: Variant in out:
+		if (carried as Array).has(str((raw as Dictionary)["name"])):
+			kept.append(raw)
+	return kept
 
 ## A place in this room nothing has claimed yet.
 ##
@@ -622,6 +642,93 @@ static func procedural_sockets(width: float, depth: float,
 ## every run, which Law 47c needs. Candidates walk a ring inward from the
 ## room's quarter points so a key lands in the open rather than against a
 ## wall, and the first clear one wins.
+## THE SPACE A RETURN DEVICE TAKES, and a body's room to stand clear of
+## it. `ReturnPlug.RADIUS` is the trigger; a player at the edge of it is
+## already inside, so the claim is the trigger plus a capsule plus a
+## little, and `plug_clear` is then a measurement that can come back
+## true rather than a hope.
+static func return_clearance(at: Vector3) -> AABB:
+	var reach := ReturnPlug.RADIUS + Constants.PLAYER_RADIUS + 0.6
+	return AABB(at - Vector3(reach, 0.0, reach),
+			Vector3(reach * 2.0, ReturnPlug.HEIGHT, reach * 2.0))
+
+## Where a room's return device goes, in room-local space.
+##
+## A room that reserved one when it was built says so and that is the
+## answer. A room that did not -- an authored shell, or any builder that
+## does not run the dense path -- gets one found the same way, against
+## everything the build DOES declare it put somewhere: the arrival, the
+## reward pedestal and every key spot. Reconstructed rather than
+## invented; the alternative is an offset, and an offset is what §5.7
+## is about.
+static func return_spot(build: Dictionary, chamber: Dictionary) -> Vector3:
+	if build.has("return_spot"):
+		return build["return_spot"]
+	# A ROOM THAT SAYS WHICH SQUARE METRES HOLD WEIGHT IS BELIEVED.
+	#
+	# `platform_path` is rising islands over a kill pit, and a spot
+	# chosen by sampling its ENVELOPE is a spot in the void: the reload
+	# fixture's `c012` refused its layout every time for "a standing
+	# capsule does not fit at 'room:c012:return'", and no lattice of
+	# offsets was going to find ground that is mostly not there. The
+	# room already declares its `stand` surfaces -- the same vocabulary
+	# that stopped activity elements being laid out over the pit -- so
+	# the return takes the LAST one wide enough to hold the device,
+	# which is the end ledge and is as far from the arrival as the room
+	# goes.
+	var best := Vector3.INF
+	# A CAPSULE HAS TO FIT, NOT THE TRIGGER. `ReturnPlug.RADIUS` is the
+	# volume that FIRES; what has to be held up is a player, and a
+	# trigger may overhang the ledge it stands on. Demanding the trigger
+	# fit skipped every surface `platform_path` has -- its end ledge is
+	# about three metres deep and its islands two and a half -- so the
+	# room declared exactly the ground it holds and none of it counted.
+	var reach := Constants.PLAYER_RADIUS + 0.6
+	for raw: Variant in build.get("sockets", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var surface: Dictionary = raw
+		if str(surface.get("kind", "")) != "stand":
+			continue
+		var extent: Vector3 = surface.get("extent", Vector3.ZERO)
+		if extent.x < reach * 2.0 or extent.z < reach * 2.0:
+			continue
+		best = surface.get("position", Vector3.ZERO)
+	if best != Vector3.INF:
+		return best
+	var box: AABB = build.get("bounds", AABB())
+	var claimed: Array[AABB] = []
+	var arrive: Vector3 = (build.get("player_entry", {}) as Dictionary) \
+			.get("position", PROCEDURAL_ARRIVAL)
+	claimed.append(AABB(arrive - Vector3(0.8, 0.0, 0.8),
+			Vector3(1.6, Constants.PLAYER_HEIGHT + 0.2, 1.6)))
+	if build.has("reward_position"):
+		claimed.append(reward_clearance(chamber,
+				build["reward_position"] as Vector3))
+	for raw: Variant in build.get("key_spots", []):
+		var spot: Dictionary = raw
+		claimed.append(AABB(
+				(spot["position"] as Vector3) - Vector3(0.8, 0.0, 0.8),
+				Vector3(1.6, 2.0, 1.6)))
+	# `_clear_spot` samples x in +/- 0.34 of width and z in 0.2..0.8 of
+	# depth, both measured from a room whose origin is its entry face;
+	# an authored shell's envelope can start somewhere else, so the spot
+	# is carried back onto the envelope it was measured against.
+	var at := _clear_spot(box.size.x, box.size.z, claimed,
+			hash("return:" + str(chamber.get("id", "c"))))
+	# THE ARRIVAL'S HEIGHT, NOT THE ENVELOPE'S FLOOR.
+	#
+	# An envelope's bottom is not a room's floor: a shell with a sunken
+	# bay or a plinth starts its box below the surface a body stands on,
+	# and a return anchor down there is inside the geometry. The bridge
+	# refuses the whole layout for it -- "the engine reports a standing
+	# capsule does not fit at 'room:c003:return'", three times running,
+	# and that Zone went to ZONE_FAILED in a live campaign. The arrival
+	# is where the room itself says a body stands, so its height is the
+	# one height in the room known to work.
+	return Vector3(at.x + box.position.x + box.size.x / 2.0, arrive.y,
+			at.z + box.position.z)
+
 static func _clear_spot(width: float, depth: float, claimed: Array,
 		seed_value: int) -> Vector3:
 	var rng := RandomNumberGenerator.new()
@@ -644,8 +751,10 @@ static func _clear_spot(width: float, depth: float, claimed: Array,
 ## The lock slab and the door probe both need to know where an opening
 ## is, and a second derivation of that is how the two come to disagree.
 static func socket_placed(socket_id: String, width: float,
-		depth: float, exit_at := Vector3.INF) -> Dictionary:
-	for raw: Variant in procedural_sockets(width, depth, exit_at):
+		depth: float, exit_at := Vector3.INF,
+		chamber_type := "") -> Dictionary:
+	for raw: Variant in procedural_sockets(width, depth, exit_at,
+			chamber_type):
 		var s: Dictionary = raw
 		if str(s["name"]) == socket_id:
 			return s
@@ -659,12 +768,24 @@ static func socket_placed(socket_id: String, width: float,
 ## and every existing procedural room composing exactly as before.
 static func cut_plan(chamber: Dictionary) -> Dictionary:
 	var out := {}
+	var carried: Variant = Constants.PROCEDURAL_SOCKET_CAPACITY.get(
+			str(chamber.get("type", "")))
 	for raw: Variant in chamber.get("doors", []):
 		if typeof(raw) != TYPE_DICTIONARY:
 			continue
 		var door: Dictionary = raw
 		var id := str(door.get("socket_id", ""))
 		if id == "":
+			continue
+		# A SAVED ZONE MAY STILL NAME A SOCKET THIS PRODUCER CANNOT
+		# BUILD, and cutting it because the door says so would be the
+		# advertisement made real in the wrong direction. A campaign
+		# composed before the capacity was measured holds
+		# `platform_path` rooms with side doors; they load, they build
+		# as the room this producer actually makes, and the layout is
+		# refused and recomposed rather than quietly carved.
+		if typeof(carried) == TYPE_ARRAY \
+				and not (carried as Array).has(id):
 			continue
 		out[id] = str(door.get("usage", "USED")) != "SEALED"
 	# AND NOTHING OVERRIDES IT, the Zone's front door included.
@@ -1078,10 +1199,39 @@ static func _secret_alcove(root: Node3D, theme: String, side: float,
 	trigger.add_to_group(SECRET_GROUP)
 	root.add_child(trigger)
 
+## Where a crate may stand along a wall that has a doorway in it, given
+## where it wanted to stand.
+##
+## The doorway is at `depth / 2` and `DOOR_WIDTH` across; a crate blocks
+## it when its own half-width plus a body's radius reaches into that
+## span. Pushed to whichever edge of the band is nearer and clamped to
+## the wall run; `NAN` when the wall is too short to hold the crate
+## anywhere clear, in which case the room simply does not get that
+## crate. A doorway that cannot be walked through is worth more than a
+## box beside it.
+static func _clear_of_side_door(along: float, size: float,
+		depth: float) -> float:
+	var keep := DOOR_WIDTH / 2.0 + size / 2.0 + Constants.PLAYER_RADIUS
+	var middle := depth / 2.0
+	if absf(along - middle) >= keep:
+		return along
+	var near := middle - keep
+	var far := middle + keep
+	var low := 2.0
+	var high := depth - 2.0
+	if along < middle and near >= low:
+		return near
+	if far <= high:
+		return far
+	if near >= low:
+		return near
+	return NAN
+
 ## Corner buttresses, perimeter crates and a hazard strip for room-like
 ## spaces. Crates hug the walls so the arena floor stays fightable.
 static func _greeble_room(root: Node3D, width: float, depth: float,
-		height: float, theme: String, rng: RandomNumberGenerator) -> void:
+		height: float, theme: String, rng: RandomNumberGenerator,
+		cut := {}) -> void:
 	var trim := ThemeMaterials.trim_mat(theme)
 	var accent := ThemeMaterials.accent_mat(theme)
 	for corner_x in [-1.0, 1.0]:
@@ -1094,10 +1244,32 @@ static func _greeble_room(root: Node3D, width: float, depth: float,
 		var size := rng.randf_range(0.7, 1.3)
 		var crate_position: Vector3
 		if against_x:
+			# A SIDE-HUGGING CRATE MUST NOT STAND IN A SIDE DOORWAY.
+			#
+			# The back-wall branch below has kept clear of the exit lane
+			# since it was written -- "a 1.3 m crate is taller than
+			# MAX_VERTICAL_STEP, so it must never block a door" -- and
+			# this branch never learned the same thing, because when it
+			# was written a procedural room had two doors and neither
+			# was in a side wall. `PROCEDURAL_SOCKETS` is four now.
+			# Measured on `zone_01`: a 0.95 m crate 0.45 m inside
+			# `c011/side_right`, a 0.78 m crate inside `c018/side_left`,
+			# both USED or LOCKED, both refusing the whole layout on
+			# aperture polarity.
+			#
+			# ROLLED FIRST, THEN MOVED, so the rng stream is untouched
+			# and a room with no side door is byte-identical to what it
+			# was. The same shape as `_free_prop_spot`.
+			var wall_sign := -1.0 if rng.randf() < 0.5 else 1.0
+			var along := rng.randf_range(2.0, depth - 2.0)
+			var socket := "side_left" if wall_sign < 0.0 else "side_right"
+			if bool(cut.get(socket, false)):
+				along = _clear_of_side_door(along, size, depth)
+			if is_nan(along):
+				continue
 			crate_position = Vector3(
-					(-1.0 if rng.randf() < 0.5 else 1.0)
-					* (width / 2.0 - size / 2.0 - 0.4),
-					size / 2.0, rng.randf_range(2.0, depth - 2.0))
+					wall_sign * (width / 2.0 - size / 2.0 - 0.4),
+					size / 2.0, along)
 		else:
 			# Back wall — keep clear of the exit door lane (a 1.3 m crate is
 			# taller than MAX_VERTICAL_STEP, so it must never block a door).
@@ -1163,10 +1335,27 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	_box(root, Vector3(width, 0.5, length),
 			Vector3(0, -0.25, length / 2.0), ThemeMaterials.floor_mat(theme))
 	var wall := ThemeMaterials.wall_mat(theme)
-	_box(root, Vector3(WALL_THICKNESS, height, length),
-			Vector3(-width / 2.0, height / 2.0, length / 2.0), wall)
-	_box(root, Vector3(WALL_THICKNESS, height, length),
-			Vector3(width / 2.0, height / 2.0, length / 2.0), wall)
+	# THE SIDES ARE CUT WHEN THE COMPOSER ASSIGNED THEM, and they were
+	# not.
+	#
+	# `PROCEDURAL_SOCKETS` is four for every procedural room, so
+	# `compose_with_branch` hangs branches off a corridor's `side_left`
+	# and `side_right` exactly as it does off an arena's -- and this
+	# builder raised two solid slabs and `door_plan` then declared a
+	# doorway in the middle of each. Measured on `zone_01`: `c013/
+	# side_left` USED and the engine measured it as solid, and the
+	# bridge refuses the whole layout for it (rule 5, aperture
+	# polarity). `_perimeter` has honoured the cut plan for years; a
+	# corridor raises its own walls and never learned to.
+	var corridor_cut := cut_plan(chamber)
+	for wall_x: float in [-width / 2.0, width / 2.0]:
+		var socket := "side_left" if wall_x < 0.0 else "side_right"
+		if bool(corridor_cut.get(socket, false)):
+			_side_wall_with_gap(root, wall_x, height, length, wall,
+					length / 2.0, DOOR_WIDTH, DOOR_HEIGHT)
+		else:
+			_box(root, Vector3(WALL_THICKNESS, height, length),
+					Vector3(wall_x, height / 2.0, length / 2.0), wall)
 	_box(root, Vector3(width, WALL_THICKNESS, length),
 			Vector3(0, height, length / 2.0),
 			ThemeMaterials.trim_mat(theme))
@@ -1187,7 +1376,6 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	# builder declares. Two pieces then meet back-to-back at the seam
 	# rather than occupying the same slab -- the difference between a
 	# door frame and a z-fight.
-	var corridor_cut := cut_plan(chamber)
 	_end_wall(root, width, height, WALL_THICKNESS / 2.0, wall, 0.0,
 			bool(corridor_cut.get("entry", true)))
 	_end_wall(root, width, height, length - WALL_THICKNESS / 2.0, wall,
@@ -1560,6 +1748,17 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 		key_spots.append({"key_id": str(spec.get("key_id", "")),
 				"colour": str(spec.get("colour", "gold")),
 				"position": spot})
+	# AND THE RETURN DEVICE'S SPACE, RESERVED THE SAME WAY. `AMALGAM
+	# _BRIDGE.md` §5.7: the plug used to stand on `room:<rid>:arrival`,
+	# which is where a body entering the room is put, so walking into a
+	# side destination fired the return on the first frame and walking
+	# back in fired it again. An offset from the arrival is not the
+	# repair -- it lands in a crate, in a wall, or outside the room. The
+	# builder knows where it put its furniture, so the builder reserves
+	# this too, before the cover crates roll.
+	var return_at := _clear_spot(width, depth, claimed,
+			hash("return:" + str(chamber.get("id", "c"))))
+	claimed.append(return_clearance(return_at))
 	# Crude cover: a few boxes and a wedge.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(str(chamber.get("id", "c")) + theme)
@@ -1598,7 +1797,8 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 		_light(root, corner, theme, 16.0)
 	_light(root, Vector3(0, wall_height - 0.5, depth / 2.0), theme, 18.0)
 	var greeble_rng := _greeble_rng(chamber, theme)
-	_greeble_room(root, width, depth, wall_height, theme, greeble_rng)
+	_greeble_room(root, width, depth, wall_height, theme, greeble_rng,
+			cut_plan(chamber))
 	# Roughly one arena in three gets a ledge you cannot walk to. It holds
 	# nothing but one of Epsilon's notes; see `_secret_alcove`.
 	if greeble_rng.randf() < 0.34:
@@ -1688,6 +1888,7 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 			"doors": door_plan(chamber, width, depth),
 			"player_entry": {"position": PROCEDURAL_ARRIVAL},
 			"key_spots": key_spots,
+			"return_spot": return_at,
 			"bounds": AABB(Vector3(-width / 2.0, lowest, 0),
 					Vector3(width, wall_height - lowest, depth)),
 			"enemy_spawns": spawns,
@@ -1774,17 +1975,40 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 	_box(root, Vector3(width, 0.5, total),
 			Vector3(0, Constants.FALL_KILL_Y - 6.0, total / 2.0),
 			ThemeMaterials.hazard_mat(theme), false)
-	# Side walls, full height.
+	# SIDE WALLS, FULL HEIGHT AND SOLID -- AND THIS ROOM STILL DECLARES
+	# TWO SIDE DOORWAYS IT CANNOT HOLD. **OPEN DEFECT, diagnosed, not
+	# fixed here.**
+	#
+	# `PROCEDURAL_SOCKETS` is four for every procedural room, so
+	# `compose_with_branch` hangs branches off a `platform_path`'s sides
+	# exactly as it does off an arena's, and `door_plan` then declares a
+	# doorway in the middle of each of these slabs. Measured on
+	# `zone_01`: `c008/side_left` USED and `c008/side_right` LOCKED,
+	# both solid, and the bridge refuses the whole layout on aperture
+	# polarity (rule 5). That is the `godot-reload` PHASE 1 refusal and
+	# the one that stops a default-scale Zone being accepted at all.
+	#
+	# CARVING HERE IS NOT THE FIX. The declared position is the middle
+	# of the side wall, which for this room is over the kill pit and
+	# BELOW the walkway: a hole onto nothing. Measured alternative:
+	# moving the side socket onto the start ledge (the one place this
+	# room has floor at y = 0 beside a wall) carves honestly and then
+	# `zone_01` fails to lay out at all -- "branch room 'c014' off
+	# 'c008' could not be placed clear of the 29 room(s) already
+	# standing" -- because the branch mouth moved to the room's entry
+	# end. The remaining answers are compositional: the composer stops
+	# offering a climbing room's sides as junctions, or the room grows a
+	# landing at the opening. Neither is a wall this builder can cut.
 	var wall := ThemeMaterials.wall_mat(theme)
 	_box(root, Vector3(WALL_THICKNESS, wall_height + 40.0, total),
 			Vector3(-width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
 	_box(root, Vector3(WALL_THICKNESS, wall_height + 40.0, total),
 			Vector3(width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
+	var path_cut := cut_plan(chamber)
 	# Ends and a ceiling. There were none: the lights below hung off
 	# nothing, and the chamber was open to the void sideways of its own
 	# doorways. The exit doorway is raised by `rise` because that is
 	# where the path leaves from.
-	var path_cut := cut_plan(chamber)
 	_end_wall(root, width, wall_height, 0.0, wall, 0.0,
 			bool(path_cut.get("entry", true)))
 	_end_wall(root, width, wall_height, total, wall, rise,

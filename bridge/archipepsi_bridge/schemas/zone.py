@@ -24,18 +24,75 @@ try:  # works standalone and when copied into a package
     from . import constants as C
     from . import mechanics as M
     from .graph import (
-        DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+        EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
+        ZoneKeySpec)
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
     from graph import (
-        DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+        EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
+        ZoneKeySpec)
 
-#: The four joining sockets every procedural room declares, matching
+#: Every joining socket name a procedural room can be given, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
 #: own set in the catalog; these are the ones the bridge can check
 #: without one.
+#:
+#: **THE VOCABULARY, NOT THE CAPACITY.** Which of these a room can really
+#: be joined through depends on its producer —
+#: `C.PROCEDURAL_SOCKET_CAPACITY` says which, and
+#: `procedural_sockets_for` is how to ask. This tuple stays the full set
+#: because a SAVED Zone may name any of them: a campaign composed before
+#: the capacity was measured holds `platform_path` rooms with side doors,
+#: and refusing those names here would refuse to LOAD those saves.
 PROCEDURAL_SOCKETS = ("entry", "exit", "side_left", "side_right")
+
+def procedural_sockets_for(chamber_type: str) -> tuple[str, ...]:
+    """The joining sockets a PROCEDURAL room of this type can hold.
+
+    **THE ONE DECLARATION**, projected from
+    `C.PROCEDURAL_SOCKET_CAPACITY` so the composer, this schema, the
+    acceptance validator and the ENGINE cannot each have their own
+    answer — the capacity is exported to `constants.gd`, which is what
+    stops the builder and the planner drifting into different numbers of
+    doors. Drift is exactly what the flat four-door advertisement was: a
+    composer assigning a side door the engine would never cut.
+
+    `chamber_builders.procedural_sockets` places a side socket at the
+    middle of the side wall. That is the shape of a FLAT room and is
+    false of the two producers that CLIMB — on a platform course the
+    middle of the side wall is over the kill pit and below the walkway,
+    and a tower's is behind its spiral. Both were measured at the site,
+    one control per chamber type, and `zone_01`'s `c008` refused its
+    layout for exactly that. Relocating the socket onto the start ledge
+    was MEASURED and does not help: the branch then cannot be placed at
+    all. So the honest repair is to stop OFFERING the doorway, not to
+    move it.
+
+    A statement about the PRESENT PROCEDURAL PRODUCERS. Not a rule
+    against branching platform rooms, and nothing at all about an
+    authored shell that shares the type: a shell declares its own
+    openings and `topology._sockets_for` reads them instead of this.
+    """
+    return tuple(C.PROCEDURAL_SOCKET_CAPACITY.get(chamber_type,
+                                                  PROCEDURAL_SOCKETS))
+
+#: The per-room anchors the engine resolves, as `room:<room_id>:<kind>`.
+#:
+#: `arrival` is where a body entering the room stands — the room's own
+#: `player_entry`, carried into world space by `zone_builder`.
+#:
+#: `return` is a spot RESERVED for a return device, reconciled against
+#: the room's furniture, its reward pedestal and its key spots by the
+#: builder that placed them (`ChamberBuilders._clear_spot`), and clear
+#: of `arrival` by enough that a body standing at the arrival is not
+#: inside the device's trigger volume.
+#:
+#: The two are separate because they were once the same, and a return
+#: plug standing on the arrival fires the moment the player walks in:
+#: the branch sent them home before they could use it. Found by the
+#: engine lane in the integrated build.
+ROOM_ANCHOR_KINDS = ("arrival", "return")
 
 SCHEMA_VERSION = 7
 
@@ -63,6 +120,21 @@ class Strict(BaseModel):
 AffordanceTag = Literal[
     "grapple_anchor", "breakable_wall", "water_volume", "rail",
     "wind_volume", "bounce_pad", "moving_platform",
+    # ENVIRONMENTAL AGENCY, and it is a feature for a reason.
+    #
+    # `powered_door` is a chain rather than an object: a crate the player
+    # shoves with their own body, a plate that adds up what stands on it,
+    # a live signal, and a door open exactly while the signal is high
+    # (`06_THE_AMALGAM.md` §5.4a).
+    #
+    # It is declared HERE, in the optional-feature vocabulary, rather
+    # than as a new kind of thing, because §13.2 already guarantees what
+    # this most needs to be true: a feature may never lie on the
+    # mandatory path, host an AP reward, an exit or an objective. A
+    # player who cannot shove the crate therefore loses a note and
+    # nothing else, and the chain cannot become an undeclared capability
+    # gate by construction rather than by anyone remembering.
+    "powered_door",
 ]
 
 
@@ -329,9 +401,65 @@ class ChamberBase(Strict):
     #: composing unchanged, by construction rather than by promise.
     doors: tuple[DoorAssignment, ...] = Field(default=(), max_length=8)
 
+    #: Which edge the chain ARRIVES by and which it DEPARTS by.
+    #:
+    #: `09_ROOM_CONTRACT.md` §11.2. `content_instantiator.socket_for_edge`
+    #: reads exactly these two names off the chamber and resolves each
+    #: through `doors` to a socket, so `_entry_offset`/`_exit_offset` use
+    #: the opening the composer assigned rather than the one that happens
+    #: to be called `entry`. The engine's half has shipped; nothing wrote
+    #: these, so every room fell through to the legacy name pair and an
+    #: authored junction would have been entered through the wrong door.
+    #:
+    #: **They name an EDGE, never a socket.** Which socket serves that
+    #: edge is already in `doors`, and saying it twice is how the two
+    #: come to disagree. `_the_chain_names_edges_this_room_carries`
+    #: below is what stops them being a second topology: each must name
+    #: an edge one of this room's own non-`SEALED` doors carries.
+    #:
+    #: Additive and optional, for the third time and the same reason
+    #: `features` and `doors` were: a chamber carrying neither is the
+    #: chamber that shipped before multi-door existed, the engine's
+    #: documented fallback applies, and `schema_version` stays 7.
+    arrive_edge: str | None = Field(default=None, min_length=1,
+                                    max_length=48, pattern=EDGE_ID_CHARSET)
+    depart_edge: str | None = Field(default=None, min_length=1,
+                                    max_length=48, pattern=EDGE_ID_CHARSET)
+
     #: Zone-local keys this room holds. Not Archipelago items: no
     #: location id, never scouted, never sent, gone when the Zone is.
     keys: tuple[ZoneKeySpec, ...] = Field(default=(), max_length=4)
+
+    @model_validator(mode="after")
+    def _the_chain_names_edges_this_room_carries(self):
+        """A selector that names an edge no door of this room serves.
+
+        The engine resolves `arrive_edge` by scanning `doors` for it and
+        returns an empty socket when it finds none — which is the LEGACY
+        FALLBACK, silently. So a selector naming an edge this room does
+        not carry does not fail: it quietly places the room at its
+        default opening, which is the defect this field exists to fix,
+        with a value in it that looks like the fix was applied.
+        """
+        carried = {d.edge_id for d in self.doors
+                   if d.edge_id and d.usage != "SEALED"}
+        for name, edge in (("arrive_edge", self.arrive_edge),
+                           ("depart_edge", self.depart_edge)):
+            if edge is None:
+                continue
+            if edge not in carried:
+                raise ValueError(
+                    f"chamber '{self.id}' names '{edge}' as its {name} "
+                    "and carries no open door onto it; the engine would "
+                    "fall back to the legacy opening and nothing would "
+                    "say so")
+        if self.arrive_edge is not None \
+                and self.arrive_edge == self.depart_edge:
+            raise ValueError(
+                f"chamber '{self.id}' arrives and departs by the same "
+                f"edge '{self.arrive_edge}'; that is one opening asked "
+                "to be both ends of the room")
+        return self
 
     @model_validator(mode="after")
     def _no_socket_serves_twice(self):
@@ -753,16 +881,63 @@ class Zone(Strict):
                         f"TRAVERSAL_ONLY edge '{e.edge_id}' has no plug; "
                         "nothing would carry the player across it")
 
+        # §11.2: the chain's arrival is the room's INBOUND edge, and
+        # §11.1/§6.5 say a room is the `room_b` of at most one JOINED
+        # edge because the engine keys its route record by room. A
+        # selector pointing the other way would have the engine place
+        # the room by the opening it leaves through.
+        for c in self.chambers:
+            if c.arrive_edge is not None:
+                e = by_id[c.arrive_edge]
+                if e.realization != "JOINED":
+                    # BACKSTOP, unreachable by construction: a selector
+                    # must name an edge one of this room's open doors
+                    # carries, and a door carrying a TRAVERSAL_ONLY edge
+                    # is refused above. Kept because the two rules that
+                    # make it unreachable live in different models.
+                    raise ValueError(
+                        f"chamber '{c.id}' arrives by '{e.edge_id}', "
+                        f"which is {e.realization}; a plug carries no "
+                        "geometry to arrive through")
+                if e.room_b != c.id:
+                    raise ValueError(
+                        f"chamber '{c.id}' names '{e.edge_id}' as its "
+                        f"arrival, but that edge runs {e.room_a} -> "
+                        f"{e.room_b}; the arrival is the inbound edge")
+            if c.depart_edge is not None:
+                e = by_id[c.depart_edge]
+                if e.realization != "JOINED":
+                    raise ValueError(
+                        f"chamber '{c.id}' departs by '{e.edge_id}', "
+                        f"which is {e.realization}")
+                if e.room_a != c.id:
+                    raise ValueError(
+                        f"chamber '{c.id}' names '{e.edge_id}' as its "
+                        f"departure, but that edge runs {e.room_a} -> "
+                        f"{e.room_b}; the departure is the outbound edge")
+
         # Invariant 7: anchors are names the engine can resolve. The
         # bridge checks the FORM and the room id; whether the anchor
         # exists in the built scene is the engine's answer, returned as
         # evidence.
+        #
+        # `:return` is ADDITIVE and `:arrival` is kept. Every save that
+        # already holds a branched Zone names `:arrival` as its plug's
+        # source, and `ZoneRecord.zone` is a typed `Zone` — so refusing
+        # that spelling here would refuse to load those saves. The
+        # placement defect it represents is caught where it can be
+        # caught safely: `layout.validate`, which a committed manifest
+        # never runs again.
         for pl in self.plugs:
             for anchor in (pl.source_anchor, pl.destination):
                 if anchor in ("zone_start", "last_large_room"):
                     continue
-                if anchor.startswith("room:") and anchor.endswith(":arrival"):
-                    rid = anchor[len("room:"):-len(":arrival")]
+                room_anchor = next(
+                    (suffix for suffix in ROOM_ANCHOR_KINDS
+                     if anchor.startswith("room:")
+                     and anchor.endswith(f":{suffix}")), None)
+                if room_anchor is not None:
+                    rid = anchor[len("room:"):-len(f":{room_anchor}")]
                     if rid not in rooms:
                         raise ValueError(
                             f"plug '{pl.edge_id}' names anchor '{anchor}' "
@@ -786,6 +961,21 @@ class Zone(Strict):
         # Invariant 8: a procedural room's unused joining sockets are
         # declared SEALED, never left unmentioned. "Unmentioned" is
         # exactly how an unaudited hole gets into a wall.
+        #
+        # TWO SETS, AND THEY ARE DIFFERENT SETS. The NAME must be one a
+        # procedural room can be given — the full vocabulary, because a
+        # Zone composed before the capacity was measured holds
+        # `platform_path` rooms with side doors and those saves must
+        # still load. What must be MENTIONED is only what the room's
+        # producer can carry: a `platform_path` composed today names
+        # `entry` and `exit`, and demanding two more from it would be
+        # demanding it declare doors it cannot build.
+        #
+        # So this permits both shapes and neither is silence. What stops
+        # a NEW proposal joining through a side the producer does not
+        # build is `topology._sockets_for`, which never offers one, and
+        # `_the_composer_assigns_only_what_a_room_carries` there, which
+        # fails loudly if that ever drifts.
         for c in self.chambers:
             if not c.doors or getattr(c, "shell_id", None):
                 continue
@@ -795,7 +985,19 @@ class Zone(Strict):
                 raise ValueError(
                     f"chamber '{c.id}' assigns socket(s) {sorted(unknown)} "
                     "that a procedural room does not declare")
-            silent = set(PROCEDURAL_SOCKETS) - named
+            # Audited against what this room's OWN TYPE can hold, not
+            # against the four a flat room has, so a `platform_path`
+            # owes a mention for `entry` and `exit` and nothing else.
+            #
+            # A socket the type cannot hold is NOT refused here, and
+            # deliberately. This validator runs on load, and every Zone
+            # composed before the capacity was corrected assigned side
+            # doors to platform courses -- refusing them here would make
+            # a save holding one unreadable rather than repairable. The
+            # refusal belongs where a proposal is judged and repaired:
+            # `validate_zone`, `_a_room_may_not_use_a_doorway_it_cannot_hold`.
+            supported = procedural_sockets_for(c.type)
+            silent = set(supported) - named
             if silent:
                 raise ValueError(
                     f"chamber '{c.id}' leaves joining socket(s) "
@@ -890,6 +1092,38 @@ def validate_zone(
     accepted components; nothing the provider sent is read as a score.
     """
     errors: list[str] = []
+
+    # A ROOM MAY NOT USE A DOORWAY ITS BUILD CANNOT HOLD.
+    #
+    # `procedural_sockets_for` is the one declaration; the composer
+    # offers from it and this refuses a proposal that went around it. A
+    # procedural `platform_path` that assigns `side_left` is asking for
+    # a hole in a wall whose middle is over the kill pit -- the engine
+    # measures that and refuses the whole layout, which costs a round
+    # trip and reports the failure as a placement problem rather than as
+    # the composition problem it is.
+    #
+    # Here and not in the Zone's own Invariant 8, because that validator
+    # runs on LOAD: every Zone composed before the capacity was
+    # corrected carries these doors, and a save holding one must stay
+    # readable. A proposal, by contrast, is exactly the thing this
+    # function exists to reject and repair.
+    #
+    # An AUTHORED shell is not asked. It declares its own openings in
+    # the catalog and `shell_rules` audits those; sharing a chamber type
+    # with a procedural room says nothing about what an artist cut.
+    for chamber in zone.chambers:
+        if getattr(chamber, "shell_id", None) or not chamber.doors:
+            continue
+        can_hold = procedural_sockets_for(chamber.type)
+        overreach = sorted({d.socket_id for d in chamber.doors
+                            if d.socket_id not in can_hold
+                            and d.usage != "SEALED"})
+        if overreach:
+            errors.append(
+                f"chamber '{chamber.id}' is a procedural '{chamber.type}' "
+                f"and uses joining socket(s) {overreach} its build cannot "
+                f"hold; it offers {list(can_hold)}")
 
     # Enemy counts scale with the Zone's content budget: a longer level
     # holds more enemies OVER TIME. `MAX_ENEMIES_ACTIVE` is what bounds

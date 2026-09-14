@@ -125,12 +125,18 @@ jobs:
           make godot-activity
           make godot-room
           make godot-room-contract
+          make godot-graphs
           make godot-movement
           make godot-zone-audit
           make godot-legible
+          make godot-physics
+          make godot-traverse
 
       - name: Whole campaign, headlessly
         run: make godot-integration
+
+      - name: The same campaign with the lower-budget variant selected
+        run: make godot-integration-quiet
 
       - name: A campaign reopened in a second process
         run: make godot-reload

@@ -424,6 +424,467 @@ static func _openings_are_holes(room: Dictionary, to_world: Transform3D,
 ## ones included: a door the layout does not report is refused by the
 ## bridge rather than skipped, which is what makes the probe inverted
 ## rather than optional.
+## THE WHOLE LAYOUT'S EVIDENCE, measured once, in one place.
+##
+## `apertures` and `arrival_ok` are what the bridge refuses a layout on,
+## and only the engine can see the geometry they are about. Living
+## inside `ZoneController` meant only a live played Zone could produce
+## them -- so a harness that composed twenty Zones and sent their
+## manifests off to the validator had every one of them refused for
+## carrying no measurement, which says nothing about the layouts and
+## everything about the harness. The Zone's root must be in the tree and
+## settled; `space` is `get_world_3d().direct_space_state`.
+static func measure_layout(build: Dictionary,
+		space: PhysicsDirectSpaceState3D) -> Dictionary:
+	var apertures := {}
+	for entry: Dictionary in build.get("chambers", []):
+		var rid := str((entry["chamber"] as Dictionary).get("id", ""))
+		var measured := aperture_polarity(entry["build"] as Dictionary,
+				entry["xform"] as Transform3D, space)
+		for socket: String in measured:
+			apertures["%s/%s" % [rid, socket]] = bool(measured[socket])
+	# THE RETURN ANCHOR IS SETTLED BEFORE IT IS REPORTED.
+	#
+	# `ChamberBuilders.return_spot` reserves against the room's own
+	# furniture, which is what §5.7 asks for and is not the same as
+	# standing somewhere. A room with a chasm, a sunken bay or a floor
+	# the builder does not model as furniture can offer a spot that
+	# reserves cleanly and holds no body -- and the bridge refuses the
+	# WHOLE layout for it. Measured in a live campaign: "a standing
+	# capsule does not fit at 'room:c003:return'", nine times, five
+	# Zones discarded. So where reservation ends, the probe begins.
+	var placement := _settle_return_anchors(build, space)
+	var arrival_ok := {}
+	for name: String in build.get("anchors", {}):
+		arrival_ok[name] = arrival_is_supported(space,
+				(build["anchors"] as Dictionary)[name])
+	return {"apertures": apertures, "arrival_ok": arrival_ok,
+			"plug_clear": plugs_clear_of_arrivals(build),
+			# WHAT THE ENGINE FOUND WHEN IT PLACED EACH RETURN, and the
+			# bounded search it ran. `plug_clear` answers "is THIS
+			# position clear"; only this says whether a position was
+			# found at all -- and only `NO_CANDIDATE` is a statement
+			# about the ROOM. See `PLACEMENT_*`.
+			"plug_placement": placement}
+
+## THE PLACEMENT OUTCOME CONTRACT, and it is ONE contract.
+##
+## A room was being barred from branch selection on `plug_clear ==
+## false`, and that boolean cannot tell "nothing was measured" from
+## "this position is bad" from "no position works". This says which,
+## PER PLUG, and `layout.py` branches on it:
+##
+## | outcome | means | the bridge (`AMALGAM_BRIDGE.md` 5.9) |
+## |---|---|---|
+## | *(no entry)* | this payload predates the field | the check does not apply |
+## | `NO_EVIDENCE` | the engine measured nothing | refuse; do not bar |
+## | `NO_CANDIDATE` | the declared bounded search finished and nothing held | refuse **and bar the host** |
+## | `PLACED` | a position with support and clearance | nothing |
+##
+## **KEYED BY `edge_id`, NOT BY ROOM**, and spelled the way `layout.py`
+## spells it. This producer wrote `MEASURED` / `REPAIRED` /
+## `NO_EVIDENCE` / `NO_CANDIDATE` keyed by ROOM id while the consumer
+## read its own set keyed by EDGE id -- two vocabularies for one fact
+## across one wire, which is a contract that cannot be true. Measured on
+## the far side: a `NO_CANDIDATE` in this shape was ACCEPTED, so a Zone
+## committed with a return device that was never placed. A room-keyed
+## report is now REFUSED rather than ignored, which is how the mismatch
+## stayed silent.
+##
+## `MEASURED` and `REPAIRED` COLLAPSE INTO `PLACED`: the device is
+## placed, and which position it ended on is diagnostic. That rides
+## along as `repaired` and `how`.
+##
+## ABSENCE IS FOR OLDER CLIENTS, AND THIS ONE IS NOT ONE. An engine that
+## speaks this contract says `NO_EVIDENCE` when it measured nothing
+## rather than saying nothing at all -- silence is reserved for a
+## payload that predates the field, and a current client falling silent
+## would be indistinguishable from one. What must never be sent is a
+## malformed entry: a present-but-unreadable report is refused, not read
+## as absence, which is why the outcome is written from the constants
+## below and never assembled from a string.
+##
+## `searched`, `probed` and `policy` are for the log: what search ran
+## and how much of it. No exhaustive proof of impossibility is asked for
+## -- but a `NO_CANDIDATE` that enumerated nothing is a bug and not a
+## verdict, so the two counts are separate and both are sent.
+const PLACEMENT_PLACED := "PLACED"
+const PLACEMENT_NO_EVIDENCE := "NO_EVIDENCE"
+const PLACEMENT_NO_CANDIDATE := "NO_CANDIDATE"
+
+## Where the settle looks for standable ground: a LATTICE around the
+## room's arrival, not a ring.
+##
+## A ring at four and seven metres finds nothing in a corridor seven
+## metres wide -- every bearing but two is outside the envelope, and the
+## two that are not are the ones the ring steps over. Measured: nine
+## refusals of `room:c003:return` before and nine after, byte for byte.
+## Offsets on both axes, nearest first, so a narrow room is served by
+## its long axis and a wide one by whichever is clear.
+##
+## Every offset is at least the device's trigger plus a capsule from the
+## arrival, so a spot this finds cannot be one the player is standing on
+## when they walk in -- which is the defect the whole anchor exists for.
+## `ReturnPlug.RADIUS` (1.4) plus `PLAYER_RADIUS` (0.4) is 1.8, so 2.5
+## is the nearest offset that still leaves a body at the arrival outside
+## the trigger -- and a small room needs a near one or it has no
+## candidates at all: `played_zone`'s `c012` had none at three metres.
+const RETURN_OFFSETS := [2.5, -2.5, 3.5, -3.5, 5.0, -5.0, 8.0, -8.0]
+
+## Moves each `room:<rid>:return` anchor onto ground a body can stand on,
+## when the reserved spot is not. Bounded: sixteen probes, the room's own
+## envelope, and the first that holds -- and if none does, the anchor is
+## left exactly where the builder put it and the bridge refuses the
+## layout, which is the honest outcome and not a silent one.
+##
+## The plug NODE moves with the anchor. Publishing one place and standing
+## the device in another is two truths about one thing.
+static func _settle_return_anchors(build: Dictionary,
+		space: PhysicsDirectSpaceState3D) -> Dictionary:
+	var report := {}
+	var anchors: Dictionary = build.get("anchors", {})
+	var rooms: Dictionary = build.get("rooms", {})
+	for name: String in anchors.keys():
+		if not name.begins_with("room:") or not name.ends_with(":return"):
+			continue
+		var rid := name.substr(5, name.length() - 12)
+		var placed: Dictionary = rooms.get(rid, {})
+		# ONE SOURCE FOR THE ARRIVAL, and the published one.
+		#
+		# This read `rooms[rid].arrival` while `plugs_clear_of_arrivals`
+		# read `anchors["room:<rid>:arrival"]` -- two places holding one
+		# fact, and a control that removed one of them got a "missing
+		# evidence" verdict from the settle and a measured boolean from
+		# the clearance. The ANCHOR is what the bridge validates, so the
+		# anchor is what both ask; the committed transform is the
+		# fallback for a build that predates it.
+		var published: Variant = anchors.get("room:%s:arrival" % rid)
+		if published == null:
+			published = placed.get("arrival")
+		if placed.is_empty() or published == null:
+			# NOTHING TO MEASURE AGAINST, AND THE REPORT SAYS SO.
+			#
+			# `NO_EVIDENCE`, not silence: the bridge refuses the layout
+			# -- an unmeasured return is not a placed one -- and does
+			# NOT bar the room, because nothing was learned about it.
+			# Silence would mean something else entirely, "this client
+			# predates the field", and a current engine claiming that
+			# about itself is the one thing absence must never cover.
+			_say_placement(report, build, rid, {
+					"outcome": PLACEMENT_NO_EVIDENCE, "searched": 0,
+					"probed": 0,
+					"why": "no published arrival anchor to measure against"})
+			continue
+		var box: AABB = placed.get("bounds", AABB())
+		var from: Vector3 = published
+		# SUPPORT **AND** CLEARANCE, and the second one is the fix.
+		#
+		# This skipped the search whenever the current anchor was
+		# standable -- so a pad on solid ground two metres from the
+		# arrival, well inside its own trigger, was left exactly where
+		# it was and reported `plug_clear = false`. The candidate was
+		# repairable and the room was barred for it.
+		var content := content_of(build, rid)
+		if arrival_is_supported(space, anchors[name]) \
+				and clear_of_arrival(anchors[name], from) \
+				and clear_of_content_path(anchors[name], from, content):
+			_say_placement(report, build, rid, {
+					"outcome": PLACEMENT_PLACED, "repaired": false,
+					"searched": 0, "probed": 0,
+					"how": "the position the builder reserved"})
+			continue
+		var moved := Vector3.INF
+		# THE ROOM'S OWN DECLARED GROUND FIRST, probed in world space.
+		#
+		# A lattice around the arrival keeps the arrival's HEIGHT, and
+		# `platform_path` is rising islands over a kill pit: every
+		# candidate at the start ledge's height is over the void, which
+		# is why `played_zone`'s `c012` refused its layout however wide
+		# the lattice got. The room already declares which square metres
+		# hold weight; the farthest one that holds a capsule and leaves
+		# a body at the arrival outside the trigger is the answer.
+		var clearance := ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
+		var best_gap := clearance
+		var examined := 0
+		# HOW MUCH OF THE DECLARED SEARCH RAN, in two numbers, because
+		# one of them cannot tell a finished search from an absent one.
+		#
+		# `probed` counts physics queries -- positions actually put to
+		# the world. `searched` counts every candidate the bounded
+		# search enumerated, admissible or not. A `NO_CANDIDATE` with
+		# `searched: 0` is a search that never ran and a report that
+		# should never have been written; `searched: 16, probed: 0` is a
+		# room whose envelope holds none of the lattice, which is a real
+		# and reportable answer. The missing `dz = 0` below was the
+		# first kind wearing the second kind's clothes, and no field in
+		# the report said so.
+		var searched := 0
+		for raw: Variant in build.get("chambers", []):
+			var entry: Dictionary = raw
+			if str((entry["chamber"] as Dictionary).get("id", "")) != rid:
+				continue
+			var to_world: Transform3D = entry["xform"]
+			for raw_socket: Variant in (entry["build"] as Dictionary) \
+					.get("sockets", []):
+				if typeof(raw_socket) != TYPE_DICTIONARY:
+					continue
+				var surface: Dictionary = raw_socket
+				if str(surface.get("kind", "")) != "stand":
+					continue
+				var at: Vector3 = to_world * (surface.get("position",
+						Vector3.ZERO) as Vector3)
+				searched += 1
+				var gap := Vector2(at.x - from.x, at.z - from.z).length()
+				if gap < clearance or gap < best_gap:
+					continue
+				examined += 1
+				if arrival_is_supported(space, at) \
+						and clear_of_arrival(at, from) \
+						and clear_of_content_path(at, from, content):
+					moved = at
+					best_gap = gap
+		if moved != Vector3.INF:
+			_stand_the_device(build, anchors, name, rid, moved)
+			_say_placement(report, build, rid, {
+					"outcome": PLACEMENT_PLACED, "repaired": true,
+					"searched": searched, "probed": examined,
+					"how": "a declared stand"})
+			continue
+		var inside := box.grow(-0.6)
+		# BOTH AXES INCLUDE ZERO, and leaving it off one of them cost
+		# every corridor in the game its return.
+		#
+		# The comment above `RETURN_OFFSETS` promises "a narrow room is
+		# served by its long axis". The inner loop offered `dx = 0`; the
+		# outer loop never offered `dz = 0`, so every candidate was at
+		# least 2.5 m off the arrival ON BOTH AXES -- and in a room 8 m
+		# long and 4 m wide, `bounds.grow(-0.6)` is 2.8 m deep, so every
+		# one of them fell outside the envelope before it was probed.
+		# MEASURED: a corridor 8.0 x 4.0, a vault and a shaft each
+		# reported `NO_CANDIDATE` with `tried: 0` -- the search never
+		# ran a single query, and `tried: 0` is what says so. The one
+		# outcome that bars a host was being reported for ordinary rooms
+		# with metres of clear floor down their length.
+		#
+		# `(0, 0)` is the arrival itself, which is not a candidate and
+		# is not counted as one.
+		var lattice: Array = ([0.0] as Array) + RETURN_OFFSETS
+		for dz: float in lattice:
+			if moved != Vector3.INF:
+				break
+			for dx: float in lattice:
+				if is_zero_approx(dx) and is_zero_approx(dz):
+					continue
+				searched += 1
+				var at := from + Vector3(float(dx), 0.0, dz)
+				if not inside.has_point(at):
+					continue
+				examined += 1
+				if arrival_is_supported(space, at) \
+						and clear_of_arrival(at, from) \
+						and clear_of_content_path(at, from, content):
+					moved = at
+					break
+		if moved == Vector3.INF:
+			# SAY SO, because the bridge's refusal names the anchor and
+			# not the reason. A room over a kill pit -- `platform_path`
+			# is rising islands and two narrow ledges -- can have NO
+			# ground that both holds a capsule and leaves a body at the
+			# arrival outside the device's trigger. That is a composition
+			# question (should such a room host a return at all?) and not
+			# a placement one, and the engine refusing is the contract
+			# working rather than the contract failing.
+			push_warning("zone: no standable spot in room '%s' is clear "
+					% rid + "of its arrival, so its return device has "
+					+ "nowhere to stand; the layout will be refused")
+			# THE ONE OUTCOME THAT IS ABOUT THE ROOM, and it says what
+			# it searched rather than claiming impossibility: this many
+			# candidates, the room's own declared stands and a lattice
+			# bounded by `RETURN_OFFSETS` inside the committed envelope.
+			#
+			# WHICH OF THE TWO REFUSALS, and the difference is whether
+			# the declared search could run at all. A room with no
+			# committed envelope has no lattice to bound -- there is
+			# nothing to search INSIDE -- so nothing was established
+			# about the room and `NO_EVIDENCE` is the honest word.
+			# `NO_CANDIDATE` is the one outcome with teeth and it may
+			# only be said of a search that finished.
+			_say_placement(report, build, rid, {
+					"outcome": PLACEMENT_NO_CANDIDATE if box.has_volume()
+						else PLACEMENT_NO_EVIDENCE,
+					"searched": searched, "probed": examined,
+					"policy": {"offsets": RETURN_OFFSETS,
+						"clearance": clearance,
+						"off_content_path": clearance,
+						"inside": "committed bounds less 0.6 m"}})
+			continue
+		_stand_the_device(build, anchors, name, rid, moved)
+		_say_placement(report, build, rid, {
+				"outcome": PLACEMENT_PLACED, "repaired": true,
+				"searched": searched, "probed": examined,
+				"how": "a probed lattice"})
+	return report
+
+## Files one placement outcome under EVERY plug the room hosts.
+##
+## The search is per ROOM -- one return position, whoever asks for it --
+## and the contract is per PLUG, because that is the identity
+## `layout.py` iterates and the identity a `PlugAssignment` carries. A
+## room with no plug says nothing: there is no device whose placement it
+## would be about.
+static func _say_placement(report: Dictionary, build: Dictionary,
+		rid: String, told: Dictionary) -> void:
+	for raw: Variant in build.get("plugs", []):
+		if not is_instance_valid(raw as Object):
+			continue
+		var plug: ReturnPlug = raw
+		if str(plug.get_meta("room_id", "")) == rid:
+			report[plug.edge_id] = told.duplicate()
+
+## Publishes an anchor and moves the device standing on it together.
+## One place, because publishing one and standing the other somewhere
+## else is two truths about one thing.
+static func _stand_the_device(build: Dictionary, anchors: Dictionary,
+		name: String, rid: String, at: Vector3) -> void:
+	anchors[name] = at
+	for raw: Variant in build.get("plugs", []):
+		if not is_instance_valid(raw as Object):
+			continue
+		var plug: ReturnPlug = raw
+		if str(plug.get_meta("room_id", "")) == rid:
+			plug.global_position = at
+
+## IS A BODY AT THE ROOM'S ARRIVAL OUTSIDE THE RETURN DEVICE?
+##
+## `AMALGAM_BRIDGE.md` §5.7 rule 4b, and the question is deliberately
+## about a BODY and not about two points. `ReturnPlug`'s trigger is a
+## cylinder of `RADIUS` by `HEIGHT` standing on the device; a player is
+## a capsule of `PLAYER_RADIUS` by `PLAYER_HEIGHT` standing on the
+## arrival. They overlap when the horizontal gap is less than the two
+## radii together AND the two vertical spans meet -- which is the
+## `Area3D` would actually report, arithmetic rather than a guess.
+##
+## One entry per plug, keyed by edge id. Missing is a refusal on the
+## bridge side, so a plug whose room published no arrival still gets an
+## answer here: `false`, because nothing was shown to be clear.
+static func plugs_clear_of_arrivals(build: Dictionary) -> Dictionary:
+	var out := {}
+	var anchors: Dictionary = build.get("anchors", {})
+	for raw: Variant in build.get("plugs", []):
+		if not is_instance_valid(raw as Object):
+			continue
+		var plug: ReturnPlug = raw
+		var room := str(plug.get_meta("room_id", ""))
+		var arrive: Variant = anchors.get("room:%s:arrival" % room)
+		if arrive == null:
+			# NO ENTRY AT ALL, rather than `false`.
+			#
+			# `false` here meant "measured, and a body at the arrival
+			# stands inside the device" -- a fact about a POSITION, and
+			# the bridge bars a host on it. Writing it when there was no
+			# arrival to measure against made MISSING EVIDENCE
+			# indistinguishable from a measured failure, and a room
+			# could be removed from branch selection because its anchor
+			# had not been published. Rule 4b already refuses a layout
+			# whose plug carries no measurement; that refuses the
+			# LAYOUT, which is right, and does not condemn the ROOM.
+			continue
+		var at: Vector3 = arrive
+		var here := plug.global_position if plug.is_inside_tree() \
+				else plug.position
+		out[plug.edge_id] = clear_of_arrival(here, at)
+	return out
+
+## Is a body standing at `arrival` outside the device standing at `at`?
+##
+## The trigger is a cylinder of `RADIUS` by `HEIGHT`; the body is a
+## capsule of `PLAYER_RADIUS` by `PLAYER_HEIGHT`. They miss each other
+## when the horizontal gap covers both radii, or when the two vertical
+## spans do not meet -- which is what the `Area3D` itself would report.
+static func clear_of_arrival(at: Vector3, arrival: Vector3) -> bool:
+	var flat := Vector2(arrival.x - at.x, arrival.z - at.z).length()
+	var apart := flat >= ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
+	var above := arrival.y >= at.y + ReturnPlug.HEIGHT
+	var below := arrival.y + Constants.PLAYER_HEIGHT <= at.y
+	return apart or above or below
+
+## AND THE PAD MUST NOT STAND ON THE WAY TO WHAT THE ROOM HOLDS.
+##
+## `clear_of_arrival` keeps the device off the spot a body appears on,
+## which is the §5.7 defect. It says nothing about the eight metres
+## between that spot and the room's reward -- and a device in the middle
+## of those sends the player home on the way to the thing they came for.
+##
+## MEASURED, on the merged tree, five journeys through real branch
+## destinations:
+##
+## | Zone | pad off the arrival->content line | reached the content |
+## |---|---|---|
+## | `zone_01` `c018` | 7.67 m | yes |
+## | `zone_02` `c011` | **0.41 m** | NO -- "took the return home by wandering onto it" |
+## | `zone_03` `c011` | **0.15 m** | NO |
+##
+## The correlation is the whole finding: every journey that failed to
+## reach its room's content had the pad within a body's width of the
+## straight line to it, and the one that succeeded had it seven metres
+## clear. Not a steering failure and not an unreachable route -- the
+## device is in the way.
+##
+## The same margin as the arrival: the trigger plus a capsule. A body
+## walking that line must be able to pass the device without entering
+## it. Rooms with no content declared are unconstrained, which is what
+## `content == Vector3.INF` means.
+static func clear_of_content_path(at: Vector3, arrival: Vector3,
+		content: Vector3) -> bool:
+	if not content.is_finite() or not arrival.is_finite():
+		return true
+	var a := Vector2(arrival.x, arrival.z)
+	var c := Vector2(content.x, content.z)
+	var p := Vector2(at.x, at.z)
+	var seg := c - a
+	if seg.length_squared() < 0.0001:
+		return true
+	var t := clampf((p - a).dot(seg) / seg.length_squared(), 0.0, 1.0)
+	return (a + seg * t).distance_to(p) \
+			>= ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
+
+## Where the thing a player came to this room FOR actually stands, in
+## world space, or `INF` when the room holds nothing to reach.
+##
+## **The room's own warp station, by its id.** Two facts decide this.
+##
+## The first is that the nominal `reward_position` is not where the
+## player goes: measured across the five generated fixtures, the
+## interactable the player's own probe stops at is six to ten metres
+## from the producer's nominal reward spot -- on `zone_02`'s `c011`,
+## `(15.2, 36.5, 131.45)` against `(8.8, 36.5, 134.97)`. Guarding the
+## line to the nominal spot guards a line nobody walks. In every room
+## measured, the node that probe stops at is that room's station.
+##
+## The second is that a return anchor is COMMITTED GEOMETRY. It is
+## settled once, written into the manifest, and a cold restart has to
+## lay it down in the same place. So the point this guards against has
+## to be a function of the committed layout and nothing else. The first
+## version of this asked the scene "what is the first node with
+## `interact()` inside this room" -- tree order over a subtree whose
+## membership is NOT the same on a replay, because a key the player is
+## already carrying is not rebuilt. Every room measured answered with
+## its own station either way; this asks for that station directly, by
+## the id the builder gave it, so the answer cannot depend on what else
+## happens to be standing in the room or on what order it was added in.
+static func content_of(build: Dictionary, rid: String) -> Vector3:
+	var want := "st:%s" % rid
+	for raw: Variant in build.get("stations", []):
+		if not is_instance_valid(raw as Object):
+			continue
+		var station := raw as Node3D
+		if station == null or not station.is_inside_tree():
+			continue
+		if str(station.get("station_id")) != want:
+			continue
+		return station.global_position
+	return Vector3.INF
+
 static func aperture_polarity(room: Dictionary, to_world: Transform3D,
 		space: PhysicsDirectSpaceState3D) -> Dictionary:
 	var out := {}
@@ -432,16 +893,7 @@ static func aperture_polarity(room: Dictionary, to_world: Transform3D,
 			continue
 		var door: Dictionary = raw
 		var at: Vector3 = door["position"]
-		# Stand where the floor is, exactly as the two-door probe does:
-		# an aperture's sill is not always the height its socket names.
-		var ground := _ray(space, to_world * (at + Vector3.UP * 1.0),
-				to_world * (at + Vector3.DOWN * 1.0))
-		var base := at.y
-		if not ground.is_empty():
-			base = (to_world.affine_inverse()
-					* (ground["position"] as Vector3)).y
-		var stance := Vector3.UP * (base - at.y
-				+ Constants.PLAYER_HEIGHT / 2.0 + 0.05)
+		var stance := _door_stance(to_world, space, at)
 		# INWARD, because a room's own doors are measured from inside it.
 		var inward := _inward(at, room["bounds"] as AABB)
 		var blocked := false
@@ -451,6 +903,23 @@ static func aperture_polarity(room: Dictionary, to_world: Transform3D,
 				break
 		out[str(door["socket_id"])] = not blocked
 	return out
+
+## Where a body stands to be measured in this doorway.
+##
+## Stand where the floor is: an aperture's sill is not always the height
+## its socket names. Shared by the polarity reading and the blocker
+## reading, because two stances for one doorway is how a report and the
+## refusal it explains come to disagree.
+static func _door_stance(to_world: Transform3D,
+		space: PhysicsDirectSpaceState3D, at: Vector3) -> Vector3:
+	var ground := _ray(space, to_world * (at + Vector3.UP * 1.0),
+			to_world * (at + Vector3.DOWN * 1.0))
+	var base := at.y
+	if not ground.is_empty():
+		base = (to_world.affine_inverse()
+				* (ground["position"] as Vector3)).y
+	return Vector3.UP * (base - at.y + Constants.PLAYER_HEIGHT / 2.0
+			+ 0.05)
 
 static func _assigned_doors_match_their_usage(room: Dictionary,
 		to_world: Transform3D, space: PhysicsDirectSpaceState3D,
@@ -805,6 +1274,17 @@ static func _arrival_is_safe(room: Dictionary, to_world: Transform3D,
 
 static func _blocked(space: PhysicsDirectSpaceState3D,
 		at: Vector3) -> bool:
+	return _blocker(space, at) != null
+
+## WHAT IS STANDING HERE, not merely that something is.
+##
+## One probe, two readings. `_blocked` asked a yes/no question and threw
+## the answer away, so every refusal downstream -- including the bridge's
+## "the engine measured it as solid", which stops a Zone opening -- named
+## the door and nothing else. Whoever had to fix it then had a doorway
+## and no suspect.
+static func _blocker(space: PhysicsDirectSpaceState3D,
+		at: Vector3) -> Node:
 	var capsule := CapsuleShape3D.new()
 	# Very slightly slimmer than the player, so an opening built exactly
 	# to the minimum is not refused by float error.
@@ -816,5 +1296,27 @@ static func _blocked(space: PhysicsDirectSpaceState3D,
 	query.collide_with_areas = false
 	for hit: Dictionary in space.intersect_shape(query, 8):
 		if not _is_placed_content(hit.get("collider")):
-			return true
-	return false
+			return hit.get("collider") as Node
+	return null
+
+## `socket_id -> what stands in it`, for the declared doors that measure
+## solid. Empty when every aperture is the hole it was declared to be.
+static func aperture_blockers(room: Dictionary, to_world: Transform3D,
+		space: PhysicsDirectSpaceState3D) -> Dictionary:
+	var out := {}
+	for raw: Variant in room.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		var at: Vector3 = door["position"]
+		var inward := _inward(at, room["bounds"] as AABB)
+		for step: float in [0.0, 0.45]:
+			var who := _blocker(space, to_world * (at + inward * step
+					+ _door_stance(to_world, space, at)))
+			if who == null:
+				continue
+			out[str(door["socket_id"])] = ("%s (%s), %.2f m inside the "
+					% [str(who.get_path()), who.get_class(), step]
+					+ "doorway")
+			break
+	return out

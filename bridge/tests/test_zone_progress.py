@@ -17,7 +17,7 @@ from pydantic import TypeAdapter
 
 from archipepsi_bridge.schemas import constants as C
 
-from .conftest import connected_engine, drain, run
+from .conftest import enter_zone, connected_engine, drain, run
 
 _ADAPTER = TypeAdapter(ClientMessage)
 
@@ -85,7 +85,7 @@ def test_a_collected_key_reaches_the_save(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         key, lock = _identities(engine, zone_id)
         assert key and lock, "this Zone should carry a branch"
 
@@ -115,7 +115,7 @@ def test_an_undeclared_key_never_becomes_save_data(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         with pytest.raises(Exception, match="declares no key"):
             await engine.handle_progress(_ADAPTER.validate_python(
                 {"type": "key_collected", "zone_id": zone_id,
@@ -131,7 +131,7 @@ def test_a_lock_on_a_door_that_is_not_locked_is_refused(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         with pytest.raises(Exception, match="no locked door"):
             await engine.handle_progress(_ADAPTER.validate_python(
                 {"type": "lock_opened", "zone_id": zone_id,
@@ -147,7 +147,7 @@ def test_a_station_the_layout_never_placed_is_refused(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         with pytest.raises(Exception, match="placed no station"):
             await engine.handle_progress(_ADAPTER.validate_python(
                 {"type": "station_reached", "zone_id": zone_id,
@@ -164,7 +164,7 @@ def test_progress_lands_in_the_zone_it_happened_in(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         msg = _ADAPTER.validate_python(
             {"type": "key_collected", "zone_id": "zone_999",
              "key_id": "red"})
@@ -180,7 +180,7 @@ def test_progress_survives_a_save_round_trip(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         key, lock = _identities(engine, zone_id)
         room, socket = lock
         for m in ({"type": "key_collected", "zone_id": zone_id,
@@ -217,7 +217,7 @@ def test_leaving_with_checks_outstanding_keeps_them(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         key, _ = _identities(engine, zone_id)
         await engine.handle_progress(_ADAPTER.validate_python(
             {"type": "key_collected", "zone_id": zone_id, "key_id": key}))
@@ -252,7 +252,7 @@ def test_an_abandoned_zone_is_the_one_you_cannot_return_to(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         engine.save = T.abandon_zone(engine.save, zone_id)
         assert engine.save.zone_by_id(zone_id).state == "ABANDONED"
         with pytest.raises(ValueError, match="nothing to enter"):
@@ -268,7 +268,7 @@ def test_a_dormant_zone_still_records_progress(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         engine.save = T.rest_zone(engine.save, zone_id)
         key, _ = _identities(engine, zone_id)
         engine.save = T.record_key(engine.save, zone_id, key)
@@ -297,7 +297,7 @@ def test_visiting_a_finished_zone_counts_nothing_twice(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         save = _finish(engine.save, zone_id)
 
         counted = save.completed_zone_count
@@ -328,7 +328,7 @@ def test_a_finished_zone_cannot_be_completed_twice(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         zone_id = engine.save.active_zone_id
-        await engine.handle_enter_zone(zone_id)
+        await enter_zone(engine, zone_id)
         save = _finish(engine.save, zone_id)
         save = T.enter_zone(save, zone_id)
         with pytest.raises(ValueError, match="already counted"):
@@ -346,14 +346,14 @@ def test_a_finished_zone_is_visitable_while_another_is_dormant(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         first = engine.save.active_zone_id
-        await engine.handle_enter_zone(first)
+        await enter_zone(engine, first)
         engine.save = _finish(engine.save, first)
 
         await engine.handle_request_next_zone(False)
         await drain()
         second = engine.save.active_zone_id
         assert second != first
-        await engine.handle_enter_zone(second)
+        await enter_zone(engine, second)
         engine.save = T.rest_zone(engine.save, second)
         assert engine.save.zone_by_id(second).state == "DORMANT"
 
@@ -382,8 +382,107 @@ def test_one_unfinished_zone_holds_locations_at_a_time(tmp_path):
         await engine.handle_request_next_zone(False)
         await drain()
         first = engine.save.active_zone_id
-        await engine.handle_enter_zone(first)
+        await enter_zone(engine, first)
         engine.save = T.rest_zone(engine.save, first)
         holders = [z for z in engine.save.zones if z.holds_locations]
         assert [z.zone_id for z in holders] == [first]
+    run(go())
+
+
+# --- five refusals nothing was reading ------------------------------------
+#
+# Mutation testing: neuter the raise, run the suite, watch it stay green.
+# All five are in the Zone-lifecycle transitions this lane added, and all
+# five guard a way for a Zone to leave a state it is not in — which is
+# how DORMANT/VISITING earn their keep in the first place.
+
+def _in_flight(save, zone_id):
+    """Put one of the Zone's own Checks on the wire and leave it there."""
+    loc = sorted(save.zone_by_id(zone_id).allocated_location_ids)[0]
+    return T.claim_zone_check(save, zone_id=zone_id, location_id=loc,
+                              transaction_id="tx-in-flight")
+
+
+def test_resting_a_zone_that_is_not_active_is_refused(tmp_path):
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        await engine.handle_request_next_zone(False)
+        await drain()
+        zone_id = engine.save.active_zone_id
+        # Never entered: still PENDING/ACCEPTED, whatever the record says,
+        # it is not ACTIVE and there is no visit to put down.
+        assert engine.save.zone_by_id(zone_id).state != "ACTIVE"
+        with pytest.raises(ValueError, match="not ACTIVE"):
+            T.rest_zone(engine.save, zone_id)
+    run(go())
+
+
+def test_resting_a_zone_with_checks_in_flight_is_refused(tmp_path):
+    """A dormant Zone with an unanswered claim is a Check whose
+    confirmation arrives for a Zone nobody is in."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        await engine.handle_request_next_zone(False)
+        await drain()
+        zone_id = engine.save.active_zone_id
+        await enter_zone(engine, zone_id)
+        save = _in_flight(engine.save, zone_id)
+        with pytest.raises(ValueError, match="still has Checks in flight"):
+            T.rest_zone(save, zone_id)
+    run(go())
+
+
+def test_progress_recorded_into_an_abandoned_zone_is_refused(tmp_path):
+    """Progress sets are monotone, so anything written here is permanent.
+    An abandoned Zone has given its Checks back; a key collected in it
+    describes a room that is no longer anyone's."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        await engine.handle_request_next_zone(False)
+        await drain()
+        zone_id = engine.save.active_zone_id
+        key, _ = _identities(engine, zone_id)
+        await enter_zone(engine, zone_id)
+        await engine.handle_abandon_zone(zone_id)
+        rec = engine.save.zone_by_id(zone_id)
+        assert rec.state not in REVISITABLE_ZONE_STATES
+        if key is not None:
+            with pytest.raises(ValueError, match="records no progress"):
+                T.record_key(engine.save, zone_id, key)
+        with pytest.raises(ValueError, match="records no progress"):
+            T.record_station(engine.save, zone_id, "room:c001:arrival")
+    run(go())
+
+
+def test_completing_a_zone_that_is_neither_active_nor_dormant_is_refused(
+        tmp_path):
+    """Accepted and never walked into. Not ABANDONED or COMPLETE — those
+    are in `zone_history` and the guard above them fires first — but a
+    Zone whose Checks were allocated and whose rooms nobody has seen."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        await engine.handle_request_next_zone(False)
+        await drain()
+        zone_id = engine.save.active_zone_id
+        rec = engine.save.zone_by_id(zone_id)
+        assert rec.state not in ("ACTIVE", "DORMANT")
+        assert zone_id not in engine.save.zone_history
+        with pytest.raises(ValueError, match="not ACTIVE or DORMANT"):
+            T.complete_zone(engine.save, zone_id)
+    run(go())
+
+
+def test_completing_a_zone_with_checks_in_flight_is_refused(tmp_path):
+    """§14.5 completes a Zone with every Check CONFIRMED. A claim that
+    has been sent and not answered is not a confirmation, and counting
+    it as one is how a Zone completes holding a location it never got."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        await engine.handle_request_next_zone(False)
+        await drain()
+        zone_id = engine.save.active_zone_id
+        await enter_zone(engine, zone_id)
+        save = _in_flight(engine.save, zone_id)
+        with pytest.raises(ValueError, match="still has Checks in flight"):
+            T.complete_zone(save, zone_id)
     run(go())

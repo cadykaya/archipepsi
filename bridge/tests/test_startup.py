@@ -29,7 +29,7 @@ from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.server import BridgeServer
 from archipepsi_bridge.store import DEFAULT_SAVE_DIR
 
-from .conftest import run
+from .conftest import enter_zone, run
 
 #: Away from the real ports, so a developer with a bridge already running
 #: does not get a confusing failure here.
@@ -101,7 +101,7 @@ def test_mock_campaign_plays_without_a_server(tmp_path):
         zone = engine.save.active_zone
         assert zone is not None and zone.zone is not None, (
             "the mock campaign generated no Zone")
-        await engine.handle_enter_zone(zone.zone_id)
+        await enter_zone(engine, zone.zone_id)
         for loc in zone.allocated_location_ids:
             await TX.claim_check(engine, zone.zone_id, loc)
         for _ in range(40):
