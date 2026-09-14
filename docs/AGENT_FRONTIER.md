@@ -1,5 +1,52 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — follow-up 02 integration — 2026-09-14
+
+**`claude/archipepsi-echoes-continuation-b1adno`**, merged from the
+bridge lane at `fdac6ab`. Full page:
+**`docs/FOLLOWUP_02_INTEGRATION.md`**. Read that, not this.
+
+**The variant is selectable now, and selecting it needed two fixes.**
+Separate save folders did not select it, and neither did the switch as
+first wired: both `fallback_zone_attempt` and `generate_zone_validated`
+read `request.campaign.zone_budget`, so narrowing
+`constraints["zone_budget"]` changed nothing and delivered the
+filter-only arm (a Zone asked for 72% arrived at 917 against 648-792).
+Setting the band before the request is built fixed that and then crashed
+at the low end -- 72% of the prototype's 200 is 144 against a floor of
+200 -- so it is clamped to the floor and said out loud per Zone, because
+a clamp that bites is filter-only again. `0.72` is untouched.
+
+**Labelled as the owner asked: a LOWER-BUDGET GENERATION VARIANT**, not
+the same level with two drills removed. +17 rooms, +27 enemies and
+different rooms, carried in the banner, the launcher, `--help` and the
+slot marker rather than left to be discovered.
+
+**Stations counted, not inferred.** Five real manifests of each variant
+built by `ZoneBuilder`: baseline 5 of 5 composed, 49 stations, 39
+broken; variant **2 of 5 composed**, 20 stations, 12 broken. No station
+in either starts broken in a room with no activity, and entrance and
+exit are whole in both. The finding is the first column: three variant
+manifests are refused by the engine's layout router (a branch room that
+cannot be placed clear), all three accepted by `validate_zone` first.
+
+**Both loops run.** `godot-integration` and the new
+`godot-integration-quiet` both pass -- at prototype scale, where the
+clamp makes it family-narrowing only. Default scale is not available in
+that harness: it fails there for the baseline too.
+
+**`test_startup`'s second-bridge case does not reproduce** (5x alone, 3x
+the file, twice in the suite). Not waived: `TEST_PORT` is a fixed
+constant and a colliding process on 38331 fails it for reasons unrelated
+to the code. Left unchanged, recorded as a decision.
+
+**The strictly matched no-compensation comparison remains incomplete.**
+Recorded, not worked around.
+
+**Waiting on Dess:** the `_accepts` correction. Nothing here depends on
+it; their 12-of-12 acceptance figure does.
+
+
 ## ENGINE LANE — owner-away follow-up 02 — 2026-09-13
 
 **`claude/archipepsi-echoes-continuation-b1adno`**, from `eb14a38`.

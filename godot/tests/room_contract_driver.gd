@@ -7952,14 +7952,31 @@ func _test_no_station_demands_a_repair_that_variant_does_not_hold() -> void:
 				+ "%d station(s), %d broken, %d working"
 				% [row["stations"], row["broken"],
 					int(row["stations"]) - int(row["broken"])])
+		# PER COMPOSED ZONE, because the two totals are over different
+		# numbers of Zones and comparing them directly says nothing.
+		var each := maxf(1.0, float(row["composed"]))
+		print("       per Zone: %.1f rooms, %.1f station(s), "
+				% [float(row["rooms"]) / each,
+					float(row["stations"]) / each]
+				+ "%.1f broken, %.1f working"
+				% [float(row["broken"]) / each,
+					float(int(row["stations"]) - int(row["broken"])) / each])
 		if not (row["refused"] as Array).is_empty():
 			print("       refused: %s" % str(row["refused"]))
-	print("     difference: %+d rooms, %+d with an activity, "
-			% [variant["rooms"] - baseline["rooms"],
-				variant["activity_rooms"] - baseline["activity_rooms"]]
-			+ "%+d station(s), %+d broken"
-			% [variant["stations"] - baseline["stations"],
-				variant["broken"] - baseline["broken"]])
+	# THE DIFFERENCE PER ZONE, for the same reason. Subtracting a total
+	# over two Zones from a total over five measures the refusals, not
+	# the variant, and would read as "29 fewer stations".
+	var b := maxf(1.0, float(baseline["composed"]))
+	var v := maxf(1.0, float(variant["composed"]))
+	print("     difference per Zone: %+.1f rooms, %+.1f with an activity, "
+			% [float(variant["rooms"]) / v - float(baseline["rooms"]) / b,
+				float(variant["activity_rooms"]) / v
+					- float(baseline["activity_rooms"]) / b]
+			+ "%+.1f station(s), %+.1f broken"
+			% [float(variant["stations"]) / v
+					- float(baseline["stations"]) / b,
+				float(variant["broken"]) / v
+					- float(baseline["broken"]) / b])
 
 	# THE PROMISE, in both variants.
 	for row: Dictionary in [baseline, variant]:
