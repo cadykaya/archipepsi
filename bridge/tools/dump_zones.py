@@ -58,7 +58,7 @@ def _shape(zone) -> dict:
     }
 
 
-async def _generate(count: int, out: Path) -> int:
+async def _generate(count: int, out: Path, quiet_generation: bool = False) -> int:
     from conftest import connected_engine, drain      # noqa: E402
 
     out.mkdir(parents=True, exist_ok=True)
@@ -66,6 +66,11 @@ async def _generate(count: int, out: Path) -> int:
     with tempfile.TemporaryDirectory() as save_dir:
         engine, _ = await connected_engine(Path(save_dir),
                                            config=C.DEFAULT_CONFIG)
+        # THE SAME SWITCH A PLAYER FLIPS. `--quiet-generation` on the
+        # bridge sets this one attribute, so a fixture dumped here went
+        # through the identical request path -- not a second recipe that
+        # agrees with the live one until it doesn't.
+        engine.quiet_generation = quiet_generation
         for n in range(count):
             await engine.handle_request_next_zone(False)
             await drain()
@@ -100,8 +105,14 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--out", type=Path,
         default=Path("../godot/tests/fixtures/generated"))
+    parser.add_argument(
+        "--quiet", action="store_true",
+        help="dump the LOWER-BUDGET GENERATION VARIANT instead (the "
+             "same switch the bridge's --quiet-generation sets). These "
+             "are not the ordinary Zones with two drills removed: the "
+             "smaller band composes different rooms.")
     args = parser.parse_args(argv)
-    return asyncio.run(_generate(args.count, args.out))
+    return asyncio.run(_generate(args.count, args.out, args.quiet))
 
 
 if __name__ == "__main__":

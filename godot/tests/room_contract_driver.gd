@@ -128,6 +128,7 @@ func _run() -> void:
 	await _test_a_zone_resumes_at_the_station_it_was_left_from()
 	await _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not()
 	await _test_a_broken_station_is_repaired_by_its_own_rooms_puzzle()
+	await _test_no_station_demands_a_repair_that_variant_does_not_hold()
 	await _test_a_capability_gate_holds_and_never_blocks_the_way_out()
 	await _test_the_committed_layout_is_measured_not_re_solved()
 	_test_the_walk_prober_is_no_kinder_than_the_controller()
@@ -7908,3 +7909,157 @@ func _test_the_spans_repaired_route_is_walked_by_the_actual_player() \
 	rooms_checked += 1
 	host.queue_free()
 	await get_tree().process_frame
+
+
+## NO STATION PROMISES A REPAIR ITS OWN VARIANT CANNOT DELIVER.
+##
+## Follow-up 02, integration. The bridge lane's lower-budget variant
+## leaves many more rooms with no activity in them, and flagged the
+## consequence rather than backfilling it: "a repair-gated station must
+## not be placed in one of them."
+##
+## MEASURED ON REAL STATIONS, not inferred from how many rooms hold an
+## activity. Those are different questions -- a station exists only in a
+## room whose footprint reaches `STATION_ROOM_AREA`, so the count of
+## activity-bearing rooms says nothing about how many stations there are
+## or which of them are broken. This builds both variants' manifests
+## with the real `ZoneBuilder` and counts the `WarpStation` nodes that
+## actually come out.
+##
+## The invariant is one expression in `zone_builder.gd` -- a station is
+## created broken only when its own room's `activities` array is
+## non-empty, and its `repair_room` is that same room -- so a promise
+## with nothing behind it is not something the builder can express. This
+## asserts it on real Zones from both variants anyway, because "true by
+## construction" is what the flat socket table was too.
+func _test_no_station_demands_a_repair_that_variant_does_not_hold() -> void:
+	var baseline: Dictionary = await _station_census(
+			"res://tests/fixtures/sample", 5)
+	var variant: Dictionary = await _station_census(
+			"res://tests/fixtures/quiet", 5)
+	for row: Dictionary in [baseline, variant]:
+		if row.has("error"):
+			# SAY WHICH ONE AND WHY. A census that reports "something
+			# did not compose" has measured nothing and explained less.
+			_check(false, str(row["error"]))
+			return
+
+	print("  -- stations, measured on 5 Zones of each variant --")
+	for row: Dictionary in [baseline, variant]:
+		print("     %s: %d of 5 composed; %d rooms, %d with an activity, "
+				% [row["label"], row["composed"], row["rooms"],
+					row["activity_rooms"]]
+				+ "%d station(s), %d broken, %d working"
+				% [row["stations"], row["broken"],
+					int(row["stations"]) - int(row["broken"])])
+		if not (row["refused"] as Array).is_empty():
+			print("       refused: %s" % str(row["refused"]))
+	print("     difference: %+d rooms, %+d with an activity, "
+			% [variant["rooms"] - baseline["rooms"],
+				variant["activity_rooms"] - baseline["activity_rooms"]]
+			+ "%+d station(s), %+d broken"
+			% [variant["stations"] - baseline["stations"],
+				variant["broken"] - baseline["broken"]])
+
+	# THE PROMISE, in both variants.
+	for row: Dictionary in [baseline, variant]:
+		_check(int(row["promised_nothing"]) == 0,
+				"%s: %d station(s) start broken in a room with no "
+				% [row["label"], int(row["promised_nothing"])]
+				+ "activity to repair them: %s" % str(row["offenders"]))
+		# A ZONE ALWAYS HAS A WAY TO SAVE. Entrance and exit are appended
+		# outside the per-room loop and are never broken; a variant that
+		# lost that would strand a player at the door.
+		_check(int(row["broken_doors"]) == 0,
+				"%s: the entrance or exit station started broken (%s)"
+				% [row["label"], str(row["broken_door_ids"])])
+		_check(int(row["stations"]) > int(row["broken"]),
+				"%s: every station in the sample starts broken, so there "
+				% row["label"] + "is no working save point at all")
+
+	# AND THE VARIANT IS NOT A DEGENERATE CASE. If the lower-budget arm
+	# had simply stopped producing stations the checks above would pass
+	# by holding nothing.
+	_check(int(variant["stations"]) > 0,
+			"the lower-budget variant produced no stations at all")
+
+
+## One variant's manifests, built and counted. `{}` if any fails to
+## compose, so the caller reports that rather than comparing half a set.
+func _station_census(where: String, count: int) -> Dictionary:
+	var rooms := 0
+	var activity_rooms := 0
+	var stations := 0
+	var broken := 0
+	var promised_nothing := 0
+	var broken_doors := 0
+	var composed := 0
+	var refused: Array[String] = []
+	var offenders: Array[String] = []
+	var broken_door_ids: Array[String] = []
+	for n in range(1, count + 1):
+		var path := "%s/zone_%02d.json" % [where, n]
+		if not FileAccess.file_exists(path):
+			return {"error": "%s is not there. Regenerate it with "
+					% path + "`python tools/dump_zones.py`."}
+		var zone: Dictionary = JSON.parse_string(
+				FileAccess.get_file_as_string(path))
+		var out := ZoneBuilder.build(zone)
+		if str(out.get("status", "")) != "LAYOUT_OK" or not out.has("root"):
+			# A REFUSAL IS DATA, NOT THE END OF THE CENSUS. These
+			# manifests are composed offline, without the live
+			# negotiation a played Zone gets, so a refusal here is a
+			# fact about this harness as much as about the Zone -- and
+			# comparing the two variants only means something if both
+			# are counted the same way.
+			refused.append("%s (%s)" % [path.get_file(),
+					str(out.get("failed", out.get("status", "?")))])
+			continue
+		composed += 1
+		# WHICH ROOMS HOLD AN ACTIVITY, read from the manifest the
+		# builder was handed -- the same array the builder's own rule
+		# reads, so the two cannot disagree about what a puzzled room is.
+		#
+		# Counted only for Zones that COMPOSED. A refused Zone
+		# contributes no stations, so letting its rooms into the totals
+		# would compare a station count from four Zones against a room
+		# count from five.
+		var has_activity := {}
+		for raw_chamber: Variant in (zone.get("chambers", []) as Array):
+			var chamber: Dictionary = raw_chamber
+			var rid := str(chamber.get("id", ""))
+			rooms += 1
+			var acts: Array = chamber.get("activities", []) as Array
+			has_activity[rid] = not acts.is_empty()
+			if not acts.is_empty():
+				activity_rooms += 1
+		add_child(out["root"] as Node3D)
+		await get_tree().physics_frame
+		for raw: Variant in (out["stations"] as Array):
+			var station: WarpStation = raw
+			stations += 1
+			if not station.is_broken():
+				continue
+			broken += 1
+			var room := station.repair_room
+			if room.is_empty() or not bool(has_activity.get(room, false)):
+				promised_nothing += 1
+				offenders.append("%s/%s -> %s"
+						% [str(zone.get("zone_id", "?")),
+							station.station_id, room])
+			if station.station_id in ["st:entrance", "st:exit"]:
+				broken_doors += 1
+				broken_door_ids.append("%s/%s"
+						% [str(zone.get("zone_id", "?")),
+							station.station_id])
+		(out["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	return {
+		"label": "baseline" if where.ends_with("sample") \
+				else "lower-budget",
+		"composed": composed, "refused": refused,
+		"rooms": rooms, "activity_rooms": activity_rooms,
+		"stations": stations, "broken": broken,
+		"promised_nothing": promised_nothing, "offenders": offenders,
+		"broken_doors": broken_doors, "broken_door_ids": broken_door_ids,
+	}

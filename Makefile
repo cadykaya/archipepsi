@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-integration-quiet godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -242,6 +242,48 @@ zone-sample: godot-import
 	@echo "   -- room overlap -- the router now refuses itself."
 	-cd bridge && $(PY) tools/check_sample_layouts.py
 
+# THE SAME LOOP, WITH THE OPT-IN VARIANT TURNED ON. The owner's ask is
+# that BOTH modes are exercised through real build and acceptance, not
+# just the one that ships -- so this is `godot-integration` with the one
+# flag added and its own save folder. A variant that generates Zones the
+# engine refuses fails here rather than in a review session.
+#
+# PROTOTYPE SCALE, exactly like the baseline target, because that is
+# what this harness is written for: `--mock-scale=default` fails here
+# for the BASELINE too ("30 locations scouted", then a layout verdict
+# that never arrives), so running the variant at default scale would
+# compare it against a harness rather than against the baseline.
+#
+# The consequence is worth stating rather than burying: at prototype
+# scale a Zone's budget is already ZONE_BUDGET_MIN, so the variant's
+# band is clamped to the floor and what this exercises is the FAMILY
+# NARROWING, not the lower band. The bridge logs that per Zone. Default
+# scale is covered in Python instead -- `test_quiet_integration.py`
+# generates and accepts a default-scale variant Zone through the same
+# provider and the same validate_zone -- and in the engine by the
+# station census in `godot-room-contract`, which builds five real
+# manifests of each variant.
+godot-integration-quiet: godot-import
+	rm -rf $(QUIET_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(QUIET_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --quiet-generation & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving? see the traceback above)"; \
+	  exit 1; }; \
+	$(GODOT) --headless --path godot -- --integration-test \
+	  > /tmp/archipepsi-integration-quiet.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID; \
+	cat /tmp/archipepsi-integration-quiet.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	if grep -q "SCRIPT ERROR" /tmp/archipepsi-integration-quiet.log; then \
+	  echo "-- a script error was raised: a run that crashed and still"; \
+	  echo "-- printed OK is not a pass."; \
+	  grep "SCRIPT ERROR" /tmp/archipepsi-integration-quiet.log | sort -u; \
+	  exit 1; \
+	fi
+
 godot-movement: godot-import   # P3.0 rails, launch pads, and the offer seam
 	@out=$$($(GODOT) --headless --path godot -- --movement-test 2>&1); \
 	status=$$?; echo "$$out" | grep -v "^$$"; \
@@ -386,6 +428,10 @@ godot-affordance: godot-import # world affordances, local rewards, readouts
 # counter climbed forever, "coins were genuinely spent" passed on coins an
 # earlier run had spent, and the shop assertion failed at random.
 INTEGRATION_SAVES := $(CURDIR)/.integration-saves
+# The lower-budget variant's own folder. A SEPARATE one, because the
+# two modes compose different Zones and a single campaign holding
+# both would make the comparison unreadable.
+QUIET_SAVES := $(CURDIR)/.integration-saves-quiet
 JOURNEY_SAVES := $(CURDIR)/.journey-saves
 
 # The S2/S5 action-runner suite: press, release, cancel and death, with a
