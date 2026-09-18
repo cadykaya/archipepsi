@@ -1702,6 +1702,30 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 				"--" if r == null else "%.2f" % (r as Vector3).y]
 	_note("raw heights (c=centreline, r=+3.0 m), cast 7.53 -> -1.47:")
 	_note("  " + dump)
+	# HOW WIDE IS THE SEGMENT THE PAD SITS ON?
+	#
+	# That is the number the whole detour question turns on, and it is
+	# one lateral sweep rather than another pass/fail criterion. A body
+	# needs more than `ReturnPlug.RADIUS + PLAYER_RADIUS` of clearance
+	# from the pad's centre to walk past without triggering it.
+	var edge_lo := 0.0
+	var edge_hi := 0.0
+	var ceil_y2 := pad_at.y + 5.0
+	for k in 33:
+		var dz := -4.0 + float(k) * 0.25
+		var g: Variant = _ground_under(probe_space,
+				Vector3(pad_at.x, ceil_y2, pad_at.z + dz), ceil_y2)
+		if g == null:
+			continue
+		if absf((g as Vector3).y - pad_at.y) > Constants.MAX_VERTICAL_STEP:
+			continue
+		edge_lo = minf(edge_lo, dz)
+		edge_hi = maxf(edge_hi, dz)
+	_note("the segment under the pad carries floor from %+.2f to %+.2f m "
+			% [edge_lo, edge_hi]
+			+ "either side of its centre (%.2f m wide); passing the "
+			% (edge_hi - edge_lo)
+			+ "trigger needs more than %.2f m" % keep_off)
 	var lanes: Array[Dictionary] = []
 	for offset: float in [-3.0, -2.5, -2.0, 2.0, 2.5, 3.0]:
 		if absf(offset) <= keep_off:
