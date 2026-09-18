@@ -52,29 +52,105 @@ godot --headless --path godot -- --traverse-test \
 
 ## CHECK 126 is in c021, and CHECK 120 does not exist
 
-**Confirmed by the game, not by a lookup.** Walking the committed
-placement with the real controller, the base kit reaches the pedestal
-from `c021`'s own doorway and the interact prompt reads:
+**Confirmed by the game, not by a lookup.** On the committed placement
+the interact prompt at the pedestal reads:
 
 > `[E] CLAIM CHECK 126`
 
 `c021` is a procedural `platform_path`: 3 segments, declared `gap_size`
-2.03, `vertical_step` 0.51, objective `platform_to_goal`, entry `USED`
-and exit `SEALED`, with return plug `p:c021:start` and one four-element
-untimed `switch_sequence`. The render below is that room, built from the
-owner's own proposal.
+2.03, `vertical_step` 0.51, objective `platform_to_goal`, **entry
+`USED` by `e:c018:c021`, exit `SEALED` with no edge**, carrying
+`p:c021:start` — a TRAVERSAL_ONLY return pad bound for `zone_start`.
 
-**`89100120` is allocated nowhere in this save.** Checked directly
-against the proposal's chambers. Any earlier "CHECK 120" wording was not
-an identifier and nothing should be inferred from it.
+**`89100120` is allocated nowhere in this save.** Checked against the
+proposal's chambers. Any earlier "CHECK 120" wording was not an
+identifier.
 
-![c021](evidence/owner-save/c021_switch_sequence_over_the_pit.png)
+---
 
-The four switches sit **on the platform segments, spread across the
-gaps** — so touching all four means crossing the course, over the drop,
-with the activity timer already running. That is consistent with the 792
-active seconds the record shows for `c021_0`, and it is a correlation,
-not a diagnosis.
+## The crossing, from where a player is actually put down
+
+**The earlier start was the wrong door.** `_nearest_doorway` picks by
+distance and checks neither a door's usage nor where the room is
+entered from — so on `c021` it chose **`c021/exit`, which is SEALED**,
+has no edge, and is nowhere a player has ever stood. That result stands
+only as **local approach evidence** — can the Check be addressed from
+beside it — and was never a route.
+
+**The route, run from the committed arrival** `(5.65, 0.0, 42.25)`,
+where `e:c018:c021` puts a body down. One continuous walk, guaranteed
+kit (walk + jump), nothing relocated along the course.
+
+| | |
+|---|---|
+| arrival | x **5.6** |
+| return plug `p:c021:start` | x **19.0** — 13.4 m along an 18.7 m run |
+| CHECK 126 | x **24.3** |
+
+All three on the same centreline, and **the plug sits between the
+arrival and the Check**.
+
+**Attempt A — everything live: the plug fired.** Walking the line took
+the body over `p:c021:start`, which announced itself on its own
+`traversed` signal and sent it to `zone_start`; it ended at
+`(3.3, 0.0, 6.0)`, in `c001`. That is the **device doing its job**, not
+the course refusing a route.
+
+**Attempt B — the same walk with that one trigger muted: REACHED**,
+closest 2.20 m, 143 frames. Route and transition are separate subjects
+and A cannot separate them; B isolates the course. Nothing was moved or
+rebuilt — one `Area3D` stopped monitoring for one walk and was restored.
+
+> **The course is crossable from its real arrival on walk and jump
+> alone.**
+
+**And there is a valid way out.** Walking from the Check onto the return
+plug **fires it** (`p:c021:start → zone_start`). The walk's own outcome
+reads BLOCKED at 2.25 m, which is the walker still aiming at a pad the
+body has just left — the signal is the fact, not the walk outcome. An
+earlier version of this check read that outcome as the answer and
+reported a working exit as a softlock.
+
+**WHICH CONTROLLER.** All of this ran on the **current build, with this
+batch's descent repair in it**. It says the crossing works on the
+repaired controller. It says nothing about what the owner's older build
+did, and is not an explanation of their session.
+
+Reproduce:
+
+```
+godot --headless --path godot -- --traverse-test \
+      --zone-json=<copy>/proposal.json --manifest-json=<copy>/manifest.json
+```
+
+**26 of 26 checks pass on the saved level.**
+
+---
+
+## Withdrawn: the "timed, gap-spanning switches" reading
+
+I wrote that `c021`'s four switches were spread across the gaps, making
+the activity a traversal with a timer running. **That was wrong on every
+count**, and it came from reading one camera angle instead of measuring.
+
+From the saved proposal, and from the built geometry:
+
+| claim | measured |
+|---|---|
+| "timer already running" | `time_limit` = **0.0** — untimed |
+| "in order" | `ordered` = **false** |
+| "spread across the gaps" | all four at **x 4.6, y 1.0**, spanning 5.0 m in z |
+| "along the course" | at the **arrival end**; the Check is at x 24.3 |
+| — | floor sampled every 0.5 m between the first and last switch: **0 of 11 samples without ground — one continuous ledge** |
+
+Which is what the owner's screenshot showed. The render in this
+directory is the same room from a camera angle that made a lit near
+ledge and a shadowed far one look like two; it is kept as a picture of
+`c021`, not as evidence about the switches.
+
+**And nothing here reads the 792 active seconds as difficulty.** The
+measurement does not support it and elapsed activity time is not a
+difficulty diagnosis.
 
 ---
 
@@ -123,8 +199,11 @@ controller and the base kit only:
 > base-kit jump.
 
 So on the played geometry the sampled routes do not need the Whistle.
-That is six sampled Checks walked, not a proof about all fifteen, and it
-says nothing about how a human would choose to move.
+Those six started from the nearest declared doorway, which is **local
+approach evidence** (see above) — for `c021` the one route run from the
+real arrival also reached, on walk and jump alone. Six sampled Checks,
+one real-arrival route, not a proof about all fifteen, and nothing about
+how a human would choose to move.
 
 **`Reward_89100126` sits on ground at y 1.53 with 0.00 m under it.** The
 Check this lane once reported 2.6 m below the floor, and retracted, was
@@ -196,13 +275,12 @@ the budget by 28% addresses neither.
 
 ## Two other things worth seeing
 
-**`c021_0` ran its active timer for 792 seconds** on a four-element
-`switch_sequence`. The render above shows why that is at least
-plausible: the four switches are spread along the platform course over
-the drop, so the activity is a traversal with a timer on it rather than
-four switches in a room. Still a correlation — the record cannot
-separate a defect from a player taking their time, or from the session's
-discussion.
+**`c021_0` recorded 792 active seconds** on a four-element
+`switch_sequence`. The explanation I offered for it is withdrawn above,
+and **no replacement is offered**: the switches are untimed, unordered
+and on one ledge, so nothing measured here accounts for the number, and
+elapsed activity time is not a difficulty diagnosis. It is recorded and
+left alone.
 
 **The three longest rooms after the arena are all `platform_path`.** Per
 the caveat above, the room timers include whatever else the session
@@ -220,7 +298,14 @@ traversal cost.
   that long, or time the session spent not playing. The record cannot
   separate them.
 - **Whether the sampled six generalise.** Six of fifteen Checks were
-  walked. The other nine are unwalked, not proven unreachable.
+  walked, and only `c021`'s was run from its real arrival; the other
+  five started from the nearest declared doorway, which may be the
+  wrong door for them too.
+- **Why `c021`'s return pad sits on the line** between the arrival and
+  the Check. A body walking straight at the Check is sent home by it.
+  There is lateral room in an 8 m wide course to pass beside it, and
+  nothing here measures whether a player finds that obvious. Not
+  chased — it is a design question, not a defect I can demonstrate.
 - **The `c023` exit seam.** SEALED ordinary exit plus a synthetic join
   is preserved as two facts; which one the production reconstruction
   path follows was not traced.

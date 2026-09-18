@@ -104,9 +104,24 @@ func _step(frames: int) -> void:
 ## a route the guaranteed kit has, and refusing to use it would report
 ## reachable geometry as blocked. It has no Echoes at all, so a route
 ## that needs one is correctly reported as not walkable.
+## `jump_gaps` OFF BY DEFAULT, and every existing caller leaves it off.
+##
+## The walker jumps only when it has been stuck for a while, which is
+## the right rule for walls and the wrong one for holes: a body walking
+## at a gap is not stuck, it is falling, and it falls before the stuck
+## counter has counted. So a straight-line walker can never cross a
+## platform course, and "the course cannot be crossed" would be a
+## permanent fact about the walker rather than about any Zone.
+##
+## Turned on, it probes for floor a stride ahead and jumps when there is
+## none. That is STILL THE GUARANTEED KIT -- walk and jump, nothing
+## else, no relocation -- and the rule is written from the movement law
+## rather than from any particular course: no ground within a step of
+## foot level, a stride ahead, means jump. It is not permitted to
+## rescue a body that is already off the floor.
 func _walk(parent: Node3D, from: Vector3, to: Vector3,
 		target: Node = null, body: Player = null,
-		release_holds := false) -> Dictionary:
+		release_holds := false, jump_gaps := false) -> Dictionary:
 	# THE ZONE'S OWN PLAYER WHERE THERE IS ONE. `ZoneController` spawns
 	# the body the game spawns, with the holds, the Echo slots and the
 	# signal wiring a fresh `Player.create()` would not have; a second
@@ -156,6 +171,22 @@ func _walk(parent: Node3D, from: Vector3, to: Vector3,
 		if release_holds:
 			for reason: Variant in body.holds():
 				body.release(str(reason))
+		# A HOLE A STRIDE AHEAD IS JUMPED, not walked into.
+		if jump_gaps and body.is_on_floor() and flat.length() > 0.01:
+			# Spelled as a statement, not a ternary: a GDScript ternary
+			# infers Variant here and the ray query wants a Vector3.
+			var ahead: Vector3 = body.global_position \
+					+ flat.normalized() * (Constants.PLAYER_RADIUS + 0.7)
+			var probe := PhysicsRayQueryParameters3D.create(
+					ahead + Vector3.UP * 0.2,
+					ahead + Vector3.DOWN * (Constants.MAX_VERTICAL_STEP
+							+ 0.2))
+			probe.exclude = [body.get_rid()]
+			if get_viewport().world_3d.direct_space_state \
+					.intersect_ray(probe).is_empty():
+				Input.action_press("jump", 1.0)
+				await get_tree().physics_frame
+				Input.action_release("jump")
 		await get_tree().physics_frame
 		if body.is_on_floor():
 			last_grounded = body.global_position
@@ -421,6 +452,10 @@ var _zone: ZoneController = null
 var _doors := {}
 var _walker: Player = null
 
+## The committed placement, when one was supplied. Empty for the
+## ordinary fixture run, which has no manifest to replay.
+var _saved_manifest := {}
+
 ## Built through `ZoneController.setup`, not through `ZoneBuilder.build`.
 ##
 ## The difference is the whole point. `ZoneBuilder` lays out geometry;
@@ -467,6 +502,7 @@ func _load_the_real_zone() -> bool:
 			_check(false, "%s did not parse to a manifest" % manifest_path)
 			return false
 		manifest = mparsed
+		_saved_manifest = manifest
 		print("  -- walking a SAVED level: %s" % which.get_file())
 		print("     replaying its committed placement from %s"
 				% manifest_path.get_file())
@@ -1345,6 +1381,7 @@ func _run() -> void:
 		_the_exit_has_somewhere_to_stand_around_it()
 		await _the_exit_is_approached_and_addressable()
 		await _a_lower_check_is_a_destination_or_a_defect()
+		await _the_crossing_from_where_the_player_actually_arrives()
 		_every_sealed_door_is_solid()
 		_where_targets_mounted_and_where_they_did_not()
 		var joins := await _joins_are_walked_through()
@@ -1432,3 +1469,248 @@ func _as_vec(raw: Variant) -> Vector3:
 	if arr.size() < 3:
 		return Vector3.ZERO
 	return Vector3(float(arr[0]), float(arr[1]), float(arr[2]))
+
+
+## THE CROSSING FROM WHERE A PLAYER IS PUT DOWN, not from the nearest door.
+##
+## `_nearest_doorway` picks by DISTANCE. It checks neither a door's
+## usage nor where the room is actually entered from, and on `c021` it
+## picked `c021/exit` -- which is SEALED, has no edge, and is nowhere a
+## player has ever stood. The room is entered through `entry`, USED by
+## `e:c018:c021`, at the other end of the course. So the earlier
+## "REACHED from its own room's doorway" is LOCAL APPROACH EVIDENCE --
+## can you address the Check from beside it -- and was never a route.
+##
+## This is the route. One continuous walk from the committed placement's
+## own arrival for the room, with the base kit, and THE BODY IS NOT
+## MOVED past any part of the course on the way: a start chosen further
+## along would be assuming the answer.
+##
+## Then the way out, which for `c021` is not the way in: its exit is
+## SEALED and it carries `p:c021:start`, a TRAVERSAL_ONLY return pad at
+## `room:c021:return` bound for `zone_start`. Reaching the Check and
+## being unable to leave would be a softlock, so both legs are walked.
+##
+## WHICH CONTROLLER. This runs on the CURRENT build, with this batch's
+## descent repair in it. A success here says the crossing works on the
+## repaired controller; it says nothing about what the owner's older
+## build did, and must not be read as explaining their session.
+func _the_crossing_from_where_the_player_actually_arrives() -> void:
+	if _saved_manifest.is_empty():
+		return                      # only a saved level has an arrival
+	var subject: RewardObject = null
+	for check: RewardObject in _required_checks():
+		if _room_type_of(_room_holding(check.global_position)) \
+				== "platform_path":
+			subject = check
+			break
+	if subject == null:
+		return
+	var goal := subject.global_position
+	var rid := _room_holding(goal)
+	var rooms: Dictionary = _saved_manifest.get("rooms", {})
+	if not rooms.has(rid):
+		_check(false, "the manifest has no record for %s" % rid)
+		return
+
+	# WHICH DOOR IS WHICH, said out loud, because the mix-up this exists
+	# to correct is invisible otherwise.
+	var used: Array[String] = []
+	var sealed: Array[String] = []
+	for chamber: Dictionary in (_zone.zone.get("chambers", []) as Array):
+		if str(chamber.get("id", "")) != rid:
+			continue
+		for door: Dictionary in (chamber.get("doors", []) as Array):
+			var line := "%s/%s%s" % [rid, str(door.get("socket_id", "")),
+					"" if door.get("edge_id") == null
+					else " [%s]" % str(door["edge_id"])]
+			if str(door.get("usage", "")) == "SEALED":
+				sealed.append(line)
+			else:
+				used.append(line)
+	_note("%s doors: USED %s | SEALED %s" % [rid, str(used), str(sealed)])
+	_note("the nearest-door result above started from %s -- a SEALED "
+			% str(sealed) + "door, so it is approach evidence only")
+
+	var arrival := _as_vec((rooms[rid] as Dictionary).get("arrival"))
+	var pad_at := _as_vec((_zone._zone_anchors as Dictionary).get(
+			"room:%s:return" % rid, Vector3.ZERO))
+	_note("the committed arrival for %s is %s (where %s puts a body down)"
+			% [rid, str(arrival), str(used)])
+
+	# WHICH DEVICE IS IN THE WAY, found before it surprises anyone.
+	var plug: ReturnPlug = null
+	for node: Node in _zone.find_children("*", "ReturnPlug", true, false):
+		var candidate: ReturnPlug = node
+		if candidate.global_position.distance_to(pad_at) < 3.0:
+			plug = candidate
+			break
+	if plug != null:
+		var along := (goal - arrival).normalized()
+		var t_pad := (plug.global_position - arrival).dot(along)
+		var t_goal := (goal - arrival).dot(along)
+		if t_pad > 0.0 and t_pad < t_goal:
+			_note("the return plug '%s' -> %s sits ON the line from the "
+					% [plug.edge_id, plug.destination]
+					+ "arrival to the Check, %.1f m along a %.1f m run"
+					% [t_pad, t_goal])
+
+	# THE PLUG SAYS WHETHER IT FIRED. Inferring it from where the body
+	# ended is guessing; `traversed` is the device announcing itself.
+	var fired: Array[String] = []
+	if plug != null:
+		plug.traversed.connect(
+				func(edge: String, dest: String) -> void:
+					fired.append("%s -> %s" % [edge, dest]))
+
+	# ATTEMPT A: the straight line, with everything live. What a body
+	# aimed at the Check from the real arrival actually does.
+	_reset_the_walker()
+	var to_check := await _walk(_zone, arrival, goal, subject, _walker,
+			true, true)
+	# WHERE EVERYTHING IS, before any conclusion about the route.
+	_note("geometry: arrival %s | return pad %s | Check %s"
+			% [str(arrival.snapped(Vector3.ONE * 0.1)),
+				str(_as_vec((_zone._zone_anchors as Dictionary).get(
+					"room:%s:return" % rid, Vector3.ZERO)).snapped(
+						Vector3.ONE * 0.1)),
+				str(goal.snapped(Vector3.ONE * 0.1))])
+	_note("        the body ended at %s"
+			% str(_walker.global_position.snapped(Vector3.ONE * 0.1)))
+	_note("CROSSING A (everything live)  kit=base(walk+jump)  "
+			+ "controller=CURRENT (repaired descent)  from=%s arrival "
+			% rid + "%s -> %s  closest %.2f m, %d frames"
+			% [str(arrival), str(to_check["outcome"]),
+				float(to_check["closest"]), int(to_check["frames"])])
+	var landed := _walker.global_position
+	if not fired.is_empty():
+		_note("        and the plug FIRED (%s): walking the line took "
+				% str(fired)
+				+ "the body over it and it left for '%s', ending at %s. "
+				% [plug.destination,
+					str(landed.snapped(Vector3.ONE * 0.1))]
+				+ "That is the DEVICE doing its job, not the course "
+				+ "refusing a route.")
+	fired.clear()
+
+	# ATTEMPT B: the same walk with the plug's trigger off, because the
+	# route and the transition are different subjects and A cannot
+	# separate them. Nothing is moved and nothing is rebuilt -- one
+	# Area3D stops monitoring for one walk, and is restored after.
+	var was_monitoring := false
+	if plug != null:
+		was_monitoring = plug.monitoring
+		plug.monitoring = false
+	_reset_the_walker()
+	var isolated := await _walk(_zone, arrival, goal, subject, _walker,
+			true, true)
+	if plug != null:
+		plug.monitoring = was_monitoring
+	_note("CROSSING B (return plug muted)  same start, same kit  -> %s  "
+			% str(isolated["outcome"])
+			+ "closest %.2f m, %d frames"
+			% [float(isolated["closest"]), int(isolated["frames"])])
+	if str(isolated["outcome"]) == "BLOCKED":
+		_check(false, "with the plug muted the crossing from %s's real "
+				% rid + "arrival is still BLOCKED, by %s"
+				% str(isolated.get("blocker", "?")))
+	elif str(isolated["outcome"]) == "REACHED":
+		_check(true, "the course itself is crossable from the arrival "
+				+ "%s puts a body down at, on walk and jump alone"
+				% str(used))
+	else:
+		_note("NOT a defect and NOT a success: a straight-line walker "
+				+ "that does not arrive has measured its own route "
+				+ "choice. Unresolved, and left that way.")
+	to_check = isolated
+
+	# LEG TWO: the way out FROM THE CHECK -- and only if leg one got
+	# there.
+	#
+	# The first version of this walked "from wherever leg one ended",
+	# and leg one ended at the bottom of the pit at y -30.5. It then
+	# reported the return pad BLOCKED and asserted on it, which is a
+	# finding about a body lying in a hole and not about the route out
+	# of this room. An instrument that measures its own failure and
+	# calls it a defect is the exact mistake this file exists to avoid.
+	var anchors: Dictionary = _zone._zone_anchors
+	var key := "room:%s:return" % rid
+	if not anchors.has(key):
+		_note("%s declares no return anchor, so the way out is the way "
+				% rid + "in")
+		return
+	var pad := _as_vec(anchors[key])
+	if str(to_check["outcome"]) != "REACHED":
+		_note("WAY OUT   not attempted: the crossing did not reach the "
+				+ "Check, and walking out from where it stopped would "
+				+ "measure the stopping place, not the route")
+		return
+	var from := _walker.global_position
+	fired.clear()
+	var out := await _walk(_zone, from, pad, null, _walker, true, true)
+	_note("WAY OUT   kit=base(walk+jump)  from the Check %s -> return "
+			% str(from.snapped(Vector3.ONE * 0.1))
+			+ "pad %s  -> walk says %s at %.2f m"
+			% [str(pad.snapped(Vector3.ONE * 0.1)), str(out["outcome"]),
+				float(out["closest"])])
+	# THE WALK OUTCOME IS THE WRONG QUESTION HERE, and reading it as the
+	# answer reported a working exit as a defect once already: the body
+	# reaches the pad, the pad fires, the body is somewhere else, and
+	# the walk -- still aiming at a pad the body has just left -- ends
+	# BLOCKED at the trigger radius. Whether the plug fired is the fact;
+	# `traversed` is where it is stated.
+	_check(not fired.is_empty(),
+			"the Check in %s can be left: walking from it onto the "
+			% rid + "return plug fires it (%s)" % str(fired))
+	if fired.is_empty():
+		_note("        the plug did not fire and the walk got no closer "
+				+ "than %.2f m -- that is the softlock this looks for"
+				% float(out["closest"]))
+
+	# WHERE THE FOUR SWITCHES ACTUALLY ARE.
+	#
+	# A render was read as "switches spread across the gaps", which
+	# would have made the activity a traversal. Measured instead: each
+	# element's position, and whether the floor is continuous between
+	# the first and the last. An impression from one camera angle is not
+	# evidence and this replaces it either way.
+	var space := get_viewport().world_3d.direct_space_state
+	var spots: Array[Vector3] = []
+	for node: Node in _zone.find_children("*", "ActivityElement", true,
+			false):
+		var element: ActivityElement = node
+		if _room_holding(element.global_position) == rid:
+			spots.append(element.global_position)
+	if spots.size() >= 2:
+		spots.sort_custom(func(a: Vector3, b: Vector3) -> bool:
+				return (a - arrival).length() < (b - arrival).length())
+		var line := ""
+		for s: Vector3 in spots:
+			line += "%s " % str(s.snapped(Vector3.ONE * 0.1))
+		_note("%s switches (%d): %s" % [rid, spots.size(), line])
+		var span := spots[0].distance_to(spots[spots.size() - 1])
+		var holes := 0
+		var steps := int(span / 0.5) + 1
+		for i in steps + 1:
+			var p := spots[0].lerp(spots[spots.size() - 1],
+					float(i) / float(steps))
+			if _ground_under(space, p + Vector3.UP * 0.5, p.y + 0.6) \
+					== null:
+				holes += 1
+		_note("        floor between the first and the last, sampled "
+				+ "every 0.5 m over %.1f m: %d of %d samples have no "
+				% [span, holes, steps + 1]
+				+ "ground -- %s" % ("ONE CONTINUOUS LEDGE" if holes == 0
+					else "the run is BROKEN by a gap"))
+
+	# AND WHAT THE ACTIVITY ACTUALLY DECLARES, since a wrong reading of
+	# it was published once already.
+	for chamber: Dictionary in (_zone.zone.get("chambers", []) as Array):
+		if str(chamber.get("id", "")) != rid:
+			continue
+		for act: Dictionary in (chamber.get("activities", []) as Array):
+			_note("%s activity %s: kind=%s time_limit=%s ordered=%s"
+					% [rid, str(act.get("activity_id", "?")),
+						str(act.get("kind", "?")),
+						str(act.get("time_limit", "?")),
+						str(act.get("ordered", "?"))])

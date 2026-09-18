@@ -1,5 +1,45 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the c021 crossing, from the real arrival — 2026-09-18
+
+Two owner corrections to the saved-level work, both applied. Page:
+**`docs/PLAYED_SESSION_FINDINGS.md`**.
+
+**THE START WAS THE WRONG DOOR.** `_nearest_doorway` picks by distance
+and checks neither usage nor the assigned arrival, so on `c021` it chose
+`c021/exit` -- SEALED, no edge, nowhere a player has stood. That result
+is LOCAL APPROACH EVIDENCE only. The route was re-run from the committed
+arrival `(5.65, 0.0, 42.25)`, where `e:c018:c021` puts a body down, one
+continuous walk, guaranteed kit, nothing relocated.
+
+**A (everything live): the return plug FIRED.** `p:c021:start` sits on
+the line, 13.4 m along an 18.7 m run, and announced itself on its own
+`traversed` signal; the body left for `zone_start`. The DEVICE working,
+not the course refusing.
+**B (that one trigger muted): REACHED, 2.20 m, 143 frames** -- the
+course is crossable from its real arrival on walk and jump alone.
+**A valid way out is demonstrated:** walking from the Check onto the
+plug fires it. Its walk outcome says BLOCKED at 2.25 m, which is the
+walker aiming at a pad the body has just left -- an earlier version read
+that as a softlock, which is the instrument measuring itself again.
+
+**CONTROLLER: CURRENT, with this batch's descent repair.** Success here
+says nothing about the owner's older build and does not explain their
+session.
+
+**WITHDRAWN: the "timed, gap-spanning switches" reading.** Measured:
+`time_limit` 0.0, `ordered` false, all four switches at x 4.6 y 1.0
+spanning 5.0 m in z at the ARRIVAL end, with 0 of 11 floor samples
+missing between first and last -- ONE CONTINUOUS LEDGE, as the owner's
+screenshot showed. It came from one camera angle instead of a
+measurement. No replacement explanation is offered for the 792 active
+seconds, and elapsed activity time is not used as a difficulty
+diagnosis.
+
+**26 of 26 checks pass on the saved level;** the ordinary fixture run is
+unchanged at 23.
+
+
 ## ENGINE LANE — the saved level, walked — 2026-09-14
 
 The owner's full bundle arrived: proposal, COMMITTED MANIFEST, `.bak`
