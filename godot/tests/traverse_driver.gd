@@ -1667,6 +1667,143 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 				+ "than %.2f m -- that is the softlock this looks for"
 				% float(out["closest"]))
 
+	# IS THERE A SUPPORTED LANE PAST THE PAD?
+	#
+	# The room envelope is 8 m wide and that is NOT evidence: a
+	# platform course's segments can be far narrower than the room that
+	# contains them, and a lane over the drop is not a detour. So every
+	# candidate is probed for real floor and real standing clearance
+	# with `RoomAudit.player_stands_here` -- the same test the audit
+	# uses -- and the trigger is given its actual radius plus the body's.
+	var probe_space := get_viewport().world_3d.direct_space_state
+	var keep_off := ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
+	var lanes: Array[Dictionary] = []
+	for offset: float in [-3.0, -2.5, -2.0, 2.0, 2.5, 3.0]:
+		if absf(offset) <= keep_off:
+			continue
+		var standable := 0
+		var samples := 0
+		var lo := minf(arrival.x, goal.x) - 1.0
+		var hi := maxf(arrival.x, goal.x) + 1.0
+		var steps := int((hi - lo) / 0.5)
+		for i in steps + 1:
+			var x := lo + (hi - lo) * float(i) / float(steps)
+			# Only the stretch that has to pass the pad; the ends are
+			# the arrival and the Check and are walked anyway.
+			if absf(x - pad_at.x) > 5.0:
+				continue
+			samples += 1
+			# FIND THE FLOOR, do not assume it. A platform course
+			# CLIMBS -- 0.51 m per segment here -- so probing at a
+			# fixed height rejects every sample the course has risen
+			# above and reports a solid ledge as a hole. Measured that
+			# way first: 3 of 20 at every offset, which is the probe
+			# describing itself.
+			var found: Variant = _ground_under(probe_space,
+					Vector3(x, pad_at.y + 6.0, pad_at.z + offset),
+					pad_at.y + 6.0)
+			if found == null:
+				continue
+			var spot: Vector3 = found
+			if RoomAudit.player_stands_here(spot, Transform3D.IDENTITY,
+					probe_space):
+				standable += 1
+		if samples == 0:
+			continue
+		_note("lane at %+.1f m from the pad centre (%.1f m clear of a "
+				% [offset, absf(offset) - keep_off]
+				+ "%.1f m trigger + %.1f m body): %d of %d sampled "
+				% [ReturnPlug.RADIUS, Constants.PLAYER_RADIUS,
+					standable, samples]
+				+ "points have floor AND standing clearance")
+		if standable == samples:
+			lanes.append({"offset": offset, "samples": samples})
+	if lanes.is_empty():
+		_note("NO SUPPORTED LANE past the pad: every candidate offset "
+				+ "has a gap in its floor or no room to stand. The "
+				+ "interference is specific -- this course offers no "
+				+ "detour, not that no route exists anywhere.")
+
+	# ROUTE C: THE WHOLE THING, WITH EVERYTHING LIVE.
+	#
+	# A and B are diagnostics and neither is a route a player could
+	# take: A shows the pad interrupting the straight line, B shows the
+	# geometry with that pad's trigger muted. This is the outbound
+	# journey end to end -- arrival, Check reached AND addressable, then
+	# a DELIBERATE return -- on the guaranteed kit, with every trigger
+	# active, and with the body never repositioned between legs: each
+	# leg starts from wherever the last one left it.
+	#
+	# The detour is steering, not relocation. A player walks around a
+	# thing they do not want to step on, and the lane it uses was
+	# measured above rather than assumed from the room's width.
+	if not lanes.is_empty():
+		var lane: float = float((lanes[lanes.size() - 1] as Dictionary)
+				["offset"])
+		var waypoints: Array[Vector3] = []
+		for x: float in [pad_at.x - 5.0, pad_at.x + 5.0]:
+			var found: Variant = _ground_under(probe_space,
+					Vector3(x, pad_at.y + 6.0, pad_at.z + lane),
+					pad_at.y + 6.0)
+			if found != null:
+				waypoints.append(found as Vector3)
+		if waypoints.size() == 2:
+			_reset_the_walker()
+			fired.clear()
+			var legs: Array[String] = []
+			var ok_so_far := true
+			var targets: Array[Vector3] = [waypoints[0], waypoints[1],
+					goal]
+			var names: Array[String] = ["onto the lane",
+					"past the pad", "to the Check"]
+			for i in targets.size():
+				var leg := await _walk(_zone, _walker.global_position,
+						targets[i], subject if i == 2 else null,
+						_walker, true, true)
+				legs.append("%s %s(%.2f m)" % [names[i],
+						str(leg["outcome"]), float(leg["closest"])])
+				if str(leg["outcome"]) != "REACHED":
+					ok_so_far = false
+					break
+			_note("ROUTE C (all triggers live)  lane %+.1f m  legs: %s"
+					% [lane, " | ".join(legs)])
+			_check(fired.is_empty(),
+					"the detour does not touch the return plug on the "
+					+ "way out: it never fired across the outbound legs")
+			_check(ok_so_far,
+					"the whole outbound route is walked with every "
+					+ "trigger active, on walk and jump alone")
+			if ok_so_far:
+				# ADDRESSABLE, not merely arrived at.
+				var from_here := _walker.global_position
+				var eye := from_here + Vector3.UP \
+						* Constants.PLAYER_EYE_HEIGHT
+				var ray := PhysicsRayQueryParameters3D.create(eye, goal)
+				ray.collide_with_areas = true
+				ray.exclude = [_walker.get_rid()]
+				var hit := probe_space.intersect_ray(ray)
+				var sees := hit.is_empty() or (hit["collider"] == subject
+						or (hit["collider"] as Node).is_ancestor_of(
+							subject) or subject.is_ancestor_of(
+							hit["collider"] as Node))
+				_check(sees, "and the Check is addressable from where "
+						+ "the route ends, not merely arrived beside")
+				_note("       the route stands at %s, %.2f m from the "
+						% [str(from_here.snapped(Vector3.ONE * 0.1)),
+							from_here.distance_to(goal)]
+						+ "Check, prompt '%s'" % subject.interact_prompt())
+				# AND THE DELIBERATE RETURN, on purpose this time.
+				fired.clear()
+				var home := await _walk(_zone, _walker.global_position,
+						pad_at, null, _walker, true, true)
+				_check(not fired.is_empty(),
+						"and the return is then taken deliberately: "
+						+ "walking onto the plug fires it (%s)"
+						% str(fired))
+				_note("       deliberate return: walk says %s at %.2f m; "
+						% [str(home["outcome"]), float(home["closest"])]
+						+ "the plug is what answers, not the walk")
+
 	# WHERE THE FOUR SWITCHES ACTUALLY ARE.
 	#
 	# A render was read as "switches spread across the gaps", which
