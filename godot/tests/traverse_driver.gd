@@ -1684,11 +1684,12 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 	# every x, is what makes the next criterion checkable instead of
 	# another guess.
 	var dump := ""
-	var lo := minf(arrival.x, goal.x) - 1.0
-	var hi := maxf(arrival.x, goal.x) + 1.0
-	var n := int((hi - lo) / 0.5)
-	for i in n + 1:
-		var x := lo + (hi - lo) * float(i) / float(n)
+	var dump_lo := minf(arrival.x, goal.x) - 1.0
+	var dump_hi := maxf(arrival.x, goal.x) + 1.0
+	var dump_n := int((dump_hi - dump_lo) / 0.5)
+	for i in dump_n + 1:
+		var x := dump_lo + (dump_hi - dump_lo) \
+				* float(i) / float(dump_n)
 		if absf(x - pad_at.x) > 5.0:
 			continue
 		var ceil_y := pad_at.y + 5.0
