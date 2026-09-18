@@ -1790,10 +1790,21 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 		if standable == samples and samples >= 15:
 			lanes.append({"offset": offset, "samples": samples})
 	if lanes.is_empty():
-		_note("NO SUPPORTED LANE past the pad: every candidate offset "
-				+ "has a gap in its floor or no room to stand. The "
-				+ "interference is specific -- this course offers no "
-				+ "detour, not that no route exists anywhere.")
+		_note("NO SUPPORTED LANE PAST THE PAD, and the arithmetic is "
+				+ "the whole finding: the platform is %.2f m wide "
+				% (edge_hi - edge_lo)
+				+ "(%.2f m each side of centre) and passing the trigger "
+				% edge_hi
+				+ "needs more than %.2f m. Short by %.2f m."
+				% [keep_off, keep_off - edge_hi])
+		_note("        The trigger spans its own platform. A walking "
+				+ "route to this Check must cross that platform, and "
+				+ "there is no floor beside the pad to cross it on.")
+		_note("        SPECIFIC TO THIS COMMITTED PLACEMENT AND THIS "
+				+ "CONTROLLER. Not a claim that no route exists: the "
+				+ "kit has a jump, this walker steers in straight "
+				+ "lines, and nothing here rules out a player's own "
+				+ "solution.")
 
 	# ROUTE C: THE WHOLE THING, WITH EVERYTHING LIVE.
 	#

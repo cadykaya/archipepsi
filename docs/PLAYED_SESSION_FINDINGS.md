@@ -104,6 +104,44 @@ rebuilt — one `Area3D` stopped monitoring for one walk and was restored.
 > **The course is crossable from its real arrival on walk and jump
 > alone.**
 
+### Route C — the complete outbound journey — NOT DEMONSTRATED
+
+You asked for one bounded route with everything active: arrival, CHECK
+126 reached and addressable, deliberate return. **It could not be
+demonstrated, and the interference is arithmetic.**
+
+`c021` is a line of **narrow platforms over the drop**, not a wide
+walkway. The centreline, cast from above the course:
+
+| x | centreline floor | +3.0 m off-centre |
+|---|---|---|
+| 14.2 – 15.2 | y 1.02 | — |
+| 15.7 – 17.7 | **gap** | — |
+| 18.2 – 19.7 | y 1.53 — *the pad's platform* | — |
+| 20.2 – 22.3 | **gap** | — |
+| 22.8 | y 1.53 | y 1.53 |
+
+Swept laterally at the pad's own x, in 0.25 m steps:
+
+> **the platform carries floor from −1.25 m to +1.25 m of its centre —
+> 2.50 m wide. Passing the trigger needs more than 1.80 m. Short by
+> 0.55 m on each side.**
+
+The plug's trigger is a 1.4 m cylinder; a 0.4 m body needs 1.8 m of
+lateral clearance to walk past it. **The trigger spans its own
+platform.** A walking route to this Check must cross that platform, and
+there is no floor beside the pad to cross it on.
+
+**This is specific to this committed placement and this controller. It
+is not a claim that no route exists**: the kit has a jump, this walker
+steers in straight lines, and nothing measured here rules out a
+player's own solution.
+
+**Nothing was repaired.** The pad was not moved, no return was disabled
+in the live route, and no activation policy was changed. The archived
+and freshly computed anchors agree, so this is not a current-code
+artefact — it is where the pad was in the played build.
+
 **And there is a valid way out.** Walking from the Check onto the return
 plug **fires it** (`p:c021:start → zone_start`). The walk's own outcome
 reads BLOCKED at 2.25 m, which is the walker still aiming at a pad the

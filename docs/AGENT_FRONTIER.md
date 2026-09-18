@@ -1,5 +1,39 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — Route C: not demonstrated, and why — 2026-09-18
+
+The complete outbound route with every trigger active COULD NOT BE
+DEMONSTRATED, and the interference is arithmetic.
+
+`c021` is a line of NARROW PLATFORMS over the drop, not a wide walkway:
+the centreline is solid x14.2-15.2 (y1.02), GAP to 17.7, solid
+18.2-19.7 (y1.53, the pad's platform), GAP to 22.3, solid at 22.8 --
+and at +3.0 m off-centre there is no floor at all. Swept laterally at
+the pad's x: **the platform is 2.50 m wide (+/-1.25 m). Passing a 1.4 m
+trigger with a 0.4 m body needs more than 1.80 m. Short by 0.55 m.**
+The trigger spans its own platform; there is no floor beside the pad to
+walk past it on.
+
+SPECIFIC TO THIS COMMITTED PLACEMENT AND THIS CONTROLLER, and NOT a
+claim that no route exists: the kit has a jump, this walker steers in
+straight lines, and a player's own solution is not ruled out. Nothing
+was repaired -- the pad was not moved, no return disabled in the live
+route, no activation policy changed. Archived and fresh anchors agree,
+so it is not a current-code artefact.
+
+**FOUR PROBE DESIGNS MEASURED THE WRONG SURFACE BEFORE THIS ONE** --
+fixed height (rejected every ledge the course climbed above), room top
+(a slab 6 m over the walkway, reported as 20 of 20), pad level (missed
+everything climbed past it). Then the fourth was CORRECT at 2-3 of 20
+and I distrusted it because it disagreed with a lane I had convinced
+myself existed. Two commits in the sequence could not parse. The lesson
+is in the file: print what the rays return before applying any
+criterion to them.
+
+Kept: the real-arrival test and the A/B diagnostic. `godot-traverse` is
+23 checks on the fixture, 26 on a saved level.
+
+
 ## ENGINE LANE — the c021 crossing, from the real arrival — 2026-09-18
 
 Two owner corrections to the saved-level work, both applied. Page:
