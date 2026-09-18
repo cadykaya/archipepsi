@@ -1782,10 +1782,18 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 				ray.collide_with_areas = true
 				ray.exclude = [_walker.get_rid()]
 				var hit := probe_space.intersect_ray(ray)
-				var sees := hit.is_empty() or (hit["collider"] == subject
-						or (hit["collider"] as Node).is_ancestor_of(
-							subject) or subject.is_ancestor_of(
-							hit["collider"] as Node))
+				# TYPED EXPLICITLY. `:=` cannot infer from a chain of
+				# Variant comparisons, and the parse error it raised
+				# took two runs down with it: the script failed to
+				# compile, main.gd failed with it, and Godot then sat
+				# until the timeout -- which reads exactly like a slow
+				# test and is nothing of the kind.
+				var sees: bool = true
+				if not hit.is_empty():
+					var struck: Node = hit["collider"]
+					sees = struck == subject \
+							or struck.is_ancestor_of(subject) \
+							or subject.is_ancestor_of(struck)
 				_check(sees, "and the Check is addressable from where "
 						+ "the route ends, not merely arrived beside")
 				_note("       the route stands at %s, %.2f m from the "
