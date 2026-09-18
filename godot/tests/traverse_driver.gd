@@ -1677,6 +1677,30 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 	# uses -- and the trigger is given its actual radius plus the body's.
 	var probe_space := get_viewport().world_3d.direct_space_state
 	var keep_off := ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
+	# THE RAW HEIGHTS, BEFORE ANY CRITERION IS APPLIED TO THEM.
+	#
+	# Four probe designs have now each produced a plausible number from
+	# the wrong surface. Printing what the rays actually return, at
+	# every x, is what makes the next criterion checkable instead of
+	# another guess.
+	var dump := ""
+	var lo := minf(arrival.x, goal.x) - 1.0
+	var hi := maxf(arrival.x, goal.x) + 1.0
+	var n := int((hi - lo) / 0.5)
+	for i in n + 1:
+		var x := lo + (hi - lo) * float(i) / float(n)
+		if absf(x - pad_at.x) > 5.0:
+			continue
+		var ceil_y := pad_at.y + 5.0
+		var c: Variant = _ground_under(probe_space,
+				Vector3(x, ceil_y, pad_at.z), ceil_y)
+		var r: Variant = _ground_under(probe_space,
+				Vector3(x, ceil_y, pad_at.z + 3.0), ceil_y)
+		dump += "x%.1f c%s r%s  " % [x,
+				"--" if c == null else "%.2f" % (c as Vector3).y,
+				"--" if r == null else "%.2f" % (r as Vector3).y]
+	_note("raw heights (c=centreline, r=+3.0 m), cast 7.53 -> -1.47:")
+	_note("  " + dump)
 	var lanes: Array[Dictionary] = []
 	for offset: float in [-3.0, -2.5, -2.0, 2.0, 2.5, 3.0]:
 		if absf(offset) <= keep_off:
