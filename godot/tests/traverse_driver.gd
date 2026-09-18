@@ -1695,24 +1695,32 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 			if absf(x - pad_at.x) > 5.0:
 				continue
 			samples += 1
-			# PROBE FROM THE COURSE'S OWN LEVEL. Twice now this has
-			# measured the wrong surface and reported it as a lane:
-			# first at a FIXED height, which rejected every ledge the
-			# course had climbed above (3 of 20 everywhere); then from
-			# `pad + 6 m`, which made `_ground_under` scan from the top
-			# of the room DOWNWARD and return the first thing it met --
-			# a slab at y 7.73, six metres over the walkway, reported
-			# as "20 of 20 with floor and clearance".
+			# ASK THE QUESTION PER x, AGAINST THE CENTRELINE.
 			#
-			# `_ground_under` casts from `from_y + MAX_VERTICAL_STEP`
-			# down to `at - 8 m`. Anchored at the pad's own level that
-			# is a window around the walkway: a sample on the course
-			# finds it, and a sample out over the drop finds nothing,
-			# because the pit floor is 40 m down and outside the reach.
-			var here := Vector3(x, pad_at.y, pad_at.z + offset)
-			var found: Variant = _ground_under(probe_space, here,
-					pad_at.y)
-			if found == null:
+			# Three wrong surfaces so far, each a different way of
+			# assuming the course has ONE height. It does not: it
+			# climbs 0.51 m a segment. A fixed height rejected every
+			# ledge above it (3 of 20). An anchor at the room top
+			# scanned down and returned a slab 6 m over the walkway
+			# (20 of 20, of nothing). An anchor at the pad's level
+			# missed every part of the course that had climbed past it
+			# (3 of 20 again, for the opposite reason).
+			#
+			# So: find the WALKWAY at this x -- cast from above the
+			# whole course but below that slab -- then find the floor
+			# beside it, and compare the two. A lane is floor at the
+			# same height as the walkway it runs alongside, wherever
+			# that happens to be.
+			var ceiling := pad_at.y + 5.0
+			var centre: Variant = _ground_under(probe_space,
+					Vector3(x, ceiling, pad_at.z), ceiling)
+			var found: Variant = _ground_under(probe_space,
+					Vector3(x, ceiling, pad_at.z + offset), ceiling)
+			if centre == null or found == null:
+				continue
+			var walkway: Vector3 = centre
+			if absf((found as Vector3).y - walkway.y) \
+					> Constants.MAX_VERTICAL_STEP:
 				continue
 			var spot: Vector3 = found
 			lo_y = minf(lo_y, spot.y)
@@ -1729,22 +1737,9 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 					standable, samples]
 				+ "points have floor AND standing clearance, y %.2f..%.2f"
 				% [lo_y, hi_y])
-		# AND IT HAS TO BE THE SAME FLOOR THE COURSE IS ON.
-		#
-		# "Floor and clearance" is not a lane if the floor is the bottom
-		# of the pit: `player_stands_here` is perfectly happy 40 m down,
-		# and a waypoint resolved down there is a walk off the edge. The
-		# first version of this probe accepted exactly that and reported
-		# 20 of 20 -- on the pit floor.
-		var on_the_course := absf(lo_y - pad_at.y) <= \
-				Constants.MAX_VERTICAL_STEP \
-				and absf(hi_y - pad_at.y) <= Constants.MAX_VERTICAL_STEP
-		if standable == samples and on_the_course:
+		# EVERY SAMPLED x, or it is not a lane you can walk.
+		if standable == samples and samples >= 15:
 			lanes.append({"offset": offset, "samples": samples})
-		elif standable == samples:
-			_note("        ...but that floor is NOT the course: it sits "
-					+ "%.2f..%.2f m from the pad's own level. Not a lane."
-					% [lo_y - pad_at.y, hi_y - pad_at.y])
 	if lanes.is_empty():
 		_note("NO SUPPORTED LANE past the pad: every candidate offset "
 				+ "has a gap in its floor or no room to stand. The "
