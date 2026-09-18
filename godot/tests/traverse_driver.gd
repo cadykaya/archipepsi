@@ -1683,6 +1683,8 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 			continue
 		var standable := 0
 		var samples := 0
+		var lo_y := INF
+		var hi_y := -INF
 		var lo := minf(arrival.x, goal.x) - 1.0
 		var hi := maxf(arrival.x, goal.x) + 1.0
 		var steps := int((hi - lo) / 0.5)
@@ -1693,18 +1695,28 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 			if absf(x - pad_at.x) > 5.0:
 				continue
 			samples += 1
-			# FIND THE FLOOR, do not assume it. A platform course
-			# CLIMBS -- 0.51 m per segment here -- so probing at a
-			# fixed height rejects every sample the course has risen
-			# above and reports a solid ledge as a hole. Measured that
-			# way first: 3 of 20 at every offset, which is the probe
-			# describing itself.
-			var found: Variant = _ground_under(probe_space,
-					Vector3(x, pad_at.y + 6.0, pad_at.z + offset),
-					pad_at.y + 6.0)
+			# PROBE FROM THE COURSE'S OWN LEVEL. Twice now this has
+			# measured the wrong surface and reported it as a lane:
+			# first at a FIXED height, which rejected every ledge the
+			# course had climbed above (3 of 20 everywhere); then from
+			# `pad + 6 m`, which made `_ground_under` scan from the top
+			# of the room DOWNWARD and return the first thing it met --
+			# a slab at y 7.73, six metres over the walkway, reported
+			# as "20 of 20 with floor and clearance".
+			#
+			# `_ground_under` casts from `from_y + MAX_VERTICAL_STEP`
+			# down to `at - 8 m`. Anchored at the pad's own level that
+			# is a window around the walkway: a sample on the course
+			# finds it, and a sample out over the drop finds nothing,
+			# because the pit floor is 40 m down and outside the reach.
+			var here := Vector3(x, pad_at.y, pad_at.z + offset)
+			var found: Variant = _ground_under(probe_space, here,
+					pad_at.y)
 			if found == null:
 				continue
 			var spot: Vector3 = found
+			lo_y = minf(lo_y, spot.y)
+			hi_y = maxf(hi_y, spot.y)
 			if RoomAudit.player_stands_here(spot, Transform3D.IDENTITY,
 					probe_space):
 				standable += 1
@@ -1715,9 +1727,24 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 				+ "%.1f m trigger + %.1f m body): %d of %d sampled "
 				% [ReturnPlug.RADIUS, Constants.PLAYER_RADIUS,
 					standable, samples]
-				+ "points have floor AND standing clearance")
-		if standable == samples:
+				+ "points have floor AND standing clearance, y %.2f..%.2f"
+				% [lo_y, hi_y])
+		# AND IT HAS TO BE THE SAME FLOOR THE COURSE IS ON.
+		#
+		# "Floor and clearance" is not a lane if the floor is the bottom
+		# of the pit: `player_stands_here` is perfectly happy 40 m down,
+		# and a waypoint resolved down there is a walk off the edge. The
+		# first version of this probe accepted exactly that and reported
+		# 20 of 20 -- on the pit floor.
+		var on_the_course := absf(lo_y - pad_at.y) <= \
+				Constants.MAX_VERTICAL_STEP \
+				and absf(hi_y - pad_at.y) <= Constants.MAX_VERTICAL_STEP
+		if standable == samples and on_the_course:
 			lanes.append({"offset": offset, "samples": samples})
+		elif standable == samples:
+			_note("        ...but that floor is NOT the course: it sits "
+					+ "%.2f..%.2f m from the pad's own level. Not a lane."
+					% [lo_y - pad_at.y, hi_y - pad_at.y])
 	if lanes.is_empty():
 		_note("NO SUPPORTED LANE past the pad: every candidate offset "
 				+ "has a gap in its floor or no room to stand. The "
