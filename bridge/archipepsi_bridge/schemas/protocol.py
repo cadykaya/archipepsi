@@ -1278,7 +1278,14 @@ class CampaignSnapshot(Strict):
     bridge_connected: bool
     ap_connected: bool
     ap_mode: Literal["real", "mock"]
-    epsilon_provider: Literal["claude", "mock", "fallback"]
+    #: `sample` is a DIAGNOSTIC axis, not a shipping one: it serves one
+    #: named proposal out of the declared sample so a case the offline
+    #: census names can be put in front of a real client and a real
+    #: bridge. Listed here because the snapshot is a closed vocabulary
+    #: and an unlisted provider makes every snapshot unserialisable --
+    #: which is how the first run of it failed, with the client unable to
+    #: connect at all rather than with a word about the provider.
+    epsilon_provider: Literal["claude", "mock", "fallback", "sample"]
     race_mode: bool = False
 
     #: AP-derived counters are meaningful only when this is true.

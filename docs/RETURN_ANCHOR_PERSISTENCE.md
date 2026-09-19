@@ -103,11 +103,26 @@ rejected the old one, under an `anchor_repairs` key written by
 `commit_layout`, which is already the only writer and already refuses to
 replace a committed layout with a different digest.
 
-**What it would additionally need:** a manifest field and a version
-stamp; `commit_layout` extended to accept a same-digest repair rather
-than treating it as a replacement; a backup of the primary save before
-the first rewrite; and something that tells the player their level
-changed. It is a save rewrite, so it is a migration and needs an explicit
+**What it would additionally need**, and the digest wording matters:
+
+* **A NEW content digest, not a "same-digest repair".** `manifest_digest`
+  is computed from the manifest's content; moving an anchor changes that
+  content, so the repaired manifest has a DIFFERENT digest and must. A
+  repair that kept the old digest would be a manifest whose name no
+  longer describes it — exactly the drift the digest exists to catch.
+* **Explicit linkage to the manifest it replaces.** The repaired
+  manifest carries the digest it was derived from (`repaired_from`)
+  together with the room, the old point, the new point and the rule that
+  rejected the old one. That is what makes it a repair rather than a
+  replacement: the chain back to what the player actually played is
+  recorded, not overwritten.
+* `commit_layout` taught that a manifest naming a predecessor is a
+  repair, so it neither refuses it as a replacement nor accepts an
+  unlinked one.
+* A backup of the primary save before the first rewrite, and something
+  that tells the player their level changed.
+
+It is a save rewrite, so it is a migration and needs an explicit
 decision.
 
 **The comparison the choice actually turns on:**
@@ -117,7 +132,7 @@ decision.
 | Blast radius | the **whole committed layout** of that Zone | **one anchor** |
 | Player sees | a Zone that will not open, and an ABANDON with a cost | the same level, one device moved |
 | Save is rewritten | no | yes, and visibly |
-| Committed-manifest protection | untouched | must learn "repair" ≠ "replace" |
+| Committed-manifest protection | untouched | must learn "repair" ≠ "replace" (new digest + `repaired_from`) |
 | Scope of the actual defect | one return device in one room | one return device in one room |
 
 Losing a solved Zone to relocate one convenience device is a remedy out

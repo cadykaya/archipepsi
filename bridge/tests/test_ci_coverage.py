@@ -35,7 +35,15 @@ WORKFLOW = REPO / ".github" / "workflows" / "integration.yml"
 # hand and its result is reported there; give it a CI step the day that
 # defect is closed.
 NOT_A_SUITE = {"godot-import", "godot-integration",
-               "godot-return-journey"}
+               "godot-return-journey",
+               # PARAMETERISED AND DIAGNOSTIC, not a gate.
+               # `godot-named-case` puts ONE named sample proposal in
+               # front of a live bridge and reports what happened to it;
+               # which proposal is the question, and there is no default
+               # answer that means anything. It is the tool you reach for
+               # when the offline census names a case, and what it
+               # reports is a description rather than a pass or a fail.
+               "godot-named-case"}
 
 
 #: HYPHENS INCLUDED. This read `godot-[a-z]+`, which stops dead at the

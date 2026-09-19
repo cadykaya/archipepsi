@@ -1851,7 +1851,8 @@
             "enum": [
               "claude",
               "mock",
-              "fallback"
+              "fallback",
+              "sample"
             ],
             "title": "Epsilon Provider",
             "type": "string"
@@ -10683,7 +10684,8 @@
         "enum": [
           "claude",
           "mock",
-          "fallback"
+          "fallback",
+          "sample"
         ],
         "title": "Epsilon Provider",
         "type": "string"

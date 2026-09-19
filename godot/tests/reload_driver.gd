@@ -88,9 +88,151 @@ func _run() -> void:
 			await _record()
 		"resume":
 			await _resume()
+		"named-case":
+			await _named_case()
 		_:
 			_check(false, "no --reload-phase was named")
 			_finish(1)
+
+
+## ONE NAMED PROPOSAL, IN FRONT OF A REAL CLIENT AND A REAL BRIDGE.
+##
+## `make zone-sample` judges a manifest offline: the engine builds a
+## Zone, measures it, writes the manifest, and `layout.validate` reads
+## it. That answers "would the bridge accept this geometry" and nothing
+## about what a PLAYER meets -- whether the client enters, whether a
+## refusal recovers inside its budget or exhausts it, whether the Hub is
+## still usable afterwards and the Zone still holds its Checks.
+##
+## So the bridge is started with `--epsilon=sample`, which serves one
+## named proposal re-keyed to this campaign's own identity and
+## allocation, and this walks the ordinary path: ask for a Zone, enter
+## it, let the client build and certify it and the bridge judge what
+## comes back. Nothing here fabricates a certificate or skips a verdict.
+##
+## **A BOUNDED REFUSAL IS NOT A FAILED RUN, and it is not a success
+## either.** Both outcomes are reported in the same words every time --
+## the first verdict, how many refusals the Zone has spent, whether it
+## ended ACCEPTED and entered or exhausted its budget, and what the Hub
+## and the Check count say afterwards -- so a recovery can never be read
+## as a first-attempt acceptance.
+func _named_case() -> void:
+	if BridgeClient.hub_mode() == "NO_CAMPAIGN":
+		BridgeClient.send_intent({"type": "start_mock_campaign"})
+	if not await _await("a campaign",
+			func() -> bool:
+				return BridgeClient.hub_mode() != "NO_CAMPAIGN"):
+		_finish(1)
+		return
+	if BridgeClient.active_zone().is_empty():
+		BridgeClient.send_intent({"type": "request_next_zone"})
+	if not await _await("the named proposal",
+			func() -> bool:
+				return not BridgeClient.active_zone().is_empty(), 60.0):
+		_finish(1)
+		return
+	var zone: Dictionary = BridgeClient.active_zone()
+	var zone_id := str(zone.get("zone_id", "?"))
+	var allocated := (zone.get("allocated_location_ids", []) as Array).size()
+	print("  NAMED CASE: %s, %d Check(s) allocated to it"
+			% [zone_id, allocated])
+	# WHICH IDENTITY IT LAID OUT UNDER, because that decides the layout.
+	#
+	# `ZoneBuilder` seeds its placement RNG with
+	# `hash("<zone_id>|<theme>|layout")`, and a campaign gives the
+	# proposal ITS OWN zone_id -- `zone_001` here, not the `zone_007`
+	# the sample was dumped as. So the rooms, the graph and the doors are
+	# the sample's and the POSE SEQUENCE IS NOT. A case the offline
+	# census calls unroutable can route here, and that is a fact about
+	# the seed rather than a repair of the case; a case that routes here
+	# is not evidence that the dumped one does. Said out loud because
+	# reading it the other way would turn a seed into a fix.
+	print("  IDENTITY: laid out as '%s' -- the layout seed follows the "
+			% zone_id + "campaign's zone_id, not the sample's, so this "
+			+ "is that CONTENT under a different pose sequence")
+
+	main._on_enter_zone()
+	# WHAT WAS ACTUALLY SERVED, read from the Zone the CLIENT BUILT.
+	# The snapshot carries `zone: null` until the proposal lands, and an
+	# earlier version read it there and reported "0 room(s)" for a Zone
+	# of twenty-three -- a report about its own timing.
+	var built := await _await("the client builds it",
+			func() -> bool:
+				return main.zone != null and main.zone.player != null,
+			60.0)
+	# THE FIRST ANSWER, BEFORE ANY RECOVERY. A Zone that is accepted on
+	# its first submission and a Zone that is accepted on its third are
+	# different results, and only one of them is "this proposal lays
+	# out".
+	if built:
+		var served: Dictionary = main.zone.zone
+		print("  SERVED: '%s', %d room(s), %d edge(s)"
+				% [str(served.get("display_name", "?")),
+					(served.get("chambers", []) as Array).size(),
+					(served.get("edges", []) as Array).size()])
+	# A GENERATION-STAGE REFUSAL IS NOT A LAYOUT ONE, and reporting only
+	# the layout verdict hides it. `generate_zone_validated` refuses a
+	# proposal the validator rejects and the campaign composes again --
+	# so a Zone can arrive ACCEPTED on its first LAYOUT while a proposal
+	# was already refused before it. `layout_refusals` cannot see that;
+	# `last_generation_error` is what says it happened.
+	# `<null>` IS NOT A REASON. The field is nullable and `str(null)`
+	# prints the engine's placeholder, which reads as a refusal nobody
+	# made.
+	var raw_why: Variant = BridgeClient.snapshot.get("last_generation_error")
+	var why := str(raw_why) if raw_why is String else ""
+	if why != "":
+		print("  GENERATION: a proposal was refused before this one -- %s"
+				% why)
+	else:
+		print("  GENERATION: no proposal was refused; this is the one "
+				+ "the provider offered first")
+	var first := "not built" if not built else str(main.zone.layout_verdict)
+	await _await("a first verdict",
+			func() -> bool:
+				return main.zone != null \
+						and main.zone.layout_verdict != "", 30.0)
+	if main.zone != null:
+		first = str(main.zone.layout_verdict)
+	print("  FIRST RESULT: %s" % (first if first != "" else "no verdict"))
+
+	# THEN THE BOUNDED RECOVERY, WATCHED RATHER THAN ASSUMED. A refusal
+	# sends the Zone back to be composed again; the budget stops it.
+	var spent := 0
+	var ended := ""
+	for _i in 60:
+		var rec: Dictionary = BridgeClient.active_zone()
+		spent = int(rec.get("layout_refusals", 0))
+		var state := str(rec.get("layout_state", ""))
+		if state == "ACCEPTED":
+			ended = "ACCEPTED"
+			break
+		if bool(rec.get("layout_exhausted", false)) \
+				or str(rec.get("state", "")) == "DORMANT":
+			ended = "EXHAUSTED"
+			break
+		await get_tree().create_timer(0.5).timeout
+	if ended == "":
+		ended = "STILL PENDING after the watch window"
+	print("  RECOVERY: %d refusal(s) spent; ended %s" % [spent, ended])
+
+	# AND WHAT THE PLAYER IS LEFT WITH, either way.
+	var after: Dictionary = BridgeClient.active_zone()
+	var hub := BridgeClient.hub_mode()
+	var still := (after.get("allocated_location_ids", []) as Array).size()
+	print("  AFTER: hub %s; the Zone holds %d of its %d Check(s); "
+			% [hub, still, allocated]
+			+ "entered=%s" % str(main.zone != null and main.zone.player != null))
+	_check(hub != "", "the Hub still reports a mode")
+	_check(still == allocated or ended == "ACCEPTED",
+			"a refused Zone keeps every Check it was allocated (%d of %d)"
+			% [still, allocated])
+	_check(ended != "STILL PENDING after the watch window",
+			"the Zone reached a terminal answer rather than leaving the "
+			+ "client waiting (%s)" % ended)
+	print("NAMED CASE %s: first=%s refusals=%d ended=%s"
+			% [zone_id, first, spent, ended])
+	_finish(0 if _failures == 0 else 1)
 
 
 ## Anything the driver has to hand the next process that the SAVE does

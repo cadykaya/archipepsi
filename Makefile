@@ -608,6 +608,39 @@ godot-reload: godot-import
 	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" /tmp/reload-resume.log | tail -30; \
 	kill $$BRIDGE_PID; exit $$RESUME
 
+# ONE NAMED SAMPLE PROPOSAL, THROUGH A REAL CLIENT AND A REAL BRIDGE.
+#
+#   make godot-named-case CASE=zone_05
+#
+# `make zone-sample` judges a manifest offline. This puts the SAME
+# proposal in front of the live path: a disposable campaign at the scale
+# the sample was dumped at, the proposal re-keyed to that campaign's own
+# identity and allocation, and the client building, certifying and
+# submitting it for a real verdict. Nothing is fabricated and no
+# acceptance is skipped -- only WHICH proposal the campaign is asked to
+# lay out.
+#
+# Reports the same five things whether the Zone is accepted or refused,
+# so a bounded recovery can never be read as a first-attempt success.
+CASE ?= zone_05
+NAMED_CASE_SAVES := $(CURDIR)/.named-case-saves
+godot-named-case: godot-import
+	rm -rf $(NAMED_CASE_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(NAMED_CASE_SAVES) \
+	  ARCHIPEPSI_SAMPLE_ZONE=$(if $(findstring /,$(CASE)),$(CASE),$(CURDIR)/godot/tests/fixtures/sample/$(CASE).json) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=sample \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 3; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving? bad CASE?)"; \
+	  exit 1; }; \
+	$(GODOT) --headless --path godot -- --reload-phase=named-case \
+	  > /tmp/archipepsi-named-case.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID; \
+	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" \
+	  /tmp/archipepsi-named-case.log | tail -30; \
+	exit $$STATUS
+
 godot-integration: godot-import   # full loop through a live mock bridge, fresh state
 	rm -rf $(INTEGRATION_SAVES)
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(INTEGRATION_SAVES) \

@@ -1001,6 +1001,29 @@ class CampaignEngine:
         if exc is not None:
             log.error("zone generation task failed", exc_info=exc)
 
+    def _record_generation_error(self, error: str | None) -> None:
+        """The reason a Zone was not built, trimmed to what can be sent.
+
+        **A REFUSAL MUST NEVER BE ABLE TO BREAK THE SNAPSHOT THAT CARRIES
+        IT.** `last_generation_error` is bounded at `MAX_TEXT_LEN`, and
+        the strings written to it come from the validator and the shell
+        selector, which have no such bound -- a chamber that fails its
+        shell fit produces a sentence well past 160 characters. The
+        snapshot then raised `ValidationError` on construction, which
+        killed the generation task AND the broadcast, so the refusal
+        never reached the client and the Hub sat in GENERATING forever.
+        Measured live: a Zone whose rooms were inflated past what the
+        router can place left the client waiting with no verdict at all.
+
+        Trimmed here rather than widened in the schema, because widening
+        moves the cliff instead of removing it: the next message is as
+        long as whatever produced it. An ellipsis so a reader can tell a
+        trimmed reason from a short one.
+        """
+        if error is not None and len(error) > C.MAX_TEXT_LEN:
+            error = error[:C.MAX_TEXT_LEN - 1] + "\u2026"
+        self.last_generation_error = error
+
     async def _run_generation(self, zone_id: str) -> None:
         """Provider call for an already-committed PENDING_GENERATION record."""
         record = self.save.zone_by_id(zone_id)
@@ -1030,7 +1053,7 @@ class CampaignEngine:
                 "pool.")
             return
 
-        self.last_generation_error = outcome.error
+        self._record_generation_error(outcome.error)
         # Re-checked AFTER the await: the state guard at the top of this
         # method was true seconds ago, and a Zone can be abandoned (or
         # accepted by a duplicate run) while the provider is thinking.
@@ -1136,7 +1159,7 @@ class CampaignEngine:
         the Checks back, say so, and leave the Hub able to ask for the
         next Zone. Accounting is `abandon_zone`'s and only its.
         """
-        self.last_generation_error = error
+        self._record_generation_error(error)
         self._apply(T.abandon_zone(self.save, zone_id))
         await self._notify("zone_abandoned", "GENERATION FAILED", (detail,))
         await self.broadcast_snapshot()

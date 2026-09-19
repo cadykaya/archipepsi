@@ -52,7 +52,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ap", choices=("real", "mock"), default="real")
     parser.add_argument(
-        "--epsilon", choices=("claude", "mock", "fallback"),
+        "--epsilon", choices=("claude", "mock", "fallback", "sample"),
         default=os.environ.get("EPSILON_PROVIDER", "fallback"))
     parser.add_argument(
         "--mock-scale", choices=tuple(MOCK_SCALES), default="prototype",
