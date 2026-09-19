@@ -17,8 +17,22 @@ package to fabricate geometry — validation must not construct gameplay
 through the REAL handler: `conftest.enter_zone` walks in the way the
 game does, entering and then sending a layout that
 `engine.handle_layout_result` validates like any other. What is asserted
-below is what the smoke asserted, unchanged; only the certification is
-honest now.
+below is what the smoke asserted, unchanged.
+
+**WHAT THIS IS AND IS NOT, said plainly so nobody reads it as more.**
+The HANDLER is real and the VALIDATOR is real — this layout goes through
+`handle_layout_result` and `layout.validate`, and a manifest they would
+refuse is refused here. The EVIDENCE is synthetic: `conftest.place_layout`
+lays rooms 50 m apart with fabricated join chains and no physics behind
+any of it, because a test process has no engine to measure geometry with.
+So this covers the CAMPAIGN loop — claim, Echo, equip, persistence — over
+a layout the bridge accepts. It covers nothing about whether real
+geometry holds together.
+
+**The physical and live half is `make godot-integration`**: a real Godot
+client measuring real collision, certifying real chains, against a live
+bridge, driven to `ALL_CHECKS_CLEARED`. Neither test substitutes for the
+other, and a change that breaks geometry will pass here and fail there.
 
 `smoke.py` keeps the half it can honestly do, and asserts the refusal
 this file's certification avoids. The two are complements, and both say

@@ -38,80 +38,116 @@ and the bridge both read: `RoomAudit._settle_return_anchors`'
 `arrival_is_supported` ∧ `clear_of_arrival` ∧ `clear_of_content_path`.
 Nothing new has to be invented to judge an anchor.
 
-## Option A — replay, re-measure, refuse *(recommended)*
+## What a refusal ACTUALLY does to a committed Zone
 
-The smallest change that is compatible with the save contract as
-written, because it adds no new persisted state and performs no
-migration.
+**Correcting this document.** An earlier draft said Option A's refusal
+path "sends the Zone back to be composed again, keeps its Checks, and the
+player re-enters a Zone that is certified under the current rules". That
+is what happens to a **fresh** Zone. It is not what happens to a
+committed one, and the difference is the whole argument.
 
-**`zone_builder._build_once`** reads `layout["anchors"]` where it has one
-and uses the recorded point instead of calling `ChamberBuilders.return_spot`.
-**`RoomAudit._settle_return_anchors`** then judges it exactly as it
-judges a freshly reserved one. Three outcomes, all of which the pipeline
-already has vocabulary for:
+Two guards, both deliberate, both read from the code rather than assumed:
+
+* `campaign.py`, the host re-selection branch:
+  `if verdict.unhostable_rooms and rec.manifest is None:` — recomposing
+  the graph with a room barred is for **fresh proposals only**. The
+  comment says why: *"a Zone holding a committed manifest is a solved
+  Zone the player may be part-way through, and it keeps what it has."*
+* `transitions.refuse_layout`: *"**A COMMITTED Zone is preserved, not
+  recomposed.** … That Zone goes DORMANT with its manifest, its content
+  and its progress intact."*
+
+So a refused **replay** does not recompose. The Zone goes DORMANT
+holding its locations; `hub_mode_for` turns exhaustion into
+`ZONE_FAILED`; the Hub offers **ABANDON**, which releases the Zone's
+locations and is explicitly the player's call and has a cost. Nothing
+abandons it automatically.
+
+**The committed-manifest protection is not to be removed to make an
+option work.** It is what stops a solved Zone the player is part-way
+through being silently replaced.
+
+## Option A — replay, re-measure, refuse
+
+`zone_builder._build_once` reads `layout["anchors"]` where it has one and
+uses the recorded point instead of calling `ChamberBuilders.return_spot`.
+`RoomAudit._settle_return_anchors` judges it with the predicates it
+already uses.
 
 | | |
 |---|---|
 | Holds | replayed verbatim; the manifest's promise is kept |
-| Fails, a valid spot exists | **not moved.** The layout is refused, naming the room |
-| Fails, no valid spot | the layout is refused, naming the room |
+| Fails | the layout is refused |
 
-The refusal path is `Verdict.unhostable_rooms`, which exists for exactly
-this shape: *"Naming them turns a whole-Zone loss into a different
-host."* A refused replay sends the Zone back to be composed again, keeps
-its Checks, and the player re-enters a Zone that is certified under the
-current rules. That is the campaign's existing recovery loop, and it
-already has a refusal budget and an exhaustion path.
+**And the refusal costs the Zone.** Per the section above, a committed
+Zone that is refused goes DORMANT with its progress intact and no way
+back into it. For the owner's campaign that is `c021` — its Check, its
+branch and whatever else it holds — parked behind an ABANDON the player
+has to choose and pay for.
 
-**Cost, stated plainly:** a save whose recorded anchor no longer holds
-loses that Zone's committed geometry and plays a recomposed one. For the
-owner's campaign that is one room in one Zone. It is a visible,
-explicable outcome rather than a device that moved while the file said
-otherwise.
+**What it would additionally need** to behave the way the earlier draft
+claimed: a recovery path for committed Zones that does not exist today,
+i.e. relaxing `rec.manifest is None` or adding a separate
+"recompose a committed Zone whose anchors no longer validate" transition.
+Both change what a committed layout means. Neither is authorized here.
 
-**Size:** one read in `_build_once`, one branch in the settle, no schema
-change, no new field, no write-back, nothing to migrate. Old saves work
-unchanged the moment it lands.
+**Size:** one read, one branch, no schema change, no write-back. Cheapest
+to build, most expensive to play.
 
-## Option B — replay, re-measure, repair and record
+## Option B — replay, re-measure, repair the anchor explicitly
 
-As A, except that a failing anchor whose room still offers a valid spot
-is **repaired** and the repair is **written into the manifest** with the
-room, the old point, the new point and the rule that rejected the old
-one, under a `anchor_repairs` key; `commit_layout` is the only writer, so
-the rewrite goes through the path that already refuses to replace a
-committed layout with a different digest.
+A recorded anchor that no longer holds is **repaired in place** — the
+settle already finds a valid spot — and the repair is recorded as a
+repair: the room, the old point, the new point, and the rule that
+rejected the old one, under an `anchor_repairs` key written by
+`commit_layout`, which is already the only writer and already refuses to
+replace a committed layout with a different digest.
 
-Better play (the Zone survives), worse contract (the save is rewritten).
-It is a migration, so it needs the owner's explicit decision, a backup of
-the primary before the first rewrite, and a way for a player to see that
-their level changed. **Not recommended for this repair**, whose blast
-radius is one room.
+**What it would additionally need:** a manifest field and a version
+stamp; `commit_layout` extended to accept a same-digest repair rather
+than treating it as a replacement; a backup of the primary save before
+the first rewrite; and something that tells the player their level
+changed. It is a save rewrite, so it is a migration and needs an explicit
+decision.
+
+**The comparison the choice actually turns on:**
+
+| | Option A | Option B |
+|---|---|---|
+| Blast radius | the **whole committed layout** of that Zone | **one anchor** |
+| Player sees | a Zone that will not open, and an ABANDON with a cost | the same level, one device moved |
+| Save is rewritten | no | yes, and visibly |
+| Committed-manifest protection | untouched | must learn "repair" ≠ "replace" |
+| Scope of the actual defect | one return device in one room | one return device in one room |
+
+Losing a solved Zone to relocate one convenience device is a remedy out
+of all proportion to the fault. **B is the better fit for the defect**,
+and A is the honest fallback for an anchor no repair can satisfy.
 
 ## Option C — version the placement rules
 
-Stamp the manifest at commit time with a digest of the placement rules
-(the `controller_digest` already in every manifest is the nearest
-existing thing). A replay whose stamp matches adopts every anchor
-verbatim with no re-measure; a replay whose stamp differs falls back to A
-or B.
-
-This is an optimisation of A, not an alternative to it: it makes the
-common case free and makes "this save predates the current rules" a fact
-the engine can state. Worth doing **after** A, and only if re-measuring
-proves expensive — it costs one physics query per anchor today.
+Stamp the manifest with a digest of the placement rules; `controller_digest`
+is the nearest existing field. A replay whose stamp matches adopts every
+anchor verbatim with no re-measure. An optimisation of whichever of A or
+B is chosen, not an alternative to either, and worth doing only if
+re-measuring proves expensive — it costs one physics query per anchor.
 
 ## Recommendation
 
-**Take Option A.** It is the only one of the three that changes no
-persisted state, needs no migration, and cannot move a device while the
-save says otherwise. It converts a silent relocation into a refusal the
-campaign already knows how to recover from.
+**Prepare Option B, and keep Option A as its floor.** Repair the one
+anchor, record the repair explicitly, and refuse only when no valid
+placement exists in that room. That keeps the committed layout, keeps the
+protection intact, and keeps the cost proportional to the fault.
 
-Do not take it as licence to revert the return-placement repair: with
-the repair in place a freshly composed Zone puts the device off the
-required approach, and A is about what happens to the Zones committed
-before it.
+It is a save rewrite, so **nothing here is implemented and no campaign is
+migrated in this batch.** What is needed before it can be: the owner's
+decision that a recorded anchor repair is an acceptable rewrite, the
+manifest field and version stamp, the `commit_layout` distinction between
+a repair and a replacement, and a pre-rewrite backup.
+
+Do not read any of this as licence to revert the return-placement repair:
+with it in place a freshly composed Zone puts the device off the required
+approach, and this document is about the Zones committed before it.
 
 ## What must not happen
 

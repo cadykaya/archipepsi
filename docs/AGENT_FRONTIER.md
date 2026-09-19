@@ -1,5 +1,68 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — a door is not an opening while content stands in it — 2026-09-19
+
+**FOUR MISMATCHES, TWO CAUSES.** `RoomAudit.aperture_blockers` reported
+a node path and a step; it now carries the blocker's collision box back
+through the same transform the door went out by, so the two can be
+compared instead of inferred. That is what separated them:
+
+| case | door (room-local) | blocker (room-local) |
+|---|---|---|
+| `zone_02` `c013/side_left` | (-3.95, 0, 6.8) | chain leaf x -4.55..-2.45, z 7.55..7.75 |
+| `zone_04` `c009/side_right` | (4.0, 0, 6.8) | the same, mirrored |
+| `zone_10` `c005/side_left` | (-11.75, 0, 9.65) | deck x -11.75..9.75, **y 1.34..1.74**, z 9.0..17.3 |
+| `zone_14` `c006/side_left` | (-9.05, 0, 10.9) | a deck-height slab |
+
+**A:** a side doorway is cut at the MIDDLE of the wall, which is exactly
+where `resolve_position` puts a feature pushed out of the walking lane.
+**B:** a `back` gallery's deck spans the room's WIDTH and meets both side
+walls -- and `_side_socket` spelled its guard `f"side_{band.side}"`,
+which for a `back` band is `side_back`, a socket that does not exist and
+excluded nothing.
+
+**BOTH REPAIRED AT `topology._side_socket`,** the one place that knows
+the doors and is still free to choose. It already avoided the wall a
+`left`/`right` deck hugs; it now blocks BOTH sides for a full-width band,
+and blocks a side socket in a room whose features cannot clear it. **The
+DOORWAY moves, because the feature is already placed and the door is
+still being chosen.** Nothing turned SEALED, no branch dropped, no Check
+reallocated, validator untouched. `FEATURE_MIN_DEPTH_BESIDE_DOOR` --
+`2 * (2*half_depth + DOOR_WIDTH/2 + THRESHOLD_CLEARANCE)` -- is pinned
+against the builder's own constants from both sides.
+
+| declared sample | submitted | overall |
+|---|---|---|
+| before | 12 of 19 accepted | 12 of 20 |
+| **after** | **17 of 19 accepted** | **17 of 20** |
+
+All four named doors read as openings through a real `ZoneController`
+(68, 62, 58, 62 doors measured, none solid) and every SEALED socket in
+all four is still solid. **Revert control:** reverting `_side_socket`
+alone fails two named regressions.
+
+**REMAINING, NAMED, NOT A ROUTER REWRITE:** `zone_05` rooms `c010`/`c013`
+overlap; `zone_08` does not route and emits a partial manifest;
+`zone_07` produces no manifest at all.
+
+**THE SAVE PROPOSAL IS CORRECTED.** Option A's claimed recovery was
+wrong: `campaign.py` re-selects hosts only `if verdict.unhostable_rooms
+and rec.manifest is None`, and `refuse_layout` preserves a committed Zone
+as DORMANT with its progress intact and no way back in. So a refused
+replay costs the whole Zone, behind an ABANDON the player pays for.
+**`docs/RETURN_ANCHOR_PERSISTENCE.md`** now documents that, says what
+each option would additionally need, and recommends the targeted anchor
+repair (B) with A as its floor -- losing a solved Zone to relocate one
+convenience device is out of all proportion to the fault. The
+committed-manifest protection stays. Nothing implemented, nothing
+migrated.
+
+**AND `test_full_loop` IS LABELLED HONESTLY:** real handler and real
+validator, **synthetic evidence**; `godot-integration` is the separate
+physical and live coverage. Neither substitutes for the other.
+
+
+
 ## ENGINE LANE — ordinary generation: 0 of 20 was the harness — 2026-09-19
 
 **The sampler's "0 of 20 accepted" was wrong twice, and the Zones were

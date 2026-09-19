@@ -1,5 +1,31 @@
 # Archipepsi — build state
 
+## 2026-09-19 (engine) — the door-opening mismatches
+
+- **Four cases, two causes.** A side doorway is cut at the middle of the
+  wall, where the lane rule pushes a feature (`zone_02`, `zone_04`); and
+  a `back` gallery's deck spans the width and meets both side walls,
+  while `_side_socket`'s guard spelled `side_back`, which is not a socket
+  (`zone_10`, `zone_14`).
+- **Both repaired at `topology._side_socket`** — the door moves, not the
+  content. Nothing sealed, no branch dropped, no Check reallocated, the
+  validator untouched. `FEATURE_MIN_DEPTH_BESIDE_DOOR` pinned from both
+  sides; revert control on two named regressions.
+- **Sample: 12 → 17 of 19 submitted accepted, 17 of 20 overall.** All
+  four doors read as openings through a real controller; every SEALED
+  socket still solid. Remaining and named: `zone_05` overlap, `zone_08`
+  partial manifest, `zone_07` no manifest.
+- **`RoomAudit.aperture_blockers` now reports the blocker's collision box
+  in the door's own frame** — that is what separated the two causes.
+- **`docs/RETURN_ANCHOR_PERSISTENCE.md` corrected.** A refused replay of
+  a committed Zone does NOT recompose: re-selection needs
+  `rec.manifest is None`, and `refuse_layout` parks it DORMANT behind an
+  ABANDON the player pays for. Recommends the targeted anchor repair with
+  the refusal as its floor. Nothing implemented or migrated.
+- **`test_full_loop` relabelled:** real handler and validator, synthetic
+  evidence; `godot-integration` is the physical/live half.
+
+
 ## 2026-09-19 (engine) — ordinary generation, smoke, and the anchor question
 
 - **The sampler's "0 of 20 accepted" was the harness, twice.** It never

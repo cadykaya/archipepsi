@@ -22,12 +22,16 @@ into a test of its own scaffolding.
 **WHERE THE REST WENT, unchanged and with the layout really accepted:**
 
 * `bridge/tests/test_full_loop.py` — claim, one Echo per foreign Check,
-  equip, quit, reload, nothing duplicated, second Zone generated. It
-  certifies through `engine.handle_layout_result`, the same handler a
-  client's layout goes through.
-* `make godot-integration` — the same loop against a live bridge with a
-  real Godot client measuring real geometry, driven to
-  `ALL_CHECKS_CLEARED`.
+  equip, quit, reload, nothing duplicated, second Zone generated. The
+  handler and the validator are real: the layout goes through
+  `engine.handle_layout_result` and `layout.validate`. The EVIDENCE is
+  synthetic — a test process has no engine to measure geometry with — so
+  it covers the campaign loop and nothing about whether real geometry
+  holds together.
+* `make godot-integration` — the separate PHYSICAL and LIVE coverage: a
+  real Godot client measuring real collision and certifying real chains
+  against a live bridge, driven to `ALL_CHECKS_CLEARED`. Neither
+  substitutes for the other.
 
 Exits non-zero on any assertion failure.
 """
