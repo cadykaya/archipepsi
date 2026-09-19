@@ -67,6 +67,14 @@ are about `powered_door` chain certification and join evidence, not
 returns. **The sampler's own uncertainty stays separate from this
 repair** and neither improves nor excuses it.
 
+**GITHUB ACTIONS IS NOT RUNNING THIS REPOSITORY'S CI.** Runs 357, 358
+and 359 on this branch each fail **four seconds** after starting, with a
+single job that produces no downloadable log (HTTP 404). That is a job
+that never executed -- runner, minutes or permissions -- not a test
+result. So the CI badge says nothing about any commit in this batch
+either way, and the verification below is the LOCAL frontier run. Worth
+an owner glance at the repository's Actions billing/settings.
+
 **STILL RED, AND NOT FROM THIS BATCH: `make smoke`.** It fails with
 `Zone 'zone_001' has not had its layout accepted (layout_state
 UNCERTIFIED)`. Reproduced identically at `3f00ef2`, the commit before
