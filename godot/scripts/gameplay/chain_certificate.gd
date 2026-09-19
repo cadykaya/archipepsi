@@ -106,6 +106,25 @@ static func of_build(tree: SceneTree, zone_id: String,
 				str(chamber.get("id", "")), {})
 		if alive.is_valid() and not alive.call():
 			return out
+		# AND THE ROOM ITSELF, BEFORE ANYTHING CASTS IT.
+		#
+		# THIS LOOP IS NOT A NODE'S ANY MORE, and that is the whole
+		# hazard. While it lived on `ZoneController`, a Zone torn down
+		# mid-certification took the coroutine with it: Godot cancels a
+		# node's `await` when the node is freed, so the next iteration
+		# never ran. A static function has no node to be cancelled with,
+		# so it resumes after the Zone is gone and casts a freed room --
+		# `godot-playtest3a` and `godot-integration` said so, five times
+		# each, in the words this file already uses: "Trying to cast a
+		# freed object."
+		#
+		# `alive` is not enough on its own. It asks about the CALLER --
+		# the controller is still in the tree while the Zone it built is
+		# being replaced -- and `_still_there` asks about the room this
+		# iteration is about to hand to `of_room`, untyped and
+		# `is_instance_valid` first, for the reason written below it.
+		if not _still_there(entry.get("node")):
+			return out
 		for certified: Variant in await of_room(tree, zone_id, chamber,
 				entry["node"] as Node3D,
 				placed.get("bounds", AABB()) as AABB):

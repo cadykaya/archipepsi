@@ -686,6 +686,40 @@ FEATURE_MIN_WIDTH = {
 #: generator can check before choosing a tag.
 MIN_FEATURE_CHAMBER_WIDTH = min(FEATURE_MIN_WIDTH.values())
 
+#: The SHORTEST chamber that can host each tag, along the axis the
+#: feature runs down. `AffordanceFeatures.required_depth` is
+#: `2 * (THRESHOLD_CLEARANCE + half_depth)`: both doorways are where the
+#: mandatory path is narrowest, so the geometry has to clear each of them
+#: by the threshold margin plus its own reach.
+#:
+#: **`FEATURE_MIN_WIDTH` WAS HALF A RULE.** `AffordanceFeatures.fits`
+#: asks about width AND depth; only the width half had ever been written
+#: down here, so a generator could pass the gate and still hand the
+#: builder a room it would drop the tag in. `powered_door` reaches 3.5 m
+#: along the run — it is a crate shoved down a corridor — so it needs
+#: 11.0 m of length, and the width gate passed corridors of 8.6, 9.0, 9.2
+#: and 9.8 m in the declared sample. The engine dropped the tag for want
+#: of depth, offered no certified package, and `layout.validate` refused
+#: those Zones for a chain that was declared and never built: three of
+#: the nine refusals left after the sample harness was repaired.
+#:
+#: Pinned against `AffordanceFeatures.FOOTPRINT` from both sides in
+#: `test_affordances.py`, exactly as the width table is.
+FEATURE_MIN_DEPTH = {
+    "grapple_anchor": 5.4,
+    "breakable_wall": 6.6,
+    "water_volume": 5.6,
+    "rail": 11.0,
+    "wind_volume": 5.6,
+    "bounce_pad": 5.2,
+    "moving_platform": 5.6,
+    "powered_door": 11.0,
+}
+
+#: The shortest chamber that can host ANY feature, the depth-axis twin of
+#: `MIN_FEATURE_CHAMBER_WIDTH`.
+MIN_FEATURE_CHAMBER_DEPTH = min(FEATURE_MIN_DEPTH.values())
+
 #: Affordance tags a campaign may offer having interpreted NOTHING.
 #:
 #: Two under §13.1, and three since 2026-09-12: `powered_door` is a crate
