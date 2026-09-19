@@ -5,12 +5,23 @@
 **The acceptance case executes.** One route on `c021`, guaranteed kit,
 every trigger live, nothing relocated between legs: real arrival
 `(5.6, 0.0, 42.2)` -> the whole course **REACHED** in 143 frames with
-the pad **not firing** on the way -> `[E] CLAIM CHECK 126` offered where
-the route ends -> a deliberate walk onto `p:c021:start`, which **fires**
-and **delivers**, the body ending 5.95 m from `zone_start` after a
-47.7 m journey. **28 checks on a fresh build from the owner's proposal,
-29 replaying their committed manifest.** Page:
+the pad **not firing** on the way -> CHECK 126 found by the game's own
+interact ray from where the route ends, and its real `interact()` run
+from that position -> a deliberate walk onto `p:c021:start`, which
+**fires** at frame 14 and **delivers**: the walk stops there and the
+body lands **0.20 m** from `zone_start`, which is `anchor + UP * 0.2`
+exactly. **30 checks on a fresh build from the owner's proposal.** Page:
 **`docs/PLAYED_SESSION_FINDINGS.md`**.
+
+**BOTH END CHECKS WERE LOOSER THAN THEY LOOKED, and are now tight.**
+`interact_prompt() != ""` is a property of the OBJECT -- it reads the
+same from the next room -- so it asserted nothing about where the route
+ended; the game's own interact ray, polled from the final position, is
+what answers, and the reward's own interaction path runs from there.
+And the return leg used to keep steering for a hundred frames after the
+teleport, drift several metres, and be excused by a tolerance of "a
+quarter of the journey". `_walk` now takes a stop predicate and ends the
+frame the plug fires, so what is measured is the LANDING.
 
 **THE DEFECT WAS IN TWO PLACES AND THE SECOND ONE DID THE DAMAGE.**
 `return_spot` reserved the end ledge's centre, which on a platform
@@ -31,12 +42,23 @@ second is why the settle cannot re-create it elsewhere. No world
 coordinate is hardcoded, no jump buff, no disabled trigger, no
 completion gate.
 
-**EXISTING SAVES DO NOT KEEP THE OLD PLACEMENT, and nothing was
-migrated.** `layout_from_json` parses the archived anchors;
-`_build_once` reads only `rooms` and `joins`. Anchors are recomputed
-from the replayed poses, so the owner's save reopened on this build
-moves `room:c021:return` 5.89 m to the repaired spot while the file on
-disk keeps its old number, unread.
+**OPEN DEFECT, RECORDED SEPARATELY AND NOT RESOLVED HERE: a replayed
+save does not keep its committed return placement.** The save file is
+untouched -- `work_manifest.json` still carries
+`room:c021:return = [18.99, 1.53, 42.25]`, byte for byte. But
+`layout_from_json` parses the archived `anchors` block and `_build_once`
+consumes only `rooms` and `joins`, so every anchor is RECOMPUTED from
+the replayed poses. Reopening the owner's save on this build moves
+`room:c021:return` **5.89 m**.
+
+**That contradicts the committed-placement claim this branch has been
+making** -- "a committed layout is replayed, never re-solved" holds for
+room poses and joins and does NOT hold for anchors. This batch does not
+adopt that as the intended persistence contract, does not revert the
+placement repair to hide it, and does not invent a migration. It is an
+open question for the owner: should a replayed anchor come from the
+manifest, and if so what happens to a manifest whose anchor the current
+rules would now refuse.
 
 **AND A CORRECTION TO THE ENTRY BELOW.** "Archived and fresh anchors
 agree" was stated twice off a comparison that read the "fresh" value out
@@ -67,13 +89,15 @@ are about `powered_door` chain certification and join evidence, not
 returns. **The sampler's own uncertainty stays separate from this
 repair** and neither improves nor excuses it.
 
-**GITHUB ACTIONS IS NOT RUNNING THIS REPOSITORY'S CI.** Runs 357, 358
-and 359 on this branch each fail **four seconds** after starting, with a
-single job that produces no downloadable log (HTTP 404). That is a job
-that never executed -- runner, minutes or permissions -- not a test
-result. So the CI badge says nothing about any commit in this batch
-either way, and the verification below is the LOCAL frontier run. Worth
-an owner glance at the repository's Actions billing/settings.
+**OPEN, SEPARATE: REMOTE CI DOES NOT START.** Runs 357, 358 and 359 on
+this branch each fail seconds after starting, with one job that reports
+no steps, no assigned runner, empty `output.title`/`summary`/`text`, and
+HTTP 404 on its log download. One re-run of the PR gate behaved the same
+way. **The cause is unconfirmed** -- the metadata shows a job that never
+ran, and nothing observed here says why. So a red conclusion on this
+branch is not a statement about any commit in this batch, and the
+verification of record is the LOCAL frontier run below. Not polled, not
+re-run again, and no check-in scheduled for it.
 
 **STILL RED, AND NOT FROM THIS BATCH: `make smoke`.** It fails with
 `Zone 'zone_001' has not had its layout accepted (layout_state

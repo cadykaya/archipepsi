@@ -429,9 +429,23 @@ between legs** — each leg starts where the last one left the body:
 | Arrival | `(5.6, 0.0, 42.2)`, where `e:c018:c021` puts a body down |
 | Outbound | **REACHED**, 143 frames, walk and jump only |
 | The pad on the way | **did not fire** — the plug's own signal, not a distance |
-| The reward | `[E] CLAIM CHECK 126`, offered from where the route ends |
-| Deliberate return | `p:c021:start → zone_start` **fired** |
-| And it delivered | the body ends 5.95 m from `zone_start` after a 47.7 m journey |
+| The reward, reached | the game's own interact ray finds CHECK 126 from where the route ends |
+| The reward, used | `subject.interact(_walker)` runs from that position; `[E] CLAIM CHECK 126` |
+| Deliberate return | `p:c021:start → zone_start` **fired**, at frame 14 |
+| And it delivered | the walk **stops there**; the body lands **0.20 m** from `zone_start` |
+
+**Both end checks were looser than they looked.** `interact_prompt()` is
+a property of the object — it reads the same standing on the Check as
+standing in the next room — so asserting it non-empty asserted nothing
+about where the route ended. The game's own interact ray, aimed and
+polled from the final position, is what answers, and the reward's own
+interaction path then runs from there; offline it refuses, which is the
+correct refusal and is what the check pins. On the other end, the leg
+used to keep steering for a hundred frames after the teleport, drift
+about six metres, and be excused by "within a quarter of the journey" —
+a tolerance sized to excuse the instrument. `_walk` now takes a stop
+predicate and ends the frame the plug fires, so the number reported is
+the landing: `0.20 m`, which is `anchor + UP * 0.2` exactly.
 
 The return plug now sits **18.7 m along an 18.7 m run and 2.6 m off its
 line** — at the end, beside the reward, off the approach. Unrepaired it
@@ -443,19 +457,32 @@ revision and nothing else changed, the same command returns two
 failures: *the outbound route never touches the return plug* and *the
 whole course is walked from the door the room is entered by*.
 
-### Existing saves do not keep the old placement
+### Open defect, recorded and not resolved: a replay does not keep its committed placement
 
-Stated plainly, because it is the opposite of what a "committed
-manifest" sounds like. `layout_from_json` **does** parse the archived
-`anchors` block — and `_build_once` consumes only `rooms` and `joins`.
-Every anchor is **recomputed** from the replayed poses. A return device
-is derived geometry, not saved state.
+**The save file is untouched.** `work_manifest.json` still carries
+`room:c021:return = [18.99, 1.53, 42.25]`, byte for byte. Nothing was
+rewritten and no migration was written.
 
-So reopening the owner's own save on this build puts the return in the
-repaired place: the replay prints `room:c021:return` archived at
-`(18.99, 1.53, 42.25)` and recomputed to `(24.27, 1.53, 39.65)`, **moved
-5.89 m**. Nothing rewrites the file; the old number sits there unread.
-No migration was written and none is needed.
+**And the device still moves.** `layout_from_json` parses the archived
+`anchors` block; `_build_once` consumes only `rooms` and `joins`. Every
+anchor is **recomputed** from the replayed poses, so reopening the
+owner's own save on this build puts `room:c021:return` at
+`(24.27, 1.53, 39.65)` — **5.89 m** from where the save says it is.
+
+**This does not meet the committed-placement claim this branch has been
+making.** `commit_layout`'s own words are "a committed layout is
+replayed, never replaced", and `_the_committed_placement_is_what_was_played`
+verifies exactly that — for room transforms, at 0.000 m. It was never
+true of anchors, and nothing until now measured them. A *fixed* rule
+that recomputes them was invisible; a rule that changes moves the
+device.
+
+**Deliberately left open.** This batch does not adopt anchor
+recomputation as the intended persistence contract, does not revert the
+placement repair to hide the consequence, and does not invent a
+migration. The question for the owner is whether a replayed anchor
+should come from the manifest — and if so, what a replay should do with
+a manifest whose anchor the current rules would refuse.
 
 ### Reproduce
 
@@ -463,10 +490,10 @@ No migration was written and none is needed.
 make godot-return-placement          # the producer regression, no save needed
 
 godot --headless --path godot -- --traverse-test \
-      --zone-json=<copy>/work_proposal.json        # fresh:  28 checks
+      --zone-json=<copy>/work_proposal.json        # fresh:  30 checks
 godot --headless --path godot -- --traverse-test \
       --zone-json=<copy>/work_proposal.json \
-      --manifest-json=<copy>/work_manifest.json    # replay: 29 checks
+      --manifest-json=<copy>/work_manifest.json    # replay: 31 checks
 ```
 
 **The broader sampler's uncertainty is separate.** Three routes in the

@@ -19,14 +19,26 @@ A bounded 0.3 return-placement repair. Full account in
   committed reward where a room has no station. No world coordinate is
   hardcoded; no jump buff, disabled trigger or completion gate.
 - **The acceptance case executes:** real arrival → whole course REACHED
-  (143 frames, pad silent) → `[E] CLAIM CHECK 126` → deliberate return
-  fires and delivers the body to `zone_start`. 28 checks fresh, 29 on the
-  owner's replayed manifest. Reverted, it fails with two failures.
-- **Existing saves do not keep the old placement, and none were
-  migrated.** Anchors are recomputed from the replayed poses;
-  `layout_from_json` parses the archived block and `_build_once` never
-  reads it. The owner's save moves `room:c021:return` 5.89 m on reload
-  while the file keeps its old number, unread.
+  (143 frames, pad silent) → CHECK 126 found by the game's own interact
+  ray from where the route ends and its real `interact()` run there →
+  deliberate return fires at frame 14, the walk stops, the body lands
+  **0.20 m** from `zone_start`. 30 checks fresh. Reverted, two failures.
+- **Both end checks were tightened.** `interact_prompt() != ""` is a
+  property of the object and said nothing about where the route ended;
+  the interact ray and the real interaction path do. And the return leg
+  no longer keeps steering past the teleport and excusing the drift with
+  a quarter-of-the-journey tolerance — `_walk` takes a stop predicate and
+  ends the frame the plug fires, so the landing is what is measured.
+- **OPEN, not resolved here: a replay does not keep its committed return
+  placement.** The save file is untouched and no migration was written —
+  and the device still moves 5.89 m on reload, because anchors are
+  recomputed from the replayed poses while `layout_from_json`'s archived
+  `anchors` block is never read. That does not meet the
+  committed-placement claim this branch has been making, which is true of
+  room poses and joins only. Not adopted as the intended contract, not
+  papered over by reverting the repair, not migrated. Owner question:
+  should a replayed anchor come from the manifest, and what then happens
+  to a manifest whose anchor the current rules would refuse?
 - **Correction.** "Archived and fresh anchors agree" was twice supported
   by a comparison that read the fresh value out of a `--manifest-json=`
   build — the archive against itself. The claim holds; that evidence
@@ -46,6 +58,11 @@ A bounded 0.3 return-placement repair. Full account in
   attributes it to the `content_of` fallback, not the producer repair.
   The 18 standing refusals are about `powered_door` chains and join
   evidence. The sampler's uncertainty stays separate.
+- **Open, separate: remote CI does not start.** Runs 357-359 each fail
+  seconds in with one job reporting no steps, no assigned runner, empty
+  output and HTTP 404 on logs; one re-run behaved the same. **Cause
+  unconfirmed.** A red conclusion there is not a statement about this
+  batch. Not polled and not re-run again.
 - **Open, and not from this batch: `make smoke` is red.** `Zone
   'zone_001' has not had its layout accepted (layout_state
   UNCERTIFIED)`, reproduced identically at `3f00ef2`. The guard is right

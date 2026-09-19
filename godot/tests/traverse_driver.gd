@@ -120,10 +120,16 @@ func _step(frames: int) -> void:
 ## rather than from any particular course: no ground within a step of
 ## foot level, a stride ahead, means jump. It is not permitted to
 ## rescue a body that is already off the floor.
+## `stop_when` ends the walk the frame its predicate first holds, with
+## outcome `STOPPED` and no further steering. It exists because a device
+## that MOVES the body mid-walk -- a return plug carrying the player to
+## another anchor -- leaves this function aiming at a target forty metres
+## behind it, and every metre it walks after that is drift the caller
+## then has to excuse. Stopping there makes `ended` the landing.
 func _walk(parent: Node3D, from: Vector3, to: Vector3,
 		target: Node = null, body: Player = null,
 		release_holds := false, jump_gaps := false,
-		arrive := ARRIVE_RANGE) -> Dictionary:
+		arrive := ARRIVE_RANGE, stop_when := Callable()) -> Dictionary:
 	# THE ZONE'S OWN PLAYER WHERE THERE IS ONE. `ZoneController` spawns
 	# the body the game spawns, with the holds, the Echo slots and the
 	# signal wiring a fresh `Player.create()` would not have; a second
@@ -190,6 +196,9 @@ func _walk(parent: Node3D, from: Vector3, to: Vector3,
 				await get_tree().physics_frame
 				Input.action_release("jump")
 		await get_tree().physics_frame
+		if stop_when.is_valid() and stop_when.call():
+			outcome = "STOPPED"
+			break
 		if body.is_on_floor():
 			last_grounded = body.global_position
 			was_grounded = true
@@ -1574,29 +1583,36 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 	# legs: each leg starts from wherever the last one left it.
 	# DOES A SAVED LEVEL KEEP THE PLACEMENT IT WAS WRITTEN WITH?
 	#
-	# No, and the manifest is not what decides it. `layout_from_json`
-	# parses the archived `anchors` block, `_build_once` consumes only
-	# `rooms` and `joins`, and every anchor is RECOMPUTED from the
-	# replayed poses. A return device is derived geometry, not saved
-	# state: reopen an old save on this build and the return stands
-	# where this build puts it, while the file on disk still carries the
-	# old number, untouched and unread. Printed on every replay rather
-	# than asserted once, because it is the fact a reader needs to know
-	# before believing anything else on a replayed level.
+	# NO, AND THAT IS AN OPEN DEFECT RATHER THAN A CONTRACT.
+	# `layout_from_json` parses the archived `anchors` block,
+	# `_build_once` consumes only `rooms` and `joins`, and every anchor
+	# is RECOMPUTED from the replayed poses -- so reopening an old save
+	# on a build whose placement rules have changed MOVES the device,
+	# while the file on disk keeps its old number, untouched and unread.
+	#
+	# `commit_layout` says "a committed layout is replayed, never
+	# replaced", and `_the_committed_placement_is_what_was_played` above
+	# holds that to 0.000 m -- for room transforms. It was never true of
+	# anchors and nothing measured them, which was invisible only while
+	# the rule that computes them never changed. Printed on every replay,
+	# unreconciled, because a reader needs it before believing anything
+	# else about a replayed level.
 	if not _saved_manifest.is_empty():
 		var archived: Dictionary = _saved_manifest.get("anchors", {})
 		var was := _as_vec(archived.get("room:%s:return" % rid,
 				Vector3.INF))
+		var moved := was != Vector3.INF and was.distance_to(pad_at) >= 0.05
 		_note("REPLAY: the manifest carries room:%s:return = %s; this "
 				% [rid, str(was.snapped(Vector3.ONE * 0.01))
 					if was != Vector3.INF else "nothing"]
-				+ "build recomputed it to %s (%s). Anchors are derived "
+				+ "build recomputed it to %s (%s). The save file is "
 				% [str(pad_at.snapped(Vector3.ONE * 0.01)),
-					"unchanged" if was != Vector3.INF
-						and was.distance_to(pad_at) < 0.05
-						else "MOVED %.2f m" % was.distance_to(pad_at)]
-				+ "from the committed poses, never replayed, so the "
-				+ "save file is neither read for this nor rewritten.")
+					"MOVED %.2f m" % was.distance_to(pad_at) if moved
+						else "unchanged"]
+				+ "neither read for this nor rewritten -- and a move "
+				+ "here means the replay did NOT preserve the committed "
+				+ "placement, which is an OPEN question and not this "
+				+ "file's contract to bless.")
 	_reset_the_walker()
 	fired.clear()
 	var out := await _walk(_zone, arrival, goal, subject, _walker, true,
@@ -1615,11 +1631,29 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 		_note("        the outbound leg did not complete, so nothing "
 				+ "below would be evidence about the return.")
 		return
-	# INTERACTABLE, not merely arrived beside.
+	# INTERACTABLE, not merely arrived beside, and not merely willing to
+	# print a string. `interact_prompt()` is a property of the object: it
+	# reads the same standing on the Check as standing in the next room,
+	# so asserting it non-empty asserts nothing about where the route
+	# ended. What answers is the game's own interact ray, which `_walk`
+	# has already aimed and polled from the position the route stopped
+	# at -- the same `addressable` the local-approach check uses -- and
+	# then the reward's OWN interaction path, run from that position.
+	# Offline it refuses, which is the correct refusal; the send belongs
+	# to the live-bridge suites. What this asserts is that the refusal
+	# comes from the bridge being absent and not from the player being
+	# unable to reach the thing.
 	var stood := _walker.global_position
-	_check(subject.interact_prompt() != "",
-			"and the Check offers its prompt from where the route ends "
-			+ "('%s')" % subject.interact_prompt())
+	_check(bool(out["addressable"]),
+			"and the game's own interact ray finds the Check from where "
+			+ "the route ends")
+	var prompt := subject.interact_prompt()
+	_check(prompt != "", "and it offers that player a prompt ('%s')"
+			% prompt)
+	subject.interact(_walker)
+	_check(is_instance_valid(subject),
+			"and the real interaction runs from that position without "
+			+ "taking the reward with it")
 	_note("        the route stands at %s, %.2f m from the Check"
 			% [str(stood.snapped(Vector3.ONE * 0.1)),
 				stood.distance_to(goal)])
@@ -1636,7 +1670,8 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 	# The signal, not the walk outcome, is what answers.
 	fired.clear()
 	var home := await _walk(_zone, _walker.global_position, pad_at, null,
-			_walker, true, true, 0.8)
+			_walker, true, true, 0.8,
+			func() -> bool: return not fired.is_empty())
 	_check(not fired.is_empty(),
 			"and the return is then taken deliberately: walking from "
 			+ "the Check onto the plug fires it (%s)" % str(fired))
@@ -1648,35 +1683,31 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 	# outcome is the RETURN HAVING HAPPENED. Read as a route verdict it
 	# is the instrument measuring its own aftermath, which this file has
 	# already published once.
-	var landed := _walker.global_position
+	var landed: Vector3 = home["ended"]
 	var dest := _as_vec(_zone._zone_anchors.get(plug.destination
 			if plug != null else "zone_start", Vector3.INF))
-	# MEASURED AS A FRACTION OF THE JOURNEY, not against a fixed radius.
-	# The teleport does not end the leg: the walker is still aiming at a
-	# pad that is now forty metres behind it, so it walks on for the
-	# frames it has left and drifts several metres from where it landed.
-	# "Within three metres of the anchor" would fail a return that
-	# plainly worked. The question is which end of the Zone the body is
-	# at, and a quarter of the trip answers it without pretending to a
-	# precision the walker does not have.
-	var trip := goal.distance_to(dest)
-	_check(dest != Vector3.INF and trip > 1.0
-			and landed.distance_to(dest) < trip * 0.25,
-			"and the return delivers: the body ends %.2f m from '%s' "
+	# THE LANDING, NOT WHERE THE WALKER WANDERED AFTERWARDS.
+	#
+	# `_walk` now stops the frame the plug fires, so `ended` is where
+	# `_on_plug_traversed` put the body -- `anchor + UP * 0.2` plus at
+	# most one frame of gravity. That is a metre-scale question with a
+	# metre-scale answer, and an earlier version of this check asked it
+	# as "within a quarter of the journey" because the walker was still
+	# being steered for a hundred frames after the teleport. A tolerance
+	# sized to excuse an instrument is not a measurement.
+	_check(dest != Vector3.INF and landed.distance_to(dest) <= 1.0,
+			"and the return delivers: the body lands %.2f m from '%s', "
 			% [landed.distance_to(dest),
 				plug.destination if plug != null else "zone_start"]
-			+ "after a %.1f m journey, at the Zone's entrance and not "
-			% trip + "beside the Check it walked from")
-	_note("        deliberate return: fired %s; the body ends at %s, "
-			% [str(fired), str(landed.snapped(Vector3.ONE * 0.1))]
-			+ "%.2f m from the destination anchor %s. The walk's own "
-			% [landed.distance_to(dest), str(dest.snapped(
-				Vector3.ONE * 0.1))]
-			+ "outcome (%s at %.2f m, %s) is the aftermath of that "
-			% [str(home["outcome"]), float(home["closest"]),
-				str(home["blocker"]) if str(home["blocker"]) != ""
-					else "no blocker named"]
-			+ "teleport, not a verdict on the route")
+			+ "the destination the device names")
+	_note("        deliberate return: fired %s after %d frame(s); the "
+			% [str(fired), int(home["frames"])]
+			+ "walk STOPPED there and the body landed at %s, %.2f m "
+			% [str(landed.snapped(Vector3.ONE * 0.01)),
+				landed.distance_to(dest)]
+			+ "from the destination anchor %s (outcome %s)"
+			% [str(dest.snapped(Vector3.ONE * 0.01)),
+				str(home["outcome"])])
 	for chamber: Dictionary in (_zone.zone.get("chambers", []) as Array):
 		if str(chamber.get("id", "")) != rid:
 			continue
