@@ -103,7 +103,20 @@ const BRIDGE_EPSILON := 0.001
 static func _overlaps(placed: Array, candidate: AABB) -> bool:
 	for existing: AABB in placed:
 		var shared := existing.intersection(candidate)
-		if shared.has_volume() and not _is_a_collar(shared.size):
+		if not shared.has_volume():
+			continue
+		# TOUCHING IS NOT OVERLAPPING, and `has_volume()` cannot tell:
+		# two rooms placed wall to wall intersect over their whole
+		# shared face at whatever thickness the float arithmetic leaves
+		# -- `r5` and `r6` in `godot-room-contract` share
+		# 0.000008 x 6.0 x 14.0, which is a contact and reads as a
+		# 14-metre interpenetration to a shape rule. `BRIDGE_EPSILON` is
+		# the validator's own millimetre, so anything thinner than the
+		# bridge would notice is not this function's business either.
+		var thin := minf(shared.size.x, minf(shared.size.y, shared.size.z))
+		if thin <= BRIDGE_EPSILON:
+			continue
+		if not _is_a_collar(shared.size):
 			return true
 	return false
 
@@ -1583,7 +1596,6 @@ static func build(zone: Dictionary, theme_override := "",
 	var nudge := {}
 	var attempts := 1
 	var out := _build_once(zone, theme_override, budget_ms, layout, nudge)
-	_refuse_own_interpenetration(out)
 	# A REPLAY IS NEVER RE-SOLVED. The manifest already says where every
 	# room went; nudging one would produce a Zone the player has never
 	# been in, with a committed layout's name on it.
@@ -1601,7 +1613,6 @@ static func build(zone: Dictionary, theme_override := "",
 			out = _build_once(zone, theme_override,
 					maxf(budget_ms - spent, 1.0) if budget_ms > 0.0
 					else 0.0, layout, nudge)
-			_refuse_own_interpenetration(out)
 	out["placement_attempts"] = attempts
 	out["placement_nudges"] = nudge
 	out["placement_ms"] = float(Time.get_ticks_msec() - started)
@@ -1616,7 +1627,34 @@ static func build(zone: Dictionary, theme_override := "",
 ## the ladder walks backwards along the spine past every room that has
 ## already spent its `PER_ROOM_NUDGES`, which is what makes this a
 ## backtrack rather than four tries at the same room.
-## ASK THE COMMITTED-LAYOUT QUESTION BEFORE CLAIMING `LAYOUT_OK`.
+## NOT WIRED INTO `build()`, AND THE REASON IS THE BOUNDARY.
+##
+## This was called from `build()` for one commit, so the router would
+## refuse its own interpenetration before claiming `LAYOUT_OK`. It
+## cannot: `layout_findings` judges a committed overlap by SHAPE, and
+## two rooms placed wall-to-wall share their whole 0.4 m wall allowance
+## -- `shell_tower_collapsed`'s `c002` and `c003` share
+## 12.8 x 6.0 x 0.4, which is 30.72 m3 and nothing like a collar, and is
+## also exactly what abutting rooms are supposed to look like. Wired in,
+## it made every tower and treasure shell unplaceable in a three-room
+## Zone.
+##
+## **AN ENVELOPE CHECK CANNOT TELL ABUTMENT FROM INTERPENETRATION.**
+## Only the solids can, and `room_audit` needs a physics space the
+## router does not have. `zone_05`'s overlap was real -- measured in the
+## assembled Zone, one collider from each room in the same box -- and
+## `shell_tower_collapsed`'s is not, and the two are the same shape to
+## this function. Distinguishing them in the router is the larger change
+## this batch deliberately did not make.
+##
+## What DID fix `zone_05` is the search asking the collar question
+## instead of a volume bound (`_overlaps`), where `_all_but_last`
+## already excludes the abutting neighbour so a shared wall is never the
+## pair being judged.
+##
+## Kept because `room_contract_driver` reads it over a Zone standing in
+## a real tree, where it is the right measurement.
+static func _unused_refuse_own_interpenetration(out: Dictionary) -> void:
 ##
 ## `layout_findings` was written for exactly this and, until now, was
 ## called only from `room_contract_driver.gd`. A measurement that exists,
@@ -1638,7 +1676,6 @@ static func build(zone: Dictionary, theme_override := "",
 ## the room is nudged onto its next pose and the Zone is re-solved. Only
 ## an exhausted ladder makes this the Zone's refusal -- the outcome the
 ## bridge would have reached anyway, earlier and naming the rooms.
-static func _refuse_own_interpenetration(out: Dictionary) -> void:
 	if str(out.get("status", "")) != "LAYOUT_OK":
 		return
 	var findings := layout_findings(out)
