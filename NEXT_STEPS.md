@@ -1,5 +1,40 @@
 # Archipepsi — build state
 
+## 2026-09-19 (engine) — the c021 return, off the approach and walked
+
+A bounded 0.3 return-placement repair. Full account in
+`docs/PLAYED_SESSION_FINDINGS.md`; the short version:
+
+- **Two stages were wrong, and the settle pass did the damage.**
+  `ChamberBuilders.return_spot` reserved the end ledge's centre — on a
+  platform course, the reward's own square metre. Then
+  `RoomAudit._settle_return_anchors` rejected that and searched, and put
+  the device on the last island *before* the Check. Its one guard against
+  that, `clear_of_content_path`, was inert: `content_of` answers with the
+  room's warp station and `c021` has none, so every candidate passed.
+- **Repaired in both.** `return_spot` collects the claims first (arrival,
+  keys, `reward_clearance`) and tries the declared stands furthest-first,
+  sampling across each surface — `c021` gets local `(2.6, 1.53, 21.62)`,
+  beside the reward and past the course. `content_of` falls back to the
+  committed reward where a room has no station. No world coordinate is
+  hardcoded; no jump buff, disabled trigger or completion gate.
+- **The acceptance case executes:** real arrival → whole course REACHED
+  (143 frames, pad silent) → `[E] CLAIM CHECK 126` → deliberate return
+  fires and delivers the body to `zone_start`. 28 checks fresh, 29 on the
+  owner's replayed manifest. Reverted, it fails with two failures.
+- **Existing saves do not keep the old placement, and none were
+  migrated.** Anchors are recomputed from the replayed poses;
+  `layout_from_json` parses the archived block and `_build_once` never
+  reads it. The owner's save moves `room:c021:return` 5.89 m on reload
+  while the file keeps its old number, unread.
+- **Correction.** "Archived and fresh anchors agree" was twice supported
+  by a comparison that read the fresh value out of a `--manifest-json=`
+  build — the archive against itself. The claim holds; that evidence
+  never did. A no-manifest build on the unrepaired code lands at
+  `(19.0, 1.5, 42.2)` against the archive's `(18.99, 1.53, 42.25)`.
+- New suite `make godot-return-placement`, wired into CI.
+
+
 ## 2026-09-14 (engine) — reading the owner's own session
 
 A private copy of the `.diagnostic-582e954` slot JSON, its `.bak` and a

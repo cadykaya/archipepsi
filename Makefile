@@ -567,6 +567,15 @@ godot-traverse: godot-import   # walking to things, with the real controller
 	fi; \
 	exit $$status
 
+godot-return-placement: godot-import  # a convenience return is never on the way
+	@out=$$($(GODOT) --headless --path godot -- --return-placement 2>&1); \
+	status=$$?; printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: a test that crashed is not a test that passed"; \
+	  exit 1; \
+	fi; \
+	exit $$status
+
 godot-reload: godot-import
 	rm -rf $(RELOAD_SAVES) $(HOME)/.local/share/godot/app_userdata/Archipepsi/reload_notes.json
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RELOAD_SAVES) \

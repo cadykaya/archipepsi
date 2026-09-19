@@ -676,7 +676,6 @@ static func return_spot(build: Dictionary, chamber: Dictionary) -> Vector3:
 	# the return takes the LAST one wide enough to hold the device,
 	# which is the end ledge and is as far from the arrival as the room
 	# goes.
-	var best := Vector3.INF
 	# A CAPSULE HAS TO FIT, NOT THE TRIGGER. `ReturnPlug.RADIUS` is the
 	# volume that FIRES; what has to be held up is a player, and a
 	# trigger may overhang the ledge it stands on. Demanding the trigger
@@ -684,18 +683,11 @@ static func return_spot(build: Dictionary, chamber: Dictionary) -> Vector3:
 	# about three metres deep and its islands two and a half -- so the
 	# room declared exactly the ground it holds and none of it counted.
 	var reach := Constants.PLAYER_RADIUS + 0.6
-	for raw: Variant in build.get("sockets", []):
-		if typeof(raw) != TYPE_DICTIONARY:
-			continue
-		var surface: Dictionary = raw
-		if str(surface.get("kind", "")) != "stand":
-			continue
-		var extent: Vector3 = surface.get("extent", Vector3.ZERO)
-		if extent.x < reach * 2.0 or extent.z < reach * 2.0:
-			continue
-		best = surface.get("position", Vector3.ZERO)
-	if best != Vector3.INF:
-		return best
+	# WHAT THE ROOM HAS ALREADY SPENT, gathered BEFORE a surface is
+	# chosen rather than only in the fallback below. That ordering was
+	# the defect: the stand-surface branch took a surface's CENTRE and
+	# never looked at the claims, so on a platform course the return
+	# landed on the end ledge -- which is exactly where the reward is.
 	var box: AABB = build.get("bounds", AABB())
 	var claimed: Array[AABB] = []
 	var arrive: Vector3 = (build.get("player_entry", {}) as Dictionary) \
@@ -710,6 +702,36 @@ static func return_spot(build: Dictionary, chamber: Dictionary) -> Vector3:
 		claimed.append(AABB(
 				(spot["position"] as Vector3) - Vector3(0.8, 0.0, 0.8),
 				Vector3(1.6, 2.0, 1.6)))
+	# A CONVENIENCE MUST NOT STAND ON THE ROUTE IT IS A CONVENIENCE FROM.
+	#
+	# Measured on the owner's own Zone: `p:c021:start` sat between the
+	# arrival and the Check, so walking at the Check stepped on the pad
+	# and left the room. The furthest surface is tried first -- on a
+	# linear course that is the destination landing, past everything the
+	# player has to cross -- and a spot is sought WITHIN it that clears
+	# what the room has already spent. Only if no surface can host one
+	# does this fall through to the envelope sampler below.
+	var stands: Array[Dictionary] = []
+	for raw: Variant in build.get("sockets", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var surface: Dictionary = raw
+		if str(surface.get("kind", "")) != "stand":
+			continue
+		var extent: Vector3 = surface.get("extent", Vector3.ZERO)
+		if extent.x < reach * 2.0 or extent.z < reach * 2.0:
+			continue
+		stands.append(surface)
+	for i in range(stands.size() - 1, -1, -1):
+		var on := _spot_on_surface(stands[i], claimed, reach)
+		if on != Vector3.INF:
+			return on
+	# EVERY SURFACE IS SPOKEN FOR. Falling through is honest -- the
+	# sampler below may still find somewhere in the envelope -- but on a
+	# room whose floor IS its surfaces (a platform course has no floor
+	# between them) that will fail its standing check and the layout
+	# will be refused, which is the room saying it cannot host a return.
+	
 	# `_clear_spot` samples x in +/- 0.34 of width and z in 0.2..0.8 of
 	# depth, both measured from a room whose origin is its entry face;
 	# an authored shell's envelope can start somewhere else, so the spot
@@ -728,6 +750,46 @@ static func return_spot(build: Dictionary, chamber: Dictionary) -> Vector3:
 	# one height in the room known to work.
 	return Vector3(at.x + box.position.x + box.size.x / 2.0, arrive.y,
 			at.z + box.position.z)
+
+## Somewhere ON this surface that nothing else has claimed.
+##
+## Prefers the edges over the middle, and deliberately: on a linear
+## course the required approach runs up the centre, so the far side of a
+## landing is both off the route and still on solid ground. `INF` when
+## the surface cannot hold one, which is a real answer and not a
+## failure -- the caller tries the next surface in.
+static func _spot_on_surface(surface: Dictionary, claimed: Array,
+		reach: float) -> Vector3:
+	var at: Vector3 = surface.get("position", Vector3.ZERO)
+	var extent: Vector3 = surface.get("extent", Vector3.ZERO)
+	var half_x := extent.x / 2.0 - reach
+	var half_z := extent.z / 2.0 - reach
+	if half_x < 0.0 or half_z < 0.0:
+		return Vector3.INF
+	# Outward first, so a centre-line approach is left alone wherever
+	# the surface is wide enough to step aside on.
+	var lateral: Array[float] = []
+	var steps := 4
+	for i in steps + 1:
+		var f := 1.0 - float(i) / float(steps)
+		lateral.append(half_x * f)
+		if f > 0.001:
+			lateral.append(-half_x * f)
+	for dz: float in [0.0, half_z * 0.5, -half_z * 0.5]:
+		for dx: float in lateral:
+			var spot := Vector3(at.x + dx, at.y, at.z + dz)
+			var body := AABB(spot - Vector3(reach, 0.0, reach),
+					Vector3(reach * 2.0, Constants.PLAYER_HEIGHT,
+						reach * 2.0))
+			var clash := false
+			for raw: Variant in claimed:
+				var taken: AABB = raw
+				if taken.intersects(body):
+					clash = true
+					break
+			if not clash:
+				return spot
+	return Vector3.INF
 
 static func _clear_spot(width: float, depth: float, claimed: Array,
 		seed_value: int) -> Vector3:

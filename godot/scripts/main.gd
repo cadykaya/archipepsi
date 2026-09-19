@@ -65,6 +65,7 @@ const DRIVERS := {
 	"--zone-audit": preload("res://tests/zone_audit_driver.gd"),
 	"--zone-shots": preload("res://tests/zone_shot_driver.gd"),
 	"--room-test": preload("res://tests/room_driver.gd"),
+	"--return-placement": preload("res://tests/return_placement_driver.gd"),
 	"--room-contract": preload("res://tests/room_contract_driver.gd"),
 	"--graphs": preload("res://tests/graph_driver.gd"),
 	"--movement-test": preload("res://tests/movement_driver.gd"),

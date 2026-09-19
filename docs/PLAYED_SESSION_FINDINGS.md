@@ -137,10 +137,20 @@ is not a claim that no route exists**: the kit has a jump, this walker
 steers in straight lines, and nothing measured here rules out a
 player's own solution.
 
-**Nothing was repaired.** The pad was not moved, no return was disabled
-in the live route, and no activation policy was changed. The archived
-and freshly computed anchors agree, so this is not a current-code
-artefact — it is where the pad was in the played build.
+**Nothing was repaired** *(true when written; the repair below came
+after)*. The pad was not moved, no return was disabled in the live
+route, and no activation policy was changed.
+
+**The archived and freshly computed anchors do agree — but the first
+comparison that said so proved nothing.** It read the "fresh" value out
+of a build made with `--manifest-json=`, and `ZoneBuilder.layout_from_json`
+hands the archive's own numbers back, so the archive was compared with
+itself. The claim happens to be right, and here is the evidence that
+actually establishes it: built from the same proposal with **no
+manifest**, on the unrepaired code, `room:c021:return` lands at
+`(19.0, 1.5, 42.2)`. The archive carries `(18.99, 1.53, 42.25)`. One
+centimetre apart, computed independently — so the pad's place is what
+current code produces, not an artefact of that particular save.
 
 **And there is a valid way out.** Walking from the Check onto the return
 plug **fires it** (`p:c021:start → zone_start`). The walk's own outcome
@@ -349,3 +359,117 @@ traversal cost.
   path follows was not traced.
 - Anything about the variant's router blocker, which is unrelated and
   documented in `docs/FOLLOWUP_02_INTEGRATION.md` §6a.
+
+---
+
+## The return placement, repaired — and where the defect actually lived
+
+**The product rule.** A convenience return must not intercept the normal
+required approach to the reward. A player has to be able to reach the
+reward, use it, and *then* deliberately walk to the return, with every
+device live.
+
+### What was actually putting the pad on the course
+
+Two stages, and the first one is not where the damage was done.
+
+**Stage 1 — the reservation.** `ChamberBuilders.return_spot` took the
+**last** `stand` surface the room declares that is wide enough to hold a
+capsule. On a `platform_path` that is the end ledge, whose centre **is
+the reward**. So the reserved spot was the Check's own square metre.
+
+**Stage 2 — the settle, and this is the one that hurt.**
+`RoomAudit._settle_return_anchors` re-measures every `room:<rid>:return`
+against three questions — is the ground supported, is a body at the
+arrival outside the trigger, and is the spot clear of the room's
+content path — and when the reserved spot fails, it searches the room's
+declared stands for the farthest one that passes. It moved
+`p:c021:start` off the reward and onto **island 3, the last platform
+before it**, which is squarely on the only route to the Check. Measured,
+not inferred: unrepaired, a fresh build publishes `(24.27, 1.53, 42.25)`
+from the builder and the controller receives `(19.0, 1.5, 42.2)`.
+
+The guard that should have refused island 3 is `clear_of_content_path`,
+and it was guarding nothing. Its content point comes from
+`RoomAudit.content_of`, which returns **the room's warp station** — and
+`c021` has no station, so `content_of` answered `INF`, the guard
+answered `true` for every candidate, and the search was free to stand
+the device in the middle of the approach.
+
+### The repair
+
+**`ChamberBuilders.return_spot` reserves a spot that is already valid.**
+Instead of the last qualifying surface's centre, it gathers the claims
+first — the arrival, the key spots, and `reward_clearance` — and tries
+the declared stands **furthest first**, sampling across each surface for
+a place a body fits that clashes with none of them. On `c021` that is
+local `(2.6, 1.53, 21.62)`: the same end ledge, **2.6 m to the side of
+the reward, level with it**, past the whole course rather than on it. No
+world coordinate is named anywhere; the room's own declared fields
+decide it.
+
+**`RoomAudit.content_of` falls back to the committed reward** when a
+room has no station, so the settle pass can no longer re-create the
+defect in a room whose reservation is rejected. The station is still
+preferred where there is one. The fallback keeps the property the
+station was chosen for: it is a function of the committed layout, so a
+cold restart settles the anchor in the same place.
+
+On `c021` the first change alone is sufficient — the settle accepts the
+reservation and never searches. The second is why the same defect cannot
+come back through the other door.
+
+### The acceptance case, executed
+
+One route, guaranteed kit, every trigger live, **nothing relocated
+between legs** — each leg starts where the last one left the body:
+
+| | |
+|---|---|
+| Arrival | `(5.6, 0.0, 42.2)`, where `e:c018:c021` puts a body down |
+| Outbound | **REACHED**, 143 frames, walk and jump only |
+| The pad on the way | **did not fire** — the plug's own signal, not a distance |
+| The reward | `[E] CLAIM CHECK 126`, offered from where the route ends |
+| Deliberate return | `p:c021:start → zone_start` **fired** |
+| And it delivered | the body ends 5.95 m from `zone_start` after a 47.7 m journey |
+
+The return plug now sits **18.7 m along an 18.7 m run and 2.6 m off its
+line** — at the end, beside the reward, off the approach. Unrepaired it
+sat **13.4 m along and 0.4 m off**, and the same route reports
+**BLOCKED at 7.11 m** with the plug firing on the way to the Check.
+
+**Reverted, the case fails.** With `chamber_builders.gd` at its old
+revision and nothing else changed, the same command returns two
+failures: *the outbound route never touches the return plug* and *the
+whole course is walked from the door the room is entered by*.
+
+### Existing saves do not keep the old placement
+
+Stated plainly, because it is the opposite of what a "committed
+manifest" sounds like. `layout_from_json` **does** parse the archived
+`anchors` block — and `_build_once` consumes only `rooms` and `joins`.
+Every anchor is **recomputed** from the replayed poses. A return device
+is derived geometry, not saved state.
+
+So reopening the owner's own save on this build puts the return in the
+repaired place: the replay prints `room:c021:return` archived at
+`(18.99, 1.53, 42.25)` and recomputed to `(24.27, 1.53, 39.65)`, **moved
+5.89 m**. Nothing rewrites the file; the old number sits there unread.
+No migration was written and none is needed.
+
+### Reproduce
+
+```
+make godot-return-placement          # the producer regression, no save needed
+
+godot --headless --path godot -- --traverse-test \
+      --zone-json=<copy>/work_proposal.json        # fresh:  28 checks
+godot --headless --path godot -- --traverse-test \
+      --zone-json=<copy>/work_proposal.json \
+      --manifest-json=<copy>/work_manifest.json    # replay: 29 checks
+```
+
+**The broader sampler's uncertainty is separate.** Three routes in the
+Zone remain UNRESOLVED — a straight-line walker that does not arrive has
+measured its own route choice. That is unchanged by this repair and is
+not evidence about it either way.

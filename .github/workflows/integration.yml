@@ -131,6 +131,7 @@ jobs:
           make godot-legible
           make godot-physics
           make godot-traverse
+          make godot-return-placement
 
       - name: Whole campaign, headlessly
         run: make godot-integration

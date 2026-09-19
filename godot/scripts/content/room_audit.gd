@@ -883,6 +883,33 @@ static func content_of(build: Dictionary, rid: String) -> Vector3:
 		if str(station.get("station_id")) != want:
 			continue
 		return station.global_position
+	# A ROOM WITH NO STATION STILL HAS SOMETHING TO WALK TO.
+	#
+	# Returning `INF` here makes `clear_of_content_path` answer `true`
+	# for every candidate, so the settle below is free to stand a return
+	# device anywhere it holds -- INCLUDING THE MIDDLE OF THE APPROACH.
+	# That is not hypothetical: `c021` is a platform course whose only
+	# content is CHECK 126 and which has no station, the reserved spot
+	# was rejected, and the search put `p:c021:start` on the last island
+	# before the reward. Walking at the Check stepped on the pad.
+	#
+	# The station is still preferred where there is one -- the reasons
+	# above stand, and the nominal reward spot is metres from where a
+	# player's probe stops. But a guarded line to the nominal spot is
+	# strictly better than no line at all, and the committed
+	# `reward_position` satisfies the same requirement the station does:
+	# it is a function of the committed layout, written by the builder
+	# before anything is added to the scene, so a cold restart settles
+	# the anchor in the same place.
+	for raw: Variant in build.get("chambers", []):
+		var entry: Dictionary = raw
+		if str((entry["chamber"] as Dictionary).get("id", "")) != rid:
+			continue
+		var made: Dictionary = entry["build"]
+		if not made.has("reward_position"):
+			break
+		var to_world: Transform3D = entry["xform"]
+		return to_world * (made["reward_position"] as Vector3)
 	return Vector3.INF
 
 static func aperture_polarity(room: Dictionary, to_world: Transform3D,

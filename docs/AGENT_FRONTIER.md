@@ -1,5 +1,53 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the c021 return, repaired and walked — 2026-09-19
+
+**The acceptance case executes.** One route on `c021`, guaranteed kit,
+every trigger live, nothing relocated between legs: real arrival
+`(5.6, 0.0, 42.2)` -> the whole course **REACHED** in 143 frames with
+the pad **not firing** on the way -> `[E] CLAIM CHECK 126` offered where
+the route ends -> a deliberate walk onto `p:c021:start`, which **fires**
+and **delivers**, the body ending 5.95 m from `zone_start` after a
+47.7 m journey. **28 checks on a fresh build from the owner's proposal,
+29 replaying their committed manifest.** Page:
+**`docs/PLAYED_SESSION_FINDINGS.md`**.
+
+**THE DEFECT WAS IN TWO PLACES AND THE SECOND ONE DID THE DAMAGE.**
+`return_spot` reserved the end ledge's centre, which on a platform
+course IS the reward. Then `RoomAudit._settle_return_anchors` rejected
+that spot and searched -- and put the device on **island 3, the last
+platform before the Check**. The guard meant to stop exactly that,
+`clear_of_content_path`, was guarding nothing: its content point is the
+room's warp station, `c021` has none, so `content_of` answered `INF` and
+every candidate passed. Measured: unrepaired, the builder publishes
+`(24.27, 1.53, 42.25)` and the controller receives `(19.0, 1.5, 42.2)`.
+
+**REPAIRED IN BOTH.** `return_spot` now gathers the claims first and
+tries the declared stands furthest-first, sampling each surface -- on
+`c021`, local `(2.6, 1.53, 21.62)`: the same end ledge, beside the
+reward, past the course. `content_of` falls back to the committed
+reward where a room has no station. The first alone fixes `c021`; the
+second is why the settle cannot re-create it elsewhere. No world
+coordinate is hardcoded, no jump buff, no disabled trigger, no
+completion gate.
+
+**EXISTING SAVES DO NOT KEEP THE OLD PLACEMENT, and nothing was
+migrated.** `layout_from_json` parses the archived anchors;
+`_build_once` reads only `rooms` and `joins`. Anchors are recomputed
+from the replayed poses, so the owner's save reopened on this build
+moves `room:c021:return` 5.89 m to the repaired spot while the file on
+disk keeps its old number, unread.
+
+**AND A CORRECTION TO THE ENTRY BELOW.** "Archived and fresh anchors
+agree" was stated twice off a comparison that read the "fresh" value out
+of a `--manifest-json=` build -- the archive against itself. The claim
+is true; that evidence never supported it. What does: a fresh build with
+no manifest, on the unrepaired code, lands at `(19.0, 1.5, 42.2)`
+against the archive's `(18.99, 1.53, 42.25)`.
+
+New suite: `make godot-return-placement`, in CI.
+
+
 ## ENGINE LANE — Route C: not demonstrated, and why — 2026-09-18
 
 The complete outbound route with every trigger active COULD NOT BE
@@ -18,8 +66,10 @@ SPECIFIC TO THIS COMMITTED PLACEMENT AND THIS CONTROLLER, and NOT a
 claim that no route exists: the kit has a jump, this walker steers in
 straight lines, and a player's own solution is not ruled out. Nothing
 was repaired -- the pad was not moved, no return disabled in the live
-route, no activation policy changed. Archived and fresh anchors agree,
-so it is not a current-code artefact.
+route, no activation policy changed. *(Superseded above: the pad HAS
+since been repaired, and "archived and fresh anchors agree" rested on a
+circular comparison. The conclusion stands on better evidence; the
+reasoning here does not.)*
 
 **FOUR PROBE DESIGNS MEASURED THE WRONG SURFACE BEFORE THIS ONE** --
 fixed height (rejected every ledge the course climbed above), room top
