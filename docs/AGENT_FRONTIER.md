@@ -11,22 +11,33 @@ collider from each room in the same 0.5 x 5.5 x 0.05 m box, and the
 shape is not a collar. The SEARCH check asked a different question from
 the committed one — a volume bound of half a cubic metre against a shape
 rule — so it asks the collar question now. **That is a tightening**, and
-`zone_05` now routes and is ACCEPTED.
+`zone_05` now routes and is ACCEPTED. It ignores contacts thinner than
+`BRIDGE_EPSILON`, the validator's own millimetre, because two abutting
+rooms leave float noise on their shared face and a shape rule reads that
+as a fourteen-metre interpenetration.
+
+**AND THE COMMITTED CHECK IS NOT WIRED INTO THE ROUTER.** Wiring
+`layout_findings` into `build()` was tried and reverted: it judges by
+SHAPE, and two rooms wall-to-wall share their whole 0.4 m wall
+allowance, so every tower and treasure shell became unplaceable. **An
+envelope check cannot tell abutment from interpenetration** — only the
+solids can, and that needs a physics space the router does not have.
+That is the boundary this batch stops at.
 
 **`zone_07` and `zone_08` share a cause and the ladder never reached
 it.** `_wedged_after` mapped a wedged BRANCH room to its parent's spine
 index and found nothing when that parent was itself a branch — so both
 reported *"1 placement attempt(s); nudged nothing"*. It walks up the
-branch tree now. Both spend 7 attempts and get materially further
-(`zone_07` from 17 rooms standing to 81 pieces placed) and **both still
-exhaust the bounded budget**. That is the limit, recorded not widened.
+branch tree now. Both spend 7 attempts and get materially further. With the search
+correction below, **`zone_07` routes**; `zone_08` still exhausts the
+bounded budget, and that is the limit, recorded not widened.
 
 | declared sample | submitted | overall |
 |---|---|---|
 | before | 17 of 19 accepted, 2 refused | 17 of 20 |
-| **after** | **18 of 18 accepted, 0 refused** | **18 of 20** |
+| **after** | **19 of 19 accepted, 0 refused** | **19 of 20** |
 
-`zone_07` and `zone_08` produce no manifest. The harness also stopped
+`zone_08` alone produces no manifest; `zone_07` routes. The harness also stopped
 judging STALE manifests: one is written only for a Zone that lays out
 and was never deleted for one that stopped, so the census once read "19
 of 20 laid out" beside a PLAYABLE line saying 17.
