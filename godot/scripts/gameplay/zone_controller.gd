@@ -997,8 +997,7 @@ func _certify_physics(build: Dictionary) -> void:
 	# leaving `packages` UNSET here is what says the answer is partial,
 	# and `_publish_layout` checks the same condition before sending.
 	var certified := await ChainCertificate.of_build(
-			get_tree(), zone_id, build,
-			func() -> bool: return is_inside_tree())
+			get_tree(), zone_id, build, self)
 	if not is_inside_tree():
 		return
 	build["packages"] = certified

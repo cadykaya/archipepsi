@@ -90,13 +90,23 @@ static func of_room(tree: SceneTree, zone_id: String,
 ## for "the layout offers 0", which is a fact about the harness and not
 ## about the Zone. One implementation, two callers.
 ##
-## `alive` is asked before each room, because certifying takes seconds
-## and the Zone can be torn down underneath it. It returns what it has
-## so far and the CALLER decides whether a partial answer may be sent:
-## publishing one under a committed Zone's name is the defect that guard
-## exists for.
+## `watcher` is the caller, asked before each room, because certifying
+## takes seconds and the Zone can be torn down underneath it. It returns
+## what it has so far and the CALLER decides whether a partial answer may
+## be sent: publishing one under a committed Zone's name is the defect
+## that guard exists for.
+##
+## A NODE, NOT A CALLABLE, and the difference is a crash. The first
+## version took `func() -> bool: return is_inside_tree()`. A lambda
+## captures the object it was written in, `Callable.is_valid()` answers
+## about the callable and NOT about that object, and a controller freed
+## mid-certification therefore passed the guard and raised "Attempt to
+## call function '<anonymous lambda>' on a null instance" --
+## `godot-playtest3a` said so. `_still_there` is the check this file
+## already wrote for exactly this, untyped and `is_instance_valid`
+## first; the watcher goes through it like any other node.
 static func of_build(tree: SceneTree, zone_id: String,
-		build: Dictionary, alive := Callable()) -> Array:
+		build: Dictionary, watcher: Variant = null) -> Array:
 	var out: Array = []
 	var rooms: Dictionary = build.get("rooms", {})
 	for raw: Variant in build.get("chambers", []):
@@ -104,7 +114,7 @@ static func of_build(tree: SceneTree, zone_id: String,
 		var chamber: Dictionary = entry["chamber"]
 		var placed: Dictionary = rooms.get(
 				str(chamber.get("id", "")), {})
-		if alive.is_valid() and not alive.call():
+		if watcher != null and not _still_there(watcher):
 			return out
 		# AND THE ROOM ITSELF, BEFORE ANYTHING CASTS IT.
 		#
@@ -118,11 +128,10 @@ static func of_build(tree: SceneTree, zone_id: String,
 		# each, in the words this file already uses: "Trying to cast a
 		# freed object."
 		#
-		# `alive` is not enough on its own. It asks about the CALLER --
-		# the controller is still in the tree while the Zone it built is
-		# being replaced -- and `_still_there` asks about the room this
-		# iteration is about to hand to `of_room`, untyped and
-		# `is_instance_valid` first, for the reason written below it.
+		# The watcher is not enough on its own. It is the CALLER, which
+		# is still in the tree while the Zone it built is being
+		# replaced; this asks about the room this iteration is about to
+		# hand to `of_room`.
 		if not _still_there(entry.get("node")):
 			return out
 		for certified: Variant in await of_room(tree, zone_id, chamber,
