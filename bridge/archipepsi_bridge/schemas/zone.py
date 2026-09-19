@@ -580,6 +580,20 @@ class ChamberBase(Strict):
             width = getattr(self, "side", None)
         if width is None:
             return self
+        # AND THE OTHER AXIS, which this rule never had.
+        # `AffordanceFeatures.fits` asks about width AND depth, and only
+        # the width half was written down -- so a `powered_door`, which
+        # reaches 3.5 m along the run and needs 11.0 m of room, could be
+        # declared on an 8.6 m corridor, pass here, and be DROPPED by the
+        # builder. The engine then offers no certified package and
+        # `layout.validate` refuses the Zone for a chain that was
+        # declared and never built. Absent depth is not checked: a room
+        # model that does not state one is not being asked to.
+        depth = getattr(self, "length", None)
+        if depth is None:
+            depth = getattr(self, "depth", None)
+        if depth is None:
+            depth = getattr(self, "side", None)
         for feature in self.features:
             needed = C.FEATURE_MIN_WIDTH.get(
                 feature.tag, C.MIN_FEATURE_CHAMBER_WIDTH)
@@ -589,6 +603,17 @@ class ChamberBase(Strict):
                     f"a '{feature.tag}', which needs {needed}m to sit clear "
                     "of the walking lane on both sides (ECHOES.md 13.2); "
                     "widen the room or offer a smaller feature"
+                )
+            if depth is None:
+                continue
+            along = C.FEATURE_MIN_DEPTH.get(
+                feature.tag, C.MIN_FEATURE_CHAMBER_DEPTH)
+            if depth < along:
+                raise ValueError(
+                    f"chamber '{self.id}' is {depth}m long and carries "
+                    f"a '{feature.tag}', which needs {along}m to clear "
+                    "both thresholds along the run (ECHOES.md 13.2); "
+                    "lengthen the room or offer a shorter feature"
                 )
         return self
 

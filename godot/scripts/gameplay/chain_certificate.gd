@@ -80,6 +80,38 @@ static func of_room(tree: SceneTree, zone_id: String,
 			out.append(certified)
 	return out
 
+## EVERY CHAIN IN A BUILT ZONE, certified in one pass.
+##
+## The loop `ZoneController` kept to itself, moved here because a second
+## caller needed it and a copy would have drifted. The sample harness
+## stands a Zone up, measures it with the same `RoomAudit.measure_layout`
+## a played Zone uses, and then emitted a manifest with `packages: []` --
+## so `layout.validate` refused every Zone that declares a `powered_door`
+## for "the layout offers 0", which is a fact about the harness and not
+## about the Zone. One implementation, two callers.
+##
+## `alive` is asked before each room, because certifying takes seconds
+## and the Zone can be torn down underneath it. It returns what it has
+## so far and the CALLER decides whether a partial answer may be sent:
+## publishing one under a committed Zone's name is the defect that guard
+## exists for.
+static func of_build(tree: SceneTree, zone_id: String,
+		build: Dictionary, alive := Callable()) -> Array:
+	var out: Array = []
+	var rooms: Dictionary = build.get("rooms", {})
+	for raw: Variant in build.get("chambers", []):
+		var entry: Dictionary = raw
+		var chamber: Dictionary = entry["chamber"]
+		var placed: Dictionary = rooms.get(
+				str(chamber.get("id", "")), {})
+		if alive.is_valid() and not alive.call():
+			return out
+		for certified: Variant in await of_room(tree, zone_id, chamber,
+				entry["node"] as Node3D,
+				placed.get("bounds", AABB()) as AABB):
+			out.append(certified)
+	return out
+
 ## IS THE ROOM STILL THERE? Certifying a chain takes seconds, not
 ## frames, and it is started from `_publish_layout`, which nobody
 ## awaits. So the Zone can be torn down underneath it -- a suite that

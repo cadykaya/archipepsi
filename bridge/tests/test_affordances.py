@@ -299,6 +299,57 @@ def test_every_tags_minimum_width_agrees_across_languages():
         source)
 
 
+def test_the_depth_table_matches_the_builders_own_run_length():
+    """`FEATURE_MIN_DEPTH` and `AffordanceFeatures.required_depth` are the
+    same rule in two languages, and they have to agree per tag.
+
+    The twin of the width pin above, and it exists because the width pin
+    on its own was only half of `fits`. A `powered_door` reaches 3.5 m
+    along the run; Python knew nothing about that axis, so it declared
+    the tag on corridors of 8.6 to 9.8 m, the builder dropped it for want
+    of depth, and the bridge refused the Zone for a chain that was
+    declared and never built.
+    """
+    from archipepsi_bridge.schemas import constants as C
+    gd = GODOT / "scripts/generation/affordance_features.gd"
+    source = gd.read_text()
+    clearance = _gd_const(gd, "THRESHOLD_CLEARANCE")
+    footprints = dict(re.findall(
+        r'"(\w+)": \{"half_width": [0-9.]+, "half_depth": ([0-9.]+)',
+        source))
+    assert set(footprints) == set(_tags()), set(footprints) ^ set(_tags())
+    assert set(C.FEATURE_MIN_DEPTH) == set(_tags())
+    for tag, half_depth in footprints.items():
+        expected = 2.0 * (clearance + float(half_depth))
+        assert abs(C.FEATURE_MIN_DEPTH[tag] - expected) < 0.001, (
+            tag, C.FEATURE_MIN_DEPTH[tag], expected)
+    # ...and the rule itself, so a rewrite that changed the shape rather
+    # than the numbers cannot slip past.
+    assert re.search(
+        r"return 2\.0 \* \(THRESHOLD_CLEARANCE \+ reach\)", source)
+
+
+def test_a_corridor_too_short_for_its_feature_is_refused():
+    """The depth half of the lane rule, at the schema boundary.
+
+    Measured on the declared sample: four corridors carried a
+    `powered_door` and none was 11 m long. Each one passed the width gate
+    and was dropped by the builder, so the Zone offered no certified
+    chain and `layout.validate` refused it.
+    """
+    with pytest.raises(ValidationError):
+        _zone(chambers=[
+            {"id": "c1", "type": "corridor", "length": 9.0, "width": 9.5,
+             "reward_location_id": 89100001,
+             "features": [{"tag": "powered_door", "at": (0.5, 0.5)}]}])
+    # ...and lengthened past the chain's run, the same room is fine.
+    ok = _zone(chambers=[
+        {"id": "c1", "type": "corridor", "length": 11.0, "width": 9.5,
+         "reward_location_id": 89100001,
+         "features": [{"tag": "powered_door", "at": (0.5, 0.5)}]}])
+    assert ok.chambers[0].features
+
+
 def test_a_corridor_that_cannot_hold_a_feature_still_holds_a_smaller_one():
     """Per-tag, not one conservative number: a rail fits a 5.9 m corridor
     that a wind column needs 8.3 m for, and refusing the rail there would

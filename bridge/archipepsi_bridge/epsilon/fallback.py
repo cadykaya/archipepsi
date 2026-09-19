@@ -836,12 +836,17 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
         ordered = ordered[offset:] + ordered[:offset]
     for index, tag in enumerate(ordered):
         need = C.FEATURE_MIN_WIDTH.get(tag, C.MIN_FEATURE_CHAMBER_WIDTH)
+        # AND THE RUN IT NEEDS. `fits` is two questions and this asked
+        # one, so a `powered_door` went onto corridors 8.6 to 9.8 m long
+        # when it needs 11.0 -- declared, dropped by the builder, and the
+        # Zone refused for an uncertified chain.
+        along = C.FEATURE_MIN_DEPTH.get(tag, C.MIN_FEATURE_CHAMBER_DEPTH)
         # A tag wider than a corridor may ever be is skipped rather than
         # emitted for the validator to refuse: the fallback's job is to
         # always produce something acceptable.
         if need > MAX_CORRIDOR_WIDTH:
             continue
-        chamber = _feature_host(plain, index, need)
+        chamber = _feature_host(plain, index, need, along)
         # The schema's per-chamber cap is the only cap there is; when the
         # plain chambers are full the remaining tags simply do not appear
         # in this Zone. They are optional content, so dropping one costs
@@ -860,9 +865,9 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
 
 
 def _feature_host(plain: list[dict], index: int,
-                  need: float) -> dict | None:
-    """Which corridor takes this feature, preferring one already wide
-    enough for it.
+                  need: float, along: float = 0.0) -> dict | None:
+    """Which corridor takes this feature, preferring one already wide AND
+    long enough for it.
 
     **WIDENING A CORRIDOR IS NOT FREE, AND THE COST IS NOT THE METRES.**
     A corridor drawn at 6.0 m is exactly the size `shell_corner_left` and
@@ -881,11 +886,24 @@ def _feature_host(plain: list[dict], index: int,
     """
     roomy = [c for c in plain
              if float(c.get("width", 5.0)) >= need
+             and float(c.get("length", 12.0)) >= along
              and len(c.get("features", []) or ()) < 3]
     if roomy:
         return roomy[index % len(roomy)]
     chamber = plain[index % len(plain)]
     if len(chamber.get("features", []) or ()) >= 3:
+        return None
+    # LENGTHENED, NEVER. Widening moves a wall; LENGTHENING moves every
+    # room downstream of it, and the cost is layout rather than metres.
+    # Measured on the declared sample: stretching the last-resort
+    # corridor to a `powered_door`'s 11.0 m run took `zone_12` from a
+    # certifiable Zone to "rooms 'c005' and 'c006' overlap" and stopped
+    # `zone_18` routing at all -- two Zones lost to hang one optional
+    # note. So a tag with no corridor long enough is simply not dealt,
+    # the same answer this function already gives when every corridor is
+    # full, and for the same reason: features are optional, and the Zone
+    # is not.
+    if along > float(chamber.get("length", 12.0)):
         return None
     chamber["width"] = max(float(chamber.get("width", 5.0)), need)
     return chamber

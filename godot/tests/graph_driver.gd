@@ -662,6 +662,18 @@ func _walk_one(file: String) -> void:
 		out["arrival_ok"] = evidence["arrival_ok"]
 		out["plug_clear"] = evidence["plug_clear"]
 		out["plug_placement"] = evidence["plug_placement"]
+		# AND THE CHAINS, which this harness used to leave out entirely.
+		#
+		# A room declaring a `powered_door` must offer a certified
+		# package for it; `ChainCertificate` is the only thing that makes
+		# one, and it ran only inside `ZoneController`. So every manifest
+		# written here carried `packages: []` and `layout.validate`
+		# refused it for "the layout offers 0" -- 19 of 19 refusals in
+		# the declared sample opened with that line. The Zone is standing
+		# and settled by now, so the same pass a played Zone runs can run
+		# here, and what is left refused afterwards is about the Zone.
+		out["packages"] = await ChainCertificate.of_build(
+				get_tree(), str(zone.get("zone_id", "")), out)
 		var sink := FileAccess.open("%s/layouts/%s" % [_where, file],
 				FileAccess.WRITE)
 		if sink != null:

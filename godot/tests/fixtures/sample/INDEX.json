@@ -402,9 +402,9 @@
    "4": 1
   },
   "junctions": [
-   "c004",
-   "c005",
+   "c006",
    "c008",
+   "c011",
    "c012"
   ],
   "dead_ends": [
@@ -417,15 +417,14 @@
    "c019"
   ],
   "locked_doors": [
-   "c004/side_left",
-   "c005/side_right",
+   "c006/side_left",
+   "c011/side_right",
    "c012/side_right",
    "c015/side_right"
   ],
   "features": [
-   "c001:bounce_pad",
-   "c001:moving_platform",
-   "c001:powered_door"
+   "c006:bounce_pad",
+   "c011:moving_platform"
   ],
   "file": "zone_11.json",
   "zone_id": "zone_011"
@@ -441,10 +440,10 @@
    "4": 1
   },
   "junctions": [
-   "c004",
    "c005",
    "c006",
    "c008",
+   "c009",
    "c017"
   ],
   "dead_ends": [
@@ -458,14 +457,14 @@
    "c020"
   ],
   "locked_doors": [
-   "c004/side_right",
-   "c005/side_right",
+   "c005/side_left",
+   "c006/side_right",
    "c017/side_left",
    "c018/side_left"
   ],
   "features": [
    "c005:moving_platform",
-   "c005:powered_door",
+   "c009:powered_door",
    "c017:bounce_pad"
   ],
   "file": "zone_12.json",
@@ -540,9 +539,9 @@
    "c018/side_left"
   ],
   "features": [
-   "c017:bounce_pad",
-   "c017:moving_platform",
-   "c017:powered_door"
+   "c001:moving_platform",
+   "c001:powered_door",
+   "c017:bounce_pad"
   ],
   "file": "zone_14.json",
   "zone_id": "zone_014"
@@ -618,8 +617,7 @@
   ],
   "features": [
    "c019:bounce_pad",
-   "c019:moving_platform",
-   "c019:powered_door"
+   "c019:moving_platform"
   ],
   "file": "zone_16.json",
   "zone_id": "zone_016"
@@ -674,8 +672,8 @@
    "4": 1
   },
   "junctions": [
-   "c006",
    "c008",
+   "c009",
    "c012",
    "c016"
   ],
@@ -689,7 +687,7 @@
    "c020"
   ],
   "locked_doors": [
-   "c006/side_left",
+   "c008/side_left",
    "c012/side_right",
    "c016/side_left",
    "c016/side_right"
@@ -697,7 +695,7 @@
   "features": [
    "c001:bounce_pad",
    "c005:moving_platform",
-   "c005:powered_door"
+   "c009:powered_door"
   ],
   "file": "zone_18.json",
   "zone_id": "zone_018"

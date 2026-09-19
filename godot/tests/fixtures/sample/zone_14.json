@@ -11,7 +11,24 @@
    "id": "c001",
    "flavor": null,
    "reward_location_id": null,
-   "features": [],
+   "features": [
+    {
+     "tag": "powered_door",
+     "at": [
+      0.18,
+      0.3
+     ],
+     "note": null
+    },
+    {
+     "tag": "moving_platform",
+     "at": [
+      0.18,
+      0.5
+     ],
+     "note": null
+    }
+   ],
    "doors": [
     {
      "socket_id": "entry",
@@ -24,6 +41,20 @@
      "socket_id": "exit",
      "usage": "USED",
      "edge_id": "e:c001:c002",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
      "key_id": null,
      "colour": null
     }
@@ -41,12 +72,12 @@
      "requires": []
     }
    ],
-   "shell_id": "shell_corner_left",
+   "shell_id": null,
    "size_class": null,
    "intent": [],
    "type": "corridor",
-   "length": 6.0,
-   "width": 6.0,
+   "length": 15.6,
+   "width": 7.9,
    "enemies": []
   },
   {
@@ -95,13 +126,13 @@
      "requires": []
     }
    ],
-   "shell_id": "shell_span_basin",
+   "shell_id": "shell_hall_transit",
    "size_class": null,
    "intent": [],
    "type": "arena",
-   "width": 30.4,
-   "depth": 89.2,
-   "wall_height": 23.6,
+   "width": 40.4,
+   "depth": 59.2,
+   "wall_height": 39.6,
    "objective": "kill_all",
    "enemies": [
     {
@@ -462,13 +493,6 @@
      "kind": "timed_run",
      "element_count": 5,
      "time_limit": 20.0,
-     "ordered": false,
-     "requires": []
-    },
-    {
-     "kind": "switch_sequence",
-     "element_count": 2,
-     "time_limit": 0.0,
      "ordered": false,
      "requires": []
     }
@@ -951,26 +975,10 @@
    "reward_location_id": null,
    "features": [
     {
-     "tag": "powered_door",
-     "at": [
-      0.18,
-      0.3
-     ],
-     "note": null
-    },
-    {
      "tag": "bounce_pad",
      "at": [
       0.82,
       0.3
-     ],
-     "note": null
-    },
-    {
-     "tag": "moving_platform",
-     "at": [
-      0.18,
-      0.5
      ],
      "note": null
     }

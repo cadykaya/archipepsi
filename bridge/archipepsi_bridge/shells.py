@@ -436,6 +436,11 @@ def rule_problems(shell_id: str, rule: dict, chamber) -> list[tuple[str, str]]:
     # affordances and BUILT NEITHER.
     if size:
         interior = float(size[0]) - OUTER
+        # THE RUN AS WELL AS THE LANE. `fits` is two questions; this
+        # asked one, so a shell long enough for its rooms but too short
+        # for a `powered_door`'s 11.0 m run passed here and the builder
+        # dropped the tag.
+        run = float(size[2]) - OUTER if len(size) > 2 else None
         for tag in feature_tags(chamber):
             needed = C.FEATURE_MIN_WIDTH.get(tag, C.MIN_FEATURE_CHAMBER_WIDTH)
             if interior + SPAN_TOLERANCE < needed:
@@ -443,6 +448,12 @@ def rule_problems(shell_id: str, rule: dict, chamber) -> list[tuple[str, str]]:
                     f"selects shell '{shell_id}', whose {interior:.2f}m "
                     f"interior cannot hold a '{tag}', which needs "
                     f"{needed}m to sit clear of the walking lane"))
+            along = C.FEATURE_MIN_DEPTH.get(tag, C.MIN_FEATURE_CHAMBER_DEPTH)
+            if run is not None and run + SPAN_TOLERANCE < along:
+                out.append(("feature",
+                    f"selects shell '{shell_id}', whose {run:.2f}m run "
+                    f"cannot hold a '{tag}', which needs {along}m to "
+                    "clear both thresholds along it"))
 
     band = field(chamber, "elevation")
     kind = (band.get("kind") if isinstance(band, dict)

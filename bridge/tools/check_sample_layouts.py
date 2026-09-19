@@ -67,15 +67,30 @@ def main(argv=None) -> int:
             continue
         result = json.loads(emitted.read_text(encoding="utf-8"))
         verdict = layout_mod.validate(zone, result)
-        if verdict.status == "LAYOUT_OK":
+        # `verdict.accepted`, not a status string guessed at. This read
+        # `status == "LAYOUT_OK"` -- the ROUTER's word for success, which
+        # `layout.validate` never returns; its statuses are `ACCEPTED`
+        # and `LAYOUT_REFUSED`. So this branch could not be reached, and
+        # every run this tool has ever made reported 0 accepted BY
+        # CONSTRUCTION. It was invisible while a missing evidence class
+        # refused everything anyway.
+        if verdict.accepted:
             accepted += 1
             print(f"{path.name}  ACCEPTED")
         else:
             refused.append(path.name)
             why = "; ".join(verdict.errors)
             print(f"{path.name}  {verdict.status}: {why}")
-    print(f"\nSAMPLE  {accepted} of {len(zones)} layout(s) accepted by the "
-          f"bridge; {missing} never laid out, {len(refused)} refused")
+    built = len(zones) - missing
+    print(f"\nSAMPLE  {built} of {len(zones)} Zone(s) physically laid out "
+          f"and emitted a manifest; of those, {accepted} were ACCEPTED by "
+          f"the validator on this single pass and {len(refused)} refused; "
+          f"{missing} never laid out")
+    print("SAMPLE  this is ONE validation pass over a manifest built "
+          "offline. It is not the live acceptance loop: retries, eventual "
+          "acceptance after recomposition, and exhaustion of the refusal "
+          "budget belong to `godot-integration`, and a refusal here is "
+          "not a failed campaign.")
     if refused or missing:
         print("SAMPLE LAYOUTS NOT ACCEPTED: " + ", ".join(
             refused + (["%d with no manifest" % missing] if missing else [])))

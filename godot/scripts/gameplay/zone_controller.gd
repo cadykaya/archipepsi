@@ -990,25 +990,18 @@ func _await_verdict() -> void:
 ## `mechanisms` that `layout_to_json` never forwarded. It measured
 ## something real and told nobody.
 func _certify_physics(build: Dictionary) -> void:
-	var out: Array = []
-	var rooms: Dictionary = build.get("rooms", {})
-	for raw: Variant in build.get("chambers", []):
-		var entry: Dictionary = raw
-		var chamber: Dictionary = entry["chamber"]
-		var rid := str(chamber.get("id", ""))
-		var placed: Dictionary = rooms.get(rid, {})
-		var bounds: AABB = placed.get("bounds", AABB())
-		# THE ZONE CAN GO AWAY WHILE THIS RUNS. Certifying a chain takes
-		# seconds and `_publish_layout` is not awaited by anything, so a
-		# Zone freed mid-certification leaves this loop measuring nodes
-		# that no longer exist.
-		if not is_inside_tree():
-			return
-		for certified: Variant in await ChainCertificate.of_room(
-				get_tree(), zone_id, chamber, entry["node"] as Node3D,
-				bounds):
-			out.append(certified)
-	build["packages"] = out
+	# THE ZONE CAN GO AWAY WHILE THIS RUNS. Certifying a chain takes
+	# seconds and `_publish_layout` is not awaited by anything, so a Zone
+	# freed mid-certification leaves the loop measuring nodes that no
+	# longer exist. `of_build` stops on that and hands back what it had;
+	# leaving `packages` UNSET here is what says the answer is partial,
+	# and `_publish_layout` checks the same condition before sending.
+	var certified := await ChainCertificate.of_build(
+			get_tree(), zone_id, build,
+			func() -> bool: return is_inside_tree())
+	if not is_inside_tree():
+		return
+	build["packages"] = certified
 
 ## Aperture polarity and arrival verdicts, measured and attached.
 ##

@@ -1097,6 +1097,48 @@ func _where_targets_mounted_and_where_they_did_not() -> void:
 ## ASSEMBLED Zone, where a cap is placed by the layout rather than by
 ## the room. That is the gap this closes, and it is why a proxy was
 ## reaching for the answer in the first place.
+## WHICH DOORS THE LIVE CONTROLLER ITSELF CALLS SOLID.
+##
+## `layout.validate` refuses a Zone for "door X is USED and the engine
+## measured it as solid", and the sample harness has carried a note for
+## months saying such refusals are about the harness -- "an unplayed
+## Zone's doorways are probed without the setup a played Zone gets". That
+## was never measured. This is the measurement: the same comparison, on a
+## Zone built and stood up by `ZoneController`, reading the apertures the
+## controller would SEND. If a door disagrees here too, the refusal is
+## about the Zone and the harness note is folklore.
+##
+## Reported, never asserted. A door that measures solid is a fact about
+## the Zone under test, and this file walks whichever Zone it is given.
+func _declared_doors_against_the_controllers_own_measurement() -> void:
+	var measured: Dictionary = _zone.measured_apertures
+	if measured.is_empty():
+		_note("the controller published no aperture measurement")
+		return
+	var disagree: Array[String] = []
+	for raw: Variant in (_zone.zone.get("chambers", []) as Array):
+		var chamber: Dictionary = raw
+		var rid := str(chamber.get("id", ""))
+		for raw_door: Variant in (chamber.get("doors", []) as Array):
+			var door: Dictionary = raw_door
+			var usage := str(door.get("usage", ""))
+			if usage == "SEALED":
+				continue
+			var key := "%s/%s" % [rid, str(door.get("socket_id", ""))]
+			if not measured.has(key):
+				continue
+			if not bool(measured[key]):
+				disagree.append("%s [%s]" % [key, usage])
+	if disagree.is_empty():
+		_note("every non-SEALED door the controller measured reads as an "
+				+ "opening (%d measured)" % measured.size())
+		return
+	_note("DOORS THE LIVE CONTROLLER MEASURES AS SOLID WHILE DECLARED "
+			+ "OPEN (%d of %d): %s -- the bridge refuses a layout for "
+			% [disagree.size(), measured.size(), str(disagree)]
+			+ "exactly this, and it is measured here on a Zone the "
+			+ "controller built and stood up, not on a harness")
+
 func _every_sealed_door_is_solid() -> void:
 	var found := _measure_doors_against(_zone.zone.get("chambers", []))
 	_note("%d SEALED sockets and %d passable ones measured on the "
@@ -1397,6 +1439,7 @@ func _run() -> void:
 		_where_targets_mounted_and_where_they_did_not()
 		var joins := await _joins_are_walked_through()
 		await _a_bricked_up_join_refuses_the_walker(joins)
+		_declared_doors_against_the_controllers_own_measurement()
 	if _zone != null:
 		_zone.queue_free()
 		await get_tree().process_frame

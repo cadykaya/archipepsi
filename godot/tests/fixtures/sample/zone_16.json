@@ -1031,14 +1031,6 @@
      "note": null
     },
     {
-     "tag": "powered_door",
-     "at": [
-      0.82,
-      0.3
-     ],
-     "note": null
-    },
-    {
      "tag": "bounce_pad",
      "at": [
       0.18,
