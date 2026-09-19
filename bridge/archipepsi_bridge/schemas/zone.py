@@ -606,14 +606,32 @@ class ChamberBase(Strict):
                 )
             if depth is None:
                 continue
-            along = C.FEATURE_MIN_DEPTH.get(
-                feature.tag, C.MIN_FEATURE_CHAMBER_DEPTH)
+            # A SIDE DOORWAY IS CUT WHERE THE LANE RULE PUSHES A FEATURE.
+            # `side_left` and `side_right` are declared at the middle of
+            # the side wall, which is exactly where a feature pushed out
+            # of the walking lane ends up -- so the run it needs is the
+            # one that fits WHOLLY to one side of that opening. Measured
+            # on `zone_02`'s `c013` and `zone_04`'s `c009`, both refused
+            # on aperture polarity for their own `powered_door` leaf
+            # standing in a door the composer declared USED.
+            beside = any(
+                d.socket_id in C.SIDE_SOCKETS and d.usage != "SEALED"
+                for d in getattr(self, "doors", ()) or ())
+            along = (
+                C.FEATURE_MIN_DEPTH_BESIDE_DOOR.get(
+                    feature.tag, C.MIN_FEATURE_CHAMBER_DEPTH_BESIDE_DOOR)
+                if beside else
+                C.FEATURE_MIN_DEPTH.get(
+                    feature.tag, C.MIN_FEATURE_CHAMBER_DEPTH))
             if depth < along:
                 raise ValueError(
                     f"chamber '{self.id}' is {depth}m long and carries "
                     f"a '{feature.tag}', which needs {along}m to clear "
-                    "both thresholds along the run (ECHOES.md 13.2); "
-                    "lengthen the room or offer a shorter feature"
+                    + ("both thresholds and the side doorway cut into "
+                       "the middle of its wall" if beside else
+                       "both thresholds along the run")
+                    + " (ECHOES.md 13.2); lengthen the room or offer a "
+                    "shorter feature"
                 )
         return self
 

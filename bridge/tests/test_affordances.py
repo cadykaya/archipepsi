@@ -329,6 +329,107 @@ def test_the_depth_table_matches_the_builders_own_run_length():
         r"return 2\.0 \* \(THRESHOLD_CLEARANCE \+ reach\)", source)
 
 
+def test_the_beside_a_door_table_matches_the_builders_own_rule():
+    """`FEATURE_MIN_DEPTH_BESIDE_DOOR` is the run a feature needs when the
+    room also carries an open side doorway, and it has to agree with the
+    geometry the builder actually clears.
+
+    A side door is cut at the MIDDLE of the side wall -- exactly where
+    the lane rule pushes a feature -- so the feature has to fit wholly to
+    one side of the opening: its own reach twice over, the door's half
+    width, and the end threshold, on either side of the middle.
+    """
+    from archipepsi_bridge.schemas import constants as C
+    gd = GODOT / "scripts/generation/affordance_features.gd"
+    source = gd.read_text()
+    clearance = _gd_const(gd, "THRESHOLD_CLEARANCE")
+    door_width = _gd_const(
+        GODOT / "scripts/generation/chamber_builders.gd", "DOOR_WIDTH")
+    footprints = dict(re.findall(
+        r'"(\w+)": \{"half_width": [0-9.]+, "half_depth": ([0-9.]+)',
+        source))
+    assert set(C.FEATURE_MIN_DEPTH_BESIDE_DOOR) == set(_tags())
+    for tag, half_depth in footprints.items():
+        expected = 2.0 * (2.0 * float(half_depth)
+                          + door_width / 2.0 + clearance)
+        assert abs(C.FEATURE_MIN_DEPTH_BESIDE_DOOR[tag] - expected) < 0.001, (
+            tag, C.FEATURE_MIN_DEPTH_BESIDE_DOOR[tag], expected)
+    # Strictly more than the no-door run, for every tag: a doorway in the
+    # middle of the wall cannot make a room easier to furnish.
+    for tag in _tags():
+        assert (C.FEATURE_MIN_DEPTH_BESIDE_DOOR[tag]
+                > C.FEATURE_MIN_DEPTH[tag]), tag
+    # ...and the builder moves it rather than building into the opening.
+    assert "_clear_of_side_doors" in source
+
+
+def test_a_feature_may_not_stand_in_an_open_side_doorway():
+    """The measured case, at the schema boundary.
+
+    `zone_02`'s `c013` is a 13.6 m corridor with `side_left` USED and a
+    `powered_door`, and the chain's leaf stood in that doorway. A
+    `powered_door` needs 20.4 m to sit beside a side door; 13.6 is not
+    enough, so the combination is refused rather than built into the
+    opening.
+    """
+    def _branched(length: float, usage: str) -> Z.Zone:
+        """`c1` with a side branch, the shape `compose_with_branch` makes.
+
+        A door assignment needs an edge to name -- an assignment with no
+        graph names routes that do not exist -- so the branch is real,
+        and `c1` departs through its own `exit` either way so that
+        sealing the side does not strand the route.
+        """
+        edges = [{"edge_id": "e:c1:c2", "room_a": "c1", "room_b": "c2",
+                  "direction": "BIDIRECTIONAL", "realization": "JOINED"}]
+        # EVERY SOCKET MENTIONED. An unused one is declared SEALED so it
+        # is measured, never omitted.
+        doors = [{"socket_id": "entry", "usage": "SEALED"},
+                 {"socket_id": "exit", "usage": "USED",
+                  "edge_id": "e:c1:c2"},
+                 {"socket_id": "side_right", "usage": "SEALED"}]
+        chambers = [
+            {"id": "c1", "type": "corridor", "length": length,
+             "width": 9.5, "depart_edge": "e:c1:c2", "doors": doors,
+             "features": [{"tag": "powered_door", "at": (0.18, 0.3)}]},
+            {"id": "c2", "type": "corridor", "length": 12.0, "width": 5.0,
+             "arrive_edge": "e:c1:c2", "reward_location_id": 89100001,
+             "doors": [{"socket_id": "entry", "usage": "USED",
+                        "edge_id": "e:c1:c2"},
+                       {"socket_id": "exit", "usage": "SEALED"},
+                       {"socket_id": "side_left", "usage": "SEALED"},
+                       {"socket_id": "side_right", "usage": "SEALED"}]}]
+        if usage == "SEALED":
+            doors.append({"socket_id": "side_left", "usage": "SEALED"})
+        else:
+            edges.append({"edge_id": "e:c1:c3", "room_a": "c1",
+                          "room_b": "c3", "direction": "BIDIRECTIONAL",
+                          "realization": "JOINED"})
+            doors.append({"socket_id": "side_left", "usage": usage,
+                          "edge_id": "e:c1:c3"})
+            chambers.append(
+                {"id": "c3", "type": "corridor", "length": 12.0,
+                 "width": 5.0, "arrive_edge": "e:c1:c3",
+                 "reward_location_id": 89100002,
+                 "doors": [{"socket_id": "entry", "usage": "USED",
+                            "edge_id": "e:c1:c3"},
+                           {"socket_id": "exit", "usage": "SEALED"},
+                           {"socket_id": "side_left", "usage": "SEALED"},
+                           {"socket_id": "side_right", "usage": "SEALED"}]})
+        return TypeAdapter(Z.Zone).validate_python({
+            "schema_version": 7, "zone_id": "zone_001",
+            "display_name": "Relay", "target_game": "Game",
+            "theme": "void_glitch", "edges": edges, "chambers": chambers})
+
+    with pytest.raises(ValidationError):
+        _branched(13.6, "USED")
+    # The SAME room with that doorway SEALED is fine: nothing is standing
+    # in an opening that is not one.
+    assert _branched(13.6, "SEALED").chambers[0].features
+    # ...and so is a corridor long enough to hold it beside the opening.
+    assert _branched(20.4, "USED").chambers[0].features
+
+
 def test_a_corridor_too_short_for_its_feature_is_refused():
     """The depth half of the lane rule, at the schema boundary.
 
@@ -620,3 +721,67 @@ def _zone_with_features(features: list[dict]) -> Z.Zone:
              "reward_location_id": 89100001},
         ],
     })
+
+
+# --- the door assigner keeps a side opening clear -------------------------
+
+def _stub_chamber(**fields):
+    """A chamber-shaped object for `_side_socket`, which reads attributes.
+
+    A real `Zone` cannot carry the bad pairing any more -- that is what
+    the schema rule above is for -- so the thing being tested has to be
+    handed the shape the assigner sees BEFORE the Zone is assembled.
+    """
+    from types import SimpleNamespace
+    fields.setdefault("features", ())
+    fields.setdefault("elevation", None)
+    fields.setdefault("length", None)
+    fields.setdefault("depth", None)
+    return SimpleNamespace(**fields)
+
+
+def test_a_side_door_is_not_cut_where_the_rooms_feature_stands():
+    """`zone_02`'s `c013`, at the moment the door is chosen.
+
+    A 13.6 m corridor carrying a `powered_door` has nowhere to put the
+    chain clear of an opening cut at the middle of its wall, so the
+    assigner must spend a different socket. Reverting
+    `_features_need_the_side_walls` makes this return `side_left` again
+    -- which is the placement the engine measured solid.
+    """
+    from archipepsi_bridge import topology as T
+    from types import SimpleNamespace
+    short = _stub_chamber(
+        length=13.6,
+        features=(SimpleNamespace(tag="powered_door"),))
+    assert T._side_socket(short, ("side_left", "side_right")) is None
+    # A room long enough holds both, and the socket is spent normally.
+    roomy = _stub_chamber(
+        length=20.4,
+        features=(SimpleNamespace(tag="powered_door"),))
+    assert T._side_socket(roomy, ("side_left", "side_right")) == "side_left"
+    # And a room with no feature is untouched by this rule.
+    assert T._side_socket(
+        _stub_chamber(length=13.6), ("side_left",)) == "side_left"
+
+
+def test_a_back_gallery_blocks_both_side_walls_not_neither():
+    """`zone_10`'s `c005`, at the same moment.
+
+    A `back` deck spans the room's WIDTH, so it meets the left and the
+    right wall alike. `f"side_{band.side}"` spells `side_back`, which is
+    not a socket and excluded nothing -- and the deck stood at chest
+    height across a `side_left` the composer had declared USED.
+    """
+    from archipepsi_bridge import topology as T
+    from types import SimpleNamespace
+    back = _stub_chamber(
+        depth=19.3,
+        elevation=SimpleNamespace(side="back", kind="gallery"))
+    assert T._side_socket(back, ("side_left", "side_right")) is None
+    # A `left` band still blocks only the wall it hugs, which is the
+    # behaviour this rule already had and must keep.
+    left = _stub_chamber(
+        depth=19.3,
+        elevation=SimpleNamespace(side="left", kind="gallery"))
+    assert T._side_socket(left, ("side_left", "side_right")) == "side_right"

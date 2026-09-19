@@ -717,8 +717,50 @@ FEATURE_MIN_DEPTH = {
 }
 
 #: The shortest chamber that can host ANY feature, the depth-axis twin of
-#: `MIN_FEATURE_CHAMBER_WIDTH`.
+#: `MIN_FEATURE_CHAMBER_DEPTH`'s companion above.
 MIN_FEATURE_CHAMBER_DEPTH = min(FEATURE_MIN_DEPTH.values())
+
+#: And the run a feature needs when the room also carries a SIDE DOORWAY.
+#:
+#: A side door is cut at the MIDDLE of the side wall -- `side_left` and
+#: `side_right` are declared at `depth / 2` and `_perimeter` cuts them
+#: there -- so it sits exactly where `resolve_position` puts a feature it
+#: has pushed out of the walking lane. Measured: `zone_02`'s `c013`
+#: declares `side_left` USED and its `powered_door` leaf stands at room
+#: local x -4.55..-2.45, z 7.55..7.75, through a wall whose opening is at
+#: (-3.95, 0, 6.8). `zone_04`'s `c009` is the same with the sides
+#: mirrored. Both Zones were refused on aperture polarity for a door the
+#: room's own content was standing in.
+#:
+#: `2 * (2 * half_depth + DOOR_WIDTH / 2 + THRESHOLD_CLEARANCE)`: the
+#: feature has to fit WHOLLY on one side of the opening, clear of the
+#: door's own half-width and of the end threshold, and the room has to
+#: hold that on either side of the middle. A `powered_door` needs 20.4 m
+#: of corridor to sit beside a side door -- so a 13.6 m one does not get
+#: the tag, which is the same answer `FEATURE_MIN_DEPTH` gives and for
+#: the same reason: the Zone is not optional and the note is.
+#:
+#: Pinned against `AffordanceFeatures.FOOTPRINT`, `DOOR_WIDTH` and
+#: `THRESHOLD_CLEARANCE` in `test_affordances.py`.
+FEATURE_MIN_DEPTH_BESIDE_DOOR = {
+    "grapple_anchor": 9.2,
+    "breakable_wall": 11.6,
+    "water_volume": 9.6,
+    "rail": 20.4,
+    "wind_volume": 9.6,
+    "bounce_pad": 8.8,
+    "moving_platform": 9.6,
+    "powered_door": 20.4,
+}
+
+#: The doorways whose opening a feature can be pushed into. Named rather
+#: than inferred from "not entry and not exit": the end doorways are
+#: guarded by `THRESHOLD_CLEARANCE` already, and these two are the ones
+#: cut into the middle of a wall the lane rule pushes toward.
+SIDE_SOCKETS = ("side_left", "side_right")
+
+MIN_FEATURE_CHAMBER_DEPTH_BESIDE_DOOR = min(
+    FEATURE_MIN_DEPTH_BESIDE_DOOR.values())
 
 #: Affordance tags a campaign may offer having interpreted NOTHING.
 #:

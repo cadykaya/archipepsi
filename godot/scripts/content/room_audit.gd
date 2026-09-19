@@ -1310,6 +1310,38 @@ static func _blocked(space: PhysicsDirectSpaceState3D,
 ## "the engine measured it as solid", which stops a Zone opening -- named
 ## the door and nothing else. Whoever had to fix it then had a doorway
 ## and no suspect.
+## THE SPACE A BLOCKING BODY ACTUALLY OCCUPIES, in world coordinates.
+##
+## The body's own origin is not it: `_box` parents a `StaticBody3D` under
+## a `MeshInstance3D` that carries the offset, so a body reported at
+## `(1.0, 5.74, -181.85)` can be a deck whose surface is two metres
+## lower. Reading an origin and a size and inferring a span is the
+## second derivation this project keeps paying for. This asks the
+## collision shape where it is, in the frame the door was probed in, so
+## the two numbers can be compared directly.
+##
+## Best-effort by design: a body with no shape answers with an empty box
+## rather than raising. This is a diagnostic string, and a missing extent
+## must never break the measurement that produced it.
+static func _body_box(who: Node) -> AABB:
+	for child: Node in who.get_children():
+		var fitted := child as CollisionShape3D
+		if fitted == null or fitted.shape == null:
+			continue
+		var size := Vector3.ZERO
+		var cube := fitted.shape as BoxShape3D
+		if cube != null:
+			size = cube.size
+		else:
+			var ball := fitted.shape as SphereShape3D
+			size = Vector3.ONE * ball.radius * 2.0 if ball != null \
+					else fitted.shape.get_debug_mesh().get_aabb().size
+		return AABB(fitted.global_position - size / 2.0, size)
+	var body := who as Node3D
+	if body != null:
+		return AABB(body.global_position, Vector3.ZERO)
+	return AABB()
+
 static func _blocker(space: PhysicsDirectSpaceState3D,
 		at: Vector3) -> Node:
 	var capsule := CapsuleShape3D.new()
@@ -1342,8 +1374,35 @@ static func aperture_blockers(room: Dictionary, to_world: Transform3D,
 					+ _door_stance(to_world, space, at)))
 			if who == null:
 				continue
-			out[str(door["socket_id"])] = ("%s (%s), %.2f m inside the "
-					% [str(who.get_path()), who.get_class(), step]
-					+ "doorway")
+			# WHERE IT IS AND HOW BIG, not only what it is called.
+			#
+			# A node path names the producer's branch and nothing else:
+			# `Chamber_c005/@MeshInstance3D@998/@StaticBody3D@1000` is
+			# every anonymous box a room builds, and picking which one
+			# meant reading the builder and guessing. The world point
+			# and the extent say which piece of geometry it actually is
+			# -- a wall segment, a deck, a ramp -- and the probe point
+			# says where the door was looked for.
+			# IN THE DOOR'S OWN FRAME. A world span and a room-local
+			# door position cannot be compared without re-deriving the
+			# room's transform, and re-deriving it is how two numbers
+			# that describe one thing come to disagree. The blocker is
+			# carried back through the same transform the door was
+			# carried out by, so "does this stand in that opening" is a
+			# comparison rather than an inference.
+			var local := to_world.affine_inverse() * _body_box(who)
+			out[str(door["socket_id"])] = ("%s (%s) spanning room-local "
+					% [str(who.get_path()), who.get_class()]
+					+ "%s..%s; "
+					% [str(local.position.snapped(Vector3.ONE * 0.01)),
+						str(local.end.snapped(Vector3.ONE * 0.01))]
+					+ "probed %.2f m inside the doorway declared at "
+					% step
+					+ "room-local %s (world %s), room %.1f x %.1f"
+					% [str(at.snapped(Vector3.ONE * 0.01)),
+						str((to_world * (at + inward * step)).snapped(
+							Vector3.ONE * 0.01)),
+						(room["bounds"] as AABB).size.x,
+						(room["bounds"] as AABB).size.z])
 			break
 	return out

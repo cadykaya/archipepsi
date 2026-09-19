@@ -317,17 +317,17 @@
     },
     {
      "socket_id": "side_left",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
+     "usage": "LOCKED",
+     "edge_id": "e:c006:c017",
+     "key_id": "red",
+     "colour": "red"
     },
     {
      "socket_id": "side_right",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
+     "usage": "LOCKED",
+     "edge_id": "e:c006:c018",
+     "key_id": "blue",
+     "colour": "blue"
     }
    ],
    "arrive_edge": "e:c005:c006",
@@ -488,15 +488,15 @@
     },
     {
      "socket_id": "side_left",
-     "usage": "LOCKED",
-     "edge_id": "e:c009:c020",
-     "key_id": "green",
-     "colour": "green"
+     "usage": "USED",
+     "edge_id": "e:c009:c011",
+     "key_id": null,
+     "colour": null
     },
     {
      "socket_id": "side_right",
-     "usage": "SEALED",
-     "edge_id": null,
+     "usage": "USED",
+     "edge_id": "e:c009:c015",
      "key_id": null,
      "colour": null
     }
@@ -576,15 +576,15 @@
     },
     {
      "socket_id": "side_left",
-     "usage": "USED",
-     "edge_id": "e:c010:c011",
+     "usage": "SEALED",
+     "edge_id": null,
      "key_id": null,
      "colour": null
     },
     {
      "socket_id": "side_right",
-     "usage": "USED",
-     "edge_id": "e:c010:c015",
+     "usage": "SEALED",
+     "edge_id": null,
      "key_id": null,
      "colour": null
     }
@@ -626,7 +626,7 @@
     {
      "socket_id": "entry",
      "usage": "USED",
-     "edge_id": "e:c010:c011",
+     "edge_id": "e:c009:c011",
      "key_id": null,
      "colour": null
     },
@@ -652,7 +652,7 @@
      "colour": null
     }
    ],
-   "arrive_edge": "e:c010:c011",
+   "arrive_edge": "e:c009:c011",
    "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
@@ -850,7 +850,7 @@
     {
      "socket_id": "entry",
      "usage": "USED",
-     "edge_id": "e:c010:c015",
+     "edge_id": "e:c009:c015",
      "key_id": null,
      "colour": null
     },
@@ -863,20 +863,20 @@
     },
     {
      "socket_id": "side_left",
-     "usage": "LOCKED",
-     "edge_id": "e:c015:c017",
-     "key_id": "red",
-     "colour": "red"
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
     },
     {
      "socket_id": "side_right",
-     "usage": "LOCKED",
-     "edge_id": "e:c015:c018",
-     "key_id": "blue",
-     "colour": "blue"
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
     }
    ],
-   "arrive_edge": "e:c010:c015",
+   "arrive_edge": "e:c009:c015",
    "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
@@ -962,7 +962,7 @@
     {
      "socket_id": "entry",
      "usage": "USED",
-     "edge_id": "e:c015:c017",
+     "edge_id": "e:c006:c017",
      "key_id": null,
      "colour": null
     },
@@ -974,7 +974,7 @@
      "colour": null
     }
    ],
-   "arrive_edge": "e:c015:c017",
+   "arrive_edge": "e:c006:c017",
    "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
@@ -1006,7 +1006,7 @@
     {
      "socket_id": "entry",
      "usage": "USED",
-     "edge_id": "e:c015:c018",
+     "edge_id": "e:c006:c018",
      "key_id": null,
      "colour": null
     },
@@ -1019,20 +1019,20 @@
     },
     {
      "socket_id": "side_left",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
+     "usage": "LOCKED",
+     "edge_id": "e:c018:c020",
+     "key_id": "green",
+     "colour": "green"
     },
     {
      "socket_id": "side_right",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
+     "usage": "LOCKED",
+     "edge_id": "e:c018:c021",
+     "key_id": "gold",
+     "colour": "gold"
     }
    ],
-   "arrive_edge": "e:c015:c018",
+   "arrive_edge": "e:c006:c018",
    "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
@@ -1104,7 +1104,7 @@
     {
      "socket_id": "entry",
      "usage": "USED",
-     "edge_id": "e:c009:c020",
+     "edge_id": "e:c018:c020",
      "key_id": null,
      "colour": null
     },
@@ -1117,10 +1117,10 @@
     },
     {
      "socket_id": "side_left",
-     "usage": "LOCKED",
-     "edge_id": "e:c020:c021",
-     "key_id": "gold",
-     "colour": "gold"
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
     },
     {
      "socket_id": "side_right",
@@ -1130,8 +1130,8 @@
      "colour": null
     }
    ],
-   "arrive_edge": "e:c009:c020",
-   "depart_edge": "e:c020:c021",
+   "arrive_edge": "e:c018:c020",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -1168,7 +1168,7 @@
     {
      "socket_id": "entry",
      "usage": "USED",
-     "edge_id": "e:c020:c021",
+     "edge_id": "e:c018:c021",
      "key_id": null,
      "colour": null
     },
@@ -1180,7 +1180,7 @@
      "colour": null
     }
    ],
-   "arrive_edge": "e:c020:c021",
+   "arrive_edge": "e:c018:c021",
    "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
@@ -1439,8 +1439,8 @@
    "capability": null
   },
   {
-   "edge_id": "e:c010:c011",
-   "room_a": "c010",
+   "edge_id": "e:c009:c011",
+   "room_a": "c009",
    "room_b": "c011",
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",
@@ -1487,8 +1487,8 @@
    "capability": null
   },
   {
-   "edge_id": "e:c010:c015",
-   "room_a": "c010",
+   "edge_id": "e:c009:c015",
+   "room_a": "c009",
    "room_b": "c015",
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",
@@ -1503,8 +1503,8 @@
    "capability": null
   },
   {
-   "edge_id": "e:c015:c017",
-   "room_a": "c015",
+   "edge_id": "e:c006:c017",
+   "room_a": "c006",
    "room_b": "c017",
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",
@@ -1519,8 +1519,8 @@
    "capability": null
   },
   {
-   "edge_id": "e:c015:c018",
-   "room_a": "c015",
+   "edge_id": "e:c006:c018",
+   "room_a": "c006",
    "room_b": "c018",
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",
@@ -1535,8 +1535,8 @@
    "capability": null
   },
   {
-   "edge_id": "e:c009:c020",
-   "room_a": "c009",
+   "edge_id": "e:c018:c020",
+   "room_a": "c018",
    "room_b": "c020",
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",
@@ -1551,8 +1551,8 @@
    "capability": null
   },
   {
-   "edge_id": "e:c020:c021",
-   "room_a": "c020",
+   "edge_id": "e:c018:c021",
+   "room_a": "c018",
    "room_b": "c021",
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",

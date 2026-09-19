@@ -169,6 +169,63 @@ static func resolve_position(at: Array, width: float, depth: float,
 ## How far from either doorway a feature's geometry must stay.
 const THRESHOLD_CLEARANCE := 2.0
 
+## A SIDE DOORWAY IS CUT AT THE MIDDLE OF THE WALL THIS RULE PUSHES
+## TOWARD, and nothing here used to know that.
+##
+## `resolve_position` clears the two END thresholds and the walking lane,
+## and then pushes the feature sideways -- straight into `side_left` or
+## `side_right`, which `ChamberBuilders._perimeter` cuts at `depth / 2`.
+## Measured: `zone_02`'s `c013` declares `side_left` USED and its
+## `powered_door` leaf stands at room-local x -4.55..-2.45, z 7.55..7.75,
+## through a wall whose opening is at (-3.95, 0, 6.8); `zone_04`'s `c009`
+## is the same with the sides mirrored. Both Zones were refused on
+## aperture polarity for a door their own content was standing in.
+##
+## So the feature is moved off the opening, to whichever end has room for
+## it. `FEATURE_MIN_DEPTH_BESIDE_DOOR` is the Python half of the same
+## rule and stops the tag being declared where neither end has room; this
+## is what places it once it has been.
+static func _clear_of_side_doors(z: float, chamber: Dictionary,
+		depth: float, tag: String) -> float:
+	var open_side := false
+	for raw: Variant in chamber.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		var socket := str(door.get("socket_id", ""))
+		if socket != "side_left" and socket != "side_right":
+			continue
+		if str(door.get("usage", "USED")) != "SEALED":
+			open_side = true
+	if not open_side:
+		return z
+	var half_depth: float = float(FOOTPRINT.get(tag, {}).get(
+			"half_depth", 1.2))
+	var keep := ChamberBuilders.DOOR_WIDTH / 2.0 + half_depth
+	var middle := depth / 2.0
+	if absf(z - middle) >= keep:
+		return z
+	# BOTH ENDS OFFERED, THE NEARER ONE TAKEN. Refusing to move is what
+	# put the leaf in the doorway; moving to a fixed end would swing
+	# every feature in the Zone to the same wall.
+	var near := middle - keep
+	var far := middle + keep
+	var low := THRESHOLD_CLEARANCE + half_depth
+	var high := depth - THRESHOLD_CLEARANCE - half_depth
+	var near_ok := near >= low
+	var far_ok := far <= high
+	if near_ok and far_ok:
+		return near if z <= middle else far
+	if near_ok:
+		return near
+	if far_ok:
+		return far
+	# NEITHER END HOLDS IT. The room should never have been given the
+	# tag -- that is what the Python rule is for -- and building it into
+	# the doorway anyway is the defect this function exists to end. The
+	# caller drops it.
+	return INF
+
 ## Build every feature a chamber declares. Called from `ChamberBuilders`
 ## after the room exists, so the extent is known and the lane is real.
 static func place_all(root: Node3D, chamber: Dictionary, theme: String,
@@ -184,10 +241,21 @@ static func place_all(root: Node3D, chamber: Dictionary, theme: String,
 			continue
 		var origin := resolve_position(
 				feature.get("at", [0.5, 0.5]), width, depth, tag)
+		origin.z = _clear_of_side_doors(origin.z, chamber, depth, tag)
 		# Zone-scoped, because the bridge's idempotence key is the reward
 		# id alone. Chamber-scoped ids repeat across Zones — the fallback
 		# emits `c1` and `c3` in every one — so the second Zone's note
 		# vanished on pickup and was silently discarded as a duplicate.
+		if not is_finite(origin.z):
+			# No end of this room holds the tag clear of its own side
+			# doorway. Dropped, loudly: the composer declared something
+			# the room cannot host, and a silent drop is what made the
+			# last one of these a mystery.
+			push_warning("zone: room '%s' declared a '%s' with no room "
+					% [str(chamber.get("id", "?")), tag]
+					+ "for it clear of an open side doorway; no feature "
+					+ "is built and the layout will be refused")
+			continue
 		var reward_id := "%s_%s_%s_%d" % [
 				str(chamber.get("zone_id", "z")),
 				str(chamber.get("id", "c")), tag, index]

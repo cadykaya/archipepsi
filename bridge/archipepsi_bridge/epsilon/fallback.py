@@ -841,12 +841,14 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
         # when it needs 11.0 -- declared, dropped by the builder, and the
         # Zone refused for an uncertified chain.
         along = C.FEATURE_MIN_DEPTH.get(tag, C.MIN_FEATURE_CHAMBER_DEPTH)
+        beside = C.FEATURE_MIN_DEPTH_BESIDE_DOOR.get(
+            tag, C.MIN_FEATURE_CHAMBER_DEPTH_BESIDE_DOOR)
         # A tag wider than a corridor may ever be is skipped rather than
         # emitted for the validator to refuse: the fallback's job is to
         # always produce something acceptable.
         if need > MAX_CORRIDOR_WIDTH:
             continue
-        chamber = _feature_host(plain, index, need, along)
+        chamber = _feature_host(plain, index, need, along, beside)
         # The schema's per-chamber cap is the only cap there is; when the
         # plain chambers are full the remaining tags simply do not appear
         # in this Zone. They are optional content, so dropping one costs
@@ -865,7 +867,8 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
 
 
 def _feature_host(plain: list[dict], index: int,
-                  need: float, along: float = 0.0) -> dict | None:
+                  need: float, along: float = 0.0,
+                  beside: float = 0.0) -> dict | None:
     """Which corridor takes this feature, preferring one already wide AND
     long enough for it.
 
@@ -884,9 +887,22 @@ def _feature_host(plain: list[dict], index: int,
     it to hang a note. So a corridor that already fits is preferred, and
     one is widened only when no other corridor can take the tag at all.
     """
+    # A CORRIDOR WITH AN OPEN SIDE DOORWAY NEEDS THE LONGER RUN. The
+    # door is cut at the middle of the wall the lane rule pushes toward,
+    # so the feature has to fit wholly to one side of it.
+    def _run(chamber: dict) -> float:
+        for door in chamber.get("doors", []) or ():
+            socket = (door.get("socket_id") if isinstance(door, dict)
+                      else getattr(door, "socket_id", None))
+            usage = (door.get("usage") if isinstance(door, dict)
+                     else getattr(door, "usage", None))
+            if socket in C.SIDE_SOCKETS and usage != "SEALED":
+                return beside
+        return along
+
     roomy = [c for c in plain
              if float(c.get("width", 5.0)) >= need
-             and float(c.get("length", 12.0)) >= along
+             and float(c.get("length", 12.0)) >= _run(c)
              and len(c.get("features", []) or ()) < 3]
     if roomy:
         return roomy[index % len(roomy)]
@@ -903,7 +919,7 @@ def _feature_host(plain: list[dict], index: int,
     # the same answer this function already gives when every corridor is
     # full, and for the same reason: features are optional, and the Zone
     # is not.
-    if along > float(chamber.get("length", 12.0)):
+    if _run(chamber) > float(chamber.get("length", 12.0)):
         return None
     chamber["width"] = max(float(chamber.get("width", 5.0)), need)
     return chamber

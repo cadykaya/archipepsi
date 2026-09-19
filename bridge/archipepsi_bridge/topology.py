@@ -22,11 +22,13 @@ from dataclasses import dataclass, field
 try:
     from .schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+    from .schemas import constants as C
     from .schemas import mechanics as M
     from .schemas.zone import Zone, procedural_sockets_for
 except ImportError:  # pragma: no cover
     from schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+    from schemas import constants as C
     from schemas import mechanics as M
     from schemas.zone import Zone, procedural_sockets_for
 
@@ -397,15 +399,71 @@ def _side_socket(chamber, spare: tuple[str, ...]) -> str | None:
     hole, the deck stands in it, and the layout is refused ("door
     'c009/side_left' is LOCKED and the engine measured it as solid").
 
-    For an authored room there is nothing to avoid: the artist placed
-    the openings, and every one they declared is one they meant.
+    A `back` or `front` band blocks BOTH sides, and this used to block
+    neither. Such a deck spans the room's WIDTH -- it is the full-width
+    gallery the exit rule already knows about -- so it meets the left and
+    the right wall alike, and `f"side_{band.side}"` spells `side_back`,
+    which is not a socket and excludes nothing. Measured: `zone_10`'s
+    `c005` is a 23.5 x 19.3 arena with a `back` gallery whose deck stands
+    at room-local x -11.75..9.75, y 1.34..1.74, z 9.0..17.3 -- reaching
+    the left wall exactly, at chest height, across a `side_left` the
+    composer had declared USED. The layout was refused on aperture
+    polarity.
+
+    A ROOM'S OWN FEATURES BLOCK A SIDE WALL TOO, and for the same
+    reason: `side_left` and `side_right` are cut at the MIDDLE of the
+    wall, which is exactly where `resolve_position` puts a feature it has
+    pushed out of the walking lane. `zone_02`'s `c013` is a 13.6 m
+    corridor whose `powered_door` leaf stood at x -4.55..-2.45,
+    z 7.55..7.75, through a wall whose opening is at (-3.95, 0, 6.8).
+    `FEATURE_MIN_DEPTH_BESIDE_DOOR` is the run such a feature needs to
+    sit wholly to one side of the opening; a room shorter than that
+    cannot carry both, and the DOORWAY is the one to move, because the
+    feature is already placed and the door is still being chosen.
+
+    For an authored room there is nothing to avoid on the band's
+    account: the artist placed the openings, and every one they declared
+    is one they meant. The feature rule still applies -- a shell's
+    doorway is as real as a carved one, and a note standing in it is as
+    solid.
     """
     band = getattr(chamber, "elevation", None)
-    blocked = f"side_{band.side}" if band is not None else None
+    blocked: set[str] = set()
+    if band is not None:
+        side = str(getattr(band, "side", ""))
+        blocked = (set(C.SIDE_SOCKETS) if side in ("back", "front")
+                   else {f"side_{side}"})
+    if _features_need_the_side_walls(chamber):
+        blocked |= set(C.SIDE_SOCKETS)
     for socket in spare:
-        if socket != blocked:
+        if socket not in blocked:
             return socket
     return None
+
+
+def _features_need_the_side_walls(chamber) -> bool:
+    """Would this room's own features stand in a side doorway?
+
+    The room is measured against `FEATURE_MIN_DEPTH_BESIDE_DOOR`: the run
+    a feature needs to sit wholly to one side of an opening cut at the
+    middle of the wall. A room with no depth to judge is left alone --
+    "we cannot tell" and "it is fine" must not produce the same answer,
+    and the schema rule refuses the pairing either way if it is wrong.
+    """
+    features = getattr(chamber, "features", ()) or ()
+    if not features:
+        return False
+    depth = getattr(chamber, "length", None)
+    if depth is None:
+        depth = getattr(chamber, "depth", None)
+    if depth is None:
+        depth = getattr(chamber, "side", None)
+    if depth is None:
+        return False
+    return any(
+        float(depth) < C.FEATURE_MIN_DEPTH_BESIDE_DOOR.get(
+            f.tag, C.MIN_FEATURE_CHAMBER_DEPTH_BESIDE_DOOR)
+        for f in features)
 
 
 @dataclass(frozen=True)
