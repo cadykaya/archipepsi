@@ -203,6 +203,18 @@ func _run() -> void:
 		return
 	if sampling:
 		DirAccess.make_dir_recursive_absolute(where + "/layouts")
+		# AND EMPTIED FIRST. A manifest is written only for a Zone that
+		# laid out, and never deleted for one that stopped laying out --
+		# so a run in which `zone_05` became unbuildable left the
+		# PREVIOUS run's manifest on disk and `check_sample_layouts.py`
+		# judged it as if it were current. The census then read "19 of 20
+		# laid out" beside a PLAYABLE line saying 17. What is on disk
+		# after a sample run has to be what that run produced.
+		var stale := DirAccess.open(where + "/layouts")
+		if stale != null:
+			for name: String in stale.get_files():
+				if name.ends_with(".json"):
+					stale.remove(name)
 	var names: Array[String] = []
 	for file: String in dir.get_files():
 		if file.begins_with("zone_") and file.ends_with(".json"):

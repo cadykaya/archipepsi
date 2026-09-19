@@ -83,9 +83,27 @@ static func _all_but_last(laid: Array) -> Array:
 ## `EPSILON_JOIN` in `bridge/archipepsi_bridge/layout.py`.
 const BRIDGE_EPSILON := 0.001
 
+## THE SAME QUESTION THE COMMITTED CHECK ASKS, and it used to be a
+## different one.
+##
+## This tolerated half a cubic metre of intersection -- a VOLUME bound,
+## chosen so a room's inset entry socket could swallow a little of the
+## connector it joins. `layout_findings` judges the committed layout by
+## SHAPE instead: an overlap is legal when it is one aperture, thin
+## through the wall and no wider or taller than a doorway. A sliver can
+## be under half a cubic metre and nothing like a collar, and `zone_05`
+## was: `c010` and `c013` committed 0.5 x 5.5 x 0.05 m, 0.138 m3, and the
+## search let it through while the bridge refused the Zone for it. In the
+## assembled Zone both rooms have real solids in that box.
+##
+## So the search asks the collar question now. This is a TIGHTENING: the
+## volume bound admitted shapes the committed check always refused, and
+## every overlap the collar rule admits was already admitted before
+## (a collar is at most 0.4 x 2.4 x 3.2, well under half a cubic metre).
 static func _overlaps(placed: Array, candidate: AABB) -> bool:
 	for existing: AABB in placed:
-		if existing.intersection(candidate).get_volume() > 0.5:
+		var shared := existing.intersection(candidate)
+		if shared.has_volume() and not _is_a_collar(shared.size):
 			return true
 	return false
 
@@ -1565,6 +1583,7 @@ static func build(zone: Dictionary, theme_override := "",
 	var nudge := {}
 	var attempts := 1
 	var out := _build_once(zone, theme_override, budget_ms, layout, nudge)
+	_refuse_own_interpenetration(out)
 	# A REPLAY IS NEVER RE-SOLVED. The manifest already says where every
 	# room went; nudging one would produce a Zone the player has never
 	# been in, with a committed layout's name on it.
@@ -1582,6 +1601,7 @@ static func build(zone: Dictionary, theme_override := "",
 			out = _build_once(zone, theme_override,
 					maxf(budget_ms - spent, 1.0) if budget_ms > 0.0
 					else 0.0, layout, nudge)
+			_refuse_own_interpenetration(out)
 	out["placement_attempts"] = attempts
 	out["placement_nudges"] = nudge
 	out["placement_ms"] = float(Time.get_ticks_msec() - started)
@@ -1596,6 +1616,48 @@ static func build(zone: Dictionary, theme_override := "",
 ## the ladder walks backwards along the spine past every room that has
 ## already spent its `PER_ROOM_NUDGES`, which is what makes this a
 ## backtrack rather than four tries at the same room.
+## ASK THE COMMITTED-LAYOUT QUESTION BEFORE CLAIMING `LAYOUT_OK`.
+##
+## `layout_findings` was written for exactly this and, until now, was
+## called only from `room_contract_driver.gd`. A measurement that exists,
+## is correct, and is never handed the case that fails it is this
+## project's recurring defect, and this is another instance: the SEARCH
+## check `_overlaps` tolerates half a cubic metre over an array that
+## deliberately omits pieces, so `zone_05` committed `c010` and `c013`
+## sharing 0.138 m3 and reported `LAYOUT_OK`. The bridge then refused the
+## whole Zone.
+##
+## AND IT IS A REAL COLLISION, measured rather than inferred: in the
+## assembled Zone both rooms have solids inside that box -- one collider
+## each, in the same 0.5 x 5.5 x 0.05 m -- so it is interpenetration and
+## not two envelopes meeting at a wall. The shape is not a collar either;
+## 5.5 m is taller than any doorway.
+##
+## Turned into a WEDGE rather than straight into a failure, because a
+## wedge is what the placement ladder already knows how to recover from:
+## the room is nudged onto its next pose and the Zone is re-solved. Only
+## an exhausted ladder makes this the Zone's refusal -- the outcome the
+## bridge would have reached anyway, earlier and naming the rooms.
+static func _refuse_own_interpenetration(out: Dictionary) -> void:
+	if str(out.get("status", "")) != "LAYOUT_OK":
+		return
+	var findings := layout_findings(out)
+	if findings.is_empty():
+		return
+	# THE ROOMS THE FINDING NAMES, so the ladder nudges one of THEM
+	# rather than whatever was blocking something else. `_wedged_after`
+	# walks back along the spine from the room it is handed.
+	var rooms: Dictionary = out.get("rooms", {})
+	var blocking: Array = []
+	for raw: Variant in findings:
+		for word: String in str(raw).split("'"):
+			if rooms.has(word) and not blocking.has(word):
+				blocking.append(word)
+	out["wedge"] = true
+	out["blocking_rooms"] = blocking
+	out["status"] = "LAYOUT_INFEASIBLE"
+	out["failed"] = "; ".join(findings)
+
 static func _wedged_after(zone: Dictionary, out: Dictionary,
 		nudge: Dictionary) -> String:
 	var blocking: Array = out.get("blocking_rooms", [])
@@ -1610,18 +1672,42 @@ static func _wedged_after(zone: Dictionary, out: Dictionary,
 			at = i - 1
 			break
 	if at < 0 and not spine.has(stuck):
+		# UP THE BRANCH TREE, NOT ONE STEP OF IT.
+		#
+		# This looked the wedged room up among the branches and took its
+		# parent's index on the spine -- which finds nothing when that
+		# parent is ITSELF a branch, and then `at` stays -1, this returns
+		# "", and the ladder breaks without nudging anything. Measured:
+		# `zone_07` ("branch room 'c021' off 'c018'") and `zone_08`
+		# ("'c012' off 'c009'") each reported "1 placement attempt(s);
+		# nudged nothing". The whole recovery ladder existed and never
+		# ran for the one failure class it was most needed for.
+		#
+		# So the walk repeats: parent, parent's parent, until a room on
+		# the spine turns up. `seen` because a malformed branch map that
+		# pointed at itself would otherwise spin here forever, and a
+		# router that hangs is worse than one that gives up.
 		var branches: Dictionary = graph.get("branches", {})
+		var parent_of := {}
 		for parent_id: Variant in branches:
 			for raw: Variant in (branches[parent_id] as Array):
 				if typeof(raw) != TYPE_DICTIONARY:
 					continue
 				var kid: Dictionary = (raw as Dictionary).get(
 						"chamber", {})
-				if str(kid.get("id", "")) != stuck:
-					continue
-				for i in spine.size():
-					if str(spine[i]) == str(parent_id):
-						at = i
+				if str(kid.get("id", "")) != "":
+					parent_of[str(kid.get("id", ""))] = str(parent_id)
+		var climb := stuck
+		var seen := {}
+		while parent_of.has(climb) and not seen.has(climb):
+			seen[climb] = true
+			climb = str(parent_of[climb])
+			for i in spine.size():
+				if str(spine[i]) == climb:
+					at = i
+					break
+			if at >= 0:
+				break
 	while at >= 0:
 		var who := str(spine[at])
 		if int(nudge.get(who, 0)) < PER_ROOM_NUDGES:

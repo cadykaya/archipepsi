@@ -1097,6 +1097,87 @@ func _where_targets_mounted_and_where_they_did_not() -> void:
 ## ASSEMBLED Zone, where a cap is placed by the layout rather than by
 ## the room. That is the gap this closes, and it is why a proxy was
 ## reaching for the answer in the first place.
+## IS AN ENVELOPE OVERLAP A REAL COLLISION, OR ONLY AN ENVELOPE?
+##
+## `layout.validate` refuses a Zone for "rooms 'c010' and 'c013'
+## overlap", and a committed envelope is a room's span PLUS its wall
+## allowance -- so two rooms whose walls merely meet can report an
+## overlap that no player could ever see. Deciding which one a refusal is
+## by reading the numbers is exactly the inference this file keeps
+## paying for, so it asks the physics server instead: for every pair of
+## committed envelopes that intersect, what actual colliders stand in the
+## shared box, and do any two of them from DIFFERENT rooms intersect each
+## other.
+##
+## Reported, never asserted. Whether a given Zone overlaps is a fact
+## about that Zone, and this file walks whichever one it is given.
+func _committed_envelopes_that_interpenetrate() -> void:
+	var bounds: Dictionary = _zone.room_bounds
+	var ids: Array = bounds.keys()
+	ids.sort()
+	var space := get_viewport().world_3d.direct_space_state
+	var found := 0
+	for a in ids.size():
+		for b in range(a + 1, ids.size()):
+			var box_a: AABB = bounds[ids[a]]
+			var shared := box_a.intersection(bounds[ids[b]] as AABB)
+			if not shared.has_volume():
+				continue
+			found += 1
+			var collar := ZoneBuilder._is_a_collar(shared.size)
+			var real := _solids_of_both_rooms_meet(space, shared,
+					str(ids[a]), str(ids[b]))
+			_note("ENVELOPES '%s' and '%s' share %s (%.3f m3), %s; real "
+					% [str(ids[a]), str(ids[b]),
+						str(shared.size.snapped(Vector3.ONE * 0.01)),
+						shared.get_volume(),
+						"a collar" if collar else "NOT a collar"]
+					+ "geometry of both rooms in that box: %s" % real)
+	if found == 0:
+		_note("no two committed envelopes intersect at all (%d rooms)"
+				% ids.size())
+
+## What actually stands in a shared box, and whether it is two rooms'
+## solids in the same cubic metres or only one room's.
+##
+## The chamber a collider belongs to is read from the node it hangs
+## under: the builder names them `Chamber_<rid>`, and walking up to that
+## name is how a body says which room it is part of without a second
+## registry to drift from.
+func _solids_of_both_rooms_meet(space: PhysicsDirectSpaceState3D,
+		shared: AABB, a: String, b: String) -> String:
+	var probe := BoxShape3D.new()
+	# A DEGENERATE BOX FINDS NOTHING. A shared region can be 0.05 m
+	# thin, and a query shape of zero extent on an axis reports no hits
+	# at all -- which would read as "no real geometry" for exactly the
+	# slivers this exists to judge.
+	probe.size = Vector3(maxf(shared.size.x, 0.02),
+			maxf(shared.size.y, 0.02), maxf(shared.size.z, 0.02))
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = probe
+	query.transform = Transform3D(Basis(), shared.get_center())
+	query.collide_with_areas = false
+	var rooms := {}
+	for hit: Dictionary in space.intersect_shape(query, 32):
+		var who := hit.get("collider") as Node
+		if who == null:
+			continue
+		var owner_room := _chamber_of(who)
+		if owner_room == a or owner_room == b:
+			rooms[owner_room] = int(rooms.get(owner_room, 0)) + 1
+	if rooms.size() < 2:
+		return ("only %s -- the envelopes meet, the SOLIDS do not"
+				% ("nothing" if rooms.is_empty() else str(rooms)))
+	return "%s -- both rooms have solids in it" % str(rooms)
+
+func _chamber_of(who: Node) -> String:
+	var walk := who
+	while walk != null:
+		if str(walk.name).begins_with("Chamber_"):
+			return str(walk.name).substr("Chamber_".length())
+		walk = walk.get_parent()
+	return ""
+
 ## WHICH DOORS THE LIVE CONTROLLER ITSELF CALLS SOLID.
 ##
 ## `layout.validate` refuses a Zone for "door X is USED and the engine
@@ -1440,6 +1521,7 @@ func _run() -> void:
 		var joins := await _joins_are_walked_through()
 		await _a_bricked_up_join_refuses_the_walker(joins)
 		_declared_doors_against_the_controllers_own_measurement()
+		_committed_envelopes_that_interpenetrate()
 	if _zone != null:
 		_zone.queue_free()
 		await get_tree().process_frame
