@@ -1,5 +1,84 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — ordinary generation: 0 of 20 was the harness — 2026-09-19
+
+**The sampler's "0 of 20 accepted" was wrong twice, and the Zones were
+not the reason either time.**
+
+**NAMED CASE `zone_01`** — lays out physically, refused with one error:
+*"room 'c001' declares 1 'powered_door' chain(s) the engine must certify
+and the layout offers 0"*. Followed to its producer:
+
+1. **A missing evidence class.** `ChainCertificate` is the only thing
+   that makes a certified package and it ran only inside
+   `ZoneController._certify_physics`. The harness stands a Zone up and
+   measures it with the same `RoomAudit.measure_layout` a played Zone
+   uses -- then emitted `packages: []` every time. The loop is now
+   `ChainCertificate.of_build`: one implementation, two callers, the
+   liveness guard passed in so the controller keeps its "a partial
+   certification is never published" rule.
+2. **A success test that could not be true.**
+   `check_sample_layouts.py` asked `status == "LAYOUT_OK"` -- the
+   ROUTER's word. `layout.validate` returns `ACCEPTED`/`LAYOUT_REFUSED`
+   and carries `.accepted` for exactly this. The tool reported 0 **by
+   construction**, for its whole life, hidden by (1).
+
+**THEN THE CONTENT DEFECT UNDERNEATH.** `AffordanceFeatures.fits` asks
+about width AND depth; only the width half was ever written down in
+Python. A `powered_door` reaches 3.5 m along the run and needs **11.0 m**
+of corridor -- the sample hung it on corridors of 8.6, 9.0, 9.2 and
+9.8 m. All four passed `FEATURE_MIN_WIDTH`, all four were dropped by the
+builder, all four Zones refused for a chain declared and never built.
+`FEATURE_MIN_DEPTH` now joins it, pinned against
+`AffordanceFeatures.FOOTPRINT` from both sides; the chamber model, the
+shell selector and the fallback all ask it.
+
+**NOT BY STRETCHING THE ROOM.** Lengthening a last-resort corridor cost
+two Zones -- `zone_12` became a room overlap and `zone_18` stopped
+routing. Widening moves a wall; lengthening moves everything downstream.
+A tag with no corridor long enough is not dealt.
+
+| on the same declared sample | accepted | lay out |
+|---|---|---|
+| reported before | **0 of 20** | 18 of 20 |
+| harness repaired | 10 of 19 | 18 of 20 |
+| + producer, by stretching | 11 of 19 | 17 of 20 |
+| **+ producer, by not** | **12 of 19** | **18 of 20** |
+
+**AND THE DOOR-POLARITY NOTE IS FOLKLORE.** `zone-sample` has carried
+"door-polarity refusals here are about this harness" unmeasured for
+months. Built and stood up by a real `ZoneController`, `zone_02` measures
+`c013/side_left` **SOLID** while the composer declares it USED -- 1 of
+68 doors, the exact door the bridge refuses that Zone for. The traverse
+driver reports this on whatever Zone it is given; `played_zone`'s 66
+doors all read as openings. **4 of the 7 remaining refusals are that
+class and they are real.**
+
+**SMOKE, RECONCILED WITH CERTIFICATION.** `claim_zone_check` refuses a
+Check against unvalidated geometry, and `smoke.py` has no client, so its
+claim/Echo/equip/reload half had been failing since that guard landed.
+Every assertion moved to `bridge/tests/test_full_loop.py`, which enters
+through `conftest.enter_zone` and certifies via the real
+`handle_layout_result`; the live half is `godot-integration`. `smoke.py`
+keeps what needs no client and now **asserts the guard**: UNCERTIFIED,
+claim raises, refusal names the layout, location not marked checked.
+Nothing was deleted and no placer was shipped in the package.
+
+**THE SAVE ANCHOR ISSUE IS NOW ACTIONABLE, NOT ACTED ON.**
+**`docs/RETURN_ANCHOR_PERSISTENCE.md`** — three options, recommending
+the one that persists nothing new and migrates nothing: replay the
+recorded anchor, re-measure it with the settle's own predicates, and
+refuse the layout when it no longer holds, which is the recovery loop
+the campaign already has. No migration was written, the placement repair
+stands, and the owner's diagnostic save is untouched.
+
+**STILL OPEN, SEPARATELY:** the 7 remaining sample refusals (4 door
+polarity, 2 room overlap, 1 a Zone that does not route), `zone_07` which
+never lays out, and remote CI startup, whose cause remains unconfirmed
+and which nothing here waits on.
+
+
+
 ## ENGINE LANE — the c021 return, repaired and walked — 2026-09-19
 
 **The acceptance case executes.** One route on `c021`, guaranteed kit,

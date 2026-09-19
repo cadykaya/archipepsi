@@ -1,5 +1,39 @@
 # Archipepsi — build state
 
+## 2026-09-19 (engine) — ordinary generation, smoke, and the anchor question
+
+- **The sampler's "0 of 20 accepted" was the harness, twice.** It never
+  ran `ChainCertificate`, so every manifest carried `packages: []`; and
+  `check_sample_layouts.py` tested `status == "LAYOUT_OK"`, which
+  `layout.validate` never returns, so it reported 0 accepted **by
+  construction**. Certification moved to `ChainCertificate.of_build`
+  (one implementation, two callers) and the checker uses
+  `verdict.accepted`.
+- **A real content defect underneath it.** `fits` asks width AND depth;
+  Python knew only width. A `powered_door` needs an 11.0 m run and the
+  sample hung it on corridors of 8.6–9.8 m — declared, dropped, refused.
+  `FEATURE_MIN_DEPTH` now exists, pinned against the builder's own
+  footprint from both sides, and the chamber model, shells and fallback
+  all ask it. Tags with no corridor long enough are not dealt rather
+  than stretching a corridor, which cost two Zones when tried.
+- **0 of 20 → 12 of 19 accepted, 18 of 20 laying out.** The report now
+  separates physical build from acceptance and says that retries,
+  eventual acceptance and exhaustion belong to the live loop.
+- **The door-polarity "harness artifact" note is folklore.** A real
+  `ZoneController` measures `zone_02`'s `c013/side_left` SOLID while it
+  is declared USED — the exact door the bridge refuses. 4 of the 7
+  remaining refusals are that class and they are real.
+- **Smoke reconciled with certification.** Its claim/Echo/equip/reload
+  half moved to `bridge/tests/test_full_loop.py` (certified through the
+  real handler) with the live half in `godot-integration`; `smoke.py`
+  keeps the client-less span and now asserts the guard itself. Nothing
+  deleted, no placer shipped in the package.
+- **`docs/RETURN_ANCHOR_PERSISTENCE.md`** — the save-anchor proposal.
+  Recommended: replay the recorded anchor, re-measure with the settle's
+  own predicates, refuse when it no longer holds. Persists nothing new,
+  migrates nothing. Not implemented in this batch.
+
+
 ## 2026-09-19 (engine) — the c021 return, off the approach and walked
 
 A bounded 0.3 return-placement repair. Full account in
