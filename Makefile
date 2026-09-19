@@ -100,7 +100,14 @@ bridge:
 bridge-mock:
 	cd bridge && $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback
 
-smoke:                         # headless full-loop smoke test, mock AP + fallback Epsilon
+# BRIDGE-ONLY, AND THE NAME NO LONGER OVERSELLS IT. A process with no
+# client certifies no layout, and `claim_zone_check` refuses a Check
+# against geometry the bridge has not validated -- so the claim/Echo/
+# equip/reload half of this moved to `bridge/tests/test_full_loop.py`,
+# which certifies through the real handler, and to `godot-integration`,
+# which certifies against real geometry. What is left is the half that
+# needs no client, plus an assertion that the guard refuses.
+smoke:                         # bridge-only loop + the certification guard
 	cd bridge && $(PY) -m archipepsi_bridge.smoke
 
 replay:                        # re-validate the generation archive (EPSILON_SPEC §14)
