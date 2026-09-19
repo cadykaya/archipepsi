@@ -33,6 +33,26 @@ A bounded 0.3 return-placement repair. Full account in
   never did. A no-manifest build on the unrepaired code lands at
   `(19.0, 1.5, 42.2)` against the archive's `(18.99, 1.53, 42.25)`.
 - New suite `make godot-return-placement`, wired into CI.
+- **Fixtures.** `placement/supported.json` regenerates with
+  `room:c005:return` 2.6 m along — the same repair, a second room.
+  `captures.json` keeps its `controller_digest`; only `source_commit`
+  moved. `test_placement_contract.py` passes on the new pair.
+- **Verification.** The whole CI list is green — python 1584 + 627
+  subtests, every `godot-*` suite, including `godot-reload` (cold
+  restart) and `godot-integration` (live bridge).
+- **`make zone-sample`: 0 of 20 accepted before and after**, Godot's own
+  `18 of 20 lay out` unchanged. One line moved — `zone_11` from *no
+  manifest* to *a manifest the bridge refuses* — and bisection
+  attributes it to the `content_of` fallback, not the producer repair.
+  The 18 standing refusals are about `powered_door` chains and join
+  evidence. The sampler's uncertainty stays separate.
+- **Open, and not from this batch: `make smoke` is red.** `Zone
+  'zone_001' has not had its layout accepted (layout_state
+  UNCERTIFIED)`, reproduced identically at `3f00ef2`. The guard is right
+  and landed in `9137c17`; `smoke.py` is bridge-only and never gets a
+  layout certified. Left for a decision rather than patched: the only
+  ways to green it are to stop claiming Checks or to ship the tests'
+  synthetic placer inside the package, and F-4 forbids the second.
 
 
 ## 2026-09-14 (engine) — reading the owner's own session

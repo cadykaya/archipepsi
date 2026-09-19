@@ -47,6 +47,39 @@ against the archive's `(18.99, 1.53, 42.25)`.
 
 New suite: `make godot-return-placement`, in CI.
 
+**WHAT ELSE MOVED.** `godot/tests/fixtures/placement/supported.json`
+regenerates with `room:c005:return` 2.6 m along -- the producer repair
+putting a second room's return beside its reward instead of on it. The
+`controller_digest` in `captures.json` is unchanged; only its
+`source_commit` moved. `bridge/tests/test_placement_contract.py` reads
+both and passes on the new pair. The whole CI list is green: python
+1584 + 627 subtests, and every `godot-*` suite including `godot-reload`
+(cold restart) and `godot-integration` (live bridge).
+
+**THE DECLARED SAMPLE, MEASURED BOTH WAYS.** `make zone-sample` is
+**0 of 20 accepted before and after**, and the Godot side still reports
+`18 of 20 lay out; unbuildable: zone_07, zone_11` unchanged. One line
+moved: `zone_11` went from *no manifest at all* to *a manifest the
+bridge refuses*. Attributed by bisection -- with only the `return_spot`
+repair the sample is byte-identical to baseline, so the `content_of`
+fallback is what moved it. The 18 standing refusals are unchanged and
+are about `powered_door` chain certification and join evidence, not
+returns. **The sampler's own uncertainty stays separate from this
+repair** and neither improves nor excuses it.
+
+**STILL RED, AND NOT FROM THIS BATCH: `make smoke`.** It fails with
+`Zone 'zone_001' has not had its layout accepted (layout_state
+UNCERTIFIED)`. Reproduced identically at `3f00ef2`, the commit before
+this batch. Cause: the guard in `transitions.claim_zone_check` landed in
+`9137c17` and is correct -- a Check may not be claimed against
+geometry the bridge has not validated -- while `smoke.py` is
+bridge-only, has no Godot client, and so never gets a layout certified.
+**Not fixed here on purpose.** The two ways to make it pass are to stop
+claiming Checks (deletes most of what the smoke covers) or to ship the
+tests' synthetic `place_layout` inside the package (validation
+constructing gameplay, which F-4 forbids). Which one the smoke should
+become is a decision, not a repair.
+
 
 ## ENGINE LANE — Route C: not demonstrated, and why — 2026-09-18
 
