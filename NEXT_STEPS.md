@@ -5,14 +5,24 @@
 - **`zone_05`: a real collision** (both rooms have solids in the shared
   box), and `layout_findings` — the check for exactly this — was only
   ever called from a test driver. The search now asks the same collar
-  question the committed check asks; `zone_05` routes and is accepted.
+  question the committed check asks, ignoring contacts below the
+  bridge's millimetre (`BRIDGE_EPSILON`), because two abutting rooms
+  leave float noise on their shared face and a shape rule reads that as
+  a fourteen-metre interpenetration. `zone_05` routes and is accepted.
+  **Wiring the committed check into the router itself was tried and
+  reverted** — an envelope cannot tell abutment from interpenetration
+  (wall-to-wall rooms share their whole 0.4 m allowance, and every tower
+  and treasure shell became unplaceable), and that is the boundary this
+  batch stops at.
 - **`zone_07`/`zone_08`: one cause.** `_wedged_after` could not map a
   wedged branch room to the spine when its parent was itself a branch,
-  so the recovery ladder never ran. It walks up now; both get much
-  further and both still exhaust the bounded budget. Recorded, not
-  widened.
-- **Sample: 18 of 18 submitted accepted, 18 of 20 overall, 0 refused.**
-  The harness also stopped judging stale manifests.
+  so the recovery ladder never ran. It walks up now; both spend seven
+  attempts and get materially further. With the search correction,
+  `zone_07` routes; `zone_08` still exhausts the bounded budget.
+  Recorded, not widened.
+- **Sample: 19 of 19 submitted accepted, 19 of 20 overall, 0 refused.**
+  Only `zone_08` still produces no manifest. The harness also stopped
+  judging stale manifests.
 - **`make godot-named-case CASE=zone_05`** puts one named proposal in
   front of a real client and bridge, and reports served content,
   generation-stage refusals, first verdict, retries, end state, Hub mode
