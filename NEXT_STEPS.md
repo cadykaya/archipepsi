@@ -1,5 +1,32 @@
 # Archipepsi — build state
 
+## 2026-09-19 (engine) — the last three sample cases
+
+- **`zone_05`: a real collision** (both rooms have solids in the shared
+  box), and `layout_findings` — the check for exactly this — was only
+  ever called from a test driver. The search now asks the same collar
+  question the committed check asks; `zone_05` routes and is accepted.
+- **`zone_07`/`zone_08`: one cause.** `_wedged_after` could not map a
+  wedged branch room to the spine when its parent was itself a branch,
+  so the recovery ladder never ran. It walks up now; both get much
+  further and both still exhaust the bounded budget. Recorded, not
+  widened.
+- **Sample: 18 of 18 submitted accepted, 18 of 20 overall, 0 refused.**
+  The harness also stopped judging stale manifests.
+- **`make godot-named-case CASE=zone_05`** puts one named proposal in
+  front of a real client and bridge, and reports served content,
+  generation-stage refusals, first verdict, retries, end state, Hub mode
+  and Check count.
+- **It found a hang:** a refusal message longer than
+  `last_generation_error`'s 160 characters made the snapshot
+  unserialisable, killing the generation task and leaving the client in
+  GENERATING forever. Trimmed at the assignment sites.
+- **Offline routing failures are seed-specific**: placement is seeded by
+  `zone_id`, so the same content routes under a campaign's own id. Four
+  sample contents, including both "unroutable" ones, were accepted live
+  on the first attempt.
+
+
 ## 2026-09-19 (engine) — the door-opening mismatches
 
 - **Four cases, two causes.** A side doorway is cut at the middle of the

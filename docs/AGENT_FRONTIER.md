@@ -1,5 +1,65 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the last three sample cases, and a hang — 2026-09-19
+
+**`zone_05` was a real collision, and the check that would have caught it
+was never run.** `layout_findings` — written because "a builder whose
+incremental check has a blind spot passes the first and fails this one"
+— was called only from `room_contract_driver.gd`. Measured in the
+assembled Zone rather than argued: `{ "c013": 1, "c010": 1 }`, one
+collider from each room in the same 0.5 x 5.5 x 0.05 m box, and the
+shape is not a collar. The SEARCH check asked a different question from
+the committed one — a volume bound of half a cubic metre against a shape
+rule — so it asks the collar question now. **That is a tightening**, and
+`zone_05` now routes and is ACCEPTED.
+
+**`zone_07` and `zone_08` share a cause and the ladder never reached
+it.** `_wedged_after` mapped a wedged BRANCH room to its parent's spine
+index and found nothing when that parent was itself a branch — so both
+reported *"1 placement attempt(s); nudged nothing"*. It walks up the
+branch tree now. Both spend 7 attempts and get materially further
+(`zone_07` from 17 rooms standing to 81 pieces placed) and **both still
+exhaust the bounded budget**. That is the limit, recorded not widened.
+
+| declared sample | submitted | overall |
+|---|---|---|
+| before | 17 of 19 accepted, 2 refused | 17 of 20 |
+| **after** | **18 of 18 accepted, 0 refused** | **18 of 20** |
+
+`zone_07` and `zone_08` produce no manifest. The harness also stopped
+judging STALE manifests: one is written only for a Zone that lays out
+and was never deleted for one that stopped, so the census once read "19
+of 20 laid out" beside a PLAYABLE line saying 17.
+
+**NAMED CASES NOW RUN LIVE:** `make godot-named-case CASE=zone_05`.
+`--epsilon=sample` serves one proposal re-keyed to a disposable
+campaign's own identity and allocation; the client builds, certifies and
+submits it for a real verdict. Nothing is fabricated.
+
+**AND IT FOUND A HANG.** Pointed at a deliberately unroutable control,
+the client never built and the Hub sat in GENERATING. Not the routing:
+the validator's refusal message is longer than the 160 characters
+`last_generation_error` allows, so `CampaignSnapshot` raised on
+construction and killed the generation task AND the broadcast. **The
+refusal died on its own error string.** Trimmed at the assignment sites
+— widening the field moves the cliff. With it, the control refuses,
+falls back, composes, is ACCEPTED and entered, Hub ZONE_ACTIVE, 15 of 15
+Checks.
+
+**THE OFFLINE FAILURES ARE SEED-SPECIFIC.** `ZoneBuilder` seeds
+placement with `hash("<zone_id>|<theme>|layout")` and a campaign gives a
+proposal its OWN zone_id. `zone_05`, `zone_07`, `zone_08` and `zone_12`
+were each ACCEPTED first time live, 0 refusals, entered — including the
+two the census calls unroutable. So "unroutable" means "unroutable under
+the seed it was dumped with", and the phase prints that on every run.
+
+**Save proposal:** unimplemented, targeted repair still the direction,
+and the digest wording corrected — an anchor change needs a **new
+content digest** plus explicit `repaired_from` linkage, never a
+"same-digest repair". Committed-manifest protections untouched.
+
+
+
 ## ENGINE LANE — a door is not an opening while content stands in it — 2026-09-19
 
 **FOUR MISMATCHES, TWO CAUSES.** `RoomAudit.aperture_blockers` reported
