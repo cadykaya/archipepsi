@@ -1005,6 +1005,64 @@ func _named_case() -> void:
 	_finish(0 if _failures == 0 else 1)
 
 
+## WHAT THE MANIFEST RECORDED, AGAINST WHAT THE BUILD INSTANTIATED.
+##
+## **The defect this keeps visible.** `layout_from_json` parses a
+## manifest's `anchors` block and `_build_once` consumes only `rooms`
+## and `joins` -- so every anchor is RECOMPUTED from the replayed poses.
+## `commit_layout` promises a committed layout is replayed and never
+## replaced, and `_the_committed_placement_is_what_was_played` holds
+## that to 0.000 m for ROOM TRANSFORMS. It was never true of anchors,
+## and nothing measured them, which stayed invisible only while the rule
+## that computes them never changed. The 0.3 return-placement repair
+## changed it. Measured on the owner's own campaign and recorded in
+## `docs/RETURN_ANCHOR_PERSISTENCE.md`: a manifest carrying
+## `room:c021:return = [18.99, 1.53, 42.25]` recomputes to
+## `(24.27, 1.53, 39.65)` -- 5.89 m away.
+##
+## **THIS RUN CANNOT SPEAK TO THAT.** Both processes here are the same
+## build, so the rule that recomputes an anchor is the rule that
+## computed it: agreement proves PRESENT determinism and says nothing
+## about a save written by a different build. It is measured anyway,
+## because the day the same-build number stops being zero is the day
+## this became a live defect rather than a cross-build one -- and
+## nothing else would notice.
+##
+## Nothing is relocated to make this agree.
+func _anchors_match_the_manifest(zone: ZoneController) -> void:
+	var recorded: Dictionary = zone.committed_manifest.get("anchors", {})
+	if recorded.is_empty():
+		print("  ANCHORS: the committed manifest carries none; nothing "
+				+ "to compare")
+		return
+	var worst := 0.0
+	var worst_name := ""
+	var compared := 0
+	for name: String in recorded:
+		var was: Variant = recorded[name]
+		if typeof(was) != TYPE_ARRAY or (was as Array).size() != 3:
+			continue
+		var then := Vector3(float(was[0]), float(was[1]), float(was[2]))
+		var now: Vector3 = zone._zone_anchors.get(name, Vector3.INF)
+		if now == Vector3.INF:
+			continue
+		compared += 1
+		var gap := then.distance_to(now)
+		if gap > worst:
+			worst = gap
+			worst_name = name
+	print("  ANCHORS: %d recorded anchor(s) compared with what this "
+			% compared + "build instantiated; worst gap %.3f m%s"
+			% [worst, "" if worst_name == "" else " (%s)" % worst_name])
+	print("          SAME BUILD, so this is present determinism and NOT "
+			+ "evidence about a save written by another build; see "
+			+ "docs/RETURN_ANCHOR_PERSISTENCE.md")
+	_check(compared > 0, "the manifest's anchors could be compared with "
+			+ "the instantiated ones")
+	_check(worst < 0.05, "this build reinstantiates its own committed "
+			+ "anchors where it recorded them (worst %.3f m)" % worst)
+
+
 ## Anything the driver has to hand the next process that the SAVE does
 ## not carry: which Zone, which lock, which key. Written beside the save
 ## rather than into it, because the save is the bridge's and this is the
@@ -1346,6 +1404,7 @@ func _resume() -> void:
 	if from_at == Vector3.INF or to_at == Vector3.INF:
 		_finish(1)
 		return
+	await _anchors_match_the_manifest(zone)
 	var box: AABB = zone.room_bounds.get(str(notes["branch"]), AABB())
 	zone.player.global_position = from_at + Vector3.UP * 0.6
 	for _i in 12:

@@ -54,3 +54,5 @@ assets/themed/
 # is the verdict, not the file.
 godot/tests/fixtures/sample/layouts/
 .named-case-saves/
+# `godot-ordinary-live`: one ordinary Zone at default scale, its own save.
+.ordinary-live-saves/
