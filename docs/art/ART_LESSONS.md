@@ -66,6 +66,14 @@ not different capitalisation — `WALL_FIELD_3x3_SHEET.png` beside
 Not left to memory: `bridge/tests/test_case_collisions.py` fails on any pair,
 in any lane, so this can be introduced exactly once more and no further.
 
+**Undoing one costs a step on Windows, once.** Pulling across the rename
+deletes the old spelling — and on a case-insensitive filesystem that IS the
+file the surviving name points at, so the survivor disappears from the folder
+too and shows up as deleted. It is only missing from the working tree:
+`git checkout -- <the surviving path>` writes it back, and because the commit
+no longer holds two names that fold together, it stays. Expect this exactly
+once per Windows checkout that crosses the fix.
+
 ---
 
 ## Painting
