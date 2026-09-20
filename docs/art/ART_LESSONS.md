@@ -48,6 +48,24 @@ running", and is the same failure as a filter that cannot express failure.
 Use the `mcp__github__*` tools, and note that a scheduled heartbeat session
 does not have them.
 
+### L-100 · Two filenames differing only in capitals break Windows forever
+`WALL_FIELD_3x3.png` (the annotated sheet) and `wall_field_3x3.png` (the raw
+render) sat in the same review folder, differing only in case. On Linux that
+is two files. **On the owner's Windows checkout it is one**: git writes one,
+overwrites it with the other, and reports the loser as modified for the rest
+of time. `Update Archipepsi` refuses to pull over a modified file, so the
+owner could not update at all — the same dialog every launch, about a file
+they had never touched, and `git reset` did not help because the collision
+returns on the next checkout.
+
+**The rule: a filename must be unique ignoring case, everywhere in the
+repository.** A sheet and the render it is made from need different STEMS,
+not different capitalisation — `WALL_FIELD_3x3_SHEET.png` beside
+`wall_field_3x3.png`, never the same word twice in two cases.
+
+Not left to memory: `bridge/tests/test_case_collisions.py` fails on any pair,
+in any lane, so this can be introduced exactly once more and no further.
+
 ---
 
 ## Painting

@@ -116,8 +116,12 @@ def wall_sheet():
         dr.line([(x, y0), (x, y0 + t.height)], fill=(226, 84, 62))
         yy = y0 + i * 256
         dr.line([(PAD, yy), (PAD + t.width, yy)], fill=(226, 84, 62))
-    im.save(os.path.join(OUT, "WALL_FIELD_3x3.png"))
-    print("[sheet] WALL_FIELD_3x3.png  %dx%d" % im.size)
+    # `_SHEET`, and the suffix is load-bearing: this sheet used to be
+    # `WALL_FIELD_3x3.png`, one capital away from the `wall_field_3x3.png`
+    # it is rendered from. A Windows checkout cannot hold both -- see
+    # ART_LESSONS L-100 and `bridge/tests/test_case_collisions.py`.
+    im.save(os.path.join(OUT, "WALL_FIELD_3x3_SHEET.png"))
+    print("[sheet] WALL_FIELD_3x3_SHEET.png  %dx%d" % im.size)
 
 
 def layer_board():

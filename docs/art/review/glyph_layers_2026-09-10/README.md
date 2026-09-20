@@ -44,7 +44,7 @@ times**. Vertical joints stay at 2.0 m = 64, which divides it twice. The
 texel-density convention (32 texels/m) is unchanged. *A tiling texture's
 structural pitch has to divide its own tile, or the repeat shows.*
 
-`WALL_FIELD_3x3.png` is the evidence, tile boundaries marked in red.
+`WALL_FIELD_3x3_SHEET.png` is the evidence, tile boundaries marked in red.
 
 ### And the drips had to leave the field
 
@@ -171,7 +171,7 @@ whose trim is a full-height skirting. Not resolved here.
 | `wall_field.glyph`, `wall_skirt.glyph`, `decals/*.glyph` | the **editable projects**, eight of them, each reopenable without the scripts |
 | `wall_layers_record.json`, `decal_kit.json` | the look records, structure and timings |
 | `WALL_LAYERS.png` | field and skirting, apart and together |
-| `WALL_FIELD_3x3.png` | tiling, both axes, boundaries marked |
+| `WALL_FIELD_3x3_SHEET.png` | tiling, both axes, boundaries marked |
 | `DECAL_KIT.png` | native / over checker / on the wall, per mark |
 | `GODOT_CLEAN_VS_DRESSED.png` | four framings, clean beside dressed |
 | `passes/` | the passes that were wrong, kept |
