@@ -1,0 +1,131 @@
+{
+  "_comment": [
+    "Batch 042 deep_space_derelict field record. TRIAL ART: ships nowhere,",
+    "in no manifest, bound into no runtime."
+  ],
+  "glyph_root": "/home/user/ecms-glyph",
+  "glyph_sha": "6c80b6315912a70b44c28d566ddff608eafa234a",
+  "owner": "act_owner_skyiah",
+  "artist": "act_agent_arty",
+  "palette": "derelict_palette.json",
+  "texels_per_metre": 32,
+  "fields": [
+    {
+      "id": "derelict_wall",
+      "role": "wall",
+      "title": "bulkhead plating",
+      "native_size": [
+        128,
+        128
+      ],
+      "metres": [
+        4,
+        4
+      ],
+      "texels_per_metre": 32,
+      "tiles": "both axes",
+      "divides": {
+        "horizontal": true,
+        "vertical": true
+      },
+      "palette_entries": 9,
+      "images": {
+        "native": "derelict_wall.png",
+        "enlarged": "derelict_wall_4x.png",
+        "tiled": "derelict_wall_3x3.png",
+        "tiled_value": "derelict_wall_3x3_value.png"
+      },
+      "render_sha256": "3aec5b319b0647a6394c5eb81f51faeaa7866eea559141ab7193eeb5e72e205f",
+      "verified": true,
+      "studies_are_renders": false
+    },
+    {
+      "id": "derelict_floor",
+      "role": "floor",
+      "title": "deck plate with anti-slip tread",
+      "native_size": [
+        128,
+        128
+      ],
+      "metres": [
+        4,
+        4
+      ],
+      "texels_per_metre": 32,
+      "tiles": "both axes",
+      "divides": {
+        "horizontal": true,
+        "vertical": true
+      },
+      "palette_entries": 10,
+      "images": {
+        "native": "derelict_floor.png",
+        "enlarged": "derelict_floor_4x.png",
+        "tiled": "derelict_floor_3x3.png",
+        "tiled_value": "derelict_floor_3x3_value.png"
+      },
+      "render_sha256": "36864373905c1ce6b3a1adeb09886a051d4859f88c3fc0567c05a3bd4c300114",
+      "verified": true,
+      "studies_are_renders": false
+    },
+    {
+      "id": "derelict_trim",
+      "role": "trim",
+      "title": "structural frame channel",
+      "native_size": [
+        128,
+        32
+      ],
+      "metres": [
+        4,
+        1
+      ],
+      "texels_per_metre": 32,
+      "tiles": "horizontally; placed once at the floor junction",
+      "divides": {
+        "horizontal": true,
+        "vertical": true
+      },
+      "palette_entries": 6,
+      "images": {
+        "native": "derelict_trim.png",
+        "enlarged": "derelict_trim_4x.png",
+        "tiled": "derelict_trim_3x3.png",
+        "tiled_value": "derelict_trim_3x3_value.png"
+      },
+      "render_sha256": "bdfb68ce6e378d3bf55da1f6b5da2f430fc340826b9ad5196c8f2efdc3000411",
+      "verified": true,
+      "studies_are_renders": false
+    },
+    {
+      "id": "derelict_accent",
+      "role": "accent",
+      "title": "louvred machinery face with cold indicators",
+      "native_size": [
+        128,
+        128
+      ],
+      "metres": [
+        4,
+        4
+      ],
+      "texels_per_metre": 32,
+      "tiles": "both axes",
+      "divides": {
+        "horizontal": true,
+        "vertical": true
+      },
+      "palette_entries": 8,
+      "images": {
+        "native": "derelict_accent.png",
+        "enlarged": "derelict_accent_4x.png",
+        "tiled": "derelict_accent_3x3.png",
+        "tiled_value": "derelict_accent_3x3_value.png"
+      },
+      "render_sha256": "fe8827da4280359c3313a5e5fcd9ad5c18326129090aa40747b1e9848c8f4f3c",
+      "verified": true,
+      "studies_are_renders": false
+    }
+  ],
+  "elapsed_ms": 3022
+}

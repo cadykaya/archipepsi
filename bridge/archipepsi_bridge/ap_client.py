@@ -55,14 +55,27 @@ def ensure_ap_importable() -> None:
     _ap_imported = True
 
 
-ALL_LOCATION_IDS = tuple(range(C.FIRST_LOCATION_ID, C.LAST_LOCATION_ID + 1))
+#: The PROTOTYPE's thirty. A seed generated before the options carries no
+#: `campaign_scale`, and that is the campaign it is.
+ALL_LOCATION_IDS = tuple(C.PROTOTYPE_CONFIG.active_location_ids())
 
 
-def scout_message() -> dict:
-    """The bulk scout packet: all 30, create_as_hint MUST stay 0 — non-zero
+def location_ids_for(scale: C.CampaignConfig | None) -> tuple[int, ...]:
+    """The locations THIS seed actually has.
+
+    Scouting a fixed range was correct while there was one campaign size.
+    At 450 it scouts the first thirty, so the bridge never learns what is
+    on Check 031 and the allocator never offers it -- a 450-location
+    campaign that stops at 30 (CAMPAIGN_SCALE.md 2, 3).
+    """
+    return tuple((scale or C.PROTOTYPE_CONFIG).active_location_ids())
+
+
+def scout_message(scale: C.CampaignConfig | None = None) -> dict:
+    """The bulk scout packet. `create_as_hint` MUST stay 0 — non-zero
     always creates persistent hints, even for already-found locations."""
     return {"cmd": "LocationScouts",
-            "locations": list(ALL_LOCATION_IDS),
+            "locations": list(location_ids_for(scale)),
             "create_as_hint": 0}
 
 
@@ -105,6 +118,31 @@ def build_context_class(backend: "RealAPBackend", slot_name: str):
             super().event_invalid_game()
 
     return ArchipepsiContext
+
+
+def _scale_from_slot_data(slot_data: dict) -> C.CampaignConfig | None:
+    """The campaign scale the seed was generated with, or None.
+
+    None means "this seed predates the options", which is the PROTOTYPE
+    campaign -- not the current default. Returning the default here would
+    quietly resize somebody's finished 30-location run to 450 the first
+    time they reconnected with a newer build.
+
+    A malformed block is also None rather than a guess: an unreadable
+    scale is not a licence to invent one.
+    """
+    block = slot_data.get("campaign_scale")
+    if not isinstance(block, dict):
+        return None
+    try:
+        return C.CampaignConfig(
+            location_count=int(block["location_count"]),
+            zone_target_checks=int(block["zone_target_checks"]),
+            zone_budget=int(block["zone_budget"]))
+    except (KeyError, TypeError, ValueError) as exc:
+        log.warning("slot data carried an unusable campaign_scale (%s); "
+                    "treating this seed as a prototype campaign", exc)
+        return None
 
 
 class RealAPBackend:
@@ -181,7 +219,7 @@ class RealAPBackend:
 
     def _sync_truth_sets(self) -> None:
         ctx = self.ctx
-        ours = set(ALL_LOCATION_IDS)
+        ours = set(location_ids_for(self.data.campaign_scale))
         self.data.checked = set(ctx.checked_locations) & ours
         self.data.missing = set(ctx.missing_locations) & ours
 
@@ -203,7 +241,7 @@ class RealAPBackend:
     def _resolve_scouts(self) -> None:
         ctx = self.ctx
         scouts: dict[int, ScoutInfo] = {}
-        for loc in ALL_LOCATION_IDS:
+        for loc in location_ids_for(self.data.campaign_scale):
             ni = ctx.locations_info.get(loc)
             if ni is None:
                 continue
@@ -249,6 +287,8 @@ class RealAPBackend:
             d.team = int(ctx.team or 0)
             d.slot_id = int(ctx.slot or 0)
             d.slot_name = str(ctx.auth or "")
+            d.campaign_scale = _scale_from_slot_data(
+                getattr(ctx, "slot_data", None) or {})
             self._sync_truth_sets()
             log.info("connected as slot %d '%s' (seed %s); awaiting race-mode "
                      "answer before scouting", d.slot_id, d.slot_name,
@@ -268,10 +308,11 @@ class RealAPBackend:
                         await self.engine.broadcast_snapshot()
                     return
                 self._scout_sent = True
-                await ctx.send_msgs([scout_message()])
+                await ctx.send_msgs([scout_message(d.campaign_scale)])
         elif cmd == "LocationInfo":
             self._resolve_scouts()
-            if len(self.data.scouts) >= len(ALL_LOCATION_IDS):
+            if (len(self.data.scouts)
+                    >= len(location_ids_for(self.data.campaign_scale))):
                 self._rebuild_received()
                 self._sync_truth_sets()
                 d.synced = True

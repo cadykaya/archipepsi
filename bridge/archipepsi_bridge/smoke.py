@@ -1,9 +1,38 @@
-"""Headless full-loop smoke test — no Godot, no server, no API key.
+"""Headless BRIDGE-ONLY smoke test — no Godot, no server, no API key.
 
     python -m archipepsi_bridge.smoke
 
-Drives: connect (mock AP) → scout → allocate → fallback-generate → enter →
-claim → confirm → Echo → equip → quit → reload → verify nothing duplicated.
+Drives: connect (mock AP) → scout → allocate → fallback-generate → enter
+→ and stops there, because that is the last thing a process with no
+client can honestly do.
+
+**WHY IT STOPS THERE.** A graph Zone is ACTIVE the moment it is entered
+and UNCERTIFIED until its layout comes back; `claim_zone_check` refuses a
+Check against geometry the bridge has not validated. Nothing here sends a
+`layout_result` — there is no engine in this process to measure one — so
+no Zone is ever certified, and the claim/Echo/equip/reload half of the
+old smoke had been failing at its first claim since that guard landed.
+
+The guard is right, so this asserts it rather than working around it: the
+last thing this file does is prove that a Check claimed against an
+uncertified layout is REFUSED. Fabricating a layout to get past it would
+be validation constructing gameplay (F-4), and would turn a smoke test
+into a test of its own scaffolding.
+
+**WHERE THE REST WENT, unchanged and with the layout really accepted:**
+
+* `bridge/tests/test_full_loop.py` — claim, one Echo per foreign Check,
+  equip, quit, reload, nothing duplicated, second Zone generated. The
+  handler and the validator are real: the layout goes through
+  `engine.handle_layout_result` and `layout.validate`. The EVIDENCE is
+  synthetic — a test process has no engine to measure geometry with — so
+  it covers the campaign loop and nothing about whether real geometry
+  holds together.
+* `make godot-integration` — the separate PHYSICAL and LIVE coverage: a
+  real Godot client measuring real collision and certifying real chains
+  against a live bridge, driven to `ALL_CHECKS_CLEARED`. Neither
+  substitutes for the other.
+
 Exits non-zero on any assertion failure.
 """
 
@@ -62,69 +91,40 @@ async def run() -> None:
 
     await engine.handle_enter_zone(zone.zone_id)
     assert engine.snapshot().hub.mode == "ZONE_ACTIVE"
+    log.info("entered %s; layout_state %s", zone.zone_id,
+             engine.save.zone_by_id(zone.zone_id).layout_state)
 
+    # THE GUARD, ASSERTED RATHER THAN WORKED AROUND.
+    #
+    # This is the boundary of what a client-less process may claim about
+    # a campaign, and it is worth a test of its own: a Check claimed
+    # against a layout nobody validated must be refused, and the refusal
+    # must name the reason rather than failing somewhere vague.
     from . import transactions
-    for loc in zone.allocated_location_ids:
+    from .campaign import IntentError
+
+    rec = engine.save.zone_by_id(zone.zone_id)
+    assert rec.layout_state == "UNCERTIFIED", rec.layout_state
+    loc = sorted(zone.allocated_location_ids)[0]
+    try:
         await transactions.claim_check(engine, zone.zone_id, loc)
-        await _drain()
-    snap = engine.snapshot()
-    assert not snap.pending_checks, "pending checks left over"
-    assert snap.completed_zone_count == 1, "zone did not auto-complete"
-    assert snap.hub.mode in ("ZONE_AVAILABLE", "WAITING_FOR_AP"), snap.hub.mode
-
-    foreign = [l for l in zone.allocated_location_ids
-               if not backend.data.scouts[l].recipient_is_self]
-    assert len(snap.interpretations) == len(foreign), (
-        f"{len(foreign)} foreign checks but "
-        f"{len(snap.interpretations)} interpretations")
-    log.info("zone complete; %d echoes; coins %d; keys %d",
-             len(snap.interpretations), snap.coins_received,
-             snap.signal_keys)
-
-    actions = snap.mechanics.actions
-    if actions:
-        first = actions[0]
-        await engine.handle_slot_action(first.component.slot, first.component_id)
-        assert dict(engine.snapshot().slots.assigned())[
-            first.component.slot] == first.component_id
-        log.info("slotted %s into %s", first.component.display_name,
-                 first.component.slot)
-
-    before = engine.snapshot()
-
-    # Quit and reload: fresh engine, same save dir, same mock server truth.
-    engine2 = _engine(save_dir)
-    backend2 = MockAPBackend(engine2, server_state=server_state)
-    engine2.backend = backend2
-    await backend2.connect("", "Skyiah", "")
+    except IntentError as exc:
+        assert "layout" in str(exc).lower(), exc
+        log.info("claim against an uncertified layout refused: %s", exc)
+    else:  # pragma: no cover - reached only if the guard regresses
+        raise AssertionError(
+            f"check {loc} was claimed against an UNCERTIFIED layout; the "
+            "rule that a Zone's geometry is validated before its Checks "
+            "count has regressed")
     await _drain()
-    after = engine2.snapshot()
+    assert loc not in engine.snapshot().checked_location_ids, (
+        "a refused claim still marked the location checked")
 
-    assert after.coins_received == before.coins_received, "coins duplicated"
-    assert after.coins_spent == before.coins_spent
-    assert len(after.interpretations) == len(before.interpretations), \
-        "interpretations duplicated"
-    assert after.slots == before.slots
-    # The fold survives the round trip too: same log, same mechanics.
-    assert after.mechanics == before.mechanics
-    assert after.completed_zone_count == 1
-    assert len(after.checked_location_ids) == len(before.checked_location_ids)
-    log.info("reload OK: state identical (coins %d, echoes %d, %d checked)",
-             after.coins_received, len(after.interpretations),
-             len(after.checked_location_ids))
-
-    # One more zone to prove the loop continues after reload.
-    await engine2.handle_request_next_zone(False)
-    await engine2._generation_task
-    await _drain()
-    snap = engine2.snapshot()
-    assert snap.hub.mode == "ZONE_READY"
-    request_echoes = len(snap.interpretations)
-    log.info("second zone '%s' generated with %d owned echoes in context",
-             snap.active_zone.zone.display_name, request_echoes)
-
-    print("\nSMOKE OK — full loop: connect, scout, allocate, generate, "
-          "claim, confirm, echo, equip, save, reload, regenerate.")
+    print("\nSMOKE OK — bridge-only loop: connect, scout, allocate, "
+          "generate, enter, and a Check refused against an uncertified "
+          "layout.\n  The claim/Echo/equip/reload half needs an accepted "
+          "layout and lives in bridge/tests/test_full_loop.py and "
+          "`make godot-integration`.")
 
 
 def main() -> None:

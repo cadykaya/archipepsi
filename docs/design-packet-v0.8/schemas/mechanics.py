@@ -31,8 +31,10 @@ from typing import Literal, Union
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 try:
+    from . import constants as C
     from . import echo as E
 except ImportError:  # pragma: no cover
+    import constants as C
     import echo as E
 
 
@@ -246,7 +248,500 @@ AFFORDANCE_REQUIREMENTS: dict[str, dict[str, tuple[str, ...]]] = {
     # carries anyone. Requiring nothing is a real entry, not an omission.
     "bounce_pad": {},
     "moving_platform": {},
+    # AND THE CRATE IS SHOVED BY A BODY, so this requires nothing either.
+    #
+    # The temptation is to write `{"capabilities": ("manipulate",)}` here
+    # and it would be wrong twice over. `manipulate` is §29.3.1's
+    # question -- does a HOST qualify to be relied on by content authored
+    # at §29.3.2's 700 N / 20 m / 120 kg envelope -- and the chain does
+    # not need a host at all: the player walks into the crate and their
+    # own momentum moves it, which every character can do from the first
+    # Zone. Requiring a capability here would make a note behind a door
+    # into a gate, and `manipulate` is deliberately not in the
+    # capability vocabulary precisely so nothing can declare one.
+    "powered_door": {},
 }
+
+
+#: SEMANTIC CAPABILITIES (owner ruling, 2026-08-30). What a piece of
+#: content may ASK FOR, expressed as "can the player DO x", never as "does
+#: the player own item Y".
+#:
+#: The same shape and the same vocabulary as `AFFORDANCE_REQUIREMENTS`
+#: above, and deliberately so: a second taxonomy would be a second answer
+#: to a question that already has one. A capability is satisfied by ANY
+#: primitive in its set, which is the whole point -- `grapple` is not the
+#: canonical Grapple Echo, it is "owns an action whose primitive is in the
+#: grapple family", and an Echo the player built themselves that lands in
+#: that family satisfies it identically.
+#:
+#: Kept SMALL on purpose. Four capabilities, each one something an
+#: activity the engine already builds could genuinely need. The physics
+#: and construction capabilities an owner brief might name --
+#: MOVE_OBJECT_*, TETHER_OBJECT, APPLY_UPWARD_FORCE, PLACE_CONSTRUCT --
+#: are not here because nothing can satisfy them yet: they wait on the
+#: v9 physics tool, and a capability nothing can satisfy is a gate
+#: nothing opens.
+ACTIVITY_CAPABILITIES: dict[str, dict[str, tuple[str, ...]]] = {
+    # Hit a thing at range. Satisfied by the permanent baseline -- Static
+    # Pulse is the always-available ranged floor -- so it is a real
+    # requirement that is ALWAYS guaranteed, which is case A of the
+    # guarantee model and the reason case A is not hypothetical.
+    "ranged_hit": {"primitives": E.RANGED_PRIMITIVES},
+    # Reach across more than base movement covers.
+    "cross_long_gap": {"primitives": (
+        "dash", "air_dash", "double_jump", "wall_kick", "glide", "hover",
+        "blink", "grapple_to_surface", "grapple_swing")},
+    # The same family `grapple_anchor` names, for the same reason.
+    "grapple": {"primitives": (
+        "grapple_to_surface", "grapple_pull_target", "grapple_swing")},
+    "blink": {"primitives": ("blink",)},
+}
+
+#: Capabilities the permanent baseline satisfies for every player in every
+#: campaign, forever. Case A of the guarantee model.
+#:
+#: Exactly one entry, and that is not an oversight. Static Pulse is the
+#: permanent always-available RANGED floor, so `ranged_hit` is guaranteed
+#: to everyone. Base movement is base movement: it does not cross a long
+#: gap, grapple or blink, which is what makes those three capable of
+#: gating anything at all. Baseline melee, when it lands, belongs to the
+#: permanent starting device and its binding is not decided here.
+BASELINE_CAPABILITIES: tuple[str, ...] = ("ranged_hit",)
+
+
+def _capability_is_satisfied(
+    capability: str, primitives: set[str], stats: set[str]
+) -> bool:
+    """**IDENTITY, not qualification.** Is this a dash at all?
+
+    Deliberately Boolean and deliberately about names, exactly as §29.3.1
+    separates the two questions for `manipulate`: membership answers
+    "is this a manipulation Ability", never "can this one move the
+    crate". Here it answers "does the campaign own something in the dash
+    family", never "does that dash cross this gap".
+
+    **No numeric envelope belongs in this intersection.** `stats` is a
+    set of stat NAMES off the components — `_primitives_and_stats` adds
+    `component.stat`, a label — so putting a floor here would be
+    comparing a number against a word. Qualification reads resolved
+    provider parameters instead; see `qualifies_for_gap`.
+    """
+    requirement = ACTIVITY_CAPABILITIES.get(capability)
+    if requirement is None:
+        return False
+    needed_primitives = set(requirement.get("primitives", ()))
+    needed_stats = set(requirement.get("stats", ()))
+    if not needed_primitives and not needed_stats:
+        return True
+    return bool(primitives & needed_primitives or stats & needed_stats)
+
+
+def _primitives_and_stats(components) -> tuple[set[str], set[str]]:
+    primitives: set[str] = set()
+    stats: set[str] = set()
+    for component in components:
+        primitive = getattr(component, "primitive", None)
+        if primitive is not None:
+            primitives.add(primitive.type)
+        stat = getattr(component, "stat", None)
+        if stat is not None:
+            stats.add(stat)
+    return primitives, stats
+
+
+def owned_capabilities(mechanics) -> tuple[str, ...]:
+    """What this campaign can DO, over everything it owns (case B).
+
+    Over OWNED components rather than slotted ones, for the reason
+    `owned_affordance_tags` gives: you own the grapple whether or not it
+    is in a slot, and you can always slot it. Generation asks this
+    question, because a Zone whose contents depended on the loadout at
+    generation time would be a Zone that lies the moment the player
+    changes slots.
+    """
+    primitives, stats = _primitives_and_stats(
+        owned.component for owned in mechanics.owned)
+    return tuple(sorted(
+        capability for capability in ACTIVITY_CAPABILITIES
+        if capability in BASELINE_CAPABILITIES
+        or _capability_is_satisfied(capability, primitives, stats)))
+
+
+def available_capabilities(mechanics, slots) -> tuple[str, ...]:
+    """What the player can do RIGHT NOW, over what is actually equipped.
+
+    The other half of `owned_capabilities`, and the difference between
+    them is the whole reason NOT YET is a real state rather than dead
+    code: a Zone is generated against what the campaign OWNS, and the
+    player may walk into it having slotted something else. Then the
+    activity is legitimately there, legitimately theirs, and legitimately
+    not doable this minute -- which reads as NOT YET, never as a broken
+    switch.
+    """
+    # Field names read off the model rather than listed here: a fifth
+    # slot, or a rename, would otherwise silently stop counting and this
+    # function would quietly under-report what the player can do.
+    equipped = {getattr(slots, name, None)
+                for name in type(slots).model_fields}
+    equipped.discard(None)
+    primitives, stats = _primitives_and_stats(
+        owned.component for owned in mechanics.owned
+        if owned.component.component_id in equipped)
+    return tuple(sorted(
+        capability for capability in ACTIVITY_CAPABILITIES
+        if capability in BASELINE_CAPABILITIES
+        or _capability_is_satisfied(capability, primitives, stats)))
+
+
+# --- provider qualification, which is not capability identity ------------
+#
+# §29.3.1, applied to movement. `owned_capabilities` says the campaign
+# owns a dash. It does not say the dash crosses the gap in front of the
+# player, and §0-bis is explicit that the movement floor still binds: "a
+# declared Grapple gate is legal; an undeclared 3-metre jump is still a
+# bug." A weak dash is still a dash, and it must not certify a route it
+# cannot cross.
+
+#: The resolved parameter each movement primitive carries, and its UNIT.
+#:
+#: **These are not distances.** `Dash.force` is documented in `echo.py`
+#: as "instantaneous velocity change in m/s", bounded 4–20, and
+#: `echo_runtime.gd::_dash` spends it as `player.velocity += dir * force`
+#: along CAMERA-FORWARD — so it adds to whatever the player was already
+#: doing, and its direction carries the camera's pitch. `_air_dash`
+#: replaces horizontal velocity instead. How far either carries a body
+#: depends on the speed it was already moving at, the look angle, ground
+#: friction and air damping, and how long the body stays airborne. There
+#: is no closed form to write here and this lane must not invent one.
+MOBILITY_PARAMETER_UNITS: dict[str, str] = {
+    "dash": "m/s", "air_dash": "m/s", "double_jump": "m/s",
+    "wall_kick": "m/s", "blink": "m", "glide": "unitless",
+    "hover": "s", "grapple_to_surface": "m", "grapple_swing": "m",
+    "grapple_pull_target": "m",
+}
+
+#: Which resolved parameter each primitive is qualified on, BY NAME.
+#:
+#: Explicit rather than a `getattr(force) or getattr(range)` fallback.
+#: `Glide` carries a fall-speed fraction and `Hover` carries a duration
+#: in seconds; a lookup that shrugged at both would report them as "no
+#: envelope measured", which reads as "somebody should measure this"
+#: when the truth is "this lane does not know what measuring it would
+#: even mean". Those are different answers and a player stranded by the
+#: second one is stranded differently.
+QUALIFIABLE_PARAMETER: dict[str, str] = {
+    "dash": "force",
+    "air_dash": "force",
+    "double_jump": "force",
+    "wall_kick": "force",
+    "blink": "range",
+    "grapple_to_surface": "range",
+    "grapple_swing": "range",
+}
+
+
+class CrossingEvidence(Strict):
+    """One measured crossing, and EXACTLY what it certifies.
+
+    **A measurement is not a trend.** The first version of this held
+    `(parameter, reach)` points and read "the largest point at or below
+    the provider's value", so a crossing measured at force 12 silently
+    certified force 14 and force 20. Stronger is not automatically
+    suitable: a bigger impulse can overshoot the landing, clip a ceiling,
+    or carry the body past a ledge it was meant to arrive on. Whatever a
+    measurement covers, it says so here; nothing is extrapolated.
+
+    **And a crossing has conditions.** Reach alone certified a 6 m gap
+    whose landing was a hundred metres above the takeoff, because the
+    rise only ever reached the base-kit comparison. Evidence names the
+    rise band it was executed at, and anything outside that band is
+    outside its scope rather than covered by it.
+    """
+
+    primitive: str = Field(max_length=32)
+    #: Which parameter the ranges below are about — must match
+    #: `QUALIFIABLE_PARAMETER[primitive]`, so evidence cannot certify a
+    #: field qualification never reads.
+    parameter: str = Field(max_length=32)
+    parameter_min: float
+    parameter_max: float
+    #: The landing-height band, in metres relative to takeoff. Negative
+    #: is a drop.
+    rise_min_m: float
+    rise_max_m: float
+    #: Horizontal metres the crossing covered, at EVERY point in both
+    #: bands above. A floor, not a best case.
+    reach_m: float = Field(gt=0)
+    #: The controller and scene it was measured against — engine-owned
+    #: and opaque here, exactly like `PhysicsSetup.scene_digest`.
+    #:
+    #: **Recorded provenance, and a comparison waiting on its other
+    #: half.** `qualifies_for_gap` compares this against an
+    #: `expected_setup` the caller supplies, and refuses a row measured
+    #: somewhere else. What is not settled is where that expected
+    #: identity comes from — the engine computes it, like
+    #: `scene_digest`, and nobody has agreed what it covers or when it
+    #: is handed over. Until that is agreed this is not yet working
+    #: stale-evidence invalidation; it is a field that records which
+    #: setup was measured, and a comparison ready for the day the other
+    #: side of it exists.
+    setup_digest: str = Field(min_length=16, max_length=16,
+                              pattern=r"^[0-9a-f]{16}$")
+
+    def covers(self, value: float, rise_m: float) -> bool:
+        return (self.parameter_min - 1e-9 <= value <= self.parameter_max + 1e-9
+                and self.rise_min_m - 1e-9 <= rise_m
+                <= self.rise_max_m + 1e-9)
+
+
+#: Measured crossings per primitive. **Engine-owned, and empty.**
+#:
+#: The pattern is §29.3.2's, which already solved this for `manipulate`:
+#: a mandatory-route envelope, content authored against the MINIMUM, and
+#: a reference solution replayed at exactly that minimum so anything
+#: qualifying can solve it. Only the engine can produce the equivalent
+#: here, for the same reason it owns `scene_digest`: the bridge has no
+#: body, no controller and no physics frame.
+#:
+#: Until an entry covers a provider's parameter AND the rise being
+#: asked for, NOTHING QUALIFIES. That is the honest state rather than a
+#: placeholder: a gate with no measured crossing behind it is a route
+#: nobody has shown the player can make.
+CROSSING_EVIDENCE: dict[str, tuple[CrossingEvidence, ...]] = {}
+
+
+class ProviderQualification(Strict):
+    """Can THIS provider make THIS crossing, under THESE conditions?
+
+    Separate from `CapabilityGuarantee`, which asks whether the player
+    can get a capability at all. Both have to hold, and they are
+    different obligations: Archipelago proves the capability is
+    OBTAINABLE, a measured crossing proves the provider is SUITABLE.
+    Neither substitutes for the other.
+    """
+
+    capability: str = Field(max_length=32)
+    qualifies: bool
+    reason: Literal[
+        # The base kit already covers it; no provider is needed and the
+        # crossing is not a gate at all.
+        "within_base_kit",
+        # Evidence covers this provider's parameter and this rise, and
+        # its measured reach spans the gap.
+        "meets_envelope",
+        # Same, and it does not.
+        "below_envelope",
+        # The campaign owns nothing in the family.
+        "no_provider",
+        # The family is owned; nothing has been measured for it at all.
+        "no_envelope_measured",
+        # Measurements exist and none covers this parameter value or
+        # this rise. A different answer from the one above: something
+        # was measured, just not this.
+        "outside_measured_scope",
+        # A row filed under this primitive names a different primitive
+        # or a parameter this provider is not qualified on. Not a gap in
+        # the measurements — a defect in them, and reporting it as
+        # "nobody measured this" would send someone to measure a thing
+        # that was already measured and misfiled.
+        "evidence_misfiled",
+        # Every covering row was measured against a different setup.
+        "evidence_for_another_setup",
+        # No `expected_setup` was supplied, so no row can be tied to the
+        # setup the question is being asked about. Refused rather than
+        # waved through: evidence that might be about another build is
+        # not evidence about this one.
+        "setup_identity_unknown",
+        # The family member carries no parameter qualification reads —
+        # glide, hover. Not a gap in the measurements; a gap in what
+        # this lane knows how to ask for.
+        "provider_not_qualifiable",
+    ]
+    #: The gap asked for and the reach proved, both metres, when known.
+    gap_m: float | None = None
+    reach_m: float | None = None
+    rise_m: float | None = None
+
+
+def qualifies_for_gap(capability: str, mechanics, gap_m: float,
+                      rise_m: float = 0.0,
+                      expected_setup: str | None = None
+                      ) -> ProviderQualification:
+    """Does anything the campaign owns actually make this crossing?
+
+    **A TESTED HELPER, NOT YET WIRED.** Nothing in production calls it —
+    see `AP_CAPABILITY_LOGIC.md` §8c for the consumer it is waiting on
+    and why that consumer is `layout.validate` rather than generation.
+    What refuses an undeclared gate today is still
+    `topology.reachability`, on the Archipelago side of the question.
+
+    `gap_m` is the crossing the route needs and `rise_m` its landing
+    height relative to takeoff, both metres. The base kit's own reach is
+    `C.max_safe_gap(rise_m)` — derived from the same constants the
+    engine generates its copy from — so a gap inside that needs no
+    provider and is not a gate.
+    """
+    base = C.max_safe_gap(rise_m)
+    if gap_m <= base:
+        return ProviderQualification(
+            capability=capability, qualifies=True,
+            reason="within_base_kit", gap_m=gap_m, reach_m=base,
+            rise_m=rise_m)
+
+    wanted = set(ACTIVITY_CAPABILITIES.get(capability, {})
+                 .get("primitives", ()))
+    best: float | None = None
+    saw_provider = False
+    saw_qualifiable = False
+    saw_measurement = False
+    misfiled = False
+    other_setup = False
+    unknown_setup = False
+    for owned in mechanics.owned:
+        primitive = getattr(owned.component, "primitive", None)
+        if primitive is None or primitive.type not in wanted:
+            continue
+        saw_provider = True
+        field = QUALIFIABLE_PARAMETER.get(primitive.type)
+        if field is None:
+            continue
+        value = getattr(primitive, field, None)
+        if value is None:
+            continue
+        saw_qualifiable = True
+        for evidence in CROSSING_EVIDENCE.get(primitive.type, ()):
+            saw_measurement = True
+            # IDENTITY BEFORE SHAPE. A row is evidence about THIS
+            # provider only if it says so: filed under the primitive it
+            # names, about the parameter this primitive is qualified on.
+            # Neither was checked, so a row naming `blink` certified a
+            # dash and a row naming `range` certified a `force` reading.
+            if (evidence.primitive != primitive.type
+                    or evidence.parameter != field):
+                misfiled = True
+                continue
+            if not evidence.covers(float(value), rise_m):
+                continue
+            # AND MEASURED AGAINST THE SETUP BEING ASKED ABOUT. A
+            # well-formed digest from another build is not a crossing in
+            # this one.
+            if expected_setup is None:
+                unknown_setup = True
+                continue
+            if evidence.setup_digest != expected_setup:
+                other_setup = True
+                continue
+            if best is None or evidence.reach_m > best:
+                best = evidence.reach_m
+
+    if not saw_provider:
+        return ProviderQualification(
+            capability=capability, qualifies=False, reason="no_provider",
+            gap_m=gap_m, reach_m=base, rise_m=rise_m)
+    if not saw_qualifiable:
+        return ProviderQualification(
+            capability=capability, qualifies=False,
+            reason="provider_not_qualifiable", gap_m=gap_m, rise_m=rise_m)
+    if best is None:
+        # Ordered by what the answer sends someone to do. A misfiled row
+        # is a defect in the evidence; a wrong setup is a re-measure; an
+        # unknown setup is a missing input; out of scope is a gap; none
+        # at all is work not started.
+        if misfiled:
+            reason = "evidence_misfiled"
+        elif other_setup:
+            reason = "evidence_for_another_setup"
+        elif unknown_setup:
+            reason = "setup_identity_unknown"
+        elif saw_measurement:
+            reason = "outside_measured_scope"
+        else:
+            reason = "no_envelope_measured"
+        return ProviderQualification(
+            capability=capability, qualifies=False, reason=reason,
+            gap_m=gap_m, rise_m=rise_m)
+    return ProviderQualification(
+        capability=capability, qualifies=best >= gap_m,
+        reason="meets_envelope" if best >= gap_m else "below_envelope",
+        gap_m=gap_m, reach_m=best, rise_m=rise_m)
+
+
+class CapabilityGuarantee(Strict):
+    """Why a capability is available, or that it is not (owner ruling).
+
+    THE INVARIANT: **no requirement before guarantee.** Content may
+    require a capability. It may not require one the generator cannot
+    prove the player can get. `reason` is what the proof was, so a
+    refusal can say which door was shut rather than only that one was.
+    """
+    capability: str = Field(max_length=32)
+    guaranteed: bool
+    reason: Literal[
+        # A: the permanent baseline satisfies it for everyone, forever.
+        "permanent_baseline",
+        # B: authoritative campaign state proves the player owns something
+        #    that satisfies it.
+        "already_possessed",
+        # C: the Zone itself establishes it before the requirement. No
+        #    producer yet -- see `capability_guarantee`.
+        "established_in_zone",
+        # D: the Forge can build something that satisfies it. Deferred.
+        "forge_constructible",
+        "not_guaranteed",
+    ]
+
+
+def capability_guarantee(
+    capability: str,
+    mechanics,
+    established_earlier: tuple[str, ...] = (),
+) -> CapabilityGuarantee:
+    """Can the generator PROVE the player will be able to do this?
+
+    The four cases are the owner's, in the owner's order, and the order
+    matters: the cheapest proof that holds is the one reported, so a
+    refusal is only ever reported when every case failed.
+
+    A. PERMANENT BASELINE -- `BASELINE_CAPABILITIES`.
+    B. ALREADY POSSESSED -- `owned_capabilities`, over the fold, which is
+       the authoritative campaign state. Not over the loadout: the player
+       can always slot what they own.
+    C. ESTABLISHED EARLIER IN THE ZONE -- the caller passes the
+       capabilities every route to this point has already been proven to
+       pass through. **Nothing produces that set yet**, and it is
+       deliberately a parameter rather than a lookup so that when a
+       capability-establishment construct exists it plugs in here and
+       every caller inherits it. Passing `()` -- which is what every
+       caller does today -- means "the Zone establishes nothing", which
+       is true.
+    D. FORGE-CONSTRUCTIBLE -- **not implemented.** It needs Forge access,
+       guaranteed ingredients, and a proof that a legal configuration
+       satisfying `capability` can be built from them, none of which
+       exist. It is named in `reason` and unreachable, so the day the
+       Forge lands the shape of the answer does not have to change.
+
+    An unknown capability is refused rather than defaulted. A typo that
+    silently means "no requirement" is the failure this whole invariant
+    exists to prevent.
+    """
+    if capability not in ACTIVITY_CAPABILITIES:
+        return CapabilityGuarantee(
+            capability=capability, guaranteed=False, reason="not_guaranteed")
+    if capability in BASELINE_CAPABILITIES:
+        return CapabilityGuarantee(
+            capability=capability, guaranteed=True,
+            reason="permanent_baseline")
+    if capability in owned_capabilities(mechanics):
+        return CapabilityGuarantee(
+            capability=capability, guaranteed=True,
+            reason="already_possessed")
+    if capability in established_earlier:
+        return CapabilityGuarantee(
+            capability=capability, guaranteed=True,
+            reason="established_in_zone")
+    return CapabilityGuarantee(
+        capability=capability, guaranteed=False, reason="not_guaranteed")
 
 
 def owned_affordance_tags(mechanics) -> tuple[str, ...]:

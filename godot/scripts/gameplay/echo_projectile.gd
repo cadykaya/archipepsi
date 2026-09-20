@@ -38,23 +38,38 @@ var shooter: Player
 var _velocity := Vector3.ZERO
 var _spent := false
 
+## The silhouette this shot is wearing, decided in `_ready` from the
+## flight fields and never read back by anything that moves it.
+var silhouette := ProjectileSilhouette.STRAIGHT
+
+## Presentation lives under here, so orienting or animating it cannot
+## reach the collider. Same rule, same reason as `Enemy`: `scale` on a
+## body scales its `CollisionShape3D` child, and a visual that grows a
+## hitbox is a bug nobody sees until a shot misses.
+var _visual: Node3D
+
 func _ready() -> void:
 	var shape := CollisionShape3D.new()
 	var sphere := SphereShape3D.new()
+	# One radius for all three silhouettes. What a shot LOOKS like is
+	# decided below; what it HITS is decided here, and the two must not
+	# be able to influence each other.
 	sphere.radius = 0.25
 	shape.shape = sphere
 	add_child(shape)
-	var visual := MeshInstance3D.new()
-	var mesh := SphereMesh.new()
-	var scale_up := 1.0 if blast_radius <= 0.0 else 1.5
-	mesh.radius = 0.22 * scale_up
-	mesh.height = 0.44 * scale_up
-	visual.mesh = mesh
-	visual.material_override = ThemeMaterials.glow_material(tint, 2.5)
-	add_child(visual)
+
+	_visual = Node3D.new()
+	_visual.name = "Visual"
+	add_child(_visual)
+	silhouette = ProjectileSilhouette.for_behaviour(gravity_scale,
+			blast_radius)
+	_visual.add_child(ContentInstantiator.projectile_visual(
+			silhouette, tint))
+
 	monitoring = true
 	body_entered.connect(_on_body_entered)
 	_velocity = direction.normalized() * speed
+	_face_travel()
 
 func _physics_process(delta: float) -> void:
 	if _spent:
@@ -80,6 +95,7 @@ func _physics_process(delta: float) -> void:
 	# the enemy hit direction follow the arc instead of the launch angle.
 	if _velocity.length() > 0.0001:
 		direction = _velocity.normalized()
+		_face_travel()
 
 	lifetime -= delta
 	if fuse > 0.0:
@@ -94,6 +110,22 @@ func _physics_process(delta: float) -> void:
 			_detonate()
 		else:
 			queue_free()
+
+## Points the silhouette down the arc rather than down the launch angle,
+## so a falling shot visibly noses over as it drops.
+##
+## Rotates the VISUAL, never this node: the collider is a sphere and
+## would not notice, but the rule that presentation cannot touch a body's
+## transform is the rule whether or not this particular shape would care.
+func _face_travel() -> void:
+	if _visual == null or direction.length_squared() < 0.0001:
+		return
+	var forward := direction.normalized()
+	var up := Vector3.UP
+	if absf(forward.dot(up)) > 0.999:
+		up = Vector3.FORWARD          # straight up or down: pick another
+	_visual.basis = Basis.looking_at(forward, up)
+
 
 ## Whether the swept ray hit something that should take the shot rather
 ## than stop it. A breakable panel counts: a projectile that punched

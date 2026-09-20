@@ -1,0 +1,155 @@
+rm -rf /home/user/archipepsi/.named-case-saves
+cd bridge && ARCHIPEPSI_SAVE_DIR=/home/user/archipepsi/.named-case-saves \
+  ARCHIPEPSI_SAMPLE_ONCE=1 \
+  ARCHIPEPSI_SAMPLE_ZONE=/home/user/archipepsi/godot/tests/fixtures/sample/zone_08.json \
+  python3 -m archipepsi_bridge --ap=mock --epsilon=sample \
+  --mock-scale=default & \
+BRIDGE_PID=$!; sleep 3; \
+kill -0 $BRIDGE_PID 2>/dev/null || { \
+  echo "bridge did not start (port already serving? bad CASE?)"; \
+  exit 1; }; \
+godot-bin/godot --headless --path godot -- --reload-phase=named-case \
+  --named-case-at=8 \
+  > /tmp/archipepsi-named-case.log 2>&1; \
+STATUS=$?; kill $BRIDGE_PID; \
+grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )" \
+  /tmp/archipepsi-named-case.log | tail -40; \
+if [ $STATUS -ne 0 ]; then exit $STATUS; fi; \
+if grep -q "SCRIPT ERROR" /tmp/archipepsi-named-case.log; then \
+  echo "-- a script error was raised. A run that crashed and still"; \
+  echo "-- printed its report is not a pass: the missing-player"; \
+  echo "-- crash after a failed build printed one."; \
+  grep -m5 "SCRIPT ERROR" /tmp/archipepsi-named-case.log; \
+  exit 1; \
+fi
+
+  Archipepsi bridge v0.1.0  (9ea174372622*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     sample
+    saves       /home/user/archipepsi/.named-case-saves
+
+    (no campaign there yet; it is created on first connect)
+
+2026-09-20 04:31:45,317 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-20 04:31:45,317 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-20 04:31:50,685 websockets.server INFO connection open
+2026-09-20 04:31:50,685 archipepsi.server INFO client connected (1 total)
+2026-09-20 04:31:50,699 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-20 04:31:50,701 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-20 04:31:50,775 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,775 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,775 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,775 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,775 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,778 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+  sample: serving zone_08.json as 'zone_001'  (once: a retry will be composed ordinarily)
+2026-09-20 04:31:50,817 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,817 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,817 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,817 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,818 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,832 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+  sample: serving zone_08.json as 'zone_002'  (once: a retry will be composed ordinarily)
+2026-09-20 04:31:50,838 archipepsi.campaign INFO zone zone_002 is ABANDONED by the time generation returned; discarding this outcome
+2026-09-20 04:31:50,856 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,856 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,857 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,857 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,857 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,859 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+  sample: serving zone_08.json as 'zone_003'  (once: a retry will be composed ordinarily)
+2026-09-20 04:31:50,898 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,898 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,898 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,899 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,899 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,901 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+  sample: serving zone_08.json as 'zone_004'  (once: a retry will be composed ordinarily)
+2026-09-20 04:31:50,940 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,940 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,940 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,940 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,940 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,942 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+  sample: serving zone_08.json as 'zone_005'  (once: a retry will be composed ordinarily)
+2026-09-20 04:31:50,998 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,998 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,998 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,998 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:50,998 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,000 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+  sample: serving zone_08.json as 'zone_006'  (once: a retry will be composed ordinarily)
+2026-09-20 04:31:51,047 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,047 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,047 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,048 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,048 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,050 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+  sample: serving zone_08.json as 'zone_007'  (once: a retry will be composed ordinarily)
+2026-09-20 04:31:51,095 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,096 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,096 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,096 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,096 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:51,098 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+  sample: serving zone_08.json as 'zone_008'  (once: a retry will be composed ordinarily)
+2026-09-20 04:31:52,578 archipepsi.campaign WARNING zone zone_008 could not be built by the engine: branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
+2026-09-20 04:31:52,591 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:52,591 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:52,591 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:52,592 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:52,592 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:52,594 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+  sample: 'zone_008' has had the sample once; composing this one ordinarily (fallback)
+2026-09-20 04:31:54,462 archipepsi.campaign WARNING zone zone_008 could not be built by the engine: branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
+2026-09-20 04:31:54,475 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:54,475 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:54,475 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:54,475 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:54,475 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-20 04:31:54,478 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+  sample: 'zone_008' has had the sample once; composing this one ordinarily (fallback)
+2026-09-20 04:31:56,336 archipepsi.campaign WARNING zone zone_008 could not be built by the engine: branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
+2026-09-20 04:31:56,730 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/home/user/archipepsi/bridge/archipepsi_bridge/server.py", line 84, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-20 04:31:56,731 archipepsi.server INFO client disconnected (0 left)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  ADVANCING: generating and abandoning 7 Zone(s) so the sample is served as this campaign's Zone 8 -- the id it was dumped under, and therefore its placement seed
+  NAMED CASE: zone_008, 15 Check(s) allocated to it
+  IDENTITY: laid out as 'zone_008' -- the layout seed follows the campaign's zone_id, not the sample's, so this is that CONTENT under a different pose sequence
+  BUILD: the engine could not construct this proposal -- branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
+  REPORTED: build_failed for 'zone_008', proposal d6b5eb7b1fcc7cd7, attempt 0
+  ok: the failure was reported for the Zone that failed
+  ok: the failure was reported for the attempt it belongs to (0)
+  ok: the client did not enter a Zone it could not build
+  GENERATION: no proposal was refused; this is the one the provider offered first
+  FIRST RESULT: BUILD FAILED (no layout was submitted, so there is no verdict to wait for)
+  RECOVERY: at least 2 refusal(s) seen over 3 entry attempt(s); ended EXHAUSTED
+  AFTER: hub ZONE_FAILED; 'zone_008' is parked, so its record is off the snapshot; the Hub names it as the discard target and refuses a new Zone over it, which is its 15 Check(s) still reserved; entered=false
+  ok: the Hub offers a way out of the Zone that cannot be built
+  ok: the parked Zone still reserves its Checks -- a new Zone is refused over it
+  ok: the Hub still reports a mode
+  ok: the Zone reached a terminal answer rather than leaving the client waiting (EXHAUSTED)
+  TIMELINE:
+       0.00s  provider proposal offered for 'zone_008' and accepted by the provider-side validator (15 Check(s) allocated)
+       0.00s  enter_zone sent; the client begins the engine build
+       1.49s  ENGINE BUILD FAILED -- branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
+       1.49s  client sent build_failed for 'zone_008' proposal d6b5eb7b1fcc7cd7 attempt 0
+       1.86s  bridge charged attempt 1 to 'zone_008'
+       1.86s  the recomposed Zone is offered again; entering it (attempt 2) the way the portal does
+       3.73s  bridge charged attempt 2 to 'zone_008'
+       3.73s  the recomposed Zone is offered again; entering it (attempt 3) the way the portal does
+       5.61s  EXHAUSTED: the Zone spent its budget and is parked; the Hub offers a discard rather than a way in
+       5.61s  final: hub ZONE_FAILED; parked, Checks still reserved
+NAMED CASE zone_008: first=BUILD FAILED (no layout was submitted, so there is no verdict to wait for) refusals=2 ended=EXHAUSTED
+GODOT RELOAD TESTS OK (7 checks)

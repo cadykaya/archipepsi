@@ -295,6 +295,9 @@ def test_reconcile_assigns_batch_order_by_location_id(monkeypatch):
                 checked={LOC_A, LOC_B}, missing=set(),
             )
             self.backend = None
+            # `reconcile` asks the campaign where its goal is, because
+            # that moved with `location_count` (CAMPAIGN_SCALE.md 2).
+            self.config = save.scale.config()
 
         async def echo_backlog_sweep(self):
             return None

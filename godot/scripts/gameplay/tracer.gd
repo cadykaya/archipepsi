@@ -16,12 +16,12 @@ static func spawn(parent: Node, from: Vector3, to: Vector3, color: Color,
 	if parent == null:
 		return
 	var tracer := Tracer.new()
-	var mesh := BoxMesh.new()
+	var beam := BoxMesh.new()
 	var length := maxf(0.01, from.distance_to(to))
 	var width: float = STYLE_WIDTH.get(style, 0.03)
 	lifetime *= float(STYLE_LIFETIME.get(style, 1.0))
-	mesh.size = Vector3(width, width, length)
-	tracer.mesh = mesh
+	beam.size = Vector3(width, width, length)
+	tracer.mesh = beam
 	tracer.material_override = ThemeMaterials.glow_material(color, 2.2)
 	parent.add_child(tracer)
 	tracer.global_position = (from + to) / 2.0

@@ -295,45 +295,45 @@ func activate() -> void:
 	player.kick_viewmodel(0.12)
 	_flash_for(_primitive_type())
 
-	var primitive := _primitive()
+	var prim := _primitive()
 	var modifiers: Array = equipped.get("modifiers", [])
 	var damaged: Array[Node] = []
 	_held = true
 	match _primitive_type():
 		# -- close combat
-		"melee_swing": damaged = _melee_arc(primitive)
-		"melee_thrust": damaged = _melee_thrust(primitive)
-		"slam_ground": _slam_ground(primitive)
+		"melee_swing": damaged = _melee_arc(prim)
+		"melee_thrust": damaged = _melee_thrust(prim)
+		"slam_ground": _slam_ground(prim)
 		# -- ranged
-		"hitscan_damage": damaged = _hitscan(primitive)
-		"projectile_damage": _projectile(primitive, modifiers)
-		"arc_lob": _arc_lob(primitive, modifiers)
-		"burst_fire": _begin_burst(primitive)
+		"hitscan_damage": damaged = _hitscan(prim)
+		"projectile_damage": _projectile(prim, modifiers)
+		"arc_lob": _arc_lob(prim, modifiers)
+		"burst_fire": _begin_burst(prim)
 		"charge_shot": _charge = 0.0        # resolves on release
 		# -- movement
-		"dash": _dash(primitive)
-		"air_dash": _air_dash(primitive)
-		"double_jump": _double_jump(primitive)
-		"wall_kick": _wall_kick(primitive)
-		"glide": _begin_glide(primitive)
-		"blink": _blink(primitive)
-		"grapple_to_surface": _grapple(primitive)
-		"grapple_pull_target": damaged = _grapple_pull_target(primitive)
-		"grapple_swing": _grapple_swing(primitive)
+		"dash": _dash(prim)
+		"air_dash": _air_dash(prim)
+		"double_jump": _double_jump(prim)
+		"wall_kick": _wall_kick(prim)
+		"glide": _begin_glide(prim)
+		"blink": _blink(prim)
+		"grapple_to_surface": _grapple(prim)
+		"grapple_pull_target": damaged = _grapple_pull_target(prim)
+		"grapple_swing": _grapple_swing(prim)
 		# -- defensive
-		"shield": _shield(primitive)
-		"parry": _begin_parry(primitive)
-		"heal_self": player.heal(float(primitive["amount"]))
+		"shield": _shield(prim)
+		"parry": _begin_parry(prim)
+		"heal_self": player.heal(float(prim["amount"]))
 		"block": pass               # held: the absorb path reads the hold
-		"cleanse": player.statuses.cleanse(int(primitive.get("count", 1)))
+		"cleanse": player.statuses.cleanse(int(prim.get("count", 1)))
 		# -- powered / linked (S5)
 		"beam_sustained": pass      # resolves per frame while held
-		"hover": _begin_hover(primitive)
-		"restore_resource": _restore_resource(primitive)
+		"hover": _begin_hover(prim)
+		"restore_resource": _restore_resource(prim)
 		# -- utility
-		"place_marker": _place_marker(primitive)
-		"scan_mark": _scan_mark(primitive)
-		"pull_pickup": _pull_pickup(primitive)
+		"place_marker": _place_marker(prim)
+		"scan_mark": _scan_mark(prim)
+		"pull_pickup": _pull_pickup(prim)
 
 	if _press_refunded:
 		# A verb that refused after the cooldown was charged -- a blink
@@ -356,7 +356,7 @@ func activate() -> void:
 ##
 ## `player.gd` calls this on every key-up, whether or not the matching
 ## `activate()` got past the cooldown, the conditions, the gates and the
-## cost. Matching on the primitive alone meant a `charge_shot` fired from
+## cost. Matching on the prim alone meant a `charge_shot` fired from
 ## the key-up of a press that was refused: no cooldown charged, no gate
 ## checked, no cost paid, a `min_damage` bolt every tap, bounded only by
 ## how fast the player could press the key.
@@ -428,7 +428,7 @@ func can_activate() -> bool:
 		return pool.value_of(source) > 0.0
 	return pool.value_of(source) >= float(link.get("strength", 1.0))
 
-## The equipped Action's primitive, for anything that needs to know what
+## The equipped Action's prim, for anything that needs to know what
 ## kind of thing a press would do without pressing it.
 func primitive() -> Dictionary:
 	return _primitive()
@@ -450,7 +450,7 @@ func _pay_powers_cost() -> bool:
 
 ## `fills(action → resource)`: a successful use adds strength. The
 ## restore_resource verb fills by its OWN amount through the same link —
-## the link says where, the primitive says how much — so it is skipped
+## the link says where, the prim says how much — so it is skipped
 ## here rather than counted twice.
 func _apply_fills() -> void:
 	if pool == null or _primitive_type() == "restore_resource":
@@ -461,14 +461,14 @@ func _apply_fills() -> void:
 			pool.refill(str(link.get("target", "")),
 					float(link.get("strength", 1.0)))
 
-func _restore_resource(primitive: Dictionary) -> void:
+func _restore_resource(prim: Dictionary) -> void:
 	if pool == null:
 		return
 	var my_id := str(equipped.get("component_id", ""))
 	for link: Dictionary in _link_edges("fills"):
 		if str(link.get("source", "")) == my_id:
 			pool.refill(str(link.get("target", "")),
-					float(primitive.get("amount", 0.0)))
+					float(prim.get("amount", 0.0)))
 
 ## Drain the powering resource; false means the bar ran dry and the hold
 ## must end. The spend path keeps regen_delay honest per tick.
@@ -483,22 +483,22 @@ func _beam_tick(delta: float) -> void:
 	if not _drain(delta):
 		_held = false
 		return
-	var primitive := _primitive()
-	var hit := player.camera_ray(float(primitive.get("range", 20.0)))
+	var prim := _primitive()
+	var hit := player.camera_ray(float(prim.get("range", 20.0)))
 	if not hit.is_empty():
 		var target: Variant = hit["collider"]
 		if Damageable.of(target) != null:
 			player.report_hit(Damageable.hit(
 					target,
-					float(primitive.get("damage_per_second", 0.0)) * delta
+					float(prim.get("damage_per_second", 0.0)) * delta
 					* player.damage_dealt_mult,
 					-player.camera.global_transform.basis.z, 0.0))
 	player.muzzle_flash(1.1, source_color())
 
-func _begin_hover(primitive: Dictionary) -> void:
+func _begin_hover(prim: Dictionary) -> void:
 	_hovering = true
-	_hover_scale = float(primitive.get("gravity_multiplier", 0.5))
-	_hover_left = float(primitive.get("max_duration", 1.0))
+	_hover_scale = float(prim.get("gravity_multiplier", 0.5))
+	_hover_left = float(prim.get("max_duration", 1.0))
 	_republish_hover()
 
 func _end_hover() -> void:
@@ -540,9 +540,9 @@ func block_reduction() -> float:
 		return clampf(float(_primitive().get("reduction", 0.0)), 0.0, 0.9)
 	return 0.0
 
-func _scan_mark(primitive: Dictionary) -> void:
-	var reach := float(primitive.get("range", 20.0))
-	var duration := float(primitive.get("duration", 5.0))
+func _scan_mark(prim: Dictionary) -> void:
+	var reach := float(prim.get("range", 20.0))
+	var duration := float(prim.get("duration", 5.0))
 	for node in get_tree().get_nodes_in_group("enemies"):
 		if node is Node3D and not node.is_queued_for_deletion() \
 				and (node as Node3D).global_position.distance_to(
@@ -615,11 +615,11 @@ func _apply_modifiers(modifiers: Array, damaged: Array[Node]) -> void:
 ## Everything inside `reach` and within `arc_degrees` of where you are
 ## looking. Angle is measured on the flat: a swing should connect with the
 ## enemy in front of you whether or not you happen to be looking at its feet.
-func _melee_arc(primitive: Dictionary) -> Array[Node]:
+func _melee_arc(prim: Dictionary) -> Array[Node]:
 	var damaged: Array[Node] = []
-	var reach := float(primitive["reach"])
-	var damage := float(primitive["damage"])
-	var half_arc := deg_to_rad(float(primitive["arc_degrees"])) / 2.0
+	var reach := float(prim["reach"])
+	var damage := float(prim["damage"])
+	var half_arc := deg_to_rad(float(prim["arc_degrees"])) / 2.0
 	var forward := -player.camera.global_transform.basis.z
 	var flat_forward := Vector3(forward.x, 0.0, forward.z).normalized()
 	var killed := false
@@ -644,9 +644,9 @@ func _melee_arc(primitive: Dictionary) -> Array[Node]:
 	return damaged
 
 ## Narrow and long: a ray, not an arc. One target, more damage.
-func _melee_thrust(primitive: Dictionary) -> Array[Node]:
+func _melee_thrust(prim: Dictionary) -> Array[Node]:
 	var damaged: Array[Node] = []
-	var reach := float(primitive["reach"])
+	var reach := float(prim["reach"])
 	var hit := player.camera_ray(reach)
 	var forward := -player.camera.global_transform.basis.z
 	Tracer.spawn(get_tree().current_scene,
@@ -659,18 +659,18 @@ func _melee_thrust(primitive: Dictionary) -> Array[Node]:
 	var struck := Damageable.of(target)
 	if struck != null:
 		var killed := Damageable.hit(
-				target, float(primitive["damage"]), forward, 0.0)
+				target, float(prim["damage"]), forward, 0.0)
 		damaged.append(struck)
 		player.report_hit(killed)
 	return damaged
 
 ## Drives you down, then detonates on contact. Airborne-only, so it is a
 ## commitment: you give up the rest of your jump to land it.
-func _slam_ground(primitive: Dictionary) -> void:
-	player.velocity.y = -float(primitive["descent_force"])
+func _slam_ground(prim: Dictionary) -> void:
+	player.velocity.y = -float(prim["descent_force"])
 	player.pending_slam = {
-		"damage": float(primitive["damage"]),
-		"radius": float(primitive["radius"]),
+		"damage": float(prim["damage"]),
+		"radius": float(prim["radius"]),
 		"tint": source_color(),
 	}
 
@@ -688,12 +688,12 @@ func _swing_arc_effect(reach: float, half_arc: float) -> void:
 # Ranged
 # ---------------------------------------------------------------------------
 
-func _hitscan(primitive: Dictionary) -> Array[Node]:
+func _hitscan(prim: Dictionary) -> Array[Node]:
 	var damaged: Array[Node] = []
-	var pellets := int(primitive.get("pellets", 1))
-	var spread := deg_to_rad(float(primitive.get("spread_degrees", 0.0)))
-	var damage := float(primitive["damage"])
-	var reach := float(primitive["range"])
+	var pellets := int(prim.get("pellets", 1))
+	var spread := deg_to_rad(float(prim.get("spread_degrees", 0.0)))
+	var damage := float(prim["damage"])
+	var reach := float(prim["range"])
 	var basis := player.camera.global_transform.basis
 	var rng := RandomNumberGenerator.new()
 	var killed := false
@@ -723,25 +723,25 @@ func _hitscan(primitive: Dictionary) -> Array[Node]:
 		player.report_hit(killed)
 	return damaged
 
-func _projectile(primitive: Dictionary, modifiers: Array) -> void:
+func _projectile(prim: Dictionary, modifiers: Array) -> void:
 	var projectile := EchoProjectile.new()
-	projectile.damage = float(primitive["damage"])
-	projectile.speed = float(primitive["speed"])
-	projectile.lifetime = float(primitive["lifetime"])
-	projectile.gravity_scale = float(primitive.get("gravity_scale", 0.0))
-	projectile.bounces = int(primitive.get("bounces", 0))
+	projectile.damage = float(prim["damage"])
+	projectile.speed = float(prim["speed"])
+	projectile.lifetime = float(prim["lifetime"])
+	projectile.gravity_scale = float(prim.get("gravity_scale", 0.0))
+	projectile.bounces = int(prim.get("bounces", 0))
 	_launch(projectile, modifiers, -player.camera.global_transform.basis.z)
 
 ## A lob is a projectile with a fuse, a blast radius and full gravity. It
 ## aims UP the launch axis rather than straight down the crosshair, so a
 ## flat press still arcs instead of falling at your feet.
-func _arc_lob(primitive: Dictionary, modifiers: Array) -> void:
+func _arc_lob(prim: Dictionary, modifiers: Array) -> void:
 	var projectile := EchoProjectile.new()
-	projectile.damage = float(primitive["damage"])
-	projectile.speed = float(primitive["launch_force"])
-	projectile.blast_radius = float(primitive["radius"])
-	projectile.fuse = float(primitive["fuse"])
-	projectile.lifetime = float(primitive["fuse"]) + 2.0
+	projectile.damage = float(prim["damage"])
+	projectile.speed = float(prim["launch_force"])
+	projectile.blast_radius = float(prim["radius"])
+	projectile.fuse = float(prim["fuse"])
+	projectile.lifetime = float(prim["fuse"]) + 2.0
 	projectile.gravity_scale = 1.0
 	var aim := -player.camera.global_transform.basis.z
 	_launch(projectile, modifiers, (aim + Vector3.UP * 0.35).normalized())
@@ -761,30 +761,30 @@ func _launch(projectile: EchoProjectile, modifiers: Array,
 	var camera := player.camera
 	projectile.global_position = camera.global_position + direction * 0.6
 
-func _begin_burst(primitive: Dictionary) -> void:
+func _begin_burst(prim: Dictionary) -> void:
 	# The first shot goes out on the press; the rest are scheduled. A burst
 	# whose first round waits for the interval feels like input lag.
-	_burst_left = int(primitive["shots"]) - 1
-	_burst_timer = float(primitive["interval"])
+	_burst_left = int(prim["shots"]) - 1
+	_burst_timer = float(prim["interval"])
 	_hitscan({
-		"damage": primitive["damage"],
+		"damage": prim["damage"],
 		"pellets": 1,
-		"spread_degrees": primitive.get("spread_degrees", 0.0),
-		"range": primitive["range"],
+		"spread_degrees": prim.get("spread_degrees", 0.0),
+		"range": prim["range"],
 	})
 
 ## Released before the charge completes, it fires weaker — it never fizzles.
 ## A charge weapon that punishes an early release with nothing at all reads
 ## as a dropped input.
-func _fire_charge_shot(primitive: Dictionary) -> void:
-	var charge_time := float(primitive["charge_time"])
+func _fire_charge_shot(prim: Dictionary) -> void:
+	var charge_time := float(prim["charge_time"])
 	var ratio := clampf(_charge / maxf(charge_time, 0.001), 0.0, 1.0)
-	var min_damage := float(primitive["min_damage"])
-	var damage := min_damage + (float(primitive["max_damage"]) - min_damage) * ratio
+	var min_damage := float(prim["min_damage"])
+	var damage := min_damage + (float(prim["max_damage"]) - min_damage) * ratio
 	_charge = 0.0
 	var projectile := EchoProjectile.new()
 	projectile.damage = damage
-	projectile.speed = float(primitive["speed"]) * (0.6 + 0.4 * ratio)
+	projectile.speed = float(prim["speed"]) * (0.6 + 0.4 * ratio)
 	projectile.lifetime = 4.0
 	_launch(projectile, equipped.get("modifiers", []),
 			-player.camera.global_transform.basis.z)
@@ -802,34 +802,34 @@ func charge_ratio() -> float:
 # Movement
 # ---------------------------------------------------------------------------
 
-func _dash(primitive: Dictionary) -> void:
+func _dash(prim: Dictionary) -> void:
 	var dir := -player.camera.global_transform.basis.z
-	player.velocity += dir * float(primitive["force"])
+	player.velocity += dir * float(prim["force"])
 
-func _air_dash(primitive: Dictionary) -> void:
+func _air_dash(prim: Dictionary) -> void:
 	_air_dashes_left -= 1
 	var dir := -player.camera.global_transform.basis.z
 	# Replaces horizontal velocity instead of adding to it, so repeated air
 	# dashes cannot compound into a speed no chamber was measured against.
 	# The vertical component is zeroed for the same reason a dash is not a
 	# flight: it buys you distance, not altitude.
-	var force := float(primitive["force"])
+	var force := float(prim["force"])
 	player.velocity = Vector3(dir.x, 0.0, dir.z).normalized() * force
 	player.velocity.y = maxf(0.0, player.velocity.y)
 
-func _double_jump(primitive: Dictionary) -> void:
+func _double_jump(prim: Dictionary) -> void:
 	_extra_jumps_left -= 1
-	player.velocity.y = float(primitive["force"])
+	player.velocity.y = float(prim["force"])
 
 ## Off the wall you are touching, mostly outward, partly up. Uses the
 ## surface normal so it works on the rotated corridors as well as the
 ## axis-aligned ones.
-func _wall_kick(primitive: Dictionary) -> void:
+func _wall_kick(prim: Dictionary) -> void:
 	var normal := _wall_normal()
 	if normal == Vector3.ZERO:
 		return
-	var force := float(primitive["force"])
-	var outward := float(primitive["outward_fraction"])
+	var force := float(prim["force"])
+	var outward := float(prim["outward_fraction"])
 	player.velocity = normal * force * outward
 	player.velocity.y = force * (1.0 - outward)
 
@@ -859,10 +859,10 @@ func _wall_normal() -> Vector3:
 		return normal.normalized()
 	return Vector3.ZERO
 
-func _begin_glide(primitive: Dictionary) -> void:
+func _begin_glide(prim: Dictionary) -> void:
 	_gliding = true
-	player.glide_fall_speed = float(primitive["fall_speed"])
-	player.glide_forward_speed = float(primitive["forward_speed"])
+	player.glide_fall_speed = float(prim["fall_speed"])
+	player.glide_forward_speed = float(prim["forward_speed"])
 
 func _end_glide() -> void:
 	if not _gliding:
@@ -881,9 +881,9 @@ func _end_glide() -> void:
 ##      so you arrive beside the surface rather than inside it
 ##   3. the landing point is clearance-tested with a real shape query
 ##   4. the landing point is inside the Zone's bounds
-func _blink(primitive: Dictionary) -> void:
-	var distance := float(primitive["range"])
-	var clearance := float(primitive.get("clearance", Constants.PLAYER_RADIUS))
+func _blink(prim: Dictionary) -> void:
+	var distance := float(prim["range"])
+	var clearance := float(prim.get("clearance", Constants.PLAYER_RADIUS))
 	var from := player.camera.global_position
 	var dir := -player.camera.global_transform.basis.z
 	var hit := player.camera_ray(distance, dir)
@@ -1007,24 +1007,24 @@ func _inside_zone_bounds(landing: Vector3) -> bool:
 	var box: AABB = bounds
 	return box.grow(0.5).has_point(landing)
 
-func _grapple(primitive: Dictionary) -> void:
-	var hit := player.camera_ray(float(primitive["range"]))
+func _grapple(prim: Dictionary) -> void:
+	var hit := player.camera_ray(float(prim["range"]))
 	if hit.is_empty():
 		return
 	var target: Variant = hit["collider"]
 	if is_instance_valid(target) and target is StaticBody3D:
 		var pull: Vector3 = (hit["position"]
 				- player.global_position).normalized()
-		player.velocity = pull * float(primitive["pull_force"])
+		player.velocity = pull * float(prim["pull_force"])
 		Tracer.spawn(get_tree().current_scene,
 				player.global_position + Vector3.UP * 1.2, hit["position"],
 				source_color(), 0.15, source_particles())
 
 ## Reels a LIGHT enemy in. `max_target_hp` is what stops it being a way to
 ## drag a brute off its perch and into a corner.
-func _grapple_pull_target(primitive: Dictionary) -> Array[Node]:
+func _grapple_pull_target(prim: Dictionary) -> Array[Node]:
 	var damaged: Array[Node] = []
-	var hit := player.camera_ray(float(primitive["range"]))
+	var hit := player.camera_ray(float(prim["range"]))
 	if hit.is_empty():
 		return damaged
 	var target: Variant = hit["collider"]
@@ -1032,12 +1032,12 @@ func _grapple_pull_target(primitive: Dictionary) -> Array[Node]:
 			and (target as Node).is_in_group("enemies")):
 		return damaged
 	var enemy := target as Enemy
-	if enemy.max_hp > float(primitive["max_target_hp"]):
+	if enemy.max_hp > float(prim["max_target_hp"]):
 		return damaged
 	var toward := (player.global_position - enemy.global_position)
 	if toward.length() < 0.001:
 		return damaged
-	enemy.apply_knockback(toward.normalized() * float(primitive["pull_force"]))
+	enemy.apply_knockback(toward.normalized() * float(prim["pull_force"]))
 	damaged.append(enemy)
 	Tracer.spawn(get_tree().current_scene,
 			player.global_position + Vector3.UP * 1.2,
@@ -1047,8 +1047,8 @@ func _grapple_pull_target(primitive: Dictionary) -> Array[Node]:
 ## A tether you arc from. Held: while the key is down and the anchor holds,
 ## you are pulled toward it and keep your tangential speed, which is what
 ## makes it a swing rather than a second grapple.
-func _grapple_swing(primitive: Dictionary) -> void:
-	var hit := player.camera_ray(float(primitive["range"]))
+func _grapple_swing(prim: Dictionary) -> void:
+	var hit := player.camera_ray(float(prim["range"]))
 	if hit.is_empty():
 		_refund_press()
 		return
@@ -1056,8 +1056,8 @@ func _grapple_swing(primitive: Dictionary) -> void:
 	if not (is_instance_valid(target) and target is StaticBody3D):
 		_refund_press()
 		return
-	player.begin_swing(hit["position"], float(primitive["tether_force"]),
-			float(primitive["max_duration"]))
+	player.begin_swing(hit["position"], float(prim["tether_force"]),
+			float(prim["max_duration"]))
 	Tracer.spawn(get_tree().current_scene,
 			player.global_position + Vector3.UP * 1.2, hit["position"],
 			source_color(), 0.2, source_particles())
@@ -1066,9 +1066,9 @@ func _grapple_swing(primitive: Dictionary) -> void:
 # Defensive
 # ---------------------------------------------------------------------------
 
-func _shield(primitive: Dictionary) -> void:
-	shield_hp = float(primitive["amount"])
-	_shield_timer = float(primitive["duration"])
+func _shield(prim: Dictionary) -> void:
+	shield_hp = float(prim["amount"])
+	_shield_timer = float(prim["duration"])
 	shield_changed.emit(shield_hp)
 
 ## Rule-effect entry points (ECHOES §5, applied by RuleRuntime). Shields
@@ -1107,8 +1107,8 @@ func fire_rule_projectile(damage: float, direction_kind: String) -> void:
 				direction = velocity.normalized()
 	_launch(projectile, [], direction)
 
-func _begin_parry(primitive: Dictionary) -> void:
-	_parry_window = float(primitive["window"])
+func _begin_parry(prim: Dictionary) -> void:
+	_parry_window = float(prim["window"])
 
 func absorb_with_shield(damage: float, parryable: bool = true) -> float:
 	# Parry first: it is the timed, skilful one, and letting a shield soak a
@@ -1140,8 +1140,8 @@ func absorb_with_shield(damage: float, parryable: bool = true) -> float:
 ## are `RewardObject`s in a different group, and claiming one is an intent
 ## the player sends by interacting, never something an Action does at
 ## range. That separation is the whole reason this verb waited for S9.
-func _pull_pickup(primitive: Dictionary) -> void:
-	var radius := float(primitive.get("radius", 6.0))
+func _pull_pickup(prim: Dictionary) -> void:
+	var radius := float(prim.get("radius", 6.0))
 	for node in get_tree().get_nodes_in_group(LocalRewardPickup.GROUP):
 		if node is Node3D and not node.is_queued_for_deletion():
 			var pickup := node as Node3D
@@ -1158,9 +1158,9 @@ func _pull_pickup(primitive: Dictionary) -> void:
 				if pickup is LocalRewardPickup:
 					(pickup as LocalRewardPickup).collect()
 
-func _place_marker(primitive: Dictionary) -> void:
+func _place_marker(prim: Dictionary) -> void:
 	var hit := player.camera_ray(40.0)
 	var at: Vector3 = hit.get("position",
 			player.global_position + Vector3.UP * 0.2)
 	EchoMarker.spawn(get_tree().current_scene, at, source_color(),
-			float(primitive["duration"]))
+			float(prim["duration"]))

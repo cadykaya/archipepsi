@@ -28,4 +28,25 @@ def make_provider(name: str):
     if name == "claude":
         from .claude import ClaudeEpsilonProvider
         return ClaudeEpsilonProvider()
+    # A NAMED SAMPLE, SERVED LIVE. `--epsilon=sample` asks for one
+    # proposal out of the declared sample instead of composing one, so a
+    # case the offline census names can be put in front of a real client
+    # and a real bridge. The path travels in the environment because the
+    # provider is constructed by name and nothing else threads a value
+    # through; it is a diagnostic axis, never a shipping one.
+    if name == "sample":
+        import os
+        from .sample import SampleEpsilonProvider
+        where = os.environ.get("ARCHIPEPSI_SAMPLE_ZONE", "")
+        if not where:
+            raise ValueError(
+                "--epsilon=sample needs ARCHIPEPSI_SAMPLE_ZONE to name "
+                "the proposal to serve")
+        # THEN: a SECOND proposal from a Zone's second request onward.
+        # The axis a failure-then-recovery demonstration needs. The
+        # ordinary provider cannot supply it -- the fallback seeds on
+        # zone index and budget alone, so a recompose returns identical
+        # content and the budget can only ever be seen being spent.
+        return SampleEpsilonProvider(
+            where, then=os.environ.get("ARCHIPEPSI_SAMPLE_THEN") or None)
     raise ValueError(f"unknown Epsilon provider '{name}'")

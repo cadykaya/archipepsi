@@ -14,8 +14,12 @@ var hud: Hud
 var reveal: RevealLayer
 var inventory: InventoryLayer
 var shop: ShopUI
+var station_panel: StationPanel
 var pause_menu: PauseMenu
 var debug: DebugOverlay
+## F5, review-only. See `nav_schematic.gd`: not a map feature, and
+## nothing in the game reads it.
+var nav: NavSchematic
 var tones: Tones
 
 var _entering_zone := false
@@ -54,6 +58,22 @@ const DRIVERS := {
 	"--lab-test": preload("res://tests/lab_driver.gd"),
 	"--affordance-test": preload("res://tests/affordance_driver.gd"),
 	"--verbs-test": preload("res://tests/verbs_driver.gd"),
+	"--boot-test": preload("res://tests/boot_driver.gd"),
+	"--legibility-test": preload("res://tests/legibility_driver.gd"),
+	"--content-test": preload("res://tests/content_driver.gd"),
+	"--activity-test": preload("res://tests/activity_driver.gd"),
+	"--zone-audit": preload("res://tests/zone_audit_driver.gd"),
+	"--zone-shots": preload("res://tests/zone_shot_driver.gd"),
+	"--room-test": preload("res://tests/room_driver.gd"),
+	"--return-placement": preload("res://tests/return_placement_driver.gd"),
+	"--room-contract": preload("res://tests/room_contract_driver.gd"),
+	"--graphs": preload("res://tests/graph_driver.gd"),
+	"--movement-test": preload("res://tests/movement_driver.gd"),
+	"--playtest3a-test": preload("res://tests/playtest3a_driver.gd"),
+	"--physics-test": preload("res://tests/physics_driver.gd"),
+	"--traverse-test": preload("res://tests/traverse_driver.gd"),
+	"--target-facing": preload("res://tests/target_facing_driver.gd"),
+	"--exit-reach": preload("res://tests/exit_reach_driver.gd"),
 }
 
 func _ready() -> void:
@@ -63,6 +83,121 @@ func _ready() -> void:
 			headless_test = true
 			add_child((DRIVERS[flag] as GDScript).new())
 			return
+	boot()
+	# THE STAGE 3A SHOWCASE, and only when an operator asks for it by
+	# name. Without `--playtest3a` this branch does nothing at all and
+	# startup is byte-for-byte what it was: the menu, the bridge, the
+	# ordinary campaign. The showcase is scaffolding (Road to Playable
+	# 0.3, R2) and must never be something a player arrives in by
+	# accident.
+	var asked := MovementSelection.from_cmdline()
+	# THE OPERATOR'S MOVEMENT PACKAGE, for EVERY Zone this run enters
+	# (Stage 3B). In 3A this was held for the showcase alone and
+	# deliberately not inherited by an ordinary Zone, which made the
+	# movement work provable only against four hand-picked rooms. A
+	# normally generated Zone now honours the same flag, so what the
+	# suite exercises is the shipping composition path.
+	#
+	# A REFUSED VALUE IS NEVER APPLIED and never quietly becomes `none`:
+	# it is reported and the package stays at the default, so an
+	# operator who mistyped `--movement-package=rial` learns that from
+	# the log rather than from a green run that built nothing.
+	if bool(asked["refused"]):
+		Telemetry.refused_selection(str(asked["why"]))
+	else:
+		_movement_package = str(asked["mode"])
+	# THE AMALGAM'S FIRST SLICE, and only when an operator asks. Without
+	# `--slice1` nothing below runs and an ordinary campaign is
+	# untouched; with it, the composed Zone is decorated with one valid
+	# multi-door assignment so the slice can be walked rather than only
+	# asserted.
+	_slice1 = Slice1Fixture.FLAG in user_args
+	if _slice1:
+		print("slice1: the composed Zone will be decorated with a "
+				+ "three-door junction, a red lock and a return plug")
+	if bool(asked["showcase"]):
+		_enter_showcase(asked)
+	# THE TWO-PROCESS RELOAD PROOF, and only when an operator asks.
+	#
+	# Unlike every other driver, this one runs AFTER `boot()` and beside
+	# the real `Main` rather than instead of it -- because what it is
+	# testing is `Main`. A driver that replaced the boot could not have
+	# caught the thing this exists for: `_to_zone` reading in-memory
+	# dictionaries that a new process cannot have.
+	var phase := ReloadDriver.phase_from_cmdline()
+	if phase != "":
+		var reload_driver := ReloadDriver.new()
+		reload_driver.main = self
+		add_child(reload_driver)
+
+## Enter the curated Stage 3A showcase.
+##
+## A REFUSED SELECTION STOPS HERE. An unknown `--movement-package` value
+## is not a reason to pick one: it is reported and the showcase does not
+## open, because a typo that quietly became `none` would produce a green
+## run that proved nothing about movement at all.
+##
+## Everything past the refusal is the REAL path -- the same
+## `ZoneController` and the same `_to_zone` an ordinary Zone takes, so
+## what this proves is the runtime rather than a harness beside it.
+func _enter_showcase(asked: Dictionary) -> void:
+	if bool(asked["refused"]):
+		# Already reported by the caller. The showcase additionally does
+		# not OPEN, because a showcase that proved nothing about
+		# movement is worse than no showcase.
+		return
+	Telemetry.showcase(ShowcaseZone.ZONE_ID, _movement_package,
+			ShowcaseZone.shell_ids())
+	_to_zone(ShowcaseZone.build())
+
+## The movement package every Zone this run builds (Stage 3B, R6/R7).
+##
+## An operator control and nothing more: not an Archipelago item, not
+## progression, not saved, not part of the Zone schema. Default `none`,
+## so a run started without the flag constructs no movement geometry and
+## behaves exactly as it did before Stage 3A.
+var _movement_package := MovementSelection.DEFAULT_MODE
+## `--slice1` decorates the composed Zone with one multi-door
+## assignment so the Amalgam's first slice can be WALKED. Off unless an
+## operator asks, so an ordinary run is untouched.
+var _slice1 := false
+## WHAT A ZONE RESUMES TO, kept per Zone for the life of the session.
+##
+## §30.12.4 says a player may SAVE at a warp station, and §30.12.2 makes
+## reached-ness progress that survives a Hub return. The bridge owns that
+## persistence -- `ZoneProgress` on the Zone record -- and does not carry
+## it yet, so this holds the same two facts in memory: which station a
+## Zone resumes at, and which of its stations are already online.
+##
+## **In memory only, and deliberately.** It survives a Hub return and a
+## re-entry, which is what the feature is for; it does not survive
+## quitting, and nothing here pretends it does. When `ZoneProgress`
+## lands, this is what it replaces.
+var _zone_resume := {}
+var _zone_stations := {}
+var _zone_keys := {}
+var _zone_locks_open := {}
+
+## Everything the real game needs, extracted so a test can call it.
+##
+## It used to be the tail of `_ready`, which meant NO suite ran it: every
+## driver takes the branch above and returns first. That is how ba0a804
+## deleted the world and the sound bank and nine green suites plus two CI
+## tiers said nothing for a day, while the game could not enter the Hub
+## at all. `--boot-test` calls this directly.
+func boot() -> void:
+	# The world every Hub and Zone is parented to, and the sound bank.
+	#
+	# These were lost in ba0a804, which replaced the block of per-driver
+	# `if` statements above with the `DRIVERS` loop and took the five
+	# lines that happened to sit underneath it. The game could not enter
+	# the Hub from that commit until this one: `_clear_world()` is the
+	# first thing every transition calls, and it dereferenced null.
+	world = Node3D.new()
+	world.name = "World"
+	add_child(world)
+	tones = Tones.new()
+	add_child(tones)
 
 	menu = MainMenu.new()
 	add_child(menu)
@@ -92,8 +227,12 @@ func _ready() -> void:
 	add_child(shop)
 	pause_menu = PauseMenu.new()
 	add_child(pause_menu)
+	station_panel = StationPanel.new()
+	add_child(station_panel)
 	debug = DebugOverlay.new()
 	add_child(debug)
+	nav = NavSchematic.new()
+	add_child(nav)
 
 	menu.connect_pressed.connect(_on_menu_connect)
 	menu.mock_pressed.connect(_on_menu_mock)
@@ -101,6 +240,15 @@ func _ready() -> void:
 	reveal.reveal_finished.connect(_update_modal)
 	inventory.closed.connect(_update_modal)
 	shop.closed.connect(_update_modal)
+	station_panel.closed.connect(_update_modal)
+	station_panel.warp_chosen.connect(_on_station_warp_chosen)
+	# THE ONE OPTION WITH SEMANTICS ALREADY BEHIND IT. The pause menu's
+	# own Return to Hub is this same handler: `leave_zone` after the
+	# resume anchor, keys, locks and reached stations are remembered, so
+	# the Zone goes DORMANT and the portal offers it back. Nothing new
+	# is invented here and `abandon_zone` is not reachable from a
+	# station.
+	station_panel.return_to_hub_chosen.connect(_on_return_to_hub)
 	pause_menu.resumed.connect(_update_modal)
 	pause_menu.return_to_hub_requested.connect(_on_return_to_hub)
 	pause_menu.abandon_confirmed.connect(_on_abandon)
@@ -132,9 +280,10 @@ func _on_menu_mock() -> void:
 
 # ---------------------------------------------------------------------------
 
-func _on_snapshot(snapshot: Dictionary) -> void:
+func _on_snapshot(_snapshot: Dictionary) -> void:
 	menu.refresh()
 	debug.refresh()
+	_refresh_nav()
 	_refresh_banner()
 	var mode := BridgeClient.hub_mode()
 	match view:
@@ -213,7 +362,26 @@ func _on_bridge_error(err: Dictionary) -> void:
 # -- view transitions -------------------------------------------------------
 
 func _clear_world() -> void:
+	# A PANEL CANNOT OUTLIVE THE ZONE IT BELONGS TO. A travel panel left
+	# open across a teardown would sit over the Hub offering warps into a
+	# controller that no longer exists, and its Return to Hub would send
+	# a second `leave_zone`.
+	if station_panel != null:
+		station_panel.close()
 	for child in world.get_children():
+		# OUT OF THE TREE NOW, not at the end of the frame.
+		#
+		# `queue_free` is deferred: the old world's colliders stay
+		# registered with the physics server until the frame ends, and
+		# the new one is built AND MEASURED before that. Both worlds are
+		# built around the origin, so the Hub's floor stood in the hall's
+		# entry doorway and `_measure_layout_evidence` reported
+		# `c002/entry` solid -- the bridge refused the layout, three
+		# times over, and the Zone never opened.
+		#
+		# `remove_child` is immediate and unregisters the colliders;
+		# `queue_free` still runs, so nothing leaks.
+		world.remove_child(child)
 		child.queue_free()
 	hub = null
 	zone = null
@@ -324,12 +492,32 @@ func _toggle_shop() -> void:
 	_update_modal()
 
 func _on_enter_zone() -> void:
-	var active := BridgeClient.active_zone()
-	if active.is_empty():
+	# WHICH ZONE, from the Hub rather than from `active_zone`.
+	#
+	# A DORMANT Zone is not the active one -- `active_zone_id` is cleared
+	# when the player walks out -- so reading `active_zone()` returned
+	# nothing and this returned early, which is why there was no way back
+	# into a Zone you had left. `resume_zone_id` is the bridge saying
+	# which Zone the portal leads to, in every mode that has one.
+	var zid := str(BridgeClient.hub().get("resume_zone_id", ""))
+	if zid == "":
+		zid = str(BridgeClient.active_zone().get("zone_id", ""))
+	if zid == "":
+		return
+	# AND NOT BACK INTO THE ONE THAT CANNOT BE BUILT.
+	#
+	# `AMALGAM_BRIDGE.md` §5.7a defect 1. The Hub's portal already
+	# refuses to offer this, and this is the second lock: an
+	# `enter_zone` that arrives from anywhere else -- a stale prompt, a
+	# queued input, a driver -- must not restart the refusal loop the
+	# owner's decision closes.
+	if BridgeClient.hub_mode() == "ZONE_FAILED" \
+			or zid == HubController.discard_target():
+		hud.toast("That Zone cannot be built. Discard it at the console.",
+				Color(0.9, 0.5, 0.3))
 		return
 	_entering_zone = true
-	BridgeClient.send_intent({"type": "enter_zone",
-			"zone_id": active.get("zone_id", "")})
+	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zid})
 
 func _to_zone(zone_dict: Dictionary) -> void:
 	_clear_world()
@@ -342,6 +530,11 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.tones = tones
 	zone.hud = hud
 	zone.is_finale = bool(record.get("is_finale", false))
+	# BEFORE `setup`, because the offer stage is deferred from inside it.
+	# `none` unless an operator asked for a package on the command line,
+	# so a run started without the flag constructs no movement geometry
+	# and behaves exactly as it did before Stage 3A.
+	zone.movement_package = _movement_package
 	world.add_child(zone)
 	# Before setup, so a Zone whose first frame already spends something
 	# sees full channels rather than last Zone's leftovers. The rule
@@ -351,8 +544,72 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	# longer existed.
 	resource_pool.reset_for_zone()
 	rule_runtime.reset_for_zone()
-	zone.setup(zone_dict)
+	# The slice's assignment goes on HERE, at the last moment before the
+	# Zone is built, so nothing upstream -- the bridge, the save, the
+	# manifest -- ever sees a decorated Zone.
+	# WHERE THIS ZONE RESUMES, if it has been left and re-entered.
+	# Empty on a first entry, which is every Zone before a station is
+	# reached, so nothing changes for a Zone nobody has left.
+	var zid := str(record.get("zone_id", ""))
+	# FROM THE BRIDGE FIRST, because the bridge is what survives quitting.
+	#
+	# These four came only from the in-memory dictionaries below, which
+	# is why the docstring on `_zone_resume` says "it does not survive
+	# quitting, and nothing here pretends it does". `ZoneProgress` landed
+	# and has been persisted on every `key_collected`, `lock_opened` and
+	# `station_reached` since -- the save held the progress and the game
+	# read past it, so relaunching put the player back in front of a lock
+	# they had already opened with a key that was no longer there to
+	# collect.
+	#
+	# UNION, not replacement. The dictionaries stay as the in-flight
+	# half: an intent sent in the same breath as leaving may not be in
+	# the snapshot yet, and both sides are monotone sets, so taking both
+	# cannot lose progress and cannot invent it.
+	var progress: Dictionary = record.get("progress", {}) \
+			if typeof(record.get("progress")) == TYPE_DICTIONARY else {}
+	var saved_resume := str(progress.get("resume_anchor", "")) \
+			if progress.get("resume_anchor") != null else ""
+	zone.resume_anchor = str(_zone_resume.get(zid, saved_resume))
+	zone.stations_online = _union_progress(
+			progress.get("reached_stations", []), _zone_stations.get(zid, {}))
+	zone.keys_carried = _union_progress(
+			progress.get("collected_keys", []), _zone_keys.get(zid, {}))
+	zone.locks_carried = _union_progress(
+			progress.get("opened_locks", []), _zone_locks_open.get(zid, {}))
+	# THE COMMITTED LAYOUT, when this Zone has one. `ZoneReady` carries
+	# the manifest the bridge accepted on the first visit, and replaying
+	# it is what makes the Zone the player walks back into the Zone they
+	# walked out of rather than a second one that happens to be similar.
+	var committed: Variant = record.get("manifest")
+	zone.committed_manifest = committed \
+			if typeof(committed) == TYPE_DICTIONARY else {}
+	zone.setup(Slice1Fixture.decorate(zone_dict) if _slice1 else zone_dict)
+	# A ZONE THAT COULD NOT BE BUILT HAS NO PLAYER, and every line below
+	# this one assumes there is one.
+	#
+	# `ZoneController.setup` returns early when `ZoneBuilder` cannot
+	# route the rooms -- correctly, because entering a level whose Check
+	# is inside a wall is worse than not entering it -- and this
+	# function carried straight on into `hud.bind_player(zone.player)`
+	# and four `zone.player.<signal>.connect` calls against a null. The
+	# first of those is where the run died, halfway through a handoff,
+	# with the Hub already torn down by `_clear_world` and the failed
+	# Zone still in the tree.
+	#
+	# `layout_failed` is the controller's own report and is set before
+	# it returns, so this is the same fact the suites read rather than a
+	# second flag that could disagree with it.
+	if zone.layout_failed != "":
+		# `zone.zone_id` AND NOT `zid`: the controller took its id from
+		# the content it was handed, which is the Zone that actually
+		# failed, while `zid` comes off the bridge record and is empty
+		# on any path that builds a Zone without one.
+		_on_build_failed(zone.zone_id, zone.layout_failed)
+		return
 	zone.exit_requested.connect(_on_exit_zone)
+	zone.layout_refused.connect(_on_layout_refused)
+	zone.travel_panel_requested.connect(_on_travel_panel_requested)
 	hud.bind_player(zone.player)
 	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	zone.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
@@ -384,12 +641,10 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	# is the premise, and it was previously invisible.
 	var featured: Array = zone_dict.get("featured_echo_ids", [])
 	if not featured.is_empty():
-		for echo: Dictionary in BridgeClient.snapshot.get(
-				"interpretations", []):
-			if echo.get("echo_id") == featured[0]:
-				note = "Built with your %s in mind. %s" % [
-						echo.get("display_name", "Echo"), note]
-				break
+		var echo := BridgeClient.echo_by_id(str(featured[0]))
+		if not echo.is_empty():
+			note = "Built with your %s in mind. %s" % [
+					echo.get("display_name", "Echo"), note]
 	hud.show_zone_title(index_text, str(zone_dict.get("display_name", "")),
 			note.strip_edges(),
 			Color(ThemeMaterials.spec(theme)["accent_color"]).lightened(0.25))
@@ -397,29 +652,164 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.refresh()
 	_update_modal()
 
+## THE LAYOUT WAS REFUSED, SO THE ZONE IS NOT PLAYABLE.
+##
+## The bridge has already moved it to DORMANT and stopped it being the
+## active Zone, so nothing the player does in it can reach the campaign.
+## Standing in it is the only thing left, and standing in a Zone whose
+## geometry the validator just rejected is how a player ends up inside a
+## wall. Back to the Hub, with the Checks still allocated to that Zone.
+func _on_layout_refused(refused_id: String) -> void:
+	if view != View.ZONE or zone == null or zone.zone_id != refused_id:
+		return
+	push_warning("main: leaving '%s'; its layout was refused"
+			% refused_id)
+	if hud != null:
+		hud.toast("LAYOUT REFUSED — RETURNING TO HUB",
+				Color(0.95, 0.5, 0.45), 4.0)
+	_remember_zone_progress()
+	_to_hub()
+
+## THE ENGINE COULD NOT BUILD IT. Back to a Hub that still works.
+##
+## Distinct from `_on_layout_refused`, which is the bridge rejecting
+## geometry the engine DID build, and distinct again from a
+## generation-stage rejection, which never reaches a client at all. Here
+## there is no level and no player: the only thing to do is say so and
+## put the player somewhere they can act.
+##
+## `ZoneController.setup` has already told the bridge (`build_failed`),
+## so the recovery -- compose this proposal again inside its budget, or
+## park it and offer ABANDON once the budget is spent -- is running
+## while this returns to the Hub. Nothing is sent from here; two reports
+## of one failure would charge the attempt twice.
+##
+## AND NOTHING IS REMEMBERED. `_remember_zone_progress` copies the
+## controller's RUNTIME dictionaries over the in-memory ones, and on a
+## failed setup those are empty -- so calling it here would overwrite a
+## revisited Zone's stations, keys and opened locks with nothing. The
+## save is the truth for a Zone that was never entered.
+func _on_build_failed(failed_id: String, reason: String) -> void:
+	push_warning("main: '%s' could not be built -- %s" % [failed_id, reason])
+	if hud != null:
+		hud.toast("ZONE COULD NOT BE BUILT — RETURNING TO HUB",
+				Color(0.95, 0.5, 0.45), 4.0)
+	# The entry that was in flight is over, however it ended. The
+	# snapshot path already clears this before it calls `_to_zone`, so
+	# this is belt and braces for the other callers rather than a fix --
+	# what matters is that the flag cannot be left set by a path that
+	# ends here, because the recomposed Zone arrives as another
+	# ZONE_ACTIVE and that branch is what would walk the player back in
+	# without asking.
+	_entering_zone = false
+	_to_hub()
+
 func _on_exit_zone() -> void:
+	_send_zone_timing(true)
 	BridgeClient.send_intent({"type": "exit_zone", "zone_id": zone.zone_id})
 	_to_hub()
 
+## What the Zone cost, sent once as the player leaves (CAMPAIGN_SCALE.md
+## 13). The bridge writes it to a local file and nothing else -- it is
+## not campaign state, no snapshot carries it, and it goes nowhere near
+## the network beyond the bridge already running on this machine.
+##
+## `completed` separates a Zone finished from one bailed out of: an
+## abandoned Zone's elapsed time is not a Zone length.
+func _send_zone_timing(completed: bool) -> void:
+	if zone == null:
+		return
+	var intent: Dictionary = zone.playtime.to_intent(zone.zone_id, completed)
+	if not intent.is_empty():
+		BridgeClient.send_intent(intent)
+
+## A station asked for a destination. The panel renders what the
+## controller says is eligible and decides nothing itself.
+func _on_travel_panel_requested(from_id: String, from_label: String,
+		options: Array) -> void:
+	if view != View.ZONE:
+		return
+	station_panel.open(from_id, from_label, options)
+	_update_modal()
+
+## ONE WARP, and only into the Zone that asked. A panel left open across
+## a Zone teardown would otherwise send a choice to a freed controller.
+func _on_station_warp_chosen(from_id: String, to_id: String) -> void:
+	if view == View.ZONE and zone != null and is_instance_valid(zone):
+		zone.warp_to(from_id, to_id)
+	_update_modal()
+
 func _on_return_to_hub() -> void:
+	station_panel.close()
 	pause_menu.close()
 	if view == View.ZONE:
+		_send_zone_timing(false)
+		_remember_zone_progress()
 		BridgeClient.send_intent({"type": "leave_zone",
 				"zone_id": zone.zone_id})
 		_to_hub()
+
+## Carry the resume point and the online stations out of a Zone.
+##
+## Read from the controller rather than pushed to it, so a Zone plays
+## identically whether or not anything is remembering.
+## The saved list and the in-flight dictionary, as one set.
+##
+## `ZoneController` asks these `has()`, so the shape is a set keyed by id
+## and the value is only ever `true`.
+static func _union_progress(saved: Variant, held: Variant) -> Dictionary:
+	var out := {}
+	if typeof(saved) == TYPE_ARRAY:
+		for entry: Variant in saved as Array:
+			out[str(entry)] = true
+	if typeof(held) == TYPE_DICTIONARY:
+		for entry: Variant in (held as Dictionary):
+			out[str(entry)] = true
+	return out
+
+
+func _remember_zone_progress() -> void:
+	if zone == null or zone.zone_id == "":
+		return
+	_zone_resume[zone.zone_id] = zone.resume_anchor
+	_zone_stations[zone.zone_id] = zone.stations_reached()
+	_zone_keys[zone.zone_id] = zone.keys_held()
+	_zone_locks_open[zone.zone_id] = zone.locks_opened()
 
 func _on_abandon() -> void:
 	pause_menu.close()
 	if view == View.ZONE:
 		_abandoning = true
+		_send_zone_timing(false)
 		BridgeClient.send_intent({"type": "abandon_zone",
 				"zone_id": zone.zone_id})
+
+## F4: name every activity, or stop naming them.
+##
+## ON by default. The graybox silhouettes are meant to carry family
+## identity by themselves, so a label that could not be turned off would
+## make "can you tell these apart" a question nobody could answer again
+## -- but a playtester who cannot tell a pressure pad from a floor tile
+## is not testing the mechanics, they are testing the placeholder.
+func _toggle_activity_labels() -> void:
+	ActivityRuntime.labels_visible = not ActivityRuntime.labels_visible
+	for runtime in get_tree().get_nodes_in_group(ActivityRuntime.GROUP):
+		(runtime as ActivityRuntime).set_labels_visible(
+				ActivityRuntime.labels_visible)
+	hud.toast("Activity labels %s"
+			% ("ON" if ActivityRuntime.labels_visible else "OFF"),
+			Color(0.85, 0.88, 0.92))
 
 # -- global input -----------------------------------------------------------
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_overlay"):
 		debug.toggle()
+	if event.is_action_pressed("activity_labels"):
+		_toggle_activity_labels()
+	if event.is_action_pressed("nav_schematic"):
+		nav.toggle()
+		_refresh_nav()
 	if view == View.MENU:
 		return
 	if event.is_action_pressed("pause"):
@@ -479,19 +869,48 @@ func _highlighted_slot() -> String:
 		return hub.player.highlighted_slot
 	return "echo_a"
 
+## WHILE IT IS OPEN, and only then.
+##
+## `_on_snapshot` refreshes it too, but a snapshot arrives when the
+## BRIDGE has something to say -- so walking from one room to the next
+## would not have moved the "you are here" dot until something else
+## happened. The panel is a prototype somebody holds open and walks
+## around with; it has to keep up with the walking.
+func _process(_delta: float) -> void:
+	if nav != null and nav.visible:
+		_refresh_nav()
+
+## Hand the schematic the facts it draws. Read, never stored: every one
+## of these is owned by `ZoneController` and this takes a copy for one
+## frame of drawing.
+func _refresh_nav() -> void:
+	if nav == null or not nav.visible:
+		return
+	if view != View.ZONE or zone == null or not is_instance_valid(zone):
+		nav.show_zone({}, {}, [], {}, {}, "")
+		return
+	nav.show_zone(zone.rooms_entered(), zone.room_bounds,
+			zone.zone.get("edges", []), zone.gates_not_yet_open(),
+			zone.stations_reached(), zone.current_room())
+
 func _update_modal() -> void:
 	var modal: bool = pause_menu.visible or inventory.visible \
-			or shop.visible or reveal.visible
+			or shop.visible or reveal.visible or station_panel.visible
 	var player: Player = null
 	if hub != null:
 		player = hub.player
 	elif zone != null:
 		player = zone.player
 	if player != null:
-		player.input_frozen = modal
+		# A NAMED CLAIM, not the boolean. `player.input_frozen = modal`
+		# cleared an acceptance hold every time the inventory closed.
+		if modal:
+			player.hold("modal")
+		else:
+			player.release("modal")
 	hud.set_crosshair_visible(not modal)
 	if view == View.MENU or pause_menu.visible or inventory.visible \
-			or shop.visible:
+			or shop.visible or station_panel.visible:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

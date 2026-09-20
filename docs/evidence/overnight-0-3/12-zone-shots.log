@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.1 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+libpulse.so.0: cannot open shared object file: No such file or directory
+libpulse.so.0: cannot open shared object file: No such file or directory
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5727:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+
+  29 activity runtimes in the assembled Zone
+  4 of 23 chambers declare an elevation band
+    00_room_c002_gallery_left  (room 15.8 x 13.8 m, band on the left)
+    01_room_c005_pit_left  (room 19.3 x 17.0 m, band on the left)
+    02_room_c009_gallery_left  (room 20.4 x 15.6 m, band on the left)
+    03_room_c011_gallery_left  (room 12.4 x 21.5 m, band on the left)
+    04_timed_run_c001_0  (2 elements, subject 14.0m, camera 8.8m out)
+    05_target_challenge_c002_0  (5 elements, subject 11.8m, camera 7.7m out)
+    06_switch_sequence_c021_0_FLAGGED  (4 elements, subject 7.7m, camera 7.8m out)
+    07_pressure_routing_c003_0_FLAGGED  (2 elements, subject 7.8m, camera 6.1m out)
+    08_pressure_routing_c015_0_FLAGGED  (4 elements, subject 21.6m, camera 13.9m out)
+    09_switch_sequence_c017_0_FLAGGED  (4 elements, subject 7.7m, camera 12.9m out)
+    10_timed_run_c008_0_FLAGGED  (3 elements, subject 9.4m, camera 7.3m out)
+    11_timed_run_c012_0_FLAGGED  (5 elements, subject 9.4m, camera 15.7m out)
+    close_timed_run_start  (2.2m tall)
+    close_timed_run_goal  (2.9m tall)
+    close_target_challenge  (1.2m tall)
+    close_timed_run_waypoint  (2.2m tall)
+    close_switch_sequence  (2.2m tall)
+    close_pressure_routing  (0.2m tall)
+    eye_mounted_target_challenge_c002_0  (eye height 1.60 m, 6.0 m from the subject, mounted)
+    eye_mounted_target_challenge_c018_0  (eye height 1.60 m, 6.0 m from the subject, mounted)
+    eye_unmounted_target_challenge_c007_0  (eye height 1.60 m, 5.5 m from the subject, not mounted)
+    nav_schematic_prototype  (6 of 23 rooms walked)
+    station_travel_panel  (2 destinations, 1 'you are here')
+  wrote 23 shots to /root/.local/share/godot/app_userdata/Archipepsi/zone_shots
+GODOT ZONE SHOTS OK

@@ -35,7 +35,7 @@ from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas import mechanics as M
 from archipepsi_bridge.schemas.protocol import CampaignSave
 
-from .conftest import drain, make_engine, run
+from .conftest import enter_zone, drain, make_engine, run
 
 SEEDS = [f"Soak{i:02d}" for i in range(25)]
 
@@ -103,7 +103,7 @@ async def _play(tmp_path, seed: str) -> _Watcher:
         if hub.mode in ("ZONE_READY", "ZONE_ACTIVE"):
             record = engine.save.active_zone
             if record.state == "GENERATED":
-                await engine.handle_enter_zone(record.zone_id)
+                await enter_zone(engine, record.zone_id)
             watcher.zones_played += 1
             for loc in sorted(record.allocated_location_ids):
                 await TX.claim_check(engine, record.zone_id, loc)
@@ -177,7 +177,7 @@ def test_the_allocator_never_starves_on_any_seed(tmp_path):
             if hub.mode in ("ZONE_READY", "ZONE_ACTIVE"):
                 record = engine.save.active_zone
                 if record.state == "GENERATED":
-                    await engine.handle_enter_zone(record.zone_id)
+                    await enter_zone(engine, record.zone_id)
                 for loc in sorted(record.allocated_location_ids):
                     await TX.claim_check(engine, record.zone_id, loc)
                 await drain()

@@ -1,0 +1,400 @@
+  ok: zone content arrived
+zone zone_001: 'Relay 001: Bomb Rush Cyberfunk' (neon_transit) checks [89100005.0, 89100010.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: player spawned
+  ok: exit portal appended
+  ok: the Zone built no activities, so nothing here is tested
+  ok: 0 of 6 activities complete into silence: `completed` has no listener, so finishing one tells the player nothing
+  ok: no feature shares a chamber with an AP reward
+  ok: no feature shares a chamber with an AP reward
+  ok: no feature shares a chamber with an AP reward
+  ok: 'moving_platform' was offered without the capability that pays for it
+  ok: 'powered_door' was offered without the capability that pays for it
+  ok: 'bounce_pad' was offered without the capability that pays for it
+  ok: the client built the offered affordances
+  ok: the affordances hold local rewards
+  ok: earning a local reward checked no AP location
+  ok: exit portal starts sealed
+  ok: locked reward refuses interaction (test 58)
+  ok: objective stays latched through death (test 59)
+  ok: first check confirmed
+  ok: confirming a check fires its transmission beam
+  ok: the Zone was left and the Hub still calls it active (test I)
+  ok: a second Zone was requested while a DORMANT one still holds its locations and nothing refused it (test I)
+  ok: a new Zone began generating while a DORMANT one still holds its locations: mode is 'ZONE_DORMANT' (test I)
+  ok: re-entering the DORMANT Zone made a different Zone active (test I)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: confirmed reward stays disabled after resume (test I)
+  ok: resuming does not replay the transmission beam
+  ok: objectives reset on resume (test I)
+  ok: exit portal stays locked until every check confirms (test I)
+  ok: objective stays latched through death (test 59)
+  ok: exit portal unlocked
+  ok: a slotted action activates on demand
+  ok: a slotted action knows the world it came from
+  ok: the slotted action wears its source world's colour (Bomb Rush Cyberfunk)
+  ok: a slotted action shows its attachment
+  ok: body and tip are both painted
+  ok: source colour and slot colour stay distinguishable
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+  ok: a sealed, edge-less door (c001/entry) was dropped from this client's copy only
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_span_basin     mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_002 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: this client reported no measurement for c001/entry, which is the disagreement under test; it reported <null>
+  ok: the client measured no apertures at all, so the missing one proves nothing
+  ok: the controller raised `layout_refused` for zone_002, and it raised ["zone_002"]
+  ok: the player is held while the layout is unaccepted
+  ok: closing a menu released the acceptance hold: holds are ["layout_verdict"]
+  ok: the acceptance hold is not named among ["layout_verdict"]
+  ok: a refused Zone cannot claim check 89100004
+  ok: the recomposed Zone is still zone_002
+  ok: the refused Zone kept its Checks: [89100003.0, 89100004.0], and it holds [89100003.0, 89100004.0]
+zone zone_002: 'Relay 002: Dark Souls III' (gothic_stone) checks [89100003.0, 89100004.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_span_basin     mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_002 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_003 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the torn-down Zone's player went with it (offset 3)
+  ok: the discarded attempt raised no verdict of its own, and it raised [] (offset 3)
+  ok: the discarded attempt left no refusal behind (it held '', offset 3)
+  ok: the campaign is still in zone_003 after the teardown, and it is in ZONE_ACTIVE (offset 3)
+  ok: no partial certification from the discarded attempt was refused as if this Zone had sent one: layout_state is 'ACCEPTED' (offset 3)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_003 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the torn-down Zone's player went with it (offset 14)
+  ok: the discarded attempt raised no verdict of its own, and it raised [] (offset 14)
+  ok: the discarded attempt left no refusal behind (it held 'ACCEPTED', offset 14)
+  ok: the campaign is still in zone_003 after the teardown, and it is in ZONE_ACTIVE (offset 14)
+  ok: no partial certification from the discarded attempt was refused as if this Zone had sent one: layout_state is 'ACCEPTED' (offset 14)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_003 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the replacement Zone reached its own ACCEPTED verdict, and it reached 'ACCEPTED'
+  ok: no stale verdict left the replacement player held: []
+  ok: certification and replay awarded no Check: the campaign held [89100003.0, 89100004.0, 89100005.0, 89100010.0] and now holds [89100003.0, 89100004.0, 89100005.0, 89100010.0]
+  ok: the teardown stranded no allocated location: [89100008.0, 89100012.0] before, [89100008.0, 89100012.0] after
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_004 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: round 0's falsified layout was refused, and it was 'REFUSED'
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_004 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: round 1's falsified layout was refused, and it was 'REFUSED'
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_004 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: round 2's falsified layout was refused, and it was 'REFUSED'
+  ok: the Hub names zone_004 as the Zone to discard, and it names 'zone_004'
+  ok: and offers no resume id for it, so nothing can enter it by accident: resume_zone_id is ''
+  ok: the portal is disabled in ZONE_FAILED
+  ok: the portal offers no way in: 'ZONE CANNOT BE BUILT — DISCARD IT AT THE CONSOLE'
+  ok: and activating it asks for nothing (asked 0 times)
+  ok: the discard console is visible in ZONE_FAILED
+  ok: the first press asks for confirmation: '[E] CONFIRM ABANDON — unclaimed Checks return to the pool'
+  ok: and changed no campaign state: the Hub is still ZONE_FAILED
+  ok: and the Zone is still held
+  ok: discarding it leaves the Hub able to generate again, and it is in ZONE_AVAILABLE
+  ok: discarding claimed nothing on the player's behalf: [89100003.0, 89100004.0, 89100005.0, 89100010.0] before, [89100003.0, 89100004.0, 89100005.0, 89100010.0] after
+  ok: the discarded Zone's 2 reserved location(s) are back in the pool; stranded: []
+  ok: and it is a new Zone, not the discarded one
+zone zone_005: 'Relay 005: Super Mario 64' (concrete_facility) checks [89100012.0, 89100008.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_span_basin     mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_005 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+zone zone_006: 'Relay 006: Borderlands 2' (rusted_industrial) checks [89100009.0, 89100015.0, 89100001.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_006 mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 5)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+  ok: double buy charged exactly once (test O)
+zone zone_007: 'Relay 007: Archipepsi' (void_glitch) checks [89100020.0, 89100006.0, 89100013.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_007 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 5)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+zone zone_008: 'Relay 008: Ocarina of Time' (temple_ruin) checks [89100011.0, 89100024.0, 89100018.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_span_basin     mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_008 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 4)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+zone zone_009: 'Relay 009: Bomb Rush Cyberfunk' (neon_transit) checks [89100025.0, 89100019.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_span_basin     mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_009 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+zone zone_010: 'Relay 010: Dark Souls III' (gothic_stone) checks [89100014.0, 89100023.0, 89100017.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_010 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 5)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+  ok: double buy charged exactly once (test O)
+zone zone_011: 'Relay 011: Super Mario 64' (concrete_facility) checks [89100021.0, 89100016.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_span_basin     mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_011 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+zone zone_012: 'Terminal Relay 012' (neon_transit) [FINALE] checks [89100030.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_012 mode=none declared=0 judged=0 accepted=0 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+zone zone_013: 'Relay 013: Archipepsi' (void_glitch) checks [89100027.0, 89100029.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_013 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+zone zone_014: 'Relay 014: Ocarina of Time' (temple_ruin) checks [89100002.0, 89100026.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_span_basin     mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_014 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ZONE_AVAILABLE)
+zone zone_015: 'Relay 015: Borderlands 2' (rusted_industrial) checks [89100028.0]
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_015 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 3)
+  ok: the Zone this client is playing has an accepted layout (ACCEPTED)
+  ok: the controller acted on an ACCEPTED verdict, and it acted on 'ACCEPTED'
+  ok: the acceptance hold outlived the acceptance: []
+  ok: a menu opened after acceptance does not hold the player
+  ok: the player is still held with no claim standing: []
+  ok: EXIT: interacting with the portal asks to leave the Zone (1 request(s))
+  ok: EXIT: and the player survives the frames after the Zone is torn down
+  ok: EXIT: with its probe answering empty rather than reading a world that is not there
+  ok: EXIT: and the campaign still reports a mode (ALL_CHECKS_CLEARED)
+  ok: campaign reaches ALL_CHECKS_CLEARED (after 12 zones)
+  ok: all 30 checks confirmed
+  ok: goal reported
+  ok: 26 foreign checks -> 26 interpretations, none missing, none duplicated
+  ok: interpretation_seq is unique and gapless across the campaign
+integration: 10 zone timings, 0 encounters, 0 Zone-spanning
+  ok: no zone_timing intent was ever sent
+  ok: 0 encounter(s) covered over 80% of their Zone; that is the Zone-wide live-enemy count reappearing
+  ok: the bridge elided the unchanged Echo log 112 times
+  ok: the Echo log never went backwards across 112 snapshots
+  ok: every interpretation left a mark on the fold (uncredited: [])
+  ok: the campaign owns at least one folded resource channel
+  ok: the campaign owns at least one folded rule
+  ok: the fold assigned the resource a HUD channel
+  ok: the campaign owns at least one powers link
+  ok: Action act_l89100005 declares a real slot (mobility)
+  ok: Action act_l89100004 declares a real slot (utility)
+  ok: Action act_l89100009 declares a real slot (echo_a)
+  ok: Action act_l89100001 declares a real slot (echo_a)
+  ok: Action act_l89100011 declares a real slot (echo_a)
+  ok: Action act_l89100024 declares a real slot (echo_a)
+  ok: Action act_l89100018 declares a real slot (mobility)
+  ok: Action act_l89100025 declares a real slot (echo_a)
+  ok: Action act_l89100019 declares a real slot (mobility)
+  ok: Action act_l89100023 declares a real slot (mobility)
+  ok: Action act_l89100021 declares a real slot (mobility)
+  ok: Action act_l89100016 declares a real slot (utility)
+  ok: the campaign's Actions reach more than one slot (["mobility", "utility", "echo_a"])
+  ok: 'REP' was read as something (§15)
+  ok: 'REP' claims literal and earns it
+  ok: 'Fresh Rep' was read as something (§15)
+  ok: 'Estus Shard' was read as something (§15)
+  ok: 'Estus Shard' claims systemic and earns it
+  ok: 'Wing Cap' was read as something (§15)
+  ok: 'Power Star' was read as something (§15)
+  ok: 'Power Star' claims systemic and earns it
+  ok: 'Metal Cap' was read as something (§15)
+  ok: 'Unkempt Harold' was read as something (§15)
+  ok: 'Unkempt Harold' claims literal and earns it
+  ok: 'Ice Beam' was read as something (§15)
+  ok: 'Ice Beam' claims systemic and earns it
+  ok: 'Conference Call' was read as something (§15)
+  ok: 'Conference Call' claims literal and earns it
+  ok: 'Cloud Boots' was read as something (§15)
+  ok: 'Bomb Bag' was read as something (§15)
+  ok: 'Bomb Bag' claims literal and earns it
+  ok: 'Sledge Hammer' was read as something (§15)
+  ok: 'Sledge Hammer' claims literal and earns it
+  ok: 'Glider Cape' was read as something (§15)
+  ok: 'Glider Cape' claims literal and earns it
+  ok: 'Spear of Justice' was read as something (§15)
+  ok: 'Spear of Justice' claims literal and earns it
+  ok: 'Warp Whistle' was read as something (§15)
+  ok: 'Warp Whistle' claims literal and earns it
+  ok: 'Ember' was read as something (§15)
+  ok: 'Ember' claims systemic and earns it
+  ok: 'Hookshot Chain' was read as something (§15)
+  ok: 'Hookshot Chain' claims literal and earns it
+  ok: 'Restoration Wine' was read as something (§15)
+  ok: 'Boomerang' was read as something (§15)
+  ok: 'Wall Jump Boots' was read as something (§15)
+  ok: 'Wall Jump Boots' claims literal and earns it
+  ok: 'Tower Shield' was read as something (§15)
+  ok: 'Tower Shield' claims literal and earns it
+  ok: 'Clarity Draught' was read as something (§15)
+  ok: 'Revelation Scroll' was read as something (§15)
+  ok: 'Hookshot' was read as something (§15)
+  ok: 'Seal of Authority' was read as something (§15)
+  ok: 'Momentum Core' was read as something (§15)
+  ok: 'Momentum Core' claims systemic and earns it
+  ok: a full campaign reads items in more than one mode (["literal", "mechanical", "systemic", "conceptual"])
+  ok: the campaign emitted at least one non-create operation (12)
+  ok: at least one component reached Mk II or better (7 did)
+  ok: a provenance chain names more than one item (longest 4)
+  ok: the Hub's Echo Lab exists and the visit changed no campaign truth
+  ok: the campaign offered affordance features (3)
+  ok: a local reward was earned and recorded in the save (1)
+  ok: shop stocked at least once during the campaign
+  ok: at least one shop purchase completed
+  ok: coins were genuinely spent
+GODOT INTEGRATION OK

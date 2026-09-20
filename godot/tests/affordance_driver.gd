@@ -46,10 +46,12 @@ func _run() -> void:
 	BridgeClient.sent_intents.clear()
 
 	_features_stay_out_of_the_lane()
+	_a_check_sits_on_the_lane_features_are_kept_off()
 	await _the_seven_are_built()
 	await _a_bounce_pad_beats_a_jump()
 	await _water_slows_you_but_cannot_trap_you()
 	await _a_rail_carries_a_dash_further()
+	await _the_rail_mesh_and_ride_come_from_one_path()
 	await _wind_only_lifts()
 	await _a_volume_freed_under_you_lets_go()
 	await _the_panel_is_reachable_by_a_real_shot()
@@ -60,6 +62,7 @@ func _run() -> void:
 	await _pull_pickup_cannot_reach_an_ap_reward()
 	await _readouts_only_show_what_is_owned()
 	await _readouts_change_nothing()
+	await _a_player_who_has_left_the_world_does_not_probe_it()
 	_the_suite_actually_exercised_something()
 
 	if failures == 0:
@@ -74,6 +77,45 @@ func _run() -> void:
 ## The whole fraction space, at several room widths. `resolve_position` is
 ## the only thing standing between "Epsilon picked 0.5, 0.5" and a feature
 ## in the doorway, so it is swept rather than sampled.
+## THE EXIT PORTAL CRASHED THE GAME, and this is why it cannot again.
+##
+## Taking the portal removes the Zone and the player with it, but a
+## queued frame still arrives. `camera_ray` read `.direct_space_state`
+## off `get_world_3d()` without asking whether there was a world --
+## "Invalid access to property or key 'direct_space_state' on a base
+## object of type 'null instance'" -- and `_physics_process` called
+## `move_and_slide` on a body whose space was freed. Measured on a
+## played Zone with every Check claimed: **the portal that ends a Zone
+## ended the process instead**, which is the single most important
+## transition in the game.
+##
+## The interact probe and every shot run through `camera_ray` each
+## frame, so the first frame after the portal fires is the one that
+## crashes. An empty result is what "nothing is there" already means to
+## every caller, so the guard costs nothing and changes no behaviour
+## inside the tree.
+func _a_player_who_has_left_the_world_does_not_probe_it() -> void:
+	var player := Player.create()
+	add_child(player)
+	await get_tree().physics_frame
+	_check(player.is_inside_tree(),
+			"the control needs a player in the tree to start from")
+	# OUT OF THE TREE, exactly as the portal leaves it.
+	remove_child(player)
+	_check(not player.is_inside_tree(),
+			"and the player is detached, as the portal leaves it")
+	var probed := player.camera_ray(3.0)
+	_check(probed.is_empty(),
+			"a detached player's camera ray answers an empty result "
+			+ "rather than reading a world that is not there (%s)"
+			% str(probed))
+	# AND A QUEUED PHYSICS FRAME IS SURVIVED, not crashed on.
+	player._physics_process(0.016)
+	_check(true, "and a queued physics frame on a detached body is "
+			+ "survived rather than crashed on")
+	player.free()
+	await get_tree().process_frame
+
 func _features_stay_out_of_the_lane() -> void:
 	var lane := AffordanceFeatures.LANE_HALF_WIDTH
 	var checked := 0
@@ -755,3 +797,136 @@ func _snapshot() -> Dictionary:
 		"interpretations": [],
 		"checked_location_ids": [],
 	}
+
+## The other half of "an affordance is never on the way to a Check".
+##
+## `_features_stay_out_of_the_lane` proves features clear the lane in
+## every room width, including arena widths. That only protects a Check
+## if the CHECK IS ON THE LANE -- otherwise both could sit off it, on
+## the same side, with the pedestal behind the feature.
+##
+## Until CAMPAIGN_SCALE.md 7, none of this had to hold for rooms: a
+## chamber holding a Check was simply forbidden from holding a feature,
+## and the blanket ban did the work. The ban is gone because it made
+## every reward room sterile, so the conjunction below is now what
+## carries the invariant, and both halves need saying out loud.
+func _a_check_sits_on_the_lane_features_are_kept_off() -> void:
+	var lane := AffordanceFeatures.LANE_HALF_WIDTH
+	var checked := 0
+	for width: float in [5.0, 8.0, 14.0, 20.0, 28.0]:
+		for depth: float in [12.0, 20.0, 28.0]:
+			var reward := ContentInstantiator._objective(
+					{}, Vector3(width, 5.0, depth))
+			checked += 1
+			_check_once(absf(reward.x) < lane,
+					"a Check in a %.0fx%.0f room sits %.2fm off centre, "
+					% [width, depth, absf(reward.x)]
+					+ "outside the walking lane a feature is kept out of "
+					+ "-- so a feature could stand between the player and "
+					+ "it")
+	_check_once(checked >= 15,
+			"only %d reward placements checked" % checked)
+
+
+## Art requirement 16. Owner ruling: `ride_path` is the AUTHORITATIVE
+## geometric path shared by the visual mesh and the runtime riding
+## geometry -- *"do not independently hand-author visual rail and
+## collision/ride path."*
+##
+## The beam and the lane used to be two hand-written boxes with different
+## centres and different sizes that happened to share one `length`. Two
+## authorings of one thing drift the moment either is edited, and the
+## drift is invisible: the rail looks right and rides somewhere else.
+##
+## Tested against a MULTI-SEGMENT path on purpose. The footprint only
+## allows a straight rail today, so through `_rail` the whole polyline
+## claim is untestable -- a two-point path has one segment, and a
+## hardcoded length is indistinguishable from a derived one when there is
+## only one of them. Sabotaging the built rail proved exactly that: three
+## hand-authored lengths all passed, because `run` happened to equal the
+## literal. So this drives `build_rail_along` with a bent path of three
+## unequal segments, which is the shape a curved authored rail arrives in.
+func _the_rail_mesh_and_ride_come_from_one_path() -> void:
+	var path := AffordanceFeatures.rail_ride_path(Vector3.ZERO)
+	_check(path.size() >= 2,
+			"a ride path needs at least two points, got %d" % path.size())
+
+	var bent := PackedVector3Array([
+		Vector3(0, 1.1, 0),
+		Vector3(0, 1.1, 4.0),        # 4.0 along z
+		Vector3(3.0, 1.1, 4.0),      # 3.0 along x -- a turn
+		Vector3(3.0, 1.1, 9.5),      # 5.5 along z
+	])
+	var runs := [4.0, 3.0, 5.5]
+
+	# DETACHED, and never added to the tree. Every assertion below reads
+	# geometry -- extents, position, rotation, mesh -- and none of it
+	# needs a scene tree. A `Volume` that enters the tree registers
+	# global influence, and this suite has concurrent coroutine tests
+	# that read exactly that: when the type error below aborted this
+	# function mid-way, the leaked Volume failed "a freed volume
+	# releases its influence" three tests away. Not being in the tree
+	# removes the whole class of interference rather than tidying up
+	# after it.
+	var root := Node3D.new()
+	var built: Dictionary = AffordanceFeatures.build_rail_along(root, bent)
+	var beams: Array = built["beams"]
+	var lanes: Array = built["lanes"]
+
+	# One ride volume AND one beam segment per straight segment -- the
+	# shape the ruling confirmed as a valid integration direction.
+	_check(lanes.size() == bent.size() - 1,
+			"a %d-point path built %d ride volumes, expected %d"
+			% [bent.size(), lanes.size(), bent.size() - 1])
+	_check(beams.size() == bent.size() - 1,
+			"a %d-point path built %d beam segments, expected %d"
+			% [bent.size(), beams.size(), bent.size() - 1])
+
+	for i in runs.size():
+		if i >= lanes.size() or i >= beams.size():
+			continue
+		var lane: AffordanceNodes.Volume = lanes[i]
+		# A colliding `_solid` is a StaticBody3D wrapping its mesh, not a
+		# MeshInstance3D. Typing it as one assigns cleanly right up until
+		# it does not, and the suite still prints OK when it does -- the
+		# Makefile's own guard is what caught it, which is why "TESTS OK"
+		# is not the thing to grep for.
+		var beam: Node3D = beams[i]
+		var run: float = runs[i]
+		_check(absf(lane.extents.z - run) < 0.01,
+				"ride volume %d is %.2f long, its path segment is %.2f"
+				% [i, lane.extents.z, run])
+		var box := _box_mesh_of(beam)
+		_check(box != null and absf(box.size.z - run) < 0.01,
+				"beam segment %d is %.2f long, its path segment is %.2f"
+				% [i, 0.0 if box == null else box.size.z, run])
+		# ...and they sit on the same segment, not merely at the same
+		# length. A mesh the right size in the wrong place is the failure
+		# a length check alone cannot see.
+		var midpoint := (bent[i] + bent[i + 1]) * 0.5
+		_check(Vector2(beam.position.x - midpoint.x,
+				beam.position.z - midpoint.z).length() < 0.01,
+				"beam segment %d is centred at %.2v, its segment's "
+				% [i, beam.position] + "midpoint is %.2v" % midpoint)
+		_check(Vector2(lane.position.x - midpoint.x,
+				lane.position.z - midpoint.z).length() < 0.01,
+				"ride volume %d is centred at %.2v, its segment's "
+				% [i, lane.position] + "midpoint is %.2v" % midpoint)
+		# The turn has to reach the geometry: a segment along x that was
+		# not rotated is a rail that rides sideways.
+		_check(absf(beam.rotation.y - lane.rotation.y) < 0.01,
+				"beam segment %d and its ride volume face different ways"
+				% i)
+	# Immediate, not deferred: a queued free leaves the nodes alive for a
+	# frame, which is a frame the next test shares with them.
+	root.free()
+
+## The BoxMesh a `_solid` built, whether it came back as a bare mesh or
+## as a StaticBody3D wrapping one.
+func _box_mesh_of(node: Node3D) -> BoxMesh:
+	if node is MeshInstance3D:
+		return (node as MeshInstance3D).mesh as BoxMesh
+	for child in node.get_children():
+		if child is MeshInstance3D:
+			return (child as MeshInstance3D).mesh as BoxMesh
+	return null

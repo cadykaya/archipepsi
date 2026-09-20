@@ -66,7 +66,7 @@ def write_save(path: Path, save: CampaignSave) -> None:
     with open(tmp, "w", encoding="utf-8") as f:
         f.write(payload)
         f.flush()
-        os.fsync(f.fileno())
+        _flush(f.fileno())
     if path.exists():
         bak = path.with_suffix(path.suffix + ".bak")
         shutil.copy2(path, bak)
@@ -80,15 +80,53 @@ def write_save(path: Path, save: CampaignSave) -> None:
               len(save.zones), len(save.interpretations))
 
 
-def _fsync_file(path: Path) -> None:
+def _flush(fd: int) -> None:
+    """fsync that cannot take the save down with it.
+
+    EVERY durability call in this module goes through here, and none of
+    them may raise. The trade is deliberate and one-directional: an
+    un-flushed write survives anything but a power cut, while an
+    exception here loses the write outright, in a game whose save is the
+    campaign.
+
+    Playtest 1 lost a session to the other arrangement -- a Windows
+    `_commit()` refusing a handle it could not write through, EBADF, and
+    a red error in the HUD where a Zone should have been. That specific
+    cause is fixed at the call site; this is the guarantee that the NEXT
+    platform quirk costs a durability margin rather than the campaign.
+    """
     try:
-        fd = os.open(path, os.O_RDONLY)
+        os.fsync(fd)
+    except OSError:                              # pragma: no cover
+        log.debug("fsync refused on fd %d; the write itself stands", fd)
+
+
+def _fsync_file(path: Path) -> None:
+    """Best-effort durability, like `_fsync_dir` below.
+
+    Opened O_RDWR rather than O_RDONLY because Windows will not flush a
+    read-only handle: `_commit()` rejects it with EBADF, and POSIX's
+    willingness to fsync a read-only fd is what hid that for the entire
+    life of this function. It surfaced in playtest 1 as a red
+    `OSError: [Errno 9] Bad file descriptor` in the HUD on the SECOND
+    save of a session -- the first has no primary to back up, so this is
+    never reached -- which read as the portal being broken.
+
+    And the fsync is now tolerated rather than fatal. Failing to flush a
+    BACKUP is a weaker durability guarantee; failing the whole save
+    because the backup would not flush loses the data outright.
+    """
+    try:
+        fd = os.open(path, os.O_RDWR)
     except OSError:                              # pragma: no cover
         return
     try:
-        os.fsync(fd)
+        _flush(fd)
     finally:
-        os.close(fd)
+        try:
+            os.close(fd)
+        except OSError:                          # pragma: no cover
+            pass
 
 
 def _fsync_dir(directory: Path) -> None:
@@ -99,11 +137,12 @@ def _fsync_dir(directory: Path) -> None:
     except OSError:                              # pragma: no cover
         return
     try:
-        os.fsync(fd)
-    except OSError:                              # pragma: no cover
-        pass
+        _flush(fd)
     finally:
-        os.close(fd)
+        try:
+            os.close(fd)
+        except OSError:                          # pragma: no cover
+            pass
 
 
 def load_save(path: Path) -> CampaignSave | None:

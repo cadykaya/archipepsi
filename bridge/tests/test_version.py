@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from pathlib import Path
 
 from archipepsi_bridge import BRIDGE_VERSION
 from archipepsi_bridge.version import build_metadata, render
@@ -100,9 +101,17 @@ def test_an_untracked_build_artifact_is_not_a_dirty_tree():
 
 
 def test_the_module_runs_as_a_command():
-    """`make version` is a CI step; it has to exit zero and print."""
+    """`make version` is a CI step; it has to exit zero and print.
+
+    Run from `bridge/`, which is what the make target does. Inheriting
+    pytest's cwd made this pass under `cd bridge && pytest` and under CI
+    (which pip-installs the package, so it resolves from anywhere) while
+    failing `make test` from the repo root on a machine without that
+    install -- i.e. everywhere the target is actually typed.
+    """
     out = subprocess.run(
         [sys.executable, "-m", "archipepsi_bridge.version"],
+        cwd=Path(__file__).resolve().parents[1],
         capture_output=True, text=True, timeout=30)
     assert out.returncode == 0, out.stderr
     assert "bridge_version" in out.stdout

@@ -1,0 +1,44 @@
+python3 -m pytest -q
+........................................................................ [  4%]
+........................................................................ [  8%]
+........................................................................ [ 13%]
+........................................................................ [ 17%]
+........................................................................ [ 22%]
+........................................................................ [ 26%]
+........................................................................ [ 31%]
+........................................................................ [ 35%]
+........................................................................ [ 40%]
+........................................................................ [ 44%]
+........................................................................ [ 49%]
+........................................................................ [ 53%]
+........................................................................ [ 58%]
+........................................................................ [ 62%]
+................................................................
+  fold: 0.163 ms for a full 26-echo campaign
+........ [ 67%]
+........................................................................ [ 71%]
+........................................................................ [ 76%]
+........................................................................ [ 80%]
+........................................................................ [ 85%]
+........................................................................ [ 89%]
+........................................................................ [ 94%]
+.......................................................................... [ 99%]
+................    [100%]
+=============================== warnings summary ===============================
+.archipelago/NetUtils.py:532
+  /home/user/archipepsi/.archipelago/NetUtils.py:532: UserWarning: _speedups not available. Falling back to pure python LocationStore. Install a matching C++ compiler for your platform to compile _speedups.
+    warnings.warn("_speedups not available. Falling back to pure python LocationStore. "
+
+.archipelago/worlds/pokemon_emerald/data.py:12
+  /home/user/archipepsi/.archipelago/worlds/pokemon_emerald/data.py:12: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+    import pkg_resources
+
+apworld/tests/test_apworld.py::TestStructure::test_all_state_can_reach_everything
+apworld/tests/test_apworld.py::TestTierReachability::test_all_state_can_reach_everything
+apworld/tests/test_apworld.py::TestProductionScale::test_all_state_can_reach_everything
+apworld/tests/test_apworld.py::TestAnUnusualSize::test_all_state_can_reach_everything
+  /home/user/archipepsi/.archipelago/BaseClasses.py:450: DeprecationWarning: multiworld.get_all_state no longer caches all_state and this argument will be removed.
+    warnings.warn("multiworld.get_all_state no longer caches all_state and this argument will be removed.",
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1602 passed, 6 warnings, 627 subtests passed in 118.91s (0:01:58)

@@ -1,5 +1,60 @@
 {
   "$defs": {
+    "ActivityPrimitive": {
+      "additionalProperties": false,
+      "description": "One instance of an activity family, with its difficulty dialled in.\n\nEpsilon picks the family and the numbers. It does not describe the\npuzzle in prose, because prose cannot be built and cannot be scored:\nan unimplemented tag counts for nothing (CAMPAIGN_SCALE.md 9), and\nthe way to guarantee that is to have no field it could put prose in.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "switch_sequence",
+            "timed_run",
+            "target_challenge",
+            "pressure_routing"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "element_count": {
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Element Count",
+          "type": "integer"
+        },
+        "time_limit": {
+          "default": 0.0,
+          "maximum": 120.0,
+          "minimum": 0.0,
+          "title": "Time Limit",
+          "type": "number"
+        },
+        "ordered": {
+          "default": false,
+          "title": "Ordered",
+          "type": "boolean"
+        },
+        "requires": {
+          "default": [],
+          "items": {
+            "enum": [
+              "blink",
+              "cross_long_gap",
+              "grapple",
+              "ranged_hit"
+            ],
+            "type": "string"
+          },
+          "maxItems": 2,
+          "title": "Requires",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "ActivityPrimitive",
+      "type": "object"
+    },
     "AffordanceFeature": {
       "additionalProperties": false,
       "description": "One optional world feature a Zone may offer (ECHOES.md \u00a713).\n\nOptional is the whole point. A feature may never lie on the mandatory\npath, host an AP reward, an exit or an objective \u2014 \u00a713.2, enforced by\n`validate_zone` rather than by good intentions \u2014 so a Zone with every\nfeature stripped out is still completable with the base kit. That is\nwhat makes affordances safe to generate against a campaign whose\ncapabilities the generator cannot fully predict.",
@@ -12,7 +67,8 @@
             "rail",
             "wind_volume",
             "bounce_pad",
-            "moving_platform"
+            "moving_platform",
+            "powered_door"
           ],
           "title": "Tag",
           "type": "string"
@@ -82,7 +138,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -102,26 +158,135 @@
           "title": "Features",
           "type": "array"
         },
+        "doors": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/DoorAssignment"
+          },
+          "maxItems": 8,
+          "title": "Doors",
+          "type": "array"
+        },
+        "arrive_edge": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arrive Edge"
+        },
+        "depart_edge": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Depart Edge"
+        },
+        "keys": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ZoneKeySpec"
+          },
+          "maxItems": 4,
+          "title": "Keys",
+          "type": "array"
+        },
+        "additional_reward_location_ids": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Additional Reward Location Ids",
+          "type": "array"
+        },
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityPrimitive"
+          },
+          "maxItems": 3,
+          "title": "Activities",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
+          "type": "array"
+        },
         "type": {
           "const": "arena",
           "title": "Type",
           "type": "string"
         },
         "width": {
-          "maximum": 28,
-          "minimum": 10,
+          "maximum": 96.0,
+          "minimum": 10.0,
           "title": "Width",
           "type": "number"
         },
         "depth": {
-          "maximum": 28,
-          "minimum": 10,
+          "maximum": 96.0,
+          "minimum": 10.0,
           "title": "Depth",
           "type": "number"
         },
         "wall_height": {
-          "maximum": 8,
-          "minimum": 4,
+          "maximum": 80.0,
+          "minimum": 4.0,
           "title": "Wall Height",
           "type": "number"
         },
@@ -141,6 +306,17 @@
           "maxItems": 4,
           "title": "Enemies",
           "type": "array"
+        },
+        "elevation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ElevationBand"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -181,7 +357,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -199,6 +375,115 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "doors": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/DoorAssignment"
+          },
+          "maxItems": 8,
+          "title": "Doors",
+          "type": "array"
+        },
+        "arrive_edge": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arrive Edge"
+        },
+        "depart_edge": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Depart Edge"
+        },
+        "keys": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ZoneKeySpec"
+          },
+          "maxItems": 4,
+          "title": "Keys",
+          "type": "array"
+        },
+        "additional_reward_location_ids": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Additional Reward Location Ids",
+          "type": "array"
+        },
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityPrimitive"
+          },
+          "maxItems": 3,
+          "title": "Activities",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {
@@ -237,6 +522,135 @@
       "title": "CorridorChamber",
       "type": "object"
     },
+    "DoorAssignment": {
+      "additionalProperties": false,
+      "description": "One joining socket of one room instance, and what it does.\n\n`edge_id` is required unless the door is `SEALED` or `ZONE_EXIT`,\nand the edge it names must be `JOINED` \u2014 a `TRAVERSAL_ONLY` edge is\ncarried by a `PlugAssignment` and never by a door. `ZONE_EXIT` is\nthe Zone's own way out and names no edge at all: see `DoorUsage`.",
+      "properties": {
+        "socket_id": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Socket Id",
+          "type": "string"
+        },
+        "usage": {
+          "enum": [
+            "USED",
+            "LOCKED",
+            "SEALED",
+            "ZONE_EXIT"
+          ],
+          "title": "Usage",
+          "type": "string"
+        },
+        "edge_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Edge Id"
+        },
+        "key_id": {
+          "anyOf": [
+            {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Key Id"
+        },
+        "colour": {
+          "anyOf": [
+            {
+              "enum": [
+                "red",
+                "blue",
+                "gold",
+                "green"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Colour"
+        }
+      },
+      "required": [
+        "socket_id",
+        "usage"
+      ],
+      "title": "DoorAssignment",
+      "type": "object"
+    },
+    "ElevationBand": {
+      "additionalProperties": false,
+      "description": "A second walkable height inside an ORDINARY room (ROOM_GRAMMAR v0).\n\nThe measured finding this exists for: a room's entire shape was three\nnumbers. `ArenaChamber` was width, depth and wall_height, so every one\nof the twenty-three rooms in the played Zone was a flat rectangle and\nthe twenty-eight ranged enemies in them had nowhere to be ranged\nFROM. Nothing was wrong with the generator; there was no field in\nwhich a raised area could be described.\n\nDeliberately ONE band, and deliberately not a `platform_path`. This\nis a property an ordinary room may have, not a room type -- the whole\npoint is that verticality stops being a special minigame.\n\nEvery field is a Literal or a bounded float so the vocabulary can\nGROW without becoming free-form: `kind` gains `catwalk` and `alcove`,\n`access` gains `drop` and `capability:<name>`, `side` gains `front`.\nA dead-end one-off would have been a boolean called `has_ledge`.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "gallery",
+            "pit"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "rise": {
+          "maximum": 4.0,
+          "minimum": 1.0,
+          "title": "Rise",
+          "type": "number"
+        },
+        "coverage": {
+          "maximum": 0.55,
+          "minimum": 0.2,
+          "title": "Coverage",
+          "type": "number"
+        },
+        "side": {
+          "enum": [
+            "left",
+            "right",
+            "back"
+          ],
+          "title": "Side",
+          "type": "string"
+        },
+        "access": {
+          "default": "ramp",
+          "enum": [
+            "ramp",
+            "stair"
+          ],
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "rise",
+        "coverage",
+        "side"
+      ],
+      "title": "ElevationBand",
+      "type": "object"
+    },
     "EnemyGroup": {
       "additionalProperties": false,
       "properties": {
@@ -250,7 +664,7 @@
           "type": "string"
         },
         "count": {
-          "maximum": 8,
+          "maximum": 10,
           "minimum": 1,
           "title": "Count",
           "type": "integer"
@@ -290,7 +704,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -308,6 +722,115 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "doors": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/DoorAssignment"
+          },
+          "maxItems": 8,
+          "title": "Doors",
+          "type": "array"
+        },
+        "arrive_edge": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arrive Edge"
+        },
+        "depart_edge": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Depart Edge"
+        },
+        "keys": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ZoneKeySpec"
+          },
+          "maxItems": 4,
+          "title": "Keys",
+          "type": "array"
+        },
+        "additional_reward_location_ids": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Additional Reward Location Ids",
+          "type": "array"
+        },
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityPrimitive"
+          },
+          "maxItems": 3,
+          "title": "Activities",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {
@@ -359,6 +882,129 @@
       "title": "PlatformPathChamber",
       "type": "object"
     },
+    "PlugAssignment": {
+      "additionalProperties": false,
+      "description": "A return plug: the way back out of a dead end.\n\nBoth ends are anchors rather than coordinates, so the composer still\nnames no world position and the authored-alphabet boundary holds\nwithout special pleading.",
+      "properties": {
+        "edge_id": {
+          "maxLength": 48,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_:]+$",
+          "title": "Edge Id",
+          "type": "string"
+        },
+        "room_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Room Id",
+          "type": "string"
+        },
+        "source_anchor": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_:]+$",
+          "title": "Source Anchor",
+          "type": "string"
+        },
+        "destination": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_:]+$",
+          "title": "Destination",
+          "type": "string"
+        },
+        "device": {
+          "default": "pad",
+          "enum": [
+            "pad",
+            "threshold",
+            "tube"
+          ],
+          "title": "Device",
+          "type": "string"
+        }
+      },
+      "required": [
+        "edge_id",
+        "room_id",
+        "source_anchor",
+        "destination"
+      ],
+      "title": "PlugAssignment",
+      "type": "object"
+    },
+    "TopologyEdge": {
+      "additionalProperties": false,
+      "description": "One edge of the Zone graph.\n\nThe list order of `Zone.chambers` used to *be* the topology. This is\nwhat replaces it, and a Zone carrying no edges still means the chain\nit always meant.",
+      "properties": {
+        "edge_id": {
+          "maxLength": 48,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_:]+$",
+          "title": "Edge Id",
+          "type": "string"
+        },
+        "room_a": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Room A",
+          "type": "string"
+        },
+        "room_b": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Room B",
+          "type": "string"
+        },
+        "direction": {
+          "default": "BIDIRECTIONAL",
+          "enum": [
+            "BIDIRECTIONAL",
+            "A_TO_B",
+            "B_TO_A"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "realization": {
+          "default": "JOINED",
+          "enum": [
+            "JOINED",
+            "TRAVERSAL_ONLY"
+          ],
+          "title": "Realization",
+          "type": "string"
+        },
+        "capability": {
+          "anyOf": [
+            {
+              "enum": [
+                "ranged_hit",
+                "grapple",
+                "blink",
+                "cross_long_gap"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capability"
+        }
+      },
+      "required": [
+        "edge_id",
+        "room_a",
+        "room_b"
+      ],
+      "title": "TopologyEdge",
+      "type": "object"
+    },
     "TowerChamber": {
       "additionalProperties": false,
       "description": "Vertical traversal. The template always emits a base-movement route.",
@@ -386,7 +1032,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -404,6 +1050,115 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "doors": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/DoorAssignment"
+          },
+          "maxItems": 8,
+          "title": "Doors",
+          "type": "array"
+        },
+        "arrive_edge": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arrive Edge"
+        },
+        "depart_edge": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Depart Edge"
+        },
+        "keys": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ZoneKeySpec"
+          },
+          "maxItems": 4,
+          "title": "Keys",
+          "type": "array"
+        },
+        "additional_reward_location_ids": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Additional Reward Location Ids",
+          "type": "array"
+        },
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityPrimitive"
+          },
+          "maxItems": 3,
+          "title": "Activities",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {
@@ -469,7 +1224,7 @@
           "title": "Flavor"
         },
         "reward_location_id": {
-          "maximum": 89100030,
+          "maximum": 89100600,
           "minimum": 89100001,
           "title": "Reward Location Id",
           "type": "integer"
@@ -481,6 +1236,115 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "doors": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/DoorAssignment"
+          },
+          "maxItems": 8,
+          "title": "Doors",
+          "type": "array"
+        },
+        "arrive_edge": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arrive Edge"
+        },
+        "depart_edge": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_:]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Depart Edge"
+        },
+        "keys": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ZoneKeySpec"
+          },
+          "maxItems": 4,
+          "title": "Keys",
+          "type": "array"
+        },
+        "additional_reward_location_ids": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Additional Reward Location Ids",
+          "type": "array"
+        },
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityPrimitive"
+          },
+          "maxItems": 3,
+          "title": "Activities",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {
@@ -501,6 +1365,42 @@
         "type"
       ],
       "title": "TreasureRoomChamber",
+      "type": "object"
+    },
+    "ZoneKeySpec": {
+      "additionalProperties": false,
+      "description": "A Zone-local key. Not an Archipelago item, and never one.\n\nNo location id, never scouted, never sent, does not survive the Zone.\nIt is a lock state on generated geometry, which is what buys\nmetroidvania structure with zero multiworld risk.",
+      "properties": {
+        "key_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Key Id",
+          "type": "string"
+        },
+        "colour": {
+          "anyOf": [
+            {
+              "enum": [
+                "red",
+                "blue",
+                "gold",
+                "green"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Colour"
+        }
+      },
+      "required": [
+        "key_id"
+      ],
+      "title": "ZoneKeySpec",
       "type": "object"
     }
   },
@@ -597,9 +1497,27 @@
           }
         ]
       },
-      "maxItems": 6,
+      "maxItems": 40,
       "minItems": 1,
       "title": "Chambers",
+      "type": "array"
+    },
+    "edges": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TopologyEdge"
+      },
+      "maxItems": 32,
+      "title": "Edges",
+      "type": "array"
+    },
+    "plugs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PlugAssignment"
+      },
+      "maxItems": 8,
+      "title": "Plugs",
       "type": "array"
     }
   },

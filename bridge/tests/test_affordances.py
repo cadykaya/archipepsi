@@ -29,6 +29,7 @@ from archipepsi_bridge.schemas import zone as Z
 from pydantic import TypeAdapter
 from .test_providers import zone_request
 
+from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas.constants import (
     FEATURE_MIN_WIDTH as C_MIN_WIDTH)
 
@@ -51,17 +52,33 @@ def test_every_tag_declares_what_makes_it_interactable():
     assert set(M.AFFORDANCE_REQUIREMENTS) == set(_tags())
 
 
+#: The tags a campaign that has interpreted nothing can still use.
+#:
+#: MOVED TO `schemas/constants.py`, where it exports and the CLIENT can
+#: read it too. `integration_driver.gd` kept a hand-written copy of this
+#: pair, so the day `powered_door` joined the kit the engine offered it
+#: correctly and the client suite failed the Zone for offering it.
+#: Imported rather than restated, because restating it is what went
+#: wrong.
+BASE_KIT_TAGS = tuple(C.BASE_KIT_TAGS)
+
+
 def test_the_base_kit_tags_need_nothing_and_the_rest_need_something():
-    """§13.1 marks exactly two tags base-kit usable. The distinction is
-    load-bearing: it is why a campaign that has interpreted nothing still
-    gets optional content, and why the other five cannot appear as set
-    dressing."""
+    """The distinction is load-bearing: it is why a campaign that has
+    interpreted nothing still gets optional content, and why the rest
+    cannot appear as set dressing.
+
+    Both directions, which is the point — a tag with an empty
+    requirement that is NOT on the list is one somebody forgot to gate,
+    and a listed tag with a requirement is one that will never appear in
+    a first Zone.
+    """
     empty = M.derive_mechanics([])
-    assert M.owned_affordance_tags(empty) == ("bounce_pad", "moving_platform")
+    assert M.owned_affordance_tags(empty) == BASE_KIT_TAGS
     for tag, requirement in M.AFFORDANCE_REQUIREMENTS.items():
         needs_nothing = not requirement.get("primitives") \
             and not requirement.get("stats")
-        assert needs_nothing == (tag in ("bounce_pad", "moving_platform")), tag
+        assert needs_nothing == (tag in BASE_KIT_TAGS), tag
 
 
 def test_a_grapple_you_own_but_have_not_slotted_still_pays_for_the_anchor():
@@ -124,30 +141,108 @@ def test_a_zone_offering_an_unusable_feature_is_refused():
 
 # --- I4: never on the mandatory path --------------------------------------
 
-def test_a_feature_may_not_share_a_chamber_with_an_ap_reward():
-    """I4/§13.2. A reward chamber is on the mandatory path by definition,
-    so a feature in one is a feature you might have to use. Refused by the
-    Zone model itself, so no provider can produce one and no validator
-    call has to remember to check."""
-    with pytest.raises(ValidationError, match="13.2"):
+def test_a_narrow_chamber_still_cannot_hold_a_check_and_a_feature():
+    """I4/§13.2, by the geometric proof rather than by separation.
+
+    This chamber used to be refused for holding both at all. It is still
+    refused, and for a better reason: a 6m corridor has no room for a
+    bounce pad (7.1m) that is not across the walking lane, so the feature
+    would sit between the player and the Check.
+
+    A corridor deliberately, because it is the one chamber that can hold
+    a Check without a gating objective -- what refuses this is the lane
+    rule, with nothing else in the way to take the credit.
+    """
+    with pytest.raises(ValidationError, match="sit clear"):
         _zone(chambers=[
             {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0},
-            # A corridor: the one chamber that can hold a Check without
-            # also carrying a gating objective, so what refuses this is
-            # the reward rule rather than the objective rule.
             {"id": "c2", "type": "corridor", "length": 14.0, "width": 6.0,
              "reward_location_id": 89100001,
              "features": [{"tag": "bounce_pad", "at": (0.5, 0.5)}]}])
 
+    # ...and widened past the pad's footprint, the same room is fine.
+    ok = _zone(chambers=[
+        {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0},
+        {"id": "c2", "type": "corridor", "length": 14.0, "width": 8.0,
+         "reward_location_id": 89100001,
+         "features": [{"tag": "bounce_pad", "at": (0.5, 0.5)}]}])
+    assert ok.chambers[1].features and ok.chambers[1].reward_location_id
 
-def test_a_feature_may_not_gate_an_objective():
-    with pytest.raises(ValidationError, match="gate an objective"):
+
+def test_a_feature_may_share_an_objective_room_but_only_where_it_fits():
+    """The rule that used to be a blanket ban (CAMPAIGN_SCALE.md 7).
+
+    An affordance may never be REQUIRED for an objective. That was
+    enforced by forbidding the two from sharing a room at all, which was
+    the cheapest possible proof and made every objective room sterile --
+    no rails, no grapple, in exactly the rooms most worth having them.
+
+    The invariant did not move; the proof did. `FEATURE_MIN_WIDTH` is
+    `2 * (lane + 2 * reach + wall clearance)`, so a room wide enough for
+    the tag is a room where the feature demonstrably sits clear of the
+    walking lane. A room too narrow is still refused -- there is nowhere
+    to put the feature except across the route.
+    """
+    # Wide enough for a rail (6.7m): legal now, and this is the point.
+    zone = _zone(chambers=[
+        {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0},
+        {"id": "c2", "type": "arena", "width": 16.0, "depth": 14.0,
+         "wall_height": 5.0, "objective": "kill_all",
+         "enemies": [{"archetype": "melee", "count": 2}],
+         "features": [{"tag": "rail", "at": (0.5, 0.5)}]}])
+    assert zone.chambers[1].features, "the feature was silently dropped"
+
+    # And the refusal half, on a CORRIDOR -- see the vacuity test below
+    # for why an arena cannot demonstrate this. A 7m corridor has nowhere
+    # to put a water volume (7.9m) that is not across the walking lane.
+    with pytest.raises(ValidationError, match="sit clear"):
         _zone(chambers=[
             {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0},
-            {"id": "c2", "type": "arena", "width": 16.0, "depth": 14.0,
-             "wall_height": 5.0, "objective": "kill_all",
-             "enemies": [{"archetype": "melee", "count": 2}],
-             "features": [{"tag": "rail", "at": (0.5, 0.5)}]}])
+            {"id": "c2", "type": "corridor", "length": 14.0, "width": 7.0,
+             "features": [{"tag": "water_volume", "at": (0.5, 0.5)}]}])
+
+
+def test_a_feature_may_share_a_reward_room_but_only_where_it_fits():
+    """The same change for AP Checks, which is the one that matters.
+
+    A reward room was the most sterile room in the game: it could hold a
+    Check and nothing optional. Now it can hold both, and the ownership
+    half of the guarantee -- that nothing optional is REQUIRED to reach
+    the Check -- is still `validate_zone`'s, while the instantiated half
+    is `godot-legible` walking the built room.
+    """
+    zone = _zone(chambers=[
+        {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0},
+        {"id": "c2", "type": "arena", "width": 20.0, "depth": 18.0,
+         "wall_height": 6.0, "objective": "reach_reward",
+         "reward_location_id": 89100001,
+         "features": [{"tag": "grapple_anchor", "at": (0.5, 0.5)}]}])
+    room = zone.chambers[1]
+    assert room.reward_location_id == 89100001 and room.features
+
+
+def test_the_width_rule_is_vacuous_for_arenas_and_says_so():
+    """A limitation worth writing down rather than discovering later.
+
+    An arena is `width >= 10` and the widest feature footprint is 7.9m,
+    so EVERY legal arena is wide enough for every tag: the schema's lane
+    rule cannot refuse an arena, ever. It is a real constraint on
+    corridors, whose width starts at 4, and a tautology on rooms.
+
+    That is not a hole as long as the arena guarantee is carried
+    somewhere else, and it is: `godot-legible` walks the BUILT room and
+    checks the reward is reachable with base movement while the feature
+    is not in the way. This test exists so that nobody reads the width
+    rule as the arena's protection, deletes the Godot half as redundant,
+    and leaves reward rooms unguarded.
+    """
+    from archipepsi_bridge.schemas import zone as _Z
+    arena_min = _Z.ArenaChamber.model_fields["width"].metadata
+    lower = next(getattr(m, "ge") for m in arena_min if hasattr(m, "ge"))
+    assert lower >= max(C_MIN_WIDTH.values()), (
+        "an arena can now be narrower than its widest feature, so the "
+        "schema rule has started to bite for rooms -- which is fine, but "
+        "this test's premise no longer holds")
 
 
 def test_the_client_builder_keeps_features_out_of_the_walking_lane():
@@ -204,6 +299,158 @@ def test_every_tags_minimum_width_agrees_across_languages():
         source)
 
 
+def test_the_depth_table_matches_the_builders_own_run_length():
+    """`FEATURE_MIN_DEPTH` and `AffordanceFeatures.required_depth` are the
+    same rule in two languages, and they have to agree per tag.
+
+    The twin of the width pin above, and it exists because the width pin
+    on its own was only half of `fits`. A `powered_door` reaches 3.5 m
+    along the run; Python knew nothing about that axis, so it declared
+    the tag on corridors of 8.6 to 9.8 m, the builder dropped it for want
+    of depth, and the bridge refused the Zone for a chain that was
+    declared and never built.
+    """
+    from archipepsi_bridge.schemas import constants as C
+    gd = GODOT / "scripts/generation/affordance_features.gd"
+    source = gd.read_text()
+    clearance = _gd_const(gd, "THRESHOLD_CLEARANCE")
+    footprints = dict(re.findall(
+        r'"(\w+)": \{"half_width": [0-9.]+, "half_depth": ([0-9.]+)',
+        source))
+    assert set(footprints) == set(_tags()), set(footprints) ^ set(_tags())
+    assert set(C.FEATURE_MIN_DEPTH) == set(_tags())
+    for tag, half_depth in footprints.items():
+        expected = 2.0 * (clearance + float(half_depth))
+        assert abs(C.FEATURE_MIN_DEPTH[tag] - expected) < 0.001, (
+            tag, C.FEATURE_MIN_DEPTH[tag], expected)
+    # ...and the rule itself, so a rewrite that changed the shape rather
+    # than the numbers cannot slip past.
+    assert re.search(
+        r"return 2\.0 \* \(THRESHOLD_CLEARANCE \+ reach\)", source)
+
+
+def test_the_beside_a_door_table_matches_the_builders_own_rule():
+    """`FEATURE_MIN_DEPTH_BESIDE_DOOR` is the run a feature needs when the
+    room also carries an open side doorway, and it has to agree with the
+    geometry the builder actually clears.
+
+    A side door is cut at the MIDDLE of the side wall -- exactly where
+    the lane rule pushes a feature -- so the feature has to fit wholly to
+    one side of the opening: its own reach twice over, the door's half
+    width, and the end threshold, on either side of the middle.
+    """
+    from archipepsi_bridge.schemas import constants as C
+    gd = GODOT / "scripts/generation/affordance_features.gd"
+    source = gd.read_text()
+    clearance = _gd_const(gd, "THRESHOLD_CLEARANCE")
+    door_width = _gd_const(
+        GODOT / "scripts/generation/chamber_builders.gd", "DOOR_WIDTH")
+    footprints = dict(re.findall(
+        r'"(\w+)": \{"half_width": [0-9.]+, "half_depth": ([0-9.]+)',
+        source))
+    assert set(C.FEATURE_MIN_DEPTH_BESIDE_DOOR) == set(_tags())
+    for tag, half_depth in footprints.items():
+        expected = 2.0 * (2.0 * float(half_depth)
+                          + door_width / 2.0 + clearance)
+        assert abs(C.FEATURE_MIN_DEPTH_BESIDE_DOOR[tag] - expected) < 0.001, (
+            tag, C.FEATURE_MIN_DEPTH_BESIDE_DOOR[tag], expected)
+    # Strictly more than the no-door run, for every tag: a doorway in the
+    # middle of the wall cannot make a room easier to furnish.
+    for tag in _tags():
+        assert (C.FEATURE_MIN_DEPTH_BESIDE_DOOR[tag]
+                > C.FEATURE_MIN_DEPTH[tag]), tag
+    # ...and the builder moves it rather than building into the opening.
+    assert "_clear_of_side_doors" in source
+
+
+def test_a_feature_may_not_stand_in_an_open_side_doorway():
+    """The measured case, at the schema boundary.
+
+    `zone_02`'s `c013` is a 13.6 m corridor with `side_left` USED and a
+    `powered_door`, and the chain's leaf stood in that doorway. A
+    `powered_door` needs 20.4 m to sit beside a side door; 13.6 is not
+    enough, so the combination is refused rather than built into the
+    opening.
+    """
+    def _branched(length: float, usage: str) -> Z.Zone:
+        """`c1` with a side branch, the shape `compose_with_branch` makes.
+
+        A door assignment needs an edge to name -- an assignment with no
+        graph names routes that do not exist -- so the branch is real,
+        and `c1` departs through its own `exit` either way so that
+        sealing the side does not strand the route.
+        """
+        edges = [{"edge_id": "e:c1:c2", "room_a": "c1", "room_b": "c2",
+                  "direction": "BIDIRECTIONAL", "realization": "JOINED"}]
+        # EVERY SOCKET MENTIONED. An unused one is declared SEALED so it
+        # is measured, never omitted.
+        doors = [{"socket_id": "entry", "usage": "SEALED"},
+                 {"socket_id": "exit", "usage": "USED",
+                  "edge_id": "e:c1:c2"},
+                 {"socket_id": "side_right", "usage": "SEALED"}]
+        chambers = [
+            {"id": "c1", "type": "corridor", "length": length,
+             "width": 9.5, "depart_edge": "e:c1:c2", "doors": doors,
+             "features": [{"tag": "powered_door", "at": (0.18, 0.3)}]},
+            {"id": "c2", "type": "corridor", "length": 12.0, "width": 5.0,
+             "arrive_edge": "e:c1:c2", "reward_location_id": 89100001,
+             "doors": [{"socket_id": "entry", "usage": "USED",
+                        "edge_id": "e:c1:c2"},
+                       {"socket_id": "exit", "usage": "SEALED"},
+                       {"socket_id": "side_left", "usage": "SEALED"},
+                       {"socket_id": "side_right", "usage": "SEALED"}]}]
+        if usage == "SEALED":
+            doors.append({"socket_id": "side_left", "usage": "SEALED"})
+        else:
+            edges.append({"edge_id": "e:c1:c3", "room_a": "c1",
+                          "room_b": "c3", "direction": "BIDIRECTIONAL",
+                          "realization": "JOINED"})
+            doors.append({"socket_id": "side_left", "usage": usage,
+                          "edge_id": "e:c1:c3"})
+            chambers.append(
+                {"id": "c3", "type": "corridor", "length": 12.0,
+                 "width": 5.0, "arrive_edge": "e:c1:c3",
+                 "reward_location_id": 89100002,
+                 "doors": [{"socket_id": "entry", "usage": "USED",
+                            "edge_id": "e:c1:c3"},
+                           {"socket_id": "exit", "usage": "SEALED"},
+                           {"socket_id": "side_left", "usage": "SEALED"},
+                           {"socket_id": "side_right", "usage": "SEALED"}]})
+        return TypeAdapter(Z.Zone).validate_python({
+            "schema_version": 7, "zone_id": "zone_001",
+            "display_name": "Relay", "target_game": "Game",
+            "theme": "void_glitch", "edges": edges, "chambers": chambers})
+
+    with pytest.raises(ValidationError):
+        _branched(13.6, "USED")
+    # The SAME room with that doorway SEALED is fine: nothing is standing
+    # in an opening that is not one.
+    assert _branched(13.6, "SEALED").chambers[0].features
+    # ...and so is a corridor long enough to hold it beside the opening.
+    assert _branched(20.4, "USED").chambers[0].features
+
+
+def test_a_corridor_too_short_for_its_feature_is_refused():
+    """The depth half of the lane rule, at the schema boundary.
+
+    Measured on the declared sample: four corridors carried a
+    `powered_door` and none was 11 m long. Each one passed the width gate
+    and was dropped by the builder, so the Zone offered no certified
+    chain and `layout.validate` refused it.
+    """
+    with pytest.raises(ValidationError):
+        _zone(chambers=[
+            {"id": "c1", "type": "corridor", "length": 9.0, "width": 9.5,
+             "reward_location_id": 89100001,
+             "features": [{"tag": "powered_door", "at": (0.5, 0.5)}]}])
+    # ...and lengthened past the chain's run, the same room is fine.
+    ok = _zone(chambers=[
+        {"id": "c1", "type": "corridor", "length": 11.0, "width": 9.5,
+         "reward_location_id": 89100001,
+         "features": [{"tag": "powered_door", "at": (0.5, 0.5)}]}])
+    assert ok.chambers[0].features
+
+
 def test_a_corridor_that_cannot_hold_a_feature_still_holds_a_smaller_one():
     """Per-tag, not one conservative number: a rail fits a 5.9 m corridor
     that a wind column needs 8.3 m for, and refusing the rail there would
@@ -254,8 +501,9 @@ def test_the_fallback_only_hangs_features_on_chambers_with_nothing_on_them():
         if chamber.features:
             assert chamber.reward_location_id is None, chamber.id
             assert not getattr(chamber, "objective", None), chamber.id
-    assert _validate(zone, owned=request.unlocked_affordances,
-                     allocated=[loc.location_id for loc in request.locations]) == []
+    assert _validate(zone, owned=request.unlocked_affordances, request=request,
+                     allocated=[loc.location_id
+                                for loc in request.locations]) == []
 
 
 def test_every_shipping_provider_offers_affordances():
@@ -284,8 +532,9 @@ def test_every_shipping_provider_offers_affordances():
         assert placed, f"{name} offered no affordance at all"
         assert set(placed) <= set(request.unlocked_affordances), (name, placed)
         assert _validate(
-            zone, owned=request.unlocked_affordances,
-            allocated=[loc.location_id for loc in request.locations]) == [], name
+            zone, owned=request.unlocked_affordances, request=request,
+            allocated=[loc.location_id
+                       for loc in request.locations]) == [], name
 
 
 def test_the_fallback_offers_nothing_it_was_not_told_the_player_can_use():
@@ -435,12 +684,22 @@ def _zone(chambers: list[dict]) -> Z.Zone:
         "target_game": "Game", "theme": "void_glitch", "chambers": chambers})
 
 
-def _validate(zone, *, owned=(), allocated=None) -> list[str]:
+def _validate(zone, *, owned=(), allocated=None, request=None) -> list[str]:
+    """As `generate_zone_validated` validates, including the shell offer.
+
+    `request` is optional because most callers here hand-build chambers
+    that name no shell. A caller that generated its Zone FROM a request
+    must pass it: without the offer this helper judged the fallback's
+    valid authored choices against an empty catalog and called them
+    unoffered, which is a rule the shipping path does not apply.
+    """
+    from archipepsi_bridge import shells
     return Z.validate_zone(
         zone, expected_zone_id="zone_001",
         allocated_location_ids=(allocated if allocated is not None
                                 else list(zone.reward_location_ids)),
-        owned_echo_ids=[], owned_affordance_tags=owned)
+        owned_echo_ids=[], owned_affordance_tags=owned,
+        **(shells.offer_of(request) if request is not None else {}))
 
 
 def _gd_const(path: Path, name: str) -> float:
@@ -462,3 +721,67 @@ def _zone_with_features(features: list[dict]) -> Z.Zone:
              "reward_location_id": 89100001},
         ],
     })
+
+
+# --- the door assigner keeps a side opening clear -------------------------
+
+def _stub_chamber(**fields):
+    """A chamber-shaped object for `_side_socket`, which reads attributes.
+
+    A real `Zone` cannot carry the bad pairing any more -- that is what
+    the schema rule above is for -- so the thing being tested has to be
+    handed the shape the assigner sees BEFORE the Zone is assembled.
+    """
+    from types import SimpleNamespace
+    fields.setdefault("features", ())
+    fields.setdefault("elevation", None)
+    fields.setdefault("length", None)
+    fields.setdefault("depth", None)
+    return SimpleNamespace(**fields)
+
+
+def test_a_side_door_is_not_cut_where_the_rooms_feature_stands():
+    """`zone_02`'s `c013`, at the moment the door is chosen.
+
+    A 13.6 m corridor carrying a `powered_door` has nowhere to put the
+    chain clear of an opening cut at the middle of its wall, so the
+    assigner must spend a different socket. Reverting
+    `_features_need_the_side_walls` makes this return `side_left` again
+    -- which is the placement the engine measured solid.
+    """
+    from archipepsi_bridge import topology as T
+    from types import SimpleNamespace
+    short = _stub_chamber(
+        length=13.6,
+        features=(SimpleNamespace(tag="powered_door"),))
+    assert T._side_socket(short, ("side_left", "side_right")) is None
+    # A room long enough holds both, and the socket is spent normally.
+    roomy = _stub_chamber(
+        length=20.4,
+        features=(SimpleNamespace(tag="powered_door"),))
+    assert T._side_socket(roomy, ("side_left", "side_right")) == "side_left"
+    # And a room with no feature is untouched by this rule.
+    assert T._side_socket(
+        _stub_chamber(length=13.6), ("side_left",)) == "side_left"
+
+
+def test_a_back_gallery_blocks_both_side_walls_not_neither():
+    """`zone_10`'s `c005`, at the same moment.
+
+    A `back` deck spans the room's WIDTH, so it meets the left and the
+    right wall alike. `f"side_{band.side}"` spells `side_back`, which is
+    not a socket and excluded nothing -- and the deck stood at chest
+    height across a `side_left` the composer had declared USED.
+    """
+    from archipepsi_bridge import topology as T
+    from types import SimpleNamespace
+    back = _stub_chamber(
+        depth=19.3,
+        elevation=SimpleNamespace(side="back", kind="gallery"))
+    assert T._side_socket(back, ("side_left", "side_right")) is None
+    # A `left` band still blocks only the wall it hugs, which is the
+    # behaviour this rule already had and must keep.
+    left = _stub_chamber(
+        depth=19.3,
+        elevation=SimpleNamespace(side="left", kind="gallery"))
+    assert T._side_socket(left, ("side_left", "side_right")) == "side_right"

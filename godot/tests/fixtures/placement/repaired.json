@@ -1,0 +1,253 @@
+{
+ "anchors": {
+  "last_large_room": [
+   0.0,
+   0.0,
+   22.0
+  ],
+  "room:c004:arrival": [
+   0.0,
+   0.0,
+   3.0
+  ],
+  "room:c004:return": [
+   -0.617380619049072,
+   0.0,
+   9.77853202819824
+  ],
+  "room:c005:arrival": [
+   0.0,
+   0.0,
+   22.0
+  ],
+  "room:c005:return": [
+   2.5,
+   0.0,
+   22.0
+  ],
+  "zone_start": [
+   0.0,
+   0.800000011920929,
+   1.20000004768372
+  ]
+ },
+ "apertures": {
+
+ },
+ "arrival_ok": {
+
+ },
+ "controller_digest": "1b7ae5d3560020ac",
+ "joins": {
+  "e:__exit__": {
+   "chain": [
+    {
+     "bounds": {
+      "position": [
+       -2.0,
+       -1.0,
+       37.0
+      ],
+      "size": [
+       4.0,
+       4.59999990463257,
+       5.0
+      ]
+     },
+     "entry": [
+      0.0,
+      0.0,
+      37.0
+     ],
+     "exit": [
+      0.0,
+      0.0,
+      42.0
+     ],
+     "kind": "CONNECTOR",
+     "position": [
+      0.0,
+      0.0,
+      37.0
+     ],
+     "turn": 0,
+     "yaw": 0.0
+    }
+   ],
+   "room_a": "c005",
+   "room_b": "exit",
+   "socket_a": [
+    0.0,
+    0.0,
+    22.0
+   ],
+   "socket_b": [
+    0.0,
+    0.0,
+    42.0
+   ],
+   "synthetic": true
+  },
+  "r:c004": {
+   "chain": [],
+   "room_a": "",
+   "room_b": "c004",
+   "socket_a": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "socket_b": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "synthetic": true
+  },
+  "r:c005": {
+   "chain": [
+    {
+     "bounds": {
+      "position": [
+       -2.0,
+       -1.0,
+       14.0
+      ],
+      "size": [
+       4.0,
+       4.59999990463257,
+       5.0
+      ]
+     },
+     "entry": [
+      0.0,
+      0.0,
+      14.0
+     ],
+     "exit": [
+      0.0,
+      0.0,
+      19.0
+     ],
+     "kind": "CONNECTOR",
+     "position": [
+      0.0,
+      0.0,
+      14.0
+     ],
+     "turn": 0,
+     "yaw": 0.0
+    }
+   ],
+   "room_a": "",
+   "room_b": "c005",
+   "socket_a": [
+    0.0,
+    0.0,
+    14.0
+   ],
+   "socket_b": [
+    0.0,
+    0.0,
+    19.0
+   ],
+   "synthetic": true
+  }
+ },
+ "packages": [],
+ "plug_clear": {
+  "p:c005:start": true
+ },
+ "plug_placement": {
+  "p:c005:start": {
+   "how": "a probed lattice",
+   "outcome": "PLACED",
+   "probed": 1,
+   "repaired": true,
+   "searched": 1
+  }
+ },
+ "rooms": {
+  "c004": {
+   "arrival": [
+    0.0,
+    0.0,
+    3.0
+   ],
+   "bounds": {
+    "position": [
+     -3.95000004768372,
+     -1.0,
+     0.0
+    ],
+    "size": [
+     7.90000009536743,
+     4.59999990463257,
+     14.0
+    ]
+   },
+   "position": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "yaw": 0.0
+  },
+  "c005": {
+   "arrival": [
+    0.0,
+    0.0,
+    22.0
+   ],
+   "bounds": {
+    "position": [
+     -9.0,
+     -1.0,
+     19.0
+    ],
+    "size": [
+     18.0,
+     7.0,
+     18.0
+    ]
+   },
+   "position": [
+    0.0,
+    0.0,
+    19.0
+   ],
+   "yaw": 0.0
+  },
+  "exit": {
+   "arrival": [
+    0.0,
+    0.0,
+    42.0
+   ],
+   "bounds": {
+    "position": [
+     -4.0,
+     -1.0,
+     42.0
+    ],
+    "size": [
+     8.0,
+     5.5,
+     8.0
+    ]
+   },
+   "position": [
+    0.0,
+    0.0,
+    42.0
+   ],
+   "yaw": 0.0
+  }
+ },
+ "stations": [
+  "st:c005",
+  "st:entrance",
+  "st:exit"
+ ],
+ "status": "LAYOUT_OK"
+}

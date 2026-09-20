@@ -1,0 +1,91 @@
+rm -rf /home/user/archipepsi/.named-case-saves
+cd bridge && ARCHIPEPSI_SAVE_DIR=/home/user/archipepsi/.named-case-saves \
+   \
+  ARCHIPEPSI_SAMPLE_ZONE=/home/user/archipepsi/godot/tests/fixtures/sample/zone_05.json \
+  python3 -m archipepsi_bridge --ap=mock --epsilon=sample \
+  --mock-scale=default & \
+BRIDGE_PID=$!; sleep 3; \
+kill -0 $BRIDGE_PID 2>/dev/null || { \
+  echo "bridge did not start (port already serving? bad CASE?)"; \
+  exit 1; }; \
+godot-bin/godot --headless --path godot -- --reload-phase=named-case \
+  --named-case-at=5 \
+  --named-case-source=/home/user/archipepsi/godot/tests/fixtures/sample/zone_05.json \
+  > /tmp/archipepsi-named-case.log 2>&1; \
+STATUS=$?; kill $BRIDGE_PID; \
+grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )" \
+  /tmp/archipepsi-named-case.log | tail -70; \
+if [ $STATUS -ne 0 ]; then exit $STATUS; fi; \
+if grep -q "SCRIPT ERROR" /tmp/archipepsi-named-case.log; then \
+  echo "-- a script error was raised. A run that crashed and still"; \
+  echo "-- printed its report is not a pass: the missing-player"; \
+  echo "-- crash after a failed build printed one."; \
+  grep -m5 "SCRIPT ERROR" /tmp/archipepsi-named-case.log; \
+  exit 1; \
+fi
+
+  Archipepsi bridge v0.1.0  (0c5b4d9cae54*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     sample
+    saves       /home/user/archipepsi/.named-case-saves
+
+    (no campaign there yet; it is created on first connect)
+
+  sample: serving zone_05.json as 'zone_001'
+  sample: serving zone_05.json as 'zone_002'
+  sample: serving zone_05.json as 'zone_003'
+  sample: serving zone_05.json as 'zone_004'
+  sample: serving zone_05.json as 'zone_005'
+Traceback (most recent call last):
+  File "/home/user/archipepsi/bridge/archipepsi_bridge/server.py", line 84, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  ADVANCING: generating and abandoning 4 Zone(s) so the sample is served as this campaign's Zone 5 -- the id it was dumped under, and therefore its placement seed
+  NAMED CASE: zone_005, 15 Check(s) allocated to it
+  IDENTITY: SEED PRESERVED -- dumped as 'zone_005' and served as 'zone_005', so the placement seed is the one this case was measured under
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c007       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c009       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_005 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 20)
+  SERVED: 'Relay 005: Bomb Rush Cyberfunk', 20 room(s), 27 edge(s)
+  GENERATION: no proposal was refused; this is the one the provider offered first
+  FIRST RESULT: ACCEPTED
+  RECOVERY: 0 refusal(s) seen over 1 entry attempt(s); ended ACCEPTED
+  AFTER: hub ZONE_ACTIVE; the Zone holds 15 of its 15 Check(s); entered=true
+  ok: a refused Zone keeps every Check it was allocated (15 of 15)
+  ok: the Hub still reports a mode
+  ok: the Zone reached a terminal answer rather than leaving the client waiting (ACCEPTED)
+  TIMELINE:
+       0.00s  provider proposal offered for 'zone_005' and accepted by the provider-side validator (15 Check(s) allocated)
+       0.00s  enter_zone sent; the client begins the engine build
+       0.39s  engine build finished; a player exists and the layout goes to the bridge for a verdict
+       5.30s  ACCEPTED and entered on the first attempt; nothing failed and nothing was recomposed
+       5.30s  final: hub ZONE_ACTIVE; the Zone is the active one
+NAMED CASE zone_005: first=ACCEPTED refusals=0 ended=ACCEPTED
+GODOT RELOAD TESTS OK (3 checks)

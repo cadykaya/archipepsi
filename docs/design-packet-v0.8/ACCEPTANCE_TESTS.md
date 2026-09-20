@@ -8,7 +8,7 @@ All examples use the canonical fixture in `IMPLEMENTATION_PLAN.md` §3.1. v0.3 s
 
 # 1. Schema tests — ship with the packet
 
-`schemas/test_schemas.py` — 126 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
+`schemas/test_schemas.py` — 131 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
 
 They pin: the derived jump gap and its margin; the worst-case Zone clear time; the PRNG recipe (with a pinned seed value); Zone structural and semantic rules; the impossibility of expressing an Echo gate; Echo composition rules; rejection of invented fields and unsupported effects; save round-tripping; and that a `PENDING_GENERATION` Zone retains its allocation.
 
@@ -133,6 +133,61 @@ each test walks the *adjacent* path rather than the originally reported one.
     snapshot, `PENDING_GENERATION`/`GENERATED`/`ACTIVE` admit exactly
     `GENERATING`/`ZONE_READY`/`ZONE_ACTIVE`; a terminal Zone is never
     presented as active; `holding_finale` matches `active_zone.is_finale`.
+    The map is total over `ZoneState`, so a state added to the lifecycle
+    cannot be forgotten into a `KeyError` on the next snapshot.
+65a. **A Zone you walked out of is still yours, and the Hub says so.**
+    `DORMANT` admits `ZONE_DORMANT`: the campaign holds a Zone — it
+    still reserves its Checks and still blocks generation — and nobody
+    is standing in it, so `active_zone` is null. Those are two
+    questions, and `ZONE_HELD_MODES` and `ZONE_OCCUPIED_MODES` answer
+    one each; with a single list the state could not be described, so
+    the Hub fell through to `ZONE_AVAILABLE` and offered to design a
+    Zone the bridge then refused to allocate. `hub.resume_zone_id` names
+    which Zone the portal enters in every mode in
+    `ZONE_ENTERABLE_MODES` — one list, which is also what
+    `portal_enabled` reads, so naming a Zone and lighting the portal
+    cannot become two answers, and an Archipelago outage does not shut
+    the door on a Zone already on disk — and `hub.revisitable` lists the
+    finished Zones that stay open, bounded only by how many the campaign
+    finished.
+65b. **A Zone that never laid out is not a way back in, and the offer
+    is to discard it.** When every layout attempt is refused and no
+    manifest was ever accepted, `ZoneRecord.layout_exhausted` is true
+    and the Hub shows `ZONE_FAILED`: `portal_enabled` and
+    `accepts_zone_request` are false, `resume_zone_id` is empty, and
+    `hub.discard_zone_id` names the Zone the abandon console acts on.
+    `enter_zone` refuses it at the transition too, so a replayed intent
+    cannot route around the Hub. The Hub used to advertise a way back
+    into geometry the validator had refused three times: the player
+    walked in, the layout was refused again, and it went dormant once
+    more — the only affordance on screen was the loop.
+
+    **Nothing is abandoned automatically.** Discarding releases the
+    Zone's allocated locations, which is a decision with a cost and the
+    player's to make. Afterwards the locations return through
+    `abandon_zone` and no other path, the Hub may request the next Zone,
+    that Zone may legally allocate the released ids, and the discarded
+    Zone stays discarded.
+
+    **`ZONE_FAILED` is DERIVED, never persisted.** `state`,
+    `layout_state` and "is there a manifest" already answer the
+    question; a fourth field recording the same fact is a fact that can
+    disagree with itself. `hub_mode_for` is the one place that decides,
+    and `MAX_LAYOUT_REFUSALS` has one definition that both the
+    transition spending the budget and the record reporting it spent
+    read. The state is distinct from a **committed** Zone whose replay
+    was later refused (that one keeps its manifest and stays
+    re-enterable), from a Zone with attempts still left (recomposed),
+    and from one temporarily pending a layout.
+
+65c. **The refusal budget is spent exactly once.** `layout_refusals` is
+    persisted and bounded, and no sequence of `layout_result` messages
+    may push it past that bound: it saturates at `MAX_LAYOUT_REFUSALS`,
+    and a further result for an exhausted Zone is an ignored stale
+    result that leaves the save unchanged — never a schema exception out
+    of a transition. A resend after a dropped connection is the ordinary
+    case and is not an error.
+
 66. *(needs the shop)* **Buying leaves stock and enters the ledger
     atomically.** After a purchase the item is gone from `shop.stock` and
     present in `pending_checks`, and `coins_spent` has risen by its cost. A

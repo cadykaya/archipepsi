@@ -1,0 +1,190 @@
+{
+ "accepted": 19,
+ "cases": [
+  {
+   "case": "zone_01.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "af4e873619751a58",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "738658f3d50d8c7a",
+   "theme": "neon_transit",
+   "zone_id": "zone_001"
+  },
+  {
+   "case": "zone_02.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "bb402580b4aa8905",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "08519a69ad28ce90",
+   "theme": "neon_transit",
+   "zone_id": "zone_002"
+  },
+  {
+   "case": "zone_03.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "426e3745f4df95e4",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "9aa288d8bc8b0eab",
+   "theme": "neon_transit",
+   "zone_id": "zone_003"
+  },
+  {
+   "case": "zone_04.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "e5d3b17a1fe7c0a9",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "674f9c1df849261d",
+   "theme": "neon_transit",
+   "zone_id": "zone_004"
+  },
+  {
+   "case": "zone_05.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "44e6445021c937b4",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "bdb6ab6efa35757d",
+   "theme": "neon_transit",
+   "zone_id": "zone_005"
+  },
+  {
+   "case": "zone_06.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "2868467fd6de022f",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "8aa8c736eb215a20",
+   "theme": "neon_transit",
+   "zone_id": "zone_006"
+  },
+  {
+   "case": "zone_07.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "ebf501ac33e1e53f",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "e74812e5c5652bd2",
+   "theme": "neon_transit",
+   "zone_id": "zone_007"
+  },
+  {
+   "case": "zone_08.json",
+   "engine_revision": "a2e6b94-dirty",
+   "outcome": "NO_MANIFEST",
+   "proposal_digest": "ad04bba6febfb9cf",
+   "theme": "neon_transit",
+   "zone_id": "zone_008"
+  },
+  {
+   "case": "zone_09.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "385f74fa2b37ecd8",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "47ce5e87f3acf445",
+   "theme": "neon_transit",
+   "zone_id": "zone_009"
+  },
+  {
+   "case": "zone_10.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "e469ec9209119998",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "8a42e75ee65c7644",
+   "theme": "neon_transit",
+   "zone_id": "zone_010"
+  },
+  {
+   "case": "zone_11.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "d1732b2d904a3e60",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "75dc8adafe234e06",
+   "theme": "neon_transit",
+   "zone_id": "zone_011"
+  },
+  {
+   "case": "zone_12.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "b284bd03aec815e8",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "42b22ba61a9f8b1e",
+   "theme": "neon_transit",
+   "zone_id": "zone_012"
+  },
+  {
+   "case": "zone_13.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "60b29855a72299a6",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "4926ebd687999c8f",
+   "theme": "neon_transit",
+   "zone_id": "zone_013"
+  },
+  {
+   "case": "zone_14.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "6f161fecf30bc167",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "3a95180bb7d4d8bd",
+   "theme": "neon_transit",
+   "zone_id": "zone_014"
+  },
+  {
+   "case": "zone_15.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "f6ec6b525b53c2eb",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "b2603db0c7b9735f",
+   "theme": "neon_transit",
+   "zone_id": "zone_015"
+  },
+  {
+   "case": "zone_16.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "fafe1eb95a80f6e7",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "76f26a246e8be304",
+   "theme": "neon_transit",
+   "zone_id": "zone_016"
+  },
+  {
+   "case": "zone_17.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "3a6f0cc566e03ecb",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "2cf536286f3a9b0e",
+   "theme": "neon_transit",
+   "zone_id": "zone_017"
+  },
+  {
+   "case": "zone_18.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "1e2c5378e56c36b2",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "acc5f32dfecf1df3",
+   "theme": "neon_transit",
+   "zone_id": "zone_018"
+  },
+  {
+   "case": "zone_19.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "7378e7de7a749075",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "692466bc8b31008e",
+   "theme": "neon_transit",
+   "zone_id": "zone_019"
+  },
+  {
+   "case": "zone_20.json",
+   "engine_revision": "a2e6b94-dirty",
+   "manifest_digest": "f461b33dd2db9505",
+   "outcome": "ACCEPTED",
+   "proposal_digest": "07939f314de4e4b9",
+   "theme": "neon_transit",
+   "zone_id": "zone_020"
+  }
+ ],
+ "engine_revision": "a2e6b94-dirty",
+ "laid_out": 19,
+ "no_manifest": 1,
+ "refused": 0,
+ "source": "../godot/tests/fixtures/sample",
+ "sources": 20
+}

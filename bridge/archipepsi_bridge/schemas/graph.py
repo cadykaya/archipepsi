@@ -1,0 +1,258 @@
+"""The Zone topology graph and its per-instance assignments.
+
+`09_ROOM_CONTRACT.md` Layer 2. The bridge writes everything here; the
+engine reads it and never amends it.
+
+**Additive and optional, so `schema_version` stays 7.** A Zone carrying
+no `edges`, no `doors` and no `plugs` is exactly the chain Zone that
+shipped before multi-door existed — the list order is its topology and
+nothing is lost. Bumping the version would fail every Zone already
+inside a save for a change that requires nothing and removes nothing,
+which is the same reasoning `features` was added under.
+
+**A plug is not a door.** `PlugAssignment` is a separate record because
+a `DoorAssignment` *is* a socket assignment: its first field is
+`socket_id`, and the engine carves an aperture at every socket a door
+names. Carrying a return plug on a `DoorAssignment` would cut a fourth
+opening in a three-door junction, and would make a two-door shell fail
+the injective socket assignment outright — which is the opposite of the
+promise that every existing shell still composes.
+"""
+
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+
+class Strict(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+#: Whether an edge binds geometry. A `JOINED` edge is two sockets meeting
+#: at their collars. A `TRAVERSAL_ONLY` edge — a return plug, a
+#: non-euclidean door, a rematerialisation pad — carries the player with
+#: nothing joining the rooms spatially.
+#:
+#: **Both are equally real to reachability.** The distinction exists so a
+#: placement solver is never asked to close a cycle through a teleport.
+Realization = Literal["JOINED", "TRAVERSAL_ONLY"]
+
+#: Four usages, three different geometric outcomes. `SEALED` is not
+#: "skip the audit" — it is the same measurement with the expectation
+#: inverted, and the expectation comes from this declaration.
+#:
+#: `ZONE_EXIT` IS THE ONE DOOR NO EDGE CARRIES, and it exists because
+#: the engine appends a room the composer never sees. A chain is written
+#: with `zip(spine, spine[1:])`, so the LAST room is assigned no exit
+#: and `_seal_the_rest` sealed it — correct from here, since nothing in
+#: THIS graph follows it. The engine then appends the exit room and
+#: routes its approach out of exactly that face, and the two lanes
+#: disagreed about a wall: twenty of twenty default-scale Zones ended on
+#: a room whose exit was solid, with the portal visible through it and
+#: no way to reach it, and every suite green because each half was
+#: right on its own terms.
+#:
+#: Declaring it here is the fix. It is passable geometry like `USED`, so
+#: `cut_plan` carves it and the layout audit expects a hole, with no
+#: exemption anywhere; what it does NOT carry is an `edge_id`, because
+#: the room on the far side is the engine's and is not in `edges`.
+DoorUsage = Literal["USED", "LOCKED", "SEALED", "ZONE_EXIT"]
+
+Direction = Literal["BIDIRECTIONAL", "A_TO_B", "B_TO_A"]
+
+#: The authored plug catalogue. Each is a way back that is not a door.
+PlugKind = Literal["pad", "threshold", "tube"]
+
+#: The capabilities that exist, from `mechanics.ACTIVITY_CAPABILITIES`.
+#: Closed rather than free text: a gate naming a capability nothing can
+#: grant is a wall the validator would wave through while believing it
+#: had checked something.
+#:
+#: `manipulate` is deliberately absent. Design 6 §29.1 has five, and the
+#: fifth needs a physics substrate that does not exist — zero
+#: `RigidBody3D` in the project — so naming it here would let a Zone
+#: declare a gate no build can satisfy.
+Capability = Literal["ranged_hit", "grapple", "blink", "cross_long_gap"]
+
+#: The key tints the engine knows (`zone_key.gd` `COLOURS`). Closed
+#: rather than free text: an unknown name silently became gold, so two
+#: differently-named keys could read identically to a player.
+KeyColour = Literal["red", "blue", "gold", "green"]
+
+_ROOM = Field(min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
+#: The charset every edge id in the contract is held to. Named because
+#: three models and one allowlist all depend on it: `test_epsilon_
+#: vocabulary` permits `edge_id` on the stated ground that it cannot
+#: spell a path, and that ground is this pattern.
+EDGE_ID_CHARSET = r"^[a-z0-9_:]+$"
+_EDGE = Field(min_length=1, max_length=48, pattern=EDGE_ID_CHARSET)
+#: And the charset every key id is held to, named for the same reason.
+KEY_ID_CHARSET = r"^[a-z0-9_]+$"
+_KEY = Field(min_length=1, max_length=24, pattern=KEY_ID_CHARSET)
+_SOCKET = Field(min_length=1, max_length=32, pattern=r"^[a-z0-9_]+$")
+#: An anchor is a NAME, never a coordinate. The composer says which
+#: anchor; the engine says where it is.
+_ANCHOR = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9_:]+$")
+
+
+class TopologyEdge(Strict):
+    """One edge of the Zone graph.
+
+    The list order of `Zone.chambers` used to *be* the topology. This is
+    what replaces it, and a Zone carrying no edges still means the chain
+    it always meant.
+    """
+
+    edge_id: str = _EDGE
+    room_a: str = _ROOM
+    room_b: str = _ROOM
+    direction: Direction = "BIDIRECTIONAL"
+    realization: Realization = "JOINED"
+    #: A CAPABILITY this edge requires, if any — an Echo the player must
+    #: hold, not a Zone-local key.
+    #:
+    #: The two are different in the one way that matters. A local key is
+    #: obtainable inside the Zone, so Archipelago's claim ("reach the
+    #: Zone and you can reach its Checks") stays true with one behind a
+    #: lock. A capability comes from the multiworld, so gating an
+    #: AP-relevant route on one makes the physical graph disagree with
+    #: the logical graph unless AP's location logic says the same thing.
+    #:
+    #: `None` is the only value composition currently produces. The
+    #: field exists so that the first gate to appear is REFUSED by
+    #: `reachability` rather than passing unnoticed, which is what a
+    #: vacuous rule buys you.
+    capability: Capability | None = None
+
+    @model_validator(mode="after")
+    def _an_edge_joins_two_rooms(self):
+        if self.room_a == self.room_b:
+            raise ValueError(
+                f"edge '{self.edge_id}' has both ends in '{self.room_a}'; "
+                "a self-loop is not a route between rooms")
+        return self
+
+    @property
+    def rooms(self) -> tuple[str, str]:
+        return (self.room_a, self.room_b)
+
+    def traversable(self, frm: str) -> bool:
+        """Can this edge be walked starting from `frm`?"""
+        if frm == self.room_a:
+            return self.direction in ("BIDIRECTIONAL", "A_TO_B")
+        if frm == self.room_b:
+            return self.direction in ("BIDIRECTIONAL", "B_TO_A")
+        return False
+
+    def other(self, frm: str) -> str:
+        return self.room_b if frm == self.room_a else self.room_a
+
+
+class DoorAssignment(Strict):
+    """One joining socket of one room instance, and what it does.
+
+    `edge_id` is required unless the door is `SEALED` or `ZONE_EXIT`,
+    and the edge it names must be `JOINED` — a `TRAVERSAL_ONLY` edge is
+    carried by a `PlugAssignment` and never by a door. `ZONE_EXIT` is
+    the Zone's own way out and names no edge at all: see `DoorUsage`.
+    """
+
+    socket_id: str = _SOCKET
+    usage: DoorUsage
+    # SAME CHARSET AS EVERY OTHER EDGE ID. It had none, while the
+    # vocabulary allowlist admitted `edge_id` on the stated ground that
+    # it is "charset-constrained to [a-z0-9_:]" — true of
+    # `TopologyEdge` and `PlugAssignment` and not of this one, which is
+    # the field a composer actually fills per room.
+    edge_id: str | None = Field(default=None, min_length=1, max_length=48,
+                                pattern=EDGE_ID_CHARSET)
+    key_id: str | None = Field(default=None, min_length=1, max_length=24,
+                               pattern=KEY_ID_CHARSET)
+    #: Presentation only; the engine tints the slab. Never read by logic.
+    colour: KeyColour | None = None
+
+    @model_validator(mode="after")
+    def _usage_determines_the_rest(self):
+        if self.usage == "SEALED":
+            if self.edge_id is not None:
+                raise ValueError(
+                    f"door '{self.socket_id}' is SEALED and names edge "
+                    f"'{self.edge_id}'; a sealed door carries no route")
+        elif self.usage == "ZONE_EXIT":
+            # THE WAY OUT OF THE ZONE NAMES NO EDGE, and may not.
+            # The room on its far side is the engine's appended exit
+            # room: it is in no `chambers` list and the approach to it
+            # is in no `edges` list, both reserved and both refused if a
+            # composer declares them. A `ZONE_EXIT` that named an edge
+            # would be claiming a route this graph does not contain.
+            if self.edge_id is not None:
+                raise ValueError(
+                    f"door '{self.socket_id}' is ZONE_EXIT and names "
+                    f"edge '{self.edge_id}'; the Zone's way out leads "
+                    "to the engine's appended exit room, which no edge "
+                    "in this graph reaches")
+            if self.socket_id != "exit":
+                raise ValueError(
+                    f"door '{self.socket_id}' is ZONE_EXIT; the Zone's "
+                    "way out leaves through a room's 'exit' socket, "
+                    "which is the face the engine appends to")
+        elif not self.edge_id:
+            raise ValueError(
+                f"door '{self.socket_id}' is {self.usage} and names no "
+                "edge; only a SEALED door may carry none")
+        if self.usage == "LOCKED" and not self.key_id:
+            raise ValueError(
+                f"door '{self.socket_id}' is LOCKED with no key_id; a lock "
+                "nothing opens is a wall that lies about being a door")
+        if self.usage != "LOCKED" and self.key_id:
+            raise ValueError(
+                f"door '{self.socket_id}' is {self.usage} and names key "
+                f"'{self.key_id}'; only a LOCKED door takes a key")
+        return self
+
+    @property
+    def passable_geometry(self) -> bool:
+        """Is an aperture cut here?
+
+        `LOCKED` carves: the lock is a placement over a real hole, not an
+        uncut wall. Passability is the geometry's question and the key's
+        answer is the runtime's.
+        """
+        return self.usage != "SEALED"
+
+
+class PlugAssignment(Strict):
+    """A return plug: the way back out of a dead end.
+
+    Both ends are anchors rather than coordinates, so the composer still
+    names no world position and the authored-alphabet boundary holds
+    without special pleading.
+    """
+
+    edge_id: str = _EDGE
+    room_id: str = _ROOM
+    source_anchor: str = _ANCHOR
+    destination: str = _ANCHOR
+    device: PlugKind = "pad"
+
+    @model_validator(mode="after")
+    def _a_plug_goes_somewhere_else(self):
+        if self.source_anchor == self.destination:
+            raise ValueError(
+                f"plug '{self.edge_id}' returns to the anchor it stands "
+                "on; a way back that arrives where it departed is not one")
+        return self
+
+
+class ZoneKeySpec(Strict):
+    """A Zone-local key. Not an Archipelago item, and never one.
+
+    No location id, never scouted, never sent, does not survive the Zone.
+    It is a lock state on generated geometry, which is what buys
+    metroidvania structure with zero multiworld risk.
+    """
+
+    key_id: str = _KEY
+    colour: KeyColour | None = None

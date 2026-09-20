@@ -33,6 +33,7 @@ from pydantic import TypeAdapter, ValidationError
 from .epsilon.requests import EchoGenerationRequest, ZoneGenerationRequest
 from .schemas import migration as MG
 from .schemas.echo import EchoInterpretation, validate_interpretation
+from . import shells
 from .schemas.zone import Zone, validate_zone
 
 _ZONE = TypeAdapter(Zone)
@@ -97,7 +98,14 @@ def replay_one(record: dict) -> tuple[bool, str]:
                 zone, expected_zone_id=request.zone_id,
                 allocated_location_ids=[l.location_id
                                         for l in request.locations],
-                owned_echo_ids=[e.echo_id for e in request.player.echoes])
+                owned_echo_ids=[e.echo_id for e in request.player.echoes],
+                # From the ARCHIVED request (3B): a replay judges the
+                # recorded output against the offer it was recorded
+                # under, not against an empty one. Without this the
+                # replayer called every authored shell in the archive
+                # unoffered, which is the archive's whole purpose
+                # inverted -- it exists to say what was accepted.
+                **shells.offer_of(request))
         elif kind == "echo":
             request = EchoGenerationRequest.model_validate(
                 _upgrade_echo_request(record["request"]))

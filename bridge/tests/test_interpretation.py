@@ -320,19 +320,33 @@ def test_the_refusal_counts_distinct_tags_too(monkeypatch):
     assert any("hard budget" in e for e in budget_errors(new_tag, live))
 
 
-def test_the_affordance_budget_is_a_ceiling_the_catalog_has_not_reached():
-    """Stated rather than discovered. Only seven tags exist, so soft 8 and
-    hard 12 cannot fire today — which is the right shape for a budget, and
-    much better than a number that fires for the wrong reason. If the
-    catalog grows past the soft budget, this test says so.
+def test_the_affordance_budget_is_live_and_the_catalog_is_inside_it():
+    """**The reminder fired, on 2026-09-12.**
+
+    This used to read "only seven tags exist, so soft 8 and hard 12
+    cannot fire today ... if the catalog grows past the soft budget, this
+    test says so". `powered_door` is the eighth, so the soft budget is
+    reachable now: a campaign that interprets eight distinct
+    affordance-granting Echoes gets steered.
+
+    That is the budget working, not a defect, so what is asserted is the
+    property that still has to hold — **the catalog must never exceed the
+    HARD budget**. A catalog larger than the hard cap would mean a
+    campaign could be refused for owning tags the game itself offers,
+    which is a rule contradicting its own vocabulary.
     """
     from archipepsi_bridge.schemas.zone import AffordanceTag
     tags = len(AffordanceTag.__args__)
     soft, hard = COMPLEXITY_BUDGETS["affordance"]
-    assert tags < soft, (
-        f"the catalog grew to {tags} tags and the affordance budget is live "
-        f"now (soft {soft}); this test was the reminder")
     assert hard is not None and soft < hard
+    assert tags <= hard, (
+        f"the catalog has {tags} tags and the hard affordance budget is "
+        f"{hard}; a campaign could be refused for owning what the game "
+        "offers")
+    assert tags >= soft, (
+        "the catalog fell back below the soft budget, so this test is "
+        "describing a state that no longer exists — restore the earlier "
+        "version, which asserted the budget was unreachable")
 
 
 def test_the_steer_and_the_refusal_measure_the_same_thing():
