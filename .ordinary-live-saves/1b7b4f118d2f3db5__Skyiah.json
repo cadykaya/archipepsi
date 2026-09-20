@@ -2611,7 +2611,7 @@
                   "fixed_step_hz": 60.0,
                   "settle_timeout_s": 0.75
                 },
-                "scene_digest": "15df9c2d3bcecf78"
+                "scene_digest": "10c70ea70d4ec538"
               },
               "reference_solution": {
                 "steps": [
@@ -2621,7 +2621,7 @@
               },
               "evidence": {
                 "package_id": "c001_pd0",
-                "content_digest": "f37b133f1e12019d",
+                "content_digest": "1b98fa8ddac000c7",
                 "provider_force_n": 700.0,
                 "provider_range_m": 20.0,
                 "provider_mass_kg": 120.0,
@@ -2640,7 +2640,7 @@
             }
           }
         ],
-        "manifest_digest": "ee936dcf6a0cdb13"
+        "manifest_digest": "28f95952235ce1d0"
       },
       "layout_state": "ACCEPTED",
       "layout_refusals": 0,
@@ -3931,7 +3931,7 @@
               },
               {
                 "socket_id": "exit",
-                "usage": "SEALED",
+                "usage": "ZONE_EXIT",
                 "edge_id": null,
                 "key_id": null,
                 "colour": null
