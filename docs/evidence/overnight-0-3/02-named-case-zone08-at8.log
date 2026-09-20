@@ -1,8 +1,61 @@
+rm -rf /home/user/archipepsi/.named-case-saves
+cd bridge && ARCHIPEPSI_SAVE_DIR=/home/user/archipepsi/.named-case-saves \
+   \
+  ARCHIPEPSI_SAMPLE_ZONE=/home/user/archipepsi/godot/tests/fixtures/sample/zone_08.json \
+  python3 -m archipepsi_bridge --ap=mock --epsilon=sample \
+  --mock-scale=default & \
+BRIDGE_PID=$!; sleep 3; \
+kill -0 $BRIDGE_PID 2>/dev/null || { \
+  echo "bridge did not start (port already serving? bad CASE?)"; \
+  exit 1; }; \
+godot-bin/godot --headless --path godot -- --reload-phase=named-case \
+  --named-case-at=8 \
+  --named-case-source=/home/user/archipepsi/godot/tests/fixtures/sample/zone_08.json \
+  > /tmp/archipepsi-named-case.log 2>&1; \
+STATUS=$?; kill $BRIDGE_PID; \
+grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )" \
+  /tmp/archipepsi-named-case.log | tail -70; \
+if [ $STATUS -ne 0 ]; then exit $STATUS; fi; \
+if grep -q "SCRIPT ERROR" /tmp/archipepsi-named-case.log; then \
+  echo "-- a script error was raised. A run that crashed and still"; \
+  echo "-- printed its report is not a pass: the missing-player"; \
+  echo "-- crash after a failed build printed one."; \
+  grep -m5 "SCRIPT ERROR" /tmp/archipepsi-named-case.log; \
+  exit 1; \
+fi
+
+  Archipepsi bridge v0.1.0  (0c5b4d9cae54*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     sample
+    saves       /home/user/archipepsi/.named-case-saves
+
+    (no campaign there yet; it is created on first connect)
+
+  sample: serving zone_08.json as 'zone_001'
+  sample: serving zone_08.json as 'zone_002'
+  sample: serving zone_08.json as 'zone_003'
+  sample: serving zone_08.json as 'zone_004'
+  sample: serving zone_08.json as 'zone_005'
+  sample: serving zone_08.json as 'zone_006'
+  sample: serving zone_08.json as 'zone_007'
+  sample: serving zone_08.json as 'zone_008'
+  sample: serving zone_08.json as 'zone_008'
+  sample: serving zone_08.json as 'zone_008'
+Traceback (most recent call last):
+  File "/home/user/archipepsi/bridge/archipepsi_bridge/server.py", line 84, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
 Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
 
   ADVANCING: generating and abandoning 7 Zone(s) so the sample is served as this campaign's Zone 8 -- the id it was dumped under, and therefore its placement seed
   NAMED CASE: zone_008, 15 Check(s) allocated to it
-  IDENTITY: laid out as 'zone_008' -- the layout seed follows the campaign's zone_id, not the sample's, so this is that CONTENT under a different pose sequence
+  IDENTITY: SEED PRESERVED -- dumped as 'zone_008' and served as 'zone_008', so the placement seed is the one this case was measured under
   BUILD: the engine could not construct this proposal -- branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
   REPORTED: build_failed for 'zone_008', proposal d6b5eb7b1fcc7cd7, attempt 0
   ok: the failure was reported for the Zone that failed
@@ -10,11 +63,22 @@ Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
   ok: the client did not enter a Zone it could not build
   GENERATION: no proposal was refused; this is the one the provider offered first
   FIRST RESULT: BUILD FAILED (no layout was submitted, so there is no verdict to wait for)
-  RECOVERY: 2 refusal(s) spent over 3 entry attempt(s); ended EXHAUSTED
+  RECOVERY: at least 2 refusal(s) seen over 3 entry attempt(s); ended EXHAUSTED
   AFTER: hub ZONE_FAILED; 'zone_008' is parked, so its record is off the snapshot; the Hub names it as the discard target and refuses a new Zone over it, which is its 15 Check(s) still reserved; entered=false
   ok: the Hub offers a way out of the Zone that cannot be built
   ok: the parked Zone still reserves its Checks -- a new Zone is refused over it
   ok: the Hub still reports a mode
   ok: the Zone reached a terminal answer rather than leaving the client waiting (EXHAUSTED)
+  TIMELINE:
+       0.00s  provider proposal offered for 'zone_008' and accepted by the provider-side validator (15 Check(s) allocated)
+       0.00s  enter_zone sent; the client begins the engine build
+       1.50s  ENGINE BUILD FAILED -- branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
+       1.50s  client sent build_failed for 'zone_008' proposal d6b5eb7b1fcc7cd7 attempt 0
+       1.87s  bridge charged attempt 1 to 'zone_008'
+       1.87s  the recomposed Zone is offered again; entering it (attempt 2) the way the portal does
+       3.71s  bridge charged attempt 2 to 'zone_008'
+       3.71s  the recomposed Zone is offered again; entering it (attempt 3) the way the portal does
+       5.56s  EXHAUSTED: the Zone spent its budget and is parked; the Hub offers a discard rather than a way in
+       5.56s  final: hub ZONE_FAILED; parked, Checks still reserved
 NAMED CASE zone_008: first=BUILD FAILED (no layout was submitted, so there is no verdict to wait for) refusals=2 ended=EXHAUSTED
 GODOT RELOAD TESTS OK (7 checks)

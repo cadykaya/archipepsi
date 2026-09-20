@@ -14,7 +14,7 @@ python3 -m pytest -q
 ........................................................................ [ 58%]
 ........................................................................ [ 62%]
 ................................................................
-  fold: 0.166 ms for a full 26-echo campaign
+  fold: 0.163 ms for a full 26-echo campaign
 ........ [ 67%]
 ........................................................................ [ 71%]
 ........................................................................ [ 76%]
@@ -41,5 +41,4 @@ apworld/tests/test_apworld.py::TestAnUnusualSize::test_all_state_can_reach_every
     warnings.warn("multiworld.get_all_state no longer caches all_state and this argument will be removed.",
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-1602 passed, 6 warnings, 627 subtests passed in 120.77s (0:02:00)
-rc=0
+1602 passed, 6 warnings, 627 subtests passed in 118.91s (0:01:58)

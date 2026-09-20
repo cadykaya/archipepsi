@@ -1,0 +1,23 @@
+godot-bin/godot --headless --path godot -- --reload-phase=build-failure \
+  > /tmp/archipepsi-build-failure.log 2>&1; \
+STATUS=$?; \
+grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )" \
+  /tmp/archipepsi-build-failure.log | tail -20; \
+if [ $STATUS -ne 0 ]; then exit $STATUS; fi; \
+if grep -q "SCRIPT ERROR" /tmp/archipepsi-build-failure.log; then \
+  echo "-- a script error was raised: the crash this gate exists"; \
+  echo "-- for prints its report and then dies."; \
+  grep -m5 "SCRIPT ERROR" /tmp/archipepsi-build-failure.log; \
+  exit 1; \
+fi
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  CASE: res://tests/fixtures/sample/zone_08.json, served as 'zone_008' -- the id it was dumped under, so the placement seed is the one it failed on
+  ok: the engine's failure was reported to the bridge rather than swallowed (this Zone must NOT route; if it now does, replace the fixture with another engine-failure case)
+  ENGINE SAID: branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
+  ok: the failure named the Zone that failed
+  ok: the report went out on this entry, not an earlier one
+  ok: the unbuildable Zone was torn down rather than left in the tree with no player in it
+  ok: the player was put back in a Hub that exists
+  ok: there is a live player to bind to, rather than the null the failed Zone never created
+GODOT RELOAD TESTS OK (6 checks)

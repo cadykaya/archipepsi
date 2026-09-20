@@ -16,8 +16,8 @@ The evidence log is `docs/OVERNIGHT_0_3_LEDGER.md`; the raw runs are under
 | | |
 |---|---|
 | **Starting** | `9ea1743` — the brief's reference checkpoint. The tree was clean and already at it. |
-| **Tested** | see §4; the full frontier was run on a fixed tree with no source edits during it. |
-| **Final pushed** | see §4. |
+| **Tested** | `0c5b4d9` — the full frontier, 31 targets, all `rc=0`, on a fixed tree (§4). |
+| **Final pushed** | one documentation-and-evidence commit on top of `0c5b4d9`; it touches `docs/**` and the single `source_commit` provenance line described in §4, nothing else. |
 
 The differences are, in order: the engine NO-LAYOUT handoff and its
 coverage; the ordinary default-scale replay harness and the census
@@ -105,7 +105,38 @@ Stages are kept apart: provider-side validation · engine placement ladder
 
 ## 4. Verification
 
-*(filled in by the frozen run — see the table at the end of this file)*
+**Tested code revision `0c5b4d9`. The full frontier: 31 targets, every one
+`rc=0`, with no source edits during the run.** `docs/evidence/overnight-0-3/frontier.status`
+is the raw table.
+
+```
+test 121s  smoke  godot-import  doctor  godot-boot  godot-test  godot-hud
+godot-rules  godot-stats  godot-lab  godot-affordance  godot-verbs
+godot-blink  godot-content  godot-activity  godot-room
+godot-room-contract 112s  godot-graphs 134s  godot-movement
+godot-zone-audit  godot-legible  godot-physics 124s  godot-traverse 44s
+godot-return-placement  godot-build-failure  godot-playtest3a 63s
+godot-integration 64s  godot-integration-quiet 64s  godot-reload 35s
+godot-ordinary-live 24s  version
+```
+
+`make test`: **1602 passed, 627 subtests passed**, 0 failed.
+
+**One tracked artifact was rewritten by the run, and here is exactly what.**
+`make godot-zone-audit` regenerates `godot/tests/fixtures/placement/captures.json`
+and stamps it with the revision that produced it:
+`"source_commit": "10972f67022d"` → `"0c5b4d9cae54"`. **That one line is the
+whole diff** — every measurement in the file is byte-identical, and
+`bridge/tests/test_placement_contract.py`, which reads it, passed in the same
+run. The census consequently stamps itself `0c5b4d9-dirty`, which is honest:
+the tree carried that provenance line when it ran.
+
+The named live cases and the twenty-case census were re-run on that same
+revision after the frontier, so every number in §3 is from it.
+
+**The final commit contains exactly two kinds of change:** everything under
+`docs/**`, and that one `source_commit` line. No source file, no test input
+and no other generated artifact differs from what was tested.
 
 ### Decisive negative controls
 
@@ -181,9 +212,12 @@ will be; a fresh slot avoids the question entirely.
 1. **Update first, separately.** Double-click **`Update Archipepsi
    (Windows).bat`**. It is the only file that fetches or moves you between
    commits; the launcher never does.
-2. **Double-click `Diagnostic Campaign (Windows).bat`.** For a clean
-   candidate slot, run it once with `--new` on the command line — the slot is
-   then named for the revision.
+2. **Double-click `Diagnostic Campaign (Windows).bat`.** The default slot is
+   **`current`**, which is *not* your `582e954` campaign — so an ordinary
+   double-click already gives you a separate save. If `.diagnostic-current`
+   already holds a campaign from an older build and you want a clean one, add
+   `--new` on the command line: the slot is then named for the revision, and
+   `--list` shows them side by side afterwards.
 3. **Check the four lines it prints before anything starts:**
 
    ```
@@ -199,8 +233,14 @@ will be; a fresh slot avoids the question entirely.
    are in the wrong run — that is `Start Archipepsi`, a different game.
 4. **Leave that window open.** It is the bridge, and it is also your log:
    every refusal, verdict and error scrolls there.
-5. **Start the game** and press **MOCK CAMPAIGN** on the title screen. The
-   bridge window will show the client connecting.
+5. **Start the game** — the launcher starts the bridge only, which is the
+   established pattern here. Open the `godot` folder as a project in Godot
+   **4.5.1** and press Play, the same way you launch it today. (The three
+   `Play 3AB` launchers do find Godot for you and remember where it is in
+   `godot-path.txt`; the diagnostic launcher deliberately does not, because it
+   never wants to be the thing that moved you between builds.) Then press
+   **MOCK CAMPAIGN** on the title screen — the bridge window will show the
+   client connecting.
 6. **Afterwards:** the bridge window's scrollback is the run log, and
    `playtime.jsonl` beside the save records each Zone's elapsed time, per-room
    dwell, deaths and encounter durations. Both are local; nothing is uploaded.

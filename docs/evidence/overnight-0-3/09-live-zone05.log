@@ -24,7 +24,7 @@ if grep -q "SCRIPT ERROR" /tmp/archipepsi-named-case.log; then \
   exit 1; \
 fi
 
-  Archipepsi bridge v0.1.0  (2564ca9dbb76*)
+  Archipepsi bridge v0.1.0  (0c5b4d9cae54*)
     listening   ws://127.0.0.1:38290   (Godot connects here)
     archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
     epsilon     sample
@@ -84,8 +84,8 @@ p3a: zone zone_005 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 d
   TIMELINE:
        0.00s  provider proposal offered for 'zone_005' and accepted by the provider-side validator (15 Check(s) allocated)
        0.00s  enter_zone sent; the client begins the engine build
-       0.42s  engine build finished; a player exists and the layout goes to the bridge for a verdict
-       5.31s  ACCEPTED and entered on the first attempt; nothing failed and nothing was recomposed
-       5.31s  final: hub ZONE_ACTIVE; the Zone is the active one
+       0.39s  engine build finished; a player exists and the layout goes to the bridge for a verdict
+       5.30s  ACCEPTED and entered on the first attempt; nothing failed and nothing was recomposed
+       5.30s  final: hub ZONE_ACTIVE; the Zone is the active one
 NAMED CASE zone_005: first=ACCEPTED refusals=0 ended=ACCEPTED
 GODOT RELOAD TESTS OK (3 checks)

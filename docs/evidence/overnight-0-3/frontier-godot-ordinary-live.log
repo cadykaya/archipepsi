@@ -18,7 +18,7 @@ if grep -q "SCRIPT ERROR" /tmp/archipepsi-ordinary-live.log; then \
   exit 1; \
 fi
 
-  Archipepsi bridge v0.1.0  (2564ca9dbb76*)
+  Archipepsi bridge v0.1.0  (0c5b4d9cae54*)
     listening   ws://127.0.0.1:38290   (Godot connects here)
     archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
     epsilon     fallback
@@ -65,14 +65,14 @@ p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 d
   TIMELINE:
        0.00s  ordinary proposal offered for 'zone_001'
        0.36s  engine build finished; a player exists
-       5.38s  bridge verdict: ACCEPTED
+       5.37s  bridge verdict: ACCEPTED
        5.80s  goal area entered on foot; a Check unlocked
        6.04s  walked the last leg to Reward_89100126: 2.2 m -> 1.6 m
-       6.06s  interact pressed on Reward_89100126 (location 89100126)
-       6.10s  bridge confirmed location 89100126
-       6.21s  equipped 'act_l89100126' into mobility
-       8.55s  station st:exit online
-       8.57s  travel panel opened from station st:exit
-       8.60s  left 'zone_001' without abandoning it
-       8.99s  re-entered 'zone_001'
+       6.05s  interact pressed on Reward_89100126 (location 89100126)
+       6.09s  bridge confirmed location 89100126
+       6.11s  equipped 'act_l89100126' into mobility
+       8.44s  station st:exit online
+       8.46s  travel panel opened from station st:exit
+       8.49s  left 'zone_001' without abandoning it
+       8.87s  re-entered 'zone_001'
 GODOT RELOAD TESTS OK (10 checks)

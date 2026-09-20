@@ -419,3 +419,47 @@ happened while the owner slept. The findings from this session are classified
    attempt-identity contract; not taken.
 
 None of these blocked any independent work tonight.
+
+---
+
+## Block 6 — freeze and verification
+
+**Tested code revision `0c5b4d9`.** The full frontier ran on a fixed tree —
+**31 targets, every one `rc=0`** — with no source edit during it.
+`docs/evidence/overnight-0-3/frontier.status` is the raw table and
+`frontier-test.log` the Python run (**1602 passed, 627 subtests**).
+
+**One tracked artifact was rewritten by the run.** `make godot-zone-audit`
+regenerates `godot/tests/fixtures/placement/captures.json` and stamps it with
+the revision that produced it: `"source_commit": "10972f67022d"` →
+`"0c5b4d9cae54"`. That one line is the entire diff; every measurement in the
+file is byte-identical, and `bridge/tests/test_placement_contract.py`, which
+reads it, passed in the same run. The census therefore stamps itself
+`0c5b4d9-dirty` rather than pretending to a clean tree.
+
+**The named live cases and the twenty-case census were re-run on that
+revision afterwards**, so every figure in the handoff comes from the tested
+code. Regenerating the twenty source fixtures from `dump_zones.py` produced
+**byte-identical files** — the tree showed no change to them — which is the
+determinism the census depends on.
+
+### An observation recorded rather than repaired
+
+`main.gd`'s snapshot branch reads
+`BridgeClient.active_zone().get("zone", {}).is_empty()`. `.get`'s default does
+**not** apply to a key that exists and is null, and `zone` *is* null at
+`PENDING_GENERATION` — the same GDScript trap `bridge_client.gd` already
+carries a comment about. It is currently unreachable: GDScript's `and`
+short-circuits on `mode == "ZONE_ACTIVE"` first, and a record is only ACTIVE
+once it has content. **Not reproduced, so not repaired** — recorded here
+because the guard is one state-machine change away from being load-bearing.
+
+### Evidence kept, and what was dropped
+
+`docs/evidence/overnight-0-3/README.md` indexes every file and says which
+revision produced it. Superseded duplicates from earlier in the session were
+removed rather than left beside their replacements: pre-frontier copies of the
+integration, ordinary-live, reload and pytest logs, and two raw logs whose
+`IDENTITY:` line predates the exact dumped-versus-served wording. The two
+negative controls and the fallback-determinism measurement are kept and
+labelled, because nothing else records them.
