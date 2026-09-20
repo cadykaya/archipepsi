@@ -1,5 +1,64 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the build that could not happen, and a playable candidate — 2026-09-20
+
+**A ZONE THE ENGINE CANNOT BUILD USED TO TAKE THE RUN DOWN WITH IT.**
+`ZoneController.setup` returns when `ZoneBuilder` cannot route the rooms --
+correctly -- and `Main._to_zone` carried straight on into
+`hud.bind_player(zone.player)` and four signal connects against a null.
+Reproduced with the crash in the log: *Invalid access to property or key
+'hp_changed' on a base object of type 'Nil'*.
+
+**AND NOTHING TOLD THE BRIDGE.** No `layout_result` is sent for a build that
+did not happen, so the record sat ACTIVE waiting for a verdict that was never
+coming: the Hub stayed ZONE_ACTIVE, offered a way back into a Zone that cannot
+be built, and the campaign could not move.
+
+`build_failed` carries the proposal and attempt captured BEFORE the build
+started, and the bridge applies the existing `refuse_layout` -- so a fresh
+proposal is composed again inside its budget, a COMMITTED one is parked with
+its manifest and progress intact, and past the budget the Hub offers ABANDON
+with every Check still reserved. **Not a synthesised `layout_result`:** there
+is no geometry, and an empty one would have the validator report a geometry
+error for geometry that was never laid down.
+
+**THE SEED IS THE ZONE ID.** Serving `zone_08`'s content to a fresh campaign
+makes it `zone_001` and it routes on the first attempt -- a fact about the
+seed, not a repair. `AT=N` makes the disposable campaign generate and abandon
+N-1 Zones so the case is minted under the id it failed with. Under
+`zone_008` it fails for real: *branch room 'c015' off 'c013' could not be
+placed clear of the 36 room(s) already standing*.
+
+**BOTH OUTCOMES, LIVE.** `AT=8 THEN=zone_01` -> failure, attempt charged,
+**replacement built, certified and ACCEPTED**. `AT=8` -> failure three times
+-> **exhaustion**, ZONE_FAILED, discard offered, Checks reserved.
+
+**THE DETERMINISTIC PROVIDER CANNOT RECOVER A BUILD FAILURE.** The fallback
+seeds on zone index and budget alone, so the recompose returns byte-identical
+content: measured, three identical failures, two of them from ordinary
+composition. The player-facing recovery (discard, then a different id) works.
+Boundary recorded, not crossed.
+
+**ONE ORDINARY ZONE, PLAYED.** `make godot-ordinary-live` asks the campaign
+for whatever it would ordinarily compose at default scale, then walks into a
+goal area on foot to open a gate, walks the last leg to the Check that
+unlocks, has the game's own interact ray find it, presses `Reward.interact`,
+and waits for the bridge. The item that arrives is equipped through the
+wheel's own function; a station comes online by being stood on and opens its
+panel through Main's wiring; then it leaves without abandoning and goes back
+in. **8 of 23 chambers built approved authored shells** (freeze: 0 of 23).
+
+**ANCHORS ARE MEASURED ACROSS A COLD RESTART:** 48 recorded, worst gap
+0.000 m -- present determinism, and it says so rather than letting that read
+as evidence about another build. The cross-build defect stays measured at
+5.89 m in `RETURN_ANCHOR_PERSISTENCE.md`, and nothing was migrated.
+
+**CANDIDATE:** `docs/OVERNIGHT_HANDOFF.md` -- disposition, launch
+instructions, a 15-20 minute replay and the A1-A8 map.
+**LEDGER:** `docs/OVERNIGHT_0_3_LEDGER.md`. **EVIDENCE:**
+`docs/evidence/overnight-0-3/`.
+
+
 ## ENGINE LANE — the last three sample cases, and a hang — 2026-09-19
 
 **`zone_05` was a real collision, and the check that would have caught it

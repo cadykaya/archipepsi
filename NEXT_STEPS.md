@@ -1,5 +1,38 @@
 # Archipepsi — build state
 
+## 2026-09-20 (engine) — the engine NO-LAYOUT handoff, and a playable candidate
+
+- **A build that never happened is reported as itself.** `setup` returned
+  without a player and told nobody; `Main._to_zone` then dereferenced
+  `zone.player`, and the bridge waited forever for a verdict. The client
+  sends `build_failed` (proposal + attempt captured before the build) and
+  the bridge applies the existing `refuse_layout`. Not a synthesised
+  `layout_result`: there is no geometry to judge.
+- **Reproduced under the case's own seed.** Placement is seeded by the
+  `zone_id`, so `AT=N` makes the disposable campaign mint the id the case
+  was dumped with. `THEN=<case>` supplies a second proposal, because the
+  fallback seeds on zone index and budget alone and recomposes identical
+  content -- measured, and recorded as a boundary rather than repaired.
+- **Both outcomes live:** failure -> accepted replacement, and failure ->
+  bounded exhaustion with a usable Hub and every Check reserved.
+- **`make godot-ordinary-live`** plays one ordinary default-scale Zone
+  through the real application: goal area entered on foot, Check claimed
+  through `Reward.interact` and confirmed, Echo equipped, station panel
+  opened, left and re-entered. It found a latent race -- `active_zone` is
+  populated at PENDING_GENERATION, so a wait on "a record exists" sends
+  `enter_zone` at a Zone with no content.
+- **8 of 23 chambers built approved authored shells** in that Zone; the
+  0.3 freeze recorded 0 of 23.
+- **Anchors across a cold restart:** 48 compared, worst gap 0.000 m. Same
+  build, so present determinism only; the cross-build defect stays at
+  5.89 m in `RETURN_ANCHOR_PERSISTENCE.md` and nothing was migrated.
+- **Sample: 19 of 19 submitted accepted, 19 of 20 overall.** `zone_08`
+  still produces no manifest, and is what ordinary fallback composition
+  produces for the 8th Zone of a default-scale campaign.
+- **Candidate:** `docs/OVERNIGHT_HANDOFF.md`; ledger
+  `docs/OVERNIGHT_0_3_LEDGER.md`; evidence `docs/evidence/overnight-0-3/`.
+
+
 ## 2026-09-19 (engine) — the last three sample cases
 
 - **`zone_05`: a real collision** (both rooms have solids in the shared

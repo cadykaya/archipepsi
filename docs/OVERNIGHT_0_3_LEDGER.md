@@ -303,3 +303,119 @@ other nineteen regenerate from that command.
   destinations, RETURN TO HUB, and the line saying progress is already saved.
 * `04-navigation-schematic-F5.png` — the in-game F5 schematic: rooms walked,
   green "you are here", stations reached.
+
+---
+
+## Block 5 — A1–A8 readiness, as the checklist is written
+
+`docs/ROAD_TO_PLAYABLE_0_3.md` §5 is used verbatim. Its §8 "Evidence at
+freeze" table is **history at `e344e2c`** and is not reported here as a current
+measurement; where tonight's number differs, both are shown.
+
+Each row separates: **implemented behaviour** · **executed automated
+coverage** · **historical human observation** · **judgement still owed by the
+owner**.
+
+### A1 — an authored room appears in an actually played Zone
+
+**Moved since freeze.** In tonight's ordinary default-scale Zone `zone_001`
+(live fallback composition, not a fixture), **8 of 23 chambers actually built
+an approved authored shell**: `shell_corner_left` ×3, `shell_corner_right` ×4,
+`shell_hall_transit` ×1. All three are `review: pass` in
+`godot/content/registry/authored_art.json` with real scenes on disk. The
+`shell_id` in that report is *the shell that actually built*, not the one the
+composer requested — `telemetry.gd` says so in as many words. The Zone was
+built, its layout ACCEPTED, and a player entered it and claimed Check
+`89100126`. Freeze recorded **0 of 23**.
+
+**The gap is a reading, not a measurement.** A1 says "through the real Epsilon
+→ played Zone path". The provider here was the **deterministic fallback**.
+Whether "real Epsilon" means any provider on the real composition→play path or
+specifically the Claude provider is the owner's reading. Genuine-Epsilon
+evidence is **unavailable in this container** — there is no
+`ANTHROPIC_API_KEY`, and obtaining one is outside this brief. *Classification:
+(b) affects milestone completion, does not prevent the diagnostic.*
+
+### A2 — a real Zone is composed from approved authored rooms
+
+Same run, same evidence: eight authored shells chained into one playable Zone
+whose layout the bridge accepted, with the connector grammar and entry contract
+enforced by the validator that accepted it. *Same Epsilon-reading caveat as A1.*
+
+### A3 — activities genuinely work
+
+Measured by `make godot-activity` in tonight's frontier (result in the
+verification table). Freeze recorded 29 audited activities, 0 structural
+failures. *Automated coverage; no judgement owed.*
+
+### A4 — at least one real movement package changes navigation
+
+Tonight's ordinary Zone **declared 6 movement offers, judged 5, accepted 5**,
+and with the package set to `none`, **selected 0 and built 0** — which is the
+`none` half of the criterion, measured on ordinary composition. The
+`rail`/`launch` half is `make godot-playtest3a` (result in the verification
+table) and the three `Play 3AB - <mode> (Windows).bat` launchers.
+*Implemented and covered; the "the route differs" comparison is one the owner
+sees by playing the same Zone in two modes, which those launchers exist for.*
+
+### A5 — one environmental-agency chain works end to end
+
+A `powered_door` chain is the one tag the bridge requires a certificate for
+(`CERTIFIED_TAGS = {"powered_door"}`): the engine builds the package, replays
+it three times at exactly the manipulation envelope, and sends the evidence;
+`make godot-physics` is its suite. **What stays unresolved is not the chain but
+its persistence**: `ROAD_TO_PLAYABLE_0_3.md` §6 records that whether an agency
+signal is transient within a visit, persisted across re-entry, or derived is
+*an owner design decision that has not been made*. Nothing tonight invented
+those semantics. *Classification: (c) explicitly deferred to the named owner
+gate.*
+
+### A6 — the current player can complete the Zone
+
+`make godot-integration` plays a whole campaign to `ALL_CHECKS_CLEARED`,
+**at prototype scale**, with Checks claimed through the transaction handler
+rather than by a body pressing E. Tonight's default-scale run claimed **1 of
+15** Checks, and that one physically: walked into a goal area, walked the last
+leg, addressed by the game's own interact ray, `Reward.interact`, bridge
+confirmed. **A whole default-scale Zone completed on foot is not demonstrated
+and is not claimed.** *Classification: (b) — the diagnostic is what answers it,
+which is the point of running one.*
+
+### A7 — a coherent short run
+
+**The owner's judgement, made after playing.** Nothing automated can move this
+row, and nothing tonight tried to.
+
+### A8 — Playtest 3 happens, and its findings are triaged
+
+**Not run.** An overnight automated loop is not a playtest, and no playtest
+happened while the owner slept. The findings from this session are classified
+(a)/(b)/(c) in this ledger and in the handoff; the triage A8 asks for is of
+**Playtest 3's** findings, against the corrected playtest record.
+
+### Findings from tonight, classified
+
+| finding | class |
+|---|---|
+| missing-player crash after a failed build | **(a) prevented the diagnostic** — repaired |
+| a failed build never reaching the bridge (campaign stuck, Hub offering a Zone that cannot be built) | **(a)** — repaired |
+| `active_zone` populated at `PENDING_GENERATION`, so `enter_zone` could be sent at a Zone with no content | **(a)** — repaired in the harnesses; the shipping client waits on `ZONE_ACTIVE` plus non-empty content and was not affected |
+| the deterministic provider recomposes identical content, so the refusal budget cannot rescue an unbuildable Zone | **(b)** — recorded, bounded; the player-facing discard works |
+| `zone_08` / `zone_008` does not route within the bounded search | **(b)** — visible, not tuned away |
+| anchors are recomputed on replay, so a save from another build moves a return device | **(b)** — measured (5.89 m), proposal only, use a fresh save |
+| genuine-Epsilon evidence for A1/A2 | **(b)** — no authorized access in this container |
+| agency-signal persistence | **(c)** — named owner gate, untouched |
+
+### Unmade owner decisions, listed once
+
+1. **Agency-signal persistence** (`ROAD_TO_PLAYABLE_0_3.md` §6) — transient,
+   persisted or derived.
+2. **Does A1's "real Epsilon" mean the Claude provider specifically**, or any
+   provider on the real composition→play path?
+3. **The return-anchor repair** in `docs/RETURN_ANCHOR_PERSISTENCE.md` — new
+   content digest plus `repaired_from`; still a proposal, nothing implemented.
+4. **Whether a recompose after a failure should vary its content** (passing the
+   attempt ordinal into the fallback's existing salt axis). Interacts with the
+   attempt-identity contract; not taken.
+
+None of these blocked any independent work tonight.

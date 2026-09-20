@@ -134,6 +134,9 @@ jobs:
           make godot-return-placement
           make godot-build-failure
 
+      - name: One ordinary Zone at default scale, played
+        run: make godot-ordinary-live
+
       - name: Whole campaign, headlessly
         run: make godot-integration
 
