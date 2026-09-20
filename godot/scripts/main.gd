@@ -583,6 +583,28 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.committed_manifest = committed \
 			if typeof(committed) == TYPE_DICTIONARY else {}
 	zone.setup(Slice1Fixture.decorate(zone_dict) if _slice1 else zone_dict)
+	# A ZONE THAT COULD NOT BE BUILT HAS NO PLAYER, and every line below
+	# this one assumes there is one.
+	#
+	# `ZoneController.setup` returns early when `ZoneBuilder` cannot
+	# route the rooms -- correctly, because entering a level whose Check
+	# is inside a wall is worse than not entering it -- and this
+	# function carried straight on into `hud.bind_player(zone.player)`
+	# and four `zone.player.<signal>.connect` calls against a null. The
+	# first of those is where the run died, halfway through a handoff,
+	# with the Hub already torn down by `_clear_world` and the failed
+	# Zone still in the tree.
+	#
+	# `layout_failed` is the controller's own report and is set before
+	# it returns, so this is the same fact the suites read rather than a
+	# second flag that could disagree with it.
+	if zone.layout_failed != "":
+		# `zone.zone_id` AND NOT `zid`: the controller took its id from
+		# the content it was handed, which is the Zone that actually
+		# failed, while `zid` comes off the bridge record and is empty
+		# on any path that builds a Zone without one.
+		_on_build_failed(zone.zone_id, zone.layout_failed)
+		return
 	zone.exit_requested.connect(_on_exit_zone)
 	zone.layout_refused.connect(_on_layout_refused)
 	zone.travel_panel_requested.connect(_on_travel_panel_requested)
@@ -644,6 +666,40 @@ func _on_layout_refused(refused_id: String) -> void:
 		hud.toast("LAYOUT REFUSED — RETURNING TO HUB",
 				Color(0.95, 0.5, 0.45), 4.0)
 	_remember_zone_progress()
+	_to_hub()
+
+## THE ENGINE COULD NOT BUILD IT. Back to a Hub that still works.
+##
+## Distinct from `_on_layout_refused`, which is the bridge rejecting
+## geometry the engine DID build, and distinct again from a
+## generation-stage rejection, which never reaches a client at all. Here
+## there is no level and no player: the only thing to do is say so and
+## put the player somewhere they can act.
+##
+## `ZoneController.setup` has already told the bridge (`build_failed`),
+## so the recovery -- compose this proposal again inside its budget, or
+## park it and offer ABANDON once the budget is spent -- is running
+## while this returns to the Hub. Nothing is sent from here; two reports
+## of one failure would charge the attempt twice.
+##
+## AND NOTHING IS REMEMBERED. `_remember_zone_progress` copies the
+## controller's RUNTIME dictionaries over the in-memory ones, and on a
+## failed setup those are empty -- so calling it here would overwrite a
+## revisited Zone's stations, keys and opened locks with nothing. The
+## save is the truth for a Zone that was never entered.
+func _on_build_failed(failed_id: String, reason: String) -> void:
+	push_warning("main: '%s' could not be built -- %s" % [failed_id, reason])
+	if hud != null:
+		hud.toast("ZONE COULD NOT BE BUILT — RETURNING TO HUB",
+				Color(0.95, 0.5, 0.45), 4.0)
+	# The entry that was in flight is over, however it ended. The
+	# snapshot path already clears this before it calls `_to_zone`, so
+	# this is belt and braces for the other callers rather than a fix --
+	# what matters is that the flag cannot be left set by a path that
+	# ends here, because the recomposed Zone arrives as another
+	# ZONE_ACTIVE and that branch is what would walk the player back in
+	# without asking.
+	_entering_zone = false
 	_to_hub()
 
 func _on_exit_zone() -> void:

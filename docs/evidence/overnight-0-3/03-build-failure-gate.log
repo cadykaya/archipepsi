@@ -1,0 +1,16 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  CASE: res://tests/fixtures/sample/zone_08.json, served as 'zone_008' -- the id it was dumped under, so the placement seed is the one it failed on
+SCRIPT ERROR: Invalid access to property or key 'hp_changed' on a base object of type 'Nil'.
+SCRIPT ERROR: Invalid access to property or key 'fired_pulse' on a base object of type 'Nil'.
+  ok: the engine's failure was reported to the bridge rather than swallowed (this Zone must NOT route; if it now does, replace the fixture with another engine-failure case)
+  ENGINE SAID: branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
+  ok: the failure named the Zone that failed
+  ok: the report went out on this entry, not an earlier one
+FAIL: the unbuildable Zone was torn down rather than left in the tree with no player in it
+FAIL: the unbuildable Zone was torn down rather than left in the tree with no player in it
+FAIL: the player was put back in a Hub that exists
+FAIL: the player was put back in a Hub that exists
+FAIL: there is a live player to bind to, rather than the null the failed Zone never created
+FAIL: there is a live player to bind to, rather than the null the failed Zone never created
+GODOT RELOAD FAILED (3 of 6 checks)

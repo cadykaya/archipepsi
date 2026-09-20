@@ -622,11 +622,58 @@ godot-reload: godot-import
 #
 # Reports the same five things whether the Zone is accepted or refused,
 # so a bounded recovery can never be read as a first-attempt success.
+# THE HANDOFF AFTER A BUILD THAT COULD NOT HAPPEN. No bridge needed.
+#
+#   make godot-build-failure
+#
+# `ZoneController.setup` returns without creating a player when
+# `ZoneBuilder` cannot route the rooms, and `Main._to_zone` used to carry
+# on into `hud.bind_player(zone.player)` -- a null. This hands the real
+# `Main` a Zone the router genuinely cannot place (`zone_08` of the
+# declared sample, under the id it was dumped as) and checks what the
+# player is left with: no crash, no half-built level in the tree, a Hub
+# with a live player in it, and the failure reported to the bridge.
+#
+# The live half -- a real bridge, the bounded recovery and the parked
+# Zone -- is `make godot-named-case CASE=zone_08 AT=8`.
+godot-build-failure: godot-import
+	$(GODOT) --headless --path godot -- --reload-phase=build-failure \
+	  > /tmp/archipepsi-build-failure.log 2>&1; \
+	STATUS=$$?; \
+	grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )" \
+	  /tmp/archipepsi-build-failure.log | tail -20; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	if grep -q "SCRIPT ERROR" /tmp/archipepsi-build-failure.log; then \
+	  echo "-- a script error was raised: the crash this gate exists"; \
+	  echo "-- for prints its report and then dies."; \
+	  grep -m5 "SCRIPT ERROR" /tmp/archipepsi-build-failure.log; \
+	  exit 1; \
+	fi
+
+# `AT=N` SERVES THE PROPOSAL AS THE CAMPAIGN'S Nth ZONE, which is how a
+# case that fails OFFLINE is reproduced live. Placement is seeded by
+# `hash("<zone_id>|<theme>|layout")` and a campaign names its first Zone
+# `zone_001`, so serving `zone_08`'s content as Zone 1 lays it out under
+# a pose sequence it was never measured with -- and it routes. `AT=8`
+# gives it back the id it was dumped under, and its placement seed with
+# it: the campaign really does generate and abandon seven Zones first.
+#
+# `THEN=<case>` SERVES A SECOND PROPOSAL from the Zone's second request
+# onward. Without it a Zone whose sample the engine cannot build fails
+# identically on every retry -- which shows the budget and the
+# exhaustion honestly and cannot show the other half: a failure followed
+# by a replacement that really is built, certified and accepted. The
+# ORDINARY provider cannot supply that half either: the fallback seeds
+# composition on zone index and budget alone, so the recompose after a
+# refusal returns byte-identical content. Measured, not assumed.
 CASE ?= zone_05
+AT ?= 1
+THEN ?=
 NAMED_CASE_SAVES := $(CURDIR)/.named-case-saves
 godot-named-case: godot-import
 	rm -rf $(NAMED_CASE_SAVES)
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(NAMED_CASE_SAVES) \
+	  $(if $(THEN),ARCHIPEPSI_SAMPLE_THEN=$(if $(findstring /,$(THEN)),$(THEN),$(CURDIR)/godot/tests/fixtures/sample/$(THEN).json),) \
 	  ARCHIPEPSI_SAMPLE_ZONE=$(if $(findstring /,$(CASE)),$(CASE),$(CURDIR)/godot/tests/fixtures/sample/$(CASE).json) \
 	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=sample \
 	  --mock-scale=default & \
@@ -635,11 +682,20 @@ godot-named-case: godot-import
 	  echo "bridge did not start (port already serving? bad CASE?)"; \
 	  exit 1; }; \
 	$(GODOT) --headless --path godot -- --reload-phase=named-case \
+	  --named-case-at=$(AT) \
+	  --named-case-source=$(if $(findstring /,$(CASE)),$(CASE),$(CURDIR)/godot/tests/fixtures/sample/$(CASE).json) \
 	  > /tmp/archipepsi-named-case.log 2>&1; \
 	STATUS=$$?; kill $$BRIDGE_PID; \
-	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" \
-	  /tmp/archipepsi-named-case.log | tail -30; \
-	exit $$STATUS
+	grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )" \
+	  /tmp/archipepsi-named-case.log | tail -70; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	if grep -q "SCRIPT ERROR" /tmp/archipepsi-named-case.log; then \
+	  echo "-- a script error was raised. A run that crashed and still"; \
+	  echo "-- printed its report is not a pass: the missing-player"; \
+	  echo "-- crash after a failed build printed one."; \
+	  grep -m5 "SCRIPT ERROR" /tmp/archipepsi-named-case.log; \
+	  exit 1; \
+	fi
 
 godot-integration: godot-import   # full loop through a live mock bridge, fresh state
 	rm -rf $(INTEGRATION_SAVES)

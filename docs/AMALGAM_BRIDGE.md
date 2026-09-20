@@ -158,6 +158,46 @@ Failure payloads are already exactly right:
 exhausted, because a bounded search may never report that a design is
 impossible.
 
+### 2.3b When there is no layout at all — `build_failed`
+
+**Added 2026-09-20.** `ZoneController.setup` returns when `ZoneBuilder`
+cannot route the rooms, and until now returning was *all* it did. No
+`layout_result` is sent for a build that did not happen, so the record
+stayed ACTIVE waiting for a verdict that was never coming: the Hub stayed
+ZONE_ACTIVE, offered a way back into a Zone that cannot be built, and the
+campaign could not move.
+
+```json
+{"type": "build_failed", "zone_id": "zone_008",
+ "reason": "branch room 'c015' off 'c013' could not be placed clear of
+            the 36 room(s) already standing",
+ "proposal_id": "d6b5eb7b1fcc7cd7", "attempt": 0}
+```
+
+**Three failures, and they are not interchangeable.** A
+*generation-stage rejection* is refused before the proposal is offered
+and is reported by `last_generation_error`; no client sees it. A
+*refused layout* is geometry the engine built and the validator
+rejected. A *build failure* is this one: composed, offered, entered, and
+the engine could not construct it.
+
+**Nothing may synthesise a layout to borrow the refusal path.** There is
+no geometry; an empty or part-built `layout` would have the validator
+report a geometry error for geometry that was never laid down.
+
+`reason` is bounded by `MAX_TEXT_LEN` and trimmed on both sides — a
+router's failure text names rooms and budgets and is not short, and an
+over-long string in a snapshot field has already cost one hang.
+`proposal_id` and `attempt` carry the same meaning and the same guards
+as on `layout_result`.
+
+**What follows is the refusal ladder**, because that ladder is already
+right: `refuse_layout` charges the attempt, composes a FRESH proposal
+again inside `MAX_LAYOUT_REFUSALS`, parks a COMMITTED one DORMANT with
+its manifest, content and progress intact, and past the budget makes the
+Zone DORMANT so the Hub reports ZONE_FAILED and offers ABANDON. The
+Checks are never released here.
+
 ---
 
 ## 3. Protocol changes, in full
@@ -170,6 +210,7 @@ impossible.
 | `TERMINAL_ZONE_STATES` unchanged; **new** `REVISITABLE_ZONE_STATES` | the two questions separated |
 | `Zone.edges`, `Zone.plugs`, chamber `doors`, chamber `keys` | additive, `schema_version` stays `7` |
 | `layout_result` intent | **new, needed from the engine** |
+| `build_failed` intent (2026-09-20) | additive; §2.3b |
 
 **`COMPLETE` is revisitable** (ruled 2026-09-12) and still reserves
 nothing, because "does this hold locations" and "can you walk back in"

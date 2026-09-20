@@ -270,6 +270,19 @@ func setup(zone_dict: Dictionary) -> void:
 		layout_failed = str(build["failed"])
 		push_error("zone: %s could not be laid out -- %s"
 				% [zone_id, layout_failed])
+		# AND THE BRIDGE HAS TO HEAR IT. Returning here is right -- a
+		# Zone that could not be laid out is not a Zone -- but returning
+		# was ALL this did, and the silence was the bug. No
+		# `layout_result` is ever sent for a build that did not happen,
+		# so the record stayed ACTIVE waiting for a verdict that was not
+		# coming: the Hub stayed ZONE_ACTIVE offering a way back into a
+		# Zone that cannot be built, and the campaign could not move.
+		#
+		# `build_failed` and not a synthesised `layout_result`: there is
+		# no geometry, and sending an empty or part-built layout would
+		# have the validator report a geometry error for geometry that
+		# was never laid down.
+		send_build_failed(layout_failed)
 		return
 	add_child(build["root"])
 	_exit_portal = build["exit_portal"]
@@ -1074,6 +1087,37 @@ func send_layout_result(build: Dictionary) -> void:
 	# client that HAD one and left it off would be indistinguishable
 	# from that older client, which is why this reads the captured field
 	# rather than asking again.
+	if proposal_id != "":
+		message["proposal_id"] = proposal_id
+	if attempt >= 0:
+		message["attempt"] = attempt
+	BridgeClient.send_intent(message)
+
+## THE BUILD THAT DID NOT HAPPEN, reported for the attempt it belongs to.
+##
+## The mirror of `send_layout_result`, and deliberately a different
+## message. That one carries geometry for the bridge to judge; this one
+## says there is none to judge, so the bridge can charge the attempt,
+## compose a fresh proposal again inside its budget or park a committed
+## one, and stop waiting.
+##
+## Trimmed here because an over-long reason has already cost this
+## project one hang -- a refusal longer than `MAX_TEXT_LEN` made the
+## snapshot unserialisable and killed the broadcast that carried it.
+## `ZoneBuilder`'s failure reports name rooms and sizes and are not
+## bounded, so the bound is applied at the boundary rather than hoped
+## for. The bridge trims again; neither side trusts the other.
+func send_build_failed(reason: String) -> void:
+	if zone_id == "":
+		return
+	var said := reason
+	if said.length() > Constants.MAX_TEXT_LEN:
+		said = said.substr(0, Constants.MAX_TEXT_LEN - 1) + "\u2026"
+	var message := {"type": "build_failed", "zone_id": zone_id,
+			"reason": said}
+	# THE IDENTITY THIS BUILD STARTED WITH, on the same terms as
+	# `send_layout_result`: captured at the top of `setup`, echoed here,
+	# and omitted only when the bridge offered none.
 	if proposal_id != "":
 		message["proposal_id"] = proposal_id
 	if attempt >= 0:

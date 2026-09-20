@@ -42,5 +42,11 @@ def make_provider(name: str):
             raise ValueError(
                 "--epsilon=sample needs ARCHIPEPSI_SAMPLE_ZONE to name "
                 "the proposal to serve")
-        return SampleEpsilonProvider(where)
+        # THEN: a SECOND proposal from a Zone's second request onward.
+        # The axis a failure-then-recovery demonstration needs. The
+        # ordinary provider cannot supply it -- the fallback seeds on
+        # zone index and budget alone, so a recompose returns identical
+        # content and the budget can only ever be seen being spent.
+        return SampleEpsilonProvider(
+            where, then=os.environ.get("ARCHIPEPSI_SAMPLE_THEN") or None)
     raise ValueError(f"unknown Epsilon provider '{name}'")

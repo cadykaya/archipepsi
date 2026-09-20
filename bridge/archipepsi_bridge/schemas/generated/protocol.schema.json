@@ -169,6 +169,65 @@
         "title": "ApDisconnect",
         "type": "object"
       },
+      "BuildFailed": {
+        "additionalProperties": false,
+        "description": "The engine could not CONSTRUCT this proposal. There is no layout.\n\n**This is not a refused layout, and conflating the two would be a\nlie in both directions.** `LayoutResult` carries geometry the engine\nbuilt and the bridge then judged; this says the engine never got\nthat far -- `ZoneBuilder` could not route the rooms, so there is\nnothing to measure and nothing to validate. Sending an empty or\npart-built `layout` to borrow the refusal path would be fabricated\nevidence: the validator would report a geometry error for a\ngeometry that was never laid down.\n\n**And it is not a generation-stage rejection either.** A proposal\nthe bridge refuses before it is offered never reaches a client;\n`last_generation_error` is where that is reported. This one passed\ncomposition, was offered, was entered, and failed in the engine.\n\n**Why the bridge needs to hear it at all.** Without this message a\nfailed build is silent: `ZoneController.setup` returns, no\n`layout_result` is ever sent, and the record sits ACTIVE waiting for\na verdict that is not coming. The Hub stays in ZONE_ACTIVE, offering\na way back into a Zone that cannot be built, and the campaign cannot\nmove. What follows from this message is exactly what follows from a\nrefusal -- `refuse_layout`, so the attempt is charged, a FRESH\nproposal is composed again inside the budget, a COMMITTED one is\nparked with its manifest intact, and past the budget the Zone goes\nDORMANT and the Hub offers ABANDON.\n\n`attempt` and `proposal_id` carry the same meaning and the same\nguards as on `LayoutResult`: which build this is the outcome of.\nThey are what stop a late failure spending a replacement's budget.",
+        "properties": {
+          "type": {
+            "const": "build_failed",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Reason",
+            "type": "string"
+          },
+          "attempt": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt"
+          },
+          "proposal_id": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "minLength": 16,
+                "pattern": "^[0-9a-f]{16}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Proposal Id"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id"
+        ],
+        "title": "BuildFailed",
+        "type": "object"
+      },
       "BuyShopStock": {
         "additionalProperties": false,
         "description": "Buy one stocked location.\n\n`_NON_FINALE_LOC` makes `{\"type\":\"buy_shop_stock\",\"location_id\":89100030}`\nan unparseable message rather than a message the bridge is trusted to\nrefuse. The bridge still re-verifies stock membership and balance \u2014 this\nonly removes the goal from the reachable input space.",
@@ -813,6 +872,7 @@
         "abandon_zone": "#/$defs/AbandonZone",
         "ap_connect": "#/$defs/ApConnect",
         "ap_disconnect": "#/$defs/ApDisconnect",
+        "build_failed": "#/$defs/BuildFailed",
         "buy_shop_stock": "#/$defs/BuyShopStock",
         "claim_check": "#/$defs/ClaimCheck",
         "debug_command": "#/$defs/DebugCommand",
@@ -897,6 +957,9 @@
       },
       {
         "$ref": "#/$defs/LayoutResult"
+      },
+      {
+        "$ref": "#/$defs/BuildFailed"
       }
     ]
   },

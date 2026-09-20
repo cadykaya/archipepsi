@@ -132,6 +132,7 @@ jobs:
           make godot-physics
           make godot-traverse
           make godot-return-placement
+          make godot-build-failure
 
       - name: Whole campaign, headlessly
         run: make godot-integration

@@ -1499,6 +1499,95 @@ class CampaignEngine:
                  verdict.manifest["manifest_digest"])
         await self.broadcast_snapshot()
 
+    async def handle_build_failed(self, intent) -> None:
+        """The engine could not construct this Zone. There is no layout.
+
+        **A build that never happened is not a layout that was refused,
+        and it is not a proposal that was rejected before it was
+        offered.** This proposal passed composition, was offered, was
+        entered, and `ZoneBuilder` could not route it -- so there is no
+        geometry to validate and `layout.validate` is never called.
+        Nothing synthesises one to borrow the refusal path: a fabricated
+        layout would be reported as a geometry error for geometry that
+        was never laid down.
+
+        **What was actually broken is that nothing arrived at all.**
+        `ZoneController.setup` returned on the failure and sent nothing,
+        so the record stayed ACTIVE waiting for a verdict that was never
+        coming: the Hub stayed ZONE_ACTIVE, offered a way back into a
+        Zone that cannot be built, and the campaign could not move.
+
+        **The consequence is the refusal ladder, because that ladder is
+        already the right one.** `refuse_layout` charges the attempt,
+        sends a FRESH proposal back to be composed again inside
+        `MAX_LAYOUT_REFUSALS`, parks a COMMITTED one DORMANT with its
+        manifest, content and progress intact, and past the budget makes
+        the Zone DORMANT so `hub_mode_for` reports ZONE_FAILED and the
+        Hub offers ABANDON. The Checks are untouched throughout --
+        giving allocated locations back is `abandon_zone`'s act and only
+        its.
+
+        The guards are `handle_layout_result`'s, for the same reasons: a
+        result about a proposal that has been replaced, or about an
+        attempt this Zone has moved past, must not spend the current
+        one's budget, and a Zone that has already given up treats a
+        resend as the ordinary case rather than an error.
+        """
+        if self.save is None:
+            raise IntentError("no campaign loaded")
+        rec = self.save.zone_by_id(intent.zone_id)
+        if rec is None:
+            raise IntentError(
+                f"no Zone '{intent.zone_id}' to report a build failure for")
+        # `rec.zone is None` IS NOT AN ERROR HERE, and this is where it
+        # differs from `handle_layout_result`. That handler needs the
+        # content to validate against; this one does not validate
+        # anything. A record whose content was already cleared -- the
+        # recovery from the PREVIOUS attempt got there first -- is a
+        # stale report, and stale is the ordinary case.
+        if rec.zone is None:
+            log.info("zone %s: a build failure arrived for content the "
+                     "campaign no longer holds; ignored", intent.zone_id)
+            return
+        if intent.proposal_id is not None:
+            current = layout_check.proposal_digest(rec.zone)
+            if intent.proposal_id != current:
+                log.info("zone %s: a build failure for proposal %s "
+                         "arrived after %s replaced it; ignored",
+                         intent.zone_id, intent.proposal_id, current)
+                return
+        if intent.attempt is not None and intent.attempt != rec.layout_refusals:
+            log.info("zone %s: a build failure for attempt %d arrived "
+                     "during attempt %d; ignored", intent.zone_id,
+                     intent.attempt, rec.layout_refusals)
+            return
+        if rec.layout_exhausted:
+            log.info("zone %s already exhausted its layout attempts; "
+                     "ignoring a stale build failure", intent.zone_id)
+            return
+        reason = (intent.reason or "").strip()
+        log.warning("zone %s could not be built by the engine: %s",
+                    intent.zone_id, reason or "(no reason given)")
+        # WHETHER THIS IS RECOVERABLE IS THE RECORD'S QUESTION, not this
+        # handler's. `refuse_layout` is the one place that knows a
+        # committed Zone is kept and a fresh one is recomposed, and
+        # asking it here rather than branching is what keeps the two
+        # recoveries from drifting apart.
+        committed = rec.manifest is not None
+        self._apply(T.refuse_layout(self.save, intent.zone_id))
+        # `_notify` bounds the headline and every line it is given, so
+        # the engine's reason cannot break the notice that carries it --
+        # the same cliff `_record_generation_error` exists for, guarded
+        # on this side as well as on the client's.
+        await self._notify(
+            "zone_abandoned",
+            "BUILD FAILED (SAVED ZONE)" if committed else "BUILD FAILED",
+            (reason,) if reason else ("the engine could not lay it out",))
+        again = self.save.zone_by_id(intent.zone_id)
+        if again is not None and again.state == "PENDING_GENERATION":
+            self._start_generation_task(intent.zone_id)
+        await self.broadcast_snapshot()
+
     async def handle_slot_action(
         self, slot: str, component_id: str | None
     ) -> None:

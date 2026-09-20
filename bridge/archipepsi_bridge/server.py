@@ -147,6 +147,8 @@ class BridgeServer:
             await engine.handle_progress(m)
         elif m.type == "layout_result":
             await engine.handle_layout_result(m)
+        elif m.type == "build_failed":
+            await engine.handle_build_failed(m)
         elif m.type == "zone_timing":
             engine.record_zone_timing(m)
         elif m.type == "set_creativity":

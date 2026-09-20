@@ -1,0 +1,184 @@
+cd bridge && python3 tools/dump_zones.py --count 20 \
+  --out ../godot/tests/fixtures/sample
+zone_01.json  23 rooms, 22 joined edges, degrees {'1': 7, '2': 11, '3': 5}, 5 junction(s), 7 dead end(s)
+zone_02.json  23 rooms, 22 joined edges, degrees {'1': 8, '2': 10, '3': 4, '4': 1}, 5 junction(s), 8 dead end(s)
+zone_03.json  23 rooms, 22 joined edges, degrees {'1': 7, '2': 12, '3': 3, '4': 1}, 4 junction(s), 7 dead end(s)
+zone_04.json  20 rooms, 19 joined edges, degrees {'1': 8, '2': 7, '3': 4, '4': 1}, 5 junction(s), 8 dead end(s)
+zone_05.json  20 rooms, 19 joined edges, degrees {'1': 8, '2': 6, '3': 6}, 6 junction(s), 8 dead end(s)
+zone_06.json  19 rooms, 18 joined edges, degrees {'1': 7, '2': 8, '3': 3, '4': 1}, 4 junction(s), 7 dead end(s)
+zone_07.json  23 rooms, 22 joined edges, degrees {'1': 8, '2': 11, '3': 2, '4': 2}, 4 junction(s), 8 dead end(s)
+zone_08.json  19 rooms, 18 joined edges, degrees {'1': 7, '2': 8, '3': 3, '4': 1}, 4 junction(s), 7 dead end(s)
+zone_09.json  20 rooms, 19 joined edges, degrees {'1': 7, '2': 9, '3': 3, '4': 1}, 4 junction(s), 7 dead end(s)
+zone_10.json  19 rooms, 18 joined edges, degrees {'1': 7, '2': 8, '3': 3, '4': 1}, 4 junction(s), 7 dead end(s)
+zone_11.json  19 rooms, 18 joined edges, degrees {'1': 7, '2': 8, '3': 3, '4': 1}, 4 junction(s), 7 dead end(s)
+zone_12.json  20 rooms, 19 joined edges, degrees {'1': 7, '2': 8, '3': 5}, 5 junction(s), 7 dead end(s)
+zone_13.json  20 rooms, 19 joined edges, degrees {'1': 6, '2': 11, '3': 2, '4': 1}, 3 junction(s), 6 dead end(s)
+zone_14.json  20 rooms, 19 joined edges, degrees {'1': 7, '2': 9, '3': 3, '4': 1}, 4 junction(s), 7 dead end(s)
+zone_15.json  19 rooms, 18 joined edges, degrees {'1': 7, '2': 9, '3': 1, '4': 2}, 3 junction(s), 7 dead end(s)
+zone_16.json  23 rooms, 22 joined edges, degrees {'1': 7, '2': 12, '3': 3, '4': 1}, 4 junction(s), 7 dead end(s)
+zone_17.json  19 rooms, 18 joined edges, degrees {'1': 8, '2': 7, '3': 2, '4': 2}, 4 junction(s), 8 dead end(s)
+zone_18.json  20 rooms, 19 joined edges, degrees {'1': 7, '2': 9, '3': 3, '4': 1}, 4 junction(s), 7 dead end(s)
+zone_19.json  19 rooms, 18 joined edges, degrees {'1': 6, '2': 10, '3': 2, '4': 1}, 3 junction(s), 6 dead end(s)
+zone_20.json  19 rooms, 18 joined edges, degrees {'1': 7, '2': 8, '3': 3, '4': 1}, 4 junction(s), 7 dead end(s)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  ok: 20 generated Zone(s) to walk; one shape is not a sample
+
+zone_01.json  23 rooms, 22 joined edges, degrees { 1: 7, 3: 5, 2: 11 }
+    junctions ["c002", "c005", "c009", "c014", "c018"]
+    dead ends ["c001", "c012", "c015", "c017", "c020", "c021", "c023"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 250 ms; nudged nothing
+
+zone_02.json  23 rooms, 22 joined edges, degrees { 1: 8, 2: 10, 3: 4, 4: 1 }
+    junctions ["c006", "c009", "c011", "c016", "c018"]
+    dead ends ["c001", "c012", "c014", "c015", "c017", "c020", "c021", "c023"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 255 ms; nudged nothing
+
+zone_03.json  23 rooms, 22 joined edges, degrees { 1: 7, 2: 12, 3: 3, 4: 1 }
+    junctions ["c009", "c013", "c014", "c018"]
+    dead ends ["c001", "c012", "c015", "c017", "c020", "c021", "c023"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 222 ms; nudged nothing
+
+zone_04.json  20 rooms, 19 joined edges, degrees { 1: 8, 2: 7, 3: 4, 4: 1 }
+    junctions ["c004", "c005", "c006", "c008", "c012"]
+    dead ends ["c001", "c010", "c011", "c014", "c015", "c016", "c019", "c020"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 240 ms; nudged nothing
+
+zone_05.json  20 rooms, 19 joined edges, degrees { 1: 8, 3: 6, 2: 6 }
+    junctions ["c002", "c004", "c006", "c008", "c012", "c016"]
+    dead ends ["c001", "c010", "c011", "c014", "c015", "c018", "c019", "c020"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 248 ms; nudged nothing
+
+zone_06.json  19 rooms, 18 joined edges, degrees { 1: 7, 2: 8, 3: 3, 4: 1 }
+    junctions ["c005", "c008", "c009", "c016"]
+    dead ends ["c001", "c010", "c012", "c014", "c015", "c018", "c019"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 245 ms; nudged nothing
+
+zone_07.json  23 rooms, 22 joined edges, degrees { 1: 8, 2: 11, 4: 2, 3: 2 }
+    junctions ["c006", "c009", "c011", "c018"]
+    dead ends ["c001", "c012", "c014", "c015", "c017", "c020", "c021", "c023"]
+    layout LAYOUT_OK
+    solve  2 placement attempt(s) in 355 ms; nudged { "c006": 1 }
+
+zone_08.json  19 rooms, 18 joined edges, degrees { 1: 7, 2: 8, 3: 3, 4: 1 }
+    junctions ["c005", "c006", "c009", "c013"]
+    dead ends ["c001", "c010", "c012", "c014", "c015", "c018", "c019"]
+    layout LAYOUT_INFEASIBLE: branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
+    solve  7 placement attempt(s) in 1571 ms; nudged { "c006": 2, "c005": 2, "c004": 2 }
+
+zone_09.json  20 rooms, 19 joined edges, degrees { 1: 7, 2: 9, 4: 1, 3: 3 }
+    junctions ["c006", "c008", "c012", "c016"]
+    dead ends ["c001", "c011", "c014", "c015", "c018", "c019", "c020"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 251 ms; nudged nothing
+
+zone_10.json  19 rooms, 18 joined edges, degrees { 1: 7, 2: 8, 4: 1, 3: 3 }
+    junctions ["c004", "c008", "c009", "c015"]
+    dead ends ["c001", "c010", "c012", "c013", "c014", "c018", "c019"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 254 ms; nudged nothing
+
+zone_11.json  19 rooms, 18 joined edges, degrees { 1: 7, 2: 8, 3: 3, 4: 1 }
+    junctions ["c005", "c008", "c011", "c012"]
+    dead ends ["c001", "c010", "c013", "c014", "c017", "c018", "c019"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 207 ms; nudged nothing
+
+zone_12.json  20 rooms, 19 joined edges, degrees { 1: 7, 3: 5, 2: 8 }
+    junctions ["c002", "c004", "c006", "c008", "c017"]
+    dead ends ["c001", "c010", "c011", "c014", "c015", "c019", "c020"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 231 ms; nudged nothing
+
+zone_13.json  20 rooms, 19 joined edges, degrees { 1: 6, 2: 11, 3: 2, 4: 1 }
+    junctions ["c004", "c006", "c008"]
+    dead ends ["c001", "c011", "c014", "c015", "c018", "c020"]
+    layout LAYOUT_OK
+    solve  2 placement attempt(s) in 535 ms; nudged { "c009": 1 }
+
+zone_14.json  20 rooms, 19 joined edges, degrees { 1: 7, 2: 9, 4: 1, 3: 3 }
+    junctions ["c004", "c008", "c010", "c016"]
+    dead ends ["c001", "c011", "c012", "c015", "c018", "c019", "c020"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 239 ms; nudged nothing
+
+zone_15.json  19 rooms, 18 joined edges, degrees { 1: 7, 2: 9, 3: 1, 4: 2 }
+    junctions ["c004", "c005", "c008"]
+    dead ends ["c001", "c010", "c013", "c014", "c015", "c018", "c019"]
+    layout LAYOUT_OK
+    solve  4 placement attempt(s) in 794 ms; nudged { "c008": 2, "c007": 1 }
+
+zone_16.json  23 rooms, 22 joined edges, degrees { 1: 7, 2: 12, 3: 3, 4: 1 }
+    junctions ["c006", "c009", "c011", "c015"]
+    dead ends ["c001", "c012", "c014", "c017", "c018", "c021", "c023"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 256 ms; nudged nothing
+
+zone_17.json  19 rooms, 18 joined edges, degrees { 1: 8, 2: 7, 3: 2, 4: 2 }
+    junctions ["c004", "c005", "c008", "c016"]
+    dead ends ["c001", "c009", "c010", "c013", "c014", "c015", "c018", "c019"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 259 ms; nudged nothing
+
+zone_18.json  20 rooms, 19 joined edges, degrees { 1: 7, 2: 9, 3: 3, 4: 1 }
+    junctions ["c006", "c008", "c012", "c016"]
+    dead ends ["c001", "c011", "c014", "c015", "c018", "c019", "c020"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 249 ms; nudged nothing
+
+zone_19.json  19 rooms, 18 joined edges, degrees { 1: 6, 2: 10, 3: 2, 4: 1 }
+    junctions ["c004", "c012", "c015"]
+    dead ends ["c001", "c009", "c013", "c014", "c018", "c019"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 232 ms; nudged nothing
+
+zone_20.json  19 rooms, 18 joined edges, degrees { 1: 7, 2: 8, 3: 3, 4: 1 }
+    junctions ["c005", "c008", "c012", "c015"]
+    dead ends ["c001", "c010", "c013", "c014", "c017", "c018", "c019"]
+    layout LAYOUT_OK
+    solve  1 placement attempt(s) in 242 ms; nudged nothing
+
+BASELINE   0 Zone(s) waived as unbuildable; the other 20 are positive controls and must lay out
+SOLVE      31 placement attempt(s) across 20 Zone(s) in 7135 ms total
+JOURNEYS   0 valid start(s), 0 crossed the junction to the door: 0 entered a branch, 0 stayed in it, 0 crossed to its content, 0 got back out. 0 inconclusive (the harness could not start)
+PLAYABLE   19 of 20 generated Zone(s) lay out; unbuildable: ["zone_08.json"]
+  coverage ROSE to 19 of 20; raise SAMPLE_FLOOR in graph_driver.gd to hold the gain
+GODOT GRAPH TESTS OK
+-- and the bridge's own verdict on each emitted manifest --
+   REPORT ONLY: an unplayed Zone's doorways are probed without
+   the setup a played Zone gets, so door-polarity refusals here
+   are about this harness. Acceptance is gated live, by
+   godot-integration. The manifest-only class this once caught
+   -- room overlap -- the router now refuses itself.
+cd bridge && python3 tools/check_sample_layouts.py
+zone_01.json  ACCEPTED
+zone_02.json  ACCEPTED
+zone_03.json  ACCEPTED
+zone_04.json  ACCEPTED
+zone_05.json  ACCEPTED
+zone_06.json  ACCEPTED
+zone_07.json  ACCEPTED
+zone_08.json  NO MANIFEST -- the router did not produce one
+zone_09.json  ACCEPTED
+zone_10.json  ACCEPTED
+zone_11.json  ACCEPTED
+zone_12.json  ACCEPTED
+zone_13.json  ACCEPTED
+zone_14.json  ACCEPTED
+zone_15.json  ACCEPTED
+zone_16.json  ACCEPTED
+zone_17.json  ACCEPTED
+zone_18.json  ACCEPTED
+zone_19.json  ACCEPTED
+zone_20.json  ACCEPTED
+
+SAMPLE  19 of 20 Zone(s) physically laid out and emitted a manifest; of those, 19 were ACCEPTED by the validator on this single pass and 0 refused; 1 never laid out
+SAMPLE  this is ONE validation pass over a manifest built offline. It is not the live acceptance loop: retries, eventual acceptance after recomposition, and exhaustion of the refusal budget belong to `godot-integration`, and a refusal here is not a failed campaign.
+SAMPLE LAYOUTS NOT ACCEPTED: 1 with no manifest
+make: [Makefile:247: zone-sample] Error 1 (ignored)
