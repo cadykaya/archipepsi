@@ -1376,8 +1376,14 @@ func _zone_around(entry: Dictionary, theme: String) -> Dictionary:
 		_plain_room("c001", [["entry", "SEALED", ""],
 				["exit", "USED", "e:c001:c002"]]),
 		middle,
+		# THE LAST ROOM DECLARES THE ZONE'S WAY OUT, as
+		# `topology._reserve_the_zone_exit` gives it to the last room on
+		# every spine. A chain whose last room cuts no exit doorway is
+		# refused now: the appended exit room would hang off unbroken
+		# wall. Nothing else about this fixture moves -- c001's entry
+		# stays SEALED, which is the Zone's outer face.
 		_plain_room("c003", [["entry", "USED", "e:c002:c003"],
-				["exit", "SEALED", ""]]),
+				["exit", "ZONE_EXIT", ""]]),
 	]
 	return {"zone_id": "placed_%s" % str(entry.get("id", "?")),
 			"theme": theme,
@@ -4994,9 +5000,22 @@ func _test_a_real_player_walks_the_whole_branch_journey() -> void:
 	print("  JOURNEY onto the plug: frames=%d at %v"
 			% [int(onto["frames"]), onto["at"]])
 	Input.action_release("move_forward")
-	for _i in 20:
+	# AND THEN STANDS THERE. `ReturnPlug` arms on entry and fires after
+	# `HOLD_SECONDS` of unbroken contact rather than on touch, so the
+	# twenty frames this waited are a third of a second into a two
+	# second cast. The stand IS the contract: a device that teleports on
+	# a brush is a trap you fall into while backing away from something,
+	# which is how the owner met it mid-fight.
+	var budget := int(ceil(ReturnPlug.HOLD_SECONDS * 3.0
+			/ maxf(get_physics_process_delta_time(), 0.001)))
+	var stood := 0
+	while stood < budget \
+			and player.global_position.distance_to(start_at) >= 3.0:
 		await get_tree().physics_frame
+		stood += 1
 	var after := player.global_position
+	print("  JOURNEY held in the plug: %d frame(s) of a %d budget"
+			% [stood, budget])
 	print("  JOURNEY plug: %v -> %v (zone_start %v)"
 			% [before, after, start_at])
 	# AT the Zone start, not merely nearer it. "Closer" would pass for a
@@ -6026,6 +6045,13 @@ func _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not() -> void:
 			if closing_is_joined and i == chambers.size() - 1:
 				doors.append({"socket_id": "exit", "usage": "USED",
 						"edge_id": "eclose"})
+			# THE LAST ROOM DECLARES THE ZONE'S WAY OUT, which is what
+			# `topology._reserve_the_zone_exit` gives it. Omitting it
+			# models a chain whose last room cuts no doorway to leave
+			# by, and the engine refuses that Zone now: the appended
+			# exit room would hang off unbroken wall.
+			elif i == chambers.size() - 1:
+				doors.append({"socket_id": "exit", "usage": "ZONE_EXIT"})
 			c["doors"] = doors
 
 	var spatial: Dictionary = zone.duplicate(true)

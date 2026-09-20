@@ -275,6 +275,46 @@ def _seal_the_rest(chamber, used: dict[str, DoorAssignment],
     return tuple(out)
 
 
+def _reserve_the_zone_exit(chambers, doors, spine, shell_sockets) -> str:
+    """Give the LAST room on the spine the Zone's own way out.
+
+    A chain is written with `zip(spine, spine[1:])`, so the last room is
+    assigned no `exit` and `_seal_the_rest` seals it. That is right as
+    far as this graph goes — nothing here follows it — and it was wrong
+    about the Zone, because the ENGINE appends an exit room and routes
+    its approach out of exactly that face. The two lanes disagreed about
+    a wall, and twenty of twenty default-scale Zones ended on a room the
+    player could see the exit through and never reach.
+
+    `ZONE_EXIT` is passable geometry that names no edge, because the
+    room on its far side is the engine's and is in no `edges` list. It
+    is assigned here, in the one place that decides which doors exist,
+    rather than carved by the engine against this lane's own
+    declaration.
+
+    A room that declares no `exit` socket keeps none: inventing one
+    would advertise a doorway its producer does not build, which is what
+    `PROCEDURAL_SOCKET_CAPACITY` exists to stop. The engine refuses such
+    a Zone and the campaign composes another.
+
+    Returns the room it was given to, or "" if none could take it.
+    """
+    for rid in reversed(spine):
+        chamber = next((c for c in chambers if c.id == rid), None)
+        if chamber is None:
+            continue
+        if "exit" not in _sockets_for(chamber, shell_sockets):
+            return ""
+        if "exit" in doors.get(rid, {}):
+            # Already spent on a real edge: this room is not the end of
+            # the chain after all, so there is nothing to reserve.
+            return ""
+        doors.setdefault(rid, {})["exit"] = DoorAssignment(
+            socket_id="exit", usage="ZONE_EXIT")
+        return rid
+    return ""
+
+
 def compose_chain(chambers, shell_sockets=None) -> GraphProduct:
     """The graph the list order always meant, now said out loud.
 
@@ -311,11 +351,16 @@ def compose_chain(chambers, shell_sockets=None) -> GraphProduct:
             socket_id="entry", usage="USED", edge_id=edge.edge_id)
         departures[a.id] = edge.edge_id
         arrivals[b.id] = edge.edge_id
+    way_out = _reserve_the_zone_exit(
+        chambers, doors, [c.id for c in chambers], caps)
     return GraphProduct(
         edges=tuple(edges),
         doors={c.id: _seal_the_rest(c, doors[c.id], caps) for c in chambers},
         keys={}, plugs=(),
-        notes=("chain: %d rooms, %d edges" % (len(chambers), len(edges)),),
+        notes=("chain: %d rooms, %d edges" % (len(chambers), len(edges)),
+               "zone exit: room '%s'" % way_out if way_out
+               else "zone exit: no room on the chain declares an 'exit' "
+                    "socket to leave through"),
         arrivals=arrivals, departures=departures)
 
 
@@ -1019,6 +1064,10 @@ def compose_with_branch(chambers, shell_sockets=None,
             departures[room_id] = out_edges[0]
 
     nested = sum(1 for r in routes if r.junction_id in moved)
+    # THE SPINE'S LAST ROOM, and only it. A branch destination is a dead
+    # end with a plug, not the Zone's way out, and its sealed faces stay
+    # sealed.
+    way_out = _reserve_the_zone_exit(chambers, doors, spine, caps)
     return GraphProduct(
         edges=tuple(edges),
         doors={c.id: _seal_the_rest(c, doors[c.id], caps) for c in chambers},
@@ -1028,7 +1077,10 @@ def compose_with_branch(chambers, shell_sockets=None,
             "branches: %d off %d junction(s), %d nested, %d locked; "
             "spine %d rooms"
             % (len(routes), len({r.junction_id for r in routes}), nested,
-               sum(1 for r in routes if r.locked), len(spine)),))
+               sum(1 for r in routes if r.locked), len(spine)),
+            "zone exit: room '%s'" % way_out if way_out
+            else "zone exit: no room on the spine declares an 'exit' "
+                 "socket to leave through"))
 
 
 def _refuse_doors_beyond_capacity(zone, product: GraphProduct) -> None:

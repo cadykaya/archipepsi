@@ -2567,7 +2567,7 @@
       },
       "DoorAssignment": {
         "additionalProperties": false,
-        "description": "One joining socket of one room instance, and what it does.\n\n`edge_id` is required unless the door is `SEALED`, and the edge it\nnames must be `JOINED` \u2014 a `TRAVERSAL_ONLY` edge is carried by a\n`PlugAssignment` and never by a door.",
+        "description": "One joining socket of one room instance, and what it does.\n\n`edge_id` is required unless the door is `SEALED` or `ZONE_EXIT`,\nand the edge it names must be `JOINED` \u2014 a `TRAVERSAL_ONLY` edge is\ncarried by a `PlugAssignment` and never by a door. `ZONE_EXIT` is\nthe Zone's own way out and names no edge at all: see `DoorUsage`.",
         "properties": {
           "socket_id": {
             "maxLength": 32,
@@ -2580,7 +2580,8 @@
             "enum": [
               "USED",
               "LOCKED",
-              "SEALED"
+              "SEALED",
+              "ZONE_EXIT"
             ],
             "title": "Usage",
             "type": "string"
@@ -7363,7 +7364,7 @@
       },
       "DoorAssignment": {
         "additionalProperties": false,
-        "description": "One joining socket of one room instance, and what it does.\n\n`edge_id` is required unless the door is `SEALED`, and the edge it\nnames must be `JOINED` \u2014 a `TRAVERSAL_ONLY` edge is carried by a\n`PlugAssignment` and never by a door.",
+        "description": "One joining socket of one room instance, and what it does.\n\n`edge_id` is required unless the door is `SEALED` or `ZONE_EXIT`,\nand the edge it names must be `JOINED` \u2014 a `TRAVERSAL_ONLY` edge is\ncarried by a `PlugAssignment` and never by a door. `ZONE_EXIT` is\nthe Zone's own way out and names no edge at all: see `DoorUsage`.",
         "properties": {
           "socket_id": {
             "maxLength": 32,
@@ -7376,7 +7377,8 @@
             "enum": [
               "USED",
               "LOCKED",
-              "SEALED"
+              "SEALED",
+              "ZONE_EXIT"
             ],
             "title": "Usage",
             "type": "string"

@@ -884,6 +884,124 @@ func _the_exit_is_approached_and_addressable() -> void:
 			"and a player standing at it can address it: the game's own "
 			+ "interact ray finds the portal")
 
+## THE WHOLE CONNECTION, END TO END: can this Zone be FINISHED?
+##
+## An open aperture is not a finish line. The playtest report was a
+## player with 15 of 15 Checks claimed, standing two metres from the
+## exit waypoint, unable to leave -- and every stage of that Zone
+## measured correct on its own. So this walks the one thing the
+## complaint was about, in order:
+##
+##   1. a body INSIDE the last room, at the arrival the manifest
+##      commits for it -- not at the doorway nearest the portal, which
+##      is the exit room's own entry and skips the wall the player hit;
+##   2. out through that room's `ZONE_EXIT` doorway and along the
+##      approach the engine appended;
+##   3. to where the game's own interact ray finds the portal;
+##   4. the portal UNLOCKED, as it is when the bridge confirms the last
+##      Check, and INTERACTED WITH the way a player interacts;
+##   5. and `ZoneController.exit_requested` actually firing -- the
+##      signal `main.gd` connects to `_on_exit_zone`. A portal that
+##      lights up and hands nothing back is still a Zone you cannot
+##      leave.
+##
+## Step 5 is why this exists rather than stopping at "addressable".
+func _the_zone_can_actually_be_finished() -> void:
+	var portal := _exit_portal()
+	if portal == null:
+		_check(false, "the built Zone has no exit portal to finish at")
+		return
+	var tail := _zone.exit_departs_from
+	var place: Dictionary = _zone.room_places.get(tail, {})
+	if tail == "" or place.is_empty():
+		_check(false, "the build names no room for the Zone to leave "
+				+ "through, so there is no last room to start inside")
+		return
+	var from: Vector3 = place.get("arrival", Vector3.ZERO)
+	var goal := portal.global_position
+	var mouth: Vector3 = _zone.door_positions.get("%s/exit" % tail, from)
+
+	# LEG 1, REPORTED: the room's arrival to its own way out.
+	#
+	# `_walk` steers at its target and slides; it does not path around
+	# things. In `c023` the arrival, the Check pedestal, the ZONE_EXIT
+	# doorway and the portal are COLLINEAR -- the pedestal is 10.2 m
+	# along the only bearing -- so the walker jams on furniture a player
+	# walks around, in an eighteen-metre-wide room. Asserting that leg
+	# would measure the room's contents and call it a blocked exit,
+	# which is the instrument error this file has made twice. That the
+	# doorway is open FROM INSIDE the room is measured, with rays,
+	# against every Zone of the declared sample by `godot-exit-reach`.
+	#
+	# The collinearity is worth saying out loud even so: a room whose
+	# arrival, Check and exit share one bearing is a corridor with a
+	# pedestal in it.
+	_reset_the_walker()
+	var inside := await _walk(_zone, from, mouth, null, _walker, true)
+	_note("finish leg 1 (reported)  room '%s' arrival %s -> its "
+			% [tail, str(from.snapped(Vector3.ONE * 0.1))]
+			+ "ZONE_EXIT doorway %s (%.1f m)  -> %s  closest %.2f m"
+			% [str(mouth.snapped(Vector3.ONE * 0.1)),
+				from.distance_to(mouth), str(inside["outcome"]),
+				float(inside["closest"])]
+			+ ("" if str(inside["blocker"]) == ""
+				else "  by " + str(inside["blocker"])))
+
+	# LEG 2, ASSERTED: the doorway, the appended approach, the portal.
+	# This is the stretch the playtest could not cross and the one the
+	# repair is about.
+	_reset_the_walker()
+	var run := await _walk(_zone, mouth, goal, portal, _walker, true)
+	_note("finish leg 2  doorway %s -> portal (%.1f m)  -> %s"
+			% [str(mouth.snapped(Vector3.ONE * 0.1)),
+				mouth.distance_to(goal), str(run["outcome"])]
+			+ "  closest %.2f m" % float(run["closest"])
+			+ ("  addressable" if run["addressable"]
+				else "  NOT addressable")
+			+ ("" if str(run["blocker"]) == ""
+				else "  by " + str(run["blocker"])))
+	if str(run["outcome"]) == "UNRESOLVED":
+		unresolved += 1
+	_check(str(run["outcome"]) != "BLOCKED",
+			"a body at the last room's ZONE_EXIT doorway ('%s/exit') is "
+			% tail + "not walled off from the exit portal (%s)"
+			% str(run["outcome"]))
+	_check(bool(run["addressable"]),
+			"and from where that walk ends, the game's own interact ray "
+			+ "finds the portal")
+	if not bool(run["addressable"]):
+		return
+
+	# AND THE PORTAL HANDS THE ZONE BACK. Unlocked the way the live
+	# client unlocks it -- `_refresh_portal` calls `set_unlocked` when
+	# the bridge confirms the last Check -- and then interacted with
+	# through `ExitPortal.interact`, which is what the interact ray
+	# calls. Nothing here emits the signal itself.
+	var asked := [false]
+	_zone.exit_requested.connect(func() -> void: asked[0] = true)
+	portal.set_unlocked(true, 0)
+	_check(portal.interact_prompt() != "SEALED",
+			"an unlocked portal offers a player the prompt to leave "
+			+ "('%s')" % portal.interact_prompt())
+	portal.interact(_walker)
+	await _step(2)
+	_check(bool(asked[0]),
+			"and interacting with it reaches the Zone's exit consumer: "
+			+ "`ZoneController.exit_requested`, which is what `main.gd` "
+			+ "binds to `_on_exit_zone`")
+
+	# THE LOCK IS REAL, and this is the half that keeps the check from
+	# passing on a portal that always opens. A Zone with Checks still
+	# out there must NOT hand itself back.
+	asked[0] = false
+	portal.set_unlocked(false, 3)
+	portal.interact(_walker)
+	await _step(2)
+	_check(not bool(asked[0]),
+			"and a portal still holding %d Check(s) does not: a way out "
+			% portal.remaining + "that opens either way is not a lock")
+
+
 ## A CHECK BELOW THE FLOOR THE WALKER REACHED: which of the three?
 ##
 ## The previous batch reported `Reward_89100126` 2.6 m below the floor
@@ -1232,6 +1350,22 @@ func _every_sealed_door_is_solid() -> void:
 			"every SEALED socket is solid (%s)"
 			% ("none open" if leaking.is_empty()
 			else "OPEN: " + ", ".join(PackedStringArray(leaking))))
+	# AND THE ZONE'S OWN WAY OUT IS OPEN. Asserted rather than noted,
+	# because it is the one face `open_solid` would otherwise only
+	# mention: a solid one there is a Zone whose exit the player can see
+	# and never reach, which is what the playtest met with 15 of 15
+	# Checks claimed.
+	var tail := _zone.exit_departs_from
+	if tail != "" and _doors.has("%s/exit" % tail):
+		var space := get_viewport().world_3d.direct_space_state
+		var shut := _doorway_is_blocked(space, _doors["%s/exit" % tail],
+				_zone.room_bounds.get(tail, AABB()) as AABB)
+		_check(not shut, "the Zone's own way out is open: room '%s' "
+				% tail + "carries the exit corridor and its exit face "
+				+ "measures %s" % ("SOLID" if shut else "passable"))
+	else:
+		_note("this Zone publishes no departing room for its exit "
+				+ "corridor, so there is no way out to measure")
 	# The other direction is already `_publish_layout`'s warning and the
 	# bridge's refusal, so it is reported rather than duplicated here.
 	var stuck: Array = found["open_solid"]
@@ -1263,6 +1397,26 @@ func _every_sealed_door_is_solid() -> void:
 ## The doors of a declared chamber list, measured against the assembled
 ## geometry. Takes the chambers so the counterpart above can hand it a
 ## copy with one label changed.
+## STAND STILL AND LET THE DEVICE'S CLOCK RUN.
+##
+## Returns the frames waited. Bounded at three times `HOLD_SECONDS` so a
+## device that never fires ends the case rather than the run, and it
+## stops the frame the signal arrives so the body's position afterwards
+## is the teleport's result rather than however long the loop ran.
+##
+## The walker is not steered here. A hold that nudged the body would be
+## measuring its own nudge, and "does it stay in the volume by itself"
+## is half of what the hold contract promises.
+func _hold_in_the_plug(fired: Array) -> int:
+	var budget := int(ceil(ReturnPlug.HOLD_SECONDS * 3.0
+			/ maxf(get_physics_process_delta_time(), 0.001)))
+	var waited := 0
+	while waited < budget and fired.is_empty():
+		await get_tree().physics_frame
+		waited += 1
+	return waited
+
+
 func _measure_doors_against(chambers: Array) -> Dictionary:
 	var space := get_viewport().world_3d.direct_space_state
 	var sealed_open: Array[String] = []
@@ -1282,6 +1436,13 @@ func _measure_doors_against(chambers: Array) -> Dictionary:
 			if not _doors.has(key):
 				continue
 			var at: Vector3 = _doors[key]
+			# NO EXEMPTION, AND NONE NEEDED. The Zone's way out is
+			# declared `ZONE_EXIT` by the composer, which is passable
+			# geometry like `USED`, so it expects a hole here the same
+			# way every other open door does. `SEALED` stays strict:
+			# an inverted expectation for one face would leave the wire
+			# saying sealed while the geometry is open, which is the
+			# disagreement this whole repair exists to end.
 			var want_open := str(door.get("usage", "")) != "SEALED"
 			var blocked := _doorway_is_blocked(space, at, box)
 			if want_open:
@@ -1514,6 +1675,7 @@ func _run() -> void:
 		await _routes_to_required_checks()
 		_the_exit_has_somewhere_to_stand_around_it()
 		await _the_exit_is_approached_and_addressable()
+		await _the_zone_can_actually_be_finished()
 		await _a_lower_check_is_a_destination_or_a_defect()
 		await _the_crossing_from_where_the_player_actually_arrives()
 		_every_sealed_door_is_solid()
@@ -1797,9 +1959,34 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 	var home := await _walk(_zone, _walker.global_position, pad_at, null,
 			_walker, true, true, 0.8,
 			func() -> bool: return not fired.is_empty())
+	# AND THEN STANDS IN IT. `ReturnPlug` no longer fires on contact: it
+	# arms on entry and charges for `HOLD_SECONDS` of unbroken contact,
+	# because a 1.4 m volume that teleports on touch is a trap you fall
+	# into while backing away from something -- which is how the owner
+	# met it, mid-fight, and was at the Zone start before the fight
+	# resolved.
+	#
+	# So the contract this measures is now WALK ON, REMAIN, ARRIVE, and
+	# the wait is part of it rather than a tolerance around it. The
+	# walk above is unchanged and still has to land a body in the
+	# volume; what follows only lets the device's own clock run.
+	var stood_in := await _hold_in_the_plug(fired)
 	_check(not fired.is_empty(),
-			"and the return is then taken deliberately: walking from "
-			+ "the Check onto the plug fires it (%s)" % str(fired))
+			"and the return is then taken deliberately: standing on the "
+			+ "plug for %.1f s fires it (%s after %d frame(s))"
+			% [ReturnPlug.HOLD_SECONDS, str(fired), stood_in])
+	# AND THE WAIT IS REAL. Without this the whole hold contract passes
+	# with `HOLD_SECONDS` set to zero, which is the instant trigger the
+	# owner asked to be rid of. Half the cast is the floor rather than
+	# the whole of it: the body entered the volume some frames before
+	# the walk returned, so the charge starts earlier than this counts.
+	var floor_frames := int(ReturnPlug.HOLD_SECONDS * 0.5
+			/ maxf(get_physics_process_delta_time(), 0.001))
+	_check(stood_in >= floor_frames,
+			"and it is a cast rather than a touch: the body stood there "
+			+ "%d frame(s) before it fired, of at least %d the %.1f s "
+			% [stood_in, floor_frames, ReturnPlug.HOLD_SECONDS]
+			+ "hold owes")
 	# AND THE DEVICE DID WHAT IT IS FOR. `_on_plug_traversed` carries the
 	# body to the destination anchor, so a fired plug ends with a player
 	# standing at `zone_start` -- and the walk that was aiming at the pad
@@ -1808,7 +1995,12 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 	# outcome is the RETURN HAVING HAPPENED. Read as a route verdict it
 	# is the instrument measuring its own aftermath, which this file has
 	# already published once.
-	var landed: Vector3 = home["ended"]
+	# WHERE THE BODY IS NOW, not where the walk stopped. `_walk` returns
+	# the moment the body is on the pad, which is `HOLD_SECONDS` before
+	# the device does anything; `home["ended"]` is therefore the pad and
+	# not the landing. The walker has not been steered since, so its
+	# position is the teleport's result and nothing else.
+	var landed: Vector3 = _walker.global_position
 	var dest := _as_vec(_zone._zone_anchors.get(plug.destination
 			if plug != null else "zone_start", Vector3.INF))
 	# THE LANDING, NOT WHERE THE WALKER WANDERED AFTERWARDS.
@@ -1825,14 +2017,14 @@ func _the_crossing_from_where_the_player_actually_arrives() -> void:
 			% [landed.distance_to(dest),
 				plug.destination if plug != null else "zone_start"]
 			+ "the destination the device names")
-	_note("        deliberate return: fired %s after %d frame(s); the "
-			% [str(fired), int(home["frames"])]
-			+ "walk STOPPED there and the body landed at %s, %.2f m "
+	_note("        deliberate return: %d walk frame(s) to reach the pad "
+			% int(home["frames"])
+			+ "(outcome %s), then %d frame(s) standing in it before %s; "
+			% [str(home["outcome"]), stood_in, str(fired)]
+			+ "the body landed at %s, %.2f m from the destination "
 			% [str(landed.snapped(Vector3.ONE * 0.01)),
 				landed.distance_to(dest)]
-			+ "from the destination anchor %s (outcome %s)"
-			% [str(dest.snapped(Vector3.ONE * 0.01)),
-				str(home["outcome"])])
+			+ "anchor %s" % str(dest.snapped(Vector3.ONE * 0.01)))
 	for chamber: Dictionary in (_zone.zone.get("chambers", []) as Array):
 		if str(chamber.get("id", "")) != rid:
 			continue

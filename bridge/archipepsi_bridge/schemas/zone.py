@@ -483,8 +483,17 @@ class ChamberBase(Strict):
         A room's door degree is its JOINED degree. A dead end with one
         door and one plug has door degree 1 — the plug consumes no
         socket.
+
+        COUNTED BY THE EDGE, not by the hole. This read `usage !=
+        "SEALED"`, which was the same number while every passable door
+        carried an edge. `ZONE_EXIT` is passable and carries none — the
+        room on its far side is the engine's appended exit room, which
+        is in no `edges` list — so counting holes made the last room on
+        every chain read as degree 2 and stopped this being a statement
+        about the graph at all. `USED` and `LOCKED` always name an edge
+        and `SEALED` never does, so nothing else moves.
         """
-        return sum(1 for d in self.doors if d.usage != "SEALED")
+        return sum(1 for d in self.doors if d.edge_id is not None)
 
     #: CAMPAIGN_SCALE.md 7: a complex room may carry more than one Check.
     #:
@@ -882,6 +891,41 @@ class Zone(Strict):
                         f"chamber '{c.id}' door '{d.socket_id}' names "
                         f"unknown edge '{d.edge_id}'")
                 door_ends.setdefault(d.edge_id, []).append((c.id, d))
+
+        # ONE ZONE EXIT, ON THE ROOM THAT ACTUALLY ENDS THE CHAIN.
+        #
+        # `ZONE_EXIT` is passable geometry that names no edge, which
+        # makes it the one door nothing else constrains -- so it is
+        # constrained here, or it becomes a licence to open any wall.
+        # The engine appends ONE exit room, off the LAST room on the
+        # chain; a second way out is a hole onto nothing, and one on a
+        # room the chain continues through is a hole into the next
+        # room's approach.
+        way_out = [(c.id, d) for c in self.chambers for d in c.doors
+                   if d.usage == "ZONE_EXIT"]
+        if len(way_out) > 1:
+            raise ValueError(
+                "%d doors are ZONE_EXIT (%s); the engine appends one "
+                "exit room, so a Zone has one way out"
+                % (len(way_out), ", ".join(
+                    f"{r}/{d.socket_id}" for r, d in way_out)))
+        if way_out:
+            host = way_out[0][0]
+            # A room the chain leaves by a JOINED edge is not the end of
+            # it. `departures` is not on the wire, so this is read off
+            # the edges themselves: any JOINED edge whose `room_a` is
+            # this room and whose door there is the `exit` socket.
+            onward = [e.edge_id for e in self.edges
+                      if e.realization == "JOINED" and e.room_a == host
+                      and any(d.socket_id == "exit" and d.edge_id
+                              == e.edge_id
+                              for c in self.chambers if c.id == host
+                              for d in c.doors)]
+            if onward:
+                raise ValueError(
+                    f"room '{host}' carries the ZONE_EXIT and also "
+                    f"departs by edge(s) {onward}; the way out belongs "
+                    "to the room the chain ENDS on")
 
         plug_of: dict[str, PlugAssignment] = {}
         for pl in self.plugs:

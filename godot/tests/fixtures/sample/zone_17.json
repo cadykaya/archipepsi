@@ -1145,7 +1145,7 @@
     },
     {
      "socket_id": "exit",
-     "usage": "SEALED",
+     "usage": "ZONE_EXIT",
      "edge_id": null,
      "key_id": null,
      "colour": null

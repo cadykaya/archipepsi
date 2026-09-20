@@ -1,63 +1,101 @@
 # AGENT FRONTIER
 
-## ENGINE LANE — the build that could not happen, and a playable candidate — 2026-09-20
+## ENGINE LANE — the exit that was a wall, and the plug that was a trap — 2026-09-20
 
-**A ZONE THE ENGINE CANNOT BUILD USED TO TAKE THE RUN DOWN WITH IT.**
-`ZoneController.setup` returns when `ZoneBuilder` cannot route the rooms --
-correctly -- and `Main._to_zone` carried straight on into
-`hud.bind_player(zone.player)` and four signal connects against a null.
-Reproduced with the crash in the log: *Invalid access to property or key
-'hp_changed' on a base object of type 'Nil'*.
+**TWENTY OF TWENTY SAMPLE ZONES COULD NOT BE FINISHED.** The playtest
+report was *"the exit is still a wall; if it's a door, how am I meant to
+open it?"* with 15 of 15 Checks claimed and the HUD reading `EXIT 2m`.
+Measured: `c023`'s exit doorway at `(-156.3, 31.6, -141.3)` is SEALED by
+a solid slab, and that slab is the first solid thing 4.5 m back from the
+exit room's own -- open -- entry face. The exit room was never at fault.
 
-**AND NOTHING TOLD THE BRIDGE.** No `layout_result` is sent for a build that
-did not happen, so the record sat ACTIVE waiting for a verdict that was never
-coming: the Hub stayed ZONE_ACTIVE, offered a way back into a Zone that cannot
-be built, and the campaign could not move.
+**BOTH HALVES WERE RIGHT ON THEIR OWN TERMS, WHICH IS WHY NOTHING CAUGHT
+IT.** `topology.py` chains with `zip(spine, spine[1:])`, so the LAST room
+is assigned no `exit` and `_seal_the_rest` seals it -- correct, because
+nothing in THAT graph follows it. `zone_builder` then appends the exit
+room and routes its approach out of exactly that face. A census of the
+declared sample: **20 of 20 ended on a room whose exit was SEALED.**
 
-`build_failed` carries the proposal and attempt captured BEFORE the build
-started, and the bridge applies the existing `refuse_layout` -- so a fresh
-proposal is composed again inside its budget, a COMMITTED one is parked with
-its manifest and progress intact, and past the budget the Hub offers ABANDON
-with every Check still reserved. **Not a synthesised `layout_result`:** there
-is no geometry, and an empty one would have the validator report a geometry
-error for geometry that was never laid down.
+**`ZONE_EXIT`: THE COMPOSER DECLARES THE WAY OUT.** A fourth `DoorUsage`,
+passable geometry that names NO edge, because the room on its far side
+is the engine's appended exit room and is in no `edges` list.
+`_reserve_the_zone_exit` gives it to the last room on the spine in both
+composers. Everything downstream keys off "not SEALED", so `cut_plan`
+carves it and `layout.validate` expects a hole **with no exemption
+anywhere** -- `SEALED` stays strict, and the wire and the geometry agree.
 
-**THE SEED IS THE ZONE ID.** Serving `zone_08`'s content to a fresh campaign
-makes it `zone_001` and it routes on the first attempt -- a fact about the
-seed, not a repair. `AT=N` makes the disposable campaign generate and abandon
-N-1 Zones so the case is minted under the id it failed with. Under
-`zone_008` it fails for real: *branch room 'c015' off 'c013' could not be
-placed clear of the 36 room(s) already standing*.
+**THE ENGINE-SIDE CUT WAS TRIED FIRST AND WAS WRONG.** Having the engine
+open the door on its own copy built fine and was then refused by the
+bridge for every Zone: *door 'c023/exit' is SEALED and the engine
+measured it as a hole*. Recorded because it is the evidence that this
+could not be fixed in one lane.
 
-**BOTH OUTCOMES, LIVE.** `AT=8 THEN=zone_01` -> failure, attempt charged,
-**replacement built, certified and ACCEPTED**. `AT=8` -> failure three times
--> **exhaustion**, ZONE_FAILED, discard offered, Checks reserved.
+**CONSTRAINED, NOT A LICENCE.** `Zone` refuses more than one `ZONE_EXIT`,
+and refuses one on a room the chain still departs from by a JOINED edge.
+Unrelated sealed faces stay sealed: `c023` keeps `side_left` and
+`side_right` SEALED, and branches and Check allocation are untouched.
 
-**THE DETERMINISTIC PROVIDER CANNOT RECOVER A BUILD FAILURE.** The fallback
-seeds on zone index and budget alone, so the recompose returns byte-identical
-content: measured, three identical failures, two of them from ordinary
-composition. The player-facing recovery (discard, then a different id) works.
-Boundary recorded, not crossed.
+**OLDER SAVES ARE NOT TOUCHED.** A Zone committed before this existed
+carries `exit: SEALED`. With its committed layout it **rebuilds exactly
+as saved**, sealed exit and all, so nothing about a part-finished Zone
+changes; proposed FRESH it is **refused**, naming the room, so the
+bridge composes another. Both halves are measured against a fixture
+taken from the sample (`fixtures/legacy/sealed_exit_zone.json`). No
+migration, no abandonment.
 
-**ONE ORDINARY ZONE, PLAYED.** `make godot-ordinary-live` asks the campaign
-for whatever it would ordinarily compose at default scale, then walks into a
-goal area on foot to open a gate, walks the last leg to the Check that
-unlocks, has the game's own interact ray find it, presses `Reward.interact`,
-and waits for the bridge. The item that arrives is equipped through the
-wheel's own function; a station comes online by being stood on and opens its
-panel through Main's wiring; then it leaves without abandoning and goes back
-in. **8 of 23 chambers built approved authored shells** (freeze: 0 of 23).
+**`make godot-exit-reach`** asks APERTURE, APPROACH and DEPARTURE of
+every Zone in the declared sample with rays against built geometry, plus
+a BACKTRACK naming the room that owns whatever is in the way, plus the
+older-save pair. 81 checks, in CI. **Sabotage-verified.**
 
-**ANCHORS ARE MEASURED ACROSS A COLD RESTART:** 48 recorded, worst gap
-0.000 m -- present determinism, and it says so rather than letting that read
-as evidence about another build. The cross-build defect stays measured at
-5.89 m in `RETURN_ANCHOR_PERSISTENCE.md`, and nothing was migrated.
+**AND THE WHOLE CONNECTION, NOT AN APERTURE.** `godot-traverse` now
+walks the last room's ZONE_EXIT doorway -> the appended approach ->
+the portal (REACHED, addressable at 2.11 m), unlocks it the way the
+bridge does, interacts through `ExitPortal.interact`, and asserts
+`ZoneController.exit_requested` -- the signal `main.gd` binds to
+`_on_exit_zone`. **And that a portal still holding 3 Checks does not
+fire**, so the check cannot pass on a portal that always opens.
 
-**CANDIDATE:** `docs/OVERNIGHT_HANDOFF.md` -- disposition, launch
-instructions, a 15-20 minute replay and the A1-A8 map.
-**LEDGER:** `docs/OVERNIGHT_0_3_LEDGER.md`. **EVIDENCE:**
-`docs/evidence/overnight-0-3/`.
+**REPORTED, NOT ASSERTED:** the leg from `c023`'s arrival to its own
+doorway is walked and printed rather than gated -- that room's arrival,
+its Check pedestal and its exit are COLLINEAR, so a straight-line walker
+jams on furniture a player walks around. The doorway being open from
+inside the room is what `godot-exit-reach` measures, on all twenty.
 
+**AND THE PLACEMENT SEARCH NOW HAS A BUDGET.** The new doorway moved one
+live Zone from "routes" to "forty seconds, then refuses" -- feasibility
+is content-dependent and the sample census is unchanged at 19 of 20 --
+and that forty seconds runs on Godot's MAIN THREAD, so the client missed
+websocket keepalives and the bridge dropped it mid-build: *sent 1011
+(internal error) keepalive ping timeout*. The `build_failed` went into a
+dead socket. `ZoneBuilder` has had `budget_ms` and `LAYOUT_TIMEOUT` all
+along; its only caller passed `0.0`. Now 6000 ms -- ~3x the slowest Zone
+that routes (measured: median 321 ms, p90 711 ms, max 2070 ms) and a
+third of the keepalive. **A committed replay is exempt.** A/B verified:
+green through `zone_015` with the budget, connection death without it.
+
+**THE RETURN PLUG NO LONGER FIRES ON CONTACT.** It arms on entry and
+fires after `HOLD_SECONDS` (2.0) of unbroken contact, with a ring that
+climbs and a label that counts down; **leaving cancels it and costs
+nothing**. Charged in physics time, where the contact is measured. The
+two suites encoding the instant trigger were UPDATED, not weakened:
+walk on, REMAIN, assert arrival -- and traverse asserts the wait is
+real (113 frames held, of at least 60 owed), without which the contract
+passes with `HOLD_SECONDS` at zero.
+
+**FIXTURES REGENERATED FROM SOURCE:** the 20 sample Zones and
+`played_zone.json`. The census is unchanged at **19 of 20 laid out and
+ACCEPTED, 0 refused**; `zone_08` is the pre-existing router case and was
+not forced.
+
+**STILL OPEN.** Plug PLACEMENT ("only at the end of a long branch") is
+shared `topology.py` and is untouched. 7 of 27 SHOT targets in Zone 1
+aim into geometry (`godot-target-facing`, a report, not a gate). Both
+climbing producers file their `exit` door record past the wall the hole
+is cut in -- `tower` 9 m up and 2.2 m beyond, `platform_path` 2 m up --
+so an aperture probe there reads the landing; recorded with numbers by
+`godot-zone-audit`, not repaired, because `door_world` feeds join
+sockets and lock slabs.
 
 ## ENGINE LANE — the last three sample cases, and a hang — 2026-09-19
 

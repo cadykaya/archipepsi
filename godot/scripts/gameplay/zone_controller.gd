@@ -122,6 +122,14 @@ var _activity_note := ""
 
 ## `room_id -> world AABB`, from the committed layout.
 var room_bounds := {}
+## Each room's committed frame: `{position, yaw, arrival}` in world
+## space, off the same layout `room_bounds` comes from.
+var room_places := {}
+## The room the appended exit room hangs off, whose `exit` face the
+## engine cuts open even when the composer declared it SEALED -- see
+## `ZoneBuilder._with_zone_exit_open`. The ONE face where declared usage
+## and built geometry are meant to disagree.
+var exit_departs_from := ""
 ## `"<room_id>/<socket_id>" -> world position of that doorway.`
 ##
 ## The builder already computes this so the lock slab and the door probe
@@ -162,6 +170,30 @@ var measured_apertures := {}
 ## bar off the bridge and calling that a measurement.
 var measured_placement := {}
 ## How long to hold before treating silence as a refusal.
+## HOW LONG THE PLACEMENT SEARCH MAY RUN BEFORE IT IS A REFUSAL.
+##
+## `ZoneBuilder` has had a budget and a `LAYOUT_TIMEOUT` status all
+## along and this, its only caller, passed 0.0 -- no budget at all. The
+## search then runs on the main thread for as long as it likes, and a
+## Zone that took FORTY SECONDS to decide it was infeasible held the
+## thread past the websocket's keepalive: the bridge dropped the client
+## mid-build, the `build_failed` that followed went into a dead socket,
+## and the campaign sat waiting for a verdict nobody could send. The
+## Zone was refused correctly; the connection did not survive being
+## told.
+##
+## SIX SECONDS, against measurement rather than taste. Across the
+## declared twenty-Zone sample the whole solve takes a median of 321 ms,
+## 711 ms at p90 and 2070 ms at worst -- so this is roughly three times
+## the slowest Zone that routes, and a third of the keepalive it has to
+## stay inside. A Zone that spends it is one the bridge recomposes,
+## which is the recovery that already exists.
+##
+## A COMMITTED REPLAY IS NEVER TIMED OUT: `ZoneBuilder` exempts it,
+## because a manifest is laid down rather than searched for, and a save
+## must not become unenterable because a machine was busy.
+const PLACEMENT_BUDGET_MS := 6000.0
+
 const VERDICT_TIMEOUT := 10.0
 
 ## The name this controller holds the player under while a graph Zone's
@@ -258,7 +290,7 @@ func setup(zone_dict: Dictionary) -> void:
 	# one on every visit after the first, and laying those transforms back
 	# down is what makes a revisited Zone the same Zone -- a re-search
 	# would be a second layout for a place the player already knows.
-	var build := ZoneBuilder.build(zone, "", 0.0,
+	var build := ZoneBuilder.build(zone, "", PLACEMENT_BUDGET_MS,
 			ZoneBuilder.layout_from_json(committed_manifest) \
 			if not committed_manifest.is_empty() else {})
 	# A ZONE THAT COULD NOT BE LAID OUT IS NOT A ZONE. `ZoneBuilder`
@@ -310,9 +342,20 @@ func setup(zone_dict: Dictionary) -> void:
 	# anything that needs to ask "is this point in that room" asks here
 	# rather than re-deriving a transform.
 	for rid: String in build.get("rooms", {}) as Dictionary:
-		room_bounds[rid] = (build["rooms"] as Dictionary)[rid].get(
-				"bounds", AABB())
+		var place: Dictionary = (build["rooms"] as Dictionary)[rid]
+		room_bounds[rid] = place.get("bounds", AABB())
+		# AND ITS FRAME, not only its envelope. The builder resolved a
+		# position, a yaw and an arrival for every room and the manifest
+		# already carries all three; keeping only the AABB meant anything
+		# asking "which way does this room face" had to rebuild the
+		# transform from a constant it copied out of the builder -- which
+		# is the second computation the paragraph above forbids.
+		room_places[rid] = {
+			"position": place.get("position", Vector3.ZERO),
+			"yaw": float(place.get("yaw", 0.0)),
+			"arrival": place.get("arrival", Vector3.ZERO)}
 	door_positions = (build.get("doors", {}) as Dictionary).duplicate()
+	exit_departs_from = str(build.get("exit_departs_from", ""))
 	for raw: Variant in build.get("plugs", []):
 		var plug: ReturnPlug = raw
 		plug.traversed.connect(_on_plug_traversed)

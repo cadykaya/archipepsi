@@ -1061,6 +1061,19 @@ static func _socket_for(door_world: Dictionary, room: String,
 ## reserved edge id. Reserved means reserved: a Zone that declares either
 ## is refused, because two different rooms answering to `exit` is a
 ## manifest that cannot say which one it committed.
+## THE LAST ROOM ON THE SPINE this Zone actually built, which is where
+## the appended exit room hangs. One definition, read both when the room
+## is produced (so its exit face is cut) and when the approach is filed
+## under `EXIT_EDGE_ID` (so the join names the right room).
+static func _exit_departs_from(graph: Dictionary,
+		chamber_by_id: Dictionary) -> String:
+	var tail := ""
+	for spine_id: Variant in graph.get("spine", []):
+		if chamber_by_id.has(str(spine_id)):
+			tail = str(spine_id)
+	return tail
+
+
 const EXIT_ROOM_ID := "exit"
 const EXIT_EDGE_ID := "e:__exit__"
 
@@ -1921,6 +1934,13 @@ static func _build_once(zone: Dictionary, theme_override := "",
 			chamber_by_id[str((raw_chamber as Dictionary).get("id", ""))] \
 					= raw_chamber
 	var graph_branches: Dictionary = graph.get("branches", {})
+	# WHICH ROOM THE ZONE EXIT HANGS OFF. The exit room is appended to
+	# the last room on the spine and its approach leaves through that
+	# room's `exit` face, which the composer declares `ZONE_EXIT` so
+	# `cut_plan` carves it like any other passable door. Named here so
+	# the refusal below and the manifest's `e:__exit__` join agree about
+	# which room that is.
+	var exit_departs_from := _exit_departs_from(graph, chamber_by_id)
 	for spine_id: Variant in graph.get("spine", []):
 		var chamber: Dictionary = chamber_by_id.get(str(spine_id), {})
 		if chamber.is_empty():
@@ -2400,10 +2420,59 @@ static func _build_once(zone: Dictionary, theme_override := "",
 				% dropped_keys.size() + "not build, so a lock in this "
 				+ "Zone has no key: %s" % str(dropped_keys)}
 	# The last room on the spine, which is what the exit room hangs off.
-	var spine_tail := ""
-	for spine_id: Variant in graph.get("spine", []):
-		if chamber_by_id.has(str(spine_id)):
-			spine_tail = str(spine_id)
+	var spine_tail := exit_departs_from
+	# AND IT HAS TO BE A ROOM THE EXIT CAN LEAVE.
+	#
+	# ASKED OF THE CUTTER ITSELF, on the same copy the room was built
+	# from, because `cut_plan` is what decides whether a hole exists and
+	# a second reading of the door list here would be a second answer.
+	# An EMPTY plan is not a sealed face: `_perimeter` falls back to its
+	# two-door defaults when no composer spoke, which is the case every
+	# fixture with no door list is in.
+	#
+	# What is refused is a room that assigns doors and has no buildable
+	# `exit` among them: a composer that did not declare `ZONE_EXIT`
+	# there, or one that did on a socket this producer cannot cut. The
+	# engine does NOT carve it anyway -- overruling the lane that owns
+	# which doors exist is what put a hole in a Zone's outer wall
+	# opening onto nothing. Refused, so the bridge recomposes, rather
+	# than appending a corridor to unbroken wall and shipping a Zone
+	# whose exit is visible and unreachable.
+	var tail_cut := ChamberBuilders.cut_plan(
+			chamber_by_id.get(spine_tail, {}))
+	# AND NOT ON A ZONE THE PLAYER ALREADY HAS.
+	#
+	# A Zone committed before `ZONE_EXIT` existed carries `exit: SEALED`
+	# on its last room, saved with its manifest and its progress.
+	# Refusing it on reload would park a Zone the player is part way
+	# through -- DORMANT, Checks reserved, nothing lost, but no longer
+	# enterable -- over a defect they have already been living with.
+	# That is a behaviour change to somebody's save made on their behalf
+	# and without asking, which is the one thing a repair must not do.
+	#
+	# So a REPLAY builds exactly what was committed, sealed exit and
+	# all: the Zone behaves on reload precisely as it did before this
+	# change. The refusal is for FRESH proposals, where the composer had
+	# every chance to declare the way out and the bridge can compose
+	# another. Nothing is migrated and nothing is abandoned.
+	var replaying_committed := not (layout.get("rooms", {}) \
+			as Dictionary).is_empty()
+	if replaying_committed and spine_tail != "" and not tail_cut.is_empty() \
+			and not bool(tail_cut.get("exit", false)):
+		push_warning("zone: replaying a committed Zone whose last room "
+				+ "'%s' seals its exit; it was composed before the " % spine_tail
+				+ "Zone exit was declarable and is rebuilt as saved")
+	if not replaying_committed and spine_tail != "" \
+			and not tail_cut.is_empty() \
+			and not bool(tail_cut.get("exit", false)):
+		root.free()
+		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+				"policy": routing_policy(placed, policy_override),
+				"blocking_rooms": [spine_tail], "blocking_pairs": [],
+				"failed": "the Zone ends on room '%s', whose producer "
+				% spine_tail + "cuts no 'exit' doorway; the appended "
+				+ "exit room would hang off unbroken wall and the "
+				+ "player could see the exit without ever reaching it"}
 	var exit_room := ChamberBuilders.treasure_room(
 			{"id": EXIT_ROOM_ID}, theme)
 	var exit_committed: Dictionary = \
@@ -2563,6 +2632,14 @@ static func _build_once(zone: Dictionary, theme_override := "",
 	return {"root": root, "spawn_transform": spawn,
 			"chambers": built_chambers, "exit_portal": portal,
 			"bounds_list": bounds_list,
+			# WHICH ROOM THE ZONE EXIT LEAVES THROUGH. Published because
+			# the composer's `doors` say that face is SEALED and the
+			# geometry says it is open: the engine cut it, because the
+			# engine is what lies beyond it. Anything measuring declared
+			# usage against built geometry has to be told which one face
+			# the engine owns, and re-deriving it from the graph is the
+			# second answer this file exists to avoid.
+			"exit_departs_from": spine_tail,
 			# THE WHOLE LAYOUT, not just where the rooms are. `links`
 			# holds the connector and corner chain that reaches each
 			# room, in build order, so a committed Zone replays by
