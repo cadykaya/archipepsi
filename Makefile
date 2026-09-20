@@ -575,6 +575,16 @@ godot-traverse: godot-import   # walking to things, with the real controller
 	fi; \
 	exit $$status
 
+godot-target-facing: godot-import  # which way a shot target points
+	@out=$$($(GODOT) --headless --path godot -- --target-facing 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: a test that crashed is not a test that passed"; \
+	  exit 1; \
+	fi; \
+	exit $$status
+
 godot-return-placement: godot-import  # a convenience return is never on the way
 	@out=$$($(GODOT) --headless --path godot -- --return-placement 2>&1); \
 	status=$$?; printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)"; \

@@ -463,3 +463,68 @@ integration, ordinary-live, reload and pytest logs, and two raw logs whose
 `IDENTITY:` line predates the exact dumped-versus-served wording. The two
 negative controls and the fallback-determinism measurement are kept and
 labelled, because nothing else records them.
+
+---
+
+## Playtest finding, 2026-09-20 — some targets face the wrong way
+
+**The owner's report, from an ordinary Zone 1:** *"some targets are facing
+the wrong way."* Nothing errored and every suite was green — the class the
+headless suites structurally cannot reach.
+
+### Reproduced, in the same Zone, seed for seed
+
+The fallback seeds composition on `zone_index` and `zone_budget` alone, so
+Zone 1 of every default-scale campaign is `zone_01.json` of the declared
+sample. `make godot-target-facing` builds exactly that and fires two rays per
+SHOT target: along its face (local +Z — the stalk is built behind it at
+`(0, 0, -0.3)`), and along its back.
+
+### The instrument was wrong first, and was calibrated before it was believed
+
+The first cut probed 0.35 m to 0.9 m behind each target and reported **four
+correctly mounted targets as floating**. `MOUNT_STALK` is 0.55 m and
+`_wall_behind` accepts a wall out to 1.45 m, so the ray started at the wall
+and ended before it. Matching the producer's own window took the failure
+count from **16 of 27 to 7 of 27**. A threshold that does not match the one
+that placed the thing measures the threshold, not the thing.
+
+### What is actually wrong
+
+| | |
+|---|---|
+| SHOT targets in Zone 1 | **27** |
+| claiming a wall mount | 15 — **all correct**, wall at 0.30–0.70 m, clear in front |
+| free-standing | 12 |
+| **aimed into geometry** | **7, every one of them unmounted** |
+
+* `c002` ×2 — into a static body 1.90 m ahead
+* `c022` ×5 — three into `TargetBody` (*each other*), two into `cr_back`
+
+**Cause, and it is one line.** In `activities._place`, `yaw` starts at `0.0`
+and is assigned **only** in the mounted branch. A SHOT element that finds no
+wall keeps the room's default orientation, and the floor/surface solver that
+then places it asks about *space* and never about what is in front of the
+face.
+
+### Status
+
+**Not repaired.** The fix rotates twelve objects and moves no room and no
+Check, so it cannot invalidate the frozen evidence — but it is a placement
+change made while the owner is mid-playtest, and it was offered rather than
+taken. `godot-target-facing` is committed as a **report** and is listed in
+`NOT_A_SUITE` with that reason; **it becomes a CI gate the moment the repair
+lands.**
+
+Classification: **(b)** — affects milestone completion, does not prevent the
+diagnostic.
+
+### Also reported, and deliberately not touched
+
+*"This room is still crammed."* The density the previous playtest flagged.
+That is a content-budget question (`zone_budget` 1000 and what `room_value`
+buys), budget policy was explicitly outside this assignment's authority, and
+the standing answer is the lower-budget variant — measured at +17 rooms and
++27 enemies over twelve cases, composing *different* rooms rather than these
+rooms with content removed. Whether the default should move is an owner
+decision and is recorded as one, not quietly retuned.
