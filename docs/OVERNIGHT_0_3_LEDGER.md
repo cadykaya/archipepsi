@@ -528,3 +528,79 @@ the standing answer is the lower-budget variant — measured at +17 rooms and
 +27 enemies over twelve cases, composing *different* rooms rather than these
 rooms with content removed. Whether the default should move is an owner
 decision and is recorded as one, not quietly retuned.
+
+---
+
+## Playtest findings, 2026-09-20 (second batch) — labels, and duplicate families
+
+### F-2 · The activity banner floats above the level
+
+**Observed:** in a `platform_path`, *TARGET CHALLENGE / shoot all 2* hangs in
+the void above the geometry, well clear of the room.
+
+**Cause, exactly:** `activity_runtime._build_label` places the banner at a
+**flat constant** above its first element and never consults the room.
+
+```gdscript
+var home := _label_home()
+_label.position = home + Vector3(0.0, 3.1, 0.0)
+```
+
+A wall-mounted target already sits at ~2.2 m, so its banner goes to ~5.3 m —
+through the ceiling of an ordinary room, and into open sky on a platform
+course. Nothing clamps it to the room's interior height.
+
+Classification **(b)**. Presentation only; cheap; not taken without a word,
+because it is not what the owner was testing.
+
+### F-3 · Two banners in one room overlap and cannot be told apart
+
+**Observed:** *SWITCH SEQUENCE walk into all 2* printed across *SWITCH
+SEQUENCE walk into all 3*; later, two *DONE*s on top of each other.
+
+Same constant. Each activity anchors its own banner 3.1 m above its own
+start element, so two activities whose start elements are near each other
+put two billboards in the same place. There is no layout pass over the
+banners of one room.
+
+### F-4 · A room is allowed two activities of the same family, and usually has them
+
+**The owner's question:** *"why is the system even allowed to make two of
+them?"*
+
+**Because nothing forbids it.** The only per-room rule in the top-up loop is
+a COUNT cap — `if len(acts) < 3` — and no rule anywhere compares an
+activity's kind against the kinds already in that room. The landmark booster
+is blunter still: to make one room stand out it appends
+`_activity("switch_sequence", ...)` **unconditionally**, up to three times,
+checking only the count.
+
+**Measured in the Zone the owner is playing** (`zone_01.json`, which is every
+default-scale campaign's Zone 1):
+
+| | |
+|---|---|
+| rooms holding more than one activity | **8 of 23** |
+| of those, holding **two of the same kind** | **7 of 8** |
+
+```
+c002 arena         target_challenge ×2
+c003 platform_path pressure_routing ×2
+c004 corridor      timed_run ×2
+c005 arena         switch_sequence ×2
+c006 arena         target_challenge ×2
+c008 platform_path timed_run ×2
+c009 arena         switch_sequence ×2
+```
+
+So this is the rule rather than the exception: the kind index advances with
+the count already in the room, but the room is revisited at a stride that
+lands on the same kind again, and nothing checks.
+
+**Deliberately NOT repaired.** The owner's call, stated plainly: *"we're
+changing the whole system later so not really worth fixing."* Recorded here
+so the rework starts from a measurement instead of an impression, and so the
+variety rule it needs is written down: **a room's activities should be
+distinct by family, and a count cap is not a variety rule.**
+
+Classification **(c)** — explicitly deferred to the activity-system rework.
