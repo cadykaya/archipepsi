@@ -247,7 +247,8 @@ zone-sample: godot-import
 	@echo "   are about this harness. Acceptance is gated live, by"
 	@echo "   godot-integration. The manifest-only class this once caught"
 	@echo "   -- room overlap -- the router now refuses itself."
-	-cd bridge && $(PY) tools/check_sample_layouts.py
+	-cd bridge && $(PY) tools/check_sample_layouts.py \
+	  --json ../docs/evidence/overnight-0-3/sample-census.json
 
 # THE SAME LOOP, WITH THE OPT-IN VARIANT TURNED ON. The owner's ask is
 # that BOTH modes are exercised through real build and acceptance, not
@@ -622,6 +623,42 @@ godot-reload: godot-import
 #
 # Reports the same five things whether the Zone is accepted or refused,
 # so a bounded recovery can never be read as a first-attempt success.
+# ONE ORDINARY ZONE, AT DEFAULT SCALE, THROUGH THE REAL APPLICATION.
+#
+#   make godot-ordinary-live
+#
+# Everything else that runs live serves a NAMED proposal. This asks the
+# campaign for whatever it would ordinarily compose, at the scale the
+# diagnostic actually runs at, and then does what a player does in the
+# order a player does it: enter, walk the last leg to a Check and press
+# E on it, bring a station online and open its panel, return to the Hub
+# without abandoning, and go back in.
+#
+# The walk is the LAST LEG only and says so. Whether a route across the
+# Zone reaches every Check is `godot-traverse`'s measurement, with its
+# own BLOCKED and UNRESOLVED outcomes.
+ORDINARY_SAVES := $(CURDIR)/.ordinary-live-saves
+godot-ordinary-live: godot-import
+	rm -rf $(ORDINARY_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(ORDINARY_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 3; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --reload-phase=ordinary \
+	  > /tmp/archipepsi-ordinary-live.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID; \
+	grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )" \
+	  /tmp/archipepsi-ordinary-live.log | tail -40; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	if grep -q "SCRIPT ERROR" /tmp/archipepsi-ordinary-live.log; then \
+	  echo "-- a script error was raised: a run that printed its report"; \
+	  echo "-- and then died is not a pass."; \
+	  grep -m5 "SCRIPT ERROR" /tmp/archipepsi-ordinary-live.log; \
+	  exit 1; \
+	fi
+
 # THE HANDOFF AFTER A BUILD THAT COULD NOT HAPPEN. No bridge needed.
 #
 #   make godot-build-failure

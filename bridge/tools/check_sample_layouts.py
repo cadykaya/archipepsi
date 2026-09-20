@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -41,6 +42,29 @@ from archipepsi_bridge import layout as layout_mod   # noqa: E402
 from archipepsi_bridge.schemas.zone import Zone      # noqa: E402
 
 
+def _engine_revision() -> str:
+    """WHICH ENGINE BUILT THESE MANIFESTS, as far as this can know.
+
+    An old file on disk is not new evidence, and a census that does not
+    say which revision produced it cannot be told apart from one that
+    does. The router runs inside Godot out of the working tree, so the
+    tree's own revision is the honest answer -- with `-dirty` when it
+    has uncommitted changes, because then it is not any revision.
+    """
+    try:
+        head = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
+            capture_output=True, text=True, timeout=10)
+        dirty = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=ROOT,
+            capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+    if head.returncode != 0:
+        return "unknown"
+    return head.stdout.strip() + ("-dirty" if dirty.stdout.strip() else "")
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m tools.check_sample_layouts",
@@ -48,7 +72,11 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--sample", type=Path,
         default=Path("../godot/tests/fixtures/sample"))
+    parser.add_argument(
+        "--json", type=Path, default=None,
+        help="also write the census as JSON, with per-case identity")
     args = parser.parse_args(argv)
+    revision = _engine_revision()
 
     zones = sorted(p for p in args.sample.glob("zone_*.json"))
     if not zones:
@@ -57,12 +85,27 @@ def main(argv=None) -> int:
     accepted = 0
     missing = 0
     refused: list[str] = []
+    census: list[dict] = []
+    print(f"SAMPLE  engine revision {revision}; {len(zones)} source "
+          f"case(s) under {args.sample}")
     for path in zones:
         zone = Zone.model_validate_json(path.read_text(encoding="utf-8"))
+        # WHICH CASE, UNDER WHICH IDENTITY. Placement is seeded by
+        # `hash("<zone_id>|<theme>|layout")`, so the id and the theme
+        # ARE the seed inputs -- a census that names only the filename
+        # cannot be matched to the experiment that produced it.
+        row = {"case": path.name, "zone_id": zone.zone_id,
+               "theme": zone.theme,
+               "proposal_digest": layout_mod.proposal_digest(zone),
+               "engine_revision": revision}
+        ident = (f"{path.name}  [{zone.zone_id} | {zone.theme} | "
+                 f"{row['proposal_digest']}]")
         emitted = args.sample / "layouts" / path.name
         if not emitted.exists():
             missing += 1
-            print(f"{path.name}  NO MANIFEST -- the router did not "
+            row["outcome"] = "NO_MANIFEST"
+            census.append(row)
+            print(f"{ident}  NO MANIFEST -- the router did not "
                   f"produce one")
             continue
         result = json.loads(emitted.read_text(encoding="utf-8"))
@@ -76,11 +119,17 @@ def main(argv=None) -> int:
         # refused everything anyway.
         if verdict.accepted:
             accepted += 1
-            print(f"{path.name}  ACCEPTED")
+            row["outcome"] = "ACCEPTED"
+            row["manifest_digest"] = verdict.manifest["manifest_digest"]
+            print(f"{ident}  ACCEPTED  "
+                  f"manifest {row['manifest_digest']}")
         else:
             refused.append(path.name)
             why = "; ".join(verdict.errors)
-            print(f"{path.name}  {verdict.status}: {why}")
+            row["outcome"] = verdict.status
+            row["errors"] = list(verdict.errors)
+            print(f"{ident}  {verdict.status}: {why}")
+        census.append(row)
     built = len(zones) - missing
     print(f"\nSAMPLE  {built} of {len(zones)} Zone(s) physically laid out "
           f"and emitted a manifest; of those, {accepted} were ACCEPTED by "
@@ -91,6 +140,16 @@ def main(argv=None) -> int:
           "acceptance after recomposition, and exhaustion of the refusal "
           "budget belong to `godot-integration`, and a refusal here is "
           "not a failed campaign.")
+    if args.json is not None:
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(json.dumps(
+            {"engine_revision": revision,
+             "source": str(args.sample),
+             "sources": len(zones), "laid_out": built,
+             "accepted": accepted, "refused": len(refused),
+             "no_manifest": missing, "cases": census},
+            indent=1, sort_keys=True) + "\n", encoding="utf-8")
+        print(f"SAMPLE  census written to {args.json}")
     if refused or missing:
         print("SAMPLE LAYOUTS NOT ACCEPTED: " + ", ".join(
             refused + (["%d with no manifest" % missing] if missing else [])))

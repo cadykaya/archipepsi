@@ -1839,22 +1839,27 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 		controller.setup(zone_dict)
 		# A ROUTER REFUSAL IS NOT A SLOW VERDICT. Waiting on
 		# `layout_verdict` here would spend the whole timeout on a Zone
-		# that never sent anything, and then report the wait rather than
-		# the reason. Said plainly instead, and the loop stops: there is
-		# no recovery on this path to go round again for.
-		if controller.layout_failed != "":
+		# that submitted no layout, and then report the wait rather than
+		# the reason.
+		#
+		# **AND IT IS NO LONGER A DEAD END.** `setup` used to return and
+		# tell nobody: the bridge never learned, no verdict ever
+		# arrived, and the bounded recovery that handles a certification
+		# refusal never began. It sends `build_failed` now, so this
+		# takes the SAME recovery below -- freed, recomposed, entered
+		# again, discarded when the budget is spent. The two are still
+		# COUNTED apart, because the causes are different and reporting
+		# a build that never happened as a refused layout would hide one
+		# inside the other.
+		var router := controller.layout_failed != ""
+		if router:
 			_router_refusals += 1
 			print("zone %s: THE ROUTER REFUSED THE BUILD -- %s"
 					% [str(record.get("zone_id", "")),
 						controller.layout_failed])
-			print("       nothing was sent to the bridge, so no verdict "
-					+ "is coming and the bounded recovery that handles a")
-			print("       certification refusal never starts. This Zone "
-					+ "is a dead end for the player.")
-			controller.queue_free()
-			controller = null
-			await get_tree().process_frame
-			break
+			print("       reported to the bridge as `build_failed`; the "
+					+ "bounded recovery runs from here exactly as it")
+			print("       does for a certification refusal.")
 		# THE CONTROLLER'S OWN VERDICT, WAITED FOR.
 		#
 		# This sampled `layout_state` off the shared snapshot after
@@ -1868,16 +1873,17 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 		# longer and the bet started losing, which is how a Zone that
 		# was accepted came to be read as refused and then waited on for
 		# a recomposition nobody had asked for.
-		if not await _await_condition("a layout verdict for %s"
-					% str(record.get("zone_id", "")),
-				func() -> bool: return controller.layout_verdict != "",
-				30.0):
-			return false
-		if controller.layout_verdict != "REFUSED":
-			break
-		_layout_refusals += 1
-		print("zone %s: layout refused, composing again (attempt %d)"
-				% [str(record.get("zone_id", "")), attempt + 1])
+		if not router:
+			if not await _await_condition("a layout verdict for %s"
+						% str(record.get("zone_id", "")),
+					func() -> bool: return controller.layout_verdict != "",
+					30.0):
+				return false
+			if controller.layout_verdict != "REFUSED":
+				break
+			_layout_refusals += 1
+			print("zone %s: layout refused, composing again (attempt %d)"
+					% [str(record.get("zone_id", "")), attempt + 1])
 		controller.queue_free()
 		controller = null
 		await get_tree().process_frame
@@ -1918,8 +1924,10 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 			# rather than a surprise. Asserting as well would make that
 			# probe fail for reproducing exactly what it exists to
 			# reproduce.
-			print("       the bridge was never told, so there is no "
-					+ "path back from a router refusal")
+			print("       the router refused every attempt this Zone "
+					+ "had; the bridge was told each time and composed")
+			print("       again, and the budget ran out before a "
+					+ "buildable Zone came back")
 		else:
 			_check(false, "every layout this client sent was refused")
 		return false

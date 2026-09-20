@@ -193,3 +193,113 @@ place during any verification run. *Evidence:*
 * `make godot-named-case` gained `AT=N` (serve under the dumped id),
   `THEN=<case>` (a second proposal from the second request onward), an exact
   dumped-versus-served identity line, a `SCRIPT ERROR` guard, and the TIMELINE.
+
+---
+
+## Block 2 — the twenty declared cases, and a small live comparison
+
+### 2.1 The census, with identities
+
+`make zone-sample` empties `layouts/` first, so no file on disk survives
+from an earlier run. Each case is now reported with the inputs that decide
+its placement — **the `zone_id` and the theme ARE the seed**
+(`hash("<zone_id>|<theme>|layout")`) — together with its proposal digest, the
+manifest digest the validator accepted, and the engine revision. A machine
+readable copy is `docs/evidence/overnight-0-3/sample-census.json`.
+
+| denominator | result |
+|---|---|
+| source cases | **20** |
+| physically laid out (a manifest was emitted) | **19** |
+| of those, ACCEPTED by `layout.validate` on this single pass | **19** |
+| of those, refused | **0** |
+| no layout at all | **1** — `zone_08` / `zone_008`, proposal `d6b5eb7b1fcc7cd7` |
+
+`zone_08` stays visible and is not tuned toward fitting. It is the Block 1
+case, and it is what ordinary fallback composition produces for the 8th Zone
+of a default-scale campaign.
+
+**This is one offline validation pass over manifests built without a client.**
+It is not the live acceptance loop: retries, acceptance after recomposition,
+and exhaustion of the refusal budget belong to the live runs.
+
+### 2.2 Three named cases, live, with their seeds preserved
+
+`AT=N` makes the disposable campaign mint the id each case was dumped
+under, so all three are that case under its own placement seed.
+
+| case | served as | first result | end |
+|---|---|---|---|
+| `zone_01 AT=1` | `zone_001` | ACCEPTED on the first attempt | entered, 15 of 15 Checks, hub `ZONE_ACTIVE` |
+| `zone_05 AT=5` (the overlap repair) | `zone_005` | ACCEPTED on the first attempt | entered, 15 of 15 Checks |
+| `zone_08 AT=8` | `zone_008` | **BUILD FAILED** — no layout submitted, so there is no verdict | exhausted after 3 entry attempts; hub `ZONE_FAILED`, discard offered |
+| `zone_08 AT=8 THEN=zone_01` | `zone_008` | **BUILD FAILED** | replacement entered on attempt 2 and **ACCEPTED** |
+
+The stages are reported apart, because they are routinely collapsed:
+
+* **provider-side validation** — the bridge only offers a proposal
+  `generate_zone_validated` accepted. None of these four had a generation-stage
+  refusal (`last_generation_error` empty).
+* **engine placement ladder** — `zone_008` spends **7 internal placement
+  attempts** inside one build. Those are not bridge refusals.
+* **layout verdict** — one per submitted layout.
+* **entry attempts / refusal budget** — `zone_008` spent 3 entries and its
+  whole budget.
+
+---
+
+## Block 3 — one ordinary Zone, at default scale, through the real application
+
+`make godot-ordinary-live` — a new target. Every other live harness serves a
+NAMED proposal; this asks the campaign for whatever it would ordinarily
+compose, at the scale the diagnostic runs at.
+
+**Runtime, printed before anything is played:** `epsilon=fallback`,
+`ap=mock`, save directory `<repo>/.ordinary-live-saves` (the bridge prints
+the resolved absolute path and the scale at startup — *MOCK, default scale,
+450 locations, 15 Checks per Zone*).
+
+| stage | result | what kind of evidence it is |
+|---|---|---|
+| boot → Hub → ordinary Zone | `zone_001`, 23 rooms, 30 edges, 15 Checks, theme `neon_transit` | live fallback composition, not a fixture |
+| build + verdict | ACCEPTED at 5.4 s | the real `Main`, the real controller, the real bridge |
+| objective | **walked into a goal area on foot** → a Check unlocked | physical. `platform_to_goal` is satisfied by arriving; nothing called the handler |
+| Check `89100126` | placed 2.2 m out, **walked** to 1.6 m, the game's own interact ray found it, prompt read `[E] CLAIM CHECK 126`, `Reward.interact` called, **bridge confirmed** | walked last leg · addressed by the ray · claimed through the real path · confirmed |
+| Echo | the claim delivered an item; `act_l89100126` equipped into `mobility` via `_cycle_echo` | the same function the wheel and the inventory screen end at |
+| station | `st:exit` came online **by walking onto its pad**, the interact ray found it, pressing it opened the travel panel through `Main`'s wiring | physical + the real consumer |
+| leave / re-enter | `leave_zone` (not `abandon_zone`), Hub, back in; allocation unchanged at 15 of 15 | |
+
+**What this does NOT claim.** The walk is the **last leg only**: the body is
+placed on standable ground near the target and then walks and turns under the
+real controller with the real input actions. Whether a straight-line route
+*across* the Zone reaches every Check is `godot-traverse`'s measurement, with
+its own BLOCKED and UNRESOLVED outcomes, and is reported there.
+
+**Combat was not exercised.** Ten of the 15 pedestals sit behind `kill_all`.
+Satisfying that needs `enemy.die()`, a test-only helper, and calling it here
+would make the route a claim about the helper. `godot-integration` exercises
+it and labels it.
+
+### 3.1 A latent race this found
+
+`active_zone` is populated at `PENDING_GENERATION` — before the provider has
+composed anything — so a wait on "a record exists" fires while `zone` is still
+null, and the `enter_zone` that follows is sent at a Zone with no content.
+Invisible with the sample provider, which answers instantly; the fallback at
+default scale takes long enough to expose it, and did. All three waits now
+wait for `ZONE_READY`.
+
+### 3.2 Captures
+
+Rendered under xvfb with the GL driver (`make zone-shots`), inspected, not
+merely written. Four are kept in `docs/evidence/overnight-0-3/captures/`; the
+other nineteen regenerate from that command.
+
+* `01-ordinary-room.png` — a `neon_transit` gallery room with its floor,
+  ceiling, wall panels and a platform.
+* `02-wall-mounted-targets-at-eye-height.png` — targets flush on real walls at
+  eye height (the mounting repair).
+* `03-station-travel-panel.png` — STATION ENTRANCE, "(you are here)", two warp
+  destinations, RETURN TO HUB, and the line saying progress is already saved.
+* `04-navigation-schematic-F5.png` — the in-game F5 schematic: rooms walked,
+  green "you are here", stations reached.

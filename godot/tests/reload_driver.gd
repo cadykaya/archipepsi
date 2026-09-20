@@ -175,6 +175,8 @@ func _run() -> void:
 			await _resume()
 		"named-case":
 			await _named_case()
+		"ordinary":
+			await _ordinary()
 		_:
 			_check(false, "no --reload-phase was named")
 			_finish(1)
@@ -251,6 +253,419 @@ func _build_failure() -> void:
 	_finish(0 if _failures == 0 else 1)
 
 
+## WALK THE LAST LEG, with the real controller and the real inputs.
+##
+## Aimed every frame rather than launched on a fixed heading, because a
+## body that slides along a wall ends up walking parallel to its goal
+## and a fixed heading would call that "no progress". Bounded; the
+## return value is the closest it came, so a failure reports a distance
+## rather than a verdict it has not earned.
+func _walk_the_last_leg(body: Node3D, to: Vector3, frames := 420) -> float:
+	var closest := body.global_position.distance_to(to)
+	Input.action_press("move_forward", 1.0)
+	for _i in frames:
+		var flat := Vector3(to.x - body.global_position.x, 0.0,
+				to.z - body.global_position.z)
+		if flat.length() > 0.01:
+			body.rotation.y = atan2(-flat.x, -flat.z)
+			var eye := body.global_position + Vector3.UP \
+					* Constants.PLAYER_EYE_HEIGHT
+			body.camera.rotation.x = clampf(
+					atan2(to.y - eye.y, maxf(flat.length(), 0.01)),
+					-PI / 3.0, PI / 3.0)
+		await get_tree().physics_frame
+		closest = minf(closest, body.global_position.distance_to(to))
+		if closest <= 1.6:
+			break
+	Input.action_release("move_forward")
+	return closest
+
+
+## A CHECK, CLAIMED THE WAY A PLAYER CLAIMS ONE.
+##
+## **A Check is objective-gated, and the gate is the point.** Every
+## pedestal in an ordinary Zone starts `locked`; it becomes `available`
+## when its chamber's objective is satisfied. Two objectives exist:
+## `kill_all`, which needs combat, and `platform_to_goal`, which a
+## player satisfies BY ARRIVING. This takes the second one, because
+## arriving is a thing a body can do and `enemy.die()` is a test-only
+## helper that would make this route a claim about the helper.
+##
+## Each stage is reported separately because they are routinely
+## collapsed: arriving is not addressing, addressing is not claiming,
+## and claiming is not the bridge confirming.
+func _claim_one_check(zone: ZoneController, _zone_id: String) -> void:
+	var body: Node3D = zone.player
+	var subject: Node = _first_available(zone)
+	if subject == null:
+		# THE GATE, OPENED BY WALKING INTO IT. The goal areas are plain
+		# `Area3D` children of the controller with `body_entered` wired
+		# to `_on_goal_area_entered`; entering one is the whole
+		# objective, and entering it with the real body is the whole
+		# proof. Nothing calls the handler directly here.
+		var gates: Array[Node] = []
+		for child: Node in zone.get_children():
+			if child is Area3D:
+				gates.append(child)
+		print("  OBJECTIVE: every pedestal is locked; %d goal area(s) "
+				% gates.size() + "in this Zone, walking into them")
+		for gate: Node in gates:
+			var at := (gate as Node3D).global_position
+			var stand := _standable_near(at)
+			if stand == Vector3.ZERO:
+				continue
+			body.global_position = stand
+			for _i in 8:
+				await get_tree().physics_frame
+			var closest := await _walk_the_last_leg(body, at, 240)
+			subject = _first_available(zone)
+			if subject != null:
+				print("  OBJECTIVE: walked into a goal area (closest "
+						+ "%.1f m); a Check unlocked" % closest)
+				_stamp("goal area entered on foot; a Check unlocked")
+				break
+	if subject == null:
+		print("  CHECK: nothing became claimable. Every pedestal in this "
+				+ "Zone is behind an objective this instrument does not "
+				+ "satisfy -- combat is `kill_all`, and killing enemies "
+				+ "with a test helper would be a claim about the helper. "
+				+ "Reported, not forced.")
+		return
+	var goal: Vector3 = (subject as Node3D).global_position
+	# PLACED NEAR, THEN WALKED. Declared as isolation: the route ACROSS
+	# the Zone is `godot-traverse`'s measurement and is not claimed here.
+	var stand_at := _standable_near(goal)
+	if stand_at == Vector3.ZERO:
+		print("  CHECK: no standable ground within reach of %s; the last "
+				% str(subject.name) + "leg was not walked")
+		return
+	body.global_position = stand_at
+	for _i in 8:
+		await get_tree().physics_frame
+	var started := body.global_position.distance_to(goal)
+	var came := await _walk_the_last_leg(body, goal)
+	_stamp("walked the last leg to %s: %.1f m -> %.1f m"
+			% [str(subject.name), started, came])
+	print("  CHECK: %s  placed %.1f m out (diagnostic isolation), then "
+			% [str(subject.name), started]
+			+ "WALKED to %.1f m under the real controller" % came)
+	var addressed := await _address(body, goal, subject)
+	_check(addressed, "the game's own interact ray found %s from where "
+			% str(subject.name) + "the body stopped")
+	if not addressed:
+		return
+	print("  CHECK: the prompt reads '%s'"
+			% str(subject.call("interact_prompt")))
+	var loc := int(subject.get("location_id"))
+	_stamp("interact pressed on %s (location %d)" % [str(subject.name), loc])
+	subject.call("interact", body)
+	var confirmed := await _await("the bridge to confirm location %d" % loc,
+			func() -> bool:
+				for raw: Variant in BridgeClient.snapshot.get(
+						"checked_location_ids", []):
+					if int(raw) == loc:
+						return true
+				return false, 30.0)
+	_check(confirmed, "location %d was claimed through `Reward.interact` "
+			% loc + "and confirmed by the bridge")
+	if confirmed:
+		_stamp("bridge confirmed location %d" % loc)
+
+
+## THE FIRST PEDESTAL A PLAYER COULD PRESS E ON, or null.
+func _first_available(zone: ZoneController) -> Node:
+	for node: Node in _find_all(zone, "RewardObject"):
+		if str(node.get("state")) == "available":
+			return node
+	return null
+
+
+## TURN TOWARD A THING UNTIL THE GAME'S OWN RAY FINDS IT.
+##
+## Proximity is not addressability: the interact ray is what decides
+## whether a player standing here could press E, and it is the only
+## thing asked.
+func _address(body: Node3D, goal: Vector3, target: Node) -> bool:
+	for _i in 30:
+		var flat := Vector3(goal.x - body.global_position.x, 0.0,
+				goal.z - body.global_position.z)
+		if flat.length() > 0.01:
+			body.rotation.y = atan2(-flat.x, -flat.z)
+			var eye := body.global_position + Vector3.UP \
+					* Constants.PLAYER_EYE_HEIGHT
+			body.camera.rotation.x = clampf(
+					atan2(goal.y - eye.y, maxf(flat.length(), 0.01)),
+					-PI / 3.0, PI / 3.0)
+		await get_tree().physics_frame
+		if body.get("_interact_target") == target:
+			return true
+	return false
+
+
+## SOMEWHERE A BODY CAN STAND WITHIN REACH OF A POINT.
+##
+## The pedestal's own position is inside the pedestal. This probes a
+## ring around it for ground with headroom, which is the same pair
+## `RoomAudit.arrival_is_supported` asks.
+func _standable_near(goal: Vector3) -> Vector3:
+	var space := get_viewport().world_3d.direct_space_state
+	for radius: float in [2.4, 3.2, 4.0]:
+		for step in 12:
+			var a := TAU * float(step) / 12.0
+			var at := goal + Vector3(cos(a), 0.0, sin(a)) * radius
+			var down := PhysicsRayQueryParameters3D.create(
+					at + Vector3.UP * 3.0, at + Vector3.DOWN * 3.0)
+			var hit := space.intersect_ray(down)
+			if hit.is_empty():
+				continue
+			var floor_at: Vector3 = hit["position"]
+			var up := PhysicsRayQueryParameters3D.create(
+					floor_at + Vector3.UP * 0.2,
+					floor_at + Vector3.UP * Constants.PLAYER_HEIGHT)
+			if not space.intersect_ray(up).is_empty():
+				continue
+			return floor_at + Vector3.UP * 0.1
+	return Vector3.ZERO
+
+
+## A STATION, BROUGHT ONLINE ON FOOT AND THEN PRESSED.
+##
+## The pad is an `Area3D` and `body_entered` is what reaches it, so the
+## body WALKS in rather than being put there -- a body placed already
+## overlapping is a bet on how the physics server reports it, and the
+## bet lost the first time this was written. Pressing the station is the
+## station's own `interact`, which is what opens the panel: the
+## controller asks `Main` for a screen and `Main` is the one that has
+## one, so emitting the controller's signal from here would test the
+## panel and skip the wiring.
+func _open_a_station(zone: ZoneController) -> void:
+	var stations: Array[Node] = _find_all(zone, "WarpStation")
+	if stations.is_empty():
+		print("  STATION: this Zone composed none; nothing to open")
+		return
+	var body: Node3D = zone.player
+	var station: Node = null
+	for candidate: Node in stations:
+		var at := (candidate as Node3D).global_position
+		var stand := _standable_near(at)
+		if stand == Vector3.ZERO:
+			continue
+		body.global_position = stand
+		for _i in 8:
+			await get_tree().physics_frame
+		await _walk_the_last_leg(body, at, 240)
+		if zone.stations_reached().has(str(candidate.get("station_id"))):
+			station = candidate
+			break
+	_check(station != null, "walking onto a station pad brought it "
+			+ "online (%d station(s) in this Zone)" % stations.size())
+	if station == null:
+		return
+	var sid := str(station.get("station_id"))
+	print("  STATION: %s came online by standing on it" % sid)
+	_stamp("station %s online" % sid)
+	var addressed := await _address(body,
+			(station as Node3D).global_position, station)
+	_check(addressed, "the interact ray found station %s" % sid)
+	if not addressed:
+		return
+	station.call("interact", body)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var opened: bool = main.station_panel != null \
+			and bool(main.station_panel.visible)
+	_check(opened, "pressing the station opened the travel panel")
+	if opened:
+		_stamp("travel panel opened from station %s" % sid)
+		main.station_panel.close()
+		await get_tree().process_frame
+
+
+## AN ECHO THE CAMPAIGN GAVE, PUT IN A SLOT.
+##
+## Only if the mock allocation supplied one, and only into a slot that
+## Action actually declares. Nothing is granted here: an Echo exists
+## because an Archipelago item arrived, and inventing one would make
+## this a claim about the harness rather than about the campaign.
+## `_cycle_echo` is where the wheel and the inventory screen both end,
+## so this goes through it rather than composing its own intent.
+func _equip_an_echo() -> void:
+	var owned: Array = BridgeClient.owned_components("action")
+	if owned.is_empty():
+		print("  ECHO: the campaign has granted no Action yet, so there "
+				+ "is nothing to equip. Reported, not granted.")
+		return
+	# AN ACTION BELONGS TO ONE SLOT. Offering a mobility Echo to `echo_a`
+	# produces an intent the bridge is obliged to refuse, which is why
+	# `_cycle_echo` filters -- and why asking only `echo_a` reported a
+	# failure when the one owned Action was a mobility one.
+	var slots: Dictionary = {}
+	for raw: Variant in owned:
+		var entry: Dictionary = raw
+		var component: Dictionary = entry.get("component", {})
+		var slot := str(component.get("slot", ""))
+		if slot != "":
+			slots[slot] = true
+	if slots.is_empty():
+		print("  ECHO: %d Action(s) owned, none declaring a slot; "
+				% owned.size() + "nothing to equip")
+		return
+	for slot: String in slots:
+		var before: Variant = BridgeClient.slots().get(slot)
+		main._cycle_echo(1, slot)
+		var moved := await _await("the %s slot to change" % slot,
+				func() -> bool:
+					return BridgeClient.slots().get(slot) != before, 15.0)
+		if moved:
+			print("  ECHO: %s now holds '%s' (of %d owned Action(s), "
+					% [slot, str(BridgeClient.slots().get(slot)),
+						owned.size()]
+					+ "slots offered: %s)" % str(slots.keys()))
+			_stamp("equipped '%s' into %s"
+					% [str(BridgeClient.slots().get(slot)), slot])
+			_check(true, "an owned Action was put in %s through the "
+					% slot + "same path the wheel and the inventory "
+					+ "screen use")
+			return
+	_check(false, "an owned Action was put in a slot (tried %s)"
+			% str(slots.keys()))
+
+
+## LEAVE WITHOUT ABANDONING, AND COME BACK.
+##
+## `leave_zone`, which is what the panel's Return to Hub sends -- not
+## `abandon_zone`, which gives the Checks back, and not `exit_zone`,
+## which finishes the Zone.
+func _leave_and_return(zone_id: String) -> void:
+	var held := (BridgeClient.active_zone().get(
+			"allocated_location_ids", []) as Array).size()
+	BridgeClient.send_intent({"type": "leave_zone", "zone_id": zone_id})
+	main._to_hub()
+	if not await _await("the Hub after leaving",
+			func() -> bool: return main.hub != null, 30.0):
+		return
+	_stamp("left '%s' without abandoning it" % zone_id)
+	_check(main.zone == null, "the Zone was torn down on leaving")
+	main._on_enter_zone()
+	var back := await _await("the client to re-enter and rebuild",
+			func() -> bool:
+				return main.zone != null and main.zone.player != null, 90.0)
+	_check(back, "the Zone was re-entered after returning to the Hub")
+	if not back:
+		return
+	_stamp("re-entered '%s'" % zone_id)
+	var after := (BridgeClient.active_zone().get(
+			"allocated_location_ids", []) as Array).size()
+	_check(after == held, "leaving and re-entering changed no allocation "
+			+ "(%d of %d)" % [after, held])
+
+
+## ONE ORDINARY ZONE, AT DEFAULT SCALE, THROUGH THE REAL APPLICATION.
+##
+## **What this is for.** Every other live harness here serves a NAMED
+## proposal so a case can be put in front of the client. This one asks
+## the campaign for whatever it would ordinarily compose, at the scale
+## the diagnostic will actually run at, and then does the things a
+## player does in the order a player does them: enter, walk the last
+## leg to a Check and press E on it, open a station panel, return to the
+## Hub without abandoning, and go back in.
+##
+## **What it is NOT.** The walk is the LAST LEG only: the body is put at
+## a standable point near the pedestal's own room and then walks and
+## turns under the real controller with the real input actions. Whether
+## a straight-line route across the Zone reaches every Check is
+## `godot-traverse`'s question and is reported there, with its own
+## BLOCKED and UNRESOLVED outcomes. Saying it here would be borrowing
+## one instrument's answer for another's.
+##
+## Every stage says which of these it is: physically walked · addressed
+## by the game's own interact ray · claimed through `Reward.interact` ·
+## confirmed by the bridge.
+func _ordinary() -> void:
+	if BridgeClient.hub_mode() == "NO_CAMPAIGN":
+		BridgeClient.send_intent({"type": "start_mock_campaign"})
+	if not await _await("a campaign",
+			func() -> bool:
+				return BridgeClient.hub_mode() != "NO_CAMPAIGN", 60.0):
+		_finish(1)
+		return
+	# WHICH RUNTIME THIS IS, before anything is played. A report that
+	# does not say which provider composed the Zone cannot be told from
+	# one that ran against a fixture.
+	var snap := BridgeClient.snapshot
+	print("  RUNTIME: epsilon=%s  ap=%s  campaign=%s"
+			% [str(snap.get("epsilon_provider", "?")),
+				str(snap.get("ap_mode", "?")),
+				str(snap.get("seed_name", "?"))])
+	print("          (the bridge printed its resolved save directory and "
+			+ "scale at startup; it is in this run's log)")
+	if BridgeClient.active_zone().is_empty():
+		BridgeClient.send_intent({"type": "request_next_zone"})
+	# ZONE_READY, NOT "a record exists". `active_zone` is populated at
+	# PENDING_GENERATION -- before the provider has composed anything --
+	# so a wait on the record returning fires while `zone` is still
+	# null, and the enter intent that follows is sent at a Zone that has
+	# no content yet. Invisible with the sample provider, which answers
+	# instantly; the fallback at default scale takes long enough to
+	# expose it, and did.
+	if not await _await("an ordinarily composed Zone (ZONE_READY)",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_READY", 120.0):
+		_finish(1)
+		return
+	var record := BridgeClient.active_zone()
+	var zone_id := str(record.get("zone_id", "?"))
+	var allocated: Array = record.get("allocated_location_ids", [])
+	print("  ZONE: '%s' with %d Check(s) -- composed by the live "
+			% [zone_id, allocated.size()]
+			+ "provider for this campaign, not served from a fixture")
+
+	_clock = float(Time.get_ticks_msec()) / 1000.0
+	_stamp("ordinary proposal offered for '%s'" % zone_id)
+	main._on_enter_zone()
+	if not await _await("the client to build and enter it",
+			func() -> bool:
+				return (main.zone != null and main.zone.player != null) \
+						or not _build_failure_reported().is_empty(), 90.0):
+		_finish(1)
+		return
+	if not _build_failure_reported().is_empty():
+		_check(false, "the ordinary Zone for this campaign could not be "
+				+ "built by the engine (%s)"
+				% str(_build_failure_reported().get("reason", "?")))
+		_finish(1)
+		return
+	_stamp("engine build finished; a player exists")
+	var zone := main.zone as ZoneController
+	var served: Dictionary = zone.zone
+	print("  BUILT: '%s', %d room(s), %d edge(s), theme %s"
+			% [str(served.get("display_name", "?")),
+				(served.get("chambers", []) as Array).size(),
+				(served.get("edges", []) as Array).size(),
+				str(served.get("theme", "?"))])
+	if not await _await("the bridge's verdict",
+			func() -> bool: return zone.layout_verdict != "", 60.0):
+		_finish(1)
+		return
+	_stamp("bridge verdict: %s" % zone.layout_verdict)
+	_check(zone.layout_verdict == "ACCEPTED",
+			"the ordinary Zone's layout was ACCEPTED (%s)"
+			% zone.layout_verdict)
+	if zone.layout_verdict != "ACCEPTED":
+		_finish(1)
+		return
+
+	await _claim_one_check(zone, zone_id)
+	await _equip_an_echo()
+	await _open_a_station(zone)
+	await _leave_and_return(zone_id)
+
+	print("  TIMELINE:")
+	for line: String in _timeline:
+		print("    %s" % line)
+	_finish(0 if _failures == 0 else 1)
+
+
 ## SERVE THE NAMED PROPOSAL AS THE CAMPAIGN'S Nth ZONE.
 ##
 ## **This exists because the layout seed is the zone_id.** `ZoneBuilder`
@@ -283,9 +698,9 @@ func _advance_to(generation: int) -> bool:
 	for _i in generation - 1:
 		if BridgeClient.active_zone().is_empty():
 			BridgeClient.send_intent({"type": "request_next_zone"})
-		if not await _await("a Zone to stand down",
+		if not await _await("a Zone to stand down (ZONE_READY)",
 				func() -> bool:
-					return not BridgeClient.active_zone().is_empty(), 60.0):
+					return BridgeClient.hub_mode() == "ZONE_READY", 60.0):
 			return false
 		var zid := str(BridgeClient.active_zone().get("zone_id", ""))
 		BridgeClient.send_intent({"type": "abandon_zone", "zone_id": zid})
@@ -330,9 +745,13 @@ func _named_case() -> void:
 		return
 	if BridgeClient.active_zone().is_empty():
 		BridgeClient.send_intent({"type": "request_next_zone"})
-	if not await _await("the named proposal",
+	# ZONE_READY, not merely "a record exists": `active_zone` is
+	# populated at PENDING_GENERATION, before the provider has composed
+	# anything, so the weaker wait sends `enter_zone` at a Zone with no
+	# content in it.
+	if not await _await("the named proposal (ZONE_READY)",
 			func() -> bool:
-				return not BridgeClient.active_zone().is_empty(), 60.0):
+				return BridgeClient.hub_mode() == "ZONE_READY", 120.0):
 		_finish(1)
 		return
 	var zone: Dictionary = BridgeClient.active_zone()
@@ -492,8 +911,14 @@ func _named_case() -> void:
 						% [charged, zone_id])
 		if mine and str(rec.get("layout_state", "")) == "ACCEPTED":
 			ended = "ACCEPTED"
-			_stamp("REPLACEMENT ACCEPTED and entered: the layout the "
+			# A FIRST-ATTEMPT ACCEPTANCE IS NOT A RECOVERY, and calling
+			# it one would turn the ordinary path into evidence for the
+			# failure path.
+			_stamp(("REPLACEMENT ACCEPTED and entered: the layout the "
 					+ "client built on attempt %d was committed" % tries)
+					if tries > 1 or not _build_failure_reported().is_empty()
+					else "ACCEPTED and entered on the first attempt; "
+					+ "nothing failed and nothing was recomposed")
 			break
 		# PARKED IS THE OTHER TERMINAL ANSWER, AND THE HUB IS WHERE IT
 		# READS. A DORMANT Zone is not the active one -- the bridge

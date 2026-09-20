@@ -1,0 +1,78 @@
+rm -rf /home/user/archipepsi/.ordinary-live-saves
+cd bridge && ARCHIPEPSI_SAVE_DIR=/home/user/archipepsi/.ordinary-live-saves \
+  python3 -m archipepsi_bridge --ap=mock --epsilon=fallback \
+  --mock-scale=default & \
+BRIDGE_PID=$!; sleep 3; \
+kill -0 $BRIDGE_PID 2>/dev/null || { \
+  echo "bridge did not start (port already serving?)"; exit 1; }; \
+godot-bin/godot --headless --path godot -- --reload-phase=ordinary \
+  > /tmp/archipepsi-ordinary-live.log 2>&1; \
+STATUS=$?; kill $BRIDGE_PID; \
+grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )" \
+  /tmp/archipepsi-ordinary-live.log | tail -40; \
+if [ $STATUS -ne 0 ]; then exit $STATUS; fi; \
+if grep -q "SCRIPT ERROR" /tmp/archipepsi-ordinary-live.log; then \
+  echo "-- a script error was raised: a run that printed its report"; \
+  echo "-- and then died is not a pass."; \
+  grep -m5 "SCRIPT ERROR" /tmp/archipepsi-ordinary-live.log; \
+  exit 1; \
+fi
+
+  Archipepsi bridge v0.1.0  (2564ca9dbb76*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, default scale (450 locations, 15 Checks per Zone)
+    epsilon     fallback
+    saves       /home/user/archipepsi/.ordinary-live-saves
+    zone 1      fe2b014761fbb449   (23 rooms, 15 Checks, 911 points)
+
+    (no campaign there yet; it is created on first connect)
+
+Traceback (most recent call last):
+  File "/home/user/archipepsi/bridge/archipepsi_bridge/server.py", line 84, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 23)
+  ok: the Zone was re-entered after returning to the Hub
+  ok: leaving and re-entering changed no allocation (15 of 15)
+  TIMELINE:
+       0.00s  ordinary proposal offered for 'zone_001'
+       0.36s  engine build finished; a player exists
+       5.38s  bridge verdict: ACCEPTED
+       5.80s  goal area entered on foot; a Check unlocked
+       6.04s  walked the last leg to Reward_89100126: 2.2 m -> 1.6 m
+       6.06s  interact pressed on Reward_89100126 (location 89100126)
+       6.10s  bridge confirmed location 89100126
+       6.21s  equipped 'act_l89100126' into mobility
+       8.55s  station st:exit online
+       8.57s  travel panel opened from station st:exit
+       8.60s  left 'zone_001' without abandoning it
+       8.99s  re-entered 'zone_001'
+GODOT RELOAD TESTS OK (10 checks)
