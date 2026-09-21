@@ -48,6 +48,7 @@
 | M2-mech | The intended experience, in a development scenario: see a control you cannot reach, cross to a branch, acquire the tool, come back and open it | plan §3 build order P5 / addendum "first grapple configuration" | P4, M1-play | `railway_scenario.gd` (`EchoGrant`), `echo_runtime.gd` | **verified, and labelled** | `f9f51e9`+ | 79 checks. **Explicitly not M2 and not multiworld-safe**: the Echo is handed over by the scenario's own pedestal, not by a Check, a fold or a snapshot |
 | M1-visible | Leaving and coming back: the repair stays, everything else is rebuilt | addendum "persistence precision" | M1-play, M2-mech | `railway_scenario.gd` (`ReturnPlinth`, `reenter`) | **verified** | `9733cb5`+ | 88 checks. The case asserts the span, the lever and the carrier are DIFFERENT OBJECTS afterwards, so a reset dressed as a rebuild cannot pass it |
 | M1-safe | Dying in a yard with shooters in it is not a dead end | 0.4 scenario | M1-fight | `railway_scenario.gd` (`_place_player`) | **verified** | `3074c55`+ | `set_spawn`, not an assignment: the respawn transform is captured in `_ready`, so a player merely MOVED to S1 came back at the world origin |
+| M1-walked | **Continuous play evidence**: the whole loop on foot, nothing placed | plan §8 ("continuous play evidence kept separate from placed-near-target, pre-unlocked, direct-handler and synthetic-state runs") | M2-mech | `rail_junction_driver.gd` (`_walked_end_to_end`) | **verified** | `88cb607`+ | 114 checks, stable over four runs. Board, shoot, ride, be refused, walk the branch, take the tool, walk back, pull up, throw the lever, ride to S3 — no teleports, every command a key |
 | M1-fight | The ride is not a tram ride: three shooters on alternating sides, and cover that turns with the deck | plan §3 sequence ("one meaningful combat situation") | M1-play | `railway_scenario.gd` (`_gauntlet`, `_shield`) | **verified** | `a451876`+ | 96 checks. What is held: real enemies, alternating sides, the shield stops a shot from its side and nothing on the carrier stops one from the other, and a shot from the moving deck damages a shooter. **Whether the fight is any good is a playtest question and is not answered** |
 
 ## Findings
@@ -258,6 +259,19 @@
 
 *(built incrementally per plan §4 — never a prerequisite to starting)*
 
+## Evidence classes, kept apart
+
+The plan asks that continuous play evidence not be blended with the other
+kinds. In `godot-rail-junction`:
+
+| case | class | what it is |
+|---|---|---|
+| `_walked_end_to_end` | **continuous play** | nothing is placed; every metre is walked, ridden or pulled and every command is a key. One stated simplification: the shooters are removed, because this case measures the ROUTE and the fight has its own case |
+| `_the_grapple_opens_the_gantry` | **placed-near-target** | the body is moved between the junction and the branch so each beat can be measured on its own |
+| `_fighting_from_the_deck` | placed-near-target | the body is stood on the deck to measure the firing line and the shield |
+| `_re_entry`, `_nothing_was_accepted`, `_another_packages_latch` | **synthetic state** | a junction is restored from a latch set handed to it directly |
+| `_reported_once` | **direct handler** | `ZoneController.report_latch` is called, not reached through a machine |
+
 ## Playable milestones
 
 | Milestone | Build/ref | Launch/mode/save | Actual continuous player path | Test shortcuts | Owner verdict |
@@ -267,8 +281,9 @@
 
 ## Checkpoint
 
-- **Last completed milestone:** M2-mech, the visible re-entry, and the ride's
-  first combat situation. P0, P2, P2b, P3, P4, M1 and the
+- **Last completed milestone:** the whole loop, walked end to end with nothing
+  placed. **Full headless frontier green at `88cb607`:** Python 1604 + 627
+  subtests, and 26 Godot suites. P0, P2, P2b, P3, P4, M1 and the
   development-scenario loop verified.
 - **Current coherent tree:** `claude/archipepsi-0-4-blindside`; `godot-rail-carrier`,
   `godot-passenger-carry`, `godot-affordance`, `godot-movement`, `godot-physics`,

@@ -1,5 +1,38 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the whole loop, walked — 2026-09-21
+
+**`_walked_end_to_end` places nothing.** The body walks from S1's platform onto
+the deck, fires one Static Pulse at the chevron, rides to S2, is refused for
+want of track when it fires again, steps off, turns onto the branch walkway,
+walks it to the pedestal, takes the hookshot with the interact key, walks back,
+stands on the platform, pulls itself onto the gantry with the mobility key,
+throws the lever, comes down, steps aboard and rides to S3. Every metre is
+walked, ridden or pulled; every command is a key. 114 checks, stable over four
+runs.
+
+**IT IS KEPT APART FROM THE OTHER EVIDENCE, which is the point.** The plan asks
+that continuous play evidence not be blended with placed-near-target,
+pre-unlocked, direct-handler and synthetic-state runs, and the ledger now has a
+table saying which case is which. The one stated simplification here is that the
+shooters are removed: this case measures the ROUTE, the fight has its own case,
+and a walk that failed because the player was killed halfway would report the
+route broken when it is not.
+
+**Two things the walk found that the measured cases could not.** Steering
+straight at the pedestal walks a body off the platform's outer edge before it
+ever reaches the walkway — a player would see the walkway, and the steering had
+to. And standing a metre and a half out from the platform's centre puts the body
+UNDER the gantry's overhang, so the pull takes it into the underside rather than
+over the lip: where you stand to fire is part of the shot.
+
+**FULL FRONTIER GREEN at `88cb607`:** Python 1604 + 627 subtests, and 26 Godot
+suites — activity, affordance, blink, boot, build-failure, content, exit-reach,
+graphs, hud, lab, legible, movement, passenger-carry, physics, rail-carrier,
+rail-junction, reload, return-placement, room, room-contract, rules, stats,
+test, traverse, verbs, zone-audit.
+
+
 ## ENGINE LANE — the ride is not a tram ride — 2026-09-21
 
 Three `ranged` shooters stand beside the S1-to-S2 leg on **alternating sides**,

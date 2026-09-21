@@ -63,6 +63,7 @@ func _run() -> void:
 	await _the_scenario_is_walkable()
 	await _the_grapple_opens_the_gantry()
 	await _fighting_from_the_deck()
+	await _walked_end_to_end()
 	_finish()
 
 
@@ -795,6 +796,216 @@ func _fighting_from_the_deck() -> void:
 	_check(off < 3.0,
 		"on S1's platform rather than at the world origin (%.1f m "
 			% off + "from its centre)")
+
+	yard.queue_free()
+	await get_tree().process_frame
+
+
+## Steer a body toward a point on foot, and say whether it arrived.
+##
+## THE REAL INPUT, not an assignment. `integration_driver._walk_to` set
+## the shape: press the action, turn the body, let
+## `Player._physics_process` do the moving, and jump when wedged rather
+## than spending the whole budget pressed against something.
+func _walk(body: Player, goal: Vector3, within := 1.6,
+		frames := 700) -> bool:
+	var still := 0
+	var last := body.global_position
+	var arrived := false
+	Input.action_press("move_forward", 1.0)
+	for _i in frames:
+		var here := body.global_position
+		var flat := Vector2(goal.x - here.x, goal.z - here.z)
+		if flat.length() < within:
+			arrived = true
+			break
+		body.rotation.y = atan2(-flat.x, -flat.y)
+		if (here - last).length() < 0.012:
+			still += 1
+			if still == 20 and body.is_on_floor():
+				Input.action_press("jump", 1.0)
+				await get_tree().physics_frame
+				Input.action_release("jump")
+				still = 0
+		else:
+			still = 0
+		last = here
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	return arrived
+
+
+## THE WHOLE LOOP, WALKED.
+##
+## **Why this exists beside the cases above.** Every other case in this
+## file puts the body where it needs to be and then measures one thing.
+## That is the right instrument for "does the shield stop a shot" and
+## the wrong one for "can a person get from the start of this to the end
+## of it", and the plan asks for those two kinds of evidence to be kept
+## apart rather than blended into one number. **Nothing below teleports
+## the player.** Every metre is walked, ridden or pulled, and every
+## command is a key.
+##
+## **One stated simplification:** the shooters are removed first. This
+## case is about the ROUTE; the fight has its own case, and a walk that
+## fails because the player was killed halfway would report the route
+## broken when it is not.
+func _walked_end_to_end() -> void:
+	print("  -- WALKED: the whole loop on foot, nothing placed")
+	var yard := RailwayScenario.new()
+	add_child(yard)
+	for _i in 60:
+		await get_tree().physics_frame
+	for shooter: Enemy in yard.shooters:
+		shooter.queue_free()
+	yard.shooters.clear()
+	await get_tree().physics_frame
+	var body: Player = yard.player
+	var docks := yard.carrier.dock_offsets
+
+	# 1. ABOARD. The deck is level with the platform and touching it, so
+	#    this is a walk and not a jump.
+	var aboard := await _walk(body, yard.carrier.pose().origin, 1.2)
+	_check(aboard, "walks from S1's platform onto the deck")
+
+	# 2. SHOOT THE CONTROL AND RIDE. The station resolves its own
+	#    commands here -- nothing in this case calls `resolve`.
+	var forward: RailReceiver = null
+	for receiver: RailReceiver in yard.controls.receivers():
+		if receiver.direction == RailCarrier.FORWARD \
+				and receiver.global_position.distance_to(
+					yard.rail.at(docks[0])) < 8.0:
+			forward = receiver
+	_aim(body, forward.element.global_position)
+	await get_tree().physics_frame
+	body._fire_static_pulse()
+	var rode := 0
+	while rode < 900 and yard.carrier.at_dock() != 1:
+		await get_tree().physics_frame
+		rode += 1
+	_check(yard.carrier.at_dock() == 1,
+		"one pulse at the chevron rides the skiff to S2 (%.1f s)"
+			% (float(rode) / 60.0))
+	_check(body.is_on_floor(), "with the player still standing on it")
+
+	# 3. REFUSED, and the player is the one who finds out.
+	var refusals: Array = []
+	yard.controls.refused.connect(
+		func(reason: String, _d: String) -> void: refusals.append(reason))
+	# WAIT THE COOLDOWN OUT rather than reaching in and clearing it:
+	# a player cannot, and the second pulse is the one that has to be
+	# refused.
+	for _i in 40:
+		await get_tree().physics_frame
+	_aim(body, forward.element.global_position)
+	await get_tree().physics_frame
+	body._fire_static_pulse()
+	for _i in 6:
+		await get_tree().physics_frame
+	_check(refusals.has("no_link"),
+		"shooting forward again is refused for want of track, got %s"
+			% [refusals])
+
+	# 4. OFF AT S2 AND OUT ALONG THE BRANCH.
+	var s2_pad: Vector3 = yard.rail.at(docks[1]) \
+		+ yard.dock_side(1) * RailwayScenario.DOCK_OUT
+	_check(await _walk(body, s2_pad, 1.6),
+		"steps off onto S2's platform")
+	# THE WALKWAY, NOT THE STRAIGHT LINE. The branch leaves the dock
+	# three metres along the track from its centre, so a body steered
+	# straight at the pedestal walks off the platform's outer edge
+	# before it ever reaches the walkway. A player would see the
+	# walkway; the steering has to.
+	var onto: Vector3 = yard.rail.at(docks[1]) \
+			+ yard.dock_side(1) * 5.0 \
+			+ yard.rail.tangent(docks[1]) * 3.0
+	_check(await _walk(body, onto, 1.2, 400),
+		"turns onto the branch walkway")
+	_check(await _walk(body, yard.grant.global_position, 2.0, 900),
+		"and walks it to the pedestal")
+
+	# 5. TAKE IT, with the real verb.
+	_aim(body, yard.grant.global_position)
+	for _i in 3:
+		await get_tree().physics_frame
+	Input.action_press("interact")
+	await get_tree().physics_frame
+	Input.action_release("interact")
+	await get_tree().physics_frame
+	_check(yard.grant.taken, "takes the hookshot")
+
+	# 6. BACK TO THE JUNCTION, AND UP.
+	_check(await _walk(body, onto, 2.0, 900),
+		"walks the branch back")
+	# CLOSE, not near. The gantry's deck overhangs the platform's
+	# outer edge, and a body standing a metre and a half out is under
+	# it -- the pull then takes them into its underside rather than
+	# over its lip. Where you stand to fire is part of the shot.
+	_check(await _walk(body, s2_pad, 0.8, 500),
+		"and stands on S2's platform again")
+	for _i in 20:
+		await get_tree().physics_frame
+	_aim(body, yard.grapple_plate.global_position)
+	await get_tree().physics_frame
+	Input.action_press("fire_mobility")
+	var pulled := false
+	for _i in 4:
+		await get_tree().physics_frame
+		if (body.runtimes["mobility"] as EchoRuntime).cooldown_remaining \
+				> 0.0:
+			pulled = true
+			break
+	Input.action_release("fire_mobility")
+	Input.action_press("move_forward")
+	for _i in 150:
+		await get_tree().physics_frame
+		if body.is_on_floor() and body.global_position.y \
+				> RailwayScenario.GANTRY_Y - 0.5:
+			break
+	Input.action_release("move_forward")
+	_check(pulled and body.global_position.y
+			> RailwayScenario.GANTRY_Y - 0.5,
+		"and pulls itself onto the gantry (%.2f m)"
+			% body.global_position.y)
+
+	# 7. THE LEVER, AND THE SPAN.
+	_aim(body, yard.lever.global_position)
+	for _i in 3:
+		await get_tree().physics_frame
+	Input.action_press("interact")
+	await get_tree().physics_frame
+	Input.action_release("interact")
+	var locked := 0
+	while locked < 600 and not yard.span.locked:
+		await get_tree().physics_frame
+		locked += 1
+	_check(yard.span.locked and yard.carrier.commissioned[1],
+		"throws the lever and the span locks home (%.1f s)"
+			% (float(locked) / 60.0))
+
+	# 8. DOWN, ABOARD, AND ON TO S3.
+	# Off the gantry the short way: its deck overhangs the platform,
+	# so walking at the platform steps off onto it.
+	_check(await _walk(body, s2_pad, 2.0, 600),
+		"comes down onto S2's platform")
+	_check(await _walk(body, yard.carrier.pose().origin, 1.4, 600),
+		"and steps back aboard")
+	_check(body.is_on_floor() and body.global_position.y
+			> RailwayScenario.RAIL_Y + RailwayScenario.DECK.y - 0.5,
+		"standing on the deck rather than in the yard (%.2f m)"
+			% body.global_position.y)
+	for _i in 40:
+		await get_tree().physics_frame
+	_aim(body, forward.element.global_position)
+	await get_tree().physics_frame
+	body._fire_static_pulse()
+	var last_leg := 0
+	while last_leg < 900 and yard.carrier.at_dock() != 2:
+		await get_tree().physics_frame
+		last_leg += 1
+	_check(yard.carrier.at_dock() == 2,
+		"and the same command that was refused rides to S3 (%.1f s)"
+			% (float(last_leg) / 60.0))
 
 	yard.queue_free()
 	await get_tree().process_frame
