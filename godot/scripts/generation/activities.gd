@@ -243,6 +243,12 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 			claimed = Vector3(span, size.y, span)
 		element.set_meta("claimed_size", claimed)
 		element.set_meta("nominal_size", size)
+		# HOW HIGH ABOVE ITS FLOOR this element was placed. The second
+		# pass has to ask `_floor_under` and `_has_headroom` the same
+		# questions the solver asked, and both take the mount height;
+		# re-deriving it from a family table there would be a second
+		# answer to a question already settled here.
+		element.set_meta("mount_height", height)
 		taken.append(_footprint(spot, claimed))
 		built.append(element)
 	return built
@@ -280,7 +286,12 @@ const AIM_CLEAR := 2.0
 ## put every target's own collider in its own way, and nothing turned at
 ## all. So the walk skips the element subtrees, and the elements are
 ## modelled from the footprints they claimed instead.
-static func aim_shot_targets(root: Node3D) -> void:
+## `activities` and `occupied` are the room's own bookkeeping, passed in
+## because the nudge below can change it. A caller that has neither still
+## gets the rotation pass; it simply cannot move anything, which is the
+## honest behaviour for a caller that could not be told if it had.
+static func aim_shot_targets(root: Node3D, activities: Array = [],
+		occupied: Array[AABB] = []) -> void:
 	var elements: Array[ActivityElement] = []
 	_gather_elements(root, elements)
 	if elements.is_empty():
@@ -288,9 +299,38 @@ static func aim_shot_targets(root: Node3D) -> void:
 	var skip: Array = []
 	for element in elements:
 		skip.append(element)
-	_aim_the_unmounted(elements,
+	var moved := _aim_the_unmounted(elements,
 			ChamberBuilders.all_solid_boxes(root, Transform3D.IDENTITY,
-					skip))
+					skip), occupied)
+	if moved:
+		_reclaim(activities)
+
+## THE CLAIM FOLLOWS THE ELEMENT.
+##
+## `footprints` is what becomes `occupied` for anything placed after
+## this room, and `activity_driver` pins the invariant that the box an
+## element claims contains it. A nudge that moved the element and left
+## the claim where it was would break both at once -- so the affected
+## activity's footprints are RECOMPUTED from the elements, by the same
+## `_footprints` that produced them, rather than patched.
+static func _reclaim(activities: Array) -> void:
+	for entry: Variant in activities:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var built: Dictionary = entry
+		var elements: Variant = built.get("elements", [])
+		if typeof(elements) != TYPE_ARRAY:
+			continue
+		var typed: Array[ActivityElement] = []
+		for one: Variant in elements as Array:
+			var element := one as ActivityElement
+			if element != null:
+				typed.append(element)
+		if typed.is_empty():
+			continue
+		built["footprints"] = _footprints(typed,
+				typed[0].get_meta("nominal_size",
+					ActivityElement.TARGET_SIZE) as Vector3)
 
 static func _gather_elements(node: Node,
 		into: Array[ActivityElement]) -> void:
@@ -327,8 +367,9 @@ static func _aim_tries() -> Array[float]:
 	return out
 
 static func _aim_the_unmounted(built: Array[ActivityElement],
-		solids: Array[AABB]) -> void:
+		solids: Array[AABB], occupied: Array[AABB] = []) -> bool:
 	var tries := _aim_tries()
+	var moved := false
 	for element in built:
 		if element.trigger != ActivityElement.SHOT:
 			continue
@@ -358,11 +399,187 @@ static func _aim_the_unmounted(built: Array[ActivityElement],
 			if found:
 				break
 		if not found:
-			# NAMED, NOT SWALLOWED. A target no rotation can clear is a
-			# real remaining case and the census is entitled to say so.
+			# ROTATION FIRST, AND A NUDGE ONLY WHEN ROTATION FAILS.
+			# Turning an object is free; moving one spends part of the
+			# room's layout, so it is the second answer and never the
+			# first.
+			if _nudge_into_the_open(element, size, built, solids,
+					occupied, tries):
+				found = true
+				moved = true
+		if not found:
+			# NAMED, NOT SWALLOWED. A target neither a rotation nor a
+			# bounded nudge can clear is a real remaining case and the
+			# census is entitled to say so.
 			push_warning(("activity target %s at %v has no clear facing "
 					% [element.name, element.position])
-					+ "in any of %d tried" % tries.size())
+					+ "in any of %d tried, and none within %.2f m"
+					% [tries.size(), NUDGE_LIMIT])
+	return moved
+
+## THE SMALLEST SAME-ROOM MOVE THAT GIVES THIS TARGET A SHOT.
+##
+## Owner approval, 2026-09-21, and its shape is the whole of the
+## instruction: the smallest valid same-room nudge, in the TARGET'S OWN
+## LOCAL FRAME and against the ACTUAL placement constraints. No room, no
+## element and no world coordinate is named here -- what follows applies
+## to any unmounted SHOT target in any room that no rotation could aim.
+##
+## BOUNDED, and bounded is not a detail. `NUDGE_LIMIT` is half a metre,
+## walked in `NUDGE_STEP` increments, DISTANCE FIRST so the first
+## candidate that survives every test is the smallest one that exists.
+## A target that needs more than that is not suffering from a placement
+## that is a few centimetres out; it is in a room that has no room for
+## it, and that is a composition finding rather than something to be
+## slid away from.
+##
+## FOUR TESTS, and a candidate must pass all of them:
+##
+##   FOOTPRINT  the space it would claim hits no solid, no other
+##              element's claim, and no other reservation in the room's
+##              avoid-list. Its OWN claim is excluded, because a thing
+##              may always move inside the space it already holds.
+##   SUPPORT    there is floor under it at the height it was placed at,
+##              asked with the solver's own `_floor_under`.
+##   ROUTE      a player can stand somewhere along the new facing and
+##              shoot it, with floor underfoot and headroom above --
+##              `_floor_under` and `_has_headroom`, the same pair the
+##              mounted solver uses.
+##   THE SHOT   a facing is clear for the full `AIM_CLEAR`. The
+##              threshold is untouched: a nudge exists to satisfy the
+##              bar, never to lower it.
+##
+## THE ELEMENT IS PUT BACK if every candidate fails. Nothing is dropped
+## and nothing is left half-moved.
+const NUDGE_STEP := 0.05
+const NUDGE_LIMIT := 0.50
+
+static func _nudge_into_the_open(element: ActivityElement, size: Vector3,
+		built: Array[ActivityElement], solids: Array[AABB],
+		occupied: Array[AABB], tries: Array[float]) -> bool:
+	var home := element.position
+	var home_yaw := element.rotation.y
+	var claimed: Vector3 = element.get_meta("claimed_size", size)
+	var mine := _footprint(home, claimed)
+	var height := float(element.get_meta("mount_height", home.y))
+	# ITS OWN FRAME, NOT THE WORLD'S. `-basis.z` is the direction the
+	# target is looking, so the first thing tried is backing away from
+	# whatever is in front of it -- which is the move the geometry is
+	# actually asking for. A world-axis ladder would mean the same
+	# obstruction needed a different nudge depending on how the room
+	# happened to be turned.
+	var frame := element.transform.basis
+	var ways: Array[Vector3] = [-frame.z, frame.z, frame.x, -frame.x]
+	var steps := int(round(NUDGE_LIMIT / NUDGE_STEP))
+	for step in range(1, steps + 1):
+		var far := float(step) * NUDGE_STEP
+		for way: Vector3 in ways:
+			var here: Vector3 = home + way.normalized() * far
+			if not _nudge_is_legal(here, claimed, mine, height, element,
+					built, solids, occupied):
+				continue
+			element.position = here
+			for width: float in [1.0, NARROW_AIM]:
+				for yaw: float in tries:
+					if not _aim_is_clear(element, yaw, size, built,
+							solids, width):
+						continue
+					var face := Vector3(sin(yaw), 0.0, cos(yaw))
+					if not _shootable_from_somewhere(here, face, claimed,
+							height, solids):
+						continue
+					element.rotation.y = yaw
+					return true
+			element.position = home
+	element.position = home
+	element.rotation.y = home_yaw
+	return false
+
+## Would the element's claim at `here` land on anything, and is there
+## floor to land on?
+static func _nudge_is_legal(here: Vector3, claimed: Vector3, mine: AABB,
+		height: float, element: ActivityElement,
+		built: Array[ActivityElement], solids: Array[AABB],
+		occupied: Array[AABB]) -> bool:
+	var box := _footprint(here, claimed)
+	# THE PADDING IS FOR CONTENT, NOT FOR ARCHITECTURE, and asking a wall
+	# about it rejects the spot the element already legally stands in.
+	#
+	# `_footprint` grows an element by 0.35 m a side so two of them do
+	# not merely touch -- its own comment says so. The solver never
+	# tested that padded box against the room's solids, and could not
+	# have: `_free_spot` deliberately accepts a crowded spot rather than
+	# drop an element, so a target standing a legal 0.15 m off a
+	# partition has 0.2 m of courtesy padding INSIDE it by construction.
+	# Measured, in the diagnostic Zone: element at local x 6.1 with a
+	# 0.4 m partition at 6.7, silhouette clear, padded claim overlapping
+	# -- so every nudge in every direction was refused for a collision
+	# the element was already in and that does not exist.
+	#
+	# So a solid is asked about the SILHOUETTE, which is the thing that
+	# would really be inside a wall, and the padded claim is kept for
+	# the question it was built for, below.
+	if ChamberBuilders.box_hits(AABB(here - claimed * 0.5, claimed),
+			solids):
+		return false
+	for other in built:
+		if other == element:
+			continue
+		var theirs: Vector3 = other.get_meta("claimed_size", claimed)
+		if box.intersects(_footprint(other.position, theirs)):
+			return false
+	# RESERVATIONS COUNT HERE, unlike in `_aim_is_clear`. A shot travels
+	# through a reward's reserved space and an object does not, so the
+	# avoid-list that is irrelevant to a facing is decisive for a move.
+	for reserved: AABB in occupied:
+		if _is_my_claim(reserved, mine):
+			continue
+		if box.intersects(reserved):
+			return false
+	return _floor_under(here, height, solids)
+
+## Is this reservation the element's own, rather than somebody else's?
+##
+## The room appended this element's claim to the avoid-list when it was
+## built, so a nudge that consulted the list naively would find the
+## element blocked by itself and never move at all.
+static func _is_my_claim(reserved: AABB, mine: AABB) -> bool:
+	return reserved.position.is_equal_approx(mine.position) \
+			and reserved.size.is_equal_approx(mine.size)
+
+## Can a player stand out along this facing and take the shot?
+##
+## The same pair `_firing_position` asks of a mounted target -- floor to
+## stand on, headroom to stand in -- asked along an arbitrary facing
+## rather than a wall's normal.
+##
+## THE NEAR SAMPLES ARE THE POINT. `_firing_position` starts at 2.0 m
+## because a mounted target has a wall behind it and the room in front,
+## so anywhere out from 2.0 m is open floor. A free-standing target need
+## not be so lucky: this one has exactly `AIM_CLEAR` of clear air and
+## something solid immediately past it, so every sample from 2.0 m
+## outward lands in or beyond the blocker and the target read as
+## unshootable while a player could comfortably stand at 1.5 m and hit
+## it. The Static Pulse is a forty-metre hitscan; the question is
+## whether there is floor to stand on inside the window, not whether the
+## window happens to open onto a hall.
+##
+## The nearest sample clears the element's own silhouette plus a body's
+## radius, because standing inside a thing is not standing at it, and
+## the ladder then walks out through the clear window and past it.
+static func _shootable_from_somewhere(at: Vector3, face: Vector3,
+		claimed: Vector3, height: float, solids: Array[AABB]) -> bool:
+	var near := maxf(claimed.x, claimed.z) * 0.5 \
+			+ Constants.PLAYER_RADIUS + 0.25
+	var ladder: Array[float] = [near, (near + AIM_CLEAR) * 0.5, AIM_CLEAR,
+			3.5, 5.0, 7.0, 9.0]
+	for out: float in ladder:
+		var stand: Vector3 = at + face * out
+		if not _floor_under(stand, height, solids):
+			continue
+		if _has_headroom(stand, height, solids):
+			return true
+	return false
 
 ## Is there `AIM_CLEAR` of nothing in front of `element` at `yaw`?
 ##

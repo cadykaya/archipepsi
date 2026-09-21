@@ -141,6 +141,7 @@ jobs:
           make godot-counterfire
           make godot-mass-class
           make godot-unweighted
+          make godot-target-facing
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live

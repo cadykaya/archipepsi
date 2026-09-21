@@ -378,10 +378,13 @@ static func _build_activities(result: Dictionary, chamber: Dictionary,
 			activities.append(built)
 			index += 1
 	# AND NOW THAT EVERY ELEMENT IN THE ROOM EXISTS, which way each shot
-	# target looks. Positions are already settled and none of them move;
-	# an unmounted target claims a square precisely so this turn cannot
-	# invalidate the avoid-lists above.
-	Activities.aim_shot_targets(root)
+	# target looks -- and, for one that no rotation can aim, the
+	# smallest bounded move that gives it a shot. An unmounted target
+	# claims a square, so a turn cannot invalidate the avoid-lists
+	# above; a MOVE can, which is why both lists are handed over rather
+	# than left behind. `aim_shot_targets` rewrites the claims it
+	# invalidates.
+	Activities.aim_shot_targets(root, activities, occupied)
 	return activities
 
 ## WHICH ROOM to build. Every return here is a room; none of them is a
