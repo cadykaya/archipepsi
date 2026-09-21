@@ -639,6 +639,39 @@ by reverting the fix and finding only one failure where there should have been
 several.
 
 
+### F-18 — the engine half of "no status before its effect" was mine, and it was open
+
+D-7 increment 2 admitted the destination's vocabulary: `ECHO_STATUS_KINDS`
+went from **twelve names to twenty-four**, with `ECHO_STATUS_KINDS_IMPLEMENTED`
+still the twelve that ship. That is correct, and it is the design's own rule —
+a kind can be named, exported and reviewed while still un-emittable.
+
+**The engine was asserting the wrong list.** `StatusEffects.apply` guarded on
+`ECHO_STATUS_KINDS`, i.e. on the vocabulary rather than on support. So the
+moment the twelve designed kinds were admitted,
+`StatusEffects.apply("lightened", …)` **succeeded**: it stored, it satisfied
+`status_active` conditions and `status_applied` edges, nothing implemented it,
+and no cleanse order could remove it. That is the permanent inert
+un-cleansable status the vocabulary's own comment was written about — reached
+through the front door rather than through a typo.
+
+It was measured on this tree: `godot-stats` passed while applying all
+twenty-four and asserting all twenty-four were stored. **The suite was green
+and demonstrating the defect.**
+
+Not the bridge lane's error. Her commit says "no godot script was authored by
+this lane", and the engine half of her rule was always Prod's: the bridge
+refuses to **emit** an unsupported kind, the engine asserts it can **honour**
+what it is handed. The window existed between her push and this integration.
+
+Repaired: `apply` now refuses in two distinguishable ways — not a status at
+all, versus named by the design but unimplemented. The case's claim got
+**stronger**, not weaker: it was "every kind the schema admits is accepted"
+and is now "every kind the runtime supports is accepted, and every kind the
+vocabulary runs ahead on is refused and leaves nothing behind". With the guard
+removed, twelve checks fail by name.
+
+
 ## Full scope and status
 
 Every workstream in the plan, including what has not been started. **A Dess

@@ -26,8 +26,22 @@ func apply(kind: String, duration: float, magnitude: float) -> void:
 	# `status_applied` edges, and permanently uncleansable because it is
 	# not in the cleanse order. A typo produced a status that did nothing
 	# and could never be removed.
+	# ...AND SUPPORT IS NOT MEMBERSHIP. The vocabulary grew from twelve to
+	# twenty-four when the destination's kinds were admitted ahead of
+	# their runtimes, and for that window this guard read the wrong list:
+	# `lightened` was in `ECHO_STATUS_KINDS`, so it applied, stored, and
+	# satisfied `status_active` while nothing implemented it and no
+	# cleanse order could remove it -- the permanent inert status above,
+	# arrived at by the front door. The bridge refuses to EMIT an
+	# unsupported kind; this is the engine asserting it can HONOUR what
+	# it is handed, which is the half that lives here.
 	if not kind in Constants.ECHO_STATUS_KINDS:
 		push_error("apply_status names unknown status '%s'" % kind)
+		return
+	if not kind in Constants.ECHO_STATUS_KINDS_IMPLEMENTED:
+		push_error(("apply_status names '%s', which the design names " % kind)
+				+ "but no runtime effect implements, so it may not be "
+				+ "applied. NO STATUS BEFORE ITS EFFECT.")
 		return
 	for entry: Dictionary in BridgeClient.owned_components("status"):
 		var component: Dictionary = entry.get("component", {})

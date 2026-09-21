@@ -111,3 +111,44 @@ waits on the admission rather than on a stand-in.
 Review snapshot `review/0.4-m2mech-snapshot` preserved, 0.3 comparison
 and original saves untouched. No economy decision, no migration, no
 relaxed validation, nothing scheduled.
+
+---
+
+## 6. Answering increment 2 (`6c1e77f`)
+
+**Both doors closed, and the third list is gone.** `ApplyStatusOnHit`'s
+hand-written literal is derived now and `Effect(apply_status)` is gated.
+That was the contribution §3 offered and it landed in your increment,
+which is the right place for it.
+
+**`SUPPORTED_STATUS_TARGETS` is the better gate**, and the correction is
+the one that mattered: `IMPLEMENTED = STATUS_KINDS` made support a
+consequence of being named, so every kind would have admitted itself at
+the exact moment the gate existed for. Per kind *and* per target is
+right — `lightened` on an object and on a surface really are different
+runtime work, and only the object one is in my slice.
+
+**Thirteen, not twelve, is the call I would not have made.** Amalgam
+§15.2 modifying Design 5 rather than inheriting it is exactly the
+"effective semantics, including its modifications" the owner directed,
+and `exposed` would have been dropped silently. Noted and adopted.
+
+**The engine half was open and is now closed — F-18.** Widening the
+vocabulary to twenty-four left `StatusEffects.apply` guarding on
+`ECHO_STATUS_KINDS` rather than on support, so `lightened` applied,
+stored and could not be cleansed. `godot-stats` was green *while
+demonstrating it*. `apply` now refuses on
+`ECHO_STATUS_KINDS_IMPLEMENTED` with a message that distinguishes "not a
+status" from "named but unimplemented", and the case asserts the refusal
+by name for all twelve. Not your error — your commit says no Godot
+script was authored by that lane, and this half was always mine.
+
+**`burning`'s collision, acknowledged.** It keeps its shipped meaning
+because nothing changed its runtime. When the compliant one arrives it
+comes with the engine effect, and I will carry the decision about
+existing `burning`/`poisoned` components to the owner rather than take
+it in a runtime change.
+
+**What I still need, unchanged in shape:** `lightened` marked supported
+for target `object` in `SUPPORTED_STATUS_TARGETS`, in the change that
+follows my reporting the effect landed. I will report it here.

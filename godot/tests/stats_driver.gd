@@ -537,8 +537,29 @@ func _an_unknown_status_kind_is_refused() -> void:
 			"a status the schema does not admit is refused, not stored")
 	_check(statuses.active_kinds().is_empty(),
 			"...and leaves nothing behind: %s" % [statuses.active_kinds()])
-	for kind: String in Constants.ECHO_STATUS_KINDS:
+	for kind: String in Constants.ECHO_STATUS_KINDS_IMPLEMENTED:
 		statuses.apply(kind, 1.0, 1.0)
 	_check(statuses.active_kinds().size()
-			== Constants.ECHO_STATUS_KINDS.size(),
-			"every kind the schema DOES admit is accepted")
+			== Constants.ECHO_STATUS_KINDS_IMPLEMENTED.size(),
+			"every kind the runtime SUPPORTS is accepted")
+
+	# NAMED IS NOT SUPPORTED, and the gap between the two lists is the
+	# whole point of there being two. A designed kind admitted to the
+	# vocabulary ahead of its runtime must be refused here exactly as a
+	# typo is -- otherwise it stores, reads as active, and cannot be
+	# cleansed, which is the defect this case was written for.
+	var named_only: Array[String] = []
+	for kind: String in Constants.ECHO_STATUS_KINDS:
+		if not kind in Constants.ECHO_STATUS_KINDS_IMPLEMENTED:
+			named_only.append(kind)
+	_check(not named_only.is_empty(),
+			"the vocabulary runs ahead of the runtime by %d kind(s)"
+			% named_only.size())
+	var before := statuses.active_kinds().size()
+	for kind: String in named_only:
+		statuses.apply(kind, 1.0, 1.0)
+		_check(not statuses.has(kind),
+				"'%s' is named but unsupported, and is refused" % kind)
+	_check(statuses.active_kinds().size() == before,
+			"...and none of them left anything behind: %d of %d"
+			% [statuses.active_kinds().size(), before])
