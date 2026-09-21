@@ -46,6 +46,7 @@
 | A-fix | `godot-return-journey` green again | 0.3 carry-over | — | `integration_driver.gd` | **verified** | `a0be324` | F-04 |
 | M1-play | M1 is a place a person can stand: `--railway` | plan §3 ("M1 ... independently playable") | P4 | `railway_scenario.gd`, `railway_shot_driver.gd` | **verified** | `ca43341`+ | `make godot-rail-junction` builds and measures it; `make railway-shots` renders it. **Development scaffolding, not a Zone** |
 | M2-mech | The intended experience, in a development scenario: see a control you cannot reach, cross to a branch, acquire the tool, come back and open it | plan §3 build order P5 / addendum "first grapple configuration" | P4, M1-play | `railway_scenario.gd` (`EchoGrant`), `echo_runtime.gd` | **verified, and labelled** | `f9f51e9`+ | 79 checks. **Explicitly not M2 and not multiworld-safe**: the Echo is handed over by the scenario's own pedestal, not by a Check, a fold or a snapshot |
+| M1-visible | Leaving and coming back: the repair stays, everything else is rebuilt | addendum "persistence precision" | M1-play, M2-mech | `railway_scenario.gd` (`ReturnPlinth`, `reenter`) | **verified** | `9733cb5`+ | 88 checks. The case asserts the span, the lever and the carrier are DIFFERENT OBJECTS afterwards, so a reset dressed as a rebuild cannot pass it |
 
 ## Findings
 
@@ -264,7 +265,7 @@
 
 ## Checkpoint
 
-- **Last completed milestone:** M2-mech. P0, P2, P2b, P3, P4, M1 and the
+- **Last completed milestone:** M2-mech, and the visible re-entry. P0, P2, P2b, P3, P4, M1 and the
   development-scenario loop verified.
 - **Current coherent tree:** `claude/archipepsi-0-4-blindside`; `godot-rail-carrier`,
   `godot-passenger-carry`, `godot-affordance`, `godot-movement`, `godot-physics`,
