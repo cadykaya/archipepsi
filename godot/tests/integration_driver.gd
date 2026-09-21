@@ -1541,8 +1541,26 @@ func _the_return_carries_a_body_home(controller: ZoneController,
 	var pad := plug.global_position
 	await _walk_to(body, Vector3(pad.x, body.global_position.y, pad.z),
 			func() -> bool: return not fired.is_empty())
+	# THE HOLD IS THE EVENT, NOT THE ENTRY (19c5d8e). The playtest
+	# reported being yanked out of a fight by brushing one -- "im in
+	# combat and BAM im at the start of the zone" -- so the pad now
+	# charges for `ReturnPlug.HOLD_SECONDS` of unbroken contact and
+	# leaving cancels it. `_walk_to` stops the moment the body is within
+	# 0.3 m of the pad, which is the instant the charge STARTS.
+	#
+	# This case was the third consumer of that contract and the only one
+	# not in CI, so it was still asserting that arriving fires the
+	# device. `room_contract_driver` and `traverse_driver` were updated
+	# with the change; this was missed. Not a relaxation: the entry is
+	# now checked to fire NOTHING, which is the half the old assertion
+	# could not express.
+	_check(fired.is_empty(),
+			"PHYSICAL: arriving in the pad fires nothing -- the hold "
+			+ "does (%s)" % str(fired))
+	await _hold_in_the_plug(fired)
 	_check(fired.size() == 1,
-			"PHYSICAL: walking into the pad raised exactly one "
+			"PHYSICAL: holding in the pad for %.1f s raised exactly one "
+			% ReturnPlug.HOLD_SECONDS
 			+ "traversal and it raised %d %s" % [fired.size(), str(fired)])
 	for _settle in 30:
 		await get_tree().physics_frame
@@ -1553,6 +1571,24 @@ func _the_return_carries_a_body_home(controller: ZoneController,
 			+ "Zone start: %.1f m away" % gap)
 	return fired.size() == 1 and gap < 3.0
 
+
+## STAND STILL AND LET THE DEVICE'S CLOCK RUN.
+##
+## The same shape `traverse_driver._hold_in_the_plug` uses, and for the
+## same reasons: bounded at three times `HOLD_SECONDS` so a device that
+## never fires ends the case rather than the run, stopping the frame the
+## signal arrives so the body's position afterwards is the teleport's
+## result, and steering nothing -- a hold that nudged the body would be
+## measuring its own nudge, and "does it stay in the volume by itself"
+## is half of what the hold promises.
+func _hold_in_the_plug(fired: Array) -> int:
+	var budget := int(ceil(ReturnPlug.HOLD_SECONDS * 3.0
+			/ maxf(get_physics_process_delta_time(), 0.001)))
+	var waited := 0
+	while waited < budget and fired.is_empty():
+		await get_tree().physics_frame
+		waited += 1
+	return waited
 
 ## Steer a body toward a point until it arrives or the caller's
 ## condition fires. The stopping condition is the device's own trigger,
