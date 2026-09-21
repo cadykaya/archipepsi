@@ -656,6 +656,38 @@ func _the_grapple_opens_the_gantry() -> void:
 		yard.span.advance(STEP)
 	_check(yard.span.locked and yard.carrier.commissioned[1],
 		"which locks home and opens the way to S3")
+	# --- AND LEAVING, AND COMING BACK ---------------------------------
+	#
+	# The claim M1 actually makes, made visible. Everything the railway
+	# is made of is thrown away and built again; what comes back is
+	# whatever the accepted latch implies, and nothing else.
+	_check(yard.accepted_latches() == ["yard_junction/span_aligned"],
+		"one latch was accepted, got %s" % [yard.accepted_latches()])
+	var old_span: RailSpan = yard.span
+	var old_lever: AlignmentControl = yard.lever
+	var old_carrier: RailCarrier = yard.carrier
+	yard.reenter()
+	await get_tree().physics_frame
+	_check(yard.span != old_span and yard.lever != old_lever
+		and yard.carrier != old_carrier,
+		"coming back rebuilds the railway rather than resetting it")
+	_check(yard.span.locked and yard.carrier.commissioned[1],
+		"and the span is still home, recomputed from the latch")
+	_check(not yard.lever.done,
+		"while the lever stands up again: its position was never the "
+			+ "thing that persisted")
+	_check(yard.carrier.at_dock() == 0,
+		"the carrier is parked at S1, not where it was left")
+	_check(not yard.grant.taken,
+		"and the pedestal is rebuilt -- a dev-path grant is scenery, "
+			+ "not progress")
+	_check(yard.accepted_latches() == ["yard_junction/span_aligned"],
+		"and the rebuild reported nothing new, got %s"
+			% [yard.accepted_latches()])
+	_check(yard.carrier.request(RailCarrier.FORWARD),
+		"the railway is rideable from the first command")
+	_check(_drive(yard.carrier) > 0 and yard.carrier.at_dock() == 1,
+		"reaching S2")
 
 	yard.queue_free()
 	await get_tree().process_frame

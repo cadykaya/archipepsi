@@ -2,12 +2,14 @@ class_name RailwayScenario
 extends Node3D
 ## THE RAILWAY, PLAYABLE (`--railway`). **Development scaffolding.**
 ##
-## **What this is.** Everything M1 built, in a place a person can stand:
-## board the skiff at S1, shoot FORWARD, ride to S2, find S2 to S3
-## refused for want of track, climb the gantry, pull the alignment lever,
-## watch the span swing home and lock, ride to S3. The plan calls M1
-## "independently playable" and until this existed nothing let anyone
-## walk into it.
+## **What this is.** The whole first loop, in a place a person can stand.
+## Board the skiff at S1, shoot the chevron pointing down the track, ride
+## to S2, find S2 to S3 refused for want of track. The gantry that lowers
+## the span is overhead and out of reach; the branch that supplies the
+## tool leaves the same dock and passes under it. Take the hookshot, try
+## it on the ledge beside the pedestal, come back, pull yourself to the
+## ring, throw the lever, and ride to S3. Then leave and come back, and
+## find the repair still there and everything else at its default.
 ##
 ## **What this is NOT, and the distinction is load bearing.** This is not
 ## a Zone. It is not composed, it carries no Checks, no exit and no
@@ -17,13 +19,17 @@ extends Node3D
 ## rule -- **it runs only when an operator asks for it by name, and
 ## nothing can arrive here by accident.**
 ##
-## **Why the gantry has stairs.** The approved configuration reaches the
-## alignment control by GRAPPLE, from an acquisition branch that grants
-## the Echo. That branch is M2 and does not exist. Stairs are a
-## placeholder for it and are labelled as one in the scenario itself,
-## because a scenario that quietly walked the player up to a control the
-## design says is grappled to would be misrepresenting the design it
-## exists to show.
+## **The Echo is granted by a pedestal, and that is the ONLY shortcut.**
+## In the real loop the featured Echo arrives through the campaign: an AP
+## Check, the interpretation fold, a snapshot, `set_equipped`. That
+## contract is M2's completion requirement and is not built. Everything
+## else here is the real runtime -- the real interact verb, the real
+## mobility slot, the real damage path, the real latch -- and the one
+## shortcut is labelled on a sign in the world as well as here.
+##
+## **There is no walking bypass to the gantry, deliberately.** An earlier
+## cut had a flight of stairs as a placeholder, and a placeholder that
+## lets you skip the loop is not a placeholder for the loop.
 
 ## Where the rail sits above the yard floor, and the deck's thickness.
 ## The dock platforms are built to `RAIL_Y + DECK.y` so stepping aboard
@@ -62,8 +68,22 @@ var lever: AlignmentControl = null
 var grant: EchoGrant = null
 ## The plate above the gantry that the hookshot bites.
 var grapple_plate: StaticBody3D = null
+var plinth: ReturnPlinth = null
 var player: Player = null
 var dock_offsets := PackedFloat32Array()
+
+## EVERYTHING THE RAILWAY IS MADE OF, under one node.
+##
+## So that coming back can be a REBUILD rather than a reset. The claim
+## M1 makes is that the accepted repair is recomputed from its latch
+## when the Zone is built again -- not that a span object remembers
+## being moved -- and the only honest way to show that to a person
+## standing in it is to throw the machinery away and build it afresh.
+var _world: Node3D = null
+## The latch refs this yard has accepted, standing in for the
+## `progress.latched` a campaign would carry. In memory only: there is
+## no save here, and nothing here pretends there is.
+var _accepted := {}
 
 var _span_sign: Label3D = null
 var _refusal_sign: Label3D = null
@@ -73,6 +93,9 @@ var _refusal_left := 0.0
 func _ready() -> void:
 	name = "RailwayScenario"
 	_environment()
+	_world = Node3D.new()
+	_world.name = "Yard"
+	add_child(_world)
 	rail = RailPath.from_points(PackedVector3Array([
 		Vector3(0, RAIL_Y, 0),
 		Vector3(16, RAIL_Y, 0),
@@ -100,6 +123,7 @@ func _ready() -> void:
 	_docks()
 	_gantry()
 	_branch()
+	_plinth()
 	_spawn_player()
 	_legend()
 
@@ -200,7 +224,7 @@ func _receiver(dock: int, direction: int, where: Vector3, along: Vector3,
 		0 if direction == RailCarrier.FORWARD else 1),
 		Color(0.55, 0.9, 0.7) if direction == RailCarrier.FORWARD
 			else Color(1.0, 0.72, 0.45), PI * 0.5)
-	add_child(made)
+	_world.add_child(made)
 	made.global_position = head
 	made.basis = Basis.looking_at(-along, Vector3.UP)
 	controls.add(made)
@@ -209,17 +233,17 @@ func _receiver(dock: int, direction: int, where: Vector3, along: Vector3,
 func _carrier() -> void:
 	carrier = RailCarrier.create(rail, dock_offsets,
 		PackedStringArray(["S1", "S2", "S3"]), [true, false], DECK, THEME)
-	add_child(carrier)
+	_world.add_child(carrier)
 	controls = RailControls.create(carrier)
-	add_child(controls)
+	_world.add_child(controls)
 	junction = RailJunction.create(carrier, "yard_junction")
-	add_child(junction)
+	_world.add_child(junction)
 	# THE SPAN, pivoting at the S2 end of the gap it bridges. The parent
 	# carries the aim along the track; the span's own yaw is the swing,
 	# which is why it needs a frame of its own to swing inside.
 	var pivot := Node3D.new()
 	pivot.name = "SpanPivot"
-	add_child(pivot)
+	_world.add_child(pivot)
 	pivot.global_position = rail.at(dock_offsets[1])
 	pivot.basis = Basis.looking_at(-rail.tangent(dock_offsets[1]),
 		Vector3.UP)
@@ -228,6 +252,11 @@ func _carrier() -> void:
 	pivot.add_child(span)
 	junction.add(span, null)
 	controls.refused.connect(_on_refused)
+	# THE ACCEPTED CONSEQUENCE, kept the way a campaign would keep it:
+	# the latch ref, not the state of any object that produced it.
+	junction.latch_fired.connect(
+		func(pkg: String, latch: String) -> void:
+			_accepted["%s/%s" % [pkg, latch]] = true)
 	junction.commissioned.connect(_on_commissioned)
 
 
@@ -259,7 +288,7 @@ func _gantry() -> void:
 			Vector3(deck_centre.x, GANTRY_Y * 0.5, deck_centre.z),
 			ThemeMaterials.trim_mat(THEME))
 	lever = AlignmentControl.create("ALIGN THE SPAN", THEME)
-	add_child(lever)
+	_world.add_child(lever)
 	lever.global_position = deck_centre \
 		+ Vector3(0.0, 0.4 * 0.5 + AlignmentControl.BASE.y * 0.5, 0.0)
 	lever.look_at(Vector3(where.x, lever.global_position.y, where.z),
@@ -267,8 +296,8 @@ func _gantry() -> void:
 	lever.operated.connect(func(_c: AlignmentControl) -> void: span.begin())
 	_sign("ALIGNMENT GANTRY", deck_centre + Vector3(0, 3.0, 0),
 		Color(1.0, 0.85, 0.5), 64)
-	_sign("(stairs stand in for the grapple: the\n"
-		+ "acquisition branch that grants it is M2)",
+	_sign("reached with the hookshot from the branch\n"
+		+ "below -- aim at the ring",
 		deck_centre + Vector3(0, 2.1, 0), Color(0.7, 0.7, 0.75), 28)
 	_span_sign = _sign("SPAN: STOWED  --  NO TRACK BEYOND S2",
 		rail.at((dock_offsets[1] + dock_offsets[2]) * 0.5)
@@ -280,15 +309,22 @@ func _gantry() -> void:
 func _spawn_player() -> void:
 	player = Player.create()
 	add_child(player)
+	_place_player()
+	if player.camera != null:
+		player.camera.current = true
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+## Stand the player on S1, facing the track. Where they arrive, and
+## where they arrive again.
+func _place_player() -> void:
 	var start := rail.at(dock_offsets[0])
 	var along := rail.tangent(dock_offsets[0])
 	var side := Vector3.UP.cross(along).normalized()
 	player.global_position = start + side * DOCK_OUT \
 		+ Vector3(0.0, RAIL_Y + DECK.y + 1.2, 0.0)
 	player.rotation.y = atan2(-side.x, -side.z) + PI
-	if player.camera != null:
-		player.camera.current = true
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	player.velocity = Vector3.ZERO
 
 
 func _legend() -> void:
@@ -311,8 +347,12 @@ func _legend() -> void:
 	print("  At S2 the railway refuses S3: the span is up. The gantry that")
 	print("  lowers it is overhead and out of reach -- cross the junction,")
 	print("  take the hookshot, try it on the ledge, come back, and pull")
-	print("  yourself up to the ring. The repair is what would survive")
-	print("  leaving, if this were a Zone.")
+	print("  yourself up to the ring.")
+	print("")
+	print("  Then use the plinth by S1 to leave and come back. The span")
+	print("  stays down -- recomputed from the latch it fired -- and")
+	print("  everything else is built again: the lever stands up, the")
+	print("  controls are armed, the carrier is parked at S1.")
 	print("")
 
 
@@ -342,6 +382,124 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().quit()
+
+
+
+## The way out, and back in. OUTSIDE the yard on purpose: it stands for
+## the Zone boundary rather than for anything the railway is made of,
+## and a node that freed itself from inside its own signal handler would
+## be a crash rather than a re-entry.
+func _plinth() -> void:
+	var where := rail.at(dock_offsets[0])
+	var along := rail.tangent(dock_offsets[0])
+	var side := Vector3.UP.cross(along).normalized()
+	var top := RAIL_Y + DECK.y
+	plinth = ReturnPlinth.make(THEME)
+	add_child(plinth)
+	plinth.global_position = where + side * (DOCK_OUT + 1.2) \
+			- along * 2.4 + Vector3(0.0, top + 0.6, 0.0)
+	plinth.asked.connect(_on_leave)
+	_sign("LEAVE AND COME BACK", plinth.global_position
+			+ Vector3(0, 1.6, 0), Color(0.85, 0.75, 1.0), 44, true)
+	_sign("stands for the Zone boundary: what the latch\n"
+			+ "accepted comes back, everything else is rebuilt",
+			plinth.global_position + Vector3(0, 1.0, 0),
+			Color(0.7, 0.7, 0.75), 24, true)
+
+
+## A player asked to leave. DEFERRED, because `reenter` frees the yard
+## and this is running inside a node that is standing in it.
+func _on_leave() -> void:
+	reenter.call_deferred()
+
+
+## --- leaving, and coming back -----------------------------------------
+
+## A plinth that ends the visit and starts another one.
+##
+## **Why the scenario needs one.** M1's whole claim is that the accepted
+## repair is RECOMPUTED when the place is built again -- and until now
+## that was visible only to a test. A player could pull the lever and
+## watch the span lock, and had no way to see the part that matters.
+class ReturnPlinth extends StaticBody3D:
+	signal asked
+
+	var label := "LEAVE AND COME BACK"
+
+	static func make(theme: String) -> ReturnPlinth:
+		var made := ReturnPlinth.new()
+		made.name = "ReturnPlinth"
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = Vector3(1.0, 1.2, 1.0)
+		shape.shape = box
+		made.add_child(shape)
+		var mesh_node := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = box.size
+		mesh_node.mesh = mesh
+		mesh_node.material_override = ThemeMaterials.glow_material(
+			Color(0.85, 0.75, 1.0), 1.4)
+		made.add_child(mesh_node)
+		var mount := MeshInstance3D.new()
+		var mount_mesh := BoxMesh.new()
+		mount_mesh.size = Vector3(1.3, 0.2, 1.3)
+		mount.mesh = mount_mesh
+		mount.position = Vector3(0.0, -0.7, 0.0)
+		mount.material_override = ThemeMaterials.glow_material(
+			ActivityElement.HARDWARE, 0.0)
+		made.add_child(mount)
+		return made
+
+	func interact_prompt() -> String:
+		return "[E] %s" % label
+
+	func interact(_who: Node) -> void:
+		asked.emit()
+
+
+## What this visit has accepted, as `package_id/latch_id`. The scenario's
+## stand-in for `progress.latched`.
+func accepted_latches() -> Array:
+	var out: Array = _accepted.keys()
+	out.sort()
+	return out
+
+
+## Throw the yard away and build it again from the accepted latches.
+##
+## **A REBUILD, not a reset**, and the difference is the whole point.
+## Nothing that was standing here survives: the carrier, the controls,
+## the span, the lever and the pedestal are freed and made afresh. What
+## comes back is whatever `restore_from` can work out from the latch
+## refs this visit accepted -- which is exactly what a Zone does with
+## `progress.latched`, and exactly what a system that remembered the
+## LEVER instead of the LATCH would get wrong.
+##
+## What deliberately does NOT come back: the lever stands up again, the
+## controls are armed again, the carrier is parked at S1 rather than
+## wherever it was left, and a span that was still travelling when the
+## player walked out has left nothing behind.
+func reenter() -> void:
+	var was := _accepted.size()
+	# IMMEDIATE, not queued: a queued free leaves the old railway alive
+	# for a frame, and for that frame there are two carriers on one rail.
+	_world.free()
+	_world = Node3D.new()
+	_world.name = "Yard"
+	add_child(_world)
+	_yard()
+	_track()
+	_carrier()
+	_docks()
+	_gantry()
+	_branch()
+	_place_player()
+	var back := junction.restore_from(_accepted.keys())
+	print("  railway: rebuilt the yard; %d of %d accepted latch(es) "
+		% [back, was] + "came back")
+	if back > 0:
+		_on_commissioned(1, "span_aligned")
 
 
 ## --- the acquisition branch (M2-mech) ---------------------------------
@@ -435,7 +593,7 @@ func _anchor(at: Vector3, plate_y: float, ledge_y: float,
 	ring.rotation.x = PI * 0.5
 	ring.material_override = ThemeMaterials.glow_material(
 		Constants.AFFORDANCE_SIGNAL, 1.8)
-	add_child(ring)
+	_world.add_child(ring)
 	ring.global_position = at + Vector3(0.0, plate_y - 0.32, 0.0)
 	if ledge.length() > 0.0:
 		_slab(ledge, at + Vector3(0.0, ledge_y, 0.0),
@@ -480,7 +638,7 @@ func _branch() -> void:
 	walkway.basis = Basis.looking_at(-side, Vector3.UP)
 
 	grant = EchoGrant.make(THEME)
-	add_child(grant)
+	_world.add_child(grant)
 	grant.global_position = yard + Vector3(0.0, 0.55, 0.0)
 	grant.look_at(Vector3(where.x, grant.global_position.y, where.z),
 		Vector3.UP)
@@ -526,7 +684,7 @@ func _slab(size: Vector3, centre: Vector3,
 	mesh_node.mesh = mesh
 	mesh_node.material_override = material
 	body.add_child(mesh_node)
-	add_child(body)
+	_world.add_child(body)
 	body.global_position = centre
 	return body
 
@@ -560,8 +718,9 @@ func _stair(foot: Vector3, head: Vector3, width: float) -> void:
 		slab.basis = Basis.looking_at(-out, Vector3.UP)
 
 
+## `lasting` keeps a sign out of the yard, so it survives a rebuild.
 func _sign(text: String, where: Vector3, tint: Color,
-		size: int) -> Label3D:
+		size: int, lasting := false) -> Label3D:
 	var label := Label3D.new()
 	label.text = text
 	label.font_size = size
@@ -570,6 +729,6 @@ func _sign(text: String, where: Vector3, tint: Color,
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.double_sided = true
 	label.no_depth_test = false
-	add_child(label)
+	(self if lasting else _world).add_child(label)
 	label.global_position = where
 	return label
