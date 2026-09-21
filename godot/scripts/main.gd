@@ -74,6 +74,7 @@ const DRIVERS := {
 	"--traverse-test": preload("res://tests/traverse_driver.gd"),
 	"--target-facing": preload("res://tests/target_facing_driver.gd"),
 	"--exit-reach": preload("res://tests/exit_reach_driver.gd"),
+	"--passenger-carry": preload("res://tests/passenger_carry_driver.gd"),
 }
 
 func _ready() -> void:

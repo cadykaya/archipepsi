@@ -584,6 +584,15 @@ godot-exit-reach: godot-import  # can the player actually reach the exit
 	fi; \
 	exit $$status
 
+godot-passenger-carry: godot-import  # is a body carried on a moving deck
+	@out=$$($(GODOT) --headless --path godot -- --passenger-carry 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
 godot-target-facing: godot-import  # which way a shot target points
 	@out=$$($(GODOT) --headless --path godot -- --target-facing 2>&1); \
 	status=$$?; printf '%s\n' "$$out" \
