@@ -75,6 +75,7 @@ var shield: MeshInstance3D = null
 ## The shooters beside the S1-to-S2 leg. Rebuilt with the yard.
 var shooters: Array[Enemy] = []
 var player: Player = null
+var hud: Hud = null
 var dock_offsets := PackedFloat32Array()
 
 ## EVERYTHING THE RAILWAY IS MADE OF, under one node.
@@ -132,6 +133,7 @@ func _ready() -> void:
 	_gauntlet()
 	_plinth()
 	_spawn_player()
+	_hud()
 	_legend()
 
 
@@ -339,6 +341,20 @@ func _place_player() -> void:
 	player.set_spawn(Transform3D(
 			Basis(Vector3.UP, atan2(-side.x, -side.z) + PI), at))
 	player.velocity = Vector3.ZERO
+
+
+## THE REAL HUD, bound to the real player.
+##
+## A yard with shooters in it and no health readout is a yard where
+## being killed is a surprise, and the prompts this scenario depends on
+## -- the pedestal, the lever -- are the HUD's to draw. `main.gd` builds
+## it exactly this way for a Zone; the only thing left out is the
+## resource pool, because there is no campaign here to have one.
+func _hud() -> void:
+	hud = Hud.new()
+	add_child(hud)
+	hud.bind_player(player)
+	hud.visible = true
 
 
 func _legend() -> void:
