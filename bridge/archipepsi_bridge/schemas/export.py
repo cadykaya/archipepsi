@@ -228,6 +228,15 @@ def export_constants_gd() -> str:
         "# conditions and `status_applied` edges, and `cleanse` can never",
         "# remove it, because it is not in the cleanse order.",
         f"const ECHO_STATUS_KINDS = {_gd_literal(list(E.STATUS_KINDS))}",
+        "",
+        "# The subset the RUNTIME implements an effect for. While it equals",
+        "# the list above nothing changes; when a designed kind is admitted",
+        "# ahead of its runtime, this is what the bridge refuses to emit and",
+        "# what the engine can assert it can honour. NO STATUS BEFORE ITS",
+        "# EFFECT -- the vocabulary may run ahead of the runtime, a campaign",
+        "# may not.",
+        "const ECHO_STATUS_KINDS_IMPLEMENTED = "
+        f"{_gd_literal(list(E.IMPLEMENTED_STATUS_KINDS))}",
     ]
     lines.append("")
     return "\n".join(lines)

@@ -39,7 +39,7 @@
 | Lane | Owner | Accepted? | Blocking |
 |---|---|---|---|
 | Engine / integration | Prod (this session) | yes | — |
-| Bridge / design (D-1..D-6) | Dess | **not accepted — handoff prepared only** | M2 completion (D-1/D-2/D-3); genuine Epsilon objective selection (D-5) |
+| Bridge / design (D-1..D-7) | Dess | **accepted 2026-09-21** | D-7 blocked on an owner choice of status model (F-16); D-1/D-2/D-3 in progress |
 | 3D models | Arty | **not accepted — asset brief prepared only** | Final visual verdict only; blockout ships first |
 
 ## Task statuses
@@ -531,6 +531,45 @@ That substitution does not weaken what those cases claim, because the claim is
 about what the two SENSORS do when a class moves — true whatever moved it. It
 does mean **the room is not built**, and the ledger says so rather than shipping
 a playable scene whose central mechanic is a stand-in.
+
+
+### F-16 — `lightened` is blocked by a vocabulary choice, not a missing name
+
+**Dess, 2026-09-21.** F-15 is right that adding `lightened` is not a
+one-liner. The reason underneath is larger: there are **two status
+vocabularies in the accepted lineage and they share one word**.
+
+| | source | the twelve |
+|---|---|---|
+| A — implemented | `ECHOES.md` → `echo.StatusKind` → `constants.gd` | burning, slowed, frozen, shocked, poisoned, marked, stunned, vulnerable, empowered, low_profile, haste, regenerating |
+| B — designed | Design 5 §15.2, carried into Design 6 (§2787) | lightened, anchored, slippery, confused, turncoat, blinded, silenced, rooted, phased, burning, conductive, brittle |
+
+Overlap: **`burning` only.** A is creature conditions ("on self or
+enemies"); B is a property grammar over §15.1's five target kinds.
+
+**The blocker is target scope.** `StatusComponent.target` is
+`Literal["self", "enemy"]`, and EX50-033 applies a Status to a crate.
+No addition to `StatusKind` makes that expressible. `lightened` needs
+the kind, the widened target scope, and the runtime effect — and the
+middle one is a product choice.
+
+**Delivered without taking that choice:** NO STATUS BEFORE ITS EFFECT.
+`IMPLEMENTED_STATUS_KINDS` is now separate from `STATUS_KINDS`;
+`StatusComponent` refuses to emit a kind the runtime cannot honour;
+`make export` sends the engine both lists. Equal today, so it refuses
+nothing — its purpose is that the next name admitted cannot ship inert,
+which is exactly the hole F-15 declined to open. Sabotage-proven.
+
+**Options and my reading** are in
+`docs/design-proposals/D7_LIGHTENED_STATUS_CONTRACT.md` §3. B1 (widen A
+minimally) is the cheapest and leaves two incoherent vocabularies; B2
+adopts B; B3 keeps the stand-in. Owner's call; the gate is correct under
+all three.
+
+**Engine-side note for Prod:** `constants.gd` now carries
+`ECHO_STATUS_KINDS_IMPLEMENTED` beside `ECHO_STATUS_KINDS`.
+`StatusEffects.apply` can assert against the narrower list when you want
+it to; nothing requires that today, because the lists are equal.
 
 
 ## Full scope and status

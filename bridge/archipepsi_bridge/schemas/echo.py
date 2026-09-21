@@ -48,7 +48,8 @@ import math
 
 from typing import Annotated, Literal, Union, get_args
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (BaseModel, ConfigDict, Field, field_validator,
+                      model_validator)
 
 try:
     from . import constants as C
@@ -498,6 +499,29 @@ StatusKind = Literal[
 #: A typo produced a status that was permanent and did nothing.
 STATUS_KINDS = get_args(StatusKind)
 
+#: The kinds the RUNTIME actually applies an effect for.
+#:
+#: **THE VOCABULARY AND THE GUARANTEE ARE DIFFERENT FACTS**, and keeping
+#: them as one is what makes widening `StatusKind` dangerous. The list
+#: above is what the design NAMES; this is what the engine can HONOUR.
+#: While they are equal, nothing changes and no caller sees a difference.
+#:
+#: Why the split has to exist before the next kind is added: the comment
+#: above records a status that was "permanent and did nothing" because
+#: nothing implemented it, and `StatusEffects.apply` refuses unknown
+#: kinds precisely to stop that. Admitting a designed name into
+#: `StatusKind` re-opens that hole on purpose rather than by typo -- the
+#: kind becomes emittable, `status_active` starts answering true for it,
+#: `status_applied` starts firing, and no effect exists. This makes the
+#: name safe to admit EARLY: it can be specified, exported and reviewed
+#: while `StatusComponent` still refuses to emit it, and it becomes
+#: emittable in the same change that gives it an effect.
+#:
+#: NO STATUS BEFORE ITS EFFECT. The same shape as "no requirement before
+#: guarantee": the vocabulary may run ahead of the runtime, a campaign
+#: may not.
+IMPLEMENTED_STATUS_KINDS: tuple[str, ...] = STATUS_KINDS
+
 TraitStat = Literal[
     "move_speed", "jump_height", "gravity", "air_control", "ground_friction",
     "damage_dealt", "damage_taken", "knockback_resist", "regen",
@@ -748,6 +772,25 @@ class StatusComponent(ComponentBase):
     target: Literal["self", "enemy"]
     duration: float = Field(ge=0.5, le=30.0)
     magnitude: float = Field(ge=0.05, le=3.0)
+
+    @field_validator("status")
+    @classmethod
+    def _no_status_before_its_effect(cls, value):
+        """A kind the schema names but the runtime cannot honour is not
+        emittable, however well specified it is.
+
+        This is the gate that lets `StatusKind` be widened safely. Today
+        the two lists are equal and this refuses nothing; the moment a
+        designed kind is admitted ahead of its runtime, this is what
+        stops it reaching a real campaign inert.
+        """
+        if value not in IMPLEMENTED_STATUS_KINDS:
+            raise ValueError(
+                f"status '{value}' is named by the design but no runtime "
+                "effect implements it, so it may not be emitted; add it to "
+                "IMPLEMENTED_STATUS_KINDS in the same change that gives it "
+                "an effect")
+        return value
 
 
 class AffordanceComponent(ComponentBase):
