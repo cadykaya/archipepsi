@@ -815,6 +815,41 @@ from her side — widening the vocabulary to twenty-four opened the window where
 `StatusEffects.apply` still guarded on `ECHO_STATUS_KINDS`.
 
 
+### F-19 — D-1's seams, measured before the contract is written
+
+**Dess, 2026-09-21.** Recorded so the acquisition contract is written
+against the real path rather than a remembered one.
+
+**What exists.** The interpretation machinery is whole: `save.interpretations`
+is the log, `derive_mechanics` folds it, `next_interpretation_seq` pins how
+far it has been written, and `handle_progress` carries Check confirmation.
+Slot/equip resolution exists in `mechanics`.
+
+**What does not exist.** *Nothing binds a claimed Check to a FEATURED
+capability.* `railway_scenario.gd` says so at the site — in the real loop
+the featured Echo arrives as "an AP Check, the interpretation fold, a
+snapshot, `set_equipped`", and its pedestal is the one labelled shortcut
+precisely because that chain is not built. There is no `set_equipped` in
+the bridge at all.
+
+**So D-1 is a binding, not a subsystem**, and the five requirements land
+on seams that already exist:
+
+| requirement | the seam it lands on |
+|---|---|
+| reachable featured acquisition | the Check allocator + `topology.reachability` |
+| a qualifying local Echo | the fold's component output |
+| preserved delivery of the foreign item | the AP claim path — the local grant must not consume it |
+| matching pre-seed AP guarantees | AP's fill proves reachability before play; the local grant must agree with what was proven |
+| retries / reload / delayed interpretation | `next_interpretation_seq` vs `len(save.interpretations)`, which already distinguishes written from pending |
+
+The last row has existing machinery and is the one most likely to be
+assumed rather than checked: a fold that lags is the ordinary case, not
+an error.
+
+**Not started, and not claimed as started.** B2 stays the preferred
+direction; no proof of it is fabricated here.
+
 ## Full scope and status
 
 Every workstream in the plan, including what has not been started. **A Dess
