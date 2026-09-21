@@ -3045,6 +3045,42 @@
         "title": "EnemyGroup",
         "type": "object"
       },
+      "FeaturedAcquisition": {
+        "additionalProperties": false,
+        "description": "D-1. The capability this Zone is built to hand the player, and the\nCheck that hands it over.\n\n**This is a binding, not a subsystem.** Every part it joins already\nexisted: AP allocates the location, `append_interpretation` folds the\nconfirmed item into an Echo, `owned_capabilities` reads the fold, and\n`capability_guarantee` case C takes an `established_earlier` set that\nhad no producer. This names which capability a Zone establishes so\nthat set can be produced, and `established_in_zone` below produces it.\n\n**The foreign item is untouched.** Nothing here replaces, consumes or\nrewrites what Archipelago delivers: `EchoInterpretation` keeps\n`source_item_name`, `source_game` and `source_recipient_name`\nverbatim, and this only says which location the Zone is counting on.",
+        "properties": {
+          "capability": {
+            "enum": [
+              "blink",
+              "cross_long_gap",
+              "grapple",
+              "ranged_hit"
+            ],
+            "title": "Capability",
+            "type": "string"
+          },
+          "location_id": {
+            "maximum": 89100600,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability",
+          "location_id",
+          "room_id"
+        ],
+        "title": "FeaturedAcquisition",
+        "type": "object"
+      },
       "Glide": {
         "additionalProperties": false,
         "properties": {
@@ -5917,6 +5953,17 @@
             "maxItems": 2,
             "title": "Rail Networks",
             "type": "array"
+          },
+          "featured_acquisition": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/FeaturedAcquisition"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -8006,6 +8053,42 @@
           "count"
         ],
         "title": "EnemyGroup",
+        "type": "object"
+      },
+      "FeaturedAcquisition": {
+        "additionalProperties": false,
+        "description": "D-1. The capability this Zone is built to hand the player, and the\nCheck that hands it over.\n\n**This is a binding, not a subsystem.** Every part it joins already\nexisted: AP allocates the location, `append_interpretation` folds the\nconfirmed item into an Echo, `owned_capabilities` reads the fold, and\n`capability_guarantee` case C takes an `established_earlier` set that\nhad no producer. This names which capability a Zone establishes so\nthat set can be produced, and `established_in_zone` below produces it.\n\n**The foreign item is untouched.** Nothing here replaces, consumes or\nrewrites what Archipelago delivers: `EchoInterpretation` keeps\n`source_item_name`, `source_game` and `source_recipient_name`\nverbatim, and this only says which location the Zone is counting on.",
+        "properties": {
+          "capability": {
+            "enum": [
+              "blink",
+              "cross_long_gap",
+              "grapple",
+              "ranged_hit"
+            ],
+            "title": "Capability",
+            "type": "string"
+          },
+          "location_id": {
+            "maximum": 89100600,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability",
+          "location_id",
+          "room_id"
+        ],
+        "title": "FeaturedAcquisition",
         "type": "object"
       },
       "Glide": {
@@ -10802,6 +10885,17 @@
             "maxItems": 2,
             "title": "Rail Networks",
             "type": "array"
+          },
+          "featured_acquisition": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/FeaturedAcquisition"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [

@@ -819,6 +819,46 @@ Chamber = Annotated[
 ]
 
 
+class FeaturedAcquisition(Strict):
+    """D-1. The capability this Zone is built to hand the player, and the
+    Check that hands it over.
+
+    **This is a binding, not a subsystem.** Every part it joins already
+    existed: AP allocates the location, `append_interpretation` folds the
+    confirmed item into an Echo, `owned_capabilities` reads the fold, and
+    `capability_guarantee` case C takes an `established_earlier` set that
+    had no producer. This names which capability a Zone establishes so
+    that set can be produced, and `established_in_zone` below produces it.
+
+    **The foreign item is untouched.** Nothing here replaces, consumes or
+    rewrites what Archipelago delivers: `EchoInterpretation` keeps
+    `source_item_name`, `source_game` and `source_recipient_name`
+    verbatim, and this only says which location the Zone is counting on.
+    """
+    #: What the player can DO afterwards. Same vocabulary an activity
+    #: asks for, so a Zone cannot feature something no activity can want.
+    capability: ActivityCapability
+    #: The allocated Check that grants it. Must be one AP actually gave
+    #: this Zone -- that is what makes the promise match a pre-seed
+    #: guarantee rather than a local wish.
+    location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID)
+    #: The room carrying that Check.
+    room_id: str = _ID
+
+
+def established_in_zone(zone) -> tuple[str, ...]:
+    """D-2. The producer `capability_guarantee` case C never had.
+
+    `mechanics.capability_guarantee` takes `established_earlier` and its
+    own comment records that nothing produced that set, so case C could
+    not fire and a Zone could never prove "you will have it because you
+    get it here". This is that set, and it is deliberately narrow: a Zone
+    establishes exactly what it features, never what it merely contains.
+    """
+    featured = getattr(zone, "featured_acquisition", None)
+    return () if featured is None else (featured.capability,)
+
+
 class RailDock(Strict):
     """A place the carrier can be parked, in a room that exists."""
     dock_id: str = _ID
@@ -932,6 +972,11 @@ class Zone(Strict):
     #: idea: docks it parks at, spans between them, one alignment control
     #: per span and a latch per span.
     rail_networks: tuple[RailNetwork, ...] = Field(default=(), max_length=2)
+
+    #: D-1. The capability this Zone is built to grant, and where.
+    #: Optional: a Zone that features nothing establishes nothing, which
+    #: is every Zone composed before this.
+    featured_acquisition: FeaturedAcquisition | None = None
 
     @model_validator(mode="after")
     def _the_graph_and_the_assignments_agree(self):
@@ -1178,6 +1223,33 @@ class Zone(Strict):
 
     # NOTE: no `required_echo_ids`, and no field anywhere in this schema can
     # express a mandatory Echo requirement. Structural, not a rule.
+
+    @model_validator(mode="after")
+    def _the_featured_acquisition_is_somewhere_real(self):
+        """A featured capability the Zone cannot actually hand over is a
+        promise `capability_guarantee` would honour and the player would
+        not receive.
+
+        Two facts, both checkable here: the room exists, and it really
+        carries that Check. `reward_ids` is the canonical view -- reading
+        `reward_location_id` alone would miss a multi-Check room and call
+        a true promise false.
+        """
+        featured = self.featured_acquisition
+        if featured is None:
+            return self
+        room = next((c for c in self.chambers if c.id == featured.room_id),
+                    None)
+        if room is None:
+            raise ValueError(
+                f"featured acquisition names room '{featured.room_id}', "
+                "which this Zone does not have")
+        if featured.location_id not in room.reward_ids:
+            raise ValueError(
+                f"featured acquisition puts Check {featured.location_id} in "
+                f"room '{featured.room_id}', which carries "
+                f"{list(room.reward_ids)}")
+        return self
 
     @model_validator(mode="after")
     def _rail_networks_name_rooms_this_zone_has(self):
