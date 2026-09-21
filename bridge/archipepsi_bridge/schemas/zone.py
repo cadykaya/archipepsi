@@ -819,6 +819,74 @@ Chamber = Annotated[
 ]
 
 
+class RailDock(Strict):
+    """A place the carrier can be parked, in a room that exists."""
+    dock_id: str = _ID
+    #: THE ZONE'S OWN ROOM-ID CONSTRAINT, not a looser one. Left as a
+    #: free `max_length=64` string this is a field Epsilon can fill with
+    #: anything, which `test_epsilon_vocabulary` refuses -- correctly:
+    #: a room id that resolves to nothing is a dock nobody can reach.
+    room_id: str = _ID
+
+
+class RailSpan(Strict):
+    """One link between two docks, and the control that commissions it.
+
+    `latch_id` is the persistence handle: a commissioned span is the
+    repair that survives leaving and coming back, and it is recorded
+    through the same latch machinery a physics package already uses.
+    """
+    span_id: str = _ID
+    from_dock: str = _ID
+    to_dock: str = _ID
+    #: The room holding the alignment control that commissions this span.
+    #: `None` means the span ships commissioned and needs no control.
+    control_room_id: str | None = Field(
+        default=None, min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
+    latch_id: str = _ID
+    #: Whether the player must cross this span to finish the Zone. THE
+    #: REASON THIS IS NOT A FEATURE: §13.2 would forbid exactly this.
+    mandatory: bool = False
+
+    @model_validator(mode="after")
+    def _a_span_joins_two_different_docks(self):
+        if self.from_dock == self.to_dock:
+            raise ValueError(
+                f"span '{self.span_id}' leaves and arrives at "
+                f"'{self.from_dock}'")
+        return self
+
+
+class RailNetwork(Strict):
+    """The docks and spans of one railway inside one Zone."""
+    network_id: str = _ID
+    docks: tuple[RailDock, ...] = Field(min_length=2, max_length=8)
+    spans: tuple[RailSpan, ...] = Field(min_length=1, max_length=8)
+
+    @model_validator(mode="after")
+    def _every_span_joins_docks_this_network_declares(self):
+        known = {d.dock_id for d in self.docks}
+        if len(known) != len(self.docks):
+            raise ValueError(f"network '{self.network_id}' repeats a dock id")
+        for span in self.spans:
+            missing = {span.from_dock, span.to_dock} - known
+            if missing:
+                raise ValueError(
+                    f"span '{span.span_id}' names dock(s) "
+                    f"{sorted(missing)} that network "
+                    f"'{self.network_id}' does not declare")
+        ids = [s.span_id for s in self.spans]
+        if len(set(ids)) != len(ids):
+            raise ValueError(f"network '{self.network_id}' repeats a span id")
+        latches = [s.latch_id for s in self.spans]
+        if len(set(latches)) != len(latches):
+            raise ValueError(
+                f"network '{self.network_id}' reuses a latch id; a latch is "
+                "the handle a commissioned span persists under and two spans "
+                "sharing one cannot be told apart on reload")
+        return self
+
+
 class Zone(Strict):
     #: Still 7, and deliberately. The Zone contract did not change in v0.8 —
     #: Echoes 2.0 changes what an Echo means, not what a Zone is — and
@@ -848,6 +916,22 @@ class Zone(Strict):
     #: a door, because a door assignment consumes a joining socket and a
     #: plug must not.
     plugs: tuple[PlugAssignment, ...] = Field(default=(), max_length=8)
+
+    #: D-4. Rail content a composed Zone declares, so a junction can be
+    #: ASKED FOR rather than invented.
+    #:
+    #: **Why this is not a `feature:` tag.** A physics package binds to
+    #: `feature:<tag>` or `shell:<id>` (`layout._content_refs`), and
+    #: §13.2 forbids a feature from lying on the mandatory path, hosting
+    #: a reward, an exit or an objective. A rail span the player must
+    #: cross is exactly a thing on the mandatory path, so declaring it as
+    #: a feature would either break §13.2 or make the span optional --
+    #: and an optional span is not a railway. Hence first class.
+    #:
+    #: Shaped after what `RailJunction` already runs, not after a new
+    #: idea: docks it parks at, spans between them, one alignment control
+    #: per span and a latch per span.
+    rail_networks: tuple[RailNetwork, ...] = Field(default=(), max_length=2)
 
     @model_validator(mode="after")
     def _the_graph_and_the_assignments_agree(self):
@@ -1094,6 +1178,31 @@ class Zone(Strict):
 
     # NOTE: no `required_echo_ids`, and no field anywhere in this schema can
     # express a mandatory Echo requirement. Structural, not a rule.
+
+    @model_validator(mode="after")
+    def _rail_networks_name_rooms_this_zone_has(self):
+        """A dock in a room that does not exist is a junction nobody can
+        reach, and the engine must not invent the room to fix it."""
+        rooms = {c.id for c in self.chambers}
+        seen: set[str] = set()
+        for net in self.rail_networks:
+            if net.network_id in seen:
+                raise ValueError(
+                    f"two rail networks are both called '{net.network_id}'")
+            seen.add(net.network_id)
+            for dock in net.docks:
+                if dock.room_id not in rooms:
+                    raise ValueError(
+                        f"rail dock '{dock.dock_id}' names room "
+                        f"'{dock.room_id}', which this Zone does not have")
+            for span in net.spans:
+                if (span.control_room_id is not None
+                        and span.control_room_id not in rooms):
+                    raise ValueError(
+                        f"span '{span.span_id}' puts its control in room "
+                        f"'{span.control_room_id}', which this Zone does "
+                        "not have")
+        return self
 
     @model_validator(mode="after")
     def _zone_wide_limits(self):

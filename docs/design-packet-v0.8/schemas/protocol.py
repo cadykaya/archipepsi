@@ -1278,7 +1278,14 @@ class CampaignSnapshot(Strict):
     bridge_connected: bool
     ap_connected: bool
     ap_mode: Literal["real", "mock"]
-    epsilon_provider: Literal["claude", "mock", "fallback"]
+    #: `sample` is a DIAGNOSTIC axis, not a shipping one: it serves one
+    #: named proposal out of the declared sample so a case the offline
+    #: census names can be put in front of a real client and a real
+    #: bridge. Listed here because the snapshot is a closed vocabulary
+    #: and an unlisted provider makes every snapshot unserialisable --
+    #: which is how the first run of it failed, with the client unable to
+    #: connect at all rather than with a word about the provider.
+    epsilon_provider: Literal["claude", "mock", "fallback", "sample"]
     race_mode: bool = False
 
     #: AP-derived counters are meaningful only when this is true.
@@ -1644,6 +1651,57 @@ class LayoutResult(Strict):
                                     max_length=16, pattern=r"^[0-9a-f]{16}$")
 
 
+class BuildFailed(Strict):
+    """The engine could not CONSTRUCT this proposal. There is no layout.
+
+    **This is not a refused layout, and conflating the two would be a
+    lie in both directions.** `LayoutResult` carries geometry the engine
+    built and the bridge then judged; this says the engine never got
+    that far -- `ZoneBuilder` could not route the rooms, so there is
+    nothing to measure and nothing to validate. Sending an empty or
+    part-built `layout` to borrow the refusal path would be fabricated
+    evidence: the validator would report a geometry error for a
+    geometry that was never laid down.
+
+    **And it is not a generation-stage rejection either.** A proposal
+    the bridge refuses before it is offered never reaches a client;
+    `last_generation_error` is where that is reported. This one passed
+    composition, was offered, was entered, and failed in the engine.
+
+    **Why the bridge needs to hear it at all.** Without this message a
+    failed build is silent: `ZoneController.setup` returns, no
+    `layout_result` is ever sent, and the record sits ACTIVE waiting for
+    a verdict that is not coming. The Hub stays in ZONE_ACTIVE, offering
+    a way back into a Zone that cannot be built, and the campaign cannot
+    move. What follows from this message is exactly what follows from a
+    refusal -- `refuse_layout`, so the attempt is charged, a FRESH
+    proposal is composed again inside the budget, a COMMITTED one is
+    parked with its manifest intact, and past the budget the Zone goes
+    DORMANT and the Hub offers ABANDON.
+
+    `attempt` and `proposal_id` carry the same meaning and the same
+    guards as on `LayoutResult`: which build this is the outcome of.
+    They are what stop a late failure spending a replacement's budget.
+    """
+    type: Literal["build_failed"]
+    zone_id: str = _ID
+    #: The engine's own reason, as `ZoneBuilder` reported it.
+    #:
+    #: Bounded like every other text that reaches a snapshot. An
+    #: over-long refusal string has already cost this project one hang:
+    #: `CampaignSnapshot` raised on construction, which killed the
+    #: generation task and the broadcast with it, and left the client in
+    #: GENERATING forever. The client trims before sending and the
+    #: bridge trims again before storing -- neither trusts the other.
+    reason: str = Field(default="", max_length=C.MAX_TEXT_LEN)
+    #: Which ATTEMPT failed, echoed from `ZoneReady`; see `LayoutResult`.
+    attempt: int | None = Field(default=None, ge=0,
+                                le=MAX_LAYOUT_REFUSALS)
+    #: Which PROPOSAL failed, echoed from `ZoneReady`; see `LayoutResult`.
+    proposal_id: str | None = Field(default=None, min_length=16,
+                                    max_length=16, pattern=r"^[0-9a-f]{16}$")
+
+
 class KeyCollected(Strict):
     """A Zone-local key picked up.
 
@@ -1888,7 +1946,7 @@ ClientMessage = Annotated[
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
         SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
         ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
-        LayoutResult,
+        LayoutResult, BuildFailed,
     ],
     Field(discriminator="type"),
 ]

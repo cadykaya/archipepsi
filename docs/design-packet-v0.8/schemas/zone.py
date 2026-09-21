@@ -483,8 +483,17 @@ class ChamberBase(Strict):
         A room's door degree is its JOINED degree. A dead end with one
         door and one plug has door degree 1 — the plug consumes no
         socket.
+
+        COUNTED BY THE EDGE, not by the hole. This read `usage !=
+        "SEALED"`, which was the same number while every passable door
+        carried an edge. `ZONE_EXIT` is passable and carries none — the
+        room on its far side is the engine's appended exit room, which
+        is in no `edges` list — so counting holes made the last room on
+        every chain read as degree 2 and stopped this being a statement
+        about the graph at all. `USED` and `LOCKED` always name an edge
+        and `SEALED` never does, so nothing else moves.
         """
-        return sum(1 for d in self.doors if d.usage != "SEALED")
+        return sum(1 for d in self.doors if d.edge_id is not None)
 
     #: CAMPAIGN_SCALE.md 7: a complex room may carry more than one Check.
     #:
@@ -580,6 +589,20 @@ class ChamberBase(Strict):
             width = getattr(self, "side", None)
         if width is None:
             return self
+        # AND THE OTHER AXIS, which this rule never had.
+        # `AffordanceFeatures.fits` asks about width AND depth, and only
+        # the width half was written down -- so a `powered_door`, which
+        # reaches 3.5 m along the run and needs 11.0 m of room, could be
+        # declared on an 8.6 m corridor, pass here, and be DROPPED by the
+        # builder. The engine then offers no certified package and
+        # `layout.validate` refuses the Zone for a chain that was
+        # declared and never built. Absent depth is not checked: a room
+        # model that does not state one is not being asked to.
+        depth = getattr(self, "length", None)
+        if depth is None:
+            depth = getattr(self, "depth", None)
+        if depth is None:
+            depth = getattr(self, "side", None)
         for feature in self.features:
             needed = C.FEATURE_MIN_WIDTH.get(
                 feature.tag, C.MIN_FEATURE_CHAMBER_WIDTH)
@@ -589,6 +612,35 @@ class ChamberBase(Strict):
                     f"a '{feature.tag}', which needs {needed}m to sit clear "
                     "of the walking lane on both sides (ECHOES.md 13.2); "
                     "widen the room or offer a smaller feature"
+                )
+            if depth is None:
+                continue
+            # A SIDE DOORWAY IS CUT WHERE THE LANE RULE PUSHES A FEATURE.
+            # `side_left` and `side_right` are declared at the middle of
+            # the side wall, which is exactly where a feature pushed out
+            # of the walking lane ends up -- so the run it needs is the
+            # one that fits WHOLLY to one side of that opening. Measured
+            # on `zone_02`'s `c013` and `zone_04`'s `c009`, both refused
+            # on aperture polarity for their own `powered_door` leaf
+            # standing in a door the composer declared USED.
+            beside = any(
+                d.socket_id in C.SIDE_SOCKETS and d.usage != "SEALED"
+                for d in getattr(self, "doors", ()) or ())
+            along = (
+                C.FEATURE_MIN_DEPTH_BESIDE_DOOR.get(
+                    feature.tag, C.MIN_FEATURE_CHAMBER_DEPTH_BESIDE_DOOR)
+                if beside else
+                C.FEATURE_MIN_DEPTH.get(
+                    feature.tag, C.MIN_FEATURE_CHAMBER_DEPTH))
+            if depth < along:
+                raise ValueError(
+                    f"chamber '{self.id}' is {depth}m long and carries "
+                    f"a '{feature.tag}', which needs {along}m to clear "
+                    + ("both thresholds and the side doorway cut into "
+                       "the middle of its wall" if beside else
+                       "both thresholds along the run")
+                    + " (ECHOES.md 13.2); lengthen the room or offer a "
+                    "shorter feature"
                 )
         return self
 
@@ -767,6 +819,74 @@ Chamber = Annotated[
 ]
 
 
+class RailDock(Strict):
+    """A place the carrier can be parked, in a room that exists."""
+    dock_id: str = _ID
+    #: THE ZONE'S OWN ROOM-ID CONSTRAINT, not a looser one. Left as a
+    #: free `max_length=64` string this is a field Epsilon can fill with
+    #: anything, which `test_epsilon_vocabulary` refuses -- correctly:
+    #: a room id that resolves to nothing is a dock nobody can reach.
+    room_id: str = _ID
+
+
+class RailSpan(Strict):
+    """One link between two docks, and the control that commissions it.
+
+    `latch_id` is the persistence handle: a commissioned span is the
+    repair that survives leaving and coming back, and it is recorded
+    through the same latch machinery a physics package already uses.
+    """
+    span_id: str = _ID
+    from_dock: str = _ID
+    to_dock: str = _ID
+    #: The room holding the alignment control that commissions this span.
+    #: `None` means the span ships commissioned and needs no control.
+    control_room_id: str | None = Field(
+        default=None, min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
+    latch_id: str = _ID
+    #: Whether the player must cross this span to finish the Zone. THE
+    #: REASON THIS IS NOT A FEATURE: §13.2 would forbid exactly this.
+    mandatory: bool = False
+
+    @model_validator(mode="after")
+    def _a_span_joins_two_different_docks(self):
+        if self.from_dock == self.to_dock:
+            raise ValueError(
+                f"span '{self.span_id}' leaves and arrives at "
+                f"'{self.from_dock}'")
+        return self
+
+
+class RailNetwork(Strict):
+    """The docks and spans of one railway inside one Zone."""
+    network_id: str = _ID
+    docks: tuple[RailDock, ...] = Field(min_length=2, max_length=8)
+    spans: tuple[RailSpan, ...] = Field(min_length=1, max_length=8)
+
+    @model_validator(mode="after")
+    def _every_span_joins_docks_this_network_declares(self):
+        known = {d.dock_id for d in self.docks}
+        if len(known) != len(self.docks):
+            raise ValueError(f"network '{self.network_id}' repeats a dock id")
+        for span in self.spans:
+            missing = {span.from_dock, span.to_dock} - known
+            if missing:
+                raise ValueError(
+                    f"span '{span.span_id}' names dock(s) "
+                    f"{sorted(missing)} that network "
+                    f"'{self.network_id}' does not declare")
+        ids = [s.span_id for s in self.spans]
+        if len(set(ids)) != len(ids):
+            raise ValueError(f"network '{self.network_id}' repeats a span id")
+        latches = [s.latch_id for s in self.spans]
+        if len(set(latches)) != len(latches):
+            raise ValueError(
+                f"network '{self.network_id}' reuses a latch id; a latch is "
+                "the handle a commissioned span persists under and two spans "
+                "sharing one cannot be told apart on reload")
+        return self
+
+
 class Zone(Strict):
     #: Still 7, and deliberately. The Zone contract did not change in v0.8 —
     #: Echoes 2.0 changes what an Echo means, not what a Zone is — and
@@ -796,6 +916,22 @@ class Zone(Strict):
     #: a door, because a door assignment consumes a joining socket and a
     #: plug must not.
     plugs: tuple[PlugAssignment, ...] = Field(default=(), max_length=8)
+
+    #: D-4. Rail content a composed Zone declares, so a junction can be
+    #: ASKED FOR rather than invented.
+    #:
+    #: **Why this is not a `feature:` tag.** A physics package binds to
+    #: `feature:<tag>` or `shell:<id>` (`layout._content_refs`), and
+    #: §13.2 forbids a feature from lying on the mandatory path, hosting
+    #: a reward, an exit or an objective. A rail span the player must
+    #: cross is exactly a thing on the mandatory path, so declaring it as
+    #: a feature would either break §13.2 or make the span optional --
+    #: and an optional span is not a railway. Hence first class.
+    #:
+    #: Shaped after what `RailJunction` already runs, not after a new
+    #: idea: docks it parks at, spans between them, one alignment control
+    #: per span and a latch per span.
+    rail_networks: tuple[RailNetwork, ...] = Field(default=(), max_length=2)
 
     @model_validator(mode="after")
     def _the_graph_and_the_assignments_agree(self):
@@ -839,6 +975,41 @@ class Zone(Strict):
                         f"chamber '{c.id}' door '{d.socket_id}' names "
                         f"unknown edge '{d.edge_id}'")
                 door_ends.setdefault(d.edge_id, []).append((c.id, d))
+
+        # ONE ZONE EXIT, ON THE ROOM THAT ACTUALLY ENDS THE CHAIN.
+        #
+        # `ZONE_EXIT` is passable geometry that names no edge, which
+        # makes it the one door nothing else constrains -- so it is
+        # constrained here, or it becomes a licence to open any wall.
+        # The engine appends ONE exit room, off the LAST room on the
+        # chain; a second way out is a hole onto nothing, and one on a
+        # room the chain continues through is a hole into the next
+        # room's approach.
+        way_out = [(c.id, d) for c in self.chambers for d in c.doors
+                   if d.usage == "ZONE_EXIT"]
+        if len(way_out) > 1:
+            raise ValueError(
+                "%d doors are ZONE_EXIT (%s); the engine appends one "
+                "exit room, so a Zone has one way out"
+                % (len(way_out), ", ".join(
+                    f"{r}/{d.socket_id}" for r, d in way_out)))
+        if way_out:
+            host = way_out[0][0]
+            # A room the chain leaves by a JOINED edge is not the end of
+            # it. `departures` is not on the wire, so this is read off
+            # the edges themselves: any JOINED edge whose `room_a` is
+            # this room and whose door there is the `exit` socket.
+            onward = [e.edge_id for e in self.edges
+                      if e.realization == "JOINED" and e.room_a == host
+                      and any(d.socket_id == "exit" and d.edge_id
+                              == e.edge_id
+                              for c in self.chambers if c.id == host
+                              for d in c.doors)]
+            if onward:
+                raise ValueError(
+                    f"room '{host}' carries the ZONE_EXIT and also "
+                    f"departs by edge(s) {onward}; the way out belongs "
+                    "to the room the chain ENDS on")
 
         plug_of: dict[str, PlugAssignment] = {}
         for pl in self.plugs:
@@ -1007,6 +1178,31 @@ class Zone(Strict):
 
     # NOTE: no `required_echo_ids`, and no field anywhere in this schema can
     # express a mandatory Echo requirement. Structural, not a rule.
+
+    @model_validator(mode="after")
+    def _rail_networks_name_rooms_this_zone_has(self):
+        """A dock in a room that does not exist is a junction nobody can
+        reach, and the engine must not invent the room to fix it."""
+        rooms = {c.id for c in self.chambers}
+        seen: set[str] = set()
+        for net in self.rail_networks:
+            if net.network_id in seen:
+                raise ValueError(
+                    f"two rail networks are both called '{net.network_id}'")
+            seen.add(net.network_id)
+            for dock in net.docks:
+                if dock.room_id not in rooms:
+                    raise ValueError(
+                        f"rail dock '{dock.dock_id}' names room "
+                        f"'{dock.room_id}', which this Zone does not have")
+            for span in net.spans:
+                if (span.control_room_id is not None
+                        and span.control_room_id not in rooms):
+                    raise ValueError(
+                        f"span '{span.span_id}' puts its control in room "
+                        f"'{span.control_room_id}', which this Zone does "
+                        "not have")
+        return self
 
     @model_validator(mode="after")
     def _zone_wide_limits(self):

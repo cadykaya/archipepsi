@@ -934,6 +934,132 @@
       "title": "PlugAssignment",
       "type": "object"
     },
+    "RailDock": {
+      "additionalProperties": false,
+      "description": "A place the carrier can be parked, in a room that exists.",
+      "properties": {
+        "dock_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Dock Id",
+          "type": "string"
+        },
+        "room_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Room Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "dock_id",
+        "room_id"
+      ],
+      "title": "RailDock",
+      "type": "object"
+    },
+    "RailNetwork": {
+      "additionalProperties": false,
+      "description": "The docks and spans of one railway inside one Zone.",
+      "properties": {
+        "network_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Network Id",
+          "type": "string"
+        },
+        "docks": {
+          "items": {
+            "$ref": "#/$defs/RailDock"
+          },
+          "maxItems": 8,
+          "minItems": 2,
+          "title": "Docks",
+          "type": "array"
+        },
+        "spans": {
+          "items": {
+            "$ref": "#/$defs/RailSpan"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Spans",
+          "type": "array"
+        }
+      },
+      "required": [
+        "network_id",
+        "docks",
+        "spans"
+      ],
+      "title": "RailNetwork",
+      "type": "object"
+    },
+    "RailSpan": {
+      "additionalProperties": false,
+      "description": "One link between two docks, and the control that commissions it.\n\n`latch_id` is the persistence handle: a commissioned span is the\nrepair that survives leaving and coming back, and it is recorded\nthrough the same latch machinery a physics package already uses.",
+      "properties": {
+        "span_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Span Id",
+          "type": "string"
+        },
+        "from_dock": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "From Dock",
+          "type": "string"
+        },
+        "to_dock": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "To Dock",
+          "type": "string"
+        },
+        "control_room_id": {
+          "anyOf": [
+            {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Control Room Id"
+        },
+        "latch_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Latch Id",
+          "type": "string"
+        },
+        "mandatory": {
+          "default": false,
+          "title": "Mandatory",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "span_id",
+        "from_dock",
+        "to_dock",
+        "latch_id"
+      ],
+      "title": "RailSpan",
+      "type": "object"
+    },
     "TopologyEdge": {
       "additionalProperties": false,
       "description": "One edge of the Zone graph.\n\nThe list order of `Zone.chambers` used to *be* the topology. This is\nwhat replaces it, and a Zone carrying no edges still means the chain\nit always meant.",
@@ -1518,6 +1644,15 @@
       },
       "maxItems": 8,
       "title": "Plugs",
+      "type": "array"
+    },
+    "rail_networks": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/RailNetwork"
+      },
+      "maxItems": 2,
+      "title": "Rail Networks",
       "type": "array"
     }
   },

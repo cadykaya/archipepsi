@@ -686,6 +686,82 @@ FEATURE_MIN_WIDTH = {
 #: generator can check before choosing a tag.
 MIN_FEATURE_CHAMBER_WIDTH = min(FEATURE_MIN_WIDTH.values())
 
+#: The SHORTEST chamber that can host each tag, along the axis the
+#: feature runs down. `AffordanceFeatures.required_depth` is
+#: `2 * (THRESHOLD_CLEARANCE + half_depth)`: both doorways are where the
+#: mandatory path is narrowest, so the geometry has to clear each of them
+#: by the threshold margin plus its own reach.
+#:
+#: **`FEATURE_MIN_WIDTH` WAS HALF A RULE.** `AffordanceFeatures.fits`
+#: asks about width AND depth; only the width half had ever been written
+#: down here, so a generator could pass the gate and still hand the
+#: builder a room it would drop the tag in. `powered_door` reaches 3.5 m
+#: along the run — it is a crate shoved down a corridor — so it needs
+#: 11.0 m of length, and the width gate passed corridors of 8.6, 9.0, 9.2
+#: and 9.8 m in the declared sample. The engine dropped the tag for want
+#: of depth, offered no certified package, and `layout.validate` refused
+#: those Zones for a chain that was declared and never built: three of
+#: the nine refusals left after the sample harness was repaired.
+#:
+#: Pinned against `AffordanceFeatures.FOOTPRINT` from both sides in
+#: `test_affordances.py`, exactly as the width table is.
+FEATURE_MIN_DEPTH = {
+    "grapple_anchor": 5.4,
+    "breakable_wall": 6.6,
+    "water_volume": 5.6,
+    "rail": 11.0,
+    "wind_volume": 5.6,
+    "bounce_pad": 5.2,
+    "moving_platform": 5.6,
+    "powered_door": 11.0,
+}
+
+#: The shortest chamber that can host ANY feature, the depth-axis twin of
+#: `MIN_FEATURE_CHAMBER_DEPTH`'s companion above.
+MIN_FEATURE_CHAMBER_DEPTH = min(FEATURE_MIN_DEPTH.values())
+
+#: And the run a feature needs when the room also carries a SIDE DOORWAY.
+#:
+#: A side door is cut at the MIDDLE of the side wall -- `side_left` and
+#: `side_right` are declared at `depth / 2` and `_perimeter` cuts them
+#: there -- so it sits exactly where `resolve_position` puts a feature it
+#: has pushed out of the walking lane. Measured: `zone_02`'s `c013`
+#: declares `side_left` USED and its `powered_door` leaf stands at room
+#: local x -4.55..-2.45, z 7.55..7.75, through a wall whose opening is at
+#: (-3.95, 0, 6.8). `zone_04`'s `c009` is the same with the sides
+#: mirrored. Both Zones were refused on aperture polarity for a door the
+#: room's own content was standing in.
+#:
+#: `2 * (2 * half_depth + DOOR_WIDTH / 2 + THRESHOLD_CLEARANCE)`: the
+#: feature has to fit WHOLLY on one side of the opening, clear of the
+#: door's own half-width and of the end threshold, and the room has to
+#: hold that on either side of the middle. A `powered_door` needs 20.4 m
+#: of corridor to sit beside a side door -- so a 13.6 m one does not get
+#: the tag, which is the same answer `FEATURE_MIN_DEPTH` gives and for
+#: the same reason: the Zone is not optional and the note is.
+#:
+#: Pinned against `AffordanceFeatures.FOOTPRINT`, `DOOR_WIDTH` and
+#: `THRESHOLD_CLEARANCE` in `test_affordances.py`.
+FEATURE_MIN_DEPTH_BESIDE_DOOR = {
+    "grapple_anchor": 9.2,
+    "breakable_wall": 11.6,
+    "water_volume": 9.6,
+    "rail": 20.4,
+    "wind_volume": 9.6,
+    "bounce_pad": 8.8,
+    "moving_platform": 9.6,
+    "powered_door": 20.4,
+}
+
+#: The doorways whose opening a feature can be pushed into. Named rather
+#: than inferred from "not entry and not exit": the end doorways are
+#: guarded by `THRESHOLD_CLEARANCE` already, and these two are the ones
+#: cut into the middle of a wall the lane rule pushes toward.
+SIDE_SOCKETS = ("side_left", "side_right")
+
+MIN_FEATURE_CHAMBER_DEPTH_BESIDE_DOOR = min(
+    FEATURE_MIN_DEPTH_BESIDE_DOOR.values())
+
 #: Affordance tags a campaign may offer having interpreted NOTHING.
 #:
 #: Two under §13.1, and three since 2026-09-12: `powered_door` is a crate
