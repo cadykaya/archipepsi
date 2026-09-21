@@ -637,19 +637,23 @@ not stop at the first blocked row.
 | **C2** | A signal-driven actuator generalised from `PoweredLink` | **not started** | — | `RailSpan`/`AlignmentControl` and `ShuttleDeck`/`CallLever` are two concrete chains; the generalisation is not built |
 | **C3** | Objective semantics (§5.4a) | **settled, implemented** | — | accepted consequences persist, live values do not. M1 is the worked example |
 | **C4** | Reset / interruption / tool loss | **partly done** | — | EX50-011's reset is built and measured (E-011-*, §8). **Tool loss now has its cleanup half** (F-17): each player-side effect records the slot that started it, death ends everything, and an unrelated unequip ends nothing. Reset *groups* (§23.4) are still G3's, and blocked |
+| **C4a** | `ServiceShutter`'s blocked-closure behaviour against §21.2 | **a measured delta, not started** | — | `01_RELIABLE_CORE.md:2318` requires a blocked closure to stop, **reverse to fully open**, and retry after 1.0 s, repeating indefinitely. `service_shutter.gd:144-152` stops and waits. The `held_open(seconds_over)` signal and `overrun()` readout already exist to report it. The shutter has no direct suite today — it is covered only incidentally by `counterfire_driver.gd` |
+| **C4b** | One clearance helper instead of four | **not started** | — | `SpaceProbe.body_fits` (`space_probe.gd:132`) is the primitive, used by `affordance_nodes.gd:327`. `PoweredLink.doorway_is_clear` (`powered_link.gd:154`) hand-rolls the same query **and the runtime never calls it** — the door at `:124` moves regardless. `ServiceShutter` counts bodies in an Area3D; the blink has its own landing test |
 | **C5** | Readable cause and effect from the existing vocabulary | **partly done** | — | signs, chevrons, lever labels, deck railings. Whether any of it reads is a playtest question |
 | **C6** | Bounded objective-binding schema so Epsilon selects relationships | **not started** | **D-5 (Dess)** | |
 | **D1–D5** | Blindside major, first section | **verified as M1 + M2-mech** | — | see the rows above |
 | **D6** | Second binding (`ranged_hit` on bracing) | **verified, and labelled an existing-tool variant** | — | not a second acquisition loop |
 | **D7** | Return-later variant | **deferred, tracked** | all-Checks exit policy (owner) | plan §6 decision 5; no silent change to the completion rule |
-| **E-011** | Passing Platforms | **verified** except `E-011-save` / `E-011-gates` | D-6 for save only | see the rows above |
-| **E-021** | Counterfire Arcade | **verified** except `E-021-save` and `E-021-fair` | D-6 for save only | see the rows above. Fairness is not a thing a test can answer |
+| **E-011** | Passing Platforms | **a playable development scenario.** Its route tests pass; they do not discharge its interlocks, campaign integration or save requirements | D-6 for save | `E-011-save` (§9) and `E-011-gates` (§8 boarding gates/interlocks) are open rows with their own states. A green route test is evidence about a route |
+| **E-021** | Counterfire Arcade | **a playable development scenario.** Its route tests pass; they do not discharge its interlocks, campaign integration or save requirements | D-6 for save | `E-021-save` (§9) is open; `E-021-fair` cannot be closed by a test at all. The shutter's §21.2 interlock delta is its own row below |
 | **E-033** | Unweighted Switch | **the property distinction is verified; the room is not built** | **D-7** for the Status | the open question is answered: the engine had neither vocabulary as a gameplay concept. §10's decisive control is done and green |
 | **F** | Progression / Epsilon / AP engine half | **not started** | **D-1, D-2 (Dess)** | the `established_in_zone` producer's client half |
 | **G1** | 0.4 save representation | **not started** | **D-6 (Dess)** | |
 | **G2** | Legacy migration | **deliberately not done** | owner | no old campaign is touched |
 | **G3** | Interruption | **not started** | — | |
 | **G4** | Two unmistakable launch modes, separate saves, printed revision | **partly done** | — | the 0.4 scenarios launch by name and by double-click; the printed revision/provider/scale banner is not done |
+| **H1** | **Enemy variety** — the recorded target is ~20 distinct enemies with meaningful combat roles (`docs/art/ART_REVIEW.md` § "The enemy roster target, recorded") | **3 of 10 declared roles have behaviour** | — | `Constants.ENEMY_ROLES` declares ten — `melee, ranged, brute, charger, bulwark, scuttler, artillery, beacon, diver, drifter` — and `ENEMY_ARCHETYPES` implements **three**. `Enemy.create` branches on those three only; the other seven are names in a generated constant with no runtime behind them. The art lane records the same gap from its side (`docs/art/review/batch008/README.md`: "seven of the ten roles have no collider, and the telegraph has no node in `enemy.gd`") |
+| **H2** | Enemy telegraph as a hangable node | **not started** | — | the ranged archetype has no windup at all (F-14); only the brute telegraphs. Both a gameplay and an art-integration blocker |
 | **M0** | 0.4 line exists, 0.3 untouched | **verified** | — | |
 | **M1** | One real machine chain | **verified** | — | `M1-zone` (a junction inside a composed Zone) stays blocked on **D-4** |
 | **M2-mech** | Dev-scenario loop, labelled | **verified** | — | |
@@ -710,6 +714,15 @@ And in `godot-counterfire`:
 | `_the_interlock`, `_the_release_is_permanent` | **synthetic state** | the shutter is tripped and the release accepted directly, to measure what the interval does and does not control |
 
 ## Playable milestones
+
+**These are development scenarios, and a route test is evidence about a
+route.** Each of the three rooms below runs only when an operator asks for it
+by name: not composed, no Checks, no exit, no campaign, no bridge connection,
+no save. A green continuous-play run says a person can get from one end to the
+other. It says nothing about that room's interlocks, its campaign integration,
+or its save requirements — those are separate rows, they are open, and several
+are blocked on D-6. Nothing in this table is a progression claim.
+
 
 | Milestone | Build/ref | Launch/mode/save | Actual continuous player path | Test shortcuts | Owner verdict |
 |---|---|---|---|---|---|
