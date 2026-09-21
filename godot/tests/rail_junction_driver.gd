@@ -61,6 +61,7 @@ func _run() -> void:
 	_another_packages_latch()
 	_the_carrier_is_parked_not_resumed()
 	await _the_scenario_is_walkable()
+	await _the_grapple_opens_the_gantry()
 	_finish()
 
 
@@ -493,6 +494,168 @@ func _the_scenario_is_walkable() -> void:
 	_check(yard.carrier.request(RailCarrier.FORWARD)
 		and _drive(yard.carrier) > 0 and yard.carrier.at_dock() == 2,
 		"the carrier can now ride to S3")
+
+	yard.queue_free()
+	await get_tree().process_frame
+
+
+## Point a body's eyes at something, the way the mouse would.
+func _aim(body: Player, at: Vector3) -> void:
+	var d: Vector3 = at - body.camera.global_position
+	body.rotation.y = atan2(-d.x, -d.z)
+	body.camera.rotation.x = atan2(d.y, Vector2(d.x, d.z).length())
+
+
+## THE INTENDED EXPERIENCE, IN A DEVELOPMENT SCENARIO (M2-mech).
+##
+## **What this proves and what it does not.** It proves the loop: a
+## control the player can SEE from the junction and cannot reach; a
+## branch they can walk to on the base kit alone; a tool acquired there;
+## and the same control opened with it on the way back. That is the
+## Blindside review's cause B and the owner's approved first
+## configuration.
+##
+## It proves **nothing** about progression. The Echo is handed over by
+## the scenario's own pedestal, not by an AP Check, an interpretation
+## fold or a snapshot; the acquisition contract is M2's completion
+## requirement and is not built. Labelled M2-mech everywhere it appears,
+## because a loop that plays is not a loop that is multiworld-safe.
+func _the_grapple_opens_the_gantry() -> void:
+	print("  -- M2-mech: acquire, return, and open what you could see")
+	var yard := RailwayScenario.new()
+	add_child(yard)
+	for _i in 60:
+		await get_tree().physics_frame
+	var body: Player = yard.player
+	var lever_at: Vector3 = yard.lever.global_position
+	var plate: Vector3 = yard.grapple_plate.global_position
+
+	# THE GANTRY IS VISIBLE AND OUT OF REACH. Both halves matter: a
+	# control you cannot see is not a promise, and one you can walk to
+	# is not a lock.
+	var dock: Vector3 = yard.rail.at(yard.carrier.dock_offsets[1])
+	body.global_position = dock + yard.dock_side(1) * RailwayScenario.DOCK_OUT \
+		+ Vector3(0.0, RailwayScenario.RAIL_Y + RailwayScenario.DECK.y + 1.2,
+			0.0)
+	body.velocity = Vector3.ZERO
+	for _i in 30:
+		await get_tree().physics_frame
+	# THE RING, not the lever: the lever stands ON the gantry and its
+	# own deck hides it from below, which is true of any control on a
+	# platform. What a player reads from the junction is the hook.
+	_aim(body, plate)
+	await get_tree().physics_frame
+	_check(body.camera_ray(40.0).get("collider") == yard.grapple_plate,
+		"the gantry's hook is visible from the S2 platform")
+	_check(lever_at.y - body.global_position.y > 2.5,
+		"and %.1f m above it, past anything a jump reaches"
+			% (lever_at.y - body.global_position.y))
+	_check(not yard.lever.done, "and has not been pulled")
+
+	# BASE KIT ONLY: nothing in the mobility slot yet.
+	var mobility: EchoRuntime = body.runtimes["mobility"]
+	_check(str(mobility.equipped.get("component_id", "")) == "",
+		"the player starts with nothing in the mobility slot, got '%s'"
+			% mobility.equipped.get("component_id", ""))
+
+	# THE BRANCH. Walked to on the base kit; the pedestal is taken with
+	# the real interact verb.
+	body.global_position = yard.grant.global_position \
+		+ (yard.grant.global_transform.basis.z * 1.6) + Vector3(0, 0.6, 0)
+	body.velocity = Vector3.ZERO
+	for _i in 20:
+		await get_tree().physics_frame
+	_aim(body, yard.grant.global_position)
+	for _i in 3:
+		await get_tree().physics_frame
+	_check(body.camera_ray(3.0).get("collider") == yard.grant,
+		"the interact probe finds the pedestal")
+	Input.action_press("interact")
+	await get_tree().physics_frame
+	Input.action_release("interact")
+	await get_tree().physics_frame
+	_check(yard.grant.taken, "taking it hands over the Echo")
+	_check(str(mobility.equipped.get("component_id", "")) == "dev_hookshot",
+		"into the mobility slot, got '%s'"
+			% mobility.equipped.get("component_id", ""))
+	_check(str((mobility.equipped.get("primitive", {}) as Dictionary)
+			.get("type", "")) == "grapple_to_surface",
+		"as the primitive the schema's own tests author")
+
+	# AND BACK TO THE JUNCTION, to open what was already visible.
+	body.global_position = dock + yard.dock_side(1) * RailwayScenario.DOCK_OUT \
+		+ Vector3(0.0, RailwayScenario.RAIL_Y + RailwayScenario.DECK.y + 1.2,
+			0.0)
+	body.velocity = Vector3.ZERO
+	for _i in 30:
+		await get_tree().physics_frame
+	_aim(body, plate)
+	await get_tree().physics_frame
+	_check(body.camera_ray(25.0).get("collider") == yard.grapple_plate,
+		"the hookshot is aimed at the gantry's plate")
+	var before := body.global_position.y
+	var pull: EchoRuntime = body.runtimes["mobility"]
+	Input.action_press("fire_mobility")
+	# THE INPUT PATH, not `activate()` called by hand. A slot that
+	# fires only when a test reaches into the runtime is an Echo a
+	# player cannot use, and the cooldown is what says the press
+	# landed.
+	#
+	# A FEW FRAMES, not one. `Input.action_press` from a coroutine
+	# lands between frames, so `is_action_just_pressed` can fall on
+	# the frame after the one this resumes on. Reading the cooldown
+	# a single frame later measured a press that had not been
+	# delivered yet, and reported the Echo broken while the pull
+	# it fired was in the air.
+	var landed := false
+	for _i in 4:
+		await get_tree().physics_frame
+		if pull.cooldown_remaining > 0.0:
+			landed = true
+			break
+	Input.action_release("fire_mobility")
+	_check(landed,
+		"the mobility key fires the hookshot (cooldown %.2f)"
+			% pull.cooldown_remaining)
+	# AND STEER, because that is what a player does. The pull sets
+	# `velocity` outright and `player.gd` then lerps the horizontal
+	# part toward the walk intent every frame, so a hookshot fired
+	# and then ignored arrives almost straight up. Holding forward
+	# -- already aimed at the gantry by `_aim` -- is the input the
+	# verb is used with, and measuring it without that would be
+	# measuring a player who let go of the keyboard.
+	Input.action_press("move_forward")
+	var high := before
+	for _i in 180:
+		await get_tree().physics_frame
+		high = maxf(high, body.global_position.y)
+		if body.is_on_floor() and body.global_position.y > before + 2.0:
+			break
+	Input.action_release("move_forward")
+	print("    pulled from %.2f m to %.2f m (peak %.2f)"
+		% [before, body.global_position.y, high])
+	_check(body.global_position.y > yard.lever.global_position.y - 1.5,
+		"the pull puts the player on the gantry (%.2f m, lever at %.2f)"
+			% [body.global_position.y, yard.lever.global_position.y])
+	_check(body.is_on_floor() and body.global_position.y
+			> RailwayScenario.GANTRY_Y - 0.5,
+		"standing on it rather than back on the dock")
+
+	# AND THE LOOP CLOSES.
+	_aim(body, lever_at)
+	for _i in 3:
+		await get_tree().physics_frame
+	_check(body.camera_ray(3.0).get("collider") == yard.lever,
+		"the lever is in reach now")
+	Input.action_press("interact")
+	await get_tree().physics_frame
+	Input.action_release("interact")
+	await get_tree().physics_frame
+	_check(yard.lever.done, "and pulling it starts the span")
+	for _i in int(RailSpan.TRAVEL_SECONDS / STEP) + 10:
+		yard.span.advance(STEP)
+	_check(yard.span.locked and yard.carrier.commissioned[1],
+		"which locks home and opens the way to S3")
 
 	yard.queue_free()
 	await get_tree().process_frame

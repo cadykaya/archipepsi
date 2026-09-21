@@ -34,7 +34,21 @@ const DECK := Vector3(4.0, 0.4, 4.0)
 ## edge meets the deck's outer edge exactly.
 const DOCK_OUT := 4.0
 const DOCK := Vector3(4.0, 0.4, 7.0)
-const GANTRY_Y := 4.6
+## The gantry's deck. Out of reach on purpose -- a standing jump tops
+## out at 1.33 m and there is no mantle -- and close enough to the dock
+## that a 14 m/s pull, which is the number the schema's own example
+## authors, actually carries a body onto it. Both halves were measured
+## rather than chosen: at 4.6 m and ten metres out, the pull peaked 2.7 m
+## up and the player landed back where they started.
+const GANTRY_Y := 3.1
+## How far the gantry stands from the track, measured like the docks.
+const GANTRY_OUT := 7.5
+## How far out the acquisition branch runs from the S2 junction.
+const BRANCH_OUT := 20.0
+## The plate the hookshot bites, above the gantry's INNER lip: a pull
+## aimed at the middle of the deck arcs over it, and one aimed at the
+## near edge lands on it.
+const GANTRY_PLATE_Y := 7.2
 const STEP_RISE := 0.25
 const STEP_TREAD := 0.55
 const THEME := "concrete_facility"
@@ -45,6 +59,9 @@ var controls: RailControls = null
 var junction: RailJunction = null
 var span: RailSpan = null
 var lever: AlignmentControl = null
+var grant: EchoGrant = null
+## The plate above the gantry that the hookshot bites.
+var grapple_plate: StaticBody3D = null
 var player: Player = null
 var dock_offsets := PackedFloat32Array()
 
@@ -82,6 +99,7 @@ func _ready() -> void:
 	_carrier()
 	_docks()
 	_gantry()
+	_branch()
 	_spawn_player()
 	_legend()
 
@@ -218,16 +236,23 @@ func _gantry() -> void:
 	var along := rail.tangent(dock_offsets[1])
 	var side := Vector3.UP.cross(along).normalized()
 	var top := RAIL_Y + DECK.y
-	var deck_centre := where + side * (DOCK_OUT + 6.0) \
+	var deck_centre := where + side * GANTRY_OUT \
 		+ Vector3(0.0, GANTRY_Y, 0.0)
-	var platform := _slab(Vector3(5.0, 0.4, 5.0), deck_centre,
+	var platform := _slab(Vector3(4.0, 0.4, 4.0), deck_centre,
 		ThemeMaterials.wall_mat(THEME))
 	platform.basis = Basis.looking_at(-along, Vector3.UP)
-	# FROM THE PLATFORM'S OUTER LIP TO THE GANTRY'S INNER LIP.
-	# Both ends named, so the flight lands on what it climbs to.
-	_stair(where + side * (DOCK_OUT + DOCK.x * 0.5)
-			+ Vector3(0.0, top, 0.0),
-			deck_centre - side * 2.5 + Vector3(0.0, 0.2, 0.0), 3.0)
+	# NO STAIRS. The approved configuration reaches this control by
+	# GRAPPLE, and the owner's direction is explicit: do not add a
+	# guaranteed ordinary walking bypass to avoid the acquisition
+	# work. An earlier cut of this scenario had a flight of steps
+	# here as a placeholder, and a placeholder that lets you skip
+	# the loop is not a placeholder for the loop.
+	# ABOVE THE DECK'S INNER LIP, and the height is ballistics rather
+	# than taste. A 14 m/s pull under this gravity tops out 4.45 m
+	# above where it started, so a deck 3.8 m up was at the edge of
+	# the envelope and the player clipped its underside on the way.
+	grapple_plate = _anchor(deck_centre - side * 2.0,
+			GANTRY_PLATE_Y - deck_centre.y, 0.0, Vector3.ZERO)
 	# Something holding it up: a platform floating on nothing
 	# reads as an unfinished scene rather than as a gantry.
 	_slab(Vector3(0.6, GANTRY_Y, 0.6),
@@ -273,14 +298,21 @@ func _legend() -> void:
 	print("")
 	print("    WASD / space     move")
 	print("    left mouse       Static Pulse -- shoot a direction control")
-	print("    E                pull the alignment lever")
+	print("    E                take the hookshot / pull the lever")
+	print("    right-hand mouse / the mobility key   fire the hookshot")
 	print("    Esc              quit")
 	print("")
 	print("  S1 --commissioned-- S2 - - - broken - - - S3")
-	print("  Board at S1, shoot the GREEN control to go forward. At S2")
-	print("  the railway will refuse S3 until the span is aligned: the")
-	print("  gantry lever does that, and the repair is what would")
-	print("  survive leaving if this were a Zone.")
+	print("                      |")
+	print("                      +-- the branch: a hookshot, and a ledge")
+	print("                          to learn it on")
+	print("")
+	print("  Board at S1 and shoot the chevron pointing down the track.")
+	print("  At S2 the railway refuses S3: the span is up. The gantry that")
+	print("  lowers it is overhead and out of reach -- cross the junction,")
+	print("  take the hookshot, try it on the ledge, come back, and pull")
+	print("  yourself up to the ring. The repair is what would survive")
+	print("  leaving, if this were a Zone.")
 	print("")
 
 
@@ -310,6 +342,172 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_tree().quit()
+
+
+## --- the acquisition branch (M2-mech) ---------------------------------
+
+## A pedestal that hands over an Echo.
+##
+## **THE DEV PATH, and it is labelled as one everywhere it appears.** In
+## the real loop the featured Echo arrives through the campaign: an AP
+## Check, the interpretation fold, a snapshot, `set_equipped`. That
+## contract is M2's and is not built, so this hands the same component
+## straight to the same runtime -- which proves the EXPERIENCE (can a
+## player acquire a tool and immediately use it to open something they
+## could see but not reach) and proves nothing at all about
+## progression, logic or multiworld safety.
+##
+## The component is the one the schema's own tests author, numbers
+## included, so the thing handed over here is the thing the bridge would
+## hand over rather than a convenient invention.
+class EchoGrant extends StaticBody3D:
+	signal granted(slot: String)
+
+	const COMPONENT := {
+		"kind": "action", "component_id": "dev_hookshot",
+		"display_name": "Hookshot", "slot": "mobility",
+		"description": "Pull yourself to a surface.", "cooldown": 1.5,
+		"primitive": {"type": "grapple_to_surface", "range": 20.0,
+			"pull_force": 14.0},
+		"modifiers": []}
+
+	var taken := false
+	var _lid: Node3D = null
+
+	static func make(theme: String) -> EchoGrant:
+		var made := EchoGrant.new()
+		made.name = "EchoGrant"
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = Vector3(1.0, 1.1, 1.0)
+		shape.shape = box
+		made.add_child(shape)
+		var plinth := MeshInstance3D.new()
+		var plinth_mesh := BoxMesh.new()
+		plinth_mesh.size = box.size
+		plinth.mesh = plinth_mesh
+		plinth.material_override = ThemeMaterials.glow_material(
+			ActivityElement.HARDWARE, 0.0)
+		made.add_child(plinth)
+		made._lid = MeshInstance3D.new()
+		var lid := BoxMesh.new()
+		lid.size = Vector3(0.5, 0.5, 0.5)
+		(made._lid as MeshInstance3D).mesh = lid
+		made._lid.position = Vector3(0.0, 1.0, 0.0)
+		(made._lid as MeshInstance3D).material_override = \
+			ThemeMaterials.glow_material(Color(0.6, 0.9, 1.0), 2.2)
+		made.add_child(made._lid)
+		return made
+
+	func interact_prompt() -> String:
+		return "" if taken else "[E] TAKE THE HOOKSHOT"
+
+	func interact(who: Node) -> void:
+		if taken or who == null:
+			return
+		var holder := who as Player
+		if holder == null or not holder.runtimes.has("mobility"):
+			return
+		taken = true
+		if _lid != null:
+			_lid.visible = false
+		# THE REAL SLOT AND THE REAL RUNTIME. Nothing here reaches past
+		# `set_equipped`, which is the same call a snapshot makes.
+		var runtime: EchoRuntime = holder.runtimes["mobility"]
+		runtime.set_equipped(COMPONENT)
+		granted.emit("mobility")
+
+
+## A ceiling plate with a ledge under it: the grapple family reaches it
+## and nothing else does.
+##
+## The shape is `AffordanceFeatures._grapple_anchor`'s -- a plate to
+## bite, a ledge to land on, a ring so it reads as a hook -- built here
+## rather than called because that one is private to the feature builder
+## and carries a reward this scenario has no campaign to grant.
+func _anchor(at: Vector3, plate_y: float, ledge_y: float,
+		ledge: Vector3) -> StaticBody3D:
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 0.26
+	torus.outer_radius = 0.42
+	ring.mesh = torus
+	ring.rotation.x = PI * 0.5
+	ring.material_override = ThemeMaterials.glow_material(
+		Constants.AFFORDANCE_SIGNAL, 1.8)
+	add_child(ring)
+	ring.global_position = at + Vector3(0.0, plate_y - 0.32, 0.0)
+	if ledge.length() > 0.0:
+		_slab(ledge, at + Vector3(0.0, ledge_y, 0.0),
+			ThemeMaterials.accent_mat(THEME))
+	return _slab(Vector3(1.2, 0.3, 1.2), at + Vector3(0.0, plate_y, 0.0),
+		ThemeMaterials.trim_mat(THEME))
+
+
+## THE ACQUISITION BRANCH. Off the S2 junction, away from the gantry,
+## walkable on the base kit alone.
+##
+## **The order is the design's, and it is cause B of the Blindside
+## review.** The gantry is visible from S2 before the branch is taken;
+## the branch supplies the tool; the player comes back to a junction
+## they already know and opens what they had already seen. Nothing in
+## the branch needs the grapple to enter, because the branch is where
+## the grapple comes from.
+func _branch() -> void:
+	var where := rail.at(dock_offsets[1])
+	var along := rail.tangent(dock_offsets[1])
+	var side := Vector3.UP.cross(along).normalized()
+	var top := RAIL_Y + DECK.y
+	# OUT PAST THE GANTRY, not across the track. An earlier cut put
+	# the branch on the far side of the rails and left the player a
+	# nine-metre gap and a live railway to cross -- a branch nobody
+	# can walk to on the base kit is not an acquisition branch. This
+	# one leaves the dock beside the gantry and passes UNDER it,
+	# which also keeps the thing the tool opens in view on the way
+	# out and on the way back.
+	var lane := along * 3.0
+	var yard := where + side * BRANCH_OUT + lane \
+			+ Vector3(0.0, top, 0.0)
+	_slab(Vector3(10.0, 0.4, 10.0), yard - Vector3(0.0, 0.2, 0.0),
+			ThemeMaterials.wall_mat(THEME))
+	var walk_from := DOCK_OUT
+	var walk_to := BRANCH_OUT - 4.0
+	var walkway := _slab(
+			Vector3(3.0, 0.4, walk_to - walk_from),
+			where + side * ((walk_from + walk_to) * 0.5) + lane
+				+ Vector3(0.0, top - 0.2, 0.0),
+			ThemeMaterials.floor_mat(THEME))
+	walkway.basis = Basis.looking_at(-side, Vector3.UP)
+
+	grant = EchoGrant.make(THEME)
+	add_child(grant)
+	grant.global_position = yard + Vector3(0.0, 0.55, 0.0)
+	grant.look_at(Vector3(where.x, grant.global_position.y, where.z),
+		Vector3.UP)
+	_sign("HOOKSHOT", yard + Vector3(0, 3.4, 0),
+		Color(0.6, 0.9, 1.0), 72)
+	_sign("dev-path grant: the campaign contract that would\n"
+		+ "hand this over is M2 and is not built",
+		yard + Vector3(0, 2.6, 0), Color(0.7, 0.7, 0.75), 28)
+
+	# AND SOMETHING TO LEARN IT ON, before it matters. A ledge out of
+	# jump reach with nothing required on it: the first pull should be
+	# somewhere a miss costs nothing.
+	var practice := yard + side * 7.0
+	_anchor(practice, 6.4, 2.6, Vector3(3.0, 0.4, 3.0))
+	_sign("TRY IT", practice + Vector3(0, 7.4, 0),
+		Color(0.75, 0.9, 1.0), 48)
+
+
+## Which way is "beside the track" at a dock: the unit vector a dock
+## platform, its controls and its branch are all laid out along.
+##
+## Exposed because a caller that recomputed it would be the second copy
+## of the arithmetic, and the two would disagree the day the route
+## changes.
+func dock_side(index: int) -> Vector3:
+	var at := clampi(index, 0, dock_offsets.size() - 1)
+	return Vector3.UP.cross(rail.tangent(dock_offsets[at])).normalized()
 
 
 ## --- small builders ---------------------------------------------------

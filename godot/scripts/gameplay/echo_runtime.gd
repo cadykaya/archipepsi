@@ -1010,15 +1010,26 @@ func _inside_zone_bounds(landing: Vector3) -> bool:
 func _grapple(prim: Dictionary) -> void:
 	var hit := player.camera_ray(float(prim["range"]))
 	if hit.is_empty():
+		# A SHOT AT THE SKY COSTS NOTHING. `_blink` and `_grapple_swing`
+		# both refund a press that found no surface, and this did not:
+		# it burned the cooldown and the power draw on a miss. With the
+		# grapple as the featured Echo, that is the difference between
+		# learning to aim it and being punished for trying.
+		_refund_press()
 		return
 	var target: Variant = hit["collider"]
-	if is_instance_valid(target) and target is StaticBody3D:
-		var pull: Vector3 = (hit["position"]
-				- player.global_position).normalized()
-		player.velocity = pull * float(prim["pull_force"])
-		Tracer.spawn(get_tree().current_scene,
-				player.global_position + Vector3.UP * 1.2, hit["position"],
-				source_color(), 0.15, source_particles())
+	# THE SAME REFUND FOR A SURFACE THAT IS NOT ONE. A shot that
+	# lands on an enemy or a moving body is a miss for THIS verb, and
+	# the player has no way to tell the two misses apart.
+	if not (is_instance_valid(target) and target is StaticBody3D):
+		_refund_press()
+		return
+	var pull: Vector3 = (hit["position"]
+			- player.global_position).normalized()
+	player.velocity = pull * float(prim["pull_force"])
+	Tracer.spawn(get_tree().current_scene,
+			player.global_position + Vector3.UP * 1.2, hit["position"],
+			source_color(), 0.15, source_particles())
 
 ## Reels a LIGHT enemy in. `max_target_hp` is what stops it being a way to
 ## drag a brute off its perch and into a corner.

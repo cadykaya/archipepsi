@@ -55,6 +55,13 @@ func _run() -> void:
 			control.global_position + control.global_transform.basis.x * 2.4
 			+ Vector3(0.0, 0.5, 0.0), control.global_position,
 			"a direction control, close")
+	# THE BRANCH, from the junction: the walk out, the gantry it
+	# passes under, and the pedestal at the end of it.
+	var grant_at: Vector3 = _yard.grant.global_position
+	await _shoot("2c_the_branch",
+			s2 + _yard.dock_side(1) * 2.0 + Vector3(0.0, 9.0, -13.0),
+			(s2 + grant_at) * 0.5,
+			"the acquisition branch, out past the gantry")
 	await _shoot("3_the_lever", _yard.lever.global_position
 		+ Vector3(3.2, 1.9, 3.2), _yard.lever.global_position,
 		"the alignment control on the gantry")

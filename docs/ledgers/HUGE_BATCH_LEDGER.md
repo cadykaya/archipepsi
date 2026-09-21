@@ -45,6 +45,7 @@
 | M1-zone | A junction inside a real composed Zone | plan §6 decision 3 | **D-4 (Dess)** | — | **blocked** | — | a package binds to `feature:<tag>` or `shell:<id>` only, and §13.2 forbids the first. Nothing in the Zone schema declares rail content, so no composed Zone can carry one |
 | A-fix | `godot-return-journey` green again | 0.3 carry-over | — | `integration_driver.gd` | **verified** | `a0be324` | F-04 |
 | M1-play | M1 is a place a person can stand: `--railway` | plan §3 ("M1 ... independently playable") | P4 | `railway_scenario.gd`, `railway_shot_driver.gd` | **verified** | `ca43341`+ | `make godot-rail-junction` builds and measures it; `make railway-shots` renders it. **Development scaffolding, not a Zone** |
+| M2-mech | The intended experience, in a development scenario: see a control you cannot reach, cross to a branch, acquire the tool, come back and open it | plan §3 build order P5 / addendum "first grapple configuration" | P4, M1-play | `railway_scenario.gd` (`EchoGrant`), `echo_runtime.gd` | **verified, and labelled** | `f9f51e9`+ | 79 checks. **Explicitly not M2 and not multiworld-safe**: the Echo is handed over by the scenario's own pedestal, not by a Check, a fold or a snapshot |
 
 ## Findings
 
@@ -218,6 +219,38 @@
   assertions could not see. The suite now also builds the scenario and measures
   it, so the parts a test *can* hold are held.
 
+### F-07 — the grapple is a verb the ballistics have to allow
+
+- **Task / case identity:** M2-mech, `make godot-rail-junction`, real `Player`,
+  real `fire_mobility` press, the component the schema's own tests author
+  (`grapple_to_surface`, range 20, pull_force 14).
+- **Measured, not assumed:** `_grapple` sets `velocity` to `pull_force` toward
+  the hit point, and the player's own movement then lerps the HORIZONTAL part
+  toward the walk intent every frame. The vertical survives; the lateral does
+  not. Under this gravity (~21.9 m/s², measured from the arc) a 14 m/s pull
+  tops out **4.45 m above where it started**, and only about the first metre of
+  its lateral carry arrives.
+- **Consequence for the geometry, which is where it was fixed:** a gantry 3.8 m
+  above the dock and ten metres out was outside that envelope — the first cut
+  peaked 2.7 m up and the player landed back where they started, and a second
+  cut clipped its head on the gantry's own underside on the way up. The gantry
+  is now 3.1 m above the rail and 7.5 m out, with the plate above its inner lip:
+  the pull is steep, clears the lip, and lands. **Nothing in `player.gd` was
+  changed** — its movement damping is production behaviour and a feel change to
+  it is the owner's decision, not this lane's.
+- **One defect repaired, because the grapple is now load-bearing:** `_grapple`
+  returned on a miss with no `_refund_press()`, burning the cooldown and the
+  power draw on a shot at the sky, while `_blink` and `_grapple_swing` both
+  refund. A shot that lands on something that is not a `StaticBody3D` now
+  refunds too: it is a miss for this verb and the player cannot tell the two
+  apart.
+- **An instrument error, caught before reporting:** the first cut read the
+  cooldown one physics frame after the press and reported the Echo broken. A
+  press issued from a coroutine lands between frames, so
+  `is_action_just_pressed` can fall on the frame after the one the test resumes
+  on — the pull it fired was already in the air. The case now waits a few
+  frames for the press to be delivered.
+
 ## Full-Amalgam matrix
 
 *(built incrementally per plan §4 — never a prerequisite to starting)*
@@ -227,11 +260,12 @@
 | Milestone | Build/ref | Launch/mode/save | Actual continuous player path | Test shortcuts | Owner verdict |
 |---|---|---|---|---|---|
 | 0.3 candidate | `19c5d8e` | production mode | exit/hold patch unplayed by owner | — | not yet played |
-| M1, the railway | `ca43341`+ | `godot --path godot -- --railway` (or `godot-bin/godot --path godot -- --railway`) | board at S1, shoot the chevron pointing toward S2, ride; S2→S3 is refused; climb the gantry stair, press E on the lever, watch the span lock; ride to S3 | **the whole scenario is a test shortcut**: not a Zone, no campaign, no bridge, no Checks, no exit, and the stairs stand in for the grapple M2 will grant | not yet played |
+| M1 + M2-mech, the railway | `f9f51e9`+ | `godot --path godot -- --railway` (or `godot-bin/godot --path godot -- --railway`) | board at S1, shoot the chevron pointing down the track, ride; S2→S3 is refused; the gantry that lowers the span is overhead and out of reach; walk the branch past it, take the hookshot, try it on the ledge, come back, pull yourself to the ring, press E on the lever, ride to S3 | **the whole scenario is a test shortcut**: not a Zone, no campaign, no bridge, no Checks, no exit, and the Echo is granted by a pedestal rather than by a Check | not yet played |
 
 ## Checkpoint
 
-- **Last completed milestone:** M1 (engine half). P0, P2, P2b, P3, P4 verified.
+- **Last completed milestone:** M2-mech. P0, P2, P2b, P3, P4, M1 and the
+  development-scenario loop verified.
 - **Current coherent tree:** `claude/archipepsi-0-4-blindside`; `godot-rail-carrier`,
   `godot-passenger-carry`, `godot-affordance`, `godot-movement`, `godot-physics`,
   `godot-traverse`, `godot-content` and `godot-activity` green.
@@ -240,9 +274,10 @@
   measured — and Passing Platforms wants exactly a carrier that stops at points,
   so building the vehicle first means the minor reuses `RailCarrier` instead of
   duplicating it.
-- **Exact next action (owner's call first):** the railway is playable and
-  unplayed. Walking it is worth more than the next feature, because everything
-  after this reuses its parts. After that, P1 (EX50-011 Passing Platforms,
-  which can now reuse `RailCarrier`) or M2-mech.
-- **Not done and not started:** P1, M2-mech, M3, M4, M5. M2's completion stays
-  gated on the acquisition contract (§5) as approved.
+- **Exact next action (owner's call first):** the whole first loop is playable
+  and unplayed. Walking it is worth more than the next feature, because
+  everything after this reuses its parts.
+- **Not done and not started:** P1 (EX50-011, which can now reuse
+  `RailCarrier`), M3, M4, M5. **M2's completion stays gated on the acquisition
+  contract (§5) as approved** — M2-mech proves the experience and nothing about
+  progression.

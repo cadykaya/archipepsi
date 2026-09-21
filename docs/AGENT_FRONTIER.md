@@ -1,5 +1,48 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — see it, cross to it, come back and open it — 2026-09-21
+
+**M2-mech.** The railway scenario now carries the whole first loop. The gantry
+that lowers the span is **overhead and out of reach**; the branch that supplies
+the tool leaves the S2 dock and passes under it; the pedestal there hands over
+`grapple_to_surface`; a ledge beside it is somewhere to learn it where a miss
+costs nothing; and the same control the player could see from the junction opens
+with it on the way back. That is the Blindside review's cause **B** and the
+owner's approved first configuration.
+
+**IT IS NOT M2 AND IT IS NOT MULTIWORLD-SAFE, and it says so on a sign.** The
+Echo is handed over by the scenario's own pedestal, not by an AP Check, an
+interpretation fold or a snapshot. The acquisition contract is M2's completion
+requirement, it is Dess's, and it is not built. What this proves is the
+EXPERIENCE; it proves nothing about progression.
+
+**THE STAIRS ARE GONE.** The owner's direction is explicit — do not add a
+guaranteed ordinary walking bypass to avoid the acquisition work — and a
+placeholder that lets you skip the loop is not a placeholder for the loop.
+
+**F-07: THE GRAPPLE IS A VERB THE BALLISTICS HAVE TO ALLOW.** `_grapple` sets
+`velocity` toward the hit point and `player.gd` then lerps the HORIZONTAL part
+toward the walk intent every frame: the vertical survives, most of the lateral
+does not. Under this gravity (~21.9 m/s², measured from the arc) a 14 m/s pull
+tops out 4.45 m above where it started. A gantry 3.8 m up and ten metres out was
+outside that envelope — the first cut peaked 2.7 m and the player landed where
+they started, and the second clipped its head on the gantry's own underside.
+Fixed in the GEOMETRY: 3.1 m up, 7.5 m out, plate above the inner lip.
+**Nothing in `player.gd` was changed** — its damping is production behaviour and
+a feel change to it is the owner's call.
+
+One defect repaired because the grapple is now load-bearing: `_grapple` burned
+the cooldown and the power draw on a shot at the sky, while `_blink` and
+`_grapple_swing` both refund. It refunds now, and so does a shot that lands on
+something that is not a `StaticBody3D`.
+
+**An instrument error, caught before reporting:** reading the cooldown one
+physics frame after the press reported the Echo broken while the pull it fired
+was in the air. A press issued from a coroutine lands between frames.
+
+**NEXT:** the loop is playable and unplayed.
+
+
 ## ENGINE LANE — the railway is a place you can stand — 2026-09-21
 
 **`godot --path godot -- --railway`.** Board at S1, shoot the chevron pointing
