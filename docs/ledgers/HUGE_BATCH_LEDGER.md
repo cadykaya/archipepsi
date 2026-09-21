@@ -672,6 +672,59 @@ vocabulary runs ahead on is refused and leaves nothing behind". With the guard
 removed, twelve checks fail by name.
 
 
+### F-19 — the targets had no facing rule at all, and one still has no answer
+
+`Activities._row` writes `yaw` in **exactly one place** — the mounted branch. A
+SHOT element that found no wall kept the room's default orientation, and the
+floor solver that then placed it asks about *space* and never about what is in
+front of the face. Twelve of twenty-seven targets in the diagnostic Zone were
+unmounted; **seven faced into geometry**, two into a shell's own back wall and
+three into each other.
+
+The repair is a pass that runs when every element in the room exists, tries
+sixteen facings, and rotates. **Positions do not move** — no room, no Check and
+no element is relocated, and none is ever dropped.
+
+**Four wrong turns on the way, each caught by the census rather than by
+reasoning:**
+
+1. **Per-row is the wrong level.** Inside `_row`, `taken` holds elements
+   `0..i-1`, so three failures faced elements placed after them. Moving the pass
+   to the end of `_row` fixed those; four remained, because a target in the
+   room's *first activity* faced one in its *third*. The pass belongs to the
+   room, not the row. 7 → 4.
+2. **Solids read after the elements exist include the elements.** Every probe
+   then hit the target's own collider and nothing turned at all. 4 → 7 again.
+   The walk now prunes the element subtrees and models them from their claimed
+   footprints instead.
+3. **Padding the travel axis reaches backwards.** A probe padded in both
+   horizontal axes extends *behind* the element into the wall it stands 0.45 m
+   from, so a target refused every facing including the open ones. Padding is
+   perpendicular to travel only.
+4. **`occupied` is not what a shot travels through.** Refusing a facing because
+   a *reservation* — a padded claim that keeps two pieces of content off each
+   other — sat in front of it made this stricter than the census it exists to
+   satisfy. A target with two clear metres of air kept a facing into a wall
+   because a reward had booked the space. Solids and other elements' bodies are
+   what a ray can hit, and that is what is asked. **4 → 1.**
+
+**One case remains and rotation cannot solve it.** `ActivityElement_4` in
+`c002`, at `-17.1, 2.2, 29.1`: sixteen facings, tried at the target's full
+width and again at a sliver, and every one is blocked inside two metres. The
+census agrees — its nearest blocker on the kept facing is at **1.90 m**, ten
+centimetres short of `CLEAR_AHEAD`. It is boxed in, and the answer is a
+placement change rather than a rotation.
+
+**So the gate is not promoted.** `godot-target-facing` stays out of CI and
+stays in `NOT_A_SUITE`, because it does not pass. Enabling a red test is not
+the repair, and neither is relaxing `CLEAR_AHEAD` to 1.85 to collect a green
+tick. The suite keeps measuring; the remaining case is named here.
+
+`godot-activity`, `godot-zone-audit` and `godot-room-contract` — the three
+suites sharing the Zone-1 fixture — are green, so the mount contract and the
+never-drop-an-element rule survived the change.
+
+
 ## Full scope and status
 
 Every workstream in the plan, including what has not been started. **A Dess
@@ -680,7 +733,7 @@ not stop at the first blocked row.
 
 | ID | Workstream / milestone | State | Blocked by | Note |
 |---|---|---|---|---|
-| **A1** | 0.3 cleanup: shot-target orientation repaired, `godot-target-facing` promoted to a gate | **partly done, and the suite is RED** | — | the orientation repair landed at `f4953c1`; the suite is not in `integration.yml` and cannot be promoted, because it fails: **7 of 27 shot targets in a composed Zone cannot be shot from in front** (blocked by cover, by a wall, or by another target). Verified byte-identical at the branch point `19c5d8e` in a clean worktree, so it is pre-existing and untouched by this batch. Promoting it is not a one-line change; it is the repair |
+| **A1** | 0.3 cleanup: shot-target orientation repaired, `godot-target-facing` promoted to a gate | **repaired 7 → 1; not promoted** | — | F-19. Unmounted SHOT elements had no facing rule at all; a room-level pass now aims them and six of the seven failures are gone. **The seventh cannot be solved by rotation** — `ActivityElement_4` in `c002` is blocked inside two metres in all sixteen facings, at full width and at a sliver, and the census's own nearest blocker is 1.90 m. It needs a placement change. The suite stays in `NOT_A_SUITE` and out of CI **because it does not pass**, which is the condition, not a formality |
 | **A2** | Climbing-producer door records (`tower`, `platform_path` file `exit` past the wall the hole is cut in) | **not started** | — | bounded repair; scoped carefully because `door_world` feeds join sockets and lock slabs |
 | **A3** | Finish-path coverage | **not started** | — | |
 | **A4** | Stop tracking disposable test saves; launch hygiene | **not started** | — | |

@@ -377,6 +377,11 @@ static func _build_activities(result: Dictionary, chamber: Dictionary,
 				occupied.append(claimed as AABB)
 			activities.append(built)
 			index += 1
+	# AND NOW THAT EVERY ELEMENT IN THE ROOM EXISTS, which way each shot
+	# target looks. Positions are already settled and none of them move;
+	# an unmounted target claims a square precisely so this turn cannot
+	# invalidate the avoid-lists above.
+	Activities.aim_shot_targets(root)
 	return activities
 
 ## WHICH ROOM to build. Every return here is a room; none of them is a

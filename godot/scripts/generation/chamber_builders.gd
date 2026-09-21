@@ -82,14 +82,22 @@ static func solid_boxes(node: Node,
 ##     it cannot see, which is the "the builder knows a physical fact
 ##     the composer does not" defect this project has now paid for four
 ##     times.
+## `skip` prunes whole subtrees. `Activities.aim_shot_targets` needs the
+## finished room's blockers WITHOUT the activity elements in it -- it
+## models those from the footprints they claimed, and counting them here
+## as well would have every target blocked by itself and its neighbours
+## twice over.
 static func all_solid_boxes(node: Node,
-		xform := Transform3D.IDENTITY) -> Array[AABB]:
+		xform := Transform3D.IDENTITY,
+		skip: Array = []) -> Array[AABB]:
 	var out: Array[AABB] = []
-	_gather_solids(node, xform, out, true)
+	_gather_solids(node, xform, out, true, skip)
 	return out
 
 static func _gather_solids(node: Node, xform: Transform3D,
-		out: Array[AABB], everything: bool) -> void:
+		out: Array[AABB], everything: bool, skip: Array = []) -> void:
+	if not skip.is_empty() and node in skip:
+		return
 	var here := xform
 	if node is Node3D:
 		here = xform * (node as Node3D).transform
@@ -120,7 +128,7 @@ static func _gather_solids(node: Node, xform: Transform3D,
 			if mesh != null:
 				out.append(here * mesh.get_aabb())
 	for child in node.get_children():
-		_gather_solids(child, here, out, everything)
+		_gather_solids(child, here, out, everything, skip)
 
 ## The floor rectangle a band occupies, in room space (x, z).
 ##
