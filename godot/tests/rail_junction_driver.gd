@@ -771,6 +771,30 @@ func _fighting_from_the_deck() -> void:
 	_check(mark.hp < hp,
 		"and a shot from the moving deck damages it (%.1f -> %.1f)"
 			% [hp, mark.hp])
+	# AND DYING IS NOT A DEAD END. A yard with shooters in it and no way
+	# back is a trap, and the player's respawn goes to a transform
+	# captured in `_ready` -- so a scenario that only MOVED the player
+	# would send them to the world origin the first time they lost.
+	# S1's platform, not wherever the body happens to be standing:
+	# by this point in the case it is aboard a moving carrier.
+	var home: Vector3 = yard.rail.at(yard.carrier.dock_offsets[0]) \
+			+ yard.dock_side(0) * RailwayScenario.DOCK_OUT
+	body.global_position = yard.rail.at(yard.carrier.dock_offsets[2]) \
+		+ Vector3(0.0, 6.0, 0.0)
+	await get_tree().physics_frame
+	body.take_damage(Constants.PLAYER_MAX_HP * 10.0)
+	var waited := 0
+	var budget := int((Constants.RESPAWN_DELAY + 1.5) * 60.0)
+	while waited < budget and body.hp <= 0.0:
+		await get_tree().physics_frame
+		waited += 1
+	_check(body.hp > 0.0, "the player comes back after %.1f s"
+		% (float(waited) / 60.0))
+	var off := Vector2(body.global_position.x - home.x,
+			body.global_position.z - home.z).length()
+	_check(off < 3.0,
+		"on S1's platform rather than at the world origin (%.1f m "
+			% off + "from its centre)")
 
 	yard.queue_free()
 	await get_tree().process_frame

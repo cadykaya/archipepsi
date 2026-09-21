@@ -328,9 +328,16 @@ func _place_player() -> void:
 	var start := rail.at(dock_offsets[0])
 	var along := rail.tangent(dock_offsets[0])
 	var side := Vector3.UP.cross(along).normalized()
-	player.global_position = start + side * DOCK_OUT \
-		+ Vector3(0.0, RAIL_Y + DECK.y + 1.2, 0.0)
-	player.rotation.y = atan2(-side.x, -side.z) + PI
+	var at := start + side * DOCK_OUT \
+			+ Vector3(0.0, RAIL_Y + DECK.y + 1.2, 0.0)
+	# `set_spawn`, NOT an assignment to `global_position`. The player
+	# respawns at its spawn transform after `RESPAWN_DELAY`, and that
+	# transform is captured in `_ready` -- so a player merely MOVED
+	# here would come back at the world origin the first time the
+	# shooters killed them, which in a yard with enemies in it is the
+	# difference between a scenario and a trap.
+	player.set_spawn(Transform3D(
+			Basis(Vector3.UP, atan2(-side.x, -side.z) + PI), at))
 	player.velocity = Vector3.ZERO
 
 
