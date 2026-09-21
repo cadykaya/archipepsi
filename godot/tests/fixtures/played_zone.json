@@ -1615,5 +1615,6 @@
    "device": "pad"
   }
  ],
- "rail_networks": []
+ "rail_networks": [],
+ "featured_acquisition": null
 }

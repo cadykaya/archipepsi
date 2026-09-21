@@ -1437,6 +1437,33 @@ def reachability(zone, entry_id: str | None = None,
           [c.id for c in chambers if c.reward_ids])
     blame("key-bearing room(s)", [c.id for c in chambers if c.keys])
 
+    # D-1. YOU MAY NOT NEED THE GRAPPLE TO REACH THE GRAPPLE.
+    #
+    # The featured acquisition is what `established_in_zone` hands to
+    # `capability_guarantee` case C, and case C says "you will be able to
+    # do this because you acquire it here". That proof is circular the
+    # moment the room holding the acquisition is itself reachable only
+    # WITH the thing it hands over -- the guarantee would hold, the
+    # generator would place content behind it, and the player would be
+    # stopped at the door by the lack of exactly what is on the other
+    # side of it.
+    #
+    # Checked by taking the capability away and exploring again, rather
+    # than by trusting that the caller left it out: a caller that wires
+    # case C into `declared_capabilities` is the specific mistake this
+    # exists to catch, and it would make the room look reachable.
+    featured = getattr(zone, "featured_acquisition", None)
+    if featured is not None:
+        without = have - {featured.capability}
+        reach_without = (real if without == have else _explore(
+            entry, zone.edges, doors_by_room, keys_by_room, without))
+        if featured.room_id not in reach_without.rooms:
+            errors.append(
+                f"the featured acquisition is in room "
+                f"'{featured.room_id}', which is not reachable without "
+                f"'{featured.capability}' -- the capability that room "
+                "hands over; the guarantee for it would be circular")
+
     # §0-bis CONDITION 4. The catalogue calls this load-bearing and
     # nothing was enforcing it: every rule above asks whether the player
     # can get somewhere, and none asks whether they can get back. Both

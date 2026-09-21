@@ -554,11 +554,19 @@ STATUS_KINDS = get_args(StatusKind)
 #: `lightened` on a surface are different runtime work, and a kind that
 #: works on one is not thereby working on the other.
 #:
-#: Today this is the ECHOES.md twelve on `self`/`enemy` -- exactly what
-#: `status_effects.gd` implements. Every §15.2 kind is named by the
-#: vocabulary above and supported by nothing, which is the honest state
-#: and is what the application paths refuse.
+#: Today this is the ECHOES.md twelve on `self`/`enemy` plus §15.2's
+#: `lightened` on an `object` -- exactly what the runtime implements, no
+#: more and no less. Every other §15.2 kind is named by the vocabulary
+#: above and supported by nothing, which is the honest state and is what
+#: the application paths refuse.
 SUPPORTED_STATUS_TARGETS: dict[str, tuple[str, ...]] = {
+    # KINETIC. `lightened` on an OBJECT is implemented: mass class drops
+    # one step, incoming impulse doubles, influence volumes act on it and
+    # manipulation eligibility reads the class. Declared here in the same
+    # change that lands those effects and their tests, per this table's
+    # own rule. Not `self`/`enemy`: nothing implements it on an actor, and
+    # not `surface`/`volume`: those are different runtime work.
+    "lightened": ("object",),
     "burning": ("self", "enemy"),
     "slowed": ("self", "enemy"),
     "frozen": ("self", "enemy"),
@@ -566,7 +574,20 @@ SUPPORTED_STATUS_TARGETS: dict[str, tuple[str, ...]] = {
     "poisoned": ("self", "enemy"),
     "marked": ("enemy",),
     "stunned": ("enemy",),
-    "vulnerable": ("enemy",),
+    # BOTH SIDES, and the engine has always said so. This read
+    # `("enemy",)` while `stat_stack.gd:93` multiplies the PLAYER's
+    # `damage_taken` by it and `enemy.gd:434` multiplies the enemy's --
+    # two implementations, one declared. The under-declaration was
+    # invisible while support was per KIND; the moment the engine began
+    # asking per TARGET, `godot-stats` went red on the three cases that
+    # cover the player half, including the cleanse order's own
+    # "`vulnerable`, which the player does suffer". Declared to match the
+    # runtime, not the other way about. Owner direction, 2026-09-21:
+    # a kind implemented on one target must not be allowed on another --
+    # which cuts both ways, and a target it IS implemented on may not be
+    # refused. `marked` and `stunned` above stay enemy-only: `enemy.gd`
+    # reads them and nothing on the player does.
+    "vulnerable": ("self", "enemy"),
     "empowered": ("self",),
     "low_profile": ("self",),
     "haste": ("self",),

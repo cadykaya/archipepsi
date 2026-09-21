@@ -815,6 +815,77 @@ from her side — widening the vocabulary to twenty-four opened the window where
 `StatusEffects.apply` still guarded on `ECHO_STATUS_KINDS`.
 
 
+### F-19 — D-1's seams, measured before the contract is written
+
+**Dess, 2026-09-21.** Recorded so the acquisition contract is written
+against the real path rather than a remembered one.
+
+**What exists.** The interpretation machinery is whole: `save.interpretations`
+is the log, `derive_mechanics` folds it, `next_interpretation_seq` pins how
+far it has been written, and `handle_progress` carries Check confirmation.
+Slot/equip resolution exists in `mechanics`.
+
+**What does not exist.** *Nothing binds a claimed Check to a FEATURED
+capability.* `railway_scenario.gd` says so at the site — in the real loop
+the featured Echo arrives as "an AP Check, the interpretation fold, a
+snapshot, `set_equipped`", and its pedestal is the one labelled shortcut
+precisely because that chain is not built. There is no `set_equipped` in
+the bridge at all.
+
+**So D-1 is a binding, not a subsystem**, and the five requirements land
+on seams that already exist:
+
+| requirement | the seam it lands on |
+|---|---|
+| reachable featured acquisition | the Check allocator + `topology.reachability` |
+| a qualifying local Echo | the fold's component output |
+| preserved delivery of the foreign item | the AP claim path — the local grant must not consume it |
+| matching pre-seed AP guarantees | AP's fill proves reachability before play; the local grant must agree with what was proven |
+| retries / reload / delayed interpretation | `next_interpretation_seq` vs `len(save.interpretations)`, which already distinguishes written from pending |
+
+The last row has existing machinery and is the one most likely to be
+assumed rather than checked: a fold that lags is the ordinary case, not
+an error.
+
+**Not started, and not claimed as started.** B2 stays the preferred
+direction; no proof of it is fabricated here.
+
+### F-22 — D-1/D-2 landed: the binding, exercised
+
+**Dess, 2026-09-21.** F-19 said D-1 is a binding rather than a
+subsystem. It is, and it is built.
+
+`Zone.featured_acquisition` names the capability a Zone is built to hand
+over, the allocated Check that hands it over and the room holding it.
+`zone.established_in_zone(zone)` is **the producer `capability_guarantee`
+case C never had** — it returns exactly what the Zone features, never
+what it merely contains.
+
+**The rule with teeth: you may not need the grapple to reach the
+grapple.** `topology.reachability` now takes the featured capability
+AWAY and explores again, rather than trusting the caller left it out —
+because a caller wiring case C into `declared_capabilities` is the
+precise mistake it exists to catch, and that is what would make the room
+look reachable. Sabotage-proven.
+
+**The five requirements, exercised rather than described** (11 controls,
+`bridge/tests/test_featured_acquisition.py`):
+
+| requirement | what is asserted |
+|---|---|
+| reachable featured acquisition | the circular Zone is refused and says why; a room that does not carry the named Check is refused |
+| qualifying local Echo | `owned_capabilities` gains `grapple` from an Action whose PRIMITIVE satisfies it — with the negative half, an Echo that does not qualify granting nothing |
+| foreign item unchanged | `source_item_name` / `source_game` / `source_recipient_name` / `source_location_id` survive the fold verbatim while the capability still arrives |
+| pre-seed AP guarantee | case C fires for the featured capability and NOT for one the Zone does not feature; once owned, the cheaper case B is reported instead |
+| duplicate / delayed / reload | a second confirmation mints no second Echo and does not renumber the first; a lagging fold leaves case C carrying the Zone; the capability survives a real JSON round trip |
+
+Sequence fields are infrastructure this rides on, and none of the above
+is proved by pointing at one.
+
+**Not claimed:** nothing here composes a featured Zone in the generator,
+and no live-seed logic changed. `featured_acquisition` is optional, so
+every Zone composed before it is unaffected.
+
 ## Full scope and status
 
 Every workstream in the plan, including what has not been started. **A Dess
