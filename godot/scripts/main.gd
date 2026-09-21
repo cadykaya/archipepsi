@@ -95,7 +95,16 @@ func _ready() -> void:
 	# showcase it is scaffolding, and like that one it cannot be reached
 	# without the flag.
 	if "--railway" in user_args:
-		add_child(RailwayScenario.new())
+		var yard := RailwayScenario.new()
+		# `--bracing` selects the SECOND binding instead of the
+		# first: the span is held by a clamp the base kit can shoot
+		# rather than by a control the hookshot has to reach. They
+		# are alternatives, never both -- a yard with both would be
+		# a yard where the acquisition branch is optional.
+		yard.binding = RailwayScenario.BRACING_BINDING \
+				if "--bracing" in user_args \
+				else RailwayScenario.GANTRY_BINDING
+		add_child(yard)
 		return
 	boot()
 	# THE STAGE 3A SHOWCASE, and only when an operator asks for it by

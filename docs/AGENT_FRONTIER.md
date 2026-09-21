@@ -1,5 +1,38 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the second binding, and a name I will not invent under — 2026-09-21
+
+**`--railway --bracing` builds the same railway with the span held by a clamp
+instead of by a gantry control.** A different relationship, not a relabel: the
+first configuration asks the player to REACH a control and operate it, this one
+asks them to remove what is holding the span up. The accepted consequence is
+identical — the same latch, the same commissioned link — and what differs is the
+verb and what it is aimed at.
+
+**IT IS NOT A SECOND ACQUISITION LOOP**, and the addendum is explicit about why:
+`ranged_hit` establishes no newly acquired capability, because the starting
+player already shoots the transport receivers. It is an existing-tool objective
+variant and is labelled one everywhere it appears.
+
+**THE TWO ARE ALTERNATIVES, NEVER BOTH.** A yard offering a gantry *and* a clamp
+the base kit can shoot is a yard where the acquisition branch is optional, which
+is the guaranteed walking bypass under another name. The suite checks that the
+bracing configuration has no gantry, no pedestal and no hook.
+
+**EX50-011, EX50-021 AND EX50-033 ARE BLOCKED, AND NOT ON ENGINEERING.** Their
+specifications came from the uploaded batch package and are not in this
+repository. This lane will not invent content under names the owner gave
+specific meanings to. The parts they were chosen to share — `RailCarrier`,
+`RailReceiver`, `RailSpan`, the latch chain — all exist and are tested; what is
+missing is the design.
+
+Also: the scenario now draws the real HUD, bound the way `main.gd` binds it for
+a Zone. A yard with shooters in it and no health readout is a yard where being
+killed is a surprise.
+
+`make godot-rail-junction`, 124 checks.
+
+
 ## ENGINE LANE — the whole loop, walked — 2026-09-21
 
 **`_walked_end_to_end` places nothing.** The body walks from S1's platform onto

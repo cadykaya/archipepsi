@@ -64,6 +64,7 @@ func _run() -> void:
 	await _the_grapple_opens_the_gantry()
 	await _fighting_from_the_deck()
 	await _walked_end_to_end()
+	await _the_second_binding()
 	_finish()
 
 
@@ -1006,6 +1007,86 @@ func _walked_end_to_end() -> void:
 	_check(yard.carrier.at_dock() == 2,
 		"and the same command that was refused rides to S3 (%.1f s)"
 			% (float(last_leg) / 60.0))
+
+	yard.queue_free()
+	await get_tree().process_frame
+
+
+## THE SECOND BINDING, AND WHAT MAKES IT A SECOND ONE.
+##
+## The plan's addendum is careful about this and so is the case: a
+## `ranged_hit` on eligible bracing is a DIFFERENT RELATIONSHIP -- remove
+## what holds the span up, rather than reach a control and operate it --
+## and it is **not** a second acquisition loop, because the starting
+## player already shoots the transport receivers. What is checked here is
+## that it is genuinely an alternative: the same accepted consequence,
+## reached another way, in a yard that offers no grapple at all.
+func _the_second_binding() -> void:
+	print("  -- BRACING: the same span, a different relationship")
+	var yard := RailwayScenario.new()
+	yard.binding = RailwayScenario.BRACING_BINDING
+	add_child(yard)
+	for _i in 60:
+		await get_tree().physics_frame
+
+	# ALTERNATIVES, NEVER BOTH. A yard with a gantry AND a clamp the
+	# base kit can shoot is a yard where the branch is optional.
+	_check(yard.bracing != null, "the bracing is built")
+	_check(yard.lever == null and yard.grant == null
+		and yard.grapple_plate == null,
+		"and this configuration has no gantry, no pedestal and no hook")
+	_check(yard.junction.violations().is_empty(),
+		"the junction is still well formed, got %s"
+			% [yard.junction.violations()])
+	_check(not yard.carrier.commissioned[1],
+		"and the gap beyond S2 is still not track")
+
+	# THE BRACING RIDES THE SPAN. It is what holds it up, not one more
+	# control on a post -- so it is off the ground while the span is.
+	var lift: float = yard.bracing.global_position.y \
+		- yard.rail.at(yard.carrier.dock_offsets[1]).y
+	_check(lift > 2.0,
+		"it rides the raised span (%.1f m above the rail)" % lift)
+
+	# AND THE BASE KIT REACHES IT, from the dock the player is refused at.
+	var body: Player = yard.player
+	var dock: Vector3 = yard.rail.at(yard.carrier.dock_offsets[1])
+	body.global_position = dock + yard.dock_side(1) \
+		* RailwayScenario.DOCK_OUT \
+		+ Vector3(0.0, RailwayScenario.RAIL_Y + RailwayScenario.DECK.y
+			+ 1.2, 0.0)
+	body.velocity = Vector3.ZERO
+	for _i in 30:
+		await get_tree().physics_frame
+	# Connected BEFORE the shot, or the check below could not fail.
+	var fired: Array = []
+	yard.junction.latch_fired.connect(
+		func(pkg: String, latch: String) -> void:
+			fired.append("%s/%s" % [pkg, latch]))
+	_aim(body, yard.bracing.global_position)
+	await get_tree().physics_frame
+	var aimed: Variant = body.camera_ray(40.0).get("collider")
+	_check(aimed != null and aimed.get("element") == yard.bracing,
+		"the Static Pulse can reach it from S2's platform, saw %s"
+			% [aimed])
+	body._fire_static_pulse()
+	for _i in 4:
+		await get_tree().physics_frame
+	_check(yard.span.travelling or yard.span.locked,
+		"one shot releases the span")
+
+	# THE SAME ACCEPTED CONSEQUENCE, reached another way.
+	var landed := 0
+	while landed < 600 and not yard.span.locked:
+		await get_tree().physics_frame
+		landed += 1
+	_check(yard.span.locked and yard.carrier.commissioned[1],
+		"it locks home and commissions the same link (%.1f s)"
+			% (float(landed) / 60.0))
+	_check(yard.accepted_latches() == ["yard_junction/span_aligned"],
+		"under the same latch, got %s" % [yard.accepted_latches()])
+	_check(fired == ["yard_junction/span_aligned"],
+		"reported once and only once, got %s" % [fired])
 
 	yard.queue_free()
 	await get_tree().process_frame

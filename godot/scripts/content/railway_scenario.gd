@@ -60,6 +60,8 @@ const STEP_TREAD := 0.55
 ## Chest-high: cover you stand behind, not a wall you hide in.
 const SHIELD_HEIGHT := 1.25
 const THEME := "concrete_facility"
+const GANTRY_BINDING := "gantry"
+const BRACING_BINDING := "bracing"
 
 var rail: RailPath = null
 var carrier: RailCarrier = null
@@ -76,6 +78,13 @@ var shield: MeshInstance3D = null
 var shooters: Array[Enemy] = []
 var player: Player = null
 var hud: Hud = null
+## WHICH RELATIONSHIP RELEASES THE SPAN. `"gantry"` is the approved
+## first configuration: a control you can see from the junction and
+## cannot reach, and a branch that supplies the tool. `"bracing"` is the
+## second binding -- `ranged_hit` on eligible bracing, which the base
+## kit already does. They are ALTERNATIVES, never both: see `_bracing`.
+var binding := GANTRY_BINDING
+var bracing: ActivityElement = null
 var dock_offsets := PackedFloat32Array()
 
 ## EVERYTHING THE RAILWAY IS MADE OF, under one node.
@@ -128,8 +137,12 @@ func _ready() -> void:
 	_carrier()
 	_shield()
 	_docks()
-	_gantry()
-	_branch()
+	if binding == BRACING_BINDING:
+		_bracing()
+	else:
+		_gantry()
+		_branch()
+	_readouts()
 	_gauntlet()
 	_plinth()
 	_spawn_player()
@@ -308,11 +321,53 @@ func _gantry() -> void:
 	_sign("reached with the hookshot from the branch\n"
 		+ "below -- aim at the ring",
 		deck_centre + Vector3(0, 2.1, 0), Color(0.7, 0.7, 0.75), 28)
+
+
+## The two readouts the yard keeps whichever way the span is released.
+func _readouts() -> void:
+	var where := rail.at(dock_offsets[1])
+	var side := dock_side(1)
 	_span_sign = _sign("SPAN: STOWED  --  NO TRACK BEYOND S2",
-		rail.at((dock_offsets[1] + dock_offsets[2]) * 0.5)
-			+ Vector3(0, 3.4, 0), Color(1.0, 0.6, 0.45), 48)
+			rail.at(lerpf(dock_offsets[1], dock_offsets[2], 0.3))
+				+ Vector3(0, 2.6, 0), Color(1.0, 0.6, 0.45), 48)
 	_refusal_sign = _sign("", where + side * DOCK_OUT
-		+ Vector3(0, RAIL_Y + DECK.y + 2.2, 0), Color(1.0, 0.7, 0.55), 40)
+			+ Vector3(0, RAIL_Y + DECK.y + 2.2, 0),
+			Color(1.0, 0.7, 0.55), 40)
+
+
+## THE SECOND BINDING: bracing, and a gun you already have.
+##
+## **A different relationship, not a relabel.** The gantry configuration
+## asks the player to REACH a control and operate it. This one asks them
+## to remove what is holding the span up: a clamp on the raised beam,
+## visible from the junction, shot from the dock with the base kit. The
+## span then goes home under its own weight and locks, and the accepted
+## consequence -- the same latch, the same commissioned link -- is
+## identical. What differs is the verb and what it is aimed at.
+##
+## **It is NOT a second acquisition loop**, and the plan's addendum is
+## explicit about why: `ranged_hit` establishes no newly acquired
+## capability, because the starting player already shoots the transport
+## receivers. This is an existing-tool objective variant.
+##
+## **It is never built alongside the gantry.** A yard offering both
+## would be a yard where the acquisition branch is optional, which is
+## the guaranteed walking bypass under another name.
+func _bracing() -> void:
+	bracing = ActivityElement.create(ActivityElement.SHOT, 90,
+			ActivityElement.TARGET_SIZE, Color(1.0, 0.62, 0.42))
+	# ON THE SPAN ITSELF, so it rises with it and reads as the thing
+	# holding it up rather than as one more control on a post.
+	span.add_child(bracing)
+	bracing.position = Vector3(0.0, 0.5, 4.5)
+	bracing.rotation.y = PI * 0.5
+	bracing.triggered.connect(func(_e: ActivityElement) -> void:
+			span.begin())
+	_sign("BRACING", span.global_position + Vector3(0, 6.0, 0),
+			Color(1.0, 0.62, 0.42), 56)
+	_sign("shoot it: the span is held, not parked",
+			span.global_position + Vector3(0, 5.2, 0),
+			Color(0.7, 0.7, 0.75), 26)
 
 
 func _spawn_player() -> void:
@@ -360,6 +415,9 @@ func _hud() -> void:
 func _legend() -> void:
 	print("")
 	print("  ARCHIPEPSI 0.4 -- THE RAILWAY, development scenario")
+	print("  binding: %s%s" % [binding,
+			"  (--bracing selects the other one)"
+			if binding == GANTRY_BINDING else ""])
 	print("  Not a Zone: no Checks, no exit, no campaign, no bridge.")
 	print("")
 	print("    WASD / space     move")
@@ -595,8 +653,12 @@ func reenter() -> void:
 	_carrier()
 	_shield()
 	_docks()
-	_gantry()
-	_branch()
+	if binding == BRACING_BINDING:
+		_bracing()
+	else:
+		_gantry()
+		_branch()
+	_readouts()
 	_gauntlet()
 	_place_player()
 	var back := junction.restore_from(_accepted.keys())
