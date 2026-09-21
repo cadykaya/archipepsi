@@ -34,9 +34,12 @@ signal commanded(direction: int)
 ## send the carrier twice can.
 const REARM_SECONDS := 0.35
 ## How far the arrow lunges, and how long it takes to ease back.
-const KICK := 0.18
+const KICK := 0.26
 const KICK_SECONDS := 0.28
-const ARROW := Vector3(0.44, 0.44, 0.5)
+## The chevron, in ITS OWN axes: `x` is how tall it stands, `y` is how
+## far along the track its apex reaches, `z` is how thick it is. Read
+## that way because of how the prism is turned below.
+const ARROW := Vector3(0.55, 0.75, 0.16)
 
 ## `RailCarrier.FORWARD` or `RailCarrier.BACK`.
 var direction := RailCarrier.FORWARD
@@ -51,8 +54,17 @@ var _kick := 0.0
 var _arrow_home := Vector3.ZERO
 
 
+## `face_yaw` turns the TARGET FACE without turning the receiver.
+##
+## The arrow's axis is the rail's: local +Z is the direction of
+## increasing offset, and the builder aims the whole receiver along the
+## track. A target plate square to the track would then be edge-on to
+## the dock it is shot from -- a 0.2 m edge presented to the player --
+## so which way the plate looks is a separate, placement-local question
+## and is answered by the caller that knows which side the dock is on.
 static func create(direction_in: int, index := 0,
-		tint := Color(0.55, 0.85, 1.0)) -> RailReceiver:
+		tint := Color(0.55, 0.85, 1.0),
+		face_yaw := 0.0) -> RailReceiver:
 	var made := RailReceiver.new()
 	made.direction = RailCarrier.FORWARD if direction_in >= 0 \
 		else RailCarrier.BACK
@@ -61,28 +73,53 @@ static func create(direction_in: int, index := 0,
 	made.element = ActivityElement.create(ActivityElement.SHOT, index,
 		ActivityElement.TARGET_SIZE, tint)
 	made.add_child(made.element)
+	made.element.rotation.y = face_yaw
 	made.element.triggered.connect(made._on_hit)
 	made._build_arrow(tint)
 	return made
 
 
-## The wedge that says which way, in front of the target face so a player
-## reading the control from any angle sees the shape rather than the tint.
+## The wedge that says which way: a chevron standing ABOVE the sign, so
+## a player reading the control from any angle sees the shape before the
+## tint, and nothing stands between their shot and the target.
 func _build_arrow(tint: Color) -> void:
 	arrow = MeshInstance3D.new()
 	arrow.name = "Arrow"
 	var wedge := PrismMesh.new()
 	wedge.size = ARROW
 	arrow.mesh = wedge
-	arrow.material_override = ThemeMaterials.glow_material(tint, 2.0)
-	# A prism's apex points +Y. A quarter turn about X aims it down the
-	# local Z axis -- +Z for FORWARD, -Z for BACK -- which is the axis
-	# the builder aligns with increasing offset along the rail.
-	arrow.rotation.x = PI / 2.0 if direction == RailCarrier.FORWARD \
-		else -PI / 2.0
-	_arrow_home = Vector3(0.0, 0.0,
-		(ActivityElement.TARGET_SIZE.z * 0.5 + ARROW.z * 0.5) \
-			* float(direction))
+	arrow.material_override = ThemeMaterials.glow_material(tint, 1.1)
+	# A PRISM SHOWS ITS TRIANGLE ALONG ONE AXIS ONLY. Godot builds it
+	# with the apex at +Y, the triangle in the XY plane and the
+	# extrusion along Z -- so a quarter turn about X, which is what
+	# this did first, aims the apex down the track and leaves the
+	# player looking at the extruded RECTANGLE from the dock. The
+	# arrow has to be a triangle from where it is read, so the
+	# triangle's plane is the one containing the track and up, and
+	# the extrusion is the thickness the player sees edge-on:
+	#
+	#   prism X (triangle base) -> local Y, standing up
+	#   prism Y (apex)          -> local +/-Z, along the track
+	#   prism Z (extrusion)     -> local X, the plate's normal
+	#
+	# Written as a basis rather than as Euler angles because the BACK
+	# case has to flip two axes to stay right-handed, and a mirrored
+	# basis is how a mesh comes to render inside out.
+	var forward := direction == RailCarrier.FORWARD
+	arrow.basis = Basis(
+			Vector3(0.0, 1.0 if forward else -1.0, 0.0),
+			Vector3(0.0, 0.0, 1.0 if forward else -1.0),
+			Vector3(1.0, 0.0, 0.0))
+	# ON TOP OF THE PLATE, not beside it. The first version put the
+	# wedge along the receiver's own Z at half the plate's THICKNESS
+	# -- right for a plate square to the track, and the plate is
+	# turned to face the dock, so the wedge ended up inside it. A
+	# chevron standing above the sign reads from any angle, cannot be
+	# buried whichever way the plate looks, and does not stand between
+	# the player's shot and the target.
+	_arrow_home = Vector3(0.0,
+			ActivityElement.TARGET_SIZE.y * 0.5 + ARROW.x * 0.5 + 0.12,
+			0.0)
 	arrow.position = _arrow_home
 	add_child(arrow)
 

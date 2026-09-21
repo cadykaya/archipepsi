@@ -31,8 +31,13 @@ signal locked_home(span: RailSpan)
 ## Long enough to watch a heavy thing move, short enough that a player
 ## who is being shot at is not held still by it.
 const TRAVEL_SECONDS := 2.2
-## How far aside the span rests when it is stowed. Far enough that
-## "there is no track there" is legible from the dock.
+## How far the span is RAISED when it is stowed, in degrees.
+##
+## A DRAWBRIDGE, and the first cut was not. Swinging it aside about the
+## vertical flung a fourteen-metre beam across the yard at an angle that
+## read, from the dock, as more track. Raised, the same beam says "the
+## bridge is up" from anywhere you can see it -- which is what a player
+## standing at S2 has to be able to tell before anything refuses them.
 const STOWED_DEGREES := 62.0
 const BEAM_THICKNESS := 0.45
 
@@ -132,4 +137,6 @@ func _physics_process(delta: float) -> void:
 
 
 func _place() -> void:
-	rotation.y = deg_to_rad(STOWED_DEGREES * (1.0 - _t))
+	# Negative pitch lifts the FAR end: rotating +Z about X by -a sends
+	# it to (0, sin a, cos a).
+	rotation.x = -deg_to_rad(STOWED_DEGREES * (1.0 - _t))

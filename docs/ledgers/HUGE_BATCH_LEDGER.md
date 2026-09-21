@@ -44,6 +44,7 @@
 | M1 | The client half of the latch contract: `latch_fired` sent, `progress.latched` read back | plan §3 P4 | P4 | `zone_controller.gd`, `main.gd` | **verified** | `d1abde5`+ | the bridge half was complete and tested since the physics slice; the client had never sent one |
 | M1-zone | A junction inside a real composed Zone | plan §6 decision 3 | **D-4 (Dess)** | — | **blocked** | — | a package binds to `feature:<tag>` or `shell:<id>` only, and §13.2 forbids the first. Nothing in the Zone schema declares rail content, so no composed Zone can carry one |
 | A-fix | `godot-return-journey` green again | 0.3 carry-over | — | `integration_driver.gd` | **verified** | `a0be324` | F-04 |
+| M1-play | M1 is a place a person can stand: `--railway` | plan §3 ("M1 ... independently playable") | P4 | `railway_scenario.gd`, `railway_shot_driver.gd` | **verified** | `ca43341`+ | `make godot-rail-junction` builds and measures it; `make railway-shots` renders it. **Development scaffolding, not a Zone** |
 
 ## Findings
 
@@ -193,6 +194,30 @@
 - **One saved latch does not prove general persistence**, and nothing here is
   reported as if it did.
 
+### F-06 — three defects the screenshots found and no test would have
+
+- **The gantry stair reached nothing.** `_stair` took a foot, a height and a
+  direction and chose its own tread, so its top step landed where the arithmetic
+  put it: **four metres short of the gantry platform and two metres below it.**
+  The lever was unreachable, and the whole scenario turns on reaching it. Now
+  both ends are given and the count and tread are solved from them.
+- **The stowed span read as more track.** Swinging a fourteen-metre beam aside
+  about the vertical flung it across the yard at an angle that, from the dock,
+  looked like track. Raised instead — a drawbridge — *"the bridge is up"* reads
+  from anywhere you can see it, which is what a player at S2 must be able to
+  tell before anything refuses them.
+- **The direction chevron was a rectangle.** A `PrismMesh` shows its triangle
+  along one axis only; aiming the apex down the track with a quarter turn about
+  X left the player looking at the extruded rectangle from the dock. The
+  triangle's plane is now the one containing the track and up. Before that, the
+  chevron was buried inside the plate entirely, because the plate is turned to
+  face the dock and the offset was computed from its thickness.
+- **How they were found:** by rendering the scenario and looking at it
+  (`make railway-shots`). `godot-rail-junction` passed throughout — every one of
+  these is a fact about legibility or reachability that the signal-level
+  assertions could not see. The suite now also builds the scenario and measures
+  it, so the parts a test *can* hold are held.
+
 ## Full-Amalgam matrix
 
 *(built incrementally per plan §4 — never a prerequisite to starting)*
@@ -202,6 +227,7 @@
 | Milestone | Build/ref | Launch/mode/save | Actual continuous player path | Test shortcuts | Owner verdict |
 |---|---|---|---|---|---|
 | 0.3 candidate | `19c5d8e` | production mode | exit/hold patch unplayed by owner | — | not yet played |
+| M1, the railway | `ca43341`+ | `godot --path godot -- --railway` (or `godot-bin/godot --path godot -- --railway`) | board at S1, shoot the chevron pointing toward S2, ride; S2→S3 is refused; climb the gantry stair, press E on the lever, watch the span lock; ride to S3 | **the whole scenario is a test shortcut**: not a Zone, no campaign, no bridge, no Checks, no exit, and the stairs stand in for the grapple M2 will grant | not yet played |
 
 ## Checkpoint
 
@@ -214,9 +240,9 @@
   measured — and Passing Platforms wants exactly a carrier that stops at points,
   so building the vehicle first means the minor reuses `RailCarrier` instead of
   duplicating it.
-- **Exact next action:** make M1 playable. The plan calls M1 "independently
-  playable" and nothing yet lets the owner walk into it, so the next deliverable
-  is a launchable development scenario — board at S1, shoot FORWARD, ride to S2,
-  be refused at the gap, reach the gantry, pull the lever, watch the span lock,
-  ride to S3. Labelled scaffolding in the `ShowcaseZone` tradition: it runs only
-  when an operator asks for it by name and cannot be reached by accident.
+- **Exact next action (owner's call first):** the railway is playable and
+  unplayed. Walking it is worth more than the next feature, because everything
+  after this reuses its parts. After that, P1 (EX50-011 Passing Platforms,
+  which can now reuse `RailCarrier`) or M2-mech.
+- **Not done and not started:** P1, M2-mech, M3, M4, M5. M2's completion stays
+  gated on the acquisition contract (§5) as approved.

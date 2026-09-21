@@ -77,6 +77,7 @@ const DRIVERS := {
 	"--passenger-carry": preload("res://tests/passenger_carry_driver.gd"),
 	"--rail-carrier": preload("res://tests/rail_carrier_driver.gd"),
 	"--rail-junction": preload("res://tests/rail_junction_driver.gd"),
+	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }
 
 func _ready() -> void:
@@ -86,6 +87,16 @@ func _ready() -> void:
 			headless_test = true
 			add_child((DRIVERS[flag] as GDScript).new())
 			return
+	# THE RAILWAY, for an operator who asks for it by name (0.4, M1).
+	#
+	# BEFORE `boot()` AND INSTEAD OF IT: the scenario is not a Zone, has
+	# no campaign and opens no bridge connection, so there is nothing for
+	# the menu, the snapshot or the save to be about. Like the Stage 3A
+	# showcase it is scaffolding, and like that one it cannot be reached
+	# without the flag.
+	if "--railway" in user_args:
+		add_child(RailwayScenario.new())
+		return
 	boot()
 	# THE STAGE 3A SHOWCASE, and only when an operator asks for it by
 	# name. Without `--playtest3a` this branch does nothing at all and

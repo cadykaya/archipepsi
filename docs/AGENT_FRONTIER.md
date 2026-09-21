@@ -1,5 +1,46 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the railway is a place you can stand — 2026-09-21
+
+**`godot --path godot -- --railway`.** Board at S1, shoot the chevron pointing
+toward S2, ride; S2 to S3 is refused for want of track; climb the gantry stair,
+press E on the lever, watch the span swing down and lock; ride to S3. The plan
+calls M1 *"independently playable"* and until this existed nothing let anyone
+walk into it.
+
+**IT IS NOT A ZONE, and the distinction is load bearing.** No Checks, no exit,
+no composition, no campaign, no bridge connection — it runs *before* `boot()`
+and returns. Scaffolding in the `ShowcaseZone` tradition: it runs only when an
+operator asks for it by name and cannot be reached by accident. The gantry's
+stairs stand in for the grapple M2's acquisition branch will grant, and the
+scenario says so on a sign, because walking the player up to a control the
+design says is grappled to would misrepresent the design it exists to show.
+
+**THREE DEFECTS THE SCREENSHOTS FOUND AND NO TEST WOULD HAVE.** `make
+railway-shots` renders the place and `godot-rail-junction` passed throughout
+every one of these:
+
+- **The gantry stair reached nothing** — four metres short of the platform and
+  two metres below it. The lever was unreachable, and the scenario turns on
+  reaching it. `_stair` now takes both ends and solves the count and tread from
+  them.
+- **The stowed span read as more track.** Swung aside about the vertical, a
+  fourteen-metre beam lands across the yard at an angle that looks like rail.
+  Raised instead — a drawbridge — *"the bridge is up"* reads from anywhere.
+- **The direction chevron was a rectangle.** A `PrismMesh` shows its triangle
+  along one axis only, so aiming the apex down the track left the player
+  looking at the extrusion. Before that it was buried inside the plate
+  entirely, because the plate is turned to face the dock.
+
+These are facts about legibility and reachability. The suite now builds the
+scenario and holds the parts a test can hold: the controls are wired and aimed
+along the track, the platforms are at deck height, the player lands on one, and
+the far end of the locked span meets S3 to within 0.01 m.
+
+**NEXT:** the railway is playable and unplayed. Walking it is worth more than
+the next feature, because everything after this reuses its parts.
+
+
 ## ENGINE LANE — the first thing that stays fixed — 2026-09-21
 
 **M1, the engine half.** A player pulls a lever; a span of track swings home and

@@ -561,8 +561,13 @@ func _conflicting_pair() -> void:
 	# SHAPE, BEFORE ANY OF THIS. The two controls point opposite ways,
 	# which is the cue a player reads first and the one that survives
 	# both tints looking the same.
-	_check(signf(forward.arrow.position.z) != signf(back.arrow.position.z),
-		"the two arrows point opposite ways")
+	# THE WEDGE'S APEX, not where it sits: the chevron stands above
+	# the plate on both controls, and what differs is which way its
+	# triangle points. `basis.y` is the apex's direction.
+	_check(signf(forward.arrow.basis.y.z)
+			!= signf(back.arrow.basis.y.z),
+		"the two arrows point opposite ways (%.0f vs %.0f)"
+			% [forward.arrow.basis.y.z, back.arrow.basis.y.z])
 
 	var reasons: Array = []
 	controls.refused.connect(func(reason: String, _d: String) -> void:

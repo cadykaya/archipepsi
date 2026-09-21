@@ -60,6 +60,7 @@ func _run() -> void:
 	_nothing_was_accepted()
 	_another_packages_latch()
 	_the_carrier_is_parked_not_resumed()
+	await _the_scenario_is_walkable()
 	_finish()
 
 
@@ -394,6 +395,107 @@ func _the_carrier_is_parked_not_resumed() -> void:
 		+ "was left could be standing on a span this build has not "
 		+ "commissioned")
 	_free(kit)
+
+
+## AND IT IS WALKABLE. The scenario an operator launches with
+## `--railway`, built headlessly and measured.
+##
+## **Why a scenario needs a test at all.** It is scaffolding, so nothing
+## downstream depends on it -- which is exactly why it would rot
+## silently, and a scaffold that has rotted is discovered by the person
+## who launched it expecting to play. What is checked here is that the
+## place is coherent: the controls are wired and aimed, the platforms
+## are at deck height, the player lands on one, and the chain from
+## shooting a control to locking the span works where it is built rather
+## than only in a fixture.
+func _the_scenario_is_walkable() -> void:
+	print("  -- SCENARIO: `--railway` is a place a person can stand")
+	var yard := RailwayScenario.new()
+	add_child(yard)
+	for _i in 40:
+		await get_tree().physics_frame
+
+	_check(yard.junction.violations().is_empty(),
+		"the yard's junction has nothing to refuse, got %s"
+			% [yard.junction.violations()])
+	_check(yard.controls.receivers().size() == 6,
+		"six shootable controls, two per dock, got %d"
+			% yard.controls.receivers().size())
+	_check(yard.carrier.at_dock() == 0, "the carrier is parked at S1")
+	_check(not yard.carrier.commissioned[1],
+		"and the gap beyond S2 is not track")
+
+	# AIMED. A receiver whose local +Z is not the direction of
+	# increasing offset sends the carrier the other way, and it would
+	# look perfectly correct in the scene tree.
+	var aimed := 0
+	for receiver: RailReceiver in yard.controls.receivers():
+		var dock := yard.carrier.dock_offsets[0]
+		var best := INF
+		for i in yard.carrier.dock_offsets.size():
+			var d: float = receiver.global_position.distance_to(
+				yard.rail.at(yard.carrier.dock_offsets[i]))
+			if d < best:
+				best = d
+				dock = yard.carrier.dock_offsets[i]
+		if receiver.global_transform.basis.z.normalized().dot(
+				yard.rail.tangent(dock)) > 0.99:
+			aimed += 1
+	_check(aimed == 6, "every control points along the track, %d do"
+		% aimed)
+
+	# BOARDING IS A STEP, NOT A HOP: the platform and the deck top are
+	# the same height, which is a number two builders could disagree
+	# about and nothing else would notice until a player could not get
+	# on.
+	var deck_top: float = yard.carrier.pose().origin.y \
+		+ RailwayScenario.DECK.y * 0.5
+	_check(absf(deck_top - (RailwayScenario.RAIL_Y
+		+ RailwayScenario.DECK.y)) < 0.01,
+		"the deck's top is at the platform height (%.2f)" % deck_top)
+	_check(yard.player.is_on_floor(),
+		"the player lands on the S1 platform")
+	_check(absf(yard.player.global_position.y - deck_top) < 2.0,
+		"at platform height (%.2f vs %.2f)"
+			% [yard.player.global_position.y, deck_top])
+
+	# THE CHAIN, WHERE IT IS ACTUALLY BUILT.
+	var forward: RailReceiver = null
+	for receiver: RailReceiver in yard.controls.receivers():
+		if receiver.direction == RailCarrier.FORWARD \
+				and receiver.global_position.distance_to(
+					yard.rail.at(yard.carrier.dock_offsets[0])) < 8.0:
+			forward = receiver
+	_check(forward != null, "S1 has a FORWARD control")
+	if forward != null:
+		forward.element.take_damage(1.0)
+		yard.controls.resolve()
+		_check(yard.carrier.heading == RailCarrier.FORWARD,
+			"shooting it sends the carrier toward S2")
+	_drive(yard.carrier)
+	_check(yard.carrier.at_dock() == 1, "and it arrives at S2")
+
+	yard.lever.interact(null)
+	_check(yard.span.travelling, "the gantry lever starts the span")
+	for _i in int(RailSpan.TRAVEL_SECONDS / STEP) + 10:
+		yard.span.advance(STEP)
+	_check(yard.span.locked and yard.carrier.commissioned[1],
+		"which locks home and commissions the gap")
+	# AND IT REACHES. A span that locked in the wrong place would still
+	# pass every signal check above and leave the carrier riding air.
+	var far: Vector3 = yard.span.global_transform \
+		* Vector3(0.0, 0.0, yard.carrier.dock_offsets[2]
+			- yard.carrier.dock_offsets[1])
+	var s3: Vector3 = yard.rail.at(yard.carrier.dock_offsets[2])
+	_check(far.distance_to(s3) < 0.6,
+		"and the far end of the span meets S3 (%.2f m off)"
+			% far.distance_to(s3))
+	_check(yard.carrier.request(RailCarrier.FORWARD)
+		and _drive(yard.carrier) > 0 and yard.carrier.at_dock() == 2,
+		"the carrier can now ride to S3")
+
+	yard.queue_free()
+	await get_tree().process_frame
 
 
 func _finish() -> void:
