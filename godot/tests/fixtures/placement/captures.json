@@ -164,6 +164,6 @@
  "controller_digest": "1b96b485e28e33ce",
  "read_by": "bridge/tests/test_placement_contract.py",
  "reproduce": "make godot-zone-audit",
- "source_commit": "88cb60744088",
+ "source_commit": "5b03ec9700bf",
  "written_by": "godot/tests/zone_audit_driver.gd"
 }
