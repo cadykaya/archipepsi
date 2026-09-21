@@ -55,6 +55,9 @@ func _run() -> void:
 	await _a_release_without_a_press_does_nothing()
 	await _a_refused_press_gives_everything_back()
 	await _death_ends_every_hold()
+	await _death_ends_the_tether_and_the_slam()
+	await _an_unrelated_swap_leaves_the_tether_alone()
+	await _a_launch_arc_survives_an_unrelated_swap()
 	await _a_slot_swap_ends_a_hover()
 	await _one_slots_key_up_leaves_another_slots_hover_alone()
 	await _two_hovers_at_once_do_not_cancel_each_other()
@@ -119,6 +122,7 @@ func _reset() -> void:
 					BridgeClient.owned_component(str(equipped)).get(
 							"component", {}))
 	_player.hover_gravity_scale = 1.0
+	_player.cancel_transient_effects()
 	if _player._dead:
 		_player._respawn()
 	await get_tree().physics_frame
@@ -250,6 +254,92 @@ func _death_ends_every_hold() -> void:
 			% [_pool.value_of("res_fuel"), fuel])
 	_check(is_equal_approx(_player.hover_gravity_scale, 1.0),
 			"...and the hover's gravity scale is released")
+
+## TWO EFFECTS OUTLIVED A DEATH, and both were live defects.
+##
+## `_update_swing` is polled AFTER the `if _dead: return` guard, so a
+## player who died mid-swing kept `_swing_time` FROZEN rather than
+## cleared. Once `_respawn` set `_dead = false` the tether resumed,
+## pulling the respawned body toward an anchor in a part of the room they
+## were no longer standing in. `pending_slam` did the same: a slam
+## committed before dying detonated on the first landing afterwards, at
+## the respawn point.
+##
+## NO PHYSICS FRAMES BETWEEN THE CALLS, deliberately. `_update_swing`
+## ends a tether by itself the moment the body is on the floor or the key
+## is not held, so stepping frames here would clear it for a reason that
+## has nothing to do with the death. What is under test is the CLEANUP
+## contract, and the calls that carry it are synchronous.
+func _death_ends_the_tether_and_the_slam() -> void:
+	await _reset()
+	var anchor := _player.global_position + Vector3(0.0, 6.0, 4.0)
+	_player.begin_swing(anchor, 30.0, 3.0, "mobility")
+	_player.commit_slam({"damage": 10.0, "radius": 3.0,
+			"tint": Color.WHITE}, "echo_a")
+	_check(_player._swing_time > 0.0, "a tether is live before the death")
+	_check(not _player.pending_slam.is_empty(), "and a slam is committed")
+
+	_player.take_damage(10000.0)
+	_check(_player._dead, "the player is dead")
+	_check(_player._swing_time == 0.0,
+			"death ends the tether (%.3f s left)" % _player._swing_time)
+	_check(_player.pending_slam.is_empty(),
+			"and drops the committed slam")
+
+	_player._respawn()
+	_check(_player._swing_time == 0.0,
+			"and the tether does not come back with the respawn")
+	_check(_player.pending_slam.is_empty(),
+			"...nor the slam, which used to detonate at the respawn point")
+	await get_tree().physics_frame
+
+## THE CONTROL, and it is the half that keeps the repair honest.
+##
+## Shared cleanup has to retain ownership. Death ends everything the body
+## is carrying; unequipping ONE Echo may only end what THAT Echo started.
+## Without a name on each effect the two are the same call, and swapping
+## a combat Echo would drop the tether a mobility Echo is holding you on
+## -- trading one defect for a worse one.
+func _an_unrelated_swap_leaves_the_tether_alone() -> void:
+	await _reset()
+	var anchor := _player.global_position + Vector3(0.0, 6.0, 4.0)
+	_player.begin_swing(anchor, 30.0, 3.0, "mobility")
+	_check(_player._swing_time > 0.0, "the mobility tether is live")
+
+	var blink: Dictionary = BridgeClient.owned_component("act_blink").get(
+			"component", {})
+	_runtime("utility").set_equipped(blink)
+	_check(_player._swing_time > 0.0,
+			"another slot's swap leaves it live (%.3f s)"
+			% _player._swing_time)
+	_check(_player._swing_owner == "mobility",
+			"and it still belongs to the slot that started it")
+
+	_runtime("mobility").set_equipped(blink)
+	_check(_player._swing_time == 0.0,
+			"while the owning slot's swap does end it")
+	await get_tree().physics_frame
+
+## The second control: an effect NO Echo owns.
+##
+## A launch pad starts the arc, not a slot, so no slot change may end it
+## -- being dropped out of the sky because you swapped a weapon is the
+## failure an over-eager cleanup produces. Death still ends it.
+func _a_launch_arc_survives_an_unrelated_swap() -> void:
+	await _reset()
+	_player.begin_launch_flight()
+	_check(_player.in_launch_flight(), "the launch arc is live")
+
+	for slot: String in ["utility", "mobility"]:
+		_runtime(slot).set_equipped(BridgeClient.owned_component(
+				"act_blink").get("component", {}))
+	_check(_player.in_launch_flight(),
+			"no slot change drops a body out of the sky")
+
+	_player.take_damage(10000.0)
+	_check(not _player.in_launch_flight(), "but death ends it")
+	_player._respawn()
+	await get_tree().physics_frame
 
 # --- 4 and 5: the hover, which writes shared player state -----------------
 

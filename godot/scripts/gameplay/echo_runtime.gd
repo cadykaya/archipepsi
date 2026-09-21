@@ -120,6 +120,15 @@ func _cancel_held_state() -> void:
 	# `_hover_tick` stopped running and `_end_hover` was never reached:
 	# permanent zero gravity, from swapping slots at the wrong moment.
 	_end_hover()
+	_dash_window = 0.0
+	# ...AND THE PLAYER-SIDE EFFECTS THIS SLOT STARTED. Only this
+	# slot's: a tether the mobility Echo is holding you on has nothing
+	# to do with swapping the combat Echo, and must survive it. Death
+	# is the caller that ends everything, and it reaches the body
+	# directly through `Player.cancel_transient_effects`.
+	if player != null:
+		player.end_swing(slot)
+		player.cancel_slam(slot)
 
 func refresh_viewmodel() -> void:
 	_refresh_viewmodel_attachment()
@@ -668,11 +677,11 @@ func _melee_thrust(prim: Dictionary) -> Array[Node]:
 ## commitment: you give up the rest of your jump to land it.
 func _slam_ground(prim: Dictionary) -> void:
 	player.velocity.y = -float(prim["descent_force"])
-	player.pending_slam = {
+	player.commit_slam({
 		"damage": float(prim["damage"]),
 		"radius": float(prim["radius"]),
 		"tint": source_color(),
-	}
+	}, slot)
 
 func _swing_arc_effect(reach: float, half_arc: float) -> void:
 	# Three spokes rather than a mesh: the sweep is legible, and it costs
@@ -1068,7 +1077,7 @@ func _grapple_swing(prim: Dictionary) -> void:
 		_refund_press()
 		return
 	player.begin_swing(hit["position"], float(prim["tether_force"]),
-			float(prim["max_duration"]))
+			float(prim["max_duration"]), slot)
 	Tracer.spawn(get_tree().current_scene,
 			player.global_position + Vector3.UP * 1.2, hit["position"],
 			source_color(), 0.2, source_particles())

@@ -572,6 +572,50 @@ all three.
 it to; nothing requires that today, because the lists are equal.
 
 
+### F-17 — two effects outlived a death, and the obvious fix would have been worse
+
+`EchoRuntime._cancel_held_state()` clears the held state it happens to
+remember — charge, burst, parry, glide, hover — and its own docstring records
+that the hover was "the dangerous omission", found by a bug. Three more were
+still missing, and two of them were **live defects in shipping behaviour**:
+
+- **The tether resumed after a respawn.** `_update_swing` is polled at
+  `player.gd:667`, *after* the `if _dead: return` guard at `:612`. So a player
+  who died mid-swing kept `_swing_time` **frozen rather than cleared**; the
+  moment `_respawn` set `_dead = false` the tether started pulling the
+  respawned body toward an anchor in a part of the room they were no longer
+  standing in.
+- **A committed slam detonated at the respawn point.** `pending_slam` survived
+  both death and respawn and paid out on the first landing afterwards.
+
+`_launch_flight` and `_dash_window` leaked across an unequip as well.
+
+**The obvious repair is a trap.** Having `_cancel_held_state` clear every
+player-side effect would mean unequipping *one* Echo cancels effects *another*
+Echo started — swapping a combat Echo would drop the tether a mobility Echo is
+holding you on. Trading one defect for a worse one.
+
+**So cleanup is shared and cancellation is not.** Each player-side effect now
+records the slot that started it. `Player.end_swing(by)` / `cancel_slam(by)`
+cancel only for that owner; `cancel_transient_effects()` — with no owner — is
+death's call and ends everything. `_launch_flight` deliberately carries **no**
+owner: a launch pad started it, no Echo owns it, and no slot change may drop a
+body out of the sky.
+
+**Three cases, and the proof they bite.** With both layers of the repair
+reverted, five checks fail — including `death ends the tether (3.000 s left)`,
+which is the defect verbatim. The two control cases pass in *both* states,
+which is what a control is for: `_an_unrelated_swap_leaves_the_tether_alone`
+and `_a_launch_arc_survives_an_unrelated_swap` assert something that was
+already true and had to stay true.
+
+A first cut of the slam case named its owner `"combat"`, which is not a slot —
+`Constants.SLOT_NAMES` is `echo_a, echo_b, mobility, utility`. It passed for
+the wrong reason, because no runtime's per-slot cancel could match it. Caught
+by reverting the fix and finding only one failure where there should have been
+several.
+
+
 ## Full scope and status
 
 Every workstream in the plan, including what has not been started. **A Dess
@@ -592,7 +636,7 @@ not stop at the first blocked row.
 | **C1** | Environmental objectives: reuse `ActivityElement` sensors | **done, in use** | — | the goal plate at `G` is exactly this; `RailReceiver` is the shot case |
 | **C2** | A signal-driven actuator generalised from `PoweredLink` | **not started** | — | `RailSpan`/`AlignmentControl` and `ShuttleDeck`/`CallLever` are two concrete chains; the generalisation is not built |
 | **C3** | Objective semantics (§5.4a) | **settled, implemented** | — | accepted consequences persist, live values do not. M1 is the worked example |
-| **C4** | Reset / interruption / tool loss | **partly done** | — | EX50-011's reset is built and measured (E-011-*, §8). Tool loss is not |
+| **C4** | Reset / interruption / tool loss | **partly done** | — | EX50-011's reset is built and measured (E-011-*, §8). **Tool loss now has its cleanup half** (F-17): each player-side effect records the slot that started it, death ends everything, and an unrelated unequip ends nothing. Reset *groups* (§23.4) are still G3's, and blocked |
 | **C5** | Readable cause and effect from the existing vocabulary | **partly done** | — | signs, chevrons, lever labels, deck railings. Whether any of it reads is a playtest question |
 | **C6** | Bounded objective-binding schema so Epsilon selects relationships | **not started** | **D-5 (Dess)** | |
 | **D1–D5** | Blindside major, first section | **verified as M1 + M2-mech** | — | see the rows above |

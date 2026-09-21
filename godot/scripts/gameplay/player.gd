@@ -128,6 +128,18 @@ var _swing_anchor := Vector3.ZERO
 var _swing_force := 0.0
 var _swing_time := 0.0
 
+## WHICH SLOT STARTED EACH PLAYER-SIDE EFFECT, or "" for none.
+##
+## Cleanup is shared; cancellation is not. Death ends everything the body
+## is carrying. Unequipping ONE Echo ends only what THAT Echo started --
+## and without a name on each effect those are the same call, so swapping
+## a combat Echo would drop the tether a mobility Echo is holding you on.
+##
+## `_launch_flight` deliberately carries no owner: a launch pad started
+## it, no Echo owns it, and no slot change may drop you out of the sky.
+var _swing_owner := ""
+var _slam_owner := ""
+
 var _pulse_cooldown := 0.0
 var _coyote := 0.0
 var _jump_buffer := 0.0
@@ -1108,6 +1120,9 @@ func heal(amount: float) -> void:
 
 func _die() -> void:
 	_dead = true
+	# EVERY transient effect, not only the launch arc. See
+	# `cancel_transient_effects` for the two that used to survive.
+	cancel_transient_effects()
 	# `_physics_process` returns early while dead, so the arc would
 	# otherwise sit inert until respawn. Ending it here keeps "am I in a
 	# launch" answerable at every moment rather than only at the ones
@@ -1124,6 +1139,9 @@ func _die() -> void:
 func _respawn() -> void:
 	global_transform = _spawn_transform
 	velocity = Vector3.ZERO
+	# BELT AND BRACES, and not redundant: `died` is emitted from `_die`
+	# and a listener can commit something during the respawn delay.
+	cancel_transient_effects()
 	# Also the out-of-bounds recovery: falling past `FALL_KILL_Y` kills,
 	# so this is where a player who flew off the map comes back, and they
 	# must not come back still carrying the arc that threw them.
@@ -1181,10 +1199,51 @@ func _resolve_pending_slam() -> void:
 ## Starts a `grapple_swing` tether. The anchor is a point, not a node: the
 ## geometry it was cast at is static, and holding a reference would keep a
 ## freed chamber alive across a zone change.
-func begin_swing(anchor: Vector3, force: float, duration: float) -> void:
+func begin_swing(anchor: Vector3, force: float, duration: float,
+		owner := "") -> void:
 	_swing_anchor = anchor
 	_swing_force = force
 	_swing_time = duration
+	_swing_owner = owner
+
+## Commit a slam, remembering which slot committed it.
+func commit_slam(slam: Dictionary, owner := "") -> void:
+	pending_slam = slam
+	_slam_owner = owner
+
+## End the tether. `by` is the slot asking; "" is death, and ends it
+## whoever owns it.
+func end_swing(by := "") -> void:
+	if _swing_time <= 0.0:
+		return
+	if by != "" and by != _swing_owner:
+		return
+	_swing_time = 0.0
+	_swing_force = 0.0
+	_swing_anchor = Vector3.ZERO
+	_swing_owner = ""
+
+func cancel_slam(by := "") -> void:
+	if pending_slam.is_empty():
+		return
+	if by != "" and by != _slam_owner:
+		return
+	pending_slam = {}
+	_slam_owner = ""
+
+## Everything the body is carrying that must not outlive a death.
+##
+## Two of these outlived one. `_swing_time` was frozen rather than
+## cleared -- `_update_swing` is polled AFTER the `if _dead: return`
+## guard, so a player who died mid-swing came back with the timer intact
+## and the tether resumed pulling them toward an anchor in a part of the
+## room they were no longer in. `pending_slam` did the same: a slam
+## committed before dying detonated on the first landing after respawn,
+## at the respawn point.
+func cancel_transient_effects() -> void:
+	end_swing()
+	cancel_slam()
+	_end_launch_flight()
 
 ## A tether pulls you toward the anchor along the rope and leaves the
 ## tangential component alone — that difference is the whole reason this is
