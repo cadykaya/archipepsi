@@ -19,6 +19,8 @@
 - **Decisions still unresolved:** Forge/Static economy (B4); seed/retry policy;
   D7 return-later progression policy; old-save repair.
 - **Processes running:** none.
+- **Remote CI:** failing before it starts, on every commit, for want of a
+  runner. See F-08. Local frontier green at `5b03ec9`.
 - **Scheduler state:** heartbeat disabled; no watchers, subscriptions or scheduled
   check-ins. Observed via `list_triggers` — the account's routines are one-shot
   pokes belonging to an unrelated project, none firing into this session.
@@ -48,6 +50,7 @@
 | M2-mech | The intended experience, in a development scenario: see a control you cannot reach, cross to a branch, acquire the tool, come back and open it | plan §3 build order P5 / addendum "first grapple configuration" | P4, M1-play | `railway_scenario.gd` (`EchoGrant`), `echo_runtime.gd` | **verified, and labelled** | `f9f51e9`+ | 79 checks. **Explicitly not M2 and not multiworld-safe**: the Echo is handed over by the scenario's own pedestal, not by a Check, a fold or a snapshot |
 | M1-visible | Leaving and coming back: the repair stays, everything else is rebuilt | addendum "persistence precision" | M1-play, M2-mech | `railway_scenario.gd` (`ReturnPlinth`, `reenter`) | **verified** | `9733cb5`+ | 88 checks. The case asserts the span, the lever and the carrier are DIFFERENT OBJECTS afterwards, so a reset dressed as a rebuild cannot pass it |
 | M1-hud | The scenario draws the real HUD: HP, slots, prompts, hit feedback | 0.4 scenario | M1-fight | `railway_scenario.gd` (`_hud`) | **verified** | `89dd872`+ | `main.gd` builds it the same way for a Zone; the only thing left out is the resource pool, because there is no campaign here to have one |
+| M1-door | A double-click into the railway | 0.4 scenario | M1-play | `Play the Railway (Windows).bat`, `- bracing`, `_play-railway.bat`, `_find-godot.bat`, `play-railway.sh` | **implemented; the .bat files are UNTESTED** | `426532e` | there is no Windows in this container. The shell launcher was run and does find Godot and open the scenario. `_find-godot.bat` is a second copy of the finder inside `_play-3ab.bat` — a recorded debt, not a design |
 | D6 | The second binding: `ranged_hit` on eligible bracing releasing the same span | plan §4 D6 / addendum "second binding — corrected" | M1-play | `railway_scenario.gd` (`_bracing`), `--railway --bracing` | **verified, and labelled** | `4a8cba5`+ | 124 checks. **An existing-tool objective variant, NOT a second acquisition loop** — `ranged_hit` establishes no newly acquired capability because the starting player already shoots the transport receivers. Built as an ALTERNATIVE configuration, never alongside the gantry: a yard with both would be a yard where the acquisition branch is optional |
 | M1-safe | Dying in a yard with shooters in it is not a dead end | 0.4 scenario | M1-fight | `railway_scenario.gd` (`_place_player`) | **verified** | `3074c55`+ | `set_spawn`, not an assignment: the respawn transform is captured in `_ready`, so a player merely MOVED to S1 came back at the world origin |
 | M1-walked | **Continuous play evidence**: the whole loop on foot, nothing placed | plan §8 ("continuous play evidence kept separate from placed-near-target, pre-unlocked, direct-handler and synthetic-state runs") | M2-mech | `rail_junction_driver.gd` (`_walked_end_to_end`) | **verified** | `88cb607`+ | 114 checks, stable over four runs. Board, shoot, ride, be refused, walk the branch, take the tool, walk back, pull up, throw the lever, ride to S3 — no teleports, every command a key |
@@ -266,6 +269,26 @@ share, and all four exist.
   `is_action_just_pressed` can fall on the frame after the one the test resumes
   on — the pull it fired was already in the air. The case now waits a few
   frames for the press to be delivered.
+
+### F-08 — remote CI never started, on every commit including a docs-only one
+
+- **Observation:** both workflows ("PR gate", "Integration") complete in three to
+  five seconds with `conclusion: failure`, `runner_id: 0` and an empty
+  `runner_name`. Log download returns 404 because no job ever produced one.
+  **Every run on this branch, on every commit** — including `a451876`, which
+  changed one Markdown file and nothing else.
+- **Ruled out as this PR's**, as the batch's own rule requires: a docs-only
+  commit cannot fail the Python suite in three seconds, and the one permitted
+  re-run (attempt 2 of `35572321067`) was over in five.
+- **Cause:** runner allocation at the account level — minutes, billing, or an
+  Actions policy. **There is no fix to port into this branch**, and this lane
+  does not touch billing or account settings.
+- **Reported once**, on PR #12, per the rule: the failing checks named, the
+  reason they are not this PR's, and the local verification that stands in for
+  them. Not re-run again.
+- **The owner's standing constraint is the right frame:** *do not treat remote
+  CI infrastructure failure as gameplay evidence.* The frontier was run here
+  instead, on a fixed tree, and its result is the one this batch stands on.
 
 ## Full-Amalgam matrix
 
