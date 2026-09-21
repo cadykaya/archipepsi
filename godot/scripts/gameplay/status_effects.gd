@@ -51,7 +51,7 @@ func apply(kind: String, duration: float, magnitude: float) -> void:
 	#
 	# A REFUSAL LEAVES NOTHING BEHIND: no entry, and no `status_applied`,
 	# so nothing downstream sees a success that did not happen.
-	var targets: Array = Constants.ECHO_STATUS_TARGETS.get(kind, [])
+	var targets: Array = Constants.ECHO_STATUS_SUPPORTED_TARGETS.get(kind, [])
 	if targets.is_empty():
 		push_error(("apply_status names '%s', which the design names " % kind)
 				+ "but no runtime effect implements, so it may not be "

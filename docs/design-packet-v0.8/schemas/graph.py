@@ -39,10 +39,26 @@ class Strict(BaseModel):
 #: placement solver is never asked to close a cycle through a teleport.
 Realization = Literal["JOINED", "TRAVERSAL_ONLY"]
 
-#: Three usages, three different geometric outcomes. `SEALED` is not
+#: Four usages, three different geometric outcomes. `SEALED` is not
 #: "skip the audit" — it is the same measurement with the expectation
 #: inverted, and the expectation comes from this declaration.
-DoorUsage = Literal["USED", "LOCKED", "SEALED"]
+#:
+#: `ZONE_EXIT` IS THE ONE DOOR NO EDGE CARRIES, and it exists because
+#: the engine appends a room the composer never sees. A chain is written
+#: with `zip(spine, spine[1:])`, so the LAST room is assigned no exit
+#: and `_seal_the_rest` sealed it — correct from here, since nothing in
+#: THIS graph follows it. The engine then appends the exit room and
+#: routes its approach out of exactly that face, and the two lanes
+#: disagreed about a wall: twenty of twenty default-scale Zones ended on
+#: a room whose exit was solid, with the portal visible through it and
+#: no way to reach it, and every suite green because each half was
+#: right on its own terms.
+#:
+#: Declaring it here is the fix. It is passable geometry like `USED`, so
+#: `cut_plan` carves it and the layout audit expects a hole, with no
+#: exemption anywhere; what it does NOT carry is an `edge_id`, because
+#: the room on the far side is the engine's and is not in `edges`.
+DoorUsage = Literal["USED", "LOCKED", "SEALED", "ZONE_EXIT"]
 
 Direction = Literal["BIDIRECTIONAL", "A_TO_B", "B_TO_A"]
 
@@ -137,9 +153,10 @@ class TopologyEdge(Strict):
 class DoorAssignment(Strict):
     """One joining socket of one room instance, and what it does.
 
-    `edge_id` is required unless the door is `SEALED`, and the edge it
-    names must be `JOINED` — a `TRAVERSAL_ONLY` edge is carried by a
-    `PlugAssignment` and never by a door.
+    `edge_id` is required unless the door is `SEALED` or `ZONE_EXIT`,
+    and the edge it names must be `JOINED` — a `TRAVERSAL_ONLY` edge is
+    carried by a `PlugAssignment` and never by a door. `ZONE_EXIT` is
+    the Zone's own way out and names no edge at all: see `DoorUsage`.
     """
 
     socket_id: str = _SOCKET
@@ -163,6 +180,24 @@ class DoorAssignment(Strict):
                 raise ValueError(
                     f"door '{self.socket_id}' is SEALED and names edge "
                     f"'{self.edge_id}'; a sealed door carries no route")
+        elif self.usage == "ZONE_EXIT":
+            # THE WAY OUT OF THE ZONE NAMES NO EDGE, and may not.
+            # The room on its far side is the engine's appended exit
+            # room: it is in no `chambers` list and the approach to it
+            # is in no `edges` list, both reserved and both refused if a
+            # composer declares them. A `ZONE_EXIT` that named an edge
+            # would be claiming a route this graph does not contain.
+            if self.edge_id is not None:
+                raise ValueError(
+                    f"door '{self.socket_id}' is ZONE_EXIT and names "
+                    f"edge '{self.edge_id}'; the Zone's way out leads "
+                    "to the engine's appended exit room, which no edge "
+                    "in this graph reaches")
+            if self.socket_id != "exit":
+                raise ValueError(
+                    f"door '{self.socket_id}' is ZONE_EXIT; the Zone's "
+                    "way out leaves through a room's 'exit' socket, "
+                    "which is the face the engine appends to")
         elif not self.edge_id:
             raise ValueError(
                 f"door '{self.socket_id}' is {self.usage} and names no "

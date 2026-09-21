@@ -166,3 +166,25 @@ def test_the_engine_is_told_both_lists():
     assert "const ECHO_STATUS_KINDS =" in gd
     assert "const ECHO_STATUS_KINDS_IMPLEMENTED =" in gd
     assert "lightened" in gd, "the vocabulary did not reach the engine"
+
+
+def test_the_engine_is_told_which_targets_each_kind_supports():
+    """The kind list cannot answer target applicability.
+
+    A boundary guarding on `ECHO_STATUS_KINDS_IMPLEMENTED` alone admits
+    `lightened` on a surface the moment `lightened` works on an object.
+    The map is what lets the Godot boundary refuse the PAIR.
+    """
+    from pathlib import Path
+    import re
+    gd = Path("godot/scripts/autoload/constants.gd").read_text()
+    line = next(l for l in gd.split("\n")
+                if l.startswith("const ECHO_STATUS_SUPPORTED_TARGETS"))
+    for kind, targets in E.SUPPORTED_STATUS_TARGETS.items():
+        assert f'"{kind}": [' in line, f"{kind} missing from the exported map"
+        for target in targets:
+            assert f'"{target}"' in line
+    # and nothing unsupported is advertised as supported anywhere in it
+    for kind in set(E.STATUS_KINDS) - set(E.IMPLEMENTED_STATUS_KINDS):
+        assert f'"{kind}": [' not in line, (
+            f"{kind} is advertised as supported and is not")

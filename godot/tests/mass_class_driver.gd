@@ -344,7 +344,7 @@ func _the_shift_is_temporary() -> void:
 ## otherwise see a success that did not happen.
 func _the_boundary_refuses_an_unsupported_target() -> void:
 	print("  -- BOUNDARY: a kind is supported ON something, not merely at all")
-	var supported: Array = Constants.ECHO_STATUS_TARGETS.get("lightened", [])
+	var supported: Array = Constants.ECHO_STATUS_SUPPORTED_TARGETS.get("lightened", [])
 	_check(supported == ["object"],
 		"the export says `lightened` is implemented on %s" % [supported])
 

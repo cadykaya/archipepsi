@@ -549,7 +549,7 @@ func _an_unknown_status_kind_is_refused() -> void:
 	var accepted := 0
 	var refused := 0
 	for kind: String in Constants.ECHO_STATUS_KINDS_IMPLEMENTED:
-		var declared: Array = Constants.ECHO_STATUS_TARGETS.get(kind, [])
+		var declared: Array = Constants.ECHO_STATUS_SUPPORTED_TARGETS.get(kind, [])
 		_check(not declared.is_empty(),
 				"'%s' is implemented, so it declares its targets" % kind)
 		for target: String in target_kinds:
@@ -581,12 +581,12 @@ func _an_unknown_status_kind_is_refused() -> void:
 	# sweep proves the boundary honours the declaration; these two say
 	# the declaration is the right one, by naming the runtime lines that
 	# implement each pair.
-	var vulnerable_at: Array = Constants.ECHO_STATUS_TARGETS.get(
+	var vulnerable_at: Array = Constants.ECHO_STATUS_SUPPORTED_TARGETS.get(
 			"vulnerable", [])
 	_check("self" in vulnerable_at and "enemy" in vulnerable_at,
 			"vulnerable declares both sides: stat_stack.gd raises the "
 			+ "player's damage_taken, enemy.gd raises the enemy's")
-	_check(Constants.ECHO_STATUS_TARGETS.get("lightened", []) == ["object"],
+	_check(Constants.ECHO_STATUS_SUPPORTED_TARGETS.get("lightened", []) == ["object"],
 			"lightened declares `object` and nothing else -- an actor, a "
 			+ "surface and a volume are three unbuilt runtimes")
 

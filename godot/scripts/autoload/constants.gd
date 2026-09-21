@@ -256,9 +256,12 @@ const ECHO_STATUS_KINDS = ["lightened", "anchored", "slippery", "confused", "tur
 # may not.
 const ECHO_STATUS_KINDS_IMPLEMENTED = ["lightened", "burning", "slowed", "frozen", "shocked", "poisoned", "marked", "stunned", "vulnerable", "empowered", "low_profile", "haste", "regenerating"]
 
-# ...AND ON WHAT. Support is not one fact per kind: a Status
-# implemented on an object is not thereby implemented on an actor.
-# The engine enforces this at its own application boundary too, so
-# a kind the bridge would refuse to emit at a target cannot be
-# started there by a room either.
-const ECHO_STATUS_TARGETS = {"lightened": ["object"], "burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["self", "enemy"], "empowered": ["self"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}
+# WHICH TARGETS each supported kind is implemented FOR.
+#
+# The kind list above cannot answer target applicability, and a
+# boundary that guards on it alone admits `lightened` on a
+# surface the moment `lightened` works on an object. Support is
+# per kind AND per target because those are different runtime
+# work; this is that table, so the Godot application boundary can
+# refuse the pair rather than the name.
+const ECHO_STATUS_SUPPORTED_TARGETS = {"lightened": ["object"], "burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["self", "enemy"], "empowered": ["self"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}
