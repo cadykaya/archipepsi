@@ -255,3 +255,13 @@ const ECHO_STATUS_KINDS = ["lightened", "anchored", "slippery", "confused", "tur
 # EFFECT -- the vocabulary may run ahead of the runtime, a campaign
 # may not.
 const ECHO_STATUS_KINDS_IMPLEMENTED = ["burning", "slowed", "frozen", "shocked", "poisoned", "marked", "stunned", "vulnerable", "empowered", "low_profile", "haste", "regenerating"]
+
+# WHICH TARGETS each supported kind is implemented FOR.
+#
+# The kind list above cannot answer target applicability, and a
+# boundary that guards on it alone admits `lightened` on a
+# surface the moment `lightened` works on an object. Support is
+# per kind AND per target because those are different runtime
+# work; this is that table, so the Godot application boundary can
+# refuse the pair rather than the name.
+const ECHO_STATUS_SUPPORTED_TARGETS = {"burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["enemy"], "empowered": ["self"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}

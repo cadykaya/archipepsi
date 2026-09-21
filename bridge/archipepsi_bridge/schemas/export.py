@@ -67,6 +67,17 @@ GD_SKIP = ("ENEMY_STATS", "TIER_BOUNDS", "DEFAULT_CONFIG",
 GD_PHYSICS = ("ENVELOPE_FORCE_N", "ENVELOPE_RANGE_M", "ENVELOPE_MASS_KG")
 
 
+def _gd_dict(mapping: dict) -> str:
+    """A GDScript dictionary literal, keys and values both quoted.
+
+    Stable order: the declaration's own, so a regenerated file diffs
+    only when the declaration changes.
+    """
+    inner = ", ".join(
+        f'"{k}": {_gd_literal(list(v))}' for k, v in mapping.items())
+    return "{" + inner + "}"
+
+
 def _gd_literal(value) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
@@ -237,6 +248,17 @@ def export_constants_gd() -> str:
         "# may not.",
         "const ECHO_STATUS_KINDS_IMPLEMENTED = "
         f"{_gd_literal(list(E.IMPLEMENTED_STATUS_KINDS))}",
+        "",
+        "# WHICH TARGETS each supported kind is implemented FOR.",
+        "#",
+        "# The kind list above cannot answer target applicability, and a",
+        "# boundary that guards on it alone admits `lightened` on a",
+        "# surface the moment `lightened` works on an object. Support is",
+        "# per kind AND per target because those are different runtime",
+        "# work; this is that table, so the Godot application boundary can",
+        "# refuse the pair rather than the name.",
+        "const ECHO_STATUS_SUPPORTED_TARGETS = "
+        f"{_gd_dict(E.SUPPORTED_STATUS_TARGETS)}",
     ]
     lines.append("")
     return "\n".join(lines)
