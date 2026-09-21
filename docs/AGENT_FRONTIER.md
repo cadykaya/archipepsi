@@ -1,5 +1,55 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the railway: a carrier, its controls, and a beam that was in the wrong place — 2026-09-21
+
+**0.4 line only.** `claude/archipepsi-0-4-blindside`, branched from `19c5d8e`.
+The 0.3 comparison build on `claude/archipepsi-echoes-continuation-b1adno` is
+untouched. Durable detail lives in `docs/ledgers/HUGE_BATCH_LEDGER.md`.
+
+**P0 SAID THE CARRY WORKS, SO THE CANDIDATE `player.gd` REPAIRS WERE WITHDRAWN.**
+Four hypothesised hazards (the step-down walker's raw `move_and_collide`, the
+step-up teleport, world-space walk targets, `is_on_floor()`-gated control) were
+named in the plan as likely repairs. None of them bit: four cases, all ABOARD,
+grounded on 1200 of 1200 measured frames. Measurement, not reading.
+
+**`RailCarrier` IS `MovingPlatform` WITH A PATH.** An `AnimatableBody3D` with
+`sync_to_physics = true` advancing an offset along a `RailPath`. Docks are
+ordered; `links[i]` joins dock `i` to `i+1`; a link that is not commissioned is
+missing rail and the request is **refused at the dock, by name**, not glided
+over. `godot-rail-carrier` is 73 checks — travel, stop, refusal, repair, repeat
+shot, reverse, fail-safe hold, and a real `Player` carried round the corner
+(DRIFT 0.124 m, GROUNDED 273/273, ABOARD yes).
+
+**TWO DEFECTS FOUND BEFORE IT SHIPPED.** The textbook `v^2/2a` brake undershoots
+by `v*delta/2` — 0.058 m at 7 m/s and 60 Hz, further than `DOCK_EPSILON` — so
+the carrier would stutter into every dock; replaced by a speed ceiling of
+`sqrt(2*ACCEL*remaining)`. And `hold(true)` left the carrier between docks where
+every later command answered *"there is no dock behind this carrier"*: a
+fail-safe that can never be released is a trap with a passenger in it.
+
+**THE BEAM WAS NOT WHERE THE RIDE IS.** `RailPath` gained Catmull-Rom handles in
+P3.5; `build_rail` still swept the CONTROL points. On a four-point bent route the
+ride leaves that chord by **0.744 m** — the beam is 0.35 m thick. Swept along the
+ride: **0.030 m**. Every rail shipped today is two points, `bow()` 0.0000, and is
+swept exactly as before; the suite asserts that. `_the_rail_mesh_and_ride_come_from_one_path`
+was asserting the divergence, so it now reads against the swept route and keeps
+its sabotage resistance explicitly (the swept runs must not all be one length).
+14 pieces checked where 3 were.
+
+**A CONTROL IS SHOT, AND A COMMAND IS MOMENTARY.** `RailReceiver` wraps
+`ActivityElement` SHOT — the organ that already builds a `TargetBody` a ray can
+reach and joins `Damageable.GROUP` — and re-arms, because an element LATCHES and
+a latching direction control is a one-shot lever. The re-arm window is also the
+debounce: a shotgun's pellets are one request. `RailControls` collects a frame of
+commands and resolves them together, so FORWARD and BACK in the same instant
+**cancel and say so** rather than racing. Proven through
+`Player._fire_static_pulse`, not by calling the element.
+
+**NEXT:** P4/M1 — the first persistent machine chain. A player-performed setter
+interaction fires the never-yet-sent `latch_fired`; the link's commissioned state
+is **recomputed from the latch at build time**, never separately saved (§5.4a).
+
+
 ## ENGINE LANE — the exit that was a wall, and the plug that was a trap — 2026-09-20
 
 **TWENTY OF TWENTY SAMPLE ZONES COULD NOT BE FINISHED.** The playtest

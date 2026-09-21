@@ -135,6 +135,7 @@ jobs:
           make godot-build-failure
           make godot-exit-reach
           make godot-passenger-carry
+          make godot-rail-carrier
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live

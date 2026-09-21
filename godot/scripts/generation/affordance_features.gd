@@ -509,7 +509,7 @@ static func build_rail(root: Node3D, rail: RailPath) -> Dictionary:
 	if not refusals.is_empty():
 		push_warning("rail refused: %s" % "; ".join(refusals))
 		return {"beams": beams, "lanes": lanes, "refused": refusals}
-	var path := rail.segments()
+	var path := rail_sweep_points(rail)
 	for i in path.size() - 1:
 		var a: Vector3 = path[i]
 		var b: Vector3 = path[i + 1]
@@ -544,14 +544,48 @@ static func build_rail(root: Node3D, rail: RailPath) -> Dictionary:
 		lanes.append(lane)
 	return {"beams": beams, "lanes": lanes}
 
-## Point a node's local -Z along a path segment. A no-op for the straight
-## rail the footprint currently allows, and the thing that makes a curved
-## one work without touching anything above.
+## How finely a bowed rail is swept, in metres. A box per metre follows a
+## three-metre corner to within `s^2 / 8r` = 4 cm -- well inside the
+## beam's own thickness -- without putting the two hundred boxes on a
+## twelve-metre rail that sweeping every baked sample would.
+const RAIL_SWEEP_STEP := 1.0
+
+## The points a rail's beam and its ride volumes are swept between.
+##
+## THE BEAM MUST BE WHERE THE RIDE IS. `RailPath` interpolates between
+## its control points (P3.5, Catmull-Rom), so on a curved rail the
+## control polyline is the CHORD and the ride is the ARC: sweeping the
+## control points puts the beam through the inside of every corner and
+## the rider through the air beside it. That divergence did not exist
+## when `rail_path.gd` recorded that the two "agree by construction" --
+## the curve was a polyline then. It does now.
+##
+## A STRAIGHT RAIL IS UNCHANGED, and that is the point: its curve IS its
+## control polyline, `bow()` is 0, and this returns exactly the points it
+## always returned. Every rail shipped today is two points.
+static func rail_sweep_points(rail: RailPath) -> PackedVector3Array:
+	if rail.bow() <= RAIL_BEAM_THICKNESS * 0.25:
+		return rail.segments()
+	return rail.polyline(RAIL_SWEEP_STEP)
+
+## Point a node's local -Z along a path segment, pitch included.
+##
+## The first version set `rotation.y` alone. That is EXACT for a level
+## rail -- every rail shipped today -- and it leaves a climbing one as a
+## horizontal box with a sloped ride inside it. The sign is preserved
+## from that version (local -Z along MINUS the run) so a level rail's
+## beams and lanes land in the identical orientation they always did.
 static func _aim_along(node: Node3D, from: Vector3, to: Vector3) -> void:
 	var run := to - from
 	if run.length() < 0.001:
 		return
-	node.rotation.y = atan2(run.x, run.z)
+	var up := Vector3.UP
+	# Unreachable for a validated rail (`RailPath.MAX_PITCH_DEGREES` is
+	# 75), and here so that raising that limit degrades into a rolled
+	# frame rather than an error and a zeroed basis.
+	if absf(run.normalized().dot(up)) > 0.99:
+		up = Vector3.FORWARD
+	node.basis = Basis.looking_at(-run.normalized(), up)
 
 ## An updraft with a perch. Lift only — it can carry you up, never hold
 ## you down.
