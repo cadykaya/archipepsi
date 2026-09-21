@@ -492,7 +492,7 @@ not stop at the first blocked row.
 
 | ID | Workstream / milestone | State | Blocked by | Note |
 |---|---|---|---|---|
-| **A1** | 0.3 cleanup: shot-target orientation repaired, `godot-target-facing` promoted to a gate | **partly done** — repaired at `f4953c1`, **not in CI** | — | the driver exists and is not in `integration.yml`; promoting it is a one-line change and is not done |
+| **A1** | 0.3 cleanup: shot-target orientation repaired, `godot-target-facing` promoted to a gate | **partly done, and the suite is RED** | — | the orientation repair landed at `f4953c1`; the suite is not in `integration.yml` and cannot be promoted, because it fails: **7 of 27 shot targets in a composed Zone cannot be shot from in front** (blocked by cover, by a wall, or by another target). Verified byte-identical at the branch point `19c5d8e` in a clean worktree, so it is pre-existing and untouched by this batch. Promoting it is not a one-line change; it is the repair |
 | **A2** | Climbing-producer door records (`tower`, `platform_path` file `exit` past the wall the hole is cut in) | **not started** | — | bounded repair; scoped carefully because `door_world` feeds join sockets and lock slabs |
 | **A3** | Finish-path coverage | **not started** | — | |
 | **A4** | Stop tracking disposable test saves; launch hygiene | **not started** | — | |
@@ -617,4 +617,8 @@ And in `godot-counterfire`:
 - **Two things no test will answer**, and they are named rather than quietly
   claimed: whether EX50-021's bait is fair (§12 says so itself), and whether
   any of this is fun. Both are playtest questions.
+- **One suite outside CI is red, and it was red before this line existed.**
+  `godot-target-facing`: 7 of 27 shot targets in a composed Zone cannot be
+  shot from in front. Verified byte-identical at `19c5d8e` in a clean
+  worktree. It is workstream A1 and it is not this batch's.
 - **Scheduled work is off.** No heartbeat, no watchers, no subscriptions.
