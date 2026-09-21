@@ -297,14 +297,30 @@
         },
         "status": {
           "enum": [
+            "lightened",
+            "anchored",
+            "slippery",
+            "confused",
+            "turncoat",
+            "blinded",
+            "exposed",
+            "silenced",
+            "rooted",
+            "phased",
             "burning",
+            "conductive",
+            "brittle",
             "slowed",
             "frozen",
             "shocked",
             "poisoned",
             "marked",
             "stunned",
-            "vulnerable"
+            "vulnerable",
+            "empowered",
+            "low_profile",
+            "haste",
+            "regenerating"
           ],
           "title": "Status",
           "type": "string"
@@ -1867,7 +1883,19 @@
         },
         "status": {
           "enum": [
+            "lightened",
+            "anchored",
+            "slippery",
+            "confused",
+            "turncoat",
+            "blinded",
+            "exposed",
+            "silenced",
+            "rooted",
+            "phased",
             "burning",
+            "conductive",
+            "brittle",
             "slowed",
             "frozen",
             "shocked",
@@ -1886,7 +1914,10 @@
         "target": {
           "enum": [
             "self",
-            "enemy"
+            "enemy",
+            "object",
+            "surface",
+            "volume"
           ],
           "title": "Target",
           "type": "string"

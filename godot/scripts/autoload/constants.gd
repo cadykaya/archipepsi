@@ -246,7 +246,7 @@ const ECHO_DEFERRED_PRIMITIVES = {}
 # nothing reads it -- while still satisfying `status_active`
 # conditions and `status_applied` edges, and `cleanse` can never
 # remove it, because it is not in the cleanse order.
-const ECHO_STATUS_KINDS = ["burning", "slowed", "frozen", "shocked", "poisoned", "marked", "stunned", "vulnerable", "empowered", "low_profile", "haste", "regenerating"]
+const ECHO_STATUS_KINDS = ["lightened", "anchored", "slippery", "confused", "turncoat", "blinded", "exposed", "silenced", "rooted", "phased", "burning", "conductive", "brittle", "slowed", "frozen", "shocked", "poisoned", "marked", "stunned", "vulnerable", "empowered", "low_profile", "haste", "regenerating"]
 
 # The subset the RUNTIME implements an effect for. While it equals
 # the list above nothing changes; when a designed kind is admitted

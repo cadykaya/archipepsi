@@ -441,12 +441,21 @@ class KnockbackTarget(Strict):
 class ApplyStatusOnHit(Strict):
     """How *Fire Flower* becomes an upgrade to a gun you already own."""
     type: Literal["apply_status_on_hit"]
-    status: Literal[
-        "burning", "slowed", "frozen", "shocked", "poisoned", "marked",
-        "stunned", "vulnerable",
-    ]
+    #: A FOURTH SPELLING OF THE VOCABULARY, removed. This listed eight
+    #: kinds by hand, which is the same eight `SUPPORTED_STATUS_TARGETS`
+    #: marks as implemented on `enemy` -- so it was a transcription that
+    #: had to be kept in step with three other lists, and nothing checked
+    #: that it was. Derived now: the gate answers "can the runtime do
+    #: this to the thing I just hit", which is the real question.
+    status: StatusKind
     duration: float = Field(ge=0.5, le=12)
     magnitude: float = Field(ge=0.05, le=3.0)
+
+    @field_validator("status")
+    @classmethod
+    def _the_runtime_can_do_this_to_the_target(cls, value):
+        refuse_unsupported_status(value, "enemy")
+        return value
 
 
 Modifier = Annotated[
@@ -485,10 +494,41 @@ ConditionKind = Literal[
     "enemy_within", "slot_is", "zone_is_finale", "status_active",
 ]
 
+#: THE 0.4 DESTINATION VOCABULARY — Amalgam §15.2, thirteen Statuses in
+#: four families. Owner decision 2026-09-21 (B2 architectural direction).
+#:
+#: Design 5's twelve plus `exposed`, restored per Amalgam §0.4 without its
+#: crit clause. NOT the inherited twelve: §15.2 "modifies Design 5 §15.2",
+#: and taking the twelve as the target would miss the union's one addition.
+#:
+#: **Naming a Status here does not make it emittable.** Support is
+#: declared separately in `SUPPORTED_STATUS_TARGETS` and checked at every
+#: application path. See that table for why the two must not be one.
 StatusKind = Literal[
-    "burning", "slowed", "frozen", "shocked", "poisoned", "marked",
+    # KINETIC
+    "lightened", "anchored", "slippery",
+    # COGNITIVE
+    "confused", "turncoat", "blinded", "exposed",
+    # PERMISSION
+    "silenced", "rooted", "phased",
+    # MATERIAL
+    "burning", "conductive", "brittle",
+    # --- the ECHOES.md vocabulary that ships today -------------------
+    # Retained, NOT unioned into the destination: these are the kinds a
+    # committed 0.3 component may already name, and deleting them would
+    # break old saves this batch is forbidden to migrate. Their handling
+    # is the compatibility table in D7_LIGHTENED_STATUS_CONTRACT.md §3;
+    # `burning` appears in both lists and the two meanings differ.
+    "slowed", "frozen", "shocked", "poisoned", "marked",
     "stunned", "vulnerable", "empowered", "low_profile", "haste",
     "regenerating",
+]
+
+#: Amalgam §15.1's five target kinds. `self`/`enemy` are the ECHOES.md
+#: spelling and are kept so old components still parse; `object`,
+#: `surface` and `volume` are what §15.1 adds and what EX50-033 needs.
+StatusTarget = Literal[
+    "self", "enemy", "object", "surface", "volume",
 ]
 
 #: The closed status vocabulary, as a tuple, so the client can be checked
@@ -499,28 +539,66 @@ StatusKind = Literal[
 #: A typo produced a status that was permanent and did nothing.
 STATUS_KINDS = get_args(StatusKind)
 
-#: The kinds the RUNTIME actually applies an effect for.
+#: WHAT THE RUNTIME CAN ACTUALLY HONOUR, AND ON WHAT.
 #:
-#: **THE VOCABULARY AND THE GUARANTEE ARE DIFFERENT FACTS**, and keeping
-#: them as one is what makes widening `StatusKind` dangerous. The list
-#: above is what the design NAMES; this is what the engine can HONOUR.
-#: While they are equal, nothing changes and no caller sees a difference.
+#: **Declared, never derived.** The first version of this read
+#: `IMPLEMENTED_STATUS_KINDS = STATUS_KINDS`, which made support a
+#: consequence of being named -- so every kind added to the vocabulary
+#: admitted itself, and the gate protected nothing at the only moment it
+#: was needed. Owner correction, 2026-09-21. Support is now a separate
+#: table that has to be edited on purpose, in the change that adds the
+#: effect.
 #:
-#: Why the split has to exist before the next kind is added: the comment
-#: above records a status that was "permanent and did nothing" because
-#: nothing implemented it, and `StatusEffects.apply` refuses unknown
-#: kinds precisely to stop that. Admitting a designed name into
-#: `StatusKind` re-opens that hole on purpose rather than by typo -- the
-#: kind becomes emittable, `status_active` starts answering true for it,
-#: `status_applied` starts firing, and no effect exists. This makes the
-#: name safe to admit EARLY: it can be specified, exported and reviewed
-#: while `StatusComponent` still refuses to emit it, and it becomes
-#: emittable in the same change that gives it an effect.
+#: The value is the target kinds the runtime implements FOR THAT STATUS,
+#: because "supported" is not one fact: `lightened` on an object and
+#: `lightened` on a surface are different runtime work, and a kind that
+#: works on one is not thereby working on the other.
 #:
-#: NO STATUS BEFORE ITS EFFECT. The same shape as "no requirement before
-#: guarantee": the vocabulary may run ahead of the runtime, a campaign
-#: may not.
-IMPLEMENTED_STATUS_KINDS: tuple[str, ...] = STATUS_KINDS
+#: Today this is the ECHOES.md twelve on `self`/`enemy` -- exactly what
+#: `status_effects.gd` implements. Every §15.2 kind is named by the
+#: vocabulary above and supported by nothing, which is the honest state
+#: and is what the application paths refuse.
+SUPPORTED_STATUS_TARGETS: dict[str, tuple[str, ...]] = {
+    "burning": ("self", "enemy"),
+    "slowed": ("self", "enemy"),
+    "frozen": ("self", "enemy"),
+    "shocked": ("self", "enemy"),
+    "poisoned": ("self", "enemy"),
+    "marked": ("enemy",),
+    "stunned": ("enemy",),
+    "vulnerable": ("enemy",),
+    "empowered": ("self",),
+    "low_profile": ("self",),
+    "haste": ("self",),
+    "regenerating": ("self",),
+}
+
+#: A typo guard, and deliberately ONE-WAY: everything declared supported
+#: must be a real kind, and nothing is supported merely by being real.
+for _k in SUPPORTED_STATUS_TARGETS:
+    assert _k in get_args(StatusKind), f"{_k} is supported but not named"
+
+IMPLEMENTED_STATUS_KINDS: tuple[str, ...] = tuple(SUPPORTED_STATUS_TARGETS)
+
+
+def refuse_unsupported_status(kind: str, target: str | None = None) -> None:
+    """The ONE gate, used by every path that can start a Status.
+
+    `StatusComponent`, `ApplyStatusOnHit` and the `apply_status` effect
+    are three doors into the same room, and gating one of them leaves a
+    named-but-unimplemented kind reachable through the other two.
+    """
+    supported = SUPPORTED_STATUS_TARGETS.get(kind)
+    if supported is None:
+        raise ValueError(
+            f"status '{kind}' is named by the design but no runtime effect "
+            "implements it, so it may not be emitted; declare it in "
+            "SUPPORTED_STATUS_TARGETS in the same change that gives it an "
+            "effect")
+    if target is not None and target not in supported:
+        raise ValueError(
+            f"status '{kind}' is not implemented for target '{target}'; "
+            f"the runtime supports it on {list(supported)}")
 
 TraitStat = Literal[
     "move_speed", "jump_height", "gravity", "air_control", "ground_friction",
@@ -580,6 +658,25 @@ class Effect(Strict):
     duration: float = Field(default=0.0, ge=0.0, le=60.0)
     radius: float = Field(default=0.0, ge=0.0, le=20.0)
     direction: ImpulseDirection | None = None
+
+    @model_validator(mode="after")
+    def _apply_status_names_a_status_the_runtime_has(self):
+        """THE THIRD DOOR, and the one that was not even typed.
+
+        `subject` is a free `[a-z0-9_]+` string here because it names a
+        resource, a stat, a status or a slot depending on `type`. For
+        `apply_status` that meant a rule could start any string at all --
+        not merely an unimplemented kind, but a misspelt one, which is
+        the permanent-and-inert status `STATUS_KINDS`' comment records.
+
+        Kind only, not target: this atom does not carry one. Which thing
+        the rule applies it to is the runtime's, and it is checked there.
+        """
+        if self.type == "apply_status":
+            if self.subject is None:
+                raise ValueError("apply_status names no status in `subject`")
+            refuse_unsupported_status(self.subject)
+        return self
 
 
 LOCAL_REWARD_KINDS = (
@@ -769,28 +866,22 @@ class RuleComponent(ComponentBase):
 class StatusComponent(ComponentBase):
     kind: Literal["status"]
     status: StatusKind
-    target: Literal["self", "enemy"]
+    target: StatusTarget
     duration: float = Field(ge=0.5, le=30.0)
     magnitude: float = Field(ge=0.05, le=3.0)
 
-    @field_validator("status")
-    @classmethod
-    def _no_status_before_its_effect(cls, value):
-        """A kind the schema names but the runtime cannot honour is not
-        emittable, however well specified it is.
+    @model_validator(mode="after")
+    def _no_status_before_its_effect(self):
+        """Kind AND target, because support is not one fact.
 
-        This is the gate that lets `StatusKind` be widened safely. Today
-        the two lists are equal and this refuses nothing; the moment a
-        designed kind is admitted ahead of its runtime, this is what
-        stops it reaching a real campaign inert.
+        Checked after both fields are known: `lightened` on an object
+        and `lightened` on a surface are different runtime work, and a
+        kind implemented for one is not thereby implemented for the
+        other. A widened `StatusTarget` without this would let a
+        supported kind be aimed at a target nothing handles.
         """
-        if value not in IMPLEMENTED_STATUS_KINDS:
-            raise ValueError(
-                f"status '{value}' is named by the design but no runtime "
-                "effect implements it, so it may not be emitted; add it to "
-                "IMPLEMENTED_STATUS_KINDS in the same change that gives it "
-                "an effect")
-        return value
+        refuse_unsupported_status(self.status, self.target)
+        return self
 
 
 class AffordanceComponent(ComponentBase):
