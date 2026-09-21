@@ -1,5 +1,71 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — EX50-033: class is not kilograms, and the Status is missing — 2026-09-21
+
+**The ledger's open question is answered, and the answer is "neither".** The
+question was whether the engine had EX50-033's semantic mass-class sensor or a
+summed-kilogram plate. It had **no mass class at all** — `mass_kg` is a number
+on `ManipulableBody`, `PoweredLink` adds it up, and nothing anywhere read a
+class.
+
+`make godot-mass-class`, **36 checks**, in CI.
+
+**§10 says what to do before building anything**, and it was done in that order:
+"Before building a platform room, verify that the same object remains
+collidable while the plate's output changes under LIGHTENED." And it names the
+**decisive negative control**: "replaces the class plate with a summed-kilogram
+sensor without changing the Status... That control prevents the implementation
+from conflating two distinct mass vocabularies."
+
+The summed sensor is not written for the occasion. It is `PoweredLink`, the one
+that already ships.
+
+| measured, one crate, both sensors | class plate | summed kilograms |
+|---|---|---|
+| 200 kg crate at rest | held (HEAVY) | held (200 kg) |
+| class dropped one step, kilograms untouched | **released** | **still 200 kg** |
+| 50 kg taken off, class unchanged (still HEAVY) | **still held** | **reading fell to 150** |
+| 300 kg of MEDIUM debris | not satisfied | over a 120 kg threshold |
+
+The two vocabularies disagree in both directions, which is §6's "A mass-field
+ability that changes kilograms without changing the plate's semantic class may
+not release the plate" as well as §10's control. And the crate is still a step:
+a body dropped on the lightened crate comes to rest on its top, and the crate
+has not moved, shrunk or fallen.
+
+**The thresholds are transcribed, not chosen.**
+`docs/design-proposals/02_PHYSICS_IS_THE_GAME.md` §10.2 pins them — LIGHT below
+30 kg, MEDIUM to 120, HEAVY to 400, FIXED above that or unmanipulable — and the
+suite checks all six boundaries at three decimal places, because a
+transcription is exactly the thing that goes wrong at its edges.
+
+**F-15: `lightened` is not in the engine, and adding it is not a one-liner.**
+The accepted design has it (Design 5 §15.2: 8.0 s, magnitude 0.40, "`mass_class`
+drops one step"). `Constants.ECHO_STATUS_KINDS` does not, and that list is a
+GENERATED artifact from the bridge schema's closed `StatusKind`. Widening it is
+a shared-schema change — and worse, `StatusEffects.apply`'s own comment explains
+why it is not a line: a kind the schema admits and no system implements is
+"inert, because nothing reads it, yet still satisfying `status_active`
+conditions and `status_applied` edges". `lightened`'s specified effect spans
+impulse, wind, conveyors and Physics eligibility as well as class. That is
+**B3**, and it is raised as **D-7** rather than taken.
+
+So the class is lowered by `ManipulableBody.shift_class_provisionally`, named so
+it cannot be mistaken for the Status, and every claim measured through it says
+so. **That does not weaken the claims**: what is measured is what the two
+SENSORS do when a class moves and kilograms do not, which is true whatever moved
+the class.
+
+**And EX50-033's room is deliberately not built.** Building a playable room
+round a stand-in for its central mechanic is the coherent proposal dressed as
+evidence this ledger exists to prevent. The recess, the sill, the guide track,
+the far bolt and the return stair are named in the scope matrix as not started,
+blocked on D-7.
+
+**M3 stands at two of three**, with the third's blocker identified rather than
+guessed at.
+
+
 ## ENGINE LANE — EX50-021: an enemy's shot as the input to a machine — 2026-09-21
 
 **The second of the three approved minors.** `--counterfire`: a firing lane

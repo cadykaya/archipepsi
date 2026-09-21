@@ -107,6 +107,74 @@ func _ready() -> void:
 	can_sleep = true
 	sleeping = false
 	custom_integrator = false
+	# NOTHING TO TICK UNTIL SOMETHING IS APPLIED. A body nobody has
+	# touched costs exactly what it used to, which matters because the
+	# replay harness measures this class for determinism.
+	set_physics_process(false)
+
+# ----------------------------------------------- semantic mass class
+
+## Where the real Status would live.
+##
+## Design 2 §10.2 derives an object's mass CLASS from its kilograms, and
+## Design 5 §15.2 gives `lightened` the effect "`mass_class` drops one
+## step". `MassClass.read` already honours both that and `anchored`, so
+## the day a Status can be applied to a body this member starts being
+## consulted and nothing else changes.
+var statuses: StatusEffects = null
+
+## A PROVISIONAL, ROOM-LOCAL class shift, with the exact shape the
+## Status would have and a name that cannot be mistaken for it.
+##
+## **`lightened` is not in the engine.** `StatusEffects.apply` refuses
+## any kind outside `Constants.ECHO_STATUS_KINDS`, which is GENERATED
+## from the bridge schema's closed `StatusKind`, and `lightened` is not
+## among its twelve. Widening that enum is not a one-line change: a kind
+## the schema admits and no system implements is precisely the "inert
+## component" failure `StatusEffects.apply`'s own comment says the
+## staged gates exist to prevent, and `lightened`'s specified effect
+## spans impulse, wind, conveyors and Physics eligibility as well as
+## class. That is `B3`, it is a shared-schema change, and it is raised
+## as D-7 rather than taken here.
+var provisional_class_shift := 0
+
+var _shift_left := 0.0
+
+## Lower this body's semantic class by `steps` for `seconds`.
+##
+## PROVISIONAL -- see `provisional_class_shift`. Every claim measured
+## through it says so.
+func shift_class_provisionally(steps: int, seconds: float) -> void:
+	provisional_class_shift = maxi(provisional_class_shift, steps)
+	_shift_left = maxf(_shift_left, seconds)
+	set_physics_process(true)
+
+## Seconds left on the provisional shift.
+func shift_left() -> float:
+	return _shift_left
+
+## The class this body reads as RIGHT NOW.
+##
+## `constrained` and not `freeze`: a crate parked on its guide track is
+## physically held still and is still a manipulable HEAVY crate, while a
+## bolted one is `FIXED` by contract. Reading the physical flag would
+## make a machine's parking brake change what a sensor sees.
+func mass_class() -> String:
+	var base := MassClass.read(mass, not constrained, statuses)
+	if provisional_class_shift <= 0:
+		return base
+	return MassClass.step_down(base, provisional_class_shift)
+
+func _physics_process(delta: float) -> void:
+	if statuses != null:
+		statuses.tick(delta)
+	if _shift_left > 0.0:
+		_shift_left = maxf(_shift_left - delta, 0.0)
+		if _shift_left <= 0.0:
+			provisional_class_shift = 0
+	if _shift_left <= 0.0 and (statuses == null
+			or statuses.active_kinds().is_empty()):
+		set_physics_process(false)
 
 ## The contract's view of this body: exactly `BodySpec`, no more.
 func spec() -> Dictionary:

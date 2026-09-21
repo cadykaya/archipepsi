@@ -1,5 +1,67 @@
 # Archipepsi — build state
 
+## 2026-09-21 (engine) — EX50-033: the property distinction, and the Status that is missing
+
+Same 0.4 line, same draft PR #12. The ledger's open question about EX50-033 is
+answered and its decisive control is built; its room is not, and the reason is
+named rather than worked around.
+
+### The open question, answered
+
+**Neither vocabulary existed as a gameplay concept.** `mass_kg` is a number on
+`ManipulableBody`; `PoweredLink` adds it up; no semantic mass class was anywhere
+in the engine. So EX50-033 §10's "decisive negative control" could not have been
+run at all before this.
+
+### What exists now that did not
+
+- `MassClass` — the class ladder and its thresholds, **transcribed** from
+  `docs/design-proposals/02_PHYSICS_IS_THE_GAME.md` §10.2 rather than chosen
+  here, with `read()` already honouring `lightened` and `anchored` for the day
+  they exist.
+- `ClassPlate` — a plate that reads class and **never sums**. §8: "Optional
+  debris cannot accumulate into HEAVY on this semantic plate." The player is
+  excluded by name, per §3.
+- `ManipulableBody.mass_class()`, a `statuses` seam for the real Status, and
+  `shift_class_provisionally()` — a room-local class shift with the Status's
+  exact shape and a name that cannot be mistaken for it. The class does not read
+  `freeze`: a crate parked on a guide track is still a manipulable HEAVY crate,
+  and reading the physical flag would let a parking brake change what a sensor
+  sees.
+- Gate: `godot-mass-class` (36 checks), in `integration.yml`.
+
+`ManipulableBody` gains `set_physics_process(false)` at ready, so a body nobody
+has touched costs exactly what it used to — that class is measured by the replay
+harness for determinism and must not grow a per-frame cost.
+
+### The finding
+
+**F-15 — `lightened` is not in the engine, and adding it is not a one-liner.**
+The accepted design specifies it (Design 5 §15.2). `Constants.ECHO_STATUS_KINDS`
+does not contain it, and that list is a GENERATED artifact from the bridge
+schema's closed `StatusKind`. Widening it is a shared-schema change of the same
+kind as D-3 and D-4 — and `StatusEffects.apply`'s own comment says why it is not
+merely a line: a kind the schema admits and no system implements is the inert
+component the staged gates exist to prevent, and `lightened`'s effect spans
+impulse, wind, conveyors and Physics eligibility as well as class. That is
+workstream **B3**, raised as **D-7**, not taken.
+
+### Still open
+
+- **EX50-033's room** — recess, sill, guide track, service drive, far bolt,
+  return stair — is **not started, deliberately**. §10 orders the work and the
+  verification it asks for first is done; building the room round a stand-in for
+  its central Status would be the coherent proposal dressed as evidence.
+- **D-7** joins the handoff table: `lightened` and `anchored` in the closed
+  `StatusKind` with their specified effects. It blocks `E-033-status` and so
+  `E-033-room`, and nothing else — the four verified E-033 rows do not wait on
+  it.
+- **Blocked only where named**, unchanged: M2's completion on D-1; a junction in
+  a composed Zone on D-4; the 0.4 save representation on D-6. Dess and Arty
+  remain unassigned.
+- **Scheduled work is off.** No heartbeat, no watchers, no subscriptions.
+
+
 ## 2026-09-21 (engine) — EX50-021 Counterfire Arcade: the second minor
 
 Same 0.4 line, same draft PR #12. Two of the three approved minors are now

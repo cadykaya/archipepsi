@@ -89,6 +89,12 @@
 | E-021-fair | §11/§12: whether the bait is actually fair | `EX50-021.md` §11, §12 | E-021-bait | — | **not answered, and cannot be by a test** | — | "The actual fairness of the bait remains unverified and must be tested before this room can be considered more than a coherent proposal." The margin is reported as a number. A number is not a playtest |
 | E-021-save | §9: saving after the shutter opens but before the release must restore a safe position | `EX50-021.md` §9 | **D-6 (Dess)** | — | **not started — blocked** | — | no 0.4 save representation |
 | E-033 | EX50-033 Unweighted Switch | `EX50-033.md` | SPEC-intake | — | **not started** | — | its sensor is a semantic mass-class / LIGHTENED interaction, NOT a summed-kilogram plate. Which of the two the engine has is an open question this ledger must answer before the row moves |
+| E-033-answer | **The open question, answered.** The engine had NEITHER vocabulary as a gameplay concept: `mass_kg` is a number on `ManipulableBody`, `PoweredLink` sums it, and no mass CLASS existed anywhere | `EX50-033.md` §3, ledger's own open question | SPEC-intake | `mass_class.gd` | **verified** | this batch | the class ladder and its thresholds are transcribed from `docs/design-proposals/02_PHYSICS_IS_THE_GAME.md` §10.2, which pins them; nothing is chosen here |
+| E-033-sensor | A plate that reads mass CLASS and never sums: §8's "Optional debris cannot accumulate into HEAVY on this semantic plate" | `EX50-033.md` §3, §8 | E-033-answer | `class_plate.gd` | **verified** | this batch | `make godot-mass-class`, in CI. 300 kg of MEDIUM debris does not make a HEAVY plate, while the same mass holds a 120 kg summed threshold. The player is excluded by name, per §3 |
+| E-033-control | §10's **decisive negative control**: the class plate against a summed-kilogram sensor, same crate, same kilograms | `EX50-033.md` §10 | E-033-sensor | `mass_class_driver.gd` | **verified** | this batch | the summed sensor is not written for the occasion — it is `PoweredLink`, the one that already ships. Class HEAVY→MEDIUM releases the class plate; the summed sensor reads 200 kg before and after. **And the converse**: 50 kg off the crate moves the summed reading and not the class, which is §6's "A mass-field ability that changes kilograms without changing the plate's semantic class may not release the plate" |
+| E-033-step | §10's "verify that the same object remains collidable while the plate's output changes" | `EX50-033.md` §10 | E-033-control | `mass_class_driver.gd` | **verified** | this batch | a body dropped on the lightened crate comes to rest on its top, and the crate has not moved, shrunk or fallen |
+| E-033-status | The `lightened` Status itself | `EX50-033.md` §3, Design 5 §15.2 | **D-7 (Dess) / B3** | — | **not started — blocked** | — | F-15. `StatusEffects.apply` refuses any kind outside the closed, GENERATED `Constants.ECHO_STATUS_KINDS`, and `lightened` is not among its twelve. What lowers the class in the suite is `ManipulableBody.shift_class_provisionally`, named so it cannot be mistaken for the Status, and every claim measured through it says so |
+| E-033-room | The room: recess, sill, guide track, service drive, far bolt, return stair | `EX50-033.md` §2, §4, §5 | E-033-status | — | **not started** | — | deliberately. §10 orders the work — "Before building a platform room, verify that the same object remains collidable while the plate's output changes" — and the verification is done. Building the room around a provisional stand-in for its central Status would be the coherent proposal dressed as evidence this ledger exists to prevent |
 
 ## ~~Not in the repository, and needed before M3 content~~ — SUPERSEDED
 
@@ -484,6 +490,49 @@ gallery instead of walking down the lane. §7 wants exactly that — "Its positi
 and line of fire explain its presence before the player arrives."
 
 
+### F-15 — `lightened` is not in the engine, and adding it is not a one-liner
+
+EX50-033's whole mechanic is one Status: `lightened` drops an object's mass
+class one step while leaving its kilograms, its collision and its shape alone.
+The accepted design has it — `docs/design-proposals/05_STATUS_AS_GRAMMAR.md`
+§15.2 gives it 8.0 s, magnitude 0.40, targets actor/object/player, and the
+effect "`mass_class` drops one step; incoming impulse ×2.0; wind and conveyors
+now affect it; becomes Physics-eligible if it was `HEAVY`".
+
+**The engine does not.** `Constants.ECHO_STATUS_KINDS` has twelve kinds and
+`lightened` is not one of them; `StatusEffects.apply` refuses anything outside
+that list by design. And the list is a GENERATED artifact — `constants.gd`'s
+own header says so — produced by `schemas/export.py` from the bridge schema's
+closed `StatusKind`. So the change is a shared-schema change, in the same
+category as D-3 and D-4, which this lane has consistently declined to make
+alone.
+
+**More to the point, it is not a one-line change even with permission.**
+`StatusEffects.apply`'s own comment explains why: an unknown kind "was the worst
+of both worlds — inert, because nothing reads it, yet still satisfying
+`status_active` conditions and `status_applied` edges". A kind the schema admits
+and no system implements is exactly that failure, and `lightened`'s specified
+effect spans impulse response, wind, conveyors and Physics eligibility as well
+as class. Adding the name without the effect would let Epsilon emit it into a
+real campaign where it does nothing. That work is `B3`, it has a real blast
+radius, and it is raised as **D-7** rather than taken.
+
+**What was done instead.** The property distinction — which is what EX50-033 is
+actually about — was built and measured without the Status: `MassClass`
+transcribes §10.2's pinned ladder, `ClassPlate` reads class and never sums, and
+the class is lowered by `ManipulableBody.shift_class_provisionally`, a
+room-local shift with the Status's exact shape and a name that cannot be
+mistaken for it. §10's decisive control then compares that plate against
+`PoweredLink`, the summed-kilogram sensor that already ships, and the two
+disagree in both directions: class moves and kilograms do not; kilograms move
+and class does not.
+
+That substitution does not weaken what those cases claim, because the claim is
+about what the two SENSORS do when a class moves — true whatever moved it. It
+does mean **the room is not built**, and the ledger says so rather than shipping
+a playable scene whose central mechanic is a stand-in.
+
+
 ## Full scope and status
 
 Every workstream in the plan, including what has not been started. **A Dess
@@ -498,7 +547,7 @@ not stop at the first blocked row.
 | **A4** | Stop tracking disposable test saves; launch hygiene | **not started** | — | |
 | **B1** | Amalgam: one shared effect path | **not started** | — | |
 | **B2** | Amalgam: usable builds | **not started** | — | |
-| **B3** | Status/physics subsets (13 Statuses in 4 families, 8 compounds) | **not started** | — | |
+| **B3** | Status/physics subsets (13 Statuses in 4 families, 8 compounds) | **not started** | — | F-15/D-7: `lightened` and `anchored` are specified and absent, and `E-033-room` waits on them. The mass-class vocabulary they act on now exists (`mass_class.gd`) |
 | **B4** | Forge/Static economy | **not started — decision pending** | owner | plan §6 decision 6: only accepted recipes/costs/outputs; new economy rules stay a decision |
 | **B5** | Independent Amalgam breadth after M3 | **not started** | M3 | |
 | **C1** | Environmental objectives: reuse `ActivityElement` sensors | **done, in use** | — | the goal plate at `G` is exactly this; `RailReceiver` is the shot case |
@@ -512,7 +561,7 @@ not stop at the first blocked row.
 | **D7** | Return-later variant | **deferred, tracked** | all-Checks exit policy (owner) | plan §6 decision 5; no silent change to the completion rule |
 | **E-011** | Passing Platforms | **verified** except `E-011-save` / `E-011-gates` | D-6 for save only | see the rows above |
 | **E-021** | Counterfire Arcade | **verified** except `E-021-save` and `E-021-fair` | D-6 for save only | see the rows above. Fairness is not a thing a test can answer |
-| **E-033** | Unweighted Switch | **not started** | — | open question: semantic mass-class sensor vs summed-kilogram plate |
+| **E-033** | Unweighted Switch | **the property distinction is verified; the room is not built** | **D-7** for the Status | the open question is answered: the engine had neither vocabulary as a gameplay concept. §10's decisive control is done and green |
 | **F** | Progression / Epsilon / AP engine half | **not started** | **D-1, D-2 (Dess)** | the `established_in_zone` producer's client half |
 | **G1** | 0.4 save representation | **not started** | **D-6 (Dess)** | |
 | **G2** | Legacy migration | **deliberately not done** | owner | no old campaign is touched |
@@ -521,7 +570,7 @@ not stop at the first blocked row.
 | **M0** | 0.4 line exists, 0.3 untouched | **verified** | — | |
 | **M1** | One real machine chain | **verified** | — | `M1-zone` (a junction inside a composed Zone) stays blocked on **D-4** |
 | **M2-mech** | Dev-scenario loop, labelled | **verified** | — | |
-| **M3** | First content group | **2 of 3** | — | EX50-011 and EX50-021 done; 033 not started. **Genuine Epsilon objective selection stays incomplete until D-5** and a handwritten configuration will not be reported as it |
+| **M3** | First content group | **2 of 3, and the third's blocker is identified** | — | EX50-011 and EX50-021 done; EX50-033's property distinction is verified and its room is blocked on D-7. **Genuine Epsilon objective selection stays incomplete until D-5** and a handwritten configuration will not be reported as it |
 | **M2 complete** | The intended experience, multiworld-safe | **blocked** | **D-1 (Dess)**, §5's five requirements | |
 | **M4** | Remaining Amalgam breadth | **not started** | M3 | |
 | **M5** | Pinned review build | **not started** | M3 | |
@@ -535,7 +584,8 @@ not stop at the first blocked row.
 | D-3 `DoorAssignment.requires` | capability gates | — |
 | D-4 `RailNetwork` schema | `M1-zone` only | P0–P4, M1, M2-mech, M3, E-011 |
 | D-5 objective-binding vocabulary | C6, and any claim of **genuine** Epsilon objective selection | building and testing provisional configurations |
-| D-6 0.4 save representation | G1, `E-011-save` | E-011's other rows |
+| D-6 0.4 save representation | G1, `E-011-save`, `E-021-save` | E-011's and E-021's other rows |
+| **D-7** `lightened` (and `anchored`) in the closed `StatusKind`, with their specified effects — this is `B3`, not a schema line | `E-033-status`, and so `E-033-room` | `E-033-answer`, `E-033-sensor`, `E-033-control`, `E-033-step`, all of which are done |
 
 ## Full-Amalgam matrix
 

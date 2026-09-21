@@ -80,6 +80,7 @@ const DRIVERS := {
 	"--passing-platforms-test": preload(
 		"res://tests/passing_platforms_driver.gd"),
 	"--counterfire-test": preload("res://tests/counterfire_driver.gd"),
+	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }
 
