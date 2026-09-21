@@ -13,6 +13,15 @@
   `19c5d8e`.
 - **Latest known-good playable checkpoint:** `19c5d8e` (0.3 candidate; full
   frontier green).
+- **Preserved review snapshot:** `206167e`, on the remote branch
+  **`review/0.4-m2mech-snapshot`**, which will not be advanced. That is the head
+  the M2-mech railway was reviewed at: the whole first loop playable, the suite
+  walking it with nothing placed (124 checks), full frontier green. **It is a
+  snapshot, not a baseline** — its yard lets the base kit walk to S3 with the
+  span up (F-09), which was measured and repaired afterwards. An annotated tag
+  was written locally and could not be pushed: tag pushes to this remote fail
+  with a transport disconnect while branch pushes succeed, so the branch is the
+  durable ref.
 - **Scope decisions approved:** `grapple_to_surface` featured; three-dock Blindside
   prototype; minors EX50-011 / EX50-021 / EX50-033; first-class `RailNetwork`;
   full-strength acquisition integration as M2's completion requirement.
