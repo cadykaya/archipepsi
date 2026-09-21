@@ -86,6 +86,18 @@ const NO_DIRECTION := "no_direction"
 ## is a later question and a replay that depended on it would depend on
 ## exactly where a player stood, which is not something a reference
 ## solution can state.
+## Was this body too heavy a CLASS a moment ago, and is it not now?
+##
+## Exactly Design 5 §15.2's clause and nothing wider: the body's own
+## kilograms still read `HEAVY`, and what it is carrying has brought its
+## effective class below that. A body that was never `HEAVY` gains
+## nothing here, and neither does one carrying nothing.
+static func _lightened_into_reach(body: ManipulableBody) -> bool:
+	var raw := MassClass.of_mass(body.mass, not body.constrained)
+	if raw != MassClass.HEAVY:
+		return false
+	return not MassClass.at_least(body.mass_class(), MassClass.HEAVY)
+
 static func push(body: ManipulableBody, from: Vector3, toward: Vector3,
 		envelope: Envelope) -> Dictionary:
 	if body.constrained:
@@ -94,13 +106,29 @@ static func push(body: ManipulableBody, from: Vector3, toward: Vector3,
 	if reach > envelope.range_m:
 		return {"applied": 0.0, "refused": OUT_OF_REACH,
 				"reach_m": reach}
-	if body.mass > envelope.mass_limit_kg:
+	# KILOGRAMS FIRST, AND THE CLASS CAN ONLY OPEN THE DOOR.
+	#
+	# Design 5 §15.2 gives `lightened` "becomes Physics-eligible if it
+	# was `HEAVY`" -- a PERMISSIVE effect. So the kilogram test stays
+	# exactly as it was and nothing that can be pushed today stops being
+	# pushable; the class test only ever admits something the kilograms
+	# refused. That matters at one number in particular:
+	# `ENVELOPE_MASS_KG` is 120.0 and `MassClass.MEDIUM_BELOW` is 120.0,
+	# read with different comparators, so a body at exactly 120.0 kg is
+	# pushable today and is `HEAVY` class-wise. Reading class as the
+	# authority would have silently refused it.
+	if body.mass > envelope.mass_limit_kg \
+			and not _lightened_into_reach(body):
 		return {"applied": 0.0, "refused": TOO_HEAVY,
 				"mass_kg": body.mass}
 	var direction := Vector3(toward.x - body.global_position.x, 0.0,
 			toward.z - body.global_position.z)
 	if direction.length() < 0.001:
 		return {"applied": 0.0, "refused": NO_DIRECTION}
-	body.sleeping = false
-	body.apply_central_force(direction.normalized() * envelope.force_n)
+	# A CONTINUOUS FORCE, and it stays one. `lightened` doubles an
+	# incoming IMPULSE; a force is not an impulse, and this body's
+	# kilograms are unchanged, so the same newtons produce the same
+	# acceleration whatever its class. Doubling both would be inventing
+	# an effect the contract does not describe.
+	body.receive_force(direction.normalized() * envelope.force_n)
 	return {"applied": envelope.force_n, "refused": ""}

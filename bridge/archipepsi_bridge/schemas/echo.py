@@ -559,6 +559,13 @@ STATUS_KINDS = get_args(StatusKind)
 #: vocabulary above and supported by nothing, which is the honest state
 #: and is what the application paths refuse.
 SUPPORTED_STATUS_TARGETS: dict[str, tuple[str, ...]] = {
+    # KINETIC. `lightened` on an OBJECT is implemented: mass class drops
+    # one step, incoming impulse doubles, influence volumes act on it and
+    # manipulation eligibility reads the class. Declared here in the same
+    # change that lands those effects and their tests, per this table's
+    # own rule. Not `self`/`enemy`: nothing implements it on an actor, and
+    # not `surface`/`volume`: those are different runtime work.
+    "lightened": ("object",),
     "burning": ("self", "enemy"),
     "slowed": ("self", "enemy"),
     "frozen": ("self", "enemy"),

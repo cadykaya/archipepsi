@@ -55,7 +55,28 @@ class Volume extends Area3D:
 		# leave its influence applied forever, with nothing left to exit.
 		tree_exiting.connect(_release_all)
 
+	## WIND REACHES OBJECTS NOW, AND ONLY LIGHT ENOUGH ONES.
+	##
+	## This gate read `if body is Player` and nothing else, so a crate
+	## in an updraft was ignored completely. Design 5 §15.2 gives
+	## `lightened` "wind and conveyors now affect it", and Design 1
+	## §26.2 says the interaction is BY MASS CLASS -- so the volume asks
+	## the body what class it reads as, and a `HEAVY` or `FIXED` one is
+	## not moved. That is what makes `lightened` the thing that puts a
+	## heavy crate into the air.
+	##
+	## A body is not a `CharacterBody3D`: the locomotion keys
+	## (`drag`, `terminal_fall`, `friction_scale`, `speed_scale`) are
+	## about how a walking body moves and are NOT applied to objects.
+	## `lift` and `gravity_scale` are, because those are about what the
+	## air does to a thing in it.
 	func _on_entered(body: Node3D) -> void:
+		var crate := body as ManipulableBody
+		if crate != null:
+			if not _moves_objects():
+				return
+			_inside.append(body)
+			return
 		if body is Player:
 			_inside.append(body)
 			(body as Player).enter_volume(self, influence)
@@ -74,7 +95,38 @@ class Volume extends Area3D:
 		return Transform3D.IDENTITY if host == null \
 				else host.global_transform
 
+	## Does this volume do anything to an object at all?
+	func _moves_objects() -> bool:
+		return float(influence.get("lift", 0.0)) > 0.0 \
+				or influence.has("gravity_scale")
+
+	## The lightest class this volume will NOT move. Anything at or above
+	## it is too heavy for the air to matter.
+	const OBJECT_LIMIT := MassClass.HEAVY
+
+	func _physics_process(delta: float) -> void:
+		if _inside.is_empty():
+			return
+		var lift := float(influence.get("lift", 0.0))
+		var gravity_scale := float(influence.get("gravity_scale", 1.0))
+		for body: Node in _inside:
+			var crate := body as ManipulableBody
+			if crate == null or not is_instance_valid(crate):
+				continue
+			if MassClass.at_least(crate.mass_class(), OBJECT_LIMIT):
+				continue
+			# NEWTONS, not a velocity write. A `RigidBody3D` is moved by
+			# the solver; assigning to it the way `Player` assigns to its
+			# own velocity would fight the integrator.
+			var up := lift - ManipulableBody.gravity() * (1.0 - gravity_scale)
+			if not is_zero_approx(up):
+				crate.receive_force(Vector3.UP * up * crate.mass)
+			var _unused := delta
+
 	func _on_exited(body: Node3D) -> void:
+		if body is ManipulableBody:
+			_inside.erase(body)
+			return
 		if body is Player:
 			_inside.erase(body)
 			(body as Player).exit_volume(self)

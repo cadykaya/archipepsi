@@ -12,8 +12,12 @@ extends RefCounted
 
 signal status_applied(kind: String)
 
-#: Which side this container belongs to, for matching StatusComponent
-#: definitions ("self" for the player, "enemy" for an enemy).
+#: WHICH TARGET KIND this container belongs to -- Amalgam §15.1's five:
+#: `self`, `enemy`, `object`, `surface`, `volume`. `self`/`enemy` are the
+#: ECHOES.md spelling and still match `StatusComponent.target`; `object`
+#: is what a crate carries. It is the same field because it answers the
+#: same question the schema's `target` asks, and a second one would be a
+#: second vocabulary.
 var side := "self"
 
 var _active: Dictionary = {}
@@ -38,10 +42,24 @@ func apply(kind: String, duration: float, magnitude: float) -> void:
 	if not kind in Constants.ECHO_STATUS_KINDS:
 		push_error("apply_status names unknown status '%s'" % kind)
 		return
-	if not kind in Constants.ECHO_STATUS_KINDS_IMPLEMENTED:
+	# ...AND SUPPORT IS PER TARGET, not per kind. `lightened` is
+	# implemented on an OBJECT and on nothing else; a kind that works on
+	# one target kind is not thereby working on another, and the bridge
+	# refuses to emit at an unsupported target for the same reason. The
+	# engine asks the same question at its own application boundary, so a
+	# room cannot start a Status the campaign would have been refused.
+	#
+	# A REFUSAL LEAVES NOTHING BEHIND: no entry, and no `status_applied`,
+	# so nothing downstream sees a success that did not happen.
+	var targets: Array = Constants.ECHO_STATUS_TARGETS.get(kind, [])
+	if targets.is_empty():
 		push_error(("apply_status names '%s', which the design names " % kind)
 				+ "but no runtime effect implements, so it may not be "
 				+ "applied. NO STATUS BEFORE ITS EFFECT.")
+		return
+	if not side in targets:
+		push_error("apply_status names '%s' on target '%s'; the runtime "
+				% [kind, side] + "implements it on %s" % [targets])
 		return
 	for entry: Dictionary in BridgeClient.owned_components("status"):
 		var component: Dictionary = entry.get("component", {})

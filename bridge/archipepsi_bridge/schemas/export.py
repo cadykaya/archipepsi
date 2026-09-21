@@ -237,6 +237,14 @@ def export_constants_gd() -> str:
         "# may not.",
         "const ECHO_STATUS_KINDS_IMPLEMENTED = "
         f"{_gd_literal(list(E.IMPLEMENTED_STATUS_KINDS))}",
+        "",
+        "# ...AND ON WHAT. Support is not one fact per kind: a Status",
+        "# implemented on an object is not thereby implemented on an actor.",
+        "# The engine enforces this at its own application boundary too, so",
+        "# a kind the bridge would refuse to emit at a target cannot be",
+        "# started there by a room either.",
+        "const ECHO_STATUS_TARGETS = "
+        f"{_gd_literal({k: list(v) for k, v in E.SUPPORTED_STATUS_TARGETS.items()})}",
     ]
     lines.append("")
     return "\n".join(lines)

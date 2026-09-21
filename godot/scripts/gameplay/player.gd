@@ -1316,8 +1316,13 @@ func _shove_what_i_walked_into() -> void:
 		var speed := _walk_intent.dot(into)
 		if speed <= 0.0:
 			continue
-		body.sleeping = false
-		body.apply_central_impulse(
+		# THROUGH THE BODY'S OWN FUNNEL. This is an IMPULSE, and Design 5
+		# §15.2 gives `lightened` "incoming impulse x2.0" -- so a crate
+		# that is carrying it takes twice as much from the same shove.
+		# One of only two places in the engine that puts force on a
+		# `RigidBody3D`, which is why the scaling can live in the body
+		# rather than being remembered at each call site.
+		body.receive_impulse(
 				into * speed * SHOVE_MASS_KG * get_physics_process_delta_time())
 
 ## How hard the player is trying to walk this frame, in m/s, before the

@@ -114,44 +114,36 @@ func _ready() -> void:
 
 # ----------------------------------------------- semantic mass class
 
-## Where the real Status would live.
+## THE STATUSES THIS BODY IS CARRYING, as an `object` target.
 ##
-## Design 2 §10.2 derives an object's mass CLASS from its kilograms, and
-## Design 5 §15.2 gives `lightened` the effect "`mass_class` drops one
-## step". `MassClass.read` already honours both that and `anchored`, so
-## the day a Status can be applied to a body this member starts being
-## consulted and nothing else changes.
+## Null until something applies one, so a body nobody has touched costs
+## exactly what it used to -- this class is measured by the replay
+## harness for determinism and must not grow a per-frame cost it does
+## not need.
+##
+## `side` is `object`: Amalgam §15.1's target kind, the same field the
+## schema's `StatusComponent.target` matches against. `StatusEffects`
+## refuses a kind the runtime does not implement FOR THAT TARGET, so a
+## room cannot start on a crate what the bridge would refuse to emit at
+## one.
 var statuses: StatusEffects = null
 
-## A PROVISIONAL, ROOM-LOCAL class shift, with the exact shape the
-## Status would have and a name that cannot be mistaken for it.
-##
-## **`lightened` is not in the engine.** `StatusEffects.apply` refuses
-## any kind outside `Constants.ECHO_STATUS_KINDS`, which is GENERATED
-## from the bridge schema's closed `StatusKind`, and `lightened` is not
-## among its twelve. Widening that enum is not a one-line change: a kind
-## the schema admits and no system implements is precisely the "inert
-## component" failure `StatusEffects.apply`'s own comment says the
-## staged gates exist to prevent, and `lightened`'s specified effect
-## spans impulse, wind, conveyors and Physics eligibility as well as
-## class. That is `B3`, it is a shared-schema change, and it is raised
-## as D-7 rather than taken here.
-var provisional_class_shift := 0
+## How much more an incoming IMPULSE moves this body. Design 5 §15.2
+## gives `lightened` "incoming impulse x2.0".
+const LIGHTENED_IMPULSE := 2.0
 
-var _shift_left := 0.0
-
-## Lower this body's semantic class by `steps` for `seconds`.
-##
-## PROVISIONAL -- see `provisional_class_shift`. Every claim measured
-## through it says so.
-func shift_class_provisionally(steps: int, seconds: float) -> void:
-	provisional_class_shift = maxi(provisional_class_shift, steps)
-	_shift_left = maxf(_shift_left, seconds)
+## Apply a Status to this body. The real path -- there is no second,
+## room-local vocabulary and no stand-in.
+func apply_status(kind: String, duration: float, magnitude: float) -> void:
+	if statuses == null:
+		statuses = StatusEffects.new()
+		statuses.side = "object"
+	var before := statuses.active_kinds().size()
+	statuses.apply(kind, duration, magnitude)
+	if statuses.active_kinds().size() == before and not statuses.has(kind):
+		# Refused. Nothing started, so nothing needs ticking.
+		return
 	set_physics_process(true)
-
-## Seconds left on the provisional shift.
-func shift_left() -> float:
-	return _shift_left
 
 ## The class this body reads as RIGHT NOW.
 ##
@@ -160,20 +152,37 @@ func shift_left() -> float:
 ## bolted one is `FIXED` by contract. Reading the physical flag would
 ## make a machine's parking brake change what a sensor sees.
 func mass_class() -> String:
-	var base := MassClass.read(mass, not constrained, statuses)
-	if provisional_class_shift <= 0:
-		return base
-	return MassClass.step_down(base, provisional_class_shift)
+	return MassClass.read(mass, not constrained, statuses)
+
+## AN INSTANTANEOUS IMPULSE, scaled by what the body is carrying.
+##
+## The contract says IMPULSE, and the distinction is kept rather than
+## flattened: `lightened` doubles what a single impulse does, and leaves
+## a continuous force alone. That is not a technicality -- a constant
+## force already produces the same acceleration on this body whatever
+## its class, because `lightened` changes the CLASS and never the
+## kilograms. Doubling both would have been inventing an effect the
+## contract does not describe.
+func receive_impulse(impulse: Vector3) -> void:
+	sleeping = false
+	apply_central_impulse(impulse * impulse_scale())
+
+## A CONTINUOUS FORCE, in newtons. Deliberately unscaled; see above.
+func receive_force(force: Vector3) -> void:
+	sleeping = false
+	apply_central_force(force)
+
+func impulse_scale() -> float:
+	if statuses != null and statuses.has("lightened"):
+		return LIGHTENED_IMPULSE
+	return 1.0
 
 func _physics_process(delta: float) -> void:
-	if statuses != null:
-		statuses.tick(delta)
-	if _shift_left > 0.0:
-		_shift_left = maxf(_shift_left - delta, 0.0)
-		if _shift_left <= 0.0:
-			provisional_class_shift = 0
-	if _shift_left <= 0.0 and (statuses == null
-			or statuses.active_kinds().is_empty()):
+	if statuses == null:
+		set_physics_process(false)
+		return
+	statuses.tick(delta)
+	if statuses.active_kinds().is_empty():
 		set_physics_process(false)
 
 ## The contract's view of this body: exactly `BodySpec`, no more.

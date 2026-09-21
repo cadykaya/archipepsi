@@ -21,25 +21,12 @@ extends Node
 ## The summed-kilogram sensor is not written for the occasion: it is
 ## `PoweredLink`, the one that already exists and already ships.
 ##
-## **`lightened` IS NOT IN THE ENGINE AND IS NOT ADDED HERE.** See F-15.
-## `StatusEffects.apply` refuses any kind outside the closed, GENERATED
-## `Constants.ECHO_STATUS_KINDS`, and widening that enum is a shared
-## bridge-schema change whose honest scope is the Status's whole
-## specified effect — impulse, wind, conveyors and Physics eligibility
-## as well as class. A kind the schema admits and no system implements
-## is the inert-component failure that guard exists to prevent. It is
-## raised as **D-7** and is not taken.
-##
-## What lowers the class here is `ManipulableBody`'s **provisional,
-## room-local class shift**, which has the exact shape the Status would
-## have and is named so it cannot be mistaken for it. That substitution
-## does not weaken the claim these cases make: the claim is about what
-## the two SENSORS do when the class moves and the kilograms do not, and
-## it is true whatever moved the class.
-##
-## What this suite therefore does NOT establish: that `lightened` works,
-## that the Amalgam Status system produced anything, or that EX50-033 is
-## built. The room is not built.
+## What lowers the class is the **real `lightened` Status**, applied
+## through `ManipulableBody.apply_status` into a `StatusEffects` whose
+## target kind is `object`, and read back by `MassClass.read`. There is
+## no stand-in and no second vocabulary: the support declaration
+## `lightened: ("object",)` and this effect landed in one change, which
+## is what that table's rule requires.
 
 const HEAVY_KG := 200.0
 const MEDIUM_KG := 100.0
@@ -77,6 +64,10 @@ func _run() -> void:
 	await _the_decisive_control()
 	await _the_other_direction()
 	await _the_shift_is_temporary()
+	await _the_boundary_refuses_an_unsupported_target()
+	await _an_impulse_doubles_and_a_force_does_not()
+	await _eligibility_opens_and_the_boundary_holds()
+	await _wind_lifts_a_lightened_crate_only()
 	print("")
 	if _failures == 0:
 		print("GODOT MASS CLASS OK (%d checks, %d notes)"
@@ -246,8 +237,8 @@ func _the_decisive_control() -> void:
 	var kg_before := kilos.mass_on_plate()
 
 	# ...AND THEN THE CLASS DROPS ONE STEP. Provisional, and labelled.
-	crate.shift_class_provisionally(1, 8.0)
-	twin.shift_class_provisionally(1, 8.0)
+	crate.apply_status("lightened", 8.0, 0.40)
+	twin.apply_status("lightened", 8.0, 0.40)
 	await _settle(20)
 	_check(crate.mass_class() == MassClass.MEDIUM,
 		"the crate now reads MEDIUM")
@@ -273,11 +264,10 @@ func _the_decisive_control() -> void:
 	_check(absf(crate.global_position.y - (top_before - 0.5)) < 0.2,
 		"and the crate has not moved, shrunk or fallen: its top is "
 			+ "still at %.2f" % (crate.global_position.y + 0.5))
-	_note("the class was lowered by `ManipulableBody."
-			+ "shift_class_provisionally`, NOT by the `lightened` "
-			+ "Status, which this engine does not have (F-15, D-7). "
-			+ "What is measured is what the two sensors do when a class "
-			+ "moves and kilograms do not")
+	_note("the class was lowered by the REAL `lightened` Status, applied "
+			+ "through `ManipulableBody.apply_status` -> `StatusEffects` "
+			+ "-> `MassClass.read`. No stand-in: the support declaration "
+			+ "`lightened: (object,)` and this effect landed together")
 	world.queue_free()
 
 
@@ -326,12 +316,12 @@ func _the_shift_is_temporary() -> void:
 	var flips: Array = []
 	plate.occupancy_changed.connect(func(now: bool) -> void:
 		flips.append(now))
-	crate.shift_class_provisionally(1, 0.5)
+	crate.apply_status("lightened", 0.5, 0.40)
 	await _settle(20)
 	_check(not plate.satisfied(), "the plate released")
 	for _i in 90:
 		await get_tree().physics_frame
-		if crate.shift_left() <= 0.0:
+		if not crate.statuses.has("lightened"):
 			break
 	await _settle(20)
 	_check(crate.mass_class() == MassClass.HEAVY,
@@ -340,4 +330,167 @@ func _the_shift_is_temporary() -> void:
 	_check(flips == [false, true],
 		"the plate announced exactly one release and one re-read, got %s"
 			% [flips])
+	world.queue_free()
+
+
+## SUPPORT IS PER TARGET, AND THE ENGINE ASKS TOO.
+##
+## The bridge refuses to EMIT a Status at a target the runtime does not
+## implement. That is half a gate: a room applies statuses directly, and
+## without the same question at the engine's own application boundary a
+## scenario could start on an actor what a campaign would have been
+## refused. A refusal must leave NOTHING -- no entry, and no
+## `status_applied`, because a rule listening for that edge would
+## otherwise see a success that did not happen.
+func _the_boundary_refuses_an_unsupported_target() -> void:
+	print("  -- BOUNDARY: a kind is supported ON something, not merely at all")
+	var supported: Array = Constants.ECHO_STATUS_TARGETS.get("lightened", [])
+	_check(supported == ["object"],
+		"the export says `lightened` is implemented on %s" % [supported])
+
+	# ON AN ACTOR: named, implemented, and not for this target.
+	var actor := StatusEffects.new()
+	actor.side = "self"
+	var actor_events: Array = []
+	actor.status_applied.connect(func(k: String) -> void:
+		actor_events.append(k))
+	actor.apply("lightened", 8.0, 0.40)
+	_check(not actor.has("lightened"),
+		"`lightened` on a `self` target is refused")
+	_check(actor.active_kinds().is_empty(),
+		"...leaving no active state: %s" % [actor.active_kinds()])
+	_check(actor_events.is_empty(),
+		"...and no `status_applied` event: %s" % [actor_events])
+
+	# AND THE OTHER WAY ROUND, so this is not a rule about one word.
+	var crate := StatusEffects.new()
+	crate.side = "object"
+	var crate_events: Array = []
+	crate.status_applied.connect(func(k: String) -> void:
+		crate_events.append(k))
+	crate.apply("burning", 5.0, 1.0)
+	_check(not crate.has("burning"),
+		"`burning` on an `object` target is refused -- it is implemented "
+			+ "on actors and nothing has implemented it on a crate")
+	_check(crate_events.is_empty(), "...with no event")
+
+	# THE POSITIVE, so the refusals are not a container that refuses all.
+	crate.apply("lightened", 8.0, 0.40)
+	_check(crate.has("lightened"),
+		"`lightened` on an `object` target is accepted")
+	_check(crate_events == ["lightened"],
+		"...and announces exactly that: %s" % [crate_events])
+
+
+## §15.2 gives `lightened` "incoming impulse x2.0". It says nothing
+## about a continuous force, and the two are not the same thing: this
+## body's KILOGRAMS never change, so the same newtons produce the same
+## acceleration whatever its class. Doubling both would be inventing an
+## effect.
+func _an_impulse_doubles_and_a_force_does_not() -> void:
+	print("  -- IMPULSE: doubled; FORCE: untouched, and that is the contract")
+	var kit := _stage()
+	var world: Node3D = kit["world"]
+	await _settle(10)
+	var plain := _crate(world, "plain", HEAVY_KG, Vector3(-4.0, 6.0, 0.0))
+	var light := _crate(world, "light", HEAVY_KG, Vector3(4.0, 6.0, 0.0))
+	light.apply_status("lightened", 8.0, 0.40)
+	await _settle(6)
+	_check(light.impulse_scale() > plain.impulse_scale(),
+		"the lightened crate takes impulses at x%.1f against x%.1f"
+			% [light.impulse_scale(), plain.impulse_scale()])
+	var push := Vector3(0.0, 0.0, 12.0) * HEAVY_KG
+	plain.receive_impulse(push)
+	light.receive_impulse(push)
+	await _settle(2)
+	var ratio := light.linear_velocity.z / maxf(plain.linear_velocity.z, 0.001)
+	_check(absf(ratio - ManipulableBody.LIGHTENED_IMPULSE) < 0.05,
+		"the same impulse moves it %.2f times as fast (%.2f vs %.2f m/s)"
+			% [ratio, light.linear_velocity.z, plain.linear_velocity.z])
+
+	# AND A FORCE, on two fresh crates, does the same to both.
+	var a := _crate(world, "a", HEAVY_KG, Vector3(-8.0, 6.0, 0.0))
+	var b := _crate(world, "b", HEAVY_KG, Vector3(8.0, 6.0, 0.0))
+	b.apply_status("lightened", 8.0, 0.40)
+	await _settle(4)
+	for _i in 10:
+		a.receive_force(Vector3(0.0, 0.0, 900.0))
+		b.receive_force(Vector3(0.0, 0.0, 900.0))
+		await get_tree().physics_frame
+	_check(absf(a.linear_velocity.z - b.linear_velocity.z) < 0.05,
+		"the same continuous force moves both alike: %.3f and %.3f m/s"
+			% [a.linear_velocity.z, b.linear_velocity.z])
+	world.queue_free()
+
+
+## "Becomes Physics-eligible if it was HEAVY" -- a PERMISSIVE clause.
+## Nothing that could be pushed stops being pushable, which matters at
+## exactly one number: 120.0 kg is the envelope's limit AND the
+## MEDIUM/HEAVY boundary, read with different comparators.
+func _eligibility_opens_and_the_boundary_holds() -> void:
+	print("  -- ELIGIBILITY: the class opens the door, it never shuts it")
+	var kit := _stage()
+	var world: Node3D = kit["world"]
+	await _settle(10)
+	var envelope := Manipulation.Envelope.of(Constants.ENVELOPE_FORCE_N,
+			Constants.ENVELOPE_RANGE_M, Constants.ENVELOPE_MASS_KG)
+	var crate := _crate(world, "crate", HEAVY_KG, Vector3(0.0, 0.8, 0.0))
+	await _settle(30)
+	var from := crate.global_position + Vector3(0.0, 1.0, -3.0)
+	var toward := crate.global_position + Vector3(0.0, 0.0, 6.0)
+	var before := Manipulation.push(crate, from, toward, envelope)
+	_check(str(before["refused"]) == Manipulation.TOO_HEAVY,
+		"a %.0f kg HEAVY crate is refused by a %.0f kg envelope"
+			% [crate.mass, envelope.mass_limit_kg])
+
+	crate.apply_status("lightened", 8.0, 0.40)
+	await _settle(4)
+	var after := Manipulation.push(crate, from, toward, envelope)
+	_check(str(after["refused"]) == "" and float(after["applied"]) > 0.0,
+		"lightened, the same crate is eligible -- and its mass is still "
+			+ "%.0f kg" % crate.mass)
+
+	# THE BOUNDARY, unchanged in both directions.
+	var edge := _crate(world, "edge", Constants.ENVELOPE_MASS_KG,
+			Vector3(6.0, 0.8, 0.0))
+	await _settle(30)
+	var edge_from := edge.global_position + Vector3(0.0, 1.0, -3.0)
+	var edge_to := edge.global_position + Vector3(0.0, 0.0, 6.0)
+	var at_edge := Manipulation.push(edge, edge_from, edge_to, envelope)
+	_check(str(at_edge["refused"]) == "",
+		"a body at exactly %.1f kg is still pushable, as it was before "
+			% edge.mass + "the class was read at all")
+	_check(MassClass.of_mass(Constants.ENVELOPE_MASS_KG) == MassClass.HEAVY,
+		"...even though its class is HEAVY -- the two vocabularies "
+			+ "disagree at this number and the kilograms still decide")
+	world.queue_free()
+
+
+## "Wind and conveyors now affect it." The gate read `if body is Player`,
+## so a crate in an updraft was ignored entirely. Design 1 §26.2 makes
+## the interaction mass-class based, which is what makes `lightened` the
+## thing that puts a heavy crate into the air.
+func _wind_lifts_a_lightened_crate_only() -> void:
+	print("  -- WIND: reaches objects now, and only light enough ones")
+	var kit := _stage()
+	var world: Node3D = kit["world"]
+	var column := AffordanceNodes.Volume.new()
+	column.extents = Vector3(12.0, 10.0, 12.0)
+	column.influence = {"lift": 30.0, "gravity_scale": 0.75}
+	column.visible_shell = false
+	world.add_child(column)
+	column.global_position = Vector3(0.0, 5.0, 0.0)
+	await _settle(10)
+	var heavy := _crate(world, "heavy", HEAVY_KG, Vector3(-2.0, 3.0, 0.0))
+	var light := _crate(world, "light", HEAVY_KG, Vector3(2.0, 3.0, 0.0))
+	light.apply_status("lightened", 8.0, 0.40)
+	var heavy_from := heavy.global_position.y
+	var light_from := light.global_position.y
+	await _settle(90)
+	_check(light.global_position.y > light_from,
+		"the lightened crate rises: %.2f -> %.2f"
+			% [light_from, light.global_position.y])
+	_check(heavy.global_position.y < heavy_from,
+		"the HEAVY one is not moved by air and falls: %.2f -> %.2f"
+			% [heavy_from, heavy.global_position.y])
 	world.queue_free()
