@@ -51,6 +51,9 @@
 | M1-visible | Leaving and coming back: the repair stays, everything else is rebuilt | addendum "persistence precision" | M1-play, M2-mech | `railway_scenario.gd` (`ReturnPlinth`, `reenter`) | **verified** | `9733cb5`+ | 88 checks. The case asserts the span, the lever and the carrier are DIFFERENT OBJECTS afterwards, so a reset dressed as a rebuild cannot pass it |
 | M1-hud | The scenario draws the real HUD: HP, slots, prompts, hit feedback | 0.4 scenario | M1-fight | `railway_scenario.gd` (`_hud`) | **verified** | `89dd872`+ | `main.gd` builds it the same way for a Zone; the only thing left out is the resource pool, because there is no campaign here to have one |
 | M1-door | A double-click into the railway | 0.4 scenario | M1-play | `Play the Railway (Windows).bat`, `- bracing`, `_play-railway.bat`, `_find-godot.bat`, `play-railway.sh` | **implemented; the .bat files are UNTESTED** | `426532e` | there is no Windows in this container. The shell launcher was run and does find Godot and open the scenario. `_find-godot.bat` is a second copy of the finder inside `_play-3ab.bat` — a recorded debt, not a design |
+| M1-access | Restored VEHICLE SERVICE and genuinely new DESTINATION ACCESS are two claims, asserted separately | owner check-in 2026-09-21 | M1-play | `railway_scenario.gd` (`_yard`, `_docks`), `rail_junction_driver.gd` | **verified** | `c347057`+ | measured before it was changed: the base kit walked 42.3 m and stood on S3 with the span up. F-09 |
+| M1-recall | An island is not a trap: a player on S3 can call the skiff back with the base kit | consequence of M1-access | M1-access | `rail_junction_driver.gd` | **verified** | `c347057`+ | the direction controls are commands to the RAILWAY, not calls placed at a dock |
+| SPEC-intake | The three EX50 originals recorded with provenance, digests verified after the copy | owner check-in 2026-09-21 | — | `docs/design-library/` | **verified** | `c347057` | paper proposals, REVISED_ON_PAPER; kept distinct from runtime evidence by directory |
 | D6 | The second binding: `ranged_hit` on eligible bracing releasing the same span | plan §4 D6 / addendum "second binding — corrected" | M1-play | `railway_scenario.gd` (`_bracing`), `--railway --bracing` | **verified, and labelled** | `4a8cba5`+ | 124 checks. **An existing-tool objective variant, NOT a second acquisition loop** — `ranged_hit` establishes no newly acquired capability because the starting player already shoots the transport receivers. Built as an ALTERNATIVE configuration, never alongside the gantry: a yard with both would be a yard where the acquisition branch is optional |
 | M1-safe | Dying in a yard with shooters in it is not a dead end | 0.4 scenario | M1-fight | `railway_scenario.gd` (`_place_player`) | **verified** | `3074c55`+ | `set_spawn`, not an assignment: the respawn transform is captured in `_ready`, so a player merely MOVED to S1 came back at the world origin |
 | M1-walked | **Continuous play evidence**: the whole loop on foot, nothing placed | plan §8 ("continuous play evidence kept separate from placed-near-target, pre-unlocked, direct-handler and synthetic-state runs") | M2-mech | `rail_junction_driver.gd` (`_walked_end_to_end`) | **verified** | `88cb607`+ | 114 checks, stable over four runs. Board, shoot, ride, be refused, walk the branch, take the tool, walk back, pull up, throw the lever, ride to S3 — no teleports, every command a key |
@@ -289,6 +292,38 @@ share, and all four exist.
 - **The owner's standing constraint is the right frame:** *do not treat remote
   CI infrastructure failure as gameplay evidence.* The frontier was run here
   instead, on a fixed tree, and its result is the one this batch stands on.
+
+### F-09 — the yard's conveniences were standing in for the progression design
+
+- **The question, from the owner:** `_yard` built one continuous collidable slab
+  and `_docks` put a flight of steps at every dock, S3 included. Could the base
+  kit simply walk to S3 without commissioning the span?
+- **Measured before anything was changed: YES.** With the span up and nothing in
+  the mobility slot, a walked route round the outside of the track — 42.3 m,
+  no teleports — ended standing on S3's platform at `y = 1.00`.
+- **What that meant:** the commissioned link was restoring **vehicle service**
+  and nothing more, while the scenario read as though it opened a destination.
+  Both conveniences came from assembling the place, and neither was ever
+  measured, which is exactly how a test-yard shortcut becomes the design.
+- **Change:** the yard floor is now four slabs around a hole, S3 stands on an
+  island inside it, and a dock over the hole gets no steps — *"a flight of
+  stairs rising out of a void is a bridge"*. The branch was moved to the S1 side
+  of S2 so its walkway does not end over the hole.
+- **Both claims are now asserted separately, in one case, so neither can stand
+  in for the other:**
+
+  | claim | measurement |
+  |---|---|
+  | destination access is gated | the walk ends in the hole at `y = -25.03`; the narrowest gap round S3 is 6.0 m; a run-up and a jump from the far rim also ends in the hole |
+  | vehicle service is what the repair restores | same yard, span home, carrier crosses to S3 in 10.9 s |
+
+- **And the island is not a trap** (M1-recall): step off, send the skiff away,
+  and one Static Pulse at S3's forward chevron brings it back, because the
+  direction controls are commands to the railway rather than calls placed at a
+  dock.
+- **Still not a progression claim.** This is dev scaffolding. Nothing here
+  establishes an AP guarantee, a capability gate, or anything about a composed
+  Zone; it establishes that the scenario now shows what it is meant to show.
 
 ## Full-Amalgam matrix
 

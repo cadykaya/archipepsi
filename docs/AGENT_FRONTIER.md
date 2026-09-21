@@ -1,5 +1,40 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the yard was answering an easier question — 2026-09-21
+
+**Measured before anything was changed: the base kit could walk to S3.** With
+the span still up and nothing in the mobility slot, a walked route round the
+outside of the track — 42.3 m, no teleports — ended standing on S3's platform.
+`_yard` laid one continuous slab and `_docks` put steps at every dock, S3
+included; both were conveniences from assembling the place, and neither had ever
+been measured.
+
+**So the commissioned link was restoring VEHICLE SERVICE and nothing more,
+while the scenario read as though it opened a destination.** Those are two
+claims. The yard now makes both checkable: the floor is four slabs around a
+hole, S3 stands on an island inside it, and a dock over the hole gets no steps
+— a flight of stairs rising out of a void is a bridge.
+
+| claim | measurement |
+|---|---|
+| destination access is gated | the walk ends in the hole at `y = -25.03`; narrowest gap round S3 is 6.0 m; a run-up and a jump from the far rim also ends in the hole |
+| vehicle service is what the repair restores | same yard, span home, the carrier crosses to S3 in 10.9 s |
+
+**And the island is not a trap.** Step off, send the skiff away, and one Static
+Pulse at S3's forward chevron brings it back — the direction controls are
+commands to the RAILWAY rather than calls placed at a dock. Held as a case, not
+remembered.
+
+**None of this is a progression claim.** It is dev scaffolding; it establishes
+that the scenario shows what it is meant to show, and nothing about an AP
+guarantee, a capability gate or a composed Zone.
+
+**The three EX50 originals are in the repository**, byte-for-byte under
+`docs/design-library/EX50_entries/`, with their digests verified after the copy
+and an authority note that keeps paper proposals distinct from runtime evidence.
+`make godot-rail-junction`, 140 checks.
+
+
 ## ENGINE LANE — the second binding, and a name I will not invent under — 2026-09-21
 
 **`--railway --bracing` builds the same railway with the span held by a clamp

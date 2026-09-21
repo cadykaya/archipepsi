@@ -65,6 +65,8 @@ func _run() -> void:
 	await _fighting_from_the_deck()
 	await _walked_end_to_end()
 	await _the_second_binding()
+	await _can_the_base_kit_walk_to_s3()
+	await _the_island_is_not_a_trap()
 	_finish()
 
 
@@ -918,8 +920,7 @@ func _walked_end_to_end() -> void:
 	# before it ever reaches the walkway. A player would see the
 	# walkway; the steering has to.
 	var onto: Vector3 = yard.rail.at(docks[1]) \
-			+ yard.dock_side(1) * 5.0 \
-			+ yard.rail.tangent(docks[1]) * 3.0
+			+ yard.dock_side(1) * 5.0 + yard.branch_lane()
 	_check(await _walk(body, onto, 1.2, 400),
 		"turns onto the branch walkway")
 	_check(await _walk(body, yard.grant.global_position, 2.0, 900),
@@ -1087,6 +1088,233 @@ func _the_second_binding() -> void:
 		"under the same latch, got %s" % [yard.accepted_latches()])
 	_check(fired == ["yard_junction/span_aligned"],
 		"reported once and only once, got %s" % [fired])
+
+	yard.queue_free()
+	await get_tree().process_frame
+
+
+## CAN THE BASE KIT SIMPLY WALK TO S3?
+##
+## **The question behind the question.** The span, once home, commissions
+## the link — and what that restores is VEHICLE SERVICE. Whether it also
+## opens a destination the player could not otherwise reach is a
+## different claim, and the yard was not built to make it. `_yard` lays
+## one continuous collidable slab under everything and `_docks` puts a
+## flight of steps at every dock, S3 included, because both were built
+## to make the place walkable while it was being assembled.
+##
+## So this measures the walk, on foot, with the span still up and
+## nothing in the mobility slot. Whatever it reports is a fact about the
+## scenario's geometry and **not** a statement about the major's
+## intended progression: the two must not be allowed to stand in for
+## each other, and a test-yard convenience that is never measured is
+## exactly how one quietly becomes the other.
+##
+## **Evidence class: continuous play, shooters removed.** This is a
+## traversal question; the fight has its own case. Removing them is
+## stated rather than silent, as it is in `_walked_end_to_end`.
+func _can_the_base_kit_walk_to_s3() -> void:
+	print("  -- WALK-AROUND: is S3 reachable on foot with the span up?")
+	var yard := RailwayScenario.new()
+	add_child(yard)
+	for _i in 60:
+		await get_tree().physics_frame
+	for shooter: Enemy in yard.shooters:
+		shooter.queue_free()
+	yard.shooters.clear()
+	await get_tree().physics_frame
+
+	var body: Player = yard.player
+	var docks := yard.carrier.dock_offsets
+	_check(not yard.span.locked and not yard.carrier.commissioned[1],
+		"the span is up and the link is not commissioned")
+	_check(str((body.runtimes["mobility"] as EchoRuntime)
+			.equipped.get("component_id", "")) == "",
+		"and the player has nothing in the mobility slot")
+
+	var s3_pad: Vector3 = yard.rail.at(docks[2]) \
+		+ yard.dock_side(2) * RailwayScenario.DOCK_OUT
+	var start := body.global_position
+	# THE ROUTE A PLAYER WOULD TRY: off the platform onto the yard, along
+	# the outside of the track, to the foot of S3's steps, and up them.
+	# Nothing here is a shortcut the scenario does not offer.
+	var out_wide: Vector3 = yard.rail.at(docks[0]) \
+		+ yard.dock_side(0) * (RailwayScenario.DOCK_OUT + 9.0)
+	var alongside: Vector3 = yard.rail.at(docks[2]) \
+		+ yard.dock_side(2) * (RailwayScenario.DOCK_OUT + 9.0)
+	var foot: Vector3 = s3_pad + yard.dock_side(2) * 3.0
+	await _walk(body, out_wide, 2.0, 500)
+	await _walk(body, alongside, 2.5, 1400)
+	await _walk(body, foot, 1.8, 600)
+	var arrived := await _walk(body, s3_pad, 2.0, 600)
+	var here := body.global_position
+	var flat := Vector2(here.x - s3_pad.x, here.z - s3_pad.z).length()
+	var standing := here.y > RailwayScenario.RAIL_Y \
+		+ RailwayScenario.DECK.y - 0.5
+	print("    walked %.1f m; ended %.1f m from S3's platform centre at "
+		% [start.distance_to(here), flat] + "y=%.2f (platform top %.2f)"
+		% [here.y, RailwayScenario.RAIL_Y + RailwayScenario.DECK.y])
+	print("    on the platform: %s" % ("yes" if arrived and standing
+		else "no"))
+
+	# TWO CLAIMS, ASSERTED SEPARATELY, because they are not the same
+	# claim and the yard used to let one stand in for the other.
+	#
+	# (1) DESTINATION ACCESS is gated: with the span up there is no
+	#     route on foot, and the walk ends in the hole.
+	_check(not (arrived and standing),
+		"S3 is NOT reachable on foot with the span up (ended %.1f m "
+		% flat + "away at y=%.2f)" % here.y)
+	_check(here.y < 0.0,
+		"and the walk ends in the hole rather than short of it (%.2f)"
+			% here.y)
+	# AND NOT FROM THE OTHER SIDE EITHER. A hole you can walk round is
+	# not a hole; a hole you can jump is a ledge. Both are measured,
+	# because "there is a gap" is an assertion about a number and
+	# "nobody can cross it" is an assertion about a body.
+	# JUST OUTSIDE the hole's far edge, on ground: `VOID_HALF` is
+	# measured from the island, so the rim is half plus a step.
+	var far: Vector3 = s3_pad + yard.rail.tangent(docks[2]) \
+			* (RailwayScenario.VOID_HALF.y + 0.8)
+	var clearance: float = minf(
+		RailwayScenario.VOID_HALF.x - RailwayScenario.DOCK.x * 0.5,
+		RailwayScenario.VOID_HALF.y - RailwayScenario.DOCK.z * 0.5)
+	_check(clearance > 5.0,
+		"the narrowest gap round S3 is %.1f m" % clearance)
+	body.set_spawn(Transform3D(Basis(), far + Vector3(0.0, 1.2, 0.0)))
+	body.velocity = Vector3.ZERO
+	for _i in 40:
+		await get_tree().physics_frame
+	_check(body.is_on_floor() and body.global_position.y > -1.0,
+		"a body dropped on the far rim stands on ground (%.2f m)"
+			% body.global_position.y)
+	# RUN AT IT AND JUMP. The most a base kit can do.
+	body.rotation.y = atan2(-(s3_pad.x - far.x), -(s3_pad.z - far.z))
+	Input.action_press("move_forward", 1.0)
+	for i in 90:
+		await get_tree().physics_frame
+		if i == 12:
+			Input.action_press("jump", 1.0)
+		if i == 14:
+			Input.action_release("jump")
+		if body.global_position.y < -2.0:
+			break
+	Input.action_release("move_forward")
+	for _i in 60:
+		await get_tree().physics_frame
+	_check(body.global_position.y < 0.0,
+		"and a run-up and a jump at the island still ends in the hole "
+			+ "(%.2f m)" % body.global_position.y)
+
+	# (2) VEHICLE SERVICE is what the repair restores. Same yard, same
+	#     span, now home: the carrier crosses and the player can be
+	#     on it. Commissioned through the machine, not by hand.
+	yard.span.restore()
+	yard.junction.restore_from([yard.junction.latch_ref(yard.span)])
+	_check(yard.carrier.commissioned[1],
+		"with the span home the link is commissioned")
+	# TWO LEGS: `restore_from` parks the carrier at S1, which is the
+	# safe-machinery policy and not a bug -- so the crossing that is
+	# being measured is the second one.
+	var crossed := 0
+	for leg in 2:
+		yard.carrier.request(RailCarrier.FORWARD)
+		while crossed < 1800 and yard.carrier.at_dock() != leg + 1:
+			await get_tree().physics_frame
+			crossed += 1
+	_check(yard.carrier.at_dock() == 2,
+		"and the carrier reaches S3 (%.1f s)" % (float(crossed) / 60.0))
+	_note("the two are kept apart on purpose: the repair restores "
+		+ "VEHICLE SERVICE, and because S3 stands on an island the "
+		+ "skiff is the only way onto, that is ALSO the only access to "
+		+ "the destination. An earlier yard had continuous ground and a "
+		+ "stair at every dock: the repair meant the same thing then, and "
+		+ "the scenario read as though it meant more"
+		)
+
+	yard.queue_free()
+	await get_tree().process_frame
+
+
+## AN ISLAND MUST NOT BE A TRAP.
+##
+## Cutting the ground from under S3 is what makes the repair open a
+## destination rather than only restore a service — and it creates a way
+## to be stuck that the walkable yard did not have: step off the deck,
+## send the skiff away, and there is nothing to walk back along.
+##
+## It does not, because the direction controls are commands to the
+## RAILWAY rather than calls placed at a dock: a player standing on S3
+## shoots the forward chevron and the carrier at S2 comes to them. That
+## is a property worth holding rather than one worth remembering.
+##
+## **Evidence class: placed-near-target.** The body is stood on S3 to
+## measure the recall; getting there on foot is the point of the case
+## above, and this one is about what happens afterwards.
+func _the_island_is_not_a_trap() -> void:
+	print("  -- RECALL: stranded on S3, and calling the skiff back")
+	var yard := RailwayScenario.new()
+	add_child(yard)
+	for _i in 60:
+		await get_tree().physics_frame
+	for shooter: Enemy in yard.shooters:
+		shooter.queue_free()
+	yard.shooters.clear()
+	yard.span.restore()
+	yard.junction.restore_from([yard.junction.latch_ref(yard.span)])
+	var docks := yard.carrier.dock_offsets
+	for leg in 2:
+		yard.carrier.request(RailCarrier.FORWARD)
+		var spent := 0
+		while spent < 1800 and yard.carrier.at_dock() != leg + 1:
+			await get_tree().physics_frame
+			spent += 1
+	_check(yard.carrier.at_dock() == 2, "the skiff is standing at S3")
+
+	var body: Player = yard.player
+	var pad: Vector3 = yard.rail.at(docks[2]) \
+		+ yard.dock_side(2) * RailwayScenario.DOCK_OUT
+	body.global_position = pad + Vector3(0.0,
+		RailwayScenario.RAIL_Y + RailwayScenario.DECK.y + 1.0, 0.0)
+	body.velocity = Vector3.ZERO
+	for _i in 40:
+		await get_tree().physics_frame
+	_check(body.is_on_floor() and body.global_position.y > 0.5,
+		"the player is standing on S3's island (%.2f m)"
+			% body.global_position.y)
+	_check(yard.over_the_void(pad),
+		"which stands over the hole, so there is nothing to walk back on")
+
+	# SEND IT AWAY. The mistake the island makes possible.
+	yard.carrier.request(RailCarrier.BACK)
+	var away := 0
+	while away < 1800 and yard.carrier.at_dock() != 1:
+		await get_tree().physics_frame
+		away += 1
+	_check(yard.carrier.at_dock() == 1,
+		"the skiff leaves for S2 without them")
+
+	# AND CALL IT BACK, with the base kit, from where they are standing.
+	var forward: RailReceiver = null
+	for receiver: RailReceiver in yard.controls.receivers():
+		if receiver.direction == RailCarrier.FORWARD \
+				and receiver.global_position.distance_to(pad) < 9.0:
+			forward = receiver
+	_check(forward != null, "S3 has a forward control within reach")
+	if forward != null:
+		_aim(body, forward.element.global_position)
+		await get_tree().physics_frame
+		var seen: Variant = body.camera_ray(20.0).get("collider")
+		_check(seen != null and seen.get("element") == forward.element,
+			"the player can see it from the island, saw %s" % [seen])
+		body._fire_static_pulse()
+	var back := 0
+	while back < 1800 and yard.carrier.at_dock() != 2:
+		await get_tree().physics_frame
+		back += 1
+	_check(yard.carrier.at_dock() == 2,
+		"and one shot brings the skiff back to them (%.1f s)"
+			% (float(back) / 60.0))
 
 	yard.queue_free()
 	await get_tree().process_frame

@@ -62,6 +62,9 @@ const SHIELD_HEIGHT := 1.25
 const THEME := "concrete_facility"
 const GANTRY_BINDING := "gantry"
 const BRACING_BINDING := "bracing"
+## Half the hole in the yard floor, around S3. Wide enough that there
+## is no way round it and no lip to jump from.
+const VOID_HALF := Vector2(10.0, 9.5)
 
 var rail: RailPath = null
 var carrier: RailCarrier = null
@@ -85,6 +88,7 @@ var hud: Hud = null
 ## kit already does. They are ALTERNATIVES, never both: see `_bracing`.
 var binding := GANTRY_BINDING
 var bracing: ActivityElement = null
+var _void := AABB()
 var dock_offsets := PackedFloat32Array()
 
 ## EVERYTHING THE RAILWAY IS MADE OF, under one node.
@@ -172,8 +176,58 @@ func _environment() -> void:
 
 
 func _yard() -> void:
-	_slab(Vector3(90.0, 1.0, 90.0), Vector3(14.0, -0.5, 12.0),
-		ThemeMaterials.floor_mat(THEME))
+	# GROUND EVERYWHERE EXCEPT UNDER S3, and that hole is the point.
+	#
+	# The first cut laid one continuous slab under the whole yard and
+	# `_docks` put a flight of steps at every dock, S3 included --
+	# both conveniences from assembling the place. Measured, they
+	# meant a player could walk 42 m round the outside of the track
+	# and stand on S3 with the span still up. The repair was restoring
+	# VEHICLE SERVICE and nothing else, while the scenario read as
+	# though it opened a destination.
+	#
+	# Those are two different claims and the yard now makes both of
+	# them checkable: S3 stands on an island the carrier is the only
+	# way onto, and `_can_the_base_kit_walk_to_s3` is the guard that
+	# catches the convenience coming back.
+	var island := rail.at(dock_offsets[2]) + dock_side(2) * DOCK_OUT
+	var cut := AABB(
+			Vector3(island.x - VOID_HALF.x, -4.0, island.z - VOID_HALF.y),
+			Vector3(VOID_HALF.x * 2.0, 8.0, VOID_HALF.y * 2.0))
+	var floor_box := AABB(Vector3(-31.0, -1.0, -33.0),
+			Vector3(90.0, 1.0, 90.0))
+	var ground := ThemeMaterials.floor_mat(THEME)
+	# Four slabs around the hole, so nothing has to be subtracted from
+	# anything and the gap is exactly the box named above.
+	_ground_slab(floor_box.position.x, cut.position.x,
+			floor_box.position.z, floor_box.end.z, ground)
+	_ground_slab(cut.end.x, floor_box.end.x,
+			floor_box.position.z, floor_box.end.z, ground)
+	_ground_slab(cut.position.x, cut.end.x,
+			floor_box.position.z, cut.position.z, ground)
+	_ground_slab(cut.position.x, cut.end.x,
+			cut.end.z, floor_box.end.z, ground)
+	_void = cut
+	_sign("NO FLOOR: the skiff is the only way across",
+			island + Vector3(0, RAIL_Y + DECK.y + 4.4, 0),
+			Color(0.75, 0.8, 1.0), 34)
+
+
+## One rectangle of ground, named by its edges rather than its centre
+## because the four pieces are defined by where the hole is.
+func _ground_slab(x0: float, x1: float, z0: float, z1: float,
+		material: Material) -> void:
+	if x1 - x0 <= 0.01 or z1 - z0 <= 0.01:
+		return
+	_slab(Vector3(x1 - x0, 1.0, z1 - z0),
+			Vector3((x0 + x1) * 0.5, -0.5, (z0 + z1) * 0.5), material)
+
+
+## Is this spot over the hole? A dock that stands on nothing gets no
+## steps: a flight of stairs rising out of a void is a bridge.
+func over_the_void(at: Vector3) -> bool:
+	return _void.size.x > 0.0 and _void.has_point(
+			Vector3(at.x, _void.position.y + _void.size.y * 0.5, at.z))
 
 
 ## The visible track, laid where the ride actually goes.
@@ -217,9 +271,15 @@ func _docks() -> void:
 		pad.basis = Basis.looking_at(-along, Vector3.UP)
 		# Up from the yard onto the platform, on the side away
 		# from the track: steps must not stand where the deck goes.
+		#
+		# AND ONLY WHERE THERE IS GROUND TO STEP FROM. A flight of
+		# stairs rising out of the hole around S3 would be a bridge,
+		# and the hole is there so that the skiff is the only way on.
 		var lip := centre + side * (DOCK.x * 0.5) \
 				+ Vector3(0.0, DOCK.y * 0.5, 0.0)
-		_stair(lip + side * 2.0 - Vector3(0.0, top, 0.0), lip, 3.0)
+		var foot := lip + side * 2.0 - Vector3(0.0, top, 0.0)
+		if not over_the_void(foot):
+			_stair(foot, lip, 3.0)
 		_sign(names[i], where + side * DOCK_OUT + Vector3(0, top + 3.2, 0),
 			Color(0.75, 0.9, 1.0), 96)
 		# BOTH DIRECTIONS AT EVERY DOCK. Which of them the railway can
@@ -789,7 +849,7 @@ func _branch() -> void:
 	# one leaves the dock beside the gantry and passes UNDER it,
 	# which also keeps the thing the tool opens in view on the way
 	# out and on the way back.
-	var lane := along * 3.0
+	var lane := branch_lane()
 	var yard := where + side * BRANCH_OUT + lane \
 			+ Vector3(0.0, top, 0.0)
 	_slab(Vector3(10.0, 0.4, 10.0), yard - Vector3(0.0, 0.2, 0.0),
@@ -821,6 +881,18 @@ func _branch() -> void:
 	_anchor(practice, 6.4, 2.6, Vector3(3.0, 0.4, 3.0))
 	_sign("TRY IT", practice + Vector3(0, 7.4, 0),
 		Color(0.75, 0.9, 1.0), 48)
+
+
+## Where along the track the branch leaves S2, as an offset from the
+## dock's centre.
+##
+## TOWARD S1, not toward S3: the hole around S3 starts a few metres past
+## this dock and a walkway laid the other way would end over it. Exposed
+## because a caller that recomputed it would be the second authoring of
+## one number, and the two would disagree the day the route changes --
+## which is exactly what happened when this moved.
+func branch_lane() -> Vector3:
+	return -rail.tangent(dock_offsets[1]) * 3.0
 
 
 ## Which way is "beside the track" at a dock: the unit vector a dock
