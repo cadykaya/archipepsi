@@ -142,6 +142,11 @@ var door_positions := {}
 ## its opened-lock set only ever grow, so a reload can never put the
 ## player back behind a door they already opened.
 var _keys_held := {}
+## Latches this Zone has already reported, by `package_id/latch_id`.
+## The bridge is idempotent on these and a resend is the normal case
+## after a dropped connection, but a machine that re-reported on every
+## rebuild would be sending the bridge back what the bridge just sent.
+var _latches_fired := {}
 var _locks_open := {}
 var _zone_locks: Array = []
 var _stations: Array = []
@@ -212,6 +217,11 @@ var _zone_locations: Array[int] = []
 ## could be standing on the far side of one when it happened.
 var keys_carried := {}
 var locks_carried := {}
+## Latches this Zone has already fired, by `package_id/latch_id`, as the
+## snapshot's `progress.latched` reports them. A machine reads this at
+## BUILD time and recomputes what the latch implies; nothing about the
+## consequence is separately saved (§5.4a).
+var latches_carried := {}
 ## activity id -> the room it stands in, for station repair.
 var _activity_room := {}
 var resume_anchor := ""
@@ -673,6 +683,50 @@ func _on_key_collected(key_id: String) -> void:
 	_open_what_the_keys_allow()
 	if hud != null:
 		hud.toast(_what_that_key_did(key_id), ZoneKey.tint(key_id), 4.5)
+
+## A physics latch fired in this Zone, and the intent that records it.
+##
+## THE CLIENT HAS NEVER SENT ONE. `ZoneProgress.latched`, `LatchFired`
+## and `record_latch` have been on the bridge since the physics slice
+## landed -- monotone, idempotent by `package_id/latch_id`, and refusing
+## any latch the committed manifest does not declare -- and every
+## `latched` in this lane was prose in a comment. This is the client
+## half.
+##
+## **Only an accepted consequence reaches here.** A machine reports when
+## its latch condition is genuinely satisfied, never when a Zone is
+## rebuilt from a latch that already fired: §5.4a persists the decision,
+## and re-reporting it would be the engine telling the bridge a fact the
+## bridge told the engine.
+func report_latch(package_id: String, latch_id: String) -> void:
+	var ref := "%s/%s" % [package_id, latch_id]
+	if _latches_fired.has(ref):
+		return
+	_latches_fired[ref] = true
+	BridgeClient.send_intent({"type": "latch_fired",
+			"zone_id": zone_id, "package_id": package_id,
+			"latch_id": latch_id})
+
+## Every latch this Zone has reported. A copy: the set is this Zone's.
+func latches_fired() -> Dictionary:
+	return _latches_fired.duplicate()
+
+## Every latch this Zone should treat as already fired: what came in
+## with the snapshot, plus anything reported since it was taken.
+##
+## UNION, for the same reason keys and stations are a union: an intent
+## sent in the same breath as leaving may not be in the snapshot yet,
+## both sides are monotone, and taking both can neither lose progress
+## nor invent it.
+func latches_accepted() -> Array:
+	var out := {}
+	for ref: Variant in latches_carried:
+		out[str(ref)] = true
+	for ref: Variant in _latches_fired:
+		out[str(ref)] = true
+	var refs: Array = out.keys()
+	refs.sort()
+	return refs
 
 ## Every lock the held keys AND capabilities admit, opened at once.
 ##

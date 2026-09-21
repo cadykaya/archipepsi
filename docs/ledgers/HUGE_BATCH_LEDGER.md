@@ -40,6 +40,10 @@
 | P2 | The railway is a vehicle: it travels dock to dock, stops, refuses missing track, reverses, and holds safely | plan §3 build order P2 | P0 | `godot/scripts/gameplay/rail_carrier.gd` | **verified** | `29ccf7a`+ | `make godot-rail-carrier`, in CI. 73 checks incl. a real passenger round the corner: DRIFT 0.124 m, GROUNDED 273/273, ABOARD yes |
 | P2b | The rail a player sees is the rail they ride | plan §3 build order P2 ("swept along `polyline()` not `segments()`") | P2 | `affordance_features.gd`, `affordance_driver.gd` | **verified** | `29ccf7a`+ | ride left the swept beam by 0.744 m before, 0.030 m after. F-02 |
 | P3 | Shooting a control sends the carrier; one blast is one command; opposed commands cancel and say so | plan §3 build order P3 | P2 | `rail_receiver.gd`, `rail_controls.gd` | **verified** | `29ccf7a`+ | fired through `Player._fire_static_pulse`, not by calling the element. Negative control: the same control alone travels |
+| P4 | A player pulls a lever; a span of track locks home; the link becomes crossable; the repair survives leaving | plan §3 build order P4 / addendum "persistence precision" | P2, P3 | `rail_span.gd`, `alignment_control.gd`, `rail_junction.gd` | **verified** | `d1abde5`+ | `make godot-rail-junction`, 49 checks, in CI. Real `Player`, real `interact` verb, all four lifetimes measured separately |
+| M1 | The client half of the latch contract: `latch_fired` sent, `progress.latched` read back | plan §3 P4 | P4 | `zone_controller.gd`, `main.gd` | **verified** | `d1abde5`+ | the bridge half was complete and tested since the physics slice; the client had never sent one |
+| M1-zone | A junction inside a real composed Zone | plan §6 decision 3 | **D-4 (Dess)** | — | **blocked** | — | a package binds to `feature:<tag>` or `shell:<id>` only, and §13.2 forbids the first. Nothing in the Zone schema declares rail content, so no composed Zone can carry one |
+| A-fix | `godot-return-journey` green again | 0.3 carry-over | — | `integration_driver.gd` | **verified** | `a0be324` | F-04 |
 
 ## Findings
 
@@ -139,6 +143,56 @@
   a played route. The measured drift at that value is 0.124 m — a fifth of what
   `MovingPlatform`'s cosine loop produced — but tuning it is a playtest input.
 
+### F-04 — the suite CI does not run was red for a day
+
+- **Task / case identity:** `make godot-return-journey`, the PHYSICAL leg of
+  `_the_return_carries_a_body_home` in `integration_driver.gd`.
+- **Observation:** *"walking into the pad raised exactly one traversal and it
+  raised 0"*, then *"the production consumer put the body at the Zone start:
+  136.8 m away"*. Red since `19c5d8e`, found by running it as part of this
+  batch's regression sweep.
+- **Cause established by:** reading the three consumers of the changed contract
+  against each other. `19c5d8e` turned the return plug from a tripwire into a
+  2 s hold, at the owner's request. `room_contract_driver` and
+  `traverse_driver` were updated with it; this one was not. `_walk_to` stops the
+  moment the body is within 0.3 m of the pad — the instant the charge *starts* —
+  and the case asserted the traversal had already happened.
+- **Why nothing said so:** `godot-return-journey` is in `NOT_A_SUITE` and CI
+  never runs it. Its own guard file's thesis is *"a suite nobody runs is worse
+  than no suite"*, and this is what that costs.
+- **Change:** the case now stands still and lets the device's clock run, in the
+  same shape `traverse_driver._hold_in_the_plug` uses. **Not a relaxation:**
+  entry is asserted to fire NOTHING, which the old assertion could not express,
+  and the hold is asserted separately.
+- **Open, not decided by this lane:** the suite ran green END TO END tonight,
+  including the three legs its exclusion note describes as blocked on the
+  `platform_path` side-door defect. That note may be stale. The exclusion was
+  **not** changed — giving a live-bridge suite a CI step is the owner's call and
+  one green run is not proof the named defect is closed.
+
+### F-05 — M1 is complete except for the one part a schema owns
+
+- **What works, measured:** the whole chain. A real `Player` aims the real
+  interact probe at the lever, presses `interact`, the span travels, locks,
+  fires its latch once, and the link the carrier was refused on becomes
+  crossable. `ZoneController.report_latch` sends the intent with exactly the
+  fields `record_latch` reads, idempotently. `main.gd` unions
+  `progress.latched` into `latches_carried` beside keys, locks and stations,
+  and a junction rebuilt from that union comes up repaired **without reporting
+  anything**.
+- **The four lifetimes, each measured separately** (addendum "persistence
+  precision"): the accepted repair persists; a span left mid-travel leaves
+  nothing behind; the lever comes back armed; the carrier is parked on a
+  supported dock rather than resumed from a saved transform.
+- **What is blocked, and why it is not a workaround waiting to happen:** a
+  physics package binds to `feature:<tag>` or `shell:<shell_id>`
+  (`layout.py::_content_refs`), and §13.2 forbids a `features:` tag from
+  mattering. Nothing in the Zone schema declares rail content, so the composer
+  cannot ask for a junction and the engine must not invent one. That is **D-4**,
+  and it is Dess's.
+- **One saved latch does not prove general persistence**, and nothing here is
+  reported as if it did.
+
 ## Full-Amalgam matrix
 
 *(built incrementally per plan §4 — never a prerequisite to starting)*
@@ -151,7 +205,7 @@
 
 ## Checkpoint
 
-- **Last completed milestone:** M0. P0, P2, P2b and P3 verified.
+- **Last completed milestone:** M1 (engine half). P0, P2, P2b, P3, P4 verified.
 - **Current coherent tree:** `claude/archipepsi-0-4-blindside`; `godot-rail-carrier`,
   `godot-passenger-carry`, `godot-affordance`, `godot-movement`, `godot-physics`,
   `godot-traverse`, `godot-content` and `godot-activity` green.
@@ -160,6 +214,9 @@
   measured — and Passing Platforms wants exactly a carrier that stops at points,
   so building the vehicle first means the minor reuses `RailCarrier` instead of
   duplicating it.
-- **Exact next action:** P4/M1 — the first persistent machine chain (a
-  player-performed setter interaction fires `latch_fired`; the link's commissioned
-  state is recomputed from the latch at build time, never separately saved).
+- **Exact next action:** make M1 playable. The plan calls M1 "independently
+  playable" and nothing yet lets the owner walk into it, so the next deliverable
+  is a launchable development scenario — board at S1, shoot FORWARD, ride to S2,
+  be refused at the gap, reach the gantry, pull the lever, watch the span lock,
+  ride to S3. Labelled scaffolding in the `ShowcaseZone` tradition: it runs only
+  when an operator asks for it by name and cannot be reached by accident.

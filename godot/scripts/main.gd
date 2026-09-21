@@ -76,6 +76,7 @@ const DRIVERS := {
 	"--exit-reach": preload("res://tests/exit_reach_driver.gd"),
 	"--passenger-carry": preload("res://tests/passenger_carry_driver.gd"),
 	"--rail-carrier": preload("res://tests/rail_carrier_driver.gd"),
+	"--rail-junction": preload("res://tests/rail_junction_driver.gd"),
 }
 
 func _ready() -> void:
@@ -179,6 +180,7 @@ var _zone_resume := {}
 var _zone_stations := {}
 var _zone_keys := {}
 var _zone_locks_open := {}
+var _zone_latches := {}
 
 ## Everything the real game needs, extracted so a test can call it.
 ##
@@ -579,6 +581,11 @@ func _to_zone(zone_dict: Dictionary) -> void:
 			progress.get("collected_keys", []), _zone_keys.get(zid, {}))
 	zone.locks_carried = _union_progress(
 			progress.get("opened_locks", []), _zone_locks_open.get(zid, {}))
+	# LATCHES, read back the same way. What persists is the accepted
+	# consequence; a machine recomputes what it implies when it is built
+	# and nothing about the mechanism's own state is saved (§5.4a).
+	zone.latches_carried = _union_progress(
+			progress.get("latched", []), _zone_latches.get(zid, {}))
 	# THE COMMITTED LAYOUT, when this Zone has one. `ZoneReady` carries
 	# the manifest the bridge accepted on the first visit, and replaying
 	# it is what makes the Zone the player walks back into the Zone they
@@ -777,6 +784,7 @@ func _remember_zone_progress() -> void:
 	_zone_stations[zone.zone_id] = zone.stations_reached()
 	_zone_keys[zone.zone_id] = zone.keys_held()
 	_zone_locks_open[zone.zone_id] = zone.locks_opened()
+	_zone_latches[zone.zone_id] = zone.latches_fired()
 
 func _on_abandon() -> void:
 	pause_menu.close()

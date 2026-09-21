@@ -1,5 +1,51 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the first thing that stays fixed — 2026-09-21
+
+**M1, the engine half.** A player pulls a lever; a span of track swings home and
+locks; the link the carrier was refused on becomes crossable; and coming back
+later finds the railway repaired. `make godot-rail-junction`, 49 checks, in CI.
+
+**THE CLIENT HAD NEVER SENT A LATCH.** `ZoneProgress.latched`, `LatchFired` and
+`record_latch` have been on the bridge since the physics slice landed --
+monotone, idempotent by `package_id/latch_id`, refusing any latch the committed
+manifest does not declare, and tested including reload survival and the
+snapshot. Every `latched` in this lane was prose in a comment.
+`ZoneController.report_latch` is the missing half, and `main.gd` now unions
+`progress.latched` into `latches_carried` beside keys, locks and stations.
+
+**FOUR LIFETIMES, MEASURED SEPARATELY**, because a system that treated them
+alike would either lose a repair the player earned or resurrect a moment they
+did not. The accepted repair persists and is RECOMPUTED at build time, never
+separately saved (§5.4a). A span left mid-travel leaves nothing behind -- that
+is the case that stops "accepted consequence" collapsing into "something
+happened". The lever comes back armed. The carrier is parked on a dock this
+build supports, never resumed from a saved transform.
+
+**A RESTORE REPORTS NOTHING**, and the suite checks it: re-emitting the latch
+would be the client telling the bridge a fact the bridge told the client, and on
+a monotone set that noise is indistinguishable from a real latch.
+
+**BLOCKED, AND NOT WORKED AROUND: a junction inside a real composed Zone.** A
+physics package binds to `feature:<tag>` or `shell:<shell_id>`
+(`layout.py::_content_refs`), and §13.2 forbids a `features:` tag from
+mattering. Nothing in the Zone schema declares rail content, so the composer
+cannot ask for a junction and the engine must not invent one. That is **D-4**,
+and it is Dess's. One saved latch does not prove general persistence and is not
+reported as if it did.
+
+**`godot-return-journey` HAD BEEN RED SINCE `19c5d8e`.** The return plug stopped
+being a tripwire that frame; two of its three consumers were updated and the
+third -- the only one CI does not run -- was not. Its own guard file's thesis is
+*"a suite nobody runs is worse than no suite"*. Repaired by holding in the pad
+rather than by relaxing the assertion, and the entry is now checked to fire
+NOTHING. The suite runs green end to end, including the three legs its CI
+exclusion note calls blocked; that note may be stale and the exclusion was left
+alone rather than changed without the owner.
+
+**NEXT:** make M1 playable. Nothing yet lets the owner walk into it.
+
+
 ## ENGINE LANE — the railway: a carrier, its controls, and a beam that was in the wrong place — 2026-09-21
 
 **0.4 line only.** `claude/archipepsi-0-4-blindside`, branched from `19c5d8e`.
