@@ -79,6 +79,7 @@ const DRIVERS := {
 	"--rail-junction": preload("res://tests/rail_junction_driver.gd"),
 	"--passing-platforms-test": preload(
 		"res://tests/passing_platforms_driver.gd"),
+	"--counterfire-test": preload("res://tests/counterfire_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }
 
@@ -119,6 +120,14 @@ func _ready() -> void:
 		# commands rather than the world.
 		room.parted = "--parted" in user_args
 		add_child(room)
+		return
+	# EX50-021 COUNTERFIRE ARCADE (0.4, M3), by name and only by name.
+	if "--counterfire" in user_args:
+		var arcade := CounterfireArcade.new()
+		# `--blocked` is the specification's counterpart: a real blocker
+		# between the muzzle and the receiver. The shutter must not open.
+		arcade.blocked = "--blocked" in user_args
+		add_child(arcade)
 		return
 	boot()
 	# THE STAGE 3A SHOWCASE, and only when an operator asks for it by

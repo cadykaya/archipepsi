@@ -398,14 +398,30 @@ func _has_line_of_sight(player: Player) -> bool:
 	return not hit.is_empty() and hit["collider"] == player
 
 func _fire_projectile(player: Player) -> void:
+	fire_at(player.global_position + Vector3.UP)
+
+## Where the muzzle is. Split out because EX50-021 turns a committed shot
+## into a machine input, and "where the shot starts" stopped being an
+## implementation detail the moment a room had to be built round it.
+func muzzle() -> Vector3:
+	return global_position + Vector3.UP * 1.2
+
+## Commit a shot at a point and hand back the projectile.
+##
+## THE AIM IS TAKEN ONCE, here, and never again: `direction` is fixed at
+## the muzzle and nothing steers it afterwards. `_fire_projectile` is the
+## AI's caller and passes the player's chest; a suite is the other, and
+## passes a point, so the projectile path can be measured without a body
+## standing in it.
+func fire_at(aim: Vector3) -> Node3D:
 	_say("shot")
 	var projectile := EnemyProjectile.new()
 	projectile.damage = float(stats["damage"])
 	projectile.speed = Constants.RANGED_PROJECTILE_SPEED
 	get_tree().current_scene.add_child(projectile)
-	projectile.global_position = global_position + Vector3.UP * 1.2
-	projectile.direction = (player.global_position + Vector3.UP
-			- projectile.global_position).normalized()
+	projectile.global_position = muzzle()
+	projectile.direction = (aim - projectile.global_position).normalized()
+	return projectile
 
 ## Returns true when THIS hit was the one that killed it, so the shooter
 ## can confirm a kill without inspecting hp and racing the death tween.
@@ -566,11 +582,24 @@ func die() -> void:
 	set_collision_mask_value(1, false)
 
 
+## A committed shot.
+##
+## **Its trajectory is fixed at launch** -- `direction` is set once by
+## `_fire_projectile` from where the player was standing, and nothing
+## afterwards steers it. That is not an incidental property: it is what
+## makes an enemy's ordinary attack usable as a machine input, because
+## the player can change where the shot is going by standing somewhere
+## else and then leave before it arrives. Nothing here may become
+## homing, and nothing here may become hitscan.
 class EnemyProjectile extends Area3D:
 	var damage := 8.0
 	var speed := 14.0
 	var direction := Vector3.FORWARD
 	var _life := 6.0
+	## ONE IMPACT. `body_entered` can fire for several bodies in the same
+	## frame, and a shot that both hurt the player and tripped the
+	## machine behind them would be counting one impact twice.
+	var _spent := false
 
 	func _ready() -> void:
 		var shape := CollisionShape3D.new()
@@ -595,10 +624,20 @@ class EnemyProjectile extends Area3D:
 			queue_free()
 
 	func _on_body_entered(body: Node3D) -> void:
-		if body is Enemy:
+		if body is Enemy or _spent:
 			return
+		_spent = true
 		if body.is_in_group("player"):
 			# The projectile's own position: the shot came from where it
 			# is, which is what the player needs to turn toward.
 			body.take_damage(damage, global_position)
+			queue_free()
+			return
+		# A MACHINE THAT HAS DECLARED IT ACCEPTS HOSTILE FIRE gets the
+		# same pulse a player's shot would deliver -- same call, same
+		# arguments, same resulting machine state (EX50-021 §9). Anything
+		# that has not declared it simply stops the shot, which is what
+		# cover is: a projectile intercepted on the way cannot also
+		# trigger what stood behind it (§4).
+		Damageable.hit(Damageable.hostile_input(body), damage, direction)
 		queue_free()

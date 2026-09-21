@@ -1,5 +1,63 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — EX50-021: an enemy's shot as the input to a machine — 2026-09-21
+
+**The second of the three approved minors.** `--counterfire`: a firing lane
+with an emergency impact trip at the south end, hooded against the side you
+arrive from, and a gunner covering the lane from the north gallery. Stand in
+the lane, let it commit a shot, step into the alcove — the projectile carries
+on into the stance you left and trips the receiver, which opens a service
+shutter for eight seconds.
+
+`make godot-counterfire`, **44 checks and 2 notes**, in CI.
+
+**The specification names its own critical dependency and it did not exist.**
+EX50-021 §12: "projectile-source acceptance at the receiver." §3: "Existing
+player-only target filters must not be assumed to support this." Read rather
+than assumed — and `EnemyProjectile` delivered `take_damage` to a body in
+group `"player"` and to nothing else. Anything else it touched simply stopped
+it.
+
+**The extension is the smallest one that works, because the obvious one is
+wrong.** Letting an enemy projectile call `Damageable.hit` on whatever it
+touches is not a bounded extension; it is a change to what every damageable
+node in the game means, and the first casualty is `BreakablePanel` — a gunner
+opening the affordance whose capability the player is charged for. So a machine
+**opts in**, through `Damageable.HOSTILE_INPUT`, and the suite asserts that an
+ordinary shot element — damageable, hit by every player weapon — is untouched
+by hostile fire.
+
+**And the hood is steel, not a rule.** §3 asks for "physical directionality,
+not an owner-ID exception", so a real Static Pulse fired from the arrival side
+stops on real geometry, and the same weapon from the lane side operates the
+same plate. Both halves are measured from two real standing positions.
+
+| measured | value |
+|---|---|
+| flight, muzzle to stance (12.3 m at 14 m/s) | 0.88 s |
+| the step into cover | 0.43 s |
+| shutter interval left on reaching the service route | 5.4 s of 8 |
+| the ranged archetype's windup | **none** — `_say("shot")` is a tone at the instant of firing |
+
+**§11's three bars, all three met.** The committed shot lands in the vacated
+stance (continuous play: nothing knows the enemy is about to fire, and the
+dodge is a keypress made on seeing the projectile exist). `--blocked` puts real
+steel across the lane and the shutter does not open — and the blocker is SOUTH
+of the stance on purpose, because one north of it would break the gunner's line
+of sight and the counterpart would then be failing for the wrong reason. And
+with the gunner killed before any hit, the room still finishes: up the lane, an
+ordinary Static Pulse on the plate, through the shutter, up to the flank, the
+manual release, the goal — every metre walked.
+
+**F-14** records both runtime facts. **What is not answered, and cannot be by a
+test, is whether the bait is fair.** §12 says exactly that. The margin is
+reported as a number so a playtest has something to disagree with.
+
+**Next:** EX50-033 Unweighted Switch, the last of the three. One question
+first: its sensor is a semantic mass-class / LIGHTENED interaction, **not** a
+summed-kilogram plate, and which of the two the engine has is not established.
+
+
 ## ENGINE LANE — EX50-011 Passing Platforms, built to its own bar — 2026-09-21
 
 **The first of the three approved minors is playable and measured.**

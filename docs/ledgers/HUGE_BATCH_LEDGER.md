@@ -78,6 +78,16 @@
 | E-011-gates | §8's boarding gates and interlocks | `EX50-011.md` §8 | E-011-room | — | **not started** | — | the shelf's lift opening is open whenever the lift is away: an 8.0 m drop onto the arrival floor, survivable because there is no fall damage (F-12). §10 asks for a minimum scene and this is past it; it is named here rather than left for a player to find |
 | E-011-enemies | §7's later encounter: gunners on fixed galleries so moving with the shuttle changes cover and angle | `EX50-011.md` §7 | E-011-room | — | **not started, by the specification** | — | "The first prototype has no enemies" |
 | E-021 | EX50-021 Counterfire Arcade | `EX50-021.md` | SPEC-intake | — | **not started** | — | next in the approved minor group |
+| E-021-input | §12's "critical unsupported dependency": a real hostile projectile operates a machine input, with the same pulse a player's shot produces, one impact counted once, and nothing else in the game changed | `EX50-021.md` §3, §10, §12 | SPEC-intake | `damageable.gd` (`HOSTILE_INPUT`), `enemy.gd` (`EnemyProjectile`, `fire_at`), `impact_receiver.gd` | **verified** | this batch | `make godot-counterfire`, in CI. Before this batch the answer was NO — see F-14. The extension is an **opt-in group**: a shot element that has not declared it is damageable, is hit by every player weapon, and is untouched by hostile fire, which the suite asserts directly |
+| E-021-hood | §3's "physical directionality, not an owner-ID exception": the arrival side is hooded in steel and the lane side is not | `EX50-021.md` §3 | E-021-input | `impact_receiver.gd` (`_build_hood`) | **verified** | this batch | asked with the real Static Pulse from two real standing positions, so the geometry is what is tested rather than a branch |
+| E-021-room | The room is a place a person can stand: `--counterfire` | `EX50-021.md` §2 | E-021-input | `counterfire_arcade.gd`, `main.gd` | **verified** | this batch | 24×18 m, one gunner, one receiver, two approaches, a timed shutter and an annex. **Development scaffolding, not a Zone** |
+| E-021-bait | **Continuous play evidence**: the gunner commits a shot at a standing player, the player steps into the alcove, and the projectile carries on into the vacated stance and trips the receiver | `EX50-021.md` §11 | E-021-room | `counterfire_driver.gd` (`_the_committed_shot`) | **verified** | this batch | nothing knows the enemy is about to fire; the dodge is a keypress made on seeing the projectile exist. Measured: 0.88 s of flight, 0.43 s to cross into cover |
+| E-021-counter | §11's counterpart: a real blocker between muzzle and receiver, and the shutter must not open | `EX50-021.md` §11 | E-021-bait | `--counterfire --blocked` | **verified** | this batch | the blocker is SOUTH of the stance on purpose: one north of it would also break the gunner's line of sight, and a counterpart that fails because no shot was fired is a weaker claim |
+| E-021-fallback | §6/§11: killing the gunner before any hit still leaves the route completable | `EX50-021.md` §6, §11 | E-021-room | `counterfire_driver.gd` (`_the_fallback_route`) | **verified** | this batch | walked end to end with the gunner dead: up the lane, an ordinary Static Pulse on the plate, through the shutter inside its interval (5.4 s to spare), up to the flank, the manual release, the goal |
+| E-021-interlock | §8: "A player already in the doorway is not crushed" | `EX50-021.md` §8 | E-021-room | `service_shutter.gd` | **verified** | this batch | the doorway is a real volume, not a distance check; the shutter waits, reports how long it has waited, and shuts the moment it is clear |
+| E-021-persist | §9: the release is persistent and the timer is not | `EX50-021.md` §9 | E-021-room | `counterfire_arcade.gd` (`_on_release`) | **verified, within a run** | this batch | held open across two and a half intervals with nothing shot again. **Across a save it is untested**, for the same reason as `E-011-save`: there is nothing to save to |
+| E-021-fair | §11/§12: whether the bait is actually fair | `EX50-021.md` §11, §12 | E-021-bait | — | **not answered, and cannot be by a test** | — | "The actual fairness of the bait remains unverified and must be tested before this room can be considered more than a coherent proposal." The margin is reported as a number. A number is not a playtest |
+| E-021-save | §9: saving after the shutter opens but before the release must restore a safe position | `EX50-021.md` §9 | **D-6 (Dess)** | — | **not started — blocked** | — | no 0.4 save representation |
 | E-033 | EX50-033 Unweighted Switch | `EX50-033.md` | SPEC-intake | — | **not started** | — | its sensor is a semantic mass-class / LIGHTENED interaction, NOT a summed-kilogram plate. Which of the two the engine has is an open question this ledger must answer before the row moves |
 
 ## ~~Not in the repository, and needed before M3 content~~ — SUPERSEDED
@@ -435,6 +445,45 @@ back to a short downward ray and read what is actually under the feet. Both
 handles are kept: the slide collision is the cheap answer when there is one.
 
 
+### F-14 — two things about the runtime EX50-021 told me not to assume
+
+§3 is blunt: "Existing player-only target filters must not be assumed to
+support this." §12 names the dependency as the room's critical unsupported
+one. Both were read rather than assumed, and both answers matter.
+
+**A hostile projectile could not operate anything.** `EnemyProjectile` handed
+`take_damage` to a body in group `"player"` and to nothing else; anything else
+it touched simply stopped it and the projectile freed itself. So the whole
+premise of the room — an enemy's committed shot as the input to a machine —
+was absent, exactly as the paper feared.
+
+The extension is deliberately the smallest one that works, because the obvious
+one is wrong. Letting an enemy projectile call `Damageable.hit` on whatever it
+touches is not a bounded extension; it is a change to what every damageable
+node in the game means, and the first casualty would be `BreakablePanel` — a
+gunner would open the affordance whose capability the player is charged for,
+which is the same failure that class shipped with once for the opposite
+reason. So a machine **opts in**, one node at a time, through
+`Damageable.HOSTILE_INPUT`, and the suite asserts that an ordinary shot element
+— damageable, hit by every player weapon — is untouched by hostile fire.
+
+**And the ranged archetype has no windup.** `_say("shot")` plays a tone at the
+instant of firing; only the brute telegraphs (`_windup`). So the projectile
+itself is the entire warning, and the numbers are: **0.88 s** from muzzle to
+stance at 14 m/s over 12.3 m, against **0.43 s** for the measured step into
+cover. Whatever is left is reaction time.
+
+That is not a verdict. §12 says "The actual fairness of the bait remains
+unverified and must be tested before this room can be considered more than a
+coherent proposal", and reporting a margin is not testing it. What is recorded
+here is the margin, so that a playtest has something to disagree with.
+
+One thing the runtime already had right, by accident rather than by
+arrangement: the ranged archetype's `speed` is `0.0`, so the gunner holds its
+gallery instead of walking down the lane. §7 wants exactly that — "Its position
+and line of fire explain its presence before the player arrives."
+
+
 ## Full scope and status
 
 Every workstream in the plan, including what has not been started. **A Dess
@@ -462,7 +511,7 @@ not stop at the first blocked row.
 | **D6** | Second binding (`ranged_hit` on bracing) | **verified, and labelled an existing-tool variant** | — | not a second acquisition loop |
 | **D7** | Return-later variant | **deferred, tracked** | all-Checks exit policy (owner) | plan §6 decision 5; no silent change to the completion rule |
 | **E-011** | Passing Platforms | **verified** except `E-011-save` / `E-011-gates` | D-6 for save only | see the rows above |
-| **E-021** | Counterfire Arcade | **not started** | — | next in the approved group |
+| **E-021** | Counterfire Arcade | **verified** except `E-021-save` and `E-021-fair` | D-6 for save only | see the rows above. Fairness is not a thing a test can answer |
 | **E-033** | Unweighted Switch | **not started** | — | open question: semantic mass-class sensor vs summed-kilogram plate |
 | **F** | Progression / Epsilon / AP engine half | **not started** | **D-1, D-2 (Dess)** | the `established_in_zone` producer's client half |
 | **G1** | 0.4 save representation | **not started** | **D-6 (Dess)** | |
@@ -472,7 +521,7 @@ not stop at the first blocked row.
 | **M0** | 0.4 line exists, 0.3 untouched | **verified** | — | |
 | **M1** | One real machine chain | **verified** | — | `M1-zone` (a junction inside a composed Zone) stays blocked on **D-4** |
 | **M2-mech** | Dev-scenario loop, labelled | **verified** | — | |
-| **M3** | First content group | **1 of 3** | — | EX50-011 done; 021 and 033 not started. **Genuine Epsilon objective selection stays incomplete until D-5** and a handwritten configuration will not be reported as it |
+| **M3** | First content group | **2 of 3** | — | EX50-011 and EX50-021 done; 033 not started. **Genuine Epsilon objective selection stays incomplete until D-5** and a handwritten configuration will not be reported as it |
 | **M2 complete** | The intended experience, multiworld-safe | **blocked** | **D-1 (Dess)**, §5's five requirements | |
 | **M4** | Remaining Amalgam breadth | **not started** | M3 | |
 | **M5** | Pinned review build | **not started** | M3 | |
@@ -516,42 +565,56 @@ And in `godot-passing-platforms`:
 | `_the_railings_and_the_floor` | **placed-near-target** | both machines are put at the rendezvous and the question is asked of rays |
 | `_the_overlap_is_measured`, `_the_decks_never_touch`, `_the_dwell_is_declared`, `_no_queued_arrivals`, `_a_stop_is_not_undone_by_an_old_command`, `_reset_never_teleports` | **machine arithmetic** | `advance(STEP)` with no body in the room. A hand-stepped overlap is not evidence that a person can make the transfer; it says how long the opportunity lasts |
 
+And in `godot-counterfire`:
+
+| case | class | what it is |
+|---|---|---|
+| `_the_committed_shot` | **continuous play** | the real gunner with its real cooldown and its real line-of-sight test; the player walks into the lane and starts moving the instant a projectile exists, which is the only cue a human gets |
+| the `--blocked` counterpart | **continuous play, negative** | the same bait with steel across the lane south of the stance |
+| `_the_fallback_route` | **continuous play** | gunner dead, then every metre walked: up the lane, a real Static Pulse on the plate, through the shutter inside its interval, up to the flank, the release, the goal |
+| `_the_hood_is_steel` | **placed-near-target** | the body is stood on each side of the receiver in turn and fires the real weapon |
+| `_the_primitive`, `_the_extension_is_bounded`, `_cover_intercepts` | **synthetic** | a receiver on a bare stage and a projectile fired by a gunner built for the purpose. It answers whether the two hit paths arrive at the same place, which is a question about the code |
+| `_the_interlock`, `_the_release_is_permanent` | **synthetic state** | the shutter is tripped and the release accepted directly, to measure what the interval does and does not control |
+
 ## Playable milestones
 
 | Milestone | Build/ref | Launch/mode/save | Actual continuous player path | Test shortcuts | Owner verdict |
 |---|---|---|---|---|---|
 | 0.3 candidate | `19c5d8e` | production mode | exit/hold patch unplayed by owner | — | not yet played |
+| M3, EX50-021 Counterfire Arcade | this batch | `godot --path godot -- --counterfire`, or "Play Counterfire Arcade (Windows).bat" / `./play-counterfire.sh` | stand in the painted lane where the gunner can see you; when it shoots, step west into the alcove and the shot carries on into the impact trip behind you, opening the service shutter for eight seconds; run the service route, pull the release and reach the goal. Or take the west stair, kill the gunner, and operate the trip yourself from the lane side | **the whole scenario is a test shortcut**: not a Zone, no campaign, no bridge, no Checks, no exit, no save. `--blocked` is the counterpart and its bait cannot work | not yet played |
 | M3, EX50-011 Passing Platforms | this batch | `godot --path godot -- --passing-platforms`, or "Play Passing Platforms (Windows).bat" / `./play-passing-platforms.sh` | pull H EAST at the arrival floor, walk onto the lift, pull LAUNCH on its own deck, ride up; when the lift holds at the transfer plane and the shuttle's deck is under you, step north onto it; be carried east; walk off onto the goal gallery and the service stair opens. Or pull STOP H when it is beside the lift and take as long as you like | **the whole scenario is a test shortcut**: not a Zone, no campaign, no bridge, no Checks, no exit. No save, so nothing in §9 is exercised. `--parted` is the counterexample and is meant to be uncompletable | not yet played |
 | M1 + M2-mech, the railway | `f9f51e9`+ | `godot --path godot -- --railway` (or `godot-bin/godot --path godot -- --railway`) | board at S1, shoot the chevron pointing down the track, ride; S2→S3 is refused; the gantry that lowers the span is overhead and out of reach; walk the branch past it, take the hookshot, try it on the ledge, come back, pull yourself to the ring, press E on the lever, ride to S3 | **the whole scenario is a test shortcut**: not a Zone, no campaign, no bridge, no Checks, no exit, and the Echo is granted by a pedestal rather than by a Check | not yet played |
 
 ## Checkpoint
 
-- **Last completed milestone:** EX50-011 Passing Platforms, the first of the
-  three approved minors, verified against the bars its own specification sets:
-  §11's continuous run AND its counterpart, §10's five measurements and the
-  lowest-pressure alternative, §8's fall, §4/§8's schedule rules.
-  `make godot-passing-platforms`, 63 checks and 7 notes, in CI.
+- **Last completed milestone:** **two of the three approved minors.** EX50-011
+  Passing Platforms (`make godot-passing-platforms`, 63 checks, 7 notes) and
+  EX50-021 Counterfire Arcade (`make godot-counterfire`, 44 checks, 2 notes),
+  both in CI, both verified against the bars their own specifications set.
 - **Preserved review snapshot:** `review/0.4-m2mech-snapshot` at `206167e` —
-  the playable M2-mech checkpoint, kept available and untouched by this work.
-- **Affected suites re-run after the `RailCarrier` change** (`top_speed` and
-  `accel` became per-carrier so a maintenance shuttle can run at 1.5 m/s while
-  the skiff keeps 7.0): `godot-rail-carrier` 73, `godot-rail-junction` 140,
-  `godot-passenger-carry` 4. All green.
-- **Four findings this batch:** F-10 the recovery floor had two strips of
+  the playable M2-mech checkpoint, kept available and untouched.
+- **Shared code touched, and re-verified:** `RailCarrier` gained per-carrier
+  `top_speed`/`accel`; `Enemy` gained `muzzle()`/`fire_at()` and an
+  `EnemyProjectile` that can deliver to a declared hostile input;
+  `Damageable` gained the `HOSTILE_INPUT` opt-in. The full frontier is re-run
+  on a frozen tree before any of this is called green.
+- **Five findings this batch:** F-10 the recovery floor had two strips of
   nothing in it, found by the coverage census and by nothing walked; F-11 a
-  duplicate node name is thrown away rather than made readable, so a
-  name-based census undercounted the railings; F-12 this runtime applies no
-  fall damage at any height, which is §8's answer and not the one the paper
-  anticipates; F-13 an instrument error — a body resting on a stationary deck
-  can slide against nothing, so `get_slide_collision` alone says it is not
-  aboard.
-- **Exact next action:** EX50-021 Counterfire Arcade, then EX50-033 Unweighted
-  Switch. Both are unblocked; neither is started. EX50-033 carries an open
-  question this ledger must answer before it is built — its sensor is a
-  semantic mass-class / LIGHTENED interaction, not a summed-kilogram plate, and
-  which of the two the engine has is not yet established.
-- **Still blocked, and only where named:** M2's completion on D-1; `M1-zone` on
-  D-4; `E-011-save` and G1 on D-6; genuine Epsilon objective selection on D-5.
-  Nothing else in the scope table waits on a lane that has not accepted a
-  handoff.
+  duplicate node name is thrown away rather than made readable; F-12 this
+  runtime applies no fall damage at any height; F-13 an instrument error — a
+  body resting on a stationary deck can slide against nothing; F-14 a hostile
+  projectile could not operate any machine at all, and the ranged archetype
+  has no windup.
+- **Exact next action:** EX50-033 Unweighted Switch, the last of the three.
+  It carries an open question this ledger must answer before it is built — its
+  sensor is a semantic mass-class / LIGHTENED interaction, not a
+  summed-kilogram plate, and which of the two the engine has is not yet
+  established.
+- **Still blocked, and only where named:** M2's completion on D-1; `M1-zone`
+  on D-4; `E-011-save`, `E-021-save` and G1 on D-6; genuine Epsilon objective
+  selection on D-5. Nothing else in the scope table waits on a lane that has
+  not accepted a handoff.
+- **Two things no test will answer**, and they are named rather than quietly
+  claimed: whether EX50-021's bait is fair (§12 says so itself), and whether
+  any of this is fun. Both are playtest questions.
 - **Scheduled work is off.** No heartbeat, no watchers, no subscriptions.

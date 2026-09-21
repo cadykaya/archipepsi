@@ -1,5 +1,60 @@
 # Archipepsi — build state
 
+## 2026-09-21 (engine) — EX50-021 Counterfire Arcade: the second minor
+
+Same 0.4 line, same draft PR #12. Two of the three approved minors are now
+built and measured; the ledger's scope/status matrix carries the rest.
+
+### What exists now that did not
+
+- `Damageable.HOSTILE_INPUT` — a declared opt-in for machines an enemy's
+  committed shot may operate. Nothing that has not opted in changes behaviour
+  at all, which is the whole difference between a bounded extension and a
+  change to what every damageable node in the game means.
+- `Enemy.muzzle()` / `Enemy.fire_at(aim)` — where a shot starts and a way to
+  commit one at a point. `_fire_projectile` is now the AI's caller of the
+  second; a suite is the other, so a projectile path can be measured without a
+  body standing in it. The aim is still taken once, at the muzzle, and nothing
+  steers it afterwards.
+- `EnemyProjectile` delivers to a declared hostile input, and spends itself on
+  the first impact so one shot is counted once.
+- `ImpactReceiver` — a shot element wrapped in a real steel hood, declared as a
+  hostile input and re-armed on an interval, because the timer it drives
+  refreshes.
+- `ServiceShutter` — a timed panel with a physical doorway volume and an
+  interlock that will not close on somebody. Third consumer of `StopTravel`.
+- `CounterfireArcade` (`--counterfire`, `--counterfire --blocked`) with its own
+  launchers. Development scaffolding, not a Zone.
+- Gate: `godot-counterfire` (44 checks, 2 notes), in `integration.yml`.
+
+### The finding
+
+**F-14 — two things about the runtime the specification told me not to
+assume.** A hostile projectile could not operate any machine at all: the filter
+was `is_in_group("player")` and everything else merely stopped the shot. And
+the ranged archetype has no windup — only the brute telegraphs — so the
+projectile itself is the entire warning: 0.88 s of flight against a measured
+0.43 s step into cover.
+
+One thing the runtime already had right, by accident: the ranged archetype's
+`speed` is `0.0`, so the gunner holds its gallery instead of walking down the
+lane, which is exactly what §7 asks for.
+
+### Still open
+
+- **EX50-033 Unweighted Switch** — the last of the three, not started, and it
+  needs one question answered first: its sensor is a semantic mass-class /
+  LIGHTENED interaction, **not** a summed-kilogram plate, and which of the two
+  the engine actually has is not established.
+- **Whether the bait is fair is not answered** and a test cannot answer it.
+  §12 says so itself. The margin is a number; a number is not a playtest.
+- **Blocked only where named:** M2's completion on D-1; a junction inside a
+  composed Zone on D-4; the 0.4 save representation on D-6 (which is what
+  `E-011-save` and `E-021-save` wait on); genuine Epsilon objective selection
+  on D-5. Dess and Arty remain unassigned.
+- **Scheduled work is off.** No heartbeat, no watchers, no subscriptions.
+
+
 ## 2026-09-21 (engine) — EX50-011 Passing Platforms: the first minor
 
 **On `claude/archipepsi-0-4-blindside`, draft PR #12, the same 0.4 development
