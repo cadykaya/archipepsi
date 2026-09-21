@@ -1,5 +1,70 @@
 # Archipepsi — build state
 
+## 2026-09-21 (engine) — the 0.4 line: the Blindside railway
+
+**A separate development line, `claude/archipepsi-0-4-blindside`, branched from
+`19c5d8e`. The 0.3 comparison build (PR #4) is untouched.** Draft PR #12.
+The batch's own durable record is `docs/ledgers/HUGE_BATCH_LEDGER.md` — task
+states, findings F-01 to F-08, the evidence-class table, and what is blocked on
+whom. This entry is the project-level summary.
+
+### What exists now that did not
+
+- `RailCarrier`, `RailReceiver`, `RailControls`, `RailSpan`,
+  `AlignmentControl`, `RailJunction` — the vehicle, its shootable controls,
+  the movable track, the lever and the machinery that owns the only state on
+  the railway that outlives a session.
+- `ZoneController.report_latch` — **the client half of the latch contract, which
+  had never been built.** The bridge half has been complete and tested since the
+  physics slice landed; every `latched` in the engine lane was prose in a
+  comment. `main.gd` now unions `progress.latched` into `latches_carried`
+  beside the keys, locks and stations it already carried.
+- `RailwayScenario` (`--railway`, `--railway --bracing`) — development
+  scaffolding, not a Zone, with its own launchers.
+- Gates: `godot-passenger-carry`, `godot-rail-carrier` (73),
+  `godot-rail-junction` (124), all in `integration.yml`. `make railway-shots`
+  renders the scenario for looking at.
+
+### The measurements that changed decisions
+
+- **The carry works.** Four `player.gd` repairs the plan named as likely were
+  **withdrawn on the evidence**: 1200 of 1200 frames grounded, none of the four
+  hazards bit.
+- **The beam was not where the ride is** — 0.744 m off on a bent route against a
+  0.35 m beam, because `RailPath` gained smoothing in P3.5 and `build_rail`
+  still swept the control points. 0.030 m after. Shipped rails are unchanged,
+  and the suite asserts that.
+- **The grapple is a verb the ballistics have to allow.** 21.9 m/s² measured off
+  the arc; a 14 m/s pull tops out 4.45 m above where it started. The gantry was
+  moved into that envelope. **`player.gd` was not touched** — its movement
+  damping is production feel and a change to it is the owner's.
+
+### Two defects in work that had already landed
+
+- **`godot-return-journey` had been red since `19c5d8e`** — the return plug
+  stopped being a tripwire that frame and only two of its three consumers were
+  updated. The third is the one CI does not run. Repaired by holding in the pad;
+  the entry is now asserted to fire *nothing*.
+- **Remote CI has not started a job on this branch at all** (F-08): both
+  workflows end in three to five seconds with no runner assigned, on every
+  commit including a docs-only one. Account-level, no fix to port, reported once
+  on the PR. The full frontier was run locally on a fixed tree instead.
+
+### Blocked, and on whom
+
+- **A junction inside a real composed Zone — D-4 (Dess).** A physics package
+  binds only to `feature:<tag>` or `shell:<shell_id>`, and §13.2 forbids a
+  features tag from mattering. The composer cannot ask for rail content and the
+  engine must not invent it.
+- **M2's completion** stays gated on the acquisition contract (§5), as approved.
+  M2-mech proves the experience and nothing about progression.
+- **EX50-011, EX50-021, EX50-033** — their specifications are not in this
+  repository. The parts they were chosen to share all exist; what is missing is
+  the design.
+
+Heartbeat, watchers and scheduled check-ins remain off.
+
+
 ## 2026-09-20 (engine) — the exit that was a wall, and the plug that was a trap
 
 Both items came out of the morning playtest, reproduced before diagnosis
