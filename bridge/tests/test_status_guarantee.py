@@ -32,14 +32,71 @@ def test_the_vocabulary_is_deliberately_wider_than_the_support():
     """The two lists must NOT be equal — that was the defect."""
     named, supported = set(E.STATUS_KINDS), set(E.IMPLEMENTED_STATUS_KINDS)
     assert supported < named, "support is tracking the vocabulary again"
-    assert "lightened" in named and "lightened" not in supported
+    assert "anchored" in named and "anchored" not in supported
     assert "exposed" in named, "the Amalgam's thirteenth is missing"
     # And support may never name something the vocabulary does not.
     assert supported <= named
 
 
-@pytest.mark.parametrize("kind", ["lightened", "anchored", "exposed",
-                                  "brittle", "phased"])
+def test_lightened_crossed_from_named_to_supported_on_one_target():
+    """THE FIRST CROSSING, and the shape every later one must take.
+
+    `lightened` stood here as the example of named-and-unsupported until
+    the engine implemented it on an object — mass class down one step,
+    incoming impulse doubled, influence volumes reaching it, and
+    manipulation eligibility reading the class. It crossed in the change
+    that landed those effects, which is this table's own rule working.
+
+    What must NOT travel with it is the other four targets. `lightened`
+    on an actor, a surface or a volume is three different unbuilt
+    runtimes, and a kind that works on one target is not thereby working
+    on another — so the crossing is ONE cell, not a row.
+    """
+    assert E.SUPPORTED_STATUS_TARGETS["lightened"] == ("object",)
+    E.StatusComponent.model_validate(_component("lightened", "object"))
+    for target in ("self", "enemy", "surface", "volume"):
+        with pytest.raises(ValidationError,
+                           match="not implemented for target"):
+            E.StatusComponent.model_validate(_component("lightened", target))
+    # And the on-hit door asks about an ENEMY, so it still refuses it.
+    with pytest.raises(ValidationError, match="not implemented for target"):
+        E.ApplyStatusOnHit.model_validate({
+            "type": "apply_status_on_hit", "status": "lightened",
+            "duration": 2.0, "magnitude": 0.5})
+
+
+def test_vulnerable_is_declared_on_both_sides_because_both_implement_it():
+    """DECLARED TO MATCH THE RUNTIME, not the other way about.
+
+    This read `("enemy",)` while `stat_stack.gd:93` multiplied the
+    PLAYER's `damage_taken` by it and `enemy.gd:434` multiplied the
+    enemy's. The under-declaration was invisible while the engine asked
+    about support per KIND; asking per TARGET turned `godot-stats` red on
+    three cases, including the cleanse order's own "`vulnerable`, which
+    the player does suffer". A target the runtime implements may not be
+    refused, exactly as one it does not implement may not be allowed.
+    """
+    assert E.SUPPORTED_STATUS_TARGETS["vulnerable"] == ("self", "enemy")
+    E.StatusComponent.model_validate(_component("vulnerable", "self"))
+    E.StatusComponent.model_validate(_component("vulnerable", "enemy"))
+
+
+#: DERIVED, NOT TRANSCRIBED — the same lesson `test_the_on_hit_list_...`
+#: below already learned. Written by hand, this list named `lightened`,
+#: and the day `lightened` gained an effect the list went on asserting it
+#: had none: a test that fails for being out of date rather than for
+#: finding anything. Derived, a kind leaves this sweep at exactly the
+#: moment it stops belonging in it.
+_NAMED_ONLY = sorted(set(E.STATUS_KINDS) - set(E.IMPLEMENTED_STATUS_KINDS))
+
+
+def test_the_sweep_below_is_not_empty():
+    """A derived parametrize list that came out empty would pass by
+    running nothing at all, which is the failure mode of deriving."""
+    assert len(_NAMED_ONLY) >= 10, _NAMED_ONLY
+
+
+@pytest.mark.parametrize("kind", _NAMED_ONLY)
 def test_a_named_but_unsupported_kind_is_refused_at_every_door(kind):
     """REAL kinds, not a patched list. Three doors into one room."""
     with pytest.raises(ValidationError, match="no runtime effect"):

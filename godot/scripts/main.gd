@@ -80,6 +80,7 @@ const DRIVERS := {
 	"--passing-platforms-test": preload(
 		"res://tests/passing_platforms_driver.gd"),
 	"--counterfire-test": preload("res://tests/counterfire_driver.gd"),
+	"--unweighted-test": preload("res://tests/unweighted_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }
@@ -129,6 +130,17 @@ func _ready() -> void:
 		# between the muzzle and the receiver. The shutter must not open.
 		arcade.blocked = "--blocked" in user_args
 		add_child(arcade)
+		return
+	# EX50-033 UNWEIGHTED SWITCH (0.4, M3), by name and only by name.
+	if "--unweighted" in user_args:
+		var switch := UnweightedSwitch.new()
+		# `--disconnected` is §11's control: the plate's output is not
+		# wired to the shutter. A suite that only ever watched the
+		# shutter open would pass on a room where the plate did nothing,
+		# so the expected response has to be shown FAILING when the one
+		# link is cut.
+		switch.disconnected = "--disconnected" in user_args
+		add_child(switch)
 		return
 	boot()
 	# THE STAGE 3A SHOWCASE, and only when an operator asks for it by

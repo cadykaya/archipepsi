@@ -108,6 +108,19 @@ func trip() -> void:
 	goal = travel
 
 
+## DRIVEN BY A LIVE SIGNAL rather than by an interval.
+##
+## `trip` is the timed door EX50-021 needs: opened by an impact, closing
+## itself after a declared window. EX50-033's is the other kind -- a
+## safety lockout wired through a NOT to a plate, open exactly while the
+## plate is clear, with no window of its own. Both are this panel; what
+## differs is who decides when it shuts, so the interval is cleared here
+## rather than fought with.
+func command(open: bool) -> void:
+	left = 0.0
+	goal = travel if open else 0.0
+
+
 ## How far open, 0 shut and 1 clear.
 func openness() -> float:
 	return offset / travel if travel > 0.0 else 0.0

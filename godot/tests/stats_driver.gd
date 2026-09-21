@@ -537,11 +537,58 @@ func _an_unknown_status_kind_is_refused() -> void:
 			"a status the schema does not admit is refused, not stored")
 	_check(statuses.active_kinds().is_empty(),
 			"...and leaves nothing behind: %s" % [statuses.active_kinds()])
+	# SUPPORT IS PER TARGET, NOT PER KIND, and the boundary owes both
+	# answers: accepted on every target a kind declares, refused on every
+	# target it does not. This read `ECHO_STATUS_KINDS_IMPLEMENTED`
+	# against a single `self` container, which only ever asked the first
+	# half -- and it passed while `vulnerable` was declared `("enemy",)`
+	# and `stat_stack.gd:93` multiplied the PLAYER's `damage_taken` by it.
+	# The declaration was wrong and the test could not see it.
+	var target_kinds: Array[String] = ["self", "enemy", "object",
+			"surface", "volume"]
+	var accepted := 0
+	var refused := 0
 	for kind: String in Constants.ECHO_STATUS_KINDS_IMPLEMENTED:
-		statuses.apply(kind, 1.0, 1.0)
-	_check(statuses.active_kinds().size()
-			== Constants.ECHO_STATUS_KINDS_IMPLEMENTED.size(),
-			"every kind the runtime SUPPORTS is accepted")
+		var declared: Array = Constants.ECHO_STATUS_TARGETS.get(kind, [])
+		_check(not declared.is_empty(),
+				"'%s' is implemented, so it declares its targets" % kind)
+		for target: String in target_kinds:
+			var one := StatusEffects.new()
+			one.side = target
+			var seen: Array[String] = []
+			one.status_applied.connect(func(k: String) -> void:
+				seen.append(k))
+			one.apply(kind, 1.0, 1.0)
+			if target in declared:
+				accepted += 1
+				_check(one.has(kind) and seen.size() == 1,
+						"'%s' is accepted on declared target '%s'"
+						% [kind, target])
+			else:
+				refused += 1
+				# NO ACTIVE STATE AND NO SUCCESS EVENT. A refusal that
+				# still emitted `status_applied` would satisfy a rule
+				# edge for an application that did not happen.
+				_check(not one.has(kind) and one.active_kinds().is_empty()
+						and seen.is_empty(),
+						"'%s' on undeclared target '%s' leaves nothing"
+						% [kind, target])
+	_check(accepted > 0 and refused > 0,
+			"the sweep exercised both answers: %d accepted, %d refused"
+			% [accepted, refused])
+
+	# TWO ANCHORS the sweep cannot derive from the table it reads. The
+	# sweep proves the boundary honours the declaration; these two say
+	# the declaration is the right one, by naming the runtime lines that
+	# implement each pair.
+	var vulnerable_at: Array = Constants.ECHO_STATUS_TARGETS.get(
+			"vulnerable", [])
+	_check("self" in vulnerable_at and "enemy" in vulnerable_at,
+			"vulnerable declares both sides: stat_stack.gd raises the "
+			+ "player's damage_taken, enemy.gd raises the enemy's")
+	_check(Constants.ECHO_STATUS_TARGETS.get("lightened", []) == ["object"],
+			"lightened declares `object` and nothing else -- an actor, a "
+			+ "surface and a volume are three unbuilt runtimes")
 
 	# NAMED IS NOT SUPPORTED, and the gap between the two lists is the
 	# whole point of there being two. A designed kind admitted to the

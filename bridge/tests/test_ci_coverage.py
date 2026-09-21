@@ -44,16 +44,30 @@ NOT_A_SUITE = {"godot-import", "godot-integration",
                # when the offline census names a case, and what it
                # reports is a description rather than a pass or a fail.
                "godot-named-case",
-               # A REPORT OF AN OPEN FINDING, not yet a gate.
-               # `godot-target-facing` reproduces a defect the playtest
-               # found and that is NOT fixed: 7 of 27 SHOT targets in
-               # Zone 1 are aimed into a crate, a wall or another
-               # target, because the unmounted placement branch never
-               # sets a yaw. Wiring it into CI today would make CI red
-               # for a known-open finding, which is a decision the owner
-               # has not made. **It becomes a gate the moment that
-               # facing repair lands**, and this entry comes out with
-               # it.
+               # A REPORT OF AN OPEN FINDING, not yet a gate — and the
+               # finding is now MUCH smaller than it was.
+               #
+               # `godot-target-facing` reproduced a defect the playtest
+               # found: 7 of 27 SHOT targets in Zone 1 aimed into a
+               # crate, a wall or another target, because the unmounted
+               # placement branch never set a yaw. The repair landed at
+               # `e13e7e0` (a second pass in `Activities._row` that aims
+               # the unmounted targets against the COMPLETE footprint
+               # set, with `claimed_size` following the yaw), and it
+               # took 7 down to **1**.
+               #
+               # The one that remains is `ActivityElement_4` in `c002`
+               # at (-17.1, 2.2, 29.1): blocked inside 2 m at all 16
+               # facings and at both widths, with the census reporting
+               # the nearest blocker at 1.90 m. Rotation alone cannot
+               # solve it, so it is a PLACEMENT question and the owner
+               # has asked for the smallest same-room correction rather
+               # than a wider search or a lowered threshold. Until that
+               # lands the suite reports one real open case, and a gate
+               # that is red for a known-open finding is a decision the
+               # owner has not made. **It becomes a gate the moment
+               # that placement correction lands**, and this entry comes
+               # out with it.
                "godot-target-facing"}
 
 

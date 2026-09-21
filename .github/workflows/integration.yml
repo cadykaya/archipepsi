@@ -140,6 +140,7 @@ jobs:
           make godot-passing-platforms
           make godot-counterfire
           make godot-mass-class
+          make godot-unweighted
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live

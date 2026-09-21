@@ -261,4 +261,4 @@ const ECHO_STATUS_KINDS_IMPLEMENTED = ["lightened", "burning", "slowed", "frozen
 # The engine enforces this at its own application boundary too, so
 # a kind the bridge would refuse to emit at a target cannot be
 # started there by a room either.
-const ECHO_STATUS_TARGETS = {"lightened": ["object"], "burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["enemy"], "empowered": ["self"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}
+const ECHO_STATUS_TARGETS = {"lightened": ["object"], "burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["self", "enemy"], "empowered": ["self"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}
