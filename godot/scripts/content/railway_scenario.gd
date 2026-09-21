@@ -57,6 +57,8 @@ const BRANCH_OUT := 20.0
 const GANTRY_PLATE_Y := 7.2
 const STEP_RISE := 0.25
 const STEP_TREAD := 0.55
+## Chest-high: cover you stand behind, not a wall you hide in.
+const SHIELD_HEIGHT := 1.25
 const THEME := "concrete_facility"
 
 var rail: RailPath = null
@@ -69,6 +71,9 @@ var grant: EchoGrant = null
 ## The plate above the gantry that the hookshot bites.
 var grapple_plate: StaticBody3D = null
 var plinth: ReturnPlinth = null
+var shield: MeshInstance3D = null
+## The shooters beside the S1-to-S2 leg. Rebuilt with the yard.
+var shooters: Array[Enemy] = []
 var player: Player = null
 var dock_offsets := PackedFloat32Array()
 
@@ -120,9 +125,11 @@ func _ready() -> void:
 	# THE CARRIER BEFORE THE DOCKS: the docks hang their shootable
 	# controls on `controls`, so the station has to exist first.
 	_carrier()
+	_shield()
 	_docks()
 	_gantry()
 	_branch()
+	_gauntlet()
 	_plinth()
 	_spawn_player()
 	_legend()
@@ -344,6 +351,9 @@ func _legend() -> void:
 	print("                          to learn it on")
 	print("")
 	print("  Board at S1 and shoot the chevron pointing down the track.")
+	print("  Three shooters stand along that leg, on alternating sides:")
+	print("  the deck's shield covers one side at a time and the deck")
+	print("  turns, so staying behind it means moving.")
 	print("  At S2 the railway refuses S3: the span is up. The gantry that")
 	print("  lowers it is overhead and out of reach -- cross the junction,")
 	print("  take the hookshot, try it on the ledge, come back, and pull")
@@ -411,6 +421,74 @@ func _plinth() -> void:
 ## and this is running inside a node that is standing in it.
 func _on_leave() -> void:
 	reenter.call_deferred()
+
+
+## --- something to ride through -----------------------------------------
+
+## Chest-high cover on one edge of the deck.
+##
+## **The deck rotates, so the cover rotates with it.** That is the whole
+## idea: a shield welded to one side of a carrier that turns through a
+## corner does not protect the same side for the whole journey, so a
+## rider who wants to stay behind it has to move. `godot-passenger-carry`
+## recorded that a carrier whose passenger moves to aim or take cover
+## needs a deck sized from that movement rather than inherited -- this is
+## the movement it was talking about.
+##
+## Built as part of the carrier's own body rather than as a child node
+## standing on it: an `AnimatableBody3D` with `sync_to_physics` carries
+## its own shapes exactly, and a separate static body riding along would
+## be a second thing to keep in step.
+func _shield() -> void:
+	var panel := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.3, SHIELD_HEIGHT, DECK.z)
+	panel.shape = box
+	# ON THE SIDE AWAY FROM THE DOCKS. The carrier's own +X is the
+	# side its platforms stand on, so a shield there would be a wall
+	# between the player and the only way aboard.
+	panel.position = Vector3(-(DECK.x * 0.5 - 0.15),
+		DECK.y * 0.5 + SHIELD_HEIGHT * 0.5, 0.0)
+	carrier.add_child(panel)
+	shield = MeshInstance3D.new()
+	shield.name = "Shield"
+	var mesh := BoxMesh.new()
+	mesh.size = box.size
+	shield.mesh = mesh
+	shield.position = panel.position
+	shield.material_override = ThemeMaterials.accent_mat(THEME)
+	carrier.add_child(shield)
+
+
+## THE RIDE IS NOT A TRAM RIDE.
+##
+## Three static shooters beside the S1-to-S2 leg, on alternating sides,
+## far enough apart that they arrive one at a time. `ranged` is the
+## archetype that does not walk -- reach 40 m, speed 0 -- so what they
+## test is whether a player can fight FROM a moving deck, which is the
+## question the skiff exists to ask.
+##
+## They are ordinary `Enemy` instances and find the player themselves.
+## Nothing here teaches them about the carrier.
+func _gauntlet() -> void:
+	var leg := dock_offsets[1] - dock_offsets[0]
+	var lean := 1.0
+	for fraction: float in [0.3, 0.55, 0.8]:
+		var along := dock_offsets[0] + leg * fraction
+		var at := rail.at(along)
+		var side := Vector3.UP.cross(rail.tangent(along)).normalized() \
+			* lean
+		var stand := at + side * 7.5
+		# A perch, so a shooter that cannot walk is not standing in a
+		# hole and is above the deck's own lip.
+		_slab(Vector3(3.0, 0.4, 3.0),
+			Vector3(stand.x, RAIL_Y + 0.6, stand.z),
+			ThemeMaterials.wall_mat(THEME))
+		var shooter := Enemy.create("ranged", THEME)
+		_world.add_child(shooter)
+		shooter.global_position = Vector3(stand.x, RAIL_Y + 0.8, stand.z)
+		shooters.append(shooter)
+		lean = -lean
 
 
 ## --- leaving, and coming back -----------------------------------------
@@ -490,10 +568,13 @@ func reenter() -> void:
 	add_child(_world)
 	_yard()
 	_track()
+	shooters.clear()
 	_carrier()
+	_shield()
 	_docks()
 	_gantry()
 	_branch()
+	_gauntlet()
 	_place_player()
 	var back := junction.restore_from(_accepted.keys())
 	print("  railway: rebuilt the yard; %d of %d accepted latch(es) "

@@ -45,6 +45,12 @@ func _run() -> void:
 
 	await _shoot("1_boarding", s1 + Vector3(-6.0, 4.0, 6.0), s1,
 		"what a player sees arriving at S1")
+	# THE FIRST LEG, with what is on it.
+	await _shoot("1b_the_gauntlet",
+			rail.at(docks[0] + (docks[1] - docks[0]) * 0.45)
+			+ Vector3(-9.0, 7.0, -11.0),
+			rail.at(docks[0] + (docks[1] - docks[0]) * 0.55),
+			"the shooters beside the ride to S2")
 	await _shoot("2_the_gap", s2 + Vector3(-10.0, 9.0, -9.0),
 		(s2 + s3) * 0.5,
 		"standing at S2: no track, and the gantry above it")

@@ -62,6 +62,7 @@ func _run() -> void:
 	_the_carrier_is_parked_not_resumed()
 	await _the_scenario_is_walkable()
 	await _the_grapple_opens_the_gantry()
+	await _fighting_from_the_deck()
 	_finish()
 
 
@@ -688,6 +689,88 @@ func _the_grapple_opens_the_gantry() -> void:
 		"the railway is rideable from the first command")
 	_check(_drive(yard.carrier) > 0 and yard.carrier.at_dock() == 1,
 		"reaching S2")
+
+	yard.queue_free()
+	await get_tree().process_frame
+
+
+## CAN YOU FIGHT FROM THE SKIFF?
+##
+## The plan's own sequence puts "one meaningful combat situation" on the
+## S1-to-S2 leg, and the skiff's whole claim is that a player does
+## something on it other than stand. What is checked here is the part a
+## test can hold: the shooters are real enemies, the deck's firing line
+## reaches them, a shot from the deck damages one, and the shield stands
+## between the deck and an enemy on its side. **Whether the fight is any
+## good is a playtest question and is not answered here.**
+func _fighting_from_the_deck() -> void:
+	print("  -- GAUNTLET: a ride with something on it")
+	var yard := RailwayScenario.new()
+	add_child(yard)
+	for _i in 60:
+		await get_tree().physics_frame
+
+	_check(yard.shooters.size() == 3,
+		"three shooters stand beside the first leg, got %d"
+			% yard.shooters.size())
+	var alive := 0
+	var sides := {}
+	for shooter: Enemy in yard.shooters:
+		if is_instance_valid(shooter) and shooter.hp > 0.0:
+			alive += 1
+		var along := yard.rail.nearest_offset(shooter.global_position)
+		var side := yard.rail.at(along).direction_to(
+			shooter.global_position)
+		sides[signf(side.dot(Vector3.UP.cross(
+			yard.rail.tangent(along))))] = true
+	_check(alive == 3, "all of them alive, got %d" % alive)
+	# ALTERNATING SIDES is what makes the shield worth moving behind: a
+	# gauntlet all on one side is a gauntlet you solve by standing still.
+	_check(sides.size() == 2,
+		"and they are not all on one side of the track, got %d side(s)"
+			% sides.size())
+
+	# THE SHIELD IS REAL COVER, and it belongs to the carrier's own body
+	# so it turns with the deck.
+	_check(yard.shield != null and yard.shield.get_parent() == yard.carrier,
+		"the shield is part of the carrier, so it turns with the deck")
+	var deck_top: Vector3 = yard.carrier.pose().origin \
+		+ Vector3(0.0, RailwayScenario.DECK.y * 0.5 + 0.9, 0.0)
+	var outside: Vector3 = deck_top - yard.carrier.pose().basis.x * 6.0
+	var space := get_viewport().world_3d.direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(outside, deck_top)
+	var blocked := space.intersect_ray(query)
+	_check(not blocked.is_empty() and blocked["collider"] == yard.carrier,
+		"a shot at the deck from the shielded side stops at the carrier")
+	var open_side: Vector3 = deck_top + yard.carrier.pose().basis.x * 6.0
+	var through := space.intersect_ray(
+		PhysicsRayQueryParameters3D.create(open_side, deck_top))
+	# NOT the carrier: the yard's own furniture stands on that side
+	# -- a dock platform, a control post -- and what is being
+	# measured is the SHIELD, not an empty field.
+	_check(through.is_empty() or through["collider"] != yard.carrier,
+		"and nothing on the carrier stops a shot from the other side, "
+		+ "which is why the rider has to move")
+
+	# AND THE DECK'S FIRING LINE REACHES THEM. Measured from the deck
+	# while the carrier is under way, not from the platform.
+	var body: Player = yard.player
+	body.global_position = deck_top + Vector3(0.0, 0.2, 0.0)
+	body.velocity = Vector3.ZERO
+	yard.carrier.request(RailCarrier.FORWARD)
+	for _i in 90:
+		await get_tree().physics_frame
+	var mark: Enemy = yard.shooters[0]
+	_aim(body, mark.global_position + Vector3(0.0, 0.7, 0.0))
+	await get_tree().physics_frame
+	var seen: Variant = body.camera_ray(45.0).get("collider")
+	_check(seen == mark,
+		"the first shooter is in the deck's line of fire, saw %s" % [seen])
+	var hp := mark.hp
+	body._fire_static_pulse()
+	_check(mark.hp < hp,
+		"and a shot from the moving deck damages it (%.1f -> %.1f)"
+			% [hp, mark.hp])
 
 	yard.queue_free()
 	await get_tree().process_frame

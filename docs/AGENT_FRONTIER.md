@@ -1,5 +1,30 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the ride is not a tram ride — 2026-09-21
+
+Three `ranged` shooters stand beside the S1-to-S2 leg on **alternating sides**,
+and the skiff carries **chest-high cover on one edge of its deck**. The deck
+turns through the corner and the cover turns with it, so a rider who wants to
+stay behind it has to move — which is the movement `godot-passenger-carry`
+was talking about when it recorded that a carrier's deck must be sized from
+the rider rather than inherited from `MovingPlatform`.
+
+The shield is part of the carrier's own body rather than a static body riding
+on it: an `AnimatableBody3D` with `sync_to_physics` carries its own shapes
+exactly, and a separate body standing on the deck would be a second thing to
+keep in step. It sits on the side AWAY from the docks, because the carrier's
+own +X is the side its platforms stand on and a shield there would be a wall
+between the player and the only way aboard.
+
+**What the suite holds, and what it does not.** Held: the shooters are real
+enemies, they are not all on one side, the shield stops a shot from its side
+while nothing on the carrier stops one from the other, and a shot fired from
+the moving deck damages a shooter. **Not held: whether the fight is any good.**
+That is a playtest question and the suite does not pretend to answer it.
+
+`make godot-rail-junction`, 96 checks.
+
+
 ## ENGINE LANE — see it, cross to it, come back and open it — 2026-09-21
 
 **M2-mech.** The railway scenario now carries the whole first loop. The gantry
