@@ -11,9 +11,9 @@ shared):
 
 | Area | Owner |
 |---|---|
-| `bridge/archipepsi_bridge/**`, `bridge/tests/**` | Dess |
+| `bridge/archipepsi_bridge/**`, `bridge/tests/**` — contract, schema, generation constraints, exports | Dess |
 | `docs/design-proposals/**`, `docs/design-library/**` | Dess |
-| `godot/**` authored scripts and scenes | Prod |
+| `godot/**` — effects, targeting/interaction integration, feedback, Unweighted Switch | Prod |
 | `godot/scripts/autoload/constants.gd` | **generated** — written only by `make export`, never hand-edited by either lane |
 | `docs/ledgers/HUGE_BATCH_LEDGER.md` | Prod's record; I append findings, I do not rewrite his rows |
 
@@ -59,66 +59,78 @@ Item 2 is the owner decision. I have not taken it.
 
 ---
 
-## 2. Delivered now, because it needs no decision
+## 2. The destination, and the gate that was wrong
 
-**NO STATUS BEFORE ITS EFFECT.** Whatever is chosen in §3, the hole
-F-15 warns about has to be closed first, or the first name admitted
-re-opens it.
+**Owner decision 2026-09-21: B2's architectural direction.** The 0.4
+destination is the Amalgam's Status system. Object-targeted Status is in
+scope and EX50-033 is not blocked on whether objects may receive Status.
 
-`echo.STATUS_KINDS`' own comment records the original defect: a typo
-produced *"a status that was permanent and did nothing"* — inert,
-because nothing read it, yet still satisfying `status_active`
-conditions and `status_applied` edges, and un-`cleanse`-able because it
-was not in the cleanse order. Admitting a **designed** name does the
-same thing deliberately.
+**Thirteen, not twelve.** Amalgam §15.2 *modifies* Design 5 §15.2 — it is
+Design 5's twelve plus **`exposed`**, restored per §0.4 with its Defense
+effect and **without** its crit clause, `COGNITIVE`, 6.0 s, 0.35,
+**actor only** (objects have no Defense stat). My first reading took the
+inherited twelve as the target and would have shipped the destination
+one Status short.
 
-So the vocabulary and the guarantee are now two lists:
+**The gate I delivered was wrong, and in the way that mattered.**
+`IMPLEMENTED_STATUS_KINDS = STATUS_KINDS` made support a *consequence of
+being named*, so every kind added to the vocabulary admitted itself. It
+would have protected nothing at the exact moment it existed for.
+Corrected: support is `SUPPORTED_STATUS_TARGETS`, a declared table, and
+the assertion between them is **one-way** — everything supported must be
+a real kind, and nothing is supported merely by being real.
 
-- `STATUS_KINDS` — what the design **names**.
-- `IMPLEMENTED_STATUS_KINDS` — what the runtime can **honour**.
-- `StatusComponent` refuses to emit any kind outside the second.
-- `make export` sends the engine both, as `ECHO_STATUS_KINDS` and
-  `ECHO_STATUS_KINDS_IMPLEMENTED`, so it can assert it can honour what
-  it is given rather than trusting the vocabulary.
+**Support is per kind AND target**, because it is not one fact:
+`lightened` on an object and on a surface are different runtime work.
 
-Today the two lists are equal and **this refuses nothing** — it is inert
-on purpose. Its value is that it makes a name safe to admit *early*: a
-kind can be specified, exported and reviewed while still un-emittable,
-and becomes emittable in the same change that gives it an effect.
+**Three doors, one gate.** Gating `StatusComponent` alone left two ways
+in, and a fourth copy of the vocabulary:
 
-Controls: the equal case passes every kind; the split case refuses the
-unimplemented one and still passes the rest; and the engine is checked
-to receive both lists. Proven to bite — the refusal test fails if the
-gate is removed.
+| path | before | now |
+|---|---|---|
+| `StatusComponent` | kind only, `target` was `self`/`enemy` | kind **and** target, five §15.1 targets |
+| `ApplyStatusOnHit` | a hand-written **eight-kind** literal, kept in step with nothing | `StatusKind` + the gate at `enemy` — which derives exactly those eight |
+| `Effect(type="apply_status")` | `subject` was a free `[a-z0-9_]+` string — **any string at all** | gated; `brunning` is refused |
+
+Current state: **24 kinds named, 12 supported.** The twelve §15.2 kinds
+are named and supported by nothing, which is the honest state and is what
+the doors refuse. `make export` sends the engine both lists.
+
+Controls use real unsupported kinds rather than a patched list, and cover
+unsupported *target* applicability as well as unsupported kinds.
 
 ---
 
-## 3. The decision I am not taking
+## 3. Compatibility — how existing meanings are handled
 
-**Which status model does 0.4 build on?**
+Not deleted, not unioned. The retained ECHOES.md kinds stay named so a
+committed 0.3 component still parses; this batch performs **no migration
+and no reinterpretation**.
 
-- **B1 — widen A toward B.** Admit `lightened`/`anchored` and widen
-  `target` to include `object`. Smallest change that unblocks EX50-033.
-  Cost: a schema built for creature conditions now carries a property
-  grammar it was not designed around, and the other nine **B** names
-  stay absent, so the vocabulary is coherent in neither model.
-- **B2 — adopt B as the status vocabulary** (the acquisition work's
-  preferred-direction shape, applied here). Coherent with Design 6, and
-  the largest change: eleven kinds, five target types, compounds
-  (`updraft` = `lightened` + `burning`) and §15.7 immunities.
-- **B3 — keep A, and EX50-033 keeps its stand-in.**
-  `ManipulableBody.shift_class_provisionally` already carries the
-  Status's exact shape room-locally, and §10's decisive control does not
-  depend on what moved the class. The room stays unbuilt.
+| case | kinds | decision |
+|---|---|---|
+| ECHOES-only, no §15.2 counterpart | `slowed`, `frozen`, `shocked`, `poisoned`, `marked`, `stunned`, `vulnerable`, `empowered`, `low_profile`, `haste`, `regenerating` | **Retained as legacy.** Supported, unchanged meaning, not part of the destination. No collision. |
+| §15.2-only, no ECHOES counterpart | the other twelve, incl. `lightened`, `anchored`, `exposed` | **Named, unsupported.** Emittable only when Prod declares the effect. |
+| **In both, different meanings** | **`burning`** | **UNRESOLVED — flagged, not decided.** See below. |
 
-**I have not picked one, and the gate in §2 is correct under all three.**
-My reading is that **B1 is a trap** — it is the cheapest change and the
-one that leaves two incoherent vocabularies — but that is a product
-judgement, and it is yours.
+**The `burning` collision.** Today `burning` deals periodic damage:
+`status_effects.dot_per_second()` is
+`4.0 * magnitude_of("burning") + 2.0 * magnitude_of("poisoned")`.
+Amalgam §15.3 rule 1 is absolute — *"No Status directly deals or
+schedules Health damage"*, Player Authority §20.1 and Law 27, *"no
+exception, no Status, ever."*
 
-**What I need to proceed on priority 1:** the choice above. Everything
-else in the brief (RailNetwork, acquisition, objective-binding, save
-representation) is independent of it and continues meanwhile.
+**The same name means two incompatible things.** Adopting §15.2's
+`burning` removes periodic Status damage, which changes the behaviour of
+`burning` and `poisoned` components that already exist in saved
+campaigns. That is a migration question, and this batch is forbidden to
+migrate.
+
+So: `burning` keeps its shipped meaning **because nothing changed its
+runtime**, and the §15.3-compliant `burning` arrives with Prod's
+implementation. **That change must carry the decision about what an
+existing `burning` component means** — it cannot be taken silently, and
+it is not taken here. `poisoned` rides on the same decision.
 
 ---
 

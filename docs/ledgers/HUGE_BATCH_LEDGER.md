@@ -560,11 +560,34 @@ middle one is a product choice.
 nothing — its purpose is that the next name admitted cannot ship inert,
 which is exactly the hole F-15 declined to open. Sabotage-proven.
 
-**Options and my reading** are in
-`docs/design-proposals/D7_LIGHTENED_STATUS_CONTRACT.md` §3. B1 (widen A
-minimally) is the cheapest and leaves two incoherent vocabularies; B2
-adopts B; B3 keeps the stand-in. Owner's call; the gate is correct under
-all three.
+**RESOLVED 2026-09-21 — owner took B2's architectural direction.** The
+0.4 destination is the Amalgam Status system; object-targeted Status is
+in scope. Two corrections to what this lane delivered first:
+
+- **Thirteen, not twelve.** Amalgam §15.2 *modifies* Design 5 §15.2 —
+  the twelve plus `exposed` (COGNITIVE, actor-only, Defense to 0.0, no
+  crit per §0.4). The inherited twelve were not the target.
+- **The gate was wrong.** `IMPLEMENTED_STATUS_KINDS = STATUS_KINDS` made
+  support a consequence of being named, so each new kind admitted
+  itself. Support is now declared in `SUPPORTED_STATUS_TARGETS`, per
+  kind AND per target, with a one-way assertion to the vocabulary.
+
+**All three application paths are gated**, not just `StatusComponent`:
+`ApplyStatusOnHit` had a hand-written eight-kind literal (a fourth copy
+of the vocabulary, kept in step with nothing — now derived, and the
+derivation reproduces exactly those eight), and `Effect(apply_status)`
+took a free string, so a rule could start `brunning`. 24 kinds named,
+12 supported.
+
+**Compatibility, recorded not migrated.** The ECHOES kinds stay named so
+committed components still parse. One real collision: **`burning`** is in
+both lists with incompatible meanings — today it deals periodic damage
+(`dot_per_second()` = `4.0*burning + 2.0*poisoned`) and Amalgam §15.3
+rule 1 forbids any Status dealing or scheduling Health damage, absolutely.
+`burning` keeps its shipped meaning because nothing changed its runtime;
+the §15.3-compliant one arrives with the engine effect, and **that change
+carries the decision about existing `burning`/`poisoned` components.**
+Not taken here.
 
 **Engine-side note for Prod:** `constants.gd` now carries
 `ECHO_STATUS_KINDS_IMPLEMENTED` beside `ECHO_STATUS_KINDS`.
