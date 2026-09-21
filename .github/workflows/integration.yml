@@ -137,6 +137,7 @@ jobs:
           make godot-passenger-carry
           make godot-rail-carrier
           make godot-rail-junction
+          make godot-passing-platforms
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live

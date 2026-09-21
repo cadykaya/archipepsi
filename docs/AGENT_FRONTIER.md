@@ -1,5 +1,76 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — EX50-011 Passing Platforms, built to its own bar — 2026-09-21
+
+**The first of the three approved minors is playable and measured.**
+`--passing-platforms`: a 28×22 m chamber where a lift `V` rises from the
+arrival floor to an upper shelf, pausing 2.5 s at the transfer plane on the
+way, and a shuttle `H` crosses at that height to a goal gallery. Neither
+reaches `G` alone. You choose when to start each.
+
+`make godot-passing-platforms`, **63 checks and 7 notes**, in CI.
+
+**§11's bar, both halves.** A continuous body run from the arrival floor boards
+the lift, transfers to the shuttle with both machines commanded and moving, and
+reaches `G` — nothing placed, nothing snapped, every command a keypress on a
+lever the body is looking at, and the three deck railings counted before and
+after. Then the counterpart: `--parted` shifts the shuttle's track so nothing
+passes, **the same interval between LAUNCH and the step is replayed**, and `G`
+is not reached. The walks are not replayed frame-by-frame and the suite says so
+where it does it — a body arriving one frame late would fire its interact into
+the air and fail for a reason that has nothing to do with whether the tracks
+pass.
+
+**§10's alternative is built, not prose.** "Stop H near the transfer, ride V,
+board H, restart. If no accessible control permits that sequence, the paper
+alternative is false and must be removed or built rather than left as
+reassuring prose." There is a STOP at the arrival floor and a restart lever on
+the shuttle's own deck, and the patient route is walked end to end.
+
+| measured (§10) | value |
+|---|---|
+| overlap, for a 1 / 2 / 3 s board-and-launch | 2.17 / 2.68 / 1.75 s |
+| the same, in the parted room | 0.00 s |
+| relative speed at the transfer | 1.50 m/s |
+| deck pairs that ever intersect | 0 of 1681 — they never share a `z` |
+| fall from a missed transfer | 2.89 m, **0 HP** |
+
+**Four findings.** F-10: the recovery floor had two strips of nothing in it,
+three metres wide and the full depth of the room, and **nothing walked found
+it** — the coverage census §10 asks for did, before anyone had an opinion about
+where the floor should reach. F-11: `add_child` throws a colliding node name
+away rather than making it readable, so the shuttle's second railing was
+`@StaticBody3D@93` and a name-based census reported two railings of three.
+F-12: §8 asks for the fall damage to be verified, and the answer is that **this
+runtime has none at any height** — the recovery floor costs time, not health,
+and that is an engine-wide default rather than anything this room does. F-13:
+an instrument error — a body resting on a *stationary* deck can finish a frame
+having slid against nothing, so `get_slide_collision` alone said it was not
+aboard.
+
+**One shared change to tested code.** `RailCarrier.top_speed` and `accel` are
+now per-carrier, defaulting to the skiff's 7.0 / 3.0, so a maintenance shuttle
+can run EX50-011's 1.5 m/s without a second class. `godot-rail-carrier` 73,
+`godot-rail-junction` 140, `godot-passenger-carry` 4 — all re-run, all green.
+
+**The lift is a new class and the shuttle is not.** A finite WEST HOLD / TRAVEL
+EAST / EAST HOLD / TRAVEL WEST schedule *is* a two-dock railway with a
+fail-safe stop, so `H` is a `RailCarrier`. A rail carrier on a vertical path
+stands its deck on end — `RailPath` refuses past 75°, correctly — so `V` is a
+`ShuttleDeck`. The two share `StopTravel` and nothing else.
+
+**Not built, and named:** §9's save behaviour (there is no 0.4 save
+representation — D-6), §8's boarding gates and interlocks, §7's later
+encounter, which the specification itself defers. The full scope/status matrix,
+including everything not started and which Dess handoff blocks which row, is in
+`docs/ledgers/HUGE_BATCH_LEDGER.md`.
+
+**Next:** EX50-021 Counterfire Arcade, then EX50-033 Unweighted Switch. Both
+unblocked, neither started. EX50-033 carries an open question first — its
+sensor is a semantic mass-class / LIGHTENED interaction, not a summed-kilogram
+plate, and which of the two the engine has is not yet established.
+
+
 ## ENGINE LANE — the yard was answering an easier question — 2026-09-21
 
 **Measured before anything was changed: the base kit could walk to S3.** With

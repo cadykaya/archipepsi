@@ -77,6 +77,8 @@ const DRIVERS := {
 	"--passenger-carry": preload("res://tests/passenger_carry_driver.gd"),
 	"--rail-carrier": preload("res://tests/rail_carrier_driver.gd"),
 	"--rail-junction": preload("res://tests/rail_junction_driver.gd"),
+	"--passing-platforms-test": preload(
+		"res://tests/passing_platforms_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }
 
@@ -105,6 +107,18 @@ func _ready() -> void:
 				if "--bracing" in user_args \
 				else RailwayScenario.GANTRY_BINDING
 		add_child(yard)
+		return
+	# EX50-011 PASSING PLATFORMS (0.4, M3), by name and only by name, for
+	# the reasons above: a minor situation, not a Zone, no campaign, no
+	# bridge connection.
+	if "--passing-platforms" in user_args:
+		var room := PassingPlatforms.new()
+		# `--parted` is the specification's own counterexample: the same
+		# room with `H`'s track shifted so no overlap exists. A commanded
+		# timing that reports success in BOTH was measuring its own
+		# commands rather than the world.
+		room.parted = "--parted" in user_args
+		add_child(room)
 		return
 	boot()
 	# THE STAGE 3A SHOWCASE, and only when an operator asks for it by

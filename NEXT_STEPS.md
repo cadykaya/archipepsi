@@ -1,5 +1,90 @@
 # Archipepsi — build state
 
+## 2026-09-21 (engine) — EX50-011 Passing Platforms: the first minor
+
+**On `claude/archipepsi-0-4-blindside`, draft PR #12, the same 0.4 development
+line as the railway. The 0.3 comparison build (PR #4) is untouched, and the
+playable M2-mech snapshot is preserved as `review/0.4-m2mech-snapshot` at
+`206167e`.** The durable record is `docs/ledgers/HUGE_BATCH_LEDGER.md`, which
+now carries a full scope/status matrix including everything not started and
+which Dess handoff blocks which row.
+
+### What exists now that did not
+
+- `ShuttleDeck` — a LEVEL deck running between ordered stops on a straight
+  axis, with an **authored dwell declared as a property of the stop**. It is a
+  new class rather than a `RailCarrier` on a vertical rail because that
+  arithmetic stands the deck on end and drops the passenger; `RailPath` refuses
+  a path past 75° for the same underlying reason and that refusal is right.
+- `StopTravel` — the one authoring of how a machine gets from one stop to the
+  next, shared by the lift and the railway rather than copied. EX50-011 §9's
+  "shared machinery contract", made literal.
+- `CallLever` — a repeatable interact lever. Deliberately not `AlignmentControl`,
+  which is one-shot because the span it sends home is monotone; a call control
+  turns on being able to send a carrier back and try again.
+- `PassingPlatforms` (`--passing-platforms`, `--passing-platforms --parted`) —
+  the room, with its own launchers. Development scaffolding, not a Zone.
+- `RailCarrier.top_speed` / `accel` — per-carrier now, defaulting to the skiff's
+  7.0 / 3.0. The shuttle runs EX50-011's 1.5 m/s service speed without a second
+  class. `godot-rail-carrier` (73), `godot-rail-junction` (140) and
+  `godot-passenger-carry` (4) were re-run after the change and are green.
+- Gate: `godot-passing-platforms` (63 checks, 7 notes), in `integration.yml`.
+
+### What the specification asked for, and what was done about it
+
+EX50-011 sets its own bars and they were taken literally rather than restated.
+
+| bar | outcome |
+|---|---|
+| §11 a continuous body run from `A` boards `V`, transfers to `H` with all motion active, reaches `G` | walked, ridden and pulled; nothing placed, nothing snapped, railings counted before and after |
+| §11 a counterpart with `H`'s track shifted must not report the same commanded timing successful | `--parted`; the LAUNCH-to-step interval is replayed, `G` is not reached, the body ends on the recovery floor |
+| §10 measure overlap duration, relative velocity, railing collision, the landing, recovery-floor coverage | 2.17 / 2.68 / 1.75 s for a 1 / 2 / 3 s board-and-launch; 1.50 m/s; rays both ways; 2.89 m onto the recovery floor; a downward-ray census over the whole transfer level |
+| §10 the lowest-pressure solution must be present or removed | built: a STOP at the arrival floor and a restart lever on the shuttle's own deck, walked end to end |
+| §8 the actual maximum fall height and damage must be verified | 2.89 m, **0 HP** — see F-12 |
+| §8 repeated presses cannot queue arrivals; an old command cannot restart a stopped carrier | both asserted, with the refusal named |
+| §9 save behaviour | **not built.** There is no 0.4 save representation (D-6), no campaign under this scenario, nothing that could restore a carrier pose. Recorded as paper rather than covered by a test that would re-read the specification back to itself |
+
+### The findings
+
+- **F-10 — the recovery floor had two strips of nothing in it.** Three metres
+  wide, the full depth of the room, a fall past `FALL_KILL_Y`, in a room whose
+  §2 forbids exactly that. **No walked route went near it.** The coverage census
+  §10 asks for found it and reported eleven points with nothing underneath.
+  The same lesson F-09 paid for in the yard: a room is not proved safe by the
+  routes somebody thought to walk.
+- **F-11 — a duplicate node name is thrown away, not made readable.**
+  `add_child` assigns `@StaticBody3D@93` rather than renaming; the shuttle's
+  second railing lost its name and a name-based census found two of three. The
+  count is now read from the decks' own children.
+- **F-12 — §8's fall question has an answer the paper did not anticipate.**
+  This runtime applies **no fall damage at any height**; the only fatal fall is
+  past `FALL_KILL_Y = -30`. The recovery floor costs time and position, not
+  health — which is an engine-wide default, not something this room achieves.
+  If fall damage is ever introduced, this room's §8 claim must be re-measured.
+- **F-13 — an instrument error, caught before it was reported.** A body resting
+  on a *stationary* deck can finish a physics frame having slid against
+  nothing, so `get_slide_collision` alone reports it is not aboard. It looked
+  for about a minute like a defect in the very alternative §10 demands be
+  built. The fix is a downward ray as the fallback.
+
+### Still open
+
+- **EX50-021 Counterfire Arcade** and **EX50-033 Unweighted Switch** — both
+  unblocked, neither started. EX50-033 needs one question answered first: its
+  sensor is a semantic mass-class / LIGHTENED interaction, **not** a
+  summed-kilogram plate, and which of the two the engine actually has is not
+  established.
+- **Not built in EX50-011, and named rather than left to be found:** §9's save
+  behaviour (D-6), §8's boarding gates and interlocks — the shelf's lift
+  opening is unrailed when the lift is away, an 8.0 m drop — and §7's later
+  encounter, which the specification itself defers.
+- **Blocked only where named:** M2's completion on D-1; a junction inside a
+  composed Zone on D-4; the 0.4 save representation on D-6; genuine Epsilon
+  objective selection on D-5. Nothing else in the scope table waits on a lane
+  that has not accepted a handoff, and Dess and Arty remain unassigned.
+- **Scheduled work is off.** No heartbeat, no watchers, no subscriptions.
+
+
 ## 2026-09-21 (engine) — the 0.4 line: the Blindside railway
 
 **A separate development line, `claude/archipepsi-0-4-blindside`, branched from

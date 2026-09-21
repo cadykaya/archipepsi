@@ -67,16 +67,32 @@
 | M1-safe | Dying in a yard with shooters in it is not a dead end | 0.4 scenario | M1-fight | `railway_scenario.gd` (`_place_player`) | **verified** | `3074c55`+ | `set_spawn`, not an assignment: the respawn transform is captured in `_ready`, so a player merely MOVED to S1 came back at the world origin |
 | M1-walked | **Continuous play evidence**: the whole loop on foot, nothing placed | plan §8 ("continuous play evidence kept separate from placed-near-target, pre-unlocked, direct-handler and synthetic-state runs") | M2-mech | `rail_junction_driver.gd` (`_walked_end_to_end`) | **verified** | `88cb607`+ | 114 checks, stable over four runs. Board, shoot, ride, be refused, walk the branch, take the tool, walk back, pull up, throw the lever, ride to S3 — no teleports, every command a key |
 | M1-fight | The ride is not a tram ride: three shooters on alternating sides, and cover that turns with the deck | plan §3 sequence ("one meaningful combat situation") | M1-play | `railway_scenario.gd` (`_gauntlet`, `_shield`) | **verified** | `a451876`+ | 96 checks. What is held: real enemies, alternating sides, the shield stops a shot from its side and nothing on the carrier stops one from the other, and a shot from the moving deck damages a shooter. **Whether the fight is any good is a playtest question and is not answered** |
+| E-011-mech | EX50-011's two machines exist and keep their own rules: a lift with an authored intermediate dwell, a shuttle on a two-berth track at service speed, and one shared authoring of how either gets from one stop to the next | `EX50-011.md` §2, §3, §8 | SPEC-intake, P2 | `shuttle_deck.gd`, `stop_travel.gd`, `call_lever.gd`, `rail_carrier.gd` (`top_speed`/`accel`) | **verified** | this batch | `make godot-passing-platforms`, in CI. `RailCarrier` is reused for the shuttle rather than copied: a finite WEST HOLD / TRAVEL EAST / EAST HOLD / TRAVEL WEST schedule IS a two-dock railway with a fail-safe stop. The lift is a new class because a rail carrier on a vertical path stands its deck on end, and `RailPath` refuses such a path at 75° — correctly |
+| E-011-room | The room is a place a person can stand: `--passing-platforms` | `EX50-011.md` §2 | E-011-mech | `passing_platforms.gd`, `main.gd` | **verified** | this batch | 28×22 m, 12 m high, arrival floor, recovery floor 3 m under the transfer plane, upper shelf, goal gallery, eleven call controls. **Development scaffolding, not a Zone**: no Checks, no exit, no campaign, no bridge |
+| E-011-run | **Continuous play evidence**: from the arrival floor, board the lift, transfer to the shuttle with both machines commanded and moving, reach G | `EX50-011.md` §11 | E-011-room | `passing_platforms_driver.gd` (`_the_continuous_run`) | **verified** | this batch | nothing placed, nothing snapped, every command a keypress on a lever the body is looking at. Relative speed at the transfer 1.50 m/s; the step was taken 4.98 s after the launch lever. The three deck railings are counted before and after and are untouched |
+| E-011-counter | §11's counterpart: the same commanded timing in a room whose tracks do not pass must NOT be reported successful | `EX50-011.md` §11 | E-011-run | `passing_platforms.gd` (`parted`), `--passing-platforms --parted` | **verified** | this batch | the one number replayed is the interval between pulling LAUNCH and stepping north. G is not reached, no stair is released, and the body ends on the recovery floor. **The walks are not replayed frame-by-frame and that is stated in the suite**: a body arriving at a lever one frame later would fire its interact into the air and fail for a reason unrelated to whether the tracks pass |
+| E-011-patient | §6/§10's lowest-pressure solution is BUILT, not prose: stop the shuttle near the transfer from a control at the arrival floor, ride the lift, board it standing, restart it from its own onboard lever | `EX50-011.md` §6, §10 | E-011-room | `passing_platforms.gd` (`STOP H`, `H ON EAST`), driver (`_the_low_pressure_route`) | **verified** | this batch | walked end to end. §10 says that if no accessible control permits the sequence the paper alternative is false and must be removed or built; it is built |
+| E-011-measure | §10's five measurements: world-space overlap duration, relative velocity at the transfer, railing collision, the landing, and recovery-floor coverage | `EX50-011.md` §10 | E-011-room | driver (`_the_overlap_is_measured`, `_the_railings_and_the_floor`, `_the_decks_never_touch`) | **verified** | this batch | overlap 2.17 / 2.68 / 1.75 s for a 1 / 2 / 3 s board-and-launch; the parted room reports 0.00 s, which is the instrument's own counterexample. The decks never intersect at ANY pair of positions (1681 sampled), because they never share a `z` — a property of the geometry, not of today's schedule |
+| E-011-fall | §8's "the actual maximum fall height and damage must be verified" | `EX50-011.md` §8 | E-011-room | driver (`_the_fall_is_measured`) | **verified, and the answer is not the paper's** | this batch | 2.89 m onto the recovery floor, 0 HP. F-12: this runtime applies no fall damage at any height |
+| E-011-save | §9: carrier poses, destinations and hold states restored before the player; a dwell not replayed against elapsed real time | `EX50-011.md` §9 | **D-6 (Dess)** | — | **not started — blocked** | — | there is no 0.4 save representation, no campaign under this scenario and nothing that could restore a carrier pose. Recorded as paper rather than covered by a test that would only re-read the specification back to itself |
+| E-011-gates | §8's boarding gates and interlocks | `EX50-011.md` §8 | E-011-room | — | **not started** | — | the shelf's lift opening is open whenever the lift is away: an 8.0 m drop onto the arrival floor, survivable because there is no fall damage (F-12). §10 asks for a minimum scene and this is past it; it is named here rather than left for a player to find |
+| E-011-enemies | §7's later encounter: gunners on fixed galleries so moving with the shuttle changes cover and angle | `EX50-011.md` §7 | E-011-room | — | **not started, by the specification** | — | "The first prototype has no enemies" |
+| E-021 | EX50-021 Counterfire Arcade | `EX50-021.md` | SPEC-intake | — | **not started** | — | next in the approved minor group |
+| E-033 | EX50-033 Unweighted Switch | `EX50-033.md` | SPEC-intake | — | **not started** | — | its sensor is a semantic mass-class / LIGHTENED interaction, NOT a summed-kilogram plate. Which of the two the engine has is an open question this ledger must answer before the row moves |
 
-## Not in the repository, and needed before M3 content
+## ~~Not in the repository, and needed before M3 content~~ — SUPERSEDED
 
-**EX50-011, EX50-021 and EX50-033 are named in the plan and their specifications
-are not in this repository.** They came from the uploaded batch package, which
-this container no longer holds. The engine lane will not invent content under
-names the owner gave specific meanings to, so the first minor group is blocked
-on those specs being committed or re-sent — not on engineering. `RailCarrier`,
-`RailReceiver`, `RailSpan` and the latch chain are the parts they were chosen to
-share, and all four exist.
+**Superseded by SPEC-intake (`c347057`).** The three EX50 originals were
+recovered and are in the repository byte-for-byte under
+`docs/design-library/EX50_entries/`, with their digests verified after the copy.
+The block this section recorded is lifted. Kept as a row rather than deleted so
+the reason the minor group started late stays legible.
+
+**They are paper.** All three are `REVISED_ON_PAPER` and carry
+`Implementation evidence: none`. Their numbers — speeds, dwells, distances — are
+proposals, and a proposal that has been built is still a proposal about how the
+result FEELS. That distinction is why `docs/design-library/README.md` exists and
+why the rows above separate what was measured from what the paper says.
 
 ## Findings
 
@@ -334,6 +350,144 @@ share, and all four exist.
   establishes an AP guarantee, a capability gate, or anything about a composed
   Zone; it establishes that the scenario now shows what it is meant to show.
 
+### F-10 — the recovery floor had two strips of nothing in it
+
+EX50-011 §2 is explicit: a missed transfer is "a short fall and repositioning,
+not automatic death into a bottomless void." The room was built to satisfy that
+— an arrival floor across the south of the chamber and a recovery floor a metre
+above it covering everything north — and it did not.
+
+The first cut stopped the recovery floor at `x = -11` and `x = 12`, numbers
+chosen to clear the west shelf and the east gallery and never checked against
+anything. That left two strips about three metres wide running the full depth
+of the room with **no floor under them at all**. A body over there falls past
+`FALL_KILL_Y` and dies.
+
+**Nothing walked found it.** The continuous run, the counterpart and the patient
+route all pass with the hole in the room, because none of them goes near the
+walls. What found it was the census §10 asks for — a downward ray from every
+point of a grid over the transfer level, asserting a floor under each — and it
+reported eleven points with nothing beneath them before anyone had an opinion
+about where the floor ought to reach. The fix is one line: the recovery floor
+goes to the walls.
+
+The general lesson is the one F-09 already paid for in the yard. A room is not
+proved safe by the routes somebody thought to walk.
+
+### F-11 — a duplicate node name is thrown away, not made readable
+
+The suite counts the railings that ride on the two decks before and after the
+continuous run, because §11 says the positive test "must not snap the player
+onto H or disable its railing to pass" and a count is how that is checked. It
+reported **two railings, and there are three.**
+
+`Node.add_child` does not rename a colliding sibling to something readable
+unless it is asked to (`force_readable_name`). It assigns a fast unique name
+instead — `@StaticBody3D@93` — and the name the builder set is simply gone. Both
+of the shuttle's railings were constructed as `"Railing"`, so the second one
+lost its name, and a census that searched for railings by name found two.
+
+Two repairs, and the second is the one that matters. The railings are now named
+apart (`RailingEast`, `RailingNorth`, `RailingWest`), and the census no longer
+searches the room by name at all: it reads the decks' own children. **A count of
+parts should be taken from the thing that owns them.**
+
+### F-12 — §8's fall question has an answer the paper did not anticipate
+
+EX50-011 §8: "Missing H lands the player on the recovery floor. The actual
+maximum fall height and damage must be verified. A shallow visual void cannot
+secretly be a kill volume copied from another room type."
+
+Measured, with a body walked off the lift's edge at the transfer plane:
+**2.89 m, and 0 HP.** Not because the fall is short — because **this runtime
+applies no fall damage at any height.** The only fatal fall is past
+`FALL_KILL_Y = -30`, thirty metres below the arrival floor.
+
+So the paper's worry is answered, and for the opposite reason to the one it
+expects: nothing secretly kills, because nothing kills. What the recovery floor
+costs a player is time and position, and the room's "make a decision, see it
+fail, try a better one quickly" (§7) is therefore true today — but it is true by
+an engine-wide default and not by anything this room does. **If fall damage is
+ever introduced, this room's §8 claim has to be re-measured, not assumed.** It
+is recorded here so that day has a starting point.
+
+The related open item is E-011-gates: the shelf's lift opening is unrailed when
+the lift is away, an 8.0 m drop, and §8's "doors or boarding gates use their
+real safe interlocks" is not built.
+
+### F-13 — an instrument error: a still deck slides against nothing
+
+Caught before it was reported, and recorded because the ledger's value is in
+distinguishing a broken game from a broken measurement.
+
+"Is the player standing on this machine?" was first answered from
+`get_slide_collision`, which is the right handle for a body that has just been
+carried: the plan names it directly. It is the wrong handle for a body resting
+on a **stationary** deck with no input. That frame can finish having slid
+against nothing, the collision list comes back empty, and the instrument says
+the player is not aboard — while `is_on_floor()` is true and the deck is right
+under their feet.
+
+It surfaced as a single failure in the patient route, which is precisely the
+case where the shuttle is standing still, and for about a minute it looked like
+a gameplay defect in the alternative §10 demands be built. The answer is to fall
+back to a short downward ray and read what is actually under the feet. Both
+handles are kept: the slide collision is the cheap answer when there is one.
+
+
+## Full scope and status
+
+Every workstream in the plan, including what has not been started. **A Dess
+dependency blocks the row that names it and nothing else** — the campaign does
+not stop at the first blocked row.
+
+| ID | Workstream / milestone | State | Blocked by | Note |
+|---|---|---|---|---|
+| **A1** | 0.3 cleanup: shot-target orientation repaired, `godot-target-facing` promoted to a gate | **partly done** — repaired at `f4953c1`, **not in CI** | — | the driver exists and is not in `integration.yml`; promoting it is a one-line change and is not done |
+| **A2** | Climbing-producer door records (`tower`, `platform_path` file `exit` past the wall the hole is cut in) | **not started** | — | bounded repair; scoped carefully because `door_world` feeds join sockets and lock slabs |
+| **A3** | Finish-path coverage | **not started** | — | |
+| **A4** | Stop tracking disposable test saves; launch hygiene | **not started** | — | |
+| **B1** | Amalgam: one shared effect path | **not started** | — | |
+| **B2** | Amalgam: usable builds | **not started** | — | |
+| **B3** | Status/physics subsets (13 Statuses in 4 families, 8 compounds) | **not started** | — | |
+| **B4** | Forge/Static economy | **not started — decision pending** | owner | plan §6 decision 6: only accepted recipes/costs/outputs; new economy rules stay a decision |
+| **B5** | Independent Amalgam breadth after M3 | **not started** | M3 | |
+| **C1** | Environmental objectives: reuse `ActivityElement` sensors | **done, in use** | — | the goal plate at `G` is exactly this; `RailReceiver` is the shot case |
+| **C2** | A signal-driven actuator generalised from `PoweredLink` | **not started** | — | `RailSpan`/`AlignmentControl` and `ShuttleDeck`/`CallLever` are two concrete chains; the generalisation is not built |
+| **C3** | Objective semantics (§5.4a) | **settled, implemented** | — | accepted consequences persist, live values do not. M1 is the worked example |
+| **C4** | Reset / interruption / tool loss | **partly done** | — | EX50-011's reset is built and measured (E-011-*, §8). Tool loss is not |
+| **C5** | Readable cause and effect from the existing vocabulary | **partly done** | — | signs, chevrons, lever labels, deck railings. Whether any of it reads is a playtest question |
+| **C6** | Bounded objective-binding schema so Epsilon selects relationships | **not started** | **D-5 (Dess)** | |
+| **D1–D5** | Blindside major, first section | **verified as M1 + M2-mech** | — | see the rows above |
+| **D6** | Second binding (`ranged_hit` on bracing) | **verified, and labelled an existing-tool variant** | — | not a second acquisition loop |
+| **D7** | Return-later variant | **deferred, tracked** | all-Checks exit policy (owner) | plan §6 decision 5; no silent change to the completion rule |
+| **E-011** | Passing Platforms | **verified** except `E-011-save` / `E-011-gates` | D-6 for save only | see the rows above |
+| **E-021** | Counterfire Arcade | **not started** | — | next in the approved group |
+| **E-033** | Unweighted Switch | **not started** | — | open question: semantic mass-class sensor vs summed-kilogram plate |
+| **F** | Progression / Epsilon / AP engine half | **not started** | **D-1, D-2 (Dess)** | the `established_in_zone` producer's client half |
+| **G1** | 0.4 save representation | **not started** | **D-6 (Dess)** | |
+| **G2** | Legacy migration | **deliberately not done** | owner | no old campaign is touched |
+| **G3** | Interruption | **not started** | — | |
+| **G4** | Two unmistakable launch modes, separate saves, printed revision | **partly done** | — | the 0.4 scenarios launch by name and by double-click; the printed revision/provider/scale banner is not done |
+| **M0** | 0.4 line exists, 0.3 untouched | **verified** | — | |
+| **M1** | One real machine chain | **verified** | — | `M1-zone` (a junction inside a composed Zone) stays blocked on **D-4** |
+| **M2-mech** | Dev-scenario loop, labelled | **verified** | — | |
+| **M3** | First content group | **1 of 3** | — | EX50-011 done; 021 and 033 not started. **Genuine Epsilon objective selection stays incomplete until D-5** and a handwritten configuration will not be reported as it |
+| **M2 complete** | The intended experience, multiworld-safe | **blocked** | **D-1 (Dess)**, §5's five requirements | |
+| **M4** | Remaining Amalgam breadth | **not started** | M3 | |
+| **M5** | Pinned review build | **not started** | M3 | |
+
+### Where a Dess handoff actually blocks something
+
+| Handoff | Blocks | Does NOT block |
+|---|---|---|
+| D-1 acquisition contract | **M2's completion** | everything else in this table |
+| D-2 `established_in_zone` producer | M2 complete, F | — |
+| D-3 `DoorAssignment.requires` | capability gates | — |
+| D-4 `RailNetwork` schema | `M1-zone` only | P0–P4, M1, M2-mech, M3, E-011 |
+| D-5 objective-binding vocabulary | C6, and any claim of **genuine** Epsilon objective selection | building and testing provisional configurations |
+| D-6 0.4 save representation | G1, `E-011-save` | E-011's other rows |
+
 ## Full-Amalgam matrix
 
 *(built incrementally per plan §4 — never a prerequisite to starting)*
@@ -351,31 +505,53 @@ kinds. In `godot-rail-junction`:
 | `_re_entry`, `_nothing_was_accepted`, `_another_packages_latch` | **synthetic state** | a junction is restored from a latch set handed to it directly |
 | `_reported_once` | **direct handler** | `ZoneController.report_latch` is called, not reached through a machine |
 
+And in `godot-passing-platforms`:
+
+| case | class | what it is |
+|---|---|---|
+| `_the_continuous_run` | **continuous play** | nothing placed, nothing snapped. Walk to the call lever, pull it, walk onto the lift, pull LAUNCH, ride, step north, be carried east, walk off at G. Every command is a keypress on a lever the body is looking at, and the three deck railings are counted before and after |
+| `_the_low_pressure_route` | **continuous play** | the same, by §6's patient alternative: STOP the shuttle from the arrival floor, ride up to it, board it standing, restart it from its own deck |
+| the `--parted` counterpart | **continuous play, negative** | the same commanded timing — the interval between LAUNCH and the step — in a room whose tracks do not pass. **The walks are not replayed frame-by-frame**, and the suite says so where it does it |
+| `_the_fall_is_measured` | **placed-near-target** | the body is stood on the lift at the transfer plane and walked off the edge, to measure the consequence of a miss rather than whether a person would make one |
+| `_the_railings_and_the_floor` | **placed-near-target** | both machines are put at the rendezvous and the question is asked of rays |
+| `_the_overlap_is_measured`, `_the_decks_never_touch`, `_the_dwell_is_declared`, `_no_queued_arrivals`, `_a_stop_is_not_undone_by_an_old_command`, `_reset_never_teleports` | **machine arithmetic** | `advance(STEP)` with no body in the room. A hand-stepped overlap is not evidence that a person can make the transfer; it says how long the opportunity lasts |
+
 ## Playable milestones
 
 | Milestone | Build/ref | Launch/mode/save | Actual continuous player path | Test shortcuts | Owner verdict |
 |---|---|---|---|---|---|
 | 0.3 candidate | `19c5d8e` | production mode | exit/hold patch unplayed by owner | — | not yet played |
+| M3, EX50-011 Passing Platforms | this batch | `godot --path godot -- --passing-platforms`, or "Play Passing Platforms (Windows).bat" / `./play-passing-platforms.sh` | pull H EAST at the arrival floor, walk onto the lift, pull LAUNCH on its own deck, ride up; when the lift holds at the transfer plane and the shuttle's deck is under you, step north onto it; be carried east; walk off onto the goal gallery and the service stair opens. Or pull STOP H when it is beside the lift and take as long as you like | **the whole scenario is a test shortcut**: not a Zone, no campaign, no bridge, no Checks, no exit. No save, so nothing in §9 is exercised. `--parted` is the counterexample and is meant to be uncompletable | not yet played |
 | M1 + M2-mech, the railway | `f9f51e9`+ | `godot --path godot -- --railway` (or `godot-bin/godot --path godot -- --railway`) | board at S1, shoot the chevron pointing down the track, ride; S2→S3 is refused; the gantry that lowers the span is overhead and out of reach; walk the branch past it, take the hookshot, try it on the ledge, come back, pull yourself to the ring, press E on the lever, ride to S3 | **the whole scenario is a test shortcut**: not a Zone, no campaign, no bridge, no Checks, no exit, and the Echo is granted by a pedestal rather than by a Check | not yet played |
 
 ## Checkpoint
 
-- **Last completed milestone:** the whole loop, walked end to end with nothing
-  placed. **Full headless frontier green at `88cb607`:** Python 1604 + 627
-  subtests, and 26 Godot suites. P0, P2, P2b, P3, P4, M1 and the
-  development-scenario loop verified.
-- **Current coherent tree:** `claude/archipepsi-0-4-blindside`; `godot-rail-carrier`,
-  `godot-passenger-carry`, `godot-affordance`, `godot-movement`, `godot-physics`,
-  `godot-traverse`, `godot-content` and `godot-activity` green.
-- **Deliberate reordering (decided by this lane, owner asleep):** P2/P3 were taken
-  before P1. P0 delivered P1's stated de-risk value directly — the carry is
-  measured — and Passing Platforms wants exactly a carrier that stops at points,
-  so building the vehicle first means the minor reuses `RailCarrier` instead of
-  duplicating it.
-- **Exact next action (owner's call first):** the whole first loop is playable
-  and unplayed. Walking it is worth more than the next feature, because
-  everything after this reuses its parts.
-- **Not done and not started:** P1 (EX50-011, which can now reuse
-  `RailCarrier`), M3, M4, M5. **M2's completion stays gated on the acquisition
-  contract (§5) as approved** — M2-mech proves the experience and nothing about
-  progression.
+- **Last completed milestone:** EX50-011 Passing Platforms, the first of the
+  three approved minors, verified against the bars its own specification sets:
+  §11's continuous run AND its counterpart, §10's five measurements and the
+  lowest-pressure alternative, §8's fall, §4/§8's schedule rules.
+  `make godot-passing-platforms`, 63 checks and 7 notes, in CI.
+- **Preserved review snapshot:** `review/0.4-m2mech-snapshot` at `206167e` —
+  the playable M2-mech checkpoint, kept available and untouched by this work.
+- **Affected suites re-run after the `RailCarrier` change** (`top_speed` and
+  `accel` became per-carrier so a maintenance shuttle can run at 1.5 m/s while
+  the skiff keeps 7.0): `godot-rail-carrier` 73, `godot-rail-junction` 140,
+  `godot-passenger-carry` 4. All green.
+- **Four findings this batch:** F-10 the recovery floor had two strips of
+  nothing in it, found by the coverage census and by nothing walked; F-11 a
+  duplicate node name is thrown away rather than made readable, so a
+  name-based census undercounted the railings; F-12 this runtime applies no
+  fall damage at any height, which is §8's answer and not the one the paper
+  anticipates; F-13 an instrument error — a body resting on a stationary deck
+  can slide against nothing, so `get_slide_collision` alone says it is not
+  aboard.
+- **Exact next action:** EX50-021 Counterfire Arcade, then EX50-033 Unweighted
+  Switch. Both are unblocked; neither is started. EX50-033 carries an open
+  question this ledger must answer before it is built — its sensor is a
+  semantic mass-class / LIGHTENED interaction, not a summed-kilogram plate, and
+  which of the two the engine has is not yet established.
+- **Still blocked, and only where named:** M2's completion on D-1; `M1-zone` on
+  D-4; `E-011-save` and G1 on D-6; genuine Epsilon objective selection on D-5.
+  Nothing else in the scope table waits on a lane that has not accepted a
+  handoff.
+- **Scheduled work is off.** No heartbeat, no watchers, no subscriptions.

@@ -60,6 +60,12 @@ var dock_ids: PackedStringArray = PackedStringArray()
 var commissioned: Array[bool] = []
 ## The deck a passenger stands on. Sized by the caller -- see the note above.
 var deck := Vector3(4.0, 0.4, 4.0)
+## SERVICE SPEED, per carrier. `SPEED` and `ACCEL` stay the railway
+## skiff's numbers and stay the defaults; a maintenance shuttle running
+## a 21 m room at 1.5 m/s is a different vehicle, not a different class,
+## and EX50-011 §2 authors its speed in the situation rather than here.
+var top_speed := SPEED
+var accel := ACCEL
 
 var offset := 0.0
 var heading := HOLD
@@ -255,19 +261,14 @@ func advance(delta: float) -> void:
 	if not _malformed.is_empty():
 		return
 	var goal: float = dock_offsets[target_dock]
-	var remaining := absf(goal - offset)
-	# ARRIVE, DO NOT STALL. The obvious loop -- accelerate, and shed speed
-	# once inside `v^2 / 2a` -- undershoots by about `v * delta / 2` on a
-	# discrete timestep, which at 7 m/s and 60 Hz is 0.058 m: further than
-	# DOCK_EPSILON. The carrier would halt just short of the dock and then
-	# creep in, stuttering, because each frame it re-accelerates. Capping
-	# the speed at the one this stopping distance can still shed instead is
-	# self-correcting -- as the gap closes the cap closes with it, and the
-	# implied braking is never harsher than ACCEL.
-	var ceiling := sqrt(2.0 * ACCEL * remaining)
-	speed = minf(minf(speed + ACCEL * delta, SPEED), ceiling)
-	var step := minf(speed * delta, remaining)
-	offset += step * signf(goal - offset)
+	# THE ARITHMETIC IS `StopTravel`'s, and it is shared with the
+	# lift in EX50-011 rather than copied into it: how a machine gets
+	# from one stop to the next is one question, even where the
+	# machines differ in everything else.
+	var moved := StopTravel.step(offset, goal, speed, delta,
+			accel, top_speed, DOCK_EPSILON)
+	offset = moved.x
+	speed = moved.y
 	_place()
 	if absf(goal - offset) <= DOCK_EPSILON:
 		offset = goal
