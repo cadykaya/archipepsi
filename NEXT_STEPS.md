@@ -1,5 +1,73 @@
 # Archipepsi — build state
 
+## 2026-09-21 (engine) — the Unweighted Switch, and the declaration the boundary caught
+
+**What landed.** EX50-033's room, `lightened`'s real runtime, the per-target
+application boundary, and the two corrections that boundary turned up — as one
+checkpoint, because a room that starts a Status and a table saying which
+Statuses may start are the same fact.
+
+### The room — `make godot-unweighted`, 61 checks, in CI
+
+`--unweighted` builds it. A 16×14 m chamber whose upper sill at **1.9 m** is
+above a baseline jump from the floor (apex **1.333 m**) and **0.433 m** inside
+one from the 200 kg crate's 1.0 m top. The recess the crate must stand in is
+floored by a HEAVY `ClassPlate` wired to the shutter through a NOT, so placing
+the step you need closes the route you want.
+
+`lightened` resolves it by moving the CLASS and not the kilograms — through
+`ManipulableBody.apply_status` into a real `StatusEffects` at target kind
+`object`. **No stand-in**: `shift_class_provisionally` is gone.
+
+Measured in the room, on its own crate: kilograms unmoved at 200.0, class
+HEAVY→MEDIUM, crate top still 0.99 m with a ray still stopping on it, one
+impulse 0.1957→0.3913 m/s (×2.00), plate released with nothing having moved,
+shutter open. Then the 8.0 s runs out and all of it comes back — which is why
+the bolt exists, and the suite shows the bolt outlasting the same expiry that
+shuts the unbolted door. §11's control (`--disconnected`) builds the same room
+with the plate's output unwired and shows the expected response *failing*. The
+route is walked end to end: lever, shot, climb, crossing, bolt, goal.
+
+`ServiceShutter` gains `command(open)` — `trip()` is a timed door and this is a
+safety lockout driven by a live signal.
+
+### F-20 — `vulnerable` was declared on one side and implemented on two
+
+`stat_stack.gd:93` multiplies the PLAYER's `damage_taken`; `enemy.gd:434`
+multiplies the enemy's; the table said `("enemy",)`. Invisible while support was
+asked per kind. Declared to match the runtime — reverting the row brings the
+three `godot-stats` failures back — and the acceptance sweep rewritten to ask
+both halves across all five §15.1 targets. All thirteen implemented kinds were
+audited against their consumers; `vulnerable` was the only wrong row.
+
+### F-21 — two exports of one map, collapsed
+
+Dess exported the same table as `ECHO_STATUS_SUPPORTED_TARGETS` (`c0d5446`)
+while this lane exported it as `ECHO_STATUS_TARGETS` (`fb11161`); she branched
+before mine landed. The merge keeps **hers** and renames the three engine
+consumers onto it.
+
+### Target facing — 1 of 27, and the nudge is measured
+
+The census now carries a **bounded** proposal step (half a metre in 5 cm steps,
+three axes, same clearance, same room). For `ActivityElement_4` in `c002`:
+**move 0.10 m back along its own facing**, to `(-17.00, 2.20, 29.10)`.
+**Reported, not applied** — it moves an element in a shipping Zone's generation.
+`godot-target-facing` stays in `NOT_A_SUITE` until it lands.
+
+### What this checkpoint does NOT do
+
+- **H1/H2 enemy variety** — separate explicit workstream, untouched.
+- **The rest of the Amalgam Status catalogue** — 11 kinds named and
+  unsupported; `lightened` crossed on ONE target.
+- **EX50-011 / EX50-021 / EX50-033 remain playable development scenarios.**
+  Their interlocks, campaign integration and save requirements are not
+  discharged by their route tests.
+- No save migration, AP guarantee, economy decision or production default
+  change. Review snapshot, 0.3 comparison and original saves untouched.
+  Scheduled work stays off.
+
+
 ## 2026-09-21 (engine) — EX50-033: the property distinction, and the Status that is missing
 
 Same 0.4 line, same draft PR #12. The ledger's open question about EX50-033 is

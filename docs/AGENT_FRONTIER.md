@@ -1,5 +1,118 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the Unweighted Switch stands, and the boundary caught a lie — 2026-09-21
+
+**EX50-033 is a room you can walk.** `make godot-unweighted`, **61 checks**, in
+CI. `--unweighted` builds it; `--disconnected` is §11's control.
+
+The contradiction is real and measured: the upper sill at **1.9 m** is above a
+baseline jump from the floor (apex **1.333 m**, from generated `Constants`) and
+**0.433 m** inside one from the crate top at 1.0 m. The 200 kg crate is the only
+step; the recess floor it must stand in is a HEAVY `ClassPlate` wired to the
+shutter through a NOT. Placing the step you need closes the route you want.
+
+**`lightened` resolves it by moving the class and not the kilograms**, through
+the real path — `ManipulableBody.apply_status` into a `StatusEffects` at target
+kind `object`, refused at the engine's own boundary if the runtime does not
+implement the pair. No stand-in, no room-local vocabulary.
+
+| measured in the room, on its own crate | before | while `lightened` |
+|---|---|---|
+| kilograms | 200.0 | **200.0** |
+| mass class | HEAVY | **MEDIUM** |
+| crate top | 0.99 m | **0.99 m**, ray still stops on it |
+| one impulse | 0.1957 m/s | **0.3913 m/s** (x2.00) |
+| plate, nothing having moved | satisfied | **released** |
+| shutter | shut | **open** |
+
+**And then it expires**, which is the half a room that only measured the opening
+would never have found: at 8.0 s the class returns, the plate re-satisfies with
+nothing having moved, and the shutter shuts again. That is why the bolt exists,
+and the suite shows it outlasting the Status — crossing still open, return stair
+still built, after the same expiry that shut the unbolted door.
+
+The route is **walked**: drive lever, shot applicator (line of sight asserted,
+not assumed), climb — feet settled at 0.99 m on the crate top — crossing at
+z 7.02, bolt, goal.
+
+### F-20 — the support table under-declared what the engine implements
+
+`SUPPORTED_STATUS_TARGETS["vulnerable"]` said `("enemy",)`. The engine
+implements it **twice**: `stat_stack.gd:93` multiplies the PLAYER's
+`damage_taken`, `enemy.gd:434` multiplies the enemy's. Invisible while support
+was asked per KIND; asking per TARGET turned `godot-stats` red on three cases,
+including the cleanse order's own "`vulnerable`, which the player does suffer".
+
+**Declared to match the runtime, not the other way about.** A target the engine
+implements may not be refused, exactly as one it does not may not be allowed.
+Reverting the row alone brings all three failures back.
+
+The acceptance sweep was the weaker shape of the question — one `self` container
+against `ECHO_STATUS_KINDS_IMPLEMENTED`, which only ever asked whether a kind
+was accepted *somewhere*. It now sweeps 13 kinds across all five §15.1 targets
+and asks both halves: accepted where declared; elsewhere no entry, no active
+state, no `status_applied`.
+
+### One export of the pair, not two
+
+Dess exported the same map as `ECHO_STATUS_SUPPORTED_TARGETS` (`c0d5446`) while
+this lane exported it as `ECHO_STATUS_TARGETS` (`fb11161`) — she branched before
+mine landed. The merge **collapses them**; hers stands (her lane, her file, and
+`SUPPORTED` is what the map is) and the three engine consumers are renamed onto
+it. Two spellings of one fact is the thing this repository keeps uncreating.
+
+### Target facing: 1 of 27 open, and the nudge is measured
+
+`e13e7e0` took 7 wrong-facing targets to **1**. The survivor is
+`ActivityElement_4` in `c002` at `(-17.1, 2.2, 29.1)`, facing -X, blocked at
+**1.90 m** against a 2.0 m window — **10 cm short** — with a wall 1.25 m behind.
+
+Per the owner's direction, the census now reports a **bounded** proposal rather
+than searching: half a metre of travel in 5 cm steps, along the facing axis and
+the two perpendiculars, at the *same* clearance every other target is held to,
+rejecting any candidate that is not standing in open air or leaves the room.
+
+> **PROPOSAL: move 0.10 m back along its own facing**, to
+> `(-17.00, 2.20, 29.10)` — same room, same 2.0 m clearance, no rotation.
+
+The wall behind goes 1.25 m → 1.15 m and the target is unmounted, so it owes
+nothing back there. **Measured and reported, not applied**: it moves an element
+in a shipping Zone's generation and ripples into the placement fixtures, so it
+waits on the owner's word. `godot-target-facing` stays out of CI until it lands.
+
+**FULL FRONTIER GREEN at `cf70a98`, on a frozen tree** (`git diff --stat HEAD`
+empty at the start of the run): Python **1597 passed, 5 skipped**, and **30
+Godot suites** — boot, test, hud, rules, stats, lab, affordance, verbs, blink,
+content, activity, room, room-contract, graphs, movement, zone-audit, legible,
+physics, traverse, return-placement, build-failure, exit-reach, passenger-carry,
+rail-carrier, rail-junction, passing-platforms, counterfire, mass-class,
+**unweighted**, reload.
+
+The run was made in a separate `git worktree` at that commit so the main tree
+stayed free for the documents. **The first attempt reported all thirty suites
+FAILED and none of it was gameplay evidence**: `godot-bin/godot` is untracked
+and lives only in the main checkout, so `make godot-import` could not find a
+binary. Linking it and re-running gave the result above. An infrastructure
+failure that looks exactly like thirty broken suites is worth writing down.
+
+The only file the run itself changed is
+`godot/tests/fixtures/placement/captures.json`, and only its own
+`source_commit` stamp — the census re-attesting which commit produced it. That
+stamp is carried into the checkpoint rather than reverted.
+
+`godot-target-facing` is not in that list and is not a gate; it still reports
+its one open case, now with the measured proposal above.
+
+### Still open, and not touched by this checkpoint
+
+- **H1/H2 enemy variety** — a separate workstream on the recovered roster.
+- **The rest of the Amalgam Status catalogue** — 11 kinds named and unsupported;
+  `lightened` crossed on ONE target and the other four still refuse it.
+- **EX50-011 / EX50-021 / EX50-033 are playable development scenarios.** Their
+  interlocks, campaign integration and save requirements are not discharged by
+  their route tests and remain open rows.
+
+
 ## ENGINE LANE — EX50-033: class is not kilograms, and the Status is missing — 2026-09-21
 
 **The ledger's open question is answered, and the answer is "neither".** The

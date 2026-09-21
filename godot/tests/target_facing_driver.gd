@@ -121,6 +121,7 @@ func _run() -> void:
 		print("    %s" % line)
 		if not ok:
 			wrong.append(line)
+			_propose(space, controller, t, at, face)
 
 	print("  MOUNTED: %d of %d target(s) claim a wall"
 			% [mounted, targets.size()])
@@ -134,6 +135,78 @@ func _run() -> void:
 		print("GODOT TARGET FACING FAILED (%d of %d checks)"
 				% [_failures, _checks])
 	get_tree().quit(1 if _failures > 0 else 0)
+
+
+## THE SMALLEST SAME-ROOM NUDGE that would give this target somewhere to
+## shoot it from -- reported, never applied.
+##
+## Owner direction, 2026-09-21: when rotation alone cannot solve a named
+## placement, the answer is "the smallest same-room placement correction
+## rather than another unbounded rotation search or a reduced clearance
+## threshold". So this is a BOUNDED ladder, not a search: half-metre of
+## travel in five-centimetre steps, along the target's own facing axis
+## and the two perpendiculars, at the SAME clearance every other target
+## is held to. If nothing inside that box works, it says so and proposes
+## nothing -- which is a different finding and belongs to whoever placed
+## the room, not to this threshold.
+##
+## A candidate has to survive two questions, because a target shoved
+## into the wall behind it has "clear room in front" for the worst
+## possible reason:
+##   AHEAD    `CLEAR_AHEAD` of nothing, exactly as the census asks.
+##   STANDING the new origin is not inside anything, probed short in all
+##            four horizontal directions.
+const NUDGE_STEP := 0.05
+const NUDGE_LIMIT := 0.50
+## Enough to catch an origin buried in a solid without tripping on the
+## neighbour the target is meant to sit beside.
+const NUDGE_CLEAR := 0.22
+
+func _propose(space: PhysicsDirectSpaceState3D, controller: ZoneController,
+		t: Node3D, at: Vector3, face: Vector3) -> void:
+	var side := Vector3(-face.z, 0.0, face.x).normalized()
+	var ways: Array = [
+		["back along its own facing", -face],
+		["forward along its own facing", face],
+		["sideways", side],
+		["sideways", -side]]
+	var best_label := ""
+	var best_at := Vector3.ZERO
+	var best_far := NUDGE_LIMIT + 1.0
+	var steps := int(NUDGE_LIMIT / NUDGE_STEP)
+	for way: Array in ways:
+		for i in range(1, steps + 1):
+			var far := float(i) * NUDGE_STEP
+			if far >= best_far:
+				break
+			var here: Vector3 = at + (way[1] as Vector3) * far
+			if not _probe(space, here, face, 0.1, CLEAR_AHEAD, t).is_empty():
+				continue
+			if not _standing_clear(space, here, t):
+				continue
+			if _room_of(controller, here) != _room_of(controller, at):
+				continue
+			best_far = far
+			best_at = here
+			best_label = str(way[0])
+			break
+	if best_label == "":
+		print("      PROPOSAL: none within %.2f m in four directions -- "
+				% NUDGE_LIMIT + "this is a room question, not a nudge")
+		return
+	print("      PROPOSAL: move %.2f m %s, to %.2f,%.2f,%.2f (same room, "
+			% [best_far, best_label, best_at.x, best_at.y, best_at.z]
+			+ "same %.1f m clearance, no rotation)" % CLEAR_AHEAD)
+
+
+## Is this origin standing in open air rather than inside something?
+func _standing_clear(space: PhysicsDirectSpaceState3D, here: Vector3,
+		own: Node3D) -> bool:
+	for dir: Vector3 in [Vector3.LEFT, Vector3.RIGHT,
+			Vector3.FORWARD, Vector3.BACK]:
+		if not _probe(space, here, dir, 0.0, NUDGE_CLEAR, own).is_empty():
+			return false
+	return true
 
 
 ## WHICH ROOM A TARGET IS IN, so a finding is somewhere a player can be

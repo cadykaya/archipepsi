@@ -39,7 +39,7 @@
 | Lane | Owner | Accepted? | Blocking |
 |---|---|---|---|
 | Engine / integration | Prod (this session) | yes | — |
-| Bridge / design (D-1..D-7) | Dess | **accepted 2026-09-21** | D-7 blocked on an owner choice of status model (F-16); D-1/D-2/D-3 in progress |
+| Bridge / design (D-1..D-7) | Dess | **accepted 2026-09-21** | F-16 is decided (owner: model **B2**) and D-7 is no longer blocked: `SUPPORTED_STATUS_TARGETS` is the per-kind-per-target declaration, exported to the engine as `ECHO_STATUS_SUPPORTED_TARGETS` (`c0d5446`), and the Godot application boundary refuses the PAIR. `lightened` has crossed on `object` only. RailNetwork landed at `704f379`. See F-21 on collapsing the duplicate export |
 | 3D models | Arty | **not accepted — asset brief prepared only** | Final visual verdict only; blockout ships first |
 
 ## Task statuses
@@ -93,8 +93,8 @@
 | E-033-sensor | A plate that reads mass CLASS and never sums: §8's "Optional debris cannot accumulate into HEAVY on this semantic plate" | `EX50-033.md` §3, §8 | E-033-answer | `class_plate.gd` | **verified** | this batch | `make godot-mass-class`, in CI. 300 kg of MEDIUM debris does not make a HEAVY plate, while the same mass holds a 120 kg summed threshold. The player is excluded by name, per §3 |
 | E-033-control | §10's **decisive negative control**: the class plate against a summed-kilogram sensor, same crate, same kilograms | `EX50-033.md` §10 | E-033-sensor | `mass_class_driver.gd` | **verified** | this batch | the summed sensor is not written for the occasion — it is `PoweredLink`, the one that already ships. Class HEAVY→MEDIUM releases the class plate; the summed sensor reads 200 kg before and after. **And the converse**: 50 kg off the crate moves the summed reading and not the class, which is §6's "A mass-field ability that changes kilograms without changing the plate's semantic class may not release the plate" |
 | E-033-step | §10's "verify that the same object remains collidable while the plate's output changes" | `EX50-033.md` §10 | E-033-control | `mass_class_driver.gd` | **verified** | this batch | a body dropped on the lightened crate comes to rest on its top, and the crate has not moved, shrunk or fallen |
-| E-033-status | The `lightened` Status itself | `EX50-033.md` §3, Design 5 §15.2 | **D-7 (Dess) / B3** | — | **not started — blocked** | — | F-15. `StatusEffects.apply` refuses any kind outside the closed, GENERATED `Constants.ECHO_STATUS_KINDS`, and `lightened` is not among its twelve. What lowers the class in the suite is `ManipulableBody.shift_class_provisionally`, named so it cannot be mistaken for the Status, and every claim measured through it says so |
-| E-033-room | The room: recess, sill, guide track, service drive, far bolt, return stair | `EX50-033.md` §2, §4, §5 | E-033-status | — | **not started** | — | deliberately. §10 orders the work — "Before building a platform room, verify that the same object remains collidable while the plate's output changes" — and the verification is done. Building the room around a provisional stand-in for its central Status would be the coherent proposal dressed as evidence this ledger exists to prevent |
+| E-033-status | The `lightened` Status itself | `EX50-033.md` §3, Design 5 §15.2 | D-7 (Dess) | `manipulable_body.gd`, `status_effects.gd`, `echo.py` | **verified** | this batch | F-15 is answered and F-18 is closed. `ManipulableBody` carries a real `StatusEffects` whose target kind is `object`; `lightened: ("object",)` is declared in `SUPPORTED_STATUS_TARGETS` in the same change that landed the effects, per that table's own rule. `shift_class_provisionally` is gone. All four approved effects: class down one step, incoming impulse x2.0 (a continuous force deliberately unscaled), influence volumes reaching it, manipulation eligibility reading the class |
+| E-033-room | The room: recess, sill, guide track, service drive, far bolt, return stair | `EX50-033.md` §2, §4, §5 | E-033-status | `unweighted_switch.gd`, `unweighted_driver.gd` | **verified** | this batch | `make godot-unweighted`, 61 checks, in CI. Sill 1.9 m: above a baseline jump from the floor (apex 1.333 m) and 0.433 m inside one from the 1.0 m crate top. Exercised through a real expiry: class returns, plate re-satisfies with nothing having moved, shutter shuts, and the bolt outlasts it. `--disconnected` is §11's control and shows the expected response failing. The route is walked end to end. **A playable development scenario** — its interlocks, campaign integration and save requirements are NOT discharged by this row |
 
 ## ~~Not in the repository, and needed before M3 content~~ — SUPERSEDED
 
@@ -724,6 +724,96 @@ tick. The suite keeps measuring; the remaining case is named here.
 suites sharing the Zone-1 fixture — are green, so the mount contract and the
 never-drop-an-element rule survived the change.
 
+**The placement correction, measured and proposed — 2026-09-21.** Owner
+direction: "propose the smallest same-room placement correction rather than
+another unbounded rotation search or a reduced clearance threshold." So the
+census now carries a **bounded** proposal step, which runs only for an element
+that failed: half a metre of travel in 5 cm steps, along the element's own
+facing axis and the two perpendiculars, judged at the *same* `CLEAR_AHEAD`
+every other target is held to, rejecting any candidate whose new origin is not
+standing in open air or which leaves the room.
+
+> `ActivityElement_4` in `c002` — **PROPOSAL: move 0.10 m back along its own
+> facing**, from `(-17.10, 2.20, 29.10)` to `(-17.00, 2.20, 29.10)`. Same room,
+> same 2.0 m clearance, no rotation.
+
+Two steps of the ladder: 0.05 m is still short, 0.10 m clears. The wall behind
+goes 1.25 m → 1.15 m, and the element is **unmounted**, so it owes nothing back
+there — the BACK contract is only asked of targets claiming a mount.
+
+**Reported, not applied.** It moves an element in a shipping Zone's generation
+and would ripple into the placement fixtures and the zone-audit captures, so it
+waits on the owner's word rather than being taken as read. `godot-target-facing`
+stays in `NOT_A_SUITE` until it lands; the entry's text is corrected to say 1 of
+27 rather than the stale 7 of 27 it still claimed after `e13e7e0`.
+
+
+### F-20 — the support table under-declared what the engine implements
+
+`SUPPORTED_STATUS_TARGETS["vulnerable"]` read `("enemy",)`. The engine
+implements it **twice**: `stat_stack.gd:93` multiplies the PLAYER's
+`damage_taken` by its magnitude, and `enemy.gd:434` multiplies the enemy's.
+
+**The defect was invisible for a structural reason.** While support was asked
+per KIND, `vulnerable` was supported and that was the whole question. Landing
+the owner's per-TARGET boundary at the Godot application edge asked the second
+half for the first time, and `godot-stats` went red on three cases — two of them
+the player's own `damage_taken` and the cleanse order whose comment says in as
+many words "`vulnerable`, which the player does suffer". The live door into it,
+`rule_runtime.gd:342`, applies to `player.statuses`, whose side is `self`.
+
+**Declared to match the runtime, not the other way about.** A target the engine
+implements may not be refused, exactly as one it does not implement may not be
+allowed. Reverting the one row and regenerating brings all three failures back,
+so the fix is the declaration and not a softened boundary.
+
+**Audited, not spot-fixed.** Every one of the thirteen implemented kinds was
+read against its consumers: `marked` and `stunned` are genuinely enemy-only
+(`enemy.gd:315,336,433,482`, nothing on the player); `low_profile` is correctly
+`self` because `enemy.gd:304` reads the *player's* container; the five
+`("self","enemy")` kinds and the three self buffs all match. `vulnerable` was
+the only wrong row.
+
+**The test that could not see it has been replaced.** It swept
+`ECHO_STATUS_KINDS_IMPLEMENTED` against one `self` container, which asks only
+whether a kind is accepted *somewhere*. It now sweeps all thirteen kinds across
+all five §15.1 target kinds and asks both halves — accepted where declared, and
+elsewhere no entry, no active state and no `status_applied` — plus two anchors
+it cannot derive from the table it reads, naming the runtime lines behind
+`vulnerable` and `lightened`.
+
+**The bridge's own gate tests failed for being out of date**, which is its own
+small finding: they were written when `lightened` was the example of
+named-and-unsupported, so the change that gave it an effect broke them. The
+invariants are kept and the examples move — and the named-but-unsupported sweep
+is now DERIVED from the two lists rather than transcribed, with a guard so an
+empty derivation cannot pass by running nothing. That is the lesson the on-hit
+list in the same file had already learned once.
+
+
+### F-21 — two exports of one map, from two lanes that could not see each other
+
+Dess exported `SUPPORTED_STATUS_TARGETS` to the engine as
+`ECHO_STATUS_SUPPORTED_TARGETS` (`c0d5446`); this lane had exported the same map
+as `ECHO_STATUS_TARGETS` (`fb11161`). She branched from `e13e7e0`, before mine
+landed, so neither was careless — the lanes simply arrived at the same need
+within an hour of each other.
+
+**The merge collapses them rather than keeping both.** Hers stands: the schema
+and its exports are her lane, it is her file, and `SUPPORTED` is what the map
+actually is. The three engine consumers — `status_effects.gd`'s application
+boundary and the two drivers — are renamed onto it. Two spellings of one fact is
+the failure this repository keeps having to uncreate, and it is cheapest to
+uncreate on the day it appears.
+
+**The coordination worked in the end.** Her commit says `lightened` is
+deliberately not declared supported on her side, waiting on this lane reporting
+the effect landed. It had: her control
+`test_the_engine_is_told_which_targets_each_kind_supports` and this lane's
+per-target sweep now check the same map from both ends. She also records F-18
+from her side — widening the vocabulary to twenty-four opened the window where
+`StatusEffects.apply` still guarded on `ECHO_STATUS_KINDS`.
+
 
 ## Full scope and status
 
@@ -761,8 +851,8 @@ not stop at the first blocked row.
 | **G2** | Legacy migration | **deliberately not done** | owner | no old campaign is touched |
 | **G3** | Interruption | **not started** | — | |
 | **G4** | Two unmistakable launch modes, separate saves, printed revision | **partly done** | — | the 0.4 scenarios launch by name and by double-click; the printed revision/provider/scale banner is not done |
-| **H1** | **Enemy variety** — the recorded target is ~20 distinct enemies with meaningful combat roles (`docs/art/ART_REVIEW.md` § "The enemy roster target, recorded") | **3 of 10 declared roles have behaviour** | — | `Constants.ENEMY_ROLES` declares ten — `melee, ranged, brute, charger, bulwark, scuttler, artillery, beacon, diver, drifter` — and `ENEMY_ARCHETYPES` implements **three**. `Enemy.create` branches on those three only; the other seven are names in a generated constant with no runtime behind them. The art lane records the same gap from its side (`docs/art/review/batch008/README.md`: "seven of the ten roles have no collider, and the telegraph has no node in `enemy.gd`") |
-| **H2** | Enemy telegraph as a hangable node | **not started** | — | the ranged archetype has no windup at all (F-14); only the brute telegraphs. Both a gameplay and an art-integration blocker |
+| **H1** | **Enemy variety** — the recorded target is ~20 distinct enemies with meaningful combat roles (`docs/art/ART_REVIEW.md` § "The enemy roster target, recorded") | **3 of 10 declared roles have behaviour — a separate explicit workstream, NOT discharged by the 2026-09-21 Status/room checkpoint, and "no new content roster" does not erase it** | — | `Constants.ENEMY_ROLES` declares ten — `melee, ranged, brute, charger, bulwark, scuttler, artillery, beacon, diver, drifter` — and `ENEMY_ARCHETYPES` implements **three**. `Enemy.create` branches on those three only; the other seven are names in a generated constant with no runtime behind them. The art lane records the same gap from its side (`docs/art/review/batch008/README.md`: "seven of the ten roles have no collider, and the telegraph has no node in `enemy.gd`") |
+| **H2** | Enemy telegraph as a hangable node | **not started — NOT discharged by the 2026-09-21 Status/room checkpoint** | — | the ranged archetype has no windup at all (F-14); only the brute telegraphs. Both a gameplay and an art-integration blocker |
 | **M0** | 0.4 line exists, 0.3 untouched | **verified** | — | |
 | **M1** | One real machine chain | **verified** | — | `M1-zone` (a junction inside a composed Zone) stays blocked on **D-4** |
 | **M2-mech** | Dev-scenario loop, labelled | **verified** | — | |
