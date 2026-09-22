@@ -73,6 +73,15 @@ func _component() -> Dictionary:
 	}
 
 
+## The same supply with a REAL cooldown, for the cancel case: the
+## zero-cooldown one can never produce a press that resolves into
+## nothing, which is the whole situation being tested.
+func _component_with_cooldown() -> Dictionary:
+	var made := _component()
+	made["cooldown"] = 5.0
+	return made
+
+
 ## A snapshot with `spent` charges gone and the supply on Q.
 func _snapshot(spent: int, generation := 1) -> Dictionary:
 	var uses: Array = []
@@ -219,7 +228,8 @@ func _run() -> void:
 	await _a_snapshot_that_has_not_caught_up_releases_nothing()
 	await _a_refill_retires_a_use_still_in_flight()
 	await _a_dropped_report_does_not_make_the_charge_free()
-	await _losing_the_bridge_drops_everything_pending()
+	await _a_disconnect_keeps_what_launched()
+	await _a_cancel_does_not_forget_an_earlier_launch()
 	await _swapping_away_and_back_is_not_a_refill()
 	await _the_menu_shows_an_exhausted_supply_and_what_refills_it()
 	await _a_held_player_does_not_fire_while_the_archive_is_open()
@@ -412,8 +422,8 @@ func _a_refusal_about_another_use_releases_nothing() -> void:
 	# and not about the client having stopped listening. Reaching it
 	# marks it disputed; it never refunds.
 	_refuse(BridgeClient.use_key(COMPONENT, generation, index))
-	_check(bool((BridgeClient._in_flight[COMPONENT] as Dictionary)
-			.get("disputed", false)),
+	_check(bool(((BridgeClient._in_flight[COMPONENT] as Array)[0]
+			as Dictionary).get("disputed", false)),
 			"the exact key marks it disputed")
 	_check(BridgeClient.charges_left(COMPONENT) == 0,
 			"and the charge is STILL spent — disputed is not refunded")
@@ -494,28 +504,93 @@ func _a_dropped_report_does_not_make_the_charge_free() -> void:
 	_check(_refusals == 3, "each is refused as exhausted")
 	BridgeClient.assume_sent = true
 
-	# ...AND THE RESYNC IS AUTHORITATIVE. The engine never recorded any
-	# of it, so its snapshot is the truth and the supply comes back.
-	BridgeClient.online = true
-	BridgeClient._process(DT)                 # the socket is shut: drop
-	_deliver(_snapshot(CHARGES - 1))
-	_check(BridgeClient.charges_left(COMPONENT) == 1,
-			"and a reconnect resyncs to the engine's count, not to ours")
+	# ...AND THE RECONNECT RETRANSMITS RATHER THAN REFUNDING. The engine
+	# never recorded the expenditure, so its count cannot settle it --
+	# reading an unchanged count as "it did not happen" would hand back
+	# a charge whose grenade is in the world. The report goes again.
+	var before := _uses_sent()
+	BridgeClient.online = false
+	BridgeClient.resend_unconfirmed()
+	_check(_uses_sent() == before + 1,
+			"the lost report is sent again, not written off")
+	_check(BridgeClient.charges_left(COMPONENT) == 0,
+			"and the charge stays spent across the disconnect")
+	_deliver(_snapshot(CHARGES))              # the retransmit landed
+	_check(BridgeClient._in_flight.is_empty(),
+			"the snapshot that counts it finally settles it")
 
 
-## NOTHING SURVIVES THE SOCKET. Whether the spend landed is unknowable
-## from here; the snapshot after the reconnect is the authority.
-func _losing_the_bridge_drops_everything_pending() -> void:
-	print("  -- losing the bridge drops everything pending")
+## **THE RESERVATIONS SURVIVE THE SOCKET**, and the old case asserting
+## that they were dropped was asserting a refund.
+##
+## A launched effect whose report was lost cannot be reconciled by the
+## snapshot after the reconnect: the bridge never learned of it, so its
+## count will never move, and treating an unchanged count as proof it
+## did not happen gives back a charge whose grenade is in the world.
+## Clearing a local dictionary is not reconciliation.
+func _a_disconnect_keeps_what_launched() -> void:
+	print("  -- a disconnect keeps launched work; reconnect resends it")
 	await _reset(CHARGES - 1)
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
-	_check(not BridgeClient._in_flight.is_empty(), "one use in flight")
-	BridgeClient.online = true                # as a live session would be
-	BridgeClient._process(DT)                 # ...and the socket is shut
-	_check(BridgeClient._in_flight.is_empty(),
-			"the drop cleared it")
-	_check(not BridgeClient.online, "and the client knows it is offline")
+	_check(not BridgeClient._in_flight.is_empty(), "one reservation held")
+
+	BridgeClient.online = true
+	BridgeClient._process(DT)                 # the socket is shut
+	_check(not BridgeClient.online, "the client knows it is offline")
+	_check(not BridgeClient._in_flight.is_empty(),
+			"and the reservation is STILL HELD — the effect happened")
+	_check(BridgeClient.charges_left(COMPONENT) == 0,
+			"so the charge is still spent")
+
+	var before := _uses_sent()
+	BridgeClient.resend_unconfirmed()
+	_check(_uses_sent() == before + 1,
+			"reconnect retransmits the report the bridge never got")
+
+
+## **THE CANCEL MUST NOT FORGET A LAUNCHED USE**, which is what one
+## reservation per component quietly did.
+##
+## Several charges and a real cooldown: launch use 1 with the snapshot
+## still in transit, then press again while the cooldown is running. The
+## second press reserves, `activate()` refuses it, and the cancel that
+## follows used to erase the component's whole entry -- taking use 1's
+## launched expenditure with it. One grenade in the world, and a count
+## that said nothing had been spent.
+func _a_cancel_does_not_forget_an_earlier_launch() -> void:
+	print("  -- cancel during cooldown keeps the launched use")
+	await _reset()                            # three charges, none spent
+	var runtime: EchoRuntime = _player.runtimes["consumable"]
+	runtime.set_equipped(_component_with_cooldown())
+
+	_player.press_slot("consumable")           # USE 1: launches
+	await get_tree().physics_frame
+	_check(_effects == 1, "use 1 launched")
+	_check(BridgeClient.charges_left(COMPONENT) == CHARGES - 1,
+			"and cost a charge (%d left)"
+			% BridgeClient.charges_left(COMPONENT))
+	_check(_uses_sent() == 1, "and was reported")
+
+	# NO SNAPSHOT YET. The engine has not answered, so use 1 is still
+	# outstanding when the second press arrives.
+	_player.press_slot("consumable")           # USE 2: refused on cooldown
+	await get_tree().physics_frame
+	_check(_effects == 1, "the cooldown press launched nothing")
+	_check(_uses_sent() == 1, "and reported nothing")
+	_check(BridgeClient.charges_left(COMPONENT) == CHARGES - 1,
+			"AND USE 1 IS STILL SPENT (%d left, expected %d)"
+			% [BridgeClient.charges_left(COMPONENT), CHARGES - 1])
+
+	# ...and the cancelled attempt really was cancelled: once the
+	# cooldown clears, the next press is use 2 and not use 3.
+	runtime.reset_cooldown()
+	_player.press_slot("consumable")
+	await get_tree().physics_frame
+	_check(_effects == 2, "the next press launches")
+	_check(int(_last_use().get("use_index", 0)) == 2,
+			"as use 2 — the cancelled attempt consumed no index, got %d"
+			% int(_last_use().get("use_index", 0)))
 
 
 # ---------------------------------------------------------------------------

@@ -553,3 +553,46 @@ class TestAuthoritativeExpenditure:
                                      [(1, gen), (2, gen), (3, gen), (4, gen)])
         assert spent == 3, "four presses spent %d charges" % spent
         assert save.slots.consumable == "act_nade", "and it stays equipped"
+
+    def test_a_lost_report_retransmitted_is_still_one_expenditure(self):
+        """**THE WHOLE SEQUENCE: launch, lost report, reconnect, resume,
+        and another use.**
+
+        The client fires, the report never reaches the bridge, the
+        socket drops, the client reconnects and RETRANSMITS. That retry
+        is the only thing that can settle the expenditure -- the engine's
+        count was never moved, so no snapshot could have reconciled it --
+        and the retry must be worth exactly one charge however many
+        copies arrive.
+
+        Counted against the supply the engine authorized, not against
+        what the client deducted or how many frames it sent.
+        """
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        gen = save.consumable_generation
+        # The lost report is simply one that never arrives: nothing is
+        # applied, and the engine's count does not move.
+        assert save.charges_left("act_nade") == 3
+
+        # RECONNECT: the client retransmits use 1, twice over, because a
+        # client that is unsure sends again rather than guessing.
+        spent, save = self._accepted(save, [(1, gen), (1, gen)])
+        assert spent == 1, "the retransmitted report spent %d" % spent
+
+        # RESUME: the next ordinary press is use 2, and lands.
+        spent2, save = self._accepted(save, [(2, gen)])
+        assert spent2 == 1
+        assert save.charges_left("act_nade") == 1, (
+            "two effects, two charges, however many messages it took")
+
+    def test_a_cancelled_attempt_consumes_no_index(self):
+        """A press that resolved into nothing sends nothing, so the
+        engine never sees an index for it and the NEXT real use is the
+        next index due. If a cancelled attempt had burned an index, the
+        following use would arrive as 3 against a `spent` of 1 and be
+        refused -- the player would lose a charge to a cooldown."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        gen = save.consumable_generation
+        spent, save = self._accepted(save, [(1, gen), (2, gen)])
+        assert spent == 2, "two real uses spent %d" % spent
+        assert save.charges_left("act_nade") == 1

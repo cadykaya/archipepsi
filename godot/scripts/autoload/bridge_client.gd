@@ -60,18 +60,25 @@ func _process(delta: float) -> void:
 			_retry_delay = 0.5
 			bridge_state_changed.emit(true)
 			send_intent({"type": "hello", "client_version": "0.1.0"})
+			# THE REPORTS THAT NEVER ARRIVED, sent again. A launched
+			# effect the bridge never heard about cannot be settled by
+			# the snapshot that follows -- the count it would be checked
+			# against was never moved -- so this is the only thing that
+			# can resolve it.
+			resend_unconfirmed()
 		while _socket.get_available_packet_count() > 0:
 			_handle(_socket.get_packet().get_string_from_utf8())
 	elif state == WebSocketPeer.STATE_CLOSED:
 		if online:
 			online = false
-			# NOTHING SURVIVES THE SOCKET. A spend in flight when the
-			# connection dropped either landed or did not, and this
-			# client cannot tell which -- but the snapshot that arrives
-			# after the reconnect is the authority either way, and
-			# holding a stale subtraction against it would misreport the
-			# count until the next refill.
-			_in_flight.clear()
+			# **THE RESERVATIONS SURVIVE THE SOCKET, and the previous
+			# version clearing them here was the defect.** A launched
+			# effect whose report was lost cannot be reconciled by the
+			# snapshot after the reconnect: the bridge never learned of
+			# the expenditure, so its count will never move, and reading
+			# an unchanged count as "it did not happen" refunds work
+			# that did. Dropping a local dictionary is not
+			# reconciliation. They are retransmitted on reconnect.
 			bridge_state_changed.emit(false)
 		if _was_connecting:
 			_was_connecting = false
@@ -335,35 +342,62 @@ func slotted_action(slot := "echo_a") -> Dictionary:
 		return {}
 	return owned_component(str(id)).get("component", {})
 
-#: USES SENT AND NOT YET RESOLVED, per component:
-#: `{component_id: {"generation": int, "index": int}}`. One at a time,
-#: because a second press is gated on the count this already reduces.
+#: RESERVATIONS HELD AGAINST A CONSUMABLE, as
+#: `{component_id: [{generation, index, launched, disputed}, ...]}`.
 #:
-#: **The generation is half the key.** Without it a pending use survives
+#: **A LIST, AND THE LIST IS THE SECOND CORRECTION.** This held ONE
+#: reservation per component, and that quietly lost launched work:
+#: with several charges and a real cooldown, launching use 1 and then
+#: pressing again during the cooldown made `reserve_consumable`
+#: OVERWRITE use 1's entry with use 2's, and the cancel that followed
+#: the refused press erased the pair. One grenade in the world, and the
+#: count said nothing had been spent.
+#:
+#: So a cancel now removes exactly the attempt it is cancelling, and
+#: only if that attempt never launched. Earlier launched expenditures
+#: are not the cancel's business.
+#:
+#: `launched` is what separates the two: false means `activate()` has
+#: not yet been reached or returned early, true means the effect is in
+#: the world and the charge is spent whatever anyone says afterwards.
+#: `disputed` means the engine refused the report — the expenditure
+#: still happened, and the mark only stops the client waiting for a
+#: `spent` that will never arrive.
+#:
+#: **The generation is half the key.** Without it a reservation survives
 #: a refill and goes on subtracting from the new supply, and a refusal
 #: cannot be told from one belonging to an older press.
 #:
-#: Resolved by exactly four things: a failed send (never recorded), a
-#: refusal whose `about` matches (`_release_refused`), a snapshot under
-#: the same generation whose `spent` has reached the index, or a
-#: snapshot under a different one (`_settle_in_flight`). Reconnect
-#: clears the lot.
+#: Settled by: a snapshot under a different generation (the supply was
+#: replaced), a snapshot whose `spent` has reached the index (it landed),
+#: or a cancel before launch. A refusal marks rather than settles.
 #:
-#: **RESIDUAL, stated rather than hidden:** a request that is neither
-#: applied nor refused -- a frame lost in flight -- matches none of
-#: those. It clears on the next reconnect, on the next refill, or when a
-#: later use advances `spent` past it. Until then the count under-reports
-#: by one, which is the conservative direction: it can refuse a press
-#: the engine would have allowed, and it can never permit a second
-#: effect. No timeout, because a timeout would be a guess about the
-#: network dressed up as a fact about the protocol.
-#:
-#: A snapshot is a round trip away, so two fast presses would both see
-#: the same remaining count and both fire. The engine refuses the second
-#: spend -- `use_index` is a compare-and-swap -- but the refusal comes
-#: back long after the grenade has already left the hand. So the count
-#: this client shows and gates on subtracts what is in flight.
+#: **Not cleared on a disconnect.** An effect that launched and whose
+#: report never arrived cannot be reconciled by a later snapshot,
+#: because the bridge never learned of it — so dropping the reservation
+#: there is not reconciliation, it is a refund of work that happened.
+#: They are RETRANSMITTED on reconnect instead, which the engine's
+#: (generation, index) compare-and-swap makes idempotent: a report that
+#: already landed is refused as a duplicate, and one that never arrived
+#: applies.
 var _in_flight: Dictionary = {}
+
+
+## Reservations held for a component, newest last. Never null.
+func _held(component_id: String) -> Array:
+	var list: Variant = _in_flight.get(component_id)
+	return list if list is Array else []
+
+
+## How many of a component's reservations the engine has NOT yet counted.
+## Those are the ones the displayed count has to subtract; one whose
+## index the engine's `spent` has already passed is in the snapshot.
+func _outstanding(component_id: String, spent: int) -> int:
+	var n := 0
+	for raw: Variant in _held(component_id):
+		if int((raw as Dictionary).get("index", 0)) > spent:
+			n += 1
+	return n
 
 
 ## The domain key of one spend, matching what the bridge puts in
@@ -377,67 +411,96 @@ static func use_key(component_id: String, generation: int,
 
 ## RESERVE A CHARGE, BEFORE ANYTHING IRREVERSIBLE HAPPENS.
 ##
-## **THE ORDER IS THE WHOLE CORRECTION.** This used to be one call that
-## fired after `EchoRuntime.action_used`: the effect launched, and THEN
-## the client tried to pay for it. Two things fell out of that and both
-## were asserted as correct:
-##
-##   A FAILED SEND RAN THE EFFECT AND CHARGED NOTHING. Offline, the
-##   grenade left the hand, the intent was dropped, and the count was
-##   untouched -- an unpaid activation, repeatable for as long as the
-##   bridge stayed down.
-##   A REFUSAL REFUNDED A CHARGE WHOSE EFFECT HAD ALREADY HAPPENED, and
-##   the refund was spendable. One charge, two activations.
-##
-## Not replaying the effect on a refusal is necessary and it is not
-## sufficient. So the charge is taken FIRST, locally, and the effect is
-## only allowed to run against a reservation that succeeded.
+## **THE ORDER IS THE FIRST CORRECTION.** This used to run after
+## `EchoRuntime.action_used`: the effect launched, and THEN the client
+## tried to pay for it. An offline press ran an unpaid activation, and a
+## refusal refunded a charge whose effect was already in the world.
 ##
 ## Returns the reservation, or `{}` when there is nothing left to
-## reserve — and `{}` means the press may not fire.
+## reserve — and `{}` means the press may not fire. It APPENDS, so a
+## second reservation taken while a first is outstanding is a second
+## charge and not a replacement for the first.
 func reserve_consumable(component_id: String) -> Dictionary:
 	if charges_left(component_id) <= 0:
 		return {}
+	var spent := charges_total(component_id) \
+			- _snapshot_charges_left(component_id)
 	var held := {"generation": int(snapshot.get(
 					"consumable_generation", 0)),
-			"index": charges_total(component_id)
-					- charges_left(component_id) + 1,
-			"disputed": false}
-	_in_flight[component_id] = held
+			"index": spent + _outstanding(component_id, spent) + 1,
+			"launched": false, "disputed": false}
+	var list := _held(component_id)
+	list.append(held)
+	_in_flight[component_id] = list
 	return held
 
 
-## THE PRESS RESOLVED INTO NOTHING, so give the charge back.
+## THE PRESS RESOLVED INTO NOTHING, so give THAT charge back.
 ##
-## **THE ONE REFUND THERE IS, and it is a PRE-LAUNCH refund.** `activate()`
-## returns early on a cooldown, an unmet condition and a closed gate;
-## none of those put anything in the world, so none of them has been paid
-## for. Nothing has been sent at this point either, which is what makes
-## the refund safe: there is no message for the engine to accept later.
+## **EXACTLY THE ATTEMPT BEING CANCELLED, and only if it never
+## launched.** `activate()` returns early on a cooldown, an unmet
+## condition and a closed gate; none of those put anything in the world,
+## and nothing has been sent for them either, which is what makes the
+## refund safe.
+##
+## It used to erase the component's whole entry, which with one entry
+## per component meant a cancel could forget an earlier LAUNCHED use.
+## The newest reservation is the one this press took, so that is the one
+## removed — and a launched one is never removed here at all.
 func release_reservation(component_id: String) -> void:
-	_in_flight.erase(component_id)
+	var list := _held(component_id)
+	if list.is_empty():
+		return
+	var last: Dictionary = list[list.size() - 1]
+	if bool(last.get("launched", false)):
+		return                 # already in the world: not a cancel's business
+	list.pop_back()
+	if list.is_empty():
+		_in_flight.erase(component_id)
+	else:
+		_in_flight[component_id] = list
 
 
-## THE EFFECT LAUNCHED. Tell the engine, and keep the charge spent
-## whatever the answer is.
+## THE EFFECT LAUNCHED. Mark the reservation spent for good, and report.
 ##
-## **A FAILED SEND DOES NOT UN-FIRE A GRENADE.** If the socket is shut
-## the engine never hears about this use, and the honest state is a
-## charge the player spent and a campaign that has not recorded it —
-## never a charge they get to spend again. It reconciles on the next
-## authoritative snapshot, which is what `online` going false and the
-## next `hello` are for.
-##
-## Returns whether the report actually went out, for callers that want to
-## say so; the reservation stands either way.
+## **A FAILED SEND DOES NOT UN-FIRE A GRENADE**, and it does not clear
+## the reservation either: the report is retransmitted on reconnect.
+## Returns whether the report went out; the reservation stands regardless.
 func commit_consumable(component_id: String) -> bool:
-	if not _in_flight.has(component_id):
+	var list := _held(component_id)
+	if list.is_empty():
 		return false
-	var held: Dictionary = _in_flight[component_id]
+	var held: Dictionary = list[list.size() - 1]
+	held["launched"] = true
+	list[list.size() - 1] = held
+	_in_flight[component_id] = list
+	return _report(component_id, held)
+
+
+func _report(component_id: String, held: Dictionary) -> bool:
 	return send_intent({"type": "use_consumable",
 			"component_id": component_id,
 			"use_index": int(held["index"]),
 			"generation": int(held["generation"])})
+
+
+## RETRANSMIT EVERY LAUNCHED, UNCONFIRMED REPORT.
+##
+## **This is the reconciliation a cleared dictionary was pretending to
+## be.** A launched effect whose report was lost cannot be reconciled by
+## a later snapshot — the bridge never learned about it, so its count
+## will never move, and waiting is waiting for nothing. Sending again is
+## the only thing that can settle it.
+##
+## Safe to repeat because the engine's transaction is a compare-and-swap
+## on (generation, index): a report that already landed is refused as a
+## duplicate and changes nothing, and one that never arrived applies.
+func resend_unconfirmed() -> void:
+	for component_id: Variant in _in_flight.keys():
+		for raw: Variant in _held(str(component_id)):
+			var held: Dictionary = raw
+			if bool(held.get("launched", false)):
+				_report(str(component_id), held)
 
 
 ## RESOLVE PENDING SPENDS FROM A SNAPSHOT -- and only the two ways a
@@ -461,14 +524,23 @@ func commit_consumable(component_id: String) -> bool:
 func _settle_in_flight() -> void:
 	var generation := int(snapshot.get("consumable_generation", 0))
 	for component_id: Variant in _in_flight.keys():
-		var pending: Dictionary = _in_flight[component_id]
-		if int(pending.get("generation", -1)) != generation:
+		var cid := str(component_id)
+		var spent := charges_total(cid) - _snapshot_charges_left(cid)
+		var kept: Array = []
+		for raw: Variant in _held(cid):
+			var held: Dictionary = raw
+			# RETIRED: the supply was replaced, so this reservation is
+			# about a supply that no longer exists.
+			if int(held.get("generation", -1)) != generation:
+				continue
+			# LANDED: the engine has counted it.
+			if spent >= int(held.get("index", 0)):
+				continue
+			kept.append(held)
+		if kept.is_empty():
 			_in_flight.erase(component_id)
-			continue
-		var spent := charges_total(str(component_id)) \
-				- _snapshot_charges_left(str(component_id))
-		if spent >= int(pending.get("index", 0)):
-			_in_flight.erase(component_id)
+		else:
+			_in_flight[component_id] = kept
 
 
 ## MARK A RESERVATION DISPUTED — and **do not give the charge back**.
@@ -493,12 +565,16 @@ func _release_refused(about: String) -> void:
 	if about.is_empty():
 		return
 	for component_id: Variant in _in_flight.keys():
-		var held: Dictionary = _in_flight[component_id]
-		if use_key(str(component_id), int(held.get("generation", -1)),
-				int(held.get("index", 0))) == about:
-			held["disputed"] = true
-			_in_flight[component_id] = held
-			return
+		var list := _held(str(component_id))
+		for i in list.size():
+			var held: Dictionary = list[i]
+			if use_key(str(component_id),
+					int(held.get("generation", -1)),
+					int(held.get("index", 0))) == about:
+				held["disputed"] = true
+				list[i] = held
+				_in_flight[component_id] = list
+				return
 
 
 func _snapshot_charges_left(component_id: String) -> int:
@@ -532,12 +608,12 @@ func charges_left(component_id: String) -> int:
 	# WHAT THE ENGINE HAS COUNTED, LESS WHAT IS STILL IN FLIGHT. The
 	# second half is why one charge cannot fire twice.
 	var left := _snapshot_charges_left(component_id)
-	if _in_flight.has(component_id):
-		var pending: Dictionary = _in_flight[component_id]
-		var flying := int(pending.get("index", 0))
-		var counted := int(charges) - left
-		left = maxi(left - maxi(flying - counted, 0), 0)
-	return left
+	# EVERY RESERVATION THE ENGINE HAS NOT COUNTED comes off, not just
+	# the newest one. With a list there can be several at once -- two
+	# fast presses inside one round trip are two charges -- and
+	# subtracting only the highest index would let the second fire free.
+	var spent := int(charges) - left
+	return maxi(left - _outstanding(component_id, spent), 0)
 
 ## What it started with, for "2 of 3". Zero when it is not a consumable.
 func charges_total(component_id: String) -> int:
