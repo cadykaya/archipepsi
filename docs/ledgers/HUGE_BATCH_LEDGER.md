@@ -1925,3 +1925,54 @@ exactly what that role is for. A test that transcribes what it checks is
 the defect it was written to catch, so the expectation derives from
 `SUPPORTED_STATUS_TARGETS` now. The two baseline fixtures were
 regenerated from source.
+
+### DESS-08 — P10.5: the count matched by coincidence, and the family is 0/13
+
+**Dess, 2026-09-22.** P10.5 asks for *"a compact matrix covering all
+thirteen effective Statuses against their specified targets"* and warns
+that *"a fixed catalogue count must never hide an incomplete family"*.
+It was hiding one.
+
+**`SUPPORTED_STATUS_TARGETS` has thirteen entries. Amalgam §15.2's
+family has thirteen members. They are not the same thirteen.**
+
+| | |
+|---|---|
+| §15.2's family | `lightened` `anchored` `slippery` · `confused` `turncoat` `blinded` `exposed` · `silenced` `rooted` `phased` · `burning` `conductive` `brittle` |
+| supported today | `lightened` `burning` + eleven retained **ECHOES** kinds (`slowed` `frozen` `shocked` `poisoned` `marked` `stunned` `vulnerable` `empowered` `low_profile` `haste` `regenerating`) |
+| in both | **two** |
+
+**And neither of the two is finished.** `lightened` crossed on `object`
+only (D-7) and is missing `enemy` and `self`; `burning` has `self` and
+`enemy` and is missing `object`, `surface` and `volume`. So **no Status
+in the Amalgam family covers all of its specified targets**, and eleven
+have no support at all.
+
+Nothing here is a regression — the eleven ECHOES kinds are real,
+implemented and used. What was wrong was the impression a matching count
+gives, and the fix is that coverage is now **computed**:
+`AMALGAM_STATUS_TARGETS` is the family as data and
+`amalgam_status_coverage()` returns the missing pairs per Status. The
+control asserts the current gaps exactly and says, in its own message,
+that a row emptying means updating it rather than deleting it.
+
+**The target names are translated, and the translation is declared.**
+P09.4 warns that *"`self` is not automatically every player/actor
+target"*. Design 5 writes actor / object / surface / volume / player;
+the runtime kinds are self / enemy / object / surface / volume. The
+mapping is `player → self` and `actor → enemy`, written down once and
+used nowhere implicitly — so `confused`, an actor-only cognitive effect,
+gets `enemy` and **not** `self`, while `lightened`, listed as actor and
+object and player, gets all three.
+
+**Two rows carry design rules rather than data.** `brittle` is
+object-and-surface only, because it is the one Status that touches a
+damage number and an actor row would put a multiplier on a combatant —
+§15.3 rule 2, and Law 27 behind it. `exposed` is actor-only because
+objects have no Defense stat and an object row would silently invent
+one; §15.2 corrected itself on exactly this point and the catalogue now
+carries the correction instead of the prose alone.
+
+**Not done:** the adapters are Prod's (P10.1–P10.4). The
+`burning`/`poisoned` compatibility decision remains the owner's and
+blocks only its own subset, exactly as the dispatch says.

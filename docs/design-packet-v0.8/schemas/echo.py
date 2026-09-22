@@ -608,6 +608,71 @@ for _k in SUPPORTED_STATUS_TARGETS:
 IMPLEMENTED_STATUS_KINDS: tuple[str, ...] = tuple(SUPPORTED_STATUS_TARGETS)
 
 
+#: P10.5. THE AMALGAM'S THIRTEEN, and the targets §15.2 specifies for
+#: each. Design 5 §15.2's twelve plus `exposed`, restored by §0.4.
+#:
+#: **Why this exists as data.** `SUPPORTED_STATUS_TARGETS` has thirteen
+#: entries and the Amalgam's family has thirteen members, and they are
+#: NOT the same thirteen -- eleven of the supported ones are retained
+#: ECHOES kinds. A count that matches by coincidence is exactly what
+#: P10.5 means by "a fixed catalogue count must never hide an incomplete
+#: family", so the family is written down and the coverage is computed
+#: rather than eyeballed.
+#:
+#: **The target names are TRANSLATED, deliberately** (P09.4: "target
+#: taxonomy aliases must map intentionally; `self` is not automatically
+#: every player/actor target"). Design 5 writes targets as actor /
+#: object / surface / volume / player; §15.1's five runtime kinds are
+#: self / enemy / object / surface / volume. The mapping used here, and
+#: used nowhere implicitly:
+#:
+#:   player -> self     the Status is on the character the player drives
+#:   actor  -> enemy    the Status is on an NPC combatant
+#:
+#: A row listing both `actor` and `player` therefore lists both `self`
+#: and `enemy`, and a row listing only `actor` does NOT get `self`.
+AMALGAM_STATUS_TARGETS: dict[str, tuple[str, ...]] = {
+    # KINETIC
+    "lightened":  ("enemy", "object", "self"),
+    "anchored":   ("enemy", "object", "self"),
+    "slippery":   ("object", "surface", "self"),
+    # COGNITIVE
+    "confused":   ("enemy",),
+    "turncoat":   ("enemy",),
+    "blinded":    ("enemy",),
+    "exposed":    ("enemy",),          # actor only, per §15.2 and §15.3
+    # PERMISSION
+    "silenced":   ("enemy",),
+    "rooted":     ("enemy",),
+    "phased":     ("enemy", "object", "surface", "self"),
+    # MATERIAL
+    "burning":    ("enemy", "object", "surface", "volume", "self"),
+    "conductive": ("enemy", "object", "surface", "self"),
+    "brittle":    ("object", "surface"),   # never an actor -- Law 27
+}
+
+for _k in AMALGAM_STATUS_TARGETS:
+    assert _k in get_args(StatusKind), f"{_k} is in the family but unnamed"
+for _k, _ts in AMALGAM_STATUS_TARGETS.items():
+    for _t in _ts:
+        assert _t in get_args(StatusTarget), f"{_k} names target {_t}"
+assert len(AMALGAM_STATUS_TARGETS) == 13, "§15.2 is thirteen Statuses"
+
+
+def amalgam_status_coverage() -> dict[str, tuple[str, ...]]:
+    """Which §15.2 targets are still unsupported, per Status.
+
+    A row present with an empty tuple is complete. A row absent means
+    the Status has no support at all. Nothing here reports a percentage:
+    the missing pairs are the answer.
+    """
+    gaps: dict[str, tuple[str, ...]] = {}
+    for kind, specified in AMALGAM_STATUS_TARGETS.items():
+        have = set(SUPPORTED_STATUS_TARGETS.get(kind, ()))
+        gaps[kind] = tuple(t for t in specified if t not in have)
+    return gaps
+
+
 def refuse_unsupported_status(kind: str, target: str | None = None) -> None:
     """The ONE gate, used by every path that can start a Status.
 
