@@ -709,12 +709,17 @@ def capability_guarantee(
        can always slot what they own.
     C. ESTABLISHED EARLIER IN THE ZONE -- the caller passes the
        capabilities every route to this point has already been proven to
-       pass through. **Nothing produces that set yet**, and it is
-       deliberately a parameter rather than a lookup so that when a
-       capability-establishment construct exists it plugs in here and
-       every caller inherits it. Passing `()` -- which is what every
-       caller does today -- means "the Zone establishes nothing", which
-       is true.
+       pass through. **`zone.established_in_zone` produces that set**
+       (D-2) and `topology._explore_acquiring` is where it is honoured
+       (P02.1): the capability is not in hand at the Zone door and not
+       in hand on reaching the room, but after the claim -- so the
+       search runs from the entrance without it, and onward from the
+       featured room with it.
+
+       It stays a parameter rather than a lookup, so a caller with a
+       different notion of "already established" can pass its own.
+       Passing `()` still means "the Zone establishes nothing", which is
+       true of every Zone that features no acquisition.
     D. FORGE-CONSTRUCTIBLE -- **not implemented.** It needs Forge access,
        guaranteed ingredients, and a proof that a legal configuration
        satisfying `capability` can be built from them, none of which

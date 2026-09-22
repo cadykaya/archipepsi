@@ -269,14 +269,26 @@ def test_the_return_route_is_searched_not_assumed():
 # fires. A guarantee nothing can falsify is not a guarantee.
 # --------------------------------------------------------------------------
 
-def _featuring(capability: str = "grapple"):
-    """A really composed Zone that grants a capability in an early room."""
+def _featuring(capability: str = "grapple", *, late: bool = False):
+    """A really composed Zone that grants a capability in one of its rooms.
+
+    **Where it sits is the whole case.** Early, the player picks the tool
+    up before reaching any control that needs it, so the arrangement is
+    solvable. Late, the tool sits past the gates it would open: opening
+    the gate needs the tool and reaching the tool needs the gate, which
+    is circular in the Zone's own terms and stays circular however much
+    the multiworld declares -- `capability_guarantee` case C claims "you
+    will be able to do this because you acquire it HERE", and that claim
+    cannot rest on already having it.
+
+    `reward_ids` is a property over `reward_location_id` and the
+    additional ids, so it is read off the MODEL; the dump has the fields
+    it is computed from, not the property.
+    """
     from archipepsi_bridge.schemas.zone import Zone
     z = _recomposed(8)
-    # `reward_ids` is a property over `reward_location_id` and the
-    # additional ids, so it is read off the MODEL; the dump has the
-    # fields it is computed from, not the property.
-    host = next(c for c in z.chambers if c.reward_ids)
+    hosts = [c for c in z.chambers if c.reward_ids]
+    host = hosts[-1] if late else hosts[0]
     raw = z.model_dump()
     raw["featured_acquisition"] = {
         "capability": capability,
@@ -290,36 +302,62 @@ def test_the_composer_reads_the_setters_cost_off_the_featured_acquisition():
     """Correction 2 reaching the composer: if the Zone grants a
     capability, the control it composes is the one you need it for --
     Blindside's gantry, overhead and out of reach."""
-    out = compose_zone_state(_featuring(),
-                             declared_capabilities=["grapple"])
+    out = compose_zone_state(_featuring())
     assert out.emitted, out.note
     assert out.zone.zone_state[0].setter.capability == "grapple"
     assert "needing 'grapple'" in out.note
 
 
-def test_the_composer_declines_when_nothing_could_open_the_gate():
-    """THE CASE THAT MAKES `if reach.ok` DO SOMETHING.
+def test_the_player_picks_the_tool_up_before_the_control_that_needs_it():
+    """The ordering, in the composed arrangement rather than in a rule.
 
-    Same Zone, same relationship, but the capability the control needs
-    is not one the run is guaranteed. The gate would then be a route
-    nothing opens, so the composer must refuse to emit rather than hand
-    the seed out and let the player find it.
+    The acquisition is in an early room and the control that needs it is
+    later, so `_explore_acquiring`'s two phases are what make this Zone
+    solvable at all: without the claim between them the gate never opens.
     """
     out = compose_zone_state(_featuring())
+    order = [c.id for c in out.zone.chambers]
+    acq = order.index(out.zone.featured_acquisition.room_id)
+    setter = order.index(out.zone.zone_state[0].setter.room_id)
+    assert acq <= setter, (
+        f"the tool is in {order[acq]} and the control in {order[setter]}; "
+        "the composer must not put the control before the tool")
+    assert reachability(out.zone).ok
+
+
+def test_the_composer_declines_when_the_tool_sits_past_its_own_gate():
+    """THE CASE THAT MAKES `if reach.ok` DO SOMETHING.
+
+    The capability the control needs is granted by the Zone itself, in a
+    room past every gate the composer would place. Opening the gate needs
+    the tool and reaching the tool needs the gate, so the composer must
+    refuse rather than hand the seed out and let the player find it.
+
+    *Rewritten once.* The first version relied on the capability being
+    unavailable outright, and connecting the acquisition model
+    (`_explore_acquiring`) made it available -- correctly, because the
+    player picks it up. A control that stops holding once the code gets
+    better was measuring the wrong thing.
+    """
+    out = compose_zone_state(_featuring(late=True))
     assert not out.emitted, (
-        "a control needing a capability the run has not got opens no gate; "
-        "emitting it would move the failure to whoever ran the seed")
+        "a control whose tool is behind the control's own gate is "
+        "circular; emitting it would move the failure to whoever ran "
+        "the seed")
     assert "no placement validated" in out.note
     assert out.zone.zone_state == ()
 
 
-def test_the_two_differ_only_in_what_the_run_is_guaranteed():
-    """The pair, side by side, so neither can drift into passing for a
-    reason that has nothing to do with the capability."""
-    zone = _featuring()
-    assert compose_zone_state(zone).emitted is False
+def test_declaring_the_capability_does_not_rescue_a_circular_zone():
+    """The pair, side by side. The difference is WHERE THE TOOL IS, and
+    declaring the capability up front does not change the verdict --
+    case C's claim is that the Zone hands it over, and that claim cannot
+    rest on the player already having it."""
+    late = _featuring(late=True)
+    assert compose_zone_state(late).emitted is False
     assert compose_zone_state(
-        zone, declared_capabilities=["grapple"]).emitted is True
+        late, declared_capabilities=["grapple"]).emitted is False
+    assert compose_zone_state(_featuring()).emitted is True
 
 
 # --------------------------------------------------------------------------
