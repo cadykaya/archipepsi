@@ -191,9 +191,18 @@ func _aim_at(player: Player, target: Node3D) -> void:
 	var to: Vector3 = centre - eye
 	if to.length() < 0.01:
 		return
-	player.camera.global_rotation = Vector3(
-			asin(clampf(to.normalized().y, -1.0, 1.0)),
-			atan2(-to.x, -to.z), 0.0)
+	# **THE BODY, NOT ONLY THE CAMERA.** Strafing is relative to the
+	# PLAYER's yaw, and this used to turn the camera alone -- so
+	# `move_left` walked a fixed world direction while the camera swung
+	# to follow the enemy. The player wandered off instead of circling,
+	# and the bulwark case read that as "the flank does not work". The
+	# same split `counterfire_driver._aim` already gets right: the body
+	# yaws, the camera pitches.
+	player.rotation.y = atan2(-to.x, -to.z)
+	player.camera.rotation.x = atan2(to.y,
+			Vector2(to.x, to.z).length())
+	player.camera.rotation.y = 0.0
+	player.camera.rotation.z = 0.0
 
 
 ## FIGHT UNTIL THE ROOM IS CLEAR, with the base kit and nothing else.
@@ -279,16 +288,34 @@ func _sample_shots() -> void:
 	if scene == null:
 		return
 	var alive: Dictionary = {}
+	var near: Dictionary = {}
+	# HOW CLOSE A SHOT EVER GETS is what separates "it misses" from "it
+	# arrives and nothing happens". Those are different defects: one is
+	# aim or flight, the other is the impact test.
+	var body: Node3D = null
+	for node: Node in get_tree().get_nodes_in_group("player"):
+		body = node as Node3D
+		break
 	for child: Node in scene.get_children():
+		var kind := ""
 		if child.get("speed") != null and child.get("direction") != null:
-			alive["shot"] = int(alive.get("shot", 0)) + 1
+			kind = "shot"
 		elif child.get("target") != null and child.get("seconds") != null \
 				and child.get("origin") != null:
-			alive["shell"] = int(alive.get("shell", 0)) + 1
+			kind = "shell"
+		if kind == "":
+			continue
+		alive[kind] = int(alive.get(kind, 0)) + 1
+		if body != null and child is Node3D:
+			near[kind] = minf(float(near.get(kind, INF)),
+					(child as Node3D).global_position.distance_to(
+							body.global_position))
 	for role: Variant in _tally:
 		var row: Dictionary = _tally[role]
 		var kind := "shell" if str(role) == "artillery" else "shot"
 		row["seen"] = maxi(int(row["seen"]), int(alive.get(kind, 0)))
+		row["nearest"] = minf(float(row.get("nearest", INF)),
+				float(near.get(kind, INF)))
 		_tally[role] = row
 
 
@@ -299,8 +326,11 @@ func _tally_report(controller: ZoneController) -> String:
 	var parts: Array[String] = []
 	for role: Variant in _tally:
 		var row: Dictionary = _tally[role]
-		parts.append("%s launched %d, shots seen %d"
-				% [str(role), int(row["launched"]), int(row["seen"])])
+		var nearest: float = float(row.get("nearest", INF))
+		parts.append("%s launched %d, seen %d, nearest %s"
+				% [str(role), int(row["launched"]), int(row["seen"]),
+					"never measured" if nearest == INF
+					else "%.2f m" % nearest])
 	return ", ".join(parts) + "; player lost %.1f hp" % hurt
 
 
@@ -484,8 +514,9 @@ func _a_bulwark_can_be_flanked_by_moving() -> void:
 	controller._evaluate_objectives()
 	_check(bool(record["satisfied"]),
 			"PLAYED: kill_all is satisfied")
-	_note("bulwark, played: cleared in %.1f s with %.0f of %.0f hp left. "
-			% [float(fight["frames"]) * DT, controller.player.hp, opened]
+	_note("bulwark, played: %s after %.1f s with %.0f of %.0f hp left. "
+			% ["cleared" if int(fight["left"]) == 0 else "NOT cleared",
+				float(fight["frames"]) * DT, controller.player.hp, opened]
 			+ "turn_rate 1.4 rad/s is PROVISIONAL and is the number most "
 			+ "worth playtesting -- too slow is trivial, too fast puts "
 			+ "the wall back.")
