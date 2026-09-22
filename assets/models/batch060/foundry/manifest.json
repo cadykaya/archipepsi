@@ -1,0 +1,248 @@
+{
+  "tp_dm_bank_column": {
+    "anchor": "floor",
+    "batch": "060",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "a column that carries INFORMATION -- card racks with indicator strips, the one column in the set whose job is to be looked AT",
+    "family_runway": "TWO PACKS LEFT. T05 proved two packs sharing a house family read as one place and that different shapes cannot save them. The workaround since has been one unused family per pack. There are six families: temple_ruin (T01, T05), rusted_industrial (T02, T04), neon_transit (T03), concrete_facility (T06). gothic_stone and void_glitch are unused, and 75 packs remain. The workaround runs out at T08 and every pack from T09 must share pixels with an earlier one or wait. See COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_doom_1993",
+    "painted_with": "concrete_facility",
+    "parts": [
+      "dm_bk_plinth",
+      "dm_bk_cap",
+      "dm_bk_rack_0",
+      "dm_bk_strip_0",
+      "dm_bk_rack_1",
+      "dm_bk_strip_1",
+      "dm_bk_rack_2",
+      "dm_bk_strip_2",
+      "dm_bk_rack_3",
+      "dm_bk_strip_3"
+    ],
+    "path": "batch060/foundry/tp_dm_bank_column.glb",
+    "size": [
+      0.74,
+      0.62,
+      3.6
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE UAC TECHBASE, CONTAINMENT LEVEL -- grey-green plate, computer banks, a containment trough with its grating lifted, and the recessed light panels that are the game's real architectural signature",
+    "subtheme_is_a_choice": "DOOM 1993 has three episodes and they are three different places. Hell is the famous half and it is also the half that is TERRAIN -- rock, flesh, fire. The techbase is the architecture.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without.",
+    "theme_hint_says": null,
+    "triangles": 132
+  },
+  "tp_dm_blast_frame": {
+    "anchor": "floor",
+    "batch": "060",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "the opening is dressed as a MARKED blast door, and the chevrons are where this family's accent is spent because a blast door is the significant thing on a containment level",
+    "family_runway": "TWO PACKS LEFT. T05 proved two packs sharing a house family read as one place and that different shapes cannot save them. The workaround since has been one unused family per pack. There are six families: temple_ruin (T01, T05), rusted_industrial (T02, T04), neon_transit (T03), concrete_facility (T06). gothic_stone and void_glitch are unused, and 75 packs remain. The workaround runs out at T08 and every pack from T09 must share pixels with an earlier one or wait. See COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_doom_1993",
+    "painted_with": "concrete_facility",
+    "parts": [
+      "dm_bf_jamb_l",
+      "dm_bf_chevron_l",
+      "dm_bf_jamb_r",
+      "dm_bf_chevron_r",
+      "dm_bf_track"
+    ],
+    "path": "batch060/foundry/tp_dm_blast_frame.glb",
+    "size": [
+      3.08,
+      0.6,
+      3.56
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE UAC TECHBASE, CONTAINMENT LEVEL -- grey-green plate, computer banks, a containment trough with its grating lifted, and the recessed light panels that are the game's real architectural signature",
+    "subtheme_is_a_choice": "DOOM 1993 has three episodes and they are three different places. Hell is the famous half and it is also the half that is TERRAIN -- rock, flesh, fire. The techbase is the architecture.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without.",
+    "theme_hint_says": null,
+    "triangles": 72
+  },
+  "tp_dm_keycard_reader": {
+    "anchor": "floor",
+    "batch": "060",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "batch043's wall-switch contract as a keycard reader: a bevelled slot and a lamp column",
+    "family_runway": "TWO PACKS LEFT. T05 proved two packs sharing a house family read as one place and that different shapes cannot save them. The workaround since has been one unused family per pack. There are six families: temple_ruin (T01, T05), rusted_industrial (T02, T04), neon_transit (T03), concrete_facility (T06). gothic_stone and void_glitch are unused, and 75 packs remain. The workaround runs out at T08 and every pack from T09 must share pixels with an earlier one or wait. See COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_doom_1993",
+    "painted_with": "concrete_facility",
+    "parts": [
+      "dm_kc_bevel",
+      "dm_kc_slot",
+      "dm_kc_lamps",
+      "dm_kc_kick"
+    ],
+    "path": "batch060/foundry/tp_dm_keycard_reader.glb",
+    "size": [
+      0.44,
+      0.175,
+      0.54
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE UAC TECHBASE, CONTAINMENT LEVEL -- grey-green plate, computer banks, a containment trough with its grating lifted, and the recessed light panels that are the game's real architectural signature",
+    "subtheme_is_a_choice": "DOOM 1993 has three episodes and they are three different places. Hell is the famous half and it is also the half that is TERRAIN -- rock, flesh, fire. The techbase is the architecture.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without.",
+    "theme_hint_says": null,
+    "triangles": 60
+  },
+  "tp_dm_light_recess": {
+    "anchor": "floor",
+    "batch": "060",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "the light is a stepped RECESS, not a fitting on a wall; the only pack in the set whose lamp is a hole rather than an object",
+    "family_runway": "TWO PACKS LEFT. T05 proved two packs sharing a house family read as one place and that different shapes cannot save them. The workaround since has been one unused family per pack. There are six families: temple_ruin (T01, T05), rusted_industrial (T02, T04), neon_transit (T03), concrete_facility (T06). gothic_stone and void_glitch are unused, and 75 packs remain. The workaround runs out at T08 and every pack from T09 must share pixels with an earlier one or wait. See COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_doom_1993",
+    "painted_with": "concrete_facility",
+    "parts": [
+      "dm_lr_step_a",
+      "dm_lr_step_b",
+      "dm_lr_panel",
+      "dm_lr_bar"
+    ],
+    "path": "batch060/foundry/tp_dm_light_recess.glb",
+    "size": [
+      1.0,
+      0.34,
+      0.8
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE UAC TECHBASE, CONTAINMENT LEVEL -- grey-green plate, computer banks, a containment trough with its grating lifted, and the recessed light panels that are the game's real architectural signature",
+    "subtheme_is_a_choice": "DOOM 1993 has three episodes and they are three different places. Hell is the famous half and it is also the half that is TERRAIN -- rock, flesh, fire. The techbase is the architecture.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without.",
+    "theme_hint_says": null,
+    "triangles": 60
+  },
+  "tp_dm_screen_wall": {
+    "anchor": "floor",
+    "batch": "060",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "the wall is an INTERFACE, and the hand-run cable LOOPS are the subject: screens are furniture, loops are people solving something",
+    "family_runway": "TWO PACKS LEFT. T05 proved two packs sharing a house family read as one place and that different shapes cannot save them. The workaround since has been one unused family per pack. There are six families: temple_ruin (T01, T05), rusted_industrial (T02, T04), neon_transit (T03), concrete_facility (T06). gothic_stone and void_glitch are unused, and 75 packs remain. The workaround runs out at T08 and every pack from T09 must share pixels with an earlier one or wait. See COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_doom_1993",
+    "painted_with": "concrete_facility",
+    "parts": [
+      "dm_sw_desk",
+      "dm_sw_kick",
+      "dm_sw_screen_0",
+      "dm_sw_screen_1",
+      "dm_sw_screen_2",
+      "dm_sw_cracked",
+      "dm_sw_loop_a",
+      "dm_sw_loop_b"
+    ],
+    "path": "batch060/foundry/tp_dm_screen_wall.glb",
+    "size": [
+      2.16,
+      0.546,
+      3.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE UAC TECHBASE, CONTAINMENT LEVEL -- grey-green plate, computer banks, a containment trough with its grating lifted, and the recessed light panels that are the game's real architectural signature",
+    "subtheme_is_a_choice": "DOOM 1993 has three episodes and they are three different places. Hell is the famous half and it is also the half that is TERRAIN -- rock, flesh, fire. The techbase is the architecture.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without.",
+    "theme_hint_says": null,
+    "triangles": 108
+  },
+  "tp_dm_spill_trough": {
+    "anchor": "floor",
+    "batch": "060",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "floor dressing that CONTAINS something, with its grating dragged off and dropped SKEWED beside it -- a cover somebody took off is an event, a hole is a hole",
+    "family_runway": "TWO PACKS LEFT. T05 proved two packs sharing a house family read as one place and that different shapes cannot save them. The workaround since has been one unused family per pack. There are six families: temple_ruin (T01, T05), rusted_industrial (T02, T04), neon_transit (T03), concrete_facility (T06). gothic_stone and void_glitch are unused, and 75 packs remain. The workaround runs out at T08 and every pack from T09 must share pixels with an earlier one or wait. See COVERAGE.md section 3.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_doom_1993",
+    "painted_with": "concrete_facility",
+    "parts": [
+      "dm_sp_lip_a",
+      "dm_sp_lip_b",
+      "dm_sp_grating",
+      "dm_sp_stain_a",
+      "dm_sp_stain_b"
+    ],
+    "path": "batch060/foundry/tp_dm_spill_trough.glb",
+    "size": [
+      1.769,
+      0.858,
+      0.15
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE UAC TECHBASE, CONTAINMENT LEVEL -- grey-green plate, computer banks, a containment trough with its grating lifted, and the recessed light panels that are the game's real architectural signature",
+    "subtheme_is_a_choice": "DOOM 1993 has three episodes and they are three different places. Hell is the famous half and it is also the half that is TERRAIN -- rock, flesh, fire. The techbase is the architecture.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without.",
+    "theme_hint_says": null,
+    "triangles": 72
+  }
+}

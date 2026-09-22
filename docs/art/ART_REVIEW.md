@@ -4918,6 +4918,77 @@ cameras as T01–T04.
 **Still not complete**, and here the missing material treatment is not one
 line of boilerplate — it is **the finding**.
 
+
+## Batch 060 — T06. DOOM 1993, THE UAC TECHBASE — and the runway has two packs left
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_dm_bank_column` | 132 tris · 0.74 × 0.62 × 3.60 m · 32.0 texels/m | 10 | a column that carries **information** — the one column in the set whose job is to be looked *at* |
+| `tp_dm_screen_wall` | 108 tris · 2.16 × 0.55 × 3.00 m · 32.0 texels/m | 8 | the wall is an **interface**, and the hand-run cable **loops** are the subject: screens are furniture, loops are people solving something |
+| `tp_dm_blast_frame` | 72 tris · 3.08 × 0.60 × 3.56 m · 32.0 texels/m | 5 | the opening dressed as a **marked blast door** — and the chevrons are where this family's `accent` is spent |
+| `tp_dm_spill_trough` | 72 tris · 1.77 × 0.86 × 0.15 m · 32.0 texels/m | 5 | floor dressing that **contains** something, grating dragged off and dropped skewed |
+| `tp_dm_light_recess` | 60 tris · 1.00 × 0.34 × 0.80 m · 32.0 texels/m | 4 | the light is a stepped **recess**, not a fitting on a wall — the only pack whose lamp is a *hole* |
+| `tp_dm_keycard_reader` | 60 tris · 0.44 × 0.17 × 0.54 m · 32.0 texels/m | 4 | Batch 043's wall-switch contract as a **keycard reader** |
+
+**Subtheme chosen and stated: the UAC techbase, containment level.** DOOM
+1993 has three episodes and they are three different places. **Hell is the
+famous half and it is also the half that is terrain** — rock, flesh, fire.
+The techbase is the architecture.
+
+### THE FAMILY RUNWAY HAS TWO PACKS LEFT IN IT
+
+T05 proved two packs sharing a house family read as one place and that
+different shapes cannot save them. The workaround since has been to give
+each pack a family nobody has used. **Count it:**
+
+```
+temple_ruin        T01, T05      already doubled — T05 is the proof
+rusted_industrial  T02, T04      already doubled
+neon_transit       T03
+concrete_facility  T06           ← this one
+gothic_stone       —
+void_glitch        —
+```
+
+**Two families unused. 75 packs behind this one.** The workaround runs out
+at **T08**, and every pack from **T09** must share pixels with an earlier
+one or wait.
+
+**That is a deadline rather than an opinion**, and it is the sharpest form
+the namespace argument has taken in six packs. Recorded in the manifest as
+`family_runway`, so it is data.
+
+### Where the accent is spent, and why that is a rule
+
+`concrete_facility`'s `_concrete_accent` docstring says it: the accent
+marks a thing as **significant**, and *a colour that marks everything marks
+nothing* — a review note this lane already paid for once. So this pack
+spends it on exactly two things: the blast frame's chevrons and the
+keycard reader's lamp column. **The four racks on the bank column do not
+get it**, because four racks on a column are not four significant things.
+
+### Two gates, both routine by now
+
+`assert_parts_touch` caught the hand-run cable loops floating 6 cm off
+anything at 1.30 m. **A cable that touches nothing is not untidy, it is
+floating** — they loop just above the desk now and drop behind it, which
+is also where hand-run cable actually goes.
+
+The no-foothold rule caught the grating **leaned** against the trough
+lip: 0.16 m tall in a 0.72 × 0.47 m footprint, above the 0.12 m walk-up.
+A 0.66 m grating cannot shrink under the 0.35 m plan limit and
+`brushkit.block` only turns about Z, so there is no steep lean to be had.
+**Dragged off and dropped skewed says "somebody took this off" just as
+well**, and the skew is what stops it reading as replaced.
+
+Evidence: `docs/art/review/foundry_2026-09-22/`, same shell, same four
+cameras as T01–T05.
+
+**Still not complete:** no material treatment, no runtime selection, not
+imported, no owner review.
+
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
 
 **All four large shells are `review: "pass"`.** Three authorities had to
