@@ -37,7 +37,8 @@ try:
         MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
-        CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
+        CampaignSave, ConsumableUse, EarnedLocalReward, PendingCheck,
+        ShopState,
         ShopStockItem, ZoneRecord,
     )
     from .zone import Zone
@@ -48,7 +49,8 @@ except ImportError:  # pragma: no cover
         MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
-        CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
+        CampaignSave, ConsumableUse, EarnedLocalReward, PendingCheck,
+        ShopState,
         ShopStockItem, ZoneRecord,
     )
     from zone import Zone
@@ -183,8 +185,15 @@ def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     # the campaign already counted. VISITING is the same experience and
     # different accounting.
     state = "VISITING" if rec.state == "COMPLETE" else "ACTIVE"
+    # CONSUMABLES REFILL ON ENTERING A ZONE (owner decision, 2026-09-22).
+    # Charges are a per-Zone resource rather than a per-campaign one: a
+    # consumable spent for good would leave the slot dead weight for most
+    # of a long run, and the Echo that earned it stops mattering. They
+    # persist WITHIN a Zone -- `consumable_uses` is in the save, so a
+    # reload mid-Zone does not hand the charges back -- and clear here.
     return _rebuild(save,
                     zones=_replace_zone(save, zone_id, state=state),
+                    consumable_uses=(),
                     active_zone_id=zone_id)
 
 
@@ -967,6 +976,40 @@ def slot_action(
     return _rebuild(save, slots=save.slots.with_slot(slot, component_id))
 
 
+def spend_charge(save: CampaignSave, component_id: str) -> CampaignSave:
+    """Spend one use of a consumable. The last one empties the slot.
+
+    **Why the slot empties rather than the button just failing.** A
+    consumable with no charges left that is still sitting on Q is a
+    control that looks live and does nothing, which is the one thing the
+    HUD counter exists to prevent. Clearing it is also what makes the
+    archive able to say SPENT rather than offering an equip button for
+    something that can never fire.
+
+    Refuses rather than saturating. A caller that has lost count should
+    find out here, not by watching the number stay at zero -- and the
+    save's own validator refuses an over-spent record on every path, so
+    this is the polite door onto a rule that holds anyway.
+    """
+    owned = save.derive().by_id(component_id)
+    if owned is None or owned.kind != "action":
+        raise ValueError(f"'{component_id}' is not an owned Action")
+    charges = getattr(owned.component, "charges", None)
+    if charges is None:
+        raise ValueError(f"'{component_id}' is not a consumable")
+    spent = charges - save.charges_left(component_id)
+    if spent >= charges:
+        raise ValueError(
+            f"'{component_id}' has no charges left ({spent} of {charges})")
+    uses = tuple(u for u in save.consumable_uses
+                 if u.component_id != component_id)
+    uses += (ConsumableUse(component_id=component_id, spent=spent + 1),)
+    slots = save.slots
+    if spent + 1 == charges and slots.consumable == component_id:
+        slots = slots.with_slot("consumable", None)
+    return _rebuild(save, consumable_uses=uses, slots=slots)
+
+
 def grant_local_reward(
     save: CampaignSave, reward: EarnedLocalReward
 ) -> CampaignSave:
@@ -1011,6 +1054,7 @@ def grant_local_reward(
 #: Every transition, for the census test. A new one fails the suite until it
 #: is listed — the same shape as the location-field and HubMode censuses.
 TRANSITIONS = (
+    spend_charge,
     start_generation, accept_zone, enter_zone, complete_zone, abandon_zone,
     release_location, claim_zone_check, buy_shop_stock, confirm_check,
     rollback_shop_purchase, restock_shop, append_interpretation,

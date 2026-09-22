@@ -756,7 +756,8 @@
               "echo_a",
               "echo_b",
               "mobility",
-              "utility"
+              "utility",
+              "consumable"
             ],
             "title": "Slot",
             "type": "string"
@@ -827,6 +828,29 @@
           "station_id"
         ],
         "title": "StationReached",
+        "type": "object"
+      },
+      "UseConsumable": {
+        "additionalProperties": false,
+        "description": "Spend one charge of the Action in the consumable slot.\n\nClient-initiated because only the client knows the button was pressed\nand the Action actually fired. It names the component rather than the\nslot so a charge cannot be spent against whatever happens to be\nslotted by the time the message lands.",
+        "properties": {
+          "type": {
+            "const": "use_consumable",
+            "title": "Type",
+            "type": "string"
+          },
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Component Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "component_id"
+        ],
+        "title": "UseConsumable",
         "type": "object"
       },
       "ZoneStateSelected": {
@@ -971,6 +995,7 @@
         "slot_action": "#/$defs/SlotAction",
         "start_mock_campaign": "#/$defs/StartMockCampaign",
         "station_reached": "#/$defs/StationReached",
+        "use_consumable": "#/$defs/UseConsumable",
         "zone_state_selected": "#/$defs/ZoneStateSelected",
         "zone_timing": "#/$defs/ZoneTiming"
       },
@@ -1012,6 +1037,9 @@
       },
       {
         "$ref": "#/$defs/SlotAction"
+      },
+      {
+        "$ref": "#/$defs/UseConsumable"
       },
       {
         "$ref": "#/$defs/GrantLocalReward"
@@ -1086,7 +1114,8 @@
               "echo_a",
               "echo_b",
               "mobility",
-              "utility"
+              "utility",
+              "consumable"
             ],
             "title": "Slot",
             "type": "string"
@@ -1245,6 +1274,20 @@
             "maxItems": 2,
             "title": "Modifiers",
             "type": "array"
+          },
+          "charges": {
+            "anyOf": [
+              {
+                "maximum": 9,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges"
           }
         },
         "required": [
@@ -2155,6 +2198,14 @@
             "title": "Local Rewards",
             "type": "array"
           },
+          "consumable_uses": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ConsumableUse"
+            },
+            "title": "Consumable Uses",
+            "type": "array"
+          },
           "active_zone": {
             "anyOf": [
               {
@@ -2399,6 +2450,30 @@
           "type"
         ],
         "title": "Condition",
+        "type": "object"
+      },
+      "ConsumableUse": {
+        "additionalProperties": false,
+        "description": "How many of a consumable's charges have been spent.\n\n**Persisted, and deliberately not folded.** The fold is over the\ninterpretation log, which says what the campaign was GIVEN; how many\ntimes the player has pressed a button is not in it and cannot be\nderived from it. So this is campaign state, it moves only through\n`transitions.spend_charge`, and it is stored the way\n`local_rewards` is -- a tuple of small records rather than a dict,\nbecause a dict key can disagree with the id inside its value.",
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Component Id",
+            "type": "string"
+          },
+          "spent": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Spent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "component_id",
+          "spent"
+        ],
+        "title": "ConsumableUse",
         "type": "object"
       },
       "CorridorChamber": {
@@ -5176,7 +5251,7 @@
       },
       "SlotAssignment": {
         "additionalProperties": false,
-        "description": "Which owned Action sits in each of the four slots.\n\nFour named fields rather than a dict: the slot grammar belongs to the\ngame, not to generation, so it is structural. Epsilon assigns an Action\na slot *category*; the player chooses which owned Action fills it.\nLMB is not here at all \u2014 Static Pulse is never replaced.",
+        "description": "Which owned Action sits in each of the five slots.\n\nFour named fields rather than a dict: the slot grammar belongs to the\ngame, not to generation, so it is structural. Epsilon assigns an Action\na slot *category*; the player chooses which owned Action fills it.\nLMB is not here at all \u2014 Static Pulse is never replaced.",
         "properties": {
           "echo_a": {
             "anyOf": [
@@ -5229,6 +5304,19 @@
             ],
             "default": null,
             "title": "Utility"
+          },
+          "consumable": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Consumable"
           }
         },
         "title": "SlotAssignment",
@@ -6715,7 +6803,8 @@
               "echo_a",
               "echo_b",
               "mobility",
-              "utility"
+              "utility",
+              "consumable"
             ],
             "title": "Slot",
             "type": "string"
@@ -6874,6 +6963,20 @@
             "maxItems": 2,
             "title": "Modifiers",
             "type": "array"
+          },
+          "charges": {
+            "anyOf": [
+              {
+                "maximum": 9,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges"
           }
         },
         "required": [
@@ -7714,6 +7817,30 @@
           "type"
         ],
         "title": "Condition",
+        "type": "object"
+      },
+      "ConsumableUse": {
+        "additionalProperties": false,
+        "description": "How many of a consumable's charges have been spent.\n\n**Persisted, and deliberately not folded.** The fold is over the\ninterpretation log, which says what the campaign was GIVEN; how many\ntimes the player has pressed a button is not in it and cannot be\nderived from it. So this is campaign state, it moves only through\n`transitions.spend_charge`, and it is stored the way\n`local_rewards` is -- a tuple of small records rather than a dict,\nbecause a dict key can disagree with the id inside its value.",
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Component Id",
+            "type": "string"
+          },
+          "spent": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Spent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "component_id",
+          "spent"
+        ],
+        "title": "ConsumableUse",
         "type": "object"
       },
       "CorridorChamber": {
@@ -10413,7 +10540,7 @@
       },
       "SlotAssignment": {
         "additionalProperties": false,
-        "description": "Which owned Action sits in each of the four slots.\n\nFour named fields rather than a dict: the slot grammar belongs to the\ngame, not to generation, so it is structural. Epsilon assigns an Action\na slot *category*; the player chooses which owned Action fills it.\nLMB is not here at all \u2014 Static Pulse is never replaced.",
+        "description": "Which owned Action sits in each of the five slots.\n\nFour named fields rather than a dict: the slot grammar belongs to the\ngame, not to generation, so it is structural. Epsilon assigns an Action\na slot *category*; the player chooses which owned Action fills it.\nLMB is not here at all \u2014 Static Pulse is never replaced.",
         "properties": {
           "echo_a": {
             "anyOf": [
@@ -10466,6 +10593,19 @@
             ],
             "default": null,
             "title": "Utility"
+          },
+          "consumable": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Consumable"
           }
         },
         "title": "SlotAssignment",
@@ -12008,6 +12148,14 @@
           "$ref": "#/$defs/EarnedLocalReward"
         },
         "title": "Local Rewards",
+        "type": "array"
+      },
+      "consumable_uses": {
+        "default": [],
+        "items": {
+          "$ref": "#/$defs/ConsumableUse"
+        },
+        "title": "Consumable Uses",
         "type": "array"
       },
       "active_zone": {

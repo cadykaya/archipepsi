@@ -37,6 +37,10 @@ const SLOT_ACTIONS := {
 	"echo_b": "fire_echo_b",
 	"mobility": "fire_mobility",
 	"utility": "fire_utility",
+	# THE ONE THAT RUNS OUT. Its own key rather than a mode on another,
+	# because a consumable you have to cycle to is a consumable you
+	# forget you are carrying.
+	"consumable": "fire_consumable",
 }
 
 const MOUSE_SENSITIVITY := 0.0022
@@ -520,10 +524,10 @@ static func create() -> Player:
 	viewmodel.add_child(flash)
 
 	# S7: one runtime per slot (ECHOES §9). Cooldowns, held state and
-	# airtime budgets belong to the Action, so four buttons need four of
-	# them — sharing one would let a dash and a grapple contend for a
-	# single cooldown, which is the bug the four-slot loadout exists to
-	# make impossible.
+	# airtime budgets belong to the Action, so each button needs its own —
+	# sharing one would let a dash and a grapple contend for a single
+	# cooldown, which is the bug the per-slot loadout exists to make
+	# impossible.
 	for slot: String in Constants.SLOT_NAMES:
 		var runtime := Node.new()
 		runtime.name = "EchoRuntime_" + slot
@@ -532,7 +536,33 @@ static func create() -> Player:
 		runtime.slot = slot
 		runtime.player_ref = player
 		player.runtimes[slot] = runtime
+		if slot == "consumable":
+			# A CHARGE IS SPENT WHEN THE ACTION ACTUALLY FIRED, not when
+			# the key went down. `activate()` returns early on cooldown,
+			# on an unmet condition and on a closed gate, and charging
+			# the player for a press that resolved into nothing is the
+			# same unfairness as spending a cooldown on it.
+			runtime.action_used.connect(player._spend_a_charge)
 	return player
+
+
+## Tell the bridge one use of the consumable is gone. The bridge owns the
+## count and clears the slot on the last one; this never decrements a
+## number of its own, because the HUD reads the bridge's and two counts
+## drift.
+func _spend_a_charge() -> void:
+	var action: Dictionary = BridgeClient.slotted_action("consumable")
+	if action.is_empty():
+		return
+	var component_id := str(action.get("component_id", ""))
+	# Guarded rather than left to the bridge's refusal: the slot empties
+	# on the last charge, but the snapshot carrying that is a round trip
+	# away, and a refusal in the meantime would put an error in front of
+	# a player who did nothing wrong.
+	if BridgeClient.charges_left(component_id) <= 0:
+		return
+	BridgeClient.send_intent({"type": "use_consumable",
+			"component_id": component_id})
 
 func _ready() -> void:
 	add_to_group("player")

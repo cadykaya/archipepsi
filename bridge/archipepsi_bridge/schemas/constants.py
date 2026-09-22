@@ -1692,13 +1692,30 @@ LOW_HEALTH_FRACTION = 0.33
 STAT_STACK_MIN = 0.25
 STAT_STACK_MAX = 4.0
 
-#: The four Action slots (ECHOES.md §9). Here rather than only in
+#: The five Action slots (ECHOES.md §9). Here rather than only in
 #: `echo.py` because the CLIENT binds one key per slot and builds one
 #: action runtime per slot: a slot the schema admits and no key reaches is
 #: an Action you own and cannot press, which is the failure
 #: `IMPLEMENTED_ACTION_SLOTS` exists to prevent. Exported to GDScript, so
 #: the two sides cannot disagree about how many there are.
-SLOT_NAMES = ("echo_a", "echo_b", "mobility", "utility")
+#:
+#: `consumable` is the fifth. The other four are all "a verb you always
+#: have"; nothing in the game could express "a thing you have three of",
+#: so it is the one slot whose occupant runs out.
+SLOT_NAMES = ("echo_a", "echo_b", "mobility", "utility", "consumable")
+
+#: What the keycap says, per slot. Lived in two Godot files and disagreed
+#: with nothing only because nobody had added a slot yet; it is declared
+#: once here now, and both read it.
+SLOT_KEYCAPS = {
+    "echo_a": "RMB", "echo_b": "MMB", "mobility": "SHIFT",
+    "utility": "C", "consumable": "Q",
+}
+
+#: The most uses a consumable may declare. One digit, because the HUD
+#: shows it as a counter beside the keycap and a two-digit charge count
+#: is a number nobody reads mid-fight.
+CONSUMABLE_CHARGES_MAX = 9
 
 #: Reference mid-bounds Echo, used to state the Static Pulse comparison
 #: honestly. The *bounds* permit far more; a typical Echo lands near this.

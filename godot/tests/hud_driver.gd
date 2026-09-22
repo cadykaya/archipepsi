@@ -52,6 +52,7 @@ func _ready() -> void:
 	_source_identity_package()
 	_pressure_valve()
 	_archive_provenance()
+	_the_loadout_rows()
 	await _the_travel_panel()
 	_the_navigation_schematic()
 
@@ -61,6 +62,36 @@ func _ready() -> void:
 	else:
 		print("GODOT HUD TESTS: %d failures" % failures)
 		get_tree().quit(1)
+
+## EVERY SLOT HAS A ROW, AND EVERY ROW HAS A KEYCAP.
+##
+## `Hud._loadout_text` had no test at all — it was the one slot-facing
+## surface with none — and it is exactly the shape that rots quietly: it
+## iterates `Constants.SLOT_NAMES` but looked its keycaps up in a private
+## table, so adding a fifth slot produced a row reading "? —" that
+## nothing would have caught.
+func _the_loadout_rows() -> void:
+	print("  -- LOADOUT: one row per slot, each with a real keycap")
+	var hud := Hud.new()
+	add_child(hud)
+	var rows := hud._loadout_text("echo_a").split("\n")
+	_check(rows.size() == Constants.SLOT_NAMES.size(),
+			"a row per slot (%d of %d)"
+			% [rows.size(), Constants.SLOT_NAMES.size()])
+	for row: String in rows:
+		_check(not row.contains("?"),
+				"no row is labelled with an unknown keycap: '%s'" % row)
+	for slot: String in Constants.SLOT_NAMES:
+		var keycap: String = Constants.SLOT_KEYCAPS[slot]
+		var seen := false
+		for row: String in rows:
+			if row.contains(keycap):
+				seen = true
+		_check(seen, "'%s' shows its key, %s" % [slot, keycap])
+	_check(hud._loadout_text("mobility").contains("▸"),
+			"the highlighted slot is marked")
+	hud.queue_free()
+
 
 # --- the station travel panel ---------------------------------------------
 

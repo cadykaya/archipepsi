@@ -581,7 +581,7 @@ def _reject_underfunded_ledger(coins_spent: int, pending) -> None:
 
 
 class SlotAssignment(Strict):
-    """Which owned Action sits in each of the four slots.
+    """Which owned Action sits in each of the five slots.
 
     Four named fields rather than a dict: the slot grammar belongs to the
     game, not to generation, so it is structural. Epsilon assigns an Action
@@ -592,6 +592,9 @@ class SlotAssignment(Strict):
     echo_b: str | None = Field(default=None, max_length=32)
     mobility: str | None = Field(default=None, max_length=32)
     utility: str | None = Field(default=None, max_length=32)
+    #: The one that runs out. Its occupant declares `charges`, and
+    #: spending the last one clears this field for good.
+    consumable: str | None = Field(default=None, max_length=32)
 
     def assigned(self) -> tuple[tuple[str, str], ...]:
         return tuple(
@@ -599,12 +602,16 @@ class SlotAssignment(Strict):
             for slot, value in (
                 ("echo_a", self.echo_a), ("echo_b", self.echo_b),
                 ("mobility", self.mobility), ("utility", self.utility),
+                ("consumable", self.consumable),
             )
             if value is not None
         )
 
     def with_slot(self, slot: str, component_id: str | None) -> "SlotAssignment":
-        if slot not in ("echo_a", "echo_b", "mobility", "utility"):
+        # THE LIST IS THE EXPORTED ONE. Spelling it here again is how a
+        # fifth slot gets added everywhere except the one place that
+        # refuses it.
+        if slot not in C.SLOT_NAMES:
             raise ValueError(f"unknown slot '{slot}'")
         return SlotAssignment.model_validate(
             {**self.model_dump(), slot: component_id}
@@ -636,6 +643,45 @@ def _reject_unslottable(slots, mechanics) -> None:
             )
 
 
+def _reject_impossible_charges(uses, slots, mechanics) -> None:
+    """A consumable cannot be spent past its charges, or spent and slotted.
+
+    Both halves matter. Spending an eleventh use of a three-use grenade
+    is a save that has lost count; a consumable still sitting in the slot
+    with every charge gone is a button that looks live and does nothing,
+    which is the failure the HUD counter exists to prevent.
+    """
+    seen: set[str] = set()
+    for use in uses:
+        if use.component_id in seen:
+            raise ValueError(
+                f"'{use.component_id}' has two use records; a consumable "
+                f"has one count"
+            )
+        seen.add(use.component_id)
+        owned = mechanics.by_id(use.component_id)
+        if owned is None:
+            raise ValueError(
+                f"'{use.component_id}' has uses recorded but is not owned"
+            )
+        charges = getattr(owned.component, "charges", None)
+        if owned.kind != "action" or charges is None:
+            raise ValueError(
+                f"'{use.component_id}' has uses recorded but is not a "
+                f"consumable"
+            )
+        if use.spent > charges:
+            raise ValueError(
+                f"'{use.component_id}' has {use.spent} uses recorded "
+                f"against {charges} charges"
+            )
+        if use.spent == charges and slots.consumable == use.component_id:
+            raise ValueError(
+                f"'{use.component_id}' is spent out and still slotted; "
+                f"the last charge empties the slot"
+            )
+
+
 def _reject_nonmonotonic_seq(interpretations, next_seq: int) -> None:
     """`interpretation_seq` is assigned once and never reused.
 
@@ -662,6 +708,21 @@ def _reject_duplicate_ids(items, attr: str, label: str) -> None:
     ids = [getattr(i, attr) for i in items]
     if len(set(ids)) != len(ids):
         raise ValueError(f"duplicate {label}")
+
+
+class ConsumableUse(Strict):
+    """How many of a consumable's charges have been spent.
+
+    **Persisted, and deliberately not folded.** The fold is over the
+    interpretation log, which says what the campaign was GIVEN; how many
+    times the player has pressed a button is not in it and cannot be
+    derived from it. So this is campaign state, it moves only through
+    `transitions.spend_charge`, and it is stored the way
+    `local_rewards` is -- a tuple of small records rather than a dict,
+    because a dict key can disagree with the id inside its value.
+    """
+    component_id: str = Field(min_length=1, max_length=32)
+    spent: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
 
 
 class EarnedLocalReward(Strict):
@@ -764,6 +825,29 @@ class CampaignSave(Strict):
     local_rewards: tuple[EarnedLocalReward, ...] = Field(
         default=(), max_length=C.MAX_LOCAL_REWARDS)
 
+    #: Charges spent, per consumable. Absent for every campaign that has
+    #: never held one, which is every campaign written before the slot
+    #: existed -- so an old save loads unchanged rather than migrating.
+    consumable_uses: tuple[ConsumableUse, ...] = ()
+
+    def charges_left(self, component_id: str) -> int:
+        """Uses remaining on a consumable. Zero for anything that is not
+        one, so a caller never has to ask twice.
+
+        A read of the save rather than a transition: it returns a number,
+        and `transitions.py`'s census is the list of things that return a
+        `CampaignSave`.
+        """
+        owned = self.derive().by_id(component_id)
+        if owned is None or owned.kind != "action":
+            return 0
+        charges = getattr(owned.component, "charges", None)
+        if charges is None:
+            return 0
+        spent = next((u.spent for u in self.consumable_uses
+                      if u.component_id == component_id), 0)
+        return max(charges - spent, 0)
+
     #: The interpretation log: append-only, ordered by `interpretation_seq`,
     #: and the ONLY persisted form of what the player has earned. Live
     #: mechanics are a fold over it (`mechanics.derive_mechanics`) and are
@@ -797,7 +881,10 @@ class CampaignSave(Strict):
         # Folding here means a corrupt log is unrepresentable rather than
         # merely detected later: a CampaignSave that cannot fold cannot be
         # constructed, so it can never be written to disk.
-        _reject_unslottable(self.slots, derive_mechanics(self.interpretations))
+        _folded = derive_mechanics(self.interpretations)
+        _reject_unslottable(self.slots, _folded)
+        _reject_impossible_charges(
+            self.consumable_uses, self.slots, _folded)
         _reject_duplicate_pending(self.pending_checks)
         _reject_unbacked_pending(self.pending_checks, self.zones)
         _reject_underfunded_ledger(self.coins_spent, self.pending_checks)
@@ -1429,6 +1516,11 @@ class CampaignSnapshot(Strict):
     #: `mechanics` — but a note you found stays found, and the client is
     #: what has to stop drawing a pickup it already has.
     local_rewards: tuple[EarnedLocalReward, ...] = ()
+    #: Charges spent, per consumable, so the client can show what is
+    #: left. The component's `charges` is already in `mechanics`; this is
+    #: the half that moves, and the client subtracts rather than counting
+    #: its own button presses -- a second count is a second truth.
+    consumable_uses: tuple[ConsumableUse, ...] = ()
 
     active_zone: ZoneRecord | None = None
     #: The identity of the proposal `active_zone` holds, for the client
@@ -1936,6 +2028,18 @@ class SlotAction(Strict):
     component_id: str | None = Field(default=None, max_length=32)
 
 
+class UseConsumable(Strict):
+    """Spend one charge of the Action in the consumable slot.
+
+    Client-initiated because only the client knows the button was pressed
+    and the Action actually fired. It names the component rather than the
+    slot so a charge cannot be spent against whatever happens to be
+    slotted by the time the message lands.
+    """
+    type: Literal["use_consumable"]
+    component_id: str = Field(min_length=1, max_length=32)
+
+
 class GrantLocalReward(Strict):
     """Record a local reward the player earned (ECHOES.md §14.2).
 
@@ -2075,7 +2179,8 @@ ClientMessage = Annotated[
     Union[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
-        SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
+        SlotAction, UseConsumable, GrantLocalReward, SetCreativity,
+        DebugCommand,
         ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
         ZoneStateSelected, ObjectTransported, LayoutResult, BuildFailed,
     ],

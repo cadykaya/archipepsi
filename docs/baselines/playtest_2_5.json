@@ -151,7 +151,8 @@
             "echo_a",
             "echo_b",
             "mobility",
-            "utility"
+            "utility",
+            "consumable"
           ],
           "trait_stats": [
             "move_speed",
@@ -417,7 +418,8 @@
             "echo_a",
             "echo_b",
             "mobility",
-            "utility"
+            "utility",
+            "consumable"
           ],
           "trait_stats": [
             "move_speed",
@@ -638,7 +640,8 @@
             "echo_a",
             "echo_b",
             "mobility",
-            "utility"
+            "utility",
+            "consumable"
           ],
           "trait_stats": [
             "move_speed",
@@ -858,7 +861,8 @@
             "echo_a",
             "echo_b",
             "mobility",
-            "utility"
+            "utility",
+            "consumable"
           ],
           "trait_stats": [
             "move_speed",

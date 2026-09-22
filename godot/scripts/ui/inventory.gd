@@ -9,12 +9,21 @@ extends CanvasLayer
 ## responsible, in order (ECHOES §11), each row accented by its source
 ## game (§12). The chains read from the FOLD, so they grow on their own as
 ## later stages land UPGRADE / MODIFY / LINK / MERGE.
+##
+## **SLOT-FIRST, after the owner played it.** It was one scrolling list
+## with no search, no sort, and passives interleaved with the things you
+## can actually equip. Now the five slots are the top of the screen —
+## what is on each key, what it costs to replace, and for the consumable
+## how many uses are left — and clicking a slot filters the list to what
+## could go in it. Search and sort are `ArchiveQuery`'s, which is also
+## where those answers are tested; this file builds widgets from them.
 
 signal closed
 
-#: Same table the HUD's loadout uses: what the keycap says.
-const SLOT_KEYCAPS := {"echo_a": "RMB", "echo_b": "MMB", "mobility": "SHIFT",
-		"utility": "C"}
+#: Same table the HUD's loadout uses — literally the same one, exported
+#: from `constants.py`, because two copies is how a slot ends up labelled
+#: on one screen and "?" on the other.
+const SLOT_KEYCAPS := Constants.SLOT_KEYCAPS
 
 #: The four §15 modes, warming as the reading travels further from the
 #: item. Purely a tint — the word itself is always shown, because a colour
@@ -28,6 +37,12 @@ const _MODE_TINT := {
 
 var _list: VBoxContainer
 var _scroll: ScrollContainer
+var _loadout: VBoxContainer
+var _search: LineEdit
+var _sort: OptionButton
+#: Which slot the list is filtered to, "" for all. Clicking the slot's
+#: row in the loadout bar toggles it.
+var _slot_filter := ""
 
 func _ready() -> void:
 	layer = 8
@@ -41,15 +56,37 @@ func _ready() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 26)
 	box.add_child(title)
-	_scroll = UILayout.reading_scroll(Vector2(680, 430))
+
+	# THE LOADOUT, at the top, because "what is on my keys" is the
+	# question the screen is opened to answer and it used to be the one
+	# thing the screen did not say.
+	_loadout = VBoxContainer.new()
+	_loadout.add_theme_constant_override("separation", 2)
+	box.add_child(_loadout)
+
+	var tools := HBoxContainer.new()
+	tools.add_theme_constant_override("separation", 8)
+	box.add_child(tools)
+	_search = LineEdit.new()
+	_search.placeholder_text = "search name, game, item, concept…"
+	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_search.text_changed.connect(func(_t: String) -> void: _repaint())
+	tools.add_child(_search)
+	_sort = OptionButton.new()
+	for label: String in ArchiveQuery.SORT_LABELS:
+		_sort.add_item(label)
+	_sort.item_selected.connect(func(_i: int) -> void: _repaint())
+	tools.add_child(_sort)
+
+	_scroll = UILayout.reading_scroll(Vector2(680, 330))
 	box.add_child(_scroll)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 10)
 	_scroll.add_child(_list)
 	var hint := Label.new()
-	hint.text = "[Tab] close   [wheel] cycle the highlighted slot   " \
-			+ "[★] mark a favourite"
+	hint.text = "[Tab] close   [click a slot] show what fits it   " \
+			+ "[wheel] cycle the highlighted slot   [★] favourite"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.modulate = Color(0.6, 0.65, 0.7)
 	box.add_child(hint)
@@ -63,6 +100,13 @@ func close() -> void:
 	closed.emit()
 
 func rebuild() -> void:
+	_paint_loadout()
+	_repaint()
+
+
+## Only the list, for a keystroke in the search box. Rebuilding the
+## loadout bar too would steal focus from the field being typed into.
+func _repaint() -> void:
 	for child in _list.get_children():
 		child.queue_free()
 	var echoes: Array = BridgeClient.interpretations()
@@ -77,15 +121,120 @@ func rebuild() -> void:
 	for value in slots.values():
 		if value != null:
 			slotted.append(str(value))
-	for echo: Dictionary in echoes:
+	var found: Dictionary = ArchiveQuery.rows(echoes, _search.text,
+			_sort.selected, _slot_filter)
+	var actions: Array = found["actions"]
+	var passives: Array = found["passives"]
+
+	_list.add_child(_heading("ACTIONS", actions.size(),
+			int(found["total_actions"])))
+	if actions.is_empty():
+		_list.add_child(_nothing_here())
+	for echo: Dictionary in actions:
 		_list.add_child(_row(echo, slotted))
-	var unequip := Button.new()
-	unequip.text = "CLEAR ALL SLOTS"
-	unequip.pressed.connect(func() -> void:
-		for slot: String in ["echo_a", "echo_b", "mobility", "utility"]:
+
+	# ALWAYS ON is its own section rather than the same list in a
+	# different colour. §9: everything that is not an Action is true the
+	# moment it is owned, so these are not decisions and do not belong
+	# among the ones that are.
+	if _slot_filter == "":
+		_list.add_child(_heading("ALWAYS ON", passives.size(),
+				int(found["total_passives"])))
+		for echo: Dictionary in passives:
+			_list.add_child(_row(echo, slotted))
+
+
+func _heading(text: String, shown: int, total: int) -> Control:
+	var label := Label.new()
+	# "3 of 19" rather than "3": a count of what survived the filter,
+	# alone, looks exactly like owning three.
+	label.text = "%s (%d)" % [text, total] if shown == total \
+			else "%s (%d of %d)" % [text, shown, total]
+	label.add_theme_font_size_override("font_size", 15)
+	label.modulate = Color(0.60, 0.70, 0.78)
+	return label
+
+
+func _nothing_here() -> Control:
+	var label := Label.new()
+	label.text = "Nothing matches." if _slot_filter == "" \
+			else "Nothing you own goes on %s." % SLOT_KEYCAPS.get(
+				_slot_filter, "?")
+	label.modulate = Color(0.6, 0.6, 0.65)
+	return label
+
+
+## The five slots: what is on each key, and a way to clear it. Clicking
+## the row filters the list below to what could go there, which is the
+## "slot first" half — picking a key and being shown its candidates,
+## rather than scrolling the whole archive looking for one.
+func _paint_loadout() -> void:
+	for child in _loadout.get_children():
+		child.queue_free()
+	for slot: String in Constants.SLOT_NAMES:
+		_loadout.add_child(_slot_row(slot))
+	var clear := Button.new()
+	clear.text = "CLEAR ALL SLOTS"
+	clear.pressed.connect(func() -> void:
+		# `Constants.SLOT_NAMES`, not the four spelled out: "all" has to
+		# keep meaning all when a slot is added.
+		for name: String in Constants.SLOT_NAMES:
+			BridgeClient.send_intent({"type": "slot_action", "slot": name,
+					"component_id": null}))
+	_loadout.add_child(clear)
+
+
+func _slot_row(slot: String) -> Control:
+	var panel := PanelContainer.new()
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	panel.add_child(row)
+
+	var pick := Button.new()
+	pick.text = str(SLOT_KEYCAPS.get(slot, "?"))
+	pick.custom_minimum_size = Vector2(72, 0)
+	pick.toggle_mode = true
+	pick.button_pressed = _slot_filter == slot
+	pick.tooltip_text = "show what fits this slot"
+	pick.pressed.connect(func() -> void:
+		_slot_filter = "" if _slot_filter == slot else slot
+		_paint_loadout()
+		_repaint())
+	row.add_child(pick)
+
+	var action: Dictionary = BridgeClient.slotted_action(slot)
+	var what := Label.new()
+	what.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if action.is_empty():
+		what.text = "—"
+		what.modulate = Color(0.5, 0.5, 0.55)
+	else:
+		var component_id := str(action.get("component_id", ""))
+		var mk := int(BridgeClient.owned_component(component_id).get("mk", 1))
+		what.text = "%s%s" % [action.get("display_name", "?"),
+				"  Mk %d" % mk if mk > 1 else ""]
+		# THE CHARGE COUNT, where the thing it belongs to is. A consumable
+		# whose count lives only on the HUD is one you have to leave the
+		# screen to check before deciding whether to swap it.
+		if slot == "consumable":
+			var left := BridgeClient.charges_left(component_id)
+			var total := BridgeClient.charges_total(component_id)
+			what.text += "     %d / %d" % [left, total]
+			what.modulate = Color(0.95, 0.75, 0.5) if left == 0 \
+					else Color.WHITE
+	row.add_child(what)
+
+	if not action.is_empty():
+		var drop := Button.new()
+		drop.text = "✕"
+		drop.custom_minimum_size = Vector2(34, 0)
+		drop.tooltip_text = "clear this slot"
+		drop.pressed.connect(func() -> void:
 			BridgeClient.send_intent({"type": "slot_action", "slot": slot,
 					"component_id": null}))
-	_list.add_child(unequip)
+		row.add_child(drop)
+	return panel
+
 
 ## One interpretation. It may have contributed several components, and only
 ## the Actions among them are slottable — a trait row with an EQUIP button
@@ -192,8 +341,22 @@ func _row(echo: Dictionary, slotted: Array) -> Control:
 		# "SLOT" ambiguous — the useful question is which button this
 		# becomes, and whether something is already there.
 		var occupant: Variant = BridgeClient.slots().get(slot)
-		if component_id in slotted:
+		var is_consumable := slot == "consumable"
+		var left := BridgeClient.charges_left(component_id) \
+				if is_consumable else 0
+		if is_consumable and left <= 0:
+			# SPENT, AND SAYING SO. Offering to equip something that
+			# cannot fire is the control that looks live and does
+			# nothing — the same failure the charge counter exists to
+			# prevent. It comes back on entering a Zone, so the button
+			# says that rather than reading as gone for good.
+			button.text = "SPENT"
+			button.tooltip_text = "refills when you enter a Zone"
+			button.disabled = true
+		elif component_id in slotted:
 			button.text = "ON %s" % SLOT_KEYCAPS.get(slot, "?")
+			if is_consumable:
+				button.text += "  %d" % left
 			button.disabled = true
 		elif occupant != null:
 			button.text = "REPLACE %s" % SLOT_KEYCAPS.get(slot, "?")

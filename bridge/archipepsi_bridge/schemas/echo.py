@@ -5,7 +5,7 @@ This module IS the Echo specification. `ECHOES.md` is its prose.
 An Echo is no longer a thing you equip. It is an **interpretation** of one
 foreign Archipelago item, and it contributes **components**:
 
-    Action      needs a button; occupies one of four slots
+    Action      needs a button; occupies one of five slots
     Trait       continuous modifier of a derived stat
     Resource    a HUD channel with its own economy
     Rule        EVENT -> CONDITIONS -> COST -> EFFECTS
@@ -15,6 +15,10 @@ foreign Archipelago item, and it contributes **components**:
 
 Only Actions occupy a slot. Everything else is true once owned, which is why
 a Check can matter for the rest of the run without ever being equipped.
+
+Four of the five slots hold a verb you always have. The fifth, `consumable`,
+holds one that runs out: it declares `charges`, and spending the last one
+empties the slot for good.
 
 An interpretation carries 1-4 **operations**, and this is where build
 evolution comes from: `CREATE` introduces a component, while `UPGRADE`,
@@ -824,7 +828,8 @@ PALETTE_COLORS = (
 #: out — a type cannot be built from a runtime tuple — so a test asserts
 #: the two agree.
 SLOT_NAMES = C.SLOT_NAMES
-SlotName = Literal["echo_a", "echo_b", "mobility", "utility"]
+SlotName = Literal["echo_a", "echo_b", "mobility", "utility",
+                   "consumable"]
 
 
 # ---------------------------------------------------------------------------
@@ -844,6 +849,36 @@ class ActionComponent(ComponentBase):
     cooldown: float = Field(ge=C.ECHO_COOLDOWN_MIN, le=C.ECHO_COOLDOWN_MAX)
     primitive: ActionPrimitive
     modifiers: tuple[Modifier, ...] = Field(default=(), max_length=2)
+    #: HOW MANY USES A CONSUMABLE HAS. `None` for every other Action,
+    #: which is simply available whenever its cooldown allows.
+    #:
+    #: Not a `Resource` with zero regen, although that would express the
+    #: pool: a Resource is a HUD channel with an economy, and the eight
+    #: palette colours and three presentations exist for channels the
+    #: player manages. Three uses of one grenade is a property of the
+    #: grenade, and giving it a channel would put an economy on the HUD
+    #: for something with no decisions in it.
+    charges: int | None = Field(
+        default=None, ge=1, le=C.CONSUMABLE_CHARGES_MAX)
+
+    @model_validator(mode="after")
+    def _the_consumable_slot_is_the_one_that_runs_out(self):
+        """Slot and charges imply each other, structurally.
+
+        Either half alone is a bug with a plausible reading: an Action in
+        the consumable slot with no charges is a consumable that never
+        runs out, and charges on a `mobility` Action is a dash that
+        silently stops working with no counter anywhere to say why. The
+        file says "structural rules beat validators that have to be
+        remembered", so this is the rule rather than a note.
+        """
+        if (self.slot == "consumable") != (self.charges is not None):
+            raise ValueError(
+                "an Action declares `charges` exactly when its slot is "
+                f"'consumable'; got slot '{self.slot}' with "
+                f"charges={self.charges}"
+            )
+        return self
 
     @model_validator(mode="after")
     def _modifiers_need_something_that_hits(self):

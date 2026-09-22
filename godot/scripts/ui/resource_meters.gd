@@ -210,7 +210,11 @@ func _ensure_pips(pips: HBoxContainer, count: int, height: float) -> void:
 ## once they exist, rather than needing to be remembered later.
 func _is_cost_of_slotted_action(component_id: String) -> bool:
 	var slotted: Array = []
-	for slot: String in ["echo_a", "echo_b", "mobility", "utility"]:
+	# `Constants.SLOT_NAMES`, not the four spelled out again: a fifth slot
+	# added here would otherwise never register as paying for a resource,
+	# and a consumable that costs nothing is a consumable whose meter
+	# stays dark while it fires.
+	for slot: String in Constants.SLOT_NAMES:
 		var id: Variant = BridgeClient.slots().get(slot)
 		if id != null:
 			slotted.append(str(id))

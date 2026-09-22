@@ -646,6 +646,7 @@ class CampaignEngine:
             mechanics=save.derive() if save else Mechanics(),
             slots=save.slots if save else SlotAssignment(),
             local_rewards=save.local_rewards if save else (),
+            consumable_uses=save.consumable_uses if save else (),
             active_zone=save.active_zone if save else None,
             # Derived here on every send, from the record just above it,
             # so the identity and the content it identifies cannot come
@@ -1603,6 +1604,21 @@ class CampaignEngine:
         again = self.save.zone_by_id(intent.zone_id)
         if again is not None and again.state == "PENDING_GENERATION":
             self._start_generation_task(intent.zone_id)
+        await self.broadcast_snapshot()
+
+    async def handle_use_consumable(self, component_id: str) -> None:
+        """Spend one charge. The last one empties the slot (§9).
+
+        Refusals are the transition's, and they are reported rather than
+        swallowed: a client that has lost count of its own charges is a
+        client whose HUD is lying, and finding out here is the cheap way
+        to learn it.
+        """
+        self._require_save()
+        try:
+            self._apply(T.spend_charge(self.save, component_id))
+        except ValueError as exc:
+            raise IntentError(str(exc)) from exc
         await self.broadcast_snapshot()
 
     async def handle_slot_action(

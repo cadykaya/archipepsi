@@ -562,8 +562,11 @@ func _place_hit_marker() -> void:
 #: ECHOES §9's control grammar, as the player reads it. Not derived from
 #: the input map: this is what the KEYCAP says, and "MMB" is shorter than
 #: what Godot calls that button.
-const SLOT_KEYCAPS := {"echo_a": "RMB", "echo_b": "MMB", "mobility": "SHIFT",
-		"utility": "C"}
+#:
+#: Exported from `constants.py` rather than written here and again in
+#: `inventory.gd`. Two copies is how the fifth slot ends up labelled on
+#: one screen and "?" on the other.
+const SLOT_KEYCAPS := Constants.SLOT_KEYCAPS
 
 ## All four slots at once (S7). One line each, the highlighted one marked:
 ## a loadout you cannot see is a loadout you do not use, and three of the

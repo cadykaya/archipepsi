@@ -307,6 +307,33 @@ func slotted_action(slot := "echo_a") -> Dictionary:
 		return {}
 	return owned_component(str(id)).get("component", {})
 
+## HOW MANY USES A CONSUMABLE HAS LEFT. Zero for anything that is not one.
+##
+## Subtracted from the snapshot rather than counted here: the bridge sends
+## what has been SPENT and the component carries what it started with, so
+## the client never keeps a tally of its own button presses. A second
+## count is a second truth, and the one that drifts is always the one on
+## screen.
+func charges_left(component_id: String) -> int:
+	var component: Dictionary = owned_component(component_id).get(
+			"component", {})
+	var charges: Variant = component.get("charges")
+	if charges == null:
+		return 0
+	var spent := 0
+	for raw: Variant in snapshot.get("consumable_uses", []):
+		var use: Dictionary = raw
+		if str(use.get("component_id", "")) == component_id:
+			spent = int(use.get("spent", 0))
+			break
+	return maxi(int(charges) - spent, 0)
+
+## What it started with, for "2 of 3". Zero when it is not a consumable.
+func charges_total(component_id: String) -> int:
+	var charges: Variant = owned_component(component_id).get(
+			"component", {}).get("charges")
+	return 0 if charges == null else int(charges)
+
 ## What an Echo was interpreted from, for tints and provenance. Reads the
 ## folded provenance rather than the log, so an upgraded component still
 ## answers with the world that created it.
