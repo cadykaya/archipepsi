@@ -44,11 +44,30 @@ const PRODUCTION := {
 ## stopped existing.
 const CRATE_HEIGHT := 1.0
 const MAX_VERTICAL_STEP := 1.0
-## Nothing above a rideable deck may become a step to the 3.1 m gantry.
+## Nothing on a rideable deck stands taller than the cover Production
+## already welds to it.
+##
+## ~~STRUCK: "nothing above a rideable deck may become a step to the
+## 3.1 m gantry", checked as `deck_top + 1.333 >= 3.1`.~~ **Wrong twice
+## over, and corrected 2026-09-22.** `GANTRY_Y` 3.1 is measured above
+## the RAIL at 0.6, so the platform spans world 3.50 to 3.90; and it is
+## 3.5 m away horizontally, since it occupies lateral 5.5 to 9.5 while
+## the deck spans -2.0 to 2.0. A railing cap at world 2.1 reaches 3.433
+## straight up and 3.100 after crossing that gap -- under the platform
+## on both counts. Even Production's own 1.25 m shield, which is solid
+## (`_shield()` hangs a CollisionShape3D on an AnimatableBody3D),
+## reaches only 3.583 and 3.250.
+##
+## What replaces it is an ART rule and says so: `_shield()` puts 1.25 m
+## of cover on the skiff's deck, and an art railing standing over the
+## gameplay cover on the same vehicle reads as a mistake. The two
+## Passing Platforms carriers are held to the same silhouette because
+## they share `DECK`, not because a gantry exists in that room -- it
+## does not.
 const RIDEABLE := ["sp_skiff_deck", "sp_hoist_car", "sp_crossing_carrier"]
 const DECK_CENTRE_Y := 0.8
-const GANTRY_Y := 3.1
-const JUMP_APEX := 1.3333333333333333
+const SHIELD_HEIGHT := 1.25
+const DECK_THICKNESS := 0.4
 
 var _models: String
 var _out: String
@@ -162,17 +181,18 @@ func _check(id: String) -> void:
 		note["lightened_nodes"] = lit
 
 	if RIDEABLE.has(id):
-		# Node-space top -> world, then the jump.
 		var top := box.position.y + box.size.y
-		var reach := DECK_CENTRE_Y + top + JUMP_APEX
+		var cap := DECK_THICKNESS * 0.5 + SHIELD_HEIGHT
 		note["world_top"] = snappedf(DECK_CENTRE_Y + top, 0.001)
-		note["reach_if_solid"] = snappedf(reach, 0.001)
-		if reach >= GANTRY_Y:
-			_fail("%s tops out at world %.3f; a body standing there reaches "
-					% [id, DECK_CENTRE_Y + top]
-					+ "%.3f and the gantry is at %.1f. That is a walking "
-					% [reach, GANTRY_Y]
-					+ "bypass the scenario says must not exist.")
+		note["cap_node_z"] = cap
+		if top > cap + 0.001:
+			_fail("%s tops out at node %.3f (world %.3f) and the cover "
+					% [id, top, DECK_CENTRE_Y + top]
+					+ "Production welds to this deck tops at node %.3f "
+					% cap
+					+ "(world %.3f). A railing standing over the gameplay "
+					% (DECK_CENTRE_Y + cap)
+					+ "cover on the same vehicle reads as a mistake.")
 	root.free()
 
 

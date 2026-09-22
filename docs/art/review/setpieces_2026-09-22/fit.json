@@ -25,6 +25,7 @@
     ]
   },
   "sp_crossing_carrier": {
+    "cap_node_z": 1.44999999999999996,
     "fits": "passing_platforms DECK",
     "min_y": -0.220000000000000001,
     "nodes": 8,
@@ -38,7 +39,6 @@
       "lamp_east",
       "cross_spine"
     ],
-    "reach_if_solid": 2.79300000000000015,
     "size": [
       4.04000000000000004,
       0.880000000000000004,
@@ -64,6 +64,7 @@
     ]
   },
   "sp_hoist_car": {
+    "cap_node_z": 1.44999999999999996,
     "fits": "passing_platforms DECK",
     "min_y": -0.23000000000000001,
     "nodes": 11,
@@ -80,13 +81,12 @@
       "lamp_up",
       "lamp_down"
     ],
-    "reach_if_solid": 3.08300000000000018,
     "size": [
       4.0,
-      1.17999999999999994,
+      1.47999999999999998,
       4.0
     ],
-    "world_top": 1.75
+    "world_top": 2.04999999999999982
   },
   "sp_lane_screen": {
     "min_y": 0.0,
@@ -139,6 +139,7 @@
     ]
   },
   "sp_skiff_deck": {
+    "cap_node_z": 1.44999999999999996,
     "fits": "RailCarrier deck box; the docks meet its outer edge exactly",
     "min_y": -0.239999999999999991,
     "nodes": 25,
@@ -169,13 +170,12 @@
       "console_grab",
       "beacon_hold"
     ],
-    "reach_if_solid": 3.08300000000000018,
     "size": [
       4.0,
-      1.18999999999999995,
+      1.48999999999999999,
       4.16000000000000014
     ],
-    "world_top": 1.75
+    "world_top": 2.04999999999999982
   },
   "sp_weight_plate": {
     "fits": "unweighted PLATE (2.4, 0.12, 2.4)",

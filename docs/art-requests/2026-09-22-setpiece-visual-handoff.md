@@ -23,9 +23,9 @@ touched.
 
 | id | tris | size (m) | parts | for |
 |---|---|---|---|---|
-| `sp_skiff_deck` | 300 | 4.00 × 4.16 × 1.19 | 24 | Blindside carrier |
+| `sp_skiff_deck` | 300 | 4.00 × 4.16 × 1.49 | 24 | Blindside carrier |
 | `sp_dock_stand` | 72 | 0.80 × 0.80 × 1.27 | 5 | Blindside dock control |
-| `sp_hoist_car` | 132 | 4.00 × 4.00 × 1.18 | 10 | Passing Platforms, vertical |
+| `sp_hoist_car` | 132 | 4.00 × 4.00 × 1.48 | 10 | Passing Platforms, vertical |
 | `sp_crossing_carrier` | 96 | 4.04 × 4.00 × 0.88 | 7 | Passing Platforms, horizontal |
 | `sp_receiver_hood` | 72 | 2.40 × 1.14 × 1.70 | 5 | Counterfire receiver |
 | `sp_lane_screen` | 60 | 0.34 × 3.00 × 1.37 | 4 | Counterfire lane protection |
@@ -84,29 +84,50 @@ side, `basis.z` is travel.
 
 ---
 
-## 2 · A fit finding worth more than the meshes
+## 2 · CORRECTION, 2026-09-22 — this section was wrong
 
-**A handrail at a natural height would break the gantry guarantee.**
+> ~~**A handrail at a natural height would break the gantry guarantee.**
+> `GANTRY_Y` 3.1 against a 1.333 m standing jump: a railing cap at 1.1 m
+> above the deck sits at world 2.1, and 2.1 + 1.333 = 3.43, *above the
+> gantry*. So nothing on a rideable deck rises past world 1.75 (node
+> +0.95).~~
 
-`railway_scenario.gd` says there is no walking bypass to the gantry, and
-the arithmetic behind it is `GANTRY_Y` 3.1 against a 1.333 m standing
-jump with no mantle. From the deck top at world 1.0 a player reaches
-2.33, so the gantry is safe.
+**Struck. It was the strongest claim in Batch 045 and both of its
+numbers were wrong.** Found by measuring the yard for Batch 046 rather
+than reading it.
 
-A railing cap at a normal 1.1 m above the deck sits at world **2.1** —
-and 2.1 + 1.333 = **3.43**, which is *above the gantry*. If that railing
-ever became solid, the acquisition loop could be skipped by standing on
-it.
+**`GANTRY_Y` 3.1 is measured above the RAIL at 0.6, not above the
+floor.** `_gantry()` puts the platform centre at world **3.70**, so it
+spans **3.50 to 3.90**. A railing cap at world 2.1 reaches 3.433 —
+below the platform's *underside*.
 
-So nothing this batch puts on a rideable deck rises past **world 1.75**
-(node-space +0.95): 1.75 + 1.333 = 3.083, under 3.1 with 2 cm to spare.
-The guarantee then holds **under either collision decision**, which
-matters because "it is only a visual" is one refactor away from being
-false. `assert_under_cap()` in the builder enforces it and refused its
-own author twice during this batch.
+**And the platform is 3.5 m away horizontally.** It occupies lateral
+5.5 to 9.5; the deck spans −2.0 to 2.0. A jump that travels 3.5 m across
+has risen only 1.0 m by the time it arrives, so a player leaving that
+railing gets to **3.10** — under the platform, still.
 
-**If you want a solid rail, the number to argue with is 1.75 — please do
-not rediscover it from a playtest.**
+Even Production's own shield — `_shield()`, 1.25 m of cover on a
+`CollisionShape3D` hung on an `AnimatableBody3D`, so genuinely solid and
+standable, top at world **2.25** — reaches 3.583 straight up and 3.250
+across the gap. **Nothing on this deck is a route to the gantry.**
+
+### What changed as a result
+
+The old cap made the skiff's guard rails **world 1.75 — half a metre
+below the cover welded to the same deck.** They are now a natural 1.05 m
+above the deck (world 2.05), a little under the shield so the shield
+stays the tallest thing on the vehicle.
+
+`assert_under_cap()` survives, with an honest job: **nothing on a
+rideable deck stands taller than Production's own `SHIELD_HEIGHT`
+cover.** That is an art rule about silhouette and it needs no arithmetic
+about jumps. `setpiece_fit.gd` enforces the same.
+
+**The failure mode is the one worth keeping:** the arithmetic was
+careful and reproducible, and it was done against a constant whose
+*frame* I assumed. If you take one number from this document, take
+`assets/models/batch046/yard_fit.json` — the yard as evaluated, rather
+than as read.
 
 ---
 

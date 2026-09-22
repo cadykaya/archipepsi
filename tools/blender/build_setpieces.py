@@ -31,24 +31,40 @@ Local axes come from `pose()`: `basis.x` is the side the docks stand on,
 `basis.z` is the direction of travel. In Blender's z-up authoring space
 that is x = across, y = along the track, z = up.
 
-## THE 0.95 CEILING, AND WHY IT IS NOT A STYLE CHOICE
+## THE DECK CEILING -- CORRECTED 2026-09-22, AND THE FIRST VERSION WAS WRONG
 
-Nothing this batch adds above a rideable deck rises past **+0.95 in node
-space**, which is 1.75 m in the world.
+Nothing this batch adds above a rideable deck rises past **+1.45 in node
+space**, which is world 2.25: exactly the top of the cover Production
+already welds to that deck. `_shield()` builds a 0.3 x 1.25 x 4.0 panel
+centred at local (−1.85, 0.825, 0) on an `AnimatableBody3D`, so a
+1.25 m shield above the deck is already there and already solid. An art
+railing taller than the gameplay cover on the same vehicle would look
+wrong; that is the whole rule, and it needs no arithmetic.
 
-The scenario's own comment says there is no walking bypass to the gantry,
-and the arithmetic behind it is: a standing jump tops out at 1.33 m and
-there is no mantle, so from the deck top at 1.0 a player reaches 2.33 and
-the gantry at 3.1 is safe. A handrail at a natural 1.1 m would put its cap
-at world 2.1 -- and 2.1 + 1.33 = 3.43, which is ABOVE THE GANTRY.
+~~ORIGINAL, STRUCK: the cap was +0.95 (world 1.75) because a railing at
+world 2.1 plus a 1.33 m jump reaches 3.43, "ABOVE THE GANTRY" at 3.1.~~
+**Both halves of that were false, and it was the strongest claim in
+Batch 045.**
 
-These meshes carry no collision, so today that is moot. It is capped anyway
-because "it is only a visual" is one refactor away from being false, and a
-railing that silently becomes a step is exactly the art-added route the
-assignment forbids. 1.75 + 1.33 = 3.08, under 3.1 with 2 cm to spare, so
-the guarantee holds under EITHER collision decision. If Production ever
-wants a solid rail, the number to argue with is here rather than
-rediscovered from a playtest.
+  * `GANTRY_Y` 3.1 is measured **above the rail at 0.6**, not above the
+    floor. `_gantry()` puts the platform centre at world 3.70, so it
+    spans 3.50 to 3.90. A railing cap at 2.1 reaches 3.433 -- below the
+    platform's UNDERSIDE.
+  * And the platform is **3.5 m away horizontally**: it spans lateral
+    5.5 to 9.5 and the deck spans -2.0 to 2.0. A jump that travels 3.5 m
+    across has risen only 1.0 m by the time it gets there, so a player
+    leaving that railing arrives at 3.10 -- under the platform, still.
+
+Even Production's own shield top at 2.25 reaches 3.583 straight up and
+3.250 after crossing the gap. **Nothing on this deck is a route to the
+gantry, and the old cap made the skiff's guard rails 0.35 m shorter than
+the cover beside them for a reason that does not hold.**
+
+Kept visible rather than deleted, because the failure mode is the one
+worth remembering: the arithmetic was careful, reproducible and done
+against a constant whose FRAME was assumed. `GANTRY_Y` is relative to
+the rail. Batch 046 found that by measuring the yard instead of reading
+it -- see `assets/models/batch046/yard_fit.json`.
 """
 
 import json
@@ -78,8 +94,21 @@ GANTRY_Y = 3.1
 RECEIVER_Y = 0.85
 JUMP_APEX = 1.3333333333333333
 
-#: See the module docstring. Node-space z, above the deck-box centre.
-REACH_CAP = 0.95
+#: See the module docstring. Node-space z above the deck-box centre, set
+#: at the top of Production's own `SHIELD_HEIGHT` cover: 0.2 (deck
+#: half-thickness) + 1.25. Art parity with the gameplay object beside
+#: it, NOT a reach guarantee -- the reach claim it used to carry was
+#: wrong and is struck above.
+SHIELD_HEIGHT = 1.25
+REACH_CAP = DECK[1] * 0.5 + SHIELD_HEIGHT
+#: Where the railings and cage structure actually stop: a natural 1.05 m
+#: above the deck (world 2.05), a little under the welded cover so the
+#: guard reads as a guard and the shield stays the tallest thing on the
+#: vehicle. The old +0.95 cap put them at world 1.75 -- BELOW knee height
+#: relative to that shield -- because of the struck reach claim.
+GUARD_TOP = DECK[1] * 0.5 + 1.05
+#: A stand a standing operator works at, not a lectern.
+CONSOLE_TOP = DECK[1] * 0.5 + 0.85
 
 _IMAGES = {}
 _MATERIALS = {}
@@ -113,19 +142,23 @@ def _b(tag, size, at, role="wall", collide=None):
 
 
 def assert_under_cap(objects, label):
-    """No visual on a rideable deck may become a step to the gantry."""
+    """Nothing on a rideable deck stands taller than the welded cover.
+
+    An art rule, and it says so. The version this replaces claimed to be
+    a reach guarantee and was wrong on both of its numbers -- see the
+    module docstring.
+    """
     top = max((o.matrix_world @ __import__("mathutils").Vector(c)).z
               for o in objects for c in o.bound_box)
     if top > REACH_CAP + 1e-6:
         raise SystemExit(
             "%s reaches z %.3f in node space (world %.3f). The cap is "
-            "%.2f (world %.2f) because %.2f + %.4f of jump is %.3f and "
-            "the gantry is at %.1f -- a step onto this would skip the "
-            "acquisition loop."
+            "%.2f (world %.2f), which is the top of the SHIELD_HEIGHT "
+            "cover Production already welds to this deck. A railing "
+            "standing over the gameplay cover on the same vehicle reads "
+            "as a mistake."
             % (label, top, RAIL_Y + DECK[1] * 0.5 + top, REACH_CAP,
-               RAIL_Y + DECK[1] * 0.5 + REACH_CAP,
-               RAIL_Y + DECK[1] * 0.5 + REACH_CAP, JUMP_APEX,
-               RAIL_Y + DECK[1] * 0.5 + REACH_CAP + JUMP_APEX, GANTRY_Y))
+               RAIL_Y + DECK[1] * 0.5 + REACH_CAP))
     return top
 
 
@@ -185,11 +218,11 @@ def skiff():
         parts.append(_b("skiff_band_%s" % tag, (DECK[0] - 0.16, 0.16, 0.1),
                         (0, y, top + 0.40), "accent", "trim"))
         parts.append(_b("skiff_cap_%s" % tag, (DECK[0] - 0.1, 0.16, 0.1),
-                        (0, y, REACH_CAP - 0.05), "trim"))
+                        (0, y, GUARD_TOP - 0.05), "trim"))
         for side in (-1.0, 1.0):
             parts.append(_b("skiff_post_%s%d" % (tag, int(side)),
-                            (0.16, 0.16, REACH_CAP - top),
-                            (side * (hx - 0.12), y, (REACH_CAP + top) * 0.5),
+                            (0.16, 0.16, GUARD_TOP - top),
+                            (side * (hx - 0.12), y, (GUARD_TOP + top) * 0.5),
                             "trim"))
         # DIRECTION LAMPS, one per end, as their own nodes. `RailCarrier`
         # already has FORWARD / BACK / HOLD and emits `departed(from, dir)`
@@ -202,27 +235,27 @@ def skiff():
         parts.append(_b("lamp_%s" % tag, (0.34, 0.16, 0.16),
                         (0, end * hy, top + 0.40), "accent", "trim"))
 
-    # The driving stand. Set in a corner so the deck's walking area stays
-    # the 4 x 4 the passenger-carry measurement was made on, and capped
-    # like everything else -- a console you can stand on is a step.
+    # The driving stand. Set in a corner so the deck's walking area
+    # stays the 4 x 4 the passenger-carry measurement was made on, and
+    # kept below the guard rail so the silhouette ends on the rail.
     cx, cy = hx - 0.62, -(hy - 0.72)
-    parts.append(_b("console", (0.54, 0.44, REACH_CAP - top - 0.16),
-                    (cx, cy, (REACH_CAP + top) * 0.5 - 0.08),
+    parts.append(_b("console", (0.54, 0.44, CONSOLE_TOP - top - 0.16),
+                    (cx, cy, (CONSOLE_TOP + top) * 0.5 - 0.08),
                     "trim"))
     # A face, so the stand is a control and not a crate: a proud head
     # with a readout in it and a grab bar down one side.
     parts.append(_b("console_head", (0.66, 0.56, 0.16),
-                    (cx, cy, REACH_CAP - 0.08), "accent", "trim"))
+                    (cx, cy, CONSOLE_TOP - 0.08), "accent", "trim"))
     parts.append(_b("console_readout", (0.4, 0.1, 0.12),
-                    (cx, cy + 0.28, REACH_CAP - 0.2), "accent", "trim"))
+                    (cx, cy + 0.28, CONSOLE_TOP - 0.2), "accent", "trim"))
     parts.append(_b("console_grab", (0.08, 0.5, 0.08),
-                    (cx - 0.31, cy, REACH_CAP - 0.3), "accent", "trim"))
+                    (cx - 0.31, cy, CONSOLE_TOP - 0.3), "accent", "trim"))
     # HOLD is a real state in the carrier, not "no input". It gets a lamp.
     # Set INTO the console's top rather than standing on it. The first
     # cut perched it 6 cm proud and `assert_under_cap` refused the asset
     # at 1.070 -- which is the gate doing its job on its own author.
     parts.append(_b("beacon_hold", (0.2, 0.2, 0.12),
-                    (cx + 0.18, cy - 0.12, REACH_CAP - 0.09),
+                    (cx + 0.18, cy - 0.12, CONSOLE_TOP - 0.09),
                     "accent", "trim"))
     return body, parts
 
@@ -259,21 +292,21 @@ def hoist_car():
     for sx in (-1.0, 1.0):
         for sy in (-1.0, 1.0):
             parts.append(_b("hoist_channel_%d%d" % (int(sx), int(sy)),
-                            (0.16, 0.16, REACH_CAP - top),
+                            (0.16, 0.16, GUARD_TOP - top),
                             (sx * (hx - 0.12), sy * (hy - 0.12),
-                             (REACH_CAP + top) * 0.5), "trim"))
+                             (GUARD_TOP + top) * 0.5), "trim"))
     # The back wall is the one closed face -- a cage rider has something
     # behind them. The other three stay open: two are the transfer faces
     # and one looks out over the well.
-    parts.append(_b("hoist_back", (DECK[0] - 0.2, 0.1, REACH_CAP - top),
-                    (0, -(hy - 0.1), (REACH_CAP + top) * 0.5), "trim"))
+    parts.append(_b("hoist_back", (DECK[0] - 0.2, 0.1, GUARD_TOP - top),
+                    (0, -(hy - 0.1), (GUARD_TOP + top) * 0.5), "trim"))
     for i, z in enumerate((top + 0.26, top + 0.52)):
         parts.append(_b("hoist_brace_%d" % i, (DECK[0] - 0.24, 0.07, 0.07),
                         (0, -(hy - 0.1), z), "accent", "trim"))
     # Which way it is about to travel, as its own node.
     for tag, sy in (("up", 1.0), ("down", -1.0)):
         parts.append(_b("lamp_%s" % tag, (0.22, 0.14, 0.14),
-                        (hx - 0.14, sy * (hy - 0.12), REACH_CAP - 0.1),
+                        (hx - 0.14, sy * (hy - 0.12), GUARD_TOP - 0.1),
                         "accent", "trim"))
     return body, parts
 

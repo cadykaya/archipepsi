@@ -1,0 +1,249 @@
+{
+  "problems": [],
+  "yk_branch_conduit": {
+    "min_y": 0.0,
+    "nodes": 5,
+    "parts": [
+      "conduit_tray",
+      "conduit_cable_-1",
+      "conduit_cable_1",
+      "conduit_strap",
+      "conduit_marking"
+    ],
+    "size": [
+      0.46000000000000002,
+      0.299999999999999989,
+      2.0
+    ]
+  },
+  "yk_branch_mast": {
+    "corridor_floor": 2.78600000000000003,
+    "min_y": 0.0,
+    "nodes": 8,
+    "parts": [
+      "mast_base",
+      "mast_collar",
+      "mast_column",
+      "mast_blade_out",
+      "mast_chevron_out",
+      "mast_blade_back",
+      "mast_chevron_back",
+      "mast_cap"
+    ],
+    "size": [
+      0.900000000000000022,
+      1.62000000000000011,
+      1.30000000000000004
+    ],
+    "world_top": 2.62000000000000011
+  },
+  "yk_dock_buffer": {
+    "min_y": 0.0,
+    "nodes": 4,
+    "parts": [
+      "buffer_base",
+      "buffer_post",
+      "buffer_head",
+      "buffer_band"
+    ],
+    "size": [
+      0.46000000000000002,
+      0.859999999999999987,
+      0.46000000000000002
+    ]
+  },
+  "yk_dock_edge": {
+    "min_y": -0.0500000000000000028,
+    "nodes": 6,
+    "parts": [
+      "dock_nosing",
+      "dock_lip",
+      "board_mark_0",
+      "board_mark_1",
+      "board_mark_2",
+      "dock_band"
+    ],
+    "reaches_lateral": 3.10000000000000009,
+    "size": [
+      1.10000000000000009,
+      0.0899999999999999967,
+      7.0
+    ]
+  },
+  "yk_dock_locker": {
+    "min_y": 0.0,
+    "nodes": 5,
+    "parts": [
+      "locker_body",
+      "locker_top",
+      "locker_door",
+      "locker_reel",
+      "locker_plinth"
+    ],
+    "size": [
+      0.780000000000000027,
+      0.859999999999999987,
+      1.5
+    ]
+  },
+  "yk_gantry_anchor": {
+    "min_y": -0.0800000000000000017,
+    "nodes": 6,
+    "parts": [
+      "anchor_soffit",
+      "anchor_arm",
+      "anchor_stay",
+      "anchor_collar_-1",
+      "anchor_collar_1",
+      "anchor_lamp"
+    ],
+    "size": [
+      3.30000000000000027,
+      1.53000000000000003,
+      1.80000000000000004
+    ]
+  },
+  "yk_gantry_head": {
+    "closes_gap_of": 0.400000000000000022,
+    "min_y": -0.900000000000000022,
+    "nodes": 6,
+    "parts": [
+      "gantry_head",
+      "gantry_bracket_-1-1",
+      "gantry_bracket_-11",
+      "gantry_bracket_1-1",
+      "gantry_bracket_11",
+      "gantry_conduit"
+    ],
+    "size": [
+      3.0,
+      0.700000000000000067,
+      1.38000000000000012
+    ]
+  },
+  "yk_gantry_winch": {
+    "min_y": 0.0,
+    "nodes": 5,
+    "parts": [
+      "winch_house",
+      "winch_cap",
+      "winch_drum",
+      "winch_fairlead",
+      "winch_plinth"
+    ],
+    "size": [
+      1.35000000000000009,
+      1.0,
+      1.10000000000000009
+    ]
+  },
+  "yk_lever_housing": {
+    "min_y": 0.0,
+    "nodes": 7,
+    "parts": [
+      "lever_plinth",
+      "lever_quadrant",
+      "lever_arm",
+      "lever_lamp",
+      "service_panel",
+      "service_hinge",
+      "lever_linkage"
+    ],
+    "size": [
+      0.900000000000000022,
+      0.729999999999999982,
+      0.900000000000000022
+    ]
+  },
+  "yk_span_beam": {
+    "gap": 14.0479545593261719,
+    "min_y": -0.285000000000000031,
+    "nodes": 14,
+    "parts": [
+      "span_deck",
+      "span_web_-1",
+      "span_web_1",
+      "span_brace_0",
+      "span_brace_1",
+      "span_brace_2",
+      "span_brace_3",
+      "span_brace_4",
+      "span_brace_5",
+      "span_brace_6",
+      "span_brace_7",
+      "span_heel",
+      "span_toe",
+      "span_lamp"
+    ],
+    "size": [
+      0.570000000000000062,
+      0.660000000000000031,
+      14.048
+    ]
+  },
+  "yk_switch_stand": {
+    "min_y": 0.0,
+    "nodes": 5,
+    "parts": [
+      "switch_base",
+      "switch_box",
+      "switch_tongue",
+      "switch_indicator",
+      "switch_rod"
+    ],
+    "size": [
+      0.5,
+      0.770000000000000018,
+      1.37000000000000011
+    ]
+  },
+  "yk_track_end": {
+    "min_y": -0.175000000000000017,
+    "nodes": 7,
+    "parts": [
+      "end_sleeper",
+      "end_chair_-1",
+      "end_rail_-1",
+      "end_chair_1",
+      "end_rail_1",
+      "end_stop",
+      "end_stop_band"
+    ],
+    "size": [
+      0.540000000000000036,
+      0.479999999999999982,
+      0.599999999999999978
+    ]
+  },
+  "yk_track_module": {
+    "min_y": -0.175000000000000017,
+    "nodes": 6,
+    "parts": [
+      "track_sleeper",
+      "track_chair_-1",
+      "track_rail_-1",
+      "track_chair_1",
+      "track_rail_1",
+      "track_web"
+    ],
+    "size": [
+      0.5,
+      0.299999999999999989,
+      1.0
+    ]
+  },
+  "yk_track_pier": {
+    "min_y": 0.0,
+    "nodes": 3,
+    "parts": [
+      "pier_footing",
+      "pier_stem",
+      "pier_cap"
+    ],
+    "size": [
+      0.800000000000000044,
+      0.424999999999999989,
+      0.800000000000000044
+    ]
+  }
+}

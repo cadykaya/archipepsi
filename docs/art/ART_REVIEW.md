@@ -4064,6 +4064,50 @@ its own author twice during the batch.
 Measured boxes are Blender-ordered (width, depth, height); the manifest
 carries `size_axes` and the runtime order.
 
+### Batch 046 — the Blindside junction (2026-09-22, PENDING)
+
+Fourteen assets for the yard the 0.4 setpieces run through: track, dock
+edges, the repairable span and the gantry machinery. Candidate art:
+imported and fit-checked, **not** runtime-bound and **not**
+owner-approved. Fitted against Production `claude/archipepsi-0-4-blindside`
+@ `f404410`. Handoff: `docs/art-requests/2026-09-22-yardkit-handoff.md`.
+
+| Asset | Metrics | Item | Note |
+| --- | --- | --- | --- |
+| `yk_track_module` | 72 tris · 0.50 × 1.00 × 0.30 m · 32.0 texels/m | A04.1 | one metre of track, tiling; heads meet flush |
+| `yk_track_pier` | 36 tris · 0.80 × 0.80 × 0.42 m · 32.0 texels/m | A04.1 | **their track floats 0.425 m** over the yard floor; this is that gap |
+| `yk_track_end` | 84 tris · 0.54 × 0.60 × 0.48 m · 32.0 texels/m | A04.1 | a stop, not a taper -- the missing track must read as missing |
+| `yk_dock_edge` | 72 tris · 1.10 × 7.00 × 0.09 m · 32.0 texels/m | A04.2 | local x = 0 **is** the line the deck's outer edge arrives on |
+| `yk_dock_buffer` | 48 tris · 0.46 × 0.46 × 0.86 m · 32.0 texels/m | A04.2 | stands outboard of the receiver posts at lateral 2.60 |
+| `yk_dock_locker` | 76 tris · 0.78 × 1.50 × 0.86 m · 32.0 texels/m | A04.2 | the limited service furniture, inside the footprint |
+| `yk_span_beam` | 168 tris · 0.57 × 14.05 × 0.66 m · 32.0 texels/m | A04.3 | **14.05 m, measured** -- the aligned mesh meets both track ends |
+| `yk_switch_stand` | 60 tris · 0.50 × 1.37 × 0.77 m · 32.0 texels/m | A04.4 | **candidate**: the carrier has no switchable routing to report |
+| `yk_gantry_head` | 72 tris · 3.00 × 1.38 × 0.70 m · 32.0 texels/m | A05.1 | closes the 0.40 m between their column top and platform underside |
+| `yk_gantry_winch` | 76 tris · 1.35 × 1.10 × 1.00 m · 32.0 texels/m | A05.1 | its own asset -- the platform separates it from the head |
+| `yk_gantry_anchor` | 72 tris · 3.30 × 1.80 × 1.53 m · 32.0 texels/m | A05.2 | adapts the mounting, never the target; clear of the ring |
+| `yk_lever_housing` | 84 tris · 0.90 × 0.90 × 0.73 m · 32.0 texels/m | A05.3 | arm, lamp, linkage and service panel each addressable |
+| `yk_branch_mast` | 96 tris · 0.90 × 1.30 × 1.62 m · 32.0 texels/m | A05.4/5 | **1.62 m because the sight corridor said so**, same blade both faces |
+| `yk_branch_conduit` | 60 tris · 0.46 × 2.00 × 0.30 m · 32.0 texels/m | A05.4 | 2 m tiling run, the continuity back to the junction |
+
+**Every number is MEASURED, not remembered.**
+`assets/models/batch046/yard_fit.json` is written by
+`tools/content/run_yard_measure.sh`, which rebuilds Production's rail
+from Production's five control points with Production's own `RailPath`
+and evaluates it. The gap between S2 and S3 is **14.048 m** and no
+reading of `railway_scenario.gd` yields it — three of the five control
+points sit on a Catmull-Rom corner. The builder was sabotaged with a
+remembered 14.0 and produced a clean beam 48 mm short; the import
+harness caught it.
+
+**Three findings, all Production's to decide:** their gantry column tops
+at 3.10 against a platform underside at 3.50, a 0.40 m gap; their track
+floats 0.425 m over the yard floor with nothing under it; and a landmark
+on the acquisition branch cannot be taller than a person without
+crossing somebody's view of the grapple ring.
+
+Measured boxes are Blender-ordered (width, depth, height); the manifest
+carries `size_axes` and the runtime order.
+
 ---
 
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04

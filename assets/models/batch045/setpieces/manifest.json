@@ -12,7 +12,7 @@
       "gantry_y": 3.1,
       "production_ref": "claude/archipepsi-0-4-blindside",
       "rail_y": 0.6,
-      "reach_cap_node_z": 0.95
+      "reach_cap_node_z": 1.45
     },
     "kind": "setpiece_visual",
     "not_changed": [
@@ -61,7 +61,7 @@
       "gantry_y": 3.1,
       "production_ref": "claude/archipepsi-0-4-blindside",
       "rail_y": 0.6,
-      "reach_cap_node_z": 0.95
+      "reach_cap_node_z": 1.45
     },
     "kind": "setpiece_visual",
     "not_changed": [
@@ -107,7 +107,7 @@
       "gantry_y": 3.1,
       "production_ref": "claude/archipepsi-0-4-blindside",
       "rail_y": 0.6,
-      "reach_cap_node_z": 0.95
+      "reach_cap_node_z": 1.45
     },
     "kind": "setpiece_visual",
     "not_changed": [
@@ -151,7 +151,7 @@
       "gantry_y": 3.1,
       "production_ref": "claude/archipepsi-0-4-blindside",
       "rail_y": 0.6,
-      "reach_cap_node_z": 0.95
+      "reach_cap_node_z": 1.45
     },
     "kind": "setpiece_visual",
     "not_changed": [
@@ -179,7 +179,7 @@
     "size": [
       4.0,
       4.0,
-      1.18
+      1.48
     ],
     "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "status": "PROPOSAL -- visual only, review-pending, not a production default",
@@ -200,7 +200,7 @@
       "gantry_y": 3.1,
       "production_ref": "claude/archipepsi-0-4-blindside",
       "rail_y": 0.6,
-      "reach_cap_node_z": 0.95
+      "reach_cap_node_z": 1.45
     },
     "kind": "setpiece_visual",
     "not_changed": [
@@ -243,7 +243,7 @@
       "gantry_y": 3.1,
       "production_ref": "claude/archipepsi-0-4-blindside",
       "rail_y": 0.6,
-      "reach_cap_node_z": 0.95
+      "reach_cap_node_z": 1.45
     },
     "kind": "setpiece_visual",
     "not_changed": [
@@ -287,7 +287,7 @@
       "gantry_y": 3.1,
       "production_ref": "claude/archipepsi-0-4-blindside",
       "rail_y": 0.6,
-      "reach_cap_node_z": 0.95
+      "reach_cap_node_z": 1.45
     },
     "kind": "setpiece_visual",
     "not_changed": [
@@ -330,7 +330,7 @@
       "gantry_y": 3.1,
       "production_ref": "claude/archipepsi-0-4-blindside",
       "rail_y": 0.6,
-      "reach_cap_node_z": 0.95
+      "reach_cap_node_z": 1.45
     },
     "kind": "setpiece_visual",
     "not_changed": [
@@ -372,7 +372,7 @@
     "size": [
       4.0,
       4.16,
-      1.19
+      1.49
     ],
     "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "status": "PROPOSAL -- visual only, review-pending, not a production default",
@@ -393,7 +393,7 @@
       "gantry_y": 3.1,
       "production_ref": "claude/archipepsi-0-4-blindside",
       "rail_y": 0.6,
-      "reach_cap_node_z": 0.95
+      "reach_cap_node_z": 1.45
     },
     "kind": "setpiece_visual",
     "not_changed": [

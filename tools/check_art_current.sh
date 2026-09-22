@@ -224,6 +224,19 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_setpiece_fit.sh"
 
+  # The yard kit is fitted to a curve that cannot be restated, only
+  # evaluated -- the gap the span bridges is 14.048 m and no constant in
+  # railway_scenario.gd says so. A builder that drifts back to a
+  # remembered number exports a span 48 mm short of the far rail, which
+  # is exactly what a sabotage run produced. This is what caught it.
+  say "the yard kit still fits the MEASURED Blindside yard..."
+  tools/content/run_yardkit_fit.sh >/dev/null 2>&1 || \
+    fail "yardfit: a yard visual no longer imports, lost a named part,
+    stopped fitting the measured yard, or brought a collider, body,
+    light, camera or script along with it. Run
+
+    tools/content/run_yardkit_fit.sh"
+
   say "the theme pack binding, and its control..."
   tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
     fail "theme-bind: Production's ThemeMaterials no longer binds the
@@ -282,7 +295,7 @@ SCRIPTS="build_materials build_architecture build_props
   build_interaction_kit build_secrets build_enemy_roles build_zone_keys
   build_viewmodel build_gates build_decoys build_physics_props
   build_machinery build_wave1_repair_overlay build_junctions
-  build_setpieces"
+  build_setpieces build_yardkit"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.
@@ -343,7 +356,8 @@ done
 # prose. So these are named, and what is required is the CALL SHAPE, not a
 # mention.
 for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
-           run_arrival_test.sh run_setpiece_fit.sh; do
+           run_arrival_test.sh run_setpiece_fit.sh \
+           run_yardkit_fit.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."
