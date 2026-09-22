@@ -789,6 +789,46 @@
         "title": "StationReached",
         "type": "object"
       },
+      "ZoneStateSelected": {
+        "additionalProperties": false,
+        "description": "D-8. A player operated a setter and chose a Zone state.\n\n**P-3's gap, closed.** `ZoneProgress.with_macro` and\n`transitions.record_zone_state` both existed and there was no\nmessage that could reach them, so the engine had a selection it\ncould not report. `ZoneState.as_reported()` was what it *would*\nsend; this is the thing it sends.\n\n**Idempotent by `(variable_id, state)` and NOT monotone**, which is\nthe difference from `LatchFired` and the reason this is its own\nintent rather than a field on that one. Selecting a state the\nvariable already holds is absorbed; selecting a different one is a\nlegitimate second event, because a reversible variable going back is\nthe mechanic working rather than a replay to be rejected.\n\n**Validated against the accepted Zone**, like every sibling here:\n`record_zone_state` refuses a variable the Zone does not declare, a\nstate it does not have, and -- the one a latch analogy misses -- a\nstate no setter can select. \u00a719.7 says nothing but a player\noperating a setter moves Zone state, so a state nothing selects is\none nothing could have set.",
+        "properties": {
+          "type": {
+            "const": "zone_state_selected",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "variable_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Variable Id",
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "variable_id",
+          "state"
+        ],
+        "title": "ZoneStateSelected",
+        "type": "object"
+      },
       "ZoneTiming": {
         "additionalProperties": false,
         "description": "What the Zone actually cost the player, measured (CAMPAIGN_SCALE.md 13).\n\nThe 40-minute Zone and the 20-hour campaign are TARGETS. This is the\nonly thing that can turn either into a fact, and it is the reason the\nengine's content budget can be calibrated against play rather than\nagainst a designer's guess.\n\nGodot owns the clock -- elapsed time, per-chamber dwell, deaths and\nencounter durations are things only the running game knows. The\nbridge joins them to the room and Zone VALUES it computed for the\nsame Zone, so one local record holds both halves.\n\nLocal only: the bridge appends it to a file under the save directory.\nNothing is sent anywhere (CAMPAIGN_SCALE.md 13).",
@@ -890,6 +930,7 @@
         "slot_action": "#/$defs/SlotAction",
         "start_mock_campaign": "#/$defs/StartMockCampaign",
         "station_reached": "#/$defs/StationReached",
+        "zone_state_selected": "#/$defs/ZoneStateSelected",
         "zone_timing": "#/$defs/ZoneTiming"
       },
       "propertyName": "type"
@@ -954,6 +995,9 @@
       },
       {
         "$ref": "#/$defs/LatchFired"
+      },
+      {
+        "$ref": "#/$defs/ZoneStateSelected"
       },
       {
         "$ref": "#/$defs/LayoutResult"

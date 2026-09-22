@@ -937,6 +937,8 @@ not stop at the first blocked row.
 | **M3** | First content group | **3 of 3 built as playable development scenarios** | — | EX50-011, EX50-021 and EX50-033 all built and gated. **Built is not integrated**: all three are development scenarios, none is composed into a Zone, and their interlocks, campaign integration and save requirements are separate open rows. **Genuine Epsilon objective selection stays incomplete until D-5** and a handwritten configuration will not be reported as it |
 | **M2 complete** | The intended experience, multiworld-safe | **blocked** | **D-1 (Dess)**, §5's five requirements | |
 | **M6** | **Cross-room / Zone-spanning puzzle relationships** | **bridge half delivered; engine half and composition not started.** 0.4 COMPLETION, not a post-0.4 extension (owner scope clarification 2026-09-22) | Prod's runtime half; a composer that emits a relationship | **The declaration, the generation constraints, the progression validation and the save representation are in** (`Zone.zone_state`, `StateCondition` on `TopologyEdge`, the macro component in `topology._explore`, `ZoneProgress.macro_state`), with 20 controls on a really composed 23-room Zone and every rule sabotage-proven. **What is NOT in:** no composer emits a relationship, so nothing in a live seed declares one; the engine half is unbuilt; no physical acceptance has been run. | Prod's original measurement stands: Room boundaries must not be the default limit on puzzle scope; room-local puzzles stay supported. The architecture is already pinned at Amalgam §19.7 — room graphs read macro state and never write it, and *"a puzzle that should change the Zone drives a setter package's interaction, which the player then performs"* — so nothing is invented, but **none of it is built**: `grep -rn macro godot/scripts/` returns nothing, §20's `MACRO_STATE` and `MACRO_SELECTOR` are absent, and §21's macro effect types are absent. Engine half, measurement and the two rule questions: `docs/D8_CROSS_ROOM_PROD.md`. Acceptance is Blindside's major + acquisition branch through the real composition path with distinct room IDs — **not** a standalone scenario with labelled areas |
+| **M6** | see the cross-room row above | | | |
+| **M7** | **Transported-object support** — an object the player carries from one room to another | **not started — an explicit unfinished 0.4 row** (owner, 2026-09-22) | D-8's §11 amendment, accepted and narrowed by the bridge lane | §19.7 splits the world into a room layer and a machine layer and a carried object is neither: not macro state (rooms may not write it), not a latch (you can carry it back). Dess ACCEPTED the amendment and narrowed it — §10.5 already settles persistence, since `allowed_volume` is a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`, so what needs amending is AUTHORITY rather than persistence. Nothing is built: `ManipulableBody` positions are still replayed from the manifest, which is a room-local answer to a question that stopped being room-local. **Not discharged by the D-8 cross-room checkpoint**, which moves declared STATE and never an object |
 | **M4** | Remaining Amalgam breadth | **not started** | M3 | |
 | **M5** | Pinned review build | **not started** | M3 | |
 
@@ -1367,6 +1369,74 @@ consequence is what makes the relationship cross-room, and a control that also
 drives something where the player is standing is fine and is the more legible
 kind. A positive control was added, because "at least one elsewhere" and "none
 here" pass exactly the same tests without one.
+
+
+### P-2 — the control was placed through the wall, and the walk told me nothing
+
+`make godot-zone-state`, 37 checks, in CI: D-8's engine half consuming
+`Zone.zone_state`.
+
+The first build placed a setter at `arrival + (-2.6, 0, 1.2)` — 2.6 m
+**sideways**. A generated corridor is not that wide, so the lever went into the
+plaster: the player walked to within 1.6 m, the interact ray hit the wall at
+x −2.3, and `_interact_target` stayed null. Every case that operated the
+control failed and every case that only read state passed, which is exactly the
+shape that makes this worth writing down — **the walk succeeded**. `walked=true`
+at 1.58 m is what a control you cannot use looks like from the outside.
+
+Two wrong guesses before the measurement: the lever's half-base lift (real, and
+fixed, and not the cause) and the interact range (3.0 m, never the cause). The
+third step reported what the ray actually hit, by object rather than by name,
+and the answer was a wall.
+
+**Placement consults the committed bounds now.** `room_bounds` is the layout's
+own answer to how wide a room is; `_inside` clamps every setter and mechanism
+into it with a margin, and the offsets run ALONG a room rather than across it.
+A room with no recorded bounds is left alone rather than clamped to nothing.
+
+**The diagnostic stayed, conditioned on failure.** A control through a wall and
+a control that ignores the key look identical from a `pulls` counter, so a
+failed pull now reports what the camera was looking at instead. Success is
+quiet.
+
+
+### P-3 — D-8 consumed: a puzzle that crosses rooms, and the gap that remains
+
+`ZoneController` builds `Zone.zone_state` into a `ZoneState` (the machine layer
+of §19.7: no logic nodes, no room addressing another, idempotent), a control the
+player operates, and mechanisms elsewhere that follow the value by **variable
+id**. Proven, each as its own case:
+
+- a declaration becomes a control in its declared room and a machine **two rooms
+  away**, so nothing here is satisfied by a shared doorway;
+- the player **walks to the control and presses the key**, the Zone accepts the
+  state, and a barrier's collider moves in a room the player is not in;
+- **reachable reversal** — the walk back is made and the control operated again,
+  reported separately from the declaration that a reversal exists (owner
+  correction 2);
+- **partial reload** comes up at the saved value with the barrier already clear,
+  which a mechanism waiting for a `changed` signal would fail;
+- **completed reload** comes back still reversible, not as a latch wearing the
+  name;
+- **local reset** rebuilds the machine from the variable and loses neither the
+  configuration nor an unrelated latch;
+- the setter node is **freed outright** and every reader still works, because
+  none of them ever held it;
+- an unimplemented mechanism is refused by name and the Zone still builds.
+
+**THE GAP, NAMED RATHER THAN FILLED.** `ZoneProgress.with_macro` and
+`ZoneProgress.macro` exist — storage and read-back — and `protocol.py` has **no
+intent** a client can send to report a selection: `latch_fired`, `lock_opened`
+and their siblings are all there and there is nothing for Zone state. So the
+engine sends nothing and invents no message; `ZoneState.as_reported()` is what
+it *would* send and the suite asserts it. The authoritative state-update path is
+the bridge lane's half of the next checkpoint.
+
+**And what this is not.** No composer emits a `zone_state` declaration yet, so
+the Zones here are hand-written dictionaries standing in for its output and
+labelled as standing in for it. `docs/D8_CROSS_ROOM_PROD.md` §5 is unchanged:
+the Blindside acceptance case is the composer's output through the real path,
+and a reference fixture is an intermediate test.
 ### DESS-01 — four owner corrections to D-8, two of them real defects
 
 **Dess, 2026-09-22.** The owner returned four focused corrections to the
@@ -1524,3 +1594,37 @@ no physical acceptance has run; **transported-object support remains an
 explicit unfinished 0.4 row**; and neither the macro declaration nor a
 dev grant proves the featured-acquisition/AP delivery — that contract is
 still M2's completion requirement and is untouched by any of this.
+
+### DESS-03 — P-3's gap closed: the selection has a message now
+
+**Dess, 2026-09-22.** Prod built the runtime half of D-8 and found the
+hole from the other side: `ZoneProgress.with_macro` and
+`transitions.record_zone_state` both existed, `latch_fired` and
+`lock_opened` and their siblings were all there, and **nothing could
+carry a Zone-state selection between them**. The engine had a selection
+it could not report, so it correctly sent nothing and invented no
+message — `ZoneState.as_reported()` was what it *would* send.
+
+`ZoneStateSelected` is what it sends. Intent, union member, server
+dispatch and handler arm, with the transition it lands in already
+written.
+
+**It is its own intent rather than a field on `LatchFired`, and the
+reason is the one distinction this whole contract turns on.**
+`handle_progress`'s docstring said *"every target set is monotone, so
+the same event twice is one event"* — true of keys, locks, stations and
+latches, and **no longer true**. `macro_state` is overwritten, so
+idempotence here is per **`(variable, state)`**, not per variable:
+re-selecting the state a variable already holds is absorbed exactly as
+before, and selecting a different one is a **legitimate second event
+rather than a replay**, because a reversible variable going back is the
+mechanic working. The docstring is corrected; a resend rule that
+swallowed the reversal would have made every reversible relationship
+one-way at the protocol layer, which is the silent latch arriving by a
+door nobody was watching.
+
+**Verification.** 4 controls: the intent parses, the server routes it to
+`handle_progress` (an intent the union accepts and the dispatch drops is
+an intent that silently does nothing — the exact defect
+`handle_progress` was written to close for keys and locks), the whole
+path lands a value in the save, and the absorb/reverse pair.

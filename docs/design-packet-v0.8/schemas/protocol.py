@@ -1787,6 +1787,37 @@ class LatchFired(Strict):
                           pattern=r"^[a-z0-9_]+$")
 
 
+class ZoneStateSelected(Strict):
+    """D-8. A player operated a setter and chose a Zone state.
+
+    **P-3's gap, closed.** `ZoneProgress.with_macro` and
+    `transitions.record_zone_state` both existed and there was no
+    message that could reach them, so the engine had a selection it
+    could not report. `ZoneState.as_reported()` was what it *would*
+    send; this is the thing it sends.
+
+    **Idempotent by `(variable_id, state)` and NOT monotone**, which is
+    the difference from `LatchFired` and the reason this is its own
+    intent rather than a field on that one. Selecting a state the
+    variable already holds is absorbed; selecting a different one is a
+    legitimate second event, because a reversible variable going back is
+    the mechanic working rather than a replay to be rejected.
+
+    **Validated against the accepted Zone**, like every sibling here:
+    `record_zone_state` refuses a variable the Zone does not declare, a
+    state it does not have, and -- the one a latch analogy misses -- a
+    state no setter can select. §19.7 says nothing but a player
+    operating a setter moves Zone state, so a state nothing selects is
+    one nothing could have set.
+    """
+    type: Literal["zone_state_selected"]
+    zone_id: str = _ID
+    variable_id: str = Field(min_length=1, max_length=24,
+                             pattern=r"^[a-z0-9_]+$")
+    state: str = Field(min_length=1, max_length=24,
+                       pattern=r"^[a-z0-9_]+$")
+
+
 class LockOpened(Strict):
     """A locked door opened, identified by the door rather than the key.
 
@@ -1990,7 +2021,7 @@ ClientMessage = Annotated[
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
         SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
         ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
-        LayoutResult, BuildFailed,
+        ZoneStateSelected, LayoutResult, BuildFailed,
     ],
     Field(discriminator="type"),
 ]

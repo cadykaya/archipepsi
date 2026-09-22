@@ -1335,9 +1335,19 @@ class CampaignEngine:
         and a player who left for the Hub mid-report should not have a
         key land in whichever Zone is current.
 
-        **Idempotent, and quietly so.** Every target set is monotone, so
-        the same event twice is one event. A resend after a dropped
-        connection is the normal case and must never be an error.
+        **Idempotent, and quietly so.** The same event twice is one
+        event, and a resend after a dropped connection is the normal
+        case rather than an error.
+
+        **But not every target is monotone any more** (D-8). The key,
+        lock, station and latch sets only grow, so "the same event
+        twice" and "a repeat is absorbed" mean the same thing for them.
+        `zone_state_selected` writes `macro_state`, which is
+        OVERWRITTEN: re-selecting the state a variable already holds is
+        absorbed exactly as before, and selecting a DIFFERENT state is a
+        legitimate second event rather than a replay -- a reversible
+        variable going back is the mechanic working. The idempotence
+        here is per `(variable, state)`, not per variable.
         """
         if self.save is None:
             raise IntentError("no campaign loaded")
@@ -1362,6 +1372,9 @@ class CampaignEngine:
             elif intent.type == "lock_opened":
                 nxt = T.record_lock(self.save, intent.zone_id,
                                     intent.room_id, intent.socket_id)
+            elif intent.type == "zone_state_selected":
+                nxt = T.record_zone_state(self.save, intent.zone_id,
+                                          intent.variable_id, intent.state)
             else:
                 nxt = T.record_station(self.save, intent.zone_id,
                                        intent.station_id)

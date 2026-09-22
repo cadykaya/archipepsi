@@ -143,7 +143,7 @@ class BridgeServer:
         elif m.type == "grant_local_reward":
             await engine.handle_grant_local_reward(m)
         elif m.type in ("key_collected", "lock_opened", "station_reached",
-                        "latch_fired"):
+                        "latch_fired", "zone_state_selected"):
             await engine.handle_progress(m)
         elif m.type == "layout_result":
             await engine.handle_layout_result(m)

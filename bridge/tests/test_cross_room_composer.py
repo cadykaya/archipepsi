@@ -320,3 +320,75 @@ def test_the_two_differ_only_in_what_the_run_is_guaranteed():
     assert compose_zone_state(zone).emitted is False
     assert compose_zone_state(
         zone, declared_capabilities=["grapple"]).emitted is True
+
+
+# --------------------------------------------------------------------------
+# P-3's gap: the message the engine had no way to send.
+#
+# Prod built the runtime half and found `with_macro` and
+# `record_zone_state` both present with nothing that could reach them --
+# `ZoneState.as_reported()` was what the engine WOULD send. This is the
+# intent it sends, end to end.
+# --------------------------------------------------------------------------
+
+def test_the_engine_has_an_intent_for_a_selection():
+    from pydantic import TypeAdapter
+    from archipepsi_bridge.schemas.protocol import ClientMessage
+    msg = TypeAdapter(ClientMessage).validate_python({
+        "type": "zone_state_selected", "zone_id": "zone_001",
+        "variable_id": "span_alignment", "state": "lowered"})
+    assert msg.type == "zone_state_selected"
+    assert (msg.variable_id, msg.state) == ("span_alignment", "lowered")
+
+
+def test_the_server_routes_the_selection_to_the_progress_handler():
+    """An intent the union accepts and the dispatch drops is an intent
+    that silently does nothing -- which is the shape of the defect
+    `handle_progress` was written to close for keys and locks."""
+    import inspect
+    from archipepsi_bridge import server
+    src = inspect.getsource(server)
+    routed = src.split("handle_progress")[0].rsplit("elif m.type in", 1)[-1]
+    assert "zone_state_selected" in routed, (
+        "the selection intent must reach handle_progress")
+
+
+def test_a_selection_reported_as_an_intent_reaches_the_save():
+    """The whole path in one case: the message the engine sends, the
+    transition it lands in, and the value that comes back out."""
+    from archipepsi_bridge.schemas.transitions import record_zone_state
+    from pydantic import TypeAdapter
+    from archipepsi_bridge.schemas.protocol import ClientMessage
+
+    out = emitted()
+    v = out.zone.zone_state[0]
+    msg = TypeAdapter(ClientMessage).validate_python({
+        "type": "zone_state_selected", "zone_id": out.zone.zone_id,
+        "variable_id": v.variable_id, "state": v.states[1]})
+
+    save = _save_with(out.zone)
+    after = record_zone_state(save, msg.zone_id, msg.variable_id, msg.state)
+    rec = [z for z in after.zones if z.zone_id == out.zone.zone_id][0]
+    assert rec.progress.macro(v.variable_id) == v.states[1]
+
+
+def test_reselecting_the_same_state_is_absorbed_and_a_different_one_is_not():
+    """Idempotence is per `(variable, state)`, not per variable -- the
+    difference from every monotone sibling, and the reason a reversible
+    variable can go back without the resend rule swallowing it."""
+    from archipepsi_bridge.schemas.transitions import record_zone_state
+    out = emitted()
+    v = out.zone.zone_state[0]
+    save = _save_with(out.zone)
+
+    once = record_zone_state(save, out.zone.zone_id, v.variable_id,
+                             v.states[1])
+    again = record_zone_state(once, out.zone.zone_id, v.variable_id,
+                              v.states[1])
+    assert again is once, "a repeat of the same selection is absorbed"
+
+    back = record_zone_state(again, out.zone.zone_id, v.variable_id,
+                             v.states[0])
+    assert back is not again, "going back is an event, not a replay"
+    rec = [z for z in back.zones if z.zone_id == out.zone.zone_id][0]
+    assert rec.progress.macro(v.variable_id) == v.states[0]
