@@ -1280,6 +1280,76 @@ ACTUATOR_EPSILON = 0.001
 #: asked of whatever body is standing in a doorway -- a crate, a barrel,
 #: a rolled-in reactive prop -- and none of them share a base class.
 REQUIRED_OBJECT_GROUP = "required_object"
+
+# ---------------------------------------------------------------------------
+# CONSTRAINTS -- Amalgam §14.8 and §26.5 (pinned from Design 2).
+#
+# "This is what Design 1 deferred and Design 2 ships." A crane here is a
+# `PULLEY` with a load on one end and a `WINCH` driving it, and its cargo
+# SWINGS -- Design 1's crane was a `PATH_MACHINE` whose cargo was a child
+# transform and could not. The Amalgam calls that "the single most
+# visible difference between the two proposals in play".
+# ---------------------------------------------------------------------------
+
+#: The eight kinds and their solver treatment (§14.8). Order follows the
+#: document's table so a reader can check it line by line.
+CONSTRAINT_KINDS = (
+    "HINGE",          # single-axis rotational joint with angular limits
+    "SLIDER",         # single-axis translational joint with limits
+    "ROPE",           # distance constraint, TAUT ONLY -- resists extension
+    "CHAIN",          # same as ROPE, rendered segmented, same solver
+    "PULLEY",         # two ropes sharing a total length through a fixed point
+    "COUNTERWEIGHT",  # a PULLEY where one end carries an authored mass
+    "SEESAW",         # a HINGE, axis horizontal, pivot offset authored
+    "PENDULUM",       # a HINGE or ROPE with an authored rest and damping
+)
+
+#: WHICH KINDS THE ENGINE SOLVES ITSELF.
+#:
+#: Godot has a hinge and a slider, with real limits, and they are
+#: genuinely simulated -- so `HINGE`, `SLIDER`, `SEESAW` and a hinge
+#: `PENDULUM` use them. It has nothing for a TAUT-ONLY distance
+#: constraint (one that resists extension and not compression) or for two
+#: ropes sharing a total length, so those four are solved here, at
+#: §14.8's fixed eight iterations.
+#:
+#: The split is a fact about the substrate, not a design choice, and it
+#: is declared rather than hidden because it decides which constraints
+#: can report a force -- see `CONSTRAINT_BREAKABLE_KINDS`.
+CONSTRAINT_SOLVED_KINDS = ("ROPE", "CHAIN", "PULLEY", "COUNTERWEIGHT")
+CONSTRAINT_JOINT_KINDS = ("HINGE", "SLIDER", "SEESAW", "PENDULUM")
+
+#: §14.8: "`breakable_at` is checked once per tick against THE SOLVER'S
+#: REPORTED CONSTRAINT FORCE." Only the four this engine solves itself
+#: report one; a Godot joint does not expose its reaction, and a proxy
+#: computed from a body's velocity change would also be counting every
+#: contact it made that tick. A `breakable_at` on the other four is
+#: refused by name rather than answered with a number that is not the
+#: constraint's.
+CONSTRAINT_BREAKABLE_KINDS = CONSTRAINT_SOLVED_KINDS
+
+#: §14.8: "Solver iterations are fixed at `8` per tick. Not adaptive. A
+#: fixed iteration count is reproducible on a given build and is what
+#: makes the reference-solution replay in §23.5 check 20 meaningful."
+CONSTRAINT_SOLVER_ITERATIONS = 8
+
+#: §14.8: "Constraint chains are capped at `4` linked constraints. A
+#: pulley feeding a seesaw feeding a hinge is three."
+CONSTRAINT_CHAIN_CAP = 4
+
+#: §14.8: "Constrained objects never sleep while their constraint value
+#: is changing by more than `0.01` per tick."
+CONSTRAINT_SETTLED_DELTA = 0.01
+
+#: §14.8: "No constraint may be created at runtime except `TETHER`."
+#: Everything else is authored into the room, which is what lets §23.5
+#: check 20 replay a reference solution against a known setup.
+CONSTRAINT_RUNTIME_CREATABLE = ("ROPE",)
+
+#: Position correction per iteration, for the four solved kinds. Full
+#: correction in one step injects energy on a discrete timestep and a
+#: rope starts pumping; this is the standard Baumgarte fraction.
+CONSTRAINT_CORRECTION = 0.4
 RANGED_PROJECTILE_SPEED = 14.0
 
 

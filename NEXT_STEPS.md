@@ -1,5 +1,81 @@
 # Archipepsi — build state
 
+## 2026-09-22 (engine) — OV04 P13: the eight constraint kinds, genuinely simulated
+
+`make godot-constraints` — new at **67 checks**, in CI. Amalgam §14.8 and §26.5, pinned from
+Design 2, plus §21.10's three constraint-driven actuators. **All twelve of
+§21's actuator kinds build now**; P15 shipped nine and refused three by name,
+and this is the three.
+
+### What did not exist before
+
+`Constraints` (`godot/scripts/gameplay/constraints.gd`): the eight kinds, the
+fixed eight-iteration solver, `breakable_at` with §10.5's required-object
+rebuild, §14.8's four-link chain cap, the no-runtime-creation rule with
+`TETHER` as its one exception, and the no-sleep-while-moving rule.
+
+`Actuator.constrained()`: `WINCH`, `BRAKE` and `DRIVER`, each refusing a
+constraint family §21.10 does not give it, and each with its own §21.1.1
+power-loss answer — hold, engage, release-and-lock.
+
+### The measurement the package is for
+
+The Amalgam names it: *"A crane in Design 2 is a `PULLEY` with a load on one
+end and a `WINCH` driving it. Its cargo swings. Design 1's crane was a
+`PATH_MACHINE` whose cargo was a child transform and could not. That is the
+single most visible difference between the two proposals in play."* An 80 kg
+cargo dropped 2.4 m out from its anchor swings in underneath; a child transform
+would still be 2.4 m out.
+
+### Two solvers, and why
+
+Godot has a hinge and a slider with real limits, so `HINGE`, `SLIDER`, `SEESAW`
+and a hinge `PENDULUM` are those. It has nothing for a taut-only distance
+constraint or for two ropes sharing a total length, so `ROPE`, `CHAIN`,
+`PULLEY` and `COUNTERWEIGHT` are solved here at §14.8's fixed eight iterations.
+
+Consequences that are declared rather than hidden: `breakable_at` is offered
+only on the four kinds that report a real constraint force, and a `breakable_at`
+on a hinge is **refused by name**.
+
+### Two things the obvious implementation got wrong
+
+A brake is **a motor held at zero**, not a pair of angular limits squeezed onto
+the current value: Godot measures limits in the joint's frame and this class
+measures `value` in the body's, so "lock it where it is" would have snapped the
+hinge to wherever those disagreed. And a `DRIVER` **cannot turn a locked
+hinge** — §23.5 rule 28 pairs a `BRAKE` with every mandatory-route `DRIVER`, so
+the two meeting is designed, and the brake winning is what stalls the driver
+rather than letting whichever wrote the motor last decide.
+
+### The solver diverged to 1e18 on its first run
+
+`apply_central_impulse` outside `_integrate_forces` is queued on the physics
+server and does **not** change `linear_velocity` until the next step. So eight
+Gauss-Seidel passes each read the same unchanged velocity, each computed the
+same full correction, and eight full corrections landed on a body that needed
+one. It carries its own working velocity across the iterations now and hands
+the server one impulse per body per tick — which is also what makes `force_of`
+exact.
+
+### P-5, recorded not answered
+
+An under-rated rope on a `required` object breaks and rebuilds three times and
+then holds: each rebuild puts the load back **at rest** at `home_transform`,
+and a load at rest does not snatch. It does not loop. Hanging a required load
+on a rope it snaps is still a composition error §23.5 should catch, not a
+runtime one. Not answered with a rule this lane invented.
+
+### What this does NOT do
+
+§21.11's macro deferral (a `POWER_OFF` waiting while the player stands on the
+gantry) is the macro layer's. §14's twelve manipulation verbs are P12's —
+`TETHER`'s seam into this solver exists and the verb does not. `attach_surface`
+and `constraint_anchor` offer types (§28.8) are not authored into the Zone
+schema yet.
+
+---
+
 ## 2026-09-22 (engine) — OV04 P15: §21's actuator contract, and C4a closed
 
 `make godot-actuator` — **93 checks, in CI.** Amalgam §21, as far as this

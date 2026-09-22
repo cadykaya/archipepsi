@@ -256,3 +256,88 @@ work; §21.3's velocity-retention-on-leaving is `sync_to_physics`'s and is
 measured by `godot-physics`, not here; and the shipped machines keep their own
 motion curves — `Actuator` is the contract they consult for the rules that must
 be the same everywhere, not a rewrite of six working machines mid-flight.
+
+---
+
+### P13 — the eight constraint kinds, and a crane whose cargo swings
+
+`godot-constraints` is new at **67 checks**. §14.8 and §26.5, pinned from Design 2, plus
+§21.10's three actuators — the ones `Actuator` refused by name when P15 landed
+§21's other nine. **All twelve actuator kinds build now.**
+
+**The headline is one measurement.** The Amalgam names it itself: *"A crane in
+Design 2 is a `PULLEY` with a load on one end and a `WINCH` driving it. Its
+cargo swings. Design 1's crane was a `PATH_MACHINE` whose cargo was a child
+transform and could not. That is the single most visible difference between the
+two proposals in play."* A child transform keeps its offset from the hook
+exactly and forever; a suspended load dropped out to one side falls, goes taut,
+and swings in underneath. The case drops an 80 kg cargo 2.4 m out from its
+anchor and measures the offset collapse.
+
+| unit | evidence |
+|---|---|
+| P13.1 the vocabulary | eight kinds, each either solved here or a Godot joint, none in both and none in neither; eight fixed iterations; the four-link chain cap; exactly one runtime-creatable kind |
+| P13.2 taut only | a 60 kg load hangs at its rope's length rather than on the floor 20 m down, and a slack rope applies **nothing** — the half a two-sided distance constraint gets wrong |
+| P13.3 the cargo swings | offset from under the anchor collapses from 2.4 m while the rope still holds the load up |
+| P13.4 a chain is a rope | identical loads on a rope and a chain hang at the same depth to 0.02 m |
+| P13.5 a pulley shares one length | the heavy end descends and **draws the light end up**; two independent ropes would have dropped both |
+| P13.6 counterweight | a 260 kg authored mass raises a 50 kg platform, still declared as what it is |
+| P13.7 breaking | a 300 kg load on a 400 N rope breaks it once, the load keeps its velocity and goes on falling |
+| P13.8 rebuilding | a `required` object's broken rope rebuilds with the object at `home_transform` (§10.5) |
+| P13.9 a force that is not the constraint's | `breakable_at` on a hinge is refused by name |
+| P13.10 hinge and slider | both hold their body at the pivot and stop at their authored limits |
+| P13.11 the chain cap | four links build, the fifth is refused with the chain length in the message, and a constraint sharing no body is not counted against it |
+| P13.12 reproducibility | the same swing run twice lands within 0.02 m — which is what §23.5 check 20 replays against |
+| P13.13 the winch | winds a 120 kg girder up, stops and holds at `length_min`, pays out on OFF, holds its length on power loss |
+| P13.14 the brake | locks a seesaw **mid-swing at the value it had**, releases on OFF, and **engages unpowered whatever its input says** |
+| P13.15 the driver | turns a hinge by torque; power loss releases the torque and locks the hinge under an implicit brake |
+| P13.16 U4, the gantry | the Amalgam's own fixture: winch + brake + driver in one room, power dropped, and **nothing moves** |
+
+**Two solvers, and the split is the substrate's rather than a preference.**
+Godot has a hinge and a slider with real limits, genuinely simulated — so
+`HINGE`, `SLIDER`, `SEESAW` and a hinge `PENDULUM` are those. It has nothing
+for a taut-only distance constraint or for two ropes sharing a total length
+through a fixed point, so `ROPE`, `CHAIN`, `PULLEY` and `COUNTERWEIGHT` are
+solved here at §14.8's fixed eight iterations. Fixed, not adaptive, because a
+solver whose effort varied with load would make check 20's replay mean nothing.
+
+**`breakable_at` is only offered where a force is real.** §14.8 checks it
+"against the solver's reported constraint force". The four solved kinds report
+one exactly — it is the impulse this class applied, over the tick. A Godot joint
+does not expose its reaction, and the obvious proxy (velocity change against
+free fall) counts every contact the body made that tick too. So a `breakable_at`
+on a joint kind is refused by name, the same way `Actuator` refuses what it
+cannot build.
+
+**A brake is a motor held at zero, and the obvious implementation was wrong.**
+Squeezing the joint's angular limits onto the current value looked right and is
+not: Godot measures its limits in the joint's own reference and this class
+measures `value` in the body's, so "lock it where it is" would have snapped the
+hinge to wherever those two happened to disagree. A motor with a target velocity
+of zero is what a brake physically is, it holds at whatever value the hinge has
+without needing to name it, and it releases by switching off.
+
+**A `DRIVER` cannot turn a locked hinge.** §23.5 rule 28 puts a `BRAKE` on the
+same hinge as any mandatory-route `DRIVER`, so the two meeting is designed
+rather than accidental — and the brake wins, which is what stalls the driver
+instead of letting whichever wrote the motor last decide.
+
+**THE SOLVER DIVERGED TO 1e18 ON ITS FIRST RUN, and the reason is worth
+keeping.** `apply_central_impulse` called outside `_integrate_forces` is
+queued on the physics server and does **not** change `linear_velocity`
+until the next step. So eight Gauss-Seidel passes each read the same
+unchanged velocity, each computed the same full correction, and eight
+full corrections landed on a body that needed one. The load was flung
+up, the rope went slack, it fell, and the next tick over-corrected
+harder. The fix is what an iterative solver is supposed to do anyway:
+carry the velocity change in hand across the iterations so each pass
+sees what the passes before it did, and hand the server **one** impulse
+per body at the end. That also makes `force_of` exact, because the
+summed impulse is the number §14.8 asks for.
+
+**P-5 is smaller than it looked.** An under-rated rope on a `required`
+object breaks and rebuilds three times and then holds — each rebuild
+puts the load back **at rest** at `home_transform`, and a load at rest
+does not snatch. It does not loop. Hanging a required load on a rope it
+snaps is still a composition error §23.5 should catch; it is not a
+runtime one.

@@ -27,11 +27,13 @@ extends Node
 ##   `required = true` object" has to be measured with, because the
 ##   interlock's whole subject is a body being somewhere.
 ##
-## **WHAT THIS SUITE DOES NOT CLAIM.** Three of §21's twelve kinds —
-## `WINCH`, `BRAKE`, `DRIVER` (§21.10) — drive a constraint solver the
-## engine does not have. They are in the vocabulary and in the power-loss
-## table, and `Actuator.create` refuses them by name. The last case here
-## asserts the refusal rather than pretending at a stub.
+## **WHERE THE OTHER THREE ARE.** §21.10's `WINCH`, `BRAKE` and `DRIVER`
+## drive a named constraint rather than a `path`, so they are built by
+## `Actuator.constrained()` and measured by `godot-constraints` (P13),
+## against real ropes and hinges. What this suite still asserts is that
+## `create()` — the kinematic door, which hands an actuator a path and
+## nothing to drive — refuses them, because an actuator of one of those
+## kinds with no constraint is not an actuator.
 
 const STEP := 1.0 / 60.0
 
@@ -772,15 +774,17 @@ func _the_shipped_carriers_hold_on_power_loss() -> void:
 	carrier.queue_free()
 
 
-## §21.10's three are declared and NOT built. The refusal is the report.
+## §21.10's three are not built through THIS door. `create` hands an
+## actuator a path; those three have no path, and one built with nothing
+## to drive would be an actuator of no mechanism.
 func _the_constraint_kinds_are_refused_by_name() -> void:
-	print("\n-- §21.10: the three this engine cannot build yet --")
+	print("\n-- §21.10: the three that come through another door --")
 	for kind: String in ["WINCH", "BRAKE", "DRIVER"]:
 		var a := Actuator.create(kind, _rise(), 1.0)
 		add_child(a)
 		_check(not a.buildable() and not a.violations().is_empty(),
-				"%s is refused by name rather than stubbed (%s)"
-				% [kind, a.violations()[0]])
+				"%s built from a path is refused by name, and told where "
+				% kind + "to go instead (%s)" % a.violations()[0])
 		var before := a.t
 		a.set_input(true)
 		_drive(a, 2.0)
@@ -799,5 +803,6 @@ func _the_constraint_kinds_are_refused_by_name() -> void:
 			"…and so is a path §21.1's `length >= 2` cannot mean (%s)"
 			% short.violations())
 	short.queue_free()
-	_note("WINCH/BRAKE/DRIVER are OV04 P13's; §21.1.1's rows for them "
-			+ "are declared here so the table has no hole.")
+	_note("WINCH/BRAKE/DRIVER build through `Actuator.constrained()` and "
+			+ "are measured by `godot-constraints`. §21.1.1's rows for "
+			+ "them are declared here so the table has no hole.")

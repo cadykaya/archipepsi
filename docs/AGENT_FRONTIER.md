@@ -1,5 +1,47 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the cargo swings, and §21's twelve are all built — 2026-09-22
+
+**OV04 P13. `godot-constraints` is new at 67 checks.** Amalgam §14.8 and
+§26.5 pinned from Design 2, plus §21.10's three actuators — the ones
+`Actuator` refused by name when P15 landed §21's other nine. **All
+twelve actuator kinds build now.**
+
+**The headline is one measurement the Amalgam names itself:** *"A crane
+in Design 2 is a `PULLEY` with a load on one end and a `WINCH` driving
+it. Its cargo swings. Design 1's crane was a `PATH_MACHINE` whose cargo
+was a child transform and could not."* An 80 kg cargo dropped 2.4 m out
+from its anchor swings in to 0.00 m while the rope still holds it up.
+
+**Two solvers, and the split is the substrate's.** Godot has a hinge and
+a slider with real limits, so `HINGE`, `SLIDER`, `SEESAW` and a hinge
+`PENDULUM` are those. It has nothing for a taut-only distance constraint
+or two ropes sharing a total length, so `ROPE`, `CHAIN`, `PULLEY` and
+`COUNTERWEIGHT` are solved here at §14.8's fixed eight iterations.
+Consequence, declared rather than hidden: `breakable_at` is offered only
+where a real constraint force exists, and asking for it on a hinge is
+**refused by name**.
+
+**The solver diverged to 1e18 on its first run.** `apply_central_impulse`
+outside `_integrate_forces` is queued and does not change
+`linear_velocity` until the next step, so eight passes each applied the
+same full correction. It carries its own working velocity now.
+
+**Two things the obvious implementation got wrong.** A brake is a motor
+held at zero, not limits squeezed onto the current value — Godot
+measures limits in the joint's frame and this class measures `value` in
+the body's. And a `DRIVER` cannot turn a locked hinge: §23.5 rule 28
+pairs a `BRAKE` with every mandatory-route `DRIVER`, so the brake winning
+is what stalls the driver rather than letting whichever wrote the motor
+last decide.
+
+**P14 is NOT this lane's to build.** DESS-09 measured it and the argument
+holds: the engine has one signal chain (`PoweredLink`), no node
+vocabulary, no conduit, no graph, and declaring Design 1 §19's eleven
+node types now would be a framework no room uses — which P14.5 warns
+against in its own words.
+
+
 ## ENGINE LANE — §21's actuator contract, and the door reverses now — 2026-09-22
 
 **OV04 P15. `godot-actuator` is new at 93 checks**, and it is the first

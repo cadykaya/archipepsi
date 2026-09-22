@@ -85,6 +85,7 @@ const DRIVERS := {
 	"--zone-state": preload("res://tests/zone_state_driver.gd"),
 	"--roster": preload("res://tests/roster_driver.gd"),
 	"--actuator": preload("res://tests/actuator_driver.gd"),
+	"--constraints": preload("res://tests/constraint_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }

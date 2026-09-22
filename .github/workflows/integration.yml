@@ -146,6 +146,7 @@ jobs:
           make godot-zone-state
           make godot-roster
           make godot-actuator
+          make godot-constraints
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live

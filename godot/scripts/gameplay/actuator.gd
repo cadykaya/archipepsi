@@ -24,14 +24,21 @@ extends Node3D
 ## input is a live signal (§5.4a), the interlock's countdown is a
 ## fraction of a second, and power is a property of the room.
 ##
-## **NINE OF THE TWELVE KINDS BUILD.** `Constants.ACTUATOR_KINDS` is the
-## full twelve, because §21.1.1's power-loss table covers all twelve and
-## a table with holes is worse than one with a refusal in it. The three
-## constraint-driven kinds (§21.10 `WINCH`, `BRAKE`, `DRIVER`) drive a
-## solver this engine does not have yet, so `create` REFUSES them by name
-## rather than building something that moves but is not what the document
-## describes. That refusal is the honest report of where the substrate
-## ends; see `docs/ledgers/PROD_OV04.md`.
+## **ALL TWELVE KINDS BUILD, AND THE LAST THREE COME THROUGH A DIFFERENT
+## DOOR.** §21.10's `WINCH`, `BRAKE` and `DRIVER` are "the bridge between
+## the signal graph and the solver: a signal can now change a simulated
+## mechanism, not just move a kinematic platform." They have no `path`
+## and interpolate no `t` — what they have is a named constraint — so
+## they are built by `constrained()` rather than `create()`, and a
+## `create()` call for one of them is still refused, because an actuator
+## of those kinds with nothing to drive is not an actuator.
+##
+## They obey the same transition table: the input commands them, a
+## reversed input reverses them from where they are, and §21.1.1 answers
+## power loss per kind — a winch holds its length, a brake ENGAGES
+## whatever its input says, and a driver releases torque while its hinge
+## locks under an implicit brake. The safety property that buys is the
+## union's: **no power change puts a simulated mass in motion.**
 
 ## Reached the position the input commands, and stopped.
 signal arrived(at_t: float)
@@ -81,6 +88,21 @@ var obstruction: Area3D = null
 ## The carrier and the player, typically -- measured, not declared.
 var rail_actors: Array[Node3D] = []
 
+## §21.10. The solver this actuator reaches into, and the one constraint
+## in it that this actuator is about.
+var links: Constraints = null
+var constraint_id := ""
+## `rate_m_per_s` for a `WINCH`, `rate_rad_per_s` for a `DRIVER`.
+var rate := 0.5
+## Where a `DRIVER` is pushing its hinge toward.
+var target_value := 0.0
+## §21.10: a `DRIVER` "applies torque, not position. It can be resisted
+## by mass and it can stall."
+var torque := 40.0
+
+var _still := 0
+var _last_seen := 0.0
+
 ## §5.10's saved pair.
 var t := 0.0
 var direction := 0
@@ -112,15 +134,51 @@ static func create(actuator_kind: String, waypoints: Array[Transform3D],
 		made._refused.append("'%s' is not one of §21.1's twelve kinds"
 				% actuator_kind)
 	if actuator_kind in ["WINCH", "BRAKE", "DRIVER"]:
-		# §21.10's three drive a constraint solver rather than a `path`.
-		# They are declared in the vocabulary and in the power-loss table
-		# and they are NOT built here; see P13.
-		made._refused.append(("'%s' is constraint-driven (§21.10) and "
-				+ "needs the solver P13 owns") % actuator_kind)
+		# §21.10's three drive a named constraint rather than a `path`.
+		# An actuator of one of those kinds with nothing to drive is not
+		# an actuator, so this is a refusal rather than a default.
+		made._refused.append(("'%s' is constraint-driven (§21.10); build "
+				+ "it with `constrained()` and a constraint to drive")
+				% actuator_kind)
 	if waypoints.size() < 2 and not actuator_kind in [
 			"HAZARD_CONTROLLER", "LAUNCHPAD"]:
 		made._refused.append("§21.1 requires path length >= 2, got %d"
 				% waypoints.size())
+	return made
+
+
+## §21.10's three. They drive a named constraint rather than a `path`,
+## so they are built here and not by `create`.
+static func constrained(actuator_kind: String, solver: Constraints,
+		target: String, at_rate := 0.5) -> Actuator:
+	var made := Actuator.new()
+	made.name = "Actuator_%s" % actuator_kind
+	made.kind = actuator_kind
+	made.links = solver
+	made.constraint_id = target
+	made.rate = at_rate
+	made.travel_time = 0.0
+	if not actuator_kind in ["WINCH", "BRAKE", "DRIVER"]:
+		made._refused.append(("'%s' is a kinematic kind (§21.1) and is "
+				+ "built with `create`, from a path") % actuator_kind)
+		return made
+	if solver == null or not solver.has(target):
+		made._refused.append("'%s' names no constraint in this room"
+				% target)
+		return made
+	# EACH OF THE THREE DRIVES A DIFFERENT FAMILY, and §21.10 says which:
+	# a winch shortens a ROPE/CHAIN/PULLEY, a brake locks a
+	# HINGE/SLIDER/SEESAW, a driver applies torque to a HINGE. A winch on
+	# a hinge has nothing to shorten.
+	var drives := {
+		"WINCH": ["ROPE", "CHAIN", "PULLEY", "COUNTERWEIGHT"],
+		"BRAKE": ["HINGE", "SLIDER", "SEESAW", "PENDULUM"],
+		"DRIVER": ["HINGE", "SEESAW"],
+	}
+	var kind_of := solver.kind_of(target)
+	if not (kind_of in (drives[actuator_kind] as Array)):
+		made._refused.append("a %s drives %s, and '%s' is a %s (§21.10)"
+				% [actuator_kind, drives[actuator_kind], target, kind_of])
 	return made
 
 
@@ -150,6 +208,13 @@ func set_input(on: bool) -> void:
 		_set_hazard(on and powered)
 	if kind == "RAIL_SWITCH":
 		_want_branch(1 if on else 0)
+	if kind == "BRAKE":
+		# A BRAKE IS A STATE, NOT A TRAVEL. §21.10: it "locks at its
+		# current value while its input is ON; releases on OFF", and
+		# §21.1.1 makes an UNPOWERED brake a locked one whatever the
+		# input says -- fail-safe, the one kind whose power-loss answer
+		# ignores its input.
+		_set_brake(on or not powered)
 
 
 ## §21.4's selector. Changing it mid-travel redirects immediately, which
@@ -194,15 +259,33 @@ func power(on: bool) -> void:
 				_set_hazard(false)
 			"unlit":
 				direction = -1 if t > 0.0 else 0
+			"engage":
+				# FAIL-SAFE: an unpowered brake is a locked brake.
+				_set_brake(true)
 			_:
 				# EVERYTHING THAT CARRIES THE PLAYER HOLDS. The danger is
 				# the motion itself, and no interlock helps with a lift
 				# that drops or a bridge that retracts mid-crossing.
 				direction = 0
+				if kind == "DRIVER" and links != null:
+					# §21.1.1: "releases torque, and its hinge locks at
+					# the current value under an implicit brake." The
+					# lock is the point -- a drawbridge held up by torque
+					# alone would fall on a power cut, which is §23.5
+					# rule 28's softlock.
+					links.release(constraint_id)
+					links.lock(constraint_id, true, "driver:%s" % name)
 	else:
 		_live = true
 		if kind == "HAZARD_CONTROLLER":
 			_set_hazard(input_on)
+		if kind == "BRAKE":
+			_set_brake(input_on)
+		if kind == "DRIVER" and links != null:
+			# The implicit brake releases when power returns; §23.5 rule
+			# 28 is why a mandatory-route hinge pairs a real `BRAKE` on
+			# the same signal rather than relying on this one.
+			links.lock(constraint_id, false, "driver:%s" % name)
 	power_changed.emit(on)
 
 
@@ -278,6 +361,9 @@ func _physics_process(delta: float) -> void:
 ## One step of the transition table.
 func advance(delta: float) -> void:
 	if not _refused.is_empty():
+		return
+	if kind in ["WINCH", "BRAKE", "DRIVER"]:
+		_drive_constraint(delta)
 		return
 	if kind == "HAZARD_CONTROLLER":
 		_wind_up = _wind_up + delta if _hazard else 0.0
@@ -433,6 +519,101 @@ func _set_hazard(running: bool) -> void:
 		# its cycle rather than resuming a half-charged one.
 		_wind_up = 0.0
 	hazard_changed.emit(running)
+
+
+## §21.10, one tick of it.
+func _drive_constraint(delta: float) -> void:
+	if links == null or not links.has(constraint_id):
+		return
+	match kind:
+		"WINCH":
+			if not powered:
+				# §21.1.1: it HOLDS its current length. "A rope does not
+				# lengthen because a generator stopped."
+				direction = 0
+				return
+			# §21.1 ROWS 1 AND 2, READ FOR A LENGTH: the input commands a
+			# position, and here the position is how far in the rope is
+			# wound. ON winds in toward `length_min`, OFF pays out toward
+			# `length_max`, and an input that flips mid-wind reverses from
+			# the length it had.
+			var before := links.length_of(constraint_id)
+			var after := links.wind(constraint_id,
+					(-rate if input_on else rate) * delta)
+			t = wound()
+			if is_equal_approx(before, after):
+				# §21.10: at `length_min` or `length_max` it "stops and
+				# holds; it does not wrap or error". `Constraints.wind`
+				# clamps, so arriving is noticing the clamp.
+				if direction != 0:
+					direction = 0
+					arrived.emit(t)
+				return
+			direction = -1 if input_on else 1
+		"BRAKE":
+			_set_brake(input_on or not powered)
+		"DRIVER":
+			if not powered:
+				return
+			if not input_on:
+				links.release(constraint_id)
+				_still = 0
+				_last_seen = links.value_of(constraint_id)
+				return
+			# MEASURED ACROSS TICKS, not across the `drive` call. The
+			# constraint's value is recomputed once per tick by the
+			# solver, so reading it either side of setting a motor
+			# parameter compares a number with itself and every driver
+			# looks stalled.
+			var now := links.value_of(constraint_id)
+			_still = _still + 1 if absf(now - _last_seen) <= 0.001 else 0
+			_last_seen = now
+			links.drive(constraint_id, target_value, rate, torque)
+
+
+## How far in a winch is wound: `1.0` at `length_min`, `0.0` at
+## `length_max`. This is the `t` §5.10 saves for a winch.
+func wound() -> float:
+	if links == null or not links.has(constraint_id):
+		return 0.0
+	var span := links.length_max_of(constraint_id) 			- links.length_min_of(constraint_id)
+	if span <= 0.0:
+		return 0.0
+	return clampf((links.length_max_of(constraint_id)
+			- links.length_of(constraint_id)) / span, 0.0, 1.0)
+
+
+func _set_brake(on: bool) -> void:
+	if links == null or not links.has(constraint_id):
+		return
+	# LOCKED BY NAME. Two actuators may hold the same hinge -- rule 28's
+	# pairing is exactly that -- and one of them releasing must not
+	# release the other's hold.
+	links.lock(constraint_id, on, "brake:%s" % name)
+
+
+## §21.10: "A stalled `DRIVER` holds torque and reports stalled." It is
+## a readout rather than a refusal, because a driver that gave up would
+## be a driver that stopped holding the thing it lifted.
+func stalled() -> bool:
+	if kind != "DRIVER" or not powered or not input_on:
+		return false
+	if links == null or not links.has(constraint_id):
+		return false
+	if absf(links.value_of(constraint_id) - target_value) <= 0.02:
+		return false
+	# A THIRD OF A SECOND OF NOT MOVING, rather than one still frame. A
+	# hinge crossing the top of its arc is momentarily still and is not
+	# stalled, and the overlay this feeds should not flicker.
+	return _still > 20
+
+
+## Is this brake actually holding? A readout rather than the input,
+## because an unpowered brake is engaged whatever the input says.
+func brake_engaged() -> bool:
+	if links == null or not links.has(constraint_id):
+		return false
+	return links.is_locked(constraint_id)
 
 
 ## Interpolate `path` at `t`. `Transform3D.interpolate_with` is what
