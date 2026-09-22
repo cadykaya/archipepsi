@@ -215,6 +215,7 @@ const ZONE_TARGET_CHECKS_MIN = 1
 const ENVELOPE_FORCE_N = 700.0
 const ENVELOPE_RANGE_M = 20.0
 const ENVELOPE_MASS_KG = 120.0
+const CARRY_MASS_KG = 60.0
 const MANIPULATE_VERBS = ["HOLD", "PULL", "PUSH"]
 
 ## Largest gap a MANDATORY jump may span, landing this much

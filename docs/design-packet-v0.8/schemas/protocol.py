@@ -896,6 +896,23 @@ class CampaignSave(Strict):
     #: Empty for a campaign that has never deployed, which is also every
     #: save written before the field existed.
     consumable_deployment: str = Field(default="", max_length=64)
+    #: WHICH SUPPLY THOSE USES BELONG TO. Monotonic, minted only by a
+    #: refill, never reused — so a use minted against an old supply
+    #: carries a number that no longer exists and is refused on identity
+    #: rather than on arithmetic.
+    #:
+    #: `use_index` alone cannot do that job. An old use 1 arriving after
+    #: a refill matches the first use due (`1 == 0 + 1`), and an old use
+    #: 3 matches again once two legitimate new uses have brought the
+    #: count to 2. Both eat a charge from the fresh supply. The Zone id
+    #: is not enough either: it is reused every time you go back.
+    #:
+    #: Same shape as `proposal_id`/`attempt` — the server mints, the
+    #: snapshot mirrors, the client captures at the moment it acts and
+    #: echoes on the next intent. Zero for a campaign that has never
+    #: deployed, which is also every save written before the field
+    #: existed.
+    consumable_generation: int = Field(default=0, ge=0)
 
     def charges_left(self, component_id: str) -> int:
         """Uses remaining on a consumable. Zero for anything that is not
@@ -1587,6 +1604,12 @@ class CampaignSnapshot(Strict):
     #: the half that moves, and the client subtracts rather than counting
     #: its own button presses -- a second count is a second truth.
     consumable_uses: tuple[ConsumableUse, ...] = ()
+    #: The supply those uses belong to, mirrored from the save for the
+    #: client to capture and echo on `use_consumable`. It is also how the
+    #: client knows a refill happened: a snapshot under a different
+    #: generation retires every use it still had in flight, so a request
+    #: from the old supply can never be subtracted from the new one.
+    consumable_generation: int = Field(default=0, ge=0)
 
     active_zone: ZoneRecord | None = None
     #: The identity of the proposal `active_zone` holds, for the client
@@ -2109,6 +2132,18 @@ class UseConsumable(Strict):
     #: duplicate, a retry and a use minted before a refill all harmless
     #: without storing an identifier for any of them.
     use_index: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
+    #: WHICH SUPPLY THAT INDEX COUNTS AGAINST — captured from the
+    #: snapshot at the moment the button was pressed. `use_index` alone
+    #: cannot reject a use minted before a refill: index 1 from the old
+    #: supply is exactly the first index due after the refill, and an old
+    #: index 3 matches again once two new uses have been spent. The
+    #: generation makes both of those a mismatch.
+    #:
+    #: Required, unlike `proposal_id`, where absent legitimately means
+    #: "this client never saw a proposal". Every snapshot carries a
+    #: generation, so there is no honest reason to omit this one, and
+    #: "unchecked" is the hole this field exists to close.
+    generation: int = Field(ge=0)
 
 
 class GrantLocalReward(Strict):
@@ -2329,10 +2364,31 @@ class Notification(Strict):
 
 
 class BridgeError(Strict):
+    """A refused or failed intent, reported rather than swallowed.
+
+    **THE ONE SERVER MESSAGE WITH NO IDENTITY**, until `about`. `scope`,
+    `recoverable` and `message` say what went wrong and nothing about
+    what it went wrong ON, so two failed intents produce indistinguishable
+    frames and a client can only toast the string. That is survivable for
+    a refusal the player reads and forgets, and not survivable for one
+    the client has to UNDO — a spend it is holding in flight stays held
+    forever, subtracting from a count it will never be allowed to spend.
+    """
     type: Literal["error"]
     scope: Literal["ap", "epsilon", "bridge", "protocol"]
     recoverable: bool
     message: str = Field(max_length=C.MAX_TEXT_LEN)
+    #: WHAT THIS REFUSAL WAS ABOUT, as a domain key the refusing side
+    #: builds from the intent — `use_consumable:<component>:<gen>:<index>`
+    #: — never an opaque token the client made up. That is the house rule
+    #: everywhere identity is echoed (`key_id`, `use_index`,
+    #: `LatchFired.(package_id, latch_id)`): the name of the thing, so a
+    #: replay or a stale frame names something that can be checked.
+    #:
+    #: Empty for every refusal that existed before this field, and empty
+    #: means UNCHECKED, never "stale" — the `proposal_id` rule. A client
+    #: resolves a pending operation on an exact match and on nothing else.
+    about: str = Field(default="", max_length=C.MAX_TEXT_LEN)
 
 
 ServerMessage = Annotated[

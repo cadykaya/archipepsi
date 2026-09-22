@@ -43,7 +43,9 @@ def _zone(objects=None, rooms=("c001", "c002", "c003")) -> Zone:
 
 def _cell(**over) -> dict:
     base = {"object_id": CELL, "allowed_volume": ["c001", "c002", "c003"],
-            "home_room_id": "c001", "required": True}
+            "home_room_id": "c001", "required": True,
+            # The art lane's POWER_CELL: 40 kg and `carriable`.
+            "carriable": True, "mass_kg": 40.0}
     base.update(over)
     return base
 
@@ -293,3 +295,97 @@ def test_an_undeclared_mechanism_is_refused():
     with pytest.raises(ValueError, match="declares no object consumer"):
         T.record_object_consumed(_save(_zone_with_consumer()), "zone_001",
                                  "ghost_socket")
+
+
+# --------------------------------------------------------------------------
+# §10.3 — the object the player "carries" must be one a player can carry.
+#
+# `ENVELOPE_MASS_KG` (120) and `CARRY_MASS_KG` (60) answer different
+# questions: the first is one of three numbers a HOST must meet to be a
+# qualified manipulation provider, the second is a property of the OBJECT
+# and governs ordinary pickup. Until these tests existed, the carry line
+# had no consumer anywhere in the bridge or the engine -- it lived in
+# design prose and in one art preview's row labels -- so this declaration
+# accepted any mass at all.
+# --------------------------------------------------------------------------
+
+def test_a_ballast_cannot_be_declared_an_object_the_player_carries():
+    """320 kg, `carriable = false`: the art lane's ANCHOR-class prop.
+
+    Before §10.3 was handed this case, the declaration took it.
+    """
+    with pytest.raises(ValidationError) as e:
+        TransportedObject.model_validate(
+            _cell(object_id="ballast", carriable=False, mass_kg=320.0))
+    assert "not `carriable`" in str(e.value)
+
+
+def test_the_carry_line_is_inclusive():
+    """§10.3 reads `mass_kg <= 60.0`, so 60.0 itself is carriable."""
+    obj = TransportedObject.model_validate(_cell(mass_kg=60.0))
+    assert obj.mass_kg == 60.0
+
+
+def test_one_tenth_of_a_kilogram_over_the_line_is_refused():
+    with pytest.raises(ValidationError) as e:
+        TransportedObject.model_validate(_cell(mass_kg=60.1))
+    assert "60 kg carry line" in str(e.value)
+
+
+def test_the_flag_refuses_on_its_own_and_says_so():
+    """`PLATE` is exactly 60 kg and is NOT carriable -- the flag is not
+    a restatement of the kilograms, and the refusal must not blame the
+    mass of an object that is within the line."""
+    with pytest.raises(ValidationError) as e:
+        TransportedObject.model_validate(
+            _cell(object_id="plate", carriable=False, mass_kg=60.0))
+    text = str(e.value)
+    assert "not `carriable`" in text
+    # The shared tail explains what IS allowed above the line; the
+    # reason clause must not blame a mass that is within it.
+    assert "over \u00a710.3's" not in text
+
+
+def test_the_provider_envelope_is_not_a_licence_to_pick_something_up():
+    """100 kg is comfortably inside `ENVELOPE_MASS_KG`'s 120 and is
+    still not something a hand holds. If these two numbers are ever
+    collapsed into one rule, this is the test that fails."""
+    from archipepsi_bridge.schemas import physics as PH
+    assert 100.0 <= PH.ENVELOPE_MASS_KG
+    with pytest.raises(ValidationError) as e:
+        TransportedObject.model_validate(_cell(mass_kg=100.0))
+    assert "not a licence to pick this up" in str(e.value)
+
+
+def test_the_carry_rule_is_not_vacuous():
+    """Sabotage, with the TARGET FUNCTION confirmed changed.
+
+    A rule that is never reached looks exactly like a rule that holds.
+    `str.replace` on a module is not enough -- an identical line
+    elsewhere in the file absorbs the edit and the suite stays green
+    while nothing is tested -- so this asserts the source of
+    `carriable_by_hand` itself is what moved.
+    """
+    import inspect
+    from archipepsi_bridge.schemas import physics as PH
+
+    before = inspect.getsource(PH.carriable_by_hand)
+    assert "CARRY_MASS_KG" in before
+    original = PH.carriable_by_hand
+    try:
+        PH.carriable_by_hand = lambda carriable, mass_kg: True
+        assert PH.carriable_by_hand is not original
+        # zone.py imported the name, so reach it where the validator
+        # actually looks it up.
+        import archipepsi_bridge.schemas.zone as Z
+        z_original = Z.carriable_by_hand
+        Z.carriable_by_hand = PH.carriable_by_hand
+        try:
+            TransportedObject.model_validate(_cell(mass_kg=5000.0))
+        finally:
+            Z.carriable_by_hand = z_original
+    finally:
+        PH.carriable_by_hand = original
+    # And with the real predicate back, the same case is refused.
+    with pytest.raises(ValidationError):
+        TransportedObject.model_validate(_cell(mass_kg=5000.0))

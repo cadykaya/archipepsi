@@ -26,7 +26,9 @@ try:  # works standalone and when copied into a package
     from .graph import (
         EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
         TopologyEdge, ZoneKeySpec)
-    from .physics import STATE_VECTOR_BOUND, state_vector_product
+    from .physics import (
+        CARRY_MASS_KG, STATE_VECTOR_BOUND, carriable_by_hand,
+        state_vector_product)
     from .signal_graph import RoomGraph
 except ImportError:  # pragma: no cover
     import constants as C
@@ -34,7 +36,9 @@ except ImportError:  # pragma: no cover
     from graph import (
         EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
         TopologyEdge, ZoneKeySpec)
-    from physics import STATE_VECTOR_BOUND, state_vector_product
+    from physics import (
+        CARRY_MASS_KG, STATE_VECTOR_BOUND, carriable_by_hand,
+        state_vector_product)
     from signal_graph import RoomGraph
 
 #: Every joining socket name a procedural room can be given, matching
@@ -1279,6 +1283,52 @@ class TransportedObject(Strict):
     #: or constrained configurations are `PUZZLE_LOCAL`, everything else
     #: is `EPHEMERAL` -- so this decides whether losing it matters.
     required: bool = False
+
+    #: §10.1's flag and §10.3's kilograms, DECLARED rather than assumed.
+    #:
+    #: This schema's own first sentence is "an object the player carries
+    #: between rooms", and until these two fields existed nothing
+    #: checked that the player could carry it: a 320 kg `BALLAST` could
+    #: be declared a transported object and every validator would have
+    #: agreed. That is the project's recurring failure in its usual
+    #: shape -- a rule that exists, is correct, and is never handed the
+    #: case that fails it.
+    #:
+    #: Both are required. An optional mass defaults to something
+    #: truthful-looking and is never supplied, which is the same
+    #: unchecked declaration wearing a field name.
+    carriable: bool
+    mass_kg: float = Field(gt=0.0, le=100_000.0)
+
+    @model_validator(mode="after")
+    def _the_player_can_actually_carry_this(self):
+        """§10.3, handed the case that fails it.
+
+        The refusal names the alternative rather than pretending one
+        does not exist: above the line an object is *manipulable*, which
+        is a real way to move something and a DIFFERENT declaration this
+        schema does not yet have. `ENVELOPE_MASS_KG` is not that
+        alternative -- a qualified provider may push 120 kg and still
+        cannot pick up 61.
+        """
+        if carriable_by_hand(self.carriable, self.mass_kg):
+            return self
+        if not self.carriable:
+            why = ("it is not `carriable` (§10.1): whatever it weighs, "
+                   "this object is handled with lifting slots or attach "
+                   "pads, not a grip")
+        else:
+            why = (f"it weighs {self.mass_kg:g} kg, over §10.3's "
+                   f"{CARRY_MASS_KG:g} kg carry line")
+        raise ValueError(
+            f"object '{self.object_id}' is declared as one the player "
+            f"carries between rooms, but {why}. Above the carry line an "
+            "object is manipulable only -- a push or a pull by a "
+            "qualified provider, which is a different way of moving it "
+            "and a declaration this schema does not have yet. The "
+            "provider envelope's 120 kg is not a licence to pick this "
+            "up: it bounds what a PUSH may act on, not what a hand may "
+            "hold.")
 
     @model_validator(mode="after")
     def _home_is_inside_the_volume(self):

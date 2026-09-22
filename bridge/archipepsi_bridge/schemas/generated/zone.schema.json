@@ -1706,12 +1706,24 @@
           "default": false,
           "title": "Required",
           "type": "boolean"
+        },
+        "carriable": {
+          "title": "Carriable",
+          "type": "boolean"
+        },
+        "mass_kg": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 100000.0,
+          "title": "Mass Kg",
+          "type": "number"
         }
       },
       "required": [
         "object_id",
         "allowed_volume",
-        "home_room_id"
+        "home_room_id",
+        "carriable",
+        "mass_kg"
       ],
       "title": "TransportedObject",
       "type": "object"
