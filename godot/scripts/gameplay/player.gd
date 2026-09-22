@@ -540,12 +540,12 @@ static func create() -> Player:
 		runtime.player_ref = player
 		player.runtimes[slot] = runtime
 		if slot == "consumable":
-			# A CHARGE IS SPENT WHEN THE ACTION ACTUALLY FIRED, not when
-			# the key went down. `activate()` returns early on cooldown,
-			# on an unmet condition and on a closed gate, and charging
-			# the player for a press that resolved into nothing is the
-			# same unfairness as spending a cooldown on it.
-			runtime.action_used.connect(player._spend_a_charge)
+			# DID THE PRESS ACTUALLY PUT SOMETHING IN THE WORLD?
+			# `activate()` returns early on cooldown, on an unmet
+			# condition and on a closed gate, and a press that resolved
+			# into nothing must not be paid for. This is what tells the
+			# two apart; `press_slot` reads it.
+			runtime.action_used.connect(player._note_launch)
 	return player
 
 
@@ -562,10 +562,37 @@ func press_slot(slot: String) -> void:
 	# condition, not like a miss: no cooldown is charged and no effect
 	# runs, because a press that could never have resolved must not be
 	# paid for. The supply stays equipped at 0 -- exhausted, not gone.
-	if slot == "consumable" and not _has_a_charge():
+	if slot != "consumable":
+		runtimes[slot].activate()
+		return
+
+	# A CHARGE IS TAKEN BEFORE THE EFFECT, NOT AFTER IT.
+	#
+	# `reserve_consumable` returns `{}` when there is nothing left, which
+	# is the exhausted case: no cooldown is charged and no effect runs,
+	# because a press that could never have resolved must not be paid
+	# for. The supply stays equipped at 0 -- exhausted, not gone.
+	if BridgeClient.reserve_consumable(
+			str(BridgeClient.slotted_action("consumable").get(
+					"component_id", ""))).is_empty():
 		_say_exhausted()
 		return
+
+	var component_id := str(BridgeClient.slotted_action(
+			"consumable").get("component_id", ""))
+	_launched = false
 	runtimes[slot].activate()
+	if not _launched:
+		# PRE-LAUNCH FAILURE, and nothing has been sent yet. A cooldown or
+		# a closed gate is not an expenditure, so the charge goes back and
+		# there is no message for the engine to accept later. This is the
+		# ONLY refund there is.
+		BridgeClient.release_reservation(component_id)
+		return
+	# IT LAUNCHED. Report it, and keep the charge spent whatever the
+	# answer is -- a refusal does not un-fire a grenade, and a dropped
+	# send does not make one free.
+	BridgeClient.commit_consumable(component_id)
 
 
 ## Is there anything left in the consumable slot? Counts what is in
@@ -587,33 +614,17 @@ func _say_exhausted() -> void:
 	exhausted.emit(str(action.get("display_name", "Supply")))
 
 
-## Tell the bridge one use of the consumable is gone. The bridge owns the
-## count and clears the slot on the last one; this never decrements a
-## number of its own, because the HUD reads the bridge's and two counts
-## drift.
-func _spend_a_charge() -> void:
-	var action: Dictionary = BridgeClient.slotted_action("consumable")
-	if action.is_empty():
-		return
-	var component_id := str(action.get("component_id", ""))
-	# Guarded rather than left to the bridge's refusal: the slot empties
-	# on the last charge, but the snapshot carrying that is a round trip
-	# away, and a refusal in the meantime would put an error in front of
-	# a player who did nothing wrong.
-	if BridgeClient.charges_left(component_id) <= 0:
-		return
-	# `spend_consumable` sends the use AND records it as in flight, in
-	# that order, so a send the bridge never received is not held against
-	# the count. The next press sees one fewer before any snapshot
-	# arrives, which is what stops one charge firing twice.
-	#
-	# **THE EFFECT HAS ALREADY RUN** by the time this is called -- it
-	# hangs off `runtime.action_used`. So a refusal arriving later can
-	# only give the charge back for a NEW press; it can never un-fire or
-	# re-fire the one that happened. One accepted charge and one actual
-	# action are separate counts, and the gate above is what keeps them
-	# equal.
-	BridgeClient.spend_consumable(component_id)
+## THE CONSUMABLE'S EFFECT REACHED THE WORLD.
+##
+## Set by `EchoRuntime.action_used`, read by `press_slot`, and that is
+## the whole of it: the distinction between a press that fired and a
+## press that returned early is what separates an expenditure from a
+## refund, and this flag is where it lives.
+var _launched := false
+
+func _note_launch() -> void:
+	_launched = true
+
 
 func _ready() -> void:
 	add_to_group("player")

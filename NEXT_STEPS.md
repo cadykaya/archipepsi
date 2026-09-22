@@ -1,5 +1,74 @@
 # Archipepsi — build state
 
+## 2026-09-22 (engine) — the correction: one charge, one authorized activation
+
+**The owner withdrew the consumable advertisement, and was right to.** The
+spend transaction was correct about messages and wrong about expenditure, and
+two of my own tests asserted the wrong behaviour as the specification:
+
+- `_a_send_that_failed_is_never_held` expected the effect to RUN, nothing to
+  be sent, and the charge to remain. That is an **unpaid activation**, and it
+  repeats for as long as the bridge is down.
+- `_a_refusal_returns_the_charge_without_rerunning_the_effect` refunded a
+  charge whose effect was already in the world, and then asserted that a new
+  press fires. **One charge, two activations.**
+
+Not replaying the effect on a refusal is necessary and it is not sufficient.
+The defect was the ORDER: the effect fired on `EchoRuntime.action_used` and
+the client tried to pay for it afterwards.
+
+### The ordering, corrected
+
+**Reserve → launch → report.** `BridgeClient.reserve_consumable` takes the
+charge locally before anything irreversible happens and returns `{}` when
+there is nothing to take, which is the exhausted case. The effect is only
+allowed to run against a reservation that succeeded.
+
+- **Pre-launch failure is the only refund there is.** `activate()` returns
+  early on a cooldown, an unmet condition or a closed gate; nothing entered
+  the world and nothing has been SENT, which is what makes the refund safe —
+  there is no message for the engine to accept later.
+  `release_reservation` does this and nothing else.
+- **`commit_consumable` reports a launch and keeps the charge spent whatever
+  the answer is.** A failed send does not un-fire a grenade: the honest state
+  is a charge the player spent against a campaign that has not recorded it,
+  never a charge they get to spend again. It reconciles on the next
+  authoritative snapshot.
+- **A refusal marks the reservation DISPUTED and never refunds it.** The
+  engine did not record the expenditure; it did not say the grenade came
+  back. The mark is what stops the client waiting forever for a `spent` that
+  will never arrive — it settles on the next refill or resync instead.
+
+`Player.press_slot` carries the order, and `_launched` (set by
+`action_used`) is what separates an expenditure from a refund.
+
+### Coverage that counts expenditure, not messages
+
+`godot-consumable` is 61 checks. The two corrected cases now assert the
+opposite of what they used to: an offline press costs its charge and three
+more offline presses fire NOTHING, and a refusal leaves the charge spent with
+no second activation available.
+
+`TestAuthoritativeExpenditure` in `test_consumable_slot.py` is the other
+half — it drives sequences the way a session does and counts **how many
+charges the save actually gave up**. A retried message is one expenditure,
+not three; a delayed response does not double-charge; five refused attempts
+spend nothing; a whole stale supply spends none of the new one. A suite that
+counted messages would have scored the offline bug as four expenditures and
+the refund bug as one.
+
+**Four sabotages, all caught:** refund-on-refusal (4 failures), drop the
+reservation when the send fails — the real old bug — (3 failures, "4 effects
+total"), drop the engine's generation check (2), and let the engine saturate
+instead of refusing (3). A fifth sabotage was NOT caught and was therefore
+not a sabotage: reserving after launch instead of before changes nothing
+while the reservation still happens unconditionally, which is worth recording
+because it is the shape of a test that proves less than it claims.
+
+`IMPLEMENTED_ACTION_SLOTS` withholds `consumable` again and the baseline is
+back to four slots. It is the second time this slot has been staged, and the
+guard now reads `STAGED = {"consumable"}` once more.
+
 ## 2026-09-22 (engine) — mass semantics: the two limits, and which is real
 
 **Asked by the owner: do the pickup and ability consumers preserve the

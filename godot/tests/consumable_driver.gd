@@ -212,12 +212,13 @@ func _run() -> void:
 	await _it_damages_and_burns_what_it_hits()
 	await _an_empty_supply_refuses_before_it_costs_anything()
 	await _two_presses_on_one_charge_fire_once()
-	await _a_refusal_returns_the_charge_without_rerunning_the_effect()
+	await _a_refusal_does_not_hand_the_charge_back()
+	await _a_press_that_never_launched_costs_nothing()
 	await _an_unattributed_refusal_releases_nothing()
 	await _a_refusal_about_another_use_releases_nothing()
 	await _a_snapshot_that_has_not_caught_up_releases_nothing()
 	await _a_refill_retires_a_use_still_in_flight()
-	await _a_send_that_failed_is_never_held()
+	await _a_dropped_report_does_not_make_the_charge_free()
 	await _losing_the_bridge_drops_everything_pending()
 	await _swapping_away_and_back_is_not_a_refill()
 	await _the_menu_shows_an_exhausted_supply_and_what_refills_it()
@@ -314,33 +315,61 @@ func _two_presses_on_one_charge_fire_once() -> void:
 	_check(_uses_sent() == 1, "and exactly one use was sent")
 
 
-## **ONE ACCEPTED CHARGE IS NOT ONE ACTION.** The refusal arrives after
-## the effect has already happened. It must give the charge back — the
-## engine never recorded it — without the effect running a second time,
-## and a NEW press must then be allowed.
-func _a_refusal_returns_the_charge_without_rerunning_the_effect() -> void:
-	print("  -- a refusal restores the count, not the effect")
+## **ONE CHARGE BUYS ONE AUTHORIZED ACTIVATION, and a refusal does not
+## buy a second.**
+##
+## This case used to assert the opposite and call it correct: the
+## refusal handed the charge back, a new press fired, and the suite
+## reported two effects from one charge as a feature. The effect is
+## already in the world by the time any refusal can arrive — a refusal
+## says the engine did not RECORD the expenditure, not that the grenade
+## came back.
+func _a_refusal_does_not_hand_the_charge_back() -> void:
+	print("  -- a refusal disputes the charge; it does not refund it")
 	await _reset(CHARGES - 1)
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
 	var sent := _last_use()
 	_check(_effects == 1 and BridgeClient.charges_left(COMPONENT) == 0,
-			"one effect, and the charge is held in flight")
+			"one effect, and the charge is spent")
 
 	_refuse(BridgeClient.use_key(COMPONENT, int(sent["generation"]),
 			int(sent["use_index"])))
-	_check(BridgeClient.charges_left(COMPONENT) == 1,
-			"the refusal gave the charge back")
-	_check(_effects == 1,
-			"AND THE EFFECT DID NOT RE-RUN — a restored count is not a "
-			+ "replayed action")
+	_check(BridgeClient.charges_left(COMPONENT) == 0,
+			"the refusal did NOT give the charge back")
+	_check(_effects == 1, "and the effect did not re-run")
 
-	# The restore is real, not cosmetic: the charge can be spent again,
-	# by a NEW press, which is the only thing that can ever fire one.
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
-	_check(_effects == 2, "and a new press fires, once")
-	_check(_uses_sent() == 2, "sending a second use")
+	_check(_effects == 1,
+			"a press after the refusal fires NOTHING — one charge, one "
+			+ "activation, and the refusal did not buy a second")
+	_check(_refusals == 1, "the player is told the supply is empty")
+	_check(_uses_sent() == 1, "and no second use was sent")
+
+
+## A PRESS THAT RESOLVED INTO NOTHING IS THE ONE REFUND THERE IS.
+##
+## `activate()` returns early on a cooldown, and nothing goes into the
+## world — so nothing has been paid for, and nothing has been SENT
+## either, which is what makes the refund safe. Keeping this distinct
+## from "launched and missed" is the whole reason the reservation is
+## taken before the effect and released after it fails.
+func _a_press_that_never_launched_costs_nothing() -> void:
+	print("  -- pre-launch failure: refunded, and never reported")
+	await _reset()
+	var runtime: EchoRuntime = _player.runtimes["consumable"]
+	runtime.cooldown_remaining = 5.0          # it cannot fire
+	_player.press_slot("consumable")
+	await get_tree().physics_frame
+	_check(_effects == 0, "nothing launched")
+	_check(BridgeClient.charges_left(COMPONENT) == CHARGES,
+			"the charge came back — a cooldown is not an expenditure")
+	_check(_uses_sent() == 0,
+			"and NOTHING was sent, so there is no message for the "
+			+ "engine to accept later")
+	_check(BridgeClient._in_flight.is_empty(), "no reservation is held")
+	runtime.reset_cooldown()
 
 
 # ---------------------------------------------------------------------------
@@ -379,11 +408,15 @@ func _a_refusal_about_another_use_releases_nothing() -> void:
 	_refuse(BridgeClient.use_key(COMPONENT, generation, index + 1))
 	_check(BridgeClient.charges_left(COMPONENT) == 0,
 			"and a key naming another index is not either")
-	# ...and the right one does release it, so the case is about the
-	# match and not about the client having stopped listening.
+	# ...and the right one does REACH it, so the case is about the match
+	# and not about the client having stopped listening. Reaching it
+	# marks it disputed; it never refunds.
 	_refuse(BridgeClient.use_key(COMPONENT, generation, index))
-	_check(BridgeClient.charges_left(COMPONENT) == 1,
-			"the exact key releases it")
+	_check(bool((BridgeClient._in_flight[COMPONENT] as Dictionary)
+			.get("disputed", false)),
+			"the exact key marks it disputed")
+	_check(BridgeClient.charges_left(COMPONENT) == 0,
+			"and the charge is STILL spent — disputed is not refunded")
 
 
 ## **NOT ON EVERY SNAPSHOT.** A snapshot generated before the engine saw
@@ -430,22 +463,44 @@ func _a_refill_retires_a_use_still_in_flight() -> void:
 # The transport
 # ---------------------------------------------------------------------------
 
-## A SPEND THAT NEVER LEFT THE SOCKET IS NOT IN FLIGHT. Holding one would
-## subtract a charge the engine never heard about, for the rest of the
-## session — the count would never reconcile, because there is nothing
-## for it to reconcile against.
-func _a_send_that_failed_is_never_held() -> void:
-	print("  -- a failed send is never held against the count")
+## **A DROPPED REPORT DOES NOT MAKE THE CHARGE FREE.**
+##
+## This case used to assert that an offline press ran the effect and left
+## the count untouched, and called that correct. It is an unpaid
+## activation, repeatable for as long as the bridge stays down.
+##
+## The grenade left the hand. The engine has not heard and may never
+## hear, and the honest state is a charge the player spent against a
+## campaign that has not recorded it — never a charge they get to spend
+## again. It reconciles on the next authoritative snapshot.
+func _a_dropped_report_does_not_make_the_charge_free() -> void:
+	print("  -- offline: the effect costs its charge anyway")
 	await _reset(CHARGES - 1)
 	BridgeClient.assume_sent = false          # no socket, and no pretending
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
-	_check(_effects == 1, "the effect still ran — the press happened")
-	_check(BridgeClient._in_flight.is_empty(),
-			"but nothing is in flight, because nothing was sent")
-	_check(BridgeClient.charges_left(COMPONENT) == 1,
-			"so the count is the engine's, unreduced")
+	_check(_effects == 1, "the effect ran — the player had a charge")
+	_check(BridgeClient.charges_left(COMPONENT) == 0,
+			"and it COST that charge, though nothing was reported")
+
+	# REPEATED OFFLINE PRESSES buy nothing. This is the case the old
+	# assertion would have let through indefinitely.
+	for _i in 3:
+		_player.press_slot("consumable")
+		await get_tree().physics_frame
+	_check(_effects == 1,
+			"three more offline presses fire NOTHING (%d effects total)"
+			% _effects)
+	_check(_refusals == 3, "each is refused as exhausted")
 	BridgeClient.assume_sent = true
+
+	# ...AND THE RESYNC IS AUTHORITATIVE. The engine never recorded any
+	# of it, so its snapshot is the truth and the supply comes back.
+	BridgeClient.online = true
+	BridgeClient._process(DT)                 # the socket is shut: drop
+	_deliver(_snapshot(CHARGES - 1))
+	_check(BridgeClient.charges_left(COMPONENT) == 1,
+			"and a reconnect resyncs to the engine's count, not to ours")
 
 
 ## NOTHING SURVIVES THE SOCKET. Whether the spend landed is unknowable

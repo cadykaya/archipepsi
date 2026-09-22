@@ -375,28 +375,69 @@ static func use_key(component_id: String, generation: int,
 	return "use_consumable:%s:%d:%d" % [component_id, generation, index]
 
 
-## SEND ONE USE AND HOLD IT IN FLIGHT. Returns false if nothing was sent.
+## RESERVE A CHARGE, BEFORE ANYTHING IRREVERSIBLE HAPPENS.
 ##
-## The send and the record are one call because the order between them is
-## load-bearing: **a spend that never left the socket must not be held.**
-## `send_intent` returns false when the bridge is offline, and a pending
-## use recorded anyway would subtract a charge the engine never heard
-## about, for as long as the session lasts.
+## **THE ORDER IS THE WHOLE CORRECTION.** This used to be one call that
+## fired after `EchoRuntime.action_used`: the effect launched, and THEN
+## the client tried to pay for it. Two things fell out of that and both
+## were asserted as correct:
 ##
-## The generation is captured HERE, at the moment of acting, and echoed
-## on the intent -- the `proposal_id` convention. It is what makes a use
-## minted before a refill refusable on identity instead of on arithmetic.
-func spend_consumable(component_id: String) -> bool:
-	var generation := int(snapshot.get("consumable_generation", 0))
-	var index := charges_total(component_id) \
-			- charges_left(component_id) + 1
-	if not send_intent({"type": "use_consumable",
-			"component_id": component_id,
-			"use_index": index,
-			"generation": generation}):
+##   A FAILED SEND RAN THE EFFECT AND CHARGED NOTHING. Offline, the
+##   grenade left the hand, the intent was dropped, and the count was
+##   untouched -- an unpaid activation, repeatable for as long as the
+##   bridge stayed down.
+##   A REFUSAL REFUNDED A CHARGE WHOSE EFFECT HAD ALREADY HAPPENED, and
+##   the refund was spendable. One charge, two activations.
+##
+## Not replaying the effect on a refusal is necessary and it is not
+## sufficient. So the charge is taken FIRST, locally, and the effect is
+## only allowed to run against a reservation that succeeded.
+##
+## Returns the reservation, or `{}` when there is nothing left to
+## reserve — and `{}` means the press may not fire.
+func reserve_consumable(component_id: String) -> Dictionary:
+	if charges_left(component_id) <= 0:
+		return {}
+	var held := {"generation": int(snapshot.get(
+					"consumable_generation", 0)),
+			"index": charges_total(component_id)
+					- charges_left(component_id) + 1,
+			"disputed": false}
+	_in_flight[component_id] = held
+	return held
+
+
+## THE PRESS RESOLVED INTO NOTHING, so give the charge back.
+##
+## **THE ONE REFUND THERE IS, and it is a PRE-LAUNCH refund.** `activate()`
+## returns early on a cooldown, an unmet condition and a closed gate;
+## none of those put anything in the world, so none of them has been paid
+## for. Nothing has been sent at this point either, which is what makes
+## the refund safe: there is no message for the engine to accept later.
+func release_reservation(component_id: String) -> void:
+	_in_flight.erase(component_id)
+
+
+## THE EFFECT LAUNCHED. Tell the engine, and keep the charge spent
+## whatever the answer is.
+##
+## **A FAILED SEND DOES NOT UN-FIRE A GRENADE.** If the socket is shut
+## the engine never hears about this use, and the honest state is a
+## charge the player spent and a campaign that has not recorded it —
+## never a charge they get to spend again. It reconciles on the next
+## authoritative snapshot, which is what `online` going false and the
+## next `hello` are for.
+##
+## Returns whether the report actually went out, for callers that want to
+## say so; the reservation stands either way.
+func commit_consumable(component_id: String) -> bool:
+	if not _in_flight.has(component_id):
 		return false
-	_in_flight[component_id] = {"generation": generation, "index": index}
-	return true
+	var held: Dictionary = _in_flight[component_id]
+	return send_intent({"type": "use_consumable",
+			"component_id": component_id,
+			"use_index": int(held["index"]),
+			"generation": int(held["generation"])})
 
 
 ## RESOLVE PENDING SPENDS FROM A SNAPSHOT -- and only the two ways a
@@ -409,9 +450,14 @@ func spend_consumable(component_id: String) -> bool:
 ## What this deliberately does NOT do is clear on any snapshot that
 ## arrives. A snapshot generated before the engine saw the request would
 ## clear a use that is still genuinely in flight, and the next press
-## would run the effect a second time against one charge. Refusals are
-## resolved by `about`, not here; a request that is neither applied nor
-## refused is covered in `_in_flight`'s note.
+## would run the effect a second time against one charge.
+##
+## A DISPUTED RESERVATION SETTLES THE SAME TWO WAYS and no others. The
+## engine refused it, so its `spent` will never reach the index and
+## LANDED can never fire — but the effect happened, so the charge stays
+## deducted until the supply is REPLACED or the session resyncs. That is
+## the conservative direction: it can refuse a press the engine would
+## have allowed, and it can never permit a second effect.
 func _settle_in_flight() -> void:
 	var generation := int(snapshot.get("consumable_generation", 0))
 	for component_id: Variant in _in_flight.keys():
@@ -425,22 +471,33 @@ func _settle_in_flight() -> void:
 			_in_flight.erase(component_id)
 
 
-## RESOLVE A PENDING SPEND FROM A REFUSAL. Exact match on the domain key
-## and nothing else: an error with an empty `about` is UNCHECKED, not
-## "mine", so it cannot release a use it has no evidence about.
+## MARK A RESERVATION DISPUTED — and **do not give the charge back**.
 ##
-## Without this a refused use is held forever -- the snapshot's count can
-## never reach an index the engine declined, so the displayed charge
-## stays a charge short for the rest of the session, and after a refill
-## it is a charge short of a supply it was never minted against.
+## Exact match on the domain key and nothing else: an error with an empty
+## `about` is UNCHECKED, not "mine", so it cannot touch a reservation it
+## has no evidence about.
+##
+## **THIS USED TO REFUND, AND THAT WAS THE BUG.** Every reservation that
+## can still be refused here has already LAUNCHED — the effect is in the
+## world, because `commit_consumable` is only reached after
+## `action_used`. Handing the charge back made it spendable again, so one
+## charge bought the effect that happened AND a second press. A refusal
+## says the engine did not record the expenditure; it does not say the
+## grenade came back.
+##
+## What the mark buys is the thing holding it forever would have cost:
+## the client knows this index will never be confirmed, so it stops
+## waiting for `spent` to reach it and settles on the next refill or
+## resync instead of on nothing.
 func _release_refused(about: String) -> void:
 	if about.is_empty():
 		return
 	for component_id: Variant in _in_flight.keys():
-		var pending: Dictionary = _in_flight[component_id]
-		if use_key(str(component_id), int(pending.get("generation", -1)),
-				int(pending.get("index", 0))) == about:
-			_in_flight.erase(component_id)
+		var held: Dictionary = _in_flight[component_id]
+		if use_key(str(component_id), int(held.get("generation", -1)),
+				int(held.get("index", 0))) == about:
+			held["disputed"] = true
+			_in_flight[component_id] = held
 			return
 
 
