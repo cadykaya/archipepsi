@@ -27,6 +27,9 @@ const PRODUCTION := {
 	"sp_skiff_deck": {"x": 4.0, "z": 4.0, "tol": 0.001,
 		"why": "RailCarrier deck box; the docks meet its outer edge exactly",
 		"free_axis": "z"},
+	"sp_skiff_deck_bare": {"x": 4.0, "z": 4.0, "tol": 0.001,
+		"why": "the same hull with no end guards, for the fitted ones",
+		"free_axis": "z"},
 	"sp_hoist_car": {"x": 4.0, "z": 4.0, "tol": 0.001,
 		"why": "passing_platforms DECK", "free_axis": ""},
 	"sp_crossing_carrier": {"x": 4.0, "z": 4.0, "tol": 0.001,
@@ -64,7 +67,8 @@ const MAX_VERTICAL_STEP := 1.0
 ## Passing Platforms carriers are held to the same silhouette because
 ## they share `DECK`, not because a gantry exists in that room -- it
 ## does not.
-const RIDEABLE := ["sp_skiff_deck", "sp_hoist_car", "sp_crossing_carrier"]
+const RIDEABLE := ["sp_skiff_deck", "sp_skiff_deck_bare",
+	"sp_hoist_car", "sp_crossing_carrier"]
 const DECK_CENTRE_Y := 0.8
 const SHIELD_HEIGHT := 1.25
 const DECK_THICKNESS := 0.4

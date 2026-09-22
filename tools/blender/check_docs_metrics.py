@@ -66,11 +66,22 @@ INLINE = re.compile(
 #: So the association is by substring against the real manifest keys, and
 #: the nearest preceding match owns the metrics row beneath it.
 def _id_in(line, built):
-    hit, at = None, -1
+    """The asset a line is about: latest match, and the LONGEST of those.
+
+    The length tiebreak matters the moment one id is a prefix of
+    another. `sp_skiff_deck_bare` begins with `sp_skiff_deck`, so both
+    match at the same position, and without this the checker compared
+    the bare hull's row against the full deck's metrics and reported
+    two mismatches that were its own. The rule is unambiguous: at the
+    same position, the longer id is the one actually written.
+    """
+    hit, at, length = None, -1, -1
     for asset_id in built:
         found = line.find(asset_id)
-        if found > at:
-            hit, at = asset_id, found
+        if found < 0:
+            continue
+        if found > at or (found == at and len(asset_id) > length):
+            hit, at, length = asset_id, found, len(asset_id)
     return hit
 
 

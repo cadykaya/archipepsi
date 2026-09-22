@@ -237,6 +237,16 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_yardkit_fit.sh"
 
+  # A vehicle that turns cannot be checked by a still. The carrier
+  # yaws through the corner, so a fitting that clears a dock at S1 may
+  # not clear one at S2 -- and the sweep is the only thing that asks.
+  say "the loaded skiff still sweeps the route without fouling a dock..."
+  tools/content/run_skiff_sweep.sh >/dev/null 2>&1 || \
+    fail "sweep: a fitting on the skiff now enters a dock pad somewhere
+    on the route, or a rider can no longer see over the cover. Run
+
+    tools/content/run_skiff_sweep.sh"
+
   say "the theme pack binding, and its control..."
   tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
     fail "theme-bind: Production's ThemeMaterials no longer binds the
@@ -295,7 +305,7 @@ SCRIPTS="build_materials build_architecture build_props
   build_interaction_kit build_secrets build_enemy_roles build_zone_keys
   build_viewmodel build_gates build_decoys build_physics_props
   build_machinery build_wave1_repair_overlay build_junctions
-  build_setpieces build_yardkit"
+  build_setpieces build_yardkit build_skiffkit"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.
@@ -357,7 +367,7 @@ done
 # mention.
 for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
            run_arrival_test.sh run_setpiece_fit.sh \
-           run_yardkit_fit.sh; do
+           run_yardkit_fit.sh run_skiff_sweep.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."

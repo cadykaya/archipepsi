@@ -17,6 +17,8 @@ const FOV := 48.0
 const SHOTS := [
 	["sp_skiff_deck", Vector3(5.2, 2.6, 5.6), Vector3(0, 0.35, 0),
 		"Blindside skiff -- open on the dock sides, guarded at the ends"],
+	["sp_skiff_deck_bare", Vector3(5.2, 2.6, 5.6), Vector3(0, 0.35, 0),
+		"Bare hull -- the same deck with no end guards, for the fitted ones"],
 	["sp_hoist_car", Vector3(5.0, 2.8, 5.0), Vector3(0, 0.35, 0),
 		"Passing Platforms hoist -- the structure runs UP"],
 	["sp_crossing_carrier", Vector3(5.0, 2.4, 5.0), Vector3(0, 0.2, 0),

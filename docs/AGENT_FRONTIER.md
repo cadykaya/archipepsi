@@ -93,6 +93,12 @@ Two things from it that other lanes need:
   with nothing under it. And a landmark on the acquisition branch cannot
   be taller than a person without crossing somebody's view of the
   grapple ring.
+* **Batch 047 delivers the skiff's fitted parts** — shield, end guard,
+  traction truck, and a bare hull variant. Handoff:
+  `docs/art-requests/2026-09-22-skiffkit-handoff.md`.
+* **Their track beam is 0.175 m inside the bottom of the carrier deck**
+  (track spans 0.425–0.775, deck 0.600–1.000), so nothing fits under
+  the deck. The traction trucks hang beside the beam at ±0.45.
 * **The gap between S2 and S3 is 14.048 m and no constant says so** —
   three of the rail's five control points sit on a Catmull-Rom corner.
   `tools/content/run_yard_measure.sh` evaluates it with Production's own

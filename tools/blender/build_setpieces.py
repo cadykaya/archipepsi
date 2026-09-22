@@ -162,8 +162,17 @@ def assert_under_cap(objects, label):
     return top
 
 
-def skiff():
+def skiff(guards=True):
     """`sp_skiff_deck` -- the Blindside railway skiff.
+
+    **`guards=False` exports the same hull with no end guards**, as
+    `sp_skiff_deck_bare`. A03.2 asks for the shield and railings as
+    FITTED parts with their own attachment points, and a guard baked
+    into the hull is not that -- but a hull with nothing on its ends is
+    not a finished vehicle either. So both exist from one source, and
+    Production picks: the one-piece deck, or the bare hull with
+    `sp_skiff_rail` bolted to it. Stacking the two doubles the rail,
+    which is what the first loaded view showed.
 
     A service flat that carries one person through a working yard. The
     two SIDES stay open because that is where the docks are: `DOCK_OUT`
@@ -213,6 +222,11 @@ def skiff():
         # A SOLID LOWER PANEL, not a kick strip. Thin rails at both
         # heights read as scaffolding; a vehicle's end is a plate with a
         # rail over it, and that is also what stops a passenger's foot.
+        if not guards:
+            # The lamps are STATE NODES and survive; the guard does not.
+            parts.append(_b("lamp_%s" % tag, (0.34, 0.16, 0.16),
+                            (0, end * hy, top + 0.08), "accent", "trim"))
+            continue
         parts.append(_b("skiff_end_%s" % tag, (DECK[0] - 0.16, 0.12, 0.42),
                         (0, y, top + 0.21), "trim"))
         parts.append(_b("skiff_band_%s" % tag, (DECK[0] - 0.16, 0.16, 0.1),
@@ -499,6 +513,8 @@ def dock_stand():
 #: applies. A receiver hood in a wall is not a step to anywhere.
 ASSETS = [
     ("sp_skiff_deck", skiff, "centre", "architecture", True),
+    ("sp_skiff_deck_bare", lambda: skiff(guards=False), "centre",
+     "architecture", True),
     ("sp_hoist_car", hoist_car, "centre", "architecture", True),
     ("sp_crossing_carrier", crossing_carrier, "centre", "architecture", True),
     ("sp_receiver_hood", receiver_hood, "floor", "architecture", False),

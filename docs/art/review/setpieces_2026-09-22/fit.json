@@ -177,6 +177,35 @@
     ],
     "world_top": 2.04999999999999982
   },
+  "sp_skiff_deck_bare": {
+    "cap_node_z": 1.44999999999999996,
+    "fits": "the same hull with no end guards, for the fitted ones",
+    "min_y": -0.239999999999999991,
+    "nodes": 15,
+    "parts": [
+      "skiff_deck",
+      "skiff_skirt",
+      "skiff_curb_-1",
+      "skiff_curb_1",
+      "skiff_bumper_-1-1",
+      "skiff_bumper_-11",
+      "skiff_bumper_1-1",
+      "skiff_bumper_11",
+      "lamp_fore",
+      "lamp_aft",
+      "console",
+      "console_head",
+      "console_readout",
+      "console_grab",
+      "beacon_hold"
+    ],
+    "size": [
+      4.0,
+      1.29000000000000004,
+      4.16000000000000014
+    ],
+    "world_top": 1.85000000000000009
+  },
   "sp_weight_plate": {
     "fits": "unweighted PLATE (2.4, 0.12, 2.4)",
     "min_y": 0.0,

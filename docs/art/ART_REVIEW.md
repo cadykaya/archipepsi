@@ -4117,6 +4117,42 @@ crossing somebody's view of the grapple ring.
 Measured boxes are Blender-ordered (width, depth, height); the manifest
 carries `size_axes` and the runtime order.
 
+### Batch 047 — the skiff's fitted parts (2026-09-22, PENDING)
+
+A03.2 and A03.3. Batch 045 gave the skiff a hull; these are the parts
+fitted to it, and the hull gained a bare variant so a fitted guard has
+somewhere to go instead of doubling the one already baked in. Candidate
+art, same three states. Handoff:
+`docs/art-requests/2026-09-22-skiffkit-handoff.md`.
+
+| Asset | Metrics | Item | Note |
+| --- | --- | --- | --- |
+| `sp_skiff_shield` | 120 tris · 0.64 × 4.00 × 1.25 m · 32.0 texels/m | A03.2 | Production's own 0.3 x 1.25 x 4.0 cover box, given a face. Cap and kick eat INTO the 1.25, never above it; three `shield_mount_*` brackets |
+| `sp_skiff_rail` | 84 tris · 3.70 × 0.24 × 1.05 m · 32.0 texels/m | A03.2 | the end guard as a FITTED part, with `rail_mount_*` clips. Tops at 1.05 over the deck, under the shield |
+| `sp_skiff_bogie` | 140 tris · 0.33 × 1.60 × 0.43 m · 32.0 texels/m | A03.3 | the traction truck, **beside** the beam, not under it. `roller_0/1` are nodes; nothing is animated |
+| `sp_skiff_deck_bare` | 180 tris · 4.00 × 4.16 × 1.29 m · 32.0 texels/m | A03.2 | the same hull with no end guards, so the fitted ones have somewhere to go |
+
+**The cover height is not Art's to change.** `_shield()` builds a
+0.3 × 1.25 × 4.0 `CollisionShape3D` on an `AnimatableBody3D`, so the
+cover is real and solid. `assert_cover_intact` refuses any visual whose
+top rises above `SHIELD_HEIGHT`: a coping that adds 6 cm adds 6 cm to
+what a rider has to shoot over.
+
+**The bogie cannot go under the deck, and that is a finding.** Their
+track pieces span world 0.425–0.775 and the deck spans 0.600–1.000, so
+**the beam is already 0.175 m inside the bottom of the deck**. There is
+no space beneath it for a truck. The pair hangs at ±0.45, clear of the
+0.5 m beam, reaching in with contact shoes — outside-frame trucks on a
+centre beam, which is the only arrangement this geometry allows.
+
+**A03.5, measured over the whole route.**
+`tools/content/run_skiff_sweep.sh` poses the loaded carrier at every
+half metre of rail using `RailCarrier.pose()`'s own arithmetic and
+checks the fittings against all three dock pads: **no intrusion, swept
+envelope 29.09 × 2.00 × 30.14 m**, and a standing rider's eye clears
+the cover by **0.35 m** in every pose, because the shield rotates with
+the deck.
+
 ---
 
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04

@@ -349,21 +349,48 @@ heights with no footprints and refused a waymarker six metres away.
 Re-sabotaged afterwards: a raised winch, a locker under the gantry and
 a hard-coded gap were all refused, naming numbers.
 
+### Batch 047 — A03's remainder. The skiff's fitted parts. DELIVERED.
+
+`sp_skiff_shield`, `sp_skiff_rail`, `sp_skiff_bogie`, plus
+`sp_skiff_deck_bare` (A03.1's hull without the baked end guards, so a
+FITTED guard has somewhere to go instead of doubling the one already
+there — which is what the first loaded frame showed).
+
+* Source `tools/blender/build_skiffkit.py`; exports
+  `assets/models/batch047/skiffkit/`; evidence
+  `docs/art/review/skiffkit_2026-09-22/` (12 frames).
+* Handoff: `docs/art-requests/2026-09-22-skiffkit-handoff.md`.
+
+**A03.5 is measured, not asserted.** `run_skiff_sweep.sh` poses the
+loaded carrier at every half metre of rail with `RailCarrier.pose()`'s
+own arithmetic — the deck YAWS through the corner, so a fitting that
+clears a dock at S1 may not clear one at S2 — and checks the fittings'
+real boxes against all three pads. No intrusion; swept envelope
+**29.09 × 2.00 × 30.14 m**; a standing rider clears the cover by
+**0.35 m** in every pose.
+
+**A fourth finding:** their track beam is already **0.175 m inside the
+bottom of the deck** (track 0.425–0.775, deck 0.600–1.000), so there is
+nowhere under the deck for a bogie. The pair hangs beside the beam at
+±0.45 with contact shoes reaching in.
+
+**The state strip is a PREVIEW TINT and says so on every frame.**
+`ContentInstantiator._from_authored_scene` performs no material
+replacement; the frames demonstrate that each state region arrived as a
+fetchable node, nothing more. That warning is there because a preview
+that forcibly swapped materials was once mistaken in this lane for
+engine behaviour.
+
 ### The next task, exactly
 
-**A03's remainder** — the skiff's fitted shield and railings with their
-own attachment points (A03.2), visible traction/guide assemblies with
-visual pivots (A03.3), the swept visual-envelope report (A03.5) and the
-isolated state strip (A03.6). A03.1 and A03.4 are delivered by
-`sp_skiff_deck`.
-
-Then **A10**, the existing ten-role enemy family's production/animation
+**A10** — the existing ten-role enemy family's production/animation
 readiness, reusing `batch030`'s ten exported roles rather than
-commissioning replacements — and noting honestly that req 31 still
-leaves seven of them unspawnable, which is Production's and must not be
+commissioning replacements. Note honestly that req 31 still leaves
+seven of them unspawnable (`ENEMY_ARCHETYPES` is still
+`("melee", "ranged", "brute")`); that is Production's and must not be
 routed around.
 
-After those: A06–A08 (deepen the other three setpiece kits), A09,
+After that: A06–A08 (deepen the other three setpiece kits), A09,
 A11–A15, A16, T01–T18 (the eighteen environment packs), A17–A19.
 
 ### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.

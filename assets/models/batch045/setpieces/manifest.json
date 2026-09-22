@@ -380,6 +380,59 @@
     "texels_per_metre": 32,
     "triangles": 300
   },
+  "sp_skiff_deck_bare": {
+    "anchor": "centre",
+    "batch": "045",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "gantry_y": 3.1,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "reach_cap_node_z": 1.45
+    },
+    "kind": "setpiece_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "skiff_skirt",
+      "skiff_curb_-1",
+      "skiff_curb_1",
+      "skiff_bumper_-1-1",
+      "skiff_bumper_-11",
+      "skiff_bumper_1-1",
+      "skiff_bumper_11",
+      "lamp_fore",
+      "lamp_aft",
+      "console",
+      "console_head",
+      "console_readout",
+      "console_grab",
+      "beacon_hold"
+    ],
+    "path": "batch045/setpieces/sp_skiff_deck_bare.glb",
+    "size": [
+      4.0,
+      4.16,
+      1.29
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 180
+  },
   "sp_weight_plate": {
     "anchor": "floor",
     "batch": "045",

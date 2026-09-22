@@ -1,0 +1,163 @@
+{
+  "sp_skiff_bogie": {
+    "anchor": "centre",
+    "batch": "047",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script. No animation, no root motion.",
+    "fitted_to": {
+      "beam_half_width": 0.25,
+      "bogie_mount_x": 0.45,
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "shield_height": 1.25,
+      "shield_local_centre": [
+        -1.85,
+        0.825,
+        0.0
+      ]
+    },
+    "kind": "carrier_fitting",
+    "not_changed": [
+      "collision",
+      "cover height",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "bogie_hanger",
+      "roller_0",
+      "shoe_0",
+      "axle_0",
+      "roller_1",
+      "shoe_1",
+      "axle_1",
+      "bogie_damper"
+    ],
+    "path": "batch047/skiffkit/sp_skiff_bogie.glb",
+    "size": [
+      0.33,
+      1.6,
+      0.43
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 140
+  },
+  "sp_skiff_rail": {
+    "anchor": "centre",
+    "batch": "047",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script. No animation, no root motion.",
+    "fitted_to": {
+      "beam_half_width": 0.25,
+      "bogie_mount_x": 0.45,
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "shield_height": 1.25,
+      "shield_local_centre": [
+        -1.85,
+        0.825,
+        0.0
+      ]
+    },
+    "kind": "carrier_fitting",
+    "not_changed": [
+      "collision",
+      "cover height",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "rail_cap",
+      "rail_post_-1",
+      "rail_mount_-1",
+      "rail_post_1",
+      "rail_mount_1",
+      "rail_mid"
+    ],
+    "path": "batch047/skiffkit/sp_skiff_rail.glb",
+    "size": [
+      3.7,
+      0.24,
+      1.05
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "sp_skiff_shield": {
+    "anchor": "centre",
+    "batch": "047",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script. No animation, no root motion.",
+    "fitted_to": {
+      "beam_half_width": 0.25,
+      "bogie_mount_x": 0.45,
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "shield_height": 1.25,
+      "shield_local_centre": [
+        -1.85,
+        0.825,
+        0.0
+      ]
+    },
+    "kind": "carrier_fitting",
+    "not_changed": [
+      "collision",
+      "cover height",
+      "speeds",
+      "timings",
+      "placement",
+      "route availability",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "shield_cap",
+      "shield_rib_0",
+      "shield_rib_1",
+      "shield_rib_2",
+      "shield_rib_3",
+      "shield_kick",
+      "shield_mount_0",
+      "shield_mount_1",
+      "shield_mount_2"
+    ],
+    "path": "batch047/skiffkit/sp_skiff_shield.glb",
+    "size": [
+      0.64,
+      4.0,
+      1.25
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 120
+  }
+}
