@@ -708,6 +708,36 @@ rule they have changed. Eight sabotages, eight refusals.
 
 Handoff: `docs/art-requests/2026-09-22-manipulation-handoff.md`.
 
+### Toolchain trial -- ECMS Glyph `ebe949b`, 2026-09-22. REVIEWED, NOT ADOPTED.
+
+The owner's refresh, trialled in a SEPARATE worktree at
+`/home/user/glyph-trial`. **The baseline at `/home/user/ecms-glyph`
+`6c80b63` was not moved** and the 32-marker kit still regenerates from
+it byte-identically -- verified after the trial, not assumed.
+
+Discovery, then one disposable edit/render/reopen/export loop, all four
+steps, render opened. Build clean, 23 extensions served, attribution
+recorded correctly (owner creates, agent draws), and the authority model
+refuses a mutation without a grant and without a transaction.
+
+**DO NOT MOVE THE AUTHORING BUILD.** Batches 043 and 052 are authored at
+`6c80b63`, `status_kit.json` records that SHA beside every asset, and
+the owner's note is explicit this is not a promoted release.
+
+**`check_tiling` is worth adopting as a REPORTING step, never a gate** --
+the same shape as `run_projectile_legibility.sh`. It found a real,
+visible repeating boundary that a naive numerical check of mine missed
+entirely. But on BOTH cases examined closely the boundary was authored
+structure: `void_glitch_wall`'s line is the theme's own declared trim
+`#00ffbf`, and `concrete_facility_wall`'s bands are three courses inside
+the texture, its join stepping 2.2 of 255. `wrap_join` trips on
+authored detail near an edge whether or not the texture tiles.
+
+**Nothing was regenerated and the theme set is fine on this evidence.**
+The yield is `docs/art/review/theme_tiling_2026-09-22/` -- eighteen
+textures tiled 3x3, fourteen of which had never been seen repeating.
+Report: `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
+
 ### Then
 
 **A15** (item/Forge modules), **A16** (finish the six theme families),

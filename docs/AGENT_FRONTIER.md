@@ -161,6 +161,19 @@ Two things from it that other lanes need:
   gravity. Handoff:
   `docs/art-requests/2026-09-22-manipulation-handoff.md`.
 
+* **The Glyph toolchain candidate was trialled, not adopted.** Separate
+  worktree, baseline `6c80b63` unmoved and re-verified. The authoring
+  build does NOT move: Batches 043 and 052 record that SHA beside every
+  asset. `check_tiling` is worth having as a REPORTING step; on both
+  cases examined closely it flagged authored structure, not a defect,
+  so no texture was changed.
+  `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
+* **CI is red repository-wide and it is not the art branch's.** Both
+  checks die in 3-6 seconds with logs that 404, on PR #5 and equally on
+  PR #12's unrelated branch -- before any test body runs. One re-run
+  spent, same result. `tools/check_art_current.sh` is green locally on
+  every art head. Explained on PR #5.
+
 **Scheduling override (owner, 2026-09-22): heartbeat, watchers,
 subscriptions, scheduled check-ins and automatic re-arming stay OFF.**
 This overrides the older "resume the routine the moment a task exists"
