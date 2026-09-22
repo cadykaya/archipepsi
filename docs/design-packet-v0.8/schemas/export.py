@@ -71,6 +71,35 @@ GD_SKIP = ("ENEMY_STATS", "TIER_BOUNDS", "DEFAULT_CONFIG",
 GD_PHYSICS = ("ENVELOPE_FORCE_N", "ENVELOPE_RANGE_M", "ENVELOPE_MASS_KG",
               "CARRY_MASS_KG")
 
+#: Notes emitted above a physics constant in `constants.gd`, because two
+#: of them are masses that answer different questions and the generated
+#: file prints them one line apart.
+#:
+#: `ENVELOPE_MASS_KG` is the older and more familiar name, and every
+#: existing manipulation call site already uses it — so a carry verb
+#: written against "the mass constant" lands on 120 kg and makes
+#: `WEIGHTED` carriable, which Design 2 changed from Design 1 on
+#: purpose. Prod named that hazard in `3b67921` after the constant
+#: landed. The bridge cannot write the carry verb — that is P12 — and a
+#: GDScript helper for a verb that does not exist would be the inert
+#: framework this lane declined to build for P14. What it can do is make
+#: sure neither number is met bare.
+GD_PHYSICS_NOTES = {
+    "ENVELOPE_MASS_KG": (
+        "What a qualified PUSH/PULL/HOLD may act on (§29.3.2), together",
+        "with ENVELOPE_FORCE_N and ENVELOPE_RANGE_M. A property of the",
+        "HOST. NOT the pickup limit — see CARRY_MASS_KG below.",
+    ),
+    "CARRY_MASS_KG": (
+        "Design 2 §10.3's ordinary-pickup line: an object is carriable",
+        "if `carriable == true` AND `mass_kg <= 60.0`; above it the",
+        "object is manipulable only. A property of the OBJECT, and no",
+        "Gear, Mod or Ability widens it. NOT the envelope above: a host",
+        "that clears 120 kg may push a 100 kg crate and still may not",
+        "pick one up.",
+    ),
+}
+
 
 def _gd_dict(mapping: dict) -> str:
     """A GDScript dictionary literal, keys and values both quoted.
@@ -131,6 +160,8 @@ def export_constants_gd() -> str:
                 f"export: physics.py no longer defines {name}, which the "
                 "engine builds a provider against. Remove it from "
                 "GD_PHYSICS deliberately, or restore it.")
+        for note in GD_PHYSICS_NOTES.get(name, ()):
+            lines.append(f"## {note}")
         lines.append(f"const {name} = {_gd_literal(getattr(PH, name))}")
     # `MANIPULATE_VERBS` is a frozenset and GDScript has no set literal,
     # so it goes over as a sorted Array -- which is also how the engine
