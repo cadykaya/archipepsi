@@ -70,6 +70,81 @@ with the player's radius. `ENEMY_ENVELOPES` already exports
 
 ---
 
+## ENGINE LANE — the fight walks, the charge crosses a wire, a Zone asks for a chain — 2026-09-22
+
+**`godot-encounter` is a gate now, ten runs for ten.** It ran about one
+in five red before, always the three-scuttler `kill_all` case, and three
+consecutive direct re-runs could not reproduce it — so the fight was
+made to account for itself, and the next failure named the cause in one
+line: `1800 frames, 1 left, 82 shots / 0 landed, range 20.4-20.4 m, the
+ray hit Reward_89100002 (StaticBody3D) instead`. One range number twice
+across thirty seconds is a body that never moved: a 30x28 room can place
+a scuttler 20.4 m from the arrival point, outside the 18 m aggro radius,
+with the reward pedestal on the line. Nothing there was a finding about
+`scuttler`, `kill_all` or the placement — **a fight where the player
+never moves is not a played fight**, and `_fight` walks now, sliding
+along whatever it runs into. The bulwark's played acceptance stands:
+cleared in 8.8 s with 50 of 100 hp, base kit only, continuous fight with
+real movement and attacks.
+
+**`godot-consumable-live`: one charge, from a keypress to the save, over
+a real socket.** The spend was checked in two halves that never met —
+Python arithmetic on one side, a client with `assume_sent` and a
+hand-written snapshot on the other — and both could pass while the pair
+was broken. The live target asks the only question that matters: HOW
+MANY EFFECTS RAN, AND HOW MANY CHARGES DID THE SAVE AUTHORISE. Effects
+are counted from `EchoRuntime.action_used`; authorisation is read out of
+the snapshot's `consumable_uses`. Twenty checks, and the line it exists
+for reads **"4 authorised, 4 run"** — two presses made with the socket
+genuinely down, both resent on reconnect, both counted exactly once.
+
+The campaign owns a consumable because `tools/give_consumable.py` puts
+one in the save between two bridge runs, through the real models and the
+real store: the fallback provider emits no `consumable`-slot Action, the
+slot is still staged, and this target is about the expenditure rather
+than about generation. **`IMPLEMENTED_ACTION_SLOTS` still does not
+advertise `consumable`.**
+
+**One sabotage it catches and one it does not, said out loud.** Dropping
+the generation check from `spend_charge` fails it twice, the second
+failure being the exact harm — "3 authorised, 2 run". Restoring
+`_in_flight.clear()` on the disconnect path PASSES here, because the
+sequence can only reach that transition with nothing held; that property
+is proven in `consumable_driver.gd`, which fails three checks under the
+same sabotage, and the live driver's docstring says so.
+
+**P14's consumer exists: a Zone can ASK for the signal chain.**
+`RoomGraphs.build` reads `Zone.room_graphs` and puts the plate, the NOT
+and the shutter in the named room off the committed layout —
+`RailNetworks`' move, for the same reason. `SignalGraph` evaluates in
+declaration order, which the schema already guarantees is topological
+order. The vocabulary is refused rather than dropped and a typo gets a
+different answer from a gap (`NAND` is not one of the eleven; `AND` is
+one of them with no runtime; `LEVER` is the same on §20's sensors), and
+nothing is ever half-built. `SUPPORTED_ACTUATOR_OPS` is exported so the
+refusal reads the same list the Zone was validated against.
+
+**It does NOT gate a route, and that is a boundary rather than a
+shortcut.** `RoomGraph` declares no capability gate, so a chain that
+sealed an exit would be a physical gate the AP logic never declared —
+SOLUTIONS_CATALOGUE §0-bis's one prohibition. Putting a graph on the
+route needs the declaration to carry the gate: a schema change with
+Dess's half in it.
+
+**The player-exclusion case cannot tell two rules apart, and says so.**
+Deleting `ClassPlate`'s player-group skip fails none of the suite,
+because `Player` has no `mass_class()` either. The case pins the
+behaviour and names what it cannot attribute rather than showing a green
+tick for §3.
+
+**Open, and unchanged by any of this:** P16's Godot half (player-operated
+transport into a consuming mechanism; live Status continuity across room
+boundaries with normal expiry), P04's Godot half (a normal bridge/client
+restart and restored gameplay), OV04 P12's twelve manipulation verbs —
+which must read `CARRY_MASS_KG`, not `ENVELOPE_MASS_KG` — and the
+ThemePack identity extension to agree with Dess.
+
+
 ## ENGINE LANE — the Echo menu answers its own questions now — 2026-09-22
 
 **From the owner, after playing.** The Echo menu was "a scrolling list
