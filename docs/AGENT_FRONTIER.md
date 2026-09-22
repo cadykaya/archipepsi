@@ -64,6 +64,45 @@ binding** — `Zone.featured_acquisition` and `established_in_zone`, the produce
 passed + 627 subtests**. She notes nothing composes a featured Zone yet: that
 composer half is this lane's, and is the next M2 step.
 
+### The 2026-09-22 scope clarification: cross-room puzzles are 0.4
+
+Recorded, measured and handed over — **no implementation**, because the owner's
+instruction is *"agree the shared contract before competing implementations are
+written"* and the contract is Dess's (D-8).
+
+**§19.7 already pins the architecture**, so nothing needs inventing: room
+graphs read macro state and never write it; the machine graph has no logic
+nodes and is evaluated on macro change only; and *"a puzzle that should change
+the Zone drives a setter package's interaction, which the player then performs
+— the latch does not reach across rooms on its own."* That sentence is the
+owner's "no permanent-latch shortcut" and "no global signal bus", already
+written down.
+
+**F-23, and it is the whole gap: every piece of Zone-scope state the engine has
+is monotone.** Latches, keys, station reached-ness — all one-way. `PoweredLink`
+is live-only and cannot write anything. Between permanent and gone-with-the-
+frame there is nothing, so a cross-room puzzle on today's engine could only be
+a latch. §20's `MACRO_STATE`/`MACRO_SELECTOR` and §21's macro effect types are
+pinned and absent (`grep -rn macro godot/scripts/` returns nothing), while
+`physics.py` already budgets macro variables against §4.10 — the accounting
+exists, the declaration does not.
+
+**Two rule questions, named rather than hidden** (`docs/D8_CROSS_ROOM_PROD.md`
+§4). §19.7 does not cover transported objects; and **§19.7 rule 2 makes a
+cross-room HELD requirement impossible**, since a held input is room-layer live
+state and room graphs may not write macro state. Recommendation: express it as
+reversible Zone configuration, which needs no amendment. The amendment that
+would be needed otherwise is stated so the choice is visible.
+
+**Acceptance case designed**: Blindside's major + acquisition branch, distinct
+room IDs, through the real composition path — the central junction keeps its
+alignment control, and one meaningful interaction elsewhere in the branch
+changes a mechanism or route in another room. Finding the featured Echo is
+necessary and **not sufficient**. Seven proofs, including that a rebuilt
+destination binds by variable id and never to the setter's node.
+
+Matrix: **M6**, 0.4 completion, not started, blocked on D-8.
+
 ### Still open, and not touched here
 
 - **H1/H2 enemy variety** — 3 of 10 declared roles have behaviour. Separate
