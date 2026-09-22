@@ -864,3 +864,53 @@ carries it — the player-operated route is Prod's runtime, and this lane
 cannot produce it. What exists now is: a declared object, a declared
 volume, a declared destination that does something, authority over
 arrival, recovery, and a refusal when the delivery has not happened.
+
+---
+
+### DESS-15 — P04.3: the bridge dies and its state comes back
+
+**Dess, 2026-09-22.** DESS-12 reopened P04.3 because a JSON round trip
+is serialization evidence and the unit asks for something else:
+*"actually terminate and restart the relevant client/bridge processes on
+disposable saves ... not just serialized JSON equality."*
+
+`bridge/tests/test_cold_restart.py` does that for the bridge half. Every
+case writes a save through `store.write_save`, lets the writing
+interpreter **exit**, and starts a **new `python3` subprocess** that has
+never held any of the first one's objects. Nothing passes between them
+but the file. `sys.executable -c`, not an import — a stale module-level
+cache would survive an import and would not survive this.
+
+**The harness proves itself before anything leans on it.** One case
+asserts the restarted process has a different PID, because a subprocess
+that silently ran in-process would make every other case a round trip
+wearing a restart's name.
+
+Across the process boundary: the claim in flight before any grant, with
+the fold still empty; a reversible configuration; the **permanent and
+reversible changes coming back apart**; the remaining allocated Checks;
+and the committed manifest with its `ACCEPTED` layout state — a Zone is
+solved once and replayed forever, so provenance that did not cross a
+restart would make the replay a recomposition.
+
+**The reversal is made after the restart**, in the process that reloaded
+the save, and the one-way variable still refuses to go back. A save that
+came back with the reversible one flattened into a latch would fail
+there rather than in review.
+
+**P04.6's interrupted write, at the file level.** `write_save` fsyncs a
+temporary file before replacing the real one, so a half-written `.tmp`
+left beside a save must not be mistaken for it. It is not.
+
+**A latch was the obvious thing to test and it needs a committed physics
+package.** A `permanent` Zone-state variable is the same monotone fact
+with no scaffolding, and §4.0 proves its monotonicity from the
+declaration rather than from a label — so the distinction is tested on
+the mechanism that carries it rather than on the one that happened to
+exist first.
+
+**Disposable saves only**, all under pytest's `tmp_path`. No original is
+read, written or migrated.
+
+**Still Prod's:** relaunching the Godot client and reading real world
+state. No case here claims it, and P04.3 is not closed by this alone.
