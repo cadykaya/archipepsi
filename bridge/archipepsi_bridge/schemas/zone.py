@@ -1231,6 +1231,58 @@ class ZoneStateVariable(Strict):
         return self
 
 
+#: The two ways an object crosses a room boundary. **Both are real
+#: design; only one is built.** §10.3 hand carry is the first
+#: `TransportedObject` slice. §29's qualified manipulation -- a push or
+#: a pull by a host at the provider envelope -- is what §10.3 means when
+#: it says an object over the line "is manipulable only": a DIFFERENT
+#: way of moving the thing, not a statement that the thing may not move.
+TransportMode = Literal["hand_carried", "manipulated"]
+
+#: What a Zone may declare today.
+#:
+#: `manipulated` is named above rather than left out, because leaving it
+#: out would make heavier cross-room transport look forbidden by the
+#: 60 kg pickup rule. It is not. It is UNFINISHED, and
+#: `refuse_unsupported_transport` says exactly what is missing rather
+#: than refusing it as though it were a design error.
+SUPPORTED_TRANSPORT_MODES: tuple[str, ...] = ("hand_carried",)
+
+#: What `manipulated` is waiting on, stated once so the refusal and the
+#: ledger cannot drift apart.
+_MANIPULATED_NEEDS = (
+    "route validation that knows the object needs "
+    "`capability:core:manipulate` at §29.3.2's envelope -- `topology.py` "
+    "does not read `transported_objects` at all today, so a required "
+    "manipulated object would gate the mandatory path on a capability no "
+    "reachability search has been told about",
+    "the physical runtime that pushes or pulls it across a boundary "
+    "(P16.2, engine lane)",
+    "a doorway-clearance check on the object's own footprint -- a pushed "
+    "crate has to fit the door, and nothing measures that yet",
+)
+
+
+def refuse_unsupported_transport(mode: str) -> None:
+    """A named way of moving an object with no runtime is refused, not
+    offered -- and is not confused with an error.
+
+    Same two answers as `refuse_unsupported_node`: a mode the design
+    does not name is a typo (pydantic's `Literal` answers that one), and
+    a mode it names that nothing implements is a gap. One message for
+    both is how a gap starts reading as a prohibition.
+    """
+    if mode in SUPPORTED_TRANSPORT_MODES:
+        return
+    needs = "; ".join(f"({i}) {n}" for i, n in enumerate(_MANIPULATED_NEEDS, 1))
+    raise ValueError(
+        f"transport mode '{mode}' is real design and is UNFINISHED, not "
+        f"forbidden. §10.3's {CARRY_MASS_KG:g} kg line governs ordinary "
+        "pickup and says nothing against moving something heavier between "
+        f"rooms -- it names this as the way to do it. Missing: {needs}. "
+        f"Supported today: {sorted(SUPPORTED_TRANSPORT_MODES)}.")
+
+
 class TransportedObject(Strict):
     """P16 / D-8 lifetime 5. An object the player carries between rooms.
 
@@ -1299,18 +1351,34 @@ class TransportedObject(Strict):
     #: unchecked declaration wearing a field name.
     carriable: bool
     mass_kg: float = Field(gt=0.0, le=100_000.0)
+    #: How it crosses the boundary. Defaults to `hand_carried`, which is
+    #: what this schema's first sentence describes and the only mode
+    #: with a runtime. A heavier object says `manipulated` and gets a
+    #: refusal that names what is unbuilt -- which is the point: silence
+    #: about the heavier case would read as a ban.
+    movement: TransportMode = "hand_carried"
 
     @model_validator(mode="after")
-    def _the_player_can_actually_carry_this(self):
-        """§10.3, handed the case that fails it.
+    def _the_declared_way_of_moving_it_is_one_that_exists(self):
+        """Two questions, answered apart.
 
-        The refusal names the alternative rather than pretending one
-        does not exist: above the line an object is *manipulable*, which
-        is a real way to move something and a DIFFERENT declaration this
-        schema does not yet have. `ENVELOPE_MASS_KG` is not that
-        alternative -- a qualified provider may push 120 kg and still
-        cannot pick up 61.
+        **Is the declared mode built?** `hand_carried` is; `manipulated`
+        is named, is real design, and has no runtime. That refusal lists
+        what is missing.
+
+        **If it is hand carry, does §10.3 allow it?** The flag and the
+        kilograms, handed the case that fails them.
+
+        CORRECTED, 2026-09-22 (owner). An earlier revision had only the
+        second question, so a 320 kg object came back refused by the
+        carry line with no way to say what was actually meant -- which
+        reads as *"the 60 kg rule prohibits heavy cross-room
+        transport"*. It does not. §10.3 governs ordinary pickup and, in
+        the same sentence, names manipulation as the other way. Heavier
+        transport is UNFINISHED, and the two answers now say so
+        separately.
         """
+        refuse_unsupported_transport(self.movement)
         if carriable_by_hand(self.carriable, self.mass_kg):
             return self
         if not self.carriable:
@@ -1321,14 +1389,13 @@ class TransportedObject(Strict):
             why = (f"it weighs {self.mass_kg:g} kg, over §10.3's "
                    f"{CARRY_MASS_KG:g} kg carry line")
         raise ValueError(
-            f"object '{self.object_id}' is declared as one the player "
-            f"carries between rooms, but {why}. Above the carry line an "
-            "object is manipulable only -- a push or a pull by a "
-            "qualified provider, which is a different way of moving it "
-            "and a declaration this schema does not have yet. The "
-            "provider envelope's 120 kg is not a licence to pick this "
-            "up: it bounds what a PUSH may act on, not what a hand may "
-            "hold.")
+            f"object '{self.object_id}' is declared `hand_carried`, but "
+            f"{why}. This is not a ban on moving it between rooms: say "
+            "`movement = \"manipulated\"` for a push or a pull by a "
+            "qualified provider, and that refusal will name what is "
+            "unbuilt. The provider envelope's 120 kg is not a licence to "
+            "pick this up either: it bounds what a PUSH may act on, not "
+            "what a hand may hold.")
 
     @model_validator(mode="after")
     def _home_is_inside_the_volume(self):

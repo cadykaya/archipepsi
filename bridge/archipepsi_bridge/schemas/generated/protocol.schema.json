@@ -6136,6 +6136,15 @@
             "maximum": 100000.0,
             "title": "Mass Kg",
             "type": "number"
+          },
+          "movement": {
+            "default": "hand_carried",
+            "enum": [
+              "hand_carried",
+              "manipulated"
+            ],
+            "title": "Movement",
+            "type": "string"
           }
         },
         "required": [
@@ -11716,6 +11725,15 @@
             "maximum": 100000.0,
             "title": "Mass Kg",
             "type": "number"
+          },
+          "movement": {
+            "default": "hand_carried",
+            "enum": [
+              "hand_carried",
+              "manipulated"
+            ],
+            "title": "Movement",
+            "type": "string"
           }
         },
         "required": [

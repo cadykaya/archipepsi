@@ -1112,6 +1112,68 @@ BULWARK_FRONTAL_ARMOUR = 0.85
 #: 0.35 is a touch over 110 degrees total -- a shield, not a full front.
 BULWARK_SHIELD_DOT = 0.35
 
+#: HOW THE SHIELD IS GOT AROUND, WITH THE BASE KIT AND NOTHING ELSE.
+#:
+#: "Cannot be fought frontally" is only a brief if the other side is
+#: reachable. A bulwark that tracked the player instantly would keep its
+#: shield between them forever, and the role would read as "immune" --
+#: which is why an Echo requirement is not the answer here: this enemy
+#: is in the ORDINARY, UNGATED pool and has to offer counterplay to a
+#: player carrying the guaranteed kit.
+#:
+#: So it turns at a bounded rate, commits to a swing, and is helpless
+#: afterwards. `bulwark_opening()` states the arithmetic those three
+#: numbers produce rather than leaving it to be discovered in play.
+#:
+#: **PROVISIONAL, and the played acceptance is OPEN.** These are chosen
+#: against the brief and the geometry; a stationary DPS comparison and a
+#: synthetic front/back damage check are neither of them proof. What
+#: closes this row is a continuous fight with real movement and attacks,
+#: reaching `kill_all` completion, in the engine.
+BULWARK_TURN_RATE_DEG_S = 90.0
+#: The windup, during which it cannot turn: the telegraph.
+BULWARK_COMMIT_SECONDS = 0.5
+#: Helpless afterwards, and this is the whole opening.
+BULWARK_RECOVERY_SECONDS = 0.9
+
+
+def bulwark_opening(walk_speed: float | None = None,
+                    reach: float | None = None) -> dict:
+    """What those three numbers actually give the player, in degrees.
+
+    A player circling a bulwark at contact range has an angular speed
+    the bulwark's turn rate has to be measured against -- comparing a
+    metres-per-second to a degrees-per-second is how "it turns slowly"
+    becomes a claim nobody checked.
+
+    `strafing` is the same figure under a 0.8 allowance, because a
+    player circling while shooting is not moving at full walk speed and
+    this lane does not know the engine's real strafe factor. It is a
+    MARGIN, not a mechanic: the tuning is chosen so the opening survives
+    it, and the played run is what measures the truth.
+    """
+    walk = WALK_SPEED if walk_speed is None else walk_speed
+    r = ENEMY_STATS["bulwark"]["reach"] if reach is None else reach
+    player = math.degrees(walk / r)
+    shield_half = math.degrees(math.acos(BULWARK_SHIELD_DOT))
+    gain = player - BULWARK_TURN_RATE_DEG_S
+    no_turn = BULWARK_COMMIT_SECONDS + BULWARK_RECOVERY_SECONDS
+    return {
+        "player_deg_s": player,
+        "shield_half_deg": shield_half,
+        #: Positive means the player out-circles it by movement alone,
+        #: without waiting for a swing. Zero or less means the shield
+        #: never leaves the player's face and the role is immune.
+        "net_gain_deg_s": gain,
+        "seconds_to_clear_shield": (shield_half / gain
+                                    if gain > 0.0 else math.inf),
+        "no_turn_seconds": no_turn,
+        #: While it is committed it does not turn at all, so the player
+        #: gains the whole angle rather than the difference.
+        "degrees_swept_committed": no_turn * player,
+        "degrees_swept_committed_strafing": no_turn * player * 0.8,
+    }
+
 #: What a `beacon` does to every eligible enemy inside its radius, and
 #: the radius. Applied as the ordinary `empowered` Status through the
 #: ordinary boundary, so it cleanses, expires and reads like any other.
