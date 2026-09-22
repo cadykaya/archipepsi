@@ -130,6 +130,13 @@ func _built(zone: Dictionary) -> ZoneController:
 	# for `drifter` (2.55 m) and `diver` (1.9 m) to have climbed.
 	for _i in 30:
 		await get_tree().physics_frame
+	# ONE PLAYER IN THE WORLD. `Enemy._find_player` takes `players[0]`,
+	# so a stale body left in the group by an earlier case is the one
+	# every enemy here would notice, aim at and shell -- while the real
+	# player stands somewhere else taking nothing.
+	var bodies := get_tree().get_nodes_in_group("player").size()
+	_check(bodies == 1,
+			"exactly one player is in the world (found %d)" % bodies)
 	var player: Player = controller.player
 	_check(player != null and controller.room_bounds.has("c001")
 			and (controller.room_bounds["c001"] as AABB).grow(2.0)
@@ -142,8 +149,16 @@ func _built(zone: Dictionary) -> ZoneController:
 
 func _drop(controller: ZoneController) -> void:
 	Input.action_release("fire_pulse")
+	Input.action_release("move_left")
+	# **GONE BEFORE THE NEXT CASE BUILDS.** `queue_free` is deferred, and
+	# a controller still in the tree still has a player in the "player"
+	# group -- which matters because `Enemy._find_player` takes
+	# `players[0]`, the FIRST one it finds. A leftover from the previous
+	# case would be the one every enemy in the next case aimed at.
 	controller.queue_free()
-	await get_tree().process_frame
+	for _i in 4:
+		await get_tree().process_frame
+		await get_tree().physics_frame
 
 
 func _record(controller: ZoneController) -> Dictionary:
@@ -514,6 +529,11 @@ func _a_bulwark_can_be_flanked_by_moving() -> void:
 	controller._evaluate_objectives()
 	_check(bool(record["satisfied"]),
 			"PLAYED: kill_all is satisfied")
+	_check(float(fight["widest"]) > 70.0,
+			"PLAYED: the orbit reached %.0f degrees off its nose, past "
+			% float(fight["widest"]) + "the %.0f-degree shield cone "
+			% rad_to_deg(acos(Constants.BULWARK_SHIELD_DOT))
+			+ "(closest approach %.1f m)" % float(fight["closest"]))
 	_note("bulwark, played: %s after %.1f s with %.0f of %.0f hp left. "
 			% ["cleared" if int(fight["left"]) == 0 else "NOT cleared",
 				float(fight["frames"]) * DT, controller.player.hp, opened]
@@ -534,6 +554,13 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 	var player: Player = controller.player
 	player.input_frozen = false
 	var frames := 0
+	# **DID THE ORBIT ACTUALLY GET ROUND?** `BULWARK_SHIELD_DOT` is 0.35,
+	# a cone of about 70 degrees either side of its facing, so the player
+	# only has to reach ~70 degrees off the nose to be doing full damage.
+	# Measuring it is what separates "the turn rate is too fast" from
+	# "the harness never circled", and those want opposite answers.
+	var widest := 0.0
+	var closest := INF
 	Input.action_press("fire_pulse")
 	Input.action_press("move_left")
 	while frames < budget:
@@ -542,11 +569,21 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 		_aim_at(player, target)
 		await get_tree().physics_frame
 		frames += 1
+		if is_instance_valid(target) and not target._dead:
+			var facing: Vector3 = -target.global_transform.basis.z
+			var toward: Vector3 = player.global_position \
+					- target.global_position
+			toward.y = 0.0
+			if toward.length() > 0.01:
+				widest = maxf(widest, rad_to_deg(facing.normalized()
+						.angle_to(toward.normalized())))
+				closest = minf(closest, toward.length())
 	Input.action_release("move_left")
 	Input.action_release("fire_pulse")
 	player.input_frozen = true
 	return {"frames": frames, "left": _living(record).size(),
-			"died": player._dead}
+			"died": player._dead, "widest": widest,
+			"closest": 0.0 if closest == INF else closest}
 
 
 ## HOLD THE TRIGGER ON ONE BODY for a fixed span, and report nothing --
