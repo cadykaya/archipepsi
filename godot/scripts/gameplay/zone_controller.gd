@@ -770,17 +770,23 @@ func report_latch(package_id: String, latch_id: String) -> void:
 
 ## A Zone-state variable changed, because a player operated its control.
 ##
-## **THE REPORTING PATH IS THE BRIDGE LANE'S AND IS NOT BUILT YET.**
-## `ZoneProgress.with_macro` and `ZoneProgress.macro` exist -- storage
-## and read-back -- and `protocol.py` has no intent a client could send
-## to carry the change: `latch_fired`, `lock_opened` and their siblings
-## are all there and there is nothing for a Zone-state selection. So
-## this updates nothing outward and deliberately invents no message;
-## `zone_state.as_reported()` is what the engine WOULD send, the suite
-## asserts it, and the intent arrives with the bridge lane's
-## authoritative state-update path.
+## **P-3's gap, closed from the other side.** This reported nothing
+## outward for one checkpoint, because `ZoneProgress.with_macro` existed
+## and no message could reach it -- the engine had a selection it could
+## not send. The bridge lane's `zone_state_selected` is that message,
+## and it is deliberately NOT `latch_fired`: idempotent by
+## `(variable_id, state)` and not monotone, because a reversible
+## variable going back is the mechanic working rather than a replay to
+## be rejected.
+##
+## Sent on the CHANGE and not on every selection: `ZoneState.select`
+## absorbs a re-selection of the state a variable already holds (§19.7
+## rule 5), so this signal only fires when something actually moved.
 func _on_zone_state_changed(variable_id: String, state: String) -> void:
 	zone_state_changes.append([variable_id, state])
+	BridgeClient.send_intent({"type": "zone_state_selected",
+			"zone_id": zone_id, "variable_id": variable_id,
+			"state": state})
 
 ## Every change this Zone has seen, in order. Live, not saved: the
 ## VALUES are what persist, and the sequence that produced them is

@@ -12,15 +12,26 @@ const AFFORDANCE_DYNAMIC_CHANNELS = ["breakable_wall_damage", "wind_ring_count"]
 const AFFORDANCE_SIGNAL_HEX = "#39d7c8"
 const AFFORDANCE_SIGNAL_RGB = [0.2235294117647059, 0.8431372549019608, 0.7843137254901961]
 const AIR_CONTROL = 0.4
+const ARTILLERY_BLAST_RADIUS = 3.2
+const ARTILLERY_FLIGHT_SECONDS = 1.6
+const ARTILLERY_MIN_RANGE = 8.0
 const AUTHORED_AREA_BUDGET = 4000.0
 const BAND_DOOR_MARGIN = 2.0
 const BAND_RAMP_MIN_RUN = 3.0
 const BAND_RAMP_RUN_FACTOR = 3.0
 const BASE_KIT_TAGS = ["bounce_pad", "moving_platform", "powered_door"]
+const BEACON_MAGNITUDE = 0.5
+const BEACON_RADIUS = 12.0
+const BEACON_REFRESH = 1.0
 const BRIDGE_HOST = "127.0.0.1"
 const BRIDGE_PORT = 38290
 const BRUTES_PER_BUDGET_POINT = 0.005
+const BULWARK_FRONTAL_ARMOUR = 0.85
+const BULWARK_SHIELD_DOT = 0.35
 const CHAMBER_TYPES = ["corridor", "arena", "platform_path", "tower", "treasure_room"]
+const CHARGER_RECOVERY_SECONDS = 1.4
+const CHARGER_RUSH_SECONDS = 1.1
+const CHARGER_RUSH_SPEED = 13.0
 const CLUSTER_ANCHORS = ["floor_wall", "floor_corner", "wall", "ceiling"]
 const CLUSTER_CLEARANCE = 0.4
 const CLUSTER_FLOOR_ANCHORS = ["floor_wall", "floor_corner"]
@@ -33,6 +44,8 @@ const COYOTE_TIME = 0.12
 const DEFAULT_LOCATION_COUNT = 450
 const DEFAULT_ZONE_BUDGET = 1000
 const DEFAULT_ZONE_TARGET_CHECKS = 15
+const DIVER_DIVE_SECONDS = 0.9
+const DIVER_TRIGGER_HEIGHT = 1.6
 const ECHO_COOLDOWN_MAX = 15.0
 const ECHO_COOLDOWN_MIN = 0.15
 const ECHO_EFFECTS_MAX = 3
@@ -40,7 +53,7 @@ const ECHO_EFFECTS_MIN = 1
 const ECHO_MAX_OPERATIONS = 4
 const ENEMIES_PER_BUDGET_POINT = 0.07
 const ENEMY_AGGRO_RADIUS = 18.0
-const ENEMY_ARCHETYPES = ["melee", "ranged", "brute"]
+const ENEMY_ARCHETYPES = ["melee", "ranged", "brute", "charger", "bulwark", "drifter", "diver", "scuttler", "artillery", "beacon"]
 const ENEMY_FALL_KILL_Y = -30.0
 const ENEMY_ROLES = ["melee", "ranged", "brute", "charger", "bulwark", "scuttler", "artillery", "beacon", "diver", "drifter"]
 const EPSILON_COIN_COUNT = 10
@@ -57,6 +70,7 @@ const FIRST_NON_FINALE_LOCATION_ID = 89100001
 const FLAG_PROGRESSION = 1
 const FLAG_TRAP = 4
 const FLAG_USEFUL = 2
+const FLYER_HOVER_Y = 4.2
 const FLYING_ENEMY_ROLES = ["diver", "drifter"]
 const GOAL_LOCATION_ID = 89100030
 const GRAVITY = 24.0
@@ -209,6 +223,13 @@ const ENEMY_STATS = {
 	"melee": {"hp": 24.0, "damage": 6.0, "cooldown": 1.0, "speed": 4.0, "reach": 2.0},
 	"ranged": {"hp": 16.0, "damage": 8.0, "cooldown": 2.0, "speed": 0.0, "reach": 40.0},
 	"brute": {"hp": 120.0, "damage": 18.0, "cooldown": 1.6, "speed": 2.2, "reach": 2.5},
+	"charger": {"hp": 40.0, "damage": 14.0, "cooldown": 3.0, "speed": 3.0, "reach": 14.0},
+	"bulwark": {"hp": 90.0, "damage": 10.0, "cooldown": 1.8, "speed": 1.6, "reach": 2.4},
+	"drifter": {"hp": 44.0, "damage": 7.0, "cooldown": 2.2, "speed": 2.4, "reach": 22.0},
+	"diver": {"hp": 20.0, "damage": 12.0, "cooldown": 2.8, "speed": 7.0, "reach": 18.0},
+	"scuttler": {"hp": 12.0, "damage": 3.0, "cooldown": 0.8, "speed": 6.5, "reach": 1.8},
+	"artillery": {"hp": 30.0, "damage": 16.0, "cooldown": 3.4, "speed": 0.0, "reach": 34.0},
+	"beacon": {"hp": 36.0, "damage": 2.0, "cooldown": 2.0, "speed": 1.2, "reach": 2.0},
 }
 
 # Enemy physical envelopes, keyed by role. PHYSICAL ONLY -- an
@@ -264,4 +285,4 @@ const ECHO_STATUS_KINDS_IMPLEMENTED = ["lightened", "burning", "slowed", "frozen
 # per kind AND per target because those are different runtime
 # work; this is that table, so the Godot application boundary can
 # refuse the pair rather than the name.
-const ECHO_STATUS_SUPPORTED_TARGETS = {"lightened": ["object"], "burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["self", "enemy"], "empowered": ["self"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}
+const ECHO_STATUS_SUPPORTED_TARGETS = {"lightened": ["object"], "burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["self", "enemy"], "empowered": ["self", "enemy"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}

@@ -588,7 +588,13 @@ SUPPORTED_STATUS_TARGETS: dict[str, tuple[str, ...]] = {
     # refused. `marked` and `stunned` above stay enemy-only: `enemy.gd`
     # reads them and nothing on the player does.
     "vulnerable": ("self", "enemy"),
-    "empowered": ("self",),
+    # BOTH SIDES, and the enemy half arrived with `Enemy._hit_for`
+    # (OV04 P06). A `beacon`'s entire brief is "makes everything near it
+    # worse", and it does it by applying this to its neighbours through
+    # the ordinary boundary -- so `enemy` is declared here in the change
+    # that made an empowered enemy actually hit harder, per this table's
+    # own rule. `stat_stack.gd:96` remains the `self` implementation.
+    "empowered": ("self", "enemy"),
     "low_profile": ("self",),
     "haste": ("self",),
     "regenerating": ("self",),

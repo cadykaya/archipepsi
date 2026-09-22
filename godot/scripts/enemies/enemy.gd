@@ -84,9 +84,37 @@ const TELEGRAPH_SECONDS := {
 	# ranged enemy planted for half a second at range reads as an easy
 	# target rather than as a threat.
 	"ranged": 0.45,
+	# ONE TELEGRAPHED RUSH is the charger's entire brief, so its windup
+	# is the longest here: the rush is unsteerable and heavy, and a
+	# player who cannot see it coming has been hit by something they
+	# could not have answered.
+	"charger": 0.7,
+	# An artillery piece ranges before it fires. Long, because the shell
+	# lands where you WERE and leaving is the counterplay.
+	"artillery": 0.8,
+	# A diver commits from above; short, because it is already visible
+	# and the fall does the telegraphing.
+	"diver": 0.35,
 }
 
 var _windup := 0.0
+## OV04 P06 role state. One block, because seven roles each carrying a
+## private field scattered through this file is how the three-archetype
+## version became hard to read.
+##
+## `_rush` is the charger's remaining commit; `_recover` its helpless
+## window afterwards. `_dive` is the diver's. `_beacon_beat` paces the
+## beacon's refresh so it is not an every-frame broadcast.
+var _rush := 0.0
+var _rush_dir := Vector3.ZERO
+var _recover := 0.0
+var _dive := 0.0
+var _beacon_beat := 0.0
+## Where a flyer holds station. Resolved once from the floor under it,
+## because a flyer that recomputed its own hover height every frame
+## drifts upward over a slope.
+var _hover_y := 0.0
+var _hover_set := false
 ## Presentation-only container. EVERY mesh hangs off this and nothing
 ## else does, so a hit flinch or a windup swell scales the LOOK and can
 ## never move the collider -- which is what `scale` on the body did, and
@@ -295,7 +323,15 @@ func _physics_process(delta: float) -> void:
 
 	velocity += _knockback
 	_knockback = Vector3.ZERO
-	if not is_on_floor():
+	# OV04 P06: A FLYER HOLDS A HEIGHT rather than falling to the floor.
+	#
+	# `is_flying` is the envelope's own field, so this asks the same
+	# contract the art toolchain and the spawn placement ask. A drifter
+	# that fell would be a walker with a drifter's collider, and "owns
+	# the ceiling" would be a description of nothing.
+	if bool(envelope.get("flying", false)):
+		_hold_station(delta)
+	elif not is_on_floor():
 		velocity.y -= Constants.GRAVITY * delta
 
 	_sidestep_timer = maxf(0.0, _sidestep_timer - delta)
@@ -327,12 +363,30 @@ func _physics_process(delta: float) -> void:
 				_resolve_telegraph(kind, player)
 			_end_telegraph(true)
 
+	# OV04 P06: the committed motions, which OVERRIDE the ordinary
+	# approach rather than blending with it. A charger mid-rush is not
+	# steering, and a diver mid-dive is not reconsidering; that is the
+	# whole of both counterplays.
+	if _spend_commitment(delta, player):
+		move_and_slide()
+		return
+	if archetype == "beacon":
+		_beacon_pulse(delta)
+
 	if player != null:
 		var to_player := player.global_position - global_position
 		var distance := to_player.length()
 		# `low_profile` on the player shrinks how far this enemy notices —
 		# §10's "visibility" channel, a downside's counterpart.
-		var aggro := Constants.ENEMY_AGGRO_RADIUS \
+		# AS FAR AS IT CAN SHOOT, and no less. `ENEMY_AGGRO_RADIUS` is
+		# 18 m and artillery's declared reach is 34, so a flat radius
+		# made the top half of its range unusable: it could never notice
+		# anything it was built to hit. A role notices at the greater of
+		# the two, which leaves every existing role exactly where it was
+		# (melee 2, ranged 40 -- the ranged one gains, correctly, for
+		# the same reason).
+		var aggro := maxf(Constants.ENEMY_AGGRO_RADIUS,
+				float(stats["reach"])) \
 				* (1.0 - 0.5 * clampf(
 						player.statuses.magnitude_of("low_profile"), 0.0, 1.0))
 		if distance <= aggro:
@@ -400,6 +454,64 @@ func _try_attack(player: Player, distance: float) -> void:
 	if _attack_cooldown > 0.0:
 		return
 	var reach := float(stats["reach"])
+	# OV04 P06: the seven roles from the approved roster. Each is its own
+	# branch because each has its own answer to "what does attacking
+	# mean", and a shared one would be the three-archetype shape with
+	# names added.
+	if archetype == "charger":
+		# ONE TELEGRAPHED RUSH. The direction is fixed when the windup
+		# STARTS, not when it ends: committing to where the player was
+		# is what makes side-stepping the counterplay.
+		if distance <= reach and _has_line_of_sight(player):
+			_attack_cooldown = float(stats["cooldown"])
+			var to := player.global_position - global_position
+			_rush_dir = Vector3(to.x, 0.0, to.z).normalized()
+			_begin_telegraph("charge",
+					float(TELEGRAPH_SECONDS["charger"]))
+			_say("windup")
+		return
+	if archetype == "artillery":
+		# INDIRECT, AND IT CANNOT DEPRESS. Inside its minimum range it
+		# has no answer at all, which is the ground it fails to deny.
+		if distance >= Constants.ARTILLERY_MIN_RANGE and distance <= reach:
+			_attack_cooldown = float(stats["cooldown"])
+			_rush_dir = player.global_position
+			_begin_telegraph("shell",
+					float(TELEGRAPH_SECONDS["artillery"]))
+			_say("windup")
+		return
+	if archetype == "diver":
+		# CONTESTS THE GRAPPLE ARC: it commits only when the player has
+		# left the ground, which is what makes it a counter to traversal
+		# rather than another thing shooting at you.
+		if distance <= reach and _player_is_airborne(player):
+			_attack_cooldown = float(stats["cooldown"])
+			_begin_telegraph("dive", float(TELEGRAPH_SECONDS["diver"]))
+			_say("windup")
+		return
+	if archetype == "drifter":
+		# OWNS THE CEILING and shoots down from it.
+		if distance <= reach and _has_line_of_sight(player):
+			_attack_cooldown = float(stats["cooldown"])
+			_fire_projectile(player)
+		return
+	if archetype == "beacon":
+		# MAKES EVERYTHING NEAR IT WORSE. Its own attack is an
+		# afterthought; `_beacon_pulse` is the actual job and runs in
+		# `_physics_process` whether or not the player is in reach.
+		if distance <= reach:
+			_attack_cooldown = float(stats["cooldown"])
+			_say("melee_hit")
+			player.take_damage(_hit_for(), global_position)
+		return
+	if archetype == "bulwark" or archetype == "scuttler":
+		# Both close in and hit. What distinguishes them is not the
+		# attack -- it is the armour (`_frontal_shrug`) and the speed.
+		if distance <= reach:
+			_attack_cooldown = float(stats["cooldown"])
+			_say("melee_hit")
+			player.take_damage(_hit_for(), global_position)
+		return
 	if archetype == "ranged":
 		if distance <= reach and _has_line_of_sight(player):
 			_attack_cooldown = float(stats["cooldown"])
@@ -423,7 +535,241 @@ func _try_attack(player: Player, distance: float) -> void:
 	elif distance <= reach:
 		_attack_cooldown = float(stats["cooldown"])
 		_say("melee_hit")
-		player.take_damage(float(stats["damage"]), global_position)
+		player.take_damage(_hit_for(), global_position)
+
+# ------------------------------------------------ OV04 P06 role work
+
+## Spend a committed motion, and say whether it took the frame.
+##
+## Returns `true` while the enemy is mid-rush, mid-dive or recovering
+## from one -- during which nothing else about it steers, attacks or
+## reconsiders. That is what "committed" means and it is why each of
+## these roles has an opening: the player's answer is to be somewhere
+## else when it lands, and a commitment that could be re-aimed would
+## take that answer away.
+func _spend_commitment(delta: float, player: Player) -> bool:
+	if _recover > 0.0:
+		_recover -= delta
+		velocity.x = lerpf(velocity.x, 0.0, 0.25)
+		velocity.z = lerpf(velocity.z, 0.0, 0.25)
+		return true
+	if _rush > 0.0:
+		_rush -= delta
+		velocity.x = _rush_dir.x * Constants.CHARGER_RUSH_SPEED
+		velocity.z = _rush_dir.z * Constants.CHARGER_RUSH_SPEED
+		if player != null and global_position.distance_to(
+				player.global_position) <= float(stats["reach"]) * 0.2:
+			player.take_damage(float(stats["damage"]), global_position)
+			_say("melee_hit")
+			_rush = 0.0
+		# A WALL ENDS IT, and ends it worse: running into geometry is the
+		# free opening, so the recovery is the same either way and the
+		# player who side-stepped gets it for nothing.
+		if is_on_wall():
+			_rush = 0.0
+		if _rush <= 0.0:
+			_recover = Constants.CHARGER_RECOVERY_SECONDS
+			_say("windup")
+		return true
+	if _dive > 0.0:
+		_dive -= delta
+		velocity = _rush_dir * float(stats["speed"])
+		if player != null and global_position.distance_to(
+				player.global_position) <= 1.6:
+			player.take_damage(float(stats["damage"]), global_position)
+			_say("melee_hit")
+			_dive = 0.0
+		if _dive <= 0.0:
+			# Back to station rather than landing: a flyer that ends up
+			# on the floor is a walker with the wrong collider.
+			_hover_set = false
+			_recover = 0.6
+		return true
+	return false
+
+
+## Keep a flyer at its station height above whatever is under it.
+##
+## Resolved ONCE per station rather than every frame: recomputing from
+## the floor each tick makes a flyer climb its own correction over a
+## slope, which is how one ends up in the ceiling. `_hover_set` is
+## cleared when a dive ends, which is the only time the station moves.
+func _hold_station(delta: float) -> void:
+	if not _hover_set:
+		_hover_y = _floor_beneath() + Constants.FLYER_HOVER_Y
+		_hover_set = true
+	# A soft hold rather than a teleport, so a flyer knocked off station
+	# visibly returns to it instead of snapping.
+	velocity.y = clampf((_hover_y - global_position.y) * 2.5, -6.0, 6.0)
+	var _unused := delta
+
+
+## THE WORLD UNDER THIS FLYER, ignoring anything that can walk.
+##
+## A plain downward ray took the first thing it hit, and the first thing
+## it hit was whatever happened to be standing underneath -- so a drifter
+## hovering over a charger read the CHARGER's shoulders as the ground and
+## held station 4.2 m above them, which on a crowded floor means a flyer
+## that rises every time something walks beneath it.
+##
+## So the ray is re-cast past actors. Bounded to a few tries rather than
+## looped: a flyer over a stack of six enemies is a composition problem,
+## and spinning here would hide it.
+func _floor_beneath() -> float:
+	var from := global_position
+	var skip: Array[RID] = [get_rid()]
+	for _try in 5:
+		var query := PhysicsRayQueryParameters3D.create(from,
+				from + Vector3.DOWN * 60.0)
+		query.exclude = skip
+		var hit: Dictionary = get_world_3d().direct_space_state \
+				.intersect_ray(query)
+		if hit.is_empty():
+			return from.y
+		var body := hit["collider"] as Node3D
+		if body is StaticBody3D or body is AnimatableBody3D:
+			return (hit["position"] as Vector3).y
+		if body is CollisionObject3D:
+			skip.append((body as CollisionObject3D).get_rid())
+	return from.y
+
+
+## Is the player off the ground far enough to be worth diving at?
+##
+## Asked of the FLOOR UNDER THEM, not of their absolute height: a player
+## standing on a gantry is not airborne, and a diver that thought so
+## would spend its life committing at people standing still.
+func _player_is_airborne(player: Player) -> bool:
+	if player.is_on_floor():
+		return false
+	var from := player.global_position
+	var query := PhysicsRayQueryParameters3D.create(from,
+			from + Vector3.DOWN * (Constants.DIVER_TRIGGER_HEIGHT + 0.2))
+	query.exclude = [player.get_rid(), get_rid()]
+	return get_world_3d().direct_space_state.intersect_ray(query).is_empty()
+
+
+## A beacon's actual job: make its neighbours worse.
+##
+## `empowered` through the ordinary Status boundary, on the ordinary
+## `enemy` target, so it cleanses, expires and reads exactly like every
+## other application. A private "buffed" flag would have been a second
+## status system for one role.
+##
+## REFRESHED ON A BEAT rather than every frame: the Status refreshes
+## rather than stacks, so a per-frame broadcast would be the same effect
+## at sixty times the cost.
+func _beacon_pulse(delta: float) -> void:
+	_beacon_beat -= delta
+	if _beacon_beat > 0.0:
+		return
+	_beacon_beat = Constants.BEACON_REFRESH
+	for raw: Node in get_tree().get_nodes_in_group(Damageable.GROUP):
+		var other := raw as Enemy
+		if other == null or other == self or other._dead:
+			continue
+		if global_position.distance_to(other.global_position) \
+				> Constants.BEACON_RADIUS:
+			continue
+		other.statuses.apply("empowered", Constants.BEACON_REFRESH * 2.0,
+				Constants.BEACON_MAGNITUDE)
+
+
+## An artillery shell, landing where the player was when it was ranged.
+##
+## Built as a real projectile with a real flight, because "denies
+## ground" is a promise about time: the player has to see where it is
+## going and leave. A hitscan at the old position would deny nothing --
+## it would just be a delayed hit.
+func _lob_shell(at: Vector3) -> void:
+	var shell := ArtilleryShell.new()
+	shell.name = "ArtilleryShell"
+	shell.origin = muzzle()
+	shell.target = at
+	shell.seconds = Constants.ARTILLERY_FLIGHT_SECONDS
+	shell.damage = float(stats["damage"])
+	shell.blast = Constants.ARTILLERY_BLAST_RADIUS
+	var scene := get_tree().current_scene
+	if scene == null:
+		scene = get_tree().root
+	scene.add_child(shell)
+	shell.global_position = shell.origin
+	_say("shot")
+
+
+## How much of this hit the armour takes, 0..1.
+##
+## The bulwark's brief is "cannot be fought frontally", so this is a
+## direction question and not a damage-type one: a hit arriving inside
+## its shielded arc is mostly shrugged off and one from behind is not.
+## Any other role shrugs off nothing, and says so by returning 0.
+func _frontal_shrug(from: Vector3) -> float:
+	if archetype != "bulwark":
+		return 0.0
+	var facing := -global_transform.basis.z
+	var incoming := from - global_position
+	incoming.y = 0.0
+	if incoming.length() < 0.001:
+		return 0.0
+	if facing.normalized().dot(incoming.normalized()) \
+			< Constants.BULWARK_SHIELD_DOT:
+		return 0.0
+	return Constants.BULWARK_FRONTAL_ARMOUR
+
+
+## A shell in flight. An inner class for the same reason
+## `EnemyProjectile` is one: there is no second way to make one, and a
+## file of its own would invite a second way.
+class ArtilleryShell extends Node3D:
+	var origin := Vector3.ZERO
+	var target := Vector3.ZERO
+	var seconds := 1.6
+	var damage := 16.0
+	var blast := 3.2
+	var _flown := 0.0
+	var _marker: MeshInstance3D = null
+
+	func _ready() -> void:
+		var mesh := MeshInstance3D.new()
+		var ball := SphereMesh.new()
+		ball.radius = 0.22
+		ball.height = 0.44
+		mesh.mesh = ball
+		add_child(mesh)
+		# THE GROUND MARK IS THE POINT. A shell you cannot see the
+		# landing of denies nothing, so the circle goes down when the
+		# shell goes up.
+		_marker = MeshInstance3D.new()
+		var disc := CylinderMesh.new()
+		disc.top_radius = blast
+		disc.bottom_radius = blast
+		disc.height = 0.05
+		_marker.mesh = disc
+		_marker.material_override = ThemeMaterials.glow_material(
+				Color(1.0, 0.55, 0.2), 1.8)
+		get_parent().add_child.call_deferred(_marker)
+
+	func _physics_process(delta: float) -> void:
+		_flown += delta
+		var t := clampf(_flown / maxf(seconds, 0.01), 0.0, 1.0)
+		if is_instance_valid(_marker):
+			_marker.global_position = target + Vector3(0.0, 0.03, 0.0)
+		# A LOB, not a line: the arc is what reads as indirect fire.
+		var flat := origin.lerp(target, t)
+		global_position = flat + Vector3(0.0,
+				sin(t * PI) * (origin.distance_to(target) * 0.22), 0.0)
+		if t < 1.0:
+			return
+		for raw: Node in get_tree().get_nodes_in_group("player"):
+			var body := raw as Player
+			if body == null:
+				continue
+			if body.global_position.distance_to(target) <= blast:
+				body.take_damage(damage, target)
+		if is_instance_valid(_marker):
+			_marker.queue_free()
+		queue_free()
+
 
 ## WHAT A FINISHED TELEGRAPH DOES, by kind.
 ##
@@ -438,14 +784,37 @@ func _resolve_telegraph(kind: String, player: Player) -> void:
 			_slam(player)
 		"aim":
 			_fire_projectile(player)
+		"charge":
+			# The commit begins now and steering is over: `_rush` is
+			# spent in `_physics_process` and nothing re-aims it.
+			_rush = Constants.CHARGER_RUSH_SECONDS
+		"shell":
+			_lob_shell(_rush_dir)
+		"dive":
+			_dive = Constants.DIVER_DIVE_SECONDS
+			var down := player.global_position - global_position
+			_rush_dir = down.normalized()
 		_:
 			push_error("enemy telegraph '%s' has no resolution" % kind)
 
 ## The brute's payoff: damage plus a shove if the player lingered.
+## WHAT THIS ENEMY'S BLOW IS WORTH RIGHT NOW.
+##
+## OV04 P06: `empowered` on an ENEMY is the beacon's whole job -- "makes
+## everything near it worse" -- and it had no implementation, because
+## `stat_stack.gd` reads `empowered` for the PLAYER's `damage_dealt` and
+## nothing read it here. So a beacon applying it would have been an
+## inert Status, which is the defect the per-target boundary exists to
+## refuse: the declaration `empowered: ("self", "enemy")` travels with
+## THIS function and not before it.
+func _hit_for() -> float:
+	return float(stats["damage"]) * (1.0
+			+ clampf(statuses.magnitude_of("empowered"), 0.0, 2.0))
+
 func _slam(player: Player) -> void:
 	var to_player := player.global_position - global_position
 	if to_player.length() <= float(stats["reach"]) * 1.4:
-		player.take_damage(float(stats["damage"]), global_position)
+		player.take_damage(_hit_for(), global_position)
 		var away := Vector3(to_player.x, 0, to_player.z).normalized()
 		player.receive_knockback(away * 7.0 + Vector3.UP * 3.0)
 
@@ -492,6 +861,14 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> bool:
 	# just a glow.
 	amount *= 1.0 + 0.25 * clampf(statuses.magnitude_of("marked"), 0.0, 2.0)
 	amount *= 1.0 + 0.5 * clampf(statuses.magnitude_of("vulnerable"), 0.0, 2.0)
+	# OV04 P06: THE BULWARK'S SHIELD, and it is a direction question.
+	#
+	# `direction` is the vector the hit ARRIVED along, which every caller
+	# already passes -- so "was this frontal" is answerable without a new
+	# argument or a damage type. A hit inside the shielded arc is mostly
+	# shrugged off; one from behind lands in full. Every other role
+	# shrugs off nothing.
+	amount *= 1.0 - _frontal_shrug(global_position - direction)
 	hp -= amount
 	if knockback > 0.0:
 		_knockback += direction * knockback
