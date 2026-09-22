@@ -1315,6 +1315,64 @@ def _explore(start: str, edges, doors_by_room, keys_by_room,
                  rooms=frozenset(r for r, _, _ in seen))
 
 
+def _explore_acquiring(zone, entry: str, edges, doors_by_room, keys_by_room,
+                       base: frozenset[str], zone_state=(),
+                       start_held: frozenset[str] = frozenset(),
+                       start_macro: tuple[str, ...] | None = None) -> Reach:
+    """P02.1 -- before-acquisition and after-acquisition, kept apart.
+
+    The Zone's featured acquisition is a capability the player does not
+    have at the door and does have after claiming it. Two things would
+    both be wrong, and the owner named both:
+
+    - Handing it over at Zone entry -- *"do not supply a promised tool at
+      Zone entry"*. Every gate would open from the start and the
+      midpoint sequence would prove nothing.
+    - Granting it on reaching the room -- *"reaching the Check's room
+      must not automatically grant its capability"*. That is the same
+      error one room later.
+
+    So the search runs in ORDER. First from the entrance without it,
+    which is the only set that may be used to prove the featured room is
+    itself reachable. Then, from **each state the player can actually be
+    in while standing in that room** -- their keys and the Zone state
+    they arrived with -- onward, holding it.
+
+    The union is what the player can reach over the whole visit. It is
+    not a bigger search of the same question: the two halves answer
+    different questions and `reachability` uses each for the one it
+    answers.
+
+    **Monotone by construction.** A claimed Check is never unclaimed, so
+    there is no state in which the player holds it and later does not,
+    and the union needs no fixed point. If a second in-Zone acquisition
+    is ever added, this becomes a loop to a fixed point and the
+    assumption stops holding -- written down here rather than discovered.
+    """
+    before = _explore(entry, edges, doors_by_room, keys_by_room, base,
+                      start_held=start_held, zone_state=zone_state,
+                      start_macro=start_macro)
+    featured = getattr(zone, "featured_acquisition", None)
+    if featured is None or featured.room_id not in before.rooms:
+        return before
+
+    granted = base | {featured.capability}
+    if granted == base:
+        return before                    # already guaranteed; nothing new
+
+    states = set(before.states)
+    rooms = set(before.rooms)
+    for room, held, macro in before.states:
+        if room != featured.room_id:
+            continue
+        after = _explore(room, edges, doors_by_room, keys_by_room, granted,
+                         start_held=held, zone_state=zone_state,
+                         start_macro=macro)
+        states |= after.states
+        rooms |= after.rooms
+    return Reach(states=frozenset(states), rooms=frozenset(rooms))
+
+
 def _key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
                           have: frozenset[str], zone_state=()) -> list[str]:
     """SOLUTIONS_CATALOGUE §2 rule 2, asked directly.
@@ -1376,7 +1434,7 @@ def _key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
 
 def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
                keys_by_room, have: frozenset[str],
-               zone_state=()) -> tuple[str, ...]:
+               zone_state=(), zone=None) -> tuple[str, ...]:
     """SOLUTIONS_CATALOGUE §0-bis condition 4, and **it never changes the
     verdict**. It says which KIND of failure a refused Zone has.
 
@@ -1423,9 +1481,17 @@ def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
         # the second question with the first question's answer.
         key = (room, held, macro)
         if key not in memo:
-            back = _explore(room, edges, doors_by_room, keys_by_room, have,
-                            start_held=held, zone_state=zone_state,
-                            start_macro=macro)
+            # The way back may run through the claim, same as the way
+            # on: a player who has not picked up the featured Echo yet
+            # can still go and get it before retreating.
+            back = (_explore_acquiring(
+                        zone, room, edges, doors_by_room, keys_by_room,
+                        have, zone_state=zone_state, start_held=held,
+                        start_macro=macro)
+                    if zone is not None else
+                    _explore(room, edges, doors_by_room, keys_by_room, have,
+                             start_held=held, zone_state=zone_state,
+                             start_macro=macro))
             memo[key] = bool(back.rooms & ways_out)
         if not memo[key] and room not in trapped:
             trapped[room] = held
@@ -1495,8 +1561,13 @@ def reachability(zone, entry_id: str | None = None,
     undeclared = sorted(every - have)
 
     errors: list[str] = []
-    real = _explore(entry, zone.edges, doors_by_room, keys_by_room, have,
-                    zone_state=zstate)
+    # P02.1/P02.4. THE ACQUISITION MODEL IS CONNECTED HERE, and until now
+    # it was not: `established_in_zone` produced case C's set and nothing
+    # consumed it, while `capability_guarantee` had no production caller
+    # at all. A producer and a consumer that never meet are two halves of
+    # a guarantee nobody is making.
+    real = _explore_acquiring(zone, entry, zone.edges, doors_by_room,
+                              keys_by_room, have, zone_state=zstate)
     ideal = (real if not undeclared else
              _explore(entry, zone.edges, doors_by_room, keys_by_room,
                       every, zone_state=zstate))
@@ -1557,7 +1628,7 @@ def reachability(zone, entry_id: str | None = None,
     # finishing is still leaving.
     errors.extend(_escapable(real, frozenset({entry, exit_room}),
                              zone.edges, doors_by_room, keys_by_room,
-                             have, zone_state=zstate))
+                             have, zone_state=zstate, zone=zone))
 
     # R subset E, over STATES rather than rooms: a room you can stand in
     # holding the wrong keys is a different situation from the same room
@@ -1566,9 +1637,13 @@ def reachability(zone, entry_id: str | None = None,
     for room, held, macro in sorted(real.states):
         if room == exit_room:
             continue
-        onward = _explore(room, zone.edges, doors_by_room, keys_by_room,
-                          have, start_held=held, zone_state=zstate,
-                          start_macro=macro)
+        # ONWARD MEANS ONWARD INCLUDING THE CLAIM. Asking this with the
+        # plain search says the exit is unreachable from the entrance of
+        # every Zone whose exit lies past its own featured acquisition --
+        # which is the shape the acquisition is FOR.
+        onward = _explore_acquiring(zone, room, zone.edges, doors_by_room,
+                                    keys_by_room, have, zone_state=zstate,
+                                    start_held=held, start_macro=macro)
         if exit_room not in onward.rooms:
             # D-8. THIS IS WHERE A SELF-LOCKING CONFIGURATION SURFACES.
             # Setting a permanent variable that closes the only way on is

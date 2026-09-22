@@ -234,3 +234,93 @@ def test_the_binding_survives_a_reload():
     stored = reloaded.interpretation_by_id(f"echo_{FEATURED_LOCATION}")
     assert stored.source_item_name == "Hookshot"
     assert stored.interpretation_seq == 0
+
+
+# --------------------------------------------------------------------------
+# P02.1 / P02.4 — the acquisition model, CONNECTED.
+#
+# `established_in_zone` produced case C's set and nothing consumed it;
+# `capability_guarantee` had no production caller at all. Two halves of a
+# guarantee nobody was making. `topology._explore_acquiring` joins them,
+# and the ordering is the whole point: not at the door, not on arrival,
+# but after the claim.
+# --------------------------------------------------------------------------
+
+def _gated(order, gate_after: int, featured_room: str):
+    """A chain Zone whose edge after `gate_after` needs the capability."""
+    chambers = [_arena(rid, FEATURED_LOCATION if rid == featured_room
+                       else (89100001 if i == 0 else None))
+                for i, rid in enumerate(order)]
+    zone = TypeAdapter(Z.Zone).validate_python({
+        "schema_version": 7, "zone_id": "zone_001", "display_name": "Relay",
+        "target_game": "Game", "theme": "void_glitch",
+        "chambers": chambers,
+        "featured_acquisition": {"capability": CAPABILITY,
+                                 "location_id": FEATURED_LOCATION,
+                                 "room_id": featured_room},
+    })
+    built = topology.apply(zone, topology.compose_chain(list(zone.chambers)))
+    raw = built.model_dump()
+    target = f"e:{order[gate_after]}:{order[gate_after + 1]}"
+    hit = [e for e in raw["edges"] if e["edge_id"] == target]
+    assert hit, f"{target} is not an edge of this chain"
+    hit[0]["capability"] = CAPABILITY
+    return TypeAdapter(Z.Zone).validate_python(raw)
+
+
+def test_the_zone_grants_the_capability_and_the_route_past_it_opens():
+    """Case C, actually firing. The gate sits AFTER the featured room, so
+    the player claims the Echo and walks on."""
+    order = ["c001", "c002", "c005", "c006"]
+    zone = _gated(order, gate_after=2, featured_room="c005")
+    assert topology.reachability(zone).ok
+
+
+def test_the_capability_is_not_in_hand_at_the_zone_door():
+    """*"Do not supply a promised tool at Zone entry."*
+
+    Same Zone, gate moved to the FIRST edge -- before the featured room.
+    If the acquisition were granted at entry this would pass, and the
+    midpoint sequence would prove nothing.
+    """
+    order = ["c001", "c002", "c005", "c006"]
+    zone = _gated(order, gate_after=0, featured_room="c005")
+    bad = topology.reachability(zone)
+    assert not bad.ok, (
+        "the featured capability must not open a gate standing between "
+        "the entrance and the room that hands it over")
+
+
+def test_reaching_the_room_is_not_the_same_as_having_claimed_it():
+    """*"Reaching the Check's room must not automatically grant its
+    capability."*
+
+    The gate is the edge the player arrives at the featured room
+    THROUGH. Granting on arrival would open it from the wrong side;
+    granting on the claim does not, because the claim happens in the
+    room and the gate is behind them by then -- so this Zone is refused
+    for the same reason the door case is.
+    """
+    order = ["c001", "c002", "c005", "c006"]
+    zone = _gated(order, gate_after=1, featured_room="c005")
+    assert not topology.reachability(zone).ok
+
+
+def test_the_three_cases_differ_only_in_where_the_gate_stands():
+    """Side by side, so none of them can pass for a reason that has
+    nothing to do with the ordering."""
+    order = ["c001", "c002", "c005", "c006"]
+    verdicts = [topology.reachability(_gated(order, g, "c005")).ok
+                for g in (0, 1, 2)]
+    assert verdicts == [False, False, True], verdicts
+
+
+def test_a_zone_that_features_nothing_is_unchanged():
+    """Every Zone composed before this establishes nothing, and the
+    ordered search must not invent a capability for it."""
+    order = ["c001", "c002", "c005", "c006"]
+    zone = _gated(order, gate_after=2, featured_room="c005")
+    without = TypeAdapter(Z.Zone).validate_python(
+        {**zone.model_dump(), "featured_acquisition": None})
+    assert not topology.reachability(without).ok, (
+        "with nothing granting the capability the gate is undeclared")
