@@ -214,7 +214,16 @@ const ZONE_TARGET_CHECKS_MAX = 30
 const ZONE_TARGET_CHECKS_MIN = 1
 const ENVELOPE_FORCE_N = 700.0
 const ENVELOPE_RANGE_M = 20.0
+## What a qualified PUSH/PULL/HOLD may act on (§29.3.2), together
+## with ENVELOPE_FORCE_N and ENVELOPE_RANGE_M. A property of the
+## HOST. NOT the pickup limit — see CARRY_MASS_KG below.
 const ENVELOPE_MASS_KG = 120.0
+## Design 2 §10.3's ordinary-pickup line: an object is carriable
+## if `carriable == true` AND `mass_kg <= 60.0`; above it the
+## object is manipulable only. A property of the OBJECT, and no
+## Gear, Mod or Ability widens it. NOT the envelope above: a host
+## that clears 120 kg may push a 100 kg crate and still may not
+## pick one up.
 const CARRY_MASS_KG = 60.0
 const MANIPULATE_VERBS = ["HOLD", "PULL", "PUSH"]
 

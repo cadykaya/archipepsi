@@ -745,3 +745,28 @@ def test_the_flag_and_the_kilograms_are_both_required(mass, carried):
     assert P.carriable_by_hand(False, mass) is False, (
         "a mass test alone would put a grip on PLATE, which is exactly "
         "60 kg and is not carriable")
+
+
+def test_neither_mass_can_be_read_bare_in_the_generated_file():
+    """The two masses print a line apart, and one is the familiar name.
+
+    Prod's `3b67921`: every existing manipulation call site already uses
+    `ENVELOPE_MASS_KG`, so a carry verb written against "the mass
+    constant" lands on 120 kg and makes `WEIGHTED` carriable — which
+    Design 2 changed from Design 1 on purpose. The bridge cannot write
+    the verb, so what it does instead is make sure neither number is met
+    without the line saying which question it answers.
+    """
+    gd = GD_CONSTANTS.read_text(encoding="utf-8").splitlines()
+    for name, must_say in (("ENVELOPE_MASS_KG", "NOT the pickup limit"),
+                           ("CARRY_MASS_KG", "NOT the envelope above")):
+        at = next(i for i, line in enumerate(gd)
+                  if line.startswith(f"const {name} = "))
+        note = []
+        while at and gd[at - 1].startswith("## "):
+            at -= 1
+            note.insert(0, gd[at][3:])
+        joined = " ".join(note)
+        assert must_say in joined, (
+            f"{name} is exported with no note distinguishing it from the "
+            f"other mass; what precedes it is {joined!r}")

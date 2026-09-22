@@ -1,5 +1,54 @@
 # AGENT FRONTIER
 
+## BRIDGE LANE — the carry line exists, and the killed write is a real kill — 2026-09-22
+
+**Mass semantics, verified rather than assumed.** Design 2 §10.3 governs
+ordinary pickup (`carriable == true` AND `mass_kg <= 60`);
+`ENVELOPE_MASS_KG`'s 120 is one of three numbers a HOST must meet to be
+a qualified manipulation provider. The 120 side was correct everywhere
+it appeared. **The 60 side had no consumer at all** — design prose and
+one art preview's row labels, no named constant on either side — so
+nothing conflated them and nothing enforced §10.3 either. It was already
+load-bearing in one place: `TransportedObject`'s own first sentence is
+"an object the player carries between rooms", and a 320 kg `BALLAST`
+validated. `physics.CARRY_MASS_KG` and `carriable_by_hand` now name it
+once, exported, with `TransportedObject` handed the case that fails it.
+Prod's `3b67921` correctly kept the residual: **no runtime consumer**,
+because the carry verb is P12. A GDScript helper for a verb that does
+not exist would be the inert framework this lane refused for P14, so
+instead the exporter attaches a note to each mass and a test fails if
+either is met bare in `constants.gd`.
+
+**P04's cold-restart evidence, corrected on the owner's finding.** The
+permanent/reversible case said in its docstring that the reversal ran
+after the restart and then reversed an in-process round trip **in the
+parent**. `_resumed_in_a_fresh_process` now runs resumed transitions
+inside the restarted interpreter and asserts there, with two harness
+self-proofs first; a second case carries the campaign forward in the
+child. **The PID check proves the harness, not the lifecycle** — a
+normal bridge/client restart and restored gameplay are unwritten and are
+Prod's.
+
+**P04.6 has a real killed write now.** SIGKILL *inside* `write_save` at
+its three actual windows, with a previous save on disk; the old payload
+survives all three. Sabotage-confirmed against a naive writer, which
+also surfaced that a torn primary raises `SaveUnreadable` rather than
+returning `None`. The stray-`.tmp` case is renamed for what it does.
+
+**P16's same-room check is a precondition, not physical proof.** It
+refuses a client that contradicts its own earlier transport report. It
+does not establish that anything was carried. Relabelled.
+
+**DESS-16 — the doorway clearance.** `brute` fails worst (0.700 m near
+edge against a 1.2 m half-width) and is an approved base-kit role that
+**predates the composition widening**, so this is a latent defect the
+widening made more common, not a regression it introduced. `melee`
+clears at exactly 1.200 because `IN_THE_DOORWAY` was derived for a body
+with the player's radius. `ENEMY_ENVELOPES` already exports
+`lane_width`, so the fix needs no new number — it is Prod's nudge.
+
+---
+
 ## ENGINE LANE — the Echo menu answers its own questions now — 2026-09-22
 
 **From the owner, after playing.** The Echo menu was "a scrolling list

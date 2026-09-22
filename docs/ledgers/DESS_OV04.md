@@ -483,7 +483,7 @@ migrated.
 |---|---|
 | **P02** acquisition + AP obligation | `.1 .2 .3 .4 .5 .7` done; `.6` is Prod's equipment/gantry consumer |
 | **P03** cross-room state runtime | bridge half done; `ZoneStateSelected` closed P-3's gap |
-| **P04** restart persistence | **OPEN.** `.1` representation stands. `.3` bridge half now crosses a real process boundary AND resumes transitions inside the restarted interpreter (owner correction, 2026-09-22) — still not the full lifecycle: a normal bridge/client restart and restored gameplay are unwritten, and the PID check is not that. `.6` is stray-file recovery; the killed-write case is unwritten |
+| **P04** restart persistence | **OPEN.** `.1` representation stands. `.3` bridge half now crosses a real process boundary AND resumes transitions inside the restarted interpreter (owner correction, 2026-09-22) — still not the full lifecycle: a normal bridge/client restart and restored gameplay are unwritten, and the PID check is not that. `.6` now has BOTH: stray-file recovery, and a writer SIGKILLed inside `write_save` at three real kill points with the previous save intact, sabotage-confirmed against a naive writer |
 | **P16** transported objects | **OPEN.** The declaration, save, intent, authority, recovery and the consuming mechanism stand as *ownership, reporting and bridge-consistency* evidence. Recorded same-room presence is a **precondition**, not proof a physical consumer accepted the object (owner correction, 2026-09-22). Unwritten: actual transport and interaction, supported Status continuity across the boundary, and the selected object's lifecycle/recovery through the authority split — Prod's runtime half. Also new: §10.3 now refuses a transported object the player could not carry |
 | **P10.5** Status matrix | the family is data and coverage is computed |
 
@@ -944,8 +944,38 @@ what the case proves, and it is now named
 > file is then placed beside the result. The atomicity claim it stood
 > in for — a writer killed *between* the temporary file and the
 > rename leaves the OLD save intact — needs the writer terminated
-> mid-call with a previous save already present. **That case is
-> unwritten.** Named here rather than implied by the one next to it.
+> mid-call with a previous save already present. Named here rather than
+> implied by the one next to it — and then **written**, below.
+
+**P04.6's actual interrupted write, at three real kill points.** A child
+process is SIGKILLed *inside* `write_save`, with a previous save already
+on disk: before the temporary file is fsynced, while the backup is being
+copied, and between the temporary file and the rename. SIGKILL is
+uncatchable and unflushable, so no `finally` runs and nothing is cleaned
+up; whatever the directory holds afterwards is what a power-loss-shaped
+crash leaves. In all three the previous save comes back **intact and
+un-half-updated**, read by a fresh interpreter because the one that was
+mid-write is gone. The two payloads differ by VALUE rather than by
+presence — a survivor that merely lacked the variable would read the
+same as an old save and as a default-constructed one. A fourth window,
+inside `os.replace` itself, does not exist: the rename is atomic in the
+filesystem, which is the whole reason the function is shaped this way.
+
+**Sabotaged, because three passing kills prove nothing on their own.**
+Three cases that kill a writer and find the old save intact look
+identical to three that kill a writer which never touched the primary.
+So one case replaces `write_save` in the doomed child with the naive
+version — open the primary, write, die — and the old save must come
+back **damaged**. It does.
+
+**And the loader refuses rather than returning nothing.** That sabotage
+surfaced the behaviour: a torn primary raises `SaveUnreadable` —
+*"save file(s) exist ... and none could be read; refusing to start a
+fresh campaign over them"* — where a `None` would read as "no campaign
+here" and the next write would start a fresh one over the wreckage.
+A separate hand-truncated case that had stated the same fact on its own
+was removed; the fact is now carried by the sabotage, arrived at by a
+real kill instead of by damage placed by hand.
 
 **A latch was the obvious thing to test and it needs a committed physics
 package.** A `permanent` Zone-state variable is the same monotone fact

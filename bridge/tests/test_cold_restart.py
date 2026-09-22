@@ -36,6 +36,7 @@ pytest removes. No original is read, written or migrated.
 from __future__ import annotations
 
 import json
+import signal
 import subprocess
 import sys
 import textwrap
@@ -351,6 +352,143 @@ def test_the_committed_manifest_survives_the_restart(tmp_path):
         "{'digest': save.zone_by_id('zone_001').manifest['manifest_digest'],"
         " 'state': save.zone_by_id('zone_001').layout_state}"))
     assert answer == {"digest": "abc123", "state": "ACCEPTED"}
+
+
+def _killed_mid_write(path: Path, save: P.CampaignSave, patch: str) -> int:
+    """Write `save` to `path` in a child that **SIGKILLs itself** partway.
+
+    The real thing, not a simulation of it. `patch` replaces one step of
+    `write_save` with a call to `os.kill(getpid(), SIGKILL)`, which is
+    uncatchable and unflushable: no `finally` runs, no buffer is
+    written, no temporary file is cleaned up. Whatever the directory
+    holds afterwards is what a power-loss-shaped crash leaves behind.
+
+    Returns the child's exit status, which the caller checks: a writer
+    that finished normally would make the case prove nothing, so the
+    child raises `SystemExit` if it survives the patched step.
+    """
+    script = textwrap.dedent("""
+        import os, signal, shutil, sys
+        sys.path.insert(0, {bridge!r})
+        from pathlib import Path
+        from archipepsi_bridge import store
+        from archipepsi_bridge.schemas.protocol import CampaignSave
+
+        def die(*a, **k):
+            os.kill(os.getpid(), signal.SIGKILL)
+
+        save = CampaignSave.model_validate_json({payload!r})
+        {patch}
+        store.write_save(Path({path!r}), save)
+        raise SystemExit("the writer was supposed to die and did not")
+    """).format(bridge=_BRIDGE, payload=save.model_dump_json(),
+                path=str(path), patch=patch)
+    done = subprocess.run([sys.executable, "-c", script],
+                          capture_output=True, text=True, timeout=120)
+    assert done.returncode == -signal.SIGKILL, (
+        "the writer did not die where it was told to, so nothing below "
+        f"is evidence about an interrupted write:\n{done.stdout}\n"
+        f"{done.stderr}")
+    return done.returncode
+
+
+@pytest.mark.parametrize("where,patch", [
+    ("before the temporary file is fsynced", "store._flush = die"),
+    ("while the backup is being copied", "store.shutil.copy2 = die"),
+    ("between the temporary file and the rename", "store.os.replace = die"),
+])
+def test_a_writer_killed_mid_write_leaves_the_previous_save_intact(
+        tmp_path, where, patch):
+    """P04.6's actual interrupted write, at three real kill points.
+
+    **This is the case the stray-`.tmp` test below was standing in for**
+    and does not cover. There, a complete `write_save` runs to
+    completion and a partial file is placed beside the result; here a
+    writer is SIGKILLed *inside* `write_save`, with a previous save
+    already on disk, which is the only arrangement that can test the
+    atomicity claim: tmp + fsync + replace means the primary is either
+    the old payload or the new one and never a torn one.
+
+    The three points are the three windows `write_save` actually has.
+    A fourth -- inside `os.replace` itself -- is not a window: the
+    rename is atomic in the filesystem, which is the whole reason the
+    function is shaped this way.
+
+    Read by a FRESH interpreter afterwards, since the process that was
+    mid-write is gone and a reader in this one could only be reading
+    what pytest still holds.
+    """
+    # The two payloads differ by VALUE, not by presence: a survivor that
+    # simply lacked the variable would read the same as an old save and
+    # as a default-constructed one.
+    first = T.record_zone_state(_campaign(), "zone_001", "span_alignment",
+                                "lowered")
+    path = _written(tmp_path, first)
+    second = T.record_zone_state(first, "zone_001", "span_alignment",
+                                 "stowed")
+    _killed_mid_write(path, second, patch)
+
+    survived = _in_a_fresh_process(path, (
+        "[save.seed_name, save.zone_by_id('zone_001').progress.macro"
+        "('span_alignment')]"))
+    assert survived == ["Seed", "lowered"], (
+        f"a writer killed {where} left the previous save damaged or "
+        "half-updated; tmp + fsync + replace is supposed to make that "
+        "impossible, and the old payload is the only acceptable answer "
+        "-- the new one would mean the rename happened before the kill")
+
+
+def test_a_writer_without_the_temporary_file_would_fail_that_case(tmp_path):
+    """Sabotage: the control above must DISCRIMINATE, not just pass.
+
+    Three cases that kill a writer and find the old save intact look
+    identical to three cases that kill a writer which never touched the
+    primary at all. So here the child replaces `write_save` with the
+    naive version -- open the primary, write, die -- and the previous
+    save must come back DAMAGED. If this passes too, the atomicity
+    evidence above is worth nothing.
+
+    The sabotage is confined to the doomed child. Nothing in this
+    process, and no file outside `tmp_path`, is touched.
+    """
+    first = T.record_zone_state(_campaign(), "zone_001", "span_alignment",
+                                "lowered")
+    path = _written(tmp_path, first)
+    second = T.record_zone_state(first, "zone_001", "span_alignment",
+                                 "stowed")
+    _killed_mid_write(path, second, textwrap.dedent("""
+        def naive(p, s):
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(s.model_dump_json(indent=2)[:40])
+                f.flush()
+                die()
+        store.write_save = naive
+    """))
+
+    done = subprocess.run(
+        [sys.executable, "-c", textwrap.dedent(f"""
+            import sys
+            sys.path.insert(0, {_BRIDGE!r})
+            from pathlib import Path
+            from archipepsi_bridge import store
+            try:
+                save = store.load_save(Path({str(path)!r}))
+            except Exception as e:
+                print(type(e).__name__)
+            else:
+                print("loaded" if save is not None else "none")
+        """)], capture_output=True, text=True, timeout=120)
+    # This also carries the fact a separate hand-truncated case used to
+    # state on its own -- that the loader NOTICES a torn primary --
+    # arrived at here by a real kill rather than by damage placed by hand.
+    assert done.stdout.strip() == "SaveUnreadable", (
+        "a naive writer killed mid-write left something the loader "
+        f"accepted ({done.stdout.strip()!r}), so the three atomicity "
+        "cases above are not testing atomicity")
+
+    # And note what the loader does with it: it REFUSES rather than
+    # returning nothing. A `None` would read as "no campaign here" and
+    # the next write would start a fresh one over the wreckage.
 
 
 def test_a_stray_partial_temp_file_is_not_mistaken_for_the_save(tmp_path):
