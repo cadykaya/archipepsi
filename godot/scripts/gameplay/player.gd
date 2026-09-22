@@ -28,6 +28,9 @@ signal jumped
 ## by the ride itself, so nothing can report a catch that did not happen.
 signal rail_caught(at: Vector3)
 signal rail_released(at: Vector3)
+## The consumable slot was pressed with nothing left. Carries the name so
+## the HUD can say which supply and that entering a Zone refills it.
+signal exhausted(supply_name: String)
 
 #: ECHOES §9's control grammar, one binding per slot. LMB is the Static
 #: Pulse and appears nowhere here: its identity is untouchable, so it is
@@ -546,6 +549,25 @@ static func create() -> Player:
 	return player
 
 
+## Is there anything left in the consumable slot? Counts what is in
+## flight, so two presses inside one round trip cannot both fire.
+func _has_a_charge() -> bool:
+	var action: Dictionary = BridgeClient.slotted_action("consumable")
+	if action.is_empty():
+		return false
+	return BridgeClient.charges_left(
+			str(action.get("component_id", ""))) > 0
+
+
+## Say why nothing happened, and what brings it back. An exhausted
+## supply that refuses in silence reads as a broken button.
+func _say_exhausted() -> void:
+	var action: Dictionary = BridgeClient.slotted_action("consumable")
+	if action.is_empty():
+		return
+	exhausted.emit(str(action.get("display_name", "Supply")))
+
+
 ## Tell the bridge one use of the consumable is gone. The bridge owns the
 ## count and clears the slot on the last one; this never decrements a
 ## number of its own, because the HUD reads the bridge's and two counts
@@ -561,8 +583,13 @@ func _spend_a_charge() -> void:
 	# a player who did nothing wrong.
 	if BridgeClient.charges_left(component_id) <= 0:
 		return
+	# `note_use` returns the index this use is meant to be AND records it
+	# as in flight, so the next press sees one fewer before any snapshot
+	# arrives. The engine accepts the index only if it is the next one
+	# due, which is what makes a duplicate or a retry harmless.
 	BridgeClient.send_intent({"type": "use_consumable",
-			"component_id": component_id})
+			"component_id": component_id,
+			"use_index": BridgeClient.note_use(component_id)})
 
 func _ready() -> void:
 	add_to_group("player")
@@ -766,7 +793,15 @@ func _physics_process(delta: float) -> void:
 			var action: String = SLOT_ACTIONS[slot]
 			if Input.is_action_just_pressed(action):
 				set_highlighted_slot(slot)
-				runtimes[slot].activate()
+				# AN EMPTY SUPPLY REFUSES BEFORE IT COSTS ANYTHING. Like
+				# an unmet condition, not like a miss: no cooldown is
+				# charged and no effect runs, because a press that could
+				# never have resolved must not be paid for. The supply
+				# stays equipped at 0 -- it is exhausted, not gone.
+				if slot == "consumable" and not _has_a_charge():
+					_say_exhausted()
+				else:
+					runtimes[slot].activate()
 			if Input.is_action_just_released(action):
 				runtimes[slot].release()
 		if Input.is_action_just_pressed("interact") \

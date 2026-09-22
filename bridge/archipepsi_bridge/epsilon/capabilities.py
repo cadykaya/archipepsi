@@ -81,7 +81,14 @@ IMPLEMENTED_EFFECT_KINDS = (
 #: Action on any of them is reachable. This was the last gate still
 #: narrower than the contract: every slot the schema admits is now a
 #: button, which is what the gate was waiting for.
-IMPLEMENTED_ACTION_SLOTS = C.SLOT_NAMES
+#: STAGED. `consumable` is in the vocabulary and is not yet advertised:
+#: the spend transaction, the exhausted-and-equipped state and the real
+#: damage/Status path are not all proven, and this list is the promise
+#: that a slot the schema admits is a slot the runtime can execute. It
+#: gains `consumable` in the commit that finishes that path, and the
+#: baseline is retaken deliberately then.
+IMPLEMENTED_ACTION_SLOTS = tuple(
+    slot for slot in C.SLOT_NAMES if slot != "consumable")
 
 IMPLEMENTED_MODIFIER_TYPES = ("recoil_self", "knockback_target",
                               "apply_status_on_hit")

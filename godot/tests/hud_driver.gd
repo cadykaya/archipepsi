@@ -82,7 +82,11 @@ func _the_loadout_rows() -> void:
 		_check(not row.contains("?"),
 				"no row is labelled with an unknown keycap: '%s'" % row)
 	for slot: String in Constants.SLOT_NAMES:
-		var keycap: String = Constants.SLOT_KEYCAPS[slot]
+		# AGAINST THE ONE AUTHORITY, not against the exported default.
+		# `SlotKeycaps.of` reads the real binding and falls back to the
+		# constant; comparing the row to the constant would pass while
+		# the two disagreed, which is the bug being prevented.
+		var keycap := SlotKeycaps.of(slot)
 		var seen := false
 		for row: String in rows:
 			if row.contains(keycap):
@@ -90,6 +94,27 @@ func _the_loadout_rows() -> void:
 		_check(seen, "'%s' shows its key, %s" % [slot, keycap])
 	_check(hud._loadout_text("mobility").contains("▸"),
 			"the highlighted slot is marked")
+
+	# AND THE LABEL FOLLOWS A REBIND. S21 lets the player move a slot to
+	# another key; a fixed table would keep saying the old one, which is
+	# worse than no label because it is confidently wrong.
+	var action: String = Player.SLOT_ACTIONS["utility"]
+	var before := SlotKeycaps.of("utility")
+	var rebound := InputEventKey.new()
+	rebound.physical_keycode = KEY_F9
+	InputMap.action_erase_events(action)
+	InputMap.action_add_event(action, rebound)
+	var after := SlotKeycaps.of("utility")
+	_check(after != before and after.contains("F9"),
+			"rebinding the utility slot moves its label (%s -> %s)"
+			% [before, after])
+	_check(hud._loadout_text("echo_a").contains(after),
+			"…and the HUD row shows the new key, not the old default")
+	InputMap.action_erase_events(action)
+	_check(SlotKeycaps.of("utility")
+			== str(Constants.SLOT_KEYCAPS["utility"]),
+			"…and with no binding at all it falls back to the exported "
+			+ "default rather than to nothing")
 	hud.queue_free()
 
 

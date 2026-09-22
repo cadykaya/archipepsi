@@ -23,26 +23,68 @@ enum Sort { NEWEST, NAME, SOURCE_GAME }
 const SORT_LABELS := ["Newest first", "Name A-Z", "Source game"]
 
 
-## The Action components one interpretation created. Empty for a passive.
+## THE ACTIONS THIS ECHO CONTRIBUTES TO, resolved against what the
+## campaign currently owns.
 ##
-## `create` only: an UPGRADE names a component somebody else's Echo
-## created, and listing it here would offer to equip it from two rows.
-static func actions_of(echo: Dictionary) -> Array:
-	var out: Array = []
+## **Not "what it created".** An interpretation that only UPGRADES an
+## Action contributes to an Action and is not a passive; reading the
+## `create` operations alone filed every upgrade-only Echo under ALWAYS
+## ON, which is the same interleaving complaint one layer down. A mixed
+## Echo — one that creates a trait AND upgrades a gun — contributes to
+## both and has to appear accurately on both sides.
+##
+## `owned` is the fold (`BridgeClient.mechanics()["owned"]`), so the
+## component returned is the CURRENT resolved one: the right slot, the
+## right name, the right Mk. A `create` row alone would show the stats it
+## had when it was new.
+static func actions_of(echo: Dictionary, owned: Array = []) -> Array:
+	var wanted: Array[String] = []
 	for operation: Variant in echo.get("operations", []):
 		if typeof(operation) != TYPE_DICTIONARY:
 			continue
 		var op: Dictionary = operation
-		if str(op.get("op", "")) != "create":
-			continue
-		var component: Dictionary = op.get("component", {})
-		if str(component.get("kind", "")) == "action":
+		var verb := str(op.get("op", ""))
+		if verb == "create":
+			var component: Dictionary = op.get("component", {})
+			if str(component.get("kind", "")) == "action":
+				wanted.append(str(component.get("component_id", "")))
+		elif op.has("target"):
+			# UPGRADE / MODIFY / LINK / MERGE all name what they touch.
+			wanted.append(str(op.get("target", "")))
+	if wanted.is_empty():
+		return []
+	var out: Array = []
+	var seen: Dictionary = {}
+	for entry: Variant in owned:
+		var row: Dictionary = entry
+		var component: Dictionary = row.get("component", {})
+		var cid := str(component.get("component_id", ""))
+		if cid in wanted and not seen.has(cid) \
+				and str(component.get("kind", "")) == "action":
+			seen[cid] = true
 			out.append(component)
+	if not owned.is_empty():
+		return out
+	# NO FOLD TO RESOLVE AGAINST (a bare fixture, or a snapshot that has
+	# not arrived): fall back to what this Echo created, which is the
+	# best answer available and never worse than the old one.
+	for operation: Variant in echo.get("operations", []):
+		if typeof(operation) != TYPE_DICTIONARY:
+			continue
+		var op2: Dictionary = operation
+		if str(op2.get("op", "")) != "create":
+			continue
+		var made: Dictionary = op2.get("component", {})
+		if str(made.get("kind", "")) == "action":
+			out.append(made)
 	return out
 
 
-static func is_passive(echo: Dictionary) -> bool:
-	return actions_of(echo).is_empty()
+## A passive contributes to NO Action. A mixed Echo is not passive: it
+## appears under ACTIONS for what it can equip, and its other
+## contributions are named on the row.
+static func is_passive(echo: Dictionary, owned: Array = []) -> bool:
+	return actions_of(echo, owned).is_empty()
 
 
 ## Does this Echo answer to what was typed?
@@ -71,10 +113,11 @@ static func matches(echo: Dictionary, needle: String) -> bool:
 
 
 ## Did this Echo create an Action for this slot? `""` matches everything.
-static func in_slot(echo: Dictionary, slot: String) -> bool:
+static func in_slot(echo: Dictionary, slot: String,
+		owned: Array = []) -> bool:
 	if slot == "":
 		return true
-	for action: Variant in actions_of(echo):
+	for action: Variant in actions_of(echo, owned):
 		if str((action as Dictionary).get("slot", "")) == slot:
 			return true
 	return false
@@ -116,7 +159,7 @@ static func _name_of(echo: Dictionary) -> String:
 ## the line that tells a player their search is hiding things. A count of
 ## what survived the filter, alone, looks identical to owning three.
 static func rows(echoes: Array, search: String, mode: int,
-		slot_filter: String) -> Dictionary:
+		slot_filter: String, owned: Array = []) -> Dictionary:
 	var actions: Array = []
 	var passives: Array = []
 	var total_actions := 0
@@ -125,7 +168,7 @@ static func rows(echoes: Array, search: String, mode: int,
 		if typeof(raw) != TYPE_DICTIONARY:
 			continue
 		var echo: Dictionary = raw
-		var passive := is_passive(echo)
+		var passive := is_passive(echo, owned)
 		if passive:
 			total_passives += 1
 		else:
@@ -139,7 +182,7 @@ static func rows(echoes: Array, search: String, mode: int,
 			if slot_filter == "":
 				passives.append(echo)
 			continue
-		if not in_slot(echo, slot_filter):
+		if not in_slot(echo, slot_filter, owned):
 			continue
 		actions.append(echo)
 	return {

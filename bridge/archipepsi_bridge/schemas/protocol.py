@@ -703,13 +703,16 @@ def _reject_unslottable(slots, mechanics) -> None:
             )
 
 
-def _reject_impossible_charges(uses, slots, mechanics) -> None:
-    """A consumable cannot be spent past its charges, or spent and slotted.
+def _reject_impossible_charges(uses, mechanics) -> None:
+    """A consumable cannot be spent past its charges.
 
-    Both halves matter. Spending an eleventh use of a three-use grenade
-    is a save that has lost count; a consumable still sitting in the slot
-    with every charge gone is a button that looks live and does nothing,
-    which is the failure the HUD counter exists to prevent.
+    **Exhausted AND equipped is a legal state** (owner decision,
+    2026-09-22). A consumable is a permanently owned refillable supply,
+    not a thing you use up and lose: it stays selected at `0 / max` with
+    exhausted feedback, and only an explicit equipment change replaces
+    it. What is refused is USING one that is empty, which
+    `transitions.spend_charge` does, and a count that has drifted past
+    what the supply ever held, which is here.
     """
     seen: set[str] = set()
     for use in uses:
@@ -734,11 +737,6 @@ def _reject_impossible_charges(uses, slots, mechanics) -> None:
             raise ValueError(
                 f"'{use.component_id}' has {use.spent} uses recorded "
                 f"against {charges} charges"
-            )
-        if use.spent == charges and slots.consumable == use.component_id:
-            raise ValueError(
-                f"'{use.component_id}' is spent out and still slotted; "
-                f"the last charge empties the slot"
             )
 
 
@@ -889,6 +887,15 @@ class CampaignSave(Strict):
     #: never held one, which is every campaign written before the slot
     #: existed -- so an old save loads unchanged rather than migrating.
     consumable_uses: tuple[ConsumableUse, ...] = ()
+    #: WHICH DEPLOYMENT THOSE USES BELONG TO — the `zone_id` the player
+    #: was last sent into. Charges refill when a deployment BEGINS, and
+    #: this is what tells one beginning from a repeat: `enter_zone` is
+    #: called again on re-entry, on a generation retry and on a reconnect,
+    #: and none of those is a new deployment.
+    #:
+    #: Empty for a campaign that has never deployed, which is also every
+    #: save written before the field existed.
+    consumable_deployment: str = Field(default="", max_length=64)
 
     def charges_left(self, component_id: str) -> int:
         """Uses remaining on a consumable. Zero for anything that is not
@@ -943,8 +950,7 @@ class CampaignSave(Strict):
         # constructed, so it can never be written to disk.
         _folded = derive_mechanics(self.interpretations)
         _reject_unslottable(self.slots, _folded)
-        _reject_impossible_charges(
-            self.consumable_uses, self.slots, _folded)
+        _reject_impossible_charges(self.consumable_uses, _folded)
         _reject_duplicate_pending(self.pending_checks)
         _reject_unbacked_pending(self.pending_checks, self.zones)
         _reject_underfunded_ledger(self.coins_spent, self.pending_checks)
@@ -2098,6 +2104,11 @@ class UseConsumable(Strict):
     """
     type: Literal["use_consumable"]
     component_id: str = Field(min_length=1, max_length=32)
+    #: WHICH USE THIS IS MEANT TO BE — the first, the second. The engine
+    #: accepts it only if it is the next one due, which is what makes a
+    #: duplicate, a retry and a use minted before a refill all harmless
+    #: without storing an identifier for any of them.
+    use_index: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
 
 
 class GrantLocalReward(Strict):

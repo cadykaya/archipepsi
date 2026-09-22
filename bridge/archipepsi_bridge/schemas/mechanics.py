@@ -350,6 +350,23 @@ def _primitives_and_stats(components) -> tuple[set[str], set[str]]:
     return primitives, stats
 
 
+def _runs_out(component) -> bool:
+    """A consumable, which is NOT a permanent capability provider.
+
+    `owned_capabilities` is what GENERATION asks, and a Zone composed
+    against it may put a required route behind the capability. A charged
+    Action cannot carry that: the player may stand in front of the gap
+    with zero charges left, and nothing in the contract guarantees a
+    resupply before they need it. Owning three grenades is not owning a
+    way across.
+
+    The exclusion is here rather than in the caller because both
+    `owned_capabilities` and `available_capabilities` have to agree --
+    one of them counting charges would make NOT YET mean two things.
+    """
+    return getattr(component, "charges", None) is not None
+
+
 def owned_capabilities(mechanics) -> tuple[str, ...]:
     """What this campaign can DO, over everything it owns (case B).
 
@@ -361,7 +378,8 @@ def owned_capabilities(mechanics) -> tuple[str, ...]:
     changes slots.
     """
     primitives, stats = _primitives_and_stats(
-        owned.component for owned in mechanics.owned)
+        owned.component for owned in mechanics.owned
+        if not _runs_out(owned.component))
     return tuple(sorted(
         capability for capability in ACTIVITY_CAPABILITIES
         if capability in BASELINE_CAPABILITIES
@@ -387,7 +405,8 @@ def available_capabilities(mechanics, slots) -> tuple[str, ...]:
     equipped.discard(None)
     primitives, stats = _primitives_and_stats(
         owned.component for owned in mechanics.owned
-        if owned.component.component_id in equipped)
+        if owned.component.component_id in equipped
+        and not _runs_out(owned.component))
     return tuple(sorted(
         capability for capability in ACTIVITY_CAPABILITIES
         if capability in BASELINE_CAPABILITIES

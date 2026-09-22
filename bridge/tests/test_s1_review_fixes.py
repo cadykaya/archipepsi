@@ -75,14 +75,25 @@ def test_the_request_advertises_only_mechanics_the_runtime_can_execute():
     assert allowed["slots"] == list(CAP.IMPLEMENTED_ACTION_SLOTS)
     assert allowed["modifiers"] == list(CAP.IMPLEMENTED_MODIFIER_TYPES)
     assert allowed["trait_stats"] == list(CAP.IMPLEMENTED_TRAIT_STATS)
-    # S9 opened the last gate, so the registry no longer narrows anything:
-    # every tuple equals its contract. That is a milestone rather than a
-    # hole — the registry's remaining job is to catch the NEXT schema
-    # addition before a runtime exists for it — and the honest assertion
-    # is the equality, plus that the mechanism still runs (below).
+    # S9 opened the last gate and the registry stopped narrowing
+    # anything; its remaining job was "to catch the NEXT schema addition
+    # before a runtime exists for it", and that is now what it is doing.
+    # `consumable` is in the vocabulary and is NOT advertised, because
+    # the spend transaction and the exhausted-and-equipped state are not
+    # all proven yet. Vocabulary is not executable support.
+    #
+    # So the assertion is no longer equality. It is the two properties
+    # equality was standing in for: the registry never advertises a slot
+    # the schema does not have, and everything it withholds is withheld
+    # ON PURPOSE rather than by drift.
     from archipepsi_bridge.schemas import echo as E
     assert set(CAP.IMPLEMENTED_COMPONENT_KINDS) == set(E.COMPONENT_KINDS)
-    assert set(CAP.IMPLEMENTED_ACTION_SLOTS) == set(E.SLOT_NAMES)
+    assert set(CAP.IMPLEMENTED_ACTION_SLOTS) <= set(E.SLOT_NAMES), (
+        "the request advertises a slot the schema does not admit")
+    STAGED = {"consumable"}
+    assert set(E.SLOT_NAMES) - set(CAP.IMPLEMENTED_ACTION_SLOTS) == STAGED, (
+        "a slot is being withheld that this test does not know about, or "
+        "a staged one was advertised without finishing its runtime")
     assert set(E.IMPLEMENTED_PRIMITIVES) == set(E.ACTION_PRIMITIVES)
     assert E.DEFERRED_PRIMITIVES == {}
 

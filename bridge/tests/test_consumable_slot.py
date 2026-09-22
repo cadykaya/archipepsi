@@ -52,6 +52,13 @@ def _save(*operations) -> P.CampaignSave:
         interpretations=(interp,), next_interpretation_seq=1)
 
 
+def _spend(save: P.CampaignSave, cid="act_nade") -> P.CampaignSave:
+    """One ordinary use: the next index due, which is what a client with
+    a current snapshot would send."""
+    charges = save.derive().by_id(cid).component.charges
+    return T.spend_charge(save, cid, charges - save.charges_left(cid) + 1)
+
+
 def _restart(save: P.CampaignSave) -> P.CampaignSave:
     """A process restart: nothing survives but the serialised save."""
     return P.CampaignSave.model_validate_json(save.model_dump_json())
@@ -87,30 +94,31 @@ class TestSpending:
     def test_each_use_takes_one(self):
         save = T.slot_action(_save(), "consumable", "act_nade")
         assert save.charges_left("act_nade") == 3
-        save = T.spend_charge(save, "act_nade")
+        save = _spend(save)
         assert save.charges_left("act_nade") == 2
 
-    def test_the_last_charge_empties_the_slot(self):
-        """A consumable with nothing left sitting on its key is a control
-        that looks live and does nothing."""
+    def test_the_last_charge_leaves_it_equipped_at_zero(self):
+        """A consumable is a permanently owned refillable supply. It
+        stays selected at 0/max so the refill makes it usable again with
+        no trip back to the inventory."""
         save = T.slot_action(_save(), "consumable", "act_nade")
         for _ in range(3):
-            save = T.spend_charge(save, "act_nade")
+            save = _spend(save)
         assert save.charges_left("act_nade") == 0
-        assert save.slots.consumable is None
+        assert save.slots.consumable == "act_nade"
 
     def test_it_refuses_rather_than_saturating(self):
         save = T.slot_action(_save(), "consumable", "act_nade")
         for _ in range(3):
-            save = T.spend_charge(save, "act_nade")
+            save = _spend(save)
         with pytest.raises(ValueError) as caught:
-            T.spend_charge(save, "act_nade")
+            _spend(save)
         assert "no charges left" in str(caught.value)
 
     def test_spending_something_that_is_not_a_consumable_is_refused(self):
         save = _save(_action(slot="echo_a", charges=None, cid="act_gun"))
         with pytest.raises(ValueError) as caught:
-            T.spend_charge(save, "act_gun")
+            T.spend_charge(save, "act_gun", 1)
         assert "not a consumable" in str(caught.value)
 
 
@@ -126,15 +134,17 @@ class TestTheSaveRefusesImpossibleCounts:
                 {"component_id": "act_nade", "spent": 9},)})
         assert "against 3 charges" in str(caught.value)
 
-    def test_spent_out_and_still_slotted(self):
-        save = _save()
-        with pytest.raises(Exception) as caught:
-            P.CampaignSave(**{
-                **save.model_dump(),
-                "slots": {"consumable": "act_nade"},
-                "consumable_uses": ({"component_id": "act_nade",
-                                     "spent": 3},)})
-        assert "spent out and still slotted" in str(caught.value)
+    def test_exhausted_and_equipped_is_a_legal_save(self):
+        """The inverse of the old rule, and the owner's correction:
+        holding an empty supply is fine, USING one is not."""
+        save = P.CampaignSave(**{
+            **_save().model_dump(),
+            "slots": {"consumable": "act_nade"},
+            "consumable_uses": ({"component_id": "act_nade", "spent": 3},)})
+        assert save.slots.consumable == "act_nade"
+        assert save.charges_left("act_nade") == 0
+        with pytest.raises(ValueError):
+            _spend(save)
 
     def test_uses_recorded_against_something_unowned(self):
         save = _save()
@@ -149,8 +159,8 @@ class TestPersistence:
         """Reloading is not a refill. Otherwise the cheapest way to get a
         grenade back is to quit and come back."""
         save = T.slot_action(_save(), "consumable", "act_nade")
-        save = T.spend_charge(save, "act_nade")
-        save = T.spend_charge(save, "act_nade")
+        save = _spend(save)
+        save = _spend(save)
         assert _restart(save).charges_left("act_nade") == 1
 
     def test_a_save_that_never_held_one_loads_unchanged(self):
@@ -181,6 +191,24 @@ def _zone() -> Zone:
     })
 
 
+def _in_another_zone(save: P.CampaignSave) -> P.CampaignSave:
+    """A second, different deployment."""
+    zone = TypeAdapter(Zone).validate_python({
+        "schema_version": 7, "zone_id": "zone_002", "display_name": "Span",
+        "target_game": "Game", "theme": "void_glitch",
+        "chambers": [_room("c001", 89100003), _room("c002")],
+    })
+    # The first Zone gives its locations back before a second can take
+    # any; the point of the case is the deployment change, not the
+    # accounting around it.
+    if save.active_zone_id:
+        save = T.abandon_zone(save, save.active_zone_id)
+    save = T.start_generation(save, zone_id=zone.zone_id,
+                              allocated_location_ids=(89100003,),
+                              target_game=zone.target_game)
+    return T.enter_zone(T.accept_zone(save, zone), zone.zone_id)
+
+
 def _in_a_zone(save: P.CampaignSave) -> P.CampaignSave:
     zone = _zone()
     save = T.start_generation(save, zone_id=zone.zone_id,
@@ -190,24 +218,101 @@ def _in_a_zone(save: P.CampaignSave) -> P.CampaignSave:
 
 
 class TestTheRefill:
-    def test_entering_a_zone_gives_the_charges_back(self):
+    """Bound to a deployment BEGINNING, not to every `enter_zone` call."""
+
+    def test_deploying_into_a_new_zone_restocks(self):
         save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
-        save = T.spend_charge(save, "act_nade")
-        save = T.spend_charge(save, "act_nade")
+        save = _spend(save)
+        save = _spend(save)
         assert save.charges_left("act_nade") == 1
-        save = T.rest_zone(save, "zone_001")
-        save = T.enter_zone(save, "zone_001")
+        save = _in_another_zone(save)
         assert save.charges_left("act_nade") == 3
 
-    def test_a_spent_out_consumable_comes_back_equippable(self):
-        """The slot empties on the last charge; the refill is what makes
-        that recoverable rather than the end of the Echo."""
+    def test_it_stays_equipped_across_the_refill(self):
+        """"On refill the same equipped item becomes usable without
+        requiring another inventory visit."""
         save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
         for _ in range(3):
-            save = T.spend_charge(save, "act_nade")
-        assert save.slots.consumable is None
-        save = T.rest_zone(save, "zone_001")
-        save = T.enter_zone(save, "zone_001")
-        assert save.charges_left("act_nade") == 3
-        save = T.slot_action(save, "consumable", "act_nade")
+            save = _spend(save)
         assert save.slots.consumable == "act_nade"
+        save = _in_another_zone(save)
+        assert save.slots.consumable == "act_nade"
+        assert save.charges_left("act_nade") == 3
+        _spend(save)   # usable again, no visit needed
+
+    def test_re_entering_the_same_zone_does_not_restock(self):
+        """A repeated entry request is not a new deployment."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        save = _spend(save)
+        again = T.enter_zone(save, "zone_001")
+        assert again.charges_left("act_nade") == 2
+
+    def test_a_hub_trip_and_back_to_the_same_zone_does_not_restock(self):
+        """THE POLICY, stated as a test: the cheapest resupply must not
+        be a round trip through the portal."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        save = _spend(save)
+        save = T.rest_zone(save, "zone_001")       # back to the Hub
+        save = T.enter_zone(save, "zone_001")      # and in again
+        assert save.charges_left("act_nade") == 2
+
+    def test_a_reload_mid_deployment_does_not_restock(self):
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        save = _spend(save)
+        resumed = _restart(save)
+        assert resumed.charges_left("act_nade") == 2
+        assert T.enter_zone(resumed, "zone_001").charges_left("act_nade") == 2
+
+    def test_swapping_away_and_back_preserves_expenditure(self):
+        """Tracked by component identity, so the slot is not a hiding
+        place for a fresh supply."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        save = _spend(save)
+        save = T.slot_action(save, "consumable", None)
+        save = T.slot_action(save, "consumable", "act_nade")
+        assert save.charges_left("act_nade") == 2
+
+
+class TestTheSpendTransaction:
+    """`use_index` is a compare-and-swap, and these are the races it
+    exists for. The client mints an index from the snapshot it has; the
+    engine accepts it only if it is the next one due."""
+
+    def test_two_presses_on_the_last_charge_spend_once(self):
+        """Both presses mint the same index because neither has seen a
+        snapshot yet. At most one activation may succeed."""
+        save = T.slot_action(_save(), "consumable", "act_nade")
+        save = _spend(save)
+        save = _spend(save)
+        assert save.charges_left("act_nade") == 1
+        save = T.spend_charge(save, "act_nade", 3)
+        assert save.charges_left("act_nade") == 0
+        with pytest.raises(ValueError) as caught:
+            T.spend_charge(save, "act_nade", 3)
+        assert "no charges left" in str(caught.value)
+
+    def test_a_duplicate_message_does_not_spend_twice(self):
+        save = T.slot_action(_save(), "consumable", "act_nade")
+        save = T.spend_charge(save, "act_nade", 1)
+        assert save.charges_left("act_nade") == 2
+        with pytest.raises(ValueError) as caught:
+            T.spend_charge(save, "act_nade", 1)
+        assert "not the next one due" in str(caught.value)
+        assert save.charges_left("act_nade") == 2
+
+    def test_a_use_minted_before_a_refill_is_dropped(self):
+        """A stale message must not eat a charge from the fresh supply."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        save = _spend(save)
+        save = _spend(save)          # two gone, a third in flight at index 3
+        save = _in_another_zone(save)
+        assert save.charges_left("act_nade") == 3
+        with pytest.raises(ValueError) as caught:
+            T.spend_charge(save, "act_nade", 3)
+        assert "not the next one due" in str(caught.value)
+        assert save.charges_left("act_nade") == 3
+
+    def test_an_index_that_runs_ahead_is_refused(self):
+        save = T.slot_action(_save(), "consumable", "act_nade")
+        with pytest.raises(ValueError):
+            T.spend_charge(save, "act_nade", 2)

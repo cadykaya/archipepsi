@@ -23,7 +23,7 @@ signal closed
 #: Same table the HUD's loadout uses — literally the same one, exported
 #: from `constants.py`, because two copies is how a slot ends up labelled
 #: on one screen and "?" on the other.
-const SLOT_KEYCAPS := Constants.SLOT_KEYCAPS
+
 
 #: The four §15 modes, warming as the reading travels further from the
 #: item. Purely a tint — the word itself is always shown, because a colour
@@ -99,9 +99,19 @@ func close() -> void:
 	visible = false
 	closed.emit()
 
+## A SNAPSHOT MUST NOT THROW AWAY WHAT IS BEING TYPED. Snapshots arrive
+## while the archive is open — a charge spent, an Echo claimed — and each
+## one calls this. The search text, the sort, the slot filter and the
+## caret all survive it, because a menu that clears the box mid-word is
+## a menu you stop searching in.
 func rebuild() -> void:
+	var had_focus := _search != null and _search.has_focus()
+	var caret := _search.caret_column if _search != null else 0
 	_paint_loadout()
 	_repaint()
+	if had_focus:
+		_search.grab_focus()
+		_search.caret_column = caret
 
 
 ## Only the list, for a keystroke in the search box. Rebuilding the
@@ -122,7 +132,8 @@ func _repaint() -> void:
 		if value != null:
 			slotted.append(str(value))
 	var found: Dictionary = ArchiveQuery.rows(echoes, _search.text,
-			_sort.selected, _slot_filter)
+			_sort.selected, _slot_filter,
+			BridgeClient.mechanics().get("owned", []))
 	var actions: Array = found["actions"]
 	var passives: Array = found["passives"]
 
@@ -158,8 +169,7 @@ func _heading(text: String, shown: int, total: int) -> Control:
 func _nothing_here() -> Control:
 	var label := Label.new()
 	label.text = "Nothing matches." if _slot_filter == "" \
-			else "Nothing you own goes on %s." % SLOT_KEYCAPS.get(
-				_slot_filter, "?")
+			else "Nothing you own goes on %s." % SlotKeycaps.of(_slot_filter)
 	label.modulate = Color(0.6, 0.6, 0.65)
 	return label
 
@@ -191,7 +201,7 @@ func _slot_row(slot: String) -> Control:
 	panel.add_child(row)
 
 	var pick := Button.new()
-	pick.text = str(SLOT_KEYCAPS.get(slot, "?"))
+	pick.text = str(SlotKeycaps.of(slot))
 	pick.custom_minimum_size = Vector2(72, 0)
 	pick.toggle_mode = true
 	pick.button_pressed = _slot_filter == slot
@@ -354,14 +364,14 @@ func _row(echo: Dictionary, slotted: Array) -> Control:
 			button.tooltip_text = "refills when you enter a Zone"
 			button.disabled = true
 		elif component_id in slotted:
-			button.text = "ON %s" % SLOT_KEYCAPS.get(slot, "?")
+			button.text = "ON %s" % SlotKeycaps.of(slot)
 			if is_consumable:
 				button.text += "  %d" % left
 			button.disabled = true
 		elif occupant != null:
-			button.text = "REPLACE %s" % SLOT_KEYCAPS.get(slot, "?")
+			button.text = "REPLACE %s" % SlotKeycaps.of(slot)
 		else:
-			button.text = "TO %s" % SLOT_KEYCAPS.get(slot, "?")
+			button.text = "TO %s" % SlotKeycaps.of(slot)
 		button.custom_minimum_size = Vector2(120, 0)
 		button.pressed.connect(func() -> void:
 			BridgeClient.send_intent({"type": "slot_action",

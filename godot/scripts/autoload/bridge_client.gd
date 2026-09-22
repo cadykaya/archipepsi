@@ -105,6 +105,9 @@ func _handle(raw: String) -> void:
 			var previous_count := int(snapshot.get("completed_zone_count", 0))
 			_reattach_echo_log(message)
 			snapshot = message
+			# The engine's count is authoritative; anything in flight it
+			# has now caught up with, or refused, stops being subtracted.
+			_settle_in_flight()
 			if int(message.get("completed_zone_count", 0)) > previous_count \
 					and not _held_zone.is_empty():
 				last_completed_zone = _held_zone
@@ -307,6 +310,53 @@ func slotted_action(slot := "echo_a") -> Dictionary:
 		return {}
 	return owned_component(str(id)).get("component", {})
 
+#: USES SENT AND NOT YET CONFIRMED, per component: the highest
+#: `use_index` this client has put on the wire.
+#:
+#: A snapshot is a round trip away, so two fast presses would both see
+#: the same remaining count and both fire. The engine refuses the second
+#: spend -- `use_index` is a compare-and-swap -- but the refusal comes
+#: back long after the grenade has already left the hand. So the count
+#: this client shows and gates on subtracts what is in flight.
+var _in_flight: Dictionary = {}
+
+
+## The index to put on the next use, and a note that it is in flight.
+## Called only when the Action actually fired.
+func note_use(component_id: String) -> int:
+	var index := charges_total(component_id) \
+			- charges_left(component_id) + 1
+	_in_flight[component_id] = index
+	return index
+
+
+## Forget in-flight uses the snapshot has caught up with. A use that was
+## refused leaves its index behind, and the snapshot's count is what
+## corrects it: once the engine's `spent` reaches that index the press
+## landed, and anything below it never will.
+func _settle_in_flight() -> void:
+	for component_id: Variant in _in_flight.keys():
+		var spent := charges_total(str(component_id)) \
+				- _snapshot_charges_left(str(component_id))
+		if spent >= int(_in_flight[component_id]):
+			_in_flight.erase(component_id)
+
+
+func _snapshot_charges_left(component_id: String) -> int:
+	var component: Dictionary = owned_component(component_id).get(
+			"component", {})
+	var charges: Variant = component.get("charges")
+	if charges == null:
+		return 0
+	var spent := 0
+	for raw: Variant in snapshot.get("consumable_uses", []):
+		var use: Dictionary = raw
+		if str(use.get("component_id", "")) == component_id:
+			spent = int(use.get("spent", 0))
+			break
+	return maxi(int(charges) - spent, 0)
+
+
 ## HOW MANY USES A CONSUMABLE HAS LEFT. Zero for anything that is not one.
 ##
 ## Subtracted from the snapshot rather than counted here: the bridge sends
@@ -320,13 +370,14 @@ func charges_left(component_id: String) -> int:
 	var charges: Variant = component.get("charges")
 	if charges == null:
 		return 0
-	var spent := 0
-	for raw: Variant in snapshot.get("consumable_uses", []):
-		var use: Dictionary = raw
-		if str(use.get("component_id", "")) == component_id:
-			spent = int(use.get("spent", 0))
-			break
-	return maxi(int(charges) - spent, 0)
+	# WHAT THE ENGINE HAS COUNTED, LESS WHAT IS STILL IN FLIGHT. The
+	# second half is why one charge cannot fire twice.
+	var left := _snapshot_charges_left(component_id)
+	if _in_flight.has(component_id):
+		var flying := int(_in_flight[component_id])
+		var counted := int(charges) - left
+		left = maxi(left - maxi(flying - counted, 0), 0)
+	return left
 
 ## What it started with, for "2 of 3". Zero when it is not a consumable.
 func charges_total(component_id: String) -> int:

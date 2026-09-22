@@ -566,7 +566,7 @@ func _place_hit_marker() -> void:
 #: Exported from `constants.py` rather than written here and again in
 #: `inventory.gd`. Two copies is how the fifth slot ends up labelled on
 #: one screen and "?" on the other.
-const SLOT_KEYCAPS := Constants.SLOT_KEYCAPS
+
 
 ## All four slots at once (S7). One line each, the highlighted one marked:
 ## a loadout you cannot see is a loadout you do not use, and three of the
@@ -576,7 +576,7 @@ func _loadout_text(highlighted: String) -> String:
 	for slot: String in Constants.SLOT_NAMES:
 		var action := BridgeClient.slotted_action(slot)
 		var mark := "▸" if slot == highlighted else " "
-		var keycap: String = SLOT_KEYCAPS.get(slot, "?")
+		var keycap: String = SlotKeycaps.of(slot)
 		if action.is_empty():
 			rows.append("%s %-5s —" % [mark, keycap])
 			continue

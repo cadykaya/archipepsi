@@ -1606,7 +1606,8 @@ class CampaignEngine:
             self._start_generation_task(intent.zone_id)
         await self.broadcast_snapshot()
 
-    async def handle_use_consumable(self, component_id: str) -> None:
+    async def handle_use_consumable(self, component_id: str,
+                                    use_index: int) -> None:
         """Spend one charge. The last one empties the slot (§9).
 
         Refusals are the transition's, and they are reported rather than
@@ -1616,7 +1617,8 @@ class CampaignEngine:
         """
         self._require_save()
         try:
-            self._apply(T.spend_charge(self.save, component_id))
+            self._apply(T.spend_charge(self.save, component_id,
+                                       use_index))
         except ValueError as exc:
             raise IntentError(str(exc)) from exc
         await self.broadcast_snapshot()
