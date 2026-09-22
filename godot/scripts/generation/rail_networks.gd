@@ -25,22 +25,32 @@ extends RefCounted
 ## nullable and the schema says what that means: the span needs no
 ## control. So that link starts `true` and no lever is built.
 ##
-## **WHAT THIS REFUSES, AND WHY IT REFUSES RATHER THAN GUESSES.**
-## `RailCarrier` runs ONE ordered route: docks along a path, and a link
-## between each consecutive pair. `RailNetwork.spans` declares a graph --
-## `from_dock` and `to_dock` may be any two of up to eight docks -- so a
-## span between the first and third dock has no link on that route and no
-## meaning the engine can honour. Inventing one (routing the carrier
-## through the dock in between, say) would be the engine deciding what a
-## Zone meant, which is the boundary this file exists to keep.
+## **WHAT THIS REFUSES, AND WHAT THAT REFUSAL DOES AND DOES NOT MEAN.**
 ##
-## So a non-adjacent span is REFUSED BY NAME and the network is not
-## built. The refusal is returned rather than pushed as an error, so a
-## caller can report it as a composition finding instead of a crash.
-## `docs/ledgers/HUGE_BATCH_LEDGER.md` carries it to the bridge lane as
-## a concrete, bounded question: either `spans` are required to join
-## consecutive docks, or the carrier needs to become graph-capable, and
-## that is a decision rather than a gap to paper over.
+## `RailCarrier` runs ONE ordered route: docks along a path, and a link
+## between each consecutive pair. So a span between non-adjacent docks
+## has no link on that route and no meaning THIS IMPLEMENTATION can
+## honour. Inventing one -- routing the carrier through the dock in
+## between, say -- would be the engine deciding what a Zone meant, which
+## is the boundary this file exists to keep. It is refused by name, the
+## network builds nothing, and the Zone still builds.
+##
+## **THIS IS A STATEMENT ABOUT THE CURRENT IMPLEMENTATION, NOT ABOUT THE
+## DESIGN** (owner correction, 2026-09-22). Branching and switchable
+## railway configurations are NOT retired from the accepted design by
+## this restriction; they are unbuilt. The schema now refuses a
+## non-adjacent span (F-24) precisely so an unbuildable Zone cannot be
+## composed in the meantime, and Dess's own note says the answer is the
+## one that can be taken back: relaxing it later invalidates no Zone that
+## ever satisfied it.
+##
+## **What a branching railway would need, so the scope is visible rather
+## than implied:** a carrier whose route is a graph rather than an
+## ordered list (`dock_offsets` and `commissioned` are both indexed by
+## position along one path), a switch actuator at the branching dock and
+## a rule for which way it is set, and a reachability search that can
+## tell the two branches apart. That is real engine work to be scoped,
+## which is why it is named here instead of being half-started.
 
 ## How far above a room's arrival the rail runs. The deck rides on the
 ## path, so the path is one deck-height up and a player steps ON rather

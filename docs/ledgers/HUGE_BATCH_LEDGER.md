@@ -113,13 +113,11 @@ why the rows above separate what was measured from what the paper says.
 ## Findings
 
 **ID scheme, from 2026-09-22 (owner instruction).** New findings take a
-**lane prefix** -- `DESS-nn` for the bridge/design lane, `PROD-nn` for
-engine/integration -- and each lane allocates its own numbers. The flat
-`F-nn` series collided twice in two merges (F-23 and F-25, both times
-between unrelated findings) and both merges were spent renumbering.
-**Existing `F-nn` entries keep their numbers**; renaming them would
-break every citation in the commit history for no benefit.
-
+**lane prefix**: `P-n` for engine/integration, **`DESS-nn`** for
+bridge/design. The bridge lane is not `D-n` because **`D-1`..`D-8` is
+already the handoff series** and one spelling meaning two things is the
+failure this change exists to stop. Existing `F-nn` entries keep their
+numbers. Full adoption note: *Finding IDs from here*, below.
 
 ### F-01 — the carry works; the deck is the constraint
 
@@ -1308,6 +1306,67 @@ nothing in a live seed declares one — the same honest position D-1's
 and no physical acceptance has been run. A bridge that can refuse a bad
 relationship is not a game that has one.
 
+
+## Finding IDs from here: lane-prefixed
+
+**Owner instruction, 2026-09-22:** *"use lane-prefixed IDs or one allocator;
+don't spend another merge renumbering both lanes' unrelated findings."*
+
+Adopted. From this entry onward the engine lane numbers its findings **`P-1`,
+`P-2`, …** and the bridge lane numbers its own. Everything up to `F-26` keeps
+the number it was merged under; nothing is renumbered, because renumbering
+settled history is the cost this rule exists to stop paying.
+
+
+### P-1 — four contract corrections, applied
+
+Owner corrections of 2026-09-22, each against something this lane or the shared
+contract had got wrong.
+
+**1. Held cross-room mechanics are UNSUPPORTED, not unfair.**
+`D8_CROSS_ROOM_PROD.md` had argued that a cross-room held requirement is a bad
+puzzle — "holding a lever in one room while watching a door in another they
+cannot see". That is a design opinion this lane does not get to impose, and
+stating it risked quietly deleting a mechanic from the accepted design. The
+document now says what is true: §19.7 rule 2 has no way to express one, so it is
+unsupported under the current contract. Reversible configuration is approved for
+the first Blindside integration and is **not a substitute** — where a selected
+0.4 design needs a held mechanic, the obligation is the precise bounded
+amendment, not a toggle wearing its name.
+
+**2. Reversible operation is not reachable reversal.**
+Dess's §4.0 rule proves `setter.selects` can return a variable to its initial
+state — an **operation exists**. It does not prove the player can still reach
+and use the control. Blindside's gantry is the case: it is overhead and out of
+reach without the grapple, so *"the player entered its room"* is not *"the
+player can operate it"*. State-aware route validation and **physical
+setter-operability** are now separate evidence, and the second is this lane's.
+Every acceptance case that touches a setter tests the real approach and the real
+interaction — never a room id, never a directly assigned flag.
+
+**3. The consecutive-dock rule states the implementation, not the design.**
+`rail_networks.gd`'s header read as though branching railways had been ruled
+out. They have not; they are **unbuilt**. Corrected, with the scope named: a
+branching railway needs a carrier whose route is a graph rather than an ordered
+list (`dock_offsets` and `commissioned` are both indexed by position along one
+path), a switch actuator at the branching dock with a rule for how it is set,
+and a reachability search that can tell the branches apart.
+
+**What Blindside itself needs today: nothing more.** Its yard is S1→S2→S3, one
+ordered route, and the acquisition branch is a WALKED and grappled route off the
+S2 area — `BRANCH_OUT` is a distance from the junction, not a second line. The
+restriction does not constrain the selected configuration. It would constrain a
+configuration where the branch is itself railed, or where one carrier can be
+sent two ways, and both of those are in the accepted design and unbuilt.
+
+**4. A local reader beside a remote one is ordinary content.**
+`ZoneStateVariable._a_reader_is_never_in_the_setters_room` refused ANY reader in
+the setter's room — an acceptance-case requirement turned into a global content
+restriction. It is now `_at_least_one_reader_is_somewhere_else`: the remote
+consequence is what makes the relationship cross-room, and a control that also
+drives something where the player is standing is fine and is the more legible
+kind. A positive control was added, because "at least one elsewhere" and "none
+here" pass exactly the same tests without one.
 ### DESS-01 — four owner corrections to D-8, two of them real defects
 
 **Dess, 2026-09-22.** The owner returned four focused corrections to the

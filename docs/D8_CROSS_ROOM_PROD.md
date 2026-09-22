@@ -159,21 +159,37 @@ it*" **cannot be expressed**: room A's graph would have to write macro state,
 which rule 2 forbids, and the only legal alternative today is to make it a
 latch, which converts a live requirement into a permanent one.
 
-**Recommended resolution, no amendment needed:** express it as **reversible
-Zone configuration**, not as a held requirement. The player performs a setter
-interaction that selects a state; the state persists until something sets it
-back; the door in room B follows the state. This is a different puzzle from a
-held one — the player is not pinned in room A — and it is the one the pinned
-rules already support. It is also the honest one: a cross-room *held*
-requirement means a player holding a lever in one room while watching a door in
-another they cannot see.
+**Owner correction, 2026-09-22, and this section had it wrong.** The earlier
+wording argued that a cross-room held requirement is a *bad* puzzle — "holding
+a lever in one room while watching a door in another they cannot see". That is
+a design opinion this lane does not get to impose, and stating it risked
+quietly deleting a mechanic from the accepted design. The correction is exact:
+*"Do not treat cross-room held mechanics as categorically unfair or remove them
+from the design. Mark them unsupported under the current contract."*
 
-**If a genuinely held cross-room requirement is wanted anyway**, the amendment
-is specific: §19.7 rule 2 would need a bounded exception permitting a room
-graph to write **one** designated macro variable, restricted to non-mandatory
-relationships, with §30.6's tractability argument re-checked — because a
-writable machine-graph variable is exactly what rule 2 exists to prevent.
-**Not recommended, and named here so the choice is visible.**
+So, stated properly:
+
+**Cross-room HELD mechanics are UNSUPPORTED under the current contract.** Not
+forbidden, not unfair, not retired — unsupported. §19.7 rule 2 has no way to
+express one, so nothing can declare one today and the engine has nothing to
+build from.
+
+**For the first Blindside integration, reversible Zone configuration is the
+approved mechanism** (owner, 2026-09-22). The player performs a setter
+interaction that selects a state; the state persists until something sets it
+back; the mechanism in the other room follows.
+
+**Reversible configuration is not a substitute for a held requirement.** They
+are different mechanics: a held requirement pins the player and ends the moment
+they let go; a configuration does not. Where a *selected 0.4 design* needs a
+genuinely held cross-room mechanic, the obligation is to bring the **precise
+bounded amendment** — not to swap in a toggle or a latch and call it done.
+
+**The amendment, for when one is needed:** §19.7 rule 2 would take a bounded
+exception permitting a room graph to write one designated variable, restricted
+to non-mandatory relationships, with §30.6's tractability argument re-checked —
+a writable machine-graph variable being exactly what rule 2 exists to prevent.
+Declined for now and recorded as available, so the choice stays visible.
 
 ---
 
@@ -204,11 +220,30 @@ is an intermediate test, not the final composition claim"*.
 
 Each of these is a different way of being wrong, so each is its own case:
 
-1. **The source interaction is player-performed** — walked to, operated, not
-   called into a handler.
+0. **REVERSIBLE OPERATION IS NOT REACHABLE REVERSAL** (owner correction,
+   2026-09-22), and the two are separate evidence that must not be merged.
+
+   `setter.selects` containing the initial state is what the bridge's §4.0
+   rule checks, and it proves an **operation exists**. It does not prove the
+   player can still **reach and use** the control. Blindside's overhead gantry
+   is the case that makes this concrete: it is out of reach without the
+   grapple, so *"the player entered its room"* must never be read as *"the
+   player can operate it"*. Room membership is not operability.
+
+   State-aware route validation (the bridge's `_explore` carrying the state
+   component) and **physical setter-operability** are therefore reported
+   separately, and this lane owns the second. Every case below that touches
+   the setter tests the real approach and the real interaction, never a room
+   id and never a directly assigned flag.
+
+1. **The source interaction is player-performed** — walked to, physically
+   reachable with what the player actually has, operated, not called into a
+   handler.
 2. **The remote physical consequence is real** — the mechanism in the other
    room moves, or the route through it changes, measured in that room.
-3. **Safe return** — the player can get back; no interaction strands them.
+3. **Safe return, walked** — the player can get back from the setter, and
+   from the consequence; no interaction strands them. Measured as a route, not
+   as an assertion that two rooms are adjacent.
 4. **Partial-progress reload** — set the variable, leave, come back: the
    configuration is what it was, and the *unfinished* half is still unfinished.
 5. **Completed-progress reload** — the finished relationship survives, and the

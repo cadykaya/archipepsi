@@ -1181,22 +1181,29 @@ class ZoneStateVariable(Strict):
 
         **OWNER CORRECTION 4, 2026-09-22.** The first cut of this rule
         refused *any* reader in the setter's room, which turned an
-        acceptance-case requirement into a restriction on all content.
-        A lever that visibly moves something beside it AND opens a way
-        somewhere else is ordinary good design, and there was never a
-        reason to forbid it.
+        acceptance-case requirement into a global content restriction:
+        *"a cross-room relationship must demonstrate a remote
+        consequence, but that does not require banning additional
+        readers in its source room."*
 
-        What must hold is the claim the declaration actually makes: at
-        least one consequence is **somewhere else**. A relationship
-        whose every reader sits in the setter's room is a room-local
-        mechanism with Zone-scope machinery wrapped around it.
+        What must hold is the claim the declaration actually makes: a
+        remote consequence EXISTS, so at least one reader is somewhere
+        else. A lever that also drives something where the player is
+        standing -- a local indicator, a hatch beside it, the gantry's
+        own cradle -- is ordinary content, and it is the LEGIBLE kind: a
+        control whose only visible effect is in a room you cannot see is
+        worse to play, not better.
+
+        *Both lanes wrote this rule independently and identically; the
+        prose and the message below are the better halves of the two.*
         """
         if all(r.room_id == self.setter.room_id for r in self.readers):
             raise ValueError(
-                f"variable '{self.variable_id}' has every reader in "
-                f"'{self.setter.room_id}', the setter's own room; that is a "
-                "room-local mechanism, not a cross-room relationship. At "
-                "least one consequence has to be somewhere else")
+                f"variable '{self.variable_id}' has every reader in its "
+                f"setter's room '{self.setter.room_id}'; that is a "
+                "room-local mechanism with Zone-scope machinery wrapped "
+                "around it, not a cross-room relationship. At least one "
+                "reader must be somewhere else; others may be here")
         seen: set[tuple[str, str]] = set()
         for r in self.readers:
             if (r.room_id, r.mechanism) in seen:
