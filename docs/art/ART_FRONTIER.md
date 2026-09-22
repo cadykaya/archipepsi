@@ -762,11 +762,39 @@ measurement on every suite run; `--strict` turns it into a gate the day
 somebody rules, and it refuses (exit 3) if any of the three paths changes
 under it. **Not applied, not imported, not runtime-bound, not approved.**
 
+### T01 — Ocarina of Time, Forest Temple. Content and context DONE; not complete.
+
+Six assets (Batch 054) and an in-engine application (054-R,
+`docs/art/review/forest_temple_2026-09-22/`, four frames, README signed).
+The chamber is a Production-grey shell with a 2.4 x 3.2 opening; the pack
+dresses it and cuts nothing.
+
+**A fourth gate now runs in the ENGINE**, on the imported `.glb` rather
+than the Blender source: `forest_temple_views.gd` walks the surround's 120
+vertices against the opening and sabotage-tests itself in the same run.
+Its first version used the AABB and was worthless -- a surround's bounding
+box necessarily encloses the doorway.
+
+**Photographing it changed the art.** `tp_ft_root_mass` read as fallen
+timber; rebuilt as growth (swell/kink/fork, 48 -> 96 tris) and given the
+`route` check it never had.
+
+**NOT COMPLETE, and the missing thing is the biggest one:** the material
+treatment. All six are painted in `temple_ruin` because `THEME_PACK.json`
+has no pack namespace (COVERAGE.md §3). Prod/Dess own that seam; Art must
+not build a second loader.
+
+**Catalogue coverage and completed pack coverage are reported separately**
+in `COVERAGE.md`, as the owner asked: catalogue **81 of 81**, completed
+**0 of 81**, in progress **1**. The completion ledger has one column per
+criterion and `check_pack_coverage.py` holds it to the catalogue and to
+its own stated counts -- sabotage-tested four ways.
+
 ### Then
 
-**A15** (item/Forge modules), **A16** (finish the six theme families),
-**T01-T18 plus the 63 from the catalogue snapshot** (the
-source-game-inspired environment packs), **A17-A19** (detail/dressing
+**T02 onward** (Super Mario 64, Bomb Rush Cyberfunk, ... through T18 plus
+the 63 from the catalogue snapshot), **A15** (item/Forge modules),
+**A16** (finish the six theme families), **A17-A19** (detail/dressing
 library, actual-consumer trials and budget passes, final catalogue).
 
 ### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.

@@ -197,6 +197,18 @@ Two things from it that other lanes need:
   to it** -- five `verify` runs modified six tracked fixtures by
   checkpointing their WAL; restored.
   `docs/art/reports/2026-09-22-glyph-toolchain-trial.md` §5.
+* **T01 (Ocarina of Time, Forest Temple) has content AND context; it is
+  not complete.** Six assets, four in-engine frames dressing a
+  Production-grey shell with a 2.4 x 3.2 opening, and a fourth gate that
+  runs in the ENGINE on the imported `.glb` -- 120 vertices against the
+  opening, sabotage-tested in the same run. Photographing it changed the
+  art: `tp_ft_root_mass` read as fallen timber and was rebuilt as growth.
+  **Missing: its material treatment**, because `THEME_PACK.json` has no
+  pack namespace. Prod/Dess's seam; no second loader.
+  **Catalogue and completion coverage are now separate numbers**:
+  catalogue 81/81, completed 0/81, in progress 1.
+  `docs/art/review/forest_temple_2026-09-22/README.md`,
+  `docs/art/theme-packs/COVERAGE.md`.
 * **THE COURSE RHYTHM BREAKS AT THE TILE EDGE, AND IT TOOK THREE TRIES
   TO SAY WHY.** A 128 px tile covers 4 m; anything drawn with
   `range(0, size, step)` repeats at `step` inside the tile and at
