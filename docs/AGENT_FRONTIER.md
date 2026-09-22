@@ -1,5 +1,57 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — §21's actuator contract, and the door reverses now — 2026-09-22
+
+**OV04 P15. `godot-actuator` is new at 93 checks**, and it is the first
+suite in this lane whose subject is a document section rather than a
+room: Amalgam §21, all of it this engine can reach.
+
+**The engine had six actuators and no contract.** `ServiceShutter`,
+`RailCarrier`, `ShuttleDeck`, `RailJunction`, `PoweredLink`'s door and
+`LaunchSolver`'s pad were each built for the room that needed them, and
+no two of them answered "the input reversed halfway" or "the power went
+out" the same way — because nobody had asked. §21.1 calls its transition
+table "the complete answer… it applies to every actuator kind", so
+`Actuator` is that answer written once, `SafeClosure` is §21.2's
+interlock written once beside it, and `Constants.ACTUATOR_POWER_LOSS` is
+§21.1.1's table with no holes in it.
+
+**C4a is closed.** The shutter stopped where it was and waited, which
+never crushed anybody and was half the rule. §21.2 requires a refused
+closure to stop, **reverse to fully open**, and retry every 1.0 s,
+repeating — because a panel parked halfway still narrows the doorway it
+was asked to clear, and gives the person under it no sign that stepping
+aside is what it is waiting for. It reverses now, on the contract class
+and on the shipped machine, and its protected set widened from the
+player to §21.2's "player or any `required = true` object" — which P16's
+transported objects now carry as a group on the body.
+
+**The suite did not cover its own defect on the first attempt.** Both
+interlock cases opened the door fully, put a body in the doorway, and
+only then asked it to shut: the panel never started moving, so "stopped"
+and "reversed" were the same number, and reverting the repair left the
+suite green. §21.2's subject is a closure that has *begun*. Corrected, the
+same revert produces **nine failures**.
+
+**Nine of twelve kinds build; three are refused by name.** §21.10's
+`WINCH`, `BRAKE` and `DRIVER` drive a constraint solver this engine does
+not have. They are in the vocabulary and in the power-loss table so the
+table has no hole, and `Actuator.create` refuses them, which is the
+honest report of where the substrate ends. That is **P13**.
+
+**Also closed on machines that are in rooms today:** `ShuttleDeck` (the
+LIFT) and `RailCarrier` (the MOVING_PLATFORM) had no notion of power at
+all. Both now hold at the exact position they were caught at and resume
+the errand they were on — §21.1.1's asymmetry argument is that a lift
+which drops when a generator fails can strand or kill the player, and no
+interlock helps, because the danger is the motion.
+
+**Next ready Prod packages:** P12 (manipulation verbs), P13 (constraints
++ §21.10's three), P14 (signal graph and sensors), P10/P11 (remaining
+Statuses and compounds), P17 (railway switching). **P08 stays blocked**
+on seven content-value integers only the owner can set.
+
+
 ## BRIDGE LANE — four corrections applied, and the composer emits — 2026-09-22
 
 **Two of the owner's four corrections were defects in rules I had

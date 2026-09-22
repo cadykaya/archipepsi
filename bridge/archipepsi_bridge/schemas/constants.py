@@ -1187,6 +1187,99 @@ ENEMY_SWEEP_RATE = 0.7
 ENEMY_INTEREST_SECONDS = 4.0
 #: How close to its post counts as home again.
 ENEMY_POST_TOLERANCE = 1.5
+
+# ---------------------------------------------------------------------------
+# ACTUATORS AND MACHINERY -- Amalgam 06 §21.
+#
+# TWELVE KINDS: Design 1's nine kinematic movers, pinned identically by
+# the Amalgam at §21.1, plus Design 2 §21.10's three constraint-driven
+# ones. They are declared together because §21.1's transition table is
+# explicitly "the complete answer to what happens when a signal changes
+# mid-motion, and it applies to every actuator kind" -- one contract, not
+# twelve behaviours that happen to agree.
+#
+# The engine already ships concrete machines for six of the nine
+# (`ServiceShutter`/`LockedDoor` = DOOR, `RailCarrier` = MOVING_PLATFORM,
+# `ShuttleDeck` = LIFT, `RailJunction` = RAIL_SWITCH, `LaunchSolver` =
+# LAUNCHPAD). Each was built for its own room and none of them shared a
+# transition table or a power-loss answer. `Actuator` is that shared
+# contract; the shipped machines keep their own motion curves and consult
+# it for the rules that must be the same everywhere.
+# ---------------------------------------------------------------------------
+
+#: The twelve kinds. Order follows §21.1's enum then §21.10's three, so a
+#: reader can check this list against the document line by line.
+ACTUATOR_KINDS = (
+    "DOOR",              # §21.2 -- door, gate, shutter; the interlocked one
+    "BRIDGE",            # §21.3 -- carries the player across
+    "MOVING_PLATFORM",   # §21.3 -- carries the player along
+    "LIFT",              # §21.4 -- VALUE input, `path` entries are stops
+    "PATH_MACHINE",      # §21.5 -- the general mover: cranes, pistons, walls
+    "RAIL_SWITCH",       # §21.6 -- branch change, gated on clearance
+    "LAUNCHPAD",         # §21.7 -- the runtime solves the arc
+    "HAZARD_CONTROLLER", # §21.8 -- owns whether a hazard runs, not its damage
+    "LIGHT_CONTROLLER",  # §21.9 -- lighting, which never gates progression
+    "WINCH",             # §21.10 -- shortens a ROPE/CHAIN/PULLEY constraint
+    "BRAKE",             # §21.10 -- locks a HINGE/SLIDER/SEESAW
+    "DRIVER",            # §21.10 -- applies torque to a HINGE
+)
+
+#: WHAT POWER LOSS DOES, per kind. Amalgam §21.1.1, which is Design 1's
+#: nine rows plus three the union had to add because Design 3's
+#: `POWER_OFF` made power loss "routine, player-caused and whole-room"
+#: rather than a rare authored event.
+#:
+#: Four answers, and the split is a safety argument rather than a
+#: taxonomy: `close` is safe only because §21.2's interlock makes it
+#: safe; `hold` covers everything that carries, supports or suspends the
+#: player, because there the danger IS the motion and no interlock helps;
+#: `inert` and `disable` make an unpowered room no more dangerous than a
+#: powered one; `unlit` is lighting, which by §21.9 may never gate.
+ACTUATOR_POWER_LOSS = {
+    "DOOR": "close",
+    "BRIDGE": "hold",
+    "MOVING_PLATFORM": "hold",
+    "LIFT": "hold",
+    "PATH_MACHINE": "hold",
+    "RAIL_SWITCH": "hold",
+    "LAUNCHPAD": "inert",
+    "HAZARD_CONTROLLER": "disable",
+    "LIGHT_CONTROLLER": "unlit",
+    "WINCH": "hold",     # "a rope does not lengthen because a generator stopped"
+    "BRAKE": "engage",   # fail-safe: an unpowered brake is a locked brake
+    "DRIVER": "hold",    # releases torque; the hinge locks under an implicit brake
+}
+
+#: §21.2. A blocked closure "stops and reverses to fully open, then
+#: retries after 1.0 s. It repeats indefinitely. It never crushes."
+#:
+#: The retry is the part that is easy to drop and that matters most: a
+#: door that merely stops has parked a panel in the doorway it was asked
+#: to clear, and the player standing in it gets no signal that stepping
+#: aside is what the machine is waiting for.
+SAFE_CLOSURE_RETRY_SECONDS = 1.0
+
+#: §21.6. A rail switch's change "takes effect only when no actor is on
+#: the rail within 10.0 m of the junction"; otherwise it is QUEUED and
+#: applies when the rail clears. Not refused -- queued.
+RAIL_SWITCH_CLEARANCE_M = 10.0
+
+#: §21.1's rate: `t` runs 0 -> 1 in `travel_time` seconds, linearly. The
+#: default is what an unspecified actuator gets.
+ACTUATOR_TRAVEL_SECONDS = 2.0
+#: Where `t` counts as arrived. Small enough that a stop is exact after
+#: the snap, large enough that a 60 Hz step lands inside it.
+ACTUATOR_EPSILON = 0.001
+
+#: §21.2 protects "the player or any `required = true` object". The
+#: required half needs a physical marker the interlock can read without
+#: knowing what a transported object is, so every object a Zone declares
+#: `required` joins this group when `TransportedObjects` builds it.
+#:
+#: A group rather than a property because the interlock's question is
+#: asked of whatever body is standing in a doorway -- a crate, a barrel,
+#: a rolled-in reactive prop -- and none of them share a base class.
+REQUIRED_OBJECT_GROUP = "required_object"
 RANGED_PROJECTILE_SPEED = 14.0
 
 

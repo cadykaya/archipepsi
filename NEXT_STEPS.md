@@ -1,5 +1,78 @@
 # Archipepsi — build state
 
+## 2026-09-22 (engine) — OV04 P15: §21's actuator contract, and C4a closed
+
+`make godot-actuator` — **93 checks, in CI.** Amalgam §21, as far as this
+engine can reach it.
+
+### What did not exist before
+
+`Actuator` (`godot/scripts/gameplay/actuator.gd`) is §21.1's common contract:
+twelve kinds, the transition table, `path` interpolation over `Transform3D`
+(so a `PATH_MACHINE` is a crane and not only a slider), §21.4's lift selector,
+§21.6's 10 m rail-switch clearance queue, §21.7's inert-on-power-loss pad,
+§21.8's hazard controller and §21.9's light controller.
+
+`SafeClosure` (`godot/scripts/gameplay/safe_closure.gd`) is §21.2's interlock
+as a shared rule, in the way `StopTravel` is shared arithmetic: what "blocked"
+means and how the panel moves stay with the machine, so `ServiceShutter`
+(accelerating) and `Actuator` (linear) obey one interlock without sharing a
+motion law.
+
+`Constants.ACTUATOR_KINDS`, `ACTUATOR_POWER_LOSS`, `SAFE_CLOSURE_RETRY_SECONDS`,
+`RAIL_SWITCH_CLEARANCE_M`, `REQUIRED_OBJECT_GROUP` — declared in
+`bridge/archipepsi_bridge/schemas/constants.py` and regenerated, never
+hand-edited.
+
+### C4a, closed
+
+`service_shutter.gd` stopped where it was and waited. `01_RELIABLE_CORE.md:2318`
+requires a refused closure to stop, **reverse to fully open**, and retry after
+1.0 s, repeating indefinitely. It reverses now, and §21.2's protected set
+widened from the player alone to "the player or any `required = true` object" —
+which P16's `TransportedObjects` now marks on the body itself, because the
+interlock asks its question of whatever is standing in the doorway.
+
+New readouts: `refusals()`, `reversing()`, `retry_left()` on both the shutter
+and the contract class.
+
+### Two defects the cases found in the new code
+
+`reset()` ended when it arrived, so an actuator whose input still said `ON`
+travelled home and set off again immediately — a reset that reset nothing. A
+reset now holds until the next command. And the shutter's `overrun` read
+`goal <= 0.0`, which stays true after a successful closure, so the readout
+froze at the last refusal's value for the rest of the Zone's life.
+
+### The suite did not cover its own defect on the first attempt
+
+Both interlock cases opened the door fully, put a body in the doorway, and only
+then asked it to shut — so the panel never started moving and "stopped where it
+was" and "reversed to fully open" were the same number. Reverting the repair
+left the suite green. §21.2's subject is a closure that has *begun*; corrected,
+the same revert produces **nine failures**.
+
+### Shipped machines, not only the new class
+
+`ShuttleDeck` (LIFT) and `RailCarrier` (MOVING_PLATFORM) had no notion of power.
+Both now hold at the exact position they were caught at and resume the errand
+they were on. `power()` is deliberately not `hold()` on the carrier: `hold()`
+clears `target_dock` because a fail-safe stop means no errand, and reusing it
+would bring a carrier back powered and parked halfway down a span with its
+passenger aboard and nothing to say where it was headed.
+
+### What this does NOT do
+
+§21.10's `WINCH`, `BRAKE` and `DRIVER` are declared in the vocabulary and in the
+power-loss table and are **refused by name** by `Actuator.create`; they need the
+constraint solver, which is P13. §21.11's macro-effect deferral belongs with the
+signal/macro work. §21.3's velocity retention on leaving a platform is
+`sync_to_physics`'s and is measured by `godot-physics`. The six shipped machines
+keep their own motion curves — `Actuator` is the contract they consult for the
+rules that must be the same everywhere, not a rewrite of six working machines.
+
+---
+
 ## 2026-09-22 (engine) — target facing is a gate, D-4 is consumed, cross-room is scoped
 
 **Landed.** `godot-target-facing` is in CI: 27 of 27 SHOT targets shootable,

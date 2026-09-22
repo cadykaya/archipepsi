@@ -74,6 +74,9 @@ var speed := 0.0
 ## Where this journey is going. -1 when the carrier is parked.
 var target_dock := -1
 var held := false
+var _unpowered := false
+var _errand := -1
+var _bearing := HOLD
 
 var _deck_mesh: MeshInstance3D
 var _theme := "concrete_facility"
@@ -231,6 +234,33 @@ func hold(on: bool) -> void:
 		heading = HOLD
 		speed = 0.0
 		target_dock = -1
+
+
+## §21.1.1: a carrier HOLDS on power loss, and remembers where it was
+## going.
+##
+## Deliberately not `hold()`. That is the fail-safe stop, and it clears
+## `target_dock` on purpose -- a held carrier has no errand any more.
+## Power loss is the other thing: §21.1 says power restored "resumes
+## toward the position the current input commands, from wherever power
+## loss left it", so the errand has to survive the outage or the carrier
+## comes back powered and parked, halfway down a span, with its passenger
+## on it and no way to say where it was headed.
+func power(on: bool) -> void:
+	if on == not _unpowered:
+		return
+	_unpowered = not on
+	if not on:
+		_errand = target_dock
+		_bearing = heading
+		heading = HOLD
+		speed = 0.0
+		target_dock = -1
+		return
+	target_dock = _errand
+	heading = _bearing
+	_errand = -1
+	_bearing = HOLD
 
 
 ## Which link the carrier is standing in: `_segment()` joins dock

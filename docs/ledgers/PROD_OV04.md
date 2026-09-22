@@ -174,3 +174,85 @@ the obvious implementation reports twice.
 having been carried three rooms and not still burning. `TransportedObjects` has
 no field a Status could ride in and never consults `ManipulableBody.statuses`;
 the case asserts the reported shape is the room alone.
+
+---
+
+### P15 — the actuator contract, the power-loss table, and C4a closed
+
+`godot-actuator` is new at **93 checks**, and it is the first suite in this
+lane whose subject is a *document section* rather than a room: Amalgam §21, all
+of it that this engine can reach.
+
+**The engine had six actuators and no contract.** `ServiceShutter`,
+`RailCarrier`, `ShuttleDeck`, `RailJunction`, `PoweredLink`'s door and
+`LaunchSolver`'s pad were each built for the room that needed them, and no two
+of them answered "the input reversed halfway through" or "the power went out"
+the same way — because until now nobody had asked. §21.1 introduces its
+transition table as *"the complete answer to what happens when a signal changes
+mid-motion, and it applies to every actuator kind"*, so `Actuator` is that
+answer written once, and `SafeClosure` is §21.2's interlock written once beside
+it.
+
+| unit | evidence |
+|---|---|
+| P15.1 the vocabulary | twelve kinds, every one with a §21.1.1 power-loss answer; seven hold, and the two that do not hold are named |
+| P15.2 the transition table | ON at `t=0`, OFF at `t=1`, reverse mid-motion, reverse again mid-reversal, arrival reported once — each measured on the frame after the flip |
+| P15.3 reset | animates to `initial_t` one frame's worth at a time, and **stays there** until something commands it again |
+| P15.4 power loss, per kind | five carriers caught mid-motion hold at the exact `t` they were caught at and resume from it; a DOOR closes against its own input; a LAUNCHPAD goes inert; a HAZARD_CONTROLLER disables and clears its wind-up; a LIGHT_CONTROLLER travels to `unlit` |
+| P15.5 §21.4 lift | selector indexes stops; changed mid-travel it redirects on the next frame and never visits the stop it was going to |
+| P15.6 §21.5 path machine | rotation interpolates with position — a crane, not a slider — and it places what it drives |
+| P15.7 §21.6 rail switch | an actor at 6.0 m and again at 9.9 m queues the change; at 12.0 m the **queued** change applies. Queued, never dropped |
+| P15.8 §21.2 interlock | a closure interrupted halfway returns to **fully open**, retries every 1.0 s for as long as somebody stands there, and shuts on the next retry after they leave |
+| P15.9 the protected set | a `required = true` object refuses a closure exactly as the player does; the same body without the marker does not |
+| P15.10 the authored crusher | `safe_closure = false` closes on the player, names the body every frame of contact (§25.1 damage is a rate), and has no interlock to refuse anything |
+| P15.11 C4a on the shipped machine | the same two properties on the real `ServiceShutter`, with a real doorway volume and a real body |
+| P15.12 §21.1.1 on shipped carriers | a `ShuttleDeck` caught partway up its shaft and a `RailCarrier` caught partway down a span both hold at the exact position, resume the errand they were on, and are not restarted by power returning if the player stopped them by hand |
+| P15.12 §21.10 refused by name | `WINCH`, `BRAKE`, `DRIVER` build nothing and say why; so does a kind outside the twelve, and so does a path §21.1's `length >= 2` cannot mean |
+
+**C4a is closed.** `service_shutter.gd` stopped where it was and waited, which
+never crushed anybody and was half of §21.2. The document requires a refused
+closure to *"stop and reverse to fully open, then retry after `1.0 s`,
+repeating indefinitely"*, because a panel parked halfway is still narrowing the
+doorway it was asked to clear and gives the person under it no sign that
+stepping aside is what it is waiting for. It reverses now.
+
+**The suite did not cover its own defect on the first attempt, and the
+sabotage said so.** Both interlock cases opened the door fully, put a body in
+the doorway, and only then asked it to shut — so the panel never started
+moving, and "stopped where it was" and "reversed to fully open" were the same
+number. Reverting the repair left the suite green. §21.2's subject is a closure
+that has *begun* ("if closing **would intersect**"), so both cases now let the
+panel halfway down with the doorway clear and have somebody walk into it there.
+With that correction the same revert produces **nine failures**, on the
+contract class and on the shipped machine, naming the stop-and-wait behaviour
+in the message.
+
+**Two defects the cases found in the contract itself.** `reset()` originally
+ended when it arrived, so an actuator whose input still said `ON` travelled
+home and immediately set off again — a reset that reset nothing; a reset now
+holds until the next command. And the shutter's `overrun` read `goal <= 0.0`,
+which stays true after a successful closure, so the readout froze at the last
+refusal's value for the rest of the Zone's life.
+
+**Three of the twelve are not built, and say so.** §21.10's `WINCH`, `BRAKE`
+and `DRIVER` drive a constraint solver this engine does not have; they are in
+the vocabulary and in the power-loss table so the table has no hole, and
+`Actuator.create` refuses them by name. That is **P13**'s, and a stub would
+have been worse than the refusal.
+
+**The table landed on machines that are in rooms today, not only on the new
+class.** `ShuttleDeck` is the engine's LIFT and `RailCarrier` its
+MOVING_PLATFORM, and neither had any notion of power at all. `power()` is
+deliberately not `hold()` on the carrier: `hold()` clears `target_dock`,
+because a fail-safe stop means the carrier has no errand any more, and reusing
+it here would bring a carrier back powered and parked halfway down a span with
+its passenger aboard and nothing to say where it was headed. §21.1 requires
+power restored to *"resume toward the position the current input commands, from
+wherever power loss left it"*, so the errand survives the outage.
+
+**Not claimed by this package:** §21.11's macro-effect deferral (a `POWER_OFF`
+waiting for the player to step off the gantry) belongs with the macro/signal
+work; §21.3's velocity-retention-on-leaving is `sync_to_physics`'s and is
+measured by `godot-physics`, not here; and the shipped machines keep their own
+motion curves — `Actuator` is the contract they consult for the rules that must
+be the same everywhere, not a rewrite of six working machines mid-flight.

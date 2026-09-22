@@ -145,6 +145,7 @@ jobs:
           make godot-rail-zone
           make godot-zone-state
           make godot-roster
+          make godot-actuator
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live
