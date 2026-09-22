@@ -998,7 +998,7 @@
     },
     "RailNetwork": {
       "additionalProperties": false,
-      "description": "The docks and spans of one railway inside one Zone.",
+      "description": "The docks and spans of one railway inside one Zone.\n\n**`docks` is the ROUTE ORDER, not a collection** -- F-22 question 2.\nThe engine reads the declaration order as the carrier's route order\nbecause it is the only ordering available, and nothing in the schema\nsaid so. It says so here, and `_a_span_joins_docks_the_route_visits\n_in_turn` below is defined against it: without a stated order,\n\"consecutive\" would not mean anything.",
       "properties": {
         "network_id": {
           "maxLength": 24,
@@ -1024,6 +1024,21 @@
           "minItems": 1,
           "title": "Spans",
           "type": "array"
+        },
+        "home_dock": {
+          "anyOf": [
+            {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Home Dock"
         }
       },
       "required": [

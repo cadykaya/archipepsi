@@ -898,10 +898,24 @@ class RailSpan(Strict):
 
 
 class RailNetwork(Strict):
-    """The docks and spans of one railway inside one Zone."""
+    """The docks and spans of one railway inside one Zone.
+
+    **`docks` is the ROUTE ORDER, not a collection** -- F-22 question 2.
+    The engine reads the declaration order as the carrier's route order
+    because it is the only ordering available, and nothing in the schema
+    said so. It says so here, and `_a_span_joins_docks_the_route_visits
+    _in_turn` below is defined against it: without a stated order,
+    "consecutive" would not mean anything.
+    """
     network_id: str = _ID
     docks: tuple[RailDock, ...] = Field(min_length=2, max_length=8)
     spans: tuple[RailSpan, ...] = Field(min_length=1, max_length=8)
+    #: Where the carrier parks. `None` means the first dock, which is
+    #: exactly what `RailJunction.park` already does -- F-22 question 3
+    #: turns an engine assumption about a Zone's intent into a Zone's
+    #: declaration, and keeps the behaviour it was assuming.
+    home_dock: str | None = Field(
+        default=None, min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
 
     @model_validator(mode="after")
     def _every_span_joins_docks_this_network_declares(self):
@@ -924,6 +938,63 @@ class RailNetwork(Strict):
                 f"network '{self.network_id}' reuses a latch id; a latch is "
                 "the handle a commissioned span persists under and two spans "
                 "sharing one cannot be told apart on reload")
+        if self.home_dock is not None and self.home_dock not in known:
+            raise ValueError(
+                f"network '{self.network_id}' parks at dock "
+                f"'{self.home_dock}', which it does not declare")
+        return self
+
+    @model_validator(mode="after")
+    def _a_span_joins_docks_the_route_visits_in_turn(self):
+        """F-22 question 1, answered YES -- and the reason matters.
+
+        The schema described a GRAPH: any two of up to eight docks.
+        `RailCarrier` runs ONE ORDERED ROUTE, a link between each
+        consecutive pair, so a span from the first dock to the third has
+        no link to commission. The engine refuses it by name rather than
+        routing through the dock in between, which would be the engine
+        deciding what the Zone meant.
+
+        **A schema that can express what no runtime can build hands the
+        engine a decision it must not make.** So the restriction belongs
+        here, where a Zone is refused before it is ever composed, and
+        the engine's refusal becomes unreachable from a validated Zone
+        while staying in place for a hand-built one.
+
+        Answering YES is also the direction that can be taken back. If
+        the carrier is ever made graph-capable -- real engine work, to
+        be scoped rather than assumed -- relaxing this rule invalidates
+        no Zone that ever satisfied it. Answering NO today would let
+        unbuildable Zones be composed in the meantime.
+        """
+        order = [d.dock_id for d in self.docks]
+        at = {dock_id: i for i, dock_id in enumerate(order)}
+        seen_pairs: dict[tuple[str, str], str] = {}
+        for span in self.spans:
+            if span.from_dock not in at or span.to_dock not in at:
+                continue         # already refused above, by name
+            step = abs(at[span.from_dock] - at[span.to_dock])
+            if step != 1:
+                between = order[
+                    min(at[span.from_dock], at[span.to_dock]) + 1:
+                    max(at[span.from_dock], at[span.to_dock])]
+                raise ValueError(
+                    f"span '{span.span_id}' joins '{span.from_dock}' and "
+                    f"'{span.to_dock}', which the route visits {step} docks "
+                    f"apart with {sorted(between)} in between; the carrier "
+                    "runs one ordered route with a link between each "
+                    "consecutive pair, so this span has no link to "
+                    "commission")
+            pair = (span.from_dock, span.to_dock) if (
+                at[span.from_dock] < at[span.to_dock]) else (
+                span.to_dock, span.from_dock)
+            if pair in seen_pairs:
+                raise ValueError(
+                    f"spans '{seen_pairs[pair]}' and '{span.span_id}' both "
+                    f"join '{pair[0]}' and '{pair[1]}'; consecutive docks "
+                    "have ONE link between them, so the second span has no "
+                    "link of its own to commission")
+            seen_pairs[pair] = span.span_id
         return self
 
 

@@ -49,6 +49,16 @@ var carrier: RailCarrier = null
 ## package id, checked here so a malformed one is refused where it is
 ## built instead of at the far end of a WebSocket.
 var package_id := "junction"
+## WHICH DOCK THIS RAILWAY COMES HOME TO.
+##
+## `restore_from` re-parks after recommissioning, and it has to: a
+## carrier restored onto a link this build did not commission would be
+## standing on track that is not there. But it parked at dock 0 by
+## default, which silently overrode any home a caller had chosen -- so
+## `Zone.rail_networks.home_dock` (F-24 answer 3) was read, applied, and
+## then undone one line later. The junction owns its home now, and every
+## `park()` without an argument honours it.
+var home_dock := 0
 
 var _spans: Array[RailSpan] = []
 var _controls: Array[AlignmentControl] = []
@@ -181,10 +191,11 @@ func restore_from(latched) -> int:
 ## build has not commissioned -- standing on track that is not there --
 ## and no amount of care about saving the number would fix that.
 ## `dock` is clamped to a dock that exists.
-func park(dock := 0) -> void:
+func park(dock := -1) -> void:
 	if carrier == null or carrier.dock_offsets.is_empty():
 		return
-	var where := clampi(dock, 0, carrier.dock_offsets.size() - 1)
+	var where := clampi(home_dock if dock < 0 else dock, 0,
+			carrier.dock_offsets.size() - 1)
 	carrier.hold(false)
 	carrier.heading = RailCarrier.HOLD
 	carrier.speed = 0.0

@@ -1157,3 +1157,80 @@ timings are unchanged, because that case builds its projectile through
 
 **Not done, and not claimed:** H1. Seven of ten declared roles still have no
 behaviour, and this changes nothing about that.
+
+### F-24 — F-22's three questions, answered in the schema
+
+**Dess, 2026-09-22.** Prod built the engine half against D-4 and found the
+contract describing a **graph** where the carrier runs **one ordered route**.
+The finding is correct and the defect is mine. All three answers land in
+`RailNetwork`, with controls, at the commit carrying this entry.
+
+**1. Must spans join consecutive docks? YES — and refused in the schema.**
+
+`_a_span_joins_docks_the_route_visits_in_turn` refuses a span whose docks are
+not adjacent in `docks` order, naming the docks the route passes in between.
+The reasoning is the one this project keeps arriving at from other directions:
+**a schema that can express what no runtime can build hands the engine a
+decision it must not make.** Prod's refusal was the right call and stays in
+place for a hand-built dictionary; it simply becomes unreachable from a
+validated Zone, which is where a refusal of a too-loose schema belongs.
+
+YES is also the answer that can be taken back. Making the carrier
+graph-capable is real engine work to be scoped rather than assumed, and if it
+is ever done, relaxing this rule invalidates no Zone that ever satisfied it.
+Answering NO today would have left unbuildable Zones composable in the
+meantime, which is the expensive direction.
+
+**One more of the same defect, from the other side.** Consecutive docks have
+ONE link, so two spans naming the same pair are two latches and two controls
+over one piece of track and the second has nothing of its own to commission.
+Refused by the same validator. Prod did not ask about this case; it follows
+from Prod's own sentence, and it would have produced the same engine refusal.
+
+**2. Is `docks` order the route order? YES, and it is written down.**
+
+It had to be, or "consecutive" in answer 1 would not mean anything. The
+`RailNetwork` docstring now states it. No field, no behaviour change: the
+engine already read it this way because it was the only ordering available.
+`test_a_span_declared_against_the_route_order_is_still_consecutive` is the
+control that keeps the rule from being stricter than the fact — `s2` to `s1`
+is the same link as `s1` to `s2` and is accepted.
+
+**3. Is there a `home_dock`? There is now.**
+
+`RailNetwork.home_dock: str | None = None`, refused if it names a dock the
+network does not declare. `None` means the first dock, which is exactly what
+`RailJunction.park` already does — so **nothing built today changes**, and
+what was an engine assumption about a Zone's intent is now the Zone's own
+declaration, with the same default.
+
+Each rule sabotage-proven separately: neutralising the adjacency validator
+fails exactly its three controls and leaves the `home_dock` controls green;
+neutralising the `home_dock` check fails exactly its one.
+
+
+### F-25 — the re-park undid the home dock one line later
+
+Found while consuming F-24 answer 3. `RailNetwork.home_dock` was read, resolved
+to an index and applied with `junction.park(index)` — and the carrier still sat
+at dock 0.
+
+`RailJunction.restore_from` ends with a bare `park()`, and it has to: a carrier
+restored onto a link this build did not commission would be standing on track
+that is not there. But `park`'s default argument was `0`, so the re-park did not
+mean "come home", it meant "go to the first dock" — and `ZoneController` calls
+`restore_from` immediately after the builder, so **any** home a caller chose was
+overwritten by the next statement.
+
+Latent rather than new: nothing had ever chosen a non-zero dock, so the default
+and the intent agreed by accident. The moment a Zone declared one they stopped
+agreeing.
+
+**The junction owns its home now.** `RailJunction.home_dock` defaults to 0 —
+unchanged behaviour for every caller — and `park(dock := -1)` honours it when
+called with no argument. So `restore_from`'s re-park means "come home" and the
+one place that knows which dock that is sets it.
+
+`godot-rail-zone` covers both directions: a network naming `home_dock: d2`
+parks at dock 2 (offset 35.73), and one declaring none still parks at the
+first — the control that says F-24's answer cost nothing.

@@ -200,11 +200,17 @@ static func _one(root: Node3D, net: Dictionary, places: Dictionary,
 					func(_c: AlignmentControl) -> void: span.begin())
 		junction.add(span, control)
 
-	# PARKED AT THE FIRST DECLARED DOCK. The contract does not say which
-	# dock a carrier starts at, and `RailJunction.park` defaults to 0 --
-	# so this is an engine assumption, written down here and raised as a
-	# `home_dock` question rather than left as behaviour nobody declared.
-	junction.park(0)
+	# PARKED WHERE THE ZONE SAYS, which it can say now.
+	#
+	# This read `park(0)` with a note that the contract had no
+	# `home_dock` and the engine was assuming one. F-22 raised it; F-24
+	# answered it: `home_dock` names a declared dock, and `null` means
+	# the first -- the same default, so nothing built before this changes
+	# and what was an engine assumption is now a declaration.
+	var home := str(net.get("home_dock", ""))
+	junction.home_dock = int(order.get(home, 0)) \
+			if home != "" and home != "<null>" else 0
+	junction.park()
 	return {"junction": junction, "carrier": carrier}
 
 
