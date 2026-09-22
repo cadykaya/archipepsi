@@ -927,8 +927,9 @@ not stop at the first blocked row.
 | **M0** | 0.4 line exists, 0.3 untouched | **verified** | — | |
 | **M1** | One real machine chain | **verified** | — | `M1-zone` is built and certified this batch (`godot-rail-zone`): D-4 landed at `704f379` and the engine consumes it. What remains is a COMPOSER that declares a railway — no generated Zone asks for one yet — and a played route through it |
 | **M2-mech** | Dev-scenario loop, labelled | **verified** | — | |
-| **M3** | First content group | **2 of 3, and the third's blocker is identified** | — | EX50-011 and EX50-021 done; EX50-033's property distinction is verified and its room is blocked on D-7. **Genuine Epsilon objective selection stays incomplete until D-5** and a handwritten configuration will not be reported as it |
+| **M3** | First content group | **3 of 3 built as playable development scenarios** | — | EX50-011, EX50-021 and EX50-033 all built and gated. **Built is not integrated**: all three are development scenarios, none is composed into a Zone, and their interlocks, campaign integration and save requirements are separate open rows. **Genuine Epsilon objective selection stays incomplete until D-5** and a handwritten configuration will not be reported as it |
 | **M2 complete** | The intended experience, multiworld-safe | **blocked** | **D-1 (Dess)**, §5's five requirements | |
+| **M6** | **Cross-room / Zone-spanning puzzle relationships** | **not started — 0.4 COMPLETION, not a post-0.4 extension** (owner scope clarification 2026-09-22) | **D-8 (Dess)**, and §19.7 | Room boundaries must not be the default limit on puzzle scope; room-local puzzles stay supported. The architecture is already pinned at Amalgam §19.7 — room graphs read macro state and never write it, and *"a puzzle that should change the Zone drives a setter package's interaction, which the player then performs"* — so nothing is invented, but **none of it is built**: `grep -rn macro godot/scripts/` returns nothing, §20's `MACRO_STATE` and `MACRO_SELECTOR` are absent, and §21's macro effect types are absent. Engine half, measurement and the two rule questions: `docs/D8_CROSS_ROOM_PROD.md`. Acceptance is Blindside's major + acquisition branch through the real composition path with distinct room IDs — **not** a standalone scenario with labelled areas |
 | **M4** | Remaining Amalgam breadth | **not started** | M3 | |
 | **M5** | Pinned review build | **not started** | M3 | |
 
@@ -942,7 +943,8 @@ not stop at the first blocked row.
 | ~~D-4 `RailNetwork` schema~~ **delivered `704f379`, consumed this batch** | nothing | — |
 | D-5 objective-binding vocabulary | C6, and any claim of **genuine** Epsilon objective selection | building and testing provisional configurations |
 | D-6 0.4 save representation | G1, `E-011-save`, `E-021-save` | E-011's and E-021's other rows |
-| **D-7** `lightened` (and `anchored`) in the closed `StatusKind`, with their specified effects — this is `B3`, not a schema line | `E-033-status`, and so `E-033-room` | `E-033-answer`, `E-033-sensor`, `E-033-control`, `E-033-step`, all of which are done |
+| ~~**D-7** `lightened` in the closed `StatusKind` with its effects~~ **delivered and consumed; `lightened: ("object",)` declared beside the runtime** | nothing | `E-033-answer`, `E-033-sensor`, `E-033-control`, `E-033-step`, all of which are done |
+| **D-8** the shared cross-room relationship/state contract: macro variables, setters, consumers, generation constraints, progression validation, save representation | **M6**, and any claim of cross-room puzzle support | M1-zone, M3, the minors, H1/H2 — none of which needs it. Prod's half (runtime binding, machinery, cross-room feedback, physical acceptance) is specified in `docs/D8_CROSS_ROOM_PROD.md` and is deliberately **not implemented** until the contract is agreed, per the owner's "agree the shared contract before competing implementations are written" |
 
 ## Full-Amalgam matrix
 
@@ -1077,7 +1079,50 @@ so they stop being invisible.
 **Not blocking.** Every shape the schema can express that a route can run is
 built and certified today.
 
-### F-23 — F-22's three questions, answered in the schema
+
+### F-23 — every piece of Zone-scope state the engine has is monotone
+
+Measured while answering the 2026-09-22 cross-room scope clarification.
+
+`report_latch` / `progress.latched`, collected keys, station reached-ness: all
+one-way, all deliberately so, each carrying a comment about why progress is
+monotone. `PoweredLink`'s signal is the opposite extreme — live, recomputed
+every physics frame, *"nothing here writes to a save, and there is deliberately
+no field it could write to"*. Between "permanent" and "gone with the frame"
+there is nothing.
+
+**So there is no reversible Zone-scope state in the engine at all**, and the
+owner's five state classes have four homes and one gap:
+
+| class | today |
+|---|---|
+| permanent accepted change | `report_latch`, monotone, idempotent |
+| **reversible Zone configuration** | **nothing** |
+| temporary timer / Status | `StatusEffects`, live only per §5.4a |
+| held input | `PoweredLink.powered`, per frame, never saved |
+| transported-object state | `ManipulableBody`, replayed from the manifest |
+
+A cross-room puzzle built on today's engine therefore has exactly one way to
+express itself: a latch. Which is the shortcut the owner forbids — *"do not
+silently replace a live requirement with a permanent latch"* — and which §19.7
+forbids independently, since a latch *"is never a machine-graph variable, has
+no predicate, and drives no macro effect"*.
+
+**The reversible macro layer is the missing piece and it is the whole of D-8.**
+§20's `MACRO_STATE` and `MACRO_SELECTOR` and §21's ten macro effect types are
+pinned and unbuilt; `physics.py` already budgets macro variables against the
+§4.10 state vector, so the accounting exists while the declaration does not.
+
+Two places where a required design exceeds the pinned rules, with the exact
+rule and the proposed amendment, are in `docs/D8_CROSS_ROOM_PROD.md` §4. The
+sharper of the two: **§19.7 rule 2 makes a cross-room HELD requirement
+impossible** — a held input is room-layer live state, room graphs may not write
+macro state, and the only legal alternative today is a latch. The
+recommendation is to express such a design as reversible Zone configuration
+rather than as a held requirement, which needs no amendment; the amendment that
+*would* be needed if a genuinely held cross-room requirement is wanted is named
+so the choice is visible rather than made by accident.
+### F-24 — F-22's three questions, answered in the schema
 
 **Dess, 2026-09-22.** Prod built the engine half against D-4 and found the
 contract describing a **graph** where the carrier runs **one ordered route**.

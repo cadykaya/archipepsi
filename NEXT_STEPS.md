@@ -1,5 +1,49 @@
 # Archipepsi — build state
 
+## 2026-09-22 (engine) — target facing is a gate, D-4 is consumed, cross-room is scoped
+
+**Landed.** `godot-target-facing` is in CI: 27 of 27 SHOT targets shootable,
+after a generic bounded nudge in the element's own local frame (0.05 m steps to
+0.50 m, distance-first, rotation still the first answer). Two defects found
+building it — the footprint padding is for content not architecture, and the
+firing ladder started past the window it was checking.
+
+**D-4 consumed.** `make godot-rail-zone`, 23 checks, in CI. `ZoneController`
+reads `Zone.rail_networks` and `RailNetworks` builds a real `RailJunction`
+across composed rooms. A span with a control starts refused; one without ships
+commissioned; a Zone rebuilt knowing the latch comes up commissioned. F-22: the
+schema declares a graph and the carrier runs a route, so a non-adjacent span is
+refused by name rather than guessed at, with three concrete questions back to
+the bridge lane.
+
+**Dess integrated**: `704f379` RailNetwork, `c0d5446` the support-target export
+(collapsed onto one name), `96b6fdd` **D-1/D-2 the acquisition binding**.
+Bridge suite 1650 passed + 627 subtests.
+
+### The cross-room scope clarification — recorded, not implemented
+
+Owner, 2026-09-22: puzzles must support branch- and Zone-spanning
+relationships, and this is **0.4 completion**. Matrix row **M6** added, blocked
+on **D-8**.
+
+Deliberately no implementation: *"agree the shared contract before competing
+implementations are written"*, and the contract is Dess's. The engine lane's
+half is `docs/D8_CROSS_ROOM_PROD.md` — what exists (measured), what §19.7
+already settles, the five state classes mapped, the two rule questions with
+their proposed amendments, and the acceptance-case design on Blindside's major
++ acquisition branch through the real composition path.
+
+**F-23 is the gap in one line: every piece of Zone-scope state the engine has
+is monotone.** So a cross-room puzzle today could only be a latch — the exact
+shortcut both the owner and §19.7 forbid.
+
+### Unchanged
+
+The three EX50 rooms remain playable development scenarios. H1/H2 enemy
+variety stays an active, separate workstream. No new setpiece roster. Review
+snapshot, 0.3 comparison and original saves untouched; scheduled work off.
+
+
 ## 2026-09-21 (engine) — the Unweighted Switch, and the declaration the boundary caught
 
 **What landed.** EX50-033's room, `lightened`'s real runtime, the per-target
