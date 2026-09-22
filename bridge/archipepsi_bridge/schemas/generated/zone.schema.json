@@ -55,6 +55,40 @@
       "title": "ActivityPrimitive",
       "type": "object"
     },
+    "ActuatorBinding": {
+      "additionalProperties": false,
+      "description": "What a graph value drives. The machine, named, in this room.",
+      "properties": {
+        "actuator_id": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Actuator Id",
+          "type": "string"
+        },
+        "driven_by": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Driven By",
+          "type": "string"
+        },
+        "operation": {
+          "default": "command",
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z_]+$",
+          "title": "Operation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "actuator_id",
+        "driven_by"
+      ],
+      "title": "ActuatorBinding",
+      "type": "object"
+    },
     "AffordanceFeature": {
       "additionalProperties": false,
       "description": "One optional world feature a Zone may offer (ECHOES.md \u00a713).\n\nOptional is the whole point. A feature may never lie on the mandatory\npath, host an AP reward, an exit or an objective \u2014 \u00a713.2, enforced by\n`validate_zone` rather than by good intentions \u2014 so a Zone with every\nfeature stripped out is still completable with the base kit. That is\nwhat makes affordances safe to generate against a campaign whose\ncapabilities the generator cannot fully predict.",
@@ -720,6 +754,55 @@
       "title": "FeaturedAcquisition",
       "type": "object"
     },
+    "LogicNode": {
+      "additionalProperties": false,
+      "description": "One of \u00a719.2's eleven, taking named inputs from earlier nodes.",
+      "properties": {
+        "node_id": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "DIRECT",
+            "AND",
+            "OR",
+            "NOT",
+            "TIMER",
+            "LATCH",
+            "SEQUENCE",
+            "COUNTER",
+            "SELECTOR",
+            "DELAY",
+            "THRESHOLD"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "inputs": {
+          "items": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Inputs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "node_id",
+        "kind",
+        "inputs"
+      ],
+      "title": "LogicNode",
+      "type": "object"
+    },
     "PlatformPathChamber": {
       "additionalProperties": false,
       "description": "Base-movement platforming.\n\n`gap_size` and `vertical_step` are bounded JOINTLY: the reachable gap\nshrinks as the landing rises. v0.4 bounded them independently, so both\ncould be maxed and the real margin was 1.17x rather than the 1.56x the\nflat-jump derivation advertised.",
@@ -1116,6 +1199,113 @@
         "latch_id"
       ],
       "title": "RailSpan",
+      "type": "object"
+    },
+    "RoomGraph": {
+      "additionalProperties": false,
+      "description": "One room's signal graph. Acyclic, room-local, evaluated in a tick.\n\n**It cannot reach another room, and not because a rule forbids it.**\nEvery input names a node of this graph, so there is nothing an edge\ncould point at outside it -- \u00a719.7's rule 2 holds structurally\nrather than by inspection, which is what keeps the forbidden global\nsignal bus unwritable rather than merely banned.",
+      "properties": {
+        "room_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Room Id",
+          "type": "string"
+        },
+        "sensors": {
+          "items": {
+            "$ref": "#/$defs/SensorNode"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Sensors",
+          "type": "array"
+        },
+        "nodes": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/LogicNode"
+          },
+          "maxItems": 8,
+          "title": "Nodes",
+          "type": "array"
+        },
+        "actuators": {
+          "items": {
+            "$ref": "#/$defs/ActuatorBinding"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Actuators",
+          "type": "array"
+        }
+      },
+      "required": [
+        "room_id",
+        "sensors",
+        "actuators"
+      ],
+      "title": "RoomGraph",
+      "type": "object"
+    },
+    "SensorNode": {
+      "additionalProperties": false,
+      "description": "A source. Produces a value; reads nothing from the graph.",
+      "properties": {
+        "node_id": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "PRESSURE_PLATE",
+            "PULSE_BUTTON",
+            "TIMED_BUTTON",
+            "LEVER",
+            "SHOOTABLE_TARGET",
+            "OBJECT_SOCKET",
+            "PROXIMITY_SENSOR",
+            "ENCOUNTER_CLEAR",
+            "HACK_TERMINAL",
+            "WEIGHT_THRESHOLD",
+            "CONSTRAINT_STATE",
+            "ATTACH_SENSOR",
+            "MACRO_STATE",
+            "MACRO_SELECTOR",
+            "ROOM_VISITED",
+            "STATUS_SENSOR",
+            "STATUS_VOLUME_SENSOR",
+            "COMPOUND_SENSOR"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "requires_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "LIGHT",
+                "MEDIUM",
+                "HEAVY"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Requires Class"
+        }
+      },
+      "required": [
+        "node_id",
+        "kind"
+      ],
+      "title": "SensorNode",
       "type": "object"
     },
     "StateCondition": {
@@ -1974,6 +2164,15 @@
       },
       "maxItems": 4,
       "title": "Transported Objects",
+      "type": "array"
+    },
+    "room_graphs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/RoomGraph"
+      },
+      "maxItems": 4,
+      "title": "Room Graphs",
       "type": "array"
     }
   },

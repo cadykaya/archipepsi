@@ -27,6 +27,7 @@ try:  # works standalone and when copied into a package
         EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
         TopologyEdge, ZoneKeySpec)
     from .physics import STATE_VECTOR_BOUND, state_vector_product
+    from .signal_graph import RoomGraph
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
@@ -34,6 +35,7 @@ except ImportError:  # pragma: no cover
         EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
         TopologyEdge, ZoneKeySpec)
     from physics import STATE_VECTOR_BOUND, state_vector_product
+    from signal_graph import RoomGraph
 
 #: Every joining socket name a procedural room can be given, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
@@ -1360,6 +1362,15 @@ class Zone(Strict):
     transported_objects: tuple[TransportedObject, ...] = Field(
         default=(), max_length=4)
 
+    #: P14. Room-local signal graphs -- a sensor, §19.2 logic, and the
+    #: machine it drives. Additive and optional.
+    #:
+    #: **The first slice declares one real chain**, the class plate and
+    #: shutter `unweighted_switch.gd` already runs, so a Zone can ASK for
+    #: it instead of a scenario hard-coding it. Unsupported node and
+    #: sensor kinds are named and refused rather than offered.
+    room_graphs: tuple[RoomGraph, ...] = Field(default=(), max_length=4)
+
     @model_validator(mode="after")
     def _zone_state_names_rooms_this_zone_has(self):
         """D-8 §5's generation constraints, the half a schema can settle.
@@ -1398,6 +1409,25 @@ class Zone(Strict):
             raise ValueError(
                 f"the declared Zone-state variables alone are {product} "
                 f"configurations, past §4.10's {STATE_VECTOR_BOUND} bound")
+        return self
+
+    @model_validator(mode="after")
+    def _room_graphs_belong_to_rooms_this_zone_has(self):
+        """A graph in a room that does not exist drives nothing."""
+        if not self.room_graphs:
+            return self
+        rooms = {c.id for c in self.chambers}
+        seen: set[str] = set()
+        for graph in self.room_graphs:
+            if graph.room_id in seen:
+                raise ValueError(
+                    f"room '{graph.room_id}' declares two signal graphs; "
+                    "§19.3 evaluates one graph per room in one tick")
+            seen.add(graph.room_id)
+            if graph.room_id not in rooms:
+                raise ValueError(
+                    f"a signal graph names room '{graph.room_id}', which "
+                    "this Zone does not have")
         return self
 
     @model_validator(mode="after")

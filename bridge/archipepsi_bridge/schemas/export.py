@@ -18,6 +18,8 @@ Regenerate after any schema change; never hand-edit the outputs.
 
 from __future__ import annotations
 
+from typing import get_args
+
 import json
 import sys
 from pathlib import Path
@@ -27,6 +29,7 @@ from pydantic import TypeAdapter
 try:
     from . import constants as C
     from . import echo as E
+    from . import signal_graph as SG
     from . import physics as PH
     from .echo import EchoInterpretation
     from .protocol import CampaignSnapshot, ClientMessage, ServerMessage
@@ -34,6 +37,7 @@ try:
 except ImportError:  # pragma: no cover
     import constants as C
     import echo as E
+    import signal_graph as SG
     import physics as PH
     from echo import EchoInterpretation
     from protocol import CampaignSnapshot, ClientMessage, ServerMessage
@@ -259,6 +263,21 @@ def export_constants_gd() -> str:
         "# refuse the pair rather than the name.",
         "const ECHO_STATUS_SUPPORTED_TARGETS = "
         f"{_gd_dict(E.SUPPORTED_STATUS_TARGETS)}",
+        "",
+        "# P14. The room signal graph vocabulary, and what is IMPLEMENTED.",
+        "#",
+        "# Design 1 19.2's eleven node types and Amalgam 20's eighteen",
+        "# sensors are the complete sets, because a vocabulary with holes",
+        "# cannot tell 'not supported yet' from 'not a thing'. The",
+        "# SUPPORTED lists are what a Zone may actually use, and they are",
+        "# small on purpose: today they describe the one chain that runs,",
+        "# a HEAVY class plate through a NOT into a shutter.",
+        f"const SIGNAL_NODE_KINDS = {_gd_literal(list(get_args(SG.NodeKind)))}",
+        "const SIGNAL_NODE_KINDS_IMPLEMENTED = "
+        f"{_gd_literal(list(SG.SUPPORTED_NODE_KINDS))}",
+        f"const SIGNAL_SENSOR_KINDS = {_gd_literal(list(get_args(SG.SensorKind)))}",
+        "const SIGNAL_SENSOR_KINDS_IMPLEMENTED = "
+        f"{_gd_literal(list(SG.SUPPORTED_SENSOR_KINDS))}",
     ]
     lines.append("")
     return "\n".join(lines)

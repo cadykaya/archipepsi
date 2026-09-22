@@ -753,3 +753,68 @@ exist keep testing what they always tested; what changes is that they no
 longer stand under a heading claiming more than they show, and
 `test_restart_persistence.py` now says *round trip* wherever it used to
 say *restart*.
+
+---
+
+### DESS-13 — P14's first slice: the chain that already runs, declared
+
+**Dess, 2026-09-22.** DESS-09 called P14 not ready because the graph did
+not exist. The owner corrected that: P14.5 requires implementing the
+shared graph **and** moving real consumers onto it, and does not require
+the graph to pre-exist. The correction is right and the earlier reading
+was a way of not starting.
+
+**The slice is one real chain.** `unweighted_switch.gd` runs a HEAVY
+`ClassPlate` through `not satisfied` into `ServiceShutter.command()` —
+a sensor, a §19.2 `NOT`, and an actuator, wired in GDScript as a signal
+handler. `schemas/signal_graph.py` names exactly that, so a Zone can
+**ask** for the chain instead of a scenario hard-coding it, which is the
+move `RailNetwork` made for the railway.
+
+**Two guarantees are structural rather than checked.**
+
+- **A cycle cannot be written down.** §19.3 evaluates in topological
+  order; declaration order *is* that order, so a node may only name
+  something already declared and a cycle has nowhere to be expressed.
+- **Nothing can point outside its own room.** Every input names a node
+  of this graph, so §19.7 rule 2 holds by construction — the forbidden
+  global signal bus is not banned, it is unwritable. Both were
+  sabotage-proven, each confirmed in the intended function via
+  `inspect.getsource` first.
+
+**Unsupported is named, not offered.** `NODE_KINDS` is §19.2's complete
+eleven and `SENSOR_KINDS` is §20's eighteen, because a vocabulary with
+holes cannot tell *"not supported yet"* from *"not a thing"*.
+`SUPPORTED_NODE_KINDS` is `("NOT",)` and `SUPPORTED_SENSOR_KINDS` is
+`("PRESSURE_PLATE",)` — the one chain that runs. A typo and a gap get
+**different messages**, because one message makes a misspelling read
+like a feature request. Exported as `SIGNAL_NODE_KINDS`,
+`SIGNAL_NODE_KINDS_IMPLEMENTED` and their sensor pair, so the engine
+boundary refuses from the same source the schema does.
+
+**§20.6 is why the sensor is worth naming.** A `PRESSURE_PLATE` reads a
+semantic `MassClass` and **never accumulates** — three `LIGHT` never
+make a `MEDIUM`; `WEIGHT_THRESHOLD` sums kilograms and is the only
+sensor that does. `class_plate.gd` implements the first and
+`PoweredLink` the second. Only the first is offered, because only the
+first is what the declared chain uses.
+
+**`test_epsilon_vocabulary` caught a free string.** `LogicNode.inputs`
+was `tuple[str, ...]`, which would have let Epsilon name anything at all
+— including something outside the room, the one thing the graph must
+never be able to say. Constrained to a node-ref type.
+
+**Per-role accounting, finished.** `room_value` still read
+`ENEMY_VALUE.get(role, 0)` — the last silent zero, where an
+implemented-but-unpriced role would score nothing and the room would
+read cheaper than it is. It calls `enemy_value()` and raises now.
+`ENEMY_VALUE` records that **the score is a content budget and not
+measured difficulty**: a Zone at 156 is not "22% harder" than one at
+128, and the seven provisional entries have had no playtest at all.
+`APPROVED_ENEMY_VALUES` and `PROVISIONAL_ENEMY_VALUES` say which is
+which so nothing downstream infers it from a comment.
+
+**Still Prod's, and not claimed here:** the runtime that reads these
+declarations, and the Godot verification of the widened encounters. A
+bridge-valid enemy list is not a played encounter and this lane cannot
+make it one.
