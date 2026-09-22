@@ -144,6 +144,8 @@ func _run() -> void:
 	await _a_node_the_runtime_lacks_is_refused_and_nothing_is_built()
 	await _a_kind_the_design_does_not_name_is_refused_differently()
 	await _a_graph_in_a_room_that_is_not_there_is_refused()
+	await _a_latch_holds_its_value_and_is_restored()
+	await _a_latch_chain_is_not_declarable_yet_and_says_so()
 	_finish()
 
 
@@ -385,4 +387,111 @@ func _a_graph_in_a_room_that_is_not_there_is_refused() -> void:
 	_check(why.contains("c009"),
 			"the refusal names the room: '%s'" % why)
 	_check(_graph(controller) == null, "and nothing was built")
+	await _drop(controller)
+
+
+# ---------------------------------------------------------------------------
+# LATCH — the node that lets a chain OPEN a route instead of only denying one
+# ---------------------------------------------------------------------------
+
+## D-10's finding, and the answer to it.
+##
+## With `PRESSURE_PLATE` and `NOT` alone every sensor rests false, so a
+## chain can only ever DENY a route: the player loads the plate and
+## something shuts. Denying strands nobody and constrains nothing, which
+## is a weak puzzle — and `plate -> shutter` with no inversion is worse,
+## because the player would have to stand on the plate AND walk through
+## the door it opens, which is two places at once.
+##
+## `LATCH` is the node that fixes it: step on the plate once, the value
+## holds, the way stays open. **The semantics are checked here directly**
+## rather than through `RoomGraphs`, because the builder reads
+## `Constants.SIGNAL_NODE_KINDS_IMPLEMENTED` — generated from the
+## schema's `SUPPORTED_NODE_KINDS` — and the schema has not admitted
+## `LATCH` yet. That is the dependency order working: the runtime
+## exists, and the declaration opens when the last piece does.
+func _a_latch_holds_its_value_and_is_restored() -> void:
+	print("  -- LATCH: set once, held after, restored on rebuild")
+	var graph := SignalGraph.new()
+	graph.room_id = "c001"
+	graph.nodes.append({"id": "held", "kind": "LATCH",
+			"inputs": ["plate"]})
+	add_child(graph)
+	var fired: Array[String] = []
+	var packages: Array[String] = []
+	graph.fired.connect(func(package: String, node: String) -> void:
+			packages.append(package)
+			fired.append(node))
+
+	# The sensor is read from `values`, so a case can drive it without a
+	# physical plate: this one is about the NODE, and the plate has its
+	# own cases above.
+	graph.values["plate"] = false
+	graph.evaluate()
+	_check(not bool(graph.values.get("held", true)),
+			"an unset latch with a false input reads false")
+
+	graph.values["plate"] = true
+	graph.evaluate()
+	_check(bool(graph.values.get("held", false)),
+			"a true input sets it")
+	_check(fired.size() == 1 and fired[0] == "held",
+			"and it says so ONCE (%s)" % [fired])
+	_check(packages.size() == 1 and packages[0] == "graph_c001",
+			"under a package of its own, not the bare room id (%s)"
+			% [packages])
+
+	# THE PLAYER STEPS OFF. This is the whole difference from `NOT`.
+	graph.values["plate"] = false
+	graph.evaluate()
+	_check(bool(graph.values.get("held", false)),
+			"and it HOLDS when the input goes away -- which is what "
+			+ "lets one action open a way and then walk through it")
+	graph.evaluate()
+	_check(fired.size() == 1,
+			"it does not re-announce itself every tick (%d)" % fired.size())
+	graph.queue_free()
+
+	# REBUILT FROM THE CAMPAIGN'S RECORD, not from anything the engine
+	# was told about the machine. §5.4a.
+	var rebuilt := SignalGraph.new()
+	rebuilt.room_id = "c001"
+	rebuilt.nodes.append({"id": "held", "kind": "LATCH",
+			"inputs": ["plate"]})
+	add_child(rebuilt)
+	rebuilt.values["plate"] = false
+	rebuilt.evaluate()
+	_check(not bool(rebuilt.values.get("held", true)),
+			"a fresh graph starts unlatched")
+	# THE BARE ROOM ID IS NOT THIS GRAPH'S PACKAGE, so a record that
+	# used it must not restore anything.
+	var back := rebuilt.restore_from(["c001/held", "other/thing",
+			"graph_c001/held"])
+	_check(back == 1,
+			"one latch is restored; the bare-room ref and the stranger "
+			+ "are ignored (%d)" % back)
+	_check(bool(rebuilt.values.get("held", false)),
+			"the decision comes back with the Zone, with the plate "
+			+ "clear and nothing standing on it")
+	rebuilt.queue_free()
+	await get_tree().process_frame
+
+
+## AND IT IS NOT DECLARABLE YET, which the suite says out loud rather
+## than leaving the runtime to look finished.
+func _a_latch_chain_is_not_declarable_yet_and_says_so() -> void:
+	print("  -- a declared LATCH is still refused, and names itself")
+	_check(not Constants.SIGNAL_NODE_KINDS_IMPLEMENTED.has("LATCH"),
+			"the schema has not admitted LATCH yet (%s)"
+			% [Constants.SIGNAL_NODE_KINDS_IMPLEMENTED])
+	var controller := await _built(_zone([_chain("LATCH")]))
+	var why := str(controller.signal_graph_refusals[0]
+			if not controller.signal_graph_refusals.is_empty() else "")
+	_check(why.contains("LATCH") and why.contains("no runtime implements"),
+			"so a Zone asking for one is told it is a gap: '%s'" % why)
+	_note("LATCH's evaluation and restore are BUILT and unreachable "
+			+ "from a declaration. D-10 asks which consequence to take "
+			+ "and the answer is B: the last piece is the schema's, and "
+			+ "a denial-only chain is not worth shipping as P14's "
+			+ "consequence.")
 	await _drop(controller)

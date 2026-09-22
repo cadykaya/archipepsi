@@ -481,7 +481,21 @@ func setup(zone_dict: Dictionary) -> void:
 			room_places, room_bounds,
 			str(zone_dict.get("theme", "concrete_facility")))
 	for raw_graph: Variant in graphs.get("graphs", []) as Array:
-		signal_graphs.append(raw_graph as SignalGraph)
+		var graph: SignalGraph = raw_graph
+		# THE DECISIONS COME BACK BEFORE THE MACHINE RUNS, and they come
+		# back from the campaign's latch record rather than from
+		# anything the engine was told about the shutter. §5.4a: the
+		# decision persists, the machine is rebuilt from it. The
+		# railway's junctions do exactly this two blocks up.
+		#
+		# **Half-wired, and said so.** The restore reads the record; the
+		# REPORT that would put a latch in it is refused by the bridge
+		# today, because `record_latch` knows only physics packages.
+		# D-10's answer names that change. No Zone can declare a LATCH
+		# until it lands, so nothing here is live yet.
+		graph.fired.connect(_on_rail_latch)
+		graph.restore_from(latches_accepted())
+		signal_graphs.append(graph)
 	for why: String in graphs.get("refused", []) as Array:
 		signal_graph_refusals.append(why)
 		push_warning("signal graph refused: %s" % why)

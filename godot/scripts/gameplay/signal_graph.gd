@@ -54,6 +54,62 @@ var actuators: Dictionary = {}
 ## stopped carrying the value.
 var values: Dictionary = {}
 
+## Latch node ids that have fired, and stay fired.
+##
+## **This is the only state in the graph**, and it is why a latch needs
+## restoring while a `NOT` does not: everything else is recomputed from
+## the sensors every tick, so a rebuilt Zone arrives at the same answer
+## on its own. A latch is a decision the player made, and §5.4a is
+## explicit that the decision persists and the machine is rebuilt from
+## it -- the engine is never told the state of the machine.
+var latched: Dictionary = {}
+
+## A latch has just gone true for the first time. The Zone reports it
+## through the same `report_latch` the railway's spans use, so there is
+## one way a room-local decision reaches the campaign and not two.
+##
+## **THE BRIDGE REFUSES THESE TODAY, and that is not yet closed.**
+## `transitions.record_latch` accepts a `package_id` only when it is one
+## of the Zone's accepted PHYSICS packages, so `graph_c001/held` is
+## answered "Zone accepted no physics package 'graph_c001'" and nothing
+## is saved. The runtime half is here and tested; the record half is a
+## bridge change, named in `docs/D10_P14_PROD_ANSWER.md` rather than
+## assumed. Until it lands a latch holds for the life of the Zone and
+## is lost on reload -- which is why a LATCH chain stays undeclarable.
+signal fired(package: String, node_id: String)
+
+
+## The package this graph's latches are recorded under.
+##
+## `graph_` + the room, because `LatchFired.package_id` is
+## `^[a-z0-9_]+$` (no separator character is available) and a bare room
+## id would share one namespace with the physics packages the bridge
+## already validates against.
+func package_id() -> String:
+	return "graph_%s" % room_id
+
+
+## PUT THE DECISIONS BACK, then settle.
+##
+## §5.6 step 5: a Zone rebuilt from a save restores its latches from the
+## campaign's own record rather than from anything the engine stored
+## about the machine. `refs` is `latches_accepted()`'s form --
+## `package_id/latch_id` -- and this graph's package is `package_id()`.
+func restore_from(refs: Array) -> int:
+	var count := 0
+	for raw: Variant in refs:
+		var ref := str(raw)
+		for node: Variant in nodes:
+			var id := str((node as Dictionary).get("id", ""))
+			if str((node as Dictionary).get("kind", "")) != "LATCH":
+				continue
+			if ref == "%s/%s" % [package_id(), id] and not latched.has(id):
+				latched[id] = true
+				count += 1
+	if count > 0:
+		evaluate()
+	return count
+
 
 ## Wire every sensor's change to a re-evaluation, and settle once so the
 ## actuators start in the state the graph says rather than the state
@@ -89,17 +145,39 @@ func evaluate() -> void:
 		_drive(binding, bool(values[driven]))
 
 
-## §19.2's node semantics. `NOT` alone today, and an unknown kind
-## returns false rather than guessing -- a node nothing implements
-## should have been refused at build, and a silent default that looked
-## like OR would be worse than a dead output.
+## §19.2's node semantics. An unknown kind returns false rather than
+## guessing -- a node nothing implements should have been refused at
+## build, and a silent default that looked like OR would be worse than
+## a dead output.
+##
+## **`LATCH` IS THE ONE THAT MAKES A CHAIN ABLE TO OPEN A ROUTE.**
+## D-10's finding: with `PRESSURE_PLATE` and `NOT` alone every sensor
+## rests false, so a chain can only ever DENY a route -- the player
+## loads the plate and something shuts. Denying strands nobody and
+## constrains nothing, which is a weak puzzle. A latch holds its value
+## after the player steps off, so stepping on the plate once opens the
+## way and the player can then walk through it. That is one action, and
+## it is the difference between a machine in a room and a route.
 func _resolve(node: Dictionary) -> bool:
 	var inputs: Array = node.get("inputs", []) as Array
 	if inputs.is_empty():
 		return false
+	var id := str(node.get("id", ""))
 	match str(node.get("kind", "")):
 		"NOT":
 			return not bool(values.get(str(inputs[0]), false))
+		"LATCH":
+			# SET BY A TRUE INPUT AND NEVER RESET. §19.2's latch has no
+			# clear in this slice, because the puzzle it is here for is
+			# "open it once and walk through", and a latch that could
+			# clear is a door that can shut behind you.
+			if latched.has(id):
+				return true
+			if bool(values.get(str(inputs[0]), false)):
+				latched[id] = true
+				fired.emit(package_id(), id)
+				return true
+			return false
 		_:
 			return false
 
