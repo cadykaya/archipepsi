@@ -73,7 +73,7 @@ func _run() -> void:
 
 	await _a_room_of_melee_fights_back_and_can_be_cleared()
 	await _indirect_fire_reaches_a_player_who_stands_still()
-	await _a_bulwark_turns_to_face_you()
+	await _a_bulwark_can_be_flanked_by_moving()
 	await _a_room_of_flyers_is_completable_from_the_ground()
 	await _a_beacon_dies_like_anything_else()
 	await _the_room_is_not_clear_until_every_body_is()
@@ -230,35 +230,78 @@ func _fight(controller: ZoneController, record: Dictionary,
 			"hurt": opened - lowest, "died": player._dead}
 
 
-## TELEGRAPHS STARTED while a case is watching, per role.
+## WHAT HAPPENED OVER AN INTERVAL, per role: launches and shots seen.
+## **Counted as events, not sampled at the end.**
 ##
-## **A SINGLE SAMPLE IS NOT A MEASUREMENT.** The first version of the
-## ranged/artillery case counted enemies mid-windup at ONE instant and
-## concluded from a zero that they never fire. Artillery's windup is
-## about a second inside a 3.4 s cooldown, so an instant has roughly a
-## one-in-three chance of catching one even when it is firing normally —
-## the zero was evidence of almost nothing. Counting every `windup`
-## STARTED over the whole watch is the measurement that claim needed.
-var _windups: Dictionary = {}
+## Three faults got here before this did, and all three were mine:
+##
+##   A SINGLE SAMPLE. Enemies mid-windup were counted at ONE instant.
+##   Artillery's windup is about a second inside a 3.4 s cooldown, so an
+##   instant has roughly a one-in-three chance of catching one even when
+##   it is firing normally -- the zero was evidence of almost nothing.
+##   THE WRONG NODE. Shots were looked for among this driver's children;
+##   `enemy.gd` adds them to `current_scene`.
+##   ONLY ONE KIND OF SHOT. `EnemyProjectile` was counted and
+##   `ArtilleryShell` was not, so the role whose whole point is indirect
+##   fire contributed nothing to the count used to judge it.
+##
+## `seen` is a high-water mark of shots alive at any sampled frame, so
+## it is a floor on how many were fired rather than a total; the damage
+## is the only number here that is a fact about the player.
+var _tally: Dictionary = {}
+var _damage_at_start := 0.0
 
 
-func _watch_telegraphs(record: Dictionary) -> void:
-	_windups.clear()
+func _watch(controller: ZoneController, record: Dictionary) -> void:
+	_tally = {}
+	_damage_at_start = controller.player.hp
 	for enemy: Variant in _living(record):
 		var body := enemy as Enemy
+		var role := body.archetype
+		_tally[role] = {"launched": 0, "seen": 0}
 		body.telegraph_started.connect(
 				func(_kind: String, _duration: float) -> void:
-					_windups[body.archetype] = int(
-							_windups.get(body.archetype, 0)) + 1)
+					var row: Dictionary = _tally[role]
+					row["launched"] = int(row["launched"]) + 1
+					_tally[role] = row)
 
 
-func _windup_report() -> String:
-	if _windups.is_empty():
-		return "NO windup started by anything, the whole time"
+## Sample the shots in the world, every frame of a watch, so one with a
+## short flight is not missed between samples.
+##
+## **BOTH KINDS, BY SHAPE.** `EnemyProjectile` is an `Area3D` carrying
+## `speed` and `direction`; `ArtilleryShell` is a `Node3D` carrying
+## `origin`, `target` and `seconds`. Neither is a global type -- both are
+## inner classes of `enemy.gd` -- and referencing one by name is what
+## stopped this driver compiling once already.
+func _sample_shots() -> void:
+	var scene := get_tree().current_scene
+	if scene == null:
+		return
+	var alive: Dictionary = {}
+	for child: Node in scene.get_children():
+		if child.get("speed") != null and child.get("direction") != null:
+			alive["shot"] = int(alive.get("shot", 0)) + 1
+		elif child.get("target") != null and child.get("seconds") != null \
+				and child.get("origin") != null:
+			alive["shell"] = int(alive.get("shell", 0)) + 1
+	for role: Variant in _tally:
+		var row: Dictionary = _tally[role]
+		var kind := "shell" if str(role) == "artillery" else "shot"
+		row["seen"] = maxi(int(row["seen"]), int(alive.get(kind, 0)))
+		_tally[role] = row
+
+
+func _tally_report(controller: ZoneController) -> String:
+	var hurt: float = _damage_at_start - controller.player.hp
+	if _tally.is_empty():
+		return "nothing was watched"
 	var parts: Array[String] = []
-	for role: Variant in _windups:
-		parts.append("%s x%d" % [str(role), int(_windups[role])])
-	return "windups started: " + ", ".join(parts)
+	for role: Variant in _tally:
+		var row: Dictionary = _tally[role]
+		parts.append("%s launched %d, shots seen %d"
+				% [str(role), int(row["launched"]), int(row["seen"])])
+	return ", ".join(parts) + "; player lost %.1f hp" % hurt
 
 
 ## LET THE ROOM HIT BACK while the player does nothing.
@@ -280,6 +323,7 @@ func _stand_still(controller: ZoneController, frames: int) -> float:
 	var opened: float = player.hp
 	for _i in frames:
 		await get_tree().physics_frame
+		_sample_shots()
 	player.input_frozen = true
 	return opened - player.hp
 
@@ -364,13 +408,12 @@ func _indirect_fire_reaches_a_player_who_stands_still() -> void:
 	# problems — a role that never attacks, and a role that attacks and
 	# misses — and they want opposite fixes. Watched across the whole
 	# fifteen seconds, not sampled at the end of it.
-	_watch_telegraphs(record)
+	_watch(controller, record)
 	var hurt := await _stand_still(controller, 900)
 	_check(hurt > 0.0,
-			"a player who does nothing for fifteen seconds is hurt "
-			+ "(%.1f hp) — the shots arrive -- %s; %s; %d shots in the "
-			% [hurt, _engagement(controller, record), _windup_report(),
-				_projectiles()] + "world")
+			"a player who does nothing for fifteen seconds is hurt -- %s"
+			% _tally_report(controller)
+			+ " -- %s" % _engagement(controller, record))
 
 	var fight := await _fight(controller, record)
 	_check(int(fight["left"]) == 0,
@@ -379,67 +422,100 @@ func _indirect_fire_reaches_a_player_who_stands_still() -> void:
 	await _drop(controller)
 
 
-## THE HEAVIEST ROLE THAT IS NOT A BRUTE, and the one whose counterplay
-## a live fight does not offer.
+## THE ROLE WHOSE COUNTERPLAY THE BASE KIT HAS TO BE ABLE TO USE.
 ##
-## **TWO WRONG VERSIONS BEFORE THIS ONE, and the role was right both
-## times.** The first stood in front of a bulwark, held the trigger and
-## asserted the room would clear -- against a role whose entire brief is
-## that it cannot be fought frontally. The second put the player behind
-## it and asserted that flanking would beat a frontal fight; it measured
-## 9.9 hp either way, because a bulwark `look_at`s the player every frame
-## it has noticed them. **Teleporting behind something that turns is not
-## a flank.**
+## `bulwark` is in the ordinary, ungated encounter pool, so its
+## weakness must be reachable with the guaranteed kit and real movement.
+## It was not: every role snapped to face the player with `look_at`, so
+## the rear arc the armour leaves open could never be arrived at, and
+## "cannot be fought frontally" was in practice "cannot be fought".
+## `ENEMY_STATS["bulwark"]` declares a `turn_rate` now and the facing is
+## held through a windup.
 ##
-## So this measures what is actually there. The directional armour is
-## checked the way `roster_driver` checks it -- SYNTHETIC, two
-## `take_damage` calls with opposite directions, labelled as such -- and
-## the live fight is measured and REPORTED rather than asserted, because
-## what it reports is a design question this lane does not get to answer.
-func _a_bulwark_turns_to_face_you() -> void:
-	print("  -- bulwark: the armour is directional, the flank is not "
-			+ "available")
+## **TWO KINDS OF EVIDENCE, KEPT APART.** The armour itself is checked
+## synthetically -- two `take_damage` calls from computed WORLD
+## POSITIONS on either side of the body -- and that is machine
+## arithmetic, not a played exchange. The counterplay is then played:
+## the player circles with real movement while firing, and the room has
+## to finish. Neither stands in for the other.
+func _a_bulwark_can_be_flanked_by_moving() -> void:
+	print("  -- bulwark: the rear arc is reachable, and the room clears")
 	var controller := await _built(_zone([
-			{"archetype": "bulwark", "count": 1}]))
+			{"archetype": "bulwark", "count": 1}], 34.0, 32.0))
 	var record := _record(controller)
 	_check(_living(record).size() == 1, "one bulwark is placed")
 	var target: Enemy = _living(record)[0]
 
-	# THE MECHANISM, synthetically, in a real room. Two hits of the same
-	# size from opposite sides: this is machine arithmetic on
-	# `take_damage` and not a played exchange, and it is here to show
-	# WHY the live numbers below come out as they do.
+	# --- SYNTHETIC: the armour is directional ------------------------
+	#
+	# Attacker positions computed from the enemy's OWN basis, not from
+	# world axes. `take_damage` recovers the attacker as
+	# `global_position - direction`, so the direction to pass is
+	# `enemy - attacker`. Handing it `Vector3.BACK` names a point one
+	# metre along world -Z, which only happens to be "in front" when the
+	# body is unrotated -- and this one turns.
 	var full: float = target.hp
-	target.rotation.y = 0.0
-	target.take_damage(20.0, Vector3.BACK, 0.0)
+	var forward: Vector3 = -target.global_transform.basis.z
+	var in_front: Vector3 = target.global_position + forward * 3.0
+	var behind: Vector3 = target.global_position - forward * 3.0
+	target.take_damage(20.0, target.global_position - in_front, 0.0)
 	var frontal: float = full - target.hp
 	target.hp = full
-	target.take_damage(20.0, Vector3.FORWARD, 0.0)
-	var behind: float = full - target.hp
+	target.take_damage(20.0, target.global_position - behind, 0.0)
+	var rear: float = full - target.hp
 	target.hp = full
-	_check(frontal < behind * 0.5,
-			"a frontal hit does %.1f and one from behind does %.1f"
-			% [frontal, behind])
+	_check(frontal < rear * 0.5,
+			"SYNTHETIC: a hit from in front does %.1f, one from behind "
+			% frontal + "does %.1f" % rear)
 	_check(frontal > 0.0,
-			"the front is armoured, not invulnerable (%.1f)" % frontal)
+			"SYNTHETIC: the front is armoured, not invulnerable (%.1f)"
+			% frontal)
 
-	# ...AND THE LIVE FIGHT, played. Reported, not asserted.
+	# --- PLAYED: the opening is usable, and the room finishes --------
 	var opened: float = controller.player.hp
-	await _shoot_for(controller, target, 240)
-	var dealt: float = full - target.hp
-	var taken: float = opened - controller.player.hp
-	_check(dealt > 0.0, "four seconds of base-kit fire does land (%.1f hp)"
-			% dealt)
-	_note(("bulwark, LIVE, four seconds: player deals %.1f hp and takes "
-			+ "%.1f. It turns to face the player every frame it has "
-			+ "noticed them, so the rear arc the armour leaves open is "
-			+ "not reachable by walking. At that rate its %.0f hp "
-			+ "outlasts the player's %.0f. WHETHER A BASE-KIT PLAYER IS "
-			+ "MEANT TO BEAT ONE ALONE IS AN OWNER QUESTION -- if not, a "
-			+ "Zone that places one is gated on an Echo, and nothing "
-			+ "declares that gate.")
-			% [dealt, taken, full, opened])
+	var fight := await _circle_and_fight(controller, record, target, 3600)
+	_check(int(fight["left"]) == 0,
+			"PLAYED: circling with the base kit clears the room in %d "
+			% int(fight["frames"]) + "frames (player %s)"
+			% ("DIED" if bool(fight["died"]) else "alive"))
+	_check(not bool(fight["died"]),
+			"PLAYED: and the player survives it (%.1f of %.1f hp)"
+			% [controller.player.hp, opened])
+	controller._evaluate_objectives()
+	_check(bool(record["satisfied"]),
+			"PLAYED: kill_all is satisfied")
+	_note("bulwark, played: cleared in %.1f s with %.0f of %.0f hp left. "
+			% [float(fight["frames"]) * DT, controller.player.hp, opened]
+			+ "turn_rate 1.4 rad/s is PROVISIONAL and is the number most "
+			+ "worth playtesting -- too slow is trivial, too fast puts "
+			+ "the wall back.")
 	await _drop(controller)
+
+
+## CIRCLE AND SHOOT: real movement, the real input path, no teleports.
+##
+## The player strafes around the target while firing, which is the
+## counterplay the role is described as having. `move_left` is held and
+## the camera is re-aimed each frame, so the body genuinely travels
+## around the enemy and the shots genuinely have to connect.
+func _circle_and_fight(controller: ZoneController, record: Dictionary,
+		target: Enemy, budget: int) -> Dictionary:
+	var player: Player = controller.player
+	player.input_frozen = false
+	var frames := 0
+	Input.action_press("fire_pulse")
+	Input.action_press("move_left")
+	while frames < budget:
+		if _living(record).is_empty() or player._dead:
+			break
+		_aim_at(player, target)
+		await get_tree().physics_frame
+		frames += 1
+	Input.action_release("move_left")
+	Input.action_release("fire_pulse")
+	player.input_frozen = true
+	return {"frames": frames, "left": _living(record).size(),
+			"died": player._dead}
 
 
 ## HOLD THE TRIGGER ON ONE BODY for a fixed span, and report nothing --
@@ -538,35 +614,3 @@ func _the_room_is_not_clear_until_every_body_is() -> void:
 	controller._evaluate_objectives()
 	_check(bool(record["satisfied"]), "and only then is the room clear")
 	await _drop(controller)
-
-
-
-## EVERY ENEMY SHOT CURRENTLY IN THE WORLD. A shot that was fired and
-## went nowhere is a different finding from a shot that was never fired,
-## and the count is what tells them apart.
-##
-## **BY SHAPE, NOT BY TYPE.** `EnemyProjectile` is an inner class of
-## `enemy.gd`, so it is not a global name and the first version of this
-## referenced it anyway: the driver would not compile, and the run that
-## was supposed to answer the ranged/artillery question timed out
-## instead. `counterfire_driver` already solves this the same way —
-## an `Area3D` carrying `speed` and `direction` is an enemy shot.
-##
-## **IN `current_scene`, WHICH IS WHERE THEY GO.** The previous version
-## looked at this driver's own children and reported 0 while two enemies
-## were demonstrably firing -- `fire_at` adds its projectile to the
-## current scene, the way `counterfire_driver` already knew to look. A
-## counter pointed at the wrong node reads zero for the same reason an
-## empty room does, which is how a measurement fault gets reported as a
-## finding.
-func _projectiles() -> int:
-	var scene := get_tree().current_scene
-	if scene == null:
-		return -1                      # not "none": UNMEASURED
-	var n := 0
-	for child: Node in scene.get_children():
-		var area := child as Area3D
-		if area != null and area.get("speed") != null \
-				and area.get("direction") != null:
-			n += 1
-	return n

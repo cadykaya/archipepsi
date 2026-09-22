@@ -432,7 +432,7 @@ func _physics_process(delta: float) -> void:
 				_say("aggro")
 			var flat := Vector3(to_player.x, 0, to_player.z)
 			if flat.length() > 0.05:
-				look_at(global_position + flat, Vector3.UP)
+				_face(flat, delta)
 			var speed := float(stats["speed"]) \
 					* (1.0 - 0.5 * clampf(
 							statuses.magnitude_of("slowed"), 0.0, 1.0))
@@ -500,6 +500,35 @@ func _physics_process(delta: float) -> void:
 			_sidestep_flip = not _sidestep_flip
 			_sidestep_dir = -side if _sidestep_flip else side
 			_sidestep_timer = 0.55
+
+## TURN TOWARD THE PLAYER, at this role's own rate.
+##
+## **A ROLE WITH A REAR ARC NEEDS THAT ARC TO BE REACHABLE.** Every role
+## used to snap: `look_at` every frame it had noticed you. For the
+## `bulwark` that silently cancelled its own brief -- the armour leaves
+## the back open, and a player who ran round arrived to find it already
+## facing them, so "cannot be fought frontally" became "cannot be
+## fought". A declared `turn_rate` caps how fast the facing can change;
+## a role without one snaps as before, so nothing else in the roster
+## moves.
+##
+## **AND IT DOES NOT TURN WHILE COMMITTED.** A windup is a commitment
+## everywhere else in this file -- the charger's rush direction is fixed
+## when the telegraph starts, and the artillery's aim point with it --
+## and a body that plants to swing while still tracking is not committed
+## to anything. Holding the facing for the windup is what turns the
+## telegraph into a readable opening rather than a pause.
+func _face(flat: Vector3, delta: float) -> void:
+	var wanted := atan2(-flat.x, -flat.z)
+	var rate: Variant = stats.get("turn_rate")
+	if rate == null:
+		rotation.y = wanted
+		return
+	if _windup > 0.0:
+		return                     # committed: the facing is spent
+	rotation.y = rotate_toward(rotation.y, wanted,
+			float(rate) * delta)
+
 
 func _find_player() -> Player:
 	var players := get_tree().get_nodes_in_group("player")
