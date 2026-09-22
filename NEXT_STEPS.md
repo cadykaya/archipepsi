@@ -168,10 +168,43 @@ regenerated `godot/tests/fixtures/played_zone.json`, whose rooms now carry
 `artillery`, `bulwark`, `diver` and `beacon` where they carried `melee` and
 `ranged`.
 
-That makes it the first finding of the owner's next assignment rather than a
-loose end: *"a bridge-valid enemy list is not yet a played encounter."* Here
-is a played route that the widened list breaks. Whether the cause is
-obstruction, knockback or a changed layout is the next thing to establish.
+**Diagnosed, and it is not what I expected.** The walker now reports a block
+instead of a distance, and it says: *"BLOCKED -- no enemy within 4 m; ahead:
+@StaticBody3D"*. Not an enemy. My arithmetic hypothesis was wrong and the
+run is what said so.
+
+What it actually is, from the anchors the instrumented run printed:
+
+- c005 spans x ∈ [-60.2, -40.9]; c014 spans x ∈ [35.5, 59.3]. **They are 76 m
+  apart**, joined by a long connector.
+- The player goes THROUGH the locked doorway (mouth at x = -40.9, blocked at
+  x = -30.5, so ten metres past it) and is then in no room at all — in the
+  connector — facing static geometry. The connector turns; the walker does not.
+- `reload_driver._walk` steers a straight line with two hand-placed waypoints.
+  That was enough while the two rooms were close. The composition widening
+  changed every room's `room_value`, so the allocator produced a differently
+  shaped Zone, and a straight line is no longer a route.
+
+So the claim under test — *the doorway the key opened is passable* — is
+satisfied: the player is ten metres past it. The ASSERTION is stronger than
+the claim; it asks them to arrive inside c014, which is a 76 m walk through a
+turning connector. **The fix is to make the walker follow the connector**
+(`graph_driver._walk_into` already treats doorways as waypoints and is the
+model), not to narrow the assertion — narrowing it to fit is weakening a test
+to pass it, and the c005 → c014 leg is a real route a player has to make.
+
+**A latent issue found on the way, and it is NOT this failure.**
+`ContentInstantiator.IN_THE_DOORWAY` is `DOOR_WIDTH / 2 + PLAYER_RADIUS` =
+1.6 m: it clears a spawn from a doorway by the *player's* radius and never
+by the *enemy's*. With `melee` (half-width 0.4) the body's near edge lands at
+1.2 m, exactly the door edge. Every widened GROUND role is wider than that —
+`bulwark` 1.45, `scuttler` 1.3, `artillery` 1.25 — so their near edges land
+at 0.88, 0.95 and 0.98 m, INSIDE the 1.2 m door half-width. The comment above
+that constant records that one enemy standing in `c002/entry` turned
+`godot-integration` red for three runs, which is the same failure. Nothing
+observed has been traced to it yet, so it is recorded rather than claimed:
+the clearance should take the enemy's own `lane_width`, and a case should
+place each ground role beside a door and walk a player through.
 
 ---
 
