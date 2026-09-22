@@ -168,6 +168,18 @@ Two things from it that other lanes need:
   cases examined closely it flagged authored structure, not a defect,
   so no texture was changed.
   `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
+* **EVERY WALL AND ACCENT TEXTURE BREAKS ITS OWN PANEL RHYTHM AT THE
+  TILE EDGE, IN ALL SIX THEMES.** `materials.surface_for()` lays courses
+  at `range(0, size, pitch)` with `pitch = 38` and `size = 128`, which
+  does not divide: the courses run 0, 38, 76, 114 and then the tile
+  wraps 14 px later instead of 38. Measured on the shipped PNGs --
+  `concrete_facility_wall` 38/38/38 then **14**, `temple_ruin_wall`
+  19 x 6 then **14**, `gothic_stone_wall` 13 x 9 then **4**. On a tall
+  wall the rhythm is even for 3.6 m and then breaks, every 4 m. Present
+  since Batch 001; nothing had ever looked at a repeat. **NOT FIXED** --
+  the repair is one line and it regenerates every wall and accent in six
+  themes, which is a look decision for the owner, not a defect fix.
+  `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
 * **CI is red repository-wide and it is not the art branch's.** Both
   checks die in 3-6 seconds with logs that 404, on PR #5 and equally on
   PR #12's unrelated branch -- before any test body runs. One re-run
