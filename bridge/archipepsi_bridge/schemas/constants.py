@@ -1136,6 +1136,57 @@ ARTILLERY_MIN_RANGE = 8.0
 #: The blast the shell leaves where it lands.
 ARTILLERY_BLAST_RADIUS = 3.2
 ENEMY_AGGRO_RADIUS = 18.0
+
+#: WHAT A ROLE DOES WHEN NOBODY IS LOOKING (OV04 P07).
+#:
+#: Outside its aggro radius an enemy did nothing at all -- no `else`
+#: branch, so it stood exactly where it was placed until the player came
+#: within 18 m. A room full of statues that animate on a trigger reads as
+#: a room full of triggers.
+#:
+#: Four jobs, chosen so each says something true about the role rather
+#: than giving everything the same walk:
+#:
+#:   patrol  walks a beat around its post. Things that close distance.
+#:   watch   holds the post and sweeps its facing. THE FIXED-ROLE
+#:           GUNNER IS DELIBERATE: EX50-021's gunner covers a lane and
+#:           must still be covering it when the player arrives, so a
+#:           watcher never leaves its post.
+#:   tend    stays put with a slow idle turn. Support that is where it
+#:           is on purpose.
+#:   drift   a flyer circling its station.
+ENEMY_JOBS = {
+    "melee": "patrol",
+    "ranged": "watch",
+    "brute": "watch",
+    "charger": "patrol",
+    "bulwark": "watch",
+    "drifter": "drift",
+    "diver": "drift",
+    "scuttler": "patrol",
+    "artillery": "watch",
+    "beacon": "tend",
+}
+
+#: How far a patrol wanders from the post it was placed at, and how long
+#: it pauses at each end. Small on purpose: a patrol that ranged widely
+#: would walk out of the encounter it was composed into.
+ENEMY_PATROL_RADIUS = 4.5
+ENEMY_PATROL_PAUSE = 1.2
+#: How fast a job is walked, as a fraction of the role's combat speed.
+ENEMY_JOB_SPEED = 0.45
+#: How fast a watcher or tender sweeps, in radians a second.
+ENEMY_SWEEP_RATE = 0.7
+
+#: HOW LONG AN ENEMY STAYS INTERESTED after losing the player.
+#:
+#: Without this, stepping one metre outside the aggro radius switched an
+#: enemy off mid-fight and it went straight back to patrolling -- which
+#: is both trivially exploitable and reads as the enemy forgetting you
+#: while looking at you.
+ENEMY_INTEREST_SECONDS = 4.0
+#: How close to its post counts as home again.
+ENEMY_POST_TOLERANCE = 1.5
 RANGED_PROJECTILE_SPEED = 14.0
 
 

@@ -1764,3 +1764,53 @@ cannot show that is a sabotage that proves nothing about the control it
 was aimed at. Written down because a green suite under sabotage looks
 exactly like a vacuous test, and the wrong conclusion from it is to
 delete a control that was working.
+
+
+### P07 — enemies have a job, a memory and a way home
+
+`godot-roster` grows to **49 checks**. Three units close (P07.1, P07.2,
+P07.4); P07.3 navigation and P07.5 lifecycle/performance stay open and are
+named below.
+
+**P07.1 — an unwatched enemy was doing nothing at all.** The movement block had
+no `else` on its aggro test, so an enemy outside 18 m stood exactly where it
+was placed until the player crossed the line. A room of statues that animate on
+a trigger reads as a room of triggers, and it hides every navigation defect
+until the moment it matters.
+
+Four jobs, assigned per role so each says something true about it rather than
+giving everything the same walk: `patrol` (melee, charger, scuttler), `watch`
+(ranged, brute, bulwark, artillery), `tend` (beacon), `drift` (both flyers).
+**The fixed-role gunner is deliberate and the suite says so**: EX50-021's
+gunner covers a lane and must still be covering it when the player arrives, so
+a watcher never leaves its post. The case asserts movers moved AND holders
+held, because asserting only the first would make every watcher a bug.
+
+**P07.2 — interest outlives range.** Stepping a metre outside the radius
+switched an enemy off mid-fight: trivially exploitable, and it read as the
+enemy forgetting you while looking straight at you. Interest now runs
+`ENEMY_INTEREST_SECONDS` past the last contact.
+
+**P07.4 — a fight ends with a walk back to work.** An enemy dragged across a
+room returns to the post it was placed at before resuming, so a chase does not
+leave it guarding somewhere nobody asked it to guard. The post is captured on
+the first physics frame rather than at construction, because a composer places
+an enemy after building it.
+
+**A real defect the case found: an enemy whose player LEFT THE SCENE never
+forgot.** Interest was only decayed inside the `player != null` branch, so with
+no player at all an enemy stayed permanently alert and never went back to work
+— a different path from "out of range" and one nothing had exercised.
+
+**And a test that was measuring the wrong thing, twice.** Moving the target out
+of range does not test forgetting: the enemy pursues during its interest window
+and legitimately catches up, so interest refreshes and never lapses — the
+mechanic working. An earlier attempt moved the target to z −60, off the 40 m
+stage, where it fell, died and respawned beside the enemy. The case frees the
+player outright now.
+
+**Open, and not claimed:** P07.3 (navigation on the assembled level — the
+patrol beat is a radius around a post and does not consult room geometry, so a
+post near a wall will walk into it and rely on the existing sidestep recovery)
+and P07.5 (lifecycle and performance — nothing here measures the cost of ten
+working enemies in one room).
