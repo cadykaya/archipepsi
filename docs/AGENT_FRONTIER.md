@@ -197,6 +197,22 @@ Two things from it that other lanes need:
   to it** -- five `verify` runs modified six tracked fixtures by
   checkpointing their WAL; restored.
   `docs/art/reports/2026-09-22-glyph-toolchain-trial.md` §5.
+* **T03 (Bomb Rush Cyberfunk, BRINK TERMINAL AFTER HOURS) makes it three
+  packs, three subthemes, one shell.** Six assets (Batch 057), four
+  frames from the same cameras as T01 and T02.
+  **THE HINT IS USUALLY RIGHT AND THAT IS THE PROBLEM:** T01 agreed, T03
+  agreed, T02 did not. A hint that is always wrong gets noticed; one
+  right two times in three does not.
+  **Two checks got stricter, neither found by reading code.**
+  `assert_opening_clear` grazed in height but not width and called a
+  shutter guide tangent at exactly 1.20 m an intrusion "by 0.000 m"; and
+  the in-engine check tested VERTICES, which cannot see a box spanning
+  0 to 3.2 -- **its own sabotage step caught that**, three packs late.
+  Per triangle now; T01 and T02 re-verified.
+  `tools/blender/packkit.py` joins `packgates`: all three builders share
+  the Painter and the build loop, and `build_forest_temple` rebuilds
+  byte-identical through it.
+  `docs/art/review/brink_2026-09-22/README.md`.
 * **T02 (Super Mario 64, TICK TOCK CLOCK) likewise -- and it found two
   things T01 could not.** Six assets (Batch 056), four frames from the
   SAME cameras in the SAME shell as T01 so the packs compare frame for

@@ -830,12 +830,35 @@ line; and the wheels read as slabs until each got a hub.
   because a run that measures nothing is not a PASS.
   `tools/content/run_pack_views.sh <pack-id>`.
 
+### T03 — Bomb Rush Cyberfunk, BRINK TERMINAL AFTER HOURS. Content and context DONE; not complete.
+
+Six assets (Batch 057), four frames from the same cameras in the same
+shell as T01 and T02: `docs/art/review/brink_2026-09-22/`.
+
+**THE HINT IS USUALLY RIGHT AND THAT IS THE PROBLEM** -- three data points
+now, not an opinion. T01 agreed, T03 agreed, **T02 did not**. A hint that
+is always wrong gets noticed; one that is right two times in three does
+not. Each manifest records `theme_hint_says` / `theme_hint_agrees`.
+
+**Two checks got stricter and neither was found by reading code.**
+`assert_opening_clear` grazed in height but not in width, and reported a
+shutter guide tangent at exactly 1.20 m as an intrusion "by 0.000 m" --
+refusing correct architecture. And the in-engine check tested VERTICES,
+which caught T01's boss (corners at 3.00 and 3.20) and **could not see a
+box spanning 0 to 3.2**; shifted half a metre into the doorway it
+registered nothing, and **its own sabotage step said so**. It measures
+per triangle now. T01 and T02 re-verified under it.
+
+**`tools/blender/packkit.py`** joins `packgates`: the Painter and the
+build loop both earlier builders had grown identical copies of. All three
+packs use it; `build_forest_temple` rebuilds byte-identical through it.
+
 ### Then
 
-**T03 onward** (Bomb Rush Cyberfunk, ... through T18 plus the 63 from the
-catalogue snapshot), **A15** (item/Forge modules), **A16** (finish the six
-theme families), **A17-A19** (detail/dressing library, actual-consumer
-trials and budget passes, final catalogue).
+**T04 onward** (Dark Souls III, Borderlands 2, ... through T18 plus the 63
+from the catalogue snapshot), **A15** (item/Forge modules), **A16** (finish
+the six theme families), **A17-A19** (detail/dressing library,
+actual-consumer trials and budget passes, final catalogue).
 
 ### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.
 
