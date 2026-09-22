@@ -483,8 +483,8 @@ migrated.
 |---|---|
 | **P02** acquisition + AP obligation | `.1 .2 .3 .4 .5 .7` done; `.6` is Prod's equipment/gantry consumer |
 | **P03** cross-room state runtime | bridge half done; `ZoneStateSelected` closed P-3's gap |
-| **P04** restart persistence | **REOPENED** (owner correction 3). `.1` representation stands. `.3` does NOT: a JSON round trip is serialization evidence, not a cold process restart, and the controls say round trip everywhere they used to say restart. `.4 .6` bridge half stands |
-| **P16** transported objects | **REOPENED** (owner correction 3). The declaration, save, intent, authority and recovery stand as *ownership and reporting* evidence. They are NOT a player-carried route and NOT a completed destination interaction: nothing here moves an object by carrying it, and no consuming mechanism accepts one |
+| **P04** restart persistence | **OPEN.** `.1` representation stands. `.3` bridge half now crosses a real process boundary AND resumes transitions inside the restarted interpreter (owner correction, 2026-09-22) — still not the full lifecycle: a normal bridge/client restart and restored gameplay are unwritten, and the PID check is not that. `.6` is stray-file recovery; the killed-write case is unwritten |
+| **P16** transported objects | **OPEN.** The declaration, save, intent, authority, recovery and the consuming mechanism stand as *ownership, reporting and bridge-consistency* evidence. Recorded same-room presence is a **precondition**, not proof a physical consumer accepted the object (owner correction, 2026-09-22). Unwritten: actual transport and interaction, supported Status continuity across the boundary, and the selected object's lifecycle/recovery through the authority split — Prod's runtime half. Also new: §10.3 now refuses a transported object the player could not carry |
 | **P10.5** Status matrix | the family is data and coverage is computed |
 
 ### Three precise blockers — each blocks only its own subset
@@ -836,11 +836,25 @@ addresses another room and nothing writes to a machine layer, so there
 is no second mechanism for "something happened over there".
 
 **The check that makes transport mean something:** the mechanism fires
-only when the save says its object is **in the consumer's own room**. A
-mechanism that fired on a message alone would let a client claim a
-delivery it never made and the whole carried route would be decorative.
+only when the save says its object is **in the consumer's own room**.
 Sabotaged and confirmed in `record_object_consumed` via
 `inspect.getsource`; removing it fails exactly that control.
+
+**CORRECTED, 2026-09-22 (owner): what that check is and is not.**
+Recorded same-room presence is a **bridge consistency precondition**,
+not proof that a physical consumer accepted the object. It refuses a
+consume intent that contradicts the save's own record of where the
+object is — a client cannot claim a delivery while the save says the
+object is three rooms away. It does not establish that anything was
+carried: the recorded room came from the client's own earlier transport
+report, so the two reports are checked against each other and neither
+is checked against a physical scene. An earlier revision of this
+paragraph said a mechanism firing "on a message alone" would let a
+client claim a delivery it never made, which reads as though this
+control closed that hole. It narrows it to clients that contradict
+themselves. The physical half — an object actually carried, actually
+handed to a consumer that accepts it — is Prod's runtime and is
+unwritten.
 
 Four other ways a consumer can be a promise nothing keeps, all refused:
 a room the Zone lacks, an object it does not declare, a consequence
@@ -898,9 +912,40 @@ the save, and the one-way variable still refuses to go back. A save that
 came back with the reversible one flattened into a latch would fail
 there rather than in review.
 
-**P04.6's interrupted write, at the file level.** `write_save` fsyncs a
-temporary file before replacing the real one, so a half-written `.tmp`
-left beside a save must not be mistaken for it. It is not.
+> **CORRECTED, 2026-09-22 (owner).** When first written, that paragraph
+> was not true of the code it described. The restarted child read the
+> two variables back; the **reversal ran in the parent**, against an
+> in-process `model_validate_json` round trip, in the interpreter that
+> had written the save and still held every object in it. The label
+> claimed evidence the test did not produce.
+>
+> Repaired rather than deleted. `_resumed_in_a_fresh_process` now runs
+> the resumed transitions **inside the restarted interpreter** and
+> asserts there; the parent only checks that it exited cleanly and
+> reads back what it reported. Two harness self-proofs were added
+> first, because a child whose assertions could not fail the parent
+> would look exactly like a child whose assertions passed: one case
+> fails an assertion in the child, one raises from an `else` branch,
+> and both must reach the parent. A second case now **carries the
+> campaign forward** in the child — a claim and a configuration change
+> on the disk-loaded save — because a save every field of which reads
+> back correctly can still be one no transition will accept.
+
+**Stray-file recovery, and NOT an interrupted write.** `write_save`
+fsyncs a temporary file before replacing the real one, and a
+half-written `.tmp` left beside a save is not mistaken for it. That is
+what the case proves, and it is now named
+`test_a_stray_partial_temp_file_is_not_mistaken_for_the_save`.
+
+> **CORRECTED, 2026-09-22 (owner).** It was called
+> `test_an_interrupted_write_does_not_destroy_the_previous_save` and
+> cited as P04.6's interrupted-write evidence. Nothing in it is
+> interrupted: a complete `write_save` runs to completion and a partial
+> file is then placed beside the result. The atomicity claim it stood
+> in for — a writer killed *between* the temporary file and the
+> rename leaves the OLD save intact — needs the writer terminated
+> mid-call with a previous save already present. **That case is
+> unwritten.** Named here rather than implied by the one next to it.
 
 **A latch was the obvious thing to test and it needs a committed physics
 package.** A `permanent` Zone-state variable is the same monotone fact
@@ -912,5 +957,70 @@ exist first.
 **Disposable saves only**, all under pytest's `tmp_path`. No original is
 read, written or migrated.
 
-**Still Prod's:** relaunching the Godot client and reading real world
-state. No case here claims it, and P04.3 is not closed by this alone.
+**The PID check proves the harness, not the lifecycle.** It says the
+child is a different process, which is what every other case leans on.
+It says nothing about a normal restart of the bridge and client, and
+**P04 is not complete.** What remains, stated so it cannot be read off
+as done: a normal bridge/client restart, and **restored gameplay** —
+the player resuming in a Zone that behaves as it did. Relaunching the
+Godot client and reading real world state is Prod's; no case in this
+file claims it; and the resumed-transition evidence above is the
+bridge's half of the lifecycle, not the lifecycle.
+
+---
+
+### DESS-16 — the doorway clearance: brute fails worst, and it predates the widening
+
+**Dess, 2026-09-22.** Prod recorded, in `7b30c04`, that
+`ContentInstantiator.IN_THE_DOORWAY` clears a spawn by the **player's**
+radius and never by the enemy's, and listed bulwark, scuttler and
+artillery as the widened roles whose near edge lands inside the door.
+I ran the arithmetic against the real constants. The note is right about
+the mechanism and understates the defect in one way that changes what it
+means.
+
+`DOOR_WIDTH` 2.4, half 1.2; `PLAYER_RADIUS` 0.4; `IN_THE_DOORWAY` 1.6.
+A body centred at 1.6 m from the door centre has its near edge at
+`1.6 - lane_width/2`, which must clear 1.2:
+
+| role | `lane_width` | near edge | clears 1.2 m? |
+| --- | --- | --- | --- |
+| melee | 0.80 | 1.200 | yes, exactly |
+| ranged | 0.70 | 1.250 | yes |
+| beacon | 0.62 | 1.290 | yes |
+| diver | 1.20 | 1.000 | **no** |
+| artillery | 1.25 | 0.975 | **no** |
+| scuttler | 1.30 | 0.950 | **no** |
+| drifter | 1.35 | 0.925 | **no** |
+| bulwark | 1.45 | 0.875 | **no** |
+| **brute** | **1.80** | **0.700** | **no — worst** |
+| charger | 1.90 | 0.650 | **no** |
+
+**`brute` is the worst case and it is not new.** It was one of the three
+approved roles long before the composition widening, at 1.8 m wide
+against a 1.2 m half-width — 0.5 m inside the door. So this is a
+**latent defect the widening made more common, not a regression the
+widening introduced**: the widening added seven more roles that fail it
+and changed which rooms get them, which is why it surfaced now.
+
+**`melee` clears at exactly 1.200 for a reason that is the bug.**
+`IN_THE_DOORWAY = DOOR_WIDTH / 2 + PLAYER_RADIUS` was derived for a body
+with the player's radius. `melee`'s lane width is 0.8, so its half-width
+is 0.4 — the player's radius exactly. The constant is correct for one
+body and coincidentally correct for one enemy.
+
+**The bridge already exports what the fix needs.** `ENEMY_ENVELOPES`
+carries `lane_width` per role in `constants.gd`, so the clearance the
+engine wants is `DOOR_WIDTH / 2 + lane_width / 2` for the body being
+nudged, not a second constant and not a second export. Adding a
+per-role clearance number here would be two spellings of one fact.
+
+**Whose:** `content_instantiator.gd` is Prod's, so the nudge is Prod's
+one-line change. What is handed over is the arithmetic, the corrected
+severity, and the fact that a fix scoped to "the widened roles" would
+leave `brute` — an approved role in the base kit — still protruding.
+
+**Not observed in play.** Nothing in the current `godot-reload` failure
+traces to it; Prod's blocked-walk reporter says "no enemy within 4 m"
+and points at a turning connector instead. This stays a recorded finding
+with the arithmetic that would prove it, not a diagnosis of that red.
