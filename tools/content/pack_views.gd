@@ -194,24 +194,39 @@ func _dress(root: Node3D) -> Node3D:
 
 
 func _check_opening(surround: Node3D, nudge := Vector3.ZERO) -> void:
-	## The imported surround's VERTICES, measured against the opening.
+	## The imported surround's TRIANGLES, measured against the opening.
 	##
-	## The Blender gate checked the source. This checks what came back
-	## out of the exporter and through Godot's importer, which is a
-	## different object, and it is the one the player meets.
+	## The pack builders gate their source in Blender. This checks what
+	## came back out of the exporter and through Godot's importer, which
+	## is a different object, and it is the one the player meets.
 	##
-	## AN AABB CANNOT ANSWER THIS and the first version of this function
-	## tried. A door surround's bounding box necessarily encloses the
-	## doorway -- that is what a surround is -- so "the box covers the
-	## opening" is true of a correct surround and of a solid slab alike.
-	## The question is whether any GEOMETRY is inside the opening, and
-	## only the vertices know.
+	## TWO WRONG VERSIONS BEFORE THIS ONE, and the harness found the
+	## second itself.
+	##
+	## 1. AN AABB CANNOT ANSWER THIS. A door surround's bounding box
+	##    necessarily encloses the doorway -- that is what a surround is
+	##    -- so "the box covers the opening" is true of a correct
+	##    surround and of a solid slab alike.
+	## 2. NOR CAN THE VERTICES. `tp_ft_door_surround`'s boss has corners
+	##    at 3.00 and 3.20 m, so a vertex test caught it; a roller
+	##    shutter's guide is ONE BOX spanning 0 to 3.2, whose only
+	##    vertices are at the extremes the test excludes. Shifted half a
+	##    metre into the doorway it registered NOTHING -- and the
+	##    sabotage step is what said so, on T03, three packs after the
+	##    check was written.
+	##
+	## So: per TRIANGLE, the same question `packgates` asks per object.
+	## Does this triangle's box overlap the opening's own volume by more
+	## than a graze, in width AND in height? A face lying exactly on a
+	## jamb or under the lintel overlaps by zero and is dressing; a face
+	## that crosses the hole overlaps by its own width and is a narrower
+	## doorway.
 	if surround == null:
 		return
 	var half := DOOR_W / 2.0
 	var inv := surround.global_transform.affine_inverse()
+	var deepest := 0.0
 	var worst := Vector3.ZERO
-	var depth := 0.0
 	var counted := 0
 	for node in surround.find_children("*", "MeshInstance3D", true, false):
 		var mi := node as MeshInstance3D
@@ -221,30 +236,40 @@ func _check_opening(surround: Node3D, nudge := Vector3.ZERO) -> void:
 		for i in mi.mesh.get_surface_count():
 			var arrays := mi.mesh.surface_get_arrays(i)
 			var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-			for v in verts:
-				var p: Vector3 = to_local * v + nudge
+			var index: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+			var count: int = index.size() if index.size() > 0 else verts.size()
+			for t in range(0, count - 2, 3):
+				var a: Vector3 = to_local * verts[
+						index[t] if index.size() > 0 else t] + nudge
+				var b: Vector3 = to_local * verts[
+						index[t + 1] if index.size() > 0 else t + 1] + nudge
+				var c: Vector3 = to_local * verts[
+						index[t + 2] if index.size() > 0 else t + 2] + nudge
 				counted += 1
-				if abs(p.x) >= half - GRAZE or p.y >= DOOR_H - GRAZE:
+				var lo_x: float = min(a.x, min(b.x, c.x))
+				var hi_x: float = max(a.x, max(b.x, c.x))
+				var lo_y: float = min(a.y, min(b.y, c.y))
+				var hi_y: float = max(a.y, max(b.y, c.y))
+				# Overlap with the opening volume, as an extent.
+				var wide: float = min(hi_x, half) - max(lo_x, -half)
+				var tall: float = min(hi_y, DOOR_H) - max(lo_y, 0.0)
+				if wide <= GRAZE or tall <= GRAZE:
 					continue
-				if p.y <= GRAZE:
-					continue   # the floor line is not an obstruction
-				# How far INTO the opening this vertex reaches, from the
-				# nearer jamb. The deepest one is the one worth naming.
-				var into: float = half - abs(p.x)
-				if into > depth:
-					depth = into
-					worst = p
-	print("[packview] surround: %d vertices measured against a %.2f x %.2f "
-			% [counted, DOOR_W, DOOR_H] + "opening")
+				if wide > deepest:
+					deepest = wide
+					worst = Vector3((lo_x + hi_x) * 0.5,
+							(lo_y + hi_y) * 0.5, (a.z + b.z + c.z) / 3.0)
+	print("[packview] surround: %d triangles measured against a %.2f x "
+			% [counted, DOOR_W] + "%.2f m opening" % DOOR_H)
 	if counted == 0:
-		_fail("the imported surround carried no vertices to measure, so "
+		_fail("the imported surround carried no triangles to measure, so "
 			+ "this check measured nothing and is not a PASS")
 		return
-	if depth > 0.0:
-		_fail(("the imported surround reaches %.3f m into the opening at "
-			+ "(%.3f, %.3f, %.3f)") % [depth, worst.x, worst.y, worst.z])
+	if deepest > 0.0:
+		_fail(("the imported surround crosses the opening by %.3f m near "
+			+ "(%.3f, %.3f, %.3f)") % [deepest, worst.x, worst.y, worst.z])
 	else:
-		print("[packview] no vertex inside the opening -- clear by %.3f m"
+		print("[packview] no triangle crosses the opening -- clear by %.3f m"
 				% GRAZE)
 
 

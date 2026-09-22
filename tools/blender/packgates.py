@@ -65,7 +65,18 @@ def assert_opening_clear(objects, label, width=DOOR_W, height=DOOR_H):
         lo, hi = common.world_box(obj)
         # Anything crossing the opening's own volume is refused. The
         # opening is centred on x=0 and rises from the floor.
-        if hi[0] <= -width / 2.0 or lo[0] >= width / 2.0:
+        #
+        # THE SAME MILLIMETRE AS THE HEIGHT TEST BELOW, and it took a
+        # third asset to notice it was missing here. A roller shutter's
+        # guide lip has its inner face ON the opening edge -- that is
+        # what a guide is -- and `tp_br_shutter_head` authored it at
+        # exactly 1.20 m. Blender's float32 delivered 1.1999999 and the
+        # gate reported an intrusion "by 0.000 m", which is a refusal
+        # of correct architecture and the fastest way to get a gate
+        # switched off. A millimetre against a 2.4 m opening is nothing
+        # beside the arithmetic; a 5 mm intrusion still fails, and that
+        # is checked rather than assumed.
+        if hi[0] <= -width / 2.0 + GRAZE or lo[0] >= width / 2.0 - GRAZE:
             continue
         # A TANGENCY IS NOT AN INTRUSION, and this gate made that
         # mistake on its first run. The lintel's underside is authored

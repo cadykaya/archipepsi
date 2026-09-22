@@ -53,9 +53,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import brushkit  # noqa: E402
 import common  # noqa: E402
 import packgates  # noqa: E402
+import packkit  # noqa: E402
 import materials  # noqa: E402
 import palette as pal  # noqa: E402
 import roomcollision  # noqa: E402
@@ -64,8 +64,9 @@ import roomcollision  # noqa: E402
 #: house theme -- see the module docstring and COVERAGE.md §3.
 THEME = "temple_ruin"
 OUT = "batch054/forest_temple"
-SIZE = materials.ARCH_SIZE
-DENSITY = materials.ARCH_DENSITY
+SIZE = packkit.SIZE
+DENSITY = packkit.DENSITY
+PAINT = packkit.Painter(THEME, "ft")
 
 # The gates and the protected numbers live in `packgates` now: there are
 # eighteen packs in the first wave and sixty-three behind them, and three
@@ -77,46 +78,22 @@ assert_opening_clear = packgates.assert_opening_clear
 assert_no_emitters = packgates.assert_no_emitters
 assert_no_footholds = packgates.assert_no_footholds
 
-_IMAGES = {}
-_MATERIALS = {}
-
-
-def _image(role):
-    if role not in _IMAGES:
-        canvas, _ = materials.paint(THEME, role)
-        _IMAGES[role] = canvas.to_blender("ft_%s_%s" % (THEME, role))
-    return _IMAGES[role]
-
-
-def _paint(obj, role, collide=None):
-    if role not in _MATERIALS:
-        _MATERIALS[role] = common.make_textured_material(
-            role, _image(role), roughness=pal.roughness(THEME))
-    common.assign(obj, _MATERIALS[role])
-    return roomcollision.paint_role(obj, collide or role)
-
-
-def _b(tag, size, at, role="wall", collide=None, rotation_z=0.0):
-    return _paint(brushkit.block(tag, size, at, rotation_z=rotation_z),
-                  role, collide)
-
-
 # --------------------------------------------------------------- assets
 
 def column():
     """A carved column. Its tell is the ROOT that has grown up it --
     the house `temple_ruin` column is clean, and this one lost."""
     h = 3.6
-    body = _b("ft_col_shaft", (0.52, 0.52, h), (0.0, 0.0, h / 2.0))
+    body = PAINT.block("ft_col_shaft", (0.52, 0.52, h), (0.0, 0.0, h / 2.0))
     parts = [
-        _b("ft_col_base", (0.72, 0.72, 0.22), (0.0, 0.0, 0.11), "trim"),
-        _b("ft_col_cap", (0.76, 0.76, 0.26), (0.0, 0.0, h - 0.13), "trim"),
-        _b("ft_col_relief", (0.56, 0.10, 1.10), (0.0, -0.29, 1.5), "accent", "trim"),
+        PAINT.block("ft_col_base", (0.72, 0.72, 0.22), (0.0, 0.0, 0.11), "trim"),
+        PAINT.block("ft_col_cap", (0.76, 0.76, 0.26), (0.0, 0.0, h - 0.13), "trim"),
+        PAINT.block("ft_col_relief", (0.56, 0.10, 1.10), (0.0, -0.29, 1.5), "accent", "trim"),
     ]
     # The root: three blocks climbing one face, each offset, so it reads
     # as growth rather than as a pilaster.
     for i, z in enumerate((0.45, 1.25, 2.05)):
-        parts.append(_b("ft_col_root_%d" % i,
+        parts.append(PAINT.block("ft_col_root_%d" % i,
                         (0.16, 0.20, 0.80),
                         (0.14 - i * 0.09, 0.30, z), "trim"))
     return body, parts
@@ -125,17 +102,17 @@ def column():
 def wall_relief():
     """A wall panel a root has split. The crack is the subject."""
     w, t, h = 2.0, 0.24, 3.0
-    body = _b("ft_relief_panel", (w, t, h), (0.0, 0.0, h / 2.0))
+    body = PAINT.block("ft_relief_panel", (w, t, h), (0.0, 0.0, h / 2.0))
     parts = [
-        _b("ft_relief_sill", (w + 0.16, t + 0.10, 0.18),
+        PAINT.block("ft_relief_sill", (w + 0.16, t + 0.10, 0.18),
            (0.0, 0.0, 0.09), "trim"),
-        _b("ft_relief_lintel", (w + 0.16, t + 0.10, 0.20),
+        PAINT.block("ft_relief_lintel", (w + 0.16, t + 0.10, 0.20),
            (0.0, 0.0, h - 0.10), "trim"),
     ]
     # The split, climbing and leaning -- four segments, each stepped, so
     # it is one run rather than a stack of bricks.
     for i in range(4):
-        parts.append(_b("ft_relief_root_%d" % i,
+        parts.append(PAINT.block("ft_relief_root_%d" % i,
                         (0.13, 0.08, 0.70),
                         (-0.55 + i * 0.30, -t / 2.0 - 0.04,
                          0.45 + i * 0.62), "accent", "trim"))
@@ -145,15 +122,15 @@ def wall_relief():
 def alcove_torch():
     """The HOUSING a flame sits in. No light, and a gate about it."""
     w, d, h = 0.62, 0.40, 1.10
-    body = _b("ft_alcove_back", (w, 0.12, h), (0.0, d / 2.0, h / 2.0))
+    body = PAINT.block("ft_alcove_back", (w, 0.12, h), (0.0, d / 2.0, h / 2.0))
     parts = [
-        _b("ft_alcove_side_l", (0.10, d, h), (-w / 2.0 + 0.05, 0.0, h / 2.0)),
-        _b("ft_alcove_side_r", (0.10, d, h), (w / 2.0 - 0.05, 0.0, h / 2.0)),
-        _b("ft_alcove_hood", (w, d, 0.14), (0.0, 0.0, h - 0.07), "trim"),
+        PAINT.block("ft_alcove_side_l", (0.10, d, h), (-w / 2.0 + 0.05, 0.0, h / 2.0)),
+        PAINT.block("ft_alcove_side_r", (0.10, d, h), (w / 2.0 - 0.05, 0.0, h / 2.0)),
+        PAINT.block("ft_alcove_hood", (w, d, 0.14), (0.0, 0.0, h - 0.07), "trim"),
         # Where a flame would be. A NODE, not a light.
-        _b("ft_alcove_flame_seat", (0.22, 0.22, 0.10),
+        PAINT.block("ft_alcove_flame_seat", (0.22, 0.22, 0.10),
            (0.0, 0.02, 0.30), "accent", "trim"),
-        _b("ft_alcove_bowl", (0.34, 0.30, 0.18), (0.0, 0.02, 0.16), "trim"),
+        PAINT.block("ft_alcove_bowl", (0.34, 0.30, 0.18), (0.0, 0.02, 0.16), "trim"),
     ]
     return body, parts
 
@@ -167,15 +144,15 @@ def switch_housing():
     it is Production's.
     """
     w, d, h = 0.40, 0.22, 0.58
-    body = _b("ft_switch_case", (w, d, h), (0.0, d / 2.0, h / 2.0))
+    body = PAINT.block("ft_switch_case", (w, d, h), (0.0, d / 2.0, h / 2.0))
     parts = [
-        _b("ft_switch_frame", (w + 0.10, d + 0.06, 0.08),
+        PAINT.block("ft_switch_frame", (w + 0.10, d + 0.06, 0.08),
            (0.0, d / 2.0, h - 0.04), "trim"),
-        _b("ft_switch_sill", (w + 0.10, d + 0.06, 0.08),
+        PAINT.block("ft_switch_sill", (w + 0.10, d + 0.06, 0.08),
            (0.0, d / 2.0, 0.04), "trim"),
-        _b("ft_switch_lever", (0.10, 0.18, 0.30), (0.0, -0.02, h * 0.52),
+        PAINT.block("ft_switch_lever", (0.10, 0.18, 0.30), (0.0, -0.02, h * 0.52),
            "accent", "trim"),
-        _b("ft_switch_state_band", (w * 0.7, 0.04, 0.06),
+        PAINT.block("ft_switch_state_band", (w * 0.7, 0.04, 0.06),
            (0.0, -0.01, h * 0.20), "accent", "trim"),
     ]
     return body, parts
@@ -221,7 +198,7 @@ def root_mass():
     # 0.95-degree one, the fork tip landed 0.19 m from anything and
     # `assert_parts_touch` caught it. It was right, and the defect was
     # not the one it names: the piece was not floating, it was straight.
-    body = _b("ft_root_run", (1.42, 0.14, 0.06), (0.0, 0.0, 0.03),
+    body = PAINT.block("ft_root_run", (1.42, 0.14, 0.06), (0.0, 0.0, 0.03),
               "trim", rotation_z=6.0)
     parts = []
     #   tag          size (x, y, z)        at (x, y, z)        yaw (deg)
@@ -239,7 +216,7 @@ def root_mass():
             ("tip", (0.26, 0.11, 0.05), (0.72, -0.05, 0.025), -17.0),
             ("fork", (0.32, 0.13, 0.10), (0.20, 0.17, 0.05), 54.0),
             ("fork_tip", (0.22, 0.09, 0.06), (0.33, 0.31, 0.03), 46.0)):
-        parts.append(_b("ft_root_%s" % tag, size, at, "trim",
+        parts.append(PAINT.block("ft_root_%s" % tag, size, at, "trim",
                         rotation_z=yaw))
     return body, parts
 
@@ -247,11 +224,11 @@ def root_mass():
 def door_surround():
     """Dressing AROUND the engine's opening, never into it."""
     jamb = 0.34
-    body = _b("ft_door_lintel", (DOOR_W + jamb * 2.0, 0.30, 0.34),
+    body = PAINT.block("ft_door_lintel", (DOOR_W + jamb * 2.0, 0.30, 0.34),
               (0.0, 0.0, DOOR_H + 0.17), "trim")
     parts = []
     for sign, tag in ((-1.0, "l"), (1.0, "r")):
-        parts.append(_b("ft_door_jamb_%s" % tag, (jamb, 0.30, DOOR_H),
+        parts.append(PAINT.block("ft_door_jamb_%s" % tag, (jamb, 0.30, DOOR_H),
                         (sign * (DOOR_W / 2.0 + jamb / 2.0), 0.0,
                          DOOR_H / 2.0)))
         # The boss is the JAMB'S width and projects in DEPTH, out of the
@@ -260,7 +237,7 @@ def door_surround():
         # gate, and the gate was right. A boss that grows toward the
         # player is a boss; a boss that grows into the doorway is a
         # narrower doorway.
-        parts.append(_b("ft_door_boss_%s" % tag, (jamb, 0.46, 0.20),
+        parts.append(PAINT.block("ft_door_boss_%s" % tag, (jamb, 0.46, 0.20),
                         (sign * (DOOR_W / 2.0 + jamb / 2.0), 0.0,
                          DOOR_H - 0.10), "accent", "trim"))
     return body, parts
@@ -287,34 +264,7 @@ DISTINCT = {
 
 
 def main():
-    made = {}
-    for name, build, checks in ASSETS:
-        common.reset_scene()
-        _IMAGES.clear()
-        _MATERIALS.clear()
-        body, parts = build()
-        objects = [body] + parts
-        if "opening" in checks:
-            assert_opening_clear(objects, name)
-        if "emitters" in checks:
-            assert_no_emitters(objects, name)
-        if "route" in checks:
-            assert_no_footholds(objects, name)
-        for obj in objects:
-            common.uv_project_world(obj, DENSITY, SIZE)
-        common.assert_parts_touch(body, parts, name)
-        entry = common.export_glb(body, "%s/%s.glb" % (OUT, name), "prop",
-                                  tier="architecture", texture_size=SIZE,
-                                  anchor="floor", parts=parts)
-        entry["parts"] = [p.name for p in parts]
-        entry["distinct"] = DISTINCT[name]
-        made[name] = entry
-        print("[forest] %-24s %4d tris, %d part(s)"
-              % (name, entry["triangles"], len(parts)))
-
-    path = os.path.join(common.MODEL_DIR, OUT, "manifest.json")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    shared = {
+    packkit.build(ASSETS, OUT, PAINT, DISTINCT, {
         "batch": "054",
         "kind": "theme_pack_content",
         "pack": "tp_ocarina_of_time",
@@ -335,14 +285,9 @@ def main():
                               "family; a tint is NOT the pack's treatment.",
         "carries": "mesh and named parts only. No collider, body, trigger, "
                    "light, camera, script or animation.",
-        "texels_per_metre": DENSITY,
         "not_changed": ["collision", "placement", "any runtime state",
                         "the engine's door opening", "any approved asset"],
-    }
-    with open(path, "w", encoding="utf-8") as handle:
-        json.dump({k: dict(shared, **v) for k, v in made.items()},
-                  handle, indent=2, sort_keys=True)
-    common.log("manifest %s" % path)
+    }, log="forest")
 
 
 if __name__ == "__main__":

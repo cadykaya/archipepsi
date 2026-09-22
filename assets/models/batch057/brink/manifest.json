@@ -1,0 +1,240 @@
+{
+  "tp_br_board_panel": {
+    "anchor": "floor",
+    "batch": "057",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "a departure board caught MID-FLIP: one slat still turning is what says 'until recently', where a board merely off reads as a missing texture",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_bomb_rush_cyberfunk",
+    "painted_with": "neon_transit",
+    "parts": [
+      "br_bd_case",
+      "br_bd_screen",
+      "br_bd_shelf",
+      "br_bd_row_0",
+      "br_bd_row_1",
+      "br_bd_row_2",
+      "br_bd_flipped"
+    ],
+    "path": "batch057/brink/tp_br_board_panel.glb",
+    "size": [
+      2.16,
+      0.415,
+      3.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "BRINK TERMINAL, AFTER HOURS -- the concourse with the shutters down, the board dark, one strip light out, and the tags that only happen when nobody is watching",
+    "subtheme_is_a_choice": "Bomb Rush Cyberfunk has six boroughs. A terminal is the half of that game which is ARCHITECTURE rather than terrain, and architecture is what a theme pack ships. Not Versum Hill's rooftops, not Mataan, not Pyramid Island.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Constants.THEME_BY_GAME_HINT names the same family this pack's material culture points at. T01 agreed too; T02 did not. The hint is USUALLY right and cannot be relied on, which is worse than always wrong because nobody notices the one case. See COVERAGE.md section 3.",
+    "theme_hint_says": "neon_transit",
+    "triangles": 96
+  },
+  "tp_br_concourse_pillar": {
+    "anchor": "floor",
+    "batch": "057",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "tagged and worn through at grind height; the house pillar is clean tile because the house station still has staff in it",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_bomb_rush_cyberfunk",
+    "painted_with": "neon_transit",
+    "parts": [
+      "br_pil_plinth",
+      "br_pil_capital",
+      "br_pil_kick",
+      "br_pil_tag",
+      "br_pil_scuff_0",
+      "br_pil_scuff_1"
+    ],
+    "path": "batch057/brink/tp_br_concourse_pillar.glb",
+    "size": [
+      0.8,
+      0.8,
+      3.6
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "BRINK TERMINAL, AFTER HOURS -- the concourse with the shutters down, the board dark, one strip light out, and the tags that only happen when nobody is watching",
+    "subtheme_is_a_choice": "Bomb Rush Cyberfunk has six boroughs. A terminal is the half of that game which is ARCHITECTURE rather than terrain, and architecture is what a theme pack ships. Not Versum Hill's rooftops, not Mataan, not Pyramid Island.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Constants.THEME_BY_GAME_HINT names the same family this pack's material culture points at. T01 agreed too; T02 did not. The hint is USUALLY right and cannot be relied on, which is worse than always wrong because nobody notices the one case. See COVERAGE.md section 3.",
+    "theme_hint_says": "neon_transit",
+    "triangles": 84
+  },
+  "tp_br_shutter_head": {
+    "anchor": "floor",
+    "batch": "057",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "the opening is dressed as a shuttered concourse gate -- head box, guide lips, and the bottom rail parked above the head",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_bomb_rush_cyberfunk",
+    "painted_with": "neon_transit",
+    "parts": [
+      "br_sh_guide_l",
+      "br_sh_lip_l",
+      "br_sh_guide_r",
+      "br_sh_lip_r",
+      "br_sh_rail"
+    ],
+    "path": "batch057/brink/tp_br_shutter_head.glb",
+    "size": [
+      3.08,
+      0.48,
+      3.56
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "BRINK TERMINAL, AFTER HOURS -- the concourse with the shutters down, the board dark, one strip light out, and the tags that only happen when nobody is watching",
+    "subtheme_is_a_choice": "Bomb Rush Cyberfunk has six boroughs. A terminal is the half of that game which is ARCHITECTURE rather than terrain, and architecture is what a theme pack ships. Not Versum Hill's rooftops, not Mataan, not Pyramid Island.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Constants.THEME_BY_GAME_HINT names the same family this pack's material culture points at. T01 agreed too; T02 did not. The hint is USUALLY right and cannot be relied on, which is worse than always wrong because nobody notices the one case. See COVERAGE.md section 3.",
+    "theme_hint_says": "neon_transit",
+    "triangles": 72
+  },
+  "tp_br_strip_light": {
+    "anchor": "floor",
+    "batch": "057",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "a municipal batten with ONE TUBE OUT -- the tell is a material difference, never an emissive one",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_bomb_rush_cyberfunk",
+    "painted_with": "neon_transit",
+    "parts": [
+      "br_lt_tube_live",
+      "br_lt_tube_dead",
+      "br_lt_cage_0",
+      "br_lt_cage_1",
+      "br_lt_cage_2",
+      "br_lt_cap_l",
+      "br_lt_cap_r"
+    ],
+    "path": "batch057/brink/tp_br_strip_light.glb",
+    "size": [
+      1.28,
+      0.2,
+      0.18
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "BRINK TERMINAL, AFTER HOURS -- the concourse with the shutters down, the board dark, one strip light out, and the tags that only happen when nobody is watching",
+    "subtheme_is_a_choice": "Bomb Rush Cyberfunk has six boroughs. A terminal is the half of that game which is ARCHITECTURE rather than terrain, and architecture is what a theme pack ships. Not Versum Hill's rooftops, not Mataan, not Pyramid Island.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Constants.THEME_BY_GAME_HINT names the same family this pack's material culture points at. T01 agreed too; T02 did not. The hint is USUALLY right and cannot be relied on, which is worse than always wrong because nobody notices the one case. See COVERAGE.md section 3.",
+    "theme_hint_says": "neon_transit",
+    "triangles": 96
+  },
+  "tp_br_torn_rail": {
+    "anchor": "floor",
+    "batch": "057",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "floor dressing that was RIDDEN OFF, where T01's grew and T02's fell: a rail section still carrying one stanchion and another's ripped baseplate",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_bomb_rush_cyberfunk",
+    "painted_with": "neon_transit",
+    "parts": [
+      "br_rl_bend",
+      "br_rl_post_a",
+      "br_rl_post_b",
+      "br_rl_flange",
+      "br_rl_sticker"
+    ],
+    "path": "batch057/brink/tp_br_torn_rail.glb",
+    "size": [
+      1.649,
+      0.429,
+      0.26
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "BRINK TERMINAL, AFTER HOURS -- the concourse with the shutters down, the board dark, one strip light out, and the tags that only happen when nobody is watching",
+    "subtheme_is_a_choice": "Bomb Rush Cyberfunk has six boroughs. A terminal is the half of that game which is ARCHITECTURE rather than terrain, and architecture is what a theme pack ships. Not Versum Hill's rooftops, not Mataan, not Pyramid Island.",
+    "texel_density": 31.9,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Constants.THEME_BY_GAME_HINT names the same family this pack's material culture points at. T01 agreed too; T02 did not. The hint is USUALLY right and cannot be relied on, which is worse than always wrong because nobody notices the one case. See COVERAGE.md section 3.",
+    "theme_hint_says": "neon_transit",
+    "triangles": 72
+  },
+  "tp_br_validator_plate": {
+    "anchor": "floor",
+    "batch": "057",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "batch043's wall-switch contract as a ticket validator: tap pad, paddle, lamp bezel",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_bomb_rush_cyberfunk",
+    "painted_with": "neon_transit",
+    "parts": [
+      "br_vl_pad",
+      "br_vl_paddle",
+      "br_vl_bezel",
+      "br_vl_kick"
+    ],
+    "path": "batch057/brink/tp_br_validator_plate.glb",
+    "size": [
+      0.44,
+      0.235,
+      0.54
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "BRINK TERMINAL, AFTER HOURS -- the concourse with the shutters down, the board dark, one strip light out, and the tags that only happen when nobody is watching",
+    "subtheme_is_a_choice": "Bomb Rush Cyberfunk has six boroughs. A terminal is the half of that game which is ARCHITECTURE rather than terrain, and architecture is what a theme pack ships. Not Versum Hill's rooftops, not Mataan, not Pyramid Island.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_agrees": "Constants.THEME_BY_GAME_HINT names the same family this pack's material culture points at. T01 agreed too; T02 did not. The hint is USUALLY right and cannot be relied on, which is worse than always wrong because nobody notices the one case. See COVERAGE.md section 3.",
+    "theme_hint_says": "neon_transit",
+    "triangles": 60
+  }
+}

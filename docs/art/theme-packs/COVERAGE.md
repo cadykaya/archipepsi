@@ -13,8 +13,8 @@ into "81 packs exist".
 |---|---|
 | **CATALOGUE coverage** | **81 of 81.** Every included Archipelago game has a row, a queue id and a reserved pack id. This is a list, and a list is not art. |
 | **COMPLETED pack coverage** | **0 of 81.** Nothing has passed the bar in *What counts as a completed pack* below. |
-| **IN PROGRESS** | **2** — `tp_ocarina_of_time` (T01) and `tp_super_mario_64` (T02): content built and applied in engine, material treatment still missing on both. |
-| **NOT STARTED** | **79.** |
+| **IN PROGRESS** | **3** — `tp_ocarina_of_time` (T01), `tp_super_mario_64` (T02) and `tp_bomb_rush_cyberfunk` (T03): content built and applied in engine, material treatment still missing on all three. |
+| **NOT STARTED** | **78.** |
 
 **Catalogue snapshot:** `catalogue.json`, taken 2026-09-22 from
 `https://archipelago.gg/games` ("Currently Supported Games").
@@ -31,7 +31,7 @@ here.
 
 ## The two things a reader should know before the table
 
-### 1. Two rows have assets. Nothing has passed the completion bar.
+### 1. Three rows have assets. Nothing has passed the completion bar.
 
 Archipepsi's six theme families — `concrete_facility`,
 `rusted_industrial`, `neon_transit`, `gothic_stone`, `temple_ruin`,
@@ -45,11 +45,19 @@ the thing missing from both is the biggest one: their material
 treatment, which §3 below explains there is nowhere to file. A pack
 painted in a house family is a pack wearing another pack's clothes.
 
-**T02 also found that the hint and the subject can disagree.**
-`THEME_BY_GAME_HINT` maps Super Mario 64 to `concrete_facility`; a clock
-movement's nearest family BY MATERIAL is `rusted_industrial`. The hint
-picks a family by GAME and a treatment follows what a pack is MADE OF.
-Two questions, one field — which is §2 and §3 arriving together.
+**T03 `tp_bomb_rush_cyberfunk` has six** (Batch 057) and its own
+(`docs/art/review/brink_2026-09-22/`). Same shell, same four cameras as
+T01 and T02, so the three compare frame for frame.
+
+**THE HINT IS USUALLY RIGHT, AND THAT IS THE PROBLEM.** T01's hint,
+material and subject agreed. T03's agreed. **T02's did not** —
+`THEME_BY_GAME_HINT` maps Super Mario 64 to `concrete_facility` and a
+clock movement's nearest family BY MATERIAL is `rusted_industrial`. The
+hint picks a family by GAME; a treatment follows what a pack is MADE OF.
+Two questions, one field. A hint that is always wrong gets noticed; one
+that is right two times in three does not. Recorded per pack as
+`theme_hint_says` / `theme_hint_agrees` in each manifest, so agreement
+is data rather than silence. This is §2 and §3 arriving together.
 
 **Every other row is `not started` and says so.**
 
@@ -167,7 +175,9 @@ completion: the verdict column is.**
 | `tp_ocarina_of_time` | yes — Forest Temple, chosen over an average of Ocarina's environments | yes — 6 assets, Batch 054 | yes — floor root mass, timber-hooded torch alcove | **NO** — painted in `temple_ruin`; §3, no pack namespace to file its own set in | yes — 4 frames, `forest_temple_2026-09-22/`, opening re-checked on the IMPORTED geometry | yes — 2.4 × 3.2 opening clear, no collider, no light, no foothold added | not started | **IN PROGRESS** |
 | `tp_super_mario_64` | yes — Tick Tock Clock, the clockwork half of the packet's "Clockwork Garden"; the courtyard is the stated second subtheme and is not built | yes — 6 assets, Batch 056 | yes — fallen clock hand, pendulum fitting | **NO** — painted in `rusted_industrial`, the nearest family by MATERIAL, which is not the family the hint names either; §2 and §3 | yes — 4 frames, `clockwork_2026-09-22/`, same shell and same four camera positions as T01 | yes — same three Blender gates via `packgates`, plus the imported-geometry check | not started | **IN PROGRESS** |
 
-**0 of 81 complete. 2 in progress. 79 not started.**
+| `tp_bomb_rush_cyberfunk` | yes — Brink Terminal after hours: the architecture half of the game, not its terrain | yes — 6 assets, Batch 057 | yes — torn grind rail, strip light with one tube out | **NO** — painted in `neon_transit`, which IS the family the hint names and is still a house family, not this pack's own; §3 | yes — 4 frames, `brink_2026-09-22/`, same shell and cameras as T01 and T02 | yes — `packgates` plus the imported-geometry check, which this pack's shutter guide made stricter in two ways | not started | **IN PROGRESS** |
+
+**0 of 81 complete. 3 in progress. 78 not started.**
 
 ---
 
@@ -185,7 +195,7 @@ progress.
 |---|---|---|---|---|---|---|---|---|
 | T01 | Ocarina of Time | `tp_ocarina_of_time` | Grove Relay Temple — **Forest Temple** subtheme, stated | `temple_ruin` construction | 6: column with a climbing root, split wall relief, timber-hooded torch alcove, timber switch housing, floor root mass, bossed door surround | **content yes** (batch054), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T02 | Super Mario 64 | `tp_super_mario_64` | Clockwork Garden — **Tick Tock Clock** subtheme, stated | `rusted_industrial` construction | 6: gear column with an upright wheel and pinion, parted wall movement, dial door bezel, bent fallen clock hand, pendulum fitting, winding-key escutcheon | **content yes** (batch056), **materials no** (§3) | no | not started — in engine, see the completion ledger |
-| T03 | Bomb Rush Cyberfunk | `tp_bomb_rush_cyberfunk` | Afterhours Municipal Transit | — | — | no | no | not started |
+| T03 | Bomb Rush Cyberfunk | `tp_bomb_rush_cyberfunk` | Afterhours Municipal Transit — **Brink Terminal, after hours** subtheme, stated | `neon_transit` construction | 6: tagged concourse pillar, departure board mid-flip, shuttered gate head, torn grind rail, batten with one tube out, ticket-validator plate | **content yes** (batch057), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T04 | Super Metroid | `tp_super_metroid` | Pressureworks Derelict | — | — | no | no | not started |
 | T05 | Kingdom Hearts 2 | `tp_kingdom_hearts_2` | Twilight Service District | — | — | no | no | not started |
 | T06 | DOOM 1993 | `tp_doom_1993` | Foundry Containment | — | — | no | no | not started |

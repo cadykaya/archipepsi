@@ -4706,6 +4706,73 @@ Evidence: `docs/art/review/clockwork_2026-09-22/`, four frames from
 **Still not complete**, and for the same reason as T01: no material
 treatment, no runtime selection, not imported, no owner review.
 
+
+## Batch 057 — T03, the third game pack. Bomb Rush Cyberfunk, BRINK TERMINAL AFTER HOURS
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_br_concourse_pillar` | 84 tris · 0.80 × 0.80 × 3.60 m · 32.0 texels/m | 6 | tagged and worn through at grind height; the house pillar is clean tile because the house station still has staff in it |
+| `tp_br_board_panel` | 96 tris · 2.16 × 0.41 × 3.00 m · 32.0 texels/m | 7 | a departure board caught MID-FLIP: one slat still turning says "until recently", where a board merely off reads as a missing texture |
+| `tp_br_shutter_head` | 72 tris · 3.08 × 0.48 × 3.56 m · 32.0 texels/m | 5 | the opening is dressed as a shuttered concourse gate — head box, guide lips, bottom rail parked above the head |
+| `tp_br_torn_rail` | 72 tris · 1.65 × 0.43 × 0.26 m · 31.9 texels/m | 5 | floor dressing that was RIDDEN OFF, where T01's grew and T02's fell |
+| `tp_br_strip_light` | 96 tris · 1.28 × 0.20 × 0.18 m · 32.0 texels/m | 7 | a municipal batten with ONE TUBE OUT — the tell is a material difference, never an emissive one |
+| `tp_br_validator_plate` | 60 tris · 0.44 × 0.23 × 0.54 m · 32.0 texels/m | 4 | batch043's wall-switch contract as a ticket validator |
+
+**Subtheme chosen and stated: Brink Terminal, after hours.** Bomb Rush
+Cyberfunk has six boroughs; a terminal is the half of that game which is
+**architecture** rather than terrain, and architecture is what a theme pack
+ships.
+
+**The hint, the material and the subject all agree — and that is the
+finding.** `THEME_BY_GAME_HINT` says `neon_transit`; the nearest family by
+material culture is `neon_transit`; the subtheme is a transit terminal.
+**Three for three.** T01 agreed too. **T02 did not.** Two agreements and one
+disagreement is the shape of the argument for `COVERAGE.md` §3: *the hint is
+usually right and cannot be relied on*, which is a worse problem than a hint
+that is always wrong, because nobody notices the one case. Recorded as
+`theme_hint_agrees` in the manifest — agreement is data too, not silence.
+
+**The hazard band was checked rather than assumed this time.** T02 shipped a
+clock movement in warning stripes before anyone noticed `rusted_industrial`'s
+`trim` IS the universal hazard band. T03 looked first: only that family
+splits `trim` from `trim_plain`, and `neon_transit`'s trim is a **signage
+band** with no danger semantics. `trim` and `accent` are both used
+deliberately here and neither is a warning.
+
+### The gate learned a millimetre, and the harness found a hole in itself
+
+**`packgates.assert_opening_clear` now grazes in WIDTH as well as height.**
+A roller shutter's guide lip has its inner face **on** the opening edge —
+that is what a guide is — and `tp_br_shutter_head` authored it at exactly
+1.20 m. Blender's float32 delivered 1.1999999 and the gate reported an
+intrusion *"by 0.000 m"*. Refusing correct architecture is the fastest way
+to get a gate switched off. **A 5 mm intrusion still fails, and that is
+checked rather than assumed.** Fourth time this lane has learned the same
+lesson: `skiff_sweep` in metres, `manipulation_readiness` in newtons, the
+T01 lintel in height, and now a jamb in width.
+
+**And the in-engine check was wrong in a second way, which its OWN SABOTAGE
+STEP found.** The vertex test caught T01's door boss because that boss has
+corners at 3.00 and 3.20 m. **A roller shutter's guide is one box spanning
+0 to 3.2, whose only vertices are at the extremes the test excludes** — so
+shifted half a metre into the doorway it registered *nothing*, and the run
+failed with "the opening check did not notice a surround shifted 0.5 m into
+the doorway". It now measures **per triangle**, asking the same question
+`packgates` asks per object: does this triangle's box overlap the opening's
+volume by more than a graze, in width **and** height? T01 and T02 were
+re-verified under it and still pass.
+
+**Three wrong versions of one check, and every one was caught by the check
+itself rather than by a reviewer.** That is what the sabotage step is for.
+
+Evidence: `docs/art/review/brink_2026-09-22/`, four frames from the same
+four camera positions in the same shell as T01 and T02.
+
+**Still not complete:** no material treatment, no runtime selection, not
+imported, no owner review.
+
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
 
 **All four large shells are `review: "pass"`.** Three authorities had to
