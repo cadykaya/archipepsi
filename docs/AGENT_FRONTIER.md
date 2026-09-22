@@ -180,6 +180,10 @@ Two things from it that other lanes need:
   the repair is one line and it regenerates every wall and accent in six
   themes, which is a look decision for the owner, not a defect fix.
   `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
+  `tools/content/check_theme_courses.py` prints it on every suite
+  run so it cannot be forgotten; `--strict` turns it into a gate
+  the day somebody rules, and it refuses (exit 3) if
+  `surface_for`'s arithmetic changes under it.
 * **CI is red repository-wide and it is not the art branch's.** Both
   checks die in 3-6 seconds with logs that 404, on PR #5 and equally on
   PR #12's unrelated branch -- before any test body runs. One re-run

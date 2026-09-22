@@ -737,6 +737,10 @@ authored detail near an edge whether or not the texture tiles.
 The yield is `docs/art/review/theme_tiling_2026-09-22/` -- eighteen
 textures tiled 3x3, fourteen of which had never been seen repeating.
 Report: `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
+  `tools/content/check_theme_courses.py` prints it on every suite
+  run so it cannot be forgotten; `--strict` turns it into a gate
+  the day somebody rules, and it refuses (exit 3) if
+  `surface_for`'s arithmetic changes under it.
 
 ### Then
 
