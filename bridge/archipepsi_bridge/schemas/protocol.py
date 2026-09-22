@@ -653,7 +653,12 @@ class SlotAssignment(Strict):
     mobility: str | None = Field(default=None, max_length=32)
     utility: str | None = Field(default=None, max_length=32)
     #: The one that runs out. Its occupant declares `charges`, and
-    #: spending the last one clears this field for good.
+    #: spending the last one does NOT clear this field: the supply is
+    #: permanently owned, so an exhausted one stays selected at
+    #: `0 / max`, says it is exhausted and says what refills it
+    #: (`transitions.spend_charge`). This comment said the opposite,
+    #: which was the behaviour before the owner's ruling of
+    #: 2026-09-22 and never the behaviour after it.
     consumable: str | None = Field(default=None, max_length=32)
 
     def assigned(self) -> tuple[tuple[str, str], ...]:

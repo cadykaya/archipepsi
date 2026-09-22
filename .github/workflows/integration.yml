@@ -150,6 +150,9 @@ jobs:
           make godot-archive
           make godot-consumable
 
+      - name: One consumable charge, from a keypress to the save
+        run: make godot-consumable-live
+
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live
 

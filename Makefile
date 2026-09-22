@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -498,6 +498,9 @@ QUIET_SAVES := $(CURDIR)/.integration-saves-quiet
 # reading.
 VARIANT_SAVES := $(CURDIR)/.integration-saves-variant
 JOURNEY_SAVES := $(CURDIR)/.journey-saves
+# And the consumable sequence's own folder. It is SEEDED between two
+# bridge runs, so it must never be a directory anyone else is using.
+CONSUMABLE_SAVES := $(CURDIR)/.consumable-saves
 
 # The S2/S5 action-runner suite: press, release, cancel and death, with a
 # real player over a real floor.
@@ -885,6 +888,58 @@ godot-named-case: godot-import
 	  echo "-- printed its report is not a pass: the missing-player"; \
 	  echo "-- crash after a failed build printed one."; \
 	  grep -m5 "SCRIPT ERROR" /tmp/archipepsi-named-case.log; \
+	  exit 1; \
+	fi
+
+# THE CONSUMABLE SPEND, END TO END. Three phases, and the middle one is
+# why this is not a single command:
+#
+#   1. A bridge makes a real campaign, through the real `on_ap_ready`.
+#      The driver connects, asks for it and stops.
+#   2. `tools/give_consumable.py` appends one interpretation to that
+#      save. The fallback provider does not emit a `consumable`-slot
+#      Action -- the slot is staged -- and this target is about the
+#      expenditure rather than about generation.
+#   3. A bridge is started again on the seeded save, and the driver
+#      plays the sequence: an accepted use, a deduction held across a
+#      round trip, a refusal that names what it refused, presses made
+#      with the socket down and resent on reconnect, and the empty
+#      supply. The measure is EFFECTS RUN against CHARGES AUTHORISED.
+#
+# The bridge is stopped between phases on purpose: a live engine holds
+# the campaign in memory and would write it back over the seed.
+godot-consumable-live: godot-import
+	rm -rf $(CONSUMABLE_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(CONSUMABLE_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --consumable-live --seed-only \
+	  > /tmp/archipepsi-consumable-seed.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	if [ $$STATUS -ne 0 ]; then \
+	  tail -20 /tmp/archipepsi-consumable-seed.log; \
+	  echo "-- no campaign was created; there is nothing to seed"; \
+	  exit $$STATUS; \
+	fi
+	cd bridge && PYTHONPATH=. $(PY) tools/give_consumable.py \
+	  $(CONSUMABLE_SAVES) --charges 4
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(CONSUMABLE_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not restart"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --consumable-live \
+	  > /tmp/archipepsi-consumable-live.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; \
+	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" \
+	  /tmp/archipepsi-consumable-live.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	grep -q "GODOT CONSUMABLE LIVE TESTS OK" \
+	  /tmp/archipepsi-consumable-live.log || exit 1; \
+	if grep -qE "SCRIPT ERROR" /tmp/archipepsi-consumable-live.log; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \
 	fi
 
