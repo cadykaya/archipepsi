@@ -506,13 +506,25 @@ func _the_room_is_not_clear_until_every_body_is() -> void:
 
 
 
-## EVERY ENEMY PROJECTILE CURRENTLY IN THE WORLD. A shot that was fired
-## and went nowhere is a different finding from a shot that was never
-## fired, and the count is what tells them apart.
+## EVERY ENEMY SHOT CURRENTLY IN THE WORLD. A shot that was fired and
+## went nowhere is a different finding from a shot that was never fired,
+## and the count is what tells them apart.
+##
+## **BY SHAPE, NOT BY TYPE.** `EnemyProjectile` is an inner class of
+## `enemy.gd`, so it is not a global name and the first version of this
+## referenced it anyway: the driver would not compile, and the run that
+## was supposed to answer the ranged/artillery question timed out
+## instead. `counterfire_driver` already solves this the same way —
+## an `Area3D` carrying `speed` and `direction` is an enemy shot.
+##
+## Scoped to the driver's own children rather than the whole tree: a
+## recursive `find_children` from the root, called inside a per-frame
+## check, is its own hang.
 func _projectiles() -> int:
 	var n := 0
-	for node: Node in get_tree().root.find_children(
-			"*", "Node3D", true, false):
-		if node is EnemyProjectile:
+	for child: Node in get_children():
+		var area := child as Area3D
+		if area != null and area.get("speed") != null \
+				and area.get("direction") != null:
 			n += 1
 	return n
