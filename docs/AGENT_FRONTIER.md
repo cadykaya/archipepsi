@@ -185,22 +185,44 @@ Two things from it that other lanes need:
   cases examined closely it flagged authored structure, not a defect,
   so no texture was changed.
   `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
-* **EVERY WALL AND ACCENT TEXTURE BREAKS ITS OWN PANEL RHYTHM AT THE
-  TILE EDGE, IN ALL SIX THEMES.** `materials.surface_for()` lays courses
-  at `range(0, size, pitch)` with `pitch = 38` and `size = 128`, which
-  does not divide: the courses run 0, 38, 76, 114 and then the tile
-  wraps 14 px later instead of 38. Measured on the shipped PNGs --
-  `concrete_facility_wall` 38/38/38 then **14**, `temple_ruin_wall`
-  19 x 6 then **14**, `gothic_stone_wall` 13 x 9 then **4**. On a tall
-  wall the rhythm is even for 3.6 m and then breaks, every 4 m. Present
-  since Batch 001; nothing had ever looked at a repeat. **NOT FIXED** --
-  the repair is one line and it regenerates every wall and accent in six
-  themes, which is a look decision for the owner, not a defect fix.
-  `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
-  `tools/content/check_theme_courses.py` prints it on every suite
-  run so it cannot be forgotten; `--strict` turns it into a gate
-  the day somebody rules, and it refuses (exit 3) if
-  `surface_for`'s arithmetic changes under it.
+* **THE COURSE RHYTHM BREAKS AT THE TILE EDGE, AND IT TOOK THREE TRIES
+  TO SAY WHY.** A 128 px tile covers 4 m; anything drawn with
+  `range(0, size, step)` repeats at `step` inside the tile and at
+  `size % step` across its edge. **Three live paths** compute such a
+  step: `materials.surface_for()`'s seams at 1.2 m = 38 px (which paint
+  no line, but aim `near_seams()` speckle at thirteen call sites, place
+  every `bolts()` row and start two weep-streak loops);
+  `paintkit.panel_grid`, at 1.2/1.35/2.0/0.90/0.60/0.55/0.40/0.30 m per
+  treatment and per axis; and inline loops inside the treatments at
+  dimensions `panel_grid` never sees -- ribs 1.0 m, soffit ribs 0.6 m,
+  station tile 0.30 m, mortar joint 0.42 m, masonry course/block pairs,
+  seven bolt pitches from 0.18 to 0.5 m. `paintkit.panel_seams` is the
+  only dead one.
+  **The first two accounts of this were wrong and are recorded as wrong**
+  in `check_theme_courses.py` and `build_theme_candidate.py`: "it is
+  `surface_for`" and then, over-correcting, "`surface_for` paints
+  nothing, it is `panel_grid`". A `panel_grid`-only shim left
+  `concrete_facility_wall_ribbed` byte-identical -- that branch takes no
+  `panel_grid` call at all and still measures a 38 px rhythm -- which is
+  how the incompleteness was caught rather than argued.
+  **CANDIDATE PREPARED, NOT APPLIED.** `paintkit.SNAP_COURSES` (off by
+  default) snaps every wrapping pitch to a divisor of the tile;
+  `build_theme_candidate.py` turns it on and writes 37 textures to
+  `assets/textures/theme_candidate/`. Shipped measures 4 broken
+  axis/texture pairs, the candidate 0. The shipped set rebuilds
+  byte-identical with the flag off, proven by `check_art_current.sh`,
+  not asserted. **The cost is real:** the divisors of 128 are the powers
+  of two, so 1.35 m has nowhere nearer than 1.0 m and gothic_stone's
+  masonry lands on an exact 2:1 course-to-block that reads more
+  mechanical than the laid wall it replaces. 18 of 22 pitches move.
+  **A LOOK DECISION FOR THE OWNER.** Evidence:
+  `docs/art/review/course_candidate_2026-09-22/` (24 m of wall, six
+  repeats, shipped above and candidate below in one frame, plus the
+  shipped shell twice with one set each);
+  `docs/art/reports/2026-09-22-course-candidate.md`.
+  `tools/content/check_theme_courses.py` prints the measurement on every
+  suite run; `--strict` turns it into a gate the day somebody rules, and
+  it refuses (exit 3) if any of the three paths changes under it.
 * **CI is red repository-wide and it is not the art branch's.** Both
   checks die in 3-6 seconds with logs that 404, on PR #5 and equally on
   PR #12's unrelated branch -- before any test body runs. One re-run

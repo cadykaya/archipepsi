@@ -738,14 +738,29 @@ structure: `void_glitch_wall`'s line is the theme's own declared trim
 the texture, its join stepping 2.2 of 255. `wrap_join` trips on
 authored detail near an edge whether or not the texture tiles.
 
-**Nothing was regenerated and the theme set is fine on this evidence.**
-The yield is `docs/art/review/theme_tiling_2026-09-22/` -- eighteen
-textures tiled 3x3, fourteen of which had never been seen repeating.
-Report: `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
-  `tools/content/check_theme_courses.py` prints it on every suite
-  run so it cannot be forgotten; `--strict` turns it into a gate
-  the day somebody rules, and it refuses (exit 3) if
-  `surface_for`'s arithmetic changes under it.
+**CORRECTION, 2026-09-22.** The sentence that stood here -- "nothing was
+regenerated and the theme set is fine on this evidence" -- was wrong, and
+so were the next two attempts to say what was wrong with it. The full
+account is in `docs/art/reports/2026-09-22-course-candidate.md`; the
+short version is that three live paths compute a wrapping course pitch,
+not one, and a candidate correcting all three now exists beside the
+shipped set without replacing it.
+
+The tiling yield stands: `docs/art/review/theme_tiling_2026-09-22/` --
+eighteen textures tiled 3x3, fourteen of which had never been seen
+repeating. Report: `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
+
+**Batch 055 -- the bounded corrected candidate.** `paintkit.SNAP_COURSES`
+(off by default) snaps every wrapping pitch to a divisor of the 128 px
+tile; `build_theme_candidate.py` turns it on and writes 37 textures to
+`assets/textures/theme_candidate/`. The shipped set rebuilds
+byte-identical with the flag off. Shipped measures 4 broken axis/texture
+pairs, the candidate 0. Same-scale evidence, tiled and in engine:
+`docs/art/review/course_candidate_2026-09-22/`.
+`tools/content/check_theme_courses.py [--dir <set>] [--lines]` prints the
+measurement on every suite run; `--strict` turns it into a gate the day
+somebody rules, and it refuses (exit 3) if any of the three paths changes
+under it. **Not applied, not imported, not runtime-bound, not approved.**
 
 ### Then
 
