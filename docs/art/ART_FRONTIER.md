@@ -903,9 +903,40 @@ docstring says a colour that marks everything marks nothing -- so it is
 spent on the blast chevrons and the keycard lamp column and nowhere else.
 Third family whose `trim`/`accent` semantics had to be read before use.
 
+### T07 — Dark Souls III, THE HIGH WALL OF LOTHRIC. The runway ends here.
+
+Batch 061, `gothic_stone`. Seven packs, one shell, four cameras, the
+switch housing in the same place in all seven frames.
+
+**T06 counted two families remaining and was wrong. It is one, and this
+was it.** `void_glitch` is unusable: Archipepsi's own missing-texture
+theme, an editor checkerboard with `null` written across it, mapped to
+Archipepsi itself. **Every pack from T08 must share pixels with an
+earlier pack or wait for the namespace. 74 packs are behind.**
+
+**A FOURTH GATE: `packgates.assert_fits_corridor`** -- nothing a pack
+ships may exceed `corridor_height` (3.6 m). T02's dial mark reached 3.78,
+T03's shutter head 3.62, T07's springers 3.68. Three packs poking through
+a ceiling, and the only thing that ever noticed was a human reading the
+manifest's `size`. Unconditional in `packkit.build`.
+
+**And one thing no gate can say.** T07's springing was two stepped
+wedges; `assert_parts_touch` was satisfied by a 14 cm overlap and the
+frame showed a staircase hanging in mid-air. A gate can say a thing is
+attached; it can never say it is legible.
+
+### THE PACK QUEUE IS BLOCKED AT T08, and that is the state to wake into
+
+T08 cannot be authored honestly without either the pack namespace
+(`COVERAGE.md` §3) or an owner ruling that a recolour-shaped pack is
+acceptable as an interim. **Art's answer is that it is not, and T05 is
+the evidence.** Unblocked work meanwhile: **A15** (item/Forge modules),
+**A16** (finish the six theme families), **A17-A19**. The course
+candidate (Batch 055) also awaits a ruling.
+
 ### Then
 
-**T07 onward** through T18 plus the 63 from the catalogue snapshot,
+**T08 onward** through T18 plus the 63 from the catalogue snapshot,
 **A15** (item/Forge modules), **A16** (finish the six theme families),
 **A17-A19** (detail/dressing library, actual-consumer trials and budget
 passes, final catalogue).

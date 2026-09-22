@@ -197,6 +197,27 @@ Two things from it that other lanes need:
   to it** -- five `verify` runs modified six tracked fixtures by
   checkpointing their WAL; restored.
   `docs/art/reports/2026-09-22-glyph-toolchain-trial.md` §5.
+* **T07 (Dark Souls III, THE HIGH WALL OF LOTHRIC) IS THE LAST PACK WITH
+  A HOUSE FAMILY OF ITS OWN.** Batch 061, `gothic_stone`. T06 counted
+  two families remaining and was wrong: **`void_glitch` is unusable** --
+  it is Archipepsi's own missing-texture theme, an editor checkerboard
+  with the word `null` across it, mapped to Archipepsi itself. A game
+  pack painted in it would mean "this texture failed to load".
+  **So every pack from T08 must share pixels with an earlier pack or
+  wait for the namespace, and 74 packs are behind.** T06's report
+  carries the correction in place.
+* **A FOURTH GATE: `packgates.assert_fits_corridor`.** Nothing a pack
+  ships may exceed `corridor_height` (3.6). T02's dial mark reached
+  3.78, T03's shutter head 3.62, T07's springers 3.68 -- three packs
+  poking through a ceiling, and the only thing that ever noticed was a
+  human reading the manifest's `size` field. Unconditional in
+  `packkit.build`; caught T07 and cleared the other six.
+* **And one thing no gate can say.** T07's buttress springing was two
+  stepped wedges, `assert_parts_touch` was satisfied by a 14 cm overlap,
+  and the frame showed a staircase hanging in mid-air. **A gate can say
+  a thing is attached; it can never say it is legible.** That is the
+  case for the in-engine frames existing at all.
+  `docs/art/review/lothric_2026-09-22/README.md`.
 * **T06 (DOOM 1993, THE UAC TECHBASE) makes six packs -- AND THE FAMILY
   RUNWAY IS NOW A DEADLINE.** Batch 060, `concrete_facility`.
   T05 proved two packs sharing a house family read as one place. The
