@@ -40,7 +40,7 @@ def _room(rid: str) -> dict:
             "enemies": [{"archetype": "melee", "count": 1}]}
 
 
-def _zone(graphs=None) -> Zone:
+def _zone(graphs=None, edges=None) -> Zone:
     body = {
         "schema_version": 7, "zone_id": "zone_001", "display_name": "Relay",
         "target_game": "Game", "theme": "void_glitch",
@@ -48,7 +48,15 @@ def _zone(graphs=None) -> Zone:
     }
     if graphs is not None:
         body["room_graphs"] = graphs
+    if edges is not None:
+        body["edges"] = edges
     return TypeAdapter(Zone).validate_python(body)
+
+
+def _edge(**over) -> dict:
+    base = {"edge_id": "e_c001_c002", "room_a": "c001", "room_b": "c002"}
+    base.update(over)
+    return base
 
 
 # --------------------------------------------------------------------------
@@ -191,3 +199,176 @@ def test_the_plate_reads_a_class_and_not_a_mass():
 
 def test_a_zone_declaring_no_graphs_is_unchanged():
     assert _zone().room_graphs == ()
+
+
+# --------------------------------------------------------------------------
+# P14 — the chain on a route, and what it may cost the player.
+#
+# Prod named this half in 5124695: "Putting a graph on the route needs the
+# declaration to carry the gate, and that is a schema change with Dess's
+# half in it." The gate goes on the EDGE, because reachability reads
+# edges; the Zone ties it to the actuator so neither end can exist alone.
+# --------------------------------------------------------------------------
+
+_COMPOSED: list = []
+
+
+def composed() -> Zone:
+    """The really-composed Zone, built once.
+
+    A hand-built body cannot carry these cases: a `JOINED` edge must be
+    named by two door assignments, and inventing a pair here would be
+    inventing the layout the composer produces.
+    """
+    if not _COMPOSED:
+        from archipepsi_bridge.playtest import played_zone
+        zone = played_zone()
+        assert zone is not None, "the composition path produced no Zone"
+        _COMPOSED.append(zone)
+    return _COMPOSED[0]
+
+
+def gated(zone: Zone, *, requires_class="MEDIUM", actuator="service_shutter",
+          graph_room=None, edge_index=0, opened_by=None) -> Zone:
+    """Re-validate a composed Zone whose first edge a machine opens.
+
+    `Zone.model_validate`, never `model_copy`: a copy skips every
+    validator, and a test that skipped them would be asserting that a
+    dictionary can hold a key.
+    """
+    raw = zone.model_dump()
+    edge = raw["edges"][edge_index]
+    room = edge["room_a"] if graph_room is None else graph_room
+    raw["room_graphs"] = [{
+        "room_id": room,
+        "sensors": [{"node_id": "recess_plate", "kind": "PRESSURE_PLATE",
+                     "requires_class": requires_class}],
+        "nodes": [{"node_id": "inverted", "kind": "NOT",
+                   "inputs": ["recess_plate"]}],
+        "actuators": [{"actuator_id": actuator, "driven_by": "inverted"}],
+    }]
+    edge["opened_by"] = actuator if opened_by is None else opened_by
+    return Zone.model_validate(raw)
+
+
+def test_a_medium_plate_may_gate_a_route():
+    """The base kit solves it: the player weighs 80 kg, which is MEDIUM,
+    so standing on the plate is the whole interaction."""
+    zone = gated(composed())
+    edge = zone.edges[0]
+    assert edge.opened_by == "service_shutter"
+    assert edge.capability is None, (
+        "a machine in the room is operable from inside the room, so it "
+        "imposes no ordering on the multiworld and needs no capability")
+
+
+def test_a_heavy_plate_may_not_gate_a_route():
+    """And the refusal says why, rather than inventing a prerequisite.
+
+    `HEAVY` starts at 120 kg. The player is 80 and §10.3 caps what they
+    carry at 60, so satisfying it needs a pushed object and therefore a
+    qualified manipulation provider. `graph.Capability` deliberately
+    cannot name that, so the honest answer is that this chain may not
+    gate a route -- not that it gates one on something unwritable.
+    """
+    with pytest.raises(ValidationError) as e:
+        gated(composed(), requires_class="HEAVY")
+    text = str(e.value)
+    assert "demands HEAVY" in text
+    assert "manipulation provider" in text
+    assert "class the base kit can load" in text
+
+
+def test_the_heavy_chain_is_still_legal_when_it_gates_nothing():
+    """It is the ROUTE that is refused, not the machine. The chain the
+    room has run since EX50-033 keeps working as a machine in a room."""
+    zone = _zone([_chain()])
+    assert zone.room_graphs[0].sensors[0].requires_class == "HEAVY"
+    assert all(e.opened_by is None for e in zone.edges)
+
+
+def test_an_edge_opened_by_a_machine_nobody_declares_is_refused():
+    with pytest.raises(ValidationError, match="no room graph declares"):
+        gated(composed(), opened_by="ghost_shutter")
+
+
+def test_a_machine_in_a_room_the_edge_does_not_touch_is_refused():
+    """A door operated from elsewhere is a cross-room relationship, and
+    those go through D-8's declared Zone state -- not through a room
+    graph, which §19.7 rule 2 keeps room-local by construction."""
+    zone = composed()
+    edge = zone.edges[0]
+    far = next(c.id for c in zone.chambers
+               if c.id not in (edge.room_a, edge.room_b))
+    with pytest.raises(ValidationError, match="does not touch|Zone state"):
+        gated(zone, graph_room=far)
+
+
+def test_a_gate_that_rests_closed_is_the_held_requirement_again():
+    """The case the NOT chain never reaches, which is why it is written.
+
+    Drive the shutter straight off the plate and it rests CLOSED: the
+    player must stand on the plate to open the door and then walk
+    through it, which is not one action. That is D-8 §11.2's held
+    cross-room requirement wearing a room graph, and §19.2's answer is
+    `LATCH`, which nothing implements.
+    """
+    raw = composed().model_dump()
+    edge = raw["edges"][0]
+    raw["room_graphs"] = [{
+        "room_id": edge["room_a"],
+        "sensors": [{"node_id": "recess_plate", "kind": "PRESSURE_PLATE",
+                     "requires_class": "MEDIUM"}],
+        "nodes": [],
+        # Driven by the SENSOR, with no inversion in between.
+        "actuators": [{"actuator_id": "service_shutter",
+                       "driven_by": "recess_plate"}],
+    }]
+    edge["opened_by"] = "service_shutter"
+    with pytest.raises(ValidationError) as e:
+        Zone.model_validate(raw)
+    text = str(e.value)
+    assert "rests CLOSED" in text
+    assert "LATCH" in text
+
+
+def test_the_resting_value_counts_inversions_rather_than_guessing():
+    """Two NOTs is an inversion of an inversion, which rests closed
+    again -- so the check has to count them, not look for the word."""
+    from archipepsi_bridge.schemas import signal_graph as G
+    one = G.RoomGraph.model_validate(_chain())
+    assert G.resting_output(one, "service_shutter") is True
+    two = G.RoomGraph.model_validate(_chain(nodes=[
+        {"node_id": "inverted", "kind": "NOT", "inputs": ["recess_plate"]},
+        {"node_id": "again", "kind": "NOT", "inputs": ["inverted"]}],
+        actuators=[{"actuator_id": "service_shutter",
+                    "driven_by": "again"}]))
+    assert G.resting_output(two, "service_shutter") is False
+
+
+def test_the_base_kit_derivation_is_arithmetic_not_opinion():
+    """Both routes to a loaded plate, and neither reaches HEAVY."""
+    from archipepsi_bridge.schemas import physics as PH
+    assert PH.mass_class(PH.PLAYER_MASS_KG) == "MEDIUM"
+    assert PH.mass_class(PH.CARRY_MASS_KG) == "MEDIUM"
+    assert PH.mass_class(PH.MASS_MEDIUM_BELOW) == "HEAVY"
+    assert PH.base_kit_can_satisfy("MEDIUM")
+    assert not PH.base_kit_can_satisfy("HEAVY")
+
+
+def test_raising_the_carry_line_would_change_the_answer():
+    """Sabotage: the refusal must follow the arithmetic, not a literal.
+
+    If someone moved §10.3's line past 120 kg, a HEAVY plate WOULD be
+    loadable by hand and this gate would become legal. The check has to
+    notice that rather than refusing `HEAVY` by name.
+    """
+    from archipepsi_bridge.schemas import physics as PH
+    original = PH.CARRY_MASS_KG
+    try:
+        PH.CARRY_MASS_KG = 200.0
+        assert PH.base_kit_can_satisfy("HEAVY"), (
+            "the derivation refuses HEAVY by name rather than by mass")
+    finally:
+        PH.CARRY_MASS_KG = original
+    assert not PH.base_kit_can_satisfy("HEAVY")

@@ -27,9 +27,10 @@ try:  # works standalone and when copied into a package
         EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
         TopologyEdge, ZoneKeySpec)
     from .physics import (
-        CARRY_MASS_KG, STATE_VECTOR_BOUND, carriable_by_hand,
+        CARRY_MASS_KG, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
+        base_kit_can_satisfy, carriable_by_hand,
         state_vector_product)
-    from .signal_graph import RoomGraph
+    from .signal_graph import RoomGraph, resting_output
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
@@ -37,9 +38,10 @@ except ImportError:  # pragma: no cover
         EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
         TopologyEdge, ZoneKeySpec)
     from physics import (
-        CARRY_MASS_KG, STATE_VECTOR_BOUND, carriable_by_hand,
+        CARRY_MASS_KG, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
+        base_kit_can_satisfy, carriable_by_hand,
         state_vector_product)
-    from signal_graph import RoomGraph
+    from signal_graph import RoomGraph, resting_output
 
 #: Every joining socket name a procedural room can be given, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
@@ -1639,6 +1641,85 @@ class Zone(Strict):
                 raise ValueError(
                     f"a signal graph names room '{graph.room_id}', which "
                     "this Zone does not have")
+        return self
+
+    @model_validator(mode="after")
+    def _a_gated_edge_and_its_machine_agree_about_what_it_costs(self):
+        """P14. An edge opened by a machine, and the machine's price.
+
+        Three ways this can be a lie, all refused:
+
+        **The edge names an actuator nothing declares.** Then the route
+        search sees a gate with no way through it and the Zone is
+        unsolvable for a reason no message would name.
+
+        **The machine is not in a room the edge touches.** A shutter
+        opened from somewhere else is a cross-room relationship, which
+        is D-8's business and goes through a declared Zone-state
+        variable -- not through a room graph, which §19.7 rule 2 keeps
+        room-local by construction.
+
+        **The chain demands more of the player than the edge admits.**
+        A `PRESSURE_PLATE` reads a semantic class (§20.6). The player's
+        own body is `MEDIUM` and §10.3 caps what they can carry at
+        `MEDIUM` too, so a `HEAVY` plate demands a pushed object and a
+        pushed object demands a qualified manipulation provider. That
+        is a capability, and `graph.Capability` deliberately cannot
+        name it -- so such a chain may not gate a route at all, rather
+        than gating one on a prerequisite that would have to be
+        invented to write it down.
+        """
+        gated = [e for e in self.edges if e.opened_by is not None]
+        if not gated:
+            return self
+        by_actuator = {a.actuator_id: graph
+                       for graph in self.room_graphs
+                       for a in graph.actuators}
+        for edge in gated:
+            graph = by_actuator.get(edge.opened_by)
+            if graph is None:
+                raise ValueError(
+                    f"edge '{edge.edge_id}' is opened by "
+                    f"'{edge.opened_by}', which no room graph declares; "
+                    "the route search would see a gate with nothing on "
+                    "the other side of it")
+            if graph.room_id not in (edge.room_a, edge.room_b):
+                raise ValueError(
+                    f"edge '{edge.edge_id}' joins '{edge.room_a}' and "
+                    f"'{edge.room_b}', and the machine that opens it is "
+                    f"in '{graph.room_id}'. A door operated from a room "
+                    "it does not touch is a cross-room relationship: "
+                    "declare it as Zone state (D-8), not as a room "
+                    "graph, which is room-local by construction")
+            if not resting_output(graph, edge.opened_by):
+                raise ValueError(
+                    f"edge '{edge.edge_id}' is opened by "
+                    f"'{edge.opened_by}', which rests CLOSED -- so the "
+                    "player has to hold it open to walk through it. The "
+                    "base-kit way to load a plate is to stand on it, and "
+                    "standing on a plate is not something you do while "
+                    "walking through a doorway; that is D-8 §11.2's held "
+                    "cross-room requirement, which is UNSUPPORTED. §19.2 "
+                    "names LATCH for exactly this and nothing implements "
+                    "it yet. A chain that rests OPEN may gate a route "
+                    "today, because closing one strands nobody")
+            for sensor in graph.sensors:
+                if sensor.requires_class is None:
+                    continue
+                if base_kit_can_satisfy(sensor.requires_class):
+                    continue
+                raise ValueError(
+                    f"edge '{edge.edge_id}' is gated by sensor "
+                    f"'{sensor.node_id}', which demands "
+                    f"{sensor.requires_class}. The player weighs "
+                    f"{PLAYER_MASS_KG:g} kg and §10.3 caps what they "
+                    f"carry at {CARRY_MASS_KG:g} kg, so satisfying it "
+                    "needs a pushed object and therefore a qualified "
+                    "manipulation provider -- a capability this "
+                    "contract cannot name, so this chain may not gate a "
+                    "route. Put the machine's consequence inside the "
+                    "room, or give the plate a class the base kit can "
+                    "load")
         return self
 
     @model_validator(mode="after")

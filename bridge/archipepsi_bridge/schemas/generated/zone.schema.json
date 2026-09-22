@@ -1460,6 +1460,20 @@
           "default": null,
           "title": "Capability"
         },
+        "opened_by": {
+          "anyOf": [
+            {
+              "maxLength": 24,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Opened By"
+        },
         "requires_state": {
           "default": [],
           "items": {

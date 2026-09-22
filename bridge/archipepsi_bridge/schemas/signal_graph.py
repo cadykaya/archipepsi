@@ -166,6 +166,37 @@ class ActuatorBinding(Strict):
         return self
 
 
+def resting_output(graph, actuator_id: str) -> bool:
+    """What an actuator reads with nothing touching the room.
+
+    Every supported sensor is FALSE at rest -- a `PRESSURE_PLATE` with
+    nothing on it -- and the one supported logic node is `NOT`, so the
+    resting value of any chain is decided by how many inversions stand
+    between the sensor and the machine. Counting them is the whole
+    computation, and it is exact rather than approximate because the
+    supported vocabulary is two entries wide.
+
+    **Why anything cares.** An actuator that gates a route and rests
+    CLOSED is a door the player has to hold open. The base-kit way to
+    load a plate is to stand on it, and standing on a plate and walking
+    through a doorway are not simultaneous -- which is D-8 §11.2's
+    held cross-room requirement arriving in a room graph. `LATCH` is
+    §19.2's answer and nothing implements it yet.
+    """
+    by_id = {n.node_id: n for n in graph.nodes}
+    binding = next(a for a in graph.actuators if a.actuator_id == actuator_id)
+    value = False           # every supported sensor rests false
+    at = binding.driven_by
+    seen = 0
+    while at in by_id and seen <= len(by_id):
+        node = by_id[at]
+        if node.kind == "NOT":
+            value = not value
+        at = node.inputs[0]
+        seen += 1
+    return value
+
+
 class RoomGraph(Strict):
     """One room's signal graph. Acyclic, room-local, evaluated in a tick.
 

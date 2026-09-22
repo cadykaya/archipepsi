@@ -69,6 +69,64 @@ ENVELOPE_MASS_KG = 120.0
 #: would refuse a qualified host the crate it is authored to push.
 CARRY_MASS_KG = 60.0
 
+#: Design 2 §10.2's class ladder, and §6.1's player.
+#:
+#: Transcribed onto the bridge because something here has to DERIVE
+#: what a mechanism demands of a player, and a ladder that lives only
+#: in `mass_class.gd` is a ladder this side has to guess at. Two
+#: spellings of one fact is the failure; one spelling, exported, is the
+#: fix.
+#:
+#: `PLAYER_MASS_KG` is not decoration: a `PRESSURE_PLATE` reads a
+#: semantic class, so whether the player's own body satisfies one is a
+#: question about this number, and it is the difference between a
+#: puzzle the base kit solves and a puzzle that needs a capability.
+MASS_LIGHT_BELOW = 30.0
+MASS_MEDIUM_BELOW = 120.0
+MASS_HEAVY_BELOW = 400.0
+PLAYER_MASS_KG = 80.0
+
+MASS_CLASSES = ("LIGHT", "MEDIUM", "HEAVY", "FIXED")
+
+
+def mass_class(mass_kg: float, manipulable: bool = True) -> str:
+    """§10.2, derived and never declared.
+
+    A thing that cannot be manipulated at all is `FIXED` whatever it
+    weighs -- §10.2's second clause, and the reason a bolted 5 kg
+    bracket is not `LIGHT`.
+    """
+    if not manipulable or mass_kg >= MASS_HEAVY_BELOW:
+        return "FIXED"
+    if mass_kg >= MASS_MEDIUM_BELOW:
+        return "HEAVY"
+    if mass_kg >= MASS_LIGHT_BELOW:
+        return "MEDIUM"
+    return "LIGHT"
+
+
+def base_kit_can_satisfy(required_class: str) -> bool:
+    """Can a player carrying only the guaranteed kit load a plate that
+    demands this class?
+
+    Two ways, and both are arithmetic rather than opinion:
+
+      THE PLAYER'S OWN BODY. `PLAYER_MASS_KG` is 80, which is `MEDIUM`,
+      so standing on the plate satisfies `LIGHT` and `MEDIUM`.
+      SOMETHING THEY CARRIED. §10.3 caps ordinary pickup at
+      `CARRY_MASS_KG`, which is 60 -- also `MEDIUM`. So a carried
+      object can reach no further up the ladder than the player
+      standing on it already does.
+
+    `HEAVY` starts at 120 kg. Nothing under the carry line reaches it
+    and the player does not weigh it, so a `HEAVY` plate demands a
+    pushed object, which demands a qualified manipulation provider.
+    That is a capability, and it is one `graph.Capability` deliberately
+    cannot name.
+    """
+    heaviest = mass_class(max(PLAYER_MASS_KG, CARRY_MASS_KG))
+    return MASS_CLASSES.index(required_class) <= MASS_CLASSES.index(heaviest)
+
 #: §4.10. The verifier's whole budget, unchanged from Design 3.
 STATE_VECTOR_BOUND = 4096
 

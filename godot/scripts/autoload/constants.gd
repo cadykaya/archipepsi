@@ -228,6 +228,10 @@ const ENVELOPE_MASS_KG = 120.0
 ## that clears 120 kg may push a 100 kg crate and still may not
 ## pick one up.
 const CARRY_MASS_KG = 60.0
+const MASS_LIGHT_BELOW = 30.0
+const MASS_MEDIUM_BELOW = 120.0
+const MASS_HEAVY_BELOW = 400.0
+const PLAYER_MASS_KG = 80.0
 const MANIPULATE_VERBS = ["HOLD", "PULL", "PUSH"]
 
 ## Largest gap a MANDATORY jump may span, landing this much

@@ -147,6 +147,28 @@ class TopologyEdge(Strict):
     #: vacuous rule buys you.
     capability: Capability | None = None
 
+    #: P14. The room-graph ACTUATOR that opens this edge, if a machine
+    #: does. `None` is an edge no mechanism gates.
+    #:
+    #: **On the edge, not on the actuator, and that is deliberate.**
+    #: Reachability reads edges. An actuator that claimed an edge the
+    #: edge itself did not know about would be a physical gate the AP
+    #: logic never declared -- `SOLUTIONS_CATALOGUE` §0-bis's one
+    #: prohibition -- and it would be invisible to every route search.
+    #: The Zone validator ties the two ends together so neither can
+    #: exist alone.
+    #:
+    #: **This is not a third kind of gate for reachability to learn.**
+    #: A machine in a room is operable from inside that room, so it
+    #: imposes no ordering on the multiworld -- unless OPERATING it
+    #: needs something, in which case that something is the edge's
+    #: `capability` and the search already knows how to read it. The
+    #: Zone validator checks the two agree, which is what keeps a
+    #: prerequisite from being invented and an undeclared one from
+    #: slipping through.
+    opened_by: str | None = Field(default=None, max_length=24,
+                                  pattern=r"^[a-z0-9_]+$")
+
     #: D-8. Zone-state this edge requires to be crossable -- the
     #: predicate §5.6 step 6a has always said it evaluates. Empty means
     #: an unconditional edge, which is every edge composed before this,
