@@ -214,10 +214,16 @@ class ZoneProgress(Strict):
     #: carryable is `ZONE_PERSISTENT`.
     #:
     #: **The ROOM, and nothing else about the object.** Its Statuses are
-    #: `EPHEMERAL` by §5.1, so a `BURNING` cell carried three rooms
-    #: arrives having been carried three rooms and not still burning.
-    #: Its transform is not here either, for §5.4a's reason: semantic
-    #: state is restored and physical state is recomputed from it.
+    #: `EPHEMERAL` by §5.1, so they are not written to the save -- a
+    #: cell alight when the player quits is not alight when they load.
+    #:
+    #: **That is a statement about saves and not about doorways**
+    #: (corrected 2026-09-22). Carrying the object between rooms during
+    #: live play is not a reload: a Status on it follows its own
+    #: duration and removal rules, and a doorway cleanse would be an
+    #: invented mechanic. The union's example -- a `BURNING` power cell
+    #: carried three rooms to a generator -- depends on it arriving
+    #: still alight.
     #:
     #: Overwritten rather than accumulated, like `macro_state` and
     #: `resume_anchor`: an object carried back is not a replay to reject.
@@ -286,6 +292,60 @@ class ZoneProgress(Strict):
             "reached_stations": tuple(
                 sorted({*self.reached_stations, station_id})),
             "resume_anchor": station_id})
+
+
+#: §5.1's five persistence categories, and which one each saved field of
+#: `ZoneProgress` belongs to.
+#:
+#: **This replaces a field-NAME scan** (owner correction, 2026-09-22).
+#: The earlier guard failed on any field whose name contained `pose`,
+#: `transform`, `velocity` or `elapsed`, which generalised
+#: `rail_junction.gd`'s supported-dock policy into a universal ban on
+#: physical saved state. EX50-011 §9 asks for the opposite in so many
+#: words: *"carrier poses, destinations and hold states are
+#: package-local. A stable save restores each at its saved pose before
+#: the player."* A runtime comment about one railway does not supersede
+#: a selected spec about another package.
+#:
+#: **The two contracts differ for a stateable reason.** A `RailSpan` is
+#: COMMISSIONABLE: whether its link exists depends on a latch, so a
+#: carrier restored to a transform may be standing on track this build
+#: did not commission, and restoring it to a supported dock is the
+#: safety rule. Passing Platforms' carriers run a fixed schedule on a
+#: path that always exists, so there is nothing for a saved pose to
+#: contradict. Conditional path, restore to a dock; unconditional path,
+#: restore the pose.
+SAVE_FIELD_CATEGORY: dict[str, str] = {
+    "collected_keys": "ROOM_PERSISTENT",
+    "opened_locks": "ROOM_PERSISTENT",
+    "reached_stations": "ROOM_PERSISTENT",
+    "latched": "ROOM_PERSISTENT",
+    "resume_anchor": "ZONE_PERSISTENT",
+    "macro_state": "ZONE_PERSISTENT",
+    "object_rooms": "ZONE_PERSISTENT",
+}
+
+
+def categorise_save_field(name: str, category: str) -> str | None:
+    """Is it legal to persist a field of this category? `None` if so.
+
+    The rule §5.4a actually states, rather than a rule about spelling:
+    a **derived live value** is never serialized, because a save holding
+    one could disagree with the graph that recomputes it. `EPHEMERAL` is
+    precisely the category of things rebuilt rather than restored, so a
+    field in it has no business in a save; every other category is
+    permitted and it is the package's own contract that decides which
+    one applies.
+    """
+    known = {"EPHEMERAL", "PUZZLE_LOCAL", "ROOM_PERSISTENT",
+             "ZONE_PERSISTENT", "AP_PERSISTENT"}
+    if category not in known:
+        return f"'{name}' declares category '{category}', which §5.1 has no row for"
+    if category == "EPHEMERAL":
+        return (f"'{name}' is declared EPHEMERAL and is in a save; §5.1 says "
+                "EPHEMERAL state is rebuilt on restore, so persisting it "
+                "would let the save disagree with what rebuilds it")
+    return None
 
 
 class ZoneRecord(Strict):

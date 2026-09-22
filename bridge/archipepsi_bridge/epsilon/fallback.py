@@ -215,11 +215,15 @@ def _content_room(rng, index: int, lean: bool, step: float,
     if index % 2 and count:
         # `kill_all` with nothing to kill is not a legal objective, so a
         # Zone already at its enemy ceiling gets a traversal room here.
+        # BOUND ONCE. Calling `_arena_shape` twice would draw different
+        # numbers from `rng` and the room would not be the room the
+        # eligibility was computed for.
+        shape = _arena_shape(rng, lean)
         return {
             "id": f"c{index:03d}", "type": "arena",
-            **_arena_shape(rng, lean),
+            **shape,
             "objective": "kill_all",
-            "enemies": [{"archetype": rng.choice(["melee", "ranged"]),
+            "enemies": [{"archetype": rng.choice(_eligible_roles(shape)),
                          "count": count}]}
     return {
         "id": f"c{index:03d}", "type": "platform_path",
@@ -289,11 +293,12 @@ def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
     for index, loc in enumerate(locations):
         kind = ("arena", "platform_path", "arena")[index % 3]
         if kind == "arena":
+            shape = _arena_shape(rng, lean)
             chambers.append({
                 "id": f"c{len(chambers) + 1:03d}", "type": "arena",
-                **_arena_shape(rng, lean),
+                **shape,
                 "objective": "kill_all",
-                "enemies": [{"archetype": rng.choice(["melee", "ranged"]),
+                "enemies": [{"archetype": rng.choice(_eligible_roles(shape)),
                              "count": rng.randint(1, 2 if lean else 5)}],
                 "reward_location_id": loc.location_id})
         else:
@@ -437,7 +442,7 @@ def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
                  "activities": [candidate]}))):
             acts.append(candidate)
             return True
-        enemies, _ = totals()
+        enemies, brutes = totals()
         groups = target.setdefault("enemies", [])
         count = rng.randint(2, 4)
         if (target["type"] != "corridor"
@@ -445,9 +450,31 @@ def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
                 and enemies + count <= enemy_cap
                 and chamber_enemies(target) + count
                 <= C.MAX_ENEMIES_PER_CHAMBER
-                and would_fit(V.ENEMY_VALUE["melee"] * count)):
-            groups.append({"archetype": rng.choice(["melee", "ranged"]),
-                           "count": count})
+                ):
+            # CHARGE THE ROLE THAT IS PLACED. This scored every group at
+            # melee's price and then placed a melee OR a ranged, so half
+            # the groups in a Zone were undercharged by a point before
+            # ten roles made the spread wider.
+            #
+            # AND CHOOSE AMONG THE ROLES THAT FIT. An earlier cut picked
+            # first and gave up if the price did not fit, which pushed
+            # the builder onto the retry loop -- `test_fallback_scale`
+            # caught it by name. Affordability is a third gate beside
+            # geometry and pricing, not a coin toss after the choice.
+            # THE BRUTE CAP IS A REAL RULE AND THE FILLER HAS TO SEE IT.
+            # Before this, a brute reached a Zone only through the
+            # landmark recipe, exactly once. Making it one choice among
+            # ten in the ordinary filler put seven in a 700-point Zone
+            # against a limit of four -- `test_fallback_scale` caught it
+            # as a reroll, which is what that suite is for.
+            affordable = [
+                r for r in _eligible_roles(
+                    target, allow_brute=brutes + count <= brute_cap)
+                if would_fit(V.enemy_value(r) * count)]
+            if not affordable:
+                return False
+            role = rng.choice(affordable)
+            groups.append({"archetype": role, "count": count})
             return True
         return False
 
@@ -654,6 +681,40 @@ MAX_CORRIDOR_WIDTH = 10.0
 #: the variety is in some rooms having one and some not. Not low either,
 #: because a feature the owner meets twice in a Zone cannot be judged.
 BAND_CHANCE = 0.55
+
+
+def _eligible_roles(shape: dict, *, allow_brute: bool = False
+                    ) -> tuple[str, ...]:
+    """Roles this room can hold AND the budget can score.
+
+    P08.2. The composer used to pick from a hard-coded
+    `["melee", "ranged"]` while ten roles had envelopes and behaviour.
+    Two gates, both read from data rather than chosen here:
+    `constants.roles_that_fit` for the geometry, and
+    `content_value.COMPOSABLE_ENEMY_ROLES` for whether a price exists.
+
+    A room whose dimensions are not known falls back to the two roles
+    that fit anything -- not to "all of them", because guessing upward
+    is how a drifter ends up in a crawlspace.
+
+    **`brute` is not ordinary filler, and the default says so.** It is
+    the boss-scale role the landmark recipe places BY NAME, once, which
+    is why it has a Zone-wide cap that nothing else has. Making it one
+    choice among ten put seven in a 700-point Zone against a limit of
+    four; `test_fallback_scale` caught that as a reroll, which is what
+    that suite exists for. A caller that has counted the brutes already
+    placed may pass `allow_brute=True`.
+    """
+    width = shape.get("width")
+    depth = shape.get("depth")
+    height = shape.get("wall_height")
+    if None in (width, depth, height):
+        return ("melee", "ranged")
+    fits = set(C.roles_that_fit(width, depth, height))
+    if not allow_brute:
+        fits.discard("brute")
+    eligible = tuple(r for r in V.COMPOSABLE_ENEMY_ROLES if r in fits)
+    return eligible or ("melee",)
 
 
 def _arena_shape(rng, lean: bool) -> dict:

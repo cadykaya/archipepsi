@@ -483,8 +483,8 @@ migrated.
 |---|---|
 | **P02** acquisition + AP obligation | `.1 .2 .3 .4 .5 .7` done; `.6` is Prod's equipment/gantry consumer |
 | **P03** cross-room state runtime | bridge half done; `ZoneStateSelected` closed P-3's gap |
-| **P04** restart persistence | `.1 .3 .4 .6` bridge half done; `.2 .5` are engine |
-| **P16** transported objects | declaration, save, intent, authority, recovery — `.2` (moving it) is Prod's |
+| **P04** restart persistence | **REOPENED** (owner correction 3). `.1` representation stands. `.3` does NOT: a JSON round trip is serialization evidence, not a cold process restart, and the controls say round trip everywhere they used to say restart. `.4 .6` bridge half stands |
+| **P16** transported objects | **REOPENED** (owner correction 3). The declaration, save, intent, authority and recovery stand as *ownership and reporting* evidence. They are NOT a player-carried route and NOT a completed destination interaction: nothing here moves an object by carrying it, and no consuming mechanism accepts one |
 | **P10.5** Status matrix | the family is data and coverage is computed |
 
 ### Three precise blockers — each blocks only its own subset
@@ -624,3 +624,132 @@ to a working gate while the table is empty.
 and mods, `.4` Epsilon's actual agency, `.5` provider paths, `.6`
 boundary tests — all of which need either the nine costs or a runtime
 consumer.
+
+---
+
+### DESS-11 — four owner corrections, and three of them were my errors
+
+**Dess, 2026-09-22.** Corrections 1, 2, 3 and 4 of the OV04 clarification.
+Three were mistakes in work I had already shipped and reported as sound.
+
+**Correction 4a — I invented a doorway cleanse.** The `TransportedObject`
+docstring said a `BURNING` cell "arrives having been carried three rooms
+and **not still burning**". That conflates what survives a **save** with
+what survives a **doorway**. §5.1 puts `ActiveStatus` in `EPHEMERAL`,
+which is a statement about saves alone; carrying an object between rooms
+in live play is not a reload, and a Status on it follows its own
+duration and removal rules.
+
+The evidence was in my own paragraph: I quoted the union's example —
+*"a `BURNING` power cell carried three rooms to a generator"* — and then
+contradicted it two lines later. That sentence only means anything if
+the cell is still alight when it arrives. Corrected in `zone.py`,
+`protocol.py`, the test and the generated exports, which had carried the
+wrong claim to the engine.
+
+**Correction 4b — I generalised one railway's policy into a universal
+ban.** DESS-05 read `rail_junction.gd`'s supported-dock restore as a
+rule about all physical saved state, and built a guard that failed on
+any field whose NAME contained `pose`, `transform`, `velocity` or
+`elapsed`. **EX50-011 §9 asks for exactly that field**: *"carrier poses,
+destinations and hold states are package-local. A stable save restores
+each at its saved pose before the player."* A runtime comment about one
+package does not supersede a selected spec about another.
+
+The two contracts differ for a reason worth stating: a `RailSpan` is
+**commissionable**, so a carrier restored to a transform may be standing
+on track this build did not commission — restore it to a supported dock.
+Passing Platforms' carriers run a fixed schedule on a path that always
+exists, so a saved pose contradicts nothing. **Conditional path, restore
+to a dock; unconditional path, restore the pose.**
+
+The name scan is replaced by `SAVE_FIELD_CATEGORY` and
+`categorise_save_field`, which check §5.1's five categories. What §5.4a
+forbids is a **derived live value** — something the graph recomputes —
+and `EPHEMERAL` is precisely the category of things rebuilt rather than
+restored. Physical state a package's contract requires is permitted and
+declares its category.
+
+**Correction 2 — provisional pricing, and it unblocked the composer.**
+Seven values chosen against the three anchors and explained one by one
+in `content_value.ENEMY_VALUE`; they are **judgements, not derivations**,
+and revising them is expected. With them the composer places real
+mixtures for the first time:
+
+| | before | after |
+|---|---|---|
+| distinct roles | 3 | **7** |
+| enemy groups | 11 | 11 |
+| enemies | 35 | 39 |
+| enemy score | 128 | **156** |
+
+**Three defects surfaced on the way, and the suites named all three.**
+
+1. **A fourth list of one fact.** `Archetype` in `zone.py` was still
+   `Literal["melee", "ranged", "brute"]` beside `ENEMY_STATS`,
+   `ENEMY_ENVELOPES` and `ENEMY_ARCHETYPES`. The engine could spawn a
+   drifter, the value table could score one, and a Zone naming one would
+   not validate. Derived now.
+2. **The budget was charged at melee's price** whatever was placed, so
+   every `ranged` group was undercharged by a point. Fixed to charge the
+   role chosen.
+3. **Choosing before checking affordability** pushed the builder onto
+   the retry loop — `test_fallback_scale` caught it by name, which is
+   precisely what that suite exists for. Affordability is a third gate
+   beside geometry and pricing, not a coin toss after the choice.
+
+**And `brute` is not ordinary filler.** Making it one choice among ten
+put **seven** brutes in a 700-point Zone against a cap of four. It is
+the boss-scale role the landmark recipe places by name, once, which is
+why it is the only role with a Zone-wide cap. `_eligible_roles` defaults
+to excluding it and a caller that has counted may opt in.
+
+**Correction 1 — P14 is ready work and I was wrong to defer it.** The
+next slice is agreed as an existing room's real chain rather than the
+eleven-node catalogue. Not started in this session.
+
+**Correction 3 — the P04/P16 labels were overbroad.** Reopened below.
+
+### DESS-12 — P04 and P16 reopened: what the evidence actually shows
+
+**Dess, 2026-09-22, owner correction 3.** Both packages were reported
+closed on the bridge half. The work stands; the **labels were wider than
+the evidence**, and here is the exact gap in each.
+
+**P04.3 asked for cold process restarts.** It says so in the unit:
+*"actually terminate and restart the relevant client/bridge processes
+on disposable saves ... verify real world state, remaining Checks and
+usable return, not just serialized JSON equality."* What
+`test_restart_persistence.py` does is
+`CampaignSave.model_validate_json(save.model_dump_json())` — one process,
+no terminate, no relaunch. **That is serialization evidence.** It proves
+the representation round-trips; it proves nothing about a world coming
+back up.
+
+What it would take: terminating the bridge and the client on a
+disposable save at each of P04.3's five points — before grant, after
+grant, after a branch power change, after a span repair, and with the
+carrier away from home — and reading real world state afterwards. The
+client half is Prod's; the bridge half is a harness that stops and
+restarts the process rather than re-parsing a string, and it does not
+exist.
+
+**P16 moved an object by assignment, not by carrying it.**
+`record_object_transported(save, zone, object, room)` is the authority
+and reporting path, and it is correct: it refuses a room outside the
+volume, it refuses an undeclared object, recovery is its own event. What
+it is **not** is a player carrying something. Nothing picks the object
+up, nothing crosses a boundary with it, and **no consuming mechanism
+accepts it at the far end** — P16's generator is a destination with a
+socket that does something when the cell arrives, and there is no such
+consumer anywhere.
+
+So the honest split: **ownership, volume, persistence and recovery are
+done. Transport and consumption are not started.** The transfer message
+exists and nothing sends it from a pair of hands.
+
+**Neither row is discarded and neither is rewritten.** The controls that
+exist keep testing what they always tested; what changes is that they no
+longer stand under a heading claiming more than they show, and
+`test_restart_persistence.py` now says *round trip* wherever it used to
+say *restart*.

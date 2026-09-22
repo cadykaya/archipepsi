@@ -3114,7 +3114,14 @@
             "enum": [
               "melee",
               "ranged",
-              "brute"
+              "brute",
+              "charger",
+              "bulwark",
+              "drifter",
+              "diver",
+              "scuttler",
+              "artillery",
+              "beacon"
             ],
             "title": "Archetype",
             "type": "string"
@@ -5719,7 +5726,7 @@
       },
       "TransportedObject": {
         "additionalProperties": false,
-        "description": "P16 / D-8 lifetime 5. An object the player carries between rooms.\n\n**Neither macro state nor a latch**, which is why \u00a719.7 does not\ncover it: rooms may not write macro state, and an object is not\nmonotone -- you can carry it back. Two settled rules meet here and\nonly one of them needed an amendment:\n\n- **Persistence was already settled by \u00a710.5.** `allowed_volume` is\n  a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`.\n  No amendment, and the union's own example sentence is a `BURNING`\n  power cell carried three rooms to a generator.\n- **Authority was not.** Prod's `D8_CROSS_ROOM_PROD` \u00a74 question 1,\n  accepted and narrowed in D-8 \u00a711.1: a transported object is\n  room-layer state **whose owning room is its current room**, and\n  crossing a boundary is a TRANSFER rather than a write to the\n  machine layer. \u00a719.7 rule 2 stays intact.\n\n**What is NOT here, deliberately.** The object's Statuses. \u00a75.1 puts\nevery `ActiveStatus` in `EPHEMERAL`, so a `BURNING` cell that is\ncarried three rooms arrives having been carried three rooms and not\nstill burning -- unless something sets it alight again. Persisting\nthe Status would make a temporary effect a permanent fact, which is\n\u00a73.1's rule in the one place it is easiest to break by accident.",
+        "description": "P16 / D-8 lifetime 5. An object the player carries between rooms.\n\n**Neither macro state nor a latch**, which is why \u00a719.7 does not\ncover it: rooms may not write macro state, and an object is not\nmonotone -- you can carry it back. Two settled rules meet here and\nonly one of them needed an amendment:\n\n- **Persistence was already settled by \u00a710.5.** `allowed_volume` is\n  a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`.\n  No amendment, and the union's own example sentence is a `BURNING`\n  power cell carried three rooms to a generator.\n- **Authority was not.** Prod's `D8_CROSS_ROOM_PROD` \u00a74 question 1,\n  accepted and narrowed in D-8 \u00a711.1: a transported object is\n  room-layer state **whose owning room is its current room**, and\n  crossing a boundary is a TRANSFER rather than a write to the\n  machine layer. \u00a719.7 rule 2 stays intact.\n\n**What is NOT here, and what that does NOT mean.** The object's\nStatuses are absent from this declaration because \u00a75.1 puts every\n`ActiveStatus` in `EPHEMERAL` -- they are not SAVED.\n\n**CORRECTED, 2026-09-22 (owner).** An earlier revision of this\ndocstring went on to say a `BURNING` cell \"arrives having been\ncarried three rooms and not still burning\", which conflated two\ndifferent things: what survives a save, and what survives a\ndoorway. **Carrying an object between rooms during live play is not\na reload.** A Status on it follows its own duration and removal\nrules; walking through a door is not an event that cleanses\nanything, and inventing a doorway cleanse would be inventing a\nmechanic.\n\nThe paragraph above quotes the union's own example sentence -- *\"a\n`BURNING` power cell carried three rooms to a generator\"* -- which\nonly means anything if the cell is still alight when it gets there.\nThe earlier text contradicted the sentence it had just cited.\n\nWhat remains true: the Status is not written to the save, so a cell\nalight when the player quits is not alight when they load. That is\n\u00a75.1, and it is a statement about saves alone.",
         "properties": {
           "object_id": {
             "maxLength": 24,
@@ -8429,7 +8436,14 @@
             "enum": [
               "melee",
               "ranged",
-              "brute"
+              "brute",
+              "charger",
+              "bulwark",
+              "drifter",
+              "diver",
+              "scuttler",
+              "artillery",
+              "beacon"
             ],
             "title": "Archetype",
             "type": "string"
@@ -10956,7 +10970,7 @@
       },
       "TransportedObject": {
         "additionalProperties": false,
-        "description": "P16 / D-8 lifetime 5. An object the player carries between rooms.\n\n**Neither macro state nor a latch**, which is why \u00a719.7 does not\ncover it: rooms may not write macro state, and an object is not\nmonotone -- you can carry it back. Two settled rules meet here and\nonly one of them needed an amendment:\n\n- **Persistence was already settled by \u00a710.5.** `allowed_volume` is\n  a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`.\n  No amendment, and the union's own example sentence is a `BURNING`\n  power cell carried three rooms to a generator.\n- **Authority was not.** Prod's `D8_CROSS_ROOM_PROD` \u00a74 question 1,\n  accepted and narrowed in D-8 \u00a711.1: a transported object is\n  room-layer state **whose owning room is its current room**, and\n  crossing a boundary is a TRANSFER rather than a write to the\n  machine layer. \u00a719.7 rule 2 stays intact.\n\n**What is NOT here, deliberately.** The object's Statuses. \u00a75.1 puts\nevery `ActiveStatus` in `EPHEMERAL`, so a `BURNING` cell that is\ncarried three rooms arrives having been carried three rooms and not\nstill burning -- unless something sets it alight again. Persisting\nthe Status would make a temporary effect a permanent fact, which is\n\u00a73.1's rule in the one place it is easiest to break by accident.",
+        "description": "P16 / D-8 lifetime 5. An object the player carries between rooms.\n\n**Neither macro state nor a latch**, which is why \u00a719.7 does not\ncover it: rooms may not write macro state, and an object is not\nmonotone -- you can carry it back. Two settled rules meet here and\nonly one of them needed an amendment:\n\n- **Persistence was already settled by \u00a710.5.** `allowed_volume` is\n  a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`.\n  No amendment, and the union's own example sentence is a `BURNING`\n  power cell carried three rooms to a generator.\n- **Authority was not.** Prod's `D8_CROSS_ROOM_PROD` \u00a74 question 1,\n  accepted and narrowed in D-8 \u00a711.1: a transported object is\n  room-layer state **whose owning room is its current room**, and\n  crossing a boundary is a TRANSFER rather than a write to the\n  machine layer. \u00a719.7 rule 2 stays intact.\n\n**What is NOT here, and what that does NOT mean.** The object's\nStatuses are absent from this declaration because \u00a75.1 puts every\n`ActiveStatus` in `EPHEMERAL` -- they are not SAVED.\n\n**CORRECTED, 2026-09-22 (owner).** An earlier revision of this\ndocstring went on to say a `BURNING` cell \"arrives having been\ncarried three rooms and not still burning\", which conflated two\ndifferent things: what survives a save, and what survives a\ndoorway. **Carrying an object between rooms during live play is not\na reload.** A Status on it follows its own duration and removal\nrules; walking through a door is not an event that cleanses\nanything, and inventing a doorway cleanse would be inventing a\nmechanic.\n\nThe paragraph above quotes the union's own example sentence -- *\"a\n`BURNING` power cell carried three rooms to a generator\"* -- which\nonly means anything if the cell is still alight when it gets there.\nThe earlier text contradicted the sentence it had just cited.\n\nWhat remains true: the Status is not written to the save, so a cell\nalight when the player quits is not alight when they load. That is\n\u00a75.1, and it is a statement about saves alone.",
         "properties": {
           "object_id": {
             "maxLength": 24,

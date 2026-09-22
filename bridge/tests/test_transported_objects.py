@@ -103,9 +103,16 @@ def test_carrying_it_back_is_an_event_and_not_a_replay():
 
 
 def test_the_save_records_the_room_and_nothing_else_about_the_object():
-    """P16.5. Its Statuses are EPHEMERAL (§5.1), so a BURNING cell
-    carried three rooms arrives having been carried three rooms and not
-    still burning. Its transform is not here either (§5.4a)."""
+    """P16.5. Its Statuses are EPHEMERAL (§5.1), so they are not written
+    to the save: a cell alight when the player quits is not alight when
+    they load.
+
+    **That is about saves, not doorways** (owner correction,
+    2026-09-22). Carrying the object between rooms in live play is not
+    a reload -- a Status follows its own duration and removal rules, and
+    the union's own example sentence, a BURNING cell carried three rooms
+    to a generator, depends on it arriving still alight.
+    """
     p = P.ZoneProgress().with_object_in(CELL, "c003")
     stored = dict(p.object_rooms)
     assert stored == {CELL: "c003"}
