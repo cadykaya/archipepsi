@@ -4,6 +4,7 @@
  "display_name": "Relay 001: Bomb Rush Cyberfunk",
  "target_game": "Bomb Rush Cyberfunk",
  "theme": "neon_transit",
+ "theme_pack": null,
  "designer_note": "Deterministic fallback zone.",
  "featured_echo_ids": [],
  "chambers": [

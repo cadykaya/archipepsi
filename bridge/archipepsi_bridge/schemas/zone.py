@@ -1462,6 +1462,18 @@ class Zone(Strict):
     display_name: str = Field(min_length=1, max_length=C.MAX_TEXT_LEN)
     target_game: str = Field(min_length=1, max_length=C.MAX_AP_STRING_LEN)
     theme: Theme
+    #: D-11. A GAME PACK, beside the family and never instead of it.
+    #:
+    #: `theme` keeps its six-member vocabulary exactly: no rename, no
+    #: addition, and no Zone already in a save changes meaning. A pack is
+    #: a separate identity, so the two can never be mistaken for each
+    #: other -- and because `theme` is still required, the family a
+    #: pack's missing roles fall back to is always one this Zone names.
+    #:
+    #: `None` is every Zone written before this and resolves exactly as
+    #: before. Composition never sets it.
+    theme_pack: str | None = Field(default=None, min_length=1,
+                                   max_length=24, pattern=r"^[a-z0-9_]+$")
     designer_note: str | None = Field(default=None, max_length=C.MAX_DESIGNER_NOTE_LEN)
     featured_echo_ids: tuple[_ECHO_ID, ...] = Field(default=(), max_length=4)
     chambers: tuple[Chamber, ...] = Field(
@@ -1622,6 +1634,36 @@ class Zone(Strict):
                         f"'{con.sets_variable}' to '{con.sets_state}', "
                         f"which it does not have; it has "
                         f"{sorted(var.states)}")
+        return self
+
+    @model_validator(mode="after")
+    def _a_named_pack_is_one_a_zone_may_name(self):
+        """D-11. Authored is not selected.
+
+        A pack's rows existing in the descriptor makes it a CANDIDATE --
+        viewable in an isolated review scene, nameable by no Zone. A Zone
+        may name a pack only once a reviewed decision has made it
+        `selectable` (or the owner has `approved` it), and that decision
+        is `C.THEME_PACK_STATUS`, in source. A pack id that is a house
+        family's name is refused outright: game-pack identity is distinct
+        from the families, and a pack called `gothic_stone` would make
+        the one moment they meet ambiguous.
+        """
+        pack = self.theme_pack
+        if pack is None:
+            return self
+        if pack in C.THEMES:
+            raise ValueError(
+                f"theme pack '{pack}' is the name of a house family; a "
+                "game pack's identity is distinct from the six families, "
+                "so it may not share one of their names")
+        status = C.THEME_PACK_STATUS.get(pack, "candidate")
+        if status not in ("selectable", "approved"):
+            raise ValueError(
+                f"theme pack '{pack}' is {status}: authored rows make a "
+                "pack viewable in review, not nameable by a Zone. It "
+                "becomes nameable when a reviewed decision marks it "
+                "selectable in THEME_PACK_STATUS")
         return self
 
     @model_validator(mode="after")

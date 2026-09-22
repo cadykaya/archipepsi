@@ -1809,6 +1809,39 @@ THEMES = (
     "temple_ruin",         # cracked sandstone, root intrusion, brass fittings
     "void_glitch",         # untextured dev surfaces, missing-texture checker
 )
+
+#: D-11. GAME-PACK IDENTITY, beside the six house families and never one
+#: of them (`docs/D11_THEME_PACK_PROD_ANSWER.md`).
+#:
+#: **Three states, kept in three places so none can be read off another:**
+#:
+#:   candidate  -- AUTHORED. Rows for the pack exist in the art lane's
+#:                 exported descriptor (`THEME_PACK_TABLE`). Authored is
+#:                 not selected: a candidate is viewable in an isolated
+#:                 review scene and nameable by no Zone.
+#:   selectable -- a Zone may NAME it. A reviewed decision, recorded here
+#:                 in source where it shows up in a diff.
+#:   approved   -- the OWNER signed it off. Only the owner's decision
+#:                 moves a pack here.
+#:
+#: A pack not listed below is a candidate at most, whatever the
+#: descriptor holds. **Empty, deliberately:** no pack has been reviewed,
+#: and nothing in composition selects one -- there is no approved
+#: selection rule, and the runtime reads a pack out of nothing but the
+#: Zone.
+THEME_PACK_STATES = ("candidate", "selectable", "approved")
+THEME_PACK_STATUS: dict[str, str] = {}
+#: The descriptor table a pack's rows live in: flat, keyed
+#: `"<pack>/<theme>/<role>"`, each row the same schema as `textures`
+#: (Prod's D-11 answer §2; the name was left to this lane to settle).
+THEME_PACK_TABLE = "pack_textures"
+#: Roles resolved from the shared material in every theme and never from
+#: authored pixels -- `hazard`, because a theme-tinted hazard stripe is
+#: one the player has to re-learn in every theme. **A pack is refused the
+#: same way a family is** (D-11 answer §3), or a game pack becomes the
+#: way round the rule. Exported so `theme_pack.gd` can read it rather
+#: than keep its own copy.
+THEME_UNIVERSAL_ROLES = ("hazard",)
 CHAMBER_TYPES = ("corridor", "arena", "platform_path", "tower", "treasure_room")
 #: DERIVED, NOT TRANSCRIBED. A role with stats has behaviour; a role
 #: with only an envelope is art that cannot yet be placed. Deriving it

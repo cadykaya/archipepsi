@@ -68,3 +68,81 @@ as today), so there is no window in which either half is live without
 the other. Your §5.3 is right that nothing in composition should set the
 field until there is an approved selection rule; the runtime will not
 read a pack out of anything but the Zone.
+
+---
+
+## 5. Dess: the bridge half, delivered — exact contract
+
+**Dess (bridge/design) → Prod, 2026-09-22.** Your resolution order, your
+flat table and your universal-role amendment, as landed. The table name
+was left to me: **`pack_textures`**, as you suggested.
+
+**Zone** (`schemas/zone.py`):
+
+| field | contract |
+|---|---|
+| `theme` | unchanged: required, one of the six families |
+| `theme_pack` | `str \| None = None`, `^[a-z0-9_]+$`, ≤ 24. `None` is every existing Zone and resolves exactly as before |
+
+A Zone may name a pack only when `THEME_PACK_STATUS[pack]` is
+`selectable` or `approved`; anything else — unregistered, or registered
+as `candidate` — is refused ("authored rows make a pack viewable in
+review, not nameable by a Zone"). A pack id equal to a family's name is
+refused outright. Because `theme` is still required, a pack's fallback
+always lands on a family the Zone names.
+
+**The three states, in three places** (exported from `constants.py`):
+
+| state | where it lives |
+|---|---|
+| `candidate` — authored/imported | rows in the art lane's descriptor, `pack_textures` |
+| `selectable` — a Zone may name it | `THEME_PACK_STATUS`, a reviewed decision in source |
+| `approved` — the owner signed it off | `THEME_PACK_STATUS`, the owner's decision only |
+
+`THEME_PACK_STATUS` is **`{}`**: nothing has been reviewed, and nothing
+in composition sets `theme_pack` (tested — the composed Zone names none).
+
+**Descriptor** — exported as `THEME_PACK_TABLE = "pack_textures"`:
+
+```
+"pack_textures": {
+  "<pack>/<theme>/<role>": { exactly the keys a "textures" row has }
+}
+```
+
+`theme_packs.pack_table_problems(descriptor)` is the check, for your
+resolver tests and for the art toolchain whenever it emits pack rows.
+It refuses: a key that is not three parts; a pack id that is invalid or
+a family's name; a theme outside the six; a **universal role**
+(`THEME_UNIVERSAL_ROLES = ("hazard",)`, exported — `theme_pack.gd` can
+read it instead of its own copy); a role the family table does not
+know; and a row whose keys differ from the **descriptor's own
+`textures` rows** — checked against those rows, not a retyped list. The
+shipped descriptor has no pack table and passes unchanged.
+
+**Resolution**, as an assertable list —
+`theme_packs.resolution_order(descriptor, theme, role, pack)`:
+
+1. `"<pack>/<theme>/<role>"` — exact, **no role hop**;
+2. then the family's chain exactly as today: `"<theme>/<role>"`, and
+   its one hop if the descriptor names one.
+
+`gothic_stone`, `ceiling`, pack `p` →
+`["p/gothic_stone/ceiling", "gothic_stone/ceiling", "gothic_stone/wall"]`.
+There is never a `"p/gothic_stone/wall"`. A universal role resolves from
+no table at all.
+
+## 6. What is still yours
+
+1. `_resolve` tries the pack key first, exactly once, when the Zone
+   names a pack; your `_cache` keys on `(pack, theme, role)` so a
+   pack and a family never share an entry.
+2. `refusals` for a pack: a pack row painting a universal role is
+   refused, as for a family (your §3).
+3. `disqualified` stays about the family, so a partial pack is legal.
+4. Whether the runtime should also refuse a Zone naming a pack its
+   status does not allow is your call; the bridge already refuses to
+   accept such a Zone.
+
+Nothing here selects a pack, touches `THEME_PACK.json`, or regenerates
+the art lane's assets.

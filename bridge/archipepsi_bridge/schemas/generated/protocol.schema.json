@@ -6545,6 +6545,21 @@
             "title": "Theme",
             "type": "string"
           },
+          "theme_pack": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Theme Pack"
+          },
           "designer_note": {
             "anyOf": [
               {
@@ -12152,6 +12167,21 @@
             ],
             "title": "Theme",
             "type": "string"
+          },
+          "theme_pack": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Theme Pack"
           },
           "designer_note": {
             "anyOf": [
