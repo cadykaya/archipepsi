@@ -197,6 +197,23 @@ Two things from it that other lanes need:
   to it** -- five `verify` runs modified six tracked fixtures by
   checkpointing their WAL; restored.
   `docs/art/reports/2026-09-22-glyph-toolchain-trial.md` §5.
+* **T02 (Super Mario 64, TICK TOCK CLOCK) likewise -- and it found two
+  things T01 could not.** Six assets (Batch 056), four frames from the
+  SAME cameras in the SAME shell as T01 so the packs compare frame for
+  frame. (1) **The per-game hint and the pack's material disagree:**
+  `THEME_BY_GAME_HINT` says `concrete_facility`, a clock movement's
+  nearest family by material is `rusted_industrial`. The hint picks by
+  GAME; a treatment follows what a pack is MADE OF. Two questions, one
+  field. (2) **`rusted_industrial`'s `trim` IS the universal hazard
+  band**, and the colour is never decorative in any theme for any
+  reason -- the first pass shipped a clock movement in warning stripes.
+  `trim_plain` is trim minus danger. Every later pack reaching for that
+  family will hit it.
+  Shared now, because 79 packs remain: `tools/blender/packgates.py`
+  (the three Blender gates) and `tools/content/pack_views.gd` +
+  `packlayouts/<pack>.json` (the shell and the imported-geometry check;
+  the layout is art and is data).
+  `docs/art/review/clockwork_2026-09-22/README.md`.
 * **T01 (Ocarina of Time, Forest Temple) has content AND context; it is
   not complete.** Six assets, four in-engine frames dressing a
   Production-grey shell with a 2.4 x 3.2 opening, and a fourth gate that

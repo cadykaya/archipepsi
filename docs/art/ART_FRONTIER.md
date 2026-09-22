@@ -790,12 +790,52 @@ in `COVERAGE.md`, as the owner asked: catalogue **81 of 81**, completed
 criterion and `check_pack_coverage.py` holds it to the catalogue and to
 its own stated counts -- sabotage-tested four ways.
 
+### T02 — Super Mario 64, TICK TOCK CLOCK. Content and context DONE; not complete.
+
+Six assets (Batch 056) and an in-engine application (056-R,
+`docs/art/review/clockwork_2026-09-22/`), shot from **the same four camera
+positions in the same shell as T01**, so the two packs can be compared
+frame for frame rather than described.
+
+**The hint and the subject disagree, and that is the finding.**
+`THEME_BY_GAME_HINT` maps Super Mario 64 to `concrete_facility`; a clock
+movement's nearest family BY MATERIAL is `rusted_industrial`. The hint
+picks a family by GAME and a treatment follows what a pack is MADE OF.
+Two questions, one field. For T01 they happened to agree. Recorded in the
+manifest as `theme_hint_says` beside `painted_with`.
+
+**Nothing in it wears the hazard band, and that is a rule.**
+`rusted_industrial`'s `trim` IS the universal hazard band and the colour
+is never decorative in any theme for any reason. The first pass shipped a
+clock movement in warning stripes and a dial mark stencilled `hot`.
+`trim_plain` is trim minus danger and is what this pack paints. **T01
+never hit this; every later pack reaching for `rusted_industrial` will.**
+
+**Four defects, three found by LOOKING and one by reading the manifest:**
+gears built from crossed boxes lay FLAT and poked 0.44 m through the wall
+they were mounted on; the XII stacked above the lintel topped out at
+3.78 m against a 3.60 m ceiling; the column read as a pipe with flanges,
+because a disc on a vertical shaft seen from eye height is a horizontal
+line; and the wheels read as slabs until each got a hub.
+
+### Infrastructure, because 79 packs remain
+
+* **`tools/blender/packgates.py`** -- the three Blender gates in one
+  place. `build_forest_temple` imports them and rebuilds byte-identical;
+  both were re-sabotaged after the move.
+* **`tools/content/pack_views.gd` + `packlayouts/<pack>.json`** -- the
+  shell, the captions and the imported-geometry opening check are shared;
+  **where the pieces go is art** and is data. T01 reproduces through it.
+  The harness refuses a run where no shot asked for the opening check,
+  because a run that measures nothing is not a PASS.
+  `tools/content/run_pack_views.sh <pack-id>`.
+
 ### Then
 
-**T02 onward** (Super Mario 64, Bomb Rush Cyberfunk, ... through T18 plus
-the 63 from the catalogue snapshot), **A15** (item/Forge modules),
-**A16** (finish the six theme families), **A17-A19** (detail/dressing
-library, actual-consumer trials and budget passes, final catalogue).
+**T03 onward** (Bomb Rush Cyberfunk, ... through T18 plus the 63 from the
+catalogue snapshot), **A15** (item/Forge modules), **A16** (finish the six
+theme families), **A17-A19** (detail/dressing library, actual-consumer
+trials and budget passes, final catalogue).
 
 ### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.
 
