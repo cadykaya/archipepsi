@@ -79,6 +79,19 @@ func _run() -> void:
 	get_tree().quit(1)
 
 
+## Every intent of one type the client has sent this run.
+##
+## Read off `BridgeClient.sent_intents` rather than a hook of this
+## suite's, so what is asserted is what a live bridge would receive.
+func _intents_of(kind: String) -> Array:
+	var out: Array = []
+	for raw: Variant in BridgeClient.sent_intents:
+		var one: Dictionary = raw
+		if str(one.get("type", "")) == kind:
+			out.append(one)
+	return out
+
+
 func _settle(frames := 8) -> void:
 	for _i in frames:
 		await get_tree().physics_frame
@@ -207,9 +220,20 @@ func _the_player_operates_it_and_a_room_away_a_route_opens() -> void:
 	_check(barrier.opening_is_clear(),
 			"AFTER: the way through c003 is CLEAR -- a physical "
 			+ "consequence in a room the player is not standing in")
-	_note("the engine would report %s; there is no intent for it yet, "
-			% [controller.zone_state.as_reported()]
-			+ "so it sends nothing rather than inventing one")
+	# AND IT IS REPORTED. P-3 named the gap -- storage existed, no
+	# message could reach it -- and the bridge lane's
+	# `zone_state_selected` closed it. The intent is asserted on the
+	# wire rather than inferred from the value, because a Zone that
+	# changed state and told nobody is the defect this replaces.
+	var sent := _intents_of("zone_state_selected")
+	_check(sent.size() == 1,
+			"the selection was reported once (%d intent(s))" % sent.size())
+	if sent.size() == 1:
+		var one: Dictionary = sent[0]
+		_check(str(one.get("variable_id", "")) == "span_gate"
+				and str(one.get("state", "")) == "open",
+				"...naming the variable and the state: %s" % [one])
+	_note("reported as %s" % [controller.zone_state.as_reported()])
 	body.queue_free()
 	await _drop(controller)
 
