@@ -4212,7 +4212,7 @@ have won. Not the market, not the lake, not the volcano, and not an average.
 | `tp_ft_alcove_torch` | 72 tris · 0.62 × 0.46 × 1.10 m · 32.0 texels/m | 5 | timber hood over a stone bowl, not a metal sconce |
 | `tp_ft_door_surround` | 60 tris · 3.08 × 0.46 × 3.54 m · 32.0 texels/m | 4 | bossed jambs; dressing around a fixed opening |
 | `tp_ft_switch_housing` | 60 tris · 0.50 × 0.36 × 0.58 m · 32.0 texels/m | 4 | batch043's wall-switch contract in timber |
-| `tp_ft_root_mass` | 48 tris · 1.60 × 1.14 × 0.10 m · 32.0 texels/m | 3 | floor dressing the house family has none of |
+| `tp_ft_root_mass` | 96 tris · 1.65 × 0.60 × 0.22 m · 32.0 texels/m | 7 | floor dressing the house family has none of: it swells, kinks and forks, and nothing in it meets anything square |
 
 **Half of a pack is deliberately absent, and named as absent.** Scoping this
 batch found that `THEME_PACK.json` has no pack namespace (`COVERAGE.md` §3):
@@ -4221,6 +4221,36 @@ So these are **shapes, motifs, dressing and a stateful-control housing** —
 the half that needs no namespace — painted in `temple_ruin`, the nearest
 existing family. **A tint is not this pack's treatment and is not claimed to
 be one.** The T01 coverage row reads `content yes, materials no`.
+
+**054-R — the kit in a room, and what the room showed.**
+`tools/content/run_forest_temple_views.sh` assembles the six against a
+Production-grey shell with a 2.4 × 3.2 opening cut in it, and photographs it
+four ways: `docs/art/review/forest_temple_2026-09-22/`.
+
+It changed the art. **`tp_ft_root_mass` read as two fallen timber beams** —
+a 1.60 × 0.34 × 0.10 slab with three boxes crossing it square, and at
+0.10 m tall the silhouette was all it had. Rebuilt as five segments swelling
+0.22 → 0.05 m, each with its own yaw so the run bends twice, a knuckle taller
+than either segment it joins where it turns, and a fork leaving **at** the
+knuckle at a shallow angle. 48 → 96 tris. It also gains the `route` check it
+never had, which was backwards for the one piece in the set that sits on the
+floor.
+
+`assert_parts_touch` caught the rebuild's real defect and **not the one it
+names**: `brushkit.block`'s `rotation_z` is DEGREES, I handed it radians, and
+a 54° fork became 0.95°. The check said "not connected"; the defect was "not
+bent". A gate that fires for the wrong stated reason is still a gate that
+fired.
+
+**A fourth gate, in the engine.** The three above run in Blender, on the
+source. The `.glb` Godot loads is a different artefact, so an export or import
+that moved something would pass all three and still block the door. The
+harness walks the **imported** surround's 120 vertices in its own local frame
+and fails if any lands inside the opening — and sabotage-tests itself in the
+same run, shifting the surround 0.5 m, requiring the refusal, then withdrawing
+the planted failure. Its first version used the AABB and was worthless: a door
+surround's bounding box necessarily encloses the doorway. That is what a
+surround *is*.
 
 **Three gates, all sabotage-tested, and two were wrong first.**
 
