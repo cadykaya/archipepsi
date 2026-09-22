@@ -196,3 +196,81 @@ def test_the_engine_is_told_which_targets_each_kind_supports():
     for kind in set(E.STATUS_KINDS) - set(E.IMPLEMENTED_STATUS_KINDS):
         assert f'"{kind}": [' not in line, (
             f"{kind} is advertised as supported and is not")
+
+
+# --------------------------------------------------------------------------
+# P10.5 — the compact matrix, and the count that was hiding a family.
+# --------------------------------------------------------------------------
+
+def test_the_supported_thirteen_are_not_the_amalgams_thirteen():
+    """THE COUNT MATCHED BY COINCIDENCE.
+
+    `SUPPORTED_STATUS_TARGETS` has thirteen entries and Amalgam §15.2's
+    family has thirteen members, and reading the first number as the
+    second is exactly what P10.5 means by *"a fixed catalogue count must
+    never hide an incomplete family"*. Eleven of the supported kinds are
+    retained ECHOES vocabulary; only two are §15.2 Statuses.
+    """
+    family = set(E.AMALGAM_STATUS_TARGETS)
+    supported = set(E.SUPPORTED_STATUS_TARGETS)
+    assert len(family) == len(supported) == 13
+    assert family & supported == {"lightened", "burning"}
+
+
+def test_no_status_in_the_family_is_finished_yet_and_the_gaps_are_named():
+    """The matrix, as an assertion rather than a report.
+
+    This is expected to CHANGE as Prod lands adapters, and changing it
+    is the point: each row that empties is a row that closed. What it
+    refuses is a silent regression and a quiet claim of completeness.
+    """
+    gaps = E.amalgam_status_coverage()
+    assert set(gaps) == set(E.AMALGAM_STATUS_TARGETS)
+
+    finished = sorted(k for k, missing in gaps.items() if not missing)
+    assert finished == [], (
+        f"{finished} now cover every §15.2 target -- update this control "
+        "to record the progress rather than deleting it")
+
+    # The two with partial support, named exactly. `lightened` crossed on
+    # `object` (D-7) and `burning` predates the family as an on-hit kind.
+    assert gaps["lightened"] == ("enemy", "self")
+    assert gaps["burning"] == ("object", "surface", "volume")
+
+    no_support = sorted(k for k in gaps
+                        if k not in E.SUPPORTED_STATUS_TARGETS)
+    assert len(no_support) == 11
+
+
+def test_brittle_never_admits_an_actor_target():
+    """Law 27's protection, in the catalogue rather than in prose.
+
+    `brittle` is the one Status that touches a damage number and it is
+    object-and-surface only -- things that are destroyed rather than
+    killed. A row that admitted an actor would put a damage multiplier
+    on a combatant, which is what §15.3 rule 2 exists to forbid.
+    """
+    assert set(E.AMALGAM_STATUS_TARGETS["brittle"]) == {"object", "surface"}
+    assert "enemy" not in E.AMALGAM_STATUS_TARGETS["brittle"]
+    assert "self" not in E.AMALGAM_STATUS_TARGETS["brittle"]
+
+
+def test_exposed_is_actor_only_because_objects_have_no_defense_stat():
+    """§15.2's own correction. An earlier revision listed `exposed` as
+    actor and object; objects resolve through the destructible classes
+    and have no Defense curve, so an object row would have silently
+    invented a field."""
+    assert E.AMALGAM_STATUS_TARGETS["exposed"] == ("enemy",)
+
+
+def test_the_target_translation_is_declared_and_not_assumed():
+    """P09.4: *"self is not automatically every player/actor target."*
+
+    Design 5 writes actor/player; the runtime kinds are enemy/self. A
+    row listing only `actor` must not acquire `self` on the way in --
+    `confused` is the case, and it is a cognitive effect on an NPC.
+    """
+    assert E.AMALGAM_STATUS_TARGETS["confused"] == ("enemy",)
+    assert "self" not in E.AMALGAM_STATUS_TARGETS["blinded"]
+    # and a row listing BOTH gets both
+    assert {"enemy", "self"} <= set(E.AMALGAM_STATUS_TARGETS["lightened"])
