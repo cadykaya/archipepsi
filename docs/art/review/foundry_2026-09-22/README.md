@@ -8,7 +8,19 @@ Batch 060. 2026-09-22. Branch `claude/archipepsi-art`, PR #5.
 
 ---
 
-## The runway has two packs left in it
+## CORRECTION, after T07: the runway had ONE pack left, not two
+
+The count below says two families remain. **It is one.** `void_glitch`
+is not an option — it is Archipepsi's own missing-texture theme, an
+editor checkerboard with the word `null` across it, and
+`THEME_BY_GAME_HINT` maps it to Archipepsi itself. Painting a game pack
+in it would mean *"this texture failed to load"*.
+
+So **T07 (`gothic_stone`) was the last pack with a family of its own**,
+and every pack from **T08** must share pixels or wait. The deadline is
+one pack earlier than this file first said.
+
+## The runway (as counted here, before the correction above)
 
 T05 proved two packs sharing a house family read as one place, and that
 different shapes cannot save them
@@ -28,8 +40,9 @@ void_glitch        —
 
 **Two families unused. Seventy-five packs behind this one.**
 
-> **The workaround runs out at T08. Every pack from T09 on must share
-> pixels with an earlier pack, or wait.**
+> **The workaround runs out at T07** — see the correction at the top of
+> this file; `void_glitch` cannot be spent. Every pack from **T08** on
+> must share pixels with an earlier pack, or wait.
 
 That is a deadline rather than an opinion, and it is the sharpest form
 the namespace argument has taken in six packs. It is in the manifest as

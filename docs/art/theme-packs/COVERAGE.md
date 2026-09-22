@@ -13,8 +13,8 @@ into "81 packs exist".
 |---|---|
 | **CATALOGUE coverage** | **81 of 81.** Every included Archipelago game has a row, a queue id and a reserved pack id. This is a list, and a list is not art. |
 | **COMPLETED pack coverage** | **0 of 81.** Nothing has passed the bar in *What counts as a completed pack* below. |
-| **IN PROGRESS** | **6** — T01–T06: `tp_ocarina_of_time`, `tp_super_mario_64`, `tp_bomb_rush_cyberfunk`, `tp_super_metroid`, `tp_kingdom_hearts_2`, `tp_doom_1993`. Content built and applied in engine; material treatment still missing on all six. |
-| **NOT STARTED** | **75.** |
+| **IN PROGRESS** | **7** — T01–T07. Content built and applied in engine; material treatment still missing on all seven. |
+| **NOT STARTED** | **74.** |
 
 **Catalogue snapshot:** `catalogue.json`, taken 2026-09-22 from
 `https://archipelago.gg/games` ("Currently Supported Games").
@@ -31,7 +31,7 @@ here.
 
 ## The two things a reader should know before the table
 
-### 1. Six rows have assets. Nothing has passed the completion bar.
+### 1. Seven rows have assets. Nothing has passed the completion bar.
 
 Archipepsi's six theme families — `concrete_facility`,
 `rusted_industrial`, `neon_transit`, `gothic_stone`, `temple_ruin`,
@@ -191,9 +191,11 @@ completion: the verdict column is.**
 
 | `tp_doom_1993` | yes — the UAC techbase, containment level; Hell is the famous half and is also terrain | yes — 6 assets, Batch 060 | yes — containment trough with its grating dragged off, stepped light recess | **NO** — painted in `concrete_facility`, the last-unused-but-one house family; see the runway below | yes — 4 frames, `foundry_2026-09-22/`, same shell and cameras as T01–T05 | yes — `packgates` plus the imported-geometry check | not started | **IN PROGRESS** |
 
-**0 of 81 complete. 6 in progress. 75 not started.**
+| `tp_dark_souls_iii` | yes — the High Wall of Lothric, the aqueduct run | yes — 6 assets, Batch 061 | yes — fallen voussoirs with a keyed pair, a floor-standing brazier | **NO** — painted in `gothic_stone`, the LAST house family with nobody in it | yes — 4 frames, `lothric_2026-09-22/`, same shell and cameras as T01–T06 | yes — `packgates` (now four gates: opening, emitters, footholds, **corridor height**) plus the imported-geometry check | not started | **IN PROGRESS** |
 
-### THE FAMILY RUNWAY HAS TWO PACKS LEFT IN IT
+**0 of 81 complete. 7 in progress. 74 not started.**
+
+### THE FAMILY RUNWAY IS EXHAUSTED AT T07
 
 T05 proved two packs sharing a house family read as one place, and that
 different shapes cannot save them. The workaround since has been to give
@@ -204,13 +206,19 @@ temple_ruin        T01, T05      already doubled — T05 is the proof
 rusted_industrial  T02, T04      already doubled
 neon_transit       T03
 concrete_facility  T06
-gothic_stone       —
-void_glitch        —
+gothic_stone       T07           ← the last one
+void_glitch        UNUSABLE
 ```
 
-**Two families unused. 75 packs behind.** The workaround runs out at
-**T08**, and every pack from **T09** on must share pixels with an earlier
-pack or wait for the namespace.
+**T06 counted two remaining and was wrong.** `void_glitch` is not a sixth
+option: it is Archipepsi's own **missing-texture theme** — an editor
+checkerboard with the word `null` written across it — and
+`THEME_BY_GAME_HINT` maps it to Archipepsi itself. Painting a game pack in
+it would not be a pack wearing another pack's clothes; **it would be a
+pack wearing the clothes that mean "this texture failed to load".**
+
+> **The workaround ends at T07. Every pack from T08 on must share pixels
+> with an earlier pack, or wait for the namespace. 74 packs are behind.**
 
 **That is a deadline rather than an opinion.** It is recorded per pack in
 the manifests as `family_runway`, and it is the sharpest form this
@@ -257,7 +265,7 @@ progress.
 | T04 | Super Metroid | `tp_super_metroid` | Pressureworks Derelict — **the Wrecked Ship** subtheme, stated | `rusted_industrial` construction | 6: burst frame stanchion, hull panel with hatch on one hinge, pressure-door frame with dogging lugs, blown debris fan, caged lamp off true, dogging lever | **content yes** (batch058), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T05 | Kingdom Hearts 2 | `tp_kingdom_hearts_2` | Twilight Service District — **Tram Common service alley** subtheme, stated | `temple_ruin` construction, shared with T01 deliberately | 6: corbelled brick pier with catenary bracket, four-thickness hoarding, rolled awning gate, displaced tram rail in setts, bracket lantern missing a pane, tram call plate | **content yes** (batch059), **materials no** (§3, and this pack is the evidence) | no | not started — in engine, see the completion ledger |
 | T06 | DOOM 1993 | `tp_doom_1993` | Foundry Containment — **the UAC techbase, containment level** subtheme, stated | `concrete_facility` construction | 6: computer-bank column, interface wall with hand-run loops, chevroned blast frame, containment trough, stepped light recess, keycard reader | **content yes** (batch060), **materials no** (§3) | no | not started — in engine, see the completion ledger |
-| T07 | Dark Souls III | `tp_dark_souls_iii` | Cinder Aqueduct | — | — | no | no | not started |
+| T07 | Dark Souls III | `tp_dark_souls_iii` | Cinder Aqueduct — **the High Wall of Lothric, the aqueduct run** subtheme, stated | `gothic_stone` construction | 6: buttress pier with a springing half-arch, broken aqueduct wall with corbels past the break, iron-strapped pointed arch, fallen voussoirs with a keyed pair, floor-standing brazier, lever carved into the masonry | **content yes** (batch061), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T08 | The Wind Waker | `tp_the_wind_waker` | Harbour Windworks | — | — | no | no | not started |
 | T09 | Hollow Knight | `tp_hollow_knight` | Lamplight Conservatory | — | — | no | no | not started |
 | T10 | Terraria | `tp_terraria` | Layered Mineworks | — | — | no | no | not started |

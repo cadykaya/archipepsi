@@ -93,6 +93,20 @@ class Painter:
             brushkit.block(tag, size, at, rotation_z=rotation_z),
             role, collide)
 
+    def wedge(self, tag, size, at, role="wall", collide=None,
+              rotation_z=0.0, axis="y"):
+        """A box with one face clipped to a slope, painted.
+
+        DESIGN 3.4: "a room built only from axis-aligned cubes reads as
+        Minecraft, which is the thing to avoid". A wedge is the cheapest
+        thing that breaks the cube read, and it is also the literal
+        shape of a voussoir, a buttress and a lintel -- which is why the
+        first pack that needed real masonry needed this.
+        """
+        return self.paint(
+            brushkit.wedge(tag, size, at, rotation_z=rotation_z, axis=axis),
+            role, collide)
+
     def wheel(self, tag, across, thick, at, role="trim", collide=None,
               upright=False, hub=False, sides=8):
         """A disc, as 1998 drew one: an N-sided prism.
@@ -145,6 +159,10 @@ def build(assets, out, painter, distinct, shared, log="pack"):
             packgates.assert_no_emitters(objects, name)
         if "route" in checks:
             packgates.assert_no_footholds(objects, name)
+        # Unconditional. Every pack ships into the same corridors, and
+        # a piece too tall for them is not a choice a pack gets to
+        # declare its way out of.
+        packgates.assert_fits_corridor(objects, name)
         for obj in objects:
             common.uv_project_world(obj, DENSITY, SIZE)
         common.assert_parts_touch(body, parts, name)

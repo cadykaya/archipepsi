@@ -47,6 +47,8 @@ DOOR_H = DIM["door_height"]
 #: The measured walk-up. Below this nothing is a step.
 WALK_UP = 0.12
 JUMP_APEX = DIM["jump_apex"]
+#: The engine's corridor height. Nothing a pack ships may be taller.
+CORRIDOR_H = DIM["corridor_height"]
 #: One millimetre. See assert_opening_clear.
 GRAZE = 0.001
 
@@ -94,6 +96,35 @@ def assert_opening_clear(objects, label, width=DOOR_W, height=DOOR_H):
             "at height %.2f-%.2f. The opening is chamber_builders.gd's and "
             "the player walks through it; dress around it, never into it."
             % (label, obj.name, width, height, intrude, lo[2], hi[2]))
+
+
+def assert_fits_corridor(objects, label, height=None):
+    """Nothing a pack ships may be taller than the engine's corridor.
+
+    THIS GATE EXISTS BECAUSE THREE PACKS TRIPPED OVER IT SILENTLY.
+    T02's dial mark, stacked above its lintel, topped out at 3.78 m.
+    T03's shutter head reached 3.62 at its first size. T07's arch
+    springers reached 3.68. `corridor_height` is 3.6, so all three were
+    poking through a ceiling -- and the only thing that noticed was a
+    human reading the manifest's `size` field afterwards.
+
+    A surround is the usual offender, because a surround is the one
+    piece that HAS to reach above the 3.2 m door head, and 0.4 m is not
+    much room for a lintel plus whatever sits on it.
+
+    A pack that does not fit the room it dresses is not dressing it.
+    """
+    limit = CORRIDOR_H if height is None else height
+    for obj in objects:
+        lo, hi = common.world_box(obj)
+        if hi[2] <= limit + GRAZE:
+            continue
+        raise AssertionError(
+            "%s: %s tops out at %.3f m, above the %.2f m corridor height. "
+            "A pack that does not fit the room it dresses is not dressing "
+            "it -- and the 0.40 m between the door head and the ceiling is "
+            "all the room a surround gets."
+            % (label, obj.name, hi[2], limit))
 
 
 def assert_no_emitters(objects, label):

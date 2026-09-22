@@ -4989,6 +4989,85 @@ cameras as T01–T05.
 **Still not complete:** no material treatment, no runtime selection, not
 imported, no owner review.
 
+
+## Batch 061 — T07. Dark Souls III, THE HIGH WALL OF LOTHRIC — the last pack with a family of its own
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_ds_buttress_pier` | 68 tris · 0.78 × 1.87 × 3.60 m · 32.0 texels/m | 5 | a pier that reaches **sideways**: it carries thrust. Every other column in seven packs carries load straight down. |
+| `tp_ds_aqueduct_wall` | 80 tris · 2.16 × 0.47 × 3.00 m · 32.0 texels/m | 7 | a wall that **carried water** — and the corbels continue **past** the break |
+| `tp_ds_iron_door_arch` | 76 tris · 3.08 × 0.48 × 3.57 m · 32.0 texels/m | 6 | a pointed arch **above** a square head, which is how a real wall carries one under the other |
+| `tp_ds_fallen_voussoir` | 56 tris · 1.43 × 0.55 × 0.22 m · 31.6 texels/m | 5 | floor dressing that **collapsed** with two stones **still keyed** to each other |
+| `tp_ds_brazier` | 88 tris · 0.47 × 0.65 × 1.51 m · 32.0 texels/m | 5 | the only light in seven packs that stands **on the floor** and can be walked around |
+| `tp_ds_lever_stone` | 56 tris · 0.46 × 0.20 × 0.54 m · 32.0 texels/m | 4 | Batch 043's contract **carved in**: the recess *is* the housing |
+
+**Subtheme chosen and stated: the High Wall of Lothric, the aqueduct run.**
+The hint agrees — third agreement in seven. Running tally: agree,
+**disagree**, agree, none, none, none, agree.
+
+### THE RUNWAY IS ONE PACK, NOT TWO — T06 COUNTED WRONG
+
+T06 said two families remained. **It is one, and T07 is it.**
+
+`void_glitch` is not a sixth option. It is Archipepsi's own
+**missing-texture theme** — an editor checkerboard with the word `null`
+written across it — and `THEME_BY_GAME_HINT` maps it to Archipepsi itself.
+Painting The Wind Waker in it would not be a pack wearing another pack's
+clothes; **it would be a pack wearing the clothes that mean "this texture
+failed to load".**
+
+> **The workaround ends at T07. Every pack from T08 on must share pixels
+> with an earlier pack, or wait for the namespace. 74 packs are behind
+> this one.**
+
+### A FOURTH GATE, because three packs tripped over the same thing silently
+
+**`packgates.assert_fits_corridor`.** Nothing a pack ships may exceed
+`corridor_height` (3.6 m).
+
+T02's dial mark topped out at **3.78 m**. T03's shutter head reached
+**3.62** at its first size. T07's arch springers reached **3.68**. All
+three were poking through a ceiling, and the only thing that ever noticed
+was a human reading the manifest's `size` field afterwards.
+
+A surround is the usual offender because it is the one piece that *has* to
+reach above the 3.2 m door head — and 0.4 m is not much room for a lintel
+plus whatever sits on it. **The gate is unconditional in `packkit.build`:
+every pack ships into the same corridors, and a piece too tall for them is
+not something a pack declares its way out of.** It caught T07 and cleared
+the other six.
+
+### The no-foothold rule improved two compositions
+
+**The voussoirs.** A 0.34 m-deep wedge turned 12° measures 0.48 × 0.42 in
+plan at 0.22 m — a step. 0.24 m deep is a real arch-stone proportion and
+clears it, so the **keyed pair keeps its height**; the loose stones could
+not be narrowed at any believable proportion, so they **lie at 0.11 m**,
+under the walk-up, which is what a stone that bounced does anyway. **Two
+standing and two down reads as a collapse; four standing reads as a
+display.**
+
+**The brazier.** A 0.54 m bowl at 0.86 m is a face a player stands in.
+Raised to 1.40 m its top clears the jump — **and a brazier at head height
+on a stand is what Lothric's actually are**, so the rule pushed this
+toward the source rather than away from it.
+
+### And one thing no gate can say
+
+The buttress springing was first two stepped wedges. `assert_parts_touch`
+was satisfied — they overlapped by 14 cm — and in `DS_chamber` they read
+as **a staircase hanging in mid-air**. A flying buttress is a continuous
+ramp; two steps of it are two steps. One longer wedge now.
+
+**A gate can say a thing is attached. It can never say it is legible.**
+
+Evidence: `docs/art/review/lothric_2026-09-22/`.
+
+**Still not complete:** no material treatment, no runtime selection, not
+imported, no owner review.
+
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
 
 **All four large shells are `review: "pass"`.** Three authorities had to
