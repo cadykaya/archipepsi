@@ -116,6 +116,30 @@ def test_a_relationship_with_both_ends_in_one_room_is_refused():
         declaring(composed(), [variable("c002", "c002")])
 
 
+def test_a_local_reader_is_allowed_beside_a_remote_one():
+    """Owner correction, 2026-09-22.
+
+    The rule refused ANY reader in the setter's room, which turned an
+    acceptance-case requirement into a global content restriction: a
+    cross-room relationship must DEMONSTRATE a remote consequence, and
+    that does not mean the control may not also drive something where
+    the player is standing.
+
+    This is the positive control that separates the corrected rule from
+    the old one. Without it, "at least one reader is elsewhere" and "no
+    reader is here" pass exactly the same tests.
+    """
+    both = variable("c002", "c010")
+    both["readers"] = [
+        {"room_id": "c010", "mechanism": "gantry", "when": ["lowered"]},
+        {"room_id": "c002", "mechanism": "cradle_lamp", "when": ["lowered"]},
+    ]
+    v = declaring(composed(), [both]).zone_state[0]
+    assert {r.room_id for r in v.readers} == {"c010", "c002"}
+    assert any(r.room_id != v.setter.room_id for r in v.readers), (
+        "the remote consequence is what makes it cross-room")
+
+
 def test_the_consequence_is_real_a_gated_route_needs_the_state():
     """The remote consequence, as the bridge can measure it: an edge the
     player cannot cross until they have gone and operated the control.

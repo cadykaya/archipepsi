@@ -1129,19 +1129,29 @@ class ZoneStateVariable(Strict):
         return self
 
     @model_validator(mode="after")
-    def _a_reader_is_never_in_the_setters_room(self):
+    def _at_least_one_reader_is_somewhere_else(self):
         """What makes the relationship CROSS-room rather than merely declared.
 
-        A setter and a reader in one room is a room-local mechanism with
-        Zone-scope machinery wrapped around it, and an acceptance case
-        built on one would prove nothing about crossing a boundary.
+        **Owner correction, 2026-09-22.** This refused ANY reader in the
+        setter's room, which turned an acceptance-case requirement into a
+        global content restriction: "a cross-room relationship must
+        demonstrate a remote consequence, but that does not require
+        banning additional readers in its source room."
+
+        The requirement is that a remote consequence EXISTS, so at least
+        one reader is somewhere else. A lever that also drives something
+        where the player is standing -- a local indicator, a hatch beside
+        it, the gantry's own cradle -- is ordinary content, and it is the
+        legible kind: a control whose only visible effect is in a room
+        you cannot see is worse to play, not better.
         """
-        for r in self.readers:
-            if r.room_id == self.setter.room_id:
-                raise ValueError(
-                    f"variable '{self.variable_id}' has its setter and a "
-                    f"reader both in room '{r.room_id}'; that is a room-local "
-                    "mechanism, not a cross-room relationship")
+        if all(r.room_id == self.setter.room_id for r in self.readers):
+            raise ValueError(
+                f"variable '{self.variable_id}' has every reader in its "
+                f"setter's room '{self.setter.room_id}'; that is a "
+                "room-local mechanism with Zone-scope machinery wrapped "
+                "around it, not a cross-room relationship. At least one "
+                "reader must be somewhere else; others may be here")
         seen: set[tuple[str, str]] = set()
         for r in self.readers:
             if (r.room_id, r.mechanism) in seen:
