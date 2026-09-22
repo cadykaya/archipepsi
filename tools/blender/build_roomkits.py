@@ -127,9 +127,16 @@ def assert_no_footholds(objects, label, floor_z=0.0):
         top = max(c.z for c in corners) - floor_z
         if top <= WALK_UP:
             continue
+        # BOUNDED ABOVE BY THE JUMP, and the first version was not.
+        # A standing jump tops out at 1.333 m with no mantle, so a face
+        # higher than that is not somewhere a player can get from the
+        # floor -- and a rule that refuses the TOP of a two-metre
+        # cabinet is a rule that will be switched off. It fired on
+        # exactly that. What it is for is a ledge at knee or waist
+        # height, and that is the band it checks.
         wide = max(c.x for c in corners) - min(c.x for c in corners)
         deep = max(c.y for c in corners) - min(c.y for c in corners)
-        if wide >= 0.35 and deep >= 0.35:
+        if wide >= 0.35 and deep >= 0.35 and top <= JUMP_APEX:
             raise SystemExit(
                 "%s: %s presents a %.2f x %.2f m upward face %.3f m up. "
                 "That is somewhere a 0.4 m body can stand, and this "

@@ -1,0 +1,453 @@
+{
+  "conn_breaker": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "breaker_handle",
+      "breaker_window",
+      "breaker_bus"
+    ],
+    "path": "batch049/connect/conn_breaker.glb",
+    "size": [
+      0.44,
+      0.34,
+      0.64
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 48
+  },
+  "conn_flag_ack": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "flag_pivot",
+      "flag_blade",
+      "flag_base"
+    ],
+    "path": "batch049/connect/conn_flag_ack.glb",
+    "size": [
+      0.26,
+      0.46,
+      0.79
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 48
+  },
+  "conn_gauge": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "gauge_face",
+      "gauge_needle",
+      "gauge_bezel"
+    ],
+    "path": "batch049/connect/conn_gauge.glb",
+    "size": [
+      0.3,
+      0.175,
+      0.3
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 64
+  },
+  "conn_hold_paddle": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "commitment": "held input -- returns when released",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "paddle_arm",
+      "paddle_grip",
+      "paddle_spring",
+      "paddle_stop"
+    ],
+    "path": "batch049/connect/conn_hold_paddle.glb",
+    "size": [
+      0.26,
+      0.45,
+      0.9
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 76
+  },
+  "conn_id_plaque": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "plaque_frame",
+      "plaque_id_field",
+      "blade_seat",
+      "plaque_lug"
+    ],
+    "path": "batch049/connect/conn_id_plaque.glb",
+    "size": [
+      0.98,
+      0.18,
+      0.5
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "conn_junction_box": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "box_lid",
+      "box_terminals",
+      "port_north",
+      "port_south",
+      "port_east",
+      "port_west"
+    ],
+    "path": "batch049/connect/conn_junction_box.glb",
+    "size": [
+      1.04,
+      0.35,
+      1.04
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "conn_reader_panel": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "reader_bezel",
+      "label_field",
+      "state_selected",
+      "state_unselected",
+      "state_blocked",
+      "state_pending"
+    ],
+    "path": "batch049/connect/conn_reader_panel.glb",
+    "size": [
+      0.78,
+      0.15,
+      0.58
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "conn_relay_cabinet": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "relay_cap",
+      "relay_door_0",
+      "relay_door_1",
+      "relay_door_2",
+      "relay_plinth",
+      "relay_vent"
+    ],
+    "path": "batch049/connect/conn_relay_cabinet.glb",
+    "size": [
+      0.98,
+      0.585,
+      2.14
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "conn_repair_seal": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "commitment": "permanent repair -- one shot, breaks its tab",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "seal_frame",
+      "seal_tab_left",
+      "seal_tab_right",
+      "seal_lever"
+    ],
+    "path": "batch049/connect/conn_repair_seal.glb",
+    "size": [
+      0.98,
+      0.27,
+      0.42
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "conn_run_elbow": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "elbow_back_b",
+      "elbow_knuckle",
+      "elbow_rail_a",
+      "elbow_rail_b",
+      "state_band_a",
+      "state_band_b"
+    ],
+    "path": "batch049/connect/conn_run_elbow.glb",
+    "size": [
+      0.613,
+      0.613,
+      0.56
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "conn_run_tee": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "tee_body",
+      "tee_spur",
+      "tee_rail_-1",
+      "tee_rail_1",
+      "state_band",
+      "tee_branch_band"
+    ],
+    "path": "batch049/connect/conn_run_tee.glb",
+    "size": [
+      1.0,
+      0.71,
+      0.56
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "conn_service_stack": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "stack_flue",
+      "stack_cowl",
+      "stack_feed",
+      "stack_foot"
+    ],
+    "path": "batch049/connect/conn_service_stack.glb",
+    "size": [
+      0.72,
+      0.93,
+      2.46
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 76
+  },
+  "conn_set_dial": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "commitment": "persistent configuration -- stays where it is put",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "dial_detent",
+      "dial_tooth_0",
+      "dial_tooth_1",
+      "dial_tooth_2",
+      "dial_tooth_3",
+      "dial_tooth_4",
+      "dial_tooth_5",
+      "dial_tooth_6",
+      "dial_tooth_7",
+      "dial_knob",
+      "dial_pointer"
+    ],
+    "path": "batch049/connect/conn_set_dial.glb",
+    "size": [
+      0.34,
+      0.16,
+      0.34
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 176
+  },
+  "conn_wall_pass": {
+    "anchor": "as-built",
+    "batch": "049",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation. NO SIGNAL BUS.",
+    "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
+    "kind": "connection_visual",
+    "not_changed": [
+      "collision",
+      "any runtime state",
+      "placement",
+      "the approved navigation family",
+      "any approved asset"
+    ],
+    "parts": [
+      "pass_collar_near",
+      "pass_gland_near",
+      "pass_collar_far",
+      "pass_gland_far"
+    ],
+    "path": "batch049/connect/conn_wall_pass.glb",
+    "size": [
+      0.52,
+      0.6,
+      0.52
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  }
+}

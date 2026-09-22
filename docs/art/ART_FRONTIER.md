@@ -471,9 +471,47 @@ missing hookup rather than add an animated fake lock. No agreed gate
 state exists in `passing_platforms.gd`, so there is no gate and the
 handoff is the label.
 
+### Batch 049 — A09. Cross-room machinery and branch identity. DELIVERED.
+
+Fourteen assets extending Batch 043's conduit language into a
+branch-scale vocabulary: elbow, tee, junction box and wall penetration;
+a reader panel and the three commitments; the identity plaque; flag,
+breaker and gauge; a relay cabinet and a service stack.
+
+* Source `tools/blender/build_connect.py`; exports
+  `assets/models/batch049/connect/`; evidence
+  `docs/art/review/connect_2026-09-22/` (19 frames: 14 solos plus
+  A09.6's five-frame strip).
+* Handoff: `docs/art-requests/2026-09-22-connect-handoff.md`.
+* Gated by `tools/content/run_connect_fit.sh`.
+
+**No signal bus, no animation.** A09.1 says the model is a readable
+presentation of declared relationships; A09.4 says art must not animate
+success ahead of the authoritative result. Every moving part is a node
+with declared positions.
+
+**A09.2's requirement is that three commitments must not share a pose,
+and colour does not survive a theme change** -- so persistent
+configuration, a held input and a permanent repair are three different
+MACHINES (a detent ring, a visible spring, a frangible tab), checked by
+silhouette at build time and again after import.
+
+**The foothold rule gained an upper bound, and that is a correction that
+also touched Batch 048.** It had none, so it refused the TOP of a
+two-metre cabinet -- which a player cannot jump onto. A rule that
+refuses correct art gets switched off. Bounded by the measured 1.333 m
+jump now; Batch 048 re-verified, and the rule re-sabotaged with a
+waist-high ledge, which is still refused.
+
+**Two render errors are in the record** because catching them cost a
+rebuild each: every band faced INTO its wall (the exporter maps Blender
+-y to runtime +z, so an unrotated wall run hides its own state), and at
+emission 2.2 every band blew to flat white, which is a light box rather
+than a lit channel.
+
 ### Then
 
-**A09** (cross-room machinery communication), **A11-A15** (enemy jobs,
+**A11-A15** (enemy jobs,
 projectiles/telegraphs, Status/compound grammar reusing batch043,
 manipulation objects, item/Forge modules), **A16** (finish the six theme
 families), **T01-T18** (the eighteen source-game-inspired environment

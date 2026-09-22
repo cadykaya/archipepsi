@@ -4195,6 +4195,53 @@ refused, the last two by the builder before the export even happened.
 
 Measured boxes are Blender-ordered (width, depth, height).
 
+### Batch 049 — A09: cross-room machinery and branch identity (2026-09-22, PENDING)
+
+Fourteen assets extending Batch 043's conduit language into a
+branch-scale vocabulary. Candidate art, same three states. Handoff:
+`docs/art-requests/2026-09-22-connect-handoff.md`.
+
+| Asset | Metrics | Item | Note |
+| --- | --- | --- | --- |
+| `conn_run_elbow` | 84 tris · 0.61 × 0.61 × 0.56 m · 32.0 texels/m | A09.1 | the run turns and the band follows, at Batch 043's own 0.50 m face |
+| `conn_run_tee` | 84 tris · 1.00 × 0.71 × 0.56 m · 32.0 texels/m | A09.1 | **two declared bands** -- a fork whose halves cannot differ cannot show which way |
+| `conn_junction_box` | 84 tris · 1.04 × 0.35 × 1.04 m · 32.0 texels/m | A09.1 | four `port_*`, a lid, and terminals worth opening for |
+| `conn_wall_pass` | 60 tris · 0.52 × 0.60 × 0.52 m · 32.0 texels/m | A09.1 | the collar-and-sleeve that makes two rooms one installation |
+| `conn_reader_panel` | 84 tris · 0.78 × 0.15 × 0.58 m · 32.0 texels/m | A09.2 | blank `label_field`; **four state nodes**, not four textures |
+| `conn_set_dial` | 176 tris · 0.34 × 0.16 × 0.34 m · 32.0 texels/m | A09.2 | **PERSISTENT** -- a detent ring: something that holds a position |
+| `conn_hold_paddle` | 76 tris · 0.26 × 0.45 × 0.90 m · 32.0 texels/m | A09.2 | **HELD** -- a visible spring and a stop; it wants to come back |
+| `conn_repair_seal` | 60 tris · 0.98 × 0.27 × 0.42 m · 32.0 texels/m | A09.2 | **PERMANENT** -- a lever behind a frangible tab; using it breaks a thing |
+| `conn_id_plaque` | 60 tris · 0.98 × 0.18 × 0.50 m · 32.0 texels/m | A09.3 | the SAME asset at both ends; `nav_blade` bolts to `blade_seat` |
+| `conn_flag_ack` | 48 tris · 0.26 × 0.46 × 0.79 m · 32.0 texels/m | A09.4 | two positions, no third, no animation |
+| `conn_breaker` | 48 tris · 0.44 × 0.34 × 0.64 m · 32.0 texels/m | A09.4 | handle position is the state; `breaker_window` shows which |
+| `conn_gauge` | 64 tris · 0.30 × 0.17 × 0.30 m · 32.0 texels/m | A09.4 | a continuous read -- and here, unlike A08.2's plate, that is right |
+| `conn_relay_cabinet` | 84 tris · 0.98 × 0.58 × 2.14 m · 32.0 texels/m | A09.5 | nonblocking: 0.9 m of floor, nothing to stand on |
+| `conn_service_stack` | 76 tris · 0.72 × 0.93 × 2.46 m · 32.0 texels/m | A09.5 | the generator end of the same installation |
+
+**It extends Batch 043 rather than replacing it.** Every piece keeps the
+2.00 × 0.50 m run's face height and the separate `state_band`
+convention, so a run, an elbow and a tee show the same state at the same
+pitch. `assert_band_face` refuses a piece whose band is a different
+width — a corner whose band changes size is a different system, not the
+same run turning.
+
+**A09.2's real requirement is that three commitments must not share a
+pose**, and colour does not survive a theme change — so they are three
+different machines, checked by silhouette. `assert_commitments_differ`
+refuses if any two are within 5 cm on every axis.
+
+**No signal bus, no animation.** A09.1 says the model is a readable
+presentation of declared relationships, and A09.4 says art must not
+animate success ahead of the authoritative result. Every moving part is
+a node with declared positions.
+
+**The foothold rule gained an upper bound, and that is a correction.**
+It had none, so it refused the TOP of a two-metre relay cabinet — which
+a player cannot jump onto, since a standing jump tops out at 1.333 m
+with no mantle. A rule that refuses correct art gets switched off. Both
+this batch and Batch 048 now bound it by the measured jump; re-verified,
+and re-sabotaged with a waist-high ledge, which is still refused.
+
 ### Batch 047 — the skiff's fitted parts (2026-09-22, PENDING)
 
 A03.2 and A03.3. Batch 045 gave the skiff a hull; these are the parts

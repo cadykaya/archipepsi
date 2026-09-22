@@ -1,0 +1,244 @@
+{
+  "commitment_sizes": {
+    "conn_hold_paddle": [
+      0.260000000000000009,
+      0.900000000000000022,
+      0.450000000000000011
+    ],
+    "conn_repair_seal": [
+      0.979999999999999982,
+      0.419999999999999984,
+      0.270000000000000018
+    ],
+    "conn_set_dial": [
+      0.340000000000000024,
+      0.340000000000000024,
+      0.160000000000000003
+    ]
+  },
+  "conn_breaker": {
+    "nodes": 4,
+    "parts": [
+      "breaker_case",
+      "breaker_handle",
+      "breaker_window",
+      "breaker_bus"
+    ],
+    "size": [
+      0.440000000000000002,
+      0.640000000000000013,
+      0.340000000000000024
+    ]
+  },
+  "conn_flag_ack": {
+    "nodes": 4,
+    "parts": [
+      "flag_post",
+      "flag_pivot",
+      "flag_blade",
+      "flag_base"
+    ],
+    "size": [
+      0.260000000000000009,
+      0.790000000000000036,
+      0.46000000000000002
+    ]
+  },
+  "conn_gauge": {
+    "nodes": 4,
+    "parts": [
+      "gauge_case",
+      "gauge_face",
+      "gauge_needle",
+      "gauge_bezel"
+    ],
+    "size": [
+      0.299999999999999989,
+      0.299999999999999989,
+      0.175000000000000017
+    ]
+  },
+  "conn_hold_paddle": {
+    "nodes": 5,
+    "parts": [
+      "paddle_mount",
+      "paddle_arm",
+      "paddle_grip",
+      "paddle_spring",
+      "paddle_stop"
+    ],
+    "size": [
+      0.260000000000000009,
+      0.900000000000000022,
+      0.450000000000000011
+    ]
+  },
+  "conn_id_plaque": {
+    "nodes": 5,
+    "parts": [
+      "plaque_back",
+      "plaque_frame",
+      "plaque_id_field",
+      "blade_seat",
+      "plaque_lug"
+    ],
+    "size": [
+      0.979999999999999982,
+      0.5,
+      0.179999999999999993
+    ]
+  },
+  "conn_junction_box": {
+    "nodes": 7,
+    "parts": [
+      "box_shell",
+      "box_lid",
+      "box_terminals",
+      "port_north",
+      "port_south",
+      "port_east",
+      "port_west"
+    ],
+    "size": [
+      1.04000000000000004,
+      1.04000000000000004,
+      0.350000000000000033
+    ]
+  },
+  "conn_reader_panel": {
+    "nodes": 7,
+    "parts": [
+      "reader_case",
+      "reader_bezel",
+      "label_field",
+      "state_selected",
+      "state_unselected",
+      "state_blocked",
+      "state_pending"
+    ],
+    "size": [
+      0.780000000000000027,
+      0.57999999999999996,
+      0.149999999999999994
+    ]
+  },
+  "conn_relay_cabinet": {
+    "nodes": 7,
+    "parts": [
+      "relay_case",
+      "relay_cap",
+      "relay_door_0",
+      "relay_door_1",
+      "relay_door_2",
+      "relay_plinth",
+      "relay_vent"
+    ],
+    "size": [
+      0.979999999999999982,
+      2.14000000000000012,
+      0.584999999999999964
+    ]
+  },
+  "conn_repair_seal": {
+    "nodes": 5,
+    "parts": [
+      "seal_case",
+      "seal_frame",
+      "seal_tab_left",
+      "seal_tab_right",
+      "seal_lever"
+    ],
+    "size": [
+      0.979999999999999982,
+      0.419999999999999984,
+      0.270000000000000018
+    ]
+  },
+  "conn_run_elbow": {
+    "nodes": 7,
+    "parts": [
+      "elbow_back",
+      "elbow_back_b",
+      "elbow_knuckle",
+      "elbow_rail_a",
+      "elbow_rail_b",
+      "state_band_a",
+      "state_band_b"
+    ],
+    "size": [
+      0.612999999999999989,
+      0.560000000000000053,
+      0.612999999999999989
+    ]
+  },
+  "conn_run_tee": {
+    "nodes": 7,
+    "parts": [
+      "tee_back",
+      "tee_body",
+      "tee_spur",
+      "tee_rail_-1",
+      "tee_rail_1",
+      "state_band",
+      "tee_branch_band"
+    ],
+    "size": [
+      1.0,
+      0.560000000000000053,
+      0.709999999999999964
+    ]
+  },
+  "conn_service_stack": {
+    "nodes": 5,
+    "parts": [
+      "stack_tank",
+      "stack_flue",
+      "stack_cowl",
+      "stack_feed",
+      "stack_foot"
+    ],
+    "size": [
+      0.719999999999999973,
+      2.45999999999999996,
+      0.930000000000000049
+    ]
+  },
+  "conn_set_dial": {
+    "nodes": 12,
+    "parts": [
+      "dial_plate",
+      "dial_detent",
+      "dial_tooth_0",
+      "dial_tooth_1",
+      "dial_tooth_2",
+      "dial_tooth_3",
+      "dial_tooth_4",
+      "dial_tooth_5",
+      "dial_tooth_6",
+      "dial_tooth_7",
+      "dial_knob",
+      "dial_pointer"
+    ],
+    "size": [
+      0.340000000000000024,
+      0.340000000000000024,
+      0.160000000000000003
+    ]
+  },
+  "conn_wall_pass": {
+    "nodes": 5,
+    "parts": [
+      "pass_sleeve",
+      "pass_collar_near",
+      "pass_gland_near",
+      "pass_collar_far",
+      "pass_gland_far"
+    ],
+    "size": [
+      0.520000000000000018,
+      0.520000000000000018,
+      0.599999999999999978
+    ]
+  },
+  "problems": []
+}

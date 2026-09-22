@@ -271,6 +271,18 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_roomkit_fit.sh"
 
+  # A09's distinctions are the deliverable: a band that keeps Batch
+  # 043's face, three commitments that cannot be confused, and labels
+  # nobody baked.
+  say "the cross-room kit keeps A09's distinctions..."
+  tools/content/run_connect_fit.sh >/dev/null 2>&1 || \
+    fail "connfit: a connection visual no longer imports, its band
+    stopped matching Batch 043's run face, two of the three commitments
+    became the same shape, or a runtime-populated field went missing.
+    Run
+
+    tools/content/run_connect_fit.sh"
+
   say "the theme pack binding, and its control..."
   tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
     fail "theme-bind: Production's ThemeMaterials no longer binds the
@@ -329,7 +341,8 @@ SCRIPTS="build_materials build_architecture build_props
   build_interaction_kit build_secrets build_enemy_roles build_zone_keys
   build_viewmodel build_gates build_decoys build_physics_props
   build_machinery build_wave1_repair_overlay build_junctions
-  build_setpieces build_yardkit build_skiffkit build_roomkits"
+  build_setpieces build_yardkit build_skiffkit build_roomkits
+  build_connect"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.
@@ -392,7 +405,8 @@ done
 for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
            run_arrival_test.sh run_setpiece_fit.sh \
            run_yardkit_fit.sh run_skiff_sweep.sh \
-           run_enemy_readiness.sh run_roomkit_fit.sh; do
+           run_enemy_readiness.sh run_roomkit_fit.sh \
+           run_connect_fit.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."
