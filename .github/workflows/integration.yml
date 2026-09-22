@@ -150,6 +150,7 @@ jobs:
           make godot-archive
           make godot-consumable
           make godot-encounter
+          make godot-signal-graph
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live

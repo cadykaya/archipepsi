@@ -165,6 +165,12 @@ var macro_carried := {}
 ## instead of a silence.
 var _rail := {}
 var rail_refusals: Array[String] = []
+## THE ZONE'S DECLARED SIGNAL GRAPHS (P14), and what the engine refused
+## to build. Same posture, for the same reason: a chain the runtime
+## cannot honour is a finding about the Zone, not an error to drop a
+## player out of it over.
+var signal_graphs: Array[SignalGraph] = []
+var signal_graph_refusals: Array[String] = []
 ## Each room's committed frame: `{position, yaw, arrival}` in world
 ## space, off the same layout `room_bounds` comes from.
 var room_places := {}
@@ -463,6 +469,22 @@ func setup(zone_dict: Dictionary) -> void:
 		# it, so a span commissioned last visit is commissioned again
 		# here without the engine being told the state of any object.
 		junction.restore_from(latches_accepted())
+
+	# THE DECLARED SIGNAL GRAPHS (P14). After the railways and for the
+	# same reason: the chain is placed off `room_places` and
+	# `room_bounds`, and both are committed by now. Unlike a railway a
+	# graph is ROOM-LOCAL -- §19.7 rule 2 -- so nothing here reaches
+	# across rooms and nothing needs the whole layout, only the one
+	# room's frame.
+	var graphs := RoomGraphs.build(self,
+			zone_dict.get("room_graphs", []) as Array,
+			room_places, room_bounds,
+			str(zone_dict.get("theme", "concrete_facility")))
+	for raw_graph: Variant in graphs.get("graphs", []) as Array:
+		signal_graphs.append(raw_graph as SignalGraph)
+	for why: String in graphs.get("refused", []) as Array:
+		signal_graph_refusals.append(why)
+		push_warning("signal graph refused: %s" % why)
 	door_positions = (build.get("doors", {}) as Dictionary).duplicate()
 	exit_departs_from = str(build.get("exit_departs_from", ""))
 	for raw: Variant in build.get("plugs", []):

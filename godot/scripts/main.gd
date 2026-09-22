@@ -90,6 +90,7 @@ const DRIVERS := {
 	"--consumable": preload("res://tests/consumable_driver.gd"),
 	"--consumable-live": preload("res://tests/consumable_live_driver.gd"),
 	"--encounter": preload("res://tests/encounter_driver.gd"),
+	"--signal-graph": preload("res://tests/signal_graph_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }
