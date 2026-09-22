@@ -58,6 +58,34 @@ var _tint_base_albedo: Array[Color] = []
 var _voice: AudioStreamPlayer3D = null
 var _has_noticed := false
 # Brute slam windup.
+## HOW LONG EACH ARCHETYPE COMMITS BEFORE ITS ATTACK LANDS.
+##
+## A table rather than literals at the call sites, because "how long is
+## the brute's windup" is a question a designer asks and a suite
+## measures, and it was previously answerable only by reading the middle
+## of `_try_attack`.
+##
+## **`melee` is absent on purpose.** The contact attack is the cheap one
+## and its reach is a body-length; a windup there is a mob standing next
+## to you doing nothing. The brute's slam is the telegraphed melee and
+## that is the distinction the roster draws. Recorded as a decision so
+## the gap is not read as the same defect F-14 named.
+const TELEGRAPH_SECONDS := {
+	"brute": 0.5,
+	# THE RANGED WINDUP (F-14, H2). This archetype fired the instant its
+	# cooldown allowed, from any distance inside its reach, with nothing
+	# to see first -- `godot-counterfire` measured it and reported
+	# "windup: none" as a finding rather than a number. A shot you cannot
+	# see coming is not dodgeable, and EX50-021's whole §11 case is a
+	# player stepping out of a committed shot's way.
+	#
+	# 0.45 s: shorter than the brute's, because the projectile's own
+	# flight already gives the player most of a second on top, and a
+	# ranged enemy planted for half a second at range reads as an easy
+	# target rather than as a threat.
+	"ranged": 0.45,
+}
+
 var _windup := 0.0
 ## Presentation-only container. EVERY mesh hangs off this and nothing
 ## else does, so a hit flinch or a windup swell scales the LOOK and can
@@ -289,9 +317,14 @@ func _physics_process(delta: float) -> void:
 				(telegraph_duration - _windup) * TAU))
 		if _windup <= 0.0:
 			_set_visual_scale(1.0)
-			_say("slam")
+			# WHAT THE TELEGRAPH WAS FOR, dispatched on the kind. This
+			# read `_slam` unconditionally, which is the reason only the
+			# brute could telegraph: any other attack that opened a
+			# windup would have resolved into the brute's slam.
+			var kind := telegraph_kind
+			_say(kind)
 			if player != null:
-				_slam(player)
+				_resolve_telegraph(kind, player)
 			_end_telegraph(true)
 
 	if player != null:
@@ -318,9 +351,12 @@ func _physics_process(delta: float) -> void:
 				velocity.x = lerpf(velocity.x, 0.0, 0.5)
 				velocity.z = lerpf(velocity.z, 0.0, 0.5)
 			elif _windup > 0.0:
-				# Committed to the slam: plant and telegraph. The countdown
-				# itself runs below, outside this branch, so losing aggro
-				# mid-swing cannot freeze the brute mid-telegraph.
+				# Committed: plant and telegraph, whatever the attack is.
+				# The countdown itself runs below, outside this branch, so
+				# losing aggro mid-swing cannot freeze an enemy
+				# mid-telegraph. A ranged enemy planting to aim is what
+				# makes its shot readable AND what makes it vulnerable
+				# while it takes one.
 				velocity.x = lerpf(velocity.x, 0.0, 0.4)
 				velocity.z = lerpf(velocity.z, 0.0, 0.4)
 			elif speed > 0.0 and distance > float(stats["reach"]) * 0.8:
@@ -367,19 +403,43 @@ func _try_attack(player: Player, distance: float) -> void:
 	if archetype == "ranged":
 		if distance <= reach and _has_line_of_sight(player):
 			_attack_cooldown = float(stats["cooldown"])
-			_fire_projectile(player)
+			# COMMITTED, THEN FIRED. Line of sight is checked HERE, when
+			# the shot is committed, and deliberately not again at
+			# release: a player who breaks the line during the windup has
+			# dodged the shot, and the projectile leaving the muzzle into
+			# the cover they reached is the whole of EX50-021 §11. Asking
+			# again at release would delete the shot instead, which reads
+			# as the enemy changing its mind.
+			_begin_telegraph("aim", float(TELEGRAPH_SECONDS["ranged"]))
+			_say("windup")
 	elif archetype == "brute":
 		if distance <= reach:
 			# The boss telegraphs: half a second of swelling, then the slam.
 			# The growl matters more than the swell — you can hear it while
 			# looking somewhere else.
 			_attack_cooldown = float(stats["cooldown"])
-			_begin_telegraph("slam", 0.5)
+			_begin_telegraph("slam", float(TELEGRAPH_SECONDS["brute"]))
 			_say("windup")
 	elif distance <= reach:
 		_attack_cooldown = float(stats["cooldown"])
 		_say("melee_hit")
 		player.take_damage(float(stats["damage"]), global_position)
+
+## WHAT A FINISHED TELEGRAPH DOES, by kind.
+##
+## The seam H2 asks for: an attack hangs a telegraph of its own and says
+## here what it becomes. Adding a third is a row in `TELEGRAPH_SECONDS`
+## and a branch here, with no change to the countdown, the swell, the
+## plant, or the `telegraph_started`/`telegraph_finished` contract an
+## authored telegraph binds to.
+func _resolve_telegraph(kind: String, player: Player) -> void:
+	match kind:
+		"slam":
+			_slam(player)
+		"aim":
+			_fire_projectile(player)
+		_:
+			push_error("enemy telegraph '%s' has no resolution" % kind)
 
 ## The brute's payoff: damage plus a shove if the player lingered.
 func _slam(player: Player) -> void:

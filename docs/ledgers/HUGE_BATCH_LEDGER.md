@@ -923,7 +923,7 @@ not stop at the first blocked row.
 | **G3** | Interruption | **not started** | — | |
 | **G4** | Two unmistakable launch modes, separate saves, printed revision | **partly done** | — | the 0.4 scenarios launch by name and by double-click; the printed revision/provider/scale banner is not done |
 | **H1** | **Enemy variety** — the recorded target is ~20 distinct enemies with meaningful combat roles (`docs/art/ART_REVIEW.md` § "The enemy roster target, recorded") | **3 of 10 declared roles have behaviour — a separate explicit workstream, NOT discharged by the 2026-09-21 Status/room checkpoint, and "no new content roster" does not erase it** | — | `Constants.ENEMY_ROLES` declares ten — `melee, ranged, brute, charger, bulwark, scuttler, artillery, beacon, diver, drifter` — and `ENEMY_ARCHETYPES` implements **three**. `Enemy.create` branches on those three only; the other seven are names in a generated constant with no runtime behind them. The art lane records the same gap from its side (`docs/art/review/batch008/README.md`: "seven of the ten roles have no collider, and the telegraph has no node in `enemy.gd`") |
-| **H2** | Enemy telegraph as a hangable node | **not started — NOT discharged by the 2026-09-21 Status/room checkpoint** | — | the ranged archetype has no windup at all (F-14); only the brute telegraphs. Both a gameplay and an art-integration blocker |
+| **H2** | Enemy telegraph as a hangable node | **the seam is archetype-agnostic and the ranged windup exists (F-14 repaired)**; the authored NODE is still art's side | — | The countdown's resolution called `_slam` unconditionally, so structurally only the brute COULD telegraph — any other attack opening a windup would have resolved into the brute's melee slam. It dispatches on `telegraph_kind` now, durations live in `Enemy.TELEGRAPH_SECONDS` instead of literals mid-function, and the ranged archetype commits `aim` for 0.45 s before firing. Adding a third attack is a table row and a branch, with no change to the countdown, the plant, the swell or the `telegraph_started`/`telegraph_finished` contract an authored telegraph binds to. `melee` declares no window on purpose and the reason is recorded. Covered in `godot-content` THROUGH THE COUNTDOWN — the first cut called the resolver directly and passed with the defect restored |
 | **M0** | 0.4 line exists, 0.3 untouched | **verified** | — | |
 | **M1** | One real machine chain | **verified** | — | `M1-zone` is built and certified this batch (`godot-rail-zone`): D-4 landed at `704f379` and the engine consumes it. What remains is a COMPOSER that declares a railway — no generated Zone asks for one yet — and a played route through it |
 | **M2-mech** | Dev-scenario loop, labelled | **verified** | — | |
@@ -944,7 +944,7 @@ not stop at the first blocked row.
 | D-5 objective-binding vocabulary | C6, and any claim of **genuine** Epsilon objective selection | building and testing provisional configurations |
 | D-6 0.4 save representation | G1, `E-011-save`, `E-021-save` | E-011's and E-021's other rows |
 | ~~**D-7** `lightened` in the closed `StatusKind` with its effects~~ **delivered and consumed; `lightened: ("object",)` declared beside the runtime** | nothing | `E-033-answer`, `E-033-sensor`, `E-033-control`, `E-033-step`, all of which are done |
-| ~~**D-8**~~ **AGREED AND THE BRIDGE HALF IS DELIVERED** (`docs/design-proposals/D8_CROSS_ROOM_STATE_CONTRACT.md`, §11 answers Prod's two rule questions; F-25) | nothing any more — M6's remaining work is the engine half | M1-zone, M3, the minors, H1/H2 — none of which needs it. Prod's half (runtime binding, machinery, cross-room feedback, physical acceptance) is specified in `docs/D8_CROSS_ROOM_PROD.md` and is deliberately **not implemented** until the contract is agreed, per the owner's "agree the shared contract before competing implementations are written" |
+| ~~**D-8**~~ **AGREED AND THE BRIDGE HALF IS DELIVERED** (`docs/design-proposals/D8_CROSS_ROOM_STATE_CONTRACT.md`, §11 answers Prod's two rule questions; F-26) | nothing any more — M6's remaining work is the engine half | M1-zone, M3, the minors, H1/H2 — none of which needs it. Prod's half (runtime binding, machinery, cross-room feedback, physical acceptance) is specified in `docs/D8_CROSS_ROOM_PROD.md` and is **now unblocked**: the contract is agreed, so the owner's "agree the shared contract before competing implementations are written" is satisfied and the engine half is free to start |
 
 ## Full-Amalgam matrix
 
@@ -1122,6 +1122,42 @@ recommendation is to express such a design as reversible Zone configuration
 rather than as a held requirement, which needs no amendment; the amendment that
 *would* be needed if a genuinely held cross-room requirement is wanted is named
 so the choice is visible rather than made by accident.
+
+
+### F-14 (second half) — the telegraph seam could only ever have been the brute's
+
+Recorded when EX50-021 measured "the ranged archetype's windup: **none**". The
+first half of that finding was true and obvious: the archetype fired the instant
+its cooldown allowed, from anywhere inside its reach, with nothing to see first.
+
+The second half was structural and was not visible until H2 was attempted.
+`_physics_process`'s countdown resolved with a bare `_slam(player)` — so a
+telegraph was not a seam any attack could hang from. **Any** attack that opened
+a windup would have resolved into the brute's melee slam, landing damage at the
+brute's reach on whatever the attacker was. The interface (`telegraph_started`,
+`telegraph_finished`, `telegraph_progress`, `telegraph_origin`) was complete and
+archetype-agnostic; the one line that consumed it was not.
+
+Repaired by dispatching on `telegraph_kind`. The ranged archetype now commits
+for `TELEGRAPH_SECONDS["ranged"]` (0.45 s) and plants while it does — the
+existing windup branch already stopped an enemy mid-telegraph, generically, so
+a ranged enemy taking a shot is now both readable and vulnerable, which is what
+EX50-021 §11's dodge needs to be fair.
+
+**A test that did not cover its own defect.** The first version of the new case
+called `_resolve_telegraph` directly; reverting the dispatch to the old
+unconditional `_slam` left it **green**. It runs the windup down through
+`_physics_process` now, and the revert produces two failures.
+
+`godot-counterfire`'s note said "the ranged archetype has NO windup" and is
+rewritten to report the measured window instead — a note that went on asserting
+a repaired defect would be the suite reporting history as measurement. Its
+timings are unchanged, because that case builds its projectile through
+`Enemy.fire_at()` rather than waiting for the AI.
+
+**Not done, and not claimed:** H1. Seven of ten declared roles still have no
+behaviour, and this changes nothing about that.
+
 ### F-24 — F-22's three questions, answered in the schema
 
 **Dess, 2026-09-22.** Prod built the engine half against D-4 and found the
@@ -1172,7 +1208,33 @@ Each rule sabotage-proven separately: neutralising the adjacency validator
 fails exactly its three controls and leaves the `home_dock` controls green;
 neutralising the `home_dock` check fails exactly its one.
 
-### F-25 — D-8 agreed and the bridge half landed; one search knew what another did not
+
+### F-25 — the re-park undid the home dock one line later
+
+Found while consuming F-24 answer 3. `RailNetwork.home_dock` was read, resolved
+to an index and applied with `junction.park(index)` — and the carrier still sat
+at dock 0.
+
+`RailJunction.restore_from` ends with a bare `park()`, and it has to: a carrier
+restored onto a link this build did not commission would be standing on track
+that is not there. But `park`'s default argument was `0`, so the re-park did not
+mean "come home", it meant "go to the first dock" — and `ZoneController` calls
+`restore_from` immediately after the builder, so **any** home a caller chose was
+overwritten by the next statement.
+
+Latent rather than new: nothing had ever chosen a non-zero dock, so the default
+and the intent agreed by accident. The moment a Zone declared one they stopped
+agreeing.
+
+**The junction owns its home now.** `RailJunction.home_dock` defaults to 0 —
+unchanged behaviour for every caller — and `park(dock := -1)` honours it when
+called with no argument. So `restore_from`'s re-park means "come home" and the
+one place that knows which dock that is sets it.
+
+`godot-rail-zone` covers both directions: a network naming `home_dock: d2`
+parks at dock 2 (offset 35.73), and one declaring none still parks at the
+first — the control that says F-24's answer cost nothing.
+### F-26 — D-8 agreed and the bridge half landed; one search knew what another did not
 
 **Dess, 2026-09-22.** The contract is agreed. Prod's
 `docs/D8_CROSS_ROOM_PROD.md` and my

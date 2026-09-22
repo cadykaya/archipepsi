@@ -69,6 +69,7 @@ func _run() -> void:
 	await _a_fired_latch_rebuilds_commissioned()
 	await _a_span_the_carrier_cannot_run_is_refused()
 	await _a_zone_with_no_railway_builds_none()
+	await _the_carrier_parks_where_the_zone_says()
 	print("")
 	if _failures == 0:
 		print("GODOT RAIL ZONE OK (%d checks, %d notes)"
@@ -299,3 +300,38 @@ func _a_zone_with_no_railway_builds_none() -> void:
 			and controller.rail_refusals.is_empty(),
 			"...with no junction and nothing refused")
 	await _drop(controller)
+
+
+## F-24 answer 3: `home_dock` is the Zone's declaration now, not an
+## engine assumption. `null` still means the first dock, so the default
+## is what it always was and a Zone composed before the field is
+## unaffected.
+func _the_carrier_parks_where_the_zone_says() -> void:
+	print("  -- THE CARRIER PARKS WHERE THE ZONE SAYS")
+	var declared := _zone([{
+		"span_id": "s0", "from_dock": "d0", "to_dock": "d1",
+		"control_room_id": null, "latch_id": "given", "mandatory": false,
+	}])
+	(declared["rail_networks"] as Array)[0]["home_dock"] = "d2"
+	var controller := _built(declared)
+	await _settle()
+	var carrier: RailCarrier = controller.rail_carriers()[0]
+	_check(is_equal_approx(carrier.offset, carrier.dock_offsets[2]),
+			"a network naming `home_dock: d2` parks at dock 2 (offset "
+			+ "%.2f, dock 2 is %.2f)" % [carrier.offset,
+				carrier.dock_offsets[2]])
+	await _drop(controller)
+
+	# AND THE DEFAULT IS UNCHANGED. A null home_dock is the first dock,
+	# which is what the engine assumed before the field existed -- so
+	# this is the control that says the answer cost nothing.
+	var plain := _built(_zone([{
+		"span_id": "s0", "from_dock": "d0", "to_dock": "d1",
+		"control_room_id": null, "latch_id": "given", "mandatory": false,
+	}]))
+	await _settle()
+	var default_carrier: RailCarrier = plain.rail_carriers()[0]
+	_check(is_equal_approx(default_carrier.offset,
+			default_carrier.dock_offsets[0]),
+			"a network declaring no home_dock still parks at the first")
+	await _drop(plain)

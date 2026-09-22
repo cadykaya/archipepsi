@@ -26,7 +26,7 @@ state, `reversible` means it can always go back. The owner's "do not
 silently replace a live requirement with a permanent latch" is then
 unwritable rather than discouraged.
 
-**F-25: my own test found the defect.** Threading the macro component
+**F-26: my own test found the defect.** Threading the macro component
 through five of six searches left `_key_graph_is_acyclic` at the initial
 state, so a gated edge looked shut and a Zone with no cycle reported
 one. One search knowing what another does not — reintroduced by the

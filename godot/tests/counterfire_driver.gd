@@ -302,10 +302,18 @@ func _the_committed_shot() -> void:
 		"and the player was not hit doing it (%0.f HP)" % room.player.hp)
 	_note("the shot needed %.2f s to reach the stance; the step into "
 			% out["flight"] + "cover took %.2f s" % out["dodge"])
-	_note("the ranged archetype has NO windup -- `_say(\"shot\")` is a "
-			+ "tone played at the instant of firing, so the projectile "
-			+ "itself is the whole telegraph. Whether that margin is "
-			+ "fair is a playtest question and is not answered here")
+	# THE NOTE THIS REPLACES SAID THE OPPOSITE, and was true when it was
+	# written: "the ranged archetype has NO windup". That was F-14, and
+	# H2 repaired it -- the archetype now plants and telegraphs `aim` for
+	# `Enemy.TELEGRAPH_SECONDS["ranged"]` before the projectile leaves.
+	# A note that went on asserting the defect after the repair would be
+	# this suite reporting history as measurement.
+	_note("the ranged archetype telegraphs `aim` for %.2f s before "
+			% float(Enemy.TELEGRAPH_SECONDS["ranged"])
+			+ "firing, so the player has that plus the %.2f s flight. "
+			% out["flight"]
+			+ "Whether the total margin is fair is still a playtest "
+			+ "question and is still not answered here")
 	room.queue_free()
 
 
