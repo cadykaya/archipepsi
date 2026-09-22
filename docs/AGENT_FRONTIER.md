@@ -1,5 +1,49 @@
 # AGENT FRONTIER
 
+## BRIDGE LANE — P14's latch on a route, and D-11's pack identity: handed off — 2026-09-22
+
+**Tested revision:** `83a8e7e` on `claude/archipepsi-0-4-blindside`.
+`make test` **1887 passed, 6 skipped**; `check_packet` green; exports
+and both Zone fixtures regenerated through `make export`,
+`make zone-fixture` and `make latched-route-fixture`. **No Godot suite
+was run in this container** — there is no engine binary here — so every
+engine-side claim below is Prod's to verify.
+
+**Delivered:** `9ef2676` (P14 bridge half) and `83a8e7e` (D-11 bridge
+half). Exact contracts: `docs/D10_P14_PROD_ANSWER.md` §5 and
+`docs/D11_THEME_PACK_PROD_ANSWER.md` §5.
+
+**P14.** LATCH is supported and exported (one input, no reset; a latch
+set at rest is refused everywhere). `SensorNode.counts_player` defaults
+false, preserving EX50-033. The route validator reads the chain that
+drives the gating actuator and uses `plate_accepts_player` — the flag
+first, so the player's mass alone never counts for an object-only
+plate. Reachability models each route latch as a permanent variable
+(search only) and refuses a trigger behind its own route by name.
+`record_latch` accepts `graph_<room>` only for a declared LATCH in the
+accepted Zone with a committed layout that placed the room; `graph_` is
+reserved from physics packages, whose path is unchanged.
+`compose_latched_route` (explicit step) → `latched_route_zone.json`:
+plate and latch in `c002`, shutter across `e:c002:c003`.
+
+**D-11.** `Zone.theme_pack` beside the unchanged six families; candidate
+(descriptor rows) / selectable / approved (`THEME_PACK_STATUS`, empty)
+kept apart; `pack_textures` contract and `resolution_order` with no
+pack hop; universal roles refused for packs. Nothing selected, no asset
+touched.
+
+**Remaining runtime work, Prod's:** P14 — `ClassPlate` honours
+`counts_player`; `Player.mass_class()` from `PLAYER_MASS_KG`;
+`RoomGraphs.build` places the shutter across the `opened_by` doorway;
+the played acceptance on `latched_route_zone.json` (step on, step off,
+walk through with the base kit, normal save/reload, still open).
+D-11 — the pack key in `_resolve`, `(pack, theme, role)` cache keys,
+universal-role refusals for packs. **D-9** stays as agreed
+(authorization before launch); consumables remain staged until the
+combined feature is ready for promotion.
+
+---
+
 ## BRIDGE LANE — three proposals on the table, one of them load-bearing — 2026-09-22
 
 Coordination round. Each of these is one half of a contract with two
