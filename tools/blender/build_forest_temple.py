@@ -308,13 +308,65 @@ def switch_housing():
 
 
 def root_mass():
-    """Dressing. The floor has lost, too."""
-    body = _b("ft_root_spine", (1.60, 0.34, 0.10), (0.0, 0.0, 0.05), "trim")
+    """Dressing. The floor has lost, too.
+
+    REBUILT after seeing it in the room. The first version was a
+    1.60 x 0.34 x 0.10 slab with three thin boxes crossing it at right
+    angles, and in `FT_chamber` and `FT_threshold` it read as two fallen
+    timber beams, not as growth: every edge straight, every crossing
+    square, the whole silhouette 0.10 m tall and therefore nothing but
+    that silhouette. A root that has won a floor is not a lumber pile.
+
+    What makes it read as a root instead:
+
+    * **it swells and tapers.** Five segments from 0.22 m tall at the
+      anchored end down to 0.05 at the tip. A constant section is a
+      pipe;
+    * **it kinks.** Each segment carries its own yaw, alternating sign,
+      so the run bends twice instead of pointing;
+    * **a knuckle where it turns**, taller than either segment it joins,
+      which is what a real root does at a change of direction and what
+      the eye is actually reading;
+    * **the fork leaves at the knuckle** and at a shallow angle, rather
+      than crossing the spine square. Nothing in a root meets anything
+      at ninety degrees.
+
+    The buried run underneath is what everything is connected THROUGH --
+    `assert_parts_touch` floods outward from the body, so the fork tip
+    reaches the body by way of the fork.
+
+    No segment is 0.35 m in both plan axes, so the no-foothold rule
+    evaluates every one of them and none is a standable patch. That
+    check is now declared for this asset, which it was not before: a
+    piece that sits on the floor is the likeliest one in the set to
+    invent a step, and it was the only one with no route check at all.
+    """
+    # `brushkit.block`'s rotation_z is DEGREES -- it calls
+    # `math.radians()` on what it is given. The first pass of this
+    # rebuild handed it radians, so a 54-degree fork became a
+    # 0.95-degree one, the fork tip landed 0.19 m from anything and
+    # `assert_parts_touch` caught it. It was right, and the defect was
+    # not the one it names: the piece was not floating, it was straight.
+    body = _b("ft_root_run", (1.42, 0.14, 0.06), (0.0, 0.0, 0.03),
+              "trim", rotation_z=6.0)
     parts = []
-    for i, (x, y, ln) in enumerate((
-            (-0.55, 0.26, 0.52), (0.10, -0.30, 0.64), (0.62, 0.22, 0.44))):
-        parts.append(_b("ft_root_branch_%d" % i, (0.12, ln, 0.09),
-                        (x, y, 0.045), "trim"))
+    #   tag          size (x, y, z)        at (x, y, z)        yaw (deg)
+    for tag, size, at, yaw in (
+            # 0.24 deep, not 0.26: at 15 degrees a 0.26 box measures
+            # 0.355 m in plan, and the no-foothold rule counts anything
+            # 0.35 square above the 0.12 m walk-up. Shaving it to slip
+            # under a gate would be cheating; a root that is 0.35 m
+            # across AND 0.22 m tall is a bench, and the rule is right
+            # about benches. This is a root.
+            ("swell_0", (0.40, 0.24, 0.22), (-0.56, 0.05, 0.11), 15.0),
+            ("swell_1", (0.34, 0.22, 0.15), (-0.16, -0.04, 0.075), -11.0),
+            ("knuckle", (0.22, 0.24, 0.18), (0.10, 0.03, 0.09), 31.0),
+            ("swell_2", (0.36, 0.17, 0.11), (0.42, 0.01, 0.055), 8.0),
+            ("tip", (0.26, 0.11, 0.05), (0.72, -0.05, 0.025), -17.0),
+            ("fork", (0.32, 0.13, 0.10), (0.20, 0.17, 0.05), 54.0),
+            ("fork_tip", (0.22, 0.09, 0.06), (0.33, 0.31, 0.03), 46.0)):
+        parts.append(_b("ft_root_%s" % tag, size, at, "trim",
+                        rotation_z=yaw))
     return body, parts
 
 
@@ -345,7 +397,7 @@ ASSETS = [
     ("tp_ft_wall_relief", wall_relief, ["route"]),
     ("tp_ft_alcove_torch", alcove_torch, ["emitters"]),
     ("tp_ft_switch_housing", switch_housing, ["emitters"]),
-    ("tp_ft_root_mass", root_mass, []),
+    ("tp_ft_root_mass", root_mass, ["route"]),
     ("tp_ft_door_surround", door_surround, ["opening", "route"]),
 ]
 
@@ -355,7 +407,7 @@ DISTINCT = {
     "tp_ft_wall_relief": "the panel is SPLIT, and the split is the subject",
     "tp_ft_alcove_torch": "timber hood over a stone bowl, not a metal sconce",
     "tp_ft_switch_housing": "batch043's wall-switch contract in timber",
-    "tp_ft_root_mass": "floor dressing the house family has none of",
+    "tp_ft_root_mass": "floor dressing the house family has none of: it swells, kinks and forks, and nothing in it meets anything square",
     "tp_ft_door_surround": "bossed jambs; dressing around a fixed opening",
 }
 

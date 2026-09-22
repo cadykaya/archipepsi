@@ -2,6 +2,20 @@
 
 **Arty**
 
+## Two counts, and they are not the same count
+
+The owner asked for these to be reported separately, and they must be,
+because one of them is an inventory of a web page and the other is an
+inventory of finished art. Conflating them is how "81 rows exist" turns
+into "81 packs exist".
+
+| | |
+|---|---|
+| **CATALOGUE coverage** | **81 of 81.** Every included Archipelago game has a row, a queue id and a reserved pack id. This is a list, and a list is not art. |
+| **COMPLETED pack coverage** | **0 of 81.** Nothing has passed the bar in *What counts as a completed pack* below. |
+| **IN PROGRESS** | **1** — `tp_ocarina_of_time` (T01), content built and applied in engine, material treatment still missing. |
+| **NOT STARTED** | **80.** |
+
 **Catalogue snapshot:** `catalogue.json`, taken 2026-09-22 from
 `https://archipelago.gg/games` ("Currently Supported Games").
 **Count: 81 included games.** The first wave is the packet's eighteen;
@@ -17,12 +31,19 @@ here.
 
 ## The two things a reader should know before the table
 
-### 1. Nothing is started. Every row below is `not started`.
+### 1. One row has assets. Nothing has passed the completion bar.
 
 Archipepsi's six theme families — `concrete_facility`,
 `rusted_industrial`, `neon_transit`, `gothic_stone`, `temple_ruin`,
-`void_glitch` — are **the house's own**, not game packs. No row in this
-table has an asset yet.
+`void_glitch` — are **the house's own**, not game packs.
+
+**T01 `tp_ocarina_of_time` has six assets** (Batch 054) and an in-engine
+application (`docs/art/review/forest_temple_2026-09-22/`). It is **not
+complete**, and the thing missing is the biggest one: its material
+treatment, which §3 below explains there is nowhere to file. A pack
+painted in `temple_ruin` is a pack wearing another pack's clothes.
+
+**Every other row is `not started` and says so.**
 
 ### 2. There IS a per-game hook, and what it selects is a TINT
 
@@ -127,7 +148,25 @@ easy to drift from:
 
 ---
 
+## Completed pack coverage
+
+The criteria above, one column each, for every pack with any work on it.
+A pack absent from this table has nothing built. **A row here is not a
+completion: the verdict column is.**
+
+| Pack | Subtheme stated | Shapes / motifs | Dressing | Material treatment | In-engine application | Contracts preserved | Owner review | **Verdict** |
+|---|---|---|---|---|---|---|---|---|
+| `tp_ocarina_of_time` | yes — Forest Temple, chosen over an average of Ocarina's environments | yes — 6 assets, Batch 054 | yes — floor root mass, timber-hooded torch alcove | **NO** — painted in `temple_ruin`; §3, no pack namespace to file its own set in | yes — 4 frames, `forest_temple_2026-09-22/`, opening re-checked on the IMPORTED geometry | yes — 2.4 × 3.2 opening clear, no collider, no light, no foothold added | not started | **IN PROGRESS** |
+
+**0 of 81 complete. 1 in progress. 80 not started.**
+
+---
+
 ## Coverage
+
+This is the CATALOGUE ledger: one row per included game, so that the
+list cannot silently lose a row. It is not a progress report. The
+completion ledger is the table above.
 
 `reused family` and `distinctive assets` stay empty until a pack is
 authored — filling them in advance would be planning dressed as
@@ -135,7 +174,7 @@ progress.
 
 | Queue | Source reference | Pack ID | Packet concept | Reused family | Distinctive assets | Exported/imported | Runtime-selected | Owner review |
 |---|---|---|---|---|---|---|---|---|
-| T01 | Ocarina of Time | `tp_ocarina_of_time` | Grove Relay Temple — **Forest Temple** subtheme, stated | `temple_ruin` construction | 6: column with a climbing root, split wall relief, timber-hooded torch alcove, timber switch housing, floor root mass, bossed door surround | **content yes** (batch054), **materials no** (§3) | no | not started |
+| T01 | Ocarina of Time | `tp_ocarina_of_time` | Grove Relay Temple — **Forest Temple** subtheme, stated | `temple_ruin` construction | 6: column with a climbing root, split wall relief, timber-hooded torch alcove, timber switch housing, floor root mass, bossed door surround | **content yes** (batch054), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T02 | Super Mario 64 | `tp_super_mario_64` | Clockwork Garden | — | — | no | no | not started |
 | T03 | Bomb Rush Cyberfunk | `tp_bomb_rush_cyberfunk` | Afterhours Municipal Transit | — | — | no | no | not started |
 | T04 | Super Metroid | `tp_super_metroid` | Pressureworks Derelict | — | — | no | no | not started |
