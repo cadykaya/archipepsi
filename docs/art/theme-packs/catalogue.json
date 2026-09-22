@@ -1,0 +1,582 @@
+{
+  "snapshot_date": "2026-09-22",
+  "source": "https://archipelago.gg/games",
+  "source_heading": "Currently Supported Games",
+  "source_wording": "Below are the games that are currently included with the Archipelago software.",
+  "basis": "official included-games page -- the same basis the original packet's source-game register used",
+  "count": 81,
+  "page_sha256": "33544cc229a2ef1de336a7230c7e00f262a8c55b942035545c50ee857fea7ff0",
+  "extraction": "every `<details data-game=\"...\">` on the page, de-duplicated and order-preserved",
+  "community_only_apworlds": "NOT included and deliberately not counted. The page itself sends custom worlds to the setup guide's 'playing with custom worlds' section; this catalogue is the included set only.",
+  "first_wave": 18,
+  "remaining": 63,
+  "games": [
+    {
+      "queue": "T01",
+      "title": "Ocarina of Time",
+      "pack_id": "tp_ocarina_of_time",
+      "packet_concept": "Grove Relay Temple",
+      "wave": 1
+    },
+    {
+      "queue": "T02",
+      "title": "Super Mario 64",
+      "pack_id": "tp_super_mario_64",
+      "packet_concept": "Clockwork Garden",
+      "wave": 1
+    },
+    {
+      "queue": "T03",
+      "title": "Bomb Rush Cyberfunk",
+      "pack_id": "tp_bomb_rush_cyberfunk",
+      "packet_concept": "Afterhours Municipal Transit",
+      "wave": 1
+    },
+    {
+      "queue": "T04",
+      "title": "Super Metroid",
+      "pack_id": "tp_super_metroid",
+      "packet_concept": "Pressureworks Derelict",
+      "wave": 1
+    },
+    {
+      "queue": "T05",
+      "title": "Kingdom Hearts 2",
+      "pack_id": "tp_kingdom_hearts_2",
+      "packet_concept": "Twilight Service District",
+      "wave": 1
+    },
+    {
+      "queue": "T06",
+      "title": "DOOM 1993",
+      "pack_id": "tp_doom_1993",
+      "packet_concept": "Foundry Containment",
+      "wave": 1
+    },
+    {
+      "queue": "T07",
+      "title": "Dark Souls III",
+      "pack_id": "tp_dark_souls_iii",
+      "packet_concept": "Cinder Aqueduct",
+      "wave": 1
+    },
+    {
+      "queue": "T08",
+      "title": "The Wind Waker",
+      "pack_id": "tp_the_wind_waker",
+      "packet_concept": "Harbour Windworks",
+      "wave": 1
+    },
+    {
+      "queue": "T09",
+      "title": "Hollow Knight",
+      "pack_id": "tp_hollow_knight",
+      "packet_concept": "Lamplight Conservatory",
+      "wave": 1
+    },
+    {
+      "queue": "T10",
+      "title": "Terraria",
+      "pack_id": "tp_terraria",
+      "packet_concept": "Layered Mineworks",
+      "wave": 1
+    },
+    {
+      "queue": "T11",
+      "title": "TUNIC",
+      "pack_id": "tp_tunic",
+      "packet_concept": "Moss Archive",
+      "wave": 1
+    },
+    {
+      "queue": "T12",
+      "title": "Sonic Adventure 2 Battle",
+      "pack_id": "tp_sonic_adventure_2_battle",
+      "packet_concept": "Gravity Transit",
+      "wave": 1
+    },
+    {
+      "queue": "T13",
+      "title": "A Link to the Past",
+      "pack_id": "tp_a_link_to_the_past",
+      "packet_concept": "Mosaic Waterworks",
+      "wave": 1
+    },
+    {
+      "queue": "T14",
+      "title": "Factorio",
+      "pack_id": "tp_factorio",
+      "packet_concept": "Assembly Annex",
+      "wave": 1
+    },
+    {
+      "queue": "T15",
+      "title": "Subnautica",
+      "pack_id": "tp_subnautica",
+      "packet_concept": "Pressure-Garden Station",
+      "wave": 1
+    },
+    {
+      "queue": "T16",
+      "title": "Blasphemous",
+      "pack_id": "tp_blasphemous",
+      "packet_concept": "Processional Foundry",
+      "wave": 1
+    },
+    {
+      "queue": "T17",
+      "title": "A Hat in Time",
+      "pack_id": "tp_a_hat_in_time",
+      "packet_concept": "Clockwork Station Quarter",
+      "wave": 1
+    },
+    {
+      "queue": "T18",
+      "title": "Risk of Rain 2",
+      "pack_id": "tp_risk_of_rain_2",
+      "packet_concept": "Basalt Relay Outpost",
+      "wave": 1
+    },
+    {
+      "queue": "T19",
+      "title": "Adventure",
+      "pack_id": "tp_adventure",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T20",
+      "title": "APQuest",
+      "pack_id": "tp_apquest",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T21",
+      "title": "Aquaria",
+      "pack_id": "tp_aquaria",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T22",
+      "title": "Bumper Stickers",
+      "pack_id": "tp_bumper_stickers",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T23",
+      "title": "Castlevania - Circle of the Moon",
+      "pack_id": "tp_castlevania_circle_of_the_moon",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T24",
+      "title": "Castlevania 64",
+      "pack_id": "tp_castlevania_64",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T25",
+      "title": "Celeste (Open World)",
+      "pack_id": "tp_celeste_open_world",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T26",
+      "title": "Celeste 64",
+      "pack_id": "tp_celeste_64",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T27",
+      "title": "ChecksFinder",
+      "pack_id": "tp_checksfinder",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T28",
+      "title": "Choo-Choo Charles",
+      "pack_id": "tp_choo_choo_charles",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T29",
+      "title": "Civilization VI",
+      "pack_id": "tp_civilization_vi",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T30",
+      "title": "DLCQuest",
+      "pack_id": "tp_dlcquest",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T31",
+      "title": "Donkey Kong Country 3",
+      "pack_id": "tp_donkey_kong_country_3",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T32",
+      "title": "DOOM II",
+      "pack_id": "tp_doom_ii",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T33",
+      "title": "EarthBound",
+      "pack_id": "tp_earthbound",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T34",
+      "title": "Faxanadu",
+      "pack_id": "tp_faxanadu",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T35",
+      "title": "Final Fantasy",
+      "pack_id": "tp_final_fantasy",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T36",
+      "title": "Final Fantasy Mystic Quest",
+      "pack_id": "tp_final_fantasy_mystic_quest",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T37",
+      "title": "Heretic",
+      "pack_id": "tp_heretic",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T38",
+      "title": "Hylics 2",
+      "pack_id": "tp_hylics_2",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T39",
+      "title": "Inscryption",
+      "pack_id": "tp_inscryption",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T40",
+      "title": "Jak and Daxter: The Precursor Legacy",
+      "pack_id": "tp_jak_and_daxter_the_precursor_legacy",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T41",
+      "title": "Kingdom Hearts",
+      "pack_id": "tp_kingdom_hearts",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T42",
+      "title": "Kirby's Dream Land 3",
+      "pack_id": "tp_kirby_s_dream_land_3",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T43",
+      "title": "Landstalker - The Treasures of King Nole",
+      "pack_id": "tp_landstalker_the_treasures_of_king_nole",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T44",
+      "title": "The Legend of Zelda",
+      "pack_id": "tp_the_legend_of_zelda",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T45",
+      "title": "Lingo",
+      "pack_id": "tp_lingo",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T46",
+      "title": "Links Awakening DX",
+      "pack_id": "tp_links_awakening_dx",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T47",
+      "title": "Lufia II Ancient Cave",
+      "pack_id": "tp_lufia_ii_ancient_cave",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T48",
+      "title": "Mario & Luigi Superstar Saga",
+      "pack_id": "tp_mario_luigi_superstar_saga",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T49",
+      "title": "Mega Man 2",
+      "pack_id": "tp_mega_man_2",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T50",
+      "title": "Mega Man 3",
+      "pack_id": "tp_mega_man_3",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T51",
+      "title": "MegaMan Battle Network 3",
+      "pack_id": "tp_megaman_battle_network_3",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T52",
+      "title": "Meritous",
+      "pack_id": "tp_meritous",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T53",
+      "title": "The Messenger",
+      "pack_id": "tp_the_messenger",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T54",
+      "title": "Muse Dash",
+      "pack_id": "tp_muse_dash",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T55",
+      "title": "Noita",
+      "pack_id": "tp_noita",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T56",
+      "title": "Old School Runescape",
+      "pack_id": "tp_old_school_runescape",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T57",
+      "title": "Overcooked! 2",
+      "pack_id": "tp_overcooked_2",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T58",
+      "title": "Paint",
+      "pack_id": "tp_paint",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T59",
+      "title": "Pokemon Emerald",
+      "pack_id": "tp_pokemon_emerald",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T60",
+      "title": "Pokemon Red and Blue",
+      "pack_id": "tp_pokemon_red_and_blue",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T61",
+      "title": "Raft",
+      "pack_id": "tp_raft",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T62",
+      "title": "Satisfactory",
+      "pack_id": "tp_satisfactory",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T63",
+      "title": "Saving Princess",
+      "pack_id": "tp_saving_princess",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T64",
+      "title": "Secret of Evermore",
+      "pack_id": "tp_secret_of_evermore",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T65",
+      "title": "shapez",
+      "pack_id": "tp_shapez",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T66",
+      "title": "Shivers",
+      "pack_id": "tp_shivers",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T67",
+      "title": "A Short Hike",
+      "pack_id": "tp_a_short_hike",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T68",
+      "title": "SMZ3",
+      "pack_id": "tp_smz3",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T69",
+      "title": "Starcraft 2",
+      "pack_id": "tp_starcraft_2",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T70",
+      "title": "Stardew Valley",
+      "pack_id": "tp_stardew_valley",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T71",
+      "title": "Super Mario Land 2",
+      "pack_id": "tp_super_mario_land_2",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T72",
+      "title": "Super Mario World",
+      "pack_id": "tp_super_mario_world",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T73",
+      "title": "Timespinner",
+      "pack_id": "tp_timespinner",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T74",
+      "title": "Undertale",
+      "pack_id": "tp_undertale",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T75",
+      "title": "VVVVVV",
+      "pack_id": "tp_vvvvvv",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T76",
+      "title": "Wargroove",
+      "pack_id": "tp_wargroove",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T77",
+      "title": "The Witness",
+      "pack_id": "tp_the_witness",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T78",
+      "title": "Yacht Dice",
+      "pack_id": "tp_yacht_dice",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T79",
+      "title": "Yoshi's Island",
+      "pack_id": "tp_yoshi_s_island",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T80",
+      "title": "Yu-Gi-Oh! 2006",
+      "pack_id": "tp_yu_gi_oh_2006",
+      "packet_concept": "",
+      "wave": 2
+    },
+    {
+      "queue": "T81",
+      "title": "Zillion",
+      "pack_id": "tp_zillion",
+      "packet_concept": "",
+      "wave": 2
+    }
+  ]
+}

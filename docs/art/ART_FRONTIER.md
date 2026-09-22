@@ -582,6 +582,47 @@ never covers the face it announces. It fired on its own author twice,
 and the second time the real limiter turned out to be the four CLOSING
 bars at the diagonals rather than the cancel cross I had shortened.
 
+### SCOPE ADDITION, 2026-09-22: the library target is EVERY included game
+
+The owner widened the theme-pack target mid-session. The packet's
+eighteen are **the first wave, not the ceiling**.
+
+**Catalogue snapshot taken the same day**, from the same basis the
+packet used -- `https://archipelago.gg/games`, "Currently Supported
+Games", whose own wording is "the games that are currently included
+with the Archipelago software".
+
+* **81 included games.** 18 are the first wave; **63 remain.**
+* `docs/art/theme-packs/catalogue.json` carries the date, the URL, the
+  page's own wording and the fetched page's **SHA-256**, so the snapshot
+  is checkable rather than remembered.
+* **Community-only APWorlds are NOT in it and are not counted.** The
+  page itself sends custom worlds elsewhere; widening that definition
+  would be a different claim and is not made.
+* `docs/art/theme-packs/COVERAGE.md` is the ledger, one row per game
+  with the seven columns the owner asked for. **Every row is `not
+  started`.** Archipepsi's six theme families are the HOUSE's, not game
+  packs.
+* `tools/content/check_pack_coverage.py` keeps the two in agreement and
+  is gated. Sabotage-tested three ways: a dropped row, a
+  community-only world smuggled in, and a drifted count.
+
+**THE SELECTION HOOK EXISTS AND WHAT IT SELECTS IS A TINT.**
+`Constants.THEME_BY_GAME_HINT` maps five titles plus Archipepsi onto
+the six house themes. So today the most a per-game hook can express is
+"this game gets one of our six looks" -- which is exactly the "a
+different tint does not count as that game's completed pack" the owner
+named. And `ThemePack` loads ONE descriptor from a fixed path; a
+library of 81 needs a keyed lookup.
+
+**Both are integration dependencies for Prod/Dess, NOT permission to
+build a second loader.** The smallest seam is proposed in
+`COVERAGE.md`. Art keeps authoring packs as content meanwhile.
+
+**Priority is unchanged**: finish useful setpiece / character /
+machinery deliveries first, then continue coherent theme packs, one at
+a time as complete deliveries.
+
 ### Then
 
 **A13-A15** (enemy jobs,

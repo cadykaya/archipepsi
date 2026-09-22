@@ -307,6 +307,17 @@ else
 fi
 
 # --- 5. the preview project has not drifted from the game ---------------
+# The theme-pack coverage ledger and its dated catalogue snapshot.
+# A ledger that can silently lose a row reports full coverage of a
+# shorter list.
+say "theme-pack coverage matches the catalogue snapshot..."
+python3 tools/content/check_pack_coverage.py >/dev/null || \
+  fail "check_pack_coverage: the coverage table and catalogue.json
+  disagree -- a game has no row, a row names a game the catalogue does
+  not hold, or the stated count has drifted. Run
+
+    python3 tools/content/check_pack_coverage.py"
+
 say "preview renderer settings match godot/..."
 for setting in "textures/canvas_textures/default_texture_filter=0"; do
   if grep -qF "$setting" godot/project.godot; then

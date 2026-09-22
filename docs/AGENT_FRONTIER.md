@@ -93,6 +93,19 @@ Two things from it that other lanes need:
   with nothing under it. And a landmark on the acquisition branch cannot
   be taller than a person without crossing somebody's view of the
   grapple ring.
+* **The theme-pack library target is now EVERY included Archipelago
+  game, not the packet's eighteen.** Dated snapshot in
+  `docs/art/theme-packs/catalogue.json`: **81 included games**, 63
+  beyond the first wave, taken from `https://archipelago.gg/games` with
+  the page's SHA-256 recorded. Community-only APWorlds are deliberately
+  separate and not counted. Ledger: `docs/art/theme-packs/COVERAGE.md`,
+  gated by `tools/content/check_pack_coverage.py`. **Every row is not
+  started.**
+* **`Constants.THEME_BY_GAME_HINT` is a per-game hook that selects one
+  of six HOUSE THEMES** -- a tint, not a pack -- and `ThemePack` loads
+  one descriptor from a fixed path. A library of 81 packs needs a keyed
+  lookup and a pack-aware hint. Integration dependency for Prod/Dess;
+  Art has not built a second loader.
 * **An authored enemy would take NO damage tint.**
   `Enemy._collect_tint_parts` takes only meshes whose
   `material_override` is a `StandardMaterial3D`, and a glTF import puts
