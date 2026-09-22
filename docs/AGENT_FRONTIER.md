@@ -75,10 +75,30 @@ Two things from it that other lanes need:
   Handoff: `docs/art-requests/2026-09-22-setpiece-visual-handoff.md`.
   They are CANDIDATES — imported and fit-checked, **not** runtime-bound
   and **not** owner-approved.
-* **A handrail at a natural height on a rideable deck would break the
-  gantry guarantee.** Deck top world 1.0 + 1.333 m jump = 2.33 < `GANTRY_Y`
-  3.1; a 1.1 m railing cap puts it at 3.43, **above** the gantry. The
-  number to argue with before anyone adds a solid rail is **world 1.75**.
+* ~~**A handrail at a natural height on a rideable deck would break the
+  gantry guarantee.**~~ **STRUCK 2026-09-22.** `GANTRY_Y` 3.1 is measured
+  above the RAIL at 0.6, so the gantry platform spans world **3.50–3.90**,
+  and it is **3.5 m away horizontally** from the skiff deck. Nothing on
+  that deck reaches it. **If you are reaching for a 0.4 constant, check
+  what it is relative to** — this one cost Batch 045 its headline finding
+  and left the skiff's guard rails half a metre below the cover welded
+  beside them.
+* **Batch 046 delivers the Blindside junction** — track, docks, the
+  repairable span and the gantry machinery, fourteen assets. Handoff:
+  `docs/art-requests/2026-09-22-yardkit-handoff.md`. Same CANDIDATE
+  state.
+* **Three measured findings in the 0.4 yard, all Production's to
+  decide.** The gantry column tops at 3.10 against a platform underside
+  at 3.50, a 0.40 m gap. The track floats 0.425 m over the yard floor
+  with nothing under it. And a landmark on the acquisition branch cannot
+  be taller than a person without crossing somebody's view of the
+  grapple ring.
+* **The gap between S2 and S3 is 14.048 m and no constant says so** —
+  three of the rail's five control points sit on a Catmull-Rom corner.
+  `tools/content/run_yard_measure.sh` evaluates it with Production's own
+  `RailPath`, read-only, into `assets/models/batch046/yard_fit.json`.
+  Anything fitting that yard should read that file rather than a
+  remembered number.
 
 **Scheduling override (owner, 2026-09-22): heartbeat, watchers,
 subscriptions, scheduled check-ins and automatic re-arming stay OFF.**

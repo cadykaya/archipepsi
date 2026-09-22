@@ -4040,9 +4040,9 @@ two. Fitted against Production `claude/archipepsi-0-4-blindside` @
 
 | Asset | Metrics | For | Note |
 | --- | --- | --- | --- |
-| `sp_skiff_deck` | 300 tris · 4.00 × 4.16 × 1.19 m · 32.0 texels/m | Blindside carrier | `RailCarrier` deck, origin at the box centre; curb 0.08, nothing above node +0.95 |
+| `sp_skiff_deck` | 300 tris · 4.00 × 4.16 × 1.49 m · 32.0 texels/m | Blindside carrier | `RailCarrier` deck, origin at the box centre; curb 0.08, nothing above node +0.95 |
 | `sp_dock_stand` | 72 tris · 0.80 × 0.80 × 1.27 m · 32.0 texels/m | Blindside dock | two levers and a readout, standing beside the dock inside its footprint |
-| `sp_hoist_car` | 132 tris · 4.00 × 4.00 × 1.18 m · 32.0 texels/m | Passing Platforms, vertical | the climbing car: direction before it moves |
+| `sp_hoist_car` | 132 tris · 4.00 × 4.00 × 1.48 m · 32.0 texels/m | Passing Platforms, vertical | the climbing car: direction before it moves |
 | `sp_crossing_carrier` | 96 tris · 4.04 × 4.00 × 0.88 m · 32.0 texels/m | Passing Platforms, horizontal | the crossing car, low enough to read as the other journey |
 | `sp_receiver_hood` | 72 tris · 2.40 × 1.14 × 1.70 m · 32.0 texels/m | Counterfire receiver | a hood over the receiver at `RECEIVER_Z` −7.0 |
 | `sp_lane_screen` | 60 tris · 0.34 × 3.00 × 1.37 m · 32.0 texels/m | Counterfire lane | lane-edge protection, not a wall across the lane |
@@ -4054,12 +4054,21 @@ All nine at **32 texels/m — the architecture band, not the prop band's
 64.** A skiff at 64 standing against docks and yard walls at 32 reads as
 a different game's asset pasted in; the fit decision beat the tier table.
 
-**A handrail at a natural height would break the gantry guarantee.** Deck
-top world 1.0 plus a 1.333 m standing jump reaches 2.33, under `GANTRY_Y`
-3.1. A railing cap at a normal 1.1 m sits at world 2.1, and 2.1 + 1.333 =
-**3.43 — above the gantry.** Nothing here on a rideable deck rises past
-**world 1.75** (node +0.95); `assert_under_cap()` enforces it and refused
-its own author twice during the batch.
+~~**A handrail at a natural height would break the gantry guarantee.**
+A railing cap at 1.1 m sits at world 2.1, and 2.1 + 1.333 = 3.43, above
+`GANTRY_Y` 3.1. Nothing on a rideable deck rises past world 1.75.~~
+**STRUCK 2026-09-22 — wrong twice over, found by measuring the yard for
+Batch 046.** `GANTRY_Y` is measured above the RAIL at 0.6, so the
+platform spans world **3.50–3.90**; and it sits **3.5 m away
+horizontally** (lateral 5.5–9.5 against a deck at ±2.0). A railing cap
+at 2.1 reaches 3.433 straight up and 3.100 after crossing the gap —
+under the platform on both counts. Even Production's own solid 1.25 m
+shield reaches only 3.583 and 3.250.
+
+The cap survives as an **art** rule: nothing on a rideable deck stands
+taller than the `SHIELD_HEIGHT` cover Production already welds to it
+(world 2.25). The skiff's guard rails, which the old cap had left at
+world 1.75 — half a metre below that cover — now stand at 2.05.
 
 Measured boxes are Blender-ordered (width, depth, height); the manifest
 carries `size_axes` and the runtime order.

@@ -281,13 +281,18 @@ at 64 against docks at 32 reads as a different game's asset).
 
 **The two findings worth more than the meshes:**
 
-1. **A handrail at a natural height would break the gantry guarantee.**
-   Deck top world 1.0 + a 1.333 m standing jump = 2.33, under `GANTRY_Y`
-   3.1. A 1.1 m railing cap sits at world 2.1, and 2.1 + 1.333 = **3.43,
-   above the gantry** — the acquisition loop skippable by standing on it.
-   Nothing this batch puts on a rideable deck rises past **world 1.75**
-   (node +0.95). `assert_under_cap()` enforces it and refused its own
-   author twice.
+1. ~~**A handrail at a natural height would break the gantry
+   guarantee.**~~ **STRUCK 2026-09-22, and it was the strongest claim in
+   Batch 045.** `GANTRY_Y` 3.1 is measured **above the rail at 0.6**, so
+   the platform spans world **3.50–3.90**, not 3.10; and it sits **3.5 m
+   away horizontally** (lateral 5.5–9.5 against a deck at ±2.0). A
+   railing cap at world 2.1 reaches 3.433 straight up and 3.100 after
+   crossing the gap. Even Production's own solid 1.25 m shield reaches
+   3.583 and 3.250. **Nothing on that deck is a route to the gantry.**
+   The cap survives as an art rule — nothing stands taller than the
+   welded cover — and the skiff's guards, left at world 1.75 by the
+   wrong claim, now stand at 2.05. Found by MEASURING the yard for Batch
+   046 instead of reading it: a constant's frame is not a constant.
 2. **`RailCarrier.pose()` origin is the deck box's CENTRE, not its
    floor** — `here + basis.y * (deck.y * 0.5)`. A floor-anchored asset
    arrives 0.2 m low and nobody notices until a passenger clips through.
@@ -298,14 +303,68 @@ handoff proposes a bounded optional `visual: PackedScene` for Prod to
 accept, amend or refuse, and production continues on the rest of the
 queue meanwhile.
 
+### Batch 046 — A04 and A05. The Blindside junction. DELIVERED.
+
+Fourteen assets for the yard the setpieces run through: track modules,
+piers and end stops, dock edges, buffers and lockers, the 14.05 m
+repairable span, a candidate switch stand, the gantry head casting,
+winch, grapple-anchor mount and lever housing, and the branch landmark
+and conduit.
+
+* Source `tools/blender/build_yardkit.py`; exports
+  `assets/models/batch046/yardkit/`; evidence
+  `docs/art/review/yardkit_2026-09-22/` (18 frames, including the A04.6
+  greybox comparison and the span's three states).
+* Handoff: `docs/art-requests/2026-09-22-yardkit-handoff.md`.
+* **CANDIDATES**, same three states as Batch 045.
+
+**THE MEASUREMENT IS THE PART TO KEEP.**
+`tools/content/run_yard_measure.sh` rebuilds Production's rail from
+Production's five control points with Production's own `RailPath`,
+read-only, and writes `assets/models/batch046/yard_fit.json`. The
+builder reads that file and refuses if it is missing or stale. **The gap
+between S2 and S3 is 14.048 m and no reading of `railway_scenario.gd`
+yields it** — three control points sit on a Catmull-Rom corner. Sabotaged
+with a remembered 14.0, the builder exported a clean beam 48 mm short of
+the far rail and only the import harness caught it.
+
+**Three findings, all Production's to decide:**
+
+1. **Their gantry column stops 0.40 m short of the platform.** `GANTRY_Y`
+   is measured above the rail (platform underside 3.50) but the column
+   is `GANTRY_Y` tall from the floor (top 3.10). `yk_gantry_head` spans
+   it; the fit harness fails if it stops being tall enough.
+2. **Their track stands on nothing** — 0.425 m of air between the piece
+   envelope and the yard floor. `yk_track_pier` is that gap.
+3. **A landmark on the acquisition branch cannot be taller than a
+   person.** Near the viewer the eye-to-ring ray bundle is at head
+   height, so the corridor floor at the walkway's end is world 2.80
+   against a branch deck at 1.00.
+
+**Both new gates were wrong before they were right, and both were
+re-proved after.** The sightline gate first refused anything ABOVE the
+line (not occlusion) and then stayed flat (the branch is 3 m back along
+the track while the gantry is square on it). The no-route gate compared
+heights with no footprints and refused a waymarker six metres away.
+Re-sabotaged afterwards: a raised winch, a locker under the gantry and
+a hard-coded gap were all refused, naming numbers.
+
 ### The next task, exactly
 
-**A04/A05** — the remaining Blindside fittings (rails, dock furniture,
-switch housings, gantry and branch landmarks), then **A10**, the existing
-ten-role enemy family's production/animation readiness, reusing
-`batch030`'s ten exported roles rather than commissioning replacements.
-After those: A06–A08 (deepen the other three setpiece kits), A09, A11–A15,
-A16, T01–T18 (the eighteen environment packs), A17–A19.
+**A03's remainder** — the skiff's fitted shield and railings with their
+own attachment points (A03.2), visible traction/guide assemblies with
+visual pivots (A03.3), the swept visual-envelope report (A03.5) and the
+isolated state strip (A03.6). A03.1 and A03.4 are delivered by
+`sp_skiff_deck`.
+
+Then **A10**, the existing ten-role enemy family's production/animation
+readiness, reusing `batch030`'s ten exported roles rather than
+commissioning replacements — and noting honestly that req 31 still
+leaves seven of them unspawnable, which is Production's and must not be
+routed around.
+
+After those: A06–A08 (deepen the other three setpiece kits), A09,
+A11–A15, A16, T01–T18 (the eighteen environment packs), A17–A19.
 
 ### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.
 
