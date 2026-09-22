@@ -78,19 +78,24 @@ def test_the_request_advertises_only_mechanics_the_runtime_can_execute():
     # S9 opened the last gate and the registry stopped narrowing
     # anything; its remaining job was "to catch the NEXT schema addition
     # before a runtime exists for it", and that is now what it is doing.
-    # `consumable` is in the vocabulary and is NOT advertised, because
-    # the spend transaction and the exhausted-and-equipped state are not
-    # all proven yet. Vocabulary is not executable support.
     #
-    # So the assertion is no longer equality. It is the two properties
-    # equality was standing in for: the registry never advertises a slot
-    # the schema does not have, and everything it withholds is withheld
-    # ON PURPOSE rather than by drift.
+    # `consumable` was withheld while the spend transaction, the
+    # exhausted-and-equipped state and the real damage/Status path were
+    # unproven -- vocabulary is not executable support -- and is
+    # advertised now that all three are. NOTHING is staged today.
+    #
+    # The assertion stays in the two-property form rather than going
+    # back to equality, because equality is what let a slot be added to
+    # the schema and advertised in the same breath. The properties are:
+    # the registry never advertises a slot the schema does not admit,
+    # and everything it withholds is withheld ON PURPOSE. An empty
+    # STAGED set says the second one the same way a full one does, and
+    # the next staged slot only has to be named here.
     from archipepsi_bridge.schemas import echo as E
     assert set(CAP.IMPLEMENTED_COMPONENT_KINDS) == set(E.COMPONENT_KINDS)
     assert set(CAP.IMPLEMENTED_ACTION_SLOTS) <= set(E.SLOT_NAMES), (
         "the request advertises a slot the schema does not admit")
-    STAGED = {"consumable"}
+    STAGED: set[str] = set()
     assert set(E.SLOT_NAMES) - set(CAP.IMPLEMENTED_ACTION_SLOTS) == STAGED, (
         "a slot is being withheld that this test does not know about, or "
         "a staged one was advertised without finishing its runtime")

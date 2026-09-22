@@ -131,14 +131,47 @@ copy produces a HUD row reading `? —`.
 `Hud._loadout_text()` had **no test anywhere** and was the one slot-facing
 surface with none. It has one, and the sabotage above is what it catches.
 
-### What to watch
+### The slot is advertised now
 
-Widening `SLOT_NAMES` also widens `epsilon/capabilities.py`'s
-`IMPLEMENTED_ACTION_SLOTS`, which is what the request advertises to Epsilon —
-so new campaigns will start receiving consumables. That is what makes the slot
-real rather than inert, and it is a live gameplay change rather than a menu
-one. The Playtest 2.5 baseline was retaken for it; `zones` is byte-identical
-and all four interpretations are unchanged.
+`IMPLEMENTED_ACTION_SLOTS` withheld `consumable` through all of the above,
+because that list is the promise that a slot the schema admits is a slot the
+runtime can EXECUTE. It is `C.SLOT_NAMES` now, and nothing is staged: the
+spend is a compare-and-swap on the supply and the use, a refused spend can be
+released by the client, an exhausted supply stays equipped and says what
+refills it, and a consumable delivers real damage and a real Status through
+the ordinary effect path.
+
+**This is a live gameplay change, not a menu one.** Epsilon may now emit
+consumables into new campaigns, which is what makes the slot real rather than
+inert. The Playtest 2.5 baseline was regenerated deliberately in the same
+commit and the diff was read before committing: four `allowed.slots` lists
+gain `consumable` and NOTHING else moves — `zones` is byte-identical and all
+four interpretations are unchanged.
+
+The staged-support guard in `test_s1_review_fixes.py` keeps its two-property
+form rather than going back to equality, with `STAGED` now empty. Equality is
+what would let a slot be added to the schema and advertised in the same
+breath; an empty staged set still says "everything withheld is withheld on
+purpose", and the next staged slot only has to be named there.
+
+### Still red, and not this work: `godot-reload`
+
+`godot-reload` fails deterministically on the last leg of its named case —
+the player walks from `c005` toward `c014` through a doorway they have
+already opened and ends 69.1 m short, at the same coordinates every run.
+
+**It is not the consumable work.** Bisected across four worktrees: green at
+`06622ac` and at `f404410`, red at `b153656` and at every commit since,
+including `c296c38` which is before any of this. `b153656` is "Seven roles
+reach ordinary composition" — the enemy-composition widening — and it
+regenerated `godot/tests/fixtures/played_zone.json`, whose rooms now carry
+`artillery`, `bulwark`, `diver` and `beacon` where they carried `melee` and
+`ranged`.
+
+That makes it the first finding of the owner's next assignment rather than a
+loose end: *"a bridge-valid enemy list is not yet a played encounter."* Here
+is a played route that the widened list breaks. Whether the cause is
+obstruction, knockback or a changed layout is the next thing to establish.
 
 ---
 

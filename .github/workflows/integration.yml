@@ -148,6 +148,7 @@ jobs:
           make godot-actuator
           make godot-constraints
           make godot-archive
+          make godot-consumable
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live

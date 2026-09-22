@@ -81,14 +81,25 @@ IMPLEMENTED_EFFECT_KINDS = (
 #: Action on any of them is reachable. This was the last gate still
 #: narrower than the contract: every slot the schema admits is now a
 #: button, which is what the gate was waiting for.
-#: STAGED. `consumable` is in the vocabulary and is not yet advertised:
-#: the spend transaction, the exhausted-and-equipped state and the real
-#: damage/Status path are not all proven, and this list is the promise
-#: that a slot the schema admits is a slot the runtime can execute. It
-#: gains `consumable` in the commit that finishes that path, and the
-#: baseline is retaken deliberately then.
-IMPLEMENTED_ACTION_SLOTS = tuple(
-    slot for slot in C.SLOT_NAMES if slot != "consumable")
+#: `consumable` was STAGED -- in the vocabulary and deliberately not
+#: advertised -- until the whole path behind it was proven, because this
+#: list is the promise that a slot the schema admits is a slot the
+#: runtime can EXECUTE. Vocabulary is not executable support.
+#:
+#: It is advertised now, and these are the things that had to be true
+#: first: the spend is a compare-and-swap on the supply AND the use
+#: (`transitions.spend_charge`), a refused spend can be resolved by the
+#: client rather than held forever (`BridgeError.about`), the exhausted
+#: supply stays equipped at `0 / max` and says what refills it, and a
+#: consumable delivers real damage and a real Status through the
+#: ordinary effect path. `make godot-consumable` walks all of it at 53
+#: checks; `bridge/tests/test_consumable_slot.py` holds the transaction.
+#:
+#: **THIS IS A LIVE GAMEPLAY CHANGE, not a menu one.** Epsilon may now
+#: emit consumables into new campaigns, which is what makes the slot
+#: real instead of inert. The Playtest 2.5 baseline is retaken in the
+#: same commit, deliberately.
+IMPLEMENTED_ACTION_SLOTS = C.SLOT_NAMES
 
 IMPLEMENTED_MODIFIER_TYPES = ("recoil_self", "knockback_target",
                               "apply_status_on_hit")
