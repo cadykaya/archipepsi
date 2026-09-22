@@ -276,9 +276,21 @@ var _tally: Dictionary = {}
 var _damage_at_start := 0.0
 
 
+var _arrivals := 0
+
+
 func _watch(controller: ZoneController, record: Dictionary) -> void:
 	_tally = {}
+	_arrivals = 0
 	_damage_at_start = controller.player.hp
+	# **WAS `take_damage` REACHED AT ALL?** `damaged_from` is emitted
+	# inside it, after the arithmetic, so a count of zero says the call
+	# never happened and a count above zero with no hp lost says
+	# something absorbed it. Those are different defects and the damage
+	# figure alone cannot tell them apart -- which is the last thing
+	# still unknown about the zero-damage finding.
+	controller.player.damaged_from.connect(
+			func(_from: Vector3) -> void: _arrivals += 1)
 	for enemy: Variant in _living(record):
 		var body := enemy as Enemy
 		var role := body.archetype
@@ -346,7 +358,8 @@ func _tally_report(controller: ZoneController) -> String:
 				% [str(role), int(row["launched"]), int(row["seen"]),
 					"never measured" if nearest == INF
 					else "%.2f m" % nearest])
-	return ", ".join(parts) + "; player lost %.1f hp" % hurt
+	return ", ".join(parts) + "; %d hits reached take_damage; " % _arrivals \
+			+ "player lost %.1f hp" % hurt
 
 
 ## LET THE ROOM HIT BACK while the player does nothing.
@@ -537,9 +550,12 @@ func _a_bulwark_can_be_flanked_by_moving() -> void:
 	_note("bulwark, played: %s after %.1f s with %.0f of %.0f hp left. "
 			% ["cleared" if int(fight["left"]) == 0 else "NOT cleared",
 				float(fight["frames"]) * DT, controller.player.hp, opened]
-			+ "turn_rate 1.4 rad/s is PROVISIONAL and is the number most "
-			+ "worth playtesting -- too slow is trivial, too fast puts "
-			+ "the wall back.")
+			+ "BULWARK_TURN_RATE_DEG_S %.0f, commit %.1fs, recovery "
+			% [Constants.BULWARK_TURN_RATE_DEG_S,
+				Constants.BULWARK_COMMIT_SECONDS]
+			+ "%.1fs are PROVISIONAL and the played acceptance is what "
+			% Constants.BULWARK_RECOVERY_SECONDS
+			+ "closes them.")
 	await _drop(controller)
 
 

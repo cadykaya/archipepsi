@@ -49,6 +49,9 @@ var _dead := false
 var _knockback := Vector3.ZERO
 # Collision recovery (EPSILON_SPEC §5): sidestep briefly when walled.
 var _sidestep_timer := 0.0
+## Helpless after a swing (`BULWARK_RECOVERY_SECONDS`). Zero for every
+## role that does not declare one.
+var _recovery := 0.0
 var _sidestep_dir := Vector3.ZERO
 var _sidestep_flip := false
 # Per-instance materials for the damage tint, unshared once on first hit.
@@ -356,6 +359,11 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= Constants.GRAVITY * delta
 
 	_sidestep_timer = maxf(0.0, _sidestep_timer - delta)
+	# THE OPENING. A bulwark that has just swung is helpless for
+	# `BULWARK_RECOVERY_SECONDS`: it does not turn and it does not
+	# attack, which is the window the player's circling is meant to be
+	# paid off in.
+	_recovery = maxf(0.0, _recovery - delta)
 	var intended := Vector3.ZERO
 	var position_before := global_position
 	var player := _find_player()
@@ -520,14 +528,18 @@ func _physics_process(delta: float) -> void:
 ## telegraph into a readable opening rather than a pause.
 func _face(flat: Vector3, delta: float) -> void:
 	var wanted := atan2(-flat.x, -flat.z)
-	var rate: Variant = stats.get("turn_rate")
-	if rate == null:
+	if archetype != "bulwark":
 		rotation.y = wanted
 		return
-	if _windup > 0.0:
-		return                     # committed: the facing is spent
+	# THE THREE NUMBERS ARE ONE OPENING, and they are declared together
+	# in `schemas/constants.py` beside `bulwark_opening()`, which states
+	# the arithmetic they produce. A fourth key in `ENEMY_STATS` would
+	# have been a turn rate with no commit and no recovery beside it --
+	# a third of a design, readable as the whole of one.
+	if _windup > 0.0 or _recovery > 0.0:
+		return                     # committed, or helpless: no turning
 	rotation.y = rotate_toward(rotation.y, wanted,
-			float(rate) * delta)
+			deg_to_rad(Constants.BULWARK_TURN_RATE_DEG_S) * delta)
 
 
 func _find_player() -> Player:
@@ -535,7 +547,7 @@ func _find_player() -> Player:
 	return players[0] if not players.is_empty() else null
 
 func _try_attack(player: Player, distance: float) -> void:
-	if _attack_cooldown > 0.0:
+	if _attack_cooldown > 0.0 or _recovery > 0.0:
 		return
 	var reach := float(stats["reach"])
 	# OV04 P06: the seven roles from the approved roster. Each is its own
@@ -993,6 +1005,8 @@ func _hit_for() -> float:
 			+ clampf(statuses.magnitude_of("empowered"), 0.0, 2.0))
 
 func _slam(player: Player) -> void:
+	if archetype == "bulwark":
+		_recovery = Constants.BULWARK_RECOVERY_SECONDS
 	var to_player := player.global_position - global_position
 	if to_player.length() <= float(stats["reach"]) * 1.4:
 		player.take_damage(_hit_for(), global_position)

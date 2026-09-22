@@ -1092,21 +1092,13 @@ ENEMY_STATS = {
     "charger": {"hp": 40.0, "damage": 14.0, "cooldown": 3.0, "speed": 3.0, "reach": 14.0},
     # Slow, heavy, and armoured from the front: see `FRONTAL_ARMOUR`.
     #
-    # `turn_rate` IS WHAT MAKES THE ARMOUR A PUZZLE RATHER THAN A WALL.
-    # Every other role snaps to face the player, which for this one meant
-    # the rear arc its whole brief is built around could never be
-    # reached: a player who ran behind it arrived to find it already
-    # looking at them. "Cannot be fought frontally" then read as "cannot
-    # be fought", and a base kit could not beat one at all.
-    #
-    # 1.4 rad/s is about 80 degrees a second. A player circling at 3 m
-    # with a 6 m/s run turns about 2 rad/s around it, so the flank is
-    # reachable by moving and only by moving -- which is the counterplay
-    # the role was described as having. PROVISIONAL like every other
-    # number here, and the one most worth playtesting: too slow makes it
-    # trivial, too fast puts the wall back.
+    # The turn rate, the commit and the recovery that make its back
+    # reachable are `BULWARK_TURN_RATE_DEG_S` and its two companions
+    # below -- named constants rather than a fourth key in here, because
+    # the opening is three numbers that only mean anything together and
+    # `bulwark_opening()` states the arithmetic they produce.
     "bulwark": {"hp": 90.0, "damage": 10.0, "cooldown": 1.8, "speed": 1.6,
-                "reach": 2.4, "turn_rate": 1.4},
+                "reach": 2.4},
     # Holds the ceiling and fires down. Never descends to the floor.
     "drifter": {"hp": 44.0, "damage": 7.0,  "cooldown": 2.2, "speed": 2.4, "reach": 22.0},
     # Waits high and dives when the player leaves the ground.

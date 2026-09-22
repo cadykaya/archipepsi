@@ -262,7 +262,7 @@ const ENEMY_STATS = {
 	"ranged": {"hp": 16.0, "damage": 8.0, "cooldown": 2.0, "speed": 0.0, "reach": 40.0},
 	"brute": {"hp": 120.0, "damage": 18.0, "cooldown": 1.6, "speed": 2.2, "reach": 2.5},
 	"charger": {"hp": 40.0, "damage": 14.0, "cooldown": 3.0, "speed": 3.0, "reach": 14.0},
-	"bulwark": {"hp": 90.0, "damage": 10.0, "cooldown": 1.8, "speed": 1.6, "reach": 2.4, "turn_rate": 1.4},
+	"bulwark": {"hp": 90.0, "damage": 10.0, "cooldown": 1.8, "speed": 1.6, "reach": 2.4},
 	"drifter": {"hp": 44.0, "damage": 7.0, "cooldown": 2.2, "speed": 2.4, "reach": 22.0},
 	"diver": {"hp": 20.0, "damage": 12.0, "cooldown": 2.8, "speed": 7.0, "reach": 18.0},
 	"scuttler": {"hp": 12.0, "damage": 3.0, "cooldown": 0.8, "speed": 6.5, "reach": 1.8},
