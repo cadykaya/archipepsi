@@ -1,5 +1,154 @@
 # Archipepsi — build state
 
+## 2026-09-22 (engine) — OV04 P13: the eight constraint kinds, genuinely simulated
+
+`make godot-constraints` — new at **67 checks**, in CI. Amalgam §14.8 and §26.5, pinned from
+Design 2, plus §21.10's three constraint-driven actuators. **All twelve of
+§21's actuator kinds build now**; P15 shipped nine and refused three by name,
+and this is the three.
+
+### What did not exist before
+
+`Constraints` (`godot/scripts/gameplay/constraints.gd`): the eight kinds, the
+fixed eight-iteration solver, `breakable_at` with §10.5's required-object
+rebuild, §14.8's four-link chain cap, the no-runtime-creation rule with
+`TETHER` as its one exception, and the no-sleep-while-moving rule.
+
+`Actuator.constrained()`: `WINCH`, `BRAKE` and `DRIVER`, each refusing a
+constraint family §21.10 does not give it, and each with its own §21.1.1
+power-loss answer — hold, engage, release-and-lock.
+
+### The measurement the package is for
+
+The Amalgam names it: *"A crane in Design 2 is a `PULLEY` with a load on one
+end and a `WINCH` driving it. Its cargo swings. Design 1's crane was a
+`PATH_MACHINE` whose cargo was a child transform and could not. That is the
+single most visible difference between the two proposals in play."* An 80 kg
+cargo dropped 2.4 m out from its anchor swings in underneath; a child transform
+would still be 2.4 m out.
+
+### Two solvers, and why
+
+Godot has a hinge and a slider with real limits, so `HINGE`, `SLIDER`, `SEESAW`
+and a hinge `PENDULUM` are those. It has nothing for a taut-only distance
+constraint or for two ropes sharing a total length, so `ROPE`, `CHAIN`,
+`PULLEY` and `COUNTERWEIGHT` are solved here at §14.8's fixed eight iterations.
+
+Consequences that are declared rather than hidden: `breakable_at` is offered
+only on the four kinds that report a real constraint force, and a `breakable_at`
+on a hinge is **refused by name**.
+
+### Two things the obvious implementation got wrong
+
+A brake is **a motor held at zero**, not a pair of angular limits squeezed onto
+the current value: Godot measures limits in the joint's frame and this class
+measures `value` in the body's, so "lock it where it is" would have snapped the
+hinge to wherever those disagreed. And a `DRIVER` **cannot turn a locked
+hinge** — §23.5 rule 28 pairs a `BRAKE` with every mandatory-route `DRIVER`, so
+the two meeting is designed, and the brake winning is what stalls the driver
+rather than letting whichever wrote the motor last decide.
+
+### The solver diverged to 1e18 on its first run
+
+`apply_central_impulse` outside `_integrate_forces` is queued on the physics
+server and does **not** change `linear_velocity` until the next step. So eight
+Gauss-Seidel passes each read the same unchanged velocity, each computed the
+same full correction, and eight full corrections landed on a body that needed
+one. It carries its own working velocity across the iterations now and hands
+the server one impulse per body per tick — which is also what makes `force_of`
+exact.
+
+### P-5, recorded not answered
+
+An under-rated rope on a `required` object breaks and rebuilds three times and
+then holds: each rebuild puts the load back **at rest** at `home_transform`,
+and a load at rest does not snatch. It does not loop. Hanging a required load
+on a rope it snaps is still a composition error §23.5 should catch, not a
+runtime one. Not answered with a rule this lane invented.
+
+### What this does NOT do
+
+§21.11's macro deferral (a `POWER_OFF` waiting while the player stands on the
+gantry) is the macro layer's. §14's twelve manipulation verbs are P12's —
+`TETHER`'s seam into this solver exists and the verb does not. `attach_surface`
+and `constraint_anchor` offer types (§28.8) are not authored into the Zone
+schema yet.
+
+---
+
+## 2026-09-22 (engine) — OV04 P15: §21's actuator contract, and C4a closed
+
+`make godot-actuator` — **93 checks, in CI.** Amalgam §21, as far as this
+engine can reach it.
+
+### What did not exist before
+
+`Actuator` (`godot/scripts/gameplay/actuator.gd`) is §21.1's common contract:
+twelve kinds, the transition table, `path` interpolation over `Transform3D`
+(so a `PATH_MACHINE` is a crane and not only a slider), §21.4's lift selector,
+§21.6's 10 m rail-switch clearance queue, §21.7's inert-on-power-loss pad,
+§21.8's hazard controller and §21.9's light controller.
+
+`SafeClosure` (`godot/scripts/gameplay/safe_closure.gd`) is §21.2's interlock
+as a shared rule, in the way `StopTravel` is shared arithmetic: what "blocked"
+means and how the panel moves stay with the machine, so `ServiceShutter`
+(accelerating) and `Actuator` (linear) obey one interlock without sharing a
+motion law.
+
+`Constants.ACTUATOR_KINDS`, `ACTUATOR_POWER_LOSS`, `SAFE_CLOSURE_RETRY_SECONDS`,
+`RAIL_SWITCH_CLEARANCE_M`, `REQUIRED_OBJECT_GROUP` — declared in
+`bridge/archipepsi_bridge/schemas/constants.py` and regenerated, never
+hand-edited.
+
+### C4a, closed
+
+`service_shutter.gd` stopped where it was and waited. `01_RELIABLE_CORE.md:2318`
+requires a refused closure to stop, **reverse to fully open**, and retry after
+1.0 s, repeating indefinitely. It reverses now, and §21.2's protected set
+widened from the player alone to "the player or any `required = true` object" —
+which P16's `TransportedObjects` now marks on the body itself, because the
+interlock asks its question of whatever is standing in the doorway.
+
+New readouts: `refusals()`, `reversing()`, `retry_left()` on both the shutter
+and the contract class.
+
+### Two defects the cases found in the new code
+
+`reset()` ended when it arrived, so an actuator whose input still said `ON`
+travelled home and set off again immediately — a reset that reset nothing. A
+reset now holds until the next command. And the shutter's `overrun` read
+`goal <= 0.0`, which stays true after a successful closure, so the readout
+froze at the last refusal's value for the rest of the Zone's life.
+
+### The suite did not cover its own defect on the first attempt
+
+Both interlock cases opened the door fully, put a body in the doorway, and only
+then asked it to shut — so the panel never started moving and "stopped where it
+was" and "reversed to fully open" were the same number. Reverting the repair
+left the suite green. §21.2's subject is a closure that has *begun*; corrected,
+the same revert produces **nine failures**.
+
+### Shipped machines, not only the new class
+
+`ShuttleDeck` (LIFT) and `RailCarrier` (MOVING_PLATFORM) had no notion of power.
+Both now hold at the exact position they were caught at and resume the errand
+they were on. `power()` is deliberately not `hold()` on the carrier: `hold()`
+clears `target_dock` because a fail-safe stop means no errand, and reusing it
+would bring a carrier back powered and parked halfway down a span with its
+passenger aboard and nothing to say where it was headed.
+
+### What this does NOT do
+
+§21.10's `WINCH`, `BRAKE` and `DRIVER` are declared in the vocabulary and in the
+power-loss table and are **refused by name** by `Actuator.create`; they need the
+constraint solver, which is P13. §21.11's macro-effect deferral belongs with the
+signal/macro work. §21.3's velocity retention on leaving a platform is
+`sync_to_physics`'s and is measured by `godot-physics`. The six shipped machines
+keep their own motion curves — `Actuator` is the contract they consult for the
+rules that must be the same everywhere, not a rewrite of six working machines.
+
+---
+
 ## 2026-09-22 (engine) — target facing is a gate, D-4 is consumed, cross-room is scoped
 
 **Landed.** `godot-target-facing` is in CI: 27 of 27 SHOT targets shootable,

@@ -79,6 +79,13 @@ func declare(objects: Array, bounds: Dictionary, carried: Dictionary,
 		var body := ManipulableBody.create("carry_%s" % id, 18.0,
 				Vector3(0.7, 0.7, 0.7))
 		body.name = "Transported_%s" % id
+		if bool(one.get("required", false)):
+			# §21.2 PROTECTS THIS CRATE THE WAY IT PROTECTS THE PLAYER.
+			# A door's interlock refuses to close on "the player or any
+			# `required = true` object", and it asks that of whatever
+			# body is in the doorway -- so `required` has to be readable
+			# off the body itself rather than through this class.
+			body.add_to_group(Constants.REQUIRED_OBJECT_GROUP)
 		root.add_child(body)
 		body.global_position = (places[room_now] as Dictionary).get(
 				"arrival", Vector3.ZERO) as Vector3 + Vector3(1.6, 0.6, 0.0)

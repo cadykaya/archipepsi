@@ -89,7 +89,12 @@ func _stage() -> Node3D:
 	var ground := StaticBody3D.new()
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
-	box.size = Vector3(80.0, 1.0, 80.0)
+	# WIDE ENOUGH FOR THE WHOLE ROSTER IN A ROW. At 80 m this floor
+	# spanned x ∈ [-40, +40] and the ten-role row below ran to x = 108,
+	# so half the roster spawned in mid-air, fell past
+	# `ENEMY_FALL_KILL_Y` and freed itself -- while the case went on
+	# "measuring" bodies that no longer existed.
+	box.size = Vector3(160.0, 1.0, 80.0)
 	shape.shape = box
 	ground.add_child(shape)
 	root.add_child(ground)
@@ -442,7 +447,8 @@ func _an_unwatched_enemy_does_its_job() -> void:
 	var at: Array[Vector3] = []
 	var i := 0
 	for role: String in Constants.ENEMY_ARCHETYPES:
-		var foe := _enemy(root, role, Vector3(float(i) * 12.0, 1.0, 0.0))
+		var foe := _enemy(root, role, Vector3(
+				(float(i) - 4.5) * 12.0, 1.0, 0.0))
 		made.append(foe)
 		i += 1
 	await _settle(10)
@@ -460,6 +466,20 @@ func _an_unwatched_enemy_does_its_job() -> void:
 			"every role has an implemented job: %s" % [jobless])
 
 	await _settle(150)
+	# STILL THERE TO BE MEASURED. This is the precondition the case used
+	# to assume: an enemy that died during the settle is not a patroller
+	# that stayed put, and reading `global_position` off a freed body
+	# yields a number that can land on either side of a threshold. The
+	# check below passed for three commits while half the roster was
+	# falling out of the world.
+	var gone: Array[String] = []
+	for j in made.size():
+		if not is_instance_valid(made[j]) or made[j]._dead:
+			gone.append(Constants.ENEMY_ARCHETYPES[j])
+	_check(gone.is_empty(),
+			"all ten are still standing after 2.5 s of doing their job "
+			+ "(lost %s)" % [gone])
+
 	# The movers moved; the holders held their post. Both are "doing the
 	# job" and asserting only the first would make every watcher a bug.
 	var moved := 0

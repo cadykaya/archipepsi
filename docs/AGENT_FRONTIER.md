@@ -1,5 +1,99 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the cargo swings, and §21's twelve are all built — 2026-09-22
+
+**OV04 P13. `godot-constraints` is new at 67 checks.** Amalgam §14.8 and
+§26.5 pinned from Design 2, plus §21.10's three actuators — the ones
+`Actuator` refused by name when P15 landed §21's other nine. **All
+twelve actuator kinds build now.**
+
+**The headline is one measurement the Amalgam names itself:** *"A crane
+in Design 2 is a `PULLEY` with a load on one end and a `WINCH` driving
+it. Its cargo swings. Design 1's crane was a `PATH_MACHINE` whose cargo
+was a child transform and could not."* An 80 kg cargo dropped 2.4 m out
+from its anchor swings in to 0.00 m while the rope still holds it up.
+
+**Two solvers, and the split is the substrate's.** Godot has a hinge and
+a slider with real limits, so `HINGE`, `SLIDER`, `SEESAW` and a hinge
+`PENDULUM` are those. It has nothing for a taut-only distance constraint
+or two ropes sharing a total length, so `ROPE`, `CHAIN`, `PULLEY` and
+`COUNTERWEIGHT` are solved here at §14.8's fixed eight iterations.
+Consequence, declared rather than hidden: `breakable_at` is offered only
+where a real constraint force exists, and asking for it on a hinge is
+**refused by name**.
+
+**The solver diverged to 1e18 on its first run.** `apply_central_impulse`
+outside `_integrate_forces` is queued and does not change
+`linear_velocity` until the next step, so eight passes each applied the
+same full correction. It carries its own working velocity now.
+
+**Two things the obvious implementation got wrong.** A brake is a motor
+held at zero, not limits squeezed onto the current value — Godot
+measures limits in the joint's frame and this class measures `value` in
+the body's. And a `DRIVER` cannot turn a locked hinge: §23.5 rule 28
+pairs a `BRAKE` with every mandatory-route `DRIVER`, so the brake winning
+is what stalls the driver rather than letting whichever wrote the motor
+last decide.
+
+**P14 is NOT this lane's to build.** DESS-09 measured it and the argument
+holds: the engine has one signal chain (`PoweredLink`), no node
+vocabulary, no conduit, no graph, and declaring Design 1 §19's eleven
+node types now would be a framework no room uses — which P14.5 warns
+against in its own words.
+
+
+## ENGINE LANE — §21's actuator contract, and the door reverses now — 2026-09-22
+
+**OV04 P15. `godot-actuator` is new at 93 checks**, and it is the first
+suite in this lane whose subject is a document section rather than a
+room: Amalgam §21, all of it this engine can reach.
+
+**The engine had six actuators and no contract.** `ServiceShutter`,
+`RailCarrier`, `ShuttleDeck`, `RailJunction`, `PoweredLink`'s door and
+`LaunchSolver`'s pad were each built for the room that needed them, and
+no two of them answered "the input reversed halfway" or "the power went
+out" the same way — because nobody had asked. §21.1 calls its transition
+table "the complete answer… it applies to every actuator kind", so
+`Actuator` is that answer written once, `SafeClosure` is §21.2's
+interlock written once beside it, and `Constants.ACTUATOR_POWER_LOSS` is
+§21.1.1's table with no holes in it.
+
+**C4a is closed.** The shutter stopped where it was and waited, which
+never crushed anybody and was half the rule. §21.2 requires a refused
+closure to stop, **reverse to fully open**, and retry every 1.0 s,
+repeating — because a panel parked halfway still narrows the doorway it
+was asked to clear, and gives the person under it no sign that stepping
+aside is what it is waiting for. It reverses now, on the contract class
+and on the shipped machine, and its protected set widened from the
+player to §21.2's "player or any `required = true` object" — which P16's
+transported objects now carry as a group on the body.
+
+**The suite did not cover its own defect on the first attempt.** Both
+interlock cases opened the door fully, put a body in the doorway, and
+only then asked it to shut: the panel never started moving, so "stopped"
+and "reversed" were the same number, and reverting the repair left the
+suite green. §21.2's subject is a closure that has *begun*. Corrected, the
+same revert produces **nine failures**.
+
+**Nine of twelve kinds build; three are refused by name.** §21.10's
+`WINCH`, `BRAKE` and `DRIVER` drive a constraint solver this engine does
+not have. They are in the vocabulary and in the power-loss table so the
+table has no hole, and `Actuator.create` refuses them, which is the
+honest report of where the substrate ends. That is **P13**.
+
+**Also closed on machines that are in rooms today:** `ShuttleDeck` (the
+LIFT) and `RailCarrier` (the MOVING_PLATFORM) had no notion of power at
+all. Both now hold at the exact position they were caught at and resume
+the errand they were on — §21.1.1's asymmetry argument is that a lift
+which drops when a generator fails can strand or kill the player, and no
+interlock helps, because the danger is the motion.
+
+**Next ready Prod packages:** P12 (manipulation verbs), P13 (constraints
++ §21.10's three), P14 (signal graph and sensors), P10/P11 (remaining
+Statuses and compounds), P17 (railway switching). **P08 stays blocked**
+on seven content-value integers only the owner can set.
+
+
 ## BRIDGE LANE — four corrections applied, and the composer emits — 2026-09-22
 
 **Two of the owner's four corrections were defects in rules I had

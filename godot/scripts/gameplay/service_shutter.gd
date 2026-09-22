@@ -9,13 +9,23 @@ extends AnimatableBody3D
 ## two things — how far the panel has slid, and how long is left — and
 ## the room owns what opened it and what it leads to.
 ##
-## **The interlock is physical.** §8: "A player already in the doorway is
-## not crushed." The doorway holds a real sensing volume and a closing
-## shutter that finds a body in it stops and waits rather than continuing
-## and relying on the body being pushed somewhere survivable. The panel
-## also carries `sync_to_physics`, so a body standing ON it while it
-## moves is carried rather than left — the same property the lift and the
-## skiff depend on.
+## **The interlock is physical, and it is §21.2's.** EX50-021 §8 asks
+## that "a player already in the doorway is not crushed"; Amalgam §21.2
+## says what a door does about it, and this panel used to do only half of
+## it. It stopped where it was and waited. §21.2 requires it to **stop,
+## reverse to fully open, and retry after 1.0 s, repeating** — because a
+## panel parked halfway is still narrowing the doorway it was asked to
+## clear, and gives the person standing under it no sign that stepping
+## aside is what it is waiting for. The rule now lives in `SafeClosure`,
+## shared with `Actuator`, so there is one answer rather than one per
+## machine.
+##
+## The doorway holds a real sensing volume and it watches for §21.2's
+## whole protected set: the player, and any object a Zone declared
+## `required` (`Constants.REQUIRED_OBJECT_GROUP`). The panel also carries
+## `sync_to_physics`, so a body standing ON it while it moves is carried
+## rather than left — the same property the lift and the skiff depend
+## on.
 ##
 ## It shares `StopTravel` with them too: how a machine gets from one stop
 ## to the next is one question.
@@ -45,7 +55,7 @@ var left := 0.0
 var _theme := "concrete_facility"
 var _doorway: Area3D = null
 var _inside := 0
-var _overrun := 0.0
+var _interlock := SafeClosure.new()
 
 
 static func create(shut_centre: Vector3, panel_size: Vector3,
@@ -142,7 +152,25 @@ func doorway_occupied() -> bool:
 ## Seconds the interval has run past its expiry because the doorway was
 ## occupied. Zero whenever nothing has been in the way.
 func overrun() -> float:
-	return _overrun
+	return _interlock.overrun
+
+
+## How many closures §21.2 has refused. A door interrupted once and a
+## door being denied over and over read the same from `overrun` alone.
+func refusals() -> int:
+	return _interlock.refusals
+
+
+## True while the panel is travelling back up after a refused closure, or
+## sitting fully open waiting out the 1.0 s retry.
+func reversing() -> bool:
+	return _interlock.reversing
+
+
+## Seconds until it tries to shut again. Zero when it is not holding
+## open for anybody.
+func retry_left() -> float:
+	return _interlock.retry_left
 
 
 func _physics_process(delta: float) -> void:
@@ -154,20 +182,29 @@ func advance(delta: float) -> void:
 		left = maxf(left - delta, 0.0)
 		if left <= 0.0:
 			goal = 0.0
-	# THE INTERLOCK. A closing shutter that finds somebody in the doorway
-	# does not close, and does not silently forget that it wanted to: it
-	# waits, says how long it has been waiting, and shuts the moment the
-	# doorway is clear.
-	if goal <= 0.0 and _inside > 0:
-		_overrun += delta
-		held_open.emit(_overrun)
+	# THE INTERLOCK — §21.2, through the shared rule. A closing shutter
+	# that finds somebody in the doorway stops, goes back to FULLY OPEN,
+	# and tries again a second later, for as long as the doorway is
+	# occupied. It says how long it has been waiting each time, and it
+	# never forgets that it wanted to shut.
+	var commanded := goal
+	# A DOOR THAT IS ALREADY SHUT IS NOT WANTING TO SHUT. Reading the
+	# goal alone leaves `overrun` frozen at whatever the last refusal
+	# reached, for the rest of the Zone's life, because `goal` stays at 0
+	# after a successful closure.
+	var order := _interlock.order(delta, goal <= 0.0 and not is_shut(),
+			_inside > 0, is_open())
+	if order != SafeClosure.Order.PROCEED:
+		held_open.emit(_interlock.overrun)
+		commanded = travel
+	if order == SafeClosure.Order.HOLD_OPEN:
+		# Fully open and counting down. Holding still is the wait rather
+		# than a stall, so the speed is shed instead of being carried
+		# into the retry.
 		speed = 0.0
-		return
-	if goal > 0.0:
-		_overrun = 0.0
 	var was_open := is_open()
 	var was_shut := is_shut()
-	var moved := StopTravel.step(offset, goal, speed, delta,
+	var moved := StopTravel.step(offset, commanded, speed, delta,
 			ACCEL, SPEED, EPSILON)
 	offset = moved.x
 	speed = moved.y
@@ -182,11 +219,19 @@ func _place() -> void:
 	global_position = shut_at + Vector3(0.0, offset, 0.0)
 
 
+## §21.2's protected set is "the player or any `required = true`
+## object", so the count is of both. A crate a puzzle cannot be finished
+## without is not something a door may push through a wall either.
+func _watched(body: Node3D) -> bool:
+	return body.is_in_group("player") \
+			or body.is_in_group(Constants.REQUIRED_OBJECT_GROUP)
+
+
 func _on_entered(body: Node3D) -> void:
-	if body.is_in_group("player"):
+	if _watched(body):
 		_inside += 1
 
 
 func _on_left(body: Node3D) -> void:
-	if body.is_in_group("player"):
+	if _watched(body):
 		_inside = maxi(0, _inside - 1)

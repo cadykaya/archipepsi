@@ -58,6 +58,7 @@ var speed := 0.0
 ## destination is where it is parked.
 var destination := 0
 var held := false
+var _unpowered := false
 
 var _dwell_left := 0.0
 var _dwell_at := -1
@@ -196,6 +197,27 @@ func resume() -> void:
 	held = false
 
 
+## §21.1.1: EVERYTHING THAT CARRIES THE PLAYER HOLDS.
+##
+## "a lift that drops to the bottom when a generator fails can strand or
+## kill the player" -- the failure modes are not symmetrical, and unlike
+## a door there is no interlock that makes the motion safe, because the
+## motion IS the danger.
+##
+## Kept separate from `held` rather than folded into it. A deck the
+## player stopped by hand and a deck the room stopped by cutting power
+## are two facts, and power coming back must not cancel the first one:
+## `resume()` is still "the only way out of `stop_here`".
+##
+## The destination is untouched, so §21.1's "power restored: resume
+## toward the position the current input commands, from wherever power
+## loss left it" is what happens by construction.
+func power(on: bool) -> void:
+	_unpowered = not on
+	if not on:
+		speed = 0.0
+
+
 func _physics_process(delta: float) -> void:
 	advance(delta)
 
@@ -204,7 +226,7 @@ func _physics_process(delta: float) -> void:
 ## measured against wall-clock frames is a test that passes on a fast
 ## machine.
 func advance(delta: float) -> void:
-	if held or not _malformed.is_empty():
+	if held or _unpowered or not _malformed.is_empty():
 		return
 	if _dwell_left > 0.0:
 		_dwell_left = maxf(_dwell_left - delta, 0.0)

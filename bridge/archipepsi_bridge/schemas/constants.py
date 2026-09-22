@@ -1189,6 +1189,169 @@ ENEMY_SWEEP_RATE = 0.7
 ENEMY_INTEREST_SECONDS = 4.0
 #: How close to its post counts as home again.
 ENEMY_POST_TOLERANCE = 1.5
+
+# ---------------------------------------------------------------------------
+# ACTUATORS AND MACHINERY -- Amalgam 06 §21.
+#
+# TWELVE KINDS: Design 1's nine kinematic movers, pinned identically by
+# the Amalgam at §21.1, plus Design 2 §21.10's three constraint-driven
+# ones. They are declared together because §21.1's transition table is
+# explicitly "the complete answer to what happens when a signal changes
+# mid-motion, and it applies to every actuator kind" -- one contract, not
+# twelve behaviours that happen to agree.
+#
+# The engine already ships concrete machines for six of the nine
+# (`ServiceShutter`/`LockedDoor` = DOOR, `RailCarrier` = MOVING_PLATFORM,
+# `ShuttleDeck` = LIFT, `RailJunction` = RAIL_SWITCH, `LaunchSolver` =
+# LAUNCHPAD). Each was built for its own room and none of them shared a
+# transition table or a power-loss answer. `Actuator` is that shared
+# contract; the shipped machines keep their own motion curves and consult
+# it for the rules that must be the same everywhere.
+# ---------------------------------------------------------------------------
+
+#: The twelve kinds. Order follows §21.1's enum then §21.10's three, so a
+#: reader can check this list against the document line by line.
+ACTUATOR_KINDS = (
+    "DOOR",              # §21.2 -- door, gate, shutter; the interlocked one
+    "BRIDGE",            # §21.3 -- carries the player across
+    "MOVING_PLATFORM",   # §21.3 -- carries the player along
+    "LIFT",              # §21.4 -- VALUE input, `path` entries are stops
+    "PATH_MACHINE",      # §21.5 -- the general mover: cranes, pistons, walls
+    "RAIL_SWITCH",       # §21.6 -- branch change, gated on clearance
+    "LAUNCHPAD",         # §21.7 -- the runtime solves the arc
+    "HAZARD_CONTROLLER", # §21.8 -- owns whether a hazard runs, not its damage
+    "LIGHT_CONTROLLER",  # §21.9 -- lighting, which never gates progression
+    "WINCH",             # §21.10 -- shortens a ROPE/CHAIN/PULLEY constraint
+    "BRAKE",             # §21.10 -- locks a HINGE/SLIDER/SEESAW
+    "DRIVER",            # §21.10 -- applies torque to a HINGE
+)
+
+#: WHAT POWER LOSS DOES, per kind. Amalgam §21.1.1, which is Design 1's
+#: nine rows plus three the union had to add because Design 3's
+#: `POWER_OFF` made power loss "routine, player-caused and whole-room"
+#: rather than a rare authored event.
+#:
+#: Four answers, and the split is a safety argument rather than a
+#: taxonomy: `close` is safe only because §21.2's interlock makes it
+#: safe; `hold` covers everything that carries, supports or suspends the
+#: player, because there the danger IS the motion and no interlock helps;
+#: `inert` and `disable` make an unpowered room no more dangerous than a
+#: powered one; `unlit` is lighting, which by §21.9 may never gate.
+ACTUATOR_POWER_LOSS = {
+    "DOOR": "close",
+    "BRIDGE": "hold",
+    "MOVING_PLATFORM": "hold",
+    "LIFT": "hold",
+    "PATH_MACHINE": "hold",
+    "RAIL_SWITCH": "hold",
+    "LAUNCHPAD": "inert",
+    "HAZARD_CONTROLLER": "disable",
+    "LIGHT_CONTROLLER": "unlit",
+    "WINCH": "hold",     # "a rope does not lengthen because a generator stopped"
+    "BRAKE": "engage",   # fail-safe: an unpowered brake is a locked brake
+    "DRIVER": "hold",    # releases torque; the hinge locks under an implicit brake
+}
+
+#: §21.2. A blocked closure "stops and reverses to fully open, then
+#: retries after 1.0 s. It repeats indefinitely. It never crushes."
+#:
+#: The retry is the part that is easy to drop and that matters most: a
+#: door that merely stops has parked a panel in the doorway it was asked
+#: to clear, and the player standing in it gets no signal that stepping
+#: aside is what the machine is waiting for.
+SAFE_CLOSURE_RETRY_SECONDS = 1.0
+
+#: §21.6. A rail switch's change "takes effect only when no actor is on
+#: the rail within 10.0 m of the junction"; otherwise it is QUEUED and
+#: applies when the rail clears. Not refused -- queued.
+RAIL_SWITCH_CLEARANCE_M = 10.0
+
+#: §21.1's rate: `t` runs 0 -> 1 in `travel_time` seconds, linearly. The
+#: default is what an unspecified actuator gets.
+ACTUATOR_TRAVEL_SECONDS = 2.0
+#: Where `t` counts as arrived. Small enough that a stop is exact after
+#: the snap, large enough that a 60 Hz step lands inside it.
+ACTUATOR_EPSILON = 0.001
+
+#: §21.2 protects "the player or any `required = true` object". The
+#: required half needs a physical marker the interlock can read without
+#: knowing what a transported object is, so every object a Zone declares
+#: `required` joins this group when `TransportedObjects` builds it.
+#:
+#: A group rather than a property because the interlock's question is
+#: asked of whatever body is standing in a doorway -- a crate, a barrel,
+#: a rolled-in reactive prop -- and none of them share a base class.
+REQUIRED_OBJECT_GROUP = "required_object"
+
+# ---------------------------------------------------------------------------
+# CONSTRAINTS -- Amalgam §14.8 and §26.5 (pinned from Design 2).
+#
+# "This is what Design 1 deferred and Design 2 ships." A crane here is a
+# `PULLEY` with a load on one end and a `WINCH` driving it, and its cargo
+# SWINGS -- Design 1's crane was a `PATH_MACHINE` whose cargo was a child
+# transform and could not. The Amalgam calls that "the single most
+# visible difference between the two proposals in play".
+# ---------------------------------------------------------------------------
+
+#: The eight kinds and their solver treatment (§14.8). Order follows the
+#: document's table so a reader can check it line by line.
+CONSTRAINT_KINDS = (
+    "HINGE",          # single-axis rotational joint with angular limits
+    "SLIDER",         # single-axis translational joint with limits
+    "ROPE",           # distance constraint, TAUT ONLY -- resists extension
+    "CHAIN",          # same as ROPE, rendered segmented, same solver
+    "PULLEY",         # two ropes sharing a total length through a fixed point
+    "COUNTERWEIGHT",  # a PULLEY where one end carries an authored mass
+    "SEESAW",         # a HINGE, axis horizontal, pivot offset authored
+    "PENDULUM",       # a HINGE or ROPE with an authored rest and damping
+)
+
+#: WHICH KINDS THE ENGINE SOLVES ITSELF.
+#:
+#: Godot has a hinge and a slider, with real limits, and they are
+#: genuinely simulated -- so `HINGE`, `SLIDER`, `SEESAW` and a hinge
+#: `PENDULUM` use them. It has nothing for a TAUT-ONLY distance
+#: constraint (one that resists extension and not compression) or for two
+#: ropes sharing a total length, so those four are solved here, at
+#: §14.8's fixed eight iterations.
+#:
+#: The split is a fact about the substrate, not a design choice, and it
+#: is declared rather than hidden because it decides which constraints
+#: can report a force -- see `CONSTRAINT_BREAKABLE_KINDS`.
+CONSTRAINT_SOLVED_KINDS = ("ROPE", "CHAIN", "PULLEY", "COUNTERWEIGHT")
+CONSTRAINT_JOINT_KINDS = ("HINGE", "SLIDER", "SEESAW", "PENDULUM")
+
+#: §14.8: "`breakable_at` is checked once per tick against THE SOLVER'S
+#: REPORTED CONSTRAINT FORCE." Only the four this engine solves itself
+#: report one; a Godot joint does not expose its reaction, and a proxy
+#: computed from a body's velocity change would also be counting every
+#: contact it made that tick. A `breakable_at` on the other four is
+#: refused by name rather than answered with a number that is not the
+#: constraint's.
+CONSTRAINT_BREAKABLE_KINDS = CONSTRAINT_SOLVED_KINDS
+
+#: §14.8: "Solver iterations are fixed at `8` per tick. Not adaptive. A
+#: fixed iteration count is reproducible on a given build and is what
+#: makes the reference-solution replay in §23.5 check 20 meaningful."
+CONSTRAINT_SOLVER_ITERATIONS = 8
+
+#: §14.8: "Constraint chains are capped at `4` linked constraints. A
+#: pulley feeding a seesaw feeding a hinge is three."
+CONSTRAINT_CHAIN_CAP = 4
+
+#: §14.8: "Constrained objects never sleep while their constraint value
+#: is changing by more than `0.01` per tick."
+CONSTRAINT_SETTLED_DELTA = 0.01
+
+#: §14.8: "No constraint may be created at runtime except `TETHER`."
+#: Everything else is authored into the room, which is what lets §23.5
+#: check 20 replay a reference solution against a known setup.
+CONSTRAINT_RUNTIME_CREATABLE = ("ROPE",)
+
+#: Position correction per iteration, for the four solved kinds. Full
+#: correction in one step injects energy on a discrete timestep and a
+#: rope starts pumping; this is the standard Baumgarte fraction.
+CONSTRAINT_CORRECTION = 0.4
 RANGED_PROJECTILE_SPEED = 14.0
 
 
