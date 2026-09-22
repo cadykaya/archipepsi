@@ -27,9 +27,18 @@ test-bridge:
 test-apworld:
 	$(PY) -m pytest apworld/tests -q
 
+# EVERY COPY OF THE CONSTANTS, FROM THE ONE SOURCE. `constants.py` is
+# the binding file; the GDScript is generated from it and the APWorld
+# vendors it verbatim, because an APWorld ships to Archipelago without
+# this repository around it. The vendored copy is HERE rather than left
+# to be remembered: it drifted once already -- the enemy stat table
+# landed in the source and not in the copy, and `make test` carried the
+# failure for several commits while `make test-bridge`, which does not
+# run the APWorld suite, stayed green.
 export:
 	cd bridge/archipepsi_bridge/schemas && $(PY) export.py generated
 	cp bridge/archipepsi_bridge/schemas/generated/constants.gd godot/scripts/autoload/constants.gd
+	cp bridge/archipepsi_bridge/schemas/constants.py apworld/archipepsi/constants.py
 
 # The rule suite's snapshot is a real fold, and this is the fold that
 # makes it. Regenerate rather than editing the JSON.

@@ -68,6 +68,7 @@ func _run() -> void:
 	await _a_room_of_melee_fights_back_and_can_be_cleared()
 	await _indirect_fire_reaches_a_player_who_stands_still()
 	await _a_bulwark_can_be_flanked_by_moving()
+	await _the_bulwark_is_fought_from_where_the_player_walks_in()
 	await _a_room_of_flyers_is_completable_from_the_ground()
 	await _a_beacon_dies_like_anything_else()
 	await _the_room_is_not_clear_until_every_body_is()
@@ -722,6 +723,126 @@ func _a_bulwark_can_be_flanked_by_moving() -> void:
 	await _drop(controller)
 
 
+## THE SAME FIGHT, STARTED WHERE THE PLAYER ACTUALLY ARRIVES.
+##
+## **The placed-start case is isolated counterplay evidence and not the
+## whole acceptance.** It sets the player four metres from the bulwark
+## in open floor, which shows the rear arc is reachable and says nothing
+## about getting there from the door. A room whose opening is only
+## usable from a spot the harness teleported to is a room no player
+## reaches that spot in.
+##
+## So this one starts at the controller's own arrival -- the point a
+## connector delivers a player to, against the entry wall -- walks in on
+## ordinary input through ordinary collision, and only then fights. Both
+## cases are kept: this is the acceptance, that one is the isolation.
+func _the_bulwark_is_fought_from_where_the_player_walks_in() -> void:
+	print("  -- bulwark: in through the door, then fought")
+	var controller := await _built(_zone([
+			{"archetype": "bulwark", "count": 1}], 34.0, 32.0))
+	var record := _record(controller)
+	_check(_living(record).size() == 1, "one bulwark is placed")
+	var target: Enemy = _living(record)[0]
+	var player: Player = controller.player
+	var arrival: Vector3 = player.global_position
+	var box: AABB = record.get("bounds", AABB())
+	_check(box.grow(1.0).has_point(arrival),
+			"the player starts at the room's own arrival (%v)" % arrival)
+	var start_gap := arrival.distance_to(target.global_position)
+
+	var walk := await _walk_in_from_the_door(controller, target)
+	_check(float(walk["walked"]) > 3.0,
+			"they WALK in: %.1f m covered on move_forward alone, from %v "
+			% [float(walk["walked"]), walk["from"]]
+			+ "to %v (%.1f m from the bulwark, was %.1f)"
+			% [walk["to"], float(walk["gap"]), start_gap])
+	_check(bool(walk["arrived"]),
+			"and they reach the fighting space in %.1f s"
+			% (float(walk["frames"]) * DT))
+	_check(float(walk["gap"]) < start_gap,
+			"having closed the ground, not drifted (%.1f m -> %.1f m)"
+			% [start_gap, float(walk["gap"])])
+
+	# NOTHING PLACED. The fight begins from wherever the walk ended.
+	var opened: float = player.hp
+	var fight := await _circle_and_fight(controller, record, target,
+			3600, false)
+	_check(int(fight["left"]) == 0,
+			"ARRIVAL: the bulwark dies in a fight entered on foot (%d "
+			% int(fight["frames"]) + "frames, player %s)"
+			% ("DIED" if bool(fight["died"]) else "alive"))
+	_check(not bool(fight["died"]),
+			"ARRIVAL: and the player survives it (%.1f of %.1f hp)"
+			% [player.hp, opened])
+	controller._evaluate_objectives()
+	_check(bool(record["satisfied"]),
+			"ARRIVAL: kill_all is satisfied")
+	_note("bulwark, from the arrival: walked %.1f m in, then %s after "
+			% [float(walk["walked"]),
+				"cleared" if int(fight["left"]) == 0 else "NOT cleared"]
+			+ "%.1f s with %.0f of %.0f hp left. Tuning stays PROVISIONAL "
+			% [float(fight["frames"]) * DT, player.hp, opened]
+			+ "for human playtest.")
+	await _drop(controller)
+
+
+## WALK IN FROM THE DOOR, with nothing placed and nothing teleported.
+##
+## The controller spawns the player at the room's ARRIVAL -- the point a
+## connector delivers them to -- and this walks from there into the
+## fighting space on `move_forward` alone, yawed at the target, sliding
+## along whatever it meets. It is the half `_circle_and_fight`'s
+## placement skips over, and the half a player actually does first.
+##
+## Returns where it started, where it stopped, how far it walked and
+## whether it got within `reach` of the target.
+func _walk_in_from_the_door(controller: ZoneController, target: Enemy,
+		reach := 6.0, budget := 900) -> Dictionary:
+	var player: Player = controller.player
+	player.input_frozen = false
+	var from: Vector3 = player.global_position
+	var was := from
+	var walked := 0.0
+	var frames := 0
+	var stuck := 0
+	var sidestep := "move_right"
+	var sidestepping := 0
+	Input.action_press("move_forward")
+	while frames < budget:
+		if not is_instance_valid(target) or target._dead or player._dead:
+			break
+		_aim_at(player, target)
+		if player.global_position.distance_to(target.global_position) \
+				<= reach:
+			break
+		# The entry wall is exactly what pinned the first version of the
+		# orbit, so walking in has to be able to get off it too.
+		if sidestepping > 0:
+			sidestepping -= 1
+			if sidestepping == 0:
+				Input.action_release(sidestep)
+		elif stuck > 20:
+			stuck = 0
+			sidestep = ("move_right" if sidestep == "move_left"
+					else "move_left")
+			sidestepping = 45
+			Input.action_press(sidestep)
+		await get_tree().physics_frame
+		frames += 1
+		var step := was.distance_to(player.global_position)
+		stuck = stuck + 1 if step < 0.02 else 0
+		walked += step
+		was = player.global_position
+	Input.action_release("move_forward")
+	Input.action_release("move_left")
+	Input.action_release("move_right")
+	var gap := (player.global_position.distance_to(target.global_position)
+			if is_instance_valid(target) else 0.0)
+	return {"from": from, "to": player.global_position,
+			"walked": walked, "frames": frames, "gap": gap,
+			"arrived": gap <= reach}
+
+
 ## CIRCLE AND SHOOT: real movement, the real input path, no teleports.
 ##
 ## The player strafes around the target while firing, which is the
@@ -729,7 +850,7 @@ func _a_bulwark_can_be_flanked_by_moving() -> void:
 ## the camera is re-aimed each frame, so the body genuinely travels
 ## around the enemy and the shots genuinely have to connect.
 func _circle_and_fight(controller: ZoneController, record: Dictionary,
-		target: Enemy, budget: int) -> Dictionary:
+		target: Enemy, budget: int, place := true) -> Dictionary:
 	var player: Player = controller.player
 	player.input_frozen = false
 	# **STAND IN THE OPEN BEFORE CIRCLING.** A harness setup, not a
@@ -738,8 +859,15 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 	# straight into it. The body reached 6.97 m/s for one frame and then
 	# covered 1.9 m in twenty-three seconds -- pinned, not still, and
 	# certainly not circling. Everything after this line is walked.
+	#
+	# **AND IT IS A PLACEMENT, WHICH IS WHY IT IS OPTIONAL.** Four metres
+	# from the enemy in open floor is isolated counterplay evidence: it
+	# shows the opening is usable, and it says nothing about getting to
+	# the fighting space from the door. `place = false` leaves the player
+	# exactly where the controller spawned them, for the case that walks
+	# in first.
 	var box: AABB = record.get("bounds", AABB())
-	if box.has_volume():
+	if place and box.has_volume():
 		var middle: Vector3 = box.position + box.size / 2.0
 		var out: Vector3 = middle - target.global_position
 		out.y = 0.0
