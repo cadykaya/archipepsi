@@ -1,5 +1,42 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the Echo menu answers its own questions now — 2026-09-22
+
+**From the owner, after playing.** The Echo menu was "a scrolling list
+with no search or sort, and mixed passives with actives". `godot-archive`
+is new at 23 checks.
+
+The five slots are the top of the screen — what is on each key, what
+replacing it costs, and the consumable's remaining uses — and clicking a
+slot filters the list to what fits it. Search matches name, source game,
+source item, description and concepts; sort offers newest / name /
+source game; ACTIONS and ALWAYS ON are two counted sections. The
+"1 of 3" form matters: a search hiding two things otherwise reads as
+owning one.
+
+**A fifth slot, `consumable`, on Q.** A consumable is an Action with
+`charges` — not a new component kind, and not a zero-regen `Resource`,
+because a Resource is a HUD channel with an economy and three uses of one
+grenade has no decisions in it. Slot and charges imply each other
+structurally. Charges persist (the fold says what the campaign was given;
+button presses are not in it), and **refill on entering a Zone** by the
+owner's decision. The last charge empties the slot.
+
+**Two silent five-slot bugs, found by reading rather than by failing.**
+`resource_meters.gd` and CLEAR ALL both spelled the four names out, so a
+consumable's cost would never register as paid and "clear all" would
+leave it equipped. The keycap table lived in two Godot files; it is
+exported now, and restoring the local copy makes the HUD render "? —".
+`Hud._loadout_text()` had no test anywhere — the one slot-facing surface
+with none — and that sabotage is what its new case catches.
+
+**Live gameplay consequence, stated rather than buried:** widening
+`SLOT_NAMES` widens `IMPLEMENTED_ACTION_SLOTS`, so Epsilon may now emit
+consumables into new campaigns. That is what makes the slot real instead
+of inert support. The Playtest 2.5 baseline was retaken for it; `zones`
+is byte-identical.
+
+
 ## ENGINE LANE — the cargo swings, and §21's twelve are all built — 2026-09-22
 
 **OV04 P13. `godot-constraints` is new at 67 checks.** Amalgam §14.8 and

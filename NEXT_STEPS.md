@@ -1,5 +1,65 @@
 # Archipepsi — build state
 
+## 2026-09-22 (engine) — the Echo menu, and a fifth slot for consumables
+
+From the owner, after playing: the Echo menu was "a scrolling list with no
+search or sort, and mixed passives with actives", and should have "an
+equipable slot for each type (on shift, on right click, consumables, etc)".
+Three of the four they named already existed; consumables did not exist at all.
+
+### The screen
+
+`make godot-archive` — new at **23 checks**, in CI.
+
+The five slots are the top of the screen now: what is on each key, what
+replacing it costs, and for the consumable how many uses are left. Clicking a
+slot filters the list to what fits it. A `LineEdit` searches name, source
+game, source item, description and concepts; an `OptionButton` sorts by
+newest / name / source game. ACTIONS and ALWAYS ON are two labelled sections,
+counted as "1 of 3" so a search that is hiding things does not read as owning
+fewer.
+
+`ArchiveQuery` (`godot/scripts/ui/archive_query.gd`) holds the part with
+answers in it, so search/sort/split are tested directly rather than by
+scraping labels. `inventory.gd` keeps every row internal that was already
+good: source line, concepts and mode tint, effect summary, provenance chains,
+favourites, replace-comparison.
+
+### The consumable slot
+
+A consumable is an **Action with `charges`**, not a new component kind and not
+a zero-regen `Resource` (a Resource is a HUD channel with an economy; three
+uses of one grenade has no decisions in it). Slot and charges imply each other
+structurally, so both one-sided forms are unrepresentable.
+
+Charges are persisted — the fold says what the campaign was *given*, and how
+many times a button was pressed is not derivable from it — spent through
+`transitions.spend_charge`, and **refill on entering a Zone** (owner decision).
+They persist within a Zone, so reloading is not a refill. The last charge
+empties the slot; `Q` is the key.
+
+### Two silent five-slot bugs, found by looking
+
+`resource_meters.gd:213` and `inventory.gd`'s CLEAR ALL both spelled the four
+slot names out: a consumable's resource cost would never have registered as
+paid, and "clear all" would have left it equipped. The keycap table lived in
+two Godot files and is exported from `constants.py` now — restoring the local
+copy produces a HUD row reading `? —`.
+
+`Hud._loadout_text()` had **no test anywhere** and was the one slot-facing
+surface with none. It has one, and the sabotage above is what it catches.
+
+### What to watch
+
+Widening `SLOT_NAMES` also widens `epsilon/capabilities.py`'s
+`IMPLEMENTED_ACTION_SLOTS`, which is what the request advertises to Epsilon —
+so new campaigns will start receiving consumables. That is what makes the slot
+real rather than inert, and it is a live gameplay change rather than a menu
+one. The Playtest 2.5 baseline was retaken for it; `zones` is byte-identical
+and all four interpretations are unchanged.
+
+---
+
 ## 2026-09-22 (engine) — OV04 P13: the eight constraint kinds, genuinely simulated
 
 `make godot-constraints` — new at **67 checks**, in CI. Amalgam §14.8 and §26.5, pinned from
