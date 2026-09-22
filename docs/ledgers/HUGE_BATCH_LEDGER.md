@@ -1628,3 +1628,53 @@ door nobody was watching.
 an intent that silently does nothing — the exact defect
 `handle_progress` was written to close for keys and locks), the whole
 path lands a value in the save, and the absorb/reverse pair.
+
+### DESS-04 — P02 transaction edges and honest refusals, and a sabotage that tested nothing
+
+**Dess, 2026-09-22.** Overnight 04, package P02. The first pass (D-1)
+already covered a qualifying local Echo, the untouched foreign item,
+duplicate confirmation, a delayed fold and a reload. The master names
+four edges it did not, and they are now covered:
+
+- **reordered confirmations** — two claims in flight, confirmed in the
+  opposite order. `confirm_check` keys on `location_id`, so order cannot
+  matter; an implementation that popped the FIRST pending record would
+  pass every single-claim test and lose a Check here;
+- **interruption between claim and fold** — the window the pending
+  record exists for: cost spent, Archipelago told, interpretation not
+  back. A restart there still owes the player the Echo;
+- **process restart on both sides of completion**, asserted as two
+  different states, because a test that only restarted after completion
+  would pass with a save that dropped pending records entirely;
+- **retry after an uncertain acknowledgment** — confirming twice after a
+  dropped connection neither raises nor mints a second Echo.
+
+**P02.7, the honest refusals.** An already-owned equivalent capability
+reports case B and **not** case C: case C is a claim about *this Zone's
+content*, so reporting it for something the fold already owns would
+attribute the guarantee to the wrong thing. A Zone featuring nothing
+establishes nothing and gets no guarantee invented for it. And a Zone
+that hands over the hookshot has said nothing about `blink` — the
+specific failure refused there is treating `featured_acquisition` as
+evidence that a Zone is "an acquisition Zone" and letting any capability
+through on the strength of it.
+
+**A SABOTAGE THAT TESTED NOTHING, AND IT WAS MINE.** Checking the
+reordered-confirmation control, I replaced `confirm_check`'s filter with
+a pop-the-oldest version and the suite stayed green — which I read, for
+several minutes, as the control being vacuous.
+
+It was not. **The pattern I replaced occurs twice in `transitions.py`**,
+and `str.replace(..., 1)` hit the first occurrence, 82 lines above
+`confirm_check`, in an unrelated function. The sabotage was real, applied
+cleanly, asserted as matched, and landed on the wrong code.
+
+Targeted inside `confirm_check` the control fails immediately, as it
+should. The methodology fix is one line and applies to every sabotage
+this project runs: **assert the target FUNCTION changed, not that the
+pattern matched.** `inspect.getsource(fn)` is the check —
+`'SABOTAGE' in inspect.getsource(T.confirm_check)` — and a sabotage that
+cannot show that is a sabotage that proves nothing about the control it
+was aimed at. Written down because a green suite under sabotage looks
+exactly like a vacuous test, and the wrong conclusion from it is to
+delete a control that was working.

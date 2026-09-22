@@ -324,3 +324,169 @@ def test_a_zone_that_features_nothing_is_unchanged():
         {**zone.model_dump(), "featured_acquisition": None})
     assert not topology.reachability(without).ok, (
         "with nothing granting the capability the gate is undeclared")
+
+
+# --------------------------------------------------------------------------
+# P02.5 — the transaction edges the first pass did not exercise.
+#
+# Duplicate confirmation, a delayed fold and a reload already have their
+# own cases above. These are the four the master names and they did not:
+# reordered confirmations, interruption between claim and fold, process
+# restart on both sides of completion, and a retry after an
+# acknowledgment nobody is sure arrived.
+# --------------------------------------------------------------------------
+
+def _zone_save(allocated=(FEATURED_LOCATION,)) -> P.CampaignSave:
+    """A campaign with the featured Zone ACTIVE and its layout accepted.
+
+    Built through the real transitions, so a claim below is the claim
+    the client actually makes rather than a hand-set field.
+    """
+    zone = _zone(_featured())
+    built = topology.apply(zone, topology.compose_chain(list(zone.chambers)))
+    save = P.CampaignSave(seed_name="Seed", team=0, slot_id=1,
+                          slot_name="Skyiah")
+    save = T.start_generation(save, zone_id=built.zone_id,
+                              allocated_location_ids=tuple(allocated),
+                              target_game=built.target_game)
+    save = T.accept_zone(save, built)
+    save = T.enter_zone(save, built.zone_id)
+    # A GRAPH ZONE CANNOT CLAIM AGAINST GEOMETRY NOBODY VALIDATED, so the
+    # layout is committed here. Skipping it and setting the field would
+    # have made every claim below a claim the real client cannot make.
+    return T.commit_layout(save, built.zone_id,
+                           {"manifest_digest": "d0"})
+
+
+def _claimed(save, location_id: int = FEATURED_LOCATION):
+    """A claim in flight: the Check is pending, the fold has not run."""
+    return T.claim_zone_check(save, zone_id="zone_001",
+                              location_id=location_id,
+                              transaction_id=f"t{location_id}")
+
+
+def _restart(save):
+    """A process restart: nothing survives but the serialised save."""
+    return P.CampaignSave.model_validate_json(save.model_dump_json())
+
+
+def test_confirmations_arriving_out_of_order_settle_the_right_checks():
+    """Two claims in flight, confirmed in the opposite order.
+
+    `confirm_check` keys on `location_id`, so order cannot matter -- but
+    an implementation that popped the FIRST pending record would pass
+    every single-claim test and lose a Check here.
+    """
+    save = _zone_save(allocated=(89100001, FEATURED_LOCATION))
+    save = _claimed(save, 89100001)
+    save = _claimed(save, FEATURED_LOCATION)
+    assert {p.location_id for p in save.pending_checks} == {
+        89100001, FEATURED_LOCATION}
+
+    save = T.confirm_check(save, FEATURED_LOCATION)
+    assert {p.location_id for p in save.pending_checks} == {89100001}, (
+        "confirming the later claim must settle that one, not the oldest")
+    save = T.confirm_check(save, 89100001)
+    assert save.pending_checks == ()
+
+
+def test_an_interruption_between_claim_and_fold_loses_neither():
+    """The claim is durable before the Echo exists.
+
+    This is the window the whole pending-record design is for: the cost
+    is spent, Archipelago has been told, and the interpretation has not
+    come back. A restart here must still owe the player the Echo.
+    """
+    save = _claimed(_zone_save())
+    back = _restart(save)
+    assert [p.location_id for p in back.pending_checks] == [FEATURED_LOCATION]
+    assert back.interpretations == (), "nothing was folded yet"
+
+    settled = T.append_interpretation(T.confirm_check(back, FEATURED_LOCATION),
+                                      _grapple_echo())
+    assert settled.pending_checks == ()
+    assert CAPABILITY in M.owned_capabilities(
+        M.derive_mechanics(settled.interpretations))
+
+
+def test_a_restart_before_completion_and_one_after_it_differ():
+    """Both restarts are safe, and they are not the same state.
+
+    A test that only restarted after completion would pass with a save
+    that dropped pending records entirely.
+    """
+    before = _restart(_claimed(_zone_save()))
+    assert before.pending_checks and not before.interpretations
+
+    done = T.append_interpretation(
+        T.confirm_check(_claimed(_zone_save()), FEATURED_LOCATION),
+        _grapple_echo())
+    after = _restart(done)
+    assert after.pending_checks == ()
+    assert CAPABILITY in M.owned_capabilities(
+        M.derive_mechanics(after.interpretations))
+
+
+def test_a_retry_after_an_uncertain_acknowledgment_is_absorbed():
+    """The client did not hear the answer and sends it again.
+
+    Confirming twice is the normal case after a dropped connection, and
+    it must neither raise nor mint a second Echo. Both halves are
+    asserted: the confirmation is idempotent AND the fold still holds
+    exactly one interpretation.
+    """
+    save = T.append_interpretation(
+        T.confirm_check(_claimed(_zone_save()), FEATURED_LOCATION),
+        _grapple_echo())
+    again = T.confirm_check(save, FEATURED_LOCATION)
+    assert again is save or again.pending_checks == ()
+    twice = T.append_interpretation(again, _grapple_echo(seq=7))
+    assert len(twice.interpretations) == 1
+    assert twice.interpretations[0].interpretation_seq == 0
+
+
+# --------------------------------------------------------------------------
+# P02.7 — the situations the policy does not fully define.
+#
+# "Never invent a foreign item or grant policy. Exact unresolved cases
+# remain isolated decision blocks; ordinary successful cases do not prove
+# those cases safe."
+# --------------------------------------------------------------------------
+
+def test_an_already_owned_equivalent_capability_reports_the_cheaper_proof():
+    """A player who already grapples does not need the Zone to say so.
+
+    Case B is reported, not case C -- and that matters because case C is
+    a claim about THIS Zone's content, so reporting it for a capability
+    the fold already owns would attribute a guarantee to the wrong
+    thing.
+    """
+    owned = M.derive_mechanics(_save(_grapple_echo()).interpretations)
+    guarantee = M.capability_guarantee(
+        CAPABILITY, owned, Z.established_in_zone(_zone(_featured())))
+    assert guarantee.guaranteed
+    assert guarantee.reason == "already_possessed", guarantee.reason
+
+
+def test_a_zone_featuring_nothing_gets_no_guarantee_invented_for_it():
+    """The honest refusal. No case fires, and `forge_constructible` is
+    named in the reason rather than silently standing in for one."""
+    guarantee = M.capability_guarantee(
+        "blink", M.Mechanics(), Z.established_in_zone(_zone()))
+    assert not guarantee.guaranteed
+    assert guarantee.reason != "established_in_zone"
+    assert Z.established_in_zone(_zone()) == (), (
+        "a Zone featuring nothing establishes nothing")
+
+
+def test_the_featured_capability_does_not_guarantee_a_different_one():
+    """A Zone that hands over the hookshot has said nothing about blink.
+
+    The specific failure this refuses: treating `featured_acquisition`
+    as evidence that the Zone is "an acquisition Zone" and letting any
+    capability through on the strength of it.
+    """
+    established = Z.established_in_zone(_zone(_featured()))
+    assert established == (CAPABILITY,)
+    assert not M.capability_guarantee(
+        "blink", M.Mechanics(), established).guaranteed
