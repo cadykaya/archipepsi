@@ -230,6 +230,37 @@ func _fight(controller: ZoneController, record: Dictionary,
 			"hurt": opened - lowest, "died": player._dead}
 
 
+## TELEGRAPHS STARTED while a case is watching, per role.
+##
+## **A SINGLE SAMPLE IS NOT A MEASUREMENT.** The first version of the
+## ranged/artillery case counted enemies mid-windup at ONE instant and
+## concluded from a zero that they never fire. Artillery's windup is
+## about a second inside a 3.4 s cooldown, so an instant has roughly a
+## one-in-three chance of catching one even when it is firing normally —
+## the zero was evidence of almost nothing. Counting every `windup`
+## STARTED over the whole watch is the measurement that claim needed.
+var _windups: Dictionary = {}
+
+
+func _watch_telegraphs(record: Dictionary) -> void:
+	_windups.clear()
+	for enemy: Variant in _living(record):
+		var body := enemy as Enemy
+		body.telegraph_started.connect(
+				func(_kind: String, _duration: float) -> void:
+					_windups[body.archetype] = int(
+							_windups.get(body.archetype, 0)) + 1)
+
+
+func _windup_report() -> String:
+	if _windups.is_empty():
+		return "NO windup started by anything, the whole time"
+	var parts: Array[String] = []
+	for role: Variant in _windups:
+		parts.append("%s x%d" % [str(role), int(_windups[role])])
+	return "windups started: " + ", ".join(parts)
+
+
 ## LET THE ROOM HIT BACK while the player does nothing.
 ##
 ## **THIS IS HOW THREAT IS MEASURED, and the first draft got it wrong.**
@@ -266,7 +297,13 @@ func _engagement(controller: ZoneController, record: Dictionary) -> String:
 	for enemy: Variant in _living(record):
 		var body := enemy as Enemy
 		var gap := body.global_position.distance_to(player.global_position)
-		parts.append("%s %.1fm" % [body.archetype, gap])
+		# NOTICED IS THE DECISIVE BIT. An enemy that never noticed is a
+		# range or a visibility problem; one that noticed and did not
+		# attack is a problem in the attack itself, and the distance
+		# alone cannot tell those apart.
+		parts.append("%s %.1fm %s cd=%.1f" % [body.archetype, gap,
+				"AWAKE" if body._has_noticed else "asleep",
+				body._attack_cooldown])
 	var box: AABB = record.get("bounds", AABB())
 	return "player at %v (%s the room), aggro %.0f m; %s" % [
 			player.global_position,
@@ -323,19 +360,17 @@ func _indirect_fire_reaches_a_player_who_stands_still() -> void:
 	var record := _record(controller)
 	_check(_living(record).size() == 2, "both are placed")
 
-	var hurt := await _stand_still(controller, 900)
 	# DID THEY SHOOT AT ALL? "No damage" is the symptom of two different
 	# problems — a role that never attacks, and a role that attacks and
-	# misses — and they want opposite fixes.
-	var fired := 0
-	for enemy: Variant in _living(record):
-		if (enemy as Enemy).telegraph_kind != "":
-			fired += 1
+	# misses — and they want opposite fixes. Watched across the whole
+	# fifteen seconds, not sampled at the end of it.
+	_watch_telegraphs(record)
+	var hurt := await _stand_still(controller, 900)
 	_check(hurt > 0.0,
 			"a player who does nothing for fifteen seconds is hurt "
-			+ "(%.1f hp) — the shots arrive -- %s; %d winding up now, "
-			% [hurt, _engagement(controller, record), fired]
-			+ "%d live projectiles in the world" % _projectiles())
+			+ "(%.1f hp) — the shots arrive -- %s; %s; %d shots in the "
+			% [hurt, _engagement(controller, record), _windup_report(),
+				_projectiles()] + "world")
 
 	var fight := await _fight(controller, record)
 	_check(int(fight["left"]) == 0,
