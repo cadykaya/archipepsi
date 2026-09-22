@@ -4195,6 +4195,96 @@ refused, the last two by the builder before the export even happened.
 
 Measured boxes are Blender-ordered (width, depth, height).
 
+### Batch 052 — A13: the eleven statuses the runtime could already raise (2026-09-22, PENDING)
+
+Eleven glyphs and eleven markers, drawn into the existing Batch 043 kit.
+Candidate art, same three states. Handoff:
+`docs/art-requests/2026-09-22-status-readiness-handoff.md`.
+Decisions 5–9: `docs/art/review/status_2026-09-11/DECISIONS_FOR_OWNER.md`.
+
+**The kit drew the destination and the runtime runs the origin.** Batch 043
+drew Design 6 §15.2's thirteen. `Constants.ECHO_STATUS_KINDS` is a **closed**
+vocabulary of 24 — `StatusEffects.apply` refuses anything outside it — and
+`ECHO_STATUS_KINDS_IMPLEMENTED` names the 13 with a runtime effect. **The
+overlap between what was drawn and what is implemented was two.** Eleven
+conditions the game can put on a target today had nothing on screen to say
+so; eleven of the kit's markers were for kinds `apply()` refuses outright.
+
+| Status | Family (Art's) | Runtime targets (Production's) | Sentence (Art's) | Because the runtime |
+| --- | --- | --- | --- | --- |
+| `slowed` | KINETIC | self, enemy | *"Losing way."* | `ground_friction` x (1 - 0.4*mag) -- `slippery`'s channel, other direction |
+| `frozen` | KINETIC | self, enemy | *"Sealed where it stands."* | the same channel at 0.6, plus the enemy attack/move lock |
+| `shocked` | MATERIAL | self, enemy | *"Current still in it."* | +10% taken and half-rate cooldown recovery -- `conductive`'s other half |
+| `poisoned` | MATERIAL | self, enemy | *"Eating away at it."* | 2.0*mag of `dot_per_second()`; `burning` is the other 4.0 |
+| `marked` | COGNITIVE | enemy | *"Chosen, and it knows."* | +25% incoming, and the one status `_refresh_damage_tint` already reads |
+| `stunned` | PERMISSION | enemy | *"Switched off, briefly."* | no attack AND no move -- `silenced` and `rooted` at once |
+| `vulnerable` | COGNITIVE | self, enemy | *"Everything lands harder."* | `damage_taken` x 1.5, both sides. **Not** `exposed`; see decision 6 |
+| `empowered` | COGNITIVE | self, enemy | *"Hitting harder than it should."* | `damage_dealt` x 1.5. **The weakest family call in the eleven**; decision 7 |
+| `low_profile` | COGNITIVE | self | *"Harder to notice."* | halves the enemy's aggro radius. **self-only -- no world anchor** |
+| `haste` | KINETIC | self | *"Faster than it was."* | the one status on `move_speed`. **self-only -- no world anchor** |
+| `regenerating` | MATERIAL | self | *"Coming back."* | `regen_per_second()`. **self-only -- no world anchor** |
+
+All eleven at **16 × 16** glyph / **32 × 32** marker, the kit's native sizes.
+ECHOES §8 names them and stops, so family, targets, sentence and duration
+each carry a `*_source` field in `status_kit.json` saying what was quoted and
+what was proposed. **No fifth family was invented** — §15.2 settled the count
+at four deliberately.
+
+**A13's evidence is `tools/content/run_status_readiness.sh`**, which loads
+Production's real `constants.gd` AND their real `status_effects.gd`, and
+refuses to keep checking a guard they have rewritten:
+
+```
+[statusready] PASS -- every kind apply() admits is drawn, and every
+              runtime claim matches the runtime; 5 note(s)
+```
+
+Five sabotages, five refusals: a kind with its glyph removed; a glyph
+claiming a target `ECHO_STATUS_SUPPORTED_TARGETS` does not give it; a
+vocabulary map landing on a target kind that does not exist; a typo'd kind;
+and one of `apply()`'s three guards rewritten.
+
+**The finding to hand on: three of the thirteen have nowhere to go.**
+`haste`, `low_profile` and `regenerating` are implemented on `self` alone,
+and this kit's whole presentation model is *a marker anchored to a target*.
+The player is the camera. The preview's new runtime-legality assertion found
+it by refusing to render two of them on enemy stand-ins;
+`STATUS_runtime_*.png` places **ten of thirteen** and says so in its caption.
+The answer is the persistent HUD tier, which this kit mocks and does not
+design — an integration question with no owner.
+
+**A new build-time gate, and it bit its own author twice.**
+`author_status_kit.mjs` checked exactly one thing about a hand-drawn body:
+that it was 16 rows of 16 characters. It now measures every pair as
+`1 − max sqrt(IoU(body) · IoU(outline))` over ±2 px offsets and the
+horizontal mirror, floor **0.25**, named-pair bar **0.45** — both measured
+off the existing kit rather than picked (its own closest pair is
+`brittle`/`shatterpoint` at 0.304, which Batch 043's comment already
+defends; the named pairs' measured minimum is 0.507).
+
+- **`shocked`** was refused at **0.295** against `brittle` — a block with a
+  jagged void is a block with a jagged crack, and both are MATERIAL, so the
+  family frame could not have separated them either. Redrawn with the
+  discharge outside the body: **0.51**.
+- **`low_profile`** was never refused — 0.364, past the floor — and was
+  redrawn anyway, because it appeared in the kit's twenty closest pairs
+  **five times**: a tall rectangle with interior structure, like `brittle`,
+  `phased`, `shatterpoint` and `updraft`. Now a slab over a small body:
+  **0.608**.
+
+**Two documentation defects fixed in place, both of the same kind.**
+`SHEET_markers.png` drew on a hardcoded `cols = 7, rows = 3` and silently
+showed 21 of 32 markers under a title reading *the thirteen statuses and
+eight compounds*; grid and title are derived now. And `status_kit.json`
+recorded the player tick as `#ffd45c` (`send`) for the entire time
+`DECISIONS_FOR_OWNER.md` has said the owner's ruling 2 (*the tick is
+neutral*) was **applied** — the art was right and the manifest was wrong,
+in the one field a reader would trust it for. The colour block is derived
+from the palette the pixels come from now, and reads `#f6f9fb`.
+
+**Nothing here is runtime-bound.** There is no status presentation path in
+the engine at all.
+
 ### Batch 051 — A12: telegraphs, role reads and impacts (2026-09-22, PENDING)
 
 Eleven assets. Candidate art, same three states. Handoff:

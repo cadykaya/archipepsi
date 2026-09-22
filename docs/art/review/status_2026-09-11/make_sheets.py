@@ -10,6 +10,7 @@ individual transparent PNGs are.
 
 import json
 import os
+import textwrap
 
 from PIL import Image, ImageDraw, ImageOps
 
@@ -61,20 +62,32 @@ def sheet_families():
 
 
 def sheet_markers(grey=False):
-    """All 21 composed markers, 5x, on the three grounds."""
+    """Every composed marker, 5x, on the three grounds.
+
+    THE GRID IS DERIVED. It used to be `cols = 7, rows = 3`, which was
+    exactly the 21 markers the kit had; the eleven added in Batch 052
+    pasted straight past the band and eleven statuses vanished from the
+    sheet without the sheet saying so. A review image that silently drops
+    a third of what it claims to show is worse than no image.
+    """
     cell, scale, gap = 32, 5, 10
-    cols = 7
-    rows = 3
+    marks = KIT["markers"]
+    cols = 8
+    rows = -(-len(marks) // cols)
     bw = cols * (cell * scale + gap) + gap
     bh = rows * (cell * scale + gap) + gap
-    im = Image.new("RGB", (bw, 52 + len(GROUNDS) * (bh + 42)), INK)
+    order = ", ".join(m["id"].replace("marker_", "") for m in marks)
+    lines = textwrap.wrap("reading order: " + order, width=bw // 6)
+    head = 36 + 16 * len(lines)
+    im = Image.new("RGB", (bw, head + len(GROUNDS) * (bh + 42)), INK)
     d = ImageDraw.Draw(im)
-    label(d, (gap, 16), "THE THIRTEEN STATUSES AND EIGHT COMPOUNDS%s"
-          % (" -- GRAYSCALE" if grey else ""))
-    label(d, (gap, 32), "reading order: %s"
-          % ", ".join(m["id"].replace("marker_", "")
-                      for m in KIT["markers"]), DIMTEXT)
-    y = 52
+    statuses = sum(1 for g in KIT["glyphs"] if g.get("family") != "COMPOUND")
+    label(d, (gap, 16), "THE %d STATUSES AND %d COMPOUNDS%s"
+          % (statuses, len(marks) - statuses,
+             " -- GRAYSCALE" if grey else ""))
+    for i, line in enumerate(lines):
+        label(d, (gap, 32 + 16 * i), line, DIMTEXT)
+    y = head
     for name, colour in GROUNDS:
         band = Image.new("RGB", (bw, bh), colour)
         for n, m in enumerate(KIT["markers"]):

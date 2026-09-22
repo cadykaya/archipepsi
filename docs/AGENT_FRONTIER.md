@@ -128,6 +128,23 @@ Two things from it that other lanes need:
   Anything fitting that yard should read that file rather than a
   remembered number.
 
+* **The status kit drew the DESTINATION and the runtime runs the
+  ORIGIN.** `Constants.ECHO_STATUS_KINDS` is a closed vocabulary of 24
+  that `StatusEffects.apply` refuses anything outside;
+  `ECHO_STATUS_KINDS_IMPLEMENTED` names the 13 with a runtime effect.
+  Batch 043 drew Design 6 §15.2's thirteen and **the overlap was two**.
+  Batch 052 draws the other eleven, so the kit now covers the whole
+  vocabulary, gated by `tools/content/run_status_readiness.sh` — which
+  reads Production's constants AND their `apply()` guards and refuses
+  to keep checking a guard they have rewritten.
+* **Three implemented statuses have nowhere on screen to go.** `haste`,
+  `low_profile` and `regenerating` are implemented on `self` **alone**,
+  and the kit's whole model is a marker anchored to a target. The
+  player is the camera. `STATUS_runtime_*.png` places ten of thirteen
+  and says so. **The persistent HUD tier is the answer and it has no
+  owner** — an integration question for Prod, in
+  `docs/art-requests/2026-09-22-status-readiness-handoff.md`.
+
 **Scheduling override (owner, 2026-09-22): heartbeat, watchers,
 subscriptions, scheduled check-ins and automatic re-arming stay OFF.**
 This overrides the older "resume the routine the moment a task exists"

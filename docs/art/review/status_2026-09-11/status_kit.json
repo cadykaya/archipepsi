@@ -1,7 +1,7 @@
 {
   "batch": "043",
   "authored": "2026-09-11",
-  "art_revision": "4f088acb91a710089ccdd8f35d3ddcbd21e5b595",
+  "art_revision": "973f4ebea6596ca9072c19aebe8bdf4d86b7bba1",
   "glyph_revision": "6c80b6315912a70b44c28d566ddff608eafa234a",
   "design_revision": "a20bf55",
   "design_sections": [
@@ -39,8 +39,64 @@
     "lit": "#eef1f4",
     "dim": "#7a828c",
     "spent": "#4a5058",
-    "family_hue": "NOT ASSIGNED. See DECISIONS_FOR_OWNER.md item 1.",
-    "tick": "#ffd45c (`send`) -- PROPOSED reuse, see item 2"
+    "tick": "#f6f9fb",
+    "family_hue": "NOT ASSIGNED. See DECISIONS_FOR_OWNER.md item 1."
+  },
+  "reads_apart": {
+    "rule": "min over +/-2 px offsets and the horizontal mirror of sqrt(IoU(body) * IoU(outline)), subtracted from 1",
+    "floor": 0.25,
+    "named_floor": 0.45,
+    "named_pairs": 13,
+    "closest": [
+      {
+        "a": "brittle",
+        "b": "shatterpoint",
+        "apart": 0.304
+      },
+      {
+        "a": "anchored",
+        "b": "conductive",
+        "apart": 0.332
+      },
+      {
+        "a": "burning",
+        "b": "regenerating",
+        "apart": 0.34
+      },
+      {
+        "a": "phased",
+        "b": "brittle",
+        "apart": 0.367
+      },
+      {
+        "a": "burning",
+        "b": "vulnerable",
+        "apart": 0.371
+      }
+    ]
+  },
+  "target_vocabularies": {
+    "design": [
+      "actor",
+      "object",
+      "surface",
+      "volume",
+      "player"
+    ],
+    "runtime": [
+      "self",
+      "enemy",
+      "object",
+      "surface",
+      "volume"
+    ],
+    "maps_to": {
+      "player": "self",
+      "actor": "enemy",
+      "object": "object",
+      "surface": "surface",
+      "volume": "volume"
+    }
   },
   "depletion": {
     "rule": "the frame's own outer edge is the track; paint the first `remaining` fraction lit and the rest dim",
@@ -2192,6 +2248,10 @@
         "player"
       ],
       "duration_s": 8,
+      "runtime_targets": [
+        "object"
+      ],
+      "runtime_targets_source": "runtime -- verified against ECHO_STATUS_SUPPORTED_TARGETS",
       "chance": 0.4
     },
     {
@@ -2210,6 +2270,8 @@
         "player"
       ],
       "duration_s": 4,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.3
     },
     {
@@ -2228,6 +2290,8 @@
         "player"
       ],
       "duration_s": 10,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.45
     },
     {
@@ -2244,6 +2308,8 @@
         "actor"
       ],
       "duration_s": 5,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.3
     },
     {
@@ -2260,6 +2326,8 @@
         "actor"
       ],
       "duration_s": 8,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.15
     },
     {
@@ -2276,6 +2344,8 @@
         "actor"
       ],
       "duration_s": 6,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.35
     },
     {
@@ -2292,6 +2362,8 @@
         "actor"
       ],
       "duration_s": 6,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.35
     },
     {
@@ -2308,6 +2380,8 @@
         "actor"
       ],
       "duration_s": 6,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.3
     },
     {
@@ -2324,6 +2398,8 @@
         "actor"
       ],
       "duration_s": 5,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.35
     },
     {
@@ -2343,6 +2419,8 @@
         "player"
       ],
       "duration_s": 6,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.25
     },
     {
@@ -2363,6 +2441,11 @@
         "player"
       ],
       "duration_s": 6,
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ],
+      "runtime_targets_source": "runtime -- verified against ECHO_STATUS_SUPPORTED_TARGETS",
       "chance": 0.35,
       "requires_trait": "burnable"
     },
@@ -2383,6 +2466,8 @@
         "player"
       ],
       "duration_s": 10,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.4,
       "requires_trait": "conductive_material"
     },
@@ -2401,7 +2486,241 @@
         "surface"
       ],
       "duration_s": 8,
+      "runtime_targets": [],
+      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
       "chance": 0.35
+    },
+    {
+      "id": "glyph_slowed",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_slowed.png",
+      "kind": "status",
+      "family": "KINETIC",
+      "sentence": "Losing way.",
+      "targets": [
+        "actor",
+        "player"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
+    },
+    {
+      "id": "glyph_frozen",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_frozen.png",
+      "kind": "status",
+      "family": "KINETIC",
+      "sentence": "Sealed where it stands.",
+      "targets": [
+        "actor",
+        "player"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
+    },
+    {
+      "id": "glyph_haste",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_haste.png",
+      "kind": "status",
+      "family": "KINETIC",
+      "sentence": "Faster than it was.",
+      "targets": [
+        "player"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "self"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
+    },
+    {
+      "id": "glyph_marked",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_marked.png",
+      "kind": "status",
+      "family": "COGNITIVE",
+      "sentence": "Chosen, and it knows.",
+      "targets": [
+        "actor"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "enemy"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
+    },
+    {
+      "id": "glyph_vulnerable",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_vulnerable.png",
+      "kind": "status",
+      "family": "COGNITIVE",
+      "sentence": "Everything lands harder.",
+      "targets": [
+        "actor",
+        "player"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
+    },
+    {
+      "id": "glyph_empowered",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_empowered.png",
+      "kind": "status",
+      "family": "COGNITIVE",
+      "sentence": "Hitting harder than it should.",
+      "targets": [
+        "actor",
+        "player"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
+    },
+    {
+      "id": "glyph_low_profile",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_low_profile.png",
+      "kind": "status",
+      "family": "COGNITIVE",
+      "sentence": "Harder to notice.",
+      "targets": [
+        "player"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "self"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
+    },
+    {
+      "id": "glyph_stunned",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_stunned.png",
+      "kind": "status",
+      "family": "PERMISSION",
+      "sentence": "Switched off, briefly.",
+      "targets": [
+        "actor"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "enemy"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
+    },
+    {
+      "id": "glyph_shocked",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_shocked.png",
+      "kind": "status",
+      "family": "MATERIAL",
+      "sentence": "Current still in it.",
+      "targets": [
+        "actor",
+        "player"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
+    },
+    {
+      "id": "glyph_poisoned",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_poisoned.png",
+      "kind": "status",
+      "family": "MATERIAL",
+      "sentence": "Eating away at it.",
+      "targets": [
+        "actor",
+        "player"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
+    },
+    {
+      "id": "glyph_regenerating",
+      "native": [
+        16,
+        16
+      ],
+      "png": "png/glyph_regenerating.png",
+      "kind": "status",
+      "family": "MATERIAL",
+      "sentence": "Coming back.",
+      "targets": [
+        "player"
+      ],
+      "duration_s": 5,
+      "runtime_targets": [
+        "self"
+      ],
+      "targets_source": "runtime -- ECHOES §8 names no targets",
+      "sentence_source": "Art's, in §15.2's voice"
     },
     {
       "id": "glyph_updraft",
@@ -2690,6 +3009,116 @@
         32
       ],
       "png": "png/marker_brittle.png",
+      "frame": "frame_material",
+      "family": "MATERIAL"
+    },
+    {
+      "id": "marker_slowed",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_slowed.png",
+      "frame": "frame_kinetic",
+      "family": "KINETIC"
+    },
+    {
+      "id": "marker_frozen",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_frozen.png",
+      "frame": "frame_kinetic",
+      "family": "KINETIC"
+    },
+    {
+      "id": "marker_haste",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_haste.png",
+      "frame": "frame_kinetic",
+      "family": "KINETIC"
+    },
+    {
+      "id": "marker_marked",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_marked.png",
+      "frame": "frame_cognitive",
+      "family": "COGNITIVE"
+    },
+    {
+      "id": "marker_vulnerable",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_vulnerable.png",
+      "frame": "frame_cognitive",
+      "family": "COGNITIVE"
+    },
+    {
+      "id": "marker_empowered",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_empowered.png",
+      "frame": "frame_cognitive",
+      "family": "COGNITIVE"
+    },
+    {
+      "id": "marker_low_profile",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_low_profile.png",
+      "frame": "frame_cognitive",
+      "family": "COGNITIVE"
+    },
+    {
+      "id": "marker_stunned",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_stunned.png",
+      "frame": "frame_permission",
+      "family": "PERMISSION"
+    },
+    {
+      "id": "marker_shocked",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_shocked.png",
+      "frame": "frame_material",
+      "family": "MATERIAL"
+    },
+    {
+      "id": "marker_poisoned",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_poisoned.png",
+      "frame": "frame_material",
+      "family": "MATERIAL"
+    },
+    {
+      "id": "marker_regenerating",
+      "native": [
+        32,
+        32
+      ],
+      "png": "png/marker_regenerating.png",
       "frame": "frame_material",
       "family": "MATERIAL"
     },
@@ -3013,7 +3442,7 @@
       "id": "atlas_markers",
       "native": [
         256,
-        96
+        128
       ],
       "png": "png/atlas_markers.png"
     }

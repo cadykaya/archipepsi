@@ -37,6 +37,9 @@ var _tex := {}
 var _log := {}
 var _legal := {}          ## status id -> the §15.2 target list, from the kit
 var _checked := 0
+var _runtime_checked := 0
+var _runtime_legal := {}
+var _maps_to := {}
 
 func _init() -> void:
 	var a := OS.get_cmdline_user_args()
@@ -64,6 +67,13 @@ func _load_target_lists() -> void:
 	for raw: Variant in kit.get("glyphs", []):
 		var g: Dictionary = raw
 		_legal[g["id"]] = g["targets"]
+		if g.has("runtime_targets"):
+			_runtime_legal[g["id"]] = g["runtime_targets"]
+	# §15.2's words and `StatusEffects.side`'s words are not the same
+	# words. The kit declares the map; this reads it rather than knowing
+	# it, for the same reason the line above reads the target lists.
+	var vocab: Dictionary = kit.get("target_vocabularies", {})
+	_maps_to = vocab.get("maps_to", {})
 
 # -- the shipped surface roles, per background -----------------------------
 
@@ -153,6 +163,39 @@ func _assert_legal(image: String, kind: String) -> void:
 				% ", ".join(allowed))
 		quit(3)
 	_checked += 1
+
+
+func _assert_runtime_legal(image: String, kind: String) -> void:
+	## The SECOND question, and the one Batch 043 could not ask.
+	##
+	## `_assert_legal` asks whether §15.2 permits this pair. That is the
+	## design's question and it is the right one for a kit drawn from the
+	## design. It is not the same question as whether the pair can occur:
+	## `StatusEffects.apply` refuses on `ECHO_STATUS_SUPPORTED_TARGETS`,
+	## which today covers thirteen kinds and narrower target lists, and a
+	## shot captioned "what the runtime can raise" has to be checked
+	## against that or the caption is a guess.
+	# `_status_of` already hands back the GLYPH id, prefix and all. An
+	# earlier line here added the prefix a second time, looked up
+	# `glyph_glyph_burning`, found nothing, and reported the miss against
+	# the name it had NOT looked up -- so the message read as if the kit
+	# were missing a field it has.
+	var glyph := _status_of(image)
+	if glyph == "":
+		return
+	var status := glyph.trim_prefix("glyph_")
+	if not _runtime_legal.has(glyph):
+		push_error(("%s has no runtime_targets in the kit, so this "
+				% status) + "shot cannot claim the runtime would raise it.")
+		return
+	var want: Array = _runtime_legal[glyph]
+	var side := str(_maps_to.get(kind, kind))
+	if not side in want:
+		push_error(("apply() would refuse '%s' on a '%s' target (side "
+				% [status, kind]) + "'%s'); it implements %s."
+				% [side, str(want)])
+		return
+	_runtime_checked += 1
 
 
 func _marker(parent: Node3D, at: Vector3, image: String,
@@ -448,11 +491,15 @@ func _clear(world: Node3D) -> void:
 func _run() -> void:
 	for ground: String in ["bright", "dark", "busy"]:
 		await _individual(ground)
+		await _runtime(ground)
 		await _compound(ground)
 		await _crowd(ground)
 	await _frames()
 	_log["legal_pairs_checked"] = _checked
-	print("[status] %d status/target pairs checked against §15.2" % _checked)
+	_log["runtime_pairs_checked"] = _runtime_checked
+	print("[status] %d status/target pairs checked against §15.2, "
+			% _checked + "%d of them against apply() as well"
+			% _runtime_checked)
 	var f := FileAccess.open("%s/preview_log.json" % _out, FileAccess.WRITE)
 	f.store_string(JSON.stringify(_log, "  "))
 	f.close()
@@ -512,6 +559,68 @@ func _individual(ground: String) -> void:
 	_clear(w)
 
 
+func _runtime(ground: String) -> void:
+	## EVERYTHING THE RUNTIME CAN RAISE, AND WHERE IT COULD POSSIBLY GO.
+	##
+	## `Constants.ECHO_STATUS_KINDS_IMPLEMENTED` has thirteen entries and
+	## `ECHO_STATUS_SUPPORTED_TARGETS` splits them three ways:
+	##
+	##   nine on `self` AND `enemy`  -- they can ride a target in the room
+	##   one  on `object`            -- `lightened`, and only `lightened`
+	##   three on `self` ALONE       -- `haste`, `low_profile`,
+	##                                 `regenerating`
+	##
+	## The last three are the finding. This kit's entire presentation
+	## model is a marker ANCHORED TO A TARGET, and a status implemented
+	## on `self` alone has no target to anchor to: the player is the
+	## camera. There is no legal place in this room to put them, so they
+	## are not put anywhere, and the caption says so rather than the shot
+	## quietly showing twelve of thirteen.
+	##
+	## They are not missing art -- they are drawn, and they are on
+	## SHEET_markers and SHEET_native_size like everything else. What
+	## they have no answer for is WHERE, and that answer is the
+	## persistent HUD tier, which this file mocks with rectangles and
+	## deliberately does not design.
+	##
+	## Every pair below is checked twice: against §15.2 like every other
+	## shot, and against `ECHO_STATUS_SUPPORTED_TARGETS`.
+	var w := _scene(ground)
+	var on_actors := ["burning", "slowed", "frozen", "shocked",
+			"poisoned", "marked", "stunned", "vulnerable", "empowered"]
+	for i in on_actors.size():
+		# Five at the back, four in front and offset into their gaps, so
+		# the back rank is not simply hidden. SMALL z IS FAR in this room
+		# -- the camera stands at the high-z end and every other shot
+		# here looks toward the origin. Two passes got that backwards and
+		# they failed in opposite directions: first the four stood
+		# nearest and hid the five, then the camera itself was placed
+		# past the back wall and photographed the inside of it.
+		var rank := 0 if i < 5 else 1
+		var col := i if i < 5 else i - 5
+		var p := Vector3(
+				(-2.70 + col * 1.35) if rank == 0 else (-2.02 + col * 1.35),
+				0.0, 0.42 if rank == 0 else 2.58)
+		_stand_in(w, p)
+		_marker(w, p + Vector3(0, 1.95, 0),
+				"marker_%s" % on_actors[i], "actor")
+		_assert_runtime_legal("marker_%s" % on_actors[i], "actor")
+	# The one implemented on an object, on an object.
+	var lone := Vector3(1.40, 0, 4.35)
+	var lnode := _target(w, "crate", lone, 16.0)
+	if lnode != null:
+		_marker(w, Vector3(lone.x, _top_of(lnode) + 0.30, lone.z),
+				"marker_lightened", "object")
+		_assert_runtime_legal("marker_lightened", "object")
+	_log["runtime_placed_%s" % ground] = on_actors.size() + 1
+	_log["runtime_unplaceable"] = ["haste", "low_profile", "regenerating"]
+	await _shot(w, Vector3(0.0, 2.08, 5.90), Vector3(0.0, 1.22, 1.5),
+			"STATUS_runtime_%s" % ground, "", Vector3.INF,
+			"13 implemented; only 10 fit a room | 9 self/enemy ride "
+			+ "stand-ins, lightened rides the crate | haste, low_profile "
+			+ "and regenerating are self-only: no anchor")
+	_clear(w)
+
 func _compound(ground: String) -> void:
 	var w := _scene(ground)
 	# LEFT: a crate already carrying `lightened`, showing the §33.8 hint --
@@ -540,8 +649,11 @@ func _crowd(ground: String) -> void:
 	## Sixteen marked targets: twelve objects and four actors.
 	##
 	## The split is not arbitrary -- §15.2 makes exactly twelve of the
-	## twenty-one legal on an OBJECT, which is also §33.10 rule 2's
-	## full-render count. The four actor-only ones ride stand-ins at the
+	## kit's statuses and compounds legal on an OBJECT, which is also
+	## §33.10 rule 2's full-render count. (It said "twelve of the
+	## twenty-one" until Batch 052 made it twelve of thirty-two: none of
+	## the eleven added there is object-legal, so the twelve did not
+	## move and the sentence around it had gone stale.) The four actor-only ones ride stand-ins at the
 	## back, which puts them past the twelve nearest and demonstrates the
 	## reduced treatment on the targets that need it most.
 	var w := _scene(ground)

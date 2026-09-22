@@ -294,6 +294,22 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_projectile_legibility.sh"
 
+  # A13. Batch 043 drew Design 6 §15.2's thirteen statuses and checked
+  # every example against §15.2's own target lists, which is the right
+  # check against the design and not a check against the engine. This is
+  # the other one: Production's closed vocabulary, their implemented
+  # subset, their supported-target table and their three apply() guards,
+  # applied to the kit. It also refuses to keep checking a guard they
+  # have rewritten.
+  say "the status kit against the runtime that exists..."
+  tools/content/run_status_readiness.sh >/dev/null 2>&1 || \
+    fail "statusready: a kind in ECHO_STATUS_KINDS has no glyph, a glyph
+    claims runtime targets the runtime does not give it, the vocabulary
+    map no longer lands on a real target kind, or one of apply()'s three
+    guards has moved. Run
+
+    tools/content/run_status_readiness.sh"
+
   say "the theme pack binding, and its control..."
   tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
     fail "theme-bind: Production's ThemeMaterials no longer binds the

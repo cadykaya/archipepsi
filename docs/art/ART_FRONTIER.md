@@ -623,14 +623,58 @@ build a second loader.** The smallest seam is proposed in
 machinery deliveries first, then continue coherent theme packs, one at
 a time as complete deliveries.
 
+### Batch 052 -- A13. Status/compound grammar. DELIVERED.
+
+**The kit drew the destination and the runtime runs the origin.** Batch
+043 drew Design 6 §15.2's thirteen statuses.
+`Constants.ECHO_STATUS_KINDS` is a CLOSED vocabulary of 24 --
+`StatusEffects.apply` refuses anything outside it -- and
+`ECHO_STATUS_KINDS_IMPLEMENTED` names the 13 with a runtime effect.
+**The overlap was two.** `lightened` and `burning`. Eleven conditions
+the game can apply today had nothing on screen to say so, and eleven
+drawn markers were for kinds `apply()` refuses with NO STATUS BEFORE
+ITS EFFECT.
+
+Eleven glyphs and markers added -- `slowed`, `frozen`, `shocked`,
+`poisoned`, `marked`, `stunned`, `vulnerable`, `empowered`,
+`low_profile`, `haste`, `regenerating` -- so the kit now covers the
+whole closed vocabulary. Family, targets, sentence and duration each
+carry a `*_source` field, because ECHOES §8 names the eleven and stops.
+**No fifth family invented**: §15.2 settled the count at four.
+
+`tools/content/run_status_readiness.sh` is the gate, wired into
+`check_art_current.sh`. It reads Production's constants AND their
+`apply()` guards, and REFUSES to keep checking a guard they have
+rewritten. Five sabotages, five refusals.
+
+**THREE OF THE THIRTEEN HAVE NOWHERE TO GO.** `haste`, `low_profile`
+and `regenerating` are implemented on `self` ALONE, and this kit's
+whole model is a marker anchored to a target. The player is the camera.
+The preview's new runtime-legality assertion found it by refusing two
+of them on enemy stand-ins; `STATUS_runtime_*.png` places ten of
+thirteen and says so. **The answer is the persistent HUD tier -- an
+integration question with no owner, handed to Prod, not a gap in the
+kit.**
+
+A reads-apart gate now measures every pair of bodies
+(`1 - max sqrt(IoU(body) * IoU(outline))` over +/-2 px and the
+horizontal mirror; floor 0.25, named-pair bar 0.45, both measured off
+the existing kit). **It refused `shocked` at 0.295 against `brittle`**,
+and `low_profile` was redrawn unrefused because it sat in the twenty
+closest pairs five times. Two documentation defects fixed in place: the
+marker sheet was silently showing 21 of 32, and `status_kit.json`
+claimed a tick colour the art has never used.
+
+Handoff: `docs/art-requests/2026-09-22-status-readiness-handoff.md`.
+Decisions 5-9 for the owner in the kit's `DECISIONS_FOR_OWNER.md`.
+
 ### Then
 
-**A13-A15** (enemy jobs,
-projectiles/telegraphs, Status/compound grammar reusing batch043,
-manipulation objects, item/Forge modules), **A16** (finish the six theme
-families), **T01-T18** (the eighteen source-game-inspired environment
-packs), **A17-A19** (detail/dressing library, actual-consumer trials and
-budget passes, final catalogue).
+**A14-A15** (manipulation objects reusing batch043's twelve physics
+props, item/Forge modules), **A16** (finish the six theme families),
+**T01-T18 plus the 63 from the catalogue snapshot** (the
+source-game-inspired environment packs), **A17-A19** (detail/dressing
+library, actual-consumer trials and budget passes, final catalogue).
 
 ### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.
 

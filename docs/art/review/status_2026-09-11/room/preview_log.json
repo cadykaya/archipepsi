@@ -2,7 +2,16 @@
   "crowd_reduced_bright": 4,
   "crowd_reduced_busy": 4,
   "crowd_reduced_dark": 4,
-  "legal_pairs_checked": 84,
+  "legal_pairs_checked": 114,
+  "runtime_pairs_checked": 30,
+  "runtime_placed_bright": 10,
+  "runtime_placed_busy": 10,
+  "runtime_placed_dark": 10,
+  "runtime_unplaceable": [
+    "haste",
+    "low_profile",
+    "regenerating"
+  ],
   "unresolved_bright": 0,
   "unresolved_busy": 0,
   "unresolved_dark": 0

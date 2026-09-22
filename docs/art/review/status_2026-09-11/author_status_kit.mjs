@@ -108,6 +108,10 @@ const PALETTE = [
 // unreadable at a glance, which is the one thing it exists for.
 const SYM = { i: "ink", l: "lit", d: "dim", s: "spent", t: "tick" };
 
+/** `#rrggbb` from a PALETTE entry, so the manifest quotes the pixels. */
+const hex = ([r, g, b]) =>
+  "#" + [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("");
+
 // -- grids -----------------------------------------------------------------
 const blank = (w, h) => Array.from({ length: h }, () => new Array(w).fill("."));
 const fromAscii = (rows) => rows.map((r) => r.split("").map((c) => c === "X" ? 1 : 0));
@@ -175,6 +179,145 @@ async function publish(id, w, h, grid, message) {
   return { id, native: native.nativeSize, png: `png/${id}.png` };
 }
 
+// -- THE READS-APART GATE --------------------------------------------------
+//
+// Until this batch the only thing checked about a body was that it was 16
+// rows of 16 characters. A kit whose whole job is to tell a player which
+// of twenty-four conditions is on a target had no rule that any two of
+// them looked different, and it acquired eleven new glyphs.
+//
+// WHAT IS MEASURED. For each pair, the best agreement over a small search
+// -- every offset within two pixels, and the horizontal mirror -- of
+//
+//     sqrt( IoU(body_a, body_b) * IoU(outline_a, outline_b) )
+//
+// and `apart` is one minus that. Two things are worth saying about the
+// shape of it.
+//
+// The SEARCH is there because a glyph shifted two pixels or flipped is
+// still the same picture, and a plain comparison would score it as
+// different. Vertical mirroring is deliberately NOT searched: up and down
+// carry meaning in this kit -- `burning` rises and `poisoned` falls,
+// `conductive` hangs its bolt below a rail and `shocked` stands one on
+// top of a mass -- so an upside-down match is a real distinction, not a
+// near-miss.
+//
+// The OUTLINE term is there because area alone is a poor judge of a
+// drawing. Measured on filled masks, the closest pair in the kit came out
+// as `burning` and `regenerating` -- a fat flame and a fat cross, which
+// no one would confuse, scored together merely for both being large. The
+// outline is the silhouette, which is what a 16 px glyph actually reads
+// by, and the geometric mean means a pair has to be similar in BOTH to be
+// called close.
+//
+// THE NUMBERS ARE MEASURED, NOT PICKED. With the kit as it stands the
+// closest pair is `brittle` / `shatterpoint` at 0.304 -- two MATERIAL
+// fractures, and Batch 043's comment on `brittle` already argues that
+// one deliberately. FLOOR sits under it at 0.25: low enough that it
+// refuses no drawing in the kit, high enough that a near-duplicate
+// cannot get in. A gate that refuses correct art gets switched off, and
+// then it is worse than nothing.
+//
+// MUST_READ_APART is the second, higher bar, and it is not the close
+// pairs -- it is the pairs whose MEANINGS are adjacent enough that a
+// player could take one for the other. Their measured minimum is 0.507
+// (`slowed` / `slippery`, the same stat channel in both directions), so
+// NAMED sits at 0.45. Opposites are not on the list: `burning` and
+// `regenerating` are the same channel with opposite signs, and nobody
+// mistakes healing for being on fire.
+const FLOOR = 0.25;
+const NAMED = 0.45;
+
+const MUST_READ_APART = [
+  ["vulnerable", "exposed",
+    "near-synonyms across the two vocabularies: `exposed` zeroes the "
+    + "Defense stat and is actor-only (§15.3 rule 3), `vulnerable` "
+    + "multiplies damage taken and applies to both sides"],
+  ["marked", "low_profile",
+    "exact inverses -- one raises how visible a target is, the other "
+    + "halves the radius at which it is noticed"],
+  ["marked", "exposed", "a designation and a dropped guard"],
+  ["slowed", "slippery",
+    "the same stat, `ground_friction`, moved in opposite directions"],
+  ["frozen", "anchored", "two ways of not moving"],
+  ["frozen", "rooted", "and a third"],
+  ["stunned", "rooted",
+    "`stunned` denies what `rooted` denies, and more besides"],
+  ["stunned", "silenced", "and what `silenced` denies too"],
+  ["poisoned", "burning",
+    "the runtime's only two damage-over-time statuses; "
+    + "`dot_per_second()` is these two and nothing else"],
+  ["shocked", "conductive", "the two statuses about current"],
+  ["haste", "lightened", "two kinds of moving more freely"],
+  ["haste", "empowered", "the two `more` buffs"],
+  ["regenerating", "empowered", "two things the player wants"],
+];
+
+function iouOf(a, b) {
+  let inter = 0, union = 0;
+  for (let y = 0; y < GLYPH; y++) for (let x = 0; x < GLYPH; x++) {
+    if (a[y][x] && b[y][x]) inter++;
+    if (a[y][x] || b[y][x]) union++;
+  }
+  return union === 0 ? 1 : inter / union;
+}
+
+function nudge(m, dx, dy, mirror) {
+  const o = Array.from({ length: GLYPH }, () => new Array(GLYPH).fill(0));
+  for (let y = 0; y < GLYPH; y++) for (let x = 0; x < GLYPH; x++) {
+    if (!m[y][x]) continue;
+    const sx = (mirror ? GLYPH - 1 - x : x) + dx, sy = y + dy;
+    if (sx < 0 || sy < 0 || sx >= GLYPH || sy >= GLYPH) continue;
+    o[sy][sx] = 1;
+  }
+  return o;
+}
+
+/** How far apart two bodies read. 0 is the same picture, 1 is disjoint. */
+function apart(a, b) {
+  const ao = outline(a), bo = outline(b);
+  let agree = 0;
+  for (const mirror of [false, true])
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++)
+      agree = Math.max(agree, Math.sqrt(
+        iouOf(nudge(a, dx, dy, mirror), b)
+        * iouOf(nudge(ao, dx, dy, mirror), bo)));
+  return 1 - agree;
+}
+
+function assertReadsApart(masks) {
+  const ids = Object.keys(masks);
+  const measured = {};
+  const closest = [];
+  for (let i = 0; i < ids.length; i++)
+    for (let j = i + 1; j < ids.length; j++) {
+      const a = ids[i], b = ids[j];
+      const d = apart(masks[a], masks[b]);
+      measured[`${a}|${b}`] = d;
+      closest.push([d, a, b]);
+      if (d < FLOOR)
+        throw new Error(
+          `${a} and ${b} read as the same picture: ${d.toFixed(3)} apart, `
+          + `against a floor of ${FLOOR}. Two statuses that look alike are `
+          + `two statuses the player cannot tell apart, and the family `
+          + `frame will not help when they share a family.`);
+    }
+  for (const [a, b, why] of MUST_READ_APART) {
+    const d = measured[`${a}|${b}`] ?? measured[`${b}|${a}`];
+    if (d === undefined)
+      throw new Error(`MUST_READ_APART names ${a}/${b}, and one of them is `
+        + `not in the kit. A named pair that silently stops being checked `
+        + `is the failure this list exists to prevent.`);
+    if (d < NAMED)
+      throw new Error(
+        `${a} and ${b} are ${d.toFixed(3)} apart, against ${NAMED} for a `
+        + `named pair. They are ${why}, so they have to read further `
+        + `apart than two statuses picked at random, not the same.`);
+  }
+  closest.sort((p, q) => p[0] - q[0]);
+  return closest;
+}
+
 // -- 1. the frames ---------------------------------------------------------
 const frameMask = {};
 const frameTrack = {};
@@ -215,12 +358,25 @@ for (const g of ALL) {
       + `which is this glyph with no frame and no ring.`),
     kind: g.kind, family: g.family, sentence: g.sentence,
     targets: g.targets, duration_s: g.duration,
+    ...(g.runtime_targets !== undefined
+        ? { runtime_targets: g.runtime_targets } : {}),
+    ...(g.runtime_targets_source !== undefined
+        ? { runtime_targets_source: g.runtime_targets_source } : {}),
+    ...(g.targets_source !== undefined
+        ? { targets_source: g.targets_source } : {}),
+    ...(g.sentence_source !== undefined
+        ? { sentence_source: g.sentence_source } : {}),
     ...(g.chance !== undefined ? { chance: g.chance } : {}),
     ...(g.components !== undefined ? { components: g.components } : {}),
     ...(g.requires_trait !== undefined
         ? { requires_trait: g.requires_trait } : {}),
   });
 }
+
+// The gate, with every body in hand and before a single one is composed
+// into a marker: a pair that cannot be told apart at 16 px will not be
+// rescued by a 32 px frame, least of all by the frame they share.
+const closestPairs = assertReadsApart(bodyMask);
 
 // -- 3. the composed markers ----------------------------------------------
 const frameFor = (family) => ({
@@ -374,9 +530,43 @@ const meta = {
   glyph_origin_in_marker: [INSET, INSET],
   colour: {
     scheme: "neutral -- ink / lit / dim",
-    ink: "#14171c", lit: "#eef1f4", dim: "#7a828c", spent: "#4a5058",
+    // EVERY VALUE BELOW IS READ OUT OF `PALETTE`, which is what the
+    // pixels are actually painted from. It used to be typed out again
+    // here, and it drifted: this block claimed the player tick was
+    // `#ffd45c` (`send`) for as long as the kit has existed, while the
+    // tick has been neutral since the owner's ruling 2 and DECISIONS
+    // recorded that ruling as APPLIED. The manifest disagreed with its
+    // own art, in the one field a reader would trust it for.
+    ...Object.fromEntries(PALETTE.map((p) => [p.name, hex(p.value)])),
     family_hue: "NOT ASSIGNED. See DECISIONS_FOR_OWNER.md item 1.",
-    tick: "#ffd45c (`send`) -- PROPOSED reuse, see item 2",
+  },
+  reads_apart: {
+    rule: "min over +/-2 px offsets and the horizontal mirror of "
+        + "sqrt(IoU(body) * IoU(outline)), subtracted from 1",
+    floor: FLOOR,
+    named_floor: NAMED,
+    named_pairs: MUST_READ_APART.length,
+    closest: closestPairs.slice(0, 5).map(
+      ([d, a, b]) => ({ a, b, apart: Number(d.toFixed(3)) })),
+  },
+  target_vocabularies: {
+    // The kit and the engine both say "which targets", in different
+    // words. §15.2 says WHAT a target is -- an actor, an object, a
+    // surface, a volume, the player. `StatusEffects.side` says WHOSE it
+    // is -- `self`, `enemy`, `object`, `surface`, `volume` (its own
+    // comment names those five as Amalgam §15.1's). They partition
+    // actors on different questions, so a glyph's target list cannot be
+    // compared to `ECHO_STATUS_SUPPORTED_TARGETS` without this map.
+    //
+    // It lives here, as data, because a translation that exists only in
+    // a reader's head is not one. `tools/content/status_readiness.gd`
+    // checks both of its sides against their sources.
+    design: ["actor", "object", "surface", "volume", "player"],
+    runtime: ["self", "enemy", "object", "surface", "volume"],
+    maps_to: {
+      player: "self", actor: "enemy", object: "object",
+      surface: "surface", volume: "volume",
+    },
   },
   depletion: {
     rule: "the frame's own outer edge is the track; paint the first "
@@ -389,7 +579,7 @@ const meta = {
 writeFileSync(join(OUT, "status_kit.json"), JSON.stringify(meta, null, 2));
 
 console.log(`frames  ${made.frames.length}`);
-console.log(`glyphs  ${made.glyphs.length}  (13 statuses + 8 compounds)`);
+console.log(`glyphs  ${made.glyphs.length}  (${STATUSES.length} statuses + ${COMPOUNDS.length} compounds)`);
 console.log(`markers ${made.markers.length}`);
 console.log(`hints   ${made.hints.length}   (both directions for all 8 compounds)`);
 console.log(`extras  ${made.extras.length}`);

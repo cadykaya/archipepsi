@@ -1,0 +1,362 @@
+{
+  "claims": {
+    "anchored": {
+      "design_targets": [
+        "actor",
+        "object",
+        "player"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "actor (enemy)",
+        "object (object)",
+        "player (self)"
+      ],
+      "runtime_targets": []
+    },
+    "blinded": {
+      "design_targets": [
+        "actor"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "actor (enemy)"
+      ],
+      "runtime_targets": []
+    },
+    "brittle": {
+      "design_targets": [
+        "object",
+        "surface"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "object (object)",
+        "surface (surface)"
+      ],
+      "runtime_targets": []
+    },
+    "burning": {
+      "design_targets": [
+        "actor",
+        "object",
+        "surface",
+        "volume",
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [
+        "object (object)",
+        "surface (surface)",
+        "volume (volume)"
+      ],
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ]
+    },
+    "conductive": {
+      "design_targets": [
+        "actor",
+        "object",
+        "surface",
+        "player"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "actor (enemy)",
+        "object (object)",
+        "surface (surface)",
+        "player (self)"
+      ],
+      "runtime_targets": []
+    },
+    "confused": {
+      "design_targets": [
+        "actor"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "actor (enemy)"
+      ],
+      "runtime_targets": []
+    },
+    "empowered": {
+      "design_targets": [
+        "actor",
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ]
+    },
+    "exposed": {
+      "design_targets": [
+        "actor"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "actor (enemy)"
+      ],
+      "runtime_targets": []
+    },
+    "frozen": {
+      "design_targets": [
+        "actor",
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ]
+    },
+    "haste": {
+      "design_targets": [
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "self"
+      ]
+    },
+    "lightened": {
+      "design_targets": [
+        "actor",
+        "object",
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [
+        "actor (enemy)",
+        "player (self)"
+      ],
+      "runtime_targets": [
+        "object"
+      ]
+    },
+    "low_profile": {
+      "design_targets": [
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "self"
+      ]
+    },
+    "marked": {
+      "design_targets": [
+        "actor"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "enemy"
+      ]
+    },
+    "phased": {
+      "design_targets": [
+        "actor",
+        "object",
+        "surface",
+        "player"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "actor (enemy)",
+        "object (object)",
+        "surface (surface)",
+        "player (self)"
+      ],
+      "runtime_targets": []
+    },
+    "poisoned": {
+      "design_targets": [
+        "actor",
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ]
+    },
+    "regenerating": {
+      "design_targets": [
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "self"
+      ]
+    },
+    "rooted": {
+      "design_targets": [
+        "actor"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "actor (enemy)"
+      ],
+      "runtime_targets": []
+    },
+    "shocked": {
+      "design_targets": [
+        "actor",
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ]
+    },
+    "silenced": {
+      "design_targets": [
+        "actor"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "actor (enemy)"
+      ],
+      "runtime_targets": []
+    },
+    "slippery": {
+      "design_targets": [
+        "object",
+        "surface",
+        "player"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "object (object)",
+        "surface (surface)",
+        "player (self)"
+      ],
+      "runtime_targets": []
+    },
+    "slowed": {
+      "design_targets": [
+        "actor",
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ]
+    },
+    "stunned": {
+      "design_targets": [
+        "actor"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "enemy"
+      ]
+    },
+    "turncoat": {
+      "design_targets": [
+        "actor"
+      ],
+      "implemented": false,
+      "refused_today": [
+        "actor (enemy)"
+      ],
+      "runtime_targets": []
+    },
+    "vulnerable": {
+      "design_targets": [
+        "actor",
+        "player"
+      ],
+      "implemented": true,
+      "refused_today": [],
+      "runtime_targets": [
+        "self",
+        "enemy"
+      ]
+    }
+  },
+  "coverage": {
+    "compounds": 8,
+    "drawn": 24,
+    "implemented": [
+      "lightened",
+      "burning",
+      "slowed",
+      "frozen",
+      "shocked",
+      "poisoned",
+      "marked",
+      "stunned",
+      "vulnerable",
+      "empowered",
+      "low_profile",
+      "haste",
+      "regenerating"
+    ],
+    "kinds": 24,
+    "missing_glyph": [],
+    "staged": [
+      "anchored",
+      "slippery",
+      "confused",
+      "turncoat",
+      "blinded",
+      "exposed",
+      "silenced",
+      "rooted",
+      "phased",
+      "conductive",
+      "brittle"
+    ]
+  },
+  "notes": [
+    "13 of 24 kinds have a runtime effect today; 11 are drawings of a staged design and apply() refuses them with NO STATUS BEFORE ITS EFFECT: anchored, slippery, confused, turncoat, blinded, exposed, silenced, rooted, phased, conductive, brittle",
+    "every status _CLEANSE_ORDER['self'] removes is drawn.",
+    "every status _CLEANSE_ORDER['enemy'] removes is drawn.",
+    "lightened is drawn for [\"actor\", \"object\", \"player\"], and apply() refuses it on actor (enemy), player (self) today. That is the staged runtime, not a wrong drawing.",
+    "burning is drawn for [\"actor\", \"object\", \"surface\", \"volume\", \"player\"], and apply() refuses it on object (object), surface (surface), volume (volume) today. That is the staged runtime, not a wrong drawing."
+  ],
+  "problems": [],
+  "source": {
+    "constants": "Constants.ECHO_STATUS_* read-only, not restated",
+    "guards": "StatusEffects.apply, verified present verbatim",
+    "implemented": 13,
+    "kinds": 24,
+    "supported_targets": 13
+  },
+  "vocabularies": {
+    "design_used": [
+      "actor",
+      "object",
+      "player",
+      "surface",
+      "volume"
+    ],
+    "maps_to": {
+      "actor": "enemy",
+      "object": "object",
+      "player": "self",
+      "surface": "surface",
+      "volume": "volume"
+    },
+    "runtime_seen": [
+      "object",
+      "self",
+      "enemy"
+    ]
+  }
+}
