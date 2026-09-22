@@ -957,7 +957,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 911,
+        "content_value": 903,
         "enemy_total": 35,
         "rooms_holding_no_check": 8
       },
@@ -1429,7 +1429,7 @@
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 2,
                 "kind": "target_challenge"
               },
               {
@@ -1447,7 +1447,7 @@
             },
             "enemies": [
               {
-                "archetype": "ranged",
+                "archetype": "artillery",
                 "count": 5
               }
             ],
@@ -1461,7 +1461,7 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 3,
                 "kind": "pressure_routing"
               },
               {
@@ -1480,26 +1480,20 @@
           {
             "activities": [
               {
-                "element_count": 3,
-                "kind": "timed_run",
-                "time_limit": 12.0
-              },
-              {
                 "element_count": 4,
-                "kind": "timed_run",
-                "time_limit": 16.0
+                "kind": "pressure_routing"
               }
             ],
             "id": "c004",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 2,
                 "kind": "switch_sequence"
               },
               {
@@ -1517,7 +1511,7 @@
             },
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "bulwark",
                 "count": 2
               }
             ],
@@ -1531,7 +1525,7 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 5,
                 "kind": "target_challenge"
               },
               {
@@ -1570,14 +1564,9 @@
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 2,
                 "kind": "timed_run",
-                "time_limit": 12.0
-              },
-              {
-                "element_count": 4,
-                "kind": "timed_run",
-                "time_limit": 16.0
+                "time_limit": 8.0
               }
             ],
             "gap_size": 2.08,
@@ -1593,10 +1582,6 @@
               {
                 "element_count": 2,
                 "kind": "switch_sequence"
-              },
-              {
-                "element_count": 3,
-                "kind": "switch_sequence"
               }
             ],
             "depth": 20.4,
@@ -1609,7 +1594,7 @@
             },
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "bulwark",
                 "count": 1
               }
             ],
@@ -1644,7 +1629,7 @@
             },
             "enemies": [
               {
-                "archetype": "ranged",
+                "archetype": "diver",
                 "count": 5
               }
             ],
@@ -1694,7 +1679,7 @@
                 "time_limit": 16.0
               }
             ],
-            "depth": 24.0,
+            "depth": 23.8,
             "enemies": [
               {
                 "archetype": "melee",
@@ -1710,7 +1695,7 @@
             "reward_location_id": 89100009,
             "type": "arena",
             "wall_height": 8.0,
-            "width": 27.3
+            "width": 27.2
           },
           {
             "activities": [
@@ -1722,7 +1707,7 @@
             "depth": 10.1,
             "enemies": [
               {
-                "archetype": "ranged",
+                "archetype": "artillery",
                 "count": 2
               }
             ],
@@ -1772,7 +1757,7 @@
             "depth": 14.7,
             "enemies": [
               {
-                "archetype": "ranged",
+                "archetype": "beacon",
                 "count": 4
               }
             ],
@@ -1798,19 +1783,26 @@
                 "time_limit": 12.0
               }
             ],
-            "depth": 20.4,
+            "depth": 19.7,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.43,
+              "kind": "gallery",
+              "rise": 1.71,
+              "side": "left"
+            },
             "enemies": [
               {
-                "archetype": "melee",
-                "count": 4
+                "archetype": "ranged",
+                "count": 2
               }
             ],
             "id": "c020",
             "objective": "kill_all",
             "reward_location_id": 89100013,
             "type": "arena",
-            "wall_height": 5.8,
-            "width": 18.2
+            "wall_height": 6.9,
+            "width": 16.9
           },
           {
             "activities": [
@@ -1819,11 +1811,11 @@
                 "kind": "switch_sequence"
               }
             ],
-            "gap_size": 2.03,
+            "gap_size": 1.79,
             "id": "c021",
             "objective": "platform_to_goal",
             "reward_location_id": 89100014,
-            "segment_count": 3,
+            "segment_count": 5,
             "type": "platform_path",
             "vertical_step": 0.51
           },
@@ -1847,19 +1839,19 @@
                 "kind": "pressure_routing"
               }
             ],
-            "depth": 18.3,
+            "depth": 18.4,
             "enemies": [
               {
-                "archetype": "melee",
-                "count": 3
+                "archetype": "beacon",
+                "count": 5
               }
             ],
             "id": "c023",
             "objective": "kill_all",
             "reward_location_id": 89100015,
             "type": "arena",
-            "wall_height": 5.4,
-            "width": 18.4
+            "wall_height": 6.7,
+            "width": 18.6
           }
         ],
         "designer_note": "Deterministic fallback zone.",
@@ -1880,7 +1872,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 901,
+        "content_value": 902,
         "enemy_total": 26,
         "rooms_holding_no_check": 8
       },
@@ -2348,7 +2340,7 @@
             },
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "bulwark",
                 "count": 1
               }
             ],
@@ -2411,7 +2403,7 @@
             "depth": 59.2,
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "bulwark",
                 "count": 3
               }
             ],
@@ -2437,7 +2429,7 @@
             "depth": 19.2,
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "bulwark",
                 "count": 1
               }
             ],
@@ -2467,11 +2459,6 @@
                 "element_count": 5,
                 "kind": "timed_run",
                 "time_limit": 20.0
-              },
-              {
-                "element_count": 4,
-                "kind": "timed_run",
-                "time_limit": 16.0
               }
             ],
             "gap_size": 1.91,
@@ -2620,7 +2607,7 @@
             "depth": 17.9,
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "charger",
                 "count": 1
               }
             ],
@@ -2671,7 +2658,7 @@
             "depth": 19.0,
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "charger",
                 "count": 2
               }
             ],
@@ -2706,7 +2693,7 @@
             "depth": 20.0,
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "ranged",
                 "count": 3
               }
             ],
@@ -2755,7 +2742,7 @@
             "depth": 10.2,
             "enemies": [
               {
-                "archetype": "ranged",
+                "archetype": "scuttler",
                 "count": 3
               }
             ],
@@ -2785,7 +2772,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 904,
+        "content_value": 900,
         "enemy_total": 32,
         "rooms_holding_no_check": 8
       },
@@ -3312,7 +3299,7 @@
             "depth": 89.2,
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "charger",
                 "count": 4
               }
             ],
@@ -3338,7 +3325,7 @@
             "depth": 11.8,
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "ranged",
                 "count": 3
               }
             ],
@@ -3416,12 +3403,6 @@
             "width": 18.0
           },
           {
-            "activities": [
-              {
-                "element_count": 5,
-                "kind": "switch_sequence"
-              }
-            ],
             "id": "c010",
             "length": 6.0,
             "shell_id": "shell_corner_right",
@@ -3432,10 +3413,6 @@
             "activities": [
               {
                 "element_count": 3,
-                "kind": "pressure_routing"
-              },
-              {
-                "element_count": 4,
                 "kind": "pressure_routing"
               }
             ],
@@ -3449,7 +3426,7 @@
             },
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "charger",
                 "count": 3
               }
             ],
@@ -3541,7 +3518,7 @@
             "depth": 15.2,
             "enemies": [
               {
-                "archetype": "ranged",
+                "archetype": "scuttler",
                 "count": 1
               }
             ],
@@ -3584,7 +3561,7 @@
             "depth": 16.7,
             "enemies": [
               {
-                "archetype": "ranged",
+                "archetype": "artillery",
                 "count": 4
               }
             ],
@@ -3619,7 +3596,7 @@
             "depth": 21.0,
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "bulwark",
                 "count": 3
               }
             ],
@@ -3662,7 +3639,7 @@
             "depth": 20.7,
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "bulwark",
                 "count": 1
               }
             ],

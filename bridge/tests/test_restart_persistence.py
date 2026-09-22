@@ -4,11 +4,13 @@ Overnight 04, package P04. The bridge's half of process-restart
 persistence: the representation, its completeness, and the guard that
 keeps it from quietly growing a field the design forbids.
 
-**The engine half is not here.** Actually terminating and restarting the
-client (P04.3's "real world state, remaining Checks and usable return"),
-machinery interrupted mid-motion (P04.5) and the user-facing failure
-paths (P04.6) are Prod's, and a JSON round trip is deliberately not
-reported as either.
+**NOTHING HERE IS A COLD RESTART** (owner correction 3). Every case
+below round-trips a save through JSON in one process. That is evidence
+about the REPRESENTATION. P04.3 asks for the client and the bridge to be
+terminated and relaunched on a disposable save, at five named points,
+with real world state read afterwards -- the client half is Prod's and
+the bridge harness does not exist. It is not started, and it is not
+reported as anything else.
 """
 from __future__ import annotations
 
@@ -23,8 +25,20 @@ def _save() -> P.CampaignSave:
                           slot_name="Skyiah")
 
 
-def _restart(save: P.CampaignSave) -> P.CampaignSave:
-    """A process restart: nothing survives but the serialised save."""
+def _round_trip(save: P.CampaignSave) -> P.CampaignSave:
+    """Serialize and re-parse. **NOT a process restart.**
+
+    Owner correction 3, 2026-09-22: this used to be called `_restart`
+    and the docstring said "a process restart: nothing survives but the
+    serialised save". It is one process, nothing is terminated, and
+    nothing is relaunched. **It is serialization evidence** -- the
+    representation round-trips -- and P04.3 asks for something this
+    cannot show: terminating the client and the bridge on a disposable
+    save and reading real world state afterwards.
+
+    Renamed so no reader has to take the docstring's word for what the
+    call does.
+    """
     return P.CampaignSave.model_validate_json(save.model_dump_json())
 
 
@@ -50,46 +64,61 @@ def test_every_persistent_lifetime_has_somewhere_to_live():
     assert not {"carried_objects", "transported"} & fields
 
 
-def test_the_save_never_grows_a_field_the_design_forbids():
+def test_no_saved_field_holds_a_derived_live_signal_value():
     """§5.4a: *"Nothing serializes a signal node's current value."*
 
-    And rail_junction.gd's own rule: a carrier is restored to a
-    SUPPORTED DOCK, never to a saved transform -- a carrier resumed
-    halfway across a link this build did not commission would be
-    standing on track that is not there.
+    **REPLACED, 2026-09-22 (owner correction 4).** The first version of
+    this control scanned field NAMES for `transform`, `pose`,
+    `position`, `velocity` and `elapsed` and failed on any of them. That
+    generalised `rail_junction.gd`'s supported-dock policy into a
+    universal ban on physical saved state, and it is wrong:
+    **EX50-011 §9 explicitly requires the opposite** -- *"carrier poses,
+    destinations and hold states are package-local. A stable save
+    restores each at its saved pose before the player."* A runtime
+    comment about one railway does not supersede a selected spec about
+    another package.
 
-    So this is the case that fails if someone adds one. A save that
-    stored voltages could disagree with the graph that produced them,
-    and a save that stored poses could put the player on absent track.
+    What §5.4a actually forbids is a **derived live value**: something
+    the graph recomputes on restore. A save holding voltages could
+    disagree with the graph that produced them. Physical state that a
+    package's own contract requires is permitted, and must declare which
+    §5.1 category it belongs to.
+
+    So this checks the categories rather than the spelling.
     """
-    forbidden = ("transform", "pose", "position", "rotation", "velocity",
-                 "voltage", "signal_value", "node_value", "elapsed",
-                 "remaining_seconds")
-    surfaces = {
-        "ZoneProgress": P.ZoneProgress.model_fields,
-        "ZoneRecord": P.ZoneRecord.model_fields,
-        "CampaignSave": P.CampaignSave.model_fields,
-    }
-    def scan(surface):
-        return [f"{cls}.{name}" for cls, fields in surface.items()
-                for name in fields
-                for bad in forbidden if bad in name.lower()]
+    # §5.1's five, and every persisted field has to be one of them.
+    categories = {"EPHEMERAL", "PUZZLE_LOCAL", "ROOM_PERSISTENT",
+                  "ZONE_PERSISTENT", "AP_PERSISTENT"}
+    declared = P.SAVE_FIELD_CATEGORY
 
-    # THE GUARD IS A NAME LINTER, so it is shown catching something
-    # before it is trusted to report nothing. Without this the test
-    # passes just as well with an empty `forbidden`.
-    assert scan({"Fake": {"carrier_transform": None,
-                          "signal_value": None}}) == [
-        "Fake.carrier_transform", "Fake.signal_value"]
+    persisted = set(P.ZoneProgress.model_fields)
+    assert set(declared) == persisted, (
+        f"undeclared: {sorted(persisted - set(declared))}; "
+        f"declared but absent: {sorted(set(declared) - persisted)}")
+    assert set(declared.values()) <= categories
 
-    offences = scan(surfaces)
-    assert not offences, (
-        f"{offences} look like live or physical state. §5.4a restores "
-        "semantic state and recomputes everything else; if one of these "
-        "is genuinely needed, it needs a ruling, not a field")
+    # EPHEMERAL is the one category that may not appear in a save at all
+    # -- that is what EPHEMERAL MEANS.
+    ephemeral = [f for f, c in declared.items() if c == "EPHEMERAL"]
+    assert not ephemeral, (
+        f"{ephemeral} are declared EPHEMERAL and are in the save; §5.1 "
+        "says they are rebuilt, not restored")
 
 
-def test_manifest_provenance_survives_a_restart():
+def test_the_category_rule_admits_the_pose_ex50_011_asks_for():
+    """The control that shows the replacement is not just a looser rule.
+
+    A package-local carrier pose is `PUZZLE_LOCAL` -- §5.1's row for a
+    `PhysicalConfiguration` that is `required` or constrained -- and the
+    category check admits it while still refusing a live signal value.
+    """
+    assert P.categorise_save_field("carrier_pose", "PUZZLE_LOCAL") is None
+    assert P.categorise_save_field("hold_state", "PUZZLE_LOCAL") is None
+    problem = P.categorise_save_field("plate_signal", "EPHEMERAL")
+    assert problem is not None and "EPHEMERAL" in problem
+
+
+def test_manifest_provenance_survives_a_round_trip():
     """P04.1's "stable IDs and manifest provenance". The layout is
     solved once and replayed forever, so the digest has to come back."""
     from archipepsi_bridge.schemas.zone import Zone
@@ -114,7 +143,7 @@ def test_manifest_provenance_survives_a_restart():
     save = T.enter_zone(save, "zone_001")
     save = T.commit_layout(save, "zone_001", {"manifest_digest": "abc123"})
 
-    back = _restart(save)
+    back = _round_trip(save)
     rec = back.zone_by_id("zone_001")
     assert rec.manifest["manifest_digest"] == "abc123"
     assert rec.layout_state == "ACCEPTED"
@@ -135,11 +164,14 @@ def _progressed(**kw) -> P.ZoneProgress:
     return p
 
 
-def test_restart_points_are_distinguishable_from_each_other():
+def test_the_points_a_restart_would_happen_at_are_distinguishable():
     """P04.3 asks for restarts at *meaningful points*, which is only
     meaningful if the points differ. Four states, each round-tripped,
     each still itself afterwards -- a save that dropped one of these
     would pass a single-point test.
+
+    **This is the representation half only.** The restart itself is not
+    here; see `_round_trip`.
     """
     points = {
         "before any grant": _progressed(),
@@ -207,7 +239,7 @@ def test_a_refused_layout_keeps_the_checks_and_the_campaign_moves():
     assert rec.state == "PENDING_GENERATION"
     assert rec.allocated_location_ids == held, (
         "a refused layout must not give the player's locations back")
-    assert _restart(refused).zone_by_id("zone_001").state \
+    assert _round_trip(refused).zone_by_id("zone_001").state \
         == "PENDING_GENERATION"
 
 

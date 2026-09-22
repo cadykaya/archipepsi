@@ -31,7 +31,53 @@ from .schemas import constants as C
 
 #: Per enemy, by archetype. A brute is worth far more than its head count:
 #: it changes how a room is fought, not just how long.
-ENEMY_VALUE = {"melee": 3, "ranged": 4, "brute": 10}
+#: **The three approved anchors, and seven PROVISIONAL entries** added
+#: 2026-09-22 under the owner's authorisation to choose and revise them
+#: on the 0.4 candidate. They are **chosen, not derived**, and they are
+#: not final.
+#:
+#: What the anchors say the scale measures: `melee` 3 is the baseline
+#: threat, `ranged` 4 is one point more for forcing you to break line of
+#: sight or close distance, and `brute` 10 is a role that changes the
+#: whole room rather than lengthening it. Note that `ranged` outranks
+#: `melee` on *less* health and *less* dps -- which is why no formula
+#: over `ENEMY_STATS` can reproduce this table, and why these seven are
+#: judgements placed against those three rather than computed.
+#:
+#: Each provisional entry, and the reasoning it can be argued with:
+#:
+#: * `scuttler` **2** -- below `melee`. One scuttler asks less of the
+#:   player than one melee; it is a pressure unit whose count does the
+#:   work, and pricing it at 3 would make a swarm unaffordable for the
+#:   wrong reason.
+#: * `beacon` **4** -- level with `ranged`, for a different reason. It
+#:   barely hurts anything; what it changes is target ORDER, and a
+#:   priority target is a real tactical demand.
+#: * `artillery` **5** -- above `ranged`. It changes where you are
+#:   willing to stand and asks you to read ground marks, but it has a
+#:   total dead zone inside its minimum range, so it is not a `bulwark`.
+#: * `charger` **5** -- level with `artillery`, from the other side. A
+#:   telegraphed unsteerable commitment changes your FOOTWORK, which is
+#:   a different demand from `ranged`'s positioning and about as large.
+#: * `diver` **6** -- above both. It punishes leaving the ground, which
+#:   removes an option the player otherwise always has.
+#: * `drifter` **6** -- level with `diver`. It denies melee entirely by
+#:   holding a height, so a room containing one requires an answer for
+#:   altitude rather than rewarding one.
+#: * `bulwark` **7** -- the closest to `brute` and deliberately short of
+#:   it. Shrugging most of a frontal hit forces flanking, which changes
+#:   how the room is fought; it does not dominate the room the way a
+#:   brute does.
+#:
+#: **Revise them.** They are one table, they are charged correctly
+#: wherever a role is placed, and nothing downstream reads a second copy.
+ENEMY_VALUE = {
+    # approved
+    "melee": 3, "ranged": 4, "brute": 10,
+    # provisional, 2026-09-22
+    "scuttler": 2, "beacon": 4, "artillery": 5, "charger": 5,
+    "diver": 6, "drifter": 6, "bulwark": 7,
+}
 
 #: Roles the COMPOSER may place: implemented AND priced.
 #:

@@ -102,7 +102,13 @@ Theme = Literal[
     "concrete_facility", "rusted_industrial", "neon_transit",
     "gothic_stone", "temple_ruin", "void_glitch",
 ]
-Archetype = Literal["melee", "ranged", "brute"]
+#: DERIVED, not transcribed. This was a fourth hand-written list of the
+#: same fact -- `ENEMY_STATS`, `ENEMY_ENVELOPES`, `ENEMY_ARCHETYPES` and
+#: this one -- and it is what refused every new role at the Zone
+#: boundary after the roster landed: the engine could spawn a drifter,
+#: the value table could score one, and a Zone naming one would not
+#: validate. `Literal[*tuple]` keeps it in step with no maintenance.
+Archetype = Literal[tuple(C.ENEMY_ARCHETYPES)]  # type: ignore[valid-type]
 
 _ID = Field(min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
 _ECHO_ID = Annotated[str, Field(max_length=32, pattern=r"^echo_\d+$")]
@@ -1237,12 +1243,28 @@ class TransportedObject(Strict):
       crossing a boundary is a TRANSFER rather than a write to the
       machine layer. §19.7 rule 2 stays intact.
 
-    **What is NOT here, deliberately.** The object's Statuses. §5.1 puts
-    every `ActiveStatus` in `EPHEMERAL`, so a `BURNING` cell that is
-    carried three rooms arrives having been carried three rooms and not
-    still burning -- unless something sets it alight again. Persisting
-    the Status would make a temporary effect a permanent fact, which is
-    §3.1's rule in the one place it is easiest to break by accident.
+    **What is NOT here, and what that does NOT mean.** The object's
+    Statuses are absent from this declaration because §5.1 puts every
+    `ActiveStatus` in `EPHEMERAL` -- they are not SAVED.
+
+    **CORRECTED, 2026-09-22 (owner).** An earlier revision of this
+    docstring went on to say a `BURNING` cell "arrives having been
+    carried three rooms and not still burning", which conflated two
+    different things: what survives a save, and what survives a
+    doorway. **Carrying an object between rooms during live play is not
+    a reload.** A Status on it follows its own duration and removal
+    rules; walking through a door is not an event that cleanses
+    anything, and inventing a doorway cleanse would be inventing a
+    mechanic.
+
+    The paragraph above quotes the union's own example sentence -- *"a
+    `BURNING` power cell carried three rooms to a generator"* -- which
+    only means anything if the cell is still alight when it gets there.
+    The earlier text contradicted the sentence it had just cited.
+
+    What remains true: the Status is not written to the save, so a cell
+    alight when the player quits is not alight when they load. That is
+    §5.1, and it is a statement about saves alone.
     """
     object_id: str = _ID
     #: §10.5's list of rooms. At least two, or it is not transported --

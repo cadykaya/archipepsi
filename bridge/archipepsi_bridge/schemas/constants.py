@@ -18,6 +18,8 @@ Units: metres, seconds, metres/second. Angles in degrees.
 
 from __future__ import annotations
 
+import functools
+
 import hashlib
 import math
 import random
@@ -1476,6 +1478,7 @@ ENEMY_ENVELOPES = {
 ENEMY_ROLES = tuple(ENEMY_ENVELOPES)
 
 
+@functools.lru_cache(maxsize=4096)
 def roles_that_fit(width: float, depth: float,
                    wall_height: float) -> tuple[str, ...]:
     """Which enemy roles a room of this size can physically hold.
