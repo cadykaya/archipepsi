@@ -123,6 +123,13 @@ var _activity_note := ""
 ## `room_id -> world AABB`, from the committed layout.
 var room_bounds := {}
 
+## OBJECTS THE PLAYER CARRIES BETWEEN ROOMS (P16). `object_rooms_carried`
+## is what the snapshot said, assigned before `setup` like every other
+## carried fact.
+var objects: TransportedObjects = null
+var object_rooms_carried := {}
+var object_refusals: Array[String] = []
+
 ## THE ZONE'S REVERSIBLE CONFIGURATION (D-8). Declared by
 ## `Zone.zone_state`, set by a control the player operates, read by
 ## machinery in other rooms.
@@ -402,6 +409,19 @@ func setup(zone_dict: Dictionary) -> void:
 		zone_state_refusals.append(why)
 		push_warning("zone_state refused: %s" % why)
 	zone_state.changed.connect(_on_zone_state_changed)
+
+	# THE TRANSPORTED OBJECTS (P16 / D-8 lifetime 5). After the rooms
+	# have committed places and bounds, because an object's owning room
+	# is decided by which room CONTAINS it.
+	objects = TransportedObjects.new()
+	objects.name = "TransportedObjects"
+	add_child(objects)
+	for why: String in objects.declare(
+			zone_dict.get("transported_objects", []) as Array,
+			room_bounds, object_rooms_carried, room_places, self):
+		object_refusals.append(why)
+		push_warning("transported object refused: %s" % why)
+	objects.transported.connect(_on_object_transported)
 
 	# THE DECLARED RAILWAYS (D-4). Built here and not in the chamber
 	# loop, because a network spans ROOMS: its docks are in different
@@ -767,6 +787,26 @@ func report_latch(package_id: String, latch_id: String) -> void:
 	BridgeClient.send_intent({"type": "latch_fired",
 			"zone_id": zone_id, "package_id": package_id,
 			"latch_id": latch_id})
+
+## An object the player is carrying has entered a different room.
+##
+## Reported through the bridge lane's `object_transported`, which is
+## idempotent by `(object_id, room_id)` and not monotone -- carrying
+## something back is the mechanic working, exactly as with a reversible
+## Zone-state variable.
+##
+## **The room, and nothing else about the object.** §5.1 makes its
+## Statuses `EPHEMERAL`, so nothing here looks at them: a burning cell
+## carried three rooms arrives carried, not still burning.
+func _on_object_transported(object_id: String, room_id: String) -> void:
+	object_moves.append([object_id, room_id])
+	BridgeClient.send_intent({"type": "object_transported",
+			"zone_id": zone_id, "object_id": object_id,
+			"room_id": room_id})
+
+## Every crossing this Zone has seen, in order. Live, not saved: the
+## ROOM is what persists and the route it took to get there does not.
+var object_moves: Array = []
 
 ## A Zone-state variable changed, because a player operated its control.
 ##

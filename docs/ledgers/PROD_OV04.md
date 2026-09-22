@@ -141,3 +141,36 @@ post near a wall will walk into it and rely on the existing sidestep recovery)
 and P07.5 (lifecycle and performance — nothing here measures the cost of ten
 working enemies in one room).
 
+
+
+### P16 — transported objects, the row that was explicitly unfinished
+
+`godot-zone-state` grows to **56 checks**. M7 closes. The bridge lane declared
+the contract (DESS-06); this is the runtime.
+
+**Authority, not persistence, was the open half** — and D-8 §11.1 took this
+lane's own proposal narrowed to exactly that: a transported object is
+room-layer state **whose owning room is its current room**, and crossing a
+boundary is a TRANSFER rather than a write to the machine layer. §19.7 rule 2
+stays intact and nothing addresses another room; the player carries it, which
+is "the player is the bridge" at its most literal.
+
+| unit | evidence |
+|---|---|
+| P16.1 one identity | the declared object builds as one `ManipulableBody`, in its home room, knowing whether it is required |
+| P16.2 moved physically | carried into another room's committed bounds; the room changes and `object_transported` goes out once |
+| P16.3 persistence | a snapshot naming c002 builds it in c002, physically there and not merely recorded, reporting nothing for a build |
+| P16.4 recovery | leaving the allowed volume recovers it home once; a saved room outside the volume is not trusted at build either |
+| P16.5 status vs authority | what the save carries is the ROOM and only the room |
+
+**A room is decided by geometry, not by who last touched it** — whichever
+committed `room_bounds` contains the object. And **a doorway is not a third
+place**: a position in no room keeps the room it had, so a carry across a
+threshold reports once instead of flickering. That case is asserted, because
+the obvious implementation reports twice.
+
+**P16.5 is the one that is easiest to break by accident.** §5.1 puts every
+`ActiveStatus` in `EPHEMERAL`, so a burning cell carried three rooms arrives
+having been carried three rooms and not still burning. `TransportedObjects` has
+no field a Status could ride in and never consults `ManipulableBody.statuses`;
+the case asserts the reported shape is the room alone.

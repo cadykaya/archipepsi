@@ -68,6 +68,10 @@ func _run() -> void:
 	await _a_local_reset_loses_nothing_unrelated()
 	await _a_reader_never_holds_the_setters_node()
 	await _a_mechanism_the_engine_cannot_build_is_refused()
+	await _an_object_crosses_rooms_and_says_where_it_is()
+	await _a_carried_object_reloads_where_it_was_left()
+	await _an_object_outside_its_volume_comes_home()
+	await _the_room_persists_and_the_status_does_not()
 	print("")
 	if _failures == 0:
 		print("GODOT ZONE STATE OK (%d checks, %d notes)"
@@ -132,12 +136,25 @@ func _zone(extra_readers: Array = [],
 	}
 
 
-func _built(zone: Dictionary, carried := {}) -> ZoneController:
+func _built(zone: Dictionary, carried := {}, objects := {}) -> ZoneController:
 	var controller := ZoneController.new()
 	get_tree().root.add_child(controller)
 	controller.macro_carried = carried
+	controller.object_rooms_carried = objects
 	controller.setup(zone)
 	return controller
+
+
+## The same three-room Zone, plus one object allowed in all three.
+func _zone_with_object(home := "c001", required := true) -> Dictionary:
+	var zone := _zone()
+	zone["transported_objects"] = [{
+		"object_id": "cell",
+		"allowed_volume": ["c001", "c002", "c003"],
+		"home_room_id": home,
+		"required": required,
+	}]
+	return zone
 
 
 func _drop(controller: ZoneController) -> void:
@@ -504,3 +521,135 @@ func _walk_to(body: Player, goal: Vector3, within := 1.5,
 	Input.action_release("move_forward")
 	await get_tree().physics_frame
 	return arrived
+
+
+# ------------------------------------------- P16 transported objects
+
+## P16.1 and P16.2: one identity, and it moves physically.
+func _an_object_crosses_rooms_and_says_where_it_is() -> void:
+	print("  -- P16: an object crosses rooms and reports the new one")
+	var controller := _built(_zone_with_object())
+	await _settle(12)
+	_check(controller.objects != null
+			and controller.objects.ids() == ["cell"],
+			"the declared object was built: %s"
+			% [controller.objects.ids()])
+	_check(controller.objects.room_of("cell") == "c001",
+			"...in its home room, '%s'"
+			% controller.objects.room_of("cell"))
+	_check(controller.objects.is_required("cell"),
+			"...and it knows it is required")
+	var body := controller.objects.body_of("cell")
+	_check(body != null and body is ManipulableBody,
+			"it is a real physical body, not a token")
+
+	# CARRIED. Moved into c003's bounds the way a player carrying it
+	# would, and the report is asserted on the wire.
+	var far: AABB = controller.room_bounds.get("c003", AABB())
+	body.global_position = far.position + far.size * 0.5
+	await _settle(16)
+	_check(controller.objects.room_of("cell") == "c003",
+			"it is now the responsibility of '%s'"
+			% controller.objects.room_of("cell"))
+	var sent := _intents_of("object_transported")
+	_check(sent.size() == 1,
+			"the crossing was reported once (%d)" % sent.size())
+	if sent.size() == 1:
+		_check(str((sent[0] as Dictionary).get("room_id", "")) == "c003",
+				"...naming the room it arrived in: %s" % [sent[0]])
+	# A DOORWAY IS NOT A THIRD PLACE: a position in no room keeps the
+	# room it had, so a carry across a threshold reports once rather
+	# than flickering.
+	body.global_position = far.position + far.size * 0.5 \
+			+ Vector3(0.0, 400.0, 0.0)
+	await _settle(10)
+	_check(controller.objects.room_of("cell") == "c003",
+			"between rooms it keeps the room it had")
+	_check(_intents_of("object_transported").size() == 1,
+			"...and reports nothing new (%d)"
+			% _intents_of("object_transported").size())
+	await _drop(controller)
+
+
+## P16.3: it reloads where it was left, not where it started.
+func _a_carried_object_reloads_where_it_was_left() -> void:
+	print("  -- P16: it reloads where it was left")
+	var controller := _built(_zone_with_object(), {}, {"cell": "c002"})
+	await _settle(12)
+	_check(controller.objects.room_of("cell") == "c002",
+			"a snapshot saying c002 builds it in '%s'"
+			% controller.objects.room_of("cell"))
+	var box: AABB = controller.room_bounds.get("c002", AABB())
+	var body := controller.objects.body_of("cell")
+	_check(box.grow(2.0).has_point(body.global_position),
+			"...and the body is physically there, not merely recorded")
+	_check(controller.object_moves.is_empty(),
+			"nothing was reported for a build (%d move(s))"
+			% controller.object_moves.size())
+	await _drop(controller)
+
+
+## P16.4: an object outside its allowed volume is recovered, not
+## refused and not left where it cannot be used.
+func _an_object_outside_its_volume_comes_home() -> void:
+	print("  -- P16: out of bounds is recovered, not lost")
+	var controller := _built(_zone_with_object())
+	await _settle(12)
+	var recoveries: Array = []
+	controller.objects.recovered.connect(
+			func(id: String, room: String) -> void:
+				recoveries.append([id, room]))
+	# A snapshot naming a room outside the volume is the same case, and
+	# is handled at build: this is the runtime half, a body shoved into
+	# a room the object may not be in.
+	var body := controller.objects.body_of("cell")
+	var outside := _outside_room(controller)
+	if outside == "":
+		_note("this Zone has no room outside the volume; the build-time "
+				+ "half of recovery is asserted instead")
+		_check(controller.objects.room_of("cell") == "c001",
+				"a saved room outside the volume is not trusted")
+		await _drop(controller)
+		return
+	var box: AABB = controller.room_bounds.get(outside, AABB())
+	body.global_position = box.position + box.size * 0.5
+	await _settle(16)
+	_check(recoveries.size() == 1,
+			"leaving the volume recovered it once (%d)" % recoveries.size())
+	_check(controller.objects.room_of("cell") == "c001",
+			"...and it is home in '%s'" % controller.objects.room_of("cell"))
+	await _drop(controller)
+
+
+func _outside_room(controller: ZoneController) -> String:
+	for room: Variant in controller.room_bounds:
+		if not str(room) in ["c001", "c002", "c003"]:
+			return str(room)
+	return ""
+
+
+## P16.5: the ROOM persists and the Status does not.
+##
+## §5.1 puts every `ActiveStatus` in `EPHEMERAL`, so a burning cell
+## carried three rooms arrives having been carried three rooms and NOT
+## still burning. This is the one place that rule is easiest to break by
+## accident, so it is asserted rather than assumed.
+func _the_room_persists_and_the_status_does_not() -> void:
+	print("  -- P16.5: the room persists, the Status does not")
+	var controller := _built(_zone_with_object())
+	await _settle(12)
+	var body := controller.objects.body_of("cell")
+	body.apply_status("lightened", 8.0, 0.4)
+	await _settle(4)
+	_check(body.statuses != null and body.statuses.has("lightened"),
+			"the object is carrying a Status while it is carried")
+	var far: AABB = controller.room_bounds.get("c003", AABB())
+	body.global_position = far.position + far.size * 0.5
+	await _settle(16)
+	var reported := controller.objects.as_reported()
+	_check(str(reported.get("cell", "")) == "c003",
+			"what the save carries is the room: %s" % [reported])
+	_check(reported.size() == 1 and reported.values()[0] is String,
+			"...and ONLY the room -- there is no field a Status could "
+			+ "ride in: %s" % [reported])
+	await _drop(controller)
