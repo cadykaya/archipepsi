@@ -552,12 +552,19 @@ func _the_room_is_not_clear_until_every_body_is() -> void:
 ## instead. `counterfire_driver` already solves this the same way —
 ## an `Area3D` carrying `speed` and `direction` is an enemy shot.
 ##
-## Scoped to the driver's own children rather than the whole tree: a
-## recursive `find_children` from the root, called inside a per-frame
-## check, is its own hang.
+## **IN `current_scene`, WHICH IS WHERE THEY GO.** The previous version
+## looked at this driver's own children and reported 0 while two enemies
+## were demonstrably firing -- `fire_at` adds its projectile to the
+## current scene, the way `counterfire_driver` already knew to look. A
+## counter pointed at the wrong node reads zero for the same reason an
+## empty room does, which is how a measurement fault gets reported as a
+## finding.
 func _projectiles() -> int:
+	var scene := get_tree().current_scene
+	if scene == null:
+		return -1                      # not "none": UNMEASURED
 	var n := 0
-	for child: Node in get_children():
+	for child: Node in scene.get_children():
 		var area := child as Area3D
 		if area != null and area.get("speed") != null \
 				and area.get("direction") != null:
