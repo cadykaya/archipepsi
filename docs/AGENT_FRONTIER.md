@@ -197,6 +197,22 @@ Two things from it that other lanes need:
   to it** -- five `verify` runs modified six tracked fixtures by
   checkpointing their WAL; restored.
   `docs/art/reports/2026-09-22-glyph-toolchain-trial.md` §5.
+* **T06 (DOOM 1993, THE UAC TECHBASE) makes six packs -- AND THE FAMILY
+  RUNWAY IS NOW A DEADLINE.** Batch 060, `concrete_facility`.
+  T05 proved two packs sharing a house family read as one place. The
+  workaround since has been one unused family per pack. There are SIX
+  families: `temple_ruin` (T01, T05), `rusted_industrial` (T02, T04),
+  `neon_transit` (T03), `concrete_facility` (T06). **`gothic_stone` and
+  `void_glitch` are unused and 75 packs remain, so the workaround runs
+  out at T08 and every pack from T09 must share pixels or wait.**
+  A deadline rather than an opinion; recorded per pack as
+  `family_runway`.
+  Also: `concrete_facility`'s accent marks a thing as SIGNIFICANT and
+  its own docstring says a colour that marks everything marks nothing,
+  so it is spent on the blast chevrons and the keycard lamps and
+  nowhere else. Third family whose trim/accent semantics had to be read
+  before use.
+  `docs/art/review/foundry_2026-09-22/README.md`.
 * **T04 (Super Metroid, THE WRECKED SHIP) and T05 (Kingdom Hearts 2,
   TWILIGHT TOWN SERVICE ALLEY) make it five packs, one shell, four
   cameras, and the switch housing in the same place on the same wall in

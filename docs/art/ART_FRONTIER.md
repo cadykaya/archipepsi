@@ -884,9 +884,28 @@ T05's awning **valance** was refused for hanging 6 cm below the door head.
 the same opening**, and between them they are a fair description of what a
 theme pack may not touch.
 
+### T06 — DOOM 1993, THE UAC TECHBASE. And the runway is a deadline.
+
+Batch 060, `concrete_facility`. Six packs, one shell, four cameras, the
+switch housing in the same place in all six frames.
+
+**THE FAMILY RUNWAY HAS TWO PACKS LEFT.** T05 proved two packs sharing a
+house family read as one place and that different shapes cannot save
+them; the workaround since has been one unused family per pack. Six
+families exist: `temple_ruin` (T01, T05), `rusted_industrial` (T02, T04),
+`neon_transit` (T03), `concrete_facility` (T06). **`gothic_stone` and
+`void_glitch` are unused and 75 packs remain**, so the workaround runs out
+at **T08** and every pack from **T09** must share pixels with an earlier
+one or wait. Recorded per pack as `family_runway`.
+
+`concrete_facility`'s accent marks a thing as SIGNIFICANT -- its own
+docstring says a colour that marks everything marks nothing -- so it is
+spent on the blast chevrons and the keycard lamp column and nowhere else.
+Third family whose `trim`/`accent` semantics had to be read before use.
+
 ### Then
 
-**T06 onward** through T18 plus the 63 from the catalogue snapshot,
+**T07 onward** through T18 plus the 63 from the catalogue snapshot,
 **A15** (item/Forge modules), **A16** (finish the six theme families),
 **A17-A19** (detail/dressing library, actual-consumer trials and budget
 passes, final catalogue).
