@@ -923,7 +923,7 @@ not stop at the first blocked row.
 | **G3** | Interruption | **not started** | — | |
 | **G4** | Two unmistakable launch modes, separate saves, printed revision | **partly done** | — | the 0.4 scenarios launch by name and by double-click; the printed revision/provider/scale banner is not done |
 | **H1** | **Enemy variety** — the recorded target is ~20 distinct enemies with meaningful combat roles (`docs/art/ART_REVIEW.md` § "The enemy roster target, recorded") | **3 of 10 declared roles have behaviour — a separate explicit workstream, NOT discharged by the 2026-09-21 Status/room checkpoint, and "no new content roster" does not erase it** | — | `Constants.ENEMY_ROLES` declares ten — `melee, ranged, brute, charger, bulwark, scuttler, artillery, beacon, diver, drifter` — and `ENEMY_ARCHETYPES` implements **three**. `Enemy.create` branches on those three only; the other seven are names in a generated constant with no runtime behind them. The art lane records the same gap from its side (`docs/art/review/batch008/README.md`: "seven of the ten roles have no collider, and the telegraph has no node in `enemy.gd`") |
-| **H2** | Enemy telegraph as a hangable node | **not started — NOT discharged by the 2026-09-21 Status/room checkpoint** | — | the ranged archetype has no windup at all (F-14); only the brute telegraphs. Both a gameplay and an art-integration blocker |
+| **H2** | Enemy telegraph as a hangable node | **the seam is archetype-agnostic and the ranged windup exists (F-14 repaired)**; the authored NODE is still art's side | — | The countdown's resolution called `_slam` unconditionally, so structurally only the brute COULD telegraph — any other attack opening a windup would have resolved into the brute's melee slam. It dispatches on `telegraph_kind` now, durations live in `Enemy.TELEGRAPH_SECONDS` instead of literals mid-function, and the ranged archetype commits `aim` for 0.45 s before firing. Adding a third attack is a table row and a branch, with no change to the countdown, the plant, the swell or the `telegraph_started`/`telegraph_finished` contract an authored telegraph binds to. `melee` declares no window on purpose and the reason is recorded. Covered in `godot-content` THROUGH THE COUNTDOWN — the first cut called the resolver directly and passed with the defect restored |
 | **M0** | 0.4 line exists, 0.3 untouched | **verified** | — | |
 | **M1** | One real machine chain | **verified** | — | `M1-zone` is built and certified this batch (`godot-rail-zone`): D-4 landed at `704f379` and the engine consumes it. What remains is a COMPOSER that declares a railway — no generated Zone asks for one yet — and a played route through it |
 | **M2-mech** | Dev-scenario loop, labelled | **verified** | — | |
@@ -1122,3 +1122,38 @@ recommendation is to express such a design as reversible Zone configuration
 rather than as a held requirement, which needs no amendment; the amendment that
 *would* be needed if a genuinely held cross-room requirement is wanted is named
 so the choice is visible rather than made by accident.
+
+
+### F-14 (second half) — the telegraph seam could only ever have been the brute's
+
+Recorded when EX50-021 measured "the ranged archetype's windup: **none**". The
+first half of that finding was true and obvious: the archetype fired the instant
+its cooldown allowed, from anywhere inside its reach, with nothing to see first.
+
+The second half was structural and was not visible until H2 was attempted.
+`_physics_process`'s countdown resolved with a bare `_slam(player)` — so a
+telegraph was not a seam any attack could hang from. **Any** attack that opened
+a windup would have resolved into the brute's melee slam, landing damage at the
+brute's reach on whatever the attacker was. The interface (`telegraph_started`,
+`telegraph_finished`, `telegraph_progress`, `telegraph_origin`) was complete and
+archetype-agnostic; the one line that consumed it was not.
+
+Repaired by dispatching on `telegraph_kind`. The ranged archetype now commits
+for `TELEGRAPH_SECONDS["ranged"]` (0.45 s) and plants while it does — the
+existing windup branch already stopped an enemy mid-telegraph, generically, so
+a ranged enemy taking a shot is now both readable and vulnerable, which is what
+EX50-021 §11's dodge needs to be fair.
+
+**A test that did not cover its own defect.** The first version of the new case
+called `_resolve_telegraph` directly; reverting the dispatch to the old
+unconditional `_slam` left it **green**. It runs the windup down through
+`_physics_process` now, and the revert produces two failures.
+
+`godot-counterfire`'s note said "the ranged archetype has NO windup" and is
+rewritten to report the measured window instead — a note that went on asserting
+a repaired defect would be the suite reporting history as measurement. Its
+timings are unchanged, because that case builds its projectile through
+`Enemy.fire_at()` rather than waiting for the AI.
+
+**Not done, and not claimed:** H1. Seven of ten declared roles still have no
+behaviour, and this changes nothing about that.
