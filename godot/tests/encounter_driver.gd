@@ -578,9 +578,10 @@ func _a_bulwark_can_be_flanked_by_moving() -> void:
 			% rad_to_deg(acos(Constants.BULWARK_SHIELD_DOT))
 			+ "(closest approach %.1f m, walked %.1f m at speed_mult "
 			% [float(fight["closest"]), float(fight["walked"])]
-			+ "%.2f, top speed %.2f m/s, holds [%s])"
+			+ "%.2f, top speed %.2f m/s, holds [%s], from %v to %v)"
 			% [controller.player.speed_mult, float(fight["top_speed"]),
-				str(fight["holds"])])
+				str(fight["holds"]), fight["from"],
+				controller.player.global_position])
 	_note("bulwark, played: %s after %.1f s with %.0f of %.0f hp left. "
 			% ["cleared" if int(fight["left"]) == 0 else "NOT cleared",
 				float(fight["frames"]) * DT, controller.player.hp, opened]
@@ -603,6 +604,25 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 		target: Enemy, budget: int) -> Dictionary:
 	var player: Player = controller.player
 	player.input_frozen = false
+	# **STAND IN THE OPEN BEFORE CIRCLING.** A harness setup, not a
+	# result: the controller spawns the player at the room's ARRIVAL,
+	# which is against the entry wall, and strafing from there walks
+	# straight into it. The body reached 6.97 m/s for one frame and then
+	# covered 1.9 m in twenty-three seconds -- pinned, not still, and
+	# certainly not circling. Everything after this line is walked.
+	var box: AABB = record.get("bounds", AABB())
+	if box.has_volume():
+		var middle: Vector3 = box.position + box.size / 2.0
+		var out: Vector3 = middle - target.global_position
+		out.y = 0.0
+		if out.length() < 0.5:
+			out = Vector3(1.0, 0.0, 0.0)
+		player.global_position = target.global_position \
+				+ out.normalized() * 4.0 + Vector3.UP * 1.0
+		player.velocity = Vector3.ZERO
+		for _settle in 10:
+			await get_tree().physics_frame
+	var opened_at := player.global_position
 	var frames := 0
 	# **DID THE ORBIT ACTUALLY GET ROUND?** `BULWARK_SHIELD_DOT` is 0.35,
 	# a cone of about 70 degrees either side of its facing, so the player
@@ -627,14 +647,27 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 	var holds_seen := ""
 	var top_speed := 0.0
 	Input.action_press("fire_pulse")
-	Input.action_press("move_left")
+	var strafe := "move_left"
+	Input.action_press(strafe)
+	var stuck := 0
 	while frames < budget:
 		if _living(record).is_empty() or player._dead:
 			break
 		_aim_at(player, target)
 		await get_tree().physics_frame
 		frames += 1
-		walked += player.global_position.distance_to(was)
+		var step := player.global_position.distance_to(was)
+		# A CIRCLE THAT MEETS A WALL TURNS ROUND. `enemy.gd` does the
+		# same for its own bodies: a side that stayed blocked is not
+		# retried forever. Without it one wall ends the orbit for good.
+		stuck = stuck + 1 if step < 0.01 else 0
+		if stuck > 20:
+			Input.action_release(strafe)
+			strafe = "move_right" if strafe == "move_left" \
+					else "move_left"
+			Input.action_press(strafe)
+			stuck = 0
+		walked += step
 		was = player.global_position
 		top_speed = maxf(top_speed,
 				Vector2(player.velocity.x, player.velocity.z).length())
@@ -651,11 +684,13 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 						.angle_to(toward.normalized())))
 				closest = minf(closest, toward.length())
 	Input.action_release("move_left")
+	Input.action_release("move_right")
 	Input.action_release("fire_pulse")
 	player.input_frozen = true
 	return {"frames": frames, "left": _living(record).size(),
 			"died": player._dead, "widest": widest, "walked": walked,
 			"holds": holds_seen, "top_speed": top_speed,
+			"from": opened_at,
 			"closest": 0.0 if closest == INF else closest}
 
 
