@@ -577,3 +577,50 @@ composable yet, not a repair of something broken today, and there is now
 a control asserting that over real output — with a companion assertion
 that the sweep saw enemies at all, because a sweep over zero rooms
 passes for the wrong reason.
+
+---
+
+### DESS-10 — P19.1: the Gear grammar, and nine atoms nobody costed
+
+**Dess, 2026-09-22.** DESS-09 called P19 "a subsystem, not a slice" and
+left it. That was half right: the *runtime* is a subsystem, but **the
+grammar is a slice**, it is fully specified, and Prod and Epsilon both
+need it before anything can implement against it. `schemas/gear.py`.
+
+Amalgam §16 pinning Design 4 §16.1–§16.3: four territories, twenty-five
+domain atoms, three magnitude atoms, and the rule that a `HIGH` piece
+carries **exactly two** domain atoms from **one** territory — Design 4's
+expression of Design 1 §4.5's "high-tier Gear has exactly two
+intrinsics".
+
+**The design's own arithmetic is a control.** §16.1 states outright that
+`dom_crit` (26) + `mag_marked` (44) = 70, leaving 30, which exceeds the
+22 clause allowance and is why the resolver completes the piece with a
+second atom. The module reproduces 70 from its own tables, so a
+mistranscribed cost fails there rather than surviving into a budget.
+
+**NINE OF THE TWENTY-FIVE HAVE NO COST**, and they are listed rather
+than guessed: `dom_read_stress`, `dom_read_machine`,
+`dom_read_compounds`, `dom_status_duration`, `dom_relation_count`,
+`dom_signal_range`, `dom_transfer_range`, `dom_rail_control`,
+`dom_impact_resistance`. The Amalgam says its additions arrive *"at the
+magnitudes that proposal gave it"* — those numbers are in Designs 2, 3
+and 5 and have not been carried across. `composition_cost` **raises** on
+one rather than scoring it zero, which is `content_value.enemy_value`'s
+rule and the same reason: a free atom passes the budget check and makes
+the piece a fiction. The list is derived from the two tables, so
+recovering a cost removes it without anyone editing a list.
+
+**A vocabulary is not an offer.** `SUPPORTED_GEAR_DOMAINS` is **empty**
+and `refuse_unsupported_domain` refuses all twenty-five — NO GEAR BEFORE
+ITS RUNTIME, the rule the Status vocabulary already follows. An unknown
+atom is refused *before* the support question, so a typo comes back as
+"not a §16 atom" rather than "not implemented yet", which reads like
+something that will arrive. And the gate is shown admitting a domain
+under a patched support table, because a blanket refusal looks identical
+to a working gate while the table is empty.
+
+**Still open in P19:** `.2` qualified creation and fallback, `.3` gear
+and mods, `.4` Epsilon's actual agency, `.5` provider paths, `.6`
+boundary tests — all of which need either the nine costs or a runtime
+consumer.
