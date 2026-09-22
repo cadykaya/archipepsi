@@ -368,3 +368,106 @@ def test_a_setter_or_reader_in_a_room_that_does_not_exist_is_refused():
         declaring(composed(), [variable("c999", "c010")])
     with pytest.raises(ValidationError, match="which this Zone does not have"):
         declaring(composed(), [variable("c002", "c999")])
+
+
+# --------------------------------------------------------------------------
+# Owner corrections, 2026-09-22. Two of these are defects in the rules
+# this file shipped, so each one gets the case that would have caught it.
+# --------------------------------------------------------------------------
+
+def _gantry(**over) -> dict:
+    """Blindside's overhead gantry: a control you cannot reach on foot.
+
+    4.6 m up, no mantle, no stairs -- deliberately, because a placeholder
+    that lets you skip the loop is not a placeholder for the loop.
+    """
+    base = variable("c002", "c010")
+    base["setter"] = {"room_id": "c002", "selects": ["stowed", "lowered"],
+                      "capability": "grapple"}
+    base.update(over)
+    return base
+
+
+def test_entering_the_gantrys_room_does_not_operate_the_gantry():
+    """OWNER CORRECTION 2, and it was a real defect in the search.
+
+    The first cut let the player set any variable whose setter's room
+    they could stand in. Blindside's gantry then became operable the
+    moment they walked in underneath it, grapple or no grapple -- the
+    search granting itself a capability, which is the direction nothing
+    ever fails in.
+    """
+    zone = declaring(composed(), [_gantry()],
+                     gates=[("e:c002:c003",
+                             [{"variable_id": "gantry", "state": "lowered"}])])
+    # c002 is reachable on foot; the control in it is not operable.
+    assert not reachability(zone).ok, (
+        "walking into the room under the gantry is not reaching the gantry")
+
+
+def test_the_same_gantry_is_operable_once_the_capability_is_declared():
+    """The control that keeps the rule from refusing every gated setter."""
+    zone = declaring(composed(), [_gantry()],
+                     gates=[("e:c002:c003",
+                             [{"variable_id": "gantry", "state": "lowered"}])])
+    assert reachability(zone, declared_capabilities=["grapple"]).ok
+
+
+def test_a_setter_capability_is_counted_as_a_gate_the_logic_must_declare():
+    """No undeclared mandatory gate -- including this new kind of gate.
+
+    A control you cannot operate without the grapple gates everything
+    downstream of the state it sets. Collecting only edge capabilities
+    would have left a hole in that protection in the same change that
+    added a new way to make one.
+    """
+    zone = declaring(composed(), [_gantry()],
+                     gates=[("e:c002:c003",
+                             [{"variable_id": "gantry", "state": "lowered"}])])
+    joined = " ".join(reachability(zone).errors)
+    assert "grapple" in joined, (
+        f"the refusal must name the undeclared gate; got: {joined}")
+
+
+def test_selects_proves_an_operation_exists_not_a_reversal_you_can_reach():
+    """OWNER CORRECTION 2's other half, and the claim I had to withdraw.
+
+    `selects` containing the initial state says the control CAN put it
+    back. It says nothing about whether the player can get back to the
+    control and operate it. Here the reversal is declared and the
+    capability to operate it is not held, so the operation exists and
+    the reversal does not -- and only a search can tell them apart.
+    """
+    v = _gantry()
+    assert "stowed" in v["setter"]["selects"], "the reversal is declared"
+    zone = declaring(composed(), [v],
+                     gates=[("e:c002:c003",
+                             [{"variable_id": "gantry", "state": "lowered"}])])
+    assert not reachability(zone).ok
+    assert reachability(zone, declared_capabilities=["grapple"]).ok
+
+
+def test_a_reader_may_also_sit_in_the_setters_room():
+    """OWNER CORRECTION 4. A lever that visibly moves something beside
+    it AND opens a way somewhere else is ordinary good design, and the
+    first cut of the cross-room rule forbade it."""
+    both = variable("c002", "c010")
+    both["readers"] = [
+        {"room_id": "c010", "mechanism": "span_bolt", "when": ["lowered"]},
+        {"room_id": "c002", "mechanism": "ring_light", "when": ["lowered"]},
+    ]
+    zone = declaring(composed(), [both])
+    assert {r.room_id for r in zone.zone_state[0].readers} == {"c002", "c010"}
+    assert reachability(zone).ok
+
+
+def test_every_reader_in_the_setters_room_is_still_refused():
+    """What correction 4 did NOT relax: the relationship still has to
+    have a consequence somewhere else, or it is room-local."""
+    with pytest.raises(ValidationError, match="somewhere else"):
+        local = variable("c002", "c010")
+        local["readers"] = [
+            {"room_id": "c002", "mechanism": "a", "when": ["lowered"]},
+            {"room_id": "c002", "mechanism": "b", "when": ["lowered"]},
+        ]
+        declaring(composed(), [local])

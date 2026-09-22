@@ -440,36 +440,58 @@ Object transport has no producer, no consumer and no acceptance case
 yet, and writing a field for it now would be a declaration nothing hands
 a case to — this project's oldest failure, in its earliest form.
 
-### 11.2 Question 2 — a cross-room HELD requirement. Recommendation taken; exception declined.
+### 11.2 Question 2 — a cross-room HELD requirement: UNSUPPORTED, not refused
 
-Agreed on all three counts, and this is the sharp one:
+*Revised 2026-09-22 under owner correction 1. The first version of this
+section argued that a cross-room held requirement is unfair and treated
+reversible configuration as the honest replacement for it. **Both halves
+are withdrawn.** Held cross-room mechanics stay in the accepted design;
+what is true is narrower and is stated below.*
 
-1. §19.7 rule 2 does make a cross-room held requirement **impossible**
-   to express legally today. Room A's graph would have to write macro
-   state.
-2. The only legal alternative on today's rules **is a latch**, which is
-   exactly the silent conversion the clarification forbids. Prod and I
-   reached that from opposite directions — Prod from the engine having
-   nothing between monotone and gone-with-the-frame (F-23), me from
-   §20.7's licence not generalising (§3.1).
-3. **Reversible Zone configuration is the resolution, and it needs no
-   amendment.**
+The factual part stands, and Prod and I reached it from opposite
+directions — Prod from the engine having nothing between monotone and
+gone-with-the-frame (F-23), me from §20.7's licence not generalising
+(§3.1):
 
-I would add one thing to Prod's argument, because it strengthens it: a
-cross-room *held* requirement is not merely awkward, it is **unfair by
-§34's own standards**. The player holds a lever in room A while the
-consequence happens in room B where they cannot see it, so the feedback
-that would teach them what the lever does is in the one place they
-cannot be while operating it. The honest version is the reversible one.
+1. §19.7 rule 2 means a cross-room held requirement **cannot be
+   expressed** under the current contract. Room A's graph would have to
+   write macro state.
+2. The only thing today's rules would let you reach for instead **is a
+   latch**, which converts a live requirement into a permanent one.
 
-**The bounded exception is declined and recorded as available.** Prod
-names it precisely: rule 2 would need a bounded exception letting a room
-graph write one designated macro variable, restricted to non-mandatory
-relationships, with §30.6's tractability argument re-checked. That is
-the correct shape *if it is ever wanted*, and §4.0 is why it is not
-wanted yet: a writable machine-graph variable is what rule 2 exists to
-prevent, and §30.6's tractability argument rests on rule 2 holding.
-Named here so the choice stays visible rather than becoming accidental.
+**The status is UNSUPPORTED, which is not the same as refused.** The
+mechanic is not bad design and this contract does not judge it; it is a
+thing the current contract has no way to say. Recording it as
+unsupported keeps it visible as a gap to close rather than quietly
+disappearing it from the design.
+
+**What I withdraw.** I argued the mechanic is *unfair by §34's own
+standards* — that a player holding a lever in room A cannot see the
+consequence in room B. That is an argument about one possible staging of
+it, dressed up as a property of the mechanic. Feedback is a design
+problem with ordinary solutions, and a rule that rejects a whole class
+of mechanic because one arrangement of it would be opaque is a rule
+doing something other than its job.
+
+**Reversible Zone configuration is approved for the first Blindside
+integration** (owner, 2026-09-22) — and it is **not a substitute** for a
+held requirement. It is a different mechanic: the state persists until
+something sets it back, and the player is not pinned. Where that is what
+the design wants, it is the right tool. Where the design genuinely wants
+a *held* requirement, silently shipping a toggle or a latch instead is
+exactly the substitution §3.1 forbids.
+
+**So the amendment is drafted and ready to bring, not declined.** Prod
+named its shape precisely and it is the right one:
+
+> §19.7 rule 2 gains a bounded exception permitting a room graph to
+> write **one** designated macro variable, restricted to non-mandatory
+> relationships, with §30.6's tractability argument re-checked.
+
+It is not proposed now because **no selected 0.4 design needs one yet**.
+The moment one does, this is the amendment that comes to the owner —
+with the §30.6 re-check done rather than promised — instead of a toggle
+wearing a held requirement's name.
 
 ### 11.3 What this changes in the contract above
 

@@ -536,6 +536,68 @@ def record_latch(save: CampaignSave, zone_id: str, package_id: str,
     return _progress(save, zone_id, lambda p: p.with_latch(ref), known)
 
 
+def record_zone_state(save: CampaignSave, zone_id: str, variable_id: str,
+                      state: str) -> CampaignSave:
+    """D-8. A player operated a setter and the Zone's state changed.
+
+    **The authoritative state-update path.** The engine reports that a
+    control was worked; what becomes save data is the accepted
+    consequence, checked against the Zone the campaign actually
+    accepted — the same shape as `record_latch`, and for the same
+    reason.
+
+    Three refusals, each a different way of being wrong:
+
+    1. **The Zone declares no such variable.** Otherwise a typo becomes
+       persistent save data describing nothing.
+    2. **The variable has no such state.** A state outside its declared
+       set is a value no reader has a rule for.
+    3. **No setter can select that state.** This is the one a latch
+       analogy would miss. `states` is what the variable can HOLD;
+       `setter.selects` is what a player can PUT it in. A state that is
+       declared but unselectable is reachable only by something other
+       than a player operating a control, and §19.7 is explicit that
+       nothing else may move Zone state.
+
+    **Not monotone, and deliberately not on `latched`.** A reversible
+    variable set back is a legitimate transition, so this overwrites.
+    `ZoneProgress.macro_state` exists to hold exactly that, and the
+    resume-safety argument for the monotone sets is untouched by it.
+
+    **What this does NOT check, and the boundary matters.** It does not
+    assert the player was physically able to reach and work that
+    control. Whether Blindside's gantry is genuinely out of reach at
+    4.6 m is a measurement the engine owns; what the bridge settles is
+    that the Zone declares this control, that it can choose this state,
+    and that the route validation at acceptance already proved the
+    configuration is not self-locking.
+    """
+    def known(rec):
+        zone = rec.zone
+        declared = {v.variable_id: v for v in getattr(zone, "zone_state", ())
+                    } if zone is not None else {}
+        var = declared.get(variable_id)
+        if var is None:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no Zone-state variable "
+                f"'{variable_id}'"
+                + (f"; it declares {sorted(declared)}" if declared
+                   else " and declares none"))
+        if state not in var.states:
+            raise ValueError(
+                f"variable '{variable_id}' in Zone '{zone_id}' has no state "
+                f"'{state}'; it has {sorted(var.states)}")
+        if state not in var.setter.selects:
+            raise ValueError(
+                f"no control can put '{variable_id}' into '{state}'; the "
+                f"setter in room '{var.setter.room_id}' selects "
+                f"{sorted(var.setter.selects)}. Zone state changes only "
+                "when a player operates a setter (§19.7), so a state "
+                "nothing selects is one nothing could have set")
+    return _progress(save, zone_id,
+                     lambda p: p.with_macro(variable_id, state), known)
+
+
 def record_lock(save: CampaignSave, zone_id: str, room_id: str,
                 socket_id: str) -> CampaignSave:
     """A lock opened. Idempotent by `(room_id, socket_id)`.
@@ -886,6 +948,7 @@ TRANSITIONS = (
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
+    record_zone_state,
     reselect_hosts,
     commit_layout, refuse_layout,
 )

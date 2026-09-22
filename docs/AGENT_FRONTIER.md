@@ -1,5 +1,57 @@
 # AGENT FRONTIER
 
+## BRIDGE LANE — four corrections applied, and the composer emits — 2026-09-22
+
+**Two of the owner's four corrections were defects in rules I had
+shipped and sabotage-proven**, which is worth saying plainly: a rule can
+be correctly implemented, fully tested, and still be the wrong rule.
+
+**Correction 2 was the real one.** The search let the player set any
+variable whose setter's room they could reach, so Blindside's gantry —
+4.6 m up, no mantle, no stairs — became operable the moment they walked
+in underneath it. The search was granting itself a capability.
+`ZoneStateSetter.capability` now declares what operating a control costs
+beyond reaching its room, setter capabilities join the undeclared-gate
+accounting, and §4.0's "a reversible variable cannot strand you" is
+**withdrawn**: `selects` proves a reversal *operation* exists, not that
+the player can reach it. Physical operability evidence stays the engine
+lane's.
+
+**Correction 4:** the cross-room rule had become a content restriction.
+It now requires what it actually claims — at least one consequence
+somewhere else — and allows a reader beside the control too.
+
+**Correction 1:** held cross-room mechanics are **UNSUPPORTED, not
+unfair**. I withdrew the fairness argument; they stay in the design and
+the bounded §19.7 rule-2 amendment is drafted and ready to bring.
+Reversible configuration is approved for the first Blindside
+integration and is not a substitute.
+
+**Correction 3:** the consecutive-dock rule describes the ordered-route
+implementation and does **not** retire branching railways from the
+design. `RailJunction` is not a track fork, and Blindside's acquisition
+branch is walked, not ridden. DESS-01 lists the five pieces a branching
+configuration would still need.
+
+**The composer emits** (`cross_room.py`): handed a really composed Zone,
+it derives a control in `c002` and a consequence in `c023`, 21 rooms
+apart, gating a real edge — nothing in it names a room. It is a step,
+not a default, so `played_zone_digest` and the 0.3 comparison do not
+move. `transitions.record_zone_state` is the authoritative update path.
+
+**DESS-02: one guarantee was vacuous.** The composer claims it declines
+rather than emitting something broken; sabotaging that check left all
+fourteen controls green, because no candidate was ever unsolvable. The
+missing case — a Zone granting a capability, composed for a run not
+guaranteed it — now exists, and the sabotage fails.
+
+**Findings are lane-prefixed from here** (`DESS-nn` / `PROD-nn`). The
+flat series collided twice in two merges and both were spent renumbering.
+
+**Not done:** Prod's runtime half, physical acceptance, transported
+objects (explicit unfinished 0.4 row), and the featured-acquisition/AP
+delivery, which no macro declaration or dev grant proves.
+
 ## BRIDGE LANE — D-8 agreed, and the bridge half of cross-room is in — 2026-09-22
 
 **The contract came out the same from both lanes.** Prod's

@@ -112,6 +112,15 @@ why the rows above separate what was measured from what the paper says.
 
 ## Findings
 
+**ID scheme, from 2026-09-22 (owner instruction).** New findings take a
+**lane prefix** -- `DESS-nn` for the bridge/design lane, `PROD-nn` for
+engine/integration -- and each lane allocates its own numbers. The flat
+`F-nn` series collided twice in two merges (F-23 and F-25, both times
+between unrelated findings) and both merges were spent renumbering.
+**Existing `F-nn` entries keep their numbers**; renaming them would
+break every citation in the commit history for no benefit.
+
+
 ### F-01 — the carry works; the deck is the constraint
 
 - **Task / case identity:** P0, `make godot-passenger-carry` at `a7d23df`+,
@@ -1298,3 +1307,161 @@ nothing in a live seed declares one — the same honest position D-1's
 `featured_acquisition` is in. The engine half is unbuilt by agreement,
 and no physical acceptance has been run. A bridge that can refuse a bad
 relationship is not a game that has one.
+
+### DESS-01 — four owner corrections to D-8, two of them real defects
+
+**Dess, 2026-09-22.** The owner returned four focused corrections to the
+cross-room contract. Two were defects in rules I had shipped and
+sabotage-proven — which is worth saying plainly, because a rule can be
+correctly implemented, fully tested, and still be the wrong rule.
+
+**Correction 2 — room membership was standing in for operability, and
+that is the defect.** `_explore` let the player set any variable whose
+setter's room they could reach. Blindside's overhead gantry sits at
+4.6 m with no mantle and no stairs, deliberately — so the search made it
+operable the moment the player walked in underneath it, grapple or no
+grapple. **The search was granting itself a capability**, which is the
+direction in which nothing ever fails.
+
+`ZoneStateSetter.capability` now declares what operating a control costs
+over and above reaching its room, and the search treats it exactly as it
+treats an edge capability: impassable without it. Two further
+consequences, both of which would have been holes:
+
+- **Setter capabilities join the undeclared-gate accounting.** A control
+  you cannot operate without the grapple gates everything downstream of
+  the state it sets. Collecting only edge capabilities would have put a
+  hole in "no undeclared mandatory gate" in the same change that added a
+  new way to make one.
+- **§4.0's claim was too strong and is withdrawn.** It said a reversible
+  variable "cannot strand you". `selects` proves a reversal *operation*
+  exists; whether the player can reach that control and work it is a
+  question for the route search and for `setter.capability`. The
+  docstring now says so, and the two are kept apart — **physical
+  operability evidence stays the engine lane's**, because a declaration
+  the world does not match is a lie in either direction.
+
+**Correction 4 — an acceptance-case requirement had become a content
+restriction.** The cross-room rule refused *any* reader in the setter's
+room. A lever that visibly moves something beside it and also opens a
+way elsewhere is ordinary good design and there was never a reason to
+forbid it. The rule now requires what the declaration actually claims:
+**at least one consequence somewhere else.** Every-reader-local is still
+refused.
+
+**Correction 1 — held cross-room mechanics are UNSUPPORTED, not unfair.**
+I had argued they are unfair by §34's standards. Withdrawn: that is an
+argument about one staging of the mechanic dressed as a property of it.
+They stay in the accepted design, marked unsupported by the current
+contract, and the bounded §19.7 rule-2 amendment is **drafted and ready
+to bring** rather than declined. Reversible configuration is approved
+for the first Blindside integration and is **not a substitute** — where
+a selected design wants a held requirement, the amendment comes with the
+§30.6 re-check done, not a toggle wearing the name.
+
+**Correction 3 — the consecutive-dock rule describes the implementation,
+not the design.** It is accurate about what `RailCarrier` runs today and
+**does not retire branching or switchable railways from the accepted
+design**. Two naming hazards recorded so the distinction is not lost
+again: `RailJunction` is *not* a track fork — it is one railway's
+persistent machinery and the four-lifetime seam — and Blindside's
+acquisition branch is **walked, not ridden** (`railway_scenario._branch`,
+`walk_to`), so the selected configuration needs no branching rail at all.
+
+#### Remaining railway support a branching or switchable configuration needs
+
+Named now so it is a scoping list rather than a surprise. None of it is
+required by Blindside's selected three-dock configuration.
+
+| # | Support | Lane | Why it is not there today |
+|---:|---|---|---|
+| 1 | A carrier that can run a **graph** rather than one ordered route | engine | `RailCarrier` builds a link between consecutive docks only; a fork has no representation |
+| 2 | A **switch** whose position selects which onward link is live | engine + bridge | nothing declares a switch; `RailSpan` has a control that *commissions* a span, which is a different question from *routing* |
+| 3 | Switch position as **Zone state** rather than rail-local | bridge | D-8 already has the shape for it: a switch is a setter whose readers are spans. No new mechanism, and it is why D-8 must not grow a second railway |
+| 4 | Route conditions over switch position in `reachability` | bridge | the macro component now exists, so this is wiring rather than design |
+| 5 | Relaxing `_a_span_joins_docks_the_route_visits_in_turn` | bridge | one validator, and relaxing it invalidates no Zone that ever satisfied it |
+
+Items 3 and 4 are cheap because the cross-room work already landed the
+layer they need. Item 1 is the real engine cost and is the reason the
+restriction stands today.
+
+**Verification.** 7 new controls in `test_cross_room_state.py` (26
+total), each correction sabotage-proven separately: ignoring setter
+operability fails 3, dropping setter capabilities from the gate set
+fails exactly the one that names it, removing the remote-consequence
+rule fails 2.
+
+### DESS-02 — the composer emits, the transition records, and one guarantee was vacuous
+
+**Dess, 2026-09-22.** The next-checkpoint half the owner asked of this
+lane: *"an actual composer path that emits the declared relationship,
+plus the authoritative state-update/save path"*.
+
+**The composer — `archipepsi_bridge/cross_room.py`.** It is handed a Zone
+the campaign really composed and derives the relationship from that
+Zone's own structure: which rooms exist, which are on the spine, where
+the featured acquisition sits, which edge lies between the control and
+the consequence. **Nothing in it names a room.** On the played Zone it
+emits a control in `c002` and the consequence in `c023` — 21 rooms
+apart, furthest-first, because taking the first candidate that works
+takes the nearest, which is the weakest arrangement that still
+technically crosses a boundary.
+
+**It is a step, not a default, and that is deliberate.** Wiring emission
+into `topology.apply` would move `played_zone_digest`, the placement
+fixtures and the 0.3 comparison build in one commit. The owner's
+standing instruction is to preserve the comparison and the review
+snapshots, so a caller takes the step — the same shape `quiet.py` uses.
+`test_the_composer_does_not_touch_the_zone_it_was_given` holds that
+line.
+
+**The setter's cost comes off the Zone, not a flag.** If the Zone
+features an acquisition, operating the control requires it — which is
+Blindside's gantry: overhead, out of reach, and the reason the branch
+that supplies the tool exists. Correction 2 reaches the composer
+without a second mechanism.
+
+**The state-update path — `transitions.record_zone_state`.** Same shape
+as `record_latch`: the engine reports the control was worked, and what
+becomes save data is the accepted consequence, checked against the Zone
+the campaign accepted. Three refusals, and the third is the one a latch
+analogy would miss — **`states` is what the variable can HOLD,
+`setter.selects` is what a player can PUT it in**, so a declared but
+unselectable state is one nothing could have set, and §19.7 says nothing
+but a player operating a setter moves Zone state. It writes
+`macro_state`, never `latched`, so a reversal is a legitimate transition
+rather than a hole in a monotone set.
+
+**`test_every_transition_returns_a_validated_campaign` caught the new
+transition missing from `TRANSITIONS`** before I did. That guard exists
+because an unregistered transition is one nothing sweeps.
+
+**AND ONE GUARANTEE WAS VACUOUS.** The composer's docstring claims it
+*"declines rather than emitting something broken"*. Sabotaging the
+`if reach.ok` that implements it left **all fourteen controls green** —
+because on a Zone with no featured acquisition every candidate is
+solvable and the check never fires. A guarantee nothing can falsify is
+not a guarantee, and it is this project's oldest failure wearing a new
+coat: a measurement that exists, is correct, and is never handed the
+case that fails it.
+
+The case it was missing: a Zone that grants a capability, composed for a
+run **not guaranteed that capability**. The control then needs something
+the player has not got, the gate is a route nothing opens, and the
+composer must refuse. Three controls now cover it, and removing
+`if reach.ok` fails exactly two of them.
+
+**Verification.** `bridge/tests/test_cross_room_composer.py`, 17
+controls, all against `playtest.played_zone()` or a Zone rebuilt from it
+through `topology.compose_chain` + `apply` — the real composition path,
+because slicing a finished Zone by hand leaves dangling edge references
+and the validators correctly call that a fixture defect. Sabotage:
+dropping the furthest-first preference fails 2, dropping the
+select-check in the transition fails exactly its own, dropping
+`if reach.ok` fails 2.
+
+**What is still not done.** Prod's runtime half is unbuilt by agreement;
+no physical acceptance has run; **transported-object support remains an
+explicit unfinished 0.4 row**; and neither the macro declaration nor a
+dev grant proves the featured-acquisition/AP delivery — that contract is
+still M2's completion requirement and is untouched by any of this.

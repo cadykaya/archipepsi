@@ -1676,6 +1676,24 @@
           "minItems": 1,
           "title": "Selects",
           "type": "array"
+        },
+        "capability": {
+          "anyOf": [
+            {
+              "enum": [
+                "ranged_hit",
+                "grapple",
+                "blink",
+                "cross_long_gap"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capability"
         }
       },
       "required": [

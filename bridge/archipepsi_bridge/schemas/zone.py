@@ -24,15 +24,15 @@ try:  # works standalone and when copied into a package
     from . import constants as C
     from . import mechanics as M
     from .graph import (
-        EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
-        ZoneKeySpec)
+        EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
+        TopologyEdge, ZoneKeySpec)
     from .physics import STATE_VECTOR_BOUND, state_vector_product
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
     from graph import (
-        EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
-        ZoneKeySpec)
+        EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
+        TopologyEdge, ZoneKeySpec)
     from physics import STATE_VECTOR_BOUND, state_vector_product
 
 #: Every joining socket name a procedural room can be given, matching
@@ -963,11 +963,28 @@ class RailNetwork(Strict):
         the engine's refusal becomes unreachable from a validated Zone
         while staying in place for a hand-built one.
 
-        Answering YES is also the direction that can be taken back. If
-        the carrier is ever made graph-capable -- real engine work, to
-        be scoped rather than assumed -- relaxing this rule invalidates
-        no Zone that ever satisfied it. Answering NO today would let
-        unbuildable Zones be composed in the meantime.
+        **THIS DESCRIBES THE IMPLEMENTATION, NOT THE DESIGN** (owner
+        correction 3, 2026-09-22). It is an accurate statement of what
+        `RailCarrier` runs today -- one ordered route, a link between
+        each consecutive pair -- and it **does not retire branching or
+        switchable railway configurations from the accepted design**.
+        They remain accepted and unbuilt, which is a scoping fact rather
+        than a decision against them.
+
+        Two things make that distinction easy to lose, so both are
+        written down. `RailJunction` is **not a track fork**: it is one
+        railway's persistent machinery and the seam keeping four
+        lifetimes apart, so a Zone naming a "junction" today is naming a
+        control point, not a branch. And relaxing this rule later
+        invalidates no Zone that ever satisfied it, which is why YES is
+        the answer that can be taken back while NO would have left
+        unbuildable Zones composable in the meantime.
+
+        What Blindside's selected configuration needs is already served:
+        S1-S2-S3 is a linear three-dock route, and its acquisition
+        branch is **walked, not ridden** (`railway_scenario._branch`).
+        `docs/ledgers/HUGE_BATCH_LEDGER.md` DESS-01 lists the support a
+        branching or switchable configuration would still require.
         """
         order = [d.dock_id for d in self.docks]
         at = {dock_id: i for i, dock_id in enumerate(order)}
@@ -1019,6 +1036,26 @@ class ZoneStateSetter(Strict):
     #: Which states this control can choose. A subset of the variable's
     #: `states`, and the field §4.0's lifetime rule is checked against.
     selects: tuple[_STATE_NAME, ...] = Field(min_length=1, max_length=4)
+    #: What OPERATING this control requires, over and above standing in
+    #: its room. `None` means reaching the room is enough.
+    #:
+    #: **OWNER CORRECTION 2, 2026-09-22, and it was a real defect.**
+    #: The search granted a setter to anyone who could reach its room,
+    #: so Blindside's overhead gantry -- a control at 4.6 m with no
+    #: mantle and no stairs -- became operable in logic the moment the
+    #: player walked in underneath it, grapple or no grapple. Room
+    #: membership is not operability, and a search that assumes it is
+    #: over-approximates in the player's favour, which is the direction
+    #: nothing ever fails in.
+    #:
+    #: **What this field is and is not.** It is the DECLARATION of what
+    #: operating the control costs, and `reachability` honours it. It is
+    #: NOT evidence that the control really is out of reach: that the
+    #: gantry stands at 4.6 m and a baseline jump tops out at 1.33 m is
+    #: a physical measurement, and it belongs to the engine lane. The
+    #: two are kept apart deliberately -- a declaration the world does
+    #: not match is a lie in either direction.
+    capability: Capability | None = None
 
 
 class ZoneStateReader(Strict):
@@ -1106,9 +1143,19 @@ class ZoneStateVariable(Strict):
           initial one. Monotone by construction, which is §5.5's latch
           DERIVED rather than asserted.
         - `reversible` -- the initial state is selectable, and at least
-          one other. The player can always put it back, so "a reversible
-          variable cannot strand you" is a fact about the declaration
-          rather than a hope about the content.
+          one other, so a reversal OPERATION exists.
+
+        **OWNER CORRECTION 2: an operation existing is not a reversal
+        the player can reach.** An earlier revision of this docstring
+        said "the player can always put it back, so a reversible
+        variable cannot strand you". That is false and it was the
+        dangerous direction of false. `selects` says the control CAN
+        choose the initial state; whether the player can get back to
+        that control and operate it is a question about the route and
+        about `setter.capability`, and it is answered by
+        `topology.reachability` -- which is why R-subset-E still has to
+        run over the macro component instead of being argued away by
+        this field.
         """
         selects = set(self.setter.selects)
         if self.lifetime == "permanent":
@@ -1129,19 +1176,27 @@ class ZoneStateVariable(Strict):
         return self
 
     @model_validator(mode="after")
-    def _a_reader_is_never_in_the_setters_room(self):
+    def _at_least_one_reader_is_somewhere_else(self):
         """What makes the relationship CROSS-room rather than merely declared.
 
-        A setter and a reader in one room is a room-local mechanism with
-        Zone-scope machinery wrapped around it, and an acceptance case
-        built on one would prove nothing about crossing a boundary.
+        **OWNER CORRECTION 4, 2026-09-22.** The first cut of this rule
+        refused *any* reader in the setter's room, which turned an
+        acceptance-case requirement into a restriction on all content.
+        A lever that visibly moves something beside it AND opens a way
+        somewhere else is ordinary good design, and there was never a
+        reason to forbid it.
+
+        What must hold is the claim the declaration actually makes: at
+        least one consequence is **somewhere else**. A relationship
+        whose every reader sits in the setter's room is a room-local
+        mechanism with Zone-scope machinery wrapped around it.
         """
-        for r in self.readers:
-            if r.room_id == self.setter.room_id:
-                raise ValueError(
-                    f"variable '{self.variable_id}' has its setter and a "
-                    f"reader both in room '{r.room_id}'; that is a room-local "
-                    "mechanism, not a cross-room relationship")
+        if all(r.room_id == self.setter.room_id for r in self.readers):
+            raise ValueError(
+                f"variable '{self.variable_id}' has every reader in "
+                f"'{self.setter.room_id}', the setter's own room; that is a "
+                "room-local mechanism, not a cross-room relationship. At "
+                "least one consequence has to be somewhere else")
         seen: set[tuple[str, str]] = set()
         for r in self.readers:
             if (r.room_id, r.mechanism) in seen:

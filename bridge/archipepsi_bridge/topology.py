@@ -1263,10 +1263,10 @@ def _explore(start: str, edges, doors_by_room, keys_by_room,
     base = (tuple(v.initial for v in zone_state) if start_macro is None
             else tuple(start_macro))
     #: room -> the variables the player can operate while standing in it.
-    setters: dict[str, list[tuple[int, tuple[str, ...]]]] = {}
+    setters: dict[str, list[tuple[int, tuple[str, ...], str | None]]] = {}
     for i, v in enumerate(zone_state):
         setters.setdefault(v.setter.room_id, []).append(
-            (i, tuple(v.setter.selects)))
+            (i, tuple(v.setter.selects), v.setter.capability))
 
     def collect(room: str, held: frozenset[str]) -> frozenset[str]:
         got = {k.key_id for k in keys_by_room.get(room, ())}
@@ -1283,7 +1283,16 @@ def _explore(start: str, edges, doors_by_room, keys_by_room,
         # search can move it, which is the whole reason the crossing is
         # tractable and the reason a self-locking configuration shows up
         # here as a state the exit cannot be reached from.
-        for idx, selects in setters.get(room, ()):
+        #
+        # BUT STANDING IN THE ROOM IS NOT OPERATING THE CONTROL (owner
+        # correction 2). Blindside's gantry is 4.6 m up with no mantle
+        # and no stairs; walking in underneath it is not reaching it.
+        # A setter declaring a capability is impassable without it --
+        # not skipped, not assumed, impassable -- exactly as an edge
+        # requiring one already is.
+        for idx, selects, needs in setters.get(room, ()):
+            if needs is not None and needs not in have:
+                continue
             for chosen in selects:
                 if macro[idx] == chosen:
                     continue
@@ -1473,11 +1482,19 @@ def reachability(zone, entry_id: str | None = None,
     keys_by_room = {c.id: c.keys for c in chambers}
 
     have = guaranteed_capabilities(declared_capabilities)
-    every = have | {e.capability for e in zone.edges if e.capability}
+    zstate = tuple(getattr(zone, "zone_state", ()) or ())
+    # SETTER CAPABILITIES ARE GATES TOO (owner correction 2). A control
+    # you cannot operate without the grapple gates everything downstream
+    # of the state it sets, exactly as an edge requiring it does -- so it
+    # belongs in the same undeclared-gate accounting. Collecting only
+    # edge capabilities would have left a hole in "no undeclared
+    # mandatory gate" in the same change that added a new kind of gate.
+    every = (have
+             | {e.capability for e in zone.edges if e.capability}
+             | {v.setter.capability for v in zstate if v.setter.capability})
     undeclared = sorted(every - have)
 
     errors: list[str] = []
-    zstate = tuple(getattr(zone, "zone_state", ()) or ())
     real = _explore(entry, zone.edges, doors_by_room, keys_by_room, have,
                     zone_state=zstate)
     ideal = (real if not undeclared else
