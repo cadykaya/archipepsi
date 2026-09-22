@@ -4029,6 +4029,41 @@ wrong answer costs three rooms instead of ten.
 **Nothing follows until the owner reviews these.** Wave 2 is four rooms
 and Wave 3 is three; neither starts on a wake-up.
 
+### Batch 045 — the four 0.4 setpieces get visual identities (2026-09-22, PENDING)
+
+Nine assets for four rooms that work today out of `BoxMesh`. Candidate
+art: imported and fit-checked, **not** runtime-bound and **not**
+owner-approved — three separate states, and this batch claims the first
+two. Fitted against Production `claude/archipepsi-0-4-blindside` @
+`f404410`. Handoff:
+`docs/art-requests/2026-09-22-setpiece-visual-handoff.md`.
+
+| Asset | Metrics | For | Note |
+| --- | --- | --- | --- |
+| `sp_skiff_deck` | 300 tris · 4.00 × 4.16 × 1.19 m · 32.0 texels/m | Blindside carrier | `RailCarrier` deck, origin at the box centre; curb 0.08, nothing above node +0.95 |
+| `sp_dock_stand` | 72 tris · 0.80 × 0.80 × 1.27 m · 32.0 texels/m | Blindside dock | two levers and a readout, standing beside the dock inside its footprint |
+| `sp_hoist_car` | 132 tris · 4.00 × 4.00 × 1.18 m · 32.0 texels/m | Passing Platforms, vertical | the climbing car: direction before it moves |
+| `sp_crossing_carrier` | 96 tris · 4.04 × 4.00 × 0.88 m · 32.0 texels/m | Passing Platforms, horizontal | the crossing car, low enough to read as the other journey |
+| `sp_receiver_hood` | 72 tris · 2.40 × 1.14 × 1.70 m · 32.0 texels/m | Counterfire receiver | a hood over the receiver at `RECEIVER_Z` −7.0 |
+| `sp_lane_screen` | 60 tris · 0.34 × 3.00 × 1.37 m · 32.0 texels/m | Counterfire lane | lane-edge protection, not a wall across the lane |
+| `sp_shutter_leaf` | 60 tris · 0.48 × 2.40 × 2.60 m · 32.0 texels/m | Counterfire shutter | authored about its box centre; no pivot invented |
+| `sp_weight_plate` | 72 tris · 2.40 × 2.40 × 0.16 m · 32.0 texels/m | Unweighted sensor | the plate the switch reads, 0.16 under the 0.12 walk-up plus its own sill |
+| `sp_ballast_crate` | 132 tris · 2.12 × 2.12 × 1.00 m · 32.0 texels/m | Unweighted crate | **exactly 1.0 m in every state** against `MAX_VERTICAL_STEP` 1.0 |
+
+All nine at **32 texels/m — the architecture band, not the prop band's
+64.** A skiff at 64 standing against docks and yard walls at 32 reads as
+a different game's asset pasted in; the fit decision beat the tier table.
+
+**A handrail at a natural height would break the gantry guarantee.** Deck
+top world 1.0 plus a 1.333 m standing jump reaches 2.33, under `GANTRY_Y`
+3.1. A railing cap at a normal 1.1 m sits at world 2.1, and 2.1 + 1.333 =
+**3.43 — above the gantry.** Nothing here on a rideable deck rises past
+**world 1.75** (node +0.95); `assert_under_cap()` enforces it and refused
+its own author twice during the batch.
+
+Measured boxes are Blender-ordered (width, depth, height); the manifest
+carries `size_axes` and the runtime order.
+
 ---
 
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
