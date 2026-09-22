@@ -142,6 +142,7 @@ jobs:
           make godot-mass-class
           make godot-unweighted
           make godot-target-facing
+          make godot-rail-zone
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live
