@@ -1111,6 +1111,32 @@
       "title": "RailSpan",
       "type": "object"
     },
+    "StateCondition": {
+      "additionalProperties": false,
+      "description": "A route condition over a declared Zone-state variable.\n\nD-8 \u00a74. Amalgam \u00a75.6 step 6a says every `TopologyEdge` predicate is\nevaluated against the restored macro state -- and until now the edge\nhad no predicate to evaluate, so the design described a check the\ncode could not express.\n\n**It names the VARIABLE, never the setter's node.** The variable is\nrestored at \u00a75.6 step 4; the setter's node is rebuilt at steps 9-10\nand may be a different object afterwards, which `M1-visible` already\nasserts of the span, the lever and the carrier. A condition that\nnamed the node would name something that does not exist yet when it\nis evaluated.",
+      "properties": {
+        "variable_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Variable Id",
+          "type": "string"
+        },
+        "state": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "variable_id",
+        "state"
+      ],
+      "title": "StateCondition",
+      "type": "object"
+    },
     "TopologyEdge": {
       "additionalProperties": false,
       "description": "One edge of the Zone graph.\n\nThe list order of `Zone.chambers` used to *be* the topology. This is\nwhat replaces it, and a Zone carrying no edges still means the chain\nit always meant.",
@@ -1172,6 +1198,15 @@
           ],
           "default": null,
           "title": "Capability"
+        },
+        "requires_state": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/StateCondition"
+          },
+          "maxItems": 4,
+          "title": "Requires State",
+          "type": "array"
         }
       },
       "required": [
@@ -1579,6 +1614,143 @@
       ],
       "title": "ZoneKeySpec",
       "type": "object"
+    },
+    "ZoneStateReader": {
+      "additionalProperties": false,
+      "description": "A room whose local mechanism responds to the variable.\n\nD-8 \u00a74, answering Prod's \u00a73 question 3. **The reader names the\nvariable and never the setter's node**, which is what makes the\nstale reference the owner warned about impossible to write rather\nthan merely discouraged -- see `Zone._a_reader_is_somewhere_else`.",
+      "properties": {
+        "room_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Room Id",
+          "type": "string"
+        },
+        "mechanism": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Mechanism",
+          "type": "string"
+        },
+        "when": {
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "When",
+          "type": "array"
+        }
+      },
+      "required": [
+        "room_id",
+        "mechanism",
+        "when"
+      ],
+      "title": "ZoneStateReader",
+      "type": "object"
+    },
+    "ZoneStateSetter": {
+      "additionalProperties": false,
+      "description": "Where the player performs the interaction, and what it may select.\n\nD-8 \u00a74, answering Prod's \u00a73 question 2. \u00a719.7 is explicit that the\ncrossing happens because **the player performs a setter package's\ninteraction** -- so a setter has a room, and that room is the one\nthe player has to be standing in.",
+      "properties": {
+        "room_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Room Id",
+          "type": "string"
+        },
+        "selects": {
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Selects",
+          "type": "array"
+        }
+      },
+      "required": [
+        "room_id",
+        "selects"
+      ],
+      "title": "ZoneStateSetter",
+      "type": "object"
+    },
+    "ZoneStateVariable": {
+      "additionalProperties": false,
+      "description": "One declared cross-room relationship: `ZoneState.macro`, named.\n\nThe bridge has budgeted macro variables since `physics.py` was\nwritten -- `state_vector_product` multiplies a tuple of state counts\nagainst \u00a74.10's bound -- and has never been able to NAME one. This\nis the declaration that arithmetic was waiting for.\n\n**The three-step crossing, as data** (D-8 \u00a72, from \u00a719.7): a player\ninteraction in `setter.room_id` writes `variable_id`, and each\nreader's room graph reads it. Rooms never address each other at any\nstep, which is why the forbidden global signal bus is not ruled out\nby a rule here -- it is unrepresentable.",
+      "properties": {
+        "variable_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Variable Id",
+          "type": "string"
+        },
+        "states": {
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "States",
+          "type": "array"
+        },
+        "initial": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Initial",
+          "type": "string"
+        },
+        "lifetime": {
+          "enum": [
+            "reversible",
+            "permanent"
+          ],
+          "title": "Lifetime",
+          "type": "string"
+        },
+        "setter": {
+          "$ref": "#/$defs/ZoneStateSetter"
+        },
+        "readers": {
+          "items": {
+            "$ref": "#/$defs/ZoneStateReader"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Readers",
+          "type": "array"
+        },
+        "mandatory": {
+          "default": false,
+          "title": "Mandatory",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "variable_id",
+        "states",
+        "initial",
+        "lifetime",
+        "setter",
+        "readers"
+      ],
+      "title": "ZoneStateVariable",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -1716,6 +1888,15 @@
         }
       ],
       "default": null
+    },
+    "zone_state": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ZoneStateVariable"
+      },
+      "maxItems": 4,
+      "title": "Zone State",
+      "type": "array"
     }
   },
   "required": [

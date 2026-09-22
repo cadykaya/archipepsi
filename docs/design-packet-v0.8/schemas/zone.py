@@ -26,12 +26,14 @@ try:  # works standalone and when copied into a package
     from .graph import (
         EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
         ZoneKeySpec)
+    from .physics import STATE_VECTOR_BOUND, state_vector_product
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
     from graph import (
         EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
         ZoneKeySpec)
+    from physics import STATE_VECTOR_BOUND, state_vector_product
 
 #: Every joining socket name a procedural room can be given, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
@@ -998,6 +1000,158 @@ class RailNetwork(Strict):
         return self
 
 
+#: One state name of a Zone-state variable. Same charset as every other
+#: id here, for the same reason: a free string is a field Epsilon can
+#: fill with anything.
+_STATE_NAME = Annotated[str, Field(min_length=1, max_length=24,
+                                   pattern=r"^[a-z0-9_]+$")]
+
+
+class ZoneStateSetter(Strict):
+    """Where the player performs the interaction, and what it may select.
+
+    D-8 §4, answering Prod's §3 question 2. §19.7 is explicit that the
+    crossing happens because **the player performs a setter package's
+    interaction** -- so a setter has a room, and that room is the one
+    the player has to be standing in.
+    """
+    room_id: str = _ID
+    #: Which states this control can choose. A subset of the variable's
+    #: `states`, and the field §4.0's lifetime rule is checked against.
+    selects: tuple[_STATE_NAME, ...] = Field(min_length=1, max_length=4)
+
+
+class ZoneStateReader(Strict):
+    """A room whose local mechanism responds to the variable.
+
+    D-8 §4, answering Prod's §3 question 3. **The reader names the
+    variable and never the setter's node**, which is what makes the
+    stale reference the owner warned about impossible to write rather
+    than merely discouraged -- see `Zone._a_reader_is_somewhere_else`.
+    """
+    room_id: str = _ID
+    #: The local mechanism this variable drives, in that room. Room-layer
+    #: per §19.7: the Zone state is read, the mechanism is local.
+    mechanism: str = _ID
+    #: The states in which the mechanism is driven.
+    when: tuple[_STATE_NAME, ...] = Field(min_length=1, max_length=4)
+
+
+class ZoneStateVariable(Strict):
+    """One declared cross-room relationship: `ZoneState.macro`, named.
+
+    The bridge has budgeted macro variables since `physics.py` was
+    written -- `state_vector_product` multiplies a tuple of state counts
+    against §4.10's bound -- and has never been able to NAME one. This
+    is the declaration that arithmetic was waiting for.
+
+    **The three-step crossing, as data** (D-8 §2, from §19.7): a player
+    interaction in `setter.room_id` writes `variable_id`, and each
+    reader's room graph reads it. Rooms never address each other at any
+    step, which is why the forbidden global signal bus is not ruled out
+    by a rule here -- it is unrepresentable.
+    """
+    variable_id: str = _ID
+    #: 2 to 4, exactly §4.10's per-variable range as `state_vector_product`
+    #: already assumes.
+    states: tuple[_STATE_NAME, ...] = Field(min_length=2, max_length=4)
+    initial: _STATE_NAME
+    #: §4.0. NOT a label beside the declaration -- a claim about it, which
+    #: `_the_lifetime_agrees_with_what_the_setter_can_do` checks.
+    lifetime: Literal["reversible", "permanent"]
+    setter: ZoneStateSetter
+    readers: tuple[ZoneStateReader, ...] = Field(min_length=1, max_length=4)
+    #: `RailSpan.mandatory`'s question, in its own words and for its own
+    #: reason: §13.2 forbids a feature from lying on the mandatory path,
+    #: so a mandatory cross-room relationship cannot be a `feature:` tag
+    #: either. Hence first class, exactly as the railway is.
+    mandatory: bool = False
+
+    @model_validator(mode="after")
+    def _states_are_distinct_and_contain_everything_named(self):
+        if len(set(self.states)) != len(self.states):
+            raise ValueError(
+                f"variable '{self.variable_id}' repeats a state name; two "
+                "states spelled the same cannot be told apart")
+        known = set(self.states)
+        if self.initial not in known:
+            raise ValueError(
+                f"variable '{self.variable_id}' starts in '{self.initial}', "
+                f"which is not one of its states {sorted(known)}")
+        stray = set(self.setter.selects) - known
+        if stray:
+            raise ValueError(
+                f"variable '{self.variable_id}' has a setter selecting "
+                f"{sorted(stray)}, which it does not declare")
+        for r in self.readers:
+            stray = set(r.when) - known
+            if stray:
+                raise ValueError(
+                    f"variable '{self.variable_id}' has a reader in room "
+                    f"'{r.room_id}' responding to {sorted(stray)}, which it "
+                    "does not declare")
+        return self
+
+    @model_validator(mode="after")
+    def _the_lifetime_agrees_with_what_the_setter_can_do(self):
+        """D-8 §4.0 -- the rule that makes the silent latch unwritable.
+
+        The clarification says: do not silently replace a live
+        requirement with a permanent latch. A label saying `reversible`
+        beside a setter that can only ever move one way IS that
+        replacement, and nothing but a reviewer's attention would have
+        caught it. So lifetime is proven from the declaration:
+
+        - `permanent`  -- exactly one selectable state, and not the
+          initial one. Monotone by construction, which is §5.5's latch
+          DERIVED rather than asserted.
+        - `reversible` -- the initial state is selectable, and at least
+          one other. The player can always put it back, so "a reversible
+          variable cannot strand you" is a fact about the declaration
+          rather than a hope about the content.
+        """
+        selects = set(self.setter.selects)
+        if self.lifetime == "permanent":
+            if len(selects) != 1 or self.initial in selects:
+                raise ValueError(
+                    f"variable '{self.variable_id}' is declared permanent, "
+                    f"but its setter selects {sorted(selects)}; a permanent "
+                    "variable is monotone, so its setter chooses exactly one "
+                    f"state and it is not the initial '{self.initial}'")
+        else:
+            if self.initial not in selects or len(selects) < 2:
+                raise ValueError(
+                    f"variable '{self.variable_id}' is declared reversible, "
+                    f"but its setter selects {sorted(selects)} and cannot "
+                    f"return it to '{self.initial}'; that is a permanent "
+                    "variable wearing a reversible label, which is exactly "
+                    "the silent latch this rule exists to refuse")
+        return self
+
+    @model_validator(mode="after")
+    def _a_reader_is_never_in_the_setters_room(self):
+        """What makes the relationship CROSS-room rather than merely declared.
+
+        A setter and a reader in one room is a room-local mechanism with
+        Zone-scope machinery wrapped around it, and an acceptance case
+        built on one would prove nothing about crossing a boundary.
+        """
+        for r in self.readers:
+            if r.room_id == self.setter.room_id:
+                raise ValueError(
+                    f"variable '{self.variable_id}' has its setter and a "
+                    f"reader both in room '{r.room_id}'; that is a room-local "
+                    "mechanism, not a cross-room relationship")
+        seen: set[tuple[str, str]] = set()
+        for r in self.readers:
+            if (r.room_id, r.mechanism) in seen:
+                raise ValueError(
+                    f"variable '{self.variable_id}' drives mechanism "
+                    f"'{r.mechanism}' in room '{r.room_id}' twice")
+            seen.add((r.room_id, r.mechanism))
+        return self
+
+
 class Zone(Strict):
     #: Still 7, and deliberately. The Zone contract did not change in v0.8 —
     #: Echoes 2.0 changes what an Echo means, not what a Zone is — and
@@ -1048,6 +1202,82 @@ class Zone(Strict):
     #: Optional: a Zone that features nothing establishes nothing, which
     #: is every Zone composed before this.
     featured_acquisition: FeaturedAcquisition | None = None
+
+    #: D-8. The cross-room relationships this Zone declares -- the
+    #: `ZoneState.macro` of §5.1, which `physics.state_vector_product`
+    #: has budgeted since before anything could name one.
+    #:
+    #: Additive and optional, so every Zone composed before this still
+    #: means what it meant and `schema_version` stays 7. Four is the
+    #: bound: four variables of four states is 256 configurations, which
+    #: leaves §4.10's 4096 room for the latches that compete for the
+    #: same budget rather than spending it all here.
+    zone_state: tuple[ZoneStateVariable, ...] = Field(
+        default=(), max_length=4)
+
+    @model_validator(mode="after")
+    def _zone_state_names_rooms_this_zone_has(self):
+        """D-8 §5's generation constraints, the half a schema can settle.
+
+        A setter in a room that does not exist is a control nobody can
+        reach; a reader in one is a consequence nobody can see.
+        """
+        if not self.zone_state:
+            return self
+        rooms = {c.id for c in self.chambers}
+        seen: set[str] = set()
+        for v in self.zone_state:
+            if v.variable_id in seen:
+                raise ValueError(
+                    f"two Zone-state variables are both called "
+                    f"'{v.variable_id}'; the id is the handle a reader binds "
+                    "to, so two of them cannot be told apart")
+            seen.add(v.variable_id)
+            if v.setter.room_id not in rooms:
+                raise ValueError(
+                    f"variable '{v.variable_id}' has its setter in room "
+                    f"'{v.setter.room_id}', which this Zone does not have")
+            for r in v.readers:
+                if r.room_id not in rooms:
+                    raise ValueError(
+                        f"variable '{v.variable_id}' has a reader in room "
+                        f"'{r.room_id}', which this Zone does not have")
+
+        # §4.10's budget, through the function that has computed it all
+        # along. Latches are counted where they are known; here the
+        # claim is only that the declared variables alone do not spend
+        # the whole vector.
+        product = state_vector_product(
+            macro_variables=tuple(len(v.states) for v in self.zone_state))
+        if product > STATE_VECTOR_BOUND:
+            raise ValueError(
+                f"the declared Zone-state variables alone are {product} "
+                f"configurations, past §4.10's {STATE_VECTOR_BOUND} bound")
+        return self
+
+    @model_validator(mode="after")
+    def _route_conditions_name_state_this_zone_declares(self):
+        """An edge gated on a variable nobody declares is a locked route
+        with no key, and nothing in the search would ever open it.
+
+        Checked even when `zone_state` is empty, which is the case that
+        matters: an edge carrying a condition in a Zone that declares no
+        variables is the whole failure in miniature.
+        """
+        by_id = {v.variable_id: v for v in self.zone_state}
+        for e in self.edges:
+            for c in e.requires_state:
+                var = by_id.get(c.variable_id)
+                if var is None:
+                    raise ValueError(
+                        f"edge '{e.edge_id}' requires Zone-state variable "
+                        f"'{c.variable_id}', which this Zone does not declare")
+                if c.state not in var.states:
+                    raise ValueError(
+                        f"edge '{e.edge_id}' requires '{c.variable_id}' in "
+                        f"state '{c.state}', which that variable does not "
+                        f"have; it has {sorted(var.states)}")
+        return self
 
     @model_validator(mode="after")
     def _the_graph_and_the_assignments_agree(self):

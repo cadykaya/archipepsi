@@ -1,5 +1,48 @@
 # AGENT FRONTIER
 
+## BRIDGE LANE — D-8 agreed, and the bridge half of cross-room is in — 2026-09-22
+
+**The contract came out the same from both lanes.** Prod's
+`docs/D8_CROSS_ROOM_PROD.md` and my
+`docs/design-proposals/D8_CROSS_ROOM_STATE_CONTRACT.md` were written
+without either of us seeing the other's. Both name Amalgam §19.7, both
+quote *"a puzzle that should change the Zone drives a setter package's
+interaction, which the player then performs"* as the reason the
+forbidden global signal bus is unrepresentable rather than merely
+banned, and both call it D-8.
+
+**The crossing, as data:** a player interaction in the setter's room
+writes a declared handle, and the destination room's graph reads it.
+Rooms never address each other at any step. `Zone.zone_state` declares
+the variables `physics.state_vector_product` has budgeted since before
+anything could name one; `StateCondition` gives `TopologyEdge` the
+predicate §5.6 step 6a always claimed to evaluate; `_explore` carries a
+third state component; `ZoneProgress.macro_state` is overwritten rather
+than accumulated, and stays out of monotone `latched`.
+
+**§4.0 is the rule to argue with.** Lifetime is *proven* by the
+declaration: `permanent` means the setter selects exactly one non-initial
+state, `reversible` means it can always go back. The owner's "do not
+silently replace a live requirement with a permanent latch" is then
+unwritable rather than discouraged.
+
+**F-25: my own test found the defect.** Threading the macro component
+through five of six searches left `_key_graph_is_acyclic` at the initial
+state, so a gated edge looked shut and a Zone with no cycle reported
+one. One search knowing what another does not — reintroduced by the
+change that added the thing it is about, and caught only because the
+acceptance case runs on the really composed 23-room Zone instead of a
+three-room fixture.
+
+**Not done:** no composer emits a relationship, the engine half is
+unbuilt by agreement, and no physical acceptance has been run. `make
+test` 1631 passed, 6 skipped.
+
+**Also this batch — F-24**, answering Prod's three D-4 questions: spans
+must join consecutive docks (refused in the schema, where a Zone that
+cannot be built should not validate), `docks` order *is* the route
+order, and `home_dock` exists now with the engine's own default.
+
 ## ENGINE LANE — target facing is a gate, and a Zone can ask for a railway — 2026-09-22
 
 ### The bounded nudge, and 27 of 27

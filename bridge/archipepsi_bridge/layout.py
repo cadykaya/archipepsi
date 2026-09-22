@@ -853,6 +853,23 @@ def _rail_refs(zone) -> set[str]:
     return {f"rail:{n.network_id}" for n in zone.rail_networks}
 
 
+def _zone_state_refs(zone) -> set[str]:
+    """D-8. `zonestate:<variable_id>`, on the `rail:` precedent.
+
+    The same §13.2 argument, unchanged: a cross-room relationship the
+    player must use cannot be a `feature:` tag, because a feature may
+    not lie on the mandatory path -- so it would have to be optional,
+    and an optional mandatory relationship is a contradiction.
+
+    **Deliberately not a second kind of ref.** Prod's `D8_CROSS_ROOM_PROD`
+    §3 question 4 asked for the `rail:` precedent to be reused rather
+    than a new mechanism invented, and it costs nothing to honour: this
+    is the same line with a different prefix.
+    """
+    return {f"zonestate:{v.variable_id}"
+            for v in getattr(zone, "zone_state", ()) or ()}
+
+
 def _packages(c: "_Check", zone, result: dict) -> tuple:
     """The proposed physics packages, bound to this Zone or refused.
 
@@ -899,7 +916,7 @@ def _packages(c: "_Check", zone, result: dict) -> tuple:
             c.fail(f"package '{pp.package_id}' stands in room "
                    f"'{pp.room_id}', which this Zone does not have")
             continue
-        refs = _content_refs(room) | _rail_refs(zone)
+        refs = _content_refs(room) | _rail_refs(zone) | _zone_state_refs(zone)
         if pp.content_ref not in refs:
             c.fail(f"package '{pp.package_id}' realizes "
                    f"'{pp.content_ref}' in room '{pp.room_id}', which "

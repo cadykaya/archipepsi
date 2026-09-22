@@ -174,32 +174,64 @@ opposite of silent.
 
 Shaped after `RailNetwork`, which works, rather than after a new idea.
 
+*Revised after Prod's `D8_CROSS_ROOM_PROD.md` §3, which asks what the
+runtime must be able to answer. The first sketch covered three of its
+five questions; this covers all five.*
+
 ```
 ZoneStateVariable:
-  variable_id    : Id                     # the HANDLE. Zone-scoped.
-  states         : tuple[str, ...]        # 2..4, §4.10's per-variable range
-  default        : str                    # one of `states`
-  setter_room_id : Id                     # where the player performs it
-  lifetime       : enum { ZONE_CONFIGURATION, PERMANENT }
+  variable_id : Id                     # THE HANDLE. Zone-scoped.
+  states      : tuple[str, ...]        # 2..4, §4.10's per-variable range
+  initial     : str                    # one of `states`
+  lifetime    : enum { REVERSIBLE, PERMANENT }
+  setter      : ZoneStateSetter        # ONE. §19.7: the player performs it
+  readers     : tuple[ZoneStateReader, ...]        # at least one
+  mandatory   : bool                   # RailSpan.mandatory's question, verbatim
+
+ZoneStateSetter:
+  room_id     : Id                     # WHERE the player performs it
+  selects     : tuple[str, ...]        # which states it can choose
+
+ZoneStateReader:
+  room_id     : Id                     # a DIFFERENT room, enforced
+  mechanism   : Id                     # the local mechanism it drives
+  when        : tuple[str, ...]        # the states that drive it
 ```
 
-and, on the thing that reads it:
+`StateCondition` (`variable_id` + `state`) rides `TopologyEdge`, and on
+`DoorAssignment` when D-3 lands, so that §5.6 step 6a finally has a
+predicate to evaluate.
 
-```
-StateCondition:
-  variable_id    : Id
-  state          : str
-```
+`mandatory` is `RailSpan.mandatory`'s question asked again, deliberately
+in the same words and for the same reason: §13.2 forbids a feature from
+lying on the mandatory path, so a mandatory cross-room relationship
+cannot be a `feature:` tag either. The content ref is
+`zonestate:<variable_id>`, mirroring `rail:<network_id>` rather than
+inventing a second kind of ref — Prod's §3 question 4 asked for exactly
+that and it costs nothing to honour.
 
-carried by `TopologyEdge` (and, when D-3 lands, by `DoorAssignment`), so
-that §5.6 step 6a finally has a predicate to evaluate.
+### 4.0 Lifetime is PROVEN by the declaration, never asserted by it
+
+This is the part I would most like argued with, because it is where
+§3.1's rule stops being prose and starts being checkable.
+
+| lifetime | the setter's `selects` | why |
+|---|---|---|
+| `PERMANENT` | **exactly one state, and not `initial`** | monotone by construction: `initial` → set, one way, never back. §5.5's latch **derived** rather than labelled |
+| `REVERSIBLE` | **contains `initial`, and at least one other** | the player can always put it back, so "a reversible variable cannot strand you" is a fact about the declaration rather than a hope about the content |
+
+A variable declaring `REVERSIBLE` whose setter cannot return it to
+`initial` is refused. **That is the silent latch, and it can no longer
+be written down** — the conversion §3.1 forbids is precisely a permanent
+variable wearing a reversible label, and the two now differ in a field
+a validator reads rather than in an intention a reviewer has to guess.
 
 `lifetime` admits only the two **persistent** lifetimes, deliberately.
-Lifetimes 3 and 4 are `EPHEMERAL` and never serialized, so a declaration
-of them would be a declaration of something the save must not contain;
-lifetime 5's handle is the object, not a variable. Declaring only what
-persists is what keeps the vocabulary from being a second spelling of
-the Status system.
+Lifetimes 3 and 4 are `EPHEMERAL` and never serialized, so declaring
+them would declare something the save must not contain; lifetime 5's
+handle is the object, not a variable. Declaring only what persists is
+what keeps this vocabulary from becoming a second spelling of the Status
+system.
 
 ### 4.1 Why the destination names the handle and never the source node
 
@@ -363,3 +395,92 @@ valid, because the declaration is optional and a Zone that declares
 nothing means exactly what it meant before. The minor scenarios
 (EX50-011, EX50-021, EX50-033) are untouched and stay in scope, and
 `railway_scenario.gd` remains the development scaffolding it says it is.
+
+---
+
+## 11. Prod's two rule questions, answered
+
+*Added 2026-09-22, after `docs/D8_CROSS_ROOM_PROD.md`. Both documents
+were written without either lane seeing the other's, and both named
+§19.7, quoted the same "which the player then performs" sentence, and
+called the contract D-8. Nothing below is a compromise between two
+positions; the two positions were already the same one.*
+
+### 11.1 Question 1 — transported objects. Amendment accepted, and narrowed.
+
+Prod is right that **§19.7 does not cover a transported object**: it is
+not macro state, because rooms may not write it, and it is not a latch,
+because carrying it back makes it non-monotone.
+
+But the amendment is **narrower than stated**, because half of the
+question is already answered elsewhere and should not be re-answered:
+
+| the question | where it is settled |
+|---|---|
+| **Persistence** — what survives, and at what scope | **Already §10.5.** `allowed_volume` is *a list of rooms*, and a multi-room carryable is `ZONE_PERSISTENT`. No amendment |
+| **Authority** — which room's graph may read the object's state | **Genuinely open.** §10.5 assigns a category and says nothing about who reads it. This is what needs the amendment |
+
+So: **accepted, scoped to authority.** A transported object is
+room-layer state whose owning room is its current room, and crossing a
+boundary is a **transfer**, not a machine-layer write — which keeps rule
+2 intact, exactly as Prod argues. What I am declining is the implication
+that its persistence needs deciding: §5.1 and §10.5 decided it, and the
+union's own example sentence is a `BURNING` power cell carried three
+rooms to a generator.
+
+And Prod's second half is the right rule and worth pinning: if another
+room's graph must read an object's *location*, that is **a macro
+variable set by the transfer**, and the transfer is a setter interaction
+like any other — performed by the player, by carrying it. The three-step
+crossing of §2 is unchanged; the player is the bridge.
+
+**This does not land in the schema this batch.** Lifetime 5 is declared
+in §3's table and validated nowhere, and saying so is the honest state.
+Object transport has no producer, no consumer and no acceptance case
+yet, and writing a field for it now would be a declaration nothing hands
+a case to — this project's oldest failure, in its earliest form.
+
+### 11.2 Question 2 — a cross-room HELD requirement. Recommendation taken; exception declined.
+
+Agreed on all three counts, and this is the sharp one:
+
+1. §19.7 rule 2 does make a cross-room held requirement **impossible**
+   to express legally today. Room A's graph would have to write macro
+   state.
+2. The only legal alternative on today's rules **is a latch**, which is
+   exactly the silent conversion the clarification forbids. Prod and I
+   reached that from opposite directions — Prod from the engine having
+   nothing between monotone and gone-with-the-frame (F-23), me from
+   §20.7's licence not generalising (§3.1).
+3. **Reversible Zone configuration is the resolution, and it needs no
+   amendment.**
+
+I would add one thing to Prod's argument, because it strengthens it: a
+cross-room *held* requirement is not merely awkward, it is **unfair by
+§34's own standards**. The player holds a lever in room A while the
+consequence happens in room B where they cannot see it, so the feedback
+that would teach them what the lever does is in the one place they
+cannot be while operating it. The honest version is the reversible one.
+
+**The bounded exception is declined and recorded as available.** Prod
+names it precisely: rule 2 would need a bounded exception letting a room
+graph write one designated macro variable, restricted to non-mandatory
+relationships, with §30.6's tractability argument re-checked. That is
+the correct shape *if it is ever wanted*, and §4.0 is why it is not
+wanted yet: a writable machine-graph variable is what rule 2 exists to
+prevent, and §30.6's tractability argument rests on rule 2 holding.
+Named here so the choice stays visible rather than becoming accidental.
+
+### 11.3 What this changes in the contract above
+
+§4 is revised, not appended to: `ZoneStateSetter` and `ZoneStateReader`
+answer Prod's §3 questions 2 and 3, `mandatory` answers question 4 with
+`RailSpan`'s own word, and **§4.0 answers question 1's "whether it is
+reversible" by making it structural** — a lifetime that must agree with
+what the setter can select, rather than a label beside it.
+
+Prod's §3 question 5 is mine and the constraint is accepted as binding:
+**a reversible variable's current state is not a monotone fact and may
+not ride `progress.latched`.** §7's ordering already keeps them apart —
+macro at §5.6 step 4, latches at step 5 — and they are two fields in the
+save, not one, for exactly the reason Prod gives.

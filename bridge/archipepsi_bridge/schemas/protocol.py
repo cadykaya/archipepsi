@@ -183,6 +183,32 @@ class ZoneProgress(Strict):
     #: accumulated, and losing it costs a walk rather than a run.
     resume_anchor: str | None = Field(default=None, max_length=64)
 
+    #: D-8. The current state of each declared Zone-state variable, as
+    #: `(variable_id, state)` pairs sorted by id -- §5.1's
+    #: `ZoneState.macro`, restored at §5.6 step 4.
+    #:
+    #: **NOT `latched`, and the separation is the point.** A reversible
+    #: variable's current state is not a monotone fact: `lowered` today
+    #: may be `stowed` tomorrow because the player put it back, which is
+    #: what `reversible` MEANS. Riding `latched` would either make the
+    #: set non-monotone -- breaking the resume-safety argument in this
+    #: class's own docstring -- or quietly convert every reversible
+    #: relationship into a permanent one, which is the silent latch the
+    #: 0.4 scope clarification forbids by name.
+    #:
+    #: So it joins `resume_anchor` as a field that is OVERWRITTEN rather
+    #: than accumulated. A `permanent` variable is monotone by the
+    #: declaration that `ZoneStateVariable` validates, not by the
+    #: container it is stored in.
+    #:
+    #: **The name.** `ZoneState` in this module is the campaign
+    #: lifecycle literal, so calling this `zone_state` would give one
+    #: spelling two meanings. `macro_state` is the Amalgam's own word
+    #: for the value; `Zone.zone_state` is the DECLARATION of which
+    #: variables exist, and this is what they currently are.
+    macro_state: tuple[tuple[str, str], ...] = Field(
+        default=(), max_length=4)
+
     def with_key(self, key_id: str) -> "ZoneProgress":
         if key_id in self.collected_keys:
             return self
@@ -199,6 +225,24 @@ class ZoneProgress(Strict):
     def with_latch(self, ref: str) -> "ZoneProgress":
         return self if ref in self.latched else self.model_copy(update={
             "latched": tuple(sorted({*self.latched, ref}))})
+
+    def with_macro(self, variable_id: str, state: str) -> "ZoneProgress":
+        """Set a Zone-state variable, replacing whatever it held.
+
+        The replacement is the whole difference from `with_latch`: a
+        latch that has fired stays fired, and a variable that has been
+        set can be set again.
+        """
+        kept = {v: st for v, st in self.macro_state}
+        if kept.get(variable_id) == state:
+            return self
+        kept[variable_id] = state
+        return self.model_copy(update={
+            "macro_state": tuple(sorted(kept.items()))})
+
+    def macro(self, variable_id: str) -> str | None:
+        """What that variable currently holds, or `None` if unset."""
+        return dict(self.macro_state).get(variable_id)
 
     def with_station(self, station_id: str) -> "ZoneProgress":
         if station_id in self.reached_stations:

@@ -97,6 +97,27 @@ _SOCKET = Field(min_length=1, max_length=32, pattern=r"^[a-z0-9_]+$")
 _ANCHOR = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9_:]+$")
 
 
+class StateCondition(Strict):
+    """A route condition over a declared Zone-state variable.
+
+    D-8 §4. Amalgam §5.6 step 6a says every `TopologyEdge` predicate is
+    evaluated against the restored macro state -- and until now the edge
+    had no predicate to evaluate, so the design described a check the
+    code could not express.
+
+    **It names the VARIABLE, never the setter's node.** The variable is
+    restored at §5.6 step 4; the setter's node is rebuilt at steps 9-10
+    and may be a different object afterwards, which `M1-visible` already
+    asserts of the span, the lever and the carrier. A condition that
+    named the node would name something that does not exist yet when it
+    is evaluated.
+    """
+    variable_id: str = Field(min_length=1, max_length=24,
+                             pattern=r"^[a-z0-9_]+$")
+    state: str = Field(min_length=1, max_length=24,
+                       pattern=r"^[a-z0-9_]+$")
+
+
 class TopologyEdge(Strict):
     """One edge of the Zone graph.
 
@@ -125,6 +146,30 @@ class TopologyEdge(Strict):
     #: `reachability` rather than passing unnoticed, which is what a
     #: vacuous rule buys you.
     capability: Capability | None = None
+
+    #: D-8. Zone-state this edge requires to be crossable -- the
+    #: predicate §5.6 step 6a has always said it evaluates. Empty means
+    #: an unconditional edge, which is every edge composed before this,
+    #: so nothing already saved changes meaning.
+    #:
+    #: ALL of them must hold. One condition per variable: two states of
+    #: one variable required at once is a route nothing can satisfy,
+    #: refused below rather than left to a search to discover.
+    requires_state: tuple[StateCondition, ...] = Field(
+        default=(), max_length=4)
+
+    @model_validator(mode="after")
+    def _one_condition_per_variable(self):
+        seen: set[str] = set()
+        for c in self.requires_state:
+            if c.variable_id in seen:
+                raise ValueError(
+                    f"edge '{self.edge_id}' requires '{c.variable_id}' twice; "
+                    "a variable holds one state at a time, so two conditions "
+                    "on it are either a duplicate or a route nothing can "
+                    "satisfy")
+            seen.add(c.variable_id)
+        return self
 
     @model_validator(mode="after")
     def _an_edge_joins_two_rooms(self):

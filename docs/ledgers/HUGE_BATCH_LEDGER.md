@@ -929,7 +929,7 @@ not stop at the first blocked row.
 | **M2-mech** | Dev-scenario loop, labelled | **verified** | — | |
 | **M3** | First content group | **3 of 3 built as playable development scenarios** | — | EX50-011, EX50-021 and EX50-033 all built and gated. **Built is not integrated**: all three are development scenarios, none is composed into a Zone, and their interlocks, campaign integration and save requirements are separate open rows. **Genuine Epsilon objective selection stays incomplete until D-5** and a handwritten configuration will not be reported as it |
 | **M2 complete** | The intended experience, multiworld-safe | **blocked** | **D-1 (Dess)**, §5's five requirements | |
-| **M6** | **Cross-room / Zone-spanning puzzle relationships** | **not started — 0.4 COMPLETION, not a post-0.4 extension** (owner scope clarification 2026-09-22) | **D-8 (Dess)**, and §19.7 | Room boundaries must not be the default limit on puzzle scope; room-local puzzles stay supported. The architecture is already pinned at Amalgam §19.7 — room graphs read macro state and never write it, and *"a puzzle that should change the Zone drives a setter package's interaction, which the player then performs"* — so nothing is invented, but **none of it is built**: `grep -rn macro godot/scripts/` returns nothing, §20's `MACRO_STATE` and `MACRO_SELECTOR` are absent, and §21's macro effect types are absent. Engine half, measurement and the two rule questions: `docs/D8_CROSS_ROOM_PROD.md`. Acceptance is Blindside's major + acquisition branch through the real composition path with distinct room IDs — **not** a standalone scenario with labelled areas |
+| **M6** | **Cross-room / Zone-spanning puzzle relationships** | **bridge half delivered; engine half and composition not started.** 0.4 COMPLETION, not a post-0.4 extension (owner scope clarification 2026-09-22) | Prod's runtime half; a composer that emits a relationship | **The declaration, the generation constraints, the progression validation and the save representation are in** (`Zone.zone_state`, `StateCondition` on `TopologyEdge`, the macro component in `topology._explore`, `ZoneProgress.macro_state`), with 20 controls on a really composed 23-room Zone and every rule sabotage-proven. **What is NOT in:** no composer emits a relationship, so nothing in a live seed declares one; the engine half is unbuilt; no physical acceptance has been run. | Prod's original measurement stands: Room boundaries must not be the default limit on puzzle scope; room-local puzzles stay supported. The architecture is already pinned at Amalgam §19.7 — room graphs read macro state and never write it, and *"a puzzle that should change the Zone drives a setter package's interaction, which the player then performs"* — so nothing is invented, but **none of it is built**: `grep -rn macro godot/scripts/` returns nothing, §20's `MACRO_STATE` and `MACRO_SELECTOR` are absent, and §21's macro effect types are absent. Engine half, measurement and the two rule questions: `docs/D8_CROSS_ROOM_PROD.md`. Acceptance is Blindside's major + acquisition branch through the real composition path with distinct room IDs — **not** a standalone scenario with labelled areas |
 | **M4** | Remaining Amalgam breadth | **not started** | M3 | |
 | **M5** | Pinned review build | **not started** | M3 | |
 
@@ -944,7 +944,7 @@ not stop at the first blocked row.
 | D-5 objective-binding vocabulary | C6, and any claim of **genuine** Epsilon objective selection | building and testing provisional configurations |
 | D-6 0.4 save representation | G1, `E-011-save`, `E-021-save` | E-011's and E-021's other rows |
 | ~~**D-7** `lightened` in the closed `StatusKind` with its effects~~ **delivered and consumed; `lightened: ("object",)` declared beside the runtime** | nothing | `E-033-answer`, `E-033-sensor`, `E-033-control`, `E-033-step`, all of which are done |
-| **D-8** the shared cross-room relationship/state contract: macro variables, setters, consumers, generation constraints, progression validation, save representation | **M6**, and any claim of cross-room puzzle support | M1-zone, M3, the minors, H1/H2 — none of which needs it. Prod's half (runtime binding, machinery, cross-room feedback, physical acceptance) is specified in `docs/D8_CROSS_ROOM_PROD.md` and is deliberately **not implemented** until the contract is agreed, per the owner's "agree the shared contract before competing implementations are written" |
+| ~~**D-8**~~ **AGREED AND THE BRIDGE HALF IS DELIVERED** (`docs/design-proposals/D8_CROSS_ROOM_STATE_CONTRACT.md`, §11 answers Prod's two rule questions; F-25) | nothing any more — M6's remaining work is the engine half | M1-zone, M3, the minors, H1/H2 — none of which needs it. Prod's half (runtime binding, machinery, cross-room feedback, physical acceptance) is specified in `docs/D8_CROSS_ROOM_PROD.md` and is deliberately **not implemented** until the contract is agreed, per the owner's "agree the shared contract before competing implementations are written" |
 
 ## Full-Amalgam matrix
 
@@ -1171,3 +1171,68 @@ declaration, with the same default.
 Each rule sabotage-proven separately: neutralising the adjacency validator
 fails exactly its three controls and leaves the `home_dock` controls green;
 neutralising the `home_dock` check fails exactly its one.
+
+### F-25 — D-8 agreed and the bridge half landed; one search knew what another did not
+
+**Dess, 2026-09-22.** The contract is agreed. Prod's
+`docs/D8_CROSS_ROOM_PROD.md` and my
+`docs/design-proposals/D8_CROSS_ROOM_STATE_CONTRACT.md` were written
+without either lane seeing the other's, both named §19.7 as the
+architecture, both quoted the same *"which the player then performs"*
+sentence as the answer to the forbidden global signal bus, and both
+called it D-8. §11 of the contract answers Prod's two rule questions:
+the transported-object amendment is **accepted and narrowed to
+authority** (§10.5 already settles persistence), and the held-requirement
+resolution is **taken as recommended**, with the bounded §19.7 rule-2
+exception declined and recorded as available.
+
+**What landed, and the one rule worth arguing with.** `Zone.zone_state`
+declares the variables `physics.state_vector_product` has budgeted since
+before anything could name one; `StateCondition` gives `TopologyEdge`
+the predicate §5.6 step 6a has always claimed to evaluate;
+`topology._explore` carries a third state component; and
+`ZoneProgress.macro_state` is a save field that is **overwritten rather
+than accumulated**, joining `resume_anchor` and staying out of `latched`
+for the reason Prod's §3 question 5 gives.
+
+The rule I would most like argued with is **§4.0: lifetime is proven by
+the declaration, not asserted by it.** `permanent` means the setter
+selects exactly one state and it is not the initial one — monotone by
+construction, §5.5's latch derived rather than labelled. `reversible`
+means the initial state is selectable and at least one other, so the
+player can always put it back. The owner's *"do not silently replace a
+live requirement with a permanent latch"* is then **unwritable** rather
+than discouraged: the silent version is precisely a permanent variable
+wearing a reversible label, and the two now differ in a field a
+validator reads instead of in an intention a reviewer has to notice.
+
+**THE DEFECT, AND MY OWN TEST FOUND IT.** Adding the macro component to
+`_explore` and threading it through five of the six searches in
+`reachability` left `_key_graph_is_acyclic` exploring at the initial
+state only. A gated spine edge therefore looked permanently shut, every
+key beyond it looked unfetchable, and the composed Zone came back with
+*"the key graph has a cycle: blue -> green -> blue"* — a cycle report
+about a Zone that has no cycle.
+
+That is this project's oldest failure, **reintroduced by the same change
+that added the thing it is about**: one search knowing what another does
+not. It was caught only because the acceptance case runs against the
+really composed 23-room Zone rather than a three-room fixture; a toy
+with no locked doors would have passed every assertion and shipped the
+bug.
+
+**Evidence.** `bridge/tests/test_cross_room_state.py`, 20 controls, all
+against `playtest.played_zone()` — 23 rooms, 30 edges, re-validated
+through `Zone.model_validate` rather than `model_copy` so the validators
+actually run. Five rules sabotage-proven separately, each failing
+exactly its own controls: the cross-room rule (1), the lifetime rule
+(2), the edge predicate (3), the route-condition validator (2) and the
+setter branch in the search (4). `make test` **1631 passed, 6 skipped**;
+`check_packet` green after syncing the v0.8 `zone.py`, `graph.py` and
+`protocol.py` mirrors; generated artifacts regenerated, never edited.
+
+**What this is NOT.** No composer emits a cross-room relationship, so
+nothing in a live seed declares one — the same honest position D-1's
+`featured_acquisition` is in. The engine half is unbuilt by agreement,
+and no physical acceptance has been run. A bridge that can refuse a bad
+relationship is not a game that has one.
