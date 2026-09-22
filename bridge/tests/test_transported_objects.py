@@ -173,3 +173,123 @@ def test_carrying_an_object_does_not_disturb_any_other_progress():
     assert moved.latched == before.latched
     assert moved.collected_keys == before.collected_keys
     assert moved.macro_state == before.macro_state
+
+
+# --------------------------------------------------------------------------
+# P16 reopened — the consuming mechanism.
+#
+# Ownership and a room were the overbroad part of the first pass: an
+# object can arrive somewhere it is allowed to be and have nothing
+# happen. The generator in the union's own sentence is this.
+# --------------------------------------------------------------------------
+
+def _variable(**over) -> dict:
+    base = {
+        "variable_id": "generator", "states": ["dark", "lit"],
+        "initial": "dark", "lifetime": "permanent",
+        "setter": {"room_id": "c001", "selects": ["lit"]},
+        "readers": [{"room_id": "c003", "mechanism": "lamp",
+                     "when": ["lit"]}],
+    }
+    base.update(over)
+    return base
+
+
+def _consumer(**over) -> dict:
+    base = {"mechanism_id": "generator_socket", "room_id": "c003",
+            "accepts": CELL, "sets_variable": "generator",
+            "sets_state": "lit"}
+    base.update(over)
+    return base
+
+
+def _zone_with_consumer(**over) -> Zone:
+    body = {
+        "schema_version": 7, "zone_id": "zone_001", "display_name": "Relay",
+        "target_game": "Game", "theme": "void_glitch",
+        "chambers": [_room(r, 89100001 if i == 0 else None)
+                     for i, r in enumerate(("c001", "c002", "c003"))],
+        "transported_objects": [_cell()],
+        "zone_state": [_variable()],
+        "object_consumers": [_consumer()],
+    }
+    body.update(over)
+    return TypeAdapter(Zone).validate_python(body)
+
+
+def test_a_consumer_must_stand_where_the_object_may_be_carried():
+    """§10.5's volume is where the object may go. A consumer outside it
+    is a destination nothing may ever legally reach, and the puzzle
+    would be unsolvable in a way no route search sees."""
+    with pytest.raises(ValidationError, match="outside"):
+        _zone_with_consumer(
+            transported_objects=[_cell(allowed_volume=["c001", "c002"])])
+
+
+def test_a_consumer_accepting_an_undeclared_object_is_refused():
+    with pytest.raises(ValidationError, match="does not declare"):
+        _zone_with_consumer(object_consumers=[_consumer(accepts="ghost")])
+
+
+def test_a_consequence_is_a_variable_and_the_state_it_is_put_in():
+    with pytest.raises(ValidationError, match="a variable AND the state"):
+        _zone_with_consumer(
+            object_consumers=[_consumer(sets_state=None)])
+
+
+def test_a_consumer_setting_a_state_the_variable_lacks_is_refused():
+    with pytest.raises(ValidationError, match="does not have"):
+        _zone_with_consumer(
+            object_consumers=[_consumer(sets_state="melted")])
+
+
+def test_the_mechanism_fires_only_once_the_object_is_actually_there():
+    """THE CHECK THAT MAKES TRANSPORT MEAN SOMETHING.
+
+    A mechanism that fired on a message alone would let a client claim a
+    delivery it never made, and the carried route would be decorative.
+    """
+    zone = _zone_with_consumer()
+    save = _save(zone)
+    with pytest.raises(ValueError, match="not anywhere yet"):
+        T.record_object_consumed(save, "zone_001", "generator_socket")
+
+    # delivered to the wrong room: still refused, and it says where
+    wrong = T.record_object_transported(save, "zone_001", CELL, "c002")
+    with pytest.raises(ValueError, match="in 'c002'"):
+        T.record_object_consumed(wrong, "zone_001", "generator_socket")
+
+    delivered = T.record_object_transported(save, "zone_001", CELL, "c003")
+    lit = T.record_object_consumed(delivered, "zone_001", "generator_socket")
+    assert lit.zone_by_id("zone_001").progress.macro("generator") == "lit"
+
+
+def test_the_consequence_goes_through_the_declared_handle():
+    """Not a second channel. The consumer sets a D-8 variable the rest of
+    the Zone already knows how to read, so nothing here is a new way for
+    one room to change another."""
+    zone = _zone_with_consumer()
+    delivered = T.record_object_transported(_save(zone), "zone_001", CELL,
+                                            "c003")
+    lit = T.record_object_consumed(delivered, "zone_001", "generator_socket")
+    progress = lit.zone_by_id("zone_001").progress
+    assert progress.macro("generator") == "lit"
+    assert progress.object_room(CELL) == "c003", (
+        "consuming it does not make the object vanish from the save; what "
+        "the mechanism changes is the Zone's state")
+
+
+def test_a_scenery_consumer_is_legal_and_changes_nothing():
+    zone = _zone_with_consumer(object_consumers=[
+        _consumer(sets_variable=None, sets_state=None)])
+    delivered = T.record_object_transported(_save(zone), "zone_001", CELL,
+                                            "c003")
+    after = T.record_object_consumed(delivered, "zone_001",
+                                     "generator_socket")
+    assert after.zone_by_id("zone_001").progress.macro("generator") is None
+
+
+def test_an_undeclared_mechanism_is_refused():
+    with pytest.raises(ValueError, match="declares no object consumer"):
+        T.record_object_consumed(_save(_zone_with_consumer()), "zone_001",
+                                 "ghost_socket")

@@ -663,6 +663,58 @@ def record_object_transported(save: CampaignSave, zone_id: str,
                      lambda p: p.with_object_in(object_id, room_id), known)
 
 
+def record_object_consumed(save: CampaignSave, zone_id: str,
+                           mechanism_id: str) -> CampaignSave:
+    """P16. A consuming mechanism took the object it was waiting for.
+
+    **The object must actually be there.** This is the check that makes
+    transport mean something: the consumer fires only when the save says
+    its object is in the consumer's own room. A mechanism that fired on
+    a message alone would let a client claim a delivery it never made,
+    and the whole carried route would be decorative.
+
+    The consequence goes through D-8's handle -- `with_macro` on the
+    declared variable -- so nothing here is a second way for one room to
+    change another.
+    """
+    def known(rec):
+        zone = rec.zone
+        consumers = {c.mechanism_id: c
+                     for c in getattr(zone, "object_consumers", ())
+                     } if zone is not None else {}
+        con = consumers.get(mechanism_id)
+        if con is None:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no object consumer "
+                f"'{mechanism_id}'"
+                + (f"; it declares {sorted(consumers)}" if consumers
+                   else " and declares none"))
+        where = rec.progress.object_room(con.accepts)
+        if where != con.room_id:
+            raise ValueError(
+                f"consumer '{mechanism_id}' is in room '{con.room_id}' and "
+                f"'{con.accepts}' is "
+                + (f"in '{where}'" if where else "not anywhere yet")
+                + "; the object has to be delivered before it is consumed")
+
+    rec = _require_zone(save, zone_id)
+    # LOOK IT UP SAFELY. `next()` on an empty generator raises
+    # StopIteration before `known` ever runs, so an unknown mechanism
+    # came back as a bare traceback instead of the refusal written for
+    # it -- an error path that swallowed its own error message.
+    con = next((c for c in getattr(rec.zone, "object_consumers", ())
+                if c.mechanism_id == mechanism_id), None)
+
+    def apply(p):
+        if con is None:
+            return p        # `known` refuses first; this never runs
+        if con.sets_variable is None:
+            return p        # scenery: legal, and it changes nothing
+        return p.with_macro(con.sets_variable, con.sets_state)
+
+    return _progress(save, zone_id, apply, known)
+
+
 def recover_transported_object(save: CampaignSave, zone_id: str,
                                object_id: str) -> CampaignSave:
     """P16.4. Put a lost or unreachable object back where it comes home.
@@ -1098,7 +1150,7 @@ TRANSITIONS = (
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
-    record_zone_state, record_object_transported,
+    record_zone_state, record_object_transported, record_object_consumed,
     recover_transported_object,
     reselect_hosts,
     commit_layout, refuse_layout,

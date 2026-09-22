@@ -803,6 +803,70 @@
       "title": "LogicNode",
       "type": "object"
     },
+    "ObjectConsumer": {
+      "additionalProperties": false,
+      "description": "P16. The machine at the far end that takes the object.\n\n**Transport without a consumer is not a puzzle**, and reporting\nownership and a room was the overbroad part of P16's first pass: an\nobject can arrive somewhere it is allowed to be and have nothing\nhappen. The generator in the union's own sentence -- *\"a `BURNING`\npower cell carried three rooms to a generator\"* -- is this.\n\n**The consequence goes through D-8's handle, not through a new\nchannel.** A consumer that accepts its object sets a declared\nZone-state variable, which the rest of the Zone already knows how to\nread. Nothing here addresses another room, nothing writes to a\nmachine layer, and there is no second mechanism for \"something\nhappened over there\".",
+      "properties": {
+        "mechanism_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Mechanism Id",
+          "type": "string"
+        },
+        "room_id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Room Id",
+          "type": "string"
+        },
+        "accepts": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Accepts",
+          "type": "string"
+        },
+        "sets_variable": {
+          "anyOf": [
+            {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sets Variable"
+        },
+        "sets_state": {
+          "anyOf": [
+            {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sets State"
+        }
+      },
+      "required": [
+        "mechanism_id",
+        "room_id",
+        "accepts"
+      ],
+      "title": "ObjectConsumer",
+      "type": "object"
+    },
     "PlatformPathChamber": {
       "additionalProperties": false,
       "description": "Base-movement platforming.\n\n`gap_size` and `vertical_step` are bounded JOINTLY: the reachable gap\nshrinks as the landing rises. v0.4 bounded them independently, so both\ncould be maxed and the real margin was 1.17x rather than the 1.56x the\nflat-jump derivation advertised.",
@@ -2164,6 +2228,15 @@
       },
       "maxItems": 4,
       "title": "Transported Objects",
+      "type": "array"
+    },
+    "object_consumers": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ObjectConsumer"
+      },
+      "maxItems": 4,
+      "title": "Object Consumers",
       "type": "array"
     },
     "room_graphs": {

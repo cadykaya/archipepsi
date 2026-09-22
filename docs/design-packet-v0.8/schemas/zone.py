@@ -1294,6 +1294,45 @@ class TransportedObject(Strict):
         return self
 
 
+class ObjectConsumer(Strict):
+    """P16. The machine at the far end that takes the object.
+
+    **Transport without a consumer is not a puzzle**, and reporting
+    ownership and a room was the overbroad part of P16's first pass: an
+    object can arrive somewhere it is allowed to be and have nothing
+    happen. The generator in the union's own sentence -- *"a `BURNING`
+    power cell carried three rooms to a generator"* -- is this.
+
+    **The consequence goes through D-8's handle, not through a new
+    channel.** A consumer that accepts its object sets a declared
+    Zone-state variable, which the rest of the Zone already knows how to
+    read. Nothing here addresses another room, nothing writes to a
+    machine layer, and there is no second mechanism for "something
+    happened over there".
+    """
+    mechanism_id: str = _ID
+    room_id: str = _ID
+    #: The transported object this machine takes. One: a socket that
+    #: accepts anything is a bin, not a puzzle.
+    accepts: str = _ID
+    #: The Zone-state variable arrival sets, and to what. `None` means
+    #: the consumer is scenery -- legal, and it consumes nothing that
+    #: progression depends on.
+    sets_variable: str | None = Field(
+        default=None, min_length=1, max_length=24,
+        pattern=r"^[a-z0-9_]+$")
+    sets_state: _STATE_NAME | None = None
+
+    @model_validator(mode="after")
+    def _it_sets_a_state_or_it_sets_nothing(self):
+        if (self.sets_variable is None) != (self.sets_state is None):
+            raise ValueError(
+                f"consumer '{self.mechanism_id}' names "
+                f"{'a variable with no state' if self.sets_state is None else 'a state with no variable'}"
+                "; a consequence is a variable AND the state it is put in")
+        return self
+
+
 class Zone(Strict):
     #: Still 7, and deliberately. The Zone contract did not change in v0.8 —
     #: Echoes 2.0 changes what an Echo means, not what a Zone is — and
@@ -1362,6 +1401,11 @@ class Zone(Strict):
     transported_objects: tuple[TransportedObject, ...] = Field(
         default=(), max_length=4)
 
+    #: P16. Machines that take a transported object and do something.
+    #: Additive and optional.
+    object_consumers: tuple[ObjectConsumer, ...] = Field(
+        default=(), max_length=4)
+
     #: P14. Room-local signal graphs -- a sensor, §19.2 logic, and the
     #: machine it drives. Additive and optional.
     #:
@@ -1409,6 +1453,56 @@ class Zone(Strict):
             raise ValueError(
                 f"the declared Zone-state variables alone are {product} "
                 f"configurations, past §4.10's {STATE_VECTOR_BOUND} bound")
+        return self
+
+    @model_validator(mode="after")
+    def _consumers_stand_where_their_object_can_reach_them(self):
+        """Four ways a consumer can be a promise nothing keeps."""
+        if not self.object_consumers:
+            return self
+        rooms = {c.id for c in self.chambers}
+        objects = {o.object_id: o for o in self.transported_objects}
+        variables = {v.variable_id: v for v in self.zone_state}
+        seen: set[str] = set()
+        for con in self.object_consumers:
+            if con.mechanism_id in seen:
+                raise ValueError(
+                    f"two consumers are both '{con.mechanism_id}'")
+            seen.add(con.mechanism_id)
+            if con.room_id not in rooms:
+                raise ValueError(
+                    f"consumer '{con.mechanism_id}' stands in room "
+                    f"'{con.room_id}', which this Zone does not have")
+            obj = objects.get(con.accepts)
+            if obj is None:
+                raise ValueError(
+                    f"consumer '{con.mechanism_id}' accepts "
+                    f"'{con.accepts}', which this Zone does not declare as "
+                    "a transported object")
+            # THE DELIVERY HAS TO BE POSSIBLE. §10.5's volume is where
+            # the object may go; a consumer outside it is a destination
+            # the player may never legally carry anything to, and the
+            # puzzle would be unsolvable in a way no route search sees.
+            if con.room_id not in obj.allowed_volume:
+                raise ValueError(
+                    f"consumer '{con.mechanism_id}' is in room "
+                    f"'{con.room_id}', which is outside "
+                    f"'{con.accepts}''s volume "
+                    f"{sorted(obj.allowed_volume)}; the object may never "
+                    "legally be carried to it")
+            if con.sets_variable is not None:
+                var = variables.get(con.sets_variable)
+                if var is None:
+                    raise ValueError(
+                        f"consumer '{con.mechanism_id}' sets "
+                        f"'{con.sets_variable}', which this Zone does not "
+                        "declare")
+                if con.sets_state not in var.states:
+                    raise ValueError(
+                        f"consumer '{con.mechanism_id}' sets "
+                        f"'{con.sets_variable}' to '{con.sets_state}', "
+                        f"which it does not have; it has "
+                        f"{sorted(var.states)}")
         return self
 
     @model_validator(mode="after")

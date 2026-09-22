@@ -818,3 +818,49 @@ which so nothing downstream infers it from a comment.
 declarations, and the Godot verification of the widened encounters. A
 bridge-valid enemy list is not a played encounter and this lane cannot
 make it one.
+
+---
+
+### DESS-14 — P16's consuming mechanism: transport that means something
+
+**Dess, 2026-09-22.** DESS-12 reopened P16 because ownership and a room
+were the overbroad part: an object could arrive somewhere it was allowed
+to be and **nothing happened**. The generator in the union's own
+sentence — *"a `BURNING` power cell carried three rooms to a
+generator"* — is the missing half, and `ObjectConsumer` is it.
+
+**The consequence goes through D-8's handle, not a new channel.** A
+consumer that accepts its object sets a declared Zone-state variable,
+which the rest of the Zone already knows how to read. Nothing here
+addresses another room and nothing writes to a machine layer, so there
+is no second mechanism for "something happened over there".
+
+**The check that makes transport mean something:** the mechanism fires
+only when the save says its object is **in the consumer's own room**. A
+mechanism that fired on a message alone would let a client claim a
+delivery it never made and the whole carried route would be decorative.
+Sabotaged and confirmed in `record_object_consumed` via
+`inspect.getsource`; removing it fails exactly that control.
+
+Four other ways a consumer can be a promise nothing keeps, all refused:
+a room the Zone lacks, an object it does not declare, a consequence
+that is a variable without a state (or the reverse), and — the one worth
+naming — **a consumer outside its object's `allowed_volume`**. §10.5's
+volume is where the object may go, so a consumer beyond it is a
+destination nothing may ever legally reach, and the puzzle would be
+unsolvable in a way no route search sees.
+
+**Consuming does not make the object vanish.** What the mechanism
+changes is the Zone's state; the object's room is still its room. A
+scenery consumer that sets nothing is legal and changes nothing.
+
+**An error path that swallowed its own error.** `next()` over the
+consumers raised `StopIteration` before the validator ran, so an unknown
+mechanism came back as a bare traceback instead of the refusal written
+for it. Looked up safely now.
+
+**Still open at corrected scope.** Nothing picks the object up and
+carries it — the player-operated route is Prod's runtime, and this lane
+cannot produce it. What exists now is: a declared object, a declared
+volume, a declared destination that does something, authority over
+arrival, recovery, and a refusal when the delivery has not happened.

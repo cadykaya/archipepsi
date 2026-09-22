@@ -1634,5 +1634,6 @@
  "featured_acquisition": null,
  "zone_state": [],
  "transported_objects": [],
+ "object_consumers": [],
  "room_graphs": []
 }
