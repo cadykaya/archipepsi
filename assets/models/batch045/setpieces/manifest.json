@@ -1,0 +1,427 @@
+{
+  "sp_ballast_crate": {
+    "anchor": "floor",
+    "batch": "045",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "gantry_y": 3.1,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "reach_cap_node_z": 0.95
+    },
+    "kind": "setpiece_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "crate_band_0",
+      "crate_band_1",
+      "crate_foot_-1-1",
+      "crate_foot_-11",
+      "crate_foot_1-1",
+      "crate_foot_11",
+      "lightened_panel_0",
+      "lightened_panel_1",
+      "lightened_panel_2",
+      "lightened_panel_3"
+    ],
+    "path": "batch045/setpieces/sp_ballast_crate.glb",
+    "size": [
+      2.12,
+      2.12,
+      1.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 132
+  },
+  "sp_crossing_carrier": {
+    "anchor": "centre",
+    "batch": "045",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "gantry_y": 3.1,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "reach_cap_node_z": 0.95
+    },
+    "kind": "setpiece_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "cross_solebar_-1",
+      "cross_solebar_1",
+      "cross_buffer_west",
+      "lamp_west",
+      "cross_buffer_east",
+      "lamp_east",
+      "cross_spine"
+    ],
+    "path": "batch045/setpieces/sp_crossing_carrier.glb",
+    "size": [
+      4.04,
+      4.0,
+      0.88
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 96
+  },
+  "sp_dock_stand": {
+    "anchor": "floor",
+    "batch": "045",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "gantry_y": 3.1,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "reach_cap_node_z": 0.95
+    },
+    "kind": "setpiece_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "stand_base",
+      "stand_head",
+      "lever_fore",
+      "lever_aft",
+      "stand_readout"
+    ],
+    "path": "batch045/setpieces/sp_dock_stand.glb",
+    "size": [
+      0.8,
+      0.8,
+      1.27
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "sp_hoist_car": {
+    "anchor": "centre",
+    "batch": "045",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "gantry_y": 3.1,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "reach_cap_node_z": 0.95
+    },
+    "kind": "setpiece_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "hoist_apron",
+      "hoist_channel_-1-1",
+      "hoist_channel_-11",
+      "hoist_channel_1-1",
+      "hoist_channel_11",
+      "hoist_back",
+      "hoist_brace_0",
+      "hoist_brace_1",
+      "lamp_up",
+      "lamp_down"
+    ],
+    "path": "batch045/setpieces/sp_hoist_car.glb",
+    "size": [
+      4.0,
+      4.0,
+      1.18
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 132
+  },
+  "sp_lane_screen": {
+    "anchor": "floor",
+    "batch": "045",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "gantry_y": 3.1,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "reach_cap_node_z": 0.95
+    },
+    "kind": "setpiece_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "screen_cap",
+      "screen_post_-1",
+      "screen_post_1",
+      "screen_slot"
+    ],
+    "path": "batch045/setpieces/sp_lane_screen.glb",
+    "size": [
+      0.34,
+      3.0,
+      1.37
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "sp_receiver_hood": {
+    "anchor": "floor",
+    "batch": "045",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "gantry_y": 3.1,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "reach_cap_node_z": 0.95
+    },
+    "kind": "setpiece_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "hood_lip_top",
+      "hood_cheek_-1",
+      "hood_cheek_1",
+      "receiver_mouth",
+      "hood_base"
+    ],
+    "path": "batch045/setpieces/sp_receiver_hood.glb",
+    "size": [
+      2.4,
+      1.14,
+      1.7
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "sp_shutter_leaf": {
+    "anchor": "centre",
+    "batch": "045",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "gantry_y": 3.1,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "reach_cap_node_z": 0.95
+    },
+    "kind": "setpiece_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "shutter_rib_0",
+      "shutter_rib_1",
+      "shutter_rib_2",
+      "shutter_edge"
+    ],
+    "path": "batch045/setpieces/sp_shutter_leaf.glb",
+    "size": [
+      0.48,
+      2.4,
+      2.6
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "sp_skiff_deck": {
+    "anchor": "centre",
+    "batch": "045",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "gantry_y": 3.1,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "reach_cap_node_z": 0.95
+    },
+    "kind": "setpiece_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "skiff_skirt",
+      "skiff_curb_-1",
+      "skiff_curb_1",
+      "skiff_bumper_-1-1",
+      "skiff_bumper_-11",
+      "skiff_bumper_1-1",
+      "skiff_bumper_11",
+      "skiff_end_fore",
+      "skiff_band_fore",
+      "skiff_cap_fore",
+      "skiff_post_fore-1",
+      "skiff_post_fore1",
+      "lamp_fore",
+      "skiff_end_aft",
+      "skiff_band_aft",
+      "skiff_cap_aft",
+      "skiff_post_aft-1",
+      "skiff_post_aft1",
+      "lamp_aft",
+      "console",
+      "console_head",
+      "console_readout",
+      "console_grab",
+      "beacon_hold"
+    ],
+    "path": "batch045/setpieces/sp_skiff_deck.glb",
+    "size": [
+      4.0,
+      4.16,
+      1.19
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 300
+  },
+  "sp_weight_plate": {
+    "anchor": "floor",
+    "batch": "045",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera or script.",
+    "fitted_to": {
+      "deck": [
+        4.0,
+        0.4,
+        4.0
+      ],
+      "gantry_y": 3.1,
+      "production_ref": "claude/archipepsi-0-4-blindside",
+      "rail_y": 0.6,
+      "reach_cap_node_z": 0.95
+    },
+    "kind": "setpiece_visual",
+    "not_changed": [
+      "collision",
+      "speeds",
+      "timings",
+      "placement",
+      "room topology",
+      "any approved asset"
+    ],
+    "origin_means": "RailCarrier node origin: the deck box centre",
+    "parts": [
+      "plate_pad_-1-1",
+      "plate_pad_-11",
+      "plate_pad_1-1",
+      "plate_pad_11",
+      "plate_readout"
+    ],
+    "path": "batch045/setpieces/sp_weight_plate.glb",
+    "size": [
+      2.4,
+      2.4,
+      0.16
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  }
+}

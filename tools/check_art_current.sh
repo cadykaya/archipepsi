@@ -211,6 +211,19 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_arrival_test.sh"
 
+  # A setpiece that does not fit is not a visual problem, it is a
+  # gameplay one: an oversize deck fouls a dock, an undersize crate stops
+  # being a 1.0 m step, and a collider riding in on a "visual" changes
+  # what Production owns. The envelope numbers are read from their
+  # constants, not restated here.
+  say "the 0.4 setpiece visuals still fit Production's envelope..."
+  tools/content/run_setpiece_fit.sh >/dev/null 2>&1 || \
+    fail "setfit: a setpiece visual no longer imports, lost a named part,
+    left Production's envelope, or brought a collider, body, light, camera
+    or script along with it. Run
+
+    tools/content/run_setpiece_fit.sh"
+
   say "the theme pack binding, and its control..."
   tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
     fail "theme-bind: Production's ThemeMaterials no longer binds the
@@ -268,7 +281,8 @@ SCRIPTS="build_materials build_architecture build_props
   build_epsilon_states build_forge build_checkpoint build_pickups
   build_interaction_kit build_secrets build_enemy_roles build_zone_keys
   build_viewmodel build_gates build_decoys build_physics_props
-  build_machinery build_wave1_repair_overlay build_junctions"
+  build_machinery build_wave1_repair_overlay build_junctions
+  build_setpieces"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.
@@ -329,7 +343,7 @@ done
 # prose. So these are named, and what is required is the CALL SHAPE, not a
 # mention.
 for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
-           run_arrival_test.sh; do
+           run_arrival_test.sh run_setpiece_fit.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."

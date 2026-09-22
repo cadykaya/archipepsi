@@ -60,10 +60,36 @@ rewritten, no commits lost). PR #6, opened from it against `main`, is
 **superseded** — it showed the whole stacked project history rather than an
 art diff. Do not maintain two active art branches.
 
-## Art batches — state 2026-09-02, with a 2026-09-13 head note
+## Art batches — state 2026-09-02, with 2026-09-13 and 2026-09-22 head notes
 
-**THE ART LANE IS WAITING ON AN OWNER VERDICT, NOT IDLE-WITH-WORK-TO-DO.**
-Do not start work in it on a wake-up. Read this section and stop.
+**2026-09-22 — THE ART LANE IS PRODUCING AGAIN.** The owner opened the
+**0.4 Arty Overnight assignment**: 38 packages, 228 explicit actions, in a
+stated priority order. `docs/art/ART_FRONTIER.md` §10 is the art lane's
+live frontier; read that, not this section, for what art does next.
+
+Two things from it that other lanes need:
+
+* **Batch 045 delivers visual identities for the four 0.4 setpieces**
+  (Blindside, Passing Platforms, Counterfire Arcade, Unweighted Switch),
+  fitted against Production `claude/archipepsi-0-4-blindside` @ `f404410`.
+  Handoff: `docs/art-requests/2026-09-22-setpiece-visual-handoff.md`.
+  They are CANDIDATES — imported and fit-checked, **not** runtime-bound
+  and **not** owner-approved.
+* **A handrail at a natural height on a rideable deck would break the
+  gantry guarantee.** Deck top world 1.0 + 1.333 m jump = 2.33 < `GANTRY_Y`
+  3.1; a 1.1 m railing cap puts it at 3.43, **above** the gantry. The
+  number to argue with before anyone adds a solid rail is **world 1.75**.
+
+**Scheduling override (owner, 2026-09-22): heartbeat, watchers,
+subscriptions, scheduled check-ins and automatic re-arming stay OFF.**
+This overrides the older "resume the routine the moment a task exists"
+rule in `docs/art/ART_FRONTIER.md`. A large queue existing is **not** a
+reason to re-arm.
+
+~~**THE ART LANE IS WAITING ON AN OWNER VERDICT, NOT IDLE-WITH-WORK-TO-DO.**
+Do not start work in it on a wake-up. Read this section and stop.~~
+Superseded 2026-09-22 by the assignment above. Batches 023–030 and 044
+remain pending owner review; that is unchanged and is not a blocker.
 
 **2026-09-13 — three things another lane may need, from
 `docs/art/reports/2026-09-13-presentation-study.md`:**

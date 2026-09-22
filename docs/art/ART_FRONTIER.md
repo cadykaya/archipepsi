@@ -220,8 +220,92 @@ is history and this is the state.
      **not** a rule forbidding slopes or vertical rooms, and **not** a
      licence to raise `MAX_VERTICAL_STEP`.
 
-**There is no Art-side blocker.** The lane is idle by intent, not by
-obstruction.
+~~**There is no Art-side blocker.** The lane is idle by intent, not by
+obstruction.~~ **Superseded 2026-09-22 — the lane is NOT idle.** See below.
+
+---
+
+## 10. FRONTIER, 2026-09-22 — the 0.4 Arty Overnight assignment
+
+**This is the current frontier item. Everything above it is history.**
+
+The owner opened a substantial parallel art-production assignment for 0.4:
+**38 packages, 228 explicit actions**, priority order stated. The lane is
+producing, not planning: *"No broad plan-only round is requested… Do not
+stop after the first kit or concept sheet."*
+
+### The scheduling override — READ THIS BEFORE RE-ARMING ANYTHING
+
+> **Heartbeat, watchers, subscriptions, scheduled check-ins and automatic
+> re-arming stay OFF.** Owner, 2026-09-22. This **overrides the older Art
+> Frontier scheduling text above** — including "resume it the moment a
+> task exists" and every "re-enable when a brief lands" clause. A task
+> existing is no longer a reason to re-arm. There is a large queue AND
+> the routine stays disabled.
+
+Also standing from the same message: *"Do not claim work continues
+outside the active session."* Work happens in the session that is awake.
+
+### Reconciliation of what already exists (A00.2) — four outcomes
+
+Done by inspection of the current art head, **not** from an old
+inventory row. *"An old 'NO ASSET' inventory entry is not evidence that
+nothing exists now."*
+
+| Area | Outcome | Evidence |
+|---|---|---|
+| Ten-role enemy family | **REUSE AS-IS** — all ten roles exported to `Constants.ENEMY_ENVELOPES` and the fit asserted | `assets/models/batch030/enemies/` |
+| Machinery / Status / physics | **EXTEND** — batch043 exists and is the base | `assets/models/batch043/` |
+| Six theme families | **EXTEND** — 6/6 material families, dressing, lights, `trim_plain` | Batches 012–014, 041 |
+| The four 0.4 setpiece kits | **NOTHING EXISTED.** Production builds `BoxMesh` inline in `rail_carrier.gd`, `passing_platforms.gd`, `counterfire_arcade.gd`, `unweighted_switch.gd` | read at `claude/archipepsi-0-4-blindside` `f404410` |
+
+Only the fourth was a genuine gap, which is why Batch 045 went first.
+
+### Batch 045 — the four setpieces have visual identities. DELIVERED.
+
+Nine assets, fitted against Production `claude/archipepsi-0-4-blindside`
+@ `f404410`, all at 32 texels/m (architecture band, deliberately — a prop
+at 64 against docks at 32 reads as a different game's asset).
+
+`sp_skiff_deck` · `sp_dock_stand` · `sp_hoist_car` ·
+`sp_crossing_carrier` · `sp_receiver_hood` · `sp_lane_screen` ·
+`sp_shutter_leaf` · `sp_weight_plate` · `sp_ballast_crate`
+
+* Source `tools/blender/build_setpieces.py`; exports
+  `assets/models/batch045/setpieces/`; evidence
+  `docs/art/review/setpieces_2026-09-22/`.
+* Handoff: `docs/art-requests/2026-09-22-setpiece-visual-handoff.md`.
+* **CANDIDATES.** Imported and fit-checked; **not** runtime-bound and
+  **not** owner-approved. Three separate states, and this batch claims
+  the first two only.
+
+**The two findings worth more than the meshes:**
+
+1. **A handrail at a natural height would break the gantry guarantee.**
+   Deck top world 1.0 + a 1.333 m standing jump = 2.33, under `GANTRY_Y`
+   3.1. A 1.1 m railing cap sits at world 2.1, and 2.1 + 1.333 = **3.43,
+   above the gantry** — the acquisition loop skippable by standing on it.
+   Nothing this batch puts on a rideable deck rises past **world 1.75**
+   (node +0.95). `assert_under_cap()` enforces it and refused its own
+   author twice.
+2. **`RailCarrier.pose()` origin is the deck box's CENTRE, not its
+   floor** — `here + basis.y * (deck.y * 0.5)`. A floor-anchored asset
+   arrives 0.2 m low and nobody notices until a passenger clips through.
+
+**There is no presentation seam today.** `RailCarrier._ready()` builds
+its own `BoxMesh`. Art has NOT built a private loader around it; the
+handoff proposes a bounded optional `visual: PackedScene` for Prod to
+accept, amend or refuse, and production continues on the rest of the
+queue meanwhile.
+
+### The next task, exactly
+
+**A04/A05** — the remaining Blindside fittings (rails, dock furniture,
+switch housings, gantry and branch landmarks), then **A10**, the existing
+ten-role enemy family's production/animation readiness, reusing
+`batch030`'s ten exported roles rather than commissioning replacements.
+After those: A06–A08 (deepen the other three setpiece kits), A09, A11–A15,
+A16, T01–T18 (the eighteen environment packs), A17–A19.
 
 ### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.
 
