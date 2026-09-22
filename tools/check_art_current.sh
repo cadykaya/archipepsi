@@ -340,6 +340,22 @@ fi
 # The theme-pack coverage ledger and its dated catalogue snapshot.
 # A ledger that can silently lose a row reports full coverage of a
 # shorter list.
+# REPORTS, does not gate -- and the distinction is the point. Every wall
+# and accent texture in all six themes has its panel-course rhythm broken
+# at the tile edge, because `surface_for` lays courses at `range(0, 128,
+# 38)` and 128 is not a multiple of 38. The repair is one line and it
+# regenerates every one of them, which is a look decision for the owner
+# rather than a defect fix. So this prints it on every run -- it cannot
+# be forgotten -- and `--strict` turns it into a gate the day somebody
+# rules. It DOES refuse (exit 3) if surface_for's arithmetic changes
+# under it, because then it is checking a rule that has moved.
+say "the panel courses against the tile they are drawn on..."
+python3 tools/content/check_theme_courses.py | sed 's/^/    /' || \
+  fail "check_theme_courses: surface_for's arithmetic has changed under
+  the report. Re-read it. Run
+
+    python3 tools/content/check_theme_courses.py"
+
 say "theme-pack coverage matches the catalogue snapshot..."
 python3 tools/content/check_pack_coverage.py >/dev/null || \
   fail "check_pack_coverage: the coverage table and catalogue.json
