@@ -1375,6 +1375,10 @@ class CampaignEngine:
             elif intent.type == "zone_state_selected":
                 nxt = T.record_zone_state(self.save, intent.zone_id,
                                           intent.variable_id, intent.state)
+            elif intent.type == "object_transported":
+                nxt = T.record_object_transported(
+                    self.save, intent.zone_id, intent.object_id,
+                    intent.room_id)
             else:
                 nxt = T.record_station(self.save, intent.zone_id,
                                        intent.station_id)

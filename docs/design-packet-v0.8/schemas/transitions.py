@@ -598,6 +598,74 @@ def record_zone_state(save: CampaignSave, zone_id: str, variable_id: str,
                      lambda p: p.with_macro(variable_id, state), known)
 
 
+def record_object_transported(save: CampaignSave, zone_id: str,
+                              object_id: str, room_id: str) -> CampaignSave:
+    """P16. A transported object arrived somewhere, authoritatively.
+
+    Three refusals:
+
+    1. **The Zone declares no such object.** A room recorded against an
+       id nothing placed is save data describing nothing.
+    2. **The room is outside the object's `allowed_volume`.** §10.5's
+       volume is the composer's statement of where the object may go,
+       and accepting an arrival outside it would describe a world the
+       composer never allowed.
+    3. *(not a refusal, but the same rule)* a repeat of the room it is
+       already in is absorbed.
+
+    **Recovery is `home_room_id`, not a refusal.** P16.4's lost or
+    invalid object is put back where the declaration says it comes home
+    to, and `recover_transported_object` below is that path -- kept
+    separate so "it went somewhere illegal" and "put it back" are two
+    events rather than one silent correction.
+    """
+    def known(rec):
+        zone = rec.zone
+        declared = {o.object_id: o
+                    for o in getattr(zone, "transported_objects", ())
+                    } if zone is not None else {}
+        obj = declared.get(object_id)
+        if obj is None:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no transported object "
+                f"'{object_id}'"
+                + (f"; it declares {sorted(declared)}" if declared
+                   else " and declares none"))
+        if room_id not in obj.allowed_volume:
+            raise ValueError(
+                f"object '{object_id}' may not be in room '{room_id}'; its "
+                f"volume is {sorted(obj.allowed_volume)}")
+    return _progress(save, zone_id,
+                     lambda p: p.with_object_in(object_id, room_id), known)
+
+
+def recover_transported_object(save: CampaignSave, zone_id: str,
+                               object_id: str) -> CampaignSave:
+    """P16.4. Put a lost or unreachable object back where it comes home.
+
+    Separate from `record_object_transported` on purpose: recovery is a
+    decision about a broken situation, and folding it into the ordinary
+    arrival path would make every illegal arrival silently correct
+    itself with nothing to notice.
+    """
+    def known(rec):
+        zone = rec.zone
+        declared = {o.object_id: o
+                    for o in getattr(zone, "transported_objects", ())
+                    } if zone is not None else {}
+        if object_id not in declared:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no transported object "
+                f"'{object_id}'")
+
+    rec = _require_zone(save, zone_id)
+    obj = next(o for o in getattr(rec.zone, "transported_objects", ())
+               if o.object_id == object_id)
+    return _progress(save, zone_id,
+                     lambda p: p.with_object_in(object_id, obj.home_room_id),
+                     known)
+
+
 def record_lock(save: CampaignSave, zone_id: str, room_id: str,
                 socket_id: str) -> CampaignSave:
     """A lock opened. Idempotent by `(room_id, socket_id)`.
@@ -948,7 +1016,8 @@ TRANSITIONS = (
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
-    record_zone_state,
+    record_zone_state, record_object_transported,
+    recover_transported_object,
     reselect_hosts,
     commit_layout, refuse_layout,
 )

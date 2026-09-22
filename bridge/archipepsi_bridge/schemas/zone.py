@@ -1023,6 +1023,11 @@ class RailNetwork(Strict):
 _STATE_NAME = Annotated[str, Field(min_length=1, max_length=24,
                                    pattern=r"^[a-z0-9_]+$")]
 
+#: A room id as a tuple ELEMENT. `_ID` is a `Field`, which annotates a
+#: model attribute; a tuple's element type needs the `Annotated` form.
+_ROOM_ID = Annotated[str, Field(min_length=1, max_length=24,
+                                pattern=r"^[a-z0-9_]+$")]
+
 
 class ZoneStateSetter(Strict):
     """Where the player performs the interaction, and what it may select.
@@ -1214,6 +1219,57 @@ class ZoneStateVariable(Strict):
         return self
 
 
+class TransportedObject(Strict):
+    """P16 / D-8 lifetime 5. An object the player carries between rooms.
+
+    **Neither macro state nor a latch**, which is why §19.7 does not
+    cover it: rooms may not write macro state, and an object is not
+    monotone -- you can carry it back. Two settled rules meet here and
+    only one of them needed an amendment:
+
+    - **Persistence was already settled by §10.5.** `allowed_volume` is
+      a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`.
+      No amendment, and the union's own example sentence is a `BURNING`
+      power cell carried three rooms to a generator.
+    - **Authority was not.** Prod's `D8_CROSS_ROOM_PROD` §4 question 1,
+      accepted and narrowed in D-8 §11.1: a transported object is
+      room-layer state **whose owning room is its current room**, and
+      crossing a boundary is a TRANSFER rather than a write to the
+      machine layer. §19.7 rule 2 stays intact.
+
+    **What is NOT here, deliberately.** The object's Statuses. §5.1 puts
+    every `ActiveStatus` in `EPHEMERAL`, so a `BURNING` cell that is
+    carried three rooms arrives having been carried three rooms and not
+    still burning -- unless something sets it alight again. Persisting
+    the Status would make a temporary effect a permanent fact, which is
+    §3.1's rule in the one place it is easiest to break by accident.
+    """
+    object_id: str = _ID
+    #: §10.5's list of rooms. At least two, or it is not transported --
+    #: an object that may only ever be in one room is room-local and
+    #: needs none of this.
+    allowed_volume: tuple[_ROOM_ID, ...] = Field(min_length=2, max_length=8)
+    #: Where it starts, and where a recovery puts it back.
+    home_room_id: str = _ID
+    #: Whether a puzzle on the mandatory path needs it. §5.1: `required`
+    #: or constrained configurations are `PUZZLE_LOCAL`, everything else
+    #: is `EPHEMERAL` -- so this decides whether losing it matters.
+    required: bool = False
+
+    @model_validator(mode="after")
+    def _home_is_inside_the_volume(self):
+        if self.home_room_id not in self.allowed_volume:
+            raise ValueError(
+                f"object '{self.object_id}' comes home to "
+                f"'{self.home_room_id}', which is not in the volume it is "
+                f"allowed in ({sorted(self.allowed_volume)}); a recovery "
+                "would put it somewhere it may not be")
+        if len(set(self.allowed_volume)) != len(self.allowed_volume):
+            raise ValueError(
+                f"object '{self.object_id}' repeats a room in its volume")
+        return self
+
+
 class Zone(Strict):
     #: Still 7, and deliberately. The Zone contract did not change in v0.8 —
     #: Echoes 2.0 changes what an Echo means, not what a Zone is — and
@@ -1277,6 +1333,11 @@ class Zone(Strict):
     zone_state: tuple[ZoneStateVariable, ...] = Field(
         default=(), max_length=4)
 
+    #: P16. Objects the player may carry from room to room. Additive and
+    #: optional: a Zone declaring none behaves exactly as before.
+    transported_objects: tuple[TransportedObject, ...] = Field(
+        default=(), max_length=4)
+
     @model_validator(mode="after")
     def _zone_state_names_rooms_this_zone_has(self):
         """D-8 §5's generation constraints, the half a schema can settle.
@@ -1315,6 +1376,28 @@ class Zone(Strict):
             raise ValueError(
                 f"the declared Zone-state variables alone are {product} "
                 f"configurations, past §4.10's {STATE_VECTOR_BOUND} bound")
+        return self
+
+    @model_validator(mode="after")
+    def _transported_objects_name_rooms_this_zone_has(self):
+        """An object allowed into a room that does not exist is a volume
+        nobody can carry it through."""
+        if not self.transported_objects:
+            return self
+        rooms = {c.id for c in self.chambers}
+        seen: set[str] = set()
+        for obj in self.transported_objects:
+            if obj.object_id in seen:
+                raise ValueError(
+                    f"two transported objects are both called "
+                    f"'{obj.object_id}'; the id is what a save records a "
+                    "room against, so two of them cannot be told apart")
+            seen.add(obj.object_id)
+            missing = sorted(set(obj.allowed_volume) - rooms)
+            if missing:
+                raise ValueError(
+                    f"object '{obj.object_id}' is allowed into {missing}, "
+                    "which this Zone does not have")
         return self
 
     @model_validator(mode="after")

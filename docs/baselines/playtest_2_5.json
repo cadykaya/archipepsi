@@ -981,7 +981,14 @@
           "enemy_archetypes": [
             "melee",
             "ranged",
-            "brute"
+            "brute",
+            "charger",
+            "bulwark",
+            "drifter",
+            "diver",
+            "scuttler",
+            "artillery",
+            "beacon"
           ],
           "objectives": [
             "reach_reward",
@@ -1897,7 +1904,14 @@
           "enemy_archetypes": [
             "melee",
             "ranged",
-            "brute"
+            "brute",
+            "charger",
+            "bulwark",
+            "drifter",
+            "diver",
+            "scuttler",
+            "artillery",
+            "beacon"
           ],
           "objectives": [
             "reach_reward",
@@ -2795,7 +2809,14 @@
           "enemy_archetypes": [
             "melee",
             "ranged",
-            "brute"
+            "brute",
+            "charger",
+            "bulwark",
+            "drifter",
+            "diver",
+            "scuttler",
+            "artillery",
+            "beacon"
           ],
           "objectives": [
             "reach_reward",

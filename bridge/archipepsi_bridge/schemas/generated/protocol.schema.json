@@ -656,6 +656,46 @@
         "title": "LockOpened",
         "type": "object"
       },
+      "ObjectTransported": {
+        "additionalProperties": false,
+        "description": "P16. A transported object arrived in a room.\n\nIdempotent by `(object_id, room_id)` and **not monotone**, same as\n`ZoneStateSelected` and for the same reason: carrying it back is the\nmechanic working, not a replay to reject.\n\nValidated against the accepted Zone: the object must be one the Zone\ndeclares and the room must be inside the `allowed_volume` \u00a710.5 gave\nit. An object reported into a room it may not enter is refused\nrather than recorded -- a save that accepted it would describe a\nworld the composer never allowed.",
+        "properties": {
+          "type": {
+            "const": "object_transported",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "object_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Object Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "object_id",
+          "room_id"
+        ],
+        "title": "ObjectTransported",
+        "type": "object"
+      },
       "RequestNextZone": {
         "additionalProperties": false,
         "description": "Generate the next Zone.\n\n`finale` picks WHICH Zone \u2014 ordinary, or the reserved Check 030 Zone \u2014\nand never whether one may be started. Admission is `HubStatus\n.accepts_zone_request` for both values, so the ordinary and finale paths\ncannot drift apart; `finale=True` additionally requires\n`HubStatus.finale_offered`.\n\nConcretely, the bridge refuses this intent whenever a Zone is held, and\n`GENERATING` counts as held. v0.5 only barred it for GENERATED and\nACTIVE, so a second request arriving while the provider was still working\nstarted a second allocation against the same eligible pool.",
@@ -925,6 +965,7 @@
         "layout_result": "#/$defs/LayoutResult",
         "leave_zone": "#/$defs/LeaveZone",
         "lock_opened": "#/$defs/LockOpened",
+        "object_transported": "#/$defs/ObjectTransported",
         "request_next_zone": "#/$defs/RequestNextZone",
         "set_creativity": "#/$defs/SetCreativity",
         "slot_action": "#/$defs/SlotAction",
@@ -998,6 +1039,9 @@
       },
       {
         "$ref": "#/$defs/ZoneStateSelected"
+      },
+      {
+        "$ref": "#/$defs/ObjectTransported"
       },
       {
         "$ref": "#/$defs/LayoutResult"
@@ -5673,6 +5717,50 @@
         "title": "TraitComponent",
         "type": "object"
       },
+      "TransportedObject": {
+        "additionalProperties": false,
+        "description": "P16 / D-8 lifetime 5. An object the player carries between rooms.\n\n**Neither macro state nor a latch**, which is why \u00a719.7 does not\ncover it: rooms may not write macro state, and an object is not\nmonotone -- you can carry it back. Two settled rules meet here and\nonly one of them needed an amendment:\n\n- **Persistence was already settled by \u00a710.5.** `allowed_volume` is\n  a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`.\n  No amendment, and the union's own example sentence is a `BURNING`\n  power cell carried three rooms to a generator.\n- **Authority was not.** Prod's `D8_CROSS_ROOM_PROD` \u00a74 question 1,\n  accepted and narrowed in D-8 \u00a711.1: a transported object is\n  room-layer state **whose owning room is its current room**, and\n  crossing a boundary is a TRANSFER rather than a write to the\n  machine layer. \u00a719.7 rule 2 stays intact.\n\n**What is NOT here, deliberately.** The object's Statuses. \u00a75.1 puts\nevery `ActiveStatus` in `EPHEMERAL`, so a `BURNING` cell that is\ncarried three rooms arrives having been carried three rooms and not\nstill burning -- unless something sets it alight again. Persisting\nthe Status would make a temporary effect a permanent fact, which is\n\u00a73.1's rule in the one place it is easiest to break by accident.",
+        "properties": {
+          "object_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Object Id",
+            "type": "string"
+          },
+          "allowed_volume": {
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 2,
+            "title": "Allowed Volume",
+            "type": "array"
+          },
+          "home_room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Home Room Id",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "object_id",
+          "allowed_volume",
+          "home_room_id"
+        ],
+        "title": "TransportedObject",
+        "type": "object"
+      },
       "TreasureRoomChamber": {
         "additionalProperties": false,
         "description": "Small safe reward room. Exactly one reward, never enemies.",
@@ -6067,6 +6155,15 @@
             "maxItems": 4,
             "title": "Zone State",
             "type": "array"
+          },
+          "transported_objects": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/TransportedObject"
+            },
+            "maxItems": 4,
+            "title": "Transported Objects",
+            "type": "array"
           }
         },
         "required": [
@@ -6205,6 +6302,25 @@
             },
             "maxItems": 4,
             "title": "Macro State",
+            "type": "array"
+          },
+          "object_rooms": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Object Rooms",
             "type": "array"
           }
         },
@@ -10838,6 +10954,50 @@
         "title": "TraitComponent",
         "type": "object"
       },
+      "TransportedObject": {
+        "additionalProperties": false,
+        "description": "P16 / D-8 lifetime 5. An object the player carries between rooms.\n\n**Neither macro state nor a latch**, which is why \u00a719.7 does not\ncover it: rooms may not write macro state, and an object is not\nmonotone -- you can carry it back. Two settled rules meet here and\nonly one of them needed an amendment:\n\n- **Persistence was already settled by \u00a710.5.** `allowed_volume` is\n  a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`.\n  No amendment, and the union's own example sentence is a `BURNING`\n  power cell carried three rooms to a generator.\n- **Authority was not.** Prod's `D8_CROSS_ROOM_PROD` \u00a74 question 1,\n  accepted and narrowed in D-8 \u00a711.1: a transported object is\n  room-layer state **whose owning room is its current room**, and\n  crossing a boundary is a TRANSFER rather than a write to the\n  machine layer. \u00a719.7 rule 2 stays intact.\n\n**What is NOT here, deliberately.** The object's Statuses. \u00a75.1 puts\nevery `ActiveStatus` in `EPHEMERAL`, so a `BURNING` cell that is\ncarried three rooms arrives having been carried three rooms and not\nstill burning -- unless something sets it alight again. Persisting\nthe Status would make a temporary effect a permanent fact, which is\n\u00a73.1's rule in the one place it is easiest to break by accident.",
+        "properties": {
+          "object_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Object Id",
+            "type": "string"
+          },
+          "allowed_volume": {
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 2,
+            "title": "Allowed Volume",
+            "type": "array"
+          },
+          "home_room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Home Room Id",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "object_id",
+          "allowed_volume",
+          "home_room_id"
+        ],
+        "title": "TransportedObject",
+        "type": "object"
+      },
       "TreasureRoomChamber": {
         "additionalProperties": false,
         "description": "Small safe reward room. Exactly one reward, never enemies.",
@@ -11232,6 +11392,15 @@
             "maxItems": 4,
             "title": "Zone State",
             "type": "array"
+          },
+          "transported_objects": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/TransportedObject"
+            },
+            "maxItems": 4,
+            "title": "Transported Objects",
+            "type": "array"
           }
         },
         "required": [
@@ -11370,6 +11539,25 @@
             },
             "maxItems": 4,
             "title": "Macro State",
+            "type": "array"
+          },
+          "object_rooms": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Object Rooms",
             "type": "array"
           }
         },

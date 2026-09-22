@@ -1285,8 +1285,12 @@ class EnemyEnvelope:
 #: collider cannot be built to different numbers.
 #:
 #: THIS IS NOT THE LIST OF ENEMIES A ZONE MAY CONTAIN. It is the list of
-#: roles that have an agreed physical envelope. `ENEMY_ARCHETYPES` is the
-#: placeable set, and it is smaller.
+#: roles that have an agreed physical envelope.
+#:
+#: `ENEMY_ARCHETYPES` used to be a hand-written subset of this and is now
+#: `tuple(ENEMY_STATS)`, so the two agree by construction rather than by
+#: maintenance. The note that it "is smaller" was true of three roles and
+#: is not true of ten.
 ENEMY_ENVELOPES = {
     # -- the three with behaviour, unchanged from `enemy.gd`'s literals
     "melee":     EnemyEnvelope(width=0.8, height=1.6, depth=0.8),
@@ -1307,6 +1311,45 @@ ENEMY_ENVELOPES = {
 
 #: The whole approved family, in a stable order.
 ENEMY_ROLES = tuple(ENEMY_ENVELOPES)
+
+
+def roles_that_fit(width: float, depth: float,
+                   wall_height: float) -> tuple[str, ...]:
+    """Which enemy roles a room of this size can physically hold.
+
+    P08.2. The composer picked from a hard-coded `["melee", "ranged"]`
+    (and one `brute` in the arena recipe) while ten roles had envelopes
+    and, since the roster landed, behaviour. Widening that list without
+    asking whether a role FITS would put a drifter that holds station
+    2.55 m up into a room with a 2.0 m ceiling.
+
+    Two necessary conditions, both read off `ENEMY_ENVELOPES` rather
+    than chosen here:
+
+    - **it clears the ceiling** -- `top_y` is the role's highest point
+      and what a lintel must clear, so a room whose wall is lower than
+      that cannot hold it;
+    - **it fits the floor** -- `lane_width` is the corridor width the
+      role needs, and a room narrower than that on its shorter axis
+      cannot hold it either.
+
+    **Necessary, not sufficient, and that distinction is the point.**
+    This says a role is not impossible here. It does not say the
+    encounter is good, that the spawn has line of sight, or that a
+    stationary artillery piece with a 34 m reach has anything to shoot
+    -- `ENEMY_STATS` carries `reach` but no minimum range, so the
+    "nothing at all inside 8 m" the roster brief describes lives in the
+    engine and is not a number this function may invent.
+    """
+    fits = []
+    for role in ENEMY_ROLES:
+        envelope = ENEMY_ENVELOPES[role]
+        if envelope.top_y >= wall_height:
+            continue
+        if envelope.lane_width >= min(width, depth):
+            continue
+        fits.append(role)
+    return tuple(fits)
 
 #: Roles that hold a height instead of standing on the floor. Explicit
 #: rather than inferred at each call site, because "is this a flyer" is

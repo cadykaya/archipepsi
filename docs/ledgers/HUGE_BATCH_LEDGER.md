@@ -1630,90 +1630,15 @@ an intent that silently does nothing — the exact defect
 path lands a value in the save, and the absorb/reverse pair.
 
 
-## OVERNIGHT 04 — execution log (engine lane)
+## Overnight 04 — the engine lane's log lives elsewhere
 
-The OV04 packet replaces OV03 as the work order: 24 packages, 133 units,
-`docs/` copy of the inventory not duplicated here. Rows close against this
-ledger with revision, evidence and scope limit, per P00.
-
-**P00 reconciled, once.** Tree clean at `16c198b`, branch in sync, protected
-refs present and untouched (`review/0.4-m2mech-snapshot`,
-`claude/archipepsi-echoes-continuation-b1adno`). Bridge lane merged through
-`68eb947`. Ownership unchanged: the Python composer and every shared schema is
-the bridge lane's single writer; runtime, machinery, feedback and physical
-acceptance are this lane's.
+`docs/ledgers/PROD_OV04.md`. Split out on 2026-09-22: both lanes append to this
+file's tail and every merge was conflicting there, which is the same cost the
+lane-prefixed finding IDs were meant to stop paying. The bridge lane's OV04
+rows stay here.
 
 
-### P06 — all seven additional enemy roles, implemented and verified
-
-`make godot-roster`, **40 checks**, in CI. H1's standing row closes: the
-approved family is ten and all ten now have behaviour.
-
-**The archetype list is DERIVED, not transcribed.** `ENEMY_ARCHETYPES` was a
-hand-written tuple of three beside a ten-role envelope table — the same
-two-lists-for-one-fact defect the status vocabulary had. It is
-`tuple(ENEMY_STATS)` now, so a role gains behaviour and becomes placeable in
-one edit, and `Enemy.create`'s assert ("an approved art role is not yet a
-placeable enemy") keeps saying something true with nobody maintaining a second
-list.
-
-**Each role does what its recovered brief says**, and the brief is the approved
-roster's own one-liner (`docs/art/ART_REVIEW.md`), not new design:
-
-| role | brief | what was built |
-|---|---|---|
-| charger | one telegraphed rush | telegraphs `charge`, aim FIXED at the telegraph, unsteerable commitment, recovery window |
-| bulwark | cannot be fought frontally | 85% shrug inside a ~110° arc; measured 3.0 frontal vs 20.0 from behind |
-| drifter | owns the ceiling | holds station 4.2 m up, never reaches the floor |
-| diver | contests the grapple arc | no dive at a grounded player; commits when they leave the ground |
-| scuttler | costs attention | 8.4 m closed in two seconds, 12 hp, 3 damage |
-| artillery | indirect, denies ground | lobbed shell with flight time and a ground mark; silent inside 8 m |
-| beacon | makes everything near it worse | `empowered` on neighbours through the ordinary boundary; lapses when it dies |
-
-**Tuning is provisional and labelled.** The numbers make each role's shape
-legible against the Static Pulse's ~17 DPS; none is playtested, and the package
-that authorised this says missing tuning may be provisional while missing
-behaviour may not.
-
-**Three real defects found while building it:**
-
-1. **The envelope's key is `flying`, not `is_flying`** — so both flyers fell.
-   The name came from the Python attribute rather than the exported dictionary.
-2. **A flyer's hover ray took the first thing it hit**, and the first thing it
-   hit was whatever was standing underneath: a drifter over a charger read the
-   charger's shoulders as the ground and held station 4.2 m above THEM. It
-   re-casts past actors now, bounded to five tries.
-3. **`ENEMY_AGGRO_RADIUS` is 18 m and artillery's reach is 34**, so the top
-   half of its declared range was unusable — it could never notice what it was
-   built to hit. A role notices at the greater of the two.
-
-**`empowered` now has an enemy implementation, declared beside it.**
-`stat_stack.gd` reads it for the PLAYER's `damage_dealt` and nothing read it on
-an enemy, so a beacon applying it would have been an inert Status — exactly
-what the per-target boundary refuses. `Enemy._hit_for()` is the implementation
-and `empowered: ("self", "enemy")` is the declaration, in the same change.
-
-
-### P-4 — a charger finishes its rush standing on the player
-
-Found while measuring P06's commitment, and **not diagnosed**, which is why it
-is a finding rather than a repair.
-
-Measuring the rush with a player-shaped body in its path gave the charger's
-final position as the PLAYER's position, 0.8 m up, whichever direction it had
-committed to. A rushing `CharacterBody3D` walks into a player-shaped
-`CharacterBody3D`, climbs it and stops, so what the measurement recorded was
-the collision rather than the commitment.
-
-Two things are separable and both are asserted, so the suite is honest about
-which is which: the aim is fixed at the telegraph (measured against a real
-player) and the commitment carries and ends (measured with nothing in the way,
-labelled DIRECT HANDLER).
-
-Open: whether a charger should be able to end a rush on top of the player at
-all. It is a question about body separation on contact, it affects the three
-original archetypes equally, and answering it by guessing is how a combat feel
-gets changed by accident.
+## Overnight 04 — the bridge lane's rows
 
 ### DESS-04 — P02 transaction edges and honest refusals, and a sabotage that tested nothing
 
@@ -1766,51 +1691,163 @@ exactly like a vacuous test, and the wrong conclusion from it is to
 delete a control that was working.
 
 
-### P07 — enemies have a job, a memory and a way home
+### DESS-05 — P04's snapshot is mostly already written, and one row is closed by policy
 
-`godot-roster` grows to **49 checks**. Three units close (P07.1, P07.2,
-P07.4); P07.3 navigation and P07.5 lifecycle/performance stay open and are
-named below.
+**Dess, 2026-09-22.** Package P04, bridge half. The useful finding is
+what did **not** need building.
 
-**P07.1 — an unwatched enemy was doing nothing at all.** The movement block had
-no `else` on its aggro test, so an enemy outside 18 m stood exactly where it
-was placed until the player crossed the line. A room of statues that animate on
-a trigger reads as a room of triggers, and it hides every navigation defect
-until the moment it matters.
+**The carrier pose row is closed by an accepted decision, not by a
+missing field.** `E-011-save` asks for "carrier poses, destinations and
+hold states restored before the player", and the natural reading is a
+saved transform. `rail_junction.gd`'s own four-lifetime docstring says
+the opposite and says it for a reason: **a carrier is restored to a
+SUPPORTED DOCK, never to a saved transform**, because one resumed
+halfway across a link this build did not commission would be standing on
+track that is not there. `restore_from` re-parks at `home_dock` — which
+is the field F-24 answer 3 added.
 
-Four jobs, assigned per role so each says something true about it rather than
-giving everything the same walk: `patrol` (melee, charger, scuttler), `watch`
-(ranged, brute, bulwark, artillery), `tend` (beacon), `drift` (both flyers).
-**The fixed-role gunner is deliberate and the suite says so**: EX50-021's
-gunner covers a lane and must still be covering it when the player arrives, so
-a watcher never leaves its post. The case asserts movers moved AND holders
-held, because asserting only the first would make every watcher a bug.
+So implementing a saved carrier pose would have **violated** the
+safe-machinery policy while appearing to close a row. P04.1's wording is
+"*appropriate* machine poses/destinations/holds", and the appropriate
+representation here is none.
 
-**P07.2 — interest outlives range.** Stepping a metre outside the radius
-switched an enemy off mid-fight: trivially exploitable, and it read as the
-enemy forgetting you while looking straight at you. Interest now runs
-`ENEMY_INTEREST_SECONDS` past the last contact.
+**What the save does carry**, checked against D-8 §3's five lifetimes
+rather than asserted: permanent consequences (`latched`), reversible
+configuration (`macro_state`), equipment, allocation, manifest
+provenance. Lifetimes 3 and 4 are `EPHEMERAL` and **their absence is the
+representation**. Lifetime 5, transported objects, stays an explicit
+unfinished 0.4 row and the control says so — which is what stops a later
+reader assuming it is covered.
 
-**P07.4 — a fight ends with a walk back to work.** An enemy dragged across a
-room returns to the post it was placed at before resuming, so a chase does not
-leave it guarding somewhere nobody asked it to guard. The post is captured on
-the first physics frame rather than at construction, because a composer places
-an enemy after building it.
+**The guard that earns its place.** A name scan over `ZoneProgress`,
+`ZoneRecord` and `CampaignSave` fails on anything that looks like live
+or physical state — transform, pose, velocity, voltage, elapsed. §5.4a:
+a save that stored voltages could disagree with the graph that produced
+them, and one that stored poses could put the player on absent track.
+The linter is shown catching two synthetic bad names before it is
+trusted to report none, because without that it would pass equally well
+with an empty forbidden list.
 
-**A real defect the case found: an enemy whose player LEFT THE SCENE never
-forgot.** Interest was only decayed inside the `player != null` branch, so with
-no player at all an enemy stayed permanently alert and never went back to work
-— a different path from "out of range" and one nothing had exercised.
+**Restart points are asserted to be different states** before each is
+round-tripped. P04.3 asks for restarts at *meaningful* points, which
+only means something if the points differ; a save that collapsed two of
+them would pass a single-point test.
 
-**And a test that was measuring the wrong thing, twice.** Moving the target out
-of range does not test forgetting: the enemy pursues during its interest window
-and legitimately catches up, so interest refreshes and never lapses — the
-mechanic working. An earlier attempt moved the target to z −60, off the 40 m
-stage, where it fell, died and respawned beside the enemy. The case frees the
-player outright now.
+**Not done here, and deliberately:** actually terminating and restarting
+the client, machinery interrupted mid-motion, and the user-facing
+failure paths are Prod's. A JSON round trip is not reported as any of
+them.
 
-**Open, and not claimed:** P07.3 (navigation on the assembled level — the
-patrol beat is a radius around a post and does not consult room geometry, so a
-post near a wall will walk into it and rely on the existing sidestep recovery)
-and P07.5 (lifecycle and performance — nothing here measures the cost of ten
-working enemies in one room).
+### DESS-06 — P16: transported objects, the row that was explicitly unfinished
+
+**Dess, 2026-09-22.** D-8 lifetime 5 had a table row, no field and no
+producer, and both the contract and Prod's matrix said so. It is
+declared, persisted, authoritative and recoverable now.
+
+**Two settled rules met here and only one needed an amendment.** §10.5
+already said a multi-room carryable is `ZONE_PERSISTENT` with an
+`allowed_volume` — persistence needed nothing. What was genuinely open
+was **authority**, and D-8 §11.1 took Prod's answer narrowed to exactly
+that: a transported object is room-layer state **whose owning room is
+its current room**, and crossing a boundary is a TRANSFER, not a write
+to the machine layer. §19.7 rule 2 stays intact and no room addresses
+another to make it happen — the player carries it, which is "the player
+is the bridge" in its most literal form.
+
+| piece | where |
+|---|---|
+| declaration | `Zone.transported_objects`, `TransportedObject` |
+| volume, home, and whether losing it matters | `allowed_volume`, `home_room_id`, `required` |
+| save | `ZoneProgress.object_rooms`, overwritten not accumulated |
+| the message | `ObjectTransported` intent, routed to `handle_progress` |
+| authority | `transitions.record_object_transported` |
+| recovery | `transitions.recover_transported_object` |
+
+**What the save records is the ROOM and nothing else about the object**
+(P16.5). Its Statuses are `EPHEMERAL` by §5.1, so a `BURNING` cell
+carried three rooms arrives having been carried three rooms and **not
+still burning** unless something sets it alight again. Persisting the
+Status would turn a temporary effect into a permanent fact — §3.1's rule
+in the place it is easiest to break by accident. Its transform is absent
+for §5.4a's reason, and DESS-05's name guard now fails if either
+appears.
+
+**Recovery is its own event, not a correction.** An arrival outside the
+volume is refused and records nothing — including no recovery. Folding
+the two together would make every illegal arrival silently correct
+itself with nothing to notice, which is how a composer defect becomes
+invisible.
+
+**Sabotage, with DESS-04's fix applied.** Each check was neutralised
+*and confirmed present in the intended function via
+`inspect.getsource`* before the run: dropping the volume check fails 2
+controls, dropping home-inside-volume fails exactly its own.
+
+**Not done:** moving it physically is Prod's (P16.2), and nothing
+composes a transported object yet — the declaration is real and no live
+seed emits one.
+
+### DESS-07 — P08: the composer can only place three of ten, and pricing is the blocker
+
+**Dess, 2026-09-22.** Prod's P06 landed behaviour for all seven
+remaining roles and derived `ENEMY_ARCHETYPES` from `ENEMY_STATS`, which
+made the merged tree red in five bridge controls. Four were stale
+transcriptions. **The fifth is a real blocker and it needs one decision
+from the owner.**
+
+**The composer places `melee`, `ranged` and `brute` and nothing else.**
+`epsilon/fallback.py` picks from a hard-coded `["melee", "ranged"]` in
+four places and one `brute` in the arena recipe, while ten roles have
+envelopes, stats and — since P06 — behaviour. P08's closure asks that
+new roles "actually appear in admissible ordinary candidate encounters".
+They cannot yet, and here is exactly why.
+
+**Implemented is not composable, and conflating them was the defect.**
+`test_the_content_value_table_scores_only_placeable_roles` asserted
+`set(ENEMY_VALUE) == set(ENEMY_ARCHETYPES)` — true while both were the
+trio, and it broke the moment one of them grew. The two mean different
+things: `ENEMY_ARCHETYPES` is *the engine has behaviour for this*,
+`ENEMY_VALUE` is *a Zone's content budget knows what this costs*. The
+invariant that survives is `ENEMY_VALUE ⊆ ENEMY_ARCHETYPES` — nothing
+priced that cannot be placed — and the other direction is now a named
+gap rather than a satisfied rule.
+
+**THE BLOCKER, AND IT IS ONE INTEGER PER ROLE.** Seven roles have no
+approved content value: `charger`, `bulwark`, `scuttler`, `artillery`,
+`beacon`, `diver`, `drifter`.
+
+**It cannot be derived, and I checked before saying so.** `ranged` is
+worth **more** than `melee` — 4 against 3 — while having less hp (16 vs
+24), less dps (4.0 vs 6.0) and no melee threat. Content value scores how
+much a role changes *the way a room is fought*, not how long it takes to
+kill, exactly as `ENEMY_VALUE`'s own comment says of the brute. Any
+formula fitted to hp and damage ranks those two the other way round and
+contradicts the owner's own numbers. So none is offered and none is
+guessed.
+
+Until then: `COMPOSABLE_ENEMY_ROLES` is implemented-and-priced,
+`UNPRICED_ENEMY_ROLES` is the rest, and `enemy_value()` **raises instead
+of scoring zero** — because `ENEMY_VALUE.get(role, 0)` is precisely how
+an unpriced role becomes free content, passing the budget check and
+handing the player a Zone whose accounting is a fiction.
+
+**What is ready the moment those seven numbers exist.**
+`constants.roles_that_fit(width, depth, wall_height)` answers which
+roles a room can physically hold, from `ENEMY_ENVELOPES` rather than
+from anything chosen here: a role clears the ceiling if its `top_y` is
+under the wall, and fits the floor if its `lane_width` is under the
+shorter axis. Necessary, not sufficient — it does not claim the
+encounter is good, and `ENEMY_STATS` carries `reach` but no minimum
+range, so the roster brief's "nothing at all inside 8 m" for artillery
+stays in the engine and is not a number this function may invent.
+
+**The other four failures were stale transcriptions, repaired upward.**
+The roster test asserted the seven were NOT placeable — true when they
+had no behaviour, and the opposite of the goal; it now asserts all ten
+are. `test_the_on_hit_list_is_derived_rather_than_transcribed` kept a
+hand-written list of eight as its *expectation* and went stale when
+`empowered` gained `enemy` support — the beacon buffing its allies,
+exactly what that role is for. A test that transcribes what it checks is
+the defect it was written to catch, so the expectation derives from
+`SUPPORTED_STATUS_TARGETS` now. The two baseline fixtures were
+regenerated from source.

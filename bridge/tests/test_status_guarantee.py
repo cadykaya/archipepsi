@@ -145,8 +145,16 @@ def test_the_on_hit_list_is_derived_rather_than_transcribed():
             admitted.append(kind)
         except ValidationError:
             pass
-    assert admitted == ["burning", "slowed", "frozen", "shocked",
-                        "poisoned", "marked", "stunned", "vulnerable"]
+    # THE EXPECTATION IS DERIVED TOO, and it had to become so: the
+    # hand-written eight was the last transcription of the vocabulary,
+    # and it went stale the moment `empowered` gained `enemy` support --
+    # which is the beacon buffing its allies, exactly what that role is
+    # for. A test that transcribes what it is checking is the defect it
+    # was written to catch.
+    expected = [kind for kind in E.STATUS_KINDS
+                if "enemy" in E.SUPPORTED_STATUS_TARGETS.get(kind, ())]
+    assert admitted == expected
+    assert "burning" in admitted and "vulnerable" in admitted
 
 
 def test_a_misspelt_status_in_a_rule_effect_is_refused():

@@ -209,6 +209,21 @@ class ZoneProgress(Strict):
     macro_state: tuple[tuple[str, str], ...] = Field(
         default=(), max_length=4)
 
+    #: P16. Where each declared transported object currently is, as
+    #: `(object_id, room_id)` pairs sorted by id. §10.5: a multi-room
+    #: carryable is `ZONE_PERSISTENT`.
+    #:
+    #: **The ROOM, and nothing else about the object.** Its Statuses are
+    #: `EPHEMERAL` by §5.1, so a `BURNING` cell carried three rooms
+    #: arrives having been carried three rooms and not still burning.
+    #: Its transform is not here either, for §5.4a's reason: semantic
+    #: state is restored and physical state is recomputed from it.
+    #:
+    #: Overwritten rather than accumulated, like `macro_state` and
+    #: `resume_anchor`: an object carried back is not a replay to reject.
+    object_rooms: tuple[tuple[str, str], ...] = Field(
+        default=(), max_length=4)
+
     def with_key(self, key_id: str) -> "ZoneProgress":
         if key_id in self.collected_keys:
             return self
@@ -243,6 +258,26 @@ class ZoneProgress(Strict):
     def macro(self, variable_id: str) -> str | None:
         """What that variable currently holds, or `None` if unset."""
         return dict(self.macro_state).get(variable_id)
+
+    def with_object_in(self, object_id: str, room_id: str) -> "ZoneProgress":
+        """Record where a transported object now is, replacing where it was.
+
+        A TRANSFER, not a machine-layer write (D-8 §11.1): the object's
+        owning room becomes its current room and no room's graph wrote
+        anything to another room to make that happen. The player carried
+        it, which is §19.7's "the player is the bridge" in its most
+        literal form.
+        """
+        kept = {o: r for o, r in self.object_rooms}
+        if kept.get(object_id) == room_id:
+            return self
+        kept[object_id] = room_id
+        return self.model_copy(update={
+            "object_rooms": tuple(sorted(kept.items()))})
+
+    def object_room(self, object_id: str) -> str | None:
+        """Which room that object is in, or `None` if it has not moved."""
+        return dict(self.object_rooms).get(object_id)
 
     def with_station(self, station_id: str) -> "ZoneProgress":
         if station_id in self.reached_stations:
@@ -1818,6 +1853,27 @@ class ZoneStateSelected(Strict):
                        pattern=r"^[a-z0-9_]+$")
 
 
+class ObjectTransported(Strict):
+    """P16. A transported object arrived in a room.
+
+    Idempotent by `(object_id, room_id)` and **not monotone**, same as
+    `ZoneStateSelected` and for the same reason: carrying it back is the
+    mechanic working, not a replay to reject.
+
+    Validated against the accepted Zone: the object must be one the Zone
+    declares and the room must be inside the `allowed_volume` §10.5 gave
+    it. An object reported into a room it may not enter is refused
+    rather than recorded -- a save that accepted it would describe a
+    world the composer never allowed.
+    """
+    type: Literal["object_transported"]
+    zone_id: str = _ID
+    object_id: str = Field(min_length=1, max_length=24,
+                           pattern=r"^[a-z0-9_]+$")
+    room_id: str = Field(min_length=1, max_length=24,
+                         pattern=r"^[a-z0-9_]+$")
+
+
 class LockOpened(Strict):
     """A locked door opened, identified by the door rather than the key.
 
@@ -2021,7 +2077,7 @@ ClientMessage = Annotated[
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
         SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
         ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
-        ZoneStateSelected, LayoutResult, BuildFailed,
+        ZoneStateSelected, ObjectTransported, LayoutResult, BuildFailed,
     ],
     Field(discriminator="type"),
 ]
