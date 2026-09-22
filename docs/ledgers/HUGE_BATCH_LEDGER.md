@@ -53,7 +53,7 @@
 | P3 | Shooting a control sends the carrier; one blast is one command; opposed commands cancel and say so | plan §3 build order P3 | P2 | `rail_receiver.gd`, `rail_controls.gd` | **verified** | `29ccf7a`+ | fired through `Player._fire_static_pulse`, not by calling the element. Negative control: the same control alone travels |
 | P4 | A player pulls a lever; a span of track locks home; the link becomes crossable; the repair survives leaving | plan §3 build order P4 / addendum "persistence precision" | P2, P3 | `rail_span.gd`, `alignment_control.gd`, `rail_junction.gd` | **verified** | `d1abde5`+ | `make godot-rail-junction`, 49 checks, in CI. Real `Player`, real `interact` verb, all four lifetimes measured separately |
 | M1 | The client half of the latch contract: `latch_fired` sent, `progress.latched` read back | plan §3 P4 | P4 | `zone_controller.gd`, `main.gd` | **verified** | `d1abde5`+ | the bridge half was complete and tested since the physics slice; the client had never sent one |
-| M1-zone | A junction inside a real composed Zone | plan §6 decision 3 | **D-4 (Dess)** | — | **schema unblocked** | Dess `RailNetwork` | `Zone.rail_networks` declares docks/spans/controls/latches and `rail:<network_id>` is a content ref a package can bind to. The composer can now ASK for a junction; composing and building one is the remaining engine/composer work |
+| M1-zone | A junction inside a real composed Zone | plan §6 decision 3 | D-4 (Dess), delivered `704f379` | `rail_networks.gd`, `zone_controller.gd`, `rail_zone_driver.gd` | **verified** | this batch | `make godot-rail-zone`, 23 checks, in CI. `ZoneController` reads `Zone.rail_networks` and builds a real `RailJunction` across the composed rooms: docks at the declared rooms' arrivals, a `RailPath` through them, a span per declaration carrying its own `latch_id`, and an `AlignmentControl` in the room `control_room_id` names. A null control means the span ships commissioned, per the schema. Latches go out through the existing `report_latch`, and a Zone rebuilt knowing the latch comes up commissioned — §5.4a recomputed, never a saved span. **Not yet played**: nothing composes a Zone that declares a railway, so this is the build-and-certify half, not a route a player has ridden |
 | A-fix | `godot-return-journey` green again | 0.3 carry-over | — | `integration_driver.gd` | **verified** | `a0be324` | F-04 |
 | M1-play | M1 is a place a person can stand: `--railway` | plan §3 ("M1 ... independently playable") | P4 | `railway_scenario.gd`, `railway_shot_driver.gd` | **verified** | `ca43341`+ | `make godot-rail-junction` builds and measures it; `make railway-shots` renders it. **Development scaffolding, not a Zone** |
 | M2-mech | The intended experience, in a development scenario: see a control you cannot reach, cross to a branch, acquire the tool, come back and open it | plan §3 build order P5 / addendum "first grapple configuration" | P4, M1-play | `railway_scenario.gd` (`EchoGrant`), `echo_runtime.gd` | **verified, and labelled** | `f9f51e9`+ | 79 checks. **Explicitly not M2 and not multiworld-safe**: the Echo is handed over by the scenario's own pedestal, not by a Check, a fold or a snapshot |
@@ -925,7 +925,7 @@ not stop at the first blocked row.
 | **H1** | **Enemy variety** — the recorded target is ~20 distinct enemies with meaningful combat roles (`docs/art/ART_REVIEW.md` § "The enemy roster target, recorded") | **3 of 10 declared roles have behaviour — a separate explicit workstream, NOT discharged by the 2026-09-21 Status/room checkpoint, and "no new content roster" does not erase it** | — | `Constants.ENEMY_ROLES` declares ten — `melee, ranged, brute, charger, bulwark, scuttler, artillery, beacon, diver, drifter` — and `ENEMY_ARCHETYPES` implements **three**. `Enemy.create` branches on those three only; the other seven are names in a generated constant with no runtime behind them. The art lane records the same gap from its side (`docs/art/review/batch008/README.md`: "seven of the ten roles have no collider, and the telegraph has no node in `enemy.gd`") |
 | **H2** | Enemy telegraph as a hangable node | **not started — NOT discharged by the 2026-09-21 Status/room checkpoint** | — | the ranged archetype has no windup at all (F-14); only the brute telegraphs. Both a gameplay and an art-integration blocker |
 | **M0** | 0.4 line exists, 0.3 untouched | **verified** | — | |
-| **M1** | One real machine chain | **verified** | — | `M1-zone` (a junction inside a composed Zone) stays blocked on **D-4** |
+| **M1** | One real machine chain | **verified** | — | `M1-zone` is built and certified this batch (`godot-rail-zone`): D-4 landed at `704f379` and the engine consumes it. What remains is a COMPOSER that declares a railway — no generated Zone asks for one yet — and a played route through it |
 | **M2-mech** | Dev-scenario loop, labelled | **verified** | — | |
 | **M3** | First content group | **2 of 3, and the third's blocker is identified** | — | EX50-011 and EX50-021 done; EX50-033's property distinction is verified and its room is blocked on D-7. **Genuine Epsilon objective selection stays incomplete until D-5** and a handwritten configuration will not be reported as it |
 | **M2 complete** | The intended experience, multiworld-safe | **blocked** | **D-1 (Dess)**, §5's five requirements | |
@@ -939,7 +939,7 @@ not stop at the first blocked row.
 | D-1 acquisition contract | **M2's completion** | everything else in this table |
 | D-2 `established_in_zone` producer | M2 complete, F | — |
 | D-3 `DoorAssignment.requires` | capability gates | — |
-| D-4 `RailNetwork` schema | `M1-zone` only | P0–P4, M1, M2-mech, M3, E-011 |
+| ~~D-4 `RailNetwork` schema~~ **delivered `704f379`, consumed this batch** | nothing | — |
 | D-5 objective-binding vocabulary | C6, and any claim of **genuine** Epsilon objective selection | building and testing provisional configurations |
 | D-6 0.4 save representation | G1, `E-011-save`, `E-021-save` | E-011's and E-021's other rows |
 | **D-7** `lightened` (and `anchored`) in the closed `StatusKind`, with their specified effects — this is `B3`, not a schema line | `E-033-status`, and so `E-033-room` | `E-033-answer`, `E-033-sensor`, `E-033-control`, `E-033-step`, all of which are done |
@@ -1026,7 +1026,7 @@ are blocked on D-6. Nothing in this table is a progression claim.
   sensor is a semantic mass-class / LIGHTENED interaction, not a
   summed-kilogram plate, and which of the two the engine has is not yet
   established.
-- **Still blocked, and only where named:** M2's completion on D-1; `M1-zone`
+- **Still blocked, and only where named:** M2's completion on the acquisition guarantee (D-1/D-2 delivered `96b6fdd`; the composer half is engine work, and the guarantee gates M2 completion and mandatory AP capability claims — not Zone/runtime integration development); `M1-zone`
   on D-4; `E-011-save`, `E-021-save` and G1 on D-6; genuine Epsilon objective
   selection on D-5. Nothing else in the scope table waits on a lane that has
   not accepted a handoff.
@@ -1038,3 +1038,41 @@ are blocked on D-6. Nothing in this table is a progression claim.
   shot from in front. Verified byte-identical at `19c5d8e` in a clean
   worktree. It is workstream A1 and it is not this batch's.
 - **Scheduled work is off.** No heartbeat, no watchers, no subscriptions.
+
+
+### F-22 — the contract declares a graph, the carrier runs a route
+
+`Zone.rail_networks` (D-4, `704f379`) is shaped after what `RailJunction`
+already runs -- docks, spans, one control per span, a latch per span -- and it
+is a good fit in every respect but one. `RailSpan.from_dock` and `to_dock` are
+any two of up to eight declared docks, so the schema describes a **graph**.
+`RailCarrier` runs **one ordered route**: docks along a `RailPath`, with a link
+between each consecutive pair. A span between the first and third dock has no
+link to commission and no meaning the engine can honour.
+
+**The engine refuses rather than guesses.** Routing the carrier through the dock
+in between would be the engine deciding what the Zone meant, which is the
+boundary `rail_networks.gd` exists to keep. A non-adjacent span is refused by
+name, the network builds nothing, the Zone still builds, and the refusal is
+readable on `ZoneController.rail_refusals` so a suite can report it as a
+composition finding instead of a crash. `godot-rail-zone` pins that behaviour
+including the refusal text.
+
+**Concrete and bounded, for the bridge lane — three questions, not a rewrite:**
+
+1. **Must spans join consecutive docks?** If yes, `RailNetwork` can validate it
+   where it already validates that a span's docks exist, and the engine's
+   refusal becomes unreachable. If no, the carrier has to become graph-capable,
+   which is real engine work and should be scoped as such rather than assumed.
+2. **Is `docks` order the route order?** The engine reads it as such -- it is
+   the only ordering available -- and nothing in the schema says so.
+3. **Is there a `home_dock`?** `RailJunction.park` defaults to dock 0 and the
+   engine parks there. That is an engine assumption about a Zone's intent, and
+   a one-field answer would make it a declaration.
+
+Question 1 is the only one that can make a Zone unbuildable; 2 and 3 are
+currently engine defaults doing a declaration's job, and are written down here
+so they stop being invisible.
+
+**Not blocking.** Every shape the schema can express that a route can run is
+built and certified today.

@@ -122,6 +122,15 @@ var _activity_note := ""
 
 ## `room_id -> world AABB`, from the committed layout.
 var room_bounds := {}
+
+## THE ZONE'S DECLARED RAILWAYS, and what the engine refused to build.
+##
+## `rail_refusals` is deliberately public and deliberately not an error:
+## a declaration the carrier cannot honour is a finding about the Zone,
+## and a suite that can read it is how that finding becomes a report
+## instead of a silence.
+var _rail := {}
+var rail_refusals: Array[String] = []
 ## Each room's committed frame: `{position, yaw, arrival}` in world
 ## space, off the same layout `room_bounds` comes from.
 var room_places := {}
@@ -364,6 +373,28 @@ func setup(zone_dict: Dictionary) -> void:
 			"position": place.get("position", Vector3.ZERO),
 			"yaw": float(place.get("yaw", 0.0)),
 			"arrival": place.get("arrival", Vector3.ZERO)}
+	# THE DECLARED RAILWAYS (D-4). Built here and not in the chamber
+	# loop, because a network spans ROOMS: its docks are in different
+	# chambers and its path is only computable once every one of them has
+	# a committed place. `room_places` is that commitment, read rather
+	# than re-derived.
+	_rail = RailNetworks.build(self, zone_dict.get("rail_networks", []),
+			room_places, str(zone_dict.get("theme", "concrete_facility")))
+	for why: String in _rail.get("refused", []) as Array:
+		# REPORTED, NOT RAISED. A network the engine cannot honour is a
+		# composition finding for whoever authored the Zone; crashing a
+		# player out of a Zone over it would be the wrong end of the
+		# problem, and building half of one would be worse.
+		rail_refusals.append(why)
+		push_warning("rail network refused: %s" % why)
+	for raw_junction: Variant in _rail.get("junctions", []) as Array:
+		var junction: RailJunction = raw_junction
+		junction.latch_fired.connect(_on_rail_latch)
+		# RECOMPUTED FROM THE LATCH, never restored from a saved span.
+		# §5.4a: the decision persists and the machine is rebuilt from
+		# it, so a span commissioned last visit is commissioned again
+		# here without the engine being told the state of any object.
+		junction.restore_from(latches_accepted())
 	door_positions = (build.get("doors", {}) as Dictionary).duplicate()
 	exit_departs_from = str(build.get("exit_departs_from", ""))
 	for raw: Variant in build.get("plugs", []):
@@ -706,6 +737,21 @@ func report_latch(package_id: String, latch_id: String) -> void:
 	BridgeClient.send_intent({"type": "latch_fired",
 			"zone_id": zone_id, "package_id": package_id,
 			"latch_id": latch_id})
+
+## A declared railway's span locked. The junction has already decided the
+## consequence is accepted; this is only the reporting half, and
+## `report_latch` is idempotent by `package_id/latch_id`, so a span that
+## locks twice in one session still tells the bridge once.
+func _on_rail_latch(package_id: String, latch_id: String) -> void:
+	report_latch(package_id, latch_id)
+
+## The railways this Zone actually built, for a suite that has to ask
+## whether a declaration became a machine.
+func rail_junctions() -> Array:
+	return (_rail.get("junctions", []) as Array).duplicate()
+
+func rail_carriers() -> Array:
+	return (_rail.get("carriers", []) as Array).duplicate()
 
 ## Every latch this Zone has reported. A copy: the set is this Zone's.
 func latches_fired() -> Dictionary:

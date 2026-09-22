@@ -1,5 +1,81 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — target facing is a gate, and a Zone can ask for a railway — 2026-09-22
+
+### The bounded nudge, and 27 of 27
+
+`godot-target-facing` is **in CI**. The entry in `NOT_A_SUITE` always said it
+would come out "the moment that repair lands", and it has.
+
+The nudge is generic — no room, element or world coordinate is named. Any
+unmounted SHOT target that no rotation can aim gets a bounded walk in **its own
+local frame**, `-basis.z` first, so the first thing tried is backing away from
+whatever it is looking at. 0.05 m steps to 0.50 m, **distance-first**, so the
+first candidate that survives is the smallest that exists. Rotation stays the
+first answer; a case pins that in a room where every target can simply be
+turned, **none of them moves**.
+
+Four gates, all required: footprint (no solid, no other claim, no reservation —
+reservations count for a move although they do not count for a facing),
+support (`_floor_under`), route (floor and headroom where a player would
+stand), and the shot at the **unchanged** 2.0 m. The claim follows the element:
+the affected activity's footprints are recomputed by the same `_footprints`
+that produced them.
+
+**Two defects found building it, both measured.** The 0.35 m courtesy padding
+is for keeping content off *content* — tested against architecture it rejected
+every nudge for a collision the element was already in (local x 6.1, partition
+at 6.7, silhouette clear, padded claim overlapping). And the firing ladder
+started at 2.0 m, i.e. *past* the window it was meant to check, so a target
+with exactly its clearance and something solid just beyond read as unshootable
+while a player could stand at 1.5 m and hit it.
+
+The diagnostic Zone's case moved **0.10 m** back along its own facing — exactly
+the proposal the census had measured.
+
+### D-4 consumed: `Zone.rail_networks` builds a real railway
+
+`make godot-rail-zone`, **23 checks**, in CI. `ZoneController` reads the
+contract Dess landed at `704f379` and `RailNetworks` builds it: docks at the
+declared rooms' arrivals, a `RailPath` through them, a span per declaration
+carrying its own `latch_id`, an `AlignmentControl` in the room
+`control_room_id` names. A null control means the span ships commissioned,
+because that is what the schema says it means.
+
+Certified: every dock stands in the room its declaration names; a span with a
+control starts **refused** and one without starts open; the control is in its
+own room; and a Zone rebuilt knowing the latch fired comes up **commissioned**
+— §5.4a recomputed from the latch, with nothing having saved a span.
+
+**F-22, and the engine refuses rather than guesses.** The schema declares a
+graph (`from_dock`/`to_dock`, any two of eight); `RailCarrier` runs one ordered
+route. A non-adjacent span has no link to commission, so it is refused **by
+name**, the network builds nothing, and the Zone still builds — a composition
+finding on `rail_refusals`, not a crash. Three concrete questions go back to
+the bridge lane: must spans join neighbours, is `docks` order the route order,
+and is there a `home_dock`. Only the first can make a Zone unbuildable.
+
+### Dess's deliveries integrated
+
+`704f379` RailNetwork (consumed above), `c0d5446` the support-target export
+(collapsed onto one name, F-21), and `96b6fdd` **D-1/D-2 the acquisition
+binding** — `Zone.featured_acquisition` and `established_in_zone`, the producer
+`capability_guarantee`'s case C never had. Merged clean; bridge suite **1650
+passed + 627 subtests**. She notes nothing composes a featured Zone yet: that
+composer half is this lane's, and is the next M2 step.
+
+### Still open, and not touched here
+
+- **H1/H2 enemy variety** — 3 of 10 declared roles have behaviour. Separate
+  explicit workstream, active in the queue.
+- **The rest of the Amalgam catalogue** — 11 kinds named and unsupported.
+- **No composer declares a railway or a featured acquisition yet**, so neither
+  has been ridden or played. Build-and-certify is not the same as played, and
+  the rows say so.
+- The three EX50 rooms remain **playable development scenarios**; their
+  interlocks, campaign integration and save requirements are open rows.
+
+
 ## ENGINE LANE — the Unweighted Switch stands, and the boundary caught a lie — 2026-09-21
 
 **EX50-033 is a room you can walk.** `make godot-unweighted`, **61 checks**, in

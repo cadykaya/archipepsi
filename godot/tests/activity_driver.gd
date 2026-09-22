@@ -74,6 +74,8 @@ func _run() -> void:
 	await _test_a_shot_element_is_reached_by_a_real_weapon()
 	await _test_targets_are_mounted_on_real_walls()
 	await _test_a_mounted_target_is_shootable_from_the_lane()
+	await _test_a_target_that_can_be_turned_is_never_moved()
+	await _test_a_boxed_in_target_is_nudged_the_smallest_way()
 	await _test_a_blocked_shot_is_a_blocked_shot()
 	await _test_a_wall_with_no_room_declines_the_mount()
 	await _test_a_target_over_a_gap_is_mounted_and_shootable()
@@ -1622,3 +1624,149 @@ func _snapshot() -> Dictionary:
 		"coins_received": 0, "coins_spent": 0,
 		"hub": {"state": "IDLE"},
 	}
+
+
+# ------------------------------------- the bounded same-room nudge
+
+## ROTATION FIRST, AND MOVING IS THE SECOND ANSWER.
+##
+## `aim_shot_targets` may turn a target freely -- turning costs the room
+## nothing. Moving one spends part of the layout, so a pass that slid
+## things about when a rotation was available would be quietly
+## redesigning rooms that were fine. Every unmounted target in an
+## ordinary probe room has somewhere to look, so every one of them must
+## still be exactly where the solver put it.
+func _test_a_target_that_can_be_turned_is_never_moved() -> void:
+	var probe := _target_room(3)
+	var root: Node3D = probe["root"]
+	var built: Dictionary = probe["built"]
+	var elements: Array = built["elements"]
+	var before: Array[Vector3] = []
+	for one: Variant in elements:
+		before.append((one as ActivityElement).position)
+	# The builder has already run the pass once; running it again on a
+	# settled room must be a no-op for every position.
+	Activities.aim_shot_targets(root, [built], [])
+	var moved := 0
+	for i in elements.size():
+		if (elements[i] as ActivityElement).position.distance_to(
+				before[i]) > 0.0001:
+			moved += 1
+	_check(moved == 0,
+			"%d of %d targets moved in a room where every one of them "
+			% [moved, elements.size()] + "could simply be turned")
+	# AND THE CLAIM STILL CONTAINS THE ELEMENT. `footprints` becomes
+	# `occupied` for whatever is placed next, so a claim that has come
+	# adrift from its element is a later activity placed into this one.
+	var claims: Array = built["footprints"]
+	_check(claims.size() == elements.size(),
+			"%d claims for %d elements" % [claims.size(), elements.size()])
+	for i in elements.size():
+		_check((claims[i] as AABB).has_point(
+				(elements[i] as ActivityElement).position),
+				"claim %d contains its element" % i)
+	root.queue_free()
+	await get_tree().process_frame
+
+## THE NUDGE ITSELF, on a target no rotation can aim.
+##
+## **DIRECTLY CONSTRUCTED, and it says so.** The element is made and
+## placed by hand in an alcove built for the purpose, rather than waiting
+## for a generated Zone to produce one: what is under test is the pass,
+## and a fixture that only sometimes contains a boxed-in target is a
+## fixture that only sometimes tests anything.
+##
+## The alcove: walls 1.3 m off each side and 1.5 m behind, and a slab
+## 1.78 m in front. Every facing is short of `AIM_CLEAR`, so no rotation
+## can solve it -- and backing away from the slab can, at the fifth step
+## of the ladder and not before.
+const ALCOVE_AT := Vector3(-900.0, 0.0, 0.0)
+
+func _test_a_boxed_in_target_is_nudged_the_smallest_way() -> void:
+	var root := Node3D.new()
+	add_child(root)
+	_slab_in(root, Vector3(40.0, 1.0, 40.0), Vector3(0.0, -0.5, 0.0))
+	for side: float in [-1.0, 1.0]:
+		_slab_in(root, Vector3(0.5, 6.0, 6.0),
+				Vector3(side * 1.55, 3.0, 0.0))
+	_slab_in(root, Vector3(6.0, 6.0, 0.5), Vector3(0.0, 3.0, -1.75))
+	_slab_in(root, Vector3(6.0, 6.0, 0.5), Vector3(0.0, 3.0, 2.03))
+	var target := ActivityElement.create(ActivityElement.SHOT, 0,
+			ActivityElement.TARGET_SIZE, Color.WHITE)
+	root.add_child(target)
+	target.position = Vector3(0.0, 2.2, 0.0)
+	var span := maxf(ActivityElement.TARGET_SIZE.x,
+			ActivityElement.TARGET_SIZE.z)
+	target.set_meta("claimed_size",
+			Vector3(span, ActivityElement.TARGET_SIZE.y, span))
+	target.set_meta("nominal_size", ActivityElement.TARGET_SIZE)
+	target.set_meta("mount_height", 2.2)
+	target.set_meta("mounted", false)
+	await get_tree().physics_frame
+
+	# SOLVED AT THE ORIGIN, MOVED AFTERWARDS, exactly as `_target_room`
+	# had to learn: `aim_shot_targets` gathers the room's boxes from
+	# `Transform3D.IDENTITY` and compares them against element
+	# POSITIONS, which are local. A probe shifted out first hands the
+	# pass boxes 900 m from every candidate spot, so nothing is ever in
+	# the way, every facing reads clear and the target sits still for the
+	# wrong reason -- which is what the first run of this case did.
+	var home := target.position
+	Activities.aim_shot_targets(root, [], [])
+	root.global_position = ALCOVE_AT
+	await get_tree().physics_frame
+	var shift := target.position - home
+	_check(target.is_inside_tree(),
+			"THE ELEMENT IS PRESERVED: a target no rotation can aim is "
+			+ "moved, never dropped")
+	_check(shift.length() > 0.0001,
+			"the boxed-in target moved at all (%v)" % shift)
+	_check(shift.length() <= Activities.NUDGE_LIMIT + 0.0001,
+			"...and by %.2f m, inside the %.2f m bound"
+			% [shift.length(), Activities.NUDGE_LIMIT])
+	# ALONG ONE OF ITS OWN AXES, A WHOLE NUMBER OF STEPS.
+	#
+	# Not "backwards", which is what this asserted first: the ladder is
+	# distance-first across four directions, so a sideways step of 0.20 m
+	# rightly beats a backward one of 0.25 m, and pinning the direction
+	# pinned this alcove's geometry rather than the pass's contract. What
+	# IS the contract is that the move is along an axis of the element's
+	# own frame and lands on the ladder -- an arbitrary direction or an
+	# arbitrary distance would mean a search rather than the bounded
+	# walk the instruction asked for. (The element is unrotated here, so
+	# its local axes are the probe's.)
+	var on_axis := (absf(shift.x) < 0.0001) != (absf(shift.z) < 0.0001)
+	_check(on_axis, "...along ONE axis of its own frame: %v" % shift)
+	var steps := shift.length() / Activities.NUDGE_STEP
+	_check(absf(steps - roundf(steps)) < 0.001,
+			"...and a whole %.2f m step of the ladder (%.2f of them)"
+			% [Activities.NUDGE_STEP, steps])
+	_check(absf(target.position.y - home.y) < 0.0001,
+			"...and level: a nudge is a floor move, not a lift")
+
+	# AND THE SHOT IS REAL. Measured the way the census measures it: a
+	# ray along the face, excluding the target's own colliders.
+	var face := target.global_transform.basis.z.normalized()
+	var at := target.global_position
+	var space := get_viewport().world_3d.direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(
+			at + face * 0.1, at + face * 2.0)
+	var mine: Array[RID] = []
+	for body in target.find_children("*", "CollisionObject3D", true, false):
+		mine.append((body as CollisionObject3D).get_rid())
+	query.exclude = mine
+	_check(space.intersect_ray(query).is_empty(),
+			"THE SHOT: %.1f m in front of the moved target is clear"
+			% Activities.AIM_CLEAR)
+	root.queue_free()
+	await get_tree().process_frame
+
+func _slab_in(root: Node3D, size: Vector3, at: Vector3) -> void:
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	body.add_child(shape)
+	root.add_child(body)
+	body.position = at
