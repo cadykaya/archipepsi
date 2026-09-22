@@ -853,12 +853,43 @@ per triangle now. T01 and T02 re-verified under it.
 build loop both earlier builders had grown identical copies of. All three
 packs use it; `build_forest_temple` rebuilds byte-identical through it.
 
+### T04 — Super Metroid, THE WRECKED SHIP. T05 — Kingdom Hearts 2, TWILIGHT TOWN SERVICE ALLEY.
+
+Batches 058 and 059. Five packs now, one shell, four cameras, and the
+switch housing in the same place on the same wall in all five frames.
+
+**T04 turned the hint finding into a number.** `THEME_BY_GAME_HINT` holds
+6 entries against 81 catalogued games: **75 of 81 have no hint at all.**
+T02's disagreement was an argument; 7% coverage is a measurement.
+It also lost its **coaming**: a 0.10 m sill across the doorway is FLOOR,
+floor is Production's whatever its height, and a 0.10 m step is under the
+0.12 m walk-up so the foothold rule would never have seen it. The opening
+rule is the only thing between a plausible detail and art changing a
+walking surface. If the coaming should exist it is Production's to place;
+art has marked where.
+
+**T05 WAS AN EXPERIMENT AND IT FAILED USEFULLY.** It shares `temple_ruin`
+with T01 deliberately, to test the owner's criterion that *a useful visual
+variant is not a duplicate merely because its construction is shared*.
+The shapes ARE different and legible as different -- and the frame still
+reads as a warmer Forest Temple, because `temple_ruin`'s `accent` is mossy
+stone, so awning canvas reads as foliage and timber boards read as green
+stone. **The geometry says "boarded-up shopfront"; the pixels say
+"overgrown temple"; the pixels win.** Strongest argument in five packs for
+the pack namespace, and a picture rather than an assertion. Its frames are
+deliberately not lit or posed to hide it.
+
+T05's awning **valance** was refused for hanging 6 cm below the door head.
+**T04's coaming and T05's valance are the same rule seen from both ends of
+the same opening**, and between them they are a fair description of what a
+theme pack may not touch.
+
 ### Then
 
-**T04 onward** (Dark Souls III, Borderlands 2, ... through T18 plus the 63
-from the catalogue snapshot), **A15** (item/Forge modules), **A16** (finish
-the six theme families), **A17-A19** (detail/dressing library,
-actual-consumer trials and budget passes, final catalogue).
+**T06 onward** through T18 plus the 63 from the catalogue snapshot,
+**A15** (item/Forge modules), **A16** (finish the six theme families),
+**A17-A19** (detail/dressing library, actual-consumer trials and budget
+passes, final catalogue).
 
 ### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.
 

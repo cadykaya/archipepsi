@@ -197,6 +197,29 @@ Two things from it that other lanes need:
   to it** -- five `verify` runs modified six tracked fixtures by
   checkpointing their WAL; restored.
   `docs/art/reports/2026-09-22-glyph-toolchain-trial.md` §5.
+* **T04 (Super Metroid, THE WRECKED SHIP) and T05 (Kingdom Hearts 2,
+  TWILIGHT TOWN SERVICE ALLEY) make it five packs, one shell, four
+  cameras, and the switch housing in the same place on the same wall in
+  all five.** Batches 058 and 059.
+  **T04: the hint covers 6 of 81 games.** T02's disagreement was an
+  argument; this is a number. 75 of 81 -- Super Metroid among them --
+  have no hint at all, so for nine games in ten there is nothing to
+  agree or disagree with. And the pressure door's COAMING was refused:
+  a 0.10 m sill across the doorway is FLOOR, floor is Production's
+  whatever its height, and a 0.10 m step is under the 0.12 m walk-up so
+  the foothold rule would never have seen it.
+  **T05 WAS AN EXPERIMENT AND IT FAILED USEFULLY.** It shares
+  `temple_ruin` with T01 on purpose, to test the owner's "a variant is
+  not a duplicate merely because its construction is shared". The shapes
+  ARE different and legible as different -- and the frame still reads as
+  a warmer Forest Temple, because `temple_ruin`'s accent is mossy stone
+  so awning canvas reads as foliage. **The geometry says "boarded-up
+  shopfront", the pixels say "overgrown temple", the pixels win.**
+  Strongest argument in five packs for the pack namespace, and it is a
+  picture rather than an assertion. The awning's valance was refused for
+  hanging 6 cm below the door head -- T04's coaming and T05's valance
+  are the same rule seen from both ends of the same opening.
+  `docs/art/review/wreck_2026-09-22/`, `.../twilight_2026-09-22/`.
 * **T03 (Bomb Rush Cyberfunk, BRINK TERMINAL AFTER HOURS) makes it three
   packs, three subthemes, one shell.** Six assets (Batch 057), four
   frames from the same cameras as T01 and T02.
