@@ -42,6 +42,7 @@ try:
         ShopState,
         ShopStockItem, ZoneRecord,
     )
+    from .physics import GRAPH_PACKAGE_PREFIX
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
@@ -55,6 +56,7 @@ except ImportError:  # pragma: no cover
         ShopState,
         ShopStockItem, ZoneRecord,
     )
+    from physics import GRAPH_PACKAGE_PREFIX
     from zone import Zone
 
 
@@ -573,6 +575,55 @@ def _accepted_packages(rec: ZoneRecord) -> dict[str, set[str]]:
     return out
 
 
+def _accepted_graph_latches(rec: ZoneRecord, room_id: str) -> set[str]:
+    """The LATCH nodes a room graph may record, or why it may record none.
+
+    Four facts have to hold, and a `graph_<room>` name establishes none
+    of them on its own:
+
+    1. **The Zone was accepted** and this is it -- the declaration read
+       is `rec.zone`, the one the campaign accepted, not anything the
+       engine says it built.
+    2. **Its layout was committed** -- `layout_state` ACCEPTED, with a
+       manifest for this Zone. A room graph is built off the committed
+       layout, so a Zone with none has built nothing and nothing in it
+       can have latched. The same honest answer `_accepted_packages`
+       gives for physics.
+    3. **The committed layout placed that room.** The manifest's `rooms`
+       is the layout evidence: a latch in a room the layout never
+       placed is a machine nobody built.
+    4. **The accepted Zone declares a graph in that room, and it has
+       LATCH nodes.** Only those ids are recordable.
+
+    Nothing here consults a physics package, fabricates a certificate,
+    or reaches around `record_latch`: a room-graph latch is a different
+    kind of accepted fact, checked against its own evidence.
+    """
+    zone = rec.zone
+    manifest = rec.manifest or {}
+    if zone is None:
+        raise ValueError(f"Zone '{rec.zone_id}' holds no accepted Zone")
+    if rec.layout_state != "ACCEPTED" or not manifest:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' has no committed layout, so no room "
+            "graph in it has been built and nothing can have latched")
+    if manifest.get("zone_id") != rec.zone_id:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' carries a manifest for "
+            f"'{manifest.get('zone_id')}'")
+    if room_id not in (manifest.get("rooms") or {}):
+        raise ValueError(
+            f"Zone '{rec.zone_id}''s committed layout placed no room "
+            f"'{room_id}'")
+    graph = next((g for g in zone.room_graphs if g.room_id == room_id),
+                 None)
+    if graph is None:
+        raise ValueError(
+            f"room '{room_id}' in Zone '{rec.zone_id}' declares no "
+            "signal graph")
+    return {n.node_id for n in graph.nodes if n.kind == "LATCH"}
+
+
 def record_latch(save: CampaignSave, zone_id: str, package_id: str,
                  latch_id: str) -> CampaignSave:
     """A physics latch fired. Idempotent by `package_id/latch_id`.
@@ -589,6 +640,20 @@ def record_latch(save: CampaignSave, zone_id: str, package_id: str,
     describing nothing — and monotone sets never give anything back.
     """
     def known(rec):
+        # P14. A ROOM-GRAPH LATCH, under the reserved `graph_` namespace
+        # no physics package may take. Checked against the accepted
+        # Zone's declaration and the committed layout; the physics path
+        # below is untouched.
+        if package_id.startswith(GRAPH_PACKAGE_PREFIX):
+            room_id = package_id[len(GRAPH_PACKAGE_PREFIX):]
+            latches = _accepted_graph_latches(rec, room_id)
+            if latch_id not in latches:
+                raise ValueError(
+                    f"the signal graph in room '{room_id}' of Zone "
+                    f"'{zone_id}' declares no LATCH '{latch_id}'"
+                    + (f"; it declares {sorted(latches)}" if latches
+                       else " and declares none"))
+            return
         packages = _accepted_packages(rec)
         if package_id not in packages:
             raise ValueError(

@@ -93,3 +93,83 @@ it is one function.
 
 **Nothing about this is played yet.** P14's consequence stays open until
 that last Prod row runs.
+
+---
+
+## 5. Dess: the bridge half, delivered — exact fields
+
+**Dess (bridge/design) → Prod, 2026-09-22.** Your §2 finding was right
+and it corrected my D-10 §2: the player's mass alone is not evidence
+that a plate accepts them. Everything below is landed and tested; the
+runtime rows in §4 are still yours.
+
+**Declaration** (`schemas/signal_graph.py`, exported by `make export`):
+
+| field | contract |
+|---|---|
+| `SUPPORTED_NODE_KINDS` | `("NOT", "LATCH")` → `SIGNAL_NODE_KINDS_IMPLEMENTED = ["NOT", "LATCH"]` |
+| `LogicNode` kind `LATCH` | **exactly one input** — the set input, your `inputs[0]`; no reset. A second input is refused, because the runtime would read it as nothing |
+| `SensorNode.counts_player` | `bool`, **default `false`** — EX50-033's object-only arrangement unchanged. Refused on any sensor that is not a `PRESSURE_PLATE` |
+| a latch set at rest | refused for **every** graph: `plate → NOT → LATCH` latches on the first tick and would report a decision no player made |
+| `PLAYER_MASS_KG`, `MASS_LIGHT_BELOW`, `MASS_MEDIUM_BELOW`, `MASS_HEAVY_BELOW` | exported, for `Player.mass_class()`; `mass_class.gd` can read these instead of its hand copy |
+
+**The interaction, described once.** `physics.plate_accepts_player(requires_class, counts_player)`
+is `ClassPlate`'s rule restated: the flag first — an object-only plate
+never accepts the player whatever they weigh — then
+`at_least(class(PLAYER_MASS_KG), requires_class)`. Carried and pushed
+objects are **not** counted as base kit: the carry verb is P12 and the
+push-onto-plate claim is unproven.
+
+**The route** (`TopologyEdge.opened_by` = actuator id). The Zone
+validator reads the chain that drives **that** actuator only — a
+second, object-only chain in the same room does not get the route
+refused — and settles it the way `signal_graph.gd` does: rest, pressed,
+released. A route may hang on it only if the plate accepts the player
+and the chain is **open once the plate has been stepped on and left**.
+That admits `plate → LATCH → shutter` and a denial-only `NOT` chain;
+it refuses the held requirement (`plate → shutter`) and the latch that
+seals the way (`plate → LATCH → NOT → shutter`). No capability on the
+edge.
+
+**The trigger before the route.** `topology.reachability` models each
+route latch as a *permanent* variable — for the search only — whose
+setter is the plate's room, so R⊆E, escapability and key acyclicity
+all see it through one substitution point. A plate reachable only
+through the door it opens is refused by name: *"the trigger is behind
+the route it opens"*. Sabotage-checked: without the modelling, a
+far-side plate passes unnoticed.
+
+**The record** (`transitions.record_latch`). `package_id =
+"graph_<room_id>"`, `latch_id` = the `LATCH` node's id, saved as
+`graph_<room>/<node_id>` in `latched` (`ROOM_PERSISTENT`) — the form
+your `restore_from(latches_accepted())` compares. Recorded only when
+all four hold: the accepted Zone is this one; its layout is committed
+(`ACCEPTED`, manifest for this Zone); the manifest's `rooms` placed that
+room; the accepted Zone declares a graph there whose node by that id is
+a `LATCH`. A `graph_` name alone authorizes nothing. The physics path is
+untouched, and `graph_` is **reserved**: `PhysicsPackage`,
+`ReplayEvidence` and `PlacedPackage` refuse a package id that takes it.
+
+**A Zone to play.** `latched_route.compose_latched_route` — an explicit
+step, never a default, same discipline as D-8's composer — puts the
+chain on a real composed Zone and declines rather than emitting
+anything the schema or the route search refuses. `make
+latched-route-fixture` writes it to
+`godot/tests/fixtures/latched_route_zone.json` (plate and latch in
+`c002`, shutter across `e:c002:c003`), with a staleness test. The
+default composition, and `played_zone.json`, carry no room graph.
+
+## 6. What is still yours — the runtime rows, exactly
+
+1. `ClassPlate` honours `counts_player` from the declaration (default
+   `false` keeps EX50-033).
+2. `Player.mass_class()` → the class of `Constants.PLAYER_MASS_KG`.
+3. `RoomGraphs.build` honours `opened_by`: the shutter across the named
+   doorway, not beside the plate.
+4. The played acceptance on `latched_route_zone.json`: walk in, step on
+   the plate, step off, walk through into `c003` with the base kit
+   only, then a normal save/reload and the way still open.
+
+One assumption to confirm when you wire (2): the route validator reads
+the player at `PLAYER_MASS_KG` with no Status. If anything can change
+the player's own class, that is transient and not modelled here.

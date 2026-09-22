@@ -63,9 +63,16 @@ SensorKind = Literal[
     "STATUS_SENSOR", "STATUS_VOLUME_SENSOR", "COMPOUND_SENSOR",
 ]
 
-#: What a Zone may use today. **`NOT` alone**, because `NOT` is the only
-#: logic node the one chain that exists runs.
-SUPPORTED_NODE_KINDS: tuple[str, ...] = ("NOT",)
+#: What a Zone may use today: `NOT`, which the EX50-033 chain runs, and
+#: `LATCH`, which Prod built in `signal_graph.gd` for D-10's option B.
+#:
+#: **`LATCH` is set by a true input and never reset in this slice.**
+#: One input, no clear: the puzzle it exists for is "step on the plate
+#: once and walk through", and a latch that could clear is a door that
+#: can shut behind you. §5.4a persists the DECISION, so a set latch is
+#: recorded (`transitions.record_latch`, under `graph_<room>`) and the
+#: machine is rebuilt from the record rather than restored from itself.
+SUPPORTED_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH")
 
 #: **`PRESSURE_PLATE` alone**, and §20.6's distinction is the reason it
 #: is worth naming: a `PRESSURE_PLATE` reads a semantic `MassClass` and
@@ -120,6 +127,19 @@ class SensorNode(Strict):
     #: For `PRESSURE_PLATE`, the semantic class it demands. The plate
     #: never accumulates, so this is a class name and not a mass.
     requires_class: Literal["LIGHT", "MEDIUM", "HEAVY"] | None = None
+    #: Whether the PLAYER'S OWN BODY loads this plate. **False by default,
+    #: and the default is EX50-033's arrangement preserved exactly:**
+    #: *"the player's own mass class does not count toward its threshold
+    #: in this arrangement."* `ClassPlate` skips the player unless told
+    #: otherwise, and this is where it is told.
+    #:
+    #: **The player's mass is not evidence on its own.** An object-only
+    #: plate does not accept a player however much the player weighs,
+    #: and a route validator that reasoned "80 kg is MEDIUM, so the base
+    #: kit loads a MEDIUM plate" about such a plate would be describing
+    #: an interaction the runtime refuses. `physics.plate_accepts_player`
+    #: reads this flag first for exactly that reason.
+    counts_player: bool = False
 
     @model_validator(mode="after")
     def _the_runtime_has_this_sensor(self):
@@ -129,6 +149,11 @@ class SensorNode(Strict):
                 f"sensor '{self.node_id}' is a PRESSURE_PLATE and names no "
                 "class; a plate that demands nothing is satisfied by "
                 "anything, which is not a puzzle and not §20.1's sensor")
+        if self.counts_player and self.kind != "PRESSURE_PLATE":
+            raise ValueError(
+                f"sensor '{self.node_id}' is a {self.kind} and says it "
+                "counts the player; only a plate reads bodies standing "
+                "on it, so the flag would describe nothing")
         return self
 
 
@@ -145,6 +170,15 @@ class LogicNode(Strict):
             raise ValueError(
                 f"node '{self.node_id}' is a NOT with {len(self.inputs)} "
                 "inputs; §19.2 gives NOT exactly one")
+        if self.kind == "LATCH" and len(self.inputs) != 1:
+            # The runtime reads `inputs[0]` as SET and has no clear. A
+            # second input would be read as nothing at all, so a
+            # declared reset would silently never reset -- refused here
+            # rather than discovered as a door that will not close.
+            raise ValueError(
+                f"node '{self.node_id}' is a LATCH with {len(self.inputs)} "
+                "inputs; this slice's latch takes exactly one -- the set "
+                "input -- and has no reset")
         return self
 
 
@@ -166,35 +200,93 @@ class ActuatorBinding(Strict):
         return self
 
 
+def settle(graph, pressed: bool,
+           latched: frozenset[str] = frozenset()
+           ) -> tuple[dict[str, bool], frozenset[str]]:
+    """One tick of this graph with every plate `pressed` or not.
+
+    The runtime's order, restated rather than approximated: sensors,
+    then logic in declaration order (which the schema already proves is
+    topological order), then actuators. A `LATCH` already in `latched`
+    stays true; one whose input is true this tick joins it.
+
+    Every supported node takes ONE input, so every actuator depends on
+    exactly one sensor and pressing all of them at once asks the same
+    question of each chain as pressing its own.
+    """
+    values = {s.node_id: pressed for s in graph.sensors}
+    now = set(latched)
+    for node in graph.nodes:
+        feed = values[node.inputs[0]]
+        if node.kind == "NOT":
+            values[node.node_id] = not feed
+        elif node.kind == "LATCH":
+            if node.node_id in now or feed:
+                now.add(node.node_id)
+            values[node.node_id] = node.node_id in now
+        else:                                       # refused at declaration
+            values[node.node_id] = False
+    return values, frozenset(now)
+
+
+def phases(graph, actuator_id: str) -> dict:
+    """What an actuator reads before, during and after the one action.
+
+    `rest` is the room as built. `pressed` is the plate loaded.
+    `released` is the plate left again, with whatever latched still
+    latched -- and since nothing un-latches, every later press and
+    release lands back on these two values, so three states are all of
+    them.
+
+    The shapes this tells apart, which is why it exists:
+
+      plate -> shutter                 rest closed, released closed:
+                                       the player must HOLD it open
+      plate -> NOT -> shutter          rest open,   released open:
+                                       loading it only ever denies
+      plate -> LATCH -> shutter        rest closed, released open:
+                                       step on it once, walk through
+      plate -> LATCH -> NOT -> shutter rest open,   released closed:
+                                       the plate shuts the way for good
+      plate -> NOT -> LATCH -> ...     latched at rest: the room decided
+                                       before the player arrived
+    """
+    binding = next(a for a in graph.actuators
+                   if a.actuator_id == actuator_id)
+    rest_v, rest_l = settle(graph, False)
+    press_v, press_l = settle(graph, True, rest_l)
+    free_v, _ = settle(graph, False, press_l)
+    at = binding.driven_by
+    return {"rest": rest_v[at], "pressed": press_v[at],
+            "released": free_v[at], "latched_at_rest": rest_l}
+
+
 def resting_output(graph, actuator_id: str) -> bool:
-    """What an actuator reads with nothing touching the room.
+    """What an actuator reads with nothing touching the room."""
+    return phases(graph, actuator_id)["rest"]
 
-    Every supported sensor is FALSE at rest -- a `PRESSURE_PLATE` with
-    nothing on it -- and the one supported logic node is `NOT`, so the
-    resting value of any chain is decided by how many inversions stand
-    between the sensor and the machine. Counting them is the whole
-    computation, and it is exact rather than approximate because the
-    supported vocabulary is two entries wide.
 
-    **Why anything cares.** An actuator that gates a route and rests
-    CLOSED is a door the player has to hold open. The base-kit way to
-    load a plate is to stand on it, and standing on a plate and walking
-    through a doorway are not simultaneous -- which is D-8 §11.2's
-    held cross-room requirement arriving in a room graph. `LATCH` is
-    §19.2's answer and nothing implements it yet.
+def upstream(graph, actuator_id: str) -> tuple[list, list]:
+    """The sensors and nodes an actuator is driven through.
+
+    Walked backwards along single inputs, so it is a chain and not a
+    tree. The route validator asks about THESE sensors only: a second
+    chain in the same room -- an object-only plate running a scenery
+    shutter -- is not the interaction the route depends on, and refusing
+    the route because of it would describe the wrong thing.
     """
     by_id = {n.node_id: n for n in graph.nodes}
-    binding = next(a for a in graph.actuators if a.actuator_id == actuator_id)
-    value = False           # every supported sensor rests false
+    by_sensor = {s.node_id: s for s in graph.sensors}
+    binding = next(a for a in graph.actuators
+                   if a.actuator_id == actuator_id)
+    sensors, nodes = [], []
     at = binding.driven_by
-    seen = 0
-    while at in by_id and seen <= len(by_id):
-        node = by_id[at]
-        if node.kind == "NOT":
-            value = not value
-        at = node.inputs[0]
-        seen += 1
-    return value
+    while at in by_id:
+        nodes.append(by_id[at])
+        at = by_id[at].inputs[0]
+    if at in by_sensor:
+        sensors.append(by_sensor[at])
+    return sensors, nodes
 
 
 class RoomGraph(Strict):
@@ -240,4 +332,16 @@ class RoomGraph(Strict):
                     f"actuator '{binding.actuator_id}' is driven by "
                     f"'{binding.driven_by}', which this room's graph does "
                     "not declare")
+        # A LATCH THAT SETS WHEN THE ROOM IS BUILT RECORDS A DECISION
+        # NOBODY MADE. Its input is true at rest -- `plate -> NOT ->
+        # LATCH` -- so the first tick latches it, the runtime reports it,
+        # and the campaign would persist a player choice that happened
+        # during loading. Refused for every graph, route or not.
+        _, at_rest = settle(self, False)
+        if at_rest:
+            raise ValueError(
+                f"LATCH {sorted(at_rest)} in room '{self.room_id}' is set "
+                "the moment the room is built, because its input is true "
+                "with nothing on the plate; that records a decision no "
+                "player made")
         return self

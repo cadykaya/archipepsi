@@ -105,27 +105,49 @@ def mass_class(mass_kg: float, manipulable: bool = True) -> str:
     return "LIGHT"
 
 
-def base_kit_can_satisfy(required_class: str) -> bool:
-    """Can a player carrying only the guaranteed kit load a plate that
-    demands this class?
+def plate_accepts_player(requires_class: str, counts_player: bool) -> bool:
+    """Does standing on this plate load it? `ClassPlate`'s rule, restated.
 
-    Two ways, and both are arithmetic rather than opinion:
+    **The flag first, and the mass only if the flag says the body
+    counts.** `ClassPlate.occupants()` skips the player unless the plate
+    is told to count them, so for an object-only plate the answer is no
+    whatever the player weighs. Only then does the runtime compare
+    classes -- `MassClass.at_least(player, requires)` over §10.2's
+    ladder -- and `Player.mass_class()` is the class of `PLAYER_MASS_KG`
+    (Prod, D-10 answer §2).
 
-      THE PLAYER'S OWN BODY. `PLAYER_MASS_KG` is 80, which is `MEDIUM`,
-      so standing on the plate satisfies `LIGHT` and `MEDIUM`.
-      SOMETHING THEY CARRIED. §10.3 caps ordinary pickup at
-      `CARRY_MASS_KG`, which is 60 -- also `MEDIUM`. So a carried
-      object can reach no further up the ladder than the player
-      standing on it already does.
-
-    `HEAVY` starts at 120 kg. Nothing under the carry line reaches it
-    and the player does not weigh it, so a `HEAVY` plate demands a
-    pushed object, which demands a qualified manipulation provider.
-    That is a capability, and it is one `graph.Capability` deliberately
-    cannot name.
+    **What this deliberately does not count.** A carried object: the
+    carry verb is P12 and unbuilt, so a 60 kg thing in the player's
+    hands is not a base-kit way to load anything yet. A pushed object:
+    walking a crate onto a plate is a physics claim nobody has proven,
+    and progression is not where to find out. An earlier revision of
+    this derivation counted both, and counted the player's mass for a
+    plate that ignores the player -- which described an interaction the
+    runtime refuses.
     """
-    heaviest = mass_class(max(PLAYER_MASS_KG, CARRY_MASS_KG))
-    return MASS_CLASSES.index(required_class) <= MASS_CLASSES.index(heaviest)
+    if not counts_player:
+        return False
+    body = mass_class(PLAYER_MASS_KG)
+    return MASS_CLASSES.index(body) >= MASS_CLASSES.index(requires_class)
+
+
+#: The namespace room-graph latches are recorded under: `graph_<room>`.
+#:
+#: `LatchFired.package_id` is `^[a-z0-9_]+$`, so no separator character
+#: is available, and a bare room id would share one namespace with the
+#: physics packages `record_latch` already validates. **Reserved:** a
+#: physics package may not take a name in it, or a physics latch and a
+#: room-graph latch could be recorded under one identity.
+GRAPH_PACKAGE_PREFIX = "graph_"
+
+
+def refuse_reserved_package_id(package_id: str) -> None:
+    if package_id.startswith(GRAPH_PACKAGE_PREFIX):
+        raise ValueError(
+            f"physics package '{package_id}' takes the "
+            f"'{GRAPH_PACKAGE_PREFIX}' prefix, which is reserved for "
+            "room-graph latches; a physics latch recorded under it would "
+            "share an identity with one")
 
 #: §4.10. The verifier's whole budget, unchanged from Design 3.
 STATE_VECTOR_BOUND = 4096
@@ -344,6 +366,11 @@ class PhysicsPackage(Strict):
 
     package_id: str = Field(min_length=1, max_length=32,
                             pattern=r"^[a-z0-9_]+$")
+
+    @model_validator(mode="after")
+    def _the_graph_namespace_is_reserved(self):
+        refuse_reserved_package_id(self.package_id)
+        return self
     latch_conditions: tuple[LatchCondition, ...] = Field(default=(),
                                                          max_length=16)
     #: Which of `latch_conditions`, by index, the verifier reasons about.
@@ -520,6 +547,11 @@ class ReplayEvidence(Strict):
 
     package_id: str = Field(min_length=1, max_length=32,
                             pattern=r"^[a-z0-9_]+$")
+
+    @model_validator(mode="after")
+    def _the_graph_namespace_is_reserved(self):
+        refuse_reserved_package_id(self.package_id)
+        return self
     content_digest: str = Field(min_length=16, max_length=16,
                                 pattern=r"^[0-9a-f]{16}$")
     provider_force_n: float = Field(ge=0.0)
@@ -582,6 +614,11 @@ class PlacedPackage(Strict):
 
     package_id: str = Field(min_length=1, max_length=32,
                             pattern=r"^[a-z0-9_]+$")
+
+    @model_validator(mode="after")
+    def _the_graph_namespace_is_reserved(self):
+        refuse_reserved_package_id(self.package_id)
+        return self
     zone_id: str = Field(min_length=1, max_length=32,
                          pattern=r"^[a-z0-9_]+$")
     room_id: str = Field(min_length=1, max_length=24,

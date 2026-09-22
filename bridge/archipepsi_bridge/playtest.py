@@ -526,6 +526,38 @@ def _dump(args) -> int:
     return 0
 
 
+def latched_route_zone():
+    """The played Zone with P14's latch route composed onto it, or None.
+
+    The input to Prod's played acceptance for the latch -- walk in, step
+    on the plate, step off, walk through, reload, still open -- and a
+    Zone the bridge has validated end to end: schema, then reachability.
+    Derived from `played_zone()` by an explicit step, so the Zone the
+    baseline plays is untouched.
+    """
+    from .latched_route import compose_latched_route
+    zone = played_zone()
+    if zone is None:
+        return None
+    out = compose_latched_route(zone)
+    return out.zone if out.emitted else None
+
+
+def _dump_latched(args) -> int:
+    zone = latched_route_zone()
+    if zone is None:
+        print("could not compose a latch route onto the played Zone",
+              file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(zone.model_dump_json(indent=1), encoding="utf-8")
+    graph = zone.room_graphs[0]
+    edge = next(e for e in zone.edges if e.opened_by)
+    print(f"wrote {args.out}  (plate in '{graph.room_id}', shutter across "
+          f"'{edge.edge_id}')")
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m archipepsi_bridge.playtest",
@@ -538,11 +570,19 @@ def main(argv=None) -> int:
         "dump", help="write the played Zone as JSON, for the Godot audit")
     dumper.add_argument("--out", type=Path,
                         default=Path("godot/tests/fixtures/played_zone.json"))
+    latched = sub.add_parser(
+        "dump-latched", help="write the played Zone with P14's latch "
+        "route composed onto it, for Prod's played acceptance")
+    latched.add_argument(
+        "--out", type=Path,
+        default=Path("godot/tests/fixtures/latched_route_zone.json"))
     args = parser.parse_args(argv)
     if args.command == "check":
         return _check(args)
     if args.command == "dump":
         return _dump(args)
+    if args.command == "dump-latched":
+        return _dump_latched(args)
     return report(args.save_dir)
 
 

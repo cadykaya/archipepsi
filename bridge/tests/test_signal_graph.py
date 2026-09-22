@@ -91,12 +91,13 @@ def test_one_graph_per_room():
 # --------------------------------------------------------------------------
 
 def test_every_other_node_kind_is_named_and_refused():
-    """§19.2's eleven exist in the vocabulary; one is implemented."""
+    """§19.2's eleven exist in the vocabulary; two are implemented."""
     from typing import get_args
     named = set(get_args(G.NodeKind))
     assert len(named) == 11
-    assert set(G.SUPPORTED_NODE_KINDS) == {"NOT"}
-    for kind in named - {"NOT"}:
+    # LATCH joined NOT once Prod's runtime evaluated it (D-10 answer).
+    assert set(G.SUPPORTED_NODE_KINDS) == {"NOT", "LATCH"}
+    for kind in named - {"NOT", "LATCH"}:
         with pytest.raises(ValueError, match="no runtime implements"):
             G.refuse_unsupported_node(kind)
 
@@ -228,63 +229,93 @@ def composed() -> Zone:
     return _COMPOSED[0]
 
 
-def gated(zone: Zone, *, requires_class="MEDIUM", actuator="service_shutter",
+def gated(zone: Zone, *, requires_class="MEDIUM", counts_player=True,
+          nodes=None, actuator="service_shutter", driven_by=None,
           graph_room=None, edge_index=0, opened_by=None) -> Zone:
     """Re-validate a composed Zone whose first edge a machine opens.
 
-    `Zone.model_validate`, never `model_copy`: a copy skips every
-    validator, and a test that skipped them would be asserting that a
-    dictionary can hold a key.
+    The default is the chain D-10 chose: a plate that counts the player,
+    a LATCH, the shutter. `Zone.model_validate`, never `model_copy`: a
+    copy skips every validator, and a test that skipped them would be
+    asserting that a dictionary can hold a key.
     """
     raw = zone.model_dump()
     edge = raw["edges"][edge_index]
     room = edge["room_a"] if graph_room is None else graph_room
+    chain = ([{"node_id": "held", "kind": "LATCH", "inputs": ["recess_plate"]}]
+             if nodes is None else nodes)
     raw["room_graphs"] = [{
         "room_id": room,
         "sensors": [{"node_id": "recess_plate", "kind": "PRESSURE_PLATE",
-                     "requires_class": requires_class}],
-        "nodes": [{"node_id": "inverted", "kind": "NOT",
-                   "inputs": ["recess_plate"]}],
-        "actuators": [{"actuator_id": actuator, "driven_by": "inverted"}],
+                     "requires_class": requires_class,
+                     "counts_player": counts_player}],
+        "nodes": chain,
+        "actuators": [{"actuator_id": actuator,
+                       "driven_by": (driven_by if driven_by is not None
+                                     else (chain[-1]["node_id"] if chain
+                                           else "recess_plate"))}],
     }]
     edge["opened_by"] = actuator if opened_by is None else opened_by
     return Zone.model_validate(raw)
 
 
-def test_a_medium_plate_may_gate_a_route():
-    """The base kit solves it: the player weighs 80 kg, which is MEDIUM,
-    so standing on the plate is the whole interaction."""
+_NOT = [{"node_id": "inverted", "kind": "NOT", "inputs": ["recess_plate"]}]
+
+
+def test_the_chosen_chain_may_open_a_route():
+    """D-10's option B: step on a plate that counts the player, once,
+    and the latch holds the shutter open. No capability on the edge --
+    the guaranteed base kit is the whole requirement."""
     zone = gated(composed())
     edge = zone.edges[0]
     assert edge.opened_by == "service_shutter"
-    assert edge.capability is None, (
-        "a machine in the room is operable from inside the room, so it "
-        "imposes no ordering on the multiworld and needs no capability")
+    assert edge.capability is None
 
 
-def test_a_heavy_plate_may_not_gate_a_route():
-    """And the refusal says why, rather than inventing a prerequisite.
+def test_an_object_only_plate_may_not_open_a_route_whatever_the_player_weighs():
+    """THE OWNER'S LINE: the player's mass alone is not evidence that an
+    object-only plate accepts them.
 
-    `HEAVY` starts at 120 kg. The player is 80 and §10.3 caps what they
-    carry at 60, so satisfying it needs a pushed object and therefore a
-    qualified manipulation provider. `graph.Capability` deliberately
-    cannot name that, so the honest answer is that this chain may not
-    gate a route -- not that it gates one on something unwritable.
+    80 kg is MEDIUM, and the plate demands MEDIUM, and it still does not
+    count: `ClassPlate` skips the player unless told otherwise. An
+    earlier revision of this file asserted the opposite -- that a MEDIUM
+    plate was base kit because of what the player weighs -- which was a
+    claim about an interaction the runtime refuses. Replaced, not
+    loosened.
     """
+    with pytest.raises(ValidationError) as e:
+        gated(composed(), counts_player=False)
+    text = str(e.value)
+    assert "object-only" in text and "whatever they weigh" in text
+
+
+def test_a_plate_that_counts_the_player_but_demands_more_than_they_weigh():
     with pytest.raises(ValidationError) as e:
         gated(composed(), requires_class="HEAVY")
     text = str(e.value)
-    assert "demands HEAVY" in text
-    assert "manipulation provider" in text
-    assert "class the base kit can load" in text
+    assert "demands HEAVY" in text and "MEDIUM" in text
 
 
-def test_the_heavy_chain_is_still_legal_when_it_gates_nothing():
-    """It is the ROUTE that is refused, not the machine. The chain the
-    room has run since EX50-033 keeps working as a machine in a room."""
+def test_ex50_033s_object_only_chain_is_still_legal_as_a_machine_in_a_room():
+    """It is the ROUTE that is refused, never the machine, and the
+    default keeps the room exactly as it was."""
     zone = _zone([_chain()])
-    assert zone.room_graphs[0].sensors[0].requires_class == "HEAVY"
+    sensor = zone.room_graphs[0].sensors[0]
+    assert sensor.requires_class == "HEAVY"
+    assert sensor.counts_player is False
     assert all(e.opened_by is None for e in zone.edges)
+
+
+def test_only_a_plate_reads_bodies_so_only_a_plate_may_count_the_player():
+    from archipepsi_bridge.schemas import signal_graph as SGm
+    old = SGm.SUPPORTED_SENSOR_KINDS
+    try:
+        SGm.SUPPORTED_SENSOR_KINDS = ("PRESSURE_PLATE", "LEVER")
+        with pytest.raises(ValidationError, match="only a plate reads bodies"):
+            G.SensorNode.model_validate(
+                {"node_id": "pull", "kind": "LEVER", "counts_player": True})
+    finally:
+        SGm.SUPPORTED_SENSOR_KINDS = old
 
 
 def test_an_edge_opened_by_a_machine_nobody_declares_is_refused():
@@ -304,38 +335,73 @@ def test_a_machine_in_a_room_the_edge_does_not_touch_is_refused():
         gated(zone, graph_room=far)
 
 
-def test_a_gate_that_rests_closed_is_the_held_requirement_again():
-    """The case the NOT chain never reaches, which is why it is written.
+# ---- the shapes a chain can take, and which of them a route may hang on
 
-    Drive the shutter straight off the plate and it rests CLOSED: the
-    player must stand on the plate to open the door and then walk
-    through it, which is not one action. That is D-8 §11.2's held
-    cross-room requirement wearing a room graph, and §19.2's answer is
-    `LATCH`, which nothing implements.
-    """
-    raw = composed().model_dump()
-    edge = raw["edges"][0]
-    raw["room_graphs"] = [{
-        "room_id": edge["room_a"],
-        "sensors": [{"node_id": "recess_plate", "kind": "PRESSURE_PLATE",
-                     "requires_class": "MEDIUM"}],
-        "nodes": [],
-        # Driven by the SENSOR, with no inversion in between.
-        "actuators": [{"actuator_id": "service_shutter",
-                       "driven_by": "recess_plate"}],
-    }]
-    edge["opened_by"] = "service_shutter"
+def test_a_plate_straight_to_the_shutter_is_the_held_requirement():
+    """Closed at rest and closed again once the plate is left: the
+    player would have to stand on it and walk through at once."""
     with pytest.raises(ValidationError) as e:
-        Zone.model_validate(raw)
+        gated(composed(), nodes=[])
     text = str(e.value)
-    assert "rests CLOSED" in text
-    assert "LATCH" in text
+    assert "hold it open" in text and "LATCH" in text
+
+
+def test_a_not_chain_only_denies_and_may_still_gate():
+    """Open at rest, closed only while loaded: it strands nobody,
+    because the player can leave the plate alone."""
+    zone = gated(composed(), nodes=_NOT)
+    assert zone.edges[0].opened_by == "service_shutter"
+
+
+def test_a_latch_after_an_inversion_shuts_the_way_for_good():
+    """Open at rest, and the player's own step seals it permanently."""
+    with pytest.raises(ValidationError) as e:
+        gated(composed(), nodes=[
+            {"node_id": "held", "kind": "LATCH", "inputs": ["recess_plate"]},
+            {"node_id": "inverted", "kind": "NOT", "inputs": ["held"]}])
+    assert "SHUT FOR GOOD" in str(e.value)
+
+
+def test_a_latch_that_sets_when_the_room_is_built_is_refused_everywhere():
+    """`plate -> NOT -> LATCH` latches on the first tick with nothing on
+    the plate, which would record a decision no player made -- refused
+    for any graph, route or not."""
+    with pytest.raises(ValidationError, match="decision no player made"):
+        G.RoomGraph.model_validate(_chain(
+            nodes=[{"node_id": "inverted", "kind": "NOT",
+                    "inputs": ["recess_plate"]},
+                   {"node_id": "held", "kind": "LATCH",
+                    "inputs": ["inverted"]}],
+            actuators=[{"actuator_id": "service_shutter",
+                        "driven_by": "held"}]))
+
+
+def test_a_latch_takes_one_input_and_has_no_reset():
+    with pytest.raises(ValidationError, match="exactly one"):
+        G.LogicNode.model_validate(
+            {"node_id": "held", "kind": "LATCH",
+             "inputs": ["recess_plate", "other"]})
+
+
+def test_the_three_phases_are_the_runtimes_order():
+    """`phases` settles the way `signal_graph.gd` evaluates: sensors,
+    then logic in declaration order, then actuators -- rest, pressed,
+    released."""
+    graph = G.RoomGraph.model_validate(_chain(
+        sensors=[{"node_id": "recess_plate", "kind": "PRESSURE_PLATE",
+                  "requires_class": "MEDIUM", "counts_player": True}],
+        nodes=[{"node_id": "held", "kind": "LATCH",
+                "inputs": ["recess_plate"]}],
+        actuators=[{"actuator_id": "service_shutter", "driven_by": "held"}]))
+    shape = G.phases(graph, "service_shutter")
+    assert (shape["rest"], shape["pressed"], shape["released"]) == (
+        False, True, True)
+    assert shape["latched_at_rest"] == frozenset()
 
 
 def test_the_resting_value_counts_inversions_rather_than_guessing():
     """Two NOTs is an inversion of an inversion, which rests closed
     again -- so the check has to count them, not look for the word."""
-    from archipepsi_bridge.schemas import signal_graph as G
     one = G.RoomGraph.model_validate(_chain())
     assert G.resting_output(one, "service_shutter") is True
     two = G.RoomGraph.model_validate(_chain(nodes=[
@@ -346,29 +412,57 @@ def test_the_resting_value_counts_inversions_rather_than_guessing():
     assert G.resting_output(two, "service_shutter") is False
 
 
-def test_the_base_kit_derivation_is_arithmetic_not_opinion():
-    """Both routes to a loaded plate, and neither reaches HEAVY."""
+def test_the_route_asks_about_its_own_plate_and_not_the_rooms_other_one():
+    """A second chain in the same room -- EX50-033's object-only HEAVY
+    plate running a scenery shutter -- is not the interaction the route
+    depends on, and must not get the route refused."""
+    raw = composed().model_dump()
+    edge = raw["edges"][0]
+    raw["room_graphs"] = [{
+        "room_id": edge["room_a"],
+        "sensors": [
+            {"node_id": "step_plate", "kind": "PRESSURE_PLATE",
+             "requires_class": "MEDIUM", "counts_player": True},
+            {"node_id": "recess_plate", "kind": "PRESSURE_PLATE",
+             "requires_class": "HEAVY"}],
+        "nodes": [
+            {"node_id": "held", "kind": "LATCH", "inputs": ["step_plate"]},
+            {"node_id": "inverted", "kind": "NOT",
+             "inputs": ["recess_plate"]}],
+        "actuators": [
+            {"actuator_id": "route_shutter", "driven_by": "held"},
+            {"actuator_id": "service_shutter", "driven_by": "inverted"}],
+    }]
+    edge["opened_by"] = "route_shutter"
+    zone = Zone.model_validate(raw)
+    assert zone.edges[0].opened_by == "route_shutter"
+
+
+# ---- the player, as the runtime reads them
+
+def test_the_player_counts_only_where_the_plate_says_so():
     from archipepsi_bridge.schemas import physics as PH
     assert PH.mass_class(PH.PLAYER_MASS_KG) == "MEDIUM"
-    assert PH.mass_class(PH.CARRY_MASS_KG) == "MEDIUM"
-    assert PH.mass_class(PH.MASS_MEDIUM_BELOW) == "HEAVY"
-    assert PH.base_kit_can_satisfy("MEDIUM")
-    assert not PH.base_kit_can_satisfy("HEAVY")
+    for cls in ("LIGHT", "MEDIUM", "HEAVY"):
+        assert PH.plate_accepts_player(cls, counts_player=False) is False
+    assert PH.plate_accepts_player("LIGHT", counts_player=True)
+    assert PH.plate_accepts_player("MEDIUM", counts_player=True)
+    assert not PH.plate_accepts_player("HEAVY", counts_player=True)
 
 
-def test_raising_the_carry_line_would_change_the_answer():
-    """Sabotage: the refusal must follow the arithmetic, not a literal.
-
-    If someone moved §10.3's line past 120 kg, a HEAVY plate WOULD be
-    loadable by hand and this gate would become legal. The check has to
-    notice that rather than refusing `HEAVY` by name.
-    """
+def test_the_predicate_reads_the_flag_before_the_mass():
+    """Sabotage, target confirmed: a version that compared classes first
+    would answer MEDIUM-and-object-only with a yes."""
+    import inspect
     from archipepsi_bridge.schemas import physics as PH
-    original = PH.CARRY_MASS_KG
+    src = inspect.getsource(PH.plate_accepts_player)
+    body = src.split('"""')[-1]
+    assert body.index("counts_player") < body.index("mass_class("), (
+        "the class comparison runs before the flag, so the player's "
+        "mass can answer for a plate that ignores the player")
+    original = PH.PLAYER_MASS_KG
     try:
-        PH.CARRY_MASS_KG = 200.0
-        assert PH.base_kit_can_satisfy("HEAVY"), (
-            "the derivation refuses HEAVY by name rather than by mass")
+        PH.PLAYER_MASS_KG = 500.0      # a player heavier than any plate
+        assert PH.plate_accepts_player("HEAVY", counts_player=False) is False
     finally:
-        PH.CARRY_MASS_KG = original
-    assert not PH.base_kit_can_satisfy("HEAVY")
+        PH.PLAYER_MASS_KG = original

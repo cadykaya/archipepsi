@@ -5478,6 +5478,11 @@
             ],
             "default": null,
             "title": "Requires Class"
+          },
+          "counts_player": {
+            "default": false,
+            "title": "Counts Player",
+            "type": "boolean"
           }
         },
         "required": [
@@ -11081,6 +11086,11 @@
             ],
             "default": null,
             "title": "Requires Class"
+          },
+          "counts_player": {
+            "default": false,
+            "title": "Counts Player",
+            "type": "boolean"
           }
         },
         "required": [

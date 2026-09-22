@@ -25,12 +25,16 @@ try:
     from .schemas import constants as C
     from .schemas import mechanics as M
     from .schemas.zone import Zone, procedural_sockets_for
+    from .schemas import signal_graph as SG
+    from .schemas.physics import GRAPH_PACKAGE_PREFIX
 except ImportError:  # pragma: no cover
     from schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from schemas import constants as C
     from schemas import mechanics as M
     from schemas.zone import Zone, procedural_sockets_for
+    from schemas import signal_graph as SG
+    from schemas.physics import GRAPH_PACKAGE_PREFIX
 
 #: What a chain needs from any room: a way in and a way out.
 #:
@@ -1507,6 +1511,118 @@ def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
         "4); it is a Zone holding its Checks with the player stuck "
         "inside it",)
 
+# --------------------------------------------------------------------------
+# P14. A route a room-graph latch opens, as the search sees it.
+# --------------------------------------------------------------------------
+
+class _Setter:
+    __slots__ = ("room_id", "selects", "capability")
+
+    def __init__(self, room_id: str):
+        self.room_id = room_id
+        self.selects = ("set",)
+        self.capability = None
+
+
+class _LatchVariable:
+    """A route latch, modelled as a PERMANENT variable -- for the search
+    only, and never persisted as one.
+
+    It is the same monotone fact D-8's permanent variables are: it
+    becomes true in exactly one room and never goes back. The setter's
+    room is the plate's room, because the plate is in the graph's room
+    (§19.7: a room graph is room-local by construction), and it carries
+    no capability because the Zone validator has already refused any
+    chain the guaranteed kit cannot operate. In the SAVE it is a latch
+    in `latched`, `ROOM_PERSISTENT`, and nothing here changes that.
+    """
+    __slots__ = ("variable_id", "initial", "states", "lifetime", "setter")
+
+    def __init__(self, ref: str, room_id: str):
+        self.variable_id = ref
+        self.initial = "unset"
+        self.states = ("unset", "set")
+        self.lifetime = "permanent"
+        self.setter = _Setter(room_id)
+
+
+class _Condition:
+    __slots__ = ("variable_id", "state")
+
+    def __init__(self, variable_id: str):
+        self.variable_id = variable_id
+        self.state = "set"
+
+
+class _LatchedEdge:
+    """An edge whose crossing also waits on its latch."""
+
+    def __init__(self, edge, conditions):
+        self._edge = edge
+        self.requires_state = tuple(edge.requires_state) + tuple(conditions)
+
+    def __getattr__(self, name):
+        return getattr(self._edge, name)
+
+
+class _Searched:
+    """A Zone as the route search sees it.
+
+    **One substitution point, on purpose.** D-8's first cut threaded the
+    Zone-state tuple through the searches by hand and missed one --
+    `_key_graph_is_acyclic` saw a gated edge as permanently shut and
+    reported a cycle that did not exist. Everything in `reachability`
+    reads `zone.edges` and `zone.zone_state`, so handing it this view
+    gives every check the latches at once, including the helpers that
+    read the Zone themselves.
+    """
+
+    def __init__(self, zone, edges, zone_state):
+        self._zone = zone
+        self.edges = edges
+        self.zone_state = zone_state
+
+    def __getattr__(self, name):
+        return getattr(self._zone, name)
+
+
+def _route_latches(zone):
+    """-> (searched zone, triggers) for every latch-opened route.
+
+    An `opened_by` edge whose chain RESTS OPEN -- a `NOT` chain that only
+    denies while held -- needs nothing: the player can simply leave the
+    plate alone. One that rests CLOSED waits on the latches on its drive
+    path, each of which is set by standing in the plate's room. A shape
+    that is closed after the one action never gets here: the Zone
+    validator refused it.
+    """
+    graphs = {a.actuator_id: g for g in (zone.room_graphs or ())
+              for a in g.actuators}
+    extra: dict[str, _LatchVariable] = {}
+    triggers: list[tuple[str, str, str]] = []
+    edges = []
+    for edge in zone.edges:
+        graph = graphs.get(getattr(edge, "opened_by", None))
+        if graph is None or SG.phases(graph, edge.opened_by)["rest"]:
+            edges.append(edge)
+            continue
+        _, nodes = SG.upstream(graph, edge.opened_by)
+        conds = []
+        for node in nodes:
+            if node.kind != "LATCH":
+                continue
+            ref = f"{GRAPH_PACKAGE_PREFIX}{graph.room_id}/{node.node_id}"
+            extra.setdefault(ref, _LatchVariable(ref, graph.room_id))
+            conds.append(_Condition(ref))
+            triggers.append((edge.edge_id, graph.room_id, ref))
+        edges.append(_LatchedEdge(edge, conds) if conds else edge)
+    if not extra:
+        return zone, ()
+    state = tuple(getattr(zone, "zone_state", ()) or ()) + tuple(
+        extra.values())
+    return _Searched(zone, tuple(edges), state), tuple(triggers)
+
+
 def reachability(zone, entry_id: str | None = None,
                  exit_id: str | None = None,
                  declared_capabilities=None) -> Reach:
@@ -1540,6 +1656,7 @@ def reachability(zone, entry_id: str | None = None,
     """
     if not zone.edges:
         return Reach(states=frozenset(), rooms=frozenset())
+    zone, triggers = _route_latches(zone)
 
     chambers = list(zone.chambers)
     entry = entry_id or chambers[0].id
@@ -1620,6 +1737,29 @@ def reachability(zone, entry_id: str | None = None,
                 f"'{featured.room_id}', which is not reachable without "
                 f"'{featured.capability}' -- the capability that room "
                 "hands over; the guarantee for it would be circular")
+
+    # P14. THE TRIGGER BEFORE THE ROUTE IT OPENS. A plate that can only
+    # be reached through the door it opens would leave everything past
+    # that door unreachable, and the rules above would say so -- as "not
+    # reachable at all", without naming why. Asked the D-1 way instead:
+    # is the plate's room reachable without the latch, and with it?
+    order = [v.variable_id for v in zstate]
+    for edge_id, plate_room, ref in triggers:
+        if plate_room in real.rooms:
+            continue
+        preset = tuple("set" if vid == ref else v.initial
+                       for vid, v in zip(order, zstate))
+        with_it = _explore(entry, zone.edges, doors_by_room, keys_by_room,
+                           have, zone_state=zstate, start_macro=preset)
+        if plate_room in with_it.rooms:
+            errors.append(
+                f"the plate that opens edge '{edge_id}' is in room "
+                f"'{plate_room}', which is reachable only through that "
+                "edge -- the trigger is behind the route it opens")
+        else:
+            errors.append(
+                f"the plate that opens edge '{edge_id}' is in room "
+                f"'{plate_room}', which is not reachable at all")
 
     # §0-bis CONDITION 4. The catalogue calls this load-bearing and
     # nothing was enforcing it: every rule above asks whether the player

@@ -28,9 +28,9 @@ try:  # works standalone and when copied into a package
         TopologyEdge, ZoneKeySpec)
     from .physics import (
         CARRY_MASS_KG, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
-        base_kit_can_satisfy, carriable_by_hand,
+        carriable_by_hand, mass_class, plate_accepts_player,
         state_vector_product)
-    from .signal_graph import RoomGraph, resting_output
+    from .signal_graph import RoomGraph, phases, upstream
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
@@ -39,9 +39,9 @@ except ImportError:  # pragma: no cover
         TopologyEdge, ZoneKeySpec)
     from physics import (
         CARRY_MASS_KG, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
-        base_kit_can_satisfy, carriable_by_hand,
+        carriable_by_hand, mass_class, plate_accepts_player,
         state_vector_product)
-    from signal_graph import RoomGraph, resting_output
+    from signal_graph import RoomGraph, phases, upstream
 
 #: Every joining socket name a procedural room can be given, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
@@ -1645,29 +1645,44 @@ class Zone(Strict):
 
     @model_validator(mode="after")
     def _a_gated_edge_and_its_machine_agree_about_what_it_costs(self):
-        """P14. An edge opened by a machine, and the machine's price.
+        """P14. An edge a machine opens, and what opening it asks.
 
-        Three ways this can be a lie, all refused:
+        **The interaction is one thing, described once.** The sensor
+        that drives this actuator, its class, whether it counts the
+        player, and what the chain does after one press all have to
+        describe the same act -- walk onto the plate, walk off, walk
+        through -- or the route search is validating a door the runtime
+        does not build. So everything below is read off the chain that
+        actually drives THIS actuator (`upstream`) and settled the way
+        the runtime settles it (`phases`), not inferred room-wide.
 
-        **The edge names an actuator nothing declares.** Then the route
-        search sees a gate with no way through it and the Zone is
-        unsolvable for a reason no message would name.
+        Refused, each for a reason the player would meet:
 
-        **The machine is not in a room the edge touches.** A shutter
-        opened from somewhere else is a cross-room relationship, which
-        is D-8's business and goes through a declared Zone-state
-        variable -- not through a room graph, which §19.7 rule 2 keeps
-        room-local by construction.
+        **The edge names an actuator nothing declares**, or **one in a
+        room the edge does not touch** -- a door worked from somewhere
+        else is D-8 Zone state, not a room graph.
 
-        **The chain demands more of the player than the edge admits.**
-        A `PRESSURE_PLATE` reads a semantic class (§20.6). The player's
-        own body is `MEDIUM` and §10.3 caps what they can carry at
-        `MEDIUM` too, so a `HEAVY` plate demands a pushed object and a
-        pushed object demands a qualified manipulation provider. That
-        is a capability, and `graph.Capability` deliberately cannot
-        name it -- so such a chain may not gate a route at all, rather
-        than gating one on a prerequisite that would have to be
+        **The plate does not accept the player.** An object-only plate
+        (`counts_player` false, EX50-033's arrangement) is not a base-kit
+        interaction however much the player weighs, and the carry and
+        push verbs that could load it are unbuilt. A plate that counts
+        the player but demands a class the player's own body does not
+        reach is refused the same way. `graph.Capability` cannot name a
+        manipulation prerequisite, so the honest answer is that such a
+        chain gates no route -- not that it gates one on something
         invented to write it down.
+
+        **The route is not open after the one action.** Rest closed and
+        released closed is a door the player must hold -- D-8 §11.2's
+        held requirement. Rest open and released closed is a plate that
+        shuts the way for good, and a route the player's own step can
+        seal is a softlock. What passes is a chain that is open once the
+        plate has been stepped on and left: `plate -> LATCH -> shutter`,
+        or a `NOT` chain that only ever denies while it is held.
+
+        Whether the plate's room can be reached WITHOUT the route it
+        opens is a question about the whole Zone graph, and
+        `topology.reachability` asks it.
         """
         gated = [e for e in self.edges if e.opened_by is not None]
         if not gated:
@@ -1691,35 +1706,46 @@ class Zone(Strict):
                     "it does not touch is a cross-room relationship: "
                     "declare it as Zone state (D-8), not as a room "
                     "graph, which is room-local by construction")
-            if not resting_output(graph, edge.opened_by):
+            sensors, _ = upstream(graph, edge.opened_by)
+            for sensor in sensors:
+                if plate_accepts_player(sensor.requires_class,
+                                        sensor.counts_player):
+                    continue
+                if not sensor.counts_player:
+                    why = ("is object-only (`counts_player` is false), so "
+                           "the player standing on it does not load it, "
+                           "whatever they weigh -- and the carry and push "
+                           "verbs that could load it with an object are "
+                           "not built")
+                else:
+                    why = (f"demands {sensor.requires_class} and the "
+                           f"player's own body is "
+                           f"{mass_class(PLAYER_MASS_KG)} "
+                           f"({PLAYER_MASS_KG:g} kg)")
+                raise ValueError(
+                    f"edge '{edge.edge_id}' is opened through plate "
+                    f"'{sensor.node_id}', which {why}. A route may only "
+                    "hang on an interaction the guaranteed base kit "
+                    "performs, and a manipulation prerequisite is not "
+                    "one this contract can name. Put the consequence "
+                    "inside the room, or declare a plate that counts the "
+                    "player at a class they reach")
+            shape = phases(graph, edge.opened_by)
+            if shape["released"]:
+                continue
+            if not shape["rest"]:
                 raise ValueError(
                     f"edge '{edge.edge_id}' is opened by "
-                    f"'{edge.opened_by}', which rests CLOSED -- so the "
-                    "player has to hold it open to walk through it. The "
-                    "base-kit way to load a plate is to stand on it, and "
-                    "standing on a plate is not something you do while "
-                    "walking through a doorway; that is D-8 §11.2's held "
-                    "cross-room requirement, which is UNSUPPORTED. §19.2 "
-                    "names LATCH for exactly this and nothing implements "
-                    "it yet. A chain that rests OPEN may gate a route "
-                    "today, because closing one strands nobody")
-            for sensor in graph.sensors:
-                if sensor.requires_class is None:
-                    continue
-                if base_kit_can_satisfy(sensor.requires_class):
-                    continue
-                raise ValueError(
-                    f"edge '{edge.edge_id}' is gated by sensor "
-                    f"'{sensor.node_id}', which demands "
-                    f"{sensor.requires_class}. The player weighs "
-                    f"{PLAYER_MASS_KG:g} kg and §10.3 caps what they "
-                    f"carry at {CARRY_MASS_KG:g} kg, so satisfying it "
-                    "needs a pushed object and therefore a qualified "
-                    "manipulation provider -- a capability this "
-                    "contract cannot name, so this chain may not gate a "
-                    "route. Put the machine's consequence inside the "
-                    "room, or give the plate a class the base kit can "
-                    "load")
+                    f"'{edge.opened_by}', which is closed at rest and "
+                    "closed again once the plate is left -- so the player "
+                    "has to hold it open to walk through it. That is D-8 "
+                    "§11.2's held requirement, which is UNSUPPORTED; put "
+                    "a LATCH between the plate and the machine")
+            raise ValueError(
+                f"edge '{edge.edge_id}' is opened by '{edge.opened_by}', "
+                "which starts open and is SHUT FOR GOOD by stepping on "
+                "the plate -- a latch after an inversion. A route the "
+                "player's own step can seal permanently is a softlock")
         return self
 
     @model_validator(mode="after")

@@ -1,0 +1,112 @@
+"""P14's composer: a room-graph latch opening a route on a real Zone.
+
+**The same discipline as D-8's `cross_room.compose_zone_state`, and for
+the same reasons.** It is a step a caller takes, never a default:
+wiring it into `topology.apply` would change every Zone the campaign
+composes, and the runtime half -- `ClassPlate` honouring
+`counts_player`, the shutter placed across the named doorway -- is
+Prod's and not finished. A default that emitted this today would ship a
+door the engine cannot yet open.
+
+**It is derived, not hardcoded.** Handed a Zone the campaign really
+composed, it picks the edge from that Zone's own structure -- the spine
+order, which edges are real doorways, which already carry a gate.
+Nothing here names a room.
+
+**And it declines rather than emitting something broken.** Every
+candidate goes through the real `Zone` schema (which refuses an
+object-only plate, a held requirement, a latch that seals the way, a
+latch that sets on build) and then through `topology.reachability`
+(which refuses a trigger behind the route it opens, and anything that
+strands). If nothing passes, the Zone comes back unchanged with the
+reason.
+
+What it emits is the chain D-10 chose: a `MEDIUM` plate that counts the
+player, a `LATCH`, a shutter -- **step on it once, walk through**. The
+guaranteed base kit and nothing else; no capability on the edge.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from .schemas.zone import Zone
+from .topology import reachability
+
+#: Room-local ids; the graph is room-local by construction, so they
+#: cannot collide with anything in another room.
+PLATE_ID = "step_plate"
+LATCH_ID = "held"
+SHUTTER_ID = "route_shutter"
+
+#: Prefer a plate that is not in the entrance itself -- a latch at spawn
+#: is stepped on before the player knows it is there -- and fall back to
+#: the entrance only if nothing further in is legal.
+_PREFER_FROM = 1
+
+
+@dataclass(frozen=True)
+class LatchedRoute:
+    zone: Zone
+    #: `None` when nothing was emitted.
+    edge_id: str | None
+    note: str
+
+    @property
+    def emitted(self) -> bool:
+        return self.edge_id is not None
+
+
+def _graph(room_id: str) -> dict:
+    return {
+        "room_id": room_id,
+        "sensors": [{"node_id": PLATE_ID, "kind": "PRESSURE_PLATE",
+                     "requires_class": "MEDIUM", "counts_player": True}],
+        "nodes": [{"node_id": LATCH_ID, "kind": "LATCH",
+                   "inputs": [PLATE_ID]}],
+        "actuators": [{"actuator_id": SHUTTER_ID, "driven_by": LATCH_ID}],
+    }
+
+
+def compose_latched_route(zone: Zone) -> LatchedRoute:
+    """Put `plate -> LATCH -> shutter` on one legal doorway of `zone`."""
+    if zone.room_graphs or any(e.opened_by for e in zone.edges):
+        return LatchedRoute(zone, None,
+                            "the Zone already declares a room graph or a "
+                            "machine-opened edge; this step does not stack")
+    order = {c.id: i for i, c in enumerate(zone.chambers)}
+    candidates = []
+    for index, edge in enumerate(zone.edges):
+        if edge.realization != "JOINED":
+            continue          # a plug has no doorway for a shutter to cross
+        if edge.capability or edge.requires_state:
+            continue          # one gate per edge
+        if edge.room_a not in order or edge.room_b not in order:
+            continue
+        near, far = sorted((edge.room_a, edge.room_b), key=order.__getitem__)
+        candidates.append((order[near] < _PREFER_FROM, order[near], index,
+                           near, far))
+    refusals = []
+    base = zone.model_dump()
+    for _, _, index, near, far in sorted(candidates):
+        raw = {**base, "edges": [dict(e) for e in base["edges"]]}
+        raw["edges"][index]["opened_by"] = SHUTTER_ID
+        raw["room_graphs"] = [_graph(near)]
+        try:
+            candidate = Zone.model_validate(raw)
+        except ValueError as exc:
+            refusals.append(f"{raw['edges'][index]['edge_id']}: {exc}")
+            continue
+        verdict = reachability(candidate)
+        if not verdict.ok:
+            refusals.append(f"{raw['edges'][index]['edge_id']}: "
+                            + "; ".join(verdict.errors))
+            continue
+        edge_id = raw["edges"][index]["edge_id"]
+        return LatchedRoute(
+            candidate, edge_id,
+            f"plate and latch in '{near}', shutter across '{edge_id}' "
+            f"into '{far}'; reachable before the route it opens")
+    return LatchedRoute(
+        zone, None,
+        "no doorway in this Zone can carry the latch legally"
+        + (f": {refusals[0]}" if refusals else " (no candidate edges)"))
