@@ -528,3 +528,99 @@ migrated.
   `test_restart_persistence.py` catches two synthetic names before it is
   trusted to report none, because otherwise it passes with an empty
   list.
+
+---
+
+### DESS-09 — P14, P19 and P20 measured for readiness, and two are not ready
+
+**Dess, 2026-09-22.** Having closed the bridge halves of P02, P03, P04,
+P16 and P10.5, I measured the next three packages in this lane's order
+before starting one. Two are not ready, and the reasons are different.
+
+**P14 — shared signal graph. NOT READY, and building it would be the
+thing P14.5 warns against.** The measurement: the engine has exactly one
+signal chain, `PoweredLink` (plate → signal → door), plus `ClassPlate`.
+There is no node vocabulary, no conduit, no graph. Design 1 §19's eleven
+node types and Amalgam §20's eighteen sensors are design, not code.
+
+Declaring an eleven-node vocabulary now would be a framework no room
+uses — P14.5 says in its own words that such a framework "is not this
+package's completion" — and the dispatch forbids publishing inert
+support. The one piece with two real implementations, §20.6's semantic
+class versus summed kilograms, is **already implemented and already
+self-documenting**: `class_plate.gd`'s own docstring cites the
+distinction and it never adds masses. There is no bridge gap to close
+there.
+
+What would make P14 ready: a second real consumer whose question
+matches. D-8's `ZoneStateReader.mechanism` is the seam it should join
+when one exists, and no second railway or global bus is needed to do it.
+
+**P19 — item grammar. NOT STARTED, and deliberately not half-started.**
+There is no gear, mod or item vocabulary in the bridge at all; §16 is
+design only. This is a subsystem rather than a slice, and the dispatch's
+"preserve a usable candidate rather than starting everything and
+integrating nothing" applies directly. It is the largest genuinely ready
+bridge unit remaining and it wants a session that can finish it.
+
+**P20 — Forge/Static transactions. BLOCKED on a recorded decision.**
+`HUGE_BATCH_LEDGER.md`'s approved-assignment block lists the Forge /
+Static economy (B4) under "Decisions still unresolved", and P20.1 is
+"identify exact approved operations". That list does not exist yet, so
+the package blocks on its own exact subset, as the dispatch anticipates.
+
+**One thing measured and found already correct.** The eligibility gate
+added in DESS-07 could have been hiding a live defect, so I checked the
+real composed Zone: **zero** placed enemies sit in a room that cannot
+hold them. The gate is a guard for the seven roles that are not
+composable yet, not a repair of something broken today, and there is now
+a control asserting that over real output — with a companion assertion
+that the sweep saw enemies at all, because a sweep over zero rooms
+passes for the wrong reason.
+
+---
+
+### DESS-10 — P19.1: the Gear grammar, and nine atoms nobody costed
+
+**Dess, 2026-09-22.** DESS-09 called P19 "a subsystem, not a slice" and
+left it. That was half right: the *runtime* is a subsystem, but **the
+grammar is a slice**, it is fully specified, and Prod and Epsilon both
+need it before anything can implement against it. `schemas/gear.py`.
+
+Amalgam §16 pinning Design 4 §16.1–§16.3: four territories, twenty-five
+domain atoms, three magnitude atoms, and the rule that a `HIGH` piece
+carries **exactly two** domain atoms from **one** territory — Design 4's
+expression of Design 1 §4.5's "high-tier Gear has exactly two
+intrinsics".
+
+**The design's own arithmetic is a control.** §16.1 states outright that
+`dom_crit` (26) + `mag_marked` (44) = 70, leaving 30, which exceeds the
+22 clause allowance and is why the resolver completes the piece with a
+second atom. The module reproduces 70 from its own tables, so a
+mistranscribed cost fails there rather than surviving into a budget.
+
+**NINE OF THE TWENTY-FIVE HAVE NO COST**, and they are listed rather
+than guessed: `dom_read_stress`, `dom_read_machine`,
+`dom_read_compounds`, `dom_status_duration`, `dom_relation_count`,
+`dom_signal_range`, `dom_transfer_range`, `dom_rail_control`,
+`dom_impact_resistance`. The Amalgam says its additions arrive *"at the
+magnitudes that proposal gave it"* — those numbers are in Designs 2, 3
+and 5 and have not been carried across. `composition_cost` **raises** on
+one rather than scoring it zero, which is `content_value.enemy_value`'s
+rule and the same reason: a free atom passes the budget check and makes
+the piece a fiction. The list is derived from the two tables, so
+recovering a cost removes it without anyone editing a list.
+
+**A vocabulary is not an offer.** `SUPPORTED_GEAR_DOMAINS` is **empty**
+and `refuse_unsupported_domain` refuses all twenty-five — NO GEAR BEFORE
+ITS RUNTIME, the rule the Status vocabulary already follows. An unknown
+atom is refused *before* the support question, so a typo comes back as
+"not a §16 atom" rather than "not implemented yet", which reads like
+something that will arrive. And the gate is shown admitting a domain
+under a patched support table, because a blanket refusal looks identical
+to a working gate while the table is empty.
+
+**Still open in P19:** `.2` qualified creation and fallback, `.3` gear
+and mods, `.4` Epsilon's actual agency, `.5` provider paths, `.6`
+boundary tests — all of which need either the nine costs or a runtime
+consumer.
