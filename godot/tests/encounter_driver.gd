@@ -578,7 +578,9 @@ func _a_bulwark_can_be_flanked_by_moving() -> void:
 			% rad_to_deg(acos(Constants.BULWARK_SHIELD_DOT))
 			+ "(closest approach %.1f m, walked %.1f m at speed_mult "
 			% [float(fight["closest"]), float(fight["walked"])]
-			+ "%.2f)" % controller.player.speed_mult)
+			+ "%.2f, top speed %.2f m/s, holds [%s])"
+			% [controller.player.speed_mult, float(fight["top_speed"]),
+				str(fight["holds"])])
 	_note("bulwark, played: %s after %.1f s with %.0f of %.0f hp left. "
 			% ["cleared" if int(fight["left"]) == 0 else "NOT cleared",
 				float(fight["frames"]) * DT, controller.player.hp, opened]
@@ -614,6 +616,16 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 	# distance walked is what tells those apart.
 	var walked := 0.0
 	var was := player.global_position
+	# **STOP GUESSING WHY IT DID NOT MOVE.** Three hypotheses have been
+	# wrong in a row -- a stale player, an unwired resource pool, a zero
+	# speed multiplier -- and each cost a five-minute run. The state that
+	# actually gates `_physics_process`'s movement block is `input_frozen`,
+	# which is `not _holds.is_empty()`: setting it false erases only the
+	# "direct" key, so any OTHER hold (the controller takes `LAYOUT_HOLD`
+	# and releases it on a bridge verdict this harness never delivers)
+	# leaves the body frozen while the Static Pulse still fires.
+	var holds_seen := ""
+	var top_speed := 0.0
 	Input.action_press("fire_pulse")
 	Input.action_press("move_left")
 	while frames < budget:
@@ -624,6 +636,11 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 		frames += 1
 		walked += player.global_position.distance_to(was)
 		was = player.global_position
+		top_speed = maxf(top_speed,
+				Vector2(player.velocity.x, player.velocity.z).length())
+		if holds_seen == "":
+			holds_seen = "none" if player.holds().is_empty() \
+					else ", ".join(PackedStringArray(player.holds()))
 		if is_instance_valid(target) and not target._dead:
 			var facing: Vector3 = -target.global_transform.basis.z
 			var toward: Vector3 = player.global_position \
@@ -638,6 +655,7 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 	player.input_frozen = true
 	return {"frames": frames, "left": _living(record).size(),
 			"died": player._dead, "widest": widest, "walked": walked,
+			"holds": holds_seen, "top_speed": top_speed,
 			"closest": 0.0 if closest == INF else closest}
 
 
