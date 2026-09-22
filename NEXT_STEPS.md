@@ -1,5 +1,43 @@
 # Archipepsi — build state
 
+## 2026-09-22 (engine) — mass semantics: the two limits, and which is real
+
+**Asked by the owner: do the pickup and ability consumers preserve the
+distinction?** Design 2 §10.3 governs ORDINARY PICKUP — an object is
+carriable if `carriable = true` **and** `mass_kg <= 60.0`; above that it is
+manipulable only (`docs/design-proposals/02_PHYSICS_IS_THE_GAME.md:561`).
+`ENVELOPE_MASS_KG = 120.0` is a different number for a different thing: the
+qualified manipulation-provider envelope, alongside force and range.
+
+**Audited, and the distinction is intact — by absence.**
+
+- `ENVELOPE_MASS_KG` appears in exactly three places and every one of them is
+  the provider envelope: `schemas/physics.py` (the package's `mass_limit_kg`
+  floor and the provider comparison), `manipulation.gd` (the same two), and
+  `replay_harness.gd` (`provider_mass_kg`). It never stands in for pickup.
+- **The ordinary-pickup rule is not implemented anywhere.** There is no
+  `carriable` field in the Zone schema, no 60 kg pickup threshold, and no
+  carry or lift verb — the twelve manipulation verbs are OV04 P12 and P12 has
+  not been built. The three 60.0 constants that do exist are unrelated:
+  `CRATE_MASS_KG` is a crate's mass, `PoweredLink.threshold_kg` is a weight
+  sensor's trip point, and `MassClass.MEDIUM_BELOW` is 120.0, not 60.0.
+
+So no consumer can currently confuse them, because only one of them exists.
+
+**THE RISK IS P12, AND THIS IS THE WARNING FOR WHOEVER BUILDS IT.**
+`ENVELOPE_MASS_KG` is the only mass limit in `Constants`, so a carry verb
+written against "the mass constant" would silently adopt 120 kg and make
+`WEIGHTED` carriable — which Design 2 changed FROM Design 1 deliberately, and
+which the packet calls "a real difference in feel: Design 1's cube puzzles
+are walked; Design 2's are pushed, pulled, and dropped".
+
+No constant has been added for the 60 kg rule. An unused threshold is the
+inert-vocabulary failure this repo guards against everywhere else — it would
+be a number with no effect, satisfying a grep and gating nothing. It lands
+with the carry verb that uses it, named for pickup rather than for envelopes,
+with the refusal case above 60 kg and a `WEIGHTED` body that refuses to be
+carried and accepts being manipulated.
+
 ## 2026-09-22 (engine) — the Echo menu, and a fifth slot for consumables
 
 From the owner, after playing: the Echo menu was "a scrolling list with no
