@@ -65,6 +65,9 @@ func _run() -> void:
 	await _the_scuttler_costs_attention()
 	await _the_artillery_denies_ground()
 	await _the_beacon_makes_its_neighbours_worse()
+	await _an_unwatched_enemy_does_its_job()
+	await _interest_outlives_the_radius()
+	await _a_fight_ends_with_a_walk_back_to_work()
 	print("")
 	if _failures == 0:
 		print("GODOT ROSTER OK (%d checks, %d notes)" % [_checks, _notes])
@@ -422,3 +425,125 @@ func _the_beacon_makes_its_neighbours_worse() -> void:
 	root.queue_free()
 	await get_tree().process_frame
 
+
+
+# ------------------------------------------- OV04 P07 jobs and return
+
+## P07.1: an enemy nobody has seen is DOING something.
+##
+## Before this there was no `else` on the aggro branch, so an enemy
+## outside its radius stood exactly where it was placed until the player
+## came within 18 m. This is the case that would have caught that, and
+## it is asked of every role because the failure was structural.
+func _an_unwatched_enemy_does_its_job() -> void:
+	print("  -- P07: an unwatched enemy is doing something")
+	var root := _stage()
+	var made: Array[Enemy] = []
+	var at: Array[Vector3] = []
+	var i := 0
+	for role: String in Constants.ENEMY_ARCHETYPES:
+		var foe := _enemy(root, role, Vector3(float(i) * 12.0, 1.0, 0.0))
+		made.append(foe)
+		i += 1
+	await _settle(10)
+	for foe in made:
+		at.append(foe.global_position)
+	_check(made.size() == 10, "ten roles placed, and no player anywhere")
+
+	# Every role has a job, and it is one the runtime implements.
+	var known := ["patrol", "watch", "tend", "drift"]
+	var jobless: Array[String] = []
+	for foe in made:
+		if not known.has(foe.job):
+			jobless.append("%s:%s" % [foe.archetype, foe.job])
+	_check(jobless.is_empty(),
+			"every role has an implemented job: %s" % [jobless])
+
+	await _settle(150)
+	# The movers moved; the holders held their post. Both are "doing the
+	# job" and asserting only the first would make every watcher a bug.
+	var moved := 0
+	var held := 0
+	for j in made.size():
+		var travelled := at[j].distance_to(made[j].global_position)
+		if made[j].job == "patrol" or made[j].job == "drift":
+			if travelled > 0.4:
+				moved += 1
+		elif travelled < 2.0:
+			held += 1
+	var walkers := 0
+	for foe in made:
+		if foe.job == "patrol" or foe.job == "drift":
+			walkers += 1
+	_check(moved == walkers,
+			"every patrol and drift role went to work (%d of %d)"
+			% [moved, walkers])
+	_check(held == made.size() - walkers,
+			"every watcher and tender held its post (%d of %d)"
+			% [held, made.size() - walkers])
+	_note("a fixed-role gunner holding its lane is deliberate, not a "
+			+ "role that failed to patrol")
+	root.queue_free()
+	await get_tree().process_frame
+
+
+## P07.2: interest outlives the radius, so stepping one metre out does
+## not switch an enemy off mid-fight.
+func _interest_outlives_the_radius() -> void:
+	print("  -- P07: interest outlives the aggro radius")
+	var root := _stage()
+	var foe := _enemy(root, "melee", Vector3(0.0, 1.0, 0.0))
+	var mark := _target(root, Vector3(0.0, 1.0, -6.0))
+	await _settle(30)
+	_check(foe._has_noticed, "it noticed the player at 6 m")
+
+	# THE PLAYER LEAVES FOR GOOD. Moving them merely out of range does
+	# not test forgetting: the enemy pursues during its interest window
+	# and legitimately catches up, so its interest refreshes and never
+	# lapses -- which is the mechanic working, not a defect. (An earlier
+	# version moved them to z -60, off the 40 m stage, where they fell,
+	# died and respawned back beside the enemy.)
+	mark.queue_free()
+	await get_tree().process_frame
+	await _settle(60)
+	_check(foe._has_noticed,
+			"a second later it has NOT forgotten them (interest %.2f s)"
+			% foe._interest)
+	await _settle(240)
+	_check(not foe._has_noticed,
+			"...and after %.0f s of nothing it does"
+			% Constants.ENEMY_INTEREST_SECONDS)
+	root.queue_free()
+	await get_tree().process_frame
+
+
+## P07.4: a fight that dragged an enemy across a room does not leave it
+## guarding somewhere nobody asked it to guard.
+func _a_fight_ends_with_a_walk_back_to_work() -> void:
+	print("  -- P07: it goes back to work, and back to its post")
+	var root := _stage()
+	var foe := _enemy(root, "melee", Vector3(0.0, 1.0, 0.0))
+	await _settle(6)
+	var home := foe.post
+	_check(home.distance_to(Vector3(0.0, 1.0, 0.0)) < 1.5,
+			"its post is where it was placed (%v)" % home)
+
+	# Drag it away, the way a chase would.
+	var mark := _target(root, Vector3(0.0, 1.0, -14.0))
+	await _settle(200)
+	var dragged := foe.global_position.distance_to(home)
+	_check(dragged > 3.0,
+			"the chase pulled it %.1f m off its post" % dragged)
+
+	# The player leaves for good.
+	mark.queue_free()
+	await get_tree().process_frame
+	await _settle(420)
+	_check(foe.global_position.distance_to(home)
+			<= Constants.ENEMY_PATROL_RADIUS + 1.5,
+			"it walked back to within its beat of the post (%.1f m)"
+			% foe.global_position.distance_to(home))
+	_check(not foe.returning,
+			"...and is working again rather than still walking home")
+	root.queue_free()
+	await get_tree().process_frame

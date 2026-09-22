@@ -115,6 +115,27 @@ var _beacon_beat := 0.0
 ## drifts upward over a slope.
 var _hover_y := 0.0
 var _hover_set := false
+
+## OV04 P07: THE JOB. Where this enemy belongs, what it does there, and
+## how long it stays interested once it has seen you.
+##
+## `post` is captured on the first physics frame rather than at
+## `create`, because a composer places an enemy after building it and a
+## post recorded at construction would be the origin.
+var post := Vector3.ZERO
+var _post_set := false
+var job := ""
+## Seconds of interest left. Above zero, the enemy is engaged even if
+## the player has stepped out of its radius.
+var _interest := 0.0
+## Patrol bookkeeping: which end of the beat it is walking to, and how
+## long it is pausing there.
+var _beat := Vector3.ZERO
+var _beat_set := false
+var _pause := 0.0
+## True while walking back to the post after losing interest. Public,
+## because "did it go back to work" is the question P07.4 asks.
+var returning := false
 ## Presentation-only container. EVERY mesh hangs off this and nothing
 ## else does, so a hit flinch or a windup swell scales the LOOK and can
 ## never move the collider -- which is what `scale` on the body did, and
@@ -373,6 +394,14 @@ func _physics_process(delta: float) -> void:
 	if archetype == "beacon":
 		_beacon_pulse(delta)
 
+	# OV04 P07: THE POST AND THE JOB, resolved once on the first frame
+	# this enemy actually runs -- by which time whatever placed it has
+	# put it where it belongs.
+	if not _post_set:
+		post = global_position
+		_post_set = true
+		job = str(Constants.ENEMY_JOBS.get(archetype, "watch"))
+
 	if player != null:
 		var to_player := player.global_position - global_position
 		var distance := to_player.length()
@@ -389,7 +418,15 @@ func _physics_process(delta: float) -> void:
 				float(stats["reach"])) \
 				* (1.0 - 0.5 * clampf(
 						player.statuses.magnitude_of("low_profile"), 0.0, 1.0))
+		# INTEREST OUTLIVES RANGE. Stepping a metre outside the radius
+		# used to switch an enemy off mid-fight -- trivially
+		# exploitable, and it reads as the enemy forgetting you while
+		# looking straight at you.
 		if distance <= aggro:
+			_interest = Constants.ENEMY_INTEREST_SECONDS
+		else:
+			_interest = maxf(0.0, _interest - delta)
+		if distance <= aggro or _interest > 0.0:
 			if not _has_noticed:
 				_has_noticed = true
 				_say("aggro")
@@ -426,6 +463,24 @@ func _physics_process(delta: float) -> void:
 			if _windup <= 0.0 and not statuses.has("frozen") \
 					and not statuses.has("stunned"):
 				_try_attack(player, distance)
+		else:
+			# OUT OF MIND: back to work. This branch did not exist, so
+			# an enemy outside its radius stood exactly where it was
+			# placed, for ever.
+			if _has_noticed:
+				_has_noticed = false
+				returning = true
+			_work(delta)
+	else:
+		# NO PLAYER AT ALL, which is not the same as one out of range and
+		# had no path through the code: interest was only decayed inside
+		# the `player != null` branch, so an enemy whose player left the
+		# scene stayed permanently alert and never went back to work.
+		_interest = maxf(0.0, _interest - delta)
+		if _interest <= 0.0 and _has_noticed:
+			_has_noticed = false
+			returning = true
+		_work(delta)
 	move_and_slide()
 	# Collision recovery: wanted to move but barely did -> slide sideways
 	# for a beat instead of grinding into the geometry forever.
@@ -536,6 +591,103 @@ func _try_attack(player: Player, distance: float) -> void:
 		_attack_cooldown = float(stats["cooldown"])
 		_say("melee_hit")
 		player.take_damage(_hit_for(), global_position)
+
+# ------------------------------------------- OV04 P07 jobs and return
+
+## DO THE JOB, or walk back to it.
+##
+## Everything here is what an enemy does when it is not fighting, which
+## before OV04 P07 was nothing whatsoever: outside the aggro radius the
+## movement block had no `else`, so a placed enemy stood motionless
+## until the player crossed 18 m. A room of statues that animate on a
+## trigger reads as a room of triggers, and it also hides every
+## navigation defect until the moment it matters.
+##
+## RETURNING COMES FIRST. An enemy that lost the player walks back to
+## its post before resuming, so a fight that dragged it across a room
+## does not leave it guarding somewhere nobody asked it to guard.
+func _work(delta: float) -> void:
+	if statuses.has("frozen") or statuses.has("stunned"):
+		velocity.x = lerpf(velocity.x, 0.0, 0.5)
+		velocity.z = lerpf(velocity.z, 0.0, 0.5)
+		return
+	var speed := float(stats["speed"]) * Constants.ENEMY_JOB_SPEED
+	if returning:
+		var home := Vector3(post.x - global_position.x, 0.0,
+				post.z - global_position.z)
+		if home.length() <= Constants.ENEMY_POST_TOLERANCE:
+			returning = false
+			_beat_set = false
+			_pause = 0.0
+		else:
+			_walk(home.normalized(), maxf(speed, 1.0))
+			return
+	match job:
+		"patrol":
+			_patrol(delta, speed)
+		"drift":
+			_drift(delta, speed)
+		_:
+			# `watch` and `tend` both hold the post; what differs is
+			# only how fast they turn, and that is presentation.
+			velocity.x = lerpf(velocity.x, 0.0, 0.25)
+			velocity.z = lerpf(velocity.z, 0.0, 0.25)
+			rotation.y += Constants.ENEMY_SWEEP_RATE * delta \
+					* (0.5 if job == "tend" else 1.0)
+
+
+## Walk a beat around the post, pausing at each end.
+##
+## The ends are picked around the post rather than along a fixed axis,
+## so two patrollers placed side by side do not march in lockstep.
+func _patrol(delta: float, speed: float) -> void:
+	if _pause > 0.0:
+		_pause -= delta
+		velocity.x = lerpf(velocity.x, 0.0, 0.3)
+		velocity.z = lerpf(velocity.z, 0.0, 0.3)
+		return
+	if not _beat_set:
+		var angle := randf() * TAU
+		_beat = post + Vector3(cos(angle), 0.0, sin(angle)) \
+				* Constants.ENEMY_PATROL_RADIUS
+		_beat_set = true
+	var toward := Vector3(_beat.x - global_position.x, 0.0,
+			_beat.z - global_position.z)
+	if toward.length() < 0.6:
+		_beat_set = false
+		_pause = Constants.ENEMY_PATROL_PAUSE
+		return
+	_walk(toward.normalized(), speed)
+
+
+## A flyer circling its station. Slow, and it never descends: "owns the
+## ceiling" is a claim about height and a drifter that wandered down to
+## the floor between fights would stop meaning it.
+func _drift(delta: float, speed: float) -> void:
+	if not _beat_set:
+		_beat = post
+		_beat_set = true
+	var around := Time.get_ticks_msec() / 1000.0 * 0.4
+	var want := _beat + Vector3(cos(around), 0.0, sin(around)) * 2.5
+	var toward := Vector3(want.x - global_position.x, 0.0,
+			want.z - global_position.z)
+	if toward.length() > 0.2:
+		_walk(toward.normalized(), speed)
+	var _unused := delta
+
+
+## One step of ordinary locomotion, facing where it is going.
+##
+## Shared by the job walks so "how an enemy moves when not fighting" has
+## one answer, and so the sidestep recovery above keeps working: it
+## measures actual displacement, which a job walk produces exactly as a
+## chase does.
+func _walk(dir: Vector3, speed: float) -> void:
+	velocity.x = lerpf(velocity.x, dir.x * speed, 0.15)
+	velocity.z = lerpf(velocity.z, dir.z * speed, 0.15)
+	if dir.length() > 0.05:
+		look_at(global_position + dir, Vector3.UP)
+
 
 # ------------------------------------------------ OV04 P06 role work
 
