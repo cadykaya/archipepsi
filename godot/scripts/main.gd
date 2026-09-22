@@ -88,6 +88,7 @@ const DRIVERS := {
 	"--constraints": preload("res://tests/constraint_driver.gd"),
 	"--archive": preload("res://tests/archive_driver.gd"),
 	"--consumable": preload("res://tests/consumable_driver.gd"),
+	"--encounter": preload("res://tests/encounter_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }
