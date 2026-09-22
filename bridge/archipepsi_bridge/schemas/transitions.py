@@ -37,7 +37,8 @@ try:
         MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
-        CampaignSave, ConsumableUse, EarnedLocalReward, PendingCheck,
+        CampaignSave, ConsumableAuthorization, ConsumableUse,
+        EarnedLocalReward, PendingCheck,
         ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -49,7 +50,8 @@ except ImportError:  # pragma: no cover
         MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
-        CampaignSave, ConsumableUse, EarnedLocalReward, PendingCheck,
+        CampaignSave, ConsumableAuthorization, ConsumableUse,
+        EarnedLocalReward, PendingCheck,
         ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -244,6 +246,12 @@ def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     return _rebuild(save,
                     zones=_replace_zone(save, zone_id, state=state),
                     consumable_uses=() if fresh else save.consumable_uses,
+                    # A refill retires the old supply outright, so an
+                    # authorization that was outstanding against it goes
+                    # with it rather than lingering to be released
+                    # against a supply it was never minted for.
+                    consumable_authorizations=(
+                        () if fresh else save.consumable_authorizations),
                     consumable_generation=(save.consumable_generation + 1
                                            if fresh
                                            else save.consumable_generation),
@@ -1122,12 +1130,7 @@ def spend_charge(save: CampaignSave, component_id: str,
     Refuses rather than saturating. A caller that has lost count should
     find out here, not by watching the number stay at zero.
     """
-    owned = save.derive().by_id(component_id)
-    if owned is None or owned.kind != "action":
-        raise ValueError(f"'{component_id}' is not an owned Action")
-    charges = getattr(owned.component, "charges", None)
-    if charges is None:
-        raise ValueError(f"'{component_id}' is not a consumable")
+    charges = _consumable_charges(save, component_id)
     # THE GENERATION IS CHECKED FIRST, and it is checked before the
     # count, so a stale use is reported as stale rather than as bad
     # arithmetic. Three tests in this lane have now passed for the wrong
@@ -1138,6 +1141,19 @@ def spend_charge(save: CampaignSave, component_id: str,
             f"{generation}; the current supply is "
             f"{save.consumable_generation}. It was refilled after the "
             f"press, so this use no longer exists")
+    # AN AUTHORIZED CHARGE IS ALREADY COUNTED, so the report that
+    # follows it settles the record rather than spending again. Without
+    # this, authorizing and then reporting the same use would take two
+    # charges for one effect -- the opposite failure to the one
+    # authorizing was introduced to close, and just as silent.
+    held = save.consumable_authorizations
+    settled = next((a for a in held
+                    if a.component_id == component_id
+                    and a.generation == generation
+                    and a.use_index == use_index), None)
+    if settled is not None:
+        return _rebuild(save, consumable_authorizations=tuple(
+            a for a in held if a is not settled))
     spent = charges - save.charges_left(component_id)
     if spent >= charges:
         raise ValueError(
@@ -1155,6 +1171,133 @@ def spend_charge(save: CampaignSave, component_id: str,
     # equipped item usable again without another trip to the inventory.
     # Only an explicit equipment change replaces it.
     return _rebuild(save, consumable_uses=uses)
+
+
+def _consumable_charges(save: CampaignSave, component_id: str) -> int:
+    """How many charges this component has, or the refusal saying why it
+    has none. Shared by the three functions that move a charge, because
+    three copies of one lookup is three places to stop agreeing."""
+    owned = save.derive().by_id(component_id)
+    if owned is None or owned.kind != "action":
+        raise ValueError(f"'{component_id}' is not an owned Action")
+    charges = getattr(owned.component, "charges", None)
+    if charges is None:
+        raise ValueError(f"'{component_id}' is not a consumable")
+    return charges
+
+
+def authorize_consumable(save: CampaignSave, component_id: str, *,
+                         use_index: int, generation: int) -> CampaignSave:
+    """Count a charge BEFORE the client launches the effect.
+
+    **PROPOSED, NOT AGREED.** The client half is Prod's and is
+    unwritten, so this is the bridge's side of a contract that has
+    one owner per file and must have one shape. The proposal, the
+    two boundaries it distinguishes and what it asks of the client
+    are in `docs/D9_CONSUMABLE_ACCOUNTING_PROD.md`; if the engine
+    lane prefers another accounting shape, this is the half that
+    moves.
+
+    The whole point is that this reaches the disk before anything
+    irreversible happens. `spend_charge` learns about expenditure from a
+    report, and a report is exactly what a crash loses: launch, lose the
+    report, kill the client, relaunch into the same unrefilled
+    deployment, and a report-driven bridge still believes the charge is
+    there. Retaining and retransmitting an in-memory list survives a
+    dropped socket and does not survive the process.
+
+    So `spent` moves here. The record this writes exists only so an
+    attempt that never launched can be cancelled
+    (`release_consumable_authorization`); a crash between this call and
+    the launch BURNS the charge, which is the conservative direction and
+    the cost of authorizing first.
+
+    Same compare-and-swap as the spend, checked in the same order and
+    for the same reasons -- generation before count, so a stale
+    authorization is reported as stale rather than as bad arithmetic.
+    """
+    charges = _consumable_charges(save, component_id)
+    if generation != save.consumable_generation:
+        raise ValueError(
+            f"'{component_id}' authorization {use_index} was minted "
+            f"against supply {generation}; the current supply is "
+            f"{save.consumable_generation}. It was refilled after the "
+            "press, so this use no longer exists")
+    spent = charges - save.charges_left(component_id)
+    if spent >= charges:
+        raise ValueError(
+            f"'{component_id}' has no charges left ({spent} of {charges})")
+    if use_index != spent + 1:
+        raise ValueError(
+            f"'{component_id}' authorization {use_index} is not the next "
+            f"one due ({spent + 1}); a duplicate or a retry")
+    uses = tuple(u for u in save.consumable_uses
+                 if u.component_id != component_id)
+    uses += (ConsumableUse(component_id=component_id, spent=spent + 1),)
+    held = save.consumable_authorizations + (
+        ConsumableAuthorization(component_id=component_id,
+                                generation=generation,
+                                use_index=use_index),)
+    return _rebuild(save, consumable_uses=uses,
+                    consumable_authorizations=held)
+
+
+def release_consumable_authorization(
+        save: CampaignSave, component_id: str, *, use_index: int,
+        generation: int) -> CampaignSave:
+    """Cancel an attempt that never launched, and ONLY that attempt.
+
+    **PROPOSED, NOT AGREED.** The client half is Prod's and is
+    unwritten, so this is the bridge's side of a contract that has
+    one owner per file and must have one shape. The proposal, the
+    two boundaries it distinguishes and what it asks of the client
+    are in `docs/D9_CONSUMABLE_ACCOUNTING_PROD.md`; if the engine
+    lane prefers another accounting shape, this is the half that
+    moves.
+
+    **The defect this shape does not have.** A reservation held as one
+    entry per component is overwritten by the next press, so cancelling
+    the second forgets the first -- and the first had already launched.
+    Here an authorization is keyed by `(component, generation,
+    use_index)`, so two presses inside one cooldown are two records and
+    cancelling the later one leaves the earlier expenditure standing.
+
+    **Only the newest may be released.** Releasing an authorization that
+    is not the last one spent would leave a hole in the index sequence
+    that `use_consumable`'s "next one due" check could never fill again.
+    This is also what makes a release from a FRESH process harmless: by
+    the time such a client has pressed anything, the index it could name
+    is no longer the newest.
+
+    Whether the effect launched is a thing only the process that
+    launched it knows, so that claim is the caller's and this function
+    takes it at its word. What it refuses to do is let a claim be made
+    about an attempt the caller cannot have made.
+    """
+    charges = _consumable_charges(save, component_id)
+    held = save.consumable_authorizations
+    match = next((a for a in held
+                  if a.component_id == component_id
+                  and a.generation == generation
+                  and a.use_index == use_index), None)
+    if match is None:
+        raise ValueError(
+            f"'{component_id}' has no outstanding authorization "
+            f"{use_index} against supply {generation}; it was already "
+            "reported, already released, or never made")
+    spent = charges - save.charges_left(component_id)
+    if use_index != spent:
+        raise ValueError(
+            f"'{component_id}' authorization {use_index} is not the "
+            f"newest ({spent}); releasing it would leave a gap in the "
+            "use sequence that nothing could fill")
+    uses = tuple(u for u in save.consumable_uses
+                 if u.component_id != component_id)
+    if spent - 1 > 0:
+        uses += (ConsumableUse(component_id=component_id, spent=spent - 1),)
+    return _rebuild(
+        save, consumable_uses=uses,
+        consumable_authorizations=tuple(a for a in held if a is not match))
 
 
 def grant_local_reward(
@@ -1202,6 +1345,8 @@ def grant_local_reward(
 #: is listed — the same shape as the location-field and HubMode censuses.
 TRANSITIONS = (
     spend_charge,
+    authorize_consumable,
+    release_consumable_authorization,
     start_generation, accept_zone, enter_zone, complete_zone, abandon_zone,
     release_location, claim_zone_check, buy_shop_stock, confirm_check,
     rollback_shop_purchase, restock_shop, append_interpretation,

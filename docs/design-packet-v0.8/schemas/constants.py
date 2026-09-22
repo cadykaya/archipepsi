@@ -1091,7 +1091,14 @@ ENEMY_STATS = {
     # damage is high and its recovery is the opening.
     "charger": {"hp": 40.0, "damage": 14.0, "cooldown": 3.0, "speed": 3.0, "reach": 14.0},
     # Slow, heavy, and armoured from the front: see `FRONTAL_ARMOUR`.
-    "bulwark": {"hp": 90.0, "damage": 10.0, "cooldown": 1.8, "speed": 1.6, "reach": 2.4},
+    #
+    # The turn rate, the commit and the recovery that make its back
+    # reachable are `BULWARK_TURN_RATE_DEG_S` and its two companions
+    # below -- named constants rather than a fourth key in here, because
+    # the opening is three numbers that only mean anything together and
+    # `bulwark_opening()` states the arithmetic they produce.
+    "bulwark": {"hp": 90.0, "damage": 10.0, "cooldown": 1.8, "speed": 1.6,
+                "reach": 2.4},
     # Holds the ceiling and fires down. Never descends to the floor.
     "drifter": {"hp": 44.0, "damage": 7.0,  "cooldown": 2.2, "speed": 2.4, "reach": 22.0},
     # Waits high and dives when the player leaves the ground.

@@ -35,7 +35,8 @@ def _about(m) -> str:
     engine has agreed. Every other refusal is read and forgotten, and ""
     correctly says "unchecked" for all of them.
     """
-    if getattr(m, "type", "") == "use_consumable":
+    if getattr(m, "type", "") in ("use_consumable", "authorize_consumable",
+                                  "release_consumable_authorization"):
         return use_consumable_key(m.component_id, m.generation, m.use_index)
     return ""
 
@@ -164,6 +165,13 @@ class BridgeServer:
             await transactions.buy_shop_stock(engine, m.location_id)
         elif m.type == "slot_action":
             await engine.handle_slot_action(m.slot, m.component_id)
+        elif m.type == "authorize_consumable":
+            await engine.handle_authorize_consumable(m.component_id,
+                                                     m.use_index,
+                                                     m.generation)
+        elif m.type == "release_consumable_authorization":
+            await engine.handle_release_consumable_authorization(
+                m.component_id, m.use_index, m.generation)
         elif m.type == "use_consumable":
             await engine.handle_use_consumable(m.component_id,
                                                m.use_index,
