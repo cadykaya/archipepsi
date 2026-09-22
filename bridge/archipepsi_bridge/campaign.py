@@ -1658,6 +1658,44 @@ class CampaignEngine:
                                          use_index)) from exc
         await self.broadcast_snapshot()
 
+    async def handle_authorize_consumable(self, component_id: str,
+                                          use_index: int,
+                                          generation: int) -> None:
+        """Count the charge before the client launches anything.
+
+        The refusal carries the same key as the spend's, because the
+        client is holding this attempt open in exactly the same way --
+        and an authorization it cannot attribute is one it can never
+        release, which leaves the supply a charge short for the session.
+        """
+        self._require_save()
+        try:
+            self._apply(T.authorize_consumable(
+                self.save, component_id, use_index=use_index,
+                generation=generation))
+        except ValueError as exc:
+            raise IntentError(
+                str(exc),
+                about=use_consumable_key(component_id, generation,
+                                         use_index)) from exc
+        await self.broadcast_snapshot()
+
+    async def handle_release_consumable_authorization(
+            self, component_id: str, use_index: int,
+            generation: int) -> None:
+        """Give back a charge whose effect never launched."""
+        self._require_save()
+        try:
+            self._apply(T.release_consumable_authorization(
+                self.save, component_id, use_index=use_index,
+                generation=generation))
+        except ValueError as exc:
+            raise IntentError(
+                str(exc),
+                about=use_consumable_key(component_id, generation,
+                                         use_index)) from exc
+        await self.broadcast_snapshot()
+
     async def handle_slot_action(
         self, slot: str, component_id: str | None
     ) -> None:

@@ -653,7 +653,12 @@ class SlotAssignment(Strict):
     mobility: str | None = Field(default=None, max_length=32)
     utility: str | None = Field(default=None, max_length=32)
     #: The one that runs out. Its occupant declares `charges`, and
-    #: spending the last one clears this field for good.
+    #: spending the last one does NOT clear this field: the supply is
+    #: permanently owned, so an exhausted one stays selected at
+    #: `0 / max`, says it is exhausted and says what refills it
+    #: (`transitions.spend_charge`). This comment said the opposite,
+    #: which was the behaviour before the owner's ruling of
+    #: 2026-09-22 and never the behaviour after it.
     consumable: str | None = Field(default=None, max_length=32)
 
     def assigned(self) -> tuple[tuple[str, str], ...]:
@@ -766,6 +771,40 @@ def _reject_duplicate_ids(items, attr: str, label: str) -> None:
     ids = [getattr(i, attr) for i in items]
     if len(set(ids)) != len(ids):
         raise ValueError(f"duplicate {label}")
+
+
+class ConsumableAuthorization(Strict):
+    """A charge counted **before** the effect that spends it exists.
+
+    **The hole this closes.** The client's reserve/launch/report is an
+    in-memory list. Retaining and retransmitting it survives a dropped
+    socket, and it does not survive the process: launch an effect, lose
+    the report, kill Godot, relaunch into the same unrefilled
+    deployment, and a bridge that only ever learned about expenditure
+    from a report still believes the charge is there. Nothing in a
+    cleared local dictionary is reconciliation.
+
+    **So the charge is spent at AUTHORIZE time, not at report time.**
+    `spent` moves the moment this record is written, and this record
+    exists only to allow the one thing authorize-before-launch would
+    otherwise lose: cancelling an attempt that never launched. A crash
+    between authorize and launch therefore BURNS the charge. That is the
+    cost of the chosen shape, it is the conservative direction — a lost
+    report can never duplicate a charge, only forfeit one — and it is
+    stated here rather than discovered by a player.
+
+    **Keyed by the trio the design already uses.** `(component,
+    generation, use_index)` is the same compare-and-swap identity
+    `use_consumable` checks, so there is no second convention and no
+    opaque id to mint, lose or forge. It is also why two presses during
+    one cooldown cannot overwrite each other: they are different
+    indices, so cancelling the second preserves the first.
+    """
+    component_id: str = Field(min_length=1, max_length=32)
+    #: The supply it counts against, so an authorization outstanding
+    #: across a refill is refused on identity like every other stale use.
+    generation: int = Field(default=0, ge=0)
+    use_index: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
 
 
 class ConsumableUse(Strict):
@@ -887,6 +926,19 @@ class CampaignSave(Strict):
     #: never held one, which is every campaign written before the slot
     #: existed -- so an old save loads unchanged rather than migrating.
     consumable_uses: tuple[ConsumableUse, ...] = ()
+    #: Charges authorized and not yet reported as launched.
+    #:
+    #: **Already counted in `consumable_uses`** — an authorization moves
+    #: `spent` when it is written, and this is the record that lets an
+    #: UNLAUNCHED attempt be cancelled. So it is not a second ledger to
+    #: add up; subtracting it again would double-charge.
+    #:
+    #: **Deliberately not mirrored on the snapshot.** Only the process
+    #: that made an authorization knows whether the effect launched, and
+    #: that is the one fact a release turns on. A fresh client is handed
+    #: the reduced `charges_left` and nothing it could release — which
+    #: is the point, because it cannot know what the dead process did.
+    consumable_authorizations: tuple[ConsumableAuthorization, ...] = ()
     #: WHICH DEPLOYMENT THOSE USES BELONG TO — the `zone_id` the player
     #: was last sent into. Charges refill when a deployment BEGINS, and
     #: this is what tells one beginning from a repeat: `enter_zone` is
@@ -2117,6 +2169,46 @@ class SlotAction(Strict):
     component_id: str | None = Field(default=None, max_length=32)
 
 
+class AuthorizeConsumable(Strict):
+    """Ask the bridge to count a charge BEFORE launching the effect.
+
+    **PROPOSED, NOT AGREED.** The client half is Prod's and is
+    unwritten, so this is the bridge's side of a contract that has
+    one owner per file and must have one shape. The proposal, the
+    two boundaries it distinguishes and what it asks of the client
+    are in `docs/D9_CONSUMABLE_ACCOUNTING_PROD.md`; if the engine
+    lane prefers another accounting shape, this is the half that
+    moves.
+
+    Sent while the press is still cancellable and nothing irreversible
+    has happened. The bridge writes the expenditure to the save and
+    answers; only then may the client launch. A client that launches
+    first and reports afterwards is relying on a report surviving the
+    process, and it does not.
+
+    The trio is `use_consumable`'s, unchanged, so the authorization and
+    the report that settles it are the same compare-and-swap.
+    """
+    type: Literal["authorize_consumable"]
+    component_id: str = Field(min_length=1, max_length=32)
+    use_index: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
+    generation: int = Field(ge=0)
+
+
+class ReleaseConsumableAuthorization(Strict):
+    """Cancel an authorized attempt that **never launched**.
+
+    Only the process that authorized can know that, so the claim is the
+    client's. What the bridge enforces is that the attempt being
+    cancelled is the newest one — which is also why a client that has
+    just relaunched cannot refund a dead process's expenditure.
+    """
+    type: Literal["release_consumable_authorization"]
+    component_id: str = Field(min_length=1, max_length=32)
+    use_index: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
+    generation: int = Field(ge=0)
+
+
 class UseConsumable(Strict):
     """Spend one charge of the Action in the consumable slot.
 
@@ -2285,7 +2377,9 @@ ClientMessage = Annotated[
     Union[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
-        SlotAction, UseConsumable, GrantLocalReward, SetCreativity,
+        SlotAction, AuthorizeConsumable,
+        ReleaseConsumableAuthorization,
+        UseConsumable, GrantLocalReward, SetCreativity,
         DebugCommand,
         ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
         ZoneStateSelected, ObjectTransported, LayoutResult, BuildFailed,

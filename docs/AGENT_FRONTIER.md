@@ -1,5 +1,44 @@
 # AGENT FRONTIER
 
+## BRIDGE LANE — three proposals on the table, one of them load-bearing — 2026-09-22
+
+Coordination round. Each of these is one half of a contract with two
+owners, and each says so in its own file rather than being announced as
+settled.
+
+**D-9 — consumable expenditure (`docs/D9_CONSUMABLE_ACCOUNTING_PROD.md`).**
+A dropped socket and a dead process fail differently: retaining and
+retransmitting an in-memory pending list closes the first completely and
+cannot close the second. So the charge moves at AUTHORIZE time, before
+anything irreversible, and reaches the disk there;
+`ConsumableAuthorization` exists only so an unlaunched attempt can be
+cancelled. Keyed by `(component, generation, use_index)` — the trio the
+spend already checks — so two presses in one cooldown are two records
+and cancelling the second leaves the first standing. Proven across a
+real process boundary on the bridge side. **Not proven end to end**: the
+client still launches first and reports after. Found on the way: the
+settle branch was unreachable behind the "next index due" check.
+
+**D-10 — the chain on a route (`docs/D10_P14_CHAIN_ON_A_ROUTE_PROD.md`).**
+`TopologyEdge.opened_by` puts the gate on the edge, where reachability
+reads. The base-kit question is arithmetic: the player is 80 kg
+(MEDIUM) and §10.3 caps carrying at 60 kg (also MEDIUM), so `HEAVY`
+needs a pushed object and therefore a capability `graph.Capability`
+deliberately cannot name — the declared HEAVY chain may not gate a
+route, and the refusal says that instead of inventing a prerequisite.
+**The finding:** with `PRESSURE_PLATE` and `NOT`, a chain can only DENY
+a route. `plate → NOT → shutter` rests open; `plate → shutter` rests
+closed and is D-8 §11.2's held requirement wearing a room graph.
+Opening a route needs `LATCH`, which §19.2 names and nothing
+implements. Two candidates put to Prod.
+
+**D-11 — game-pack identity (`docs/D11_THEME_PACK_IDENTITY_PROD.md`).**
+One optional `Zone.theme_pack` beside the unchanged six-member
+`Zone.theme`, one extra lookup key ahead of the existing fallback chain.
+**Deliberately unbuilt** pending agreement.
+
+---
+
 ## BRIDGE LANE — the carry line exists, and the killed write is a real kill — 2026-09-22
 
 **Mass semantics, verified rather than assumed.** Design 2 §10.3 governs

@@ -169,6 +169,42 @@
         "title": "ApDisconnect",
         "type": "object"
       },
+      "AuthorizeConsumable": {
+        "additionalProperties": false,
+        "description": "Ask the bridge to count a charge BEFORE launching the effect.\n\n**PROPOSED, NOT AGREED.** The client half is Prod's and is\nunwritten, so this is the bridge's side of a contract that has\none owner per file and must have one shape. The proposal, the\ntwo boundaries it distinguishes and what it asks of the client\nare in `docs/D9_CONSUMABLE_ACCOUNTING_PROD.md`; if the engine\nlane prefers another accounting shape, this is the half that\nmoves.\n\nSent while the press is still cancellable and nothing irreversible\nhas happened. The bridge writes the expenditure to the save and\nanswers; only then may the client launch. A client that launches\nfirst and reports afterwards is relying on a report surviving the\nprocess, and it does not.\n\nThe trio is `use_consumable`'s, unchanged, so the authorization and\nthe report that settles it are the same compare-and-swap.",
+        "properties": {
+          "type": {
+            "const": "authorize_consumable",
+            "title": "Type",
+            "type": "string"
+          },
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Component Id",
+            "type": "string"
+          },
+          "use_index": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Use Index",
+            "type": "integer"
+          },
+          "generation": {
+            "minimum": 0,
+            "title": "Generation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "component_id",
+          "use_index",
+          "generation"
+        ],
+        "title": "AuthorizeConsumable",
+        "type": "object"
+      },
       "BuildFailed": {
         "additionalProperties": false,
         "description": "The engine could not CONSTRUCT this proposal. There is no layout.\n\n**This is not a refused layout, and conflating the two would be a\nlie in both directions.** `LayoutResult` carries geometry the engine\nbuilt and the bridge then judged; this says the engine never got\nthat far -- `ZoneBuilder` could not route the rooms, so there is\nnothing to measure and nothing to validate. Sending an empty or\npart-built `layout` to borrow the refusal path would be fabricated\nevidence: the validator would report a geometry error for a\ngeometry that was never laid down.\n\n**And it is not a generation-stage rejection either.** A proposal\nthe bridge refuses before it is offered never reaches a client;\n`last_generation_error` is where that is reported. This one passed\ncomposition, was offered, was entered, and failed in the engine.\n\n**Why the bridge needs to hear it at all.** Without this message a\nfailed build is silent: `ZoneController.setup` returns, no\n`layout_result` is ever sent, and the record sits ACTIVE waiting for\na verdict that is not coming. The Hub stays in ZONE_ACTIVE, offering\na way back into a Zone that cannot be built, and the campaign cannot\nmove. What follows from this message is exactly what follows from a\nrefusal -- `refuse_layout`, so the attempt is charged, a FRESH\nproposal is composed again inside the budget, a COMMITTED one is\nparked with its manifest intact, and past the budget the Zone goes\nDORMANT and the Hub offers ABANDON.\n\n`attempt` and `proposal_id` carry the same meaning and the same\nguards as on `LayoutResult`: which build this is the outcome of.\nThey are what stop a late failure spending a replacement's budget.",
@@ -696,6 +732,42 @@
         "title": "ObjectTransported",
         "type": "object"
       },
+      "ReleaseConsumableAuthorization": {
+        "additionalProperties": false,
+        "description": "Cancel an authorized attempt that **never launched**.\n\nOnly the process that authorized can know that, so the claim is the\nclient's. What the bridge enforces is that the attempt being\ncancelled is the newest one \u2014 which is also why a client that has\njust relaunched cannot refund a dead process's expenditure.",
+        "properties": {
+          "type": {
+            "const": "release_consumable_authorization",
+            "title": "Type",
+            "type": "string"
+          },
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Component Id",
+            "type": "string"
+          },
+          "use_index": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Use Index",
+            "type": "integer"
+          },
+          "generation": {
+            "minimum": 0,
+            "title": "Generation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "component_id",
+          "use_index",
+          "generation"
+        ],
+        "title": "ReleaseConsumableAuthorization",
+        "type": "object"
+      },
       "RequestNextZone": {
         "additionalProperties": false,
         "description": "Generate the next Zone.\n\n`finale` picks WHICH Zone \u2014 ordinary, or the reserved Check 030 Zone \u2014\nand never whether one may be started. Admission is `HubStatus\n.accepts_zone_request` for both values, so the ordinary and finale paths\ncannot drift apart; `finale=True` additionally requires\n`HubStatus.finale_offered`.\n\nConcretely, the bridge refuses this intent whenever a Zone is held, and\n`GENERATING` counts as held. v0.5 only barred it for GENERATED and\nACTIVE, so a second request arriving while the provider was still working\nstarted a second allocation against the same eligible pool.",
@@ -989,6 +1061,7 @@
         "abandon_zone": "#/$defs/AbandonZone",
         "ap_connect": "#/$defs/ApConnect",
         "ap_disconnect": "#/$defs/ApDisconnect",
+        "authorize_consumable": "#/$defs/AuthorizeConsumable",
         "build_failed": "#/$defs/BuildFailed",
         "buy_shop_stock": "#/$defs/BuyShopStock",
         "claim_check": "#/$defs/ClaimCheck",
@@ -1003,6 +1076,7 @@
         "leave_zone": "#/$defs/LeaveZone",
         "lock_opened": "#/$defs/LockOpened",
         "object_transported": "#/$defs/ObjectTransported",
+        "release_consumable_authorization": "#/$defs/ReleaseConsumableAuthorization",
         "request_next_zone": "#/$defs/RequestNextZone",
         "set_creativity": "#/$defs/SetCreativity",
         "slot_action": "#/$defs/SlotAction",
@@ -1050,6 +1124,12 @@
       },
       {
         "$ref": "#/$defs/SlotAction"
+      },
+      {
+        "$ref": "#/$defs/AuthorizeConsumable"
+      },
+      {
+        "$ref": "#/$defs/ReleaseConsumableAuthorization"
       },
       {
         "$ref": "#/$defs/UseConsumable"
@@ -5790,6 +5870,20 @@
             ],
             "default": null,
             "title": "Capability"
+          },
+          "opened_by": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Opened By"
           },
           "requires_state": {
             "default": [],
@@ -11379,6 +11473,20 @@
             ],
             "default": null,
             "title": "Capability"
+          },
+          "opened_by": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Opened By"
           },
           "requires_state": {
             "default": [],
