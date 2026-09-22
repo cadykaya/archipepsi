@@ -770,7 +770,7 @@ The chamber is a Production-grey shell with a 2.4 x 3.2 opening; the pack
 dresses it and cuts nothing.
 
 **A fourth gate now runs in the ENGINE**, on the imported `.glb` rather
-than the Blender source: `forest_temple_views.gd` walks the surround's 120
+than the Blender source: `pack_views.gd` walks the surround's 120
 vertices against the opening and sabotage-tests itself in the same run.
 Its first version used the AABB and was worthless -- a surround's bounding
 box necessarily encloses the doorway.

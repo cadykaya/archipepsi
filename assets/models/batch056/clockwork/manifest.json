@@ -1,0 +1,232 @@
+{
+ "tp_ck_door_bezel": {
+  "anchor": "floor",
+  "batch": "056",
+  "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+  "distinct": "the opening is dressed as a DIAL: minute marks up the jambs and XII over the head",
+  "kind": "theme_pack_content",
+  "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+  "not_changed": [
+   "collision",
+   "placement",
+   "any runtime state",
+   "the engine's door opening",
+   "any approved asset"
+  ],
+  "pack": "tp_super_mario_64",
+  "painted_with": "rusted_industrial",
+  "parts": [
+   "ck_dr_jamb_l",
+   "ck_dr_marks_l",
+   "ck_dr_jamb_r",
+   "ck_dr_marks_r",
+   "ck_dr_crown"
+  ],
+  "path": "batch056/clockwork/tp_ck_door_bezel.glb",
+  "size": [
+   3.08,
+   0.46,
+   3.54
+  ],
+  "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+  "status": "PROPOSAL -- visual only, review-pending, not a production default",
+  "subtheme": "TICK TOCK CLOCK -- the inside of a running movement: gear trains, pendulums, dial marks, and a hand that came off",
+  "subtheme_is_a_choice": "Super Mario 64 has fifteen courses and the packet's concept for T02 is 'Clockwork Garden', which has two halves. This pack is the CLOCKWORK half. The garden -- Peach's hedged courtyard -- is the deliberate second subtheme and is not built here, because a courtyard and a movement do not share a material culture.",
+  "texel_density": 32.0,
+  "theme_hint_disagrees": "Constants.THEME_BY_GAME_HINT maps this game to concrete_facility; the nearest family BY MATERIAL is rusted_industrial. The hint picks a family by GAME and a treatment follows what the pack is MADE OF -- two questions, one field. For T01 they happened to agree. See COVERAGE.md section 3.",
+  "theme_hint_says": "concrete_facility",
+  "triangles": 72
+ },
+ "tp_ck_fallen_hand": {
+  "anchor": "floor",
+  "batch": "056",
+  "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+  "distinct": "floor dressing that FELL, where T01's grew -- and it is bent, because a straight one is bar stock",
+  "kind": "theme_pack_content",
+  "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+  "not_changed": [
+   "collision",
+   "placement",
+   "any runtime state",
+   "the engine's door opening",
+   "any approved asset"
+  ],
+  "pack": "tp_super_mario_64",
+  "painted_with": "rusted_industrial",
+  "parts": [
+   "ck_hd_boss",
+   "ck_hd_bend",
+   "ck_hd_spade",
+   "ck_hd_tip",
+   "ck_hd_tail"
+  ],
+  "path": "batch056/clockwork/tp_ck_fallen_hand.glb",
+  "size": [
+   1.653,
+   0.394,
+   0.11
+  ],
+  "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+  "status": "PROPOSAL -- visual only, review-pending, not a production default",
+  "subtheme": "TICK TOCK CLOCK -- the inside of a running movement: gear trains, pendulums, dial marks, and a hand that came off",
+  "subtheme_is_a_choice": "Super Mario 64 has fifteen courses and the packet's concept for T02 is 'Clockwork Garden', which has two halves. This pack is the CLOCKWORK half. The garden -- Peach's hedged courtyard -- is the deliberate second subtheme and is not built here, because a courtyard and a movement do not share a material culture.",
+  "texel_density": 31.8,
+  "theme_hint_disagrees": "Constants.THEME_BY_GAME_HINT maps this game to concrete_facility; the nearest family BY MATERIAL is rusted_industrial. The hint picks a family by GAME and a treatment follows what the pack is MADE OF -- two questions, one field. For T01 they happened to agree. See COVERAGE.md section 3.",
+  "theme_hint_says": "concrete_facility",
+  "triangles": 88
+ },
+ "tp_ck_gear_column": {
+  "anchor": "floor",
+  "batch": "056",
+  "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+  "distinct": "the column is a SHAFT: it transmits torque, and the house column holds a roof up",
+  "kind": "theme_pack_content",
+  "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+  "not_changed": [
+   "collision",
+   "placement",
+   "any runtime state",
+   "the engine's door opening",
+   "any approved asset"
+  ],
+  "pack": "tp_super_mario_64",
+  "painted_with": "rusted_industrial",
+  "parts": [
+   "ck_col_plinth",
+   "ck_col_bearing",
+   "ck_col_collar",
+   "ck_col_wheel",
+   "ck_col_wheel_hub",
+   "ck_col_pinion",
+   "ck_col_pinion_hub"
+  ],
+  "path": "batch056/clockwork/tp_ck_gear_column.glb",
+  "size": [
+   1.331,
+   0.72,
+   3.6
+  ],
+  "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+  "status": "PROPOSAL -- visual only, review-pending, not a production default",
+  "subtheme": "TICK TOCK CLOCK -- the inside of a running movement: gear trains, pendulums, dial marks, and a hand that came off",
+  "subtheme_is_a_choice": "Super Mario 64 has fifteen courses and the packet's concept for T02 is 'Clockwork Garden', which has two halves. This pack is the CLOCKWORK half. The garden -- Peach's hedged courtyard -- is the deliberate second subtheme and is not built here, because a courtyard and a movement do not share a material culture.",
+  "texel_density": 32.0,
+  "theme_hint_disagrees": "Constants.THEME_BY_GAME_HINT maps this game to concrete_facility; the nearest family BY MATERIAL is rusted_industrial. The hint picks a family by GAME and a treatment follows what the pack is MADE OF -- two questions, one field. For T01 they happened to agree. See COVERAGE.md section 3.",
+  "theme_hint_says": "concrete_facility",
+  "triangles": 160
+ },
+ "tp_ck_key_escutcheon": {
+  "anchor": "floor",
+  "batch": "056",
+  "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+  "distinct": "batch043's wall-switch contract WOUND, not pressed: a square arbor with a handle on it",
+  "kind": "theme_pack_content",
+  "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+  "not_changed": [
+   "collision",
+   "placement",
+   "any runtime state",
+   "the engine's door opening",
+   "any approved asset"
+  ],
+  "pack": "tp_super_mario_64",
+  "painted_with": "rusted_industrial",
+  "parts": [
+   "ck_ky_bezel",
+   "ck_ky_dial",
+   "ck_ky_arbor",
+   "ck_ky_spoke"
+  ],
+  "path": "batch056/clockwork/tp_ck_key_escutcheon.glb",
+  "size": [
+   0.46,
+   0.205,
+   0.54
+  ],
+  "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+  "status": "PROPOSAL -- visual only, review-pending, not a production default",
+  "subtheme": "TICK TOCK CLOCK -- the inside of a running movement: gear trains, pendulums, dial marks, and a hand that came off",
+  "subtheme_is_a_choice": "Super Mario 64 has fifteen courses and the packet's concept for T02 is 'Clockwork Garden', which has two halves. This pack is the CLOCKWORK half. The garden -- Peach's hedged courtyard -- is the deliberate second subtheme and is not built here, because a courtyard and a movement do not share a material culture.",
+  "texel_density": 32.0,
+  "theme_hint_disagrees": "Constants.THEME_BY_GAME_HINT maps this game to concrete_facility; the nearest family BY MATERIAL is rusted_industrial. The hint picks a family by GAME and a treatment follows what the pack is MADE OF -- two questions, one field. For T01 they happened to agree. See COVERAGE.md section 3.",
+  "theme_hint_says": "concrete_facility",
+  "triangles": 60
+ },
+ "tp_ck_pendulum_lamp": {
+  "anchor": "floor",
+  "batch": "056",
+  "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+  "distinct": "the fitting hangs and swings; no house family has a light that is also a moving part",
+  "kind": "theme_pack_content",
+  "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+  "not_changed": [
+   "collision",
+   "placement",
+   "any runtime state",
+   "the engine's door opening",
+   "any approved asset"
+  ],
+  "pack": "tp_super_mario_64",
+  "painted_with": "rusted_industrial",
+  "parts": [
+   "ck_pd_cap",
+   "ck_pd_rod",
+   "ck_pd_bob"
+  ],
+  "path": "batch056/clockwork/tp_ck_pendulum_lamp.glb",
+  "size": [
+   0.34,
+   0.35,
+   0.96
+  ],
+  "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+  "status": "PROPOSAL -- visual only, review-pending, not a production default",
+  "subtheme": "TICK TOCK CLOCK -- the inside of a running movement: gear trains, pendulums, dial marks, and a hand that came off",
+  "subtheme_is_a_choice": "Super Mario 64 has fifteen courses and the packet's concept for T02 is 'Clockwork Garden', which has two halves. This pack is the CLOCKWORK half. The garden -- Peach's hedged courtyard -- is the deliberate second subtheme and is not built here, because a courtyard and a movement do not share a material culture.",
+  "texel_density": 32.0,
+  "theme_hint_disagrees": "Constants.THEME_BY_GAME_HINT maps this game to concrete_facility; the nearest family BY MATERIAL is rusted_industrial. The hint picks a family by GAME and a treatment follows what the pack is MADE OF -- two questions, one field. For T01 they happened to agree. See COVERAGE.md section 3.",
+  "theme_hint_says": "concrete_facility",
+  "triangles": 64
+ },
+ "tp_ck_wall_movement": {
+  "anchor": "floor",
+  "batch": "056",
+  "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+  "distinct": "the panel is PARTED and the works show through, held by a bridge the way a movement is",
+  "kind": "theme_pack_content",
+  "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+  "not_changed": [
+   "collision",
+   "placement",
+   "any runtime state",
+   "the engine's door opening",
+   "any approved asset"
+  ],
+  "pack": "tp_super_mario_64",
+  "painted_with": "rusted_industrial",
+  "parts": [
+   "ck_mv_plate_r",
+   "ck_mv_rail_top",
+   "ck_mv_rail_low",
+   "ck_mv_gear_big",
+   "ck_mv_gear_big_hub",
+   "ck_mv_gear_small",
+   "ck_mv_gear_small_hub",
+   "ck_mv_bridge"
+  ],
+  "path": "batch056/clockwork/tp_ck_wall_movement.glb",
+  "size": [
+   2.16,
+   0.27,
+   3.0
+  ],
+  "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+  "status": "PROPOSAL -- visual only, review-pending, not a production default",
+  "subtheme": "TICK TOCK CLOCK -- the inside of a running movement: gear trains, pendulums, dial marks, and a hand that came off",
+  "subtheme_is_a_choice": "Super Mario 64 has fifteen courses and the packet's concept for T02 is 'Clockwork Garden', which has two halves. This pack is the CLOCKWORK half. The garden -- Peach's hedged courtyard -- is the deliberate second subtheme and is not built here, because a courtyard and a movement do not share a material culture.",
+  "texel_density": 32.0,
+  "theme_hint_disagrees": "Constants.THEME_BY_GAME_HINT maps this game to concrete_facility; the nearest family BY MATERIAL is rusted_industrial. The hint picks a family by GAME and a treatment follows what the pack is MADE OF -- two questions, one field. For T01 they happened to agree. See COVERAGE.md section 3.",
+  "theme_hint_says": "concrete_facility",
+  "triangles": 172
+ }
+}

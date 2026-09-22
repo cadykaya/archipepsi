@@ -4223,7 +4223,7 @@ existing family. **A tint is not this pack's treatment and is not claimed to
 be one.** The T01 coverage row reads `content yes, materials no`.
 
 **054-R — the kit in a room, and what the room showed.**
-`tools/content/run_forest_temple_views.sh` assembles the six against a
+`tools/content/run_pack_views.sh tp_ocarina_of_time` assembles the six against a
 Production-grey shell with a 2.4 × 3.2 opening cut in it, and photographs it
 four ways: `docs/art/review/forest_temple_2026-09-22/`.
 
@@ -4639,6 +4639,72 @@ the cover by **0.35 m** in every pose, because the shield rotates with
 the deck.
 
 ---
+
+
+## Batch 056 — T02, the second game pack. Super Mario 64, TICK TOCK CLOCK
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_ck_gear_column` | 160 tris · 1.33 × 0.72 × 3.60 m · 32.0 texels/m | 7 | the column is a SHAFT: it transmits torque, and the house column holds a roof up |
+| `tp_ck_wall_movement` | 172 tris · 2.16 × 0.27 × 3.00 m · 32.0 texels/m | 8 | the panel is PARTED and the works show through, held by a bridge the way a movement is |
+| `tp_ck_door_bezel` | 72 tris · 3.08 × 0.46 × 3.54 m · 32.0 texels/m | 5 | the opening is dressed as a DIAL: minute marks up the jambs and XII over the head |
+| `tp_ck_fallen_hand` | 88 tris · 1.65 × 0.39 × 0.11 m · 31.8 texels/m | 5 | floor dressing that FELL, where T01's grew — and it is bent, because a straight one is bar stock |
+| `tp_ck_pendulum_lamp` | 64 tris · 0.34 × 0.35 × 0.96 m · 32.0 texels/m | 3 | the fitting hangs and swings; no house family has a light that is also a moving part |
+| `tp_ck_key_escutcheon` | 60 tris · 0.46 × 0.20 × 0.54 m · 32.0 texels/m | 4 | batch043's wall-switch contract WOUND, not pressed: a square arbor with a handle on it |
+
+**The subtheme is chosen and stated: Tick Tock Clock.** Super Mario 64 has
+fifteen courses and the packet's T02 concept, "Clockwork Garden", has two
+halves. This is the clockwork half; Peach's hedged courtyard is the
+deliberate second subtheme and is **not** built, because a courtyard and a
+movement do not share a material culture and pretending they do is how a
+pack stops reading as a place.
+
+**THE HINT AND THE SUBJECT DISAGREE, AND THAT IS THE FINDING.**
+`Constants.THEME_BY_GAME_HINT` maps Super Mario 64 to `concrete_facility`.
+A clock movement is brass, steel and oil, so the nearest family **by
+material** is `rusted_industrial`. The hint picks a family by GAME; a
+treatment follows what the pack is MADE OF. **Two questions, one field.**
+For T01 they happened to agree. The manifest records both as
+`theme_hint_says` beside `painted_with`, so the mismatch is data rather
+than a remark in a report — and it is the clearest argument yet for
+`COVERAGE.md` §3's pack namespace.
+
+**Nothing here wears the hazard band, and that is a rule, not a taste.**
+`rusted_industrial`'s `trim` role paints a universal hazard band, and the
+colour is never decorative in any theme for any reason. The first pass
+painted the gear wheels and door marks with `trim` and `accent`, and the
+room showed it at once: **a clock movement in warning stripes, and a dial
+mark stencilled `hot`.** They paint `trim_plain` now — trim, minus danger —
+and collide as `trim`, because `roomcollision.paint_role` knows four
+classes and `trim_plain` is not one. **T01 never hit this** because
+`temple_ruin`'s trim carries no hazard semantics; every later pack that
+reaches for `rusted_industrial` will.
+
+**Two shapes were wrong and the manifest said so before any render did.**
+`_wheel` first built gears from two crossed boxes with `rotation_z` — the
+only rotation `brushkit.block` offers — which makes a gear lying FLAT:
+right on a vertical shaft, wrong on a wall. `tp_ck_wall_movement` measured
+**0.88 m deep on a 0.12 m plate**, because a 0.62 m square turned 45° in
+plan pokes 0.44 m straight through the wall it is mounted on. And the
+door bezel's XII, stacked above the lintel, topped out at **3.78 m against
+a 3.60 m ceiling**. A pack that does not fit the room it dresses is not
+dressing it. Both are now prisms and a face-mounted mark.
+
+**056-R — and the room changed the art twice more.** `CK_approach` showed
+three flat discs stacked on each column reading as **flanges on a pipe**:
+a disc on a vertical shaft seen from eye height is a horizontal line, and
+a gear is only a gear face on. The column now carries an upright wheel
+with a pinion meshing below it. Then the wheels still read as **slabs**
+until each got a raised hub — one prism, 28 triangles, and the difference
+between a gear and a stop sign.
+
+Evidence: `docs/art/review/clockwork_2026-09-22/`, four frames from
+`tools/content/run_pack_views.sh tp_super_mario_64`.
+
+**Still not complete**, and for the same reason as T01: no material
+treatment, no runtime selection, not imported, no owner review.
 
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
 

@@ -55,7 +55,7 @@ something would pass the Blender gate and still block the door. **A
 check that only runs upstream of the export has a gap in it exactly
 where the pipeline is.**
 
-So `forest_temple_views.gd` walks the imported surround's **120
+So `pack_views.gd` walks the imported surround's **120
 vertices** in its own local frame and fails the run if any of them lands
 inside the 2.4 × 3.2 rectangle.
 
@@ -177,7 +177,7 @@ producing.**
 
 ```
 .tools/blender/blender -b --python tools/blender/build_forest_temple.py
-tools/content/run_forest_temple_views.sh
+tools/content/run_pack_views.sh tp_ocarina_of_time
 ```
 
 The build is in `tools/check_art_current.sh`'s rebuild list, so the

@@ -13,8 +13,8 @@ into "81 packs exist".
 |---|---|
 | **CATALOGUE coverage** | **81 of 81.** Every included Archipelago game has a row, a queue id and a reserved pack id. This is a list, and a list is not art. |
 | **COMPLETED pack coverage** | **0 of 81.** Nothing has passed the bar in *What counts as a completed pack* below. |
-| **IN PROGRESS** | **1** — `tp_ocarina_of_time` (T01), content built and applied in engine, material treatment still missing. |
-| **NOT STARTED** | **80.** |
+| **IN PROGRESS** | **2** — `tp_ocarina_of_time` (T01) and `tp_super_mario_64` (T02): content built and applied in engine, material treatment still missing on both. |
+| **NOT STARTED** | **79.** |
 
 **Catalogue snapshot:** `catalogue.json`, taken 2026-09-22 from
 `https://archipelago.gg/games` ("Currently Supported Games").
@@ -31,17 +31,25 @@ here.
 
 ## The two things a reader should know before the table
 
-### 1. One row has assets. Nothing has passed the completion bar.
+### 1. Two rows have assets. Nothing has passed the completion bar.
 
 Archipepsi's six theme families — `concrete_facility`,
 `rusted_industrial`, `neon_transit`, `gothic_stone`, `temple_ruin`,
 `void_glitch` — are **the house's own**, not game packs.
 
 **T01 `tp_ocarina_of_time` has six assets** (Batch 054) and an in-engine
-application (`docs/art/review/forest_temple_2026-09-22/`). It is **not
-complete**, and the thing missing is the biggest one: its material
+application (`docs/art/review/forest_temple_2026-09-22/`).
+**T02 `tp_super_mario_64` has six** (Batch 056) and its own
+(`docs/art/review/clockwork_2026-09-22/`). Neither is **complete**, and
+the thing missing from both is the biggest one: their material
 treatment, which §3 below explains there is nowhere to file. A pack
-painted in `temple_ruin` is a pack wearing another pack's clothes.
+painted in a house family is a pack wearing another pack's clothes.
+
+**T02 also found that the hint and the subject can disagree.**
+`THEME_BY_GAME_HINT` maps Super Mario 64 to `concrete_facility`; a clock
+movement's nearest family BY MATERIAL is `rusted_industrial`. The hint
+picks a family by GAME and a treatment follows what a pack is MADE OF.
+Two questions, one field — which is §2 and §3 arriving together.
 
 **Every other row is `not started` and says so.**
 
@@ -157,8 +165,9 @@ completion: the verdict column is.**
 | Pack | Subtheme stated | Shapes / motifs | Dressing | Material treatment | In-engine application | Contracts preserved | Owner review | **Verdict** |
 |---|---|---|---|---|---|---|---|---|
 | `tp_ocarina_of_time` | yes — Forest Temple, chosen over an average of Ocarina's environments | yes — 6 assets, Batch 054 | yes — floor root mass, timber-hooded torch alcove | **NO** — painted in `temple_ruin`; §3, no pack namespace to file its own set in | yes — 4 frames, `forest_temple_2026-09-22/`, opening re-checked on the IMPORTED geometry | yes — 2.4 × 3.2 opening clear, no collider, no light, no foothold added | not started | **IN PROGRESS** |
+| `tp_super_mario_64` | yes — Tick Tock Clock, the clockwork half of the packet's "Clockwork Garden"; the courtyard is the stated second subtheme and is not built | yes — 6 assets, Batch 056 | yes — fallen clock hand, pendulum fitting | **NO** — painted in `rusted_industrial`, the nearest family by MATERIAL, which is not the family the hint names either; §2 and §3 | yes — 4 frames, `clockwork_2026-09-22/`, same shell and same four camera positions as T01 | yes — same three Blender gates via `packgates`, plus the imported-geometry check | not started | **IN PROGRESS** |
 
-**0 of 81 complete. 1 in progress. 80 not started.**
+**0 of 81 complete. 2 in progress. 79 not started.**
 
 ---
 
@@ -175,7 +184,7 @@ progress.
 | Queue | Source reference | Pack ID | Packet concept | Reused family | Distinctive assets | Exported/imported | Runtime-selected | Owner review |
 |---|---|---|---|---|---|---|---|---|
 | T01 | Ocarina of Time | `tp_ocarina_of_time` | Grove Relay Temple — **Forest Temple** subtheme, stated | `temple_ruin` construction | 6: column with a climbing root, split wall relief, timber-hooded torch alcove, timber switch housing, floor root mass, bossed door surround | **content yes** (batch054), **materials no** (§3) | no | not started — in engine, see the completion ledger |
-| T02 | Super Mario 64 | `tp_super_mario_64` | Clockwork Garden | — | — | no | no | not started |
+| T02 | Super Mario 64 | `tp_super_mario_64` | Clockwork Garden — **Tick Tock Clock** subtheme, stated | `rusted_industrial` construction | 6: gear column with an upright wheel and pinion, parted wall movement, dial door bezel, bent fallen clock hand, pendulum fitting, winding-key escutcheon | **content yes** (batch056), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T03 | Bomb Rush Cyberfunk | `tp_bomb_rush_cyberfunk` | Afterhours Municipal Transit | — | — | no | no | not started |
 | T04 | Super Metroid | `tp_super_metroid` | Pressureworks Derelict | — | — | no | no | not started |
 | T05 | Kingdom Hearts 2 | `tp_kingdom_hearts_2` | Twilight Service District | — | — | no | no | not started |
