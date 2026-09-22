@@ -33,6 +33,45 @@ from .schemas import constants as C
 #: it changes how a room is fought, not just how long.
 ENEMY_VALUE = {"melee": 3, "ranged": 4, "brute": 10}
 
+#: Roles the COMPOSER may place: implemented AND priced.
+#:
+#: **Implemented is not the same as composable, and conflating them was
+#: the defect.** `ENEMY_ARCHETYPES` means "the engine has behaviour for
+#: this" and is all ten since the roster landed. `ENEMY_VALUE` means
+#: "a Zone's content budget has a score for this" and is still three.
+#: A composer that placed an unpriced role would charge it nothing and
+#: hand the player a Zone whose budget is a fiction.
+COMPOSABLE_ENEMY_ROLES = tuple(
+    role for role in C.ENEMY_ARCHETYPES if role in ENEMY_VALUE)
+
+#: Implemented, playable, and NOT composable until someone prices it.
+#:
+#: **This is an owner decision and it is one integer per role.** The
+#: three approved values cannot be derived from `ENEMY_STATS`: `ranged`
+#: is worth MORE than `melee` (4 against 3) while having less hp, less
+#: dps and no melee threat, because content value scores how much a role
+#: changes the way a room is fought rather than how long it takes to
+#: kill. A formula fitted to hp and damage would rank them the other way
+#: round and contradict the owner's own numbers, so none is offered.
+UNPRICED_ENEMY_ROLES = tuple(
+    role for role in C.ENEMY_ARCHETYPES if role not in ENEMY_VALUE)
+
+
+def enemy_value(archetype: str) -> int:
+    """The score one of these adds to a Zone's content budget.
+
+    Raises rather than scoring zero. `ENEMY_VALUE.get(role, 0)` is how an
+    unpriced role becomes free content: the budget check passes, the
+    room fills, and nothing says the accounting was wrong.
+    """
+    try:
+        return ENEMY_VALUE[archetype]
+    except KeyError:
+        raise KeyError(
+            f"enemy role '{archetype}' has no approved content value; it "
+            f"cannot be composed until one is set. Unpriced: "
+            f"{sorted(UNPRICED_ENEMY_ROLES)}") from None
+
 #: Per affordance feature. An optional route is real content even though
 #: nothing mandatory may depend on it -- arguably especially then.
 AFFORDANCE_VALUE = 4

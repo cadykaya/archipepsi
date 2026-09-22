@@ -1057,11 +1057,84 @@ STATIC_PULSE_COOLDOWN = 0.35
 STATIC_PULSE_RANGE = 40.0
 STATIC_PULSE_DPS = STATIC_PULSE_DAMAGE / STATIC_PULSE_COOLDOWN   # ~17.1
 
+#: WHAT A ROLE DOES, and the declaration that it does anything at all.
+#:
+#: `ENEMY_ARCHETYPES` is DERIVED from this table below, so a role gains
+#: behaviour and becomes placeable in the same edit. It used to be a
+#: hand-written tuple of three beside a ten-role envelope table, which is
+#: the same transcription defect the status vocabulary had: two lists for
+#: one fact and nothing keeping them in step.
+#:
+#: The seven added for OV04 P06 take their identities from the approved
+#: roster's own one-line briefs (`docs/art/ART_REVIEW.md`), which are the
+#: recovered specification and not new design:
+#:
+#:   charger    one telegraphed rush
+#:   bulwark    cannot be fought frontally
+#:   drifter    (flyer) owns the ceiling
+#:   diver      (flyer) contests the grapple arc
+#:   scuttler   costs attention
+#:   artillery  indirect, denies ground
+#:   beacon     makes everything near it worse
+#:
+#: TUNING IS PROVISIONAL AND SAYS SO. The numbers below are chosen to
+#: make each role's shape legible against the Static Pulse's ~17 DPS;
+#: they are not playtested, and the package that authorised them says
+#: missing tuning may be provisional while missing behaviour may not.
 ENEMY_STATS = {
     "melee":  {"hp": 24.0,  "damage": 6.0,  "cooldown": 1.0, "speed": 4.0, "reach": 2.0},
     "ranged": {"hp": 16.0,  "damage": 8.0,  "cooldown": 2.0, "speed": 0.0, "reach": 40.0},
     "brute":  {"hp": 120.0, "damage": 18.0, "cooldown": 1.6, "speed": 2.2, "reach": 2.5},
+    # Commits to a straight rush and cannot steer during it, so its
+    # damage is high and its recovery is the opening.
+    "charger": {"hp": 40.0, "damage": 14.0, "cooldown": 3.0, "speed": 3.0, "reach": 14.0},
+    # Slow, heavy, and armoured from the front: see `FRONTAL_ARMOUR`.
+    "bulwark": {"hp": 90.0, "damage": 10.0, "cooldown": 1.8, "speed": 1.6, "reach": 2.4},
+    # Holds the ceiling and fires down. Never descends to the floor.
+    "drifter": {"hp": 44.0, "damage": 7.0,  "cooldown": 2.2, "speed": 2.4, "reach": 22.0},
+    # Waits high and dives when the player leaves the ground.
+    "diver":   {"hp": 20.0, "damage": 12.0, "cooldown": 2.8, "speed": 7.0, "reach": 18.0},
+    # Cheap, fast, low damage: it costs attention rather than health.
+    "scuttler": {"hp": 12.0, "damage": 3.0, "cooldown": 0.8, "speed": 6.5, "reach": 1.8},
+    # Lobs at where you ARE, slowly, so the ground it denies is leavable.
+    "artillery": {"hp": 30.0, "damage": 16.0, "cooldown": 3.4, "speed": 0.0, "reach": 34.0},
+    # Does almost nothing itself; makes its neighbours worse.
+    "beacon":  {"hp": 36.0, "damage": 2.0,  "cooldown": 2.0, "speed": 1.2, "reach": 2.0},
 }
+
+#: How much of a frontal hit a `bulwark` shrugs off. Its brief is "cannot
+#: be fought frontally", so the number has to be big enough that trying
+#: is visibly the wrong answer rather than merely slower.
+BULWARK_FRONTAL_ARMOUR = 0.85
+#: How wide the shielded arc is, as a dot product against its facing.
+#: 0.35 is a touch over 110 degrees total -- a shield, not a full front.
+BULWARK_SHIELD_DOT = 0.35
+
+#: What a `beacon` does to every eligible enemy inside its radius, and
+#: the radius. Applied as the ordinary `empowered` Status through the
+#: ordinary boundary, so it cleanses, expires and reads like any other.
+BEACON_RADIUS = 12.0
+BEACON_MAGNITUDE = 0.5
+BEACON_REFRESH = 1.0
+
+#: How long a `charger` commits, and how far it carries.
+CHARGER_RUSH_SECONDS = 1.1
+CHARGER_RUSH_SPEED = 13.0
+#: How long it is helpless after one, which is the whole counterplay.
+CHARGER_RECOVERY_SECONDS = 1.4
+
+#: The height a flyer holds above the floor beneath it.
+FLYER_HOVER_Y = 4.2
+#: How far above the ground the player counts as airborne for a `diver`.
+DIVER_TRIGGER_HEIGHT = 1.6
+DIVER_DIVE_SECONDS = 0.9
+
+#: An `artillery` shell's flight time to where the player was standing.
+ARTILLERY_FLIGHT_SECONDS = 1.6
+#: How close is too close: inside this it cannot depress its barrel.
+ARTILLERY_MIN_RANGE = 8.0
+#: The blast the shell leaves where it lands.
+ARTILLERY_BLAST_RADIUS = 3.2
 ENEMY_AGGRO_RADIUS = 18.0
 RANGED_PROJECTILE_SPEED = 14.0
 
@@ -1161,8 +1234,12 @@ class EnemyEnvelope:
 #: collider cannot be built to different numbers.
 #:
 #: THIS IS NOT THE LIST OF ENEMIES A ZONE MAY CONTAIN. It is the list of
-#: roles that have an agreed physical envelope. `ENEMY_ARCHETYPES` is the
-#: placeable set, and it is smaller.
+#: roles that have an agreed physical envelope.
+#:
+#: `ENEMY_ARCHETYPES` used to be a hand-written subset of this and is now
+#: `tuple(ENEMY_STATS)`, so the two agree by construction rather than by
+#: maintenance. The note that it "is smaller" was true of three roles and
+#: is not true of ten.
 ENEMY_ENVELOPES = {
     # -- the three with behaviour, unchanged from `enemy.gd`'s literals
     "melee":     EnemyEnvelope(width=0.8, height=1.6, depth=0.8),
@@ -1183,6 +1260,45 @@ ENEMY_ENVELOPES = {
 
 #: The whole approved family, in a stable order.
 ENEMY_ROLES = tuple(ENEMY_ENVELOPES)
+
+
+def roles_that_fit(width: float, depth: float,
+                   wall_height: float) -> tuple[str, ...]:
+    """Which enemy roles a room of this size can physically hold.
+
+    P08.2. The composer picked from a hard-coded `["melee", "ranged"]`
+    (and one `brute` in the arena recipe) while ten roles had envelopes
+    and, since the roster landed, behaviour. Widening that list without
+    asking whether a role FITS would put a drifter that holds station
+    2.55 m up into a room with a 2.0 m ceiling.
+
+    Two necessary conditions, both read off `ENEMY_ENVELOPES` rather
+    than chosen here:
+
+    - **it clears the ceiling** -- `top_y` is the role's highest point
+      and what a lintel must clear, so a room whose wall is lower than
+      that cannot hold it;
+    - **it fits the floor** -- `lane_width` is the corridor width the
+      role needs, and a room narrower than that on its shorter axis
+      cannot hold it either.
+
+    **Necessary, not sufficient, and that distinction is the point.**
+    This says a role is not impossible here. It does not say the
+    encounter is good, that the spawn has line of sight, or that a
+    stationary artillery piece with a 34 m reach has anything to shoot
+    -- `ENEMY_STATS` carries `reach` but no minimum range, so the
+    "nothing at all inside 8 m" the roster brief describes lives in the
+    engine and is not a number this function may invent.
+    """
+    fits = []
+    for role in ENEMY_ROLES:
+        envelope = ENEMY_ENVELOPES[role]
+        if envelope.top_y >= wall_height:
+            continue
+        if envelope.lane_width >= min(width, depth):
+            continue
+        fits.append(role)
+    return tuple(fits)
 
 #: Roles that hold a height instead of standing on the floor. Explicit
 #: rather than inferred at each call site, because "is this a flyer" is
@@ -1391,7 +1507,12 @@ THEMES = (
     "void_glitch",         # untextured dev surfaces, missing-texture checker
 )
 CHAMBER_TYPES = ("corridor", "arena", "platform_path", "tower", "treasure_room")
-ENEMY_ARCHETYPES = ("melee", "ranged", "brute")
+#: DERIVED, NOT TRANSCRIBED. A role with stats has behaviour; a role
+#: with only an envelope is art that cannot yet be placed. Deriving it
+#: means the two can never disagree, and `enemy.gd`'s `create` assert --
+#: "an approved art role is not yet a placeable enemy" -- keeps saying
+#: something true without anyone maintaining a second list.
+ENEMY_ARCHETYPES = tuple(ENEMY_STATS)
 OBJECTIVES = ("reach_reward", "kill_all", "platform_to_goal")
 
 THEME_BY_GAME_HINT = {

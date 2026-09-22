@@ -1860,3 +1860,68 @@ controls, dropping home-inside-volume fails exactly its own.
 **Not done:** moving it physically is Prod's (P16.2), and nothing
 composes a transported object yet — the declaration is real and no live
 seed emits one.
+
+### DESS-07 — P08: the composer can only place three of ten, and pricing is the blocker
+
+**Dess, 2026-09-22.** Prod's P06 landed behaviour for all seven
+remaining roles and derived `ENEMY_ARCHETYPES` from `ENEMY_STATS`, which
+made the merged tree red in five bridge controls. Four were stale
+transcriptions. **The fifth is a real blocker and it needs one decision
+from the owner.**
+
+**The composer places `melee`, `ranged` and `brute` and nothing else.**
+`epsilon/fallback.py` picks from a hard-coded `["melee", "ranged"]` in
+four places and one `brute` in the arena recipe, while ten roles have
+envelopes, stats and — since P06 — behaviour. P08's closure asks that
+new roles "actually appear in admissible ordinary candidate encounters".
+They cannot yet, and here is exactly why.
+
+**Implemented is not composable, and conflating them was the defect.**
+`test_the_content_value_table_scores_only_placeable_roles` asserted
+`set(ENEMY_VALUE) == set(ENEMY_ARCHETYPES)` — true while both were the
+trio, and it broke the moment one of them grew. The two mean different
+things: `ENEMY_ARCHETYPES` is *the engine has behaviour for this*,
+`ENEMY_VALUE` is *a Zone's content budget knows what this costs*. The
+invariant that survives is `ENEMY_VALUE ⊆ ENEMY_ARCHETYPES` — nothing
+priced that cannot be placed — and the other direction is now a named
+gap rather than a satisfied rule.
+
+**THE BLOCKER, AND IT IS ONE INTEGER PER ROLE.** Seven roles have no
+approved content value: `charger`, `bulwark`, `scuttler`, `artillery`,
+`beacon`, `diver`, `drifter`.
+
+**It cannot be derived, and I checked before saying so.** `ranged` is
+worth **more** than `melee` — 4 against 3 — while having less hp (16 vs
+24), less dps (4.0 vs 6.0) and no melee threat. Content value scores how
+much a role changes *the way a room is fought*, not how long it takes to
+kill, exactly as `ENEMY_VALUE`'s own comment says of the brute. Any
+formula fitted to hp and damage ranks those two the other way round and
+contradicts the owner's own numbers. So none is offered and none is
+guessed.
+
+Until then: `COMPOSABLE_ENEMY_ROLES` is implemented-and-priced,
+`UNPRICED_ENEMY_ROLES` is the rest, and `enemy_value()` **raises instead
+of scoring zero** — because `ENEMY_VALUE.get(role, 0)` is precisely how
+an unpriced role becomes free content, passing the budget check and
+handing the player a Zone whose accounting is a fiction.
+
+**What is ready the moment those seven numbers exist.**
+`constants.roles_that_fit(width, depth, wall_height)` answers which
+roles a room can physically hold, from `ENEMY_ENVELOPES` rather than
+from anything chosen here: a role clears the ceiling if its `top_y` is
+under the wall, and fits the floor if its `lane_width` is under the
+shorter axis. Necessary, not sufficient — it does not claim the
+encounter is good, and `ENEMY_STATS` carries `reach` but no minimum
+range, so the roster brief's "nothing at all inside 8 m" for artillery
+stays in the engine and is not a number this function may invent.
+
+**The other four failures were stale transcriptions, repaired upward.**
+The roster test asserted the seven were NOT placeable — true when they
+had no behaviour, and the opposite of the goal; it now asserts all ten
+are. `test_the_on_hit_list_is_derived_rather_than_transcribed` kept a
+hand-written list of eight as its *expectation* and went stale when
+`empowered` gained `enemy` support — the beacon buffing its allies,
+exactly what that role is for. A test that transcribes what it checks is
+the defect it was written to catch, so the expectation derives from
+`SUPPORTED_STATUS_TARGETS` now. The two baseline fixtures were
+regenerated from source.
