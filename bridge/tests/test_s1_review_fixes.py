@@ -79,10 +79,11 @@ def test_the_request_advertises_only_mechanics_the_runtime_can_execute():
     # anything; its remaining job was "to catch the NEXT schema addition
     # before a runtime exists for it", and that is now what it is doing.
     #
-    # `consumable` was withheld while the spend transaction, the
-    # exhausted-and-equipped state and the real damage/Status path were
-    # unproven -- vocabulary is not executable support -- and is
-    # advertised now that all three are. NOTHING is staged today.
+    # `consumable` is STAGED AGAIN. It was advertised once and withdrawn:
+    # a failed send ran the effect and charged nothing, and a refusal
+    # refunded a charge whose effect had already happened, which made one
+    # charge worth two activations. Vocabulary is not executable support,
+    # and neither is an effect that fires without being paid for.
     #
     # The assertion stays in the two-property form rather than going
     # back to equality, because equality is what let a slot be added to
@@ -95,7 +96,7 @@ def test_the_request_advertises_only_mechanics_the_runtime_can_execute():
     assert set(CAP.IMPLEMENTED_COMPONENT_KINDS) == set(E.COMPONENT_KINDS)
     assert set(CAP.IMPLEMENTED_ACTION_SLOTS) <= set(E.SLOT_NAMES), (
         "the request advertises a slot the schema does not admit")
-    STAGED: set[str] = set()
+    STAGED = {"consumable"}
     assert set(E.SLOT_NAMES) - set(CAP.IMPLEMENTED_ACTION_SLOTS) == STAGED, (
         "a slot is being withheld that this test does not know about, or "
         "a staged one was advertised without finishing its runtime")

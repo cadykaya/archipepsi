@@ -1436,7 +1436,26 @@ func _resume() -> void:
 			if inward.length() > 0.01:
 				await _walk(zone.player,
 						mouth + inward.normalized() * 3.5, box)
-	var walk := await _walk(zone.player, to_at, box)
+	# ALONG THE CONNECTOR, not across it.
+	#
+	# This walked a straight line at the far room's arrival, and that was
+	# enough while the two rooms were near neighbours. They are not any
+	# more: the composition widening changed every room's value, the
+	# allocator produced a differently shaped Zone, and c005 and c014
+	# came out 76 m apart joined by a connector that TURNS. The body went
+	# through the doorway, got ten metres, and walked into the outside of
+	# the corner -- in no room at all, facing static geometry -- and the
+	# leg then reported "69.1 m from its arrival", which describes the
+	# distance and not the problem.
+	#
+	# `room_routes` is the chain the router actually solved, with each
+	# piece's own exit and its own height. Walking it is what
+	# `graph_driver._walk_into` has always done, and the claim is
+	# unchanged: the doorway is passable and the room beyond it is
+	# reachable on foot. A straight line was never the claim -- it was an
+	# assumption about the shape of a Zone, and the Zone changed.
+	var walk := await _walk_the_connector(zone, str(notes["branch"]),
+			to_at, box)
 	# INSIDE THE ROOM, not within a metre of a point in it.
 	#
 	# The walk crosses a doorway, a connector and a turn, and a straight
@@ -1572,6 +1591,39 @@ func _walk(player: Player, goal: Vector3,
 			"at": ended, "frames": used, "closest": closest,
 			"blocked": blocked,
 			"against": _what_is_against(player) if blocked else ""}
+
+
+## FOLLOW THE COMMITTED ROUTE INTO A ROOM, piece by piece.
+##
+## Returns the last leg's result, so a caller reads it exactly as it read
+## a single `_walk`. A leg that lands inside the destination ends the
+## walk early -- arriving is arriving, and the remaining waypoints are
+## then behind the body.
+func _walk_the_connector(zone: ZoneController, room: String,
+		arrival: Vector3, box: AABB) -> Dictionary:
+	var steps: Array[Vector3] = []
+	for raw: Variant in (zone.room_routes.get(room, []) as Array):
+		var piece: Dictionary = raw
+		if piece.has("exit"):
+			steps.append(piece["exit"])
+	steps.append(arrival)
+	# NO ROUTE IS NOT AN EXCUSE TO GUESS. A room the router reached
+	# without any connector is a neighbour, and the straight line to its
+	# arrival is the honest walk for it.
+	var walk: Dictionary = {}
+	for step: Vector3 in steps:
+		if box.grow(0.5).has_point(zone.player.global_position):
+			break
+		walk = await _walk(zone.player, step, box)
+		if bool(walk.get("blocked", false)):
+			# A BLOCKED PIECE IS THE ANSWER. Carrying on to the next
+			# waypoint would steer the body back across whatever it is
+			# stuck against and report the LAST leg's distance, which is
+			# how a route failure disguises itself as a short walk.
+			break
+	if walk.is_empty():
+		walk = await _walk(zone.player, arrival, box)
+	return walk
 
 
 ## WHAT A WEDGED BODY IS WEDGED ON, named rather than left to guesswork.

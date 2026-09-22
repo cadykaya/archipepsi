@@ -123,6 +123,23 @@ var _activity_note := ""
 ## `room_id -> world AABB`, from the committed layout.
 var room_bounds := {}
 
+## `room_id -> the connector chain that REACHES it`, in build order, as
+## the router solved it. Each piece records where it is entered and left,
+## including its `y`.
+##
+## Kept for the same reason `room_bounds` is: something outside the
+## builder needs to know the committed shape of the level, and
+## re-deriving it is the second answer `zone_builder` exists to avoid.
+## A straight line between two rooms is not a route — the connector
+## turns, and it climbs — so anything that has to GET somewhere in this
+## Zone (a harness walking a leg, a future escort, a path preview) has to
+## follow the pieces rather than aim through the walls between them.
+##
+## `graph_driver` already learned this the expensive way: steering
+## waypoints projected onto the body's current height walked three of
+## five approaches off a ledge, because a route that climbs is not flat.
+var room_routes := {}
+
 ## OBJECTS THE PLAYER CARRIES BETWEEN ROOMS (P16). `object_rooms_carried`
 ## is what the snapshot said, assigned before `setup` like every other
 ## carried fact.
@@ -359,6 +376,7 @@ func setup(zone_dict: Dictionary) -> void:
 				else _world_bounds.merge(box)
 		_has_bounds = true
 	offer_rooms = build["chambers"]
+	room_routes = build.get("links", {})
 	playtime.begin(build["chambers"].size())
 	# THE OFFER BINDING (owner ruling, 2026-09-03). The Zone's root is in
 	# the tree now, so its colliders are about to be real -- one physics

@@ -465,3 +465,91 @@ class TestStaleUsesAcrossARefill:
         assert save.consumable_generation != first_visit  # and yet: new
         with pytest.raises(ValueError):
             T.spend_charge(save, "act_nade", 1, first_visit)
+
+
+class TestAuthoritativeExpenditure:
+    """**COUNT WHAT THE ENGINE ACCEPTED, not what the client sent.**
+
+    Every other class here asks whether one intent is accepted or
+    refused. This one drives sequences the way a session does and counts
+    the only number that settles the question: how many charges the SAVE
+    actually gave up. A suite that counted messages would have scored a
+    client firing four times offline as four expenditures, and a client
+    whose refusals were refunded as one -- and both of those were bugs
+    the engine never saw, because the engine was never told.
+
+    The client half is `godot/tests/consumable_driver.gd`, which counts
+    effects that reached the world. These two numbers are the contract:
+    **one authorized activation per accepted charge**, and neither side
+    can prove it alone.
+    """
+
+    def _accepted(self, save, attempts):
+        """Apply `(use_index, generation)` attempts the way the server
+        does -- accept or refuse, never crash -- and report how many
+        charges actually left the save."""
+        before = save.charges_left("act_nade")
+        for use_index, generation in attempts:
+            try:
+                save = T.spend_charge(save, "act_nade", use_index,
+                                      generation)
+            except ValueError:
+                pass
+            # AND THE SAVE IS ALWAYS VALID. A refused attempt that left a
+            # half-written save would make the count meaningless.
+            _restart(save)
+        return before - save.charges_left("act_nade"), save
+
+    def test_a_retried_message_is_one_expenditure_not_three(self):
+        """A reconnect replays what it was unsure of. Three copies of one
+        use are one charge, and the count is what says so."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        gen = save.consumable_generation
+        spent, save = self._accepted(save, [(1, gen), (1, gen), (1, gen)])
+        assert spent == 1, "three copies of use 1 spent %d charges" % spent
+        assert save.charges_left("act_nade") == 2
+
+    def test_a_delayed_response_does_not_double_charge(self):
+        """The client cannot see its own use land, so it acts again on
+        the count it has. The engine sees index 1 twice and the second
+        is not the next one due."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        gen = save.consumable_generation
+        spent, save = self._accepted(save, [(1, gen), (1, gen), (2, gen)])
+        assert spent == 2, "expected two accepted, got %d" % spent
+
+    def test_refused_attempts_spend_nothing_at_all(self):
+        """Repeated refusals are not a slow leak. Whatever the client is
+        doing, a refused attempt costs the campaign nothing."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        gen = save.consumable_generation
+        # Every one of these is wrong in a different way: an index that
+        # runs ahead, a stale supply, a supply that does not exist yet.
+        spent, save = self._accepted(save, [
+            (2, gen), (3, gen), (1, gen - 1), (1, gen + 7), (9, gen)])
+        assert spent == 0, "five refused attempts spent %d" % spent
+        assert save.charges_left("act_nade") == 3
+
+    def test_a_stale_supply_cannot_spend_the_new_one(self):
+        """The whole supply, used up, and then the old indices replayed
+        after a refill. Not one charge of the fresh supply may go."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        old = save.consumable_generation
+        for _ in range(3):
+            save = _spend(save)
+        assert save.charges_left("act_nade") == 0
+        save = _in_another_zone(save)
+        assert save.charges_left("act_nade") == 3
+        spent, save = self._accepted(save,
+                                     [(1, old), (2, old), (3, old)])
+        assert spent == 0, "the old supply's uses spent %d of the new" % spent
+
+    def test_the_whole_supply_and_not_one_more(self):
+        """The ordinary case, counted: three presses spend three, and a
+        fourth spends nothing, with the item still equipped."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        gen = save.consumable_generation
+        spent, save = self._accepted(save,
+                                     [(1, gen), (2, gen), (3, gen), (4, gen)])
+        assert spent == 3, "four presses spent %d charges" % spent
+        assert save.slots.consumable == "act_nade", "and it stays equipped"

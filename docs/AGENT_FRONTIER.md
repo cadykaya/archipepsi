@@ -40,7 +40,29 @@ else, mirrored on the snapshot and echoed on the intent — the
 carries the domain key of what was refused, so a client can release a spend
 it is holding; it was the only server→client message with no identity at all.
 
-**`make godot-consumable` is new at 53 checks** — the runtime half, on a
+**THE ADVERTISEMENT WAS WITHDRAWN AND THE ORDERING CORRECTED.** The
+spend was right about messages and wrong about expenditure: the effect
+fired on `action_used` and the client paid afterwards, so an offline
+press ran an UNPAID activation and a refusal refunded a charge whose
+effect was already in the world — one charge, two activations. Two of
+this lane's own tests asserted that as the specification.
+
+The order is **reserve → launch → report**. `reserve_consumable` takes
+the charge before anything irreversible happens; `release_reservation`
+is the only refund there is and it is pre-launch, when nothing has been
+sent; `commit_consumable` reports a launch and keeps the charge spent
+whatever the answer is; a refusal marks the reservation DISPUTED and
+never hands it back. `IMPLEMENTED_ACTION_SLOTS` withholds `consumable`
+again and the baseline is back to four slots.
+
+`TestAuthoritativeExpenditure` counts how many charges the SAVE gave up
+rather than how many messages went out — a retry is one expenditure, a
+delayed response does not double-charge, refused attempts spend nothing,
+a stale supply spends none of the new one. Four sabotages caught; a
+fifth was not caught and so was not a sabotage, which is recorded
+because it is the shape of a test that proves less than it claims.
+
+**`make godot-consumable` is 61 checks** — the runtime half, on a
 real Player, EchoRuntime and InventoryLayer. It counts charges accepted
 AND actions run in every case, because those are two numbers. Three
 sabotages caught. It found a real bug: `inventory.gd::_row` derived equip

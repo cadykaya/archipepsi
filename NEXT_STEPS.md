@@ -1,5 +1,116 @@
 # Archipepsi — build state
 
+## 2026-09-22 (engine) — the correction: one charge, one authorized activation
+
+**The owner withdrew the consumable advertisement, and was right to.** The
+spend transaction was correct about messages and wrong about expenditure, and
+two of my own tests asserted the wrong behaviour as the specification:
+
+- `_a_send_that_failed_is_never_held` expected the effect to RUN, nothing to
+  be sent, and the charge to remain. That is an **unpaid activation**, and it
+  repeats for as long as the bridge is down.
+- `_a_refusal_returns_the_charge_without_rerunning_the_effect` refunded a
+  charge whose effect was already in the world, and then asserted that a new
+  press fires. **One charge, two activations.**
+
+Not replaying the effect on a refusal is necessary and it is not sufficient.
+The defect was the ORDER: the effect fired on `EchoRuntime.action_used` and
+the client tried to pay for it afterwards.
+
+### The ordering, corrected
+
+**Reserve → launch → report.** `BridgeClient.reserve_consumable` takes the
+charge locally before anything irreversible happens and returns `{}` when
+there is nothing to take, which is the exhausted case. The effect is only
+allowed to run against a reservation that succeeded.
+
+- **Pre-launch failure is the only refund there is.** `activate()` returns
+  early on a cooldown, an unmet condition or a closed gate; nothing entered
+  the world and nothing has been SENT, which is what makes the refund safe —
+  there is no message for the engine to accept later.
+  `release_reservation` does this and nothing else.
+- **`commit_consumable` reports a launch and keeps the charge spent whatever
+  the answer is.** A failed send does not un-fire a grenade: the honest state
+  is a charge the player spent against a campaign that has not recorded it,
+  never a charge they get to spend again. It reconciles on the next
+  authoritative snapshot.
+- **A refusal marks the reservation DISPUTED and never refunds it.** The
+  engine did not record the expenditure; it did not say the grenade came
+  back. The mark is what stops the client waiting forever for a `spent` that
+  will never arrive — it settles on the next refill or resync instead.
+
+`Player.press_slot` carries the order, and `_launched` (set by
+`action_used`) is what separates an expenditure from a refund.
+
+### Coverage that counts expenditure, not messages
+
+`godot-consumable` is 61 checks. The two corrected cases now assert the
+opposite of what they used to: an offline press costs its charge and three
+more offline presses fire NOTHING, and a refusal leaves the charge spent with
+no second activation available.
+
+`TestAuthoritativeExpenditure` in `test_consumable_slot.py` is the other
+half — it drives sequences the way a session does and counts **how many
+charges the save actually gave up**. A retried message is one expenditure,
+not three; a delayed response does not double-charge; five refused attempts
+spend nothing; a whole stale supply spends none of the new one. A suite that
+counted messages would have scored the offline bug as four expenditures and
+the refund bug as one.
+
+**Four sabotages, all caught:** refund-on-refusal (4 failures), drop the
+reservation when the send fails — the real old bug — (3 failures, "4 effects
+total"), drop the engine's generation check (2), and let the engine saturate
+instead of refusing (3). A fifth sabotage was NOT caught and was therefore
+not a sabotage: reserving after launch instead of before changes nothing
+while the reservation still happens unconditionally, which is worth recording
+because it is the shape of a test that proves less than it claims.
+
+`IMPLEMENTED_ACTION_SLOTS` withholds `consumable` again and the baseline is
+back to four slots. It is the second time this slot has been staged, and the
+guard now reads `STAGED = {"consumable"}` once more.
+
+## 2026-09-22 (engine) — mass semantics: the two limits, and which is real
+
+**Asked by the owner: do the pickup and ability consumers preserve the
+distinction?** Design 2 §10.3 governs ORDINARY PICKUP — an object is
+carriable if `carriable = true` **and** `mass_kg <= 60.0`; above that it is
+manipulable only (`docs/design-proposals/02_PHYSICS_IS_THE_GAME.md:561`).
+`ENVELOPE_MASS_KG = 120.0` is a different number for a different thing: the
+qualified manipulation-provider envelope, alongside force and range.
+
+**Audited, and the distinction is intact — by absence.**
+
+- `ENVELOPE_MASS_KG` appears in exactly three places and every one of them is
+  the provider envelope: `schemas/physics.py` (the package's `mass_limit_kg`
+  floor and the provider comparison), `manipulation.gd` (the same two), and
+  `replay_harness.gd` (`provider_mass_kg`). It never stands in for pickup.
+- **When this was audited the ordinary-pickup rule did not exist at all** —
+  no `carriable` field, no 60 kg threshold, no carry verb. **Dess has since
+  landed the bridge half** (`a8eb469`): `physics.CARRY_MASS_KG = 60.0` and
+  `carriable_by_hand(carriable, mass_kg)`, exported to `constants.gd`. That
+  part of the audit is superseded and is corrected here rather than left
+  standing.
+- **The engine half is still missing, and that is where the risk always
+  was.** `CARRY_MASS_KG` is in `constants.gd` and **nothing in
+  `godot/scripts/` reads it** — there is no carry or lift verb, because the
+  twelve manipulation verbs are OV04 P12 and P12 has not been built.
+
+So no consumer confuses the two limits today, because the pickup limit has no
+consumer at all.
+
+**THE RISK IS P12, AND THIS IS THE WARNING FOR WHOEVER BUILDS IT.**
+`Constants` now holds BOTH numbers, which is better than one and is also the
+new hazard: a carry verb written against `ENVELOPE_MASS_KG` — the older, more
+familiar name, and the one every existing manipulation call site uses — would
+silently adopt 120 kg and make `WEIGHTED` carriable — which Design 2 changed FROM Design 1 deliberately, and
+which the packet calls "a real difference in feel: Design 1's cube puzzles
+are walked; Design 2's are pushed, pulled, and dropped".
+
+The constant exists now and its runtime does not, so the pairing P12 owes is
+the same either way: the carry verb reads `CARRY_MASS_KG` and never
+`ENVELOPE_MASS_KG`, with the refusal case above 60 kg and a `WEIGHTED` body
+that refuses to be carried and accepts being manipulated.
+
 ## 2026-09-22 (engine) — the Echo menu, and a fifth slot for consumables
 
 From the owner, after playing: the Echo menu was "a scrolling list with no

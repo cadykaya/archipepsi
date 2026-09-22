@@ -86,20 +86,29 @@ IMPLEMENTED_EFFECT_KINDS = (
 #: list is the promise that a slot the schema admits is a slot the
 #: runtime can EXECUTE. Vocabulary is not executable support.
 #:
-#: It is advertised now, and these are the things that had to be true
-#: first: the spend is a compare-and-swap on the supply AND the use
-#: (`transitions.spend_charge`), a refused spend can be resolved by the
-#: client rather than held forever (`BridgeError.about`), the exhausted
-#: supply stays equipped at `0 / max` and says what refills it, and a
-#: consumable delivers real damage and a real Status through the
-#: ordinary effect path. `make godot-consumable` walks all of it at 53
-#: checks; `bridge/tests/test_consumable_slot.py` holds the transaction.
+#: **WITHDRAWN, 2026-09-22, and this is the second time it has been
+#: staged.** It was advertised once and the owner withdrew it, because
+#: the path was not complete in the way that matters:
 #:
-#: **THIS IS A LIVE GAMEPLAY CHANGE, not a menu one.** Epsilon may now
-#: emit consumables into new campaigns, which is what makes the slot
-#: real instead of inert. The Playtest 2.5 baseline is retaken in the
-#: same commit, deliberately.
-IMPLEMENTED_ACTION_SLOTS = C.SLOT_NAMES
+#:   A FAILED SEND RAN THE EFFECT AND CHARGED NOTHING. The grenade left
+#:   the hand, the bridge never heard about it, and the count was
+#:   unreduced -- a free activation, which the suite ASSERTED as correct.
+#:   A REFUSAL REFUNDED A CHARGE WHOSE EFFECT HAD ALREADY HAPPENED, and
+#:   the refunded charge was then usable for a second press. One charge,
+#:   two activations.
+#:
+#: Not replaying an effect on a refusal is necessary and it is not
+#: sufficient. What this list promises is that a slot the schema admits
+#: is a slot the runtime can EXECUTE, and executing a consumable means
+#: one charge buys exactly one authorized activation.
+#:
+#: It gains `consumable` again when the commitment ordering holds --
+#: authorize, then launch, and never refund a charge whose effect is
+#: already in the world -- with client/bridge coverage that counts
+#: ACCEPTED EXPENDITURE rather than messages sent. The baseline is
+#: retaken deliberately then.
+IMPLEMENTED_ACTION_SLOTS = tuple(
+    slot for slot in C.SLOT_NAMES if slot != "consumable")
 
 IMPLEMENTED_MODIFIER_TYPES = ("recoil_self", "knockback_target",
                               "apply_status_on_hit")
