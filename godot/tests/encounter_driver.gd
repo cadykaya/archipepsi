@@ -162,6 +162,8 @@ func _built(zone: Dictionary) -> ZoneController:
 func _drop(controller: ZoneController) -> void:
 	Input.action_release("fire_pulse")
 	Input.action_release("move_left")
+	Input.action_release("move_right")
+	Input.action_release("move_forward")
 	# **GONE BEFORE THE NEXT CASE BUILDS.** `queue_free` is deferred, and
 	# a controller still in the tree still has a player in the "player"
 	# group -- which matters because `Enemy._find_player` takes
@@ -239,6 +241,18 @@ func _aim_at(player: Player, target: Node3D) -> void:
 ## by hand. A room that can only be cleared by a harness reaching past
 ## the input path is a room no player can clear.
 ##
+## **IT WALKS.** The first version stood still and held the trigger, and
+## that is not a played fight -- it is a turret. It failed intermittently
+## and the instrumentation below named why in one line: `1800 frames, 1
+## left, 82 shots / 0 landed, range 20.4-20.4 m, the ray hit
+## Reward_89100002 (StaticBody3D) instead`. A scuttler placed 20.4 m away
+## in a 30x28 room is outside the 18 m aggro radius, so it never woke and
+## never moved -- the range band is one number twice -- and the reward
+## pedestal stood between it and the player, so eighty-two shots went
+## into the pedestal. Nothing there was a finding about `scuttler`,
+## `kill_all` or the placement; a player who cannot hit what they are
+## aiming at walks until they can, and this now does.
+##
 ## Returns what happened, so a case can assert on the fight and not only
 ## on its outcome.
 func _fight(controller: ZoneController, record: Dictionary,
@@ -248,22 +262,143 @@ func _fight(controller: ZoneController, record: Dictionary,
 	var opened: float = player.hp
 	var lowest: float = player.hp
 	var frames := 0
+	_watch_the_gun(player)
+	var near := INF
+	var far := 0.0
+	var walked := 0.0
+	var was: Vector3 = player.global_position
+	var last: Node3D = null
+	var advancing := false
+	var stuck := 0
+	var sidestep := "move_right"
+	var sidestepping := 0
 	Input.action_press("fire_pulse")
 	while frames < budget:
 		var alive := _living(record)
 		if alive.is_empty():
 			break
-		_aim_at(player, alive[0] as Node3D)
+		last = alive[0] as Node3D
+		_aim_at(player, last)
+		var gap: float = player.global_position.distance_to(
+				last.global_position)
+		near = minf(near, gap)
+		far = maxf(far, gap)
+		# **CLOSE THE GROUND WHEN THE SHOT WILL NOT ARRIVE.** A player
+		# who cannot hit what they are aiming at walks until they can.
+		# The body is already yawed at the target, so forward is toward
+		# it. Held off inside melee range, where advancing further only
+		# pushes into the body.
+		var want := (gap > 2.5
+				and _marksmanship(player, last) != "on target")
+		if want != advancing:
+			advancing = want
+			if advancing:
+				Input.action_press("move_forward")
+			else:
+				Input.action_release("move_forward")
+				Input.action_release(sidestep)
+				sidestepping = 0
+		# **WALKING INTO THE THING IN THE WAY IS NOT GETTING PAST IT.**
+		# Forward is straight at the target, so a pedestal on that line
+		# stops the player dead against it and the advance above would
+		# hold the key there for the rest of the budget. Slide along it
+		# instead, and take the other way round if that side is shut too
+		# -- the same answer `_circle_and_fight` needed against the entry
+		# wall.
+		if sidestepping > 0:
+			sidestepping -= 1
+			if sidestepping == 0:
+				Input.action_release(sidestep)
+		elif advancing and stuck > 20:
+			stuck = 0
+			sidestep = ("move_right" if sidestep == "move_left"
+					else "move_left")
+			sidestepping = 45
+			Input.action_press(sidestep)
 		await get_tree().physics_frame
+		var step := was.distance_to(player.global_position)
+		stuck = stuck + 1 if advancing and step < 0.02 else 0
+		walked += step
+		was = player.global_position
 		lowest = minf(lowest, player.hp)
 		frames += 1
 		if player._dead:
 			break
 	Input.action_release("fire_pulse")
+	Input.action_release("move_forward")
+	Input.action_release("move_left")
+	Input.action_release("move_right")
 	player.input_frozen = true
-	return {"frames": frames, "left": _living(record).size(),
+	var out := {"frames": frames, "left": _living(record).size(),
 			"opened": opened, "lowest": lowest,
-			"hurt": opened - lowest, "died": player._dead}
+			"hurt": opened - lowest, "died": player._dead,
+			"shots": _shots, "landed": _landed,
+			"near": near, "far": far, "walked": walked,
+			"marksmanship": _marksmanship(player, last)}
+	_stop_watching_the_gun(player)
+	return out
+
+
+## WHY A FIGHT WENT THE WAY IT DID, in one line a failure can carry.
+##
+## **A timeout that says only "still alive after 1800 frames" names no
+## cause**, and this suite has already spent five rounds on findings that
+## were the harness rather than the roles. Shots fired versus hits
+## confirmed separates "the pulse never connected" from "it connected and
+## something absorbed it"; the range band separates either from a target
+## that was never inside `STATIC_PULSE_RANGE`; and the ray taken at the
+## end names whatever stood in the way.
+var _shots := 0
+var _landed := 0
+
+
+func _watch_the_gun(player: Player) -> void:
+	_shots = 0
+	_landed = 0
+	if not player.fired_pulse.is_connected(_on_pulse):
+		player.fired_pulse.connect(_on_pulse)
+	if not player.hit_confirmed.is_connected(_on_landed):
+		player.hit_confirmed.connect(_on_landed)
+
+
+func _stop_watching_the_gun(player: Player) -> void:
+	if player.fired_pulse.is_connected(_on_pulse):
+		player.fired_pulse.disconnect(_on_pulse)
+	if player.hit_confirmed.is_connected(_on_landed):
+		player.hit_confirmed.disconnect(_on_landed)
+
+
+func _on_pulse() -> void:
+	_shots += 1
+
+
+func _on_landed(_killed: bool) -> void:
+	_landed += 1
+
+
+## What the shot that would be fired right now would hit, named.
+func _marksmanship(player: Player, target: Node3D) -> String:
+	if target == null or not is_instance_valid(target):
+		return "no target"
+	var hit := player.camera_ray(Constants.STATIC_PULSE_RANGE)
+	if hit.is_empty():
+		return "the ray hit NOTHING"
+	var collider: Object = hit["collider"]
+	if collider == target:
+		return "on target"
+	return "the ray hit %s (%s) instead" % [
+			(collider as Node).name if collider is Node else str(collider),
+			(collider as Node).get_class() if collider is Node else "?"]
+
+
+## A fight's own account of itself, for a message.
+func _account(fight: Dictionary) -> String:
+	return ("%d frames, %d left, %d shots / %d landed, range %.1f-%.1f m, "
+			% [int(fight["frames"]), int(fight["left"]),
+				int(fight.get("shots", -1)), int(fight.get("landed", -1)),
+				float(fight.get("near", 0.0)), float(fight.get("far", 0.0))]
+			+ "walked %.1f m, %s" % [float(fight.get("walked", 0.0)),
+				str(fight.get("marksmanship", "?"))])
 
 
 ## WHAT HAPPENED OVER AN INTERVAL, per role: launches and shots seen.
@@ -470,8 +605,8 @@ func _a_room_of_melee_fights_back_and_can_be_cleared() -> void:
 
 	var fight := await _fight(controller, record)
 	_check(int(fight["left"]) == 0,
-			"and the room clears with the base kit in %d frames"
-			% int(fight["frames"]))
+			"and the room clears with the base kit -- %s"
+			% _account(fight))
 	_check(not bool(fight["died"]),
 			"without the player dying (%.1f hp left)"
 			% controller.player.hp)
@@ -505,8 +640,7 @@ func _indirect_fire_reaches_a_player_who_stands_still() -> void:
 
 	var fight := await _fight(controller, record)
 	_check(int(fight["left"]) == 0,
-			"and the room is still clearable, in %d frames"
-			% int(fight["frames"]))
+			"and the room is still clearable -- %s" % _account(fight))
 	await _drop(controller)
 
 
@@ -730,10 +864,8 @@ func _a_room_of_flyers_is_completable_from_the_ground() -> void:
 			% above + "height problem and not a walk-up")
 	var fight := await _fight(controller, record, 3600)
 	_check(int(fight["left"]) == 0,
-			"and the room finishes from the ground in %d frames "
-			% int(fight["frames"]) + "(%d left, player %s)"
-			% [int(fight["left"]),
-				"DIED" if bool(fight["died"]) else "alive"])
+			"and the room finishes from the ground (player %s) -- %s"
+			% ["DIED" if bool(fight["died"]) else "alive", _account(fight)])
 	_check(not bool(fight["died"]),
 			"with the player alive — a room a grounded player cannot "
 			+ "survive is a room that needs an air Echo to be solvable, "
@@ -758,8 +890,7 @@ func _a_beacon_dies_like_anything_else() -> void:
 			% [hurt, _engagement(controller, record)])
 	var fight := await _fight(controller, record, 3000)
 	_check(int(fight["left"]) == 0,
-			"and both die like anything else, in %d frames"
-			% int(fight["frames"]))
+			"and both die like anything else -- %s" % _account(fight))
 	await _drop(controller)
 
 
@@ -786,7 +917,8 @@ func _the_room_is_not_clear_until_every_body_is() -> void:
 			"and the room is NOT satisfied with a body still standing")
 
 	var fight := await _fight(controller, record, 1800)
-	_check(int(fight["left"]) == 0, "the last one dies")
+	_check(int(fight["left"]) == 0, "the last one dies -- %s" % _account(fight))
 	controller._evaluate_objectives()
-	_check(bool(record["satisfied"]), "and only then is the room clear")
+	_check(bool(record["satisfied"]),
+			"and only then is the room clear -- %s" % _account(fight))
 	await _drop(controller)
