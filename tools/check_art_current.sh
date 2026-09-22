@@ -342,7 +342,7 @@ SCRIPTS="build_materials build_architecture build_props
   build_viewmodel build_gates build_decoys build_physics_props
   build_machinery build_wave1_repair_overlay build_junctions
   build_setpieces build_yardkit build_skiffkit build_roomkits
-  build_connect"
+  build_connect build_jobs"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.

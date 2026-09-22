@@ -509,9 +509,42 @@ rebuild each: every band faced INTO its wall (the exporter maps Blender
 emission 2.2 every band blew to flat white, which is a light box rather
 than a lit channel.
 
+### Batch 050 — A11. Enemy jobs and their spaces. DELIVERED.
+
+Eight props for the four jobs `Constants.ENEMY_JOBS` actually declares.
+**A11 was not blocked** -- `ENEMY_JOBS` declares patrol/watch/drift/tend
+with all their parameters and `enemy.gd` implements all four, so A11.6's
+"no runtime job contract yet" escape does not apply.
+
+* Source `tools/blender/build_jobs.py` (importing
+  `build_enemy_roles.ENVELOPES`, so the envelope table has ONE source);
+  exports `assets/models/batch050/jobs/`; evidence
+  `docs/art/review/jobs_2026-09-22/` (14 frames).
+* Handoff: `docs/art-requests/2026-09-22-jobs-handoff.md`.
+
+**Four jobs, four working areas, read out of `enemy.gd`.** `_patrol`
+walks a random point on a 4.5 m circle -- a 9 m disc. `_drift` orbits at
+**2.5 m** and never descends -- a ring at hover height. `watch` and
+`tend` hold the post and sweep -- a cylinder the role's own width.
+`assert_clear_of_job` checks every prop against the served role's
+published envelope; `assert_flat` keeps floor cues under the 0.12 m
+walk-up. All three sabotage-tested and refused.
+
+**A finding that belongs to A10 too: an anchor is an attachment POINT,
+not a display surface.** Lighting `anchor_warn` shows nothing, correctly
+-- the anchors are 40 mm markers INSIDE the body and the readiness
+harness refuses one that stands proud. A runtime attaches to them and
+the attached thing is what is seen.
+
+**A11.1's clips are not delivered**, and the blocker is A10.4's: no
+authored-visual path into `Enemy.visual`, no animation owner, and
+gameplay already scales that node. A11.1 forbids inventing a
+behavioural controller to stage an animation in the same sentence it
+asks for clips.
+
 ### Then
 
-**A11-A15** (enemy jobs,
+**A12-A15** (enemy jobs,
 projectiles/telegraphs, Status/compound grammar reusing batch043,
 manipulation objects, item/Forge modules), **A16** (finish the six theme
 families), **T01-T18** (the eighteen source-game-inspired environment

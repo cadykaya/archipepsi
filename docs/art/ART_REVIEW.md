@@ -4195,6 +4195,57 @@ refused, the last two by the builder before the export even happened.
 
 Measured boxes are Blender-ordered (width, depth, height).
 
+### Batch 050 — A11: enemy jobs and the spaces that host them (2026-09-22, PENDING)
+
+Eight props for the four jobs `Constants.ENEMY_JOBS` actually declares.
+Candidate art, same three states. Handoff:
+`docs/art-requests/2026-09-22-jobs-handoff.md`.
+
+| Asset | Job | Note |
+| --- | --- | --- |
+| `job_watch_post` | 72 tris · 2.90 × 2.60 × 1.77 m · 32.0 texels/m | watch | the column stands **outside** the brute's 1.95 m turning circle |
+| `job_tend_pedestal` | 60 tris · 0.80 × 0.80 × 1.47 m · 32.0 texels/m | tend | what a beacon sweeps at half rate for; outside its own turning circle |
+| `job_drift_perch` | 84 tris · 1.28 × 0.30 × 1.64 m · 32.0 texels/m | drift | **hung**, and narrower than the 2.5 m orbit minus the flyer |
+| `job_charge_socket` | 48 tris · 0.50 × 0.21 × 0.57 m · 32.0 texels/m | any | 0.5 m, role-agnostic — the honest alternative to a universal dock |
+| `job_inspect_panel` | 60 tris · 0.90 × 0.23 × 1.00 m · 32.0 texels/m | any | `inspect_door` has two positions and `inspect_guts` is behind it |
+| `job_tool_rack` | 72 tris · 0.84 × 0.34 × 1.20 m · 32.0 texels/m | any | three `tool_slot_*`, so a taken tool has somewhere to not be |
+| `job_post_plate` | 72 tris · 3.00 × 3.00 × 0.04 m · 32.0 texels/m | patrol | 3.0 m across — `ENEMY_POST_TOLERANCE` 1.5, doubled. Flat. |
+| `job_beat_cue` | 36 tris · 1.40 × 1.40 × 0.03 m · 32.0 texels/m | patrol | a scuff, **not a path**: `_patrol` picks a RANDOM point on the circle |
+
+**A11 was not blocked, and the inventory said so.** `ENEMY_JOBS`
+declares patrol / watch / drift / tend with `ENEMY_JOB_SPEED` 0.45,
+`ENEMY_PATROL_PAUSE` 1.2, `ENEMY_PATROL_RADIUS` 4.5,
+`ENEMY_POST_TOLERANCE` 1.5 and `ENEMY_SWEEP_RATE` 0.7 — and `enemy.gd`
+implements all four. So A11.6's "if no runtime job contract exists yet"
+escape does not apply.
+
+**Four jobs, four working areas, read out of `enemy.gd` rather than
+guessed.** `_patrol` walks to a random point on a 4.5 m circle and
+pauses 1.2 s — a 9 m disc, walked over. `_drift` orbits at **2.5 m**
+and never descends — a ring at the role's hover height. `watch` and
+`tend` hold the post and sweep `rotation.y` — a cylinder the role's own
+width, because it has to turn around.
+
+`assert_clear_of_job` checks a prop against the served role's published
+envelope; `assert_flat` keeps a floor cue under the 0.12 m walk-up,
+because A11.4 says a decorative mark is not a promise of reachable
+geometry. Sabotage-tested three ways — a column moved inside the
+turning circle, a cue raised into a step, a perch widened into the
+flyer's orbit — all refused.
+
+**A11.1's motion clips are not delivered**, and the blocker is A10.4's,
+not A11's: there is no authored-visual path into `Enemy.visual`, no
+animation owner, and gameplay already scales that node. A11.1 forbids
+inventing a behavioural controller to stage an animation in the same
+sentence it asks for clips.
+
+**An anchor is an attachment POINT, not a display surface.** The
+idle-to-alert frames first lit `anchor_warn` itself and nothing
+appeared — correctly, since Batch 030's anchors are 40 mm markers
+embedded inside the body and the readiness harness refuses one that
+stands proud. The frames now do what a runtime would: read the
+anchor's transform and attach something there.
+
 ### Batch 049 — A09: cross-room machinery and branch identity (2026-09-22, PENDING)
 
 Fourteen assets extending Batch 043's conduit language into a
