@@ -753,3 +753,164 @@ exist keep testing what they always tested; what changes is that they no
 longer stand under a heading claiming more than they show, and
 `test_restart_persistence.py` now says *round trip* wherever it used to
 say *restart*.
+
+---
+
+### DESS-13 — P14's first slice: the chain that already runs, declared
+
+**Dess, 2026-09-22.** DESS-09 called P14 not ready because the graph did
+not exist. The owner corrected that: P14.5 requires implementing the
+shared graph **and** moving real consumers onto it, and does not require
+the graph to pre-exist. The correction is right and the earlier reading
+was a way of not starting.
+
+**The slice is one real chain.** `unweighted_switch.gd` runs a HEAVY
+`ClassPlate` through `not satisfied` into `ServiceShutter.command()` —
+a sensor, a §19.2 `NOT`, and an actuator, wired in GDScript as a signal
+handler. `schemas/signal_graph.py` names exactly that, so a Zone can
+**ask** for the chain instead of a scenario hard-coding it, which is the
+move `RailNetwork` made for the railway.
+
+**Two guarantees are structural rather than checked.**
+
+- **A cycle cannot be written down.** §19.3 evaluates in topological
+  order; declaration order *is* that order, so a node may only name
+  something already declared and a cycle has nowhere to be expressed.
+- **Nothing can point outside its own room.** Every input names a node
+  of this graph, so §19.7 rule 2 holds by construction — the forbidden
+  global signal bus is not banned, it is unwritable. Both were
+  sabotage-proven, each confirmed in the intended function via
+  `inspect.getsource` first.
+
+**Unsupported is named, not offered.** `NODE_KINDS` is §19.2's complete
+eleven and `SENSOR_KINDS` is §20's eighteen, because a vocabulary with
+holes cannot tell *"not supported yet"* from *"not a thing"*.
+`SUPPORTED_NODE_KINDS` is `("NOT",)` and `SUPPORTED_SENSOR_KINDS` is
+`("PRESSURE_PLATE",)` — the one chain that runs. A typo and a gap get
+**different messages**, because one message makes a misspelling read
+like a feature request. Exported as `SIGNAL_NODE_KINDS`,
+`SIGNAL_NODE_KINDS_IMPLEMENTED` and their sensor pair, so the engine
+boundary refuses from the same source the schema does.
+
+**§20.6 is why the sensor is worth naming.** A `PRESSURE_PLATE` reads a
+semantic `MassClass` and **never accumulates** — three `LIGHT` never
+make a `MEDIUM`; `WEIGHT_THRESHOLD` sums kilograms and is the only
+sensor that does. `class_plate.gd` implements the first and
+`PoweredLink` the second. Only the first is offered, because only the
+first is what the declared chain uses.
+
+**`test_epsilon_vocabulary` caught a free string.** `LogicNode.inputs`
+was `tuple[str, ...]`, which would have let Epsilon name anything at all
+— including something outside the room, the one thing the graph must
+never be able to say. Constrained to a node-ref type.
+
+**Per-role accounting, finished.** `room_value` still read
+`ENEMY_VALUE.get(role, 0)` — the last silent zero, where an
+implemented-but-unpriced role would score nothing and the room would
+read cheaper than it is. It calls `enemy_value()` and raises now.
+`ENEMY_VALUE` records that **the score is a content budget and not
+measured difficulty**: a Zone at 156 is not "22% harder" than one at
+128, and the seven provisional entries have had no playtest at all.
+`APPROVED_ENEMY_VALUES` and `PROVISIONAL_ENEMY_VALUES` say which is
+which so nothing downstream infers it from a comment.
+
+**Still Prod's, and not claimed here:** the runtime that reads these
+declarations, and the Godot verification of the widened encounters. A
+bridge-valid enemy list is not a played encounter and this lane cannot
+make it one.
+
+---
+
+### DESS-14 — P16's consuming mechanism: transport that means something
+
+**Dess, 2026-09-22.** DESS-12 reopened P16 because ownership and a room
+were the overbroad part: an object could arrive somewhere it was allowed
+to be and **nothing happened**. The generator in the union's own
+sentence — *"a `BURNING` power cell carried three rooms to a
+generator"* — is the missing half, and `ObjectConsumer` is it.
+
+**The consequence goes through D-8's handle, not a new channel.** A
+consumer that accepts its object sets a declared Zone-state variable,
+which the rest of the Zone already knows how to read. Nothing here
+addresses another room and nothing writes to a machine layer, so there
+is no second mechanism for "something happened over there".
+
+**The check that makes transport mean something:** the mechanism fires
+only when the save says its object is **in the consumer's own room**. A
+mechanism that fired on a message alone would let a client claim a
+delivery it never made and the whole carried route would be decorative.
+Sabotaged and confirmed in `record_object_consumed` via
+`inspect.getsource`; removing it fails exactly that control.
+
+Four other ways a consumer can be a promise nothing keeps, all refused:
+a room the Zone lacks, an object it does not declare, a consequence
+that is a variable without a state (or the reverse), and — the one worth
+naming — **a consumer outside its object's `allowed_volume`**. §10.5's
+volume is where the object may go, so a consumer beyond it is a
+destination nothing may ever legally reach, and the puzzle would be
+unsolvable in a way no route search sees.
+
+**Consuming does not make the object vanish.** What the mechanism
+changes is the Zone's state; the object's room is still its room. A
+scenery consumer that sets nothing is legal and changes nothing.
+
+**An error path that swallowed its own error.** `next()` over the
+consumers raised `StopIteration` before the validator ran, so an unknown
+mechanism came back as a bare traceback instead of the refusal written
+for it. Looked up safely now.
+
+**Still open at corrected scope.** Nothing picks the object up and
+carries it — the player-operated route is Prod's runtime, and this lane
+cannot produce it. What exists now is: a declared object, a declared
+volume, a declared destination that does something, authority over
+arrival, recovery, and a refusal when the delivery has not happened.
+
+---
+
+### DESS-15 — P04.3: the bridge dies and its state comes back
+
+**Dess, 2026-09-22.** DESS-12 reopened P04.3 because a JSON round trip
+is serialization evidence and the unit asks for something else:
+*"actually terminate and restart the relevant client/bridge processes on
+disposable saves ... not just serialized JSON equality."*
+
+`bridge/tests/test_cold_restart.py` does that for the bridge half. Every
+case writes a save through `store.write_save`, lets the writing
+interpreter **exit**, and starts a **new `python3` subprocess** that has
+never held any of the first one's objects. Nothing passes between them
+but the file. `sys.executable -c`, not an import — a stale module-level
+cache would survive an import and would not survive this.
+
+**The harness proves itself before anything leans on it.** One case
+asserts the restarted process has a different PID, because a subprocess
+that silently ran in-process would make every other case a round trip
+wearing a restart's name.
+
+Across the process boundary: the claim in flight before any grant, with
+the fold still empty; a reversible configuration; the **permanent and
+reversible changes coming back apart**; the remaining allocated Checks;
+and the committed manifest with its `ACCEPTED` layout state — a Zone is
+solved once and replayed forever, so provenance that did not cross a
+restart would make the replay a recomposition.
+
+**The reversal is made after the restart**, in the process that reloaded
+the save, and the one-way variable still refuses to go back. A save that
+came back with the reversible one flattened into a latch would fail
+there rather than in review.
+
+**P04.6's interrupted write, at the file level.** `write_save` fsyncs a
+temporary file before replacing the real one, so a half-written `.tmp`
+left beside a save must not be mistaken for it. It is not.
+
+**A latch was the obvious thing to test and it needs a committed physics
+package.** A `permanent` Zone-state variable is the same monotone fact
+with no scaffolding, and §4.0 proves its monotonicity from the
+declaration rather than from a label — so the distinction is tested on
+the mechanism that carries it rather than on the one that happened to
+exist first.
+
+**Disposable saves only**, all under pytest's `tmp_path`. No original is
+read, written or migrated.
+
+**Still Prod's:** relaunching the Godot client and reading real world
+state. No case here claims it, and P04.3 is not closed by this alone.

@@ -69,6 +69,18 @@ from .schemas import constants as C
 #:   how the room is fought; it does not dominate the room the way a
 #:   brute does.
 #:
+#: **THIS IS A CONTENT-BUDGET SCORE, NOT MEASURED DIFFICULTY.** It says
+#: how much a role is worth toward what a Zone is allowed to contain. It
+#: is not a difficulty rating, it has never been played against, and a
+#: Zone scoring 156 is not "22% harder" than one scoring 128 -- that
+#: comparison would need a playtest, and the seven entries below have
+#: had none.
+#:
+#: **STATUS: PROVISIONAL, on the 0.4 candidate.** The three anchors are
+#: approved; the seven are authorised tuning, expected to be revised,
+#: and they are not final. `PROVISIONAL_ENEMY_VALUES` below names which
+#: is which so nothing downstream has to infer it from a comment.
+#:
 #: **Revise them.** They are one table, they are charged correctly
 #: wherever a role is placed, and nothing downstream reads a second copy.
 ENEMY_VALUE = {
@@ -78,6 +90,13 @@ ENEMY_VALUE = {
     "scuttler": 2, "beacon": 4, "artillery": 5, "charger": 5,
     "diver": 6, "drifter": 6, "bulwark": 7,
 }
+
+#: Which entries are approved and which are authorised tuning. Derived
+#: from the two sets rather than restated, so promoting one to approved
+#: is a single edit.
+APPROVED_ENEMY_VALUES: tuple[str, ...] = ("melee", "ranged", "brute")
+PROVISIONAL_ENEMY_VALUES: tuple[str, ...] = tuple(
+    role for role in ENEMY_VALUE if role not in APPROVED_ENEMY_VALUES)
 
 #: Roles the COMPOSER may place: implemented AND priced.
 #:
@@ -223,7 +242,14 @@ def room_value(chamber) -> int:
     total = 0
 
     for group in getattr(chamber, "enemies", ()) or ():
-        total += ENEMY_VALUE.get(group.archetype, 0) * group.count
+        # PER-ROLE, AND IT RAISES. `.get(role, 0)` was the last silent
+        # zero in the accounting: an implemented-but-unpriced role would
+        # score nothing here and the room would read as cheaper than it
+        # is. `Archetype` derives from what the ENGINE implements and
+        # `ENEMY_VALUE` from what is PRICED, so the two can legitimately
+        # diverge again -- and when they do this is the right place to
+        # be loud rather than quietly wrong.
+        total += enemy_value(group.archetype) * group.count
 
     total += AFFORDANCE_VALUE * len(getattr(chamber, "features", ()) or ())
 

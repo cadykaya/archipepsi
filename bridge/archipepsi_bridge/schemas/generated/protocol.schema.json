@@ -844,11 +844,18 @@
             "minLength": 1,
             "title": "Component Id",
             "type": "string"
+          },
+          "use_index": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Use Index",
+            "type": "integer"
           }
         },
         "required": [
           "type",
-          "component_id"
+          "component_id",
+          "use_index"
         ],
         "title": "UseConsumable",
         "type": "object"
@@ -1355,6 +1362,40 @@
           "kind"
         ],
         "title": "ActivityPrimitive",
+        "type": "object"
+      },
+      "ActuatorBinding": {
+        "additionalProperties": false,
+        "description": "What a graph value drives. The machine, named, in this room.",
+        "properties": {
+          "actuator_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Actuator Id",
+            "type": "string"
+          },
+          "driven_by": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Driven By",
+            "type": "string"
+          },
+          "operation": {
+            "default": "command",
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z_]+$",
+            "title": "Operation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actuator_id",
+          "driven_by"
+        ],
+        "title": "ActuatorBinding",
         "type": "object"
       },
       "AffordanceComponent": {
@@ -3790,6 +3831,55 @@
         "title": "LinkOperation",
         "type": "object"
       },
+      "LogicNode": {
+        "additionalProperties": false,
+        "description": "One of \u00a719.2's eleven, taking named inputs from earlier nodes.",
+        "properties": {
+          "node_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "DIRECT",
+              "AND",
+              "OR",
+              "NOT",
+              "TIMER",
+              "LATCH",
+              "SEQUENCE",
+              "COUNTER",
+              "SELECTOR",
+              "DELAY",
+              "THRESHOLD"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "maxLength": 32,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Inputs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind",
+          "inputs"
+        ],
+        "title": "LogicNode",
+        "type": "object"
+      },
       "Mechanics": {
         "additionalProperties": false,
         "description": "Everything the campaign's interpretations add up to.\n\nNot round-trippable through `model_dump()`: `channel_order` is a\n`computed_field`, so it appears in the dump and is rejected on the way\nback in by `extra=\"forbid\"`. That is deliberate rather than an\noversight -- the dump exists to be SENT to a client, which must read\nchannel order and must never reconstruct mechanics -- but it means the\nonly way back is `derive_mechanics` over the log, which is the point.",
@@ -4102,6 +4192,70 @@
           "title"
         ],
         "title": "Notification",
+        "type": "object"
+      },
+      "ObjectConsumer": {
+        "additionalProperties": false,
+        "description": "P16. The machine at the far end that takes the object.\n\n**Transport without a consumer is not a puzzle**, and reporting\nownership and a room was the overbroad part of P16's first pass: an\nobject can arrive somewhere it is allowed to be and have nothing\nhappen. The generator in the union's own sentence -- *\"a `BURNING`\npower cell carried three rooms to a generator\"* -- is this.\n\n**The consequence goes through D-8's handle, not through a new\nchannel.** A consumer that accepts its object sets a declared\nZone-state variable, which the rest of the Zone already knows how to\nread. Nothing here addresses another room, nothing writes to a\nmachine layer, and there is no second mechanism for \"something\nhappened over there\".",
+        "properties": {
+          "mechanism_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Mechanism Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "accepts": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Accepts",
+            "type": "string"
+          },
+          "sets_variable": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sets Variable"
+          },
+          "sets_state": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sets State"
+          }
+        },
+        "required": [
+          "mechanism_id",
+          "room_id",
+          "accepts"
+        ],
+        "title": "ObjectConsumer",
         "type": "object"
       },
       "OwnedComponent": {
@@ -4894,6 +5048,53 @@
         "title": "RestoreResource",
         "type": "object"
       },
+      "RoomGraph": {
+        "additionalProperties": false,
+        "description": "One room's signal graph. Acyclic, room-local, evaluated in a tick.\n\n**It cannot reach another room, and not because a rule forbids it.**\nEvery input names a node of this graph, so there is nothing an edge\ncould point at outside it -- \u00a719.7's rule 2 holds structurally\nrather than by inspection, which is what keeps the forbidden global\nsignal bus unwritable rather than merely banned.",
+        "properties": {
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "sensors": {
+            "items": {
+              "$ref": "#/$defs/SensorNode"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Sensors",
+            "type": "array"
+          },
+          "nodes": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/LogicNode"
+            },
+            "maxItems": 8,
+            "title": "Nodes",
+            "type": "array"
+          },
+          "actuators": {
+            "items": {
+              "$ref": "#/$defs/ActuatorBinding"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Actuators",
+            "type": "array"
+          }
+        },
+        "required": [
+          "room_id",
+          "sensors",
+          "actuators"
+        ],
+        "title": "RoomGraph",
+        "type": "object"
+      },
       "RuleComponent": {
         "additionalProperties": false,
         "properties": {
@@ -5125,6 +5326,66 @@
           "location_name"
         ],
         "title": "ScoutedLocation",
+        "type": "object"
+      },
+      "SensorNode": {
+        "additionalProperties": false,
+        "description": "A source. Produces a value; reads nothing from the graph.",
+        "properties": {
+          "node_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "PRESSURE_PLATE",
+              "PULSE_BUTTON",
+              "TIMED_BUTTON",
+              "LEVER",
+              "SHOOTABLE_TARGET",
+              "OBJECT_SOCKET",
+              "PROXIMITY_SENSOR",
+              "ENCOUNTER_CLEAR",
+              "HACK_TERMINAL",
+              "WEIGHT_THRESHOLD",
+              "CONSTRAINT_STATE",
+              "ATTACH_SENSOR",
+              "MACRO_STATE",
+              "MACRO_SELECTOR",
+              "ROOM_VISITED",
+              "STATUS_SENSOR",
+              "STATUS_VOLUME_SENSOR",
+              "COMPOUND_SENSOR"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "requires_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "LIGHT",
+                  "MEDIUM",
+                  "HEAVY"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Requires Class"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind"
+        ],
+        "title": "SensorNode",
         "type": "object"
       },
       "Shield": {
@@ -6259,6 +6520,24 @@
             "maxItems": 4,
             "title": "Transported Objects",
             "type": "array"
+          },
+          "object_consumers": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ObjectConsumer"
+            },
+            "maxItems": 4,
+            "title": "Object Consumers",
+            "type": "array"
+          },
+          "room_graphs": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/RoomGraph"
+            },
+            "maxItems": 4,
+            "title": "Room Graphs",
+            "type": "array"
           }
         },
         "required": [
@@ -7051,6 +7330,40 @@
           "kind"
         ],
         "title": "ActivityPrimitive",
+        "type": "object"
+      },
+      "ActuatorBinding": {
+        "additionalProperties": false,
+        "description": "What a graph value drives. The machine, named, in this room.",
+        "properties": {
+          "actuator_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Actuator Id",
+            "type": "string"
+          },
+          "driven_by": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Driven By",
+            "type": "string"
+          },
+          "operation": {
+            "default": "command",
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z_]+$",
+            "title": "Operation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actuator_id",
+          "driven_by"
+        ],
+        "title": "ActuatorBinding",
         "type": "object"
       },
       "AffordanceComponent": {
@@ -9164,6 +9477,55 @@
         "title": "LinkOperation",
         "type": "object"
       },
+      "LogicNode": {
+        "additionalProperties": false,
+        "description": "One of \u00a719.2's eleven, taking named inputs from earlier nodes.",
+        "properties": {
+          "node_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "DIRECT",
+              "AND",
+              "OR",
+              "NOT",
+              "TIMER",
+              "LATCH",
+              "SEQUENCE",
+              "COUNTER",
+              "SELECTOR",
+              "DELAY",
+              "THRESHOLD"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "maxLength": 32,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Inputs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind",
+          "inputs"
+        ],
+        "title": "LogicNode",
+        "type": "object"
+      },
       "Mechanics": {
         "additionalProperties": false,
         "description": "Everything the campaign's interpretations add up to.\n\nNot round-trippable through `model_dump()`: `channel_order` is a\n`computed_field`, so it appears in the dump and is rejected on the way\nback in by `extra=\"forbid\"`. That is deliberate rather than an\noversight -- the dump exists to be SENT to a client, which must read\nchannel order and must never reconstruct mechanics -- but it means the\nonly way back is `derive_mechanics` over the log, which is the point.",
@@ -9398,6 +9760,70 @@
           "target"
         ],
         "title": "ModifyOperation",
+        "type": "object"
+      },
+      "ObjectConsumer": {
+        "additionalProperties": false,
+        "description": "P16. The machine at the far end that takes the object.\n\n**Transport without a consumer is not a puzzle**, and reporting\nownership and a room was the overbroad part of P16's first pass: an\nobject can arrive somewhere it is allowed to be and have nothing\nhappen. The generator in the union's own sentence -- *\"a `BURNING`\npower cell carried three rooms to a generator\"* -- is this.\n\n**The consequence goes through D-8's handle, not through a new\nchannel.** A consumer that accepts its object sets a declared\nZone-state variable, which the rest of the Zone already knows how to\nread. Nothing here addresses another room, nothing writes to a\nmachine layer, and there is no second mechanism for \"something\nhappened over there\".",
+        "properties": {
+          "mechanism_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Mechanism Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "accepts": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Accepts",
+            "type": "string"
+          },
+          "sets_variable": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sets Variable"
+          },
+          "sets_state": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sets State"
+          }
+        },
+        "required": [
+          "mechanism_id",
+          "room_id",
+          "accepts"
+        ],
+        "title": "ObjectConsumer",
         "type": "object"
       },
       "OwnedComponent": {
@@ -10190,6 +10616,53 @@
         "title": "RestoreResource",
         "type": "object"
       },
+      "RoomGraph": {
+        "additionalProperties": false,
+        "description": "One room's signal graph. Acyclic, room-local, evaluated in a tick.\n\n**It cannot reach another room, and not because a rule forbids it.**\nEvery input names a node of this graph, so there is nothing an edge\ncould point at outside it -- \u00a719.7's rule 2 holds structurally\nrather than by inspection, which is what keeps the forbidden global\nsignal bus unwritable rather than merely banned.",
+        "properties": {
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "sensors": {
+            "items": {
+              "$ref": "#/$defs/SensorNode"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Sensors",
+            "type": "array"
+          },
+          "nodes": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/LogicNode"
+            },
+            "maxItems": 8,
+            "title": "Nodes",
+            "type": "array"
+          },
+          "actuators": {
+            "items": {
+              "$ref": "#/$defs/ActuatorBinding"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Actuators",
+            "type": "array"
+          }
+        },
+        "required": [
+          "room_id",
+          "sensors",
+          "actuators"
+        ],
+        "title": "RoomGraph",
+        "type": "object"
+      },
       "RuleComponent": {
         "additionalProperties": false,
         "properties": {
@@ -10421,6 +10894,66 @@
           "location_name"
         ],
         "title": "ScoutedLocation",
+        "type": "object"
+      },
+      "SensorNode": {
+        "additionalProperties": false,
+        "description": "A source. Produces a value; reads nothing from the graph.",
+        "properties": {
+          "node_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "PRESSURE_PLATE",
+              "PULSE_BUTTON",
+              "TIMED_BUTTON",
+              "LEVER",
+              "SHOOTABLE_TARGET",
+              "OBJECT_SOCKET",
+              "PROXIMITY_SENSOR",
+              "ENCOUNTER_CLEAR",
+              "HACK_TERMINAL",
+              "WEIGHT_THRESHOLD",
+              "CONSTRAINT_STATE",
+              "ATTACH_SENSOR",
+              "MACRO_STATE",
+              "MACRO_SELECTOR",
+              "ROOM_VISITED",
+              "STATUS_SENSOR",
+              "STATUS_VOLUME_SENSOR",
+              "COMPOUND_SENSOR"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "requires_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "LIGHT",
+                  "MEDIUM",
+                  "HEAVY"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Requires Class"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind"
+        ],
+        "title": "SensorNode",
         "type": "object"
       },
       "Shield": {
@@ -11554,6 +12087,24 @@
             },
             "maxItems": 4,
             "title": "Transported Objects",
+            "type": "array"
+          },
+          "object_consumers": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ObjectConsumer"
+            },
+            "maxItems": 4,
+            "title": "Object Consumers",
+            "type": "array"
+          },
+          "room_graphs": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/RoomGraph"
+            },
+            "maxItems": 4,
+            "title": "Room Graphs",
             "type": "array"
           }
         },

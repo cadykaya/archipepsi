@@ -311,3 +311,16 @@ const ECHO_STATUS_KINDS_IMPLEMENTED = ["lightened", "burning", "slowed", "frozen
 # work; this is that table, so the Godot application boundary can
 # refuse the pair rather than the name.
 const ECHO_STATUS_SUPPORTED_TARGETS = {"lightened": ["object"], "burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["self", "enemy"], "empowered": ["self", "enemy"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}
+
+# P14. The room signal graph vocabulary, and what is IMPLEMENTED.
+#
+# Design 1 19.2's eleven node types and Amalgam 20's eighteen
+# sensors are the complete sets, because a vocabulary with holes
+# cannot tell 'not supported yet' from 'not a thing'. The
+# SUPPORTED lists are what a Zone may actually use, and they are
+# small on purpose: today they describe the one chain that runs,
+# a HEAVY class plate through a NOT into a shutter.
+const SIGNAL_NODE_KINDS = ["DIRECT", "AND", "OR", "NOT", "TIMER", "LATCH", "SEQUENCE", "COUNTER", "SELECTOR", "DELAY", "THRESHOLD"]
+const SIGNAL_NODE_KINDS_IMPLEMENTED = ["NOT"]
+const SIGNAL_SENSOR_KINDS = ["PRESSURE_PLATE", "PULSE_BUTTON", "TIMED_BUTTON", "LEVER", "SHOOTABLE_TARGET", "OBJECT_SOCKET", "PROXIMITY_SENSOR", "ENCOUNTER_CLEAR", "HACK_TERMINAL", "WEIGHT_THRESHOLD", "CONSTRAINT_STATE", "ATTACH_SENSOR", "MACRO_STATE", "MACRO_SELECTOR", "ROOM_VISITED", "STATUS_SENSOR", "STATUS_VOLUME_SENSOR", "COMPOUND_SENSOR"]
+const SIGNAL_SENSOR_KINDS_IMPLEMENTED = ["PRESSURE_PLATE"]

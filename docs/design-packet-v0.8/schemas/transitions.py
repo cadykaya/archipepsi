@@ -37,7 +37,8 @@ try:
         MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
-        CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
+        CampaignSave, ConsumableUse, EarnedLocalReward, PendingCheck,
+        ShopState,
         ShopStockItem, ZoneRecord,
     )
     from .zone import Zone
@@ -48,7 +49,8 @@ except ImportError:  # pragma: no cover
         MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
-        CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
+        CampaignSave, ConsumableUse, EarnedLocalReward, PendingCheck,
+        ShopState,
         ShopStockItem, ZoneRecord,
     )
     from zone import Zone
@@ -183,8 +185,30 @@ def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     # the campaign already counted. VISITING is the same experience and
     # different accounting.
     state = "VISITING" if rec.state == "COMPLETE" else "ACTIVE"
+    # CONSUMABLES REFILL WHEN A DEPLOYMENT BEGINS (owner decision,
+    # 2026-09-22), and this function is not the same thing as a
+    # deployment beginning. It runs again on re-entry, after a Hub trip,
+    # on a reconnect and on a generation retry; restocking on every call
+    # would make the cheapest resupply a round trip through the portal.
+    #
+    # So the refill is keyed to `consumable_deployment`, the Zone the
+    # current expenditure belongs to. Entering the Zone you are already
+    # deployed into changes nothing at all.
+    #
+    # **THE SAME-ZONE HUB-REVISIT POLICY, stated rather than left to fall
+    # out of this code:** going back to the Hub and returning to the SAME
+    # Zone does NOT restock. That trip is the same deployment continued,
+    # and the alternative is a free refill behind two loading screens.
+    # Deploying into a DIFFERENT Zone does restock, which is what makes
+    # charges a per-Zone resource rather than a per-campaign one.
+    #
+    # Expenditure is tracked by component id, so swapping the supply out
+    # and back within a deployment preserves what has been spent.
+    fresh = save.consumable_deployment != zone_id
     return _rebuild(save,
                     zones=_replace_zone(save, zone_id, state=state),
+                    consumable_uses=() if fresh else save.consumable_uses,
+                    consumable_deployment=zone_id,
                     active_zone_id=zone_id)
 
 
@@ -639,6 +663,58 @@ def record_object_transported(save: CampaignSave, zone_id: str,
                      lambda p: p.with_object_in(object_id, room_id), known)
 
 
+def record_object_consumed(save: CampaignSave, zone_id: str,
+                           mechanism_id: str) -> CampaignSave:
+    """P16. A consuming mechanism took the object it was waiting for.
+
+    **The object must actually be there.** This is the check that makes
+    transport mean something: the consumer fires only when the save says
+    its object is in the consumer's own room. A mechanism that fired on
+    a message alone would let a client claim a delivery it never made,
+    and the whole carried route would be decorative.
+
+    The consequence goes through D-8's handle -- `with_macro` on the
+    declared variable -- so nothing here is a second way for one room to
+    change another.
+    """
+    def known(rec):
+        zone = rec.zone
+        consumers = {c.mechanism_id: c
+                     for c in getattr(zone, "object_consumers", ())
+                     } if zone is not None else {}
+        con = consumers.get(mechanism_id)
+        if con is None:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no object consumer "
+                f"'{mechanism_id}'"
+                + (f"; it declares {sorted(consumers)}" if consumers
+                   else " and declares none"))
+        where = rec.progress.object_room(con.accepts)
+        if where != con.room_id:
+            raise ValueError(
+                f"consumer '{mechanism_id}' is in room '{con.room_id}' and "
+                f"'{con.accepts}' is "
+                + (f"in '{where}'" if where else "not anywhere yet")
+                + "; the object has to be delivered before it is consumed")
+
+    rec = _require_zone(save, zone_id)
+    # LOOK IT UP SAFELY. `next()` on an empty generator raises
+    # StopIteration before `known` ever runs, so an unknown mechanism
+    # came back as a bare traceback instead of the refusal written for
+    # it -- an error path that swallowed its own error message.
+    con = next((c for c in getattr(rec.zone, "object_consumers", ())
+                if c.mechanism_id == mechanism_id), None)
+
+    def apply(p):
+        if con is None:
+            return p        # `known` refuses first; this never runs
+        if con.sets_variable is None:
+            return p        # scenery: legal, and it changes nothing
+        return p.with_macro(con.sets_variable, con.sets_state)
+
+    return _progress(save, zone_id, apply, known)
+
+
 def recover_transported_object(save: CampaignSave, zone_id: str,
                                object_id: str) -> CampaignSave:
     """P16.4. Put a lost or unreachable object back where it comes home.
@@ -967,6 +1043,63 @@ def slot_action(
     return _rebuild(save, slots=save.slots.with_slot(slot, component_id))
 
 
+def spend_charge(save: CampaignSave, component_id: str,
+                 use_index: int) -> CampaignSave:
+    """Spend one use of a consumable. It stays equipped when empty.
+
+    **The supply is permanently owned** (owner decision, 2026-09-22).
+    Spending the last charge does not clear the slot -- the item stays
+    selected at `0 / max`, says it is exhausted and says what refills it,
+    and the refill makes it usable again with no inventory visit. The
+    thing that is refused is USING an empty one, which is this function,
+    not holding one.
+
+    **`use_index` MAKES THIS A COMPARE-AND-SWAP, and that is the whole
+    transaction.** It is which use this is meant to be -- the first, the
+    second -- and the spend is accepted only if it is the next one due.
+    Everything the delayed-snapshot cases need falls out of that one
+    rule, with no identifiers to store and nothing to expire:
+
+      TWO PRESSES ON THE LAST CHARGE. Both mint the same index because
+      neither has seen a snapshot yet. The first moves `spent` past it;
+      the second no longer matches and is refused. At most one
+      activation succeeds.
+      A DUPLICATE OR RETRIED MESSAGE. Same index, already consumed, same
+      refusal -- so a retry can never spend twice or replay an effect.
+      A STALE USE FROM BEFORE A REFILL. It carries an index from the old
+      deployment's count; after the refill the next one due is 1 again,
+      so it does not match and is dropped rather than eating a fresh
+      charge.
+
+    Refuses rather than saturating. A caller that has lost count should
+    find out here, not by watching the number stay at zero.
+    """
+    owned = save.derive().by_id(component_id)
+    if owned is None or owned.kind != "action":
+        raise ValueError(f"'{component_id}' is not an owned Action")
+    charges = getattr(owned.component, "charges", None)
+    if charges is None:
+        raise ValueError(f"'{component_id}' is not a consumable")
+    spent = charges - save.charges_left(component_id)
+    if spent >= charges:
+        raise ValueError(
+            f"'{component_id}' has no charges left ({spent} of {charges})")
+    if use_index != spent + 1:
+        raise ValueError(
+            f"'{component_id}' use {use_index} is not the next one due "
+            f"({spent + 1}); a duplicate, a retry, or a use minted "
+            f"before a refill")
+    uses = tuple(u for u in save.consumable_uses
+                 if u.component_id != component_id)
+    uses += (ConsumableUse(component_id=component_id, spent=spent + 1),)
+    # THE SLOT IS NOT CLEARED. A consumable is a permanently owned
+    # refillable supply: spending the last charge leaves it selected at
+    # `0 / max` with exhausted feedback, and the refill makes the same
+    # equipped item usable again without another trip to the inventory.
+    # Only an explicit equipment change replaces it.
+    return _rebuild(save, consumable_uses=uses)
+
+
 def grant_local_reward(
     save: CampaignSave, reward: EarnedLocalReward
 ) -> CampaignSave:
@@ -1011,12 +1144,13 @@ def grant_local_reward(
 #: Every transition, for the census test. A new one fails the suite until it
 #: is listed — the same shape as the location-field and HubMode censuses.
 TRANSITIONS = (
+    spend_charge,
     start_generation, accept_zone, enter_zone, complete_zone, abandon_zone,
     release_location, claim_zone_check, buy_shop_stock, confirm_check,
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
-    record_zone_state, record_object_transported,
+    record_zone_state, record_object_transported, record_object_consumed,
     recover_transported_object,
     reselect_hosts,
     commit_layout, refuse_layout,
