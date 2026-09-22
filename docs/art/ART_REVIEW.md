@@ -4773,6 +4773,83 @@ four camera positions in the same shell as T01 and T02.
 **Still not complete:** no material treatment, no runtime selection, not
 imported, no owner review.
 
+
+## Batch 058 — T04, the fourth game pack. Super Metroid, THE WRECKED SHIP
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_ws_stanchion` | 84 tris · 0.74 × 1.07 × 3.60 m · 32.0 texels/m | 6 | a ship's **frame member** with its own service run burst out of it — boxed and flanged, never round |
+| `tp_ws_bulkhead_panel` | 84 tris · 2.16 × 0.65 × 3.00 m · 32.0 texels/m | 6 | the inspection hatch let go and is still on **one hinge**; a hatch on the floor is debris, a hatch still attached is an accident |
+| `tp_ws_pressure_door` | 132 tris · 3.08 × 0.48 × 3.54 m · 32.0 texels/m | 10 | the opening is dressed as a **pressure boundary**: dogging lugs, seal channel, marked threshold |
+| `tp_ws_debris_fan` | 72 tris · 1.69 × 0.93 × 0.20 m · 31.8 texels/m | 5 | floor dressing that **blew out** — plates at spreading angles all pointing back at one origin, where a pile points at nothing |
+| `tp_ws_lamp_cage` | 84 tris · 0.35 × 0.52 × 0.52 m · 32.0 texels/m | 6 | a caged emergency lamp hanging **off true**; a straight fitting is one somebody maintains |
+| `tp_ws_dogging_lever` | 60 tris · 0.46 × 0.23 × 0.54 m · 32.0 texels/m | 4 | Batch 043's wall-switch contract as a dogging lever in a recessed pocket — **thrown**, not pressed |
+
+**Subtheme chosen and stated: the Wrecked Ship.** Super Metroid has six
+regions and five of them are **caves**, which is terrain. The Wrecked Ship
+is the one that is architecture, and architecture is what a theme pack
+ships.
+
+### THIS IS THE FIRST PACK WITH NO HINT AT ALL
+
+`Constants.THEME_BY_GAME_HINT` holds **six** entries. The catalogue holds
+**81 games**. So **75 of 81 — including this one — have no hint.**
+
+T01 and T03 found the hint agreeing with the pack's material culture; T02
+found it disagreeing. This is sharper than either: for nine games in ten
+there is nothing to agree or disagree with. **A selection mechanism
+covering 7% of the catalogue is not a mechanism with an exception in it; it
+is a mechanism for six games.** Recorded as `theme_hint_says: null` plus the
+count, so the gap is a number in the manifest rather than a sentence here.
+
+### The hazard band means something here, which is the contrast with T02
+
+Same family as T02, opposite answer, **and the difference is the geometry
+rather than the taste.** T02 reached for `rusted_industrial` and had to
+refuse its `trim` everywhere, because nothing in a clock room is a hazard
+boundary. A derelict is nothing but hazard boundaries: the pressure
+threshold, the lamp cage, the severed conduit. Those carry the band;
+everything else carries `trim_plain`.
+
+### The coaming is the one part of a pressure door art cannot ship
+
+A real pressure door has a raised sill you step over, and the first cut of
+`tp_ws_pressure_door` had one — 0.10 m tall, full width, across the
+doorway. **The gate refused it by 2.740 m and was right.**
+
+It does not narrow the opening's *width*. It lays **floor** inside an
+opening the player walks through, and floor is Production's whatever its
+height. **A 0.10 m step is also under the 0.12 m walk-up**, so the foothold
+rule would never have seen it — the opening rule is the only thing between
+a plausible detail and art changing a walking surface.
+
+What survives is the **mark without the step**: a banded cheek at the foot
+of each jamb, outside the opening. If the coaming should exist, it is
+Production's to place and collide.
+
+### And the foothold rule shrank a lamp
+
+`ws_lc_body` at 0.30 m square and 16° measures 0.37 m in plan, above the
+0.12 m walk-up with nothing tall enough above it to cover it. The lamp
+hangs on a wall at 2.3 m in the room, so in *world* terms it is not a step
+— **but the gate measures the asset's own frame and cannot know where it
+will be hung, which is the correct thing for it to do.** Shrinking a lamp
+is cheaper than an exception. Same shape as T02's pendulum bob.
+
+### 058-R — and the room found one more
+
+The bulkhead panel first sat at x −4.90 with a 0.14 m plate, **entirely
+inside the 0.4 m wall**, so the frame read as ribs floating on grey. The
+hull is the subject of that piece; it is at −4.80 now and stands proud.
+
+Evidence: `docs/art/review/wreck_2026-09-22/`, four frames from the same
+four camera positions in the same shell as T01, T02 and T03.
+
+**Still not complete:** no material treatment, no runtime selection, not
+imported, no owner review.
+
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
 
 **All four large shells are `review: "pass"`.** Three authorities had to

@@ -13,8 +13,8 @@ into "81 packs exist".
 |---|---|
 | **CATALOGUE coverage** | **81 of 81.** Every included Archipelago game has a row, a queue id and a reserved pack id. This is a list, and a list is not art. |
 | **COMPLETED pack coverage** | **0 of 81.** Nothing has passed the bar in *What counts as a completed pack* below. |
-| **IN PROGRESS** | **3** — `tp_ocarina_of_time` (T01), `tp_super_mario_64` (T02) and `tp_bomb_rush_cyberfunk` (T03): content built and applied in engine, material treatment still missing on all three. |
-| **NOT STARTED** | **78.** |
+| **IN PROGRESS** | **4** — T01 `tp_ocarina_of_time`, T02 `tp_super_mario_64`, T03 `tp_bomb_rush_cyberfunk`, T04 `tp_super_metroid`: content built and applied in engine, material treatment still missing on all four. |
+| **NOT STARTED** | **77.** |
 
 **Catalogue snapshot:** `catalogue.json`, taken 2026-09-22 from
 `https://archipelago.gg/games` ("Currently Supported Games").
@@ -31,7 +31,7 @@ here.
 
 ## The two things a reader should know before the table
 
-### 1. Three rows have assets. Nothing has passed the completion bar.
+### 1. Four rows have assets. Nothing has passed the completion bar.
 
 Archipepsi's six theme families — `concrete_facility`,
 `rusted_industrial`, `neon_transit`, `gothic_stone`, `temple_ruin`,
@@ -57,7 +57,15 @@ hint picks a family by GAME; a treatment follows what a pack is MADE OF.
 Two questions, one field. A hint that is always wrong gets noticed; one
 that is right two times in three does not. Recorded per pack as
 `theme_hint_says` / `theme_hint_agrees` in each manifest, so agreement
-is data rather than silence. This is §2 and §3 arriving together.
+is data rather than silence.
+
+**AND T04 IS THE FIRST PACK WITH NO HINT AT ALL.**
+`THEME_BY_GAME_HINT` holds **six** entries. This table holds **81
+games**. So **75 of 81 have no hint** — Super Metroid among them. A
+selection mechanism covering 7% of the catalogue is not a mechanism
+with an exception in it; **it is a mechanism for six games.** That is
+§2 and §3 arriving together, and it is a number rather than an
+opinion.
 
 **Every other row is `not started` and says so.**
 
@@ -177,7 +185,9 @@ completion: the verdict column is.**
 
 | `tp_bomb_rush_cyberfunk` | yes — Brink Terminal after hours: the architecture half of the game, not its terrain | yes — 6 assets, Batch 057 | yes — torn grind rail, strip light with one tube out | **NO** — painted in `neon_transit`, which IS the family the hint names and is still a house family, not this pack's own; §3 | yes — 4 frames, `brink_2026-09-22/`, same shell and cameras as T01 and T02 | yes — `packgates` plus the imported-geometry check, which this pack's shutter guide made stricter in two ways | not started | **IN PROGRESS** |
 
-**0 of 81 complete. 3 in progress. 78 not started.**
+| `tp_super_metroid` | yes — the Wrecked Ship, the one region of six that is architecture rather than cave | yes — 6 assets, Batch 058 | yes — debris fan, caged lamp hanging off true | **NO** — painted in `rusted_industrial`; this game has NO hint to agree or disagree with, and 74 others are in the same position | yes — 4 frames, `wreck_2026-09-22/`, same shell and cameras as T01–T03 | yes — `packgates` plus the imported-geometry check; the pressure door's coaming was REFUSED and is Production's to place | not started | **IN PROGRESS** |
+
+**0 of 81 complete. 4 in progress. 77 not started.**
 
 ---
 
@@ -196,7 +206,7 @@ progress.
 | T01 | Ocarina of Time | `tp_ocarina_of_time` | Grove Relay Temple — **Forest Temple** subtheme, stated | `temple_ruin` construction | 6: column with a climbing root, split wall relief, timber-hooded torch alcove, timber switch housing, floor root mass, bossed door surround | **content yes** (batch054), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T02 | Super Mario 64 | `tp_super_mario_64` | Clockwork Garden — **Tick Tock Clock** subtheme, stated | `rusted_industrial` construction | 6: gear column with an upright wheel and pinion, parted wall movement, dial door bezel, bent fallen clock hand, pendulum fitting, winding-key escutcheon | **content yes** (batch056), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T03 | Bomb Rush Cyberfunk | `tp_bomb_rush_cyberfunk` | Afterhours Municipal Transit — **Brink Terminal, after hours** subtheme, stated | `neon_transit` construction | 6: tagged concourse pillar, departure board mid-flip, shuttered gate head, torn grind rail, batten with one tube out, ticket-validator plate | **content yes** (batch057), **materials no** (§3) | no | not started — in engine, see the completion ledger |
-| T04 | Super Metroid | `tp_super_metroid` | Pressureworks Derelict | — | — | no | no | not started |
+| T04 | Super Metroid | `tp_super_metroid` | Pressureworks Derelict — **the Wrecked Ship** subtheme, stated | `rusted_industrial` construction | 6: burst frame stanchion, hull panel with hatch on one hinge, pressure-door frame with dogging lugs, blown debris fan, caged lamp off true, dogging lever | **content yes** (batch058), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T05 | Kingdom Hearts 2 | `tp_kingdom_hearts_2` | Twilight Service District | — | — | no | no | not started |
 | T06 | DOOM 1993 | `tp_doom_1993` | Foundry Containment | — | — | no | no | not started |
 | T07 | Dark Souls III | `tp_dark_souls_iii` | Cinder Aqueduct | — | — | no | no | not started |
