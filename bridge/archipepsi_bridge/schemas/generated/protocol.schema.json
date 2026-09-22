@@ -850,12 +850,18 @@
             "minimum": 1,
             "title": "Use Index",
             "type": "integer"
+          },
+          "generation": {
+            "minimum": 0,
+            "title": "Generation",
+            "type": "integer"
           }
         },
         "required": [
           "type",
           "component_id",
-          "use_index"
+          "use_index",
+          "generation"
         ],
         "title": "UseConsumable",
         "type": "object"
@@ -1955,6 +1961,7 @@
       },
       "BridgeError": {
         "additionalProperties": false,
+        "description": "A refused or failed intent, reported rather than swallowed.\n\n**THE ONE SERVER MESSAGE WITH NO IDENTITY**, until `about`. `scope`,\n`recoverable` and `message` say what went wrong and nothing about\nwhat it went wrong ON, so two failed intents produce indistinguishable\nframes and a client can only toast the string. That is survivable for\na refusal the player reads and forgets, and not survivable for one\nthe client has to UNDO \u2014 a spend it is holding in flight stays held\nforever, subtracting from a count it will never be allowed to spend.",
         "properties": {
           "type": {
             "const": "error",
@@ -1978,6 +1985,12 @@
           "message": {
             "maxLength": 160,
             "title": "Message",
+            "type": "string"
+          },
+          "about": {
+            "default": "",
+            "maxLength": 160,
+            "title": "About",
             "type": "string"
           }
         },
@@ -2246,6 +2259,12 @@
             },
             "title": "Consumable Uses",
             "type": "array"
+          },
+          "consumable_generation": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Consumable Generation",
+            "type": "integer"
           },
           "active_zone": {
             "anyOf": [
@@ -6107,12 +6126,24 @@
             "default": false,
             "title": "Required",
             "type": "boolean"
+          },
+          "carriable": {
+            "title": "Carriable",
+            "type": "boolean"
+          },
+          "mass_kg": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 100000.0,
+            "title": "Mass Kg",
+            "type": "number"
           }
         },
         "required": [
           "object_id",
           "allowed_volume",
-          "home_room_id"
+          "home_room_id",
+          "carriable",
+          "mass_kg"
         ],
         "title": "TransportedObject",
         "type": "object"
@@ -11675,12 +11706,24 @@
             "default": false,
             "title": "Required",
             "type": "boolean"
+          },
+          "carriable": {
+            "title": "Carriable",
+            "type": "boolean"
+          },
+          "mass_kg": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 100000.0,
+            "title": "Mass Kg",
+            "type": "number"
           }
         },
         "required": [
           "object_id",
           "allowed_volume",
-          "home_room_id"
+          "home_room_id",
+          "carriable",
+          "mass_kg"
         ],
         "title": "TransportedObject",
         "type": "object"
@@ -12722,6 +12765,12 @@
         },
         "title": "Consumable Uses",
         "type": "array"
+      },
+      "consumable_generation": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Consumable Generation",
+        "type": "integer"
       },
       "active_zone": {
         "anyOf": [

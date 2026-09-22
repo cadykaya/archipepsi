@@ -51,12 +51,54 @@ ENVELOPE_FORCE_N = 700.0
 ENVELOPE_RANGE_M = 20.0
 ENVELOPE_MASS_KG = 120.0
 
+#: Design 2 §10.3's ordinary-pickup line, and **not a fourth envelope
+#: number**.
+#:
+#: These two masses answer different questions and collapsing them into
+#: one rule would be wrong in both directions. `ENVELOPE_MASS_KG` (120)
+#: is one of THREE numbers -- with force and range -- that a *host* must
+#: meet to count as a qualified manipulation provider (§29.3.2); it
+#: bounds what a `PUSH`, `PULL` or `HOLD` may act on. `CARRY_MASS_KG`
+#: (60) is a property of the *object* and governs ordinary pickup:
+#: §10.3, *"an object is carriable if `carriable = true` and
+#: `mass_kg <= 60.0`. Above that it is manipulable only."*
+#:
+#: A 100 kg crate sits inside the provider envelope and is still not
+#: something the player picks up. Reading 120 as the carry limit would
+#: hand the player a crate in both hands; reading 60 as the envelope
+#: would refuse a qualified host the crate it is authored to push.
+CARRY_MASS_KG = 60.0
+
 #: §4.10. The verifier's whole budget, unchanged from Design 3.
 STATE_VECTOR_BOUND = 4096
 
 #: §4.10. Latches compete with macro variables for that budget, so the
 #: count promoted into the vector is capped on its own as well.
 MAX_VECTOR_LATCHES = 8
+
+
+# --------------------------------------------------------------------------
+# Ordinary pickup — a property of the OBJECT, not of the host.
+# --------------------------------------------------------------------------
+
+def carriable_by_hand(carriable: bool, mass_kg: float) -> bool:
+    """§10.3's ordinary-pickup test: the flag AND the kilograms.
+
+    **Both clauses, and the flag is not redundant.** `PLATE` is exactly
+    60 kg -- on the line, not over it -- and is still not carriable,
+    because §10.1's flag says it is handled with lifting slots rather
+    than a grip. A kilogram test on its own would put a grip on it.
+
+    **Nothing about the host reaches this function**, which is the
+    point: no Gear, Mod or Ability widens ordinary pickup. A host that
+    clears §29.3.2's envelope may push a 100 kg crate; it still may not
+    pick one up. The two rules live in one module so the distinction is
+    written down where a reader will meet both, and they take different
+    arguments so neither can be called with the other's data.
+
+    The kilogram comparison is `<=`: 60.0 itself passes.
+    """
+    return bool(carriable) and float(mass_kg) <= CARRY_MASS_KG
 
 
 # --------------------------------------------------------------------------

@@ -68,7 +68,8 @@ GD_SKIP = ("ENEMY_STATS", "TIER_BOUNDS", "DEFAULT_CONFIG",
 #: Named rather than swept, because `physics.py` also holds bounds that
 #: are the VERIFIER's budget (`STATE_VECTOR_BOUND`,
 #: `MAX_VECTOR_LATCHES`) and mean nothing in a scene.
-GD_PHYSICS = ("ENVELOPE_FORCE_N", "ENVELOPE_RANGE_M", "ENVELOPE_MASS_KG")
+GD_PHYSICS = ("ENVELOPE_FORCE_N", "ENVELOPE_RANGE_M", "ENVELOPE_MASS_KG",
+              "CARRY_MASS_KG")
 
 
 def _gd_dict(mapping: dict) -> str:
