@@ -1678,3 +1678,99 @@ cannot show that is a sabotage that proves nothing about the control it
 was aimed at. Written down because a green suite under sabotage looks
 exactly like a vacuous test, and the wrong conclusion from it is to
 delete a control that was working.
+
+### DESS-05 — P04's snapshot is mostly already written, and one row is closed by policy
+
+**Dess, 2026-09-22.** Package P04, bridge half. The useful finding is
+what did **not** need building.
+
+**The carrier pose row is closed by an accepted decision, not by a
+missing field.** `E-011-save` asks for "carrier poses, destinations and
+hold states restored before the player", and the natural reading is a
+saved transform. `rail_junction.gd`'s own four-lifetime docstring says
+the opposite and says it for a reason: **a carrier is restored to a
+SUPPORTED DOCK, never to a saved transform**, because one resumed
+halfway across a link this build did not commission would be standing on
+track that is not there. `restore_from` re-parks at `home_dock` — which
+is the field F-24 answer 3 added.
+
+So implementing a saved carrier pose would have **violated** the
+safe-machinery policy while appearing to close a row. P04.1's wording is
+"*appropriate* machine poses/destinations/holds", and the appropriate
+representation here is none.
+
+**What the save does carry**, checked against D-8 §3's five lifetimes
+rather than asserted: permanent consequences (`latched`), reversible
+configuration (`macro_state`), equipment, allocation, manifest
+provenance. Lifetimes 3 and 4 are `EPHEMERAL` and **their absence is the
+representation**. Lifetime 5, transported objects, stays an explicit
+unfinished 0.4 row and the control says so — which is what stops a later
+reader assuming it is covered.
+
+**The guard that earns its place.** A name scan over `ZoneProgress`,
+`ZoneRecord` and `CampaignSave` fails on anything that looks like live
+or physical state — transform, pose, velocity, voltage, elapsed. §5.4a:
+a save that stored voltages could disagree with the graph that produced
+them, and one that stored poses could put the player on absent track.
+The linter is shown catching two synthetic bad names before it is
+trusted to report none, because without that it would pass equally well
+with an empty forbidden list.
+
+**Restart points are asserted to be different states** before each is
+round-tripped. P04.3 asks for restarts at *meaningful* points, which
+only means something if the points differ; a save that collapsed two of
+them would pass a single-point test.
+
+**Not done here, and deliberately:** actually terminating and restarting
+the client, machinery interrupted mid-motion, and the user-facing
+failure paths are Prod's. A JSON round trip is not reported as any of
+them.
+
+### DESS-06 — P16: transported objects, the row that was explicitly unfinished
+
+**Dess, 2026-09-22.** D-8 lifetime 5 had a table row, no field and no
+producer, and both the contract and Prod's matrix said so. It is
+declared, persisted, authoritative and recoverable now.
+
+**Two settled rules met here and only one needed an amendment.** §10.5
+already said a multi-room carryable is `ZONE_PERSISTENT` with an
+`allowed_volume` — persistence needed nothing. What was genuinely open
+was **authority**, and D-8 §11.1 took Prod's answer narrowed to exactly
+that: a transported object is room-layer state **whose owning room is
+its current room**, and crossing a boundary is a TRANSFER, not a write
+to the machine layer. §19.7 rule 2 stays intact and no room addresses
+another to make it happen — the player carries it, which is "the player
+is the bridge" in its most literal form.
+
+| piece | where |
+|---|---|
+| declaration | `Zone.transported_objects`, `TransportedObject` |
+| volume, home, and whether losing it matters | `allowed_volume`, `home_room_id`, `required` |
+| save | `ZoneProgress.object_rooms`, overwritten not accumulated |
+| the message | `ObjectTransported` intent, routed to `handle_progress` |
+| authority | `transitions.record_object_transported` |
+| recovery | `transitions.recover_transported_object` |
+
+**What the save records is the ROOM and nothing else about the object**
+(P16.5). Its Statuses are `EPHEMERAL` by §5.1, so a `BURNING` cell
+carried three rooms arrives having been carried three rooms and **not
+still burning** unless something sets it alight again. Persisting the
+Status would turn a temporary effect into a permanent fact — §3.1's rule
+in the place it is easiest to break by accident. Its transform is absent
+for §5.4a's reason, and DESS-05's name guard now fails if either
+appears.
+
+**Recovery is its own event, not a correction.** An arrival outside the
+volume is refused and records nothing — including no recovery. Folding
+the two together would make every illegal arrival silently correct
+itself with nothing to notice, which is how a composer defect becomes
+invisible.
+
+**Sabotage, with DESS-04's fix applied.** Each check was neutralised
+*and confirmed present in the intended function via
+`inspect.getsource`* before the run: dropping the volume check fails 2
+controls, dropping home-inside-volume fails exactly its own.
+
+**Not done:** moving it physically is Prod's (P16.2), and nothing
+composes a transported object yet — the declaration is real and no live
+seed emits one.

@@ -1647,5 +1647,6 @@
  ],
  "rail_networks": [],
  "featured_acquisition": null,
- "zone_state": []
+ "zone_state": [],
+ "transported_objects": []
 }
