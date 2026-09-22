@@ -4145,6 +4145,56 @@ crossing somebody's view of the grapple ring.
 Measured boxes are Blender-ordered (width, depth, height); the manifest
 carries `size_axes` and the runtime order.
 
+### Batch 048 — Passing Platforms, Counterfire Arcade, Unweighted Switch (2026-09-22, PENDING)
+
+A06, A07 and A08: the same treatment Blindside got, for the other three
+0.4 rooms. Candidate art, same three states. Handoff:
+`docs/art-requests/2026-09-22-roomkits-handoff.md`.
+
+| Asset | Metrics | Item | Note |
+| --- | --- | --- | --- |
+| `pp_lift_guide` | 108 tris · 1.16 × 0.48 × 2.00 m · 32.0 texels/m | A06.1 | masts, ties, rope and a counterweight in its channel; **no standable face** |
+| `pp_shuttle_guide` | 100 tris · 0.34 × 2.00 × 0.42 m · 32.0 texels/m | A06.1 | a **screw**, not a rope -- the two drives are told apart by mechanism |
+| `pp_transfer_edge` | 72 tris · 4.04 × 0.55 × 1.10 m · 32.0 texels/m | A06.2 | rail at Production's `RAIL_HEIGHT` 1.10; **nothing crosses the edge line** |
+| `pp_call_post` | 84 tris · 0.34 × 0.35 × 1.44 m · 32.0 texels/m | A06.3 | `call_lamp`, `travel_up/down`, `stop_face`, each addressable |
+| `pp_recovery_mark` | 72 tris · 3.40 × 3.40 × 0.04 m · 32.0 texels/m | A06.4 | a landing pad, not a hazard border; 0.03 m tall so nothing is covered |
+| `cf_gunner_mount` | 72 tris · 1.74 × 1.73 × 1.06 m · 32.0 texels/m | A07.2 | on the published `ranged` envelope; open at the back so killing it stays possible |
+| `cf_lane_mark` | 72 tris · 0.60 × 2.00 × 0.04 m · 32.0 texels/m | A07.3 | **ribbed, not coloured**; 0.04 m against a shot at 0.85 |
+| `cf_alcove_frame` | 72 tris · 3.10 × 0.50 × 2.76 m · 32.0 texels/m | A07.3 | a deep reveal is what says 'in here, not there' |
+| `cf_shutter_track` | 132 tris · 0.70 × 2.80 × 2.86 m · 32.0 texels/m | A07.4 | **eight named pips, one per `OPEN_SECONDS`** -- and no clock in the asset |
+| `cf_release_bolt` | 60 tris · 0.56 × 1.13 × 0.68 m · 32.0 texels/m | A07.5 | a bolt driven home: unreadable as a countdown, which is the distinction |
+| `uw_plate_frame` | 108 tris · 2.90 × 2.92 × 0.90 m · 32.0 texels/m | A08.2 | **three discrete class marks, no dial** -- a class read is not a kilogram gauge |
+| `uw_drive_housing` | 108 tris · 0.87 × 5.44 × 1.33 m · 32.0 texels/m | A08.3 | lever and rail **outside** the crate's 4.6 m travel corridor |
+| `uw_applicator` | 60 tris · 0.72 × 0.78 × 1.30 m · 32.0 texels/m | A08.5 | the housing; LIGHTENED itself is Production's state hook |
+| `uw_return_rail` | 72 tris · 3.00 × 0.30 × 1.66 m · 32.0 texels/m | A08.5 | a drop bar, and **deliberately not a stair** |
+
+**Three gates, and two of them were wrong before they were right.**
+
+`assert_no_footholds` refuses any upward face 0.35 m square above the
+measured 0.12 m walk-up, on every asset in open space — A06.2's
+"decorative cables and counterweights must not look like alternate
+climbable routes", held as a rule rather than a promise.
+
+`assert_stops_at_edge` refuses anything crossing the deck's edge line
+into the 0.2 m hop. ~~Its first version refused anything whose span fell
+between the gap and half a metre past it, as "bridge-sized"~~ — and duly
+refused a 0.3 m nosing lying flat **on** the deck. A rule about size
+cannot tell a bridge from a doormat; a rule about position can.
+
+`assert_clear_of_corridor` keeps the drive housing out of the crate's
+4.6 m travel path. It first reported the guide rail *inside* a corridor
+it runs beside, because `set_origin_group` had recentred an asset whose
+whole contract is that local y = 0 is the park position. Three assets
+are now exported **as-built**, with `origin_means` saying what their
+origin is.
+
+**All four import-side promises were sabotage-tested:** five pips
+instead of eight, a `kg_gauge_*` part on the class plate, a lane rib
+raised into the shot line, and a tread on the return gate. Each was
+refused, the last two by the builder before the export even happened.
+
+Measured boxes are Blender-ordered (width, depth, height).
+
 ### Batch 047 — the skiff's fitted parts (2026-09-22, PENDING)
 
 A03.2 and A03.3. Batch 045 gave the skiff a hull; these are the parts

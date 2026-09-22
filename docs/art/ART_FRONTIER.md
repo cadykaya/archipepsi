@@ -433,10 +433,52 @@ windup swell, deliberately, so a clip touching the root's scale fights
 gameplay — which argues for articulated rigid parts over a skinned rig.
 Art's proposal is in the handoff; it is a proposal, not a decision.
 
-Meanwhile, continue with **A06–A08** — deepening the Passing Platforms,
-Counterfire Arcade and Unweighted Switch kits the way A03–A05 deepened
-Blindside. Then A09, A11–A15, A16, T01–T18 (the eighteen environment
-packs), A17–A19.
+### Batch 048 — A06, A07, A08. The other three rooms. DELIVERED.
+
+Fourteen assets: the lift and shuttle guides, transfer edge, call post
+and recovery floor for Passing Platforms; the gunner emplacement, lane
+marking, alcove frame, shutter track and release bolt for Counterfire
+Arcade; the HEAVY plate frame, guided drive, applicator and return gate
+for Unweighted Switch.
+
+* Source `tools/blender/build_roomkits.py`; exports
+  `assets/models/batch048/roomkits/`; evidence
+  `docs/art/review/roomkits_2026-09-22/` (17 frames, including three
+  with Production's geometry in plain grey).
+* Handoff: `docs/art-requests/2026-09-22-roomkits-handoff.md`.
+* Gated by `tools/content/run_roomkit_fit.sh`.
+
+**The promises A06-A08 make are now checkable rather than described:**
+eight interval pips against `OPEN_SECONDS`, a class read that is not a
+kilogram gauge (enforced by part NAME), a lane marking under the shot
+line at `RECEIVER_Y` 0.85, a return gate with no tread. All four
+sabotage-tested and refused.
+
+**Two gates were wrong before they were right, again.**
+`assert_stops_at_edge` began as a rule about SIZE -- anything
+"bridge-sized" between the 0.2 m gap and half a metre past it -- and
+refused a nosing lying flat ON the deck. A rule about size cannot tell a
+bridge from a doormat. And `assert_clear_of_corridor` reported the
+drive's rail inside a corridor it runs beside, because
+`set_origin_group` had recentred an asset whose contract is that local
+y = 0 is the park position. **Three assets are exported "as-built" now,
+each carrying an `origin_means` string** -- the same class of error as
+the Blindside constant read in the wrong frame.
+
+**A06.5 is deliberately NOT delivered.** It asks for gate/interlock
+assemblies "only against actual agreed runtime states", and to label the
+missing hookup rather than add an animated fake lock. No agreed gate
+state exists in `passing_platforms.gd`, so there is no gate and the
+handoff is the label.
+
+### Then
+
+**A09** (cross-room machinery communication), **A11-A15** (enemy jobs,
+projectiles/telegraphs, Status/compound grammar reusing batch043,
+manipulation objects, item/Forge modules), **A16** (finish the six theme
+families), **T01-T18** (the eighteen source-game-inspired environment
+packs), **A17-A19** (detail/dressing library, actual-consumer trials and
+budget passes, final catalogue).
 
 ### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.
 

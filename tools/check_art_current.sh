@@ -259,6 +259,18 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_enemy_readiness.sh"
 
+  # A06-A08's promises are sentences in an assignment until something
+  # checks them: eight pips against OPEN_SECONDS, a class read that is
+  # not a kilogram gauge, a lane marking under the shot line, and a
+  # return gate with no tread on it.
+  say "the other three 0.4 rooms keep their kits' promises..."
+  tools/content/run_roomkit_fit.sh >/dev/null 2>&1 || \
+    fail "roomfit: a room visual no longer imports, lost a named part,
+    broke one of the A06-A08 promises, or brought a collider, light,
+    camera, script or animation along with it. Run
+
+    tools/content/run_roomkit_fit.sh"
+
   say "the theme pack binding, and its control..."
   tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
     fail "theme-bind: Production's ThemeMaterials no longer binds the
@@ -317,7 +329,7 @@ SCRIPTS="build_materials build_architecture build_props
   build_interaction_kit build_secrets build_enemy_roles build_zone_keys
   build_viewmodel build_gates build_decoys build_physics_props
   build_machinery build_wave1_repair_overlay build_junctions
-  build_setpieces build_yardkit build_skiffkit"
+  build_setpieces build_yardkit build_skiffkit build_roomkits"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.
@@ -380,7 +392,7 @@ done
 for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
            run_arrival_test.sh run_setpiece_fit.sh \
            run_yardkit_fit.sh run_skiff_sweep.sh \
-           run_enemy_readiness.sh; do
+           run_enemy_readiness.sh run_roomkit_fit.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."
