@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-encounter godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -676,6 +676,26 @@ godot-archive: godot-import  # the Echo archive: search, sort, the split
 	  echo "-- a script error was raised"; exit 1; \
 	fi; \
 	exit $$status
+
+# THE GENERATED ENCOUNTER, PLAYED. Declared cases, not all ten roles in
+# one room: the roles are built by the same composer a campaign uses,
+# the player is the controller's own, the input is the real input path,
+# and the fight ends in `kill_all` or it does not end.
+#
+# It ran about one in five red before it was a target, always on the
+# three-scuttler case, and the cause was the harness: the fight held
+# the trigger from a fixed spot, so a body placed outside the 18 m
+# aggro radius never woke and eighty-two shots went into the reward
+# pedestal in front of it. It walks now. Ten consecutive green runs
+# bought this line.
+godot-encounter: godot-import  # generated rooms, fought with the base kit
+	@out=$$($(GODOT) --headless --path godot -- --encounter 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT ENCOUNTER TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
 
 godot-consumable: godot-import  # the fifth slot at runtime: charges, races, refusals
 	@out=$$($(GODOT) --headless --path godot -- --consumable 2>&1); \

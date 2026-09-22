@@ -15,12 +15,6 @@ extends Node
 ## drops the controller's own player in, drives the REAL input path, and
 ## plays until the room is clear or the budget runs out.
 ##
-## **IN FLIGHT, AND NOT YET A GATE.** There is no `godot-encounter`
-## Makefile target on purpose: a suite in the Makefile is a suite CI must
-## run, and this one still has open findings. Run it by hand with
-## `godot-bin/godot --headless --path godot -- --encounter`. The target
-## and the CI line land together, in the commit that makes it green.
-##
 ## **DECLARED, and deliberately not exhaustive.** Each case names the
 ## roles it is about. Nothing forces all ten into one Zone: that is not a
 ## room anyone would generate, and a suite that built one would be

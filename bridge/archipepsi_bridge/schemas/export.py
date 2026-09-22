@@ -310,6 +310,13 @@ def export_constants_gd() -> str:
         f"const SIGNAL_SENSOR_KINDS = {_gd_literal(list(get_args(SG.SensorKind)))}",
         "const SIGNAL_SENSOR_KINDS_IMPLEMENTED = "
         f"{_gd_literal(list(SG.SUPPORTED_SENSOR_KINDS))}",
+        # What a graph value may DO to a machine. Exported for the same
+        # reason as the other two: `RoomGraphs` refuses an operation no
+        # runtime implements, and a refusal that read a list GDScript
+        # kept for itself could disagree with the one the Zone was
+        # validated against.
+        "const SIGNAL_ACTUATOR_OPS_IMPLEMENTED = "
+        f"{_gd_literal(list(SG.SUPPORTED_ACTUATOR_OPS))}",
     ]
     lines.append("")
     return "\n".join(lines)

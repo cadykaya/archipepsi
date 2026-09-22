@@ -149,6 +149,7 @@ jobs:
           make godot-constraints
           make godot-archive
           make godot-consumable
+          make godot-encounter
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live
