@@ -82,6 +82,7 @@ const DRIVERS := {
 	"--counterfire-test": preload("res://tests/counterfire_driver.gd"),
 	"--unweighted-test": preload("res://tests/unweighted_driver.gd"),
 	"--rail-zone": preload("res://tests/rail_zone_driver.gd"),
+	"--zone-state": preload("res://tests/zone_state_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }

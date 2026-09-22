@@ -123,6 +123,16 @@ var _activity_note := ""
 ## `room_id -> world AABB`, from the committed layout.
 var room_bounds := {}
 
+## THE ZONE'S REVERSIBLE CONFIGURATION (D-8). Declared by
+## `Zone.zone_state`, set by a control the player operates, read by
+## machinery in other rooms.
+var zone_state: ZoneState = null
+var _zone_state_built := {}
+var zone_state_refusals: Array[String] = []
+## What the snapshot said the variables held. Assigned before `setup`
+## exactly as `latches_carried` and `keys_carried` are.
+var macro_carried := {}
+
 ## THE ZONE'S DECLARED RAILWAYS, and what the engine refused to build.
 ##
 ## `rail_refusals` is deliberately public and deliberately not an error:
@@ -373,6 +383,26 @@ func setup(zone_dict: Dictionary) -> void:
 			"position": place.get("position", Vector3.ZERO),
 			"yaw": float(place.get("yaw", 0.0)),
 			"arrival": place.get("arrival", Vector3.ZERO)}
+	# THE DECLARED CROSS-ROOM RELATIONSHIPS (D-8). Before the railways,
+	# because both read `room_places` and this one owns state the rest of
+	# the Zone may read.
+	zone_state = ZoneState.new()
+	zone_state.name = "ZoneState"
+	add_child(zone_state)
+	zone_state.declare(zone_dict.get("zone_state", []) as Array)
+	# THE SAVED VALUES, BEFORE ANYTHING IS BUILT, so every mechanism
+	# comes up in the position the snapshot implies rather than at its
+	# initial and then jumping.
+	zone_state.restore(macro_carried)
+	_zone_state_built = ZoneStateBuild.build(self,
+			zone_dict.get("zone_state", []) as Array, zone_state,
+			room_places, room_bounds,
+			str(zone_dict.get("theme", "concrete_facility")))
+	for why: String in _zone_state_built.get("refused", []) as Array:
+		zone_state_refusals.append(why)
+		push_warning("zone_state refused: %s" % why)
+	zone_state.changed.connect(_on_zone_state_changed)
+
 	# THE DECLARED RAILWAYS (D-4). Built here and not in the chamber
 	# loop, because a network spans ROOMS: its docks are in different
 	# chambers and its path is only computable once every one of them has
@@ -737,6 +767,32 @@ func report_latch(package_id: String, latch_id: String) -> void:
 	BridgeClient.send_intent({"type": "latch_fired",
 			"zone_id": zone_id, "package_id": package_id,
 			"latch_id": latch_id})
+
+## A Zone-state variable changed, because a player operated its control.
+##
+## **THE REPORTING PATH IS THE BRIDGE LANE'S AND IS NOT BUILT YET.**
+## `ZoneProgress.with_macro` and `ZoneProgress.macro` exist -- storage
+## and read-back -- and `protocol.py` has no intent a client could send
+## to carry the change: `latch_fired`, `lock_opened` and their siblings
+## are all there and there is nothing for a Zone-state selection. So
+## this updates nothing outward and deliberately invents no message;
+## `zone_state.as_reported()` is what the engine WOULD send, the suite
+## asserts it, and the intent arrives with the bridge lane's
+## authoritative state-update path.
+func _on_zone_state_changed(variable_id: String, state: String) -> void:
+	zone_state_changes.append([variable_id, state])
+
+## Every change this Zone has seen, in order. Live, not saved: the
+## VALUES are what persist, and the sequence that produced them is
+## exactly the history `with_macro` overwrites rather than accumulates.
+var zone_state_changes: Array = []
+
+## The relationships this Zone actually built.
+func zone_state_setters() -> Array:
+	return (_zone_state_built.get("setters", []) as Array).duplicate()
+
+func zone_state_readers() -> Array:
+	return (_zone_state_built.get("readers", []) as Array).duplicate()
 
 ## A declared railway's span locked. The junction has already decided the
 ## consequence is accepted; this is only the reporting half, and

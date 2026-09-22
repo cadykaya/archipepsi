@@ -143,6 +143,7 @@ jobs:
           make godot-unweighted
           make godot-target-facing
           make godot-rail-zone
+          make godot-zone-state
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live

@@ -1360,3 +1360,71 @@ consequence is what makes the relationship cross-room, and a control that also
 drives something where the player is standing is fine and is the more legible
 kind. A positive control was added, because "at least one elsewhere" and "none
 here" pass exactly the same tests without one.
+
+
+### P-2 — the control was placed through the wall, and the walk told me nothing
+
+`make godot-zone-state`, 37 checks, in CI: D-8's engine half consuming
+`Zone.zone_state`.
+
+The first build placed a setter at `arrival + (-2.6, 0, 1.2)` — 2.6 m
+**sideways**. A generated corridor is not that wide, so the lever went into the
+plaster: the player walked to within 1.6 m, the interact ray hit the wall at
+x −2.3, and `_interact_target` stayed null. Every case that operated the
+control failed and every case that only read state passed, which is exactly the
+shape that makes this worth writing down — **the walk succeeded**. `walked=true`
+at 1.58 m is what a control you cannot use looks like from the outside.
+
+Two wrong guesses before the measurement: the lever's half-base lift (real, and
+fixed, and not the cause) and the interact range (3.0 m, never the cause). The
+third step reported what the ray actually hit, by object rather than by name,
+and the answer was a wall.
+
+**Placement consults the committed bounds now.** `room_bounds` is the layout's
+own answer to how wide a room is; `_inside` clamps every setter and mechanism
+into it with a margin, and the offsets run ALONG a room rather than across it.
+A room with no recorded bounds is left alone rather than clamped to nothing.
+
+**The diagnostic stayed, conditioned on failure.** A control through a wall and
+a control that ignores the key look identical from a `pulls` counter, so a
+failed pull now reports what the camera was looking at instead. Success is
+quiet.
+
+
+### P-3 — D-8 consumed: a puzzle that crosses rooms, and the gap that remains
+
+`ZoneController` builds `Zone.zone_state` into a `ZoneState` (the machine layer
+of §19.7: no logic nodes, no room addressing another, idempotent), a control the
+player operates, and mechanisms elsewhere that follow the value by **variable
+id**. Proven, each as its own case:
+
+- a declaration becomes a control in its declared room and a machine **two rooms
+  away**, so nothing here is satisfied by a shared doorway;
+- the player **walks to the control and presses the key**, the Zone accepts the
+  state, and a barrier's collider moves in a room the player is not in;
+- **reachable reversal** — the walk back is made and the control operated again,
+  reported separately from the declaration that a reversal exists (owner
+  correction 2);
+- **partial reload** comes up at the saved value with the barrier already clear,
+  which a mechanism waiting for a `changed` signal would fail;
+- **completed reload** comes back still reversible, not as a latch wearing the
+  name;
+- **local reset** rebuilds the machine from the variable and loses neither the
+  configuration nor an unrelated latch;
+- the setter node is **freed outright** and every reader still works, because
+  none of them ever held it;
+- an unimplemented mechanism is refused by name and the Zone still builds.
+
+**THE GAP, NAMED RATHER THAN FILLED.** `ZoneProgress.with_macro` and
+`ZoneProgress.macro` exist — storage and read-back — and `protocol.py` has **no
+intent** a client can send to report a selection: `latch_fired`, `lock_opened`
+and their siblings are all there and there is nothing for Zone state. So the
+engine sends nothing and invents no message; `ZoneState.as_reported()` is what
+it *would* send and the suite asserts it. The authoritative state-update path is
+the bridge lane's half of the next checkpoint.
+
+**And what this is not.** No composer emits a `zone_state` declaration yet, so
+the Zones here are hand-written dictionaries standing in for its output and
+labelled as standing in for it. `docs/D8_CROSS_ROOM_PROD.md` §5 is unchanged:
+the Blindside acceptance case is the composer's output through the real path,
+and a reference fixture is an intermediate test.
