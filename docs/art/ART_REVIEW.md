@@ -4850,6 +4850,74 @@ four camera positions in the same shell as T01, T02 and T03.
 **Still not complete:** no material treatment, no runtime selection, not
 imported, no owner review.
 
+
+## Batch 059 — T05. Kingdom Hearts 2, TWILIGHT TOWN SERVICE ALLEY — and the experiment that failed usefully
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_tw_alley_buttress` | 84 tris · 0.70 × 1.07 × 3.60 m · 32.0 texels/m | 6 | a brick pier that carries a **wire**, not a roof: corbelled, with a catenary bracket and stay |
+| `tp_tw_hoarding` | 108 tris · 2.16 × 0.29 × 3.00 m · 32.0 texels/m | 8 | the wall is **covered**, in four thicknesses — brick infill, boards, batten, torn bills |
+| `tp_tw_awning_gate` | 84 tris · 3.08 × 0.60 × 3.54 m · 32.0 texels/m | 6 | **soft goods on a hard frame**: a rolled shop awning and its folded arms |
+| `tp_tw_tram_track` | 84 tris · 1.45 × 0.47 × 0.13 m · 32.0 texels/m | 6 | floor dressing **laid and then neglected** — a displaced section with a lifted sett, never a continuous rail |
+| `tp_tw_street_lantern` | 96 tris · 0.32 × 0.48 × 0.83 m · 32.0 texels/m | 7 | one pane of four simply **absent** |
+| `tp_tw_tram_call` | 60 tris · 0.44 × 0.21 × 0.54 m · 32.0 texels/m | 4 | Batch 043's wall-switch contract as a municipal **tram call** |
+
+**Subtheme chosen and stated: Twilight Town, the service alley behind Tram
+Common.** Kingdom Hearts 2 has a dozen worlds and three of them are whole
+architectures on their own; blending them is the average the owner ruled
+out. No hint for this game either — one of the 75.
+
+### THIS PACK WAS AN EXPERIMENT AND IT RETURNED A NEGATIVE RESULT
+
+**It shares `temple_ruin` with T01 on purpose.** The owner's completion
+criteria say reuse is encouraged and *a useful visual variant is not a
+duplicate merely because its construction is shared*. Two packs in one
+family, in one shell, under the same four cameras, is the **test** of that
+claim rather than an accident of it.
+
+**The test says the claim does not hold today, and the reason is exactly
+the namespace.**
+
+The shapes are different and they are legible as different. `TW_hoarding`
+shows all four thicknesses — wall, brick infill, boards, batten, bill —
+and the silhouette does its job. The piers are corbelled where T01's are
+rooted. The gate is soft goods where T01's is bossed stone.
+
+**And the frame still reads as a warmer Forest Temple**, because
+`temple_ruin`'s `accent` is mossy stone, so the awning canvas reads as
+foliage and the timber boards read as green stone panels.
+
+> **The geometry is saying "boarded-up shopfront" and the pixels are
+> saying "overgrown temple". The pixels win.**
+
+That is the strongest single argument in this run for `COVERAGE.md` §3's
+pack namespace, and it is a picture rather than an assertion. It is also
+why **T05 is deliberately not lit or posed to hide it**: the honest frame
+is the useful one.
+
+### The valance is T04's coaming at the other end of the same hole
+
+A real shop awning's valance hangs below the door head. The first cut put
+it at `DOOR_H + 0.05`, lower edge at 3.14 m — **six centimetres inside the
+opening** — and the gate refused it by 2.550 m. That is what a valance
+*does*, and it is still headroom, and headroom in Production's doorway is
+Production's. The canopy ships **rolled**.
+
+### And the setts had to be bedded, not scattered
+
+`assert_parts_touch` called two of the four floating at 3–4 cm. It was
+right in a way that is also the art note: a sett that is not touching the
+rail is a stone lying in a street, and **the whole read of that piece is
+that the rail was bedded in them.**
+
+Evidence: `docs/art/review/twilight_2026-09-22/`, same shell, same four
+cameras as T01–T04.
+
+**Still not complete**, and here the missing material treatment is not one
+line of boilerplate — it is **the finding**.
+
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
 
 **All four large shells are `review: "pass"`.** Three authorities had to

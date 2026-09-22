@@ -1,0 +1,52 @@
+{
+  "pack": "tp_kingdom_hearts_2",
+  "models": "batch059/twilight",
+  "prefix": "TW",
+  "caption_note": "Material treatment MISSING: painted in temple_ruin -- the SAME family as T01, deliberately, to test whether reuse costs identity.",
+  "surround": "tp_tw_awning_gate",
+  "light": {
+    "ambient": [0.82, 0.70, 0.58],
+    "ambient_energy": 0.40,
+    "fog": 0.014,
+    "fog_color": [0.34, 0.24, 0.20],
+    "lamps": [
+      {"at": [4.30, 2.30, -1.0], "range": 8.0, "energy": 2.2,
+       "color": [1.00, 0.80, 0.46],
+       "why": "the bracket lantern, amber and low. Twilight Town's whole identity is a sun that never finishes setting, and a lantern is what you light against it rather than instead of it."},
+      {"at": [0.0, 2.6, -7.2], "range": 15.0, "energy": 2.6,
+       "color": [1.00, 0.72, 0.42],
+       "why": "the sun itself, down the alley the awning gate leads to -- warm from the low side, which is the opposite of every other pack's cold doorway"},
+      {"at": [-3.0, 3.3, 2.4], "range": 11.0, "energy": 1.1,
+       "color": [0.72, 0.78, 0.92],
+       "why": "sky bounce, cool, so the warm light has something to be warm AGAINST"}
+    ]
+  },
+  "place": [
+    {"id": "tp_tw_awning_gate", "at": [0.0, 0.0, -4.80], "yaw": 0,
+     "why": "on the opening; the canopy is ROLLED, because a deployed one is headroom and headroom is Production's"},
+    {"id": "tp_tw_alley_buttress", "at": [-2.7, 0.0, -3.4], "yaw": 0,
+     "why": "clear of the approach; the cable bracket reaches into the room"},
+    {"id": "tp_tw_alley_buttress", "at": [2.7, 0.0, -3.4], "yaw": 0,
+     "why": "and the opposite pier faces the same way, because a catenary runs BETWEEN two brackets and two brackets pointing apart carry nothing"},
+    {"id": "tp_tw_hoarding", "at": [-4.80, 0.0, -1.2], "yaw": 90,
+     "why": "the boarded window faces the alley; the wall stands proud so the four thicknesses read"},
+    {"id": "tp_tw_street_lantern", "at": [4.78, 2.05, -1.0], "yaw": -90,
+     "why": "bracket height on the opposite wall, with the broken face toward the street"},
+    {"id": "tp_tw_tram_call", "at": [1.82, 1.15, -4.74], "yaw": 0,
+     "why": "batch043's wall-switch contract: beside the door, at hand height -- the same place as T01's, T02's, T03's and T04's"},
+    {"id": "tp_tw_tram_track", "at": [-2.4, 0.0, 1.4], "yaw": -12},
+    {"id": "tp_tw_tram_track", "at": [2.2, 0.0, 2.6], "yaw": 166,
+     "why": "two displaced lengths, not one continuous run: a continuous rail reads as walkable infrastructure and floor is Production's"}
+  ],
+  "shots": [
+    {"name": "TW_approach", "eye": [0.0, 1.7, 4.4], "look": [0.0, 1.6, -5.0],
+     "check_opening": true,
+     "caption": "Approach -- grey is Production's; the pack is what sits on it"},
+    {"name": "TW_hoarding", "eye": [1.6, 1.7, 1.4], "look": [-4.7, 1.7, -1.6],
+     "caption": "Four thicknesses over a bricked-up window, seen in passing"},
+    {"name": "TW_threshold", "eye": [0.0, 1.7, -9.6], "look": [0.0, 1.6, -2.0],
+     "caption": "Through the 2.4 x 3.2 opening -- the valance clears the head"},
+    {"name": "TW_chamber", "eye": [3.9, 3.1, 4.4], "look": [-0.7, 0.7, -2.2],
+     "caption": "The alley -- six pieces, one place, routes unchanged"}
+  ]
+}

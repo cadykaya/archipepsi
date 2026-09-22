@@ -13,8 +13,8 @@ into "81 packs exist".
 |---|---|
 | **CATALOGUE coverage** | **81 of 81.** Every included Archipelago game has a row, a queue id and a reserved pack id. This is a list, and a list is not art. |
 | **COMPLETED pack coverage** | **0 of 81.** Nothing has passed the bar in *What counts as a completed pack* below. |
-| **IN PROGRESS** | **4** — T01 `tp_ocarina_of_time`, T02 `tp_super_mario_64`, T03 `tp_bomb_rush_cyberfunk`, T04 `tp_super_metroid`: content built and applied in engine, material treatment still missing on all four. |
-| **NOT STARTED** | **77.** |
+| **IN PROGRESS** | **5** — T01 `tp_ocarina_of_time`, T02 `tp_super_mario_64`, T03 `tp_bomb_rush_cyberfunk`, T04 `tp_super_metroid`, T05 `tp_kingdom_hearts_2`: content built and applied in engine, material treatment still missing on all five. |
+| **NOT STARTED** | **76.** |
 
 **Catalogue snapshot:** `catalogue.json`, taken 2026-09-22 from
 `https://archipelago.gg/games` ("Currently Supported Games").
@@ -31,7 +31,7 @@ here.
 
 ## The two things a reader should know before the table
 
-### 1. Four rows have assets. Nothing has passed the completion bar.
+### 1. Five rows have assets. Nothing has passed the completion bar.
 
 Archipepsi's six theme families — `concrete_facility`,
 `rusted_industrial`, `neon_transit`, `gothic_stone`, `temple_ruin`,
@@ -187,7 +187,30 @@ completion: the verdict column is.**
 
 | `tp_super_metroid` | yes — the Wrecked Ship, the one region of six that is architecture rather than cave | yes — 6 assets, Batch 058 | yes — debris fan, caged lamp hanging off true | **NO** — painted in `rusted_industrial`; this game has NO hint to agree or disagree with, and 74 others are in the same position | yes — 4 frames, `wreck_2026-09-22/`, same shell and cameras as T01–T03 | yes — `packgates` plus the imported-geometry check; the pressure door's coaming was REFUSED and is Production's to place | not started | **IN PROGRESS** |
 
-**0 of 81 complete. 4 in progress. 77 not started.**
+| `tp_kingdom_hearts_2` | yes — Twilight Town, the service alley behind Tram Common | yes — 6 assets, Batch 059 | yes — displaced tram rail in setts, bracket lantern with a pane gone | **NO, AND THIS PACK IS THE PROOF OF WHY IT MATTERS** — it shares `temple_ruin` with T01 deliberately, to test the "reuse is not a duplicate" criterion, and **the test failed**: the shapes read as a boarded shopfront and the pixels read as an overgrown temple. See below. | yes — 4 frames, `twilight_2026-09-22/`, same shell and cameras as T01–T04 | yes — `packgates` plus the imported-geometry check; the awning valance was REFUSED for hanging into the doorway | not started | **IN PROGRESS** |
+
+**0 of 81 complete. 5 in progress. 76 not started.**
+
+### The experiment in T05, and what it settles
+
+The owner's criteria say reuse is encouraged and **a useful visual variant
+is not a duplicate merely because its construction is shared.** T05 shares
+`temple_ruin` with T01 on purpose to test that.
+
+**The shapes are different and legible as different** — corbelled brick
+piers against rooted columns, a four-thickness hoarding against a split
+relief, a rolled awning against a bossed surround. **And the frame still
+reads as a warmer Forest Temple**, because `temple_ruin`'s `accent` is
+mossy stone, so awning canvas reads as foliage and timber boards read as
+green stone.
+
+> **The geometry says "boarded-up shopfront". The pixels say "overgrown
+> temple". The pixels win.**
+
+The criterion is right in principle and cannot be met in practice until a
+pack can carry its own material set — which is §3. Two packs sharing a
+FAMILY is fine; two packs sharing the same PIXELS is not a variant, it is
+a recolour that forgot to recolour.
 
 ---
 
@@ -207,7 +230,7 @@ progress.
 | T02 | Super Mario 64 | `tp_super_mario_64` | Clockwork Garden — **Tick Tock Clock** subtheme, stated | `rusted_industrial` construction | 6: gear column with an upright wheel and pinion, parted wall movement, dial door bezel, bent fallen clock hand, pendulum fitting, winding-key escutcheon | **content yes** (batch056), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T03 | Bomb Rush Cyberfunk | `tp_bomb_rush_cyberfunk` | Afterhours Municipal Transit — **Brink Terminal, after hours** subtheme, stated | `neon_transit` construction | 6: tagged concourse pillar, departure board mid-flip, shuttered gate head, torn grind rail, batten with one tube out, ticket-validator plate | **content yes** (batch057), **materials no** (§3) | no | not started — in engine, see the completion ledger |
 | T04 | Super Metroid | `tp_super_metroid` | Pressureworks Derelict — **the Wrecked Ship** subtheme, stated | `rusted_industrial` construction | 6: burst frame stanchion, hull panel with hatch on one hinge, pressure-door frame with dogging lugs, blown debris fan, caged lamp off true, dogging lever | **content yes** (batch058), **materials no** (§3) | no | not started — in engine, see the completion ledger |
-| T05 | Kingdom Hearts 2 | `tp_kingdom_hearts_2` | Twilight Service District | — | — | no | no | not started |
+| T05 | Kingdom Hearts 2 | `tp_kingdom_hearts_2` | Twilight Service District — **Tram Common service alley** subtheme, stated | `temple_ruin` construction, shared with T01 deliberately | 6: corbelled brick pier with catenary bracket, four-thickness hoarding, rolled awning gate, displaced tram rail in setts, bracket lantern missing a pane, tram call plate | **content yes** (batch059), **materials no** (§3, and this pack is the evidence) | no | not started — in engine, see the completion ledger |
 | T06 | DOOM 1993 | `tp_doom_1993` | Foundry Containment | — | — | no | no | not started |
 | T07 | Dark Souls III | `tp_dark_souls_iii` | Cinder Aqueduct | — | — | no | no | not started |
 | T08 | The Wind Waker | `tp_the_wind_waker` | Harbour Windworks | — | — | no | no | not started |
