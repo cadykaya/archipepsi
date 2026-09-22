@@ -106,6 +106,19 @@ Two things from it that other lanes need:
   one descriptor from a fixed path. A library of 81 packs needs a keyed
   lookup and a pack-aware hint. Integration dependency for Prod/Dess;
   Art has not built a second loader.
+* **AND THERE IS NOWHERE TO PUT A PACK'S PIXELS.** Sharper than the
+  missing hook, and a different problem. `THEME_PACK.json` is a flat
+  `themes` list of six with `textures` keyed `"<theme>/<role>"` -- no
+  pack namespace. A game pack's materials can enter it only by becoming
+  a SEVENTH HOUSE THEME, and 39 files here name `temple_ruin`
+  (navigation, lights, landmarks, dressing, secrets, the content export,
+  four verifiers). Eighty-one packs cannot be seventy-five more entries
+  in that list. Pack CONTENT -- meshes, motifs, dressing, control
+  housings -- is not blocked; a pack's MATERIAL SET is. Prod/Dess pick:
+  packs become themes, or `THEME_PACK.json` grows a `packs` namespace
+  and `ThemePack` resolves one. Art has not picked, because picking by
+  writing files is a second loader through the back door.
+  `docs/art/theme-packs/COVERAGE.md` §3.
 * **An authored enemy would take NO damage tint.**
   `Enemy._collect_tint_parts` takes only meshes whose
   `material_override` is a `StandardMaterial3D`, and a glTF import puts

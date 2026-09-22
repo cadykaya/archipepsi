@@ -62,6 +62,47 @@ producing.
 
 ---
 
+### 3. And there is nowhere to PUT a pack's pixels
+
+Found 2026-09-22, while scoping the first pack. It is sharper than the
+hook problem above and it is a different problem.
+
+`assets/textures/theme/THEME_PACK.json` — the descriptor the whole set is
+built and verified against — has this shape:
+
+```json
+"themes":   ["concrete_facility", "gothic_stone", "neon_transit",
+             "rusted_industrial", "temple_ruin", "void_glitch"],
+"textures": { "concrete_facility/accent": …, "concrete_facility/ceiling": … }
+```
+
+A flat list of themes, and textures keyed `"<theme>/<role>"`. **There is no
+pack namespace.** A game pack's textures can enter that structure in exactly
+one way: by becoming a seventh entry in `themes` — at which point it is
+indistinguishable from a house family, because the only thing that could tell
+them apart is `Constants.THEME_BY_GAME_HINT`, which is Production's and which
+maps six titles onto the six house looks.
+
+Eleven shells hard-code a house theme name, and **39 files in this repository
+name `temple_ruin`** — navigation, lights, landmarks, dressing, secrets, the
+content export and four verifiers among them. So a seventh name is not a small
+addition; and **eighty-one packs cannot be seventy-five more entries in a flat
+list that the rest of the codebase treats as the house set.**
+
+**What this means for the queue.** Art can author a pack's *content* — meshes,
+motifs, dressing, control housings — into the existing batch pipeline today,
+and that work is not blocked. What cannot happen yet is a pack's **material
+set**, because there is no key it can be filed under that does not claim to be
+a seventh house family.
+
+**What Prod/Dess would need to decide**, and it is one decision, not three:
+does a game pack become a theme (the `themes` list grows, and something other
+than `THEME_BY_GAME_HINT` distinguishes pack from house), or a separate
+artefact (`THEME_PACK.json` grows a `packs` namespace beside `themes`, and
+`ThemePack` learns to resolve one)? **Art has not picked**, because picking it
+by writing files is how a second loader gets built by the back door, and the
+owner's note forbids that in as many words.
+
 ## What counts as a completed pack
 
 Recorded here because the owner's wording is the specification and it is
