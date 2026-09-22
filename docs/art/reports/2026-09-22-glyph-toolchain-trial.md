@@ -228,3 +228,130 @@ authority was touched.
   from it, as it did before this trial.
 - No repository merge, no installation change, no credential, no subscription,
   no scheduled wake-up.
+
+---
+
+## 5 · Addendum: the candidate advanced to `87db9e2`, and what one real cycle showed
+
+**Arty**, 2026-09-22, at the first safe checkpoint after Batch 055 was
+committed and pushed.
+
+The owner's addendum replaced the `ebe949b` pin with
+`87db9e20dd0c7cb1a1f7a3c617a47d5efa3526de` on
+`claude/feature-planning-roadmap-5oibiu`, and asked for the updated
+**external** interface to be verified — *"An in-process helper test alone
+would miss the external-interface bugs this update repairs"* — not for the
+whole trial to be rerun. It was not rerun.
+
+### What moved, and what did not
+
+* `/home/user/glyph-trial` fetched and checked out `87db9e2`. Clean.
+* `/home/user/ecms-glyph` is still at **`6c80b63`**, clean. Batches 043 and
+  052 record that SHA beside every asset; **the authoring build did not
+  move and this addendum does not move it.**
+* `npm ci` + `npm run build` clean. `glyph doctor`: every package compiled,
+  chromium found, **23 extensions** served.
+
+### One thing I broke by reading, and put back
+
+`art-trial/*.glyph` are the repository's own committed fixtures, and they
+are SQLite containers. Running `glyph verify` on five of them checkpointed
+their WAL into the main file and deleted the tracked `-shm`/`-wal`
+siblings on close — so **six tracked files were modified by an operation
+that only read**. Restored with `git checkout -- art-trial/`; the checkout
+is clean. Worth knowing before anyone opens a shared `.glyph` casually: in
+this container format, opening is a write.
+
+### The cycle, through the interface I will actually use
+
+A fresh scratch project, because the addendum's `--collaborator` path is
+the one-time authorized grant and a fresh project is where it applies. **I
+did not recreate or overwrite an existing working project**, and the owner
+and artist identities are distinct: `act_owner_arty` is Lead Owner,
+`act_agent_arty` is the artist, and every drawing command below ran as the
+artist.
+
+| step | through | result |
+|---|---|---|
+| grant | `glyph run project.grant --actor act_owner_arty --collaborator act_agent_arty:agent` | `grn_1_act_agent_arty`, scopes `*`, operations edit/comment/review/session_start |
+| edit | `glyph batch` — `txn.begin` with explicit `base_revision` and `scope`, then palette, asset, variant, fill and eight `pixels.draw` calls, all citing the one transaction | 14 steps, one process |
+| commit | `txn.commit` | `rev_J81NDB7F533AC0CBHJWT1Z` |
+| **look** | `glyph view --scale 8 --out probe.png`, **opened as an image** | `docs/art/review/glyph_addendum_2026-09-22/CYCLE_probe_8x.png` |
+| reopen | `glyph describe`, `glyph log` | head and seq read back; the log attributes the revision to the **artist**, not the owner |
+| export | `glyph project-revision --to <dir>` | `glyph.projection.json`, a palette, a variant and a cel PNG, with six omissions declared by name |
+
+The rendered probe is four dark joints with light lips at rows 0, 8, 16
+and 24 of a 32 px tile — a pitch that divides, chosen so the picture is
+about today's Batch 055 question and not about nothing. The wrap gap is
+the same 8 px as the others, and that is visible in the image rather than
+asserted about it.
+
+### The two repairs, verified on the real surface
+
+Driven over **stdio JSON-RPC** against `glyph mcp`, not in process.
+
+* **Ordinary mutations advertise the transaction argument.** 35 tools on
+  the default surface; nine of them carry `transaction` and **every one
+  lists it in `required`** — `asset_create`, `palette_create`,
+  `variant_create`, `pixels_draw`, `pixels_apply_patch`, `candidate_submit`,
+  `question_raise`, `txn_commit`, `txn_abort`. The old incomplete
+  signatures are gone and nothing was worked around.
+* **The five newly-defaulted tools are there:** `memory_query`,
+  `candidate_submit`, `comment_list`, `question_raise`, `question_list`,
+  all present by name.
+
+### Doctrine, craft, and not approving my own work
+
+* `craftbook_query {topic:"tiling"}` returns `cb_seams`, and it lands on
+  today's work: *"A tile seam that matches at the abutting column and
+  breaks one pixel in still reads as a seam. Check the depth the eye
+  actually notices, not the depth that is easy to check."* The tool says
+  of itself that craft **binds no actor and overrides no project
+  doctrine**.
+* `memory_query {scope:"project"}` is a different question and answers it
+  separately, tier by tier, with the note that an empty tier means nothing
+  was found there **rather than that it was not searched**.
+* `candidate_submit` succeeded as the artist — `cnd_V1EFSZVSPGD4AAZGW2TPRD`,
+  `outcome: null`, awaiting the owner.
+* `memory.promote` on my own candidate, as the artist, with `scopes:["*"]`:
+  **`PERMISSION_DENIED — "promote_doctrine" is reserved to the Lead Owner
+  and is not available under any grant.`** A grant of everything is still
+  not ownership. That is the property worth having.
+
+### Interface friction found on the way, reported rather than worked around
+
+Five refusals before the cycle ran, all mine to fix, and one of them is a
+gap in the tool rather than in me:
+
+1. `palette.create` with `{"name":..,"rgba":"3a4048ff"}` — the documented
+   shape is `[{value:{r,g,b,a}, name?}]` and I had not read it. **But the
+   response was an internal `TypeError: Cannot read properties of
+   undefined (reading 'a')` wrapped as `PRECONDITION_FAILED`, with
+   `"internal": true`.** `palette.create_entry` runs its colour through
+   `parseRgba`, which says *"must be an {r, g, b, a} colour"*;
+   `palette.create` casts `e.value as never` and does not. **A malformed
+   entry should get the same sentence from both.** Reported here; not
+   patched, because this is the tool's repository and not mine.
+2. An `a: 0` entry in an indexed project is refused with a `how_to_allow`.
+   Correct, and well said.
+3. Coordinates are `[x, y]`, not `{x, y}`.
+4. `connectivity` takes the **string** `"4"`. The sentence renders the
+   enum unquoted — *must be one of 4, 8* — so an integer looks acceptable;
+   only the machine payload's `"values": ["4","8"]` disambiguates.
+5. `approval_scope_requested` is an array, not a scope object like
+   `txn.begin`'s. Two adjacent fields named "scope" with different shapes
+   is a thing to trip on twice.
+
+Every one of these refused with the field named and the accepted values
+listed, which is why five wrong inputs cost five minutes rather than an
+afternoon.
+
+### Verdict, unchanged
+
+**Adopt `check_tiling` as a REPORTING step. Do not move the authoring
+build.** `6c80b63` stays. Nothing here changes that, and nothing in the
+Archipepsi repository depends on the trial checkout.
+
+The candidate submitted above lives inside a transaction that was then
+aborted, so it is **not** persisted: this was interface verification, not
+production work. No Archipepsi asset was authored through Glyph.

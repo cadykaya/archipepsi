@@ -178,13 +178,25 @@ Two things from it that other lanes need:
   gravity. Handoff:
   `docs/art-requests/2026-09-22-manipulation-handoff.md`.
 
-* **The Glyph toolchain candidate was trialled, not adopted.** Separate
-  worktree, baseline `6c80b63` unmoved and re-verified. The authoring
-  build does NOT move: Batches 043 and 052 record that SHA beside every
-  asset. `check_tiling` is worth having as a REPORTING step; on both
-  cases examined closely it flagged authored structure, not a defect,
-  so no texture was changed.
-  `docs/art/reports/2026-09-22-glyph-toolchain-trial.md`.
+* **The Glyph toolchain candidate was trialled, not adopted; the
+  addendum's `87db9e2` has now been taken too.** Separate worktree,
+  baseline `6c80b63` unmoved and re-verified. The authoring build does
+  NOT move: Batches 043 and 052 record that SHA beside every asset.
+  `check_tiling` is worth having as a REPORTING step. Both addendum
+  repairs verified over real stdio JSON-RPC, not in process: 35 tools on
+  the default surface with `transaction` **required** on all nine
+  mutations that take one, and `memory_query`, `candidate_submit`,
+  `comment_list`, `question_raise`, `question_list` all present. One
+  edit -> commit -> image LOOKED AT -> reopen -> export cycle ran end to
+  end as a granted artist distinct from the owner, and `memory.promote`
+  on my own candidate refused: *reserved to the Lead Owner and not
+  available under any grant*, even with `scopes:["*"]`. Five interface
+  frictions reported, one of them a real gap (`palette.create` answers a
+  malformed colour with an internal TypeError where
+  `palette.create_entry` preconditions it). **Opening a `.glyph` writes
+  to it** -- five `verify` runs modified six tracked fixtures by
+  checkpointing their WAL; restored.
+  `docs/art/reports/2026-09-22-glyph-toolchain-trial.md` §5.
 * **THE COURSE RHYTHM BREAKS AT THE TILE EDGE, AND IT TOOK THREE TRIES
   TO SAY WHY.** A 128 px tile covers 4 m; anything drawn with
   `range(0, size, step)` repeats at `step` inside the tile and at
