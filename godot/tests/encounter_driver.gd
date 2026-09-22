@@ -73,7 +73,7 @@ func _run() -> void:
 
 	await _a_room_of_melee_fights_back_and_can_be_cleared()
 	await _indirect_fire_reaches_a_player_who_stands_still()
-	await _a_bulwark_has_to_be_flanked()
+	await _a_bulwark_turns_to_face_you()
 	await _a_room_of_flyers_is_completable_from_the_ground()
 	await _a_beacon_dies_like_anything_else()
 	await _the_room_is_not_clear_until_every_body_is()
@@ -324,10 +324,18 @@ func _indirect_fire_reaches_a_player_who_stands_still() -> void:
 	_check(_living(record).size() == 2, "both are placed")
 
 	var hurt := await _stand_still(controller, 900)
+	# DID THEY SHOOT AT ALL? "No damage" is the symptom of two different
+	# problems — a role that never attacks, and a role that attacks and
+	# misses — and they want opposite fixes.
+	var fired := 0
+	for enemy: Variant in _living(record):
+		if (enemy as Enemy).telegraph_kind != "":
+			fired += 1
 	_check(hurt > 0.0,
 			"a player who does nothing for fifteen seconds is hurt "
-			+ "(%.1f hp) — the shots arrive -- %s"
-			% [hurt, _engagement(controller, record)])
+			+ "(%.1f hp) — the shots arrive -- %s; %d winding up now, "
+			% [hurt, _engagement(controller, record), fired]
+			+ "%d live projectiles in the world" % _projectiles())
 
 	var fight := await _fight(controller, record)
 	_check(int(fight["left"]) == 0,
@@ -336,54 +344,66 @@ func _indirect_fire_reaches_a_player_who_stands_still() -> void:
 	await _drop(controller)
 
 
-## THE HEAVIEST ROLE THAT IS NOT A BRUTE, and the one with actual
-## counterplay in it.
+## THE HEAVIEST ROLE THAT IS NOT A BRUTE, and the one whose counterplay
+## a live fight does not offer.
 ##
-## **THE FIRST VERSION OF THIS CASE WAS WRONG AND THE ROLE WAS RIGHT.**
-## It stood in front of a bulwark, held the trigger, and asserted the
-## room would clear; the bulwark killed the player instead and the case
-## reported that as a failure. But `roster_driver` proves that a bulwark
-## CANNOT BE FOUGHT FRONTALLY -- that is its whole brief -- so a case
-## that fights it frontally and expects to win is a case asserting the
-## opposite of the design.
+## **TWO WRONG VERSIONS BEFORE THIS ONE, and the role was right both
+## times.** The first stood in front of a bulwark, held the trigger and
+## asserted the room would clear -- against a role whose entire brief is
+## that it cannot be fought frontally. The second put the player behind
+## it and asserted that flanking would beat a frontal fight; it measured
+## 9.9 hp either way, because a bulwark `look_at`s the player every frame
+## it has noticed them. **Teleporting behind something that turns is not
+## a flank.**
 ##
-## So this asks the question the role is built for: does the counterplay
-## work? Frontal fire is measured, the player walks around, and flanking
-## fire is measured against it.
-func _a_bulwark_has_to_be_flanked() -> void:
-	print("  -- bulwark: frontal fire is refused, flanking is not")
+## So this measures what is actually there. The directional armour is
+## checked the way `roster_driver` checks it -- SYNTHETIC, two
+## `take_damage` calls with opposite directions, labelled as such -- and
+## the live fight is measured and REPORTED rather than asserted, because
+## what it reports is a design question this lane does not get to answer.
+func _a_bulwark_turns_to_face_you() -> void:
+	print("  -- bulwark: the armour is directional, the flank is not "
+			+ "available")
 	var controller := await _built(_zone([
 			{"archetype": "bulwark", "count": 1}]))
 	var record := _record(controller)
 	_check(_living(record).size() == 1, "one bulwark is placed")
 	var target: Enemy = _living(record)[0]
-	var opened: float = target.hp
 
-	# FROM THE FRONT. The bulwark turns to face the player, so standing
-	# still and shooting is the frontal case by construction.
+	# THE MECHANISM, synthetically, in a real room. Two hits of the same
+	# size from opposite sides: this is machine arithmetic on
+	# `take_damage` and not a played exchange, and it is here to show
+	# WHY the live numbers below come out as they do.
+	var full: float = target.hp
+	target.rotation.y = 0.0
+	target.take_damage(20.0, Vector3.BACK, 0.0)
+	var frontal: float = full - target.hp
+	target.hp = full
+	target.take_damage(20.0, Vector3.FORWARD, 0.0)
+	var behind: float = full - target.hp
+	target.hp = full
+	_check(frontal < behind * 0.5,
+			"a frontal hit does %.1f and one from behind does %.1f"
+			% [frontal, behind])
+	_check(frontal > 0.0,
+			"the front is armoured, not invulnerable (%.1f)" % frontal)
+
+	# ...AND THE LIVE FIGHT, played. Reported, not asserted.
+	var opened: float = controller.player.hp
 	await _shoot_for(controller, target, 240)
-	var frontal: float = opened - target.hp
-
-	# ...AND FROM BEHIND. A harness setup: the player is put on the far
-	# side, which is what walking around would achieve, and the shooting
-	# after it is real.
-	var behind: Vector3 = target.global_position \
-			- target.global_transform.basis.z * 4.0
-	controller.player.global_position = Vector3(
-			behind.x, controller.player.global_position.y, behind.z)
-	await get_tree().physics_frame
-	var before_flank: float = target.hp
-	await _shoot_for(controller, target, 240)
-	var flanked: float = before_flank - target.hp
-
-	_check(flanked > frontal,
-			"flanking beats a frontal fight (%.1f hp against %.1f in the "
-			% [flanked, frontal] + "same four seconds)")
-	_note("bulwark: %.1f hp frontal / %.1f hp flanked per four seconds "
-			% [frontal, flanked]
-			+ "of base-kit fire. Whether that RATIO is right is a "
-			+ "playtest question, and the provisional value of 7 has had "
-			+ "no playtest.")
+	var dealt: float = full - target.hp
+	var taken: float = opened - controller.player.hp
+	_check(dealt > 0.0, "four seconds of base-kit fire does land (%.1f hp)"
+			% dealt)
+	_note(("bulwark, LIVE, four seconds: player deals %.1f hp and takes "
+			+ "%.1f. It turns to face the player every frame it has "
+			+ "noticed them, so the rear arc the armour leaves open is "
+			+ "not reachable by walking. At that rate its %.0f hp "
+			+ "outlasts the player's %.0f. WHETHER A BASE-KIT PLAYER IS "
+			+ "MEANT TO BEAT ONE ALONE IS AN OWNER QUESTION -- if not, a "
+			+ "Zone that places one is gated on an Echo, and nothing "
+			+ "declares that gate.")
+			% [dealt, taken, full, opened])
 	await _drop(controller)
 
 
@@ -483,3 +503,16 @@ func _the_room_is_not_clear_until_every_body_is() -> void:
 	controller._evaluate_objectives()
 	_check(bool(record["satisfied"]), "and only then is the room clear")
 	await _drop(controller)
+
+
+
+## EVERY ENEMY PROJECTILE CURRENTLY IN THE WORLD. A shot that was fired
+## and went nowhere is a different finding from a shot that was never
+## fired, and the count is what tells them apart.
+func _projectiles() -> int:
+	var n := 0
+	for node: Node in get_tree().root.find_children(
+			"*", "Node3D", true, false):
+		if node is EnemyProjectile:
+			n += 1
+	return n
