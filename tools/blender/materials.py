@@ -109,7 +109,7 @@ def _concrete_wall(canvas, surface, theme, ribbed=False):
         # A pilaster variant. The room read as "every surface exposes the
         # same exact 4 m panel rhythm"; the fix is not less structure, it is
         # a SECOND structure that alternates with the first.
-        pitch = surface.texels(1.0)
+        pitch = surface.course(1.0)
         for x in range(0, surface.size, pitch):
             w = surface.texels(0.16)
             canvas.rect(x, 0, w, surface.size, base[1])
@@ -120,7 +120,7 @@ def _concrete_wall(canvas, surface, theme, ribbed=False):
     else:
         paintkit.panel_grid(canvas, surface, base[0], base[3],
                             pitch_metres=1.2, vertical_pitch_metres=2.0)
-        surface.bolt_pitch = surface.texels(0.5)
+        surface.bolt_pitch = surface.course(0.5)
         paintkit.bolts(canvas, surface, base[0], base[3])
         for seam in surface.seams:
             for x in range(surface.bolt_pitch // 2, surface.size,
@@ -170,7 +170,7 @@ def _concrete_floor(canvas, surface, theme):
     paintkit.tonal_drift(canvas, surface, amount=0.06, cell_metres=1.2)
     paintkit.broad_patches(canvas, surface, [base[1]],
                            cell_metres=0.8, density=0.20, strength=0.25)
-    step = surface.texels(2.0)
+    step = surface.course(2.0)
     for i in range(0, surface.size, step):
         canvas.hline(i, 0, surface.size - 1, trim[0])
         canvas.hline(i + 1, 0, surface.size - 1, base[1])
@@ -198,7 +198,7 @@ def _concrete_ceiling(canvas, surface, theme):
     paintkit.broad_patches(canvas, surface, [base[0]],
                            cell_metres=0.7, density=0.24, strength=0.28)
     # Ribbed soffit: spanning ribs at 0.6 m, one direction only.
-    pitch = surface.texels(0.6)
+    pitch = surface.course(0.6)
     for y in range(0, surface.size, pitch):
         canvas.hline(y, 0, surface.size - 1, base[0])
         canvas.hline(y + 1, 0, surface.size - 1, base[2])
@@ -221,7 +221,7 @@ TRIM_CYCLE_M = 0.5
 
 def _trim_strip(canvas, surface, rows):
     """Repeat a `rows(canvas, y0, cycle)` design up the whole tile."""
-    cycle = surface.texels(TRIM_CYCLE_M)
+    cycle = surface.course(TRIM_CYCLE_M)
     for y0 in range(-cycle, surface.size + cycle, cycle):
         rows(canvas, y0, cycle)
 
@@ -273,7 +273,7 @@ def _concrete_accent(canvas, surface, theme):
     canvas.rect(0, top, surface.size, band, accent[1])
     canvas.hline(top - 1, 0, surface.size - 1, base[3])
     canvas.hline(top + band, 0, surface.size - 1, base[0])
-    surface.bolt_pitch = surface.texels(0.5)
+    surface.bolt_pitch = surface.course(0.5)
     for x in range(inset + 2, surface.size - inset, surface.bolt_pitch):
         for y in (inset + 2, surface.size - inset - 3):
             canvas.set(x, y, base[0])
@@ -302,7 +302,7 @@ def _corrugate(canvas, surface, dark, light, pitch_metres=0.22):
     repeating rule in the real world. Stepped, not shaded: a sine sampled
     at 32 texels/m is a blur.
     """
-    pitch = max(3, surface.texels(pitch_metres))
+    pitch = surface.course(pitch_metres, minimum=3)
     for x in range(surface.size):
         phase = (x % pitch) / float(pitch)
         if phase < 0.16:
@@ -323,7 +323,7 @@ def _rust_wall(canvas, surface, theme):
     # Sheets lap horizontally; the vertical joint is where two sheets meet.
     paintkit.panel_grid(canvas, surface, base[0], base[3],
                         pitch_metres=1.2, vertical_pitch_metres=1.35)
-    surface.bolt_pitch = surface.texels(0.35)
+    surface.bolt_pitch = surface.course(0.35)
     paintkit.bolts(canvas, surface, base[0], accent[2])
     # Rust bleeds DOWN from the fixings, and only from the fixings. That is
     # the whole difference between a rusted wall and a wall with orange
@@ -352,7 +352,7 @@ def _rust_floor(canvas, surface, theme):
     paintkit.tonal_drift(canvas, surface, amount=0.06, cell_metres=1.2)
     # Chequer plate: raised lozenges in alternating pairs, drawn as texel
     # runs -- exactly how it was drawn in 1998.
-    step = max(4, surface.texels(0.14))
+    step = surface.course(0.14, minimum=4)
     for cy in range(0, surface.size, step):
         for cx in range(0, surface.size, step):
             flip = ((cx // step) + (cy // step)) % 2
@@ -363,7 +363,7 @@ def _rust_floor(canvas, surface, theme):
                 canvas.set(x, y, base[2])
                 canvas.set(x, y + 1, base[0])
     # Plate sections bolt down at their edges.
-    plate = surface.texels(2.0)
+    plate = surface.course(2.0)
     for i in range(0, surface.size, plate):
         canvas.hline(i, 0, surface.size - 1, base[0])
         canvas.vline(i, 0, surface.size - 1, base[0])
@@ -463,7 +463,7 @@ def _void_wall(canvas, surface, theme):
     # The missing-texture checker, at a REAL editor's cell size. Half-Life's
     # AAATRIGGER and Quake's notexture were both 16 units on a 64px map;
     # 0.5 m is the same idea expressed in metres.
-    cell = surface.texels(0.5)
+    cell = surface.course(0.5)
     for y in range(surface.size):
         for x in range(surface.size):
             on = ((x // cell) + (y // cell)) % 2
@@ -475,7 +475,7 @@ def _void_wall(canvas, surface, theme):
     # different game's texture.
     paintkit.panel_grid(canvas, surface, base[0], trim[2],
                         pitch_metres=1.2, vertical_pitch_metres=2.0)
-    surface.bolt_pitch = surface.texels(0.5)
+    surface.bolt_pitch = surface.course(0.5)
     paintkit.bolts(canvas, surface, base[0], trim[2])
     # Scanline tearing: whole rows displaced by whole texels. A displacement
     # is what a broken renderer does; noise is what a lava lamp does.
@@ -493,14 +493,14 @@ def _void_wall(canvas, surface, theme):
 
 def _void_floor(canvas, surface, theme):
     base, accent, trim = _ramps(theme)
-    cell = surface.texels(0.5)
+    cell = surface.course(0.5)
     for y in range(surface.size):
         for x in range(surface.size):
             on = ((x // cell) + (y // cell)) % 2
             canvas.set(x, y, base[1] if on else base[0])
     # A wireframe grid over the checker: the floor of a level nobody
     # compiled. The grid is at 1 m, the unit a 1998 editor snapped to.
-    step = surface.texels(1.0)
+    step = surface.course(1.0)
     for i in range(0, surface.size, step):
         canvas.hline(i, 0, surface.size - 1, trim[2])
         canvas.vline(i, 0, surface.size - 1, trim[2])
@@ -568,8 +568,8 @@ def _coursed(canvas, surface, joint, highlight, course_metres, block_metres,
     Each course gets its own offset, jittered off the nominal stagger by a
     hash, because a perfectly alternating bond is a machine's bond.
     """
-    course = max(2, surface.texels(course_metres))
-    block = max(3, surface.texels(block_metres))
+    course = surface.course(course_metres)
+    block = surface.course(block_metres, minimum=3)
     for index, y in enumerate(range(0, surface.size, course)):
         canvas.hline(y, 0, surface.size - 1, joint)
         if y + 1 < surface.size:
@@ -596,7 +596,7 @@ def _neon_wall(canvas, surface, theme):
     # Individual tiles vary. A tiled wall where every tile matches is a
     # printed tiled wall, and the variation has to be PER TILE rather than
     # per texel or it reads as noise laid over tiles.
-    tile = max(3, surface.texels(0.30))
+    tile = surface.course(0.30, minimum=3)
     for ty in range(0, surface.size, tile):
         for tx in range(0, surface.size, tile):
             shade = surface.hash.breaker("tile", tx, ty)
@@ -719,7 +719,7 @@ def _gothic_wall(canvas, surface, theme):
     # Mortar loss: the joint opens out in places rather than staying a
     # clean line. This is the mark that says the wall is old rather than
     # merely dark.
-    joint = surface.texels(0.42)
+    joint = surface.course(0.42)
     for y in range(0, surface.size, joint):
         for x in range(surface.size):
             if surface.hash.breaker("mortar", x, y) > 0.86:
@@ -783,7 +783,7 @@ def _gothic_trim(canvas, surface, theme):
     _trim_strip(canvas, surface, cycle_rows)
     # Riveted. The rivets are the theme's only regular rhythm, which is what
     # makes the stone around them read as irregular.
-    surface.bolt_pitch = surface.texels(0.22)
+    surface.bolt_pitch = surface.course(0.22)
     paintkit.bolts(canvas, surface, trim[0], accent[2])
     paintkit.speckle(canvas, surface, accent[0],
                      paintkit.near_edges(surface, 0.06),
@@ -799,7 +799,7 @@ def _gothic_accent(canvas, surface, theme):
     paintkit.tonal_drift(canvas, surface, amount=0.08, cell_metres=0.6)
     paintkit.panel_grid(canvas, surface, accent[0], accent[2],
                         pitch_metres=0.55, vertical_pitch_metres=1.1)
-    surface.bolt_pitch = surface.texels(0.28)
+    surface.bolt_pitch = surface.course(0.28)
     paintkit.bolts(canvas, surface, accent[0], accent[2])
     paintkit.speckle(canvas, surface, pal.grime(0),
                      paintkit.near_seams(surface, 0.05),
@@ -918,7 +918,7 @@ def _temple_trim(canvas, surface, theme):
     _trim_strip(canvas, surface, cycle_rows)
     # Brass mechanism: the one MADE thing in a theme of weathered stone,
     # so it gets the regular rhythm and the stone gets none.
-    surface.bolt_pitch = surface.texels(0.18)
+    surface.bolt_pitch = surface.course(0.18)
     paintkit.bolts(canvas, surface, trim[0], trim[2])
     # Verdigris, in the recesses, because that is where water sits.
     paintkit.speckle(canvas, surface, accent[1],
@@ -1018,7 +1018,20 @@ def surface_for(role, theme, size=ARCH_SIZE, metres=ARCH_METRES):
     if role in ("wall", "accent", "wall_ribbed"):
         # Panel courses at 1.2 m, which is a plausible sheet height and puts
         # two seams plus the top edge in a 4 m tile.
+        #
+        # THIS IS A LIVE COURSE, not inert metadata, and it took a wrong
+        # correction to find that out. `panel_seams` -- the only function
+        # that draws `surface.seams` as LINES -- is called zero times. But
+        # `paintkit.near_seams()` reads the same tuple to aim speckle (13
+        # call sites here), `paintkit.bolts()` puts a bolt row on every
+        # seam, and two treatments run weep streaks down from them. So the
+        # seams paint grime, bolts and streaks on this pitch even where
+        # nothing draws a line on it: `concrete_facility_wall_ribbed` takes
+        # no `panel_grid` call at all and still measures a 38 px rhythm in
+        # the exported PNG, and that rhythm is this one.
         pitch = int(round(size * 1.2 / metres))
+        if paintkit.SNAP_COURSES:
+            pitch = paintkit.snap_to_tile(pitch, size)
         seams = tuple(range(0, size, pitch))
         floor_edge = "bottom"
     elif role == "trim":

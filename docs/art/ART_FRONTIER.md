@@ -677,8 +677,13 @@ above -- under a stated rule: "a hand grip means a hand can lift it."
 The game does not manipulate with hands. `MANIPULATE_VERBS` are HOLD,
 PULL and PUSH, performed by a 700 N field at 20 m that holds 120 kg. So
 `phys_plate` 60, `phys_drum` 70 and `phys_girder` 95 wear "a device has
-to" and the field can carry all three. **One of those numbers is wrong
-and neither lane owns both**, so no fitting was moved on it.
+to" and the field can carry all three. ~~**One of those numbers is wrong
+and neither lane owns both**~~ -- CORRECTED by the owner: §10.3 is
+ORDINARY PICKUP (carriable AND <= 60 kg), ENVELOPE_MASS_KG 120 is the
+QUALIFIED PROVIDER envelope beside force and range. Two mechanisms, two
+limits, both right. The grips follow the hand rule correctly and nothing
+needs redesigning; Art distinguishes hand handling from device/constraint
+attachment, which grip_* against attach_* already does.
 
 Two more measured, both Production's to decide:
 

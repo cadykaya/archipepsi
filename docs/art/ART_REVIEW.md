@@ -4263,8 +4263,20 @@ states the rule: *"A hand grip means a hand can lift it."* The game does not
 manipulate with hands. `MANIPULATE_VERBS` are HOLD, PULL and PUSH, performed
 by a 700 N field at up to 20 m that holds 120 kg. So `phys_plate` (60),
 `phys_drum` (70) and `phys_girder` (95) wear *a device has to* and the field
-can pick all three up. **One of those two numbers is wrong and neither lane
-owns both**, so no fitting was moved on the strength of it.
+can pick all three up. ~~**One of those two numbers is wrong and neither lane
+owns both**~~, so no fitting was moved on the strength of it.
+
+**CORRECTED 2026-09-22 (owner):** ~~one of those two numbers is wrong~~ —
+**they govern different mechanisms.** §10.3, inherited by Amalgam, is
+ORDINARY PICKUP (`carriable` AND `mass <= 60`); `ENVELOPE_MASS_KG` 120 is
+the QUALIFIED MANIPULATION-PROVIDER envelope, beside force and range. Both
+correct. Batch 043's grips follow the hand rule because a grip is a hand
+affordance, and nothing needs redesigning. Art's job is to distinguish hand
+handling from device/constraint attachment — which `grip_*` against
+`attach_*` already does. The ask to Prod/Dess is to verify the pickup and
+ability consumers preserve that distinction, not to pick a number.
+
+
 
 | prop | kg | class | HOLD | PUSH | needs |
 | --- | ---: | --- | --- | --- | ---: |

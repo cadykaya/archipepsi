@@ -146,6 +146,36 @@ def _rgb(value):
 # structure -- what the painter is painting ON
 # ----------------------------------------------------------------------
 
+#: Snap wrapping course pitches to a divisor of the tile. OFF by default,
+#: because turning it on changes the painted look of every theme -- a 1.2 m
+#: panel course becomes 1.0 m -- and that is the owner's call, not a
+#: generator's. `build_theme_candidate.py` turns it on and writes to
+#: `assets/textures/theme_candidate/` so the two can be compared at the
+#: same scale before anything is decided.
+SNAP_COURSES = False
+
+
+def snap_to_tile(step, size, minimum=2):
+    """The divisor of `size` nearest `step`; the larger one on a tie.
+
+    Only a divisor removes the short interval at the wrap, and no amount
+    of moving where the run STARTS does: an offset relocates the odd
+    interval, it does not remove it. At 128 px the divisors are the
+    powers of two, which is coarse, and that coarseness is a real cost of
+    the correction rather than an implementation detail -- 43 px (1.35 m)
+    has nowhere nearer than 32 (1.0 m) to go.
+
+    The tie rule prefers the LARGER divisor, because halving a rhythm
+    doubles the number of lines in the tile and that reads as a different
+    material, where doubling it reads as the same material at a coarser
+    grain.
+    """
+    divisors = [d for d in range(minimum, size + 1) if size % d == 0]
+    if not divisors:
+        return step
+    return min(divisors, key=lambda d: (abs(d - step), -d))
+
+
 class Surface:
     """What this texture is a surface OF.
 
@@ -173,6 +203,32 @@ class Surface:
     @property
     def texels_per_metre(self):
         return self.size / float(self.metres)
+
+    def course(self, metres, minimum=2):
+        """A pitch that will be used as a WRAPPING step, in whole texels.
+
+        `texels()` answers "how big is this in texels". `course()` answers
+        a different question: "how far apart do I repeat this, on a tile
+        that repeats". Those are not the same question and the difference
+        is the whole of the tile-edge break --
+
+            for y in range(0, surface.size, step)
+
+        walks off the end of the tile and starts again at the next tile's
+        0, so the interval across the join is `size % step`, not `step`.
+        At 128 px a 38 px course gives 38, 38, 38 and then 14. The rhythm
+        is even for 3.5 m of wall and then stumbles, once every 4 m, for
+        as long as the wall goes on.
+
+        With `SNAP_COURSES` off this returns exactly what the call sites
+        computed before it existed, so the shipped set is unchanged and
+        that is checked by rebuilding it. With `SNAP_COURSES` on it
+        returns the nearest pitch the tile is a whole multiple of.
+        """
+        step = max(minimum, self.texels(metres))
+        if not SNAP_COURSES:
+            return step
+        return snap_to_tile(step, self.size, minimum)
 
     def texels(self, metres):
         """Convert a real-world size to whole texels. Rounds UP to 1.
@@ -421,12 +477,12 @@ def panel_grid(canvas, surface, dark, light, pitch_metres,
     left-to-right and a 4 m span of unbroken surface is not a panel, it is a
     wall with lines on it.
     """
-    step = max(2, surface.texels(pitch_metres))
+    step = surface.course(pitch_metres)
     for y in range(0, surface.size, step):
         canvas.hline(y, 0, surface.size - 1, dark)
         if y + 1 < surface.size:
             canvas.hline(y + 1, 0, surface.size - 1, light)
-    vstep = max(2, surface.texels(vertical_pitch_metres or pitch_metres))
+    vstep = surface.course(vertical_pitch_metres or pitch_metres)
     for x in range(0, surface.size, vstep):
         canvas.vline(x, 0, surface.size - 1, dark)
         if x + 1 < surface.size:

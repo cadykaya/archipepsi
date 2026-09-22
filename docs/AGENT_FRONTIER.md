@@ -162,8 +162,12 @@ Two things from it that other lanes need:
   `Constants.ENVELOPE_MASS_KG` is 120.** Batch 043's physics props
   signal what a HAND could do, and the game lifts with a 700 N field at
   20 m. Three props the envelope can carry -- plate 60, drum 70, girder
-  95 -- wear the "a device has to" language. Art moved no fitting on it:
-  one of the two numbers is wrong and neither lane owns both.
+  95 -- wear the "a device has to" language. **CORRECTED by the owner:
+  the two numbers govern DIFFERENT MECHANISMS** -- §10.3 is ordinary
+  pickup (carriable AND <= 60 kg), ENVELOPE_MASS_KG 120 is the qualified
+  manipulation-provider envelope beside force and range. Both right, the
+  grips are right, nothing needs redesigning. Art distinguishes hand
+  handling from device/constraint attachment.
 * **`phys_cart` at 180 kg is exactly the heaviest thing the envelope can
   push** -- 700.0 N against 700 N -- and **`phys_movable_cover` at 220
   cannot be pushed at all**, though its own docstring says it exists to

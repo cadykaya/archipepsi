@@ -1,0 +1,159 @@
+{
+  "batch": "055",
+  "cost": "The divisors of 128 are the powers of two. 1.35 m (43 px) snaps to 1.0 m (32 px) because there is nowhere nearer. Correcting the break changes designed course spacing by up to a quarter, which is a look decision for the owner.",
+  "not_a_fix": "pitch // 2 was proposed first and does not work: moving where the run starts relocates the odd interval without removing it. A panel_grid-only shim was tried second and does not work either: concrete_facility_wall_ribbed came out byte-identical because its 38 px rhythm is surface_for's seams, not panel_grid.",
+  "snaps": {
+    "0.14": {
+      "divides": true,
+      "now_px": 4,
+      "was_px": 4
+    },
+    "0.18": {
+      "divides": true,
+      "now_px": 8,
+      "was_px": 6
+    },
+    "0.2": {
+      "divides": true,
+      "now_px": 8,
+      "was_px": 6
+    },
+    "0.22": {
+      "divides": true,
+      "now_px": 8,
+      "was_px": 7
+    },
+    "0.28": {
+      "divides": true,
+      "now_px": 8,
+      "was_px": 9
+    },
+    "0.3": {
+      "divides": true,
+      "now_px": 8,
+      "was_px": 10
+    },
+    "0.35": {
+      "divides": true,
+      "now_px": 8,
+      "was_px": 11
+    },
+    "0.4": {
+      "divides": true,
+      "now_px": 16,
+      "was_px": 13
+    },
+    "0.42": {
+      "divides": true,
+      "now_px": 16,
+      "was_px": 13
+    },
+    "0.5": {
+      "divides": true,
+      "now_px": 16,
+      "was_px": 16
+    },
+    "0.55": {
+      "divides": true,
+      "now_px": 16,
+      "was_px": 18
+    },
+    "0.6": {
+      "divides": true,
+      "now_px": 16,
+      "was_px": 19
+    },
+    "0.75": {
+      "divides": true,
+      "now_px": 32,
+      "was_px": 24
+    },
+    "0.86": {
+      "divides": true,
+      "now_px": 32,
+      "was_px": 28
+    },
+    "0.9": {
+      "divides": true,
+      "now_px": 32,
+      "was_px": 29
+    },
+    "1.0": {
+      "divides": true,
+      "now_px": 32,
+      "was_px": 32
+    },
+    "1.1": {
+      "divides": true,
+      "now_px": 32,
+      "was_px": 35
+    },
+    "1.2": {
+      "divides": true,
+      "now_px": 32,
+      "was_px": 38
+    },
+    "1.2 (surface_for seams)": {
+      "divides": true,
+      "now_px": 32,
+      "was_px": 38
+    },
+    "1.35": {
+      "divides": true,
+      "now_px": 32,
+      "was_px": 43
+    },
+    "1.5": {
+      "divides": true,
+      "now_px": 64,
+      "was_px": 48
+    },
+    "2.0": {
+      "divides": true,
+      "now_px": 64,
+      "was_px": 64
+    }
+  },
+  "status": "CANDIDATE -- not a production asset, not applied, not approved, not runtime-selected. The shipped set under assets/textures/theme/ is untouched and was rebuilt byte-identical with SNAP_COURSES off.",
+  "textures": [
+    "concrete_facility_accent",
+    "concrete_facility_ceiling",
+    "concrete_facility_floor",
+    "concrete_facility_trim",
+    "concrete_facility_trim_plain",
+    "concrete_facility_wall",
+    "concrete_facility_wall_ribbed",
+    "gothic_stone_accent",
+    "gothic_stone_ceiling",
+    "gothic_stone_floor",
+    "gothic_stone_trim",
+    "gothic_stone_trim_plain",
+    "gothic_stone_wall",
+    "neon_transit_accent",
+    "neon_transit_ceiling",
+    "neon_transit_floor",
+    "neon_transit_trim",
+    "neon_transit_trim_plain",
+    "neon_transit_wall",
+    "rusted_industrial_accent",
+    "rusted_industrial_ceiling",
+    "rusted_industrial_floor",
+    "rusted_industrial_trim",
+    "rusted_industrial_trim_plain",
+    "rusted_industrial_wall",
+    "temple_ruin_accent",
+    "temple_ruin_ceiling",
+    "temple_ruin_floor",
+    "temple_ruin_trim",
+    "temple_ruin_trim_plain",
+    "temple_ruin_wall",
+    "void_glitch_accent",
+    "void_glitch_ceiling",
+    "void_glitch_floor",
+    "void_glitch_trim",
+    "void_glitch_trim_plain",
+    "void_glitch_wall"
+  ],
+  "what_changed": "Every WRAPPING pitch in the generator asks Surface.course() for its step, and with paintkit.SNAP_COURSES on that step is the divisor of the 128 px tile nearest the designed one. Four paths draw on such a pitch: surface_for's seams (read by near_seams, bolts and weep streaks), paintkit.panel_grid, inline loops in the treatments, and bolt pitches along a seam.",
+  "why": "range(0, size, step) with a step the size is not a multiple of leaves an odd interval across the tile's own edge, so the rhythm breaks once per repeat."
+}

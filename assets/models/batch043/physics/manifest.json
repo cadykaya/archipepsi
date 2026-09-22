@@ -43,7 +43,7 @@
       "push_force_n": 1944.444
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": false,
     "mass_class": "FIXED",
@@ -189,7 +189,7 @@
       "push_force_n": 1244.444
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "HEAVY",
@@ -280,7 +280,7 @@
       "push_force_n": 700.0
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "HEAVY",
@@ -388,7 +388,7 @@
       "push_force_n": 272.222
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "MEDIUM",
@@ -497,7 +497,7 @@
       "push_force_n": 58.333
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "LIGHT",
@@ -606,7 +606,7 @@
       "push_force_n": 369.444
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "MEDIUM",
@@ -695,7 +695,7 @@
       "push_force_n": 31.111
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "LIGHT",
@@ -787,7 +787,7 @@
       "push_force_n": 213.889
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "MEDIUM",
@@ -898,7 +898,7 @@
       "push_force_n": 855.556
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "HEAVY",
@@ -1007,7 +1007,7 @@
       "push_force_n": 233.333
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "MEDIUM",
@@ -1096,7 +1096,7 @@
       "push_force_n": 155.556
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "MEDIUM",
@@ -1207,7 +1207,7 @@
       "push_force_n": 544.444
     },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
-    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line, correctly: a grip is a HAND affordance and \u00a710.3 is the hand rule. The ENVELOPE's 120 kg is a DIFFERENT MECHANISM -- the qualified manipulation provider, beside force and range -- so a prop can be outside ordinary pickup and inside the envelope with neither number wrong. The `envelope` block says what the field can do; `grip_*` against `attach_*` says hand against device.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "HEAVY",

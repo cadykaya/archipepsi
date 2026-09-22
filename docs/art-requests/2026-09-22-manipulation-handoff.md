@@ -11,6 +11,45 @@ Production's own constants. **Not** runtime-bound and **not** owner-approved.
 
 ---
 
+## CORRECTION, 2026-09-22 — the headline below was wrong
+
+> ~~**Design 2 §10.3 draws the carry line at 60 kg.
+> `Constants.ENVELOPE_MASS_KG` is 120.** … **One of those two numbers is
+> wrong and neither lane owns both.**~~
+
+**Struck. They are not two answers to one question.** The owner's ruling:
+
+* **§10.3, inherited by Amalgam, governs ORDINARY PICKUP** — `carriable ==
+  true` **and** `mass <= 60 kg`. That is a hand picking a thing up.
+* **`ENVELOPE_MASS_KG` 120 belongs to the QUALIFIED MANIPULATION-PROVIDER
+  ENVELOPE**, alongside `ENVELOPE_FORCE_N` and `ENVELOPE_RANGE_M`. That is a
+  device holding a thing at range.
+
+Two mechanisms, two limits, both correct. A prop can be outside ordinary
+pickup and inside the envelope without either number being wrong, and
+`phys_plate`, `phys_drum` and `phys_girder` are exactly that: too heavy for a
+hand, within reach of the provider.
+
+**So Batch 043's fittings were right and this report was wrong about them.**
+The grips follow §10.3 because §10.3 is the hand rule and a grip is a hand
+affordance. Nothing needs redesigning because the envelope's number differs —
+the correct art response is to **distinguish hand handling from device or
+constraint attachment**, which this family already does with `grip_*` against
+`attach_*`.
+
+**What survives:** the measurements, all of them, and the three findings that
+do not depend on the false premise — `phys_cart` sits exactly on the push
+limit, `phys_movable_cover` cannot be pushed by the envelope at all, and
+`lightened` rescues neither. And the one real defect the batch fixed:
+`phys_cart` carried a part named `grip_bar` at 180 kg, which was wrong under
+§10.3 whatever the envelope says.
+
+**For Prod/Dess**, the ask changes shape: not *pick a number*, but **verify
+the actual pickup and ability consumers preserve the distinction** between
+ordinary pickup and the provider envelope.
+
+---
+
 ## The headline, and it is a design finding surfaced by art
 
 **Design 2 §10.3 draws the carry line at 60 kg. `Constants.ENVELOPE_MASS_KG`
@@ -28,8 +67,9 @@ at up to 20 m.** So three props the envelope can pick up and carry —
 `phys_plate` at 60, `phys_drum` at 70, `phys_girder` at 95 — wear the
 language that says *a device has to*.
 
-**One of those two numbers is wrong and neither lane owns both.** Art has
-not moved a fitting on the strength of it: redrawing the girder's language
+~~**One of those two numbers is wrong and neither lane owns both.**~~ See
+the correction above: they govern different mechanisms. Art did not move a
+fitting on the strength of it: redrawing the girder's language
 would be the art lane deciding that 120 beats 60, and that is a design call.
 It is measured, declared in the export and handed over.
 

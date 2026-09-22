@@ -715,12 +715,16 @@ GRAZE_N = 0.5
 def envelope_verdict(kg):
     """What the FIELD can do with this mass. Not what a hand can do.
 
-    The two are different questions and this family answers the hand's
-    elsewhere: §10.3 draws `carriable` at 60 kg, and every grip in this
-    file follows that line. The envelope HOLDS to 120 kg and PUSHES to
-    180, so three props are carriable by the field and not by the hand.
-    That disagreement is reported, not resolved here -- one of the two
-    numbers is wrong and neither lane owns both.
+    The two are different MECHANISMS, not two answers to one question.
+    §10.3 (inherited by Amalgam) governs ORDINARY PICKUP: `carriable`
+    and 60 kg, which is a hand. `ENVELOPE_MASS_KG` 120 belongs to the
+    QUALIFIED MANIPULATION PROVIDER, beside `ENVELOPE_FORCE_N` and
+    `ENVELOPE_RANGE_M`, which is a device at range. Both limits are
+    correct and a prop can sit outside one and inside the other.
+
+    So this reports what the FIELD can do, and the family's `grip_*`
+    against `attach_*` reports hand against device. Neither is a defect
+    in the other.
     """
     need = ENVELOPE_MU * kg * GRAVITY
     if need > ENVELOPE_FORCE_N + GRAZE_N:
@@ -936,15 +940,19 @@ def main():
                            "attach pads means a device has to",
             "family_rule_is_about_hands": "§10.3 draws `carriable` at 60 kg "
                                           "and every grip in this family "
-                                          "follows that line. The ENVELOPE "
-                                          "holds 120 kg and pushes 180, so "
-                                          "three props the field can carry "
-                                          "wear the `a device has to` "
-                                          "language. One of the two numbers "
-                                          "is wrong and neither lane owns "
-                                          "both; see the `envelope` block "
-                                          "and the 2026-09-22 manipulation "
-                                          "handoff.",
+                                          "follows that line, correctly: a "
+                                          "grip is a HAND affordance and "
+                                          "§10.3 is the hand rule. The "
+                                          "ENVELOPE's 120 kg is a DIFFERENT "
+                                          "MECHANISM -- the qualified "
+                                          "manipulation provider, beside "
+                                          "force and range -- so a prop can "
+                                          "be outside ordinary pickup and "
+                                          "inside the envelope with neither "
+                                          "number wrong. The `envelope` "
+                                          "block says what the field can "
+                                          "do; `grip_*` against `attach_*` "
+                                          "says hand against device.",
             "texels_per_metre": DENSITY,
             "not_changed": ["player physics", "object mass rules",
                             "carry limits", "package schemas",
