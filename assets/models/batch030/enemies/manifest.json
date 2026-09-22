@@ -1,6 +1,13 @@
 {
   "enemy_role_artillery": {
     "anchor": "floor",
+    "anchors": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
+    "anchors_are": "named attachment NODES for a runtime to fetch. Not decoration, not behaviour, no hitbox and no damage logic. Positions are fractions of ENEMY_ENVELOPES, so an anchor cannot drift from the collider it hangs off.",
     "batch": "030",
     "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
     "envelope_w_h_d_m": [
@@ -13,6 +20,12 @@
     "invents_no_behaviour": true,
     "is_flying": false,
     "kind": "enemy_role",
+    "parts": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
     "path": "batch030/enemies/enemy_role_artillery.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": false,
@@ -30,10 +43,16 @@
     "telegraph_seat_at_centre_y_m": 0.775,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 296
+    "triangles": 408
   },
   "enemy_role_beacon": {
     "anchor": "floor",
+    "anchors": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "anchors_are": "named attachment NODES for a runtime to fetch. Not decoration, not behaviour, no hitbox and no damage logic. Positions are fractions of ENEMY_ENVELOPES, so an anchor cannot drift from the collider it hangs off.",
     "batch": "030",
     "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
     "envelope_w_h_d_m": [
@@ -46,6 +65,11 @@
     "invents_no_behaviour": true,
     "is_flying": false,
     "kind": "enemy_role",
+    "parts": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
     "path": "batch030/enemies/enemy_role_beacon.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": false,
@@ -63,10 +87,17 @@
     "telegraph_seat_at_centre_y_m": 1.1,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 376
+    "triangles": 460
   },
   "enemy_role_brute": {
     "anchor": "floor",
+    "anchors": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
+    "anchors_are": "named attachment NODES for a runtime to fetch. Not decoration, not behaviour, no hitbox and no damage logic. Positions are fractions of ENEMY_ENVELOPES, so an anchor cannot drift from the collider it hangs off.",
     "batch": "030",
     "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
     "envelope_w_h_d_m": [
@@ -79,6 +110,12 @@
     "invents_no_behaviour": true,
     "is_flying": false,
     "kind": "enemy_role",
+    "parts": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
     "path": "batch030/enemies/enemy_role_brute.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": true,
@@ -96,10 +133,17 @@
     "telegraph_seat_at_centre_y_m": 1.3,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 232
+    "triangles": 344
   },
   "enemy_role_bulwark": {
     "anchor": "floor",
+    "anchors": [
+      "anchor_shield",
+      "anchor_weak",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "anchors_are": "named attachment NODES for a runtime to fetch. Not decoration, not behaviour, no hitbox and no damage logic. Positions are fractions of ENEMY_ENVELOPES, so an anchor cannot drift from the collider it hangs off.",
     "batch": "030",
     "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
     "envelope_w_h_d_m": [
@@ -112,6 +156,12 @@
     "invents_no_behaviour": true,
     "is_flying": false,
     "kind": "enemy_role",
+    "parts": [
+      "anchor_shield",
+      "anchor_weak",
+      "anchor_warn",
+      "anchor_effect"
+    ],
     "path": "batch030/enemies/enemy_role_bulwark.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": false,
@@ -129,10 +179,17 @@
     "telegraph_seat_at_centre_y_m": 1.025,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 328
+    "triangles": 440
   },
   "enemy_role_charger": {
     "anchor": "floor",
+    "anchors": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
+    "anchors_are": "named attachment NODES for a runtime to fetch. Not decoration, not behaviour, no hitbox and no damage logic. Positions are fractions of ENEMY_ENVELOPES, so an anchor cannot drift from the collider it hangs off.",
     "batch": "030",
     "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
     "envelope_w_h_d_m": [
@@ -145,6 +202,12 @@
     "invents_no_behaviour": true,
     "is_flying": false,
     "kind": "enemy_role",
+    "parts": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_weak",
+      "anchor_effect"
+    ],
     "path": "batch030/enemies/enemy_role_charger.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": false,
@@ -162,10 +225,16 @@
     "telegraph_seat_at_centre_y_m": 0.525,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 348
+    "triangles": 460
   },
   "enemy_role_diver": {
     "anchor": "floor",
+    "anchors": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "anchors_are": "named attachment NODES for a runtime to fetch. Not decoration, not behaviour, no hitbox and no damage logic. Positions are fractions of ENEMY_ENVELOPES, so an anchor cannot drift from the collider it hangs off.",
     "batch": "030",
     "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
     "envelope_w_h_d_m": [
@@ -178,6 +247,11 @@
     "invents_no_behaviour": true,
     "is_flying": true,
     "kind": "enemy_role",
+    "parts": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
     "path": "batch030/enemies/enemy_role_diver.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": false,
@@ -195,10 +269,15 @@
     "telegraph_seat_at_centre_y_m": 1.9,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 180
+    "triangles": 264
   },
   "enemy_role_drifter": {
     "anchor": "floor",
+    "anchors": [
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "anchors_are": "named attachment NODES for a runtime to fetch. Not decoration, not behaviour, no hitbox and no damage logic. Positions are fractions of ENEMY_ENVELOPES, so an anchor cannot drift from the collider it hangs off.",
     "batch": "030",
     "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
     "envelope_w_h_d_m": [
@@ -211,6 +290,10 @@
     "invents_no_behaviour": true,
     "is_flying": true,
     "kind": "enemy_role",
+    "parts": [
+      "anchor_warn",
+      "anchor_effect"
+    ],
     "path": "batch030/enemies/enemy_role_drifter.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": false,
@@ -228,10 +311,16 @@
     "telegraph_seat_at_centre_y_m": 2.55,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 420
+    "triangles": 476
   },
   "enemy_role_melee": {
     "anchor": "floor",
+    "anchors": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "anchors_are": "named attachment NODES for a runtime to fetch. Not decoration, not behaviour, no hitbox and no damage logic. Positions are fractions of ENEMY_ENVELOPES, so an anchor cannot drift from the collider it hangs off.",
     "batch": "030",
     "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
     "envelope_w_h_d_m": [
@@ -244,6 +333,11 @@
     "invents_no_behaviour": true,
     "is_flying": false,
     "kind": "enemy_role",
+    "parts": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_effect"
+    ],
     "path": "batch030/enemies/enemy_role_melee.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": true,
@@ -261,10 +355,16 @@
     "telegraph_seat_at_centre_y_m": 0.8,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 316
+    "triangles": 400
   },
   "enemy_role_ranged": {
     "anchor": "floor",
+    "anchors": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "anchors_are": "named attachment NODES for a runtime to fetch. Not decoration, not behaviour, no hitbox and no damage logic. Positions are fractions of ENEMY_ENVELOPES, so an anchor cannot drift from the collider it hangs off.",
     "batch": "030",
     "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
     "envelope_w_h_d_m": [
@@ -277,6 +377,11 @@
     "invents_no_behaviour": true,
     "is_flying": false,
     "kind": "enemy_role",
+    "parts": [
+      "anchor_muzzle",
+      "anchor_warn",
+      "anchor_effect"
+    ],
     "path": "batch030/enemies/enemy_role_ranged.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": true,
@@ -294,10 +399,16 @@
     "telegraph_seat_at_centre_y_m": 0.7,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 236
+    "triangles": 320
   },
   "enemy_role_scuttler": {
     "anchor": "floor",
+    "anchors": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_effect"
+    ],
+    "anchors_are": "named attachment NODES for a runtime to fetch. Not decoration, not behaviour, no hitbox and no damage logic. Positions are fractions of ENEMY_ENVELOPES, so an anchor cannot drift from the collider it hangs off.",
     "batch": "030",
     "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
     "envelope_w_h_d_m": [
@@ -310,6 +421,11 @@
     "invents_no_behaviour": true,
     "is_flying": false,
     "kind": "enemy_role",
+    "parts": [
+      "anchor_strike",
+      "anchor_warn",
+      "anchor_effect"
+    ],
     "path": "batch030/enemies/enemy_role_scuttler.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": false,
@@ -327,6 +443,6 @@
     "telegraph_seat_at_centre_y_m": 0.31,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 392
+    "triangles": 476
   }
 }

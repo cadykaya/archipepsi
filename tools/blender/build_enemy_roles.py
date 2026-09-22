@@ -136,6 +136,107 @@ def _seat(z):
                               (0.0, 0.0, z)), "mark")
 
 
+#: A10.3 -- the named attachment anchors, per role.
+#:
+#: **They are NODES, not decoration, and not behaviour.** Each is a
+#: 40 mm marker embedded inside the body, exported as its own object so
+#: a runtime can fetch it by name and hang a muzzle flash, a warning, a
+#: status glyph or a hit effect on it. Nothing here animates, nothing
+#: carries a hitbox, and no damage logic lives in a model.
+#:
+#: The one thing every role has is `anchor_centre`, because the
+#: telegraph seat already agreed that point with Production:
+#: `ENEMY_ENVELOPES[role].centre_y`, which is where `enemy.gd` puts its
+#: `TelegraphOrigin` Marker3D.
+#:
+#: The others are "where specified", which is A10.3's own wording -- a
+#: melee role has no muzzle and a drifter deliberately gives away no
+#: facing, so neither gets one.
+#:
+#: Positions are FRACTIONS of the published envelope, so an anchor
+#: cannot drift from the collider it hangs off. Blender +Y is the
+#: front: the exporter maps (x, y, z) -> (x, z, -y), so +Y becomes
+#: Godot's -Z.
+ANCHOR_RADIUS = 0.02
+ANCHORS = {
+    #                  name             x      front(+y)  height(z)
+    "melee":     [("anchor_strike",   0.26,   0.42,  0.72),
+                  ("anchor_warn",     0.0,    0.18,  0.92),
+                  ("anchor_effect",   0.0,    0.0,   0.60)],
+    "ranged":    [("anchor_muzzle",   0.22,   0.45,  0.68),
+                  ("anchor_warn",     0.0,    0.20,  0.90),
+                  ("anchor_effect",   0.0,    0.0,   0.62)],
+    "brute":     [("anchor_strike",   0.34,   0.34,  0.52),
+                  ("anchor_warn",     0.0,    0.22,  0.88),
+                  ("anchor_weak",     0.0,   -0.40,  0.58),
+                  ("anchor_effect",   0.0,    0.0,   0.56)],
+    "charger":   [("anchor_strike",   0.0,    0.46,  0.55),
+                  ("anchor_warn",     0.0,    0.30,  0.86),
+                  ("anchor_weak",     0.0,   -0.44,  0.52),
+                  ("anchor_effect",   0.0,    0.0,   0.55)],
+    # The shield IS the front, so the weak side is behind it. That is
+    # the role's whole proposition and the anchor says so.
+    "bulwark":   [("anchor_shield",   0.0,    0.44,  0.62),
+                  ("anchor_weak",     0.0,   -0.42,  0.56),
+                  ("anchor_warn",     0.0,    0.20,  0.90),
+                  ("anchor_effect",   0.0,    0.0,   0.58)],
+    "scuttler":  [("anchor_strike",   0.0,    0.42,  0.58),
+                  ("anchor_warn",     0.0,    0.14,  0.86),
+                  ("anchor_effect",   0.0,    0.0,   0.55)],
+    "artillery": [("anchor_muzzle",   0.0,    0.34,  0.84),
+                  ("anchor_warn",     0.0,    0.10,  0.92),
+                  ("anchor_weak",     0.0,   -0.38,  0.40),
+                  ("anchor_effect",   0.0,    0.0,   0.58)],
+    "beacon":    [("anchor_muzzle",   0.0,    0.0,   0.94),
+                  ("anchor_warn",     0.0,    0.14,  0.86),
+                  ("anchor_effect",   0.0,    0.0,   0.55)],
+    "diver":     [("anchor_muzzle",   0.0,    0.44,  0.50),
+                  ("anchor_warn",     0.0,    0.10,  0.84),
+                  ("anchor_effect",   0.0,    0.0,   0.50)],
+    # No muzzle and no weak side: the drifter's read is that it gives
+    # away no facing, and an anchor on its front would be Art deciding
+    # a thing the silhouette deliberately refuses to say.
+    "drifter":   [("anchor_warn",     0.0,    0.0,   0.88),
+                  ("anchor_effect",   0.0,    0.0,   0.50)],
+}
+
+
+def _anchors(role, body):
+    """The role's named attachment points, as their own objects.
+
+    **Placed off the BODY'S MEASURED BOX, not off the envelope**, and
+    that is a repair. The first cut used envelope fractions, and the
+    bodies do not fill their envelopes -- the scuttler is 0.34 m tall
+    inside a 0.62 m one -- so eight anchors across six roles ended up
+    outside the geometry they are supposed to be points on. The
+    readiness harness refuses an anchor that is not inside the body,
+    and it refused these.
+
+    Embedded at 40 mm so they do not read as fittings on an enemy that
+    has none; they exist to be FETCHED, not seen. The one anchor that
+    stays envelope-derived is the telegraph seat, because its whole
+    job is to agree with `ENEMY_ENVELOPES[role].centre_y`.
+    """
+    lo, hi = common.world_box(body)
+    span = [hi[i] - lo[i] for i in range(3)]
+    # Half the marker, plus a little, kept inside every face.
+    inset = ANCHOR_RADIUS * 1.6
+    out = []
+    for name, fx, fy, fz in ANCHORS.get(role, []):
+        at = []
+        for i, frac in enumerate((fx, fy, fz)):
+            if i == 2:
+                # Height is a fraction of the body's own height, from
+                # its foot.
+                value = lo[2] + span[2] * frac
+            else:
+                value = (lo[i] + hi[i]) * 0.5 + span[i] * frac
+            at.append(min(max(value, lo[i] + inset), hi[i] - inset))
+        out.append(brushkit.prism(name, ANCHOR_RADIUS,
+                                  ANCHOR_RADIUS * 2.0, 8, tuple(at)))
+    return out
+
+
 def _melee(w, h, d):
     out = []
     out += _tag(brushkit.block("legs", (w * 0.62, d * 0.52, h * 0.42),
@@ -560,6 +661,13 @@ def main():
         parts = builder(w, h, d) + _surface(role, w, h, d)
         centre_z = hover if hover else h / 2.0
         parts += _seat(centre_z - (hover if hover else 0.0))
+        # THE ANCHORS STAY OUT OF THE BUCKETS, and are built AFTER the
+        # body, because they are placed off its measured box. Everything
+        # else is joined by material role and then joined again into one
+        # body, which is how all ten shipped as a SINGLE node -- and a
+        # role that arrives as one mesh has nowhere to hang a muzzle
+        # flash. The readiness harness found exactly that: ten roles,
+        # one node each, no named attachment point anywhere.
 
         buckets = {}
         for obj, r in parts:
@@ -591,6 +699,14 @@ def main():
 
         obj = common.join(painted, name)
         common.set_origin(obj, "floor")
+        # The anchors are painted in the body material and moved with
+        # the body's own origin shift, so they stay where the envelope
+        # fractions put them.
+        anchors = _anchors(role, obj)
+        anchor_names = [a.name for a in anchors]
+        for anchor in anchors:
+            if obj.data.materials:
+                common.assign(anchor, obj.data.materials[0])
         # The envelope is a CONTRACT, not a guide. A model that overruns it
         # is a model whose collider disagrees with it.
         common.assert_fits(obj, name, (w, d, h),
@@ -598,7 +714,8 @@ def main():
                            "Production builds the collider from the same "
                            "numbers." % (role, w, h, d))
         record = common.export_glb(obj, "%s/%s.glb" % (OUT, name), "enemy",
-                                   check_flat=False)
+                                   check_flat=False, parts=anchors)
+        record["parts"] = anchor_names
         record.update({
             "batch": "030",
             "kind": "enemy_role",
@@ -621,6 +738,12 @@ def main():
             "invents_no_behaviour": True,
             "integration_ready": False,
             "scale_basis": "authored to the published envelope",
+            "anchors": anchor_names,
+            "anchors_are": "named attachment NODES for a runtime to "
+                           "fetch. Not decoration, not behaviour, no "
+                           "hitbox and no damage logic. Positions are "
+                           "fractions of ENEMY_ENVELOPES, so an anchor "
+                           "cannot drift from the collider it hangs off.",
         })
         report[name] = record
 

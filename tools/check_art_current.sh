@@ -247,6 +247,18 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_skiff_sweep.sh"
 
+  # The roster has to survive Production's consumer, not only the
+  # build-time envelope assert. This is where the damage-tint finding
+  # lives, and it will turn from a note into a pass the moment
+  # _collect_tint_parts also considers surface materials.
+  say "the ten enemy roles against their published envelopes..."
+  tools/content/run_enemy_readiness.sh >/dev/null 2>&1 || \
+    fail "enemyready: a role no longer imports, left its published
+    envelope, lost a declared anchor, or grew one that stands proud of
+    the body. Run
+
+    tools/content/run_enemy_readiness.sh"
+
   say "the theme pack binding, and its control..."
   tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
     fail "theme-bind: Production's ThemeMaterials no longer binds the
@@ -367,7 +379,8 @@ done
 # mention.
 for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
            run_arrival_test.sh run_setpiece_fit.sh \
-           run_yardkit_fit.sh run_skiff_sweep.sh; do
+           run_yardkit_fit.sh run_skiff_sweep.sh \
+           run_enemy_readiness.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."

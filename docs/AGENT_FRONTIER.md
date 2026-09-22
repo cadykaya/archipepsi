@@ -93,6 +93,15 @@ Two things from it that other lanes need:
   with nothing under it. And a landmark on the acquisition branch cannot
   be taller than a person without crossing somebody's view of the
   grapple ring.
+* **An authored enemy would take NO damage tint.**
+  `Enemy._collect_tint_parts` takes only meshes whose
+  `material_override` is a `StandardMaterial3D`, and a glTF import puts
+  its materials on the surfaces. Measured across all ten roles: zero
+  tintable parts. Production's to fix; the proposed one-line fallback is
+  in `docs/art-requests/2026-09-22-enemy-readiness-handoff.md`.
+* **The ten enemy roles now carry named attachment anchors** and are
+  gated by `tools/content/run_enemy_readiness.sh`. Req 31 is unchanged:
+  seven are art-ready and not spawnable.
 * **Batch 047 delivers the skiff's fitted parts** — shield, end guard,
   traction truck, and a bare hull variant. Handoff:
   `docs/art-requests/2026-09-22-skiffkit-handoff.md`.

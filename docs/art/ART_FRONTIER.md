@@ -381,17 +381,62 @@ fetchable node, nothing more. That warning is there because a preview
 that forcibly swapped materials was once mistaken in this lane for
 engine behaviour.
 
+### A10 — the enemy roster's readiness. A10.1-3 and A10.6 DELIVERED.
+
+No new roster, no replaced identity. Batch 030's ten roles reused
+as-is; what changed is that each now exports **named attachment nodes**,
+and the whole roster has been through Production's own consumer rules
+rather than only build-time assertions.
+
+* `tools/content/run_enemy_readiness.sh` →
+  `docs/art/review/enemy_readiness_2026-09-22/readiness.json`, gated in
+  `check_art_current.sh`.
+* `tools/content/run_enemy_views.sh` → 30 frames: ten roles × runtime /
+  silhouette / clay, **all from one camera at 7.5 m**, each stamped with
+  both facts A10.6 asks for — fit-checked, and spawnable or not.
+* Handoff:
+  `docs/art-requests/2026-09-22-enemy-readiness-handoff.md`.
+
+**THE BLOCKER, and it is Production's.** `Enemy._collect_tint_parts`
+takes only meshes whose `material_override` is a `StandardMaterial3D`,
+and a glTF import puts its materials on the SURFACES. Measured by
+applying their rule verbatim: **ten roles, zero tintable parts** — an
+authored enemy would take no damage tint at all. Art has NOT worked
+around it (baked overrides would be a second source of material
+behaviour); the handoff proposes the one-line fallback and the harness
+will report non-zero the moment it lands.
+
+**All ten used to arrive as a SINGLE joined mesh**, so there was
+nowhere to hang a muzzle flash. Each now carries its anchors as their
+own objects — `anchor_muzzle` / `anchor_strike` / `anchor_shield`,
+`anchor_warn`, `anchor_weak`, `anchor_effect`, per role, "where
+specified" taken literally: the drifter gets no muzzle and no weak side
+because its read is that it gives away no facing.
+
+**Anchors are placed off the body's MEASURED box, not the envelope.**
+The bodies do not fill their envelopes — the scuttler is 0.34 m tall
+inside a 0.62 m one — and the first cut put eight anchors across six
+roles outside the geometry. The containment gate refused every one.
+
+**Req 31 is unchanged and was not routed around.** `ENEMY_ARCHETYPES`
+is still `("melee", "ranged", "brute")`, so seven roles are art-ready
+and not spawnable, and every frame says which.
+
 ### The next task, exactly
 
-**A10** — the existing ten-role enemy family's production/animation
-readiness, reusing `batch030`'s ten exported roles rather than
-commissioning replacements. Note honestly that req 31 still leaves
-seven of them unspawnable (`ENEMY_ARCHETYPES` is still
-`("melee", "ranged", "brute")`); that is Production's and must not be
-routed around.
+**A10.4 and A10.5 — clips and phase markers — are NOT done, and two
+decisions are Production's before they can be.** (1) Where an
+`AnimationPlayer` lives: `Enemy.create()` builds `visual` as a bare
+`Node3D` and fills it with `BoxMesh`; there is no authored-visual path
+in and no animation owner. (2) `visual` is scaled by the flinch and the
+windup swell, deliberately, so a clip touching the root's scale fights
+gameplay — which argues for articulated rigid parts over a skinned rig.
+Art's proposal is in the handoff; it is a proposal, not a decision.
 
-After that: A06–A08 (deepen the other three setpiece kits), A09,
-A11–A15, A16, T01–T18 (the eighteen environment packs), A17–A19.
+Meanwhile, continue with **A06–A08** — deepening the Passing Platforms,
+Counterfire Arcade and Unweighted Switch kits the way A03–A05 deepened
+Blindside. Then A09, A11–A15, A16, T01–T18 (the eighteen environment
+packs), A17–A19.
 
 ### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.
 
