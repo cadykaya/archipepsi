@@ -463,3 +463,68 @@ carries the correction instead of the prose alone.
 **Not done:** the adapters are Prod's (P10.1–P10.4). The
 `burning`/`poisoned` compatibility decision remains the owner's and
 blocks only its own subset, exactly as the dispatch says.
+
+---
+
+## Bridge lane handoff — state at the end of this session
+
+**Head:** this commit on `claude/archipepsi-0-4-blindside`, PR #12.
+`make test` **1700 passed, 6 skipped**; `check_packet` green; working
+tree clean and pushed. Generated artifacts (`make export`,
+`make zone-fixture`, `make baseline`) regenerated from source, never
+hand-edited. The 0.3 comparison build on
+`claude/archipepsi-echoes-continuation-b1adno` and the
+`review/0.4-m2mech-snapshot` head are untouched; no original save was
+migrated.
+
+### Closed this session (bridge half)
+
+| package | state |
+|---|---|
+| **P02** acquisition + AP obligation | `.1 .2 .3 .4 .5 .7` done; `.6` is Prod's equipment/gantry consumer |
+| **P03** cross-room state runtime | bridge half done; `ZoneStateSelected` closed P-3's gap |
+| **P04** restart persistence | `.1 .3 .4 .6` bridge half done; `.2 .5` are engine |
+| **P16** transported objects | declaration, save, intent, authority, recovery — `.2` (moving it) is Prod's |
+| **P10.5** Status matrix | the family is data and coverage is computed |
+
+### Three precise blockers — each blocks only its own subset
+
+1. **Seven enemy content values.** `charger`, `bulwark`, `scuttler`,
+   `artillery`, `beacon`, `diver`, `drifter` have envelopes, stats and
+   behaviour and **no approved `ENEMY_VALUE`**, so the composer cannot
+   place them (DESS-07). It is one integer each and it cannot be
+   derived — `ranged` is worth more than `melee` while having less hp
+   and less dps, so any stats formula contradicts the owner's own
+   numbers. `constants.roles_that_fit()` and `COMPOSABLE_ENEMY_ROLES`
+   are already wired; the moment the numbers exist, widening the
+   composer's selection is a small edit in `epsilon/fallback.py`
+   (four `rng.choice(["melee", "ranged"])` sites plus the arena recipe).
+2. **`burning` / `poisoned` versus Amalgam's no-direct-Status-damage
+   rule.** Recorded, still the owner's, blocks only those rows.
+3. **A live held cross-room requirement.** Unsupported by the current
+   contract; the bounded §19.7 rule-2 amendment is drafted in D-8 §11.2
+   and comes to the owner if a selected design needs one.
+
+### Exact next actions, in order
+
+1. **P14** — the shared signal graph declaration. Not started. Reuse the
+   D-8 handle layer; no second signal system and no global bus.
+2. **P19** — item grammar and Epsilon's supported choices. Not started.
+3. **P01.2** — offer the existing minors through the composer.
+   `cross_room.compose_zone_state` is the pattern: an explicit step that
+   derives from a really composed Zone and declines rather than emitting
+   something broken.
+4. **P20** — the approved Forge/Static transaction subset, once the
+   exact approved operation list is confirmed.
+
+### Two methodology notes worth keeping
+
+- **A sabotage must be shown to hit the function it aimed at**
+  (`inspect.getsource`), not merely to have matched a pattern. One
+  pattern here occurred twice and the sabotage landed 82 lines away,
+  which reads exactly like a vacuous control (DESS-04).
+- **A guard that can only report "nothing found" should be shown
+  finding something first** — the forbidden-field name scan in
+  `test_restart_persistence.py` catches two synthetic names before it is
+  trusted to report none, because otherwise it passes with an empty
+  list.
