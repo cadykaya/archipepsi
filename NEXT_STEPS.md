@@ -84,28 +84,32 @@ qualified manipulation-provider envelope, alongside force and range.
   the provider envelope: `schemas/physics.py` (the package's `mass_limit_kg`
   floor and the provider comparison), `manipulation.gd` (the same two), and
   `replay_harness.gd` (`provider_mass_kg`). It never stands in for pickup.
-- **The ordinary-pickup rule is not implemented anywhere.** There is no
-  `carriable` field in the Zone schema, no 60 kg pickup threshold, and no
-  carry or lift verb — the twelve manipulation verbs are OV04 P12 and P12 has
-  not been built. The three 60.0 constants that do exist are unrelated:
-  `CRATE_MASS_KG` is a crate's mass, `PoweredLink.threshold_kg` is a weight
-  sensor's trip point, and `MassClass.MEDIUM_BELOW` is 120.0, not 60.0.
+- **When this was audited the ordinary-pickup rule did not exist at all** —
+  no `carriable` field, no 60 kg threshold, no carry verb. **Dess has since
+  landed the bridge half** (`a8eb469`): `physics.CARRY_MASS_KG = 60.0` and
+  `carriable_by_hand(carriable, mass_kg)`, exported to `constants.gd`. That
+  part of the audit is superseded and is corrected here rather than left
+  standing.
+- **The engine half is still missing, and that is where the risk always
+  was.** `CARRY_MASS_KG` is in `constants.gd` and **nothing in
+  `godot/scripts/` reads it** — there is no carry or lift verb, because the
+  twelve manipulation verbs are OV04 P12 and P12 has not been built.
 
-So no consumer can currently confuse them, because only one of them exists.
+So no consumer confuses the two limits today, because the pickup limit has no
+consumer at all.
 
 **THE RISK IS P12, AND THIS IS THE WARNING FOR WHOEVER BUILDS IT.**
-`ENVELOPE_MASS_KG` is the only mass limit in `Constants`, so a carry verb
-written against "the mass constant" would silently adopt 120 kg and make
-`WEIGHTED` carriable — which Design 2 changed FROM Design 1 deliberately, and
+`Constants` now holds BOTH numbers, which is better than one and is also the
+new hazard: a carry verb written against `ENVELOPE_MASS_KG` — the older, more
+familiar name, and the one every existing manipulation call site uses — would
+silently adopt 120 kg and make `WEIGHTED` carriable — which Design 2 changed FROM Design 1 deliberately, and
 which the packet calls "a real difference in feel: Design 1's cube puzzles
 are walked; Design 2's are pushed, pulled, and dropped".
 
-No constant has been added for the 60 kg rule. An unused threshold is the
-inert-vocabulary failure this repo guards against everywhere else — it would
-be a number with no effect, satisfying a grep and gating nothing. It lands
-with the carry verb that uses it, named for pickup rather than for envelopes,
-with the refusal case above 60 kg and a `WEIGHTED` body that refuses to be
-carried and accepts being manipulated.
+The constant exists now and its runtime does not, so the pairing P12 owes is
+the same either way: the carry verb reads `CARRY_MASS_KG` and never
+`ENVELOPE_MASS_KG`, with the refusal case above 60 kg and a `WEIGHTED` body
+that refuses to be carried and accepts being manipulated.
 
 ## 2026-09-22 (engine) — the Echo menu, and a fifth slot for consumables
 
