@@ -142,14 +142,31 @@ func _generation() -> int:
 
 ## One press through the real gate, waiting out the Action's cooldown
 ## first so the press is refused by the supply or by nothing at all.
-func _press(player: Player) -> void:
+func _ready_to_press(player: Player) -> void:
 	await _await("the cooldown to clear",
 			func() -> bool:
 				return (player.runtimes["consumable"].cooldown_remaining
 						<= 0.0),
 			6.0)
+
+
+## **SEPARATE FROM THE WAIT, and the offline case is why.** Waiting out
+## an Action's cooldown takes about a second, and the client reconnects
+## on a 0.5 s backoff -- so a case that closed the socket and then
+## called a press-that-waits was pressing against a link that had
+## already come back. It measured the opposite of what it claimed.
+func _press_now(player: Player) -> void:
 	player.press_slot("consumable")
-	await get_tree().process_frame
+	# A press is a QUESTION now. Give the answer a few frames to arrive
+	# before the caller looks; a case that needs to watch the wait does
+	# its own awaiting on top of this.
+	for _i in 12:
+		await get_tree().process_frame
+
+
+func _press(player: Player) -> void:
+	await _ready_to_press(player)
+	await _press_now(player)
 
 
 func _run() -> void:
@@ -172,6 +189,24 @@ func _run() -> void:
 			return
 		print("campaign created; stopping for the seeding step")
 		_finish(0)
+		return
+
+	# ---- THE PROCESS BOUNDARY, in two runs of this driver ----------
+	#
+	# `--kill-after-launch` authorises a charge, lets the effect happen
+	# with the settle report DROPPED, and then kills its own process --
+	# hard, with a signal, so nothing gets a chance to tidy up. That is
+	# the state D-9 exists for: the engine counted an expenditure, the
+	# report never arrived, and the process that knew about it is gone.
+	#
+	# `--after-kill` is a genuinely fresh client against the same
+	# unrefilled deployment. It holds no list, no reservation and no
+	# memory of the dead run; everything it knows comes off the save.
+	if OS.get_cmdline_user_args().has("--kill-after-launch"):
+		await _authorise_then_die()
+		return
+	if OS.get_cmdline_user_args().has("--after-kill"):
+		await _the_dead_process_s_charge_is_gone_for_good()
 		return
 
 	if not await _await("the seeded consumable",
@@ -230,8 +265,27 @@ func _run() -> void:
 func _an_accepted_use_is_counted_by_the_save(player: Player) -> void:
 	print("  -- an accepted use, all the way to the save")
 	var before := _effects
-	await _press(player)
-	_check(_effects == before + 1, "the press put something in the world")
+	await _ready_to_press(player)
+	var asked := Time.get_ticks_msec()
+	await _press_now(player)
+	# **THE PRESS DOES NOT FIRE; THE ANSWER DOES.** D-9: nothing
+	# irreversible happens until the engine has moved `spent` and written
+	# the save. So the effect arrives a round trip later, and the round
+	# trip is measured here rather than asserted from a guess -- it is the
+	# one cost the reordering has.
+	if not await _await("the authorisation to come back",
+			func() -> bool: return _effects > before, 10.0):
+		return
+	# AN UPPER BOUND, and it is mostly this driver. The wait polls once
+	# per process frame and `_press_now` gives it twelve of them, so the
+	# figure is the round trip PLUS up to a frame of poll granularity
+	# plus the engine's save write. It is quoted to show the order of
+	# magnitude on a loopback socket, not as a measurement of the socket.
+	_note("press to effect: %d ms, upper bound including this driver's "
+			% (Time.get_ticks_msec() - asked)
+			+ "frame-poll granularity and the engine's save write")
+	_check(_effects == before + 1,
+			"one press, one effect, once it was paid for")
 	if not await _await("the engine to count it",
 			func() -> bool: return _authorised() >= 1, 10.0):
 		return
@@ -255,7 +309,7 @@ func _the_deduction_holds_while_the_answer_is_in_flight(
 	var left := BridgeClient.charges_left(CID)
 	await _press(player)
 	_check(BridgeClient.charges_left(CID) == left - 1,
-			"the charge is gone the instant the effect launches (%d)"
+			"the charge is gone from the moment it is asked for (%d)"
 			% BridgeClient.charges_left(CID))
 	if not await _await("the engine to count it",
 			func() -> bool: return _authorised() > authorised, 10.0):
@@ -306,49 +360,65 @@ func _a_stale_supply_is_refused_and_names_what_it_refused() -> void:
 			"and nothing was spent (%d)" % _authorised())
 
 
-## PRESSES MADE WITH THE SOCKET DOWN. The effects happen -- a grenade
-## does not wait for the network -- and the reports are retransmitted
-## when the client reconnects. The measure is the one that matters:
-## after the resend, the save has authorised exactly as many charges as
-## there were effects, no more and no fewer.
+## PRESSES MADE WITH THE SOCKET DOWN FIRE NOTHING, and cost nothing.
+##
+## **This is the half the reordering changed on purpose.** The old
+## client launched offline and retransmitted the report on reconnect,
+## which closed the socket boundary and left the process boundary wide
+## open: an effect whose report died with the process was an effect
+## nobody ever paid for. *Offline firing is not a requirement* -- the
+## owner has said so twice -- so a press with no link is refused the way
+## an empty supply is, and the supply is untouched when the link returns.
 func _presses_made_offline_are_resent_and_counted_once(
 		player: Player) -> void:
-	print("  -- offline presses, resent on reconnect")
+	print("  -- presses with the socket down")
 	var authorised := _authorised()
 	var before := _effects
 	var left := BridgeClient.charges_left(CID)
+	var said := _exhausted_said
 	if left <= 0:
-		_note("no charges left to spend offline; case skipped")
+		_note("no charges left; case skipped")
 		return
 
+	# THE COOLDOWN FIRST, THEN THE OUTAGE. The other order gives the
+	# client's 0.5 s backoff a second to put the link back before the
+	# press lands.
+	await _ready_to_press(player)
 	BridgeClient._socket.close()
 	if not await _await("the socket to go down",
 			func() -> bool: return not BridgeClient.online, 10.0):
 		return
-	await _press(player)
-	var offline_effects := _effects - before
-	_check(offline_effects == 1,
-			"the press still fired with the bridge down (%d effects)"
-			% offline_effects)
+	await _press_now(player)
+	_check(_effects == before,
+			"nothing went into the world (%d effect(s))" % (_effects - before))
+	_check(_exhausted_said > said,
+			"and the player was told, rather than the button dying quietly")
 	_check(_authorised() == authorised,
-			"and the engine has not counted it, because it never "
-			+ "arrived (%d)" % _authorised())
-	# PRESSED AGAIN WHILE STILL DOWN. The supply still has one, so this
-	# is a second expenditure and not a duplicate of the first.
-	await _press(player)
-	_note("offline presses fired: %d" % (_effects - before))
+			"the engine counted nothing (%d)" % _authorised())
+	_check(BridgeClient.charges_left(CID) == left,
+			"and the charge is still there (%d of %d)"
+			% [BridgeClient.charges_left(CID), left])
 
 	if not await _await("the client to reconnect",
 			func() -> bool: return BridgeClient.online, 25.0):
 		return
+	await _settles(func() -> bool: return true, 0.5)
+	_check(BridgeClient.charges_left(CID) == left,
+			"the supply survives the outage intact (%d of %d)"
+			% [BridgeClient.charges_left(CID), left])
+	await _press(player)
+	await _settles(func() -> bool: return _effects > before, 10.0)
+	_check(_effects == before + 1,
+			"and a press once the link is back works normally (%d)"
+			% (_effects - before))
 	# Waited for QUIETLY. A timeout here is not a finding of its own --
 	# the assertion below is the finding, and reporting the wait as a
 	# second failure would make one defect look like two.
 	var expected := _effects
 	await _settles(func() -> bool: return _authorised() >= expected, 15.0)
 	_check(_authorised() == _effects,
-			"after the reconnect the save has authorised exactly the "
-			+ "effects that ran (%d authorised, %d run)"
+			"across the outage the save authorised exactly the effects "
+			+ "that ran (%d authorised, %d run)"
 			% [_authorised(), _effects])
 
 
@@ -383,3 +453,103 @@ func _the_last_charge_is_the_last_effect(player: Player) -> void:
 	_check(_exhausted_said > 0,
 			"and it said so: the exhausted feedback fired %d time(s)"
 			% _exhausted_said)
+
+
+# ---------------------------------------------------------------------------
+# The process boundary
+# ---------------------------------------------------------------------------
+
+## AUTHORISE, FIRE, LOSE THE REPORT, DIE.
+##
+## Everything real except the death, and the death is real too: `OS.kill`
+## on this process's own pid, which is a signal and not a quit. No
+## `_exit_tree`, no deferred save, no chance to send anything.
+func _authorise_then_die() -> void:
+	if not await _await("the seeded consumable",
+			func() -> bool: return BridgeClient.charges_total(CID) > 0,
+			30.0):
+		_finish(1)
+		return
+	var player := await _a_player()
+	if player == null:
+		_finish(1)
+		return
+	var total := BridgeClient.charges_total(CID)
+	var before := _authorised()
+	# THE REPORT NEVER ARRIVES. Not a flag that pretends -- the bytes
+	# are not written, which is what a lost message is.
+	BridgeClient.drop_reports = true
+	await _press(player)
+	if not await _await("the authorisation",
+			func() -> bool: return _effects > 0, 10.0):
+		_finish(1)
+		return
+	print("KILLED AFTER AUTHORISING: %d effect(s), save authorised %d "
+			% [_effects, _authorised()]
+			+ "of %d, report dropped" % total)
+	# Flush before the signal lands: a print nobody sees proves nothing.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	OS.kill(OS.get_process_id())
+
+
+## A FRESH PROCESS, AND THE SUPPLY IS NOT BACK.
+func _the_dead_process_s_charge_is_gone_for_good() -> void:
+	if not await _await("the campaign",
+			func() -> bool: return BridgeClient.charges_total(CID) > 0,
+			30.0):
+		_finish(1)
+		return
+	var total := BridgeClient.charges_total(CID)
+	var spent := _authorised()
+	_check(spent == 1,
+			"the dead process's charge is still spent: the save says %d "
+			% spent + "of %d used" % total)
+	_check(BridgeClient.charges_left(CID) == total - spent,
+			"so a brand new client is shown %d of %d, not a full supply"
+			% [BridgeClient.charges_left(CID), total])
+	_check(BridgeClient._in_flight.is_empty(),
+			"and it holds nothing in flight -- it cannot: it never "
+			+ "pressed anything (%s)" % BridgeClient._in_flight)
+
+	var player := await _a_player()
+	if player == null:
+		return
+	# THE ONE THAT MATTERS. If the supply could be reused, this press
+	# would mint index 1 again and buy a second effect from the charge
+	# the dead process already paid for.
+	await _press(player)
+	if not await _await("the new press to be authorised",
+			func() -> bool: return _effects > 0, 10.0):
+		return
+	_check(_authorised() == spent + 1,
+			"a press in the new process spends the NEXT charge, not the "
+			+ "dead one's: the save is at %d of %d" % [_authorised(), total])
+	_check(BridgeClient.charges_left(CID) == total - spent - 1,
+			"leaving %d" % BridgeClient.charges_left(CID))
+	_note("across the process boundary: %d charge(s) authorised in "
+			% _authorised() + "total, %d effect(s) run in THIS process, "
+			% _effects + "and the supply was never handed back")
+	_finish(0)
+
+
+## The hub, its player, and the loadout push -- the setup the socket
+## sequence does inline, factored out because both process-boundary runs
+## need it too.
+func _a_player() -> Player:
+	var hub := HubController.new()
+	get_tree().root.add_child(hub)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var player: Player = hub.player
+	if player == null:
+		_check(false, "the hub spawns a player to press the button")
+		return null
+	_equip(player)
+	BridgeClient.snapshot_received.connect(
+			func(_s: Dictionary) -> void: _equip(player))
+	player.runtimes["consumable"].action_used.connect(
+			func() -> void: _effects += 1)
+	player.exhausted.connect(
+			func(_name: String) -> void: _exhausted_said += 1)
+	return player

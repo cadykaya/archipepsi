@@ -192,6 +192,44 @@ func _reset(spent := 0, generation := 1) -> void:
 	await get_tree().physics_frame
 
 
+## PRESS, AND LET THE ENGINE SAY YES.
+##
+## D-9: the press asks and fires nothing; the snapshot in which the
+## engine moved `spent` is what starts the effect. So every case that
+## wants an effect has to deliver that snapshot, and the number it
+## delivers is the engine's count AFTER the authorisation -- which is
+## what the real engine would send.
+func _press_and_authorise(spent_after: int, generation := 1) -> void:
+	_player.press_slot("consumable")
+	await get_tree().physics_frame
+	_deliver(_snapshot(spent_after, generation))
+	await get_tree().physics_frame
+
+
+func _intents_of(kind: String) -> int:
+	var n := 0
+	for intent: Dictionary in BridgeClient.sent_intents:
+		if intent.get("type", "") == kind:
+			n += 1
+	return n
+
+
+func _asks_sent() -> int:
+	return _intents_of("authorize_consumable")
+
+
+func _releases_sent() -> int:
+	return _intents_of("release_consumable_authorization")
+
+
+func _last_ask() -> Dictionary:
+	for i in range(BridgeClient.sent_intents.size() - 1, -1, -1):
+		var intent: Dictionary = BridgeClient.sent_intents[i]
+		if intent.get("type", "") == "authorize_consumable":
+			return intent
+	return {}
+
+
 func _uses_sent() -> int:
 	var n := 0
 	for intent: Dictionary in BridgeClient.sent_intents:
@@ -221,14 +259,16 @@ func _run() -> void:
 	await _it_damages_and_burns_what_it_hits()
 	await _an_empty_supply_refuses_before_it_costs_anything()
 	await _two_presses_on_one_charge_fire_once()
-	await _a_refusal_does_not_hand_the_charge_back()
+	await _a_refused_ask_fires_nothing_and_costs_nothing()
 	await _a_press_that_never_launched_costs_nothing()
+	await _an_authorised_press_that_does_not_launch_is_released()
 	await _an_unattributed_refusal_releases_nothing()
 	await _a_refusal_about_another_use_releases_nothing()
 	await _a_snapshot_that_has_not_caught_up_releases_nothing()
 	await _a_refill_retires_a_use_still_in_flight()
-	await _a_dropped_report_does_not_make_the_charge_free()
-	await _a_disconnect_keeps_what_launched()
+	await _an_offline_press_fires_nothing_and_costs_nothing()
+	await _a_disconnect_abandons_an_unanswered_press()
+	await _a_disconnect_after_the_engine_counted_it_costs_the_charge()
 	await _a_cancel_does_not_forget_an_earlier_launch()
 	await _swapping_away_and_back_is_not_a_refill()
 	await _the_menu_shows_an_exhausted_supply_and_what_refills_it()
@@ -256,8 +296,7 @@ func _it_damages_and_burns_what_it_hits() -> void:
 	print("  -- a real consumable delivers damage AND a Status")
 	await _reset()
 	var before: float = _target.hp
-	_player.press_slot("consumable")
-	await get_tree().physics_frame
+	await _press_and_authorise(1)
 	_check(_target.hp < before,
 			"the dummy took damage (%.1f -> %.1f)" % [before, _target.hp])
 	_check(_target.statuses.has("burning"),
@@ -317,56 +356,65 @@ func _two_presses_on_one_charge_fire_once() -> void:
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
 	_check(BridgeClient.charges_left(COMPONENT) == 0,
-			"the press is subtracted immediately, before any snapshot")
+			"the press is subtracted the moment it is ASKED for, before "
+			+ "any snapshot")
+	_check(_effects == 0,
+			"and nothing has fired yet -- the engine has not answered")
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
+	_check(_asks_sent() == 1, "the second press asked for nothing")
+	_check(_refusals == 1, "it was refused as exhausted")
+	_deliver(_snapshot(CHARGES))
+	await get_tree().physics_frame
 	_check(_effects == 1, "EXACTLY ONE action resolved")
-	_check(_refusals == 1, "the second press was refused as exhausted")
-	_check(_uses_sent() == 1, "and exactly one use was sent")
+	_check(_uses_sent() == 1, "and exactly one use was reported")
 
 
-## **ONE CHARGE BUYS ONE AUTHORIZED ACTIVATION, and a refusal does not
-## buy a second.**
+## **A REFUSED ASK FIRES NOTHING, AND COSTS NOTHING.**
 ##
-## This case used to assert the opposite and call it correct: the
-## refusal handed the charge back, a new press fired, and the suite
-## reported two effects from one charge as a feature. The effect is
-## already in the world by the time any refusal can arrive — a refusal
-## says the engine did not RECORD the expenditure, not that the grenade
-## came back.
-func _a_refusal_does_not_hand_the_charge_back() -> void:
-	print("  -- a refusal disputes the charge; it does not refund it")
+## This case has been rewritten twice and the history is the point. It
+## first asserted that a refusal handed the charge back AFTER the effect
+## had run, which approved two effects from one charge. It then asserted
+## that the charge stayed spent, which was right while the effect ran on
+## the press.
+##
+## Under D-9 the effect does not run on the press. A refusal now arrives
+## for something that never happened, so the honest answer is the first
+## one after all -- give it back -- and it is safe for exactly the reason
+## it was not safe before: there is no grenade in the world to un-fire.
+func _a_refused_ask_fires_nothing_and_costs_nothing() -> void:
+	print("  -- a refused authorisation: nothing fired, nothing spent")
 	await _reset(CHARGES - 1)
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
-	var sent := _last_use()
-	_check(_effects == 1 and BridgeClient.charges_left(COMPONENT) == 0,
-			"one effect, and the charge is spent")
-
-	_refuse(BridgeClient.use_key(COMPONENT, int(sent["generation"]),
-			int(sent["use_index"])))
+	var asked := _last_ask()
+	_check(_asks_sent() == 1 and _effects == 0,
+			"the press asked, and fired nothing")
 	_check(BridgeClient.charges_left(COMPONENT) == 0,
-			"the refusal did NOT give the charge back")
-	_check(_effects == 1, "and the effect did not re-run")
+			"the charge is held while the answer is outstanding")
 
-	_player.press_slot("consumable")
-	await get_tree().physics_frame
+	_refuse(BridgeClient.use_key(COMPONENT, int(asked["generation"]),
+			int(asked["use_index"])))
+	_check(_effects == 0, "the refusal fired nothing")
+	_check(BridgeClient.charges_left(COMPONENT) == 1,
+			"and gave the charge back -- there was no effect to pay for")
+	_check(_refusals == 1, "the player was told")
+
+	# AND THE CHARGE IS REALLY USABLE, not just displayed. One press,
+	# one effect, from the charge the refusal returned.
+	await _press_and_authorise(CHARGES)
 	_check(_effects == 1,
-			"a press after the refusal fires NOTHING — one charge, one "
-			+ "activation, and the refusal did not buy a second")
-	_check(_refusals == 1, "the player is told the supply is empty")
-	_check(_uses_sent() == 1, "and no second use was sent")
+			"a press after the refusal fires ONCE, on the returned charge")
+	_check(_uses_sent() == 1, "and reports exactly one use")
 
 
-## A PRESS THAT RESOLVED INTO NOTHING IS THE ONE REFUND THERE IS.
+## A PRESS THAT COULD NEVER HAVE RESOLVED NEVER REACHES THE BRIDGE.
 ##
-## `activate()` returns early on a cooldown, and nothing goes into the
-## world — so nothing has been paid for, and nothing has been SENT
-## either, which is what makes the refund safe. Keeping this distinct
-## from "launched and missed" is the whole reason the reservation is
-## taken before the effect and released after it fails.
+## The two things knowable without the engine -- an empty supply and the
+## Action's own cooldown -- are checked before the ask, so a dead press
+## costs nothing and asks nothing.
 func _a_press_that_never_launched_costs_nothing() -> void:
-	print("  -- pre-launch failure: refunded, and never reported")
+	print("  -- a press on cooldown: refused here, never asked")
 	await _reset()
 	var runtime: EchoRuntime = _player.runtimes["consumable"]
 	runtime.cooldown_remaining = 5.0          # it cannot fire
@@ -374,11 +422,39 @@ func _a_press_that_never_launched_costs_nothing() -> void:
 	await get_tree().physics_frame
 	_check(_effects == 0, "nothing launched")
 	_check(BridgeClient.charges_left(COMPONENT) == CHARGES,
-			"the charge came back — a cooldown is not an expenditure")
-	_check(_uses_sent() == 0,
-			"and NOTHING was sent, so there is no message for the "
-			+ "engine to accept later")
+			"the charge is untouched -- a cooldown is not an expenditure")
+	_check(_asks_sent() == 0,
+			"and NOTHING was asked for, so there is nothing to release")
 	_check(BridgeClient._in_flight.is_empty(), "no reservation is held")
+	runtime.reset_cooldown()
+
+
+## AND ONE THAT FAILS ON THE FAR SIDE OF THE ASK IS RELEASED.
+##
+## `activate()` can still refuse after the charge is authorised -- a
+## gate that closed, a link cost the bar cannot pay, a condition that
+## stopped holding during the round trip. The engine has already taken
+## the charge, so the client must give it back explicitly. **This is the
+## only refund there is**, and it is the piece my own first proposal did
+## not have, which is why D-9 took Dess's shape.
+func _an_authorised_press_that_does_not_launch_is_released() -> void:
+	print("  -- authorised, then refused by the runtime: released")
+	await _reset()
+	var runtime: EchoRuntime = _player.runtimes["consumable"]
+	_player.press_slot("consumable")
+	await get_tree().physics_frame
+	_check(_asks_sent() == 1, "the press asked")
+	# THE GATE CLOSES WHILE THE ANSWER IS IN FLIGHT. Not contrived: a
+	# round trip is long enough for the world to change.
+	runtime.cooldown_remaining = 5.0
+	_deliver(_snapshot(1))
+	await get_tree().physics_frame
+	_check(_effects == 0, "the effect did not run -- the runtime refused")
+	_check(_releases_sent() == 1,
+			"so the authorisation was RELEASED (%d sent)" % _releases_sent())
+	_check(_uses_sent() == 0, "and no use was reported")
+	_check(BridgeClient._in_flight.is_empty(),
+			"nothing is left in flight")
 	runtime.reset_cooldown()
 
 
@@ -396,10 +472,11 @@ func _an_unattributed_refusal_releases_nothing() -> void:
 	await get_tree().physics_frame
 	_refuse("")
 	_check(BridgeClient.charges_left(COMPONENT) == 0,
-			"the use is still held")
+			"the ask is still held")
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
-	_check(_effects == 1, "so a second press still cannot fire")
+	_check(_asks_sent() == 1,
+			"so a second press asks for nothing -- the charge is not free")
 
 
 func _a_refusal_about_another_use_releases_nothing() -> void:
@@ -407,26 +484,24 @@ func _a_refusal_about_another_use_releases_nothing() -> void:
 	await _reset(CHARGES - 1)
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
-	var sent := _last_use()
+	var sent := _last_ask()
 	var generation := int(sent["generation"])
 	var index := int(sent["use_index"])
 	# Same component, wrong supply.
 	_refuse(BridgeClient.use_key(COMPONENT, generation + 1, index))
 	_check(BridgeClient.charges_left(COMPONENT) == 0,
-			"a key naming another supply is not this use")
+			"a key naming another supply is not this ask")
 	# Same supply, wrong index.
 	_refuse(BridgeClient.use_key(COMPONENT, generation, index + 1))
 	_check(BridgeClient.charges_left(COMPONENT) == 0,
 			"and a key naming another index is not either")
 	# ...and the right one does REACH it, so the case is about the match
-	# and not about the client having stopped listening. Reaching it
-	# marks it disputed; it never refunds.
+	# and not about the client having stopped listening.
 	_refuse(BridgeClient.use_key(COMPONENT, generation, index))
-	_check(bool(((BridgeClient._in_flight[COMPONENT] as Array)[0]
-			as Dictionary).get("disputed", false)),
-			"the exact key marks it disputed")
-	_check(BridgeClient.charges_left(COMPONENT) == 0,
-			"and the charge is STILL spent — disputed is not refunded")
+	_check(BridgeClient._in_flight.is_empty(),
+			"the exact key releases it")
+	_check(BridgeClient.charges_left(COMPONENT) == 1,
+			"and the charge comes back, because nothing had fired")
 
 
 ## **NOT ON EVERY SNAPSHOT.** A snapshot generated before the engine saw
@@ -441,15 +516,21 @@ func _a_snapshot_that_has_not_caught_up_releases_nothing() -> void:
 	# The same supply, the same count: this frame crossed the request on
 	# the wire.
 	_deliver(_snapshot(CHARGES - 1))
+	await get_tree().physics_frame
 	_check(BridgeClient.charges_left(COMPONENT) == 0,
-			"the use is still in flight")
+			"the ask is still outstanding")
+	_check(_effects == 0,
+			"and NOTHING has fired -- this snapshot authorised nothing")
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
-	_check(_effects == 1, "and one charge still produced one effect")
-	# The snapshot that HAS caught up does settle it.
+	_check(_asks_sent() == 1, "a second press asks for nothing")
+	# The snapshot that HAS caught up authorises it, and the effect runs.
 	_deliver(_snapshot(CHARGES))
+	await get_tree().physics_frame
+	_check(_effects == 1,
+			"the snapshot whose count reaches the index is what fires it")
 	_check(BridgeClient._in_flight.is_empty(),
-			"the snapshot whose count reaches the index settles it")
+			"and settles it")
 	_check(BridgeClient.charges_left(COMPONENT) == 0,
 			"leaving the engine's count, not a doubled subtraction")
 
@@ -462,6 +543,7 @@ func _a_refill_retires_a_use_still_in_flight() -> void:
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
 	_check(BridgeClient.charges_left(COMPONENT) == 0, "held in flight")
+	_check(_effects == 0, "and unfired, because it is unanswered")
 	_deliver(_snapshot(0, 2))         # a new deployment: fresh supply
 	_check(BridgeClient._in_flight.is_empty(),
 			"the pending use was retired by the new supply")
@@ -473,124 +555,143 @@ func _a_refill_retires_a_use_still_in_flight() -> void:
 # The transport
 # ---------------------------------------------------------------------------
 
-## **A DROPPED REPORT DOES NOT MAKE THE CHARGE FREE.**
+## **AN OFFLINE PRESS FIRES NOTHING.** The half D-9 changed on purpose.
 ##
-## This case used to assert that an offline press ran the effect and left
-## the count untouched, and called that correct. It is an unpaid
-## activation, repeatable for as long as the bridge stays down.
+## This case has had three different answers and the history is worth
+## keeping. It first asserted that an offline press ran the effect and
+## left the count untouched -- an unpaid activation, repeatable for as
+## long as the bridge stayed down. It then asserted that the effect ran
+## and cost its charge, with the report retransmitted on reconnect,
+## which closed the socket boundary and left the PROCESS boundary open:
+## an effect whose report died with the process was an effect nobody
+## ever paid for.
 ##
-## The grenade left the hand. The engine has not heard and may never
-## hear, and the honest state is a charge the player spent against a
-## campaign that has not recorded it — never a charge they get to spend
-## again. It reconciles on the next authoritative snapshot.
-func _a_dropped_report_does_not_make_the_charge_free() -> void:
-	print("  -- offline: the effect costs its charge anyway")
+## Now the press asks first, so there is nothing to lose. *Offline
+## firing is not a requirement* -- the owner has said so twice -- and a
+## press with no link is refused the way an empty supply is.
+func _an_offline_press_fires_nothing_and_costs_nothing() -> void:
+	print("  -- offline: refused, and the supply is untouched")
 	await _reset(CHARGES - 1)
 	BridgeClient.assume_sent = false          # no socket, and no pretending
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
-	_check(_effects == 1, "the effect ran — the player had a charge")
-	_check(BridgeClient.charges_left(COMPONENT) == 0,
-			"and it COST that charge, though nothing was reported")
+	_check(_effects == 0, "nothing went into the world")
+	_check(BridgeClient.charges_left(COMPONENT) == 1,
+			"and the charge is still there (%d)"
+			% BridgeClient.charges_left(COMPONENT))
+	_check(_refusals == 1, "the player was told, rather than nothing")
+	_check(BridgeClient._in_flight.is_empty(),
+			"and no reservation is left holding a charge hostage")
 
-	# REPEATED OFFLINE PRESSES buy nothing. This is the case the old
-	# assertion would have let through indefinitely.
+	# REPEATED OFFLINE PRESSES buy nothing and cost nothing.
 	for _i in 3:
 		_player.press_slot("consumable")
 		await get_tree().physics_frame
-	_check(_effects == 1,
-			"three more offline presses fire NOTHING (%d effects total)"
-			% _effects)
-	_check(_refusals == 3, "each is refused as exhausted")
+	_check(_effects == 0,
+			"three more offline presses fire NOTHING (%d effects)" % _effects)
+	_check(BridgeClient.charges_left(COMPONENT) == 1,
+			"and the supply is STILL one (%d)"
+			% BridgeClient.charges_left(COMPONENT))
 	BridgeClient.assume_sent = true
 
-	# ...AND THE RECONNECT RETRANSMITS RATHER THAN REFUNDING. The engine
-	# never recorded the expenditure, so its count cannot settle it --
-	# reading an unchanged count as "it did not happen" would hand back
-	# a charge whose grenade is in the world. The report goes again.
-	var before := _uses_sent()
-	BridgeClient.online = false
-	BridgeClient.resend_unconfirmed()
-	_check(_uses_sent() == before + 1,
-			"the lost report is sent again, not written off")
-	_check(BridgeClient.charges_left(COMPONENT) == 0,
-			"and the charge stays spent across the disconnect")
-	_deliver(_snapshot(CHARGES))              # the retransmit landed
-	_check(BridgeClient._in_flight.is_empty(),
-			"the snapshot that counts it finally settles it")
+	# ...AND THE LINK COMING BACK CHANGES NOTHING TO UNDO.
+	await _press_and_authorise(CHARGES)
+	_check(_effects == 1, "a press once the link is back works normally")
 
 
-## **THE RESERVATIONS SURVIVE THE SOCKET**, and the old case asserting
-## that they were dropped was asserting a refund.
+## **A DISCONNECT WITH A PRESS UNANSWERED: NOT FIRED, NOT REFUNDED HERE.**
 ##
-## A launched effect whose report was lost cannot be reconciled by the
-## snapshot after the reconnect: the bridge never learned of it, so its
-## count will never move, and treating an unchanged count as proof it
-## did not happen gives back a charge whose grenade is in the world.
-## Clearing a local dictionary is not reconciliation.
-func _a_disconnect_keeps_what_launched() -> void:
-	print("  -- a disconnect keeps launched work; reconnect resends it")
+## The client cannot know whether the engine counted the ask before the
+## socket died, so it may not refund; and it may not fire either,
+## because a grenade that goes off when the link happens to come back is
+## worse than one that does not go off. The reconnect snapshot is the
+## answer, and it answers both ways.
+func _a_disconnect_abandons_an_unanswered_press() -> void:
+	print("  -- a disconnect: the ask is abandoned, not fired")
 	await _reset(CHARGES - 1)
 	_player.press_slot("consumable")
 	await get_tree().physics_frame
-	_check(not BridgeClient._in_flight.is_empty(), "one reservation held")
+	_check(not BridgeClient._in_flight.is_empty(), "one ask outstanding")
 
 	BridgeClient.online = true
 	BridgeClient._process(DT)                 # the socket is shut
 	_check(not BridgeClient.online, "the client knows it is offline")
+	_check(_effects == 0, "nothing fired on the way down")
 	_check(not BridgeClient._in_flight.is_empty(),
-			"and the reservation is STILL HELD — the effect happened")
+			"and the ask is still held -- the client cannot know yet")
+
+	# THE ENGINE NEVER GOT IT: the reconnect snapshot has not moved, so
+	# the charge was never taken and the ask is dropped.
+	_deliver(_snapshot(CHARGES - 1))
+	await get_tree().physics_frame
+	_check(BridgeClient._in_flight.is_empty(),
+			"the snapshot settles it either way")
+	_check(_effects == 0, "still nothing fired")
+	_check(BridgeClient.charges_left(COMPONENT) == 1,
+			"and an ask the engine never counted costs nothing (%d)"
+			% BridgeClient.charges_left(COMPONENT))
+
+
+## AND THE OTHER WAY: THE ENGINE DID COUNT IT. The charge is gone and
+## nothing fires -- which is the price of authorising first, and the
+## direction that can never produce a second effect.
+func _a_disconnect_after_the_engine_counted_it_costs_the_charge() -> void:
+	print("  -- a disconnect after the engine counted it: charge gone")
+	await _reset(CHARGES - 1)
+	_player.press_slot("consumable")
+	await get_tree().physics_frame
+	BridgeClient.online = true
+	BridgeClient._process(DT)
+	_check(_effects == 0, "nothing fired")
+
+	# The engine HAD applied it; this is the first snapshot after the
+	# link came back.
+	_deliver(_snapshot(CHARGES))
+	await get_tree().physics_frame
+	_check(_effects == 0,
+			"the effect does NOT go off late when the link returns")
 	_check(BridgeClient.charges_left(COMPONENT) == 0,
-			"so the charge is still spent")
-
-	var before := _uses_sent()
-	BridgeClient.resend_unconfirmed()
-	_check(_uses_sent() == before + 1,
-			"reconnect retransmits the report the bridge never got")
+			"and the charge is gone, because the engine took it")
+	_check(BridgeClient._in_flight.is_empty(), "nothing is still held")
 
 
-## **THE CANCEL MUST NOT FORGET A LAUNCHED USE**, which is what one
-## reservation per component quietly did.
+## **A SECOND PRESS MUST NOT FORGET THE FIRST ONE'S EXPENDITURE**, which
+## is what one reservation per component quietly did.
 ##
-## Several charges and a real cooldown: launch use 1 with the snapshot
-## still in transit, then press again while the cooldown is running. The
-## second press reserves, `activate()` refuses it, and the cancel that
-## follows used to erase the component's whole entry -- taking use 1's
-## launched expenditure with it. One grenade in the world, and a count
-## that said nothing had been spent.
+## Several charges and a real cooldown: ask for use 1 and let the engine
+## authorise it, then press again while the cooldown is running. The
+## second press is refused locally -- it never reaches the wire -- and
+## the refusal used to erase the component's whole entry, taking use 1's
+## expenditure with it.
 func _a_cancel_does_not_forget_an_earlier_launch() -> void:
-	print("  -- cancel during cooldown keeps the launched use")
+	print("  -- a cooldown press keeps the earlier expenditure")
 	await _reset()                            # three charges, none spent
 	var runtime: EchoRuntime = _player.runtimes["consumable"]
 	runtime.set_equipped(_component_with_cooldown())
 
-	_player.press_slot("consumable")           # USE 1: launches
-	await get_tree().physics_frame
-	_check(_effects == 1, "use 1 launched")
+	await _press_and_authorise(1)              # USE 1: asked and fired
+	_check(_effects == 1, "use 1 fired")
 	_check(BridgeClient.charges_left(COMPONENT) == CHARGES - 1,
 			"and cost a charge (%d left)"
 			% BridgeClient.charges_left(COMPONENT))
 	_check(_uses_sent() == 1, "and was reported")
 
-	# NO SNAPSHOT YET. The engine has not answered, so use 1 is still
-	# outstanding when the second press arrives.
 	_player.press_slot("consumable")           # USE 2: refused on cooldown
 	await get_tree().physics_frame
-	_check(_effects == 1, "the cooldown press launched nothing")
-	_check(_uses_sent() == 1, "and reported nothing")
+	_check(_effects == 1, "the cooldown press fired nothing")
+	_check(_asks_sent() == 1, "and asked for nothing")
 	_check(BridgeClient.charges_left(COMPONENT) == CHARGES - 1,
 			"AND USE 1 IS STILL SPENT (%d left, expected %d)"
 			% [BridgeClient.charges_left(COMPONENT), CHARGES - 1])
 
-	# ...and the cancelled attempt really was cancelled: once the
-	# cooldown clears, the next press is use 2 and not use 3.
+	# ...and the refused attempt consumed no index: once the cooldown
+	# clears, the next ask is use 2 and not use 3.
 	runtime.reset_cooldown()
-	_player.press_slot("consumable")
-	await get_tree().physics_frame
-	_check(_effects == 2, "the next press launches")
-	_check(int(_last_use().get("use_index", 0)) == 2,
-			"as use 2 — the cancelled attempt consumed no index, got %d"
-			% int(_last_use().get("use_index", 0)))
+	await _press_and_authorise(2)
+	_check(_effects == 2, "the next press fires")
+	_check(int(_last_ask().get("use_index", 0)) == 2,
+			"as use 2 -- the refused attempt consumed no index, got %d"
+			% int(_last_ask().get("use_index", 0)))
 
 
 # ---------------------------------------------------------------------------
@@ -616,8 +717,7 @@ func _swapping_away_and_back_is_not_a_refill() -> void:
 	var runtime: EchoRuntime = _player.runtimes["consumable"]
 	runtime.set_equipped(_component())
 	runtime.reset_cooldown()
-	_player.press_slot("consumable")
-	await get_tree().physics_frame
+	await _press_and_authorise(2)
 	_check(_effects == 1, "the resumed supply fires with no refill")
 
 
@@ -691,18 +791,28 @@ func _a_held_player_does_not_fire_while_the_archive_is_open() -> void:
 	_player.input_frozen = false          # `_holds` empty: ordinary play
 
 	await _press_the_key()
+	_deliver(_snapshot(1))
+	await get_tree().physics_frame
 	_check(_effects == 1,
 			"an unheld player fires on a real `fire_consumable` press")
 
-	# ...and now the archive is open.
+	# ...and now the archive is open. Nothing is even ASKED for, which is
+	# the stronger claim: the press never reached the slot, so there is
+	# no authorisation for a snapshot to confirm.
+	var asks := _asks_sent()
 	_player.hold("modal")
 	await _press_the_key()
+	_deliver(_snapshot(1))
+	await get_tree().physics_frame
 	_check(_effects == 1, "the same press, held, does nothing")
+	_check(_asks_sent() == asks, "and asks the bridge for nothing")
 	_check(_refusals == 0,
 			"and it is not even refused — the press never reached the slot")
 
 	_player.release("modal")
 	await _press_the_key()
+	_deliver(_snapshot(2))
+	await get_tree().physics_frame
 	_check(_effects == 2, "closing the archive gives the key back")
 	_player.input_frozen = true
 

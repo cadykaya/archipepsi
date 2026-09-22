@@ -27,6 +27,7 @@ godot-path.txt
 .integration-saves-variant/
 .journey-saves/
 .consumable-saves/
+.consumable-restart-saves/
 .reload-saves/
 generation_archive/
 godot-bin/

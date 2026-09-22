@@ -155,6 +155,9 @@ jobs:
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live
 
+      - name: A charge spent by a process that then dies
+        run: make godot-consumable-restart
+
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live
 

@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-encounter godot-signal-graph godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -510,6 +510,9 @@ JOURNEY_SAVES := $(CURDIR)/.journey-saves
 # And the consumable sequence's own folder. It is SEEDED between two
 # bridge runs, so it must never be a directory anyone else is using.
 CONSUMABLE_SAVES := $(CURDIR)/.consumable-saves
+# And the process-boundary run's own, because it deliberately leaves a
+# campaign mid-expenditure and the socket sequence must not inherit it.
+RESTART_SAVES := $(CURDIR)/.consumable-restart-saves
 
 # The S2/S5 action-runner suite: press, release, cancel and death, with a
 # real player over a real floor.
@@ -950,6 +953,52 @@ godot-named-case: godot-import
 #
 # The bridge is stopped between phases on purpose: a live engine holds
 # the campaign in memory and would write it back over the seed.
+# THE PROCESS BOUNDARY, which is a DIFFERENT boundary from a dropped
+# socket and the one `_in_flight` cannot close by itself.
+#
+# Phase 3 authorises a charge, lets the effect happen with the settle
+# report dropped, and kills its own process with a signal. Phase 4 is a
+# genuinely fresh Godot against the same bridge and the same unrefilled
+# deployment: it holds no list, no reservation and no memory, and
+# everything it knows comes off the save. If the supply could be reused,
+# phase 4's press would mint index 1 again and buy a second effect from
+# the charge phase 3 already paid for.
+#
+# Phase 3 is EXPECTED to die, so its exit status proves nothing and is
+# not read; the marker line it prints before the signal is.
+godot-consumable-restart: godot-import
+	rm -rf $(RESTART_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RESTART_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+	BRIDGE_PID=$$!; sleep 2; \
+	$(GODOT) --headless --path godot -- --consumable-live --seed-only \
+	  > /tmp/archipepsi-restart-seed.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-restart-seed.log; \
+	  echo "-- no campaign was created"; exit $$STATUS; fi
+	cd bridge && PYTHONPATH=. $(PY) tools/give_consumable.py \
+	  $(RESTART_SAVES) --charges 3
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RESTART_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+	BRIDGE_PID=$$!; sleep 2; \
+	$(GODOT) --headless --path godot -- --consumable-live \
+	  --kill-after-launch > /tmp/archipepsi-restart-die.log 2>&1; \
+	grep -q "KILLED AFTER AUTHORISING" /tmp/archipepsi-restart-die.log || { \
+	  kill $$BRIDGE_PID 2>/dev/null; \
+	  tail -25 /tmp/archipepsi-restart-die.log; \
+	  echo "-- the first process never authorised anything, so there is"; \
+	  echo "-- no expenditure for the second one to fail to reuse"; \
+	  exit 1; }; \
+	grep "KILLED AFTER AUTHORISING" /tmp/archipepsi-restart-die.log; \
+	$(GODOT) --headless --path godot -- --consumable-live \
+	  --after-kill > /tmp/archipepsi-restart-back.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; \
+	grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" \
+	  /tmp/archipepsi-restart-back.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	grep -q "GODOT CONSUMABLE LIVE TESTS OK" \
+	  /tmp/archipepsi-restart-back.log || exit 1
+
 godot-consumable-live: godot-import
 	rm -rf $(CONSUMABLE_SAVES)
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(CONSUMABLE_SAVES) \

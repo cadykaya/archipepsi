@@ -11,6 +11,17 @@ signal snapshot_received(snapshot: Dictionary)
 signal zone_ready_received(zone: Dictionary, used_fallback: bool)
 signal notification_received(note: Dictionary)
 signal error_received(err: Dictionary)
+## AN AUTHORISED CHARGE, and the moment the effect may run.
+##
+## D-9: the press asks and launches nothing. The engine moves `spent`,
+## writes the save and broadcasts; THIS is that broadcast arriving, and
+## it is the only thing that may start an irreversible effect. Emitted
+## once per authorisation.
+signal consumable_authorized(component_id: String, use_index: int)
+## The press was refused, and nothing happened. `why` is the engine's
+## own message, or a local one when there was no link to ask down.
+signal consumable_denied(component_id: String, use_index: int,
+		why: String)
 
 var online := false
 var snapshot: Dictionary = {}
@@ -71,6 +82,7 @@ func _process(delta: float) -> void:
 	elif state == WebSocketPeer.STATE_CLOSED:
 		if online:
 			online = false
+			_abandon_awaiting()
 			# **THE RESERVATIONS SURVIVE THE SOCKET, and the previous
 			# version clearing them here was the defect.** A launched
 			# effect whose report was lost cannot be reconciled by the
@@ -166,7 +178,8 @@ func _handle(raw: String) -> void:
 					message.get("scope", "?"), message.get("message", "")])
 			# BEFORE the signal, so a listener redrawing the HUD on an
 			# error already sees the charge given back.
-			_release_refused(str(message.get("about", "")))
+			_release_refused(str(message.get("about", "")),
+					str(message.get("message", "REFUSED")))
 			error_received.emit(message)
 		_:
 			push_warning("unknown bridge message type")
@@ -461,23 +474,99 @@ func release_reservation(component_id: String) -> void:
 		_in_flight[component_id] = list
 
 
-## THE EFFECT LAUNCHED. Mark the reservation spent for good, and report.
+## ASK FOR THE CHARGE. **Nothing irreversible may happen until the
+## answer comes back** — D-9 §2, and the whole reason the order changed.
 ##
-## **A FAILED SEND DOES NOT UN-FIRE A GRENADE**, and it does not clear
-## the reservation either: the report is retransmitted on reconnect.
-## Returns whether the report went out; the reservation stands regardless.
-func commit_consumable(component_id: String) -> bool:
+## The press used to launch and then report, which meant an expenditure
+## the engine never heard of lived only in this process's memory: kill
+## Godot between the two and the charge was spendable again. Asking
+## first makes a lost message an effect that never happened, and there
+## is nothing for a dead process to lose.
+##
+## Returns false when there was no link to ask down. *Offline firing is
+## not a requirement* — the press is refused, like an empty supply.
+func authorize_consumable(component_id: String) -> bool:
 	var list := _held(component_id)
 	if list.is_empty():
 		return false
 	var held: Dictionary = list[list.size() - 1]
-	held["launched"] = true
+	var sent := send_intent({"type": "authorize_consumable",
+			"component_id": component_id,
+			"use_index": int(held["index"]),
+			"generation": int(held["generation"])})
+	if not sent:
+		# NOTHING WAS ASKED, so there is nothing to give back but the
+		# local reservation, and the press cost nothing.
+		release_reservation(component_id)
+		consumable_denied.emit(component_id, int(held["index"]),
+				"NO LINK TO THE BRIDGE")
+		return false
+	held["awaiting"] = true
 	list[list.size() - 1] = held
 	_in_flight[component_id] = list
+	return true
+
+
+## THE EFFECT LAUNCHED, against an authorisation the engine already
+## counted. The report SETTLES the authorisation; it spends nothing
+## more, so a lost one costs a refund and never a second charge.
+##
+## **AND THE RESERVATION IS DONE.** Under the old ordering it had to
+## stay: it was the only record that the charge had been spent. It is
+## not any more -- the engine counted the charge before the effect ran,
+## and the count is on the snapshot -- so holding it would subtract the
+## same charge twice, once from `spent` and once from `_outstanding`.
+func commit_consumable(component_id: String) -> bool:
+	var list := _held(component_id)
+	if list.is_empty():
+		return false
+	var held: Dictionary = list.pop_back()
+	if list.is_empty():
+		_in_flight.erase(component_id)
+	else:
+		_in_flight[component_id] = list
 	return _report(component_id, held)
 
 
+## THE AUTHORISED PRESS RESOLVED INTO NOTHING. A cooldown, an unmet
+## condition, a closed gate — `activate()` returned before anything
+## reached the world — so the charge comes back.
+##
+## **This is the only refund there is**, and it is a claim only this
+## process can make: whether the effect launched is known here and
+## nowhere else. The engine enforces that the attempt being cancelled is
+## the newest one, which is what stops a relaunched client refunding a
+## dead process's expenditure.
+func release_authorization(component_id: String) -> bool:
+	var list := _held(component_id)
+	if list.is_empty():
+		return false
+	var held: Dictionary = list[list.size() - 1]
+	if bool(held.get("launched", false)):
+		return false
+	list.pop_back()
+	if list.is_empty():
+		_in_flight.erase(component_id)
+	else:
+		_in_flight[component_id] = list
+	return send_intent({"type": "release_consumable_authorization",
+			"component_id": component_id,
+			"use_index": int(held["index"]),
+			"generation": int(held["generation"])})
+
+
+## TEST SEAM: swallow the settle report, as a lost message would.
+##
+## `godot-consumable-restart` needs the state D-9 exists for -- an
+## authorisation the engine counted and a report it never received --
+## and the only honest way to produce it is for the report not to
+## arrive. Never set by anything the player can reach.
+var drop_reports := false
+
+
 func _report(component_id: String, held: Dictionary) -> bool:
+	if drop_reports:
+		return false
 	return send_intent({"type": "use_consumable",
 			"component_id": component_id,
 			"use_index": int(held["index"]),
@@ -521,8 +610,38 @@ func resend_unconfirmed() -> void:
 ## deducted until the supply is REPLACED or the session resyncs. That is
 ## the conservative direction: it can refuse a press the engine would
 ## have allowed, and it can never permit a second effect.
+## THE LINK WENT DOWN WITH A PRESS UNANSWERED.
+##
+## It may not fire: a grenade that goes off ten seconds late, when the
+## socket happens to come back, is worse than one that does not go off.
+## And it may not be refunded here either, because the client cannot
+## know whether the engine counted it before the drop.
+##
+## So it is marked and left for the reconnect snapshot, which IS the
+## answer: `spent` past it means the engine took the charge (gone, and
+## nothing fires), `spent` short of it means the request never landed
+## (the charge was never taken). `_settle_in_flight` reads the mark.
+func _abandon_awaiting() -> void:
+	for component_id: Variant in _in_flight.keys():
+		var list := _held(str(component_id))
+		for i in list.size():
+			var held: Dictionary = list[i]
+			if bool(held.get("awaiting", false)):
+				held["awaiting"] = false
+				held["abandoned"] = true
+				list[i] = held
+		_in_flight[component_id] = list
+
+
+## Authorisations confirmed by the snapshot being settled, announced
+## AFTER the walk rather than during it: a handler that pressed again
+## would be mutating `_in_flight` inside the loop that is rebuilding it.
+var _authorized: Array = []
+
+
 func _settle_in_flight() -> void:
 	var generation := int(snapshot.get("consumable_generation", 0))
+	_authorized.clear()
 	for component_id: Variant in _in_flight.keys():
 		var cid := str(component_id)
 		var spent := charges_total(cid) - _snapshot_charges_left(cid)
@@ -533,14 +652,36 @@ func _settle_in_flight() -> void:
 			# about a supply that no longer exists.
 			if int(held.get("generation", -1)) != generation:
 				continue
+			# ABANDONED: the link dropped with this press unanswered,
+			# and this snapshot is the answer. Either way it is
+			# finished: counted means the charge is gone and nothing
+			# fires, uncounted means it never arrived and the charge was
+			# never taken. Both are "stop holding it".
+			if bool(held.get("abandoned", false)):
+				continue
 			# LANDED: the engine has counted it.
 			if spent >= int(held.get("index", 0)):
+				# **AND IF IT WAS WAITING TO BE ALLOWED TO FIRE, THIS IS
+				# THE MOMENT.** The engine has moved `spent` and written
+				# the save, so the charge is paid for and the effect may
+				# now happen. The reservation is KEPT while the effect
+				# runs -- `commit_consumable` or `release_authorization`
+				# closes it -- because a press still deciding what it did
+				# is not a press that is finished.
+				if bool(held.get("awaiting", false)):
+					held["awaiting"] = false
+					kept.append(held)
+					_authorized.append([cid, int(held.get("index", 0))])
 				continue
 			kept.append(held)
 		if kept.is_empty():
 			_in_flight.erase(component_id)
 		else:
 			_in_flight[component_id] = kept
+	for raw: Variant in _authorized:
+		var pair: Array = raw
+		consumable_authorized.emit(str(pair[0]), int(pair[1]))
+	_authorized.clear()
 
 
 ## MARK A RESERVATION DISPUTED — and **do not give the charge back**.
@@ -561,7 +702,7 @@ func _settle_in_flight() -> void:
 ## the client knows this index will never be confirmed, so it stops
 ## waiting for `spent` to reach it and settles on the next refill or
 ## resync instead of on nothing.
-func _release_refused(about: String) -> void:
+func _release_refused(about: String, why := "REFUSED") -> void:
 	if about.is_empty():
 		return
 	for component_id: Variant in _in_flight.keys():
@@ -571,6 +712,21 @@ func _release_refused(about: String) -> void:
 			if use_key(str(component_id),
 					int(held.get("generation", -1)),
 					int(held.get("index", 0))) == about:
+				# **A REFUSED AUTHORISATION IS A PRESS THAT NEVER
+				# HAPPENED.** Nothing launched -- that is the point of
+				# asking first -- so the reservation goes, the charge was
+				# never taken, and the player is told. A refused REPORT is
+				# the other thing entirely: the effect is in the world and
+				# the charge stays gone, so that one is only marked.
+				if bool(held.get("awaiting", false)):
+					list.remove_at(i)
+					if list.is_empty():
+						_in_flight.erase(component_id)
+					else:
+						_in_flight[component_id] = list
+					consumable_denied.emit(str(component_id),
+							int(held.get("index", 0)), why)
+					return
 				held["disputed"] = true
 				list[i] = held
 				_in_flight[component_id] = list

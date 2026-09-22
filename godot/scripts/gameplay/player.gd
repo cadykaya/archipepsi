@@ -540,6 +540,17 @@ static func create() -> Player:
 		runtime.player_ref = player
 		player.runtimes[slot] = runtime
 		if slot == "consumable":
+			# THE ANSWER IS WHAT FIRES IT, so the player listens for the
+			# answer. Connected here, where the runtimes are built, so a
+			# player that exists at all has this wire.
+			if not BridgeClient.consumable_authorized.is_connected(
+					player._on_consumable_authorized):
+				BridgeClient.consumable_authorized.connect(
+						player._on_consumable_authorized)
+			if not BridgeClient.consumable_denied.is_connected(
+					player._on_consumable_denied):
+				BridgeClient.consumable_denied.connect(
+						player._on_consumable_denied)
 			# DID THE PRESS ACTUALLY PUT SOMETHING IN THE WORLD?
 			# `activate()` returns early on cooldown, on an unmet
 			# condition and on a closed gate, and a press that resolved
@@ -566,32 +577,60 @@ func press_slot(slot: String) -> void:
 		runtimes[slot].activate()
 		return
 
-	# A CHARGE IS TAKEN BEFORE THE EFFECT, NOT AFTER IT.
+	# THE PRESS ASKS. IT DOES NOT FIRE.
 	#
-	# `reserve_consumable` returns `{}` when there is nothing left, which
-	# is the exhausted case: no cooldown is charged and no effect runs,
-	# because a press that could never have resolved must not be paid
-	# for. The supply stays equipped at 0 -- exhausted, not gone.
-	if BridgeClient.reserve_consumable(
-			str(BridgeClient.slotted_action("consumable").get(
-					"component_id", ""))).is_empty():
-		_say_exhausted()
-		return
-
+	# D-9: the expenditure is authorised BEFORE anything irreversible
+	# happens, because an effect that launched and whose report was lost
+	# lives only in this process's memory -- kill Godot between the two
+	# and the charge is spendable again. Asking first makes a lost
+	# message an effect that never happened.
+	#
+	# The two things knowable WITHOUT the engine are checked here, so an
+	# obviously dead press never reaches the bridge: nothing left in the
+	# supply, and the Action's own cooldown. Everything else --
+	# conditions, gates, link costs -- is `activate()`'s to refuse, and
+	# it refuses on the far side of the authorisation, which is what
+	# `release_authorization` is for.
 	var component_id := str(BridgeClient.slotted_action(
 			"consumable").get("component_id", ""))
-	_launched = false
-	runtimes[slot].activate()
-	if not _launched:
-		# PRE-LAUNCH FAILURE, and nothing has been sent yet. A cooldown or
-		# a closed gate is not an expenditure, so the charge goes back and
-		# there is no message for the engine to accept later. This is the
-		# ONLY refund there is.
+	if BridgeClient.reserve_consumable(component_id).is_empty():
+		_say_exhausted()
+		return
+	var runtime: EchoRuntime = runtimes[slot]
+	if runtime.cooldown_remaining > 0.0:
 		BridgeClient.release_reservation(component_id)
 		return
-	# IT LAUNCHED. Report it, and keep the charge spent whatever the
-	# answer is -- a refusal does not un-fire a grenade, and a dropped
-	# send does not make one free.
+	BridgeClient.authorize_consumable(component_id)
+
+
+## THE CHARGE IS PAID FOR. **Now** the effect may happen.
+##
+## Reached from `BridgeClient.consumable_authorized`, which fires on the
+## snapshot in which the engine moved `spent` and wrote the save. A
+## press that resolves into nothing here still costs nothing: the
+## authorisation is released, which is the only refund there is.
+## THE PRESS WAS REFUSED, and nothing happened. Said out loud for the
+## same reason an empty supply is: a button that does nothing in silence
+## reads as broken.
+func _on_consumable_denied(_component_id: String, _use_index: int,
+		_why: String) -> void:
+	_say_exhausted()
+
+
+func _on_consumable_authorized(component_id: String,
+		_use_index: int) -> void:
+	var slotted := str(BridgeClient.slotted_action("consumable").get(
+			"component_id", ""))
+	if component_id != slotted:
+		# The slot changed between the press and the answer. Nothing
+		# will fire, so give it back rather than firing the wrong thing.
+		BridgeClient.release_authorization(component_id)
+		return
+	_launched = false
+	runtimes["consumable"].activate()
+	if not _launched:
+		BridgeClient.release_authorization(component_id)
+		return
 	BridgeClient.commit_consumable(component_id)
 
 
