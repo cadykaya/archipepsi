@@ -272,3 +272,36 @@ class TestEveryRoleFitsTheRoomsItWillStandIn:
             BUILDERS_GD, "CORRIDOR_HEIGHT"), (
             "a flyer that cannot fit down a corridor cannot be placed at "
             "all; this is the bound that decides it")
+
+
+class TestTheComposerPlacesOnlyRolesThatFit:
+    """P08.2 as a property of real output, not only of the helper.
+
+    `roles_that_fit` is a guard for the roles that are not composable
+    yet. This asserts it is not also papering over a defect today: every
+    enemy the composer actually places is one its room can hold.
+    """
+
+    def test_every_placed_role_fits_the_room_it_is_placed_in(self):
+        from archipepsi_bridge.playtest import played_zone
+        zone = played_zone()
+        assert zone is not None
+        offences = []
+        for chamber in zone.chambers:
+            dims = (getattr(chamber, "width", None),
+                    getattr(chamber, "depth", None),
+                    getattr(chamber, "wall_height", None))
+            if None in dims:
+                continue          # not a dimensioned room kind
+            fits = set(C.roles_that_fit(*dims))
+            for group in getattr(chamber, "enemies", ()) or ():
+                if group.archetype not in fits:
+                    offences.append((chamber.id, group.archetype, dims))
+        assert not offences, offences
+
+    def test_the_check_is_not_vacuous_it_saw_real_enemies(self):
+        """A sweep over zero rooms passes for the wrong reason."""
+        from archipepsi_bridge.playtest import played_zone
+        zone = played_zone()
+        placed = sum(len(getattr(c, "enemies", ()) or ()) for c in zone.chambers)
+        assert placed >= 5, f"only {placed} enemy groups; nothing was checked"

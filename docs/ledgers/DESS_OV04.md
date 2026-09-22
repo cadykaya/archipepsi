@@ -528,3 +528,52 @@ migrated.
   `test_restart_persistence.py` catches two synthetic names before it is
   trusted to report none, because otherwise it passes with an empty
   list.
+
+---
+
+### DESS-09 — P14, P19 and P20 measured for readiness, and two are not ready
+
+**Dess, 2026-09-22.** Having closed the bridge halves of P02, P03, P04,
+P16 and P10.5, I measured the next three packages in this lane's order
+before starting one. Two are not ready, and the reasons are different.
+
+**P14 — shared signal graph. NOT READY, and building it would be the
+thing P14.5 warns against.** The measurement: the engine has exactly one
+signal chain, `PoweredLink` (plate → signal → door), plus `ClassPlate`.
+There is no node vocabulary, no conduit, no graph. Design 1 §19's eleven
+node types and Amalgam §20's eighteen sensors are design, not code.
+
+Declaring an eleven-node vocabulary now would be a framework no room
+uses — P14.5 says in its own words that such a framework "is not this
+package's completion" — and the dispatch forbids publishing inert
+support. The one piece with two real implementations, §20.6's semantic
+class versus summed kilograms, is **already implemented and already
+self-documenting**: `class_plate.gd`'s own docstring cites the
+distinction and it never adds masses. There is no bridge gap to close
+there.
+
+What would make P14 ready: a second real consumer whose question
+matches. D-8's `ZoneStateReader.mechanism` is the seam it should join
+when one exists, and no second railway or global bus is needed to do it.
+
+**P19 — item grammar. NOT STARTED, and deliberately not half-started.**
+There is no gear, mod or item vocabulary in the bridge at all; §16 is
+design only. This is a subsystem rather than a slice, and the dispatch's
+"preserve a usable candidate rather than starting everything and
+integrating nothing" applies directly. It is the largest genuinely ready
+bridge unit remaining and it wants a session that can finish it.
+
+**P20 — Forge/Static transactions. BLOCKED on a recorded decision.**
+`HUGE_BATCH_LEDGER.md`'s approved-assignment block lists the Forge /
+Static economy (B4) under "Decisions still unresolved", and P20.1 is
+"identify exact approved operations". That list does not exist yet, so
+the package blocks on its own exact subset, as the dispatch anticipates.
+
+**One thing measured and found already correct.** The eligibility gate
+added in DESS-07 could have been hiding a live defect, so I checked the
+real composed Zone: **zero** placed enemies sit in a room that cannot
+hold them. The gate is a guard for the seven roles that are not
+composable yet, not a repair of something broken today, and there is now
+a control asserting that over real output — with a companion assertion
+that the sweep saw enemies at all, because a sweep over zero rooms
+passes for the wrong reason.
