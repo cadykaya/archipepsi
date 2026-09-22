@@ -4195,6 +4195,76 @@ refused, the last two by the builder before the export even happened.
 
 Measured boxes are Blender-ordered (width, depth, height).
 
+### Batch 053 — A14: the props signal a hand, the game lifts with a field (2026-09-22, PENDING)
+
+No new asset. Batch 043's twelve physics props, re-exported with one part
+renamed, twenty-two state nodes added and an `envelope` verdict declared.
+Handoff: `docs/art-requests/2026-09-22-manipulation-handoff.md`.
+
+**Design 2 §10.3 draws the carry line at 60 kg.
+`Constants.ENVELOPE_MASS_KG` is 120.** Batch 043's fittings follow §10.3
+exactly — grips below 60 kg, attach pads above — and its module docstring
+states the rule: *"A hand grip means a hand can lift it."* The game does not
+manipulate with hands. `MANIPULATE_VERBS` are HOLD, PULL and PUSH, performed
+by a 700 N field at up to 20 m that holds 120 kg. So `phys_plate` (60),
+`phys_drum` (70) and `phys_girder` (95) wear *a device has to* and the field
+can pick all three up. **One of those two numbers is wrong and neither lane
+owns both**, so no fitting was moved on the strength of it.
+
+| prop | kg | class | HOLD | PUSH | needs |
+| --- | ---: | --- | --- | --- | ---: |
+| `phys_key_component` | 8 | light | yes | yes | 31.1 N |
+| `phys_generic` | 15 | light | yes | yes | 58.3 N |
+| `phys_power_cell` | 40 | medium | yes | yes | 155.6 N |
+| `phys_mechanical_part` | 55 | medium | yes | yes | 213.9 N |
+| `phys_plate` | 60 | medium | yes | yes | 233.3 N |
+| `phys_drum` | 70 | medium | yes | yes | 272.2 N |
+| `phys_girder` | 95 | medium | yes | yes | 369.4 N |
+| `phys_weighted` | 140 | heavy | **no** | yes | 544.4 N |
+| `phys_cart` | 180 | heavy | **no** | **at the limit** | **700.0 N** |
+| `phys_movable_cover` | 220 | heavy | **no** | **no** | 855.6 N |
+| `phys_ballast` | 320 | heavy | **no** | **no** | 1244.4 N |
+| `phys_anchor_block` | 500 | fixed | **no** | **no** | 1944.4 N |
+
+**`phys_cart` sits exactly on the push limit.** `mu` is
+`2/3 × 700 / (120 × 9.8)` = 0.39683, and 0.39683 × 180 × 9.8 = 700.0 N
+against 700 N. Reported as *at the limit* rather than forced into yes or no,
+because rounding a tie is reporting floating point as a design fact — the
+`skiff_sweep` GRAZE lesson, applied to newtons.
+
+**`phys_movable_cover` cannot be pushed by the envelope at all**, and its own
+docstring says *"It exists to be got behind."* At 855.6 N against 700 it is
+scenery. Its mass is §10.1's, so Art cannot lower it.
+
+**And `lightened` rescues none of them.** It is the one status
+`ECHO_STATUS_SUPPORTED_TARGETS` implements on an `object` and it moves ten of
+twelve one rung down the ladder — but `receive_force` applies its newtons
+**unscaled** and `impulse_scale()` doubles only an impulse. It doubles one
+shove and changes nothing about a sustained push.
+
+**Three changes to the art, all in-lane:**
+
+| | |
+| --- | --- |
+| `phys_cart`'s `grip_bar` → `push_bar` | 180 kg carrying a part named for a hand. The intent lived only in its `proposes` string, where no runtime reading node names ever sees it. **A prefix that means two things means neither.** |
+| eleven props gain `lightened_panel_0/1` | the one object-implemented status had nowhere to show on eleven of twelve. `phys_anchor_block` gets none — it is `manipulable: false`. |
+| every prop declares `envelope` | `hold`, `push`, `push_force_n`, so *can the player move this* is answered in the manifest |
+
+**Every exported size is unchanged to within half a millimetre.**
+`ManipulableBody.create` derives a `BoxShape3D` from a size this family
+declares, so `assert_flush_with_body` refuses any state fitting that stands
+proud of the body's measured box.
+
+**Eight sabotages, eight refusals.** Five against Production's inputs (a
+moved `MassClass` threshold, a changed friction derivation, a `receive_force`
+that started scaling, an emptied rung, a prop with no mass) and three against
+Art's declarations (a drifted `mass_class`, a drifted `hold`, a tangency
+called a clean push). Two build-time gates were sabotaged too:
+`assert_grip_is_hand_scale` and `assert_flush_with_body`.
+
+**Nothing is runtime-bound and no collision is shipped** — not derived, not
+exported, not evidence, unchanged from Batch 043.
+
 ### Batch 052 — A13: the eleven statuses the runtime could already raise (2026-09-22, PENDING)
 
 Eleven glyphs and eleven markers, drawn into the existing Batch 043 kit.

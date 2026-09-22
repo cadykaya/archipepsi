@@ -194,17 +194,17 @@ nobody is tracking.
 | `mach_conduit_run` | L0 | prop | 120 | 2.06 × 0.18 × 0.50 | wall | B1R | B43 | PROPOSAL |
 | `mach_wall_switch` | L0 | prop | 60 | 0.36 × 0.19 × 0.54 | wall | B1R | B43 | PROPOSAL |
 | `mach_receiver_lamp` | L0 | prop | 60 | 0.50 × 0.26 × 0.37 | floor | B1R | B43 | PROPOSAL |
-| `phys_key_component` | L0 | prop | 108 | 0.25 × 0.20 × 0.30 | floor | B1R | B43 | PROPOSAL |
-| `phys_generic` | L0 | prop | 96 | 0.65 × 0.65 × 0.62 | floor | B1R | B43 | PROPOSAL |
-| `phys_power_cell` | L0 | prop | 148 | 0.34 × 0.34 × 0.60 | floor | B1R | B43 | PROPOSAL |
-| `phys_mechanical_part` | L0 | prop | 136 | 0.47 × 0.40 × 0.43 | floor | B1R | B43 | PROPOSAL |
-| `phys_plate` | L0 | prop | 68 | 1.80 × 0.92 × 0.14 | floor | B1R | B43 | PROPOSAL |
-| `phys_drum` | L0 | prop | 108 | 1.03 × 0.68 × 0.68 | floor | B1R | B43 | PROPOSAL |
-| `phys_girder` | L0 | prop | 84 | 3.20 × 0.20 × 0.26 | floor | B1R | B43 | PROPOSAL |
-| `phys_weighted` | L0 | prop | 108 | 0.82 × 0.86 × 0.70 | floor | B1R | B43 | PROPOSAL |
-| `phys_cart` | L0 | prop | 232 | 1.36 × 0.86 × 0.67 | floor | B1R | B43 | PROPOSAL |
-| `phys_movable_cover` | L0 | prop | 108 | 1.33 × 0.26 × 1.72 | floor | B1R | B43 | PROPOSAL |
-| `phys_ballast` | L0 | prop | 120 | 1.12 × 0.82 × 0.50 | floor | B1R | B43 | PROPOSAL |
+| `phys_key_component` | L0 | prop | 132 | 0.25 × 0.20 × 0.30 | floor | B1R | B43 | PROPOSAL |
+| `phys_generic` | L0 | prop | 120 | 0.65 × 0.65 × 0.62 | floor | B1R | B43 | PROPOSAL |
+| `phys_power_cell` | L0 | prop | 172 | 0.34 × 0.34 × 0.60 | floor | B1R | B43 | PROPOSAL |
+| `phys_mechanical_part` | L0 | prop | 160 | 0.47 × 0.40 × 0.43 | floor | B1R | B43 | PROPOSAL |
+| `phys_plate` | L0 | prop | 92 | 1.80 × 0.92 × 0.14 | floor | B1R | B43 | PROPOSAL |
+| `phys_drum` | L0 | prop | 132 | 1.03 × 0.68 × 0.68 | floor | B1R | B43 | PROPOSAL |
+| `phys_girder` | L0 | prop | 108 | 3.20 × 0.20 × 0.26 | floor | B1R | B43 | PROPOSAL |
+| `phys_weighted` | L0 | prop | 132 | 0.82 × 0.86 × 0.70 | floor | B1R | B43 | PROPOSAL |
+| `phys_cart` | L0 | prop | 256 | 1.36 × 0.86 × 0.67 | floor | B1R | B43 | PROPOSAL |
+| `phys_movable_cover` | L0 | prop | 132 | 1.33 × 0.26 × 1.72 | floor | B1R | B43 | PROPOSAL |
+| `phys_ballast` | L0 | prop | 144 | 1.12 × 0.82 × 0.50 | floor | B1R | B43 | PROPOSAL |
 | `phys_anchor_block` | L0 | prop | 80 | 0.99 × 0.99 × 0.69 | floor | B1R | B43 | PROPOSAL |
 
 The twelve `phys_*` are **all twelve** of Design 2 §10.1's object classes —

@@ -668,10 +668,49 @@ claimed a tick colour the art has never used.
 Handoff: `docs/art-requests/2026-09-22-status-readiness-handoff.md`.
 Decisions 5-9 for the owner in the kit's `DECISIONS_FOR_OWNER.md`.
 
+### Batch 053 -- A14. Manipulation objects. DELIVERED.
+
+**Design 2 §10.3 draws the carry line at 60 kg.
+`Constants.ENVELOPE_MASS_KG` is 120.** Batch 043's twelve physics props
+carry fittings that follow §10.3 exactly -- grips below 60, attach pads
+above -- under a stated rule: "a hand grip means a hand can lift it."
+The game does not manipulate with hands. `MANIPULATE_VERBS` are HOLD,
+PULL and PUSH, performed by a 700 N field at 20 m that holds 120 kg. So
+`phys_plate` 60, `phys_drum` 70 and `phys_girder` 95 wear "a device has
+to" and the field can carry all three. **One of those numbers is wrong
+and neither lane owns both**, so no fitting was moved on it.
+
+Two more measured, both Production's to decide:
+
+* **`phys_cart` at 180 kg sits EXACTLY on the push limit.** mu is
+  `2/3 * 700 / (120 * 9.8)` = 0.39683, and 0.39683 * 180 * 9.8 = 700.0 N
+  against 700 N. Reported "at the limit", not forced into yes or no.
+* **`phys_movable_cover` at 220 kg cannot be pushed by the envelope at
+  all** -- 855.6 N against 700 -- and its own docstring says it exists
+  to be got behind. Its mass is §10.1's.
+* **`lightened` rescues neither.** It moves ten of twelve one rung down
+  the ladder, but `receive_force` is UNSCALED and only `impulse_scale()`
+  doubles. It doubles one shove; a sustained push is unchanged.
+
+Three in-lane changes: `phys_cart`'s `grip_bar` is now `push_bar` (a
+prefix that means two things means neither); eleven props gain
+`lightened_panel_0/1`, since `lightened` is the one status implemented
+on an `object` and eleven of twelve had nowhere to show it; and every
+prop declares an `envelope` verdict. **Every exported size is unchanged
+to within half a millimetre** -- `ManipulableBody.create` sizes a
+`BoxShape3D` from what this family declares, so `assert_flush_with_body`
+refuses a state fitting standing proud.
+
+`tools/content/run_manipulation_readiness.sh` is the gate, wired into
+`check_art_current.sh`. It reads their `MassClass`, their friction
+derivation and THEIR project's gravity, and refuses to run against a
+rule they have changed. Eight sabotages, eight refusals.
+
+Handoff: `docs/art-requests/2026-09-22-manipulation-handoff.md`.
+
 ### Then
 
-**A14-A15** (manipulation objects reusing batch043's twelve physics
-props, item/Forge modules), **A16** (finish the six theme families),
+**A15** (item/Forge modules), **A16** (finish the six theme families),
 **T01-T18 plus the 63 from the catalogue snapshot** (the
 source-game-inspired environment packs), **A17-A19** (detail/dressing
 library, actual-consumer trials and budget passes, final catalogue).

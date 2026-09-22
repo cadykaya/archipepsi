@@ -36,7 +36,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": false,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "no",
+      "push_force_n": 1944.444
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": false,
     "mass_class": "FIXED",
@@ -175,7 +182,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": false,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "no",
+      "push_force_n": 1244.444
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "HEAVY",
@@ -196,7 +210,9 @@
       "attach_pad_0",
       "attach_pad_1",
       "attach_pad_2",
-      "attach_pad_3"
+      "attach_pad_3",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_ballast.glb",
     "size": [
@@ -218,7 +234,7 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 120
+    "triangles": 144
   },
   "phys_cart": {
     "anchor": "floor",
@@ -229,19 +245,19 @@
           0.0,
           0.745
         ],
-        "id": "grip_bar",
+        "id": "push_bar",
         "normal": [
           -1.0,
           0.0,
           -0.0
         ],
-        "part": "grip_bar",
+        "part": "push_bar",
         "position": [
           -0.58,
           0.635,
           -0.0
         ],
-        "proposes": "a push bar at one end only -- a cart has a front, and the bar is where it is"
+        "proposes": "a push bar at one end only -- a cart has a front, and the bar is where it is. NOT a grip: a hand does not lift 180 kg"
       }
     ],
     "batch": "043",
@@ -257,7 +273,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": false,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "at the limit",
+      "push_force_n": 700.0
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "HEAVY",
@@ -275,7 +298,9 @@
     ],
     "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
     "parts": [
-      "grip_bar"
+      "push_bar",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_cart.glb",
     "size": [
@@ -297,7 +322,7 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 232
+    "triangles": 256
   },
   "phys_drum": {
     "anchor": "floor",
@@ -356,7 +381,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 272.222
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "MEDIUM",
@@ -375,7 +407,9 @@
     "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
     "parts": [
       "attach_hub_0",
-      "attach_hub_1"
+      "attach_hub_1",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_drum.glb",
     "size": [
@@ -397,7 +431,7 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 108
+    "triangles": 132
   },
   "phys_generic": {
     "anchor": "floor",
@@ -456,7 +490,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 58.333
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "LIGHT",
@@ -475,7 +516,9 @@
     "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
     "parts": [
       "grip_hand_0",
-      "grip_hand_1"
+      "grip_hand_1",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_generic.glb",
     "size": [
@@ -497,7 +540,7 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 96
+    "triangles": 120
   },
   "phys_girder": {
     "anchor": "floor",
@@ -556,7 +599,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 369.444
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "MEDIUM",
@@ -575,7 +625,9 @@
     "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
     "parts": [
       "attach_end_a",
-      "attach_end_b"
+      "attach_end_b",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_girder.glb",
     "size": [
@@ -597,7 +649,7 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 84
+    "triangles": 108
   },
   "phys_key_component": {
     "anchor": "floor",
@@ -636,7 +688,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 31.111
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "LIGHT",
@@ -658,7 +717,9 @@
       "grip_post_l",
       "grip_post_r",
       "attach_bit",
-      "attach_bit_ward"
+      "attach_bit_ward",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_key_component.glb",
     "size": [
@@ -680,7 +741,7 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 108
+    "triangles": 132
   },
   "phys_mechanical_part": {
     "anchor": "floor",
@@ -719,7 +780,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 213.889
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "MEDIUM",
@@ -740,7 +808,9 @@
       "grip_bar",
       "grip_post_l",
       "grip_post_r",
-      "attach_key"
+      "attach_key",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_mechanical_part.glb",
     "size": [
@@ -762,7 +832,7 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 136
+    "triangles": 160
   },
   "phys_movable_cover": {
     "anchor": "floor",
@@ -821,7 +891,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": false,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "no",
+      "push_force_n": 855.556
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "HEAVY",
@@ -840,7 +917,9 @@
     "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
     "parts": [
       "attach_push_0",
-      "attach_push_1"
+      "attach_push_1",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_movable_cover.glb",
     "size": [
@@ -862,7 +941,7 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 108
+    "triangles": 132
   },
   "phys_plate": {
     "anchor": "floor",
@@ -921,7 +1000,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 233.333
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "MEDIUM",
@@ -940,7 +1026,9 @@
     "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
     "parts": [
       "attach_slot_0",
-      "attach_slot_1"
+      "attach_slot_1",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_plate.glb",
     "size": [
@@ -962,7 +1050,7 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 68
+    "triangles": 92
   },
   "phys_power_cell": {
     "anchor": "floor",
@@ -1001,7 +1089,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": true,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 155.556
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "MEDIUM",
@@ -1022,7 +1117,9 @@
       "grip_bar",
       "grip_post_l",
       "grip_post_r",
-      "attach_socket"
+      "attach_socket",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_power_cell.glb",
     "size": [
@@ -1044,7 +1141,7 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 148
+    "triangles": 172
   },
   "phys_weighted": {
     "anchor": "floor",
@@ -1103,7 +1200,14 @@
     },
     "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
     "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "envelope": {
+      "hold": false,
+      "of": "Constants.ENVELOPE_*, transcribed; gated by tools/content/run_manipulation_readiness.sh",
+      "push": "yes",
+      "push_force_n": 544.444
+    },
     "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "family_rule_is_about_hands": "\u00a710.3 draws `carriable` at 60 kg and every grip in this family follows that line. The ENVELOPE holds 120 kg and pushes 180, so three props the field can carry wear the `a device has to` language. One of the two numbers is wrong and neither lane owns both; see the `envelope` block and the 2026-09-22 manipulation handoff.",
     "kind": "physics_props",
     "manipulable": true,
     "mass_class": "HEAVY",
@@ -1122,7 +1226,9 @@
     "orientation_runtime": "+X is the object's length, +Y is up, +Z is depth; the origin is floor-centred, on the ground plane",
     "parts": [
       "attach_push_0",
-      "attach_push_1"
+      "attach_push_1",
+      "lightened_panel_0",
+      "lightened_panel_1"
     ],
     "path": "batch043/physics/phys_weighted.glb",
     "size": [
@@ -1144,6 +1250,6 @@
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
     "texels_per_metre": 64,
-    "triangles": 108
+    "triangles": 132
   }
 }

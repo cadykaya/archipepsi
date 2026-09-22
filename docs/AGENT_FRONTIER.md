@@ -145,6 +145,22 @@ Two things from it that other lanes need:
   owner** — an integration question for Prod, in
   `docs/art-requests/2026-09-22-status-readiness-handoff.md`.
 
+* **§10.3 draws the carry line at 60 kg and
+  `Constants.ENVELOPE_MASS_KG` is 120.** Batch 043's physics props
+  signal what a HAND could do, and the game lifts with a 700 N field at
+  20 m. Three props the envelope can carry -- plate 60, drum 70, girder
+  95 -- wear the "a device has to" language. Art moved no fitting on it:
+  one of the two numbers is wrong and neither lane owns both.
+* **`phys_cart` at 180 kg is exactly the heaviest thing the envelope can
+  push** -- 700.0 N against 700 N -- and **`phys_movable_cover` at 220
+  cannot be pushed at all**, though its own docstring says it exists to
+  be got behind. `lightened` rescues neither: it changes CLASS, not
+  kilograms, and `receive_force` is unscaled.
+  `tools/content/run_manipulation_readiness.sh` measures all of it with
+  Production's own constants, ladder, friction derivation and project
+  gravity. Handoff:
+  `docs/art-requests/2026-09-22-manipulation-handoff.md`.
+
 **Scheduling override (owner, 2026-09-22): heartbeat, watchers,
 subscriptions, scheduled check-ins and automatic re-arming stay OFF.**
 This overrides the older "resume the routine the moment a task exists"

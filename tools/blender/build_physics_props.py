@@ -485,15 +485,23 @@ def cart():
                 "ct_fork_%d_%d" % (int(sx), int(sy)), (0.06, 0.14, 0.30),
                 (sx * (w / 2.0 - 0.22), sy * (d / 2.0 - 0.06), 0.30)))
     shell = common.join(body, "phys_cart")
+    # `push_bar`, NOT `grip_bar`. It was the latter, and that broke this
+    # family's own rule on the one prop where it mattered most: "a hand
+    # grip means a hand can lift it", on a 180 kg cart. The intent was
+    # right and lived only in the `proposes` string below, where no node
+    # name carried it -- so a runtime reading node names saw a hand grip
+    # and §10.3's line at 60 kg say the opposite. `assert_grip_is_hand_
+    # scale` now refuses a `grip_*` part on anything not carriable.
     parts = [
-        _grip("grip_bar", (0.07, d * 0.72, 0.07),
+        _grip("push_bar", (0.07, d * 0.72, 0.07),
               (-w / 2.0 + 0.10, 0.0, h - 0.035)),
     ]
-    attach = [{"id": "grip_bar", "part": "grip_bar",
+    attach = [{"id": "push_bar", "part": "push_bar",
                "at": (-w / 2.0 + 0.10, 0.0, h - 0.035),
                "normal": (-1.0, 0.0, 0.0),
                "proposes": "a push bar at one end only -- a cart has a "
-                           "front, and the bar is where it is"}]
+                           "front, and the bar is where it is. NOT a "
+                           "grip: a hand does not lift 180 kg"}]
     return shell, parts, attach
 
 
@@ -677,6 +685,59 @@ CLASSES = [
 ]
 
 
+# ----------------------------------------------------------------------
+# THE ENVELOPE, TRANSCRIBED -- AND GATED
+# ----------------------------------------------------------------------
+#
+# `Constants.ENVELOPE_FORCE_N`, `ENVELOPE_MASS_KG` and
+# `ManipulableBody.FRICTION_HEADROOM`, copied here because the ART is
+# shaped by them: which fitting a prop wears, and what the manifest
+# declares the field can do with it, both depend on these three numbers.
+#
+# A transcription that nothing checks is a transcription that drifts, so
+# `tools/content/run_manipulation_readiness.sh` recomputes every verdict
+# below from Production's own source and FAILS on any disagreement. It
+# also refuses to run at all if their friction derivation has changed.
+ENVELOPE_FORCE_N = 700.0
+ENVELOPE_MASS_KG = 120.0
+FRICTION_HEADROOM = 2.0 / 3.0
+GRAVITY = 9.8
+#: What `ManipulableBody.envelope_friction()` derives. mu < F / (m g),
+#: taking two thirds of the bound so a body at the limit accelerates.
+ENVELOPE_MU = FRICTION_HEADROOM * ENVELOPE_FORCE_N \
+    / (ENVELOPE_MASS_KG * GRAVITY)
+#: Half a newton beside 700. A tangency is not a refusal: `phys_cart` at
+#: 180 kg needs 700.0 N exactly, and rounding that into "no" would report
+#: floating point as a design fact.
+GRAZE_N = 0.5
+
+
+def envelope_verdict(kg):
+    """What the FIELD can do with this mass. Not what a hand can do.
+
+    The two are different questions and this family answers the hand's
+    elsewhere: §10.3 draws `carriable` at 60 kg, and every grip in this
+    file follows that line. The envelope HOLDS to 120 kg and PUSHES to
+    180, so three props are carriable by the field and not by the hand.
+    That disagreement is reported, not resolved here -- one of the two
+    numbers is wrong and neither lane owns both.
+    """
+    need = ENVELOPE_MU * kg * GRAVITY
+    if need > ENVELOPE_FORCE_N + GRAZE_N:
+        push = "no"
+    elif need > ENVELOPE_FORCE_N - GRAZE_N:
+        push = "at the limit"
+    else:
+        push = "yes"
+    return {
+        "hold": kg <= ENVELOPE_MASS_KG,
+        "push": push,
+        "push_force_n": round(need, 3),
+        "of": "Constants.ENVELOPE_*, transcribed; gated by "
+              "tools/content/run_manipulation_readiness.sh",
+    }
+
+
 def mass_class(kg, manipulable):
     """Design 2 §10.2. Derived, never declared."""
     if not manipulable or kg >= 400.0:
@@ -688,11 +749,99 @@ def mass_class(kg, manipulable):
     return "HEAVY"
 
 
+def assert_grip_is_hand_scale(name, carriable, parts):
+    """`grip_*` means A HAND CAN LIFT THIS, and nothing else.
+
+    That is this family's own rule, stated in the module docstring, and
+    §10.3 draws the line it depends on at 60 kg. Until Batch 053 nothing
+    checked it, and it was broken on the one prop where breaking it did
+    the most damage: `phys_cart`, 180 kg, carrying a part named
+    `grip_bar`. Its `proposes` string said "a push bar", which is right
+    and which no runtime reading node names ever sees.
+
+    A prefix that means two things means neither.
+    """
+    if carriable:
+        return
+    stray = [o.name for o in parts if o.name.startswith("grip")]
+    if stray:
+        raise AssertionError(
+            "%s is not carriable and carries %s. In this family `grip_*` "
+            "means a HAND can lift it -- §10.3 draws that at 60 kg -- so "
+            "a grip here teaches the player something untrue. Name it "
+            "for what it is (`push_bar`, `attach_*`) or make the object "
+            "carriable." % (name, ", ".join(stray)))
+
+
+def _lightened_panels(shell, name):
+    """Somewhere for the ONE status the runtime implements on an object.
+
+    `ECHO_STATUS_SUPPORTED_TARGETS` gives `lightened` and only
+    `lightened` an `object` target, and `ManipulableBody.apply_status`
+    is the real path for it -- so every manipulable prop in this family
+    can carry it and, until now, eleven of the twelve had nowhere to
+    show it. Batch 045's `sp_ballast_crate` already solved this for one
+    crate with `lightened_panel_*`; this is the same answer for the rest.
+
+    FLUSH, NEVER PROUD. The panel's outer face sits exactly on the body's
+    measured face, so the exported size does not move by a millimetre --
+    Production derives a `BoxShape3D` from a size this family declares,
+    and a fitting that grew the box would quietly change a collider
+    nobody asked to change.
+
+    ART DECLARES THE NODE; a runtime decides what lights it and when.
+    """
+    lo, hi = common.world_box(shell)
+    w = hi[0] - lo[0]
+    h = hi[2] - lo[2]
+    mid_x = (lo[0] + hi[0]) / 2.0
+    thick = 0.03
+    panel = (min(0.34, w * 0.40), thick, min(0.16, max(0.04, h * 0.30)))
+    at_z = lo[2] + h * 0.55
+    out = []
+    for i, sy in enumerate((-1.0, 1.0)):
+        face = hi[1] if sy > 0.0 else lo[1]
+        out.append(_grip("lightened_panel_%d" % i, panel,
+                         (mid_x, face - sy * thick / 2.0, at_z)))
+    return out
+
+
+def assert_flush_with_body(shell, panels, name, tolerance=0.0005):
+    """A state fitting may not grow the object it is on.
+
+    Production derives a `BoxShape3D` from the size this family
+    declares -- `ManipulableBody.create` takes it as an argument -- so a
+    panel standing one centimetre proud silently changes a collider that
+    nobody asked to change, on twelve objects at once, and the only
+    evidence would be a manifest number moving. Collision is Prod's.
+
+    Checked against the body's MEASURED box, not its nominal dimensions:
+    that distinction is the one `assert_parts_touch` was written for and
+    it is the same one here.
+    """
+    lo, hi = common.world_box(shell)
+    for panel in panels:
+        plo, phi = common.world_box(panel)
+        for axis in range(3):
+            over = max(lo[axis] - plo[axis], phi[axis] - hi[axis])
+            if over > tolerance:
+                raise AssertionError(
+                    "%s: %s stands %.4f m proud of the body on %s. A "
+                    "state fitting is flush or inside -- Production sizes "
+                    "a collider from what this family exports."
+                    % (name, panel.name, over, "XYZ"[axis]))
+
+
 def main():
     made = []
     for name, klass, kg, carriable, manipulable, build, anchor in CLASSES:
         common.reset_scene()
         shell, parts, attach = build()
+        assert_grip_is_hand_scale(name, carriable, parts)
+        if manipulable:
+            panels = _lightened_panels(shell, name)
+            assert_flush_with_body(shell, panels, name)
+            parts = parts + panels
         shift = common.set_origin_group([shell] + parts, anchor)
         common.uv_project_world(shell, DENSITY, propkit.PROP_SIZE)
         skin = SKIN[name]
@@ -737,6 +886,7 @@ def main():
         entry.update({
             "class": klass, "mass_kg": kg,
             "mass_class": mass_class(kg, manipulable),
+            "envelope": envelope_verdict(kg),
             "carriable": carriable, "manipulable": manipulable,
             "coordinate_space": {
                 "authoring": "Blender, Z-up, metres",
@@ -784,6 +934,17 @@ def main():
                            "player's device touches; a hand grip means a hand "
                            "can lift it, and its absence on an object with "
                            "attach pads means a device has to",
+            "family_rule_is_about_hands": "§10.3 draws `carriable` at 60 kg "
+                                          "and every grip in this family "
+                                          "follows that line. The ENVELOPE "
+                                          "holds 120 kg and pushes 180, so "
+                                          "three props the field can carry "
+                                          "wear the `a device has to` "
+                                          "language. One of the two numbers "
+                                          "is wrong and neither lane owns "
+                                          "both; see the `envelope` block "
+                                          "and the 2026-09-22 manipulation "
+                                          "handoff.",
             "texels_per_metre": DENSITY,
             "not_changed": ["player physics", "object mass rules",
                             "carry limits", "package schemas",

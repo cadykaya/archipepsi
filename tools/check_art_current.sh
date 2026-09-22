@@ -301,6 +301,20 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # subset, their supported-target table and their three apply() guards,
   # applied to the kit. It also refuses to keep checking a guard they
   # have rewritten.
+  # A14. Batch 043's twelve physics props carry a mass class derived
+  # from Design 2 §10.2, transcribed into the exporter -- and Production
+  # transcribes the same table into `MassClass`. Two transcriptions of
+  # one section is the arrangement that drifts. This runs their ladder,
+  # their envelope constants and their friction derivation over Art's
+  # export, and refuses to keep checking a derivation they have changed.
+  say "the physics props against the envelope that must move them..."
+  tools/content/run_manipulation_readiness.sh >/dev/null 2>&1 || \
+    fail "manipready: a prop's exported mass_class or envelope verdict
+    disagrees with Production's own numbers, a rung of the mass ladder
+    has emptied, or MassClass / ManipulableBody have moved under it. Run
+
+    tools/content/run_manipulation_readiness.sh"
+
   say "the status kit against the runtime that exists..."
   tools/content/run_status_readiness.sh >/dev/null 2>&1 || \
     fail "statusready: a kind in ECHO_STATUS_KINDS has no glyph, a glyph
