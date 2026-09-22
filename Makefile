@@ -674,6 +674,15 @@ godot-archive: godot-import  # the Echo archive: search, sort, the split
 	fi; \
 	exit $$status
 
+godot-consumable: godot-import  # the fifth slot at runtime: charges, races, refusals
+	@out=$$($(GODOT) --headless --path godot -- --consumable 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
 godot-zone-state: godot-import  # D-8: a puzzle that crosses rooms
 	@out=$$($(GODOT) --headless --path godot -- --zone-state 2>&1); \
 	status=$$?; printf '%s\n' "$$out" \

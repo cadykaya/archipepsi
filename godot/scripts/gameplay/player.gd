@@ -549,6 +549,25 @@ static func create() -> Player:
 	return player
 
 
+## ONE SLOT'S BUTTON GOING DOWN, gate and all.
+##
+## Named rather than left inline in `_physics_process` so the tests press
+## the REAL gate instead of a copy of it. The consumable path has two
+## counts that must stay equal -- charges accepted and actions run -- and
+## a test that reimplemented this decision would be measuring its own
+## arithmetic rather than the game's.
+func press_slot(slot: String) -> void:
+	set_highlighted_slot(slot)
+	# AN EMPTY SUPPLY REFUSES BEFORE IT COSTS ANYTHING. Like an unmet
+	# condition, not like a miss: no cooldown is charged and no effect
+	# runs, because a press that could never have resolved must not be
+	# paid for. The supply stays equipped at 0 -- exhausted, not gone.
+	if slot == "consumable" and not _has_a_charge():
+		_say_exhausted()
+		return
+	runtimes[slot].activate()
+
+
 ## Is there anything left in the consumable slot? Counts what is in
 ## flight, so two presses inside one round trip cannot both fire.
 func _has_a_charge() -> bool:
@@ -583,13 +602,18 @@ func _spend_a_charge() -> void:
 	# a player who did nothing wrong.
 	if BridgeClient.charges_left(component_id) <= 0:
 		return
-	# `note_use` returns the index this use is meant to be AND records it
-	# as in flight, so the next press sees one fewer before any snapshot
-	# arrives. The engine accepts the index only if it is the next one
-	# due, which is what makes a duplicate or a retry harmless.
-	BridgeClient.send_intent({"type": "use_consumable",
-			"component_id": component_id,
-			"use_index": BridgeClient.note_use(component_id)})
+	# `spend_consumable` sends the use AND records it as in flight, in
+	# that order, so a send the bridge never received is not held against
+	# the count. The next press sees one fewer before any snapshot
+	# arrives, which is what stops one charge firing twice.
+	#
+	# **THE EFFECT HAS ALREADY RUN** by the time this is called -- it
+	# hangs off `runtime.action_used`. So a refusal arriving later can
+	# only give the charge back for a NEW press; it can never un-fire or
+	# re-fire the one that happened. One accepted charge and one actual
+	# action are separate counts, and the gate above is what keeps them
+	# equal.
+	BridgeClient.spend_consumable(component_id)
 
 func _ready() -> void:
 	add_to_group("player")
@@ -792,16 +816,7 @@ func _physics_process(delta: float) -> void:
 		for slot: String in SLOT_ACTIONS:
 			var action: String = SLOT_ACTIONS[slot]
 			if Input.is_action_just_pressed(action):
-				set_highlighted_slot(slot)
-				# AN EMPTY SUPPLY REFUSES BEFORE IT COSTS ANYTHING. Like
-				# an unmet condition, not like a miss: no cooldown is
-				# charged and no effect runs, because a press that could
-				# never have resolved must not be paid for. The supply
-				# stays equipped at 0 -- it is exhausted, not gone.
-				if slot == "consumable" and not _has_a_charge():
-					_say_exhausted()
-				else:
-					runtimes[slot].activate()
+				press_slot(slot)
 			if Input.is_action_just_released(action):
 				runtimes[slot].release()
 		if Input.is_action_just_pressed("interact") \

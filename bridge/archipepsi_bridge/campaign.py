@@ -51,11 +51,34 @@ MAX_LAZY_ECHOES_PER_LOAD = 3
 
 
 class IntentError(Exception):
-    """A refused intent. Answered with a recoverable `error`, never a crash."""
+    """A refused intent. Answered with a recoverable `error`, never a crash.
 
-    def __init__(self, message: str, scope: str = "bridge"):
+    `about` is the domain key of the thing that was refused, for the one
+    kind of refusal a client cannot merely read and forget: one it is
+    holding an operation open against. Empty everywhere else, and empty
+    means "unchecked" rather than "not yours" — a client resolves a
+    pending operation on an exact match and on nothing else.
+    """
+
+    def __init__(self, message: str, scope: str = "bridge",
+                 about: str = ""):
         super().__init__(message)
         self.scope = scope
+        self.about = about
+
+
+def use_consumable_key(component_id: str, generation: int,
+                       use_index: int) -> str:
+    """The domain key of one consumable spend, for `BridgeError.about`.
+
+    Built from the intent's own fields on both sides rather than from a
+    token either side invented — the house rule wherever identity is
+    echoed (`key_id`, `use_index`, `LatchFired.(package_id, latch_id)`).
+    Two spends of the same component differ by index; the same index
+    either side of a refill differs by generation; so an exact match is
+    exactly one operation and can never resolve a different one.
+    """
+    return f"use_consumable:{component_id}:{generation}:{use_index}"
 
 
 def set_creativity(save: CampaignSave, value: int) -> CampaignSave:
@@ -647,6 +670,7 @@ class CampaignEngine:
             slots=save.slots if save else SlotAssignment(),
             local_rewards=save.local_rewards if save else (),
             consumable_uses=save.consumable_uses if save else (),
+            consumable_generation=save.consumable_generation if save else 0,
             active_zone=save.active_zone if save else None,
             # Derived here on every send, from the record just above it,
             # so the identity and the content it identifies cannot come
@@ -1607,20 +1631,31 @@ class CampaignEngine:
         await self.broadcast_snapshot()
 
     async def handle_use_consumable(self, component_id: str,
-                                    use_index: int) -> None:
-        """Spend one charge. The last one empties the slot (§9).
+                                     use_index: int,
+                                     generation: int) -> None:
+        """Spend one charge. It stays equipped when empty (§9).
 
         Refusals are the transition's, and they are reported rather than
         swallowed: a client that has lost count of its own charges is a
         client whose HUD is lying, and finding out here is the cheap way
         to learn it.
+
+        **THE REFUSAL CARRIES THE KEY OF WHAT IT REFUSED.** The client is
+        holding this spend in flight — subtracting it from the count it
+        draws so a second press cannot spend the same charge — and a
+        refusal it cannot attribute is one it can never release. The
+        count would stay a charge short for the rest of the session, and
+        after a refill it would be a charge short of the *new* supply.
         """
         self._require_save()
         try:
             self._apply(T.spend_charge(self.save, component_id,
-                                       use_index))
+                                       use_index, generation))
         except ValueError as exc:
-            raise IntentError(str(exc)) from exc
+            raise IntentError(
+                str(exc),
+                about=use_consumable_key(component_id, generation,
+                                         use_index)) from exc
         await self.broadcast_snapshot()
 
     async def handle_slot_action(

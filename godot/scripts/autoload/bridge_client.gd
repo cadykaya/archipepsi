@@ -65,6 +65,13 @@ func _process(delta: float) -> void:
 	elif state == WebSocketPeer.STATE_CLOSED:
 		if online:
 			online = false
+			# NOTHING SURVIVES THE SOCKET. A spend in flight when the
+			# connection dropped either landed or did not, and this
+			# client cannot tell which -- but the snapshot that arrives
+			# after the reconnect is the authority either way, and
+			# holding a stale subtraction against it would misreport the
+			# count until the next refill.
+			_in_flight.clear()
 			bridge_state_changed.emit(false)
 		if _was_connecting:
 			_was_connecting = false
@@ -82,11 +89,26 @@ func _process(delta: float) -> void:
 var sent_intents: Array[Dictionary] = []
 const _INTENT_LOG_CAP := 64
 
+## TEST SEAM: report a send as accepted with no socket behind it.
+##
+## Headless drivers have no bridge to connect to, so `send_intent`
+## correctly fails for every intent they make -- which would leave
+## everything that happens AFTER a successful send untestable without
+## standing a bridge up. A driver that needs that half sets this for the
+## cases that need it and clears it for the case about failing sends.
+##
+## Never set by anything the player can reach. The one thing it changes
+## is the return value; the intent still goes in `sent_intents`, which is
+## what the drivers read.
+var assume_sent := false
+
 func send_intent(intent: Dictionary) -> bool:
 	sent_intents.append(intent)
 	if sent_intents.size() > _INTENT_LOG_CAP:
 		sent_intents.pop_front()
 	if _socket.get_ready_state() != WebSocketPeer.STATE_OPEN:
+		if assume_sent:
+			return true
 		push_warning("intent '%s' dropped: bridge offline" % intent.get("type", "?"))
 		return false
 	_socket.send_text(JSON.stringify(intent))
@@ -135,6 +157,9 @@ func _handle(raw: String) -> void:
 		"error":
 			push_warning("bridge error [%s]: %s" % [
 					message.get("scope", "?"), message.get("message", "")])
+			# BEFORE the signal, so a listener redrawing the HUD on an
+			# error already sees the charge given back.
+			_release_refused(str(message.get("about", "")))
 			error_received.emit(message)
 		_:
 			push_warning("unknown bridge message type")
@@ -310,8 +335,28 @@ func slotted_action(slot := "echo_a") -> Dictionary:
 		return {}
 	return owned_component(str(id)).get("component", {})
 
-#: USES SENT AND NOT YET CONFIRMED, per component: the highest
-#: `use_index` this client has put on the wire.
+#: USES SENT AND NOT YET RESOLVED, per component:
+#: `{component_id: {"generation": int, "index": int}}`. One at a time,
+#: because a second press is gated on the count this already reduces.
+#:
+#: **The generation is half the key.** Without it a pending use survives
+#: a refill and goes on subtracting from the new supply, and a refusal
+#: cannot be told from one belonging to an older press.
+#:
+#: Resolved by exactly four things: a failed send (never recorded), a
+#: refusal whose `about` matches (`_release_refused`), a snapshot under
+#: the same generation whose `spent` has reached the index, or a
+#: snapshot under a different one (`_settle_in_flight`). Reconnect
+#: clears the lot.
+#:
+#: **RESIDUAL, stated rather than hidden:** a request that is neither
+#: applied nor refused -- a frame lost in flight -- matches none of
+#: those. It clears on the next reconnect, on the next refill, or when a
+#: later use advances `spent` past it. Until then the count under-reports
+#: by one, which is the conservative direction: it can refuse a press
+#: the engine would have allowed, and it can never permit a second
+#: effect. No timeout, because a timeout would be a guess about the
+#: network dressed up as a fact about the protocol.
 #:
 #: A snapshot is a round trip away, so two fast presses would both see
 #: the same remaining count and both fire. The engine refuses the second
@@ -321,25 +366,82 @@ func slotted_action(slot := "echo_a") -> Dictionary:
 var _in_flight: Dictionary = {}
 
 
-## The index to put on the next use, and a note that it is in flight.
-## Called only when the Action actually fired.
-func note_use(component_id: String) -> int:
+## The domain key of one spend, matching what the bridge puts in
+## `BridgeError.about`. Built from the intent's own fields on both sides,
+## never an opaque token this client invented -- the same rule as
+## `key_id` and `LatchFired.(package_id, latch_id)`.
+static func use_key(component_id: String, generation: int,
+		index: int) -> String:
+	return "use_consumable:%s:%d:%d" % [component_id, generation, index]
+
+
+## SEND ONE USE AND HOLD IT IN FLIGHT. Returns false if nothing was sent.
+##
+## The send and the record are one call because the order between them is
+## load-bearing: **a spend that never left the socket must not be held.**
+## `send_intent` returns false when the bridge is offline, and a pending
+## use recorded anyway would subtract a charge the engine never heard
+## about, for as long as the session lasts.
+##
+## The generation is captured HERE, at the moment of acting, and echoed
+## on the intent -- the `proposal_id` convention. It is what makes a use
+## minted before a refill refusable on identity instead of on arithmetic.
+func spend_consumable(component_id: String) -> bool:
+	var generation := int(snapshot.get("consumable_generation", 0))
 	var index := charges_total(component_id) \
 			- charges_left(component_id) + 1
-	_in_flight[component_id] = index
-	return index
+	if not send_intent({"type": "use_consumable",
+			"component_id": component_id,
+			"use_index": index,
+			"generation": generation}):
+		return false
+	_in_flight[component_id] = {"generation": generation, "index": index}
+	return true
 
 
-## Forget in-flight uses the snapshot has caught up with. A use that was
-## refused leaves its index behind, and the snapshot's count is what
-## corrects it: once the engine's `spent` reaches that index the press
-## landed, and anything below it never will.
+## RESOLVE PENDING SPENDS FROM A SNAPSHOT -- and only the two ways a
+## snapshot can actually resolve one.
+##
+## LANDED: same supply, and the engine's `spent` has reached the index.
+## RETIRED: a different supply. The refill happened, so this use can
+## never be applied and must stop reducing the NEW supply.
+##
+## What this deliberately does NOT do is clear on any snapshot that
+## arrives. A snapshot generated before the engine saw the request would
+## clear a use that is still genuinely in flight, and the next press
+## would run the effect a second time against one charge. Refusals are
+## resolved by `about`, not here; a request that is neither applied nor
+## refused is covered in `_in_flight`'s note.
 func _settle_in_flight() -> void:
+	var generation := int(snapshot.get("consumable_generation", 0))
 	for component_id: Variant in _in_flight.keys():
+		var pending: Dictionary = _in_flight[component_id]
+		if int(pending.get("generation", -1)) != generation:
+			_in_flight.erase(component_id)
+			continue
 		var spent := charges_total(str(component_id)) \
 				- _snapshot_charges_left(str(component_id))
-		if spent >= int(_in_flight[component_id]):
+		if spent >= int(pending.get("index", 0)):
 			_in_flight.erase(component_id)
+
+
+## RESOLVE A PENDING SPEND FROM A REFUSAL. Exact match on the domain key
+## and nothing else: an error with an empty `about` is UNCHECKED, not
+## "mine", so it cannot release a use it has no evidence about.
+##
+## Without this a refused use is held forever -- the snapshot's count can
+## never reach an index the engine declined, so the displayed charge
+## stays a charge short for the rest of the session, and after a refill
+## it is a charge short of a supply it was never minted against.
+func _release_refused(about: String) -> void:
+	if about.is_empty():
+		return
+	for component_id: Variant in _in_flight.keys():
+		var pending: Dictionary = _in_flight[component_id]
+		if use_key(str(component_id), int(pending.get("generation", -1)),
+				int(pending.get("index", 0))) == about:
+			_in_flight.erase(component_id)
+			return
 
 
 func _snapshot_charges_left(component_id: String) -> int:
@@ -374,7 +476,8 @@ func charges_left(component_id: String) -> int:
 	# second half is why one charge cannot fire twice.
 	var left := _snapshot_charges_left(component_id)
 	if _in_flight.has(component_id):
-		var flying := int(_in_flight[component_id])
+		var pending: Dictionary = _in_flight[component_id]
+		var flying := int(pending.get("index", 0))
 		var counted := int(charges) - left
 		left = maxi(left - maxi(flying - counted, 0), 0)
 	return left

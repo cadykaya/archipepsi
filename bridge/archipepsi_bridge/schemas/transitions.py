@@ -149,6 +149,47 @@ def accept_zone(save: CampaignSave, zone: Zone, *,
         used_fallback=used_fallback))
 
 
+def _refill_is_due(save: CampaignSave, zone_id: str) -> bool:
+    """Whether entering `zone_id` hands back a fresh consumable supply.
+
+    **PROPOSED BY THIS LANE; NOT DECIDED BY THE OWNER.** What the owner
+    chose is "consumables refill on entering a Zone", and nothing finer.
+    Everything below — what counts as *entering*, and what a same-Zone
+    return does — is this lane's proposal, isolated in one predicate so
+    the owner can replace the policy by rewriting one function and its
+    tests rather than unpicking the spend transaction.
+
+    The rule as written: **refill when the deployment target changes.**
+    `enter_zone` is not the same thing as a deployment beginning — it
+    runs again on re-entry, on a generation retry and on a reconnect —
+    so the refill is keyed to `consumable_deployment`, the Zone the
+    current expenditure belongs to.
+
+    What that actually delivers, stated in full rather than left to be
+    discovered in play:
+
+      A -> A (re-entry, reload, Hub round trip): no refill. The trip is
+        the same deployment continued, and the alternative is a free
+        refill behind two loading screens.
+      A -> B: refill. This is what makes charges a per-Zone resource
+        rather than a per-campaign one.
+      **A -> B -> A: refills BOTH times.** Returning to A does not
+        restore what A had left — it hands over a fresh supply. So
+        Hub -> B -> A is a working restock loop at the price of one
+        extra Zone, and the same-Zone rule above closes the cheap
+        version of that loop without closing the loop.
+
+    That last line is the honest cost of a one-string rule, and it is
+    why this is a proposal rather than a ruling. PER-ZONE EXPENDITURE
+    PERSISTENCE — where what A had left waits for you while you are in B
+    — is a different policy, not a bug fix for this one: it needs a
+    record per Zone instead of one deployment id, every record has to
+    survive a save round trip, and abandoning a Zone has to decide
+    whether its record goes with it. The owner has that decision.
+    """
+    return save.consumable_deployment != zone_id
+
+
 def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     """GENERATED, DORMANT or COMPLETE -> ACTIVE. Idempotent on ACTIVE.
 
@@ -185,29 +226,27 @@ def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     # the campaign already counted. VISITING is the same experience and
     # different accounting.
     state = "VISITING" if rec.state == "COMPLETE" else "ACTIVE"
-    # CONSUMABLES REFILL WHEN A DEPLOYMENT BEGINS (owner decision,
-    # 2026-09-22), and this function is not the same thing as a
-    # deployment beginning. It runs again on re-entry, after a Hub trip,
-    # on a reconnect and on a generation retry; restocking on every call
-    # would make the cheapest resupply a round trip through the portal.
-    #
-    # So the refill is keyed to `consumable_deployment`, the Zone the
-    # current expenditure belongs to. Entering the Zone you are already
-    # deployed into changes nothing at all.
-    #
-    # **THE SAME-ZONE HUB-REVISIT POLICY, stated rather than left to fall
-    # out of this code:** going back to the Hub and returning to the SAME
-    # Zone does NOT restock. That trip is the same deployment continued,
-    # and the alternative is a free refill behind two loading screens.
-    # Deploying into a DIFFERENT Zone does restock, which is what makes
-    # charges a per-Zone resource rather than a per-campaign one.
+    # CONSUMABLES REFILL ON ENTERING A ZONE (owner decision, 2026-09-22).
+    # WHICH entries count as one is `_refill_is_due` — this lane's
+    # PROPOSAL, not the owner's ruling, and the whole of it lives in that
+    # predicate together with the consequences it has not been asked to
+    # accept yet.
     #
     # Expenditure is tracked by component id, so swapping the supply out
     # and back within a deployment preserves what has been spent.
-    fresh = save.consumable_deployment != zone_id
+    #
+    # A refill MINTS A NEW GENERATION, and that is the only thing that
+    # ever does. A use minted against the old supply carries a number
+    # that no longer exists, so `spend_charge` refuses it on identity
+    # instead of hoping the arithmetic disagrees — which, on an old
+    # index 1 arriving at a fresh supply, it does not.
+    fresh = _refill_is_due(save, zone_id)
     return _rebuild(save,
                     zones=_replace_zone(save, zone_id, state=state),
                     consumable_uses=() if fresh else save.consumable_uses,
+                    consumable_generation=(save.consumable_generation + 1
+                                           if fresh
+                                           else save.consumable_generation),
                     consumable_deployment=zone_id,
                     active_zone_id=zone_id)
 
@@ -992,7 +1031,7 @@ def slot_action(
 
 
 def spend_charge(save: CampaignSave, component_id: str,
-                 use_index: int) -> CampaignSave:
+                 use_index: int, generation: int) -> CampaignSave:
     """Spend one use of a consumable. It stays equipped when empty.
 
     **The supply is permanently owned** (owner decision, 2026-09-22).
@@ -1002,22 +1041,31 @@ def spend_charge(save: CampaignSave, component_id: str,
     thing that is refused is USING an empty one, which is this function,
     not holding one.
 
-    **`use_index` MAKES THIS A COMPARE-AND-SWAP, and that is the whole
-    transaction.** It is which use this is meant to be -- the first, the
-    second -- and the spend is accepted only if it is the next one due.
-    Everything the delayed-snapshot cases need falls out of that one
-    rule, with no identifiers to store and nothing to expire:
+    **THE TRANSACTION IS A COMPARE-AND-SWAP ON TWO THINGS: WHICH SUPPLY,
+    AND WHICH USE OF IT.** `generation` is the supply the caller was
+    looking at when it acted; `use_index` is which use of that supply
+    this is meant to be -- the first, the second. The spend is accepted
+    only if the generation is still current AND the index is the next one
+    due. What each half catches:
 
-      TWO PRESSES ON THE LAST CHARGE. Both mint the same index because
-      neither has seen a snapshot yet. The first moves `spent` past it;
-      the second no longer matches and is refused. At most one
+      TWO PRESSES ON THE LAST CHARGE (index). Both mint the same index
+      because neither has seen a snapshot yet. The first moves `spent`
+      past it; the second no longer matches and is refused. At most one
       activation succeeds.
-      A DUPLICATE OR RETRIED MESSAGE. Same index, already consumed, same
-      refusal -- so a retry can never spend twice or replay an effect.
-      A STALE USE FROM BEFORE A REFILL. It carries an index from the old
-      deployment's count; after the refill the next one due is 1 again,
-      so it does not match and is dropped rather than eating a fresh
-      charge.
+      A DUPLICATE OR RETRIED MESSAGE (index). Same index, already
+      consumed, same refusal -- so a retry can never spend twice or
+      replay an effect.
+      A USE MINTED BEFORE A REFILL (generation). **The index cannot
+      catch this one, which is why the generation exists.** An old use 1
+      arriving at a fresh supply IS the next index due (`1 == 0 + 1`);
+      an old use 3 is the next one due again once two legitimate new uses
+      have brought `spent` to 2. Both would eat a charge from a supply
+      they were never minted against. The generation no longer exists, so
+      both are refused on identity instead.
+
+    The Zone id could not have stood in for the generation: it is reused
+    every time you walk back in, so a use from the last visit to A would
+    still name A. Minted only by a refill, never reused.
 
     Refuses rather than saturating. A caller that has lost count should
     find out here, not by watching the number stay at zero.
@@ -1028,6 +1076,16 @@ def spend_charge(save: CampaignSave, component_id: str,
     charges = getattr(owned.component, "charges", None)
     if charges is None:
         raise ValueError(f"'{component_id}' is not a consumable")
+    # THE GENERATION IS CHECKED FIRST, and it is checked before the
+    # count, so a stale use is reported as stale rather than as bad
+    # arithmetic. Three tests in this lane have now passed for the wrong
+    # reason; a refusal that names the wrong cause is how that happens.
+    if generation != save.consumable_generation:
+        raise ValueError(
+            f"'{component_id}' use {use_index} was minted against supply "
+            f"{generation}; the current supply is "
+            f"{save.consumable_generation}. It was refilled after the "
+            f"press, so this use no longer exists")
     spent = charges - save.charges_left(component_id)
     if spent >= charges:
         raise ValueError(
@@ -1035,8 +1093,7 @@ def spend_charge(save: CampaignSave, component_id: str,
     if use_index != spent + 1:
         raise ValueError(
             f"'{component_id}' use {use_index} is not the next one due "
-            f"({spent + 1}); a duplicate, a retry, or a use minted "
-            f"before a refill")
+            f"({spent + 1}); a duplicate or a retry")
     uses = tuple(u for u in save.consumable_uses
                  if u.component_id != component_id)
     uses += (ConsumableUse(component_id=component_id, spent=spent + 1),)

@@ -13,9 +13,14 @@ number going down.
 
 **They refill on entering a Zone** (owner decision, 2026-09-22). Spent
 for good would leave the slot dead weight for most of a long run and
-retire the Echo that earned it; per-Zone keeps it a resource worth
-spending deliberately. They persist WITHIN a Zone, so a reload does not
-hand them back.
+retire the Echo that earned it.
+
+**WHICH entries count as a refill is THIS LANE'S PROPOSAL and not the
+owner's ruling** -- the owner chose "on entering a Zone" and nothing
+finer. The whole policy lives in `transitions._refill_is_due`, its
+consequences are spelled out there, and `TestTheRefill` asserts what it
+does rather than arguing that it is right. A reload does not hand
+charges back; A -> B -> A does.
 """
 from __future__ import annotations
 
@@ -53,10 +58,11 @@ def _save(*operations) -> P.CampaignSave:
 
 
 def _spend(save: P.CampaignSave, cid="act_nade") -> P.CampaignSave:
-    """One ordinary use: the next index due, which is what a client with
-    a current snapshot would send."""
+    """One ordinary use: the next index due against the CURRENT supply,
+    which is what a client holding a current snapshot would send."""
     charges = save.derive().by_id(cid).component.charges
-    return T.spend_charge(save, cid, charges - save.charges_left(cid) + 1)
+    return T.spend_charge(save, cid, charges - save.charges_left(cid) + 1,
+                          save.consumable_generation)
 
 
 def _restart(save: P.CampaignSave) -> P.CampaignSave:
@@ -118,7 +124,8 @@ class TestSpending:
     def test_spending_something_that_is_not_a_consumable_is_refused(self):
         save = _save(_action(slot="echo_a", charges=None, cid="act_gun"))
         with pytest.raises(ValueError) as caught:
-            T.spend_charge(save, "act_gun", 1)
+            T.spend_charge(save, "act_gun", 1,
+                           save.consumable_generation)
         assert "not a consumable" in str(caught.value)
 
 
@@ -191,8 +198,17 @@ def _zone() -> Zone:
     })
 
 
-def _in_another_zone(save: P.CampaignSave) -> P.CampaignSave:
-    """A second, different deployment."""
+def _in_another_zone(save: P.CampaignSave,
+                     rest: bool = False) -> P.CampaignSave:
+    """A second, different deployment.
+
+    `rest=True` FINISHES the first Zone instead of abandoning it, so it
+    can be walked back into: an abandoned Zone is deliberately not
+    re-enterable, and a Zone merely put down still holds its locations,
+    which the one-Zone-at-a-time rule refuses to let a second Zone
+    generate past. A completed one is revisitable, which is the route
+    A -> B -> A actually takes in play.
+    """
     zone = TypeAdapter(Zone).validate_python({
         "schema_version": 7, "zone_id": "zone_002", "display_name": "Span",
         "target_game": "Game", "theme": "void_glitch",
@@ -202,7 +218,8 @@ def _in_another_zone(save: P.CampaignSave) -> P.CampaignSave:
     # any; the point of the case is the deployment change, not the
     # accounting around it.
     if save.active_zone_id:
-        save = T.abandon_zone(save, save.active_zone_id)
+        save = (T.complete_zone(save, save.active_zone_id) if rest
+                else T.abandon_zone(save, save.active_zone_id))
     save = T.start_generation(save, zone_id=zone.zone_id,
                               allocated_location_ids=(89100003,),
                               target_game=zone.target_game)
@@ -263,6 +280,50 @@ class TestTheRefill:
         assert resumed.charges_left("act_nade") == 2
         assert T.enter_zone(resumed, "zone_001").charges_left("act_nade") == 2
 
+    def test_a_b_a_refills_on_both_changes(self):
+        """**WHAT THE PROPOSED RULE ACTUALLY DELIVERS**, recorded rather
+        than assumed. `_refill_is_due` compares against ONE deployment
+        id, so going A -> B -> A refills at both changes: coming back to
+        A does not restore what A had left, it hands over a fresh supply.
+
+        That makes Hub -> B -> A a working restock loop, at the price of
+        one extra Zone — the same-Zone rule closes the cheap version of
+        the loop without closing the loop. This is not per-Zone
+        expenditure persistence, and the docstring on `_refill_is_due`
+        says so. The case asserts the behaviour rather than endorsing it;
+        if the owner rules for per-Zone records, this is the test that
+        has to change, and it is meant to be easy to find.
+        """
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        save = _spend(save)
+        save = _spend(save)
+        assert save.charges_left("act_nade") == 1
+        # A -> B: a refill, as the rule intends.
+        save = _in_another_zone(save, rest=True)
+        assert save.charges_left("act_nade") == 3
+        save = _spend(save)
+        assert save.charges_left("act_nade") == 2
+        # B -> A: a SECOND refill. A's remaining one charge is gone, and
+        # so is B's remaining two; there is only ever one supply.
+        save = T.complete_zone(save, "zone_002")
+        save = T.enter_zone(save, "zone_001")     # revisited
+        assert save.charges_left("act_nade") == 3
+
+    def test_the_generation_only_moves_on_a_refill(self):
+        """It is the identity of the SUPPLY, not a message counter. Every
+        entry that is not a refill has to leave it alone, or a use in
+        flight across an ordinary re-entry would be refused as stale."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        deployed = save.consumable_generation
+        assert T.enter_zone(save, "zone_001").consumable_generation \
+            == deployed
+        save = _spend(save)
+        assert save.consumable_generation == deployed
+        save = T.slot_action(save, "consumable", None)
+        assert save.consumable_generation == deployed
+        assert _restart(save).consumable_generation == deployed
+        assert _in_another_zone(save).consumable_generation > deployed
+
     def test_swapping_away_and_back_preserves_expenditure(self):
         """Tracked by component identity, so the slot is not a hiding
         place for a fresh supply."""
@@ -285,34 +346,122 @@ class TestTheSpendTransaction:
         save = _spend(save)
         save = _spend(save)
         assert save.charges_left("act_nade") == 1
-        save = T.spend_charge(save, "act_nade", 3)
+        save = T.spend_charge(save, "act_nade", 3,
+                              save.consumable_generation)
         assert save.charges_left("act_nade") == 0
         with pytest.raises(ValueError) as caught:
-            T.spend_charge(save, "act_nade", 3)
+            T.spend_charge(save, "act_nade", 3,
+                           save.consumable_generation)
         assert "no charges left" in str(caught.value)
 
     def test_a_duplicate_message_does_not_spend_twice(self):
         save = T.slot_action(_save(), "consumable", "act_nade")
-        save = T.spend_charge(save, "act_nade", 1)
+        save = T.spend_charge(save, "act_nade", 1,
+                              save.consumable_generation)
         assert save.charges_left("act_nade") == 2
         with pytest.raises(ValueError) as caught:
-            T.spend_charge(save, "act_nade", 1)
+            T.spend_charge(save, "act_nade", 1,
+                           save.consumable_generation)
         assert "not the next one due" in str(caught.value)
         assert save.charges_left("act_nade") == 2
-
-    def test_a_use_minted_before_a_refill_is_dropped(self):
-        """A stale message must not eat a charge from the fresh supply."""
-        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
-        save = _spend(save)
-        save = _spend(save)          # two gone, a third in flight at index 3
-        save = _in_another_zone(save)
-        assert save.charges_left("act_nade") == 3
-        with pytest.raises(ValueError) as caught:
-            T.spend_charge(save, "act_nade", 3)
-        assert "not the next one due" in str(caught.value)
-        assert save.charges_left("act_nade") == 3
 
     def test_an_index_that_runs_ahead_is_refused(self):
         save = T.slot_action(_save(), "consumable", "act_nade")
         with pytest.raises(ValueError):
-            T.spend_charge(save, "act_nade", 2)
+            T.spend_charge(save, "act_nade", 2,
+                           save.consumable_generation)
+
+
+
+class TestStaleUsesAcrossARefill:
+    """**THE INDEX ALONE CANNOT DO THIS JOB**, and the test that said it
+    could passed for the wrong reason.
+
+    The old case sent index 3 immediately after a refill and asserted a
+    refusal. It got one — because 3 is not 1, which is arithmetic, and
+    has nothing to do with the use being stale. It would have passed
+    against an engine with no staleness rule at all, and it did.
+
+    Both cases below are ones the index genuinely accepts. Each asserts
+    the arithmetic that would have let it through FIRST, so the test
+    cannot quietly stop being about staleness, and then asserts that the
+    generation refuses it anyway.
+    """
+
+    def _two_deep_in_a_zone(self):
+        """A deployment with two charges spent and a third in flight."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        save = _spend(save)
+        save = _spend(save)
+        return save, save.consumable_generation
+
+    def test_an_old_use_1_cannot_eat_a_fresh_charge(self):
+        """The case the old test never reached. A use minted at index 1
+        before the refill arrives after it, when nothing has been spent
+        — and index 1 IS the first index due. Accepted on arithmetic;
+        refused on identity."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        stale = save.consumable_generation
+        save = _in_another_zone(save)
+        assert save.charges_left("act_nade") == 3
+        # The arithmetic that would have accepted it:
+        assert 1 == (3 - save.charges_left("act_nade")) + 1
+        assert save.consumable_generation != stale
+        with pytest.raises(ValueError) as caught:
+            T.spend_charge(save, "act_nade", 1, stale)
+        assert "minted against supply" in str(caught.value)
+        assert save.charges_left("act_nade") == 3
+
+    def test_an_old_index_is_refused_when_the_count_catches_up(self):
+        """The slower version of the same hole. An old index 3 does not
+        match immediately after a refill — but it matches again as soon
+        as two legitimate new uses have been spent, and by then the
+        refusal the old test relied on has evaporated."""
+        save, stale = self._two_deep_in_a_zone()
+        save = _in_another_zone(save)
+        save = _spend(save)
+        save = _spend(save)          # the new supply is now two deep too
+        assert save.charges_left("act_nade") == 1
+        # The arithmetic that would have accepted it:
+        assert 3 == (3 - save.charges_left("act_nade")) + 1
+        with pytest.raises(ValueError) as caught:
+            T.spend_charge(save, "act_nade", 3, stale)
+        assert "minted against supply" in str(caught.value)
+        assert save.charges_left("act_nade") == 1
+
+    def test_the_current_supply_still_spends(self):
+        """The generation refuses stale uses and nothing else: the same
+        index, against the supply it was minted for, goes through."""
+        save, _ = self._two_deep_in_a_zone()
+        save = _in_another_zone(save)
+        save = _spend(save)
+        save = _spend(save)
+        save = T.spend_charge(save, "act_nade", 3,
+                              save.consumable_generation)
+        assert save.charges_left("act_nade") == 0
+
+    def test_a_use_from_a_supply_that_does_not_exist_yet_is_refused(self):
+        """Symmetry, and a client that has invented a number rather than
+        echoed one. A generation ahead of the engine's is as wrong as one
+        behind it, and is refused by the same equality."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        with pytest.raises(ValueError) as caught:
+            T.spend_charge(save, "act_nade", 1,
+                           save.consumable_generation + 1)
+        assert "minted against supply" in str(caught.value)
+
+    def test_the_zone_id_could_not_have_stood_in_for_it(self):
+        """Why this is a generation and not the Zone id: the Zone id is
+        reused on every return, so a use from the LAST visit to A names
+        A just as correctly as one minted this visit. The generation is
+        minted only by the refill, so the two visits differ."""
+        save = _in_a_zone(T.slot_action(_save(), "consumable", "act_nade"))
+        first_visit = save.consumable_generation
+        save = _spend(save)
+        save = _in_another_zone(save, rest=True)
+        save = T.complete_zone(save, "zone_002")
+        save = T.enter_zone(save, "zone_001")     # the same Zone id again
+        assert save.consumable_deployment == "zone_001"   # unchanged
+        assert save.consumable_generation != first_visit  # and yet: new
+        with pytest.raises(ValueError):
+            T.spend_charge(save, "act_nade", 1, first_visit)

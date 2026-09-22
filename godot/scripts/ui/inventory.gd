@@ -250,13 +250,21 @@ func _slot_row(slot: String) -> Control:
 ## the Actions among them are slottable — a trait row with an EQUIP button
 ## would be a button that cannot do anything.
 func _row(echo: Dictionary, slotted: Array) -> Control:
-	var actions: Array = []
-	for operation: Dictionary in echo.get("operations", []):
-		if operation.get("op", "") != "create":
-			continue
-		var component: Dictionary = operation.get("component", {})
-		if component.get("kind", "") == "action":
-			actions.append(component)
+	# RESOLVED AGAINST THE FOLD, and by the SAME function that decided
+	# which section this row is in.
+	#
+	# This loop used to look for `create` operations carrying an Action,
+	# which is a different question and gave a different answer. An
+	# UPGRADE-only Echo creates nothing, so it came back empty: the list
+	# filed the row under ACTIONS -- `ArchiveQuery.is_passive` resolves
+	# the target and gets it right -- and then the row painted the
+	# "ALWAYS ON" badge and offered no way to equip anything. Filed as a
+	# decision, drawn as a fact.
+	#
+	# It also meant the button described the component as it was CREATED
+	# rather than as it is now, so a Mk III Action offered its Mk I self.
+	var actions: Array = ArchiveQuery.actions_of(
+			echo, BridgeClient.mechanics().get("owned", []))
 	var is_equipped := false
 	for action: Dictionary in actions:
 		if str(action.get("component_id", "")) in slotted:

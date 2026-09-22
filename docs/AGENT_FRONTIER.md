@@ -20,7 +20,33 @@ because a Resource is a HUD channel with an economy and three uses of one
 grenade has no decisions in it. Slot and charges imply each other
 structurally. Charges persist (the fold says what the campaign was given;
 button presses are not in it), and **refill on entering a Zone** by the
-owner's decision. The last charge empties the slot.
+owner's decision. The supply is permanently owned: the last charge leaves
+it equipped at `0 / max` saying what refills it.
+
+**WHICH entries count as a refill is this lane's proposal, not a ruling**,
+isolated in `transitions._refill_is_due` so it can be replaced without
+touching the spend. As proposed, it refills when the deployment target
+changes — so a re-entry, a reload and a Hub round trip do not restock, but
+**A → B → A refills at both changes** and Hub → B → A is a restock loop one
+Zone long. Per-Zone expenditure persistence is a different policy and the
+owner has the decision.
+
+**The spend is a compare-and-swap on the supply AND the use.** `use_index`
+alone cannot reject a stale request across a refill: an old use 1 is exactly
+the first index due afterwards, and an old use 3 matches again once two new
+uses have landed. `consumable_generation` is minted by the refill and nothing
+else, mirrored on the snapshot and echoed on the intent — the
+`proposal_id`/`attempt` shape, not a second convention. `BridgeError.about`
+carries the domain key of what was refused, so a client can release a spend
+it is holding; it was the only server→client message with no identity at all.
+
+**`make godot-consumable` is new at 53 checks** — the runtime half, on a
+real Player, EchoRuntime and InventoryLayer. It counts charges accepted
+AND actions run in every case, because those are two numbers. Three
+sabotages caught. It found a real bug: `inventory.gd::_row` derived equip
+buttons from a `create`-only loop while the list derived sections from the
+fold, so an upgrade-only Echo was filed under ACTIONS and drawn as ALWAYS
+ON with nothing to equip.
 
 **Two silent five-slot bugs, found by reading rather than by failing.**
 `resource_meters.gd` and CLEAR ALL both spelled the four names out, so a

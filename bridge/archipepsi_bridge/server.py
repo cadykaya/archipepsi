@@ -15,7 +15,8 @@ from pydantic import TypeAdapter, ValidationError
 from websockets.asyncio.server import serve
 
 from . import BRIDGE_VERSION, transactions
-from .campaign import CampaignEngine, IntentError
+from .campaign import (CampaignEngine, IntentError,
+                       use_consumable_key)
 from .mock_ap import MockAPBackend
 from .schemas import constants as C
 from .schemas.protocol import BridgeError, BridgeReady, ClientMessage
@@ -23,6 +24,20 @@ from .schemas.protocol import BridgeError, BridgeReady, ClientMessage
 log = logging.getLogger("archipepsi.server")
 
 _CLIENT_ADAPTER = TypeAdapter(ClientMessage)
+
+
+def _about(m) -> str:
+    """The domain key of what an intent was about, or "" if it has none.
+
+    Only the intents a client holds an operation OPEN against need one --
+    today that is `use_consumable` and nothing else, because a spend is
+    the only thing the client subtracts from its own display before the
+    engine has agreed. Every other refusal is read and forgotten, and ""
+    correctly says "unchecked" for all of them.
+    """
+    if getattr(m, "type", "") == "use_consumable":
+        return use_consumable_key(m.component_id, m.generation, m.use_index)
+    return ""
 
 
 class BridgeServer:
@@ -103,12 +118,21 @@ class BridgeServer:
         except IntentError as exc:
             await self._send(ws, BridgeError(
                 type="error", scope=exc.scope, recoverable=True,
-                message=str(exc)[:C.MAX_TEXT_LEN]))
+                message=str(exc)[:C.MAX_TEXT_LEN],
+                about=exc.about or _about(message)))
         except Exception as exc:
             log.exception("intent %s failed", message.type)
+            # A CRASH IS STILL AN ANSWER to the intent that caused it.
+            # The client is holding an operation open against this
+            # message; if the only frame it gets back is an unattributed
+            # `bridge` error, it holds it forever. The key is built from
+            # the message rather than from the handler that failed, so
+            # this path does not depend on the handler having got far
+            # enough to build one.
             await self._send(ws, BridgeError(
                 type="error", scope="bridge", recoverable=True,
-                message=f"{type(exc).__name__}: {exc}"[:C.MAX_TEXT_LEN]))
+                message=f"{type(exc).__name__}: {exc}"[:C.MAX_TEXT_LEN],
+                about=_about(message)))
 
     async def _route(self, ws, m) -> None:
         engine = self.engine
@@ -142,7 +166,8 @@ class BridgeServer:
             await engine.handle_slot_action(m.slot, m.component_id)
         elif m.type == "use_consumable":
             await engine.handle_use_consumable(m.component_id,
-                                               m.use_index)
+                                               m.use_index,
+                                               m.generation)
         elif m.type == "grant_local_reward":
             await engine.handle_grant_local_reward(m)
         elif m.type in ("key_collected", "lock_opened", "station_reached",

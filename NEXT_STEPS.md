@@ -35,8 +35,90 @@ structurally, so both one-sided forms are unrepresentable.
 Charges are persisted — the fold says what the campaign was *given*, and how
 many times a button was pressed is not derivable from it — spent through
 `transitions.spend_charge`, and **refill on entering a Zone** (owner decision).
-They persist within a Zone, so reloading is not a refill. The last charge
-empties the slot; `Q` is the key.
+The last charge does NOT empty the slot: the supply is permanently owned, and
+it stays equipped at `0 / max` saying what refills it (owner decision, and a
+reversal of what this lane first built). `Q` is the key.
+
+**WHICH entries count as a refill is this lane's proposal, not the owner's
+ruling**, and it is isolated in one predicate, `transitions._refill_is_due`,
+so the owner can replace the policy without touching the spend transaction.
+As proposed: refill when the deployment target changes. A re-entry, a reload
+and a Hub round trip back to the same Zone are the same deployment continued
+and do not restock — but **A → B → A refills at both changes**, so returning
+to A hands over a fresh supply rather than A's remaining one, and Hub → B → A
+is a working restock loop at the price of one extra Zone. That is the honest
+cost of a one-string rule; per-Zone expenditure persistence is a different
+policy needing a record per Zone, and the owner has that decision.
+`test_a_b_a_refills_on_both_changes` asserts the behaviour rather than
+endorsing it, and is the case that changes if the ruling goes the other way.
+
+**The spend is a compare-and-swap on two things: which supply, and which use
+of it.** `use_index` alone cannot reject a stale request across a refill — an
+old use 1 arriving at a fresh supply *is* the first index due, and an old use 3
+matches again once two legitimate new uses have been spent. So the engine mints
+a `consumable_generation` on every refill and nothing else; the snapshot
+mirrors it, the client captures it when the button goes down and echoes it, and
+a use naming a supply that no longer exists is refused on identity. Same shape
+as `proposal_id`/`attempt`, which is the protocol's one existing correlation
+convention — not a second one. The Zone id could not have stood in: it is
+reused on every return.
+
+**A real bug the new tests earned.** `inventory.gd::_row` derived its
+equip buttons from a private `create`-only loop while the LIST derived its
+sections from `ArchiveQuery.is_passive`, which resolves against the fold.
+So an upgrade-only Echo was filed under ACTIONS — correctly — and then
+painted the "ALWAYS ON" badge with no equip control, because its Action
+was created by a different Echo. Filed as a decision, drawn as a fact. It
+now calls `ArchiveQuery.actions_of(echo, owned)`, the same resolution the
+classifier uses, which also makes the button describe the component as it
+IS rather than as it was created (a Mk III Action was offering its Mk I
+self).
+
+**`BridgeError` gained `about`,** a domain key (`use_consumable:<component>:
+<generation>:<index>`) filled in by the refusing side. It was the only
+server→client message with no identity field at all, which is fine for a
+refusal the player reads and forgets and fatal for one the client has to
+*undo*: a spend held in flight against an unattributable refusal is held
+forever, and after a refill it is a charge short of the *new* supply. Empty
+for every refusal that existed before, and empty means unchecked, never stale.
+
+**A fourth wrong-reason pass, caught by sabotage rather than by reading.**
+The first draft of the search-box case asserted that focus and the caret
+survive a rebuild. Deleting `rebuild()`'s restore left it green: `_search`
+sits in `tools`, a sibling of the two containers a repaint empties, so
+nothing ever frees it and the restore never fires. The case now asserts
+that structural separation directly, which is the thing a refactor would
+actually break. Running the sabotage is what found it; reading the code
+had not.
+
+### The runtime gate: `make godot-consumable`, 53 checks
+
+A new driver for what the fifth slot DOES, against a real `Player`, a
+real `EchoRuntime` and a real `InventoryLayer` — `archive_driver.gd`
+stays widget-free and asks what the menu shows. It counts TWO numbers in
+every case: charges the engine accepted, and actions that actually ran.
+They are not the same number, and the spend transaction exists to keep
+them equal. Covered: a consumable delivering real damage and a real
+`burning` Status through the ordinary effect path (and that Status
+expiring normally); zero-charge refusal costing no cooldown and leaving
+the supply equipped; two presses on one charge firing once; a refusal
+restoring the count without re-running the effect, and the next press
+firing; unattributed and mismatched refusals releasing nothing; a
+snapshot that has not caught up releasing nothing; a refill retiring a
+use in flight; a failed send never being held; reconnect dropping
+everything; swap-away-and-back resuming live without a refill; and a real
+`fire_consumable` press doing nothing while the player holds "modal".
+
+Three sabotages were run against it and all three were caught: settle on
+any snapshot, release on any error, and drop the in-flight subtraction —
+the last of which broke "EXACTLY ONE action resolved", which is the whole
+point of the transaction.
+
+`Player.press_slot` was extracted from `_physics_process` so the driver
+presses the REAL gate instead of a copy of it, and `BridgeClient` gained
+`assume_sent`, a documented test seam: a headless driver has no bridge to
+succeed against, so without it nothing downstream of a successful send
+could be tested at all. The case about failing sends clears it.
 
 ### Two silent five-slot bugs, found by looking
 
