@@ -35,6 +35,27 @@ survives all three. Sabotage-confirmed against a naive writer, which
 also surfaced that a torn primary raises `SaveUnreadable` rather than
 returning `None`. The stray-`.tmp` case is renamed for what it does.
 
+**UNFINISHED is not PROHIBITED.** The §10.3 binding was right about the
+rule and wrong about its reach: with only one shape available, a 320 kg
+object came back refused by the carry line and there was no way to say
+what was meant, so the schema encoded a ban the design never made.
+`TransportedObject.movement` now separates the two questions.
+`manipulated` is IN the vocabulary and refused as UNFINISHED, naming
+what is missing — route validation that knows the object needs
+`capability:core:manipulate` (`topology.py` does not read
+`transported_objects` at all), the physical runtime, and a
+doorway-clearance check on the object's own footprint.
+
+**The bulwark's back is reachable with the base kit.** Bounded turning
+at 90 deg/s, a 0.5 s commitment it cannot turn through, 0.9 s helpless
+after. `bulwark_opening()`: a player at contact range circles at
+167.1 deg/s for a net 77.1, clears the 69.5 deg shield half-angle in
+0.90 s — half of one swing — and the 1.4 s no-turn window sweeps
+234 deg, still 187 under a 0.8 strafe allowance. Instant tracking is
+sabotage-confirmed to fail the same check. **The played acceptance is
+OPEN**: geometry against a brief is not counterplay, and one test exists
+purely to fail if the tuning stops saying so.
+
 **P16's same-room check is a precondition, not physical proof.** It
 refuses a client that contradicts its own earlier transport report. It
 does not establish that anything was carried. Relabelled.

@@ -1054,3 +1054,84 @@ leave `brute` — an approved role in the base kit — still protruding.
 traces to it; Prod's blocked-walk reporter says "no enemy within 4 m"
 and points at a turning connector instead. This stays a recorded finding
 with the arithmetic that would prove it, not a diagnosis of that red.
+
+
+---
+
+### DESS-17 — unfinished is not prohibited: the transport mode
+
+**Dess, 2026-09-22 (owner correction).** *"The first
+`TransportedObject` slice is hand-carried; heavier cross-room transport
+remains unfinished, not prohibited by the 60 kg pickup rule."*
+
+The §10.3 binding I landed earlier was right about the rule and wrong
+about its reach. With only one shape available, a 320 kg object came
+back refused by the carry line and there was no way to say what was
+actually meant — so the schema encoded a ban the design never made.
+§10.3 governs ordinary pickup and, in the same sentence, names
+manipulation as the other way of moving a thing.
+
+`TransportedObject.movement` now says which of the two is meant, and the
+two questions are answered apart: is the declared mode built, and — if
+it is hand carry — does §10.3 allow this object. `manipulated` is IN the
+vocabulary and refused as **UNFINISHED**, with what is missing named:
+
+1. **Route validation.** `topology.py` does not read
+   `transported_objects` at all, so a required manipulated object would
+   gate the mandatory path on `capability:core:manipulate` at §29.3.2's
+   envelope — a capability no reachability search has been told about.
+   That is the undeclared-gate failure this lane exists to prevent.
+2. **The physical runtime** that pushes or pulls it across a boundary
+   (P16.2, engine lane).
+3. **Doorway clearance on the object's own footprint.** A pushed crate
+   has to fit the door and nothing measures that — the same shape as
+   DESS-16, arriving from the other side.
+
+Same two-answer split as `refuse_unsupported_node`: a mode the design
+does not name is a typo (pydantic answers that), a mode it names that
+nothing implements is a gap. One message for both is how a gap starts
+reading as a prohibition. The hand-carry refusal now says outright that
+it is not a ban and points at the other mode.
+
+---
+
+### DESS-18 — the bulwark's weakness, made reachable with the base kit
+
+**Dess, 2026-09-22.** The brief is "cannot be fought frontally", which is
+only a brief if the other side can be got to. This enemy sits in the
+**ordinary, ungated** pool, so the answer cannot be an Echo requirement —
+and an Echo requirement added to excuse instant tracking would be the
+role's weakness written out rather than gated.
+
+Three numbers, against the existing brief and the geometry:
+
+| | | |
+| --- | --- | --- |
+| `BULWARK_TURN_RATE_DEG_S` | 90.0 | bounded turning |
+| `BULWARK_COMMIT_SECONDS` | 0.5 | the windup, and it cannot turn during it |
+| `BULWARK_RECOVERY_SECONDS` | 0.9 | helpless afterwards |
+
+`bulwark_opening()` states what they give rather than leaving it to be
+discovered in play. At contact range (`reach` 2.4) a player at
+`WALK_SPEED` circles at **167.1 deg/s** against the bulwark's 90, a net
+**77.1 deg/s**. The shield is 0.35 by dot, so its half-angle is 69.5 deg
+and clearing it takes **0.90 s** — half of one 1.8 s swing, which is the
+price. While committed it does not turn at all, so the 1.4 s window
+sweeps **234 deg**: the whole back, with margin, and still **187 deg**
+under a 0.8 strafe allowance. That allowance is a MARGIN and not a
+mechanic — this lane does not know the engine's real strafe factor, and
+the tuning is chosen so the opening survives not knowing.
+
+Two failure directions are both tested. Raise the turn rate to the
+player's angular speed and `net_gain_deg_s` goes negative and the clear
+time goes infinite — sabotage-confirmed, because a check that permits
+the current tuning and also permits instant tracking permits nothing.
+Drop it too far and the back becomes a safe room rather than an opening,
+so a 180 has to complete within 2.5 s.
+
+**THE PLAYED ACCEPTANCE IS OPEN AND THIS DOES NOT CLOSE IT.** Geometry
+against a brief is not counterplay. A stationary DPS comparison is not
+proof of unbeatability and a synthetic front/back damage check is not a
+fight. What closes the row is a continuous engagement with real movement
+and attacks reaching `kill_all` completion, in the engine, and one test
+here exists purely to fail if this tuning stops saying so.

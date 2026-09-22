@@ -309,7 +309,7 @@ def test_an_undeclared_mechanism_is_refused():
 # accepted any mass at all.
 # --------------------------------------------------------------------------
 
-def test_a_ballast_cannot_be_declared_an_object_the_player_carries():
+def test_a_ballast_cannot_be_declared_hand_carried():
     """320 kg, `carriable = false`: the art lane's ANCHOR-class prop.
 
     Before §10.3 was handed this case, the declaration took it.
@@ -389,3 +389,75 @@ def test_the_carry_rule_is_not_vacuous():
     # And with the real predicate back, the same case is refused.
     with pytest.raises(ValidationError):
         TransportedObject.model_validate(_cell(mass_kg=5000.0))
+
+
+# --------------------------------------------------------------------------
+# UNFINISHED is not PROHIBITED.
+#
+# Owner correction, 2026-09-22: "The first TransportedObject slice is
+# hand-carried; heavier cross-room transport remains unfinished, not
+# prohibited by the 60 kg pickup rule." §10.3 governs ordinary pickup and
+# names manipulation as the other way of moving a thing in the same
+# sentence -- so a schema that could only say `hand_carried` encoded a
+# ban the design never made.
+# --------------------------------------------------------------------------
+
+def test_the_design_names_the_way_of_moving_it_that_is_not_built_yet():
+    """`manipulated` has to be IN the vocabulary. Leaving it out is how
+    an unbuilt thing becomes an impossible one."""
+    from typing import get_args
+    from archipepsi_bridge.schemas.zone import (
+        SUPPORTED_TRANSPORT_MODES, TransportMode)
+    assert set(get_args(TransportMode)) == {"hand_carried", "manipulated"}
+    assert tuple(SUPPORTED_TRANSPORT_MODES) == ("hand_carried",)
+
+
+def test_a_heavy_object_declared_manipulated_is_refused_as_unfinished():
+    """The refusal must read as a gap, not as a rule against it, and must
+    say what is missing rather than leaving the reader to guess."""
+    with pytest.raises(ValidationError) as e:
+        TransportedObject.model_validate(
+            _cell(object_id="ballast", carriable=False, mass_kg=320.0,
+                  movement="manipulated"))
+    text = str(e.value)
+    assert "UNFINISHED, not" in text and "forbidden" in text
+    assert "says nothing against moving something heavier" in text
+    # The three missing pieces, by their distinguishing words.
+    assert "capability:core:manipulate" in text
+    assert "P16.2" in text
+    assert "doorway-clearance" in text
+    # And it must NOT be refused for failing the pickup rule.
+    assert "not `carriable`" not in text
+
+
+def test_the_hand_carry_refusal_points_at_the_other_mode():
+    """A 320 kg object declared `hand_carried` is refused by §10.3 --
+    correctly -- and the message must not leave the reader believing
+    that settles whether the object can cross a room boundary."""
+    with pytest.raises(ValidationError) as e:
+        TransportedObject.model_validate(
+            _cell(object_id="ballast", carriable=False, mass_kg=320.0))
+    text = str(e.value)
+    assert "not a ban on moving it between rooms" in text
+    assert 'movement = "manipulated"' in text
+
+
+def test_a_misspelled_mode_is_a_typo_and_not_a_feature_request():
+    """The other half of the two-answer split: a mode the design does not
+    name fails as an unknown value, listing the two that exist."""
+    with pytest.raises(ValidationError) as e:
+        TransportedObject.model_validate(_cell(movement="dragged"))
+    text = str(e.value)
+    assert "hand_carried" in text and "manipulated" in text
+    assert "UNFINISHED" not in text
+
+
+def test_the_unfinished_list_is_the_one_the_module_states():
+    """One spelling of the fact. If the refusal ever grew its own list,
+    the ledger and the message would drift apart silently."""
+    from archipepsi_bridge.schemas import zone as Z
+    with pytest.raises(ValidationError) as e:
+        TransportedObject.model_validate(_cell(movement="manipulated"))
+    text = str(e.value)
+    for need in Z._MANIPULATED_NEEDS:
+        assert need in text
