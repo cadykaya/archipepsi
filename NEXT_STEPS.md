@@ -1,5 +1,51 @@
 # Archipepsi — build state
 
+## 2026-09-22 (engine) — P08: an enemy shot has never been proven to hit
+
+**OPEN, WELL-EVIDENCED, AND NOT A HARNESS FAULT.** A `ranged` at 14.7 m and
+an `artillery` at 19.8 m, both inside their own aggro range, against a player
+who stands still for fifteen seconds in a real generated arena:
+
+```
+ranged 14.7m AWAKE cd=0.7, artillery 19.8m AWAKE cd=1.6;
+windups started: ranged x7, artillery x4; 1 shots in the world
+    ...and the player took 0.0 hp.
+```
+
+Seven and four windups is each role firing at very close to its designed rate
+(cooldown 2.0 and 3.4 over fifteen seconds is 7.5 and 4.4). Projectiles exist
+in the world. **Eleven committed attacks landed nothing.**
+
+**Nothing in the repository has ever asserted that an enemy shot damages the
+player.** Only two suites touch `fire_at`/`_fire_projectile`: this new one,
+and `counterfire_driver`, whose subject is EX50-021 — a hostile shot as an
+input to a MACHINE, not to a player. `roster_driver`'s artillery case asserts
+that it telegraphs, that a shell is in the air, that it will not fire inside
+its minimum range, and that **a player who LEFT the marked ground is unhurt**.
+Every one of those is about firing or about *not* hitting. The positive case
+— a shot reaching someone who stayed — has no test anywhere.
+
+So this is a GAP rather than a regression, and it is the shape P08 exists to
+catch: a role that behaves correctly on a bare stage and does not deliver in
+a composed room.
+
+**Ruled out so far:** it is not aggro (both AWAKE), not rate (11 windups),
+not the projectile existing (counted in `current_scene`, where `enemy.gd:1002`
+puts them), and not collision layers — nothing in the project sets
+`collision_layer`/`collision_mask` at all, so the projectile's Area3D mask and
+the player's CharacterBody3D layer are both Godot's default 1.
+
+**Next step, and it needs a run rather than a read:** instrument
+`EnemyProjectile._on_body_entered` and the shot's path to find out whether the
+area never overlaps the player, overlaps and takes the machine branch, or is
+freed first. A shot teleported 0.23 m per frame by
+`global_position += direction * speed * delta` against a 0.4 m capsule should
+not tunnel, but that is the assumption to test first.
+
+**Do not read this as a difficulty finding.** It says the shots do not connect,
+not that the roles are weak; `ENEMY_VALUE` is a content budget and nothing
+here measures difficulty.
+
 ## 2026-09-22 (engine) — the correction: one charge, one authorized activation
 
 **The owner withdrew the consumable advertisement, and was right to.** The
