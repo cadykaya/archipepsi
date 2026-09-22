@@ -113,7 +113,19 @@ func _zone(groups: Array, width := 26.0, depth := 24.0) -> Dictionary:
 func _built(zone: Dictionary) -> ZoneController:
 	var controller := ZoneController.new()
 	get_tree().root.add_child(controller)
+	# **THE STAT STACK NEEDS ITS POOL, exactly as `main.gd:476` gives it
+	# one.** Without it the player's derived `move_speed` is not valid
+	# and the body cannot walk -- while the Static Pulse, which reads no
+	# movement stat, keeps firing. That asymmetry is why the bulwark case
+	# looked like a failed flank: shots landed, and the player walked
+	# 1.9 m in twenty-three seconds. A driver that builds a
+	# `ZoneController` by hand owes it the wiring `main.gd` does.
+	var pool := ResourcePool.new()
+	pool.name = "ResourcePool"
+	controller.add_child(pool)
 	controller.setup(zone)
+	if controller.player != null:
+		controller.player.stat_stack.pool = pool
 	# DID THE ZONE EVEN BUILD? A case that plays a room which was never
 	# laid out measures nothing and reports it as a behaviour failure:
 	# every body sits at the origin, nothing has a floor, and "0.0 hp
@@ -564,8 +576,9 @@ func _a_bulwark_can_be_flanked_by_moving() -> void:
 			"PLAYED: the orbit reached %.0f degrees off its nose, past "
 			% float(fight["widest"]) + "the %.0f-degree shield cone "
 			% rad_to_deg(acos(Constants.BULWARK_SHIELD_DOT))
-			+ "(closest approach %.1f m, walked %.1f m)"
-			% [float(fight["closest"]), float(fight["walked"])])
+			+ "(closest approach %.1f m, walked %.1f m at speed_mult "
+			% [float(fight["closest"]), float(fight["walked"])]
+			+ "%.2f)" % controller.player.speed_mult)
 	_note("bulwark, played: %s after %.1f s with %.0f of %.0f hp left. "
 			% ["cleared" if int(fight["left"]) == 0 else "NOT cleared",
 				float(fight["frames"]) * DT, controller.player.hp, opened]
