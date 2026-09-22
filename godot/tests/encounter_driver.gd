@@ -277,12 +277,25 @@ var _damage_at_start := 0.0
 
 
 var _arrivals := 0
+## **CUMULATIVE DAMAGE, NOT AN ENDPOINT DIFFERENCE.** A start-vs-end hp
+## comparison cannot see a player who died and respawned: `_respawn`
+## restores full health, so ten landed hits worth 80-160 damage read as
+## "lost 0.0 hp" and the roles that dealt them read as harmless. That is
+## exactly what happened, and it is why the zero-damage finding was
+## reported for several rounds before this counter existed.
+var _taken := 0.0
+var _deaths := 0
+var _last_hp := 0.0
 
 
 func _watch(controller: ZoneController, record: Dictionary) -> void:
 	_tally = {}
 	_arrivals = 0
+	_taken = 0.0
+	_deaths = 0
+	_last_hp = controller.player.hp
 	_damage_at_start = controller.player.hp
+	controller.player.died.connect(func() -> void: _deaths += 1)
 	# **WAS `take_damage` REACHED AT ALL?** `damaged_from` is emitted
 	# inside it, after the arithmetic, so a count of zero says the call
 	# never happened and a count above zero with no hp lost says
@@ -347,7 +360,7 @@ func _sample_shots() -> void:
 
 
 func _tally_report(controller: ZoneController) -> String:
-	var hurt: float = _damage_at_start - controller.player.hp
+	var hurt := _taken
 	if _tally.is_empty():
 		return "nothing was watched"
 	var parts: Array[String] = []
@@ -359,7 +372,7 @@ func _tally_report(controller: ZoneController) -> String:
 					"never measured" if nearest == INF
 					else "%.2f m" % nearest])
 	return ", ".join(parts) + "; %d hits reached take_damage; " % _arrivals \
-			+ "player lost %.1f hp" % hurt
+			+ "player took %.1f hp across %d death(s)" % [hurt, _deaths]
 
 
 ## LET THE ROOM HIT BACK while the player does nothing.
@@ -382,8 +395,13 @@ func _stand_still(controller: ZoneController, frames: int) -> float:
 	for _i in frames:
 		await get_tree().physics_frame
 		_sample_shots()
+		# EVERY DROP, SUMMED. A respawn puts hp back up, so only the
+		# falls are damage and the rises are not healing.
+		if player.hp < _last_hp:
+			_taken += _last_hp - player.hp
+		_last_hp = player.hp
 	player.input_frozen = true
-	return opened - player.hp
+	return _taken
 
 
 ## WHY A ROOM DID NOT ENGAGE, in the failure rather than in a later run.
@@ -546,7 +564,8 @@ func _a_bulwark_can_be_flanked_by_moving() -> void:
 			"PLAYED: the orbit reached %.0f degrees off its nose, past "
 			% float(fight["widest"]) + "the %.0f-degree shield cone "
 			% rad_to_deg(acos(Constants.BULWARK_SHIELD_DOT))
-			+ "(closest approach %.1f m)" % float(fight["closest"]))
+			+ "(closest approach %.1f m, walked %.1f m)"
+			% [float(fight["closest"]), float(fight["walked"])])
 	_note("bulwark, played: %s after %.1f s with %.0f of %.0f hp left. "
 			% ["cleared" if int(fight["left"]) == 0 else "NOT cleared",
 				float(fight["frames"]) * DT, controller.player.hp, opened]
@@ -577,6 +596,11 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 	# "the harness never circled", and those want opposite answers.
 	var widest := 0.0
 	var closest := INF
+	# DID THE BODY ACTUALLY TRAVEL? An orbit that reaches zero degrees
+	# is either a perfect tracker or a player standing still, and the
+	# distance walked is what tells those apart.
+	var walked := 0.0
+	var was := player.global_position
 	Input.action_press("fire_pulse")
 	Input.action_press("move_left")
 	while frames < budget:
@@ -585,6 +609,8 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 		_aim_at(player, target)
 		await get_tree().physics_frame
 		frames += 1
+		walked += player.global_position.distance_to(was)
+		was = player.global_position
 		if is_instance_valid(target) and not target._dead:
 			var facing: Vector3 = -target.global_transform.basis.z
 			var toward: Vector3 = player.global_position \
@@ -598,7 +624,7 @@ func _circle_and_fight(controller: ZoneController, record: Dictionary,
 	Input.action_release("fire_pulse")
 	player.input_frozen = true
 	return {"frames": frames, "left": _living(record).size(),
-			"died": player._dead, "widest": widest,
+			"died": player._dead, "widest": widest, "walked": walked,
 			"closest": 0.0 if closest == INF else closest}
 
 
