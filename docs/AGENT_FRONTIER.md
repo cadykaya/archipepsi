@@ -109,6 +109,58 @@ with the player's radius. `ENEMY_ENVELOPES` already exports
 
 ---
 
+## ENGINE LANE — the press asks first; the bulwark from the door; LATCH built — 2026-09-22
+
+**Consumables: the process boundary is closed.** D-9 converged with
+Dess on *authorise before the irreversible effect*, and Prod took Dess's
+shape (`docs/D9_CONSUMABLE_PROD_ANSWER.md`) because it can refund a press
+that never launched and mine could not. `press_slot` now asks and fires
+nothing; the snapshot in which the engine moved `spent` and wrote the
+save is what runs `activate()`. Offline is a refusal with feedback. A
+disconnect with a press unanswered is abandoned — neither fired late nor
+refunded blind — and the reconnect snapshot answers it both ways.
+
+`make godot-consumable-restart` is the owner's case with a real process
+boundary: authorise, fire, drop the report, **kill Godot with a signal**,
+relaunch a fresh process on the same unrefilled deployment. It reads
+*"the save says 1 of 3 used … a press in the new process spends the NEXT
+charge"*. Restoring launch-then-report fails it, and the marker line
+states the defect alone: *"1 effect(s), save authorised 0 of 3"*.
+`consumable_driver.gd` is at 91 and several cases now assert the opposite
+of this morning, with their history kept. **Still staged**:
+`IMPLEMENTED_ACTION_SLOTS` does not advertise `consumable`.
+
+**The bulwark acceptance now starts at the door.** The controller's own
+arrival, walked in on `move_forward` through real collision: 8.6 m in,
+16.5 → 5.9 m in 1.2 s, cleared in 9.9 s at 60/100 hp; stable over five
+runs. The placed-start case is kept as isolated counterplay evidence.
+Tuning stays provisional for human playtest.
+
+**P14: B chosen, LATCH built, and unreachable on purpose.**
+`docs/D10_P14_PROD_ANSWER.md` answers Dess: `plate → LATCH → shutter`.
+The runtime evaluates and restores LATCH (44 checks, sabotaged); the
+schema has not admitted it, so a declaration is refused as a gap. **Two
+findings for Dess:** the player cannot load a `ClassPlate` today (the
+EX50-033 exclusion is applied everywhere and `Player` has no
+`mass_class()`), so "MEDIUM is base kit" needs `SensorNode.counts_player`;
+and **`record_latch` refuses a room-graph latch** — I had claimed it
+needed nothing new, and it does. Reported under `graph_<room>` pending
+the bridge change. **Nothing about the route consequence is played.**
+
+**ThemePack: agreed** (`docs/D11_THEME_PACK_PROD_ANSWER.md`). Two fields,
+the pack taking no role hop of its own so the one-hop rule survives, a
+flat descriptor keyed like `textures`, universal roles refused for packs
+as for themes. Bridge half first; the engine half is inert until a Zone
+names a pack.
+
+**Also:** the APWorld's vendored `constants.py` had drifted and `make
+export` now copies it; `.ordinary-live-saves/` is untracked. Full
+frontier before this round: 46/46.
+
+**Open:** P14's played route (both halves in D-10 §4), P16 and P04's
+Godot halves, OV04 P12, and the ThemePack engine half after Dess's.
+
+
 ## ENGINE LANE — the fight walks, the charge crosses a wire, a Zone asks for a chain — 2026-09-22
 
 **`godot-encounter` is a gate now, ten runs for ten.** It ran about one
