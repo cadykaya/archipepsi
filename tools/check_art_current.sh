@@ -283,6 +283,17 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_connect_fit.sh"
 
+  # REPORTS rather than refuses: whose legibility rule governs the
+  # projectiles is an owner decision, not a defect. What this catches
+  # is the meshes failing to import or profile at all.
+  say "Art's projectiles through Production's legibility rule..."
+  tools/content/run_projectile_legibility.sh >/dev/null 2>&1 || \
+    fail "projleg: a projectile no longer imports or no longer profiles
+    through ProjectileSilhouette. The pairwise legibility numbers are
+    REPORTED, not refused -- see the batch 051 handoff. Run
+
+    tools/content/run_projectile_legibility.sh"
+
   say "the theme pack binding, and its control..."
   tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
     fail "theme-bind: Production's ThemeMaterials no longer binds the
@@ -342,7 +353,7 @@ SCRIPTS="build_materials build_architecture build_props
   build_viewmodel build_gates build_decoys build_physics_props
   build_machinery build_wave1_repair_overlay build_junctions
   build_setpieces build_yardkit build_skiffkit build_roomkits
-  build_connect build_jobs"
+  build_connect build_jobs build_combatfx"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.
@@ -406,7 +417,7 @@ for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
            run_arrival_test.sh run_setpiece_fit.sh \
            run_yardkit_fit.sh run_skiff_sweep.sh \
            run_enemy_readiness.sh run_roomkit_fit.sh \
-           run_connect_fit.sh; do
+           run_connect_fit.sh run_projectile_legibility.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."

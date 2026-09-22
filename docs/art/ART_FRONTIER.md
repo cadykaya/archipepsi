@@ -542,9 +542,49 @@ gameplay already scales that node. A11.1 forbids inventing a
 behavioural controller to stage an animation in the same sentence it
 asks for clips.
 
+### Batch 051 — A12. Telegraphs, role reads, impacts. DELIVERED.
+
+Eleven assets. Source `tools/blender/build_combatfx.py`; exports
+`assets/models/batch051/combatfx/`; evidence
+`docs/art/review/projectiles_2026-09-22/` (14 frames). Handoff:
+`docs/art-requests/2026-09-22-combatfx-handoff.md`.
+
+**A DECISION IS WAITING FOR THE OWNER, and it is the batch's biggest
+result.** `ProjectileSilhouette` publishes a legibility contract
+(`LEGIBLE_RATIO` 1.8, `LEGIBLE_BALANCE` 0.15, `reads_apart`) and
+nothing had ever run it against Art's meshes.
+`tools/content/run_projectile_legibility.sh` does, through their own
+`profile()`, and **all three pairs fail** -- elongation 1.000 / 1.000 /
+0.968 against 1.80, balance 0.500 / 0.500 / 0.500 against a 0.15 gap.
+
+The balance half **cannot fire at all**: `profile()` measures balance
+per PART and all three export as ONE joined mesh, so it is 0.5 by
+construction whatever the shape.
+
+**REPORTED, NOT REFUSED.** Batch 008 was approved under a different
+rule -- it reads by silhouette KIND and `straight()`'s docstring says
+its blades make it "wider than it is tall so it does not read as
+something that will drop", deliberately not elongated. Two defensible
+rules that cannot both govern; treating a diagnostic as a refusal is
+the mistake the Yard doorways already taught. Three options are laid
+out in the handoff with Art's preference marked AS a preference.
+
+**A12.2's cancel-vs-completed is held as geometry**, not colour:
+`telegraph_finished(kind, completed)` is one signal and a boolean, so
+`fx_telegraph_ring` carries `ring_complete_*` (closed) and
+`ring_cancel_*` (broken) and the builder refuses it if either is
+missing. **A12.4's refused-vs-damaging** is the same test one level
+down, and `fx_hit_shield` (a dome, sliding off) is checked against
+`fx_hit_body` (a spike going in).
+
+**The ring is OPEN** -- hole at least 60% of the outer diameter -- so it
+never covers the face it announces. It fired on its own author twice,
+and the second time the real limiter turned out to be the four CLOSING
+bars at the diagonals rather than the cancel cross I had shortened.
+
 ### Then
 
-**A12-A15** (enemy jobs,
+**A13-A15** (enemy jobs,
 projectiles/telegraphs, Status/compound grammar reusing batch043,
 manipulation objects, item/Forge modules), **A16** (finish the six theme
 families), **T01-T18** (the eighteen source-game-inspired environment

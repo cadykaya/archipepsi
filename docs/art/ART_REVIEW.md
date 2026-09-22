@@ -4195,6 +4195,58 @@ refused, the last two by the builder before the export even happened.
 
 Measured boxes are Blender-ordered (width, depth, height).
 
+### Batch 051 — A12: telegraphs, role reads and impacts (2026-09-22, PENDING)
+
+Eleven assets. Candidate art, same three states. Handoff:
+`docs/art-requests/2026-09-22-combatfx-handoff.md`.
+
+| Asset | Metrics | Item | Note |
+| --- | --- | --- | --- |
+| `fx_telegraph_ring` | 280 tris · 2.29 × 2.14 × 0.09 m · 32.0 texels/m | A12.2 | twelve ticks, a **CLOSED** ending and a **BROKEN** one; hole ≥ 60% so it never covers the face |
+| `fx_charger_lane` | 72 tris · 0.90 × 6.00 × 0.03 m · 32.0 texels/m | A12.3 | a lane, not an arrow — the rush is unsteerable. Flat. |
+| `fx_bulwark_face` | 60 tris · 1.45 × 0.13 × 1.57 m · 32.0 texels/m | A12.3 | to the published 1.45 × 0.85 envelope, so it claims no extra coverage |
+| `fx_warned_ground` | 112 tris · 2.40 × 2.40 × 0.03 m · 32.0 texels/m | A12.3 | **open** in the middle: a filled disc hides the landing edge |
+| `fx_beacon_range` | 124 tris · 3.36 × 3.44 × 0.03 m · 32.0 texels/m | A12.3 | how far the thing that makes it worse reaches |
+| `fx_diver_trail` | 60 tris · 0.56 × 0.60 × 2.55 m · 32.0 texels/m | A12.1/3 | narrowing down, within the diver's 0.70 × 1.20 footprint |
+| `fx_hit_wall` | 84 tris · 0.62 × 0.06 × 0.33 m · 32.0 texels/m | A12.4 | it stopped, and the surface took it |
+| `fx_hit_shield` | 60 tris · 0.79 × 0.37 × 0.62 m · 32.0 texels/m | A12.4 | **REFUSED** — convex, sliding off, no penetration |
+| `fx_hit_body` | 60 tris · 0.25 × 0.68 × 0.25 m · 32.0 texels/m | A12.4 | **DAMAGING** — narrow and going IN. Checked against the dome. |
+| `fx_hit_miss` | 24 tris · 0.05 × 1.05 × 0.05 m · 32.0 texels/m | A12.4 | the quietest of the five; a miss that looks like a hit teaches nothing |
+| `fx_hit_interrupt` | 36 tris · 0.57 × 0.57 × 0.16 m · 26.9 texels/m | A12.4 | shares `ring_cancel`'s BROKEN language, and nothing else's |
+
+**A12.1's inspection produced the batch's biggest result, and it is not
+a mesh.** `ProjectileSilhouette` publishes a legibility contract —
+`LEGIBLE_RATIO` 1.8, `LEGIBLE_BALANCE` 0.15, `reads_apart(a, b)` — and
+**nothing had ever run it against Art's meshes.**
+`tools/content/run_projectile_legibility.sh` does, through their own
+`profile()`:
+
+| | length | cross | elongation | balance | parts |
+|---|---|---|---|---|---|
+| `straight` | 0.440 | 0.440 | 1.000 | 0.500 | 1 |
+| `falling` | 0.440 | 0.440 | 1.000 | 0.500 | 1 |
+| `lobbed` | 0.610 | 0.630 | 0.968 | 0.500 | 1 |
+
+**All three pairs fail**, with elongation ratios of 1.000–1.033 against
+1.80 and balance gaps of 0.000 against 0.15. And the balance half
+**cannot fire at all**: `profile()` measures balance per PART — its own
+comment says a bounding box cannot say where along a single cone the
+wide end is — and all three export as one joined mesh, so balance is
+0.5 by construction whatever the shape.
+
+**This is reported, not refused.** Batch 008 was authored and approved
+under a different rule: it reads by silhouette KIND, and `straight()`'s
+docstring says its blades make it "wider than it is tall so it does not
+read as something that will drop" — deliberately not elongated. Two
+defensible rules, and they cannot both govern. That is the owner's
+decision, and treating a diagnostic as a refusal is the mistake the
+Yard doorways already taught this lane.
+
+**A12.5 is a real test, not three pictures**: the same rig and the same
+camera against pale, dark and busy backdrops, with the backdrop as the
+only variable. The busy one is panelled rather than noisy, because what
+breaks a read is competing structure.
+
 ### Batch 050 — A11: enemy jobs and the spaces that host them (2026-09-22, PENDING)
 
 Eight props for the four jobs `Constants.ENEMY_JOBS` actually declares.
