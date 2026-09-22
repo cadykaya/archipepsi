@@ -4195,6 +4195,61 @@ refused, the last two by the builder before the export even happened.
 
 Measured boxes are Blender-ordered (width, depth, height).
 
+### Batch 054 — T01: the first game pack's CONTENT (2026-09-22, PENDING)
+
+Six assets. Candidate art, same three states. Source:
+`tools/blender/build_forest_temple.py`.
+
+**The subtheme is chosen and stated, which is half the job.** The packet's
+concept for Ocarina of Time is *Grove Relay Temple*; this batch takes the
+**Forest Temple** reading of it — overgrown cut stone, timber, and roots that
+have won. Not the market, not the lake, not the volcano, and not an average.
+
+| Asset | Metrics | Parts | What makes it this pack's, not the house family's |
+| --- | --- | --- | --- |
+| `tp_ft_column` | 84 tris · 0.76 × 0.78 × 3.60 m · 32.0 texels/m | 6 | a root has climbed it; the house column is clean |
+| `tp_ft_wall_relief` | 84 tris · 2.16 × 0.37 × 3.00 m · 32.0 texels/m | 6 | the panel is SPLIT, and the split is the subject |
+| `tp_ft_alcove_torch` | 72 tris · 0.62 × 0.46 × 1.10 m · 32.0 texels/m | 5 | timber hood over a stone bowl, not a metal sconce |
+| `tp_ft_door_surround` | 60 tris · 3.08 × 0.46 × 3.54 m · 32.0 texels/m | 4 | bossed jambs; dressing around a fixed opening |
+| `tp_ft_switch_housing` | 60 tris · 0.50 × 0.36 × 0.58 m · 32.0 texels/m | 4 | batch043's wall-switch contract in timber |
+| `tp_ft_root_mass` | 48 tris · 1.60 × 1.14 × 0.10 m · 32.0 texels/m | 3 | floor dressing the house family has none of |
+
+**Half of a pack is deliberately absent, and named as absent.** Scoping this
+batch found that `THEME_PACK.json` has no pack namespace (`COVERAGE.md` §3):
+a pack's material set can only be filed by becoming a seventh house theme.
+So these are **shapes, motifs, dressing and a stateful-control housing** —
+the half that needs no namespace — painted in `temple_ruin`, the nearest
+existing family. **A tint is not this pack's treatment and is not claimed to
+be one.** The T01 coverage row reads `content yes, materials no`.
+
+**Three gates, all sabotage-tested, and two were wrong first.**
+
+`assert_opening_clear` keeps `chamber_builders.gd`'s 2.40 × 3.20 m opening
+the engine's. It caught a real error — a door boss centred on the jamb but
+0.08 m wider, overhanging **0.04 m into the doorway**; the boss now projects
+in depth, out of the wall, where a boss belongs. It also called a *tangency*
+an intrusion first: the lintel's underside is authored at `door_height`
+exactly, floating-point delivered 3.1999999999999997, and a bare `>=`
+reported a 2.74 m intrusion. A millimetre of graze fixed it — the third time
+this session that lesson has been re-learned, after `skiff_sweep` in metres
+and `manipulation_readiness` in newtons.
+
+`assert_no_emitters` keeps illumination engine-owned: `export_content_pack.py`
+refuses an authored housing carrying its own `Light3D`, and this catches it at
+build time instead of at export.
+
+`assert_no_footholds` **refused the column's own plinth**, and that was the
+rule being too blunt rather than the art being wrong: a 0.22 m base under a
+3.6 m column is not a way up, because what is above it is more column. It
+gained an exemption — and **the exemption was then too permissive, which
+sabotage found**: a standalone 2.16 × 0.58 m ledge went unrefused because the
+lintel three metres above overlapped it by *two centimetres*. The exemption
+now asks whether a standable 0.35 m patch survives the coverage, and the
+sabotage refuses.
+
+**Nothing is runtime-bound**, no collider or light rides along, and the
+engine's door opening is unchanged.
+
 ### Batch 053 — A14: the props signal a hand, the game lifts with a field (2026-09-22, PENDING)
 
 No new asset. Batch 043's twelve physics props, re-exported with one part

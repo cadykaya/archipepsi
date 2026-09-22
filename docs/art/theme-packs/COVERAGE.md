@@ -135,7 +135,7 @@ progress.
 
 | Queue | Source reference | Pack ID | Packet concept | Reused family | Distinctive assets | Exported/imported | Runtime-selected | Owner review |
 |---|---|---|---|---|---|---|---|---|
-| T01 | Ocarina of Time | `tp_ocarina_of_time` | Grove Relay Temple | — | — | no | no | not started |
+| T01 | Ocarina of Time | `tp_ocarina_of_time` | Grove Relay Temple — **Forest Temple** subtheme, stated | `temple_ruin` construction | 6: column with a climbing root, split wall relief, timber-hooded torch alcove, timber switch housing, floor root mass, bossed door surround | **content yes** (batch054), **materials no** (§3) | no | not started |
 | T02 | Super Mario 64 | `tp_super_mario_64` | Clockwork Garden | — | — | no | no | not started |
 | T03 | Bomb Rush Cyberfunk | `tp_bomb_rush_cyberfunk` | Afterhours Municipal Transit | — | — | no | no | not started |
 | T04 | Super Metroid | `tp_super_metroid` | Pressureworks Derelict | — | — | no | no | not started |
