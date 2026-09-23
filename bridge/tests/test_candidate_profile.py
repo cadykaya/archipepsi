@@ -27,10 +27,14 @@ def _played():
 
 @pytest.mark.parametrize("spec, want", [
     (None, ()), ("", ()), ("off", ()), ("none", ()),
-    ("all", candidate.STEPS),
+    # `all` is every step AND every option (O05-11): the candidate is the
+    # profile with everything that is ready switched on.
+    ("all", candidate.STEPS + candidate.OPTIONS),
     ("transport", ("transport",)),
     # ORDER IS THE PROFILE'S, whatever order the operator typed.
     ("transport,zone_state", ("zone_state", "transport")),
+    ("consumables", ("consumables",)),
+    ("consumables,minors", ("minors", "consumables")),
 ])
 def test_the_profile_is_parsed_as_asked(spec, want):
     assert candidate.parse(spec) == want

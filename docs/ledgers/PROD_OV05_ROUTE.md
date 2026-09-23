@@ -61,6 +61,13 @@ continue an ordinary one, and an ordinary launch will not continue it.
   Unweighted Switch and Counterfire Arcade; the second has Counterfire
   Arcade and Passing Platforms. Abandoning the first returns its
   unclaimed Checks to the pool, which is fine in this separate slot.
+- **The consumable slot (`Q`) is offered to this profile's Echoes, and
+  you may never see one.** On the deterministic Epsilon a Bomb Bag
+  would be three stun bombs, but in these campaigns every Bomb Bag
+  arrives after you already own a thrown weapon. The evolution rule
+  then makes it that weapon's upgrade instead. Which reading is right
+  is an open question, listed in the answers. The ordinary game still
+  does not offer the slot at all.
 - **This is an implementation candidate.** It is not approved content
   and not the ordinary game. Everything here comes from the
   deterministic Epsilon and the mock multiworld.

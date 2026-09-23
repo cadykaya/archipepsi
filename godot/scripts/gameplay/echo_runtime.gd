@@ -760,6 +760,10 @@ func _launch(projectile: EchoProjectile, modifiers: Array,
 	for modifier: Dictionary in modifiers:
 		if modifier.get("type") == "knockback_target":
 			projectile.knockback = float(modifier["force"])
+		elif modifier.get("type") == "apply_status_on_hit":
+			# The projectile outlives this call, so it carries the status
+			# to whatever it hits rather than this applying it now.
+			projectile.statuses.append(modifier)
 	# The projectile outlives this call, so it confirms its own hit.
 	projectile.shooter = player
 	# Before add_child: _ready builds the visual, and a tint assigned after

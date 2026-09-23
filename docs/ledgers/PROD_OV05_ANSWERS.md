@@ -86,6 +86,19 @@ relationships are the same, or a step declines and says so in
 
   Each of these is a policy, not code. The details are in
   `PROD_OV05.md`.
+- **A consumable in the candidate (O05-11).** The slot is offered to
+  the candidate only, and the whole path works (claim, fold, slot,
+  spend, reload). But in the mock campaigns every Bomb Bag meets a
+  thrown weapon you already own. ECHOES §11's rule, "a sequel when you
+  already own the item's verb", then makes it that weapon's upgrade.
+  Does a thing that runs out share a family with a verb you always
+  have? That is a design question for Dess and you, not code.
+- **Manipulation verbs reaching an Echo (O05-08).** The accepted design
+  delivers them through the Amalgam's atom grammar, with costed atoms
+  and a `physics_verb` discriminator. The running Echo model implements
+  no atoms for any verb. The verbs' own physics can be built
+  (runtime-only, labelled). Delivering them needs the grammar, or a
+  decision on how atoms are represented until it exists.
 - **Nothing of O05-06 is blocked any more.** All three minors are in
   candidate Zones: Passing Platforms in the second, because each Zone
   has room for two and the offer turns (a selection rule of this lane,

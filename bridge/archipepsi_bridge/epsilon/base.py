@@ -235,7 +235,8 @@ async def generate_echo_validated(
         semantic=lambda e: (
             validate_interpretation(
                 e, expected_source_location_id=request.source.location_id)
-            + CAP.validate_stage_support(e)
+            + CAP.validate_stage_support(e, slots=tuple(
+                request.allowed.get("slots", CAP.IMPLEMENTED_ACTION_SLOTS)))
             + budget_errors(e, live)
             + target_errors(e, live)
             + reading_errors(e, request)

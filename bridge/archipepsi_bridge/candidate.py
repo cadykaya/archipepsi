@@ -54,6 +54,17 @@ from .schemas.zone import Zone
 STEPS: tuple[str, ...] = ("zone_state", "transport", "latched_route",
                           "minors")
 
+#: Profile OPTIONS: switched on by the same `--candidate` spec, and NOT
+#: Zone steps. They change what the campaign's other paths may do, not
+#: what a Zone contains, so `apply` never sees them and the engine keeps
+#: them apart from the steps (`CampaignEngine.candidate_options`).
+#:
+#: `consumables` (O05-11.4): the Echo requests advertise the consumable
+#: slot, and the acceptance gate admits exactly what was advertised. For
+#: this profile only; production keeps the slot staged
+#: (`capabilities.IMPLEMENTED_ACTION_SLOTS`).
+OPTIONS: tuple[str, ...] = ("consumables",)
+
 
 @dataclass(frozen=True)
 class Applied:
@@ -68,20 +79,35 @@ class Applied:
 
 
 def parse(spec: str | None) -> tuple[str, ...]:
-    """`"all"`, `""`/None (off), or a comma list of step names."""
+    """`"all"`, `""`/None (off), or a comma list of step and option names.
+
+    The profile's own order, steps before options, whatever order the
+    operator typed.
+    """
     if spec is None:
         return ()
     spec = spec.strip()
     if spec in ("", "off", "none"):
         return ()
+    known = STEPS + OPTIONS
     if spec == "all":
-        return STEPS
+        return known
     asked = [s.strip() for s in spec.split(",") if s.strip()]
-    unknown = sorted(set(asked) - set(STEPS))
+    unknown = sorted(set(asked) - set(known))
     if unknown:
         raise ValueError(f"unknown candidate step(s) {unknown}; the profile "
-                         f"knows {list(STEPS)}")
-    return tuple(s for s in STEPS if s in asked)
+                         f"knows {list(known)}")
+    return tuple(s for s in known if s in asked)
+
+
+def steps_of(profile: tuple[str, ...]) -> tuple[str, ...]:
+    """The Zone steps of a parsed profile."""
+    return tuple(s for s in profile if s in STEPS)
+
+
+def options_of(profile: tuple[str, ...]) -> tuple[str, ...]:
+    """The options of a parsed profile."""
+    return tuple(s for s in profile if s in OPTIONS)
 
 
 def apply(zone: Zone, steps: tuple[str, ...]) -> Applied:

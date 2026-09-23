@@ -75,6 +75,24 @@ one writer.
   is stated. `ServiceShutter` lost its private clock. Slice 1's
   "not routed" note misread §3 and is corrected. `godot-counterfire` 55;
   candidate-live all eight phases; `make test-bridge` 1907.
+- **O05-11: consumables promoted for the candidate only.** The
+  `candidate.OPTIONS` option `consumables` is included in `all`; its
+  requests advertise the slot and the gate admits exactly that.
+  Production stays STAGED. Offered the slot, the fallback reads a Bomb
+  Bag as three stun bombs. Claim, fold, slot, authorize, settle and
+  reload are proven through the real engine with one arranged item name.
+  BOUNDARY: in the mock's own campaigns the sequel rule (family =
+  primitive) folds every Bomb Bag into an owned lob. Whether a
+  consumable shares a family with an always-available verb is a Dess or
+  owner decision. P5-19: projectiles now apply their on-hit status.
+- **O05-08: answered, and bounded.** The verb RUNTIME is a faithful,
+  bounded integration within authority (next). Echo DELIVERY needs the
+  Amalgam's composition grammar (atoms, costs, discriminators), which
+  the running Echo model does not implement for any verb, so a
+  primitive would be a parallel path. That is a design boundary, not a
+  missing mapping. Qualification waits on delivery.
+- **O05-14: reconciled, nothing to bind.** No delivered enemy or
+  machinery models exist; the 3 projectile visuals stay `pending`.
 - **O05-10 in part: 10.1 audit, 10.3 reversal, 10.4 isolation.** Every
   doorway machine this run built is one `ServiceShutter` through the
   shared `SafeClosure`. EX50-021's shutter reverses mid-closure from

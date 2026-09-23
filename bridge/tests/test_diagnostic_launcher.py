@@ -391,8 +391,10 @@ def test_the_banner_says_which_generation_is_running(tmp_path):
 
 def test_the_candidate_switch_takes_all_steps_by_default():
     from archipepsi_bridge import candidate as CP
+    # Every step and every option (O05-11): the candidate is the profile
+    # with everything that is ready switched on.
     assert D.candidate_steps(D.build_parser().parse_args(["--candidate"])) \
-        == CP.STEPS
+        == CP.STEPS + CP.OPTIONS
     assert D.candidate_steps(D.build_parser().parse_args(
         ["--candidate=transport"])) == ("transport",)
     assert D.candidate_steps(D.build_parser().parse_args([])) == ()
@@ -424,9 +426,9 @@ def test_a_candidate_slot_remembers_its_profile(tmp_path):
     slot.mkdir()
     (slot / "campaign.json").write_text("{}")
     from archipepsi_bridge import candidate as CP
-    D.mark_candidate(slot, CP.STEPS)
+    D.mark_candidate(slot, CP.parse("all"))
     assert D.slot_mode(slot) == "candidate"
-    assert D.slot_profile(slot) == CP.STEPS
+    assert D.slot_profile(slot) == CP.STEPS + CP.OPTIONS
     # the same profile resumes
     D.resolve(D.build_parser().parse_args(["--candidate"]), tmp_path)
     # another one is refused, and nothing is touched
@@ -435,6 +437,23 @@ def test_a_candidate_slot_remembers_its_profile(tmp_path):
         D.resolve(D.build_parser().parse_args(["--candidate=transport"]),
                   tmp_path)
     assert {f.name: f.read_bytes() for f in slot.iterdir()} == before
+
+
+def test_a_slot_made_before_an_option_resumes_only_as_it_was_made(tmp_path):
+    """A candidate slot made with the four Zone steps and no option -- any
+    made before O05-11 -- is refused under the new default and resumes
+    under its own profile, which the refusal names. The options change
+    what its Echoes may be, so the guard treats them as the profile."""
+    slot = tmp_path / ".diagnostic-candidate"
+    slot.mkdir()
+    (slot / "campaign.json").write_text("{}")
+    from archipepsi_bridge import candidate as CP
+    D.mark_candidate(slot, CP.STEPS)
+    with pytest.raises(ValueError, match="--candidate=zone_state,transport,"
+                       "latched_route,minors"):
+        D.resolve(D.build_parser().parse_args(["--candidate"]), tmp_path)
+    D.resolve(D.build_parser().parse_args(
+        ["--candidate=" + ",".join(CP.STEPS)]), tmp_path)
 
 
 def test_an_ordinary_run_cannot_continue_a_candidate_campaign(tmp_path):

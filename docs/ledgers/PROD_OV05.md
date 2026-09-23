@@ -116,6 +116,12 @@ rule, before it is edited. Rows are appended as edits land:
 | `ServiceShutter` (Godot): `trip`, `open_seconds`, `left` removed; `create(...)` loses its `seconds` parameter (5 call sites, one of them a test's) | EX50-021 §3 names the TIMER as the window's owner | the shutter is commanded like every actuator. A second clock would be a second answer to how long the way stays open | `384497b` |
 | `CounterfireArcadeRoom` (Godot) | O05-07.3 | the room binds its receiver, release lever and shutter to the declared ids; the shared runtime drives the shutter. The room keeps its lines and the release stair | `384497b` |
 | `godot/tests/fixtures/latched_route_zone.json` (Dess's P14 fixture) and `candidate_zone.json`, regenerated with their make targets | "Regenerated from source, never edited" | the only change is three `null` keys per graph (`mode`, `required_tags`, `duration`): the new optional fields, dumped the way `requires_class` already is. `proposal_digest` is derived and never stored, so no save is affected | `384497b` |
+| `candidate.OPTIONS` (new), `parse` / `steps_of` / `options_of`; `CampaignEngine.candidate_options` (new) | O05-11.4 "enable the complete function for the explicit overnight candidate profile"; O05-13's "off by default" | an option is switched on by the same spec, and `all` includes it; the engine keeps options apart from Zone steps, so every Zone-profile test is unchanged | O05-11 commit |
+| `epsilon/capabilities.CANDIDATE_ACTION_SLOTS` (new); `validate_stage_support(..., slots=)` | the file's own promotion condition (authorize, then launch; count accepted expenditure), met by `player.gd` and the D-9 suites | the gate admits exactly the slots the request advertised. `IMPLEMENTED_ACTION_SLOTS` is untouched and still withholds `consumable` | O05-11 commit |
+| `epsilon/requests.allowed_for` (new; the request's default factory); `epsilon/base.generate_echo_validated` | as above | a request advertises the consumable slot only when built with `consumable=True`; the default is byte-for-byte the old dict (tested) | O05-11 commit |
+| `epsilon/fallback`: the explosive rule's consumable reading (`_consumable`, new) | O05-11.3 "a deterministic supported candidate provider must be able to produce and deliver a consumable ... include real damage and a currently supported Status" | only when the request offers the slot: three of the weapon reading's own lob, plus `stunned` 1.5 s. Otherwise unchanged, and no other item reads differently (tested) | O05-11 commit |
+| `__main__._candidate_line`, `--candidate` help; `diagnostic.candidate_steps` message | O05-15.1 "print ... profile ... and any staged functions" | the option is printed with the steps | O05-11 commit |
+| `EchoProjectile.statuses` + `_apply_statuses` (new); `EchoRuntime._launch` | the schema's pairing of `apply_status_on_hit` with any damage primitive (P5-19) | a projectile carries its status modifiers to what it damages | O05-11 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -813,6 +819,161 @@ graph, not just the sensor, and each was sabotaged.
   - Power loss (above).
 - **Evidence:** `godot-counterfire` 59 (55 + 4).
 
+### O05-11 — the consumable slot, for the candidate only — promoted; natural acquisition bounded by an open rule
+
+- **Commitment ordering holds, so promotion was allowed (11.1/11.2).**
+  The condition in `capabilities.py` was "authorize, then launch, and
+  never refund a charge whose effect is already in the world, with
+  coverage that counts accepted expenditure". It is met:
+  - the press only reserves and authorizes;
+  - `_on_consumable_authorized` launches, then commits, or releases a
+    launch that did not happen;
+  - `godot-consumable-live` and `-restart` count accepted spends across
+    a dropped socket and a killed process.
+
+  Nothing new was needed there. That is inspected, not re-tested.
+- **Candidate-only promotion (11.4).**
+  - `candidate.OPTIONS = ("consumables",)`. It is switched on by the
+    same `--candidate` spec, and `all` includes it. It is not a Zone
+    step: the engine keeps it in `candidate_options`, apart from
+    `candidate_steps`, so every "is the profile on" test still asks
+    about Zone composition.
+  - Under it, `_echo_request` advertises all five slots
+    (`allowed_for(consumable=True)`). `generate_echo_validated` admits
+    exactly the slots the request advertised.
+  - **Production is unchanged:** `IMPLEMENTED_ACTION_SLOTS` still
+    withholds `consumable`, and `test_s1_review_fixes`' STAGED
+    assertion is untouched.
+  - The launcher prints the option in its profile line. A candidate slot
+    made before this commit resumes only under its own profile, and the
+    refusal names `--candidate=zone_state,transport,latched_route,minors`.
+- **The provider's reading (11.3).** Offered the slot, the fallback reads
+  a Bomb Bag as three of the same bomb: the weapon reading's `arc_lob`
+  (34 damage, 4 m), plus a 1.5 s `stunned` on what the blast catches.
+  That is real damage and a supported Status. Not offered, it is the
+  weapon, exactly as before, and no other item reads differently.
+- **Acquired, folded, slotted, spent, kept (bridge, real engine).**
+  `test_the_candidate_acquires_uses_and_keeps_a_bomb_bag` runs a mock
+  campaign under the option through these real steps:
+  - the Check is claimed;
+  - the fallback reads the item as the consumable, and it validates;
+  - the fold owns it with 3 charges;
+  - `handle_slot_action` slots it;
+  - `handle_authorize_consumable` and `handle_use_consumable` settle
+    one use;
+  - the save reloads from disk with 2 left, still slotted.
+
+  **One thing is arranged, and the test says so:** the first Check's
+  item NAME is set to "Bomb Bag". Its id, recipient and flags are kept,
+  so allocation is untouched. The next point is why.
+- **THE BOUNDARY: in the mock's own campaigns the sequel rule takes the
+  bomb.** Unarranged, every Bomb Bag reaches a campaign that already
+  owns a lob (prototype seeds default and Soak00–07; default scale).
+  Those lobs come from items no keyword rule matches ("Boomerang",
+  "Revelation Scroll", "Restoration Wine"), which fall through to the
+  fallback's default "throw it" `arc_lob`. `_as_sequel`, ECHOES §11's
+  "a sequel when the campaign already owns the item's verb", keys the
+  family on the primitive alone, so the consumable CREATE becomes that
+  weapon's UPGRADE (pinned:
+  `test_in_the_mock_s_own_campaign_the_sequel_rule_takes_it`).
+  - **Whether a consumable shares a family with a verb you always have
+    is a design decision, not a missing mapping.** ECHOES v0.8 predates
+    the consumable slot, and no accepted source settles it. Changing the
+    family key would redesign S6's evolution rule, so it is left for Dess
+    and the owner.
+  - Until then, a candidate played on the deterministic provider will
+    rarely hold a consumable. A live model sees the slot offered and may
+    create one.
+- **Runtime:** P5-19 (above) makes the bomb's stun, and any projectile's
+  status, actually land. `godot-consumable` 91, `godot-verbs`,
+  `godot-stats`, `godot-lab`, `godot-archive` 23, `godot-hud` and
+  `godot-legible` are OK.
+- **Not claimed:** a live Godot run of this naturally acquired bomb. The
+  live consumable suites use `give_consumable.py`, a test setup, and a
+  hitscan charge. The bomb's client path is the same `EchoRuntime`
+  press, now with its status proven in `godot-verbs`.
+
+### O05-08 — manipulation: what is a missing mapping and what is a decision (owner's question, answered)
+
+- **What the accepted sources pin.**
+  - **Delivery**, Amalgam §11.7: the twelve verbs enter "through the
+    `effect` dimension of the Ability grammar, each carrying a
+    non-costed discriminator" (`physics_verb` / `field_verb`) on costed
+    atoms:
+    - `effect_physics_basic` (24): PUSH, PULL, ALIGN, SETTLE;
+    - `effect_physics_hold` (30): HOLD, ROTATE, PIN, TETHER;
+    - `effect_physics_structural` (34): ATTACH, DETACH;
+    - `effect_mass_field` (32): the two fields;
+    - `effect_physics_master` (62, `tier_min` HIGH): all twelve.
+
+    An Ability is a composition, e.g. `ab_physics_light` = `form_press`
+    + `effect_physics_basic` + `target_actor` + `recharge_cooldown_short`
+    + `scaling_flat`, `physics_verb = PUSH` (§ table at line 768).
+  - **Legal forms**, Design 2 §12.9: PRESS / HOLD / CHARGE_RELEASE, and
+    RESOURCE / COOLDOWN, never ACTION.
+  - **Behaviour**, Design 2 §14.2–§14.4: eligibility, per-verb effect,
+    profile numbers, limits.
+  - **Qualification**, §29.3: `capability:core:manipulate` is Boolean
+    membership in {PUSH, PULL, HOLD}, and the envelope is 700 N / 20 m /
+    120 kg.
+- **What the running Echo representation is:** ECHOES v0.8's Action,
+  meaning one primitive from a closed catalog (28 plus 3 modifiers),
+  bounded numbers, a slot, a cooldown, up to 2 modifiers and optional
+  charges. There are no atoms, compositions, costs or discriminators,
+  for ANY verb. The bridge implements no part of the Amalgam's
+  composition grammar (searched).
+- **Fields the current representation cannot carry faithfully:**
+  1. the atom identity and its cost (24/30/34/32/62);
+  2. `tier_min` HIGH for the master atom;
+  3. the separate `form` / `target` / `scaling` dimensions of a
+     composition;
+  4. `physics_verb` as an atom's discriminator, i.e. the rule that
+     verbs within one atom are "priced equivalently";
+  5. CHARGE_RELEASE on a verb. The running model has charge only on
+     `charge_shot`, a damage primitive.
+
+  RESOURCE recharge IS carriable (`powers` links), and a cooldown is.
+- **Verdict, in three separate parts (none substitutes for another).**
+  1. **Verb runtime: a bounded, faithful integration is possible and is
+     within this batch's authority.** §14.2/§14.3 are exact: the
+     impulse formula and its 30 m/s and 14 m/s clamps, HOLD's
+     1.5–6.0 m distance, 8 m/s and release conditions, ALIGN's
+     0.3 s + 2.5 s, SETTLE's exclusions, PIN's durations. It builds on
+     `Manipulation` / `ManipulableBody`. Evidence would be direct
+     invocation, labelled "runtime, not delivered". Per 08.5 it stays
+     unavailable to generation, because a verb that no Action reaches
+     is not enabled.
+  2. **Normal Echo delivery: a genuine design boundary, not a missing
+     mapping.** Adding a `physics_verb` primitive to the ECHOES catalog
+     would carry the verb and a profile's resolved numbers, but not the
+     atom semantics: cost, tier, which verbs share a price. It would
+     also be a second delivery path beside the composition grammar the
+     accepted design names as the path. That is the parallel ability
+     system the owner excludes. Delivery needs either the composition
+     grammar (a replacement of the Echo representation, Dess's model)
+     or an explicit decision on how atoms are represented in the
+     interim.
+  3. **Mandatory-route qualification** exists as data and code
+     (`physics.MANIPULATE_VERBS`, `Manipulation.Envelope`,
+     `grants_manipulate`). It qualifies a HOST, so it has nothing to
+     read until delivery exists.
+- **What this lane will do next inside that line:** the verb runtime,
+  one verb family at a time, labelled runtime-only, unavailable to
+  generation. Nothing is delivered, and there are no primitives or
+  shortcuts.
+
+### O05-14 — existing visual work — reconciled; nothing it may bind
+
+- **14.1.** The checkout has no delivered enemy or machinery models. The
+  registry holds 12 room shells, 6 fixtures and 3 projectile visuals.
+  18 are `pass` and bound; the 3 projectiles are `pending`. Pending is
+  not approval, and they stay unbound.
+- **14.2.** D-11's exact-role lookup, family fallback, pack-aware caches
+  and universal-role refusals are unchanged since OV04 (#128). No seam
+  is added without a delivery to consume.
+- **14.3.** No candidate pack is available to review. `THEME_PACK_STATUS`
+  stays `{}`, and Arty stays paused.
+
 ### O05-13 — the candidate composer profile — built; the whole profile played live
 
 - **Candidate configuration, not fixture laundering (O05-13.1).**
@@ -1098,4 +1259,19 @@ graph, not just the sensor, and each was sabotaged.
   railing is now cut where the stair lands, and only once the stair
   exists, since before that the edge is a 4 m drop. Up and down both
   pass, and `next_final` walks it in the Zone.
+- **P5-19 — a projectile's `apply_status_on_hit` was applied to no one.**
+  `EchoRuntime._launch` handed a projectile its `knockback_target` and
+  dropped every other modifier. So a rocket, a lob or a charge shot
+  carrying a status did its damage and applied nothing, silently. Yet
+  the schema pairs the modifier with any damage primitive, and the stage
+  gate admitted it.
+  - **Who it touched:** any projectile Action with a status, including
+    an owned projectile weapon the fallback's "enhancement" reading
+    gives a status.
+  - **The fix:** the projectile carries the modifiers and applies them,
+    through the target's own `StatusEffects.apply`, to what its direct
+    hit lands on and to every enemy its blast reaches.
+  - **Evidence:** `godot-verbs` fires a straight shot and a lob at real
+    enemies. With the handoff removed, both checks fail with the enemy
+    damaged and carrying no status.
 

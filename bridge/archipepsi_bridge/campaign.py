@@ -24,7 +24,8 @@ from .epsilon import (
     generate_echo_validated, generate_zone_validated,
 )
 from .epsilon.requests import (
-    EchoPlayerState, EchoSource, OwnedComponentSummary, OwnedLinkSummary)
+    EchoPlayerState, EchoSource, OwnedComponentSummary, OwnedLinkSummary,
+    allowed_for)
 from .schemas import constants as C
 from .schemas import transitions as T
 from .schemas.mechanics import (
@@ -278,7 +279,13 @@ class CampaignEngine:
         #: called and every Zone is composed exactly as it always was.
         #: On, the named relationship composers run on each Zone after its
         #: graph is proved and before it is accepted (`candidate.py`).
-        self.candidate_steps = tuple(candidate_steps)
+        self.candidate_steps = candidate.steps_of(tuple(candidate_steps))
+        #: O05-11: the profile's OPTIONS, kept apart from its Zone steps
+        #: so every "is the profile on" test above still asks about Zone
+        #: composition. `consumables` advertises the consumable slot in
+        #: this campaign's Echo requests (`_echo_request`).
+        self.candidate_options = candidate.options_of(
+            tuple(candidate_steps))
 
         self.backend: APBackend | None = None
         self.save: CampaignSave | None = None
@@ -1913,6 +1920,8 @@ class CampaignEngine:
         save = self.save
         mechanics = save.derive()
         return EchoGenerationRequest(
+            allowed=allowed_for(
+                consumable="consumables" in self.candidate_options),
             source=EchoSource(
                 location_id=location_id,
                 item_name=_clamp_ap_string(s.item_name),

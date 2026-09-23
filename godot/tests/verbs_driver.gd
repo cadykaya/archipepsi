@@ -64,6 +64,7 @@ func _run() -> void:
 	await _a_burn_tick_does_not_spend_the_parry_window()
 	await _an_absorbed_shield_does_not_inflate_the_next_one()
 	await _rule_effects_follow_the_slot_the_player_is_looking_at()
+	await _a_projectile_carries_its_status_to_what_it_hits()
 
 	if failures == 0:
 		print("GODOT VERBS TESTS OK")
@@ -517,3 +518,85 @@ func _rule_effects_follow_the_slot_the_player_is_looking_at() -> void:
 	_check(is_equal_approx(_runtime("echo_a").shield_hp, 0.0),
 			"...and not on whichever slot loaded first")
 	rules.queue_free()
+
+
+# --- O05-11: a projectile's status reaches what it hits -------------------
+
+## `apply_status_on_hit` on a projectile or a lob used to stop at the
+## launcher: `_launch` handed the projectile its knockback and nothing
+## else, so the status was applied to no one. The schema pairs the
+## modifier with any damage primitive and the stage gate admitted it --
+## an Action that said one thing and did less. Through the real runtime,
+## at a real enemy: a straight shot's direct hit, then a lob's blast.
+func _a_projectile_carries_its_status_to_what_it_hits() -> void:
+	await _reset()
+	var runtime := _runtime("echo_a")
+	var shot := _enemy_at(Vector3(0.0, 0.0, -7.0))
+	for _i in 4:
+		await get_tree().physics_frame
+	runtime.set_equipped({"kind": "action", "component_id": "act_test_shot",
+			"slot": "echo_a", "cooldown": 0.5,
+			"primitive": {"type": "projectile_damage", "damage": 4.0,
+				"speed": 30.0, "lifetime": 3.0, "gravity_scale": 0.0,
+				"bounces": 0},
+			"modifiers": [{"type": "apply_status_on_hit",
+				"status": "slowed", "duration": 4.0, "magnitude": 0.5}]})
+	runtime.reset_cooldown()
+	_aim_at(shot.global_position + Vector3.UP * 1.0)
+	runtime.activate()
+	for _i in 60:
+		await get_tree().physics_frame
+		if shot.hp < shot.max_hp:
+			break
+	_check(shot.hp < shot.max_hp and shot.statuses.has("slowed"),
+			"a straight shot's direct hit damaged the enemy (%.1f/%.1f) and "
+			% [shot.hp, shot.max_hp] + "applied its status: %s"
+			% [shot.statuses.active_kinds()])
+	shot.queue_free()
+
+	var caught := _enemy_at(Vector3(0.0, 0.0, -3.0))
+	for _i in 4:
+		await get_tree().physics_frame
+	runtime.set_equipped({"kind": "action", "component_id": "act_test_lob",
+			"slot": "echo_a", "cooldown": 0.5,
+			"primitive": {"type": "arc_lob", "damage": 4.0, "radius": 4.0,
+				"launch_force": 17.0, "fuse": 1.4},
+			"modifiers": [{"type": "apply_status_on_hit",
+				"status": "stunned", "duration": 1.5, "magnitude": 1.0}]})
+	runtime.reset_cooldown()
+	# DOWN AT THE FLOOR a couple of metres ahead: the lob strikes it and
+	# goes off there, inside the blast's four metres of the enemy.
+	_aim_at(_player.global_position + Vector3(0.0, -1.0, -2.0))
+	runtime.activate()
+	for _i in 120:
+		await get_tree().physics_frame
+		if caught.hp < caught.max_hp:
+			break
+	_check(caught.hp < caught.max_hp and caught.statuses.has("stunned"),
+			"a lob's blast damaged the enemy it caught (%.1f/%.1f) and "
+			% [caught.hp, caught.max_hp] + "applied its status: %s"
+			% [caught.statuses.active_kinds()])
+	caught.queue_free()
+	_player.camera.rotation = Vector3.ZERO
+	_player.rotation = Vector3.ZERO
+	await _reset()
+
+
+## An enemy standing on the floor at `at`, woken so its body is in the
+## world this frame.
+func _enemy_at(at: Vector3) -> Enemy:
+	var made := Enemy.create("melee", "concrete_facility")
+	add_child(made)
+	made.global_position = at
+	return made
+
+
+## Point the player's view at a world point: yaw on the body, pitch on
+## the camera, the way looking does.
+func _aim_at(point: Vector3) -> void:
+	var eye := _player.camera.global_position
+	var flat := Vector3(point.x - eye.x, 0.0, point.z - eye.z)
+	if flat.length() > 0.001:
+		_player.rotation.y = atan2(-flat.x, -flat.z)
+	var rise := point.y - eye.y
+	_player.camera.rotation.x = atan2(rise, maxf(flat.length(), 0.001))

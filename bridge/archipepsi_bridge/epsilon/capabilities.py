@@ -110,12 +110,29 @@ IMPLEMENTED_EFFECT_KINDS = (
 IMPLEMENTED_ACTION_SLOTS = tuple(
     slot for slot in C.SLOT_NAMES if slot != "consumable")
 
+#: O05-11.4: THE EXPLICIT OVERNIGHT CANDIDATE PROFILE'S SLOTS -- all five.
+#: The condition above holds now: the press authorises first and waits
+#: for the snapshot, launches only on `consumable_authorized`, releases a
+#: launch that did not happen and commits one that did (`player.gd`), and
+#: `godot-consumable-live` / `-restart` count accepted expenditure across
+#: a dropped socket and a killed process. The owner's instruction is to
+#: promote for the candidate profile only, so this is advertised only
+#: when a request is built under `candidate.OPTIONS`' `consumables`, and
+#: the production list above stays staged, unchanged, with its test.
+CANDIDATE_ACTION_SLOTS = tuple(C.SLOT_NAMES)
+
 IMPLEMENTED_MODIFIER_TYPES = ("recoil_self", "knockback_target",
                               "apply_status_on_hit")
 
 
-def validate_stage_support(interpretation: EchoInterpretation) -> list[str]:
+def validate_stage_support(
+        interpretation: EchoInterpretation, *,
+        slots: tuple[str, ...] = IMPLEMENTED_ACTION_SLOTS) -> list[str]:
     """Reject schema-valid mechanics the current runtime cannot execute.
+
+    `slots` is what the request ADVERTISED (O05-11): the gate admits
+    exactly that, so a slot reaches a save only through a request that
+    offered it. The default is production's.
 
     This is intentionally independent from structural schema validation. A
     Resource, Rule, LINK, etc. is *valid v0.8 data*, but accepting it before
@@ -172,7 +189,7 @@ def validate_stage_support(interpretation: EchoInterpretation) -> list[str]:
             continue
 
         if component.kind == "action":
-            if component.slot not in IMPLEMENTED_ACTION_SLOTS:
+            if component.slot not in slots:
                 errors.append(
                     f"action slot '{component.slot}' is not wired by the "
                     "current runtime"

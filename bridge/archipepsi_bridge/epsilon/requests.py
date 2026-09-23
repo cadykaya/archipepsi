@@ -280,6 +280,26 @@ class EchoPlayerState(Strict):
     aliases: tuple[tuple[str, str], ...] = ()
 
 
+def allowed_for(*, consumable: bool = False) -> dict:
+    """What an Echo request may use. Production's, unless a caller -- the
+    candidate profile's `consumables` option (O05-11.4) -- asks for the
+    consumable slot as well. `generate_echo_validated` admits exactly the
+    slots advertised here, so the two cannot disagree."""
+    return {
+        "operations": list(CAP.IMPLEMENTED_OPERATION_KINDS),
+        "modes": list(E.INTERPRETATION_MODES),
+        "component_kinds": list(CAP.IMPLEMENTED_COMPONENT_KINDS),
+        "action_primitives": list(E.IMPLEMENTED_PRIMITIVES),
+        "modifiers": list(CAP.IMPLEMENTED_MODIFIER_TYPES),
+        "trait_stats": list(CAP.IMPLEMENTED_TRAIT_STATS),
+        "slots": list(CAP.CANDIDATE_ACTION_SLOTS if consumable
+                      else CAP.IMPLEMENTED_ACTION_SLOTS),
+        "rule_events": list(CAP.IMPLEMENTED_RULE_EVENTS),
+        "rule_conditions": list(CAP.IMPLEMENTED_CONDITION_KINDS),
+        "rule_effects": list(CAP.IMPLEMENTED_EFFECT_KINDS),
+    }
+
+
 class EchoGenerationRequest(Strict):
     """What a provider is given to interpret one foreign item.
 
@@ -329,18 +349,7 @@ class EchoGenerationRequest(Strict):
     #: disposition could usefully touch. Empty on a fresh campaign, where
     #: there is nothing to relate to and CREATE is the only honest answer.
     relevance_hint: str = Field(default="", max_length=C.MAX_TEXT_LEN)
-    allowed: dict = Field(default_factory=lambda: {
-        "operations": list(CAP.IMPLEMENTED_OPERATION_KINDS),
-        "modes": list(E.INTERPRETATION_MODES),
-        "component_kinds": list(CAP.IMPLEMENTED_COMPONENT_KINDS),
-        "action_primitives": list(E.IMPLEMENTED_PRIMITIVES),
-        "modifiers": list(CAP.IMPLEMENTED_MODIFIER_TYPES),
-        "trait_stats": list(CAP.IMPLEMENTED_TRAIT_STATS),
-        "slots": list(CAP.IMPLEMENTED_ACTION_SLOTS),
-        "rule_events": list(CAP.IMPLEMENTED_RULE_EVENTS),
-        "rule_conditions": list(CAP.IMPLEMENTED_CONDITION_KINDS),
-        "rule_effects": list(CAP.IMPLEMENTED_EFFECT_KINDS),
-    })
+    allowed: dict = Field(default_factory=lambda: allowed_for())
     composition_rules: tuple[str, ...] = (
         "an interpretation carries 1-4 operations",
         "a create operation's component id must start with its kind prefix "

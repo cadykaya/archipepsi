@@ -1040,6 +1040,33 @@ def _primary(request: EchoGenerationRequest, *, archetype: str, cooldown: float,
     }]}
 
 
+def _consumable(
+        request: EchoGenerationRequest, *, charges: int, cooldown: float,
+        initiator: dict, modifiers: list[dict], description: str,
+        tags: list[str]) -> dict:
+    """One CREATE, one Action in the consumable slot, with its charges.
+
+    The schema ties the two together (`ActionComponent`: charges exactly
+    when the slot is `consumable`), and the stage gate admits the slot
+    only when the request advertised it.
+    """
+    src = request.source
+    return {**_common(request, description, tags), "operations": [{
+        "op": "create",
+        "component": {
+            "kind": "action",
+            "component_id": MG.component_id_for("act", src.location_id),
+            "display_name": _clamp(src.item_name, C.MAX_TEXT_LEN),
+            "description": _clamp(description, C.MAX_TEXT_LEN),
+            "slot": "consumable",
+            "charges": charges,
+            "cooldown": cooldown,
+            "primitive": initiator,
+            "modifiers": modifiers,
+        },
+    }]}
+
+
 def _primary_and_resource(
         request: EchoGenerationRequest, *, archetype: str, cooldown: float,
         initiator: dict, resource: dict, description: str,
@@ -1755,6 +1782,23 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
                 },
             ])
     if has("bomb", "grenade", "mine", "explosive"):
+        # O05-11.3: A BAG OF THEM, WHEN THE SLOT IS OFFERED. Only a request
+        # that advertises the consumable slot (the candidate profile's
+        # `consumables`) gets this reading; every other request gets the
+        # weapon below, exactly as before. The same lob and blast, so the
+        # consumable is this item, counted: three of it, and a stun on
+        # what the blast catches -- real damage and a supported Status
+        # (`stunned` on an enemy).
+        if "consumable" in request.allowed.get("slots", ()):
+            return _consumable(
+                request, charges=3, cooldown=3.0,
+                initiator={"type": "arc_lob", "damage": 34.0, "radius": 4.0,
+                           "launch_force": 17.0, "fuse": 1.4},
+                modifiers=[{"type": "apply_status_on_hit",
+                            "status": "stunned", "duration": 1.5,
+                            "magnitude": 1.0}],
+                description="Three of them. Lob one, count, regret nothing.",
+                tags=["explosive", "consumable"])
         return _primary(
             request, archetype="weapon", cooldown=3.0,
             initiator={"type": "arc_lob", "damage": 34.0, "radius": 4.0,

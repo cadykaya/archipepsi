@@ -465,7 +465,8 @@ def candidate_steps(args) -> tuple[str, ...]:
     if not steps:
         raise ValueError(
             f"--candidate={spec} names no step; the profile knows "
-            f"{', '.join(CP.STEPS)} (or give --candidate alone for all).")
+            f"{', '.join(CP.STEPS + CP.OPTIONS)} (or give --candidate "
+            "alone for all).")
     return steps
 
 

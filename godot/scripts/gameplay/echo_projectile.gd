@@ -17,6 +17,13 @@ var damage := 10.0
 var speed := 15.0
 var lifetime := 3.0
 var knockback := 0.0
+## The Action's `apply_status_on_hit` modifiers, applied to what this
+## projectile damages: the body a direct hit lands on, or every enemy its
+## blast reaches. The launcher used to hand over knockback and nothing
+## else, so a rocket or a lob carrying a status applied it to no one --
+## silently, while the schema pairs the modifier with any damage
+## primitive and the stage gate admitted it (O05-11).
+var statuses: Array = []
 var direction := Vector3.FORWARD
 ## 0 flies straight; 1 falls at full world gravity.
 var gravity_scale := 0.0
@@ -158,8 +165,10 @@ func _on_body_entered(body: Node3D) -> void:
 	if blast_radius > 0.0:
 		_detonate()
 		return
-	if Damageable.of(body) != null:
+	var struck := Damageable.of(body)
+	if struck != null:
 		var killed := Damageable.hit(body, damage, direction, 0.0)
+		_apply_statuses(struck)
 		if is_instance_valid(shooter):
 			shooter.report_hit(killed)
 		if knockback > 0.0 and body.has_method("apply_knockback"):
@@ -194,6 +203,7 @@ func _detonate() -> void:
 		away = away.normalized() if away.length() > 0.001 else Vector3.UP
 		if enemy.take_damage(damage * falloff, away, 0.0):
 			killed_any = true
+		_apply_statuses(enemy)
 		hit_any = true
 		if knockback > 0.0:
 			enemy.apply_knockback(away * knockback)
@@ -201,3 +211,16 @@ func _detonate() -> void:
 		shooter.report_hit(killed_any)
 	Blast.spawn(get_tree().current_scene, global_position, blast_radius, tint)
 	queue_free()
+
+
+## Each carried status, through the target's own `StatusEffects.apply` --
+## the one boundary that checks the kind is supported on that target. A
+## target with no statuses (a shot element, a panel) takes the damage and
+## nothing else, as a hitscan's does in `EchoRuntime._apply_modifiers`.
+func _apply_statuses(target: Node) -> void:
+	if not is_instance_valid(target) or not "statuses" in target:
+		return
+	for modifier: Dictionary in statuses:
+		target.statuses.apply(str(modifier.get("status", "")),
+				float(modifier.get("duration", 1.0)),
+				float(modifier.get("magnitude", 0.5)))

@@ -89,7 +89,9 @@ def main() -> None:
         help="OPT-IN CANDIDATE GENERATION PROFILE (O05-13): after each "
              "Zone's graph is composed and proved, run the supported "
              "relationship composers on it -- 'all', or a comma list of "
-             "zone_state, latched_route, transport. Each emits or declines "
+             "zone_state, transport, latched_route, minors, and the option "
+             "consumables (the consumable slot, offered to this profile's "
+             "Echo requests only). Each step emits or declines "
              "by name (logged, and recorded under <save dir>/candidate/). "
              "Off by default: without this flag every Zone is composed "
              "exactly as it always was. Use a separate save slot.")
@@ -227,10 +229,11 @@ def _quiet_line(args) -> str:
 def _candidate_line(engine) -> str:
     """Said out loud when on, silent when off, like `_quiet_line`."""
     steps = getattr(engine, "candidate_steps", ())
-    if not steps:
+    options = getattr(engine, "candidate_options", ())
+    if not steps and not options:
         return ""
     return ("    generation  CANDIDATE PROFILE (opt-in): "
-            + ", ".join(steps) + "\n"
+            + ", ".join(steps + options) + "\n"
             "                each step emits or declines per Zone; see "
             "<save dir>/candidate/\n")
 
