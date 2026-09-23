@@ -152,6 +152,7 @@ jobs:
           make godot-encounter
           make godot-signal-graph
           make godot-latched-route
+          make godot-theme-pack
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live

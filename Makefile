@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-theme-pack theme-pack-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -828,6 +828,32 @@ latched-route-play: godot-import
 	  echo "bridge did not start (port already serving?)"; exit 1; }; \
 	$(GODOT) --path godot; \
 	kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; true
+
+# D-11: A ZONE'S GAME PACK, THROUGH THE REAL MATERIAL PATH. Real Zones
+# and the real Hub are built and the meshes the builders made are read:
+# no pack is unchanged; a selectable pack's exact row wins; a missing role
+# is the family's (and a pack takes no hop); two packs over one family
+# share nothing; no pack again is the family again; the Hub is no Zone's;
+# a pack's hazard row is refused; a candidate or unlisted pack binds
+# nothing. The packs are in-memory and test-scoped: THEME_PACK.json and
+# the production THEME_PACK_STATUS ({}) are untouched.
+godot-theme-pack: godot-import  # Zone.theme_pack, on the geometry
+	@out=$$($(GODOT) --headless --path godot -- --theme-pack 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT THEME PACK TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The same arena wall rendered under no pack, test pack A and test pack
+# B, for a reviewer. Diagnostic and not in CI: it asserts nothing and it
+# needs a display; `godot-theme-pack` makes the claims. Output is
+# `user://theme_pack_shots`, outside the repository.
+theme-pack-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --theme-pack --shots 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
 godot-encounter: godot-import  # generated rooms, fought with the base kit
 	@out=$$($(GODOT) --headless --path godot -- --encounter 2>&1); \

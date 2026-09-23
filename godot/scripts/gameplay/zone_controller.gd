@@ -317,9 +317,18 @@ var _has_bounds := false
 var playtime := PlaytimeLog.new()
 const _QUIET_BEFORE_ASIDE := 75.0
 
+## A Zone leaving the world gives up its pack, if it still holds it.
+func _exit_tree() -> void:
+	ThemeMaterials.release_pack(self)
+
 func setup(zone_dict: Dictionary) -> void:
 	zone = zone_dict
 	zone_id = zone.get("zone_id", "")
+	# THE ZONE'S GAME PACK, bound before anything is built (D-11) -- or
+	# none, which replaces whatever the last Zone bound. `theme_pack` is
+	# JSON null on every Zone that names none, and `str(null)` is not "".
+	var named: Variant = zone_dict.get("theme_pack")
+	ThemeMaterials.bind_pack(str(named) if named != null else "", self)
 	# WHICH PROPOSAL THIS BUILD IS OF, taken NOW and not when the result
 	# is sent (`AMALGAM_BRIDGE.md` §5.9).
 	#
