@@ -93,16 +93,16 @@ rule, before it is edited. Rows are appended as edits land:
 | `minor_hosting.compose_minor` (every contract, each behind its own dead end) | O05-06.5: "The composer does not need to place all three in every Zone" (so it MAY place more than one) | `HostedMinor.rooms`; a minor is never a parent | `6cbe5f2` |
 | `minor_rooms.json` `minor_counterfire_arcade`, `HostedMinor` (Godot, new), `CounterfireArcadeRoom` extraction | as for EX50-033 | a second minor shell; `HostedMinor` is the one interface a Zone uses for any minor (`latched`, `said`, `restore`) | `6cbe5f2` |
 | `ZoneController.minors`, `MinorRooms` (Godot, new) | §5.4a (the decision persists; the machine is rebuilt from it) | a hosted minor is FOUND in its room; its bolt is restored from `latches_accepted()` before anyone sees it and reported as `minor_<room>/bolt` when pulled; its lines go to the HUD | O05-06 commit |
-| `schemas/protocol.py` `ZoneProgress.carrier_states`, `with_carrier`; `SAVE_FIELD_CATEGORY["carrier_states"] = "PUZZLE_LOCAL"` | EX50-011 §9 ("Carrier poses, destinations and hold states are package-local. A stable save restores each at its saved pose before the player"; a dwell restores held); Amalgam §5.2 (machinery `t` is `PUZZLE_LOCAL`), §5.3 (no save while a `PUZZLE_LOCAL` body moves), §5.6 step 9; `SAVE_FIELD_CATEGORY`'s own note (a path that always exists restores the pose) | one bounded field (max 8): `(minor_<room>/<carrier>, t, destination, held)`, overwritten rather than accumulated, like `macro_state`. Only a carrier AT REST is ever recorded | O05-06.2 commit |
-| `protocol.py` intent `CarrierRested` | as above | one client intent, routed to one transition | O05-06.2 commit |
-| `transitions.record_carrier_rested` (new); `_accepted_minor_latches` split into `_accepted_minor_contract` | the minor path's four facts (accepted Zone, committed layout, placed room, contracted shell) | records a rest only for a carrier the hosted minor's contract declares, at one of its declared stops (or held with no errand), at a finite offset. The latch path's checks and messages are unchanged | O05-06.2 commit |
-| `schemas/minors.py` `MinorContract.carriers`; the `minor_passing_platforms` contract | O05-06.2; EX50-011 §3 (a lift A/TRANSFER/SHELF and a shuttle WEST/EAST), §4 (the stair at G), §9 | the stair is the latch; the carriers and their stops are declared, so the bridge refuses a machine or stop the minor does not have | O05-06.2 commit |
-| `campaign.py` `handle_progress`, `server.py` routing | existing progress dispatch | `carrier_rested` | O05-06.2 commit |
-| `ShuttleDeck._place` (Godot) | P5-15's rule: a machine places itself in its parent's frame | the lift is placed with `position`, not `global_position`. Every existing parent is at the origin, so nothing else moves | O05-06.2 commit |
-| `RailCarrier.frame_from_parent` (Godot, opt-in, default off) | `to_world` "maps the path into world"; a room at a Zone transform knows its frame only once it is in the tree | when set, `_ready` takes `to_world` from the parent. Off everywhere else, so the Zone railway and its tests are unchanged | O05-06.2 commit |
-| `HostedMinor.carrier_rested` / `restore_carriers` / `player_died`; `ZoneController` reports and restores them | EX50-011 §9 (restore before the player; before completion, death restores the initial transport configuration) | a minor may report a carrier at rest and is handed its saved rests before anyone sees the room | O05-06.2 commit |
-| `minor_hosting.offer_order` (new) | O05-06.5 "The composer does not need to place all three in every Zone"; O05-06.1 "select each minor" | this lane's selection rule: the contract order turns with the Zone's ordinal, so a campaign meets every minor. With a fixed order, EX50-011 was hosted in 0 of 12 sample Zones. `zone_001` is unchanged | O05-06.2 commit |
-| `RoomAudit._openings_are_holes` + `_exit_facing` (Godot) | the 2026-09-03 owner ruling for entries ("the entry is where the room says it is") | the exit probe stands on the wall the declared `exit_yaw` faces. Before, a side exit was measured on the far wall (P5-17) | O05-06.2 commit |
+| `schemas/protocol.py` `ZoneProgress.carrier_states`, `with_carrier`; `SAVE_FIELD_CATEGORY["carrier_states"] = "PUZZLE_LOCAL"` | EX50-011 §9 ("Carrier poses, destinations and hold states are package-local. A stable save restores each at its saved pose before the player"; a dwell restores held); Amalgam §5.2 (machinery `t` is `PUZZLE_LOCAL`), §5.3 (no save while a `PUZZLE_LOCAL` body moves), §5.6 step 9; `SAVE_FIELD_CATEGORY`'s own note (a path that always exists restores the pose) | one bounded field (max 8): `(minor_<room>/<carrier>, t, destination, held)`, overwritten rather than accumulated, like `macro_state`. Only a carrier AT REST is ever recorded | `400ed37` |
+| `protocol.py` intent `CarrierRested` | as above | one client intent, routed to one transition | `400ed37` |
+| `transitions.record_carrier_rested` (new); `_accepted_minor_latches` split into `_accepted_minor_contract` | the minor path's four facts (accepted Zone, committed layout, placed room, contracted shell) | records a rest only for a carrier the hosted minor's contract declares, at one of its declared stops (or held with no errand), at a finite offset. The latch path's checks and messages are unchanged | `400ed37` |
+| `schemas/minors.py` `MinorContract.carriers`; the `minor_passing_platforms` contract | O05-06.2; EX50-011 §3 (a lift A/TRANSFER/SHELF and a shuttle WEST/EAST), §4 (the stair at G), §9 | the stair is the latch; the carriers and their stops are declared, so the bridge refuses a machine or stop the minor does not have | `400ed37` |
+| `campaign.py` `handle_progress`, `server.py` routing | existing progress dispatch | `carrier_rested` | `400ed37` |
+| `ShuttleDeck._place` (Godot) | P5-15's rule: a machine places itself in its parent's frame | the lift is placed with `position`, not `global_position`. Every existing parent is at the origin, so nothing else moves | `400ed37` |
+| `RailCarrier.frame_from_parent` (Godot, opt-in, default off) | `to_world` "maps the path into world"; a room at a Zone transform knows its frame only once it is in the tree | when set, `_ready` takes `to_world` from the parent. Off everywhere else, so the Zone railway and its tests are unchanged | `400ed37` |
+| `HostedMinor.carrier_rested` / `restore_carriers` / `player_died`; `ZoneController` reports and restores them | EX50-011 §9 (restore before the player; before completion, death restores the initial transport configuration) | a minor may report a carrier at rest and is handed its saved rests before anyone sees the room | `400ed37` |
+| `minor_hosting.offer_order` (new) | O05-06.5 "The composer does not need to place all three in every Zone"; O05-06.1 "select each minor" | this lane's selection rule: the contract order turns with the Zone's ordinal, so a campaign meets every minor. With a fixed order, EX50-011 was hosted in 0 of 12 sample Zones. `zone_001` is unchanged | `400ed37` |
+| `RoomAudit._openings_are_holes` + `_exit_facing` (Godot) | the 2026-09-03 owner ruling for entries ("the entry is where the room says it is") | the exit probe stands on the wall the declared `exit_yaw` faces. Before, a side exit was measured on the far wall (P5-17) | `400ed37` |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -502,6 +502,17 @@ the overhead gantry; the S3 destination; a rail model in
     SHELF exactly as last saved, the Check still claimed, and the stair
     walked from A up onto G with both carriers elsewhere. Nothing is
     sent back.
+  - **Whole run, one process chain, at `400ed37`:** `godot-candidate-
+    live` seed 40, play 20, restore 5, minor 32, minor_restore 15,
+    next 21, next_restore 18, next_final 7, all OK. Around it, with no
+    regressions: `make test-bridge` 1883 passed, 1 skipped;
+    `godot-passing-platforms` 70; room-contract; actuator 93;
+    rail-carrier 73; rail-junction 140; rail-zone 25; room; zone-audit;
+    content; counterfire 44; unweighted 62; zone-state 60; transport-live
+    6/16/18/12; reversible-live 3/9/6; latched-route-live 2/18/12;
+    consumable-live OK. `godot-zone-audit` rewrote the placement
+    fixtures' `controller_digest`, stale since O05-01 changed
+    `player.gd` (committed apart, `3f6c1d3`).
   - **Direct-handler checks, labelled as such** (`godot-passing-
     platforms`): a lift stopped in its dwell reports [4.0, "SHELF",
     held]; handed to a second room it waits five seconds without
@@ -549,8 +560,13 @@ the overhead gantry; the S3 destination; a rail model in
   every case in `docs/ledgers/ov05_evidence/candidate_sample.json`.
   - `zone_state` emitted in 12 of 12 cases.
   - `latched_route` emitted in 12 of 12.
-  - `minors` emitted in 12 of 12: EX50-033 in 12, EX50-021 in 10, and
-    declined by name in the other two (see O05-06.4 above).
+  - `minors` emitted in 12 of 12. Regenerated at `3f6c1d3` (clean) with
+    all three contracts and the offer order turning per Zone:
+    EX50-033 in 7, EX50-021 in 7, EX50-011 in 8. Each Zone hosts two, or
+    one where only one dead end qualifies (zone_004, zone_012), and the
+    rest decline by name. zone_002 hosts EX50-011 as `c025` behind
+    `c015`, the same rooms as the live run; its Check differs because
+    that run's zone_001 was played before it was abandoned.
   - `transport` emitted in 11 of 12. zone_002 declined by name: its
     platform path and transit hall leave no walkable, one-floor run
     inside the home window.

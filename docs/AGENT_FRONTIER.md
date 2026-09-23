@@ -41,6 +41,8 @@ one writer.
     room for two, so the offer order turns with the Zone
     (`minor_hosting.offer_order`, this lane's rule, recorded for Dess):
     zone_001 hosts EX50-033 + EX50-021, zone_002 EX50-021 + EX50-011.
+    Sample at `3f6c1d3`: EX50-033 in 7 of 12 Zones, EX50-021 in 7,
+    EX50-011 in 8; all certified, every Check kept.
   - EX50-021's gunner is the chamber's own declared enemy (§9).
   - EX50-011's carriers persist their REST (pose, destination, hold) in
     the new `ZoneProgress.carrier_states` (`PUZZLE_LOCAL`), recorded only
@@ -50,7 +52,8 @@ one writer.
     finished from it.
   - `godot-candidate-live` now has eight phases: seed 40, play 20,
     restore 5, minor 32, minor_restore 15, next 21, next_restore 18,
-    next_final 7.
+    next_final 7 (one run at `400ed37`, with the other live suites
+    green around it).
   - Findings this segment: P5-16 (EX50-033's rails were a bypass), P5-17
     (the room audit measured side exits on the far wall), P5-18
     (EX50-011's stair ended against a railing). Earlier: P5-12 (budget),

@@ -1,6 +1,6 @@
 {
  "frozen": {
-  "revision": "6cbe5f2edcfc",
+  "revision": "3f6c1d347ef8",
   "tree": "clean",
   "count": 12,
   "profile": [
@@ -39,7 +39,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100055 moved into the minor, at its objective; it records minor_c024/bolt; EX50-021 Counterfire Arcade built as 'c025' behind the dead end 'c020' (its 'side_right' doorway); 'c020''s Check 89100025 moved into the minor, at its objective; it records minor_c025/release"
+     "note": "EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100055 moved into the minor, at its objective; it records minor_c024/bolt; EX50-021 Counterfire Arcade built as 'c025' behind the dead end 'c020' (its 'side_right' doorway); 'c020''s Check 89100025 moved into the minor, at its objective; it records minor_c025/release; EX50-011 declined: no dead end can take it ('c024' is itself a minor; 'c025' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c005' already holds the 'cell_power' setter; and 8 more)"
     }
    ],
    "certified": true,
@@ -53,7 +53,7 @@
    "zone_id": "zone_002",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "98452288a8d52c4b",
+   "proposal_digest": "568f6aed28dcef95",
    "steps": [
     {
      "step": "zone_state",
@@ -73,7 +73,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100110 moved into the minor, at its objective; it records minor_c024/bolt; EX50-021 Counterfire Arcade built as 'c025' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100047 moved into the minor, at its objective; it records minor_c025/release"
+     "note": "EX50-021 Counterfire Arcade built as 'c024' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100110 moved into the minor, at its objective; it records minor_c024/release; EX50-011 Passing Platforms built as 'c025' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100047 moved into the minor, at its objective; it records minor_c025/stair; EX50-033 declined: no dead end can take it ('c020': the Zone schema refused every free doorway (Tuple should have at most 32 items after validation, not 33 [type=too_long, input_value=[{'edge_id': 'e:c001:c002...realization': 'JOINED'}], input_type=list]); 'c024' is itself a minor; 'c025' is itself a minor; 'c002' already holds the 'span_alignment' setter; and 8 more)"
     }
    ],
    "certified": true,
@@ -87,7 +87,7 @@
    "zone_id": "zone_003",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "9d2979c8e1c43026",
+   "proposal_digest": "fdcd85203eb65f70",
    "steps": [
     {
      "step": "zone_state",
@@ -107,7 +107,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100063 moved into the minor, at its objective; it records minor_c024/bolt; EX50-021 Counterfire Arcade built as 'c025' behind the dead end 'c020' (its 'side_right' doorway); 'c020''s Check 89100114 moved into the minor, at its objective; it records minor_c025/release"
+     "note": "EX50-011 Passing Platforms built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100063 moved into the minor, at its objective; it records minor_c024/stair; EX50-033 Unweighted Switch built as 'c025' behind the dead end 'c020' (its 'side_right' doorway); 'c020''s Check 89100114 moved into the minor, at its objective; it records minor_c025/bolt; EX50-021 declined: no dead end can take it ('c024' is itself a minor; 'c025' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c005' already holds a signal graph; and 8 more)"
     }
    ],
    "certified": true,
@@ -141,7 +141,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c021' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100005 moved into the minor, at its objective; it records minor_c021/bolt; EX50-021 declined: no dead end can take it ('c021' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' already holds 'power_cell''s home; 'c006' already holds the 'cell_power' setter; and 7 more)"
+     "note": "EX50-033 Unweighted Switch built as 'c021' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100005 moved into the minor, at its objective; it records minor_c021/bolt; EX50-021 declined: no dead end can take it ('c021' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' already holds 'power_cell''s home; 'c006' already holds the 'cell_power' setter; and 7 more); EX50-011 declined: no dead end can take it ('c021' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' already holds 'power_cell''s home; 'c006' already holds the 'cell_power' setter; and 7 more)"
     }
    ],
    "certified": true,
@@ -155,7 +155,7 @@
    "zone_id": "zone_005",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "b9cc634418c1111c",
+   "proposal_digest": "4dccba5dce4a5c38",
    "steps": [
     {
      "step": "zone_state",
@@ -175,7 +175,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c021' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100047 moved into the minor, at its objective; it records minor_c021/bolt; EX50-021 Counterfire Arcade built as 'c022' behind the dead end 'c016' (its 'side_right' doorway); 'c016''s Check 89100063 moved into the minor, at its objective; it records minor_c022/release"
+     "note": "EX50-021 Counterfire Arcade built as 'c021' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100047 moved into the minor, at its objective; it records minor_c021/release; EX50-011 Passing Platforms built as 'c022' behind the dead end 'c016' (its 'side_right' doorway); 'c016''s Check 89100063 moved into the minor, at its objective; it records minor_c022/stair; EX50-033 declined: no dead end can take it ('c010' has no free joining socket to build the minor off; 'c021' is itself a minor; 'c022' is itself a minor; 'c002' already holds the 'span_alignment' setter; and 8 more)"
     }
    ],
    "certified": true,
@@ -189,7 +189,7 @@
    "zone_id": "zone_006",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "2ef834f64d3604a8",
+   "proposal_digest": "a8c01884808b7741",
    "steps": [
     {
      "step": "zone_state",
@@ -209,7 +209,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c020' behind the dead end 'c012' (its 'side_left' doorway); 'c012''s Check 89100114 moved into the minor, at its objective; it records minor_c020/bolt; EX50-021 Counterfire Arcade built as 'c021' behind the dead end 'c017' (its 'side_right' doorway); 'c017''s Check 89100072 moved into the minor, at its objective; it records minor_c021/release"
+     "note": "EX50-011 Passing Platforms built as 'c020' behind the dead end 'c012' (its 'side_left' doorway); 'c012''s Check 89100114 moved into the minor, at its objective; it records minor_c020/stair; EX50-033 Unweighted Switch built as 'c021' behind the dead end 'c017' (its 'side_right' doorway); 'c017''s Check 89100072 moved into the minor, at its objective; it records minor_c021/bolt; EX50-021 declined: no dead end can take it ('c020' is itself a minor; 'c021' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' already holds 'power_cell''s home; and 8 more)"
     }
    ],
    "certified": true,
@@ -243,7 +243,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100019 moved into the minor, at its objective; it records minor_c024/bolt; EX50-021 Counterfire Arcade built as 'c025' behind the dead end 'c020' (its 'side_right' doorway); 'c020''s Check 89100093 moved into the minor, at its objective; it records minor_c025/release"
+     "note": "EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100019 moved into the minor, at its objective; it records minor_c024/bolt; EX50-021 Counterfire Arcade built as 'c025' behind the dead end 'c020' (its 'side_right' doorway); 'c020''s Check 89100093 moved into the minor, at its objective; it records minor_c025/release; EX50-011 declined: no dead end can take it ('c024' is itself a minor; 'c025' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c005' already holds a signal graph; and 8 more)"
     }
    ],
    "certified": true,
@@ -257,7 +257,7 @@
    "zone_id": "zone_008",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "8976ebfe35f678a1",
+   "proposal_digest": "7b249285949d56a1",
    "steps": [
     {
      "step": "zone_state",
@@ -277,7 +277,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c020' behind the dead end 'c012' (its 'side_right' doorway); 'c012''s Check 89100114 moved into the minor, at its objective; it records minor_c020/bolt; EX50-021 Counterfire Arcade built as 'c021' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100105 moved into the minor, at its objective; it records minor_c021/release"
+     "note": "EX50-021 Counterfire Arcade built as 'c020' behind the dead end 'c012' (its 'side_right' doorway); 'c012''s Check 89100114 moved into the minor, at its objective; it records minor_c020/release; EX50-011 Passing Platforms built as 'c021' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100105 moved into the minor, at its objective; it records minor_c021/stair; EX50-033 declined: no dead end can take it ('c020' is itself a minor; 'c021' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' already holds 'power_cell''s home; and 8 more)"
     }
    ],
    "certified": true,
@@ -291,7 +291,7 @@
    "zone_id": "zone_009",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "05e93956bf2bb362",
+   "proposal_digest": "f93eeb1d82c76d9a",
    "steps": [
     {
      "step": "zone_state",
@@ -311,7 +311,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c021' behind the dead end 'c014' (its 'side_left' doorway); 'c014''s Check 89100068 moved into the minor, at its objective; it records minor_c021/bolt; EX50-021 Counterfire Arcade built as 'c022' behind the dead end 'c018' (its 'side_right' doorway); 'c018''s Check 89100063 moved into the minor, at its objective; it records minor_c022/release"
+     "note": "EX50-011 Passing Platforms built as 'c021' behind the dead end 'c014' (its 'side_left' doorway); 'c014''s Check 89100068 moved into the minor, at its objective; it records minor_c021/stair; EX50-033 Unweighted Switch built as 'c022' behind the dead end 'c018' (its 'side_right' doorway); 'c018''s Check 89100063 moved into the minor, at its objective; it records minor_c022/bolt; EX50-021 declined: no dead end can take it ('c021' is itself a minor; 'c022' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' holds a Zone-local key; and 8 more)"
     }
    ],
    "certified": true,
@@ -345,7 +345,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c020' behind the dead end 'c012' (its 'side_right' doorway); 'c012''s Check 89100110 moved into the minor, at its objective; it records minor_c020/bolt; EX50-021 Counterfire Arcade built as 'c021' behind the dead end 'c013' (its 'side_right' doorway); 'c013''s Check 89100072 moved into the minor, at its objective; it records minor_c021/release"
+     "note": "EX50-033 Unweighted Switch built as 'c020' behind the dead end 'c012' (its 'side_right' doorway); 'c012''s Check 89100110 moved into the minor, at its objective; it records minor_c020/bolt; EX50-021 Counterfire Arcade built as 'c021' behind the dead end 'c013' (its 'side_right' doorway); 'c013''s Check 89100072 moved into the minor, at its objective; it records minor_c021/release; EX50-011 declined: no dead end can take it ('c020' is itself a minor; 'c021' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' already holds 'power_cell''s home; and 8 more)"
     }
    ],
    "certified": true,
@@ -359,7 +359,7 @@
    "zone_id": "zone_011",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "f0d3da2d80b5137f",
+   "proposal_digest": "373514fc2e2fe489",
    "steps": [
     {
      "step": "zone_state",
@@ -379,7 +379,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c020' behind the dead end 'c013' (its 'side_right' doorway); 'c013''s Check 89100063 moved into the minor, at its objective; it records minor_c020/bolt; EX50-021 Counterfire Arcade built as 'c021' behind the dead end 'c017' (its 'side_left' doorway); 'c017''s Check 89100118 moved into the minor, at its objective; it records minor_c021/release"
+     "note": "EX50-021 Counterfire Arcade built as 'c020' behind the dead end 'c013' (its 'side_right' doorway); 'c013''s Check 89100063 moved into the minor, at its objective; it records minor_c020/release; EX50-011 Passing Platforms built as 'c021' behind the dead end 'c017' (its 'side_left' doorway); 'c017''s Check 89100118 moved into the minor, at its objective; it records minor_c021/stair; EX50-033 declined: no dead end can take it ('c020' is itself a minor; 'c021' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' already holds 'power_cell''s home; and 8 more)"
     }
    ],
    "certified": true,
@@ -393,7 +393,7 @@
    "zone_id": "zone_012",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "17eb3fac590f72bd",
+   "proposal_digest": "ecc5e01a45959a0a",
    "steps": [
     {
      "step": "zone_state",
@@ -413,7 +413,7 @@
     {
      "step": "minors",
      "emitted": true,
-     "note": "EX50-033 Unweighted Switch built as 'c021' behind the dead end 'c014' (its 'side_left' doorway); 'c014''s Check 89100139 moved into the minor, at its objective; it records minor_c021/bolt; EX50-021 declined: no dead end can take it ('c010' has no free joining socket to build the minor off; 'c021' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' already holds 'power_cell''s home; and 7 more)"
+     "note": "EX50-011 Passing Platforms built as 'c021' behind the dead end 'c014' (its 'side_left' doorway); 'c014''s Check 89100139 moved into the minor, at its objective; it records minor_c021/stair; EX50-033 declined: no dead end can take it ('c010' has no free joining socket to build the minor off; 'c021' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' already holds 'power_cell''s home; and 7 more); EX50-021 declined: no dead end can take it ('c010' has no free joining socket to build the minor off; 'c021' is itself a minor; 'c002' already holds the 'span_alignment' setter; 'c004' already holds 'power_cell''s home; and 7 more)"
     }
    ],
    "certified": true,
