@@ -113,14 +113,53 @@ def test_the_zone_keeps_its_counted_content(hosted, played):
     EXISTING rows -- its `reach_reward` objective and the space that
     bounds -- because the table has no row for a minor and none is added.
     """
-    parent = _parent(hosted.zone, hosted.room_id)
-    assert room_value(parent) == room_value(_room(played, parent.id))
-    minor = room_value(_room(hosted.zone, hosted.room_id))
-    assert zone_value(hosted.zone) == zone_value(played) + minor
+    added = 0
+    for room_id in hosted.rooms:
+        parent = _parent(hosted.zone, room_id)
+        assert room_value(parent) == room_value(_room(played, parent.id))
+        added += room_value(_room(hosted.zone, room_id))
+    assert zone_value(hosted.zone) == zone_value(played) + added
 
 
 def test_the_hosted_zone_is_reachable_with_the_base_kit(hosted):
     assert reachability(hosted.zone).ok
+
+
+def test_every_contracted_minor_is_hosted_behind_its_own_dead_end(hosted):
+    """The played Zone takes both: EX50-033 and EX50-021, each behind a
+    different dead end, and neither behind the other."""
+    shells_hosted = {_room(hosted.zone, r).shell_id for r in hosted.rooms}
+    assert shells_hosted == set(CONTRACTS)
+    parents = {_parent(hosted.zone, r).id for r in hosted.rooms}
+    assert len(parents) == len(hosted.rooms)
+    assert not parents & set(hosted.rooms)
+
+
+def test_counterfire_s_gunner_is_the_chamber_s_own_enemy(hosted):
+    """EX50-021 §9: the gunner follows "the source encounter persistence
+    rather than a new puzzle-owned copy" -- so the chamber declares it."""
+    room = next(_room(hosted.zone, r) for r in hosted.rooms
+                if _room(hosted.zone, r).shell_id
+                == "minor_counterfire_arcade")
+    assert [(g.archetype, g.count) for g in room.enemies] == [("ranged", 1)]
+    assert room.objective == "reach_reward"
+    assert {d.socket_id: d.usage for d in room.doors} \
+        == {"entry": "USED", "exit": "SEALED"}
+    rule = shells.rule_of(shells.load_registry()["minor_counterfire_arcade"])
+    assert not shells.rule_errors("minor_counterfire_arcade", rule, room)
+
+
+def test_a_minor_records_only_its_own_contract_s_latches(hosted):
+    zone = hosted.zone
+    by_shell = {_room(zone, r).shell_id: r for r in hosted.rooms}
+    arcade = by_shell["minor_counterfire_arcade"]
+    save = T.record_latch(_save(zone), zone.zone_id, latch_package(arcade),
+                          "release")
+    assert f"{latch_package(arcade)}/release" in \
+        save.zone_by_id(zone.zone_id).progress.latched
+    with pytest.raises(ValueError, match="declares no latch 'bolt'"):
+        T.record_latch(_save(zone), zone.zone_id, latch_package(arcade),
+                       "bolt")
 
 
 def test_the_minor_is_never_offered_to_a_provider():
@@ -135,7 +174,8 @@ def test_the_minor_is_never_offered_to_a_provider():
 
 def test_a_second_pass_does_not_host_it_twice(hosted):
     again = MH.compose_minor(hosted.zone)
-    assert not again.emitted and "already hosted" in again.note
+    assert not again.emitted
+    assert again.note.count("already hosted") == len(CONTRACTS)
 
 
 def test_a_room_holding_another_relationship_is_not_a_parent(played):
@@ -196,7 +236,7 @@ def test_a_gallery_on_the_preferred_side_moves_the_doorway_over(played,
 # Reversible, and re-certified
 # --------------------------------------------------------------------------
 
-def test_unhost_hands_the_check_back_exactly(hosted, played):
+def test_unhost_hands_every_check_back_exactly(hosted, played):
     back = MH.unhost(hosted.zone)
     assert [c.id for c in back.chambers] == [c.id for c in played.chambers]
     for a, b in zip(back.chambers, played.chambers):
@@ -230,7 +270,7 @@ def test_certification_accepts_the_minor_only_with_its_own_rule(hosted,
     without = _certify(hosted.zone, played, _offer())
     assert any(SHELL in e for e in without), without
     new = set(without) - set(_certify(played, played, _offer()))
-    assert new and all(SHELL in e for e in new)
+    assert new and all(any(s in e for s in CONTRACTS) for e in new), new
     offer = MH.certify_offer(_offer())
     assert not (set(_certify(hosted.zone, played, offer))
                 - set(_certify(played, played, offer)))

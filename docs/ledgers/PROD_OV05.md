@@ -89,6 +89,9 @@ rule, before it is edited. Rows are appended as edits land:
 | `minor_hosting.py` (new), `candidate.STEPS` += `minors`, `candidate.strip` (+ `unhost`) | O05-06.1/.4/.5; P5-13 (no counted content removed); "an incompatible host declines by name" | the minor is ADDED behind a dead-end arena and takes that arena's Check; the parent keeps its fight and objective. Runs last. `strip` hands the Check back so re-hosting still works | O05-06 commit |
 | `CampaignEngine._certify_offer` | `validate_zone` refuses a shell the offer lacks; the provider's offer never has a minor | when the profile includes `minors`, the certification offer is the provider's plus each minor's own registry rule -- and nothing looser | O05-06 commit |
 | `mock_ap.MockServerState.bound/store`, `MockAPBackend.for_campaign`, `server._connect_mock` | `MockServerState`'s own docstring: "truth that survives quit/reload/reconnect"; a real Archipelago room keeps confirmed Checks | the mock room is kept beside the campaign's save and resumed only with it (P5-14). Test and harness code that shares an unbound state is unchanged | O05-06 commit |
+| `schemas/minors.py` `MinorContract.enemies`; the `minor_counterfire_arcade` contract | EX50-021 §9 (the gunner follows "the source encounter persistence") | a minor may declare the chamber's own enemies; the composer writes them into the chamber, so the Zone spawns and owns the encounter | this checkpoint |
+| `minor_hosting.compose_minor` (every contract, each behind its own dead end) | O05-06.5: "The composer does not need to place all three in every Zone" (so it MAY place more than one) | `HostedMinor.rooms`; a minor is never a parent | this checkpoint |
+| `minor_rooms.json` `minor_counterfire_arcade`, `HostedMinor` (Godot, new), `CounterfireArcadeRoom` extraction | as for EX50-033 | a second minor shell; `HostedMinor` is the one interface a Zone uses for any minor (`latched`, `said`, `restore`) | this checkpoint |
 | `ZoneController.minors`, `MinorRooms` (Godot, new) | §5.4a (the decision persists; the machine is rebuilt from it) | a hosted minor is FOUND in its room; its bolt is restored from `latches_accepted()` before anyone sees it and reported as `minor_<room>/bolt` when pulled; its lines go to the HUD | O05-06 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
@@ -310,7 +313,7 @@ curve through room arrivals; a declared control height/capability and
 the overhead gantry; the S3 destination; a rail model in
 `topology.reachability`.
 
-### O05-06 — the existing minors in game context — EX50-033 integrated and played; EX50-011 and EX50-021 not yet
+### O05-06 — the existing minors in game context — EX50-033 and EX50-021 integrated and played; EX50-011 not yet
 
 - **O05-06.1, the occurrence contract.** `schemas/minors.py` states what
   the registry cannot: the host chamber type, the one way in, the sealed
@@ -384,12 +387,54 @@ the overhead gantry; the S3 destination; a rail model in
     Then the crate is driven back onto the HEAVY plate by hand and the
     crossing STAYS OPEN, because the restored bolt holds it. No latch and
     no claim is sent back.
-- **Not yet:** EX50-011 Passing Platforms and EX50-021 Counterfire
-  Arcade. The contract, composer, latch path and engine hook are shared;
-  each still needs its room extracted and hosted. For EX50-021 the
-  gunner must be the Zone's declared enemy, not a room-owned copy
-  (EX50-021 §9: "Enemy position and health follow the source encounter
-  persistence rather than a new puzzle-owned copy").
+- **O05-06.3, EX50-021 Counterfire Arcade: integrated and played.**
+  - **Extraction.** `CounterfireArcadeRoom` is the scenario's room,
+    moved out whole and placed in its own frame. `--counterfire` owns one
+    at the origin (still 44 checks OK). `CounterfireArcadeHosted` is the
+    registry shell `minor_counterfire_arcade`, and it differs from the
+    scenario in four ways:
+    - a doorway in the arrival wall;
+    - the annex closed (the scenario stood in a void);
+    - a sealed way on at the flank's height, as EX50-033's hosted room
+      has one;
+    - no stand-in goal plate.
+  - **The gunner is the Zone's.** EX50-021 §9 says "Enemy position and
+    health follow the source encounter persistence rather than a new
+    puzzle-owned copy". So the contract declares one `ranged` enemy for
+    the chamber, the shell's `enemy_spawn` volume is the gallery post,
+    and the hosted room builds none. The Zone spawns, tracks and
+    persists it like any other enemy.
+  - **Hosting.** The `minors` step now hosts every contracted minor,
+    each behind its own dead end; a parent that took one is no longer a
+    dead end, and a minor is never a parent. On the played Zone,
+    EX50-021 is `c025` behind `c020` and EX50-033 is `c024` behind
+    `c015`. Its latch is `minor_<room>/release`.
+  - **Played (`minor` phase):**
+    - HARNESS STEP, declared: placed at c020's arrival.
+    - c020 itself is walked past, not fought. Its two ranged enemies
+      stand on an elevation band the scripted fighter cannot reach.
+      Measured: three deaths, not one landing a hit.
+    - At the stance, facing the gallery, nothing is pressed: the Zone's
+      gunner commits a shot.
+    - The player dodges into the alcove. The enemy's own projectile
+      carries on down the lane and trips the receiver.
+    - Through the shutter with 5.6 s of its interval left, then up the
+      supported route onto the flank (2.96 m).
+    - The release is pulled and ACCEPTED as `minor_c025/release`.
+    - Check 89100025 is CONFIRMED.
+    - The shot detector takes only a projectile inside the room heading
+      south: the first run picked up one of c020's ranged enemies
+      shooting through the doorway.
+  - **Restart (`minor_restore` phase):** before anyone acts, the room is
+    released, the shutter open with its panel physically raised, and the
+    fixed stair standing. The Check stays claimed. 20 s later (two and a
+    half intervals, nothing shot) the shutter is still open.
+- **Not yet: EX50-011 Passing Platforms.** EX50-011 §9 says "Carrier
+  poses, destinations and hold states are package-local. A stable save
+  restores each at its saved pose before the player." That needs a
+  saved carrier pose, the package-specific restoration O05-10.2 names.
+  No persisted field carries one today, and the room is not hosted
+  without it.
 
 ### O05-13 — the candidate composer profile — built; the whole profile played live
 
@@ -635,3 +680,16 @@ the overhead gantry; the S3 destination; a rail model in
   that is the same frame. The minor phase now checks the panel is IN the
   crossing when shut, has the player stand on the crate and fail to walk
   through, and after the restart checks the panel is physically raised.
+- **P5-16 — EX50-033's guide rails were a way round the whole room.**
+  The rails that keep the crate in its channel were 1.4 m tall, walkable,
+  and ran to the doorway. The jump apex is 1.33 m, so the rail is out of
+  reach from the floor but not from the parked crate (1.0 + 1.33), and
+  from the rail top the sill is (1.4 + 1.33 > 1.9). That route crosses
+  while the empty plate holds the crossing open: no step placed, no
+  LIGHTENED. It was found when the live suite's "standing on the crate
+  top" check measured the player at 1.35 m after the Zone's layout
+  changed the approach, i.e. standing on a rail. The rails are now
+  0.45 m (0.45 + 1.33 = 1.78, under the sill), and `godot-unweighted`
+  asserts that a jump from them stays under the sill (62 checks). The
+  scenario had passed 61 checks with this route open.
+

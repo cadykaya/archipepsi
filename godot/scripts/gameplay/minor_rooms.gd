@@ -5,15 +5,16 @@ extends RefCounted
 ## A minor is a whole room -- the registry shell the builder instantiated
 ## for a chamber (`minor_unweighted_switch` is `UnweightedSwitchHosted`)
 ## -- so it is FOUND in that room's node rather than built here. The Zone
-## owns only what a Zone owns: persistence. The bolt is reported as the
-## latch `minor_<room>/bolt`, which the bridge accepts only for a room its
-## ACCEPTED Zone declares a minor in (`schemas/minors.py`), and on load
-## the room is put back from the campaign's record before anyone sees it.
+## owns only what a Zone owns: persistence. A latch the minor fires
+## (`HostedMinor.latched`) is reported as `minor_<room>/<latch>`, which
+## the bridge accepts only for a room its ACCEPTED Zone declares a minor
+## in, and only the latches that minor's contract declares
+## (`schemas/minors.py`). On load the room is put back from the
+## campaign's record before anyone sees it.
 
 ## The bridge's `MINOR_PACKAGE_PREFIX`, reserved there so no physics
 ## package can take a name in it.
 const PREFIX := "minor_"
-const BOLT := "bolt"
 
 
 static func package_of(room_id: String) -> String:
@@ -37,12 +38,22 @@ static func hosted_in(build: Dictionary) -> Array:
 	return out
 
 
-static func _find(node: Node) -> UnweightedSwitchHosted:
-	var own := node as UnweightedSwitchHosted
+static func _find(node: Node) -> HostedMinor:
+	var own := node as HostedMinor
 	if own != null:
 		return own
 	for child: Node in node.find_children("*", "Node3D", true, false):
-		var hosted := child as UnweightedSwitchHosted
+		var hosted := child as HostedMinor
 		if hosted != null:
 			return hosted
 	return null
+
+
+## The latch ids the campaign accepted for this room's minor.
+static func accepted_for(room_id: String, refs: Array) -> Array:
+	var prefix := package_of(room_id) + "/"
+	var out: Array = []
+	for ref: Variant in refs:
+		if str(ref).begins_with(prefix):
+			out.append(str(ref).substr(prefix.length()))
+	return out

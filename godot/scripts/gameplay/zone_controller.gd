@@ -587,13 +587,13 @@ func setup(zone_dict: Dictionary) -> void:
 	minors.clear()
 	for raw_minor: Variant in MinorRooms.hosted_in(build):
 		var minor: Dictionary = raw_minor
-		var hosted: UnweightedSwitchHosted = minor["hosted"]
-		var package := MinorRooms.package_of(str(minor["room_id"]))
-		if latches_accepted().has("%s/%s" % [package, MinorRooms.BOLT]):
-			hosted.room.restore_bolt()
-		hosted.room.bolt_engaged.connect(
-				report_latch.bind(package, MinorRooms.BOLT))
-		hosted.room.said.connect(_on_minor_said)
+		var hosted: HostedMinor = minor["hosted"]
+		var rid := str(minor["room_id"])
+		var package := MinorRooms.package_of(rid)
+		hosted.restore(MinorRooms.accepted_for(rid, latches_accepted()))
+		hosted.latched.connect(func(latch_id: String) -> void:
+			report_latch(package, latch_id))
+		hosted.said.connect(_on_minor_said)
 		minors.append(minor)
 	door_positions = (build.get("doors", {}) as Dictionary).duplicate()
 	exit_departs_from = str(build.get("exit_departs_from", ""))

@@ -47,6 +47,9 @@ const RECESS_Z := 5.6
 const CRATE := Vector3(2.0, 1.0, 2.0)
 const CRATE_KG := 200.0
 const PARK_Z := 1.0
+## The guide rails' height: a ledge the player can stand on, so low
+## enough that a jump from it stays under the sill (P5-16).
+const RAIL_Y := 0.45
 
 ## §3: LIGHTENED's own numbers, from Design 5 §15.2.
 const LIGHTENED_SECONDS := 8.0
@@ -210,9 +213,15 @@ func _the_recess() -> void:
 	# ordinary landing does not roll it out of the recess, which is the
 	# authored alternative the paper allows to LIGHTENED's real impulse
 	# response. The channel runs from the parking place to the recess.
+	#
+	# LOW, AND THAT IS THE ROOM (P5-16). The rails were 1.4 m, walkable,
+	# and ran to the doorway: from the parked crate onto a rail, and from
+	# the rail's top a jump reached the sill -- across a crossing the
+	# empty plate was holding open. The whole contradiction, bypassed.
+	# `RAIL_Y` plus a jump stays under the sill.
 	for side: float in [-1.0, 1.0]:
-		_slab(Vector3(0.4, 1.4, NORTH_Z - (PARK_Z - 1.4)),
-				Vector3((DOOR_HALF + 0.2) * side, 0.7,
+		_slab(Vector3(0.4, RAIL_Y, NORTH_Z - (PARK_Z - 1.4)),
+				Vector3((DOOR_HALF + 0.2) * side, RAIL_Y * 0.5,
 					(PARK_Z - 1.4 + NORTH_Z) * 0.5), wall)
 
 

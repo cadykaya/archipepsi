@@ -61,6 +61,11 @@ class MinorContract:
     completion: str
     #: What a player who gets it wrong can always do.
     recovery: str
+    #: `(archetype, count)` the chamber itself declares -- the Zone's own
+    #: encounter, spawned at the shell's `enemy_spawn` volume and tracked
+    #: and persisted like any other. A minor that needs an enemy never
+    #: builds its own copy (EX50-021 §9).
+    enemies: tuple[tuple[str, int], ...] = ()
 
 
 CONTRACTS: dict[str, MinorContract] = {
@@ -82,6 +87,27 @@ CONTRACTS: dict[str, MinorContract] = {
             "on its own clock and the applicator is reusable; the gallery "
             "drops back to the floor through the return gap, and the bolt "
             "adds the return stair"),
+    ),
+    "minor_counterfire_arcade": MinorContract(
+        shell_id="minor_counterfire_arcade",
+        catalogue_id="EX50-021",
+        name="Counterfire Arcade",
+        chamber_type="arena",
+        entry_socket="entry",
+        sealed_sockets=("exit",),
+        latches=("release",),
+        completion=(
+            "the gunner's committed shot, dodged, trips the hooded "
+            "receiver and opens the service shutter for eight seconds; "
+            "beyond it the flank's manual release makes the service route "
+            "permanent, and the room's Check stands at its objective on "
+            "the flank"),
+        recovery=(
+            "a missed bait leaves the player in the arcade to try again; "
+            "with the gunner dead, the west stair and an ordinary Static "
+            "Pulse at the receiver's face still open the shutter; the "
+            "release adds a fixed stair back down"),
+        enemies=(("ranged", 1),),
     ),
 }
 

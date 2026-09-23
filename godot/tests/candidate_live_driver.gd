@@ -28,16 +28,20 @@ extends "res://tests/reversible_driver.gd"
 ##   restore  both processes new. The lever still lowered and its doorway
 ##            open, the cell seated and its doorway open, P14's shutter
 ##            still shut, before anyone acts; nothing announced.
-##   minor    (O05-06.4) EX50-033, the minor the profile added behind a
-##            dead end, played by hand: the drive pulled, the crate on the
-##            plate and the crossing shut, the applicator SHOT, the player
-##            up on the crate and through, the bolt pulled (ACCEPTED as
-##            `minor_<room>/bolt`) and the room's Check claimed.
-##   minor_restore  both processes new. The bolt restored before anyone
-##            acts, the return stair standing, LIGHTENED gone and the
-##            crate parked (package-local), the Check still claimed; and
-##            the crate driven back onto the plate does NOT shut the
-##            crossing, because the restored bolt holds it.
+##   minor    (O05-06) both minors the profile added, each behind its
+##            own dead end, played by hand. EX50-033: the drive pulled,
+##            the crate on the plate and the crossing SHUT (the panel in
+##            it, the player on the crate stopped), the applicator SHOT,
+##            through, the bolt pulled (ACCEPTED as `minor_<room>/bolt`),
+##            the Check claimed. EX50-021: the Zone's own gunner baited
+##            from the stance, the shot dodged into the alcove, the
+##            receiver tripped by the enemy's projectile, the shutter run
+##            inside its interval, the release pulled (ACCEPTED as
+##            `minor_<room>/release`), the Check claimed.
+##   minor_restore  both processes new, each minor as it was left before
+##            anyone acts: EX50-033's bolt holds against the plate;
+##            EX50-021's release holds the shutter open past its
+##            interval; every Check still claimed.
 ##
 ## **HARNESS STEPS, declared:** the same as the suites this reuses -- a
 ## shielded Bulwark removed through the damage path from behind when the
@@ -49,6 +53,8 @@ extends "res://tests/reversible_driver.gd"
 
 const PHASE_FLAG := "--candidate-live="
 const SAVE_DIR_FLAG := "--candidate-save-dir="
+## Development only: play just the minor built from this shell id.
+const ONLY_FLAG := "--candidate-minor="
 const ZONE_ID := "zone_001"
 const CANDIDATE_FIXTURE := "res://tests/fixtures/candidate_zone.json"
 const PROFILE := ["zone_state", "transport", "latched_route", "minors"]
@@ -429,13 +435,16 @@ func _restore() -> void:
 # O05-06.4 -- EX50-033, the minor the profile added, played by hand
 # ---------------------------------------------------------------------------
 
-## The one minor this Zone hosts, as the controller found it in its room.
-func _the_minor(controller: ZoneController) -> Dictionary:
+## The minors this Zone hosts, as the controller found them in their
+## rooms: one per contracted minor the profile built.
+func _the_minors(controller: ZoneController) -> Array:
 	var ids: Array = controller.minors.map(
 			func(m: Dictionary) -> String: return str(m["room_id"]))
-	_check(ids.size() == 1, "the Zone hosts one minor, found in its own "
-			+ "room by the controller: %s" % [ids])
-	return controller.minors[0] if ids.size() == 1 else {}
+	var kinds: Array = controller.minors.map(
+			func(m: Dictionary) -> String: return str((m["hosted"] as Node).name))
+	_check(ids.size() == 2, "the Zone hosts both minors, each found in its "
+			+ "own room by the controller: %s %s" % [ids, kinds])
+	return controller.minors
 
 
 ## The dead end a minor was built behind: the far room of its way in.
@@ -531,21 +540,53 @@ func _hop_walk(player: Player, goal: Vector3, within: float,
 	return arrived
 
 
-## Into the minor from the dead end it stands behind: placed at the
-## parent's arrival (declared), the parent cleared with the base kit,
-## and then walked in through the parent's own new doorway.
-func _into_the_minor(controller: ZoneController, rid: String) -> bool:
+## Into the minor from the dead end it stands behind: placed at that
+## room's arrival (declared), then walked into the minor through the
+## doorway the profile added.
+##
+## `clear` fights the parent room first with the base kit. EX50-033's
+## parent is cleared; EX50-021's is walked past, because its two ranged
+## enemies stand on an elevation band the scripted fighter cannot reach
+## (measured: three deaths, none of them landing a hit) -- that fight is
+## the parent's, not the minor's. A DEATH IS NOT THE END OF IT: the player
+## respawns at the Zone's start, is placed again and carries on, as
+## `_advance_to` does. Asserted once, on the outcome.
+func _into_the_minor(controller: ZoneController, rid: String,
+		clear := true) -> bool:
+	var player := controller.player
 	var parent := _parent_of(rid)
 	_check(parent != "", "the minor %s stands behind %s" % [rid, parent])
 	if parent == "":
 		return false
-	await _place_at(controller, parent)
-	await _cleared(controller, parent)
-	var into := await _walk_into(controller, rid)
-	_check(bool(into["inside"]), "walked from %s into the minor %s through "
-			% [parent, rid] + "the doorway the profile added (%.1f m)"
-			% float(into["walked"]))
-	return bool(into["inside"])
+	var deaths_before := _deaths
+	var inside := false
+	var walked := 0.0
+	for attempt in 3:
+		await _place_at(controller, parent)
+		if clear:
+			await _clear_shielded(controller, parent)
+			await _clear_room(controller, parent)
+			if not player._dead:
+				await _climb_out(controller, parent)
+		if not player._dead:
+			var into := await _walk_into(controller, rid)
+			inside = bool(into["inside"])
+			walked = float(into["walked"])
+		if inside or not player._dead:
+			break
+		_note("the player died on the way into %s (attempt %d); respawned "
+				% [rid, attempt + 1] + "and placed again")
+		await _wait_for(func() -> bool: return not player._dead,
+				int((Constants.RESPAWN_DELAY + 1.0) / DT))
+		await _settle(10)
+	if clear:
+		var left := _living_in(controller, parent).size()
+		_check(left == 0, "%s cleared with the base kit (%d left)"
+				% [parent, left])
+	_check(inside, "walked from %s into the minor %s through the doorway "
+			% [parent, rid] + "the profile added (%.1f m, %d death(s))"
+			% [walked, _deaths - deaths_before])
+	return inside
 
 
 func _minor() -> void:
@@ -555,10 +596,27 @@ func _minor() -> void:
 	var controller := await _through_the_portal()
 	if controller == null:
 		return
+	var only := _arg(ONLY_FLAG)
+	var played := 0
+	for raw: Variant in _the_minors(controller):
+		var minor: Dictionary = raw
+		if only != "" and str(_chamber(str(minor["room_id"])).get(
+				"shell_id", "")) != only:
+			continue
+		played += 1
+		if minor["hosted"] is UnweightedSwitchHosted:
+			await _play_unweighted(controller, minor)
+		elif minor["hosted"] is CounterfireArcadeHosted:
+			await _play_counterfire(controller, minor)
+	await _settle(30)
+	_check(_intents("claim_check").size() == played,
+			"each Check claimed exactly once (%d claim intent(s) for %d "
+			% [_intents("claim_check").size(), played] + "minor(s))")
+	await _leave()
+
+
+func _play_unweighted(controller: ZoneController, minor: Dictionary) -> void:
 	var player := controller.player
-	var minor := _the_minor(controller)
-	if minor.is_empty():
-		return
 	var rid := str(minor["room_id"])
 	var room: UnweightedSwitchRoom = \
 			(minor["hosted"] as UnweightedSwitchHosted).room
@@ -598,7 +656,11 @@ func _minor() -> void:
 	# ---- the step is placed, and the route it was for is closed ---------
 	await _hop_walk(player, room.to_global(Vector3(0.0, 0.0,
 			UnweightedSwitchRoom.RECESS_Z)), 1.4)
+	# LANDED, not sampled mid-hop: the walker's stall-hop can leave the
+	# body in the air at the moment the walk ends.
 	await _settle(24)
+	await _wait_for(func() -> bool: return player.is_on_floor(), 120)
+	await _settle(6)
 	_check(player.is_on_floor() and absf(player.global_position.y - floor_y
 			- UnweightedSwitchRoom.CRATE.y) < 0.25,
 			"STANDING on the crate top, feet %.2f m above the floor"
@@ -631,7 +693,7 @@ func _minor() -> void:
 				> UnweightedSwitchRoom.SILL_Y - 0.3,
 			"through the doorway onto the gallery")
 	var bolted := await _operate(controller, room.bolt)
-	var ref := "%s/%s" % [MinorRooms.package_of(rid), MinorRooms.BOLT]
+	var ref := "%s/bolt" % MinorRooms.package_of(rid)
 	var recorded := await _await_live("the bridge to record the bolt",
 			func() -> bool: return _served().get("latched", []).has(ref),
 			10.0)
@@ -648,11 +710,6 @@ func _minor() -> void:
 			func() -> bool: return BridgeClient.is_checked(
 					reward.location_id), 15.0)
 	_check(claimed, "the minor's Check %d is CONFIRMED" % reward.location_id)
-	await _settle(30)
-	_check(_intents("claim_check").size() == 1,
-			"claimed exactly once (%d claim intent(s))"
-			% _intents("claim_check").size())
-	await _leave()
 	print("played: EX50-033 in %s -- bolt %s, Check %d claimed"
 			% [rid, ref, reward.location_id])
 
@@ -667,9 +724,20 @@ func _minor_restore() -> void:
 	var controller := await _through_the_portal()
 	if controller == null:
 		return
-	var minor := _the_minor(controller)
-	if minor.is_empty():
-		return
+	for raw: Variant in _the_minors(controller):
+		var minor: Dictionary = raw
+		if minor["hosted"] is UnweightedSwitchHosted:
+			await _restored_unweighted(controller, minor)
+		elif minor["hosted"] is CounterfireArcadeHosted:
+			await _restored_counterfire(controller, minor)
+	await _settle(30)
+	_check(_intents("latch_fired").is_empty()
+			and _intents("claim_check").is_empty(),
+			"and nothing was announced: no latch and no claim sent back")
+
+
+func _restored_unweighted(controller: ZoneController,
+		minor: Dictionary) -> void:
 	var rid := str(minor["room_id"])
 	var room: UnweightedSwitchRoom = \
 			(minor["hosted"] as UnweightedSwitchHosted).room
@@ -700,8 +768,170 @@ func _minor_restore() -> void:
 	_check(drove and placed and room.shutter.is_open(),
 			"the crate driven back onto the HEAVY plate, and the crossing "
 			+ "STAYS OPEN: the restored bolt holds it")
-	_check(_intents("latch_fired").is_empty()
-			and _intents("claim_check").is_empty(),
-			"and nothing was announced: no latch and no claim sent back")
 	print("played: the restored bolt holds %s's crossing" % rid)
+
+
+
+
+# ---------------------------------------------------------------------------
+# O05-06.3 -- EX50-021 Counterfire Arcade, played by hand in the Zone
+# ---------------------------------------------------------------------------
+
+## The gunner's own shot, or null: an enemy projectile inside the room
+## and heading south down its lane. `EnemyProjectile` adds itself to the
+## current scene, so this looks there -- and it has to choose, because in
+## a Zone the room next door has ranged enemies too, and the first run
+## picked up one of theirs coming the other way through the doorway.
+func _shot_in_flight(room: CounterfireArcadeRoom) -> Node3D:
+	var scene := get_tree().current_scene
+	if scene == null:
+		return null
+	for child: Node in scene.get_children():
+		var area := child as Area3D
+		if area == null or area.get("speed") == null \
+				or area.get("direction") == null:
+			continue
+		var at := room.to_local(area.global_position)
+		var heading: Vector3 = room.global_transform.basis.inverse() \
+				* (area.get("direction") as Vector3)
+		if absf(at.x) <= CounterfireArcadeRoom.ROOM_HALF.x \
+				and absf(at.z) <= CounterfireArcadeRoom.ROOM_HALF.y \
+				and heading.z < 0.0:
+			return area
+	return null
+
+
+func _play_counterfire(controller: ZoneController,
+		minor: Dictionary) -> void:
+	var player := controller.player
+	var rid := str(minor["room_id"])
+	var room: CounterfireArcadeRoom = \
+			(minor["hosted"] as CounterfireArcadeHosted).room
+	var floor_y := room.global_position.y
+	_check(str(_chamber(rid).get("shell_id", "")) == \
+			CounterfireArcadeHosted.SHELL_ID,
+			"%s is built from EX50-021's own shell" % rid)
+	_check(not room.released and room.shutter.is_shut()
+			and room.release_stair_steps() == 0 and room.goal_plate == null
+			and room.gunner == null,
+			"as built: shutter shut, nothing released, no stair, no "
+			+ "stand-in goal, and no gunner of the room's own")
+	# THE GUNNER IS THE ZONE'S (EX50-021 §9): the chamber's declared
+	# enemy, spawned on the gallery post and tracked with the room.
+	var gunners := _living_in(controller, rid)
+	var post := room.to_global(CounterfireArcadeRoom.GUNNER)
+	_check(gunners.size() == 1
+			and (gunners[0] as Enemy).archetype == "ranged"
+			and (gunners[0] as Node3D).global_position.distance_to(post)
+				< 0.5,
+			"the gunner is the Zone's own ranged enemy, on the gallery "
+			+ "post (%d in the room)" % gunners.size())
+	var reward := _reward_in(controller, rid)
+	_check(reward != null and absf(reward.global_position.y - floor_y
+			- CounterfireArcadeRoom.FLANK_Y) < 0.5,
+			"its Check stands on the flank, %.2f m above the floor"
+			% ((reward.global_position.y - floor_y) if reward != null
+				else -1.0))
+	if reward == null or gunners.size() != 1:
+		return
+	# Placed at the parent's arrival (declared); the parent is cleared,
+	# and the minor is walked into. Its gunner is NOT cleared: it is the
+	# thing this room is played against.
+	if not await _into_the_minor(controller, rid, false):
+		return
+
+	# ---- the bait: into the lane at the stance, facing the gunner -------
+	var stance := room.to_global(CounterfireArcadeRoom.STANCE)
+	await _hop_walk(player, room.to_global(Vector3(3.6, 0.0,
+			CounterfireArcadeRoom.STANCE.z)), 0.8)
+	await _hop_walk(player, stance, 0.5)
+	var gunner := gunners[0] as Enemy
+	var shot: Node3D = null
+	for _i in 900:
+		_look_at(player, gunner.global_position + Vector3.UP * 1.2)
+		await get_tree().physics_frame
+		shot = _shot_in_flight(room)
+		if shot != null:
+			break
+	_check(shot != null, "standing in the lane, the Zone's gunner "
+			+ "COMMITTED a shot at the player (nothing was pressed)")
+	if shot == null:
+		return
+	# ---- the dodge: into the alcove, started on seeing the shot ---------
+	await _hop_walk(player, room.to_global(CounterfireArcadeRoom.ALCOVE),
+			0.4, 120)
+	for _i in 240:
+		await get_tree().physics_frame
+		if room.receiver.hits > 0:
+			break
+	_check(room.receiver.hits > 0,
+			"the enemy's own projectile carried on down the lane and "
+			+ "TRIPPED the receiver (%d hit(s))" % room.receiver.hits)
+	var opening := await _wait_for(func() -> bool:
+		return not room.shutter.is_shut(), 120)
+	_check(opening, "and the service shutter is opening")
+
+	# ---- the timed passage: through, up, the release --------------------
+	var through := await _hop_walk(player, room.to_global(Vector3(
+			CounterfireArcadeRoom.ROOM_HALF.x + 1.4, 0.0,
+			CounterfireArcadeRoom.SHUTTER_Z)), 1.0, 400)
+	_check(through and room.to_local(player.global_position).x
+			> CounterfireArcadeRoom.ROOM_HALF.x,
+			"through the shutter inside its interval (%.1f s left)"
+			% room.shutter.left)
+	await _hop_walk(player, room.to_global(Vector3(16.2,
+			CounterfireArcadeRoom.FLANK_Y, -2.0)), 1.1, 500)
+	await _settle(10)
+	_check(absf(player.global_position.y - floor_y
+			- CounterfireArcadeRoom.FLANK_Y) < 1.0,
+			"up the supported route onto the flank, %.2f m above the floor"
+			% (player.global_position.y - floor_y))
+	var pulled := await _operate(controller, room.release)
+	var ref := "%s/release" % MinorRooms.package_of(rid)
+	var recorded := await _await_live("the bridge to record the release",
+			func() -> bool: return _served().get("latched", []).has(ref),
+			10.0)
+	_check(pulled and room.released and recorded,
+			"the SERVICE RELEASE pulled and ACCEPTED: '%s' is in the save"
+			% ref)
+
+	# ---- the Check -------------------------------------------------------
+	var seen := await _approach(controller, reward, 1.2)
+	_check(seen and reward.interact_prompt().begins_with("[E] CLAIM"),
+			"at the Check: \"%s\"" % reward.interact_prompt())
+	await _press("interact")
+	var claimed := await _await_live("the Check to be confirmed",
+			func() -> bool: return BridgeClient.is_checked(
+					reward.location_id), 15.0)
+	_check(claimed, "the minor's Check %d is CONFIRMED" % reward.location_id)
+	print("played: EX50-021 in %s -- the Zone's gunner baited, release %s, "
+			% [rid, ref] + "Check %d claimed" % reward.location_id)
+
+
+func _restored_counterfire(controller: ZoneController,
+		minor: Dictionary) -> void:
+	var rid := str(minor["room_id"])
+	var room: CounterfireArcadeRoom = \
+			(minor["hosted"] as CounterfireArcadeHosted).room
+	_check(room.released and room.shutter.is_open()
+			and room.release_stair_steps() > 0,
+			"RESTORED before anyone acts: released, the shutter open and "
+			+ "its fixed stair standing (%d steps)"
+			% room.release_stair_steps())
+	var raised := room.to_global(room.shutter.shut_at
+			+ Vector3(0.0, room.shutter.travel, 0.0))
+	_check(room.shutter.global_position.distance_to(raised) < 0.05,
+			"and the panel is physically raised clear of its doorway "
+			+ "(%.2f m off)" % room.shutter.global_position.distance_to(
+				raised))
+	var reward := _reward_in(controller, rid)
+	_check(reward != null and BridgeClient.is_checked(reward.location_id)
+			and reward.interact_prompt() == "",
+			"the Check stays claimed: nothing to claim twice")
+	# NOT A TIMER: past two of its intervals, nothing shot, still open.
+	await _settle(int(CounterfireArcadeRoom.OPEN_SECONDS * 2.5 / DT))
+	_check(room.shutter.is_open(), "and %.0f s later -- two and a half "
+			% (CounterfireArcadeRoom.OPEN_SECONDS * 2.5)
+			+ "intervals -- the restored release still holds it open")
+	print("played: the restored release holds %s's shutter" % rid)
 

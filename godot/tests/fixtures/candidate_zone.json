@@ -1083,7 +1083,7 @@
   {
    "id": "c020",
    "flavor": null,
-   "reward_location_id": 89100025,
+   "reward_location_id": null,
    "features": [],
    "doors": [
     {
@@ -1109,14 +1109,14 @@
     },
     {
      "socket_id": "side_right",
-     "usage": "SEALED",
-     "edge_id": null,
+     "usage": "USED",
+     "edge_id": "e:c020:c025",
      "key_id": null,
      "colour": null
     }
    ],
    "arrive_edge": "e:c018:c020",
-   "depart_edge": null,
+   "depart_edge": "e:c020:c025",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -1335,6 +1335,48 @@
    "wall_height": 6.0,
    "objective": "reach_reward",
    "enemies": [],
+   "elevation": null
+  },
+  {
+   "id": "c025",
+   "flavor": null,
+   "reward_location_id": 89100025,
+   "features": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c020:c025",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "arrive_edge": "e:c020:c025",
+   "depart_edge": null,
+   "keys": [],
+   "additional_reward_location_ids": [],
+   "activities": [],
+   "shell_id": "minor_counterfire_arcade",
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 29.2,
+   "depth": 17.7,
+   "wall_height": 8.0,
+   "objective": "reach_reward",
+   "enemies": [
+    {
+     "archetype": "ranged",
+     "count": 1
+    }
+   ],
    "elevation": null
   }
  ],
@@ -1653,6 +1695,16 @@
    "edge_id": "e:c015:c024",
    "room_a": "c015",
    "room_b": "c024",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED",
+   "capability": null,
+   "opened_by": null,
+   "requires_state": []
+  },
+  {
+   "edge_id": "e:c020:c025",
+   "room_a": "c020",
+   "room_b": "c025",
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",
    "capability": null,

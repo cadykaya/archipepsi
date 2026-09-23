@@ -163,6 +163,14 @@ func _the_sill_is_out_of_reach_and_the_crate_top_is_not() -> void:
 	_check(top + apex > sill,
 			"from the crate top at %.2f m, a jump reaches %.3f m"
 			% [top, top + apex])
+	# EVERY OTHER LEDGE BY THE DOOR IS A BYPASS if it does the crate's job
+	# (P5-16): the guide rails were 1.4 m, walkable, reached from the
+	# parked crate, and a jump from them made the sill with the plate
+	# empty and the crossing open.
+	var rail := UnweightedSwitchRoom.RAIL_Y
+	_check(rail + apex < sill,
+			"the guide rails are no step: %.2f m, and a jump from them "
+			% rail + "reaches %.3f m, under the sill" % (rail + apex))
 	_note("margin from the crate top is %.3f m" % (top + apex - sill))
 
 

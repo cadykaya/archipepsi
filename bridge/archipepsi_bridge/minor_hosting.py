@@ -1,4 +1,4 @@
-"""O05-06.4: an existing minor added to a composed Zone, or declined by name.
+"""O05-06: the existing minors added to a composed Zone, or declined by name.
 
 **The candidate profile's last step.** Handed a Zone the campaign really
 composed -- graph proved, every earlier relationship already placed --
@@ -70,13 +70,18 @@ SOCKET_PREFERENCE = ("side_right", "side_left")
 @dataclass(frozen=True)
 class HostedMinor:
     zone: Zone
-    #: The room the minor now is; None when nothing was emitted.
-    room_id: str | None
+    #: The rooms the minors now are, in the contracts' order.
+    rooms: tuple[str, ...]
     note: str
 
     @property
     def emitted(self) -> bool:
-        return self.room_id is not None
+        return bool(self.rooms)
+
+    @property
+    def room_id(self) -> str | None:
+        """The first minor's room, or None when nothing was emitted."""
+        return self.rooms[0] if self.rooms else None
 
 
 def _occupied(zone: Zone) -> dict[str, str]:
@@ -121,6 +126,8 @@ def parent_problem(zone: Zone, chamber, first: str,
     """Why a minor cannot be built behind `chamber`, or None when it can."""
     if chamber.type not in PARENT_TYPES:
         return f"is a {chamber.type}"
+    if getattr(chamber, "shell_id", None) in CONTRACTS:
+        return "is itself a minor"
     if chamber.id == first:
         return "is where the Zone starts"
     if chamber.id in occupied:
@@ -166,7 +173,9 @@ def _minor_room(room_id: str, edge_id: str, check: int,
         "id": room_id, "type": contract.chamber_type,
         "shell_id": contract.shell_id,
         "reward_location_id": check, "objective": "reach_reward",
-        "enemies": [], "activities": [], "features": [],
+        "enemies": [{"archetype": archetype, "count": count}
+                    for archetype, count in contract.enemies],
+        "activities": [], "features": [],
         # `adopt` writes the shell's own size over these; they are only
         # here so it has keys to write.
         "width": 0.0, "depth": 0.0, "wall_height": 0.0,
@@ -181,95 +190,103 @@ def _minor_room(room_id: str, edge_id: str, check: int,
 
 
 def compose_minor(zone: Zone, registry=None) -> HostedMinor:
-    """Build the first contracted minor behind a dead end of `zone`."""
+    """Build every contracted minor behind its own dead end of `zone`.
+
+    In the contracts' order, each on the Zone the previous one left: a
+    parent that took a minor is no longer a dead end, and a minor is never
+    a parent. A minor that finds no parent declines by name without
+    stopping the others.
+    """
     reg = registry if registry is not None else shells.load_registry()
+    built: list[str] = []
+    notes: list[str] = []
+    for contract in CONTRACTS.values():
+        zone, room_id, note = _host_one(zone, contract, reg)
+        if room_id is not None:
+            built.append(room_id)
+        notes.append(note)
+    return HostedMinor(zone, tuple(built), "; ".join(notes))
+
+
+def _host_one(zone: Zone, contract: MinorContract, reg):
+    """`(zone, room_id, note)`: the minor built, or `(zone, None, why)`."""
+    entry = reg.get(contract.shell_id)
+    if entry is None:
+        return zone, None, (f"{contract.catalogue_id}: the registry holds "
+                            f"no '{contract.shell_id}'")
+    already = [c.id for c in zone.chambers if c.shell_id == contract.shell_id]
+    if already:
+        return zone, None, (f"{contract.catalogue_id} is already hosted in "
+                            f"{already}")
     first = zone.chambers[0].id if zone.chambers else ""
     occupied = _occupied(zone)
-    declined: list[str] = []
-    for contract in CONTRACTS.values():
-        entry = reg.get(contract.shell_id)
-        if entry is None:
-            declined.append(f"{contract.catalogue_id}: the registry holds "
-                            f"no '{contract.shell_id}'")
+    rule = shells.rule_of(entry)
+    room_id = _next_room_id(zone)
+    problems: list[tuple[int, int, str]] = []
+    base = zone.model_dump()
+    for index, parent in enumerate(zone.chambers):
+        if parent.type not in PARENT_TYPES:
             continue
-        already = [c.id for c in zone.chambers
-                   if c.shell_id == contract.shell_id]
-        if already:
-            declined.append(f"{contract.catalogue_id} is already hosted "
-                            f"in {already}")
+        why = parent_problem(zone, parent, first, occupied, reg)
+        if why:
+            # THE DEAD ENDS' REASONS FIRST. They are the rooms that nearly
+            # qualified, so a decline that is read only as far as its
+            # first few reasons still says what decided it.
+            dead_end = sum(d.usage != "SEALED" for d in parent.doors) == 1
+            problems.append((0 if dead_end else 1, index,
+                             f"'{parent.id}' {why}"))
             continue
-        rule = shells.rule_of(entry)
-        room_id = _next_room_id(zone)
-        problems: list[str] = []
-        base = zone.model_dump()
-        for index, parent in enumerate(zone.chambers):
-            if parent.type not in PARENT_TYPES:
-                continue
-            why = parent_problem(zone, parent, first, occupied, reg)
-            if why:
-                # THE DEAD ENDS' REASONS FIRST. They are the rooms that
-                # nearly qualified, so a decline that is read only as far
-                # as its first few reasons still says what decided it.
-                dead_end = sum(d.usage != "SEALED" for d in parent.doors) == 1
-                problems.append((0 if dead_end else 1, index,
-                                 f"'{parent.id}' {why}"))
-                continue
-            edge_id = f"e:{parent.id}:{room_id}"
-            candidate, socket, refused = None, "", ""
-            for socket in _free_sockets(parent, reg):
-                raw = {**base, "chambers": list(base["chambers"]),
-                       "edges": list(base["edges"])}
-                parent_raw = dict(raw["chambers"][index])
-                parent_raw["doors"] = [
-                    d for d in parent_raw["doors"]
-                    if d["socket_id"] != socket
-                ] + [{"socket_id": socket, "usage": "USED",
-                      "edge_id": edge_id}]
-                parent_raw["reward_location_id"] = None
-                # The composer's own rule for a nested room with ONE
-                # onward edge: that edge is the chain's continuation
-                # through it (`topology.compose_with_branch`,
-                # "departures").
-                parent_raw["depart_edge"] = edge_id
-                raw["chambers"][index] = parent_raw
-                raw["chambers"].append(_minor_room(
-                    room_id, edge_id, parent.reward_ids[0], contract, rule))
-                raw["edges"].append({
-                    "edge_id": edge_id, "room_a": parent.id,
-                    "room_b": room_id, "direction": "BIDIRECTIONAL",
-                    "realization": "JOINED"})
-                try:
-                    candidate = Zone.model_validate(raw)
-                    break
-                except ValueError as exc:
-                    refused = (str(exc).splitlines() or [""])[-2].strip() \
-                        if len(str(exc).splitlines()) > 1 else str(exc)
-                    candidate = None
-            if candidate is None:
-                problems.append((0, index, f"'{parent.id}': the Zone schema "
-                                           f"refused every free doorway "
-                                           f"({refused})"))
-                continue
-            verdict = reachability(candidate)
-            if not verdict.ok:
-                problems.append((0, index, f"'{parent.id}': "
-                                 + "; ".join(verdict.errors[:2])))
-                continue
-            return HostedMinor(
-                candidate, room_id,
-                f"{contract.catalogue_id} {contract.name} built as "
-                f"'{room_id}' behind the dead end '{parent.id}' (its "
-                f"'{socket}' doorway); '{parent.id}''s Check "
-                f"{parent.reward_ids[0]} moved onto the minor's "
-                f"gallery; its bolt is recorded as minor_{room_id}/bolt")
-        reasons = [why for _, _, why in sorted(problems)]
-        declined.append(
-            f"{contract.catalogue_id} declined: no dead end can take it"
-            + (f" ({'; '.join(reasons[:4])}"
-               + (f"; and {len(reasons) - 4} more" if len(reasons) > 4
-                  else "") + ")"
-               if reasons else " (the Zone has no arena)"))
-    return HostedMinor(zone, None, "; ".join(declined))
+        edge_id = f"e:{parent.id}:{room_id}"
+        candidate, socket, refused = None, "", ""
+        for socket in _free_sockets(parent, reg):
+            raw = {**base, "chambers": list(base["chambers"]),
+                   "edges": list(base["edges"])}
+            parent_raw = dict(raw["chambers"][index])
+            parent_raw["doors"] = [
+                d for d in parent_raw["doors"] if d["socket_id"] != socket
+            ] + [{"socket_id": socket, "usage": "USED", "edge_id": edge_id}]
+            parent_raw["reward_location_id"] = None
+            # The composer's own rule for a nested room with ONE onward
+            # edge: that edge is the chain's continuation through it
+            # (`topology.compose_with_branch`, "departures").
+            parent_raw["depart_edge"] = edge_id
+            raw["chambers"][index] = parent_raw
+            raw["chambers"].append(_minor_room(
+                room_id, edge_id, parent.reward_ids[0], contract, rule))
+            raw["edges"].append({
+                "edge_id": edge_id, "room_a": parent.id, "room_b": room_id,
+                "direction": "BIDIRECTIONAL", "realization": "JOINED"})
+            try:
+                candidate = Zone.model_validate(raw)
+                break
+            except ValueError as exc:
+                lines = str(exc).splitlines()
+                refused = lines[-2].strip() if len(lines) > 1 else str(exc)
+                candidate = None
+        if candidate is None:
+            problems.append((0, index, f"'{parent.id}': the Zone schema "
+                                       f"refused every free doorway "
+                                       f"({refused})"))
+            continue
+        verdict = reachability(candidate)
+        if not verdict.ok:
+            problems.append((0, index, f"'{parent.id}': "
+                             + "; ".join(verdict.errors[:2])))
+            continue
+        latches = ", ".join(f"minor_{room_id}/{latch}"
+                            for latch in contract.latches)
+        return candidate, room_id, (
+            f"{contract.catalogue_id} {contract.name} built as "
+            f"'{room_id}' behind the dead end '{parent.id}' (its "
+            f"'{socket}' doorway); '{parent.id}''s Check "
+            f"{parent.reward_ids[0]} moved into the minor, at its "
+            f"objective; it records {latches}")
+    reasons = [why for _, _, why in sorted(problems)]
+    return zone, None, (
+        f"{contract.catalogue_id} declined: no dead end can take it"
+        + (f" ({'; '.join(reasons[:4])}"
+           + (f"; and {len(reasons) - 4} more" if len(reasons) > 4 else "")
+           + ")" if reasons else " (the Zone has no arena)"))
 
 
 def hosted(zone: Zone) -> dict[str, MinorContract]:

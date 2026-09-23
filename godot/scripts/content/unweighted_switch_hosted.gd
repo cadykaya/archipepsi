@@ -1,5 +1,5 @@
 class_name UnweightedSwitchHosted
-extends Node3D
+extends HostedMinor
 ## EX50-033 AS A ROOM OF A COMPOSED ZONE (O05-06.4).
 ##
 ## The room shell `minor_unweighted_switch` (registry pack `minor_rooms`)
@@ -22,9 +22,9 @@ extends Node3D
 ## envelope, its socket markers against the declared sockets -- before
 ## anyone stands in it.
 ##
-## **The Zone owns persistence, not this.** `room.bolt_engaged` is the
-## persistent fact; `ZoneController` reports it as a latch and, on load,
-## calls `room.restore_bolt()` from the campaign's record.
+## **The Zone owns persistence, not this** (`HostedMinor`). The bolt is
+## the persistent fact: pulled, it is `latched("bolt")`; on load the Zone
+## hands back the accepted latches and `restore` puts the bolt in.
 
 const SHELL_ID := "minor_unweighted_switch"
 const OFFSET := Vector3(0.0, 0.0, UnweightedSwitchRoom.ROOM_HALF.y + 0.25)
@@ -45,6 +45,8 @@ func _init() -> void:
 	room.position = OFFSET
 	room.build()
 	add_child(room)
+	room.bolt_engaged.connect(func() -> void: latched.emit("bolt"))
+	room.said.connect(func(text: String) -> void: said.emit(text))
 	_marker("entry", Vector3.ZERO, 180.0)
 	_marker("exit", Vector3(EXIT_X, UnweightedSwitchRoom.SILL_Y,
 			OFFSET.z + UnweightedSwitchRoom.G_NORTH + 0.25), 0.0)
@@ -55,12 +57,9 @@ func _physics_process(delta: float) -> void:
 	room.step(delta)
 
 
-func _marker(marker_name: String, at: Vector3, yaw: float) -> void:
-	var marker := Marker3D.new()
-	marker.name = marker_name
-	marker.position = at
-	marker.rotation.y = deg_to_rad(yaw)
-	add_child(marker)
+func restore(latch_ids: Array) -> void:
+	if latch_ids.has("bolt"):
+		room.restore_bolt()
 
 
 ## The scenario's room, with a doorway in A's wall and G walled in.

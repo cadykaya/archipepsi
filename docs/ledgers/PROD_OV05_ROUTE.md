@@ -33,6 +33,9 @@ continue an ordinary one, and an ordinary launch will not continue it.
   go**, and see what happens to it.
 - Past the power cell's doorway is the last batch's plate-and-shutter
   branch (P14), composed here by the same profile.
+- **Off the branch past the first fight room, there is a long firing
+  lane with a gunner on a gallery.** You will not out-shoot your way to
+  the service shutter. Watch where its shots go.
 - **Behind two locked doors off a side room, there is a service room
   with a crate on a track and a doorway you cannot reach.** The room's
   Check is up there. Make the crate a step, then find out why that did
@@ -46,9 +49,8 @@ continue an ordinary one, and an ordinary launch will not continue it.
 - **The Blindside loop is not here.** That is earning the featured Echo
   and using it at the junction. It is blocked on three policy
   decisions, listed in the answers.
-- **Two of the three minors are still separate launchers:** Passing
-  Platforms and Counterfire Arcade. Unweighted Switch is the service room
-  above.
+- **Passing Platforms is still a separate launcher.** Counterfire
+  Arcade and Unweighted Switch are the two rooms above.
 - **This is an implementation candidate.** It is not approved content
   and not the ordinary game. Everything here comes from the
   deterministic Epsilon and the mock multiworld.

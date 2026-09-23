@@ -5,7 +5,7 @@
 **Assignment:** the owner's Overnight 05 work order,
 `docs/ledgers/ov05/01_EXECUTION_PLAN.md` (verbatim copy, checksums
 verified). Execution log, shared-seam table for Dess, and findings P5-1
-to P5-14: `docs/ledgers/PROD_OV05.md`. Branch
+to P5-16: `docs/ledgers/PROD_OV05.md`. Branch
 `claude/archipepsi-0-4-blindside`. The start is protected as
 `review/ov05-start-330c555`. **No heartbeat, watcher, subscription or
 scheduled job is armed.** Dess and Arty stay paused, and this lane is the
@@ -35,14 +35,17 @@ one writer.
   - Bounded sample: 12 cases (`docs/ledgers/ov05_evidence/candidate_sample.json`).
     Every case was certified and kept its Checks; transport declined
     once, by name.
-- **O05-06, the minors: EX50-033 integrated and played; EX50-011 and
-  EX50-021 not yet.**
+- **O05-06, the minors: EX50-033 and EX50-021 integrated and played;
+  EX50-011 not yet.**
   - The candidate `minors` step ADDS Unweighted Switch behind a dead-end
     arena (P5-13) and moves that arena's Check onto the minor's gallery.
     Emitted and certified in 12 of 12 sample Zones.
-  - The bolt persists as `minor_<room>/bolt`. `godot-candidate-live` now
-    has five phases: seed 39, play 20, restore 5, minor 16,
-    minor_restore 10.
+  - Counterfire Arcade is added the same way, and its gunner is the
+    chamber's own declared enemy (EX50-021 §9).
+  - Latches persist as `minor_<room>/<latch>`. `godot-candidate-live`
+    now has five phases: seed 40, play 20, restore 5, minor 32,
+    minor_restore 15.
+  - P5-16: EX50-033's guide rails were a bypass; lowered, and asserted.
   - Also found and fixed: P5-12 (re-certification ignored the Zone
     budget) and P5-14 (a restarted mock campaign forgot its confirmed
     Checks).
@@ -55,13 +58,10 @@ one writer.
 
 **Next, in the plan's order:**
 
-1. **O05-06, the other two minors.** The contract, the composer, the
-   latch path and the engine hook are shared (`schemas/minors.py`,
-   `minor_hosting.py`, `MinorRooms`).
-   - EX50-021 Counterfire Arcade: extract its room, and make its gunner
-     the chamber's declared enemy, per EX50-021 §9.
-   - EX50-011 Passing Platforms: needs its carriers' poses saved
-     (EX50-011 §9, overlapping O05-10.2).
+1. **O05-06.2, EX50-011 Passing Platforms.** It needs its carriers'
+   poses saved (EX50-011 §9); that is O05-10.2's package-specific
+   restoration. The hosting path is shared (`schemas/minors.py`,
+   `minor_hosting.py`, `HostedMinor`, `MinorRooms`).
 2. O05-07 onward.
 3. The O05-17 frozen run and ZIP.
 
