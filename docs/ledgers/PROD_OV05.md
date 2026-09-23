@@ -341,8 +341,13 @@ the overhead gantry; the S3 destination; a rail model in
     (`validate_zone` with the minor's own shell rule added to the offer,
     and the Zone's real budget, P5-12). `strip` hands the Check back so
     re-hosting still works.
-  - Frozen sample: emitted in 12 of 12, every case certified, every
-    allocated Check kept. The first frozen run declined zone_012: its one
+  - Frozen sample (regenerated at `6cbe5f2`, both contracts): the step
+    emitted in 12 of 12, every case certified, every allocated Check
+    kept. EX50-033 was hosted in 12 of 12 and EX50-021 in 10 of 12; in
+    zone_004 and zone_012 EX50-021 declined by name, because the one
+    remaining dead end had already taken EX50-033 and every other room
+    holds a relationship's control, a key or no free side socket.
+    The first frozen run declined zone_012: its one
     dead end has a right-hand gallery, which stands in a `side_right`
     doorway. The step now tries each free side socket, and the Zone
     schema judges each one (`test_a_gallery_on_the_preferred_side_...`).
@@ -477,6 +482,8 @@ the overhead gantry; the S3 destination; a rail model in
   every case in `docs/ledgers/ov05_evidence/candidate_sample.json`.
   - `zone_state` emitted in 12 of 12 cases.
   - `latched_route` emitted in 12 of 12.
+  - `minors` emitted in 12 of 12: EX50-033 in 12, EX50-021 in 10, and
+    declined by name in the other two (see O05-06.4 above).
   - `transport` emitted in 11 of 12. zone_002 declined by name: its
     platform path and transit hall leave no walkable, one-floor run
     inside the home window.

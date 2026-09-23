@@ -39,7 +39,8 @@ one writer.
   EX50-011 not yet.**
   - The candidate `minors` step ADDS Unweighted Switch behind a dead-end
     arena (P5-13) and moves that arena's Check onto the minor's gallery.
-    Emitted and certified in 12 of 12 sample Zones.
+    Sample: EX50-033 in 12 of 12 Zones, EX50-021 in 10 of 12 (declined
+    by name in two); all 12 certified.
   - Counterfire Arcade is added the same way, and its gunner is the
     chamber's own declared enemy (EX50-021 §9).
   - Latches persist as `minor_<room>/<latch>`. `godot-candidate-live`
