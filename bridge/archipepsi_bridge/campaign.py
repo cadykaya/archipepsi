@@ -1527,6 +1527,11 @@ class CampaignEngine:
             elif intent.type == "object_recovered":
                 nxt = T.recover_transported_object(
                     self.save, intent.zone_id, intent.object_id)
+            elif intent.type == "carrier_rested":
+                nxt = T.record_carrier_rested(
+                    self.save, intent.zone_id, intent.package_id,
+                    intent.carrier_id, intent.t, intent.destination,
+                    intent.held)
             else:
                 nxt = T.record_station(self.save, intent.zone_id,
                                        intent.station_id)

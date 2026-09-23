@@ -57,3 +57,15 @@ static func accepted_for(room_id: String, refs: Array) -> Array:
 		if str(ref).begins_with(prefix):
 			out.append(str(ref).substr(prefix.length()))
 	return out
+
+
+## The rests the campaign accepted for this room's minor's carriers, as
+## `{carrier_id: [t, destination, held]}`, from `ZoneProgress.
+## carrier_states` keyed by `minor_<room>/<carrier>`.
+static func carriers_for(room_id: String, carried: Dictionary) -> Dictionary:
+	var prefix := package_of(room_id) + "/"
+	var out := {}
+	for ref: Variant in carried:
+		if str(ref).begins_with(prefix):
+			out[str(ref).substr(prefix.length())] = carried[ref]
+	return out

@@ -905,6 +905,11 @@ godot-candidate-live: godot-import
 	$(call candidate_phase,minor)
 	@echo "-- restart: both processes new, only the save crosses --"
 	$(call candidate_phase,minor_restore)
+	$(call candidate_phase,next)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call candidate_phase,next_restore)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call candidate_phase,next_final)
 
 # P14: THE LATCH-ROUTE CANDIDATE, BY HAND. Opt-in and disposable: its own
 # save directory, a default-scale mock campaign whose zone_001 is Dess's

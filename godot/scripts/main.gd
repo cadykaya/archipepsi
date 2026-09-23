@@ -695,6 +695,8 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.objects_consumed_carried = _pairs(
 			progress.get("consumed_objects", []))
 	zone.object_poses_carried = _poses(progress.get("object_poses", []))
+	zone.carrier_states_carried = _carriers(
+			progress.get("carrier_states", []))
 	# THE COMMITTED LAYOUT, when this Zone has one. `ZoneReady` carries
 	# the manifest the bridge accepted on the first visit, and replaying
 	# it is what makes the Zone the player walks back into the Zone they
@@ -898,6 +900,20 @@ static func _poses(raw: Variant) -> Dictionary:
 		var r: Array = row
 		out[str(r[0])] = [str(r[1]),
 				Vector3(float(r[2]), float(r[3]), float(r[4])), float(r[5])]
+	return out
+
+
+## `carrier_states` off the wire, `[[ref, t, destination, held], ...]`,
+## as `{ref: [t, destination, held]}`.
+static func _carriers(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for row: Variant in raw as Array:
+		if typeof(row) != TYPE_ARRAY or (row as Array).size() != 4:
+			continue
+		var r: Array = row
+		out[str(r[0])] = [float(r[1]), str(r[2]), bool(r[3])]
 	return out
 
 

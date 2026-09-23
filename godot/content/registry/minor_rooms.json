@@ -262,6 +262,135 @@
    ],
    "size_class": "large",
    "exit_yaw": 90.0
+  },
+  {
+   "id": "minor_passing_platforms",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "Passing Platforms (EX50-011)",
+   "scene": "res://content/minors/minor_passing_platforms.tscn",
+   "fallback": "shell_arena_proc",
+   "semantic_tags": [
+    "minor",
+    "ex50_011",
+    "arena",
+    "passing_platforms"
+   ],
+   "size": [
+    28.5,
+    12.0,
+    22.5
+   ],
+   "surfaces": [
+    {
+     "name": "floor",
+     "center": [
+      0.0,
+      0.0,
+      3.65
+     ],
+     "extent": [
+      28.0,
+      6.8
+     ]
+    },
+    {
+     "name": "recovery",
+     "center": [
+      0.0,
+      1.0,
+      16.75
+     ],
+     "extent": [
+      27.4,
+      10.4
+     ]
+    },
+    {
+     "name": "shelf",
+     "center": [
+      -8.55,
+      8.0,
+      9.25
+     ],
+     "extent": [
+      6.9,
+      6.0
+     ]
+    },
+    {
+     "name": "gallery",
+     "center": [
+      12.525,
+      4.0,
+      13.75
+     ],
+     "extent": [
+      2.95,
+      7.0
+     ]
+    }
+   ],
+   "sockets": [
+    {
+     "name": "entry",
+     "kind": "doorway",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "yaw": 180.0,
+     "width": 2.4,
+     "height": 3.2,
+     "surface_id": "floor"
+    },
+    {
+     "name": "exit",
+     "kind": "doorway",
+     "position": [
+      14.25,
+      4.0,
+      13.75
+     ],
+     "yaw": 90.0,
+     "width": 2.4,
+     "height": 3.2,
+     "surface_id": "gallery"
+    }
+   ],
+   "volumes": [
+    {
+     "name": "arrival",
+     "kind": "player_entry",
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    },
+    {
+     "name": "reward",
+     "kind": "objective",
+     "center": [
+      12.8,
+      4.0,
+      16.15
+     ],
+     "size": [
+      1.5,
+      1.5,
+      1.5
+     ]
+    }
+   ],
+   "size_class": "large",
+   "exit_yaw": 90.0
   }
  ]
 }

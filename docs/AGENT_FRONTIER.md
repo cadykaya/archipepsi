@@ -1,6 +1,6 @@
 # AGENT FRONTIER
 
-## PROD LANE — Overnight 05 in progress: carry, delivery, reversible lever, candidate launcher, the first minor in a Zone — 2026-09-23
+## PROD LANE — Overnight 05 in progress: carry, delivery, reversible lever, candidate launcher, all three minors in Zones — 2026-09-23
 
 **Assignment:** the owner's Overnight 05 work order,
 `docs/ledgers/ov05/01_EXECUTION_PLAN.md` (verbatim copy, checksums
@@ -35,21 +35,26 @@ one writer.
   - Bounded sample: 12 cases (`docs/ledgers/ov05_evidence/candidate_sample.json`).
     Every case was certified and kept its Checks; transport declined
     once, by name.
-- **O05-06, the minors: EX50-033 and EX50-021 integrated and played;
-  EX50-011 not yet.**
-  - The candidate `minors` step ADDS Unweighted Switch behind a dead-end
-    arena (P5-13) and moves that arena's Check onto the minor's gallery.
-    Sample: EX50-033 in 12 of 12 Zones, EX50-021 in 10 of 12 (declined
-    by name in two); all 12 certified.
-  - Counterfire Arcade is added the same way, and its gunner is the
-    chamber's own declared enemy (EX50-021 §9).
-  - Latches persist as `minor_<room>/<latch>`. `godot-candidate-live`
-    now has five phases: seed 40, play 20, restore 5, minor 32,
-    minor_restore 15.
-  - P5-16: EX50-033's guide rails were a bypass; lowered, and asserted.
-  - Also found and fixed: P5-12 (re-certification ignored the Zone
-    budget) and P5-14 (a restarted mock campaign forgot its confirmed
-    Checks).
+- **O05-06, the minors: all three integrated, played and restarted.**
+  - The candidate `minors` step ADDS each minor behind its own dead-end
+    arena (P5-13) and moves that arena's Check onto it. Each Zone has
+    room for two, so the offer order turns with the Zone
+    (`minor_hosting.offer_order`, this lane's rule, recorded for Dess):
+    zone_001 hosts EX50-033 + EX50-021, zone_002 EX50-021 + EX50-011.
+  - EX50-021's gunner is the chamber's own declared enemy (§9).
+  - EX50-011's carriers persist their REST (pose, destination, hold) in
+    the new `ZoneProgress.carrier_states` (`PUZZLE_LOCAL`), recorded only
+    at rest and accepted only for a declared carrier and stop. Played in
+    zone_002, reached by abandoning zone_001 from the pause menu; a
+    restart restores the shuttle HELD mid-track and the route is
+    finished from it.
+  - `godot-candidate-live` now has eight phases: seed 40, play 20,
+    restore 5, minor 32, minor_restore 15, next 21, next_restore 18,
+    next_final 7.
+  - Findings this segment: P5-16 (EX50-033's rails were a bypass), P5-17
+    (the room audit measured side exits on the far wall), P5-18
+    (EX50-011's stair ended against a railing). Earlier: P5-12 (budget),
+    P5-14 (the mock forgot confirmed Checks).
 - **O05-15, the launcher: built.**
   - `Diagnostic Campaign - Candidate (Windows).bat`, or
     `python -m archipepsi_bridge.diagnostic --candidate`.
@@ -59,12 +64,10 @@ one writer.
 
 **Next, in the plan's order:**
 
-1. **O05-06.2, EX50-011 Passing Platforms.** It needs its carriers'
-   poses saved (EX50-011 §9); that is O05-10.2's package-specific
-   restoration. The hosting path is shared (`schemas/minors.py`,
-   `minor_hosting.py`, `HostedMinor`, `MinorRooms`).
-2. O05-07 onward.
-3. The O05-17 frozen run and ZIP.
+1. O05-07 onward (graph inputs and nodes, manipulation verbs, Status,
+   machinery interruptions, consumables, encounters, art binding).
+   O05-10.2's Passing Platforms half is done with O05-06.2.
+2. The O05-17 frozen run and ZIP.
 
 ## PROD LANE — P14 played and persisted, D-11 on the geometry: integration batch closed — 2026-09-23
 

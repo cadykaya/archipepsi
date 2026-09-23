@@ -150,6 +150,13 @@ var object_rooms_carried := {}
 ## before `setup` like every other carried fact.
 var object_poses_carried := {}
 var objects_consumed_carried := {}
+## O05-06.2: `ZoneProgress.carrier_states` as `{minor_<room>/<carrier>:
+## [t, destination, held]}` -- each hosted minor carrier's last accepted
+## rest (EX50-011 §9). Assigned before `setup`, like every carried fact.
+var carrier_states_carried := {}
+## Every carrier rest this controller reported, in order, as
+## `[package, carrier, t, destination, held]`. For the suites.
+var carrier_reports: Array = []
 var object_refusals: Array[String] = []
 ## The consumers this Zone built (P16's receiving sites), and what the
 ## engine refused to build.
@@ -591,9 +598,17 @@ func setup(zone_dict: Dictionary) -> void:
 		var rid := str(minor["room_id"])
 		var package := MinorRooms.package_of(rid)
 		hosted.restore(MinorRooms.accepted_for(rid, latches_accepted()))
+		# EX50-011 §9: "A stable save restores each at its saved pose
+		# before the player" -- the carriers' last accepted rests, put back
+		# silently, before anyone can see the room.
+		hosted.restore_carriers(MinorRooms.carriers_for(rid,
+				carrier_states_carried))
 		hosted.latched.connect(func(latch_id: String) -> void:
 			report_latch(package, latch_id))
 		hosted.said.connect(_on_minor_said)
+		hosted.carrier_rested.connect(func(carrier_id: String, t: float,
+				destination: String, held: bool) -> void:
+			report_carrier(package, carrier_id, t, destination, held))
 		minors.append(minor)
 	door_positions = (build.get("doors", {}) as Dictionary).duplicate()
 	exit_departs_from = str(build.get("exit_departs_from", ""))
@@ -688,6 +703,13 @@ func setup(zone_dict: Dictionary) -> void:
 	player.damaged_from.connect(func(_source: Vector3) -> void:
 		_note_engagement())
 	player.died.connect(func() -> void: _encounter_chamber = -1)
+	# A minor applies its own death rule (EX50-011 §9: before completion,
+	# the carriers go home).
+	player.died.connect(func() -> void:
+		for raw_minor: Variant in minors:
+			var hosted: HostedMinor = (raw_minor as Dictionary)["hosted"]
+			if is_instance_valid(hosted):
+				hosted.player_died())
 
 	# Optional ledges (DESIGN §19). Walked, not searched: nothing is
 	# reported anywhere, so reaching one only ever earns a remark.
@@ -937,6 +959,18 @@ func report_latch(package_id: String, latch_id: String) -> void:
 	BridgeClient.send_intent({"type": "latch_fired",
 			"zone_id": zone_id, "package_id": package_id,
 			"latch_id": latch_id})
+
+## O05-06.2: a hosted minor's carrier came to rest. Sent every time,
+## because a rest is overwritten rather than accumulated: the bridge
+## absorbs one it already holds. Only a carrier AT REST reaches here
+## (Amalgam §5.3); a restored rest is never reported.
+func report_carrier(package_id: String, carrier_id: String, t: float,
+		destination: String, held: bool) -> void:
+	carrier_reports.append([package_id, carrier_id, t, destination, held])
+	BridgeClient.send_intent({"type": "carrier_rested",
+			"zone_id": zone_id, "package_id": package_id,
+			"carrier_id": carrier_id, "t": t, "destination": destination,
+			"held": held})
 
 ## What a minor's own machinery says -- "LIGHTENED -- crate reads MEDIUM",
 ## "BOLT ENGAGED" -- on the HUD the player has, since a hosted minor has

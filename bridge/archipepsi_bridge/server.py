@@ -187,7 +187,8 @@ class BridgeServer:
         elif m.type in ("key_collected", "lock_opened", "station_reached",
                         "latch_fired", "zone_state_selected",
                         "object_transported", "object_settled",
-                        "object_consumed", "object_recovered"):
+                        "object_consumed", "object_recovered",
+                        "carrier_rested"):
             await engine.handle_progress(m)
         elif m.type == "layout_result":
             await engine.handle_layout_result(m)

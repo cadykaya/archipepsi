@@ -260,6 +260,31 @@ class ZoneProgress(Strict):
     consumed_objects: tuple[tuple[str, str], ...] = Field(default=(),
                                                           max_length=4)
 
+    #: O05-06.2. Where each saved carrier CAME TO REST, as
+    #: `(minor_<room>/<carrier>, t, destination, held)` rows sorted by
+    #: ref: `t` the machine's own offset along its path in metres (to
+    #: the millimetre), `destination` the stop it stands at or is bound
+    #: for (empty when a hold has cleared its errand), `held` whether a
+    #: STOP or a dwell holds it there.
+    #:
+    #: EX50-011 §9: "Carrier poses, destinations and hold states are
+    #: package-local. A stable save restores each at its saved pose
+    #: before the player." Amalgam §5.2 puts machinery `t` in
+    #: `PUZZLE_LOCAL`, and §5.3 refuses a save while such a body moves,
+    #: so **only a carrier at rest is recorded**: parked at a stop,
+    #: held by a STOP, or pausing in a declared dwell. A carrier the
+    #: player quits mid-travel comes back at its last rest.
+    #:
+    #: **A dwell comes back HELD** (§9: "a carrier in a dwell state can
+    #: remain safely held until the player resumes"), so a restored lift
+    #: never leaves from under a player because the application was
+    #: closed for an hour.
+    #:
+    #: Overwritten rather than accumulated, like `macro_state`: a carrier
+    #: sent back is not a replay to reject.
+    carrier_states: tuple[tuple[str, float, str, bool], ...] = Field(
+        default=(), max_length=8)
+
     def with_key(self, key_id: str) -> "ZoneProgress":
         if key_id in self.collected_keys:
             return self
@@ -358,6 +383,24 @@ class ZoneProgress(Strict):
             "consumed_objects": tuple(sorted(
                 {*self.consumed_objects, (object_id, mechanism_id)}))})
 
+    def with_carrier(self, ref: str, t: float, destination: str,
+                     held: bool) -> "ZoneProgress":
+        """Record where a carrier came to rest, replacing its last rest."""
+        row = (ref, round(float(t), 3), destination, bool(held))
+        kept = {r[0]: r for r in self.carrier_states}
+        if kept.get(ref) == row:
+            return self
+        kept[ref] = row
+        return self.model_copy(update={
+            "carrier_states": tuple(sorted(kept.values()))})
+
+    def carrier(self, ref: str):
+        """`(t, destination, held)` for that carrier, or `None`."""
+        for row in self.carrier_states:
+            if row[0] == ref:
+                return row[1], row[2], row[3]
+        return None
+
     def consumed(self, object_id: str) -> bool:
         return self.consumed_by(object_id) is not None
 
@@ -415,6 +458,10 @@ SAVE_FIELD_CATEGORY: dict[str, str] = {
     # consumer has taken it.
     "object_poses": "ZONE_PERSISTENT",
     "consumed_objects": "ZONE_PERSISTENT",
+    # O05-06.2: machinery `t` is `PUZZLE_LOCAL` (Amalgam §5.2), and a
+    # Passing Platforms carrier's rest is saved by its own package's
+    # contract (EX50-011 §9) -- the unconditional-path case above.
+    "carrier_states": "PUZZLE_LOCAL",
 }
 
 
@@ -2244,6 +2291,29 @@ class ObjectRecovered(Strict):
                            pattern=r"^[a-z0-9_]+$")
 
 
+class CarrierRested(Strict):
+    """O05-06.2. A hosted minor's carrier came to rest.
+
+    Sent only at rest -- parked at a stop, held by a STOP, or pausing in
+    a declared dwell -- never mid-travel (Amalgam §5.3). The package is
+    the minor's (`minor_<room>`); the bridge accepts it only for a
+    carrier and stop the room's minor contract declares, and stores the
+    offset the engine measured without inventing one.
+    """
+    type: Literal["carrier_rested"]
+    zone_id: str = _ID
+    package_id: str = Field(min_length=1, max_length=32,
+                            pattern=r"^[a-z0-9_]+$")
+    carrier_id: str = Field(min_length=1, max_length=32,
+                            pattern=r"^[a-z0-9_]+$")
+    t: float
+    #: The stop it stands at or is bound for; empty only when held with
+    #: no errand.
+    destination: str = Field(default="", max_length=32,
+                             pattern=r"^[A-Za-z0-9_]*$")
+    held: bool = False
+
+
 class LockOpened(Strict):
     """A locked door opened, identified by the door rather than the key.
 
@@ -2520,7 +2590,7 @@ ClientMessage = Annotated[
         DebugCommand,
         ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
         ZoneStateSelected, ObjectTransported, ObjectSettled, ObjectConsumed,
-        ObjectRecovered, LayoutResult, BuildFailed,
+        ObjectRecovered, CarrierRested, LayoutResult, BuildFailed,
     ],
     Field(discriminator="type"),
 ]

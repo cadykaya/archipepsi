@@ -53,6 +53,12 @@ const HOLD := 0
 ## The route, in the space `to_world` maps from.
 var path: RailPath = null
 var to_world := Transform3D.IDENTITY
+## O05-06.2. Take `to_world` from the parent when entering the tree. A
+## railway laid in a ROOM's frame (EX50-011's shuttle, hosted in a Zone)
+## knows its frame only once that room has been placed, which is after
+## the carrier was built. Off by default: the Zone's own railways lay
+## their paths in world coordinates and are unchanged.
+var frame_from_parent := false
 ## Dock offsets along `path`, ascending, with their ids.
 var dock_offsets: PackedFloat32Array = PackedFloat32Array()
 var dock_ids: PackedStringArray = PackedStringArray()
@@ -112,6 +118,8 @@ func _ready() -> void:
 	# The property the measured carry depends on. Without it the deck moves
 	# without the physics server knowing, and a passenger is left behind.
 	sync_to_physics = true
+	if frame_from_parent and get_parent() is Node3D:
+		to_world = (get_parent() as Node3D).global_transform
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = deck

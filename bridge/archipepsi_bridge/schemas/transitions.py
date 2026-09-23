@@ -627,7 +627,13 @@ def _accepted_graph_latches(rec: ZoneRecord, room_id: str) -> set[str]:
 
 
 def _accepted_minor_latches(rec: ZoneRecord, room_id: str) -> set[str]:
-    """The latches a hosted minor may record, or why it may record none.
+    """The latches a hosted minor may record, or why it may record none."""
+    return set(_accepted_minor_contract(rec, room_id, "latched").latches)
+
+
+def _accepted_minor_contract(rec: ZoneRecord, room_id: str,
+                             happened: str):
+    """The contract of the minor hosted in that room, or why there is none.
 
     O05-06. The graph path's four facts, with the minor's contract where
     the graph's declaration was:
@@ -647,7 +653,7 @@ def _accepted_minor_latches(rec: ZoneRecord, room_id: str) -> set[str]:
     if rec.layout_state != "ACCEPTED" or not manifest:
         raise ValueError(
             f"Zone '{rec.zone_id}' has no committed layout, so no minor in "
-            "it has been built and nothing can have latched")
+            f"it has been built and nothing can have {happened}")
     if manifest.get("zone_id") != rec.zone_id:
         raise ValueError(
             f"Zone '{rec.zone_id}' carries a manifest for "
@@ -661,7 +667,7 @@ def _accepted_minor_latches(rec: ZoneRecord, room_id: str) -> set[str]:
     if contract is None:
         raise ValueError(
             f"room '{room_id}' in Zone '{rec.zone_id}' hosts no minor")
-    return set(contract.latches)
+    return contract
 
 
 def _accepted_rail_latches(rec: ZoneRecord, network_id: str
@@ -1063,6 +1069,65 @@ def record_object_settled(save: CampaignSave, zone_id: str, object_id: str,
     return _progress(save, zone_id,
                      lambda p: p.with_object_pose(object_id, room_id,
                                                   position, yaw),
+                     known)
+
+
+def record_carrier_rested(save: CampaignSave, zone_id: str,
+                          package_id: str, carrier_id: str, t: float,
+                          destination: str, held: bool) -> CampaignSave:
+    """O05-06.2. A hosted minor's carrier came to rest; its rest is saved.
+
+    EX50-011 §9: "Carrier poses, destinations and hold states are
+    package-local. A stable save restores each at its saved pose before
+    the player." Overwritten rather than accumulated -- a carrier sent
+    back is not a replay to reject -- and refused unless every fact is
+    the accepted Zone's:
+
+    - **The package is a hosted minor's**, by the minor path's four
+      facts (`_accepted_minor_contract`): an accepted Zone, a committed
+      layout, the room placed, a contracted shell in it.
+    - **The carrier is one that contract declares.** The engine does not
+      get to say which machines exist.
+    - **The destination is one of that carrier's declared stops.** A
+      carrier that is not held is standing AT its destination, so it
+      needs one; a held carrier may have none, because a fail-safe STOP
+      clears a shuttle's errand (`RailCarrier.hold`).
+    - **The offset is a number a path could hold.** The engine measures
+      it; the bridge has no geometry and does not pretend to, but it
+      refuses a non-finite, negative or absurd offset rather than
+      storing it.
+    """
+    import math
+
+    if not package_id.startswith(MINOR_PACKAGE_PREFIX):
+        raise ValueError(
+            f"'{package_id}' is not a hosted minor's package; only a "
+            f"'{MINOR_PACKAGE_PREFIX}<room>' records a carrier")
+    room_id = package_id[len(MINOR_PACKAGE_PREFIX):]
+    ref = f"{package_id}/{carrier_id}"
+
+    def known(rec):
+        contract = _accepted_minor_contract(rec, room_id, "moved")
+        stops = contract.carrier_stops(carrier_id)
+        if stops is None:
+            raise ValueError(
+                f"the minor in room '{room_id}' ({contract.catalogue_id}) "
+                f"declares no carrier '{carrier_id}'")
+        if destination and destination not in stops:
+            raise ValueError(
+                f"carrier '{ref}' has no stop '{destination}'; its stops "
+                f"are {list(stops)}")
+        if not destination and not held:
+            raise ValueError(
+                f"carrier '{ref}' reported a rest with no stop and no "
+                "hold; a carrier that is not held stands at a stop")
+        if not (math.isfinite(t) and 0.0 <= t < 1000.0):
+            raise ValueError(
+                f"carrier '{ref}' reported an offset {t} no path could "
+                "hold")
+
+    return _progress(save, zone_id,
+                     lambda p: p.with_carrier(ref, t, destination, held),
                      known)
 
 
@@ -1631,6 +1696,7 @@ TRANSITIONS = (
     rest_zone, record_key, record_latch, record_lock, record_station,
     record_zone_state, record_object_transported, record_object_consumed,
     record_object_settled,
+    record_carrier_rested,
     recover_transported_object,
     reselect_hosts,
     commit_layout, refuse_layout,

@@ -189,18 +189,40 @@ def _minor_room(room_id: str, edge_id: str, check: int,
     return room
 
 
+def offer_order(zone_id: str) -> tuple[MinorContract, ...]:
+    """The order a Zone offers the minors in: rotated by its ordinal.
+
+    **A selection rule, this lane's, recorded for Dess.** Every Zone of
+    the frozen sample has at most two dead ends a minor can be built
+    behind, and there are three minors. In one fixed order the third
+    never finds a host in any Zone -- EX50-011 was hosted in 0 of 12. So
+    the order turns with the Zone's place in the campaign: `zone_001`
+    offers the contracts as declared, `zone_002` from the second, and so
+    on, and a campaign meets every minor. O05-06.5: "The composer does
+    not need to place all three in every Zone."
+
+    Deterministic by the Zone's own id, so a re-composition after host
+    re-selection makes the same choice. An id without an ordinal takes
+    the declared order.
+    """
+    contracts = tuple(CONTRACTS.values())
+    found = re.fullmatch(r"zone_(\d+)", zone_id or "")
+    turn = (int(found.group(1)) - 1) % len(contracts) if found else 0
+    return contracts[turn:] + contracts[:turn]
+
+
 def compose_minor(zone: Zone, registry=None) -> HostedMinor:
     """Build every contracted minor behind its own dead end of `zone`.
 
-    In the contracts' order, each on the Zone the previous one left: a
-    parent that took a minor is no longer a dead end, and a minor is never
-    a parent. A minor that finds no parent declines by name without
-    stopping the others.
+    In the Zone's offer order (`offer_order`), each on the Zone the
+    previous one left: a parent that took a minor is no longer a dead
+    end, and a minor is never a parent. A minor that finds no parent
+    declines by name without stopping the others.
     """
     reg = registry if registry is not None else shells.load_registry()
     built: list[str] = []
     notes: list[str] = []
-    for contract in CONTRACTS.values():
+    for contract in offer_order(zone.zone_id):
         zone, room_id, note = _host_one(zone, contract, reg)
         if room_id is not None:
             built.append(room_id)

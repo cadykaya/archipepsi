@@ -289,5 +289,10 @@ func _next_toward(goal: int) -> int:
 func _place() -> void:
 	# The deck's TOP is what a passenger stands on, so the body sits half
 	# a deck below the offset the stops are named in.
-	global_position = origin + axis * offset \
-			- Vector3(0.0, deck.y * 0.5, 0.0)
+	#
+	# IN ITS PARENT'S FRAME (O05-06.2, P5-15's rule): `origin` and `axis`
+	# are where the room that owns the lift says they are. The scenario's
+	# room stood at the world origin, where the two frames agree; a room
+	# hosted in a Zone does not, and a lift placed in world coordinates
+	# would stand wherever the Zone happened to put the origin.
+	position = origin + axis * offset - Vector3(0.0, deck.y * 0.5, 0.0)

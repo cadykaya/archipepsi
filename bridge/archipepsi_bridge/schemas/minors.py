@@ -19,11 +19,14 @@ openings -- so nothing here restates a number the manifest owns.
 **Who reads it.** `minor_hosting.compose_minor` selects a host against
 it and declines by name when none qualifies; `record_latch` accepts a
 `minor_<room>/<latch>` only when the accepted Zone's chamber in that
-room carries a contracted shell that declares the latch. Nothing else.
+room carries a contracted shell that declares the latch, and
+`record_carrier_rested` a carrier's rest only for a carrier and stop
+that shell declares. Nothing else.
 
 **What it is not.** Not a second vocabulary for machines: the plate,
 NOT, shutter and bolt are the room's own code, built by the engine and
-verified there (`godot-unweighted`, `godot-minor-live`). Not a grant:
+verified there (`godot-unweighted`, `godot-counterfire`,
+`godot-passing-platforms`) and played in a Zone (`godot-candidate-live`). Not a grant:
 the room's `lightened` applicator is the minor's specified local source
 and gives the campaign nothing.
 """
@@ -66,6 +69,17 @@ class MinorContract:
     #: and persisted like any other. A minor that needs an enemy never
     #: builds its own copy (EX50-021 §9).
     enemies: tuple[tuple[str, int], ...] = ()
+    #: `(carrier_id, stops)` for each machine the room runs whose REST
+    #: is saved (EX50-011 §9: "Carrier poses, destinations and hold
+    #: states are package-local"). The bridge records a carrier at rest
+    #: as `minor_<room>/<carrier>` only if it is declared here, and only
+    #: at one of these stops or held between them. The stops are names,
+    #: not numbers: where each one stands is the room's own geometry.
+    carriers: tuple[tuple[str, tuple[str, ...]], ...] = ()
+
+    def carrier_stops(self, carrier_id: str) -> tuple[str, ...] | None:
+        """A declared carrier's stops, or None when it has no such one."""
+        return dict(self.carriers).get(carrier_id)
 
 
 CONTRACTS: dict[str, MinorContract] = {
@@ -108,6 +122,30 @@ CONTRACTS: dict[str, MinorContract] = {
             "Pulse at the receiver's face still open the shutter; the "
             "release adds a fixed stair back down"),
         enemies=(("ranged", 1),),
+    ),
+    "minor_passing_platforms": MinorContract(
+        shell_id="minor_passing_platforms",
+        catalogue_id="EX50-011",
+        name="Passing Platforms",
+        chamber_type="arena",
+        entry_socket="entry",
+        sealed_sockets=("exit",),
+        latches=("stair",),
+        completion=(
+            "the lift and the shuttle are started so that one is beside "
+            "the other at the transfer plane; the player steps across "
+            "and is carried on to the goal gallery, and walking onto it "
+            "releases the permanent service stair down to the arrival "
+            "floor; the room's Check stands at its objective on the "
+            "gallery"),
+        recovery=(
+            "a missed transfer is a short fall to the recovery floor, "
+            "whose stair climbs back to arrival; STOP holds the shuttle "
+            "where it is for the patient crossing; RESET at arrival or on "
+            "the shelf calls both carriers home by ordinary motion; the "
+            "service stair makes the carriers unnecessary afterwards"),
+        carriers=(("lift", ("A", "TRANSFER", "SHELF")),
+                  ("shuttle", ("WEST", "EAST"))),
     ),
 }
 

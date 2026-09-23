@@ -43,14 +43,24 @@ continue an ordinary one, and an ordinary launch will not continue it.
 - **Quit the game and close the bridge window.** Then start both again
   (steps 2 and 3) and go back into the same Zone. Check what is still
   as you left it.
+- **For the third minor, go on to the next Zone.** A Zone offers the
+  minors in turn, and this one has room for two. In the Zone, open the
+  pause menu, choose ABANDON ZONE, then CONFIRM ABANDON. At the Hub,
+  use the portal to ask for a new Zone, then take it. Somewhere off a
+  side room there is a tall room with a lift and a shuttle, and a
+  gallery neither of them reaches alone. Try it once without hurrying;
+  there is more than one way. Stop partway and quit, then come back
+  and see where you left things.
 
 ## What is not in this build yet
 
 - **The Blindside loop is not here.** That is earning the featured Echo
   and using it at the junction. It is blocked on three policy
   decisions, listed in the answers.
-- **Passing Platforms is still a separate launcher.** Counterfire
-  Arcade and Unweighted Switch are the two rooms above.
+- **The three minors are not all in one Zone.** The first Zone has
+  Unweighted Switch and Counterfire Arcade; the second has Counterfire
+  Arcade and Passing Platforms. Abandoning the first returns its
+  unclaimed Checks to the pool, which is fine in this separate slot.
 - **This is an implementation candidate.** It is not approved content
   and not the ordinary game. Everything here comes from the
   deterministic Epsilon and the mock multiworld.

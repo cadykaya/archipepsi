@@ -15,14 +15,33 @@ extends Node3D
 ## * `restore(latch_ids)`, the accepted latches, before anyone sees the
 ##   room. A restored latch announces nothing, so nothing is reported
 ##   back that the bridge has just sent.
+##
+## A minor whose contract declares CARRIERS (EX50-011 §9: "Carrier poses,
+## destinations and hold states are package-local") also says
+## `carrier_rested` when one comes to rest -- never while it moves -- and
+## is handed the accepted rests in `restore_carriers` before the player
+## arrives. `player_died` is where a minor applies its own death rule.
 
 signal latched(latch_id: String)
 signal said(text: String)
+signal carrier_rested(carrier_id: String, t: float, destination: String,
+		held: bool)
 
 
 ## Put the room back from the latches the campaign accepted. Each minor
 ## overrides it for the latches its contract declares.
 func restore(_latch_ids: Array) -> void:
+	pass
+
+
+## `{carrier_id: [t, destination, held]}`, the rests the campaign
+## accepted. Silent, like `restore`.
+func restore_carriers(_states: Dictionary) -> void:
+	pass
+
+
+## The Zone's player died. Most minors have nothing to do.
+func player_died() -> void:
 	pass
 
 

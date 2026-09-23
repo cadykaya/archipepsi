@@ -89,10 +89,20 @@ rule, before it is edited. Rows are appended as edits land:
 | `minor_hosting.py` (new), `candidate.STEPS` += `minors`, `candidate.strip` (+ `unhost`) | O05-06.1/.4/.5; P5-13 (no counted content removed); "an incompatible host declines by name" | the minor is ADDED behind a dead-end arena and takes that arena's Check; the parent keeps its fight and objective. Runs last. `strip` hands the Check back so re-hosting still works | O05-06 commit |
 | `CampaignEngine._certify_offer` | `validate_zone` refuses a shell the offer lacks; the provider's offer never has a minor | when the profile includes `minors`, the certification offer is the provider's plus each minor's own registry rule -- and nothing looser | O05-06 commit |
 | `mock_ap.MockServerState.bound/store`, `MockAPBackend.for_campaign`, `server._connect_mock` | `MockServerState`'s own docstring: "truth that survives quit/reload/reconnect"; a real Archipelago room keeps confirmed Checks | the mock room is kept beside the campaign's save and resumed only with it (P5-14). Test and harness code that shares an unbound state is unchanged | O05-06 commit |
-| `schemas/minors.py` `MinorContract.enemies`; the `minor_counterfire_arcade` contract | EX50-021 §9 (the gunner follows "the source encounter persistence") | a minor may declare the chamber's own enemies; the composer writes them into the chamber, so the Zone spawns and owns the encounter | this checkpoint |
-| `minor_hosting.compose_minor` (every contract, each behind its own dead end) | O05-06.5: "The composer does not need to place all three in every Zone" (so it MAY place more than one) | `HostedMinor.rooms`; a minor is never a parent | this checkpoint |
-| `minor_rooms.json` `minor_counterfire_arcade`, `HostedMinor` (Godot, new), `CounterfireArcadeRoom` extraction | as for EX50-033 | a second minor shell; `HostedMinor` is the one interface a Zone uses for any minor (`latched`, `said`, `restore`) | this checkpoint |
+| `schemas/minors.py` `MinorContract.enemies`; the `minor_counterfire_arcade` contract | EX50-021 §9 (the gunner follows "the source encounter persistence") | a minor may declare the chamber's own enemies; the composer writes them into the chamber, so the Zone spawns and owns the encounter | `6cbe5f2` |
+| `minor_hosting.compose_minor` (every contract, each behind its own dead end) | O05-06.5: "The composer does not need to place all three in every Zone" (so it MAY place more than one) | `HostedMinor.rooms`; a minor is never a parent | `6cbe5f2` |
+| `minor_rooms.json` `minor_counterfire_arcade`, `HostedMinor` (Godot, new), `CounterfireArcadeRoom` extraction | as for EX50-033 | a second minor shell; `HostedMinor` is the one interface a Zone uses for any minor (`latched`, `said`, `restore`) | `6cbe5f2` |
 | `ZoneController.minors`, `MinorRooms` (Godot, new) | §5.4a (the decision persists; the machine is rebuilt from it) | a hosted minor is FOUND in its room; its bolt is restored from `latches_accepted()` before anyone sees it and reported as `minor_<room>/bolt` when pulled; its lines go to the HUD | O05-06 commit |
+| `schemas/protocol.py` `ZoneProgress.carrier_states`, `with_carrier`; `SAVE_FIELD_CATEGORY["carrier_states"] = "PUZZLE_LOCAL"` | EX50-011 §9 ("Carrier poses, destinations and hold states are package-local. A stable save restores each at its saved pose before the player"; a dwell restores held); Amalgam §5.2 (machinery `t` is `PUZZLE_LOCAL`), §5.3 (no save while a `PUZZLE_LOCAL` body moves), §5.6 step 9; `SAVE_FIELD_CATEGORY`'s own note (a path that always exists restores the pose) | one bounded field (max 8): `(minor_<room>/<carrier>, t, destination, held)`, overwritten rather than accumulated, like `macro_state`. Only a carrier AT REST is ever recorded | O05-06.2 commit |
+| `protocol.py` intent `CarrierRested` | as above | one client intent, routed to one transition | O05-06.2 commit |
+| `transitions.record_carrier_rested` (new); `_accepted_minor_latches` split into `_accepted_minor_contract` | the minor path's four facts (accepted Zone, committed layout, placed room, contracted shell) | records a rest only for a carrier the hosted minor's contract declares, at one of its declared stops (or held with no errand), at a finite offset. The latch path's checks and messages are unchanged | O05-06.2 commit |
+| `schemas/minors.py` `MinorContract.carriers`; the `minor_passing_platforms` contract | O05-06.2; EX50-011 §3 (a lift A/TRANSFER/SHELF and a shuttle WEST/EAST), §4 (the stair at G), §9 | the stair is the latch; the carriers and their stops are declared, so the bridge refuses a machine or stop the minor does not have | O05-06.2 commit |
+| `campaign.py` `handle_progress`, `server.py` routing | existing progress dispatch | `carrier_rested` | O05-06.2 commit |
+| `ShuttleDeck._place` (Godot) | P5-15's rule: a machine places itself in its parent's frame | the lift is placed with `position`, not `global_position`. Every existing parent is at the origin, so nothing else moves | O05-06.2 commit |
+| `RailCarrier.frame_from_parent` (Godot, opt-in, default off) | `to_world` "maps the path into world"; a room at a Zone transform knows its frame only once it is in the tree | when set, `_ready` takes `to_world` from the parent. Off everywhere else, so the Zone railway and its tests are unchanged | O05-06.2 commit |
+| `HostedMinor.carrier_rested` / `restore_carriers` / `player_died`; `ZoneController` reports and restores them | EX50-011 §9 (restore before the player; before completion, death restores the initial transport configuration) | a minor may report a carrier at rest and is handed its saved rests before anyone sees the room | O05-06.2 commit |
+| `minor_hosting.offer_order` (new) | O05-06.5 "The composer does not need to place all three in every Zone"; O05-06.1 "select each minor" | this lane's selection rule: the contract order turns with the Zone's ordinal, so a campaign meets every minor. With a fixed order, EX50-011 was hosted in 0 of 12 sample Zones. `zone_001` is unchanged | O05-06.2 commit |
+| `RoomAudit._openings_are_holes` + `_exit_facing` (Godot) | the 2026-09-03 owner ruling for entries ("the entry is where the room says it is") | the exit probe stands on the wall the declared `exit_yaw` faces. Before, a side exit was measured on the far wall (P5-17) | O05-06.2 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -313,7 +323,7 @@ curve through room arrivals; a declared control height/capability and
 the overhead gantry; the S3 destination; a rail model in
 `topology.reachability`.
 
-### O05-06 — the existing minors in game context — EX50-033 and EX50-021 integrated and played; EX50-011 not yet
+### O05-06 — the existing minors in game context — all three integrated and played
 
 - **O05-06.1, the occurrence contract.** `schemas/minors.py` states what
   the registry cannot: the host chamber type, the one way in, the sealed
@@ -434,12 +444,69 @@ the overhead gantry; the S3 destination; a rail model in
     released, the shutter open with its panel physically raised, and the
     fixed stair standing. The Check stays claimed. 20 s later (two and a
     half intervals, nothing shot) the shutter is still open.
-- **Not yet: EX50-011 Passing Platforms.** EX50-011 §9 says "Carrier
-  poses, destinations and hold states are package-local. A stable save
-  restores each at its saved pose before the player." That needs a
-  saved carrier pose, the package-specific restoration O05-10.2 names.
-  No persisted field carries one today, and the room is not hosted
-  without it.
+- **O05-06.2, EX50-011 Passing Platforms: integrated, played, and
+  restarted from a non-default platform state.**
+  - **Extraction.** `PassingPlatformsRoom` is the scenario's room, moved
+    out whole and placed in its own frame. `--passing-platforms` owns one
+    at the origin (63 checks unchanged, then 70 with the checks below).
+    The lift now places itself in its parent's frame (`ShuttleDeck._place`,
+    P5-15's rule), and the shuttle takes its frame from the room when it
+    enters the tree (`RailCarrier.frame_from_parent`, opt-in, off for the
+    Zone's own railways). `PassingPlatformsHosted` is the registry shell
+    `minor_passing_platforms`: a doorway in the arrival wall at x = 0, and
+    the way on cut behind G at G's height for the Zone to seal. The plate
+    on G stays: it is §4's "arriving at G" that releases the stair. The
+    Zone's Check stands at the objective on G.
+  - **What persists.** The stair is the latch `minor_<room>/stair`. Each
+    carrier's rest is `minor_<room>/<carrier>` in the new
+    `ZoneProgress.carrier_states` (`PUZZLE_LOCAL`, Amalgam §5.2): pose,
+    destination and hold, reported only AT REST (arrived, STOP, or a
+    declared dwell), because §5.3 refuses to save a moving machine. The
+    bridge accepts a rest only for a carrier and stop the contract
+    declares (`record_carrier_rested`, 11 bridge tests). A dwell comes
+    back HELD (§9). Before completion, a death sends both carriers home
+    by the ordinary commands (§9 with §8's no-teleport rule).
+  - **Where it appears (a selection rule, recorded for Dess).** Every
+    sample Zone has at most two dead ends a minor can take, and with a
+    fixed order EX50-011 was hosted in 0 of 12. `minor_hosting.
+    offer_order` turns the order with the Zone's ordinal: `zone_001`
+    keeps EX50-033 + EX50-021 (the evidence above is unchanged), and
+    `zone_002` offers EX50-021, EX50-011, EX50-033. The other two minors
+    already had their own live proofs, so EX50-011 is played in
+    `zone_002`.
+  - **Reached by the ordinary lifecycle (`next` phase).** zone_001
+    re-entered and abandoned from the pause menu (ABANDON ZONE, CONFIRM
+    ABANDON); the portal designs zone_002 with the whole profile; the
+    bridge's record shows EX50-011 built as `c025` behind `c015`; the
+    layout is ACCEPTED.
+  - **Played, before the restart (`next`, 21 checks):**
+    - HARNESS STEP, declared: placed at c015's arrival, then walked in.
+    - H EAST pulled at A. HARNESS STEP, declared: the player is killed
+      through the damage path. The shuttle went home from 1.52 m by
+      ordinary motion (largest step 0.054 m, the docking snap included),
+      and its rest at WEST was reported.
+    - H EAST again, then STOP H at A as the shuttle crossed the
+      rendezvous: HELD at 8.075 m with no errand, ACCEPTED as
+      `minor_c025/shuttle` = [8.075, "", true].
+  - **Restarted (`next_restore`, 18 checks).** Before the player: the
+    shuttle HELD at 8.075 m, as saved, with 0.0000 m of drift over a
+    second, and no rest reported back. Then the patient route (§6) was
+    finished FROM the restored shuttle: onto the lift at A, LAUNCH, its
+    dwell reported as a held rest bound for SHELF, the step across onto
+    the held shuttle, H ON EAST from its own deck, carried to EAST,
+    walked off onto G, the stair ACCEPTED as `minor_c025/stair`, Check
+    89100005 CONFIRMED, and the lift, left to its schedule, came to rest
+    at SHELF.
+  - **Restarted again (`next_final`, 7 checks).** The stair stands with
+    G's railing open where it lands, the shuttle at EAST and the lift at
+    SHELF exactly as last saved, the Check still claimed, and the stair
+    walked from A up onto G with both carriers elsewhere. Nothing is
+    sent back.
+  - **Direct-handler checks, labelled as such** (`godot-passing-
+    platforms`): a lift stopped in its dwell reports [4.0, "SHELF",
+    held]; handed to a second room it waits five seconds without
+    leaving, and LAUNCH resumes it to SHELF; the shuttle restores held
+    at 7.25 m.
 
 ### O05-13 — the candidate composer profile — built; the whole profile played live
 
@@ -699,4 +766,26 @@ the overhead gantry; the S3 destination; a rail model in
   0.45 m (0.45 + 1.33 = 1.78, under the sill), and `godot-unweighted`
   asserts that a jump from them stays under the sill (62 checks). The
   scenario had passed 61 checks with this route open.
+- **P5-17 — the room audit measured every exit on the room's far wall.**
+  `RoomAudit._openings_are_holes` probed "the exit" at
+  `(exit.x, exit.y, bounds.end.z)`. For a room whose `exit_yaw` turns the
+  way on to a side wall, that is not the doorway: beside EX50-021's flank
+  it was open air, so that exit passed without being looked at, and
+  beside EX50-011's gallery it was a wall corner, so a doorway a real
+  body crosses was reported sealed. The probe now stands on the wall the
+  exit faces (`_exit_facing`, from `exit_yaw`, the way the entry was
+  corrected on 2026-09-03). Sabotage: with EX50-011's aperture filled,
+  the audit reports the exit sealed at (14.25, 4.0, 13.75), the real
+  doorway. Every shell passes the room contract.
+- **P5-18 — EX50-011's service stair ended against a railing.** The
+  stair released at G runs up to G's south edge, which carries a 1.1 m
+  railing. So a body walked up it stopped on the top step
+  (`pp_stair_before.log`: feet at z = -1.475, G starts at z = -1).
+  The first version of the new check passed anyway: it tested only x
+  and height, which the top step also satisfies, and its walker hopped
+  whenever it stalled (the jump apex clears 1.1 m). The check now walks
+  without ever jumping and requires the body on G, and it failed. The
+  railing is now cut where the stair lands, and only once the stair
+  exists, since before that the edge is a 4 m drop. Up and down both
+  pass, and `next_final` walks it in the Zone.
 

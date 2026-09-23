@@ -29,12 +29,13 @@ extends Node
 ## one property. A hand-stepped overlap is not evidence that a person
 ## can make the transfer; the continuous run is.
 ##
-## **What is NOT tested here, because it is not built:** §9's save
-## behaviour. There is no 0.4 save representation yet, no campaign under
-## this scenario and nothing that could restore a carrier pose, so the
-## dwell-across-reload rule is paper. It is recorded as paper in the
-## ledger rather than covered by a test that would only be re-reading
-## the specification back to itself.
+## **§9's save behaviour is tested in two places, kept apart** (O05-06.2).
+## `_a_saved_rest_comes_back` hands the rest one room reports to a second
+## room through the room's own handlers -- a dwell comes back held and
+## waits, and a visible command resumes it to its saved destination.
+## `godot-candidate-live`'s `next` phases are the restart through a real
+## save, with the room hosted in a composed Zone. This scenario still has
+## no campaign and writes nothing.
 
 const STEP := 1.0 / 60.0
 ## A hand-stepped schedule is allowed a generous ceiling: 40 s at 60 Hz.
@@ -77,6 +78,8 @@ func _run() -> void:
 	await _the_continuous_run()
 	await _the_low_pressure_route()
 	await _reset_never_teleports()
+	await _the_service_stair_is_a_route()
+	await _a_saved_rest_comes_back()
 	print("")
 	if _failures == 0:
 		print("GODOT PASSING PLATFORMS OK (%d checks, %d notes)"
@@ -717,6 +720,106 @@ func _reset_never_teleports() -> void:
 	room.queue_free()
 
 
+## §4: the stair makes "later traversal quick"; §5: "They descend to A by
+## the fixed route. Neither carrier is needed to escape after the goal."
+##
+## WALKED, both ways, with the carriers at their berths: a stair is a
+## route only if a body can use it. Released through the room's own
+## restore path -- reaching G by carrier is `_the_continuous_run`'s --
+## and everything after that is the body.
+func _the_service_stair_is_a_route() -> void:
+	print("  -- STAIR: the released service stair, walked up and down")
+	var room := _room()
+	await _settle()
+	room.room.restore_stair()
+	await _settle(10)
+	var body: Player = room.player
+	# WALKED, NOT HOPPED: the stair is a route only if nobody has to jump
+	# anything to use it. `_walk_to` hops when it stalls, and a 1.1 m
+	# railing is inside the base kit's jump -- so this walker never jumps.
+	await _walk_to(body, Vector3(12.5, 0.0, -9.8), 0.6, 600)
+	await _walk_flat(body, Vector3(12.5, PassingPlatforms.TRANSFER_Y, 0.6),
+			0.6, 600)
+	await _settle(20)
+	var top := body.global_position
+	# ON G, which starts at z = -1: the stair's own top step is at G's
+	# height too, and a body stopped on it by something across the head
+	# is not on the gallery. So the arrival is the goal, north of the edge.
+	var on_g := Vector2(top.x - 12.5, top.z - 0.6).length() < 0.8 \
+			and top.z > -0.9
+	_check(body.is_on_floor() and on_g and top.x > PassingPlatforms.G_WEST
+			and top.y > PassingPlatforms.TRANSFER_Y - 0.2,
+			"walked from A up the service stair onto G without a jump, the "
+			+ "lift at A and the shuttle at WEST: feet at %v" % top)
+	await _walk_flat(body, Vector3(12.5, 0.0, -9.8), 0.6, 600)
+	await _settle(20)
+	var bottom := body.global_position
+	_check(body.is_on_floor() and bottom.y < 0.5 and bottom.z < -8.0,
+			"and back down it to A, again without a jump: feet at %v"
+			% bottom)
+	room.queue_free()
+
+
+## §9: "A stable save restores each at its saved pose before the player",
+## and "a carrier in a dwell state can remain safely held until the
+## player resumes". THE ROOM'S OWN HANDLERS, labelled as that: the rest a
+## room reports, handed to a second room. `godot-candidate-live`'s `next`
+## phases are the restart through a real save.
+func _a_saved_rest_comes_back() -> void:
+	print("  -- REST: a carrier's saved rest comes back, a dwell held")
+	var first := _room()
+	await _settle()
+	var reports: Array = []
+	first.room.carrier_rested.connect(func(id: String, t: float,
+			destination: String, held: bool) -> void:
+		reports.append([id, t, destination, held]))
+	first.v.go_to(PassingPlatforms.V_SHELF)
+	for _i in HAND_FRAMES:
+		first.v.advance(STEP)
+		if first.v.dwelling_at() == PassingPlatforms.V_TRANSFER:
+			break
+	# The lever path, so the report is the room's rather than the test's.
+	first.room.stop_v()
+	var dwell: Array = reports.back() if not reports.is_empty() else []
+	_check(dwell.size() == 4 and dwell[0] == "lift"
+			and is_equal_approx(float(dwell[1]), PassingPlatforms.TRANSFER_Y)
+			and dwell[2] == "SHELF" and bool(dwell[3]),
+			"the lift stopped in its dwell reports a HELD rest bound for "
+			+ "SHELF: %s" % [dwell])
+	first.queue_free()
+	await _settle(4)
+
+	var second := _room()
+	await _settle()
+	second.room.restore_carrier(str(dwell[0]), float(dwell[1]),
+			str(dwell[2]), bool(dwell[3]))
+	await _settle(4)
+	_check(is_equal_approx(second.v.offset, PassingPlatforms.TRANSFER_Y)
+			and second.v.held and second.v.destination
+				== PassingPlatforms.V_SHELF,
+			"restored at the transfer plane, HELD, still bound for SHELF")
+	var held_at := second.v.offset
+	for _i in 300:
+		second.v.advance(STEP)
+	_check(is_equal_approx(second.v.offset, held_at),
+			"and it waits: five seconds later it has not left (%.3f m)"
+			% second.v.offset)
+	(second.room.levers["LAUNCH"] as CallLever).interact(second.player)
+	for _i in HAND_FRAMES:
+		second.v.advance(STEP)
+		if second.v.at_stop() == PassingPlatforms.V_SHELF:
+			break
+	_check(second.v.at_stop() == PassingPlatforms.V_SHELF,
+			"a visible command resumes it to its saved destination")
+	# The shuttle: held between its berths, with no errand.
+	second.room.restore_carrier("shuttle", 7.25, "", true)
+	await _settle(2)
+	_check(is_equal_approx(second.h.offset, 7.25) and second.h.held
+			and second.h.heading == RailCarrier.HOLD,
+			"the shuttle restored HELD at 7.25 m, going nowhere")
+	second.queue_free()
+
+
 # ------------------------------------------------------------- helpers
 
 ## Every railing that RIDES ON A DECK, which is what §11 means by not
@@ -827,6 +930,26 @@ func _walk_to(body: Player, goal: Vector3, within := 1.2,
 		else:
 			still = 0
 		last = here
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	await get_tree().physics_frame
+	return arrived
+
+
+## Walk, on the flat, to a point -- and NEVER jump. For a route whose
+## claim is that it needs no jump.
+func _walk_flat(body: Player, goal: Vector3, within := 1.2,
+		frames := 320) -> bool:
+	var arrived := false
+	Input.action_press("move_forward", 1.0)
+	for _i in frames:
+		var here := body.global_position
+		var flat := Vector2(goal.x - here.x, goal.z - here.z)
+		if flat.length() < within:
+			arrived = true
+			break
+		body.rotation.y = atan2(-flat.x, -flat.y)
+		body.camera.rotation.x = 0.0
 		await get_tree().physics_frame
 	Input.action_release("move_forward")
 	await get_tree().physics_frame

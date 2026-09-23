@@ -287,6 +287,63 @@
         "title": "BuyShopStock",
         "type": "object"
       },
+      "CarrierRested": {
+        "additionalProperties": false,
+        "description": "O05-06.2. A hosted minor's carrier came to rest.\n\nSent only at rest -- parked at a stop, held by a STOP, or pausing in\na declared dwell -- never mid-travel (Amalgam \u00a75.3). The package is\nthe minor's (`minor_<room>`); the bridge accepts it only for a\ncarrier and stop the room's minor contract declares, and stores the\noffset the engine measured without inventing one.",
+        "properties": {
+          "type": {
+            "const": "carrier_rested",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "package_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Package Id",
+            "type": "string"
+          },
+          "carrier_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Carrier Id",
+            "type": "string"
+          },
+          "t": {
+            "title": "T",
+            "type": "number"
+          },
+          "destination": {
+            "default": "",
+            "maxLength": 32,
+            "pattern": "^[A-Za-z0-9_]*$",
+            "title": "Destination",
+            "type": "string"
+          },
+          "held": {
+            "default": false,
+            "title": "Held",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "package_id",
+          "carrier_id",
+          "t"
+        ],
+        "title": "CarrierRested",
+        "type": "object"
+      },
       "ChamberDwell": {
         "additionalProperties": false,
         "description": "How long the player spent in one chamber. Seconds, one entry per\nchamber the Zone has, whether or not it was entered.",
@@ -1193,6 +1250,7 @@
         "authorize_consumable": "#/$defs/AuthorizeConsumable",
         "build_failed": "#/$defs/BuildFailed",
         "buy_shop_stock": "#/$defs/BuyShopStock",
+        "carrier_rested": "#/$defs/CarrierRested",
         "claim_check": "#/$defs/ClaimCheck",
         "debug_command": "#/$defs/DebugCommand",
         "enter_zone": "#/$defs/EnterZone",
@@ -1304,6 +1362,9 @@
       },
       {
         "$ref": "#/$defs/ObjectRecovered"
+      },
+      {
+        "$ref": "#/$defs/CarrierRested"
       },
       {
         "$ref": "#/$defs/LayoutResult"
@@ -7041,6 +7102,31 @@
             "maxItems": 4,
             "title": "Consumed Objects",
             "type": "array"
+          },
+          "carrier_states": {
+            "default": [],
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 8,
+            "title": "Carrier States",
+            "type": "array"
           }
         },
         "title": "ZoneProgress",
@@ -12713,6 +12799,31 @@
             },
             "maxItems": 4,
             "title": "Consumed Objects",
+            "type": "array"
+          },
+          "carrier_states": {
+            "default": [],
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 8,
+            "title": "Carrier States",
             "type": "array"
           }
         },

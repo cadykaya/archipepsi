@@ -42,6 +42,21 @@ extends "res://tests/reversible_driver.gd"
 ##            anyone acts: EX50-033's bolt holds against the plate;
 ##            EX50-021's release holds the shutter open past its
 ##            interval; every Check still claimed.
+##   next     (O05-06.2) the campaign's SECOND Zone, by the ordinary
+##            lifecycle: zone_001 re-entered and abandoned from the pause
+##            menu, the portal designs zone_002, whose offer order hosts
+##            EX50-011. Its §9 death rule (a death before completion
+##            sends the carriers home, by motion), then the patient
+##            route's first half: H called and STOPPED at the
+##            rendezvous, its held rest ACCEPTED, the Zone left.
+##   next_restore  both processes new: the shuttle HELD exactly where it
+##            was saved before the player arrives, and it does not move;
+##            then the route finished from it -- the lift launched, the
+##            step across during its dwell, H restarted from its own
+##            deck, G reached, the stair ACCEPTED, the Check claimed.
+##   next_final  both processes new: the stair stands, each carrier at
+##            its last rest, the Check claimed, and the stair walked from
+##            A up to G with both carriers elsewhere.
 ##
 ## **HARNESS STEPS, declared:** the same as the suites this reuses -- a
 ## shielded Bulwark removed through the damage path from behind when the
@@ -49,13 +64,17 @@ extends "res://tests/reversible_driver.gd"
 ## minor phases only, the player is PLACED at the arrival of the dead end
 ## the minor stands behind: the walk there crosses P14's plate and two
 ## locked doors, which their own suites play. From that arrival on,
-## everything is the player's own input.
+## everything is the player's own input. In `next`, the player is killed
+## once through the damage path, to exercise EX50-011 §9's death rule.
 
 const PHASE_FLAG := "--candidate-live="
 const SAVE_DIR_FLAG := "--candidate-save-dir="
 ## Development only: play just the minor built from this shell id.
 const ONLY_FLAG := "--candidate-minor="
 const ZONE_ID := "zone_001"
+## The campaign's second Zone, reached by abandoning the first: its offer
+## order turns once (`minor_hosting.offer_order`) and hosts EX50-011.
+const NEXT_ZONE_ID := "zone_002"
 const CANDIDATE_FIXTURE := "res://tests/fixtures/candidate_zone.json"
 const PROFILE := ["zone_state", "transport", "latched_route", "minors"]
 
@@ -91,6 +110,12 @@ func _run() -> void:
 				await _minor()
 			"minor_restore":
 				await _minor_restore()
+			"next":
+				await _next()
+			"next_restore":
+				await _next_restore()
+			"next_final":
+				await _next_final()
 			_:
 				_check(false, "no --candidate-live phase was named")
 	_finish()
@@ -183,10 +208,7 @@ static func _row(rows: Variant, key: String) -> Array:
 
 
 func _leave() -> void:
-	BridgeClient.send_intent({"type": "leave_zone", "zone_id": ZONE_ID})
-	await _await_live("the Zone goes dormant",
-			func() -> bool: return BridgeClient.active_zone().is_empty(),
-			20.0)
+	await _leave_zone(ZONE_ID)
 
 
 ## The declared edge a variable gates, off the served Zone.
@@ -935,3 +957,470 @@ func _restored_counterfire(controller: ZoneController,
 			+ "intervals -- the restored release still holds it open")
 	print("played: the restored release holds %s's shutter" % rid)
 
+
+# ---------------------------------------------------------------------------
+# O05-06.2 -- EX50-011 Passing Platforms, in the campaign's second Zone
+# ---------------------------------------------------------------------------
+
+## The Passing Platforms minor a Zone hosts, or {}.
+func _platforms_in(controller: ZoneController) -> Dictionary:
+	for raw: Variant in controller.minors:
+		if (raw as Dictionary)["hosted"] is PassingPlatformsHosted:
+			return raw
+	return {}
+
+
+## The yaw that faces the room's +z: from the lift toward the shuttle.
+static func _north_yaw(room: PassingPlatformsRoom) -> float:
+	var north := room.global_transform.basis.z
+	return atan2(-north.x, -north.z)
+
+
+## Where the shuttle's deck is centred, in the room's frame.
+static func _shuttle_x(room: PassingPlatformsRoom) -> float:
+	var span := room.h_span()
+	return (span.x + span.y) * 0.5
+
+
+## The last rest this controller reported for a carrier: `[package,
+## carrier, t, destination, held]`, or [].
+static func _last_rest(controller: ZoneController, carrier_id: String) -> Array:
+	for i in range(controller.carrier_reports.size() - 1, -1, -1):
+		var row: Array = controller.carrier_reports[i]
+		if str(row[1]) == carrier_id:
+			return row
+	return []
+
+
+## The rest the bridge accepted for `ref`, off the served progress:
+## `[t, destination, held]`, or [].
+func _saved_rest(ref: String) -> Array:
+	var row := _row(_served().get("carrier_states", []), ref)
+	return [float(row[1]), str(row[2]), bool(row[3])] if row.size() == 4 \
+			else []
+
+
+## Look at a lever within reach and hold [E] until it counts the pull --
+## the scenario suite's `_pull`, for a lever the player is already
+## standing at (on a deck, where walking to a stand-off could walk off).
+func _pull_here(player: Player, lever: CallLever) -> bool:
+	var before := lever.pulls
+	var top := lever.global_position + Vector3(0.0, CallLever.BASE.y, 0.0)
+	for _i in 20:
+		_look_at(player, top)
+		await get_tree().physics_frame
+		if player._interact_target == lever:
+			break
+	Input.action_press("interact", 1.0)
+	for _i in 12:
+		_look_at(player, top)
+		await get_tree().physics_frame
+		if lever.pulls > before:
+			break
+	Input.action_release("interact")
+	await get_tree().physics_frame
+	return lever.pulls > before
+
+
+## Face `yaw` and hold forward for `frames`: the step across.
+func _step_toward(player: Player, yaw: float, frames: int) -> void:
+	player.rotation.y = yaw
+	player.camera.rotation.x = 0.0
+	Input.action_press("move_forward", 1.0)
+	for _i in frames:
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	await get_tree().physics_frame
+
+
+## Is the body's feet on `machine`? Read from what is under the feet --
+## `godot-passing-platforms`' test, unchanged.
+func _standing_on(body: Player, machine: Node3D) -> bool:
+	if not body.is_on_floor():
+		return false
+	for i in body.get_slide_collision_count():
+		var hit := body.get_slide_collision(i).get_collider()
+		if hit == machine or (hit is Node and (hit as Node).get_parent() \
+				== machine):
+			return true
+	var space := body.get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(body.global_position,
+			body.global_position - Vector3(0.0, 2.0, 0.0))
+	query.exclude = [body.get_rid()]
+	var ray := space.intersect_ray(query)
+	if ray.is_empty():
+		return false
+	var under: Variant = ray["collider"]
+	return under == machine or (under is Node
+			and (under as Node).get_parent() == machine)
+
+
+## The in-Zone pause menu, as a player works it: ABANDON ZONE..., then
+## CONFIRM ABANDON -- each the menu's own button, pressed.
+func _abandon_from_the_pause_menu(zone_id: String) -> bool:
+	var menu: PauseMenu = main.pause_menu
+	menu.open(true)
+	await get_tree().process_frame
+	var armed := _press_button(menu, "ABANDON ZONE")
+	await get_tree().process_frame
+	var confirmed := armed and _press_button(menu, "CONFIRM ABANDON")
+	_check(armed and confirmed, "the pause menu's ABANDON ZONE, then "
+			+ "CONFIRM ABANDON, pressed")
+	if not confirmed:
+		return false
+	var offering := func() -> bool:
+		return BridgeClient.hub_mode() == "ZONE_AVAILABLE" and main.hub != null
+	return await _await_live("%s abandoned, the Hub offering a new Zone"
+			% zone_id, offering, 30.0)
+
+
+func _press_button(root: Node, prefix: String) -> bool:
+	for node: Node in root.find_children("*", "Button", true, false):
+		var button := node as Button
+		if button != null and not button.is_queued_for_deletion() \
+				and button.text.begins_with(prefix):
+			button.pressed.emit()
+			return true
+	return false
+
+
+## The portal, worked in ZONE_AVAILABLE: it designs the next Zone.
+func _request_next_zone() -> bool:
+	var offered := func() -> bool:
+		var standing := main.hub as HubController
+		return standing != null and standing.portal() != null \
+				and standing.portal().interact_prompt() != ""
+	if not await _await_live("the Hub's portal", offered, 30.0):
+		return false
+	(main.hub as HubController).portal().interact(main)
+	var designed := func() -> bool:
+		return BridgeClient.hub_mode() == "ZONE_READY"
+	return await _await_live("the next Zone designed", designed, 150.0)
+
+
+func _leave_zone(zone_id: String) -> void:
+	BridgeClient.send_intent({"type": "leave_zone", "zone_id": zone_id})
+	await _await_live("the Zone goes dormant",
+			func() -> bool: return BridgeClient.active_zone().is_empty(),
+			20.0)
+
+
+func _next() -> void:
+	if not await _campaign():
+		return
+	BridgeClient.sent_intents.clear()
+	var first := await _through_the_portal()
+	if first == null:
+		return
+	_check(str(_zone_data.get("zone_id", "")) == ZONE_ID,
+			"back in %s, the Zone the campaign holds" % ZONE_ID)
+	if not await _abandon_from_the_pause_menu(ZONE_ID):
+		return
+	_check(_intents("abandon_zone").size() == 1,
+			"abandoned by the ordinary lifecycle: one 'abandon_zone', and "
+			+ "the Hub offers a new Zone")
+	if not await _request_next_zone():
+		return
+	var controller := await _through_the_portal()
+	if controller == null:
+		return
+	_check(str(_zone_data.get("zone_id", "")) == NEXT_ZONE_ID,
+			"the portal designed and opened %s" % NEXT_ZONE_ID)
+	# WHAT THE STEP DID, as the bridge recorded it.
+	var record_path := _arg(SAVE_DIR_FLAG).path_join("candidate") \
+			.path_join("%s.json" % NEXT_ZONE_ID)
+	var record: Variant = JSON.parse_string(
+			FileAccess.get_file_as_string(record_path))
+	var note := ""
+	if typeof(record) == TYPE_DICTIONARY:
+		for raw: Variant in (record as Dictionary).get("steps", []):
+			if str((raw as Dictionary).get("step", "")) == "minors":
+				note = str((raw as Dictionary).get("note", ""))
+	_check(note.contains("EX50-011 Passing Platforms built as"),
+			"the bridge recorded the minors step hosting EX50-011 in %s: %s"
+			% [NEXT_ZONE_ID, note.left(160)])
+	var minor := _platforms_in(controller)
+	_check(not minor.is_empty(), "the controller found it in its room")
+	if minor.is_empty():
+		return
+	await _set_up_platforms(controller, minor)
+	await _leave_zone(NEXT_ZONE_ID)
+
+
+## zone_002, first visit: EX50-011 as built; §9's death rule before
+## completion; then the patient route's first half -- the shuttle called
+## and STOPPED at the rendezvous -- left there for a restart.
+func _set_up_platforms(controller: ZoneController, minor: Dictionary) -> void:
+	var player := controller.player
+	var rid := str(minor["room_id"])
+	var room: PassingPlatformsRoom = \
+			(minor["hosted"] as PassingPlatformsHosted).room
+	var package := MinorRooms.package_of(rid)
+	_check(str(_chamber(rid).get("shell_id", "")) == \
+			PassingPlatformsHosted.SHELL_ID,
+			"%s is built from the minor's own shell" % rid)
+	_check(room.v.at_stop() == PassingPlatformsRoom.V_ARRIVAL
+			and room.h.at_dock() == PassingPlatformsRoom.H_WEST
+			and not room.stair_released,
+			"as built: the lift at A, the shuttle at WEST, no service stair")
+	var reward := _reward_in(controller, rid)
+	var floor_y := room.global_position.y
+	_check(reward != null and absf(reward.global_position.y - floor_y
+			- PassingPlatformsRoom.TRANSFER_Y) < 0.6
+			and room.to_local(reward.global_position).x
+				> PassingPlatformsRoom.G_WEST,
+			"its Check stands on the goal gallery G, %.2f m up"
+			% ((reward.global_position.y - floor_y) if reward != null
+				else -1.0))
+	if reward == null or not await _into_the_minor(controller, rid, false):
+		return
+
+	# ---- §9: before completion, a death sends the carriers home ---------
+	var call: CallLever = room.levers["H EAST"]
+	var called := await _operate(controller, call)
+	var going := func() -> bool:
+		return room.h.heading == RailCarrier.FORWARD and room.h.offset > 1.5
+	var under_way := await _wait_for(going, 600)
+	_check(called and under_way, "H EAST pulled at A by hand; the shuttle "
+			+ "under way (%.2f m along)" % room.h.offset)
+	var left_at := room.h.offset
+	_note("HARNESS STEP: the player is killed through the damage path, "
+			+ "to exercise EX50-011 §9's death rule")
+	player.take_damage(1.0e6, Vector3.INF, false)
+	var worst := 0.0
+	var last := room.h.offset
+	var home := false
+	for _i in 1200:
+		await get_tree().physics_frame
+		worst = maxf(worst, absf(room.h.offset - last))
+		last = room.h.offset
+		if room.h.at_dock() == PassingPlatformsRoom.H_WEST \
+				and room.h.heading == RailCarrier.HOLD:
+			home = true
+			break
+	var ceiling := ShuttleDeck.SPEED * DT * 1.5 + RailCarrier.DOCK_EPSILON
+	_check(home and worst <= ceiling,
+			("the player died before completing it, and the shuttle went "
+			+ "home from %.2f m by ordinary motion: largest single step "
+			+ "%.3f m against %.3f") % [left_at, worst, ceiling])
+	var went := _last_rest(controller, PassingPlatformsRoom.SHUTTLE)
+	_check(went.size() == 5 and str(went[3]) == "WEST" and not bool(went[4]),
+			"its rest at WEST was reported: %s" % [went])
+	var alive := func() -> bool: return not player._dead
+	await _wait_for(alive, int((Constants.RESPAWN_DELAY + 1.0) / DT))
+	await _settle(10)
+
+	# ---- the patient route's first half: call H, and STOP it ------------
+	if not await _into_the_minor(controller, rid, false):
+		return
+	called = await _operate(controller, call)
+	var stop_lever: CallLever = room.levers["STOP H"]
+	var watching := await _approach(controller, stop_lever, 1.3,
+			stop_lever.global_position + Vector3(0.0, CallLever.BASE.y, 0.0))
+	var centred := func() -> bool:
+		return absf(_shuttle_x(room) - PassingPlatformsRoom.V_X) < 1.0
+	var near := await _wait_for(centred, 1200)
+	var stopped := near and await _pull_here(player, stop_lever)
+	await _settle(30)
+	_check(called and watching and stopped and room.h.held
+			and room.h.speed == 0.0 and room.h.at_dock() < 0,
+			"H EAST, then STOP H at A as the shuttle crossed the "
+			+ "rendezvous: HELD between its berths, %.2f m along" % room.h.offset)
+	var rest := _last_rest(controller, PassingPlatformsRoom.SHUTTLE)
+	_check(rest.size() == 5 and bool(rest[4]) and str(rest[3]) == ""
+			and absf(float(rest[2]) - room.h.offset) < 0.001,
+			"the held rest was reported with no errand: %s" % [rest])
+	var ref := "%s/%s" % [package, PassingPlatformsRoom.SHUTTLE]
+	var recorded_rest := func() -> bool:
+		var saved := _saved_rest(ref)
+		return saved.size() == 3 and bool(saved[2]) \
+				and absf(float(saved[0]) - room.h.offset) < 0.002
+	var accepted := await _await_live("the bridge to record the rest",
+			recorded_rest, 10.0)
+	_check(accepted, "ACCEPTED: '%s' rests at %s in the save"
+			% [ref, _saved_rest(ref)])
+	# The death's reset commanded the lift home too, and a command that
+	# leaves a carrier standing is a rest: at A, unheld.
+	var lift := _saved_rest("%s/%s" % [package, PassingPlatformsRoom.LIFT])
+	_check(lift.size() == 3 and is_zero_approx(float(lift[0]))
+			and str(lift[1]) == "A" and not bool(lift[2]),
+			"and the lift's saved rest is its berth at A, unheld: %s" % [lift])
+	_check(not BridgeClient.is_checked(reward.location_id)
+			and not room.stair_released,
+			"left unfinished: the Check unclaimed, no service stair")
+	print("played: EX50-011 in %s set up -- %s held at %.3f m" %
+			[rid, ref, room.h.offset])
+
+
+func _next_restore() -> void:
+	if not await _campaign():
+		return
+	_check(str(BridgeClient.hub().get("resume_zone_id", "")) \
+			== NEXT_ZONE_ID, "RESTART: the new bridge loaded the save; the "
+			+ "Hub offers '%s'" % str(BridgeClient.hub().get(
+				"resume_zone_id", "")))
+	BridgeClient.sent_intents.clear()
+	var controller := await _through_the_portal()
+	if controller == null:
+		return
+	var minor := _platforms_in(controller)
+	_check(not minor.is_empty(), "%s still hosts EX50-011" % NEXT_ZONE_ID)
+	if minor.is_empty():
+		return
+	var player := controller.player
+	var rid := str(minor["room_id"])
+	var room: PassingPlatformsRoom = \
+			(minor["hosted"] as PassingPlatformsHosted).room
+	var package := MinorRooms.package_of(rid)
+	var ref := "%s/%s" % [package, PassingPlatformsRoom.SHUTTLE]
+	var saved := _saved_rest(ref)
+
+	# ---- restored before anyone acts, and it stays put -------------------
+	_check(saved.size() == 3 and absf(room.h.offset - float(saved[0]))
+			< 0.002 and room.h.held and room.h.heading == RailCarrier.HOLD,
+			"RESTORED before the player: the shuttle HELD at %.3f m, where "
+			% room.h.offset + "the save says %s" % [saved])
+	_check(room.v.at_stop() == PassingPlatformsRoom.V_ARRIVAL
+			and not room.v.held, "the lift at A, which is where it was")
+	var at := room.h.global_position
+	var drift := 0.0
+	for _i in 60:
+		await get_tree().physics_frame
+		drift = maxf(drift, room.h.global_position.distance_to(at))
+	_check(drift < 0.001, "and it stays put -- no correction impulse, no "
+			+ "replayed motion: %.4f m over a second" % drift)
+	_check(controller.carrier_reports.is_empty(),
+			"a restored rest reports nothing back")
+
+	# ---- the patient route, finished from the restored shuttle -----------
+	if not await _into_the_minor(controller, rid, false):
+		return
+	await _hop_walk(player, room.to_global(Vector3(
+			PassingPlatformsRoom.V_X + 1.0, 0.0,
+			PassingPlatformsRoom.V_Z - 1.0)), 0.7)
+	await _settle(10)
+	_check(_standing_on(player, room.v), "standing on the lift at A")
+	var launched := await _pull_here(player, room.levers["LAUNCH"])
+	# To the deck's middle while it rises: the step across is then taken
+	# where the held shuttle's deck certainly is, not at its edge.
+	await _hop_walk(player, room.to_global(Vector3(
+			PassingPlatformsRoom.V_X, PassingPlatformsRoom.TRANSFER_Y,
+			PassingPlatformsRoom.V_Z - 1.0)), 0.5, 120)
+	var at_transfer := func() -> bool:
+		return room.v.dwelling_at() == PassingPlatformsRoom.V_TRANSFER
+	var dwelling := await _wait_for(at_transfer, 900)
+	_check(launched and dwelling, "LAUNCH pulled on the lift's deck; it "
+			+ "pauses at the transfer plane beside the held shuttle")
+	var dwell := _last_rest(controller, PassingPlatformsRoom.LIFT)
+	_check(dwell.size() == 5 and str(dwell[3]) == "SHELF" and bool(dwell[4])
+			and absf(float(dwell[2]) - PassingPlatformsRoom.TRANSFER_Y)
+				< 0.05,
+			"its dwell reported as a HELD rest bound for SHELF: %s" % [dwell])
+	await _step_toward(player, _north_yaw(room), 34)
+	await _settle(10)
+	_check(_standing_on(player, room.h),
+			"stepped across onto the restored shuttle")
+	var onboard: CallLever = room.levers["H ON EAST"]
+	await _hop_walk(player, onboard.global_position, 1.2, 200)
+	var restarted := await _pull_here(player, onboard)
+	var at_east := func() -> bool:
+		return room.h.at_dock() == PassingPlatformsRoom.H_EAST
+	var berthed := await _wait_for(at_east, 1500)
+	_check(restarted and berthed and _standing_on(player, room.h),
+			"H ON EAST pulled on its deck, and it carried the player to "
+			+ "the east berth")
+	var east := _last_rest(controller, PassingPlatformsRoom.SHUTTLE)
+	_check(east.size() == 5 and str(east[3]) == "EAST" and not bool(east[4]),
+			"its rest at EAST reported: %s" % [east])
+	await _hop_walk(player, room.to_global(Vector3(
+			PassingPlatformsRoom.G_WEST + 1.8,
+			PassingPlatformsRoom.TRANSFER_Y, 2.2)), 0.8, 300)
+	await _settle(20)
+	var stair := "%s/stair" % package
+	var stair_saved := func() -> bool:
+		return _served().get("latched", []).has(stair)
+	var recorded := await _await_live("the bridge to record the stair",
+			stair_saved, 10.0)
+	_check(room.reached_g and room.stair_released and recorded,
+			"walked off onto G: the service stair released and ACCEPTED as "
+			+ "'%s'" % stair)
+	var reward := _reward_in(controller, rid)
+	var seen := reward != null and await _approach(controller, reward, 1.2)
+	_check(seen and reward.interact_prompt().begins_with("[E] CLAIM"),
+			"at the Check on G")
+	await _press("interact")
+	var confirmed := func() -> bool:
+		return reward != null and BridgeClient.is_checked(reward.location_id)
+	var claimed := reward != null and await _await_live(
+			"the Check to be confirmed", confirmed, 15.0)
+	_check(claimed, "the minor's Check %d is CONFIRMED"
+			% (reward.location_id if reward != null else -1))
+	var at_shelf := func() -> bool:
+		var r := _last_rest(controller, PassingPlatformsRoom.LIFT)
+		return r.size() == 5 and str(r[3]) == "SHELF" and not bool(r[4])
+	var shelf := await _wait_for(at_shelf, 900)
+	_check(shelf, "and the lift, left to its schedule, came to rest at "
+			+ "SHELF: %s" % [_last_rest(controller, PassingPlatformsRoom.LIFT)])
+	print("played: EX50-011 in %s finished from the restored shuttle -- "
+			% rid + "%s, Check %d" % [stair, reward.location_id
+				if reward != null else -1])
+	await _leave_zone(NEXT_ZONE_ID)
+
+
+func _next_final() -> void:
+	if not await _campaign():
+		return
+	BridgeClient.sent_intents.clear()
+	var controller := await _through_the_portal()
+	if controller == null:
+		return
+	var minor := _platforms_in(controller)
+	if minor.is_empty():
+		_check(false, "%s still hosts EX50-011" % NEXT_ZONE_ID)
+		return
+	var player := controller.player
+	var rid := str(minor["room_id"])
+	var room: PassingPlatformsRoom = \
+			(minor["hosted"] as PassingPlatformsHosted).room
+	var package := MinorRooms.package_of(rid)
+	var steps := room.service_stair.get_child_count() \
+			if room.service_stair != null else 0
+	_check(room.stair_released and steps > 2 and room.g_south_rail == null,
+			"RESTORED before anyone acts: the service stair stands, and G's "
+			+ "railing is open where it lands (%d pieces)" % steps)
+	var h_saved := _saved_rest("%s/%s" % [package,
+			PassingPlatformsRoom.SHUTTLE])
+	var v_saved := _saved_rest("%s/%s" % [package,
+			PassingPlatformsRoom.LIFT])
+	_check(h_saved.size() == 3 and str(h_saved[1]) == "EAST"
+			and room.h.at_dock() == PassingPlatformsRoom.H_EAST
+			and not room.h.held
+			and v_saved.size() == 3 and str(v_saved[1]) == "SHELF"
+			and room.v.at_stop() == PassingPlatformsRoom.V_SHELF
+			and not room.v.held,
+			"each carrier where it last came to rest: the shuttle at EAST, "
+			+ "the lift at SHELF (%s, %s)" % [h_saved, v_saved])
+	var reward := _reward_in(controller, rid)
+	_check(reward != null and BridgeClient.is_checked(reward.location_id)
+			and reward.interact_prompt() == "",
+			"the Check stays claimed: nothing to claim twice")
+	# THE SHORTCUT IS THE POINT (§4): up from A to G with both carriers
+	# elsewhere, on foot.
+	if await _into_the_minor(controller, rid, false):
+		var foot := room.to_global(Vector3(12.5, 0.0, -9.8))
+		var head := room.to_global(Vector3(12.5,
+				PassingPlatformsRoom.TRANSFER_Y, 0.6))
+		await _hop_walk(player, foot, 0.6, 600)
+		await _hop_walk(player, head, 0.6, 600)
+		await _settle(20)
+		var here := room.to_local(player.global_position)
+		_check(player.is_on_floor() and here.x > PassingPlatformsRoom.G_WEST
+				and here.y > PassingPlatformsRoom.TRANSFER_Y - 0.2,
+				"walked up the service stair from A onto G, the lift at "
+				+ "SHELF and the shuttle at EAST: feet at (%.2f, %.2f, %.2f)"
+				% [here.x, here.y, here.z])
+	await _settle(30)
+	_check(_intents("latch_fired").is_empty()
+			and _intents("claim_check").is_empty()
+			and _intents("carrier_rested").is_empty(),
+			"and nothing was announced: no latch, claim or rest sent back")
