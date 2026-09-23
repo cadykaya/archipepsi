@@ -1,12 +1,13 @@
 {
  "frozen": {
-  "revision": "f1fc737cd355",
-  "tree": "clean",
+  "revision": "38f3fc456f0d",
+  "tree": "dirty",
   "count": 12,
   "profile": [
    "zone_state",
    "transport",
-   "latched_route"
+   "latched_route",
+   "minors"
   ],
   "config": "C.DEFAULT_CONFIG (mock multiworld, default scale)",
   "provider": "fallback (deterministic; no model credentials used)",
@@ -18,7 +19,7 @@
    "zone_id": "zone_001",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "d87936f61d99dc1d",
+   "proposal_digest": "8a9886c495fc02ee",
    "steps": [
     {
      "step": "zone_state",
@@ -34,6 +35,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c009', shutter across 'e:c009:c010' into 'c010'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100055 moved onto the minor's gallery; its bolt is recorded as minor_c024/bolt"
     }
    ],
    "certified": true,
@@ -47,7 +53,7 @@
    "zone_id": "zone_002",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "29b185fc3c5309ac",
+   "proposal_digest": "82460430f0ec43f8",
    "steps": [
     {
      "step": "zone_state",
@@ -63,6 +69,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c006', shutter across 'e:c006:c007' into 'c007'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100110 moved onto the minor's gallery; its bolt is recorded as minor_c024/bolt"
     }
    ],
    "certified": true,
@@ -76,7 +87,7 @@
    "zone_id": "zone_003",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "d08cbb299746bec5",
+   "proposal_digest": "9391bc5bfae4b01f",
    "steps": [
     {
      "step": "zone_state",
@@ -92,6 +103,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100063 moved onto the minor's gallery; its bolt is recorded as minor_c024/bolt"
     }
    ],
    "certified": true,
@@ -105,7 +121,7 @@
    "zone_id": "zone_004",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "caaf8e1fc2ceca93",
+   "proposal_digest": "b8318ba80dbeb982",
    "steps": [
     {
      "step": "zone_state",
@@ -121,6 +137,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c008', shutter across 'e:c008:c009' into 'c009'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c021' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100005 moved onto the minor's gallery; its bolt is recorded as minor_c021/bolt"
     }
    ],
    "certified": true,
@@ -134,7 +155,7 @@
    "zone_id": "zone_005",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "fdf93a680a7f5faa",
+   "proposal_digest": "14a357c8844c74f7",
    "steps": [
     {
      "step": "zone_state",
@@ -150,6 +171,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c008', shutter across 'e:c008:c009' into 'c009'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c021' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100047 moved onto the minor's gallery; its bolt is recorded as minor_c021/bolt"
     }
    ],
    "certified": true,
@@ -163,7 +189,7 @@
    "zone_id": "zone_006",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "0c2c8a6961cee377",
+   "proposal_digest": "287cc065d1f51a97",
    "steps": [
     {
      "step": "zone_state",
@@ -179,6 +205,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c020' behind the dead end 'c012' (its 'side_left' doorway); 'c012''s Check 89100114 moved onto the minor's gallery; its bolt is recorded as minor_c020/bolt"
     }
    ],
    "certified": true,
@@ -192,7 +223,7 @@
    "zone_id": "zone_007",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "9eeaf47023787c2b",
+   "proposal_digest": "5b99f515aef02fe3",
    "steps": [
     {
      "step": "zone_state",
@@ -208,6 +239,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c024' behind the dead end 'c015' (its 'side_right' doorway); 'c015''s Check 89100019 moved onto the minor's gallery; its bolt is recorded as minor_c024/bolt"
     }
    ],
    "certified": true,
@@ -221,7 +257,7 @@
    "zone_id": "zone_008",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "81ed3015e480405e",
+   "proposal_digest": "0a3ed888691af770",
    "steps": [
     {
      "step": "zone_state",
@@ -237,6 +273,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c020' behind the dead end 'c012' (its 'side_right' doorway); 'c012''s Check 89100114 moved onto the minor's gallery; its bolt is recorded as minor_c020/bolt"
     }
    ],
    "certified": true,
@@ -250,7 +291,7 @@
    "zone_id": "zone_009",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "61a46e25d913e61d",
+   "proposal_digest": "040a2b616a2f1b7e",
    "steps": [
     {
      "step": "zone_state",
@@ -266,6 +307,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c008', shutter across 'e:c008:c009' into 'c009'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c021' behind the dead end 'c014' (its 'side_left' doorway); 'c014''s Check 89100068 moved onto the minor's gallery; its bolt is recorded as minor_c021/bolt"
     }
    ],
    "certified": true,
@@ -279,7 +325,7 @@
    "zone_id": "zone_010",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "9056f74f3f38a199",
+   "proposal_digest": "5ce1d0bc0d154b62",
    "steps": [
     {
      "step": "zone_state",
@@ -295,6 +341,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c020' behind the dead end 'c012' (its 'side_right' doorway); 'c012''s Check 89100110 moved onto the minor's gallery; its bolt is recorded as minor_c020/bolt"
     }
    ],
    "certified": true,
@@ -308,7 +359,7 @@
    "zone_id": "zone_011",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "437bf8d598e13d6c",
+   "proposal_digest": "0f55309d31fe7ac1",
    "steps": [
     {
      "step": "zone_state",
@@ -324,6 +375,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c020' behind the dead end 'c013' (its 'side_right' doorway); 'c013''s Check 89100063 moved onto the minor's gallery; its bolt is recorded as minor_c020/bolt"
     }
    ],
    "certified": true,
@@ -337,7 +393,7 @@
    "zone_id": "zone_012",
    "state": "GENERATED",
    "provider": "fallback",
-   "proposal_digest": "4a2e34091756723a",
+   "proposal_digest": "17eb3fac590f72bd",
    "steps": [
     {
      "step": "zone_state",
@@ -353,6 +409,11 @@
      "step": "latched_route",
      "emitted": true,
      "note": "plate and latch in 'c008', shutter across 'e:c008:c009' into 'c009'; reachable before the route it opens"
+    },
+    {
+     "step": "minors",
+     "emitted": true,
+     "note": "EX50-033 Unweighted Switch built as 'c021' behind the dead end 'c014' (its 'side_left' doorway); 'c014''s Check 89100139 moved onto the minor's gallery; its bolt is recorded as minor_c021/bolt"
     }
    ],
    "certified": true,
@@ -366,7 +427,8 @@
   "emitted_per_step": {
    "zone_state": 12,
    "transport": 11,
-   "latched_route": 12
+   "latched_route": 12,
+   "minors": 12
   },
   "cases": 12,
   "every_case_kept_its_checks": true,
