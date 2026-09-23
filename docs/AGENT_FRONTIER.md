@@ -75,6 +75,13 @@ one writer.
   is stated. `ServiceShutter` lost its private clock. Slice 1's
   "not routed" note misread §3 and is corrected. `godot-counterfire` 55;
   candidate-live all eight phases; `make test-bridge` 1907.
+- **O05-10 in part: 10.1 audit, 10.3 reversal, 10.4 isolation.** Every
+  doorway machine this run built is one `ServiceShutter` through the
+  shared `SafeClosure`. EX50-021's shutter reverses mid-closure from
+  where it was (0.591, no snap). Two arcades keep two windows, and a
+  room freed mid-window reaches nothing. Each check was sabotaged. Power
+  loss and a constrained assembly remain untested here.
+  `godot-counterfire` 59.
 - **O05-07.5, sensor safety: done (tests only).** Class-not-sum,
   duplicate occupancy (every plate answer recorded), a repeated pull,
   and a stale callback, each through the graph and each sabotaged.

@@ -83,6 +83,8 @@ func _run() -> void:
 	await _the_interlock()
 	await _the_release_is_permanent()
 	await _the_chain_is_the_declared_graph()
+	await _a_closing_shutter_reverses_on_a_hit()
+	await _two_arcades_do_not_share_a_window()
 	print("")
 	if _failures == 0:
 		print("GODOT COUNTERFIRE OK (%d checks, %d notes)"
@@ -615,6 +617,107 @@ func _the_chain_is_the_declared_graph() -> void:
 			"and a window that runs out after it leaves the shutter open: "
 			+ "the release is not a timer")
 	room.queue_free()
+
+
+## O05-10.3: A MID-MOTION REVERSAL, on the machine this occurrence uses.
+## Design 1 §21.1: "Input reverses mid-motion: Reverse immediately from
+## the current `t`. No snap, no pause, no completion of the current leg."
+## The window runs out and the panel starts down; a hit before it is shut
+## sends it back up from where it was. A door that never started closing
+## cannot be called reversed, so the check first proves it was partway
+## down, with the doorway clear -- this is not the interlock.
+func _a_closing_shutter_reverses_on_a_hit() -> void:
+	print("  -- REVERSAL: a hit while the shutter is closing")
+	var room := _room()
+	await _settle(40)
+	room.gunner.queue_free()
+	room.gunner = null
+	var target: Node = room.receiver.element.get_node("TargetBody")
+	Damageable.hit(target, 6.0, Vector3.FORWARD)
+	for _i in 300:
+		await get_tree().physics_frame
+		if room.shutter.is_open():
+			break
+	room.room.graph.timers["window"] = 0.05
+	var caught := 1.0
+	for _i in 300:
+		await get_tree().physics_frame
+		caught = room.shutter.openness()
+		if caught < 0.6:
+			break
+	_check(caught < 0.6 and caught > 0.05
+			and not room.shutter.doorway_occupied()
+			and room.room.window_left() == 0.0,
+			"the window ran out and the panel is partway down, the doorway "
+			+ "clear (%.3f)" % caught)
+	var hits := room.receiver.hits
+	Damageable.hit(target, 6.0, Vector3.FORWARD)
+	var lowest := caught
+	var previous := room.shutter.openness()
+	var largest_step := 0.0
+	for _i in 300:
+		await get_tree().physics_frame
+		var now := room.shutter.openness()
+		lowest = minf(lowest, now)
+		largest_step = maxf(largest_step, absf(now - previous))
+		previous = now
+		if room.shutter.is_open():
+			break
+	_check(room.receiver.hits == hits + 1 and room.shutter.is_open()
+			and lowest > 0.05 and largest_step < 0.05,
+			"a hit sends it back up from where it was: never lower than "
+			+ "%.3f, no step larger than %.3f of its travel in a frame, "
+			% [lowest, largest_step] + "and fully open again")
+	room.queue_free()
+
+
+## O05-10.4: OWNERSHIP AND ISOLATION. Two arcades, each with its own
+## graph. A hit on one opens only its own window. Freed in the middle of
+## that window, it leaves the other untouched, and a room built in its
+## place starts shut with no window and no pulse: its graph has been
+## evaluated exactly once, when it started. Nothing of the freed graph --
+## a running TIMER, a wired receiver -- reaches its replacement.
+func _two_arcades_do_not_share_a_window() -> void:
+	print("  -- ISOLATION: two arcades, two windows")
+	var first := _bare_arcade(Vector3.ZERO)
+	var second := _bare_arcade(Vector3(0.0, 0.0, 120.0))
+	await _settle(10)
+	Damageable.hit(first.receiver.element.get_node("TargetBody"), 6.0,
+			Vector3.FORWARD)
+	await get_tree().physics_frame
+	for _i in 200:
+		await get_tree().physics_frame
+		if first.shutter.is_open():
+			break
+	_check(first.shutter.is_open() and first.window_left() > 0.0
+			and second.shutter.is_shut() and second.window_left() == 0.0
+			and second.receiver.hits == 0,
+			"a hit on one arcade opens its own window (%.2f s) and not the "
+			% first.window_left() + "other's")
+	first.queue_free()
+	await _settle(4)
+	var third := _bare_arcade(Vector3.ZERO)
+	await _settle(30)
+	_check(second.shutter.is_shut() and second.window_left() == 0.0
+			and third.shutter.is_shut() and third.window_left() == 0.0
+			and third.receiver.hits == 0 and third.graph.ticks == 1,
+			"freed mid-window, it reached nothing: the other still shut, and "
+			+ "its replacement shut with no window, evaluated once (%d)"
+			% third.graph.ticks)
+	second.queue_free()
+	third.queue_free()
+	await _settle(4)
+
+
+## An arcade room on its own: no scenario, no player, no gunner.
+func _bare_arcade(at: Vector3) -> CounterfireArcadeRoom:
+	var made := CounterfireArcadeRoom.new()
+	made.with_gunner = false
+	made.development_signs = false
+	made.position = at
+	made.build()
+	add_child(made)
+	return made
 
 
 # ------------------------------------------------------------ helpers

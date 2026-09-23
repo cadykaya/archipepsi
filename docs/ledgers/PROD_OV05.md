@@ -110,12 +110,12 @@ rule, before it is edited. Rows are appended as edits land:
 | `SignalGraph` (Godot): pulse sensors, `OR`, `restore_latch` | §19.3 ("pulses live for exactly one tick") | a `CallLever` source is a PULSE_BUTTON, raised for one evaluation and cleared. An unbound source reads OFF. `restore_latch` puts a latch back by id, silently, for a room that owns its graph | `a718654` |
 | `RoomGraphs` (Godot) | as the Zone validator | refuses a sensor it cannot place, instead of placing a plate for it | `a718654` |
 | `UnweightedSwitchRoom` (Godot) | O05-07.3 "route an existing minor ... relationship through the shared implementation while preserving its specialized semantics and standalone comparison" | the room binds its own plate, bolt lever and shutter to the declared ids, and the shared runtime drives the shutter. What the room keeps is its lines and the return stair. The §11 control is the plate sensor left unbound | `a718654` |
-| `schemas/signal_graph.py`: `SUPPORTED_NODE_KINDS` += `TIMER`, `SUPPORTED_SENSOR_KINDS` += `SHOOTABLE_TARGET`; `DamageTag`, `SUPPORTED_TARGET_TAGS`, `TIMER_MAX_SECONDS` (new); `SensorNode.mode`/`required_tags`, `LogicNode.duration` (new, optional) | Design 1 §19.2 (TIMER: 1 Pulse, ON for `duration`, a new pulse restarts it), §19.6 (TIMER is EPHEMERAL), §20/§20.2 (SHOOTABLE_TARGET: `mode: PULSE \| TOGGLE`, `required_tags` default `[RANGED]`); EX50-021 §3 | two kinds join with EX50-021's chain. TOGGLE is refused: nothing reads it. `required_tags` accepts exactly `[RANGED]`, because the runtime has no damage tags and its SHOT path counts any hit (see the O05-07 slice 2 notes). `TIMER_MAX_SECONDS` is `ActivityPrimitive.time_limit`'s 120 s ceiling, a bound this lane chose | O05-07b commit |
-| `schemas/minors.py`: the `minor_counterfire_arcade` contract's `graph` | EX50-021 §3 ("the receiver emits one pulse per valid hit"; "the eight-second TIMER refreshes on another valid receiver hit. Its output opens the service shutter"), §9 ("the receiver timer is ephemeral") | the chain is declared, and its LATCH id is the contract's `release`, so a pulled release is still `minor_<room>/release` | O05-07b commit |
-| `SignalGraph` (Godot): `ImpactReceiver` pulses, `TIMER` + `advance`/`timer_left`, `bind_declared`/`source_is` (moved up from `UnweightedSwitchRoom`) | §19.3; §19.2 | a receiver's valid hit is a one-tick pulse, and TIMERs run down on the physics tick; a TIMER running out re-evaluates the graph. A room binds its machines by declared id; a machine of the wrong kind is left unbound and reported | O05-07b commit |
-| `ServiceShutter` (Godot): `trip`, `open_seconds`, `left` removed; `create(...)` loses its `seconds` parameter (5 call sites, one of them a test's) | EX50-021 §3 names the TIMER as the window's owner | the shutter is commanded like every actuator. A second clock would be a second answer to how long the way stays open | O05-07b commit |
-| `CounterfireArcadeRoom` (Godot) | O05-07.3 | the room binds its receiver, release lever and shutter to the declared ids; the shared runtime drives the shutter. The room keeps its lines and the release stair | O05-07b commit |
-| `godot/tests/fixtures/latched_route_zone.json` (Dess's P14 fixture) and `candidate_zone.json`, regenerated with their make targets | "Regenerated from source, never edited" | the only change is three `null` keys per graph (`mode`, `required_tags`, `duration`): the new optional fields, dumped the way `requires_class` already is. `proposal_digest` is derived and never stored, so no save is affected | O05-07b commit |
+| `schemas/signal_graph.py`: `SUPPORTED_NODE_KINDS` += `TIMER`, `SUPPORTED_SENSOR_KINDS` += `SHOOTABLE_TARGET`; `DamageTag`, `SUPPORTED_TARGET_TAGS`, `TIMER_MAX_SECONDS` (new); `SensorNode.mode`/`required_tags`, `LogicNode.duration` (new, optional) | Design 1 §19.2 (TIMER: 1 Pulse, ON for `duration`, a new pulse restarts it), §19.6 (TIMER is EPHEMERAL), §20/§20.2 (SHOOTABLE_TARGET: `mode: PULSE \| TOGGLE`, `required_tags` default `[RANGED]`); EX50-021 §3 | two kinds join with EX50-021's chain. TOGGLE is refused: nothing reads it. `required_tags` accepts exactly `[RANGED]`, because the runtime has no damage tags and its SHOT path counts any hit (see the O05-07 slice 2 notes). `TIMER_MAX_SECONDS` is `ActivityPrimitive.time_limit`'s 120 s ceiling, a bound this lane chose | `384497b` |
+| `schemas/minors.py`: the `minor_counterfire_arcade` contract's `graph` | EX50-021 §3 ("the receiver emits one pulse per valid hit"; "the eight-second TIMER refreshes on another valid receiver hit. Its output opens the service shutter"), §9 ("the receiver timer is ephemeral") | the chain is declared, and its LATCH id is the contract's `release`, so a pulled release is still `minor_<room>/release` | `384497b` |
+| `SignalGraph` (Godot): `ImpactReceiver` pulses, `TIMER` + `advance`/`timer_left`, `bind_declared`/`source_is` (moved up from `UnweightedSwitchRoom`) | §19.3; §19.2 | a receiver's valid hit is a one-tick pulse, and TIMERs run down on the physics tick; a TIMER running out re-evaluates the graph. A room binds its machines by declared id; a machine of the wrong kind is left unbound and reported | `384497b` |
+| `ServiceShutter` (Godot): `trip`, `open_seconds`, `left` removed; `create(...)` loses its `seconds` parameter (5 call sites, one of them a test's) | EX50-021 §3 names the TIMER as the window's owner | the shutter is commanded like every actuator. A second clock would be a second answer to how long the way stays open | `384497b` |
+| `CounterfireArcadeRoom` (Godot) | O05-07.3 | the room binds its receiver, release lever and shutter to the declared ids; the shared runtime drives the shutter. The room keeps its lines and the release stair | `384497b` |
+| `godot/tests/fixtures/latched_route_zone.json` (Dess's P14 fixture) and `candidate_zone.json`, regenerated with their make targets | "Regenerated from source, never edited" | the only change is three `null` keys per graph (`mode`, `required_tags`, `duration`): the new optional fields, dumped the way `requires_class` already is. `proposal_digest` is derived and never stored, so no save is affected | `384497b` |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -752,6 +752,66 @@ graph, not just the sensor, and each was sabotaged.
       is restored through `restore_latch` before anyone acts, and still
       holds the shutter two and a half windows later.
     - `godot-latched-route-live` against the regenerated fixture: 2/18/12.
+
+### O05-10 — machinery through interruptions, on this run's occurrences — 10.1, 10.3, 10.4 in part
+
+- **10.1, the audit, limited to the machine kinds this run touched.**
+  - **`ServiceShutter`**: every doorway machine this run built uses
+    this one panel class:
+    - EX50-021's shutter, commanded by its graph's TIMER;
+    - EX50-033's, by its graph's NOT/OR;
+    - the P14 route panel (`RoomGraphs`);
+    - O05-04's `StateGates` doorway (`settle`/`command`).
+
+    Its closure is §21.2's through the shared `SafeClosure`, which
+    `Actuator` also uses, so no second safety helper exists. Since
+    O05-07 slice 2 it keeps no clock of its own either.
+  - **`RailCarrier` / `ShuttleDeck`** (EX50-011) step through the shared
+    `StopTravel`. They carry the player, so §21.1.1 has them hold.
+  - **Power loss is untested here, stated:** no occurrence built this
+    run has a power source, a `HAZARD_CONTROLLER` or a
+    `LIGHT_CONTROLLER`. §21.1.1's per-kind rows stay an explicitly
+    untested family for these occurrences. The P15 construction suite's
+    coverage is not a substitute (§10's "Done").
+- **10.3, interrupted operations.**
+  - **A real mid-motion reversal, on EX50-021's shutter**
+    (`godot-counterfire`, new): the window runs out and the panel goes
+    down. At 0.591 open, with the doorway clear (this is not the
+    interlock), a hit arrives. The panel goes back up from 0.591, never
+    lower, with no step larger than 0.014 of its travel in a frame, and
+    opens fully. That is §21.1's "reverse immediately from the current
+    `t`. No snap, no pause, no completion of the current leg".
+    Sabotage: a shutter that ignores commands mid-motion finishes the
+    leg (lowest 0.000) and fails it.
+  - **Blocked closure, reopen and retry:** the arcade's interlock case,
+    now through the graph. The window expires with the player in the
+    doorway, the panel holds open (3.1 s over), and it shuts once the
+    doorway is clear.
+  - **A queued change:** O05-04's "CLOSING QUEUED · DOORWAY OCCUPIED",
+    applied by itself once clear (`godot-reversible` 32).
+  - **No restart from stale input:** a pulse is gone on the next tick
+    (EX50-021 and EX50-033). EX50-011's death reset leaves its carriers
+    at their reset rest until a new call (O05-06.2).
+- **10.4, ownership and isolation.**
+  - **Two arcades, two windows** (`godot-counterfire`, new). A hit on
+    one opens its own window (6.38 s) and not the other's. The first is
+    freed mid-window. The other stays shut, and a room built in its
+    place starts shut with no window, evaluated exactly once. Sabotage:
+    TIMERs shared across graphs (`static var timers`) fails both checks
+    and an existing one.
+  - **A freed graph's lever wiring reaches nothing**, and its
+    replacement is wired once (O05-07.5).
+- **Remaining, individually:**
+  - 10.2's "separately selected constrained assembly": no constrained
+    assembly is in the candidate. Its Passing Platforms half was done
+    with O05-06.2.
+  - 10.4's "counters or resources do not accrue repeated effects after
+    several enter/leave/restart cycles" has no dedicated measurement.
+    The candidate-live chain restarts the process eight times, and its
+    restore checks assert nothing is announced twice, but no counter is
+    read across cycles.
+  - Power loss (above).
+- **Evidence:** `godot-counterfire` 59 (55 + 4).
 
 ### O05-13 — the candidate composer profile — built; the whole profile played live
 
