@@ -121,6 +121,11 @@ func _through_the_portal() -> ZoneController:
 			func() -> bool: return BridgeClient.hub_mode() == "ZONE_ACTIVE",
 			30.0):
 		return null
+	# READ AGAIN ONCE ENTERED. A RESUMED Zone is offered by the Hub before
+	# the bridge serves it as the active one, so the copy taken above can
+	# be empty after a restart -- and every spine walk reads this one.
+	if (_zone_data.get("chambers", []) as Array).is_empty():
+		_zone_data = BridgeClient.active_zone().get("zone", {})
 	if not await _await_live("Main builds the Zone",
 			func() -> bool:
 				return main.zone != null and main.zone.player != null,
@@ -388,8 +393,11 @@ func _install() -> void:
 	# ---- forgeries that would duplicate or move it -----------------------
 	await _refused({"type": "object_recovered", "zone_id": ZONE_ID,
 			"object_id": CELL}, "installed", "recovering an installed cell")
+	# INTO ANOTHER ROOM OF ITS VOLUME: home, which is never the socket's
+	# room. (On a two-room run the "middle" room IS the socket's, and a
+	# report of the room it is already in is not a move at all.)
 	await _refused({"type": "object_transported", "zone_id": ZONE_ID,
-			"object_id": CELL, "room_id": mid}, "does not move",
+			"object_id": CELL, "room_id": str(volume[0])}, "does not move",
 			"moving an installed cell")
 	await _refused({"type": "object_settled", "zone_id": ZONE_ID,
 			"object_id": CELL, "room_id": consumer_room,

@@ -98,6 +98,7 @@ const DRIVERS := {
 	"--reversible": preload("res://tests/reversible_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
+	"--candidate-shots": preload("res://tests/candidate_shot_driver.gd"),
 }
 
 func _ready() -> void:
@@ -222,6 +223,12 @@ func _ready() -> void:
 		var reversible_driver := ReversibleLiveDriver.new()
 		reversible_driver.main = self
 		add_child(reversible_driver)
+	# O05-13/15: the whole candidate profile in one Zone, the combination
+	# the candidate launcher plays, through a real bridge and a restart.
+	if CandidateLiveDriver.phase_from_cmdline() != "":
+		var candidate_driver := CandidateLiveDriver.new()
+		candidate_driver.main = self
+		add_child(candidate_driver)
 
 ## Enter the curated Stage 3A showcase.
 ##

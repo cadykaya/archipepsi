@@ -39,10 +39,11 @@ from .schemas.protocol import (
     ZoneReady, ZoneRecord,
 )
 from .schemas import protocol as P
+from .schemas.zone import Zone, validate_zone
 from .echo_projection import detail_examples, history_view
 from . import instrumentation
 from . import layout as layout_check
-from . import candidate, quiet
+from . import candidate, quiet, shells
 from . import store
 from . import topology
 
@@ -1107,7 +1108,18 @@ class CampaignEngine:
         # around before anything is stored. Doing it after acceptance
         # would mean a Zone existed in a save with an unproved graph.
         try:
-            composed = self._candidate(_with_graph(outcome.value))
+            composed = self._candidate(
+                _with_graph(outcome.value),
+                certify=lambda z: validate_zone(
+                    z, expected_zone_id=request.zone_id,
+                    allocated_location_ids=list(
+                        record.allocated_location_ids),
+                    owned_echo_ids=[e.echo_id
+                                    for e in self.save.interpretations],
+                    owned_affordance_tags=request.unlocked_affordances,
+                    guaranteed_capabilities=(
+                        request.guaranteed_capabilities),
+                    **shells.offer_of(request)))
         except topology.GraphRefused as exc:
             # THE SAME BOUNDED RECOVERY a failed generation already has,
             # because this IS a Zone that could not be built. Nothing is
@@ -1189,16 +1201,52 @@ class CampaignEngine:
         await self.broadcast_snapshot()
         return True
 
-    def _candidate(self, zone):
+    def _candidate(self, zone, certify=None):
         """The CANDIDATE profile on a proved Zone, or the Zone unchanged.
 
         Every step's outcome -- emitted or declined, and why -- goes to
         the log and to `<save dir>/candidate/<zone>.json`, a local record
         like the playtime file: nothing in the campaign reads it back.
+
+        **RE-CERTIFIED, NOT TRUSTED (O05-13.3).** The provider's Zone went
+        through `validate_zone` before the profile touched it, and
+        acceptance does not validate again, so a step that broke a rule
+        -- dropped an allocated Check, named an unoffered shell -- would
+        otherwise reach a save unexamined. `certify` is the same
+        `validate_zone`, with the same offer and allocation the provider
+        was held to, and the whole Zone schema is re-run. A profile
+        result that INTRODUCES an error is DISCARDED WHOLE: the Zone goes
+        on exactly as the provider made it, and the record says which
+        rule refused what.
         """
         if not self.candidate_steps:
             return zone
         applied = candidate.apply(zone, self.candidate_steps)
+        refused: list[str] = []
+        if certify is not None and applied.emitted:
+            # WHAT THE PROFILE INTRODUCED, and only that. `validate_zone`
+            # judges a provider's Zone BEFORE its graph is composed, and a
+            # graphed Zone can already fail a rule the graph changed (the
+            # enemy budget counts rooms the graph adds) -- so the profile
+            # is refused for an error its own Zone has and the graphed
+            # Zone it started from does not.
+            already = set(certify(zone) or ())
+            refused = [e for e in (certify(applied.zone) or ())
+                       if e not in already]
+            # AND THE SCHEMA, whole: a composer that built its Zone with
+            # `model_copy` skipped every model validator.
+            try:
+                Zone.model_validate_json(applied.zone.model_dump_json())
+            except ValueError as exc:
+                refused.insert(0, f"the Zone schema refused it: {exc}")
+        if refused:
+            log.warning("zone %s: the candidate profile's Zone failed "
+                        "validate_zone and is discarded: %s", zone.zone_id,
+                        "; ".join(refused[:3]))
+            applied = candidate.Applied(zone, tuple(
+                (st, False, f"discarded with the whole profile: "
+                            f"validate_zone refused it ({refused[0]})")
+                for st, _em, _no in applied.steps))
         for step, emitted, note in applied.steps:
             log.info("zone %s: candidate %s %s: %s", zone.zone_id, step,
                      "EMITTED" if emitted else "declined", note)
@@ -1213,6 +1261,8 @@ class CampaignEngine:
                           for st, em, no in applied.steps],
                 "proposal_digest": layout_check.proposal_digest(
                     applied.zone),
+                "certified": not refused,
+                "refused_by_validate_zone": refused[:8],
             }, indent=1), encoding="utf-8")
         except OSError as exc:                       # pragma: no cover
             log.warning("candidate record not written: %s", exc)

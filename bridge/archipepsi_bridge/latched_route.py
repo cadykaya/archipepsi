@@ -38,6 +38,13 @@ PLATE_ID = "step_plate"
 LATCH_ID = "held"
 SHUTTER_ID = "route_shutter"
 
+#: WHERE A PLATE MAY STAND (P5-11): rooms with open floor. A
+#: `platform_path` is islands over a kill pit and a `tower` is floors over
+#: a drop, and a corridor is a lane -- its floor is the way through, and
+#: the engine's clear-floor search keeps 2.6 m from everything placed.
+#: P14's own played acceptance stands its plate in an arena.
+_PLATE_ROOM_TYPES = ("arena", "treasure_room")
+
 #: Prefer a plate that is not in the entrance itself -- a latch at spawn
 #: is stepped on before the player knows it is there -- and fall back to
 #: the entrance only if nothing further in is legal.
@@ -74,6 +81,20 @@ def compose_latched_route(zone: Zone) -> LatchedRoute:
                             "the Zone already declares a room graph or a "
                             "machine-opened edge; this step does not stack")
     order = {c.id: i for i, c in enumerate(zone.chambers)}
+    # ONE CONTROL PER ROOM (O05-13, P5-11). A room already holding another
+    # relationship's control -- a Zone-state setter, a carried object's
+    # home, the socket it goes into -- has spent the clear floor a plate
+    # needs. In the candidate profile's first played combination the
+    # lever took c002's floor and the engine refused this plate by name
+    # ("no clear floor for sensor 'step_plate'"). Declined here, where the
+    # room is chosen, instead of being left for the engine to refuse.
+    kinds = {c.id: c.type for c in zone.chambers}
+    arrive = {c.id: c.arrive_edge for c in zone.chambers}
+    from .transport_route import _off_the_floor, _socket_heights
+    heights = _socket_heights()
+    occupied = ({v.setter.room_id for v in zone.zone_state if v.setter}
+                | {o.home_room_id for o in zone.transported_objects}
+                | {c.room_id for c in zone.object_consumers})
     candidates = []
     for index, edge in enumerate(zone.edges):
         if edge.realization != "JOINED":
@@ -83,6 +104,17 @@ def compose_latched_route(zone: Zone) -> LatchedRoute:
         if edge.room_a not in order or edge.room_b not in order:
             continue
         near, far = sorted((edge.room_a, edge.room_b), key=order.__getitem__)
+        if near in occupied:
+            continue          # one control per room
+        if kinds.get(near) not in _PLATE_ROOM_TYPES:
+            continue          # a plate needs clear walkable floor
+        # AND THE DOOR IT OPENS ON THE PLATE'S FLOOR (P5-8's rule): a
+        # shutter 28 m over the plate, across a launch arc, is not the
+        # consequence a player standing on it can see.
+        if _off_the_floor(zone, near, {edge.edge_id}
+                          | ({arrive[near]} if arrive.get(near) else set()),
+                          heights):
+            continue
         candidates.append((order[near] < _PREFER_FROM, order[near], index,
                            near, far))
     refusals = []

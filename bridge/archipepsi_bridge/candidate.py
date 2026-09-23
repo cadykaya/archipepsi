@@ -22,12 +22,18 @@ says why. A declined step leaves the Zone exactly as it was.
    (`reader_order="nearest"`, O05-04.2). It comes first because it
    composes the Zone's FIRST relationship and declines onto a Zone that
    already declares state.
-2. `latched_route`: P14's plate, latch and shutter
-   (`latched_route.compose_latched_route`). It refuses an edge that
-   already carries `requires_state` (one gate per doorway, P5-1).
-3. `transport`: P16's carry-and-install journey
+2. `transport`: P16's carry-and-install journey
    (`transport_route.compose_transport`), which adds its own variable
    beside any the Zone has.
+3. `latched_route`: P14's plate, latch and shutter
+   (`latched_route.compose_latched_route`). LAST, because it is the one
+   with the widest choice of rooms. It refuses an edge that already
+   carries `requires_state` (one gate per doorway, P5-1) and a room that
+   already holds another relationship's control (one control per room,
+   P5-11): the first played combination put its plate beside the lever
+   in c002, the engine refused the plate for want of floor, and with
+   P14 ahead of the transport step the cell's only walkable run was
+   taken instead.
 
 A caller may name a subset (`--candidate=transport`), and the order is
 kept either way.
@@ -39,7 +45,7 @@ from dataclasses import dataclass, field
 from .schemas.zone import Zone
 
 #: Every step the profile knows, in the order it runs them.
-STEPS: tuple[str, ...] = ("zone_state", "latched_route", "transport")
+STEPS: tuple[str, ...] = ("zone_state", "transport", "latched_route")
 
 
 @dataclass(frozen=True)

@@ -32,6 +32,7 @@ godot-path.txt
 .latched-route-saves/
 .transport-saves/
 .reversible-saves/
+.candidate-saves/
 .latched-route-play/
 generation_archive/
 godot-bin/

@@ -1,5 +1,58 @@
 # AGENT FRONTIER
 
+## PROD LANE — Overnight 05 in progress: carry, delivery, reversible lever, candidate launcher — 2026-09-23
+
+**Assignment:** the owner's Overnight 05 work order,
+`docs/ledgers/ov05/01_EXECUTION_PLAN.md` (verbatim copy, checksums
+verified). Execution log, shared-seam table for Dess, and findings P5-1
+to P5-10: `docs/ledgers/PROD_OV05.md`. Branch
+`claude/archipepsi-0-4-blindside`. The start is protected as
+`review/ov05-start-330c555`. **No heartbeat, watcher, subscription or
+scheduled job is armed.** Dess and Arty stay paused, and this lane is the
+one writer.
+
+**Where it stands (details in the ledger rows):**
+
+- **O05-01, hand carry: closed** (`ae8bcb7`).
+- **O05-02/03, the required cell: verified.**
+  - `godot-transport` passes 106/106. `godot-transport-live` passes all
+    four phases: seed 6, place 16, install 18, restore 12. Real
+    restarts, with the save read back off disk.
+  - The composer only uses one-floor, walkable rooms (P5-2, P5-8).
+- **O05-04, the reversible lever: verified.**
+  - `godot-reversible` 32/32. `godot-reversible-live` seed 3,
+    select 9, restore 3. `godot-zone-state` 60, after the P5-10 fix.
+- **O05-05, the Blindside loop: reconciled and BLOCKED; M2 is partial.**
+  - Three policies are missing: a featured Check can hold the player's
+    own item; nothing qualifies the grant; there is no pre-seed AP
+    representation.
+  - The composed railway's span persistence is fixed (P5-9).
+- **O05-13, the candidate profile: played whole.**
+  - `godot-candidate-live` seed 38, play 20, restore 5. Its first run
+    found P5-11 (two controls in one room); fixed.
+  - The profile's Zone is re-certified by `validate_zone`, and a result
+    that introduces an error is discarded whole.
+  - Bounded sample: 12 cases (`docs/ledgers/ov05_evidence/candidate_sample.json`).
+    Every case was certified and kept its Checks; transport declined
+    once, by name.
+- **O05-15, the launcher: built.**
+  - `Diagnostic Campaign - Candidate (Windows).bat`, or
+    `python -m archipepsi_bridge.diagnostic --candidate`.
+  - Owner route: `docs/ledgers/PROD_OV05_ROUTE.md`. Answers:
+    `docs/ledgers/PROD_OV05_ANSWERS.md`.
+  - Review frames: `make candidate-shots`, through the player's camera.
+
+**Next, in the plan's order:**
+
+1. **O05-06, the three minors.** The chosen route is a minor as a
+   code-built room shell: a registry entry that names no chamber type,
+   so it is never offered to a provider. The scenario's own builder is
+   extracted and reused, the Check sits at the minor's goal, its latch
+   persists through the bridge, and a candidate step selects the host
+   and declines by name. First target: EX50-033 Unweighted Switch.
+2. O05-07 onward.
+3. The O05-17 frozen run and ZIP.
+
 ## PROD LANE — P14 played and persisted, D-11 on the geometry: integration batch closed — 2026-09-23
 
 **STOPPED here, by instruction.** This batch consumed Dess's `9ef2676`

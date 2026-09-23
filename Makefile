@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -440,6 +440,9 @@ transport-fixture:
 reversible-fixture:
 	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-candidate \
 	  zone_state --out ../godot/tests/fixtures/reversible_zone.json
+candidate-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-candidate \
+	  all --out ../godot/tests/fixtures/candidate_zone.json
 
 # Invariant I14 (ACCEPTANCE_TESTS 5.7). Boots the real project rather than
 # using `--script`: a SceneTree script never instantiates the autoloads, so
@@ -870,6 +873,36 @@ godot-reversible-live: godot-import
 	@echo "-- restart: both processes new, only the save crosses --"
 	$(call reversible_phase,restore)
 
+# O05-13/15: THE WHOLE CANDIDATE PROFILE IN ONE ZONE, the combination the
+# candidate launcher (`archipepsi_bridge.diagnostic --candidate`) plays.
+# SEED checks the served Zone is `candidate_zone.json` and that the bridge
+# recorded every step EMITTED; PLAY builds all three, pulls the lever,
+# carries and installs the cell and walks through; RESTORE (both processes
+# new) finds lever, cell and P14's shutter as they were left.
+CANDIDATE_SAVES := $(CURDIR)/.candidate-saves
+define candidate_phase
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(CANDIDATE_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --candidate=all & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start for $(1) (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --candidate-live=$(1) \
+	  --candidate-save-dir=$(CANDIDATE_SAVES) \
+	  > /tmp/archipepsi-candidate-$(1).log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|seeded|played|GODOT CANDIDATE)" \
+	  /tmp/archipepsi-candidate-$(1).log; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-candidate-$(1).log; \
+	  exit $$STATUS; fi
+endef
+godot-candidate-live: godot-import
+	rm -rf $(CANDIDATE_SAVES)
+	$(call candidate_phase,seed)
+	$(call candidate_phase,play)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call candidate_phase,restore)
+
 # P14: THE LATCH-ROUTE CANDIDATE, BY HAND. Opt-in and disposable: its own
 # save directory, a default-scale mock campaign whose zone_001 is Dess's
 # `latched_route_zone.json` -- the same seed and explicit compose step
@@ -928,6 +961,14 @@ godot-theme-pack: godot-import  # Zone.theme_pack, on the geometry
 # B, for a reviewer. Diagnostic and not in CI: it asserts nothing and it
 # needs a display; `godot-theme-pack` makes the claims. Output is
 # `user://theme_pack_shots`, outside the repository.
+# O05-15.4: review frames of the candidate Zone (`candidate_zone.json`),
+# each relationship before and after. Diagnostic and not in CI: it asserts
+# nothing and needs a display. Output is `user://candidate_shots`.
+candidate-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --candidate-shots 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
 theme-pack-shots: godot-import
 	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
 	  --rendering-driver opengl3 -- --theme-pack --shots 2>&1 \

@@ -113,6 +113,11 @@ func _through_the_portal() -> ZoneController:
 			func() -> bool: return BridgeClient.hub_mode() == "ZONE_ACTIVE",
 			30.0):
 		return null
+	# READ AGAIN ONCE ENTERED. A RESUMED Zone is offered by the Hub before
+	# the bridge serves it as the active one, so the copy taken above can
+	# be empty after a restart -- and every spine walk reads this one.
+	if (_zone_data.get("chambers", []) as Array).is_empty():
+		_zone_data = BridgeClient.active_zone().get("zone", {})
 	if not await _await_live("Main builds the Zone",
 			func() -> bool:
 				return main.zone != null and main.zone.player != null,

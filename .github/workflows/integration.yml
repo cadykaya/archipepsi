@@ -172,6 +172,9 @@ jobs:
       - name: A reversible lever through a real bridge and a restart
         run: make godot-reversible-live
 
+      - name: The whole candidate profile in one Zone, and a restart
+        run: make godot-candidate-live
+
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live
 

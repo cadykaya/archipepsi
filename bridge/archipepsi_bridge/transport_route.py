@@ -214,6 +214,11 @@ def compose_transport(zone: Zone, *, entry_id: str | None = None,
     kinds = {c.id: c.type for c in zone.chambers}
     arrive = {c.id: c.arrive_edge for c in zone.chambers}
     heights = _socket_heights()
+    # ONE CONTROL PER ROOM (P5-11): the object's home and its socket take
+    # floor, and so does another relationship's control -- a Zone-state
+    # setter, or a room graph's plate.
+    occupied = ({v.setter.room_id for v in zone.zone_state if v.setter}
+                | {g.room_id for g in zone.room_graphs})
     exit_room = exit_id or rooms[-1]
     index = len(zone.zone_state)
     why_not: list[str] = []
@@ -232,6 +237,11 @@ def compose_transport(zone: Zone, *, entry_id: str | None = None,
                 why_not.append(f"{run}: {unwalkable[0]} is a "
                                f"{kinds.get(unwalkable[0])}, not a room a "
                                "carried object crosses on foot")
+                continue
+            crowded = [r for r in (run[0], run[-1]) if r in occupied]
+            if crowded:
+                why_not.append(f"{run}: '{crowded[0]}' already holds another "
+                               "relationship's control")
                 continue
             carry = [edges_by_pair.get(frozenset((a, b)))
                      for a, b in zip(run, run[1:])]

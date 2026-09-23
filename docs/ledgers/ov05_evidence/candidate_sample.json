@@ -1,0 +1,375 @@
+{
+ "frozen": {
+  "revision": "d92d723410e7",
+  "tree": "dirty",
+  "count": 12,
+  "profile": [
+   "zone_state",
+   "transport",
+   "latched_route"
+  ],
+  "config": "C.DEFAULT_CONFIG (mock multiworld, default scale)",
+  "provider": "fallback (deterministic; no model credentials used)",
+  "layout": "NOT built here -- bridge half only; see godot-candidate-live for a built, accepted, played Zone"
+ },
+ "cases": [
+  {
+   "case": 1,
+   "zone_id": "zone_001",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "d87936f61d99dc1d",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c004', carried c004 -> c005, installed in 'c005', opening 'e:c005:c006'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c009', shutter across 'e:c009:c010' into 'c010'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 2,
+   "zone_id": "zone_002",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "29b185fc3c5309ac",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": false,
+     "note": "no placement validated: ['c002', 'c003', 'c004']: c003 is a platform_path, not a room a carried object crosses on foot; ['c003', 'c004', 'c005']: c003 is a platform_path, not a room a carried object crosses on foot; ['c004', 'c005', 'c006']: 'c005' is shell 'shell_hall_transit', whose doorways 'entry' at 0 m, 'exit' at 28 m are not one floor; a hand carry is a walk; ['c005', 'c006', 'c007']: 'c005' is shell 'shell_hall_transit', whose doorways 'entry' at 0 m, 'exit' at 28 m are not one floor; a hand carry is a walk"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c006', shutter across 'e:c006:c007' into 'c007'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 3,
+   "zone_id": "zone_003",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "d08cbb299746bec5",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c004', carried c004 -> c005 -> c006, installed in 'c006', opening 'e:c006:c007'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 4,
+   "zone_id": "zone_004",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "caaf8e1fc2ceca93",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c004', carried c004 -> c005 -> c006, installed in 'c006', opening 'e:c006:c007'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c008', shutter across 'e:c008:c009' into 'c009'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 5,
+   "zone_id": "zone_005",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "fdf93a680a7f5faa",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c004', carried c004 -> c005 -> c006, installed in 'c006', opening 'e:c006:c007'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c008', shutter across 'e:c008:c009' into 'c009'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 6,
+   "zone_id": "zone_006",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "0c2c8a6961cee377",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c004', carried c004 -> c005 -> c006, installed in 'c006', opening 'e:c006:c007'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 7,
+   "zone_id": "zone_007",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "9eeaf47023787c2b",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c004', carried c004 -> c005 -> c006, installed in 'c006', opening 'e:c006:c007'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 8,
+   "zone_id": "zone_008",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "81ed3015e480405e",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c004', carried c004 -> c005 -> c006, installed in 'c006', opening 'e:c006:c007'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 9,
+   "zone_id": "zone_009",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "61a46e25d913e61d",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c005', carried c005 -> c006, installed in 'c006', opening 'e:c006:c007'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c008', shutter across 'e:c008:c009' into 'c009'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 10,
+   "zone_id": "zone_010",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "9056f74f3f38a199",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c004', carried c004 -> c005 -> c006, installed in 'c006', opening 'e:c006:c007'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 11,
+   "zone_id": "zone_011",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "437bf8d598e13d6c",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c004', carried c004 -> c005 -> c006, installed in 'c006', opening 'e:c006:c007'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c005', shutter across 'e:c005:c006' into 'c006'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  },
+  {
+   "case": 12,
+   "zone_id": "zone_012",
+   "state": "GENERATED",
+   "provider": "fallback",
+   "proposal_digest": "4a2e34091756723a",
+   "steps": [
+    {
+     "step": "zone_state",
+     "emitted": true,
+     "note": "control in 'c002', consequence in 'c003', gating 'e:c002:c003'"
+    },
+    {
+     "step": "transport",
+     "emitted": true,
+     "note": "'power_cell' at home in 'c004', carried c004 -> c005 -> c006, installed in 'c006', opening 'e:c006:c007'"
+    },
+    {
+     "step": "latched_route",
+     "emitted": true,
+     "note": "plate and latch in 'c008', shutter across 'e:c008:c009' into 'c009'; reachable before the route it opens"
+    }
+   ],
+   "certified": true,
+   "checks_allocated": 15,
+   "checks_placed": 15,
+   "every_allocated_check_placed": true,
+   "record": "written"
+  }
+ ],
+ "summary": {
+  "emitted_per_step": {
+   "zone_state": 12,
+   "transport": 11,
+   "latched_route": 12
+  },
+  "cases": 12,
+  "every_case_kept_its_checks": true,
+  "every_case_certified": true
+ }
+}

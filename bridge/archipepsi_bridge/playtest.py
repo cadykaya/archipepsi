@@ -587,6 +587,14 @@ def reversible_zone():
     return candidate_zone("zone_state")
 
 
+def candidate_all_zone():
+    """O05-13/15's fixture: the played Zone with the WHOLE profile, in
+    its order -- what `--candidate` (all steps) composes, and what the
+    candidate launcher's campaign plays."""
+    from .candidate import STEPS
+    return candidate_zone(",".join(STEPS))
+
+
 def _dump_candidate(args) -> int:
     from .candidate import apply, parse
     zone = played_zone()

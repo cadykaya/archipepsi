@@ -390,8 +390,9 @@ def test_the_banner_says_which_generation_is_running(tmp_path):
 # --- the candidate profile (Overnight 05, O05-13 / O05-15.1) ------------
 
 def test_the_candidate_switch_takes_all_steps_by_default():
+    from archipepsi_bridge import candidate as CP
     assert D.candidate_steps(D.build_parser().parse_args(["--candidate"])) \
-        == ("zone_state", "latched_route", "transport")
+        == CP.STEPS
     assert D.candidate_steps(D.build_parser().parse_args(
         ["--candidate=transport"])) == ("transport",)
     assert D.candidate_steps(D.build_parser().parse_args([])) == ()
@@ -422,10 +423,10 @@ def test_a_candidate_slot_remembers_its_profile(tmp_path):
     slot = tmp_path / ".diagnostic-candidate"
     slot.mkdir()
     (slot / "campaign.json").write_text("{}")
-    D.mark_candidate(slot, ("zone_state", "latched_route", "transport"))
+    from archipepsi_bridge import candidate as CP
+    D.mark_candidate(slot, CP.STEPS)
     assert D.slot_mode(slot) == "candidate"
-    assert D.slot_profile(slot) == ("zone_state", "latched_route",
-                                    "transport")
+    assert D.slot_profile(slot) == CP.STEPS
     # the same profile resumes
     D.resolve(D.build_parser().parse_args(["--candidate"]), tmp_path)
     # another one is refused, and nothing is touched

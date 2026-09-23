@@ -75,6 +75,11 @@ rule, before it is edited. Rows are appended as edits land:
 | `candidate.py` (new), `CampaignEngine.candidate_steps`, `--candidate` | O05-13: an opt-in profile, off by default; the pattern of `quiet_generation` | runs `zone_state`, `latched_route`, `transport` after the graph is proved and before `accept_zone`. On host re-selection it is re-applied from a stripped Zone. Records each step, emitted or declined, under `<save dir>/candidate/` | O05-02 commit |
 | `playtest.dump-candidate` (replaces the new `dump-transport`) | fixtures generated from source | the transport and reversible fixtures are `candidate.apply` on the played Zone, with freshness tests | O05-02 commit |
 | `transport_route.py` (new) | P16 `TransportedObject`/`ObjectConsumer`; D-8 `permanent` lifetime; §0-bis (a declared gate is allowed, an undeclared one never is) | an explicit composer step in the same shape as `cross_room.py` and `latched_route.py`. It is never a default, so digests and comparisons do not move | O05-02 commit |
+| `transitions.record_latch` + `_accepted_rail_latches` (new) | `RailSpan.latch_id` "is the persistence handle: a commissioned span is the repair that survives leaving and coming back, recorded through the same latch machinery a physics package already uses" (zone.py) | a third, separately evidenced path for a declared railway's controlled span (P5-9); the physics and `graph_` paths are unchanged | `d92d723` |
+| `diagnostic.py` (launcher) | O05-15.1: "reuse the current launch/bootstrap idioms"; the follow-up 02 slot/marker rule | `--candidate[=STEPS]` mode: its own slot, a profile marker, a banner naming the profile and that nothing is staged. The single write moved into one `_mark` shared by both markers | `d92d723` |
+| `latched_route.compose_latched_route` (Dess's P14 composer) | P5-1's "one gate per doorway", extended to rooms: one relationship's control per room; P5-2/P5-8's walkable, one-floor rooms | skips a plate room already holding a Zone-state setter, a carried object's home or its socket (P5-11); stands plates only in arenas and treasure rooms, on the floor of the doorway they open. **P14 alone composes exactly as before** (c002; tested) | this checkpoint |
+| `candidate.STEPS` order | O05-13 | `zone_state, transport, latched_route` (was `zone_state, latched_route, transport`): P14, the step with the widest choice of rooms, now goes last (P5-11) | this checkpoint |
+| `CampaignEngine._candidate` re-certification | O05-13.3 "rejected hosts/choices must not silently drop allocated Checks"; acceptance does not re-run `validate_zone` | the profile's Zone is re-run through `validate_zone` with the provider's own offer and allocation, and through the whole Zone schema. A result that INTRODUCES an error is discarded whole and recorded (`certified`, `refused_by_validate_zone`) | this checkpoint |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -132,6 +137,105 @@ rule, before it is edited. Rows are appended as edits land:
   Zone. `LIGHTENED` is applied directly with `apply_status` here; the
   real source is exercised in O05-02.5. There is no consumer yet; that
   is O05-02.
+
+### O05-02 — a required object carried across rooms and installed (P16) — verified
+
+- **Built from the delivered declaration.**
+  - `transport_route.compose_transport` derives the object from a
+    composed Zone: a 40 kg `power_cell` that is `required`, `carriable`
+    and hand carried.
+  - The allowed volume is a run of the spine, home first. The composer
+    only uses walkable room types (P5-2) that sit on one floor (P5-8).
+  - It adds an `ObjectConsumer` in the run's last room, a permanent D-8
+    variable, lamps, and `requires_state` on the next spine edge.
+  - It refuses the placement unless `reachability` shows the run is
+    reachable with the gate shut, and the exit is not.
+  - The engine spawns the object once, at home. A consumed object is
+    never spawned loose.
+- **Real connections and consumer.**
+  - The real `Player` is driven with `Input.action_press`. It picks the
+    cell up with the interact ray and carries it across the connector.
+    The cell is never recovered while between rooms.
+  - It installs the cell with `interact` at the `ObjectSocket`. Being in
+    the same room does nothing; a different carriable object is refused
+    ("WRONG PART").
+  - The declared doorway (`StateGates`, P5-4) opens and the player walks
+    through.
+  - On the played Zone the run is c004 → c005, gated at `e:c005:c006`.
+- **Authority and uniqueness** (bridge-tested; `test_transport_route.py`,
+  51 tests):
+  - Python holds the room, the pose and the consumption.
+  - A forged transfer, pose, value or install is refused by name. The
+    live suite repeats these refusals against the real bridge.
+  - An installed object cannot move, settle or recover.
+  - A second consumer is refused.
+- **Status continuity, separately.** Unweighted Switch's real `SHOT`
+  applicator makes the cell LIGHTENED (factor 1.00, down from 0.85). The
+  same body is carried over the threshold, and the Status expires on its
+  own 8.0 s clock. The kilograms stay 40 throughout, and nothing about
+  the Status is sent for saving.
+- **Evidence.** `make godot-transport` gave **106/106** on the tree
+  committed as `5902920`: 10 cases, 6 notes. Every note is the declared
+  P5-7 Bulwark harness removal.
+
+### O05-03 — restore and recover the journey — verified (live restart re-run pending)
+
+- **Persisted facts.** `ZoneProgress.object_poses` records a settled
+  room, position and yaw, never a node path. `consumed_objects` records
+  the installation. Both are `ZONE_PERSISTENT`. `Main._to_zone` hands
+  both to the Zone before it is built (P5-3).
+- **Two restart points (live).** `make godot-transport-live` runs four
+  processes of each side against one disposable save:
+  - `seed`, `place` (put down in c005), then restart;
+  - `install` (the same body picked up and installed; forgeries
+    refused), then restart;
+  - `restore` (seated at load, doorway open, nothing announced).
+
+  On `d92d723`, seed and place passed (6 and 16 checks). Install failed
+  in the driver itself: its cached copy of the served Zone was empty
+  after the restart. The fix is committed with this row and the re-run
+  result goes here: **(pending)**.
+- **Recovery without solving.** Covered by `godot-transport`:
+  - out of the volume: home after 1.0 s, and not before 0.5 s;
+  - destroyed: the same identity is back after 2.0 s;
+  - out of bounds: home at once;
+  - death: dropped where it was held, still owned;
+  - interrupted beside the socket: restored loose, not installed.
+- **Reset domains.** The object's facts are its own. Installing changes
+  only its variable (bridge test). The reversible lever, the P14 latch
+  and keys survive side by side in the combined candidate Zone (see
+  O05-13).
+
+### O05-04 — a reversible lever changes another room's doorway — verified
+
+- **Bound to D-8.** `compose_zone_state(mechanism="lamp",
+  reader_order="nearest")` produces the following on the played Zone:
+  - the control in c002;
+  - `requires_state` on `e:c002:c003`;
+  - a lamp in c003, the first room past the gate (O05-04.2).
+
+  `span_bolt` would have been refused by the engine (P5-6).
+- **Source feedback and a useful consequence.** Pulling the lever makes
+  it read PENDING. The bridge's snapshot makes it read ACCEPTED, or a
+  refusal whose `about` names that exact selection makes it read
+  REFUSED and reverts it. The consequence is the doorway itself, not
+  only text: it opens, and closes on reversal.
+- **Reversal, occupancy, escape** (`godot-reversible`, **32/32** on
+  `5902920` and again on `d92d723`):
+  - both configurations are played;
+  - reversal is played;
+  - the closing state with the player in the doorway is held as
+    "CLOSING QUEUED · DOORWAY OCCUPIED", with three interlock refusals;
+  - the close applies by itself once the doorway is clear;
+  - the base-kit way back is kept.
+- **Restart with the chosen configuration** (`godot-reversible-live`,
+  OK on `d92d723`):
+  - seed: 3 checks;
+  - select: 9 checks. The status is recorded frame by frame, PENDING
+    then ACCEPTED. The value is on disk. A forged selection is refused
+    by its own key;
+  - restore: 3 checks. The doorway is open at load and walked through
+    without touching the lever.
 
 ### O05-05 — the featured Echo at Blindside (M2) — reconciled; the integrated loop is BLOCKED, M2 partial
 
@@ -195,6 +299,80 @@ railways; a rail path that follows the committed doorways rather than a
 curve through room arrivals; a declared control height/capability and
 the overhead gantry; the S3 destination; a rail model in
 `topology.reachability`.
+
+### O05-13 — the candidate composer profile — built; the whole profile played live
+
+- **Candidate configuration, not fixture laundering (O05-13.1).**
+  - The `--candidate[=STEPS]` bridge flag is off by default. It is
+    applied inside the real generation path, after the graph is proved
+    and before `accept_zone`.
+  - Each step derives its relationship from the Zone the campaign really
+    composed, or declines by name.
+  - Order: `zone_state, transport, latched_route` (P5-11). Nothing is
+    loaded from a file and nothing edits a save.
+- **Re-certified, not trusted (O05-13.3).**
+  - The profile's Zone is re-run through `validate_zone` with the
+    provider's own offer and allocation, and through the whole Zone
+    schema.
+  - A result that introduces an error is discarded whole, and the record
+    says `certified: false` and names the rule.
+  - The test drops an allocated Check and asserts the provider's Zone
+    survives. With re-certification disabled, that test fails.
+- **Every outcome recorded.** `<save dir>/candidate/<zone>.json` holds:
+  - the profile and the provider;
+  - every step, emitted or declined, with its reason;
+  - the proposal digest and the certification.
+- **The whole profile, played (`make godot-candidate-live`, new):**
+  - **seed:** 38 checks. The served Zone is `candidate_zone.json` field
+    for field. It has three relationships on three doorways
+    (`e:c002:c003`, `e:c005:c006`, `e:c009:c010`), and all three steps
+    are recorded EMITTED.
+  - **play:** 20 checks, 1 note (the P5-7 harness). All three are built
+    and nothing is refused. The lever is pulled and ACCEPTED, and its
+    doorway opens. The cell is carried from c004 into c005, installed
+    and ACCEPTED. The player walks into c006. P14's branch stays shut.
+  - **restore:** 5 checks. Both processes are new. The lever's doorway
+    is open at load, the cell is seated (one copy) with its doorway
+    open, P14's shutter is still shut, and nothing is announced.
+  - The first run of this suite found P5-11.
+- **Bounded sample (O05-13.3).** `bridge/tools/candidate_sample.py`
+  freezes its inputs before running: count 12, `C.DEFAULT_CONFIG` mock
+  multiworld, fallback provider, whole profile, revision. It records
+  every case in `docs/ledgers/ov05_evidence/candidate_sample.json`.
+  - `zone_state` emitted in 12 of 12 cases.
+  - `latched_route` emitted in 12 of 12.
+  - `transport` emitted in 11 of 12. zone_002 declined by name: its
+    platform path and transit hall leave no walkable, one-floor run
+    inside the home window.
+  - **Every case was certified and kept all its allocated Checks.**
+  - The layout verdict is not in this sample: it is the bridge half
+    only.
+- **Scope limit.** The deterministic fallback provider composed
+  everything; no live model was used. The composers are a small
+  canonical set (O05-13.2), not an expressive ceiling.
+
+### O05-15 — a launchable candidate — built
+
+- **One launcher family (O05-15.1).**
+  - `Diagnostic Campaign - Candidate (Windows).bat`, or
+    `python -m archipepsi_bridge.diagnostic --candidate`.
+  - It uses its own slot (`candidate`) and resumes by default; `--new`
+    starts a fresh one.
+  - A marker records the slot's mode and profile, and the launcher
+    refuses to continue it any other way.
+  - The banner prints the revision, the profile, mock AP, fallback
+    Epsilon, the default scale and "staged: nothing".
+  - The direct scenario launchers are unchanged, for comparison.
+- **Normal lifecycle (O05-15.2).** The real Main, client and bridge, and
+  the shipped input paths. Nothing is seeded. The diagnostic drivers
+  stay separate modes.
+- **Owner review (O05-15.4).** `PROD_OV05_ROUTE.md` (spoiler-light) and
+  `PROD_OV05_ANSWERS.md` (answers, with the evidence class of each
+  claim). `make candidate-shots` renders the review frames under xvfb.
+  It is diagnostic and asserts nothing.
+- **Not claimed.** Windows execution. The `.bat` is read, and the Python
+  module it delegates to is tested (`test_diagnostic_launcher.py`,
+  45 tests).
 
 ## Findings (`P5-n`)
 
@@ -293,3 +471,20 @@ the overhead gantry; the S3 destination; a rail model in
   suite's own 60 checks passed, but `make godot-zone-state` fails on
   any script error, and the regression batch caught it. The controller
   now skips an invalid instance before the typed read.
+- **P5-11 — two relationships' controls in one room, and one of them
+  lost.** In the first played combination of the whole candidate profile
+  (`godot-candidate-live`), `zone_state` put the reversible lever in c002
+  and `latched_route` put P14's plate in c002 as well. The engine refused
+  P14's graph by name: "no clear floor for sensor 'step_plate' on this
+  side of the doorway it opens". So the branch's shutter was never built,
+  and the doorway was logically gated and physically open. This is the
+  combination the candidate launcher actually plays; each step's own
+  suite had passed alone. Fixed in the composers, where rooms are chosen:
+  - one relationship's control per room;
+  - P14's plate only in open rooms (arena, treasure room) on the floor of
+    the doorway it opens;
+  - the profile order is now zone_state, transport, latched_route, so
+    that P14, the step with the widest choice of rooms, goes last.
+
+  On the played Zone the plate is now in c009 and the shutter is across
+  `e:c009:c010`. P14 composed alone is unchanged (c002).
