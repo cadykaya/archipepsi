@@ -138,7 +138,11 @@ one writer.
     made FIXED.
   - A weld under a field keeps its own kilograms. Enemies are left
     alone: they have no `mass_kg`, the same gap as PUSH/PULL.
-  - Items 18 and 19. `godot-verb-runtime` 92 checks, 7 sabotages. The
+  - Read through the two real sensors: a field that crosses a class
+    line releases both `ClassPlate` and `PoweredLink`. One that changes
+    the kilograms without changing the class releases only the kilogram
+    plate (EX50-033 §6). `lightened` releases only the class plate.
+  - Items 18 and 19. `godot-verb-runtime` 95 checks, 9 sabotages. The
     item-19 check first read the mass once, and a sabotage passed it,
     so it now reads every tick.
   - The `anchored` Status has no runtime yet (O05-09), so a field

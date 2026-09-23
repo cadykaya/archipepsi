@@ -562,7 +562,7 @@ godot-boot: godot-import       # the real startup path, and the transition that 
 # ATTACH and DETACH, and the relations ledger, runtime only (Design 2
 # §14.2-14.4, §31.2), by direct invocation. No Echo Action reaches them;
 # see PROD_OV05.md, O05-08.
-godot-verb-runtime: godot-import  # ten verbs' runtime, not their delivery
+godot-verb-runtime: godot-import  # twelve verbs' runtime, not their delivery
 	@out=$$($(GODOT) --headless --path godot -- --verb-runtime-test 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT VERB RUNTIME OK" || exit 1; \

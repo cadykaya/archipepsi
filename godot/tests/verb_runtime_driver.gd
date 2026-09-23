@@ -79,6 +79,7 @@ func _run() -> void:
 	await _relations_are_counted_and_exclusive()
 	await _attach_welds_and_detach_gives_back()
 	await _fields_scale_kilograms()
+	await _fields_read_by_the_two_sensors()
 	_finish()
 
 
@@ -1796,8 +1797,9 @@ func _fields_scale_kilograms() -> void:
 	await _settle(2)
 	_check(fixed.mass == 450.0 and withheld.mass == 40.0
 			and last.governed.has(ballast),
-			"left alone in the volume: 450 kg (FIXED) and a required object "
-			+ "whose package withholds physics")
+			"left alone in the volume: a 450 kg body, FIXED by its own "
+			+ "kilograms (%.1f kg), and a 40 kg required object whose " % fixed.mass
+			+ "package withholds physics (%.1f kg)" % withheld.mass)
 	last.end("test")
 	var wrong := VerbField.begin(VerbField.LIGHTEN, eye, aim,
 			"ab_mass_heavy", space, world, exclude)
@@ -1858,5 +1860,106 @@ func _fields_scale_kilograms() -> void:
 	world.queue_free()
 	for body: Node in [ballast, crate, drifter, fixed, withheld, g_root,
 			g_part]:
+		body.queue_free()
+	await _settle(4)
+
+
+## THE TWO SENSORS UNDER A FIELD. EX50-033's decisive control, read by the
+## real consumers rather than by the body: `ClassPlate` asks one occupant's
+## CLASS, `PoweredLink` sums KILOGRAMS. A field changes kilograms and the
+## class follows them; a Status steps the class and leaves the kilograms
+## alone. EX50-033 §6: "A mass-field ability that changes kilograms without
+## changing the plate's semantic class may not release the plate."
+func _fields_read_by_the_two_sensors() -> void:
+	print("  -- the mass fields, read by a class plate and a kilogram plate")
+	var stage := _stage(Vector3(2000.0, 0.0, 0.0))
+	var world: Node3D = stage["world"]
+	var player: Player = stage["player"]
+	await _settle(20)
+	var base := player.global_position
+	var plate := ClassPlate.create(Vector3(2.4, 0.12, 2.4), MassClass.HEAVY)
+	world.add_child(plate)
+	plate.global_position = base + Vector3(-2.5, 0.06, -9.0)
+	var kilos := PoweredLink.create("concrete_facility",
+			Vector3(0.0, 1.6, -6.0), 150.0)
+	world.add_child(kilos)
+	kilos.global_position = base + Vector3(2.5, 0.0, -9.0)
+	await _settle(2)
+	var on_class := _crate(320.0, plate.global_position
+			+ Vector3(0.0, 0.6, 0.0), Vector3(1.0, 1.0, 1.0))
+	var on_kilos := _crate(320.0, kilos.plate_position()
+			+ Vector3(0.0, 0.6, 0.0), Vector3(1.0, 1.0, 1.0))
+	await _settle(60)
+	var eye := player.camera.global_position
+	var exclude: Array[RID] = [player.get_rid()]
+	var centre := base + Vector3(0.0, 0.8, -9.0)
+	var held_before := plate.satisfied() and kilos.powered
+	# 1. A FIELD THAT CROSSES A CLASS LINE: 320 kg x 0.35 = 112 kg, MEDIUM.
+	var one: VerbField = VerbField.begin(VerbField.LIGHTEN, eye, centre,
+			"ab_mass_light", _space(), world, exclude).get("field")
+	# Read now: an ended field is freed, and a freed object reads as null.
+	var laid_one := one != null
+	await _settle(4)
+	var class_in := plate.satisfied()
+	var kilos_in := kilos.powered
+	var kg_in := [on_class.mass, on_kilos.mass]
+	if one != null:
+		one.end("test")
+	await _settle(4)
+	_check(laid_one and held_before and not class_in and not kilos_in
+			and is_equal_approx(kg_in[0], 112.0)
+			and plate.satisfied() and kilos.powered
+			and on_class.mass == 320.0 and on_kilos.mass == 320.0,
+			"a field changes the kilograms and the class follows them: two "
+			+ "320 kg BALLASTs hold a HEAVY class plate and a 150 kg "
+			+ "kilogram plate (%s/%s); in a LIGHTEN_FIELD each is %.0f kg, "
+			% [held_before, held_before, kg_in[0]] + "MEDIUM, and BOTH let "
+			+ "go (class %s, kilograms %s); the field gone, both hold again "
+			% [class_in, kilos_in] + "(%s, %s)"
+			% [plate.satisfied(), kilos.powered])
+	# 2. EX50-033 §6 -- KILOGRAMS WITHOUT A CLASS: 380 kg x 0.35 = 133 kg,
+	# still HEAVY (120 kg and over).
+	on_class.mass = 380.0
+	on_kilos.mass = 380.0
+	await _settle(4)
+	var two: VerbField = VerbField.begin(VerbField.LIGHTEN, eye, centre,
+			"ab_mass_light", _space(), world, exclude).get("field")
+	var laid_two := two != null
+	await _settle(4)
+	var class_six := plate.satisfied()
+	var kilos_six := kilos.powered
+	var kg_six := on_class.mass
+	var class_of := on_class.mass_class()
+	if two != null:
+		two.end("test")
+	await _settle(4)
+	_check(laid_two and class_six and not kilos_six
+			and is_equal_approx(kg_six, 133.0) and class_of == MassClass.HEAVY
+			and plate.satisfied() and kilos.powered,
+			"EX50-033 §6, kilograms without a class: 380 kg in the field is "
+			+ "%.0f kg and still %s, so the class plate HOLDS (%s) while " % [kg_six, class_of, class_six]
+			+ "the kilogram plate lets go (%s) -- the field did not release " % [not kilos_six]
+			+ "it; after it, (%s, %s)" % [plate.satisfied(), kilos.powered])
+	# 3. A STATUS, THE OTHER WAY: the class stepped, the kilograms kept.
+	on_class.mass = 320.0
+	on_kilos.mass = 320.0
+	for body: ManipulableBody in [on_class, on_kilos]:
+		body.apply_status("lightened", 60.0, 1.0)
+	await _settle(4)
+	var class_status := plate.satisfied()
+	var kilos_status := kilos.powered
+	var stepped := on_class.mass_class()
+	for body: ManipulableBody in [on_class, on_kilos]:
+		body.statuses.clear()
+	await _settle(4)
+	_check(not class_status and kilos_status and stepped == MassClass.MEDIUM
+			and on_class.mass == 320.0 and on_kilos.mass == 320.0
+			and plate.satisfied() and kilos.powered,
+			"a Status steps the class and keeps the kilograms: `lightened` "
+			+ "on the same 320 kg BALLASTs reads %s, so the class plate " % stepped
+			+ "lets go while the kilogram plate, still reading 320 kg, "
+			+ "holds; the Status gone, both hold")
+	world.queue_free()
+	for body: Node in [on_class, on_kilos]:
 		body.queue_free()
 	await _settle(4)

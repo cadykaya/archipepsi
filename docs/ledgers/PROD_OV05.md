@@ -140,9 +140,9 @@ rule, before it is edited. Rows are appended as edits land:
 | `AttachPoint`, `VerbAttach` (Godot, new files) | §14.3 ATTACH/DETACH; §4.8 `AttachPoint` | runtime only; offered to nothing | `0f4c335` |
 | `ManipulableBody.material`, `attach_points`, `welds`, `welded_into` (new; empty by default); `interact`/`interact_prompt` first undo a PLAYER weld | §4.8 `material`, `attach_points`; O05-08.3 "Keep the base interaction for undoing player-created attachment" | no authored body has a material or a point, and nothing makes a weld outside the tests, so every existing `interact` is unchanged (`godot-carry`) | `0f4c335` |
 | `Constraints.sever(id)` | §14.3 DETACH "breaks a `ConstraintSpec` whose `breakable_at` is non-null" | breaks through the solver's own `_check_break`; refuses an unbreakable one | `0f4c335` |
-| `VerbField` (Godot, new file) | §14.3 LIGHTEN_FIELD/ANCHOR_FIELD and their profiles; §14.4 radius ceiling 8.0 m and multiplier range 0.30–3.00; §10.2 derivation | runtime only; offered to nothing | O05-08.4 commit |
-| `ManipulableBody.own_mass`, `field` (new; -1 and null by default) | §14.3 "Fields do not stack" | set only by a field; every other reader still reads `mass`, which is the body's own kilograms whenever no field scales it | O05-08.4 commit |
-| `VerbAttach._own`, `_set_own` (new); ATTACH gives a held part back from its field before the weld | §14.3 ATTACH with the fields: item 14's 190 kg is the girders' own kilograms | with no field, the O05-08.3 arithmetic exactly (its checks unchanged) | O05-08.4 commit |
+| `VerbField` (Godot, new file) | §14.3 LIGHTEN_FIELD/ANCHOR_FIELD and their profiles; §14.4 radius ceiling 8.0 m and multiplier range 0.30–3.00; §10.2 derivation | runtime only; offered to nothing | `38b104f` |
+| `ManipulableBody.own_mass`, `field` (new; -1 and null by default) | §14.3 "Fields do not stack" | set only by a field; every other reader still reads `mass`, which is the body's own kilograms whenever no field scales it | `38b104f` |
+| `VerbAttach._own`, `_set_own` (new); ATTACH gives a held part back from its field before the weld | §14.3 ATTACH with the fields: item 14's 190 kg is the girders' own kilograms | with no field, the O05-08.3 arithmetic exactly (its checks unchanged) | `38b104f` |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -1538,7 +1538,7 @@ graph, not just the sensor, and each was sabotaged.
   - Nothing in the runtime blows objects about, so Design 2 §26's wind
     consequence has no consumer yet. Any consumer that reads the class
     or the kilograms reads the field.
-- **Evidence: `make godot-verb-runtime`, 92 checks and 1 note.**
+- **Evidence: `make godot-verb-runtime`, 95 checks and 1 note.**
   - Item 18: a 320 kg BALLAST in a LIGHTEN_FIELD at 0.35 is 112 kg,
     class MEDIUM, with no Status on it. Before the field, the light
     profile's PUSH refuses it (`too_heavy`); inside the field, it admits
@@ -1560,7 +1560,22 @@ graph, not just the sensor, and each was sabotaged.
   - A weld: two girders welded inside a LIGHTEN_FIELD are 66.5 kg
     (190 × 0.35). With the field gone they are 190 kg; detached, 95 kg
     each.
-- **Sabotages (7, each restored, each failing by name):**
+  - The two real sensors, `ClassPlate` (one occupant's class) and
+    `PoweredLink` (summed kilograms, 150 kg), each with a 320 kg BALLAST
+    on it:
+    - A LIGHTEN_FIELD makes both 112 kg, MEDIUM, and both plates let go.
+      With the field gone, both hold again.
+    - EX50-033 §6, kilograms without a class: at 380 kg the field gives
+      133 kg, still HEAVY. The class plate holds and the kilogram plate
+      lets go.
+    - `lightened` does the reverse: the class plate lets go, and the
+      kilogram plate, still reading 320 kg, holds. With the Status
+      cleared, both hold.
+    - The first version of these checks failed on correct readings. It
+      asked `field != null` after the field had ended, and a freed
+      object reads as null. The check now records whether the field was
+      laid when it is laid.
+- **Sabotages (9, each restored, each failing by name):**
   - F1, the scale stacks: item 19 reads 280 kg, class heavy.
   - F2, expiry gives nothing back: item 18 reads 112 kg after expiry,
     and the Status and weld checks follow.
@@ -1575,9 +1590,15 @@ graph, not just the sensor, and each was sabotaged.
     112 kg.
   - F6, the weld counts scaled kilograms: 128.2 kg in the field and
     95 kg without it.
+  - F7, FIXED is not left alone: the 450 kg body reads 157.5 kg.
   - F8, no direction check: the refusal check reads an empty refusal.
-- **Neighbours:** `godot-carry` 32 (the `interact` path),
-  `godot-constraints` 67, `godot-physics` 68, `godot-mass-class` 59.
+  - F9, a field steps the class instead of scaling the kilograms (it
+    applies `lightened`): 8 failures, including items 18 and 19 and
+    both new sensor checks, where the BALLAST stays 320 kg and the
+    kilogram plate never lets go.
+- **Neighbours unchanged:** `godot-carry` 32 (the `interact` path),
+  `godot-constraints` 67, `godot-physics` 68, `godot-mass-class` 59,
+  `godot-unweighted` 70, `godot-transport` 106.
 
 ### O05-14 — existing visual work — reconciled; nothing it may bind
 
