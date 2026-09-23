@@ -1,0 +1,112 @@
+{
+ "schema_version": 1,
+ "pack": "minor_rooms",
+ "description": "O05-06: existing minors as code-built rooms. Not art (no review field); never offered (tagged minor), so only the candidate minor step selects one.",
+ "entries": [
+  {
+   "id": "minor_unweighted_switch",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "Unweighted Switch (EX50-033)",
+   "scene": "res://content/minors/minor_unweighted_switch.tscn",
+   "fallback": "shell_arena_proc",
+   "semantic_tags": [
+    "minor",
+    "ex50_033",
+    "arena",
+    "service_lockout"
+   ],
+   "size": [
+    16.5,
+    6.0,
+    18.5
+   ],
+   "surfaces": [
+    {
+     "name": "floor",
+     "center": [
+      0.0,
+      0.0,
+      7.25
+     ],
+     "extent": [
+      15.5,
+      13.5
+     ]
+    },
+    {
+     "name": "gallery",
+     "center": [
+      2.375,
+      1.9,
+      16.15
+     ],
+     "extent": [
+      10.75,
+      4.2
+     ]
+    }
+   ],
+   "sockets": [
+    {
+     "name": "entry",
+     "kind": "doorway",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "yaw": 180.0,
+     "width": 2.4,
+     "height": 3.2,
+     "surface_id": "floor"
+    },
+    {
+     "name": "exit",
+     "kind": "doorway",
+     "position": [
+      4.5,
+      1.9,
+      18.5
+     ],
+     "yaw": 0.0,
+     "width": 2.4,
+     "height": 3.2,
+     "surface_id": "gallery"
+    }
+   ],
+   "volumes": [
+    {
+     "name": "arrival",
+     "kind": "player_entry",
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    },
+    {
+     "name": "reward",
+     "kind": "objective",
+     "center": [
+      6.0,
+      1.9,
+      16.75
+     ],
+     "size": [
+      1.5,
+      1.5,
+      1.5
+     ]
+    }
+   ],
+   "size_class": "medium",
+   "exit_yaw": 0.0
+  }
+ ]
+}

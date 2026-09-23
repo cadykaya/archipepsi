@@ -129,6 +129,10 @@ def doorways_off_the_body(entry: ContentEntry) -> dict[str, float]:
     return out
 
 
+#: The tag every minor room carries (`godot/content/registry/minor_rooms.json`).
+MINOR_TAG = "minor"
+
+
 def is_offerable(entry: ContentEntry) -> bool:
     """Whether this entry may be put in front of Epsilon at all.
 
@@ -158,6 +162,13 @@ def is_offerable(entry: ContentEntry) -> bool:
     if entry.category != "room_shell":
         return False
     if entry.review == "pending":
+        return False
+    # A MINOR ROOM IS NEVER A PROVIDER'S CHOICE (O05-06). It is a whole
+    # situation with its own geometry, placed only by the candidate
+    # profile's minor step against its own host requirements
+    # (`minors.py`); offering it would let a provider drop one into any
+    # room of the right size.
+    if MINOR_TAG in entry.semantic_tags:
         return False
     # NO LONGER A GATE, and the reason is measured.
     #
