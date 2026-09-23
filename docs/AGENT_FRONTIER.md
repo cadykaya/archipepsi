@@ -65,7 +65,13 @@ one writer.
   plate/NOT/LATCH. `godot-unweighted` 69, where 7 checks read the graph
   itself, plus a sabotage showing the runtime is what drives the room.
   EX50-021 is deliberately not routed: its window is the shutter's own
-  timer.
+  timer. Landed at `a718654`, with `godot-candidate-live` all eight
+  phases.
+- **O05-07.5, sensor safety: done (tests only).** Class-not-sum,
+  duplicate occupancy (every plate answer recorded), a repeated pull,
+  and a stale callback, each through the graph and each sabotaged.
+  `godot-signal-graph` 57, `godot-unweighted` 70. Repeated shots wait
+  on SHOOTABLE_TARGET.
 - **O05-15, the launcher: built.**
   - `Diagnostic Campaign - Candidate (Windows).bat`, or
     `python -m archipepsi_bridge.diagnostic --candidate`.
@@ -76,7 +82,7 @@ one writer.
 **Next, in the plan's order:**
 
 1. O05-07 further slices (TIMER/AND/DIRECT and sensors each with a
-   real consumer; signal verbs; sensor safety), then O05-08 onward
+   real consumer; signal verbs), then O05-08 onward
    (manipulation verbs, Status, machinery interruptions, consumables,
    encounters, art binding). O05-10.2's Passing Platforms half is done
    with O05-06.2.

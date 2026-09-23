@@ -146,6 +146,8 @@ func _run() -> void:
 	await _a_graph_in_a_room_that_is_not_there_is_refused()
 	await _a_latch_holds_its_value_and_is_restored()
 	await _a_latch_chain_is_declarable_and_builds()
+	await _a_class_is_not_a_sum_and_one_off_is_not_both()
+	await _a_graph_that_is_gone_hears_nothing()
 	_finish()
 
 
@@ -500,3 +502,142 @@ func _a_latch_chain_is_declarable_and_builds() -> void:
 			and str((graph.nodes[0] as Dictionary).get("kind", "")) == "LATCH",
 			"and the graph carries the latch")
 	await _drop(controller)
+
+
+## O05-07.5: A CLASS IS NOT A SUM, AND TWO OCCUPANTS ARE ONE ANSWER --
+## through the graph, not only at the plate (the plate-level pair is
+## `mass_class_driver._debris_does_not_add_up`). MEDIUM debris whose
+## kilograms add past HEAVY's floor leaves the NOT true and the shutter
+## open. Two HEAVY bodies are one answer, not a count: taking one off
+## leaves the plate satisfied and the shutter shut, and only the last one
+## leaving releases it.
+func _a_class_is_not_a_sum_and_one_off_is_not_both() -> void:
+	print("  -- two occupants: a class is not a sum; one off is not both")
+	var controller := await _built(_zone([_chain()]))
+	var graph := _graph(controller)
+	if graph == null:
+		_check(false, "a graph was built")
+		await _drop(controller)
+		return
+	var plate: ClassPlate = graph.sensors["plate"]
+	var shutter: ServiceShutter = graph.actuators["shutter"]["node"]
+	await _until(func() -> bool: return shutter.is_open())
+
+	var debris: Array[ManipulableBody] = [
+		await _small_crate(controller, plate, "debris_a", -0.55, 100.0),
+		await _small_crate(controller, plate, "debris_b", 0.55, 100.0)]
+	var classes: Array = debris.map(
+			func(b: ManipulableBody) -> String: return MassClass.of_node(b))
+	_check(classes == [MassClass.MEDIUM, MassClass.MEDIUM]
+			and plate.occupants().size() == 2 and not plate.satisfied()
+			and bool(graph.values.get("inverted", false))
+			and shutter.is_open(),
+			"two MEDIUM bodies, 200 kg together against HEAVY's %.0f kg "
+			% MassClass.MEDIUM_BELOW + "floor: the plate is not satisfied, "
+			+ "NOT is still true and the shutter open -- %s"
+			% [plate.reading()])
+	for body in debris:
+		body.global_position += Vector3(0.0, 0.0, 5.0)
+	for _i in 60:
+		await get_tree().physics_frame
+	_check(plate.occupants().is_empty(), "the debris is off the plate")
+
+	var first := await _small_crate(controller, plate, "heavy_a", -0.55,
+			200.0)
+	var second := await _small_crate(controller, plate, "heavy_b", 0.55,
+			200.0)
+	_check(plate.occupants().size() == 2 and plate.satisfied(),
+			"two HEAVY bodies on the plate: %s" % [plate.reading()])
+	_check(await _until(func() -> bool: return shutter.is_shut()),
+			"and the shutter is shut")
+	# EVERY ANSWER THE PLATE GIVES, not only the last: a plate that
+	# released for one frame when a body left, and took it back the next,
+	# would end up satisfied with the shutter shut and still have told the
+	# graph the crossing was open.
+	var answers: Array[bool] = []
+	plate.occupancy_changed.connect(func(now: bool) -> void:
+		answers.append(now))
+	first.global_position += Vector3(0.0, 0.0, 8.0)
+	for _i in 60:
+		await get_tree().physics_frame
+	_check(plate.occupants().size() == 1 and plate.satisfied()
+			and answers.is_empty()
+			and not bool(graph.values.get("inverted", true))
+			and shutter.is_shut(),
+			"one taken off: the plate never changed its answer (%s), NOT is "
+			% [answers] + "still false and the shutter still shut -- %s"
+			% graph.reading())
+	second.global_position += Vector3(0.0, 0.0, 8.0)
+	for _i in 60:
+		await get_tree().physics_frame
+	_check(not plate.satisfied() and answers == [false]
+			and await _until(func() -> bool: return shutter.is_open()),
+			"the last one off releases the plate, once (%s), and the "
+			% [answers] + "shutter opens")
+	await _drop(controller)
+
+
+## A body small enough that two stand on one plate side by side.
+func _small_crate(controller: ZoneController, plate: ClassPlate,
+		id: String, across: float, kilograms: float) -> ManipulableBody:
+	var body := ManipulableBody.create(id, kilograms,
+			Vector3(0.9, 0.9, 0.9))
+	controller.add_child(body)
+	body.global_position = plate.global_position \
+			+ Vector3(across, 1.0, 0.0)
+	for _i in 60:
+		await get_tree().physics_frame
+	return body
+
+
+## O05-07.5: STALE CALLBACKS AND A REPEATED PULSE. A lever outlives the
+## graph that wired it: freeing the graph leaves nothing on the lever, so
+## no pull can reach a graph that is gone. The graph that replaces it is
+## wired once however often it starts, and hears one pull once -- the
+## LATCH sets and fires once -- while a second pull fires nothing more.
+func _a_graph_that_is_gone_hears_nothing() -> void:
+	print("  -- a lever outlives its graph; the next graph hears it once")
+	var lever := CallLever.make("TEST", Color(1.0, 1.0, 1.0))
+	add_child(lever)
+	var old := _button_latch(lever)
+	add_child(old)
+	old.start()
+	_check(lever.pulled.get_connections().size() == 1,
+			"a started graph wired the lever once")
+	old.free()
+	_check(lever.pulled.get_connections().is_empty(),
+			"the freed graph left nothing wired to the lever")
+	var fresh := _button_latch(lever)
+	add_child(fresh)
+	fresh.start()
+	fresh.start()
+	# WIRED ONCE is held twice over: the graph skips a lever it has
+	# wired, and behind that the engine refuses an identical connection
+	# (with an error). Removing the graph's guard does not fail this
+	# check; it adds the engine's error to the log.
+	_check(lever.pulled.get_connections().size() == 1,
+			"its replacement, started twice, is wired once")
+	var fired: Array[String] = []
+	fresh.fired.connect(func(_package: String, id: String) -> void:
+		fired.append(id))
+	lever.interact(self)
+	_check(fired == ["held"] and fresh.latched.has("held"),
+			"one pull: the LATCH set and fired once (%s)" % [fired])
+	lever.interact(self)
+	fresh.evaluate()
+	_check(fired == ["held"] and bool(fresh.values.get("held", false))
+			and not bool(fresh.values.get("button", true)),
+			"a second pull fires nothing more, and on the next tick the "
+			+ "pulse is gone while the latch holds")
+	fresh.free()
+	lever.free()
+
+
+## A PULSE_BUTTON into a LATCH, the way a hosted minor binds its lever.
+func _button_latch(lever: CallLever) -> SignalGraph:
+	var graph := SignalGraph.new()
+	graph.room_id = "test"
+	graph.sensors["button"] = lever
+	graph.nodes.append({"id": "held", "kind": "LATCH",
+			"inputs": ["button"]})
+	return graph

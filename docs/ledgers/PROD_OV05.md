@@ -103,13 +103,13 @@ rule, before it is edited. Rows are appended as edits land:
 | `HostedMinor.carrier_rested` / `restore_carriers` / `player_died`; `ZoneController` reports and restores them | EX50-011 §9 (restore before the player; before completion, death restores the initial transport configuration) | a minor may report a carrier at rest and is handed its saved rests before anyone sees the room | `400ed37` |
 | `minor_hosting.offer_order` (new) | O05-06.5 "The composer does not need to place all three in every Zone"; O05-06.1 "select each minor" | this lane's selection rule: the contract order turns with the Zone's ordinal, so a campaign meets every minor. With a fixed order, EX50-011 was hosted in 0 of 12 sample Zones. `zone_001` is unchanged | `400ed37` |
 | `RoomAudit._openings_are_holes` + `_exit_facing` (Godot) | the 2026-09-03 owner ruling for entries ("the entry is where the room says it is") | the exit probe stands on the wall the declared `exit_yaw` faces. Before, a side exit was measured on the far wall (P5-17) | `400ed37` |
-| `schemas/signal_graph.py` `SUPPORTED_NODE_KINDS` += `OR`, `SUPPORTED_SENSOR_KINDS` += `PULSE_BUTTON`; `SENSOR_OUTPUT_FORM`, `NODE_INPUT_FORMS`, `ZONE_PLACEABLE_SENSOR_KINDS`, `ROUTE_SENSOR_KINDS`/`ROUTE_NODE_KINDS` (new) | Design 1 §19.1 (ports: "a graph connecting mismatched forms fails validation at composition, never at runtime"), §19.2 (OR: 2–4 Boolean inputs; LATCH: pulse `set`), §20 (PULSE_BUTTON: Pulse); O05-07.2 "add support/export only with the working consumer; nothing silently becomes OR or a no-op" | two kinds join, each with its consumer (EX50-033's chain). Port forms are checked, so a pulse feeding a Boolean reader, or driving a machine by itself, is refused. The P14 LATCH's Boolean set is kept as that slice's accepted rule | O05-07 commit |
-| `signal_graph.settle`, `upstream` | the runtime's evaluation order (§19.3) | generalized from chains to trees: OR is any of its inputs, and `upstream` walks every input. A single chain comes back exactly as before (tested) | O05-07 commit |
-| `schemas/zone.py` room-graph and route validators | D-10 §5 (a route hangs on the guaranteed base kit); P14's `phases` reasons about one plate through NOT/LATCH | a Zone may declare only sensors its builder PLACES (plates). A route gate hangs only on a PRESSURE_PLATE through NOT/LATCH; anything else is refused by name. The same OR as a machine in a room is legal. The composed P14 routes are unchanged | O05-07 commit |
-| `schemas/minors.py` `MinorContract.graph`; EX50-033's declared chain | EX50-033 §3 (the HEAVY plate under a NOT; the bolt holds the crossing); `SignalGraph`'s own header ("the scenario keeps its own wiring ... rewriting it to go through here would change a working room to prove a point about a different one") | the minor's chain is declared in its contract and validated by the Zone graph schema. Its LATCH ids are exactly the contract's latches, so a fired latch is still `minor_<room>/bolt` and existing saves read the same. Exported to Godot as `Constants.MINOR_SIGNAL_GRAPHS` | O05-07 commit |
-| `SignalGraph` (Godot): pulse sensors, `OR`, `restore_latch` | §19.3 ("pulses live for exactly one tick") | a `CallLever` source is a PULSE_BUTTON, raised for one evaluation and cleared. An unbound source reads OFF. `restore_latch` puts a latch back by id, silently, for a room that owns its graph | O05-07 commit |
-| `RoomGraphs` (Godot) | as the Zone validator | refuses a sensor it cannot place, instead of placing a plate for it | O05-07 commit |
-| `UnweightedSwitchRoom` (Godot) | O05-07.3 "route an existing minor ... relationship through the shared implementation while preserving its specialized semantics and standalone comparison" | the room binds its own plate, bolt lever and shutter to the declared ids, and the shared runtime drives the shutter. What the room keeps is its lines and the return stair. The §11 control is the plate sensor left unbound | O05-07 commit |
+| `schemas/signal_graph.py` `SUPPORTED_NODE_KINDS` += `OR`, `SUPPORTED_SENSOR_KINDS` += `PULSE_BUTTON`; `SENSOR_OUTPUT_FORM`, `NODE_INPUT_FORMS`, `ZONE_PLACEABLE_SENSOR_KINDS`, `ROUTE_SENSOR_KINDS`/`ROUTE_NODE_KINDS` (new) | Design 1 §19.1 (ports: "a graph connecting mismatched forms fails validation at composition, never at runtime"), §19.2 (OR: 2–4 Boolean inputs; LATCH: pulse `set`), §20 (PULSE_BUTTON: Pulse); O05-07.2 "add support/export only with the working consumer; nothing silently becomes OR or a no-op" | two kinds join, each with its consumer (EX50-033's chain). Port forms are checked, so a pulse feeding a Boolean reader, or driving a machine by itself, is refused. The P14 LATCH's Boolean set is kept as that slice's accepted rule | `a718654` |
+| `signal_graph.settle`, `upstream` | the runtime's evaluation order (§19.3) | generalized from chains to trees: OR is any of its inputs, and `upstream` walks every input. A single chain comes back exactly as before (tested) | `a718654` |
+| `schemas/zone.py` room-graph and route validators | D-10 §5 (a route hangs on the guaranteed base kit); P14's `phases` reasons about one plate through NOT/LATCH | a Zone may declare only sensors its builder PLACES (plates). A route gate hangs only on a PRESSURE_PLATE through NOT/LATCH; anything else is refused by name. The same OR as a machine in a room is legal. The composed P14 routes are unchanged | `a718654` |
+| `schemas/minors.py` `MinorContract.graph`; EX50-033's declared chain | EX50-033 §3 (the HEAVY plate under a NOT; the bolt holds the crossing); `SignalGraph`'s own header ("the scenario keeps its own wiring ... rewriting it to go through here would change a working room to prove a point about a different one") | the minor's chain is declared in its contract and validated by the Zone graph schema. Its LATCH ids are exactly the contract's latches, so a fired latch is still `minor_<room>/bolt` and existing saves read the same. Exported to Godot as `Constants.MINOR_SIGNAL_GRAPHS` | `a718654` |
+| `SignalGraph` (Godot): pulse sensors, `OR`, `restore_latch` | §19.3 ("pulses live for exactly one tick") | a `CallLever` source is a PULSE_BUTTON, raised for one evaluation and cleared. An unbound source reads OFF. `restore_latch` puts a latch back by id, silently, for a room that owns its graph | `a718654` |
+| `RoomGraphs` (Godot) | as the Zone validator | refuses a sensor it cannot place, instead of placing a plate for it | `a718654` |
+| `UnweightedSwitchRoom` (Godot) | O05-07.3 "route an existing minor ... relationship through the shared implementation while preserving its specialized semantics and standalone comparison" | the room binds its own plate, bolt lever and shutter to the declared ids, and the shared runtime drives the shutter. What the room keeps is its lines and the return stair. The §11 control is the plate sensor left unbound | `a718654` |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -587,6 +587,53 @@ the overhead gantry; the S3 destination; a rail model in
 - **Still unsupported, individually:** AND, DIRECT, TIMER, SEQUENCE,
   COUNTER, SELECTOR, DELAY, THRESHOLD; fifteen of the eighteen sensors;
   all five signal verbs (O05-07.4).
+
+### O05-07.5 — sensor distinctions and safety, on the graph runtime
+
+Tests only; no runtime change was needed. Each case runs through the
+graph, not just the sensor, and each was sabotaged.
+
+- **A class is not a sum.** Two MEDIUM bodies of 100 kg, 200 kg
+  together against HEAVY's 120 kg floor, stand on a HEAVY plate. The
+  plate is not satisfied, the NOT stays true and the shutter stays
+  open. The plate-level pair already existed
+  (`mass_class_driver._debris_does_not_add_up`); this one is the graph
+  reading the plate. Sabotage: a plate that adds up kilograms fails it.
+- **Duplicate occupancy.** Two HEAVY bodies are one answer, not a
+  count. Taking one off must not change the plate's answer even for a
+  frame; the check records every `occupancy_changed` the plate emits.
+  Only the last one leaving releases it, once. Sabotage: a plate that
+  releases for one frame when any body leaves fails it with answers
+  `[false, true]`, although its end state (NOT false, shutter shut)
+  looked right. That is why the check records answers, not only the end
+  state.
+- **A repeated pulse.** A second pull fires nothing more:
+  - in the suite, the LATCH fires once;
+  - in EX50-033, the LATCH fires once and the room engages once.
+  Sabotage: a held LATCH that re-fires on a pulse fails both suites,
+  with "LATCH fired 2 time(s), the room engaged 1". The room's own
+  `bolted` guard would have hidden it, so the check counts the latch.
+- **Stale callbacks.** A lever outlives the graph that wired it:
+  - freeing the graph leaves nothing on the lever, so no pull can reach
+    a graph that is gone;
+  - its replacement, started twice, is wired once and hears one pull
+    once.
+  Stated plainly: both hold at the engine as well. Godot drops a freed
+  target's connections, and it refuses an identical second connection
+  with an error. So removing the graph's own wire-once guard does not
+  fail the check; it adds the engine's error to the log (confirmed).
+- **Already covered, not repeated:**
+  - removal (`_a_heavy_occupant_closes_it_and_leaving_opens_it`);
+  - player participation per sensor (`_the_player_is_not_an_occupant`,
+    and `mass_class_driver._counts_player_is_the_only_door` for the
+    decisive `counts_player` pair);
+  - a pulse's normal expiry after one tick (`godot-unweighted`);
+  - route requirements widened only through the named route kinds
+    (slice 1).
+- **Waits on its producer:** repeated SHOTS need SHOOTABLE_TARGET in the
+  graph, and the expiry of a temporary override needs O05-07.4's verbs.
+- **Evidence:** `godot-signal-graph` 57 (46 + 11);
+  `godot-unweighted` 70 (69 + 1).
 
 ### O05-13 — the candidate composer profile — built; the whole profile played live
 

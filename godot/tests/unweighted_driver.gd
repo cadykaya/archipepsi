@@ -419,11 +419,24 @@ func _the_chain_is_the_declared_graph() -> void:
 			and room.shutter.is_shut(),
 			"the crate on the plate: plate ON, NOT OFF, OR OFF, and the "
 			+ "graph shut the crossing")
+	var latch_fired: Array[int] = [0]
+	var engaged: Array[int] = [0]
+	graph.fired.connect(func(_package: String, node_id: String) -> void:
+		if node_id == "bolt":
+			latch_fired[0] += 1)
+	room.room.bolt_engaged.connect(func() -> void: engaged[0] += 1)
 	room.bolt.pulled.emit(room.bolt)
 	for _i in 300:
 		await get_tree().physics_frame
 		if room.shutter.is_open():
 			break
+	# A REPEATED PULL (O05-07.5) is not a second decision: the LATCH is
+	# set once, and the room engages its bolt once.
+	room.bolt.pulled.emit(room.bolt)
+	await _settle(4)
+	_check(latch_fired[0] == 1 and engaged[0] == 1,
+			"a second pull fires nothing more: the LATCH fired %d time(s), "
+			% latch_fired[0] + "the room engaged %d" % engaged[0])
 	_check(graph.latched.has("bolt") and bool(graph.values.get("open",
 			false)) and bool(graph.values.get("plate", false))
 			and room.shutter.is_open() and room.bolted,
