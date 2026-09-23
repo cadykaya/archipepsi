@@ -111,6 +111,9 @@ class Link extends RefCounted:
 	## The physics frame a machine last drove this: a `WINCH` changing
 	## its length, a `DRIVER`'s motor turning it. -1 for never.
 	var driven_frame := -1
+	## Made at runtime by `tether` -- the one kind §14.8 lets a player
+	## make, and so the one kind `untether` may take away.
+	var runtime := false
 
 	func point_a() -> Vector3:
 		return a.global_position if a != null else anchor_a
@@ -203,12 +206,61 @@ func _add(spec: Dictionary) -> String:
 ##
 ## The verb is P12's; this is the seam it will come through, and it is
 ## deliberately the ONLY door into `_links` that is not `declare`.
+##
+## §14.3 TETHER ties "the first and second surfaces struck", and a wall
+## is a surface: an end with no body is anchored to the world at its
+## `anchor_*` point, as a declared rope's is.
 func tether(id: String, a: RigidBody3D, b: RigidBody3D,
-		length: float, breakable_at: float) -> String:
-	return _add({
+		length: float, breakable_at: float, anchor_a := Vector3.ZERO,
+		anchor_b := Vector3.ZERO) -> String:
+	var refusal := _add({
 		"constraint_id": id, "kind": Constants.CONSTRAINT_RUNTIME_CREATABLE[0],
 		"a": a, "b": b, "length": length, "breakable_at": breakable_at,
+		"anchor_a": anchor_a, "anchor_b": anchor_b,
 	})
+	if refusal == "":
+		(_links[id] as Link).runtime = true
+	return refusal
+
+
+## §14.3: a tether "is destroyed by save, death, room unload, or Zone
+## exit". Only a runtime tether can be taken away; every other
+## constraint is the room's, authored, and stays.
+func untether(id: String) -> bool:
+	if not _links.has(id) or not (_links[id] as Link).runtime:
+		return false
+	_links.erase(id)
+	_order.erase(id)
+	return true
+
+
+func breakable_at_of(id: String) -> float:
+	return (_links[id] as Link).breakable_at if _links.has(id) else NAN
+
+
+## The HINGE-family constraint `body` turns on, or "": the one a §14.3
+## ROTATE drives. A SEESAW and a hinge PENDULUM are Godot hinges too.
+func hinge_of(body: RigidBody3D) -> String:
+	for id: String in _order:
+		var link: Link = _links[id]
+		if link.b == body and link.joint is HingeJoint3D and not link.broken:
+			return id
+	return ""
+
+
+## The hinge's turning axis in the world, for `hinge_of`'s constraint.
+func hinge_axis(id: String) -> Vector3:
+	if not _links.has(id) or not ((_links[id] as Link).joint is Node3D):
+		return Vector3.ZERO
+	return ((_links[id] as Link).joint as Node3D).global_transform.basis.z \
+			.normalized()
+
+
+func limits_of(id: String) -> Vector2:
+	if not _links.has(id):
+		return Vector2.ZERO
+	var link: Link = _links[id]
+	return Vector2(link.limit_lower, link.limit_upper)
 
 
 func ids() -> Array[String]:
@@ -307,7 +359,11 @@ func is_locked(id: String) -> bool:
 
 ## `DRIVER`: apply torque toward a target. Torque, not position — it can
 ## be resisted by mass and it can stall.
-func drive(id: String, toward: float, rate: float, torque: float) -> void:
+##
+## `by_machine` false for a player's hand on it (§14.3 ROTATE): SETTLE
+## leaves alone what MACHINERY drives, and a hand is not machinery.
+func drive(id: String, toward: float, rate: float, torque: float,
+		by_machine := true) -> void:
 	if not _links.has(id):
 		return
 	var link: Link = _links[id]
@@ -328,7 +384,8 @@ func drive(id: String, toward: float, rate: float, torque: float) -> void:
 	hinge.set_param(HingeJoint3D.PARAM_MOTOR_TARGET_VELOCITY,
 			signf(toward - link.value) * absf(rate))
 	hinge.set_param(HingeJoint3D.PARAM_MOTOR_MAX_IMPULSE, torque)
-	link.driven_frame = Engine.get_physics_frames()
+	if by_machine:
+		link.driven_frame = Engine.get_physics_frames()
 
 
 ## IS MACHINERY DRIVING `body` RIGHT NOW? True while a `WINCH` is changing
@@ -353,6 +410,27 @@ func involves(id: String, body: RigidBody3D) -> bool:
 		return false
 	var link: Link = _links[id]
 	return link.a == body or link.b == body
+
+
+## TURN A HINGE AT `rate` rad/s (signed), however far, until its own
+## limits stop it: §14.3 ROTATE's "applies `angular_velocity`", as against
+## a DRIVER's "toward a target". A motor driven TOWARD A VALUE reverses the
+## moment a soft limit lets it overshoot, and chatters there; one told
+## only which way to turn leans on the limit and stays. `by_machine` as
+## for `drive`.
+func turn(id: String, rate: float, torque: float,
+		by_machine := true) -> void:
+	if not _links.has(id):
+		return
+	var link: Link = _links[id]
+	if link.joint == null or not (link.joint is HingeJoint3D) or link.locked:
+		return
+	var hinge := link.joint as HingeJoint3D
+	hinge.set_flag(HingeJoint3D.FLAG_ENABLE_MOTOR, true)
+	hinge.set_param(HingeJoint3D.PARAM_MOTOR_TARGET_VELOCITY, rate)
+	hinge.set_param(HingeJoint3D.PARAM_MOTOR_MAX_IMPULSE, torque)
+	if by_machine:
+		link.driven_frame = Engine.get_physics_frames()
 
 
 func release(id: String) -> void:

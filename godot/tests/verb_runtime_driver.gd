@@ -1,14 +1,15 @@
 extends Node
-## O05-08.1: FIVE VERBS' RUNTIME, AND NOTHING ELSE -- PUSH, PULL, HOLD,
-## ALIGN AND SETTLE.
+## O05-08.1/.2: EIGHT VERBS' RUNTIME, AND NOTHING ELSE -- PUSH, PULL,
+## HOLD, ALIGN, SETTLE, PIN, TETHER AND ROTATE -- and the relations ledger.
 ##
-## `Manipulation.impulse_verb`, `VerbHold`, `VerbAlign` and
-## `Manipulation.settle` against Design 2 §14.2 (eligibility), §14.3
-## (each verb's contract) and §14.4 (the ceilings), with the numbered
-## acceptance items of Design 2's own list where they apply (5, 7, 8, 9,
-## 10, 20, 21, 28), on real bodies in a real physics world. HOLD's caster
-## is a real `Player`, so its eye, its body and its death are the real
-## ones.
+## `Manipulation.impulse_verb`, `VerbHold`, `VerbAlign`,
+## `Manipulation.settle`, `VerbPin`, `VerbTether`, `VerbRotate` and
+## `VerbRelations` against Design 2 §14.2 (eligibility), §14.3 (each
+## verb's contract), §14.4 (the ceilings) and §31.2 (exclusivity), with
+## the numbered acceptance items of Design 2's own list where they apply
+## (5, 7, 8, 9, 10, 11, 12, 13, 17, 20, 21, 22, 23, 28), on real bodies in
+## a real physics world. The caster is a real `Player` wherever the verb
+## watches one, so its eye, its body and its death are the real ones.
 ##
 ## **EVIDENCE CLASS: DIRECT INVOCATION, RUNTIME ONLY.** No Echo Action
 ## reaches this verb -- the accepted delivery is the Amalgam's atom
@@ -71,6 +72,10 @@ func _run() -> void:
 	await _settle_calms_what_it_may()
 	await _a_settled_body_in_mid_air()
 	await _no_verb_moves_the_player()
+	await _pin_holds_what_it_pins()
+	await _tether_ties_two_ends()
+	await _rotate_turns_a_hinge_and_spins_a_body()
+	await _relations_are_counted_and_exclusive()
 	_finish()
 
 
@@ -189,6 +194,26 @@ func _contains(list: Array, node: Object) -> bool:
 		if is_same(item, node):
 			return true
 	return false
+
+
+## Still in force? A finished relation frees itself.
+func _live(relation: Variant) -> bool:
+	return is_instance_valid(relation) and bool(
+			(relation as Object).call("active"))
+
+
+## A flat beam to strike, its underside at `underside`.
+func _beam(parent: Node, underside: Vector3) -> StaticBody3D:
+	var beam := StaticBody3D.new()
+	beam.name = "Beam"
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(6.0, 0.4, 6.0)
+	shape.shape = box
+	beam.add_child(shape)
+	parent.add_child(beam)
+	beam.global_position = underside + Vector3(0.0, 0.2, 0.0)
+	return beam
 
 
 func _flat(velocity: Vector3) -> float:
@@ -1067,4 +1092,340 @@ func _no_verb_moves_the_player() -> void:
 			% [targeted, volumes] + "SETTLE volumes around it never touched "
 			+ "it, and it has moved %.4f m" % moved)
 	(stage["world"] as Node).queue_free()
+	await _settle(4)
+
+
+## §14.3 PIN, and item 13: "PIN holds a 260 kg object against gravity for
+## exactly 6.0 s on `ab_pin_brief`, and supports a 140 kg object resting
+## on it."
+func _pin_holds_what_it_pins() -> void:
+	print("  -- PIN: 260 kg held in the air for exactly 6 s, bearing 140 kg")
+	var at := Vector3(1300.0, 30.0, 0.0)
+	var eye := at + Vector3(0.0, 0.0, 8.0)
+	var slab := _crate(260.0, at, Vector3(2.0, 0.5, 2.0))
+	await _settle(1)
+	var out := VerbPin.begin(eye, slab, "ab_pin_brief", _space())
+	var pin: VerbPin = out.get("pin")
+	# TIMED BY THE PIN ITSELF: the physics frame it began on and the one
+	# its release fired on. A loop counting its own resumes would count
+	# the step after the release too, and read the fall that follows it.
+	var began := Engine.get_physics_frames()
+	var why: Array[String] = []
+	var ended_on: Array[int] = []
+	if pin != null:
+		pin.released.connect(func(r: String) -> void:
+			why.append(r)
+			ended_on.append(Engine.get_physics_frames()))
+	var weight := _crate(140.0, at + Vector3(0.0, 1.2, 0.0))
+	var start := slab.global_position
+	var ticks := 0
+	var drift := 0.0
+	var resting := 0.0
+	var weight_speed := 0.0
+	while ticks < 400:
+		await get_tree().physics_frame
+		if not _live(pin):
+			break
+		ticks += 1
+		drift = maxf(drift, slab.global_position.distance_to(start))
+		if ticks == 300:
+			resting = weight.global_position.y - slab.global_position.y
+			weight_speed = weight.linear_velocity.length()
+	var held_for := (ended_on[0] - began) if not ended_on.is_empty() else -1
+	_check(bool(out["applied"]) and why == [VerbPin.EXPIRED]
+			and held_for >= 359 and held_for <= 361 and drift < 0.001,
+			"item 13: 260 kg pinned on `ab_pin_brief` does not move "
+			+ "(%.4f m) for %d physics frames (6.0 s is 360), then the pin "
+			% [drift, held_for] + "expires")
+	_check(absf(resting - 0.65) < 0.05 and weight_speed < 0.05,
+			"and 140 kg rests on it, not through it: %.3f m above its " % resting
+			+ "centre (0.65 is resting), moving at %.3f m/s" % weight_speed)
+	await _settle(20)
+	_check(slab.global_position.y < start.y - 0.05 and not slab.freeze,
+			"unpinned, it falls (%.2f m), frozen no longer"
+			% (start.y - slab.global_position.y))
+	var heavy := _crate(300.0, at + Vector3(6.0, 0.0, 0.0),
+			Vector3(1.0, 1.0, 1.0))
+	var enemy := _statue(self, at + Vector3(-6.0, -1.0, 0.0))
+	await _settle(1)
+	var too_heavy := VerbPin.begin(eye, heavy, "ab_pin_brief", _space())
+	var actor := VerbPin.begin(eye, enemy, "ab_pin_brief", _space())
+	_check(too_heavy["refused"] == Manipulation.TOO_HEAVY
+			and actor["refused"] == Manipulation.ACTOR_MASS_UNMODELLED,
+			"refused: 300 kg on a 260 kg profile (%s), an enemy (%s: §14.2 "
+			% [too_heavy["refused"], actor["refused"]] + "admits PIN on one, "
+			+ "and its mass limit reads a mass no enemy has here)")
+	var pins: Array = []
+	var ended: Array[String] = []
+	for i in 3:
+		var crate := _crate(20.0, at + Vector3(-3.0 + 3.0 * i, 6.0, 0.0))
+		await _settle(1)
+		var held: VerbPin = VerbPin.begin(eye, crate, "ab_pin_brief",
+				_space()).get("pin")
+		held.released.connect(func(r: String) -> void: ended.append(r))
+		pins.append(held)
+	_check(ended == [VerbPin.MAX_PINNED] and not _live(pins[0])
+			and _live(pins[1]) and _live(pins[2]),
+			"`max_pinned` is 2 on `ab_pin_brief`: a third pin releases the "
+			+ "oldest (%s)" % [ended])
+	for held: Variant in pins:
+		if _live(held):
+			(held as VerbPin).release(VerbPin.DETACHED)
+	enemy.queue_free()
+	for body: Node in [slab, weight, heavy]:
+		body.queue_free()
+	await _settle(4)
+
+
+## §14.3 TETHER, items 11 and 12: "TETHER between two points 9 m apart
+## creates a ROPE of length 9.45 (x1.05)" and "A tether beyond
+## `max_length` fails on the second activation and refunds nothing."
+func _tether_ties_two_ends() -> void:
+	print("  -- TETHER: two activations, a rope 1.05 of the span")
+	var stage := _stage(Vector3(1400.0, 0.0, 0.0))
+	var world: Node3D = stage["world"]
+	var player: Player = stage["player"]
+	await _settle(20)
+	var base := player.global_position
+	var links := Constraints.new()
+	links.name = "Constraints"
+	world.add_child(links)
+	var beam := _beam(world, base + Vector3(0.0, 9.4, -6.0))
+	var crate := _crate(40.0, base + Vector3(0.0, 0.4, -6.0))
+	await _settle(20)
+	var eye := player.camera.global_position
+	var space := _space()
+	var up := base + Vector3(0.0, 9.4, -6.0)
+	var first := VerbTether.first(eye, beam, up, "ab_tether_light", space,
+			player)
+	var pending: VerbTether.Pending = first.get("pending")
+	var tied := pending.second(eye, crate,
+			crate.global_position + Vector3(0.0, 0.4, 0.0), space, links)
+	var tether: VerbTether = tied.get("tether")
+	var why: Array[String] = []
+	if tether != null:
+		tether.released.connect(func(r: String) -> void: why.append(r))
+	var id := tether.rope_id if tether != null else ""
+	_check(bool(first["applied"]) and bool(tied["applied"])
+			and absf(float(tied["length_m"]) - 9.45) < 0.01
+			and absf(links.length_of(id) - 9.45) < 0.01
+			and links.kind_of(id) == "ROPE"
+			and is_equal_approx(links.breakable_at_of(id), 2500.0),
+			"item 11: a beam's underside and a crate 9 m below it make a "
+			+ "ROPE of %.3f m (x1.05), breakable at the profile's %.0f N"
+			% [links.length_of(id), links.breakable_at_of(id)])
+	# 18 m from the eye, within the profile's 22; 15 m from the beam.
+	var far := _crate(40.0, base + Vector3(0.0, 0.4, -18.0))
+	var ropes := links.ids().size()
+	await _settle(2)
+	var again := VerbTether.first(eye, beam, up, "ab_tether_light", space,
+			player)
+	var pending_far: VerbTether.Pending = again.get("pending")
+	var long := pending_far.second(eye, far,
+			far.global_position + Vector3(0.0, 0.4, 0.0), space, links)
+	var retry := pending_far.second(eye, crate,
+			crate.global_position + Vector3(0.0, 0.4, 0.0), space, links)
+	_check(long["refused"] == VerbTether.TOO_LONG
+			and retry["refused"] == VerbTether.SPENT
+			and links.ids().size() == ropes,
+			"item 12: %.1f m against a 14 m `max_length` fails on the second "
+			% float(long.get("span_m", 0.0)) + "activation (%s), and the "
+			% long["refused"] + "spent first is not refunded: a retry is "
+			+ "refused as %s and no rope is made" % retry["refused"])
+	var enemy := _statue(world, base + Vector3(3.0, 0.0, -6.0))
+	await _settle(1)
+	var at_enemy := VerbTether.first(eye, enemy, enemy.global_position
+			+ Vector3(0.0, 1.0, 0.0), "ab_tether_light", space, player)
+	var at_player := VerbTether.first(eye, player, player.global_position,
+			"ab_tether_light", space, player)
+	var out_of_range := VerbTether.first(eye, beam, up + Vector3(0.0, 0.0,
+			-30.0), "ab_tether_light", space, player)
+	_check(at_enemy["refused"] == Manipulation.ACTOR_RULE
+			and at_player["refused"] == Manipulation.NEVER_THE_PLAYER
+			and out_of_range["refused"] == Manipulation.OUT_OF_REACH,
+			"refused at the first activation: an enemy (%s), the player (%s), "
+			% [at_enemy["refused"], at_player["refused"]] + "a point past 22 m "
+			+ "(%s)" % out_of_range["refused"])
+	enemy.queue_free()
+	tether.release(VerbTether.SAVE)
+	await _settle(1)
+	_check(why == [VerbTether.SAVE] and not links.has(id),
+			"EPHEMERAL: a save takes the rope out of the solver")
+	# A rope to each of three crates, one at a time: `concurrent` is 2.
+	var three: Array = []
+	var ended: Array[String] = []
+	for i in 3:
+		var hung := _crate(20.0, base + Vector3(-2.0 + 2.0 * i, 0.4, -6.0))
+		await _settle(2)
+		var start := VerbTether.first(eye, beam, up, "ab_tether_light",
+				space, player)
+		var made: VerbTether = (start["pending"] as VerbTether.Pending) \
+				.second(eye, hung, hung.global_position, space, links) \
+				.get("tether")
+		made.released.connect(func(r: String) -> void: ended.append(r))
+		three.append([made, hung])
+	_check(ended == [VerbTether.CONCURRENT] and not _live(three[0][0])
+			and _live(three[1][0]) and _live(three[2][0]),
+			"`concurrent` is 2 on `ab_tether_light`: a third rope releases the "
+			+ "oldest (%s)" % [ended])
+	ended.clear()
+	(three[1][1] as Node).queue_free()
+	await _settle(2)
+	var gone_rope: bool = not links.has((three[1][0] as Object).get(
+			"rope_id")) if is_instance_valid(three[1][0]) else true
+	player.take_damage(Constants.PLAYER_MAX_HP * 10.0)
+	await _settle(2)
+	_check(ended == [VerbTether.TARGET_GONE, VerbTether.DEATH] and gone_rope
+			and links.ids().size() == ropes - 1,
+			"a tied crate destroyed takes its rope, and the caster's death "
+			+ "takes the rest (%s)" % [ended])
+	world.queue_free()
+	crate.queue_free()
+	far.queue_free()
+	await _settle(4)
+
+
+## §14.3 ROTATE, item 17: "ROTATE on a HINGE-constrained object drives it
+## within limits and stops at `limit_upper` without oscillating."
+func _rotate_turns_a_hinge_and_spins_a_body() -> void:
+	print("  -- ROTATE: a hinge driven to its limit, a free body spun")
+	var at := Vector3(1500.0, 10.0, 0.0)
+	var world := Node3D.new()
+	add_child(world)
+	var links := Constraints.new()
+	links.name = "Constraints"
+	world.add_child(links)
+	var wheel := _crate(60.0, at, Vector3(2.0, 0.2, 0.4))
+	links.declare([{"constraint_id": "valve", "kind": "HINGE", "b": wheel,
+			"anchor_a": at, "limit_lower": 0.0, "limit_upper": 1.2}])
+	var eye := Node3D.new()
+	world.add_child(eye)
+	eye.global_position = at + Vector3(0.0, 5.0, 0.0)
+	eye.look_at(at, Vector3.FORWARD)
+	await _settle(10)
+	var out := VerbRotate.begin(eye, wheel, "ab_physics_light", null, -1.0)
+	var turned := -1
+	var peak := -INF
+	for tick in 120:
+		await get_tree().physics_frame
+		peak = maxf(peak, links.value_of("valve"))
+		if turned < 0 and links.value_of("valve") > 1.15:
+			turned = tick + 1
+	# ARRIVED; NOW, DOES IT SIT THERE? A second more, still driven.
+	var lowest := INF
+	var highest := -INF
+	for _i in 60:
+		await get_tree().physics_frame
+		lowest = minf(lowest, links.value_of("valve"))
+		highest = maxf(highest, links.value_of("valve"))
+		peak = maxf(peak, highest)
+	_check(bool(out["applied"]) and bool(out["on_hinge"]) and turned > 0
+			and absf(highest - 1.2) < 0.05 and peak <= 1.2 + 0.05
+			and highest - lowest < 0.02,
+			"item 17: seen from above, a hinged valve turns to its 1.2 rad "
+			+ "limit (past 1.15 after %d ticks, never beyond %.3f) and sits "
+			% [turned, peak] + "there, still driven: %.4f rad of wander in "
+			% (highest - lowest) + "a second")
+	(out["rotate"] as VerbRotate).release(VerbRotate.INPUT)
+	var spun := _crate(20.0, at + Vector3(4.0, 0.0, 0.0))
+	var eye_side := Node3D.new()
+	world.add_child(eye_side)
+	eye_side.global_position = spun.global_position + Vector3(0.0, 0.0, 6.0)
+	eye_side.look_at(spun.global_position, Vector3.UP)
+	await _settle(1)
+	var free := VerbRotate.begin(eye_side, spun, "ab_physics_light")
+	await _settle(10)
+	var view := (-eye_side.global_transform.basis.z).normalized()
+	var omega := spun.angular_velocity
+	_check(bool(free["applied"]) and not bool(free["on_hinge"])
+			and absf(omega.length() - 2.5) < 0.1
+			and omega.normalized().dot(view) > 0.99,
+			"a free body spins at %.2f rad/s about the view axis" % omega.length())
+	(free["rotate"] as VerbRotate).release(VerbRotate.INPUT)
+	var bolted := _crate(20.0, at + Vector3(8.0, 0.0, 0.0))
+	bolted.constrained = true
+	var drawbridge := _crate(500.0, at + Vector3(-6.0, 0.0, 0.0),
+			Vector3(3.0, 0.3, 1.0))
+	links.declare([{"constraint_id": "bridge", "kind": "HINGE",
+			"b": drawbridge, "anchor_a": drawbridge.global_position,
+			"limit_lower": 0.0, "limit_upper": 0.8}])
+	var enemy := _statue(world, at + Vector3(0.0, 0.0, 6.0))
+	await _settle(2)
+	var unhinged := VerbRotate.begin(eye, bolted, "ab_physics_light")
+	var hinged := VerbRotate.begin(eye, drawbridge, "ab_physics_light")
+	var actor := VerbRotate.begin(eye, enemy, "ab_physics_light")
+	_check(unhinged["refused"] == Manipulation.FIXED
+			and bool(hinged["applied"]) and bool(hinged["on_hinge"])
+			and actor["refused"] == Manipulation.ACTOR_RULE,
+			"§14.2: a FIXED body with no hinge is refused (%s); a 500 kg one "
+			% unhinged["refused"] + "on a hinge is ROTATE's, by its axis; an "
+			+ "enemy is refused (%s)" % actor["refused"])
+	if bool(hinged["applied"]):
+		(hinged["rotate"] as VerbRotate).release(VerbRotate.INPUT)
+	world.queue_free()
+	for body: Node in [wheel, spun, bolted, drawbridge]:
+		body.queue_free()
+	await _settle(4)
+
+
+## §14.4 and §31.2, items 22 and 23: "`max_relations` at 3 releases the
+## oldest relation on a fourth; `RULE_RELATION_COUNT` raises it and never
+## past 6" and "A second relation on an already-held object releases the
+## first."
+func _relations_are_counted_and_exclusive() -> void:
+	print("  -- relations: exclusive per object, three at once, oldest out")
+	var stage := _stage(Vector3(1600.0, 0.0, 0.0))
+	var world: Node3D = stage["world"]
+	var player: Player = stage["player"]
+	await _settle(20)
+	var base := player.global_position
+	var links := Constraints.new()
+	links.name = "Constraints"
+	world.add_child(links)
+	var beam := _beam(world, base + Vector3(0.0, 9.0, -8.0))
+	var crates: Array[ManipulableBody] = []
+	for i in 4:
+		crates.append(_crate(20.0, base + Vector3(-3.0 + 2.0 * i, 0.4, -5.0)))
+	await _settle(20)
+	var eye := player.camera.global_position
+	var space := _space()
+	var ended: Array[String] = []
+	var hold := _held(player, crates[0])
+	hold.released.connect(func(r: String) -> void: ended.append("hold " + r))
+	await _settle(2)
+	var pin: VerbPin = VerbPin.begin(eye, crates[0], "ab_pin_brief", space,
+			player).get("pin")
+	await _settle(1)
+	_check(ended == ["hold superseded"] and _live(pin)
+			and VerbRelations.of(player).count() == 1,
+			"item 23: pinning the held crate releases the HOLD (%s); one "
+			% [ended] + "relation, not two")
+	ended.clear()
+	pin.released.connect(func(r: String) -> void: ended.append("pin " + r))
+	var tether: VerbTether = (VerbTether.first(eye, beam,
+			base + Vector3(-1.0, 9.0, -8.0), "ab_tether_light", space,
+			player)["pending"] as VerbTether.Pending).second(eye, crates[1],
+			crates[1].global_position, space, links).get("tether")
+	var second_hold := _held(player, crates[2])
+	await _settle(1)
+	var three := VerbRelations.of(player).count()
+	var fourth: VerbPin = VerbPin.begin(eye, crates[3], "ab_pin_brief",
+			space, player).get("pin")
+	await _settle(1)
+	_check(three == 3 and ended == ["pin max_relations"] and _live(tether)
+			and _live(second_hold) and _live(fourth)
+			and VerbRelations.of(player).count() == 3,
+			"item 22: a pin, a tether and a hold are three; a fourth relation "
+			+ "releases the oldest (%s)" % [ended])
+	var ledger := VerbRelations.of(player)
+	var raised := ledger.raise_by(1)
+	var capped := ledger.raise_by(9)
+	_check(raised == 4 and capped == VerbRelations.CEILING,
+			"`RULE_RELATION_COUNT` raises the cap (+1 is %d) and never past 6 "
+			% raised + "(+9 is %d)" % capped)
+	for held: Variant in ledger.relations():
+		(held as Object).call("release", "input")
+	world.queue_free()
+	for crate in crates:
+		crate.queue_free()
 	await _settle(4)

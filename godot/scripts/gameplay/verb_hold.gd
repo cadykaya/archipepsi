@@ -34,10 +34,9 @@ extends Node
 ## because only the caller knows them: input release and save. Nothing
 ## delivers the verb, so nothing calls those two yet.
 ##
-## Not here: `max_relations` (§14.4) and the second-relation rule (§31.2)
-## across HOLD, PIN and TETHER, which wait on the other two verbs. A
-## second HOLD on a held body releases the first -- that rule, for the
-## one relation that exists.
+## A HOLD is one of the caster's relations (`VerbRelations`): it counts
+## toward §14.4's `max_relations` with PIN and TETHER, and §31.2 releases
+## it when another relation takes its body.
 
 signal released(reason: String)
 
@@ -96,15 +95,13 @@ static func begin(eye_node: Node3D, target: Node, profile: String,
 	if why != "":
 		return {"applied": false, "refused": why}
 	var held: ManipulableBody = target
-	for child: Node in held.get_children():
-		if child is VerbHold and (child as VerbHold).holding():
-			(child as VerbHold).release(SUPERSEDED)
 	var hold := VerbHold.new()
 	hold.name = "VerbHold"
 	hold.body = held
 	hold.eye = eye_node
 	hold.caster = caster_body
 	hold.range_m = float(numbers["range_m"])
+	VerbRelations.of(caster_body).admit(hold)
 	held.add_child(hold)
 	hold._start()
 	return {"applied": true, "refused": "", "hold": hold}
@@ -112,6 +109,15 @@ static func begin(eye_node: Node3D, target: Node, profile: String,
 
 func holding() -> bool:
 	return release_reason == ""
+
+
+## As a relation (`VerbRelations`).
+func active() -> bool:
+	return holding()
+
+
+func bodies() -> Array:
+	return [body] if is_instance_valid(body) else []
 
 
 ## §14.3: "adjustable by the player between 1.5 m and 6.0 m". How far one

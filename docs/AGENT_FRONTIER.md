@@ -106,6 +106,18 @@ one writer.
   - Named source conflict: SETTLE's forced sleep holds an unsupported
     body in mid-air (0.003 m in 1 s) against PIN's short-duration
     rationale. It is unreachable while nothing delivers the verb.
+- **O05-08.2: TETHER, PIN, ROTATE and the relations ledger, runtime
+  only.**
+  - One per-caster `VerbRelations` holds HOLD, PIN and TETHER: §31.2
+    exclusivity, and §14.4's 3 (never past 6).
+  - PIN is a static freeze that bears weight.
+  - TETHER takes two activations (×1.05; `too_long` refunds nothing) and
+    is ephemeral.
+  - ROTATE lands on a hinge's limit and holds it (two versions that left
+    the limit to the joint failed and are recorded). A FIXED body is
+    ROTATE's only on a hinge.
+  - Acceptance items 11, 12, 13, 17, 22 and 23. `godot-verb-runtime` 73
+    checks, 11 sabotages.
 - **O05-14: reconciled, nothing to bind.** No delivered enemy or
   machinery models exist; the 3 projectile visuals stay `pending`.
 - **O05-10 in part: 10.1 audit, 10.3 reversal, 10.4 isolation.** Every

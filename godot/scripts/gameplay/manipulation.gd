@@ -179,9 +179,13 @@ const ACTOR_VERBS := ["PUSH", "PULL", "PIN"]
 ## the refusal's name. PUSH, PULL, HOLD and ALIGN all ask here, so the
 ## table is read in one place. `numbers` is the verb's profile row;
 ## `exclude` is what the line of sight may pass through (the caster).
+##
+## `turns_on_a_hinge`: §14.2's one exception, "ROTATE about a constrained
+## axis" -- a FIXED body with a hinge is ROTATE's to drive, and nothing so
+## heavy is weighed against a verb mass limit it was never meant to meet.
 static func target_refusal(verb: String, target: Node, eye: Vector3,
 		numbers: Dictionary, space: PhysicsDirectSpaceState3D,
-		exclude: Array[RID] = []) -> String:
+		exclude: Array[RID] = [], turns_on_a_hinge := false) -> String:
 	if target == null or not is_instance_valid(target):
 		# §12.3: "A verb aimed at nothing spends nothing."
 		return NO_TARGET
@@ -200,11 +204,13 @@ static func target_refusal(verb: String, target: Node, eye: Vector3,
 	var body: ManipulableBody = target
 	# §14.2: FIXED responds to no verb but DETACH and ROTATE -- bolted,
 	# 400 kg and over, or anchored.
-	if body.mass_class() == MassClass.FIXED:
+	var fixed := body.mass_class() == MassClass.FIXED
+	if fixed and not turns_on_a_hinge:
 		return FIXED
 	# KILOGRAMS, with Design 5 §15.2's one permissive door, exactly as
-	# `push` reads it: a lightened HEAVY body becomes eligible.
-	if body.mass > float(numbers["mass_limit_kg"]) \
+	# `push` reads it: a lightened HEAVY body becomes eligible. Not for a
+	# FIXED body on a hinge: §14.2 admits it by its axis, not its weight.
+	if not fixed and body.mass > float(numbers["mass_limit_kg"]) \
 			and not _lightened_into_reach(body):
 		return TOO_HEAVY
 	if eye.distance_to(body.global_position) > float(numbers["range_m"]):

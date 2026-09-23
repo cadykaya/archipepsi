@@ -128,11 +128,15 @@ rule, before it is edited. Rows are appended as edits land:
 | `Manipulation.settle`, `SETTLE_PROFILES`, `DRIVEN` (new) | §14.3 SETTLE and its profile; §14.2's volume line-of-sight rule | runtime only; offered to nothing | `394817b` |
 | `VerbHold`, `VerbAlign` (Godot, new files) | §14.3 HOLD and ALIGN; §14.4's carry distance; §31.2 for the one relation that exists | runtime only; offered to nothing | `394817b` |
 | `Constraints.GROUP` + `_ready`, `driven(body)`, `involves(id, body)`, `Link.driven_frame` (stamped by `wind` and `drive`) | §14.3 SETTLE ("does not affect constrained objects currently driven by machinery"); §14.3 HOLD's constraint release | additive queries; the solver's behaviour is unchanged (`godot-constraints` 67, `godot-actuator` 93) | `394817b` |
-| `epsilon/requests.OwnedComponentSummary`: `origin`, `origin_game`, `slot` (new, defaulted) | owner direction 2026-09-23 ("Epsilon makes that interpretation using the new source and the existing collection"; "Preserve source provenance") | a request names each owned component's first source and its slot. Old callers stay valid (empty reads as related to nothing) | related-Echoes commit |
-| `campaign.owned_summaries` (new; the request uses it) | as above | the one builder of the summary | related-Echoes commit |
-| `epsilon/fallback`: `_READINGS`, `_reads`, `reading_of`, `_MEANINGFUL`, `_meaningful_delta` (new); `_fallback_echo_create`'s 23 keyword conditions read the table; `_as_sequel` and `as_disposition(reading=)` | owner direction 2026-09-23 ("sharing an Action primitive does not establish that two items are the same family"; "An upgrade must produce a meaningful, visible change"; "Preserve the existing item's useful function") | a sequel needs the same verb, the same reading of both sources and the same slot, and a change of at least 25%. The chain's outputs are unchanged, because the words moved and not the rules | related-Echoes commit |
-| `epsilon/mock.mock_reading` (new); `_mock_echo` passes it | as above | mock relates items by its own catalog reading | related-Echoes commit |
-| `epsilon/claude.ECHO_SYSTEM`: a "RELATED ITEMS" paragraph | as above | a model provider is told the rule and the new fields | related-Echoes commit |
+| `epsilon/requests.OwnedComponentSummary`: `origin`, `origin_game`, `slot` (new, defaulted) | owner direction 2026-09-23 ("Epsilon makes that interpretation using the new source and the existing collection"; "Preserve source provenance") | a request names each owned component's first source and its slot. Old callers stay valid (empty reads as related to nothing) | `b27bee5` |
+| `campaign.owned_summaries` (new; the request uses it) | as above | the one builder of the summary | `b27bee5` |
+| `epsilon/fallback`: `_READINGS`, `_reads`, `reading_of`, `_MEANINGFUL`, `_meaningful_delta` (new); `_fallback_echo_create`'s 23 keyword conditions read the table; `_as_sequel` and `as_disposition(reading=)` | owner direction 2026-09-23 ("sharing an Action primitive does not establish that two items are the same family"; "An upgrade must produce a meaningful, visible change"; "Preserve the existing item's useful function") | a sequel needs the same verb, the same reading of both sources and the same slot, and a change of at least 25%. The chain's outputs are unchanged, because the words moved and not the rules | `b27bee5` |
+| `epsilon/mock.mock_reading` (new); `_mock_echo` passes it | as above | mock relates items by its own catalog reading | `b27bee5` |
+| `epsilon/claude.ECHO_SYSTEM`: a "RELATED ITEMS" paragraph | as above | a model provider is told the rule and the new fields | `b27bee5` |
+| `VerbPin`, `VerbTether` (+ `Pending`), `VerbRotate`, `VerbRelations` (Godot, new files) | §14.3 PIN, TETHER and ROTATE; §14.4 `max_relations`; §31.2 exclusivity | runtime only; offered to nothing | O05-08.2 commit |
+| `VerbHold` joins `VerbRelations` (its private second-HOLD rule is removed); `bodies()`/`active()` | §31.2, which covers HOLD, PIN and TETHER alike | HOLD's 23 checks unchanged | O05-08.2 commit |
+| `Manipulation.target_refusal(..., turns_on_a_hinge)` | §14.2: FIXED responds to "`ROTATE` about a constrained axis" | a FIXED body on a hinge skips FIXED and the mass limit; every other caller unchanged (default false) | O05-08.2 commit |
+| `Constraints.tether(...anchor_a, anchor_b)`, `untether`, `turn`, `hinge_of`, `hinge_axis`, `limits_of`, `breakable_at_of`; `drive(..., by_machine)`; `Link.runtime` | §14.8 (only TETHER is made at runtime, so only a tether is unmade); §14.3 ROTATE; SETTLE's machinery test | additive; `godot-constraints` 67 and `godot-actuator` 93 unchanged | O05-08.2 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -1278,9 +1282,119 @@ graph, not just the sensor, and each was sabotaged.
 - **Still not claimed:** delivery, qualification, or a played use.
   `physics.MANIPULATE_VERBS` and `grants_manipulate` are unchanged, and
   nothing offers these verbs to generation.
-- **Remaining O05-08:** 08.2 (TETHER, PIN, ROTATE), 08.3 (ATTACH,
-  DETACH) and 08.4 (the mass fields) are not started. 08.5 (delivery
-  and qualification) stays behind the design boundary above.
+- **Remaining O05-08:** see O05-08.2 below; 08.3 (ATTACH, DETACH) and
+  08.4 (the mass fields) are not started. 08.5 (delivery and
+  qualification) stays behind the design boundary above.
+
+### O05-08.2 — TETHER, PIN, ROTATE, and the relations they share — runtime only
+
+- **One relations ledger (`VerbRelations`), per caster.** It holds HOLD,
+  PIN and TETHER, the three §14.4 counts ("held, pinned, tethered,
+  combined").
+  - §31.2 comes first: a new relation on an object already under one
+    releases that one (`superseded`).
+  - Then §14.4: at `max_relations` (3) the oldest goes (`max_relations`).
+  - `RULE_RELATION_COUNT` raises the cap by its magnitude and never past
+    6. No rule reaches it yet; the cap is the contract's.
+  - HOLD's own second-HOLD rule is gone, replaced by the ledger.
+    ROTATE is not a relation.
+- **PIN (`VerbPin`).**
+  - Profiles: `ab_pin_brief` 20 m / 6 s / 260 kg / 2 at once;
+    `ab_pin_long` 16 m / 14 s / 400 kg / 1.
+  - "FIXED in world space" is the solver's static freeze: the body
+    collides and bears weight, and nothing moves it. Its semantic mass
+    class is untouched (a reading, stated: FIXED here is where the body
+    is, not what a class plate reads). On release it is unfrozen at rest.
+  - A pin past the profile's `max_pinned` releases that profile's oldest.
+  - It ends on expiry, on DETACH (a `release` reason; the verb is 08.3),
+    on the ledger, or when its body leaves the tree.
+  - An enemy is `actor_mass_unmodelled`: §14.2 admits PIN on one, and
+    the mass limit reads a mass no enemy has.
+- **TETHER (`VerbTether`), two activations.**
+  - `first` commits one end. `Pending.second` ties the rope or refuses,
+    and is spent either way ("refunds nothing"). Profiles:
+    `ab_tether_light` 22 m / 14 m / 2500 N / 2 at once;
+    `ab_tether_strong` 18 m / 10 m / 6000 N / 3.
+  - **Where the rope is tied (a reading, stated).** A surface struck (the
+    world, a static body, a FIXED object) is an anchor at the struck
+    point. A manipulable body is tied at its origin, which is where
+    `Constraints` ties a rope. The length (×1.05) is measured between
+    those two points, so the rope is exactly as slack as the contract
+    says the moment it is tied.
+  - The rope is `Constraints.tether`, the §14.8 seam, which now takes a
+    world anchor. `untether` removes only a runtime tether.
+  - EPHEMERAL. It is watched for the caster's death, the caster leaving
+    the tree (Zone exit), an end body leaving the tree (room unload or
+    destroyed), the rope breaking, and the solver leaving the tree. Save
+    is the caller's `release(save)`.
+  - One past the profile's `concurrent` releases its oldest.
+  - §14.2 at each end: an enemy is `actor_rule`, the player is
+    `never_the_player`, and a point past the range is `out_of_reach`.
+- **ROTATE (`VerbRotate`), while held.**
+  - **A free body:** its angular velocity is held at 2.5 rad/s about the
+    view axis.
+  - **A body on a hinge** (`Constraints.hinge_of`: HINGE, SEESAW or hinge
+    PENDULUM): the hinge's motor turns it the way the view axis turns it,
+    at up to 2.5 rad/s. The rate is slowed to land on the limit and is
+    zero there (held, not pushed on). "Within `limit_lower` /
+    `limit_upper`" is the verb's to keep.
+  - **Two versions that left the limit to the joint were measured and
+    were wrong, and the test caught both.**
+    - Aimed toward the limit value (a DRIVER's `drive`), it reversed on
+      the soft limit's small overshoot and chattered: 0.042 rad of
+      wander in a second.
+    - Told only which way to turn (the new `Constraints.turn`), it drove
+      through Godot's soft limit to 2.418 rad on a 1.2 rad hinge.
+  - **Strength (a reading, stated).** ROTATE has no profile of its own.
+    It reads the `ab_physics_*` row, and its `force` (§12.1: "force in
+    newtons") is the motor's per-step bound.
+  - A hand is not machinery: ROTATE's `turn` does not mark the hinge
+    driven, so SETTLE's exclusion stays about machines.
+  - **§14.2.** A FIXED body is refused unless it has a hinge. A 500 kg
+    drawbridge on one is ROTATE's by its axis, with its weight not
+    measured (`target_refusal(..., turns_on_a_hinge)`). A lighter hinged
+    body still meets its mass limit. An enemy is `actor_rule`.
+  - A hinge whose axis is square to the view gets nothing, which is the
+    literal physics of turning "about the view axis".
+- **Evidence: `make godot-verb-runtime`, 73 checks and 1 note.**
+  - 13: 260 kg pinned on `ab_pin_brief` moves 0.0000 m for 359 physics
+    frames (the release fires on the 360th tick's processing), then
+    expires and falls. A 140 kg load rests on it 0.640 m above its
+    centre (0.65 is resting) at 0.000 m/s.
+  - 11: a beam's underside and a crate 9 m below make a ROPE of
+    9.453 m, breakable at 2500 N.
+  - 12: a 15.0 m span against 14 m is `too_long` on the second
+    activation; a retry is `spent`, and no rope is made.
+  - 17: the hinged valve reaches 1.2 rad, never exceeds 1.200, and sits
+    there still driven with 0.0000 rad of wander. A free body spins at
+    2.41 rad/s about the view axis (2.5 less one tick of its angular
+    damping).
+  - 22: a pin, a tether and a hold make three; a fourth releases the
+    pin (the oldest). The cap is +1 → 4, and +9 → 6.
+  - 23: pinning the held crate releases the HOLD; one relation, not two.
+  - Also: `max_pinned`, `concurrent`, save, a tied body destroyed, and
+    the caster's death; the refusals for 300 kg, an enemy, the player
+    and range.
+- **Sabotages (11, each restored and each failing by name):**
+
+  | # | Sabotage | Failure |
+  |---|---|---|
+  | P1 | the pin does not freeze | item 13, 39 m of fall, and the load |
+  | P2 | `max_pinned` not kept | the max_pinned check |
+  | T1 | no ×1.05 | item 11 reads 9.003 |
+  | T2 | no `max_length` | item 12 |
+  | T3 | a refused second refunds | item 12 (its retry then ties the rope, and the run ends at 70 checks) |
+  | T4 | death not watched | the ephemeral check |
+  | R1 | ROTATE ignores the limits | item 17 reads 2.418 |
+  | R2 | no hinge exception | the 500 kg drawbridge |
+  | L1 | no exclusivity | item 23 and four HOLD checks |
+  | L2 | no cap | item 22 |
+  | L3 | the cap can pass 6 | +9 reads 12 |
+- **Neighbours unchanged:** `godot-constraints` 67, `godot-actuator` 93,
+  `godot-physics` 68.
+- **Not claimed:** delivery, qualification, played use. A pinned body's
+  interaction with hand carry is undefined by the sources and not
+  handled.
 
 ### O05-14 — existing visual work — reconciled; nothing it may bind
 
