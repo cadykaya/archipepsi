@@ -1,14 +1,14 @@
 extends Node
-## O05-08.1/.2/.3: TEN VERBS' RUNTIME, AND NOTHING ELSE -- PUSH, PULL,
-## HOLD, ALIGN, SETTLE, PIN, TETHER, ROTATE, ATTACH AND DETACH -- and the
-## relations ledger.
+## O05-08.1-.4: ALL TWELVE VERBS' RUNTIME, AND NOTHING ELSE -- PUSH, PULL,
+## HOLD, ALIGN, SETTLE, PIN, TETHER, ROTATE, ATTACH, DETACH, LIGHTEN_FIELD
+## AND ANCHOR_FIELD -- and the relations ledger.
 ##
 ## `Manipulation.impulse_verb`, `VerbHold`, `VerbAlign`,
 ## `Manipulation.settle`, `VerbPin`, `VerbTether`, `VerbRotate` and
 ## `VerbRelations` against Design 2 §14.2 (eligibility), §14.3 (each
 ## verb's contract), §14.4 (the ceilings) and §31.2 (exclusivity), with
 ## the numbered acceptance items of Design 2's own list where they apply
-## (5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 23, 28), on real bodies in
+## (5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 28), on real bodies in
 ## a real physics world. The caster is a real `Player` wherever the verb
 ## watches one, so its eye, its body and its death are the real ones.
 ##
@@ -78,6 +78,7 @@ func _run() -> void:
 	await _rotate_turns_a_hinge_and_spins_a_body()
 	await _relations_are_counted_and_exclusive()
 	await _attach_welds_and_detach_gives_back()
+	await _fields_scale_kilograms()
 	_finish()
 
 
@@ -1647,4 +1648,215 @@ func _attach_welds_and_detach_gives_back() -> void:
 		body.queue_free()
 	for girder in girders:
 		girder.queue_free()
+	await _settle(4)
+
+
+## The aim point on `body`: where a ray from `eye` meets it.
+func _aim_point(eye: Vector3, body: Node3D, exclude: Array[RID]) -> Vector3:
+	var ray := PhysicsRayQueryParameters3D.create(eye, body.global_position)
+	ray.exclude = exclude
+	return _space().intersect_ray(ray).get("position", body.global_position)
+
+
+## §14.3 LIGHTEN_FIELD / ANCHOR_FIELD, items 18 and 19: "`LIGHTEN_FIELD` at
+## `0.35` on a `320 kg` `BALLAST` yields `112 kg`, class `MEDIUM`, and the
+## change reverts exactly on expiry" and "Two overlapping fields do not
+## stack; the later-applied wins."
+func _fields_scale_kilograms() -> void:
+	print("  -- the mass fields: kilograms scaled, never stacked, given back")
+	var stage := _stage(Vector3(1800.0, 0.0, 0.0))
+	var world: Node3D = stage["world"]
+	var player: Player = stage["player"]
+	await _settle(20)
+	var base := player.global_position
+	var ballast := _crate(320.0, base + Vector3(0.0, 0.5, -8.0),
+			Vector3(1.0, 1.0, 1.0))
+	await _settle(40)
+	var eye := player.camera.global_position
+	var exclude: Array[RID] = [player.get_rid()]
+	var space := _space()
+	var aim := _aim_point(eye, ballast, exclude)
+	var before := Manipulation.target_refusal("PUSH", ballast, eye,
+			Manipulation.PHYSICS_PROFILES["ab_physics_light"], space, exclude)
+	var out := VerbField.begin(VerbField.LIGHTEN, eye, aim, "ab_mass_light",
+			space, world, exclude)
+	var light: VerbField = out.get("field")
+	var began := Engine.get_physics_frames()
+	var ended_on: Array[int] = []
+	if light != null:
+		light.ended.connect(func(_r: String) -> void:
+			ended_on.append(Engine.get_physics_frames()))
+	var rest := ballast.global_position
+	await _settle(10)
+	var during := Manipulation.target_refusal("PUSH", ballast, eye,
+			Manipulation.PHYSICS_PROFILES["ab_physics_light"], space, exclude)
+	_check(bool(out["applied"]) and is_equal_approx(ballast.mass, 112.0)
+			and ballast.mass_class() == MassClass.MEDIUM
+			and ballast.statuses == null,
+			"item 18: LIGHTEN_FIELD at 0.35 makes a 320 kg BALLAST %.1f kg, "
+			% ballast.mass + "class %s -- in kilograms, with no Status on it"
+			% ballast.mass_class())
+	_check(before == Manipulation.TOO_HEAVY and during == ""
+			and ballast.global_position.distance_to(rest) < 0.01,
+			"\"immovable until it is lightened\": the light profile's PUSH "
+			+ "refuses it (%s) and then admits it, and the field itself " % before
+			+ "moved nothing (%.4f m)" % ballast.global_position.distance_to(rest))
+	# Item 19, while the LIGHTEN_FIELD runs: an ANCHOR_FIELD over it.
+	var heavy_out := VerbField.begin(VerbField.ANCHOR, eye, aim,
+			"ab_mass_heavy", space, world, exclude)
+	var heavy: VerbField = heavy_out.get("field")
+	# Read every tick, not once: a field that judged eligibility on the
+	# kilograms it scaled would drop the body it had made FIXED, give it back
+	# its 320, and take it again the tick after -- a flicker one reading on
+	# the right tick would miss.
+	var readings: Array[float] = []
+	var classes: Array[String] = []
+	for i in 12:
+		await get_tree().physics_frame
+		readings.append(ballast.mass)
+		classes.append(ballast.mass_class())
+	var anchored := ballast.mass
+	var steady := readings.all(func(kg: float) -> bool:
+			return is_equal_approx(kg, 800.0))
+	var fixed_all := classes.all(func(c: String) -> bool:
+			return c == MassClass.FIXED)
+	var seen: Array[String] = []
+	for c in classes:
+		if not seen.has(c):
+			seen.append(c)
+	_check(bool(heavy_out["applied"]) and steady and fixed_all,
+			"item 19: an ANCHOR_FIELD laid over it wins, and does not stack: "
+			+ "%.0f kg (320 x 2.5, not 112 x 2.5 = 280) on every one of %d "
+			% [anchored, readings.size()] + "ticks (%.0f to %.0f), class "
+			% [readings.min(), readings.max()] + "%s on all of them -- "
+			% "/".join(seen)
+			+ "which does not drop it from the field, whose eligibility reads "
+			+ "its own 320 kg")
+	heavy.end("test")
+	await _settle(2)
+	_check(is_equal_approx(ballast.mass, 112.0) and light.active(),
+			"the later one gone, the earlier one -- still running -- has it "
+			+ "again: %.1f kg" % ballast.mass)
+	while ended_on.is_empty() and Engine.get_physics_frames() - began < 700:
+		await get_tree().physics_frame
+	var lasted := (ended_on[0] - began) if not ended_on.is_empty() else -1
+	_check(ballast.mass == 320.0 and ballast.mass_class() == MassClass.HEAVY
+			and lasted >= 599 and lasted <= 601,
+			"item 18: and on expiry after %d physics frames (10 s is 600) it "
+			% lasted + "is exactly %.1f kg again, class %s"
+			% [ballast.mass, ballast.mass_class()])
+	# KILOGRAMS AND CLASS, KEPT APART: a `lightened` crate in a field.
+	var crate := _crate(100.0, base + Vector3(3.0, 0.4, -8.0))
+	crate.apply_status("lightened", 60.0, 1.0)
+	await _settle(4)
+	var status_only := crate.mass_class()
+	var both_out := VerbField.begin(VerbField.LIGHTEN, eye,
+			_aim_point(eye, crate, exclude), "ab_mass_light", space, world,
+			exclude)
+	var both: VerbField = both_out.get("field")
+	await _settle(2)
+	var scaled := crate.mass
+	var both_class := crate.mass_class()
+	both.end("test")
+	await _settle(2)
+	_check(status_only == MassClass.LIGHT and is_equal_approx(scaled, 35.0)
+			and both_class == MassClass.LIGHT and crate.mass == 100.0
+			and crate.statuses.has("lightened")
+			and crate.mass_class() == MassClass.LIGHT,
+			"a Status steps the class and a field scales the kilograms: "
+			+ "100 kg lightened reads %s; in the field it is %.0f kg, "
+			% [status_only, scaled] + "derived MEDIUM stepped to %s; out of "
+			% both_class + "it, 100 kg again with the Status still on it")
+	# MEMBERSHIP: in, and out.
+	var drifter := _crate(20.0, base + Vector3(12.0, 0.4, -8.0))
+	var wide := VerbField.begin(VerbField.LIGHTEN, eye, aim, "ab_mass_light",
+			space, world, exclude).get("field") as VerbField
+	await _settle(2)
+	var outside := drifter.mass
+	drifter.global_position = ballast.global_position + Vector3(2.0, 0.0, 0.0)
+	await _settle(2)
+	var inside := drifter.mass
+	drifter.global_position = base + Vector3(12.0, 0.4, -8.0)
+	await _settle(2)
+	_check(is_equal_approx(outside, 20.0) and is_equal_approx(inside, 7.0)
+			and is_equal_approx(drifter.mass, 20.0),
+			"a volume, not a snapshot: a crate outside it is %.0f kg, carried "
+			% outside + "in it is %.0f kg, and carried out, its own %.0f kg "
+			% [inside, drifter.mass] + "again")
+	wide.end("test")
+	# WHAT A FIELD LEAVES ALONE, AND WHAT IS REFUSED.
+	var fixed := _crate(450.0, base + Vector3(-2.0, 0.5, -8.0),
+			Vector3(1.0, 1.0, 1.0))
+	var withheld := _crate(40.0, base + Vector3(1.5, 0.4, -9.5))
+	withheld.add_to_group(Constants.REQUIRED_OBJECT_GROUP)
+	withheld.physics_permitted = false
+	await _settle(4)
+	var last := VerbField.begin(VerbField.LIGHTEN, eye, aim, "ab_mass_light",
+			space, world, exclude).get("field") as VerbField
+	await _settle(2)
+	_check(fixed.mass == 450.0 and withheld.mass == 40.0
+			and last.governed.has(ballast),
+			"left alone in the volume: 450 kg (FIXED) and a required object "
+			+ "whose package withholds physics")
+	last.end("test")
+	var wrong := VerbField.begin(VerbField.LIGHTEN, eye, aim,
+			"ab_mass_heavy", space, world, exclude)
+	var far := VerbField.begin(VerbField.LIGHTEN, eye,
+			eye + Vector3(0.0, 0.0, -25.0), "ab_mass_light", space, world,
+			exclude)
+	var wall := _wall(world, eye + Vector3(0.0, 0.0, -2.0))
+	await _settle(1)
+	var blind := VerbField.begin(VerbField.LIGHTEN, eye, aim,
+			"ab_mass_light", space, world, exclude)
+	var neither := VerbField.begin("SHRINK_FIELD", eye, aim,
+			"ab_mass_light", space, world, exclude)
+	_check(wrong["refused"] == VerbField.WRONG_DIRECTION
+			and far["refused"] == Manipulation.OUT_OF_REACH
+			and blind["refused"] == Manipulation.NO_LINE_OF_SIGHT
+			and neither["refused"] == VerbField.NOT_A_FIELD,
+			"refused: a LIGHTEN_FIELD on the anchoring profile (%s), a "
+			% wrong["refused"] + "centre 25 m off (%s), a wall before it "
+			% far["refused"] + "(%s), and a field §14.1 does not name (%s)"
+			% [blind["refused"], neither["refused"]])
+	wall.queue_free()
+	await _settle(2)
+	# A WELD UNDER A FIELD KEEPS ITS KILOGRAMS: two 95 kg girders welded
+	# inside a LIGHTEN_FIELD are one body of 190 kg, which the field scales;
+	# the field gone, 190; detached, 95 each.
+	var g_root := _girder(base + Vector3(-5.0, 0.15, -14.0))
+	var g_part := _girder(base + Vector3(-5.0, 0.15, -11.0))
+	await _settle(20)
+	player.global_position = base + Vector3(-3.0, 0.0, -9.0)
+	await _settle(4)
+	var near_eye := player.camera.global_position
+	var weld_field: VerbField = VerbField.begin(VerbField.LIGHTEN, near_eye,
+			_aim_point(near_eye, g_root, exclude), "ab_mass_light", _space(),
+			world, exclude).get("field")
+	# Asked now: an ended field frees itself, and a freed one reads null.
+	var laid := weld_field != null
+	await _settle(2)
+	var socket := VerbAttach.world_transform_of(g_root) \
+			* (g_root.attach_points[0] as AttachPoint).local_transform
+	var weld_hold := await _hold_near(player, g_part, socket.origin)
+	VerbAttach.attach(weld_hold, g_root, 0, player.camera.global_position)
+	await _settle(2)
+	var welded_scaled := g_root.mass
+	if weld_field != null:
+		weld_field.end("test")
+	await _settle(2)
+	var welded_own := g_root.mass
+	VerbAttach.detach(g_part)
+	await _settle(2)
+	_check(laid and is_equal_approx(welded_scaled, 66.5)
+			and is_equal_approx(welded_own, 190.0)
+			and is_equal_approx(g_root.mass, 95.0)
+			and is_equal_approx(g_part.mass, 95.0),
+			"a weld under a field keeps its kilograms: two girders welded in "
+			+ "a LIGHTEN_FIELD are %.1f kg (190 x 0.35); the field gone, " % welded_scaled
+			+ "%.0f; detached, %.0f and %.0f" % [welded_own, g_root.mass,
+				g_part.mass])
+	world.queue_free()
+	for body: Node in [ballast, crate, drifter, fixed, withheld, g_root,
+			g_part]:
+		body.queue_free()
 	await _settle(4)

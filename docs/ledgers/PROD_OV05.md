@@ -137,9 +137,12 @@ rule, before it is edited. Rows are appended as edits land:
 | `VerbHold` joins `VerbRelations` (its private second-HOLD rule is removed); `bodies()`/`active()` | §31.2, which covers HOLD, PIN and TETHER alike | HOLD's 23 checks unchanged | `2b60770` |
 | `Manipulation.target_refusal(..., turns_on_a_hinge)` | §14.2: FIXED responds to "`ROTATE` about a constrained axis" | a FIXED body on a hinge skips FIXED and the mass limit; every other caller unchanged (default false) | `2b60770` |
 | `Constraints.tether(...anchor_a, anchor_b)`, `untether`, `turn`, `hinge_of`, `hinge_axis`, `limits_of`, `breakable_at_of`; `drive(..., by_machine)`; `Link.runtime` | §14.8 (only TETHER is made at runtime, so only a tether is unmade); §14.3 ROTATE; SETTLE's machinery test | additive; `godot-constraints` 67 and `godot-actuator` 93 unchanged | `2b60770` |
-| `AttachPoint`, `VerbAttach` (Godot, new files) | §14.3 ATTACH/DETACH; §4.8 `AttachPoint` | runtime only; offered to nothing | O05-08.3 commit |
-| `ManipulableBody.material`, `attach_points`, `welds`, `welded_into` (new; empty by default); `interact`/`interact_prompt` first undo a PLAYER weld | §4.8 `material`, `attach_points`; O05-08.3 "Keep the base interaction for undoing player-created attachment" | no authored body has a material or a point, and nothing makes a weld outside the tests, so every existing `interact` is unchanged (`godot-carry`) | O05-08.3 commit |
-| `Constraints.sever(id)` | §14.3 DETACH "breaks a `ConstraintSpec` whose `breakable_at` is non-null" | breaks through the solver's own `_check_break`; refuses an unbreakable one | O05-08.3 commit |
+| `AttachPoint`, `VerbAttach` (Godot, new files) | §14.3 ATTACH/DETACH; §4.8 `AttachPoint` | runtime only; offered to nothing | `0f4c335` |
+| `ManipulableBody.material`, `attach_points`, `welds`, `welded_into` (new; empty by default); `interact`/`interact_prompt` first undo a PLAYER weld | §4.8 `material`, `attach_points`; O05-08.3 "Keep the base interaction for undoing player-created attachment" | no authored body has a material or a point, and nothing makes a weld outside the tests, so every existing `interact` is unchanged (`godot-carry`) | `0f4c335` |
+| `Constraints.sever(id)` | §14.3 DETACH "breaks a `ConstraintSpec` whose `breakable_at` is non-null" | breaks through the solver's own `_check_break`; refuses an unbreakable one | `0f4c335` |
+| `VerbField` (Godot, new file) | §14.3 LIGHTEN_FIELD/ANCHOR_FIELD and their profiles; §14.4 radius ceiling 8.0 m and multiplier range 0.30–3.00; §10.2 derivation | runtime only; offered to nothing | O05-08.4 commit |
+| `ManipulableBody.own_mass`, `field` (new; -1 and null by default) | §14.3 "Fields do not stack" | set only by a field; every other reader still reads `mass`, which is the body's own kilograms whenever no field scales it | O05-08.4 commit |
+| `VerbAttach._own`, `_set_own` (new); ATTACH gives a held part back from its field before the weld | §14.3 ATTACH with the fields: item 14's 190 kg is the girders' own kilograms | with no field, the O05-08.3 arithmetic exactly (its checks unchanged) | O05-08.4 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -1467,6 +1470,114 @@ graph, not just the sensor, and each was sabotaged.
 - **Neighbours unchanged:** `godot-carry` 32 (the `interact` path),
   `godot-constraints` 67, `godot-physics` 68, `godot-mass-class` 59,
   `godot-unweighted` 70, `godot-transport` 106.
+
+### O05-08.4 — LIGHTEN_FIELD and ANCHOR_FIELD — runtime only, apart from the Statuses
+
+- **Kilograms, not class.** A field scales the body's actual `mass`, and
+  the class follows the kilograms (§10.2 derives it). The Statuses
+  `lightened` and `anchored` (Design 5 §15.2) work the other way: they
+  step the class, or make it FIXED, and leave the kilograms alone. A
+  field never touches `statuses`, and a Status never touches `mass`. A
+  body under both reads the class its scaled kilograms derive, stepped
+  by its Status.
+- **The two §14.3 profiles, within §14.4's bounds.**
+  - `ab_mass_light`: 20 m range, 7 m radius, 10 s, ×0.35.
+  - `ab_mass_heavy`: 20 m range, 6 m radius, 8 s, ×2.50.
+  - The radius ceiling is 8 m, and the multiplier stays within
+    0.30–3.00.
+  - A LIGHTEN_FIELD must scale below 1 and an ANCHOR_FIELD above 1
+    (`wrong_direction`). Anything else is `not_a_field`.
+  - Line of sight is needed to the centre only; §14.2 treats fields as
+    volumes.
+- **Not stacked; the later wins.** The scale always applies to the
+  body's own kilograms (`ManipulableBody.own_mass`), never to a scaled
+  mass. A body inside two fields takes the one applied later. When that
+  one ends, an earlier field still running takes it back.
+- **Membership is continuous — a stated reading.** "Every eligible
+  object whose origin is inside a sphere ... for `duration`" is read as
+  a volume that governs what is inside it while it lasts. A body
+  carried in is scaled; one carried out gets its own kilograms back. The
+  other reading, a snapshot at the moment of the cast, is not taken.
+- **Eligibility reads the body's own kilograms.** Otherwise an
+  ANCHOR_FIELD that takes a 320 kg BALLAST to 800 kg would make it FIXED
+  and drop it from the field that did so.
+  - Eligible means a `ManipulableBody` whose own class is not FIXED and
+    which is not a required object whose package withholds physics.
+  - §14.2: FIXED objects "respond to no verb except `DETACH` and
+    `ROTATE`". The Status `anchored` makes a body FIXED
+    (`MassClass.read`), and Design 2's interaction table agrees:
+    "`ANCHORED` × any verb ... No effect on the target". The Status
+    itself cannot be applied yet, because no runtime implements it on an
+    object (that is O05-09). So a field leaving an `anchored` body alone
+    is read from the rule here, not played, and its check lands with
+    O05-09.
+  - The profiles have no `verb_mass_limit`.
+- **Enemies: the PUSH/PULL gap again.** §14.2's actor rule and item 25
+  admit both fields on enemies, but an enemy has no `mass_kg` in this
+  runtime. The field leaves it alone rather than invent one. This is
+  O05-08.1's `actor_mass_unmodelled`, not a new rule. The player is
+  never a target.
+- **A weld under a field keeps its kilograms.** ATTACH and DETACH add
+  and remove a body's own kilograms, never the field's scaling of them
+  (`VerbAttach._own`/`_set_own`). A part leaving the world is first
+  given back by its field. With no field, the arithmetic is O05-08.3's.
+- **Ending.** A field ends on the 600th physics frame of its 10 s and
+  gives back every body it scales. It does the same if its host leaves
+  the tree (the room unloads).
+- **The source pair, named.** Design 2's interaction table has
+  "`LIGHTENED` × `WEIGHT_THRESHOLD`: Threshold reads the reduced
+  `mass_kg`". That describes Design 2's own Status. The runtime's
+  `lightened` is Design 5 §15.2's, which EX50-033 was built on: it keeps
+  the kilograms. O05-08.4's instruction to keep the fields "distinct
+  from LIGHTENED/ANCHORED Status semantics" settles which reading this
+  unit follows. The fields carry the reduced kilograms; the Status does
+  not.
+- **Not here.**
+  - The cast time (0.15 s) belongs to the activation (§12.2/§12.3), and
+    nothing delivers the verb.
+  - Nothing in the runtime blows objects about, so Design 2 §26's wind
+    consequence has no consumer yet. Any consumer that reads the class
+    or the kilograms reads the field.
+- **Evidence: `make godot-verb-runtime`, 92 checks and 1 note.**
+  - Item 18: a 320 kg BALLAST in a LIGHTEN_FIELD at 0.35 is 112 kg,
+    class MEDIUM, with no Status on it. Before the field, the light
+    profile's PUSH refuses it (`too_heavy`); inside the field, it admits
+    it. The field itself moves it 0.0000 m. After 600 physics frames it
+    is 320 kg again, class HEAVY.
+  - Item 19: an ANCHOR_FIELD laid over it wins and does not stack. It
+    reads 800 kg (not 280) and FIXED on each of 12 consecutive ticks.
+    When that field ends, the earlier one, still running, takes it back
+    at 112 kg.
+  - A `lightened` 100 kg crate reads LIGHT. In a field it is 35 kg, its
+    derived MEDIUM stepped to LIGHT. Out of the field it is 100 kg
+    again, with the Status still on it.
+  - Membership: a crate outside the field is 20 kg, 7 kg once carried
+    in, and 20 kg once carried out.
+  - Left alone inside the volume: a 450 kg (FIXED) body, and a required
+    object whose package withholds physics.
+  - Refused: the wrong direction for the profile, a centre 25 m off, a
+    wall before the centre, and a field §14.1 does not name.
+  - A weld: two girders welded inside a LIGHTEN_FIELD are 66.5 kg
+    (190 × 0.35). With the field gone they are 190 kg; detached, 95 kg
+    each.
+- **Sabotages (7, each restored, each failing by name):**
+  - F1, the scale stacks: item 19 reads 280 kg, class heavy.
+  - F2, expiry gives nothing back: item 18 reads 112 kg after expiry,
+    and the Status and weld checks follow.
+  - F3, a snapshot rather than a volume: the crate carried out keeps
+    7 kg.
+  - F4, eligibility reads the scaled mass. **It passed at first.**
+    Item 19 read the mass once, and the flicker it causes (the body
+    dropped as FIXED at 800 kg, taken again at 320 kg) shows 800 on
+    every other tick. The check now reads every tick, and F4 fails it
+    ("320 to 800").
+  - F5, an earlier field keeps what a later one takes: item 19 reads
+    112 kg.
+  - F6, the weld counts scaled kilograms: 128.2 kg in the field and
+    95 kg without it.
+  - F8, no direction check: the refusal check reads an empty refusal.
+- **Neighbours:** `godot-carry` 32 (the `interact` path),
+  `godot-constraints` 67, `godot-physics` 68, `godot-mass-class` 59.
 
 ### O05-14 — existing visual work — reconciled; nothing it may bind
 

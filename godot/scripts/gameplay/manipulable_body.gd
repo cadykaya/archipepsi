@@ -53,6 +53,11 @@ var attach_points: Array = []
 var welds: Array = []
 ## As a welded part: the root it is welded into, or null.
 var welded_into: ManipulableBody = null
+## Under a mass field (`VerbField`, O05-08.4): the body's OWN kilograms,
+## which `mass` is the field's scaling of, and the field. -1 and null when
+## no field scales it. A field never stacks on a scaled mass.
+var own_mass := -1.0
+var field: VerbField = null
 
 ## The player holding this, or null. Set only by `HandCarry`.
 var carried_by: Node = null

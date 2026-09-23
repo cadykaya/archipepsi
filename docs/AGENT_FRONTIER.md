@@ -126,6 +126,23 @@ one writer.
   - §4.8's `material` and `attach_points` exist and are empty by
     default. Persistence of a weld is named, not built.
   - Items 14, 15 and 16. `godot-verb-runtime` 82 checks, 7 sabotages.
+- **O05-08.4: LIGHTEN_FIELD and ANCHOR_FIELD, runtime only.**
+  - A field scales the body's KILOGRAMS, and the class follows; a
+    Status steps the CLASS and keeps the kilograms. Neither touches the
+    other's field.
+  - Fields never stack: the scale is always of the body's own
+    kilograms. The later field wins, and an earlier one still running
+    takes the body back.
+  - Membership is continuous (a stated reading), and eligibility reads
+    the body's own kilograms, so an ANCHOR_FIELD never drops the body it
+    made FIXED.
+  - A weld under a field keeps its own kilograms. Enemies are left
+    alone: they have no `mass_kg`, the same gap as PUSH/PULL.
+  - Items 18 and 19. `godot-verb-runtime` 92 checks, 7 sabotages. The
+    item-19 check first read the mass once, and a sabotage passed it,
+    so it now reads every tick.
+  - The `anchored` Status has no runtime yet (O05-09), so a field
+    leaving an `anchored` body alone is stated, not played.
 - **O05-14: reconciled, nothing to bind.** No delivered enemy or
   machinery models exist; the 3 projectile visuals stay `pending`.
 - **O05-10 in part: 10.1 audit, 10.3 reversal, 10.4 isolation.** Every

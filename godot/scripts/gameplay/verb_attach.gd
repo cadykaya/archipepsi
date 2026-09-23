@@ -77,6 +77,10 @@ static func attach(hold: VerbHold, target: ManipulableBody, point: int,
 	if chain > CHAIN_CAP:
 		return {"applied": false, "refused": CHAIN_FULL, "chain": chain}
 	hold.release(ATTACHED)
+	# A PART LEAVES THE WORLD, and any mass field with it: the weld counts
+	# in its own kilograms.
+	if held.field != null and is_instance_valid(held.field):
+		held.field._give_back(held)
 	_weld(root, held, at, socket, by_player)
 	return {"applied": true, "refused": "", "root": root,
 			"mass_kg": root.mass, "chain": count(root)}
@@ -105,7 +109,7 @@ static func detach(part: ManipulableBody) -> Dictionary:
 	part.freeze_mode = weld["freeze_mode"]
 	part.freeze = weld["freeze"]
 	part.mass = weld["mass"]
-	root.mass -= float(weld["mass"])
+	_set_own(root, _own(root) - float(weld["mass"]))
 	for body: ManipulableBody in [part, root]:
 		body.linear_velocity = Vector3.ZERO
 		body.angular_velocity = Vector3.ZERO
@@ -154,6 +158,22 @@ static func world_transform_of(body: ManipulableBody) -> Transform3D:
 	if weld.is_empty():
 		return body.global_transform
 	return root.global_transform * (weld["rel"] as Transform3D)
+
+
+## A body's OWN kilograms, whether or not a mass field scales it now
+## (`VerbField`): a weld adds and a DETACH takes away kilograms that are
+## the body's, never the field's scaling of them.
+static func _own(body: ManipulableBody) -> float:
+	return body.own_mass if body.own_mass >= 0.0 else body.mass
+
+
+static func _set_own(body: ManipulableBody, kilograms: float) -> void:
+	if body.own_mass >= 0.0 and body.field != null \
+			and is_instance_valid(body.field):
+		body.own_mass = kilograms
+		body.mass = kilograms * body.field.magnitude
+	else:
+		body.mass = kilograms
 
 
 ## The body an assembly's welds hang from: itself, unless it was welded.
@@ -205,7 +225,7 @@ static func _weld(root: ManipulableBody, held: ManipulableBody,
 	var record := {
 		"part": held, "point": socket, "by_player": by_player,
 		"rel": root.global_transform.affine_inverse() * held.global_transform,
-		"mass": held.mass - carried_mass,
+		"mass": _own(held) - carried_mass,
 		"layer": held.collision_layer, "mask": held.collision_mask,
 		"visible": held.visible, "freeze": held.freeze,
 		"freeze_mode": held.freeze_mode,
@@ -224,8 +244,8 @@ static func _weld(root: ManipulableBody, held: ManipulableBody,
 	for node: Node3D in moving:
 		node.name = "weld_%d_%s" % [node.get_instance_id(), node.name]
 		node.reparent(root, true)
-	root.mass += held.mass
-	held.mass = maxf(held.mass - carried_mass, 0.001)
+	_set_own(root, _own(root) + _own(held))
+	held.mass = maxf(_own(held) - carried_mass, 0.001)
 	held.freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
 	held.freeze = true
 	held.collision_layer = 0
