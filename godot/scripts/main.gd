@@ -93,6 +93,7 @@ const DRIVERS := {
 	"--signal-graph": preload("res://tests/signal_graph_driver.gd"),
 	"--latched-route": preload("res://tests/latched_route_driver.gd"),
 	"--theme-pack": preload("res://tests/theme_pack_driver.gd"),
+	"--carry": preload("res://tests/carry_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }

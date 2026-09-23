@@ -1,0 +1,737 @@
+{
+  "packet": "Archipepsi Overnight 05",
+  "reference_head": "330c55563104e51b9d87a1c9c2efa9efe6529722",
+  "reference_head_is_not_reset_target": true,
+  "agent": "Prod",
+  "paused_agents": [
+    "Dess",
+    "Arty"
+  ],
+  "authority": "01_EXECUTION_PLAN.md and effective owner-approved design; this inventory is derivative",
+  "status_note": "UNRECONCILED does not mean missing. Preserve completed work and execute only the remainder.",
+  "package_count": 18,
+  "task_count": 85,
+  "packages": [
+    {
+      "id": "O05-00",
+      "title": "Preserve, reconcile and start",
+      "maps_to": "Maps to P00 / P23. This is setup, not the night\u2019s deliverable.",
+      "tasks": [
+        {
+          "id": "O05-00.1",
+          "title": "Protect the delivered checkpoint",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-00.2",
+          "title": "Reconcile the first dependencies",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-00.3",
+          "title": "Persist this work order and ownership",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-00.4",
+          "title": "Start a code unit",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-01",
+      "title": "Ordinary hand carry, actually operated",
+      "maps_to": "Maps to P12 prerequisite / P16. Base-kit interaction is not an Echo HOLD ability.",
+      "tasks": [
+        {
+          "id": "O05-01.1",
+          "title": "Implement the selected pickup/drop interaction",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-01.2",
+          "title": "Keep it physical",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-01.3",
+          "title": "Integrate input and feedback",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-01.4",
+          "title": "Prove both legal and illegal cases",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-02",
+      "title": "Carry one required object across rooms and use it",
+      "maps_to": "Maps to P16.1\u2013.5 / P03. Do not introduce a fifth setpiece.",
+      "tasks": [
+        {
+          "id": "O05-02.1",
+          "title": "Build from the delivered declaration",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-02.2",
+          "title": "Traverse actual connections",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-02.3",
+          "title": "Install in the real consumer",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-02.4",
+          "title": "Preserve authority and uniqueness",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-02.5",
+          "title": "Demonstrate Status continuity separately",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-03",
+      "title": "Restore and recover the transported-object journey",
+      "maps_to": "Maps to P04 / P16. Build on the delivered fresh-process and latch-restart coverage.",
+      "tasks": [
+        {
+          "id": "O05-03.1",
+          "title": "Persist the accepted physical facts",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-03.2",
+          "title": "Restart at two meaningful points",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-03.3",
+          "title": "Restore in the right order",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-03.4",
+          "title": "Recover without solving for the player",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-03.5",
+          "title": "Isolate reset domains",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-04",
+      "title": "A reversible branch action changes machinery elsewhere",
+      "maps_to": "Maps to P03 / P04 / P15. Independent early work when transport is blocked.",
+      "tasks": [
+        {
+          "id": "O05-04.1",
+          "title": "Bind an existing D-8 configuration",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-04.2",
+          "title": "Make the consequence useful and visible",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-04.3",
+          "title": "Verify reversal and escape",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-04.4",
+          "title": "Respect machinery occupancy",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-04.5",
+          "title": "Restart with the chosen configuration",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-05",
+      "title": "Earn the featured Echo and use it at Blindside",
+      "maps_to": "Maps to P01 / P02 / M2. This is the highest-value campaign payoff.",
+      "tasks": [
+        {
+          "id": "O05-05.1",
+          "title": "Reconcile the acquisition seams once",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-05.2",
+          "title": "Compose the intended structure",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-05.3",
+          "title": "Acquire before use",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-05.4",
+          "title": "Make the return matter",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-05.5",
+          "title": "Preserve the five acquisition obligations",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-05.6",
+          "title": "Handle failure without counterfeit success",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-05.7",
+          "title": "Resume the earned result",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-06",
+      "title": "Integrate the three existing minors without changing their meaning",
+      "maps_to": "Maps to P01.2 / P05. Three independent children, not an all-or-nothing dependency.",
+      "tasks": [
+        {
+          "id": "O05-06.1",
+          "title": "Supported occurrence contract",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-06.2",
+          "title": "Passing Platforms",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-06.3",
+          "title": "Counterfire Arcade",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-06.4",
+          "title": "Unweighted Switch",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-06.5",
+          "title": "Real reward and return consumers",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-07",
+      "title": "Broaden the shared graph through actual consumers",
+      "maps_to": "Maps to P14. Do not stop at NOT + LATCH, and do not emit an unused catalogue.",
+      "tasks": [
+        {
+          "id": "O05-07.1",
+          "title": "Inputs the existing rooms need next",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-07.2",
+          "title": "Useful logic nodes",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-07.3",
+          "title": "Shared wiring where meanings match",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-07.4",
+          "title": "Signal verbs and state",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-07.5",
+          "title": "Sensor distinctions and safety",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-08",
+      "title": "Complete more of the twelve manipulation verbs",
+      "maps_to": "Maps to P12 / P13 / P18. This is substantial authorized continuation, not a new design brainstorm.",
+      "tasks": [
+        {
+          "id": "O05-08.1",
+          "title": "PULL/HOLD/ALIGN/SETTLE",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-08.2",
+          "title": "TETHER/PIN/ROTATE",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-08.3",
+          "title": "ATTACH/DETACH",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-08.4",
+          "title": "Mass fields and Status interactions",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-08.5",
+          "title": "Delivery and qualification",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-09",
+      "title": "Advance the effective Status family, not the legacy count",
+      "maps_to": "Maps to P09\u2013P11. Exact effective semantics, one shared support map.",
+      "tasks": [
+        {
+          "id": "O05-09.1",
+          "title": "Kinetic and material consumers first",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-09.2",
+          "title": "Actor behavior, not damage substitutes",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-09.3",
+          "title": "Safe temporary collision and interactions",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-09.4",
+          "title": "Compounds with real inputs",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-09.5",
+          "title": "Preserve compatibility boundaries",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-10",
+      "title": "Machinery and physical assemblies survive interruptions",
+      "maps_to": "Maps to P04 / P13 / P15. Extend scope, do not redo the proved latch.",
+      "tasks": [
+        {
+          "id": "O05-10.1",
+          "title": "Apply the existing common contracts to actual occurrences",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-10.2",
+          "title": "Package-specific physical restoration",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-10.3",
+          "title": "Interrupted operations",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-10.4",
+          "title": "Ownership and isolation",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-11",
+      "title": "Make the corrected consumable path useful in the candidate",
+      "maps_to": "Maps to D-9 / P18 / P19. Do not restart the transaction design.",
+      "tasks": [
+        {
+          "id": "O05-11.1",
+          "title": "Reuse authorization before launch",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-11.2",
+          "title": "Close any specific outstanding promotion condition",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-11.3",
+          "title": "Exercise normal acquisition/creation",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-11.4",
+          "title": "Candidate-only promotion",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-12",
+      "title": "Improve encounter relationships and legibility in existing content",
+      "maps_to": "Maps to P07 / P08 / P21. Use the research as a design lens, not an obsolete roadmap.",
+      "tasks": [
+        {
+          "id": "O05-12.1",
+          "title": "One controlled placement comparison",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-12.2",
+          "title": "Preserve intended counterplay",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-12.3",
+          "title": "Ground navigation and doorway occupancy",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-12.4",
+          "title": "Truthful event instrumentation",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-12.5",
+          "title": "Make consequences understandable",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-13",
+      "title": "Let the real candidate composer use the supported systems",
+      "maps_to": "Maps to P01 / P02 / P19. This must not remain a collection of save-editing tools.",
+      "tasks": [
+        {
+          "id": "O05-13.1",
+          "title": "Candidate configuration, not fixture laundering",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-13.2",
+          "title": "Offer meaningful choices",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-13.3",
+          "title": "Keep all identities and outcomes",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-13.4",
+          "title": "Use available provider paths honestly",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-14",
+      "title": "Consume existing visual work without restarting Arty",
+      "maps_to": "Maps to P08.1 / P21.4 / D-11. Art is paused and approvals are unchanged.",
+      "tasks": [
+        {
+          "id": "O05-14.1",
+          "title": "Bind already approved assets where ready",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-14.2",
+          "title": "Make the pack path maintainable",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-14.3",
+          "title": "Review candidates without promotion",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-15",
+      "title": "Keep a playable build available before the entire queue finishes",
+      "maps_to": "Maps to P21 / P23. Do this incrementally, not only after all reserve work.",
+      "tasks": [
+        {
+          "id": "O05-15.1",
+          "title": "One clear launcher family",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-15.2",
+          "title": "Normal lifecycle, no test-only superpowers",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-15.3",
+          "title": "Preserve a green checkpoint early",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-15.4",
+          "title": "Prepare owner review",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-16",
+      "title": "Continue the named ready reserve instead of stopping early",
+      "maps_to": "Maps to remaining P07/P10\u2013P20/P22. These are authorized continuation priorities, not permission to invent extra systems.",
+      "tasks": [
+        {
+          "id": "O05-16.1",
+          "title": "Finish remaining verbs/sensors/status pairs",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-16.2",
+          "title": "Existing railway network breadth",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-16.3",
+          "title": "Gear/mod runtime where costs already exist",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-16.4",
+          "title": "Approved transaction consumers only",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-16.5",
+          "title": "Assembled runtime and generation recovery",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    },
+    {
+      "id": "O05-17",
+      "title": "Final verification, evidence and stop",
+      "maps_to": "Maps to P23. End only under the stopping rules in \u00a70.",
+      "tasks": [
+        {
+          "id": "O05-17.1",
+          "title": "Freeze one integrated revision",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-17.2",
+          "title": "Preserve evidence distinctions",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-17.3",
+          "title": "Close the selected continuous journey",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-17.4",
+          "title": "Inspect generated differences",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-17.5",
+          "title": "One handoff, playable things first",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        },
+        {
+          "id": "O05-17.6",
+          "title": "End cleanly, not automatically",
+          "status": "UNRECONCILED",
+          "evidence": null,
+          "blocked_by": null
+        }
+      ]
+    }
+  ]
+}

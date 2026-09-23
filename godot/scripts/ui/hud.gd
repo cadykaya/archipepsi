@@ -472,6 +472,9 @@ func bind_player(player: Player) -> void:
 	readouts.bind(player)
 	player.hp_changed.connect(_on_hp_changed)
 	player.interact_prompt_changed.connect(_on_prompt)
+	player.carry_feedback.connect(func(text: String, ok: bool) -> void:
+		toast(text, Color(0.75, 1.0, 0.8) if ok else Color(1.0, 0.6, 0.45),
+				2.0))
 	# Clear whatever the LAST world left on screen. The player only emits
 	# when its interact target CHANGES, and a fresh player starts with a
 	# null target -- so one that spawns looking at nothing emits nothing,

@@ -31,6 +31,9 @@ signal rail_released(at: Vector3)
 ## The consumable slot was pressed with nothing left. Carries the name so
 ## the HUD can say which supply and that entering a Zone refills it.
 signal exhausted(supply_name: String)
+## What the hand did or refused, for the HUD: "CARRYING · 18 kg",
+## "TOO HEAVY TO CARRY · 61 kg (limit 60 kg)", "DROPPED", ...
+signal carry_feedback(text: String, ok: bool)
 
 #: ECHOES §9's control grammar, one binding per slot. LMB is the Static
 #: Pulse and appears nowhere here: its identity is untouchable, so it is
@@ -158,6 +161,10 @@ var _jump_buffer := 0.0
 var _dead := false
 var _spawn_transform: Transform3D
 var _interact_target: Node = null
+## ORDINARY HAND CARRY (Design 2 §10.3-10.4). Not an Echo: every player
+## has hands.
+var carry: HandCarry = null
+var _last_prompt := ""
 var _step_accumulator := 0.0
 var _step_toggle := false
 var _airborne_time := 0.0
@@ -691,6 +698,7 @@ func _note_launch() -> void:
 
 func _ready() -> void:
 	add_to_group("player")
+	carry = HandCarry.new(self)
 	_spawn_transform = global_transform
 	statuses.side = "self"
 	stat_stack.statuses = statuses
@@ -851,7 +859,7 @@ func _physics_process(delta: float) -> void:
 		var direction := (transform.basis
 				* Vector3(input_dir.x, 0, input_dir.y)).normalized()
 		var speed := Constants.WALK_SPEED * speed_mult \
-				* float(env["speed_scale"])
+				* float(env["speed_scale"]) * carry.speed_factor()
 		# Friction below base is how a downside is allowed to express
 		# (§10): slippier control, never a shorter jump.
 		# A grind rail's lane multiplies ground friction down, so a dash
@@ -882,7 +890,8 @@ func _physics_process(delta: float) -> void:
 		# are going. See `_shove_what_i_walked_into`.
 		_walk_intent = Vector3(direction.x * speed, 0.0, direction.z * speed)
 
-		if Input.is_action_pressed("fire_pulse"):
+		# CARRYING BLOCKS THE WEAPON PRIMARY (Design 1 §10.2).
+		if Input.is_action_pressed("fire_pulse") and not carry.holding():
 			_fire_static_pulse()
 		# The Static Pulse keeps LMB and is never any of these. Each slot
 		# owns exactly one binding, so "which button was that" and "which
@@ -890,12 +899,21 @@ func _physics_process(delta: float) -> void:
 		for slot: String in SLOT_ACTIONS:
 			var action: String = SLOT_ACTIONS[slot]
 			if Input.is_action_just_pressed(action):
-				press_slot(slot)
+				# ...AND MOBILITY. Abilities stay usable: a defensive one
+				# unavailable because you are holding a cube is a death
+				# the player cannot explain (Design 1 §10.2).
+				if slot == "mobility" and carry.holding():
+					carry_feedback.emit("MOBILITY BLOCKED WHILE CARRYING",
+							false)
+				else:
+					press_slot(slot)
 			if Input.is_action_just_released(action):
 				runtimes[slot].release()
-		if Input.is_action_just_pressed("interact") \
-				and _interact_target != null:
-			_interact_target.interact(self)
+		if Input.is_action_just_pressed("interact"):
+			if carry.holding():
+				carry.on_interact(_interact_target)
+			elif _interact_target != null:
+				_interact_target.interact(self)
 	elif _launch_flight:
 		# A frozen player steers nothing, so the carrier arrives intact.
 		_carry_launch(Vector3.ZERO)
@@ -915,6 +933,7 @@ func _physics_process(delta: float) -> void:
 		_resolve_pending_slam()
 	_update_footsteps(delta, falling_speed)
 	_update_camera_feel(delta)
+	carry.update(delta)
 	_update_interact_target()
 
 	if global_position.y < Constants.FALL_KILL_Y:
@@ -1274,6 +1293,10 @@ func heal(amount: float) -> void:
 
 func _die() -> void:
 	_dead = true
+	# WHAT THE HAND HELD IS PUT DOWN WHERE IT WAS, at rest. Recovery is
+	# the object's own business (§10.5), not a side effect of dying.
+	if carry != null and carry.holding():
+		carry.release("death")
 	# EVERY transient effect, not only the launch arc. See
 	# `cancel_transient_effects` for the two that used to survive.
 	cancel_transient_effects()
@@ -1309,15 +1332,26 @@ func _update_interact_target() -> void:
 	var target: Node = null
 	if not hit.is_empty():
 		var collider: Variant = hit["collider"]
-		if is_instance_valid(collider) and collider.has_method("interact"):
+		if is_instance_valid(collider) and (collider.has_method("interact")
+				or collider.has_method("install_refusal")):
 			target = collider
-	if target != _interact_target:
-		_interact_target = target
-		var prompt := ""
-		if target != null and target.has_method("interact_prompt"):
-			prompt = target.interact_prompt()
-		elif target != null:
-			prompt = "[E] INTERACT"
+	_interact_target = target
+	# THE PROMPT IS WHAT `interact` WOULD DO NOW, which depends on the
+	# hand as well as on the target -- so it is recomputed every frame and
+	# emitted when its text changes, not only when the target does.
+	var prompt := ""
+	if carry != null and carry.holding():
+		if target != null and target.has_method("install_refusal"):
+			var why: String = target.install_refusal(carry.body)
+			prompt = "[E] INSTALL" if why == "" else why
+		else:
+			prompt = "[E] DROP"
+	elif target != null and target.has_method("interact_prompt"):
+		prompt = target.interact_prompt()
+	elif target != null and target.has_method("interact"):
+		prompt = "[E] INTERACT"
+	if prompt != _last_prompt:
+		_last_prompt = prompt
 		interact_prompt_changed.emit(prompt)
 
 ## Pays out a committed `slam_ground` on the frame the body touches down.

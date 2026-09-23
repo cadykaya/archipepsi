@@ -30,6 +30,21 @@ extends RigidBody3D
 ## contract reasons about and a push may not move.
 @export var constrained := false
 
+## §10.1's flag: may a hand pick this up at all? False unless the content
+## that made the body says so, so every existing crate stays something
+## that is pushed and not picked up. Kilograms decide the rest
+## (`HandCarry.refusal`).
+@export var carriable := false
+
+## The player holding this, or null. Set only by `HandCarry`.
+var carried_by: Node = null
+## The consumer this was installed in, or null. Set only by the consumer.
+var installed_in: Node = null
+
+## Put down by the hand carrying it, and why ("drop", "death",
+## "occluded", ...). A transported object's owner listens to this.
+signal dropped_by_carry(reason: String)
+
 ## Damping, chosen so a pushed crate coasts to a stop rather than sliding
 ## for twenty metres. Not a tuning knob anybody should reach for without
 ## re-running the replay evidence: it is inside `scene_digest`, so
@@ -102,6 +117,15 @@ static func create(id: String, mass_kg: float, size: Vector3,
 	if bolted:
 		body.freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
 	return body
+
+## THE PLAYER'S `interact`, aimed at this body: pick it up if a hand may.
+func interact(player: Node) -> void:
+	var who := player as Player
+	if who != null and who.carry != null:
+		who.carry.try_pick_up(self)
+
+func interact_prompt() -> String:
+	return HandCarry.prompt_for(self)
 
 func _ready() -> void:
 	can_sleep = true

@@ -153,6 +153,7 @@ jobs:
           make godot-signal-graph
           make godot-latched-route
           make godot-theme-pack
+          make godot-carry
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live
