@@ -36,8 +36,12 @@ from dataclasses import dataclass
 
 try:
     from .physics import MINOR_PACKAGE_PREFIX
+    from .signal_graph import (ActuatorBinding, LogicNode, RoomGraph,
+                               SensorNode)
 except ImportError:  # pragma: no cover
     from physics import MINOR_PACKAGE_PREFIX
+    from signal_graph import (ActuatorBinding, LogicNode, RoomGraph,
+                              SensorNode)
 
 
 @dataclass(frozen=True)
@@ -76,6 +80,15 @@ class MinorContract:
     #: at one of these stops or held between them. The stops are names,
     #: not numbers: where each one stands is the room's own geometry.
     carriers: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    #: O05-07. The minor's own relationship as a declared signal graph,
+    #: run by the shared `SignalGraph` in the room that hosts it -- and in
+    #: the development scenario, the same declaration. Validated here by
+    #: the schema every Zone graph passes; exported to Godot as
+    #: `Constants.MINOR_SIGNAL_GRAPHS`. `room_id` is a placeholder: the
+    #: graph is bound to whichever room hosts the minor. Its LATCH nodes
+    #: are exactly the contract's latches, which is what makes a fired
+    #: latch `minor_<room>/<latch>`.
+    graph: RoomGraph | None = None
 
     def carrier_stops(self, carrier_id: str) -> tuple[str, ...] | None:
         """A declared carrier's stops, or None when it has no such one."""
@@ -91,6 +104,21 @@ CONTRACTS: dict[str, MinorContract] = {
         entry_socket="entry",
         sealed_sockets=("exit",),
         latches=("bolt",),
+        # EX50-033 §3: the HEAVY plate under a NOT holds the crossing shut
+        # while loaded; the bolt, once engaged, holds it open for good.
+        graph=RoomGraph(
+            room_id="minor",
+            sensors=(SensorNode(node_id="plate", kind="PRESSURE_PLATE",
+                                requires_class="HEAVY"),
+                     SensorNode(node_id="bolt_lever", kind="PULSE_BUTTON")),
+            nodes=(LogicNode(node_id="unloaded", kind="NOT",
+                             inputs=("plate",)),
+                   LogicNode(node_id="bolt", kind="LATCH",
+                             inputs=("bolt_lever",)),
+                   LogicNode(node_id="open", kind="OR",
+                             inputs=("unloaded", "bolt"))),
+            actuators=(ActuatorBinding(actuator_id="shutter",
+                                       driven_by="open"),)),
         completion=(
             "the crate stands on the HEAVY plate as the step to the sill "
             "and `lightened` releases the plate without moving it; the "

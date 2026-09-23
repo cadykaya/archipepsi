@@ -74,6 +74,14 @@ var goal_plate: ActivityElement = null
 
 var bolted := false
 var reached_goal := false
+## O05-07: THE ROOM'S CHAIN, RUN BY THE SHARED GRAPH. The minor's
+## occurrence contract declares it (`schemas/minors.py`, exported as
+## `Constants.MINOR_SIGNAL_GRAPHS`): the HEAVY plate through a NOT, the
+## bolt lever through a LATCH, both into an OR that commands the
+## shutter. The room binds its own plate, lever and shutter to the
+## declaration's ids and keeps only what is presentation -- its lines,
+## and the return stair the bolt releases.
+var graph: SignalGraph = null
 ## §11's control: the plate's signal is not wired to the shutter.
 var disconnected := false
 var theme := "concrete_facility"
@@ -101,6 +109,7 @@ func build() -> void:
 	_the_applicator()
 	_beyond()
 	_controls()
+	_the_graph()
 	_signs()
 
 
@@ -125,6 +134,11 @@ func step(delta: float) -> void:
 func restore_bolt() -> void:
 	if bolted:
 		return
+	if graph != null:
+		graph.restore_latch("bolt")
+		# ALREADY OPEN, not opening: the crossing the record says is held
+		# is held when the room appears.
+		graph.evaluate(true)
 	_engage(false)
 
 
@@ -291,7 +305,6 @@ func _beyond() -> void:
 	add_child(bolt)
 	bolt.position = Vector3(0.0, SILL_Y + CallLever.BASE.y * 0.5,
 			NORTH_Z + 1.4)
-	bolt.pulled.connect(_on_bolt)
 	goal_plate = ActivityElement.create(ActivityElement.STAND, 0,
 			ActivityElement.PLATE_SIZE, Color(0.55, 1.0, 0.7))
 	add_child(goal_plate)
@@ -303,17 +316,52 @@ func _beyond() -> void:
 		said.emit("GOAL REACHED"))
 
 
-## §3: "Reaching and operating it makes the useful crossing persistent
-## without requiring the temporary Status to remain active forever."
-func _on_bolt(_who: CallLever) -> void:
-	if bolted:
-		return
-	_engage(true)
+## The declared chain, bound to this room's machines by the
+## declaration's own ids. A declared id the room has no machine for is a
+## drift between the contract and the room, and it is said loudly.
+func _the_graph() -> void:
+	var declared: Dictionary = Constants.MINOR_SIGNAL_GRAPHS.get(
+			"minor_unweighted_switch", {})
+	# §11's control cuts the plate's link: declared, left unbound.
+	var machines := {"plate": null if disconnected else plate,
+			"bolt_lever": bolt, "shutter": shutter}
+	graph = SignalGraph.new()
+	graph.name = "Graph"
+	graph.room_id = "minor"
+	for raw: Variant in declared.get("sensors", []) as Array:
+		var id := str((raw as Dictionary).get("node_id", ""))
+		if not machines.has(id):
+			push_error("unweighted switch: the declared sensor '%s' has "
+					% id + "no machine in the room")
+		graph.sensors[id] = machines.get(id)
+	for raw: Variant in declared.get("nodes", []) as Array:
+		var node: Dictionary = raw
+		graph.nodes.append({"id": str(node.get("node_id", "")),
+				"kind": str(node.get("kind", "")),
+				"inputs": node.get("inputs", [])})
+	for raw: Variant in declared.get("actuators", []) as Array:
+		var bind: Dictionary = raw
+		var id := str(bind.get("actuator_id", ""))
+		if not machines.has(id):
+			push_error("unweighted switch: the declared actuator '%s' has "
+					% id + "no machine in the room")
+		graph.actuators[id] = {"node": machines.get(id),
+				"driven_by": str(bind.get("driven_by", "")),
+				"operation": str(bind.get("operation", "command"))}
+	add_child(graph)
+	# §3: "Reaching and operating it makes the useful crossing persistent
+	# without requiring the temporary Status to remain active forever."
+	# The LATCH is the persistence; what is left here is the stair.
+	graph.fired.connect(func(_package: String, node_id: String) -> void:
+		if node_id == "bolt" and not bolted:
+			_engage(true))
+	graph.start()
 
 
+## The bolt's consequences apart from the crossing, which the graph holds:
+## the return stair, and the line.
 func _engage(announce: bool) -> void:
 	bolted = true
-	shutter.command(true)
 	_return_stair = Node3D.new()
 	_return_stair.name = "ReturnStair"
 	add_child(_return_stair)
@@ -343,11 +391,11 @@ func _on_drive(_who: CallLever) -> void:
 
 
 func _on_plate(satisfied: bool) -> void:
-	# THE NOT. A qualifying HEAVY occupant closes the shutter; releasing
-	# the plate opens it. The bolt outranks both once engaged.
+	# THE ROOM'S LINE about what the graph just did: the NOT closes the
+	# shutter under a HEAVY occupant and opens it when the plate is left,
+	# and the bolt's LATCH outranks both through the OR.
 	if bolted:
 		return
-	shutter.command(not satisfied)
 	said.emit("PLATE %s -- shutter %s"
 			% ["ON" if satisfied else "OFF",
 				"closing" if satisfied else "opening"])

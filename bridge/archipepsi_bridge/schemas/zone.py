@@ -30,7 +30,9 @@ try:  # works standalone and when copied into a package
         CARRY_MASS_KG, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
         carriable_by_hand, mass_class, plate_accepts_player,
         state_vector_product)
-    from .signal_graph import RoomGraph, phases, upstream
+    from .signal_graph import (RoomGraph, phases, upstream,
+                               ROUTE_NODE_KINDS, ROUTE_SENSOR_KINDS,
+                               ZONE_PLACEABLE_SENSOR_KINDS)
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
@@ -41,7 +43,9 @@ except ImportError:  # pragma: no cover
         CARRY_MASS_KG, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
         carriable_by_hand, mass_class, plate_accepts_player,
         state_vector_product)
-    from signal_graph import RoomGraph, phases, upstream
+    from signal_graph import (RoomGraph, phases, upstream,
+                              ROUTE_NODE_KINDS, ROUTE_SENSOR_KINDS,
+                              ZONE_PLACEABLE_SENSOR_KINDS)
 
 #: Every joining socket name a procedural room can be given, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
@@ -1683,6 +1687,16 @@ class Zone(Strict):
                 raise ValueError(
                     f"a signal graph names room '{graph.room_id}', which "
                     "this Zone does not have")
+            # O05-07: A ZONE ASKS ONLY FOR WHAT ITS BUILDER PLACES.
+            # `RoomGraphs` puts a class plate down; a button is run by the
+            # same runtime but placed only by a room that owns its lever.
+            for sensor in graph.sensors:
+                if sensor.kind not in ZONE_PLACEABLE_SENSOR_KINDS:
+                    raise ValueError(
+                        f"room '{graph.room_id}' declares a {sensor.kind} "
+                        f"('{sensor.node_id}'); the Zone builder places "
+                        f"{list(ZONE_PLACEABLE_SENSOR_KINDS)} only. A "
+                        "button belongs to a room that owns its machine")
         return self
 
     @model_validator(mode="after")
@@ -1748,7 +1762,22 @@ class Zone(Strict):
                     "it does not touch is a cross-room relationship: "
                     "declare it as Zone state (D-8), not as a room "
                     "graph, which is room-local by construction")
-            sensors, _ = upstream(graph, edge.opened_by)
+            sensors, chain = upstream(graph, edge.opened_by)
+            # O05-07: A ROUTE HANGS ON A CHAIN THIS VALIDATOR REASONS
+            # ABOUT. `phases` and the route search were written for one
+            # plate through NOT/LATCH; an OR or a button in front of a
+            # route would be certified by arithmetic that does not
+            # describe it. Room-local machinery may use them freely.
+            odd = sorted({s.kind for s in sensors
+                          if s.kind not in ROUTE_SENSOR_KINDS}
+                         | {n.kind for n in chain
+                            if n.kind not in ROUTE_NODE_KINDS})
+            if odd:
+                raise ValueError(
+                    f"edge '{edge.edge_id}' is opened through {odd}; a "
+                    "route gate is certified only for the plate, NOT and "
+                    "LATCH chains the route search reasons about. Put "
+                    "that machine inside the room, where it gates nothing")
             for sensor in sensors:
                 if plate_accepts_player(sensor.requires_class,
                                         sensor.counts_player):

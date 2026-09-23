@@ -287,15 +287,20 @@ def test_a_connector_that_needs_mobility_is_not_a_carry_route():
 
 
 def test_a_zone_with_no_edges_is_declined_with_the_reason():
-    raw = played().model_dump()
-    raw["edges"] = []
-    for c in raw["chambers"]:
-        c["doors"] = [d for d in c.get("doors", ())
-                      if d.get("usage") in ("SEALED", "ZONE_EXIT")]
-    try:
-        zone = Zone.model_validate(raw)
-    except Exception:
-        pytest.skip("this Zone cannot be expressed without its edges")
+    """A Zone that declares no edges has no doorway to carry anything
+    through. BUILT so that it validates: the played Zone with its edges
+    stripped does not (its JOINED doors name those edges), and the first
+    version of this test skipped on that every time -- it never ran."""
+    def room(rid: str) -> dict:
+        return {"id": rid, "type": "arena", "width": 16.0, "depth": 15.0,
+                "wall_height": 5.0, "objective": "kill_all",
+                "reward_location_id": 89100001 if rid == "c001" else None,
+                "enemies": [{"archetype": "melee", "count": 1}]}
+    zone = TypeAdapter(Zone).validate_python({
+        "schema_version": 7, "zone_id": "zone_001", "display_name": "Relay",
+        "target_game": "Game", "theme": "void_glitch",
+        "chambers": [room("c001"), room("c002")]})
+    assert not zone.edges
     out = compose_transport(zone)
     assert not out.emitted and "no edges" in out.note
 

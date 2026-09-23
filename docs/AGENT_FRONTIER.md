@@ -58,6 +58,14 @@ one writer.
     (the room audit measured side exits on the far wall), P5-18
     (EX50-011's stair ended against a railing). Earlier: P5-12 (budget),
     P5-14 (the mock forgot confirmed Checks).
+- **O05-07, the shared graph: slice 1 done.** EX50-033's chain is
+  declared in its minor contract and run by the shared `SignalGraph`:
+  PULSE_BUTTON and OR join, with §19.1's port forms enforced. A Zone may
+  still declare only plates, and a route gate still hangs only on
+  plate/NOT/LATCH. `godot-unweighted` 69, where 7 checks read the graph
+  itself, plus a sabotage showing the runtime is what drives the room.
+  EX50-021 is deliberately not routed: its window is the shutter's own
+  timer.
 - **O05-15, the launcher: built.**
   - `Diagnostic Campaign - Candidate (Windows).bat`, or
     `python -m archipepsi_bridge.diagnostic --candidate`.
@@ -67,9 +75,11 @@ one writer.
 
 **Next, in the plan's order:**
 
-1. O05-07 onward (graph inputs and nodes, manipulation verbs, Status,
-   machinery interruptions, consumables, encounters, art binding).
-   O05-10.2's Passing Platforms half is done with O05-06.2.
+1. O05-07 further slices (TIMER/AND/DIRECT and sensors each with a
+   real consumer; signal verbs; sensor safety), then O05-08 onward
+   (manipulation verbs, Status, machinery interruptions, consumables,
+   encounters, art binding). O05-10.2's Passing Platforms half is done
+   with O05-06.2.
 2. The O05-17 frozen run and ZIP.
 
 ## PROD LANE — P14 played and persisted, D-11 on the geometry: integration batch closed — 2026-09-23

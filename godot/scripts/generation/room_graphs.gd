@@ -195,6 +195,14 @@ static func _one(root: Node3D, declared: Dictionary, places: Dictionary,
 		var sensor: Dictionary = entry
 		var kind := str(sensor.get("kind", ""))
 		var why := _refuse_sensor(kind)
+		# THE BUILDER PLACES PLATES (O05-07). A button is run by the same
+		# runtime but placed only by a room that owns its machine; asked
+		# for one here, the builder would otherwise put a plate down.
+		if why == "" and not Constants.SIGNAL_ZONE_PLACEABLE_SENSORS.has(
+				kind):
+			why = ("'%s' is run by the signal graph but the Zone builder "
+					% kind + "places only %s"
+					% [Constants.SIGNAL_ZONE_PLACEABLE_SENSORS])
 		if why != "":
 			graph.free()
 			return {"refused": "room '%s': %s" % [room_id, why]}

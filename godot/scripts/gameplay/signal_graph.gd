@@ -39,8 +39,18 @@ var room_id := ""
 ## and a graph that ran and did nothing are different findings.
 var ticks := 0
 
-## `node_id -> ClassPlate`. The sources.
+## `node_id -> ClassPlate | CallLever | null`. The sources. A plate is a
+## Boolean; a lever is a PULSE_BUTTON (O05-07), whose pull is a pulse
+## that lives exactly one tick (§19.3). A source declared and left null
+## is UNBOUND and reads OFF -- EX50-033's §11 control, the plate's link
+## cut.
 var sensors: Dictionary = {}
+
+## Pulses raised on the tick being evaluated, by sensor id. Cleared the
+## moment that tick is done, so a pulse is never read twice.
+var _pulses: Dictionary = {}
+## Levers already wired, so `start` twice does not pull twice.
+var _wired: Dictionary = {}
 
 ## Logic nodes in DECLARATION order: `[{id, kind, inputs}]`.
 var nodes: Array = []
@@ -121,19 +131,61 @@ func restore_from(refs: Array) -> int:
 	return count
 
 
+## Put ONE latch back by id, silently: for a room that owns its graph and
+## reports its latches under its own package (a hosted minor's
+## `minor_<room>/<latch>`), where `restore_from`'s `graph_` refs do not
+## apply. Like `restore_from`, it records and does not evaluate or
+## announce; the owner settles afterwards.
+func restore_latch(node_id: String) -> bool:
+	for node: Variant in nodes:
+		var id := str((node as Dictionary).get("id", ""))
+		if id == node_id and str((node as Dictionary).get("kind", "")) \
+				== "LATCH" and not latched.has(id):
+			latched[id] = true
+			restored += 1
+			return true
+	return false
+
+
 ## Wire every sensor's change to a re-evaluation, and SETTLE once so the
 ## actuators start in the state the graph says rather than the state
 ## whoever built them left them in. Call it after `restore_from`.
 func start() -> void:
-	for raw: Variant in sensors.values():
-		var plate: ClassPlate = raw
-		if not plate.occupancy_changed.is_connected(_on_sensor):
-			plate.occupancy_changed.connect(_on_sensor)
+	for key: Variant in sensors.keys():
+		var source: Variant = sensors[key]
+		if not is_instance_valid(source):
+			continue
+		if source is ClassPlate:
+			var plate: ClassPlate = source
+			if not plate.occupancy_changed.is_connected(_on_sensor):
+				plate.occupancy_changed.connect(_on_sensor)
+		elif source is CallLever and not _wired.has(str(key)):
+			_wired[str(key)] = true
+			(source as CallLever).pulled.connect(_on_pulse.bind(str(key)))
 	evaluate(true)
 
 
 func _on_sensor(_satisfied: bool) -> void:
 	evaluate()
+
+
+## A PULSE_BUTTON pulled: one tick with its pulse raised, then gone.
+func _on_pulse(_lever: CallLever, sensor_id: String) -> void:
+	_pulses[sensor_id] = true
+	evaluate()
+	_pulses.erase(sensor_id)
+
+
+## What a source reads this tick. An unbound or freed source reads OFF.
+func _read(sensor_id: String) -> bool:
+	var source: Variant = sensors.get(sensor_id)
+	if not is_instance_valid(source):
+		return false
+	if source is ClassPlate:
+		return (source as ClassPlate).satisfied()
+	if source is CallLever:
+		return _pulses.has(sensor_id)
+	return false
 
 
 ## ONE TICK. Sensors, then logic in declaration order, then the
@@ -142,8 +194,7 @@ func _on_sensor(_satisfied: bool) -> void:
 func evaluate(settle := false) -> void:
 	ticks += 1
 	for key: Variant in sensors.keys():
-		var plate: ClassPlate = sensors[key]
-		values[key] = plate.satisfied()
+		values[key] = _read(str(key))
 	for raw: Variant in nodes:
 		var node: Dictionary = raw
 		values[str(node["id"])] = _resolve(node)
@@ -176,6 +227,13 @@ func _resolve(node: Dictionary) -> bool:
 	match str(node.get("kind", "")):
 		"NOT":
 			return not bool(values.get(str(inputs[0]), false))
+		"OR":
+			# §19.2: ON when any input is ON. Two to four Booleans, which
+			# the schema checked; a pulse cannot reach here (§19.1).
+			for feed: Variant in inputs:
+				if bool(values.get(str(feed), false)):
+					return true
+			return false
 		"LATCH":
 			# SET BY A TRUE INPUT AND NEVER RESET. §19.2's latch has no
 			# clear in this slice, because the puzzle it is here for is

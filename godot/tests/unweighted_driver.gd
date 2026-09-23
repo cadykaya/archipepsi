@@ -72,6 +72,7 @@ func _run() -> void:
 	await _an_impulse_doubles_on_the_room_s_own_crate()
 	await _the_window_closes_it_again()
 	await _the_bolt_outlasts_the_status()
+	await _the_chain_is_the_declared_graph()
 	await _a_refused_status_leaves_the_room_alone()
 	await _the_disconnected_control()
 	await _the_complete_route()
@@ -377,6 +378,74 @@ func _the_bolt_outlasts_the_status() -> void:
 			"...and the stair is still there")
 	room.queue_free()
 	await _settle(2)
+
+
+## O05-07: THE CHAIN IS THE MINOR'S DECLARED GRAPH, RUN BY `SignalGraph`.
+## The rest of this suite is the comparison -- the room behaves as it did
+## when the chain was wired by hand. This is the evidence that the shared
+## runtime is what makes it behave: the room's machines are bound to the
+## contract's own ids, and the graph's values move with the plate and the
+## bolt.
+func _the_chain_is_the_declared_graph() -> void:
+	print("  -- THE CHAIN: the contract's graph, run by the shared runtime")
+	var room := _room()
+	await _settle(12)
+	var graph: SignalGraph = room.room.graph
+	var shutter_binding: Dictionary = graph.actuators.get("shutter", {}) \
+			if graph != null else {}
+	_check(graph != null and graph.sensors.get("plate") == room.plate
+			and graph.sensors.get("bolt_lever") == room.bolt
+			and shutter_binding.get("node") == room.shutter
+			and shutter_binding.get("driven_by") == "open",
+			"the room's plate, bolt lever and shutter are bound to the "
+			+ "contract's declared ids, the shutter driven by 'open'")
+	if graph == null:
+		room.queue_free()
+		return
+	var kinds: Array = graph.nodes.map(
+			func(n: Dictionary) -> String: return str(n["kind"]))
+	_check(kinds == ["NOT", "LATCH", "OR"],
+			"the declared nodes, in order: %s" % [kinds])
+	_check(bool(graph.values.get("open", false)) and room.shutter.is_open(),
+			"at rest the graph reads OPEN and the crossing is open")
+	await _drive_to(room, true)
+	for _i in 300:
+		await get_tree().physics_frame
+		if room.shutter.is_shut():
+			break
+	_check(bool(graph.values.get("plate", false))
+			and not bool(graph.values.get("unloaded", true))
+			and not bool(graph.values.get("open", true))
+			and room.shutter.is_shut(),
+			"the crate on the plate: plate ON, NOT OFF, OR OFF, and the "
+			+ "graph shut the crossing")
+	room.bolt.pulled.emit(room.bolt)
+	for _i in 300:
+		await get_tree().physics_frame
+		if room.shutter.is_open():
+			break
+	_check(graph.latched.has("bolt") and bool(graph.values.get("open",
+			false)) and bool(graph.values.get("plate", false))
+			and room.shutter.is_open() and room.bolted,
+			"the bolt's one-tick pulse set the LATCH, and the OR holds the "
+			+ "crossing open with the plate still loaded")
+	# ONE LATER TICK. `values` is the last tick's snapshot and the graph
+	# evaluates on events, so "later" has to be made to happen: §19.3's
+	# pulse lives exactly one tick, and the latch it set does not.
+	graph.evaluate()
+	_check(not bool(graph.values.get("bolt_lever", true))
+			and graph.latched.has("bolt")
+			and bool(graph.values.get("open", false)),
+			"and on the next tick the pulse is gone -- the lever reads OFF "
+			+ "-- while the LATCH still holds the crossing open")
+	room.queue_free()
+	var cut := _room(true)
+	await _settle(12)
+	_check(cut.room.graph.sensors.has("plate")
+			and cut.room.graph.sensors["plate"] == null,
+			"§11's control: the plate sensor is declared and left unbound")
+	cut.queue_free()
+	await _settle(4)
 
 
 func _stair_count(room: UnweightedSwitch) -> int:

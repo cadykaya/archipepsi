@@ -342,7 +342,9 @@ const ECHO_STATUS_SUPPORTED_TARGETS = {"lightened": ["object"], "burning": ["sel
 # small on purpose: today they describe the one chain that runs,
 # a HEAVY class plate through a NOT into a shutter.
 const SIGNAL_NODE_KINDS = ["DIRECT", "AND", "OR", "NOT", "TIMER", "LATCH", "SEQUENCE", "COUNTER", "SELECTOR", "DELAY", "THRESHOLD"]
-const SIGNAL_NODE_KINDS_IMPLEMENTED = ["NOT", "LATCH"]
+const SIGNAL_NODE_KINDS_IMPLEMENTED = ["NOT", "LATCH", "OR"]
 const SIGNAL_SENSOR_KINDS = ["PRESSURE_PLATE", "PULSE_BUTTON", "TIMED_BUTTON", "LEVER", "SHOOTABLE_TARGET", "OBJECT_SOCKET", "PROXIMITY_SENSOR", "ENCOUNTER_CLEAR", "HACK_TERMINAL", "WEIGHT_THRESHOLD", "CONSTRAINT_STATE", "ATTACH_SENSOR", "MACRO_STATE", "MACRO_SELECTOR", "ROOM_VISITED", "STATUS_SENSOR", "STATUS_VOLUME_SENSOR", "COMPOUND_SENSOR"]
-const SIGNAL_SENSOR_KINDS_IMPLEMENTED = ["PRESSURE_PLATE"]
+const SIGNAL_SENSOR_KINDS_IMPLEMENTED = ["PRESSURE_PLATE", "PULSE_BUTTON"]
 const SIGNAL_ACTUATOR_OPS_IMPLEMENTED = ["command"]
+const SIGNAL_ZONE_PLACEABLE_SENSORS = ["PRESSURE_PLATE"]
+const MINOR_SIGNAL_GRAPHS = {"minor_unweighted_switch": {"room_id": "minor", "sensors": [{"node_id": "plate", "kind": "PRESSURE_PLATE", "requires_class": "HEAVY", "counts_player": false}, {"node_id": "bolt_lever", "kind": "PULSE_BUTTON", "counts_player": false}], "nodes": [{"node_id": "unloaded", "kind": "NOT", "inputs": ["plate"]}, {"node_id": "bolt", "kind": "LATCH", "inputs": ["bolt_lever"]}, {"node_id": "open", "kind": "OR", "inputs": ["unloaded", "bolt"]}], "actuators": [{"actuator_id": "shutter", "driven_by": "open", "operation": "command"}]}}

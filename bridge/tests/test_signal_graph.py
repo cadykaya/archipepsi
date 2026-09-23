@@ -91,13 +91,15 @@ def test_one_graph_per_room():
 # --------------------------------------------------------------------------
 
 def test_every_other_node_kind_is_named_and_refused():
-    """§19.2's eleven exist in the vocabulary; two are implemented."""
+    """§19.2's eleven exist in the vocabulary; three are implemented."""
     from typing import get_args
     named = set(get_args(G.NodeKind))
     assert len(named) == 11
-    # LATCH joined NOT once Prod's runtime evaluated it (D-10 answer).
-    assert set(G.SUPPORTED_NODE_KINDS) == {"NOT", "LATCH"}
-    for kind in named - {"NOT", "LATCH"}:
+    # LATCH joined NOT once Prod's runtime evaluated it (D-10 answer); OR
+    # joined once the runtime evaluated it for EX50-033's own chain
+    # (O05-07), its first consumer.
+    assert set(G.SUPPORTED_NODE_KINDS) == {"NOT", "LATCH", "OR"}
+    for kind in named - {"NOT", "LATCH", "OR"}:
         with pytest.raises(ValueError, match="no runtime implements"):
             G.refuse_unsupported_node(kind)
 
@@ -466,3 +468,182 @@ def test_the_predicate_reads_the_flag_before_the_mass():
         assert PH.plate_accepts_player("HEAVY", counts_player=False) is False
     finally:
         PH.PLAYER_MASS_KG = original
+
+
+# --------------------------------------------------------------------------
+# O05-07: PULSE_BUTTON and OR, through a real consumer -- EX50-033's chain
+# --------------------------------------------------------------------------
+
+_BUTTON = {"node_id": "bolt_lever", "kind": "PULSE_BUTTON"}
+_PLATE = {"node_id": "recess_plate", "kind": "PRESSURE_PLATE",
+          "requires_class": "HEAVY"}
+
+
+def _ex50_033():
+    from archipepsi_bridge.schemas.minors import CONTRACTS
+    return CONTRACTS["minor_unweighted_switch"].graph
+
+
+def test_the_minor_declares_its_own_chain_in_the_shared_vocabulary():
+    """The room's hand-wired chain, now a declaration the schema checks:
+    HEAVY plate -> NOT, bolt lever -> LATCH, both -> OR -> shutter."""
+    graph = _ex50_033()
+    assert isinstance(graph, G.RoomGraph)
+    assert {s.kind for s in graph.sensors} == {"PRESSURE_PLATE",
+                                               "PULSE_BUTTON"}
+    assert [n.kind for n in graph.nodes] == ["NOT", "LATCH", "OR"]
+    assert graph.actuators[0].driven_by == "open"
+
+
+def test_a_minor_s_latches_are_exactly_its_contract_s():
+    """A fired LATCH is recorded as `minor_<room>/<latch>`, which the
+    bridge accepts only for the contract's latches -- so the graph may
+    not name one the contract does not, nor miss one it does."""
+    from archipepsi_bridge.schemas.minors import CONTRACTS
+    graphs = 0
+    for shell_id, contract in CONTRACTS.items():
+        if contract.graph is None:
+            continue
+        graphs += 1
+        latches = {n.node_id for n in contract.graph.nodes
+                   if n.kind == "LATCH"}
+        assert latches == set(contract.latches), shell_id
+    assert graphs >= 1
+
+
+def test_or_and_pulse_button_joined_with_a_consumer_and_nothing_else_did():
+    assert set(G.SUPPORTED_NODE_KINDS) == {"NOT", "LATCH", "OR"}
+    assert set(G.SUPPORTED_SENSOR_KINDS) == {"PRESSURE_PLATE",
+                                             "PULSE_BUTTON"}
+    for kind in ("AND", "DIRECT", "TIMER", "SEQUENCE", "COUNTER"):
+        with pytest.raises(ValueError, match="no runtime implements"):
+            G.refuse_unsupported_node(kind)
+
+
+def test_or_takes_two_to_four_inputs():
+    with pytest.raises(ValidationError, match="two to four"):
+        G.RoomGraph.model_validate(_chain(
+            nodes=[{"node_id": "any", "kind": "OR",
+                    "inputs": ["recess_plate"]}],
+            actuators=[{"actuator_id": "s", "driven_by": "any"}]))
+    with pytest.raises(ValidationError):
+        G.RoomGraph.model_validate(_chain(
+            nodes=[{"node_id": "any", "kind": "OR",
+                    "inputs": ["recess_plate"] * 5}],
+            actuators=[{"actuator_id": "s", "driven_by": "any"}]))
+
+
+def test_a_pulse_cannot_feed_a_boolean_reader():
+    """§19.1: a node reading a Boolean port sees OFF when a pulse
+    occurred -- so an OR fed by a button would never fire. Refused at
+    composition, which is where §19.1 says the mismatch fails."""
+    with pytest.raises(ValidationError, match="produces a PULSE"):
+        G.RoomGraph.model_validate(_chain(
+            sensors=[_PLATE, _BUTTON],
+            nodes=[{"node_id": "any", "kind": "OR",
+                    "inputs": ["recess_plate", "bolt_lever"]}],
+            actuators=[{"actuator_id": "s", "driven_by": "any"}]))
+    with pytest.raises(ValidationError, match="produces a PULSE"):
+        G.RoomGraph.model_validate(_chain(
+            sensors=[_BUTTON],
+            nodes=[{"node_id": "inverted", "kind": "NOT",
+                    "inputs": ["bolt_lever"]}],
+            actuators=[{"actuator_id": "s", "driven_by": "inverted"}]))
+
+
+def test_a_pulse_cannot_drive_a_machine_by_itself():
+    with pytest.raises(ValidationError, match="move for one tick"):
+        G.RoomGraph.model_validate(_chain(
+            sensors=[_BUTTON], nodes=[],
+            actuators=[{"actuator_id": "s", "driven_by": "bolt_lever"}]))
+
+
+def test_a_latch_is_set_by_a_pulse_and_still_by_a_plate():
+    """§19.2's LATCH takes a pulse on `set`; the P14 slice's takes a
+    plate's Boolean. Both, and neither resets."""
+    G.RoomGraph.model_validate(_chain(
+        sensors=[_BUTTON],
+        nodes=[{"node_id": "bolt", "kind": "LATCH", "inputs": ["bolt_lever"]}],
+        actuators=[{"actuator_id": "s", "driven_by": "bolt"}]))
+    G.RoomGraph.model_validate(_chain(
+        nodes=[{"node_id": "held", "kind": "LATCH",
+                "inputs": ["recess_plate"]}],
+        actuators=[{"actuator_id": "s", "driven_by": "held"}]))
+
+
+def test_a_button_reads_no_class_and_counts_no_body():
+    with pytest.raises(ValidationError, match="only a plate reads a mass"):
+        G.SensorNode.model_validate({"node_id": "b", "kind": "PULSE_BUTTON",
+                                     "requires_class": "HEAVY"})
+    with pytest.raises(ValidationError, match="only a plate reads bodies"):
+        G.SensorNode.model_validate({"node_id": "b", "kind": "PULSE_BUTTON",
+                                     "counts_player": True})
+
+
+def test_or_settles_as_any_of_its_inputs():
+    graph = G.RoomGraph.model_validate(_chain(
+        sensors=[_PLATE, {**_PLATE, "node_id": "other_plate"}],
+        nodes=[{"node_id": "any", "kind": "OR",
+                "inputs": ["recess_plate", "other_plate"]}],
+        actuators=[{"actuator_id": "s", "driven_by": "any"}]))
+    rest, _ = G.settle(graph, False)
+    pressed, _ = G.settle(graph, True)
+    assert (rest["any"], pressed["any"]) == (False, True)
+
+
+def test_the_minor_s_chain_settles_the_way_the_room_behaves():
+    """At rest the crate is parked, the plate is off and the crossing is
+    open; the bolt, once pulled, holds it open for good."""
+    graph = _ex50_033()
+    rest, latched = G.settle(graph, False)
+    assert rest["open"] is True and not latched
+    _, latched = G.settle(graph, True)
+    assert latched == {"bolt"}
+    after, _ = G.settle(graph, False, latched)
+    assert after["open"] is True and after["unloaded"] is True
+
+
+def test_upstream_walks_every_input_and_a_chain_as_before():
+    graph = _ex50_033()
+    sensors, nodes = G.upstream(graph, "shutter")
+    assert {s.node_id for s in sensors} == {"plate", "bolt_lever"}
+    assert [n.node_id for n in nodes] == ["open", "unloaded", "bolt"]
+    chain = G.RoomGraph.model_validate(_chain())
+    sensors, nodes = G.upstream(chain, "service_shutter")
+    assert [s.node_id for s in sensors] == ["recess_plate"]
+    assert [n.node_id for n in nodes] == ["inverted"]
+
+
+def test_a_zone_asks_only_for_what_its_builder_places():
+    """`RoomGraphs` puts plates down. A button is run by the same runtime
+    and placed only by a room that owns its lever, so a Zone may not ask
+    the builder for one."""
+    with pytest.raises(ValidationError, match="Zone builder places"):
+        _zone([_chain(
+            sensors=[_BUTTON],
+            nodes=[{"node_id": "held", "kind": "LATCH",
+                    "inputs": ["bolt_lever"]}],
+            actuators=[{"actuator_id": "s", "driven_by": "held"}])])
+
+
+def test_a_route_may_not_hang_on_an_or():
+    """The route search and `phases` reason about one plate through NOT
+    and LATCH. A route gate driven through an OR is refused by name
+    rather than certified by arithmetic written for a single plate; the
+    same OR as a machine in a room is legal."""
+    with pytest.raises(ValidationError, match="certified only for"):
+        gated(composed(), nodes=[
+            {"node_id": "held", "kind": "LATCH", "inputs": ["recess_plate"]},
+            {"node_id": "any", "kind": "OR",
+             "inputs": ["held", "recess_plate"]}])
+    zone = composed()
+    raw = zone.model_dump()
+    room = raw["chambers"][0]["id"]
+    raw["room_graphs"] = [_chain(
+        room_id=room,
+        nodes=[{"node_id": "held", "kind": "LATCH",
+                "inputs": ["recess_plate"]},
+               {"node_id": "any", "kind": "OR",
+                "inputs": ["held", "recess_plate"]}],
+        actuators=[{"actuator_id": "lamp", "driven_by": "any"}])]
+    assert Zone.model_validate(raw).room_graphs[0].nodes[-1].kind == "OR"
