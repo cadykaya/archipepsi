@@ -226,10 +226,26 @@ func _select() -> void:
 	# ---- operated, accepted --------------------------------------------
 	if not await _advance_to(controller, setter_room):
 		return
-	_check(await _pull(controller) and lever.status == "PENDING",
-			"PULLED with the interact ray: \"%s\"" % lever.interact_prompt())
+	# THE STATUS, FRAME BY FRAME. A real bridge can answer inside the
+	# frames the pull itself takes, so one look afterwards may find the
+	# lever already ACCEPTED; what has to be true is that PENDING was
+	# shown first, and then the verdict.
+	var shown: Array[String] = []
+	var sampling := {"on": true}
+	var sampler := func() -> void:
+		while sampling["on"]:
+			if shown.is_empty() or shown.back() != lever.status:
+				shown.append(lever.status)
+			await get_tree().process_frame
+	sampler.call()
+	var pulled := await _pull(controller)
 	var accepted := await _await_live("the snapshot to carry it",
 			func() -> bool: return lever.status == "ACCEPTED", 10.0)
+	sampling["on"] = false
+	_check(pulled and shown.has("PENDING") and shown.has("ACCEPTED")
+			and shown.find("PENDING") < shown.find("ACCEPTED"),
+			"PULLED with the interact ray; the lever showed %s, in order"
+			% [shown])
 	_check(accepted and _served_value() == "lowered"
 			and lever.interact_prompt().contains("ACCEPTED"),
 			"ACCEPTED: the snapshot carries '%s' and the lever says so: "

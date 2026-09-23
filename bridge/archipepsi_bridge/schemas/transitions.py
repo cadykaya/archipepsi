@@ -624,6 +624,52 @@ def _accepted_graph_latches(rec: ZoneRecord, room_id: str) -> set[str]:
     return {n.node_id for n in graph.nodes if n.kind == "LATCH"}
 
 
+def _accepted_rail_latches(rec: ZoneRecord, network_id: str
+                           ) -> set[str] | None:
+    """The span latches a declared railway may record; None when the
+    accepted Zone declares no railway by that id.
+
+    O05-05.1, P5-9. `RailSpan.latch_id` is "the persistence handle: a
+    commissioned span is the repair that survives leaving and coming
+    back", and the engine reports it under the NETWORK id
+    (`RailJunction.latch_fired`). A railway is neither a physics package
+    nor a room graph, so until this existed every composed span a player
+    commissioned was refused here and forgotten at the next load.
+
+    Checked against its own evidence, like the graph path: the ACCEPTED
+    Zone declares the network (`rec.zone`, not anything the engine says
+    it built); the layout is committed; the committed layout placed
+    every dock room, because `RailNetworks._one` builds nothing for a
+    network through a room it did not build; and only a span with a
+    control can latch -- one without ships commissioned and no lever is
+    ever built for it, so a report of it describes nothing a player did.
+    """
+    zone = rec.zone
+    if zone is None:
+        return None
+    net = next((n for n in zone.rail_networks
+                if n.network_id == network_id), None)
+    if net is None:
+        return None
+    manifest = rec.manifest or {}
+    if rec.layout_state != "ACCEPTED" or not manifest:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' has no committed layout, so its railway "
+            f"'{network_id}' has not been built and nothing on it can "
+            "have latched")
+    if manifest.get("zone_id") != rec.zone_id:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' carries a manifest for "
+            f"'{manifest.get('zone_id')}'")
+    placed = manifest.get("rooms") or {}
+    missing = sorted({d.room_id for d in net.docks} - set(placed))
+    if missing:
+        raise ValueError(
+            f"Zone '{rec.zone_id}''s committed layout placed no room "
+            f"'{missing[0]}', which railway '{network_id}' docks in")
+    return {s.latch_id for s in net.spans if s.control_room_id is not None}
+
+
 def record_latch(save: CampaignSave, zone_id: str, package_id: str,
                  latch_id: str) -> CampaignSave:
     """A physics latch fired. Idempotent by `package_id/latch_id`.
@@ -655,6 +701,24 @@ def record_latch(save: CampaignSave, zone_id: str, package_id: str,
                        else " and declares none"))
             return
         packages = _accepted_packages(rec)
+        # A DECLARED RAILWAY'S SPAN (O05-05.1, P5-9). One name, one
+        # meaning: `latched` is a set of `package/latch` strings and a
+        # junction restores from it by that string, so a name that is
+        # both would let a physics latch commission a span.
+        rail = _accepted_rail_latches(rec, package_id)
+        if rail is not None:
+            if package_id in packages:
+                raise ValueError(
+                    f"'{package_id}' in Zone '{zone_id}' names both a "
+                    "physics package and a rail network; neither is "
+                    "guessed")
+            if latch_id not in rail:
+                raise ValueError(
+                    f"railway '{package_id}' in Zone '{zone_id}' declares "
+                    f"no span latch '{latch_id}'"
+                    + (f"; its controlled spans latch {sorted(rail)}"
+                       if rail else " that a control commissions"))
+            return
         if package_id not in packages:
             raise ValueError(
                 f"Zone '{zone_id}' accepted no physics package "

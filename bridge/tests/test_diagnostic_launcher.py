@@ -184,9 +184,13 @@ def test_the_only_write_in_the_module_is_the_mode_marker():
     Follow-up 02 gave the launcher one thing to write -- the marker that
     remembers a slot is the quieter one -- so the ban is replaced by the
     stronger statement it was standing in for: there is exactly one
-    write in this module, it is inside `mark_quiet`, and it writes the
-    marker path and nothing else. A second write appearing anywhere
+    write in this module, it is inside the marker writer, and it writes
+    the marker path and nothing else. A second write appearing anywhere
     fails here, which is what the blanket ban was for.
+
+    Overnight 05 gave the launcher a second MODE marker (the candidate
+    profile), and both markers go through the one `_mark`, so this still
+    finds exactly one write.
     """
     import ast
     import inspect
@@ -201,7 +205,7 @@ def test_the_only_write_in_the_module_is_the_mode_marker():
                     and isinstance(inner.func, ast.Attribute)
                     and inner.func.attr == "write_text"):
                 writers.append((node.name, ast.unparse(inner.func.value)))
-    assert writers == [("mark_quiet", "marker")], writers
+    assert writers == [("_mark", "marker")], writers
 
 
 def test_marking_a_slot_quiet_does_not_touch_what_is_already_in_it(tmp_path):
@@ -381,3 +385,81 @@ def test_the_banner_says_which_generation_is_running(tmp_path):
     assert "MORE rooms" in preview and "MORE enemies" in preview
     assert "DIFFERENT rooms" in preview
     assert "Not the same level with the drills removed." in preview
+
+
+# --- the candidate profile (Overnight 05, O05-13 / O05-15.1) ------------
+
+def test_the_candidate_switch_takes_all_steps_by_default():
+    assert D.candidate_steps(D.build_parser().parse_args(["--candidate"])) \
+        == ("zone_state", "latched_route", "transport")
+    assert D.candidate_steps(D.build_parser().parse_args(
+        ["--candidate=transport"])) == ("transport",)
+    assert D.candidate_steps(D.build_parser().parse_args([])) == ()
+
+
+def test_an_unknown_candidate_step_is_refused_before_any_folder(tmp_path):
+    with pytest.raises(ValueError, match="unknown candidate step"):
+        D.resolve(D.build_parser().parse_args(["--candidate=blindside"]),
+                  tmp_path)
+    assert not list(tmp_path.iterdir())
+
+
+def test_the_candidate_campaign_has_its_own_slot(tmp_path):
+    _, npath, _ = D.resolve(_args(slot=None, new=False), tmp_path)
+    cand = D.build_parser().parse_args(["--candidate"])
+    slot, cpath, resuming = D.resolve(cand, tmp_path)
+    assert slot == D.CANDIDATE_DEFAULT_SLOT and cpath != npath
+    assert not resuming
+
+
+def test_quiet_and_candidate_are_not_one_campaign(tmp_path):
+    both = D.build_parser().parse_args(["--quiet", "--candidate"])
+    with pytest.raises(ValueError, match="two different campaigns"):
+        D.resolve(both, tmp_path)
+
+
+def test_a_candidate_slot_remembers_its_profile(tmp_path):
+    slot = tmp_path / ".diagnostic-candidate"
+    slot.mkdir()
+    (slot / "campaign.json").write_text("{}")
+    D.mark_candidate(slot, ("zone_state", "latched_route", "transport"))
+    assert D.slot_mode(slot) == "candidate"
+    assert D.slot_profile(slot) == ("zone_state", "latched_route",
+                                    "transport")
+    # the same profile resumes
+    D.resolve(D.build_parser().parse_args(["--candidate"]), tmp_path)
+    # another one is refused, and nothing is touched
+    before = {f.name: f.read_bytes() for f in slot.iterdir()}
+    with pytest.raises(ValueError, match="composed with zone_state"):
+        D.resolve(D.build_parser().parse_args(["--candidate=transport"]),
+                  tmp_path)
+    assert {f.name: f.read_bytes() for f in slot.iterdir()} == before
+
+
+def test_an_ordinary_run_cannot_continue_a_candidate_campaign(tmp_path):
+    slot = tmp_path / ".diagnostic-candidate"
+    slot.mkdir()
+    (slot / "campaign.json").write_text("{}")
+    D.mark_candidate(slot, ("transport",))
+    with pytest.raises(ValueError, match="CANDIDATE campaign"):
+        D.resolve(_args(slot="candidate", new=False), tmp_path)
+
+
+def test_the_banner_names_the_profile_and_that_nothing_is_staged(tmp_path):
+    text = D.describe("candidate", tmp_path, False, False,
+                      ("zone_state", "transport"))
+    assert "CANDIDATE: zone_state, transport" in text
+    assert "staged      nothing" in text
+    assert "MOCK, default scale" in text and "fallback" in text
+    assert "CANDIDATE" not in D.describe("current", tmp_path, False)
+
+
+def test_the_profile_reaches_the_bridge_only_through_the_switch():
+    with pytest.raises(ValueError, match="decided by the diagnostic"):
+        D.bridge_argv(Path("/tmp/x"), ["--candidate=all"])
+
+
+def test_a_new_candidate_slot_is_named_for_the_revision(tmp_path):
+    args = D.build_parser().parse_args(["--new", "--candidate"])
+    slot, _, resuming = D.resolve(args, tmp_path)
+    assert slot.endswith("-candidate") and not resuming

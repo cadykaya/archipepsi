@@ -133,6 +133,69 @@ rule, before it is edited. Rows are appended as edits land:
   real source is exercised in O05-02.5. There is no consumer yet; that
   is O05-02.
 
+### O05-05 — the featured Echo at Blindside (M2) — reconciled; the integrated loop is BLOCKED, M2 partial
+
+**O05-05.1, what runs today** (read at `5902920` by one read-only helper;
+the claims marked ✓ were re-checked by hand):
+
+| seam | state |
+|---|---|
+| claim → pending → AP send → confirm | runs. `reward.gd` `claim_check` → `transactions.claim_check` → `T.claim_zone_check`, then `backend.check_locations` (real `ap_client` or `mock_ap`) → `T.confirm_check` |
+| a foreign item → a local Echo | runs, **for a foreign item only** ✓ (`transactions.py` ~118-133: a self-recipient item is "Delivered to you" and mints nothing). Interpretation is validate → one repair → deterministic fallback; `append_interpretation` is idempotent per `echo_id`; `derive()` folds |
+| equip through the menu | runs. `InventoryLayer` → `slot_action` → `T.slot_action` → snapshot → `EchoRuntime.set_equipped`. No auto-equip |
+| the grapple itself | runs (`echo_runtime._grapple`, `player.camera_ray`, cooldown, a miss refunded) |
+| D-1/D-2 featured acquisition | declared and tested at the bridge: `Zone.featured_acquisition`, `established_in_zone`, case C, the circularity refusal (`topology._explore_acquiring`). **No composer emits it** |
+| `Zone.rail_networks` | built by `RailNetworks` in composed Zones (track, carrier, junction, span, a GROUND-level control). **No composer emits it**; no direction receivers are built outside `railway_scenario.gd`; `topology.reachability` has no rail model |
+| rail span persistence | **was broken — fixed here, P5-9** |
+| the gantry, the grapple ring, the pedestal grant, the S3 hole | exist only in `railway_scenario.gd` (the M2-mech development scenario, labelled a shortcut) |
+
+**The exact blockers** — each a policy the packet does not choose and
+this lane may not invent (`06_SOURCES_AND_LIMITS.md`: "does not
+authorize weakening the guarantee to finish M2"):
+
+- **B-1, allocation edge case: the featured Check can hold the player's
+  own item.** Only a foreign item mints an Echo ✓. A featured Check
+  holding a Signal Key or coin would hand over nothing. Choosing the
+  featured Check by its scouted recipient is the move
+  `SOLUTIONS_CATALOGUE.md` §1 option 3 rejects ("leaks hidden scouting
+  information into level structure"). Which Check is featured, and what
+  a self item does there, is Dess's/the owner's call.
+- **B-2, qualification: nothing makes the Echo supply the function.**
+  `EchoGenerationRequest` has no required-capability field ✓
+  (`epsilon/requests.py`), nothing refuses a non-qualifying
+  interpretation for a featured Check, and the fallback yields a grapple
+  only when the item's NAME suggests one. `qualifies_for_gap` and
+  `capability_guarantee` have no production caller. "Use only the
+  selected fallback/repair rules" (O05-05.6): no rule is selected for a
+  provider that does not qualify.
+- **B-3, pre-seed AP representation.** The APWorld declares Signal-Key
+  tier rules only ✓ (`apworld/archipepsi/__init__.py`).
+  `docs/AP_CAPABILITY_LOGIC.md` is a proposal ("Nothing here is
+  implemented"; the shape "is an owner decision"). Production never
+  passes `declared_capabilities`, so Option C governs: a capability
+  gate may sit only where no AP location is behind it.
+- **Latent risk, recorded rather than acted on:** `_explore_acquiring`
+  lets Checks or the exit sit behind the FEATURED gate (case C). With
+  B-1 and B-2 open, a composer that emitted `featured_acquisition` today
+  could produce an unwinnable seed. None does. It must not until B-1..B-3
+  are settled.
+
+**What that leaves (O05-05.2-.7).** The required progression gate stays
+unavailable, and M2 is **partial**: the physical loop is proved only in
+the development scenario (M2-mech, pedestal grant, labelled as such);
+the claim, delivery, interpretation, equip and grapple halves each run
+through real campaign machinery, separately. No walking bypass, no
+faked foreign item, no candidate `blindside` step (the profile still
+refuses the name). Composing the three-dock structure without the gate
+it exists for would be a railway demo, not Blindside.
+
+**Engine work that does not wait on the policy, when M2 resumes** (none
+started, so nothing is half-built): direction receivers for composed
+railways; a rail path that follows the committed doorways rather than a
+curve through room arrivals; a declared control height/capability and
+the overhead gantry; the S3 destination; a rail model in
+`topology.reachability`.
+
 ## Findings (`P5-n`)
 
 - **P5-1 — two composers gate one doorway.** On the played Zone, D-10's
@@ -208,3 +271,25 @@ rule, before it is edited. Rows are appended as edits land:
   runs are refused by name ("'exit' at 28 m ... a hand carry is a walk").
   Second, the driver asserts that the player stands at the doorway, on
   its floor, before it reads the side.
+- **P5-9 — a composed railway's commissioned span could not be saved.**
+  `RailSpan.latch_id` is documented as the handle a commissioned span
+  persists under, and the engine reports it (`RailJunction.latch_fired`
+  → `report_latch(network_id, latch_id)`). But `record_latch` accepted
+  only P14's `graph_` latches and the committed manifest's physics
+  packages, and a railway is neither, so the bridge refused every
+  composed span a player commissioned and it was gone at the next load.
+  `godot-rail-zone` fills `latches_carried` directly, so it never saw
+  this. Fixed with a third, separately evidenced path. The ACCEPTED Zone
+  must declare the network; the layout must be committed; the committed
+  layout must have placed every dock room; and only a span with a
+  control can latch, since one without ships commissioned. A name that
+  is both a physics package and a network is refused as ambiguous.
+  Covered by `bridge/tests/test_rail_latch_record.py`, 9 tests. Before
+  the fix, 7 of 8 failed with "accepted no physics package 'yard'".
+- **P5-10 — the lever status assigned a freed control.** O05-04's
+  `_setter_status` read each setter into a typed variable. The
+  zone-state suite frees a control on purpose, and the typed read then
+  raised "Trying to assign invalid previously freed instance". The
+  suite's own 60 checks passed, but `make godot-zone-state` fails on
+  any script error, and the regression batch caught it. The controller
+  now skips an invalid instance before the typed read.

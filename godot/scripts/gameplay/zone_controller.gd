@@ -1116,8 +1116,14 @@ func _on_refusal_for_state(err: Dictionary) -> void:
 
 func _setter_status(variable_id: String, status: String) -> void:
 	for raw: Variant in zone_state_setters():
-		var control: ZoneStateBuild.ZoneStateSetterControl = raw
-		if control.variable_id == variable_id:
+		# A CONTROL CAN BE GONE while its variable still holds -- the
+		# zone-state suite frees one on purpose -- and a freed lever has
+		# no status to show. Checked before the typed read, which is what
+		# raises on a freed instance.
+		if not is_instance_valid(raw):
+			continue
+		var control := raw as ZoneStateBuild.ZoneStateSetterControl
+		if control != null and control.variable_id == variable_id:
 			control.status = status
 
 

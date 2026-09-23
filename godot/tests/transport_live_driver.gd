@@ -262,8 +262,12 @@ func _place() -> void:
 	await _refused({"type": "zone_state_selected", "zone_id": ZONE_ID,
 			"variable_id": VARIABLE, "state": "powered"},
 			"deliver the object", "the consumer's variable set by message")
+	# UNDELIVERED, whichever way the bridge words where the cell is: "not
+	# anywhere yet" before it has reported anything, or "in '<home>'"
+	# once it has settled there after the Zone was built.
 	await _refused({"type": "object_consumed", "zone_id": ZONE_ID,
-			"mechanism_id": SOCKET}, "not anywhere yet",
+			"mechanism_id": SOCKET},
+			"has to be delivered before it is consumed",
 			"an installation with no delivery")
 
 	if not await _advance_to(controller, mid):
