@@ -558,11 +558,12 @@ STATUS_KINDS = get_args(StatusKind)
 #: `lightened` on a surface are different runtime work, and a kind that
 #: works on one is not thereby working on the other.
 #:
-#: Today this is the ECHOES.md twelve on `self`/`enemy` plus §15.2's
-#: `lightened` on an `object` -- exactly what the runtime implements, no
-#: more and no less. Every other §15.2 kind is named by the vocabulary
-#: above and supported by nothing, which is the honest state and is what
-#: the application paths refuse.
+#: Today this is the ECHOES.md twelve on `self`/`enemy`, plus §15.2's
+#: `lightened` on an `object` and `rooted` and `anchored` on an `enemy`
+#: -- exactly what the runtime implements, no more and no less. Every
+#: other §15.2 kind is named by the vocabulary above and supported by
+#: nothing, which is the honest state and is what the application paths
+#: refuse.
 SUPPORTED_STATUS_TARGETS: dict[str, tuple[str, ...]] = {
     # KINETIC. `lightened` on an OBJECT is implemented: mass class drops
     # one step, incoming impulse doubles, influence volumes act on it and
@@ -571,6 +572,17 @@ SUPPORTED_STATUS_TARGETS: dict[str, tuple[str, ...]] = {
     # own rule. Not `self`/`enemy`: nothing implements it on an actor, and
     # not `surface`/`volume`: those are different runtime work.
     "lightened": ("object",),
+    # KINETIC and PERMISSION, on an ENEMY (O05-09.1), declared in the
+    # change that lands their effects and tests. Design 5 §15.2: `rooted`
+    # "cannot move under its own power; can still be pushed, pulled, and
+    # thrown, unlike `anchored`; attacks continue". `anchored` holds
+    # movement at 0 with attacks continuing, and is "immune to all
+    # impulse": a knock does not move it and the manipulation verbs
+    # refuse it as FIXED. `enemy.gd` implements both. Not `anchored` on
+    # an `object` or on `self`: a body fixed in place, and a player whose
+    # jump is blocked, are two other runtimes, and neither exists yet.
+    "rooted": ("enemy",),
+    "anchored": ("enemy",),
     "burning": ("self", "enemy"),
     "slowed": ("self", "enemy"),
     "frozen": ("self", "enemy"),

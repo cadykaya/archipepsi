@@ -2054,3 +2054,27 @@ graph, not just the sensor, and each was sabotaged.
     enemies. With the handoff removed, both checks fail with the enemy
     damaged and carrying no status.
 
+- **P5-20 — this lane's schema edits never reached the design packet.**
+  The O05-17 frozen run's step 3 (`check_packet.py`) failed on
+  `73b7b87` with 8 disagreements:
+  - `minors.py` was in the bridge but not in the packet;
+  - `echo.py`, `export.py`, `physics.py`, `protocol.py`,
+    `signal_graph.py`, `transitions.py` and `zone.py` differed between
+    the two.
+
+  The packet is the contract. Dess's own commits change the bridge and
+  the packet copy together. This lane's eight schema commits (`5902920`
+  to `7abb338`, every edit in the shared-seam table) changed only the
+  bridge. The checker is not in CI, and the focused checks this lane
+  ran never called it, so nothing caught the drift until the full run.
+  - **Scope, checked:** every packet copy was byte-identical to the
+    bridge as it stood at `57e962e`. The whole difference is this
+    batch's edits.
+  - **The fix:** the eight files are copied from the bridge into
+    `docs/design-packet-v0.8/schemas/`, docs only. `check_packet.py`
+    now reads "prose matches the models across 11 documents", exit 0.
+    No packet prose was touched.
+  - **For Dess:** the packet now carries this lane's edits. They are the
+    shared-seam table's rows, awaiting her review like the bridge side.
+  - **The run:** it was stopped at step 8 and restarted from step 1 on
+    the corrected revision, so one frozen revision carries every step.

@@ -140,14 +140,26 @@ def plate_accepts_player(requires_class: str, counts_player: bool) -> bool:
 #: room-graph latch could be recorded under one identity.
 GRAPH_PACKAGE_PREFIX = "graph_"
 
+#: O05-06. The namespace a hosted minor's latches are recorded under:
+#: `minor_<room>`. Reserved for the reason `graph_` is -- a physics
+#: package named into it would share an identity with a minor's latch.
+#: What a minor may record is its occurrence contract's, not the engine's
+#: (`schemas/minors.py`).
+MINOR_PACKAGE_PREFIX = "minor_"
+
+#: Every reserved namespace, each with what it is reserved for.
+RESERVED_PACKAGE_PREFIXES = {GRAPH_PACKAGE_PREFIX: "room-graph latches",
+                             MINOR_PACKAGE_PREFIX: "hosted minors' latches"}
+
 
 def refuse_reserved_package_id(package_id: str) -> None:
-    if package_id.startswith(GRAPH_PACKAGE_PREFIX):
-        raise ValueError(
-            f"physics package '{package_id}' takes the "
-            f"'{GRAPH_PACKAGE_PREFIX}' prefix, which is reserved for "
-            "room-graph latches; a physics latch recorded under it would "
-            "share an identity with one")
+    for prefix, owner in RESERVED_PACKAGE_PREFIXES.items():
+        if package_id.startswith(prefix):
+            raise ValueError(
+                f"physics package '{package_id}' takes the "
+                f"'{prefix}' prefix, which is reserved for {owner}; a "
+                "physics latch recorded under it would share an identity "
+                "with one")
 
 #: §4.10. The verifier's whole budget, unchanged from Design 3.
 STATE_VECTOR_BOUND = 4096

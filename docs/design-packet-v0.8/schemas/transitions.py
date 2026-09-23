@@ -42,7 +42,8 @@ try:
         ShopState,
         ShopStockItem, ZoneRecord,
     )
-    from .physics import GRAPH_PACKAGE_PREFIX
+    from .physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
+    from .minors import contract_for as _minor_contract
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
@@ -56,7 +57,8 @@ except ImportError:  # pragma: no cover
         ShopState,
         ShopStockItem, ZoneRecord,
     )
-    from physics import GRAPH_PACKAGE_PREFIX
+    from physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
+    from minors import contract_for as _minor_contract
     from zone import Zone
 
 
@@ -624,6 +626,96 @@ def _accepted_graph_latches(rec: ZoneRecord, room_id: str) -> set[str]:
     return {n.node_id for n in graph.nodes if n.kind == "LATCH"}
 
 
+def _accepted_minor_latches(rec: ZoneRecord, room_id: str) -> set[str]:
+    """The latches a hosted minor may record, or why it may record none."""
+    return set(_accepted_minor_contract(rec, room_id, "latched").latches)
+
+
+def _accepted_minor_contract(rec: ZoneRecord, room_id: str,
+                             happened: str):
+    """The contract of the minor hosted in that room, or why there is none.
+
+    O05-06. The graph path's four facts, with the minor's contract where
+    the graph's declaration was:
+
+    1. **The Zone was accepted**, and the declaration read is `rec.zone`.
+    2. **Its layout was committed** for this Zone.
+    3. **The committed layout placed that room** -- a latch in a room
+       the engine never built is a machine nobody built.
+    4. **The accepted Zone's chamber in that room carries a shell with a
+       minor contract**, and only that contract's latches are
+       recordable. The engine does not get to say which latches exist.
+    """
+    zone = rec.zone
+    manifest = rec.manifest or {}
+    if zone is None:
+        raise ValueError(f"Zone '{rec.zone_id}' holds no accepted Zone")
+    if rec.layout_state != "ACCEPTED" or not manifest:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' has no committed layout, so no minor in "
+            f"it has been built and nothing can have {happened}")
+    if manifest.get("zone_id") != rec.zone_id:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' carries a manifest for "
+            f"'{manifest.get('zone_id')}'")
+    if room_id not in (manifest.get("rooms") or {}):
+        raise ValueError(
+            f"Zone '{rec.zone_id}''s committed layout placed no room "
+            f"'{room_id}'")
+    chamber = next((c for c in zone.chambers if c.id == room_id), None)
+    contract = _minor_contract(getattr(chamber, "shell_id", None))
+    if contract is None:
+        raise ValueError(
+            f"room '{room_id}' in Zone '{rec.zone_id}' hosts no minor")
+    return contract
+
+
+def _accepted_rail_latches(rec: ZoneRecord, network_id: str
+                           ) -> set[str] | None:
+    """The span latches a declared railway may record; None when the
+    accepted Zone declares no railway by that id.
+
+    O05-05.1, P5-9. `RailSpan.latch_id` is "the persistence handle: a
+    commissioned span is the repair that survives leaving and coming
+    back", and the engine reports it under the NETWORK id
+    (`RailJunction.latch_fired`). A railway is neither a physics package
+    nor a room graph, so until this existed every composed span a player
+    commissioned was refused here and forgotten at the next load.
+
+    Checked against its own evidence, like the graph path: the ACCEPTED
+    Zone declares the network (`rec.zone`, not anything the engine says
+    it built); the layout is committed; the committed layout placed
+    every dock room, because `RailNetworks._one` builds nothing for a
+    network through a room it did not build; and only a span with a
+    control can latch -- one without ships commissioned and no lever is
+    ever built for it, so a report of it describes nothing a player did.
+    """
+    zone = rec.zone
+    if zone is None:
+        return None
+    net = next((n for n in zone.rail_networks
+                if n.network_id == network_id), None)
+    if net is None:
+        return None
+    manifest = rec.manifest or {}
+    if rec.layout_state != "ACCEPTED" or not manifest:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' has no committed layout, so its railway "
+            f"'{network_id}' has not been built and nothing on it can "
+            "have latched")
+    if manifest.get("zone_id") != rec.zone_id:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' carries a manifest for "
+            f"'{manifest.get('zone_id')}'")
+    placed = manifest.get("rooms") or {}
+    missing = sorted({d.room_id for d in net.docks} - set(placed))
+    if missing:
+        raise ValueError(
+            f"Zone '{rec.zone_id}''s committed layout placed no room "
+            f"'{missing[0]}', which railway '{network_id}' docks in")
+    return {s.latch_id for s in net.spans if s.control_room_id is not None}
+
+
 def record_latch(save: CampaignSave, zone_id: str, package_id: str,
                  latch_id: str) -> CampaignSave:
     """A physics latch fired. Idempotent by `package_id/latch_id`.
@@ -655,6 +747,40 @@ def record_latch(save: CampaignSave, zone_id: str, package_id: str,
                        else " and declares none"))
             return
         packages = _accepted_packages(rec)
+        # A HOSTED MINOR'S LATCH (O05-06), under its own reserved
+        # namespace. A railway declared under the same name would make
+        # one report mean two things, so that is refused, not guessed.
+        if package_id.startswith(MINOR_PACKAGE_PREFIX):
+            if _accepted_rail_latches(rec, package_id) is not None:
+                raise ValueError(
+                    f"'{package_id}' in Zone '{zone_id}' names both a "
+                    "hosted minor and a rail network; neither is guessed")
+            room_id = package_id[len(MINOR_PACKAGE_PREFIX):]
+            latches = _accepted_minor_latches(rec, room_id)
+            if latch_id not in latches:
+                raise ValueError(
+                    f"the minor in room '{room_id}' of Zone '{zone_id}' "
+                    f"declares no latch '{latch_id}'; it declares "
+                    f"{sorted(latches)}")
+            return
+        # A DECLARED RAILWAY'S SPAN (O05-05.1, P5-9). One name, one
+        # meaning: `latched` is a set of `package/latch` strings and a
+        # junction restores from it by that string, so a name that is
+        # both would let a physics latch commission a span.
+        rail = _accepted_rail_latches(rec, package_id)
+        if rail is not None:
+            if package_id in packages:
+                raise ValueError(
+                    f"'{package_id}' in Zone '{zone_id}' names both a "
+                    "physics package and a rail network; neither is "
+                    "guessed")
+            if latch_id not in rail:
+                raise ValueError(
+                    f"railway '{package_id}' in Zone '{zone_id}' declares "
+                    f"no span latch '{latch_id}'"
+                    + (f"; its controlled spans latch {sorted(rail)}"
+                       if rail else " that a control commissions"))
+            return
         if package_id not in packages:
             raise ValueError(
                 f"Zone '{zone_id}' accepted no physics package "
@@ -730,6 +856,20 @@ def record_zone_state(save: CampaignSave, zone_id: str, variable_id: str,
                 f"{sorted(var.setter.selects)}. Zone state changes only "
                 "when a player operates a setter (§19.7), so a state "
                 "nothing selects is one nothing could have set")
+        # O05-02. A STATE A CONSUMER OWNS IS SET BY DELIVERING ITS
+        # OBJECT, and by nothing else. The consumer IS that variable's
+        # setter -- installing the object is the interaction -- so a bare
+        # `zone_state_selected` naming it is a claim of a delivery that
+        # `record_object_consumed` would have checked, arriving by a
+        # path that checks nothing.
+        for con in getattr(zone, "object_consumers", ()):
+            if con.sets_variable == variable_id \
+                    and con.sets_state == state:
+                raise ValueError(
+                    f"'{variable_id}' = '{state}' is set by consumer "
+                    f"'{con.mechanism_id}' taking '{con.accepts}' in room "
+                    f"'{con.room_id}'; deliver the object -- it is not a "
+                    "control a message can operate")
     return _progress(save, zone_id,
                      lambda p: p.with_macro(variable_id, state), known)
 
@@ -771,6 +911,14 @@ def record_object_transported(save: CampaignSave, zone_id: str,
             raise ValueError(
                 f"object '{object_id}' may not be in room '{room_id}'; its "
                 f"volume is {sorted(obj.allowed_volume)}")
+        # O05-02.4: AN INSTALLED OBJECT DOES NOT TRAVEL. Its consumer's
+        # room is the last room it was in; a report of the same room is
+        # the same fact again, anything else would describe a second copy.
+        if rec.progress.consumed(object_id) \
+                and rec.progress.object_room(object_id) != room_id:
+            raise ValueError(
+                f"'{object_id}' is installed in its consumer and does not "
+                f"move; it cannot arrive in '{room_id}'")
     return _progress(save, zone_id,
                      lambda p: p.with_object_in(object_id, room_id), known)
 
@@ -801,6 +949,16 @@ def record_object_consumed(save: CampaignSave, zone_id: str,
                 f"'{mechanism_id}'"
                 + (f"; it declares {sorted(consumers)}" if consumers
                    else " and declares none"))
+        # A REPEAT OF THE SAME DELIVERY IS ABSORBED BELOW; anything else
+        # about an object already taken is refused, because it would be
+        # a second consumption of one object.
+        held = rec.progress.consumed_by(con.accepts)
+        if held == mechanism_id:
+            return      # the same delivery, reported again: absorbed
+        if held is not None:
+            raise ValueError(
+                f"'{con.accepts}' is already installed in '{held}'; "
+                f"consumer '{mechanism_id}' cannot take it as well")
         where = rec.progress.object_room(con.accepts)
         if where != con.room_id:
             raise ValueError(
@@ -820,9 +978,12 @@ def record_object_consumed(save: CampaignSave, zone_id: str,
     def apply(p):
         if con is None:
             return p        # `known` refuses first; this never runs
+        # CONSUMED, and never rebuilt loose (§30.6.1). Monotone, so the
+        # same delivery reported twice changes nothing the second time.
+        taken = p.with_consumed(con.accepts, mechanism_id)
         if con.sets_variable is None:
-            return p        # scenery: legal, and it changes nothing
-        return p.with_macro(con.sets_variable, con.sets_state)
+            return taken    # scenery: legal, and it changes nothing else
+        return taken.with_macro(con.sets_variable, con.sets_state)
 
     return _progress(save, zone_id, apply, known)
 
@@ -845,12 +1006,128 @@ def recover_transported_object(save: CampaignSave, zone_id: str,
             raise ValueError(
                 f"Zone '{zone_id}' declares no transported object "
                 f"'{object_id}'")
+        if rec.progress.consumed(object_id):
+            raise ValueError(
+                f"'{object_id}' is installed in its consumer; an installed "
+                "object is not lost, and recovering it would put a second "
+                "copy back home")
 
     rec = _require_zone(save, zone_id)
-    obj = next(o for o in getattr(rec.zone, "transported_objects", ())
-               if o.object_id == object_id)
+    obj = next((o for o in getattr(rec.zone, "transported_objects", ())
+                if o.object_id == object_id), None)
+
+    def apply(p):
+        if obj is None:
+            return p        # `known` refuses first; this never runs
+        # HOME, AND NO LONGER WHERE IT WAS LOST: the pose goes with it.
+        return p.with_object_in(object_id, obj.home_room_id) \
+            .without_object_pose(object_id)
+
+    return _progress(save, zone_id, apply, known)
+
+
+def record_object_settled(save: CampaignSave, zone_id: str, object_id: str,
+                          room_id: str, position: tuple[float, float, float],
+                          yaw: float) -> CampaignSave:
+    """O05-03. A transported object came to rest where the hand left it.
+
+    The same refusals as `record_object_transported` -- a declared
+    object, a room inside its volume -- plus two of its own:
+
+    - **A consumed object does not settle anywhere.** It is installed,
+      and a pose for it would describe a second copy.
+    - **A pose must be a number a room could hold.** The engine measures
+      it; the bridge has no geometry and does not pretend to, but it
+      refuses a non-finite or absurd coordinate rather than storing it.
+    """
+    import math
+
+    def known(rec):
+        zone = rec.zone
+        declared = {o.object_id: o
+                    for o in getattr(zone, "transported_objects", ())
+                    } if zone is not None else {}
+        obj = declared.get(object_id)
+        if obj is None:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no transported object "
+                f"'{object_id}'")
+        if room_id not in obj.allowed_volume:
+            raise ValueError(
+                f"object '{object_id}' may not rest in room '{room_id}'; "
+                f"its volume is {sorted(obj.allowed_volume)}")
+        if rec.progress.consumed(object_id):
+            raise ValueError(
+                f"'{object_id}' is installed in its consumer and rests "
+                "nowhere else")
+        if not all(math.isfinite(c) and abs(c) < 10_000.0
+                   for c in (*position, yaw)):
+            raise ValueError(
+                f"'{object_id}' reported a pose {position}/{yaw} no room "
+                "could hold")
+
     return _progress(save, zone_id,
-                     lambda p: p.with_object_in(object_id, obj.home_room_id),
+                     lambda p: p.with_object_pose(object_id, room_id,
+                                                  position, yaw),
+                     known)
+
+
+def record_carrier_rested(save: CampaignSave, zone_id: str,
+                          package_id: str, carrier_id: str, t: float,
+                          destination: str, held: bool) -> CampaignSave:
+    """O05-06.2. A hosted minor's carrier came to rest; its rest is saved.
+
+    EX50-011 §9: "Carrier poses, destinations and hold states are
+    package-local. A stable save restores each at its saved pose before
+    the player." Overwritten rather than accumulated -- a carrier sent
+    back is not a replay to reject -- and refused unless every fact is
+    the accepted Zone's:
+
+    - **The package is a hosted minor's**, by the minor path's four
+      facts (`_accepted_minor_contract`): an accepted Zone, a committed
+      layout, the room placed, a contracted shell in it.
+    - **The carrier is one that contract declares.** The engine does not
+      get to say which machines exist.
+    - **The destination is one of that carrier's declared stops.** A
+      carrier that is not held is standing AT its destination, so it
+      needs one; a held carrier may have none, because a fail-safe STOP
+      clears a shuttle's errand (`RailCarrier.hold`).
+    - **The offset is a number a path could hold.** The engine measures
+      it; the bridge has no geometry and does not pretend to, but it
+      refuses a non-finite, negative or absurd offset rather than
+      storing it.
+    """
+    import math
+
+    if not package_id.startswith(MINOR_PACKAGE_PREFIX):
+        raise ValueError(
+            f"'{package_id}' is not a hosted minor's package; only a "
+            f"'{MINOR_PACKAGE_PREFIX}<room>' records a carrier")
+    room_id = package_id[len(MINOR_PACKAGE_PREFIX):]
+    ref = f"{package_id}/{carrier_id}"
+
+    def known(rec):
+        contract = _accepted_minor_contract(rec, room_id, "moved")
+        stops = contract.carrier_stops(carrier_id)
+        if stops is None:
+            raise ValueError(
+                f"the minor in room '{room_id}' ({contract.catalogue_id}) "
+                f"declares no carrier '{carrier_id}'")
+        if destination and destination not in stops:
+            raise ValueError(
+                f"carrier '{ref}' has no stop '{destination}'; its stops "
+                f"are {list(stops)}")
+        if not destination and not held:
+            raise ValueError(
+                f"carrier '{ref}' reported a rest with no stop and no "
+                "hold; a carrier that is not held stands at a stop")
+        if not (math.isfinite(t) and 0.0 <= t < 1000.0):
+            raise ValueError(
+                f"carrier '{ref}' reported an offset {t} no path could "
+                "hold")
+
+    return _progress(save, zone_id,
+                     lambda p: p.with_carrier(ref, t, destination, held),
                      known)
 
 
@@ -1418,6 +1695,8 @@ TRANSITIONS = (
     slot_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
     record_zone_state, record_object_transported, record_object_consumed,
+    record_object_settled,
+    record_carrier_rested,
     recover_transported_object,
     reselect_hosts,
     commit_layout, refuse_layout,

@@ -230,6 +230,61 @@ class ZoneProgress(Strict):
     object_rooms: tuple[tuple[str, str], ...] = Field(
         default=(), max_length=4)
 
+    #: O05-03. Where a transported object CAME TO REST, per object:
+    #: `(object_id, room_id, x, y, z, yaw)`, rounded to the millimetre.
+    #: Amalgam §5.6 step 10 restores physical configurations "at saved
+    #: transforms", and §30.6.1 keeps `PLACED` room-indexed because "a
+    #: required cell dropped in room B stays in room B". The room alone
+    #: put a restored object back at the room's arrival point, which is
+    #: not where the player left it.
+    #:
+    #: **A pose is recorded only once the object has settled**, never
+    #: mid-carry or mid-fall (§5.3's rule against saving a moving
+    #: `PUZZLE_LOCAL` body). A pose in a room the object is no longer in
+    #: is stale and is dropped by `with_object_in`, so the save can never
+    #: say "in room C, at a point in room B".
+    object_poses: tuple[tuple[str, str, float, float, float, float], ...] = \
+        Field(default=(), max_length=4)
+
+    #: O05-02. Objects a consumer has TAKEN (§30.6.1's `CONSUMED`), as
+    #: `(object_id, mechanism_id)` rows sorted by object. Monotone: the
+    #: declared consumers take and never give back. A consumed object is
+    #: never rebuilt loose, so re-entering the room or restarting can
+    #: never produce a second copy beside the installed one.
+    #:
+    #: **Which consumer took it is part of the fact.** Without it, a
+    #: second consumer asking for an object already installed elsewhere
+    #: looked exactly like the first one's delivery reported again, and a
+    #: scenery consumer (whose consequence trivially "already holds")
+    #: was absorbed as a repeat.
+    consumed_objects: tuple[tuple[str, str], ...] = Field(default=(),
+                                                          max_length=4)
+
+    #: O05-06.2. Where each saved carrier CAME TO REST, as
+    #: `(minor_<room>/<carrier>, t, destination, held)` rows sorted by
+    #: ref: `t` the machine's own offset along its path in metres (to
+    #: the millimetre), `destination` the stop it stands at or is bound
+    #: for (empty when a hold has cleared its errand), `held` whether a
+    #: STOP or a dwell holds it there.
+    #:
+    #: EX50-011 §9: "Carrier poses, destinations and hold states are
+    #: package-local. A stable save restores each at its saved pose
+    #: before the player." Amalgam §5.2 puts machinery `t` in
+    #: `PUZZLE_LOCAL`, and §5.3 refuses a save while such a body moves,
+    #: so **only a carrier at rest is recorded**: parked at a stop,
+    #: held by a STOP, or pausing in a declared dwell. A carrier the
+    #: player quits mid-travel comes back at its last rest.
+    #:
+    #: **A dwell comes back HELD** (§9: "a carrier in a dwell state can
+    #: remain safely held until the player resumes"), so a restored lift
+    #: never leaves from under a player because the application was
+    #: closed for an hour.
+    #:
+    #: Overwritten rather than accumulated, like `macro_state`: a carrier
+    #: sent back is not a replay to reject.
+    carrier_states: tuple[tuple[str, float, str, bool], ...] = Field(
+        default=(), max_length=8)
+
     def with_key(self, key_id: str) -> "ZoneProgress":
         if key_id in self.collected_keys:
             return self
@@ -278,8 +333,83 @@ class ZoneProgress(Strict):
         if kept.get(object_id) == room_id:
             return self
         kept[object_id] = room_id
+        # A POSE IN THE ROOM IT LEFT IS STALE, and is dropped with the
+        # move rather than left to contradict the room.
+        poses = tuple(row for row in self.object_poses
+                      if row[0] != object_id or row[1] == room_id)
         return self.model_copy(update={
-            "object_rooms": tuple(sorted(kept.items()))})
+            "object_rooms": tuple(sorted(kept.items())),
+            "object_poses": poses})
+
+    def with_object_pose(self, object_id: str, room_id: str,
+                         position: tuple[float, float, float],
+                         yaw: float) -> "ZoneProgress":
+        """Record where an object came to rest (O05-03), in its room."""
+        row = (object_id, room_id, round(float(position[0]), 3),
+               round(float(position[1]), 3), round(float(position[2]), 3),
+               round(float(yaw), 4))
+        kept = {r[0]: r for r in self.object_poses}
+        if kept.get(object_id) == row:
+            return self
+        kept[object_id] = row
+        return self.with_object_in(object_id, room_id).model_copy(
+            update={"object_poses": tuple(sorted(kept.values()))})
+
+    def without_object_pose(self, object_id: str) -> "ZoneProgress":
+        if not any(r[0] == object_id for r in self.object_poses):
+            return self
+        return self.model_copy(update={"object_poses": tuple(
+            r for r in self.object_poses if r[0] != object_id)})
+
+    def object_pose(self, object_id: str):
+        """`(room_id, (x, y, z), yaw)` or `None`."""
+        for row in self.object_poses:
+            if row[0] == object_id:
+                return row[1], (row[2], row[3], row[4]), row[5]
+        return None
+
+    def with_consumed(self, object_id: str,
+                      mechanism_id: str) -> "ZoneProgress":
+        """Installed in `mechanism_id`. Taking an object a DIFFERENT
+        consumer already holds is a caller's error, raised rather than
+        recorded, so the save can never name two homes for one object."""
+        held = self.consumed_by(object_id)
+        if held == mechanism_id:
+            return self
+        if held is not None:
+            raise ValueError(
+                f"'{object_id}' is already installed in '{held}'")
+        return self.without_object_pose(object_id).model_copy(update={
+            "consumed_objects": tuple(sorted(
+                {*self.consumed_objects, (object_id, mechanism_id)}))})
+
+    def with_carrier(self, ref: str, t: float, destination: str,
+                     held: bool) -> "ZoneProgress":
+        """Record where a carrier came to rest, replacing its last rest."""
+        row = (ref, round(float(t), 3), destination, bool(held))
+        kept = {r[0]: r for r in self.carrier_states}
+        if kept.get(ref) == row:
+            return self
+        kept[ref] = row
+        return self.model_copy(update={
+            "carrier_states": tuple(sorted(kept.values()))})
+
+    def carrier(self, ref: str):
+        """`(t, destination, held)` for that carrier, or `None`."""
+        for row in self.carrier_states:
+            if row[0] == ref:
+                return row[1], row[2], row[3]
+        return None
+
+    def consumed(self, object_id: str) -> bool:
+        return self.consumed_by(object_id) is not None
+
+    def consumed_by(self, object_id: str) -> str | None:
+        """The consumer holding that object, or `None`."""
+        for obj, mechanism in self.consumed_objects:
+            if obj == object_id:
+                return mechanism
+        return None
 
     def object_room(self, object_id: str) -> str | None:
         """Which room that object is in, or `None` if it has not moved."""
@@ -323,6 +453,15 @@ SAVE_FIELD_CATEGORY: dict[str, str] = {
     "resume_anchor": "ZONE_PERSISTENT",
     "macro_state": "ZONE_PERSISTENT",
     "object_rooms": "ZONE_PERSISTENT",
+    # O05-02/03: a multi-room carryable is ZONE_PERSISTENT (Amalgam §10,
+    # pinning Design 3 §10.5), and so is where it rests and whether a
+    # consumer has taken it.
+    "object_poses": "ZONE_PERSISTENT",
+    "consumed_objects": "ZONE_PERSISTENT",
+    # O05-06.2: machinery `t` is `PUZZLE_LOCAL` (Amalgam §5.2), and a
+    # Passing Platforms carrier's rest is saved by its own package's
+    # contract (EX50-011 §9) -- the unconditional-path case above.
+    "carrier_states": "PUZZLE_LOCAL",
 }
 
 
@@ -2107,6 +2246,74 @@ class ObjectTransported(Strict):
                          pattern=r"^[a-z0-9_]+$")
 
 
+class ObjectSettled(Strict):
+    """O05-03. A transported object came to rest after the hand put it down.
+
+    Validated like `ObjectTransported` (declared object, room inside its
+    volume) and additionally refused for an object a consumer has taken.
+    The pose is the engine's measurement; the bridge bounds it and
+    stores it, and never invents one.
+    """
+    type: Literal["object_settled"]
+    zone_id: str = _ID
+    object_id: str = Field(min_length=1, max_length=24,
+                           pattern=r"^[a-z0-9_]+$")
+    room_id: str = Field(min_length=1, max_length=24,
+                         pattern=r"^[a-z0-9_]+$")
+    position: tuple[float, float, float]
+    yaw: float = Field(ge=-7.0, le=7.0)
+
+
+class ObjectConsumed(Strict):
+    """O05-02. A declared consumer took the object it was waiting for.
+
+    Names the MECHANISM, not the object: the consumer's declaration says
+    which object it accepts and which state it sets, so a client cannot
+    choose either. `record_object_consumed` refuses it unless the save
+    already has that object in the consumer's own room.
+    """
+    type: Literal["object_consumed"]
+    zone_id: str = _ID
+    mechanism_id: str = Field(min_length=1, max_length=32,
+                              pattern=r"^[a-z0-9_]+$")
+
+
+class ObjectRecovered(Strict):
+    """O05-03 / §10.5. A required object was lost and put back home.
+
+    Recovery is a separate event from an arrival, so a correction is
+    never silent. Refused for a consumed object: an installed object is
+    not lost.
+    """
+    type: Literal["object_recovered"]
+    zone_id: str = _ID
+    object_id: str = Field(min_length=1, max_length=24,
+                           pattern=r"^[a-z0-9_]+$")
+
+
+class CarrierRested(Strict):
+    """O05-06.2. A hosted minor's carrier came to rest.
+
+    Sent only at rest -- parked at a stop, held by a STOP, or pausing in
+    a declared dwell -- never mid-travel (Amalgam §5.3). The package is
+    the minor's (`minor_<room>`); the bridge accepts it only for a
+    carrier and stop the room's minor contract declares, and stores the
+    offset the engine measured without inventing one.
+    """
+    type: Literal["carrier_rested"]
+    zone_id: str = _ID
+    package_id: str = Field(min_length=1, max_length=32,
+                            pattern=r"^[a-z0-9_]+$")
+    carrier_id: str = Field(min_length=1, max_length=32,
+                            pattern=r"^[a-z0-9_]+$")
+    t: float
+    #: The stop it stands at or is bound for; empty only when held with
+    #: no errand.
+    destination: str = Field(default="", max_length=32,
+                             pattern=r"^[A-Za-z0-9_]*$")
+    held: bool = False
+
+
 class LockOpened(Strict):
     """A locked door opened, identified by the door rather than the key.
 
@@ -2382,7 +2589,8 @@ ClientMessage = Annotated[
         UseConsumable, GrantLocalReward, SetCreativity,
         DebugCommand,
         ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
-        ZoneStateSelected, ObjectTransported, LayoutResult, BuildFailed,
+        ZoneStateSelected, ObjectTransported, ObjectSettled, ObjectConsumed,
+        ObjectRecovered, CarrierRested, LayoutResult, BuildFailed,
     ],
     Field(discriminator="type"),
 ]

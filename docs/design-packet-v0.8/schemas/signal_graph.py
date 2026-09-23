@@ -18,6 +18,19 @@ as a signal handler. Naming it here is what lets a Zone ASK for that
 chain instead of a scenario hard-coding it -- the same move
 `RailNetwork` made for the railway.
 
+**O05-07 BROADENS IT THROUGH A REAL CONSUMER** -- EX50-033's own
+chain, as the minor's occurrence contract declares it
+(`schemas/minors.py`) and the room runs it through `SignalGraph`:
+
+    ClassPlate (HEAVY) --> NOT ------------.
+                                            OR --> ServiceShutter.command()
+    bolt lever (PULSE_BUTTON) --> LATCH --'
+
+So `PULSE_BUTTON` and `OR` join, and with them §19.1's PORT FORMS: a
+button's output is a PULSE, which a Boolean reader sees as OFF, so a
+node that reads Booleans refuses a pulse at composition rather than
+quietly never seeing it.
+
 **Everything else is named and refused.** `NODE_KINDS` is §19.2's
 complete eleven and `SENSOR_KINDS` is §20's eighteen, because a
 vocabulary with holes in it cannot tell "not supported yet" from "not a
@@ -72,7 +85,7 @@ SensorKind = Literal[
 #: can shut behind you. §5.4a persists the DECISION, so a set latch is
 #: recorded (`transitions.record_latch`, under `graph_<room>`) and the
 #: machine is rebuilt from the record rather than restored from itself.
-SUPPORTED_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH")
+SUPPORTED_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH", "OR", "TIMER")
 
 #: **`PRESSURE_PLATE` alone**, and §20.6's distinction is the reason it
 #: is worth naming: a `PRESSURE_PLATE` reads a semantic `MassClass` and
@@ -81,7 +94,71 @@ SUPPORTED_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH")
 #: `class_plate.gd` implements the first and `PoweredLink` the second;
 #: only the first is offered, because only the first is what the
 #: declared chain uses.
-SUPPORTED_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE",)
+SUPPORTED_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE", "PULSE_BUTTON",
+                                          "SHOOTABLE_TARGET")
+
+#: §20's `DamageTag`s, which a SHOOTABLE_TARGET's `required_tags` names.
+DamageTag = Literal[
+    "RANGED", "MELEE", "PROJECTILE", "BEAM", "EXPLOSIVE",
+    "PHYSICS", "FIRE", "ENVIRONMENTAL",
+]
+
+#: **What a target's `required_tags` may say today: §20.2's default and
+#: nothing else.** The runtime has no damage tags: `take_damage` carries
+#: an amount, a direction and a knockback, and the SHOT path a target is
+#: built on counts ANY hit (`ActivityElement.take_damage`: "Static
+#: Pulse, an Echo hitscan, a projectile, a melee swing"). So `[RANGED]`
+#: holds as a FLOOR -- every ranged hit operates it, and Static Pulse
+#: suffices, which is §20.2's rule for a mandatory target -- but it is
+#: not a filter: a swing or a blast operates it too. A target requiring
+#: MELEE or EXPLOSIVE would be operated by a Static Pulse, which is the
+#: opposite of what it says, so it is refused rather than approximated.
+SUPPORTED_TARGET_TAGS: tuple[str, ...] = ("RANGED",)
+
+#: O05-07. What a ZONE's own `room_graphs` may declare: the sensors the
+#: Zone builder can PLACE. `RoomGraphs` puts a class plate down beside the
+#: doorway its chain serves; a `PULSE_BUTTON` is evaluated by the same
+#: runtime but placed only by a room that owns its machine -- EX50-033's
+#: bolt lever -- so a Zone declaring one would be asking the builder for
+#: something it cannot put down.
+ZONE_PLACEABLE_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE",)
+
+#: The chains a ROUTE gate may hang on: the shapes the route search and
+#: the Zone validator reason about (D-10 §5, `phases`). A gate driven
+#: through anything else is refused by name rather than certified by
+#: arithmetic that was written for a single plate.
+ROUTE_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE",)
+ROUTE_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH")
+
+#: §19.1: every port is one form. What each supported sensor PRODUCES.
+SENSOR_OUTPUT_FORM: dict[str, str] = {
+    "PRESSURE_PLATE": "BOOLEAN",
+    "PULSE_BUTTON": "PULSE",
+    # §20: "Pulse or Boolean", by `mode`. PULSE only today -- EX50-021's
+    # receiver "emits one pulse per valid hit" -- and TOGGLE, the
+    # Boolean, is refused until something reads it.
+    "SHOOTABLE_TARGET": "PULSE",
+}
+
+#: What each supported node's inputs ACCEPT. Every one of them outputs a
+#: Boolean (§19.2's table).
+#:
+#: `LATCH` takes §19.2's PULSE on `set`, and also the Boolean the P14
+#: slice already feeds it -- a plate, "set by a true input" (D-10 option
+#: B). Neither ever resets.
+NODE_INPUT_FORMS: dict[str, tuple[str, ...]] = {
+    "NOT": ("BOOLEAN",),
+    "OR": ("BOOLEAN",),
+    "LATCH": ("BOOLEAN", "PULSE"),
+    # §19.2: "1 Pulse". A plate held down is not a pulse, and a TIMER fed
+    # one would restart on no tick at all.
+    "TIMER": ("PULSE",),
+}
+
+#: The longest `duration` a TIMER may declare: `ActivityPrimitive`'s own
+#: `time_limit` ceiling, so no window outlasts the longest timed thing a
+#: Zone already allows.
+TIMER_MAX_SECONDS = 120.0
 
 #: Actuator operations a node may drive. One, for the same reason.
 SUPPORTED_ACTUATOR_OPS: tuple[str, ...] = ("command",)
@@ -90,6 +167,9 @@ for _k in SUPPORTED_NODE_KINDS:
     assert _k in get_args(NodeKind), f"{_k} is supported but not a node kind"
 for _k in SUPPORTED_SENSOR_KINDS:
     assert _k in get_args(SensorKind), f"{_k} is supported but not a sensor"
+    assert _k in SENSOR_OUTPUT_FORM, f"{_k} is supported and has no form"
+for _k in SUPPORTED_NODE_KINDS:
+    assert _k in NODE_INPUT_FORMS, f"{_k} is supported and reads nothing"
 
 
 def refuse_unsupported_node(kind: str) -> None:
@@ -140,10 +220,39 @@ class SensorNode(Strict):
     #: an interaction the runtime refuses. `physics.plate_accepts_player`
     #: reads this flag first for exactly that reason.
     counts_player: bool = False
+    #: For `SHOOTABLE_TARGET`, §20's `mode: PULSE | TOGGLE`. Named, never
+    #: defaulted: a target that pulses and one that toggles are different
+    #: machines, and a silent default would pick one for the author.
+    mode: Literal["PULSE", "TOGGLE"] | None = None
+    #: For `SHOOTABLE_TARGET`, §20.2's `required_tags`, default `[RANGED]`.
+    #: See `SUPPORTED_TARGET_TAGS` for why nothing else is accepted.
+    required_tags: tuple[DamageTag, ...] | None = None
 
     @model_validator(mode="after")
     def _the_runtime_has_this_sensor(self):
         refuse_unsupported_sensor(self.kind)
+        if self.kind == "SHOOTABLE_TARGET":
+            if self.mode is None:
+                raise ValueError(
+                    f"sensor '{self.node_id}' is a SHOOTABLE_TARGET and "
+                    "names no mode; §20 gives it PULSE or TOGGLE")
+            if self.mode != "PULSE":
+                raise ValueError(
+                    f"sensor '{self.node_id}' is a {self.mode} target; no "
+                    "runtime implements TOGGLE -- the one that exists "
+                    "emits one pulse per valid hit (EX50-021 §3)")
+            tags = self.required_tags or ("RANGED",)
+            if tuple(tags) != SUPPORTED_TARGET_TAGS:
+                raise ValueError(
+                    f"sensor '{self.node_id}' requires {list(tags)}; the "
+                    "runtime has no damage tags and counts any hit, so "
+                    f"only {list(SUPPORTED_TARGET_TAGS)} -- which every "
+                    "Static Pulse satisfies -- can be honoured")
+        elif self.mode is not None or self.required_tags is not None:
+            raise ValueError(
+                f"sensor '{self.node_id}' is a {self.kind} and declares a "
+                "target's mode or tags; only a SHOOTABLE_TARGET is shot, "
+                "so they would describe nothing")
         if self.kind == "PRESSURE_PLATE" and self.requires_class is None:
             raise ValueError(
                 f"sensor '{self.node_id}' is a PRESSURE_PLATE and names no "
@@ -154,6 +263,11 @@ class SensorNode(Strict):
                 f"sensor '{self.node_id}' is a {self.kind} and says it "
                 "counts the player; only a plate reads bodies standing "
                 "on it, so the flag would describe nothing")
+        if self.requires_class is not None and self.kind != "PRESSURE_PLATE":
+            raise ValueError(
+                f"sensor '{self.node_id}' is a {self.kind} and demands "
+                f"class {self.requires_class}; only a plate reads a mass "
+                "class, so the demand would describe nothing")
         return self
 
 
@@ -162,14 +276,37 @@ class LogicNode(Strict):
     node_id: str = _ID
     kind: NodeKind
     inputs: tuple[_NODE_REF, ...] = Field(min_length=1, max_length=4)
+    #: For `TIMER`, §19.2's `duration`: seconds ON after a pulse. The
+    #: TIMER is EPHEMERAL (§19.6): nothing of it is saved, and a rebuilt
+    #: room starts it OFF.
+    duration: float | None = Field(default=None, gt=0.0,
+                                   le=TIMER_MAX_SECONDS)
 
     @model_validator(mode="after")
     def _the_runtime_has_this_node(self):
         refuse_unsupported_node(self.kind)
+        if self.kind == "TIMER":
+            if len(self.inputs) != 1:
+                raise ValueError(
+                    f"node '{self.node_id}' is a TIMER with "
+                    f"{len(self.inputs)} inputs; §19.2 gives TIMER one "
+                    "pulse")
+            if self.duration is None:
+                raise ValueError(
+                    f"node '{self.node_id}' is a TIMER and names no "
+                    "duration; §19.2's TIMER is ON for `duration`")
+        elif self.duration is not None:
+            raise ValueError(
+                f"node '{self.node_id}' is a {self.kind} and declares a "
+                "duration; only a TIMER has one here")
         if self.kind == "NOT" and len(self.inputs) != 1:
             raise ValueError(
                 f"node '{self.node_id}' is a NOT with {len(self.inputs)} "
                 "inputs; §19.2 gives NOT exactly one")
+        if self.kind == "OR" and not 2 <= len(self.inputs) <= 4:
+            raise ValueError(
+                f"node '{self.node_id}' is an OR with {len(self.inputs)} "
+                "input(s); §19.2 gives OR two to four")
         if self.kind == "LATCH" and len(self.inputs) != 1:
             # The runtime reads `inputs[0]` as SET and has no clear. A
             # second input would be read as nothing at all, so a
@@ -210,20 +347,28 @@ def settle(graph, pressed: bool,
     topological order), then actuators. A `LATCH` already in `latched`
     stays true; one whose input is true this tick joins it.
 
-    Every supported node takes ONE input, so every actuator depends on
-    exactly one sensor and pressing all of them at once asks the same
-    question of each chain as pressing its own.
+    A pressed PULSE sensor is its pulse on this tick. Pressing every
+    sensor at once is a question about a route, and a route's chain is a
+    single one (`ROUTE_*_KINDS`), so it asks each route the same thing as
+    pressing its own plate; a room-local OR is never asked it.
     """
     values = {s.node_id: pressed for s in graph.sensors}
     now = set(latched)
     for node in graph.nodes:
-        feed = values[node.inputs[0]]
+        feeds = [values[i] for i in node.inputs]
         if node.kind == "NOT":
-            values[node.node_id] = not feed
+            values[node.node_id] = not feeds[0]
         elif node.kind == "LATCH":
-            if node.node_id in now or feed:
+            if node.node_id in now or feeds[0]:
                 now.add(node.node_id)
             values[node.node_id] = node.node_id in now
+        elif node.kind == "OR":
+            values[node.node_id] = any(feeds)
+        elif node.kind == "TIMER":
+            # ON on the tick its pulse arrives. "Released" is after the
+            # action, when the window has run out: a TIMER is never a
+            # state a room rests in.
+            values[node.node_id] = feeds[0]
         else:                                       # refused at declaration
             values[node.node_id] = False
     return values, frozenset(now)
@@ -269,8 +414,9 @@ def resting_output(graph, actuator_id: str) -> bool:
 def upstream(graph, actuator_id: str) -> tuple[list, list]:
     """The sensors and nodes an actuator is driven through.
 
-    Walked backwards along single inputs, so it is a chain and not a
-    tree. The route validator asks about THESE sensors only: a second
+    Walked backwards along EVERY input (O05-07: an OR has several), in
+    the order a single chain was always walked, so a chain comes back as
+    it did. The route validator asks about THESE sensors only: a second
     chain in the same room -- an object-only plate running a scenery
     shutter -- is not the interaction the route depends on, and refusing
     the route because of it would describe the wrong thing.
@@ -279,14 +425,27 @@ def upstream(graph, actuator_id: str) -> tuple[list, list]:
     by_sensor = {s.node_id: s for s in graph.sensors}
     binding = next(a for a in graph.actuators
                    if a.actuator_id == actuator_id)
-    sensors, nodes = [], []
-    at = binding.driven_by
-    while at in by_id:
-        nodes.append(by_id[at])
-        at = by_id[at].inputs[0]
-    if at in by_sensor:
-        sensors.append(by_sensor[at])
+    sensors, nodes, seen = [], [], set()
+    stack = [binding.driven_by]
+    while stack:
+        at = stack.pop()
+        if at in seen:
+            continue
+        seen.add(at)
+        if at in by_id:
+            nodes.append(by_id[at])
+            stack.extend(reversed(by_id[at].inputs))
+        elif at in by_sensor:
+            sensors.append(by_sensor[at])
     return sensors, nodes
+
+
+def output_form(graph, node_id: str) -> str:
+    """§19.1: the form a node or sensor of `graph` produces."""
+    for sensor in graph.sensors:
+        if sensor.node_id == node_id:
+            return SENSOR_OUTPUT_FORM.get(sensor.kind, "BOOLEAN")
+    return "BOOLEAN"
 
 
 class RoomGraph(Strict):
@@ -332,6 +491,29 @@ class RoomGraph(Strict):
                     f"actuator '{binding.actuator_id}' is driven by "
                     f"'{binding.driven_by}', which this room's graph does "
                     "not declare")
+        # §19.1: "A node's input port accepts only its declared form; a
+        # graph connecting mismatched forms fails validation at
+        # composition, never at runtime." A pulse read as a Boolean is
+        # OFF on every tick, so the mismatch would not fail -- it would
+        # silently never fire.
+        for node in self.nodes:
+            accepts = NODE_INPUT_FORMS.get(node.kind, ("BOOLEAN",))
+            for feed in node.inputs:
+                form = output_form(self, feed)
+                if form not in accepts:
+                    raise ValueError(
+                        f"node '{node.node_id}' is a {node.kind}, which "
+                        f"reads {' or '.join(accepts)}; '{feed}' produces "
+                        f"a {form}. §19.1: a node reading a Boolean port "
+                        "sees OFF when a pulse occurred")
+        for binding in self.actuators:
+            form = output_form(self, binding.driven_by)
+            if form != "BOOLEAN":
+                raise ValueError(
+                    f"actuator '{binding.actuator_id}' is driven straight "
+                    f"by '{binding.driven_by}', a {form}; a machine "
+                    "commanded by a pulse would move for one tick. Put a "
+                    "LATCH between them")
         # A LATCH THAT SETS WHEN THE ROOM IS BUILT RECORDS A DECISION
         # NOBODY MADE. Its input is true at rest -- `plate -> NOT ->
         # LATCH` -- so the first tick latches it, the runtime reports it,

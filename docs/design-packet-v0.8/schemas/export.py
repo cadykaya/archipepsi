@@ -30,6 +30,7 @@ try:
     from . import constants as C
     from . import echo as E
     from . import signal_graph as SG
+    from . import minors as MINORS
     from . import physics as PH
     from .echo import EchoInterpretation
     from .protocol import CampaignSnapshot, ClientMessage, ServerMessage
@@ -38,6 +39,7 @@ except ImportError:  # pragma: no cover
     import constants as C
     import echo as E
     import signal_graph as SG
+    import minors as MINORS
     import physics as PH
     from echo import EchoInterpretation
     from protocol import CampaignSnapshot, ClientMessage, ServerMessage
@@ -318,6 +320,13 @@ def export_constants_gd() -> str:
         # validated against.
         "const SIGNAL_ACTUATOR_OPS_IMPLEMENTED = "
         f"{_gd_literal(list(SG.SUPPORTED_ACTUATOR_OPS))}",
+        # O05-07. What a Zone's own graphs may place (`RoomGraphs` refuses
+        # the rest), and the hosted minors' own declared graphs.
+        "const SIGNAL_ZONE_PLACEABLE_SENSORS = "
+        f"{_gd_literal(list(SG.ZONE_PLACEABLE_SENSOR_KINDS))}",
+        "const MINOR_SIGNAL_GRAPHS = " + _gd_literal({
+            sid: c.graph.model_dump(mode="json", exclude_none=True)
+            for sid, c in MINORS.CONTRACTS.items() if c.graph is not None}),
     ]
     lines.append("")
     return "\n".join(lines)
