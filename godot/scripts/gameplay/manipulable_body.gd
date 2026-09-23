@@ -36,6 +36,12 @@ extends RigidBody3D
 ## (`HandCarry.refusal`).
 @export var carriable := false
 
+## Design 2 §4.8's `physics_permitted`, and its default. §14.2: an object
+## with `required = true` responds to a verb only while this is true, and
+## Design 2 makes true the default. Nothing sets it false today; the rule
+## is here so the verb runtime asks the question the contract asks.
+@export var physics_permitted := true
+
 ## The player holding this, or null. Set only by `HandCarry`.
 var carried_by: Node = null
 ## The consumer this was installed in, or null. Set only by the consumer.

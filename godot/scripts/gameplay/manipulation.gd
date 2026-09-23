@@ -132,3 +132,130 @@ static func push(body: ManipulableBody, from: Vector3, toward: Vector3,
 	# an effect the contract does not describe.
 	body.receive_force(direction.normalized() * envelope.force_n)
 	return {"applied": envelope.force_n, "refused": ""}
+
+
+# ---------------------------------------------------------------------------
+# §14.3's IMPULSE VERBS, PUSH AND PULL -- RUNTIME ONLY (O05-08)
+# ---------------------------------------------------------------------------
+
+## Design 2 §14.3's three PUSH/PULL profiles, exactly: `range`, `force`
+## and `verb_mass_limit`. The only numbers the verb reads.
+const IMPULSE_PROFILES := {
+	"ab_physics_light": {"range_m": 20.0, "force_n": 700.0,
+			"mass_limit_kg": 120.0},
+	"ab_physics_standard": {"range_m": 24.0, "force_n": 1400.0,
+			"mass_limit_kg": 260.0},
+	"ab_physics_strong": {"range_m": 28.0, "force_n": 2600.0,
+			"mass_limit_kg": 400.0},
+}
+## §14.4: the impulse velocity ceiling, and the vertical ceiling on any
+## player-caused impulse -- the defence against the infinite staircase.
+const IMPULSE_VELOCITY_MAX := 30.0
+const VERTICAL_VELOCITY_MAX := 14.0
+
+## §14.2's refusals, each its own answer, beside `push`'s above.
+const NO_TARGET := "no_target"
+const NOT_AN_IMPULSE_VERB := "not_an_impulse_verb"
+const UNKNOWN_PROFILE := "unknown_profile"
+const NEVER_THE_PLAYER := "never_the_player"
+const ACTOR_MASS_UNMODELLED := "actor_mass_unmodelled"
+const NOT_MANIPULABLE := "not_manipulable"
+const FIXED := "fixed"
+const NOT_PERMITTED := "not_permitted"
+const NO_LINE_OF_SIGHT := "no_line_of_sight"
+
+
+## ONE IMPULSE, ON COMMIT: §14.3's PUSH, away from the player along the
+## aim ray, and PULL, toward the player along it.
+##
+## **RUNTIME ONLY, AND SAID SO.** No Echo Action reaches this. The
+## accepted delivery is the Amalgam's atom grammar (§11.7: a costed
+## `effect_physics_basic` atom carrying a `physics_verb` discriminator),
+## which the running Echo model does not implement for any verb; a
+## primitive here would be a second, unreconciled path. So the verb is
+## built to §14.2/§14.3, verified by direct invocation, and offered to
+## nothing (`PROD_OV05.md`, O05-08). Nor is it `push` above: that is a
+## HELD force at the envelope, the replay harness's question; this is
+## the verb's.
+##
+## `eye` is where the aim ray starts and `aim` its direction; `target` is
+## what the caller's ray found; `exclude` is what the line of sight may
+## pass through (the caster's own body).
+static func impulse_verb(verb: String, target: Node, eye: Vector3,
+		aim: Vector3, profile: String, space: PhysicsDirectSpaceState3D,
+		exclude: Array[RID] = []) -> Dictionary:
+	if verb != "PUSH" and verb != "PULL":
+		return {"applied": false, "refused": NOT_AN_IMPULSE_VERB}
+	if not IMPULSE_PROFILES.has(profile):
+		return {"applied": false, "refused": UNKNOWN_PROFILE}
+	if target == null or not is_instance_valid(target):
+		# §12.3: "A verb aimed at nothing spends nothing."
+		return {"applied": false, "refused": NO_TARGET}
+	# §14.2's player and actor rules, before anything is measured.
+	if target.is_in_group("player"):
+		return {"applied": false, "refused": NEVER_THE_PLAYER}
+	if target is Enemy:
+		# §14.2 admits PUSH and PULL on an enemy, and §14.3 divides the
+		# force by the target's `mass_kg`. No enemy has one in this
+		# runtime, so its velocity would be a guess -- refused by name
+		# rather than invented. Bosses (§14.2) take no verb either way.
+		return {"applied": false, "refused": ACTOR_MASS_UNMODELLED}
+	if not (target is ManipulableBody):
+		return {"applied": false, "refused": NOT_MANIPULABLE}
+	var body: ManipulableBody = target
+	var numbers: Dictionary = IMPULSE_PROFILES[profile]
+	# §14.2: FIXED responds to no verb but DETACH and ROTATE -- bolted,
+	# 400 kg and over, or anchored.
+	if body.mass_class() == MassClass.FIXED:
+		return {"applied": false, "refused": FIXED}
+	# KILOGRAMS, with Design 5 §15.2's one permissive door, exactly as
+	# `push` reads it: a lightened HEAVY body becomes eligible.
+	if body.mass > float(numbers["mass_limit_kg"]) \
+			and not _lightened_into_reach(body):
+		return {"applied": false, "refused": TOO_HEAVY,
+				"mass_kg": body.mass}
+	var reach := eye.distance_to(body.global_position)
+	if reach > float(numbers["range_m"]):
+		return {"applied": false, "refused": OUT_OF_REACH,
+				"reach_m": reach}
+	# §14.2's progression rule, with Design 2 §4.8's default.
+	if body.is_in_group(Constants.REQUIRED_OBJECT_GROUP) \
+			and not body.physics_permitted:
+		return {"applied": false, "refused": NOT_PERMITTED}
+	if not _in_sight(space, eye, body, exclude):
+		return {"applied": false, "refused": NO_LINE_OF_SIGHT}
+	var direction := aim.normalized() if verb == "PUSH" \
+			else -aim.normalized()
+	# §14.3: `impulse_velocity = clamp(force / mass_kg, 0.0, 30.0)`, one
+	# impulse, on commit. `lightened` doubles an incoming impulse (Design
+	# 5 §15.2); §14.4's ceilings bound what results, whatever doubled it.
+	var speed := clampf(float(numbers["force_n"]) / maxf(body.mass, 0.001),
+			0.0, IMPULSE_VELOCITY_MAX)
+	var scale := body.impulse_scale()
+	var velocity := _within_ceilings(direction * speed * scale)
+	body.receive_impulse(velocity * body.mass / scale)
+	return {"applied": true, "refused": "", "velocity": velocity}
+
+
+## §14.4, in one place: 30 m/s overall and 14 m/s vertically.
+static func _within_ceilings(velocity: Vector3) -> Vector3:
+	var out := velocity
+	if out.length() > IMPULSE_VELOCITY_MAX:
+		out = out.normalized() * IMPULSE_VELOCITY_MAX
+	out.y = clampf(out.y, -VERTICAL_VELOCITY_MAX, VERTICAL_VELOCITY_MAX)
+	return out
+
+
+## §14.2: "Unobstructed from eye to target origin." Anything the ray
+## meets on the way, other than the target and what the caller excluded,
+## is in the way.
+static func _in_sight(space: PhysicsDirectSpaceState3D, eye: Vector3,
+		body: ManipulableBody, exclude: Array[RID]) -> bool:
+	if space == null:
+		return false
+	var query := PhysicsRayQueryParameters3D.create(eye,
+			body.global_position)
+	var skip: Array[RID] = exclude.duplicate()
+	skip.append(body.get_rid())
+	query.exclude = skip
+	return space.intersect_ray(query).is_empty()

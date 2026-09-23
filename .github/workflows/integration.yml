@@ -156,6 +156,7 @@ jobs:
           make godot-carry
           make godot-transport
           make godot-reversible
+          make godot-verb-runtime
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live

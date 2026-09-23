@@ -116,12 +116,14 @@ rule, before it is edited. Rows are appended as edits land:
 | `ServiceShutter` (Godot): `trip`, `open_seconds`, `left` removed; `create(...)` loses its `seconds` parameter (5 call sites, one of them a test's) | EX50-021 §3 names the TIMER as the window's owner | the shutter is commanded like every actuator. A second clock would be a second answer to how long the way stays open | `384497b` |
 | `CounterfireArcadeRoom` (Godot) | O05-07.3 | the room binds its receiver, release lever and shutter to the declared ids; the shared runtime drives the shutter. The room keeps its lines and the release stair | `384497b` |
 | `godot/tests/fixtures/latched_route_zone.json` (Dess's P14 fixture) and `candidate_zone.json`, regenerated with their make targets | "Regenerated from source, never edited" | the only change is three `null` keys per graph (`mode`, `required_tags`, `duration`): the new optional fields, dumped the way `requires_class` already is. `proposal_digest` is derived and never stored, so no save is affected | `384497b` |
-| `candidate.OPTIONS` (new), `parse` / `steps_of` / `options_of`; `CampaignEngine.candidate_options` (new) | O05-11.4 "enable the complete function for the explicit overnight candidate profile"; O05-13's "off by default" | an option is switched on by the same spec, and `all` includes it; the engine keeps options apart from Zone steps, so every Zone-profile test is unchanged | O05-11 commit |
-| `epsilon/capabilities.CANDIDATE_ACTION_SLOTS` (new); `validate_stage_support(..., slots=)` | the file's own promotion condition (authorize, then launch; count accepted expenditure), met by `player.gd` and the D-9 suites | the gate admits exactly the slots the request advertised. `IMPLEMENTED_ACTION_SLOTS` is untouched and still withholds `consumable` | O05-11 commit |
-| `epsilon/requests.allowed_for` (new; the request's default factory); `epsilon/base.generate_echo_validated` | as above | a request advertises the consumable slot only when built with `consumable=True`; the default is byte-for-byte the old dict (tested) | O05-11 commit |
-| `epsilon/fallback`: the explosive rule's consumable reading (`_consumable`, new) | O05-11.3 "a deterministic supported candidate provider must be able to produce and deliver a consumable ... include real damage and a currently supported Status" | only when the request offers the slot: three of the weapon reading's own lob, plus `stunned` 1.5 s. Otherwise unchanged, and no other item reads differently (tested) | O05-11 commit |
-| `__main__._candidate_line`, `--candidate` help; `diagnostic.candidate_steps` message | O05-15.1 "print ... profile ... and any staged functions" | the option is printed with the steps | O05-11 commit |
-| `EchoProjectile.statuses` + `_apply_statuses` (new); `EchoRuntime._launch` | the schema's pairing of `apply_status_on_hit` with any damage primitive (P5-19) | a projectile carries its status modifiers to what it damages | O05-11 commit |
+| `candidate.OPTIONS` (new), `parse` / `steps_of` / `options_of`; `CampaignEngine.candidate_options` (new) | O05-11.4 "enable the complete function for the explicit overnight candidate profile"; O05-13's "off by default" | an option is switched on by the same spec, and `all` includes it; the engine keeps options apart from Zone steps, so every Zone-profile test is unchanged | `65f3ef4` |
+| `epsilon/capabilities.CANDIDATE_ACTION_SLOTS` (new); `validate_stage_support(..., slots=)` | the file's own promotion condition (authorize, then launch; count accepted expenditure), met by `player.gd` and the D-9 suites | the gate admits exactly the slots the request advertised. `IMPLEMENTED_ACTION_SLOTS` is untouched and still withholds `consumable` | `65f3ef4` |
+| `epsilon/requests.allowed_for` (new; the request's default factory); `epsilon/base.generate_echo_validated` | as above | a request advertises the consumable slot only when built with `consumable=True`; the default is byte-for-byte the old dict (tested) | `65f3ef4` |
+| `epsilon/fallback`: the explosive rule's consumable reading (`_consumable`, new) | O05-11.3 "a deterministic supported candidate provider must be able to produce and deliver a consumable ... include real damage and a currently supported Status" | only when the request offers the slot: three of the weapon reading's own lob, plus `stunned` 1.5 s. Otherwise unchanged, and no other item reads differently (tested) | `65f3ef4` |
+| `__main__._candidate_line`, `--candidate` help; `diagnostic.candidate_steps` message | O05-15.1 "print ... profile ... and any staged functions" | the option is printed with the steps | `65f3ef4` |
+| `EchoProjectile.statuses` + `_apply_statuses` (new); `EchoRuntime._launch` | the schema's pairing of `apply_status_on_hit` with any damage primitive (P5-19) | a projectile carries its status modifiers to what it damages | `65f3ef4` |
+| `Manipulation.impulse_verb` (Godot, new), with `IMPULSE_PROFILES`, the two §14.4 ceilings and nine refusal names; `_within_ceilings`, `_in_sight` | Design 2 §14.2 (eligibility), §14.3 (PUSH/PULL: one impulse on commit, `clamp(force / mass_kg, 0, 30)`, the three profiles' numbers), §14.4 (30 m/s; 14 m/s vertical); Design 5 §15.2 (`lightened`) | a new static verb beside the replay harness's held-force `push`, which is untouched. Offered to nothing: no Echo Action, no generation, no qualification reads it | O05-08 commit |
+| `ManipulableBody.physics_permitted` (Godot, new; default true) | Design 2 §4.8 `PhysicalObject.physics_permitted : bool = true`; §14.2's progression rule | read only by `impulse_verb`, for bodies in the required-object group. Nothing sets it false yet | O05-08 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -961,6 +963,88 @@ graph, not just the sensor, and each was sabotaged.
   one verb family at a time, labelled runtime-only, unavailable to
   generation. Nothing is delivered, and there are no primitives or
   shortcuts.
+
+### O05-08.1 — PUSH and PULL, the first verb family — runtime only, verified by direct invocation
+
+- **What exists now.** `Manipulation.impulse_verb(verb, target, eye,
+  aim, profile, space, exclude)` in
+  `godot/scripts/gameplay/manipulation.gd`, and
+  `ManipulableBody.physics_permitted` (Design 2 §4.8's field and its
+  default, true). Nothing else changed: the replay harness's held-force
+  `push` is untouched, and no bridge file moved.
+- **Built to the contract, in this refusal order:**
+  1. not PUSH or PULL; a profile §14.3 does not name;
+  2. no target (§12.3: "A verb aimed at nothing spends nothing");
+  3. the player (§14.2: never a target);
+  4. an enemy — see the boundary below;
+  5. not a `ManipulableBody` (scenery);
+  6. `FIXED` by `mass_class()`: bolted, 400 kg or more, or anchored.
+     §14.2 leaves FIXED to DETACH and ROTATE;
+  7. over the profile's mass limit, unless Design 5 §15.2's door
+     applies (a lightened HEAVY body is eligible), read through the same
+     `_lightened_into_reach` the held-force `push` uses;
+  8. beyond the profile's range, eye to origin;
+  9. a required object whose `physics_permitted` is false;
+  10. no line of sight from the eye to the body's origin.
+
+  Then one impulse: `clamp(force / mass_kg, 0, 30)` along the aim
+  (PUSH) or against it (PULL), doubled when `lightened`, and bounded by
+  §14.4 after the doubling: 30 m/s overall, 14 m/s vertically. The
+  result reports the velocity the body actually receives.
+- **Profiles (§14.3):** light 20 m / 700 N / 120 kg; standard 24 m /
+  1400 N / 260 kg; strong 28 m / 2600 N / 400 kg.
+- **The one boundary inside the family: enemies.** §14.2 admits PUSH
+  and PULL on an actor, and §14.3 divides by the target's `mass_kg`. No
+  enemy in this runtime has a mass, so its velocity would be a number
+  this lane invented. An enemy is refused by name
+  (`actor_mass_unmodelled`). Giving enemies masses is a design value,
+  not a mapping. Bosses take no verb in any case.
+- **Evidence: `make godot-verb-runtime` (new, in CI), 23 checks.**
+  Evidence class: DIRECT INVOCATION, RUNTIME ONLY, on real bodies in a
+  real physics world.
+  - PUSH: 700 N on 40 kg is 17.50 m/s, and the body leaves the eye
+    along the aim at 17.12 m/s. Half a second later it is at 8.87 m/s:
+    one impulse, not a held force.
+  - PULL: 1400 N on 50 kg is 28 m/s, back along the aim.
+  - Ceilings: 2600 N on 10 kg would be 260 m/s and is 30.0. Aimed
+    steeply up (26 m/s of it vertical), it leaves at 14.0 m/s
+    vertically, and the body's own vertical speed is 13.22 m/s.
+  - `lightened`: a 100 kg body goes 7.0 m/s plain and 14.0 lightened. A
+    150 kg body against the 120 kg limit is refused (`too_heavy`), then
+    admitted once lightened.
+  - Every refusal is named, and each one aimed at a rigid body is shown
+    to move nothing: one frame later the body has 0.000 m/s of sideways
+    speed. The cases: `not_an_impulse_verb`, `unknown_profile`,
+    `no_target`, `out_of_reach` (21 m against 20; the strong profile's
+    28 m then reaches it), `too_heavy` (130 kg), `fixed` (a bolted 20 kg
+    bracket; 450 kg under the strong profile), `not_permitted` (after
+    the same required body responded by default), `no_line_of_sight`
+    (a wall), `never_the_player`, `actor_mass_unmodelled`,
+    `not_manipulable`.
+- **Sabotages (each restored, each failing by name):**
+  - S1: remove the vertical ceiling. 2 failures: 25.7 m/s vertical.
+  - S2: an impulse lands before eligibility is decided. 7 failures:
+    every refused rigid body "has moved" at 1.957 m/s, and the ceiling
+    check reads 14.89.
+  - S3: skip the line-of-sight test. The wall case fails (17.1 m/s).
+  - S4: shut the lightened door. The HEAVY case fails.
+  - The first S4 attempt proved something else. A check message that
+    read a refused result's velocity raised a script error, which ended
+    the case before its check was counted. Every velocity read is now
+    refusal-safe, and S4 fails by name with all 23 checks counted.
+    (That attempt's first anchor also matched `push`'s identical line
+    and applied nothing. It was rerun on a unique anchor.)
+- **Neighbours unchanged:** `godot-physics` 68, `godot-constraints` 67,
+  `godot-carry` 32, `godot-unweighted` 70, `godot-mass-class` 59.
+- **What this does not prove, and is not claimed:** delivery (no Echo
+  Action reaches the verb), qualification (it qualifies a host only
+  once delivery exists), or any played use. Generation is unaffected:
+  `physics.MANIPULATE_VERBS` and `grants_manipulate` are unchanged, and
+  nothing advertises the verb.
+- **Remaining families, each runtime-only on the same terms:** HOLD
+  (§14.3's 1.5–6.0 m hold distance, 8 m/s and release conditions), ALIGN
+  and SETTLE, TETHER / PIN / ROTATE, ATTACH / DETACH, and the two mass
+  fields. Not started in this run.
 
 ### O05-14 — existing visual work — reconciled; nothing it may bind
 

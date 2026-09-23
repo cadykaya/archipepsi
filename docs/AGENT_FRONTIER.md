@@ -86,11 +86,17 @@ one writer.
   consumable shares a family with an always-available verb is a Dess or
   owner decision. P5-19: projectiles now apply their on-hit status.
 - **O05-08: answered, and bounded.** The verb RUNTIME is a faithful,
-  bounded integration within authority (next). Echo DELIVERY needs the
+  bounded integration within authority. Echo DELIVERY needs the
   Amalgam's composition grammar (atoms, costs, discriminators), which
   the running Echo model does not implement for any verb, so a
   primitive would be a parallel path. That is a design boundary, not a
   missing mapping. Qualification waits on delivery.
+- **O05-08.1: PUSH and PULL, runtime only.** `Manipulation.impulse_verb`
+  to §14.2–§14.4: eleven named refusals, one impulse by the formula, and
+  both ceilings applied after `lightened` doubles it. Enemies are
+  refused as `actor_mass_unmodelled`, because no enemy has the mass the
+  formula divides by. `make godot-verb-runtime` 23 checks, in CI, with
+  4 sabotages. Evidence is direct invocation; nothing delivers the verb.
 - **O05-14: reconciled, nothing to bind.** No delivered enemy or
   machinery models exist; the 3 projectile visuals stay `pending`.
 - **O05-10 in part: 10.1 audit, 10.3 reversal, 10.4 isolation.** Every
