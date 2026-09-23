@@ -143,10 +143,10 @@ rule, before it is edited. Rows are appended as edits land:
 | `VerbField` (Godot, new file) | §14.3 LIGHTEN_FIELD/ANCHOR_FIELD and their profiles; §14.4 radius ceiling 8.0 m and multiplier range 0.30–3.00; §10.2 derivation | runtime only; offered to nothing | `38b104f` |
 | `ManipulableBody.own_mass`, `field` (new; -1 and null by default) | §14.3 "Fields do not stack" | set only by a field; every other reader still reads `mass`, which is the body's own kilograms whenever no field scales it | `38b104f` |
 | `VerbAttach._own`, `_set_own` (new); ATTACH gives a held part back from its field before the weld | §14.3 ATTACH with the fields: item 14's 190 kg is the girders' own kilograms | with no field, the O05-08.3 arithmetic exactly (its checks unchanged) | `38b104f` |
-| `SUPPORTED_STATUS_TARGETS["rooted"]` and `["anchored"]` = `("enemy",)` (bridge schema; exported to `constants.gd`) | Design 5 §15.2 (Amalgam §15.2); D-7's rule that support is declared in the change that lands the effect | the on-hit modifier, a `StatusComponent` at an enemy and an `apply_status` rule effect admit both; every other target is refused as before | O05-09.1 commit |
-| `Enemy._held_in_place()` (new) read by the approach, `_work`, the rush, the dive and the station hold; the anchored knock discard in `_physics_process` | Design 5 §15.2 `rooted`, `anchored` | no other Status's behaviour changes (`godot-roster`, `godot-encounter` unchanged) | O05-09.1 commit |
-| `Manipulation.target_refusal`: an anchored enemy is `fixed` for PUSH, PULL and PIN | Design 5 §15.2 `anchored` ("immune to ... Physics"); Design 2 item 63 | every other enemy answer unchanged (`godot-verb-runtime`) | O05-09.1 commit |
-| `StatusEffects._CLEANSE_ORDER["enemy"]` gains `anchored`, `rooted` | D-7: a kind outside the cleanse order can never be removed | `cleanse` aims only at the player today | O05-09.1 commit |
+| `SUPPORTED_STATUS_TARGETS["rooted"]` and `["anchored"]` = `("enemy",)` (bridge schema; exported to `constants.gd`) | Design 5 §15.2 (Amalgam §15.2); D-7's rule that support is declared in the change that lands the effect | the on-hit modifier, a `StatusComponent` at an enemy and an `apply_status` rule effect admit both; every other target is refused as before | `7abb338` |
+| `Enemy._held_in_place()` (new) read by the approach, `_work`, the rush, the dive and the station hold; the anchored knock discard in `_physics_process` | Design 5 §15.2 `rooted`, `anchored` | no other Status's behaviour changes (`godot-roster`, `godot-encounter` unchanged) | `7abb338` |
+| `Manipulation.target_refusal`: an anchored enemy is `fixed` for PUSH, PULL and PIN | Design 5 §15.2 `anchored` ("immune to ... Physics"); Design 2 item 63 | every other enemy answer unchanged (`godot-verb-runtime`) | `7abb338` |
+| `StatusEffects._CLEANSE_ORDER["enemy"]` gains `anchored`, `rooted` | D-7: a kind outside the cleanse order can never be removed | `cleanse` aims only at the player today | `7abb338` |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -1736,8 +1736,10 @@ graph, not just the sensor, and each was sabotaged.
   first and lets it settle. The encounter driver's warm-up comment
   records a similar symptom. Whether a real Zone can place an enemy
   where its player is first created is not examined here.
-- **Neighbours:** to be run after this commit (roster, encounter,
-  stats, verbs, verb-runtime, unweighted, counterfire).
+- **Neighbours unchanged** (run on `7abb338`): `godot-roster` 52,
+  `godot-encounter` 51, `godot-stats` OK (its sweep now covers the two
+  new pairs), `godot-verbs` OK (on-hit statuses), `godot-verb-runtime`
+  95, `godot-unweighted` 70, `godot-counterfire` 59.
 
 ### O05-14 — existing visual work — reconciled; nothing it may bind
 
