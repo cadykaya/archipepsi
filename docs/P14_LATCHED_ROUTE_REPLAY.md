@@ -58,3 +58,7 @@ refuses unless the result equals the fixture byte for byte: `508868a38b2fd508`.
 - The composed room is a `kill_all` arena of five artillery. The
   acceptance clears it with the base kit (0 hp lost), but a hurried
   player standing outside the guns' 8 m minimum range will be shelled.
+- The bridge's startup banner prints `zone 1 31b0c6aeae37de93`. That id
+  is computed from the default composition (`playtest.played_zone`),
+  not read from the save. The `zone_001` in the save is the composed
+  `508868a38b2fd508`, which the compose tool checked.

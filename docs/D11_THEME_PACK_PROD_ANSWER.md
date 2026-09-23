@@ -146,3 +146,60 @@ no table at all.
 
 Nothing here selects a pack, touches `THEME_PACK.json`, or regenerates
 the art lane's assets.
+
+## 7. Prod: the engine half, delivered — 2026-09-23
+
+**Prod (engine) → Dess (bridge/design).** This answers your §6 row by
+row, against `83a8e7e` as landed. No second loader was added and nothing
+in your contract was changed. Tested at `57e962e`.
+
+| §6 row | landed |
+|---|---|
+| 1. The pack key first, exactly once; cache on `(pack, theme, role)` | `ThemePack._resolve` tries `<pack>/<theme>/<role>` and nothing else of the pack's. Otherwise it resolves the family chain unchanged, one hop included. The cache key is `pack\|theme\|role`, and `ThemeMaterials` puts the pack in every material's key too |
+| 2. `refusals` for a pack | `pack_refusals(pack)` names a pack row painting a universal role. The row is refused, never bound, and the rest of the pack still binds. `UNIVERSAL_ROLES` and the table name are now your exported constants, not copies |
+| 3. `disqualified` stays about the family | Unchanged. A partial pack is legal, and a role it lacks is the family's |
+| 4. The runtime refusing a pack the status does not allow | Yes. The engine binds a pack only in a state a Zone may name it in: `selectable` or `approved`, read from `THEME_PACK_STATUS` and never moved. A `candidate`, an unlisted pack or a family's name binds nothing, and the family paints the Zone |
+
+**Where the Zone's pack reaches the builders.** There are 114 material
+requests across twenty builders, and every one passes a family `theme`
+only. So `ThemeMaterials` holds the pack that owns the world being built:
+
+- `ZoneController.setup` binds its Zone's `theme_pack`, or none, before
+  it builds anything.
+- The Hub binds none.
+- A binding is *replaced*, never merely cleared, and a former owner's
+  `release_pack` does nothing.
+
+So no pack reaches another Zone or the Hub, in any build or teardown
+order.
+
+**Shown on the geometry, not in a lookup** (`godot-theme-pack`, 30
+checks). The suite builds real Zones and the real Hub and reads the
+materials on the meshes the builders made:
+
+- **No pack is unchanged**: the same files on the same surfaces as
+  before a pack table existed.
+- **The exact pack row wins**: 26 wall surfaces become the pack's.
+- **A missing role is the family's**, and the pack takes no hop:
+  `metal` resolves to the family's `trim`, not to the pack's `trim`,
+  which the pack ships.
+- **Two packs over one family** share no material.
+- **No pack again** gives the family material again.
+- **The Hub stays the family's**: built while a pack Zone still stands,
+  with the Echo Lab inside it.
+- **A forged `hazard` row is refused**, and no surface wears it.
+- **Candidate and unlisted packs bind nothing.**
+- **Every answer prints its identity**: source, key, pack and status.
+
+Three sabotages each fail it: the pack dropped from the material key,
+the Hub not binding, and the status gate removed.
+
+`make theme-pack-shots` renders the same arena wall under no pack and
+under test packs A and B. It is diagnostic, needs a display, and is not
+in CI.
+
+**Test-scoped only.** The packs are in-memory rows reusing the shipped
+descriptor's own rows for other families, with an in-memory status
+registry. `THEME_PACK.json`, the production `THEME_PACK_STATUS` (`{}`)
+and the art lane's assets are untouched, and no pack is marked
+approved.

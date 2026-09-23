@@ -1,5 +1,109 @@
 # AGENT FRONTIER
 
+## PROD LANE — P14 played and persisted, D-11 on the geometry: integration batch closed — 2026-09-23
+
+**STOPPED here, by instruction.** This batch consumed Dess's `9ef2676`
+(P14) and `83a8e7e` (D-11) and nothing else. Dess and Arty are paused.
+Do not continue into P12, P16, P19, new theme packs or broader campaign
+generation without a new instruction. **No heartbeat, watcher,
+subscription or scheduled job is armed**: the next task starts by
+turning one on, if it needs one.
+
+**Tested revision:** `57e962e` on `claude/archipepsi-0-4-blindside`,
+frozen (clean tree) for the whole run. The handoff commit on top of it
+changes documents only. These are **local results**. Remote CI
+availability is a separate question and was not polled.
+
+| set, as CI runs it | local result on `57e962e` |
+|---|---|
+| `make test` | **1933 passed** (627 subtests), 211 s |
+| `make smoke`; `python3 docs/design-packet-v0.8/check_packet.py`; `make export` + `git diff --exit-code` over the generated artifacts | green; nothing stale |
+| `make godot-import`; `make doctor` | green |
+| the 41 "Headless Godot suites" (the CI step's list). New in this batch: `godot-latched-route` **38 checks** and `godot-theme-pack` **30 checks**. Changed: `godot-mass-class` 59, `godot-signal-graph` 46 | **41 / 41 OK** |
+| `godot-consumable-live`, `godot-consumable-restart`, `godot-latched-route-live` (seed 2 / play 18 / restore 12), `godot-ordinary-live`, `godot-integration`, `godot-integration-quiet`, `godot-integration-variant-live`, `godot-reload` | **8 / 8 OK** |
+| `make version` | ok |
+
+**56 of 56 steps passed, and nothing failed or was re-run.** The run
+took 01:56–02:38 UTC. `make godot-zone-audit` restamped its five
+generated placement captures (`controller_digest`, `source_commit`),
+because `zone_controller.gd` changed. Those restamps are committed with
+this handoff, and `test_placement_contract.py` passes on them.
+
+**P14: delivered.** The per-row detail is in
+`docs/D10_P14_PROD_ANSWER.md` §7.
+
+- `ClassPlate.counts_player` is false by default, and EX50-033 is
+  unchanged.
+- `Player.mass_class()` reads the exported mass and ladder. Only
+  `ClassPlate` reads a player's class.
+- The route shutter is built across the `opened_by` doorway from the
+  committed door frame.
+- Accepted latches are restored before the first graph evaluation and
+  settled without an announcement.
+- `godot-latched-route` (38 checks) plays the fixture with the real
+  body: arrive, clear the arena with the base kit, press at the shut
+  doorway, step on, step off, walk into `c003` and back. The control
+  with no `LATCH` is stopped at the door.
+- `godot-latched-route-live` (seed 2 / play 18 / restore 12 checks)
+  runs on a disposable save:
+  - the real path generates `zone_001`, and the compose tool proves it
+    is exactly Dess's fixture (`508868a38b2fd508`, no re-keying);
+  - the real `Main` enters and gets the bridge's own verdict;
+  - the real `latch_fired` is accepted and read off the save file as
+    `graph_c002/held`;
+  - forged latches are refused (uncommitted, unknown latch, no graph,
+    unplaced room);
+  - both processes restart, and the route is open before the plate,
+    with nothing announced.
+
+**D-11: delivered.** The per-row detail is in
+`docs/D11_THEME_PACK_PROD_ANSWER.md` §7.
+
+- The resolution order is the exact `<pack>/<theme>/<role>` first, then
+  the family chain unchanged. There is no pack hop.
+- The `(pack, theme, role)` cache and a pack-keyed material cache.
+- Only `selectable` or `approved` packs bind.
+- Universal-role pack rows are refused.
+- The Zone binds its pack and the Hub binds none (owner-replaced), so
+  nothing leaks.
+- `godot-theme-pack` (30 checks) proves it on the materials of built
+  meshes, with in-memory test-scoped packs. `make theme-pack-shots`
+  renders it.
+
+**Engine defects found and fixed on the way:**
+
+- Enemies acted on a player the layout verdict was holding: 80 hp lost
+  at the arrival to five artillery shells.
+- A declared route gate read as a solid doorway, and the bridge refused
+  the live layout.
+
+Both have regression checks and were sabotage-checked.
+
+**Launch or replay the latch-route candidate:**
+
+```
+make godot-latched-route          # standalone, ~95 s
+make godot-latched-route-live     # seed -> compose -> play -> restart -> restore, ~85 s
+make latched-route-play           # by hand, windowed, on .latched-route-play/ (FRESH=1 reseeds)
+```
+
+`docs/P14_LATCHED_ROUTE_REPLAY.md` says what to do in the game.
+
+**Limits, stated:**
+
+- The by-hand launch was not run windowed here, because there is no
+  display. The same client path runs headless in the live gate.
+- The latch closes one permanent interaction, not the cross-room puzzle
+  programme.
+- No production pack is selectable, and `THEME_PACK_STATUS` is `{}`.
+- Consumables stay staged as agreed; D-9 was not reopened.
+- **Observed in passing, not worked:** artillery shells hit a
+  stationary player here. Five shells did exactly 80 hp to the held
+  player at 20.6 m. That is a data point for the P08 note in
+  `NEXT_STEPS.md`, not a P08 test.
+
+---
+
 ## BRIDGE LANE — P14's latch on a route, and D-11's pack identity: handed off — 2026-09-22
 
 **Tested revision:** `83a8e7e` on `claude/archipepsi-0-4-blindside`.

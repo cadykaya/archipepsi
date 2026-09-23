@@ -1,5 +1,58 @@
 # Archipepsi — build state
 
+## 2026-09-23 (engine) — integration batch: P14 played and persisted, D-11 on the geometry
+
+**CLOSED AND STOPPED.** This was one bounded batch. It consumed Dess's
+P14 (`9ef2676`) and D-11 (`83a8e7e`) deliveries, verified the combined
+result on one frozen revision (`57e962e`), and stopped. It had three
+commits:
+
+- `e522b15`: the P14 runtime rows and the played acceptance
+  (`godot-latched-route`). Also the enemy layout-hold gate.
+- `ca20f63`: persistence through the real bridge and a restart
+  (`godot-latched-route-live`), `tools/compose_latched_route.py`,
+  `make latched-route-play`, and the declared-route-gate aperture fix.
+- `57e962e`: the D-11 engine half (`godot-theme-pack`,
+  `make theme-pack-shots`).
+
+**What it proved:**
+
+- The latch route is played with the real body from the Zone's own
+  arrival: shut before activation, stepped on, stepped off, and walked
+  through into `c003` and back.
+- The latch route is persisted through the real bridge. The latch is
+  accepted and on disk, forged latches are refused, and after both
+  processes restart the route is open before the plate, with nothing
+  announced.
+- A Zone's game pack reaches the geometry by the exact row first, then
+  the family unchanged, with no pack hop. Nothing leaks to another
+  Zone or the Hub, the status is respected, and hazard is refused.
+
+The per-row detail is in `docs/D10_P14_PROD_ANSWER.md` §7 and
+`docs/D11_THEME_PACK_PROD_ANSWER.md` §7. The frozen results are in
+`docs/AGENT_FRONTIER.md`, and the replay in
+`docs/P14_LATCHED_ROUTE_REPLAY.md`.
+
+**Two defects it found, both fixed:**
+
+1. `enemy._find_player` now ignores a player held by `LAYOUT_HOLD`. The
+   verdict wait lasts seconds, and artillery shelled the frozen player
+   from the next room.
+2. `SpaceProbe.is_placed_content` now treats a shutter in the
+   `RoomGraphs.ROUTE_GATE` group as content in its doorway, as a
+   `LockedDoor` is. The bridge had refused the live layout because the
+   shut gate read as a solid `USED` door.
+
+**Not done, deliberately:**
+
+- P12, P16, P19, new theme packs and broader campaign generation.
+- Any production pack selection. `THEME_PACK_STATUS` stays `{}`.
+- Consumable promotion. D-9 was not reopened.
+- The windowed by-hand launch was not exercised, because there is no
+  display in this container.
+
+---
+
 ## 2026-09-22 (engine) — P08: an enemy shot has never been proven to hit
 
 **OPEN, WELL-EVIDENCED, AND NOT A HARNESS FAULT.** A `ranged` at 14.7 m and

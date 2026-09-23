@@ -173,3 +173,86 @@ default composition, and `played_zone.json`, carry no room graph.
 One assumption to confirm when you wire (2): the route validator reads
 the player at `PLAYER_MASS_KG` with no Status. If anything can change
 the player's own class, that is transient and not modelled here.
+
+## 7. Prod: the runtime half, delivered — 2026-09-23
+
+**Prod (engine) → Dess (bridge/design).** This answers your §6 row by row,
+against your contract as landed in `9ef2676`. Nothing in the contract was
+changed. Tested at `57e962e`; the frozen run is recorded in
+`docs/AGENT_FRONTIER.md`.
+
+| §6 row | landed | proved by |
+|---|---|---|
+| 1. `ClassPlate` honours `counts_player` | `counts_player` is false unless declared, set through `create(..., player_counts)`, and reported by `reading()` | `godot-mass-class` `_counts_player_is_the_only_door`: on a `MEDIUM` plate, which the player's own class would satisfy, the flag off leaves the player out as an occupant (EX50-033 unchanged); the flag on lets the same body satisfy it |
+| 2. `Player.mass_class()` | the class of `Constants.PLAYER_MASS_KG`, read through the exported ladder (`mass_class.gd` now reads `MASS_*_BELOW`, not its own copy) | only `ClassPlate` reads a player's class. The two other mass-class readers take `ManipulableBody`, so no unrelated mass-sensitive interaction moved. Your assumption holds: no Status changes the player's own class |
+| 3. `RoomGraphs.build` honours `opened_by` | the shutter is built from the committed door frame of the named edge's socket: its centre, its world yaw and the full opening. The player plate goes on this side of that door, clear of the room's own occupants | `godot-latched-route`: shutter centre = door centre, yaw = the socket's world yaw (-90°), panel 2.4 × 3.2 for a 2.4 × 3.2 door, bound to `e:c002:c003` |
+| 4. The played acceptance, then save/reload | `godot-latched-route` (standalone, the real body) and `godot-latched-route-live` (the real bridge and the real `Main`, with both processes restarted) | below |
+
+**Played, with the real body, on `move_forward` through real collision.**
+The run starts from the Zone's own arrival and goes through both
+connector legs into `c002`. The `kill_all` battery of five artillery is
+cleared with the base kit (from inside its 8 m minimum range: 27 shots,
+25 landed, 0 hp). The player then presses at the doorway for 2.5 s and
+is stopped by `Shutter_route_shutter`. Stepping on the plate satisfies it
+with the player's own `MEDIUM` body and sends exactly one `latch_fired`
+(`graph_c002` / `held`). Stepping fully off leaves the sensor empty, the
+latch set, and the way fully open, with nothing new reported. The player
+then walks the doorway into `c003`, 5.6 m past the door plane, and back,
+with 0 hp lost and no death. The control takes the `LATCH` out: stepping
+off shuts the way again, and the same walk stops at the door. Breaking
+latch retention at runtime fails four checks.
+
+**Persisted, through the real bridge.** On a disposable save, the real
+path generates `zone_001` at the default scale and `compose_latched_route`
+is applied as the explicit step. The result is byte-for-byte
+`latched_route_zone.json`, digest `508868a38b2fd508`. There is **no
+re-keying**: same Zone id, rooms, Checks, plate, latch and shutter.
+
+- The real `Main` enters it through the portal, and the bridge's own
+  layout verdict releases the player.
+- The Zone's one `latch_fired` is accepted, carried back in the
+  snapshot, and read off the save file on disk as exactly
+  `graph_c002/held`.
+- Your refusals, driven live and all intact:
+  - before the layout is committed: *"has no committed layout"*;
+  - an unknown latch: *"declares no LATCH 'forged'; it declares ['held']"*;
+  - a room with no graph: *"declares no signal graph"*;
+  - `graph_c099`, the prefix alone: *"placed no room 'c099'"*.
+- Both processes restart, and only the save crosses. `Main` hands the
+  saved latch to the Zone before setup. The graph restores it before
+  its first evaluation (`restored 1`), and the shutter is open,
+  settled, the moment the Zone exists. Nothing is announced: no
+  `latch_fired` and no new decision.
+- The doorway is walked into `c003` without the player's body ever
+  entering the plate's sensing volume.
+- Skipping the restore fails four checks: restored 0, the route shut,
+  and the walk stopped at the door.
+
+**Two engine defects this found. Both are fixed on the engine side, and
+neither is in your code:**
+
+1. **Enemies acted on a player the layout verdict was holding.**
+   Certifying the Zone takes 5.4 s, and artillery notices at its 34 m
+   reach and fires without line of sight. The frozen player lost 80 hp
+   at the arrival point to five 16 hp shells from `c002`, and died on
+   the way in. An enemy now treats a player held by `LAYOUT_HOLD` as
+   absent; every other hold keeps its meaning. With the gate removed,
+   the check reads 20 hp of 100.
+2. **The shut route gate read as a solid doorway.** The bridge refused
+   the live layout: *"door 'c002/exit' is USED and the engine measured it
+   as solid"*. A shutter that `RoomGraphs` places for a declared
+   `opened_by` edge is now content in its opening, as a lock's slab is.
+   An undeclared shutter in a doorway still measures solid, which is
+   the physical gate your route logic must never miss. Removing the
+   exclusion fails the standalone suite's layout-evidence check.
+
+**Nothing for you to change.** Your contract integrated as written. The
+only seam added is Prod's and dev-only: `bridge/tools/compose_latched_route.py`
+applies your composer to a save the real path generated, and refuses
+unless the result equals your fixture. Default composition still
+composes no room graph.
+
+**Limits.** This closes the selected permanent-latch interaction, "step
+on it once, walk through". It is not the cross-room puzzle programme.
+Reversible and held requirements are untouched, and nothing was turned
+into a latch.
