@@ -147,6 +147,17 @@ one writer.
     so it now reads every tick.
   - The `anchored` Status has no runtime yet (O05-09), so a field
     leaving an `anchored` body alone is stated, not played.
+- **O05-09.1, first slice: `rooted` and `anchored` on an enemy.**
+  - Both: no step of its own (the approach, the job walk, a charger's
+    rush, a diver's dive, a flyer's station), and attacks continue.
+  - A knock moves a rooted enemy and not an anchored one. The verbs read
+    an anchored enemy as FIXED.
+  - Declared on `enemy` only, in the change that implements it.
+    `rooted` is the family's first fully supported Status.
+  - Proven through a real on-hit in a declared arena (injected Echo) and
+    per role. `godot-status-family` 15 checks, 10 sabotages.
+  - Named gaps: an enemy's mass class, anchored on an object or the
+    player, the §15.4 roll/cap pipeline, and §15.8 feedback.
 - **O05-14: reconciled, nothing to bind.** No delivered enemy or
   machinery models exist; the 3 projectile visuals stay `pending`.
 - **O05-10 in part: 10.1 audit, 10.3 reversal, 10.4 isolation.** Every

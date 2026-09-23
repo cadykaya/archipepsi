@@ -483,8 +483,8 @@ func _a_refused_status_leaves_the_room_alone() -> void:
 		room.crate.statuses.status_applied.connect(
 				func(k: String) -> void: seen.append(k))
 	# `burning` is implemented on `self` and `enemy` and on no object,
-	# and `anchored` is named by the design with nothing behind it at
-	# all. Both doors, one answer.
+	# `anchored` on an enemy and on no object (O05-09.1), and `slippery`
+	# has nothing behind it at all. Every door, one answer.
 	for kind: String in ["burning", "anchored", "slippery"]:
 		room.crate.apply_status(kind, 6.0, 1.0)
 		await _settle(2)

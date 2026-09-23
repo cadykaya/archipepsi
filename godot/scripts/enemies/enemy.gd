@@ -345,6 +345,14 @@ func _physics_process(delta: float) -> void:
 		if _dead:
 			return
 
+	# ANCHORED IS IMMUNE TO ALL IMPULSE (Design 5 §15.2): a knock that
+	# lands on it goes nowhere, and it does not slide on from one that
+	# landed before. ROOTED is not -- "can still be pushed, pulled, and
+	# thrown, unlike `anchored`" -- so its knock is taken as usual.
+	if statuses.has("anchored"):
+		_knockback = Vector3.ZERO
+		velocity.x = 0.0
+		velocity.z = 0.0
 	velocity += _knockback
 	_knockback = Vector3.ZERO
 	# OV04 P06: A FLYER HOLDS A HEIGHT rather than falling to the floor.
@@ -354,7 +362,13 @@ func _physics_process(delta: float) -> void:
 	# that fell would be a walker with a drifter's collider, and "owns
 	# the ceiling" would be a description of nothing.
 	if bool(envelope.get("flying", false)):
-		_hold_station(delta)
+		if _held_in_place():
+			# Holding station is a flyer's own power too: held, it stays
+			# where it is -- neither climbing back after a knock nor
+			# falling, which nothing in §15.2 asks of it.
+			velocity.y = lerpf(velocity.y, 0.0, 0.3)
+		else:
+			_hold_station(delta)
 	elif not is_on_floor():
 		velocity.y -= Constants.GRAVITY * delta
 
@@ -458,6 +472,13 @@ func _physics_process(delta: float) -> void:
 				# while it takes one.
 				velocity.x = lerpf(velocity.x, 0.0, 0.4)
 				velocity.z = lerpf(velocity.z, 0.0, 0.4)
+			elif _held_in_place():
+				# ROOTED OR ANCHORED: no step of its own. What is already
+				# moving it -- a knock it took -- runs down exactly as it
+				# does for an enemy standing still in reach, and the attack
+				# below is not withheld: "attacks continue".
+				velocity.x = lerpf(velocity.x, 0.0, 0.3)
+				velocity.z = lerpf(velocity.z, 0.0, 0.3)
 			elif speed > 0.0 and distance > float(stats["reach"]) * 0.8:
 				var dir := flat.normalized()
 				if _sidestep_timer > 0.0:
@@ -669,6 +690,12 @@ func _work(delta: float) -> void:
 		velocity.x = lerpf(velocity.x, 0.0, 0.5)
 		velocity.z = lerpf(velocity.z, 0.0, 0.5)
 		return
+	if _held_in_place():
+		# No patrol, no drift and no walk back to the post: all of it is
+		# its own legs. A knock runs down as it does for anyone standing.
+		velocity.x = lerpf(velocity.x, 0.0, 0.3)
+		velocity.z = lerpf(velocity.z, 0.0, 0.3)
+		return
 	var speed := float(stats["speed"]) * Constants.ENEMY_JOB_SPEED
 	if returning:
 		var home := Vector3(post.x - global_position.x, 0.0,
@@ -692,6 +719,16 @@ func _work(delta: float) -> void:
 			velocity.z = lerpf(velocity.z, 0.0, 0.25)
 			rotation.y += Constants.ENEMY_SWEEP_RATE * delta \
 					* (0.5 if job == "tend" else 1.0)
+
+
+## ROOTED OR ANCHORED (Design 5 §15.2, O05-09.1): it cannot move under
+## its own power. Every own-power motion reads this -- the approach, the
+## job walk, a charger's rush, a diver's dive and a flyer's station --
+## while turning, attacking and a beacon's pulse do not, because none of
+## them moves it. The two differ only in impulse: a rooted enemy is still
+## knocked about, an anchored one is not (`_physics_process`).
+func _held_in_place() -> bool:
+	return statuses.has("rooted") or statuses.has("anchored")
 
 
 ## Walk a beat around the post, pausing at each end.
@@ -765,8 +802,15 @@ func _spend_commitment(delta: float, player: Player) -> bool:
 		return true
 	if _rush > 0.0:
 		_rush -= delta
-		velocity.x = _rush_dir.x * Constants.CHARGER_RUSH_SPEED
-		velocity.z = _rush_dir.z * Constants.CHARGER_RUSH_SPEED
+		if _held_in_place():
+			# THE RUSH IS THE CHARGER'S OWN LEGS. Held, the attack still
+			# happens -- "attacks continue" -- but where it stands, so it
+			# reaches only a player already in contact with it.
+			velocity.x = lerpf(velocity.x, 0.0, 0.3)
+			velocity.z = lerpf(velocity.z, 0.0, 0.3)
+		else:
+			velocity.x = _rush_dir.x * Constants.CHARGER_RUSH_SPEED
+			velocity.z = _rush_dir.z * Constants.CHARGER_RUSH_SPEED
 		if player != null and global_position.distance_to(
 				player.global_position) <= float(stats["reach"]) * 0.2:
 			player.take_damage(float(stats["damage"]), global_position)
@@ -783,7 +827,11 @@ func _spend_commitment(delta: float, player: Player) -> bool:
 		return true
 	if _dive > 0.0:
 		_dive -= delta
-		velocity = _rush_dir * float(stats["speed"])
+		if _held_in_place():
+			# The same for a diver: the dive happens where it hangs.
+			velocity = velocity.lerp(Vector3.ZERO, 0.3)
+		else:
+			velocity = _rush_dir * float(stats["speed"])
 		if player != null and global_position.distance_to(
 				player.global_position) <= 1.6:
 			player.take_damage(float(stats["damage"]), global_position)

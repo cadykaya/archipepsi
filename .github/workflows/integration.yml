@@ -157,6 +157,7 @@ jobs:
           make godot-transport
           make godot-reversible
           make godot-verb-runtime
+          make godot-status-family
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live

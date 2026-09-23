@@ -198,7 +198,16 @@ static func target_refusal(verb: String, target: Node, eye: Vector3,
 		# runtime, so its answer would be a guess -- refused by name
 		# rather than invented. Every other verb the rule refuses outright.
 		# Bosses (§14.2) take no verb either way.
-		return ACTOR_MASS_UNMODELLED if verb in ACTOR_VERBS else ACTOR_RULE
+		if not verb in ACTOR_VERBS:
+			return ACTOR_RULE
+		# ...AND AN ANCHORED ONE IS FIXED (Design 5 §15.2: "`mass_class`
+		# becomes `FIXED`; immune to all impulse, wind, conveyor, and
+		# Physics"), which answers the verb without the kilograms no
+		# enemy has. A rooted one is still unmodelled: rooting forbids
+		# its own steps, not being pushed.
+		if (target as Enemy).statuses.has("anchored"):
+			return FIXED
+		return ACTOR_MASS_UNMODELLED
 	if not (target is ManipulableBody):
 		return NOT_MANIPULABLE
 	var body: ManipulableBody = target

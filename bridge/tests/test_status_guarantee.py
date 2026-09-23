@@ -10,7 +10,7 @@ nothing at the only moment it mattered.
 Support is now `SUPPORTED_STATUS_TARGETS`, edited on purpose in the
 change that adds the effect, and checked at **every** path that can
 start a Status. Nothing below patches a list to manufacture its case:
-twelve §15.2 kinds are genuinely named and genuinely unsupported today.
+nine §15.2 kinds are genuinely named and genuinely unsupported today.
 """
 
 from __future__ import annotations
@@ -32,7 +32,9 @@ def test_the_vocabulary_is_deliberately_wider_than_the_support():
     """The two lists must NOT be equal — that was the defect."""
     named, supported = set(E.STATUS_KINDS), set(E.IMPLEMENTED_STATUS_KINDS)
     assert supported < named, "support is tracking the vocabulary again"
-    assert "anchored" in named and "anchored" not in supported
+    # `anchored` stood here until it crossed on an enemy (O05-09.1);
+    # `phased` has nothing behind it on any target.
+    assert "phased" in named and "phased" not in supported
     assert "exposed" in named, "the Amalgam's thirteenth is missing"
     # And support may never name something the vocabulary does not.
     assert supported <= named
@@ -65,6 +67,32 @@ def test_lightened_crossed_from_named_to_supported_on_one_target():
             "duration": 2.0, "magnitude": 0.5})
 
 
+def test_rooted_and_anchored_crossed_on_the_enemy_only():
+    """O05-09.1, the second crossing, in the shape the first set.
+
+    `enemy.gd` implements both: a rooted or anchored enemy takes no step
+    of its own while its attacks continue; a knock still moves a rooted
+    one and does not move an anchored one; and the verbs refuse an
+    anchored enemy as FIXED. That is one target. `anchored` on an object
+    (a body fixed in place) and on the player (a blocked jump) are other
+    runtimes, and `rooted` names no other target in §15.2 at all.
+    """
+    assert E.SUPPORTED_STATUS_TARGETS["rooted"] == ("enemy",)
+    assert E.SUPPORTED_STATUS_TARGETS["anchored"] == ("enemy",)
+    for kind in ("rooted", "anchored"):
+        E.StatusComponent.model_validate(_component(kind, "enemy"))
+        for target in ("self", "object", "surface", "volume"):
+            with pytest.raises(ValidationError,
+                               match="not implemented for target"):
+                E.StatusComponent.model_validate(_component(kind, target))
+        # The on-hit door asks about an ENEMY, so it admits both now.
+        E.ApplyStatusOnHit.model_validate({
+            "type": "apply_status_on_hit", "status": kind,
+            "duration": 2.0, "magnitude": 0.5})
+        E.Effect.model_validate({"type": "apply_status", "subject": kind,
+                                 "duration": 3.0})
+
+
 def test_vulnerable_is_declared_on_both_sides_because_both_implement_it():
     """DECLARED TO MATCH THE RUNTIME, not the other way about.
 
@@ -92,8 +120,15 @@ _NAMED_ONLY = sorted(set(E.STATUS_KINDS) - set(E.IMPLEMENTED_STATUS_KINDS))
 
 def test_the_sweep_below_is_not_empty():
     """A derived parametrize list that came out empty would pass by
-    running nothing at all, which is the failure mode of deriving."""
-    assert len(_NAMED_ONLY) >= 10, _NAMED_ONLY
+    running nothing at all, which is the failure mode of deriving.
+
+    It shrinks as the family lands -- nine once O05-09.1 took `rooted`
+    and `anchored` across on an enemy -- so its floor is not a count. It
+    must be exactly the §15.2 Statuses nothing supports yet: a retained
+    ECHOES kind appearing here would be a runtime that was lost."""
+    assert _NAMED_ONLY, "the sweep would run nothing"
+    assert _NAMED_ONLY == sorted(k for k in E.AMALGAM_STATUS_TARGETS
+                                 if k not in E.SUPPORTED_STATUS_TARGETS)
 
 
 @pytest.mark.parametrize("kind", _NAMED_ONLY)
@@ -126,7 +161,7 @@ def test_a_supported_kind_aimed_at_an_unsupported_target_is_refused():
 
 
 def test_everything_supported_still_works():
-    """The gate must not cost the twelve that ship today."""
+    """The gate must not cost any kind on any target that ships today."""
     for kind, targets in E.SUPPORTED_STATUS_TARGETS.items():
         for target in targets:
             E.StatusComponent.model_validate(_component(kind, target))
@@ -202,22 +237,24 @@ def test_the_engine_is_told_which_targets_each_kind_supports():
 # P10.5 — the compact matrix, and the count that was hiding a family.
 # --------------------------------------------------------------------------
 
-def test_the_supported_thirteen_are_not_the_amalgams_thirteen():
-    """THE COUNT MATCHED BY COINCIDENCE.
+def test_the_supported_count_is_not_the_amalgams_count():
+    """THE COUNT MATCHED BY COINCIDENCE, and then stopped matching.
 
-    `SUPPORTED_STATUS_TARGETS` has thirteen entries and Amalgam §15.2's
+    `SUPPORTED_STATUS_TARGETS` had thirteen entries and Amalgam §15.2's
     family has thirteen members, and reading the first number as the
     second is exactly what P10.5 means by *"a fixed catalogue count must
-    never hide an incomplete family"*. Eleven of the supported kinds are
-    retained ECHOES vocabulary; only two are §15.2 Statuses.
+    never hide an incomplete family"*. O05-09.1 made it fifteen, which
+    says no more: eleven of the supported kinds are retained ECHOES
+    vocabulary, and four are §15.2 Statuses, three of them on one target.
     """
     family = set(E.AMALGAM_STATUS_TARGETS)
     supported = set(E.SUPPORTED_STATUS_TARGETS)
-    assert len(family) == len(supported) == 13
-    assert family & supported == {"lightened", "burning"}
+    assert len(family) == 13 and len(supported) == 15
+    assert family & supported == {"lightened", "burning", "rooted",
+                                  "anchored"}
 
 
-def test_no_status_in_the_family_is_finished_yet_and_the_gaps_are_named():
+def test_one_status_in_the_family_is_finished_and_the_gaps_are_named():
     """The matrix, as an assertion rather than a report.
 
     This is expected to CHANGE as Prod lands adapters, and changing it
@@ -227,19 +264,23 @@ def test_no_status_in_the_family_is_finished_yet_and_the_gaps_are_named():
     gaps = E.amalgam_status_coverage()
     assert set(gaps) == set(E.AMALGAM_STATUS_TARGETS)
 
+    # `rooted` is §15.2's one actor-only Status besides the cognitive
+    # four, so its enemy crossing (O05-09.1) finished it.
     finished = sorted(k for k, missing in gaps.items() if not missing)
-    assert finished == [], (
+    assert finished == ["rooted"], (
         f"{finished} now cover every §15.2 target -- update this control "
         "to record the progress rather than deleting it")
 
-    # The two with partial support, named exactly. `lightened` crossed on
-    # `object` (D-7) and `burning` predates the family as an on-hit kind.
+    # The partial ones, named exactly. `lightened` crossed on `object`
+    # (D-7), `burning` predates the family as an on-hit kind, and
+    # `anchored` crossed on `enemy` (O05-09.1).
     assert gaps["lightened"] == ("enemy", "self")
     assert gaps["burning"] == ("object", "surface", "volume")
+    assert gaps["anchored"] == ("object", "self")
 
     no_support = sorted(k for k in gaps
                         if k not in E.SUPPORTED_STATUS_TARGETS)
-    assert len(no_support) == 11
+    assert len(no_support) == 9
 
 
 def test_brittle_never_admits_an_actor_target():

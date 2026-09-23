@@ -143,6 +143,10 @@ rule, before it is edited. Rows are appended as edits land:
 | `VerbField` (Godot, new file) | §14.3 LIGHTEN_FIELD/ANCHOR_FIELD and their profiles; §14.4 radius ceiling 8.0 m and multiplier range 0.30–3.00; §10.2 derivation | runtime only; offered to nothing | `38b104f` |
 | `ManipulableBody.own_mass`, `field` (new; -1 and null by default) | §14.3 "Fields do not stack" | set only by a field; every other reader still reads `mass`, which is the body's own kilograms whenever no field scales it | `38b104f` |
 | `VerbAttach._own`, `_set_own` (new); ATTACH gives a held part back from its field before the weld | §14.3 ATTACH with the fields: item 14's 190 kg is the girders' own kilograms | with no field, the O05-08.3 arithmetic exactly (its checks unchanged) | `38b104f` |
+| `SUPPORTED_STATUS_TARGETS["rooted"]` and `["anchored"]` = `("enemy",)` (bridge schema; exported to `constants.gd`) | Design 5 §15.2 (Amalgam §15.2); D-7's rule that support is declared in the change that lands the effect | the on-hit modifier, a `StatusComponent` at an enemy and an `apply_status` rule effect admit both; every other target is refused as before | O05-09.1 commit |
+| `Enemy._held_in_place()` (new) read by the approach, `_work`, the rush, the dive and the station hold; the anchored knock discard in `_physics_process` | Design 5 §15.2 `rooted`, `anchored` | no other Status's behaviour changes (`godot-roster`, `godot-encounter` unchanged) | O05-09.1 commit |
+| `Manipulation.target_refusal`: an anchored enemy is `fixed` for PUSH, PULL and PIN | Design 5 §15.2 `anchored` ("immune to ... Physics"); Design 2 item 63 | every other enemy answer unchanged (`godot-verb-runtime`) | O05-09.1 commit |
+| `StatusEffects._CLEANSE_ORDER["enemy"]` gains `anchored`, `rooted` | D-7: a kind outside the cleanse order can never be removed | `cleanse` aims only at the player today | O05-09.1 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -1599,6 +1603,141 @@ graph, not just the sensor, and each was sabotaged.
 - **Neighbours unchanged:** `godot-carry` 32 (the `interact` path),
   `godot-constraints` 67, `godot-physics` 68, `godot-mass-class` 59,
   `godot-unweighted` 70, `godot-transport` 106.
+
+### O05-09.1 — `rooted` and `anchored` on an enemy: the first slice
+
+- **What crossed, and where.** `rooted` and `anchored` on the `enemy`
+  target, and nothing else. Both are declared in
+  `SUPPORTED_STATUS_TARGETS` in the change that implements them, and the
+  export gives the engine the same map. The on-hit modifier, a
+  `StatusComponent` aimed at an enemy and an `apply_status` rule effect
+  now admit both. Every other target is refused, as before.
+  - `rooted`'s only §15.2 target is an actor, so it is the first Status
+    in the family with every target supported.
+  - `anchored` on an object (a body fixed in place) and on the player
+    (movement 0, jump blocked) are other runtimes, and neither is built.
+- **The exact effects (Design 5 §15.2).**
+  - Both: the enemy cannot move under its own power, and its attacks
+    continue. Every own-power motion reads `Enemy._held_in_place()`:
+    - the approach;
+    - the job walk (patrol, drift, the walk back to its post);
+    - a charger's rush;
+    - a diver's dive;
+    - a flyer's station hold.
+
+    Turning, attacking and a beacon's pulse do not move it, so none of
+    them is withheld.
+  - `rooted` is still knocked about ("can still be pushed, pulled, and
+    thrown, unlike `anchored`"). A knock runs down at the rate an enemy
+    standing in reach sheds one.
+  - `anchored` is immune to all impulse. A knock is discarded, and its
+    horizontal velocity is held at 0 ("Fixed in place").
+  - To the manipulation verbs, an anchored enemy is `fixed`, where it
+    was `actor_mass_unmodelled`. A rooted enemy is still
+    `actor_mass_unmodelled`: rooting forbids its own steps, not being
+    pushed.
+- **Per-role readings, stated.**
+  - A charger's attack IS a rush, so a held charger lunges where it
+    stands. It reaches only a player already in contact, and it still
+    goes into its recovery.
+  - A diver's dive happens where it hangs.
+  - A held flyer neither climbs back to its station nor falls. §15.2
+    asks neither of it, and holding station is its own power.
+  - A bulwark still turns, at its own bounded rate, to meet the player.
+  - An enemy caught mid-stride sheds its momentum over about 0.15 m
+    under `rooted` (the standing run-down) and stops dead under
+    `anchored`.
+- **Not here, named.**
+  - `anchored`'s "`mass_class` becomes `FIXED`". No enemy has a mass
+    class in this runtime (O05-08.1's `actor_mass_unmodelled`), so a
+    plate does not count an anchored enemy. The verbs are its only
+    consumer.
+  - Wind and conveyors: nothing in the runtime blows or conveys an
+    enemy.
+  - "`LIGHTENED` and `ANCHORED` never coexist" (Design 2 item 61) needs
+    both on one target. `lightened` is object-only and `anchored`
+    enemy-only, so no target can carry both yet. The rule lands with the
+    first target that supports both.
+  - Design 5 §15.4's roll, cap and susceptibility pipeline is not in the
+    runtime for any Status, legacy or new: an application applies.
+  - §15.8's feedback (the HUD sentence and particles) is not built for
+    these, as for the legacy kinds. Stopping is the visible sign.
+  - Delivery. No provider emits either. The fallback has no reading that
+    roots or anchors, and none is invented here. A model provider's
+    `rooted` or `anchored` on-hit is now admitted, as D-7 intended
+    ("Emittable only when Prod declares the effect").
+- **Evidence: `make godot-status-family` (new), 15 checks and 1 note.**
+  Direct application, on a bare floor:
+  - Rooted mid-stride, a melee enemy sheds its momentum in 0.15 m, then
+    takes no step: 0.0001 m in 1.5 s. An unrooted one closes 5.99 m.
+  - Attacks continue: the player stepping into its reach takes 6.0, and
+    it struck without stepping. A knock of 8 m/s still moves it 0.31 m.
+  - Anchored mid-stride, it stops dead: 0.0000 m. The same knock moves
+    it 0.0000 m, and moves the rooted one 0.31 m.
+  - To the verbs: the anchored enemy is `fixed`; the rooted and the
+    plain enemy are `actor_mass_unmodelled`; HOLD is `actor_rule`. The
+    anchored one's blow still lands (6.0).
+  - Rooted for 1.0 s, it holds; expired, it closes 2.81 m in the next
+    second.
+  - A rooted charger's rush goes 0.000 m and still ends in its recovery;
+    an unrooted one's carries 14.94 m. A rooted diver's dive goes
+    0.000 m; an unrooted one's 2.33 m.
+  - A rooted drifter holds where it hangs (0.000 m in 2 s, y 4.69); an
+    unrooted one drifts 1.92 m. Put a metre below its station, the
+    rooted one stays (0.000 m) and the unrooted one climbs 0.90 m back.
+  - A rooted bulwark turns 92° to meet the player and takes no step.
+
+  **The real path (integrated, with an injected Echo).** A declared
+  Zone's arena, the controller's own player and the real `fire_echo`
+  binding. A projectile Action whose on-hit Status is `rooted` hits a
+  real melee enemy that was closing at 1.00 m per quarter-second from
+  10.6 m. The enemy is damaged (23/24) and rooted. It sheds its stride
+  in 0.16 m, then takes no step: 0.0001 m in the next second. The Echo
+  was handed to the runtime (`set_equipped`), not delivered by a
+  provider.
+- **Bridge.** `test_status_guarantee.py`:
+  - New: the two kinds crossed on the enemy only. Every other target is
+    refused; the on-hit modifier and the rule effect admit both.
+  - Its pinned facts are updated as its own docstring asks ("update this
+    control to record the progress"). `anchored` is no longer the
+    named-only example (`phased` is). The named-only sweep equals
+    exactly the unsupported §15.2 Statuses, which replaces a floor of 10
+    that nine would have failed. The supported count is 15, with 4 in
+    the family. `rooted` is finished, `anchored` lacks object and self,
+    and 9 Statuses have no support.
+  - `make test-bridge`: 1,933 passed. `make export` changed only the two
+    support lines of `constants.gd`.
+- **Sabotages (10, each restored, each failing by name):**
+  - S1, nothing is held in place: 9 failures, every rooted case.
+  - S2, anchored takes a knock: it slides 0.15 m and a knock moves it
+    0.31 m.
+  - S3, rooted refuses a knock too: 0.00 m.
+  - S4, a held enemy withholds its attack: the player takes 0.0, for
+    rooted and for anchored.
+  - S5, the approach is not held: 6 failures, including the real path
+    (4.00 m in the second after rooting).
+  - S6, the rush carries: 14.94 m.
+  - S7, the dive carries: 2.33 m.
+  - S8, the station is held: the rooted drifter climbs 0.90 m back. The
+    first probe for this, a downward knock, measured nothing: a flyer's
+    station hold overwrites its vertical velocity every frame, so the
+    knock never moved the unrooted control either. The probe is now a
+    direct displacement.
+  - S9, the job walk is not held: the rooted drifter drifts 1.92 m.
+  - S10, an anchored enemy is only unmodelled: the verbs read
+    `actor_mass_unmodelled`. The container restarted during this run;
+    both files were checked against the intended diff and S10 was run
+    again on its own.
+- **A test-setup finding, recorded.** A player and an enemy created in
+  the same frame: the player's body stood at the world origin for one
+  physics step, where the bulwark was placed. The bulwark was lifted
+  onto it, and carried 8 m when the player's own position arrived. Two
+  runs measured that ride as a step. The suite now creates the player
+  first and lets it settle. The encounter driver's warm-up comment
+  records a similar symptom. Whether a real Zone can place an enemy
+  where its player is first created is not examined here.
+- **Neighbours:** to be run after this commit (roster, encounter,
+  stats, verbs, verb-runtime, unweighted, counterfire).
 
 ### O05-14 — existing visual work — reconciled; nothing it may bind
 

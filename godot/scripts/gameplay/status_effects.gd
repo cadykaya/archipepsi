@@ -154,8 +154,8 @@ func regen_per_second() -> float:
 const _CLEANSE_ORDER := {
 	"self": ["burning", "poisoned", "frozen", "shocked", "slowed",
 			"vulnerable"],
-	"enemy": ["burning", "poisoned", "frozen", "stunned", "shocked",
-			"slowed", "vulnerable", "marked"],
+	"enemy": ["burning", "poisoned", "frozen", "stunned", "anchored",
+			"rooted", "shocked", "slowed", "vulnerable", "marked"],
 }
 
 func cleanse(count: int) -> int:

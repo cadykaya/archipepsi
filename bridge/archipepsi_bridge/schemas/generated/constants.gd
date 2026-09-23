@@ -321,7 +321,7 @@ const ECHO_STATUS_KINDS = ["lightened", "anchored", "slippery", "confused", "tur
 # what the engine can assert it can honour. NO STATUS BEFORE ITS
 # EFFECT -- the vocabulary may run ahead of the runtime, a campaign
 # may not.
-const ECHO_STATUS_KINDS_IMPLEMENTED = ["lightened", "burning", "slowed", "frozen", "shocked", "poisoned", "marked", "stunned", "vulnerable", "empowered", "low_profile", "haste", "regenerating"]
+const ECHO_STATUS_KINDS_IMPLEMENTED = ["lightened", "rooted", "anchored", "burning", "slowed", "frozen", "shocked", "poisoned", "marked", "stunned", "vulnerable", "empowered", "low_profile", "haste", "regenerating"]
 
 # WHICH TARGETS each supported kind is implemented FOR.
 #
@@ -331,7 +331,7 @@ const ECHO_STATUS_KINDS_IMPLEMENTED = ["lightened", "burning", "slowed", "frozen
 # per kind AND per target because those are different runtime
 # work; this is that table, so the Godot application boundary can
 # refuse the pair rather than the name.
-const ECHO_STATUS_SUPPORTED_TARGETS = {"lightened": ["object"], "burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["self", "enemy"], "empowered": ["self", "enemy"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}
+const ECHO_STATUS_SUPPORTED_TARGETS = {"lightened": ["object"], "rooted": ["enemy"], "anchored": ["enemy"], "burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["self", "enemy"], "empowered": ["self", "enemy"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}
 
 # P14. The room signal graph vocabulary, and what is IMPLEMENTED.
 #
