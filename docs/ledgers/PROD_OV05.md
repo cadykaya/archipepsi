@@ -339,7 +339,11 @@ the overhead gantry; the S3 destination; a rail model in
     and the Zone's real budget, P5-12). `strip` hands the Check back so
     re-hosting still works.
   - Frozen sample: emitted in 12 of 12, every case certified, every
-    allocated Check kept.
+    allocated Check kept. The first frozen run declined zone_012: its one
+    dead end has a right-hand gallery, which stands in a `side_right`
+    doorway. The step now tries each free side socket, and the Zone
+    schema judges each one (`test_a_gallery_on_the_preferred_side_...`).
+    A decline lists the dead ends' reasons first.
 - **O05-06.4, persistence.** The bolt is `minor_<room>/bolt`, a reserved
   namespace, accepted only for a room the ACCEPTED Zone builds from a
   contracted shell (`test_minor_hosting.py`, 23 tests). `ZoneController`

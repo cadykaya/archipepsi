@@ -102,18 +102,18 @@ def _occupied(zone: Zone) -> dict[str, str]:
     return out
 
 
-def _free_socket(chamber, registry) -> str | None:
-    """A joining socket this room can hold and has not assigned, or None."""
+def _free_sockets(chamber, registry) -> tuple[str, ...]:
+    """The joining sockets this room can hold and has not assigned, in
+    the order they are tried. Each is only a candidate: the Zone schema
+    still judges the doorway (a gallery hugging that wall refuses it)."""
     if chamber.shell_id:
         entry = registry.get(chamber.shell_id)
         offered = shells.joinable_sockets(entry) if entry else ()
     else:
         offered = procedural_sockets_for(chamber.type)
     taken = {d.socket_id for d in chamber.doors if d.usage != "SEALED"}
-    for socket in SOCKET_PREFERENCE:
-        if socket in offered and socket not in taken:
-            return socket
-    return None
+    return tuple(s for s in SOCKET_PREFERENCE
+                 if s in offered and s not in taken)
 
 
 def parent_problem(zone: Zone, chamber, first: str,
@@ -144,7 +144,7 @@ def parent_problem(zone: Zone, chamber, first: str,
         return "is not entered through a doorway"
     if edge.capability or edge.requires_state or edge.opened_by:
         return f"is entered through a gated doorway ('{edge.edge_id}')"
-    if _free_socket(chamber, registry) is None:
+    if not _free_sockets(chamber, registry):
         return "has no free joining socket to build the minor off"
     return None
 
@@ -207,37 +207,53 @@ def compose_minor(zone: Zone, registry=None) -> HostedMinor:
                 continue
             why = parent_problem(zone, parent, first, occupied, reg)
             if why:
-                problems.append(f"'{parent.id}' {why}")
+                # THE DEAD ENDS' REASONS FIRST. They are the rooms that
+                # nearly qualified, so a decline that is read only as far
+                # as its first few reasons still says what decided it.
+                dead_end = sum(d.usage != "SEALED" for d in parent.doors) == 1
+                problems.append((0 if dead_end else 1, index,
+                                 f"'{parent.id}' {why}"))
                 continue
-            socket = _free_socket(parent, reg)
             edge_id = f"e:{parent.id}:{room_id}"
-            raw = {**base, "chambers": list(base["chambers"]),
-                   "edges": list(base["edges"])}
-            parent_raw = dict(raw["chambers"][index])
-            parent_raw["doors"] = [
-                d for d in parent_raw["doors"] if d["socket_id"] != socket
-            ] + [{"socket_id": socket, "usage": "USED", "edge_id": edge_id}]
-            parent_raw["reward_location_id"] = None
-            # The composer's own rule for a nested room with ONE onward
-            # edge: that edge is the chain's continuation through it
-            # (`topology.compose_with_branch`, "departures").
-            parent_raw["depart_edge"] = edge_id
-            raw["chambers"][index] = parent_raw
-            raw["chambers"].append(_minor_room(
-                room_id, edge_id, parent.reward_ids[0], contract, rule))
-            raw["edges"].append({
-                "edge_id": edge_id, "room_a": parent.id, "room_b": room_id,
-                "direction": "BIDIRECTIONAL", "realization": "JOINED"})
-            try:
-                candidate = Zone.model_validate(raw)
-            except ValueError as exc:
-                problems.append(f"'{parent.id}': the Zone schema refused "
-                                f"it ({exc})")
+            candidate, socket, refused = None, "", ""
+            for socket in _free_sockets(parent, reg):
+                raw = {**base, "chambers": list(base["chambers"]),
+                       "edges": list(base["edges"])}
+                parent_raw = dict(raw["chambers"][index])
+                parent_raw["doors"] = [
+                    d for d in parent_raw["doors"]
+                    if d["socket_id"] != socket
+                ] + [{"socket_id": socket, "usage": "USED",
+                      "edge_id": edge_id}]
+                parent_raw["reward_location_id"] = None
+                # The composer's own rule for a nested room with ONE
+                # onward edge: that edge is the chain's continuation
+                # through it (`topology.compose_with_branch`,
+                # "departures").
+                parent_raw["depart_edge"] = edge_id
+                raw["chambers"][index] = parent_raw
+                raw["chambers"].append(_minor_room(
+                    room_id, edge_id, parent.reward_ids[0], contract, rule))
+                raw["edges"].append({
+                    "edge_id": edge_id, "room_a": parent.id,
+                    "room_b": room_id, "direction": "BIDIRECTIONAL",
+                    "realization": "JOINED"})
+                try:
+                    candidate = Zone.model_validate(raw)
+                    break
+                except ValueError as exc:
+                    refused = (str(exc).splitlines() or [""])[-2].strip() \
+                        if len(str(exc).splitlines()) > 1 else str(exc)
+                    candidate = None
+            if candidate is None:
+                problems.append((0, index, f"'{parent.id}': the Zone schema "
+                                           f"refused every free doorway "
+                                           f"({refused})"))
                 continue
             verdict = reachability(candidate)
             if not verdict.ok:
-                problems.append(f"'{parent.id}': "
-                                + "; ".join(verdict.errors[:2]))
+                problems.append((0, index, f"'{parent.id}': "
+                                 + "; ".join(verdict.errors[:2])))
                 continue
             return HostedMinor(
                 candidate, room_id,
@@ -246,12 +262,13 @@ def compose_minor(zone: Zone, registry=None) -> HostedMinor:
                 f"'{socket}' doorway); '{parent.id}''s Check "
                 f"{parent.reward_ids[0]} moved onto the minor's "
                 f"gallery; its bolt is recorded as minor_{room_id}/bolt")
+        reasons = [why for _, _, why in sorted(problems)]
         declined.append(
             f"{contract.catalogue_id} declined: no dead end can take it"
-            + (f" ({'; '.join(problems[:4])}"
-               + (f"; and {len(problems) - 4} more" if len(problems) > 4
+            + (f" ({'; '.join(reasons[:4])}"
+               + (f"; and {len(reasons) - 4} more" if len(reasons) > 4
                   else "") + ")"
-               if problems else " (the Zone has no arena)"))
+               if reasons else " (the Zone has no arena)"))
     return HostedMinor(zone, None, "; ".join(declined))
 
 

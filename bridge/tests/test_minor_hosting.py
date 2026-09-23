@@ -171,6 +171,27 @@ def test_a_gated_doorway_is_not_a_way_in(played):
     assert why and "gated doorway" in why
 
 
+def test_a_gallery_on_the_preferred_side_moves_the_doorway_over(played,
+                                                                 hosted):
+    """Measured on the frozen sample's zone_012: the one dead end had a
+    right-hand gallery, which stands in a `side_right` doorway, and the
+    first version tried only the first free socket and declined."""
+    parent = _parent(hosted.zone, hosted.room_id)
+    raw = played.model_dump()
+    for c in raw["chambers"]:
+        if c["id"] == parent.id:
+            c["elevation"] = {"kind": "gallery", "rise": 1.2,
+                              "coverage": 0.3, "side": "right",
+                              "access": "ramp"}
+    zone = Zone.model_validate(raw)
+    out = MH.compose_minor(zone)
+    assert out.emitted, out.note
+    doors = {d.socket_id: d.usage
+             for d in _room(out.zone, parent.id).doors}
+    assert doors.get("side_left") == "USED"
+    assert doors.get("side_right") == "SEALED"
+
+
 # --------------------------------------------------------------------------
 # Reversible, and re-certified
 # --------------------------------------------------------------------------
