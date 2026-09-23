@@ -29,15 +29,21 @@ _CLIENT_ADAPTER = TypeAdapter(ClientMessage)
 def _about(m) -> str:
     """The domain key of what an intent was about, or "" if it has none.
 
-    Only the intents a client holds an operation OPEN against need one --
-    today that is `use_consumable` and nothing else, because a spend is
-    the only thing the client subtracts from its own display before the
-    engine has agreed. Every other refusal is read and forgotten, and ""
-    correctly says "unchecked" for all of them.
+    Only the intents a client holds an operation OPEN against need one.
+    That was `use_consumable` alone, because a spend is the only thing the
+    client subtracts from its own display before the engine has agreed.
+    O05-04 adds `zone_state_selected`: the control shows its selection as
+    PENDING until the snapshot carries it, and a refusal has to be told
+    apart from any other so the control can say it was refused, rather
+    than stay pending forever. The key is domain-derived, the house rule
+    (`zone_state_selected:<zone>:<variable>:<state>`). Every other refusal
+    is read and forgotten, and "" correctly says "unchecked" for them.
     """
     if getattr(m, "type", "") in ("use_consumable", "authorize_consumable",
                                   "release_consumable_authorization"):
         return use_consumable_key(m.component_id, m.generation, m.use_index)
+    if getattr(m, "type", "") == "zone_state_selected":
+        return f"zone_state_selected:{m.zone_id}:{m.variable_id}:{m.state}"
     return ""
 
 
@@ -180,7 +186,8 @@ class BridgeServer:
             await engine.handle_grant_local_reward(m)
         elif m.type in ("key_collected", "lock_opened", "station_reached",
                         "latch_fired", "zone_state_selected",
-                        "object_transported"):
+                        "object_transported", "object_settled",
+                        "object_consumed", "object_recovered"):
             await engine.handle_progress(m)
         elif m.type == "layout_result":
             await engine.handle_layout_result(m)

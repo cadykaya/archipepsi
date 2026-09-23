@@ -61,7 +61,8 @@ def compose_zone_state(zone: Zone, *, variable_id: str = "span_alignment",
                        mechanism: str = "span_bolt",
                        entry_id: str | None = None,
                        exit_id: str | None = None,
-                       declared_capabilities=None) -> Composed:
+                       declared_capabilities=None,
+                       reader_order: str = "furthest") -> Composed:
     """Derive one cross-room relationship from a composed Zone.
 
     The shape is Blindside's: a control the player works in one room,
@@ -73,7 +74,18 @@ def compose_zone_state(zone: Zone, *, variable_id: str = "span_alignment",
     it -- which is the gantry: overhead, out of reach, and the reason
     the branch that supplies the tool exists. If it features none, the
     control needs nothing but the walk.
+
+    **`reader_order`** (O05-04, a bounded addition by the engine lane for
+    Dess's review; the default is unchanged). `"furthest"` is the policy
+    this composer has always had. `"nearest"` puts the consequence in
+    the first room past the gate, which keeps the reveal and the return
+    together at the control's own junction. That is the relationship the
+    owner asked to preserve "instead of maximizing walk distance"
+    (O05-04.2). Both are validated the same way.
     """
+    if reader_order not in ("furthest", "nearest"):
+        raise ValueError(f"reader_order must be 'furthest' or 'nearest', "
+                         f"not {reader_order!r}")
     rooms = _spine(zone)
     if len(rooms) < 4:
         return Composed(zone, None,
@@ -100,12 +112,22 @@ def compose_zone_state(zone: Zone, *, variable_id: str = "span_alignment",
         gated = edges_by_pair.get(frozenset({setter_room, rooms[si + 1]}))
         if gated is None:
             continue
+        # ONE GATE PER DOORWAY (finding P5-1, O05). P14's composer already
+        # refuses an edge that carries `requires_state`; this is the same
+        # rule from the other side. Without it, composing D-8 after a
+        # latch route put a second condition on the latch's own doorway,
+        # sound in logic and two panels fighting over one opening in the
+        # world.
+        if gated.opened_by is not None or gated.requires_state:
+            continue
         # FURTHEST FIRST. The point of the relationship is that it
         # spans the Zone, so the consequence wants to be as far from the
         # control as the Zone will validate. Taking the first candidate
         # that works would take the nearest, which is the weakest
         # arrangement that still technically crosses a boundary.
-        for ri in range(len(rooms) - 1, si, -1):
+        order = (range(len(rooms) - 1, si, -1) if reader_order == "furthest"
+                 else range(si + 1, len(rooms)))
+        for ri in order:
             reader_room = rooms[ri]
             if reader_room == setter_room:
                 continue

@@ -120,6 +120,30 @@ func selectable(variable_id: String) -> Array:
 	return ((_declared[variable_id] as Dictionary)["selects"] as Array)
 
 
+func initial_of(variable_id: String) -> String:
+	if not _declared.has(variable_id):
+		return ""
+	return str((_declared[variable_id] as Dictionary)["initial"])
+
+
+## THE BRIDGE'S ANSWER, applied (O05-04). A selection the bridge refused
+## is put back to what the campaign holds. This is the one caller that
+## moves a value without its setter, and only to a declared state: the
+## engine shows the player's operation at once, and the campaign decides
+## whether it stands.
+func revert(variable_id: String, state: String) -> bool:
+	if not _declared.has(variable_id):
+		return false
+	if not state in ((_declared[variable_id] as Dictionary)["states"]
+			as Array):
+		return false
+	if str(_value.get(variable_id, "")) == state:
+		return true
+	_value[variable_id] = state
+	changed.emit(variable_id, state)
+	return true
+
+
 func lifetime_of(variable_id: String) -> String:
 	if not _declared.has(variable_id):
 		return ""

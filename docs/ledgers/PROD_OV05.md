@@ -70,6 +70,10 @@ rule, before it is edited. Rows are appended as edits land:
 | `transitions.py` `recover_transported_object` | §10.4 recovery keeps the object's identity | refuses an installed object (no duplicate) and drops a stale pose | O05-02 commit |
 | `transitions.py` `record_object_settled` (new) | §5.6 step 10 | records a settled pose only for a declared, unconsumed object, in a room inside its volume, at finite coordinates | O05-02 commit |
 | `campaign.py` `handle_progress`, `server.py` routing | existing progress dispatch | the three intents above | O05-02 commit |
+| `cross_room.compose_zone_state` (Dess's D-8 composer) | D-8 "one gate per doorway", the rule P14's composer already applies from its side | (a) skips a gated edge that already carries `opened_by` or `requires_state` (P5-1); (b) new keyword `reader_order="furthest"|"nearest"`, **default unchanged**. `"nearest"` keeps reveal and return at the control's junction (O05-04.2) | O05-04 commit |
+| `server._about` | the existing `BridgeError.about` convention (domain key; empty means unchecked) | adds `zone_state_selected:<zone>:<variable>:<state>`, so the lever's PENDING can be resolved as REFUSED on an exact match | O05-04 commit |
+| `candidate.py` (new), `CampaignEngine.candidate_steps`, `--candidate` | O05-13: an opt-in profile, off by default; the pattern of `quiet_generation` | runs `zone_state`, `latched_route`, `transport` after the graph is proved and before `accept_zone`. On host re-selection it is re-applied from a stripped Zone. Records each step, emitted or declined, under `<save dir>/candidate/` | O05-02 commit |
+| `playtest.dump-candidate` (replaces the new `dump-transport`) | fixtures generated from source | the transport and reversible fixtures are `candidate.apply` on the played Zone, with freshness tests | O05-02 commit |
 | `transport_route.py` (new) | P16 `TransportedObject`/`ObjectConsumer`; D-8 `permanent` lifetime; §0-bis (a declared gate is allowed, an undeclared one never is) | an explicit composer step in the same shape as `cross_room.py` and `latched_route.py`. It is never a default, so digests and comparisons do not move | O05-02 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
@@ -129,3 +133,78 @@ rule, before it is edited. Rows are appended as edits land:
   real source is exercised in O05-02.5. There is no consumer yet; that
   is O05-02.
 
+## Findings (`P5-n`)
+
+- **P5-1 — two composers gate one doorway.** On the played Zone, D-10's
+  `compose_latched_route` puts P14's shutter on `e:c002:c003` through
+  `opened_by`. Dess's `compose_zone_state` then puts `requires_state` on
+  that same edge. The logic is sound, because both conditions must hold.
+  The world is not: a doorway takes one shutter. `StateGates` therefore
+  refuses a state gate on an edge that also carries `opened_by`, by name,
+  and leaves that doorway to the latch shutter. The logic stays stricter
+  than the world, which never traps anyone. Resolution belongs to the
+  composer's owner and is **open for Dess**. The candidate profile
+  (O05-13) has to choose an order, or skip that edge.
+- **P5-2 — a required carry was routed through a platform path.** The
+  first `compose_transport` run chose c002→c003→c004 on the played Zone.
+  c003 is a `platform_path`: islands over a kill pit. A cell fumbled
+  there can come to rest where nobody reaches it, and §10.4's "at rest
+  5 s, unreachable" recovery is not implemented. The played acceptance
+  found it. The composer now carries only through corridors, arenas and
+  treasure rooms, and the run became c004→c005→c006.
+- **P5-3 — D-8 values and P16 rooms were never restored in the real
+  client.** `Main._to_zone` passed keys, locks, stations and latches from
+  the snapshot. It never passed `macro_state` or `object_rooms`, so a
+  D-8 selection or a carried object's room survived only in synthetic
+  suites that set the controller fields by hand. `_to_zone` now passes
+  all four object and state fields from the snapshot alone: the rooms,
+  the poses, the consumption, and the D-8 values.
+- **P5-4 — `requires_state` edges were never physically enforced.**
+  `topology.reachability` honoured them, and nothing in Godot read them.
+  The route was shut in logic and open in the world. New
+  `StateGates` puts a declared shutter in the edge's own doorway, bound
+  to the variable by id. It sits in the `ROUTE_GATE` group, so the
+  aperture evidence still reads the doorway as an opening.
+- **P5-5 — the transported-object runtime predated carry.** It built a
+  fixed 18 kg crate whatever the declaration said. It recovered on the
+  first frame instead of after §10.4's 1.0 s, and it reported a recovery
+  as an ordinary transfer home. It had no consumed state, so an
+  installed object would have respawned loose. All four are fixed. The
+  D-8 driver's recovery case now asserts the delay, including that the
+  object is not recovered before 1.0 s. Its "between rooms" proxy was a
+  point 400 m above the Zone, which is out of bounds by §10.4. It is now
+  a real point beside a room, with the out-of-bounds case asserted
+  separately.
+- **P5-6 — the D-8 composer's reader mechanism is not one the engine
+  builds.** `compose_zone_state` defaults to `mechanism="span_bolt"`.
+  `ZoneStateBuild` implements `barrier` and `lamp` and refuses anything
+  else by name, which also drops that variable's setter. For O05-04.
+- **P5-7 — a scripted two-Bulwark fight is not stable evidence.** c005
+  holds two Bulwarks in a pit arena. Four orbit policies were tried: plain
+  strafing, a 4–6 m band, 2.8–3.8 m, and 3.6–4.6 m. Each cleared the room
+  on some starts and lost the player on others. Two reasons, both
+  measured. Their slam lands within reach × 1.4 = 3.36 m. And at 90°/s
+  a Bulwark out-turns any orbit wide enough to stay clear of the slam.
+  The designed opening is the 0.9 s recovery after a swing, and baiting
+  that reliably is AI play, not transport evidence. The transport and
+  reversible suites therefore remove Bulwarks through the real damage
+  path, from behind, as a **declared and counted harness step**, and
+  fight the artillery arena with the base kit as P14's suite does.
+  Bulwark counterplay stays `godot-encounter`'s played acceptance.
+
+- **P5-8 — the delivery opened a door 27 m overhead, and a check passed
+  anyway.** After P5-2 the run was c004→c005→c006, with the socket in
+  c006. c006 is `shell_hall_transit`: entered at the floor, left 28 m up
+  by a launch arc. The carried cell never reached c007, because the door
+  the delivery opened was overhead. The journey's "pressed at the shut
+  doorway, the player stays on this side" check passed regardless: it
+  measured which side of the door plane the player was on, and the
+  player was 27 m below the door. Two fixes. First, the composer now reads
+  each shell's doorway heights from the registry, the same data the
+  engine builds from. Every room of the journey has to be one floor
+  (within 0.5 m) across its way in, its carry doorways and the door the
+  delivery opens. An unmeasured shell is declined, not guessed flat. The
+  played Zone's run is now c004→c005, gated at `e:c005:c006`. The longer
+  runs are refused by name ("'exit' at 28 m ... a hand carry is a walk").
+  Second, the driver asserts that the player stands at the doorway, on
+  its floor, before it reads the side.

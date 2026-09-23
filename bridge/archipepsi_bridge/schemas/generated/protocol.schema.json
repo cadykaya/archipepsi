@@ -692,6 +692,135 @@
         "title": "LockOpened",
         "type": "object"
       },
+      "ObjectConsumed": {
+        "additionalProperties": false,
+        "description": "O05-02. A declared consumer took the object it was waiting for.\n\nNames the MECHANISM, not the object: the consumer's declaration says\nwhich object it accepts and which state it sets, so a client cannot\nchoose either. `record_object_consumed` refuses it unless the save\nalready has that object in the consumer's own room.",
+        "properties": {
+          "type": {
+            "const": "object_consumed",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "mechanism_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Mechanism Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "mechanism_id"
+        ],
+        "title": "ObjectConsumed",
+        "type": "object"
+      },
+      "ObjectRecovered": {
+        "additionalProperties": false,
+        "description": "O05-03 / \u00a710.5. A required object was lost and put back home.\n\nRecovery is a separate event from an arrival, so a correction is\nnever silent. Refused for a consumed object: an installed object is\nnot lost.",
+        "properties": {
+          "type": {
+            "const": "object_recovered",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "object_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Object Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "object_id"
+        ],
+        "title": "ObjectRecovered",
+        "type": "object"
+      },
+      "ObjectSettled": {
+        "additionalProperties": false,
+        "description": "O05-03. A transported object came to rest after the hand put it down.\n\nValidated like `ObjectTransported` (declared object, room inside its\nvolume) and additionally refused for an object a consumer has taken.\nThe pose is the engine's measurement; the bridge bounds it and\nstores it, and never invents one.",
+        "properties": {
+          "type": {
+            "const": "object_settled",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "object_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Object Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "position": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Position",
+            "type": "array"
+          },
+          "yaw": {
+            "maximum": 7.0,
+            "minimum": -7.0,
+            "title": "Yaw",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "object_id",
+          "room_id",
+          "position",
+          "yaw"
+        ],
+        "title": "ObjectSettled",
+        "type": "object"
+      },
       "ObjectTransported": {
         "additionalProperties": false,
         "description": "P16. A transported object arrived in a room.\n\nIdempotent by `(object_id, room_id)` and **not monotone**, same as\n`ZoneStateSelected` and for the same reason: carrying it back is the\nmechanic working, not a replay to reject.\n\nValidated against the accepted Zone: the object must be one the Zone\ndeclares and the room must be inside the `allowed_volume` \u00a710.5 gave\nit. An object reported into a room it may not enter is refused\nrather than recorded -- a save that accepted it would describe a\nworld the composer never allowed.",
@@ -1075,6 +1204,9 @@
         "layout_result": "#/$defs/LayoutResult",
         "leave_zone": "#/$defs/LeaveZone",
         "lock_opened": "#/$defs/LockOpened",
+        "object_consumed": "#/$defs/ObjectConsumed",
+        "object_recovered": "#/$defs/ObjectRecovered",
+        "object_settled": "#/$defs/ObjectSettled",
         "object_transported": "#/$defs/ObjectTransported",
         "release_consumable_authorization": "#/$defs/ReleaseConsumableAuthorization",
         "request_next_zone": "#/$defs/RequestNextZone",
@@ -1163,6 +1295,15 @@
       },
       {
         "$ref": "#/$defs/ObjectTransported"
+      },
+      {
+        "$ref": "#/$defs/ObjectSettled"
+      },
+      {
+        "$ref": "#/$defs/ObjectConsumed"
+      },
+      {
+        "$ref": "#/$defs/ObjectRecovered"
       },
       {
         "$ref": "#/$defs/LayoutResult"
@@ -6850,6 +6991,56 @@
             "maxItems": 4,
             "title": "Object Rooms",
             "type": "array"
+          },
+          "object_poses": {
+            "default": [],
+            "items": {
+              "maxItems": 6,
+              "minItems": 6,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Object Poses",
+            "type": "array"
+          },
+          "consumed_objects": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Consumed Objects",
+            "type": "array"
           }
         },
         "title": "ZoneProgress",
@@ -12472,6 +12663,56 @@
             },
             "maxItems": 4,
             "title": "Object Rooms",
+            "type": "array"
+          },
+          "object_poses": {
+            "default": [],
+            "items": {
+              "maxItems": 6,
+              "minItems": 6,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Object Poses",
+            "type": "array"
+          },
+          "consumed_objects": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Consumed Objects",
             "type": "array"
           }
         },

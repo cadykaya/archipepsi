@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -431,6 +431,16 @@ latched-route-fixture:
 	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-latched \
 	  --out ../godot/tests/fixtures/latched_route_zone.json
 
+# O05-02 / O05-04: the played Zone with one CANDIDATE profile step applied
+# (`candidate.py`, the same code the opt-in generation profile runs).
+# Generated, never hand-edited.
+transport-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-candidate \
+	  transport --out ../godot/tests/fixtures/transport_zone.json
+reversible-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-candidate \
+	  zone_state --out ../godot/tests/fixtures/reversible_zone.json
+
 # Invariant I14 (ACCEPTANCE_TESTS 5.7). Boots the real project rather than
 # using `--script`: a SceneTree script never instantiates the autoloads, so
 # every script touching BridgeClient fails to compile and the suite reports
@@ -792,6 +802,74 @@ godot-latched-route-live: godot-import
 	grep -q "GODOT LATCHED LIVE RESTORE OK" /tmp/archipepsi-latched-restore.log \
 	  || exit 1
 
+# O05-03: THE TRANSPORT JOURNEY THROUGH A REAL BRIDGE, ACROSS TWO REAL
+# RESTARTS. A disposable default-scale mock campaign whose bridge runs the
+# opt-in CANDIDATE profile (`--candidate=transport`): the real generation
+# path composes zone_001 and the profile adds the journey before the Zone
+# is accepted -- no save is edited. SEED checks it is `transport_zone.json`
+# exactly. Then three more process pairs, each a new bridge beside a new
+# client with only the save crossing: PLACE (carry the cell partway and put
+# it down), INSTALL (restart 1: it is where it was put down; carry on and
+# install), RESTORE (restart 2: installed at load, the doorway open, and
+# the player walks through).
+TRANSPORT_SAVES := $(CURDIR)/.transport-saves
+TRANSPORT_BRIDGE = cd bridge && ARCHIPEPSI_SAVE_DIR=$(TRANSPORT_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --candidate=transport
+define transport_phase
+	$(TRANSPORT_BRIDGE) & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start for $(1) (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --transport-live=$(1) \
+	  --transport-save-dir=$(TRANSPORT_SAVES) \
+	  > /tmp/archipepsi-transport-$(1).log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|seeded|placed|installed|GODOT TRANSPORT)" \
+	  /tmp/archipepsi-transport-$(1).log; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-transport-$(1).log; \
+	  exit $$STATUS; fi
+endef
+godot-transport-live: godot-import
+	rm -rf $(TRANSPORT_SAVES)
+	$(call transport_phase,seed)
+	$(call transport_phase,place)
+	@echo "-- restart 1: both processes new, only the save crosses --"
+	$(call transport_phase,install)
+	@echo "-- restart 2: both processes new again --"
+	$(call transport_phase,restore)
+
+# O05-04.5: THE REVERSIBLE LEVER THROUGH A REAL BRIDGE AND A RESTART. The
+# bridge runs the CANDIDATE profile's `zone_state` step, so the real
+# generation path composes the lever (SEED checks it is
+# `reversible_zone.json`). SELECT pulls it -- PENDING, then ACCEPTED off
+# the snapshot, and on disk -- refuses a forged selection by its own key,
+# walks through and leaves it LOWERED. RESTORE: both processes new, the
+# doorway open at load, walked through without touching the lever.
+REVERSIBLE_SAVES := $(CURDIR)/.reversible-saves
+define reversible_phase
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(REVERSIBLE_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --candidate=zone_state & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start for $(1) (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --reversible-live=$(1) \
+	  --reversible-save-dir=$(REVERSIBLE_SAVES) \
+	  > /tmp/archipepsi-reversible-$(1).log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|seeded|selected|GODOT REVERSIBLE)" \
+	  /tmp/archipepsi-reversible-$(1).log; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-reversible-$(1).log; \
+	  exit $$STATUS; fi
+endef
+godot-reversible-live: godot-import
+	rm -rf $(REVERSIBLE_SAVES)
+	$(call reversible_phase,seed)
+	$(call reversible_phase,select)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call reversible_phase,restore)
+
 # P14: THE LATCH-ROUTE CANDIDATE, BY HAND. Opt-in and disposable: its own
 # save directory, a default-scale mock campaign whose zone_001 is Dess's
 # `latched_route_zone.json` -- the same seed and explicit compose step
@@ -869,6 +947,37 @@ godot-carry: godot-import  # Design 2 §10.3-10.4 hand carry, played
 	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \
 	fi
+
+# O05-02/03: A REQUIRED OBJECT, CARRIED BETWEEN ROOMS AND INSTALLED, on
+# `transport_zone.json` (`make transport-fixture`). The real player clears
+# the rooms, fetches the 40 kg cell with `interact`, carries it through two
+# connectors, installs it in the socket with the interact ray and walks
+# through the doorway it opens. Then: restore installed (one copy, gate
+# open at load), restore at a settled mid-branch pose, the wrong object
+# refused, out-of-volume recovery after 1.0 s, death while carrying,
+# destruction (2.0 s), interruption beside the socket, and LIGHTENED
+# crossing the threshold on the same body.
+godot-transport: godot-import  # P16 carry + install, played
+	@out=$$($(GODOT) --headless --path godot -- --transport 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT TRANSPORT TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-transport: script errors in the run"; exit 1; fi
+
+# O05-04: A REVERSIBLE BRANCH ACTION CHANGES ACCESS ELSEWHERE, on
+# `reversible_zone.json` (`make reversible-fixture`). The real player clears
+# c002, finds the doorway shut, operates the lever (PENDING until a bridge
+# answers), walks through the doorway it opened, comes back and reverses
+# it. Then a required crate carried into the opening holds the closure
+# QUEUED until it is carried back out, and the way in stays open. Restored
+# lowered and stowed; and (synthetic) a refusal naming the selection puts
+# it back.
+godot-reversible: godot-import  # D-8 reversible lever, played
+	@out=$$($(GODOT) --headless --path godot -- --reversible 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT REVERSIBLE TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-reversible: script errors in the run"; exit 1; fi
 
 godot-encounter: godot-import  # generated rooms, fought with the base kit
 	@out=$$($(GODOT) --headless --path godot -- --encounter 2>&1); \

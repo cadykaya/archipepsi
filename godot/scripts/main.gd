@@ -94,6 +94,8 @@ const DRIVERS := {
 	"--latched-route": preload("res://tests/latched_route_driver.gd"),
 	"--theme-pack": preload("res://tests/theme_pack_driver.gd"),
 	"--carry": preload("res://tests/carry_driver.gd"),
+	"--transport": preload("res://tests/transport_driver.gd"),
+	"--reversible": preload("res://tests/reversible_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
 }
@@ -208,6 +210,18 @@ func _ready() -> void:
 		var latched_driver := LatchedRouteLiveDriver.new()
 		latched_driver.main = self
 		add_child(latched_driver)
+	# O05-03's transport journey across two real restarts, beside `Main`
+	# for the same reason: `_to_zone` is what hands the saved object,
+	# pose and installation to the Zone before it is built.
+	if TransportLiveDriver.phase_from_cmdline() != "":
+		var transport_driver := TransportLiveDriver.new()
+		transport_driver.main = self
+		add_child(transport_driver)
+	# O05-04.5's reversible lever through a real bridge and a restart.
+	if ReversibleLiveDriver.phase_from_cmdline() != "":
+		var reversible_driver := ReversibleLiveDriver.new()
+		reversible_driver.main = self
+		add_child(reversible_driver)
 
 ## Enter the curated Stage 3A showcase.
 ##
@@ -662,6 +676,18 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	# and nothing about the mechanism's own state is saved (§5.4a).
 	zone.latches_carried = _union_progress(
 			progress.get("latched", []), _zone_latches.get(zid, {}))
+	# D-8 VALUES AND P16 OBJECTS, from the bridge alone (O05-03). These
+	# are not monotone sets -- a reversible variable goes back, an object
+	# is carried back -- so the union rule above cannot apply, and there
+	# is no in-flight half to add: the bridge reads one socket in order
+	# (`server.py`), so the snapshot that comes with this entry already
+	# includes every intent sent before the request that produced it. The
+	# engine keeps no copy of its own that could outvote the save.
+	zone.macro_carried = _pairs(progress.get("macro_state", []))
+	zone.object_rooms_carried = _pairs(progress.get("object_rooms", []))
+	zone.objects_consumed_carried = _pairs(
+			progress.get("consumed_objects", []))
+	zone.object_poses_carried = _poses(progress.get("object_poses", []))
 	# THE COMMITTED LAYOUT, when this Zone has one. `ZoneReady` carries
 	# the manifest the bridge accepted on the first visit, and replaying
 	# it is what makes the Zone the player walks back into the Zone they
@@ -842,6 +868,32 @@ func _on_return_to_hub() -> void:
 ##
 ## `ZoneController` asks these `has()`, so the shape is a set keyed by id
 ## and the value is only ever `true`.
+## `[[a, b], ...]` off the wire as `{a: b}`.
+static func _pairs(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for row: Variant in raw as Array:
+		if typeof(row) == TYPE_ARRAY and (row as Array).size() == 2:
+			out[str((row as Array)[0])] = str((row as Array)[1])
+	return out
+
+
+## `object_poses` off the wire, `[[object, room, x, y, z, yaw], ...]`, as
+## `{object: [room, Vector3, yaw]}`.
+static func _poses(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for row: Variant in raw as Array:
+		if typeof(row) != TYPE_ARRAY or (row as Array).size() != 6:
+			continue
+		var r: Array = row
+		out[str(r[0])] = [str(r[1]),
+				Vector3(float(r[2]), float(r[3]), float(r[4])), float(r[5])]
+	return out
+
+
 static func _union_progress(saved: Variant, held: Variant) -> Dictionary:
 	var out := {}
 	if typeof(saved) == TYPE_ARRAY:

@@ -145,7 +145,31 @@ var room_routes := {}
 ## carried fact.
 var objects: TransportedObjects = null
 var object_rooms_carried := {}
+## O05-03: `ZoneProgress.object_poses` as `{object_id: [room, Vector3,
+## yaw]}` and `consumed_objects` as `{object_id: mechanism_id}`, assigned
+## before `setup` like every other carried fact.
+var object_poses_carried := {}
+var objects_consumed_carried := {}
 var object_refusals: Array[String] = []
+## The consumers this Zone built (P16's receiving sites), and what the
+## engine refused to build.
+var object_sockets: Array = []
+var object_socket_refusals: Array[String] = []
+## The doorways a declared Zone-state condition closes, and what was
+## refused (O05-02 / O05-04).
+var state_gates: Array = []
+var state_gate_refusals: Array[String] = []
+## Variables an `ObjectConsumer` sets. Their setter is the installation,
+## so no lever is built and no `zone_state_selected` is ever sent.
+var _consumer_owned: Array = []
+## O05-04: selections sent and not yet answered, `{variable: state}`.
+## The engine shows the operation at once; the campaign decides whether
+## it stands. Resolved by a snapshot carrying the value (ACCEPTED) or by
+## a refusal whose `about` names it exactly (REFUSED, and put back).
+var zone_state_pending := {}
+## Every answer, in order: `[variable, state, accepted, why]`.
+var zone_state_answers: Array = []
+var _reverting := false
 
 ## THE ZONE'S REVERSIBLE CONFIGURATION (D-8). Declared by
 ## `Zone.zone_state`, set by a control the player operates, read by
@@ -439,14 +463,24 @@ func setup(zone_dict: Dictionary) -> void:
 	# comes up in the position the snapshot implies rather than at its
 	# initial and then jumping.
 	zone_state.restore(macro_carried)
+	_consumer_owned.clear()
+	for raw_consumer: Variant in zone_dict.get("object_consumers", []) \
+			as Array:
+		if typeof(raw_consumer) == TYPE_DICTIONARY \
+				and (raw_consumer as Dictionary).get("sets_variable") != null:
+			_consumer_owned.append(str(
+					(raw_consumer as Dictionary)["sets_variable"]))
 	_zone_state_built = ZoneStateBuild.build(self,
 			zone_dict.get("zone_state", []) as Array, zone_state,
 			room_places, room_bounds,
-			str(zone_dict.get("theme", "concrete_facility")))
+			str(zone_dict.get("theme", "concrete_facility")),
+			_consumer_owned)
 	for why: String in _zone_state_built.get("refused", []) as Array:
 		zone_state_refusals.append(why)
 		push_warning("zone_state refused: %s" % why)
 	zone_state.changed.connect(_on_zone_state_changed)
+	BridgeClient.snapshot_received.connect(_on_snapshot_for_state)
+	BridgeClient.error_received.connect(_on_refusal_for_state)
 
 	# THE TRANSPORTED OBJECTS (P16 / D-8 lifetime 5). After the rooms
 	# have committed places and bounds, because an object's owning room
@@ -456,10 +490,15 @@ func setup(zone_dict: Dictionary) -> void:
 	add_child(objects)
 	for why: String in objects.declare(
 			zone_dict.get("transported_objects", []) as Array,
-			room_bounds, object_rooms_carried, room_places, self):
+			room_bounds, object_rooms_carried, room_places, self,
+			object_poses_carried, objects_consumed_carried):
 		object_refusals.append(why)
 		push_warning("transported object refused: %s" % why)
 	objects.transported.connect(_on_object_transported)
+	objects.settled.connect(_on_object_settled)
+	objects.recovered.connect(_on_object_recovered)
+	_build_sockets(zone_dict.get("object_consumers", []) as Array,
+			str(zone_dict.get("theme", "concrete_facility")))
 
 	# THE DECLARED RAILWAYS (D-4). Built here and not in the chamber
 	# loop, because a network spans ROOMS: its docks are in different
@@ -491,6 +530,25 @@ func setup(zone_dict: Dictionary) -> void:
 	# doorway the room built, which is why the edges, the chambers'
 	# build results and the doorway frames go in too.
 	door_frames = (build.get("door_frames", {}) as Dictionary).duplicate()
+	# THE DOORWAYS A ZONE-STATE CONDITION CLOSES. Only a variable with
+	# something a player can operate may shut one: a lever the build
+	# made, or a consumer socket that stands in its room.
+	var operable: Array = []
+	for id: Variant in _zone_state_built.get("built", []) as Array:
+		if not str(id) in _consumer_owned:
+			operable.append(str(id))
+	for raw_socket: Variant in object_sockets:
+		var socket: ObjectSocket = raw_socket
+		if socket.sets_variable != "":
+			operable.append(socket.sets_variable)
+	var gated := StateGates.build(self,
+			zone_dict.get("edges", []) as Array,
+			build.get("chambers", []) as Array, door_frames, zone_state,
+			operable, str(zone_dict.get("theme", "concrete_facility")))
+	state_gates = gated.get("gates", []) as Array
+	for why: String in gated.get("refused", []) as Array:
+		state_gate_refusals.append(why)
+		push_warning("state gate refused: %s" % why)
 	var graphs := RoomGraphs.build(self,
 			zone_dict.get("room_graphs", []) as Array,
 			room_places, room_bounds,
@@ -868,14 +926,97 @@ func report_latch(package_id: String, latch_id: String) -> void:
 ## something back is the mechanic working, exactly as with a reversible
 ## Zone-state variable.
 ##
-## **The room, and nothing else about the object.** §5.1 makes its
-## Statuses `EPHEMERAL`, so nothing here looks at them: a burning cell
-## carried three rooms arrives carried, not still burning.
+## **The room, and nothing about its Statuses.** §5.1 makes them
+## `EPHEMERAL`, so none is ever sent to be saved -- which is a statement
+## about saves only. The live body crosses the doorway with its Statuses
+## and they run out on their own clocks (owner, 2026-09-22).
 func _on_object_transported(object_id: String, room_id: String) -> void:
 	object_moves.append([object_id, room_id])
 	BridgeClient.send_intent({"type": "object_transported",
 			"zone_id": zone_id, "object_id": object_id,
 			"room_id": room_id})
+
+
+## O05-03.1: the object came to rest. The settled pose is what a restart
+## puts it back at; a pose mid-carry or mid-fall is never sent.
+func _on_object_settled(object_id: String, room_id: String,
+		position: Vector3, yaw: float) -> void:
+	object_settles.append([object_id, room_id, position, yaw])
+	BridgeClient.send_intent({"type": "object_settled",
+			"zone_id": zone_id, "object_id": object_id,
+			"room_id": room_id,
+			"position": [position.x, position.y, position.z], "yaw": yaw})
+
+
+## §10.4: the object was put back home as the same object. Its own intent
+## rather than a transfer, so "it went somewhere illegal" and "put it
+## back" stay two events, and the bridge drops the stale pose.
+func _on_object_recovered(object_id: String, room_id: String) -> void:
+	object_recoveries.append([object_id, room_id])
+	BridgeClient.send_intent({"type": "object_recovered",
+			"zone_id": zone_id, "object_id": object_id})
+
+
+## O05-02.3: an object was installed in its consumer. The transfer into
+## the consumer's room is reported first when the socket's room is not
+## already the object's room -- the seated body IS in that room now --
+## and then the consumption, which the bridge checks against it.
+func _on_object_installed(mechanism_id: String, object_id: String,
+		socket_room: String) -> void:
+	object_installs.append([mechanism_id, object_id])
+	# `room_of` is the last room reported: every change of it is sent.
+	if objects.room_of(object_id) != socket_room:
+		objects.seat_in(object_id, socket_room)
+		_on_object_transported(object_id, socket_room)
+	BridgeClient.send_intent({"type": "object_consumed",
+			"zone_id": zone_id, "mechanism_id": mechanism_id})
+
+
+## Build every declared consumer's receiving site in its room.
+func _build_sockets(consumers: Array, theme: String) -> void:
+	object_sockets.clear()
+	for raw: Variant in consumers:
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var one: Dictionary = raw
+		var mechanism := str(one.get("mechanism_id", ""))
+		var room := str(one.get("room_id", ""))
+		var accepts := str(one.get("accepts", ""))
+		if not room_places.has(room):
+			object_socket_refusals.append(
+					"consumer '%s' stands in room '%s', which this Zone "
+					% [mechanism, room] + "did not build")
+			continue
+		if not accepts in objects.ids():
+			object_socket_refusals.append(
+					"consumer '%s' takes '%s', which this Zone did not "
+					% [mechanism, accepts] + "build")
+			continue
+		var socket := ObjectSocket.create(one, theme)
+		add_child(socket)
+		var place: Dictionary = room_places[room]
+		var yaw := float(place.get("yaw", 0.0))
+		socket.global_position = ZoneStateBuild._inside(
+				(place.get("arrival", Vector3.ZERO) as Vector3)
+				+ Basis(Vector3.UP, yaw) * SOCKET_OFFSET,
+				room_bounds.get(room, AABB()) as AABB)
+		socket.global_position.y = (place.get("arrival", Vector3.ZERO)
+				as Vector3).y
+		socket.bind(zone_state, objects)
+		socket.installed.connect(
+				func(m: String, o: String) -> void:
+					_on_object_installed(m, o, room))
+		object_sockets.append(socket)
+	for why: String in object_socket_refusals:
+		push_warning("object consumer refused: %s" % why)
+
+## Where a consumer's socket stands, relative to its room's arrival and
+## turned with the room: to one side of the way in, a few steps along.
+const SOCKET_OFFSET := Vector3(1.8, 0.0, 2.6)
+
+var object_settles: Array = []
+var object_recoveries: Array = []
+var object_installs: Array = []
 
 ## Every crossing this Zone has seen, in order. Live, not saved: the
 ## ROOM is what persists and the route it took to get there does not.
@@ -895,11 +1036,94 @@ var object_moves: Array = []
 ## Sent on the CHANGE and not on every selection: `ZoneState.select`
 ## absorbs a re-selection of the state a variable already holds (§19.7
 ## rule 5), so this signal only fires when something actually moved.
+##
+## **Except a variable a consumer sets.** Its change is reported as the
+## installation (`object_consumed`), which is the operation the bridge
+## accepts; a `zone_state_selected` for it would be refused there, and
+## rightly: no message alone stands in for the delivery.
 func _on_zone_state_changed(variable_id: String, state: String) -> void:
 	zone_state_changes.append([variable_id, state])
+	if variable_id in _consumer_owned or _reverting:
+		return
+	zone_state_pending[variable_id] = state
+	_setter_status(variable_id, "PENDING")
+	_state_toast("%s -> %s · SENT" % [variable_id.to_upper(), state.to_upper()],
+			Color(0.9, 0.85, 0.5))
 	BridgeClient.send_intent({"type": "zone_state_selected",
 			"zone_id": zone_id, "variable_id": variable_id,
 			"state": state})
+
+
+## The campaign's own values for this Zone, off the last snapshot.
+func _served_macro() -> Dictionary:
+	var record := BridgeClient.active_zone()
+	if str(record.get("zone_id", "")) != zone_id:
+		return {}
+	var progress: Variant = record.get("progress", {})
+	var out := {}
+	if typeof(progress) != TYPE_DICTIONARY:
+		return out
+	for row: Variant in (progress as Dictionary).get("macro_state", []) \
+			as Array:
+		if typeof(row) == TYPE_ARRAY and (row as Array).size() == 2:
+			out[str((row as Array)[0])] = str((row as Array)[1])
+	return out
+
+
+## ACCEPTED: a snapshot carries the value the control selected.
+func _on_snapshot_for_state(_snapshot: Dictionary) -> void:
+	if zone_state_pending.is_empty():
+		return
+	var macro := _served_macro()
+	for variable: Variant in zone_state_pending.keys():
+		var state := str(zone_state_pending[variable])
+		if str(macro.get(str(variable), "")) != state:
+			continue
+		zone_state_pending.erase(variable)
+		zone_state_answers.append([str(variable), state, true, ""])
+		_setter_status(str(variable), "ACCEPTED")
+		_state_toast("%s -> %s · ACCEPTED" % [str(variable).to_upper(),
+				state.to_upper()], Color(0.45, 1.0, 0.7))
+
+
+## REFUSED: the bridge's answer names exactly this selection. The value
+## goes back to what the campaign holds (or the declared initial), and
+## the doorway and readers follow it back.
+func _on_refusal_for_state(err: Dictionary) -> void:
+	var about := str(err.get("about", ""))
+	var prefix := "zone_state_selected:%s:" % zone_id
+	if not about.begins_with(prefix):
+		return
+	var parts := about.substr(prefix.length()).split(":")
+	if parts.size() != 2:
+		return
+	var variable := parts[0]
+	var state := parts[1]
+	if str(zone_state_pending.get(variable, "")) != state:
+		return
+	zone_state_pending.erase(variable)
+	var back := str(_served_macro().get(variable,
+			zone_state.initial_of(variable)))
+	_reverting = true
+	zone_state.revert(variable, back)
+	_reverting = false
+	var why := str(err.get("message", ""))
+	zone_state_answers.append([variable, state, false, why])
+	_setter_status(variable, "REFUSED")
+	_state_toast("%s -> %s · REFUSED: %s" % [variable.to_upper(),
+			state.to_upper(), why], Color(1.0, 0.55, 0.3))
+
+
+func _setter_status(variable_id: String, status: String) -> void:
+	for raw: Variant in zone_state_setters():
+		var control: ZoneStateBuild.ZoneStateSetterControl = raw
+		if control.variable_id == variable_id:
+			control.status = status
+
+
+func _state_toast(text: String, color: Color) -> void:
+	if hud != null:
+		hud.toast(text, color, 3.0)
 
 ## Every change this Zone has seen, in order. Live, not saved: the
 ## VALUES are what persist, and the sequence that produced them is

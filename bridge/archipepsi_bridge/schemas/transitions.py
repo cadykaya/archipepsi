@@ -730,6 +730,20 @@ def record_zone_state(save: CampaignSave, zone_id: str, variable_id: str,
                 f"{sorted(var.setter.selects)}. Zone state changes only "
                 "when a player operates a setter (§19.7), so a state "
                 "nothing selects is one nothing could have set")
+        # O05-02. A STATE A CONSUMER OWNS IS SET BY DELIVERING ITS
+        # OBJECT, and by nothing else. The consumer IS that variable's
+        # setter -- installing the object is the interaction -- so a bare
+        # `zone_state_selected` naming it is a claim of a delivery that
+        # `record_object_consumed` would have checked, arriving by a
+        # path that checks nothing.
+        for con in getattr(zone, "object_consumers", ()):
+            if con.sets_variable == variable_id \
+                    and con.sets_state == state:
+                raise ValueError(
+                    f"'{variable_id}' = '{state}' is set by consumer "
+                    f"'{con.mechanism_id}' taking '{con.accepts}' in room "
+                    f"'{con.room_id}'; deliver the object -- it is not a "
+                    "control a message can operate")
     return _progress(save, zone_id,
                      lambda p: p.with_macro(variable_id, state), known)
 
@@ -771,6 +785,14 @@ def record_object_transported(save: CampaignSave, zone_id: str,
             raise ValueError(
                 f"object '{object_id}' may not be in room '{room_id}'; its "
                 f"volume is {sorted(obj.allowed_volume)}")
+        # O05-02.4: AN INSTALLED OBJECT DOES NOT TRAVEL. Its consumer's
+        # room is the last room it was in; a report of the same room is
+        # the same fact again, anything else would describe a second copy.
+        if rec.progress.consumed(object_id) \
+                and rec.progress.object_room(object_id) != room_id:
+            raise ValueError(
+                f"'{object_id}' is installed in its consumer and does not "
+                f"move; it cannot arrive in '{room_id}'")
     return _progress(save, zone_id,
                      lambda p: p.with_object_in(object_id, room_id), known)
 
@@ -801,6 +823,16 @@ def record_object_consumed(save: CampaignSave, zone_id: str,
                 f"'{mechanism_id}'"
                 + (f"; it declares {sorted(consumers)}" if consumers
                    else " and declares none"))
+        # A REPEAT OF THE SAME DELIVERY IS ABSORBED BELOW; anything else
+        # about an object already taken is refused, because it would be
+        # a second consumption of one object.
+        held = rec.progress.consumed_by(con.accepts)
+        if held == mechanism_id:
+            return      # the same delivery, reported again: absorbed
+        if held is not None:
+            raise ValueError(
+                f"'{con.accepts}' is already installed in '{held}'; "
+                f"consumer '{mechanism_id}' cannot take it as well")
         where = rec.progress.object_room(con.accepts)
         if where != con.room_id:
             raise ValueError(
@@ -820,9 +852,12 @@ def record_object_consumed(save: CampaignSave, zone_id: str,
     def apply(p):
         if con is None:
             return p        # `known` refuses first; this never runs
+        # CONSUMED, and never rebuilt loose (§30.6.1). Monotone, so the
+        # same delivery reported twice changes nothing the second time.
+        taken = p.with_consumed(con.accepts, mechanism_id)
         if con.sets_variable is None:
-            return p        # scenery: legal, and it changes nothing
-        return p.with_macro(con.sets_variable, con.sets_state)
+            return taken    # scenery: legal, and it changes nothing else
+        return taken.with_macro(con.sets_variable, con.sets_state)
 
     return _progress(save, zone_id, apply, known)
 
@@ -845,12 +880,69 @@ def recover_transported_object(save: CampaignSave, zone_id: str,
             raise ValueError(
                 f"Zone '{zone_id}' declares no transported object "
                 f"'{object_id}'")
+        if rec.progress.consumed(object_id):
+            raise ValueError(
+                f"'{object_id}' is installed in its consumer; an installed "
+                "object is not lost, and recovering it would put a second "
+                "copy back home")
 
     rec = _require_zone(save, zone_id)
-    obj = next(o for o in getattr(rec.zone, "transported_objects", ())
-               if o.object_id == object_id)
+    obj = next((o for o in getattr(rec.zone, "transported_objects", ())
+                if o.object_id == object_id), None)
+
+    def apply(p):
+        if obj is None:
+            return p        # `known` refuses first; this never runs
+        # HOME, AND NO LONGER WHERE IT WAS LOST: the pose goes with it.
+        return p.with_object_in(object_id, obj.home_room_id) \
+            .without_object_pose(object_id)
+
+    return _progress(save, zone_id, apply, known)
+
+
+def record_object_settled(save: CampaignSave, zone_id: str, object_id: str,
+                          room_id: str, position: tuple[float, float, float],
+                          yaw: float) -> CampaignSave:
+    """O05-03. A transported object came to rest where the hand left it.
+
+    The same refusals as `record_object_transported` -- a declared
+    object, a room inside its volume -- plus two of its own:
+
+    - **A consumed object does not settle anywhere.** It is installed,
+      and a pose for it would describe a second copy.
+    - **A pose must be a number a room could hold.** The engine measures
+      it; the bridge has no geometry and does not pretend to, but it
+      refuses a non-finite or absurd coordinate rather than storing it.
+    """
+    import math
+
+    def known(rec):
+        zone = rec.zone
+        declared = {o.object_id: o
+                    for o in getattr(zone, "transported_objects", ())
+                    } if zone is not None else {}
+        obj = declared.get(object_id)
+        if obj is None:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no transported object "
+                f"'{object_id}'")
+        if room_id not in obj.allowed_volume:
+            raise ValueError(
+                f"object '{object_id}' may not rest in room '{room_id}'; "
+                f"its volume is {sorted(obj.allowed_volume)}")
+        if rec.progress.consumed(object_id):
+            raise ValueError(
+                f"'{object_id}' is installed in its consumer and rests "
+                "nowhere else")
+        if not all(math.isfinite(c) and abs(c) < 10_000.0
+                   for c in (*position, yaw)):
+            raise ValueError(
+                f"'{object_id}' reported a pose {position}/{yaw} no room "
+                "could hold")
+
     return _progress(save, zone_id,
-                     lambda p: p.with_object_in(object_id, obj.home_room_id),
+                     lambda p: p.with_object_pose(object_id, room_id,
+                                                  position, yaw),
                      known)
 
 
@@ -1418,6 +1510,7 @@ TRANSITIONS = (
     slot_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
     record_zone_state, record_object_transported, record_object_consumed,
+    record_object_settled,
     recover_transported_object,
     reselect_hosts,
     commit_layout, refuse_layout,

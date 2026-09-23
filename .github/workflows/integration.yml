@@ -154,6 +154,8 @@ jobs:
           make godot-latched-route
           make godot-theme-pack
           make godot-carry
+          make godot-transport
+          make godot-reversible
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live
@@ -163,6 +165,12 @@ jobs:
 
       - name: The latch route through a real bridge and a restart
         run: make godot-latched-route-live
+
+      - name: A carried cell through a real bridge and two restarts
+        run: make godot-transport-live
+
+      - name: A reversible lever through a real bridge and a restart
+        run: make godot-reversible-live
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live

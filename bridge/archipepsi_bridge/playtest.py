@@ -558,6 +558,53 @@ def _dump_latched(args) -> int:
     return 0
 
 
+def candidate_zone(steps: str):
+    """The played Zone with the CANDIDATE profile's `steps` applied, or
+    None if any asked-for step declined.
+
+    The input to Prod's played acceptances for O05-02 (`transport`) and
+    O05-04 (`zone_state`): the same `candidate.apply` the opt-in
+    generation profile runs inside the engine, on the same played Zone,
+    so the fixture a suite plays is the Zone the profile produces, not a
+    lookalike. The Zone the baseline plays is untouched.
+    """
+    from .candidate import apply, parse
+    zone = played_zone()
+    if zone is None:
+        return None
+    asked = parse(steps)
+    out = apply(zone, asked)
+    return out.zone if set(out.emitted) == set(asked) else None
+
+
+def transport_zone():
+    """O05-02's fixture: the played Zone with the `transport` step."""
+    return candidate_zone("transport")
+
+
+def reversible_zone():
+    """O05-04's fixture: the played Zone with the `zone_state` step."""
+    return candidate_zone("zone_state")
+
+
+def _dump_candidate(args) -> int:
+    from .candidate import apply, parse
+    zone = played_zone()
+    if zone is None:
+        print("no played Zone to compose onto", file=sys.stderr)
+        return 1
+    out = apply(zone, parse(args.steps))
+    for step, emitted, note in out.steps:
+        print(f"  {step}: {'EMITTED' if emitted else 'declined'} -- {note}")
+    if set(out.emitted) != set(parse(args.steps)):
+        print("a step declined; nothing written", file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(out.zone.model_dump_json(indent=1), encoding="utf-8")
+    print(f"wrote {args.out}")
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m archipepsi_bridge.playtest",
@@ -576,6 +623,11 @@ def main(argv=None) -> int:
     latched.add_argument(
         "--out", type=Path,
         default=Path("godot/tests/fixtures/latched_route_zone.json"))
+    cand = sub.add_parser(
+        "dump-candidate", help="write the played Zone with the CANDIDATE "
+        "profile's steps applied (candidate.py), for Prod's acceptances")
+    cand.add_argument("steps", help="'all' or a comma list of steps")
+    cand.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.command == "check":
         return _check(args)
@@ -583,6 +635,8 @@ def main(argv=None) -> int:
         return _dump(args)
     if args.command == "dump-latched":
         return _dump_latched(args)
+    if args.command == "dump-candidate":
+        return _dump_candidate(args)
     return report(args.save_dir)
 
 

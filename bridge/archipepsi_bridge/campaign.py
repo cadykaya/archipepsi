@@ -10,6 +10,7 @@ before any network send that depends on it.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import uuid
 from collections import defaultdict
@@ -41,7 +42,7 @@ from .schemas import protocol as P
 from .echo_projection import detail_examples, history_view
 from . import instrumentation
 from . import layout as layout_check
-from . import quiet
+from . import candidate, quiet
 from . import store
 from . import topology
 
@@ -255,7 +256,8 @@ class CampaignEngine:
     def __init__(self, *, provider, provider_name: str,
                  save_dir: Path | None = None,
                  archive_dir: Path | None = None,
-                 quiet_generation: bool = False):
+                 quiet_generation: bool = False,
+                 candidate_steps: tuple[str, ...] = ()):
         self.provider = provider
         self.provider_name = provider_name
         self.save_dir = save_dir or store.DEFAULT_SAVE_DIR
@@ -270,6 +272,12 @@ class CampaignEngine:
         #: that shipped. It is a PREVIEW for review, not a budget
         #: ruling, and no campaign setting reads it.
         self.quiet_generation = quiet_generation
+        #: O05-13: the CANDIDATE profile's steps, or `()` for off. Off is
+        #: the default and the promise: with it off `candidate` is never
+        #: called and every Zone is composed exactly as it always was.
+        #: On, the named relationship composers run on each Zone after its
+        #: graph is proved and before it is accepted (`candidate.py`).
+        self.candidate_steps = tuple(candidate_steps)
 
         self.backend: APBackend | None = None
         self.save: CampaignSave | None = None
@@ -1099,7 +1107,7 @@ class CampaignEngine:
         # around before anything is stored. Doing it after acceptance
         # would mean a Zone existed in a save with an unproved graph.
         try:
-            composed = _with_graph(outcome.value)
+            composed = self._candidate(_with_graph(outcome.value))
         except topology.GraphRefused as exc:
             # THE SAME BOUNDED RECOVERY a failed generation already has,
             # because this IS a Zone that could not be built. Nothing is
@@ -1135,7 +1143,13 @@ class CampaignEngine:
         """
         barred = tuple(sorted(set(rec.unhostable_rooms) | set(rooms)))
         try:
-            regraphed = _with_graph(rec.zone, barred=barred)
+            # A CANDIDATE ZONE IS RE-COMPOSED FROM A CLEAN ZONE: every
+            # relationship the profile added is bound to the old graph's
+            # edges, so it is stripped, the graph recomposed, and the
+            # profile applied again to what came out.
+            base = (candidate.strip(rec.zone) if self.candidate_steps
+                    else rec.zone)
+            regraphed = self._candidate(_with_graph(base, barred=barred))
         except topology.GraphRefused as exc:
             # Barring the room left a Zone that cannot be composed —
             # a leaf with nowhere to hang, most likely. That is the
@@ -1174,6 +1188,35 @@ class CampaignEngine:
             used_fallback=self.save.zone_by_id(rec.zone_id).used_fallback))
         await self.broadcast_snapshot()
         return True
+
+    def _candidate(self, zone):
+        """The CANDIDATE profile on a proved Zone, or the Zone unchanged.
+
+        Every step's outcome -- emitted or declined, and why -- goes to
+        the log and to `<save dir>/candidate/<zone>.json`, a local record
+        like the playtime file: nothing in the campaign reads it back.
+        """
+        if not self.candidate_steps:
+            return zone
+        applied = candidate.apply(zone, self.candidate_steps)
+        for step, emitted, note in applied.steps:
+            log.info("zone %s: candidate %s %s: %s", zone.zone_id, step,
+                     "EMITTED" if emitted else "declined", note)
+        try:
+            out = Path(self.save_dir) / "candidate"
+            out.mkdir(parents=True, exist_ok=True)
+            (out / f"{zone.zone_id}.json").write_text(json.dumps({
+                "zone_id": zone.zone_id,
+                "profile": list(self.candidate_steps),
+                "provider": self.provider_name,
+                "steps": [{"step": st, "emitted": em, "note": no}
+                          for st, em, no in applied.steps],
+                "proposal_digest": layout_check.proposal_digest(
+                    applied.zone),
+            }, indent=1), encoding="utf-8")
+        except OSError as exc:                       # pragma: no cover
+            log.warning("candidate record not written: %s", exc)
+        return applied.zone
 
     async def _generation_failed(self, zone_id: str, error: str,
                                  detail: str) -> None:
@@ -1404,6 +1447,16 @@ class CampaignEngine:
                 nxt = T.record_object_transported(
                     self.save, intent.zone_id, intent.object_id,
                     intent.room_id)
+            elif intent.type == "object_settled":
+                nxt = T.record_object_settled(
+                    self.save, intent.zone_id, intent.object_id,
+                    intent.room_id, intent.position, intent.yaw)
+            elif intent.type == "object_consumed":
+                nxt = T.record_object_consumed(
+                    self.save, intent.zone_id, intent.mechanism_id)
+            elif intent.type == "object_recovered":
+                nxt = T.recover_transported_object(
+                    self.save, intent.zone_id, intent.object_id)
             else:
                 nxt = T.record_station(self.save, intent.zone_id,
                                        intent.station_id)

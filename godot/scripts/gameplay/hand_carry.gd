@@ -51,6 +51,9 @@ var _dir := Vector3.ZERO
 var _dist := FORWARD_M
 var _saved_layer := 1
 var _saved_mask := 1
+## What stopped the last occluded carry, by node name: evidence for a
+## drop the player did not ask for. Empty until one happens.
+var last_blocker := ""
 ## Bodies just put down that still overlap the player. They keep a
 ## collision exception with the player until the two separate, so a drop
 ## at the player's feet is not resolved as a violent depenetration.
@@ -200,6 +203,7 @@ func update(delta: float) -> void:
 	# The rule is about geometry in the way; a short unobstructed line is
 	# only the swing into the pose.
 	if free < 1.0 and _dist * free < DROP_CLEARANCE_M:
+		last_blocker = _blocker(anchor, anchor + _dir * _dist)
 		var putting := body
 		putting.global_position = player.global_position \
 				+ Vector3(0.0, _half_height(putting) + 0.02, 0.0)
@@ -241,6 +245,29 @@ func _free_fraction(from: Vector3, to: Vector3) -> float:
 	if fractions.is_empty():
 		return 1.0
 	return clampf(fractions[0], 0.0, 1.0)
+
+
+## Which collider the carried shape meets along `from -> to`, by name.
+func _blocker(from: Vector3, to: Vector3) -> String:
+	var hull := body.get_node_or_null("hull") as CollisionShape3D
+	if hull == null or hull.shape == null:
+		return ""
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = hull.shape
+	query.transform = Transform3D(body.global_transform.basis, from)
+	query.motion = to - from
+	query.exclude = [player.get_rid(), body.get_rid()]
+	var space := player.get_world_3d().direct_space_state
+	var fractions := space.cast_motion(query)
+	if fractions.size() < 2:
+		return ""
+	query.transform = Transform3D(body.global_transform.basis,
+			from + (to - from) * fractions[1])
+	query.motion = Vector3.ZERO
+	var info := space.get_rest_info(query)
+	var hit: Variant = instance_from_id(int(info.get("collider_id", 0))) \
+			if not info.is_empty() else null
+	return str((hit as Node).get_path()) if hit is Node else "(unnamed)"
 
 
 func _half_height(target: ManipulableBody) -> float:

@@ -67,25 +67,39 @@ const WALL_MARGIN := 1.2
 ## `state` is the live `ZoneState`; `places` is `room_places` off the
 ## committed layout. Returns
 ## `{"setters": [...], "readers": [...], "refused": [...]}`.
+##
+## `consumer_owned` names the variables an `ObjectConsumer` sets (P16).
+## Their setter IS the installation -- the socket the object is carried
+## to -- so no lever is built for them: a lever would let the player
+## select the consequence without making the delivery, which is exactly
+## what the bridge refuses a raw `zone_state_selected` for. Their readers
+## are built as usual. `built` lists every variable that has something a
+## player can operate, lever or consumer, for the doorway gates to check.
 static func build(root: Node3D, variables: Array, state: ZoneState,
 		places: Dictionary, bounds: Dictionary = {},
-		theme := "concrete_facility") -> Dictionary:
+		theme := "concrete_facility",
+		consumer_owned: Array = []) -> Dictionary:
 	var setters: Array = []
 	var readers: Array = []
+	var built: Array = []
 	var refused: Array[String] = []
 	for raw: Variant in variables:
 		if typeof(raw) != TYPE_DICTIONARY:
 			continue
 		var one: Dictionary = raw
-		var made := _one(root, one, state, places, bounds, theme)
+		var made := _one(root, one, state, places, bounds, theme,
+				str(one.get("variable_id", "")) in consumer_owned)
 		var why := str(made.get("refused", ""))
 		if why != "":
 			refused.append(why)
 			continue
-		setters.append(made["setter"])
+		built.append(str(one.get("variable_id", "")))
+		if made["setter"] != null:
+			setters.append(made["setter"])
 		for reader: Variant in made["readers"] as Array:
 			readers.append(reader)
-	return {"setters": setters, "readers": readers, "refused": refused}
+	return {"setters": setters, "readers": readers, "built": built,
+			"refused": refused}
 
 
 ## Keep a point inside the room it is meant to be in.
@@ -108,7 +122,8 @@ static func _inside(at: Vector3, box: AABB) -> Vector3:
 
 
 static func _one(root: Node3D, one: Dictionary, state: ZoneState,
-		places: Dictionary, bounds: Dictionary, theme: String) -> Dictionary:
+		places: Dictionary, bounds: Dictionary, theme: String,
+		by_consumer := false) -> Dictionary:
 	var id := str(one.get("variable_id", ""))
 	if not state.declares(id):
 		return {"refused": "variable '%s' was not declared" % id}
@@ -136,14 +151,16 @@ static func _one(root: Node3D, one: Dictionary, state: ZoneState,
 					% [id, str(reader.get("room_id", ""))]
 					+ "this Zone did not build"}
 
-	var control := ZoneStateSetterControl.create(id,
-			state.selectable(id), theme)
-	root.add_child(control)
-	control.global_position = _inside(
-			(places[setter_room] as Dictionary).get(
-				"arrival", Vector3.ZERO) as Vector3 + SETTER_OFFSET,
-			bounds.get(setter_room, AABB()) as AABB)
-	control.bind(state)
+	var control: ZoneStateSetterControl = null
+	if not by_consumer:
+		control = ZoneStateSetterControl.create(id, state.selectable(id),
+				theme)
+		root.add_child(control)
+		control.global_position = _inside(
+				(places[setter_room] as Dictionary).get(
+					"arrival", Vector3.ZERO) as Vector3 + SETTER_OFFSET,
+				bounds.get(setter_room, AABB()) as AABB)
+		control.bind(state)
 
 	var built: Array = []
 	for raw: Variant in reader_list:
@@ -180,7 +197,24 @@ static func _one(root: Node3D, one: Dictionary, state: ZoneState,
 class ZoneStateSetterControl extends CallLever:
 	var variable_id := ""
 	var selects: Array = []
+	## What the campaign has said about the last selection: "PENDING"
+	## until the snapshot carries it, then "ACCEPTED", or "REFUSED" (and
+	## the value put back). Set by the controller; empty before any pull.
+	var status := ""
 	var _state: ZoneState = null
+
+	## WHAT A PULL WILL DO, what it holds now, and what the campaign said.
+	## O05-04.2: "the source feedback identifies what was accepted or
+	## pending".
+	func interact_prompt() -> String:
+		if _state == null or selects.is_empty():
+			return "[E] %s" % label
+		var here := _state.value_of(variable_id)
+		var at := selects.find(here)
+		var next := str(selects[(at + 1) % selects.size()])
+		return "[E] %s -> %s   (now %s%s)" % [variable_id.to_upper(),
+				next.to_upper(), here.to_upper(),
+				(" · " + status) if status != "" else ""]
 
 	static func create(id: String, choices: Array,
 			theme := "concrete_facility") -> ZoneStateSetterControl:

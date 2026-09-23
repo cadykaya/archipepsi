@@ -557,18 +557,61 @@ func _an_object_crosses_rooms_and_says_where_it_is() -> void:
 	if sent.size() == 1:
 		_check(str((sent[0] as Dictionary).get("room_id", "")) == "c003",
 				"...naming the room it arrived in: %s" % [sent[0]])
-	# A DOORWAY IS NOT A THIRD PLACE: a position in no room keeps the
-	# room it had, so a carry across a threshold reports once rather
-	# than flickering.
-	body.global_position = far.position + far.size * 0.5 \
-			+ Vector3(0.0, 400.0, 0.0)
+	# A DOORWAY IS NOT A THIRD PLACE: a position in no room, beside one,
+	# keeps the room it had, so a carry across a threshold reports once
+	# rather than flickering.
+	#
+	# (This used to be a point 400 m above the Zone. §10.4 calls that
+	# OUT OF BOUNDS and sends the object home at once, which the case
+	# below now asserts; "between rooms" is a point beside a room that
+	# no room's box holds.)
+	var gap := _point_in_no_room(controller, far)
+	_check(gap != Vector3.INF, "there is a point beside c003 in no room")
+	var recoveries: Array = []
+	controller.objects.recovered.connect(
+			func(id: String, room: String) -> void:
+				recoveries.append([id, room]))
+	body.global_position = gap
 	await _settle(10)
 	_check(controller.objects.room_of("cell") == "c003",
-			"between rooms it keeps the room it had")
+			"between rooms (%s, in no room's box) it keeps the room it had"
+			% [gap])
 	_check(_intents_of("object_transported").size() == 1,
 			"...and reports nothing new (%d)"
 			% _intents_of("object_transported").size())
+	_check(recoveries.is_empty(),
+			"...and is not recovered from a connector (%d)"
+			% recoveries.size())
+	# FAR OUTSIDE THE ZONE IS NOT BETWEEN ROOMS: home at once (§10.4).
+	body.global_position = far.position + far.size * 0.5 \
+			+ Vector3(0.0, 400.0, 0.0)
+	await _settle(4)
+	_check(recoveries.size() == 1
+			and controller.objects.room_of("cell") == "c001",
+			"400 m above the Zone it is out of bounds and home at once "
+			+ "(%d recoveries, in '%s')"
+			% [recoveries.size(), controller.objects.room_of("cell")])
 	await _drop(controller)
+
+
+## A floor-height point just beyond one face of `box` that no room's box
+## contains, or `Vector3.INF`.
+func _point_in_no_room(controller: ZoneController, box: AABB) -> Vector3:
+	var centre := box.position + box.size * 0.5
+	var y := box.position.y + 1.0
+	for at: Vector3 in [
+			Vector3(box.end.x + 1.0, y, centre.z),
+			Vector3(box.position.x - 1.0, y, centre.z),
+			Vector3(centre.x, y, box.end.z + 1.0),
+			Vector3(centre.x, y, box.position.z - 1.0)]:
+		var held := false
+		for room: Variant in controller.room_bounds:
+			if (controller.room_bounds[room] as AABB).has_point(at):
+				held = true
+				break
+		if not held:
+			return at
+	return Vector3.INF
 
 
 ## P16.3: it reloads where it was left, not where it started.
@@ -613,9 +656,18 @@ func _an_object_outside_its_volume_comes_home() -> void:
 		return
 	var box: AABB = controller.room_bounds.get(outside, AABB())
 	body.global_position = box.position + box.size * 0.5
-	await _settle(16)
+	# §10.4: HOME AFTER 1.0 S OUTSIDE THE VOLUME, AND NOT BEFORE. The
+	# first cut of this runtime recovered on the first frame, which the
+	# O05 reconciliation listed as a deviation; the half-second check is
+	# what makes the delay a measured fact rather than a constant.
+	await _settle(30)
+	_check(recoveries.is_empty(),
+			"half a second outside its volume it is not yet recovered (%d)"
+			% recoveries.size())
+	await _settle(48)
 	_check(recoveries.size() == 1,
-			"leaving the volume recovered it once (%d)" % recoveries.size())
+			"after 1.0 s outside it, it was recovered once (%d)"
+			% recoveries.size())
 	_check(controller.objects.room_of("cell") == "c001",
 			"...and it is home in '%s'" % controller.objects.room_of("cell"))
 	await _drop(controller)
