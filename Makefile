@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -735,6 +735,99 @@ godot-latched-route: godot-import  # the latch route, played end to end
 	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \
 	fi
+
+# P14: THE SAME ROUTE THROUGH A REAL BRIDGE, AND BACK AFTER A RESTART.
+# A disposable default-scale mock campaign (the scale Dess's fixture was
+# composed at). The real path generates zone_001; `compose_latched_route.py`
+# takes D-10's explicit step on it and checks the result IS
+# `latched_route_zone.json` (no re-keying); the real `Main` enters it
+# through the portal, the bridge certifies the layout, and the plate is
+# stepped on -- the real `latch_fired` accepted and read back off the save
+# file, forged latches refused. Then BOTH processes restart from the save
+# alone, and the route is open before anyone reaches the plate.
+#
+# To play the same candidate by hand, seed a save the same way and point
+# the ordinary client at it: see docs/P14_LATCHED_ROUTE_REPLAY.md.
+LATCH_SAVES := $(CURDIR)/.latched-route-saves
+godot-latched-route-live: godot-import
+	rm -rf $(LATCH_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --latched-live=seed \
+	  > /tmp/archipepsi-latched-seed.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|FAIL|seeded|GODOT LATCHED)" /tmp/archipepsi-latched-seed.log; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-latched-seed.log; \
+	  echo "-- no campaign was seeded"; exit $$STATUS; fi
+	cd bridge && PYTHONPATH=. $(PY) tools/compose_latched_route.py \
+	  $(LATCH_SAVES) --expect ../godot/tests/fixtures/latched_route_zone.json
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "the bridge did not load the composed save"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --latched-live=play \
+	  --latched-save-dir=$(LATCH_SAVES) > /tmp/archipepsi-latched-play.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|played|GODOT LATCHED)" /tmp/archipepsi-latched-play.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	grep -q "GODOT LATCHED LIVE PLAY OK" /tmp/archipepsi-latched-play.log || exit 1
+	@echo "-- both processes restart: the bridge too, from its own save --"
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "the restarted bridge did not come back"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --latched-live=restore \
+	  --latched-save-dir=$(LATCH_SAVES) > /tmp/archipepsi-latched-restore.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|GODOT LATCHED)" /tmp/archipepsi-latched-restore.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	grep -q "GODOT LATCHED LIVE RESTORE OK" /tmp/archipepsi-latched-restore.log \
+	  || exit 1
+
+# P14: THE LATCH-ROUTE CANDIDATE, BY HAND. Opt-in and disposable: its own
+# save directory, a default-scale mock campaign whose zone_001 is Dess's
+# `latched_route_zone.json` -- the same seed and explicit compose step
+# `godot-latched-route-live` takes, identity checked. Nothing else is read
+# or written, and the ordinary campaign never composes a latch.
+#   make latched-route-play           seed once, then the bridge + the game
+#   make latched-route-play FRESH=1   discard that save and seed again
+# In the game: MOCK CAMPAIGN, then the portal. Quit and run it again (no
+# FRESH) to come back to the same save. docs/P14_LATCHED_ROUTE_REPLAY.md.
+LATCH_PLAY_SAVES := $(CURDIR)/.latched-route-play
+latched-route-play: godot-import
+	$(if $(FRESH),rm -rf $(LATCH_PLAY_SAVES))
+	@if ls $(LATCH_PLAY_SAVES)/*.json >/dev/null 2>&1; then \
+	  echo "-- reusing $(LATCH_PLAY_SAVES) (FRESH=1 seeds it again)"; \
+	else \
+	  cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_PLAY_SAVES) \
+	    $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	    --mock-scale=default > /tmp/archipepsi-latched-play-seed.log 2>&1 & \
+	  BRIDGE_PID=$$!; sleep 2; \
+	  $(GODOT) --headless --path godot -- --latched-live=seed \
+	    > /tmp/archipepsi-latched-play-seed-client.log 2>&1; \
+	  STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	  if [ $$STATUS -ne 0 ]; then \
+	    tail -20 /tmp/archipepsi-latched-play-seed-client.log; exit $$STATUS; fi; \
+	  (cd bridge && PYTHONPATH=. $(PY) tools/compose_latched_route.py \
+	    $(LATCH_PLAY_SAVES) \
+	    --expect ../godot/tests/fixtures/latched_route_zone.json) || exit 1; \
+	fi
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_PLAY_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; exit 1; }; \
+	$(GODOT) --path godot; \
+	kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; true
 
 godot-encounter: godot-import  # generated rooms, fought with the base kit
 	@out=$$($(GODOT) --headless --path godot -- --encounter 2>&1); \

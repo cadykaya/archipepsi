@@ -199,6 +199,13 @@ func _ready() -> void:
 		var reload_driver := ReloadDriver.new()
 		reload_driver.main = self
 		add_child(reload_driver)
+	# P14's latch route through the real bridge and a restart, beside the
+	# real `Main` for the same reason: `_to_zone` is what hands a saved
+	# latch to the Zone before its graph is first evaluated.
+	if LatchedRouteLiveDriver.phase_from_cmdline() != "":
+		var latched_driver := LatchedRouteLiveDriver.new()
+		latched_driver.main = self
+		add_child(latched_driver)
 
 ## Enter the curated Stage 3A showcase.
 ##

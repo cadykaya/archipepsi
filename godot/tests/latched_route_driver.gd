@@ -18,8 +18,10 @@ extends Node
 ## pre-set, the shutter is not moved by anything but the graph, and
 ## nothing is placed beyond the door.
 ##
-## **THE ONE PLACEMENT THIS SUITE MAKES** is the survey below, which
-## reads where things are and moves nothing.
+## **THE ONE HARNESS STEP** is releasing the layout hold once the
+## verdict wait has concluded with no bridge to answer it (`_enter`).
+## `godot-latched-route-live` plays the same route with the bridge's own
+## verdict, through the real `Main`, and across a restart.
 
 const FIXTURE := "res://tests/fixtures/latched_route_zone.json"
 const DT := 1.0 / 60.0
@@ -347,6 +349,14 @@ func _clear_room(controller: ZoneController, room: String,
 	player.fired_pulse.connect(_on_pulse)
 	player.hit_confirmed.connect(_on_landed)
 	var battery := _living_in(controller, room)
+	# NOTHING TO FIGHT is an answer, not a walk to the world origin: the
+	# centre of no guns is `Vector3.ZERO`.
+	if battery.is_empty():
+		player.fired_pulse.disconnect(_on_pulse)
+		player.hit_confirmed.disconnect(_on_landed)
+		return {"frames": 0, "left": 0, "guns": 0, "shots": 0, "landed": 0,
+				"walked_in": 0.0, "hurt_walking": 0.0, "hurt_standing": 0.0,
+				"widest": 0.0}
 	var among := Vector3.ZERO
 	for raw: Variant in battery:
 		among += (raw as Node3D).global_position
@@ -533,6 +543,16 @@ func _the_route_is_played_end_to_end(zone_data: Dictionary) -> void:
 			% _side_of(frame, inward, plate.global_position))
 	_check(shutter.is_shut() and not graph.latched.has("held"),
 			"and the route starts shut, unlatched")
+	# THE OPENING IS STILL A HOLE TO THE LAYOUT PROBE, with the shut gate
+	# standing in it: the evidence the bridge validates says `c002/exit`
+	# is open, as a locked door's does. Without this the bridge refused
+	# the live layout ("USED and the engine measured it as solid").
+	var socket_ref := "%s/%s" % [room, str(frame.get("socket_id", ""))]
+	_check(controller.measured_apertures.has(socket_ref)
+			and bool(controller.measured_apertures[socket_ref]),
+			"and the layout evidence reads %s as an opening, gate and all "
+			% socket_ref + "(%s)" % [controller.measured_apertures.get(
+				socket_ref, "unmeasured")])
 
 	# ---- 1. ARRIVE THROUGH THE NORMAL ROUTE --------------------------
 	var arrival := player.global_position

@@ -159,6 +159,9 @@ jobs:
       - name: A charge spent by a process that then dies
         run: make godot-consumable-restart
 
+      - name: The latch route through a real bridge and a restart
+        run: make godot-latched-route-live
+
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live
 

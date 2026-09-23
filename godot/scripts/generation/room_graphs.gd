@@ -45,6 +45,13 @@ const PANEL_SECONDS := 3.0
 ## procedural 2.4 x 3.2 is still closed. Thinner than the wall it stands
 ## in (0.4 m), so it sits inside the carved hole; it rises the opening's
 ## full height plus this much, so a standing capsule clears it.
+## A SHUTTER THAT `TopologyEdge.opened_by` DECLARES, standing in its
+## doorway. The layout probes ask whether an opening is a hole, and this
+## one is: the gate in it is content, as a lock's slab is
+## (`SpaceProbe.is_placed_content`). Only a declared gate joins the group.
+## A shutter nobody declared, standing in a doorway, still measures solid,
+## because that is the physical gate the route logic would not know about.
+const ROUTE_GATE := "declared_route_gate"
 const ROUTE_PANEL_DEPTH := 0.3
 const ROUTE_PANEL_CLEARANCE := 0.4
 
@@ -345,6 +352,7 @@ static func route_shutter(frame: Dictionary, theme: String) -> ServiceShutter:
 			Vector3(width, height, ROUTE_PANEL_DEPTH),
 			height + ROUTE_PANEL_CLEARANCE, PANEL_SECONDS, theme)
 	shutter.rotation.y = float(frame.get("yaw", 0.0))
+	shutter.add_to_group(ROUTE_GATE)
 	return shutter
 
 
