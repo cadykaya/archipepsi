@@ -1,6 +1,45 @@
 # AGENT FRONTIER
 
-## PROD LANE — Overnight 05 in progress: carry, delivery, reversible lever, candidate launcher, all three minors in Zones — 2026-09-23
+## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
+
+**Handed off here.** The frozen full run on `46bf023` was green: 64 of 64 steps passed, 16:50–17:55 UTC
+(`docs/ledgers/ov05_evidence/FROZEN_RUN.md`). The handoff commit on top
+of it changes documents and the zone audit's own provenance stamp only.
+These are local results; remote CI was not polled.
+
+- **The owner's review:** `docs/ledgers/PROD_OV05_MORNING_REVIEW.md`
+  (filled; §4 is yours).
+- **Per-unit status of all 85 units:** `docs/ledgers/PROD_OV05_READY_QUEUE.md`.
+- **The route and the answers:** `PROD_OV05_ROUTE.md` and
+  `PROD_OV05_ANSWERS.md`.
+
+**No heartbeat, watcher, subscription or scheduled job is armed.** The
+next task starts by turning one on, if it needs one. Dess and Arty stay
+paused. Every edit this lane made to Dess's files is in the ledger's
+shared-seam table for her review, and the packet copies now mirror the
+bridge (P5-20).
+
+**The exact remaining queue** (ready work, in the plan's order):
+
+- **O05-05.2–.7:** blocked on B-1, B-2 and B-3 (policies).
+- **O05-07.2:** AND, DIRECT and SEQUENCE, with a consumer each.
+- **O05-07.4:** the five signal verbs.
+- **O05-08.5:** a boundary (the atom grammar, or an interim
+  representation), owner/Dess.
+- **O05-09.1:** the rest of it:
+  - `anchored` on objects and the player;
+  - `lightened` on enemies and the player;
+  - `slippery`;
+  - `conductive`, which needs an electric hazard;
+  - `brittle`, which needs an object-targeted delivery decision.
+- **O05-09.2–.5:** not started.
+- **O05-10.2 / 10.4:** a constrained assembly in the candidate, and
+  counters measured across cycles.
+- **O05-10:** power loss.
+- **O05-12:** not started.
+- **O05-16.2–.5:** not started.
+
+### The batch, as it went
 
 **Assignment:** the owner's Overnight 05 work order,
 `docs/ledgers/ov05/01_EXECUTION_PLAN.md` (verbatim copy, checksums

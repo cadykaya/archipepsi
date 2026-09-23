@@ -4,21 +4,53 @@ The answers, with room names and the evidence behind each claim, are in
 `PROD_OV05_ANSWERS.md`. Read this one first if you would rather find
 things yourself.
 
-## Start it
+## The build
 
-1. **Update** the checkout the usual way ("Update Archipepsi"). The
-   branch is `claude/archipepsi-0-4-blindside`.
-2. **Double-click `Diagnostic Campaign - Candidate (Windows).bat`.** On
-   macOS or Linux, run
-   `cd bridge && python3 -m archipepsi_bridge.diagnostic --candidate`.
-   Leave the window open. Its banner should read **DIAGNOSTIC CAMPAIGN
-   (CANDIDATE PROFILE)** and show your revision. It should also say
-   `staged nothing`: no item, Echo or key is given to you.
-3. **Open the game as usual.** Start a mock campaign if the Hub asks
-   for one, ask for a Zone, and take the portal.
+- **Tested revision:** `46bf023` on `claude/archipepsi-0-4-blindside`.
+  The frozen full run there was green: 64 of 64 steps passed. The raw per-step results are in
+  `docs/ledgers/ov05_evidence/FROZEN_RUN.md`.
+- **Pushed revision:** the handoff commit directly on top of it. It
+  holds documents and the zone audit's own provenance stamp only; no
+  code.
+- These are local Linux results. Nothing was run on Windows. The `.bat`
+  files were read, and the Python they call is tested.
 
-The candidate slot is separate from your other campaigns. It will not
-continue an ordinary one, and an ordinary launch will not continue it.
+## Start it (Windows)
+
+1. **Update:** double-click `Update Archipepsi (Windows).bat`. You
+   should end up on branch `claude/archipepsi-0-4-blindside`, at the
+   pushed revision or later.
+2. **Start the candidate bridge:** double-click
+   `Diagnostic Campaign - Candidate (Windows).bat`.
+   - It needs Python on PATH and says so if it is missing.
+   - Its banner reads **DIAGNOSTIC CAMPAIGN (CANDIDATE PROFILE)** with
+     your revision, and says `staged nothing`.
+   - **Leave this window open** while you play.
+   - **Do not also run `Start Archipepsi (Windows).bat`:** that starts
+     the ordinary bridge instead.
+3. **Start the game:** launch Godot 4.5.1, open `godot/project.godot`
+   from the checkout, and press Play (F5).
+   - The game connects to the bridge window from step 2. If it says
+     BRIDGE OFFLINE, that window is not running.
+   - At the Hub, press **MOCK CAMPAIGN** if it asks, ask for a Zone,
+     and take the portal.
+
+**Fresh or resumed.**
+
+- The first launch makes the candidate slot.
+- Every later double-click resumes that same slot, under the same
+  profile. A different profile is refused, with nothing touched.
+- For a fresh candidate slot, run it from a command prompt in the
+  checkout: `cd bridge`, then
+  `py -m archipepsi_bridge.diagnostic --candidate --new`.
+- `--list` shows the slots and their folders.
+
+**Where it saves:** `<your checkout>\.diagnostic-candidate\`. That is
+a hidden folder beside the repository, separate from your ordinary
+campaigns.
+
+- The candidate launcher never continues an ordinary campaign.
+- An ordinary launch never continues the candidate slot.
 
 ## What to look for
 
@@ -61,13 +93,20 @@ continue an ordinary one, and an ordinary launch will not continue it.
   Unweighted Switch and Counterfire Arcade; the second has Counterfire
   Arcade and Passing Platforms. Abandoning the first returns its
   unclaimed Checks to the pool, which is fine in this separate slot.
-- **The consumable slot (`Q`) is offered to this profile's Echoes, and
-  you may never see one.** On the deterministic Epsilon a Bomb Bag
-  would be three stun bombs, but in these campaigns every Bomb Bag
-  arrives after you already own a thrown weapon. The evolution rule
-  then makes it that weapon's upgrade instead. Which reading is right
-  is an open question, listed in the answers. The ordinary game still
-  does not offer the slot at all.
+- **The consumable slot (`Q`).**
+  - The owner's direction of 2026-09-23 applies: the campaign's own Bomb
+    Bag now arrives as bombs you can slot, spend and have reloaded.
+    Bombs followed by a Bomb Bag is one Bombs at Mk II.
+  - That is proven in the bridge and on the real engine path. A live
+    run of this naturally acquired bomb was not played. If you never
+    see it, report that.
+  - The refill rule (a new deployment target refills) is this lane's
+    proposal, not your decision.
+  - The ordinary game still does not offer the slot.
+- **In the engine but not reachable by play.** The twelve manipulation
+  verbs, the mass fields, and `rooted` and `anchored` on enemies all
+  work and are tested. No Echo the deterministic Epsilon makes delivers
+  them (see the answers).
 - **This is an implementation candidate.** It is not approved content
   and not the ordinary game. Everything here comes from the
   deterministic Epsilon and the mock multiworld.

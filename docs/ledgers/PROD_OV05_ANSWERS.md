@@ -50,6 +50,34 @@ relationships are the same, or a step declines and says so in
   home, moving normally. After G, they stay where you left them, and
   the service stair means you do not need them.
 
+## In the engine, but not reachable by play yet
+
+These work, and each has its own suite, but no Echo the fallback makes
+delivers them, so you will not meet them on the route.
+
+- **The twelve manipulation verbs** (O05-08.1–.4): PUSH, PULL, HOLD,
+  ALIGN, SETTLE, TETHER, PIN, ROTATE, ATTACH, DETACH, LIGHTEN_FIELD and
+  ANCHOR_FIELD.
+  - They have one §14.2 eligibility table and one per-caster relations
+    ledger.
+  - A weld is one body.
+  - A mass field scales kilograms and never stacks, and a Status steps
+    the class. The real class and kilogram plates tell the two apart.
+  - `make godot-verb-runtime`: 95 checks, by direct invocation.
+  - Delivering them needs the Amalgam's atom grammar (O05-08.5), a
+    representation decision for you or Dess.
+- **`rooted` and `anchored` on an enemy** (O05-09.1).
+  - A rooted enemy takes no step of its own but still attacks and can
+    still be knocked about.
+  - An anchored one is not moved by a knock, and the verbs read it as
+    FIXED.
+  - Per role: a rooted charger lunges where it stands, a diver dives
+    where it hangs, a flyer stays put, and a bulwark still turns.
+  - `make godot-status-family`: 15 checks. The last case fires an
+    injected rooted-on-hit Echo through the real `fire_echo` binding in a
+    declared arena. A model provider's `rooted` or `anchored` on-hit is
+    now admitted; the fallback makes neither.
+
 ## What is proved, and how (evidence classes kept apart)
 
 - **Real input and world effect.** The drivers press `interact`,

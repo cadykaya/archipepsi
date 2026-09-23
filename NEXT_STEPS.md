@@ -1,5 +1,40 @@
 # Archipepsi — build state
 
+## 2026-09-23 (engine) — Overnight 05: physical carry to a consumer, a reversible lever, three minors in Zones, twelve verbs and two Statuses in the engine
+
+**HANDED OFF.** This was the owner's Overnight 05 work order
+(`docs/ledgers/ov05/`, verbatim). One writer; Dess and Arty paused.
+
+- **Verified:** one frozen revision, `46bf023`, green: 64 of 64 steps passed, 16:50–17:55 UTC
+  (`docs/ledgers/ov05_evidence/FROZEN_RUN.md`).
+- **Owner review:** `docs/ledgers/PROD_OV05_MORNING_REVIEW.md`.
+- **Per-unit status:** `docs/ledgers/PROD_OV05_READY_QUEUE.md`.
+- **Every row's evidence, and the shared-seam table for Dess:**
+  `docs/ledgers/PROD_OV05.md`.
+
+**The revision map** (`330c555` → handoff):
+
+| commits | what |
+|---|---|
+| `ae8bcb7` | O05-01 hand carry, operated through the real player |
+| `5902920`, `d92d723`, `f1fc737`, `f4a938e` | O05-02/03/04 (transport, restart, the reversible lever), O05-05.1 reconciliation and P5-9, the candidate launcher, the whole profile played |
+| `83044c3`, `6f96ca9`, `38f3fc4`, `074627f`, `6cbe5f2`, `a63a319`, `400ed37`, `3f6c1d3`, `0f4715a` | O05-06: all three minors in composed Zones, played and restarted; the sample regenerated |
+| `a718654`, `4276835`, `384497b` | O05-07: the minors' own chains through the shared graph; sensor safety |
+| `4d006e5` | O05-10: a real mid-motion reversal; two isolated arcades |
+| `65f3ef4`, `b27bee5` | O05-11: the candidate's consumable slot; the owner's related-Echoes rule |
+| `7ca5945`, `394817b`, `2b60770`, `0f4c335`, `38b104f`, `44f2e0e` | O05-08.1–.4: the twelve verbs, runtime only |
+| `7abb338`, `73b7b87` | O05-09.1: `rooted` and `anchored` on an enemy |
+| `46bf023` | P5-20: the design packet mirrors this lane's schema edits |
+| handoff | documents, and the zone audit's provenance stamp |
+
+**Blocked, and on whom:**
+
+- O05-05 (the featured Echo at Blindside): three policies, B-1..B-3.
+- O05-08.5 (delivering the verbs): the atom-grammar representation.
+
+Both are owner/Dess decisions. The remaining ready queue is at the head
+of `docs/AGENT_FRONTIER.md`.
+
 ## 2026-09-23 (engine) — integration batch: P14 played and persisted, D-11 on the geometry
 
 **CLOSED AND STOPPED.** This was one bounded batch. It consumed Dess's
