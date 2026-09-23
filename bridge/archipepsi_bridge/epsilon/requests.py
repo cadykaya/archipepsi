@@ -253,6 +253,19 @@ class OwnedComponentSummary(Strict):
     #: that cannot see the existing two is guessing at exactly the thing
     #: the fold will refuse it for. Empty for every kind but `action`.
     modifiers: tuple[str, ...] = Field(default=(), max_length=2)
+    #: THE ITEM THAT MADE IT, and the world it came from: its first
+    #: provenance row. Owner direction (2026-09-23): whether a new item
+    #: upgrades something the player owns or becomes a new thing is
+    #: Epsilon's reading of "the new source and the existing collection",
+    #: and sharing an Action primitive does not make two items one family.
+    #: A collection that names only verbs cannot be read that way. Empty
+    #: for a caller that predates it, which reads as "related to nothing".
+    origin: _AP_STR = ""
+    origin_game: _AP_STR = ""
+    #: An action's slot. A consumable, a weapon and a utility that share a
+    #: verb are three different things to hold, and an upgrade keeps the
+    #: function the owned one has. "" for every other kind.
+    slot: str = Field(default="", max_length=16)
 
 
 class OwnedLinkSummary(Strict):

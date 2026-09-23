@@ -25,6 +25,7 @@ from archipepsi_bridge.epsilon.requests import (
     EchoGenerationRequest, EchoPlayerState, EchoSource, allowed_for)
 
 from archipepsi_bridge.mock_ap import MockAPBackend
+from archipepsi_bridge.schemas import mechanics as M
 from archipepsi_bridge.schemas.echo import (
     EchoInterpretation, validate_interpretation)
 
@@ -188,16 +189,18 @@ async def _campaign(tmp_path, *profile: str, arrange: bool):
     engine = _engine(tmp_path, *profile)
     backend = MockAPBackend(engine)
     if arrange:
-        # ARRANGED, AND SAID SO. In the mock's own campaigns every Bomb
-        # Bag meets an owned lob first -- the fallback's default reading
-        # of an unmatched item is a thrown `arc_lob` -- and the sequel
-        # rule folds it into that weapon (the test below pins that, and
-        # the ledger records the open question). So the first Check is
-        # given the Bomb Bag's placement. Nothing after this line is
-        # arranged: the claim, the reading, the validation, the fold, the
-        # slot, the spend and the reload are the real ones. Only the NAME
-        # moves: the location keeps its own item id, recipient and flags,
-        # so the allocator places it exactly where it placed it before.
+        # ARRANGED, AND SAID SO: the first Check is given the Bomb Bag's
+        # placement, so the item is reached on the first claim rather
+        # than after the campaign's shop opens. Until the owner's
+        # direction of 2026-09-23 this was the only way to reach it as a
+        # consumable at all -- the sequel rule then keyed a family on the
+        # primitive and folded every Bomb Bag into an owned lob; the
+        # unarranged test below now proves the natural path. Nothing
+        # after this line is arranged: the claim, the reading, the
+        # validation, the fold, the slot, the spend and the reload are
+        # the real ones. Only the NAME moves: the location keeps its own
+        # item id, recipient and flags, so the allocator places it
+        # exactly where it placed it before.
         _, item_id, slot, flags = backend.placements[_FIRST_CLAIM]
         backend.placements[_FIRST_CLAIM] = ("Bomb Bag", item_id, slot, flags)
     engine.backend = backend
@@ -245,19 +248,37 @@ def test_production_reads_the_same_bomb_bag_as_a_weapon(tmp_path):
     assert bomb.component.slot == "echo_a" and bomb.component.charges is None
 
 
-def test_in_the_mock_s_own_campaign_the_sequel_rule_takes_it(tmp_path):
-    """THE RECORDED BOUNDARY, pinned. Unarranged, the prototype campaign
-    reaches its Bomb Bag in the Hub shop after it already owns a lob, and
-    `_as_sequel` -- ECHOES §11, "a sequel when the campaign already owns
-    the item's verb", with the family keyed on the primitive alone --
-    turns the consumable CREATE into that weapon's UPGRADE. Whether a
-    consumable shares a family with a verb you always have is not
-    settled by any accepted source; this changes only on that decision."""
+def test_unarranged_the_campaign_s_own_bomb_bag_is_bombs(tmp_path):
+    """THE BOUNDARY O05-11 RECORDED, SETTLED BY THE OWNER (2026-09-23):
+    "sharing an Action primitive does not establish that two items are
+    the same family". Unarranged, the prototype campaign reaches its Bomb
+    Bag in the Hub shop after it already owns a lob. The Bomb Bag reads
+    as an explosive and that lob does not, so the bag is its own thing --
+    a consumable CREATE, where the old rule made it the lob's UPGRADE --
+    and every lob the campaign owned is exactly what it was. Then it is
+    the real thing, with nothing arranged: slotted, spent and reloaded."""
     engine, loc = run(_campaign(tmp_path, "consumables", arrange=False))
     assert loc == _BOMB_BAG
     [op] = engine.save.interpretations[-1].operations
-    assert op.op == "upgrade"
-    target = next(o for o in engine.save.derive().owned
-                  if o.component_id == op.target)
-    assert target.component.primitive.type == "arc_lob"
-    assert target.component.slot != "consumable"
+    assert op.op == "create"
+    before = M.derive_mechanics(engine.save.interpretations[:-1])
+    after = engine.save.derive()
+    lobs = [o for o in before.owned if o.kind == "action"
+            and o.component.primitive.type == "arc_lob"]
+    assert lobs, "the campaign owned no lob, so this proved nothing"
+    for lob in lobs:
+        kept = after.by_id(lob.component_id)
+        assert kept.mk == lob.mk and kept.component == lob.component
+    [bag] = [o for o in after.owned if o.component_id.endswith(f"l{loc}")]
+    assert bag.component.slot == "consumable" and bag.component.charges == 3
+    cid = bag.component_id
+
+    async def use():
+        await engine.handle_slot_action("consumable", cid)
+        generation = engine.save.consumable_generation
+        await engine.handle_authorize_consumable(cid, 1, generation)
+        await engine.handle_use_consumable(cid, 1, generation)
+    run(use())
+    assert engine.save.charges_left(cid) == 2
+    reloaded = store.load_save(engine._save_path)
+    assert reloaded is not None and reloaded.charges_left(cid) == 2

@@ -124,10 +124,15 @@ rule, before it is edited. Rows are appended as edits land:
 | `EchoProjectile.statuses` + `_apply_statuses` (new); `EchoRuntime._launch` | the schema's pairing of `apply_status_on_hit` with any damage primitive (P5-19) | a projectile carries its status modifiers to what it damages | `65f3ef4` |
 | `Manipulation.impulse_verb` (Godot, new), with `IMPULSE_PROFILES`, the two §14.4 ceilings and nine refusal names; `_within_ceilings`, `_in_sight` | Design 2 §14.2 (eligibility), §14.3 (PUSH/PULL: one impulse on commit, `clamp(force / mass_kg, 0, 30)`, the three profiles' numbers), §14.4 (30 m/s; 14 m/s vertical); Design 5 §15.2 (`lightened`) | a new static verb beside the replay harness's held-force `push`, which is untouched. Offered to nothing: no Echo Action, no generation, no qualification reads it | `7ca5945` |
 | `ManipulableBody.physics_permitted` (Godot, new; default true) | Design 2 §4.8 `PhysicalObject.physics_permitted : bool = true`; §14.2's progression rule | read only by `impulse_verb`, for bodies in the required-object group. Nothing sets it false yet | `7ca5945` |
-| `Manipulation.target_refusal` (new; `impulse_verb` now asks it), `in_sight` (was `_in_sight`), `ACTOR_RULE`, `PHYSICS_PROFILES` (was `IMPULSE_PROFILES`) | §14.2's table, read once for PUSH, PULL, HOLD and ALIGN; its actor rule ("Never HOLD, ATTACH, TETHER, ROTATE, ALIGN, DETACH, SETTLE") | PUSH/PULL answers unchanged (23 checks); an enemy is `actor_rule` for a verb the rule never admits, `actor_mass_unmodelled` for one it admits | O05-08.1 commit |
-| `Manipulation.settle`, `SETTLE_PROFILES`, `DRIVEN` (new) | §14.3 SETTLE and its profile; §14.2's volume line-of-sight rule | runtime only; offered to nothing | O05-08.1 commit |
-| `VerbHold`, `VerbAlign` (Godot, new files) | §14.3 HOLD and ALIGN; §14.4's carry distance; §31.2 for the one relation that exists | runtime only; offered to nothing | O05-08.1 commit |
-| `Constraints.GROUP` + `_ready`, `driven(body)`, `involves(id, body)`, `Link.driven_frame` (stamped by `wind` and `drive`) | §14.3 SETTLE ("does not affect constrained objects currently driven by machinery"); §14.3 HOLD's constraint release | additive queries; the solver's behaviour is unchanged (`godot-constraints` 67, `godot-actuator` 93) | O05-08.1 commit |
+| `Manipulation.target_refusal` (new; `impulse_verb` now asks it), `in_sight` (was `_in_sight`), `ACTOR_RULE`, `PHYSICS_PROFILES` (was `IMPULSE_PROFILES`) | §14.2's table, read once for PUSH, PULL, HOLD and ALIGN; its actor rule ("Never HOLD, ATTACH, TETHER, ROTATE, ALIGN, DETACH, SETTLE") | PUSH/PULL answers unchanged (23 checks); an enemy is `actor_rule` for a verb the rule never admits, `actor_mass_unmodelled` for one it admits | `394817b` |
+| `Manipulation.settle`, `SETTLE_PROFILES`, `DRIVEN` (new) | §14.3 SETTLE and its profile; §14.2's volume line-of-sight rule | runtime only; offered to nothing | `394817b` |
+| `VerbHold`, `VerbAlign` (Godot, new files) | §14.3 HOLD and ALIGN; §14.4's carry distance; §31.2 for the one relation that exists | runtime only; offered to nothing | `394817b` |
+| `Constraints.GROUP` + `_ready`, `driven(body)`, `involves(id, body)`, `Link.driven_frame` (stamped by `wind` and `drive`) | §14.3 SETTLE ("does not affect constrained objects currently driven by machinery"); §14.3 HOLD's constraint release | additive queries; the solver's behaviour is unchanged (`godot-constraints` 67, `godot-actuator` 93) | `394817b` |
+| `epsilon/requests.OwnedComponentSummary`: `origin`, `origin_game`, `slot` (new, defaulted) | owner direction 2026-09-23 ("Epsilon makes that interpretation using the new source and the existing collection"; "Preserve source provenance") | a request names each owned component's first source and its slot. Old callers stay valid (empty reads as related to nothing) | related-Echoes commit |
+| `campaign.owned_summaries` (new; the request uses it) | as above | the one builder of the summary | related-Echoes commit |
+| `epsilon/fallback`: `_READINGS`, `_reads`, `reading_of`, `_MEANINGFUL`, `_meaningful_delta` (new); `_fallback_echo_create`'s 23 keyword conditions read the table; `_as_sequel` and `as_disposition(reading=)` | owner direction 2026-09-23 ("sharing an Action primitive does not establish that two items are the same family"; "An upgrade must produce a meaningful, visible change"; "Preserve the existing item's useful function") | a sequel needs the same verb, the same reading of both sources and the same slot, and a change of at least 25%. The chain's outputs are unchanged, because the words moved and not the rules | related-Echoes commit |
+| `epsilon/mock.mock_reading` (new); `_mock_echo` passes it | as above | mock relates items by its own catalog reading | related-Echoes commit |
+| `epsilon/claude.ECHO_SYSTEM`: a "RELATED ITEMS" paragraph | as above | a model provider is told the rule and the new fields | related-Echoes commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -872,8 +877,11 @@ graph, not just the sensor, and each was sabotaged.
   **One thing is arranged, and the test says so:** the first Check's
   item NAME is set to "Bomb Bag". Its id, recipient and flags are kept,
   so allocation is untouched. The next point is why.
-- **THE BOUNDARY: in the mock's own campaigns the sequel rule takes the
-  bomb.** Unarranged, every Bomb Bag reaches a campaign that already
+- **THE BOUNDARY — SETTLED by the owner on 2026-09-23 (see "Owner
+  direction: related Echoes" below). What follows is the finding as it
+  stood; the pinned test is replaced by one that proves the natural
+  path.** In the mock's own campaigns the sequel rule took the bomb.
+  Unarranged, every Bomb Bag reaches a campaign that already
   owns a lob (prototype seeds default and Soak00–07; default scale).
   Those lobs come from items no keyword rule matches ("Boomerang",
   "Revelation Scroll", "Restoration Wine"), which fall through to the
@@ -898,6 +906,104 @@ graph, not just the sensor, and each was sabotaged.
   live consumable suites use `give_consumable.py`, a test setup, and a
   hitscan charge. The bomb's client path is the same `EchoRuntime`
   press, now with its status proven in `godot-verbs`.
+
+### Owner direction: related Echoes (2026-09-23) — applied; the O05-11 boundary settled
+
+- **The direction, verbatim:** "Similar or similar-sounding source items
+  are an opportunity for Epsilon to upgrade an existing item OR create a
+  new one. Similarity does not force a merge, and sharing an Action
+  primitive does not establish that two items are the same family. [...]
+  An upgrade must produce a meaningful, visible change. Preserve the
+  existing item's useful function; a substantial trade-off should
+  normally be a separate item/variant rather than an involuntary
+  replacement. Use supported mechanics and existing validation/budgets.
+  Preserve source provenance, original multiworld delivery, and
+  consumable expenditure. This settles the creative choice, not
+  permission to bypass accounting or fabricate unsupported behavior."
+- **What was wrong.** The deterministic providers keyed a "family" on
+  `action:<primitive>` (`_as_sequel`, S6). A Bomb Bag was therefore the
+  upgrade of any lob the player owned, and a Boomerang or a Revelation
+  Scroll the default happened to render as a lob counted. That is the
+  O05-11 boundary above.
+- **The request now names what each owned thing came from.**
+  `OwnedComponentSummary` gains `origin`, `origin_game` (its first
+  provenance row) and `slot`. It is built in one place,
+  `campaign.owned_summaries`, which the campaign and the new tests share.
+  A provider judging "the new source and the existing collection" can now
+  see the collection's sources, not only its verbs.
+- **The deterministic rule (`fallback._as_sequel`).** A sequel needs
+  three things:
+  1. **The same verb or stat.** Necessary, because the upgrade lands on
+     a field the owned component has, but no longer sufficient.
+  2. **The same reading of the two sources.** Each provider uses its own
+     reading:
+     - the fallback's `reading_of`, the keyword table `_READINGS`. It is
+       now the chain's ONLY word list, so what builds an item and what
+       relates two items cannot drift apart (a source-level test holds
+       this);
+     - mock's `mock_reading`, its catalog concept, else the fallback's.
+
+     An item nothing specific reads (the fallback's hashed default) is
+     related to nothing.
+  3. **The same slot.** A consumable does not upgrade a weapon, nor the
+     reverse, so each keeps its function.
+
+  Then the change must be meaningful: at least a quarter of the field's
+  current value, or the ladder's own step where that is larger, rounded
+  away from zero and inside the field's bounds. Otherwise the item is
+  created. `_MEANINGFUL = 0.25` is this provider's reading of
+  "meaningful", a tuning constant rather than a game rule.
+- **A model provider is told the same rule.** A "RELATED ITEMS" paragraph
+  in `claude.ECHO_SYSTEM` names the new fields.
+- **What it produces** (fallback, Ocarina of Time):
+  - Hookshot → Longshot → Clawshot: one grapple at Mk III (range +6.25,
+    pull +3.75).
+  - Bombs → Bomb Bag → Bombchu: one Bombs at Mk III (damage +8.5, then
+    radius +1.0). Each description reads "The same Bombs, heavier/wider".
+  - Ocarina (a default lob), then Bomb Bag: two items.
+  - Weapon Bombs, then a consumable Bomb Bag: two items, in either order.
+  - Mock: Hover, Iron and Pegasus Boots (all read `mock:footing`) are one
+    wall-kick at Mk III.
+- **O05-11.3 without the arrangement.** The unarranged prototype
+  campaign reaches its own Bomb Bag in the Hub shop, and it is now a
+  consumable CREATE. Every lob the campaign already owned is unchanged
+  (the component and its Mk). The bag is slotted, one charge is
+  authorised and spent, and the count survives a reload: 2 left. The
+  arranged test stays as the faster route.
+- **What is not changed.** Validation, budgets, the fold, the upgrade
+  vocabulary, provenance (every source still credited at its location),
+  delivery, and consumable accounting. An upgrade of a consumable leaves
+  a spent charge spent (tested). Stricter relatedness means more CREATEs
+  in a campaign; the existing soft and hard budgets govern them,
+  unchanged.
+- **A gap, named and not built: capacity.** The owner's example lists
+  "capacity" among what a Bomb Bag may improve. `charges` is not an
+  upgradable field (`UPGRADABLE_FIELDS`), so no provider can raise it.
+  Making it one would decide how a raised capacity meets a supply already
+  part-spent in the current Zone, which is consumable accounting. That is
+  outside "supported mechanics and existing validation", so it waits for
+  a decision. Until then a related bomb item improves damage and radius.
+- **Evidence.**
+  - `tests/test_related_echoes.py` (new: 11 tests, 14 cases) and the replaced
+    engine test
+    `test_unarranged_the_campaign_s_own_bomb_bag_is_bombs`.
+  - `test_dispositions`, `test_upgrade_headroom`, `test_fallback_variety`
+    unchanged and green; `make test-bridge` 1934 passed. The playtest
+    baseline's tripwires all pass: its generator still produces it, so
+    it is not retaken.
+  - **Sabotages, each restored:**
+
+    | # | Sabotage | Failing test |
+    |---|---|---|
+    | R1 | the verb alone makes a family | `test_a_shared_primitive_is_not_a_family` |
+    | R2 | a default reading counts as a kind | `test_two_items_nothing_reads_are_not_related` |
+    | R3 | no slot check | `…consumable_does_not_upgrade_a_weapon…` and the request test |
+    | R4 | no meaningful floor | all four meaningful chains |
+    | R5 | mock does not pass its reading | `test_mock_judges_by_its_own_reading` |
+
+    The engine test is held by both R1's rule and R3's rule, so each of
+    those sabotages alone leaves it green. Each rule has its own
+    isolating unit test.
 
 ### O05-08 — manipulation: what is a missing mapping and what is a decision (owner's question, answered)
 

@@ -86,13 +86,20 @@ relationships are the same, or a step declines and says so in
 
   Each of these is a policy, not code. The details are in
   `PROD_OV05.md`.
-- **A consumable in the candidate (O05-11).** The slot is offered to
-  the candidate only, and the whole path works (claim, fold, slot,
-  spend, reload). But in the mock campaigns every Bomb Bag meets a
-  thrown weapon you already own. ECHOES §11's rule, "a sequel when you
-  already own the item's verb", then makes it that weapon's upgrade.
-  Does a thing that runs out share a family with a verb you always
-  have? That is a design question for Dess and you, not code.
+- **A consumable in the candidate (O05-11): answered by your direction
+  of 2026-09-23, and applied.**
+  - Sharing a verb no longer makes two items one family. A sequel now
+    needs:
+    - the same reading of both SOURCES (by the provider's own reading);
+    - the same slot;
+    - a change of at least a quarter of the field.
+  - The request names each owned thing's source and slot, and a model
+    provider is told the rule.
+  - The campaign's own Bomb Bag is now bombs, unarranged: slotted,
+    spent, reloaded. Bombs followed by a Bomb Bag is one Bombs at Mk II.
+  - One gap stays yours: "capacity" is not an upgradable field today.
+    Raising it would decide how a new capacity meets a part-spent
+    supply, which is consumable accounting, so it is not built.
 - **Manipulation verbs reaching an Echo (O05-08).** The accepted design
   delivers them through the Amalgam's atom grammar, with costed atoms
   and a `physics_verb` discriminator. The running Echo model implements

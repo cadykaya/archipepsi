@@ -111,6 +111,33 @@ def _clamp_ap_string(text: str) -> str:
     return cleaned[:C.MAX_AP_STRING_LEN] or "?"
 
 
+def owned_summaries(mechanics) -> tuple[OwnedComponentSummary, ...]:
+    """The owned component graph as an Echo request carries it (S6), in
+    one place, so the campaign and the tests that judge a provider by it
+    cannot describe the same component two ways.
+
+    `origin`, `origin_game` and `slot` are the owner's direction of
+    2026-09-23 made readable: whether a new item upgrades an owned one or
+    becomes a new thing is Epsilon's reading of "the new source and the
+    existing collection", so the collection names what each thing came
+    from and how it is held -- not only its verb.
+    """
+    return tuple(
+        OwnedComponentSummary(
+            component_id=owned.component_id,
+            kind=owned.kind,
+            display_name=owned.component.display_name,
+            mk=owned.mk,
+            upgradable=upgradable_field_info(owned.component),
+            detail=_component_detail(owned.component),
+            modifiers=tuple(
+                m.type for m in getattr(owned.component, "modifiers", ())),
+            origin=_clamp_ap_string(owned.provenance[0].source_item_name),
+            origin_game=_clamp_ap_string(owned.provenance[0].source_game),
+            slot=str(getattr(owned.component, "slot", None) or ""))
+        for owned in mechanics.owned)
+
+
 def budget_headroom(mechanics) -> dict:
     """§16 in full: `{kind: [owned, soft, hard]}`.
 
@@ -1937,18 +1964,7 @@ class CampaignEngine:
                 signal_keys=self.ap.signal_keys,
                 coins_available=max(
                     0, self.ap.coins_received - save.coins_spent),
-                owned_components=tuple(
-                    OwnedComponentSummary(
-                        component_id=owned.component_id,
-                        kind=owned.kind,
-                        display_name=owned.component.display_name,
-                        mk=owned.mk,
-                        upgradable=upgradable_field_info(owned.component),
-                        detail=_component_detail(owned.component),
-                        modifiers=tuple(
-                            m.type for m in
-                            getattr(owned.component, "modifiers", ())))
-                    for owned in mechanics.owned),
+                owned_components=owned_summaries(mechanics),
                 owned_links=tuple(
                     OwnedLinkSummary(link=edge.link, source=edge.source,
                                      target=edge.target)

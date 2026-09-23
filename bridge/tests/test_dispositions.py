@@ -271,7 +271,10 @@ def _request(index: int, name: str,
             upgradable=upgradable_field_info(o.component),
             detail=detail(o.component),
             modifiers=tuple(m.type for m in
-                            getattr(o.component, "modifiers", ())))
+                            getattr(o.component, "modifiers", ())),
+            origin=o.provenance[0].source_item_name,
+            origin_game=o.provenance[0].source_game,
+            slot=str(getattr(o.component, "slot", None) or ""))
         for o in mechanics.owned)
     links = () if mechanics is None else tuple(
         OwnedLinkSummary(link=e.link, source=e.source, target=e.target)

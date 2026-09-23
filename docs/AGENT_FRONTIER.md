@@ -81,10 +81,12 @@ one writer.
   Production stays STAGED. Offered the slot, the fallback reads a Bomb
   Bag as three stun bombs. Claim, fold, slot, authorize, settle and
   reload are proven through the real engine with one arranged item name.
-  BOUNDARY: in the mock's own campaigns the sequel rule (family =
-  primitive) folds every Bomb Bag into an owned lob. Whether a
-  consumable shares a family with an always-available verb is a Dess or
-  owner decision. P5-19: projectiles now apply their on-hit status.
+  The BOUNDARY (the sequel rule folded every Bomb Bag into an owned lob)
+  is SETTLED by the owner's direction of 2026-09-23 and applied. A
+  sequel needs the same reading of both sources, the same slot and a
+  change of at least 25%, never the verb alone. The campaign's own Bomb
+  Bag is now bombs, unarranged. Capacity is not an upgradable field
+  (named gap). P5-19: projectiles now apply their on-hit status.
 - **O05-08: answered, and bounded.** The verb RUNTIME is a faithful,
   bounded integration within authority. Echo DELIVERY needs the
   Amalgam's composition grammar (atoms, costs, discriminators), which
