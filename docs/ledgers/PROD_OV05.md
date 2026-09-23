@@ -133,10 +133,13 @@ rule, before it is edited. Rows are appended as edits land:
 | `epsilon/fallback`: `_READINGS`, `_reads`, `reading_of`, `_MEANINGFUL`, `_meaningful_delta` (new); `_fallback_echo_create`'s 23 keyword conditions read the table; `_as_sequel` and `as_disposition(reading=)` | owner direction 2026-09-23 ("sharing an Action primitive does not establish that two items are the same family"; "An upgrade must produce a meaningful, visible change"; "Preserve the existing item's useful function") | a sequel needs the same verb, the same reading of both sources and the same slot, and a change of at least 25%. The chain's outputs are unchanged, because the words moved and not the rules | `b27bee5` |
 | `epsilon/mock.mock_reading` (new); `_mock_echo` passes it | as above | mock relates items by its own catalog reading | `b27bee5` |
 | `epsilon/claude.ECHO_SYSTEM`: a "RELATED ITEMS" paragraph | as above | a model provider is told the rule and the new fields | `b27bee5` |
-| `VerbPin`, `VerbTether` (+ `Pending`), `VerbRotate`, `VerbRelations` (Godot, new files) | §14.3 PIN, TETHER and ROTATE; §14.4 `max_relations`; §31.2 exclusivity | runtime only; offered to nothing | O05-08.2 commit |
-| `VerbHold` joins `VerbRelations` (its private second-HOLD rule is removed); `bodies()`/`active()` | §31.2, which covers HOLD, PIN and TETHER alike | HOLD's 23 checks unchanged | O05-08.2 commit |
-| `Manipulation.target_refusal(..., turns_on_a_hinge)` | §14.2: FIXED responds to "`ROTATE` about a constrained axis" | a FIXED body on a hinge skips FIXED and the mass limit; every other caller unchanged (default false) | O05-08.2 commit |
-| `Constraints.tether(...anchor_a, anchor_b)`, `untether`, `turn`, `hinge_of`, `hinge_axis`, `limits_of`, `breakable_at_of`; `drive(..., by_machine)`; `Link.runtime` | §14.8 (only TETHER is made at runtime, so only a tether is unmade); §14.3 ROTATE; SETTLE's machinery test | additive; `godot-constraints` 67 and `godot-actuator` 93 unchanged | O05-08.2 commit |
+| `VerbPin`, `VerbTether` (+ `Pending`), `VerbRotate`, `VerbRelations` (Godot, new files) | §14.3 PIN, TETHER and ROTATE; §14.4 `max_relations`; §31.2 exclusivity | runtime only; offered to nothing | `2b60770` |
+| `VerbHold` joins `VerbRelations` (its private second-HOLD rule is removed); `bodies()`/`active()` | §31.2, which covers HOLD, PIN and TETHER alike | HOLD's 23 checks unchanged | `2b60770` |
+| `Manipulation.target_refusal(..., turns_on_a_hinge)` | §14.2: FIXED responds to "`ROTATE` about a constrained axis" | a FIXED body on a hinge skips FIXED and the mass limit; every other caller unchanged (default false) | `2b60770` |
+| `Constraints.tether(...anchor_a, anchor_b)`, `untether`, `turn`, `hinge_of`, `hinge_axis`, `limits_of`, `breakable_at_of`; `drive(..., by_machine)`; `Link.runtime` | §14.8 (only TETHER is made at runtime, so only a tether is unmade); §14.3 ROTATE; SETTLE's machinery test | additive; `godot-constraints` 67 and `godot-actuator` 93 unchanged | `2b60770` |
+| `AttachPoint`, `VerbAttach` (Godot, new files) | §14.3 ATTACH/DETACH; §4.8 `AttachPoint` | runtime only; offered to nothing | O05-08.3 commit |
+| `ManipulableBody.material`, `attach_points`, `welds`, `welded_into` (new; empty by default); `interact`/`interact_prompt` first undo a PLAYER weld | §4.8 `material`, `attach_points`; O05-08.3 "Keep the base interaction for undoing player-created attachment" | no authored body has a material or a point, and nothing makes a weld outside the tests, so every existing `interact` is unchanged (`godot-carry`) | O05-08.3 commit |
+| `Constraints.sever(id)` | §14.3 DETACH "breaks a `ConstraintSpec` whose `breakable_at` is non-null" | breaks through the solver's own `_check_break`; refuses an unbreakable one | O05-08.3 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -1395,6 +1398,75 @@ graph, not just the sensor, and each was sabotaged.
 - **Not claimed:** delivery, qualification, played use. A pinned body's
   interaction with hand carry is undefined by the sources and not
   handled.
+
+### O05-08.3 — ATTACH and DETACH — runtime only
+
+- **§4.8's two fields, added and empty.** `ManipulableBody.material` is
+  one of METAL, STONE, WOOD, COMPOSITE or GLASS, or "" for a body nothing
+  has declared. `attach_points` holds `AttachPoint`s (`local_transform`,
+  `accepts_materials`, `occupied_by`). No room authors either, so ATTACH
+  has nothing to join outside its tests. A body of undeclared material
+  cannot be attached (`no_material`); no material is guessed.
+- **A weld is ONE body.** Item 14 asks for "two `GIRDER`s into one body
+  of `190 kg`, class `HEAVY`", so the weld is not a joint.
+  - The held part's own shapes and visuals move into the target's
+    assembly root, renamed so nothing collides with the root's own
+    `hull`.
+  - The root takes on the part's mass. The part waits out of the world:
+    frozen, no layers, hidden.
+  - The part's origin goes on the attach point.
+  - A held assembly attached to another is flattened onto the new root,
+    so the chain count and every part's mass stay exact.
+  - The HOLD that carried the part ends as `attached`.
+- **ATTACH's checks, in order:** held; not the same assembly; the point
+  exists; the point is within 4.0 m of the eye; the held body has a
+  declared material; the point accepts it; the point is unoccupied; the
+  chain after the weld is at most 4.
+- **DETACH gives back exactly that** (item 16). The part is put where it
+  is in the assembly now. Its own nodes return under their own names, its
+  flags and mass are restored, both bodies are at rest, and the point is
+  freed. Other parts stay where they are. DETACH at a constraint breaks
+  it through the solver's own break path only when its `breakable_at` is
+  non-null (`Constraints.sever`), and refuses an unbreakable one.
+- **The base kit's undo.** `interact` on an assembly first undoes its
+  newest PLAYER weld (prompt "DETACH"), so a player with no DETACH Echo
+  cannot softlock their own construction. An authored weld is never
+  undone that way. Until something makes a weld, `interact` is exactly
+  what it was.
+- **Not here: persistence.** §14.3's "Attachment is `PUZZLE_LOCAL` and
+  survives save, reload, and reset within its group" needs a save record.
+  Nothing delivers the verb, so it is named rather than built.
+- **Evidence: `make godot-verb-runtime`, 82 checks and 1 note.**
+  - 14: two 95 kg GIRDERs become one body of 190 kg, class heavy. A push
+    on the root carries the welded girder's own hull 0.24 m.
+  - 15: four make a chain of 4 (380 kg). A fifth is refused
+    `chain_full` and stays in the hand.
+  - 16: DETACH puts the girder back 0.0000 m from its world transform,
+    its own `hull` back under its own name, both bodies at rest, and the
+    root at 285 kg; the rest of the chain is untouched.
+  - `interact` undoes the player's newest weld and leaves an authored
+    one.
+  - Refusals: WOOD at a METAL point, an undeclared material, a point
+    past 4 m, an occupied point, nothing held.
+  - DETACH on constraints: breakable breaks, unbreakable is refused.
+- **Sabotages (7, each restored, each failing by name):**
+  - A1, the weld adds no mass: items 14, 15 and 16 read 95 kg.
+  - A2, no chain cap: item 15 reads a chain of 5, and the later checks
+    follow.
+  - A3, DETACH leaves the part where it was welded: 0.34 m off.
+  - A5, the undo takes authored welds too.
+  - A6, no material check: the refusal check. Its first version hit a
+    null in the test's own fixture; the fixture is now null-safe and the
+    sabotage fails by name.
+  - A7, the shapes stay on the part: "moves as one" reads 0.00 m.
+  - A8, sever breaks the unbreakable.
+
+  The sabotage runner for O05-08.2 and this read stdout only. A script
+  error there (stderr) would not have shown in its summary, though
+  `make` fails on one; the runner now merges both.
+- **Neighbours unchanged:** `godot-carry` 32 (the `interact` path),
+  `godot-constraints` 67, `godot-physics` 68, `godot-mass-class` 59,
+  `godot-unweighted` 70, `godot-transport` 106.
 
 ### O05-14 — existing visual work — reconciled; nothing it may bind
 

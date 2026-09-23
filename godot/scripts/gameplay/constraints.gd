@@ -234,6 +234,21 @@ func untether(id: String) -> bool:
 	return true
 
 
+## DETACH on a constraint (§14.3): "breaks a `ConstraintSpec` whose
+## `breakable_at` is non-null". Broken exactly as the solver breaks one --
+## `broken` set, both bodies keep their velocity, a required one rebuilt --
+## by the same path. False, and nothing broken, for an unbreakable one.
+func sever(id: String) -> bool:
+	if not _links.has(id):
+		return false
+	var link: Link = _links[id]
+	if is_nan(link.breakable_at) or link.broken:
+		return false
+	link.force = link.breakable_at
+	_check_break(link, 0.0)
+	return true
+
+
 func breakable_at_of(id: String) -> float:
 	return (_links[id] as Link).breakable_at if _links.has(id) else NAN
 

@@ -42,6 +42,18 @@ extends RigidBody3D
 ## is here so the verb runtime asks the question the contract asks.
 @export var physics_permitted := true
 
+## Design 2 §4.8's `material`: one of METAL, STONE, WOOD, COMPOSITE or
+## GLASS. "" for a body nothing has said the material of, which cannot be
+## attached by anything (`VerbAttach`, O05-08.3).
+@export var material := ""
+## §4.8's `attach_points` (`AttachPoint`). Empty for every body today.
+var attach_points: Array = []
+## As an assembly's root: the welds hanging from it, oldest first
+## (`VerbAttach`). Empty for a body nothing is welded to.
+var welds: Array = []
+## As a welded part: the root it is welded into, or null.
+var welded_into: ManipulableBody = null
+
 ## The player holding this, or null. Set only by `HandCarry`.
 var carried_by: Node = null
 ## The consumer this was installed in, or null. Set only by the consumer.
@@ -125,12 +137,20 @@ static func create(id: String, mass_kg: float, size: Vector3,
 	return body
 
 ## THE PLAYER'S `interact`, aimed at this body: pick it up if a hand may.
+##
+## First, the base kit's undo of a player's own weld (O05-08.3): a player
+## with no DETACH Echo must not be able to softlock their construction.
+## Only a weld a player made; an authored one stays.
 func interact(player: Node) -> void:
+	if VerbAttach.undo_latest(self):
+		return
 	var who := player as Player
 	if who != null and who.carry != null:
 		who.carry.try_pick_up(self)
 
 func interact_prompt() -> String:
+	if not VerbAttach.latest_player_weld(self).is_empty():
+		return "DETACH"
 	return HandCarry.prompt_for(self)
 
 func _ready() -> void:

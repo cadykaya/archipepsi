@@ -118,6 +118,14 @@ one writer.
     ROTATE's only on a hinge.
   - Acceptance items 11, 12, 13, 17, 22 and 23. `godot-verb-runtime` 73
     checks, 11 sabotages.
+- **O05-08.3: ATTACH and DETACH, runtime only.**
+  - A weld is ONE body: two GIRDERs make 190 kg, HEAVY. The chain is
+    capped at 4.
+  - DETACH gives both bodies back at their world transforms, at rest.
+  - `interact` undoes only a player's own weld.
+  - §4.8's `material` and `attach_points` exist and are empty by
+    default. Persistence of a weld is named, not built.
+  - Items 14, 15 and 16. `godot-verb-runtime` 82 checks, 7 sabotages.
 - **O05-14: reconciled, nothing to bind.** No delivered enemy or
   machinery models exist; the 3 projectile visuals stay `pending`.
 - **O05-10 in part: 10.1 audit, 10.3 reversal, 10.4 isolation.** Every

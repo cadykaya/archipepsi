@@ -1,13 +1,14 @@
 extends Node
-## O05-08.1/.2: EIGHT VERBS' RUNTIME, AND NOTHING ELSE -- PUSH, PULL,
-## HOLD, ALIGN, SETTLE, PIN, TETHER AND ROTATE -- and the relations ledger.
+## O05-08.1/.2/.3: TEN VERBS' RUNTIME, AND NOTHING ELSE -- PUSH, PULL,
+## HOLD, ALIGN, SETTLE, PIN, TETHER, ROTATE, ATTACH AND DETACH -- and the
+## relations ledger.
 ##
 ## `Manipulation.impulse_verb`, `VerbHold`, `VerbAlign`,
 ## `Manipulation.settle`, `VerbPin`, `VerbTether`, `VerbRotate` and
 ## `VerbRelations` against Design 2 §14.2 (eligibility), §14.3 (each
 ## verb's contract), §14.4 (the ceilings) and §31.2 (exclusivity), with
 ## the numbered acceptance items of Design 2's own list where they apply
-## (5, 7, 8, 9, 10, 11, 12, 13, 17, 20, 21, 22, 23, 28), on real bodies in
+## (5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 23, 28), on real bodies in
 ## a real physics world. The caster is a real `Player` wherever the verb
 ## watches one, so its eye, its body and its death are the real ones.
 ##
@@ -76,6 +77,7 @@ func _run() -> void:
 	await _tether_ties_two_ends()
 	await _rotate_turns_a_hinge_and_spins_a_body()
 	await _relations_are_counted_and_exclusive()
+	await _attach_welds_and_detach_gives_back()
 	_finish()
 
 
@@ -1428,4 +1430,221 @@ func _relations_are_counted_and_exclusive() -> void:
 	world.queue_free()
 	for crate in crates:
 		crate.queue_free()
+	await _settle(4)
+
+
+## A GIRDER as §10.1 has it: 95 kg, and "attaches at both ends" -- METAL,
+## with a point at each end that takes METAL. The points sit one girder's
+## length out, so a girder welded at one continues the span.
+func _girder(at: Vector3) -> ManipulableBody:
+	var girder := _crate(95.0, at, Vector3(2.0, 0.3, 0.3))
+	girder.material = "METAL"
+	var metal: Array[String] = ["METAL"]
+	girder.attach_points = [
+		AttachPoint.at(Transform3D(Basis(), Vector3(2.0, 0.0, 0.0)), metal),
+		AttachPoint.at(Transform3D(Basis(), Vector3(-2.0, 0.0, 0.0)), metal),
+	]
+	return girder
+
+
+## Hold `body` from where the player stands now, in reach of `point`.
+func _hold_near(player: Player, body: ManipulableBody, point: Vector3,
+		profile := "ab_physics_light") -> VerbHold:
+	player.global_position = Vector3(point.x, player.global_position.y,
+			point.z + 2.0)
+	await _settle(2)
+	return _held(player, body, profile)
+
+
+## §14.3 ATTACH and DETACH, items 14-16: "`ATTACH` joins two `GIRDER`s
+## into one body of `190 kg`, class `HEAVY`"; "A fifth `ATTACH` onto a
+## four-object chain is rejected"; "`DETACH` restores both bodies at their
+## world transforms with zero velocity".
+func _attach_welds_and_detach_gives_back() -> void:
+	print("  -- ATTACH / DETACH: one welded body, and both given back")
+	var stage := _stage(Vector3(1700.0, 0.0, 0.0))
+	var world: Node3D = stage["world"]
+	var player: Player = stage["player"]
+	await _settle(20)
+	var base := player.global_position
+	var girders: Array[ManipulableBody] = []
+	for i in 5:
+		girders.append(_girder(base + Vector3(-8.0 + 4.0 * i, 0.15, -6.0)))
+	await _settle(40)
+	var root := girders[0]
+	var socket := VerbAttach.world_transform_of(root) \
+			* (root.attach_points[0] as AttachPoint).local_transform
+	var hold := await _hold_near(player, girders[1], socket.origin)
+	var eye := player.camera.global_position
+	_released_why.clear()
+	var out := VerbAttach.attach(hold, root, 0, eye)
+	await _settle(2)
+	_check(bool(out["applied"]) and is_equal_approx(root.mass, 190.0)
+			and root.mass_class() == MassClass.HEAVY
+			and VerbAttach.count(root) == 2
+			and girders[1].welded_into == root and not girders[1].visible
+			and girders[1].collision_layer == 0 and not _holding(hold)
+			and _released_why == [VerbAttach.ATTACHED],
+			"item 14: two 95 kg GIRDERs are one body of %.0f kg, class %s; "
+			% [root.mass, root.mass_class()] + "the held one left the hand "
+			+ "for the weld (%s)" % [_released_why])
+	# ONE BODY: a push on the root carries the welded girder's shape.
+	var part_hull: Node3D = null
+	for child: Node in root.get_children():
+		if child is CollisionShape3D and str(child.name).ends_with("hull") \
+				and child.name != "hull":
+			part_hull = child
+	var from := part_hull.global_position if part_hull != null \
+			else Vector3.ZERO
+	root.receive_impulse(Vector3(0.0, 0.0, 190.0 * 2.0))
+	await _settle(10)
+	var carried := part_hull.global_position.distance_to(from) \
+			if part_hull != null else 0.0
+	_check(part_hull != null and carried > 0.1,
+			"and it moves as one: a push on the root carries the welded "
+			+ "girder's own hull %.2f m" % carried)
+	# THE CHAIN: two more make four, and a fifth is refused.
+	for spec: Array in [[2, root, 1], [3, girders[1], 0]]:
+		var host: ManipulableBody = spec[1]
+		var at := VerbAttach.world_transform_of(host) \
+				* (host.attach_points[spec[2]] as AttachPoint).local_transform
+		var held := await _hold_near(player, girders[spec[0]], at.origin)
+		VerbAttach.attach(held, host, spec[2], player.camera.global_position)
+		await _settle(2)
+	var fifth_at := VerbAttach.world_transform_of(girders[2]) \
+			* (girders[2].attach_points[1] as AttachPoint).local_transform
+	# The fifth waits 20 m down the floor: the strong profile's 28 m.
+	var fifth := await _hold_near(player, girders[4], fifth_at.origin,
+			"ab_physics_strong")
+	var refused := VerbAttach.attach(fifth, girders[2], 1,
+			player.camera.global_position)
+	_check(VerbAttach.count(root) == 4
+			and refused["refused"] == VerbAttach.CHAIN_FULL
+			and _holding(fifth) and is_equal_approx(root.mass, 380.0),
+			"item 15: four GIRDERs are one chain of %d (%.0f kg); a fifth is "
+			% [VerbAttach.count(root), root.mass] + "refused (%s) and stays "
+			% refused["refused"] + "in the hand")
+	fifth.release(VerbHold.INPUT)
+	await _settle(30)
+	# DETACH: the first girder welded, given back where it is now.
+	var where := VerbAttach.world_transform_of(girders[1])
+	var detached := VerbAttach.detach(girders[1])
+	var hull := girders[1].get_node_or_null("hull") as CollisionShape3D
+	_check(bool(detached["applied"])
+			and girders[1].global_transform.origin.distance_to(where.origin)
+				< 0.001
+			and hull != null and girders[1].visible
+			and girders[1].collision_layer != 0 and not girders[1].freeze
+			and girders[1].linear_velocity == Vector3.ZERO
+			and root.linear_velocity == Vector3.ZERO
+			and is_equal_approx(root.mass, 285.0)
+			and girders[1].welded_into == null,
+			"item 16: DETACH gives the girder back at its world transform "
+			+ "(%.4f m off), its own hull back under its own name, both "
+			% girders[1].global_transform.origin.distance_to(where.origin)
+			+ "bodies at rest, and the root %.0f kg" % root.mass)
+	await _settle(4)
+	# Its other part, girder 3, rode on girder 1: after the DETACH it is
+	# still on the root, where it was.
+	_check(girders[3].welded_into == root and VerbAttach.count(root) == 3,
+			"and the rest of the chain is untouched (%d on the root)"
+			% VerbAttach.count(root))
+	# THE BASE KIT'S UNDO: `interact` on the assembly takes back the
+	# newest weld a player made; an authored weld stays.
+	var prompt := root.interact_prompt()
+	root.interact(player)
+	await _settle(2)
+	_check(prompt == "DETACH" and girders[3].welded_into == null
+			and VerbAttach.count(root) == 2,
+			"a player with no DETACH Echo undoes their own newest weld with "
+			+ "`interact` (prompt %s)" % prompt)
+	var authored_at := VerbAttach.world_transform_of(root) \
+			* (root.attach_points[0] as AttachPoint).local_transform
+	var authored := await _hold_near(player, girders[3],
+			authored_at.origin)
+	VerbAttach.attach(authored, root, 0, player.camera.global_position,
+			false)
+	await _settle(2)
+	root.interact(player)
+	root.interact(player)
+	await _settle(2)
+	_check(girders[3].welded_into == root and girders[2].welded_into == null,
+			"an authored weld is not undone by `interact`: the player's own "
+			+ "goes, the authored one stays")
+	# THE REFUSALS, beside a free girder, with the player next to its point.
+	var host := girders[4]
+	var free_at := VerbAttach.world_transform_of(host) \
+			* (host.attach_points[0] as AttachPoint).local_transform
+	player.global_position = Vector3(free_at.origin.x, base.y,
+			free_at.origin.z + 2.0)
+	await _settle(4)
+	var crate := _crate(20.0, Vector3(free_at.origin.x + 1.5, base.y + 0.4,
+			free_at.origin.z + 1.0))
+	crate.material = "WOOD"
+	var bare := _crate(20.0, Vector3(free_at.origin.x - 1.5, base.y + 0.4,
+			free_at.origin.z + 1.0))
+	await _settle(10)
+	var wood: VerbHold = VerbHold.begin(player.camera, crate,
+			"ab_physics_light", player).get("hold")
+	var wrong := VerbAttach.attach(wood, host, 0,
+			player.camera.global_position)
+	if wood != null:
+		wood.release(VerbHold.INPUT)
+	var unknown: VerbHold = VerbHold.begin(player.camera, bare,
+			"ab_physics_light", player).get("hold")
+	var no_material := VerbAttach.attach(unknown, host, 0,
+			player.camera.global_position)
+	var far := VerbAttach.attach(unknown, host, 0,
+			player.camera.global_position + Vector3(0.0, 0.0, 6.0))
+	# OCCUPIED: a METAL body is welded at the point, then another tried.
+	bare.material = "METAL"
+	VerbAttach.attach(unknown, host, 0, player.camera.global_position)
+	await _settle(2)
+	crate.material = "METAL"
+	var second_out := VerbHold.begin(player.camera, crate,
+			"ab_physics_light", player)
+	var second: VerbHold = second_out.get("hold")
+	var full := VerbAttach.attach(second, host, 0,
+			player.camera.global_position) if second != null \
+			else {"refused": "no hold: %s" % second_out["refused"]}
+	# Released, and asked at once -- before the hold frees itself.
+	if second != null:
+		second.release(VerbHold.INPUT)
+	var not_held := VerbAttach.attach(second, host, 1,
+			player.camera.global_position)
+	_check(wrong["refused"] == VerbAttach.WRONG_MATERIAL
+			and no_material["refused"] == VerbAttach.NO_MATERIAL
+			and far["refused"] == VerbAttach.POINT_OUT_OF_REACH
+			and full["refused"] == VerbAttach.OCCUPIED
+			and not_held["refused"] == VerbAttach.NOT_HELD,
+			"refused: WOOD at a METAL point (%s), a body of no declared "
+			% wrong["refused"] + "material (%s), a point past 4 m (%s), an "
+			% [no_material["refused"], far["refused"]] + "occupied point "
+			+ "(%s), nothing held (%s)" % [full["refused"],
+				not_held["refused"]])
+	# DETACH on a constraint: only a breakable one breaks.
+	var links := Constraints.new()
+	links.name = "Constraints"
+	world.add_child(links)
+	var hung := _crate(20.0, base + Vector3(6.0, 3.0, -6.0))
+	links.declare([
+		{"constraint_id": "frail", "kind": "ROPE", "b": hung,
+			"anchor_a": base + Vector3(6.0, 6.0, -6.0), "length": 3.0,
+			"breakable_at": 900.0},
+		{"constraint_id": "sound", "kind": "ROPE", "b": crate,
+			"anchor_a": base + Vector3(0.0, 4.0, -3.0), "length": 4.0},
+	])
+	await _settle(2)
+	var severed := VerbAttach.sever(links, "frail")
+	var kept := VerbAttach.sever(links, "sound")
+	_check(bool(severed["applied"]) and links.is_broken("frail")
+			and kept["refused"] == VerbAttach.UNBREAKABLE
+			and not links.is_broken("sound"),
+			"DETACH on a constraint breaks the breakable one and refuses the "
+			+ "unbreakable (%s)" % kept["refused"])
+	world.queue_free()
+	for body: Node in [crate, bare, hung]:
+		body.queue_free()
+	for girder in girders:
+		girder.queue_free()
 	await _settle(4)
