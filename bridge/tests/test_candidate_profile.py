@@ -173,6 +173,46 @@ def test_on_the_engine_applies_it_before_acceptance(tmp_path):
     assert record["refused_by_validate_zone"] == []
 
 
+def test_the_whole_profile_is_certified_in_the_engine(tmp_path):
+    """Every step, the minor included, through the real generation path:
+    the Zone that reaches the save is the profile's, and it passed
+    `validate_zone` with the provider's offer, allocation and budget."""
+    from archipepsi_bridge import minor_hosting
+    engine = _generated(tmp_path, candidate.STEPS)
+    rec = engine.save.zone_by_id(engine.save.active_zone_id)
+    record = json.loads((tmp_path / "candidate" / f"{rec.zone_id}.json")
+                        .read_text(encoding="utf-8"))
+    assert record["certified"] is True, record["refused_by_validate_zone"]
+    emitted = {s["step"] for s in record["steps"] if s["emitted"]}
+    assert "minors" in emitted, record["steps"]
+    assert minor_hosting.hosted(rec.zone), "the saved Zone hosts the minor"
+    assert set(rec.allocated_location_ids) <= set(
+        rec.zone.reward_location_ids)
+
+
+def test_certification_is_held_to_the_budget_the_provider_was(
+        tmp_path, monkeypatch):
+    """P5-12. Without `zone_budget` the re-certification judged a
+    default-scale Zone against the prototype's 200 points, and only the
+    "already failing" comparison hid it. The call site is what is pinned
+    here: every certification of the profile's Zone gets the request's
+    own budget."""
+    from archipepsi_bridge import campaign as campaign_module
+    seen = []
+    real = campaign_module.validate_zone
+
+    def recording(zone, **kw):
+        seen.append(kw.get("zone_budget"))
+        return real(zone, **kw)
+
+    monkeypatch.setattr(campaign_module, "validate_zone", recording)
+    engine = _generated(tmp_path, candidate.STEPS)
+    budget = engine.save.scale.config().zone_budget_for(len(
+        engine.save.zone_by_id(engine.save.active_zone_id)
+        .allocated_location_ids))
+    assert seen and all(b == budget for b in seen), (seen, budget)
+
+
 def test_a_profile_result_validation_refuses_is_discarded_whole(
         tmp_path, monkeypatch):
     """O05-13.3: 'rejected hosts/choices must not silently drop allocated

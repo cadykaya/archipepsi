@@ -42,7 +42,8 @@ try:
         ShopState,
         ShopStockItem, ZoneRecord,
     )
-    from .physics import GRAPH_PACKAGE_PREFIX
+    from .physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
+    from .minors import contract_for as _minor_contract
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
@@ -56,7 +57,8 @@ except ImportError:  # pragma: no cover
         ShopState,
         ShopStockItem, ZoneRecord,
     )
-    from physics import GRAPH_PACKAGE_PREFIX
+    from physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
+    from minors import contract_for as _minor_contract
     from zone import Zone
 
 
@@ -624,6 +626,44 @@ def _accepted_graph_latches(rec: ZoneRecord, room_id: str) -> set[str]:
     return {n.node_id for n in graph.nodes if n.kind == "LATCH"}
 
 
+def _accepted_minor_latches(rec: ZoneRecord, room_id: str) -> set[str]:
+    """The latches a hosted minor may record, or why it may record none.
+
+    O05-06. The graph path's four facts, with the minor's contract where
+    the graph's declaration was:
+
+    1. **The Zone was accepted**, and the declaration read is `rec.zone`.
+    2. **Its layout was committed** for this Zone.
+    3. **The committed layout placed that room** -- a latch in a room
+       the engine never built is a machine nobody built.
+    4. **The accepted Zone's chamber in that room carries a shell with a
+       minor contract**, and only that contract's latches are
+       recordable. The engine does not get to say which latches exist.
+    """
+    zone = rec.zone
+    manifest = rec.manifest or {}
+    if zone is None:
+        raise ValueError(f"Zone '{rec.zone_id}' holds no accepted Zone")
+    if rec.layout_state != "ACCEPTED" or not manifest:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' has no committed layout, so no minor in "
+            "it has been built and nothing can have latched")
+    if manifest.get("zone_id") != rec.zone_id:
+        raise ValueError(
+            f"Zone '{rec.zone_id}' carries a manifest for "
+            f"'{manifest.get('zone_id')}'")
+    if room_id not in (manifest.get("rooms") or {}):
+        raise ValueError(
+            f"Zone '{rec.zone_id}''s committed layout placed no room "
+            f"'{room_id}'")
+    chamber = next((c for c in zone.chambers if c.id == room_id), None)
+    contract = _minor_contract(getattr(chamber, "shell_id", None))
+    if contract is None:
+        raise ValueError(
+            f"room '{room_id}' in Zone '{rec.zone_id}' hosts no minor")
+    return set(contract.latches)
+
+
 def _accepted_rail_latches(rec: ZoneRecord, network_id: str
                            ) -> set[str] | None:
     """The span latches a declared railway may record; None when the
@@ -701,6 +741,22 @@ def record_latch(save: CampaignSave, zone_id: str, package_id: str,
                        else " and declares none"))
             return
         packages = _accepted_packages(rec)
+        # A HOSTED MINOR'S LATCH (O05-06), under its own reserved
+        # namespace. A railway declared under the same name would make
+        # one report mean two things, so that is refused, not guessed.
+        if package_id.startswith(MINOR_PACKAGE_PREFIX):
+            if _accepted_rail_latches(rec, package_id) is not None:
+                raise ValueError(
+                    f"'{package_id}' in Zone '{zone_id}' names both a "
+                    "hosted minor and a rail network; neither is guessed")
+            room_id = package_id[len(MINOR_PACKAGE_PREFIX):]
+            latches = _accepted_minor_latches(rec, room_id)
+            if latch_id not in latches:
+                raise ValueError(
+                    f"the minor in room '{room_id}' of Zone '{zone_id}' "
+                    f"declares no latch '{latch_id}'; it declares "
+                    f"{sorted(latches)}")
+            return
         # A DECLARED RAILWAY'S SPAN (O05-05.1, P5-9). One name, one
         # meaning: `latched` is a set of `package/latch` strings and a
         # junction restores from it by that string, so a name that is

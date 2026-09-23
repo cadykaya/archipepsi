@@ -210,7 +210,10 @@ class BridgeServer:
             await engine.backend.disconnect()
             engine.backend = None
         if engine.backend is None:
-            engine.backend = MockAPBackend(engine, config=self.mock_config)
+            # KEPT BESIDE THE SAVE (P5-14), so a restarted bridge resumes
+            # the same room: confirmed Checks stay confirmed.
+            engine.backend = MockAPBackend.for_campaign(
+                engine, config=self.mock_config)
         await engine.backend.connect("", "Skyiah", "")
 
     async def _connect_ap(self, server: str, slot_name: str,

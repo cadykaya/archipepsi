@@ -28,16 +28,30 @@ extends "res://tests/reversible_driver.gd"
 ##   restore  both processes new. The lever still lowered and its doorway
 ##            open, the cell seated and its doorway open, P14's shutter
 ##            still shut, before anyone acts; nothing announced.
+##   minor    (O05-06.4) EX50-033, the minor the profile added behind a
+##            dead end, played by hand: the drive pulled, the crate on the
+##            plate and the crossing shut, the applicator SHOT, the player
+##            up on the crate and through, the bolt pulled (ACCEPTED as
+##            `minor_<room>/bolt`) and the room's Check claimed.
+##   minor_restore  both processes new. The bolt restored before anyone
+##            acts, the return stair standing, LIGHTENED gone and the
+##            crate parked (package-local), the Check still claimed; and
+##            the crate driven back onto the plate does NOT shut the
+##            crossing, because the restored bolt holds it.
 ##
 ## **HARNESS STEPS, declared:** the same as the suites this reuses -- a
 ## shielded Bulwark removed through the damage path from behind when the
-## base-kit flank does not land (P5-7, printed as a NOTE).
+## base-kit flank does not land (P5-7, printed as a NOTE). And in the two
+## minor phases only, the player is PLACED at the arrival of the dead end
+## the minor stands behind: the walk there crosses P14's plate and two
+## locked doors, which their own suites play. From that arrival on,
+## everything is the player's own input.
 
 const PHASE_FLAG := "--candidate-live="
 const SAVE_DIR_FLAG := "--candidate-save-dir="
 const ZONE_ID := "zone_001"
 const CANDIDATE_FIXTURE := "res://tests/fixtures/candidate_zone.json"
-const PROFILE := ["zone_state", "transport", "latched_route"]
+const PROFILE := ["zone_state", "transport", "latched_route", "minors"]
 
 var main: Node
 var _errors: Array = []
@@ -67,6 +81,10 @@ func _run() -> void:
 				await _play()
 			"restore":
 				await _restore()
+			"minor":
+				await _minor()
+			"minor_restore":
+				await _minor_restore()
 			_:
 				_check(false, "no --candidate-live phase was named")
 	_finish()
@@ -249,11 +267,11 @@ func _seed() -> void:
 			if typeof(record) == TYPE_DICTIONARY else []
 	_check(typeof(record) == TYPE_DICTIONARY
 			and (record as Dictionary).get("profile") == PROFILE
-			and steps.size() == 3
+			and steps.size() == PROFILE.size()
 			and steps.all(func(s: Variant) -> bool:
 				return bool((s as Dictionary).get("emitted", false))),
-			"the bridge recorded all three steps EMITTED in %s"
-			% record_path)
+			"the bridge recorded all %d steps EMITTED in %s"
+			% [PROFILE.size(), record_path])
 	print("seeded: %s generated with the whole candidate profile" % ZONE_ID)
 
 
@@ -405,3 +423,285 @@ func _restore() -> void:
 			and _intents("object_consumed").is_empty()
 			and _intents("object_transported").is_empty(),
 			"and nothing was announced: the restore reported nothing back")
+
+
+# ---------------------------------------------------------------------------
+# O05-06.4 -- EX50-033, the minor the profile added, played by hand
+# ---------------------------------------------------------------------------
+
+## The one minor this Zone hosts, as the controller found it in its room.
+func _the_minor(controller: ZoneController) -> Dictionary:
+	var ids: Array = controller.minors.map(
+			func(m: Dictionary) -> String: return str(m["room_id"]))
+	_check(ids.size() == 1, "the Zone hosts one minor, found in its own "
+			+ "room by the controller: %s" % [ids])
+	return controller.minors[0] if ids.size() == 1 else {}
+
+
+## The dead end a minor was built behind: the far room of its way in.
+func _parent_of(room_id: String) -> String:
+	var arrive := str(_chamber(room_id).get("arrive_edge", ""))
+	for raw: Variant in _zone_data.get("edges", []) as Array:
+		var edge: Dictionary = raw
+		if str(edge.get("edge_id", "")) == arrive:
+			return str(edge["room_a"]) if str(edge["room_b"]) == room_id \
+					else str(edge["room_b"])
+	return ""
+
+
+## The Check pedestal standing in a room, found by where it stands.
+func _reward_in(controller: ZoneController, room_id: String) -> RewardObject:
+	var box: AABB = controller.room_bounds.get(room_id, AABB())
+	for node: Node in controller.find_children("*", "", true, false):
+		var reward := node as RewardObject
+		if reward != null and box.has_point(reward.global_position):
+			return reward
+	return null
+
+
+## HARNESS STEP, declared at the top: the player stands at a room's
+## arrival. Everything after it is the player's own input.
+func _place_at(controller: ZoneController, room_id: String) -> void:
+	var arrival: Vector3 = RoomGraphs.place_of(controller.room_places,
+			room_id).get("arrival", Vector3.INF)
+	controller.player.global_position = arrival + Vector3(0.0, 0.2, 0.0)
+	controller.player.velocity = Vector3.ZERO
+	await _settle(20)
+	_note("HARNESS STEP: placed at %s's arrival %v" % [room_id, arrival])
+
+
+## A lever worked by hand: walked up to, looked at, [E].
+func _operate(controller: ZoneController, lever: CallLever) -> bool:
+	var top := lever.global_position + Vector3(0.0, CallLever.BASE.y, 0.0)
+	var before := lever.pulls
+	if not await _approach(controller, lever, 1.3, top):
+		return false
+	await _press("interact")
+	await _settle(4)
+	return lever.pulls > before
+
+
+## The Static Pulse, aimed and fired at `target`; how often it triggered.
+func _shoot_at(controller: ZoneController, target: ActivityElement) -> int:
+	var hits: Array[int] = [0]
+	var count := func(_w: ActivityElement) -> void: hits[0] += 1
+	target.triggered.connect(count)
+	var player := controller.player
+	for _attempt in 3:
+		for _i in 20:
+			_look_at(player, target.global_position)
+			await get_tree().physics_frame
+		await _press("fire_pulse")
+		await _settle(30)
+		if hits[0] > 0:
+			break
+	target.triggered.disconnect(count)
+	return hits[0]
+
+
+## Straight at `goal`, hopping when the body stalls against a lip -- the
+## walker `godot-unweighted` climbs this same crate with.
+func _hop_walk(player: Player, goal: Vector3, within: float,
+		frames := 480) -> bool:
+	var arrived := false
+	var still := 0
+	var last := player.global_position
+	player.camera.rotation.x = 0.0
+	Input.action_press("move_forward", 1.0)
+	for _i in frames:
+		var here := player.global_position
+		var flat := Vector2(goal.x - here.x, goal.z - here.z)
+		if flat.length() < within:
+			arrived = true
+			break
+		player.rotation.y = atan2(-flat.x, -flat.y)
+		if (here - last).length() < 0.012:
+			still += 1
+			if still == 14 and player.is_on_floor():
+				Input.action_press("jump", 1.0)
+				await get_tree().physics_frame
+				Input.action_release("jump")
+				still = 0
+		else:
+			still = 0
+		last = here
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	await get_tree().physics_frame
+	return arrived
+
+
+## Into the minor from the dead end it stands behind: placed at the
+## parent's arrival (declared), the parent cleared with the base kit,
+## and then walked in through the parent's own new doorway.
+func _into_the_minor(controller: ZoneController, rid: String) -> bool:
+	var parent := _parent_of(rid)
+	_check(parent != "", "the minor %s stands behind %s" % [rid, parent])
+	if parent == "":
+		return false
+	await _place_at(controller, parent)
+	await _cleared(controller, parent)
+	var into := await _walk_into(controller, rid)
+	_check(bool(into["inside"]), "walked from %s into the minor %s through "
+			% [parent, rid] + "the doorway the profile added (%.1f m)"
+			% float(into["walked"]))
+	return bool(into["inside"])
+
+
+func _minor() -> void:
+	if not await _campaign():
+		return
+	BridgeClient.sent_intents.clear()
+	var controller := await _through_the_portal()
+	if controller == null:
+		return
+	var player := controller.player
+	var minor := _the_minor(controller)
+	if minor.is_empty():
+		return
+	var rid := str(minor["room_id"])
+	var room: UnweightedSwitchRoom = \
+			(minor["hosted"] as UnweightedSwitchHosted).room
+	_check(str(_chamber(rid).get("shell_id", "")) == \
+			UnweightedSwitchHosted.SHELL_ID,
+			"%s is built from the minor's own shell" % rid)
+	_check(not room.bolted and not room.crate_is_placed()
+			and room.return_stair_steps() == 0 and room.goal_plate == null,
+			"as built: bolt free, crate parked, no return stair, and no "
+			+ "stand-in goal -- the goal is the Zone's Check")
+	var reward := _reward_in(controller, rid)
+	var floor_y := room.global_position.y
+	_check(reward != null and reward.global_position.y
+			> floor_y + UnweightedSwitchRoom.SILL_Y - 0.3,
+			"its Check stands on the gallery, %.2f m above the floor"
+			% ((reward.global_position.y - floor_y) if reward != null
+				else -1.0))
+	if reward == null or not await _into_the_minor(controller, rid):
+		return
+
+	# ---- the drive, by hand: the step placed, the crossing shut ---------
+	var drove := await _operate(controller, room.drive)
+	var placed := await _wait_for(func() -> bool:
+		return room.crate_is_placed(), 900)
+	var shut := await _wait_for(func() -> bool:
+		return room.shutter.is_shut(), 400)
+	_check(drove and placed and shut,
+			"the SERVICE DRIVE pulled by hand; the crate is on the HEAVY "
+			+ "plate and the crossing has SHUT")
+	# SHUT IS A PLACE, NOT A NUMBER (P5-15). The state read shut while the
+	# panel stood near the world origin; this asks where the panel is.
+	var crossing := room.to_global(room.shutter.shut_at)
+	_check(room.shutter.global_position.distance_to(crossing) < 0.05,
+			"the shut panel stands IN the crossing (%.2f m off it)"
+			% room.shutter.global_position.distance_to(crossing))
+
+	# ---- the step is placed, and the route it was for is closed ---------
+	await _hop_walk(player, room.to_global(Vector3(0.0, 0.0,
+			UnweightedSwitchRoom.RECESS_Z)), 1.4)
+	await _settle(24)
+	_check(player.is_on_floor() and absf(player.global_position.y - floor_y
+			- UnweightedSwitchRoom.CRATE.y) < 0.25,
+			"STANDING on the crate top, feet %.2f m above the floor"
+			% (player.global_position.y - floor_y))
+	await _hop_walk(player, room.to_global(Vector3(0.0, 0.0,
+			UnweightedSwitchRoom.NORTH_Z + 1.6)), 1.6, 150)
+	_check(room.to_local(player.global_position).z
+			< UnweightedSwitchRoom.NORTH_Z,
+			"...and walking at the doorway from the crate gets nowhere: "
+			+ "%.2f m short of the crossing" % (UnweightedSwitchRoom.NORTH_Z
+				- room.to_local(player.global_position).z))
+
+	# ---- the applicator, SHOT from the crate: the class moves -----------
+	var hits := await _shoot_at(controller, room.applicator)
+	_check(hits > 0 and room.crate.statuses != null
+			and room.crate.statuses.has("lightened"),
+			"the applicator was shot with the Static Pulse (%d trigger(s)) "
+			% hits + "and the crate carries LIGHTENED")
+	var opened := await _wait_for(func() -> bool:
+		return room.shutter.is_open(), 400)
+	_check(opened and room.crate_is_placed(),
+			"the crossing OPENED with the crate still on the plate")
+
+	# ---- through, then the bolt ---------------------------------------
+	await _hop_walk(player, room.to_global(Vector3(0.0, 0.0,
+			UnweightedSwitchRoom.NORTH_Z + 1.6)), 1.6)
+	_check(room.to_local(player.global_position).z
+			> UnweightedSwitchRoom.NORTH_Z
+			and player.global_position.y - floor_y
+				> UnweightedSwitchRoom.SILL_Y - 0.3,
+			"through the doorway onto the gallery")
+	var bolted := await _operate(controller, room.bolt)
+	var ref := "%s/%s" % [MinorRooms.package_of(rid), MinorRooms.BOLT]
+	var recorded := await _await_live("the bridge to record the bolt",
+			func() -> bool: return _served().get("latched", []).has(ref),
+			10.0)
+	_check(bolted and room.bolted and recorded,
+			"the HOLD-OPEN BOLT pulled and ACCEPTED: '%s' is in the save"
+			% ref)
+
+	# ---- the Check, claimed once -----------------------------------------
+	var seen := await _approach(controller, reward, 1.2)
+	_check(seen and reward.interact_prompt().begins_with("[E] CLAIM"),
+			"at the Check: \"%s\"" % reward.interact_prompt())
+	await _press("interact")
+	var claimed := await _await_live("the Check to be confirmed",
+			func() -> bool: return BridgeClient.is_checked(
+					reward.location_id), 15.0)
+	_check(claimed, "the minor's Check %d is CONFIRMED" % reward.location_id)
+	await _settle(30)
+	_check(_intents("claim_check").size() == 1,
+			"claimed exactly once (%d claim intent(s))"
+			% _intents("claim_check").size())
+	await _leave()
+	print("played: EX50-033 in %s -- bolt %s, Check %d claimed"
+			% [rid, ref, reward.location_id])
+
+
+func _minor_restore() -> void:
+	if not await _campaign():
+		return
+	_check(str(BridgeClient.hub().get("resume_zone_id", "")) == ZONE_ID,
+			"RESTART: the new bridge loaded the save; the Hub offers '%s'"
+			% str(BridgeClient.hub().get("resume_zone_id", "")))
+	BridgeClient.sent_intents.clear()
+	var controller := await _through_the_portal()
+	if controller == null:
+		return
+	var minor := _the_minor(controller)
+	if minor.is_empty():
+		return
+	var rid := str(minor["room_id"])
+	var room: UnweightedSwitchRoom = \
+			(minor["hosted"] as UnweightedSwitchHosted).room
+	_check(room.bolted and room.shutter.is_open()
+			and room.return_stair_steps() > 0,
+			"RESTORED before anyone acts: the bolt holds, the crossing is "
+			+ "open and the return stair stands (%d steps)"
+			% room.return_stair_steps())
+	_check(not room.crate_is_placed() and not (room.crate.statuses != null
+			and room.crate.statuses.has("lightened")),
+			"the crate is parked and LIGHTENED is gone: package-local and "
+			+ "ephemeral, never saved")
+	var raised := room.to_global(room.shutter.shut_at
+			+ Vector3(0.0, room.shutter.travel, 0.0))
+	_check(room.shutter.global_position.distance_to(raised) < 0.05,
+			"and the panel is physically raised clear of the crossing "
+			+ "(%.2f m off)" % room.shutter.global_position.distance_to(raised))
+	var reward := _reward_in(controller, rid)
+	_check(reward != null and BridgeClient.is_checked(reward.location_id)
+			and reward.interact_prompt() == "",
+			"the Check stays claimed: nothing to claim twice")
+	if not await _into_the_minor(controller, rid):
+		return
+	var drove := await _operate(controller, room.drive)
+	var placed := await _wait_for(func() -> bool:
+		return room.crate_is_placed(), 900)
+	await _settle(60)
+	_check(drove and placed and room.shutter.is_open(),
+			"the crate driven back onto the HEAVY plate, and the crossing "
+			+ "STAYS OPEN: the restored bolt holds it")
+	_check(_intents("latch_fired").is_empty()
+			and _intents("claim_check").is_empty(),
+			"and nothing was announced: no latch and no claim sent back")
+	print("played: the restored bolt holds %s's crossing" % rid)
+

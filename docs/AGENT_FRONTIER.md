@@ -1,11 +1,11 @@
 # AGENT FRONTIER
 
-## PROD LANE — Overnight 05 in progress: carry, delivery, reversible lever, candidate launcher — 2026-09-23
+## PROD LANE — Overnight 05 in progress: carry, delivery, reversible lever, candidate launcher, the first minor in a Zone — 2026-09-23
 
 **Assignment:** the owner's Overnight 05 work order,
 `docs/ledgers/ov05/01_EXECUTION_PLAN.md` (verbatim copy, checksums
 verified). Execution log, shared-seam table for Dess, and findings P5-1
-to P5-10: `docs/ledgers/PROD_OV05.md`. Branch
+to P5-14: `docs/ledgers/PROD_OV05.md`. Branch
 `claude/archipepsi-0-4-blindside`. The start is protected as
 `review/ov05-start-330c555`. **No heartbeat, watcher, subscription or
 scheduled job is armed.** Dess and Arty stay paused, and this lane is the
@@ -35,6 +35,17 @@ one writer.
   - Bounded sample: 12 cases (`docs/ledgers/ov05_evidence/candidate_sample.json`).
     Every case was certified and kept its Checks; transport declined
     once, by name.
+- **O05-06, the minors: EX50-033 integrated and played; EX50-011 and
+  EX50-021 not yet.**
+  - The candidate `minors` step ADDS Unweighted Switch behind a dead-end
+    arena (P5-13) and moves that arena's Check onto the minor's gallery.
+    Emitted and certified in 12 of 12 sample Zones.
+  - The bolt persists as `minor_<room>/bolt`. `godot-candidate-live` now
+    has five phases: seed 39, play 20, restore 5, minor 16,
+    minor_restore 10.
+  - Also found and fixed: P5-12 (re-certification ignored the Zone
+    budget) and P5-14 (a restarted mock campaign forgot its confirmed
+    Checks).
 - **O05-15, the launcher: built.**
   - `Diagnostic Campaign - Candidate (Windows).bat`, or
     `python -m archipepsi_bridge.diagnostic --candidate`.
@@ -44,12 +55,13 @@ one writer.
 
 **Next, in the plan's order:**
 
-1. **O05-06, the three minors.** The chosen route is a minor as a
-   code-built room shell: a registry entry that names no chamber type,
-   so it is never offered to a provider. The scenario's own builder is
-   extracted and reused, the Check sits at the minor's goal, its latch
-   persists through the bridge, and a candidate step selects the host
-   and declines by name. First target: EX50-033 Unweighted Switch.
+1. **O05-06, the other two minors.** The contract, the composer, the
+   latch path and the engine hook are shared (`schemas/minors.py`,
+   `minor_hosting.py`, `MinorRooms`).
+   - EX50-021 Counterfire Arcade: extract its room, and make its gunner
+     the chamber's declared enemy, per EX50-021 §9.
+   - EX50-011 Passing Platforms: needs its carriers' poses saved
+     (EX50-011 §9, overlapping O05-10.2).
 2. O05-07 onward.
 3. The O05-17 frozen run and ZIP.
 

@@ -14,6 +14,7 @@ relationships are the same, or a step declines and says so in
 | c004 (the corner past the platform path) | a glowing 40 kg **power cell** | Pick it up with `E`. It is MEDIUM, so you walk at 0.85 speed. While you hold it you cannot fire the Static Pulse or use the mobility slot | `godot-carry` 32; `godot-transport` 106/106 |
 | c005 (the arena after it) | a socket | `E` while aiming at it installs the cell. Being in the room with the cell does nothing. The doorway into c006 opens and both lamps light. The install is recorded as the delivery; a message saying the same thing is refused | `godot-transport`; the live suite repeats every refusal against the real bridge |
 | c009 | P14's plate (the last batch) | Standing on it latches the shutter across `e:c009:c010` open, permanently | P14's own suites; built and shut in `godot-candidate-live` |
+| c024, through c015's side doorway (c005 → locked door → c014 → locked door → c015) | **Unweighted Switch (EX50-033)**, the minor room itself, with c015's Check moved onto its gallery | The sill is out of reach. The SERVICE DRIVE puts the crate in the recess as a step, and that shuts the crossing, because the recess floor is a HEAVY plate. Shoot the applicator: the crate goes LIGHTENED (lighter by class, never by kilograms), the plate lets go, and the crossing opens. Climb, cross, pull the HOLD-OPEN BOLT, claim the Check. After a restart the bolt still holds the crossing, even with the crate back on the plate | `godot-candidate-live` phases `minor` 16 and `minor_restore` 10; `godot-unweighted` 61 (the development room) |
 
 ## Things to try, and what should happen
 
@@ -30,6 +31,10 @@ relationships are the same, or a step declines and says so in
   open before you reach it, and nothing is announced again.
 - **Leave the lever lowered, then quit and restart.** The doorway is
   open at load, and you do not have to touch the lever.
+- **In the minor: claim the Check, then quit and restart.** The Check is
+  still claimed. The crate is back in parking and LIGHTENED is gone,
+  because both are deliberately forgotten. The bolt is not forgotten:
+  drive the crate back onto the plate and the crossing stays open.
 
 ## What is proved, and how (evidence classes kept apart)
 
@@ -40,6 +45,8 @@ relationships are the same, or a step declines and says so in
   damage path from behind when the base-kit flank does not land (P5-7).
   A second, wrong crate is placed to test refusal. The destroyed case
   frees the body. The LIGHTENED applicator is placed in the home room.
+  In the two minor phases, the player is placed at c015's arrival
+  instead of walking there past P14's plate and two locked doors.
 - **Authoritative state.** Python holds the room, the pose, the
   consumption and the lever's value. Every forged intent is refused by
   name, both in bridge tests and live.
@@ -61,8 +68,11 @@ relationships are the same, or a step declines and says so in
 
   Each of these is a policy, not code. The details are in
   `PROD_OV05.md`.
-- **The three minors (O05-06).** Each needs a space no composed room
-  offers without shrinking it. They remain standalone launchers.
+- **Two of the three minors (O05-06).** Unweighted Switch is now in the
+  candidate Zone. Passing Platforms needs its carriers' poses saved
+  (EX50-011 §9). Counterfire Arcade needs its gunner to be the Zone's
+  own enemy (EX50-021 §9). Both are still standalone launchers; see
+  `PROD_OV05.md`.
 
 ## Where to look
 

@@ -80,6 +80,16 @@ rule, before it is edited. Rows are appended as edits land:
 | `latched_route.compose_latched_route` (Dess's P14 composer) | P5-1's "one gate per doorway", extended to rooms: one relationship's control per room; P5-2/P5-8's walkable, one-floor rooms | skips a plate room already holding a Zone-state setter, a carried object's home or its socket (P5-11); stands plates only in arenas and treasure rooms, on the floor of the doorway they open. **P14 alone composes exactly as before** (c002; tested) | this checkpoint |
 | `candidate.STEPS` order | O05-13 | `zone_state, transport, latched_route` (was `zone_state, latched_route, transport`): P14, the step with the widest choice of rooms, now goes last (P5-11) | this checkpoint |
 | `CampaignEngine._candidate` re-certification | O05-13.3 "rejected hosts/choices must not silently drop allocated Checks"; acceptance does not re-run `validate_zone` | the profile's Zone is re-run through `validate_zone` with the provider's own offer and allocation, and through the whole Zone schema. A result that INTRODUCES an error is discarded whole and recorded (`certified`, `refused_by_validate_zone`) | this checkpoint |
+| `CampaignEngine` certify call: `zone_budget` | `epsilon/base.py`: the provider is accepted "against `request.campaign.zone_budget`"; "accepting against the default instead held a 1000-point Zone to a 200-point Zone's limits" | the re-certification passes the same budget (P5-12). Before, the prototype's 200 points applied and the "already failing" comparison hid it | O05-06 commit |
+| `schemas/minors.py` (new) | O05-06.1 "select each minor by its actual space, entrances, mechanisms, reward and recovery requirements"; EX50-033 §3/§5 (the bolt is the persistent fact, the crate package-local, LIGHTENED ephemeral) | the occurrence contract: shell, catalogue id, host chamber type, the way in, the sealed openings, the latches it may record (`bolt`), completion and recovery in words. Space and doorways stay the registry entry's | O05-06 commit |
+| `schemas/physics.py` `MINOR_PACKAGE_PREFIX`, `RESERVED_PACKAGE_PREFIXES`, `refuse_reserved_package_id` | the `graph_` reservation's own reason: a physics latch must not share an identity with another kind | `minor_` reserved beside `graph_`; the existing message is unchanged for `graph_` | O05-06 commit |
+| `transitions.record_latch` + `_accepted_minor_latches` (new) | the graph path's four facts (accepted Zone, committed layout, placed room, declared latch) | a fourth, separately evidenced path: `minor_<room>/<latch>` only for a room the ACCEPTED Zone builds from a contracted minor shell, only that contract's latches, and never a name a rail network also has | O05-06 commit |
+| `shells.is_offerable` | `AUTHORED_CONTENT.md`: the offer is what a provider may choose | an entry tagged `minor` is never offered; only the candidate `minors` step places one | `83044c3` |
+| `godot/content/registry/minor_rooms.json` (new pack) | S12 registry contract; no `review` field = not art | `minor_unweighted_switch`: the scenario's own room (`UnweightedSwitchRoom`) hosted by `UnweightedSwitchHosted`, a doorway in A's wall and the way on cut at the sill in G | `83044c3` |
+| `minor_hosting.py` (new), `candidate.STEPS` += `minors`, `candidate.strip` (+ `unhost`) | O05-06.1/.4/.5; P5-13 (no counted content removed); "an incompatible host declines by name" | the minor is ADDED behind a dead-end arena and takes that arena's Check; the parent keeps its fight and objective. Runs last. `strip` hands the Check back so re-hosting still works | O05-06 commit |
+| `CampaignEngine._certify_offer` | `validate_zone` refuses a shell the offer lacks; the provider's offer never has a minor | when the profile includes `minors`, the certification offer is the provider's plus each minor's own registry rule -- and nothing looser | O05-06 commit |
+| `mock_ap.MockServerState.bound/store`, `MockAPBackend.for_campaign`, `server._connect_mock` | `MockServerState`'s own docstring: "truth that survives quit/reload/reconnect"; a real Archipelago room keeps confirmed Checks | the mock room is kept beside the campaign's save and resumed only with it (P5-14). Test and harness code that shares an unbound state is unchanged | O05-06 commit |
+| `ZoneController.minors`, `MinorRooms` (Godot, new) | §5.4a (the decision persists; the machine is rebuilt from it) | a hosted minor is FOUND in its room; its bolt is restored from `latches_accepted()` before anyone sees it and reported as `minor_<room>/bolt` when pulled; its lines go to the HUD | O05-06 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -300,6 +310,83 @@ curve through room arrivals; a declared control height/capability and
 the overhead gantry; the S3 destination; a rail model in
 `topology.reachability`.
 
+### O05-06 — the existing minors in game context — EX50-033 integrated and played; EX50-011 and EX50-021 not yet
+
+- **O05-06.1, the occurrence contract.** `schemas/minors.py` states what
+  the registry cannot: the host chamber type, the one way in, the sealed
+  openings, the latches the room records, and completion and recovery in
+  words. Space and doorways stay the registry entry's own
+  (`minor_rooms.json`). A minor is never offered to a provider
+  (`shells.is_offerable`); only the candidate `minors` step places one.
+- **Extraction, not duplication (O05-06.1).** `UnweightedSwitchRoom` is
+  the scenario's room, moved out whole. Two owners, one implementation:
+  - `--unweighted` (development, still labelled so): 61 checks OK;
+  - `UnweightedSwitchHosted`, the registry shell: a doorway in A's wall,
+    G walled in with the way on cut at the sill, and the scenario's
+    stand-in goal plate removed, because the goal is the Zone's Check.
+  - `godot-room-contract`: the minor shell PASSES, and both doorways are
+    crossed by a real body (3.10 and 3.11 m past, 0.08 m of dip).
+- **O05-06.4, selection.** The `minors` step (`minor_hosting.py`) runs
+  last in the candidate profile. It ADDS the minor as a new room behind a
+  dead-end arena, off the parent's side doorway, and moves that arena's
+  one Check onto the minor's gallery (P5-13).
+  - A parent is: an arena; not the first room; holding no key and no
+    other relationship's control; with exactly one Check; entered by an
+    ungated doorway; with a free side socket.
+  - Otherwise the step declines by name, listing each room's reason.
+  - The Zone is schema-validated, reachability-proved and re-certified
+    (`validate_zone` with the minor's own shell rule added to the offer,
+    and the Zone's real budget, P5-12). `strip` hands the Check back so
+    re-hosting still works.
+  - Frozen sample: emitted in 12 of 12, every case certified, every
+    allocated Check kept.
+- **O05-06.4, persistence.** The bolt is `minor_<room>/bolt`, a reserved
+  namespace, accepted only for a room the ACCEPTED Zone builds from a
+  contracted shell (`test_minor_hosting.py`, 23 tests). `ZoneController`
+  finds the hosted room, restores the bolt from the latch record before
+  anyone sees it, reports it when it is pulled, and sends the room's own
+  lines to the HUD.
+- **O05-06.5, reward and return.** The Check stands at the shell's
+  objective on the gallery and is claimed once through the ordinary
+  claim path. The way back is the room's own: the return gap, then the
+  return stair the bolt adds. The parent keeps its return plug.
+- **Played (`make godot-candidate-live`, now five phases, all OK):**
+  seed 39, play 20, restore 5, minor 16 and minor_restore 10 checks.
+  - **seed:** the served Zone matches `candidate_zone.json` field for
+    field, minor room `c024` included. All four steps are recorded
+    EMITTED and certified.
+  - **minor:** the controller finds the minor in its own room. It is
+    built from its shell and stands as built: bolt free, crate parked, no
+    stair, no stand-in goal. Its Check stands on the gallery, 1.90 m up.
+    HARNESS STEP, declared: the player is placed at c015's arrival
+    (reaching it crosses P14's plate and two locked doors, which their
+    own suites play). From there the player, by hand:
+    - clears c015 with the base kit;
+    - walks through the doorway the profile added (14.9 m);
+    - pulls the drive: the crate lands on the HEAVY plate and the crossing
+      SHUTS;
+    - shoots the applicator with the Static Pulse: LIGHTENED is on the
+      crate, and the crossing OPENS with the crate still on the plate;
+    - stands on the crate top (0.99 m) and goes through onto the gallery;
+    - pulls the bolt: ACCEPTED, `minor_c024/bolt` is in the save;
+    - claims Check 89100055: CONFIRMED, with exactly one claim intent.
+  - **minor_restore:** both processes are new, and nothing is done before
+    these checks:
+    - the bolt holds, the crossing is open, and the 8-step return stair
+      stands;
+    - the crate is parked and LIGHTENED is gone (package-local and
+      ephemeral);
+    - the Check stays claimed (this needed P5-14).
+    Then the crate is driven back onto the HEAVY plate by hand and the
+    crossing STAYS OPEN, because the restored bolt holds it. No latch and
+    no claim is sent back.
+- **Not yet:** EX50-011 Passing Platforms and EX50-021 Counterfire
+  Arcade. The contract, composer, latch path and engine hook are shared;
+  each still needs its room extracted and hosted. For EX50-021 the
+  gunner must be the Zone's declared enemy, not a room-owned copy
+  (EX50-021 §9: "Enemy position and health follow the source encounter
+  persistence rather than a new puzzle-owned copy").
+
 ### O05-13 — the candidate composer profile — built; the whole profile played live
 
 - **Candidate configuration, not fixture laundering (O05-13.1).**
@@ -488,3 +575,59 @@ the overhead gantry; the S3 destination; a rail model in
 
   On the played Zone the plate is now in c009 and the shutter is across
   `e:c009:c010`. P14 composed alone is unchanged (c002).
+- **P5-12 — the profile's re-certification judged a 1000-point Zone
+  against a 200-point budget.** O05-13.3's `certify` called
+  `validate_zone` without `zone_budget`, so the prototype's 200 points
+  applied: every default-scale Zone read as "31 enemies, limit is 14".
+  The "refuse only what the profile introduced" comparison hid it,
+  because the error was already present on the graphed Zone. It surfaced
+  when the first version of the minor step removed two enemies: the count
+  in the message changed, the string no longer matched, and all 12 sample
+  cases were discarded. `epsilon/base.py` names this exact mistake. The
+  call now passes `request.campaign.zone_budget`, and
+  `test_certification_is_held_to_the_budget_the_provider_was` pins the
+  call site: with the argument removed, it fails.
+- **P5-13 — substituting a minor for a room empties the Zone below its
+  content floor.** The first minor step turned a dead-end arena INTO
+  EX50-033. With the budget restored (P5-12), all 12 sample Zones then
+  refused it. The fallback composes to within a few points of the floor
+  (the played Zone holds 903 against a 900 minimum), and
+  `content_value.room_value` has no row for a minor. So the replaced
+  arena's enemies and activity left the count, and even the cheapest host
+  (38 points) took the Zone out of its band. Valuing a minor is a row in
+  Dess's table (CAMPAIGN_SCALE.md 5) and is not invented here. The step
+  now ADDS the minor as a new room behind a dead-end arena and moves that
+  arena's Check onto the minor's gallery. "An AP Check is not content",
+  so nothing counted is removed; the parent keeps its fight and its
+  objective. Emitted in 12 of 12 sample Zones, all certified. **Question
+  for Dess:** should a hosted minor carry a content value of its own? It
+  currently counts only through the table's existing objective and space
+  rows (4 points on the played Zone).
+- **P5-14 — a restarted mock campaign forgot every confirmed Check.**
+  `MockServerState` says it is "truth that survives quit/reload/
+  reconnect". It survived reconnects only, because it lived in the
+  bridge's memory. The save deliberately keeps no copy of Archipelago's
+  truth. So in a mock campaign (which is what the diagnostic and
+  candidate launchers play), quitting and relaunching turned every
+  confirmed Check back into unchecked: its pedestal became claimable, and
+  claiming it delivered its item a second time. `godot-candidate-live`'s
+  `minor_restore` phase found this by asserting the minor's Check was
+  still claimed after a restart. The room is now kept beside the
+  campaign's own save (`<save stem>.mock_room`, not `.json`, so
+  the save stays the only `.json` in its folder) and resumed only when that
+  save exists, so a new campaign never inherits an old room. An unbound
+  `MockServerState`, which tests share in one process, behaves exactly as
+  before. Covered by `test_mock_room_persistence.py`, 5 tests; with
+  `store()` disabled, 4 of them fail.
+- **P5-15 — a hosted room's shutter stood near the world origin.**
+  `ServiceShutter` placed its panel and its doorway interlock at
+  `global_position = shut_at`. That was right for every owner standing at
+  the world origin (the Zone's state gates and P14's graphs) and wrong
+  for a room that carries its own shutter and is placed elsewhere.
+  Hosted in the Zone, EX50-033's panel stood near the origin while its
+  state read shut. The first `minor` run passed anyway, because it read
+  `is_shut()`, which is the panel's offset and not where the panel is.
+  The shutter now works in its parent's frame; for owners at the origin
+  that is the same frame. The minor phase now checks the panel is IN the
+  crossing when shut, has the player stand on the crate and fail to walk
+  through, and after the restart checks the panel is physically raised.

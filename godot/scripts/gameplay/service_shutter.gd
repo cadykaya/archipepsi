@@ -108,7 +108,7 @@ func _adopt() -> void:
 	if _doorway == null or _doorway.is_inside_tree():
 		return
 	add_sibling(_doorway)
-	_doorway.global_position = shut_at
+	_doorway.position = shut_at
 	# **TURNED WITH THE PANEL.** The volume is `panel.x` wide and
 	# `panel.z + 1.4` deep, so it only covers the opening when it faces
 	# the way the panel does. Every shutter used to be built unrotated,
@@ -237,8 +237,15 @@ func advance(delta: float) -> void:
 		closed.emit()
 
 
+## IN THE PARENT'S FRAME, like the doorway volume beside it (P5-15).
+## This set `global_position`, so `shut_at` was a WORLD point: right for
+## every owner standing at the world origin -- the Zone's gates and
+## signal graphs -- and wrong for a room that carries its own shutter
+## and is placed somewhere else. EX50-033 hosted in a Zone put its panel
+## and its interlock near the world origin, nowhere near its crossing,
+## while its state read shut.
 func _place() -> void:
-	global_position = shut_at + Vector3(0.0, offset, 0.0)
+	position = shut_at + Vector3(0.0, offset, 0.0)
 
 
 ## §21.2's protected set is "the player or any `required = true`

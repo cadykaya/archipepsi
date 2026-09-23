@@ -195,6 +195,8 @@ var rail_refusals: Array[String] = []
 ## player out of it over.
 var signal_graphs: Array[SignalGraph] = []
 var signal_graph_refusals: Array[String] = []
+## O05-06: `[{room_id, hosted}]`, the minors this Zone's rooms are.
+var minors: Array = []
 ## Each room's committed frame: `{position, yaw, arrival}` in world
 ## space, off the same layout `room_bounds` comes from.
 var room_places := {}
@@ -576,6 +578,23 @@ func setup(zone_dict: Dictionary) -> void:
 	for why: String in graphs.get("refused", []) as Array:
 		signal_graph_refusals.append(why)
 		push_warning("signal graph refused: %s" % why)
+	# THE HOSTED MINORS (O05-06). A minor is a whole room the builder has
+	# already instantiated from its shell, so it is found rather than
+	# built. §5.4a again: the bolt is the decision that persists, and it
+	# comes back from the latch record BEFORE the player can see the
+	# room -- `restore_bolt` announces nothing, so nothing is reported
+	# back that the bridge just sent. A bolt pulled from here on is.
+	minors.clear()
+	for raw_minor: Variant in MinorRooms.hosted_in(build):
+		var minor: Dictionary = raw_minor
+		var hosted: UnweightedSwitchHosted = minor["hosted"]
+		var package := MinorRooms.package_of(str(minor["room_id"]))
+		if latches_accepted().has("%s/%s" % [package, MinorRooms.BOLT]):
+			hosted.room.restore_bolt()
+		hosted.room.bolt_engaged.connect(
+				report_latch.bind(package, MinorRooms.BOLT))
+		hosted.room.said.connect(_on_minor_said)
+		minors.append(minor)
 	door_positions = (build.get("doors", {}) as Dictionary).duplicate()
 	exit_departs_from = str(build.get("exit_departs_from", ""))
 	for raw: Variant in build.get("plugs", []):
@@ -918,6 +937,13 @@ func report_latch(package_id: String, latch_id: String) -> void:
 	BridgeClient.send_intent({"type": "latch_fired",
 			"zone_id": zone_id, "package_id": package_id,
 			"latch_id": latch_id})
+
+## What a minor's own machinery says -- "LIGHTENED -- crate reads MEDIUM",
+## "BOLT ENGAGED" -- on the HUD the player has, since a hosted minor has
+## no readout of its own.
+func _on_minor_said(text: String) -> void:
+	if hud != null:
+		hud.toast(text, Color(0.7, 1.0, 0.8), 3.0)
 
 ## An object the player is carrying has entered a different room.
 ##

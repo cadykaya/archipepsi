@@ -8,7 +8,9 @@ extends Node3D
 ## development scenario never had: a way IN through A's wall, and a way
 ## ON out of G at the gallery's height. Nothing about the puzzle changes:
 ## the same 16 by 14 m chamber, the same 1.9 m sill, the same crate,
-## plate, NOT, shutter, applicator, bolt and return stair.
+## plate, NOT, shutter, applicator, bolt and return stair. The one thing
+## taken out is the scenario's stand-in goal plate: here the goal is the
+## Zone's own Check, standing at the shell's objective on the gallery.
 ##
 ## **THE SHELL'S FRAME.** Registry convention: the entry socket at the
 ## origin, the room in +z. The scenario's room stands with A's wall at
@@ -67,6 +69,13 @@ class HostedRoom extends UnweightedSwitchRoom:
 	func build() -> void:
 		super.build()
 		_enclose_g()
+		# THE GOAL IS THE ZONE'S CHECK (O05-06.5). The scenario's goal
+		# plate stood in for a Check it did not have. Hosted, the room's
+		# Check stands at its objective on this gallery, and a second
+		# "goal" beside it would be a completion that awards nothing.
+		remove_child(goal_plate)
+		goal_plate.free()
+		goal_plate = null
 
 
 	## A's wall in three pieces round a doorway on the room's centre line,

@@ -34,6 +34,12 @@ says why. A declined step leaves the Zone exactly as it was.
    in c002, the engine refused the plate for want of floor, and with
    P14 ahead of the transport step the cell's only walkable run was
    taken instead.
+4. `minors`: an existing minor added whole behind a dead end
+   (`minor_hosting.compose_minor`, O05-06). LAST, because it builds on
+   a room and a doorway of its own: it declines a room any earlier step
+   put a control in, and a doorway any earlier step gated, so running
+   it after them is what lets it see both. It never fits its minor into
+   a smaller room; it declines by name.
 
 A caller may name a subset (`--candidate=transport`), and the order is
 kept either way.
@@ -45,7 +51,8 @@ from dataclasses import dataclass, field
 from .schemas.zone import Zone
 
 #: Every step the profile knows, in the order it runs them.
-STEPS: tuple[str, ...] = ("zone_state", "transport", "latched_route")
+STEPS: tuple[str, ...] = ("zone_state", "transport", "latched_route",
+                          "minors")
 
 
 @dataclass(frozen=True)
@@ -92,6 +99,10 @@ def apply(zone: Zone, steps: tuple[str, ...]) -> Applied:
             from .latched_route import compose_latched_route
             out = compose_latched_route(zone)
             emitted, note, zone = out.emitted, out.note, out.zone
+        elif step == "minors":
+            from .minor_hosting import compose_minor
+            out = compose_minor(zone)
+            emitted, note, zone = out.emitted, out.note, out.zone
         else:
             from .transport_route import compose_transport
             out = compose_transport(zone)
@@ -107,7 +118,13 @@ def strip(zone: Zone) -> Zone:
     bound to that graph's rooms and edges. So the profile is re-applied
     to the new graph from a clean Zone rather than trusted to survive a
     graph it was not composed on.
+
+    A minor comes out too (`minor_hosting.unhost`): the room it added is
+    dropped and its Check handed back to the dead end it was built
+    behind, which is exactly where the provider put it.
     """
+    from .minor_hosting import unhost
+    zone = unhost(zone)
     return zone.model_copy(update={
         "zone_state": (), "transported_objects": (), "object_consumers": (),
         "room_graphs": (),

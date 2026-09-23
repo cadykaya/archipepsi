@@ -14,7 +14,11 @@ one of our locations, so Signal Keys and Coins flow in at a believable rate.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import os
+from dataclasses import asdict
+from pathlib import Path
 
 from .ap_backend import APData, NormalizedItem, ScoutInfo
 from .schemas import constants as C
@@ -165,7 +169,19 @@ _FINDERS = [2, 3, 4, 5, 6]     # who "finds" our queued items, round-robin
 class MockServerState:
     """The mock 'server side': truth that survives quit/reload/reconnect.
     Share one instance across backend instances to simulate a persistent
-    room."""
+    room.
+
+    **AND A QUIT, when it is bound to a file (P5-14).** In memory only,
+    this survived reconnects and NOT a bridge restart, so a restarted mock
+    campaign was a fresh room: every Check it had confirmed read as
+    unchecked, its pedestal as claimable, and claiming it again delivered
+    its item a second time. A real Archipelago room keeps both, and the
+    save deliberately does not duplicate them (Archipelago owns that
+    truth). `bound` ties the state to the campaign's own save, so it
+    resumes exactly when the campaign does.
+    """
+
+    VERSION = 1
 
     def __init__(self, config: C.CampaignConfig = C.PROTOTYPE_CONFIG):
         self.config = config
@@ -174,6 +190,59 @@ class MockServerState:
         self.delivery_queue: list[int] = _build_delivery_queue(config)
         self.delivered = 0
         self.goal_reports = 0
+        #: Where this room is kept; None keeps it in memory, as before.
+        self.path: Path | None = None
+
+    @classmethod
+    def bound(cls, path: Path, config: C.CampaignConfig,
+              resume: bool) -> "MockServerState":
+        """The room kept at `path`: resumed when `resume` and the file is
+        this scale's, otherwise a fresh room that will be kept there.
+
+        `resume` is "the campaign's save exists". A fresh campaign is a
+        fresh room even when a file from an older one is lying there, so
+        a new campaign can never inherit another's confirmed Checks.
+        """
+        state = cls(config)
+        state.path = path
+        if resume and path.is_file():
+            try:
+                raw = json.loads(path.read_text(encoding="utf-8"))
+                if raw.get("version") == cls.VERSION and \
+                        raw.get("location_count") == config.location_count:
+                    state.checked = {int(x) for x in raw["checked"]}
+                    state.received = [NormalizedItem(**i)
+                                      for i in raw["received"]]
+                    state.delivery_queue = [int(x)
+                                            for x in raw["delivery_queue"]]
+                    state.delivered = int(raw["delivered"])
+                    state.goal_reports = int(raw["goal_reports"])
+                else:
+                    log.warning("mock room at %s is for another scale; "
+                                "starting a fresh one", path)
+            except (OSError, ValueError, KeyError, TypeError) as exc:
+                log.warning("mock room at %s unreadable (%s); starting a "
+                            "fresh one", path, exc)
+        return state
+
+    def store(self) -> None:
+        """Write the room, whole and atomically, when it is bound."""
+        if self.path is None:
+            return
+        tmp = self.path.with_suffix(self.path.suffix + ".tmp")
+        try:
+            tmp.write_text(json.dumps({
+                "version": self.VERSION,
+                "location_count": self.config.location_count,
+                "checked": sorted(self.checked),
+                "received": [asdict(i) for i in self.received],
+                "delivery_queue": list(self.delivery_queue),
+                "delivered": self.delivered,
+                "goal_reports": self.goal_reports,
+            }), encoding="utf-8")
+            os.replace(tmp, self.path)
+        except OSError as exc:                      # pragma: no cover
+            log.warning("mock room not written to %s: %s", self.path, exc)
 
 
 class MockAPBackend:
@@ -239,6 +308,32 @@ class MockAPBackend:
         d.checked = set(self.server.checked)
         d.missing = set(self.placements) - self.server.checked
         d.received = list(self.server.received)
+        # Every change to the room reaches the client through here, so
+        # this is the one place it is kept.
+        self.server.store()
+
+    @classmethod
+    def for_campaign(cls, engine, *, config: C.CampaignConfig | None = None,
+                     slot_name: str = "Skyiah") -> "MockAPBackend":
+        """A mock whose room is kept beside the campaign's own save.
+
+        The bridge's mock (`server._connect_mock`). The save is found by
+        the identity this mock always reports -- its seed, team 0 and our
+        slot -- so the room resumes exactly when that save does.
+        """
+        from . import store
+        backend = cls(engine, config=config)
+        save_dir = getattr(engine, "save_dir", None)
+        if save_dir:
+            save = store.save_path(Path(save_dir), backend.seed_name, 0,
+                                   SELF_SLOT, slot_name)
+            # NOT `.json`: a save folder holds one campaign file with that
+            # extension, and the harnesses that read "the save" off the
+            # disk find it by exactly that.
+            backend.server = MockServerState.bound(
+                save.with_name(save.stem + ".mock_room"),
+                backend.config, resume=save.is_file())
+        return backend
 
     # -- APBackend surface -------------------------------------------------
 
@@ -310,3 +405,4 @@ class MockAPBackend:
 
     async def send_goal(self) -> None:
         self.server.goal_reports += 1
+        self.server.store()

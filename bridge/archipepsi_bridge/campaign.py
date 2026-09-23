@@ -43,7 +43,7 @@ from .schemas.zone import Zone, validate_zone
 from .echo_projection import detail_examples, history_view
 from . import instrumentation
 from . import layout as layout_check
-from . import candidate, quiet, shells
+from . import candidate, minor_hosting, quiet, shells
 from . import store
 from . import topology
 
@@ -1119,7 +1119,14 @@ class CampaignEngine:
                     owned_affordance_tags=request.unlocked_affordances,
                     guaranteed_capabilities=(
                         request.guaranteed_capabilities),
-                    **shells.offer_of(request)))
+                    # THE BUDGET THE PROVIDER WAS HELD TO (P5-12). Left
+                    # out, `validate_zone` falls back to the prototype's
+                    # 200 points and a default-scale Zone reads as 31
+                    # enemies over a cap of 14 -- which the comparison
+                    # below hid as "already failing" until a step
+                    # changed the count.
+                    zone_budget=request.campaign.zone_budget,
+                    **self._certify_offer(shells.offer_of(request))))
         except topology.GraphRefused as exc:
             # THE SAME BOUNDED RECOVERY a failed generation already has,
             # because this IS a Zone that could not be built. Nothing is
@@ -1200,6 +1207,19 @@ class CampaignEngine:
             used_fallback=self.save.zone_by_id(rec.zone_id).used_fallback))
         await self.broadcast_snapshot()
         return True
+
+    def _certify_offer(self, offer: dict) -> dict:
+        """The shell offer the candidate profile is certified against.
+
+        The provider's own, unless the profile hosts minors: a minor is
+        never offered to a provider, so `validate_zone` would refuse the
+        step's shell for not having been offered. Then it is the
+        provider's offer plus each minor's own registry rule, which is
+        what the step placed it against (`minor_hosting.certify_offer`).
+        """
+        if "minors" not in self.candidate_steps:
+            return offer
+        return minor_hosting.certify_offer(offer)
 
     def _candidate(self, zone, certify=None):
         """The CANDIDATE profile on a proved Zone, or the Zone unchanged.
