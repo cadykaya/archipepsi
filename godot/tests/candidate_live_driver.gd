@@ -900,7 +900,7 @@ func _play_counterfire(controller: ZoneController,
 	_check(through and room.to_local(player.global_position).x
 			> CounterfireArcadeRoom.ROOM_HALF.x,
 			"through the shutter inside its interval (%.1f s left)"
-			% room.shutter.left)
+			% room.window_left())
 	await _hop_walk(player, room.to_global(Vector3(16.2,
 			CounterfireArcadeRoom.FLANK_Y, -2.0)), 1.1, 500)
 	await _settle(10)

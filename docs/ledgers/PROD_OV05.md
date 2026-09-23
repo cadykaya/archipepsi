@@ -110,6 +110,12 @@ rule, before it is edited. Rows are appended as edits land:
 | `SignalGraph` (Godot): pulse sensors, `OR`, `restore_latch` | §19.3 ("pulses live for exactly one tick") | a `CallLever` source is a PULSE_BUTTON, raised for one evaluation and cleared. An unbound source reads OFF. `restore_latch` puts a latch back by id, silently, for a room that owns its graph | `a718654` |
 | `RoomGraphs` (Godot) | as the Zone validator | refuses a sensor it cannot place, instead of placing a plate for it | `a718654` |
 | `UnweightedSwitchRoom` (Godot) | O05-07.3 "route an existing minor ... relationship through the shared implementation while preserving its specialized semantics and standalone comparison" | the room binds its own plate, bolt lever and shutter to the declared ids, and the shared runtime drives the shutter. What the room keeps is its lines and the return stair. The §11 control is the plate sensor left unbound | `a718654` |
+| `schemas/signal_graph.py`: `SUPPORTED_NODE_KINDS` += `TIMER`, `SUPPORTED_SENSOR_KINDS` += `SHOOTABLE_TARGET`; `DamageTag`, `SUPPORTED_TARGET_TAGS`, `TIMER_MAX_SECONDS` (new); `SensorNode.mode`/`required_tags`, `LogicNode.duration` (new, optional) | Design 1 §19.2 (TIMER: 1 Pulse, ON for `duration`, a new pulse restarts it), §19.6 (TIMER is EPHEMERAL), §20/§20.2 (SHOOTABLE_TARGET: `mode: PULSE \| TOGGLE`, `required_tags` default `[RANGED]`); EX50-021 §3 | two kinds join with EX50-021's chain. TOGGLE is refused: nothing reads it. `required_tags` accepts exactly `[RANGED]`, because the runtime has no damage tags and its SHOT path counts any hit (see the O05-07 slice 2 notes). `TIMER_MAX_SECONDS` is `ActivityPrimitive.time_limit`'s 120 s ceiling, a bound this lane chose | O05-07b commit |
+| `schemas/minors.py`: the `minor_counterfire_arcade` contract's `graph` | EX50-021 §3 ("the receiver emits one pulse per valid hit"; "the eight-second TIMER refreshes on another valid receiver hit. Its output opens the service shutter"), §9 ("the receiver timer is ephemeral") | the chain is declared, and its LATCH id is the contract's `release`, so a pulled release is still `minor_<room>/release` | O05-07b commit |
+| `SignalGraph` (Godot): `ImpactReceiver` pulses, `TIMER` + `advance`/`timer_left`, `bind_declared`/`source_is` (moved up from `UnweightedSwitchRoom`) | §19.3; §19.2 | a receiver's valid hit is a one-tick pulse, and TIMERs run down on the physics tick; a TIMER running out re-evaluates the graph. A room binds its machines by declared id; a machine of the wrong kind is left unbound and reported | O05-07b commit |
+| `ServiceShutter` (Godot): `trip`, `open_seconds`, `left` removed; `create(...)` loses its `seconds` parameter (5 call sites, one of them a test's) | EX50-021 §3 names the TIMER as the window's owner | the shutter is commanded like every actuator. A second clock would be a second answer to how long the way stays open | O05-07b commit |
+| `CounterfireArcadeRoom` (Godot) | O05-07.3 | the room binds its receiver, release lever and shutter to the declared ids; the shared runtime drives the shutter. The room keeps its lines and the release stair | O05-07b commit |
+| `godot/tests/fixtures/latched_route_zone.json` (Dess's P14 fixture) and `candidate_zone.json`, regenerated with their make targets | "Regenerated from source, never edited" | the only change is three `null` keys per graph (`mode`, `required_tags`, `duration`): the new optional fields, dumped the way `requires_class` already is. `proposal_digest` is derived and never stored, so no save is affected | O05-07b commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -208,7 +214,7 @@ rule, before it is edited. Rows are appended as edits land:
   committed as `5902920`: 10 cases, 6 notes. Every note is the declared
   P5-7 Bulwark harness removal.
 
-### O05-03 — restore and recover the journey — verified (live restart re-run pending)
+### O05-03 — restore and recover the journey — verified, the live restart included
 
 - **Persisted facts.** `ZoneProgress.object_poses` records a settled
   room, position and yaw, never a node path. `consumed_objects` records
@@ -223,8 +229,9 @@ rule, before it is edited. Rows are appended as edits land:
 
   On `d92d723`, seed and place passed (6 and 16 checks). Install failed
   in the driver itself: its cached copy of the served Zone was empty
-  after the restart. The fix is committed with this row and the re-run
-  result goes here: **(pending)**.
+  after the restart. The fix is committed with this row. **Re-run at
+  `400ed37`**, in the batch recorded under O05-06: seed 6, place 16,
+  install 18, restore 12, all four phases OK.
 - **Recovery without solving.** Covered by `godot-transport`:
   - out of the volume: home after 1.0 s, and not before 0.5 s;
   - destroyed: the same identity is back after 2.0 s;
@@ -575,11 +582,13 @@ the overhead gantry; the S3 destination; a rail model in
     and accepted as `minor_c024/bolt`, then restored before anyone
     acts, and still holding the crossing with the crate back on the
     plate.
-- **Not routed, and why: EX50-021.** Its eight-second window is the
-  shutter's own timer, by design (`ServiceShutter`: "the timer is the
-  machine's, not the player's"; EX50-021 §3/§9). A graph TIMER would
-  move that ownership out of the machine rather than preserve it, so the
-  room keeps its wiring.
+- **~~Not routed, and why: EX50-021.~~ CORRECTED in slice 2.** This
+  said the window was the shutter's own timer "by design", citing
+  `ServiceShutter`'s comment and EX50-021 §3/§9. §3 says the opposite:
+  "the eight-second TIMER refreshes on another valid receiver hit. Its
+  output opens the service shutter." §9 calls it "the receiver timer".
+  The shutter's clock was an implementation shortcut, and the note
+  mistook it for the source's intent. EX50-021 is now routed (below).
 - **Also fixed:** `test_a_zone_with_no_edges_is_declined_with_the_reason`
   (O05-02, this lane's) had skipped on every run. Its Zone could not be
   validated without edges. It now builds a Zone that can, and runs; the
@@ -634,6 +643,115 @@ graph, not just the sensor, and each was sabotaged.
   graph, and the expiry of a temporary override needs O05-07.4's verbs.
 - **Evidence:** `godot-signal-graph` 57 (46 + 11);
   `godot-unweighted` 70 (69 + 1).
+
+### O05-07 — slice 2: EX50-021's own chain, through the graph — done
+
+- **The consumer is the arcade's own contract.** EX50-021 §3 names the
+  parts: "the receiver emits one pulse per valid hit", "the eight-second
+  TIMER refreshes on another valid receiver hit. Its output opens the
+  service shutter", and the manual release is permanent. §9: "The
+  receiver timer is ephemeral." Declared in the minor's contract and run
+  by `SignalGraph`, in the `--counterfire` scenario and in the hosted
+  room alike:
+
+      receiver (SHOOTABLE_TARGET, PULSE) -> TIMER (window, 8 s) --.
+                                                                  OR (open) -> shutter
+      release_lever (PULSE_BUTTON) -> LATCH (release) ------------'
+
+  It is the same tree as EX50-033's, with a TIMER where the NOT was. The
+  LATCH id is the contract's `release`, so saves read the same.
+- **Two kinds join, each with this consumer.**
+  - `TIMER`: one pulse in; ON for `duration` after it; a new pulse
+    restarts it (§19.2); EPHEMERAL (§19.6). The runtime runs TIMERs down
+    on the physics tick, and a TIMER running out re-evaluates the graph.
+    That is the one change no sensor announces.
+  - `SHOOTABLE_TARGET`, in PULSE mode: `ImpactReceiver`, which already
+    reuses the activity SHOT path (07.1's "reuse SHOT/STAND/TOUCH ...
+    paths"), with its 0.4 s re-arm as the debounce. TOGGLE is refused:
+    nothing reads it.
+- **A stated gap: `[RANGED]` is a floor, not a filter.** §20.2's
+  `required_tags` defaults to `[RANGED]`. The runtime has no damage
+  tags: `take_damage` carries an amount, a direction and a knockback,
+  and the SHOT path counts any hit, "a melee swing" included. So every
+  ranged hit operates the receiver and a Static Pulse always suffices,
+  which is what §20.2 requires of a mandatory target. But a swing or a
+  blast would operate it too. A target requiring MELEE or EXPLOSIVE
+  would be operated by a Static Pulse, the opposite of what it says, so
+  the schema accepts exactly `[RANGED]` and refuses every other tag set
+  by name. Enforcing tags means a DamageRequest carrying them through
+  every damage call site. That is a cross-cutting change this lane did
+  not make, so it is recorded here for review.
+- **One clock, not two.** `ServiceShutter` kept its own timer (`trip`,
+  `open_seconds`, `left`), and the arcade tripped it directly. It is
+  now commanded like every actuator, and the window is the TIMER's.
+  `create(...)` lost its `seconds` parameter: five call sites, one of
+  them a test's (`actuator_driver`), which passed the value positionally.
+- **A shared binder.** `SignalGraph.bind_declared` moved up from
+  EX50-033's room now that there are two. It also checks that each
+  declared sensor's machine is of its kind. A lever bound under a
+  target's id is left unbound (reads OFF) and reported, rather than run
+  as something the declaration never described.
+- **Tests changed, and why.**
+  - `counterfire_driver`'s interlock case opened the shutter with
+    `trip()` and ran it out with `shutter.left = 0.2`. It now opens it
+    with a hit on the receiver's own target body and runs out the
+    graph's TIMER. The assertions are unchanged, and the case now
+    exercises the path the room actually uses.
+  - Two "(%.1f s left)" messages read the removed `shutter.left`; they
+    read the TIMER now (`window_left()`).
+  - The wrapper's `_on_release` test hook pulls the lever through its
+    own `interact`, so the graph hears it.
+  - Two bridge tests pin the supported sets. They now list TIMER and
+    SHOOTABLE_TARGET, and everything else is still refused.
+- **Fixtures regenerated, not edited:** `latched_route_zone.json` (Dess's
+  P14 fixture) and `candidate_zone.json`. Each gains three `null` keys
+  per graph (`mode`, `required_tags`, `duration`), dumped the way
+  `requires_class` already is. The content is otherwise identical,
+  checked key by key. `proposal_digest` is derived and never stored, so
+  no save is affected. Omitting the keys instead needs pydantic 2.11's
+  `exclude_if`; the pin is `>=2.6`, and raising it would be a tooling
+  upgrade.
+- **Evidence.**
+  - Bridge: 10 new tests; `make test-bridge` 1907 passed, none skipped.
+  - Four schema sabotages each fail exactly their own test: a TIMER fed
+    a Boolean, any tags accepted, TOGGLE accepted, and duration made
+    optional.
+  - `godot-counterfire` **55** (44 + 11). The 44 played and primitive
+    checks are unchanged in assertion; the committed hostile shot, the
+    fallback Static Pulse, the interlock and the release now run through
+    the graph. The 11 new checks read the graph itself:
+    - the bindings, and the node order TIMER/LATCH/OR;
+    - the declared 8 s equals the room's §2 `OPEN_SECONDS`;
+    - SHUT at rest;
+    - one hit is one pulse, TIMER ON at about 8 s;
+    - on the next tick the pulse is gone and the window holds;
+    - REPEATED SHOTS: a second hit restarts the window (6.38 s → 7.98 s),
+      and a third inside the re-arm is not a third pulse;
+    - expiry: window OFF, OR OFF, shutter shut;
+    - the release LATCH fires once and holds the OR through a later
+      expiry.
+  - Runtime sabotages, each failing its checks:
+    - a TIMER that does not restart ("6.38 s left, then 6.37 s");
+    - an expiry that does not re-evaluate (the interlock and expiry
+      cases);
+    - receivers ignored (every played "shutter opened" fails, so the
+      graph is what drives the room);
+    - a binder that accepts any kind.
+  - `godot-signal-graph` 59 (+2, the binder), `godot-unweighted` 70,
+    `godot-actuator` 93, `godot-graphs`, `godot-latched-route` 38,
+    `godot-content`, `godot-encounter` 51, `godot-room-contract`,
+    `godot-zone-audit`, and, because `StateGates` drives the same panel,
+    `godot-zone-state` 60, `godot-reversible` 32 and `godot-transport`
+    106: all OK, all at their previous counts.
+  - Live, through the real bridge:
+    - `godot-candidate-live`, all eight phases at the same counts as
+      before (40/20/5/32/15/21/18/7). The hosted arcade in c025: the
+      Zone's own gunner's shot trips the receiver, the player goes
+      through "inside its interval (5.6 s left)", read from the TIMER,
+      and the release is accepted as `minor_c025/release`. On restart it
+      is restored through `restore_latch` before anyone acts, and still
+      holds the shutter two and a half windows later.
+    - `godot-latched-route-live` against the regenerated fixture: 2/18/12.
 
 ### O05-13 — the candidate composer profile — built; the whole profile played live
 

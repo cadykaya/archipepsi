@@ -615,7 +615,7 @@ func _an_authored_crusher_does_not_reverse() -> void:
 func _the_shipped_shutter_obeys_21_2() -> void:
 	print("\n-- C4a: the shipped ServiceShutter --")
 	var shutter := ServiceShutter.create(Vector3(90.0, 1.3, 0.0),
-			Vector3(2.4, 2.6, 0.3), 2.6, 8.0)
+			Vector3(2.4, 2.6, 0.3), 2.6)
 	add_child(shutter)
 	await get_tree().physics_frame
 	await get_tree().physics_frame

@@ -91,15 +91,16 @@ def test_one_graph_per_room():
 # --------------------------------------------------------------------------
 
 def test_every_other_node_kind_is_named_and_refused():
-    """§19.2's eleven exist in the vocabulary; three are implemented."""
+    """§19.2's eleven exist in the vocabulary; four are implemented."""
     from typing import get_args
     named = set(get_args(G.NodeKind))
     assert len(named) == 11
     # LATCH joined NOT once Prod's runtime evaluated it (D-10 answer); OR
     # joined once the runtime evaluated it for EX50-033's own chain
-    # (O05-07), its first consumer.
-    assert set(G.SUPPORTED_NODE_KINDS) == {"NOT", "LATCH", "OR"}
-    for kind in named - {"NOT", "LATCH", "OR"}:
+    # (O05-07), its first consumer; TIMER joined with EX50-021's window
+    # (O05-07, second slice), its first.
+    assert set(G.SUPPORTED_NODE_KINDS) == {"NOT", "LATCH", "OR", "TIMER"}
+    for kind in named - {"NOT", "LATCH", "OR", "TIMER"}:
         with pytest.raises(ValueError, match="no runtime implements"):
             G.refuse_unsupported_node(kind)
 
@@ -511,11 +512,14 @@ def test_a_minor_s_latches_are_exactly_its_contract_s():
     assert graphs >= 1
 
 
-def test_or_and_pulse_button_joined_with_a_consumer_and_nothing_else_did():
-    assert set(G.SUPPORTED_NODE_KINDS) == {"NOT", "LATCH", "OR"}
+def test_each_kind_joined_with_a_consumer_and_nothing_else_did():
+    """OR and PULSE_BUTTON joined with EX50-033's chain; TIMER and
+    SHOOTABLE_TARGET with EX50-021's. Nothing joined on its own."""
+    assert set(G.SUPPORTED_NODE_KINDS) == {"NOT", "LATCH", "OR", "TIMER"}
     assert set(G.SUPPORTED_SENSOR_KINDS) == {"PRESSURE_PLATE",
-                                             "PULSE_BUTTON"}
-    for kind in ("AND", "DIRECT", "TIMER", "SEQUENCE", "COUNTER"):
+                                             "PULSE_BUTTON",
+                                             "SHOOTABLE_TARGET"}
+    for kind in ("AND", "DIRECT", "SEQUENCE", "COUNTER", "DELAY"):
         with pytest.raises(ValueError, match="no runtime implements"):
             G.refuse_unsupported_node(kind)
 
@@ -647,3 +651,132 @@ def test_a_route_may_not_hang_on_an_or():
                 "inputs": ["held", "recess_plate"]}],
         actuators=[{"actuator_id": "lamp", "driven_by": "any"}])]
     assert Zone.model_validate(raw).room_graphs[0].nodes[-1].kind == "OR"
+
+
+# --------------------------------------------------------------------------
+# O05-07, second slice: SHOOTABLE_TARGET and TIMER, through EX50-021
+# --------------------------------------------------------------------------
+
+_TARGET = {"node_id": "receiver", "kind": "SHOOTABLE_TARGET",
+           "mode": "PULSE"}
+
+
+def _ex50_021():
+    from archipepsi_bridge.schemas.minors import CONTRACTS
+    return CONTRACTS["minor_counterfire_arcade"].graph
+
+
+def _timed(duration=8.0, sensors=None, feed="receiver"):
+    return _chain(
+        sensors=sensors or [_TARGET],
+        nodes=[{"node_id": "window", "kind": "TIMER", "inputs": [feed],
+                "duration": duration}],
+        actuators=[{"actuator_id": "s", "driven_by": "window"}])
+
+
+def test_the_arcade_declares_its_own_chain():
+    """EX50-021 §3, as a declaration: the receiver's pulse into an
+    eight-second TIMER, the release lever into a LATCH, both into an OR
+    that opens the shutter."""
+    graph = _ex50_021()
+    assert {s.node_id: s.kind for s in graph.sensors} == {
+        "receiver": "SHOOTABLE_TARGET", "release_lever": "PULSE_BUTTON"}
+    assert [(n.node_id, n.kind) for n in graph.nodes] == [
+        ("window", "TIMER"), ("release", "LATCH"), ("open", "OR")]
+    assert graph.nodes[0].duration == 8.0
+    assert graph.actuators[0].driven_by == "open"
+
+
+def test_the_arcade_settles_the_way_the_room_behaves():
+    """Shut at rest; a hit opens it; the window is not a state the room
+    rests in; the release holds it open for good."""
+    graph = _ex50_021()
+    rest, latched = G.settle(graph, False)
+    assert rest["open"] is False and not latched
+    hit, latched = G.settle(graph, True)
+    assert hit["window"] is True and latched == {"release"}
+    after, _ = G.settle(graph, False, latched)
+    assert after["window"] is False and after["open"] is True
+
+
+def test_a_timer_reads_a_pulse_and_nothing_else():
+    """§19.2: TIMER takes 1 Pulse. A plate held down is a Boolean; fed to
+    a TIMER it would restart on no tick at all."""
+    G.RoomGraph.model_validate(_timed())
+    with pytest.raises(ValidationError, match="reads PULSE"):
+        G.RoomGraph.model_validate(_timed(sensors=[
+            {"node_id": "recess_plate", "kind": "PRESSURE_PLATE",
+             "requires_class": "HEAVY"}], feed="recess_plate"))
+
+
+def test_a_timer_names_its_duration_and_only_a_timer_has_one():
+    with pytest.raises(ValidationError, match="names no duration"):
+        G.LogicNode.model_validate({"node_id": "w", "kind": "TIMER",
+                                    "inputs": ["receiver"]})
+    with pytest.raises(ValidationError, match="only a TIMER has one"):
+        G.LogicNode.model_validate({"node_id": "n", "kind": "NOT",
+                                    "inputs": ["plate"], "duration": 2.0})
+    with pytest.raises(ValidationError, match="one pulse"):
+        G.LogicNode.model_validate({"node_id": "w", "kind": "TIMER",
+                                    "inputs": ["a", "b"], "duration": 2.0})
+    for bad in (0.0, -1.0, G.TIMER_MAX_SECONDS + 1.0):
+        with pytest.raises(ValidationError):
+            G.RoomGraph.model_validate(_timed(duration=bad))
+
+
+def test_a_timer_s_output_is_a_boolean_a_machine_can_follow():
+    """The TIMER is what turns one pulse into a window a machine can be
+    commanded by -- where a pulse alone would move it for one tick."""
+    graph = G.RoomGraph.model_validate(_timed())
+    assert G.output_form(graph, "window") == "BOOLEAN"
+    with pytest.raises(ValidationError, match="move for one tick"):
+        G.RoomGraph.model_validate(_chain(
+            sensors=[_TARGET], nodes=[],
+            actuators=[{"actuator_id": "s", "driven_by": "receiver"}]))
+
+
+def test_a_target_names_its_mode_and_only_pulse_has_a_runtime():
+    with pytest.raises(ValidationError, match="names no mode"):
+        G.SensorNode.model_validate({"node_id": "t",
+                                     "kind": "SHOOTABLE_TARGET"})
+    with pytest.raises(ValidationError, match="no runtime implements TOGGLE"):
+        G.SensorNode.model_validate({**_TARGET, "mode": "TOGGLE"})
+
+
+def test_a_target_requires_ranged_as_a_floor_and_nothing_else():
+    """§20.2's default is [RANGED], and every mandatory target has it. The
+    runtime has no damage tags -- its SHOT path counts any hit -- so
+    [RANGED] holds as a floor (a Static Pulse always operates it), and a
+    target requiring MELEE or EXPLOSIVE, which a Static Pulse would
+    operate anyway, is refused rather than approximated."""
+    assert G.SensorNode.model_validate(_TARGET).required_tags is None
+    G.SensorNode.model_validate({**_TARGET, "required_tags": ["RANGED"]})
+    for tags in (["EXPLOSIVE"], ["MELEE"], ["RANGED", "MELEE"]):
+        with pytest.raises(ValidationError, match="can be honoured"):
+            G.SensorNode.model_validate({**_TARGET, "required_tags": tags})
+    with pytest.raises(ValidationError):
+        G.SensorNode.model_validate({**_TARGET, "required_tags": ["LASER"]})
+
+
+def test_only_a_target_is_shot():
+    for extra in ({"mode": "PULSE"}, {"required_tags": ["RANGED"]}):
+        with pytest.raises(ValidationError, match="only a SHOOTABLE_TARGET"):
+            G.SensorNode.model_validate({"node_id": "b",
+                                         "kind": "PULSE_BUTTON", **extra})
+
+
+def test_a_zone_may_not_ask_its_builder_for_a_target():
+    """`RoomGraphs` places plates; a target is placed by the room that
+    owns its receiver, as a button is by the room that owns its lever."""
+    with pytest.raises(ValidationError, match="Zone builder places"):
+        _zone([_timed()])
+
+
+def test_the_arcade_s_latch_is_its_contract_s_and_the_timer_is_not_saved():
+    """§19.6: a LATCH is PUZZLE_LOCAL and a TIMER is EPHEMERAL. The only
+    thing of this graph that can reach a save is the release, and it is
+    exactly the contract's latch."""
+    from archipepsi_bridge.schemas.minors import CONTRACTS
+    contract = CONTRACTS["minor_counterfire_arcade"]
+    kept = {n.node_id for n in contract.graph.nodes if n.kind == "LATCH"}
+    assert kept == set(contract.latches) == {"release"}

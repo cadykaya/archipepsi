@@ -138,6 +138,25 @@ CONTRACTS: dict[str, MinorContract] = {
         entry_socket="entry",
         sealed_sockets=("exit",),
         latches=("release",),
+        # EX50-021 §3: "The receiver emits one pulse per valid hit"; "the
+        # eight-second TIMER refreshes on another valid receiver hit. Its
+        # output opens the service shutter"; the manual release "accepts
+        # a permanent return/shortcut condition". §9: "The receiver timer
+        # is ephemeral."
+        graph=RoomGraph(
+            room_id="minor",
+            sensors=(SensorNode(node_id="receiver", kind="SHOOTABLE_TARGET",
+                                mode="PULSE"),
+                     SensorNode(node_id="release_lever",
+                                kind="PULSE_BUTTON")),
+            nodes=(LogicNode(node_id="window", kind="TIMER",
+                             inputs=("receiver",), duration=8.0),
+                   LogicNode(node_id="release", kind="LATCH",
+                             inputs=("release_lever",)),
+                   LogicNode(node_id="open", kind="OR",
+                             inputs=("window", "release"))),
+            actuators=(ActuatorBinding(actuator_id="shutter",
+                                       driven_by="open"),)),
         completion=(
             "the gunner's committed shot, dodged, trips the hooded "
             "receiver and opens the service shutter for eight seconds; "

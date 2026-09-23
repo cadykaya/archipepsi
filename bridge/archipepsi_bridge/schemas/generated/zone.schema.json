@@ -793,6 +793,20 @@
           "minItems": 1,
           "title": "Inputs",
           "type": "array"
+        },
+        "duration": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 120.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration"
         }
       },
       "required": [
@@ -1368,6 +1382,47 @@
           "default": false,
           "title": "Counts Player",
           "type": "boolean"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "PULSE",
+                "TOGGLE"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "required_tags": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "RANGED",
+                  "MELEE",
+                  "PROJECTILE",
+                  "BEAM",
+                  "EXPLOSIVE",
+                  "PHYSICS",
+                  "FIRE",
+                  "ENVIRONMENTAL"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required Tags"
         }
       },
       "required": [

@@ -134,10 +134,11 @@ func _environment() -> void:
 	add_child(sun)
 
 
-## The release, as the room receives it -- for a suite that pulls it
-## without a hand on the lever.
-func _on_release(who: CallLever) -> void:
-	room._on_release(who)
+## The release, pulled through the lever's own `interact` -- for a suite
+## that pulls it without walking a hand onto it. The room's graph hears
+## the pull as it hears a hand's.
+func _on_release(who: Node) -> void:
+	room.release.interact(who)
 
 
 func muzzle() -> Vector3:

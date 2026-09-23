@@ -82,6 +82,7 @@ func _run() -> void:
 	await _the_fallback_route()
 	await _the_interlock()
 	await _the_release_is_permanent()
+	await _the_chain_is_the_declared_graph()
 	print("")
 	if _failures == 0:
 		print("GODOT COUNTERFIRE OK (%d checks, %d notes)"
@@ -417,7 +418,7 @@ func _the_fallback_route() -> void:
 	_check(through and body.global_position.x
 			> CounterfireArcade.ROOM_HALF.x,
 		"the service route is reachable within the interval "
-			+ "(%.1f s left)" % room.shutter.left)
+			+ "(%.1f s left)" % room.room.window_left())
 	await _walk_to(body, Vector3(16.2, CounterfireArcade.FLANK_Y, -2.0),
 			1.1, 500)
 	await _settle(10)
@@ -443,7 +444,10 @@ func _the_interlock() -> void:
 	room.gunner.queue_free()
 	room.gunner = null
 	var body: Player = room.player
-	room.shutter.trip()
+	# OPENED THROUGH THE GRAPH: a hit on the receiver's own target body,
+	# the one every weapon's hit lands on, starts the declared TIMER.
+	Damageable.hit(room.receiver.element.get_node("TargetBody"), 6.0,
+			Vector3.FORWARD)
 	for _i in 200:
 		await get_tree().physics_frame
 		if room.shutter.is_open():
@@ -455,8 +459,9 @@ func _the_interlock() -> void:
 	await _settle(20)
 	_check(room.shutter.doorway_occupied(),
 		"and a body standing in the opening is seen there")
-	# RUN THE INTERVAL OUT with the player still in it.
-	room.shutter.left = 0.2
+	# RUN THE INTERVAL OUT with the player still in it: the TIMER's, the
+	# only one there is (O05-07).
+	room.room.graph.timers["window"] = 0.2
 	for _i in 200:
 		await get_tree().physics_frame
 	_check(room.shutter.is_open() and room.shutter.overrun() > 1.0,
@@ -499,6 +504,116 @@ func _the_release_is_permanent() -> void:
 			+ "still open, because the release is not a timer")
 	_check(room.receiver.hits == 0,
 		"and nothing had to be shot again to keep it that way")
+	room.queue_free()
+
+
+## O05-07: THE CHAIN IS THE DECLARED GRAPH. EX50-021 §3's receiver,
+## TIMER, release and shutter as the minor's contract declares them and
+## the shared runtime runs them -- read off the graph itself, where the
+## played cases above read the room. A hit goes in through the
+## receiver's own target body, where every weapon's hit lands, and a pull
+## through the lever's own `interact`; what is skipped is the aim, which
+## the played cases do.
+func _the_chain_is_the_declared_graph() -> void:
+	print("  -- THE CHAIN: the contract's graph, run by the shared runtime")
+	var room := _room()
+	await _settle(40)
+	room.gunner.queue_free()
+	room.gunner = null
+	var graph: SignalGraph = room.room.graph
+	var shutter_binding: Dictionary = graph.actuators.get("shutter", {}) \
+			if graph != null else {}
+	_check(graph != null and graph.sensors.get("receiver") == room.receiver
+			and graph.sensors.get("release_lever") == room.release
+			and shutter_binding.get("node") == room.shutter
+			and shutter_binding.get("driven_by") == "open",
+			"the room's receiver, release lever and shutter are bound to "
+			+ "the contract's declared ids, the shutter driven by 'open'")
+	if graph == null:
+		room.queue_free()
+		return
+	var kinds: Array = graph.nodes.map(
+			func(n: Dictionary) -> String: return str(n["kind"]))
+	var duration := float((graph.nodes[0] as Dictionary).get("duration",
+			0.0))
+	_check(kinds == ["TIMER", "LATCH", "OR"]
+			and is_equal_approx(duration, CounterfireArcade.OPEN_SECONDS),
+			"the declared nodes, in order: %s; the TIMER's window is %.1f s, "
+			% [kinds, duration] + "the room's own §2 interval")
+	_check(not bool(graph.values.get("open", true))
+			and room.shutter.is_shut() and room.room.window_left() == 0.0,
+			"at rest the graph reads SHUT and the window is closed")
+
+	var target: Node = room.receiver.element.get_node("TargetBody")
+	Damageable.hit(target, 6.0, Vector3.FORWARD)
+	await get_tree().physics_frame
+	_check(room.receiver.hits == 1 and bool(graph.values.get("window",
+			false)) and bool(graph.values.get("open", false))
+			and room.room.window_left() > CounterfireArcade.OPEN_SECONDS - 0.1,
+			"one valid hit is one pulse: the TIMER is ON with %.2f s left "
+			% room.room.window_left() + "and the OR is ON")
+	# ONE LATER TICK (§19.3): the pulse is gone, the window is not.
+	graph.evaluate()
+	_check(not bool(graph.values.get("receiver", true))
+			and bool(graph.values.get("window", false)),
+			"on the next tick the pulse is gone while the TIMER holds the "
+			+ "window open")
+	for _i in 200:
+		await get_tree().physics_frame
+		if room.shutter.is_open():
+			break
+	_check(room.shutter.is_open(), "and the graph opened the shutter")
+
+	# REPEATED SHOTS (O05-07.5): "a new pulse restarts it" (§19.2), "the
+	# eight-second TIMER refreshes on another valid receiver hit" (§3).
+	var before := room.room.window_left()
+	Damageable.hit(target, 6.0, Vector3.FORWARD)
+	await get_tree().physics_frame
+	var after := room.room.window_left()
+	_check(room.receiver.hits == 2 and after > before + 1.0,
+			"a second hit inside the window restarts it: %.2f s left, "
+			% before + "then %.2f s" % after)
+	Damageable.hit(target, 6.0, Vector3.FORWARD)
+	await get_tree().physics_frame
+	_check(room.receiver.hits == 2,
+			"and a third impact inside the receiver's re-arm is not a "
+			+ "third pulse")
+
+	# THE WINDOW RUNS OUT and the graph asks the shutter to shut (§4:
+	# "Timer expiry requests closure under its safety interlock").
+	graph.timers["window"] = 0.1
+	for _i in 400:
+		await get_tree().physics_frame
+		if room.shutter.is_shut():
+			break
+	_check(not bool(graph.values.get("window", true))
+			and not bool(graph.values.get("open", true))
+			and room.shutter.is_shut(),
+			"the TIMER ran out: the window OFF, the OR OFF, and the "
+			+ "shutter shut")
+
+	# THE RELEASE, through its own lever: the LATCH holds the OR.
+	var fired: Array[String] = []
+	graph.fired.connect(func(_package: String, id: String) -> void:
+		fired.append(id))
+	room.release.interact(null)
+	for _i in 200:
+		await get_tree().physics_frame
+		if room.shutter.is_open():
+			break
+	_check(fired == ["release"] and room.released
+			and room.shutter.is_open(),
+			"the release lever's pulse set the LATCH (%s) and the OR opened "
+			% [fired] + "the shutter")
+	Damageable.hit(target, 6.0, Vector3.FORWARD)
+	graph.timers["window"] = 0.1
+	for _i in 60:
+		await get_tree().physics_frame
+	_check(room.receiver.hits == 3 and room.room.window_left() == 0.0
+			and bool(graph.values.get("open", false))
+			and room.shutter.is_open(),
+			"and a window that runs out after it leaves the shutter open: "
+			+ "the release is not a timer")
 	room.queue_free()
 
 

@@ -38,7 +38,6 @@ const CHAIN_SPREAD := 3.0
 const PLATE_SIZE := Vector3(2.4, 0.12, 2.4)
 const PANEL_SIZE := Vector3(2.0, 2.2, 0.3)
 const PANEL_RISE := 2.4
-const PANEL_SECONDS := 3.0
 
 ## A ROUTE SHUTTER IS THE DOORWAY'S OWN SIZE. It is sized from the socket
 ## frame rather than from a constant, so a shell whose opening is not the
@@ -292,7 +291,7 @@ static func _one(root: Node3D, declared: Dictionary, places: Dictionary,
 			var centre := base - across * (float(shutters + 1) * CHAIN_SPREAD)
 			centre.y = floor_y + PANEL_SIZE.y * 0.5
 			shutter = ServiceShutter.create(centre, PANEL_SIZE,
-					PANEL_RISE, PANEL_SECONDS, theme)
+					PANEL_RISE, theme)
 		shutter.name = "Shutter_%s" % actuator_id
 		graph.add_child(shutter)
 		graph.actuators[actuator_id] = {
@@ -358,7 +357,7 @@ static func route_shutter(frame: Dictionary, theme: String) -> ServiceShutter:
 	var centre := at + Vector3(0.0, height * 0.5, 0.0)
 	var shutter := ServiceShutter.create(centre,
 			Vector3(width, height, ROUTE_PANEL_DEPTH),
-			height + ROUTE_PANEL_CLEARANCE, PANEL_SECONDS, theme)
+			height + ROUTE_PANEL_CLEARANCE, theme)
 	shutter.rotation.y = float(frame.get("yaw", 0.0))
 	shutter.add_to_group(ROUTE_GATE)
 	return shutter

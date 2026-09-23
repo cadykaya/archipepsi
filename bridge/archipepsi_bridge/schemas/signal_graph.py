@@ -85,7 +85,7 @@ SensorKind = Literal[
 #: can shut behind you. §5.4a persists the DECISION, so a set latch is
 #: recorded (`transitions.record_latch`, under `graph_<room>`) and the
 #: machine is rebuilt from the record rather than restored from itself.
-SUPPORTED_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH", "OR")
+SUPPORTED_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH", "OR", "TIMER")
 
 #: **`PRESSURE_PLATE` alone**, and §20.6's distinction is the reason it
 #: is worth naming: a `PRESSURE_PLATE` reads a semantic `MassClass` and
@@ -94,7 +94,26 @@ SUPPORTED_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH", "OR")
 #: `class_plate.gd` implements the first and `PoweredLink` the second;
 #: only the first is offered, because only the first is what the
 #: declared chain uses.
-SUPPORTED_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE", "PULSE_BUTTON")
+SUPPORTED_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE", "PULSE_BUTTON",
+                                          "SHOOTABLE_TARGET")
+
+#: §20's `DamageTag`s, which a SHOOTABLE_TARGET's `required_tags` names.
+DamageTag = Literal[
+    "RANGED", "MELEE", "PROJECTILE", "BEAM", "EXPLOSIVE",
+    "PHYSICS", "FIRE", "ENVIRONMENTAL",
+]
+
+#: **What a target's `required_tags` may say today: §20.2's default and
+#: nothing else.** The runtime has no damage tags: `take_damage` carries
+#: an amount, a direction and a knockback, and the SHOT path a target is
+#: built on counts ANY hit (`ActivityElement.take_damage`: "Static
+#: Pulse, an Echo hitscan, a projectile, a melee swing"). So `[RANGED]`
+#: holds as a FLOOR -- every ranged hit operates it, and Static Pulse
+#: suffices, which is §20.2's rule for a mandatory target -- but it is
+#: not a filter: a swing or a blast operates it too. A target requiring
+#: MELEE or EXPLOSIVE would be operated by a Static Pulse, which is the
+#: opposite of what it says, so it is refused rather than approximated.
+SUPPORTED_TARGET_TAGS: tuple[str, ...] = ("RANGED",)
 
 #: O05-07. What a ZONE's own `room_graphs` may declare: the sensors the
 #: Zone builder can PLACE. `RoomGraphs` puts a class plate down beside the
@@ -115,6 +134,10 @@ ROUTE_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH")
 SENSOR_OUTPUT_FORM: dict[str, str] = {
     "PRESSURE_PLATE": "BOOLEAN",
     "PULSE_BUTTON": "PULSE",
+    # §20: "Pulse or Boolean", by `mode`. PULSE only today -- EX50-021's
+    # receiver "emits one pulse per valid hit" -- and TOGGLE, the
+    # Boolean, is refused until something reads it.
+    "SHOOTABLE_TARGET": "PULSE",
 }
 
 #: What each supported node's inputs ACCEPT. Every one of them outputs a
@@ -127,7 +150,15 @@ NODE_INPUT_FORMS: dict[str, tuple[str, ...]] = {
     "NOT": ("BOOLEAN",),
     "OR": ("BOOLEAN",),
     "LATCH": ("BOOLEAN", "PULSE"),
+    # §19.2: "1 Pulse". A plate held down is not a pulse, and a TIMER fed
+    # one would restart on no tick at all.
+    "TIMER": ("PULSE",),
 }
+
+#: The longest `duration` a TIMER may declare: `ActivityPrimitive`'s own
+#: `time_limit` ceiling, so no window outlasts the longest timed thing a
+#: Zone already allows.
+TIMER_MAX_SECONDS = 120.0
 
 #: Actuator operations a node may drive. One, for the same reason.
 SUPPORTED_ACTUATOR_OPS: tuple[str, ...] = ("command",)
@@ -189,10 +220,39 @@ class SensorNode(Strict):
     #: an interaction the runtime refuses. `physics.plate_accepts_player`
     #: reads this flag first for exactly that reason.
     counts_player: bool = False
+    #: For `SHOOTABLE_TARGET`, §20's `mode: PULSE | TOGGLE`. Named, never
+    #: defaulted: a target that pulses and one that toggles are different
+    #: machines, and a silent default would pick one for the author.
+    mode: Literal["PULSE", "TOGGLE"] | None = None
+    #: For `SHOOTABLE_TARGET`, §20.2's `required_tags`, default `[RANGED]`.
+    #: See `SUPPORTED_TARGET_TAGS` for why nothing else is accepted.
+    required_tags: tuple[DamageTag, ...] | None = None
 
     @model_validator(mode="after")
     def _the_runtime_has_this_sensor(self):
         refuse_unsupported_sensor(self.kind)
+        if self.kind == "SHOOTABLE_TARGET":
+            if self.mode is None:
+                raise ValueError(
+                    f"sensor '{self.node_id}' is a SHOOTABLE_TARGET and "
+                    "names no mode; §20 gives it PULSE or TOGGLE")
+            if self.mode != "PULSE":
+                raise ValueError(
+                    f"sensor '{self.node_id}' is a {self.mode} target; no "
+                    "runtime implements TOGGLE -- the one that exists "
+                    "emits one pulse per valid hit (EX50-021 §3)")
+            tags = self.required_tags or ("RANGED",)
+            if tuple(tags) != SUPPORTED_TARGET_TAGS:
+                raise ValueError(
+                    f"sensor '{self.node_id}' requires {list(tags)}; the "
+                    "runtime has no damage tags and counts any hit, so "
+                    f"only {list(SUPPORTED_TARGET_TAGS)} -- which every "
+                    "Static Pulse satisfies -- can be honoured")
+        elif self.mode is not None or self.required_tags is not None:
+            raise ValueError(
+                f"sensor '{self.node_id}' is a {self.kind} and declares a "
+                "target's mode or tags; only a SHOOTABLE_TARGET is shot, "
+                "so they would describe nothing")
         if self.kind == "PRESSURE_PLATE" and self.requires_class is None:
             raise ValueError(
                 f"sensor '{self.node_id}' is a PRESSURE_PLATE and names no "
@@ -216,10 +276,29 @@ class LogicNode(Strict):
     node_id: str = _ID
     kind: NodeKind
     inputs: tuple[_NODE_REF, ...] = Field(min_length=1, max_length=4)
+    #: For `TIMER`, §19.2's `duration`: seconds ON after a pulse. The
+    #: TIMER is EPHEMERAL (§19.6): nothing of it is saved, and a rebuilt
+    #: room starts it OFF.
+    duration: float | None = Field(default=None, gt=0.0,
+                                   le=TIMER_MAX_SECONDS)
 
     @model_validator(mode="after")
     def _the_runtime_has_this_node(self):
         refuse_unsupported_node(self.kind)
+        if self.kind == "TIMER":
+            if len(self.inputs) != 1:
+                raise ValueError(
+                    f"node '{self.node_id}' is a TIMER with "
+                    f"{len(self.inputs)} inputs; §19.2 gives TIMER one "
+                    "pulse")
+            if self.duration is None:
+                raise ValueError(
+                    f"node '{self.node_id}' is a TIMER and names no "
+                    "duration; §19.2's TIMER is ON for `duration`")
+        elif self.duration is not None:
+            raise ValueError(
+                f"node '{self.node_id}' is a {self.kind} and declares a "
+                "duration; only a TIMER has one here")
         if self.kind == "NOT" and len(self.inputs) != 1:
             raise ValueError(
                 f"node '{self.node_id}' is a NOT with {len(self.inputs)} "
@@ -285,6 +364,11 @@ def settle(graph, pressed: bool,
             values[node.node_id] = node.node_id in now
         elif node.kind == "OR":
             values[node.node_id] = any(feeds)
+        elif node.kind == "TIMER":
+            # ON on the tick its pulse arrives. "Released" is after the
+            # action, when the window has run out: a TIMER is never a
+            # state a room rests in.
+            values[node.node_id] = feeds[0]
         else:                                       # refused at declaration
             values[node.node_id] = False
     return values, frozenset(now)

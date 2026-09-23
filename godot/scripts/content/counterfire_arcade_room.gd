@@ -51,6 +51,9 @@ const ALCOVE_Z := Vector2(-6.4, -4.2)
 const SHUTTER_X := ROOM_HALF.x
 const SHUTTER_Z := -2.0
 const SHUTTER := Vector3(0.4, 2.6, 2.4)
+## §2's "proposed eight-second interval". The window itself is the
+## declared TIMER's `duration` (O05-07); `counterfire_driver` checks the
+## two agree, so the room's statement and the contract cannot drift.
 const OPEN_SECONDS := 8.0
 const FLANK_Y := 3.0
 const ANNEX_X := Vector2(ROOM_HALF.x, 17.5)
@@ -72,6 +75,21 @@ var development_signs := true
 
 var receiver: ImpactReceiver = null
 var shutter: ServiceShutter = null
+## O05-07: THE ROOM'S CHAIN, RUN BY THE SHARED GRAPH. EX50-021 §3 names
+## it -- "the receiver emits one pulse per valid hit", "the eight-second
+## TIMER refreshes on another valid receiver hit. Its output opens the
+## service shutter", and the manual release makes the route permanent --
+## and the minor's occurrence contract declares it (`schemas/minors.py`,
+## exported as `Constants.MINOR_SIGNAL_GRAPHS`):
+##
+##     receiver (SHOOTABLE_TARGET) -> TIMER (window, 8 s) --.
+##                                                          OR -> shutter
+##     release_lever (PULSE_BUTTON) -> LATCH (release) -----'
+##
+## The room binds its receiver, lever and shutter to the declaration's
+## ids and keeps what is presentation: its lines, and the stair the
+## release adds.
+var graph: SignalGraph = null
 var gunner: Enemy = null
 var release: CallLever = null
 var goal_plate: ActivityElement = null
@@ -90,6 +108,7 @@ func build() -> void:
 	_the_receiver()
 	_the_shutter()
 	_the_annex()
+	_the_graph()
 	if with_gunner:
 		_the_gunner()
 	_signs()
@@ -100,7 +119,18 @@ func build() -> void:
 func restore_release() -> void:
 	if released:
 		return
+	if graph != null:
+		graph.restore_latch("release")
+		# ALREADY OPEN, not opening: a route the campaign's record says is
+		# open is open when the room appears.
+		graph.evaluate(true)
 	_release(false)
+
+
+## The TIMER's time left: how long the service shutter stays commanded
+## open by the last valid hit. 0 when the window is shut.
+func window_left() -> float:
+	return graph.timer_left("window") if graph != null else 0.0
 
 
 ## Where the gunner's muzzle is, which is where a committed shot starts.
@@ -219,7 +249,6 @@ func _the_receiver() -> void:
 	receiver = ImpactReceiver.create(PI, Color(1.0, 0.55, 0.3), theme)
 	add_child(receiver)
 	receiver.position = Vector3(0.0, RECEIVER_Y, RECEIVER_Z)
-	receiver.struck.connect(_on_struck)
 	# Its housing: a plinth under it, so the plate reads as mounted
 	# equipment at the end of the lane rather than as a floating sign.
 	_slab(Vector3(1.9, RECEIVER_Y - 0.7, 1.2),
@@ -262,7 +291,7 @@ func _conduit() -> void:
 func _the_shutter() -> void:
 	shutter = ServiceShutter.create(
 			Vector3(SHUTTER_X, SHUTTER.y * 0.5, SHUTTER_Z),
-			SHUTTER, SHUTTER.y, OPEN_SECONDS, theme)
+			SHUTTER, SHUTTER.y, theme)
 	add_child(shutter)
 	shutter.opened.connect(func() -> void: said.emit("SERVICE SHUTTER OPEN"))
 	shutter.closed.connect(func() -> void: said.emit(""))
@@ -288,7 +317,6 @@ func _the_annex() -> void:
 			theme)
 	add_child(release)
 	release.position = Vector3(16.4, FLANK_Y + CallLever.BASE.y * 0.5, -1.0)
-	release.pulled.connect(_on_release)
 	goal_plate = ActivityElement.create(ActivityElement.STAND, 0,
 			ActivityElement.PLATE_SIZE, Color(0.55, 1.0, 0.7))
 	add_child(goal_plate)
@@ -306,26 +334,33 @@ func _annex_east_wall(wall: Material) -> void:
 				(ROOM_HALF.y - 5.5) * 0.5), wall)
 
 
+## The declared chain, bound to this room's machines by the declaration's
+## own ids. The receiver's pulses and the TIMER's window are the graph's;
+## the release is its LATCH.
+func _the_graph() -> void:
+	graph = SignalGraph.bind_declared(Constants.MINOR_SIGNAL_GRAPHS.get(
+			"minor_counterfire_arcade", {}),
+			{"receiver": receiver, "release_lever": release,
+				"shutter": shutter},
+			"counterfire arcade")
+	add_child(graph)
+	graph.fired.connect(_on_fired)
+	graph.start()
+
+
+func _on_fired(_package: String, node_id: String) -> void:
+	if node_id == "release" and not released:
+		_release(true)
+
+
 ## §9: "the service route remains open after its accepted release."
 ##
-## Two consequences, and both are permanent. The shutter stops being on
-## a timer, and a fixed stair joins the flank to the arcade so the way
-## back does not need another baited shot.
-func _on_release(_who: CallLever) -> void:
-	if released:
-		return
-	_release(true)
-
-
+## Two consequences, and both are permanent. The LATCH holds the shutter
+## open through the OR whatever the window does -- that is the graph's --
+## and a fixed stair joins the flank to the arcade so the way back does
+## not need another baited shot, which is this.
 func _release(announce: bool) -> void:
 	released = true
-	shutter.open_seconds = INF
-	if announce:
-		shutter.trip()
-	else:
-		# ALREADY OPEN, not opening: a route the campaign's record says
-		# is open is open when the room appears.
-		shutter.settle(true)
 	var before := get_child_count()
 	_stair(Vector3(ROOM_HALF.x - 3.0, 0.0, ROOM_HALF.y - 2.0),
 			Vector3(ROOM_HALF.x - 0.6, FLANK_Y, ROOM_HALF.y - 2.0), 1.8)
@@ -354,10 +389,6 @@ func _the_gunner() -> void:
 	gunner = Enemy.create("ranged", theme)
 	add_child(gunner)
 	gunner.position = GUNNER
-
-
-func _on_struck(_from: Vector3) -> void:
-	shutter.trip()
 
 
 func _signs() -> void:

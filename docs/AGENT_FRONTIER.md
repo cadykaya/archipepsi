@@ -67,6 +67,14 @@ one writer.
   EX50-021 is deliberately not routed: its window is the shutter's own
   timer. Landed at `a718654`, with `godot-candidate-live` all eight
   phases.
+- **O05-07 slice 2: EX50-021 through the graph: done.** The arcade's
+  own chain, as §3 names it: the receiver's pulse feeds an 8 s TIMER;
+  the TIMER and the release's LATCH meet in an OR that drives the
+  shutter. TIMER and SHOOTABLE_TARGET (PULSE) join. `[RANGED]` is a
+  floor, not a filter, because the runtime has no damage tags; that gap
+  is stated. `ServiceShutter` lost its private clock. Slice 1's
+  "not routed" note misread §3 and is corrected. `godot-counterfire` 55;
+  candidate-live all eight phases; `make test-bridge` 1907.
 - **O05-07.5, sensor safety: done (tests only).** Class-not-sum,
   duplicate occupancy (every plate answer recorded), a repeated pull,
   and a stale callback, each through the graph and each sabotaged.

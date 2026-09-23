@@ -256,7 +256,7 @@ func _the_crate() -> void:
 func _the_shutter() -> void:
 	shutter = ServiceShutter.create(
 			Vector3(0.0, SILL_Y + 1.0, NORTH_Z),
-			Vector3(DOOR_HALF * 2.0, 2.0, 0.35), 2.0, INF, theme)
+			Vector3(DOOR_HALF * 2.0, 2.0, 0.35), 2.0, theme)
 	add_child(shutter)
 	# §4: "Initially the crate is parked, the plate is OFF and the
 	# shutter is open." ALREADY OPEN, not opening: a panel that spent its
@@ -320,34 +320,12 @@ func _beyond() -> void:
 ## declaration's own ids. A declared id the room has no machine for is a
 ## drift between the contract and the room, and it is said loudly.
 func _the_graph() -> void:
-	var declared: Dictionary = Constants.MINOR_SIGNAL_GRAPHS.get(
-			"minor_unweighted_switch", {})
 	# §11's control cuts the plate's link: declared, left unbound.
-	var machines := {"plate": null if disconnected else plate,
-			"bolt_lever": bolt, "shutter": shutter}
-	graph = SignalGraph.new()
-	graph.name = "Graph"
-	graph.room_id = "minor"
-	for raw: Variant in declared.get("sensors", []) as Array:
-		var id := str((raw as Dictionary).get("node_id", ""))
-		if not machines.has(id):
-			push_error("unweighted switch: the declared sensor '%s' has "
-					% id + "no machine in the room")
-		graph.sensors[id] = machines.get(id)
-	for raw: Variant in declared.get("nodes", []) as Array:
-		var node: Dictionary = raw
-		graph.nodes.append({"id": str(node.get("node_id", "")),
-				"kind": str(node.get("kind", "")),
-				"inputs": node.get("inputs", [])})
-	for raw: Variant in declared.get("actuators", []) as Array:
-		var bind: Dictionary = raw
-		var id := str(bind.get("actuator_id", ""))
-		if not machines.has(id):
-			push_error("unweighted switch: the declared actuator '%s' has "
-					% id + "no machine in the room")
-		graph.actuators[id] = {"node": machines.get(id),
-				"driven_by": str(bind.get("driven_by", "")),
-				"operation": str(bind.get("operation", "command"))}
+	graph = SignalGraph.bind_declared(Constants.MINOR_SIGNAL_GRAPHS.get(
+			"minor_unweighted_switch", {}),
+			{"plate": null if disconnected else plate,
+				"bolt_lever": bolt, "shutter": shutter},
+			"unweighted switch")
 	add_child(graph)
 	# §3: "Reaching and operating it makes the useful crossing persistent
 	# without requiring the temporary Status to remain active forever."

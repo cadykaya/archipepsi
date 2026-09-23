@@ -1,13 +1,16 @@
 class_name ServiceShutter
 extends AnimatableBody3D
-## A shutter that opens for a while and closes itself, and will not close
-## on somebody.
+## A shutter that opens and shuts on command, and will not close on
+## somebody.
 ##
-## **The timer is the machine's, not the player's.** EX50-021 §3: the
-## interval "refreshes on another valid receiver hit", and §9: the timer
-## is ephemeral while what lies beyond it is not. So this owns exactly
-## two things — how far the panel has slid, and how long is left — and
-## the room owns what opened it and what it leads to.
+## **The window is the graph's, not the shutter's (O05-07).** EX50-021
+## §3 names the parts: "the eight-second TIMER refreshes on another valid
+## receiver hit. Its output opens the service shutter." So the interval
+## is a TIMER node in the room's signal graph and this is its actuator,
+## commanded like every other. It used to keep a clock of its own, and
+## the arcade tripped it directly; a second timer here would be a second
+## answer to how long the way stays open. What this owns is how far the
+## panel has slid, and the interlock.
 ##
 ## **The interlock is physical, and it is §21.2's.** EX50-021 §8 asks
 ## that "a player already in the doorway is not crushed"; Amalgam §21.2
@@ -44,13 +47,10 @@ var travel := 2.6
 ## Where the panel's centre sits when shut.
 var shut_at := Vector3.ZERO
 var panel := Vector3(2.4, 2.6, 0.3)
-## §2's "proposed eight-second interval".
-var open_seconds := 8.0
 
 var offset := 0.0
 var speed := 0.0
 var goal := 0.0
-var left := 0.0
 
 var _theme := "concrete_facility"
 var _doorway: Area3D = null
@@ -59,14 +59,12 @@ var _interlock := SafeClosure.new()
 
 
 static func create(shut_centre: Vector3, panel_size: Vector3,
-		rise: float, seconds := 8.0,
-		theme := "concrete_facility") -> ServiceShutter:
+		rise: float, theme := "concrete_facility") -> ServiceShutter:
 	var made := ServiceShutter.new()
 	made.name = "ServiceShutter"
 	made.shut_at = shut_centre
 	made.panel = panel_size
 	made.travel = rise
-	made.open_seconds = seconds
 	made._theme = theme
 	return made
 
@@ -118,13 +116,6 @@ func _adopt() -> void:
 	_doorway.rotation.y = rotation.y
 
 
-## Open it, or refresh the interval if it is already open. §3: the timer
-## "refreshes on another valid receiver hit".
-func trip() -> void:
-	left = open_seconds
-	goal = travel
-
-
 ## START in a commanded state, rather than travel to it.
 ##
 ## A route the campaign's record says is open must BE open when the Zone
@@ -140,16 +131,10 @@ func settle(open: bool) -> void:
 		_place()
 
 
-## DRIVEN BY A LIVE SIGNAL rather than by an interval.
-##
-## `trip` is the timed door EX50-021 needs: opened by an impact, closing
-## itself after a declared window. EX50-033's is the other kind -- a
-## safety lockout wired through a NOT to a plate, open exactly while the
-## plate is clear, with no window of its own. Both are this panel; what
-## differs is who decides when it shuts, so the interval is cleared here
-## rather than fought with.
+## DRIVEN BY A LIVE SIGNAL. EX50-021's window is a TIMER feeding it;
+## EX50-033's safety lockout is a NOT on a plate. Both are this panel,
+## commanded by what the graph says.
 func command(open: bool) -> void:
-	left = 0.0
 	goal = travel if open else 0.0
 
 
@@ -200,10 +185,6 @@ func _physics_process(delta: float) -> void:
 
 
 func advance(delta: float) -> void:
-	if left > 0.0:
-		left = maxf(left - delta, 0.0)
-		if left <= 0.0:
-			goal = 0.0
 	# THE INTERLOCK — §21.2, through the shared rule. A closing shutter
 	# that finds somebody in the doorway stops, goes back to FULLY OPEN,
 	# and tries again a second later, for as long as the doorway is

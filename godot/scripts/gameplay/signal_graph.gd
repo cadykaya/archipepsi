@@ -25,12 +25,13 @@ extends Node3D
 ## origin of the Zone's space, so a child's `position` means the same
 ## thing whether it hangs here or off the controller.
 ##
-## **IT IS NOT A NEW WIRE.** `unweighted_switch.gd` already runs this
-## exact chain, hand-wired in `_on_plate`: a HEAVY class plate, a NOT,
-## and a shutter. What is new is that a Zone can ASK for it. The
-## scenario keeps its own wiring -- it is scaffolding for a room that
-## predates the declaration, and rewriting it to go through here would
-## change a working room to prove a point about a different one.
+## **IT RUNS THE ROOMS' OWN CHAINS TOO (O05-07).** A Zone asks for a
+## chain through `room_graphs` and `RoomGraphs` builds it. A minor room
+## that owns its machines -- EX50-033's plate, bolt and shutter,
+## EX50-021's receiver, release and shutter -- has its chain declared in
+## its occurrence contract instead, and binds its own machines to it
+## through `bind_declared`. Either way this is what evaluates it; the
+## rooms keep only what is presentation.
 
 ## The room this graph belongs to. Room-local by construction.
 var room_id := ""
@@ -39,20 +40,27 @@ var room_id := ""
 ## and a graph that ran and did nothing are different findings.
 var ticks := 0
 
-## `node_id -> ClassPlate | CallLever | null`. The sources. A plate is a
-## Boolean; a lever is a PULSE_BUTTON (O05-07), whose pull is a pulse
-## that lives exactly one tick (§19.3). A source declared and left null
-## is UNBOUND and reads OFF -- EX50-033's §11 control, the plate's link
-## cut.
+## `node_id -> ClassPlate | CallLever | ImpactReceiver | null`. The
+## sources. A plate is a Boolean. A lever is a PULSE_BUTTON and a
+## receiver a SHOOTABLE_TARGET in PULSE mode (O05-07): a pull, or a valid
+## hit, is a pulse that lives exactly one tick (§19.3). A source declared
+## and left null is UNBOUND and reads OFF -- EX50-033's §11 control, the
+## plate's link cut.
 var sensors: Dictionary = {}
+
+## Running TIMERs: `node_id -> seconds left`. §19.6 makes a TIMER
+## EPHEMERAL: it is never saved and never restored, so a rebuilt room
+## starts every TIMER OFF. The only state here that the clock changes.
+var timers: Dictionary = {}
 
 ## Pulses raised on the tick being evaluated, by sensor id. Cleared the
 ## moment that tick is done, so a pulse is never read twice.
 var _pulses: Dictionary = {}
-## Levers already wired, so `start` twice does not pull twice.
+## Pulse sources already wired, so `start` twice does not pulse twice.
 var _wired: Dictionary = {}
 
-## Logic nodes in DECLARATION order: `[{id, kind, inputs}]`.
+## Logic nodes in DECLARATION order: `[{id, kind, inputs}]`, and a
+## TIMER's `duration`.
 var nodes: Array = []
 
 ## `actuator_id -> {"node": Node, "driven_by": String,
@@ -90,6 +98,70 @@ var latched: Dictionary = {}
 ## `graph_` name alone authorizes nothing, and physics packages may not
 ## take the prefix.
 signal fired(package: String, node_id: String)
+
+
+## BIND A DECLARED GRAPH TO A ROOM'S OWN MACHINES (O05-07).
+##
+## `declared` is one of `Constants.MINOR_SIGNAL_GRAPHS`: the chain a
+## minor's occurrence contract declares, already validated by the
+## bridge. `machines` maps the declaration's ids to what the room built.
+## A declared id the room has no machine for, or a machine of the wrong
+## kind -- a lever where the declaration says a target -- is drift
+## between the contract and the room. It is said loudly and left
+## unbound, so it reads OFF rather than run as something it is not. A
+## machine the room leaves null on purpose is UNBOUND (EX50-033's §11
+## control).
+##
+## Returned unstarted and outside the tree: the room adds it, connects
+## `fired`, restores, and then calls `start`.
+static func bind_declared(declared: Dictionary, machines: Dictionary,
+		owner: String) -> SignalGraph:
+	var graph := SignalGraph.new()
+	graph.name = "Graph"
+	graph.room_id = str(declared.get("room_id", "minor"))
+	for raw: Variant in declared.get("sensors", []) as Array:
+		var sensor: Dictionary = raw
+		var id := str(sensor.get("node_id", ""))
+		var kind := str(sensor.get("kind", ""))
+		if not machines.has(id):
+			push_error("%s: the declared sensor '%s' has no machine in the "
+					% [owner, id] + "room")
+		var machine: Variant = machines.get(id)
+		if machine != null and not source_is(kind, machine):
+			push_error("%s: the declared %s '%s' is bound to %s; left "
+					% [owner, kind, id, machine] + "unbound")
+			machine = null
+		graph.sensors[id] = machine
+	for raw: Variant in declared.get("nodes", []) as Array:
+		var node: Dictionary = raw
+		var made := {"id": str(node.get("node_id", "")),
+				"kind": str(node.get("kind", "")),
+				"inputs": node.get("inputs", [])}
+		if node.has("duration"):
+			made["duration"] = float(node["duration"])
+		graph.nodes.append(made)
+	for raw: Variant in declared.get("actuators", []) as Array:
+		var bind: Dictionary = raw
+		var id := str(bind.get("actuator_id", ""))
+		if not machines.has(id):
+			push_error("%s: the declared actuator '%s' has no machine in "
+					% [owner, id] + "the room")
+		graph.actuators[id] = {"node": machines.get(id),
+				"driven_by": str(bind.get("driven_by", "")),
+				"operation": str(bind.get("operation", "command"))}
+	return graph
+
+
+## Whether `machine` is the thing a declared sensor of `kind` is.
+static func source_is(kind: String, machine: Variant) -> bool:
+	match kind:
+		"PRESSURE_PLATE":
+			return machine is ClassPlate
+		"PULSE_BUTTON":
+			return machine is CallLever
+		"SHOOTABLE_TARGET":
+			return machine is ImpactReceiver
+	return false
 
 
 ## The package this graph's latches are recorded under.
@@ -159,9 +231,11 @@ func start() -> void:
 			var plate: ClassPlate = source
 			if not plate.occupancy_changed.is_connected(_on_sensor):
 				plate.occupancy_changed.connect(_on_sensor)
-		elif source is CallLever and not _wired.has(str(key)):
+		elif _pulses_from(source) and not _wired.has(str(key)):
 			_wired[str(key)] = true
-			(source as CallLever).pulled.connect(_on_pulse.bind(str(key)))
+			var pulse: Signal = (source as CallLever).pulled \
+					if source is CallLever else (source as ImpactReceiver).struck
+			pulse.connect(_on_pulse.bind(str(key)))
 	evaluate(true)
 
 
@@ -169,8 +243,18 @@ func _on_sensor(_satisfied: bool) -> void:
 	evaluate()
 
 
-## A PULSE_BUTTON pulled: one tick with its pulse raised, then gone.
-func _on_pulse(_lever: CallLever, sensor_id: String) -> void:
+## Whether a source's output is a PULSE: a PULSE_BUTTON's lever, or a
+## SHOOTABLE_TARGET's receiver, which "emits one pulse per valid hit"
+## (EX50-021 §3) and debounces a burst of impacts into one.
+static func _pulses_from(source: Variant) -> bool:
+	return source is CallLever or source is ImpactReceiver
+
+
+## A PULSE_BUTTON pulled, or a target struck: one tick with its pulse
+## raised, then gone. What the signal carried -- the lever, or where the
+## shot came from -- is not an input (§9: the last hit source "is not the
+## progression authority").
+func _on_pulse(_payload: Variant, sensor_id: String) -> void:
 	_pulses[sensor_id] = true
 	evaluate()
 	_pulses.erase(sensor_id)
@@ -183,9 +267,37 @@ func _read(sensor_id: String) -> bool:
 		return false
 	if source is ClassPlate:
 		return (source as ClassPlate).satisfied()
-	if source is CallLever:
+	if _pulses_from(source):
 		return _pulses.has(sensor_id)
 	return false
+
+
+func _physics_process(delta: float) -> void:
+	advance(delta)
+
+
+## RUN THE TIMERS DOWN. A TIMER running out is its output falling, so the
+## graph evaluates on that tick -- the one change here that no sensor
+## announces. Nothing runs, nothing is evaluated. Split out so a suite
+## can step it by hand, in the idiom every machine here uses.
+func advance(delta: float) -> void:
+	if timers.is_empty():
+		return
+	var lapsed := false
+	for id: Variant in timers.keys():
+		var left := float(timers[id]) - delta
+		if left <= 0.0:
+			timers.erase(id)
+			lapsed = true
+		else:
+			timers[id] = left
+	if lapsed:
+		evaluate()
+
+
+## Seconds a TIMER has left; 0 when it is OFF.
+func timer_left(node_id: String) -> float:
+	return float(timers.get(node_id, 0.0))
 
 
 ## ONE TICK. Sensors, then logic in declaration order, then the
@@ -234,6 +346,13 @@ func _resolve(node: Dictionary) -> bool:
 				if bool(values.get(str(feed), false)):
 					return true
 			return false
+		"TIMER":
+			# §19.2: ON for `duration` after a pulse; "a new pulse restarts
+			# it". The schema proved the input is a pulse and the duration
+			# is there. `advance` runs it down.
+			if bool(values.get(str(inputs[0]), false)):
+				timers[id] = float(node.get("duration", 0.0))
+			return timer_left(id) > 0.0
 		"LATCH":
 			# SET BY A TRUE INPUT AND NEVER RESET. §19.2's latch has no
 			# clear in this slice, because the puzzle it is here for is

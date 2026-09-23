@@ -148,6 +148,7 @@ func _run() -> void:
 	await _a_latch_chain_is_declarable_and_builds()
 	await _a_class_is_not_a_sum_and_one_off_is_not_both()
 	await _a_graph_that_is_gone_hears_nothing()
+	await _a_declared_sensor_binds_only_its_own_kind()
 	_finish()
 
 
@@ -641,3 +642,42 @@ func _button_latch(lever: CallLever) -> SignalGraph:
 	graph.nodes.append({"id": "held", "kind": "LATCH",
 			"inputs": ["button"]})
 	return graph
+
+
+## O05-07: DRIFT BETWEEN A CONTRACT AND A ROOM IS NOT RUN. A room binds
+## its own machines to a declared chain by id; a machine of the wrong
+## kind under a declared id -- a lever where the contract says a target
+## -- is left unbound, so it reads OFF, rather than run as a thing the
+## declaration never described. The right kinds bind, and a TIMER keeps
+## its declared duration.
+func _a_declared_sensor_binds_only_its_own_kind() -> void:
+	print("  -- a declared sensor binds only a machine of its own kind")
+	var declared := {"room_id": "minor",
+		"sensors": [{"node_id": "receiver", "kind": "SHOOTABLE_TARGET",
+				"mode": "PULSE"},
+			{"node_id": "release_lever", "kind": "PULSE_BUTTON"}],
+		"nodes": [{"node_id": "window", "kind": "TIMER",
+				"inputs": ["receiver"], "duration": 8.0}],
+		"actuators": [{"actuator_id": "shutter", "driven_by": "window"}]}
+	var lever := CallLever.make("A", Color(1.0, 1.0, 1.0))
+	var other := CallLever.make("B", Color(1.0, 1.0, 1.0))
+	var receiver := ImpactReceiver.create(0.0)
+	var wrong := SignalGraph.bind_declared(declared,
+			{"receiver": lever, "release_lever": other, "shutter": null},
+			"test")
+	_check(wrong.sensors.has("receiver") and wrong.sensors["receiver"]
+			== null and wrong.sensors["release_lever"] == other,
+			"a lever under the declared target's id is left unbound; the "
+			+ "lever under the lever's id binds")
+	var right := SignalGraph.bind_declared(declared,
+			{"receiver": receiver, "release_lever": lever, "shutter": null},
+			"test")
+	_check(right.sensors["receiver"] == receiver
+			and float((right.nodes[0] as Dictionary).get("duration", 0.0))
+			== 8.0,
+			"a receiver binds as the target, and the TIMER keeps its 8 s")
+	wrong.free()
+	right.free()
+	lever.free()
+	other.free()
+	receiver.free()
