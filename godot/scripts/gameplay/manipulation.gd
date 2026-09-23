@@ -135,12 +135,16 @@ static func push(body: ManipulableBody, from: Vector3, toward: Vector3,
 
 
 # ---------------------------------------------------------------------------
-# §14.3's IMPULSE VERBS, PUSH AND PULL -- RUNTIME ONLY (O05-08)
+# §14.2 FOR EVERY TARGETED VERB, AND §14.3's IMPULSE VERBS, PUSH AND PULL
+# -- RUNTIME ONLY (O05-08)
 # ---------------------------------------------------------------------------
 
-## Design 2 §14.3's three PUSH/PULL profiles, exactly: `range`, `force`
-## and `verb_mass_limit`. The only numbers the verb reads.
-const IMPULSE_PROFILES := {
+## Design 2 §14.3's three `ab_physics_*` profiles, exactly: `range`,
+## `force` and `verb_mass_limit`. PUSH and PULL read all three. HOLD and
+## ALIGN have no profile table of their own: they are verbs of the same
+## family (§12.1 `PHYSICS_VERB`) and read this row's `range` and
+## `verb_mass_limit`, the only numbers the family has.
+const PHYSICS_PROFILES := {
 	"ab_physics_light": {"range_m": 20.0, "force_n": 700.0,
 			"mass_limit_kg": 120.0},
 	"ab_physics_standard": {"range_m": 24.0, "force_n": 1400.0,
@@ -163,6 +167,55 @@ const NOT_MANIPULABLE := "not_manipulable"
 const FIXED := "fixed"
 const NOT_PERMITTED := "not_permitted"
 const NO_LINE_OF_SIGHT := "no_line_of_sight"
+## §14.2's actor rule, for a verb it never admits on an enemy (HOLD,
+## ALIGN, SETTLE, ...), as distinct from `actor_mass_unmodelled`: that
+## one is a verb the rule admits and this runtime cannot yet compute.
+const ACTOR_RULE := "actor_rule"
+## The targeted verbs §14.2 admits on an enemy (the fields are the rest).
+const ACTOR_VERBS := ["PUSH", "PULL", "PIN"]
+
+
+## §14.2 FOR ONE TARGETED VERB: "" when `target` is eligible, otherwise
+## the refusal's name. PUSH, PULL, HOLD and ALIGN all ask here, so the
+## table is read in one place. `numbers` is the verb's profile row;
+## `exclude` is what the line of sight may pass through (the caster).
+static func target_refusal(verb: String, target: Node, eye: Vector3,
+		numbers: Dictionary, space: PhysicsDirectSpaceState3D,
+		exclude: Array[RID] = []) -> String:
+	if target == null or not is_instance_valid(target):
+		# §12.3: "A verb aimed at nothing spends nothing."
+		return NO_TARGET
+	# §14.2's player and actor rules, before anything is measured.
+	if target.is_in_group("player"):
+		return NEVER_THE_PLAYER
+	if target is Enemy:
+		# The rule admits PUSH, PULL and PIN on an enemy, and each of them
+		# reads the target's `mass_kg` (§14.3). No enemy has one in this
+		# runtime, so its answer would be a guess -- refused by name
+		# rather than invented. Every other verb the rule refuses outright.
+		# Bosses (§14.2) take no verb either way.
+		return ACTOR_MASS_UNMODELLED if verb in ACTOR_VERBS else ACTOR_RULE
+	if not (target is ManipulableBody):
+		return NOT_MANIPULABLE
+	var body: ManipulableBody = target
+	# §14.2: FIXED responds to no verb but DETACH and ROTATE -- bolted,
+	# 400 kg and over, or anchored.
+	if body.mass_class() == MassClass.FIXED:
+		return FIXED
+	# KILOGRAMS, with Design 5 §15.2's one permissive door, exactly as
+	# `push` reads it: a lightened HEAVY body becomes eligible.
+	if body.mass > float(numbers["mass_limit_kg"]) \
+			and not _lightened_into_reach(body):
+		return TOO_HEAVY
+	if eye.distance_to(body.global_position) > float(numbers["range_m"]):
+		return OUT_OF_REACH
+	# §14.2's progression rule, with Design 2 §4.8's default.
+	if body.is_in_group(Constants.REQUIRED_OBJECT_GROUP) \
+			and not body.physics_permitted:
+		return NOT_PERMITTED
+	if not in_sight(space, eye, body, exclude):
+		return NO_LINE_OF_SIGHT
+	return ""
 
 
 ## ONE IMPULSE, ON COMMIT: §14.3's PUSH, away from the player along the
@@ -186,44 +239,13 @@ static func impulse_verb(verb: String, target: Node, eye: Vector3,
 		exclude: Array[RID] = []) -> Dictionary:
 	if verb != "PUSH" and verb != "PULL":
 		return {"applied": false, "refused": NOT_AN_IMPULSE_VERB}
-	if not IMPULSE_PROFILES.has(profile):
+	if not PHYSICS_PROFILES.has(profile):
 		return {"applied": false, "refused": UNKNOWN_PROFILE}
-	if target == null or not is_instance_valid(target):
-		# §12.3: "A verb aimed at nothing spends nothing."
-		return {"applied": false, "refused": NO_TARGET}
-	# §14.2's player and actor rules, before anything is measured.
-	if target.is_in_group("player"):
-		return {"applied": false, "refused": NEVER_THE_PLAYER}
-	if target is Enemy:
-		# §14.2 admits PUSH and PULL on an enemy, and §14.3 divides the
-		# force by the target's `mass_kg`. No enemy has one in this
-		# runtime, so its velocity would be a guess -- refused by name
-		# rather than invented. Bosses (§14.2) take no verb either way.
-		return {"applied": false, "refused": ACTOR_MASS_UNMODELLED}
-	if not (target is ManipulableBody):
-		return {"applied": false, "refused": NOT_MANIPULABLE}
+	var numbers: Dictionary = PHYSICS_PROFILES[profile]
+	var why := target_refusal(verb, target, eye, numbers, space, exclude)
+	if why != "":
+		return {"applied": false, "refused": why}
 	var body: ManipulableBody = target
-	var numbers: Dictionary = IMPULSE_PROFILES[profile]
-	# §14.2: FIXED responds to no verb but DETACH and ROTATE -- bolted,
-	# 400 kg and over, or anchored.
-	if body.mass_class() == MassClass.FIXED:
-		return {"applied": false, "refused": FIXED}
-	# KILOGRAMS, with Design 5 §15.2's one permissive door, exactly as
-	# `push` reads it: a lightened HEAVY body becomes eligible.
-	if body.mass > float(numbers["mass_limit_kg"]) \
-			and not _lightened_into_reach(body):
-		return {"applied": false, "refused": TOO_HEAVY,
-				"mass_kg": body.mass}
-	var reach := eye.distance_to(body.global_position)
-	if reach > float(numbers["range_m"]):
-		return {"applied": false, "refused": OUT_OF_REACH,
-				"reach_m": reach}
-	# §14.2's progression rule, with Design 2 §4.8's default.
-	if body.is_in_group(Constants.REQUIRED_OBJECT_GROUP) \
-			and not body.physics_permitted:
-		return {"applied": false, "refused": NOT_PERMITTED}
-	if not _in_sight(space, eye, body, exclude):
-		return {"applied": false, "refused": NO_LINE_OF_SIGHT}
 	var direction := aim.normalized() if verb == "PUSH" \
 			else -aim.normalized()
 	# §14.3: `impulse_velocity = clamp(force / mass_kg, 0.0, 30.0)`, one
@@ -249,13 +271,112 @@ static func _within_ceilings(velocity: Vector3) -> Vector3:
 ## §14.2: "Unobstructed from eye to target origin." Anything the ray
 ## meets on the way, other than the target and what the caller excluded,
 ## is in the way.
-static func _in_sight(space: PhysicsDirectSpaceState3D, eye: Vector3,
-		body: ManipulableBody, exclude: Array[RID]) -> bool:
+static func in_sight(space: PhysicsDirectSpaceState3D, eye: Vector3,
+		body: Node3D, exclude: Array[RID] = []) -> bool:
 	if space == null:
 		return false
 	var query := PhysicsRayQueryParameters3D.create(eye,
 			body.global_position)
 	var skip: Array[RID] = exclude.duplicate()
-	skip.append(body.get_rid())
+	if body is CollisionObject3D:
+		skip.append((body as CollisionObject3D).get_rid())
 	query.exclude = skip
+	return space.intersect_ray(query).is_empty()
+
+
+# ---------------------------------------------------------------------------
+# §14.3's SETTLE -- RUNTIME ONLY (O05-08.1)
+# ---------------------------------------------------------------------------
+
+## §14.3's one SETTLE profile, exactly.
+const SETTLE_PROFILES := {
+	"ab_settle_standard": {"range_m": 25.0, "radius_m": 8.0},
+}
+## A body in the volume left alone because machinery is driving it.
+const DRIVEN := "driven_by_machinery"
+## How many bodies one volume query may return. A room holds far fewer.
+const SETTLE_MAX_BODIES := 256
+
+## "Sets linear and angular velocity to zero on every eligible object
+## within `radius` of the aim point, and forces `sleeping = true` on the
+## next tick. Does not affect constrained objects currently driven by
+## machinery, and does not affect actors." (§14.3)
+##
+## A VOLUME VERB: §14.2 asks line of sight to the volume's centre only,
+## and a body is in the volume when its ORIGIN is within `radius`. Only
+## a `ManipulableBody` can be eligible, so an actor never is. Of the
+## rest, three are left alone and named: a `FIXED` body (§14.2: no verb
+## but DETACH and ROTATE), a required object whose package withholds
+## physics (§4.8), and a body in a constraint that machinery is driving
+## (`Constraints.driven`). The profile has no `verb_mass_limit`, so
+## nothing lighter than `FIXED` is refused by its kilograms.
+##
+## **RUNTIME ONLY**, as the impulse verbs above: nothing delivers it.
+static func settle(eye: Vector3, aim_point: Vector3, profile: String,
+		space: PhysicsDirectSpaceState3D, tree: SceneTree,
+		exclude: Array[RID] = []) -> Dictionary:
+	if not SETTLE_PROFILES.has(profile):
+		return {"applied": false, "refused": UNKNOWN_PROFILE}
+	var numbers: Dictionary = SETTLE_PROFILES[profile]
+	if eye.distance_to(aim_point) > float(numbers["range_m"]):
+		return {"applied": false, "refused": OUT_OF_REACH}
+	if not _clear(space, eye, aim_point, exclude):
+		return {"applied": false, "refused": NO_LINE_OF_SIGHT}
+	var radius := float(numbers["radius_m"])
+	var sphere := SphereShape3D.new()
+	sphere.radius = radius
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = sphere
+	query.transform = Transform3D(Basis.IDENTITY, aim_point)
+	query.collide_with_areas = false
+	var solvers := tree.get_nodes_in_group(Constraints.GROUP)
+	var settled: Array[ManipulableBody] = []
+	var left := {}
+	for hit: Dictionary in space.intersect_shape(query, SETTLE_MAX_BODIES):
+		var body := hit.get("collider") as ManipulableBody
+		if body == null or settled.has(body) or left.has(body) \
+				or body.global_position.distance_to(aim_point) > radius:
+			continue
+		var why := ""
+		if body.mass_class() == MassClass.FIXED:
+			why = FIXED
+		elif body.is_in_group(Constants.REQUIRED_OBJECT_GROUP) \
+				and not body.physics_permitted:
+			why = NOT_PERMITTED
+		else:
+			for solver: Node in solvers:
+				if (solver as Constraints).driven(body):
+					why = DRIVEN
+					break
+		if why != "":
+			left[body] = why
+			continue
+		body.linear_velocity = Vector3.ZERO
+		body.angular_velocity = Vector3.ZERO
+		settled.append(body)
+	if not settled.is_empty():
+		# "On the next tick": the solver steps once with the velocities
+		# zeroed, and the next physics frame puts every one to sleep.
+		tree.physics_frame.connect(func() -> void:
+			for body: ManipulableBody in settled:
+				if is_instance_valid(body):
+					body.sleeping = true,
+				CONNECT_ONE_SHOT)
+	return {"applied": true, "refused": "", "settled": settled,
+			"left": left}
+
+
+## Nothing between `from` and `to` but what the caller excluded. A
+## volume's centre is usually a point on a surface -- where the aim ray
+## landed -- so the test stops 5 cm short rather than meet that surface.
+static func _clear(space: PhysicsDirectSpaceState3D, from: Vector3,
+		to: Vector3, exclude: Array[RID]) -> bool:
+	if space == null:
+		return false
+	var reach := from.distance_to(to)
+	if reach < 0.05:
+		return true
+	var query := PhysicsRayQueryParameters3D.create(from,
+			from + (to - from) * ((reach - 0.05) / reach))
+	query.exclude = exclude
 	return space.intersect_ray(query).is_empty()

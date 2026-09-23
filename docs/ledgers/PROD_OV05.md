@@ -122,8 +122,12 @@ rule, before it is edited. Rows are appended as edits land:
 | `epsilon/fallback`: the explosive rule's consumable reading (`_consumable`, new) | O05-11.3 "a deterministic supported candidate provider must be able to produce and deliver a consumable ... include real damage and a currently supported Status" | only when the request offers the slot: three of the weapon reading's own lob, plus `stunned` 1.5 s. Otherwise unchanged, and no other item reads differently (tested) | `65f3ef4` |
 | `__main__._candidate_line`, `--candidate` help; `diagnostic.candidate_steps` message | O05-15.1 "print ... profile ... and any staged functions" | the option is printed with the steps | `65f3ef4` |
 | `EchoProjectile.statuses` + `_apply_statuses` (new); `EchoRuntime._launch` | the schema's pairing of `apply_status_on_hit` with any damage primitive (P5-19) | a projectile carries its status modifiers to what it damages | `65f3ef4` |
-| `Manipulation.impulse_verb` (Godot, new), with `IMPULSE_PROFILES`, the two §14.4 ceilings and nine refusal names; `_within_ceilings`, `_in_sight` | Design 2 §14.2 (eligibility), §14.3 (PUSH/PULL: one impulse on commit, `clamp(force / mass_kg, 0, 30)`, the three profiles' numbers), §14.4 (30 m/s; 14 m/s vertical); Design 5 §15.2 (`lightened`) | a new static verb beside the replay harness's held-force `push`, which is untouched. Offered to nothing: no Echo Action, no generation, no qualification reads it | O05-08 commit |
-| `ManipulableBody.physics_permitted` (Godot, new; default true) | Design 2 §4.8 `PhysicalObject.physics_permitted : bool = true`; §14.2's progression rule | read only by `impulse_verb`, for bodies in the required-object group. Nothing sets it false yet | O05-08 commit |
+| `Manipulation.impulse_verb` (Godot, new), with `IMPULSE_PROFILES`, the two §14.4 ceilings and nine refusal names; `_within_ceilings`, `_in_sight` | Design 2 §14.2 (eligibility), §14.3 (PUSH/PULL: one impulse on commit, `clamp(force / mass_kg, 0, 30)`, the three profiles' numbers), §14.4 (30 m/s; 14 m/s vertical); Design 5 §15.2 (`lightened`) | a new static verb beside the replay harness's held-force `push`, which is untouched. Offered to nothing: no Echo Action, no generation, no qualification reads it | `7ca5945` |
+| `ManipulableBody.physics_permitted` (Godot, new; default true) | Design 2 §4.8 `PhysicalObject.physics_permitted : bool = true`; §14.2's progression rule | read only by `impulse_verb`, for bodies in the required-object group. Nothing sets it false yet | `7ca5945` |
+| `Manipulation.target_refusal` (new; `impulse_verb` now asks it), `in_sight` (was `_in_sight`), `ACTOR_RULE`, `PHYSICS_PROFILES` (was `IMPULSE_PROFILES`) | §14.2's table, read once for PUSH, PULL, HOLD and ALIGN; its actor rule ("Never HOLD, ATTACH, TETHER, ROTATE, ALIGN, DETACH, SETTLE") | PUSH/PULL answers unchanged (23 checks); an enemy is `actor_rule` for a verb the rule never admits, `actor_mass_unmodelled` for one it admits | O05-08.1 commit |
+| `Manipulation.settle`, `SETTLE_PROFILES`, `DRIVEN` (new) | §14.3 SETTLE and its profile; §14.2's volume line-of-sight rule | runtime only; offered to nothing | O05-08.1 commit |
+| `VerbHold`, `VerbAlign` (Godot, new files) | §14.3 HOLD and ALIGN; §14.4's carry distance; §31.2 for the one relation that exists | runtime only; offered to nothing | O05-08.1 commit |
+| `Constraints.GROUP` + `_ready`, `driven(body)`, `involves(id, body)`, `Link.driven_frame` (stamped by `wind` and `drive`) | §14.3 SETTLE ("does not affect constrained objects currently driven by machinery"); §14.3 HOLD's constraint release | additive queries; the solver's behaviour is unchanged (`godot-constraints` 67, `godot-actuator` 93) | O05-08.1 commit |
 
 ## Reconciliation (O05-00.2): the immediately relevant rows only
 
@@ -964,7 +968,10 @@ graph, not just the sensor, and each was sabotaged.
   generation. Nothing is delivered, and there are no primitives or
   shortcuts.
 
-### O05-08.1 — PUSH and PULL, the first verb family — runtime only, verified by direct invocation
+### O05-08.1 — PULL/HOLD/ALIGN/SETTLE (with PUSH) — runtime only, verified by direct invocation
+
+#### PUSH and PULL (`7ca5945`)
+
 
 - **What exists now.** `Manipulation.impulse_verb(verb, target, eye,
   aim, profile, space, exclude)` in
@@ -1041,10 +1048,133 @@ graph, not just the sensor, and each was sabotaged.
   once delivery exists), or any played use. Generation is unaffected:
   `physics.MANIPULATE_VERBS` and `grants_manipulate` are unchanged, and
   nothing advertises the verb.
-- **Remaining families, each runtime-only on the same terms:** HOLD
-  (§14.3's 1.5–6.0 m hold distance, 8 m/s and release conditions), ALIGN
-  and SETTLE, TETHER / PIN / ROTATE, ATTACH / DETACH, and the two mass
-  fields. Not started in this run.
+#### HOLD, ALIGN and SETTLE (this commit)
+
+- **One eligibility table.** `Manipulation.target_refusal` answers §14.2
+  for every targeted verb, so PUSH, PULL, HOLD and ALIGN cannot drift
+  apart. Its actor rule refuses an enemy as `actor_rule` for a verb the
+  rule never admits (HOLD, ALIGN), and as `actor_mass_unmodelled` for one
+  it admits but this runtime cannot compute (PUSH, PULL, PIN).
+- **A reading, stated.** HOLD and ALIGN have no profile table of their
+  own. They are verbs of the same family (§12.1 `PHYSICS_VERB`) and read
+  the `ab_physics_*` row's `range` and `verb_mass_limit`, the only numbers
+  the family has.
+- **HOLD (`VerbHold`).** 3.5 m ahead of the eye by default, clamped to
+  1.5–6.0 m. How far one wheel notch moves it is the input's choice; no
+  input reaches the verb, and the source does not say.
+  - **Motion.** Each tick, the step toward the hold point (at most 8 m/s
+    of it) is swept with the body's own shape and collision exceptions,
+    then slid once along what it met. The body stays dynamic, gravity is
+    suspended while it is held, and rotation is left to the solver.
+  - **The first version was wrong, and the test said so.** Driving the
+    velocity straight at a hold point under the floor left the crate
+    resting 7 cm inside the floor (centre 0.329 m where resting is
+    0.400). The solver cancels the approach, but only slowly undoes a
+    penetration it is driven back into every tick. Swept, it rests at
+    0.400 and meets the floor at 0.399. That is `HandCarry`'s rule for
+    what a carried object meets, applied to a dynamic body.
+  - **Actors.** A collision exception both ways with every enemy and the
+    player, kept after release until the two stop overlapping. A crate
+    released inside an enemy falls through it; it is not thrown out
+    (0.37 m/s sideways at most). When the two are apart, both exceptions
+    go.
+  - **Release.** Watched by the hold: the target beyond `range × 1.5`;
+    line of sight blocked for 0.5 s without a break; a constraint the
+    body is one end of breaking; the caster's `died`; the target leaving
+    the tree (room unload or destroyed); the caster leaving the tree (a
+    Zone exit). A second HOLD on the same body releases the first
+    (§31.2, for the one relation that exists). Input release and save
+    are the caller's to call, and nothing delivers the verb yet.
+  - **Not here.** `max_relations` across HOLD, PIN and TETHER, which
+    waits on those verbs. HOLD on a hand-carried body: the sources do not
+    say, and it is not handled.
+- **ALIGN (`VerbAlign`).** It turns to the nearest of the 24
+  axis-aligned orientations. The turn is an angular velocity recomputed
+  each tick from the angle and time left of the 0.3 s. For 2.5 s after
+  that, the solver's own angular axis locks hold the orientation, and
+  linear velocity is never touched. The body's own locks are restored
+  afterwards, and a second ALIGN replaces the first.
+- **SETTLE (`Manipulation.settle`).** Profile `ab_settle_standard`: 25 m
+  range, 8 m radius. Line of sight is to the volume centre only, stopping
+  5 cm short of the surface point the aim ray found. A body is in the
+  volume when its origin is.
+  - **Zeroed and put to sleep.** Velocities are zeroed on the call, and
+    the body is put to sleep on the next physics frame.
+  - **Left alone, by name:** `fixed`; `not_permitted`;
+    `driven_by_machinery` (`Constraints.driven`: a WINCH changing the
+    length, or a DRIVER's motor turning it, this tick or the last).
+  - **Never eligible:** actors. Only a `ManipulableBody` is eligible.
+  - **No mass limit.** The profile has no `verb_mass_limit`, so nothing
+    lighter than `FIXED` is refused by its kilograms.
+- **A source conflict, named and not resolved.**
+  - **The pair:** §14.3 SETTLE, which "forces `sleeping = true` on the
+    next tick", against §14.3 PIN's rationale ("ignoring gravity ...
+    why `PIN` duration is short") and §14.4's bounded improvised
+    structures.
+  - **What the letter does here:** a body settled with nothing under it
+    is asleep, and the solver does not move a sleeping body, gravity
+    included. It fell 0.003 m in 1 s (measured as a note, not asserted).
+    That is an indefinite PIN in all but name.
+  - **What is done about it:** SETTLE is built to the letter. Nothing
+    delivers it, so no player can reach this. The choice goes to Dess or
+    the owner before delivery (for example, sleep only a supported body),
+    and none is made here.
+- **Evidence: `make godot-verb-runtime`, 56 checks and 1 note.**
+  Evidence class: DIRECT INVOCATION, RUNTIME ONLY. HOLD's caster is a
+  real `Player`, so its camera, body and death are real.
+  - **Design 2's own acceptance items:**
+    - 5: 700 N on 120 kg gives 5.8333 m/s.
+    - 28: 120.0 kg moves; 120.1 kg is `too_heavy`.
+    - 7: 10,000 random verbs, angles and masses (8,235 applied, the
+      second half lightened). The highest upward speed is 14.0000 m/s,
+      and the highest speed is 30.0000.
+    - 8: a held body stays within 0.000 m of `hold_distance` for 2 s,
+      under the 0.1 m bound.
+    - 9: the clamp is 1.5–6.0 m.
+    - 10: a 0.700 rad turn takes 19 ticks observed (the lock lands on
+      tick 19 of a 0.3 s = 18-tick turn), with 0.359 rad left at tick 9.
+      It arrives within 0.0015 rad and holds for 149 observed ticks
+      (2.5 s is 150) through an off-centre knock. It falls exactly with
+      a twin that has no ALIGN (0.000 m apart).
+    - 20: three sliding crates are zeroed and asleep on the next tick,
+      and have moved 0.0000 m half a second later. A winch's load keeps
+      rising at 1.50 m/s.
+    - 21: 7,998 aimed verbs are all `never_the_player`, 2,002 SETTLE
+      volumes around the player never touch it, and the player moves
+      0.0000 m.
+  - **HOLD in motion:** the body reaches the hold point after 28 ticks,
+    never faster than 7.83 m/s or 0.130 m in a tick. It follows the
+    caster sideways at the same bound.
+  - **Every watched release:** `out_of_range` (held at about 28 m,
+    released past 30 m). `occluded`: 20 ticks behind a wall is not
+    enough and the count restarts, then 30 ticks release it.
+    `constraint_broke` (a 200 N rope). `target_gone`, `superseded`,
+    `caster_gone` and `death`. Each release restores gravity.
+  - **SETTLE refusals:** 26 m (`out_of_reach`); a wall before the centre
+    (`no_line_of_sight`); an unknown profile.
+- **Sabotages (10, each restored):**
+
+  | # | Sabotage | Result |
+  |---|---|---|
+  | H1 | remove the step cap alone | **passes**: the velocity cap enforces the same 8 m/s bound. Not a gap; the next row shows the bound is tested |
+  | H1b | remove both caps | 4 failures: 217 m/s, 3.6 m in a tick, and the out-of-range case changes |
+  | H2 | remove the sweep | the floor case fails (centre 0.329 m) |
+  | H3 | no actor exceptions | 2 failures (the enemy case) |
+  | H4 | occlusion never resets | the hold releases after 9 ticks instead of 30 |
+  | H5 | no constraint watch | the hold is never released by the broken rope |
+  | A1 | ALIGN snaps | the turn reads 0.000 rad |
+  | A2 | ALIGN holds with no lock | 2.33 rad off through the knock |
+  | S1 | SETTLE ignores machinery | the winch's load is settled; 2 failures |
+  | S2 | SETTLE never sleeps | item 20 fails |
+- **Neighbours unchanged:** `godot-constraints` 67, `godot-actuator` 93,
+  `godot-physics` 68, `godot-carry` 32, `godot-mass-class` 59,
+  `godot-unweighted` 70, `godot-transport` 106.
+- **Still not claimed:** delivery, qualification, or a played use.
+  `physics.MANIPULATE_VERBS` and `grants_manipulate` are unchanged, and
+  nothing offers these verbs to generation.
+- **Remaining O05-08:** 08.2 (TETHER, PIN, ROTATE), 08.3 (ATTACH,
+  DETACH) and 08.4 (the mass fields) are not started. 08.5 (delivery
+  and qualification) stays behind the design boundary above.
 
 ### O05-14 — existing visual work — reconciled; nothing it may bind
 

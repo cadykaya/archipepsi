@@ -91,12 +91,19 @@ one writer.
   the running Echo model does not implement for any verb, so a
   primitive would be a parallel path. That is a design boundary, not a
   missing mapping. Qualification waits on delivery.
-- **O05-08.1: PUSH and PULL, runtime only.** `Manipulation.impulse_verb`
-  to §14.2–§14.4: eleven named refusals, one impulse by the formula, and
-  both ceilings applied after `lightened` doubles it. Enemies are
-  refused as `actor_mass_unmodelled`, because no enemy has the mass the
-  formula divides by. `make godot-verb-runtime` 23 checks, in CI, with
-  4 sabotages. Evidence is direct invocation; nothing delivers the verb.
+- **O05-08.1: PUSH, PULL, HOLD, ALIGN and SETTLE, runtime only.**
+  - One §14.2 table (`Manipulation.target_refusal`) serves every
+    targeted verb.
+  - HOLD sweeps its step at up to 8 m/s, passes through actors, and
+    watches 7 release conditions. ALIGN turns over 0.3 s, then holds on
+    the solver's axis lock for 2.5 s. SETTLE leaves FIXED, withheld and
+    machine-driven bodies alone.
+  - Design 2's acceptance items 5, 7, 8, 9, 10, 20, 21 and 28 are proven
+    by direct invocation. `make godot-verb-runtime`: 56 checks, 1 note,
+    10 sabotages.
+  - Named source conflict: SETTLE's forced sleep holds an unsupported
+    body in mid-air (0.003 m in 1 s) against PIN's short-duration
+    rationale. It is unreachable while nothing delivers the verb.
 - **O05-14: reconciled, nothing to bind.** No delivered enemy or
   machinery models exist; the 3 projectile visuals stay `pending`.
 - **O05-10 in part: 10.1 audit, 10.3 reversal, 10.4 isolation.** Every

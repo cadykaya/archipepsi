@@ -53,6 +53,10 @@ signal broke(constraint_id: String, at_force: float)
 signal rebuilt(constraint_id: String)
 
 const ITERATIONS := Constants.CONSTRAINT_SOLVER_ITERATIONS
+## Every solver in the tree, so a verb that must leave machinery alone
+## (§14.3 SETTLE) or let go when a constraint breaks (§14.3 HOLD) finds
+## them without being handed a list.
+const GROUP := "constraint_solvers"
 const CORRECTION := Constants.CONSTRAINT_CORRECTION
 ## How hard a brake holds. Large enough to stop a §14.4-legal mass at a
 ## §14.4-legal speed, which is the heaviest thing a player can set moving.
@@ -104,6 +108,9 @@ class Link extends RefCounted:
 	var locked := false
 	var lock_at := 0.0
 	var rest := Basis()
+	## The physics frame a machine last drove this: a `WINCH` changing
+	## its length, a `DRIVER`'s motor turning it. -1 for never.
+	var driven_frame := -1
 
 	func point_a() -> Vector3:
 		return a.global_position if a != null else anchor_a
@@ -125,6 +132,10 @@ var _refused: Array[String] = []
 ## Build the authored constraints. Returns what it refused and why; a
 ## refusal names the constraint rather than the batch, because one bad
 ## row must not cost the room its other seven.
+func _ready() -> void:
+	add_to_group(GROUP)
+
+
 func declare(specs: Array) -> Array[String]:
 	var out: Array[String] = []
 	for raw: Variant in specs:
@@ -251,8 +262,11 @@ func wind(id: String, metres: float) -> float:
 	if not _links.has(id):
 		return 0.0
 	var link: Link = _links[id]
+	var before := link.length
 	link.length = clampf(link.length + metres, link.length_min,
 			link.length_max)
+	if not is_equal_approx(before, link.length):
+		link.driven_frame = Engine.get_physics_frames()
 	return link.length
 
 
@@ -314,6 +328,31 @@ func drive(id: String, toward: float, rate: float, torque: float) -> void:
 	hinge.set_param(HingeJoint3D.PARAM_MOTOR_TARGET_VELOCITY,
 			signf(toward - link.value) * absf(rate))
 	hinge.set_param(HingeJoint3D.PARAM_MOTOR_MAX_IMPULSE, torque)
+	link.driven_frame = Engine.get_physics_frames()
+
+
+## IS MACHINERY DRIVING `body` RIGHT NOW? True while a `WINCH` is changing
+## the length of, or a `DRIVER`'s motor is turning, a constraint this body
+## is one end of -- this tick or the last, because whether the machine or
+## the reader runs first within a tick is the scene's order, not a fact
+## about the machine. A winch that has arrived and holds is not driving.
+func driven(body: RigidBody3D) -> bool:
+	var now := Engine.get_physics_frames()
+	for raw: Variant in _links.values():
+		var link: Link = raw
+		if link.broken or (link.a != body and link.b != body):
+			continue
+		if link.driven_frame >= now - 1:
+			return true
+	return false
+
+
+## Is `body` one end of constraint `id`?
+func involves(id: String, body: RigidBody3D) -> bool:
+	if not _links.has(id):
+		return false
+	var link: Link = _links[id]
+	return link.a == body or link.b == body
 
 
 func release(id: String) -> void:
