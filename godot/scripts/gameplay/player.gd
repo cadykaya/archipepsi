@@ -100,6 +100,11 @@ func holds() -> Array:
 	out.sort()
 	return out
 
+## Whether one named claim stands, for a reader that means that claim and
+## not the others -- `enemy.gd` asks about the layout verdict only.
+func held_by(reason: String) -> bool:
+	return _holds.has(reason)
+
 var gravity_mult := 1.0
 var speed_mult := 1.0
 ## The rest of the S5 derived stat stack, refreshed every physics frame
@@ -632,6 +637,25 @@ func _on_consumable_authorized(component_id: String,
 		BridgeClient.release_authorization(component_id)
 		return
 	BridgeClient.commit_consumable(component_id)
+
+
+## THE PLAYER'S OWN MASS CLASS: `PLAYER_MASS_KG` on the exported ladder,
+## which is `MEDIUM` at 80 kg.
+##
+## **Only a plate that opts in ever reads it.** `ClassPlate` skips the
+## player group unless its declaration sets `counts_player`, so EX50-033's
+## object-only plate is untouched; and every other class consumer is typed
+## to `ManipulableBody` (`manipulation.gd`, `affordance_nodes.gd`), while
+## the sensors that sum weight read `.mass`, which a `Player` does not
+## have. Adding this method changes what exactly one thing can see.
+##
+## **No Status moves it.** The bridge's route validator reads the player
+## at `PLAYER_MASS_KG` with nothing applied (D-10 §6), and a route it
+## certified must open for the body the runtime actually has. If a Status
+## ever changes the player's class, that is a transient the validator
+## does not model, and this is the line that would have to say so.
+func mass_class() -> String:
+	return MassClass.of_mass(Constants.PLAYER_MASS_KG)
 
 
 ## Is there anything left in the consumable slot? Counts what is in

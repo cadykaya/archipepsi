@@ -145,7 +145,7 @@ func _run() -> void:
 	await _a_kind_the_design_does_not_name_is_refused_differently()
 	await _a_graph_in_a_room_that_is_not_there_is_refused()
 	await _a_latch_holds_its_value_and_is_restored()
-	await _a_latch_chain_is_not_declarable_yet_and_says_so()
+	await _a_latch_chain_is_declarable_and_builds()
 	_finish()
 
 
@@ -248,18 +248,17 @@ func _a_heavy_occupant_closes_it_and_leaving_opens_it() -> void:
 ## §3: THE PLAYER IS NOT AN OCCUPANT. A room whose machine the player's
 ## own body operates is a room they cannot stand in.
 ##
-## **WHAT THIS CANNOT TELL APART, said here rather than implied by a
-## green tick.** Two independent rules exclude the player and either
-## alone would pass this case: `ClassPlate.occupants` skips anything in
-## the `player` group, and `MassClass.of_node` returns "" for a node
-## with no `mass_class()` -- which `Player` does not have. Deleting the
-## group check does NOT fail this suite; that was checked. So what is
-## pinned here is the BEHAVIOUR, that a player standing on a plate does
-## not drive the chain, and the case proves the player is genuinely on
-## the plate rather than merely near it. Which of the two rules is
-## carrying it is not something this can answer, and a case that
-## claimed otherwise would be the third in this lane to pass for the
-## wrong reason.
+## **WHICH RULE CARRIES IT.** Until P14 two independent rules excluded
+## the player and either alone passed this case: the plate skipped the
+## `player` group, and `MassClass.of_node` answered "" because `Player`
+## had no `mass_class()`. It has one now (`MEDIUM` at the exported
+## 80 kg), so the plate's `counts_player` opt-in -- false unless the
+## declaration says otherwise -- is the only rule left. This plate wants
+## `HEAVY`, which a `MEDIUM` body could not satisfy anyway, so the
+## decisive pair lives in `mass_class_driver`
+## (`_counts_player_is_the_only_door`, on a `MEDIUM` plate). What is
+## pinned here is the BEHAVIOUR on the shipped chain, and that the
+## player is genuinely on the plate rather than merely near it.
 func _the_player_is_not_an_occupant() -> void:
 	print("  -- the player does not count")
 	var controller := await _built(_zone([_chain()]))
@@ -465,33 +464,39 @@ func _a_latch_holds_its_value_and_is_restored() -> void:
 			"a fresh graph starts unlatched")
 	# THE BARE ROOM ID IS NOT THIS GRAPH'S PACKAGE, so a record that
 	# used it must not restore anything.
+	var announced := fired.size()
 	var back := rebuilt.restore_from(["c001/held", "other/thing",
 			"graph_c001/held"])
 	_check(back == 1,
 			"one latch is restored; the bare-room ref and the stranger "
 			+ "are ignored (%d)" % back)
+	# RESTORE RECORDS; THE FIRST EVALUATION IS `start()`'s. The value is
+	# not in `values` until then, which is the point: nothing downstream
+	# ever saw the latch unset on a reload.
+	rebuilt.start()
 	_check(bool(rebuilt.values.get("held", false)),
 			"the decision comes back with the Zone, with the plate "
 			+ "clear and nothing standing on it")
+	_check(fired.size() == announced,
+			"and putting it back is NOT announced as a new decision")
 	rebuilt.queue_free()
 	await get_tree().process_frame
 
 
-## AND IT IS NOT DECLARABLE YET, which the suite says out loud rather
-## than leaving the runtime to look finished.
-func _a_latch_chain_is_not_declarable_yet_and_says_so() -> void:
-	print("  -- a declared LATCH is still refused, and names itself")
-	_check(not Constants.SIGNAL_NODE_KINDS_IMPLEMENTED.has("LATCH"),
-			"the schema has not admitted LATCH yet (%s)"
+## AND NOW IT IS DECLARABLE. The schema admitted `LATCH` (Dess, 9ef2676),
+## so a Zone asking for `plate -> LATCH -> shutter` gets one built --
+## this case asserted the opposite until that landed, and the flip is the
+## dependency order working rather than a test being loosened.
+func _a_latch_chain_is_declarable_and_builds() -> void:
+	print("  -- a declared LATCH chain builds")
+	_check(Constants.SIGNAL_NODE_KINDS_IMPLEMENTED.has("LATCH"),
+			"the schema admits LATCH (%s)"
 			% [Constants.SIGNAL_NODE_KINDS_IMPLEMENTED])
 	var controller := await _built(_zone([_chain("LATCH")]))
-	var why := str(controller.signal_graph_refusals[0]
-			if not controller.signal_graph_refusals.is_empty() else "")
-	_check(why.contains("LATCH") and why.contains("no runtime implements"),
-			"so a Zone asking for one is told it is a gap: '%s'" % why)
-	_note("LATCH's evaluation and restore are BUILT and unreachable "
-			+ "from a declaration. D-10 asks which consequence to take "
-			+ "and the answer is B: the last piece is the schema's, and "
-			+ "a denial-only chain is not worth shipping as P14's "
-			+ "consequence.")
+	_check(controller.signal_graph_refusals.is_empty(),
+			"nothing was refused: %s" % [controller.signal_graph_refusals])
+	var graph := _graph(controller)
+	_check(graph != null and graph.nodes.size() == 1
+			and str((graph.nodes[0] as Dictionary).get("kind", "")) == "LATCH",
+			"and the graph carries the latch")
 	await _drop(controller)

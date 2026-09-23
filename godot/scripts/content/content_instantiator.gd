@@ -907,6 +907,10 @@ static func authored_door_plan(entry: Dictionary,
 			"socket_id": declared,
 			"usage": usage,
 			"position": _vector(socket.get("position", []), Vector3.ZERO),
+			# The manifest declares which way the opening faces, and a
+			# shell's `exit` is often NOT the back wall (the corner shell
+			# puts it at 90 degrees). Carried so nothing has to guess.
+			"yaw": float(socket.get("yaw", 0.0)),
 			"width": float(socket.get("width", 2.4)),
 			"height": float(socket.get("height", 3.2)),
 			"passable": usage != "SEALED",

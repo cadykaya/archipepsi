@@ -343,7 +343,8 @@ static func _furnish_room(root: Node3D, theme: String,
 		chamber: Dictionary, result: Dictionary, origin: Vector3,
 		yaw: float, anchors: Dictionary, room_transforms: Dictionary,
 		keys: Array, locks: Array, stations: Array,
-		dropped: Array = [], door_world: Dictionary = {}) -> float:
+		dropped: Array = [], door_world: Dictionary = {},
+		door_frames: Dictionary = {}) -> float:
 	var rid := str(chamber.get("id", "?"))
 	# WHERE EACH DECLARED DOOR ACTUALLY IS, from the producer's own plan
 	# rather than re-derived. Both producers emit `doors` with a position,
@@ -356,6 +357,18 @@ static func _furnish_room(root: Node3D, theme: String,
 		var plan: Dictionary = raw_door
 		door_world["%s/%s" % [rid, str(plan.get("socket_id", ""))]] = \
 				origin + _rot(yaw, plan.get("position", Vector3.ZERO))
+		# AND THE WHOLE FRAME, beside the position rather than instead of
+		# it: `door_world` stays a map of points because `_joins`, the
+		# station placement and every suite reading `door_positions`
+		# expect one. The frame adds which way the opening runs in the
+		# world (the room's committed yaw plus the socket's own) and how
+		# big it is, which is what a thing standing across it needs.
+		door_frames["%s/%s" % [rid, str(plan.get("socket_id", ""))]] = {
+			"position": origin + _rot(yaw, plan.get("position", Vector3.ZERO)),
+			"yaw": yaw + deg_to_rad(float(plan.get("yaw", 0.0))),
+			"width": float(plan.get("width", ChamberBuilders.DOOR_WIDTH)),
+			"height": float(plan.get("height", ChamberBuilders.DOOR_HEIGHT)),
+		}
 	# A DECLARED KEY THAT NO PRODUCER PLACED IS A DROPPED KEY.
 	#
 	# Not a warning: the bridge's `R ⊆ E` proves a key is obtainable
@@ -1897,6 +1910,8 @@ static func _build_once(zone: Dictionary, theme_override := "",
 	var carried: Array = []
 	## "room/socket" -> where that declared door is, in world space.
 	var door_world := {}
+	## "room/socket" -> that door's world frame: position, yaw, size.
+	var door_frames := {}
 	## Rooms whose declared keys no producer reserved space for.
 	var dropped_keys: Array = []
 	var next_turn := 1 if rng.randf() < 0.5 else -1
@@ -2126,7 +2141,7 @@ static func _build_once(zone: Dictionary, theme_override := "",
 		var rid := str(chamber.get("id", "?"))
 		var footprint := _furnish_room(root, theme, chamber, result,
 				origin, yaw, anchors, room_transforms, keys, locks,
-				stations, dropped_keys, door_world)
+				stations, dropped_keys, door_world, door_frames)
 		if footprint > float(largest["area"]):
 			largest = {"area": footprint, "id": rid}
 		root.add_child(node)
@@ -2328,7 +2343,8 @@ static func _build_once(zone: Dictionary, theme_override := "",
 			# key to the next one.
 			_furnish_room(root, theme, b_chamber, b_result, b_origin,
 					float(b_walked["yaw"]), anchors, room_transforms,
-					keys, locks, stations, dropped_keys, door_world)
+					keys, locks, stations, dropped_keys, door_world,
+					door_frames)
 			# ITS OWN BRANCHES, from the transform it was just given,
 			# from either source.
 			for raw_deeper: Variant in graph_branches.get(
@@ -2649,5 +2665,6 @@ static func _build_once(zone: Dictionary, theme_override := "",
 			"joins": _joins(zone, links, door_world, room_transforms,
 					spine_tail),
 			"doors": door_world,
+			"door_frames": door_frames,
 			"anchors": anchors, "plugs": plugs,
 			"keys": keys, "locks": locks, "stations": stations}

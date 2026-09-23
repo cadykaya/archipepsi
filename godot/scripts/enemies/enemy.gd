@@ -542,9 +542,26 @@ func _face(flat: Vector3, delta: float) -> void:
 			deg_to_rad(Constants.BULWARK_TURN_RATE_DEG_S) * delta)
 
 
+## The player this enemy may act on, or null.
+##
+## **NOT WHILE THE LAYOUT VERDICT HOLDS THEM.** A graph Zone freezes its
+## player from the moment the body exists until the bridge certifies the
+## layout, because gameplay waits for the verdict
+## (`ZoneController._await_verdict`) -- and the enemies did not wait.
+## Certifying a Zone's chains takes seconds, and artillery notices at its
+## 34 m reach and fires without line of sight, so the first played run of
+## the latched route lost 80 hp at its own arrival point, frozen, before
+## it could take a step: five 16 hp shells from the battery in the next
+## room. A player the verdict is holding is absent to an enemy. Only that
+## claim: every other hold keeps the meaning it had.
 func _find_player() -> Player:
 	var players := get_tree().get_nodes_in_group("player")
-	return players[0] if not players.is_empty() else null
+	if players.is_empty():
+		return null
+	var found: Player = players[0]
+	if found != null and found.held_by(ZoneController.LAYOUT_HOLD):
+		return null
+	return found
 
 func _try_attack(player: Player, distance: float) -> void:
 	if _attack_cooldown > 0.0 or _recovery > 0.0:

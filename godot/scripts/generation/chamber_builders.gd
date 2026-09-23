@@ -575,6 +575,15 @@ static func door_plan(chamber: Dictionary, width: float,
 			"socket_id": id,
 			"usage": usage,
 			"position": at["position"],
+			# THE SOCKET'S OWN FACING AND SIZE, carried rather than
+			# assumed. A thing that stands IN a doorway -- a lock slab, a
+			# route shutter -- has to span the opening, and which way the
+			# opening runs depends on which wall it is in: `exit` faces
+			# 0 degrees and `side_left` 90. The room's yaw alone only
+			# gets the front and back walls right.
+			"yaw": float(at.get("yaw", 0.0)),
+			"width": float(at.get("width", DOOR_WIDTH)),
+			"height": float(at.get("height", DOOR_HEIGHT)),
 			# LOCKED carves; the lock is a placement over a real hole,
 			# not an uncut wall. Passability is the geometry's question
 			# and the key's answer is the runtime's.

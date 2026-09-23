@@ -187,6 +187,11 @@ var exit_departs_from := ""
 ## deriving it a second time from room bounds is how the third answer
 ## starts. Empty on a Zone with no door assignments.
 var door_positions := {}
+## `"<room_id>/<socket_id>" -> {position, yaw, width, height}`: the whole
+## committed frame of each doorway, where `door_positions` has only the
+## point. A thing that stands ACROSS a doorway -- P14's route shutter --
+## needs which way the opening runs and how big it is.
+var door_frames := {}
 ## MONOTONE, and that is what makes a resume safe. A Zone's key set and
 ## its opened-lock set only ever grow, so a reload can never put the
 ## player back behind a door they already opened.
@@ -472,14 +477,17 @@ func setup(zone_dict: Dictionary) -> void:
 
 	# THE DECLARED SIGNAL GRAPHS (P14). After the railways and for the
 	# same reason: the chain is placed off `room_places` and
-	# `room_bounds`, and both are committed by now. Unlike a railway a
-	# graph is ROOM-LOCAL -- §19.7 rule 2 -- so nothing here reaches
-	# across rooms and nothing needs the whole layout, only the one
-	# room's frame.
+	# `room_bounds`, and both are committed by now. A graph is
+	# ROOM-LOCAL -- §19.7 rule 2 -- but its actuator may stand IN a
+	# doorway the room built, which is why the edges, the chambers'
+	# build results and the doorway frames go in too.
+	door_frames = (build.get("door_frames", {}) as Dictionary).duplicate()
 	var graphs := RoomGraphs.build(self,
 			zone_dict.get("room_graphs", []) as Array,
 			room_places, room_bounds,
-			str(zone_dict.get("theme", "concrete_facility")))
+			str(zone_dict.get("theme", "concrete_facility")),
+			zone_dict.get("edges", []) as Array,
+			build.get("chambers", []) as Array, door_frames)
 	for raw_graph: Variant in graphs.get("graphs", []) as Array:
 		var graph: SignalGraph = raw_graph
 		# THE DECISIONS COME BACK BEFORE THE MACHINE RUNS, and they come
@@ -488,13 +496,15 @@ func setup(zone_dict: Dictionary) -> void:
 		# decision persists, the machine is rebuilt from it. The
 		# railway's junctions do exactly this two blocks up.
 		#
-		# **Half-wired, and said so.** The restore reads the record; the
-		# REPORT that would put a latch in it is refused by the bridge
-		# today, because `record_latch` knows only physics packages.
-		# D-10's answer names that change. No Zone can declare a LATCH
-		# until it lands, so nothing here is live yet.
+		# **ORDER: restore, THEN start.** `start()` is the graph's first
+		# evaluation, and it SETTLES the machines rather than commanding
+		# them -- so a route the record says is open is open on the
+		# first tick, with nothing slid shut and reopened in front of
+		# the player. A restored latch emits nothing, so nothing is
+		# reported back to the bridge that the bridge just sent.
 		graph.fired.connect(_on_rail_latch)
 		graph.restore_from(latches_accepted())
+		graph.start()
 		signal_graphs.append(graph)
 	for why: String in graphs.get("refused", []) as Array:
 		signal_graph_refusals.append(why)

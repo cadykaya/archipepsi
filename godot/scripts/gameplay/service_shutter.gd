@@ -109,6 +109,13 @@ func _adopt() -> void:
 		return
 	add_sibling(_doorway)
 	_doorway.global_position = shut_at
+	# **TURNED WITH THE PANEL.** The volume is `panel.x` wide and
+	# `panel.z + 1.4` deep, so it only covers the opening when it faces
+	# the way the panel does. Every shutter used to be built unrotated,
+	# which hid this; one placed across a doorway takes the doorway's
+	# yaw, and an interlock lying crosswise to its own panel would watch
+	# the wall beside the door instead of the door.
+	_doorway.rotation.y = rotation.y
 
 
 ## Open it, or refresh the interval if it is already open. §3: the timer
@@ -116,6 +123,21 @@ func _adopt() -> void:
 func trip() -> void:
 	left = open_seconds
 	goal = travel
+
+
+## START in a commanded state, rather than travel to it.
+##
+## A route the campaign's record says is open must BE open when the Zone
+## loads -- not slide open in front of the player, as though they had
+## just done something. The first evaluation of a room graph settles its
+## machines; every later one commands them. `unweighted_switch` has done
+## the same by hand since EX50-033 ("ALREADY OPEN, not opening").
+func settle(open: bool) -> void:
+	command(open)
+	offset = goal
+	speed = 0.0
+	if is_inside_tree():
+		_place()
 
 
 ## DRIVEN BY A LIVE SIGNAL rather than by an interval.

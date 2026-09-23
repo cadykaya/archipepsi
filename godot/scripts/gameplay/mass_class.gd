@@ -29,10 +29,17 @@ const FIXED := "fixed"
 ## Ascending. `step_down` walks it and nothing falls off the bottom.
 const LADDER := [LIGHT, MEDIUM, HEAVY, FIXED]
 
-## Design 2 §10.2, transcribed.
-const LIGHT_BELOW := 30.0
-const MEDIUM_BELOW := 120.0
-const HEAVY_BELOW := 400.0
+## Design 2 §10.2, READ FROM THE EXPORT rather than transcribed.
+##
+## The bridge's route validator decides whether a plate accepts the
+## player with `physics.plate_accepts_player`, against its own ladder;
+## this file decides it again at runtime. Two hand copies of the same
+## three numbers is how a route the bridge certified becomes a door the
+## runtime will not open, so both now read `schemas/physics.py`'s values
+## through `export.py`. Same numbers as the transcription they replace.
+const LIGHT_BELOW := Constants.MASS_LIGHT_BELOW
+const MEDIUM_BELOW := Constants.MASS_MEDIUM_BELOW
+const HEAVY_BELOW := Constants.MASS_HEAVY_BELOW
 
 
 ## The class an object's kilograms put it in.

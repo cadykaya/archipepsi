@@ -9,11 +9,18 @@ extends Node3D
 ## class or heavier, and ten crates of the wrong class are still the
 ## wrong class.
 ##
-## **The player does not count.** §3: "the player's own mass class does
-## not count toward its threshold in this arrangement." A player weighs
-## 80 kg and would be `MEDIUM`; on a `HEAVY` plate that is already not
-## enough, but the exclusion is written down rather than left to depend
-## on a threshold staying where it is.
+## **The player does not count — unless the plate says it does.** §3:
+## "the player's own mass class does not count toward its threshold IN
+## THIS ARRANGEMENT." That was EX50-033's arrangement, and it was applied
+## to every plate: nothing could be opened by walking onto it. D-10 made
+## it a declared property instead: `SensorNode.counts_player`, default
+## `false`, so EX50-033 and every plate built before it keep exactly the
+## behaviour they had. A plate that sets it reads the player's own class
+## (`Player.mass_class()`, `MEDIUM` at 80 kg) like any other occupant's.
+##
+## The exclusion is still written down rather than left to depend on a
+## threshold: now that the player HAS a class, the group check is the
+## only thing keeping an object-only `MEDIUM` plate object-only.
 ##
 ## **It decides nothing.** It reports whether it is satisfied; the room
 ## decides that a satisfied plate closes a shutter. `PoweredLink` wired
@@ -27,6 +34,9 @@ const LAMP := Vector3(0.28, 0.06, 0.28)
 
 ## The class an occupant must be, or heavier.
 var requires := MassClass.HEAVY
+## Whether the player's own body is an occupant. `false` is the object-
+## only plate EX50-033 describes and the default for every plate.
+var counts_player := false
 var size := Vector3(2.4, 0.12, 2.4)
 
 var _sensor: Area3D = null
@@ -36,12 +46,13 @@ var _theme := "concrete_facility"
 
 
 static func create(plate_size: Vector3, needs := MassClass.HEAVY,
-		theme := "concrete_facility") -> ClassPlate:
+		theme := "concrete_facility", player_counts := false) -> ClassPlate:
 	var made := ClassPlate.new()
 	made.name = "ClassPlate"
 	made.size = plate_size
 	made.requires = needs
 	made._theme = theme
+	made.counts_player = player_counts
 	return made
 
 
@@ -99,7 +110,7 @@ func occupants() -> Array[Node]:
 	if _sensor == null:
 		return out
 	for body in _sensor.get_overlapping_bodies():
-		if body.is_in_group("player"):
+		if body.is_in_group("player") and not counts_player:
 			continue
 		if MassClass.of_node(body) == "":
 			continue
@@ -123,7 +134,7 @@ func reading() -> Dictionary:
 	for body in occupants():
 		classes.append(MassClass.of_node(body))
 	return {"requires": requires, "classes": classes,
-			"satisfied": satisfied()}
+			"counts_player": counts_player, "satisfied": satisfied()}
 
 
 func _paint() -> void:

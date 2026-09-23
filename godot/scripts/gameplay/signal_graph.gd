@@ -54,6 +54,11 @@ var actuators: Dictionary = {}
 ## stopped carrying the value.
 var values: Dictionary = {}
 
+## How many latches the last `restore_from` put back from the record.
+## A restored latch is not a new player action, and a suite checking
+## "no announcement on reload" needs to tell the two apart.
+var restored := 0
+
 ## Latch node ids that have fired, and stay fired.
 ##
 ## **This is the only state in the graph**, and it is why a latch needs
@@ -68,14 +73,12 @@ var latched: Dictionary = {}
 ## through the same `report_latch` the railway's spans use, so there is
 ## one way a room-local decision reaches the campaign and not two.
 ##
-## **THE BRIDGE REFUSES THESE TODAY, and that is not yet closed.**
-## `transitions.record_latch` accepts a `package_id` only when it is one
-## of the Zone's accepted PHYSICS packages, so `graph_c001/held` is
-## answered "Zone accepted no physics package 'graph_c001'" and nothing
-## is saved. The runtime half is here and tested; the record half is a
-## bridge change, named in `docs/D10_P14_PROD_ANSWER.md` rather than
-## assumed. Until it lands a latch holds for the life of the Zone and
-## is lost on reload -- which is why a LATCH chain stays undeclarable.
+## **THE BRIDGE RECORDS IT UNDER FOUR CONDITIONS, and a prefix is not one
+## of them** (D-10 §5): the accepted Zone is this one, its layout is
+## committed, the manifest placed this room, and the accepted Zone
+## declares a graph here whose node by that id is a `LATCH`. A
+## `graph_` name alone authorizes nothing, and physics packages may not
+## take the prefix.
 signal fired(package: String, node_id: String)
 
 
@@ -95,6 +98,14 @@ func package_id() -> String:
 ## campaign's own record rather than from anything the engine stored
 ## about the machine. `refs` is `latches_accepted()`'s form --
 ## `package_id/latch_id` -- and this graph's package is `package_id()`.
+##
+## **RECORDS, AND DOES NOT EVALUATE.** It runs BEFORE the graph's first
+## tick, so the first thing the machine ever does is already the restored
+## answer. It used to evaluate here -- after `start()` had evaluated once
+## with the latch unset -- which commanded the route SHUT on every reload
+## and then opened it a frame later, in front of the player. And it never
+## announces: a latch put back from the record is not a new decision, so
+## `fired` is not emitted and nothing is reported to the bridge twice.
 func restore_from(refs: Array) -> int:
 	var count := 0
 	for raw: Variant in refs:
@@ -106,20 +117,19 @@ func restore_from(refs: Array) -> int:
 			if ref == "%s/%s" % [package_id(), id] and not latched.has(id):
 				latched[id] = true
 				count += 1
-	if count > 0:
-		evaluate()
+	restored = count
 	return count
 
 
-## Wire every sensor's change to a re-evaluation, and settle once so the
+## Wire every sensor's change to a re-evaluation, and SETTLE once so the
 ## actuators start in the state the graph says rather than the state
-## whoever built them left them in.
+## whoever built them left them in. Call it after `restore_from`.
 func start() -> void:
 	for raw: Variant in sensors.values():
 		var plate: ClassPlate = raw
 		if not plate.occupancy_changed.is_connected(_on_sensor):
 			plate.occupancy_changed.connect(_on_sensor)
-	evaluate()
+	evaluate(true)
 
 
 func _on_sensor(_satisfied: bool) -> void:
@@ -129,7 +139,7 @@ func _on_sensor(_satisfied: bool) -> void:
 ## ONE TICK. Sensors, then logic in declaration order, then the
 ## actuators -- so every node reads values from this tick and none from
 ## the last one.
-func evaluate() -> void:
+func evaluate(settle := false) -> void:
 	ticks += 1
 	for key: Variant in sensors.keys():
 		var plate: ClassPlate = sensors[key]
@@ -142,7 +152,7 @@ func evaluate() -> void:
 		var driven := str(binding.get("driven_by", ""))
 		if not values.has(driven):
 			continue
-		_drive(binding, bool(values[driven]))
+		_drive(binding, bool(values[driven]), settle)
 
 
 ## §19.2's node semantics. An unknown kind returns false rather than
@@ -182,13 +192,16 @@ func _resolve(node: Dictionary) -> bool:
 			return false
 
 
-func _drive(binding: Dictionary, value: bool) -> void:
+func _drive(binding: Dictionary, value: bool, settle := false) -> void:
 	var target: Node = binding.get("node")
 	if target == null or not is_instance_valid(target):
 		return
 	match str(binding.get("operation", "")):
 		"command":
-			target.call("command", value)
+			if settle and target.has_method("settle"):
+				target.call("settle", value)
+			else:
+				target.call("command", value)
 
 
 ## What the graph currently says, for a message. Not the state of the

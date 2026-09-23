@@ -61,6 +61,7 @@ func _run() -> void:
 	await _the_plate_reads_class()
 	await _debris_does_not_add_up()
 	await _the_player_does_not_count()
+	await _counts_player_is_the_only_door()
 	await _the_decisive_control()
 	await _the_other_direction()
 	await _the_shift_is_temporary()
@@ -212,6 +213,55 @@ func _the_player_does_not_count() -> void:
 	_check(plate.occupants().is_empty(),
 		"they are not even counted as an occupant")
 	world.queue_free()
+
+
+## `counts_player` IS THE ONLY DOOR, on a plate the player's own class
+## would satisfy.
+##
+## `Player.mass_class()` exists now (D-10, P14: `MEDIUM` at the exported
+## 80 kg), so `MassClass.of_node` no longer answers "" for the player and
+## the plate's opt-in is the one rule left between a body and an object
+## plate. The case above cannot show that: its plate wants `HEAVY`, which
+## a `MEDIUM` player could never satisfy with or without the rule. This
+## one uses a `MEDIUM` plate, where only the opt-in decides: off, the
+## player stands on it and it reads empty (EX50-033's object-only plate,
+## unchanged); on, the same body on the same plate satisfies it.
+func _counts_player_is_the_only_door() -> void:
+	print("  -- PLAYER: only a plate that opts in counts them")
+	var results := {}
+	for opted: bool in [false, true]:
+		var kit := _stage()
+		var world: Node3D = kit["world"]
+		var plate: ClassPlate = kit["plate"]
+		plate.requires = MassClass.MEDIUM
+		plate.counts_player = opted
+		var body := Player.create()
+		world.add_child(body)
+		body.set_spawn(Transform3D(Basis(), Vector3(0.0, 1.4, 0.0)))
+		body.velocity = Vector3.ZERO
+		await _settle(60)
+		_check(body.global_position.y < 1.2 and body.is_on_floor(),
+			"counts_player=%s: the player is standing on the plate at "
+				% opted + "y=%.2f" % body.global_position.y)
+		results[opted] = {"satisfied": plate.satisfied(),
+				"occupants": plate.occupants().size(),
+				"class": body.mass_class()}
+		world.queue_free()
+	_check(str(results[false]["class"]) == MassClass.MEDIUM,
+		"the player's class is MEDIUM, which this plate wants (%s)"
+			% results[false]["class"])
+	_check(not bool(results[false]["satisfied"])
+			and int(results[false]["occupants"]) == 0,
+		"off (the default): the player is no occupant and the plate is "
+			+ "not satisfied (%s)" % [results[false]])
+	_check(bool(results[true]["satisfied"])
+			and int(results[true]["occupants"]) == 1,
+		"on: the same body satisfies the same plate (%s)"
+			% [results[true]])
+	var bare := ClassPlate.create(Vector3.ONE)
+	_check(not bare.counts_player,
+		"and a plate is object-only unless it is declared otherwise")
+	bare.free()
 
 
 ## §10's DECISIVE NEGATIVE CONTROL, and §10's "verify that the same
