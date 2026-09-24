@@ -1,5 +1,21 @@
 # AGENT FRONTIER
 
+## PROD LANE — post-playtest repair: CP0 → CP4, then inherited 0.4 (owner-approved 2026-09-24)
+
+**In progress.** The packet is `docs/ledgers/post_playtest_v1.0/` (verbatim;
+Prod's brief is `dispatch/PROD_START.md`). The execution log, the
+owner's D-06/D-07 rulings and the seam table are in
+`docs/ledgers/PROD_POST_PLAYTEST.md`. The start is preserved at
+`review/post-playtest-start-a745637`.
+
+- **Order:** CP1 fair combat and safe resume → CP2 the three rooms and
+  the pressure/latch presentation → CP3 the rotating 3D shell with one
+  equipment face → CP4 inventory, minimap, 3D map and journal → the
+  ready inherited 0.4 work.
+- **No heartbeat, watcher, subscription or schedule.** Dess and Arty
+  are not resumed, so Prod holds a recorded single-writer exception for
+  the narrow shared edits.
+
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 
 **Handed off here.** The frozen full run on `46bf023` was green: 64 of 64 steps passed, 16:50–17:55 UTC
