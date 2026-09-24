@@ -1888,3 +1888,32 @@ pack — rather than to where it stops touching, which was 0.010 m and
 
 > **"It no longer fails" and "it now has room" are a hand's width apart
 > and one of them survives a rebuild.**
+
+---
+
+## A gate that writes evidence hides its own staleness in `git status`
+
+The course ruling changed `concrete_facility`'s course pitch. The full
+suite came back green, the commit went out, and four theme-bind evidence
+renders sat in the working tree *modified* — re-rendered by
+`run_theme_bind.sh`, which is a gate that happens to write PNGs into
+`docs/art/review/` as a side effect.
+
+`tools/check_art_current.sh` was right to pass. It says out loud that
+review sheets are not covered, and it reasons that a stale `.glb` implies
+a stale sheet and it catches the `.glb`. But the drift here ran the other
+way: the **texture** rebuilt byte-identical because it *had* been
+rebuilt, and the render made from it was the thing left behind. Nothing in
+the suite compares evidence against the pixels it was made from.
+
+> **A green suite means every check passed, not that the tree is clean.
+> Read `git status` before calling a checkpoint done — a gate that writes
+> files reports its own staleness there and nowhere else.**
+
+Not fixed by adding a byte-comparison gate on the renders: these are
+1280x720 software renders, and the first driver that encodes a PNG
+differently would make that gate cry wolf, which ends the same way as no
+gate at all. The shape that would work is for the harness to record the
+`sha256` of the textures it bound beside the renders, and compare *that*
+— deterministic, machine-independent, and it names the reason the
+evidence is stale instead of showing a pixel count.
