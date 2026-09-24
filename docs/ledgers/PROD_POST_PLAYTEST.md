@@ -148,3 +148,105 @@ never presented as the Glyph-authored final.
     The target is now made first and settled. `godot-roster` 52.
 - **Neighbours:** `godot-encounter` 51, including "indirect fire reaches
   a player who stands still".
+
+## CP1 — `H-FLYER-HIT` (PT-12): a flyer is hit where it is seen — repaired
+
+- **Reproduced first,** on the unmodified runtime at `6ebbc90`
+  (`post_playtest_evidence/H-FLYER-HIT_repro_on_6ebbc90.log`: 17 failures
+  in 29 checks). The player aims its camera at the middle of the
+  RENDERED meshes, never at an internal centre, and fires through the
+  real `fire_pulse` binding; hits are counted cumulatively.
+  - **Seen versus hittable:**
+    - the drifter's visible body was centred at 4.78 m and its hittable
+      box at 6.72 m (1.95 m apart);
+    - the diver's was 4.50 m against 6.07 m (1.57 m apart).
+  - **Aimed at the middle of the visible body** at 4, 9 and 18 m: 0 hits,
+    both roles.
+  - **The deliberate miss,** aimed 0.45 m ABOVE the visible body: 2 hits
+    each. That is where the hidden collider was.
+  - **A real explosive Echo shot** at the visible body did no damage.
+  - The diver's shots started outside its visible body.
+- **The cause, in the source:**
+  - The envelope contract (`schemas/constants.py`, `EnemyEnvelope`) says
+    `hover_height` is the collider's CENTRE above the FLOOR, and
+    `create()` hangs the collider exactly that far above the pivot.
+  - `_hold_station` then lifted the pivot a further `FLYER_HOVER_Y`
+    (4.2 m), so the hover height was counted twice.
+  - Meanwhile the flyers got the walker fallback visual, built upward
+    from the pivot. The body was drawn near the pivot and hit 1.6–2 m
+    above it.
+- **The repair (runtime only; no shared file edited):**
+  - **The station is the floor.** The flyer's pivot rests on the floor
+    under it, so its body sits at exactly the envelope's hover height:
+    the diver at 1.65–2.15 m, the drifter at 2.08–3.03 m.
+    `_floor_beneath` casts from the body; with nothing under it, the
+    flyer holds where it is.
+  - **Drawn where it is hit.** A flyer's `Visual` sits at the collider's
+    centre. Provisional engine silhouettes are built inside the
+    collider's box on every axis: a dart for the diver, with the eye on
+    the nose it faces with; a canopy, emitter and vanes for the drifter.
+    A flinch now scales about the body's middle rather than the floor.
+    Arty's models later replace the look against the same box
+    (`H-ENEMY-ART`), never the box.
+  - **Shots, sight and the dive come from the body.** `muzzle()` and
+    line of sight start at a flyer's body (a walker's are unchanged). The
+    dive is aimed from body to body, and lands body to body.
+  - **Area effects measure to the body.** There are three new accessors:
+    `body_centre()`, `nearest_body_point()` and `overhead()`.
+    - An explosive Echo shot measures to the nearest point of the body,
+      not to the pivot. Otherwise a direct hit on something hovering
+      2.5 m up would be a blast 2.5 m away.
+    - The damage bar sits above the collider's top. `pivot + 2.1` put it
+      inside a diver and under a drifter.
+- **Evidence:** `make godot-combat-fairness`, 29 checks: the 7 artillery
+  checks, plus 11 per flyer.
+  - Seen versus hittable centres: 0.02 m (drifter) and 0.00 m (diver).
+    Each also passes a same-box check: each box encloses the other with
+    0.05 m of slack (the hittable box shrunk by 0.2 m inside the seen
+    one).
+  - Each body sits at the envelope's hover height (2.55 m and 1.90 m).
+  - The muzzle is inside the visible body, and the flyer faces the
+    player (0° off).
+  - Aimed at the visible body at 4, 9 and 18 m: 3, 2 and 3 hits for
+    each role.
+  - The deliberate misses, 0.45 m above and 0.45 m below: 0 hits.
+  - The explosive Echo shot: drifter 44 → 34.8 hp, diver 20 → 10.7 hp.
+- **Sabotages (each restored byte for byte, each failing by name):**
+  - **SF1,** the station lifted by `FLYER_HOVER_Y` again: both "holds at
+    the envelope's hover height" checks fail (6.07 m and 6.72 m). So
+    does the drifter's miss above: from 9 m, a steep ray 0.45 m over the
+    body's top grazes the box's near edge.
+  - **SF2,** the flyer's `Visual` left at the pivot: 14 fail. These are
+    the centres 1.90 m and 2.53 m apart, every near/mid/far shot, the
+    same-box check, the muzzle check and the explosive shot.
+  - **SF3,** the blast measured to the pivot again: both explosive-shot
+    checks fail (0 damage).
+  - **SF4,** a flyer's muzzle back at `pivot + 1.2`: both muzzle checks
+    fail.
+  - **SF5,** the walker silhouette on a flyer (at the right height): 10
+    fail. These are the centres 0.33 m and 0.60 m apart, the same-box
+    check, and shots at the visible middle that miss. The drifter's
+    snout reaches below the collider, so aiming under it hits.
+- **Tests that measured the old geometry, corrected (not weakened):**
+  - `roster_driver`'s drifter case compared the PIVOT with the 4.2 m
+    constant. It now asks whether the BODY holds at the envelope's hover
+    height and clears a standing player's head. `godot-roster` 52.
+  - `status_family_driver`'s "a rooted drifter neither drifts nor falls"
+    read the pivot's height. It now reads the body's (3.12 m).
+    `godot-status-family` 15.
+- **Other neighbours, green:** `godot-encounter` 51, `godot-content`,
+  `godot-hud`, `godot-verbs`, `godot-legible`, `godot-affordance`,
+  `godot-test`, `godot-transport` 106, `godot-lab`, `godot-stats`,
+  `godot-counterfire` 59.
+- **What the owner will notice:** flyers hover lower than in the
+  candidate that was played. They now sit at the heights the shared
+  contract declares, with the diver at head height and the drifter just
+  above it, instead of about 4.5 m up. If they should hang higher, that
+  is one number per role in the contract (`hover_height`, Dess's), and
+  the runtime follows it with no code change.
+- **For Dess (no edit made):** the runtime no longer reads
+  `FLYER_HOVER_Y` in `schemas/constants.py`. It is superseded by
+  `EnemyEnvelope.hover_height`, and is left in place because the shared
+  constants are Dess's to retire.
+- **Art review:** pending. Arty's lane has not resumed, and `H-ENEMY-ART`
+  depends on this task.

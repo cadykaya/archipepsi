@@ -15,6 +15,12 @@ owner's D-06/D-07 rulings and the seam table are in
 - **No heartbeat, watcher, subscription or schedule.** Dess and Arty
   are not resumed, so Prod holds a recorded single-writer exception for
   the narrow shared edits.
+- **CP1 progress:**
+  - `H-ARTILLERY` is done (`6ebbc90`).
+  - `H-FLYER-HIT` is done: a flyer's body is drawn and hit at its
+    envelope's hover height. Flyers now hang lower than in the played
+    candidate. `godot-combat-fairness` has 29 checks.
+  - **Next:** `H-FLYER-AI`, then `H-RESUME-R` (D-06).
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

@@ -207,6 +207,18 @@ static func create(kind: String, theme: String) -> Enemy:
 	# Each archetype gets its own silhouette, because telling a sniper
 	# from a charger across a dark room is gameplay information, not
 	# decoration. Theme only supplies the palette.
+	#
+	# PT-12: A FLYER IS DRAWN WHERE IT CAN BE HIT. Its collider hangs at
+	# the envelope's hover height above the pivot, and the walker
+	# fallback it used to get was built up from the pivot -- so the body
+	# the player saw and the box a shot could hit were two different
+	# places. A flyer's `Visual` sits at the collider's centre and its
+	# silhouette is built inside the collider's box, so a flinch also
+	# scales it about its own middle rather than about the floor.
+	if bool(envelope["flying"]):
+		body_visual.position = Vector3(0, float(envelope["centre_y"]), 0)
+		_build_flyer(body_visual, size, theme, kind)
+		return enemy
 	match kind:
 		"ranged": _build_ranged(body_visual, size, theme)
 		"brute": _build_brute(body_visual, size, theme)
@@ -273,6 +285,56 @@ static func _build_ranged(enemy: Node3D, size: Vector3, theme: String) -> void:
 			Vector3(0, size.y * 0.88, 0), accent)
 	_eye(enemy, Vector3(size.x * 0.8, 0.14, 0.05),
 			Vector3(0, size.y * 0.88, -size.z * 0.38), Color(1.0, 0.6, 0.15))
+
+## Flyers, built about the collider's CENTRE (their `Visual` sits there)
+## and inside its box on every axis, because the box is what a shot hits
+## and what a doorway has to admit. Provisional engine silhouettes: the
+## art lane's models replace the look against the same box, never the
+## box.
+##
+## Diver: a dart -- a fuselage the length of the envelope, swept wings,
+## the eye on the nose (-z, the way it faces) and talons underneath.
+## Drifter: a wide canopy that owns the space above, an emitter and lens
+## underneath that it shoots down from, and hanging vanes.
+static func _build_flyer(enemy: Node3D, size: Vector3, theme: String,
+		kind: String) -> void:
+	var accent := ThemeMaterials.accent_mat(theme)
+	var trim := ThemeMaterials.trim_mat(theme)
+	if kind == "diver":
+		_part(enemy, Vector3(size.x * 0.36, size.y * 0.5, size.z * 0.92),
+				Vector3.ZERO, accent)
+		for side in [-1.0, 1.0]:
+			_part(enemy, Vector3(size.x * 0.32, size.y * 0.12, size.z * 0.42),
+					Vector3(side * size.x * 0.34, size.y * 0.06,
+						size.z * 0.1), trim)
+			_part(enemy, Vector3(size.x * 0.08, size.y * 0.24, size.x * 0.08),
+					Vector3(side * size.x * 0.12, -size.y * 0.36,
+						-size.z * 0.08), trim)
+		_part(enemy, Vector3(size.x * 0.06, size.y * 0.42, size.z * 0.22),
+				Vector3(0, size.y * 0.27, size.z * 0.36), trim)
+		_eye(enemy, Vector3(size.x * 0.26, size.y * 0.1, 0.04),
+				Vector3(0, size.y * 0.08, -size.z * 0.47), Color(1.0, 0.3, 0.2))
+		return
+	var canopy := MeshInstance3D.new()
+	var disc := CylinderMesh.new()
+	disc.top_radius = minf(size.x, size.z) * 0.36
+	disc.bottom_radius = minf(size.x, size.z) * 0.49
+	disc.height = size.y * 0.34
+	canopy.mesh = disc
+	canopy.position = Vector3(0, size.y * 0.2, 0)
+	canopy.material_override = accent
+	enemy.add_child(canopy)
+	_part(enemy, Vector3(size.x * 0.34, size.y * 0.12, size.z * 0.34),
+			Vector3(0, size.y * 0.42, 0), trim)
+	_part(enemy, Vector3(size.x * 0.3, size.y * 0.22, size.z * 0.3),
+			Vector3(0, -size.y * 0.08, 0), trim)
+	for vane in 4:
+		var angle := TAU * float(vane) / 4.0 + PI / 4.0
+		_part(enemy, Vector3(0.06, size.y * 0.4, 0.06),
+				Vector3(sin(angle) * size.x * 0.3, -size.y * 0.24,
+					cos(angle) * size.z * 0.3), trim)
+	_eye(enemy, Vector3(size.x * 0.2, 0.05, size.z * 0.2),
+			Vector3(0, -size.y * 0.215, 0), Color(1.0, 0.6, 0.15))
 
 ## Brute: wide and low-slung, with shoulder blocks and a tiny head, so it
 ## reads as heavy before it reads as anything else.
@@ -846,9 +908,9 @@ func _spend_commitment(delta: float, player: Player) -> bool:
 			velocity = velocity.lerp(Vector3.ZERO, 0.3)
 		else:
 			velocity = _rush_dir * float(stats["speed"])
-		if player != null and global_position.distance_to(
-				player.global_position) <= 1.6:
-			player.take_damage(float(stats["damage"]), global_position)
+		if player != null and body_centre().distance_to(
+				_centre_of(player)) <= 1.6:
+			player.take_damage(float(stats["damage"]), body_centre())
 			_say("melee_hit")
 			_dive = 0.0
 		if _dive <= 0.0:
@@ -860,7 +922,14 @@ func _spend_commitment(delta: float, player: Player) -> bool:
 	return false
 
 
-## Keep a flyer at its station height above whatever is under it.
+## Keep a flyer's pivot on the floor beneath it, so its body hangs at
+## the envelope's hover height.
+##
+## PT-12: the envelope's `hover_height` is the collider's CENTRE above
+## the FLOOR, and the collider already hangs that far above this pivot.
+## Lifting the pivot a further `FLYER_HOVER_Y` (4.2 m) put the diver's
+## body 6.1 m up and the drifter's 6.7 m, where no contract and no drawn
+## body said they were. So the station is the floor itself.
 ##
 ## Resolved ONCE per station rather than every frame: recomputing from
 ## the floor each tick makes a flyer climb its own correction over a
@@ -868,7 +937,7 @@ func _spend_commitment(delta: float, player: Player) -> bool:
 ## cleared when a dive ends, which is the only time the station moves.
 func _hold_station(delta: float) -> void:
 	if not _hover_set:
-		_hover_y = _floor_beneath() + Constants.FLYER_HOVER_Y
+		_hover_y = _floor_beneath()
 		_hover_set = true
 	# A soft hold rather than a teleport, so a flyer knocked off station
 	# visibly returns to it instead of snapping.
@@ -888,7 +957,9 @@ func _hold_station(delta: float) -> void:
 ## looped: a flyer over a stack of six enemies is a composition problem,
 ## and spinning here would hide it.
 func _floor_beneath() -> float:
-	var from := global_position
+	# From the BODY, which is in the air, rather than from the pivot,
+	# which sits on the floor and would start the ray at its surface.
+	var from := body_centre()
 	var skip: Array[RID] = [get_rid()]
 	for _try in 5:
 		var query := PhysicsRayQueryParameters3D.create(from,
@@ -897,13 +968,21 @@ func _floor_beneath() -> float:
 		var hit: Dictionary = get_world_3d().direct_space_state \
 				.intersect_ray(query)
 		if hit.is_empty():
-			return from.y
+			# Nothing under it: hold where it is rather than guess.
+			return global_position.y
 		var body := hit["collider"] as Node3D
 		if body is StaticBody3D or body is AnimatableBody3D:
 			return (hit["position"] as Vector3).y
 		if body is CollisionObject3D:
 			skip.append((body as CollisionObject3D).get_rid())
-	return from.y
+	return global_position.y
+
+
+## The middle of the player's collider: what a dive is aimed at and
+## lands on.
+static func _centre_of(player: Player) -> Vector3:
+	return player.global_position + Vector3.UP * (Constants.PLAYER_HEIGHT
+			/ 2.0)
 
 
 ## Is the player off the ground far enough to be worth diving at?
@@ -1139,7 +1218,8 @@ func _resolve_telegraph(kind: String, player: Player) -> void:
 			_lob_shell(_rush_dir)
 		"dive":
 			_dive = Constants.DIVER_DIVE_SECONDS
-			var down := player.global_position - global_position
+			# From its body at theirs: the pivot is on the floor.
+			var down := _centre_of(player) - body_centre()
 			_rush_dir = down.normalized()
 		_:
 			push_error("enemy telegraph '%s' has no resolution" % kind)
@@ -1168,7 +1248,9 @@ func _slam(player: Player) -> void:
 		player.receive_knockback(away * 7.0 + Vector3.UP * 3.0)
 
 func _has_line_of_sight(player: Player) -> bool:
-	var from := global_position + Vector3.UP * 1.2
+	# From where its shots start: the same point for a walker as before,
+	# and a flyer's body rather than a point on the floor beneath it.
+	var from := muzzle()
 	var to := player.global_position + Vector3.UP * 1.0
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.exclude = [get_rid()]
@@ -1182,7 +1264,36 @@ func _fire_projectile(player: Player) -> void:
 ## into a machine input, and "where the shot starts" stopped being an
 ## implementation detail the moment a room had to be built round it.
 func muzzle() -> Vector3:
+	# PT-12: a flyer's shots start from its BODY, which hangs at its
+	# hover height above this pivot. `pivot + 1.2` was chest height for a
+	# walker and, for a flyer, a point in the air nowhere near what the
+	# player could see firing.
+	if bool(envelope.get("flying", false)):
+		return body_centre()
 	return global_position + Vector3.UP * 1.2
+
+## Where this enemy's body IS: its collider's centre. The pivot is on the
+## floor for every role, and a flyer's body hangs its hover height above
+## it -- so anything asking "where is the enemy" in order to reach it
+## asks this, not `global_position`.
+func body_centre() -> Vector3:
+	return global_position + Vector3.UP * float(envelope.get("centre_y", 0.0))
+
+## The point of this enemy's collider nearest `point`. What an area
+## effect measures to: a blast that meets a flyer's body 2.5 m above its
+## pivot is a direct hit, not a blast 2.5 m away.
+func nearest_body_point(point: Vector3) -> Vector3:
+	var half: Vector3 = (envelope.get("size", Vector3.ZERO) as Vector3) / 2.0
+	var centre := Vector3(0, float(envelope.get("centre_y", 0.0)), 0)
+	var local := global_transform.affine_inverse() * point
+	return global_transform * local.clamp(centre - half, centre + half)
+
+## A point just above the top of the collider, for things drawn OVER the
+## enemy -- its damage bar. Every role's top, including a flyer's, which
+## `pivot + 2.1` put inside a diver and under a drifter.
+func overhead() -> Vector3:
+	return global_position + Vector3.UP * (float(envelope.get("top_y",
+			1.8)) + 0.3)
 
 ## Commit a shot at a point and hand back the projectile.
 ##

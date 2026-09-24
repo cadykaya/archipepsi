@@ -269,12 +269,19 @@ func _the_drifter_owns_the_ceiling() -> void:
 	var foe := _enemy(root, "drifter", Vector3(0.0, 6.0, 0.0))
 	var mark := _target(root, Vector3(0.0, 1.0, -6.0))
 	await _settle(90)
-	_check(foe.global_position.y > 2.5,
-			"it is still in the air after a second and a half (y %.2f)"
-			% foe.global_position.y)
-	_check(absf(foe.global_position.y - Constants.FLYER_HOVER_Y) < 1.5,
-			"...holding near its station height of %.1f m (y %.2f)"
-			% [Constants.FLYER_HOVER_Y, foe.global_position.y])
+	# Its BODY, not its pivot: the pivot rests on the floor and the body
+	# hangs at the envelope's hover height above it (PT-12). The station
+	# is a contract number, so the check asks the contract.
+	var body_y := foe.body_centre().y
+	var hover: float = float(Constants.ENEMY_ENVELOPES["drifter"]
+			["hover_height"])
+	_check(body_y - float(Constants.ENEMY_ENVELOPES["drifter"]["size"].y)
+			/ 2.0 > Constants.PLAYER_HEIGHT,
+			"its body is still in the air after a second and a half, "
+			+ "clear over a standing player's head (body y %.2f)" % body_y)
+	_check(absf(body_y - hover) < 0.3,
+			"...holding at its envelope's hover height of %.2f m (body y %.2f)"
+			% [hover, body_y])
 	_check(not foe.is_on_floor(),
 			"...and never reaches the floor")
 	mark.queue_free()

@@ -53,6 +53,8 @@ func _run() -> void:
 	await _no_blast_through_a_wall()
 	await _a_shell_stops_at_what_it_meets()
 	await _low_cover_is_still_shelled()
+	for role: String in ["drifter", "diver"]:
+		await _a_flyer_is_hit_where_it_is_seen(role)
 	if failures == 0:
 		print("GODOT COMBAT FAIRNESS OK (%d checks, %d notes)"
 				% [checks, notes])
@@ -274,3 +276,152 @@ func _low_cover_is_still_shelled() -> void:
 			% [tally["hits"], _lost(tally, mark)] + "-- the repair did not "
 			+ "silence artillery")
 	await _drop(root)
+
+
+# ------------------------------------------------------------- flyers (H-FLYER-HIT)
+
+## The world box every mesh under `Visual` covers: what the player SEES.
+static func _seen(enemy: Enemy) -> AABB:
+	var box := AABB()
+	var first := true
+	for node: Node in enemy.visual.find_children("*", "MeshInstance3D",
+			true, false):
+		var mesh := node as MeshInstance3D
+		var world := mesh.global_transform * mesh.get_aabb()
+		box = world if first else box.merge(world)
+		first = false
+	return box
+
+
+## The world box of its collider: what a shot can HIT.
+static func _hittable(enemy: Enemy) -> AABB:
+	for child: Node in enemy.get_children():
+		var shape := child as CollisionShape3D
+		if shape != null and shape.shape is BoxShape3D:
+			var size: Vector3 = (shape.shape as BoxShape3D).size
+			return AABB(shape.global_position - size / 2.0, size)
+	return AABB()
+
+
+func _aim_at(player: Player, point: Vector3) -> void:
+	var eye := player.camera.global_position
+	var flat := Vector3(point.x - eye.x, 0.0, point.z - eye.z)
+	if flat.length() > 0.001:
+		player.rotation.y = atan2(-flat.x, -flat.z)
+	var rise := point.y - eye.y
+	player.camera.rotation.x = atan2(rise, maxf(flat.length(), 0.001))
+
+
+## PT-12: "Flyer hitbox above visible body." V-04: "Normal player camera
+## shoots visible body across near/mid/far views. Hit volume follows
+## rendered body; intentional miss outside it remains a miss."
+##
+## The player aims at the middle of what they can SEE and fires the
+## Static Pulse through its real binding. The envelope's own hover height
+## (the collider's centre above the floor) says where the body belongs.
+## What is measured is the rendered meshes, never an internal centre: a
+## test aiming at the collider would be green while the player aimed
+## somewhere else.
+func _a_flyer_is_hit_where_it_is_seen(role: String) -> void:
+	print("  -- %s: seen, hit and placed where the contract says" % role)
+	var root := _stage()
+	var mark := await _player(root, Vector3(0.0, 0.2, 9.0))
+	# Its shots are not what is being measured; the player outlasting
+	# them is.
+	mark.hp = 100000.0
+	var flyer := await _enemy(root, role, Vector3(0.0, 0.2, 0.0))
+	await _settle(120)
+	var seen := _seen(flyer)
+	var hittable := _hittable(flyer)
+	var gap := absf(seen.get_center().y - hittable.get_center().y)
+	var hover: float = float(flyer.envelope["centre_y"])
+	var held := hittable.get_center().y
+	_check(gap < 0.15,
+			"%s: the body the player sees is centred %.2f m from the box a " % [role, gap]
+			+ "shot can hit (seen %.2f m, hittable %.2f m)"
+			% [seen.get_center().y, hittable.get_center().y])
+	_check(seen.grow(0.05).encloses(hittable.grow(-0.2)) \
+			and hittable.grow(0.05).encloses(seen),
+			"%s: what is seen and what is hittable are the same box, not " % role
+			+ "two that merely share a centre (seen %s, hittable %s)"
+			% [seen, hittable])
+	_check(absf(held - hover) < 0.3,
+			"%s: its body holds at %.2f m above the floor, where its " % [role, held]
+			+ "envelope's hover height (%.2f m, the collider's centre above " % hover
+			+ "the floor) puts it")
+	_check(seen.grow(0.1).has_point(flyer.muzzle()),
+			"%s: its shots start inside the body the player sees (muzzle " % role
+			+ "%s, seen %s)" % [flyer.muzzle(), seen])
+	var facing := -flyer.global_transform.basis.z
+	var toward := mark.global_position - flyer.global_position
+	var flat_facing := Vector3(facing.x, 0.0, facing.z).normalized()
+	var flat_toward := Vector3(toward.x, 0.0, toward.z).normalized()
+	_check(rad_to_deg(flat_facing.angle_to(flat_toward)) < 30.0,
+			"%s: having noticed the player, it faces them (%.0f deg off)"
+			% [role, rad_to_deg(flat_facing.angle_to(flat_toward))])
+
+	# ORDINARY AIMING across near, mid and far views: the middle of what
+	# is seen, through the real fire binding.
+	var hits := [0]
+	mark.hit_confirmed.connect(func(_k: bool) -> void: hits[0] += 1)
+	for distance: float in [4.0, 9.0, 18.0]:
+		mark.global_position = Vector3(0.0, 0.2, distance)
+		await _settle(6)
+		var hp_before := flyer.hp
+		hits[0] = 0
+		await _fire(mark, func() -> Vector3: return _seen(flyer).get_center())
+		_check(hits[0] >= 1 and flyer.hp < hp_before,
+				"%s at %.0f m: aimed at the middle of its visible body, the " % [role, distance]
+				+ "Static Pulse hits it %d time(s) (%.1f -> %.1f hp)"
+				% [hits[0], hp_before, flyer.hp])
+		flyer.hp = flyer.max_hp
+
+	# THE DELIBERATE MISSES: just clear of the visible body, above it and
+	# below it. Before the repair the one above is where the hidden
+	# collider was, and it HIT.
+	mark.global_position = Vector3(0.0, 0.2, 9.0)
+	await _settle(6)
+	for side: String in ["above", "below"]:
+		var hp_before := flyer.hp
+		hits[0] = 0
+		await _fire(mark, func() -> Vector3:
+			var box := _seen(flyer)
+			return Vector3(box.get_center().x,
+					box.end.y + 0.45 if side == "above"
+						else box.position.y - 0.45,
+					box.get_center().z))
+		_check(hits[0] == 0 and is_equal_approx(flyer.hp, hp_before),
+				"%s: aimed 0.45 m %s its visible body, the Static Pulse " % [role, side]
+				+ "misses (%d hit(s), %.1f -> %.1f hp)"
+				% [hits[0], hp_before, flyer.hp])
+
+	# AN AREA WEAPON: a real explosive Echo shot aimed at the visible
+	# body. It must meet the body and its blast must count the body --
+	# measuring from a point under the flyer would make a direct hit on
+	# something hovering 2.5 m up a blast that reaches nobody.
+	var hp_before_blast := flyer.hp
+	var shot := EchoProjectile.new()
+	shot.damage = 10.0
+	shot.speed = 15.0
+	shot.blast_radius = 1.2
+	shot.lifetime = 3.0
+	var from := mark.global_position + Vector3.UP * 1.4
+	shot.direction = (_seen(flyer).get_center() - from).normalized()
+	root.add_child(shot)
+	shot.global_position = from
+	await _settle(60)
+	_check(flyer.hp < hp_before_blast,
+			"%s: an explosive Echo shot aimed at its visible body damages " % role
+			+ "it (%.1f -> %.1f hp)" % [hp_before_blast, flyer.hp])
+	await _drop(root)
+
+
+## Hold the real fire binding for three pulses' worth of frames, aiming
+## at `where` every frame (the body may drift; aiming tracks what is seen).
+func _fire(mark: Player, where: Callable) -> void:
+	for _i in 45:
+		_aim_at(mark, where.call())
+		Input.action_press("fire_pulse")
+		await get_tree().physics_frame
+	Input.action_release("fire_pulse")
+	await _settle(4)

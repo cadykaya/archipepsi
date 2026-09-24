@@ -194,12 +194,16 @@ func _detonate() -> void:
 		var enemy := node as Enemy
 		if enemy == null or not is_instance_valid(enemy):
 			continue
-		var distance := enemy.global_position.distance_to(global_position)
+		# To the nearest point of its BODY, not its pivot: a flyer's
+		# pivot is on the floor with its body hanging 2 m or more above
+		# it, and a blast that meets that body is a direct hit (PT-12).
+		var distance := enemy.nearest_body_point(global_position) \
+				.distance_to(global_position)
 		if distance > blast_radius:
 			continue
 		var falloff := 1.0 - clampf(distance / maxf(blast_radius, 0.001),
 				0.0, 1.0) * 0.6
-		var away := (enemy.global_position - global_position)
+		var away := (enemy.body_centre() - global_position)
 		away = away.normalized() if away.length() > 0.001 else Vector3.UP
 		if enemy.take_damage(damage * falloff, away, 0.0):
 			killed_any = true

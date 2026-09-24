@@ -318,10 +318,12 @@ func _a_flyer_holds_where_it_is_and_a_bulwark_still_turns() -> void:
 	await _settle(120)
 	var held_moved := held.global_position.distance_to(held_from)
 	var loose_moved := _flat(loose.global_position - loose_from)
-	_check(held_moved < 0.05 and held.global_position.y > 2.0
+	# "Neither falls" is asked of its BODY: the pivot rests on the floor
+	# and the body hangs at the envelope's hover height above it (PT-12).
+	_check(held_moved < 0.05 and held.body_centre().y > 2.0
 			and loose_moved > 0.3,
-			"a rooted drifter stays where it hangs (%.3f m in 2 s, y %.2f): "
-			% [held_moved, held.global_position.y] + "it neither drifts nor "
+			"a rooted drifter stays where it hangs (%.3f m in 2 s, body y "
+			% held_moved + "%.2f): it neither drifts nor " % held.body_centre().y
 			+ "falls, while an unrooted one drifts %.2f m" % loose_moved)
 	# OFF STATION, IT DOES NOT CLIMB BACK: the station is its own power.
 	# **DIRECT HANDLER.** Both are put a metre below where they hang. A
