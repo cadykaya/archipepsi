@@ -205,7 +205,8 @@ def test_a_misspelt_status_in_a_rule_effect_is_refused():
 
 def test_the_engine_is_told_both_lists():
     from pathlib import Path
-    gd = Path("godot/scripts/autoload/constants.gd").read_text()
+    gd = (Path(__file__).resolve().parents[2]
+          / "godot/scripts/autoload/constants.gd").read_text()
     assert "const ECHO_STATUS_KINDS =" in gd
     assert "const ECHO_STATUS_KINDS_IMPLEMENTED =" in gd
     assert "lightened" in gd, "the vocabulary did not reach the engine"
@@ -220,7 +221,8 @@ def test_the_engine_is_told_which_targets_each_kind_supports():
     """
     from pathlib import Path
     import re
-    gd = Path("godot/scripts/autoload/constants.gd").read_text()
+    gd = (Path(__file__).resolve().parents[2]
+          / "godot/scripts/autoload/constants.gd").read_text()
     line = next(l for l in gd.split("\n")
                 if l.startswith("const ECHO_STATUS_SUPPORTED_TARGETS"))
     for kind, targets in E.SUPPORTED_STATUS_TARGETS.items():

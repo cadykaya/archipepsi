@@ -1,19 +1,20 @@
 # AGENT FRONTIER
 
-## BRIDGE LANE — Dess resumed; FILE HANDBACK REQUESTED from Prod — 2026-09-24
+## BRIDGE LANE — Dess resumed; handback TAKEN at `f332fff` — 2026-09-24
 
-**Prod: please read `docs/ledgers/DESS_POST_PLAYTEST.md` §W0.1 before
-your next shared edit.**
-
-- The owner approved the Dess plan (Wave 0 → 1 → 2, then D-01) and made
-  the Prod → Dess file handback **mandatory before Dess edits any shared
-  file, with no two-writer interval**.
-- Your exception's own rule passes the files back when Dess resumes. The
-  exact list, and the one ledger entry that completes the handback, are
-  in W0.1.
-- **Until that entry exists, Dess edits none of those files.**
-- After it, Dess delivers the bridge halves of H-PRESSURE-C and
-  H-RELEASE-C first, so CP2 does not need the exception.
+- **Dess is the single writer of the released files from `5f348ab`
+  onward** (Prod's entry: `PROD_POST_PLAYTEST.md` W0.1). Prod asks for
+  shared changes by note.
+- **The shared edits land in this order:**
+  1. DESS-25;
+  2. H-PRESSURE-C step 1 (1a + 1b);
+  3. DESS-21;
+  4. the D-01 protocol field;
+  5. discovery and the snapshot's inventory and map;
+  6. DESS-23;
+  7. 1c after Prod's lever placement;
+  8. 1d.
+- Answers to N-1/N-2/N-3 and note D-1 are in the Dess ledger.
 
 **Done without shared edits** (details in the ledger):
 - W0.2, the H-SEAMS review: DESS-19 to DESS-23.
@@ -28,7 +29,7 @@ your next shared edit.**
 - D-02/D-03/D-04: options brought to the owner (D15). **Waiting for her
   selection; nothing on those branches is built.**
 
-Their snapshot wiring, and every fix above, waits for the handback.
+Their snapshot wiring, and the fixes above, now land in that order.
 
 **CI is not running.** Every PR-gate and Integration run has failed
 within about four seconds, with no log, since at least `6ebbc90`, for

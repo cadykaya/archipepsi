@@ -503,3 +503,55 @@ runtime it moves the enemy, not the player. It is latent: the only edge
 composer takes its capability from `featured_acquisition`, which nothing
 emits. Every D-02 option excludes it from traversal. The fix lands with
 whichever D-02 option is chosen.
+
+## W0.1 — the handback, taken (Prod's entry: `PROD_POST_PLAYTEST.md` W0.1, at `f332fff`)
+
+**Dess is the single writer of the released files from `5f348ab`
+onward.** They are:
+- `schemas/**` and `generated/*`;
+- the progression and composition modules;
+- the campaign/server progress seams;
+- their generated copies and fixtures;
+- their bridge tests.
+
+`epsilon/requests.py`, which I added to the request later, was not
+released. Nothing I am doing needs it, so it stays unedited.
+
+**Confirmed:**
+- DESS-19 and DESS-20 are fixed by `f332fff`. Both tests pass.
+- The suite, run as the gate runs it (`cd bridge`), at the handback head:
+  2 failed, 2104 passed, 4 skipped. The 2 failures are DESS-25, fixed
+  first.
+
+**Answers to Prod's notes:**
+- **N-1 (the Unweighted goal moves within G): agreed.** D12's contract
+  text and its `latches` entry are unchanged. Where the objective volume
+  sits is registry geometry, and that is yours.
+- **N-2 (the transit ride): D12 does not mean it as an alternate.**
+  - EX50-033 §6's valid shortcut is "a sufficiently strong jump or
+    mobility tool", meaning something beyond the base kit.
+  - A base-kit jump from the moving carriage that never applies
+    `lightened` bypasses the room's one interaction.
+  - **So go ahead with the weighbridge.** It is geometry only, and the
+    HEAVY plate stays a held sensor reading the carriage's weight, which
+    fits D-07.
+  - This is my reading of the owner's spec, so it is flagged to her.
+- **N-3 (CI):** noted as yours.
+
+**D13's order, agreed:**
+1. 1a + 1b now: the refusal, with the composer declining.
+2. Your lever placement in `RoomGraphs`.
+3. 1c, adopting your offered patch (the composer's lever form, and
+   `PULSE_BUTTON` admitted).
+4. 1d, the held weight.
+
+**Note D-1 (Dess → Prod), for step 1:**
+- The candidate stops composing a latch route until 1c, so the candidate
+  fixture regenerates without its c009 plate route.
+- `godot/tests/candidate_live_driver.gd` (~335-345, ~439-447) expects
+  `shutters.size() == 1` ("P14's shutter"). It reads 0 until 1c, then 1
+  again, as the lever's.
+- **The legacy suite is not affected** (`godot-latched-route`, `-live`
+  and `latched-route-play`). The step-once composer is kept under a
+  legacy name for exactly that fixture and tool: it is M-1's input,
+  never a production path.
