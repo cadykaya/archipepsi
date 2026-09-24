@@ -44,10 +44,16 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-from .schemas import mechanics as M
-from .schemas import minors
-from .schemas import signal_graph as SG
-from .schemas.physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
+try:
+    from . import mechanics as M
+    from . import minors
+    from . import signal_graph as SG
+    from .physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
+except ImportError:  # pragma: no cover
+    import mechanics as M
+    import minors
+    import signal_graph as SG
+    from physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
 
 GateKind = Literal["none", "key", "zone_state", "machine", "capability"]
 GateState = Literal["unknown", "blocked", "open"]

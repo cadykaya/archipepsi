@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from archipepsi_bridge.inventory_view import inventory_view
+from archipepsi_bridge.schemas.inventory_view import inventory_view
 from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas import protocol as P
 from archipepsi_bridge.schemas import transitions as T

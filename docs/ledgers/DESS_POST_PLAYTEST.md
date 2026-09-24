@@ -666,3 +666,18 @@ documented as fixed per campaign.
 - The legacy test now asserts the field exists before removing it, so
   the removal is no longer vacuous.
 - Defaulting it to on fails by name.
+
+## W2 wiring, part A — the two views moved into the schema layer
+
+**What moved.** `inventory_view.py` and `map_view.py` now live in
+`bridge/archipepsi_bridge/schemas/`.
+- They use the schema modules' dual imports.
+- Each has one byte-identical copy in the v0.8 packet, following the
+  precedent of `gear.py`, `signal_graph.py` and `minors.py`.
+- It is a pure move: no behaviour changes, and 17 tests pass unchanged
+  except for their import path.
+
+**Why.** The snapshot can then derive the inventory and the map on the
+model, as it already derives `available_capabilities`, without an edit
+to `campaign.py`'s snapshot builder, which is outside the released
+seams. `record_room_entered` can also reuse the discovery derivation.

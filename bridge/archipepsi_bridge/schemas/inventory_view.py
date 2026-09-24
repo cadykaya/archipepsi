@@ -46,8 +46,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .schemas import constants as C
-from .schemas.echo import SlotName
+try:
+    from . import constants as C
+    from .echo import SlotName
+except ImportError:  # pragma: no cover
+    import constants as C
+    from echo import SlotName
 
 
 class _Strict(BaseModel):

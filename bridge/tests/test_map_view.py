@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from archipepsi_bridge.map_view import derived_discovery, map_view, room_names
+from archipepsi_bridge.schemas.map_view import derived_discovery, map_view, room_names
 from archipepsi_bridge.schemas import echo as E
 from archipepsi_bridge.schemas import protocol as P
 from archipepsi_bridge.schemas import transitions as T
