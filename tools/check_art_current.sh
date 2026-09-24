@@ -52,7 +52,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 cd "$ROOT"
 BLENDER="${BLENDER:-$ROOT/.tools/blender/blender}"
-PATHS="assets/art_palette.json assets/art_budgets.json assets/models assets/textures"
+PATHS="assets/art_palette.json assets/art_budgets.json assets/models assets/textures assets/ui"
 status=0
 
 say() { printf 'check-art: %s\n' "$1"; }
@@ -294,6 +294,19 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_projectile_legibility.sh"
 
+  # Track A. The Glyph guide's bitmap-font proof names Godot 4.3 and this
+  # project ships 4.5.1, so the interface family's metrics surviving the
+  # import is a measured fact with an expiry date, not a property of the
+  # file. It is cheap to re-measure and the whole family -- panels,
+  # keycaps, item counts -- is built on top of it.
+  say "the interface font's metrics through Godot's own importer..."
+  tools/content/run_font_import.sh >/dev/null 2>&1 || \
+    fail "fontimport: the committed bitmap font no longer imports with its
+    declared baseline and per-glyph advances intact. An engine upgrade can
+    do this, and a panel renders it as plausible-looking wrong numbers. Run
+
+    tools/content/run_font_import.sh"
+
   # A13. Batch 043 drew Design 6 §15.2's thirteen statuses and checked
   # every example against §15.2's own target lists, which is the right
   # check against the design and not a check against the engine. This is
@@ -476,11 +489,41 @@ for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
            run_arrival_test.sh run_setpiece_fit.sh \
            run_yardkit_fit.sh run_skiff_sweep.sh \
            run_enemy_readiness.sh run_roomkit_fit.sh \
-           run_connect_fit.sh run_projectile_legibility.sh; do
+           run_connect_fit.sh run_projectile_legibility.sh \
+           run_font_import.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."
 done
+
+# --- 5d. the interface font rebuilds byte-identical ---------------------
+#
+# Separate from section 6 because it needs a different tool. The font's
+# source is tools/glyphui/author_numerals.py -- the glyph rows are text in
+# that file -- but turning them into a .fnt and a page needs a built ECMS
+# Glyph checkout, which is not in this repo and not on every machine. So
+# the rebuild is gated on the CLI and the skip SAYS SO. A silent skip here
+# would mean a hand-edited font passing as generated, which is the one
+# thing the rule about generated artifacts exists to stop.
+GLYPH_ROOT="${GLYPH_ROOT:-/home/user/glyph-trial}"
+if [ ! -f "$GLYPH_ROOT/packages/cli/dist/main.js" ]; then
+  say "SKIPPED interface font rebuild -- no built Glyph CLI at $GLYPH_ROOT
+  (set GLYPH_ROOT=...). The font's metrics were still measured in the
+  engine above; what is NOT checked is that the committed .fnt and page
+  are what the authoring script produces."
+elif ! git diff --quiet -- assets/ui; then
+  say "SKIPPED interface font rebuild -- assets/ui is already modified."
+else
+  say "rebuilding the interface font..."
+  GLYPH_ROOT="$GLYPH_ROOT" python3 tools/glyphui/author_numerals.py \
+    >/dev/null 2>&1 || \
+    fail "author_numerals.py did not complete. Run it directly:
+    GLYPH_ROOT=$GLYPH_ROOT python3 tools/glyphui/author_numerals.py"
+  if ! git diff --quiet -- assets/ui; then
+    fail "the committed interface font is out of date with its source:"
+    git diff --stat -- assets/ui | sed 's/^/    /'
+  fi
+fi
 
 # --- 6. everything rebuilds byte-identical ------------------------------
 if [ ! -x "$BLENDER" ]; then
