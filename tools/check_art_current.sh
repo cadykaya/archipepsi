@@ -307,6 +307,17 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_font_import.sh"
 
+  # The other half of the same risk. A nine-slice that stretches its
+  # corners is the failure that looks fine in a screenshot at the one
+  # size it was authored for.
+  say "the interface panels through Godot's own NinePatchRect..."
+  tools/content/run_nine_slice.sh >/dev/null 2>&1 || \
+    fail "nineslice: a committed panel no longer nine-slices -- its
+    corners distort, an edge resamples, or the texture stopped importing
+    lossless. Run
+
+    tools/content/run_nine_slice.sh"
+
   # A13. Batch 043 drew Design 6 §15.2's thirteen statuses and checked
   # every example against §15.2's own target lists, which is the right
   # check against the design and not a check against the engine. This is
@@ -490,13 +501,13 @@ for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
            run_yardkit_fit.sh run_skiff_sweep.sh \
            run_enemy_readiness.sh run_roomkit_fit.sh \
            run_connect_fit.sh run_projectile_legibility.sh \
-           run_font_import.sh; do
+           run_font_import.sh run_nine_slice.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."
 done
 
-# --- 5d. the interface font rebuilds byte-identical ---------------------
+# --- 5d. the interface font and panels rebuild byte-identical -----------
 #
 # Separate from section 6 because it needs a different tool. The font's
 # source is tools/glyphui/author_numerals.py -- the glyph rows are text in
@@ -514,13 +525,15 @@ if [ ! -f "$GLYPH_ROOT/packages/cli/dist/main.js" ]; then
 elif ! git diff --quiet -- assets/ui; then
   say "SKIPPED interface font rebuild -- assets/ui is already modified."
 else
-  say "rebuilding the interface font..."
-  GLYPH_ROOT="$GLYPH_ROOT" python3 tools/glyphui/author_numerals.py \
-    >/dev/null 2>&1 || \
-    fail "author_numerals.py did not complete. Run it directly:
-    GLYPH_ROOT=$GLYPH_ROOT python3 tools/glyphui/author_numerals.py"
+  say "rebuilding the interface font and panels..."
+  for ui in author_numerals author_panels; do
+    GLYPH_ROOT="$GLYPH_ROOT" python3 "tools/glyphui/$ui.py" \
+      >/dev/null 2>&1 || \
+      fail "$ui.py did not complete. Run it directly:
+    GLYPH_ROOT=$GLYPH_ROOT python3 tools/glyphui/$ui.py"
+  done
   if ! git diff --quiet -- assets/ui; then
-    fail "the committed interface font is out of date with its source:"
+    fail "the committed interface art is out of date with its source:"
     git diff --stat -- assets/ui | sed 's/^/    /'
   fi
 fi

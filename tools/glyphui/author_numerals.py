@@ -45,9 +45,10 @@ from __future__ import annotations
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
+
+import glyphrun
 
 #: 6 x 8 cells. Small enough to be pixel art at panel scale, tall enough
 #: for a digit to have a distinguishable waist -- which is the whole
@@ -114,20 +115,6 @@ def _advance(rows):
 ADVANCE = {c: _advance(rows) for c, rows in GLYPHS.items()}
 
 
-def run(cli, project, command, payload, actor, extra=()):
-    out = subprocess.run(
-        ["node", cli, "run", project, command, json.dumps(payload),
-         "--actor", actor, *extra],
-        capture_output=True, text=True)
-    if out.returncode != 0:
-        raise SystemExit("glyph %s failed:\n%s\n%s"
-                         % (command, out.stdout[-2000:], out.stderr[-2000:]))
-    try:
-        return json.loads(out.stdout)
-    except json.JSONDecodeError:
-        raise SystemExit("glyph %s returned no JSON:\n%s" % (command, out.stdout[-2000:]))
-
-
 #: The two files that are the deliverable. Everything else the authoring
 #: leaves behind -- the project, the batch scripts, the raw command
 #: results -- stays in the scratch work directory.
@@ -146,66 +133,16 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(
 
 
 def main():
-    checkout = os.environ.get("GLYPH_ROOT", "/home/user/glyph-trial")
     out_dir = os.path.abspath(sys.argv[1] if len(sys.argv) > 1
                               else os.path.join(REPO, "assets", "ui"))
-    cli = os.path.join(checkout, "packages", "cli", "dist", "main.js")
-    if not os.path.exists(cli):
-        raise SystemExit("no Glyph CLI at %s -- set GLYPH_ROOT to a built "
-                         "ECMS Glyph checkout" % cli)
     os.makedirs(out_dir, exist_ok=True)
     work = tempfile.mkdtemp(prefix="glyphui_")
-    project = os.path.join(work, "archipepsi_ui.glyph")
-
-    # A NEW project. Never an existing one -- opening checkpoints it.
-    run(cli, project, "project.describe", {}, OWNER)
-    # The one-time grant, by the owner, to a distinct artist identity.
-    run(cli, project, "project.grant", {
-        "actor": ARTIST, "scopes": ["*"],
-        "operations": ["edit", "comment", "review", "session_start"],
-        "rationale": "the art lane draws the interface family",
-    }, OWNER, ("--collaborator", "%s:agent" % ARTIST))
+    ses = glyphrun.Session(
+        os.environ.get("GLYPH_ROOT", "/home/user/glyph-trial"),
+        work, "archipepsi_ui.glyph", OWNER, ARTIST)
+    ses.create("the art lane draws the interface family")
     print("[ui] granted %s edit; lead owner stays %s" % (ARTIST, OWNER))
-
-    def head():
-        return run(cli, project, "project.describe", {}, ARTIST
-                   )["project_description"]["head_revision"]
-
-    def txn(scope, steps, message):
-        """One transaction, in ONE PROCESS.
-
-        `glyph run` starts a process per call and a transaction lives in
-        the process that opened it -- the first version of this script
-        called `txn.begin` and then `palette.create` as two runs and got
-        `TARGET_NOT_FOUND: no open transaction`, which is exactly right
-        and exactly what `glyph batch` exists for. So a transaction is a
-        batch script: begin, the steps, commit, one node process.
-
-        `steps` is a list of (command, payload) with `$1.transaction.id`
-        already standing for the transaction.
-        """
-        script = [{"command": "txn.begin",
-                   "input": {"base_revision": head(), "scope": scope}}]
-        for command, payload in steps:
-            script.append({"command": command,
-                           "input": dict(payload,
-                                         transaction="$1.transaction.id")})
-        script.append({"command": "txn.commit",
-                       "input": {"transaction": "$1.transaction.id",
-                                 "message": message}})
-        path = os.path.join(work, "_batch.json")
-        with open(path, "w") as fh:
-            json.dump(script, fh)
-        out = subprocess.run(
-            ["node", cli, "batch", project, "@" + path, "--actor", ARTIST,
-             "--json"], capture_output=True, text=True)
-        if out.returncode != 0 or "PRECONDITION_FAILED" in out.stdout:
-            raise SystemExit("glyph batch (%s) failed:\n%s\n%s"
-                             % (message, out.stdout[-2500:],
-                                out.stderr[-1500:]))
-        body = out.stdout[out.stdout.index("["):]
-        # begin and commit bracket the steps the caller asked for.
-        return json.loads(body)[1:-1]
+    txn = ses.txn
 
     # --- the canvas, the palette, and frame 0 ---------------------------
     made = txn({"creates": ["asset", "palette", "variant"]}, [
@@ -280,39 +217,16 @@ def main():
     # `TARGET_NOT_FOUND: export preset ... does not resolve`. So the
     # preset, the check and the write are one batch: three inspections
     # that have to agree about the same rectangles.
-    preset_spec = {"preset": {
-        "name": "ui_numerals", "version": 1, "format": "sprite_sheet",
-        "scope": [variant], "scale": 1, "trim": "none", "padding": 0,
-        "packing": "row_major_grid", "packing_tie_break": "lower_index_first",
-        "frame_ordering": "frame_position",
-        "max_sheet_width": 128, "max_sheet_height": 128,
-        "metadata_schema": "glyph.sheet.v1",
-        "metadata_fields": ["duration", "anchors"],
-        "color_handling": {"kind": "preserve_rgba"},
-        "engine_conventions": {"originCorner": "top_left", "yAxis": "down",
-                               "frameIndexBase": 0},
-        "gate_on_seams": False, "loop_count": None,
-        "frame_duration_unit": "milliseconds",
-    }}
+    preset_spec = ses.sheet_preset("ui_numerals", [variant], 128, 128)
     font_args = {"preset": "$1.preset", "characters": CHARACTERS,
                  "baseline_anchor": "baseline", "advance_anchor": "advance"}
-    script = [
+    results = ses.batch([
         {"command": "export.define_preset", "input": preset_spec},
         {"command": "x-glyph.check_font", "input": font_args},
         {"command": "x-glyph.bitmap_font", "input": font_args},
         {"command": "export.run",
-         "input": {"preset": "$1.preset", "destination": out_dir}},
-    ]
-    path = os.path.join(work, "_font.json")
-    with open(path, "w") as fh:
-        json.dump(script, fh)
-    out = subprocess.run(["node", cli, "batch", project, "@" + path,
-                          "--actor", ARTIST, "--json"],
-                         capture_output=True, text=True)
-    if out.returncode != 0:
-        raise SystemExit("the font batch failed:\n%s\n%s"
-                         % (out.stdout[-2500:], out.stderr[-1500:]))
-    results = json.loads(out.stdout[out.stdout.index("["):])
+         "input": {"preset": "$1.preset", "destination": work}},
+    ], label="font")
     check, written, exported = results[1], results[2], results[3]
 
     faults = check.get("faults", [])
@@ -341,16 +255,7 @@ def main():
     # The alternative -- decoding the base64 out of the record here --
     # would make this script the PNG writer, and then a bug in my
     # decoding would look like a bug in Glyph's export.
-    declaration = exported["record"]["preset_declaration"]
-    decl_path = os.path.join(work, "_preset.json")
-    with open(decl_path, "w") as fh:
-        json.dump(declaration, fh)
-    out = subprocess.run(["node", cli, "export", project,
-                          "--preset", "@" + decl_path, "--to", work],
-                         capture_output=True, text=True)
-    if out.returncode != 0:
-        raise SystemExit("glyph export failed:\n%s\n%s"
-                         % (out.stdout[-1500:], out.stderr[-1500:]))
+    ses.write_export(exported["record"], label="sheet")
 
     # The .fnt is Glyph's text, written verbatim under the name Glyph
     # suggested, beside the page under the name the .fnt itself cites.
@@ -367,7 +272,7 @@ def main():
     print("[ui] wrote %s and its page %s" % (fnt["suggested_path"], page))
 
     # --- the deliverable, and only the deliverable ----------------------
-    revision = head()
+    revision = ses.head()
     for name in ARTIFACTS:
         src = os.path.join(work, name)
         if not os.path.exists(src):
@@ -376,7 +281,8 @@ def main():
         shutil.copyfile(src, os.path.join(out_dir, name))
     print("[ui] %d artifact(s) -> %s" % (len(ARTIFACTS), out_dir))
     if os.environ.get("GLYPH_KEEP_WORK"):
-        print("[ui] project kept at %s, revision %s" % (project, revision))
+        print("[ui] project kept at %s, revision %s"
+              % (ses.project, revision))
     else:
         shutil.rmtree(work)
         print("[ui] project built and discarded; revision was %s" % revision)
