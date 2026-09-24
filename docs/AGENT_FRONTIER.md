@@ -58,9 +58,14 @@ owner's D-06/D-07 rulings and the seam table are in
   the pressure/latch presentation → CP3 the rotating 3D shell with one
   equipment face → CP4 inventory, minimap, 3D map and journal → the
   ready inherited 0.4 work.
-- **No heartbeat, watcher, subscription or schedule.** Dess and Arty
-  are not resumed, so Prod holds a recorded single-writer exception for
-  the narrow shared edits.
+- **No heartbeat, watcher, subscription or schedule.**
+- **W0.1 handback to Dess: RECORDED at `f332fff`.** Every file on
+  Dess's list is released, and Prod keeps none. See
+  `PROD_POST_PLAYTEST.md`, "W0.1".
+  - Prod's in-flight bridge half for D13 1b/1c is offered as a patch,
+    not landed.
+  - From here, Prod asks for shared changes by note (N-1 to N-3 are
+    there).
 - **CP1 progress:**
   - `H-ARTILLERY` is done (`6ebbc90`).
   - `H-FLYER-HIT` is done: a flyer's body is drawn and hit at its
@@ -83,8 +88,25 @@ owner's D-06/D-07 rulings and the seam table are in
     - an older save's encounter is treated as unknown, not as cleared;
     - `godot-resume-live` (two processes) and `godot-resume` are new,
       both in CI.
-  - **Next:** the CP1 checkpoint (neighbours, then the full frontier),
-    then CP2 (`H-PRESSURE-R` per D-07).
+  - **CP1 checkpoint.**
+    - The full frontier ran on `76b0952`: 66 of 68 steps passed.
+    - The two failures were DESS-19 and DESS-20, both mine. They are
+      fixed at `f332fff`, which is also on top of Dess's 8 commits
+      (`make test` 2149 passed).
+    - The full frontier on the handback head is next, as the checkpoint
+      record.
+  - **CP2, against D12/D13, in a Prod work tree until landed:**
+    - `H-PRESSURE-R`: the lever placement, runtime only, lands first
+      (D13's order). Legacy plates are placed as before (M-1).
+    - `H-UNWEIGHTED`: two bypasses reproduced by play.
+      - The Check can be claimed from the floor through the return gap.
+      - A carriage ridden in transit reaches G with no `lightened`.
+      - Repairs: move the goal within G (N-1) and a weighbridge along
+        the lane (N-2); a faster drive, a live class readout and
+        guided-service hardware.
+    - `godot-minor-claim` is new: a claim-reach census of every hosted
+      minor, plus played witnesses.
+    - Then `H-PASSING` and `H-COUNTERFIRE`.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 
