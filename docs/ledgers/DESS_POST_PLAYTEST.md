@@ -54,6 +54,10 @@ records it, **Dess edits none of the files below.**
   theme_packs, content_value, layout, store.
 - In `campaign.py` and `server.py`: **only** the progress-intent seams —
   the handlers, the routing and `_about`.
+- `bridge/archipepsi_bridge/epsilon/requests.py`, the Echo request
+  schema. Added 2026-09-24: your OV05 seam table edited it, and the
+  first list missed it. The provider, fallback, mock and prompt are not
+  requested.
 - Generated from those: `godot/scripts/autoload/constants.gd`, the
   apworld constants copy, `docs/design-packet-v0.8/schemas/*`, and the
   Zone fixtures the make targets regenerate.
@@ -438,3 +442,44 @@ runs it: `cd bridge && ARCHIPELAGO_ROOT=/nonexistent python -m pytest -q`.
   runs, so they turn the gate red the moment Actions runs again.
   **Fix:** anchor the path at the repository root through `__file__`.
   They exercise a generated export, so after the handback.
+
+## D-01 — H-SELF-ECHO: the contract (`docs/D14_SELF_ADDRESSED_ECHO_PROD.md`)
+
+**The rule.** A confirmed Check releases its original through AP once.
+Under the policy, Epsilon also makes a local Echo from it, keyed
+`echo_<location_id>`, whoever the recipient is. The original and the
+Echo are two records: AP counts the first, the fold the second. The Echo
+is never sent, received, counted as a key or coin, or stocked.
+
+**Applying the standing rule** (no silent compatibility change):
+`CampaignSave.self_addressed_echoes`, default `False`, and set `True` at
+campaign creation. A legacy campaign never grows an Echo for its own
+items. The backlog sweep would otherwise mint them retroactively on the
+first load after the update. If the owner wants legacy campaigns
+included, it has to be a visible opt-in.
+
+**Evidence** (`bridge/tests/test_self_echo_boundaries.py`, 3 tests,
+each failing under a sabotage):
+- **No clone:** a sweep grant sends nothing and moves no AP state. Two
+  sabotages: a send after the grant, and a cloned key.
+- **One per Check:** without `append_interpretation`'s guard, the save
+  model still refuses the duplicate.
+- **Legacy stays:** with the self filter lifted, `echo_89100006` is
+  minted. That also shows the existing pipeline interprets a
+  self-addressed original unchanged.
+
+**Split:**
+- **Dess, after W0.1:** the protocol field and export, landed first as a
+  no-op.
+- **Prod:** creation, the filter, text, reveal, and the combined tests,
+  including the deliberate `test_full_loop.py` change D14 §6 names.
+- **Epsilon lane:** prompt wording.
+
+**Not settled here:** B-2/D-02 and B-3/D-03.
+
+**Handback addendum.** Prod's OV05 seam table also edited
+`epsilon/requests.py`, `epsilon/fallback.py`, `epsilon/mock.py` and
+`epsilon/claude.py`'s prompt. Schema files return with the rest under
+§5: `epsilon/requests.py` joins the W0.1 list. The provider, fallback
+and prompt stay where the Epsilon lane's content ownership puts them.
+D-01 itself needs none of the four.

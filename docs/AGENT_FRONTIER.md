@@ -23,6 +23,8 @@ your next shared edit.**
 - W1.2: the pressure contract.
 - W2.1: the inventory view.
 - W2.2: the map view.
+- D-01: the self-addressed Echo contract (D14). It includes a
+  per-campaign policy, so a legacy save never grows Echoes.
 
 Their snapshot wiring, and every fix above, waits for the handback.
 
