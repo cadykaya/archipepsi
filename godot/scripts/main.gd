@@ -62,6 +62,7 @@ const DRIVERS := {
 	"--status-family-test": preload("res://tests/status_family_driver.gd"),
 	"--combat-fairness-test": preload("res://tests/combat_fairness_driver.gd"),
 	"--flyer-room": preload("res://tests/flyer_room_driver.gd"),
+	"--resume-test": preload("res://tests/resume_driver.gd"),
 	"--boot-test": preload("res://tests/boot_driver.gd"),
 	"--legibility-test": preload("res://tests/legibility_driver.gd"),
 	"--content-test": preload("res://tests/content_driver.gd"),
@@ -233,6 +234,13 @@ func _ready() -> void:
 		var candidate_driver := CandidateLiveDriver.new()
 		candidate_driver.main = self
 		add_child(candidate_driver)
+	# H-RESUME-R: an encounter resumed as it was left, through a real
+	# bridge and a restart, beside `Main` for the same reason -- `_to_zone`
+	# is what hands the saved encounter to the Zone before it is built.
+	if ResumeLiveDriver.resume_phase() != "":
+		var resume_driver := ResumeLiveDriver.new()
+		resume_driver.main = self
+		add_child(resume_driver)
 
 ## Enter the curated Stage 3A showcase.
 ##
@@ -282,6 +290,10 @@ var _zone_stations := {}
 var _zone_keys := {}
 var _zone_locks_open := {}
 var _zone_latches := {}
+## H-RESUME-R: encounter members defeated, per Zone, for the in-flight
+## half -- a defeat reported in the same breath as leaving may not be in
+## the snapshot yet. Only ever grows, like the sets above.
+var _zone_defeats := {}
 
 ## Everything the real game needs, extracted so a test can call it.
 ##
@@ -687,6 +699,17 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	# and nothing about the mechanism's own state is saved (§5.4a).
 	zone.latches_carried = _union_progress(
 			progress.get("latched", []), _zone_latches.get(zid, {}))
+	# THE ENCOUNTER AS IT WAS LEFT (D-06). `null` from the bridge is a
+	# save with no per-enemy record -- the encounter state is UNKNOWN and
+	# stays so here, unless this process has itself recorded a defeat in
+	# the Zone since (then it is known from that entry on).
+	var saved_defeats: Variant = progress.get("defeated")
+	if saved_defeats == null and not _zone_defeats.has(zid):
+		zone.defeated_carried = null
+	else:
+		zone.defeated_carried = _union_progress(
+				saved_defeats if saved_defeats != null else [],
+				_zone_defeats.get(zid, {}))
 	# D-8 VALUES AND P16 OBJECTS, from the bridge alone (O05-03). These
 	# are not monotone sets -- a reversible variable goes back, an object
 	# is carried back -- so the union rule above cannot apply, and there
@@ -940,6 +963,11 @@ func _remember_zone_progress() -> void:
 	_zone_keys[zone.zone_id] = zone.keys_held()
 	_zone_locks_open[zone.zone_id] = zone.locks_opened()
 	_zone_latches[zone.zone_id] = zone.latches_fired()
+	var defeated := zone.defeated_members()
+	if not defeated.is_empty() or _zone_defeats.has(zone.zone_id):
+		var known: Dictionary = _zone_defeats.get(zone.zone_id, {})
+		known.merge(defeated)
+		_zone_defeats[zone.zone_id] = known
 
 func _on_abandon() -> void:
 	pause_menu.close()

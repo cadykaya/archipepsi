@@ -28,7 +28,17 @@ owner's D-06/D-07 rulings and the seam table are in
     - the drifter telegraphs its shot;
     - an enemy's eye shows whether it is idle, watching or committing;
     - `godot-flyer-room` (new, in CI) plays the owner's `c011`.
-  - **Next:** `H-RESUME-R` (D-06).
+  - `H-RESUME-R` is done (D-06):
+    - defeated members are recorded by declared identity
+      (`room/archetype#n`), a shared edit in the seam table;
+    - they are never rebuilt;
+    - a resumed player is never placed among the living, and is told
+      why;
+    - an older save's encounter is treated as unknown, not as cleared;
+    - `godot-resume-live` (two processes) and `godot-resume` are new,
+      both in CI.
+  - **Next:** the CP1 checkpoint (neighbours, then the full frontier),
+    then CP2 (`H-PRESSURE-R` per D-07).
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

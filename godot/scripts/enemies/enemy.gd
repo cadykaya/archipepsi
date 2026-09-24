@@ -168,6 +168,12 @@ var visual: Node3D = null
 ## centre (`Constants.ENEMY_ENVELOPES[role].centre_y`), outside `visual`
 ## so a flinch does not drag the telegraph around with it.
 var telegraph_origin: Marker3D = null
+## H-RESUME-R: WHO THIS IS in its room's declared encounter,
+## `room/archetype#n` -- set by whatever placed it from a declaration
+## (the Zone's chambers), empty for an enemy no declaration names. Its
+## death is reported under this identity, and a member the save records
+## as defeated is never built again (D-06).
+var member := ""
 ## The attack currently being telegraphed, "" when none.
 var telegraph_kind := ""
 var telegraph_duration := 0.0

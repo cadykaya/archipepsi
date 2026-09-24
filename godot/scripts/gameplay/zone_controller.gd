@@ -309,6 +309,21 @@ var locks_carried := {}
 ## BUILD time and recomputes what the latch implies; nothing about the
 ## consequence is separately saved (§5.4a).
 var latches_carried := {}
+## H-RESUME-R (owner ruling D-06): THE ENCOUNTER AS IT WAS LEFT.
+##
+## `null` when the save holds no per-enemy record for this Zone -- one
+## written before the record existed -- and the encounter state is then
+## UNKNOWN: every member is built, as it always was, because a guessed
+## clear would be a fabricated one. A set otherwise, `member -> true`:
+## the declared members the player defeated, which are never built.
+## "Reloading is not an encounter-reset event." Set before `setup` by
+## whoever is carrying progress, like `keys_carried`.
+var defeated_carried: Variant = null
+## Members defeated during this entry, reported and remembered.
+var _defeated_now := {}
+## What the player was told on entry about WHERE they were put and why,
+## "" when nothing needed saying. Read by the resume suite.
+var resume_notice := ""
 ## activity id -> the room it stands in, for station repair.
 var _activity_room := {}
 var resume_anchor := ""
@@ -816,8 +831,24 @@ func setup(zone_dict: Dictionary) -> void:
 					Vector3.ZERO))
 		var middle: Vector3 = (result["bounds"] as AABB).position \
 				+ (result["bounds"] as AABB).size / 2.0
+		# EACH MEMBER BY ITS DECLARED IDENTITY, and a defeated one never
+		# built (D-06). The n-th spawn of an archetype in this room is
+		# `room/archetype#n`: every builder lays the declared groups out
+		# in declaration order, and the bridge derives the same identity
+		# from the same declaration, so neither reads the other. Skipped
+		# here, at build time, the fallen are absent before anything can
+		# perceive or attack -- not removed a frame later.
+		var room_id := str(chamber.get("id", ""))
+		var ordinals := {}
 		for spawn: Dictionary in result.get("enemy_spawns", []):
-			var enemy := Enemy.create(spawn["archetype"], theme)
+			var role := str(spawn["archetype"])
+			var n := int(ordinals.get(role, 0))
+			ordinals[role] = n + 1
+			var member := "%s/%s#%d" % [room_id, role, n]
+			if _is_defeated(member):
+				continue
+			var enemy := Enemy.create(role, theme)
+			enemy.member = member
 			add_child(enemy)
 			enemy.global_position = xform * ContentInstantiator \
 					.out_of_any_doorway(spawn["position"], mouths, middle)
@@ -877,6 +908,13 @@ func setup(zone_dict: Dictionary) -> void:
 
 		_chambers.append(record)
 	_evaluate_objectives()
+	# D-06: WITH EVERY MEMBER NOW BUILT OR SKIPPED, the resumed player is
+	# never left standing among the living. Still inside `setup`, so no
+	# physics step has run and nothing has perceived anything.
+	if is_instance_valid(player):
+		var safe := _never_among_the_living(player.global_transform)
+		if not safe.is_equal_approx(player.global_transform):
+			player.set_spawn(safe)
 	refresh()
 	if is_finale and hud != null:
 		hud.say_line("finale_open")
@@ -1487,6 +1525,77 @@ func warp_to(from_id: String, to_id: String) -> void:
 func keys_held() -> Dictionary:
 	return _keys_held.duplicate()
 
+## The members defeated during this entry, for whoever carries progress
+## across a Hub return before the snapshot has caught up.
+func defeated_members() -> Dictionary:
+	return _defeated_now.duplicate()
+
+## Was this declared member defeated, by the save or during this entry?
+func _is_defeated(member: String) -> bool:
+	if _defeated_now.has(member):
+		return true
+	return typeof(defeated_carried) == TYPE_DICTIONARY \
+			and (defeated_carried as Dictionary).has(member)
+
+## THE RESUMED PLAYER IS NEVER PUT AMONG THE LIVING (D-06, PT-16).
+##
+## A resume restores the player at the station they last reached -- and
+## every large room has one, near its middle, in the same space its
+## encounter holds. Two cases put living enemies there: a partly cleared
+## room, whose survivors return to their posts, and a save with no
+## per-enemy record, whose members are all built because nothing proves
+## any fell. Either way, standing the player where they left off would
+## put them among the living, and "do not place them around an
+## unchanged player location and call it an exact continuation".
+##
+## So when the room the resume point stands in holds any living member
+## of its encounter, the player is restored at THAT ROOM'S ARRIVAL -- the
+## doorway its encounter was composed to be entered from -- and told
+## why. The rest of the saved world is untouched. This runs inside
+## `setup`, before the first physics step, so nothing has perceived or
+## attacked anything yet; and the enemies ignore a player held for the
+## layout verdict in any case (`Enemy._find_player`).
+func _never_among_the_living(spawn_at: Transform3D) -> Transform3D:
+	resume_notice = ""
+	# ONLY A RESUME. An ordinary entry starts at the Zone's own arrival,
+	# which is by construction the doorway it was composed to be entered
+	# from: there is nothing to move and nothing to say.
+	if _station_by_id(resume_anchor) == null:
+		return spawn_at
+	var room := ""
+	for raw: Variant in room_bounds:
+		if (room_bounds[raw] as AABB).has_point(spawn_at.origin):
+			room = str(raw)
+			break
+	if room == "":
+		return spawn_at
+	var living := 0
+	for record: Dictionary in _chambers:
+		if str((record["chamber"] as Dictionary).get("id", "")) != room:
+			continue
+		for enemy: Variant in record["enemies"]:
+			if is_instance_valid(enemy) and not (enemy as Enemy)._dead:
+				living += 1
+	if living == 0:
+		return spawn_at
+	var arrival: Variant = RoomGraphs.place_of(room_places, room) \
+			.get("arrival")
+	if typeof(arrival) != TYPE_VECTOR3:
+		return spawn_at
+	var name := room.to_upper()
+	if defeated_carried == null:
+		resume_notice = ("NO RECORD OF WHICH ENEMIES FELL IN THIS SAVE -- "
+				+ "%s'S ENCOUNTER IS BACK. YOU START AT ITS ENTRANCE."
+				% name)
+	else:
+		resume_notice = ("%d LEFT IN %s -- YOU START AT ITS ENTRANCE."
+				% [living, name])
+	# TOLD, not silent (V-07: "no invented clear flags, silent reset").
+	if hud != null:
+		hud.toast(resume_notice, Color(1.0, 0.78, 0.35), 7.0)
+	return Transform3D(spawn_at.basis, (arrival as Vector3)
+			+ Vector3(0, 0.3, 0))
+
 func locks_opened() -> Dictionary:
 	return _locks_open.duplicate()
 
@@ -1879,6 +1988,12 @@ func _note_engagement() -> void:
 
 
 func _on_enemy_died(enemy: Enemy, record: Dictionary) -> void:
+	# REPORTED BY DECLARED IDENTITY, once (D-06). Idempotent on the
+	# bridge too -- the record is monotone -- so a resend is harmless.
+	if enemy.member != "" and not _defeated_now.has(enemy.member):
+		_defeated_now[enemy.member] = true
+		BridgeClient.send_intent({"type": "enemy_defeated",
+				"zone_id": zone_id, "member": enemy.member})
 	var remaining := _live_enemy_count()
 	playtime.note_enemy_died(remaining)
 	if remaining <= 0:

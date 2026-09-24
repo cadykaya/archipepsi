@@ -160,6 +160,7 @@ jobs:
           make godot-status-family
           make godot-combat-fairness
           make godot-flyer-room
+          make godot-resume
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live
@@ -178,6 +179,9 @@ jobs:
 
       - name: The whole candidate profile in one Zone, and a restart
         run: make godot-candidate-live
+
+      - name: An encounter resumed as it was left, through a real bridge and restarts
+        run: make godot-resume-live
 
       - name: One ordinary Zone at default scale, played
         run: make godot-ordinary-live

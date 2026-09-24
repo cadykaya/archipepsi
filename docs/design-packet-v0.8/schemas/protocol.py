@@ -285,6 +285,29 @@ class ZoneProgress(Strict):
     carrier_states: tuple[tuple[str, float, str, bool], ...] = Field(
         default=(), max_length=8)
 
+    #: H-RESUME-R (owner ruling D-06, 2026-09-24). The encounter members
+    #: this player has DEFEATED here, as `room/archetype#n`: the n-th
+    #: spawn of that archetype in that room's declared `enemies`, counted
+    #: in declaration order -- the order every room builder lays them out
+    #: in. Derived from the declaration alone: never an engine node path,
+    #: and nothing about a live enemy (health, timers, position) is saved.
+    #:
+    #: **`None` is not "nobody".** It is a Zone whose save has no record
+    #: -- one written before this field existed -- so its encounter state
+    #: is UNKNOWN. The engine then builds every member (no cleared room is
+    #: invented), restores the player at the resume room's arrival rather
+    #: than among them (no ambush), and says so; the first defeat recorded
+    #: after that makes this a tuple, which is the new persistence taking
+    #: over "from that point onward". `()` would be "known, and nobody has
+    #: fallen".
+    #:
+    #: **Monotone.** "Reloading is not an encounter-reset event": a member
+    #: once defeated is never built again in this Zone, which is also what
+    #: will make a later drop once-only. Checked against the declaration
+    #: by `transitions.record_defeat`; the bridge's check is consistency
+    #: evidence, and the engine's lifecycle is the evidence of the kill.
+    defeated: tuple[str, ...] | None = Field(default=None, max_length=512)
+
     def with_key(self, key_id: str) -> "ZoneProgress":
         if key_id in self.collected_keys:
             return self
@@ -423,6 +446,16 @@ class ZoneProgress(Strict):
                 sorted({*self.reached_stations, station_id})),
             "resume_anchor": station_id})
 
+    def with_defeated(self, member: str) -> "ZoneProgress":
+        """A member defeated. From an unknown record (`None`), the first
+        defeat starts the record: the engine built every member on that
+        entry, so what falls from then on is exactly what is known."""
+        known = self.defeated if self.defeated is not None else ()
+        if self.defeated is not None and member in known:
+            return self
+        return self.model_copy(update={
+            "defeated": tuple(sorted({*known, member}))})
+
 
 #: §5.1's five persistence categories, and which one each saved field of
 #: `ZoneProgress` belongs to.
@@ -462,6 +495,9 @@ SAVE_FIELD_CATEGORY: dict[str, str] = {
     # Passing Platforms carrier's rest is saved by its own package's
     # contract (EX50-011 §9) -- the unconditional-path case above.
     "carrier_states": "PUZZLE_LOCAL",
+    # H-RESUME-R: which declared members of a room's encounter have
+    # fallen is that room's own fact, kept like a lock opened.
+    "defeated": "ROOM_PERSISTENT",
 }
 
 
@@ -2339,6 +2375,21 @@ class StationReached(Strict):
                             pattern=r"^[a-z0-9_:]+$")
 
 
+class EnemyDefeated(Strict):
+    """An encounter member defeated (H-RESUME-R, D-06).
+
+    Idempotent by `member`, because the target record is monotone: the
+    same defeat twice is one defeat, and a resend after a dropped
+    connection is the normal case. `member` is the declared identity
+    `room/archetype#n` (see `ZoneProgress.defeated`), which the bridge
+    checks against the Zone's own declaration before it is recorded.
+    """
+    type: Literal["enemy_defeated"]
+    zone_id: str = _ID
+    member: str = Field(min_length=5, max_length=64,
+                        pattern=r"^[a-z0-9_]+/[a-z]+#[0-9]{1,3}$")
+
+
 class ClaimCheck(Strict):
     """Sent when the player interacts with an unlocked reward object.
 
@@ -2590,7 +2641,8 @@ ClientMessage = Annotated[
         DebugCommand,
         ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
         ZoneStateSelected, ObjectTransported, ObjectSettled, ObjectConsumed,
-        ObjectRecovered, CarrierRested, LayoutResult, BuildFailed,
+        ObjectRecovered, CarrierRested, EnemyDefeated, LayoutResult,
+        BuildFailed,
     ],
     Field(discriminator="type"),
 ]

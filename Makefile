@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -609,6 +609,18 @@ godot-flyer-room: godot-import  # the played room's flyers wait, dive and die
 	  exit 1; \
 	fi
 
+# CP1 (post-playtest) H-RESUME-R, offline: what the Zone builds from a
+# saved encounter record, read before the first physics step. The
+# two-process proof is `godot-resume-live`.
+godot-resume: godot-import  # the fallen stay fallen; the player never among the living
+	@out=$$($(GODOT) --headless --path godot -- --resume-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT RESUME TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
 # Can the player READ the walls? Playtest 1 found every Hub sign
 # mirrored while nine suites stayed green: they all assert state,
 # geometry or protocol, and a backwards sign is correct in all three.
@@ -961,6 +973,46 @@ godot-candidate-live: godot-import
 	$(call candidate_phase,next_restore)
 	@echo "-- restart: both processes new, only the save crosses --"
 	$(call candidate_phase,next_final)
+
+# H-RESUME-R (post-playtest CP1): AN ENCOUNTER RESUMES AS IT WAS LEFT
+# (D-06). The candidate profile's c005 -- two bulwarks and the station a
+# resume returns to. Each phase is a new client beside a new bridge; only
+# the save crosses. `legacy` runs on a COPY made after `partial`, with the
+# per-enemy record stripped by `tools/strip_encounter_record.py`, which
+# refuses any directory but such a copy.
+RESUME_SAVES := $(CURDIR)/.resume-saves
+RESUME_LEGACY := $(CURDIR)/.resume-saves-legacy
+define resume_phase
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(2) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --candidate=all & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start for $(1) (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --resume-live=$(1) \
+	  --resume-save-dir=$(2) \
+	  > /tmp/archipepsi-resume-$(1).log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|seeded|played|restored|legacy|GODOT RESUME)" \
+	  /tmp/archipepsi-resume-$(1).log; \
+	if grep -qE "SCRIPT ERROR|String formatting error" \
+	  /tmp/archipepsi-resume-$(1).log; then \
+	  echo "-- a runtime error was raised in $(1)"; exit 1; fi; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-resume-$(1).log; \
+	  exit $$STATUS; fi
+endef
+godot-resume-live: godot-import
+	rm -rf $(RESUME_SAVES) $(RESUME_LEGACY)
+	$(call resume_phase,seed,$(RESUME_SAVES))
+	$(call resume_phase,partial,$(RESUME_SAVES))
+	cp -r $(RESUME_SAVES) $(RESUME_LEGACY)
+	$(PY) tools/strip_encounter_record.py $(RESUME_LEGACY)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call resume_phase,partial_restore,$(RESUME_SAVES))
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call resume_phase,clear_restore,$(RESUME_SAVES))
+	@echo "-- the legacy copy: both processes new, a save without the record --"
+	$(call resume_phase,legacy,$(RESUME_LEGACY))
 
 # P14: THE LATCH-ROUTE CANDIDATE, BY HAND. Opt-in and disposable: its own
 # save directory, a default-scale mock campaign whose zone_001 is Dess's

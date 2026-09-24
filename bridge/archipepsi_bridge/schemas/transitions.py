@@ -1131,6 +1131,48 @@ def record_carrier_rested(save: CampaignSave, zone_id: str,
                      known)
 
 
+def _declared_members(rec: ZoneRecord) -> set[str]:
+    """Every encounter member the Zone DECLARES, as `room/archetype#n`.
+
+    The n-th spawn of an archetype in a room, counted across the room's
+    `enemies` groups in declaration order -- which is the order every
+    room builder lays them out in, so the engine and this agree without
+    either reading the other.
+    """
+    out: set[str] = set()
+    for ch in _chambers_of(rec):
+        seen: dict[str, int] = {}
+        for group in ch.get("enemies") or ():
+            role = str(group.get("archetype"))
+            for _ in range(int(group.get("count", 0))):
+                n = seen.get(role, 0)
+                seen[role] = n + 1
+                out.add(f"{ch.get('id')}/{role}#{n}")
+    return out
+
+
+def record_defeat(save: CampaignSave, zone_id: str,
+                  member: str) -> CampaignSave:
+    """An encounter member defeated (H-RESUME-R, owner ruling D-06).
+    Idempotent by `member`, and monotone: ordinary quit and reload are
+    not encounter resets.
+
+    **Checked against the declaration, not trusted from the client.** The
+    room must be one of this Zone's chambers, the archetype one it
+    declares there, and the ordinal inside the declared count. That is
+    consistency evidence -- the bridge cannot see the kill; the engine's
+    lifecycle is the evidence of that -- but it keeps a wrong identity
+    from becoming permanent save data.
+    """
+    def known(rec):
+        if member not in _declared_members(rec):
+            raise ValueError(
+                f"Zone '{zone_id}' declares no encounter member "
+                f"'{member}'")
+    return _progress(save, zone_id,
+                     lambda p: p.with_defeated(member), known)
+
+
 def record_lock(save: CampaignSave, zone_id: str, room_id: str,
                 socket_id: str) -> CampaignSave:
     """A lock opened. Idempotent by `(room_id, socket_id)`.
