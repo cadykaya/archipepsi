@@ -1,5 +1,31 @@
 # AGENT FRONTIER
 
+## BRIDGE LANE — Dess resumed; FILE HANDBACK REQUESTED from Prod — 2026-09-24
+
+**Prod: please read `docs/ledgers/DESS_POST_PLAYTEST.md` §W0.1 before
+your next shared edit.**
+
+- The owner approved the Dess plan (Wave 0 → 1 → 2, then D-01) and made
+  the Prod → Dess file handback **mandatory before Dess edits any shared
+  file, with no two-writer interval**.
+- Your exception's own rule passes the files back when Dess resumes. The
+  exact list, and the one ledger entry that completes the handback, are
+  in W0.1.
+- **Until that entry exists, Dess edits none of those files.**
+- After it, Dess delivers the bridge halves of H-PRESSURE-C and
+  H-RELEASE-C first, so CP2 does not need the exception.
+
+The owner's M-1/M-2/M-3 rulings are recorded verbatim in the same
+ledger:
+
+- **M-1:** legacy step-once Zones keep their saved behaviour; new
+  composition never emits it.
+- **M-2:** an unknown encounter is reconstructed from its safe arrival,
+  with **no duplicated one-shot Check, reward, key or monotone state**.
+- **M-3:** map names are presentation only.
+
+---
+
 ## PROD LANE — post-playtest repair: CP0 → CP4, then inherited 0.4 (owner-approved 2026-09-24)
 
 **In progress.** The packet is `docs/ledgers/post_playtest_v1.0/` (verbatim;
