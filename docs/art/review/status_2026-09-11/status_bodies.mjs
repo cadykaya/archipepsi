@@ -48,8 +48,9 @@ export const STATUSES = [
   {
     id: "anchored", family: "KINETIC", duration: 4.0, chance: 0.30,
     targets: ["actor", "object", "player"],
-    runtime_targets: [],
-    runtime_targets_source: "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
+    runtime_targets: ["enemy"],
+    runtime_targets_source:
+      "runtime -- ECHO_STATUS_SUPPORTED_TARGETS at a745637, which IMPLEMENTED it after this glyph was authored",
     sentence: "Fixed in place.",
     // A capped stake with ONE barb driven straight down into ground. One
     // vertical member, a head on top. `rooted` has no head and splays.
@@ -242,8 +243,9 @@ export const STATUSES = [
   {
     id: "rooted", family: "PERMISSION", duration: 5.0, chance: 0.35,
     targets: ["actor"],
-    runtime_targets: [],
-    runtime_targets_source: "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
+    runtime_targets: ["enemy"],
+    runtime_targets_source:
+      "runtime -- ECHO_STATUS_SUPPORTED_TARGETS at a745637, which IMPLEMENTED it after this glyph was authored",
     sentence: "Cannot walk.",
     // A stem with THREE roots splaying below a ground line, and no head.
     // Against `anchored`: branching versus a single spike, and the splay is

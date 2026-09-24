@@ -38,16 +38,14 @@ const PREFIX := "cl"
 const STRIP_M := 24.0
 const TILE_M := 4.0
 ## The themes whose courses the snap actually moves, and what it moves.
-const STRIPS := [
-	{"theme": "concrete_facility", "role": "wall",
-	 "note": "panel courses 1.2 m -> 1.0 m, seam grime 1.2 -> 1.0"},
-	{"theme": "gothic_stone", "role": "accent",
-	 "note": "masonry course 0.55 -> 0.5 m, block 1.1 -> 1.0 m"},
-	{"theme": "rusted_industrial", "role": "wall",
-	 "note": "corrugation 0.22 m -> 0.25 m"},
-	{"theme": "neon_transit", "role": "wall",
-	 "note": "station tile 0.30 m -> 0.25 m"},
-]
+## The strips to render, as `theme/role/note` triples in argv[2..].
+## Driven from the command line because WHICH treatments are worth
+## comparing is a ruling, not a property of this harness -- the owner
+## accepted two on 2026-09-24, refused one and left three pending, and
+## the same tool has to be able to show any of those groupings.
+var _strips: Array = []
+var _before := "theme_pre_ruling"
+var _after := "theme"
 
 var _assets: String
 var _out: String
@@ -56,6 +54,12 @@ func _init() -> void:
 	var args := OS.get_cmdline_user_args()
 	_assets = args[0]
 	_out = args[1]
+	_before = args[2]
+	_after = args[3]
+	for spec in args.slice(4):
+		var parts := spec.split("|")
+		_strips.append({"theme": parts[0], "role": parts[1],
+						"note": parts[2] if parts.size() > 2 else ""})
 	_run.call_deferred()
 
 func _material(set_dir: String, theme: String, role: String,
@@ -141,18 +145,18 @@ func _bind(root: Node, set_dir: String, theme: String) -> int:
 
 func _run() -> void:
 	# --- the long strips, one frame per theme --------------------------
-	for entry in STRIPS:
+	for entry in _strips:
 		var world := Node3D.new()
 		get_root().add_child(world)
 		# SHIPPED above, CANDIDATE below, one metre apart, so the eye
 		# compares two rhythms in one saccade instead of across two
 		# images -- and so each strip's caption sits beside it rather
 		# than on top of the pixels being judged.
-		_strip(world, "theme", entry["theme"], entry["role"], 5.0)
-		_strip(world, "theme_candidate", entry["theme"], entry["role"], 0.0)
-		_label(world, "SHIPPED   assets/textures/theme",
+		_strip(world, _before, entry["theme"], entry["role"], 5.0)
+		_strip(world, _after, entry["theme"], entry["role"], 0.0)
+		_label(world, "BEFORE THE RULING   assets/textures/%s" % _before,
 				Vector3(-11.9, 7.45, 0.05), 0.42, Color(1, 0.86, 0.55))
-		_label(world, "CANDIDATE   SNAP_COURSES on   %s" % entry["note"],
+		_label(world, "SHIPPING NOW   %s" % entry["note"],
 				Vector3(-11.9, 2.45, 0.05), 0.42, Color(0.62, 0.93, 1.0))
 		_label(world, "%s / %s   24 m of wall, six repeats of a 4 m tile"
 				% [entry["theme"], entry["role"]],
@@ -178,8 +182,8 @@ func _run() -> void:
 	b.position = Vector3(9.0, 0.0, 0.0)
 	room.add_child(a)
 	room.add_child(b)
-	var n_a := _bind(a, "theme", "concrete_facility")
-	var n_b := _bind(b, "theme_candidate", "concrete_facility")
+	var n_a := _bind(a, _before, "concrete_facility")
+	var n_b := _bind(b, _after, "concrete_facility")
 	if n_a != n_b or n_a == 0:
 		push_error("the two instances did not bind the same surfaces: %d vs %d"
 				% [n_a, n_b])
@@ -189,9 +193,9 @@ func _run() -> void:
 	var eye := Vector3(0.0, 1.7, 5.2)
 	var look := Vector3(-0.6, 1.5, 0.6)
 	await _shot(room, a.position + eye, a.position + look,
-			Vector2i(960, 720), "ROOM_A_shipped", true)
+			Vector2i(960, 720), "ROOM_A_before", true)
 	await _shot(room, b.position + eye, b.position + look,
-			Vector2i(960, 720), "ROOM_B_candidate", true)
+			Vector2i(960, 720), "ROOM_B_now", true)
 	print("[cand] wrote %s" % _out)
 	quit(0)
 

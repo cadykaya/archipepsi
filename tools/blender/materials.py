@@ -1030,14 +1030,15 @@ def surface_for(role, theme, size=ARCH_SIZE, metres=ARCH_METRES):
         # no `panel_grid` call at all and still measures a 38 px rhythm in
         # the exported PNG, and that rhythm is this one.
         pitch = int(round(size * 1.2 / metres))
-        if paintkit.SNAP_COURSES:
+        if (paintkit.SNAP_ALL_COURSES
+                or theme in paintkit.SNAP_COURSE_THEMES):
             pitch = paintkit.snap_to_tile(pitch, size)
         seams = tuple(range(0, size, pitch))
         floor_edge = "bottom"
     elif role == "trim":
         floor_edge = "bottom"
     return paintkit.Surface(size, metres, role, seams=seams,
-                            floor_edge=floor_edge,
+                            floor_edge=floor_edge, theme=theme,
                             seed="archipepsi/%s/%s" % (theme, role))
 
 

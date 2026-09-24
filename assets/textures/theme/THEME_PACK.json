@@ -84,15 +84,15 @@
  "textures": {
   "concrete_facility/accent": {
    "covers_m": 4.0,
-   "mean_value": 0.5172,
-   "sha256_16": "b4d9de79069c447f",
+   "mean_value": 0.5154,
+   "sha256_16": "fc3e122af5723691",
    "size_px": 128,
    "texture": "theme/concrete_facility_accent.png"
   },
   "concrete_facility/ceiling": {
    "covers_m": 4.0,
-   "mean_value": 0.5346,
-   "sha256_16": "f72ea697a4b7b55b",
+   "mean_value": 0.5348,
+   "sha256_16": "48977fbb859538e5",
    "size_px": 128,
    "texture": "theme/concrete_facility_ceiling.png"
   },
@@ -119,15 +119,15 @@
   },
   "concrete_facility/wall": {
    "covers_m": 4.0,
-   "mean_value": 0.6302,
-   "sha256_16": "2bef9880e9d2d169",
+   "mean_value": 0.624,
+   "sha256_16": "a1f9896367dc455a",
    "size_px": 128,
    "texture": "theme/concrete_facility_wall.png"
   },
   "concrete_facility/wall_ribbed": {
    "covers_m": 4.0,
-   "mean_value": 0.6105,
-   "sha256_16": "862bf2a3b614af67",
+   "mean_value": 0.6048,
+   "sha256_16": "92b9993ddca3218e",
    "size_px": 128,
    "texture": "theme/concrete_facility_wall_ribbed.png"
   },
@@ -176,21 +176,21 @@
   "neon_transit/accent": {
    "covers_m": 4.0,
    "mean_value": 0.5835,
-   "sha256_16": "4a5347d23e5c026e",
+   "sha256_16": "50b96297d6f3fbc2",
    "size_px": 128,
    "texture": "theme/neon_transit_accent.png"
   },
   "neon_transit/ceiling": {
    "covers_m": 4.0,
    "mean_value": 0.4798,
-   "sha256_16": "51d6228645814c78",
+   "sha256_16": "7c5552e5560f15e5",
    "size_px": 128,
    "texture": "theme/neon_transit_ceiling.png"
   },
   "neon_transit/floor": {
    "covers_m": 4.0,
-   "mean_value": 0.3107,
-   "sha256_16": "5ff9e90b319a9169",
+   "mean_value": 0.3135,
+   "sha256_16": "25c12afa27117606",
    "size_px": 128,
    "texture": "theme/neon_transit_floor.png"
   },
@@ -210,8 +210,8 @@
   },
   "neon_transit/wall": {
    "covers_m": 4.0,
-   "mean_value": 0.6817,
-   "sha256_16": "bd67faa3d8fd4432",
+   "mean_value": 0.6624,
+   "sha256_16": "1c93c677a254bd5e",
    "size_px": 128,
    "texture": "theme/neon_transit_wall.png"
   },

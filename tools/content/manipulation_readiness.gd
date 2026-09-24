@@ -65,11 +65,35 @@ const UNSCALED_FORCE := "apply_central_force(force)"
 ## And the other half of the same distinction: an IMPULSE is scaled.
 const IMPULSE_SCALED := "apply_central_impulse(impulse * impulse_scale())"
 
-## `MassClass`'s ladder, Design 2 §10.2 transcribed. Required verbatim.
-const LADDER_CONSTS := [
-	"const LIGHT_BELOW := 30.0",
-	"const MEDIUM_BELOW := 120.0",
-	"const HEAVY_BELOW := 400.0",
+## `MassClass`'s ladder, Design 2 §10.2. THE VALUES ARE PINNED HERE AND
+## THE HOME IS NOT.
+##
+## This used to require the literals `const LIGHT_BELOW := 30.0` and its
+## two siblings verbatim in `mass_class.gd`, and on 2026-09-24 that
+## refused a correct Production: the thresholds moved out of the file and
+## into the generated `Constants` as `MASS_LIGHT_BELOW` and friends. The
+## **values did not change** -- 30 / 120 / 400 either way -- so no art was
+## stale and the only thing wrong was where this harness was looking.
+##
+## Following the value to the generated constants is also the better
+## source: it is the schema-backed one, and a file that delegates cannot
+## drift from it. So two assertions now, and they catch different things:
+##
+##   * `LADDER_VALUES` -- the numbers themselves, from `Constants`. If
+##     Design 2 §10.2 is ever renumbered, every class boundary this lane
+##     drew is stale and this is what says so.
+##   * `LADDER_DELEGATES` -- that `mass_class.gd` still reads them from
+##     `Constants` rather than holding its own copy. Two homes for one
+##     number is how they come apart.
+const LADDER_VALUES := {
+	"MASS_LIGHT_BELOW": 30.0,
+	"MASS_MEDIUM_BELOW": 120.0,
+	"MASS_HEAVY_BELOW": 400.0,
+}
+const LADDER_DELEGATES := [
+	"const LIGHT_BELOW := Constants.MASS_LIGHT_BELOW",
+	"const MEDIUM_BELOW := Constants.MASS_MEDIUM_BELOW",
+	"const HEAVY_BELOW := Constants.MASS_HEAVY_BELOW",
 ]
 
 
@@ -123,10 +147,36 @@ func _load_production() -> bool:
 	if ladder == "":
 		_fail("Production's mass_class.gd did not load.")
 		return false
-	for line: String in LADDER_CONSTS:
-		if not ladder.contains(line):
-			_fail("MassClass no longer declares `%s`. The ladder has "
-					% line + "moved and every class below is stale.")
+	# READ FROM THE VERBATIM COPY, not the one the runner rewrote to
+	# make it loadable here. Checking the rewritten text would be
+	# checking this harness's own sed.
+	var verbatim := FileAccess.get_file_as_string(
+			"res://_harness/prod_mass_class_verbatim.gd")
+	if verbatim == "":
+		_fail("Production's mass_class.gd was not staged verbatim, so "
+				+ "the ladder's delegation could not be read at all.")
+		return false
+	for line: String in LADDER_DELEGATES:
+		if not verbatim.contains(line):
+			_fail(("MassClass no longer declares `%s`. Either the ladder "
+					+ "moved again or it has taken its own copy of a "
+					+ "number that lives in Constants; both are worth "
+					+ "stopping for.") % line)
+			return false
+	var ladder_source := FileAccess.get_file_as_string(
+			"res://_harness/prod_constants.gd")
+	if ladder_source == "":
+		_fail("Production's constants.gd did not load, so the mass "
+				+ "ladder's VALUES could not be checked at all -- and a "
+				+ "run that checks nothing is not a PASS.")
+		return false
+	for name: String in LADDER_VALUES:
+		var want: float = LADDER_VALUES[name]
+		var want_text := "%s = %s" % [name, want]
+		if not ladder_source.contains(want_text):
+			_fail(("Constants no longer says `%s`. Design 2 section 10.2 "
+					+ "has been renumbered, and every class boundary this "
+					+ "lane drew against it is stale.") % want_text)
 			return false
 	_mass_class = load("res://_harness/prod_mass_class.gd") as GDScript
 	if _mass_class == null:

@@ -79,7 +79,7 @@ GUARD_LINES = {
         "step = surface.course(pitch_metres)",          # panel_grid, path 2
         "for y in range(0, surface.size, step):",       # ...and its wrap
         "def snap_to_tile(step, size, minimum=2):",     # the correction
-        "SNAP_COURSES = False",                         # off by default
+        "SNAP_COURSE_THEMES = frozenset(",              # the per-theme ruling
         "return max(0.0, 1.0 - surface.nearest_seam(y) / float(reach))",
     ],                                                  # near_seams, path 1
     "materials.py": [
@@ -336,11 +336,13 @@ def main() -> int:
         print("    " + ", ".join(worst))
         print()
         print("  REPORTED, NOT REFUSED. The repair is not one line: three")
-        print("  live paths compute a pitch, `paintkit.SNAP_COURSES` turns")
-        print("  the snap on for all of them at once, and turning it on")
-        print("  moves designed spacing by up to a quarter -- 1.35 m to")
-        print("  1.0 m, because the divisors of 128 are the powers of two.")
-        print("  That is a look decision for the owner. The candidate set")
+        print("  live paths compute a pitch, and the snap is now decided")
+        print("  PER TREATMENT: the owner accepted it for")
+        print("  concrete_facility and neon_transit on 2026-09-24,")
+        print("  refused it for gothic_stone, and left the rest pending.")
+        print("  A BREAKS below on a pending or refused treatment is a")
+        print("  measurement, not a defect and not a licence. The")
+        print("  candidate set")
         print("  is built by tools/blender/build_theme_candidate.py into")
         print("  assets/textures/theme_candidate/; compare with")
         print("    %s --dir assets/textures/theme_candidate"

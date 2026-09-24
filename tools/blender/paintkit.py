@@ -146,13 +146,38 @@ def _rgb(value):
 # structure -- what the painter is painting ON
 # ----------------------------------------------------------------------
 
-#: Snap wrapping course pitches to a divisor of the tile. OFF by default,
-#: because turning it on changes the painted look of every theme -- a 1.2 m
-#: panel course becomes 1.0 m -- and that is the owner's call, not a
-#: generator's. `build_theme_candidate.py` turns it on and writes to
-#: `assets/textures/theme_candidate/` so the two can be compared at the
-#: same scale before anything is decided.
-SNAP_COURSES = False
+#: WHICH THEMES SNAP THEIR WRAPPING COURSE PITCHES. Per treatment, by
+#: owner ruling of 2026-09-24, and NOT a global default.
+#:
+#: The candidate built at Batch 055 snapped every pitch in every family
+#: at once. The owner ruled on it per treatment instead, because the
+#: change is a look change and the look differs by family:
+#:
+#:     concrete_facility   ACCEPTED  -- snapped, and shipped
+#:     neon_transit        ACCEPTED  -- snapped, and shipped
+#:     gothic_stone        REFUSED   -- the snapped bond reads mechanical;
+#:                                      investigate 0.5 m / 1.5 m instead
+#:     rusted_industrial   PENDING   -- materially changed, and there is
+#:     temple_ruin         PENDING     not yet owner-facing visual
+#:     void_glitch         PENDING     evidence to rule on
+#:
+#: A PENDING treatment is NOT inferred from the arithmetic. The numbers
+#: say every unsnapped pitch breaks at the tile edge; they do not say
+#: whether the repair looks better, and only three treatments have been
+#: looked at.
+SNAP_COURSE_THEMES = frozenset({"concrete_facility", "neon_transit"})
+
+#: The REVIEW override: snap everything regardless of family. Off in
+#: production, and `build_theme_candidate.py` turns it on to render the
+#: pending treatments for the compact same-scale review the ruling asks
+#: for later. It is not a way to ship an unruled treatment.
+SNAP_ALL_COURSES = False
+
+#: PROPS ARE EXCLUDED STRUCTURALLY, not by remembering to. The ruling
+#: says the course decision does not carry into props, and the mechanism
+#: is that only `materials.surface_for` gives a Surface a `theme` --
+#: `propkit`'s two constructors pass none, so a prop surface can never
+#: match a snapped family however this set is edited.
 
 
 def snap_to_tile(step, size, minimum=2):
@@ -185,7 +210,7 @@ class Surface:
     """
 
     def __init__(self, size, metres, kind, seams=(), bolt_pitch=0,
-                 floor_edge=None, seed="archipepsi"):
+                 floor_edge=None, seed="archipepsi", theme=None):
         #: texels along one edge
         self.size = size
         #: how many world metres this texture covers
@@ -198,6 +223,9 @@ class Surface:
         self.bolt_pitch = bolt_pitch
         #: which edge of the texture meets the ground: "bottom" | None
         self.floor_edge = floor_edge
+        #: the house family this is painted in, or None for a prop. The
+        #: ONLY thing that can put a surface inside `SNAP_COURSE_THEMES`.
+        self.theme = theme
         self.hash = Hash(seed)
 
     @property
@@ -220,13 +248,14 @@ class Surface:
         is even for 3.5 m of wall and then stumbles, once every 4 m, for
         as long as the wall goes on.
 
-        With `SNAP_COURSES` off this returns exactly what the call sites
-        computed before it existed, so the shipped set is unchanged and
-        that is checked by rebuilding it. With `SNAP_COURSES` on it
-        returns the nearest pitch the tile is a whole multiple of.
+        For a family the owner has NOT accepted the snap for, this
+        returns exactly what the call sites computed before it existed.
+        For `concrete_facility` and `neon_transit` -- accepted
+        2026-09-24 -- it returns the nearest pitch the tile is a whole
+        multiple of. A prop has no theme and is never snapped.
         """
         step = max(minimum, self.texels(metres))
-        if not SNAP_COURSES:
+        if not (SNAP_ALL_COURSES or self.theme in SNAP_COURSE_THEMES):
             return step
         return snap_to_tile(step, self.size, minimum)
 

@@ -1,7 +1,7 @@
 {
   "batch": "043",
   "authored": "2026-09-11",
-  "art_revision": "973f4ebea6596ca9072c19aebe8bdf4d86b7bba1",
+  "art_revision": "dc79850f5f6a2dc7859853afc7fbe6dae066a107",
   "glyph_revision": "6c80b6315912a70b44c28d566ddff608eafa234a",
   "design_revision": "a20bf55",
   "design_sections": [
@@ -2270,8 +2270,10 @@
         "player"
       ],
       "duration_s": 4,
-      "runtime_targets": [],
-      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
+      "runtime_targets": [
+        "enemy"
+      ],
+      "runtime_targets_source": "runtime -- ECHO_STATUS_SUPPORTED_TARGETS at a745637, which IMPLEMENTED it after this glyph was authored",
       "chance": 0.3
     },
     {
@@ -2398,8 +2400,10 @@
         "actor"
       ],
       "duration_s": 5,
-      "runtime_targets": [],
-      "runtime_targets_source": "none -- apply() refuses it: NO STATUS BEFORE ITS EFFECT",
+      "runtime_targets": [
+        "enemy"
+      ],
+      "runtime_targets_source": "runtime -- ECHO_STATUS_SUPPORTED_TARGETS at a745637, which IMPLEMENTED it after this glyph was authored",
       "chance": 0.35
     },
     {

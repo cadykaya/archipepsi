@@ -39,8 +39,26 @@ GD
 # vocabulary grew -- and a `const` cannot shadow a global class name, so
 # binding the stub under that name silently resolved to the wrong thing.
 # `_ONE_STATUS` cannot collide, and it says what it is.
+# AND `Constants.` TOO, since 2026-09-24. The mass ladder used to be
+# three literals in this file; Production moved the values into the
+# generated `Constants` and left `mass_class.gd` delegating to them. A
+# file that references a global this project does not register fails to
+# COMPILE, and a failed compile here is silent in a useful-looking way:
+# `load()` returns a GDScript, `of_mass` is simply not on it, and the
+# harness reports "Nonexistent function". Binding it to the preloaded
+# copy is the same move already made for `StatusEffects` below, for the
+# same reason.
+git -C "$ROOT" show "$PROD:godot/scripts/autoload/constants.gd" \
+  | sed 's/^class_name .*$//' > "$H/prod_constants.gd"
+# The SAME file again, verbatim and never parsed. The rewritten copy
+# above is what RUNS; this is what the contract is READ from. Asserting
+# the delegation against the rewritten copy would be asserting against
+# this harness's own sed -- it would pass whatever Production did, which
+# is the exact shape of a check that cannot fail.
 git -C "$ROOT" show "$PROD:godot/scripts/gameplay/mass_class.gd" \
-  | sed 's/^class_name MassClass$//; s/\bStatusEffects\b/_ONE_STATUS/g' \
+  > "$H/prod_mass_class_verbatim.gd"
+git -C "$ROOT" show "$PROD:godot/scripts/gameplay/mass_class.gd" \
+  | sed 's/^class_name MassClass$//; s/\bStatusEffects\b/_ONE_STATUS/g; s/\bConstants\./_PROD_CONST./g' \
   > "$H/prod_mass_class.gd"
 python3 - "$H/prod_mass_class.gd" <<'PY'
 import sys, pathlib
@@ -54,7 +72,9 @@ at = next(i for i, l in enumerate(lines) if l.startswith("extends ")) + 1
 # theirs, unaltered, and the harness verifies the thresholds are still
 # the ones it thinks it is reading.
 lines[at:at] = ['const _ONE_STATUS := preload('
-                '"res://_harness/one_status.gd")']
+                '"res://_harness/one_status.gd")',
+                'const _PROD_CONST := preload('
+                '"res://_harness/prod_constants.gd")']
 p.write_text("\n".join(lines))
 PY
 
@@ -65,8 +85,6 @@ PY
 git -C "$ROOT" show "$PROD:godot/scripts/gameplay/manipulable_body.gd" \
   > "$H/prod_manipulable_body.gd"
 
-git -C "$ROOT" show "$PROD:godot/scripts/autoload/constants.gd" \
-  | sed 's/^class_name .*$//' > "$H/prod_constants.gd"
 git -C "$ROOT" show "$PROD:godot/project.godot" > "$H/prod_project"
 cp "$ROOT/tools/content/manipulation_readiness.gd" "$H/manipready.gd"
 run_godot manipready _harness/manipready.gd "$ROOT/assets/models" \

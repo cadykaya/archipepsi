@@ -41,7 +41,7 @@ texture is the evidence that a one-path shim is not the correction.
 
 ## So the candidate is built from the real generator, not a shim
 
-`paintkit.SNAP_COURSES` is a module flag, off by default. Every wrapping
+`paintkit.SNAP_ALL_COURSES` is the review override, off by default. Every wrapping
 pitch in `materials.py` and `paintkit.py` now asks `Surface.course()`
 for its step instead of `texels()`, and with the flag off `course()`
 returns exactly what those call sites computed before it existed --
@@ -102,7 +102,7 @@ def _watched_course(self, metres, minimum=2):
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    paintkit.SNAP_COURSES = True
+    paintkit.SNAP_ALL_COURSES = True
     paintkit.Surface.course = _watched_course
     written = []
     try:
@@ -119,7 +119,7 @@ def main():
                 print("[cand] %s" % name)
     finally:
         paintkit.Surface.course = _REAL_COURSE
-        paintkit.SNAP_COURSES = False
+        paintkit.SNAP_ALL_COURSES = False
 
     # The seam pitch is not asked for through `course()` -- `surface_for`
     # snaps it directly, because it has a size and a metres and no Surface
@@ -136,10 +136,10 @@ def main():
         "status": "CANDIDATE -- not a production asset, not applied, not "
                   "approved, not runtime-selected. The shipped set under "
                   "assets/textures/theme/ is untouched and was rebuilt "
-                  "byte-identical with SNAP_COURSES off.",
+                  "byte-identical for every family the owner has not accepted the snap for.",
         "what_changed": "Every WRAPPING pitch in the generator asks "
                         "Surface.course() for its step, and with "
-                        "paintkit.SNAP_COURSES on that step is the divisor "
+                        "paintkit.SNAP_ALL_COURSES on that step is the divisor "
                         "of the 128 px tile nearest the designed one. Four "
                         "paths draw on such a pitch: surface_for's seams "
                         "(read by near_seams, bolts and weep streaks), "

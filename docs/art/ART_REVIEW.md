@@ -4990,6 +4990,52 @@ cameras as T01–T05.
 imported, no owner review.
 
 
+## 2026-09-24 — the course ruling, applied per treatment
+
+**The owner ruled on the Batch 055 candidate PER TREATMENT.** Not
+wholesale, not by flipping a global default, and not into props.
+
+| family | ruling | state |
+|---|---|---|
+| `concrete_facility` | **accept** | **shipping** |
+| `neon_transit` | **accept** | **shipping** |
+| `gothic_stone` | **do not accept** — investigate a 0.5 / 1.5 m bond | unchanged |
+| `rusted_industrial`, `temple_ruin`, `void_glitch` | pending, no owner-facing visual evidence yet | unchanged |
+
+`paintkit.SNAP_COURSES` (a global flag) is gone. In its place
+**`SNAP_COURSE_THEMES`**, a set naming the two accepted families, and
+**`SNAP_ALL_COURSES`**, the review override `build_theme_candidate.py`
+uses to render the pending treatments — *not* a way to ship an unruled
+one.
+
+**Props are excluded structurally rather than by remembering to.** Only
+`materials.surface_for` gives a `Surface` a `theme`; `propkit`'s two
+constructors pass none, so a prop can never match a snapped family
+however that set is later edited.
+
+**Eight textures moved, in exactly the two accepted families** — checked
+against the descriptor, not asserted: the 8 rows whose `sha256_16`
+changed are those 8, and no row outside them moved.
+
+**Two `BREAKS` remain in the shipped set and both are on treatments the
+owner did not accept.** `gothic_stone_accent` (`v 18 wrap 2`) and
+`rusted_industrial_wall` (`h 7 wrap 9`). That is the ruling working.
+
+**A pipeline step I had been skipping, found by the measurement not
+moving.** `build_materials.py` → `verify_theme_set.py --write` →
+**`export_content_pack.py`** → `import_godot_content.sh`. I ran the first,
+second and fourth; the third is what copies `assets/textures/theme/` into
+`godot/content/theme/`. The import re-ran happily over the *old* pixels
+and reported 37 sidecars, and the course checker — which reads the
+imported copy — showed the pre-ruling numbers. **An import that reports
+success over stale inputs is the failure mode worth naming:** nothing
+errored, and the only thing that caught it was a number that should have
+changed and did not.
+
+Evidence: `docs/art/review/course_ruling_2026-09-24/`, four same-scale
+strips plus the shipped shell before and after, from
+`tools/content/run_course_ruling.sh`.
+
 ## Batch 061 — T07. Dark Souls III, THE HIGH WALL OF LOTHRIC — the last pack with a family of its own
 
 **PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
