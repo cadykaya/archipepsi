@@ -213,3 +213,48 @@ behaviour.
 
 **Open in H-RESUME-C:** DESS-19 and DESS-20, the two mechanical repairs
 to Prod's edit. They wait for the handback.
+
+---
+
+## W1.4 — H-KEYS: what each local key opens, and whether it reads as locked (V-14)
+
+`bridge/tools/audit_local_keys.py` (new, read-only) reads each Zone
+through the real schema and classifies every declared key:
+
+| Class | Meaning |
+|---|---|
+| **NO_LOCK** | opens nothing |
+| **NOTHING** | its lock guards no Check, exit or key |
+| **KEY_FIRST** | every way to the lock passes the key's own room |
+| **GATES_CHECK / EXIT / KEY** | what its lock guards |
+
+It reads the declaration only. Whether the engine realized each lock is
+Prod's runtime evidence.
+
+`bridge/tests/test_audit_local_keys.py` produces every class it claims
+from a schema-valid mutation of a real sample Zone, so a uniform result
+is not a silent classifier.
+
+**Result on the committed 20-Zone sample** (`godot/tests/fixtures/sample`,
+80 keys):
+- **0 NO_LOCK, 0 NOTHING.** Every key opens a lock that guards a Check,
+  so the payoff is real.
+- **80 of 80 KEY_FIRST.** Keys sit in early route rooms (c002–c005) and
+  their locks later. The player passes each key before they can ever
+  stand at its lock, so every locked door is reached with its key
+  already in hand.
+
+- **DESS-22 — finding (presentation and order, not a missing lock).**
+  This is the most likely mechanism behind PT-15, "keys without noticed
+  matching doors". The locks exist and pay off; they are simply never
+  met locked. **No generator change now** (V-14: "no unjustified global
+  rescope").
+  - **Near-term (Prod/Arty, CP2 readability):** a locked door
+    approached with its key should visibly *unlock* — a colour-matched
+    key-to-door beat — rather than behave like an ordinary opening.
+  - **Input to H-05-COMPOSE (0.5):** place some keys beyond a point
+    where their locked door has already been seen.
+- **DESS-23 — latent.** The Zone schema accepts a key that no door
+  locks, and the audit's NO_LOCK case is built exactly that way. The
+  composer never produces one (0 of 80). A validator guard belongs in
+  `zone.py` — after the handback, low priority.
