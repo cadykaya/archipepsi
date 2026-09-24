@@ -25,6 +25,8 @@ your next shared edit.**
 - W2.2: the map view.
 - D-01: the self-addressed Echo contract (D14). It includes a
   per-campaign policy, so a legacy save never grows Echoes.
+- D-02/D-03/D-04: options brought to the owner (D15). **Waiting for her
+  selection; nothing on those branches is built.**
 
 Their snapshot wiring, and every fix above, waits for the handback.
 

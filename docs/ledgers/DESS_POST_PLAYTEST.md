@@ -483,3 +483,23 @@ each failing under a sabotage):
 §5: `epsilon/requests.py` joins the W0.1 list. The provider, fallback
 and prompt stay where the Epsilon lane's content ownership puts them.
 D-01 itself needs none of the four.
+
+## D-02 / D-03 / D-04 — options for the owner (`docs/D15_OWNER_OPTIONS_D02_D04.md`)
+
+**Brought before any branch is built, as the owner asked.** Research
+was three read-only passes over the code and design; every claim in D15
+cites its file.
+
+**Recommendations:**
+- **D-02:** A. Python fixes the function and Epsilon flavours it, with
+  a qualifying fallback.
+- **D-03:** C now, E later. E is AP capability events, which meets the
+  2026-09-05 ruling's letter; B would need that ruling changed.
+- **D-04:** H now, G when a consumer is named.
+
+**DESS-26 — latent, found in the D-02 research.** `grapple_pull_target`
+counts as the `grapple` capability (`mechanics.py:296-297`), but at
+runtime it moves the enemy, not the player. It is latent: the only edge
+composer takes its capability from `featured_acquisition`, which nothing
+emits. Every D-02 option excludes it from traversal. The fix lands with
+whichever D-02 option is chosen.
