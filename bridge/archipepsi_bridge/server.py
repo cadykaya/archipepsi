@@ -188,7 +188,8 @@ class BridgeServer:
                         "latch_fired", "zone_state_selected",
                         "object_transported", "object_settled",
                         "object_consumed", "object_recovered",
-                        "carrier_rested", "enemy_defeated"):
+                        "carrier_rested", "enemy_defeated",
+                        "room_entered"):
             await engine.handle_progress(m)
         elif m.type == "layout_result":
             await engine.handle_layout_result(m)

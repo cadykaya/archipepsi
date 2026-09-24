@@ -307,6 +307,26 @@ class ZoneProgress(Strict):
     #: by `transitions.record_defeat`; the bridge's check is consistency
     #: evidence, and the engine's lifecycle is the evidence of the kill.
     defeated: tuple[str, ...] | None = Field(default=None, max_length=512)
+    #: H-MAP-DATA. The rooms of this Zone the player has entered: what the
+    #: map may name and draw (`map_view`).
+    #:
+    #: `None` means no discovery record yet, which is every Zone saved
+    #: before this field existed. Discovery is then what the save PROVES
+    #: (`map_view.derived_discovery`: the entrance, key rooms, opened
+    #: locks, latches, defeats, object rooms, set variables). The first room
+    #: entered records those rooms plus itself. They are facts the save
+    #: already holds, so nothing is invented. `()` would be "known, and
+    #: nothing entered".
+    #:
+    #: **Monotone:** a room once found stays on the map. It is checked
+    #: against the declaration by `transitions.record_room_entered`.
+    visited_rooms: tuple[str, ...] | None = Field(
+        default=None, max_length=C.ZONE_MAX_CHAMBERS)
+
+    def with_visited(self, rooms) -> "ZoneProgress":
+        merged = tuple(sorted({*(self.visited_rooms or ()), *rooms}))
+        return self if merged == self.visited_rooms else self.model_copy(
+            update={"visited_rooms": merged})
 
     def with_key(self, key_id: str) -> "ZoneProgress":
         if key_id in self.collected_keys:
@@ -498,6 +518,9 @@ SAVE_FIELD_CATEGORY: dict[str, str] = {
     # H-RESUME-R: which declared members of a room's encounter have
     # fallen is that room's own fact, kept like a lock opened.
     "defeated": "ROOM_PERSISTENT",
+    # H-MAP-DATA: that a room has been entered is that room's own fact,
+    # kept like a station reached.
+    "visited_rooms": "ROOM_PERSISTENT",
 }
 
 
@@ -2401,6 +2424,19 @@ class EnemyDefeated(Strict):
                         pattern=r"^[a-z0-9_]+/[a-z]+#[0-9]{1,3}$")
 
 
+class RoomEntered(Strict):
+    """The player entered a room (H-MAP-DATA): it joins the map.
+
+    Idempotent by room, because the record is monotone: a room entered
+    twice is found once, and a resend after a dropped connection is the
+    normal case. Checked against the accepted Zone's declaration.
+    """
+    type: Literal["room_entered"]
+    zone_id: str = _ID
+    room_id: str = Field(min_length=1, max_length=24,
+                         pattern=r"^[a-z0-9_]+$")
+
+
 class ClaimCheck(Strict):
     """Sent when the player interacts with an unlocked reward object.
 
@@ -2652,8 +2688,8 @@ ClientMessage = Annotated[
         DebugCommand,
         ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
         ZoneStateSelected, ObjectTransported, ObjectSettled, ObjectConsumed,
-        ObjectRecovered, CarrierRested, EnemyDefeated, LayoutResult,
-        BuildFailed,
+        ObjectRecovered, CarrierRested, EnemyDefeated, RoomEntered,
+        LayoutResult, BuildFailed,
     ],
     Field(discriminator="type"),
 ]

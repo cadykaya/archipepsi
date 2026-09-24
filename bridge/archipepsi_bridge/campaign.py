@@ -1564,6 +1564,9 @@ class CampaignEngine:
             elif intent.type == "enemy_defeated":
                 nxt = T.record_defeat(self.save, intent.zone_id,
                                       intent.member)
+            elif intent.type == "room_entered":
+                nxt = T.record_room_entered(self.save, intent.zone_id,
+                                            intent.room_id)
             elif intent.type == "carrier_rested":
                 nxt = T.record_carrier_rested(
                     self.save, intent.zone_id, intent.package_id,

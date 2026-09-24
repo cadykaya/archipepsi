@@ -153,9 +153,11 @@ def derived_discovery(zone, progress) -> frozenset[str]:
 def map_view(save, zone_id: str, *, visited=None) -> MapView:
     """The map of one Zone, as far as the player has discovered it.
 
-    `visited` is the discovery record once the save carries one. Until
-    then, and for any save written before it, discovery is what the save
-    proves (`derived_discovery`).
+    Discovery is the Zone's record (`ZoneProgress.visited_rooms`) joined
+    with what the save proves (`derived_discovery`), so a missed report
+    never hides a room a recorded fact names. Before any record exists,
+    as in a save written before the field, the proof alone. `visited`
+    overrides both, for a caller asking about a hypothetical.
 
     Capabilities are read here, from the save, rather than passed in: a
     view that took them as an argument could be handed a different
@@ -167,7 +169,8 @@ def map_view(save, zone_id: str, *, visited=None) -> MapView:
     can_now = set(M.available_capabilities(mechanics, save.slots))
     owned = set(M.owned_capabilities(mechanics))
     found = (frozenset(visited) if visited is not None
-             else derived_discovery(zone, progress))
+             else frozenset(progress.visited_rooms or ())
+             | derived_discovery(zone, progress))
     names = room_names(zone)
     rooms = tuple(MapRoom(room_id=c.id, type=c.type,
                           discovered=c.id in found,

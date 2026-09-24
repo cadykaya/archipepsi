@@ -1007,6 +1007,38 @@
         "title": "RequestNextZone",
         "type": "object"
       },
+      "RoomEntered": {
+        "additionalProperties": false,
+        "description": "The player entered a room (H-MAP-DATA): it joins the map.\n\nIdempotent by room, because the record is monotone: a room entered\ntwice is found once, and a resend after a dropped connection is the\nnormal case. Checked against the accepted Zone's declaration.",
+        "properties": {
+          "type": {
+            "const": "room_entered",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "room_id"
+        ],
+        "title": "RoomEntered",
+        "type": "object"
+      },
       "SetCreativity": {
         "additionalProperties": false,
         "properties": {
@@ -1301,6 +1333,7 @@
         "object_transported": "#/$defs/ObjectTransported",
         "release_consumable_authorization": "#/$defs/ReleaseConsumableAuthorization",
         "request_next_zone": "#/$defs/RequestNextZone",
+        "room_entered": "#/$defs/RoomEntered",
         "set_creativity": "#/$defs/SetCreativity",
         "slot_action": "#/$defs/SlotAction",
         "start_mock_campaign": "#/$defs/StartMockCampaign",
@@ -1401,6 +1434,9 @@
       },
       {
         "$ref": "#/$defs/EnemyDefeated"
+      },
+      {
+        "$ref": "#/$defs/RoomEntered"
       },
       {
         "$ref": "#/$defs/LayoutResult"
@@ -7234,6 +7270,22 @@
             ],
             "default": null,
             "title": "Defeated"
+          },
+          "visited_rooms": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 40,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Visited Rooms"
           }
         },
         "title": "ZoneProgress",
@@ -13003,6 +13055,22 @@
             ],
             "default": null,
             "title": "Defeated"
+          },
+          "visited_rooms": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 40,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Visited Rooms"
           }
         },
         "title": "ZoneProgress",

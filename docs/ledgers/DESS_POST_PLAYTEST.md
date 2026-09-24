@@ -681,3 +681,44 @@ documented as fixed per campaign.
 model, as it already derives `available_capabilities`, without an edit
 to `campaign.py`'s snapshot builder, which is outside the released
 seams. `record_room_entered` can also reuse the discovery derivation.
+
+## W2 wiring, part B — discovery is recorded (`visited_rooms`, `RoomEntered`)
+
+**The field.** `ZoneProgress.visited_rooms: tuple[str, ...] | None`.
+- `None` means no record yet, and that is also what any save written
+  before the field loads as.
+- It is monotone, `ROOM_PERSISTENT` (like a station reached), and bounded
+  by `ZONE_MAX_CHAMBERS`.
+
+**The intent.** `RoomEntered`, applied by `transitions.record_room_entered`
+(listed in `TRANSITIONS`).
+- Routed in `server.py` and handled in `campaign.py`'s progress seam.
+- Idempotent.
+- Refuses a room the accepted Zone does not declare.
+- A Zone with no record starts it with the rooms the save already
+  proves, plus the one entered. So nothing is invented, and the map
+  never shows fewer rooms after the first report than before it.
+
+**The map.** Discovery is now the record joined with what the save
+proves, so a report the engine missed never hides a room a fact names.
+
+**Exports and mirrors.** `make export` regenerated `protocol.schema.json`
+with the new intent. The packet mirrors of `protocol.py`,
+`transitions.py` and `map_view.py` are copied. The packet's own
+`generated/` copies were already frozen history before this, so they are
+left alone.
+
+**Evidence.**
+- `tests/test_room_discovery.py`, 6 tests. One sends raw JSON through
+  `BridgeServer.dispatch` into the save.
+- 6 sabotages, each failing its target:
+  - the first entry forgets the proof;
+  - the declaration is unchecked;
+  - the map ignores the record;
+  - the map ignores the proof;
+  - the server does not route it;
+  - the handler branch is missing.
+
+**Note D-2 (Dess → Prod).** Send
+`{"type": "room_entered", "zone_id", "room_id"}` wherever the minimap
+marks a room seen. A resend is harmless.

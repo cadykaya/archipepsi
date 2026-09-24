@@ -12,7 +12,9 @@
   3. DESS-21 **done**;
   4. the D-01 protocol field **done**. Prod's integration comes next
      (D14 §7);
-  5. discovery and the snapshot's inventory and map;
+  5. discovery and the snapshot's inventory and map. Discovery is
+     **done** (`RoomEntered`, note D-2 to Prod); the snapshot's views are
+     next;
   6. DESS-23;
   7. 1c after Prod's lever placement;
   8. 1d.

@@ -44,6 +44,7 @@ try:
     )
     from .physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
     from .minors import contract_for as _minor_contract
+    from .map_view import derived_discovery
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
@@ -59,6 +60,7 @@ except ImportError:  # pragma: no cover
     )
     from physics import GRAPH_PACKAGE_PREFIX, MINOR_PACKAGE_PREFIX
     from minors import contract_for as _minor_contract
+    from map_view import derived_discovery
     from zone import Zone
 
 
@@ -1173,6 +1175,37 @@ def record_defeat(save: CampaignSave, zone_id: str,
                      lambda p: p.with_defeated(member), known)
 
 
+def record_room_entered(save: CampaignSave, zone_id: str,
+                        room_id: str) -> CampaignSave:
+    """H-MAP-DATA. The player entered a room, which joins the map.
+
+    Idempotent by room, and refused for a room the accepted Zone does
+    not declare: a phantom room would otherwise stay on the map forever,
+    since the record is monotone.
+
+    **A Zone with no record yet** (`visited_rooms is None`, including
+    every Zone saved before the field) starts its record with the rooms
+    the save already proves, plus this one. Those rooms are facts the
+    save holds, so recording them invents nothing, and the map never
+    shows fewer rooms than it did before the first report.
+    """
+    rec = _require_zone(save, zone_id)
+
+    def known(r):
+        rooms = {c.id for c in r.zone.chambers} if r.zone is not None \
+            else set()
+        if room_id not in rooms:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no room '{room_id}'")
+
+    def change(p):
+        proven = (derived_discovery(rec.zone, p)
+                  if p.visited_rooms is None else ())
+        return p.with_visited((*proven, room_id))
+
+    return _progress(save, zone_id, change, known)
+
+
 def record_lock(save: CampaignSave, zone_id: str, room_id: str,
                 socket_id: str) -> CampaignSave:
     """A lock opened. Idempotent by `(room_id, socket_id)`.
@@ -1737,6 +1770,7 @@ TRANSITIONS = (
     slot_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
     record_defeat,
+    record_room_entered,
     record_zone_state, record_object_transported, record_object_consumed,
     record_object_settled,
     record_carrier_rested,
