@@ -67,8 +67,40 @@ const ROUTE_PLATE_SIDES := [3.2, -3.2, 4.4, -4.4, 5.6, -5.6]
 ## activity element. A plate under a turret is a plate nobody can stand
 ## on, and c002's five artillery sit exactly where a blind rule put it.
 const OCCUPANT_CLEARANCE := 2.6
+## The same clearance measured from the sensor's EDGE, so a sensor of any
+## size keeps the plate's margin: 2.6 m for a 2.4 m plate, as always, and
+## 1.75 m for a lever's 0.7 m base, which is stood beside, not on.
+const OCCUPANT_EDGE_CLEARANCE := OCCUPANT_CLEARANCE - PLATE_SIZE.x * 0.5
 ## And from the walls, so the plate is walkable round.
 const WALL_MARGIN := 0.8
+## WHAT THIS BUILDER CAN PUT IN A ROOM -- its own capability, not the
+## bridge's list of what a Zone may ask for. D13 (H-PRESSURE-C) orders
+## the landing by it: "the bridge must not admit a Zone lever before
+## `RoomGraphs` can place one". This builder used to refuse whatever the
+## bridge's exported list lacked, so the two could only ever move
+## together. Now the engine's side can land first, and
+## `godot-signal-graph` holds the order as a test: the bridge's exported
+## placeable list is always a subset of this.
+const PLACEABLE_SENSOR_KINDS := ["PRESSURE_PLATE", "PULSE_BUTTON"]
+## AND FROM EVERYTHING SOLID THE ROOM BUILT, measured, not declared
+## (H-PRESSURE-R). The occupant list above is points the room DECLARED;
+## the cover blocks a combat room is dressed with are not declared
+## anywhere, and a plate half under one still looked like a plate. A
+## lever half inside one is a lever the player cannot aim at: c002's
+## route lever stood 0.28 m into a 1.13 m block, under a gallery whose
+## underside is 1.61 m off the floor, and the interact ray stopped on
+## the block. So a spot is measured against every solid collider the
+## room built (`crowded_by`).
+const STAND_RING := 2.0 * Constants.PLAYER_RADIUS
+const STAND_HEIGHT := Constants.PLAYER_HEIGHT
+## A hand's breadth round the sensor itself, so a solid flush against
+## its edge still counts as crowding it.
+const SENSOR_SKIN := 0.1
+## When none of the authored preferences is clear, the rest of this side
+## of the room is searched on this grid, never nearer the door's axis
+## than half a doorway plus half a sensor.
+const ROUTE_SPOT_STEP := 0.6
+const ROUTE_SIDE_MIN := 2.4
 
 #: §19.2's eleven, §20's eighteen and what each is narrowed to are all
 #: GENERATED from `schemas/signal_graph.py`. Transcribing them here
@@ -171,6 +203,7 @@ static func _one(root: Node3D, declared: Dictionary, places: Dictionary,
 	# THE ROOM'S DECLARED OCCUPANTS, in world space, for placing a route's
 	# plate somewhere a body can actually stand.
 	var occupied := occupants_of(room_id, chambers, door_frames, arrival)
+	var solids := solids_of(room_id, chambers, floor_y)
 
 	# BUILT DETACHED, ADOPTED ONLY IF IT IS WHOLE. The machines are the
 	# graph's children, so a refusal half way through frees every one of
@@ -194,45 +227,74 @@ static func _one(root: Node3D, declared: Dictionary, places: Dictionary,
 		var sensor: Dictionary = entry
 		var kind := str(sensor.get("kind", ""))
 		var why := _refuse_sensor(kind)
-		# THE BUILDER PLACES PLATES (O05-07). A button is run by the same
-		# runtime but placed only by a room that owns its machine; asked
-		# for one here, the builder would otherwise put a plate down.
-		if why == "" and not Constants.SIGNAL_ZONE_PLACEABLE_SENSORS.has(
-				kind):
+		# THE BUILDER PLACES PLATES AND LEVERS (O05-07, D-07). A shot
+		# target is run by the same runtime but placed only by a room that
+		# owns its machine; asked for one here, the builder refuses it
+		# rather than putting something else down.
+		if why == "" and not PLACEABLE_SENSOR_KINDS.has(kind):
 			why = ("'%s' is run by the signal graph but the Zone builder "
 					% kind + "places only %s"
-					% [Constants.SIGNAL_ZONE_PLACEABLE_SENSORS])
+					% [PLACEABLE_SENSOR_KINDS])
 		if why != "":
 			graph.free()
 			return {"refused": "room '%s': %s" % [room_id, why]}
 		var node_id := str(sensor.get("node_id", ""))
-		var wants := str(sensor.get("requires_class", ""))
-		if not CLASS_OF.has(wants):
-			graph.free()
-			return {"refused": "room '%s': sensor '%s' demands class "
-					% [room_id, node_id] + "'%s', which is not one of "
-					% wants + "%s" % [CLASS_OF.keys()]}
-		# THE DECLARATION DECIDES WHETHER THE PLAYER COUNTS. Default
-		# false, which is EX50-033's object-only plate exactly.
-		var plate := ClassPlate.create(PLATE_SIZE, CLASS_OF[wants], theme,
-				bool(sensor.get("counts_player", false)))
-		plate.name = "Plate_%s" % node_id
+		var plate: Node3D = null
+		var rest_height := PLATE_SIZE.y * 0.5
+		if kind == "PULSE_BUTTON":
+			# D-07 (owner ruling, 2026-09-24): A PERMANENT CHANGE IS MADE
+			# WITH A VISIBLY PERMANENT CONTROL. "Pressure plates are held
+			# sensors [...] use a visibly different permanent control
+			# such as a lever, locking bolt [...] The existing latch
+			# machinery can absolutely be reused underneath." One pull,
+			# one pulse, into the same LATCH; once the latch is set the
+			# lever stays thrown and says so (`lock_permanent_levers`).
+			var lever := CallLever.make(ROUTE_LEVER_LABEL, ROUTE_LEVER_TINT,
+					theme)
+			lever.name = "Lever_%s" % node_id
+			lever.locks_with = _latch_fed_by(declared, node_id)
+			plate = lever
+			rest_height = CallLever.BASE.y * 0.5
+		else:
+			var wants := str(sensor.get("requires_class", ""))
+			if not CLASS_OF.has(wants):
+				graph.free()
+				return {"refused": "room '%s': sensor '%s' demands class "
+						% [room_id, node_id] + "'%s', which is not one of "
+						% wants + "%s" % [CLASS_OF.keys()]}
+			# THE DECLARATION DECIDES WHETHER THE PLAYER COUNTS. Default
+			# false, which is EX50-033's object-only plate exactly.
+			plate = ClassPlate.create(PLATE_SIZE, CLASS_OF[wants], theme,
+					bool(sensor.get("counts_player", false)))
+			plate.name = "Plate_%s" % node_id
 		if not route_frame.is_empty():
+			# LEGACY PLATES ARE PLACED EXACTLY AS THEY ALWAYS WERE (M-1:
+			# "Existing saved Zones containing the old step-once route
+			# retain their saved behavior"). The measured rule below
+			# would refuse c002's plate -- it stands under a gallery --
+			# and a saved Zone whose route the engine no longer builds
+			# is a saved Zone that no longer plays. Levers are new, and
+			# are placed by the measured rule from the start.
+			var measured := plate is CallLever
 			var spot := route_plate_spot(route_frame, box, floor_y,
-					occupied)
+					occupied, solids if measured else [], _half_of(plate),
+					measured)
 			if spot == Vector3.INF:
 				graph.free()
 				return {"refused": "room '%s': no clear floor for sensor "
 						% room_id + "'%s' on this side of the doorway it "
 						% node_id + "opens -- every candidate is inside a "
-						+ "wall margin or within %.1f m of something the "
-						% OCCUPANT_CLEARANCE + "room already placed"}
+						+ "wall margin, within %.1f m of something the "
+						% (_half_of(plate) + OCCUPANT_EDGE_CLEARANCE)
+						+ "room already placed, or "
+						+ "crowded by something solid it built"}
 			plate.position = spot
+			plate.position.y = floor_y + rest_height
 			# The next sensor must not land on this one.
 			occupied.append(spot)
 		else:
 			plate.position = base + across * (float(lane) * CHAIN_SPREAD)
-			plate.position.y = floor_y + PLATE_SIZE.y * 0.5
+			plate.position.y = floor_y + rest_height
 		graph.add_child(plate)
 		graph.sensors[node_id] = plate
 		seen[node_id] = true
@@ -427,7 +489,8 @@ static func _elements_under(node: Node) -> Array:
 ## clear of every occupant wins, so the choice is deterministic for a
 ## given Zone.
 static func route_plate_spot(frame: Dictionary, box: AABB, floor_y: float,
-		occupied: Array) -> Vector3:
+		occupied: Array, solids: Array = [],
+		half := PLATE_SIZE.x * 0.5, search := false) -> Vector3:
 	var door: Vector3 = frame.get("position", Vector3.ZERO)
 	var yaw := float(frame.get("yaw", 0.0))
 	var normal := Basis(Vector3.UP, yaw) * Vector3(0, 0, 1)
@@ -435,27 +498,176 @@ static func route_plate_spot(frame: Dictionary, box: AABB, floor_y: float,
 	var centre := box.get_center()
 	var to_centre := Vector3(centre.x - door.x, 0.0, centre.z - door.z)
 	var inward := normal if normal.dot(to_centre) >= 0.0 else -normal
-	var half := PLATE_SIZE.x * 0.5 + WALL_MARGIN
+	for candidate: Vector2 in _route_spot_candidates(box, search):
+		var spot := door + inward * candidate.x + along * candidate.y
+		spot.y = floor_y + PLATE_SIZE.y * 0.5
+		if _spot_is_clear(spot, box, floor_y, occupied, solids, half):
+			return spot
+	return Vector3.INF
+
+
+## `(inset, side)` pairs in the order they are tried: the authored
+## preferences first, exactly as before; then, when `search` (a lever,
+## placed by the measured rule), the rest of the floor on this side of
+## the doorway, nearest the door first, never on the door's own axis
+## (the way in is walked, and a sensor there is crossed on the way).
+## Deterministic: the order is a function of the room box alone.
+static func _route_spot_candidates(box: AABB, search: bool) -> Array:
+	var out: Array = []
 	for inset: Variant in ROUTE_PLATE_INSETS:
 		for side: Variant in ROUTE_PLATE_SIDES:
-			var spot := door + inward * float(inset) + along * float(side)
-			spot.y = floor_y + PLATE_SIZE.y * 0.5
-			if box.size != Vector3.ZERO and (
-					spot.x - half < box.position.x
-					or spot.x + half > box.end.x
-					or spot.z - half < box.position.z
-					or spot.z + half > box.end.z):
+			out.append(Vector2(float(inset), float(side)))
+	if not search:
+		return out
+	var reach := maxf(box.size.x, box.size.z)
+	var grid: Array = []
+	var inset := ROUTE_SPOT_STEP * 4.0
+	while inset <= reach:
+		var side := ROUTE_SIDE_MIN
+		while side <= reach * 0.5:
+			grid.append(Vector2(inset, side))
+			grid.append(Vector2(inset, -side))
+			side += ROUTE_SPOT_STEP
+		inset += ROUTE_SPOT_STEP
+	grid.sort_custom(func(a: Vector2, b: Vector2) -> bool:
+		var da := a.x + absf(a.y)
+		var db := b.x + absf(b.y)
+		if not is_equal_approx(da, db):
+			return da < db
+		if not is_equal_approx(a.x, b.x):
+			return a.x < b.x
+		return a.y > b.y)
+	out.append_array(grid)
+	return out
+
+
+static func _spot_is_clear(spot: Vector3, box: AABB, floor_y: float,
+		occupied: Array, solids: Array, half: float) -> bool:
+	var margin := half + WALL_MARGIN
+	if box.size != Vector3.ZERO and (
+			spot.x - margin < box.position.x
+			or spot.x + margin > box.end.x
+			or spot.z - margin < box.position.z
+			or spot.z + margin > box.end.z):
+		return false
+	for raw: Variant in occupied:
+		var point: Vector3 = raw
+		if Vector2(point.x - spot.x, point.z - spot.z).length() \
+				< half + OCCUPANT_EDGE_CLEARANCE:
+			return false
+	return crowded_by(spot, floor_y, solids, half) == AABB()
+
+
+## Half the footprint a route sensor stands on: a plate's, or a lever's
+## base.
+static func _half_of(sensor: Node3D) -> float:
+	if sensor is CallLever:
+		return maxf(CallLever.BASE.x, CallLever.BASE.z) * 0.5
+	return PLATE_SIZE.x * 0.5
+
+
+## The first solid box that makes `spot` unusable, or an empty AABB.
+##
+## Unusable is either of two things. Something solid over the sensor's
+## own footprint, from just above the floor to a standing player's
+## height: a plate under a 1.6 m gallery cannot be stood on, and a lever
+## inside a block cannot be aimed at. Or no side left to come at it
+## from: all four body-width strips beside the footprint crowded. One
+## clear side is enough -- a lever against a wall is a lever on a wall.
+static func crowded_by(spot: Vector3, floor_y: float,
+		solids: Array, sensor_half := PLATE_SIZE.x * 0.5) -> AABB:
+	var half := Vector2(sensor_half + SENSOR_SKIN, sensor_half + SENSOR_SKIN)
+	var low := floor_y + 0.05
+	var tall := STAND_HEIGHT - 0.05
+	var footprint := AABB(Vector3(spot.x - half.x, low, spot.z - half.y),
+			Vector3(half.x * 2.0, tall, half.y * 2.0))
+	var over := _first_intruder(footprint, solids)
+	if over != AABB():
+		return over
+	var sides := [
+		AABB(Vector3(spot.x - half.x - STAND_RING, low, spot.z - half.y),
+				Vector3(STAND_RING, tall, half.y * 2.0)),
+		AABB(Vector3(spot.x + half.x, low, spot.z - half.y),
+				Vector3(STAND_RING, tall, half.y * 2.0)),
+		AABB(Vector3(spot.x - half.x, low, spot.z - half.y - STAND_RING),
+				Vector3(half.x * 2.0, tall, STAND_RING)),
+		AABB(Vector3(spot.x - half.x, low, spot.z + half.y),
+				Vector3(half.x * 2.0, tall, STAND_RING)),
+	]
+	var blocked := AABB()
+	for side: AABB in sides:
+		var hit := _first_intruder(side, solids)
+		if hit == AABB():
+			return AABB()
+		blocked = hit
+	return blocked
+
+
+static func _first_intruder(volume: AABB, solids: Array) -> AABB:
+	for raw: Variant in solids:
+		var solid: AABB = raw
+		if solid.intersects(volume):
+			return solid
+	return AABB()
+
+
+## Every solid collider the room built that stands above its floor, as
+## world-space boxes: the chamber node's static and moving bodies, never
+## an Area (a trigger is not in anybody's way) and never a character
+## (enemies are declared occupants already). The floor slab itself tops
+## out at `floor_y` and is left out by height.
+static func solids_of(room_id: String, chambers: Array,
+		floor_y: float) -> Array:
+	var out: Array = []
+	for raw: Variant in chambers:
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = raw
+		if str((entry.get("chamber", {}) as Dictionary).get("id", "")) \
+				!= room_id:
+			continue
+		var node: Variant = entry.get("node")
+		if not (node is Node3D) or not is_instance_valid(node) \
+				or not (node as Node3D).is_inside_tree():
+			continue
+		for found: Node in (node as Node3D).find_children("*",
+				"CollisionShape3D", true, false):
+			var shape := found as CollisionShape3D
+			var body := shape.get_parent()
+			if shape.disabled or shape.shape == null \
+					or not (body is StaticBody3D or body is RigidBody3D
+						or body is AnimatableBody3D):
 				continue
-			var clear := true
-			for raw: Variant in occupied:
-				var point: Vector3 = raw
-				if Vector2(point.x - spot.x, point.z - spot.z).length() \
-						< OCCUPANT_CLEARANCE:
-					clear = false
-					break
-			if clear:
-				return spot
-	return Vector3.INF
+			var local := AABB()
+			if shape.shape is BoxShape3D:
+				var size: Vector3 = (shape.shape as BoxShape3D).size
+				local = AABB(-size * 0.5, size)
+			else:
+				local = shape.shape.get_debug_mesh().get_aabb()
+			var world := shape.global_transform * local
+			if world.end.y <= floor_y + 0.05:
+				continue
+			out.append(world)
+	return out
+
+
+## The label a route lever offers: the action and what it does (PT-01:
+## "Labels name the action and destination").
+const ROUTE_LEVER_LABEL := "THROW BOLT -- OPENS THE SHUTTER"
+const ROUTE_LEVER_TINT := Color(0.55, 1.0, 0.7)
+
+
+## The LATCH a sensor feeds directly, "" if none: what makes a lever a
+## permanent control rather than a call button.
+static func _latch_fed_by(declared: Dictionary, sensor_id: String) -> String:
+	for raw: Variant in declared.get("nodes", []) as Array:
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = raw
+		if str(node.get("kind", "")) == "LATCH" \
+				and (node.get("inputs", []) as Array).has(sensor_id):
+			return str(node.get("node_id", ""))
+	return ""
 
 
 static func _refuse_sensor(kind: String) -> String:

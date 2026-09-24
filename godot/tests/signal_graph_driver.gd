@@ -149,7 +149,27 @@ func _run() -> void:
 	await _a_class_is_not_a_sum_and_one_off_is_not_both()
 	await _a_graph_that_is_gone_hears_nothing()
 	await _a_declared_sensor_binds_only_its_own_kind()
+	_the_bridge_never_admits_what_the_builder_cannot_place()
 	_finish()
+
+
+## D13's ORDER, AS A TEST (H-PRESSURE-C §1c): "the bridge must not admit a
+## Zone lever before `RoomGraphs` can place one." The bridge's list of
+## what a Zone may ask for is exported; the builder's own list of what it
+## can put in a room is its own. Whatever the first names, the second
+## must hold -- or the bridge accepts a door the engine refuses to build.
+func _the_bridge_never_admits_what_the_builder_cannot_place() -> void:
+	print("  -- the bridge admits only what the builder can place")
+	var admitted: Array = Constants.SIGNAL_ZONE_PLACEABLE_SENSORS
+	var missing: Array = admitted.filter(func(kind: Variant) -> bool:
+		return not RoomGraphs.PLACEABLE_SENSOR_KINDS.has(kind))
+	_check(missing.is_empty(),
+			"every kind the bridge admits into a Zone, the builder can place "
+			+ "(admitted %s, placeable %s, missing %s)"
+			% [admitted, RoomGraphs.PLACEABLE_SENSOR_KINDS, missing])
+	_check(RoomGraphs.PLACEABLE_SENSOR_KINDS.has("PULSE_BUTTON"),
+			"the builder can place a lever (D-07's permanent control) "
+			+ "whether or not the bridge admits one yet")
 
 
 ## A HEAVY crate, dropped where the plate is and left to settle.

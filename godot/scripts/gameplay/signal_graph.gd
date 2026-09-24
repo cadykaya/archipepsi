@@ -99,6 +99,9 @@ var latched: Dictionary = {}
 ## take the prefix.
 signal fired(package: String, node_id: String)
 
+## What a thrown permanent lever says, once its change is made.
+const PERMANENT_LEVER_DONE := "BOLT THROWN -- THE WAY IS OPEN"
+
 
 ## BIND A DECLARED GRAPH TO A ROOM'S OWN MACHINES (O05-07).
 ##
@@ -237,6 +240,24 @@ func start() -> void:
 					if source is CallLever else (source as ImpactReceiver).struck
 			pulse.connect(_on_pulse.bind(str(key)))
 	evaluate(true)
+	# A latch restored from the save is already set before anything
+	# evaluates, and restoring does not announce -- so the lever that set
+	# it is shown thrown here, before the player sees the room.
+	lock_permanent_levers()
+
+
+## D-07: every lever whose latch is set stays thrown, and says so. A
+## lever is permanent only because the builder said which latch it sets
+## (`CallLever.locks_with`); a call control names none and is never
+## locked.
+func lock_permanent_levers() -> void:
+	for key: Variant in sensors.keys():
+		var lever := sensors[key] as CallLever
+		if lever == null or not is_instance_valid(lever) \
+				or lever.locks_with == "" or lever.locked:
+			continue
+		if latched.has(lever.locks_with):
+			lever.lock(PERMANENT_LEVER_DONE)
 
 
 func _on_sensor(_satisfied: bool) -> void:
@@ -363,6 +384,7 @@ func _resolve(node: Dictionary) -> bool:
 			if bool(values.get(str(inputs[0]), false)):
 				latched[id] = true
 				fired.emit(package_id(), id)
+				lock_permanent_levers()
 				return true
 			return false
 		_:

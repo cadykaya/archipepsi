@@ -27,6 +27,15 @@ const THROW_SECONDS := 0.35
 ## alike and whose endpoints are hidden is a room about reading labels.
 var label := "CALL"
 var pulls := 0
+## D-07: A PERMANENT CONTROL LOOKS PERMANENT. Once the change it made is
+## permanent (its LATCH is set, live or restored from the save), the arm
+## stays thrown and the prompt says what it did -- a pressure plate that
+## silently stayed "pressed" is exactly what the owner rejected. Set by
+## whoever owns the consequence (`SignalGraph.lock_permanent_levers`);
+## a call control is never locked.
+var locked := false
+## The LATCH whose setting locks this lever, "" for a call control.
+var locks_with := ""
 
 var _arm: Node3D = null
 var _thrown := 0.0
@@ -72,13 +81,26 @@ func _build(tint: Color, theme: String) -> void:
 
 
 func interact_prompt() -> String:
-	return "[E] %s" % label
+	return label if locked else "[E] %s" % label
 
 
 func interact(_who: Node) -> void:
+	# Thrown for good: there is nothing left for a pull to do.
+	if locked:
+		return
 	pulls += 1
 	_thrown = 1.0
 	pulled.emit(self)
+
+
+## Leave the arm thrown and say what it did. Idempotent.
+func lock(note: String) -> void:
+	locked = true
+	if note != "":
+		label = note
+	_thrown = 1.0
+	if _arm != null:
+		_arm.rotation.x = deg_to_rad(THROW_DEGREES)
 
 
 func _process(delta: float) -> void:
@@ -88,7 +110,7 @@ func _process(delta: float) -> void:
 ## The arm falling and springing back. Split out so a suite can step it
 ## by hand, in the idiom every other machine here uses.
 func advance(delta: float) -> void:
-	if _arm == null or _thrown <= 0.0:
+	if _arm == null or _thrown <= 0.0 or locked:
 		return
 	_thrown = maxf(_thrown - delta / THROW_SECONDS, 0.0)
 	_arm.rotation.x = deg_to_rad(THROW_DEGREES * _thrown)

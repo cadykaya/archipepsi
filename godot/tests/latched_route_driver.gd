@@ -3,20 +3,25 @@ extends Node
 ##
 ##     make godot-latched-route
 ##
-## The Zone is `tests/fixtures/latched_route_zone.json`, which Dess's
+## The Zone is `tests/fixtures/latched_route_zone.json`, which
 ## `compose_latched_route` writes from the played Zone (`make
-## latched-route-fixture`): a `MEDIUM` plate that counts the player, a
-## `LATCH`, and a shutter that `TopologyEdge e:c002:c003.opened_by`
-## names. It is entered through the same `ZoneController` an ordinary
-## player enters through, and nothing in it is edited here.
+## latched-route-fixture`): since D-07 (owner ruling, 2026-09-24) a
+## LEVER -- a visibly permanent control -- a `LATCH`, and a shutter that
+## `TopologyEdge e:c002:c003.opened_by` names. It is entered through the
+## same `ZoneController` an ordinary player enters through, and nothing
+## in it is edited here.
 ##
 ## **WHAT IS PLAYED, and what is not substituted.** The real player, on
-## `move_forward`, through real collision: from the Zone's own arrival,
-## through the c001 -> c002 connector, to the plate; into the shut
-## doorway and stopped by it; onto the plate; fully off it; through the
-## doorway into c003; and back. No handler is called by hand, no latch is
-## pre-set, the shutter is not moved by anything but the graph, and
-## nothing is placed beyond the door.
+## `move_forward` and `interact`, through real collision: from the Zone's
+## own arrival, through the c001 -> c002 connector; into the shut doorway
+## and stopped by it; to the lever, thrown with the interact ray; away
+## from it; through the doorway into c003; and back. No handler is called
+## by hand, no latch is pre-set, the shutter is not moved by anything but
+## the graph, and nothing is placed beyond the door.
+##
+## **AND THE PLATE D-07 KEEPS** is the control below: an ordinary plate
+## is a HELD sensor -- pressure present, open; pressure removed, shut
+## (V-08) -- which is exactly why a permanent change is a lever.
 ##
 ## **THE ONE HARNESS STEP** is releasing the layout hold once the
 ## verdict wait has concluded with no bridge to answer it (`_enter`).
@@ -56,7 +61,20 @@ func _run() -> void:
 	await get_tree().process_frame
 	var zone_data: Dictionary = JSON.parse_string(
 			FileAccess.get_file_as_string(FIXTURE))
-	await _the_route_is_played_end_to_end(zone_data)
+	# BOTH FORMS, WHATEVER THE FIXTURE DECLARES. The Zone as composed
+	# first; then the other form by an explicit substitution of the
+	# route's one sensor -- so a legacy step-once route (M-1) and the
+	# lever (D-07) are each played on this same room and doorway before
+	# and after the composer changes which one it writes.
+	var composed := _route_sensor_kind(zone_data)
+	await _the_route_is_played_end_to_end(zone_data,
+			"the Zone as composed (%s)" % composed)
+	if composed == "PULSE_BUTTON":
+		await _the_route_is_played_end_to_end(_with_route_sensor(zone_data,
+				"PRESSURE_PLATE"), "LEGACY step-once plate, as saved (M-1)")
+	else:
+		await _the_route_is_played_end_to_end(_with_route_sensor(zone_data,
+				"PULSE_BUTTON"), "LEVER, D-07's permanent control")
 	await _without_the_latch_the_route_does_not_hold(zone_data)
 	_finish()
 
@@ -459,8 +477,10 @@ func _on_landed(_killed: bool) -> void:
 
 
 ## THE ACCEPTANCE, in the owner's order, with the real body throughout.
-func _the_route_is_played_end_to_end(zone_data: Dictionary) -> void:
-	print("  -- the latched route, played from the Zone's own arrival")
+func _the_route_is_played_end_to_end(zone_data: Dictionary,
+		form: String) -> void:
+	print("  -- the latched route, played from the Zone's own arrival: %s"
+			% form)
 	_deaths = 0
 	_taken = 0.0
 	BridgeClient.sent_intents.clear()
@@ -512,7 +532,18 @@ func _the_route_is_played_end_to_end(zone_data: Dictionary) -> void:
 	var far_room := str(edge.get("room_b", "")) \
 			if str(edge.get("room_a", "")) == room \
 			else str(edge.get("room_a", ""))
-	var plate: ClassPlate = graph.sensors.values()[0]
+	var sensor: Node3D = graph.sensors.values()[0]
+	var lever := sensor as CallLever
+	var plate := sensor as ClassPlate
+	var declared_kind := _route_sensor_kind(zone_data)
+	_check((declared_kind == "PULSE_BUTTON" and lever != null)
+			or (declared_kind == "PRESSURE_PLATE" and plate != null),
+			"the declared %s is BUILT AS %s" % [declared_kind,
+				"A LEVER, a visibly permanent control" if lever != null
+				else "A PLATE" if plate != null else "nothing it can use"])
+	if lever == null and plate == null:
+		await _drop(controller)
+		return
 	var binding: Dictionary = graph.actuators.values()[0]
 	var shutter: ServiceShutter = binding["node"]
 	var box: AABB = controller.room_bounds[room]
@@ -536,11 +567,17 @@ func _the_route_is_played_end_to_end(zone_data: Dictionary) -> void:
 			and shutter.panel.y >= height - 0.01,
 			"and it is the opening's full size (%v for a %.1f x %.1f door)"
 			% [shutter.panel, width, height])
-	_check(plate.counts_player and plate.requires == MassClass.MEDIUM,
-			"the plate is MEDIUM and counts the player, as declared")
-	_check(_side_of(frame, inward, plate.global_position) > 1.0,
-			"the plate is on this room's side of the door (%.1f m in)"
-			% _side_of(frame, inward, plate.global_position))
+	if lever != null:
+		_check(lever.locks_with == "held" and not lever.locked
+				and lever.interact_prompt().begins_with("[E] THROW BOLT"),
+				"it names what it does and what it sets: '%s', setting '%s'"
+				% [lever.interact_prompt(), lever.locks_with])
+	else:
+		_check(plate.counts_player and plate.requires == MassClass.MEDIUM,
+				"the plate is MEDIUM and counts the player, as saved")
+	_check(_side_of(frame, inward, sensor.global_position) > 1.0,
+			"the control is on this room's side of the door (%.1f m in)"
+			% _side_of(frame, inward, sensor.global_position))
 	_check(shutter.is_shut() and not graph.latched.has("held"),
 			"and the route starts shut, unlatched")
 	# THE OPENING IS STILL A HOLE TO THE LAYOUT PROBE, with the shut gate
@@ -578,15 +615,16 @@ func _the_route_is_played_end_to_end(zone_data: Dictionary) -> void:
 		await get_tree().physics_frame
 
 	# ---- 2. THE DOORWAY IS BLOCKED BEFORE ACTIVATION -------------------
-	# Up to the door WITHOUT crossing the plate, then pressed straight at
+	# Up to the door WITHOUT touching the lever, then pressed straight at
 	# a point beyond it with no steering at all.
 	var front := door + inward * 1.4
 	var up := await _walk_to(player, front, AABB(), 900, false, 0.5)
 	_check(bool(up["arrived"]),
 			"BLOCKED: walked up to the doorway (%.1f m from its face)"
 			% _side_of(frame, inward, player.global_position))
-	_check(not graph.latched.has("held") and not plate.satisfied(),
-			"without crossing the plate on the way")
+	_check(not graph.latched.has("held") and (lever.pulls == 0
+				if lever != null else not plate.satisfied()),
+			"without touching the control on the way")
 	var past := door - inward * 4.0
 	await _press_toward(player, past, 150)
 	var side := _side_of(frame, inward, player.global_position)
@@ -602,10 +640,97 @@ func _the_route_is_played_end_to_end(zone_data: Dictionary) -> void:
 			% ("nothing" if ahead.is_empty()
 				else str((ahead["collider"] as Node).name)))
 
-	# ---- 3. STEP ON THE PLAYER-ENABLED PLATE ---------------------------
 	var announced: Array[String] = []
 	graph.fired.connect(func(_package: String, node: String) -> void:
 			announced.append(node))
+	if lever != null:
+		await _throw_the_bolt(controller, graph, lever, front, announced)
+	else:
+		await _step_once_on_the_plate(controller, graph, plate, front,
+				shutter, announced)
+
+	# ---- 5. THROUGH THE ACTUAL DOORWAY INTO THE FAR ROOM ---------------
+	var through := await _walk_into(controller, far_room)
+	_check(far_box.has_point(player.global_position),
+			"THROUGH: walked the doorway into %s (%.1f m, ended %v)"
+			% [far_room, float(through["walked"]), player.global_position])
+	_check(_side_of(frame, inward, player.global_position) < 0.0,
+			"on the far side of the door plane (%.1f m past it)"
+			% -_side_of(frame, inward, player.global_position))
+
+	# ---- 6. AND BACK: the passage works both ways ----------------------
+	await _walk_to(player, door, AABB(), 600, true, 0.8)
+	var home := await _walk_to(player, front, box.grow(-0.5), 600, true, 0.5)
+	_check(box.grow(-0.5).has_point(player.global_position),
+			"BACK: walked back through the doorway into %s" % room)
+
+	_check(_deaths == 0,
+			"the player never died: a respawn would have broken the "
+			+ "continuous interaction (%.1f hp taken in total)" % _taken)
+	_note("latched route played (%s): arrival -> %s -> %s -> away -> %s -> "
+			% [form, room, "lever" if lever != null else "plate", far_room]
+			+ "back, %.1f hp taken in total, %d death(s)"
+			% [_taken, _deaths])
+	await _drop(controller)
+
+
+## Steps 3 and 4, D-07's form: the lever, thrown with the interact ray,
+## stays thrown; walking away changes nothing; a second pull does nothing.
+func _throw_the_bolt(controller: ZoneController, graph: SignalGraph,
+		lever: CallLever, front: Vector3, announced: Array[String]) -> void:
+	var player: Player = controller.player
+	var shutter: ServiceShutter = (graph.actuators.values()[0]
+			as Dictionary)["node"]
+	# ---- 3. THROW THE BOLT: the lever, pulled with the interact ray ------
+	var thrown := await _throw(controller, lever)
+	_check(thrown and lever.pulls == 1,
+			"THROW: the player's own interact pulls the lever (%d pull(s))"
+			% lever.pulls)
+	_check(graph.latched.has("held"), "the latch is set")
+	_check(announced.size() == 1,
+			"and announced once as a new decision (%d)" % announced.size())
+	var reports := _latch_reports()
+	var report: Dictionary = reports.back() if not reports.is_empty() else {}
+	_check(reports.size() == 1
+			and str(report.get("package_id", "")) == "graph_%s" % graph.room_id
+			and str(report.get("latch_id", "")) == "held"
+			and str(report.get("zone_id", "")) == controller.zone_id,
+			"the real `latch_fired` went out: %s" % [report])
+	_check(shutter.goal >= shutter.travel - 0.01,
+			"and the shutter is commanded open")
+	# D-07: IT LOOKS PERMANENT BECAUSE IT IS. The arm stays thrown and the
+	# prompt says what it did; a plate that silently stayed "pressed" is
+	# what the owner rejected.
+	for _i in 60:
+		await get_tree().physics_frame
+	_check(lever.locked and lever.swing() >= 0.99
+			and not lever.interact_prompt().begins_with("[E]"),
+			"the lever STAYS THROWN and says so: '%s' (arm %.2f)"
+			% [lever.interact_prompt(), lever.swing()])
+
+	# ---- 4. WALK AWAY: the latch holds, and a second pull does nothing --
+	await _walk_to(player, front, AABB(), 600, false, 0.5)
+	_check(graph.latched.has("held") and bool(graph.values.get("held")),
+			"the latch still holds")
+	var opened := await _wait_for(func() -> bool: return shutter.is_open(),
+			300)
+	_check(opened, "the way opens fully, with nobody at the lever "
+			+ "(openness %.2f)" % shutter.openness())
+	lever.interact(player)
+	await _settle_frames(10)
+	_check(lever.pulls == 1 and _latch_reports().size() == 1,
+			"and pulling it again does nothing: %d pull(s), %d report(s)"
+			% [lever.pulls, _latch_reports().size()])
+
+
+## Steps 3 and 4, the LEGACY form (M-1: "Existing saved Zones containing
+## the old step-once route retain their saved behavior"): one step on the
+## plate sets the latch, and stepping fully off leaves the way open.
+func _step_once_on_the_plate(controller: ZoneController, graph: SignalGraph,
+		plate: ClassPlate, front: Vector3, shutter: ServiceShutter,
+		announced: Array[String]) -> void:
+	var player: Player = controller.player
+	# ---- 3. STEP ON THE PLAYER-ENABLED PLATE ---------------------------
 	await _walk_to(player, plate.global_position, AABB(), 900, false, 0.3)
 	var on := await _wait_for(func() -> bool: return plate.satisfied(), 60)
 	_check(on and _player_on(plate, player),
@@ -617,7 +742,7 @@ func _the_route_is_played_end_to_end(zone_data: Dictionary) -> void:
 	var reports := _latch_reports()
 	var report: Dictionary = reports.back() if not reports.is_empty() else {}
 	_check(reports.size() == 1
-			and str(report.get("package_id", "")) == "graph_%s" % room
+			and str(report.get("package_id", "")) == "graph_%s" % graph.room_id
 			and str(report.get("latch_id", "")) == "held"
 			and str(report.get("zone_id", "")) == controller.zone_id,
 			"the real `latch_fired` went out: %s" % [report])
@@ -640,31 +765,13 @@ func _the_route_is_played_end_to_end(zone_data: Dictionary) -> void:
 	_check(_latch_reports().size() == 1,
 			"and stepping off reported nothing new")
 
-	# ---- 5. THROUGH THE ACTUAL DOORWAY INTO THE FAR ROOM ---------------
-	var through := await _walk_into(controller, far_room)
-	_check(far_box.has_point(player.global_position),
-			"THROUGH: walked the doorway into %s (%.1f m, ended %v)"
-			% [far_room, float(through["walked"]), player.global_position])
-	_check(_side_of(frame, inward, player.global_position) < 0.0,
-			"on the far side of the door plane (%.1f m past it)"
-			% -_side_of(frame, inward, player.global_position))
 
-	# ---- 6. AND BACK: the passage works both ways ----------------------
-	await _walk_to(player, door, AABB(), 600, true, 0.8)
-	var home := await _walk_to(player, front, box.grow(-0.5), 600, true, 0.5)
-	_check(box.grow(-0.5).has_point(player.global_position),
-			"BACK: walked back through the doorway into %s" % room)
-
-	_check(_deaths == 0,
-			"the player never died: a respawn would have broken the "
-			+ "continuous interaction (%.1f hp taken in total)" % _taken)
-	_note("latched route played: arrival -> %s -> plate -> off -> %s -> "
-			% [room, far_room] + "back, %.1f hp taken in total, %d death(s)"
-			% [_taken, _deaths])
-	await _drop(controller)
-
-
-## THE CONTROL: THE SAME ROOM WITH THE LATCH TAKEN OUT.
+## THE CONTROL, AND V-08: THE SAME ROOM, AN ORDINARY PLATE, NO LATCH.
+##
+## D-07: "Pressure plates are held sensors. Pressure present = active.
+## Pressure removed = inactive." Whatever the route's control is, it is
+## replaced here by an ordinary plate that counts the player, driving
+## the shutter with no latch between.
 ##
 ## The plate drives the shutter directly, so the way is open only while
 ## somebody stands on the plate -- D-8 §11.2's held requirement, which the
@@ -677,8 +784,9 @@ func _without_the_latch_the_route_does_not_hold(zone_data: Dictionary) -> void:
 	var held_zone: Dictionary = zone_data.duplicate(true)
 	var graphs: Array = held_zone.get("room_graphs", []) as Array
 	var declared: Dictionary = graphs[0]
-	var plate_id := str(((declared["sensors"] as Array)[0]
-			as Dictionary)["node_id"])
+	var plate_id := "step_plate"
+	declared["sensors"] = [{"node_id": plate_id, "kind": "PRESSURE_PLATE",
+			"requires_class": "MEDIUM", "counts_player": true}]
 	declared["nodes"] = []
 	for raw: Variant in declared["actuators"] as Array:
 		(raw as Dictionary)["driven_by"] = plate_id
@@ -746,6 +854,92 @@ func _without_the_latch_the_route_does_not_hold(zone_data: Dictionary) -> void:
 			% far_room + "(ended %v, %.1f m from it, this side, %d death(s))"
 			% [ended, short, _deaths])
 	await _drop(controller)
+
+
+## The kind of the route's one sensor, as the Zone declares it.
+func _route_sensor_kind(zone_data: Dictionary) -> String:
+	var graphs: Array = zone_data.get("room_graphs", []) as Array
+	if graphs.is_empty():
+		return ""
+	var sensors: Array = (graphs[0] as Dictionary).get("sensors", []) as Array
+	return "" if sensors.is_empty() \
+			else str((sensors[0] as Dictionary).get("kind", ""))
+
+
+## THE SAME ROUTE WITH ITS ONE SENSOR SWAPPED, and nothing else touched:
+## the room, the doorway, the LATCH and the shutter are the Zone's own.
+## A test declaration, said so -- `PULSE_BUTTON` is D-07's lever,
+## `PRESSURE_PLATE` the legacy step-once plate a saved Zone may still
+## hold (M-1). Which one the composer writes is the bridge's to decide.
+func _with_route_sensor(zone_data: Dictionary, kind: String) -> Dictionary:
+	var out: Dictionary = zone_data.duplicate(true)
+	var declared: Dictionary = (out["room_graphs"] as Array)[0]
+	var old_id := str(((declared["sensors"] as Array)[0]
+			as Dictionary)["node_id"])
+	var new_id := "route_lever" if kind == "PULSE_BUTTON" else "route_plate"
+	declared["sensors"] = [{"node_id": new_id, "kind": kind}] \
+			if kind == "PULSE_BUTTON" else [{"node_id": new_id,
+				"kind": kind, "requires_class": "MEDIUM",
+				"counts_player": true}]
+	for raw: Variant in declared.get("nodes", []) as Array:
+		var node: Dictionary = raw
+		var inputs: Array = node.get("inputs", []) as Array
+		for i in inputs.size():
+			if str(inputs[i]) == old_id:
+				inputs[i] = new_id
+	return out
+
+
+## Walk to the lever, look at its top, and press the real `interact`.
+func _throw(controller: ZoneController, lever: CallLever) -> bool:
+	var player := controller.player
+	# INTO THE BASE, the collider the interact probe finds: a point inside
+	# it, so the ray meets its surface on the way whatever the angle.
+	var top := lever.global_position + Vector3(0.0, CallLever.BASE.y * 0.25,
+			0.0)
+	var flat := Vector3(top.x - player.global_position.x, 0.0,
+			top.z - player.global_position.z)
+	var goal := top - flat.normalized() * 1.3
+	goal.y = player.global_position.y
+	await _walk_to(player, goal, AABB(), 900, false, 0.35)
+	# COME TO A STOP FIRST, then hold the aim until the interact ray has
+	# the lever: an aim taken while the body still slides is gone by the
+	# press (`transport_driver._approach`, the same lesson).
+	for _i in 60:
+		if Vector2(player.velocity.x, player.velocity.z).length() < 0.05:
+			break
+		await get_tree().physics_frame
+	for _i in 30:
+		_aim(player, top)
+		await get_tree().physics_frame
+		if player._interact_target == lever:
+			break
+	if player._interact_target != lever:
+		print("    (the lever at %s is not under the ray from %s, %.2f m: "
+				% [top, player.global_position,
+					player.global_position.distance_to(top)]
+				+ "target %s)" % [player._interact_target])
+	var before := lever.pulls
+	Input.action_press("interact")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release("interact")
+	await _settle_frames(4)
+	return lever.pulls > before
+
+
+func _aim(player: Player, point: Vector3) -> void:
+	var to := point - player.camera.global_position
+	if to.length() < 0.01:
+		return
+	player.rotation.y = atan2(-to.x, -to.z)
+	player.camera.rotation.x = atan2(to.y, Vector2(to.x, to.z).length())
+	player.camera.rotation.y = 0.0
+
+
+func _settle_frames(frames: int) -> void:
+	for _i in frames:
+		await get_tree().physics_frame
 
 
 func _finish() -> void:

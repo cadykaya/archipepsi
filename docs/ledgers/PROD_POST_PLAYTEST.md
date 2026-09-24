@@ -153,6 +153,19 @@ where the new rule would refuse a lever.
     reverted.
 - **N-3 (DESS-25):** the PR gate and Integration workflows not starting
   are CI, which is Prod's. I will look.
+- **N-4 (D13 §1c, a correction).** D13 says "`RoomGraphs` does not read
+  the bridge's placeable list (`godot/scripts` has no reference to it)".
+  It did. `room_graphs.gd` refused any sensor kind outside the exported
+  `Constants.SIGNAL_ZONE_PLACEABLE_SENSORS`, so the engine could not
+  place a lever until the bridge admitted one, and the two halves could
+  only land together.
+  - The builder now keeps its own list, `RoomGraphs.PLACEABLE_SENSOR_KINDS`
+    (`PRESSURE_PLATE`, `PULSE_BUTTON`).
+  - `godot-signal-graph` holds D13's order as a test: whatever the
+    bridge exports as placeable must be in it.
+  - So your 1c can land any time after this. It needs nothing further
+    from the engine except the two live suites, which Prod switches once
+    the fixtures carry the lever.
 
 ## Evidence rules (PROD_START)
 
@@ -602,3 +615,76 @@ Prod's findings in this packet are numbered `PPT-nn`.
   - The first time an older save (like the played one) is loaded, any
     room you resume in starts you at its entrance, with its encounter
     back and a line saying why. From then on, kills are kept.
+
+## CP2 — `H-PRESSURE-R` (D-07), the engine's half — landed
+
+The contract is Dess's D13 (H-PRESSURE-C). Its bridge half, 1a to 1c,
+is Dess's after the W0.1 handback. This is the engine's half, which D13
+orders first: "the bridge must not admit a Zone lever before
+`RoomGraphs` can place one".
+
+- **Reproduction, on `76b0952`** (`H-PRESSURE-R_repro_step_once_on_76b0952.log`,
+  the CP1 frontier's own raw log of `godot-latched-route`). One step on
+  the plate, then fully off it: the plate reads empty (`"satisfied":
+  false`), "the latch still holds", and "the way opens fully with nobody
+  on the plate (openness 1.00)". That is exactly the step-once plate D-07
+  rejects.
+- **What changed:**
+  - A declared `PULSE_BUTTON` is built as a **lever** labelled "THROW
+    BOLT -- OPENS THE SHUTTER".
+  - Once the LATCH it feeds is set, live or restored from the save, the
+    lever **stays thrown**, its prompt reads "BOLT THROWN -- THE WAY IS
+    OPEN", and a second pull does nothing (`SignalGraph.lock_permanent_levers`).
+  - A call control, and a minor's own lever, names no latch and is never
+    locked.
+  - The builder keeps **its own placeable list** (N-4).
+  - **Levers are placed by a measured rule.** A spot is refused while
+    anything solid the room built stands over the lever's footprint, up
+    to a standing player's height, or crowds all four of its
+    body-width approach sides. When the authored spots all fail, the
+    rest of the floor on the room's side of the doorway is searched,
+    nearest the door first.
+  - **Legacy plates are placed exactly as before (M-1).**
+- **`PPT-04`, found by the lever's own test.** The route spot in the
+  latch fixture's `c002` is inside a 1.13 m cover block, under a gallery
+  whose underside is 1.61 m off the floor.
+  - A plate there could still be stepped on. The old played acceptance
+    passed, and a saved Zone keeps playing it (M-1).
+  - A lever there cannot be aimed at: the interact ray stopped on the
+    block.
+  - The measured rule puts the lever 2.4 m in from the doorway and
+    3.2 m to its side, clear.
+- **Regression** (`H-PRESSURE-R_after.log`):
+  - `godot-latched-route`, 73 checks. It plays both forms whatever the
+    fixture declares:
+    - the Zone as composed, today the legacy plate, played as saved;
+    - the lever, by explicit substitution of the route's one sensor,
+      with the same room, doorway, LATCH and shutter;
+    - V-08's control: an ordinary plate on the same shutter, with no
+      latch, shuts again when stepped off.
+  - `godot-signal-graph`, 61 checks, including the placeable-list order.
+  - `godot-graphs`, `godot-zone-state` (60) and `godot-reversible` (32)
+    are unchanged and green.
+- **Sabotages** (`H-PRESSURE-R_sabotages.log`), each restored
+  byte-for-byte:
+  - SP-1: a latched lever springs back. "the lever STAYS THROWN" and
+    "pulling it again does nothing" fail.
+  - SP-2: the builder cannot place a lever. "the builder can place a
+    lever" fails.
+  - SP-4: legacy plates are placed by the measured rule. The saved
+    route's graph is refused in `c002`, which is the M-1 regression the
+    split exists to prevent.
+  - **SP-3, as first written, was not caught.** It placed levers by the
+    old rule, but with the lever's own smaller footprint the old list
+    happens to pick a clear spot. So it was not the defect.
+  - SP-3′ reproduces the defect itself: the lever at the plate's old
+    spot. The interact ray misses and the THROW fails, with 8 failures.
+- **Scope, stated:** offline.
+  - The live suites (`godot-latched-route-live`, `godot-candidate-live`)
+    play the committed fixtures. Those still declare the legacy plate
+    until Dess's 1b regenerates them, so they are unchanged here.
+  - Switching them to the lever is Prod's, after that.
+- **What the owner will notice:** nothing yet in the played candidate,
+  whose saved Zones keep their step-once plates (M-1). Once Dess's
+  composer writes the lever, a new route shows a bolt lever that stays
+  thrown and says the way is open. A plate is only ever a held sensor.
