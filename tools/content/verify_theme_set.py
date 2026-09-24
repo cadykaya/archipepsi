@@ -51,6 +51,10 @@ import inspect_materials as mat                             # noqa: E402
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SET_DIR = os.path.join(REPO, "assets", "textures", "theme")
 MANIFEST = os.path.join(SET_DIR, "manifest.json")
+#: D-11. Written by `tools/blender/build_pack_materials.py`, keyed
+#: `<pack>/<theme>/<role>`. Optional: with no game pack authored, the
+#: descriptor carries no pack table and behaves exactly as it did.
+PACK_MANIFEST = os.path.join(SET_DIR, "pack_manifest.json")
 DESCRIPTOR = os.path.join(SET_DIR, "THEME_PACK.json")
 
 #: WHICH ROLES NEED AUTHORED PIXELS, AND WHICH ARE ANSWERED ELSEWHERE.
@@ -269,19 +273,57 @@ def describe(problems):
         "texels_per_metre": sorted(density)[0] if density else None,
         "textures": {},
     }
-    for key, entry in sorted(manifest.items()):
+
+    def row(entry):
         path = os.path.join(REPO, "assets", "textures", entry["texture"])
         if not os.path.exists(path):
-            continue
+            return None
         with open(path, "rb") as handle:
             digest = hashlib.sha256(handle.read()).hexdigest()[:16]
-        out["textures"][key] = {
+        return {
             "texture": entry["texture"],
             "size_px": entry["size_px"],
             "covers_m": entry["covers_m"],
             "sha256_16": digest,
             "mean_value": mean_value(path),
         }
+
+    for key, entry in sorted(manifest.items()):
+        built = row(entry)
+        if built is not None:
+            out["textures"][key] = built
+
+    # --- D-11: the game packs' own rows -------------------------------
+    #
+    # The SAME `row()` as a family texture, deliberately. Prod's gate
+    # checks a pack row's schema against the descriptor's own `textures`
+    # rows rather than a retyped list, so "the same schema" is only true
+    # if one function builds both -- and stays true the day this lane
+    # adds a key.
+    #
+    # Emitting a row is what makes a pack a CANDIDATE, and that is the
+    # whole of what this file may grant it: `THEME_PACK_STATUS` lives in
+    # Production's constants and "a pack not listed there is a candidate
+    # at most, whatever the descriptor holds". No status is written here.
+    if os.path.exists(PACK_MANIFEST):
+        with open(PACK_MANIFEST, encoding="utf-8") as handle:
+            packs = json.load(handle)
+        table = {}
+        for key, entry in sorted(packs.items()):
+            built = row(entry)
+            if built is None:
+                problems.append("pack row '%s' names a texture that does "
+                                "not exist: %s" % (key, entry["texture"]))
+                continue
+            if entry.get("texels_per_metre") not in density:
+                problems.append(
+                    "pack row '%s' is %s texels/m and the set is %s. A pack "
+                    "that changes texel density changes the ROOM's density "
+                    "wherever it is used"
+                    % (key, entry.get("texels_per_metre"), sorted(density)))
+            table[key] = built
+        if table:
+            out["pack_textures"] = table
     return out
 
 

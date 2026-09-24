@@ -7,6 +7,50 @@
   "glass": null,
   "metal": "trim"
  },
+ "pack_textures": {
+  "forest_temple/temple_ruin/accent": {
+   "covers_m": 4.0,
+   "mean_value": 0.393,
+   "sha256_16": "c24208e2a445ed3a",
+   "size_px": 128,
+   "texture": "theme/pack_forest_temple_temple_ruin_accent.png"
+  },
+  "forest_temple/temple_ruin/floor": {
+   "covers_m": 4.0,
+   "mean_value": 0.4947,
+   "sha256_16": "698d517de5c4523d",
+   "size_px": 128,
+   "texture": "theme/pack_forest_temple_temple_ruin_floor.png"
+  },
+  "forest_temple/temple_ruin/wall": {
+   "covers_m": 4.0,
+   "mean_value": 0.455,
+   "sha256_16": "dcf9dffa781d25e3",
+   "size_px": 128,
+   "texture": "theme/pack_forest_temple_temple_ruin_wall.png"
+  },
+  "twilight_town/temple_ruin/accent": {
+   "covers_m": 4.0,
+   "mean_value": 0.4168,
+   "sha256_16": "85cb8dca7aad3db8",
+   "size_px": 128,
+   "texture": "theme/pack_twilight_town_temple_ruin_accent.png"
+  },
+  "twilight_town/temple_ruin/floor": {
+   "covers_m": 4.0,
+   "mean_value": 0.372,
+   "sha256_16": "ac6e516404c276e9",
+   "size_px": 128,
+   "texture": "theme/pack_twilight_town_temple_ruin_floor.png"
+  },
+  "twilight_town/temple_ruin/wall": {
+   "covers_m": 4.0,
+   "mean_value": 0.6742,
+   "sha256_16": "e7f0750f775a177f",
+   "size_px": 128,
+   "texture": "theme/pack_twilight_town_temple_ruin_wall.png"
+  }
+ },
  "role_contract": {
   "accent": {
    "disqualifies_theme_if_missing": true,

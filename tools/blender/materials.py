@@ -1071,3 +1071,15 @@ def roles_for(theme):
 
 def built_themes():
     return tuple(sorted(_TREATMENTS))
+
+
+# ----------------------------------------------------------------------
+# Public for `packmaterials.py`. A game pack lays stone the same way the
+# house family does or it does not belong to the same game, and copying
+# the bond logic into the pack module would fork it -- the day the bond
+# changes here, a pack would quietly keep the old one. Aliases rather
+# than renames, so no call site in this file moves.
+# ----------------------------------------------------------------------
+ramps = _ramps
+coursed = _coursed
+roots = _roots
