@@ -158,6 +158,7 @@ jobs:
           make godot-reversible
           make godot-verb-runtime
           make godot-status-family
+          make godot-combat-fairness
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live

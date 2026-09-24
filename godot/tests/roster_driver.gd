@@ -337,8 +337,15 @@ func _the_scuttler_costs_attention() -> void:
 func _the_artillery_denies_ground() -> void:
 	print("  -- ARTILLERY: indirect fire, and a minimum range")
 	var root := _stage()
-	var foe := _enemy(root, "artillery", Vector3(0.0, 1.0, 0.0))
+	# THE TARGET FIRST, AND SETTLED. Made in the same frame, the target's
+	# body stood at the world origin for one physics step, where this gun
+	# stood; the gun was lifted onto the target and rode it, at 1.8 m,
+	# from then on. The case passed only because the gun fired in its
+	# first frame, before sight was required (PT-11, post-playtest),
+	# and measured a gun on the player's head after that.
 	var mark := _target(root, Vector3(0.0, 1.0, -20.0))
+	await _settle(5)
+	var foe := _enemy(root, "artillery", Vector3(0.0, 1.0, 0.0))
 	var kinds: Array = []
 	foe.telegraph_started.connect(
 			func(kind: String, _s: float) -> void: kinds.append(kind))

@@ -60,6 +60,7 @@ const DRIVERS := {
 	"--verbs-test": preload("res://tests/verbs_driver.gd"),
 	"--verb-runtime-test": preload("res://tests/verb_runtime_driver.gd"),
 	"--status-family-test": preload("res://tests/status_family_driver.gd"),
+	"--combat-fairness-test": preload("res://tests/combat_fairness_driver.gd"),
 	"--boot-test": preload("res://tests/boot_driver.gd"),
 	"--legibility-test": preload("res://tests/legibility_driver.gd"),
 	"--content-test": preload("res://tests/content_driver.gd"),

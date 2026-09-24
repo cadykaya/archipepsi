@@ -607,7 +607,21 @@ func _try_attack(player: Player, distance: float) -> void:
 	if archetype == "artillery":
 		# INDIRECT, AND IT CANNOT DEPRESS. Inside its minimum range it
 		# has no answer at all, which is the ground it fails to deny.
+		#
+		# PT-11 (post-playtest): IT SHELLS WHAT IT CAN SEE, ALONG AN ARC
+		# THAT IS REALLY THERE. Distance alone let it shell the next room
+		# through a wall and a player under a roof. Knowledge is its own
+		# line of sight; the path is the shell's own arc, sampled against
+		# the world. Low cover and open ground still get shelled -- this
+		# is physics, not a room-ID force field.
 		if distance >= Constants.ARTILLERY_MIN_RANGE and distance <= reach:
+			if not _has_line_of_sight(player) \
+					or not ArtilleryShell.arc_is_clear(get_world_3d()
+							.direct_space_state, muzzle(),
+							player.global_position, _blast_exclusions()):
+				# Look again shortly rather than every frame.
+				_attack_cooldown = 0.5
+				return
 			_attack_cooldown = float(stats["cooldown"])
 			_rush_dir = player.global_position
 			_begin_telegraph("shell",
@@ -933,6 +947,17 @@ func _beacon_pulse(delta: float) -> void:
 				Constants.BEACON_MAGNITUDE)
 
 
+## What a shell's path and blast ignore: the actors on the field. Walls,
+## floors, roofs and physical objects stop both.
+func _blast_exclusions() -> Array[RID]:
+	var out: Array[RID] = []
+	for raw: Node in get_tree().get_nodes_in_group("enemies"):
+		var body := raw as CollisionObject3D
+		if body != null:
+			out.append(body.get_rid())
+	return out
+
+
 ## An artillery shell, landing where the player was when it was ranged.
 ##
 ## Built as a real projectile with a real flight, because "denies
@@ -1007,23 +1032,87 @@ class ArtilleryShell extends Node3D:
 				Color(1.0, 0.55, 0.2), 1.8)
 		get_parent().add_child.call_deferred(_marker)
 
+	## Where the lob is at `t` in 0..1. One formula for the flight and
+	## for the check made before it is fired.
+	static func point(from: Vector3, to: Vector3, t: float) -> Vector3:
+		return from.lerp(to, t) + Vector3(0.0,
+				sin(t * PI) * (from.distance_to(to) * 0.22), 0.0)
+
+	## PT-11: may a shell fired now reach `to`? The arc is sampled in
+	## segments against the world; reaching within `ARRIVAL` of the target
+	## (its own floor) or the player there counts as arriving.
+	static func arc_is_clear(space: PhysicsDirectSpaceState3D,
+			from: Vector3, to: Vector3, exclude: Array[RID]) -> bool:
+		var last := from
+		for i in range(1, SAMPLES + 1):
+			var next := point(from, to, float(i) / float(SAMPLES))
+			var query := PhysicsRayQueryParameters3D.create(last, next)
+			query.exclude = exclude
+			var hit := space.intersect_ray(query)
+			if not hit.is_empty():
+				return hit["collider"] is Player \
+						or (hit["position"] as Vector3).distance_to(to) \
+								<= ARRIVAL
+			last = next
+		return true
+
+	const SAMPLES := 16
+	const ARRIVAL := 0.6
+
+	var _last := Vector3.ZERO
+	var _started := false
+	var _exclude: Array[RID] = []
+
 	func _physics_process(delta: float) -> void:
+		if not _started:
+			_started = true
+			_last = origin
+			for raw: Node in get_tree().get_nodes_in_group("enemies"):
+				var body := raw as CollisionObject3D
+				if body != null:
+					_exclude.append(body.get_rid())
 		_flown += delta
 		var t := clampf(_flown / maxf(seconds, 0.01), 0.0, 1.0)
 		if is_instance_valid(_marker):
 			_marker.global_position = target + Vector3(0.0, 0.03, 0.0)
 		# A LOB, not a line: the arc is what reads as indirect fire.
-		var flat := origin.lerp(target, t)
-		global_position = flat + Vector3(0.0,
-				sin(t * PI) * (origin.distance_to(target) * 0.22), 0.0)
+		var next := point(origin, target, t)
+		# PT-11: IT STOPS AT WHAT IT MEETS. The flight used to be set
+		# point by point with nothing asked, so a shell passed through
+		# walls and roofs, including one raised across it mid-flight.
+		var query := PhysicsRayQueryParameters3D.create(_last, next)
+		query.exclude = _exclude
+		var hit := get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit.is_empty():
+			_detonate(hit["position"])
+			return
+		_last = next
+		global_position = next
 		if t < 1.0:
 			return
+		_detonate(target)
+
+	## The blast, with cover. PT-11: a blast was every player within
+	## `blast` metres, walls or no walls. It now reaches a player only
+	## if something of them can be seen from the burst -- the chest or
+	## the knees -- so a wall is cover and low cover is not.
+	func _detonate(at: Vector3) -> void:
+		var space := get_world_3d().direct_space_state
+		var back := (_last - at)
+		var burst := at + (back.normalized() * 0.15 if back.length() > 0.001
+				else Vector3.ZERO) + Vector3.UP * 0.1
 		for raw: Node in get_tree().get_nodes_in_group("player"):
 			var body := raw as Player
-			if body == null:
+			if body == null or body.global_position.distance_to(at) > blast:
 				continue
-			if body.global_position.distance_to(target) <= blast:
-				body.take_damage(damage, target)
+			for aim: Vector3 in [body.global_position + Vector3.UP * 1.0,
+					body.global_position + Vector3.UP * 0.3]:
+				var query := PhysicsRayQueryParameters3D.create(burst, aim)
+				query.exclude = _exclude
+				var seen := space.intersect_ray(query)
+				if seen.is_empty() or seen["collider"] == body:
+					body.take_damage(damage, at)
+					break
 		if is_instance_valid(_marker):
 			_marker.queue_free()
 		queue_free()

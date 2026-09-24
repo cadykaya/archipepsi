@@ -1,0 +1,22 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- A: another room, behind an intact wall
+FAIL: through an intact wall from the next room, in 10 s: 3 shells committed, 3 launched, 3 hits, 48 hp lost -- it may not shell what it cannot see
+FAIL: through an intact wall from the next room, in 10 s: 3 shells committed, 3 launched, 3 hits, 48 hp lost -- it may not shell what it cannot see
+  -- B: under a roof, seen through the open side
+FAIL: under an intact roof, in 10 s: 3 shells committed, 3 launched, 3 hits, 48 hp lost -- no shell through the slab
+FAIL: under an intact roof, in 10 s: 3 shells committed, 3 launched, 3 hits, 48 hp lost -- no shell through the slab
+  -- C: a blast on the far side of a wall (a shell built by hand)
+   GDScript backtrace (most recent call first):
+FAIL: a blast 2.4 m away, behind a 6 m wall: 1 hits, 16 hp lost -- the wall is cover
+FAIL: a blast 2.4 m away, behind a 6 m wall: 1 hits, 16 hp lost -- the wall is cover
+   GDScript backtrace (most recent call first):
+  ok: the control: the same blast in the open lands 1 hit (16 hp)
+  -- D: a wall raised across a shell's path in flight
+   GDScript backtrace (most recent call first):
+FAIL: a wall across its path mid-flight: 1 hits, 16 hp lost -- it detonates on the wall
+FAIL: a wall across its path mid-flight: 1 hits, 16 hp lost -- it detonates on the wall
+  -- E: the control -- low cover is not a roof
+  ok: over 0.6 m cover, in 10 s: 3 shells committed, 3 launched, 3 hits, 48 hp lost -- the repair did not silence artillery
+GODOT COMBAT FAIRNESS: 4 failures in 6 checks
+make: *** [Makefile:591: godot-combat-fairness] Error 1
