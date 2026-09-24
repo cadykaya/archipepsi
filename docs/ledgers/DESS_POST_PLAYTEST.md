@@ -303,3 +303,138 @@ is not a silent classifier.
 2. `SensorNode.held_by`, with its validator and the route-search
    modelling, and a composed held-weight fixture.
 3. Lever routes (`PULSE_BUTTON` → LATCH), with Prod's lever placement.
+
+**DESS-24 — defect in advice, found in W2.2.** The Zone model's refusal
+of a held requirement (`zone.py`, the route validator) still ends "put a
+LATCH between the plate and the machine". That is the step-once route
+D-07 retires. The refusal itself stays, since nothing else can hold the
+plate yet. **Fix, in step 1's commit:** the message names the two legal
+forms instead: a lever for a permanent opening (1c), and a declared
+weight, `held_by`, for a held one (1d). Its neighbour, "declare a plate
+that counts the player at a class they reach", is reworded in step 2,
+because under 1d the player's body never solves a held route. The text
+changes; what is accepted does not, so every saved Zone still loads
+(M-1).
+
+## W2.1 — H-UI-DATA: the inventory view (`inventory_view.py`, `fbe5aa3`)
+
+**A projection over the fold, adding no state.** Each item carries:
+- `activation`: slotted for an Action, always-on otherwise (not a
+  toggle);
+- the slots the authority accepts it in, read off the component, since
+  only an Action occupies its one declared slot;
+- where it is equipped;
+- a consumable's charges, where zero while equipped is legal;
+- its history, with upgrades kept as history rather than extra items;
+- its siblings from the same Echo.
+
+Pending and refused uses are not mirrored (D-9 §3).
+
+**Evidence:** 6 tests. The central one tries every item in every slot
+through `slot_action` and requires the view's answer to match the
+authority's.
+
+**Queued for the handback:** `CampaignSnapshot.inventory` (`protocol.py`),
+then `make export`.
+
+## W2.2 — H-MAP-DATA: the map view (`map_view.py`)
+
+**One projection for the minimap, the 3D map and the journal.**
+- **States:** `unknown`, `blocked` (always with a reason) and `open`.
+  `transitioning` is the engine's overlay on a live gate. The bridge
+  knows settled state only, and does not fake a fifth one.
+- **A gate reads recorded consequences, never possession:**
+  - a key door opens by `opened_locks`. Holding the key only adds "you
+    hold it" to the reason.
+  - a state door opens by `macro_state` against the variable's
+    `initial`. A carried cell changes nothing; installing it sets the
+    variable.
+  - a machine door is the graph settled with nothing pressed and this
+    save's recorded latches. That is the runtime's restore order, and
+    legacy step-once Zones read as saved (M-1).
+  - a capability door opens by what is **equipped**. Owned but
+    unslotted is NOT YET: "you own it; equip it".
+- **Circuits by declaration id:**
+  - `key:<key>`;
+  - `state:<variable>`: the setter, the receiver, the object it accepts
+    and the doors it opens, so supply, receiver and door share one id;
+  - `machine:<room>:<actuator>`.
+- **Nothing undiscovered is revealed:**
+  - no connector touching only undiscovered rooms;
+  - no name for an undiscovered room;
+  - a gate whose control is in an undiscovered room says "somewhere
+    else";
+  - a circuit lists only discovered rooms, and an object only once its
+    home or its receiver is found;
+  - a circuit with no discovered member is omitted.
+- **Discovery is an input.** Until the save records it, it is derived
+  from recorded facts only: the entrance, key rooms, opened locks,
+  latches, defeats, object rooms and set variables. It can undercount;
+  it never guesses.
+- **Names (M-3):** a hosted minor's contract name ("Unweighted Switch"),
+  otherwise type and number ("Arena 3"). Generic shell labels such as
+  "corner left" describe geometry and would repeat. Names are computed
+  per call and never stored; ids stay the save's.
+
+**Evidence:**
+- 9 tests on the committed candidate Zone, plus one schema-valid
+  mutation that adds a grapple gate. The capability case uses a real
+  Hookshot Echo.
+- 13 sabotages, each failing its targeted assertion:
+  - a held key opens its door;
+  - a carried object opens a state door;
+  - "settable" is read as "open";
+  - recorded latches are ignored;
+  - an undiscovered room is named;
+  - a control room is named;
+  - a setter room is named;
+  - circuit rooms are not filtered by discovery;
+  - circuit objects are not filtered by discovery;
+  - connectors are not filtered by discovery;
+  - discovery guesses neighbours;
+  - "owned" is treated as "equipped";
+  - the NOT YET reason is dropped.
+
+**Not drawn yet: rail networks.** They are not part of the progression
+graph (`topology.py` never reads them), so no connector's state depends
+on them. A carrier connector type is 0.5 work, not a gap in these states.
+
+**Not reachable yet:** a live control's `unknown`. The Zone model
+refuses a plate → shutter with no latch, so no accepted Zone has one. It
+becomes reachable with D-13 1d (`held_by`), and its test lands in that
+commit.
+
+**Queued for the handback:**
+- `ZoneProgress.visited_rooms: tuple[str, ...] | None`. `None` means
+  unknown, for legacy saves, as `defeated` does; it is monotone.
+- A `RoomEntered` intent and `record_room_entered`: idempotent, and
+  refuses an undeclared room. On a legacy Zone, the first entry records
+  the derived rooms plus this one. Those rooms are proven by facts, so
+  nothing is invented.
+- `CampaignSnapshot.map` for the current Zone, then `make export`.
+- **Prod's half:** send `RoomEntered` wherever the minimap marks a room
+  seen, and draw from this view.
+
+## CI does not run, and what that hides (2026-09-24)
+
+**Every PR-gate and Integration run on this branch fails within about
+four seconds, with no log**, from at least `6ebbc90` (19:26 UTC) to
+`fbe5aa3`. That covers both lanes' pushes. The job is created and never
+starts, so nothing in any diff can cause or fix it. This is an Actions
+account or runner matter for the owner. A re-run would fail the same way.
+
+**Until it runs, the local suite is the only evidence**, run as the gate
+runs it: `cd bridge && ARCHIPELAGO_ROOT=/nonexistent python -m pytest -q`.
+
+- **DESS-25 — defect, hidden by the outage.** Two tests in
+  `bridge/tests/test_status_guarantee.py` read
+  `Path("godot/scripts/autoload/constants.gd")`, relative to the working
+  directory:
+  - `test_the_engine_is_told_both_lists`;
+  - `test_the_engine_is_told_which_targets_each_kind_supports`.
+
+  They pass under `make` from the repo root. They fail with
+  `FileNotFoundError` from `bridge/`, which is exactly how the PR gate
+  runs, so they turn the gate red the moment Actions runs again.
+  **Fix:** anchor the path at the repository root through `__file__`.
+  They exercise a generated export, so after the handback.

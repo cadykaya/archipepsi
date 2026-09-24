@@ -15,6 +15,24 @@ your next shared edit.**
 - After it, Dess delivers the bridge halves of H-PRESSURE-C and
   H-RELEASE-C first, so CP2 does not need the exception.
 
+**Done without shared edits** (details in the ledger):
+- W0.2, the H-SEAMS review: DESS-19 to DESS-23.
+- W1.1: the M-2 replay boundaries.
+- W1.3: room cards, plus a claim with no latch gate.
+- W1.4: the key audit. 80/80 sample keys are met before their locks.
+- W1.2: the pressure contract.
+- W2.1: the inventory view.
+- W2.2: the map view.
+
+Their snapshot wiring, and every fix above, waits for the handback.
+
+**CI is not running.** Every PR-gate and Integration run has failed
+within about four seconds, with no log, since at least `6ebbc90`, for
+both lanes. The owner needs to look at Actions itself. Meanwhile:
+- run the suite locally, exactly as the gate does (ledger, "CI does not
+  run");
+- one gate-only failure is already hidden by it (DESS-25).
+
 The owner's M-1/M-2/M-3 rulings are recorded verbatim in the same
 ledger:
 
