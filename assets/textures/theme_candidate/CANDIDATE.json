@@ -114,7 +114,7 @@
       "was_px": 64
     }
   },
-  "status": "CANDIDATE -- not a production asset, not applied, not approved, not runtime-selected. The shipped set under assets/textures/theme/ is untouched and was rebuilt byte-identical with SNAP_COURSES off.",
+  "status": "CANDIDATE -- not a production asset, not applied, not approved, not runtime-selected. The shipped set under assets/textures/theme/ is untouched and was rebuilt byte-identical for every family the owner has not accepted the snap for.",
   "textures": [
     "concrete_facility_accent",
     "concrete_facility_ceiling",
@@ -154,6 +154,6 @@
     "void_glitch_trim_plain",
     "void_glitch_wall"
   ],
-  "what_changed": "Every WRAPPING pitch in the generator asks Surface.course() for its step, and with paintkit.SNAP_COURSES on that step is the divisor of the 128 px tile nearest the designed one. Four paths draw on such a pitch: surface_for's seams (read by near_seams, bolts and weep streaks), paintkit.panel_grid, inline loops in the treatments, and bolt pitches along a seam.",
+  "what_changed": "Every WRAPPING pitch in the generator asks Surface.course() for its step, and with paintkit.SNAP_ALL_COURSES on that step is the divisor of the 128 px tile nearest the designed one. Four paths draw on such a pitch: surface_for's seams (read by near_seams, bolts and weep streaks), paintkit.panel_grid, inline loops in the treatments, and bolt pitches along a seam.",
   "why": "range(0, size, step) with a step the size is not a multiple of leaves an odd interval across the tile's own edge, so the rhythm breaks once per repeat."
 }
