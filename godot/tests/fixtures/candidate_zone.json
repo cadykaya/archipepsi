@@ -1478,7 +1478,7 @@
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",
    "capability": null,
-   "opened_by": "route_shutter",
+   "opened_by": null,
    "requires_state": []
   },
   {
@@ -1857,36 +1857,5 @@
    "sets_state": "powered"
   }
  ],
- "room_graphs": [
-  {
-   "room_id": "c009",
-   "sensors": [
-    {
-     "node_id": "step_plate",
-     "kind": "PRESSURE_PLATE",
-     "requires_class": "MEDIUM",
-     "counts_player": true,
-     "mode": null,
-     "required_tags": null
-    }
-   ],
-   "nodes": [
-    {
-     "node_id": "held",
-     "kind": "LATCH",
-     "inputs": [
-      "step_plate"
-     ],
-     "duration": null
-    }
-   ],
-   "actuators": [
-    {
-     "actuator_id": "route_shutter",
-     "driven_by": "held",
-     "operation": "command"
-    }
-   ]
-  }
- ]
+ "room_graphs": []
 }

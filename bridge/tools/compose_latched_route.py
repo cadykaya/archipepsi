@@ -36,7 +36,10 @@ import sys
 from pathlib import Path
 
 from archipepsi_bridge import store
-from archipepsi_bridge.latched_route import compose_latched_route
+# M-1's legacy replay: the retired step-once chain (D-07), seeded the way
+# a save composed before the ruling holds it. Never a production path.
+from archipepsi_bridge.latched_route import (  # noqa: E402
+    compose_legacy_step_once_route as compose_latched_route)
 from archipepsi_bridge.schemas import protocol as P
 from archipepsi_bridge.schemas.zone import Zone
 

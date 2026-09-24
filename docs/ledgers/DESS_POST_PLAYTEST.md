@@ -555,3 +555,70 @@ released. Nothing I am doing needs it, so it stays unedited.
   and `latched-route-play`). The step-once composer is kept under a
   legacy name for exactly that fixture and tool: it is M-1's input,
   never a production path.
+
+## W1.2 — H-PRESSURE-C step 1 landed: 1a + 1b (D13), with the legacy kept
+
+**1a — `validate_zone` refuses a plate that sets a LATCH**, directly or
+through NOT/OR (`schemas/zone.py`, `_plates_that_latch`).
+- Accept-time only. The Zone model validators are unchanged, so every
+  saved Zone still loads and plays as saved (M-1).
+- DESS-24's message is reworded as part of this. The held-requirement
+  refusal no longer advises a latched plate: it names the lever (1c) and
+  the declared weight (1d). Only the text changed; nothing that was
+  accepted is now refused.
+
+**1b — the production composer declines** with `DECLINED_UNTIL_LEVERS`
+(`latched_route.py`). One search now serves two entry points:
+- `compose_latched_route` is production. It declines until 1c, then
+  emits the lever form, which is Prod's offered patch adopted.
+- `compose_legacy_step_once_route` is M-1's input only: the legacy
+  fixture and `tools/compose_latched_route.py`. Prod's
+  `godot-latched-route*` replay suite therefore stays valid unchanged.
+
+**Fixtures, regenerated from source:**
+- `candidate_zone.json` loses exactly its c009 plate route. Nothing
+  else changes, including the minors.
+- `latched_route_zone.json` is byte-identical.
+- The packet's `zone.py` mirror is copied, and `check_packet` passes.
+
+**DESS-27 — defect, found here.** `make candidate-fixture` has refused
+every run ("a step declined; nothing written") since the `consumables`
+option joined `all`. The dump compared the emitted steps against steps
+plus options. Verified at the untouched head. It now compares steps only
+(`playtest._must_emit`). A decline by D-07 policy passes visibly; any
+other decline still refuses a partial fixture.
+
+**`playtest.py`.** It carries the fixtures' generators, which Prod's
+OV05 seam row added (`PROD_OV05.md:76`). The exception has ended and
+the fixtures were released, so their generators came with them. Say so
+if you read it otherwise.
+
+**Tests changed on purpose, each to assert the new rule:**
+- `test_candidate_profile.py`: the profile now expects the latch step
+  declined by D-07's reason and no room graph. Its two placement tests
+  hold the shared search through the legacy entry.
+- `test_p14_latched_route.py`: the three search tests use the legacy
+  entry, with assertions unchanged.
+- `test_map_view.py`: the machine-gate cases read M-1's legacy fixture.
+- `test_signal_graph.py`: the held-requirement message test pinned the
+  retired advice ("LATCH"). It now asserts the lever and D-07, and that
+  "put a LATCH between" is gone.
+
+**New tests** (D13 §3):
+- production declines;
+- no candidate composition, and not the committed fixture, latches a
+  plate;
+- all three shapes (direct, through NOT, through OR) load but are not
+  accepted;
+- a legacy step-once Zone loads, and its latch survives a reload.
+
+**Sabotages, each failing its target:**
+- the old emitter on the production path (3 tests);
+- 1a removed;
+- the walk narrowed to direct inputs (the NOT and OR shapes fail, and
+  direct still passes);
+- the refusal moved into a model validator, which breaks M-1's loads
+  (3 tests);
+- the 14 map sabotages, re-run.
+
+**Next in D13:** 1c after Prod's lever placement; then 1d.

@@ -5,7 +5,8 @@ C-MAP, the four promises pinned here on the committed candidate Zone:
   possession    holding the red key or carrying the power cell opens
                 nothing; opening the lock or installing the cell does;
   reversal      a reversible closure comes back when it is put back;
-  permanence    a latched opening is still open after a reload;
+  permanence    a latched opening is still open after a reload (on
+                M-1's legacy fixture: nothing composes one now);
   discovery     an undiscovered room gives away no name, and a gate's
                 control is not placed on the map before its room is found.
 
@@ -31,7 +32,11 @@ FIXTURE = (Path(__file__).resolve().parents[2]
 RED_DOOR = "e:c011:c012"        # red lock at c011/side_right; key in c002
 POWER_DOOR = "e:c005:c006"      # cell_power = powered; cell homed in c004
 SPAN = "e:c002:c003"            # span_alignment = lowered, reversible
-SHUTTER = "e:c009:c010"         # graph_c009: plate -> LATCH -> shutter
+#: M-1's legacy fixture: a Zone composed with the retired step-once plate
+#: (D-07), as a save made before the ruling holds it. The candidate no
+#: longer composes one (D13 1b), so the machine-gate cases read this.
+LEGACY = FIXTURE.parent / "latched_route_zone.json"
+SHUTTER = "e:c002:c003"         # graph_c002: plate -> LATCH -> shutter
 GAP = "e:c013:c016"             # given a grapple gate by the test below
 
 
@@ -59,6 +64,12 @@ def _save(zone: Zone) -> P.CampaignSave:
 @pytest.fixture(scope="module")
 def zone() -> Zone:
     return _zone()
+
+
+@pytest.fixture(scope="module")
+def legacy() -> Zone:
+    raw = json.loads(LEGACY.read_text(encoding="utf-8"))
+    return Zone.model_validate(raw.get("zone", raw))
 
 
 @pytest.fixture()
@@ -114,13 +125,26 @@ def test_a_reversible_closure_comes_back(zone, save):
         "putting the span back left the map showing it open"
 
 
-def test_a_latched_opening_survives_a_reload(zone, save):
+def test_a_latched_opening_survives_a_reload(legacy):
     """A legacy step-once route (M-1) reads as saved: shut until its
     latch is recorded, then open for good -- through a reload."""
-    assert _gate(save, zone, SHUTTER).state == "blocked"
-    save = T.record_latch(save, zone.zone_id, "graph_c009", "held")
+    save = _save(legacy)
+    assert _gate(save, legacy, SHUTTER).state == "blocked"
+    save = T.record_latch(save, legacy.zone_id, "graph_c002", "held")
     save = P.CampaignSave.model_validate_json(save.model_dump_json())
-    assert _gate(save, zone, SHUTTER).state == "open"
+    assert _gate(save, legacy, SHUTTER).state == "open"
+
+
+def test_a_machine_gates_control_stays_unplaced_until_found(legacy):
+    save = _save(legacy)
+    view = map_view(save, legacy.zone_id, visited={"c003"})
+    shutter = next(c for c in view.connectors if c.edge_id == SHUTTER)
+    assert shutter.state == "blocked"
+    assert "somewhere else" in shutter.reason, \
+        "the map placed a control the player has not found"
+    found = map_view(save, legacy.zone_id, visited={"c003", "c002"})
+    shutter = next(c for c in found.connectors if c.edge_id == SHUTTER)
+    assert room_names(legacy)["c002"] in shutter.reason
 
 
 def _hookshot() -> E.EchoInterpretation:
@@ -168,10 +192,6 @@ def test_an_undiscovered_room_gives_nothing_away(zone, save):
     assert all(r.name is None for r in view.rooms if not r.discovered)
     assert all("c010" in (c.room_a, c.room_b) for c in view.connectors)
     assert view.connectors, "nothing was drawn at all"
-    # The shutter's control is in c009, which is not found yet.
-    shutter = next(c for c in view.connectors if c.edge_id == SHUTTER)
-    assert shutter.state == "blocked"
-    assert "somewhere else" in shutter.reason
     dump = view.model_dump_json()
     for authored in ("Unweighted Switch", "Counterfire Arcade"):
         assert authored not in dump

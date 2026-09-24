@@ -1810,8 +1810,10 @@ class Zone(Strict):
                     f"'{edge.opened_by}', which is closed at rest and "
                     "closed again once the plate is left -- so the player "
                     "has to hold it open to walk through it. That is D-8 "
-                    "§11.2's held requirement, which is UNSUPPORTED; put "
-                    "a LATCH between the plate and the machine")
+                    "§11.2's held requirement, which is UNSUPPORTED until "
+                    "a declared weight can hold the plate (D13 1d). A "
+                    "permanent opening needs a lever, not a latched plate "
+                    "(D-07)")
             raise ValueError(
                 f"edge '{edge.edge_id}' is opened by '{edge.opened_by}', "
                 "which starts open and is SHUT FOR GOOD by stepping on "
@@ -2453,4 +2455,47 @@ def validate_zone(
             "featured_echo_ids must all be owned; unknown: " + ", ".join(unowned)
         )
 
+    # D-07 (owner ruling, 2026-09-24): A PRESSURE PLATE IS A HELD SENSOR.
+    # "A pressure plate must not permanently latch merely because I
+    # stepped on it once." So no plate may set a LATCH, directly or
+    # through NOT/OR. Refused HERE, where a Zone is accepted, and never in
+    # the model validators that run on load: a Zone saved with the
+    # step-once chain loads and plays as saved (M-1, D13 1a).
+    errors.extend(_plates_that_latch(zone))
+
     return errors
+
+
+def _plates_that_latch(zone: Zone) -> list[str]:
+    """D13 1a: every LATCH a pressure plate sets, walked through NOT/OR."""
+    out = []
+    for graph in zone.room_graphs:
+        plates = {s.node_id for s in graph.sensors
+                  if s.kind == "PRESSURE_PLATE"}
+        if not plates:
+            continue
+        by_id = {n.node_id: n for n in graph.nodes}
+        for latch in graph.nodes:
+            if latch.kind != "LATCH":
+                continue
+            found, stack, seen = set(), list(latch.inputs), set()
+            while stack:
+                at = stack.pop()
+                if at in seen:
+                    continue
+                seen.add(at)
+                if at in plates:
+                    found.add(at)
+                elif at in by_id and by_id[at].kind in ("NOT", "OR"):
+                    stack.extend(by_id[at].inputs)
+            if found:
+                names = ", ".join(f"'{p}'" for p in sorted(found))
+                out.append(
+                    f"room '{graph.room_id}': pressure "
+                    + (f"plate {names} sets" if len(found) == 1
+                       else f"plates {names} set")
+                    + f" LATCH '{latch.node_id}'. A plate is a held sensor (D-07) "
+                    "and may not latch anything: a permanent opening needs "
+                    "a lever, and a door held open needs a plate that "
+                    "stays pressed")
+    return out

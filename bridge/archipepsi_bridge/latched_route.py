@@ -21,9 +21,25 @@ latch that sets on build) and then through `topology.reachability`
 strands). If nothing passes, the Zone comes back unchanged with the
 reason.
 
-What it emits is the chain D-10 chose: a `MEDIUM` plate that counts the
-player, a `LATCH`, a shutter -- **step on it once, walk through**. The
-guaranteed base kit and nothing else; no capability on the edge.
+**D-07 retired what it used to emit** (owner ruling, 2026-09-24):
+"Pressure plates are held sensors [...] If a puzzle needs a permanent
+change, use a visibly different permanent control such as a lever". D-10
+chose a `MEDIUM` plate that counted the player, a `LATCH` and a shutter:
+step on it once and walk through. Two entry points now share one search:
+
+  `compose_latched_route`         the production step. It **declines**
+                                  until `RoomGraphs` can place a lever
+                                  (D13 1c); then it emits
+                                  `lever -> LATCH -> shutter`.
+  `compose_legacy_step_once_route` the retired plate chain, kept ONLY to
+                                  regenerate M-1's legacy fixture and to
+                                  seed its replay suite. No production
+                                  path calls it, a test says so, and
+                                  `validate_zone` refuses its output at
+                                  acceptance (D13 1a).
+
+M-1: a Zone saved with the plate chain loads and plays as saved. That is
+the model validators' business, and they did not change.
 """
 from __future__ import annotations
 
@@ -63,7 +79,8 @@ class LatchedRoute:
         return self.edge_id is not None
 
 
-def _graph(room_id: str) -> dict:
+def _step_once_graph(room_id: str) -> dict:
+    """D-10's plate chain, which D-07 retired. Legacy input only."""
     return {
         "room_id": room_id,
         "sensors": [{"node_id": PLATE_ID, "kind": "PRESSURE_PLATE",
@@ -74,8 +91,29 @@ def _graph(room_id: str) -> dict:
     }
 
 
+#: Why the production step emits nothing today (D13 1b).
+DECLINED_UNTIL_LEVERS = (
+    "D-07: a pressure plate is a held sensor, so a permanent route needs a "
+    "lever; the Zone builder cannot place one yet (D13 1c lands with "
+    "RoomGraphs' lever placement), so no latch route is composed")
+
+
 def compose_latched_route(zone: Zone) -> LatchedRoute:
-    """Put `plate -> LATCH -> shutter` on one legal doorway of `zone`."""
+    """The production step. Declines until a lever can be placed."""
+    return LatchedRoute(zone, None, DECLINED_UNTIL_LEVERS)
+
+
+def compose_legacy_step_once_route(zone: Zone) -> LatchedRoute:
+    """M-1's LEGACY input: the retired `plate -> LATCH -> shutter`.
+
+    For the legacy fixture (`make latched-route-fixture`) and the replay
+    suite that seeds from it (`tools/compose_latched_route.py`) only.
+    """
+    return _compose(zone, _step_once_graph, "plate and latch")
+
+
+def _compose(zone: Zone, graph_for, what: str) -> LatchedRoute:
+    """Put the chain `graph_for(room)` builds on one legal doorway."""
     if zone.room_graphs or any(e.opened_by for e in zone.edges):
         return LatchedRoute(zone, None,
                             "the Zone already declares a room graph or a "
@@ -122,7 +160,7 @@ def compose_latched_route(zone: Zone) -> LatchedRoute:
     for _, _, index, near, far in sorted(candidates):
         raw = {**base, "edges": [dict(e) for e in base["edges"]]}
         raw["edges"][index]["opened_by"] = SHUTTER_ID
-        raw["room_graphs"] = [_graph(near)]
+        raw["room_graphs"] = [graph_for(near)]
         try:
             candidate = Zone.model_validate(raw)
         except ValueError as exc:
@@ -136,7 +174,7 @@ def compose_latched_route(zone: Zone) -> LatchedRoute:
         edge_id = raw["edges"][index]["edge_id"]
         return LatchedRoute(
             candidate, edge_id,
-            f"plate and latch in '{near}', shutter across '{edge_id}' "
+            f"{what} in '{near}', shutter across '{edge_id}' "
             f"into '{far}'; reachable before the route it opens")
     return LatchedRoute(
         zone, None,

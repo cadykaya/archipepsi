@@ -46,9 +46,15 @@ def test_an_unknown_step_is_refused_by_name():
 
 
 def test_all_three_compose_in_order_on_the_played_zone():
+    from archipepsi_bridge.latched_route import DECLINED_UNTIL_LEVERS
     applied = candidate.apply(_played(), candidate.STEPS)
     assert [s for s, _, _ in applied.steps] == list(candidate.STEPS)
-    assert applied.emitted == candidate.STEPS, applied.steps
+    # D-07 retired the latch step's plate (D13 1b): it declines, by
+    # exactly that reason, until `RoomGraphs` can place a lever (1c).
+    assert applied.emitted == tuple(
+        s for s in candidate.STEPS if s != "latched_route"), applied.steps
+    assert dict((s, n) for s, _, n in applied.steps)["latched_route"] \
+        == DECLINED_UNTIL_LEVERS
     zone = applied.zone
     assert reachability(zone).ok
     # one gate per doorway, whichever composer put it there (P5-1)
@@ -57,7 +63,7 @@ def test_all_three_compose_in_order_on_the_played_zone():
         assert len(e.requires_state) <= 1, e.edge_id
     assert {v.variable_id for v in zone.zone_state} == {
         "span_alignment", "cell_power"}
-    assert len(zone.room_graphs) == 1 and len(zone.transported_objects) == 1
+    assert len(zone.room_graphs) == 0 and len(zone.transported_objects) == 1
 
 
 def _control_rooms(zone) -> list[str]:
@@ -79,8 +85,16 @@ def test_one_control_per_room_across_the_whole_profile():
 
 
 def test_the_plate_stands_in_an_open_room_on_its_doorways_floor():
+    """P5-8/P5-11, held by the SEARCH the latch step shares (D13 1b),
+    among the profile's other relationships. Through the legacy entry,
+    which emits today; the lever entry takes its place with 1c."""
     from archipepsi_bridge import shells
-    zone = candidate.apply(_played(), candidate.STEPS).zone
+    from archipepsi_bridge.latched_route import (
+        compose_legacy_step_once_route)
+    before = candidate.apply(_played(), ("zone_state", "transport")).zone
+    out = compose_legacy_step_once_route(before)
+    assert out.emitted, out.note
+    zone = out.zone
     graph = zone.room_graphs[0]
     room = next(c for c in zone.chambers if c.id == graph.room_id)
     assert room.type in ("arena", "treasure_room"), room.type
@@ -96,8 +110,9 @@ def test_the_plate_stands_in_an_open_room_on_its_doorways_floor():
 def test_p14_alone_is_unchanged_by_the_new_rules():
     """The rules decline rooms OTHER relationships occupy; alone, P14
     composes exactly the Zone its played acceptance ran on."""
-    from archipepsi_bridge.latched_route import compose_latched_route
-    out = compose_latched_route(_played())
+    from archipepsi_bridge.latched_route import (
+        compose_legacy_step_once_route)
+    out = compose_legacy_step_once_route(_played())
     assert out.emitted and out.zone.room_graphs[0].room_id == "c002"
 
 

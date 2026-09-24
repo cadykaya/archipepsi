@@ -535,7 +535,10 @@ def latched_route_zone():
     Derived from `played_zone()` by an explicit step, so the Zone the
     baseline plays is untouched.
     """
-    from .latched_route import compose_latched_route
+    # M-1's legacy fixture: the retired step-once chain, kept so a save
+    # composed before D-07 can still be replayed and tested as saved.
+    from .latched_route import (
+        compose_legacy_step_once_route as compose_latched_route)
     zone = played_zone()
     if zone is None:
         return None
@@ -574,7 +577,27 @@ def candidate_zone(steps: str):
         return None
     asked = parse(steps)
     out = apply(zone, asked)
-    return out.zone if set(out.emitted) == set(asked) else None
+    return out.zone if set(out.emitted) == _must_emit(asked, out) else None
+
+
+def _must_emit(asked, out) -> set[str]:
+    """Every asked step, less one declined BY POLICY.
+
+    D-07 retired the latch step's plate. Until `RoomGraphs` places a
+    lever (D13 1c), that step declines with exactly
+    `DECLINED_UNTIL_LEVERS`, and a fixture without it is the profile's
+    true output. Any other decline still means a partial fixture, which
+    is refused, as before.
+    """
+    from .candidate import steps_of
+    from .latched_route import DECLINED_UNTIL_LEVERS
+    # Steps only (DESS-27): `all` also names the profile's OPTIONS, such
+    # as `consumables`, which configure a campaign and never "emit" --
+    # comparing against them refused every `make candidate-fixture` run
+    # since the option joined the profile.
+    return set(steps_of(asked)) - {
+        step for step, emitted, note in out.steps
+        if not emitted and note == DECLINED_UNTIL_LEVERS}
 
 
 def transport_zone():
@@ -604,7 +627,7 @@ def _dump_candidate(args) -> int:
     out = apply(zone, parse(args.steps))
     for step, emitted, note in out.steps:
         print(f"  {step}: {'EMITTED' if emitted else 'declined'} -- {note}")
-    if set(out.emitted) != set(parse(args.steps)):
+    if set(out.emitted) != _must_emit(parse(args.steps), out):
         print("a step declined; nothing written", file=sys.stderr)
         return 1
     args.out.parent.mkdir(parents=True, exist_ok=True)

@@ -346,7 +346,11 @@ def test_a_plate_straight_to_the_shutter_is_the_held_requirement():
     with pytest.raises(ValidationError) as e:
         gated(composed(), nodes=[])
     text = str(e.value)
-    assert "hold it open" in text and "LATCH" in text
+    # D-07 retired the old advice, "put a LATCH between the plate and the
+    # machine" (DESS-24): a permanent opening is a lever's, and a held
+    # one needs a declared weight.
+    assert "hold it open" in text and "needs a lever" in text
+    assert "D-07" in text and "put a LATCH between" not in text
 
 
 def test_a_not_chain_only_denies_and_may_still_gate():

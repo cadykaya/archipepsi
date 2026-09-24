@@ -6,8 +6,9 @@
   onward** (Prod's entry: `PROD_POST_PLAYTEST.md` W0.1). Prod asks for
   shared changes by note.
 - **The shared edits land in this order:**
-  1. DESS-25;
-  2. H-PRESSURE-C step 1 (1a + 1b);
+  1. DESS-25 **done**;
+  2. H-PRESSURE-C step 1 (1a + 1b) **done**. The candidate composes no
+     latch route until 1c (note D-1 to Prod);
   3. DESS-21;
   4. the D-01 protocol field;
   5. discovery and the snapshot's inventory and map;

@@ -25,8 +25,10 @@ says why. A declined step leaves the Zone exactly as it was.
 2. `transport`: P16's carry-and-install journey
    (`transport_route.compose_transport`), which adds its own variable
    beside any the Zone has.
-3. `latched_route`: P14's plate, latch and shutter
-   (`latched_route.compose_latched_route`). LAST, because it is the one
+3. `latched_route`: P14's latch and shutter
+   (`latched_route.compose_latched_route`). **It declines today:** D-07
+   retired the step-once plate, and the lever that replaces it lands
+   with `RoomGraphs`' lever placement (D13 1c). It runs LAST, because it is the one
    with the widest choice of rooms. It refuses an edge that already
    carries `requires_state` (one gate per doorway, P5-1) and a room that
    already holds another relationship's control (one control per room,

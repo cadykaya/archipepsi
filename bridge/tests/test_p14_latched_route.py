@@ -269,8 +269,13 @@ def test_without_the_latch_modelling_a_far_side_plate_would_pass(monkeypatch):
 # The composer: a legal latch route on a real Zone, by an explicit step
 # --------------------------------------------------------------------------
 
+# The SEARCH is shared by both entry points (D13 1b): these three hold it
+# through the legacy entry, the one that emits today; the lever entry
+# joins them when 1c lands. The production decision is tested below.
+
 def test_the_composer_puts_a_legal_latch_route_on_the_real_zone():
-    from archipepsi_bridge.latched_route import compose_latched_route
+    from archipepsi_bridge.latched_route import (
+        compose_legacy_step_once_route as compose_latched_route)
     out = compose_latched_route(composed())
     assert out.emitted, out.note
     assert reachability(out.zone).ok
@@ -287,7 +292,8 @@ def test_the_composer_puts_a_legal_latch_route_on_the_real_zone():
 
 
 def test_the_composer_does_not_stack_onto_a_zone_that_has_one():
-    from archipepsi_bridge.latched_route import compose_latched_route
+    from archipepsi_bridge.latched_route import (
+        compose_legacy_step_once_route as compose_latched_route)
     once = compose_latched_route(composed())
     again = compose_latched_route(once.zone)
     assert not again.emitted and again.zone is once.zone
@@ -306,7 +312,7 @@ def test_the_composer_declines_rather_than_emitting_something_broken(
         return Reach(states=frozenset(), rooms=frozenset(),
                      errors=("sabotaged",))
     monkeypatch.setattr(LR, "reachability", refuses)
-    out = LR.compose_latched_route(composed())
+    out = LR.compose_legacy_step_once_route(composed())
     assert not out.emitted and out.zone is composed()
     assert "sabotaged" in out.note
 
@@ -336,3 +342,105 @@ def test_the_latch_route_fixture_is_the_zone_the_composer_emits():
         live.model_dump_json()), (
         "the latch-route fixture is stale; regenerate it with "
         "`make latched-route-fixture`")
+
+
+# --------------------------------------------------------------------------
+# D-07 / D13 step 1: nothing composed now latches a plate; saves still load
+# --------------------------------------------------------------------------
+
+def _legacy_raw() -> dict:
+    """M-1's legacy fixture: a Zone composed with the retired chain."""
+    import json
+    from pathlib import Path
+    raw = json.loads((Path(__file__).resolve().parents[2]
+                      / "godot/tests/fixtures/latched_route_zone.json")
+                     .read_text(encoding="utf-8"))
+    return raw.get("zone", raw)
+
+
+def _plate(node_id: str) -> dict:
+    return {"node_id": node_id, "kind": "PRESSURE_PLATE",
+            "requires_class": "MEDIUM", "counts_player": True}
+
+
+def _shaped(shape: str) -> dict:
+    """The legacy Zone with its graph rebuilt in one of three shapes."""
+    import copy
+    raw = copy.deepcopy(_legacy_raw())
+    graph = raw["room_graphs"][0]
+    shutter = [{"actuator_id": "route_shutter", "driven_by": "held"}]
+    if shape == "direct":
+        graph.update(sensors=[_plate("step_plate")], actuators=shutter,
+                     nodes=[{"node_id": "held", "kind": "LATCH",
+                             "inputs": ["step_plate"]}])
+    elif shape == "through NOT":
+        graph.update(sensors=[_plate("step_plate")], actuators=shutter,
+                     nodes=[{"node_id": "n1", "kind": "NOT",
+                             "inputs": ["step_plate"]},
+                            {"node_id": "n2", "kind": "NOT", "inputs": ["n1"]},
+                            {"node_id": "held", "kind": "LATCH",
+                             "inputs": ["n2"]}])
+    else:                       # through OR, driving a machine in the room
+        graph.update(sensors=[_plate("step_plate"), _plate("plate_b")],
+                     actuators=shutter,
+                     nodes=[{"node_id": "either", "kind": "OR",
+                             "inputs": ["step_plate", "plate_b"]},
+                            {"node_id": "held", "kind": "LATCH",
+                             "inputs": ["either"]}])
+        for edge in raw["edges"]:
+            edge["opened_by"] = None
+    return raw
+
+
+def test_the_production_composer_declines_until_a_lever_can_be_placed():
+    from archipepsi_bridge import latched_route as LR
+    zone = composed()
+    out = LR.compose_latched_route(zone)
+    assert not out.emitted and out.zone is zone
+    assert out.note == LR.DECLINED_UNTIL_LEVERS
+
+
+def test_no_candidate_composition_latches_a_plate():
+    """D13 §3: the composer never emits one -- the whole candidate
+    profile on the played Zone, and the committed candidate fixture."""
+    import json
+    from pathlib import Path
+    from archipepsi_bridge.candidate import STEPS, apply
+    from archipepsi_bridge.schemas.zone import _plates_that_latch
+    out = apply(composed(), STEPS)
+    assert _plates_that_latch(out.zone) == [], \
+        "a composition emitted the retired step-once plate"
+    fixture = json.loads((Path(__file__).resolve().parents[2]
+                          / "godot/tests/fixtures/candidate_zone.json")
+                         .read_text(encoding="utf-8"))
+    assert _plates_that_latch(Zone.model_validate(
+        fixture.get("zone", fixture))) == []
+
+
+@pytest.mark.parametrize("shape", ["direct", "through NOT", "through OR"])
+def test_a_plate_that_latches_loads_but_is_not_accepted(shape):
+    """M-1 and D13 1a together: the Zone model still reads it, so a save
+    holding it loads; acceptance refuses it, so nothing new holds it."""
+    from archipepsi_bridge.schemas.zone import validate_zone
+    zone = Zone.model_validate(_shaped(shape))
+    errors = validate_zone(zone, expected_zone_id=zone.zone_id,
+                           allocated_location_ids=list(
+                               zone.reward_location_ids),
+                           owned_echo_ids=[])
+    assert any("sets LATCH 'held'" in e or "set LATCH 'held'" in e
+               for e in errors), errors
+    assert any("held sensor (D-07)" in e for e in errors)
+
+
+def test_a_legacy_step_once_zone_loads_and_its_latch_restores():
+    """M-1: "Existing saved Zones containing the old step-once route
+    retain their saved behavior." Its graph loads unchanged, its latch
+    is still recordable, and a reload keeps it."""
+    legacy = Zone.model_validate(_legacy_raw())
+    room = _plate_room(legacy)
+    save = T.record_latch(_save(legacy), legacy.zone_id, f"graph_{room}",
+                          "held")
+    save = P.CampaignSave.model_validate_json(save.model_dump_json())
+    rec = save.zone_by_id(legacy.zone_id)
+    assert rec.progress.latched == (f"graph_{room}/held",)
+    assert rec.zone.room_graphs == legacy.room_graphs
