@@ -102,6 +102,21 @@ python3 tools/content/verify_theme_set.py >/dev/null || \
 
     python3 tools/content/verify_theme_set.py"
 
+# --- 3b. D-11: the game packs' rows, judged by Production's own code ----
+#
+# `pack_table_problems` is the contract. This lane does not get to hold
+# its own opinion of it, so the gate imports Production's module
+# read-only and runs it. It also asserts the rows are THERE: a
+# descriptor with no pack table is legal and reports no problems, so a
+# gate that only ran the contract would pass loudest at the moment the
+# pack art went missing.
+say "game-pack rows against D-11..."
+python3 tools/content/check_pack_table.py >/dev/null || \
+  fail "check_pack_table: the game packs' rows are not legal D-11, are
+  authored but undescribed, or resolve wrongly. Run
+
+    python3 tools/content/check_pack_table.py"
+
 # The exported theme pack against the set it came from, and against the
 # digests Production's loader refuses on. Gap 3's shipping half.
 python3 tools/content/verify_theme_export.py >/dev/null || \
@@ -436,7 +451,8 @@ SCRIPTS="build_materials build_architecture build_props
   build_setpieces build_yardkit build_skiffkit build_roomkits
   build_connect build_jobs build_combatfx build_forest_temple
   build_theme_candidate build_clockwork build_brink build_wreck
-  build_twilight build_foundry build_lothric"
+  build_twilight build_foundry build_lothric
+  build_pack_materials"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.
@@ -579,6 +595,35 @@ untracked=$(git ls-files --others --exclude-standard -- $PATHS)
 if [ -n "$untracked" ]; then
   fail "the build produces files that were never committed:"
   echo "$untracked" | sed 's/^/    /'
+fi
+
+# --- 7. the EXPORTED content matches the assets it was exported from ---
+#
+# `godot/content/` is the shipped content and it was not covered by
+# anything above: PATHS stops at `assets/`, so the course ruling rebuilt
+# 126 baked models, committed them, and left `godot/content/shells/`
+# carrying the pre-ruling geometry and pixels. Nothing failed. It was
+# found only because an unrelated export happened to run.
+#
+# This is cheap to close because the export is byte-deterministic --
+# unlike a render, which is why the theme-bind sheets got a lesson in
+# ART_LESSONS.md instead of a gate.
+if ! git diff --quiet -- godot/content; then
+  say "SKIPPED export check -- godot/content is already modified."
+  say "  Commit or stash it first; otherwise this cannot tell your edits"
+  say "  from drift."
+else
+  say "exported content matches assets..."
+  tools/export_content_pack.sh >/dev/null 2>&1 || \
+    fail "export_content_pack.sh did not complete. Run it directly."
+  tools/import_godot_content.sh >/dev/null 2>&1 || \
+    fail "import_godot_content.sh did not complete. Run it directly."
+  if ! git diff --quiet -- godot/content; then
+    fail "the exported content is out of date with the assets it comes
+  from -- godot/content/ is what SHIPS, and it is carrying something
+  other than what assets/ holds:"
+    git diff --stat -- godot/content | sed 's/^/    /'
+  fi
 fi
 
 [ $status -eq 0 ] && say "PASS -- every generated asset matches its source."

@@ -1917,3 +1917,29 @@ gate at all. The shape that would work is for the harness to record the
 `sha256` of the textures it bound beside the renders, and compare *that*
 — deterministic, machine-independent, and it names the reason the
 evidence is stale instead of showing a pixel count.
+
+---
+
+## `godot/content/` is what ships, and nothing was checking it
+
+The course ruling rebuilt 126 baked models and committed them. Six days
+later an unrelated export revealed that `godot/content/shells/` still
+held the **pre-ruling** geometry and pixels — 49 files of shipped
+content that did not match the assets they are exported from.
+
+`tools/check_art_current.sh` says at the top that it catches "every .glb
+and .png rebuilds byte-identical from its source". It does — within
+`PATHS`, which stops at `assets/`. The exported copy under
+`godot/content/` was outside every check in the suite, so the one
+directory the game actually loads was the one directory nothing
+compared.
+
+> **A check's scope is a claim about what it covers, and the gap is
+> always at the edge of the scope rather than in the middle. Ask what
+> the LAST step in the pipeline is, and whether anything compares its
+> output to its input.**
+
+Closed, in section 7: the suite now runs the export and the import and
+fails on any diff under `godot/content/`. That is affordable here for
+the reason it was not affordable for the theme-bind renders — the export
+is byte-deterministic, and a render is not.
