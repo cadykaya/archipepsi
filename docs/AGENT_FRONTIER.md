@@ -9,7 +9,7 @@
   1. DESS-25 **done**;
   2. H-PRESSURE-C step 1 (1a + 1b) **done**. The candidate composes no
      latch route until 1c (note D-1 to Prod);
-  3. DESS-21;
+  3. DESS-21 **done**;
   4. the D-01 protocol field;
   5. discovery and the snapshot's inventory and map;
   6. DESS-23;

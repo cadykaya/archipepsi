@@ -209,3 +209,14 @@ def test_no_home_dock_means_the_first_dock_and_the_order_is_declared():
     net = RailNetwork.model_validate(_net())
     assert net.home_dock is None
     assert net.docks[0].dock_id == "s1"
+
+
+@pytest.mark.parametrize("name", ["graph_c002", "minor_c002"])
+def test_a_network_may_not_take_a_reserved_latch_namespace(name):
+    """DESS-21: `graph_` and `minor_` belong to room graphs and hosted
+    minors. A railway named into either would have its span latches
+    recorded down their path."""
+    with pytest.raises(ValidationError, match="reserved"):
+        RailNetwork.model_validate(_net(network_id=name))
+    assert RailNetwork.model_validate(_net(network_id="graphite")).network_id \
+        == "graphite"

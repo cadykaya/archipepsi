@@ -152,14 +152,15 @@ RESERVED_PACKAGE_PREFIXES = {GRAPH_PACKAGE_PREFIX: "room-graph latches",
                              MINOR_PACKAGE_PREFIX: "hosted minors' latches"}
 
 
-def refuse_reserved_package_id(package_id: str) -> None:
+def refuse_reserved_package_id(package_id: str,
+                               what: str = "physics package") -> None:
     for prefix, owner in RESERVED_PACKAGE_PREFIXES.items():
         if package_id.startswith(prefix):
             raise ValueError(
-                f"physics package '{package_id}' takes the "
+                f"{what} '{package_id}' takes the "
                 f"'{prefix}' prefix, which is reserved for {owner}; a "
-                "physics latch recorded under it would share an identity "
-                "with one")
+                "latch recorded under it would share an identity "
+                "with one of theirs")
 
 #: §4.10. The verifier's whole budget, unchanged from Design 3.
 STATE_VECTOR_BOUND = 4096

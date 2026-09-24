@@ -622,3 +622,24 @@ if you read it otherwise.
 - the 14 map sabotages, re-run.
 
 **Next in D13:** 1c after Prod's lever placement; then 1d.
+
+## DESS-21 — fixed at the root
+
+**`RailNetwork` now refuses a name under a reserved latch namespace**
+(`graph_` or `minor_`), as physics packages already do
+(`refuse_reserved_package_id`, which now says what it is refusing).
+- A span latch persists as `network_id/latch_id`. A railway named into
+  either space would have had its span latches read down the room-graph
+  or minor path.
+- No fixture, and no composed Zone, declares a rail network, since no
+  composer emits one. So the model-level refusal cannot reject any saved
+  Zone.
+
+**The second half of the original fix is not needed.** With the name
+refused at the model, no validated Zone can make `record_latch`'s
+`graph_` branch meet a rail, so a guard there would be dead code.
+
+**Evidence:** one parametrized test covering both prefixes, plus a legal
+name that merely starts with "graph". It fails by name with the refusal
+removed. The packet mirrors of `zone.py` and `physics.py` are copied, and
+`check_packet` is clean.

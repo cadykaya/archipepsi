@@ -29,7 +29,7 @@ try:  # works standalone and when copied into a package
     from .physics import (
         CARRY_MASS_KG, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
         carriable_by_hand, mass_class, plate_accepts_player,
-        state_vector_product)
+        refuse_reserved_package_id, state_vector_product)
     from .signal_graph import (RoomGraph, phases, upstream,
                                ROUTE_NODE_KINDS, ROUTE_SENSOR_KINDS,
                                ZONE_PLACEABLE_SENSOR_KINDS)
@@ -42,7 +42,7 @@ except ImportError:  # pragma: no cover
     from physics import (
         CARRY_MASS_KG, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
         carriable_by_hand, mass_class, plate_accepts_player,
-        state_vector_product)
+        refuse_reserved_package_id, state_vector_product)
     from signal_graph import (RoomGraph, phases, upstream,
                               ROUTE_NODE_KINDS, ROUTE_SENSOR_KINDS,
                               ZONE_PLACEABLE_SENSOR_KINDS)
@@ -939,6 +939,11 @@ class RailNetwork(Strict):
 
     @model_validator(mode="after")
     def _every_span_joins_docks_this_network_declares(self):
+        # DESS-21: a span latch persists as `network_id/latch_id`, the
+        # same space room-graph and minor latches use. A network named
+        # into their reserved namespaces would have its span latches
+        # read as theirs, so it is refused as a physics package is.
+        refuse_reserved_package_id(self.network_id, what="rail network")
         known = {d.dock_id for d in self.docks}
         if len(known) != len(self.docks):
             raise ValueError(f"network '{self.network_id}' repeats a dock id")
