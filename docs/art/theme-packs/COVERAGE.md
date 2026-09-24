@@ -2,6 +2,47 @@
 
 **Arty**
 
+## CORRECTION, 2026-09-24 — the blocker in §2 and §3 has been ANSWERED
+
+**D-11 was delivered on 22–23 September, after this document was
+written.** §2 and §3 below say a pack's material set has nowhere to live
+and that ordinary production selection is blocked. **That was true on
+2026-09-22 and it is not true now.** The sections are left standing
+because they are the record of what was asked and why; read them with
+this correction.
+
+What was delivered, read from the source at the packet's review ref
+`a7456373` (and unchanged at that branch's head `d92b637`):
+
+| contract | delivered |
+|---|---|
+| `Zone.theme_pack` | `str \| None = None`, `^[a-z0-9_]+$`, ≤ 24; a family's name is refused |
+| table | a flat **sibling** `pack_textures`, keyed `"<pack>/<theme>/<role>"` |
+| row schema | **exactly a `textures` row** — and this lane's rows already are `{covers_m, mean_value, sha256_16, size_px, texture}` |
+| resolution | the exact pack key, **no role hop**, then the family chain unchanged including its one hop |
+| universal roles | `THEME_UNIVERSAL_ROLES = ("hazard",)` — **a pack may not paint hazard** |
+| partial packs | legal; a role a pack lacks is the family's |
+| the art lane's gate | `theme_packs.pack_table_problems(descriptor)`, written for this toolchain |
+| status ladder | `candidate` (rows exist) → `selectable` (reviewed) → `approved` (**owner only**). `THEME_PACK_STATUS` is `{}` |
+
+**No seventh house theme. No second loader.** The ask in §3 was answered
+in a better shape than the one proposed there.
+
+**Two of this document's own findings change:**
+
+* **The family runway is superseded, not disproved.** A pack no longer
+  needs a house family of its own: it ships its own rows, and the family
+  is the **backstop for roles the pack does not ship**, not its identity.
+  The arithmetic below was right; its conclusion expired.
+* **The T05 finding becomes actionable.** Twilight read as a warmer
+  Forest Temple because both were painted in `temple_ruin`'s pixels.
+  That is precisely the pair D-11 separates, and T01 + T05 are the pair
+  named for the first distinctive treatments.
+
+Plan: `docs/art/ART_PLAN_2026-09-24.md`.
+
+---
+
 ## Two counts, and they are not the same count
 
 The owner asked for these to be reported separately, and they must be,
@@ -13,7 +54,7 @@ into "81 packs exist".
 |---|---|
 | **CATALOGUE coverage** | **81 of 81.** Every included Archipelago game has a row, a queue id and a reserved pack id. This is a list, and a list is not art. |
 | **COMPLETED pack coverage** | **0 of 81.** Nothing has passed the bar in *What counts as a completed pack* below. |
-| **IN PROGRESS** | **7** — T01–T07. Content built and applied in engine; material treatment still missing on all seven. |
+| **IN PROGRESS** | **7** — T01–T07. Content built and applied in engine; material treatment still missing on all seven. Under D-11 all seven are at `candidate`-able status: **none has rows emitted yet**, and none is `selectable` or `approved`. |
 | **NOT STARTED** | **74.** |
 
 **Catalogue snapshot:** `catalogue.json`, taken 2026-09-22 from
@@ -195,7 +236,7 @@ completion: the verdict column is.**
 
 **0 of 81 complete. 7 in progress. 74 not started.**
 
-### THE FAMILY RUNWAY IS EXHAUSTED AT T07
+### THE FAMILY RUNWAY IS EXHAUSTED AT T07 — *superseded by D-11, see the correction at the top*
 
 T05 proved two packs sharing a house family read as one place, and that
 different shapes cannot save them. The workaround since has been to give

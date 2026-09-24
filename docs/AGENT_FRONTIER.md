@@ -197,6 +197,36 @@ Two things from it that other lanes need:
   to it** -- five `verify` runs modified six tracked fixtures by
   checkpointing their WAL; restored.
   `docs/art/reports/2026-09-22-glyph-toolchain-trial.md` §5.
+* **THE PACK BLOCKER IS ANSWERED. D-11 IS DELIVERED AND CONSUMED.**
+  Read from source at the packet's review ref `a7456373`, unchanged at
+  that branch's head `d92b637`: `Zone.theme_pack` (optional, `^[a-z0-9_]+$`,
+  <= 24), a flat sibling `pack_textures` table keyed `<pack>/<theme>/<role>`
+  **whose rows are exactly a `textures` row** (this lane's already are),
+  exact-pack-key-then-family resolution with **no pack role hop**,
+  `hazard` protected as universal, partial packs legal, and
+  `theme_packs.pack_table_problems()` written as the art lane's gate.
+  Status ladder `candidate` -> `selectable` -> `approved` (owner only);
+  `THEME_PACK_STATUS` is `{}`.
+  **No seventh house theme, no second loader, and none was built.**
+  Two of my own findings change: the **family runway is superseded** (a
+  pack ships its own rows; the family is the backstop for roles it does
+  not ship, not its identity), and the **T05 Twilight-vs-Forest finding
+  becomes actionable** -- that is the pair D-11 separates.
+* **POST-PLAYTEST HANDOFF v1.0 RECEIVED (2026-09-24). ASSIGNMENT
+  ACKNOWLEDGED; PLAN ONLY, NOTHING STARTED.** The owner played 0.4: more
+  fun, the power-cell installation is a keeper, and the inventory is
+  miserable. Art's order is now **A** the Glyph interface family (fonts,
+  nine-slice panels, icons, and the shared circuit / blocked-exit /
+  control symbols for a LIVE inventory face -- never a painted
+  whole-screen image), **B** a distance-readable enemy lineup judged
+  without audio or collider overlays, **C** machinery placeholders
+  against revised puzzle bounds (receiver z-fight fixed in source
+  during replacement, not as its own task), **D** consume D-11 and
+  finish T01 + T05, then **E** the A15-A19 reserve.
+  **Track D is the only one ready today; C is blocked on Prod/Dess's
+  revised puzzle bounds.** Four unresolved decisions and six cross-lane
+  dependencies are named in `docs/art/ART_PLAN_2026-09-24.md`.
+  No watchers, subscriptions or scheduled work exist or were created.
 * **T07 (Dark Souls III, THE HIGH WALL OF LOTHRIC) IS THE LAST PACK WITH
   A HOUSE FAMILY OF ITS OWN.** Batch 061, `gothic_stone`. T06 counted
   two families remaining and was wrong: **`void_glitch` is unusable** --

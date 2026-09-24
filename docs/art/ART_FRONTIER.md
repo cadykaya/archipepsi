@@ -925,14 +925,27 @@ wedges; `assert_parts_touch` was satisfied by a 14 cm overlap and the
 frame showed a staircase hanging in mid-air. A gate can say a thing is
 attached; it can never say it is legible.
 
-### THE PACK QUEUE IS BLOCKED AT T08, and that is the state to wake into
+### ~~THE PACK QUEUE IS BLOCKED AT T08~~ — ANSWERED 2026-09-24
 
-T08 cannot be authored honestly without either the pack namespace
-(`COVERAGE.md` §3) or an owner ruling that a recolour-shaped pack is
-acceptable as an interim. **Art's answer is that it is not, and T05 is
-the evidence.** Unblocked work meanwhile: **A15** (item/Forge modules),
-**A16** (finish the six theme families), **A17-A19**. The course
-candidate (Batch 055) also awaits a ruling.
+**D-11 was delivered on 22-23 September and is now consumed.** A pack
+carries its own `pack_textures` rows keyed `<pack>/<theme>/<role>`; the
+house family is the **backstop for roles the pack does not ship**, not
+its identity. So the runway finding is superseded, the queue is not
+blocked on a namespace, and **T05's Twilight-vs-Forest evidence is now
+the test case for the fix rather than an argument for one.**
+`COVERAGE.md` carries the full contract under its 2026-09-24 correction.
+
+### The order of work, from the post-playtest handoff (plan only)
+
+**A** the Glyph interface family for a LIVE inventory face -> **B** a
+distance-readable enemy lineup -> **C** machinery placeholders against
+revised puzzle bounds -> **D** consume D-11 and finish T01 + T05 ->
+**E** the A15-A19 reserve. **D is ready today; C waits on Prod/Dess's
+revised puzzle bounds.** T08 onward is explicitly not next: finish a
+pair first. The course candidate (Batch 055) still awaits a
+**per-treatment** ruling -- 18 of 22 pitches move and my own preference
+was not uniform. Plan, decisions and dependencies:
+`docs/art/ART_PLAN_2026-09-24.md`.
 
 ### Then
 
