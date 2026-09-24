@@ -64,8 +64,19 @@ art diff. Do not maintain two active art branches.
 
 **2026-09-22 — THE ART LANE IS PRODUCING AGAIN.** The owner opened the
 **0.4 Arty Overnight assignment**: 38 packages, 228 explicit actions, in a
-stated priority order. `docs/art/ART_FRONTIER.md` §10 is the art lane's
-live frontier; read that, not this section, for what art does next.
+stated priority order. `docs/art/ART_FRONTIER.md` **§11** is the art lane's
+live frontier as of 2026-09-24 (§10 is the assignment it continues);
+read that, not this section, for what art does next.
+
+**2026-09-24 — the art lane's named technical risk is closed.** A Glyph
+bitmap font and a Glyph nine-slice both import into **Godot 4.5.1** with
+their metrics intact, measured in the engine by
+`tools/content/run_font_import.sh` and `tools/content/run_nine_slice.sh`.
+The guide's own proof named 4.3, so this was the thing the whole
+interface track stood on. Two engine facts other lanes need are in §11:
+a font parsed with `load_bitmap_font()` at runtime does not scale unless
+you set `fixed_size_scale_mode`, and the importer's mode allows
+fractional scaling of a pixel face.
 
 Two things from it that other lanes need:
 

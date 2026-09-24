@@ -2257,3 +2257,57 @@ to decide it.
 7. The remaining six affordance fixtures.
 8. Hub and Echo Lab — last, because they are the largest and the least
    forgiving, and because everything else teaches us how to build them.
+
+---
+
+## 11. FRONTIER, 2026-09-24 — the post-playtest rulings, Tracks A → D → B
+
+**This supersedes §10 as the current frontier item.** §10's scheduling
+override still stands in full: heartbeat, watchers, subscriptions,
+scheduled check-ins and automatic re-arming stay OFF.
+
+The owner approved `docs/art/ART_PLAN_2026-09-24.md` with four rulings
+(course candidate per treatment; T01 + T05 approved as the first
+`pack_textures` pair; equipment-slot vocabulary is Production's, not the
+art lane's; reduced motion reduces transition motion rather than
+duplicating the state artwork) and set the order: **A → D → B. C is
+blocked on the revised machinery/puzzle bounds. E is reserve.**
+
+### Track A — the interface family. The named technical risk is CLOSED.
+
+The plan named one open technical risk: the Glyph guide's bitmap-font
+proof runs on Godot **4.3** and this project ships **4.5.1**. Both
+halves are now measured in the engine, and both pass.
+
+* **Bitmap font.** `assets/ui/ui_numerals.fnt` + page: twelve glyphs,
+  `0123456789/x`, 6x8 cells, declared baseline 6. `1` carries three
+  columns of ink against everyone else's four so its advance differs.
+  In 4.5.1: ascent 6, height 8, `"11"` 8 px, `"00"` 10 px, `"3/8"` 15
+  px, `has_char` correct. Gate: `tools/content/run_font_import.sh`.
+* **Nine-slice.** `assets/ui/panel_{panel,well,selected}.png` +
+  `panels.json`: 10x10, three-pixel border, four-pixel stretchable
+  centre. Drawn at 40x24 the corners are byte-exact against the
+  authored art, edges resample on one axis, the centre stays flat and
+  the outline is unbroken. Textures arrive lossless. Gate:
+  `tools/content/run_nine_slice.sh`.
+
+**Two engine facts other lanes need.** The editor's importer sets
+`fixed_size_scale_mode`; `FontFile.load_bitmap_font()` at runtime does
+not, so the same font renders a 2x panel correctly when `load()`ed and
+silently at 1x when parsed in code. And the mode it sets is ENABLED,
+not INTEGER_ONLY — at 1.5x the font duly measures 15 px — so a pixel UI
+must ask only for multiples of 8 or set INTEGER_ONLY itself.
+
+**Open decision, owner's:** the palette's six universal families all
+mean something specific and none of them is interface chrome. The
+panels use the `dead` ramp provisionally. See the report.
+
+**Still to author in Track A:** body text, headings and keycaps; the
+shared circuit / blocked-exit / control symbols; page arrows. Item and
+state art waits on Production's real slot vocabulary, per ruling 3.
+
+### Next: Track D, then Track B
+
+D consumes D-11 — `pack_textures` rows for **T01 + T05** at `candidate`
+status, validated by `theme_packs.pack_table_problems`. Then B, the
+distance-readable enemy lineup.
