@@ -27,8 +27,8 @@ from archipepsi_bridge.mock_ap import MockAPBackend
 
 from .conftest import connected_engine, drain, enter_zone, make_engine, run
 
-#: The contract's per-campaign field. A save without it is a legacy
-#: campaign; the integration adds it (D14 §3).
+#: The contract's per-campaign field (D14 §3). A save without it is a
+#: legacy campaign.
 POLICY_FIELD = "self_addressed_echoes"
 
 
@@ -131,7 +131,8 @@ def test_a_legacy_campaign_mints_nothing_for_its_own_item(tmp_path):
         await transactions.claim_check(engine, zone_id, loc)
         assert loc in engine.ap.checked
         raw = engine.save.model_dump(mode="json")
-        raw.pop(POLICY_FIELD, None)
+        assert POLICY_FIELD in raw, "the policy field is gone from the save"
+        raw.pop(POLICY_FIELD)
         engine.save = P.CampaignSave.model_validate(raw)
         before = len(engine.save.interpretations)
         assert await engine.grant_echo(loc) is None
@@ -139,4 +140,19 @@ def test_a_legacy_campaign_mints_nothing_for_its_own_item(tmp_path):
         assert engine.save.interpretation_by_id(f"echo_{loc}") is None, \
             "a legacy campaign grew an Echo for its own item"
         assert len(engine.save.interpretations) == before
+    run(go())
+
+
+def test_a_save_written_before_the_policy_loads_with_it_off(tmp_path):
+    """D14 §3: the default is the legacy behaviour, so no existing save
+    changes by loading it; only creation can turn it on."""
+    async def go():
+        engine, _, _ = await _in_a_zone(tmp_path)
+        raw = engine.save.model_dump(mode="json")
+        raw.pop(POLICY_FIELD)
+        assert P.CampaignSave.model_validate(raw).self_addressed_echoes \
+            is False
+        on = P.CampaignSave.model_validate({**raw, POLICY_FIELD: True})
+        again = P.CampaignSave.model_validate_json(on.model_dump_json())
+        assert again.self_addressed_echoes is True
     run(go())

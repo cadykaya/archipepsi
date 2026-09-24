@@ -1140,6 +1140,17 @@ class CampaignSave(Strict):
     #: deployed, which is also every save written before the field
     #: existed.
     consumable_generation: int = Field(default=0, ge=0)
+    #: D-01 (`docs/D14_SELF_ADDRESSED_ECHO_PROD.md` §3). Whether a Check
+    #: whose original is addressed to this slot also yields a local Echo.
+    #:
+    #: **Fixed per campaign.** A new campaign is created with it on. A save
+    #: written before the field existed loads with it OFF and keeps its
+    #: behaviour for its whole life: its own items are delivered to it and
+    #: no Echo appears for them -- not at confirmation, not on load, not
+    #: in a later backlog sweep. Nothing grows in an existing save because
+    #: the code changed. The Echo is never the item either way: the
+    #: original is Archipelago's and counted once; the Echo is the fold's.
+    self_addressed_echoes: bool = False
 
     def charges_left(self, component_id: str) -> int:
         """Uses remaining on a consumable. Zero for anything that is not

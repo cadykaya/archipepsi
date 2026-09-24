@@ -136,12 +136,14 @@ shared source). Each test fails under a sabotage:
 
 ## 7. Who does what
 
-**Dess, after W0.1:**
-- the protocol field;
-- `make export`.
+**Dess, after W0.1: landed.**
+- The protocol field, `CampaignSave.self_addressed_echoes`, default
+  `False`.
+- `make export`. It changed no generated file: the exported protocol
+  schema describes client messages, not the save.
 
-The field lands first as a no-op, because every campaign is `False`
-until creation sets it.
+It is a no-op until creation sets it, and it is pinned by
+`test_self_echo_boundaries.py`.
 
 **Prod, in one commit:**
 - creation sets `True`;

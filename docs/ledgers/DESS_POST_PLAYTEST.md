@@ -643,3 +643,26 @@ refused at the model, no validated Zone can make `record_latch`'s
 name that merely starts with "graph". It fails by name with the refusal
 removed. The packet mirrors of `zone.py` and `physics.py` are copied, and
 `check_packet` is clean.
+
+
+## D-01 — the protocol field landed (D14 §7, Dess's half)
+
+**The field.** `CampaignSave.self_addressed_echoes: bool = False`,
+documented as fixed per campaign.
+- A save written before it loads with it off, and keeps its behaviour
+  for its whole life.
+- A no-op until Prod's integration sets it `True` at creation
+  (`campaign.py`'s new-campaign `CampaignSave(`), in the same commit as
+  the grant filter.
+
+**Exports and mirrors:**
+- `make export` changed no generated file, because the protocol schema
+  covers client messages.
+- The packet mirror of `protocol.py` is copied.
+
+**Tests:**
+- A pre-policy save loads with it off.
+- On, it round-trips.
+- The legacy test now asserts the field exists before removing it, so
+  the removal is no longer vacuous.
+- Defaulting it to on fails by name.

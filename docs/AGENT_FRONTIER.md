@@ -10,7 +10,8 @@
   2. H-PRESSURE-C step 1 (1a + 1b) **done**. The candidate composes no
      latch route until 1c (note D-1 to Prod);
   3. DESS-21 **done**;
-  4. the D-01 protocol field;
+  4. the D-01 protocol field **done**. Prod's integration comes next
+     (D14 §7);
   5. discovery and the snapshot's inventory and map;
   6. DESS-23;
   7. 1c after Prod's lever placement;
