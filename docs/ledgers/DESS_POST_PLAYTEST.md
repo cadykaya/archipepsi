@@ -258,3 +258,48 @@ is not a silent classifier.
   locks, and the audit's NO_LOCK case is built exactly that way. The
   composer never produces one (0 of 80). A validator guard belongs in
   `zone.py` — after the handback, low priority.
+
+---
+
+## W1.3 — H-RELEASE-C: the room cards (`docs/D12_MINOR_ROOM_CARDS_PROD.md`)
+
+- **Contract delivered.** It covers the ten 03 §4 fields for each of
+  Unweighted, Counterfire and Passing, built from the original EX50
+  specs and PT-04 to PT-07.
+- **The load-bearing rule comes from the specs.** All three accept
+  access the recorded latch never sees, and the owner ruled out
+  input-order locks. So **the bridge does not gate a minor's Check on
+  its latch** — bolt, release and stair are the return and the
+  permanence.
+- **World and authority agree through the world.** The goal is
+  reachable only on its gallery, which is Prod's to build and test.
+- **The return latch is operated from the goal side, or fires there.**
+  An alternate arrival therefore still makes the way back; the physical
+  proof after every arrival is Prod's (PT-07).
+- **Pinned** in `bridge/tests/test_minor_release_boundaries.py`, new,
+  on the committed candidate Zone:
+  - a minor's Check is claimable with its latch unrecorded;
+  - a dead gunner strands nothing.
+- **No new claim gate and no inert field.** Contract text and `latches`
+  move only if Prod's rebuild changes which control releases the return.
+
+## W1.2 — H-PRESSURE-C: the contract (`docs/D13_PRESSURE_CONTRACT_PROD.md`); the code waits for the handback
+
+**Facts checked:**
+- **`validate_zone()` is accept-time only**, so D-07's refusal can apply
+  to new composition while every legacy Zone loads and behaves as saved
+  (M-1).
+- **The composer change must land in the same commit as the refusal.**
+  The candidate re-certification discards a whole Zone that introduces
+  a `validate_zone` error.
+- **`plate → TIMER` is already refused** by the port forms.
+- **`RoomGraphs` does not read the bridge's placeable-sensor list.** So
+  lever routes land together with Prod's lever placement, as one
+  integration.
+
+**Queued for the handback, in order:**
+1. `validate_zone` refuses plate → LATCH, and `compose_latched_route`
+   declines instead of emitting it. One commit; fixtures regenerated.
+2. `SensorNode.held_by`, with its validator and the route-search
+   modelling, and a composed held-weight fixture.
+3. Lever routes (`PULSE_BUTTON` → LATCH), with Prod's lever placement.
