@@ -87,3 +87,129 @@ These touch no shared file:
 - **Contract texts** for H-PRESSURE-C and H-RELEASE-C.
 
 Anything that needs a shared edit is queued below with its file named.
+
+---
+
+## W0.2 — H-SEAMS: the review, once (at `76b0952`)
+
+**Baseline in this container, before any Dess edit:**
+- `make test`: **2 failed, 2073 passed, 6 skipped**. Both failures are
+  DESS-19 and DESS-20 below.
+- `check_packet`: green.
+
+### Findings (lane-prefixed; they continue from DESS-18)
+
+- **DESS-19 — defect.** Post-playtest exception edit, H-RESUME-R.
+  `transitions.record_defeat` is not listed in `TRANSITIONS`, so
+  `test_every_transition_returns_a_validated_campaign` fails at the head.
+  **Fix:** add it to the tuple. `transitions.py`, after the handback.
+- **DESS-20 — defect.** Same edit. `generated/protocol.schema.json` was
+  never regenerated after `EnemyDefeated` and `defeated` were added
+  (checked by exporting to a temporary directory and diffing), so
+  `test_generated_artifacts_are_not_stale` fails. **Fix:** `make export`.
+  A generated artifact, so after the handback.
+- **DESS-21 — latent.** OV05 rail/minor latch paths.
+  - `RailNetwork.network_id` is not refused the reserved
+    `graph_`/`minor_` prefixes.
+  - `record_latch` checks `graph_` first and never asks about rails, so
+    a network named `graph_<room>` would have its span latches routed
+    down the room-graph path. If that room's graph declared a LATCH of
+    the same id, the rail latch would be recorded as a graph latch.
+  - The `minor_` branch already refuses a rail name; the `graph_` branch
+    does not.
+  - **Fix:**
+    - refuse the reserved prefixes on `network_id` (`zone.py`);
+    - make the graph branch refuse a rail name, as the minor branch does
+      (`transitions.py`).
+  - After the handback.
+
+### Adopted, with how each was checked
+
+| Area | Verdict | Checked by |
+|---|---|---|
+| `ZoneProgress.defeated`, `record_defeat`, `EnemyDefeated` | **adopted.** It matches D-06 (next section) | Read against the ruling. M-2 is pinned by new tests (next section) |
+| New save fields: `object_poses`, `consumed_objects`, `carrier_states`, `defeated` | **adopted** | Every `ZoneProgress` field has a `SAVE_FIELD_CATEGORY`. Bounds match what a Zone can declare: object fields 4 = `transported_objects` 4; carriers 8 ≥ 2 (Passing is the only contract with carriers); `defeated` 512 ≥ 480 (= 40 chambers × 12 per-chamber cap, enforced) |
+| New intents: object settled/consumed/recovered, `CarrierRested`, `EnemyDefeated` | **adopted** | All 32 `ClientMessage` intent types are named in `server.py` routing |
+| `record_latch`'s four evidence paths (physics / `graph_` / rail / `minor_`) | **adopted, except DESS-21** | `graph_` and `minor_` are reserved on `PhysicsPackage`, `ReplayEvidence` and `PlacedPackage`. The minor branch refuses a rail name; the rail branch refuses a physics name |
+| Consumable staging (`CANDIDATE_ACTION_SLOTS`, the request option) | **adopted** | `IMPLEMENTED_ACTION_SLOTS` still withholds `consumable`; only the candidate profile advertises it (D-05 stays open) |
+| `rooted`/`anchored` on an enemy | **adopted** | Exported as `ECHO_STATUS_SUPPORTED_TARGETS`, with enemy as the only target for both |
+| `DIVER_TRIGGER_HEIGHT` 1.6 → 0.8 m | **adopted** | Prod's own provisional tuning, derived from `JUMP_APEX_HEIGHT`; not a Dess contract |
+| Packet mirror | **adopted** | `check_packet` green |
+
+### Superseded by the owner's rulings — changed in W1.2, not reverted as authorship
+
+- **The route rules.** At the head: `ROUTE_SENSOR_KINDS = (PRESSURE_PLATE,)`,
+  `ROUTE_NODE_KINDS = (NOT, LATCH)`. Together they admit plate → LATCH.
+  D-07 and M-1 retire that for new composition.
+- **`candidate.STEPS` includes `latched_route`.** W1.2 changes what it
+  emits. The step itself stays.
+
+### Deferred to the contract that touches them (reviewed then, not twice)
+
+- **OR / TIMER / PULSE_BUTTON / SHOOTABLE_TARGET, and the port forms** →
+  W1.2.
+- **`minors.py` and the hosting modules:**
+  - `MinorContract`, including its `graph`, `carriers` and `enemies`;
+  - `minor_hosting`, `offer_order`, `shells.is_offerable`;
+  - the `minor_rooms.json` registry;
+  - candidate re-certification and budget.
+
+  All → W1.3.
+
+### Outside Dess's review scope, named rather than skipped
+
+- **Godot runtime rows**, which are Prod's:
+  - the verbs;
+  - constraints, `SignalGraph`, `HostedMinor`, `MinorRooms`;
+  - the arcade and switch rooms, `ServiceShutter`;
+  - enemy behaviour, `RoomAudit`.
+- **Epsilon interpretation content**: the fallback readings, the mock
+  reading, the model prompt paragraph.
+
+---
+
+## W1.1 — H-RESUME-C: Prod's bridge half reviewed against D-06 and M-2
+
+**The representation is adopted.** Each part checked against the
+ruling:
+
+- **Identity** is `room/archetype#n`, derived from the declaration. It
+  is stable because an accepted Zone is immutable in its save. No node
+  paths are stored, and nothing about a live enemy.
+- **`None` means unknown**, and a tuple means known.
+- **The first defeat recorded after an unknown resume starts the
+  record.** That is correct for the whole Zone: a room entered after
+  that resume builds its members fresh, so what falls from then on is
+  exactly what is known.
+- **Monotone and idempotent**, and checked against the declaration.
+  The category is `ROOM_PERSISTENT`.
+- **Reload is never a reset.** No other reset event exists in this
+  slice.
+
+**M-2 holds, and is now pinned** (`bridge/tests/test_resume_replay_boundaries.py`,
+new, 4 tests). A replayed unknown encounter cannot duplicate:
+
+- **an AP Check.** `transactions.claim_check` finalizes an
+  already-confirmed location and sends nothing: no new pending record,
+  no second delivery.
+  - Sabotage-checked: remove that guard, and the test fails with "an
+    already-confirmed Check was sent again".
+  - The mock ignores a repeat too.
+- **a key.** `collected_keys` is a one-way set.
+- **a unique reward.** `grant_local_reward` is idempotent by
+  `reward_id`.
+
+The defeat record's bound holds the largest legal roster.
+
+**Still Prod's (runtime):**
+- the reconstructed room must not show an already-claimed reward
+  pickup again;
+- it must not re-grant a local reward;
+- the evidence for both is `checked_location_ids` and `local_rewards`
+  in the snapshot.
+
+The bridge refusals above are the authority backstop, not that
+behaviour.
+
+**Open in H-RESUME-C:** DESS-19 and DESS-20, the two mechanical repairs
+to Prod's edit. They wait for the handback.
