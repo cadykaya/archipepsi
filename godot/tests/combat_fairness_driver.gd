@@ -55,6 +55,8 @@ func _run() -> void:
 	await _low_cover_is_still_shelled()
 	for role: String in ["drifter", "diver"]:
 		await _a_flyer_is_hit_where_it_is_seen(role)
+	await _the_drifter_in_every_state()
+	await _the_diver_in_every_state()
 	if failures == 0:
 		print("GODOT COMBAT FAIRNESS OK (%d checks, %d notes)"
 				% [checks, notes])
@@ -299,7 +301,10 @@ static func _hittable(enemy: Enemy) -> AABB:
 		var shape := child as CollisionShape3D
 		if shape != null and shape.shape is BoxShape3D:
 			var size: Vector3 = (shape.shape as BoxShape3D).size
-			return AABB(shape.global_position - size / 2.0, size)
+			# Through its world transform, so a body that has turned to
+			# face the player is compared as turned -- exactly as its
+			# meshes are.
+			return shape.global_transform * AABB(-size / 2.0, size)
 	return AABB()
 
 
@@ -425,3 +430,338 @@ func _fire(mark: Player, where: Callable) -> void:
 		await get_tree().physics_frame
 	Input.action_release("fire_pulse")
 	await _settle(4)
+
+
+# ------------------------------------------------ flyer action (H-FLYER-AI)
+
+## PT-13 / V-05: "Actual declared role with ground/air/range/sight states
+## recorded. Correct attack/wait state, real launched/impact events and
+## cumulative damage; respawn cannot erase evidence."
+##
+## Every number below is COUNTED from an event as it happens: a
+## telegraph from `telegraph_started`, a launch from a projectile or a
+## dive commit appearing, an impact from the player's `damaged_from`,
+## damage from each `hp_changed` fall, a death from `died`. Nothing is
+## read off the player's health at the end, which is how an earlier
+## diagnosis reported "zero damage" -- it read HP after a respawn.
+##
+## The player is driven through its REAL bindings (move, jump) except
+## in the one state labelled DIRECT HANDLER: held in the air where a
+## grapple arc would put it, as the roster suite does.
+func _record(role: String, state: String, setup: Callable,
+		drive: Callable, seconds := 6.0,
+		drive_while_settling := false) -> Dictionary:
+	var root := _stage()
+	var mark := await _player(root, Vector3(0.0, 0.2, 8.0))
+	mark.hp = 100000.0
+	await setup.call(root, mark)
+	var flyer := await _enemy(root, role, Vector3(0.0, 0.2, 0.0))
+	# WHERE IT COMMITS FROM is watched from the moment it exists, settle
+	# included: a commit made before the counting window is still one it
+	# made.
+	var farthest := [0.0]
+	flyer.telegraph_started.connect(func(_k: String, _d: float) -> void:
+		farthest[0] = maxf(farthest[0], flyer.body_centre().distance_to(
+				mark.global_position + Vector3.UP
+					* (Constants.PLAYER_HEIGHT / 2.0))))
+	# Time to notice, face and take station -- before anything counts.
+	# A state that has to hold from the start (a player already in the
+	# air) is driven through this too.
+	for frame in 90:
+		if drive_while_settling:
+			await drive.call(mark, frame)
+		await get_tree().physics_frame
+	var tally := {"role": role, "state": state, "telegraphs": 0,
+		"launched": 0, "impacts": 0, "damage": 0.0, "deaths": 0,
+		"noticed_frames": 0, "airborne_frames": 0, "off_floor_frames": 0,
+		"sight_frames": 0,
+		"frames": 0, "telegraphs_before_launch": true, "last_hp": mark.hp,
+		"telegraph_open": false, "eye_at_telegraph": 0.0,
+		"farthest_commit": 0.0}
+	# A dive is a launch the moment its telegraph completes: that is when
+	# it resolves into the committed dive, which may land in the same
+	# frame it starts.
+	flyer.telegraph_finished.connect(func(kind: String, done: bool) -> void:
+		if kind == "dive" and done:
+			tally["launched"] += 1)
+	flyer.telegraph_started.connect(func(_k: String, _d: float) -> void:
+		tally["telegraphs"] += 1
+		tally["telegraph_open"] = true
+		tally["eye_at_telegraph"] = maxf(float(tally["eye_at_telegraph"]),
+				_eye_energy(flyer)))
+	var on_added := func(node: Node) -> void:
+		if node is Enemy.EnemyProjectile:
+			tally["launched"] += 1
+			if not tally["telegraph_open"] and role == "drifter":
+				tally["telegraphs_before_launch"] = false
+			tally["telegraph_open"] = false
+	get_tree().node_added.connect(on_added)
+	mark.damaged_from.connect(func(_at: Vector3) -> void:
+		tally["impacts"] += 1)
+	mark.hp_changed.connect(func(hp: float, _shield: float) -> void:
+		if hp < float(tally["last_hp"]):
+			tally["damage"] += float(tally["last_hp"]) - hp
+		tally["last_hp"] = hp)
+	mark.died.connect(func() -> void: tally["deaths"] += 1)
+	for frame in int(seconds * 60.0):
+		await drive.call(mark, frame)
+		await get_tree().physics_frame
+		tally["frames"] += 1
+		if flyer._has_noticed:
+			tally["noticed_frames"] += 1
+		# Two readings of "in the air": off the floor at all, and the
+		# diver's own rule, which is the one its dive answers to.
+		if not mark.is_on_floor():
+			tally["off_floor_frames"] += 1
+		if flyer._player_is_airborne(mark):
+			tally["airborne_frames"] += 1
+		if flyer._has_line_of_sight(mark):
+			tally["sight_frames"] += 1
+	for action: String in ["jump", "move_left", "move_right"]:
+		Input.action_release(action)
+	get_tree().node_added.disconnect(on_added)
+	tally["farthest_commit"] = farthest[0]
+	tally["eye_now"] = _eye_energy(flyer)
+	tally["flyer"] = flyer
+	tally["mark"] = mark
+	tally["root"] = root
+	print("    [%s / %s] noticed %d/%d frames, off the floor %d, airborne " % [
+			role, state, tally["noticed_frames"], tally["frames"],
+			tally["off_floor_frames"]] + "by the diver's rule %d, sight %d; "
+			% [tally["airborne_frames"], tally["sight_frames"]]
+			+ "telegraphs %d, launched %d, impacts %d, damage %.1f, " % [
+			tally["telegraphs"], tally["launched"], tally["impacts"],
+			tally["damage"]] + "deaths %d" % tally["deaths"])
+	return tally
+
+
+## What the player sees of its eye: the glow of its first `Eye` mesh.
+static func _eye_energy(enemy: Enemy) -> float:
+	for eye: Node in enemy.visual.find_children("Eye*", "MeshInstance3D",
+			true, false):
+		return ((eye as MeshInstance3D).material_override
+				as StandardMaterial3D).emission_energy_multiplier
+	return -1.0
+
+
+func _nothing(_root: Node3D, _mark: Player) -> void:
+	await get_tree().physics_frame
+
+
+func _still(_mark: Player, _frame: int) -> void:
+	pass
+
+
+## Strafing across the flyer's line, a second each way, on the real
+## movement bindings.
+func _strafe(_mark: Player, frame: int) -> void:
+	var right := (frame / 60) % 2 == 0
+	Input.action_release("move_left" if right else "move_right")
+	Input.action_press("move_right" if right else "move_left")
+
+
+## An ordinary jump every 0.8 s on the real binding.
+func _hop(_mark: Player, frame: int) -> void:
+	if frame % 48 == 0:
+		Input.action_press("jump")
+	elif frame % 48 == 1:
+		Input.action_release("jump")
+
+
+## DIRECT HANDLER: held 4 m above the floor, where a grapple arc puts a
+## player, for the whole window.
+func _held_up(mark: Player, _frame: int) -> void:
+	mark.global_position = Vector3(mark.global_position.x, 4.0,
+			mark.global_position.z)
+	mark.velocity = Vector3.ZERO
+
+
+## A 6 m wall across the line, 4 m from the flyer.
+func _walled(root: Node3D, _mark: Player) -> void:
+	_box(root, Vector3(12.0, 6.0, 0.4), Vector3(0.0, 3.0, 4.0))
+	await _settle(2)
+
+
+func _far_away(_root: Node3D, mark: Player) -> void:
+	mark.global_position = Vector3(0.0, 0.2, 30.0)
+	await _settle(3)
+
+
+func _the_drifter_in_every_state() -> void:
+	print("  -- DRIFTER: every state, counted from events")
+	var still := await _record("drifter", "stationary on the ground",
+			_nothing, _still)
+	_check(still["telegraphs"] >= 2 and still["launched"] >= 2
+			and still["impacts"] >= 1 and still["damage"] > 0.0,
+			"drifter, stationary player in range and sight: it attacks "
+			+ "(%d telegraphed, %d launched, %d impacts, %.1f damage)"
+			% [still["telegraphs"], still["launched"], still["impacts"],
+				still["damage"]])
+	_check(still["telegraphs_before_launch"],
+			"drifter: every shot is telegraphed before it leaves (a shot "
+			+ "with nothing to see first cannot be dodged)")
+	_check(float(still["eye_at_telegraph"]) >= Enemy.EYE_ENERGY
+			* Enemy.EYE_FLARE - 0.01,
+			"drifter: its eye flares while it telegraphs (%.2f, resting %.2f)"
+			% [still["eye_at_telegraph"], Enemy.EYE_ENERGY])
+	await _drop(still["root"])
+	var moving := await _record("drifter", "strafing on the ground",
+			_nothing, _strafe)
+	_check(moving["launched"] >= 2,
+			"drifter, strafing player: it keeps attacking (%d launched, "
+			% moving["launched"] + "%d impacts)" % moving["impacts"])
+	await _drop(moving["root"])
+	var hopping := await _record("drifter", "jumping", _nothing, _hop)
+	_check(hopping["launched"] >= 2 and hopping["off_floor_frames"] > 0,
+			"drifter, jumping player: it attacks whether or not the player "
+			+ "is in the air (%d launched, %d frames off the floor)"
+			% [hopping["launched"], hopping["off_floor_frames"]])
+	await _drop(hopping["root"])
+	var hidden := await _record("drifter", "behind a wall", _walled, _still)
+	_check(hidden["launched"] == 0 and hidden["impacts"] == 0,
+			"drifter, player behind a wall: nothing launched, nothing lands "
+			+ "(%d, %d)" % [hidden["launched"], hidden["impacts"]])
+	await _drop(hidden["root"])
+	var far := await _record("drifter", "out of range", _far_away, _still)
+	_check(far["launched"] == 0,
+			"drifter, player 30 m away (reach %.0f): nothing launched (%d)"
+			% [float(Constants.ENEMY_STATS["drifter"]["reach"]),
+				far["launched"]])
+	await _drop(far["root"])
+
+
+func _the_diver_in_every_state() -> void:
+	print("  -- DIVER: every state, counted from events")
+	var still := await _record("diver", "stationary on the ground",
+			_nothing, _still)
+	_check(still["noticed_frames"] == still["frames"]
+			and still["launched"] == 0 and still["impacts"] == 0,
+			"diver, stationary player on the ground: it has noticed them "
+			+ "(%d/%d frames) and WAITS -- nothing launched (%d)"
+			% [still["noticed_frames"], still["frames"], still["launched"]])
+	var diver: Enemy = still["flyer"]
+	var target: Vector3 = (still["mark"] as Player).global_position \
+			+ Vector3.UP * (Constants.PLAYER_HEIGHT / 2.0)
+	var nose := -diver.visual.global_transform.basis.z
+	var aim := (target - diver.visual.global_position).normalized()
+	_check(rad_to_deg(nose.angle_to(aim)) < 12.0,
+			"diver, waiting: its nose is on the player -- it reads as "
+			+ "watching, not idle (%.0f deg off)"
+			% rad_to_deg(nose.angle_to(aim)))
+	var reach_now := diver.body_centre().distance_to(target)
+	_check(reach_now <= float(Constants.ENEMY_STATS["diver"]["speed"])
+			* Constants.DIVER_DIVE_SECONDS + 1.6,
+			"diver, waiting: it holds within a dive's reach of the player "
+			+ "(%.1f m; a dive carries %.1f m and lands within 1.6 m)"
+			% [reach_now, float(Constants.ENEMY_STATS["diver"]["speed"])
+				* Constants.DIVER_DIVE_SECONDS])
+	await _drop(still["root"])
+	var moving := await _record("diver", "strafing on the ground",
+			_nothing, _strafe)
+	_check(moving["launched"] == 0,
+			"diver, strafing player on the ground: it still waits (%d)"
+			% moving["launched"])
+	await _drop(moving["root"])
+	var hopping := await _record("diver", "jumping", _nothing, _hop)
+	_check(hopping["airborne_frames"] > 0 and hopping["launched"] >= 1,
+			"diver, ORDINARY jumps: leaving the ground draws a dive (%d "
+			% hopping["off_floor_frames"] + "frames off the floor, %d "
+			% hopping["airborne_frames"] + "airborne by its rule, %d dives)"
+			% hopping["launched"])
+	_check(hopping["impacts"] >= 1 and hopping["damage"] > 0.0,
+			"diver, jumping player who stays put: a dive lands (%d impacts, "
+			% hopping["impacts"] + "%.1f damage)" % hopping["damage"])
+	await _drop(hopping["root"])
+	# NOT A HOMING HIT (P06.4: "it must not become an unavoidable
+	# collision or a permanent homing hit"). The dive's aim is fixed when
+	# its telegraph resolves, so a player who keeps moving after the jump
+	# is somewhere else when it arrives.
+	var evading := await _record("diver", "jumping while strafing",
+			_nothing, func(mark: Player, frame: int) -> void:
+				_strafe(mark, frame)
+				_hop(mark, frame))
+	_check(evading["launched"] >= 1
+			and evading["impacts"] < evading["launched"],
+			"diver, a player who jumps and keeps moving: it still commits, "
+			+ "and the dive can be avoided (%d dives, %d landed)"
+			% [evading["launched"], evading["impacts"]])
+	await _drop(evading["root"])
+	# COMMITTED ONLY WHERE A DIVE CAN ARRIVE. Airborne from the start and
+	# 14 m off: inside what it notices (18 m), outside what a dive
+	# reaches (6.3 m carried + 1.6 m contact). It has to close first.
+	var afar := await _record("diver", "in the air 14 m away",
+			func(_root: Node3D, mark: Player) -> void:
+				mark.global_position = Vector3(0.0, 4.0, 14.0)
+				await _settle(2),
+			_held_up, 6.0, true)
+	var dive_reach := float(Constants.ENEMY_STATS["diver"]["speed"]) \
+			* Constants.DIVER_DIVE_SECONDS + Enemy.DIVE_CONTACT
+	_check(afar["launched"] >= 1 and afar["impacts"] >= 1
+			and float(afar["farthest_commit"]) <= dive_reach + 0.05,
+			"diver, a player in the air 14 m off: it closes before it "
+			+ "commits -- farthest commit %.1f m (a dive reaches %.1f), "
+			% [afar["farthest_commit"], dive_reach] + "%d dives, %d landed"
+			% [afar["launched"], afar["impacts"]])
+	await _drop(afar["root"])
+	var up := await _record("diver", "held in the air (direct handler)",
+			_nothing, _held_up)
+	_check(up["launched"] >= 1 and up["impacts"] >= 1,
+			"diver, player held where a grapple arc puts them: it dives and "
+			+ "lands (%d dives, %d impacts, %.1f damage)"
+			% [up["launched"], up["impacts"], up["damage"]])
+	await _drop(up["root"])
+	await _a_dive_is_stopped_by_a_wall_raised_in_its_path()
+	var hidden := await _record("diver", "in the air behind a wall",
+			_walled, _held_up)
+	_check(hidden["launched"] == 0 and hidden["impacts"] == 0,
+			"diver, airborne player behind a wall: no dive, nothing lands "
+			+ "(%d, %d)" % [hidden["launched"], hidden["impacts"]])
+	await _drop(hidden["root"])
+	var far := await _record("diver", "jumping out of range", _far_away,
+			_hop)
+	_check(far["launched"] == 0,
+			"diver, player jumping 30 m away: no dive (%d)" % far["launched"])
+	_check(is_equal_approx(float(still["eye_now"]), Enemy.EYE_ENERGY
+			* Enemy.EYE_WATCHING) and is_equal_approx(float(far["eye_now"]),
+			Enemy.EYE_ENERGY * Enemy.EYE_IDLE),
+			"diver: WAITING READS AS WATCHING, not as idle -- its eye burns "
+			+ "at %.2f with the player noticed, %.2f with no one there"
+			% [still["eye_now"], far["eye_now"]])
+	_check(float(hopping["eye_at_telegraph"]) >= Enemy.EYE_ENERGY
+			* Enemy.EYE_FLARE - 0.01,
+			"diver: committing, its eye flares (%.2f)"
+			% hopping["eye_at_telegraph"])
+	await _drop(far["root"])
+
+
+## The dive's analogue of artillery case D: a wall raised across a
+## committed dive's path. The dive was committed at a player in plain
+## sight; the wall arrives while it telegraphs. Pressed against it, the
+## diver's body ends within its contact distance of the player standing
+## right behind -- and a dive that lands through a wall is the
+## through-wall hit PT-11 was, on another role.
+func _a_dive_is_stopped_by_a_wall_raised_in_its_path() -> void:
+	print("  -- diver: a wall raised across a committed dive")
+	var root := _stage()
+	var mark := await _player(root, Vector3(0.0, 1.0, 2.2))
+	mark.hp = 100000.0
+	var diver := await _enemy(root, "diver", Vector3(0.0, 0.2, 0.0))
+	var impacts := [0]
+	var raised := [false]
+	mark.damaged_from.connect(func(_at: Vector3) -> void: impacts[0] += 1)
+	diver.telegraph_started.connect(func(kind: String, _d: float) -> void:
+		if kind == "dive" and not raised[0]:
+			raised[0] = true
+			_box(root, Vector3(4.0, 5.0, 0.4), Vector3(0.0, 2.5, 1.5)))
+	for _i in 150:
+		# Held in the air behind where the wall will stand.
+		mark.global_position = Vector3(0.0, 1.0, 2.2)
+		mark.velocity = Vector3.ZERO
+		await get_tree().physics_frame
+	var closest := diver.body_centre().distance_to(
+			mark.global_position + Vector3.UP * (Constants.PLAYER_HEIGHT / 2.0))
+	_check(raised[0] and impacts[0] == 0,
+			"diver: a wall raised across its committed dive stops it -- %d "
+			% impacts[0] + "impacts, though its body ends %.2f m from the "
+			% closest + "player's (contact is %.1f m)" % Enemy.DIVE_CONTACT)
+	await _drop(root)

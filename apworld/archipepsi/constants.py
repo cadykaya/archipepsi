@@ -1197,7 +1197,16 @@ CHARGER_RECOVERY_SECONDS = 1.4
 #: The height a flyer holds above the floor beneath it.
 FLYER_HOVER_Y = 4.2
 #: How far above the ground the player counts as airborne for a `diver`.
-DIVER_TRIGGER_HEIGHT = 1.6
+#:
+#: DERIVED FROM THE BASE JUMP (PT-13, 2026-09-24). The role's brief is
+#: "ignores a grounded player and commits when they leave the ground", and
+#: 1.6 m -- read by the engine as 1.8 m of clearance -- sat above the
+#: 1.33 m apex of an ordinary jump, so jumping never counted as leaving
+#: the ground and a diver outside a grapple route never attacked. Three
+#: fifths of the apex (0.8 m) is a jump's middle 0.42 s, while a step down
+#: a stair or a kerb stays grounded. `test_diver_trigger.py` holds both
+#: ends.
+DIVER_TRIGGER_HEIGHT = round(0.6 * JUMP_APEX_HEIGHT, 2)
 DIVER_DIVE_SECONDS = 0.9
 
 #: An `artillery` shell's flight time to where the player was standing.

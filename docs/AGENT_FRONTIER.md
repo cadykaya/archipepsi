@@ -20,7 +20,15 @@ owner's D-06/D-07 rulings and the seam table are in
   - `H-FLYER-HIT` is done: a flyer's body is drawn and hit at its
     envelope's hover height. Flyers now hang lower than in the played
     candidate. `godot-combat-fairness` has 29 checks.
-  - **Next:** `H-FLYER-AI`, then `H-RESUME-R` (D-06).
+  - `H-FLYER-AI` is done:
+    - the diver's trigger now follows the jump (a shared edit, in the
+      seam table);
+    - dives commit only within reach and in sight, and land only with
+      nothing solid between;
+    - the drifter telegraphs its shot;
+    - an enemy's eye shows whether it is idle, watching or committing;
+    - `godot-flyer-room` (new, in CI) plays the owner's `c011`.
+  - **Next:** `H-RESUME-R` (D-06).
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

@@ -98,7 +98,27 @@ const TELEGRAPH_SECONDS := {
 	# A diver commits from above; short, because it is already visible
 	# and the fall does the telegraphing.
 	"diver": 0.35,
+	# PT-13: THE DRIFTER'S SHOT IS THE RANGED ONE'S, from above, and it
+	# fired the instant its cooldown allowed with nothing to see first --
+	# the F-14 defect the ranged role had, left on the one that shoots
+	# down at you. Same windup, same reason.
+	"drifter": 0.45,
 }
+
+## How close a diver's body has to come to the player's for its dive to
+## land. One number, used by the dive and by the reach it commits from.
+const DIVE_CONTACT := 1.6
+
+## PT-13: WHAT AN ENEMY IS DOING, VISIBLE IN ITS EYE. Multiples of the
+## eye's authored glow (`EYE_ENERGY`). Every role's eye flares while it
+## telegraphs. A flyer's also says whether it has noticed the player: a
+## diver waiting for the player to leave the ground looked, to the
+## player, exactly like one that was broken.
+const EYE_ENERGY := 2.4
+const EYE_IDLE := 0.45
+const EYE_WATCHING := 1.0
+const EYE_FLARE := 2.6
+var _eye_level := EYE_WATCHING
 
 var _windup := 0.0
 ## OV04 P06 role state. One block, because seven roles each carrying a
@@ -239,7 +259,8 @@ static func _part(parent: Node3D, size: Vector3, at: Vector3,
 
 static func _eye(parent: Node3D, size: Vector3, at: Vector3,
 		color: Color) -> void:
-	_part(parent, size, at, ThemeMaterials.glow_material(color, 2.4))
+	_part(parent, size, at, ThemeMaterials.glow_material(color,
+			EYE_ENERGY)).name = "Eye"
 
 ## Melee: hunched and forward-leaning, with stubby arms — it reads as
 ## something that wants to be where you are.
@@ -468,6 +489,8 @@ func _physics_process(delta: float) -> void:
 				_resolve_telegraph(kind, player)
 			_end_telegraph(true)
 
+	if bool(envelope.get("flying", false)):
+		_present_flyer(player, delta)
 	# OV04 P06: the committed motions, which OVERRIDE the ordinary
 	# approach rather than blending with it. A charger mid-rush is not
 	# steering, and a diver mid-dive is not reconsidering; that is the
@@ -541,7 +564,7 @@ func _physics_process(delta: float) -> void:
 				# below is not withheld: "attacks continue".
 				velocity.x = lerpf(velocity.x, 0.0, 0.3)
 				velocity.z = lerpf(velocity.z, 0.0, 0.3)
-			elif speed > 0.0 and distance > float(stats["reach"]) * 0.8:
+			elif speed > 0.0 and distance > _standoff():
 				var dir := flat.normalized()
 				if _sidestep_timer > 0.0:
 					dir = _sidestep_dir
@@ -691,19 +714,32 @@ func _try_attack(player: Player, distance: float) -> void:
 			_say("windup")
 		return
 	if archetype == "diver":
-		# CONTESTS THE GRAPPLE ARC: it commits only when the player has
-		# left the ground, which is what makes it a counter to traversal
-		# rather than another thing shooting at you.
-		if distance <= reach and _player_is_airborne(player):
+		# CONTESTS THE AIR: it commits only when the player has left the
+		# ground, which is what makes it a counter to traversal rather
+		# than another thing shooting at you.
+		#
+		# PT-13: AND ONLY A DIVE THAT CAN ARRIVE, AT A PLAYER IT CAN SEE.
+		# It committed from its whole 18 m notice radius with a dive that
+		# carries 6.3 m, so most dives ended in the air short of anyone;
+		# and it committed through walls, since nothing asked for sight.
+		# `reach` stays what it notices from; `_dive_reach` is what it
+		# strikes from.
+		if body_centre().distance_to(_centre_of(player)) <= _dive_reach() \
+				and _player_is_airborne(player) \
+				and _has_line_of_sight(player):
 			_attack_cooldown = float(stats["cooldown"])
 			_begin_telegraph("dive", float(TELEGRAPH_SECONDS["diver"]))
 			_say("windup")
 		return
 	if archetype == "drifter":
-		# OWNS THE CEILING and shoots down from it.
+		# OWNS THE CEILING and shoots down from it -- COMMITTED, THEN
+		# FIRED, exactly as the ranged role is (see there): sight is
+		# checked when the shot is committed, and the "aim" windup
+		# resolves into `_fire_projectile`.
 		if distance <= reach and _has_line_of_sight(player):
 			_attack_cooldown = float(stats["cooldown"])
-			_fire_projectile(player)
+			_begin_telegraph("aim", float(TELEGRAPH_SECONDS["drifter"]))
+			_say("windup")
 		return
 	if archetype == "beacon":
 		# MAKES EVERYTHING NEAR IT WORSE. Its own attack is an
@@ -908,8 +944,7 @@ func _spend_commitment(delta: float, player: Player) -> bool:
 			velocity = velocity.lerp(Vector3.ZERO, 0.3)
 		else:
 			velocity = _rush_dir * float(stats["speed"])
-		if player != null and body_centre().distance_to(
-				_centre_of(player)) <= 1.6:
+		if player != null and _dive_lands_on(player):
 			player.take_damage(float(stats["damage"]), body_centre())
 			_say("melee_hit")
 			_dive = 0.0
@@ -985,17 +1020,82 @@ static func _centre_of(player: Player) -> Vector3:
 			/ 2.0)
 
 
+## How far a dive can strike: the distance it carries, plus the contact
+## it lands within. A diver commits from here and no further.
+func _dive_reach() -> float:
+	return float(stats["speed"]) * Constants.DIVER_DIVE_SECONDS + DIVE_CONTACT
+
+
+## How close this role closes before it stops to fight. Most hold at four
+## fifths of their reach; a diver's weapon is its own body, so it holds
+## where a dive can land -- WAITING, visibly, within striking distance
+## rather than at the edge of what it can see (PT-13).
+func _standoff() -> float:
+	if archetype == "diver":
+		return _dive_reach() * 0.7
+	return float(stats["reach"]) * 0.8
+
+
+## A dive lands on a body it has reached and can see: close enough, and
+## nothing solid between. Distance alone let a diver pressed against a
+## wall strike whoever stood on the other side of it.
+func _dive_lands_on(player: Player) -> bool:
+	var at := _centre_of(player)
+	if body_centre().distance_to(at) > DIVE_CONTACT:
+		return false
+	var query := PhysicsRayQueryParameters3D.create(body_centre(), at)
+	query.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	return hit.is_empty() or hit["collider"] == player
+
+
+## PT-13: WHAT A FLYER IS DOING, VISIBLE, in its eye. Idle, the eye is
+## low; having noticed the player, it burns steady -- a diver waiting for
+## the player to leave the ground is WATCHING, and now looks it.
+## Committing, it flares (`_begin_telegraph`, for every role), with the
+## swell and then the dive itself.
+##
+## The body does not pitch toward its target, on purpose: `visual`
+## turning away from the collider is exactly the mismatch PT-12 was, and
+## a nose tilted onto the player pushed the drawn body outside the box a
+## shot can hit. The body faces the player (`_face`); the eye says what
+## it means to do.
+func _present_flyer(_player: Player, _delta: float) -> void:
+	if telegraph_kind.is_empty():
+		_set_eye(EYE_WATCHING if _has_noticed else EYE_IDLE)
+
+
+## Set every eye's glow to `level` times its authored energy. Written
+## only when it changes: a material write every frame for every enemy is
+## cost for nothing.
+func _set_eye(level: float) -> void:
+	if visual == null or is_equal_approx(level, _eye_level):
+		return
+	_eye_level = level
+	for eye: Node in visual.find_children("Eye*", "MeshInstance3D", true,
+			false):
+		var material := (eye as MeshInstance3D).material_override \
+				as StandardMaterial3D
+		if material != null:
+			material.emission_energy_multiplier = EYE_ENERGY * level
+
+
 ## Is the player off the ground far enough to be worth diving at?
 ##
 ## Asked of the FLOOR UNDER THEM, not of their absolute height: a player
 ## standing on a gantry is not airborne, and a diver that thought so
 ## would spend its life committing at people standing still.
+##
+## PT-13: the ray is `DIVER_TRIGGER_HEIGHT` long, which is what the
+## constant says it is. It used to add 0.2 m to a 1.6 m trigger -- 1.8 m
+## of clearance, above the 1.33 m apex of an ordinary jump -- so a
+## player who jumped never counted as having left the ground.
 func _player_is_airborne(player: Player) -> bool:
 	if player.is_on_floor():
 		return false
 	var from := player.global_position
 	var query := PhysicsRayQueryParameters3D.create(from,
-			from + Vector3.DOWN * (Constants.DIVER_TRIGGER_HEIGHT + 0.2))
+			from + Vector3.DOWN * Constants.DIVER_TRIGGER_HEIGHT)
 	query.exclude = [player.get_rid(), get_rid()]
 	return get_world_3d().direct_space_state.intersect_ray(query).is_empty()
 
@@ -1437,6 +1537,7 @@ func _begin_telegraph(kind: String, duration: float) -> void:
 	telegraph_kind = kind
 	telegraph_duration = duration
 	_windup = duration
+	_set_eye(EYE_FLARE)
 	telegraph_started.emit(kind, duration)
 
 func _end_telegraph(completed: bool) -> void:
@@ -1447,6 +1548,7 @@ func _end_telegraph(completed: bool) -> void:
 	telegraph_duration = 0.0
 	_windup = 0.0
 	_set_visual_scale(1.0)
+	_set_eye(EYE_WATCHING)
 	telegraph_finished.emit(kind, completed)
 
 ## Presentation scale, applied to `visual` and never to the body. The

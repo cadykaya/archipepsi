@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -591,6 +591,19 @@ godot-combat-fairness: godot-import  # no shell through walls, roofs or cover
 	@out=$$($(GODOT) --headless --path godot -- --combat-fairness-test 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT COMBAT FAIRNESS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# CP1 (post-playtest) H-FLYER-AI: the five divers of the played Zone's
+# c011, in the real ZoneController -- the real player walks the spine to
+# them, stands, jumps and clears the room, and every number is counted
+# from an event (V-05).
+godot-flyer-room: godot-import  # the played room's flyers wait, dive and die
+	@out=$$($(GODOT) --headless --path godot -- --flyer-room 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT FLYER ROOM OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
 	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \

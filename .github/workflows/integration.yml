@@ -159,6 +159,7 @@ jobs:
           make godot-verb-runtime
           make godot-status-family
           make godot-combat-fairness
+          make godot-flyer-room
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live

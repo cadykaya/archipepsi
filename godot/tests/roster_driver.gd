@@ -294,13 +294,20 @@ func _the_drifter_owns_the_ceiling() -> void:
 func _the_diver_waits_for_the_air() -> void:
 	print("  -- DIVER: it answers the air, not the floor")
 	var root := _stage()
-	var foe := _enemy(root, "diver", Vector3(0.0, 6.0, 0.0))
+	# THE PLAYER FIRST, AND LANDED. Placed a metre up in the same frame as
+	# the diver, it spent its first frames dropping that metre -- in the
+	# air, by the diver's own rule since PT-13 made an ordinary jump count
+	# (`DIVER_TRIGGER_HEIGHT` 0.8 m) -- so "a player standing on the floor"
+	# was not yet true when the watching began. It stands before anything
+	# watches it.
 	var mark := _target(root, Vector3(0.0, 1.0, -5.0))
+	await _settle(30)
+	var foe := _enemy(root, "diver", Vector3(0.0, 6.0, 0.0))
 	var kinds: Array = []
 	foe.telegraph_started.connect(
 			func(kind: String, _s: float) -> void: kinds.append(kind))
 	await _settle(60)
-	_check(kinds.is_empty(),
+	_check(mark.is_on_floor() and kinds.is_empty(),
 			"a player standing on the floor draws no dive: %s" % [kinds])
 
 	# OFF THE GROUND. Held above the floor, which is what a grapple arc
