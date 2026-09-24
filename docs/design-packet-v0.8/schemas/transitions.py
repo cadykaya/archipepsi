@@ -1736,6 +1736,7 @@ TRANSITIONS = (
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
+    record_defeat,
     record_zone_state, record_object_transported, record_object_consumed,
     record_object_settled,
     record_carrier_rested,

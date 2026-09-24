@@ -428,6 +428,38 @@
         "title": "DebugCommand",
         "type": "object"
       },
+      "EnemyDefeated": {
+        "additionalProperties": false,
+        "description": "An encounter member defeated (H-RESUME-R, D-06).\n\nIdempotent by `member`, because the target record is monotone: the\nsame defeat twice is one defeat, and a resend after a dropped\nconnection is the normal case. `member` is the declared identity\n`room/archetype#n` (see `ZoneProgress.defeated`), which the bridge\nchecks against the Zone's own declaration before it is recorded.",
+        "properties": {
+          "type": {
+            "const": "enemy_defeated",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "member": {
+            "maxLength": 64,
+            "minLength": 5,
+            "pattern": "^[a-z0-9_]+/[a-z]+#[0-9]{1,3}$",
+            "title": "Member",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "member"
+        ],
+        "title": "EnemyDefeated",
+        "type": "object"
+      },
       "EnterZone": {
         "additionalProperties": false,
         "description": "Player walked into the portal. Moves GENERATED -> ACTIVE.\n\nv0.4 had no such intent, which is why GENERATED was unreachable and\nunrecoverable.",
@@ -1253,6 +1285,7 @@
         "carrier_rested": "#/$defs/CarrierRested",
         "claim_check": "#/$defs/ClaimCheck",
         "debug_command": "#/$defs/DebugCommand",
+        "enemy_defeated": "#/$defs/EnemyDefeated",
         "enter_zone": "#/$defs/EnterZone",
         "exit_zone": "#/$defs/ExitZone",
         "grant_local_reward": "#/$defs/GrantLocalReward",
@@ -1365,6 +1398,9 @@
       },
       {
         "$ref": "#/$defs/CarrierRested"
+      },
+      {
+        "$ref": "#/$defs/EnemyDefeated"
       },
       {
         "$ref": "#/$defs/LayoutResult"
@@ -7182,6 +7218,22 @@
             "maxItems": 8,
             "title": "Carrier States",
             "type": "array"
+          },
+          "defeated": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 512,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Defeated"
           }
         },
         "title": "ZoneProgress",
@@ -12935,6 +12987,22 @@
             "maxItems": 8,
             "title": "Carrier States",
             "type": "array"
+          },
+          "defeated": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 512,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Defeated"
           }
         },
         "title": "ZoneProgress",
