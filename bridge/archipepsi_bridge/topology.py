@@ -1586,6 +1586,60 @@ class _Searched:
         return getattr(self._zone, name)
 
 
+def _held_weights(zone):
+    """-> `(edge_id, plate_room, object_id, home, volume)` per held route.
+
+    D13 1d: what `reachability` must prove about each weight -- that it
+    can be fetched, and carried to its plate, without the door it holds.
+    """
+    graphs = {a.actuator_id: g for g in (zone.room_graphs or ())
+              for a in g.actuators}
+    objects = {o.object_id: o for o in (zone.transported_objects or ())}
+    out = []
+    for edge in zone.edges:
+        graph = graphs.get(getattr(edge, "opened_by", None))
+        if graph is None:
+            continue
+        sensors, _ = SG.upstream(graph, edge.opened_by)
+        for sensor in sensors:
+            weight = objects.get(getattr(sensor, "held_by", None))
+            if weight is not None:
+                out.append((edge.edge_id, graph.room_id, weight.object_id,
+                            weight.home_room_id,
+                            frozenset(weight.allowed_volume)))
+    return tuple(out)
+
+
+def _carry_path(zone, home: str, plate_room: str, volume, without: str
+                ) -> bool:
+    """Is there a PLAIN way from the weight's home to its plate, inside
+    its volume? Conservative on purpose: only ungated, traversable edges
+    between volume rooms, never the door it holds. It may refuse an
+    arrangement a key or a lever would make possible; it never certifies
+    a carry that cannot happen."""
+    seen, stack = {home}, [home]
+    while stack:
+        room = stack.pop()
+        if room == plate_room:
+            return True
+        for e in zone.edges:
+            if e.edge_id == without or room not in e.rooms:
+                continue
+            nxt = e.other(room)
+            if (nxt in volume and nxt not in seen and e.traversable(room)
+                    and not e.requires_state and not e.capability
+                    and getattr(e, "opened_by", None) is None
+                    and not _locked(zone, e.edge_id)):
+                seen.add(nxt)
+                stack.append(nxt)
+    return False
+
+
+def _locked(zone, edge_id: str) -> bool:
+    return any(d.edge_id == edge_id and d.usage == "LOCKED"
+               for c in zone.chambers for d in c.doors)
+
+
 def _route_latches(zone):
     """-> (searched zone, triggers) for every latch-opened route.
 
@@ -1606,8 +1660,17 @@ def _route_latches(zone):
         if graph is None or SG.phases(graph, edge.opened_by)["rest"]:
             edges.append(edge)
             continue
-        _, nodes = SG.upstream(graph, edge.opened_by)
+        sensors, nodes = SG.upstream(graph, edge.opened_by)
         conds = []
+        # D13 1d: A HELD ROUTE opens once its weight rests on the plate:
+        # a variable set in the plate's room, like a latch -- sound only
+        # because `reachability` refuses a weight that cannot be fetched
+        # to that room without the door it holds (`_held_weights`).
+        if any(getattr(s, "held_by", None) for s in sensors):
+            ref = f"held_{graph.room_id}/{edge.edge_id}"
+            extra.setdefault(ref, _LatchVariable(ref, graph.room_id))
+            conds.append(_Condition(ref))
+            triggers.append((edge.edge_id, graph.room_id, ref))
         for node in nodes:
             if node.kind != "LATCH":
                 continue
@@ -1760,6 +1823,26 @@ def reachability(zone, entry_id: str | None = None,
             errors.append(
                 f"the plate that opens edge '{edge_id}' is in room "
                 f"'{plate_room}', which is not reachable at all")
+
+    # D13 1d. THE WEIGHT BEFORE THE ROUTE IT HOLDS. The variable above is
+    # set in the plate's room, which is honest only if the weight is
+    # there to be set down: fetchable without the door, and carriable
+    # from its home to the plate inside its volume.
+    for edge_id, plate_room, obj, home, volume in _held_weights(zone):
+        without = _explore(entry, [e for e in zone.edges
+                                   if e.edge_id != edge_id],
+                           doors_by_room, keys_by_room, have,
+                           zone_state=zstate)
+        if home not in without.rooms:
+            errors.append(
+                f"weight '{obj}' holds edge '{edge_id}' open and is homed "
+                f"in '{home}', which cannot be reached without that edge "
+                "-- the weight is behind the route it holds")
+        elif not _carry_path(zone, home, plate_room, volume, edge_id):
+            errors.append(
+                f"weight '{obj}' cannot be carried from '{home}' to its "
+                f"plate in '{plate_room}' along plain doorways inside its "
+                "volume")
 
     # §0-bis CONDITION 4. The catalogue calls this load-bearing and
     # nothing was enforcing it: every rule above asks whether the player

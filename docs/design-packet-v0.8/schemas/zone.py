@@ -27,7 +27,7 @@ try:  # works standalone and when copied into a package
         EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
         TopologyEdge, ZoneKeySpec)
     from .physics import (
-        CARRY_MASS_KG, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
+        CARRY_MASS_KG, MASS_CLASSES, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
         carriable_by_hand, mass_class, plate_accepts_player,
         refuse_reserved_package_id, state_vector_product)
     from .signal_graph import (RoomGraph, phases, upstream,
@@ -40,7 +40,7 @@ except ImportError:  # pragma: no cover
         EDGE_ID_CHARSET, Capability, DoorAssignment, PlugAssignment,
         TopologyEdge, ZoneKeySpec)
     from physics import (
-        CARRY_MASS_KG, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
+        CARRY_MASS_KG, MASS_CLASSES, PLAYER_MASS_KG, STATE_VECTOR_BOUND,
         carriable_by_hand, mass_class, plate_accepts_player,
         refuse_reserved_package_id, state_vector_product)
     from signal_graph import (RoomGraph, phases, upstream,
@@ -1783,6 +1783,13 @@ class Zone(Strict):
                     "route gate is certified only for the plate, NOT and "
                     "LATCH chains the route search reasons about. Put "
                     "that machine inside the room, where it gates nothing")
+            # D13 1d: THE LIVE-PRESSURE ROUTE. `plate -> shutter`, open
+            # only while pressed, legal because the plate names the weight
+            # that holds it. The player's body is never the solution, so
+            # the body rule below does not apply to it.
+            if any(s.held_by for s in sensors):
+                self._held_route_is_sound(edge, graph, sensors, chain)
+                continue
             for sensor in sensors:
                 if plate_accepts_player(sensor.requires_class,
                                         sensor.counts_player):
@@ -1790,9 +1797,8 @@ class Zone(Strict):
                 if not sensor.counts_player:
                     why = ("is object-only (`counts_player` is false), so "
                            "the player standing on it does not load it, "
-                           "whatever they weigh -- and the carry and push "
-                           "verbs that could load it with an object are "
-                           "not built")
+                           "whatever they weigh, and it names no weight "
+                           "to hold it (`held_by`, D13 1d)")
                 else:
                     why = (f"demands {sensor.requires_class} and the "
                            f"player's own body is "
@@ -1804,8 +1810,8 @@ class Zone(Strict):
                     "hang on an interaction the guaranteed base kit "
                     "performs, and a manipulation prerequisite is not "
                     "one this contract can name. Put the consequence "
-                    "inside the room, or declare a plate that counts the "
-                    "player at a class they reach")
+                    "inside the room, or name the carried weight that "
+                    "holds the plate down (`held_by`)")
             shape = phases(graph, edge.opened_by)
             if shape["released"]:
                 continue
@@ -1824,6 +1830,78 @@ class Zone(Strict):
                 "which starts open and is SHUT FOR GOOD by stepping on "
                 "the plate -- a latch after an inversion. A route the "
                 "player's own step can seal permanently is a softlock")
+        return self
+
+    def _held_route_is_sound(self, edge, graph, sensors, chain) -> None:
+        """D13 1d, the route half. The weight half is checked for every
+        held plate, in or out of a route, by the validator below."""
+        if chain or any(not s.held_by for s in sensors):
+            raise ValueError(
+                f"edge '{edge.edge_id}' is held open by a weight, and a "
+                "held plate drives its door DIRECTLY: every plate on the "
+                "chain names its weight and nothing stands between them "
+                "and the shutter (a latch would make it permanent, which "
+                "is a lever's job, D-07)")
+        far = edge.room_b if graph.room_id == edge.room_a else edge.room_a
+        objects = {o.object_id: o for o in self.transported_objects}
+        for sensor in sensors:
+            weight = objects.get(sensor.held_by)
+            if weight is not None and far in weight.allowed_volume:
+                raise ValueError(
+                    f"weight '{weight.object_id}' holds edge "
+                    f"'{edge.edge_id}' open and may be carried into "
+                    f"'{far}', through that door: lifted and carried "
+                    "across, it would let the door shut behind the player "
+                    "with the weight on the wrong side. Keep the far room "
+                    "out of its volume")
+
+    @model_validator(mode="after")
+    def _a_held_plate_names_a_weight_that_holds_it(self):
+        """D13 1d. A plate that names its weight names one that can
+        really hold it, and that nothing else needs."""
+        objects = {o.object_id: o for o in self.transported_objects}
+        installed = {c.accepts for c in self.object_consumers}
+        claimed: dict[str, str] = {}
+        for graph in self.room_graphs:
+            for sensor in graph.sensors:
+                if sensor.held_by is None:
+                    continue
+                name, plate = sensor.held_by, sensor.node_id
+                weight = objects.get(name)
+                if weight is None:
+                    raise ValueError(
+                        f"plate '{plate}' is held by '{name}', which this "
+                        "Zone does not declare as a transported object")
+                # Today the object's own model already refuses anything
+                # but a hand carry of at most 60 kg (`manipulated` is
+                # unbuilt); this keeps the plate's guarantee once it is.
+                if weight.movement != "hand_carried" or not \
+                        carriable_by_hand(weight.carriable, weight.mass_kg):
+                    raise ValueError(
+                        f"plate '{plate}' is held by '{name}', which is "
+                        "not an ordinary hand carry (carriable, at most "
+                        f"{CARRY_MASS_KG:g} kg); a weight only a "
+                        "manipulation tool moves is not guaranteed")
+                body = mass_class(weight.mass_kg)
+                if MASS_CLASSES.index(body) < MASS_CLASSES.index(
+                        sensor.requires_class):
+                    raise ValueError(
+                        f"plate '{plate}' demands {sensor.requires_class} "
+                        f"and '{name}' is {body} ({weight.mass_kg:g} kg); "
+                        "it would rest on the plate and not press it")
+                if graph.room_id not in weight.allowed_volume:
+                    raise ValueError(
+                        f"plate '{plate}' is in '{graph.room_id}', outside "
+                        f"the volume '{name}' may be carried in")
+                if name in installed:
+                    raise ValueError(
+                        f"'{name}' holds plate '{plate}' and is also what "
+                        "a receiver installs; it cannot do both at once")
+                if name in claimed:
+                    raise ValueError(
+                        f"'{name}' is named by plates '{claimed[name]}' "
+                        f"and '{plate}'; one weight holds one plate")
+                claimed[name] = plate
         return self
 
     @model_validator(mode="after")

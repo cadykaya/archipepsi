@@ -227,10 +227,24 @@ class SensorNode(Strict):
     #: For `SHOOTABLE_TARGET`, §20.2's `required_tags`, default `[RANGED]`.
     #: See `SUPPORTED_TARGET_TAGS` for why nothing else is accepted.
     required_tags: tuple[DamageTag, ...] | None = None
+    #: D13 1d. For a `PRESSURE_PLATE` a door is held open by: the declared
+    #: `TransportedObject` whose weight rests on it. D-07 makes a plate a
+    #: held sensor, so a route that must stay open needs a guaranteed
+    #: movable weight -- never the player's own body, which cannot stand
+    #: on the plate and walk through the door at once. The Zone checks the
+    #: weight can do it (`Zone._a_held_plate_names_a_weight_that_holds_it`)
+    #: and the route search that it can be fetched without the door.
+    held_by: str | None = Field(default=None, min_length=1, max_length=24,
+                                pattern=r"^[a-z0-9_]+$")
 
     @model_validator(mode="after")
     def _the_runtime_has_this_sensor(self):
         refuse_unsupported_sensor(self.kind)
+        if self.held_by is not None and self.kind != "PRESSURE_PLATE":
+            raise ValueError(
+                f"sensor '{self.node_id}' is a {self.kind} and names a "
+                f"weight ('{self.held_by}'); only a pressure plate is "
+                "held down")
         if self.kind == "SHOOTABLE_TARGET":
             if self.mode is None:
                 raise ValueError(

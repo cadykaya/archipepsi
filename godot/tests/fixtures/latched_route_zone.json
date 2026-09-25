@@ -1676,7 +1676,8 @@
      "requires_class": "MEDIUM",
      "counts_player": true,
      "mode": null,
-     "required_tags": null
+     "required_tags": null,
+     "held_by": null
     }
    ],
    "nodes": [

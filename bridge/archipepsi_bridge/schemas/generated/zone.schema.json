@@ -1423,6 +1423,21 @@
           ],
           "default": null,
           "title": "Required Tags"
+        },
+        "held_by": {
+          "anyOf": [
+            {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Held By"
         }
       },
       "required": [

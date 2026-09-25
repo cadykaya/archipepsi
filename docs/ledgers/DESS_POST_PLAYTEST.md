@@ -787,3 +787,61 @@ door names (`_keys_that_open_nothing`).
 removing the guard fails that test by name. The packet mirror of
 `zone.py` is copied and `check_packet` is clean. Bridge suite: 2125
 passed.
+
+## W1.2 — H-PRESSURE-C step 2 (1d, the bridge half): a door held by a declared weight
+
+**`SensorNode.held_by`** is valid on plates only.
+- A `plate -> shutter` route, open only while pressed, is legal exactly
+  when every plate on it names its weight. It needs no latch.
+- The player's body never counts as the route's solution.
+
+**The weight must:**
+- be a declared `TransportedObject`;
+- be a hand carry. The object model already refuses anything else
+  today; the plate's own rule keeps the guarantee once manipulation is
+  built;
+- have a class at least the plate's;
+- have the plate's room in its volume, and the far side outside it, so
+  it can never be carried through the door it holds;
+- not be a receiver's object;
+- hold one plate only.
+
+The chain must be direct: a latch would make the route permanent, and
+that is the lever's job.
+
+**The route search.** A held door is a variable set in the plate's
+room, so the door stays closed until the plate is reached. The search
+also refuses:
+- a weight homed where it cannot be reached without the door ("behind
+  the route it holds");
+- a carry from home to plate with no plain doorway path inside the
+  volume. This is conservative: it may refuse an arrangement a key would
+  make possible, and never certifies an impossible carry.
+
+**DESS-24's second half:**
+- the object-only refusal no longer calls the carry verbs unbuilt, and
+  names `held_by`;
+- the route refusal's advice now names the carried weight, not "a plate
+  that counts the player";
+- `plate_accepts_player`'s docstring is corrected the same way.
+
+**Also:**
+- **The map.** A held door reads `unknown` with "worked live by a
+  control": whether the weight is on the plate right now is the engine's
+  to say. That is W2.2's previously unreachable branch, now tested.
+- **Exports and fixtures.** `make export` updated `zone.schema.json` and
+  `protocol.schema.json`. The legacy fixture regenerates with
+  `"held_by": null` on its plate, its only change (RoomGraphs reads
+  sensors with `.get`). Packet mirrors are copied.
+
+**Evidence:**
+- `tests/test_held_route.py`: 16 tests.
+- 10 sabotages, each failing its target: the held branch, the far side,
+  the chain shape, the class, the volume, the receiver clash, two
+  plates on one weight, an undeclared weight, the door open in the
+  search, and the weight's home.
+- Bridge suite: 2141 passed.
+
+**Next:**
+- a composer and a fixture for Prod's acceptance (1d-ii);
+- 1c after Prod's lever placement.

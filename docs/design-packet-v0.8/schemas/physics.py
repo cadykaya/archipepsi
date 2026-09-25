@@ -117,12 +117,13 @@ def plate_accepts_player(requires_class: str, counts_player: bool) -> bool:
     (Prod, D-10 answer §2).
 
     **What this deliberately does not count.** A carried object: the
-    carry verb is P12 and unbuilt, so a 60 kg thing in the player's
-    hands is not a base-kit way to load anything yet. A pushed object:
-    walking a crate onto a plate is a physics claim nobody has proven,
-    and progression is not where to find out. An earlier revision of
-    this derivation counted both, and counted the player's mass for a
-    plate that ignores the player -- which described an interaction the
+    player's hands are not the player's body, and a plate held by an
+    object names that object (`SensorNode.held_by`, D13 1d), where the
+    Zone checks the weight can really hold it. A pushed object: walking
+    a crate onto a plate is a physics claim nobody has proven, and
+    progression is not where to find out. An earlier revision of this
+    derivation counted both, and counted the player's mass for a plate
+    that ignores the player -- which described an interaction the
     runtime refuses.
     """
     if not counts_player:
