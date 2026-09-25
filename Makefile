@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted godot-menu-shell menu-shell-shots godot-equipment-face equipment-face-shots equipment-fixture godot-minimap minimap-shots map-fixture godot-map-face map-face-shots lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted godot-menu-shell menu-shell-shots godot-equipment-face equipment-face-shots equipment-fixture godot-minimap minimap-shots map-fixture godot-map-face map-face-shots godot-journal-face journal-face-shots journal-fixture lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -57,6 +57,11 @@ equipment-fixture:
 # transitions, so the minimap is tested against the map the bridge sends.
 map-fixture:
 	$(PY) bridge/archipepsi_bridge/fixtures/make_map_snapshot.py
+
+# The journal's snapshots: the model's own CampaignSnapshot over the
+# candidate Zone after real transitions (H-JOURNAL).
+journal-fixture:
+	$(PY) bridge/archipepsi_bridge/fixtures/make_journal_snapshot.py
 
 # The PRE-ART playtest baseline. Regenerate DELIBERATELY and in its own
 # commit: retaking it means the playtest before it and the playtest after
@@ -1271,6 +1276,24 @@ MAP_FACE_SHOTS_DIR ?= /tmp/archipepsi-map-face
 map-face-shots: godot-import
 	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
 	  --rendering-driver opengl3 -- --map-face --shots=$(MAP_FACE_SHOTS_DIR) 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# H-JOURNAL (CP4, §8): THE JOURNAL WALL AND THE SETTINGS WALL, on the
+# real shell: objectives in the Hub's own words, what was done in the
+# Zone and what it opened, what is still shut and why, the places found,
+# the earned notes -- and nothing unfound named; the campaign beside the
+# pause menu's unchanged actions, and the options that are applied.
+godot-journal-face: godot-import  # the journal and settings walls
+	@out=$$($(GODOT) --headless --path godot -- --journal-face 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT JOURNAL FACE OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-journal-face: script errors in the run"; exit 1; fi
+
+JOURNAL_SHOTS_DIR ?= /tmp/archipepsi-journal-face
+journal-face-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --journal-face --shots=$(JOURNAL_SHOTS_DIR) 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
 EQUIPMENT_SHOTS_DIR ?= /tmp/archipepsi-equipment-face

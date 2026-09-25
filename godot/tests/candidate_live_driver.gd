@@ -496,6 +496,18 @@ func _play() -> void:
 			and (wall_open["row"] as Dictionary).is_empty(),
 			"H-3D-MAP: installed, the map wall's indicator on %s is gone "
 			% door_edge + "(its circuit operated; both maps changed)")
+	# H-JOURNAL, live: the Journal wall says what was done, from the real
+	# bridge's record; the Settings wall says which campaign this is.
+	var pages := await _journal_and_settings()
+	_check(bool(pages["opened"]) and _said(pages["done"],
+			"Installed the power cell"),
+			"H-JOURNAL: the journal, opened as a player opens it, says the "
+			+ "cell was installed: %s" % [pages["done"]])
+	_check(_said(pages["campaign"], "Seed: %s"
+			% str(BridgeClient.snapshot.get("seed_name", "")))
+			and _said(pages["campaign"], "Link to the bridge: up"),
+			"and the Settings wall names this campaign, with the link up: %s"
+			% [pages["campaign"]])
 	var walked: Array = controller.rooms_entered().keys()
 	var discovered := await _await_live("the bridge to record every room "
 			+ "walked", func() -> bool:
@@ -575,6 +587,11 @@ func _restore() -> void:
 	_check(bool(wall_after["opened"])
 			and (wall_after["row"] as Dictionary).is_empty(),
 			"H-3D-MAP: and on the map wall there is no indicator on it")
+	var pages_after := await _journal_and_settings()
+	_check(bool(pages_after["opened"]) and _said(pages_after["done"],
+			"Installed the power cell"),
+			"H-JOURNAL: after the restart the journal still says the cell "
+			+ "was installed (the bridge's record, not this session's)")
 
 
 # ---------------------------------------------------------------------------
@@ -1347,6 +1364,36 @@ func _map_wall(edge_id: String) -> Dictionary:
 	return {"opened": opened and not shell.is_open(), "row": row,
 			"quiet": went.all(func(i: Dictionary) -> bool:
 				return i.get("type") == "room_entered")}
+
+
+## THE SETTINGS AND JOURNAL WALLS, OPENED AS A PLAYER OPENS THEM:
+## Escape opens the interface on Settings (the campaign is read there),
+## E turns right to the Journal, and Escape closes it.
+func _journal_and_settings() -> Dictionary:
+	var shell: MenuShell = main.menu_shell
+	await _action_event("pause")
+	for _i in 3:
+		await get_tree().process_frame
+	var campaign: Array = main.settings_face.campaign_lines() \
+			if shell.front() == "settings" else []
+	await _action_event("menu_page_right")
+	await _shell_at_rest(shell)
+	for _i in 3:
+		await get_tree().process_frame
+	var opened := shell.is_open() and shell.front() == "journal" \
+			and get_tree().paused
+	var done: Array = main.journal.section("WHAT YOU DID HERE")
+	await _action_event("pause")
+	await get_tree().process_frame
+	return {"opened": opened and not shell.is_open(), "done": done,
+			"campaign": campaign}
+
+
+func _said(lines: Array, text: String) -> bool:
+	for line: Variant in lines:
+		if str(line).contains(text):
+			return true
+	return false
 
 
 ## What the HUD's minimap is drawing for one connector.

@@ -301,8 +301,33 @@ owner's D-06/D-07 rulings and the seam table are in
         gone after the restart.
       - 17 of 17 sabotages fail by name; the first run missed MF-17 (a
         no-send check the cache made vacuous), which was fixed.
-    - **Next: `H-JOURNAL`** (the Journal wall, and campaign information
-      on Settings), then the CP4 checkpoint.
+    - `H-JOURNAL` (§8): **landed, on provisional art.**
+      - The Journal wall lists:
+        - objectives, in the Hub's own words, or in a Zone its Checks;
+        - what you did here, from the Zone's record, each thing with
+          what it opened;
+        - what is still shut, with the bridge's reasons;
+        - the places found;
+        - each Echo's note, newest first.
+
+        No unfound room is named.
+      - The Settings wall adds the campaign (seed, player, modes,
+        Checks, Zones, link) and the options the game applies:
+        sensitivity, invert look, field of view (live), motion, and
+        master volume (now wired to the Master bus). They are saved at
+        once. The pause menu's actions are unchanged.
+      - Reproduced first: 6 of 6 requirements failed on `c5db77a`.
+        `godot-journal-face` (new, in CI, 36 checks) runs on the model's
+        own snapshots (`make journal-fixture`, guarded by
+        `test_journal_fixture.py`).
+      - The live candidate suite reads the journal ("Installed the power
+        cell"), before and after the restart, and the campaign with the
+        link up.
+      - 17 of 17 sabotages fail by name, on the first run.
+      - Open: rebinding has no screen yet; "new campaign" is offered
+        nowhere in the menus; captions is stored but read by nothing.
+    - **Next: the CP4 checkpoint** (the full frontier on a frozen
+      revision), then the ready inherited 0.4 work.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

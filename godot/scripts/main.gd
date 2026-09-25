@@ -25,6 +25,10 @@ var menu_shell: MenuShell
 var minimap: Minimap
 ## H-3D-MAP (CP4): the shell's Map wall, a miniature of the Zone.
 var map_face: MapFace
+## H-JOURNAL (CP4): the Journal wall, and the Settings wall's campaign and
+## options beside the pause menu.
+var journal: JournalFace
+var settings_face: SettingsFace
 var debug: DebugOverlay
 ## F5, review-only. See `nav_schematic.gd`: not a map feature, and
 ## nothing in the game reads it.
@@ -117,6 +121,7 @@ const DRIVERS := {
 	"--equipment-face": preload("res://tests/equipment_face_driver.gd"),
 	"--minimap": preload("res://tests/minimap_driver.gd"),
 	"--map-face": preload("res://tests/map_face_driver.gd"),
+	"--journal-face": preload("res://tests/journal_face_driver.gd"),
 	"--reversible": preload("res://tests/reversible_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
@@ -363,6 +368,12 @@ func boot() -> void:
 	menu_shell.page_root("equipment").add_child(equipment)
 	map_face = MapFace.new()
 	menu_shell.page_root("map").add_child(map_face)
+	journal = JournalFace.new()
+	menu_shell.page_root("journal").add_child(journal)
+	settings_face = SettingsFace.new()
+	menu_shell.page_root("settings").add_child(settings_face)
+	# The saved volume, from the first sound on.
+	SettingsFace.apply_volume()
 	# The wall facing the player holds focus, or a keyboard or controller
 	# has nothing to move from.
 	menu_shell.page_changed.connect(func(page: String) -> void:

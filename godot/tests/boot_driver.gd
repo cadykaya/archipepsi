@@ -41,8 +41,8 @@ func _run() -> void:
 	# Everything a view transition dereferences without checking.
 	for field: String in ["world", "tones", "menu", "hud", "resource_pool",
 			"rule_runtime", "reveal", "equipment", "shop", "pause_menu",
-			"menu_shell", "minimap", "map_face", "debug", "station_panel",
-			"nav"]:
+			"menu_shell", "minimap", "map_face", "journal", "settings_face",
+			"debug", "station_panel", "nav"]:
 		_check(main.get(field) != null,
 				"boot() left '%s' null; anything that touches it crashes "
 				% field + "on the first transition")

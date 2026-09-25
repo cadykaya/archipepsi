@@ -1,0 +1,109 @@
+extends Node
+## H-JOURNAL REPRODUCTION, on the revision before it (H-3D-MAP's head).
+## Scratch: evidence, not a suite. Asks §8 of the Journal and Settings
+## walls the game builds, the same way on the old code and the new.
+
+const FIXTURE := "res://tests/fixtures/journal_snapshot.json"
+
+var failing := 0
+var cases := 0
+
+
+func _requirement(id: String, holds: bool, measured: String) -> void:
+	cases += 1
+	if holds:
+		print("REQUIREMENT %s HOLDS: %s" % [id, measured])
+	else:
+		failing += 1
+		print("REQUIREMENT %s FAILS: %s" % [id, measured])
+
+
+func _frames(n: int) -> void:
+	for _i in n:
+		await get_tree().process_frame
+
+
+## Every text a wall shows: labels, buttons and rich text.
+func _texts(root: Node) -> Array:
+	var out: Array = []
+	for node: Node in root.find_children("*", "", true, false):
+		if node is Label and (node as Label).is_visible_in_tree():
+			out.append((node as Label).text)
+		elif node is Button and (node as Button).is_visible_in_tree():
+			out.append((node as Button).text)
+		elif node is RichTextLabel and (node as RichTextLabel) \
+				.is_visible_in_tree():
+			out.append((node as RichTextLabel).get_parsed_text())
+	return out
+
+
+func _says(texts: Array, needle: String) -> bool:
+	for text: String in texts:
+		if text.contains(needle):
+			return true
+	return false
+
+
+func _ready() -> void:
+	await get_tree().process_frame
+	get_window().size = Vector2i(1280, 720)
+	var main: Node = get_parent()
+	main.call("boot")
+	await _frames(2)
+	var variants: Dictionary = JSON.parse_string(
+			FileAccess.get_file_as_string(FIXTURE))
+	var snap: Dictionary = variants["progressed"]
+	BridgeClient._handle(JSON.stringify(snap))
+	await _frames(3)
+	var shell: MenuShell = main.get("menu_shell")
+	# As Main opens it: the pause menu shown on its wall.
+	main.call("_open_menu", "journal")
+	await _frames(4)
+	var journal := _texts(shell.page_viewport("journal"))
+	var hub: Dictionary = snap["hub"]
+	var zone_name := str(snap["active_zone"]["zone"]["display_name"])
+	_requirement("J1 the journal lists the real objectives",
+			_says(journal, zone_name) and _says(journal, "of 15"),
+			"the Zone's name '%s' and its Checks (x of 15) on the " % zone_name
+			+ "journal wall; it says: %s" % [journal])
+	_requirement("J2 the journal lists what was done here",
+			_says(journal, "power cell") and _says(journal, "blue"),
+			"the cell installed and the blue key/door named: %s"
+			% [_says(journal, "power cell") and _says(journal, "blue")])
+	var found: Array = []
+	for raw: Variant in snap["zone_map"]["rooms"]:
+		if bool((raw as Dictionary)["discovered"]):
+			found.append(str((raw as Dictionary)["name"]))
+	var named := found.filter(func(n: Variant) -> bool:
+		return _says(journal, str(n)))
+	_requirement("J3 the journal lists the places found",
+			named.size() == found.size(),
+			"%d of the %d rooms found are named on it: %s" % [named.size(),
+				found.size(), found])
+	var note := str((snap["interpretations"] as Array).back()["description"])
+	_requirement("J4 the journal holds the earned notes",
+			_says(journal, note), "the latest Echo's read ('%s') on it: %s"
+			% [note, _says(journal, note)])
+	shell.show_page("settings")
+	await _frames(20)
+	var settings := _texts(shell.page_viewport("settings"))
+	var seed := str(snap["seed_name"])
+	var checked := (snap["checked_location_ids"] as Array).size()
+	_requirement("J5 the Settings wall shows the campaign",
+			_says(settings, seed) and _says(settings, "%d of" % checked),
+			"the seed '%s' and the Checks (%d of ...) on the Settings " % [seed,
+				checked] + "wall; it says: %s" % [settings])
+	var sliders := shell.page_viewport("settings").find_children("*",
+			"Range", true, false).size()
+	var toggles := shell.page_viewport("settings").find_children("*",
+			"CheckButton", true, false).size() \
+			+ shell.page_viewport("settings").find_children("*", "CheckBox",
+				true, false).size()
+	_requirement("J6 the Settings wall offers the supported options",
+			sliders >= 4 and toggles >= 1,
+			"%d sliders and %d toggles on the Settings wall " % [sliders,
+				toggles] + "(sensitivity, field of view, motion, volume; "
+			+ "invert look)")
+	print("JOURNAL REPRO: %d of %d requirements fail" % [failing, cases])
+	shell.close()
+	get_tree().quit(0)

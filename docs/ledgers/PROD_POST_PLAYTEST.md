@@ -2471,3 +2471,195 @@ its circuit operates.
     including why a blocked one is blocked.
   - The map stays where you left it when you turn away or close the
     menu.
+
+## CP4 — `H-JOURNAL` (`04` §8): the Journal wall, and the campaign and options on Settings — landed, on provisional art
+
+§8: "Journal initially lists real active objectives, completed
+consequences, discovered named places and appropriately earned notes.
+... the near-term delivery must not invent a finished campaign or spoil
+unvisited rewards. A control's recorded discovery can remind the player
+which door it affects; it should not reveal an undiscovered solution."
+And: "Settings includes resume, current campaign/profile information and
+supported options. Separate return to Hub, abandon current Zone, quit,
+and new campaign wherever those existing actions are offered.
+Destructive actions need their existing confirmation and accurate
+consequences. Do not change the all-Checks/abandon policy through a
+prettier button label."
+
+- **Reproduced first**, on `c5db77a` (H-3D-MAP's head), with a scratch
+  driver on the real `Main` (`H-JOURNAL_repro_driver.gd.txt`). It
+  delivered a real snapshot through `BridgeClient._handle` and read the
+  walls. **6 of 6 requirements fail** (`H-JOURNAL_before.log`):
+  - **J1–J4:** the Journal wall says only "The journal is not built yet
+    (H-JOURNAL). This wall holds its place." It shows no objective, no
+    record of what was done, none of the 5 places found, and no note.
+  - **J5:** the Settings wall shows the pause menu and nothing of the
+    campaign: no seed, no count of Checks.
+  - **J6:** no option can be changed in the game: 0 sliders and 0
+    toggles. `PlayerSettings` (S21) stores six preferences, and nothing
+    offers them.
+  - **The control, on the new code: 0 of 6 fail**
+    (`H-JOURNAL_control.log`).
+- **What changed:**
+  - **`JournalQuery`** (new) holds every rule, with no Control. Every
+    line is read from the snapshot:
+    - **Objectives** are the Hub's own headline and detail in the Hub.
+      In a Zone they are the Zone and its Checks (its allocated
+      locations against the campaign's confirmed ones), then the
+      finale's count.
+    - **What you did here** is the Zone's record
+      (`active_zone.progress`): keys picked up, doors unlocked, objects
+      installed, settings changed, latches held. Each line names the
+      room it happened in and what it opened ("Open now: Arena 1 to
+      Platform Path 1"). A setting back at its declared start is not
+      listed.
+    - **Still shut** is every gate the bridge's map lists as blocked or
+      unknown, with the bridge's own reason ("set by a control in
+      Arena 1"; "locked -- blue key; you hold it"). That is the
+      reminder §8 allows.
+    - **Places found** are the rooms the bridge's map names.
+    - **Notes** are each Echo's read, newest first, with where it came
+      from. An Echo is in the log only once a Check has delivered it,
+      so every note is earned.
+    - **Names come only from the bridge's map.** A room it does not
+      name is "a way not yet walked", never a save id and never a name
+      taken from the whole Zone.
+  - **`JournalFace`** (new) is the Journal wall: those five sections in
+    two scrolling columns. It refills on every snapshot. Up/Down,
+    PgUp/PgDn and the d-pad scroll it, and the page turns stay the
+    shell's.
+  - **`SettingsFace`** (new) sits on the Settings wall beside the pause
+    menu, which is unchanged.
+    - **CAMPAIGN** shows the seed, the player, Archipelago's mode and
+      connection, Epsilon's provider, the Checks confirmed, the Zones
+      completed, and the link.
+    - **OPTIONS** offers only what the game applies: mouse sensitivity,
+      invert look, field of view (applied to the camera in use at once,
+      and to every camera made after), motion (view bob and the menu's
+      turn), and master volume. Master volume is now applied to the
+      Master bus, at boot and on each change. Each option is written to
+      `user://settings.cfg` straight away.
+    - **Not offered:** `PlayerSettings` also stores "captions", which
+      nothing reads, so a switch for it would change nothing.
+  - **The fixture is the model's own:** `make journal-fixture` writes six
+    variants. Each is a `CampaignSnapshot` built by the model over a save
+    moved by real transitions on the candidate Zone (keys, a lock, the
+    span, the cell, the c009 latch). `bridge/tests/test_journal_fixture.py`
+    keeps the JSON equal to its generator and each variant true to its
+    name.
+  - **`MenuShell`:** no wall carries a "not built yet" note now.
+- **Findings from the first runs, repaired:**
+  - **JR-F1: one check tested nothing.** The first "still shut" check
+    used a variant where nothing is shut: the span was lowered, the cell
+    installed and the blue door unlocked. It compared zero gates against
+    the "nothing shut" line and failed for that reason, not the wall's.
+    A `walked` variant (rooms found and keys held, nothing operated) now
+    carries three shut gates with the bridge's reasons. The empty case
+    is checked on its own.
+  - **JR-F2: a rule with no case.** "A setting back at its start is not
+    listed" had no variant that put one back. A `stowed` variant (the
+    span lowered, then put back) now covers it, and JR-5 re-breaks it.
+- **Played:**
+  - **`godot-journal-face`** (new, in CI, 36 checks;
+    `H-JOURNAL_after.log`) runs on the real `MenuShell`, mounted as
+    `Main` mounts it, with the candidate Zone built for real. Each check
+    works out what it expects from the snapshot itself, never by asking
+    `JournalQuery`:
+    - **Objectives:** in the Hub, the Hub's headline and detail word for
+      word, and the finale's 8 of 24. In a Zone: its name and "2 of 15
+      confirmed", counted from the snapshot, and not the Hub's "step
+      back through the portal".
+    - **What you did here:**
+      - arrived: "Nothing yet.";
+      - progressed: six lines for six things done (two keys, the blue
+        door in Arena 2, the cell installed in Arena 2, the span and the
+        power), each naming what it opened;
+      - with the span put back: five lines;
+      - latched: the latch in Arena 4; once Arena 3 is found, the power
+        line names it.
+    - **Nothing unfound is named.** In all four states, no room the map
+      has not named appears, by name or by save id.
+    - **Still shut:** the three gates the map lists as shut, each with
+      the bridge's reason. Once they open: "Nothing you have found is
+      shut."
+    - **Places:** the five found, by the bridge's names. In the Hub:
+      "Places are listed inside a Zone."
+    - **Notes:** 10, newest first, each with Epsilon's read word for
+      word.
+    - **It follows the snapshot:** a new one refills the wall.
+    - **Settings:**
+      - the campaign from the snapshot (seed, player, "mock, connected",
+        fallback, 8 of 21 Checks, 2 Zones, the link down);
+      - the pause menu's actions are exactly RESUME, RETURN TO HUB,
+        ABANDON ZONE… and QUIT GAME;
+      - ABANDON still asks first, with the same consequences, word for
+        word.
+    - **Options:**
+      - field of view 100 is set, applied to the player's camera at
+        once, and saved;
+      - volume 50% puts the Master bus at -6.0 dB;
+      - motion "off" and inverted look are set;
+      - captions is not offered;
+      - the settings file is put back byte for byte.
+    - **Keys:** Down scrolls the journal, and Q still turns the page.
+  - **`godot-candidate-live`**, through the real bridge
+    (`H-JOURNAL_candidate_live.log`, all 9 phases):
+    - after the install, the journal, opened with Escape then E, says
+      "Installed the power cell in ...";
+    - the Settings wall names this campaign's seed, with the link up;
+    - after the restart, the journal still says it, from the bridge's
+      record.
+  - **Also green** on this code (`H-JOURNAL_suites.log`):
+    `godot-menu-shell`, `godot-boot`, `godot-hud`,
+    `godot-equipment-face` and `godot-map-face`.
+- **Screenshots** (`H-JOURNAL_shots/`, lossless, under xvfb with
+  opengl3 at 1280×720):
+  - the journal after the latch;
+  - the journal in the Hub;
+  - the Settings wall in a Zone.
+- **Sabotages** (`H-JOURNAL_sabotages.log`), each restored byte for byte
+  (sha256):
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| JR-1 | the Zone's Checks counted as all confirmed | `_objectives`: "its name and its Checks, 2 of 15 confirmed" (it read 15 of 15) |
+| JR-2 | the Hub's objective in the journal's own words | `_objectives`: "the Hub's own headline and detail, word for word" (it read "Find every Check.") |
+| JR-3 | the Hub's "step back through the portal" shown in a Zone | `_objectives`: "and not the Hub's 'step back through the portal' while in it" (+1) |
+| JR-4 | a way to an unfound room named by its save id | `_nothing_unfound_is_named`: "latched: ... no save id" ("Arena 4 to c010"), in 4 states |
+| JR-5 | a setting back at its start listed as done | `_what_you_did_here`: "the span put back ... is not listed (6 lines)" |
+| JR-6 | notes oldest first | `_notes_are_earned`: "one note per Echo in the log, newest first" |
+| JR-7 | a shut gate without the bridge's reason | `_still_shut`: "each with the bridge's reason" (it read "shut") |
+| JR-8 | every room listed as a place, found or not | `_places`: "the places found, by the bridge's names" |
+| JR-9 | the campaign's Checks counted from this Zone alone | `_the_settings_wall`: "missing ['Checks confirmed: 8 of 21']" |
+| JR-10 | the journal does not follow the snapshot | `_it_follows_the_snapshot`: "a snapshot refills it" (18 in all: nothing on the wall changes) |
+| JR-11 | Down does not scroll the journal | `_keys`: "Down scrolls the journal (0 px)" |
+| JR-12 | an option set but not saved | `_the_options_do_what_they_say`: "field of view 100: set, on the player's camera now, and saved" |
+| JR-13 | field of view only for the next camera | the same check: the camera in use still at the old value |
+| JR-14 | the volume slider changes nothing you hear | `_the_options_do_what_they_say`: "master volume 50%: the Master bus at 0.0 dB" |
+| JR-15 | captions offered, though nothing reads them | `_the_options_do_what_they_say`: "captions, which nothing reads, is not offered" |
+| JR-16 | a prettier label on the abandon action ("LEAVE THIS ZONE") | `_the_settings_wall`: "the pause menu's actions, one button each and as they were" (+1) |
+| JR-17 | the fixture hand-edited (the blue door not opened) | `test_journal_fixture.py::test_the_committed_fixture_matches_its_generator` |
+
+- **The sabotage run:** 17 of 17 on the first run, on the final code.
+- **What stays open:**
+  - **The Glyph-authored final look** (H-GLYPH-KIT) for both walls.
+  - **Rebinding.** `PlayerSettings` can rebind actions and refuses to
+    unbind a mandatory one, but no screen offers rebinding yet.
+  - **"New campaign" is not offered in the game.** §8 asks that it be
+    kept separate "wherever those existing actions are offered"; it is
+    offered nowhere in the menus.
+  - **The journal is this Zone's.** Places and consequences are the
+    active Zone's record; completed Zones are counted, not described.
+    The snapshot carries no history of earlier Zones' rooms.
+  - **Captions** are stored and never read. Either a caption toggle
+    needs something to switch, or the preference should go.
+  - Owner usability and visual approval is a separate result.
+- **What the owner will notice:**
+  - The Journal wall lists what you are doing, what you have done here
+    and what it opened, what is still shut and why, the places you have
+    found, and each Echo's note, newest first.
+  - Nothing names a room you have not been to.
+  - The Settings wall shows your campaign on the left and options on the
+    right: sensitivity, invert look, field of view, motion, volume. They
+    take effect at once and are remembered.
+  - The pause menu's own buttons are exactly as they were.

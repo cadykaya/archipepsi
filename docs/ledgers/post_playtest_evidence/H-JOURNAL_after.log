@@ -1,0 +1,79 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+     GDScript backtrace (most recent call first):
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_unweighted_switch mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+  -- the walls are filled
+  ok: no wall says it is not built yet: []
+  ok: the journal and the settings faces are on their walls
+  -- objectives
+  ok: in the Hub: the Hub's own headline and detail, word for word: ["PORTAL READY", "Epsilon is waiting to design your next Zone.", "Toward the finale: 8 of 24 Checks"]
+  ok: and the finale's count, 8 of 24
+  ok: in a Zone: its name and its Checks, 2 of 15 confirmed: ["In Relay 001: Bomb Rush Cyberfunk", "Checks here: 2 of 15 confirmed", "Toward the finale: 10 of 24 Checks"]
+  ok: and not the Hub's 'step back through the portal' while in it
+  -- what you did here
+  ok: arrived: nothing yet: ["Nothing yet."]
+  ok: the keys, the blue door and the cell, each in the room it happened in: missing [] from ["Picked up the blue key.", "Picked up the red key.", "Unlocked the blue door in Arena 2.", "Installed the power cell in Arena 2.", "Cell power: powered, set in Arena 2. Open now: Arena 2 to a way not yet walked.", "Span alignment: lowered, set in Arena 1. Open now: Arena 1 to Platform Path 1."]
+  ok: the span: lowered in Arena 1, and the way it opened named
+  ok: the power: on in Arena 2; the way it opened leads somewhere not yet walked, and says so
+  ok: six lines for six things done: 6
+  ok: the span put back: a setting at its start again is not listed (5 lines)
+  ok: latched: the latch in Arena 4, and the way it holds open
+  ok: and once Arena 3 is found, the power line names it
+  -- nothing unfound is named
+  ok: arrived: no unfound room named, no save id: [] []
+  ok: progressed: no unfound room named, no save id: [] []
+  ok: latched: no unfound room named, no save id: [] []
+  ok: hub: no unfound room named, no save id: [] []
+  -- still shut
+  ok: every gate the map lists shut, each with the bridge's reason (3): ["Arena 1 to Platform Path 1: set by a control in Arena 1", "Arena 2 to a way not yet walked: set by a control in Arena 2", "Arena 2 to a way not yet walked: locked -- blue key; you hold it"]
+  ok: and once all three are open, it says nothing found is shut
+  -- places
+  ok: the places found, by the bridge's names: ["Corridor 1", "Arena 1", "Platform Path 1", "Corridor 2", "Arena 2"]
+  ok: in the Hub, it says places are listed inside a Zone
+  -- notes
+  ok: one note per Echo in the log, newest first (10): ["Frost Flask", "Cinder Charge", "Scan Lens", "Warding Loop", "Estus Shard", "Magic Meter", "Arc Bolt", "Sprint Coil", "Leather Grip", "Braided Lash"]
+  ok: each with Epsilon's read, word for word
+  -- it follows the snapshot
+  ok: a snapshot refills it (17 -> 18)
+  -- the settings wall
+  ok: the campaign, from the snapshot: missing [] from ["Seed: JOURNALFIXTURE", "Player: Pepsi", "Archipelago: mock, connected", "Epsilon: fallback", "Checks confirmed: 8 of 21", "Zones completed: 2", "Link to the bridge: down"]
+  ok: and the link, as it is (down here)
+  ok: the pause menu's actions, one button each and as they were: ["RESUME", "RETURN TO HUB", "ABANDON ZONE…", "QUIT GAME"]
+  ok: ABANDON still asks first, and says the same consequences
+  -- the options
+  ok: field of view 100: set, on the player's camera now, and saved
+  ok: master volume 50%: the Master bus at -6.0 dB
+  ok: motion off (says 'off') and look inverted: both set
+  ok: captions, which nothing reads, is not offered
+  ok: and the settings file is put back as it was
+  -- keys
+  ok: Down scrolls the journal (120 px), and the page stays
+  ok: and Q still turns the page: the journal -> 'settings'
+
+GODOT JOURNAL FACE OK (36 checks, 0 notes)

@@ -26,11 +26,12 @@ extends CanvasLayer
 ## this node and the bridge client keep running. Closing releases only its
 ## own claim.
 ##
-## **WHAT IS NOT HERE YET.** The journal is H-JOURNAL's. A page nobody
-## has filled says so, rather than pretending to be finished (§5 of the
-## delivery plan: "the blank other faces are an explicitly incomplete
-## slice"). The Equipment wall is `EquipmentFace` and the Map wall is
-## `MapFace`, both mounted by `Main`; their Glyph art is still owed.
+## **WHAT FILLS THE WALLS.** `Main` mounts every wall's content: the
+## pause menu and `SettingsFace` on Settings, `EquipmentFace`, `MapFace`
+## and `JournalFace`. A page nobody has filled says so, rather than
+## pretending to be finished (§5 of the delivery plan: "the blank other
+## faces are an explicitly incomplete slice"); none is unfilled now. The
+## Glyph art of all four is still owed.
 
 signal opened(page: String)
 signal closed
@@ -47,10 +48,7 @@ const TITLES := {
 }
 ## What an unfilled wall says, so that it reads as unfinished rather than
 ## as an empty page of a finished menu. A filler removes it ("Incomplete").
-const INCOMPLETE := {
-	"journal": "The journal is not built yet (H-JOURNAL). This wall holds "
-			+ "its place.",
-}
+const INCOMPLETE := {}
 ## Each page's own pixels. The wall shows them at this aspect.
 const PAGE_PIXELS := Vector2i(1280, 720)
 ## From the box's centre to each wall, and the camera's vertical field of
