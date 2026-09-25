@@ -1183,6 +1183,16 @@ func _next() -> void:
 		return
 	_check(str(_zone_data.get("zone_id", "")) == NEXT_ZONE_ID,
 			"the portal designed and opened %s" % NEXT_ZONE_ID)
+	# OPT-IN CAPTURE (`--candidate-dump-zone=<path>`): the Zone exactly as
+	# the bridge served it, for developing against locally while no
+	# fixture carries EX50-011 (note N-10). Never a fixture itself.
+	var dump := _arg("--candidate-dump-zone=")
+	if dump != "":
+		var out := FileAccess.open(dump, FileAccess.WRITE)
+		if out != null:
+			out.store_string(JSON.stringify(_zone_data, " "))
+			out.close()
+			_note("captured %s as served to %s" % [NEXT_ZONE_ID, dump])
 	# WHAT THE STEP DID, as the bridge recorded it.
 	var record_path := _arg(SAVE_DIR_FLAG).path_join("candidate") \
 			.path_join("%s.json" % NEXT_ZONE_ID)
@@ -1457,6 +1467,10 @@ func _next_final() -> void:
 			and not room.v.held,
 			"each carrier where it last came to rest: the shuttle at EAST, "
 			+ "the lift at SHELF (%s, %s)" % [h_saved, v_saved])
+	var gate := room.gallery_gate
+	_check(gate != null and gate.is_open(),
+			"and G's glass gate stands open, its shuttle docked there (%.2f "
+			% (gate.openness() if gate != null else -1.0) + "open)")
 	var reward := _reward_in(controller, rid)
 	_check(reward != null and BridgeClient.is_checked(reward.location_id)
 			and reward.interact_prompt() == "",

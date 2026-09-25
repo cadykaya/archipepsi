@@ -6,7 +6,9 @@ extends Node3D
 ## moved here whole: the arrival floor and the lift's pit, the recovery
 ## floor and its stair, the upper shelf, the goal gallery and its plate,
 ## the lift `V`, the shuttle `H`, every call control, and the permanent
-## service stair the plate releases. The development scenario owns one at
+## service stair an arrival on `G` releases -- and since H-PASSING, the
+## glass round `G` and the gate the shuttle opens. The development
+## scenario owns one at
 ## the origin; a composed Zone hosts one through `PassingPlatformsHosted`.
 ## One implementation, two owners.
 ##
@@ -89,6 +91,40 @@ const STAIR_X := 12.5
 const STAIR_WIDTH := 1.8
 const STAIR_FOOT_Z := -9.0
 const STAIR_HEAD_Z := -1.05
+## THE GLASS GALLERY (H-PASSING). Its panes stand on `G`'s west lip and
+## just outside its railings, from under `G`'s slab to the tops of the
+## walls; the gate is door height, where the shuttle's deck docks.
+const GLASS := 0.12
+const GLASS_TOP := ROOM_HEIGHT - 1.0
+const GLASS_WEST_X := G_WEST + GLASS * 0.5
+const GLASS_NORTH_Z := 6.0 + RAIL_THICK * 0.5 + GLASS * 0.5
+const GLASS_SOUTH_Z := -1.0 - RAIL_THICK * 0.5 - GLASS * 0.5
+## The gate: door height, and how far it rises to open.
+const SCREEN_H := 2.6
+## How far the glass over a door comes down past the door's top edge.
+const LAP := 0.3
+const GATE_Z := Vector2(H_Z - DECK.z * 0.5, H_Z + DECK.z * 0.5)
+## The stair's cut in the south glass, the same as the railing's.
+const STAIR_CUT := Vector2(STAIR_X - STAIR_WIDTH * 0.5 - 0.1,
+		STAIR_X + STAIR_WIDTH * 0.5 + 0.1)
+## What each control says it does (PT-06: "label the actions"): what the
+## pull does, never when to pull it. The keys are the controls'
+## identities -- `levers` and the node names -- and do not change.
+const CONTROL_TEXT := {
+	"H EAST": "CALL SHUTTLE EAST -- TO THE GALLERY",
+	"H WEST": "CALL SHUTTLE WEST",
+	"STOP H": "HOLD SHUTTLE WHERE IT IS",
+	"RESET": "RESET BOTH CARRIERS -- LIFT DOWN, SHUTTLE WEST",
+	"LAUNCH": "LIFT UP TO THE SHELF -- PAUSES AT THE SHUTTLE'S LEVEL",
+	"STOP V": "HOLD LIFT WHERE IT IS",
+	"V DOWN": "LIFT DOWN TO ARRIVAL",
+	"H ON EAST": "SEND SHUTTLE EAST -- TO THE GALLERY",
+	"H ON WEST": "SEND SHUTTLE WEST",
+	"H WEST (SHELF)": "CALL SHUTTLE WEST",
+	"V DOWN (SHELF)": "LIFT DOWN TO ARRIVAL",
+	"RESET (SHELF)": "RESET BOTH CARRIERS -- LIFT DOWN, SHUTTLE WEST",
+	"H WEST (G)": "SEND SHUTTLE WEST",
+}
 
 ## Stop indices on `V`. Named because "go_to(1)" is not a destination.
 const V_ARRIVAL := 0
@@ -116,12 +152,14 @@ var development_signs := true
 var v: ShuttleDeck = null
 var h: RailCarrier = null
 var rail: RailPath = null
-## Every call control in the room, by the label on its prompt. The suite
-## pulls them by name because a test that indexes into an array is a test
-## that breaks when a lever is added.
+## Every call control in the room, by its key -- the name it has always
+## had; its prompt says what it does (`CONTROL_TEXT`). The suite pulls
+## them by key because a test that indexes into an array is a test that
+## breaks when a lever is added.
 var levers: Dictionary = {}
 ## The plate on `G`. §3: a sensor may remember the route was visited, and
-## it stands ON the gallery, so it cannot replace walking onto it.
+## it stands ON the gallery, so it cannot replace walking onto it. It no
+## longer answers for the stair alone: `g_arrival` covers all of `G`.
 var goal_plate: ActivityElement = null
 ## Released the first time somebody stands on `G`, and never withdrawn --
 ## §8, "No reset undoes G's released service stair".
@@ -129,6 +167,16 @@ var stair_released := false
 var reached_g := false
 ## The service stair's steps, once released.
 var service_stair: Node3D = null
+## H-PASSING (PT-06): where the shuttle docks, `G`'s glass is a gate that
+## opens only while `H` stands docked there. The machine opens the
+## gallery; nothing below it or beside it reaches through the glass or
+## over it.
+var gallery_gate: ServiceShutter = null
+## The south pane where the stair lands, cut when the stair is released.
+var g_stair_glass: StaticBody3D = null
+## H-PASSING (PT-07): an arrival ANYWHERE on G releases the service stair,
+## not only one onto the goal plate.
+var g_arrival: Area3D = null
 ## `G`'s south railing, whole until the stair is released through it.
 var g_south_rail: StaticBody3D = null
 
@@ -150,6 +198,8 @@ func build() -> void:
 
 
 func _process(delta: float) -> void:
+	if gallery_gate != null:
+		gallery_gate.command(shuttle_docked_at_g())
 	if _refusal_left > 0.0:
 		_refusal_left -= delta
 		if _refusal_left <= 0.0 and _refusal != null:
@@ -202,6 +252,11 @@ func restore_carrier(carrier_id: String, t: float, destination: String,
 				h.held = false
 			if h.is_inside_tree():
 				h._place()
+			# THE GATE COMES BACK WITH ITS SHUTTLE: open at once where the
+			# save has the shuttle docked at G, not sliding open in front
+			# of the player (`ServiceShutter.settle`).
+			if gallery_gate != null:
+				gallery_gate.settle(shuttle_docked_at_g())
 
 
 ## The lift's rest, if it is at rest: `[t, destination, held]`, else [].
@@ -353,6 +408,103 @@ func _gallery() -> void:
 	add_child(goal_plate)
 	goal_plate.position = Vector3(G_WEST + 1.6, TRANSFER_Y, 2.2)
 	goal_plate.triggered.connect(_on_goal)
+	_gallery_screen()
+	# ANY ARRIVAL ON G (PT-07, R3): the whole gallery, not the plate.
+	g_arrival = Area3D.new()
+	g_arrival.name = "GArrival"
+	var sense := CollisionShape3D.new()
+	var volume := BoxShape3D.new()
+	# From the glass's inner face, so a body pressed against the shut
+	# gate from the shuttle has not arrived.
+	var inner := GLASS_WEST_X + GLASS
+	volume.size = Vector3(ROOM_HALF.x - inner, 2.4, 7.0)
+	sense.shape = volume
+	g_arrival.add_child(sense)
+	add_child(g_arrival)
+	g_arrival.position = Vector3((inner + ROOM_HALF.x) * 0.5,
+			TRANSFER_Y + 1.2, 2.5)
+	g_arrival.body_entered.connect(func(body: Node3D) -> void:
+		if body.is_in_group("player"):
+			_on_goal(goal_plate))
+
+
+## THE GLASS GALLERY (H-PASSING, PT-06). `G` is glass on its three open
+## sides, from under its slab to the tops of the walls. It stays in view
+## from the arrival and from everywhere else, and out of reach from all
+## of it: the floor below its lip, the carriers, the beam and the air
+## beside it.
+##
+## BOTH EXTENTS WERE MEASURED, not chosen. The west edge alone left 34
+## cells north of `G` claiming the Check over the 1.1 m railing -- its
+## collider stands 2.6 m tall, and a hop there sees its top. Glass only
+## door-high let a double jump claim it from the air west of the gate
+## (V-10; SP-9 in `H-PASSING_sabotages.log`).
+##
+## Its one door is where the shuttle docks: a glass gate the shuttle opens
+## by standing there. The stair's cut is made when the stair is released,
+## as the railing's is.
+func _gallery_screen() -> void:
+	var glass := ThemeMaterials.glass_material()
+	var foot := TRANSFER_Y - SLAB
+	var tall := GLASS_TOP - foot
+	var mid_y := (GLASS_TOP + foot) * 0.5
+	var head := TRANSFER_Y + SCREEN_H
+	# WEST, either side of the gate, reaching the corners of the other two.
+	var south := GLASS_SOUTH_Z - GLASS * 0.5
+	var north := GLASS_NORTH_Z + GLASS * 0.5
+	for side: String in ["South", "North"]:
+		var span := Vector2(south, GATE_Z.x + 0.02) if side == "South" \
+				else Vector2(GATE_Z.y - 0.02, north)
+		_pane("GalleryGlassWest" + side, Vector3(GLASS, tall, span.y - span.x),
+				Vector3(GLASS_WEST_X, mid_y, (span.x + span.y) * 0.5), glass)
+	# OVER THE GATE, on `G`'s side of it, so the gate rises behind it --
+	# and reaching LAP below the gate's top edge. Meeting it edge to edge
+	# in the next plane left a seam a descending ray threaded (V-10 found
+	# it from the air west of the gate).
+	var lintel := head - LAP
+	_pane("GalleryGlassOverGate", Vector3(GLASS, GLASS_TOP - lintel,
+			GATE_Z.y - GATE_Z.x + 0.6), Vector3(GLASS_WEST_X + GLASS + 0.02,
+			(GLASS_TOP + lintel) * 0.5, H_Z), glass)
+	# NORTH, outside its railing.
+	_pane("GalleryGlassNorth", Vector3(ROOM_HALF.x - G_WEST, tall, GLASS),
+			Vector3((G_WEST + ROOM_HALF.x) * 0.5, mid_y, GLASS_NORTH_Z),
+			glass)
+	# SOUTH, outside its railing, and the stair's cut its own pane, the
+	# full height: glass left over a stair's head is a ceiling to the
+	# player's step (it wants a metre of headroom), and a body arriving up
+	# the stair could not step up past the lever there.
+	for side: String in ["West", "East"]:
+		var span := Vector2(G_WEST, STAIR_CUT.x) if side == "West" \
+				else Vector2(STAIR_CUT.y, ROOM_HALF.x)
+		_pane("GalleryGlassSouth" + side, Vector3(span.y - span.x, tall,
+				GLASS), Vector3((span.x + span.y) * 0.5, mid_y, GLASS_SOUTH_Z),
+				glass)
+	if not stair_released:
+		g_stair_glass = _pane("GalleryGlassStairCut", Vector3(STAIR_CUT.y
+				- STAIR_CUT.x, tall, GLASS), Vector3((STAIR_CUT.x
+				+ STAIR_CUT.y) * 0.5, mid_y, GLASS_SOUTH_Z), glass)
+	# A SHUTTER TURNED A QUARTER, as one across any doorway is: its panel
+	# and its doorway volume are built across `z`, and this opening runs
+	# along it.
+	gallery_gate = ServiceShutter.create(
+			Vector3(GLASS_WEST_X, TRANSFER_Y + SCREEN_H * 0.5, H_Z),
+			Vector3(GATE_Z.y - GATE_Z.x, SCREEN_H, GLASS), SCREEN_H, theme)
+	gallery_gate.name = "GalleryGate"
+	gallery_gate.rotation.y = PI * 0.5
+	gallery_gate.panel_material = glass
+	add_child(gallery_gate)
+
+
+func _pane(named: String, size: Vector3, centre: Vector3,
+		glass: Material) -> StaticBody3D:
+	var pane := _slab(size, centre, glass)
+	pane.name = named
+	return pane
+
+
+## Is the shuttle standing docked at G? Only then is the gate open.
+func shuttle_docked_at_g() -> bool:
+	return h != null and h.at_dock() == H_EAST and absf(h.speed) < 0.05
 
 
 func _on_goal(_which: ActivityElement) -> void:
@@ -384,12 +536,20 @@ func _release_stair(announce: bool) -> void:
 		g_south_rail.get_parent().remove_child(g_south_rail)
 		g_south_rail.free()
 		g_south_rail = null
+	if g_stair_glass != null:
+		g_stair_glass.get_parent().remove_child(g_stair_glass)
+		g_stair_glass.free()
+		g_stair_glass = null
 	var gap := Vector2(STAIR_X - STAIR_WIDTH * 0.5 - 0.1,
 			STAIR_X + STAIR_WIDTH * 0.5 + 0.1)
 	_railing(Vector3(G_WEST, TRANSFER_Y, -1.0),
 			Vector3(gap.x, TRANSFER_Y, -1.0), service_stair)
 	_railing(Vector3(gap.y, TRANSFER_Y, -1.0),
 			Vector3(ROOM_HALF.x, TRANSFER_Y, -1.0), service_stair)
+	# THE WAY BACK SAYS WHERE IT GOES (PT-07), at its head on G.
+	var down := _sign("STAIR DOWN TO ARRIVAL", Vector3(STAIR_X,
+			TRANSFER_Y + 2.1, STAIR_HEAD_Z + 0.4), Color(0.8, 0.85, 0.95), 38)
+	down.reparent(service_stair)
 	if _readout != null:
 		_readout.text = "G REACHED -- service stair open"
 	if announce:
@@ -605,9 +765,16 @@ func reset_carriers() -> void:
 	_send_h(RailCarrier.BACK)
 
 
+## A control reads as what it does and keeps its key's name.
+func _control(key: String, tint: Color) -> CallLever:
+	var made := CallLever.make(str(CONTROL_TEXT.get(key, key)), tint, theme)
+	made.name = "CallLever_%s" % key.to_lower().replace(" ", "_")
+	return made
+
+
 func _lever(label: String, at: Vector3, tint: Color,
 		action: Callable) -> CallLever:
-	var made := CallLever.make(label, tint, theme)
+	var made := _control(label, tint)
 	add_child(made)
 	made.position = at + Vector3(0.0, CallLever.BASE.y * 0.5, 0.0)
 	made.pulled.connect(func(_who: CallLever) -> void: action.call())
@@ -617,7 +784,7 @@ func _lever(label: String, at: Vector3, tint: Color,
 
 func _onboard(deck: Node3D, label: String, at: Vector3, tint: Color,
 		action: Callable) -> CallLever:
-	var made := CallLever.make(label, tint, theme)
+	var made := _control(label, tint)
 	deck.add_child(made)
 	made.position = at + Vector3(0.0, CallLever.BASE.y * 0.5, 0.0)
 	made.pulled.connect(func(_who: CallLever) -> void: action.call())
@@ -640,10 +807,18 @@ func _signs() -> void:
 	_sign("H  SHUTTLE\nWEST <-> EAST (G)",
 			Vector3(0.0, TRANSFER_Y + 2.4, H_Z + (PARTED_SHIFT if parted \
 			else 0.0)), Color(1.0, 0.72, 0.35), 40)
-	_sign("UPPER SHELF", Vector3((SHELF_WEST + SHELF_EAST) * 0.5,
-			SHELF_Y + 2.0, SHELF_Z.x + 0.4), Color(0.8, 0.85, 0.95), 46)
+	_sign("UPPER SHELF -- THE LIFT'S TOP",
+			Vector3((SHELF_WEST + SHELF_EAST) * 0.5, SHELF_Y + 2.0,
+				SHELF_Z.x + 0.4), Color(0.8, 0.85, 0.95), 46)
 	_sign("GOAL GALLERY  G", Vector3(G_WEST + 1.5, TRANSFER_Y + 2.2, 2.2),
 			Color(0.55, 1.0, 0.7), 46)
+	_sign("GALLERY GATE\nOPEN WHILE THE SHUTTLE IS DOCKED",
+			Vector3(G_WEST - 0.4, TRANSFER_Y + SCREEN_H + 0.5, H_Z),
+			Color(0.55, 1.0, 0.7), 34)
+	# THE BOARD AT A, named as one: the shuttle's calls and hold, and the
+	# reset of both carriers.
+	_sign("CARRIER CONTROLS", Vector3(V_X, 1.9, V_Z - 3.4),
+			Color(1.0, 0.85, 0.6), 34)
 	if development_signs:
 		_sign("EX50-011 -- development scenario, not a Zone",
 				Vector3(0.0, 1.4, -ROOM_HALF.y + 1.2),

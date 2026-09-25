@@ -169,8 +169,28 @@ owner's D-06/D-07 rulings and the seam table are in
       owner's route, the kill-first fallback, a void census, the hood
       census, V-10 and both returns. `godot-candidate-live` plays the
       bait route live.
-  - **Next:** `H-PASSING` (N-10 asks Dess for a Passing fixture), then
-    CP2's full frontier.
+  - `H-PASSING` (PT-06, PT-07): **reproduced, proposed, repaired.**
+    - Reproduced on the hosted room: 233 floor cells claimed the Check
+      over G's west lip, and three of four arrivals on G left no way
+      back.
+    - G is now a glass gallery on three sides, up to the walls' tops.
+      Both extents were measured: the west edge alone left claims over
+      the north railing, and door-high glass let a double jump claim it
+      (SP-9).
+    - Its one door is a glass gate at the shuttle's dock, open only
+      while the shuttle stands docked there, and it never shuts on a
+      body.
+    - Any arrival on G releases the stair, which is signed; every
+      control says what it does.
+    - `godot-passing-hosted` (new, 24 checks) plays both censuses (0
+      claims), the gate from A's board, the arrivals, the interlock, the
+      restore and V-10 (no claim off G). It is not in CI until N-10's
+      fixture lands; it runs on a capture
+      (`make godot-candidate-live CANDIDATE_DUMP=<path>`).
+    - `godot-candidate-live` plays the carriers' route through the real
+      bridge, and its restart restores the gate open.
+  - **Next:** CP2's full frontier on a frozen revision, then CP3 (the 3D
+    shell and one Glyph equipment face).
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

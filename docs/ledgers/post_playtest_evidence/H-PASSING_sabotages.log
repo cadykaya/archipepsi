@@ -1,0 +1,52 @@
+== SP-1 no glass on G's west edge (the proposal's screen gone) (quick): rc=1 GODOT PASSING HOSTED TESTS: 3 failures in 24 checks
+FAIL: c025: NO CLAIM BEFORE THE ROOM IS SOLVED -- 54 reached cell(s) claim the Check, in the hosted room's own frame: ["stand (9.900001, 1.000000, 14.800000) +1.33 m", "stand (10.200000, 1.000000, 14.800000) +1.33 m", "stand (9.900001, 1.000000, 15.200000) +0.67 m", "stand (10.500000, 1.000000, 15.4
+FAIL: c025: G is glass on its three open sides, with its gate where the shuttle docks and its stair cut still closed: ["OverGate", "North", "SouthWest", "SouthEast", "StairCut"]
+FAIL: c025: with the shuttle docked and the gate open, nothing the base kit reaches from the arrival claims the Check (5817 cells reached; claims from: ["(10.500000, 1.000000, 4.200000)", "(10.200000, 1.000000, 4.500000)", "(9.600000, 1.000000, 4.500000)", "(9.300000, 1.000000, 4.500000)", "(9.90000
+  restored godot/scripts/content/passing_platforms_room.gd
+== SP-2 no glass on G's north edge (quick): rc=1 GODOT PASSING HOSTED TESTS: 3 failures in 24 checks
+FAIL: c025: NO CLAIM BEFORE THE ROOM IS SOLVED -- 34 reached cell(s) claim the Check, in the hosted room's own frame: ["stand (12.900001, 1.000000, 18.200001) +1.33 m", "stand (12.300000, 1.000000, 18.200001) +1.33 m", "stand (11.700000, 1.000000, 17.800001) +1.33 m", "stand (12.600000, 1.000000, 17
+FAIL: c025: G is glass on its three open sides, with its gate where the shuttle docks and its stair cut still closed: ["WestSouth", "WestNorth", "OverGate", "SouthWest", "SouthEast", "StairCut"]
+FAIL: c025: with the shuttle docked and the gate open, nothing the base kit reaches from the arrival claims the Check (5791 cells reached; claims from: ["(11.100000, 1.000000, 6.600000)", "(11.400001, 1.000000, 6.600000)", "(11.100000, 1.000000, 7.200000)", "(11.700000, 1.000000, 6.600000)", "(11.40
+  restored godot/scripts/content/passing_platforms_room.gd
+== SP-3 the gate always open (quick): rc=1 GODOT PASSING HOSTED TESTS: 7 failures in 24 checks
+FAIL: c025: NO CLAIM BEFORE THE ROOM IS SOLVED -- 25 reached cell(s) claim the Check, in the hosted room's own frame: ["stand (9.900001, 1.000000, 13.900001) +1.33 m", "stand (10.200000, 1.000000, 13.900001) +1.33 m", "stand (9.300000, 1.000000, 14.800000) +1.33 m", "stand (10.500000, 1.000000, 13.9
+FAIL: c025: PLAYED -- walked from the arrival to stand at (9.900001, 1.000000, 14.000000) (the room's frame), hopped and looked: the prompt read '[E] CLAIM CHECK 005' and 1 claim(s) went out before the room was solved
+FAIL: c025: as built, the shuttle at its west berth and the gallery gate shut
+FAIL: c025: 'CALL SHUTTLE EAST' pulled at A's board; the shuttle crossed to G in 14.4 s, and the gate stayed shut all the way (most open 1.00)
+FAIL: c025: 'CALL SHUTTLE WEST' pulled at A's board; the shuttle left G and the gate shut behind it (0.0 s)
+FAIL: c025: 'SEND SHUTTLE WEST' pulled on G from the doorway; the shuttle left and the gate was refused its closure 0 time(s), never below 1.00 open, costing 0 health and moving the player 0.00 m
+FAIL: c025: stepping out onto G, the gate shuts behind the shuttle
+  restored godot/scripts/content/passing_platforms_room.gd
+== SP-4 the gate never opens (quick): rc=1 GODOT PASSING HOSTED TESTS: 3 failures in 23 checks
+FAIL: c025: docked at G, the gate opens (0.0 s)
+FAIL: c025: the shuttle called back to G from A's board, the stair climbed, and the player standing in the open gate ((11.700000, 4.000000, 0.900000))
+FAIL: c025: 'SEND SHUTTLE WEST' pulled on G from the doorway; the shuttle left and the gate was refused its closure 0 time(s), never below 0.00 open, costing 0 health and moving the player 0.00 m
+  restored godot/scripts/content/passing_platforms_room.gd
+== SP-5 the gate opens with the shuttle at either dock (quick): rc=1 GODOT PASSING HOSTED TESTS: 5 failures in 24 checks
+FAIL: c025: NO CLAIM BEFORE THE ROOM IS SOLVED -- 25 reached cell(s) claim the Check, in the hosted room's own frame: ["stand (9.900001, 1.000000, 13.900001) +1.33 m", "stand (10.200000, 1.000000, 13.900001) +1.33 m", "stand (9.300000, 1.000000, 14.800000) +1.33 m", "stand (10.500000, 1.000000, 13.9
+FAIL: c025: PLAYED -- walked from the arrival to stand at (9.900001, 1.000000, 14.000000) (the room's frame), hopped and looked: the prompt read '[E] CLAIM CHECK 005' and 1 claim(s) went out before the room was solved
+FAIL: c025: as built, the shuttle at its west berth and the gallery gate shut
+FAIL: c025: 'CALL SHUTTLE EAST' pulled at A's board; the shuttle crossed to G in 14.4 s, and the gate stayed shut all the way (most open 1.00)
+FAIL: c025: restored docked at G, the gate is open in the same frame; restored at the west berth, it is shut (true, false)
+  restored godot/scripts/content/passing_platforms_room.gd
+== SP-6 only the goal plate releases the stair again (PT-07) (quick): rc=1 GODOT PASSING HOSTED TESTS: 1 failures in 23 checks
+FAIL: c025: the first arrival on G releases the service stair (at (13.250000, 4.000000, 3.550000), 1.5 m from the old goal plate; arrivals that did not: [(13.25, 4.0, -0.35)])
+  restored godot/scripts/content/passing_platforms_room.gd
+== SP-7 the controls read as codes again (quick): rc=1 GODOT PASSING HOSTED TESTS: 1 failures in 23 checks
+FAIL: c025: each of its 13 controls reads as what it does, e.g. ["[E] H EAST", "[E] H WEST", "[E] STOP H"]; wrong: ["H EAST reads \'H EAST\'", "H WEST reads \'H WEST\'", "STOP H reads \'STOP H\'", "RESET reads \'RESET\'", "LAUNCH reads \'LAUNCH\'", "STOP V reads \'STOP V\'", "V DOWN reads \'V DOWN\'
+  restored godot/scripts/content/passing_platforms_room.gd
+== SP-8 the glass over the gate meets its top edge to edge (V-10) (full): rc=1 GODOT PASSING HOSTED TESTS: 1 failures in 24 checks
+FAIL: c025: V-10 -- no blink, double jump or grapple puts the Check in claim reach from anywhere but G (27132 blinks (11395 moved), 18 flights, 3 arrived on G (by blink 0, double jump 0, grapple 3)); off-G claims: ["double_jump toward (57.299999, 43.799999, 119.200005) at (55.400002, 37.299999, 119.
+  restored godot/scripts/content/passing_platforms_room.gd
+== SP-9 the glass only as tall as the gate, as proposed (V-10) (full): rc=1 GODOT PASSING HOSTED TESTS: 1 failures in 24 checks
+FAIL: c025: V-10 -- no blink, double jump or grapple puts the Check in claim reach from anywhere but G (27132 blinks (11567 moved), 18 flights, 167 arrived on G (by blink 163, double jump 0, grapple 4)); off-G claims: ["double_jump toward (57.600002, 37.100002, 121.599998) at (55.400002, 37.000000, 
+  restored godot/scripts/content/passing_platforms_room.gd
+== SP-10 a restored shuttle does not bring its gate back (quick): rc=1 GODOT PASSING HOSTED TESTS: 1 failures in 23 checks
+FAIL: c025: restored docked at G, the gate is open in the same frame; restored at the west berth, it is shut (false, true)
+  restored godot/scripts/content/passing_platforms_room.gd
+== SP-11 the stair released but its glass left uncut (quick): rc=1 GODOT PASSING HOSTED TESTS: 3 failures in 23 checks
+FAIL: c025: and the stair, signed ["STAIR DOWN TO ARRIVAL"] at its head, walks back down to A ((12.800000, 4.000000, -0.700000))
+FAIL: c025: the shuttle called back to G from A's board, the stair climbed, and the player standing in the open gate ((11.700000, 4.000000, 0.900000))
+FAIL: c025: 'SEND SHUTTLE WEST' pulled on G from the doorway; the shuttle left and the gate was refused its closure 0 time(s), never below 0.00 open, costing 0 health and moving the player 0.00 m
+  restored godot/scripts/content/passing_platforms_room.gd
+== done

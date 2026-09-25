@@ -239,6 +239,12 @@ where the new rule would refuse a lever.
   - Until it exists, Prod develops against a local capture of the Zone
     the real bridge serves (unedited, never committed). The hosted
     Passing suite goes into CI when your fixture lands.
+  - Both halves are in the Makefile now:
+    - `make godot-candidate-live CANDIDATE_DUMP=<path>` writes the
+      capture;
+    - `make godot-passing-hosted PASSING_ZONE=<path>` plays it. Its
+      default is `godot/tests/fixtures/passing_zone.json`, the file this
+      note asks for.
 
 ## Evidence rules (PROD_START)
 
@@ -1218,3 +1224,151 @@ own commit.
     - Blink or grapple to H stays the qualified alternate, as the card
       lists it.
     - V-10 will say what the screen does to any other movement arrival.
+
+## CP2 — `H-PASSING` (PT-06, PT-07, D12's card) — repaired: G a glass gallery the shuttle opens
+
+The proposal above, built. Two of its details were changed by what the
+runs found; both changes are measured below.
+
+- **What was built** (`passing_platforms_room.gd`):
+  - **G is glass on its three open sides**, from under its slab to the
+    tops of the walls. It stays in view from the arrival and is out of
+    reach from everywhere else. The proposal named the west edge only.
+    Both extents were measured:
+    - with the west edge glazed, the census still found 34 cells north
+      of G claiming the Check over its 1.1 m railing. The Check's
+      collider stands 2.6 m tall, and a hop there sees its top (SP-2);
+    - with glass only door-high, V-10 found double jumps claiming from
+      the air west of G, and 163 blinks landing on G over it (SP-9).
+  - **Its one door is a glass gate at the shuttle's dock.**
+    - It opens only while H stands docked at G, and shuts when H leaves.
+    - It is a `ServiceShutter`, so it never shuts on a body (§21.2).
+    - The glass over it reaches 0.3 m below its top edge. Meeting that
+      edge edge-to-edge, in the next plane, left a seam that a descending
+      ray threaded; V-10 found it from the air west of the gate (SP-8).
+    - A save with H docked at G restores the gate already open, in the
+      same frame, rather than sliding open in front of the player.
+  - **Any arrival on G releases the stair** (PT-07, R3). A volume over
+    the whole gallery, from the glass's inner face, does it. Before, only
+    the 1.4 m goal plate did; the plate itself is unchanged.
+  - **The way back says where it goes:** "STAIR DOWN TO ARRIVAL" at its
+    head.
+    - The south glass has the stair's cut, removed with the railing's
+      when the stair is released.
+    - The cut is full height. A first version left glass above it, and
+      the player's step, which wants a metre of headroom, would not
+      climb the stair's head past the lever there
+      (`godot-passing-platforms` caught it).
+  - **Every control says what it does, not when to use it.** Their
+    identities (the `levers` keys and node names) are unchanged. The 13
+    read, for example:
+    - "CALL SHUTTLE EAST -- TO THE GALLERY"
+    - "HOLD SHUTTLE WHERE IT IS"
+    - "RESET BOTH CARRIERS -- LIFT DOWN, SHUTTLE WEST"
+    - "LIFT UP TO THE SHELF -- PAUSES AT THE SHUTTLE'S LEVEL"
+  - **Three new signs:**
+    - "CARRIER CONTROLS" names A's board;
+    - "UPPER SHELF -- THE LIFT'S TOP";
+    - "GALLERY GATE / OPEN WHILE THE SHUTTLE IS DOCKED".
+  - **Supporting changes:**
+    - `ServiceShutter.panel_material` (a glass gate is still a shutter);
+    - `ThemeMaterials.glass_material()`.
+- **Played after the repair** (`godot-passing-hosted`, new, 24 checks;
+  `H-PASSING_after.log`), on zone_002/c025, as captured by the new
+  `CANDIDATE_DUMP` recipe:
+  - **the census:**
+    - 0 of 5,814 cells reached from the arrival claim the Check (233
+      before);
+    - with H docked at G and its gate open, 0 of 5,817;
+  - **what the room says:**
+    - each of the 13 controls reads as what it does;
+    - none of 22 signs and labels prints an order of operations;
+    - the gate says what opens it;
+    - the Check is in sight from the arrival through nothing but the
+      gate's glass;
+  - **as built,** G is not reached from the arrival with the base kit;
+  - **the gate, played with the real levers at A's board:**
+    - "CALL SHUTTLE EAST": H crossed to G in 14.4 s, and the gate stayed
+      shut all the way (never above 0.00 open);
+    - it opened 1.6 s after H docked;
+    - after "CALL SHUTTLE WEST", it shut 1.6 s after H left;
+  - **arrivals (R3):** the first arrival on G releases the stair. It was
+    placed at G's far south-east corner, 2.6 m from the old plate's
+    centre, where the plate alone does not reach (SP-6). The stair,
+    signed at its head, is walked back down to A;
+  - **the interlock:**
+    - the player stood in the open gate and pulled "SEND SHUTTLE WEST"
+      on G;
+    - H left, and the gate was refused its closure 4 times;
+    - it never came below fully open, cost 0 health and moved the player
+      0 m;
+    - once the player stepped out onto G, it shut;
+  - **restore:** with H restored docked at G, the gate is open in the
+    same frame; with H restored at the west berth, it is shut;
+  - **V-10** at the schema maxima, on a fresh build of the same Zone:
+    - 27,132 blinks and 18 flights;
+    - no claim from anywhere but G;
+    - 2 grapples (3 in a run on the first capture) arrive on G over the
+      glass's top. Those are legal arrivals (R1), and the first of them
+      released the stair (R3).
+- **The baseline route through the real bridge.** `godot-candidate-live`,
+  on this tree, is green in all eight phases, and its `next` phases play
+  this same hosted room (`H-PASSING_candidate_live.log`):
+  - LAUNCH on the lift, then a step across onto the restored held
+    shuttle, then H ON EAST to the east berth;
+  - walked off through the gate onto G. The stair was released and
+    ACCEPTED as `minor_c025/stair`, and Check 89100005 was CONFIRMED;
+  - after a real restart, the shuttle is restored at EAST, "and G's
+    glass gate stands open, its shuttle docked there (1.00 open)" (a
+    new check). The stair is then walked up from A onto G.
+- **The standalone scenario** (`godot-passing-platforms`,
+  `H-PASSING_standalone.log`): 70 of 70.
+  - The continuous run, the patient route and the counterpart pass
+    through the gate unchanged.
+  - Its walker, coming up the stair, steps onto G over the 0.35 m plinth
+    of the "SEND SHUTTLE WEST" lever at the stair's head, as it did
+    before this change. Its feet end in exactly the same place.
+- **Declared harness steps:**
+  - the player is placed on each arrival point on G, and back at the
+    arrival between cases;
+  - `_mobility` places them for each blink and flight;
+  - health is raised for the two censuses and the V-10 sweep;
+  - the restore case calls the room's own `restore_carrier`, as the
+    hosted room does before the player arrives.
+  - Every lever is pulled by the player: aimed at, interact pressed.
+- **Sabotages** (`H-PASSING_sabotages.log`), each restored byte for byte;
+  the quick suite without V-10, except where the row says V-10:
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| SP-1 | no glass on G's west edge | the census (54 cells over the west lip), the glass check, and the docked census |
+| SP-2 | no glass on G's north edge | the census (34 cells over the north railing), the glass check, and the docked census |
+| SP-3 | the gate always open | the census (25 cells) and its **played witness**: the real player hopped at the lip, read "[E] CLAIM CHECK 005", and a claim went out. Also "shut as built", "stayed shut all the way", "shut behind it", and the interlock |
+| SP-4 | the gate never opens | "docked at G, the gate opens", and the interlock case (no open gate to stand in) |
+| SP-5 | the gate opens with H at either dock | the census and its played claim (as SP-3), "shut as built", "stayed shut all the way", and the restore at the west berth |
+| SP-6 | only the goal plate releases the stair (PT-07) | "the first arrival on G releases the service stair": the far corner did not |
+| SP-7 | the controls read as codes again | "each of its 13 controls reads as what it does": all 13 wrong |
+| SP-8 | the glass over the gate meets its top edge to edge (V-10) | V-10: a double jump claims through the seam from the air west of the gate |
+| SP-9 | the glass only door-high, as the proposal had it (V-10) | V-10: double jumps claim from the air west of G, and 163 blinks land on G over it |
+| SP-10 | a restored shuttle does not bring its gate back | "restored docked at G, the gate is open in the same frame" |
+| SP-11 | the stair released, its glass left uncut | the walk back down stops at the glass, and the interlock case cannot climb to G |
+
+- **What stays open:**
+  - **N-10:** the hosted suite needs Dess's `passing_zone.json`. Until
+    then it runs on a local capture, and it is not in CI.
+    - `make godot-candidate-live CANDIDATE_DUMP=<path>` writes the
+      capture.
+    - `make godot-passing-hosted PASSING_ZONE=<path>` plays it.
+    - Two captures differed only in c025's Check id (89100047 and
+      89100005); the room is the same.
+  - **Which occurrence the owner played is not in anything we hold.**
+    PT-06's "directly reachable" matches the 233 lip cells, but the save
+    that would show it needs `room_entered` (D-2, with CP4's map work).
+- **What the owner will notice:**
+  - G, the goal gallery, is behind glass on three sides. You can see the
+    Check from the arrival, and you can't reach it from the floor.
+  - Where the shuttle docks, the glass is a gate. It slides up while the
+    shuttle stands there and down when it leaves.
+  - Every lever says what it does when you aim at it.
+  - Getting onto G anywhere opens the stair back down, and the stair's
+    head says where it goes.

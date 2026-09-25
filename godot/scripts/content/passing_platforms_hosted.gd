@@ -24,9 +24,10 @@ extends HostedMinor
 ## death sends both carriers home by ordinary motion; after it, they stay
 ## where the player left them.
 ##
-## **The goal is the Zone's Check**, at the shell's objective on `G`. The
-## plate on `G` stays: it is what releases the stair when somebody walks
-## onto the gallery, which is §4's "arriving at G", not a reward.
+## **The goal is the Zone's Check**, at the shell's objective on `G`,
+## behind the glass the shuttle's gate opens (H-PASSING). An arrival
+## anywhere on `G` releases the stair -- §4's "arriving at G", not a
+## reward; the plate on `G` stays as it was.
 
 const SHELL_ID := "minor_passing_platforms"
 const OFFSET := Vector3(0.0, 0.0, PassingPlatformsRoom.ROOM_HALF.y + 0.25)

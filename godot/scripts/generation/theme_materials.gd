@@ -171,6 +171,17 @@ static func light_energy(theme: String) -> float:
 static func void_color(theme: String) -> Color:
 	return Color(spec(theme)["trim_color"]).darkened(0.6)
 
+## GLASS: seen through, and solid. A screen that must block a reach while
+## leaving what is behind it visible (H-PASSING's glass gallery).
+static func glass_material(tint := Color(0.7, 0.9, 1.0, 0.22)) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = tint
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.roughness = 0.05
+	material.metallic = 0.2
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return material
+
 static func glow_material(color: Color, energy: float = 1.6) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color

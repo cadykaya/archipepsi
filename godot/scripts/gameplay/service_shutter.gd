@@ -53,6 +53,9 @@ var speed := 0.0
 var goal := 0.0
 
 var _theme := "concrete_facility"
+## What the panel is made of, when it is not the theme's accent panel --
+## a glass gate is still a shutter (H-PASSING).
+var panel_material: Material = null
 var _doorway: Area3D = null
 var _inside := 0
 var _interlock := SafeClosure.new()
@@ -81,7 +84,8 @@ func _ready() -> void:
 	var mesh := BoxMesh.new()
 	mesh.size = panel
 	mesh_node.mesh = mesh
-	mesh_node.material_override = ThemeMaterials.accent_mat(_theme)
+	mesh_node.material_override = panel_material if panel_material != null \
+			else ThemeMaterials.accent_mat(_theme)
 	add_child(mesh_node)
 	# THE DOORWAY, as a volume rather than as a distance check. A body is
 	# in the way when it is in the way.
