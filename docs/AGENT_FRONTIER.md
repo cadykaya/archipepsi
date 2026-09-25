@@ -15,7 +15,7 @@
   5. discovery and the snapshot's inventory and map. Discovery is
      **done** (`RoomEntered`, note D-2 to Prod), and the snapshot's
      `inventory` and `zone_map` are **done** (note D-3);
-  6. DESS-23;
+  6. DESS-23 **done**;
   7. 1c after Prod's lever placement;
   8. 1d.
 - Answers to N-1/N-2/N-3 and note D-1 are in the Dess ledger.

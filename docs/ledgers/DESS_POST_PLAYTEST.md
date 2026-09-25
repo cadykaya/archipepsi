@@ -772,3 +772,18 @@ clean.
 `snapshot.inventory.items[*]` joined to `snapshot.mechanics.owned` by
 `component_id`. The minimap, 3D map and journal read `snapshot.zone_map`,
 overlaying only the live `transitioning` state.
+
+## DESS-23 — fixed at acceptance
+
+**The rule.** `validate_zone` now refuses a declared key that no LOCKED
+door names (`_keys_that_open_nothing`).
+- It applies at acceptance only. The model still loads such a Zone, so
+  no save can break on it, and the audit's NO_LOCK mutation remains
+  schema-valid.
+- The committed sample (20 Zones) and the candidate hold none, and a
+  test says so.
+
+**Evidence:** the NO_LOCK mutation is now refused at acceptance, and
+removing the guard fails that test by name. The packet mirror of
+`zone.py` is copied and `check_packet` is clean. Bridge suite: 2125
+passed.

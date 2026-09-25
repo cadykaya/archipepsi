@@ -2468,7 +2468,23 @@ def validate_zone(
     # step-once chain loads and plays as saved (M-1, D13 1a).
     errors.extend(_plates_that_latch(zone))
 
+    # DESS-23: A KEY MUST OPEN SOMETHING. A key no door locks is picked up
+    # and carried for nothing -- PT-15's "keys without noticed matching
+    # doors" at its purest. The composer never makes one (0 of 80 in the
+    # sample); this refuses one at acceptance, and never on load.
+    errors.extend(_keys_that_open_nothing(zone))
+
     return errors
+
+
+def _keys_that_open_nothing(zone: Zone) -> list[str]:
+    """DESS-23: every declared key that no LOCKED door names."""
+    locked = {d.key_id for c in zone.chambers for d in c.doors
+              if d.usage == "LOCKED" and d.key_id}
+    return [f"key '{k.key_id}' in room '{c.id}' opens no locked door; a "
+            "key the player picks up must open something"
+            for c in zone.chambers for k in c.keys
+            if k.key_id not in locked]
 
 
 def _plates_that_latch(zone: Zone) -> list[str]:

@@ -45,8 +45,9 @@ def test_the_sample_meets_every_key_before_its_lock():
 
 
 def test_a_key_that_opens_nothing_is_named():
-    """And the schema accepts one -- the composer simply never makes
-    it (0 of 80), which is the only thing keeping it out."""
+    """The Zone model still loads one, so a save never breaks on it;
+    acceptance refuses it (DESS-23), and the composer never makes one
+    (0 of 80)."""
     raw = _raw()
     for c in raw["chambers"]:
         for d in c["doors"]:
@@ -55,6 +56,24 @@ def test_a_key_that_opens_nothing_is_named():
                 d.pop("key_id")
                 d.pop("colour", None)
     assert _row(raw, "red")["class"] == "NO_LOCK"
+    from archipepsi_bridge.schemas.zone import validate_zone
+    zone = Zone.model_validate(raw)
+    errors = validate_zone(zone, expected_zone_id=zone.zone_id,
+                           allocated_location_ids=list(
+                               zone.reward_location_ids),
+                           owned_echo_ids=[])
+    assert any("key 'red'" in e and "opens no locked door" in e
+               for e in errors), errors
+
+
+def test_no_committed_zone_holds_a_key_that_opens_nothing():
+    from archipepsi_bridge.schemas.zone import _keys_that_open_nothing
+    paths = sorted(SAMPLE.parent.glob("zone_*.json")) + [
+        ROOT / "godot/tests/fixtures/candidate_zone.json"]
+    for path in paths:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        zone = Zone.model_validate(raw.get("zone", raw))
+        assert _keys_that_open_nothing(zone) == [], path.name
 
 
 def test_a_key_found_beside_its_own_lock_is_met_with_it():
