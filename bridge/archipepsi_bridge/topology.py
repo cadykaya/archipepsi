@@ -24,7 +24,8 @@ try:
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from .schemas import constants as C
     from .schemas import mechanics as M
-    from .schemas.zone import Zone, procedural_sockets_for
+    from .schemas.zone import (CONTROL_PLACEMENT_CAPABILITY, Zone,
+                               procedural_sockets_for)
     from .schemas import signal_graph as SG
     from .schemas.physics import GRAPH_PACKAGE_PREFIX
 except ImportError:  # pragma: no cover
@@ -32,7 +33,8 @@ except ImportError:  # pragma: no cover
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from schemas import constants as C
     from schemas import mechanics as M
-    from schemas.zone import Zone, procedural_sockets_for
+    from schemas.zone import (CONTROL_PLACEMENT_CAPABILITY, Zone,
+                              procedural_sockets_for)
     from schemas import signal_graph as SG
     from schemas.physics import GRAPH_PACKAGE_PREFIX
 
@@ -1518,10 +1520,10 @@ def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
 class _Setter:
     __slots__ = ("room_id", "selects", "capability")
 
-    def __init__(self, room_id: str):
+    def __init__(self, room_id: str, capability: str | None = None):
         self.room_id = room_id
         self.selects = ("set",)
-        self.capability = None
+        self.capability = capability
 
 
 class _LatchVariable:
@@ -1538,12 +1540,15 @@ class _LatchVariable:
     """
     __slots__ = ("variable_id", "initial", "states", "lifetime", "setter")
 
-    def __init__(self, ref: str, room_id: str):
+    def __init__(self, ref: str, room_id: str,
+                 capability: str | None = None):
         self.variable_id = ref
         self.initial = "unset"
         self.states = ("unset", "set")
         self.lifetime = "permanent"
-        self.setter = _Setter(room_id)
+        # A rail span's control may need one (D-6's gantry); a room
+        # graph's never does, for the reason above.
+        self.setter = _Setter(room_id, capability)
 
 
 class _Condition:
@@ -1686,6 +1691,78 @@ def _route_latches(zone):
     return _Searched(zone, tuple(edges), state), tuple(triggers)
 
 
+class _RailEdge:
+    """A rail span as the search sees it: the carrier's ride between its
+    docks' rooms (D-6 step 2). For the search only; the Zone declares the
+    span, never an edge.
+
+    A ride binds no doorway and carries no lock, which is exactly the
+    plug case `_passable` already knows (`TRAVERSAL_ONLY`). It runs both
+    ways -- the carrier is called back along the same route -- so a room
+    past it is left the way it was reached. A span with a control waits
+    on its commissioning latch, and a latch, once set, stays set.
+    """
+    realization = "TRAVERSAL_ONLY"
+    direction = "BIDIRECTIONAL"
+    capability = None
+    opened_by = None
+
+    def __init__(self, edge_id: str, room_a: str, room_b: str, conditions):
+        self.edge_id = edge_id
+        self.room_a = room_a
+        self.room_b = room_b
+        self.requires_state = tuple(conditions)
+
+    @property
+    def rooms(self) -> tuple[str, str]:
+        return (self.room_a, self.room_b)
+
+    def traversable(self, frm: str) -> bool:
+        return frm in (self.room_a, self.room_b)
+
+    def other(self, frm: str) -> str:
+        return self.room_b if frm == self.room_a else self.room_a
+
+
+def _route_rails(zone):
+    """-> (searched zone, gantry ride ids): every declared span as a ride.
+
+    A span with a control is commissioned by standing at the control --
+    a permanent variable set in the control room, under the persistence
+    handle the span's latch is recorded by (`network/latch`). A gantry's
+    control needs `grapple` to operate (`CONTROL_PLACEMENT_CAPABILITY`),
+    which the search already reads off a setter as it does off an edge.
+    A span with no control ships commissioned: an open ride.
+    """
+    networks = tuple(getattr(zone, "rail_networks", ()) or ())
+    if not networks:
+        return zone, frozenset()
+    extra: dict[str, _LatchVariable] = {}
+    rides = []
+    gantry: set[str] = set()
+    for net in networks:
+        room_of = {d.dock_id: d.room_id for d in net.docks}
+        for span in net.spans:
+            a, b = room_of[span.from_dock], room_of[span.to_dock]
+            if a == b:
+                continue                 # a ride inside one room joins none
+            conds = []
+            if span.control_room_id is not None:
+                ref = f"{net.network_id}/{span.latch_id}"
+                extra.setdefault(ref, _LatchVariable(
+                    ref, span.control_room_id,
+                    CONTROL_PLACEMENT_CAPABILITY[span.control_placement]))
+                conds.append(_Condition(ref))
+            ride = f"rail:{net.network_id}/{span.span_id}"
+            rides.append(_RailEdge(ride, a, b, conds))
+            if span.control_placement == "gantry":
+                gantry.add(ride)
+    state = tuple(getattr(zone, "zone_state", ()) or ()) + tuple(
+        extra.values())
+    return (_Searched(zone, tuple(zone.edges) + tuple(rides), state),
+            frozenset(gantry))
+
+
 def reachability(zone, entry_id: str | None = None,
                  exit_id: str | None = None,
                  declared_capabilities=None) -> Reach:
@@ -1720,6 +1797,7 @@ def reachability(zone, entry_id: str | None = None,
     if not zone.edges:
         return Reach(states=frozenset(), rooms=frozenset())
     zone, triggers = _route_latches(zone)
+    zone, gantry = _route_rails(zone)
 
     chambers = list(zone.chambers)
     entry = entry_id or chambers[0].id
@@ -1772,6 +1850,35 @@ def reachability(zone, entry_id: str | None = None,
     blame("Check-bearing room(s)",
           [c.id for c in chambers if c.reward_ids])
     blame("key-bearing room(s)", [c.id for c in chambers if c.keys])
+
+    # D-6 / D-03 (owner, 2026-09-25): NOTHING AP-RELEVANT BEYOND A GANTRY
+    # until the Archipelago logic declares the grapple. A room reached
+    # only over a gantry ride, and only because this Zone hands the
+    # grapple over, is a room the AP logic cannot see needs it: a Check,
+    # a key or the exit there would be a gate it never declared. With
+    # the grapple declared (`declared_capabilities`) the ride is as
+    # visible to it as any gate, and the rule above already answers.
+    # So beyond a gantry: local rewards only.
+    if gantry:
+        plain = _explore(entry, zone.edges, doors_by_room, keys_by_room,
+                         have, zone_state=zstate)
+        beside = _explore_acquiring(
+            zone, entry, [e for e in zone.edges if e.edge_id not in gantry],
+            doors_by_room, keys_by_room, have, zone_state=zstate)
+        for what, rooms in (
+                ("the exit", [exit_room]),
+                ("Check-bearing room", [c.id for c in chambers
+                                        if c.reward_ids]),
+                ("key-bearing room", [c.id for c in chambers if c.keys])):
+            for room in rooms:
+                if (room in real.rooms and room not in plain.rooms
+                        and room not in beside.rooms):
+                    errors.append(
+                        f"{what} '{room}' lies beyond gantry "
+                        f"{sorted(gantry)}, crossable only with a grapple "
+                        "acquired in this Zone, which the Archipelago logic "
+                        "does not declare (§29.5a, owner ruling D-03): "
+                        "beyond a gantry, local rewards only")
 
     # D-1. YOU MAY NOT NEED THE GRAPPLE TO REACH THE GRAPPLE.
     #

@@ -5834,6 +5834,15 @@
             "default": false,
             "title": "Mandatory",
             "type": "boolean"
+          },
+          "control_placement": {
+            "default": "ground",
+            "enum": [
+              "ground",
+              "gantry"
+            ],
+            "title": "Control Placement",
+            "type": "string"
           }
         },
         "required": [
@@ -12223,6 +12232,15 @@
             "default": false,
             "title": "Mandatory",
             "type": "boolean"
+          },
+          "control_placement": {
+            "default": "ground",
+            "enum": [
+              "ground",
+              "gantry"
+            ],
+            "title": "Control Placement",
+            "type": "string"
           }
         },
         "required": [

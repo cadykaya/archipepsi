@@ -891,6 +891,25 @@ class RailDock(Strict):
     room_id: str = _ID
 
 
+#: D-6 (proposed 2026-09-25, confirmed by Prod's N-14): where a span's
+#: control stands, and what operating it therefore needs. `ground` is
+#: today's lever at the control room's arrival, base kit. `gantry` is the
+#: development scenario's deck -- 3.1 m up, its hookshot plate 7.2 m up,
+#: no stairs and no mantle by the owner's rule -- reached only by the
+#: proven anchor grapple, so it needs `grapple`: DESS-26's contract,
+#: derived from the placement and never declared beside it.
+CONTROL_PLACEMENT_CAPABILITY: dict[str, str | None] = {
+    "ground": None,
+    "gantry": "grapple",
+}
+
+#: N-14: a 7.2 m plate needs a control room at the top of the procedural
+#: range, so a gantry's room is an arena at least this tall. (Its clear
+#: floor for the deck and the approach is measured by the engine, which
+#: refuses a room without it by name, and chosen by the composer.)
+GANTRY_MIN_WALL_HEIGHT = C.PROCEDURAL_ARENA_MAX_HEIGHT
+
+
 class RailSpan(Strict):
     """One link between two docks, and the control that commissions it.
 
@@ -909,6 +928,9 @@ class RailSpan(Strict):
     #: Whether the player must cross this span to finish the Zone. THE
     #: REASON THIS IS NOT A FEATURE: §13.2 would forbid exactly this.
     mandatory: bool = False
+    #: D-6: `ground` (the default, and every span declared before it) or
+    #: `gantry`. What operating it needs is `CONTROL_PLACEMENT_CAPABILITY`.
+    control_placement: Literal["ground", "gantry"] = "ground"
 
     @model_validator(mode="after")
     def _a_span_joins_two_different_docks(self):
@@ -916,6 +938,15 @@ class RailSpan(Strict):
             raise ValueError(
                 f"span '{self.span_id}' leaves and arrives at "
                 f"'{self.from_dock}'")
+        return self
+
+    @model_validator(mode="after")
+    def _a_gantry_is_a_control_somewhere(self):
+        if self.control_placement == "gantry" and self.control_room_id is None:
+            raise ValueError(
+                f"span '{self.span_id}' puts its control on a gantry and "
+                "names no room for it; a span with no control ships "
+                "commissioned, and there is nothing to put on a gantry")
         return self
 
 
@@ -2267,7 +2298,29 @@ class Zone(Strict):
                         f"span '{span.span_id}' puts its control in room "
                         f"'{span.control_room_id}', which this Zone does "
                         "not have")
+                if span.control_placement == "gantry":
+                    self._a_gantry_room_can_hold_one(span)
         return self
+
+    def _a_gantry_room_can_hold_one(self, span) -> None:
+        """N-14: the measured gantry needs an arena at the top of the
+        procedural range. An authored shell is refused until one is
+        measured for a gantry: its ceiling and clutter are not this
+        room's numbers."""
+        room = next(c for c in self.chambers
+                    if c.id == span.control_room_id)
+        height = getattr(room, "wall_height", None)
+        if (room.type != "arena" or getattr(room, "shell_id", None)
+                or height is None or height < GANTRY_MIN_WALL_HEIGHT):
+            raise ValueError(
+                f"span '{span.span_id}' puts its gantry in room "
+                f"'{room.id}', a {room.type}"
+                + (f" {height:g} m tall" if height is not None else "")
+                + (f" built as shell '{room.shell_id}'"
+                   if getattr(room, "shell_id", None) else "")
+                + "; the measured gantry needs a procedural arena at least "
+                f"{GANTRY_MIN_WALL_HEIGHT:g} m tall (its plate is 7.2 m up, "
+                "N-14)")
 
     @model_validator(mode="after")
     def _zone_wide_limits(self):
