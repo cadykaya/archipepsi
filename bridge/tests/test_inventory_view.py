@@ -67,10 +67,14 @@ def test_an_upgrade_is_history_on_the_item_not_a_second_item():
                                          "field": "damage", "delta": 2.0}]))
     view = inventory_view(save)
     assert [i.component_id for i in view.items] == ["act_gun"]
-    item = view.items[0]
-    assert item.mk == 2
-    assert [h.operation for h in item.history] == ["create", "upgrade"]
-    assert [h.source_item_name for h in item.history] == ["Pistol", "Scope"]
+    # The history is the fold's, joined on the id -- never a copy here.
+    owned = save.derive().by_id(view.items[0].component_id)
+    assert owned.mk == 2
+    assert [p.operation for p in owned.provenance] == ["create", "upgrade"]
+    assert [p.source_item_name for p in owned.provenance] == [
+        "Pistol", "Scope"]
+    wire = view.model_dump_json()
+    assert "Scope" not in wire and "provenance" not in wire
 
 
 def test_compatibility_is_exactly_what_the_authority_accepts():
@@ -128,6 +132,9 @@ def test_the_view_is_the_fold_and_adds_nothing():
     view = inventory_view(save)
     assert [i.component_id for i in view.items] == [
         o.component_id for o in fold.owned]
-    for item, owned in zip(view.items, fold.owned):
-        assert len(item.history) == len(owned.provenance)
-        assert item.mk == owned.mk
+    # Nothing the fold already carries is repeated: no name, no text, no
+    # history. The snapshot sends the fold once.
+    wire = view.model_dump_json()
+    for owned in fold.owned:
+        assert owned.component.display_name not in wire
+        assert owned.component.description not in wire

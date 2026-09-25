@@ -2679,6 +2679,23 @@
             "title": "Available Capabilities",
             "type": "array"
           },
+          "inventory": {
+            "$ref": "#/$defs/InventoryView",
+            "description": "H-UI-DATA: the menu's items and slots.\n\nRead from the fold and slots above, never folded again. The menu\ndoes not reconstruct upgrade arithmetic, and an item's history is\nattached to it, not repeated as extra equippables. See\n`inventory_view`.",
+            "readOnly": true
+          },
+          "zone_map": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/MapView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "H-MAP-DATA: the active Zone's map, as far as the player has\nfound it; `None` with no Zone. One projection for the minimap,\nthe 3D map and the journal (`map_view`).",
+            "readOnly": true
+          },
           "coins_available": {
             "description": "Derived, never stored \u2014 `DESIGN.md` \u00a712 said so and v0.6 shipped it\nas a free integer that could read 9999 against zero received.",
             "readOnly": true,
@@ -2693,6 +2710,8 @@
           "epsilon_provider",
           "hub",
           "available_capabilities",
+          "inventory",
+          "zone_map",
           "coins_available"
         ],
         "title": "CampaignSnapshot",
@@ -4098,6 +4117,124 @@
         "title": "InfoComponent",
         "type": "object"
       },
+      "InventoryItem": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "title": "Component Id",
+            "type": "string"
+          },
+          "activation": {
+            "enum": [
+              "slotted",
+              "always_on"
+            ],
+            "title": "Activation",
+            "type": "string"
+          },
+          "compatible_slots": {
+            "default": [],
+            "items": {
+              "enum": [
+                "echo_a",
+                "echo_b",
+                "mobility",
+                "utility",
+                "consumable"
+              ],
+              "type": "string"
+            },
+            "title": "Compatible Slots",
+            "type": "array"
+          },
+          "equipped_in": {
+            "anyOf": [
+              {
+                "enum": [
+                  "echo_a",
+                  "echo_b",
+                  "mobility",
+                  "utility",
+                  "consumable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Equipped In"
+          },
+          "charges_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges Max"
+          },
+          "charges_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges Left"
+          },
+          "siblings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Siblings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "component_id",
+          "activation"
+        ],
+        "title": "InventoryItem",
+        "type": "object"
+      },
+      "InventoryView": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/InventoryItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "slots": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/SlotView"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "consumable_generation": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Consumable Generation",
+            "type": "integer"
+          }
+        },
+        "title": "InventoryView",
+        "type": "object"
+      },
       "KnockbackTarget": {
         "additionalProperties": false,
         "properties": {
@@ -4265,6 +4402,202 @@
           "inputs"
         ],
         "title": "LogicNode",
+        "type": "object"
+      },
+      "MapCircuit": {
+        "additionalProperties": false,
+        "properties": {
+          "circuit_id": {
+            "title": "Circuit Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "key",
+              "setting",
+              "machine"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "rooms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "connectors": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Connectors",
+            "type": "array"
+          },
+          "objects": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Objects",
+            "type": "array"
+          }
+        },
+        "required": [
+          "circuit_id",
+          "kind"
+        ],
+        "title": "MapCircuit",
+        "type": "object"
+      },
+      "MapConnector": {
+        "additionalProperties": false,
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "room_a": {
+            "title": "Room A",
+            "type": "string"
+          },
+          "room_b": {
+            "title": "Room B",
+            "type": "string"
+          },
+          "realization": {
+            "title": "Realization",
+            "type": "string"
+          },
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "gates": {
+            "default": [
+              "none"
+            ],
+            "items": {
+              "enum": [
+                "none",
+                "key",
+                "zone_state",
+                "machine",
+                "capability"
+              ],
+              "type": "string"
+            },
+            "title": "Gates",
+            "type": "array"
+          },
+          "circuits": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Circuits",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "unknown",
+              "blocked",
+              "open"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_id",
+          "room_a",
+          "room_b",
+          "realization",
+          "direction",
+          "state"
+        ],
+        "title": "MapConnector",
+        "type": "object"
+      },
+      "MapRoom": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "discovered": {
+            "title": "Discovered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "room_id",
+          "type",
+          "discovered"
+        ],
+        "title": "MapRoom",
+        "type": "object"
+      },
+      "MapView": {
+        "additionalProperties": false,
+        "properties": {
+          "zone_id": {
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "rooms": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapRoom"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "connectors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapConnector"
+            },
+            "title": "Connectors",
+            "type": "array"
+          },
+          "circuits": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapCircuit"
+            },
+            "title": "Circuits",
+            "type": "array"
+          }
+        },
+        "required": [
+          "zone_id"
+        ],
+        "title": "MapView",
         "type": "object"
       },
       "Mechanics": {
@@ -6021,6 +6354,47 @@
           }
         },
         "title": "SlotAssignment",
+        "type": "object"
+      },
+      "SlotView": {
+        "additionalProperties": false,
+        "properties": {
+          "slot": {
+            "enum": [
+              "echo_a",
+              "echo_b",
+              "mobility",
+              "utility",
+              "consumable"
+            ],
+            "title": "Slot",
+            "type": "string"
+          },
+          "holds": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Holds"
+          },
+          "accepts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Accepts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slot"
+        ],
+        "title": "SlotView",
         "type": "object"
       },
       "StateCondition": {
@@ -9961,6 +10335,124 @@
         "title": "InfoComponent",
         "type": "object"
       },
+      "InventoryItem": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "title": "Component Id",
+            "type": "string"
+          },
+          "activation": {
+            "enum": [
+              "slotted",
+              "always_on"
+            ],
+            "title": "Activation",
+            "type": "string"
+          },
+          "compatible_slots": {
+            "default": [],
+            "items": {
+              "enum": [
+                "echo_a",
+                "echo_b",
+                "mobility",
+                "utility",
+                "consumable"
+              ],
+              "type": "string"
+            },
+            "title": "Compatible Slots",
+            "type": "array"
+          },
+          "equipped_in": {
+            "anyOf": [
+              {
+                "enum": [
+                  "echo_a",
+                  "echo_b",
+                  "mobility",
+                  "utility",
+                  "consumable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Equipped In"
+          },
+          "charges_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges Max"
+          },
+          "charges_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges Left"
+          },
+          "siblings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Siblings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "component_id",
+          "activation"
+        ],
+        "title": "InventoryItem",
+        "type": "object"
+      },
+      "InventoryView": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/InventoryItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "slots": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/SlotView"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "consumable_generation": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Consumable Generation",
+            "type": "integer"
+          }
+        },
+        "title": "InventoryView",
+        "type": "object"
+      },
       "KnockbackTarget": {
         "additionalProperties": false,
         "properties": {
@@ -10128,6 +10620,202 @@
           "inputs"
         ],
         "title": "LogicNode",
+        "type": "object"
+      },
+      "MapCircuit": {
+        "additionalProperties": false,
+        "properties": {
+          "circuit_id": {
+            "title": "Circuit Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "key",
+              "setting",
+              "machine"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "rooms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "connectors": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Connectors",
+            "type": "array"
+          },
+          "objects": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Objects",
+            "type": "array"
+          }
+        },
+        "required": [
+          "circuit_id",
+          "kind"
+        ],
+        "title": "MapCircuit",
+        "type": "object"
+      },
+      "MapConnector": {
+        "additionalProperties": false,
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "room_a": {
+            "title": "Room A",
+            "type": "string"
+          },
+          "room_b": {
+            "title": "Room B",
+            "type": "string"
+          },
+          "realization": {
+            "title": "Realization",
+            "type": "string"
+          },
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "gates": {
+            "default": [
+              "none"
+            ],
+            "items": {
+              "enum": [
+                "none",
+                "key",
+                "zone_state",
+                "machine",
+                "capability"
+              ],
+              "type": "string"
+            },
+            "title": "Gates",
+            "type": "array"
+          },
+          "circuits": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Circuits",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "unknown",
+              "blocked",
+              "open"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_id",
+          "room_a",
+          "room_b",
+          "realization",
+          "direction",
+          "state"
+        ],
+        "title": "MapConnector",
+        "type": "object"
+      },
+      "MapRoom": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "discovered": {
+            "title": "Discovered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "room_id",
+          "type",
+          "discovered"
+        ],
+        "title": "MapRoom",
+        "type": "object"
+      },
+      "MapView": {
+        "additionalProperties": false,
+        "properties": {
+          "zone_id": {
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "rooms": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapRoom"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "connectors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapConnector"
+            },
+            "title": "Connectors",
+            "type": "array"
+          },
+          "circuits": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapCircuit"
+            },
+            "title": "Circuits",
+            "type": "array"
+          }
+        },
+        "required": [
+          "zone_id"
+        ],
+        "title": "MapView",
         "type": "object"
       },
       "Mechanics": {
@@ -11806,6 +12494,47 @@
           }
         },
         "title": "SlotAssignment",
+        "type": "object"
+      },
+      "SlotView": {
+        "additionalProperties": false,
+        "properties": {
+          "slot": {
+            "enum": [
+              "echo_a",
+              "echo_b",
+              "mobility",
+              "utility",
+              "consumable"
+            ],
+            "title": "Slot",
+            "type": "string"
+          },
+          "holds": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Holds"
+          },
+          "accepts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Accepts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slot"
+        ],
+        "title": "SlotView",
         "type": "object"
       },
       "StateCondition": {
@@ -13595,6 +14324,23 @@
         "title": "Available Capabilities",
         "type": "array"
       },
+      "inventory": {
+        "$ref": "#/$defs/InventoryView",
+        "description": "H-UI-DATA: the menu's items and slots.\n\nRead from the fold and slots above, never folded again. The menu\ndoes not reconstruct upgrade arithmetic, and an item's history is\nattached to it, not repeated as extra equippables. See\n`inventory_view`.",
+        "readOnly": true
+      },
+      "zone_map": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/MapView"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "H-MAP-DATA: the active Zone's map, as far as the player has\nfound it; `None` with no Zone. One projection for the minimap,\nthe 3D map and the journal (`map_view`).",
+        "readOnly": true
+      },
       "coins_available": {
         "description": "Derived, never stored \u2014 `DESIGN.md` \u00a712 said so and v0.6 shipped it\nas a free integer that could read 9999 against zero received.",
         "readOnly": true,
@@ -13609,6 +14355,8 @@
       "epsilon_provider",
       "hub",
       "available_capabilities",
+      "inventory",
+      "zone_map",
       "coins_available"
     ],
     "title": "CampaignSnapshot",

@@ -52,12 +52,16 @@ try:
     from . import mechanics as M
     from .mechanics import Mechanics, derive_mechanics
     from .zone import ActivityCapability, ActivityKind, Zone
+    from . import inventory_view as IV
+    from . import map_view as MV
 except ImportError:  # pragma: no cover
     import constants as C
     from echo import EchoInterpretation, SlotName
     import mechanics as M
     from mechanics import Mechanics, derive_mechanics
     from zone import ActivityCapability, ActivityKind, Zone
+    import inventory_view as IV
+    import map_view as MV
 
 PROTOCOL_VERSION = 8
 
@@ -1183,15 +1187,8 @@ class CampaignSave(Strict):
         and `transitions.py`'s census is the list of things that return a
         `CampaignSave`.
         """
-        owned = self.derive().by_id(component_id)
-        if owned is None or owned.kind != "action":
-            return 0
-        charges = getattr(owned.component, "charges", None)
-        if charges is None:
-            return 0
-        spent = next((u.spent for u in self.consumable_uses
-                      if u.component_id == component_id), 0)
-        return max(charges - spent, 0)
+        return IV.charges_left(self.derive(), self.consumable_uses,
+                               component_id)
 
     #: The interpretation log: append-only, ordered by `interpretation_seq`,
     #: and the ONLY persisted form of what the player has earned. Live
@@ -1913,6 +1910,32 @@ class CampaignSnapshot(Strict):
         reachable state rather than dead code.
         """
         return M.available_capabilities(self.mechanics, self.slots)
+
+    @computed_field
+    @property
+    def inventory(self) -> IV.InventoryView:
+        """H-UI-DATA: the menu's items and slots.
+
+        Read from the fold and slots above, never folded again. The menu
+        does not reconstruct upgrade arithmetic, and an item's history is
+        attached to it, not repeated as extra equippables. See
+        `inventory_view`.
+        """
+        return IV.inventory_of(self.mechanics, self.slots,
+                               self.consumable_uses,
+                               self.consumable_generation)
+
+    @computed_field
+    @property
+    def zone_map(self) -> MV.MapView | None:
+        """H-MAP-DATA: the active Zone's map, as far as the player has
+        found it; `None` with no Zone. One projection for the minimap,
+        the 3D map and the journal (`map_view`).
+        """
+        rec = self.active_zone
+        if rec is None or rec.zone is None:
+            return None
+        return MV.map_of(rec, self.mechanics, self.slots)
 
     @computed_field
     @property

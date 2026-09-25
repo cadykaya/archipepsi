@@ -163,10 +163,15 @@ def map_view(save, zone_id: str, *, visited=None) -> MapView:
     view that took them as an argument could be handed a different
     answer from the one the snapshot shows.
     """
-    rec = save.zone_by_id(zone_id)
+    return map_of(save.zone_by_id(zone_id), save.derive(), save.slots,
+                  visited=visited)
+
+
+def map_of(rec, mechanics, slots, *, visited=None) -> MapView:
+    """The same map from a Zone record and what a snapshot carries."""
+    zone_id = rec.zone_id
     zone, progress = rec.zone, rec.progress
-    mechanics = save.derive()
-    can_now = set(M.available_capabilities(mechanics, save.slots))
+    can_now = set(M.available_capabilities(mechanics, slots))
     owned = set(M.owned_capabilities(mechanics))
     found = (frozenset(visited) if visited is not None
              else frozenset(progress.visited_rooms or ())

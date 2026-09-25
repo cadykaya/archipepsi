@@ -722,3 +722,53 @@ left alone.
 **Note D-2 (Dess → Prod).** Send
 `{"type": "room_entered", "zone_id", "room_id"}` wherever the minimap
 marks a room seen. A resend is harmless.
+
+## W2 wiring, part C — the snapshot carries the inventory and the map
+
+**The fields.** `CampaignSnapshot.inventory` and
+`CampaignSnapshot.zone_map` (the latter `None` with no Zone) are computed
+on the model from what the snapshot already carries (the fold, the slots,
+the consumable uses and generation, the active Zone record), exactly as
+`available_capabilities` is. `campaign.py`'s snapshot builder is
+untouched.
+
+**The inventory adds only what the fold lacks, keyed by
+`component_id`:**
+- activation;
+- the slots it may and does occupy;
+- charges;
+- siblings.
+
+Name, kind, mk and history are read once, from `mechanics.owned`, by the
+id. This is a change to W2.1's shape, made because of what the size tests
+measured:
+- **The first shape repeated the fold.** It made the inventory about 80%
+  of the fold's size, around 44% of an elided snapshot, and broke the
+  premise that the fold is what an elided snapshot is made of.
+- **The join-by-id shape is 16-21%.** All 22 size tests pass. The worst
+  reachable snapshot is 1,069,647 bytes against the 8 MiB client buffer
+  (7.8x headroom).
+- **C-INVENTORY still holds.** There is no second copy of an item, and
+  no upgrade arithmetic: the join is a lookup, and history lives on the
+  resolved item in the fold.
+
+**The consumable rule is now in one place.** `inventory_view.charges_left`
+is the only rule, and `CampaignSave.charges_left` delegates to it.
+
+**Exports and mirrors.** `make export` regenerated `protocol.schema.json`
+with the snapshot's two new fields. The packet mirrors of `protocol.py`,
+`inventory_view.py` and `map_view.py` are copied. `check_packet` is
+clean.
+
+**Evidence:**
+- `tests/test_snapshot_views.py`: the snapshot equals the direct
+  projections, both reach the wire, and there is no map without a Zone.
+- The inventory tests now read history through the join and assert the
+  view repeats nothing.
+- Sabotage "inventory from nothing": caught.
+- Sabotage "map always absent": caught.
+
+**Note D-3 (Dess → Prod).** The menu reads
+`snapshot.inventory.items[*]` joined to `snapshot.mechanics.owned` by
+`component_id`. The minimap, 3D map and journal read `snapshot.zone_map`,
+overlaying only the live `transitioning` state.
