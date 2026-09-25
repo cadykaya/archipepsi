@@ -4,7 +4,8 @@
 
 **Dess is the single writer of the released files from `5f348ab`
 onward.** Prod asks for shared changes by note. The detail of every
-item is in `docs/ledgers/DESS_POST_PLAYTEST.md`.
+item is in `docs/ledgers/DESS_POST_PLAYTEST.md`, whose last section is
+the readiness table: what Prod can consume now, and what waits on whom.
 
 **Landed since the handback:**
 - DESS-25 and DESS-21.

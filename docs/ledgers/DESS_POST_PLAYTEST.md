@@ -1234,3 +1234,28 @@ and 4 skipped. The schema suite gives 131, and `check_packet` is clean.
 4. `SIGNAL_ZONE_PLACEABLE_SENSORS` is now plate and lever, so your
    `godot-signal-graph` subset check should pass. Godot cannot run here,
    so none of the live suites were run by me.
+
+## Readiness for Prod: what you can consume now, and what waits (at `462bf42`)
+
+The brief asks for one compact table. Each row names the Dess half that
+has landed. "Waits on" names the next owner of the work. Nothing in the
+Dess column stands in for your runtime half.
+
+| Item | Dess half, landed | You can consume now | Waits on |
+|---|---|---|---|
+| H-RESUME-C (D-06, M-2) | review `9503650`, M-2 pinned | your H-RESUME-R as landed | nothing |
+| H-PRESSURE-C 1a + 1b (D-07, M-1) | `d2ffea0` | legacy Zones load and play as saved; `latched_route_zone.json` unchanged | nothing |
+| H-PRESSURE-C 1c | `462bf42` | `lever_route_zone.json`; the candidate's c009 lever route; `compose_latched_route.py --form lever` | you: `godot-candidate-live` on the new candidate, `godot-latched-route-live` on the lever (D-7) |
+| H-PRESSURE-C 1d | `bca85d4`, `70778bc` | `held_route_zone.json` | you: play the held route (D-4) |
+| H-RELEASE-C | `172f6c3` (the D12 room cards) | the three cards | you: the transit-ride fix (N-2), as the owner ruled |
+| H-KEYS | `fe1c68d`; DESS-23 at `0ac9504` | acceptance refuses a key that opens nothing | nothing |
+| H-UI-DATA | `fbe5aa3`, `cf0a2d2`, `7fc7918` | `CampaignSnapshot.inventory` | you: read it (D-3) |
+| H-MAP-DATA | `3ac9d26`, `5ecb6e9`, `7fc7918` | `CampaignSnapshot.zone_map`; the `room_entered` intent | you: send `room_entered` (D-2), read `zone_map` (D-3) |
+| H-SELF-ECHO (D-01) | contract `21cc34d` (D14); field `764f9db` | `CampaignSave.self_addressed_echoes`, false by default | you: D14 §7 (creation true, the grant filter, the reveal, `test_full_loop.py`) |
+| DESS-26 (D-02) | `f877fe8` | an enemy pull no longer answers `grapple` | nothing |
+| H-QUALIFY (D-02) | `8ab7aeb` (`schemas/featured.py`) | `requirement_for`, `check`, `fallback_interpretation` | you: the pipeline wiring (D-5) |
+| H-BLINDSIDE composition | proposal `f316aa4` (D-6) | nothing yet | you: confirm the field and the gantry geometry. Then Dess lands the schema and search, you place the gantry, and Dess composes |
+| H-AP-GATE (D-03) | deferred by ruling, recorded | nothing | a later decision to integrate capability events |
+| H-ATOM-DELIVERY (D-04) | deferred by ruling, recorded | nothing | a real consumer you name, then the smallest verb contract |
+| H-GEAR | options `07584fc` (D16) | nothing | the owner's rulings |
+| CI | none | nothing | the owner (your N-6) |
