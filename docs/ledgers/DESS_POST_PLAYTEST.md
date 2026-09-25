@@ -1570,3 +1570,115 @@ scoped answer there would enshrine the gap.
 - Until then no composer emits a gantry, and D-03 keeps the S3 branch to
   local rewards: the search now refuses anything AP-relevant there
   unless the AP logic declares the grapple.
+
+## The owner's rulings on the Gear speed cap and DESS-28 (2026-09-25, verbatim)
+
+> Checkpoint accepted. Wave 3 is complete on the Dess side.
+>
+> Gear speed cap:
+> Keep the existing StatStack whole-stack cap of ×1.6.
+>
+> Do not introduce a Gear-specific ×1.45 clamp. Gear must continue using the existing runtime stat path without a parallel clamp or balance system.
+>
+> The individual speed Gear piece remains ×1.18. If we later decide Design 1's ×1.45 should be authoritative, that will be handled as a deliberate global movement-stack rebalance rather than as a Gear exception.
+>
+> DESS-28:
+> Choose option (a).
+>
+> Until H-AP-GATE / capability-events support is actually landed, a capability acquired inside a Zone may gate local rewards only.
+>
+> It may not be required to reach:
+> - an AP Check,
+> - required progression,
+> - or a required Zone exit
+>
+> when Archipelago logic cannot itself see and prove that capability prerequisite.
+>
+> Treat this as a temporary safety boundary, not deletion of P02 case C. Once capability events are represented in AP logic, case C can be restored under the proper declared prerequisite.
+>
+> Your decision to revert the generalized rule and escalate the conflict instead of silently overturning P02 was correct.
+>
+> After recording/landing this ruling, hold at the Wave 3 frontier. Do not begin 0.5 yet.
+>
+> Resume only if Production hands back one of the already-approved integration seams or a genuinely new owner decision is required.
+
+## DESS-28 landed as ruled: the temporary boundary; and DESS-29, found by it
+
+**The Gear speed cap** needs no code: the stack's ×1.6 is the one
+envelope and nothing clamps Gear alone, as landed at `60170f9` and
+pinned by `test_nothing_clamps_gear_alone`.
+
+**The boundary** (`topology.reachability`). With a featured
+acquisition whose capability the AP logic does not declare, the exit,
+every Check and every key must be reachable without it. Past such a
+gate: local rewards only. The comment names it temporary: once
+capability events are in the AP logic (H-AP-GATE), the block is removed
+and case C returns under its declared prerequisite. With the
+capability declared, nothing fires. D-6's gantry is covered, and it
+keeps its own wording ("beyond gantry").
+
+**DESS-29 (defect, found by landing it).** A search state is (room,
+keys, Zone state). Nothing in it says the featured tool was picked up.
+So the two checks that search again from a state ("can the exit still
+be reached", "can the room still be left") started without the tool,
+as if the player had dropped it. Case C always had the exit ahead, so
+it never showed. The ruled shape, local rewards past the gate and then
+the walk back, was refused as a trap.
+- **Fixed:** a state reachable only after the claim is searched from
+  holding the tool.
+- **The other half, pinned:** a player who walked through the featured
+  room without claiming and dropped into a room with no way back still
+  holds nothing, and that dead run is still refused.
+
+**Tests changed on purpose, each to assert the ruling:**
+- P02's case C (`test_featured_acquisition.py`):
+  - the route past the gate opens with the exit before it;
+  - the same Zone with the exit past the gate is refused, naming
+    H-AP-GATE;
+  - declared, it is sound;
+  - the three-cases test keeps `[False, False, True]` with the exit
+    before the gate.
+- D-8's composer (`test_cross_room_composer.py`):
+  - undeclared, it declines, naming §29.5a and H-AP-GATE;
+  - declared, it composes as before, the control still needing the
+    grapple.
+- The gantry's message now reads the ruling.
+
+**New tests:**
+- the boundary on an ordinary capability doorway;
+- the pre-claim dead run.
+
+**Also, Prod's N-16:** the gantry figures in `zone.py`, `featured.py`
+and the tests are now relative to the floor the player grapples from.
+The deck top is 2.9 m, the plate 6.2 m, the build needs 6.8 m, the
+played jump peaks at 1.40 m and the pull at 3.98 m. The 8.0 m rule
+stands.
+
+**Sabotages.** Each one failed by name and was restored byte-for-byte:
+
+| # | rule removed | caught by |
+|---|---|---|
+| B1 | no boundary | case C, the composer, the gantry (4) |
+| B2 | the boundary only at a gantry | case C, the composer, the doorway (3) |
+| B3 | the composer's ruled note dropped | the composer case |
+| D29a | the held tool forgotten again | case C, the three cases |
+| D29b | the tool held everywhere | the pre-claim dead run |
+
+## Replies to Prod's N-16; note D-10 (Dess → Prod), for D-6 step 4
+
+- **N-16:** the corrected figures are in the comments, in your proposed
+  wording (the floor it is grappled from: 2.9 m and 6.2 m). The played
+  jump apex of 1.40 m is recorded. No bridge rule derives a keep-out
+  margin from `JUMP_APEX_HEIGHT` for the gantry: its reach is your
+  measured field, and the bridge only declares the capability.
+- **D-10, the one thing step 4 needs from you first.** The composer
+  will prefer the largest arenas for a gantry, as you propose. Please
+  measure whether the gantry fits in the arena sizes the composer can
+  produce: the procedural maximum footprint at `wall_height` 8.0, and
+  the 24 m arena you found works, each with the track crossing the room
+  on the arrival axis, as the three-dock S1–S2–S3 layout would lay it.
+  With the smallest size that fits, the composer takes its room choice
+  from your numbers, not from a guess.
+- **Beyond the gantry:** local rewards only, now enforced by the search
+  (the DESS-28 ruling). The featured Check stays on the acquisition
+  branch, before the gate.

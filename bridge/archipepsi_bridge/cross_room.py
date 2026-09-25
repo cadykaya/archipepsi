@@ -102,6 +102,12 @@ def compose_zone_state(zone: Zone, *, variable_id: str = "span_alignment",
 
     lo, hi = _SETTER_WINDOW
     edges_by_pair = {frozenset(e.rooms): e for e in zone.edges}
+    # The first refusal that is §29.5a's, if any: the one reason worth
+    # naming, because it is a ruling rather than a geometry that did not
+    # fit. This composer gates the spine, so the exit is always past its
+    # gate: with a capability only this Zone hands over, it declines
+    # until H-AP-GATE (owner ruling on DESS-28).
+    ruled: str | None = None
 
     for si in range(lo, min(hi, len(rooms) - 2) + 1):
         setter_room = rooms[si]
@@ -137,6 +143,9 @@ def compose_zone_state(zone: Zone, *, variable_id: str = "span_alignment",
                 continue
             reach = reachability(candidate, entry_id, exit_id,
                                  declared_capabilities)
+            if ruled is None:
+                ruled = next((e for e in reach.errors if "§29.5a" in e),
+                             None)
             if reach.ok:
                 return Composed(
                     candidate, variable_id,
@@ -146,7 +155,8 @@ def compose_zone_state(zone: Zone, *, variable_id: str = "span_alignment",
                     f"'{gated.edge_id}'")
     return Composed(zone, None,
                     "no placement validated: every candidate either "
-                    "stranded the player or gated a route nothing opens")
+                    "stranded the player or gated a route nothing opens"
+                    + (f"; first by ruling: {ruled}" if ruled else ""))
 
 
 def _emit(zone: Zone, variable_id, states, mechanism, setter_room,

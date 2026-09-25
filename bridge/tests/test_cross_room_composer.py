@@ -301,8 +301,19 @@ def _featuring(capability: str = "grapple", *, late: bool = False):
 def test_the_composer_reads_the_setters_cost_off_the_featured_acquisition():
     """Correction 2 reaching the composer: if the Zone grants a
     capability, the control it composes is the one you need it for --
-    Blindside's gantry, overhead and out of reach."""
-    out = compose_zone_state(_featuring())
+    Blindside's gantry, overhead and out of reach.
+
+    **The owner's DESS-28 ruling (2026-09-25) decides where it may
+    stand.** This composer gates the spine, so the exit lies past its
+    gate. Until capability events are in the Archipelago logic
+    (H-AP-GATE), a capability only this Zone hands over gates local
+    rewards only, so it declines, naming the ruling. Declared, the same
+    Zone composes, and the control still needs the grapple.
+    """
+    ruled = compose_zone_state(_featuring())
+    assert not ruled.emitted
+    assert "§29.5a" in ruled.note and "H-AP-GATE" in ruled.note, ruled.note
+    out = compose_zone_state(_featuring(), declared_capabilities=["grapple"])
     assert out.emitted, out.note
     assert out.zone.zone_state[0].setter.capability == "grapple"
     assert "needing 'grapple'" in out.note
@@ -315,14 +326,16 @@ def test_the_player_picks_the_tool_up_before_the_control_that_needs_it():
     later, so `_explore_acquiring`'s two phases are what make this Zone
     solvable at all: without the claim between them the gate never opens.
     """
-    out = compose_zone_state(_featuring())
+    # Declared, as DESS-28's ruling requires before a spine gate may
+    # need a capability the Zone hands over.
+    out = compose_zone_state(_featuring(), declared_capabilities=["grapple"])
     order = [c.id for c in out.zone.chambers]
     acq = order.index(out.zone.featured_acquisition.room_id)
     setter = order.index(out.zone.zone_state[0].setter.room_id)
     assert acq <= setter, (
         f"the tool is in {order[acq]} and the control in {order[setter]}; "
         "the composer must not put the control before the tool")
-    assert reachability(out.zone).ok
+    assert reachability(out.zone, declared_capabilities={"grapple"}).ok
 
 
 def test_the_composer_declines_when_the_tool_sits_past_its_own_gate():
@@ -357,7 +370,10 @@ def test_declaring_the_capability_does_not_rescue_a_circular_zone():
     assert compose_zone_state(late).emitted is False
     assert compose_zone_state(
         late, declared_capabilities=["grapple"]).emitted is False
-    assert compose_zone_state(_featuring()).emitted is True
+    # Early and declared composes (undeclared, a spine gate may not need
+    # a capability the Zone hands over: DESS-28, the test above).
+    assert compose_zone_state(
+        _featuring(), declared_capabilities=["grapple"]).emitted is True
 
 
 # --------------------------------------------------------------------------

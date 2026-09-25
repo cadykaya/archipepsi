@@ -2,10 +2,11 @@
 
 ## BRIDGE LANE — HOLDING at the Wave 3 checkpoint (owner, 2026-09-25)
 
-**Hold.** The owner accepted `462bf42` and `bab79db` as the Wave 3
-checkpoint, ruled D16, and said: do not begin 0.5. Resume an approved
-seam only when Prod hands back a listed bridge dependency; otherwise
-hold. 0.5 opens deliberately, as a team.
+**Hold.** Wave 3 is complete on the Dess side (owner, 2026-09-25). The
+owner ruled D16, the Gear speed cap and DESS-28, and said: do not begin
+0.5. Resume only if Prod hands back an approved integration seam or a
+genuinely new owner decision is needed. 0.5 opens deliberately, as a
+team.
 
 **Dess is the single writer of the released files from `5f348ab`
 onward.** Prod asks for shared changes by note. The detail of every
@@ -53,8 +54,9 @@ under the owner's hand-back rule.
   - the StatStack multiplies `gear_effects`;
   - the Equipment wall wears Gear.
   Then Dess opens the gate in one commit and retakes the baseline.
-- D-9: the gantry placement in `RailNetworks` (D-6 step 3). Dess's step
-  4, the composer, follows it.
+- D-10: Prod's D-9 (the gantry placement) landed at `82068a9`. Dess's
+  step 4, the composer, needs the arena sizes measured first (N-16's
+  offer). The note names the sizes to measure.
 
 **Wave 3, owner-approved 2026-09-25:**
 - DESS-26 is fixed: an enemy pull is not a crossing.
@@ -70,13 +72,15 @@ under the owner's hand-back rule.
   step 4, the composer. Beyond the gantry: local rewards only (D-03).
 - H-AP-GATE and H-ATOM-DELIVERY are explicitly deferred (ledger).
 
-**Waiting on the owner:**
-- DESS-28, a material contract conflict: may an in-Zone acquisition
-  (P02's case C) gate AP-relevant content before H-AP-GATE? Options are
-  in the ledger; the recommendation is no, generalising §29.5a;
-- CI (Prod's N-6);
-- optionally, the one G1 interpretation: the stack's ×1.6 speed cap
-  stands, not §16.5's ×1.45 (D16, "G1 as ruled").
+**Ruled and landed:**
+- the Gear speed cap: the stack's ×1.6 stands, and no Gear clamp;
+- DESS-28, option (a): until H-AP-GATE, a capability acquired in a Zone
+  gates local rewards only. It is a temporary boundary; P02's case C
+  returns under a declared prerequisite.
+- DESS-29 was found and fixed while landing it: a player past the claim
+  holds the tool.
+
+**Waiting on the owner:** CI (Prod's N-6).
 
 **CI is not running.** Every PR-gate and Integration run has failed
 within about four seconds, with no log, since at least `6ebbc90`, for

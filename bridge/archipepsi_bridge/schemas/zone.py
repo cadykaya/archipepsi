@@ -894,7 +894,9 @@ class RailDock(Strict):
 #: D-6 (proposed 2026-09-25, confirmed by Prod's N-14): where a span's
 #: control stands, and what operating it therefore needs. `ground` is
 #: today's lever at the control room's arrival, base kit. `gantry` is the
-#: development scenario's deck -- 3.1 m up, its hookshot plate 7.2 m up,
+#: development scenario's deck -- its top 2.9 m and its hookshot plate 6.2 m
+#: above the floor it is grappled from (Prod's N-16 corrects N-14's 3.1
+#: and 7.2, which were from the scenario's ground),
 #: no stairs and no mantle by the owner's rule -- reached only by the
 #: proven anchor grapple, so it needs `grapple`: DESS-26's contract,
 #: derived from the placement and never declared beside it.
@@ -903,8 +905,8 @@ CONTROL_PLACEMENT_CAPABILITY: dict[str, str | None] = {
     "gantry": "grapple",
 }
 
-#: N-14: a 7.2 m plate needs a control room at the top of the procedural
-#: range, so a gantry's room is an arena at least this tall. (Its clear
+#: N-14/N-16: the gantry's build needs 6.8 m of height, so its room is an
+#: arena at the top of the procedural range, at least this tall. (Its clear
 #: floor for the deck and the approach is measured by the engine, which
 #: refuses a room without it by name, and chosen by the composer.)
 GANTRY_MIN_WALL_HEIGHT = C.PROCEDURAL_ARENA_MAX_HEIGHT
@@ -1112,7 +1114,7 @@ class ZoneStateSetter(Strict):
     #: **What this field is and is not.** It is the DECLARATION of what
     #: operating the control costs, and `reachability` honours it. It is
     #: NOT evidence that the control really is out of reach: that the
-    #: gantry stands at 4.6 m and a baseline jump tops out at 1.33 m is
+    #: gantry's deck tops out 2.9 m up and the played jump at 1.40 m is
     #: a physical measurement, and it belongs to the engine lane. The
     #: two are kept apart deliberately -- a declaration the world does
     #: not match is a lie in either direction.
@@ -2319,8 +2321,8 @@ class Zone(Strict):
                 + (f" built as shell '{room.shell_id}'"
                    if getattr(room, "shell_id", None) else "")
                 + "; the measured gantry needs a procedural arena at least "
-                f"{GANTRY_MIN_WALL_HEIGHT:g} m tall (its plate is 7.2 m up, "
-                "N-14)")
+                f"{GANTRY_MIN_WALL_HEIGHT:g} m tall (its plate is 6.2 m up and "
+                "the build needs 6.8 m, N-16)")
 
     @model_validator(mode="after")
     def _zone_wide_limits(self):

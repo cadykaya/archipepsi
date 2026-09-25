@@ -270,10 +270,24 @@ def _gated(order, gate_after: int, featured_room: str):
 
 def test_the_zone_grants_the_capability_and_the_route_past_it_opens():
     """Case C, actually firing. The gate sits AFTER the featured room, so
-    the player claims the Echo and walks on."""
+    the player claims the Echo and walks on.
+
+    **Under the owner's DESS-28 ruling (2026-09-25), past it lie local
+    rewards only** until capability events are in the Archipelago logic
+    (H-AP-GATE). So the case is asked with the exit before the gate:
+    c006, past it, holds no Check, and the route to it opens. With the
+    exit past the gate the same Zone is refused, and declaring the
+    capability restores it -- which is how case C returns."""
     order = ["c001", "c002", "c005", "c006"]
     zone = _gated(order, gate_after=2, featured_room="c005")
-    assert topology.reachability(zone).ok
+    local = topology.reachability(zone, exit_id="c005")
+    assert local.ok, local.errors
+    assert "c006" in local.rooms
+    ruled = topology.reachability(zone)
+    assert any("the exit 'c006' is reachable only with" in e
+               and "H-AP-GATE" in e for e in ruled.errors), ruled.errors
+    assert topology.reachability(
+        zone, declared_capabilities={CAPABILITY}).ok
 
 
 def test_the_capability_is_not_in_hand_at_the_zone_door():
@@ -310,9 +324,57 @@ def test_the_three_cases_differ_only_in_where_the_gate_stands():
     """Side by side, so none of them can pass for a reason that has
     nothing to do with the ordering."""
     order = ["c001", "c002", "c005", "c006"]
-    verdicts = [topology.reachability(_gated(order, g, "c005")).ok
+    # The exit before the gate: past it, local rewards only (DESS-28).
+    verdicts = [topology.reachability(_gated(order, g, "c005"),
+                                      exit_id="c005").ok
                 for g in (0, 1, 2)]
     assert verdicts == [False, False, True], verdicts
+
+
+def _drop_room():
+    """c001 -> c005 (featured) -> c006 (exit), and c007 off the spine: a
+    one-way drop from c005 into it, and a way back to c001 only with the
+    grapple. Both are plugs, so they bind no doorway."""
+    from archipepsi_bridge.schemas.graph import PlugAssignment, TopologyEdge
+    zone = TypeAdapter(Z.Zone).validate_python({
+        "schema_version": 7, "zone_id": "zone_001", "display_name": "Relay",
+        "target_game": "Game", "theme": "void_glitch",
+        "chambers": [_arena("c001", 89100001), _arena("c005",
+                                                      FEATURED_LOCATION),
+                     _arena("c007"), _arena("c006")],
+        "featured_acquisition": {"capability": CAPABILITY,
+                                 "location_id": FEATURED_LOCATION,
+                                 "room_id": "c005"},
+    })
+    spine = [c for c in zone.chambers if c.id != "c007"]
+    built = topology.apply(zone, topology.compose_chain(spine))
+    plugs = [
+        (TopologyEdge(edge_id="e:c005:c007:drop", room_a="c005",
+                      room_b="c007", realization="TRAVERSAL_ONLY",
+                      direction="A_TO_B"), "c005", "c007"),
+        (TopologyEdge(edge_id="e:c007:c001:hook", room_a="c007",
+                      room_b="c001", realization="TRAVERSAL_ONLY",
+                      direction="A_TO_B", capability=CAPABILITY),
+         "c007", "c001"),
+    ]
+    return built.model_copy(update={
+        "edges": built.edges + tuple(e for e, _, _ in plugs),
+        "plugs": built.plugs + tuple(
+            PlugAssignment(edge_id=e.edge_id, room_id=a,
+                           source_anchor=f"room:{a}:arrival",
+                           destination=f"room:{b}:arrival")
+            for e, a, b in plugs)})
+
+
+def test_a_room_reached_before_the_claim_is_searched_without_the_tool():
+    """DESS-29, its other half. A player past the claim holds the tool --
+    but one who walked through the featured room WITHOUT claiming and
+    dropped into c007 does not, and has no way back. That dead run must
+    still be refused: the tool is held only where it can have been
+    picked up, never everywhere."""
+    verdict = topology.reachability(_drop_room())
+    assert not verdict.ok
+    assert any("'c007'" in e for e in verdict.errors), verdict.errors
 
 
 def test_a_zone_that_features_nothing_is_unchanged():

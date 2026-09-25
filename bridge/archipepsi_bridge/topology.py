@@ -1440,7 +1440,7 @@ def _key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
 
 def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
                keys_by_room, have: frozenset[str],
-               zone_state=(), zone=None) -> tuple[str, ...]:
+               zone_state=(), zone=None, have_at=None) -> tuple[str, ...]:
     """SOLUTIONS_CATALOGUE §0-bis condition 4, and **it never changes the
     verdict**. It says which KIND of failure a refused Zone has.
 
@@ -1490,9 +1490,10 @@ def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
             # The way back may run through the claim, same as the way
             # on: a player who has not picked up the featured Echo yet
             # can still go and get it before retreating.
+            base = have_at(key) if have_at is not None else have
             back = (_explore_acquiring(
                         zone, room, edges, doors_by_room, keys_by_room,
-                        have, zone_state=zone_state, start_held=held,
+                        base, zone_state=zone_state, start_held=held,
                         start_macro=macro)
                     if zone is not None else
                     _explore(room, edges, doors_by_room, keys_by_room, have,
@@ -1846,39 +1847,65 @@ def reachability(zone, entry_id: str | None = None,
         if rest:
             errors.append(f"{what} {rest} are not reachable at all")
 
+    # DESS-29: A PLAYER PAST THE CLAIM IS HOLDING THE TOOL. A search
+    # state is (room, keys, Zone state), and nothing in it says the
+    # featured capability was picked up -- so every check that searches
+    # again FROM a state (can the exit still be reached; can the room
+    # still be left) used to start without it, as if the grapple used to
+    # get there had been dropped. A state reachable only after the claim
+    # is searched from holding it. (Masked while case C had the exit
+    # ahead of the gate; the DESS-28 ruling's local-rewards shape needs
+    # the walk back.)
+    featured_cap = getattr(getattr(zone, "featured_acquisition", None),
+                           "capability", None)
+    plain = None
+    if featured_cap is not None and featured_cap not in have:
+        plain = _explore(entry, zone.edges, doors_by_room, keys_by_room,
+                         have, zone_state=zstate)
+    tooled = have | ({featured_cap} if plain is not None else set())
+
+    def have_at(state) -> frozenset[str]:
+        return (frozenset(tooled) if plain is not None
+                and state not in plain.states else have)
+
     blame("the exit", [exit_room])
     blame("Check-bearing room(s)",
           [c.id for c in chambers if c.reward_ids])
     blame("key-bearing room(s)", [c.id for c in chambers if c.keys])
 
-    # D-6 / D-03 (owner, 2026-09-25): NOTHING AP-RELEVANT BEYOND A GANTRY
-    # until the Archipelago logic declares the grapple. A room reached
-    # only over a gantry ride, and only because this Zone hands the
-    # grapple over, is a room the AP logic cannot see needs it: a Check,
-    # a key or the exit there would be a gate it never declared. With
-    # the grapple declared (`declared_capabilities`) the ride is as
-    # visible to it as any gate, and the rule above already answers.
-    # So beyond a gantry: local rewards only.
-    if gantry:
-        plain = _explore(entry, zone.edges, doors_by_room, keys_by_room,
-                         have, zone_state=zstate)
-        beside = _explore_acquiring(
-            zone, entry, [e for e in zone.edges if e.edge_id not in gantry],
-            doors_by_room, keys_by_room, have, zone_state=zstate)
+    # DESS-28, owner ruling (a), 2026-09-25: A CAPABILITY ACQUIRED INSIDE
+    # A ZONE MAY GATE LOCAL REWARDS ONLY -- a temporary safety boundary
+    # until H-AP-GATE lands capability events in the Archipelago logic.
+    #
+    # The rules above search with the Zone's own acquisition
+    # (`_explore_acquiring`), which is right for what the player can
+    # reach. It is not what the AP logic can see: until capability events
+    # are represented there, it cannot see or prove that a gate opened
+    # by this Zone's own tool needs it. So that tool may not be required
+    # to reach an AP Check, required progression (a key) or the Zone's
+    # exit. With the capability declared (`declared_capabilities`) the
+    # gate is as visible as any other and nothing here fires.
+    #
+    # NOT a deletion of P02's case C: once capability events are in the
+    # AP logic, case C returns under its declared prerequisite, and this
+    # block is what is removed. D-6's gantry is the first such gate.
+    if featured_cap is not None and featured_cap not in have:
         for what, rooms in (
                 ("the exit", [exit_room]),
                 ("Check-bearing room", [c.id for c in chambers
                                         if c.reward_ids]),
                 ("key-bearing room", [c.id for c in chambers if c.keys])):
             for room in rooms:
-                if (room in real.rooms and room not in plain.rooms
-                        and room not in beside.rooms):
+                if room in real.rooms and room not in plain.rooms:
+                    where = (f"beyond gantry {sorted(gantry)}" if gantry
+                             else "behind a capability gate")
                     errors.append(
-                        f"{what} '{room}' lies beyond gantry "
-                        f"{sorted(gantry)}, crossable only with a grapple "
-                        "acquired in this Zone, which the Archipelago logic "
-                        "does not declare (§29.5a, owner ruling D-03): "
-                        "beyond a gantry, local rewards only")
+                        f"{what} '{room}' is reachable only with "
+                        f"'{featured_cap}' acquired in this Zone, "
+                        f"{where}; until capability events are in the "
+                        "Archipelago logic (H-AP-GATE), a capability "
+                        "acquired in a Zone gates local rewards only "
+                        "(§29.5a, owner ruling on DESS-28)")
 
     # D-1. YOU MAY NOT NEED THE GRAPPLE TO REACH THE GRAPPLE.
     #
@@ -1958,7 +1985,8 @@ def reachability(zone, entry_id: str | None = None,
     # finishing is still leaving.
     errors.extend(_escapable(real, frozenset({entry, exit_room}),
                              zone.edges, doors_by_room, keys_by_room,
-                             have, zone_state=zstate, zone=zone))
+                             have, zone_state=zstate, zone=zone,
+                             have_at=have_at))
 
     # R subset E, over STATES rather than rooms: a room you can stand in
     # holding the wrong keys is a different situation from the same room
@@ -1972,7 +2000,8 @@ def reachability(zone, entry_id: str | None = None,
         # every Zone whose exit lies past its own featured acquisition --
         # which is the shape the acquisition is FOR.
         onward = _explore_acquiring(zone, room, zone.edges, doors_by_room,
-                                    keys_by_room, have, zone_state=zstate,
+                                    keys_by_room, have_at((room, held, macro)),
+                                    zone_state=zstate,
                                     start_held=held, start_macro=macro)
         if exit_room not in onward.rooms:
             # D-8. THIS IS WHERE A SELF-LOCKING CONFIGURATION SURFACES.

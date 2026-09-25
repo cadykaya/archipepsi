@@ -83,9 +83,10 @@ class FeaturedRequirement(BaseModel):
 
 
 #: The proven requirements, by the capability a featured room declares.
-#: Blindside's gantry: the development scenario reaches its deck -- 3.1 m
-#: up, 7.5 m out, where a standing jump tops out at 1.33 m -- with exactly
-#: this grapple, and a 14 m/s pull tops out at 4.45 m.
+#: Blindside's gantry: the development scenario reaches its deck -- its
+#: top 2.9 m above the floor it is grappled from, 7.5 m out, where a
+#: standing jump as played tops out at 1.40 m -- with exactly this grapple;
+#: the 14 m/s pull peaks at 3.98 m (Prod's N-16, `godot-rail-gantry`).
 FEATURED_REQUIREMENTS: dict[str, FeaturedRequirement] = {
     "grapple": FeaturedRequirement(
         capability="grapple", primitive="grapple_to_surface",

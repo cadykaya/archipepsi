@@ -2,7 +2,8 @@
 
 Proposed as note D-6 and confirmed by Prod's N-14 (2026-09-25):
 `RailSpan.control_placement` is `ground` (today's lever) or `gantry` (the
-development scenario's deck, 3.1 m up with its hookshot plate 7.2 m up,
+development scenario's deck, its top 2.9 m and its plate 6.2 m above the
+floor it is grappled from (N-16),
 no stairs, no mantle). A gantry needs `grapple` -- DESS-26's anchor
 grapple, derived, never declared -- and an arena at the top of the
 procedural range. The route search now rides a span between its docks'
@@ -157,8 +158,9 @@ def test_no_check_beyond_a_gantry_opened_by_this_zone_s_own_grapple():
     Check past it needs the grapple. Refused by name."""
     verdict = TP.reachability(_zone(control_placement="gantry",
                                     far_reward=89100005, featured=_HERE))
-    assert any("Check-bearing room 'c005' lies beyond gantry" in e
-               and "D-03" in e for e in verdict.errors), verdict.errors
+    assert any("Check-bearing room 'c005' is reachable only with 'grapple'"
+               in e and "beyond gantry" in e and "H-AP-GATE" in e
+               for e in verdict.errors), verdict.errors
 
 
 def test_beyond_a_gantry_local_rewards_only_is_sound():
@@ -175,3 +177,19 @@ def test_a_ground_lever_imposes_nothing_ap_can_miss():
     so a Check past it is an ordinary Check."""
     assert TP.reachability(_zone(far_reward=89100005, featured=_HERE)).ok
 
+
+def test_the_boundary_is_every_zone_acquired_gate_not_only_the_gantry():
+    """The owner's DESS-28 ruling (a): an ordinary doorway that needs the
+    grapple, with the grapple only handed over in this Zone, keeps the
+    exit from the Archipelago logic just the same -- refused until
+    capability events are in it; declared, sound."""
+    zone = _zone(rail=False, featured=_HERE)
+    raw = zone.model_dump()
+    (last,) = [e for e in raw["edges"] if e["edge_id"] == "e:c003:c004"]
+    last["capability"] = "grapple"
+    gated = Zone.model_validate(raw)
+    verdict = TP.reachability(gated)
+    assert any("the exit 'c004' is reachable only with 'grapple'" in e
+               and "behind a capability gate" in e for e in verdict.errors), \
+        verdict.errors
+    assert TP.reachability(gated, declared_capabilities={"grapple"}).ok
