@@ -1,13 +1,75 @@
 {
 	"_contrast": {
-		"body_lstar": 0.453000000000000014,
-		"body_px": 1565136,
+		"body_lstar": 0.419999999999999984,
+		"body_px": 12055,
 		"clears_interactable_rule": false,
-		"clears_value_rule": true,
+		"clears_value_rule": false,
 		"min_interactable_separation": 0.179999999999999993,
 		"min_value_separation": 0.100000000000000006,
-		"separation_lstar": 0.165000000000000008,
-		"wall_lstar": 0.617999999999999994
+		"per_role": {
+			"artillery": {
+				"clears_interactable_rule": false,
+				"lstar": 0.377000000000000002,
+				"px": 1463,
+				"separation_lstar": 0.111000000000000001
+			},
+			"beacon": {
+				"clears_interactable_rule": false,
+				"lstar": 0.391000000000000014,
+				"px": 772,
+				"separation_lstar": 0.0970000000000000029
+			},
+			"brute": {
+				"clears_interactable_rule": false,
+				"lstar": 0.420999999999999985,
+				"px": 3804,
+				"separation_lstar": 0.067000000000000004
+			},
+			"bulwark": {
+				"clears_interactable_rule": false,
+				"lstar": 0.439000000000000001,
+				"px": 2423,
+				"separation_lstar": 0.0490000000000000019
+			},
+			"charger": {
+				"clears_interactable_rule": false,
+				"lstar": 0.447000000000000008,
+				"px": 715,
+				"separation_lstar": 0.0410000000000000017
+			},
+			"diver": {
+				"clears_interactable_rule": false,
+				"lstar": 0.474000000000000032,
+				"px": 281,
+				"separation_lstar": 0.0140000000000000003
+			},
+			"drifter": {
+				"clears_interactable_rule": false,
+				"lstar": 0.454000000000000015,
+				"px": 735,
+				"separation_lstar": 0.0340000000000000024
+			},
+			"melee": {
+				"clears_interactable_rule": false,
+				"lstar": 0.416000000000000036,
+				"px": 911,
+				"separation_lstar": 0.0720000000000000084
+			},
+			"ranged": {
+				"clears_interactable_rule": false,
+				"lstar": 0.408000000000000029,
+				"px": 637,
+				"separation_lstar": 0.0800000000000000017
+			},
+			"scuttler": {
+				"clears_interactable_rule": false,
+				"lstar": 0.400000000000000022,
+				"px": 314,
+				"separation_lstar": 0.0879999999999999949
+			}
+		},
+		"separation_lstar": 0.067000000000000004,
+		"wall_lstar": 0.487999999999999989
 	},
 	"_faults": [],
 	"_meta": {

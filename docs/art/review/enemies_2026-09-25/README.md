@@ -50,16 +50,42 @@ The silhouette test is the kindest test a shape will ever get — black on
 nothing. In the room, against the wall they stand in front of:
 
 ```
-the family reads at L* 0.453, the wall at L* 0.618 -- 0.165 apart
-  min_value_separation        0.10   clears
+the family reads at L* 0.420, the wall at L* 0.488 -- 0.067 apart
+  min_value_separation        0.10   SHORT
   min_interactable_separation 0.18   SHORT
 ```
 
-The family clears the ordinary value rule and **falls 0.015 short of the
-interactable one** — and an enemy is the most interactable thing in the
-room. It is a near miss, not a catastrophe, but it is on the wrong side
-of the right rule, and it affects all ten at once. Outline work on two
-pairs will not touch it.
+**The family fails both of the palette's separation rules**, and an
+enemy is the most interactable thing in the room. This affects all ten
+at once, and no amount of outline work on two pairs will move it.
+
+Per role, worst first — this is the order the fixes want to be made in:
+
+| role | body L\* | from the wall | clears 0.10 | clears 0.18 |
+| --- | --- | --- | --- | --- |
+| `diver` | 0.474 | **0.014** | no | no |
+| `drifter` | 0.454 | 0.034 | no | no |
+| `charger` | 0.447 | 0.041 | no | no |
+| `bulwark` | 0.439 | 0.049 | no | no |
+| `brute` | 0.421 | 0.067 | no | no |
+| `melee` | 0.416 | 0.072 | no | no |
+| `ranged` | 0.408 | 0.080 | no | no |
+| `scuttler` | 0.400 | 0.088 | no | no |
+| `beacon` | 0.391 | 0.097 | no | no |
+| `artillery` | 0.377 | **0.111** | yes | no |
+
+`diver` is the extreme case: at **0.014 L\*** it is, in value terms,
+the wall. Only `artillery` clears even the ordinary value rule, and
+nothing clears the interactable one.
+
+> **Correction.** An earlier version of this README reported the family
+> separation as 0.165 and said it cleared the value rule. That number
+> came from a broken occupancy mask which counted three quarters of the
+> frame as "enemy", so the wall was being sampled from the wrong
+> pixels. The figures above are measured per role with one render each
+> and were checked a second time by an independent script reading the
+> PNGs. The harness now refuses any region covering more than 10% of
+> the frame.
 
 ## One envelope overflow, reported not fixed
 

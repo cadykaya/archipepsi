@@ -46,17 +46,22 @@ selection treatment now; defer anything that needs a slot's meaning.
 The cells are empty because the vocabulary has not arrived, not because
 the art is unfinished.
 
-## Two things I want a decision on
+## Two things I wanted a decision on — the first is ruled
 
-**1. Interface chrome has no universal family.** The palette has six —
-`signal`, `hazard`, `identity`, `dead`, `send`, `glitch` — and each one
-means something load-bearing. None of them means "chrome". These panels
-are built from the `dead` ramp, which is defensible (a frame is not for
-you; its contents are) but which also spends the ramp that means
-*unpowered, locked, spent, offline*. If a locked slot and the frame
-around it are both `dead`, the locked slot stops reading. The options
-are a seventh universal family for chrome, or a rule that chrome uses
-`dead`'s dark half and item state uses its light half.
+**1. Interface chrome has no universal family. — RULED, 2026-09-25.**
+
+> *"Interface chrome may continue using the `dead` family provisionally
+> for neutral chrome only. Keep `signal`, `hazard` and `identity`
+> reserved for their semantic roles rather than generic decoration."*
+
+So these panels stand as authored. The concern that raised the question
+is not dismissed by the ruling and is worth writing down for whoever
+meets it next: `dead` also means *unpowered, locked, spent, offline*,
+so a locked slot drawn in `dead` on `dead` chrome will not read. When
+item and state art arrives — once Production's slot vocabulary lands —
+that collision is where it will show up, and the answer will probably
+be a value band rather than a new family: chrome in `dead`'s dark half,
+item state in its light half.
 
 **2. One pixel of bevel.** On a dark background in
 `PANELS_at_four_sizes`, `panel` and `well` take a moment to tell apart —

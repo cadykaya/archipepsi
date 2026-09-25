@@ -238,18 +238,46 @@ def _town_floor(canvas, surface, theme):
 
 
 def _town_accent(canvas, surface, theme):
-    """A painted board. Shop signs are the town's whole visual language."""
+    """A painted shop board. Signs are the town's whole visual language.
+
+    OWNER RULING, 2026-09-25: *"Adjust T05's sign accent away from the
+    family's look. The pack needs to read as its own place."* The first
+    cut filled the board with the family's own `accent` green, so on a
+    small accent surface the two read alike -- which is the finding I
+    raised about it myself.
+
+    The green is now a single keyline. The board is timber, the field
+    is the base ramp's cream, and the thing that makes it a SHOP is
+    stencilled lettering, which a temple does not have. `signal`,
+    `hazard` and `identity` stay reserved for what they mean, per the
+    same ruling.
+    """
     base, accent, trim = mat.ramps(theme)
-    canvas.rect(0, 0, surface.size, surface.size, trim[0])
-    inset = surface.texels(0.22)
-    canvas.rect(inset, inset, surface.size - inset * 2,
-                surface.size - inset * 2, accent[1])
-    # A painted border inside the frame, and a highlight along the top
-    # of it: the board is lit from above by a street lamp, always.
-    edge = max(1, surface.texels(0.06))
-    canvas.rect(inset, inset, surface.size - inset * 2, edge, accent[2])
-    canvas.rect(inset, inset, edge, surface.size - inset * 2, accent[2])
+    canvas.rect(0, 0, surface.size, surface.size, trim[1])
     paintkit.tonal_drift(canvas, surface, amount=0.05, cell_metres=0.5)
+    # Boards, not a slab: horizontal planks with a dark line between.
+    plank = max(3, surface.texels(0.42))
+    for y in range(0, surface.size, plank):
+        canvas.hline(y, 0, surface.size - 1, trim[0])
+        if y + 1 < surface.size:
+            canvas.hline(y + 1, 0, surface.size - 1, trim[2])
+
+    # The painted field, and the green reduced to the keyline around it.
+    inset = surface.texels(0.30)
+    span = surface.size - inset * 2
+    canvas.rect(inset, inset, span, span, base[3])
+    canvas.outline(inset, inset, span, span, accent[1])
+    canvas.outline(inset + 1, inset + 1, span - 2, span - 2, base[2])
+
+    # The lettering. A temple has no signage; a shopfront is nothing
+    # else. Generic on purpose -- this is a pack's own vocabulary, not a
+    # quotation of anybody's.
+    word = "MARKET"
+    width = paintkit.text_width(word)
+    paintkit.text(canvas, surface,
+                  (surface.size - width) // 2, surface.size // 2 - 3,
+                  word, trim[0])
+
     # Paint fails at the corners first, where the board was nailed.
     paintkit.edge_wear(canvas, surface, trim[2], surface.texels(0.18),
                        strength=0.45)

@@ -1943,3 +1943,38 @@ Closed, in section 7: the suite now runs the export and the import and
 fails on any diff under `godot/content/`. That is affordable here for
 the reason it was not affordable for the theme-bind renders — the export
 is byte-deterministic, and a render is not.
+
+---
+
+## Ten different models cannot report the same number
+
+The enemy contrast measurement needed to tell "enemy pixels" from "wall
+pixels", so it rendered the lineup a second time as a mask. The second
+`SubViewport` was alive at the same time as the lit one, both on
+`UPDATE_ALWAYS`, and `get_texture()` on it came back with **the first
+one's picture**. The mask was the lit room.
+
+So 1,565,136 pixels — three quarters of the frame — counted as "enemy",
+the wall got sampled from whatever was left, and the family separation
+came out as 0.165 L\*, comfortably clearing the value rule. It was
+reported to the owner and written into three documents before anything
+noticed.
+
+What noticed was not a check. It was that all ten roles reported
+**0.453** — identical to three decimal places.
+
+> **A suspicious result is one that is wrong. An impossible one is a
+> bug. Ten independent things agreeing exactly is impossible, and it is
+> worth more than any assertion in the file, because no test you
+> thought to write is looking at the thing you did not think of.**
+
+The real figure is **0.067** — the family fails both separation rules,
+not neither. Two fixes went in: the lit viewport is freed before the
+next one is built, and the harness now refuses any region covering more
+than 10% of the frame, because an enemy 18 m away occupies a few
+thousand pixels and not a million. The corrected numbers were then
+recomputed by a separate script reading the PNGs, which agreed.
+
+**The check that would have caught it was cheap and obvious in
+hindsight: assert the measurement's own inputs are the size they must
+be.** A mask is a claim about area; areas have expected magnitudes.

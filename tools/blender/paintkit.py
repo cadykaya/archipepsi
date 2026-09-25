@@ -579,6 +579,20 @@ GLYPHS = {
     "G": ["###", "#  ", "# #", "# #", "###"],
     "H": ["# #", "# #", "###", "# #", "# #"],
     "I": ["###", " # ", " # ", " # ", "###"],
+    # J, M and Q were missing here and present in
+    # `tools/artpreview/artbench.gd`, whose docstring says the two
+    # alphabets match. They had silently diverged, and the cost was a
+    # LABEL THAT LIES: `paintkit.text` skips a character it does not
+    # know, so every sheet this lane has rendered with the word TEMPLE
+    # in it says "TE PLE", and FAMILY says "FA ILY". Taken from
+    # artbench rather than drawn fresh, so the two agree again.
+    #
+    # M, N and W all want the same ink at three pixels wide. They are
+    # told apart by WHERE the crossbar sits: high for M (two peaks
+    # meeting at the top), through the middle for N, low for W.
+    "J": ["  #", "  #", "  #", "# #", "###"],
+    "M": ["# #", "###", "###", "# #", "# #"],
+    "Q": ["###", "# #", "# #", "###", "  #"],
     "K": ["# #", "# #", "## ", "# #", "# #"],
     "L": ["#  ", "#  ", "#  ", "#  ", "###"],
     "N": ["# #", "###", "###", "###", "# #"],

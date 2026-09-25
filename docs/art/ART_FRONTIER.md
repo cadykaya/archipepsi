@@ -2298,9 +2298,13 @@ silently at 1x when parsed in code. And the mode it sets is ENABLED,
 not INTEGER_ONLY — at 1.5x the font duly measures 15 px — so a pixel UI
 must ask only for multiples of 8 or set INTEGER_ONLY itself.
 
-**Open decision, owner's:** the palette's six universal families all
-mean something specific and none of them is interface chrome. The
-panels use the `dead` ramp provisionally. See the report.
+**RULED 2026-09-25:** interface chrome may continue using `dead`
+provisionally, **for neutral chrome only**; `signal`, `hazard` and
+`identity` stay reserved for their semantic roles and are not available
+as decoration. The panels stand as authored. The unresolved part is
+deferred rather than settled: `dead` also means *unpowered, locked,
+spent, offline*, so a locked slot on chrome of the same family will not
+read — which surfaces when item/state art arrives.
 
 **Still to author in Track A:** body text, headings and keycaps; the
 shared circuit / blocked-exit / control symbols; page arrows. Item and
@@ -2343,10 +2347,13 @@ are. Evidence: `docs/art/review/enemies_2026-09-25/`.
 2. **Two other pairs fail the same test** — `melee / ranged` at 0.856
    and `brute / bulwark` at 0.825. melee/ranged IS PT-10's "a different
    width is not a different silhouette", on a different pair.
-3. **Value outranks outline.** In a lit room the family sits 0.165 L*
-   from the wall behind it: clears `min_value_separation` (0.10), short
-   of `min_interactable_separation` (0.18), and an enemy is the most
-   interactable thing in the room. It affects all ten at once.
+3. **Value outranks outline.** In a lit room the family sits **0.067
+   L\*** from the wall behind it, failing BOTH `min_value_separation`
+   (0.10) and `min_interactable_separation` (0.18) — and an enemy is
+   the most interactable thing in the room. `diver` is 0.014 from the
+   wall; only `artillery` clears even the ordinary rule. It affects all
+   ten at once. (An earlier note here said 0.165 and "clears the value
+   rule"; that came from a broken occupancy mask and is corrected.)
 
 Plus one envelope overflow: `brute`'s visible body is 0.067 m wider than
 its declared envelope head-on (the PT-12 seam). Reported, not fixed.

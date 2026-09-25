@@ -29,11 +29,64 @@ import json
 import os
 import sys
 
+import numpy as np
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+import build_materials as bm  # noqa: E402
 import common  # noqa: E402
 import materials  # noqa: E402
 import packmaterials  # noqa: E402
+import palette as pal  # noqa: E402
+
+#: Where the owner-facing comparison lands. A review sheet, like the
+#: family's own `H_material_<theme>.png` -- a render, not build output.
+SHEET = os.path.join("docs", "art", "review", "packs_2026-09-24",
+                     "SHEET_tiles.png")
+ZOOM = 3
+GAP = 6
+
+
+def _column(role):
+    """One role across the family and both packs, left to right.
+
+    The claim these rows exist to support is that the difference between
+    the packs is HISTORY rather than hue -- and that claim is only
+    checkable side by side, at the same zoom, on the same role.
+    """
+    theme = packmaterials.FAMILY
+    cells = [("%s (family)" % theme, materials.paint(theme, role)[0])]
+    for pack in packmaterials.packs():
+        if role in packmaterials.roles_for(pack):
+            cells.append((pack, packmaterials.paint(pack, role, theme)[0]))
+    tiles = []
+    for name, canvas in cells:
+        zoomed = np.repeat(np.repeat(canvas.px, ZOOM, axis=0), ZOOM, axis=1)
+        label = bm._label_strip(zoomed.shape[1], "%s %s" % (role, name),
+                                pal.universal("signal", 3), pal.grime(0))
+        tiles.append(np.concatenate([label, zoomed], axis=0))
+    height = tiles[0].shape[0]
+    width = sum(t.shape[1] for t in tiles) + GAP * (len(tiles) - 1)
+    row = np.zeros((height, width, 3), dtype=np.float32)
+    row[:, :] = pal.rgb(pal.grime(0))
+    x = 0
+    for t in tiles:
+        row[:, x:x + t.shape[1]] = t
+        x += t.shape[1] + GAP
+    return row
+
+
+def _sheet(roles):
+    rows = [_column(role) for role in roles]
+    width = max(r.shape[1] for r in rows)
+    height = sum(r.shape[0] for r in rows) + GAP * (len(rows) - 1)
+    sheet = np.zeros((height, width, 3), dtype=np.float32)
+    sheet[:, :] = pal.rgb(pal.grime(0))
+    y = 0
+    for r in rows:
+        sheet[y:y + r.shape[0], :r.shape[1]] = r
+        y += r.shape[0] + GAP
+    return sheet
 
 
 def main():
@@ -64,6 +117,17 @@ def main():
         json.dump(manifest, handle, indent=2, sort_keys=True)
         handle.write("\n")
     common.log("pack   %d row(s) -> pack_manifest.json" % len(manifest))
+
+    # The owner-facing comparison. Every role either pack ships, with
+    # the family beside it at the same zoom.
+    roles = []
+    for pack in packmaterials.packs():
+        for role in packmaterials.roles_for(pack):
+            if role not in roles:
+                roles.append(role)
+    bm._save(_sheet(sorted(roles)),
+             os.path.join(common.REPO_ROOT, SHEET))
+    common.log("pack   sheet %s (%dx zoom)" % (SHEET, ZOOM))
 
 
 if __name__ == "__main__":

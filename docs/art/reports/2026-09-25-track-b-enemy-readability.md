@@ -75,22 +75,57 @@ The silhouette test is the kindest test a shape will ever get: black on
 nothing. In the room, against the wall they stand in front of:
 
 ```
-the family reads at L* 0.453, the wall at L* 0.618 -- 0.165 apart
-  min_value_separation        0.10   clears
-  min_interactable_separation 0.18   SHORT by 0.015
+the family reads at L* 0.420, the wall at L* 0.488 -- 0.067 apart
+  min_value_separation        0.10   SHORT
+  min_interactable_separation 0.18   SHORT
 ```
 
-The family clears the ordinary value rule and falls short of the
-**interactable** one, and an enemy is the most interactable thing in a
-room. It is a near miss rather than a catastrophe — but it is on the
-wrong side of the right rule, it affects all ten at once, and no amount
-of outline work on two pairs will move it.
+The family fails **both** of the palette's separation rules, and an
+enemy is the most interactable thing in a room. It affects all ten at
+once and no outline work touches it.
+
+Per role, worst first — the order the fixes want to be made in:
+
+| role | body L\* | from the wall | clears 0.10 | clears 0.18 |
+| --- | --- | --- | --- | --- |
+| `diver` | 0.474 | **0.014** | no | no |
+| `drifter` | 0.454 | 0.034 | no | no |
+| `charger` | 0.447 | 0.041 | no | no |
+| `bulwark` | 0.439 | 0.049 | no | no |
+| `brute` | 0.421 | 0.067 | no | no |
+| `melee` | 0.416 | 0.072 | no | no |
+| `ranged` | 0.408 | 0.080 | no | no |
+| `scuttler` | 0.400 | 0.088 | no | no |
+| `beacon` | 0.391 | 0.097 | no | no |
+| `artillery` | 0.377 | **0.111** | yes | no |
+
+`diver` at 0.014 is, in value terms, the wall. Only `artillery` clears
+even the ordinary rule.
 
 Reported, not refused. This measures art already in the tree against a
-threshold the palette sets for a related question, and turning it into a
-gate would be this lane quietly imposing a rule nobody agreed to.
+threshold the palette sets for a related question, and turning it into
+a gate would be this lane quietly imposing a rule nobody agreed to.
 
----
+### This number was wrong once, and the way it was wrong is worth having
+
+The first version reported **0.165** and said the family cleared the
+value rule. It did not. The occupancy mask that separates "enemy" from
+"wall" was silently the lit room instead of the enemies, so 1,565,136
+pixels — three quarters of the frame — counted as body, and the wall
+was sampled from whatever was left.
+
+Nothing failed. Ten different models reported an *identical* L\* to
+three decimal places, which is the only reason it was caught: that is
+not a thing ten different models can do.
+
+The cause was two `SubViewport`s alive at once, both `UPDATE_ALWAYS`;
+`get_texture()` on the second came back with the first one's picture.
+The lit viewport is freed before the region pass is built now, each
+role gets its own render, and the harness **refuses any region covering
+more than 10% of the frame** — an enemy at 18 m occupies a few thousand
+pixels, not a million. The corrected figures were then checked a second
+time by an independent script reading the PNGs, which agreed to three
+decimals.
 
 ## 4. One envelope overflow
 

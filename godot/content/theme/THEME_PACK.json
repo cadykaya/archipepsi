@@ -31,8 +31,8 @@
   },
   "twilight_town/temple_ruin/accent": {
    "covers_m": 4.0,
-   "mean_value": 0.4168,
-   "sha256_16": "85cb8dca7aad3db8",
+   "mean_value": 0.7054,
+   "sha256_16": "74edf61d9680124b",
    "size_px": 128,
    "texture": "theme/pack_twilight_town_temple_ruin_accent.png"
   },

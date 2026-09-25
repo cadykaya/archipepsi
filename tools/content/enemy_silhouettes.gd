@@ -345,6 +345,14 @@ func _lineup() -> void:
 	await process_frame
 	await process_frame
 	var image := view.get_texture().get_image()
+	# FREE IT BEFORE BUILDING THE NEXT ONE. Two SubViewports alive at
+	# once, both UPDATE_ALWAYS, and `get_texture()` on the second came
+	# back with the FIRST one's picture -- the region masks were the lit
+	# room, so every role measured the same 1.56 million pixels and
+	# reported an identical L* to three decimals. Ten different models
+	# cannot do that, which is the only reason it was caught.
+	view.queue_free()
+	await process_frame
 
 	# --- how far does the family sit from the wall behind it? ---------
 	#
@@ -354,15 +362,48 @@ func _lineup() -> void:
 	# it is a number. The palette's own thresholds are the yardstick:
 	# min_value_separation 0.10, min_interactable_separation 0.18, in
 	# CIE L*.
-	var occupancy := await _lineup_mask(widths)
+	var regions := await _lineup_regions()
 	var body := 0.0
 	var body_n := 0
 	var wall := 0.0
 	var wall_n := 0
+	# Per role, so the owner's prioritisation has something to sort by.
+	# A family mean says the set is dim; it does not say which of them
+	# to fix first.
+	var per_role := {}
+	for role in regions:
+		var sum := 0.0
+		var n := 0
+		var region: Image = regions[role]
+		for py in image.get_height():
+			for px in image.get_width():
+				if region.get_pixel(px, py).a > 0.5:
+					sum += _lstar(image.get_pixel(px, py))
+					n += 1
+		# A GUARD FOR THE BUG THAT GOT THROUGH ONCE. An enemy 18 m away
+		# occupies a few thousand pixels of a 1920x1080 frame. When the
+		# region masks were silently the lit room instead, every role
+		# "covered" 1,565,136 px -- three quarters of the screen -- and
+		# every role reported an identical L* to three decimals. Ten
+		# different models cannot do that, and nothing failed.
+		var share := float(n) / float(image.get_width() * image.get_height())
+		if share > 0.10:
+			_bad("%s's region covers %.0f%% of the frame. That is not an "
+				 % [role, share * 100.0]
+				 + "enemy at %.0f m -- the mask is picking up the room, "
+				 % _distance + "and every contrast number here is wrong")
+		if n > 0:
+			per_role[role] = {"lstar": snappedf(sum / float(n), 0.001),
+				"px": n}
 	for py in image.get_height():
 		for px in image.get_width():
 			var lit := image.get_pixel(px, py)
-			if occupancy != null and occupancy.get_pixel(px, py).a > 0.5:
+			var covered := false
+			for role in regions:
+				if regions[role].get_pixel(px, py).a > 0.5:
+					covered = true
+					break
+			if covered:
 				body += _lstar(lit)
 				body_n += 1
 			elif py > image.get_height() * 0.30 \
@@ -400,6 +441,21 @@ func _lineup() -> void:
 			  % [_min_interactable,
 				 "clears" if sep >= _min_interactable else "SHORT"]
 			  + "enemy is the most interactable thing in the room")
+		# Worst first: that is the order the fixes want to be made in.
+		var ranked := per_role.keys()
+		ranked.sort_custom(func(a, b):
+				return absf(float(per_role[a]["lstar"]) - wl) \
+						< absf(float(per_role[b]["lstar"]) - wl))
+		for role in ranked:
+			var rl: float = float(per_role[role]["lstar"])
+			var rsep := absf(rl - wl)
+			per_role[role]["separation_lstar"] = snappedf(rsep, 0.001)
+			per_role[role]["clears_interactable_rule"] = \
+					rsep >= _min_interactable
+			print("[enemysil]   %-10s L* %.3f, %.3f from the wall%s"
+				  % [role, rl, rsep,
+					 "" if rsep >= _min_interactable else "   SHORT"])
+		_rows["_contrast"]["per_role"] = per_role
 
 	_bench.call("label", image, "PROPOSAL -- NOT OWNER-APPROVED",
 			Vector2i(16, 16), Color(1, 0.86, 0.3))
@@ -413,7 +469,6 @@ func _lineup() -> void:
 		_bad("could not write the lineup frame")
 	print("[enemysil] lineup: %d role(s) at %.0f m under one room lamp"
 		  % [placed, _distance])
-	view.queue_free()
 
 
 ## CIE L*, 0..1 -- the same measure `palette.py` uses, so a separation
@@ -425,10 +480,51 @@ func _lstar(c: Color) -> float:
 	return clampf(l / 100.0, 0.0, 1.0)
 
 
-## The same ten bodies in the same places with no room and no light, so
-## their pixels can be told from the wall's. Rebuilt rather than reused:
-## a mask taken from the lit frame by thresholding would be a guess at
-## which dark pixels are a robot, and the darkness is the finding.
+## The same ten bodies in the same places with no room and no light, one
+## render per role with the others hidden, so every pixel is attributed
+## to exactly one enemy. Rebuilt rather than taken from the lit frame by
+## thresholding: that would be a guess at which dark pixels are a robot,
+## and the darkness is the finding.
+##
+## Per role rather than colour-coded in one pass, because a colour read
+## back through a viewport has been through sRGB and tone mapping, and
+## decoding an index out of it is a guess wearing a number.
+func _lineup_regions() -> Dictionary:
+	var view := _viewport(true)
+	_camera(view)
+	var holder := Node3D.new()
+	view.add_child(holder)
+	var models := {}
+	var x := 0.0
+	for role in ROLES:
+		var model: Node3D = _bench.call("load_glb",
+				"%s/enemy_role_%s.glb" % [_models, role])
+		if model == null:
+			continue
+		holder.add_child(model)
+		var box: AABB = _bench.call("aabb_of", model)
+		x += box.size.x * 0.5
+		model.position = Vector3(x - box.get_center().x,
+				-box.position.y - 1.0, -_distance)
+		x += box.size.x * 0.5 + 0.55
+		_flatten(model)
+		models[role] = model
+	holder.position = Vector3(-x * 0.5, 0.0, 0.0)
+
+	var out := {}
+	for role in models:
+		for other in models:
+			models[other].visible = other == role
+		await process_frame
+		await process_frame
+		var got := view.get_texture().get_image()
+		if OS.get_environment("ENEMYSIL_DEBUG") != "":
+			got.save_png("%s/DEBUG_region_%s.png" % [_out, role])
+		out[role] = got
+	view.queue_free()
+	return out
+
+
 func _lineup_mask(_widths: Array) -> Image:
 	var view := _viewport(true)
 	_camera(view)
