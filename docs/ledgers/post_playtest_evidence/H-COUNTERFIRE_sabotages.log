@@ -1,0 +1,42 @@
+== SC-1 the trip sign says EMERGENCY again: rc=1 GODOT COUNTERFIRE HOSTED TESTS: 1 failures in 24 checks
+FAIL: c025: the trip names what it does, and is not an unrelated emergency control: 'EMERGENCY IMPACT TRIP / SERVICE SHUTTER'
+  restored godot/scripts/content/counterfire_arcade_room.gd
+== SC-2 the conduit never lights: rc=1 GODOT COUNTERFIRE HOSTED TESTS: 1 failures in 24 checks
+FAIL: c025: the conduit from the receiver to the shutter LIGHTS while the window runs (0 glowing, 0 before)
+  restored godot/scripts/content/counterfire_arcade_room.gd
+== SC-3 the shutter readout never changes: rc=1 GODOT COUNTERFIRE HOSTED TESTS: 1 failures in 24 checks
+FAIL: c025: and the shutter says how long it has: 'SERVICE SHUTTER / SHUT' (was 'SERVICE SHUTTER / SHUT')
+  restored godot/scripts/content/counterfire_arcade_room.gd
+== SC-4 the release springs back like a call lever: rc=1 GODOT COUNTERFIRE HOSTED TESTS: 1 failures in 24 checks
+FAIL: c025: the release STAYS THROWN and says so: '[E] SERVICE RELEASE -- HOLDS THE SHUTTER OPEN'
+  restored godot/scripts/content/counterfire_arcade_room.gd
+== SC-5 the north-east corner open again (PPT-05): rc=1 GODOT COUNTERFIRE HOSTED TESTS: 1 failures in 24 checks
+FAIL: c025: from 7917 cell(s) reached, no step lands on nothing (void edges, the room's frame: [(15.3, 3.0, 8.400001), (14.9, 3.0, 8.6), (14.5, 3.0, 8.400001), (14.4, 3.0, 8.400001), (14.0, 3.0, 8.6), (13.6, 3.0, 8.400001), (13.8, 3.0, 8.400001), (13.4, 3.0, 8
+  restored godot/scripts/content/counterfire_arcade_room.gd
+== SC-6 no deck: the pocket floorless again under an open flank edge: rc=1 GODOT COUNTERFIRE HOSTED TESTS: 1 failures in 24 checks
+FAIL: c025: from 7744 cell(s) reached, no step lands on nothing (void edges, the room's frame: [(17.1, 0.0, 0.9), (16.7, 0.0, 1.1), (16.3, 0.0, 0.9), (15.9, 0.0, 0.9), (15.5, 0.0, 1.1), (15.1, 0.0, 0.9), (14.4, 0.0, 0.9), (14.0, 0.0, 1.1)])
+  restored godot/scripts/content/counterfire_arcade_room.gd
+== SC-7 the pocket wall back: the way over the low wall pinched to 0.8 m (PPT-06): rc=0 GODOT COUNTERFIRE HOSTED OK (24 checks, 1 notes)
+  restored godot/scripts/content/counterfire_arcade_hosted.gd
+== SC-8 the Check back where it blocked the flank: rc=0 GODOT COUNTERFIRE HOSTED OK (24 checks, 1 notes)
+  restored godot/content/registry/minor_rooms.json
+== SC-9 no hood: the receiver answers a shot from either side: rc=1 GODOT COUNTERFIRE HOSTED TESTS: 1 failures in 24 checks
+FAIL: c025: from the arrival side, 59 shot(s) at the receiver trip it 59 time(s): the hood is steel (98 shots; tripped from [(-11.2, 0.0, -8.2), (-11.2, 0.0, -7.3), (-10.6, 0.0, -7.6), (-10.0, 0.0, -7.6), (-9.400001, 0.0, -7.6), (-8.8, 0.0, -7.6), (-8.2, 0.0, 
+  restored godot/scripts/content/counterfire_arcade_room.gd
+ M .github/workflows/integration.yml
+ M Makefile
+ M docs/AGENT_FRONTIER.md
+ M docs/ledgers/PROD_POST_PLAYTEST.md
+ M godot/content/registry/minor_rooms.json
+ M godot/scripts/content/counterfire_arcade_hosted.gd
+ M godot/scripts/content/counterfire_arcade_room.gd
+ M godot/scripts/main.gd
+ M godot/tests/candidate_live_driver.gd
+?? godot-bin
+?? godot/tests/counterfire_hosted_driver.gd
+?? godot/tests/counterfire_hosted_driver.gd.uid
+== SC-8 again, on the whole suite (with the V-10 sweep): rc=1 GODOT COUNTERFIRE HOSTED TESTS: 1 failures in 25 checks
+FAIL: c025: V-10 -- no blink, double jump or grapple puts the Check in claim reach from anywhere but the flank (17444 blinks (5998 moved), 18 flights, 22 arrived on G (by blink 12, double jump 4, grapple 6)); off-flank claims: ["double_jump toward (-21.400000, 4.300000, 67.900002) at (-23.700001, 1.400000, 65.000000)"]
+  restored godot/content/registry/minor_rooms.json
+NOTE: SC-7 and SC-8 pass the quick suite. SC-7: the 0.8 m slot over the low wall is passable by a centred walk, so removing the pocket wall is margin (1.2 m), not a repair. SC-8: with the deck the flank is walkable round the Check at its old spot; the move is kept because the old spot is claimable by a double jump from the annex floor (the whole suite above).
+SAB-DONE

@@ -100,6 +100,21 @@ var released := false
 var reached_goal := false
 ## The fixed stair the release adds, kept together so it can be counted.
 var release_stair: Node3D = null
+## H-COUNTERFIRE (PT-04): the room says what its machines do to each other.
+## The conduit from the receiver to the shutter carries the window: it is
+## lit while the window runs and for good once the release is thrown. The
+## readout at the shutter says whether it is shut, how long it has, or
+## that the release holds it.
+var shutter_readout: Label3D = null
+var _conduit_runs: Array[MeshInstance3D] = []
+var _conduit_dark: Material = null
+var _conduit_lit: Material = null
+var _conduit_on := false
+
+## What the release says once it is thrown (D-07's permanence, as a bolt).
+const RELEASE_LABEL := "SERVICE RELEASE -- HOLDS THE SHUTTER OPEN"
+const RELEASE_DONE := "RELEASE THROWN -- SHUTTER HELD OPEN, STAIR DOWN"
+const TRIP_SIGN := "IMPACT TRIP\nA HIT ON ITS FACE OPENS\nTHE SERVICE SHUTTER FOR %d s"
 
 
 func build() -> void:
@@ -271,7 +286,10 @@ func _the_receiver() -> void:
 
 func _conduit() -> void:
 	var mat := ThemeMaterials.accent_mat(theme)
+	_conduit_dark = mat
+	_conduit_lit = ThemeMaterials.glow_material(Color(1.0, 0.55, 0.3), 2.2)
 	var run := MeshInstance3D.new()
+	run.name = "ConduitRun"
 	var box := BoxMesh.new()
 	box.size = Vector3(ROOM_HALF.x, 0.16, 0.16)
 	run.mesh = box
@@ -279,6 +297,7 @@ func _conduit() -> void:
 	add_child(run)
 	run.position = Vector3(ROOM_HALF.x * 0.5, 0.12, RECEIVER_Z + 0.9)
 	var rise := MeshInstance3D.new()
+	rise.name = "ConduitRise"
 	var up := BoxMesh.new()
 	up.size = Vector3(0.16, 0.16, absf(SHUTTER_Z - RECEIVER_Z - 0.9))
 	rise.mesh = up
@@ -286,6 +305,28 @@ func _conduit() -> void:
 	add_child(rise)
 	rise.position = Vector3(ROOM_HALF.x - 0.4, 0.12,
 			(SHUTTER_Z + RECEIVER_Z + 0.9) * 0.5)
+	_conduit_runs = [run, rise]
+
+
+## The conduit and the readout follow the machine every frame: what the
+## window is doing is shown where the player is looking, not only by the
+## panel it moves.
+func _physics_process(_delta: float) -> void:
+	var on := released or window_left() > 0.0
+	if on != _conduit_on:
+		_conduit_on = on
+		for run: MeshInstance3D in _conduit_runs:
+			run.material_override = _conduit_lit if on else _conduit_dark
+	if shutter_readout != null:
+		var text := "SERVICE SHUTTER\nSHUT"
+		if released:
+			text = "SERVICE SHUTTER\nHELD OPEN BY THE RELEASE"
+		elif window_left() > 0.0:
+			text = "SERVICE SHUTTER\nOPEN · %d s" % ceili(window_left())
+		elif shutter != null and not shutter.is_shut():
+			text = "SERVICE SHUTTER\nCLOSING"
+		if shutter_readout.text != text:
+			shutter_readout.text = text
 
 
 func _the_shutter() -> void:
@@ -302,6 +343,20 @@ func _the_shutter() -> void:
 func _the_annex() -> void:
 	var trim := ThemeMaterials.trim_mat(theme)
 	_ground(ANNEX_X.x, ANNEX_X.y, -4.5, 0.5, 0.0, trim)
+	# NORTH OF THE ANNEX, ONE UPPER DECK ON A SOLID MASS (PPT-05, PPT-06).
+	# Below the flank and its reach there was only a pocket: floorless in
+	# the scenario, floored but open in a hosted room. A player who walked
+	# on under the flank, or stepped off its 1.7 m edge, fell out of the
+	# world; floored, it was somewhere to double-jump from and claim the
+	# Check over the flank's edge. Now it is solid to the flank's height,
+	# decked over: the upper level is 5.5 m wide, the Check does not block
+	# it, and there is nowhere below it to stand.
+	_ground(ANNEX_X.x, 15.6, 0.5, ROOM_HALF.y - 3.0, FLANK_Y, trim)
+	_slab(Vector3(ANNEX_X.y - ANNEX_X.x, FLANK_Y - SLAB,
+			ROOM_HALF.y - 1.0 - 0.5),
+			Vector3((ANNEX_X.x + ANNEX_X.y) * 0.5, (FLANK_Y - SLAB) * 0.5,
+				(0.5 + ROOM_HALF.y - 1.0) * 0.5),
+			ThemeMaterials.wall_mat(theme))
 	_stair(Vector3(13.2, 0.0, -2.0), Vector3(15.6, FLANK_Y, -2.0), 2.2)
 	_ground(15.6, ANNEX_X.y, -4.5, ROOM_HALF.y - 1.0, FLANK_Y, trim)
 	# The flank's own floor reaches back west over the low wall, so the
@@ -313,8 +368,22 @@ func _the_annex() -> void:
 				Vector3((15.6 + ANNEX_X.y) * 0.5, ROOM_HEIGHT * 0.5, side),
 				ThemeMaterials.wall_mat(theme))
 	_annex_east_wall(ThemeMaterials.wall_mat(theme))
-	release = CallLever.make("SERVICE RELEASE", Color(0.55, 1.0, 0.7),
+	# THE CORNER NORTH OF THE ANNEX IS SOLID (PPT-05). The low wall the
+	# flank overlooks stood beside a strip with nothing under it: from its
+	# top, a 0.4 m step down off the flank's reach, a step east fell out of
+	# the world. `godot-counterfire-hosted`'s void census holds it.
+	_slab(Vector3(ANNEX_X.y - ROOM_HALF.x, ROOM_HEIGHT,
+			ROOM_HALF.y + 0.25 - (ROOM_HALF.y - 0.8)),
+			Vector3((ROOM_HALF.x + ANNEX_X.y) * 0.5, ROOM_HEIGHT * 0.5,
+				(ROOM_HALF.y + 0.25 + ROOM_HALF.y - 0.8) * 0.5),
+			ThemeMaterials.wall_mat(theme))
+	release = CallLever.make(RELEASE_LABEL, Color(0.55, 1.0, 0.7),
 			theme)
+	# A PERMANENT ROUTE IS MADE WITH A CONTROL THAT STAYS MADE (D-07): once
+	# its LATCH is set the release stays thrown and says so -- restored
+	# saves included (`SignalGraph.lock_permanent_levers`).
+	release.locks_with = "release"
+	release.done_label = RELEASE_DONE
 	add_child(release)
 	release.position = Vector3(16.4, FLANK_Y + CallLever.BASE.y * 0.5, -1.0)
 	goal_plate = ActivityElement.create(ActivityElement.STAND, 0,
@@ -394,10 +463,15 @@ func _the_gunner() -> void:
 func _signs() -> void:
 	_sign("ARRIVAL ARCADE", Vector3(0.0, 2.2, -ROOM_HALF.y + 1.0),
 			Color(0.8, 0.85, 0.95), 46)
-	_sign("EMERGENCY IMPACT TRIP\nSERVICE SHUTTER",
+	# WHAT THE TARGET DOES, not how to make it happen (D12: "without
+	# printing the answer on entry"). It was "EMERGENCY IMPACT TRIP",
+	# which read as an unrelated emergency control (PT-04).
+	_sign(TRIP_SIGN % int(OPEN_SECONDS),
 			Vector3(0.0, 2.2, RECEIVER_Z - 0.9), Color(1.0, 0.55, 0.3), 34)
-	_sign("SERVICE ROUTE", Vector3(ROOM_HALF.x - 1.6, 3.2, SHUTTER_Z),
+	shutter_readout = _sign("SERVICE SHUTTER\nSHUT",
+			Vector3(ROOM_HALF.x - 1.6, 3.2, SHUTTER_Z),
 			Color(0.55, 1.0, 0.7), 34)
+	shutter_readout.name = "ShutterReadout"
 	_sign("GALLERY", Vector3(-6.0, GALLERY_Y + 2.2, GALLERY_SOUTH + 1.2),
 			Color(0.8, 0.85, 0.95), 38)
 	if development_signs:

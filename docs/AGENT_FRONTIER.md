@@ -149,8 +149,28 @@ owner's D-06/D-07 rulings and the seam table are in
       and the interlock.
     - N-8 asks Dess for a `--form held` seed, so the held route can also
       be played across a real restart.
-  - **Next:** `H-COUNTERFIRE`, then `H-PASSING`, then CP2's full
-    frontier.
+  - `H-COUNTERFIRE` (PT-04, V-11): **identified, played, repaired.**
+    - Identified: the offer order hosts EX50-021 twice (zone_001 c025 and
+      zone_002 c024), which is the owner's "two Counterfires". Their
+      "emergency" target is the room's own receiver, and their route
+      (shoot its face from the lane) is legitimate, so nothing was
+      removed.
+    - Legibility: the trip says what it opens, the conduit glows through
+      the window, the shutter counts down, and the release stays thrown
+      (after a restart too).
+    - Two found defects fixed, both geometry:
+      - PPT-05: two holes to the fall plane beside the flank;
+      - PPT-06: the Check blocked the 1.7 m flank, cutting off the
+        release's stair.
+      The pocket is now a solid deck. The Check sits in the flank's
+      corner (registry, N-9), because at its old spot V-10 found a
+      double-jump claim from below.
+    - `godot-counterfire-hosted` (new, in CI, 25 checks) covers the
+      owner's route, the kill-first fallback, a void census, the hood
+      census, V-10 and both returns. `godot-candidate-live` plays the
+      bait route live.
+  - **Next:** `H-PASSING` (N-10 asks Dess for a Passing fixture), then
+    CP2's full frontier.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

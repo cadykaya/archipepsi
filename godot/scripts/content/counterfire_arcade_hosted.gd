@@ -128,9 +128,13 @@ class HostedRoom extends CounterfireArcadeRoom:
 		var wall := ThemeMaterials.wall_mat(theme)
 		var trim := ThemeMaterials.trim_mat(theme)
 		var mid := ROOM_HEIGHT * 0.5
-		_ground(ROOM_HALF.x, 15.6, 0.5, ROOM_HALF.y - 1.0, 0.0, trim)
+		# (No pocket to floor: north of the annex is the room's own solid
+		# mass under its upper deck now, PPT-05.)
 		_slab(Vector3(15.6 - ROOM_HALF.x, ROOM_HEIGHT, 0.4),
 				Vector3((ROOM_HALF.x + 15.6) * 0.5, mid, -4.5), wall)
-		_slab(Vector3(15.6 - ROOM_HALF.x, ROOM_HEIGHT, 0.4),
-				Vector3((ROOM_HALF.x + 15.6) * 0.5, mid, ROOM_HALF.y - 1.0),
-				wall)
+		# NO NORTH WALL HERE (PPT-06). It stood at z 7.8-8.2 and pinched
+		# the only way from the flank over the low wall -- to the gallery,
+		# and to the stair the release lowers -- down to 0.8 m, which is
+		# the player's own width: the release's return could not be
+		# walked. The room's solid north-east corner (PPT-05) closes the
+		# pocket instead, and the way over is 1.2 m.

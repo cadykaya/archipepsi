@@ -139,6 +139,7 @@ jobs:
           make godot-rail-junction
           make godot-passing-platforms
           make godot-counterfire
+          make godot-counterfire-hosted
           make godot-mass-class
           make godot-unweighted
           make godot-target-facing

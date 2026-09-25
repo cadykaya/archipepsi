@@ -212,6 +212,33 @@ where the new rule would refuse a lever.
     with that form Prod can play it across a real restart, with
     `object_poses` through the bridge. The tool is yours, so it is not
     touched here.
+- **N-9 (H-COUNTERFIRE: registry geometry, as N-1 was, and one fact).**
+  - Counterfire's Check volume moved within the flank, to its north-east
+    corner: `[13.65, 3.0, 12.25]` to `[13.85, 3.0, 16.55]`.
+    - At the old spot, a double jump from the annex floor below claims
+      it from off the flank (V-10).
+    - The walkway it used to block (PPT-06) is wide now anyway.
+  - The shell's `annex_pocket` surface (ground level) is now `deck`
+    (y 3), because the pocket is solid under a deck (PPT-05, holes to
+    the fall plane).
+  - Neither touches D12's card. The claim is on the flank, the release
+    is on the flank, and R1 to R5 hold. `godot-counterfire-hosted` shows
+    each in play.
+  - The fact: the offer order hosts EX50-021 in both zone_001 (c025)
+    and zone_002 (c024). That is PT-04's "possibly two Counterfires". It
+    is a correct consequence of `offer_order`, reported rather than
+    changed.
+- **N-10 (for H-PASSING; one ask).** EX50-011 is hosted only where the
+  offer order reaches it: zone_002 in the candidate campaign. No fixture
+  carries it, so its room can only be played live today.
+  - **The ask:** a `passing_zone.json`, regenerated from source like
+    `candidate_zone.json`. That means the candidate profile's composition
+    of a Zone whose offer order hosts EX50-011 (zone_002 is the one the
+    live suite meets), with a `make passing-fixture` recipe I will add
+    to the Makefile.
+  - Until it exists, Prod develops against a local capture of the Zone
+    the real bridge serves (unedited, never committed). The hosted
+    Passing suite goes into CI when your fixture lands.
 
 ## Evidence rules (PROD_START)
 
@@ -992,3 +1019,136 @@ directly, with no LATCH.
   has no held route. A composed held route now puts a labelled load pad
   on open floor, with a labelled weight, and the door is open exactly
   while the weight rests on it.
+
+## CP2 — `H-COUNTERFIRE` (PT-04, D12's card, V-11) — identified, played, repaired
+
+PT-04: "Possibly two Counterfires; shot a target, emergency door opened,
+took Check." The packet asks, in this order:
+- identify the owner's instance;
+- keep legitimate alternates;
+- make gunner, receiver, shutter and reward read as one relationship
+  without printing the answer;
+- make sure a dead gunner never strands the reward.
+
+- **Identification.**
+  - **There really are two.** The minors' offer order turns with the
+    Zone's ordinal (`minor_hosting.offer_order`). So the candidate hosts
+    EX50-021 in zone_001 (c025) and again in zone_002 (c024), as the
+    candidate-live logs show.
+  - **The "emergency" target is the room's own receiver.** Its sign read
+    "EMERGENCY IMPACT TRIP / SERVICE SHUTTER", and a hit on its face
+    opens the shutter for 8 s. That is the designed relationship
+    (EX50-021 §3), not an unrelated control.
+  - **The owner's route is legitimate, so nothing is removed.** A shot on
+    the receiver's face from the lane side is the designed conservative
+    route (§6; D12's "baseline shot at the receiver's face").
+  - **Which occurrence the owner played is not in anything we hold.**
+    Their save would show it once the game sends `room_entered` (Dess's
+    D-2), which lands with the CP4 map work.
+- **Played on the hosted room as it stood** (`godot-counterfire-hosted`,
+  new; `H-COUNTERFIRE_repro.log`): 10 of 23 checks failed.
+  - **The owner's route works.** The Zone's gunner was killed with the
+    base kit (4.2 s, 8 hp), the receiver shot on its face from the lane,
+    the shutter passed with 5.1 s left, the flank climbed and the Check
+    claimed. A dead gunner strands nothing.
+  - **The hood holds:** 0 of 97 shots from the arrival side trip it, and
+    130 of 393 from the lane side do.
+  - **Legibility failed, as reported:**
+    - the trip read "EMERGENCY";
+    - nothing between the receiver and the shutter changed while the
+      window ran;
+    - the shutter had no readout;
+    - the release sprang back.
+  - **PPT-05, found by the new void census: two places dropped a player
+    out of the world** (the survey is in the log).
+    - The top of the 2.6 m low wall is a 0.4 m step down from the
+      flank's reach, and it led onto a strip with nothing under it for
+      44 m.
+    - Under the flank, north of the annex floor, there was no ground.
+  - **PPT-06, found by the return case: the flank could not be walked
+    past the Check.**
+    - The Check's 1.4 m collider stood on a 1.7 m flank, leaving 0.1 m
+      and 0.2 m either side.
+    - Stepping round it put the walker off the edge and into PPT-05's
+      hole under the flank.
+    - So the stair the release lowers, and the reach over the low wall,
+      could not be walked to from where the flank is reached. The return
+      that did work was through the held-open shutter.
+    - I also blamed the 0.8 m slot over the low wall (the hosted
+      pocket's north wall against the arcade's east wall, exactly the
+      player's width). SC-7 shows a centred walk passes it, so that was
+      not established.
+- **The repair:**
+  - **The trip says what it does:** "IMPACT TRIP / A HIT ON ITS FACE
+    OPENS / THE SERVICE SHUTTER FOR 8 s". Nothing names the gunner, the
+    bait or the dodge (D12: "without printing the answer on entry").
+  - **The conduit from the receiver to the shutter glows** while the
+    window runs, and for good once the release is thrown.
+  - **The shutter has a live readout:** "SHUT", "OPEN · 6 s",
+    "CLOSING", "HELD OPEN BY THE RELEASE".
+  - **The release stays thrown and says so**, after a real restart too:
+    "RELEASE THROWN -- SHUTTER HELD OPEN, STAIR DOWN" (`locks_with`,
+    D-07).
+  - **North of the annex is one solid mass, decked at the flank's
+    height.**
+    - The upper level is now 5.5 m wide, which on its own makes the flank
+      walkable round the Check (SC-8, quick).
+    - The north-east corner is solid.
+    - The hosted pocket's north wall is gone, now that the solid corner
+      closes the north. The way over the low wall is 1.2 m: margin for a
+      player who is not walking dead centre, not a repair (SC-7).
+  - **The Check moved within the flank**, to its north-east corner. Its
+    registry volume went from `[13.65, 3.0, 12.25]` to
+    `[13.85, 3.0, 16.55]`.
+    - At its old spot, above the annex and near the stair, a double jump
+      from the annex floor claims it from off the flank. SC-8 on the
+      whole suite shows this: V-10 fails there.
+  - **The shell's declared surfaces follow the geometry.** `annex_pocket`
+    (at ground level) becomes `deck` (y 3), so the shell audit still
+    accepts the room.
+- **V-10 caught my first repair.** Flooring the pocket fixed PPT-05's
+  second hole, but it made the pocket somewhere to double-jump or
+  grapple from and claim the Check over the flank's edge (4 off-flank
+  claims). The solid deck is what replaced it.
+- **Played after the repair** (25 checks, `H-COUNTERFIRE_after.log`):
+  - what the room says, as built and while the window runs;
+  - no step off any of 7,906 reached cells lands on nothing;
+  - the owner's route, with the gunner dead;
+  - back from the flank with nothing pulled, off the reach onto the
+    gallery;
+  - the hood census;
+  - V-10 at the schema maxima: 17,444 blinks and 18 flights, 16 legal
+    arrivals on the flank, and no claim from anywhere else;
+  - the release thrown for good, down its stair, and back to the arrival.
+- **The gunner-driven route** (the bait) is played live through the real
+  bridge by `godot-candidate-live`: the gunner baited, the release
+  accepted, and Check 89100025 claimed. After a real restart the release
+  is restored thrown (a new check there).
+- **Declared harness steps:**
+  - the census places the player on each sampled cell before firing;
+  - `_mobility` places them for each blink and flight, and each case
+    returns them to the room's arrival;
+  - `ap_connected` is set so a claim can go out with no bridge;
+  - the player's health is raised for the V-10 sweep only.
+- **Sabotages** (`H-COUNTERFIRE_sabotages.log`), each restored byte for
+  byte, on the suite without the V-10 sweep:
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| SC-1 | the trip says "EMERGENCY IMPACT TRIP" again | "the trip names what it does" |
+| SC-2 | the conduit never lights | "the conduit ... LIGHTS while the window runs (0 glowing, 0 before)" |
+| SC-3 | the shutter readout never changes | "the shutter says how long it has: 'SERVICE SHUTTER / SHUT'" |
+| SC-4 | the release springs back like a call lever | "the release STAYS THROWN": `[E] SERVICE RELEASE ...` |
+| SC-5 | the north-east corner open again (PPT-05) | the void census, at the reach's north edge |
+| SC-6 | no deck: the pocket floorless under an open flank edge | the void census, under the flank |
+| SC-7 | the pocket's north wall back (the 0.8 m slot) | **passes**: a centred walk goes through, so the slot was not a defect, and its removal is margin |
+| SC-8 | the Check back at its old spot | **passes the quick suite** (the deck makes the flank walkable). On the whole suite, V-10 fails with a double-jump claim from the annex floor, which is why it moved |
+| SC-9 | no hood: the receiver answers either side | the hood census: 59 of 98 arrival-side shots trip it |
+
+- **What the owner will notice:**
+  - The target over the lane says it opens the service shutter for 8 s.
+  - A hit lights the line from the target to the shutter, and the
+    shutter counts down.
+  - The release stays thrown, and its stair can now be walked to.
+  - The upper level is a proper deck, with nothing to fall off into.
+  - The Check stands in the far corner of the deck.

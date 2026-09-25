@@ -997,6 +997,12 @@ func _restored_counterfire(controller: ZoneController,
 			"and the panel is physically raised clear of its doorway "
 			+ "(%.2f m off)" % room.shutter.global_position.distance_to(
 				raised))
+	# D-07's permanence across a real restart: the release comes back
+	# thrown and saying so, not waiting to be pulled again (H-COUNTERFIRE).
+	_check(room.release.locked
+			and not room.release.interact_prompt().begins_with("[E]"),
+			"and the release is restored THROWN: '%s'"
+			% room.release.interact_prompt())
 	var reward := _reward_in(controller, rid)
 	_check(reward != null and BridgeClient.is_checked(reward.location_id)
 			and reward.interact_prompt() == "",
