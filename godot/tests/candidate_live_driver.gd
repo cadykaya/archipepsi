@@ -230,16 +230,22 @@ func _gate_on(controller: ZoneController, edge_id: String) \
 	return null
 
 
-## The bridge's reason for composing no latch route until the engine can
-## place a lever (`latched_route.DECLINED_UNTIL_LEVERS`, D13 step 1).
-const LATCH_POLICY_DECLINE := "D-07: a pressure plate is a held sensor"
-
-
 ## Route actuators the Zone declares: the shutters its room graphs drive.
 func _declared_route_actuators(zone: Dictionary) -> int:
 	var count := 0
 	for raw: Variant in zone.get("room_graphs", []) as Array:
 		count += ((raw as Dictionary).get("actuators", []) as Array).size()
+	return count
+
+
+## Route sensors the Zone declares, and how many of them are levers
+## (`PULSE_BUTTON`, D13 1c).
+func _declared_route_sensors(zone: Dictionary, kind := "") -> int:
+	var count := 0
+	for raw: Variant in zone.get("room_graphs", []) as Array:
+		for sensor: Variant in (raw as Dictionary).get("sensors", []) as Array:
+			if kind == "" or str((sensor as Dictionary).get("kind", "")) == kind:
+				count += 1
 	return count
 
 
@@ -256,7 +262,8 @@ func _route_shutters(controller: ZoneController) -> Array:
 	return out
 
 
-func _plates(controller: ZoneController) -> Array:
+## The route graphs' sensors: since D13 1c, the lever route's bolt.
+func _route_controls(controller: ZoneController) -> Array:
 	var out: Array = []
 	for raw: Variant in controller.signal_graphs:
 		var graph: SignalGraph = raw
@@ -297,9 +304,8 @@ func _seed() -> void:
 				"%s is not gated twice" % str(edge.get("edge_id", "")))
 		if state or latch:
 			gated.append(str(edge.get("edge_id", "")))
-	# AS MANY AS THE ZONE DECLARES. Three while the profile composed a
-	# latch route; since D13 step 1 the latch step declines by policy until
-	# the lever route lands (Dess's D-1), and then there are three again.
+	# AS MANY AS THE ZONE DECLARES: the lever, the cell and, since D13 1c,
+	# the lever route in c009 again (Dess's D-1, D-7).
 	var declared := (zone.get("zone_state", []) as Array).size() \
 			+ _declared_route_actuators(zone)
 	_check(gated.size() == declared and declared >= 2,
@@ -312,20 +318,16 @@ func _seed() -> void:
 			FileAccess.get_file_as_string(record_path))
 	var steps: Array = (record as Dictionary).get("steps", []) \
 			if typeof(record) == TYPE_DICTIONARY else []
-	# EVERY STEP EMITTED -- or the latch step declined BY POLICY, with the
-	# bridge's own D-07 reason, exactly as `make candidate-fixture` accepts
-	# (DESS-27). Any other decline is a partial profile and fails here.
+	# EVERY STEP EMITTED. The latch step's D-07 policy decline ended with
+	# the lever (D13 1c, Dess's D-7), so a decline of any step is now a
+	# partial profile and fails here.
 	_check(typeof(record) == TYPE_DICTIONARY
 			and (record as Dictionary).get("profile") == PROFILE
 			and steps.size() == PROFILE.size()
 			and steps.all(func(s: Variant) -> bool:
-				var step: Dictionary = s
-				return bool(step.get("emitted", false)) or (
-						str(step.get("step", "")) == "latched_route"
-						and str(step.get("note", "")).begins_with(
-							LATCH_POLICY_DECLINE))),
-			"the bridge recorded all %d steps, each EMITTED or the latch "
-			% PROFILE.size() + "step declined by D-07 policy: %s in %s"
+				return bool((s as Dictionary).get("emitted", false))),
+			"the bridge recorded all %d steps, " % PROFILE.size()
+			+ "each EMITTED: %s in %s"
 			% [steps.map(func(x: Variant) -> String:
 				return "%s=%s" % [(x as Dictionary).get("step", "?"),
 					"EMITTED" if bool((x as Dictionary).get("emitted", false))
@@ -378,12 +380,23 @@ func _play() -> void:
 				return (sh as ServiceShutter).is_shut()),
 			"every gated doorway starts shut (%d)" % (2 + routes))
 	var nearest := INF
-	for plate: Variant in _plates(controller):
-		nearest = minf(nearest, (plate as Node3D).global_position
+	for control: Variant in _route_controls(controller):
+		nearest = minf(nearest, (control as Node3D).global_position
 				.distance_to(lever.global_position))
 	_check(nearest > 1.5,
-			"the lever does not stand on P14's plate (%.1f m apart)"
-			% nearest)
+			"the span lever does not stand on the route's own control "
+			+ "(%.1f m apart)" % nearest)
+	# D-07 in the owner's candidate: the route is pulled, never stepped on.
+	var controls := _route_controls(controller)
+	var levers := controls.filter(func(c: Variant) -> bool:
+		return c is CallLever)
+	_check(controls.size() == _declared_route_sensors(_zone_data)
+			and levers.size() == _declared_route_sensors(_zone_data,
+				"PULSE_BUTTON") and not levers.is_empty(),
+			"every declared route lever is built as a lever you pull "
+			+ "(%d of %d route controls; %d declared)"
+			% [levers.size(), controls.size(),
+				_declared_route_sensors(_zone_data)])
 
 	# ---- the lever opens the spine -------------------------------------
 	var declared: Dictionary = {}
