@@ -356,6 +356,60 @@ where the new rule would refuse a lever.
     - The runtime lands with that rule, because it is the reading of
       §14.4 that can never create progression. If you rule otherwise,
       the change is one function.
+- **N-16 (D-9 landed: one correction, and three things for your step 4).**
+  - **Correction to N-14's numbers.** N-14 gave the scenario's figures
+    as if they were relative to the floor the player grapples from: "a
+    deck whose centre is 3.1 m above" it, "the plate ... 7.2 m above
+    that floor".
+    - In fact they are measured from the scenario's ground. The player
+      grapples from the S2 platform, which is 1.0 m up.
+    - Relative to that floor, which is what a room build has to carry,
+      the deck's top is 2.9 m up and the plate 6.2 m. `godot-rail-gantry`
+      plays the pull at those numbers: from the floor onto the deck at
+      2.90 m, peaking at 3.98 m.
+    - The build needs 6.8 m of height, so `GANTRY_MIN_WALL_HEIGHT = 8.0`
+      holds.
+    - The comments in `zone.py` and `featured.py` that say "3.1 m up, its
+      hookshot plate 7.2 m up" describe the scenario's ground, not a
+      room's floor.
+    - **Proposal:** "2.9 m and 6.2 m above the floor it is grappled
+      from". The wording is yours.
+  - **The base kit's jump as played peaks at 1.40 m, not
+    `JUMP_APEX_HEIGHT` (1.33).**
+    - `player.gd` integrates explicitly at 60 Hz, which peaks half a step
+      above v²/2g. The suite measures a standing jump at 1.40 m.
+    - The gantry's reach field uses 1.40 m.
+    - Any rule of yours that must keep something out of the base kit's
+      reach, and is derived from the continuous figure, has 7 cm less
+      margin than it states. Rules about what the base kit can do lose
+      nothing.
+  - **For the composer: a gantry needs room.** The engine searches the
+    control room for a position with:
+    - the footprint inside;
+    - the carrier's half-width plus a rider's radius clear of every
+      track;
+    - floor under the approach and the post;
+    - the pull's column and the space over the deck clear;
+    - and nothing the base kit reaches within a jump of the deck.
+
+    In the suite's Zone, where the track crosses the control room
+    diagonally, a 16 m arena with its usual props has no position:
+    - 900 were tried;
+    - 324 were on the track;
+    - 3 were within a chain of crates and cover of the deck.
+
+    A 24 m arena has one. The refusal counts each test and names the
+    nearest reach, so a composed Zone that misses says why. **Proposal:**
+    prefer the largest arenas for a gantry. I can measure the sizes and
+    layouts you intend to compose.
+  - **One build order to know.** `RoomGraphs` is built after the
+    railways, and its plate search reads only the room's own solids, so a
+    signal graph in a gantry's room could put a device in the gantry's
+    footprint. No Zone has both yet. **Proposal:** for now, a gantry's
+    room carries no signal graph.
+  - **No schema change is asked.** The gantry's lever is worked only
+    from its deck (`AlignmentControl.worked_from`, D09-F1), so the AP
+    logic's `grapple` is what the room holds.
 
 ## Evidence rules (PROD_START)
 
@@ -3221,3 +3275,240 @@ temporary override expiry not started." The evidence H-GRAPHS asks for:
 - **What the owner will notice:** nothing yet, because no Echo carries a
   verb. Underneath, the rooms' machines now answer Design 3's five
   verbs, and none of them can open a way for good.
+
+## 0.4 — D-9 (Dess's note; D-6 step 3): a span's control on a gantry — landed
+
+Dess's note D-9: "`RailSpan.control_placement` is in the schema ... Your
+step 3, the gantry placement in `RailNetworks`, comes next. My step 4,
+the composer, follows it." `CONTROL_PLACEMENT_CAPABILITY["gantry"]` is
+`grapple`, so the AP logic declares that the control needs the proven
+anchor grapple. This makes the room hold exactly that gate: not less,
+which would be a loop a player skips, and not more, which would be a
+gate the logic does not declare.
+
+- **Reproduced first:** `godot-rail-gantry` (new) against the unchanged
+  engine of `41fd8cd` (`D-9_before.log`). **10 of 16 checks fail:**
+  - `RailNetworks` never read the field, so a gantry span got the ground
+    lever at the arrival;
+  - the base kit walked up to that lever and pulled it: "the base kit
+    cannot operate the control from the floor" fails, and that is the
+    defect. The logic says grapple, and the room asked for nothing;
+  - no room was refused, whatever its height or size.
+  - **Controls, green before and after:** a span declared `ground`, and
+    one that declares nothing, keep the lever at the arrival and build no
+    gantry.
+- **What changed:**
+  - **`rail_networks.gd`, the gantry.** The development scenario's
+    measured arrangement, carried relative to the floor the player
+    grapples from, which is what was proven there:
+    - a 4 × 0.4 × 4 m deck, top 2.9 m up. A standing jump peaks at
+      1.40 m and there is no mantle;
+    - the plate the hookshot bites is 6.2 m up, over the deck's near lip,
+      1.5 m beyond where the player stands. It has a glowing ring, as the
+      scenario's does;
+    - the lever stands on the deck, facing the approach, on a post;
+    - **no stairs,** by the owner's rule.
+  - **The placement is searched, nearest the arrival first.** The
+    scenario's order is the design's: the gantry is seen on arriving, and
+    opened later. The search tries an approach mark every metre, along
+    each of the room's four axes, ordered by the deck's distance from the
+    arrival (a total order, so a room gives the same gantry on every
+    build). A candidate passes when:
+    - its footprint, with 0.5 m to spare, is inside the room;
+    - no track passes within the carrier's half-width plus a rider's
+      radius. A control room is usually a dock room, and a deck across
+      the track is a carrier that cannot pass;
+    - the approach and the post stand on floor at the arrival's height,
+      which the measured pull is relative to;
+    - the column the pull climbs, the space over the deck and the post
+      hold no collider. The floor under the deck is not a path, so a
+      crate there is a crate under a gantry;
+    - and the base kit cannot reach the deck (below).
+  - **The base kit's reach, measured per room (`reach_field`).** "A
+    standing jump tops out below the deck" is true of the floor under it,
+    and says nothing about a gallery beside it. The field works as
+    follows:
+    - it samples the room's standable surfaces, one ray down per 0.5 m
+      cell and up to four deep;
+    - it fills them from the floor with the base kit's played jump
+      (D09-F2), climbing to neighbouring cells and then jumping across
+      gaps;
+    - it refuses a deck within a jump of anything reached.
+    - **It errs one way.** Walls are not in the field, a jump is not
+      blocked by what stands between, and a cell counts as far as it
+      reaches. Each of these can only add reach, never hide it.
+  - **A refusal is by name and builds nothing for that network, and the
+    Zone still builds.** The cases are:
+    - too low for the plate;
+    - no position passes. The refusal counts which test each candidate
+      failed, and for the nearest candidate it says where the base kit
+      jumps from;
+    - two gantries in one room.
+  - **`alignment_control.gd`: `worked_from`** (D09-F1). A gantry's lever
+    is pulled only by a player standing on its deck. Elsewhere, the
+    prompt says "REACHED FROM THE GANTRY" instead of offering an action
+    that does nothing. Every ground lever has no `worked_from` and is
+    unchanged.
+  - **`zone_controller.gd`** passes the rooms' bounds to the railways.
+- **Findings, all repaired here:**
+  - **D09-F1: the lever on the measured deck answered the interact probe
+    from below.**
+    - At the top of a standing jump beside the lip, the eye is at 3.00 m,
+      over a 2.9 m lip. The lever stands 2 m in, inside the 3 m probe, so
+      a timed press pulled it with no grapple.
+    - A passing carrier's deck puts the eye higher still.
+    - The deck cannot be raised without re-measuring the pull, and a
+      floor lever is one you stand at anyway. Hence `worked_from`.
+    - Sabotage D09-5 reproduces the exposure on the final geometry: the
+      probe finds the lever on 13 frames of the jump, and without the
+      rule it moves.
+  - **D09-F2: the base kit's jump peaks at 1.40 m, not the continuous
+    1.33 m of `JUMP_APEX_HEIGHT`.**
+    - `player.gd` integrates explicitly at 60 Hz, which peaks half a step
+      higher.
+    - The suite measures a standing jump at 1.40 m, and the field uses
+      that figure (`stepped_apex`).
+    - A tie at the apex counts as reached. A capsule can catch the edge
+      of a ledge at exactly its apex, and the 0.02 m tolerance means the
+      tie is decided by the rule, not by float noise in a ray's hit
+      height.
+    - Sabotage D09-10 shows the difference: with the continuous figure, a
+      1.38 m step reads as unclimbable.
+  - **D09-F3: three fixed positions were not a placement.** The first
+    build tried the centre and 4.7 m either side (`D-9_first_placement.log`):
+    - in the suite's first room, the track passed 2.2 m and 2.1 m from
+      two of the positions;
+    - a prop stood in the third.
+    - The first search then kept the whole block over the deck clear
+      (`D-9_whole_block_volume.log`), and none of 900 candidates passed.
+    - That is why the placement is searched, and why only what the player
+      uses must be clear.
+  - **D09-F4 (my test): a control that was not one.** The first control
+    was "the same gallery with no way up to it"
+    (`D-9_first_green_but_one.log`).
+    - The fill reached the gallery anyway, from a 1.12 m crate 2.2 m
+      away, as a player could. The measurement was right and the test
+      was wrong.
+    - The control is now the same block 1.3 m up. It is reached, and a
+      jump from it tops out at 2.70 m.
+  - **D09-F5 (my test): two lip attempts that never jumped.**
+    - They started 4 m behind the approach, which in that room was
+      beyond the wall. The player fell, never jumped, and the check still
+      passed (`D-9_runups_vacuous.log`).
+    - The per-attempt notes showed it.
+    - The run-up now stays on the room's floor, and each attempt must
+      leave the floor where it meant to and rise.
+  - **D09-F6 (my tests): four checks were decided by the arena, not by
+    the rule they were for.** The first sabotage run caught 12 of 16
+    (`D-9_sabotages_first.log`). Each of the four misses sat in a real
+    arena whose clutter settled it first:
+    - ignoring the track changed nothing, because the nearest position
+      was already 3.08 m off it;
+    - the continuous apex changed nothing, because a crate beside the
+      stair reached the gallery whatever the step's height;
+    - dropping the floor rule changed nothing, because the nearest
+      position already avoided the gap;
+    - a lowered deck was refused by the reach measurement before its
+      height was read. That refusal is right, so it keeps a row of its
+      own (D09-2b), and a raised deck tests the height (D09-2).
+
+    Each of the first three now has a case on a bare floor, where it
+    alone decides.
+- **The suite, `godot-rail-gantry`** (new, 41 checks; `D-9_after.log`).
+  The Zone cases run through the real `ZoneController`, with the real
+  `Player` driven by `Input`:
+  - **Built as measured:** the deck is 2.90 m up and the plate 6.20 m.
+    The plate hangs over the near lip, the lever stands on the deck, and
+    all of it is in the room that declared it. The track passes 3.08 m
+    from the deck, and a jump from the carrier tops out at 2.35 m.
+  - **The base kit, played:**
+    - a standing jump peaks at 1.40 m;
+    - three attempts at the lip: two hit the deck's underside, and one
+      takes off 2.45 m short, peaks at 1.40 m against the deck's side,
+      and falls;
+    - the lever at the top of a jump beside the lip is found by the
+      probe and does not move, and says why;
+    - the lever from the floor does nothing.
+  - **The grapple, played:** `set_equipped` with the scenario's own
+    component. Aimed at the plate, fired through the mobility key and
+    held forward, the pull lands the player on the deck (from 0.00 to
+    2.90 m, peak 3.98 m). The lever is offered there, it starts the
+    span, and the span commissions under its declared latch.
+  - **The controls:** a `ground` span and an undeclared one are
+    unchanged.
+  - **The refusals:** a 5 m arena, an 8 × 8 arena, and two gantries in
+    one room are each refused by name. In each, nothing is built and the
+    Zone still builds.
+  - **The measurement on its own:**
+    - a gallery the base kit climbs to, a metre past the deck, is
+      refused, and the placement moves elsewhere;
+    - the same block at 1.3 m is not refused;
+    - a crate in the column the pull climbs moves the gantry.
+  - **The rules on a bare floor**, in rooms of their own with nothing
+    the case did not put there:
+    - across a gap in the floor, with the arrival over it, neither the
+      approach nor the post stands over the gap. That holds to the
+      field's resolution: floor is known per 0.5 m cell, and a body
+      0.25 m past an edge still stands on it;
+    - a track laid through the chosen deck moves it 2.50 m off (the
+      carrier needs 2.10 m);
+    - a gallery up a 1.38 m step, a metre past the deck, is within
+      reach. That step is one the played jump makes and v²/2g says it
+      cannot;
+    - the same gallery at 1.3 m is not within reach (the control).
+- **Also green on the final engine** (`D-9_suites.log`):
+  `godot-rail-zone` (25), `godot-rail-junction` (140) and
+  `godot-rail-carrier` (73); `test_ci_coverage.py`. `make
+  godot-rail-gantry` is in the Makefile and CI after `godot-rail-zone`.
+- **Sabotages** (`D-9_sabotages.log`), each restored byte for byte
+  (sha256):
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| D09-1 | a gantry span gets the ground lever (the old build) | "a gantry was built for span s0" (6 in all) |
+| D09-2 | the deck raised to 3.3 m | "the deck's top stands ... (measured: 2.9)" (+1) |
+| D09-2b | the deck lowered to 2.6 m | the reach refuses every position before the height is read: "the network was not refused" (6 in all) |
+| D09-3 | the plate over the deck's middle, not its near lip | "the plate hangs over the deck's near lip" (10 in all) |
+| D09-4 | the track ignored | "a track through the chosen deck moves it off" |
+| D09-5 | the gantry's lever worked from anywhere | "at the top of a jump beside the lip ... it does not move" (3 in all) |
+| D09-6 | standing on the deck not asked | the same (3 in all) |
+| D09-7 | the lever offered to a player off the deck | "and what it says there is why" |
+| D09-8 | the placement does not ask the base kit's reach | "and the room does not put its gantry there" (3 in all) |
+| D09-9 | a jump onto the deck never counted | "a gallery the base kit climbs to" (3 in all) |
+| D09-10 | the continuous apex (1.33 m), not the played one | "on a bare floor, a gallery up a 1.38 m step" |
+| D09-11 | the flight volumes not measured | "a crate in the column the pull climbs" |
+| D09-12 | no floor asked for under the approach and the post | "across a gap in the floor" |
+| D09-13 | the room's height not asked | "a 5 m arena" |
+| D09-14 | two gantries to a room | "two gantries in c002" |
+| D09-15 | the Zone does not pass its rooms' bounds | "the network was not refused" (7 in all) |
+| D09-16 | a refused gantry quietly becomes a ground lever | "a 5 m arena" (+1) |
+
+- **The sabotage runs:** 12 of 16 on the first run
+  (`D-9_sabotages_first.log`, D09-F6). After each of the four misses got
+  its own case, all 17 were run on the final suite, and 17 of 17 were
+  caught (`D-9_sabotages.log`).
+
+- **What stays open:**
+  - **The development scenario's own gantry** has D09-F1's exposure. It
+    is the arrangement the owner reviewed, and `railway_shot_driver`
+    pulls its lever by script, so it is left as reviewed. The fix is one
+    line there (`worked_from`) and a scripted pull in the shots.
+  - **Room space (N-16).** In the suite's 16 m arena, with the track
+    across it and a dozen props, no position passes
+    (`D-9_stepped_apex_16m.log`):
+    - 900 were tried: 526 were outside the room, 324 on the track, 47
+      not clear, and 3 within the base kit's reach through a chain of
+      crates and cover;
+    - a 24 m arena takes a gantry.
+    - That is for Dess's step 4, the composer.
+  - **Build order.** `RoomGraphs` is built after the railways, and its
+    plate search reads only the room's own solids, so it does not see a
+    gantry. No Zone has both.
+  - **Not in the field:** objects a player moves, which could be carried
+    and stacked, and anything built after the railways.
+  - **No sign.** The ring is the affordance, as in the scenario, and the
+    lever explains itself when probed from below.
+- **What the owner will notice:** nothing yet, since no composer emits
+  a gantry until Dess's step 4. When one does, a span's lever may stand
+  on a gantry in its room, out of the base kit's reach, and the anchor
+  grapple the Zone's featured Check supplies is what gets you onto it.

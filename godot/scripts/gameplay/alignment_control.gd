@@ -29,6 +29,23 @@ const THROW_SECONDS := 0.4
 
 var label := "ALIGN THE SPAN"
 var done := false
+## WHERE IT IS WORKED FROM, when that is part of the gate: the body a
+## player must be standing on to pull it. Null -- every ground lever --
+## means from wherever the interact probe reaches it.
+##
+## **A gantry's lever has one (D-9).** The measured deck's top is 2.9 m
+## up and a standing jump puts the eye at 3.00 m: from beside the deck,
+## at the top of a jump, the 3 m interact probe grazes over the lip to a
+## lever two metres in, and a timed press pulled it without the grapple
+## the AP logic says it needs. From a passing carrier's deck the eye
+## clears the lip outright. Raising the deck would need the pull
+## re-measured; and this is what a floor lever means anyway -- you stand
+## at it to pull it.
+var worked_from: StaticBody3D = null
+## What the prompt says to a player who can see the lever and is not on
+## the body it is worked from: why, rather than an offer that does
+## nothing.
+const WORKED_FROM_PROMPT := "REACHED FROM THE GANTRY"
 
 var _lever: Node3D = null
 var _thrown := 0.0
@@ -76,11 +93,19 @@ func _build(theme: String) -> void:
 ## The prompt the player reads. Empty once it has been thrown, because
 ## an offer that does nothing is worse than no offer.
 func interact_prompt() -> String:
-	return "" if done else "[E] %s" % label
-
-
-func interact(_player: Node) -> void:
 	if done:
+		return ""
+	if worked_from != null and is_inside_tree():
+		var on_it := false
+		for who: Node in get_tree().get_nodes_in_group("player"):
+			on_it = on_it or stands_on_it(who)
+		if not on_it:
+			return WORKED_FROM_PROMPT
+	return "[E] %s" % label
+
+
+func interact(player: Node) -> void:
+	if done or not stands_on_it(player):
 		return
 	done = true
 	_thrown = 1.0
@@ -99,6 +124,27 @@ func advance(delta: float) -> void:
 		return
 	_thrown = maxf(_thrown - delta / THROW_SECONDS, 0.0)
 	_lever.rotation.x = deg_to_rad(THROW_DEGREES * (1.0 - _thrown))
+
+
+## Whether `who` stands on `worked_from`: on the floor, feet over its
+## top face. True of anyone for a lever worked from anywhere.
+func stands_on_it(who: Node) -> bool:
+	if worked_from == null:
+		return true
+	if not (who is CharacterBody3D) \
+			or not (who as CharacterBody3D).is_on_floor():
+		return false
+	var half := Vector3.ZERO
+	for child: Node in worked_from.get_children():
+		if child is CollisionShape3D \
+				and (child as CollisionShape3D).shape is BoxShape3D:
+			half = ((child as CollisionShape3D).shape as BoxShape3D).size \
+					* 0.5
+			break
+	var feet := worked_from.global_transform.affine_inverse() \
+			* (who as Node3D).global_position
+	return absf(feet.x) <= half.x + 0.3 and absf(feet.z) <= half.z + 0.3 \
+			and feet.y >= half.y - 0.1 and feet.y <= half.y + 0.5
 
 
 ## How far the lever has fallen, 0 at rest and 1 fully thrown.

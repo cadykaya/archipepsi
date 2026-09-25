@@ -389,9 +389,28 @@ owner's D-06/D-07 rulings and the seam table are in
       - Dess confirmed that a recorded latch is a macro setter. There
         is no Echo primitive, and no DIRECT, AND or SEQUENCE, until a
         room consumes one.
-    - **Next:** D-9, the gantry placement in `RailNetworks` (D-6 step 3;
-      Dess's steps 1 and 2 landed at `9bed879`). Then H-STATUS,
-      H-MACHINE-LIFE and H-RAIL-BREADTH.
+    - **D-9 landed: a span's control on a gantry** (D-6 step 3).
+      - `RailNetworks` builds the scenario's measured gantry, relative to
+        the floor the player grapples from: a deck 2.9 m up, and a plate
+        6.2 m up over its near lip. There are no stairs.
+      - Its position is searched in the control room, nearest the
+        arrival first. A position must be off the track, on floor, and
+        clear where the player climbs and lands.
+      - The base kit's reach is measured per room: nothing it reaches
+        may be within a jump of the deck.
+      - The lever is worked only from the deck (`worked_from`, D09-F1:
+        at the top of a jump beside the lip, the probe reached it).
+      - A room it does not fit is refused by name. Nothing is built for
+        that network, and the Zone still builds.
+      - `godot-rail-gantry` (new, in CI, 37 checks) plays the base kit
+        failing and the grapple landing on the deck, then starting the
+        span. 17 of 17 sabotages; the old engine fails 10 of 16.
+      - N-16 to Dess: N-14's 3.1 m and 7.2 m were measured from the
+        scenario's ground, and the played apex is 1.40 m. A gantry needs
+        a large arena: in the suite's Zone, 16 m has no position and
+        24 m has one.
+    - **Next:** H-STATUS, H-MACHINE-LIFE and H-RAIL-BREADTH. Dess's
+      step 4, the composer, now has the gantry to compose.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

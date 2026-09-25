@@ -544,7 +544,8 @@ func setup(zone_dict: Dictionary) -> void:
 	# a committed place. `room_places` is that commitment, read rather
 	# than re-derived.
 	_rail = RailNetworks.build(self, zone_dict.get("rail_networks", []),
-			room_places, str(zone_dict.get("theme", "concrete_facility")))
+			room_places, str(zone_dict.get("theme", "concrete_facility")),
+			room_bounds)
 	for why: String in _rail.get("refused", []) as Array:
 		# REPORTED, NOT RAISED. A network the engine cannot honour is a
 		# composition finding for whoever authored the Zone; crashing a
