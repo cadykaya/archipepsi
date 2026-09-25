@@ -3942,3 +3942,26 @@ takes its room choice from your numbers, not from a guess."
 - **What the owner will notice:** nothing yet. It is what lets the
   composer, D-6 step 4, put the Blindside gantry in a room the engine
   will build.
+
+## CK5 checkpoint — the full frontier on `ccaac5c` (D-01, D-5, H-GRAPHS slice 1, D-9, H-STATUS slice 2, D-10)
+
+- **On `ccaac5c` (D-10's head): 86 of 86 steps passed,** in two parts on
+  that one revision (`CK5_frontier_on_ccaac5c.tsv`).
+  - **Why two parts.** The container restarted during step 39
+    (`godot-rail-gantry`), and that step's partial log was discarded.
+    Steps 1–38 had passed (20:12–20:46 UTC). The tree was then
+    restored: the five placement fixtures `godot-zone-audit` rewrites,
+    whose changes were provenance stamps only, as at the end of CP4.
+    Steps 39–86 then ran from a clean tree (20:47–21:50 UTC).
+  - The steps are CP4's 82 and the four suites added since:
+    - `godot-signal-verbs` (32 checks);
+    - `godot-rail-gantry` (41);
+    - `godot-gantry-census` (4 min 13 s);
+    - `godot-status-kinetic` (35).
+  - It covers every commit since CP4's frontier (`a2115b6`): Prod's
+    D-01, D-5, H-GRAPHS slice 1, D-9, H-STATUS slice 2 and D-10, and
+    Dess's G1, D-6 steps 1–2 and DESS-28.
+  - `make test`: 2,299 passed (`CK5_make_test_on_ccaac5c.log`).
+  - No log has a line starting `SCRIPT ERROR`. Every live suite passed,
+    among them `godot-candidate-live` and both integrations.
+  - These are local results; remote CI does not run (N-6).

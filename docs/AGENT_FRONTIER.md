@@ -444,6 +444,10 @@ owner's D-06/D-07 rulings and the seam table are in
       - D10-F1 (N-18): a refused gantry never reaches the bridge, so a
         valid Zone could be accepted without its railway. The fix
         proposed is Dess's to choose.
+    - **CK5 checkpoint: 86 of 86 on `ccaac5c`** (D-01 through D-10, and
+      Dess's G1, D-6 1–2 and DESS-28), in two parts on one revision
+      because the container restarted mid-run
+      (`CK5_frontier_on_ccaac5c.tsv`). `make test`: 2,299 passed.
     - **Next:** H-MACHINE-LIFE (O05-10.4's repeated lifecycle counters
       first; then power loss and a constrained assembly, which need a
       real powered occurrence), then H-RAIL-BREADTH (branching and
