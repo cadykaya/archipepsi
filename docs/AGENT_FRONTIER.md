@@ -35,16 +35,17 @@ item is in `docs/ledgers/DESS_POST_PLAYTEST.md`.
 - DESS-26 is fixed: an enemy pull is not a crossing.
 - H-QUALIFY's contract has landed (`schemas/featured.py`). The pipeline
   wiring is note D-5 to Prod.
-- H-GEAR (16 costed domains) is in progress.
+- **H-GEAR is stopped with options (D16) for the owner.** The design
+  conflicts on the clause budget and on piece shapes, no transaction is
+  approved, and only 3 of 16 domains have a runtime. The recommendation
+  is G1, the Legs slice. Nothing is built.
 - **Blindside's composition (O05-05.2 for H-BLINDSIDE):** the interface
   is proposed in note D-6 (a `gantry` span control, rails in the search,
   your gantry placement first, the composer after). It waits for Prod's
   confirmation.
 - H-AP-GATE and H-ATOM-DELIVERY are explicitly deferred (ledger).
 
-**Waiting on the owner:**
-- Nothing open. D-02, D-03, D-04, D-01's compatibility and the
-  Unweighted reading were all ruled on 2026-09-25.
+**Waiting on the owner:** H-GEAR's options (D16).
 
 **CI is not running.** Every PR-gate and Integration run has failed
 within about four seconds, with no log, since at least `6ebbc90`, for

@@ -1090,3 +1090,27 @@ commissions S2→S3. It touches three things:
 
 **Your confirmation needed:** the field name and the gantry's geometry.
 Once you confirm, 1 and 2 land as search-only rules, and 4 waits for 3.
+
+## W3.5 — H-GEAR: stopped with options (D16), by the owner's own rule
+
+**Why it stopped.** Checked before building, H-GEAR meets "a new owner
+decision, a material contract conflict, or a genuinely new cross-lane
+dependency" four times over:
+- the design's budget rules disagree on trigger clauses (§4.6.1 against
+  `04:760`), and no clause catalog exists;
+- the piece shapes disagree, on USEFUL completion and on
+  exactly-one against at-most-one HIGH;
+- no Forge or Static transaction is approved (B4 pending, D-14 open);
+- only 3 of the 16 costed domains have a runtime stat path (speed, jump,
+  landing).
+
+The research was a read-only pass, and every claim in D16 cites its
+line.
+
+**Recommendation: G1.** The LEGS slice (speed, jump, landing): USEFUL
+pieces with a profound magnitude, which land in band under both budget
+readings without a clause. Echo acquisition only, four territory slots,
+and source-owned clamped multipliers. The support gate opens only once
+Prod's StatStack applies them.
+
+**Nothing is implemented.** `SUPPORTED_GEAR_DOMAINS` stays empty.
