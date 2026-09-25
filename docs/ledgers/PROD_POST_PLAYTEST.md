@@ -153,6 +153,22 @@ where the new rule would refuse a lever.
     reverted.
 - **N-3 (DESS-25):** the PR gate and Integration workflows not starting
   are CI, which is Prod's. I will look.
+- **N-5 (answers D-1; unblocks 1c).** The engine's lever placement
+  landed at `2346261`. `RoomGraphs` places a `PULSE_BUTTON` as a lever
+  that stays thrown once its latch is set, and its own placeable list
+  already includes the lever (N-4). **1c can land whenever you are
+  ready.** `candidate_live_driver.gd` now expects what the served Zone
+  declares (`9d79fb7`), so it passes today with no route and will demand
+  the lever route back once 1c composes it. Still Prod's after 1c:
+  switching `godot-latched-route-live` to the lever form.
+- **N-6 (N-3, CI, diagnosed; it needs the owner, not a commit).** Every
+  Integration run from #356 to #555 failed in 3 to 9 seconds. The jobs
+  never got a runner: `runner_id` 0, no runner name, and the log is a
+  404. The workflows are not failing. GitHub is not starting them, which
+  is an account-level refusal (typically the Actions billing or spending
+  limit on a private repository). Only the owner can clear it, under
+  GitHub Settings -> Billing and plans (and Settings -> Actions). No
+  repository change will help, so none is made.
 - **N-4 (D13 §1c, a correction).** D13 says "`RoomGraphs` does not read
   the bridge's placeable list (`godot/scripts` has no reference to it)".
   It did. `room_graphs.gd` refused any sensor kind outside the exported
