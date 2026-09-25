@@ -560,7 +560,21 @@ func _scan_mark(prim: Dictionary) -> void:
 
 ## Whether a conditional verb could resolve right now. Kept in one place so
 ## `activate()` reads as a list of verbs rather than a thicket of guards.
+## THE PRIMITIVES WHOSE EFFECT IS THE PLAYER'S OWN MOVEMENT. `anchored`
+## is "movement 0.0, jump blocked, all other actions permitted" (Design 5
+## §15.2): these ARE movement, so they refuse before the cooldown is
+## charged -- and say so -- rather than paying for a dash the anchor then
+## stops dead. A recoil, a slam, a pull on an enemy: actions, permitted,
+## and whatever they would move the player the anchor holds.
+const MOVES_THE_PLAYER := ["dash", "air_dash", "double_jump", "wall_kick",
+		"glide", "blink", "grapple_to_surface", "grapple_swing", "hover"]
+const ANCHORED_REFUSAL := "ANCHORED -- FIXED IN PLACE"
+
 func _conditions_met() -> bool:
+	if _primitive_type() in MOVES_THE_PLAYER and player != null \
+			and player.anchored():
+		player.carry_feedback.emit(ANCHORED_REFUSAL, false)
+		return false
 	match _primitive_type():
 		"slam_ground", "air_dash", "double_jump":
 			if player.is_on_floor():

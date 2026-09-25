@@ -71,6 +71,9 @@ func holding() -> bool:
 ## Why `target` cannot be picked up, or "" if it can. The order matters:
 ## an object that is bolted, installed or not handheld is refused for
 ## that reason before its weight is mentioned.
+## What the carry says of an anchored body (Design 5 §15.2's sentence).
+const ANCHORED := "FIXED IN PLACE"
+
 static func refusal(target: ManipulableBody) -> String:
 	if target == null or not is_instance_valid(target):
 		return "NOTHING TO CARRY"
@@ -78,6 +81,8 @@ static func refusal(target: ManipulableBody) -> String:
 		return "INSTALLED"
 	if target.constrained:
 		return "BOLTED DOWN"
+	if target.anchored():
+		return ANCHORED
 	if not target.carriable:
 		return "CAN'T CARRY THAT"
 	if target.mass > Constants.CARRY_MASS_KG:
@@ -190,6 +195,11 @@ func update(delta: float) -> void:
 	_forget_separated()
 	if not holding():
 		body = null
+		return
+	# ANCHORED IN THE HANDS: it is fixed where it is, so the hands let go
+	# and the anchor holds it there.
+	if body.anchored():
+		release(ANCHORED)
 		return
 	var alpha := 1.0 - exp(-delta / maxf(SMOOTHING_S, 0.001))
 	var view := _view()

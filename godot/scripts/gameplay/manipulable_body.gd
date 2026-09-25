@@ -187,6 +187,23 @@ var statuses: StatusEffects = null
 ## gives `lightened` "incoming impulse x2.0".
 const LIGHTENED_IMPULSE := 2.0
 
+## `anchored` on an OBJECT (Design 5 §15.2): "mass_class becomes FIXED;
+## immune to all impulse, wind, conveyor, and Physics". Fixed in place --
+## where it is, in the air included -- by the STATIC freeze a PIN uses,
+## for as long as the Status runs. Frozen STATIC, it takes no impulse and
+## no force, and keeps none to fire when it thaws -- measured, not assumed
+## (`godot-status-kinetic`), so the freeze is the one mechanism.
+##
+## **ONE HOLD AMONG SEVERAL, so it only undoes what it did.** A pin, a
+## socket, a weld and a carry each freeze a body for their own reasons.
+## The anchor freezes a body only if nothing already holds it, re-asserts
+## that while it runs (a pin released under it must not free an anchored
+## body), and on ending thaws only a freeze it made itself. Every verb and
+## the carry refuse a FIXED body, so nothing else can take hold of one in
+## between.
+var _anchor_froze := false
+var _anchor_mode := RigidBody3D.FREEZE_MODE_STATIC
+
 ## Apply a Status to this body. The real path -- there is no second,
 ## room-local vocabulary and no stand-in.
 func apply_status(kind: String, duration: float, magnitude: float) -> void:
@@ -198,7 +215,31 @@ func apply_status(kind: String, duration: float, magnitude: float) -> void:
 	if statuses.active_kinds().size() == before and not statuses.has(kind):
 		# Refused. Nothing started, so nothing needs ticking.
 		return
+	_hold_anchor()
 	set_physics_process(true)
+
+
+## Whether this body is anchored right now.
+func anchored() -> bool:
+	return statuses != null and statuses.has("anchored")
+
+
+## Keep the anchor's hold matching the Status: freeze while anchored,
+## thaw what it froze when not.
+func _hold_anchor() -> void:
+	if anchored():
+		if not freeze:
+			_anchor_mode = freeze_mode
+			linear_velocity = Vector3.ZERO
+			angular_velocity = Vector3.ZERO
+			freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+			freeze = true
+			_anchor_froze = true
+	elif _anchor_froze:
+		_anchor_froze = false
+		freeze = false
+		freeze_mode = _anchor_mode
+		sleeping = false
 
 ## The class this body reads as RIGHT NOW.
 ##
@@ -237,6 +278,7 @@ func _physics_process(delta: float) -> void:
 		set_physics_process(false)
 		return
 	statuses.tick(delta)
+	_hold_anchor()
 	if statuses.active_kinds().is_empty():
 		set_physics_process(false)
 

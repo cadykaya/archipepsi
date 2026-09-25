@@ -413,8 +413,29 @@ owner's D-06/D-07 rulings and the seam table are in
         scenario's ground, and the played apex is 1.40 m. A gantry needs
         a large arena: in the suite's Zone, 16 m has no position and
         24 m has one.
-    - **Next:** H-STATUS, H-MACHINE-LIFE and H-RAIL-BREADTH. Dess's
-      step 4, the composer, now has the gantry to compose.
+    - **H-STATUS slice 2 landed, runtime-only: the KINETIC pair on every
+      target the runtime models.**
+      - `anchored` on the player: held against every impulse, no walk and
+        no jump. Its movement Echoes refuse unpaid, and everything else is
+        permitted. A rail lets it go and a launch pad will not fire it. It
+        reads `FIXED`.
+      - `anchored` on an object: frozen in place, and refused by the
+        verbs, the push and the hands.
+      - `lightened` on the player and on an enemy: a knock at ×2. The
+        player reads `LIGHT`.
+      - Applying either removes the other.
+      - `godot-status-kinetic` (new, in CI, 35 checks). The old runtime
+        fails 21 of them. 17 of 17 sabotages.
+      - The gate is Dess's: N-17 asks for the four targets in
+        `SUPPORTED_STATUS_TARGETS`. Until then nothing applies them in
+        play.
+    - **Next:** H-MACHINE-LIFE (O05-10.4's repeated lifecycle counters
+      first; then power loss and a constrained assembly, which need a
+      real powered occurrence), then H-RAIL-BREADTH (branching and
+      switchable railways, accepted and unbuilt; DESS-01 lists what they
+      need). H-STATUS continues after N-17 with O05-09.1's material rows
+      (slippery, conductive, brittle) and O05-09.2's actor behaviour.
+      Dess's step 4, the composer, has the gantry to compose.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

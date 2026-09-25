@@ -1,0 +1,145 @@
+"""H-STATUS slice 2 sabotages: break one rule, confirm a named failure,
+restore.
+
+Same protocol as the D-9 and H-GRAPHS runners: each row edits one file
+in the wt-status work tree, runs `make godot-status-kinetic`, records
+every FAIL line, and restores the file byte for byte (sha256 checked). A
+row is CAUGHT only when the check it names is among the failures. Run
+only when no other Godot suite is running.
+"""
+from __future__ import annotations
+
+import hashlib
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+TREE = Path(os.environ.get("HS2_TREE",
+                           Path(__file__).resolve().parent / "wt-status"))
+PL = "godot/scripts/gameplay/player.gd"
+ER = "godot/scripts/gameplay/echo_runtime.gd"
+SE = "godot/scripts/gameplay/status_effects.gd"
+EN = "godot/scripts/enemies/enemy.gd"
+MB = "godot/scripts/gameplay/manipulable_body.gd"
+MA = "godot/scripts/gameplay/manipulation.gd"
+HC = "godot/scripts/gameplay/hand_carry.gd"
+AN = "godot/scripts/gameplay/affordance_nodes.gd"
+TARGET = "godot-status-kinetic"
+
+# (id, what, file, old, new, the check that must fail)
+ROWS = [
+    ("HS2-1", "the anchored walk keeps its intent (speed not zeroed)", PL,
+     " \\\n\t\t\t\t* (0.0 if anchored() else 1.0)", "",
+     "pressing forward:"),
+    ("HS2-2", "the anchored jump not blocked", PL,
+     "_jump_buffer > 0.0 and _coyote > 0.0 and not anchored():",
+     "_jump_buffer > 0.0 and _coyote > 0.0:",
+     "no `jumped` for a rule to answer"),
+    ("HS2-3", "the hold removed", PL,
+     "\tif anchored():\n\t\t_hold_anchored()\n",
+     "\tif false:\n\t\t_hold_anchored()\n",
+     "a knock (7, 3, 0)"),
+    ("HS2-4", "a grind rail keeps an anchored rider", PL,
+     "\tif _rider != null and anchored():\n\t\t_leave_rail()\n",
+     "\tif false:\n\t\t_leave_rail()\n",
+     "a grind rail catches the free player"),
+    ("HS2-5", "a grind rail catches an anchored player", PL,
+     "\tif _rider != null or _dead or anchored():",
+     "\tif _rider != null or _dead:",
+     "a grind rail catches the free player"),
+    ("HS2-6", "a lightened player's knock not doubled", PL,
+     "\tif statuses.has(\"lightened\"):\n"
+     "\t\timpulse *= ManipulableBody.LIGHTENED_IMPULSE\n", "",
+     "the same knock (4 m/s)"),
+    ("HS2-7", "the player's class ignores its Statuses", PL,
+     "\treturn MassClass.read(Constants.PLAYER_MASS_KG, true, statuses)",
+     "\treturn MassClass.of_mass(Constants.PLAYER_MASS_KG)",
+     "its class drops a step"),
+    ("HS2-8", "movement Echoes fire while anchored", ER,
+     "\tif _primitive_type() in MOVES_THE_PLAYER and player != null \\\n"
+     "\t\t\tand player.anchored():",
+     "\tif false:",
+     "the dash refuses before it is paid for"),
+    ("HS2-9", "the pair coexists", SE,
+     "\t_active.erase(_RIVALS.get(kind, \"\"))\n", "",
+     "anchoring it removes the lightness"),
+    ("HS2-10", "the container ignores the table it holds", SE,
+     "\tvar targets: Array = supported.get(kind, [])",
+     "\tvar targets: Array = Constants.ECHO_STATUS_SUPPORTED_TARGETS"
+     ".get(kind, [])",
+     "a second held forward"),
+    ("HS2-11", "a lightened enemy's knock not doubled", EN,
+     "\t_knockback += impulse * _impulse_scale()",
+     "\t_knockback += impulse",
+     "the same 8 m/s knock"),
+    ("HS2-12", "an anchored object not frozen", MB,
+     "\tif anchored():\n\t\tif not freeze:",
+     "\tif false:\n\t\tif not freeze:",
+     "walked into for a second and a half"),
+    ("HS2-13", "the anchor thaws a freeze it did not make", MB,
+     "\telif _anchor_froze:", "\telif freeze:",
+     "a bolted crate anchored and released is still frozen"),
+    ("HS2-14", "a push moves an anchored body", MA,
+     "\tif body.mass <= envelope.mass_limit_kg and body.anchored():",
+     "\tif false:",
+     "so does a push"),
+    ("HS2-15", "the hands pick up an anchored body", HC,
+     "\tif target.anchored():\n\t\treturn ANCHORED\n", "",
+     "the hands say"),
+    ("HS2-16", "the hands keep a body anchored in them", HC,
+     "\tif body.anchored():\n\t\trelease(ANCHORED)\n\t\treturn\n", "",
+     "a carried crate anchored is let go"),
+    ("HS2-17", "a launch pad fires an anchored player", AN,
+     "\t\tif player.anchored():\n\t\t\treturn\n", "",
+     "a launch pad fires the free player"),
+]
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main() -> int:
+    only = set(sys.argv[1:])
+    lines, caught, total = [], 0, 0
+    for rid, what, rel, old, new, expect in ROWS:
+        if only and rid not in only:
+            continue
+        total += 1
+        path = TREE / rel
+        original = path.read_bytes()
+        text = original.decode("utf-8")
+        if text.count(old) != 1:
+            lines.append(f"{rid} SETUP ERROR: anchor found {text.count(old)}"
+                         f" times in {rel}")
+            continue
+        before = hashlib.sha256(original).hexdigest()
+        path.write_bytes(text.replace(old, new).encode("utf-8"))
+        try:
+            out = subprocess.run(["make", TARGET], cwd=TREE,
+                                 capture_output=True, text=True, timeout=1500)
+            log = out.stdout + out.stderr
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        fails = sorted({l[6:] for l in log.splitlines()
+                        if l.startswith("FAIL: ")})
+        errors = sum(1 for l in log.splitlines()
+                     if l.lstrip().startswith("SCRIPT ERROR"))
+        hit = any(expect in f for f in fails)
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    {'CAUGHT' if hit else 'NOT CAUGHT'} by \"{expect}\""
+                     f" -- {len(fails)} failing check(s), {errors} script "
+                     f"error(s); restored byte for byte: {restored}")
+        for f in fails:
+            lines.append(f"      FAIL: {f[:260]}")
+        print("\n".join(lines[-(len(fails) + 2):]), flush=True)
+    lines.append(f"\n{caught} of {total} sabotages caught")
+    print(lines[-1])
+    return 0 if caught == total else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1437,7 +1437,7 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> bool:
 	amount *= 1.0 - _frontal_shrug(global_position - direction)
 	hp -= amount
 	if knockback > 0.0:
-		_knockback += direction * knockback
+		_knockback += direction * knockback * _impulse_scale()
 	# Crude hit feedback: a scale punch. 1998 did not have hit shaders.
 	# Skipped mid-windup so it cannot cancel the brute's telegraph.
 	# On `visual`, so being hit no longer shrinks the hitbox to 88%.
@@ -1502,7 +1502,15 @@ func _refresh_damage_tint() -> void:
 			material.albedo_color = albedo
 
 func apply_knockback(impulse: Vector3) -> void:
-	_knockback += impulse
+	_knockback += impulse * _impulse_scale()
+
+
+## Design 5 §15.2: `lightened` takes "incoming impulse x2.0". The only
+## part of the Status an enemy can carry today -- it has no mass class to
+## drop a step, and nothing blows or conveys it.
+func _impulse_scale() -> float:
+	return ManipulableBody.LIGHTENED_IMPULSE \
+			if statuses.has("lightened") else 1.0
 
 ## Burning and poison chip without the scale-punch flinch: a tween per
 ## physics frame is a strobe, and a DoT is ambient harm rather than a hit.

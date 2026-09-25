@@ -162,6 +162,7 @@ jobs:
           make godot-reversible
           make godot-verb-runtime
           make godot-status-family
+          make godot-status-kinetic
           make godot-combat-fairness
           make godot-flyer-room
           make godot-resume

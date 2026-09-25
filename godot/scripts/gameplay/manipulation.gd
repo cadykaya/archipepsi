@@ -117,6 +117,11 @@ static func push(body: ManipulableBody, from: Vector3, toward: Vector3,
 	# read with different comparators, so a body at exactly 120.0 kg is
 	# pushable today and is `HEAVY` class-wise. Reading class as the
 	# authority would have silently refused it.
+	# ANCHORED IS FIXED, whatever it weighs (Design 5 §15.2: "immune to
+	# all impulse ... and Physics"). After the kilograms, so a body that
+	# was already refused for its mass keeps its reason.
+	if body.mass <= envelope.mass_limit_kg and body.anchored():
+		return {"applied": 0.0, "refused": FIXED}
 	if body.mass > envelope.mass_limit_kg \
 			and not _lightened_into_reach(body):
 		return {"applied": 0.0, "refused": TOO_HEAVY,

@@ -395,6 +395,10 @@ class LaunchPad extends Area3D:
 			return
 		if not origin_is_clear(player):
 			return
+		# An anchored player is "immune to all impulse" (Design 5 §15.2),
+		# and a pad that captured one would carry them to its pose.
+		if player.anchored():
+			return
 		player.global_position = _body_pose()
 		player.velocity = shot["velocity"]
 		# THE ARC IS THE CONTRACT. Without this the walk solve's air

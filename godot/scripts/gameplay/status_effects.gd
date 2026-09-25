@@ -20,6 +20,20 @@ signal status_applied(kind: String)
 #: second vocabulary.
 var side := "self"
 
+#: THE TABLE THIS CONTAINER HONOURS: `SUPPORTED_STATUS_TARGETS`, generated
+#: from the bridge's schema, which is the contract -- a kind is applied to
+#: a target only once the contract declares the runtime implements it
+#: there. A field, not a constant read, for one reason: a suite may hand a
+#: container the table AS IT WILL BE DECLARED, to prove an effect through
+#: this real application path before the declaration opens the gate for
+#: everyone. Nothing in the game sets it.
+var supported: Dictionary = Constants.ECHO_STATUS_SUPPORTED_TARGETS
+
+#: THE KINETIC PAIR NEVER COEXISTS (Design 1 item 72; Design 2 §15):
+#: "applying either removes the other, since one sets mass to `FIXED` and
+#: the other reduces it."
+const _RIVALS := {"anchored": "lightened", "lightened": "anchored"}
+
 var _active: Dictionary = {}
 
 func apply(kind: String, duration: float, magnitude: float) -> void:
@@ -51,7 +65,7 @@ func apply(kind: String, duration: float, magnitude: float) -> void:
 	#
 	# A REFUSAL LEAVES NOTHING BEHIND: no entry, and no `status_applied`,
 	# so nothing downstream sees a success that did not happen.
-	var targets: Array = Constants.ECHO_STATUS_SUPPORTED_TARGETS.get(kind, [])
+	var targets: Array = supported.get(kind, [])
 	if targets.is_empty():
 		push_error(("apply_status names '%s', which the design names " % kind)
 				+ "but no runtime effect implements, so it may not be "
@@ -68,6 +82,9 @@ func apply(kind: String, duration: float, magnitude: float) -> void:
 			duration = maxf(duration, float(component.get("duration", 0.0)))
 			magnitude = maxf(magnitude,
 					float(component.get("magnitude", 0.0)))
+	# THE RIVAL GOES FIRST, and only once this application is admitted: a
+	# refused `anchored` leaves a `lightened` body lightened.
+	_active.erase(_RIVALS.get(kind, ""))
 	# Re-application refreshes rather than stacks: two burnings that added
 	# up would breach the schema's own magnitude bound from outside it.
 	#

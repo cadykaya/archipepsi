@@ -410,6 +410,44 @@ where the new rule would refuse a lever.
   - **No schema change is asked.** The gantry's lever is worked only
     from its deck (`AlignmentControl.worked_from`, D09-F1), so the AP
     logic's `grapple` is what the room holds.
+- **N-17 (H-STATUS slice 2; one ask).**
+  - **The runtime is in; please declare it.** `anchored` on `object` and
+    `self`, and `lightened` on `self` and `enemy`, now have their Design 5
+    §15.2 effects in the engine, played in `godot-status-kinetic`:
+    - the anchored player is held against every impulse. It cannot walk
+      or jump, its movement Echoes refuse unpaid, it reads `FIXED`, and
+      everything else is permitted;
+    - the anchored object is frozen in place, reads `FIXED`, and is
+      refused by the verbs, the push and the hands;
+    - a lightened player reads `LIGHT` and takes a knock at ×2;
+    - a lightened enemy takes a knock at ×2;
+    - applying either removes the other.
+  - **Ask:** add the four targets to `SUPPORTED_STATUS_TARGETS`, per the
+    table's own rule ("declared in the change that lands those
+    effects").
+    - `schemas/echo.py`'s comment for `anchored` says "a body fixed in
+      place, and a player whose jump is blocked, are two other runtimes,
+      and neither exists yet". Both exist now.
+  - **Four things move with it** (Prod's tests; I will update them on
+    your word):
+    - `stats_driver.gd:589` pins `lightened == ["object"]`;
+    - `mass_class_driver.gd:397-413` expects `lightened` on the player
+      to be refused;
+    - `unweighted_driver.gd:485-492` uses `anchored` on an object as the
+      refused example;
+    - `bridge/tests/test_status_guarantee.py` pins the table on your
+      side.
+
+    `godot-status-kinetic` needs nothing: it reads the table and follows
+    the gate.
+  - **Two readings for you to confirm or overrule:**
+    - an anchored player still falls, as an anchored enemy does:
+      "fixed in place" where it stands, not hung in the air. An anchored
+      object does hang, because it is frozen;
+    - a player's own `anchored` or `lightened` changes the class a
+      counting plate reads. The route validator reads the player
+      unstatused (D-10 §6), so this is a transient the player chose, and
+      it lasts as long as the Status does.
 
 ## Evidence rules (PROD_START)
 
@@ -3512,3 +3550,207 @@ gate the logic does not declare.
   a gantry until Dess's step 4. When one does, a span's lever may stand
   on a gantry in its room, out of the base kit's reach, and the anchor
   grapple the Zone's featured Check supplies is what gets you onto it.
+
+## 0.4 — H-STATUS, slice 2: the KINETIC pair on every target the runtime models — landed, runtime-only
+
+`05_INHERITED` O05-09.1's remainder: "anchored object/player; lightened
+enemy/player". H-STATUS's evidence is "behavior in world; no legacy
+corruption or actor damage substitute".
+
+Design 5 §15.2's exact effects:
+- **`anchored`:** `mass_class` becomes `FIXED`, and the body is immune
+  to all impulse, wind, conveyor and Physics. On an actor, movement is
+  0.0 and attacks continue. On the player, movement is 0.0, jump is
+  blocked, and all other actions are permitted.
+- **`lightened`:** `mass_class` drops one step, incoming impulse is
+  ×2.0, and wind and conveyors now affect it.
+- **Design 1 item 72:** the two never coexist. "Applying either removes
+  the other."
+
+- **The gate is Dess's.** `StatusEffects` applies a kind to a target
+  only once `SUPPORTED_STATUS_TARGETS` (`schemas/echo.py`) declares that
+  the runtime implements it there, and none of these four is declared.
+  - So the runtime lands first. Each container now holds its table as a
+    field (`supported`), which defaults to the generated one, and
+    nothing in the game sets it.
+  - The suite hands the table over as it will be declared, and applies
+    through the real path.
+  - Its first case asserts that the production gate agrees with the
+    production table, whichever way Dess has declared it by then.
+  - Note N-17 asks for the declaration.
+- **Reproduced first:** `godot-status-kinetic` (new), on the unchanged
+  runtime of `82068a9` (`H-STATUS-2_before.log`). **21 of 35 checks
+  fail.** On that runtime the Status is written where an application
+  would have put it, so what fails is that nothing reads it:
+  - the anchored player walks 7 m, jumps 1.40 m, and is thrown by a
+    knock;
+  - the anchored dash fires;
+  - its class stays MEDIUM;
+  - a lightened player and enemy take a knock at ×1.0;
+  - the pair coexist;
+  - the anchored crate slides under a push, is shoved 4.4 m when walked
+    into, and falls from where it was anchored;
+  - the hands say "CAN'T CARRY THAT";
+  - a carried one is kept.
+  - **Controls, green before and after:**
+    - the gate agrees with the table;
+    - a shield, and a lever in reach, both work while anchored;
+    - an anchored player 3 m up still comes down;
+    - a lightened player walks and jumps as a plain one does;
+    - the verbs still call an enemy's mass unmodelled;
+    - a bolted crate stays frozen.
+- **What changed:**
+  - **The player (`player.gd`).** Anchored:
+    - the walk's speed is 0, so there is no walk intent, and therefore
+      no step climbed and no crate shoved;
+    - the jump does not happen, so no `jumped` fires for a rule to
+      answer;
+    - last in the step, the body is held: nothing moves it across the
+      floor or lifts it, whichever source asks (a knock, a rule's
+      impulse, a pad, an updraft, a swing, its own Echo). Gravity still
+      brings it down, as it does an anchored enemy;
+    - a grind rail lets go, and none catches it;
+    - a launch pad does not fire it;
+    - `mass_class()` reads `FIXED`, and `lightened` reads `LIGHT`. The
+      old docstring said "no Status moves it", and now says which two do
+      and why that is a transient the route validator need not model;
+    - `lightened` doubles `receive_knockback`.
+  - **The Echo actions (`echo_runtime.gd`).** Nine primitives whose
+    effect is the player's own movement (dash, air dash, double jump,
+    wall kick, glide, blink, grapple to a surface, swing, hover) are
+    refused while anchored. The refusal comes before the cooldown is
+    charged, with "ANCHORED -- FIXED IN PLACE", instead of being paid for
+    and stopped dead. Everything else fires.
+  - **The enemy (`enemy.gd`).** `lightened` doubles an incoming knock.
+    That is the whole of it an enemy can carry today: it has no mass
+    class to drop a step, and nothing blows or conveys it.
+  - **The object (`manipulable_body.gd`).** Anchored, a body is frozen in
+    place, in the air included, with the STATIC freeze a PIN uses.
+    - The freeze is one hold among several (pin, socket, weld, carry,
+      bolt). The anchor freezes only a body nothing already holds,
+      re-asserts that while it runs, and thaws only its own freeze.
+    - `Manipulation.push` refuses an anchored body as `FIXED` (the verbs
+      already did, by class).
+    - `HandCarry` refuses it ("FIXED IN PLACE"), and lets go of one
+      anchored in the hands.
+  - **The pair (`status_effects.gd`).** Applying either removes the
+    other, once the application is admitted: a refused `anchored` leaves
+    a lightened body lightened.
+- **Findings:**
+  - **HS2-F1: a walk intent left on an anchored body lifts it every
+    frame.** The first sabotage run caught 16 of 17
+    (`H-STATUS-2_sabotages_first.log`). The miss was the anchored walk
+    speed: without it, the anchored player pressing forward kept all the
+    checks green.
+    - A trace showed why (`H-STATUS-2_climb_trace.log`):
+      the step the law promises lifted the body 0.5 m on every frame
+      forward was held, 60 lifts in a second, and the floor snap pulled
+      it back before the frame ended.
+    - The residual is 3.5 mm, and a held body leaves none. The rule
+      stays; the check now reads to the millimetre, and HS2-1 is caught.
+  - **HS2-F2: two immunities were redundant, so they are gone.**
+    - The player's knockback return: the hold overwrites the velocity
+      every frame before anything moves.
+    - The crate's impulse and force returns: measured with them removed
+      (`H-STATUS-2_redundancy.log`), the STATIC freeze takes no impulse
+      and keeps none to fire when it thaws, and a check now holds that
+      ("an impulse landed while anchored is not released").
+    - One mechanism each: the hold, and the freeze.
+  - **HS2-F3 (my tests): four of the first run's failures were mine.**
+    - Walking damps a knock and a dash within a few frames, so the free
+      controls moved 0.42 m and 0.50 m, not the metre I had asked of
+      them.
+    - `push` takes a point to push toward, and I passed the crate's own.
+    - Crates are not carriable by default.
+    - An unheld enemy walks after a knock, which diluted the ×2 to ×1.4.
+      Both enemies are now held by `rooted`, which is declared, forbids
+      their own steps and still takes a knock.
+- **The suite, `godot-status-kinetic`** (new, in CI; 35 checks,
+  `H-STATUS-2_after.log`). The real player is driven through `Input`,
+  with real enemies and crates on a real floor:
+  - **An anchored player:**
+    - walks 0.000 m where a free one walks 7.00;
+    - jumps 0.000 m, with no `jumped`;
+    - a knock (7, 3, 0) and an outside velocity (6, 12, 4) move it
+      0.000 m;
+    - it does not climb a step or shove a crate it presses into;
+    - a launch pad does not fire it;
+    - 3 m up, it still comes down.
+  - **Its actions:** the dash refuses unpaid and says why. The shield
+    fires, and a lever in reach is pulled.
+  - **Its class:** a counting HEAVY plate is pressed while the player is
+    anchored and released when the anchor ends, and the player walks
+    again.
+  - **A lightened player:** LIGHT, a knock of 4 m/s gives 8.00 m/s, and
+    it walks and jumps unchanged. Anchoring removes the lightness and
+    lightening removes the anchor.
+  - **A lightened enemy**, held by `rooted` so the knock is all that
+    moves it: it takes 16.0 m/s to a plain one's 8.0, and goes 0.62 m to
+    0.31. To the verbs its mass is still unmodelled. The pair never
+    coexists here either.
+  - **An anchored object:**
+    - it reads FIXED;
+    - a 5 m/s impulse and a 3 kN push move it 0.000 m;
+    - the verbs and the push refuse it, and the hands say why;
+    - walked into, it gives 0.000 m;
+    - anchored 3 m up, it hangs there, then thaws and falls.
+  - **Among the other holds:**
+    - a bolted crate stays frozen;
+    - the pair on an object: anchored over lightened it is FIXED and
+      frozen; lightened over that it is thawed, LIGHT, and moves 1.96 m
+      to a plain crate's 0.68;
+    - a HEAVY plate reads the crate's class as it is now;
+    - a carried crate that is anchored is let go and stays where it was.
+- **Also green on the final runtime** (`H-STATUS-2_suites.log`):
+  `godot-status-family` (15), `godot-stats`, `godot-mass-class` (59), `godot-unweighted` (70), `godot-verb-runtime` (95), `godot-physics` (68), `godot-carry` (32), `godot-movement`, `godot-rules`, `godot-lab`, `godot-affordance`, `godot-rail-gantry` (41) and `godot-rail-junction` (140). No script errors.
+- **Sabotages** (`H-STATUS-2_sabotages.log`), each restored byte for byte
+  (sha256):
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| HS2-1 | the anchored walk keeps its intent (speed not zeroed) | "pressing forward: ... anchored, it climbs 0.0035 m" (HS2-F1) |
+| HS2-2 | the anchored jump not blocked | "no `jumped` for a rule to answer" |
+| HS2-3 | the hold removed | "a knock (7, 3, 0)" (+1) |
+| HS2-4 | a grind rail keeps an anchored rider | "a grind rail ... lets go" |
+| HS2-5 | a grind rail catches an anchored player | "a grind rail ... does not catch it again" |
+| HS2-6 | a lightened player's knock not doubled | "the same knock (4 m/s)" |
+| HS2-7 | the player's class ignores its Statuses | "its class drops a step" (3 in all) |
+| HS2-8 | movement Echoes fire while anchored | "the dash refuses before it is paid for" |
+| HS2-9 | the pair coexists | "anchoring it removes the lightness" (3 in all) |
+| HS2-10 | the container ignores the table it holds | every as-declared case: "a second held forward" (23 in all) |
+| HS2-11 | a lightened enemy's knock not doubled | "the same 8 m/s knock" |
+| HS2-12 | an anchored object not frozen | "walked into for a second and a half" (6 in all) |
+| HS2-13 | the anchor thaws a freeze it did not make | "a bolted crate anchored and released is still frozen" |
+| HS2-14 | a push moves an anchored body | "so does a push" |
+| HS2-15 | the hands pick up an anchored body | "the hands say" |
+| HS2-16 | the hands keep a body anchored in them | "a carried crate anchored is let go" |
+| HS2-17 | a launch pad fires an anchored player | "a launch pad fires the free player ... and not the anchored one" |
+
+- **The sabotage runs:** 16 of 17 on the first run
+  (`H-STATUS-2_sabotages_first.log`). The miss was HS2-F1, and its check
+  now reads to the millimetre. All 17 were run again on the final suite:
+  17 of 17 (`H-STATUS-2_sabotages.log`).
+
+- **What stays open:**
+  - **Dess's declaration (N-17).** Until it lands, nothing applies these
+    four in play. When it does, `stats_driver` (the table pin at :589),
+    `mass_class_driver` (`lightened` on self refused) and
+    `unweighted_driver` (`anchored` on an object as the refused example)
+    pin today's table and move with it. `godot-status-kinetic` switches
+    to the real gate by itself.
+  - **Delivery.** On-hit reaches only `Damageable` nodes, so no Echo can
+    put a Status on an object or on the player through a hit. The player
+    receives one through a rule's `apply_status` or a self-targeted
+    `StatusComponent`. §12.5's `SELF_STATUS` (no roll, ends early on
+    re-press) is not built.
+  - **Not modelled:** wind and conveyors (there are none that push
+    sideways), an enemy's mass class, and §15.8's feedback (the HUD
+    sentence). What shows it is the stillness, and the refusal's words.
+  - **Cleanse** leaves both alone. On the player, either may be the
+    player's own build (§12.5: "`ANCHORED` on the player is immunity to
+    every impulse in the room"), and the cleanse order's own rule is
+    that it must never strip the player's buff. Both expire.
+- **What the owner will notice:** nothing yet; no Echo delivers these
+  four. When Dess declares them, a self-anchor holds you against every
+  shove in the room, and an anchored crate stays put, in the air if that
+  is where it was.

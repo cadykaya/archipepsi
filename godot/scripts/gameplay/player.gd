@@ -284,7 +284,9 @@ var _rider: RailRider = null
 ## the player is in world, and comparing the two directly is how a rail
 ## in a placed Zone came to be catchable from across the map.
 func offer_rail(rail: RailPath, to_world := Transform3D.IDENTITY) -> void:
-	if _rider != null or _dead:
+	# An anchored body is immune to "wind, conveyor" (Design 5 §15.2), and
+	# a grind rail is the conveyor this game has.
+	if _rider != null or _dead or anchored():
 		return
 	var caught := RailRider.catch(rail, global_position, velocity, to_world)
 	if caught.is_empty():
@@ -410,14 +412,18 @@ func _ride(delta: float) -> void:
 	global_position = step["position"]
 	velocity = step["velocity"]
 	if not bool(step["riding"]):
-		_rider = null
-		rail_released.emit(global_position)
-		Telemetry.rail_released(global_position)
-		# Off a rail is airborne, and a coyote frame here would give a
-		# free second jump to anyone who let go near the ground.
-		_coyote = 0.0
-		_jump_buffer = 0.0
+		_leave_rail()
 	_update_camera_feel(delta)
+
+## Off the rail, from wherever that happened.
+func _leave_rail() -> void:
+	_rider = null
+	rail_released.emit(global_position)
+	Telemetry.rail_released(global_position)
+	# Off a rail is airborne, and a coyote frame here would give a
+	# free second jump to anyone who let go near the ground.
+	_coyote = 0.0
+	_jump_buffer = 0.0
 
 func enter_volume(volume: Node, influence: Dictionary) -> void:
 	_volumes[volume] = influence
@@ -665,13 +671,15 @@ func _on_consumable_authorized(component_id: String,
 ## the sensors that sum weight read `.mass`, which a `Player` does not
 ## have. Adding this method changes what exactly one thing can see.
 ##
-## **No Status moves it.** The bridge's route validator reads the player
-## at `PLAYER_MASS_KG` with nothing applied (D-10 §6), and a route it
-## certified must open for the body the runtime actually has. If a Status
-## ever changes the player's class, that is a transient the validator
-## does not model, and this is the line that would have to say so.
+## **Two Statuses move it, and this is the line that says so.** Design 5
+## §15.2: `anchored` makes the class `FIXED` and `lightened` drops it one
+## step, to `LIGHT`. The bridge's route validator reads the player at
+## `PLAYER_MASS_KG` with nothing applied (D-10 §6), so a route it
+## certified opens for the player as they are without either; a plate the
+## player's own Status changes is a transient of their choosing, and
+## lasts as long as the Status does.
 func mass_class() -> String:
-	return MassClass.of_mass(Constants.PLAYER_MASS_KG)
+	return MassClass.read(Constants.PLAYER_MASS_KG, true, statuses)
 
 
 ## Is there anything left in the consumable slot? Counts what is in
@@ -814,6 +822,10 @@ func _physics_process(delta: float) -> void:
 	# costs and a drop pays, and jump gets you off whenever you like. It
 	# returns EARLY because a grind that also ran the walk solve would be
 	# two things steering one body.
+	# ...UNLESS ANCHORED: the rail is a conveyor, and an anchored body is
+	# immune to one. It lets go where it is.
+	if _rider != null and anchored():
+		_leave_rail()
 	if _rider != null:
 		_ride(delta)
 		return
@@ -867,7 +879,9 @@ func _physics_process(delta: float) -> void:
 	if not input_frozen:
 		if Input.is_action_just_pressed("jump"):
 			_jump_buffer = Constants.JUMP_BUFFER
-		if _jump_buffer > 0.0 and _coyote > 0.0:
+		# ANCHORED: "jump blocked" (Design 5 §15.2) -- no jump, and no
+		# `jumped` for a rule to answer, since none happened.
+		if _jump_buffer > 0.0 and _coyote > 0.0 and not anchored():
 			# Height scales with the square of launch speed, so a
 			# jump_height multiplier rides in as its square root.
 			velocity.y = Constants.JUMP_VELOCITY * sqrt(jump_mult)
@@ -880,7 +894,8 @@ func _physics_process(delta: float) -> void:
 		var direction := (transform.basis
 				* Vector3(input_dir.x, 0, input_dir.y)).normalized()
 		var speed := Constants.WALK_SPEED * speed_mult \
-				* float(env["speed_scale"]) * carry.speed_factor()
+				* float(env["speed_scale"]) * carry.speed_factor() \
+				* (0.0 if anchored() else 1.0)
 		# Friction below base is how a downside is allowed to express
 		# (§10): slippier control, never a shorter jump.
 		# A grind rail's lane multiplies ground friction down, so a dash
@@ -942,6 +957,11 @@ func _physics_process(delta: float) -> void:
 		velocity.x = lerpf(velocity.x, 0.0, 0.2)
 		velocity.z = lerpf(velocity.z, 0.0, 0.2)
 		_walk_intent = Vector3.ZERO
+
+	# ANCHORED, LAST, so it holds against every source above -- a knock, a
+	# rule's impulse, a pad, an updraft, a swing, the player's own Echo.
+	if anchored():
+		_hold_anchored()
 
 	var falling_speed := -velocity.y
 	var was_airborne := not is_on_floor()
@@ -1303,8 +1323,33 @@ func take_damage(amount: float,
 ## External shoves come through here so `knockback_resist` has one place
 ## to push back. Self-chosen recoil (the shotgun's travel plan) does not —
 ## resisting your own movement tech would be a downside wearing a buff.
+##
+## Design 5 §15.2: an `anchored` body is "immune to all impulse", and a
+## `lightened` one takes "incoming impulse x2.0".
 func receive_knockback(impulse: Vector3) -> void:
+	# An anchored body takes it and keeps none of it: `_hold_anchored`
+	# overwrites the velocity every frame before anything moves.
+	if statuses.has("lightened"):
+		impulse *= ManipulableBody.LIGHTENED_IMPULSE
 	velocity += impulse / maxf(knockback_resist_mult, 0.25)
+
+
+## `anchored` on the player (Design 5 §15.2): "player movement 0.0, jump
+## blocked, all other actions permitted", and "immune to all impulse".
+## So nothing moves the body across the floor or lifts it, whoever asks;
+## gravity still brings it down, as it does an anchored enemy. The Echo
+## actions that ARE movement refuse before they are paid for
+## (`EchoRuntime._conditions_met`); every other action is untouched.
+func anchored() -> bool:
+	return statuses.has("anchored")
+
+
+func _hold_anchored() -> void:
+	velocity.x = 0.0
+	velocity.z = 0.0
+	velocity.y = minf(velocity.y, 0.0)
+	_end_launch_flight()
+	end_swing()
 
 func heal(amount: float) -> void:
 	# `regen` is a multiplier on recovery received — the game has no base
