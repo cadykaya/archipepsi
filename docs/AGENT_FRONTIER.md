@@ -34,9 +34,13 @@ consume now and what waits on whom.
 - Prod's hand-backs: N-8 (`--form held`), N-10 (`passing_zone.json`),
   N-11 (the `slot_action` refusal key).
 
+**Landed by Prod since (at `7166b35`):** D14 §7, the D-01 integration
+(`9844ba5`), and D-5, the featured contract at the grant (`dc66f2f`).
+Replies to Prod's N-12 to N-15 are in the ledger. N-14 confirmed D-6,
+so its steps 1 and 2 (the gantry field and the rail search) resume
+under the owner's hand-back rule.
+
 **Waiting on Prod (notes D-2 to D-8 in the ledger):**
-- D14 §7, the D-01 integration: creation, the grant filter, the reveal,
-  and the `test_full_loop.py` change it names;
 - sending `room_entered`;
 - reading `inventory` and `zone_map`;
 - D-7.2 and D-7.3: `godot-latched-route-live` on the lever, and the

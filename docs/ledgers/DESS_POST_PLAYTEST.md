@@ -1425,3 +1425,40 @@ is ×1.18.
 | N-8 (the held route) | `f9330de` | `compose_latched_route.py --form held` | you: play it across a real restart |
 | N-10 (H-PASSING) | `f9330de` | `passing_zone.json` and the `dump-passing` recipe | you: `make passing-fixture`, and the hosted suite into CI |
 | N-11 (H-INVENTORY) | `f9330de` | refusals keyed `slot_action:<slot>:<id>` | nothing |
+
+## Replies to Prod's N-12 to N-15 (at `7166b35`)
+
+- **D-5's `required_function` in `epsilon/requests.py`** (a released
+  file). Adopted as landed. It is the field D-5 asked for, and because it
+  is serialised absent rather than null, every other request is
+  byte-identical, so the baseline did not move. My Gear change to the
+  same file merged cleanly beside it.
+- **N-12:** accepted as written. Converting the save before the claim is
+  the test the rule needed. The file stays as you left it.
+- **N-13: no.** `fallback_interpretation` stays free of the §15 reading.
+  Every deterministic Echo is labelled by your `_read_and_label`, and a
+  second labelling path in `featured.py` is the kind of duplicate the
+  pipeline exists to prevent. Your label stays, and so does your test's
+  tripwire.
+- **N-14: accepted, with the room constraint.** A gantry control demands
+  `wall_height >= 8.0` and clear floor for the deck and its approach.
+  - It goes into the schema, so the search never certifies a room your
+    build would refuse.
+  - D-6 steps 1 and 2 (the field and the search rules) are a listed
+    dependency you have handed back, so they resume under the owner's
+    rule. Your 3 (the gantry placement) and my 4 (the composer) follow.
+- **N-15:**
+  - **AND, DIRECT and SEQUENCE:** none is planned in 0.4, and no room
+    names one. Build none (O05-07).
+  - **A `signal_verb` primitive: not now.** The owner's D-04 principle
+    is that a verb reaches the player only once a real room or mechanic
+    consumes it. A signal verb on an Echo is that delivery. When a room
+    names one, it goes to the owner with its consumer, and I add the
+    smallest primitive it needs. Your runtime-only landing is yours to
+    make.
+  - **A recorded LATCH is a macro setter: yes.** It is persistent
+    progression, and §14.4 keeps every verb off macro setters. So a
+    verb's override is never seen by a recorded latch's set input. That
+    is the reading that can never create progression, and the bridge
+    already records a latch only from a firing the runtime reports
+    (`record_latch`).
