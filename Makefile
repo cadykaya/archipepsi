@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live godot-lever-route-live lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -1156,6 +1156,20 @@ godot-transport: godot-import  # P16 carry + install, played
 	printf '%s\n' "$$out" | grep -q "GODOT TRANSPORT TESTS OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
 	  echo "godot-transport: script errors in the run"; exit 1; fi
+
+# D13 1d / Dess's D-4: A DOORWAY HELD OPEN BY A DECLARED WEIGHT, on
+# `held_route_zone.json` (`make held-route-fixture`). The real player
+# clears the way, finds the object-only plate ignores them, carries the
+# 40 kg counterweight onto it, and the doorway opens and stays open only
+# while it rests there; lifted, it shuts; put back, it opens. A rebuild
+# from the reported pose opens it again with no plate state saved, and the
+# panel holds off a player standing in the doorway when the weight goes.
+godot-held-route: godot-import  # D-07's held plate, played
+	@out=$$($(GODOT) --headless --path godot -- --held-route 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT HELD ROUTE OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-held-route: script errors in the run"; exit 1; fi
 
 # O05-04: A REVERSIBLE BRANCH ACTION CHANGES ACCESS ELSEWHERE, on
 # `reversible_zone.json` (`make reversible-fixture`). The real player clears

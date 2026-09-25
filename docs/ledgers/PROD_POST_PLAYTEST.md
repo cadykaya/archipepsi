@@ -189,6 +189,29 @@ where the new rule would refuse a lever.
   is gone, so the seed phase now requires all four steps EMITTED.
   D-7.2 (the live suite's lever form) and D-7.3 (the two fixture
   targets) are Prod's next items, with the held route (D-4).
+- **N-8 (answers D-4; one ask).** The held route is played
+  (`godot-held-route`), and it needed an engine repair first.
+  - As it stood, the engine placed every plate at the legacy spot (M-1).
+    c002's legacy spot is under the 1.6 m gallery, and a carried weight
+    could not be put down on it: every attempt stopped 2.2 to 2.6 m
+    short. The route your search certified was impossible in the engine.
+    That was the engine's placement, not the composer.
+  - A held plate is now placed by the measured rule, like the lever, as
+    a 1.4 m load pad with signs naming the weight and the rule. A held
+    graph the engine cannot place is now refused at build, as a lever's
+    is, so it can never be silently impossible again. It needs no
+    bridge change.
+  - All three of D-4's points are played: the door open while the
+    weight rests, the interlock with the player in the doorway, and a
+    rebuild from the reported pose. At this geometry the pad is 3.4 m
+    from the doorway and the interact ray reaches 3 m, so the doorway
+    case moves the weight by a declared harness step, not by hand.
+  - **The ask:** a `--form held` for `tools/compose_latched_route.py`
+    (with `--expect ../godot/tests/fixtures/held_route_zone.json`), as
+    you did for the lever. The reload is a harness rebuild today, and
+    with that form Prod can play it across a real restart, with
+    `object_poses` through the bridge. The tool is yours, so it is not
+    touched here.
 
 ## Evidence rules (PROD_START)
 
@@ -877,3 +900,95 @@ the lever in c002, the shutter across `e:c002:c003`.
 - **What the owner will notice:** nothing new in the played candidate
   (M-1). A newly composed route shows the bolt, which is covered here
   across a real restart.
+
+## CP2 — `H-PRESSURE-R`: the held route played (Dess's D-4) — repaired
+
+D13 1d is D-07's held sensor with D-07's guarantee: "Pressure present =
+active. Pressure removed = inactive. [...] there must be a guaranteed
+physical way to keep pressure on it, such as a movable object/weight."
+Dess's `held_route_zone.json` is the played Zone with an object-only
+MEDIUM plate in c002, `held_by` a 40 kg `counterweight` homed in c002
+(volume c001 and c002), driving the shutter across `e:c002:c003`
+directly, with no LATCH.
+
+- **The reproduction, on the fixture as it stood**
+  (`H-PRESSURE-R_held_repro.log`). The new `godot-held-route` played it
+  with the real player: 14 of 28 checks failed.
+  - The engine placed the held plate at the legacy spot, because it
+    placed every plate there (M-1). In c002 that spot is entirely under
+    the low gallery (under 2 m of headroom), beside its support post.
+    The survey in the log maps it.
+  - A player cannot stand under it, and a carried weight rides at about
+    1.4 m, so the carry sweep met the gallery and held the weight back:
+    every attempt stopped 2.2 to 2.6 m from the plate's centre.
+  - **The declared weight could not be put on the plate at all**, so
+    the door could never be held open. The route the bridge certified
+    was physically impossible in the engine.
+- **The repair (engine only, `room_graphs.gd`):**
+  - **A held plate is placed by the measured rule, as a lever is.** No
+    saved Zone ever held one, so M-1 does not pin it to the legacy spot.
+    Legacy step-once plates are placed exactly as before.
+  - **It is a load pad, 1.4 m square** (`HELD_PLATE_SIZE`). It takes one
+    carried 0.34 m weight, not a crate or a person. At the full 2.4 m
+    the measured rule found no clear floor in c002 and refused the graph
+    (SH-2 below).
+  - **It says what holds it:** "LOAD PLATE -- HOLDS THE SHUTTER OPEN /
+    WHILE THE COUNTERWEIGHT RESTS ON IT". **The weight says what it is
+    for:** "COUNTERWEIGHT · 40 kg / FOR THE LOAD PLATE". Both are
+    presentation, read from `held_by`; the weight's identity, mass and
+    rules stay the declaration's.
+- **Played after the repair** (`godot-held-route`, new, in CI; 33
+  checks; `H-PRESSURE-R_held_after.log`):
+  - build: nothing refused; an object-only MEDIUM plate; one 40 kg MEDIUM
+    weight at home; the doorway shut; both signs present and naming each
+    other. The pad stands
+    3.4 m from its doorway, and the weight's home is 8.3 m from it;
+  - played:
+    - the rooms cleared with the base kit;
+    - the player standing on the pad reads nothing, and the doorway
+      stays shut (object-only);
+    - the weight picked up with the interact ray, carried on, and put
+      down 0.09 m from the pad's centre; the pad reads MEDIUM, and one
+      `object_settled` is reported;
+    - the doorway opens, and stays open for 5 s with nobody near;
+    - through into c003 and back the same way;
+    - lifted, it shuts, and nothing latched; put back, it opens again;
+      the reported pose is exactly where the weight lies;
+  - reloaded: a rebuild from that pose alone, with no latch and no plate
+    state, puts one weight back where it was left, and the doorway opens;
+  - the interlock: with the player standing in the open doorway, the
+    weight is moved off the pad. The panel is refused its closure 3
+    times, never comes below fully open, costs no health and moves the
+    player 0 m. Stepping out, it shuts.
+- **Declared harness steps:**
+  - releasing the layout hold with no bridge;
+  - the rebuild from the reported pose, standing in for the bridge's
+    `object_poses` across a reload;
+  - the interlock's move of the weight. A hand cannot lift it from the
+    doorway here: the pad is 3.4 m away and the interact ray reaches
+    3 m. So the move stands in for anything else that shifts the weight
+    while somebody is under the panel.
+- **Sabotages** (`H-PRESSURE-R_held_sabotages.log`), each restored byte
+  for byte:
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| SH-1 | a held plate placed by the legacy rule again | 14 failures: the reproduction returns. The carry stops short, the weight is never put down, and the doorway never opens |
+| SH-2 | a held plate at the full 2.4 m | the build refuses the graph: "no clear floor for sensor 'weight_plate'" |
+| SH-3 | the declared weight never named | "the weight says what it is for: '(no label)'" |
+| SH-4 | the held plate counts the player | "an object-only MEDIUM plate", and standing on it reads MEDIUM |
+| SH-5 | the panel stays open once opened (a latch in disguise) | "LIFTED ... the doorway SHUTS (1.00 open)", and both interlock checks |
+| SH-6 | the interlock does not watch the player | "(occupied false)", and the panel comes down fully on the player, moving them 0.54 m |
+
+- **What stays open:**
+  - The reload here is a harness rebuild. A real restart through the
+    bridge needs the seed tool to compose this route onto a live Zone,
+    and `tools/compose_latched_route.py` is Dess's; note N-8 asks for a
+    `--form held`.
+  - D-4's "lifting the weight while the player is in the doorway" cannot
+    be done by hand at this geometry, as above. The interlock is shown
+    with the declared move.
+- **What the owner will notice:** nothing in the played candidate, which
+  has no held route. A composed held route now puts a labelled load pad
+  on open floor, with a labelled weight, and the door is open exactly
+  while the weight rests on it.

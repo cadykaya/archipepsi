@@ -101,6 +101,7 @@ const DRIVERS := {
 	"--theme-pack": preload("res://tests/theme_pack_driver.gd"),
 	"--carry": preload("res://tests/carry_driver.gd"),
 	"--transport": preload("res://tests/transport_driver.gd"),
+	"--held-route": preload("res://tests/held_route_driver.gd"),
 	"--reversible": preload("res://tests/reversible_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),

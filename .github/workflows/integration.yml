@@ -155,6 +155,7 @@ jobs:
           make godot-theme-pack
           make godot-carry
           make godot-transport
+          make godot-held-route
           make godot-reversible
           make godot-verb-runtime
           make godot-status-family

@@ -600,6 +600,8 @@ func setup(zone_dict: Dictionary) -> void:
 	for why: String in graphs.get("refused", []) as Array:
 		signal_graph_refusals.append(why)
 		push_warning("signal graph refused: %s" % why)
+	RoomGraphs.name_the_weights(zone_dict.get("room_graphs", []) as Array,
+			objects)
 	# THE HOSTED MINORS (O05-06). A minor is a whole room the builder has
 	# already instantiated from its shell, so it is found rather than
 	# built. §5.4a again: the bolt is the decision that persists, and it

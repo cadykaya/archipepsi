@@ -36,6 +36,11 @@ const CHAIN_CLEARANCE := 3.0
 const CHAIN_SPREAD := 3.0
 
 const PLATE_SIZE := Vector3(2.4, 0.12, 2.4)
+## A HELD PLATE'S SIZE (D13 1d). It takes one declared weight, carried and
+## put down by hand -- a 0.34 m body, not a crate or a person -- so it is
+## a load pad, with room to set the weight down on it without aiming at a
+## centimetre.
+const HELD_PLATE_SIZE := Vector3(1.4, 0.12, 1.4)
 const PANEL_SIZE := Vector3(2.0, 2.2, 0.3)
 const PANEL_RISE := 2.4
 
@@ -264,9 +269,16 @@ static func _one(root: Node3D, declared: Dictionary, places: Dictionary,
 						% wants + "%s" % [CLASS_OF.keys()]}
 			# THE DECLARATION DECIDES WHETHER THE PLAYER COUNTS. Default
 			# false, which is EX50-033's object-only plate exactly.
-			plate = ClassPlate.create(PLATE_SIZE, CLASS_OF[wants], theme,
+			plate = ClassPlate.create(HELD_PLATE_SIZE
+					if held_by(sensor) != "" else PLATE_SIZE,
+					CLASS_OF[wants], theme,
 					bool(sensor.get("counts_player", false)))
 			plate.name = "Plate_%s" % node_id
+			# A HELD PLATE SAYS WHAT HOLDS IT (D-07: "Pressure present =
+			# active. Pressure removed = inactive."). The weight is named,
+			# and so is the rule: open only while it rests there.
+			if held_by(sensor) != "":
+				plate.add_child(_held_sign(held_by(sensor)))
 		if not route_frame.is_empty():
 			# LEGACY PLATES ARE PLACED EXACTLY AS THEY ALWAYS WERE (M-1:
 			# "Existing saved Zones containing the old step-once route
@@ -275,7 +287,13 @@ static func _one(root: Node3D, declared: Dictionary, places: Dictionary,
 			# and a saved Zone whose route the engine no longer builds
 			# is a saved Zone that no longer plays. Levers are new, and
 			# are placed by the measured rule from the start.
-			var measured := plate is CallLever
+			# A HELD PLATE IS NEW TOO (D13 1d): no saved Zone ever held
+			# one, so M-1 does not pin it to the legacy spot -- and its
+			# declared weight has to be put down on it by hand, which
+			# needs the same clear floor and headroom a lever needs.
+			# c002's legacy spot is under a 1.6 m gallery a carried
+			# weight cannot pass (`godot-held-route`'s reproduction).
+			var measured := plate is CallLever or held_by(sensor) != ""
 			var spot := route_plate_spot(route_frame, box, floor_y,
 					occupied, solids if measured else [], _half_of(plate),
 					measured)
@@ -563,6 +581,9 @@ static func _spot_is_clear(spot: Vector3, box: AABB, floor_y: float,
 static func _half_of(sensor: Node3D) -> float:
 	if sensor is CallLever:
 		return maxf(CallLever.BASE.x, CallLever.BASE.z) * 0.5
+	if sensor is ClassPlate:
+		return maxf((sensor as ClassPlate).size.x,
+				(sensor as ClassPlate).size.z) * 0.5
 	return PLATE_SIZE.x * 0.5
 
 
@@ -649,6 +670,68 @@ static func solids_of(room_id: String, chambers: Array,
 				continue
 			out.append(world)
 	return out
+
+
+## The weight a sensor declares holds it (`SensorNode.held_by`, D13 1d),
+## "" when it declares none. A legacy fixture carries JSON `null` there.
+static func held_by(sensor: Dictionary) -> String:
+	var named: Variant = sensor.get("held_by")
+	return "" if named == null else str(named)
+
+
+## The words a held plate carries, and the weight it names.
+const HELD_SIGN := "LOAD PLATE -- HOLDS THE SHUTTER OPEN\nWHILE THE %s RESTS ON IT"
+const HELD_SIGN_TINT := Color(1.0, 0.82, 0.45)
+
+
+static func _held_sign(weight_id: String) -> Label3D:
+	var label := Label3D.new()
+	label.name = "HeldSign"
+	label.text = HELD_SIGN % weight_id.to_upper().replace("_", " ")
+	label.font_size = 36
+	label.pixel_size = 0.005
+	label.modulate = HELD_SIGN_TINT
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.double_sided = true
+	label.position = Vector3(0.0, 1.1, 0.0)
+	return label
+
+
+## NAME EVERY DECLARED WEIGHT, once the Zone's objects and graphs both
+## exist: the body a held plate names says what it is for. Presentation
+## only -- the object's identity, mass and rules are the declaration's.
+## Returns how many were named.
+static func name_the_weights(declared_graphs: Array,
+		objects: TransportedObjects) -> int:
+	if objects == null:
+		return 0
+	var named := 0
+	for raw: Variant in declared_graphs:
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		for sensor: Variant in (raw as Dictionary).get("sensors", []) as Array:
+			if typeof(sensor) != TYPE_DICTIONARY:
+				continue
+			var weight_id := held_by(sensor as Dictionary)
+			var body := objects.body_of(weight_id) if weight_id != "" \
+					else null
+			if body == null or body.has_node("WeightSign"):
+				continue
+			var label := Label3D.new()
+			label.name = "WeightSign"
+			label.text = "%s · %s\nFOR THE LOAD PLATE" % [
+					weight_id.to_upper().replace("_", " "),
+					HandCarry.kg(body.mass)]
+			label.font_size = 28
+			label.pixel_size = 0.005
+			label.modulate = HELD_SIGN_TINT
+			label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			label.double_sided = true
+			label.no_depth_test = false
+			label.position = Vector3(0.0, 0.75, 0.0)
+			body.add_child(label)
+			named += 1
+	return named
 
 
 ## The label a route lever offers: the action and what it does (PT-01:
