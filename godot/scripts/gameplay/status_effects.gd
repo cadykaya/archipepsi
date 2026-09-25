@@ -123,6 +123,10 @@ func tick(delta: float) -> void:
 func has(kind: String) -> bool:
 	return _active.has(kind)
 
+## Seconds left on `kind`, 0 when it is not active: what a readout shows.
+func remaining_of(kind: String) -> float:
+	return float((_active.get(kind, {}) as Dictionary).get("remaining", 0.0))
+
 func magnitude_of(kind: String) -> float:
 	return float(_active.get(kind, {}).get("magnitude", 0.0))
 

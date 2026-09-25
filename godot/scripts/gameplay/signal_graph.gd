@@ -218,6 +218,9 @@ func restore_latch(node_id: String) -> bool:
 				== "LATCH" and not latched.has(id):
 			latched[id] = true
 			restored += 1
+			# A room that restores after `start` (a hosted minor) shows its
+			# lever thrown from this moment, as a Zone route does at start.
+			lock_permanent_levers()
 			return true
 	return false
 
@@ -257,7 +260,8 @@ func lock_permanent_levers() -> void:
 				or lever.locks_with == "" or lever.locked:
 			continue
 		if latched.has(lever.locks_with):
-			lever.lock(PERMANENT_LEVER_DONE)
+			lever.lock(lever.done_label if lever.done_label != ""
+					else PERMANENT_LEVER_DONE)
 
 
 func _on_sensor(_satisfied: bool) -> void:

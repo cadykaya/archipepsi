@@ -36,6 +36,8 @@ var pulls := 0
 var locked := false
 ## The LATCH whose setting locks this lever, "" for a call control.
 var locks_with := ""
+## What it says once thrown for good; "" for the graph's general line.
+var done_label := ""
 
 var _arm: Node3D = null
 var _thrown := 0.0

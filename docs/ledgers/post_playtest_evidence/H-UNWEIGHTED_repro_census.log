@@ -1,0 +1,70 @@
+# H-UNWEIGHTED reproduction: the V-09 claim census and a played witness
+# worktree 04251b2 + census driver; Unweighted room/reward/player/registry byte-identical to 76b0952
+# 2026-09-24T22:56:38Z  godot 4.5.1 headless
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_unweighted_switch mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:177)
+         [1] _process (res://scripts/autoload/bridge_client.gd:81)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:177)
+         [1] _process (res://scripts/autoload/bridge_client.gd:81)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _await_verdict (res://scripts/gameplay/zone_controller.gd:1690)
+  ok: the played Zone hosts its minors: ["c025=Chamber_c025", "c024=Chamber_c024"]
+  -- c025 (Chamber_c025), as built, nothing operated
+  ok: c025 holds its Check
+  NOTE: c025: 4875 standable cells, 3737 reached from the arrival with the base kit, 0 claim the Check (413 ms)
+  ok: c025: the census walks the room (3737 cells reached)
+  ok: c025: NO CLAIM BEFORE THE ROOM IS SOLVED -- 0 reached cell(s) claim the Check, in the hosted room's own frame: []
+  ok: c025: control -- from beside the Check (eye (-22.900000, 4.600000, 67.599998)) the same test claims it
+  -- c024 (Chamber_c024), as built, nothing operated
+  ok: c024 holds its Check
+  NOTE: c024: 2691 standable cells, 1855 reached from the arrival with the base kit, 7 claim the Check (171 ms)
+  ok: c024: the census walks the room (1855 cells reached)
+   GDScript backtrace (most recent call first):
+FAIL: c024: NO CLAIM BEFORE THE ROOM IS SOLVED -- 7 reached cell(s) claim the Check, in the hosted room's own frame: ["stand (6.000000, 0.000000, 13.400001) +0.67 m", "stand (5.400000, 0.000000, 13.400001) +0.67 m", "stand (4.800000, 0.000000, 13.400001) +0.67 m", "stand (5.100000, 0.000000, 13.400001) +0.67 m", "stand (5.700000, 0.000000, 13.400001) +0.67 m", "stand (4.500000, 0.000000, 13.400001) +0.67 m"]
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:177)
+         [1] _process (res://scripts/autoload/bridge_client.gd:81)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:131)
+         [1] interact (res://scripts/gameplay/reward.gd:368)
+         [2] _physics_process (res://scripts/gameplay/player.gd:916)
+   GDScript backtrace (most recent call first):
+FAIL: c024: PLAYED -- walked from the arrival to (6.000000, 1.000000, 13.300000) (the room's frame), hopped and looked: the prompt read '[E] CLAIM CHECK 055' and 1 claim(s) went out before the room was solved
+  ok: c024: control -- from beside the Check (eye (25.600000, 5.000000, 94.900002)) the same test claims it
+GODOT MINOR CLAIM TESTS: 2 failures in 10 checks
+make: *** [Makefile:613: godot-minor-claim] Error 1

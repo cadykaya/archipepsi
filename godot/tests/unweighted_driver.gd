@@ -574,11 +574,23 @@ func _the_complete_route() -> void:
 	_check(room.shutter.is_open(), "the crossing has opened")
 
 	# Onto the crate, and through the doorway.
+	# INTO THE TOP'S FOOTPRINT, not merely near it: 1.4 m from the centre
+	# is also the carriage's own south edge, where a body perches on its
+	# rounded foot, off the floor, and a walker that stopped there called
+	# it arrived. Which of the two a run got was marginal: the room as it
+	# was passed, and the H-UNWEIGHTED room perched with each of its
+	# changes -- weighbridge, drive speed, carriage skin, readout --
+	# reverted in turn. The assertion below is unchanged; only where the
+	# walk ends is.
 	var climbed := await _walk_to(body,
-			Vector3(0.0, 0.0, UnweightedSwitch.RECESS_Z), 1.4)
+			Vector3(0.0, 0.0, UnweightedSwitch.RECESS_Z), 0.6)
 	# SETTLED, not sampled mid-jump: an airborne player passes an
 	# altitude test without standing on anything.
 	await _settle(24)
+	for _i in 120:
+		if body.is_on_floor():
+			break
+		await get_tree().physics_frame
 	_check(climbed and body.is_on_floor()
 			and absf(body.global_position.y - UnweightedSwitch.CRATE.y)
 				< 0.2,

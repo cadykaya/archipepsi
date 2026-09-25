@@ -44,6 +44,17 @@ const NORTH_Z := 6.8
 ## is a guide track that catches.
 const PLATE := Vector3(2.4, 0.12, 2.4)
 const RECESS_Z := 5.6
+## THE WEIGHBRIDGE (H-UNWEIGHTED, PT-05). The HEAVY-class plate is not
+## only the recess floor: it runs back along the drive lane to here, so
+## the carriage is ON it wherever its top is within a running jump of the
+## sill. It was not. Ridden in transit, the carriage was a step 2.99 m
+## from the wall with the crossing wide open, and the gallery was reached
+## without the class ever changing -- the room's whole insight, skipped.
+## Parked, the carriage's north edge (2.0) stands clear of the bridge, so
+## the room still opens with the crossing open (§4) and nothing to stand
+## on within a jump of it.
+const WEIGH_SOUTH := 2.3
+const WEIGHBRIDGE := Vector3(PLATE.x, PLATE.y, NORTH_Z - WEIGH_SOUTH)
 const CRATE := Vector3(2.0, 1.0, 2.0)
 const CRATE_KG := 200.0
 const PARK_Z := 1.0
@@ -55,7 +66,10 @@ const RAIL_Y := 0.45
 const LIGHTENED_SECONDS := 8.0
 const LIGHTENED_MAGNITUDE := 0.40
 
-const DRIVE_SPEED := 1.1
+## PT-05: "an indestructible crate moved very slowly by a lever". 4.6 m
+## at 1.1 m/s was four seconds of watching; the wait was never the
+## puzzle. The weighbridge, not the speed, is what keeps a ride honest.
+const DRIVE_SPEED := 2.3
 const STEP_RISE := 0.25
 ## The gap in the north wall the released stair leads back through. High
 ## only: from the floor there is nothing to reach it by.
@@ -90,6 +104,10 @@ var theme := "concrete_facility"
 var development_signs := true
 
 var _return_stair: Node3D = null
+## What the carriage reads as, over it, live: the property the applicator
+## changes, shown where it changes (PT-05: "A local applicator should
+## show what property changed").
+var class_readout: Label3D = null
 var _drive_goal := PARK_Z
 var _built := false
 
@@ -115,6 +133,7 @@ func build() -> void:
 
 ## The guide track. The owner calls this from its `_physics_process`.
 func step(delta: float) -> void:
+	_refresh_readout()
 	if crate == null or crate.freeze:
 		return
 	var here := crate.position.z
@@ -174,11 +193,11 @@ func _shell() -> void:
 	var floor_mat := ThemeMaterials.floor_mat(theme)
 	var wall := ThemeMaterials.wall_mat(theme)
 	# The floor, with the recess cut out of it.
-	_ground(-ROOM_HALF.x, ROOM_HALF.x, -ROOM_HALF.y, RECESS_Z - 1.2,
+	_ground(-ROOM_HALF.x, ROOM_HALF.x, -ROOM_HALF.y, WEIGH_SOUTH,
 			0.0, floor_mat)
-	_ground(-ROOM_HALF.x, -DOOR_HALF, RECESS_Z - 1.2, NORTH_Z, 0.0,
+	_ground(-ROOM_HALF.x, -DOOR_HALF, WEIGH_SOUTH, NORTH_Z, 0.0,
 			floor_mat)
-	_ground(DOOR_HALF, ROOM_HALF.x, RECESS_Z - 1.2, NORTH_Z, 0.0,
+	_ground(DOOR_HALF, ROOM_HALF.x, WEIGH_SOUTH, NORTH_Z, 0.0,
 			floor_mat)
 	var mid := ROOM_HEIGHT * 0.5
 	_slab(Vector3(0.5, ROOM_HEIGHT, ROOM_HALF.y * 2.0),
@@ -216,11 +235,12 @@ func _south_wall(wall: Material) -> void:
 
 func _the_recess() -> void:
 	var wall := ThemeMaterials.wall_mat(theme)
-	_ground(-DOOR_HALF, DOOR_HALF, RECESS_Z - 1.2, NORTH_Z, -PLATE.y,
+	_ground(-DOOR_HALF, DOOR_HALF, WEIGH_SOUTH, NORTH_Z, -PLATE.y,
 			ThemeMaterials.trim_mat(theme))
-	plate = ClassPlate.create(PLATE, MassClass.HEAVY, theme)
+	plate = ClassPlate.create(WEIGHBRIDGE, MassClass.HEAVY, theme)
 	add_child(plate)
-	plate.position = Vector3(0.0, -PLATE.y * 0.5, RECESS_Z)
+	plate.position = Vector3(0.0, -PLATE.y * 0.5,
+			(WEIGH_SOUTH + NORTH_Z) * 0.5)
 	if not disconnected:
 		plate.occupancy_changed.connect(_on_plate)
 	# THE GUIDE TRACK. §8: the crate is constrained enough that an
@@ -245,12 +265,98 @@ func _the_crate() -> void:
 	crate.position = Vector3(0.0, CRATE.y * 0.5, PARK_Z)
 	crate.freeze = true
 	crate.freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
-	var skin := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = CRATE
-	skin.mesh = box
-	skin.material_override = ThemeMaterials.accent_mat(theme)
-	crate.add_child(skin)
+	_carriage_skin()
+	class_readout = _sign("", Vector3(0.0, CRATE.y * 0.5 + 0.7, 0.0),
+			Color(1.0, 0.85, 0.4), 30)
+	remove_child(class_readout)
+	crate.add_child(class_readout)
+	_refresh_readout()
+
+
+## A GUIDED SERVICE CARRIAGE, NOT A CRATE (PT-05: "Show guided-service
+## hardware rather than an apparently ordinary breakable box when
+## indestructibility is intentional"). A steel deck on a frame, rubber
+## buffers fore and aft, hazard banding, and guide shoes that sit on the
+## two rails -- so what it is, and that it goes only where the track
+## goes, is read before it moves. PROVISIONAL, runtime primitives for
+## Arty's H-MACHINE-ART to replace. **Meshes only**: the collider is the
+## same 2 x 1 x 2 m box, so nothing here is a new foothold.
+func _carriage_skin() -> void:
+	var steel := StandardMaterial3D.new()
+	steel.albedo_color = Color(0.36, 0.39, 0.42)
+	steel.metallic = 0.7
+	steel.roughness = 0.45
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.08, 0.08, 0.09)
+	dark.roughness = 0.9
+	var amber := StandardMaterial3D.new()
+	amber.albedo_color = Color(0.95, 0.72, 0.1)
+	amber.roughness = 0.6
+	var half := CRATE * 0.5
+	# The body: a darker box inset from the frame, so the frame reads.
+	_part(crate, Vector3(CRATE.x - 0.12, CRATE.y - 0.16, CRATE.z - 0.12),
+			Vector3(0.0, -0.02, 0.0), dark)
+	# The deck, a steel plate over everything.
+	_part(crate, Vector3(CRATE.x, 0.1, CRATE.z),
+			Vector3(0.0, half.y - 0.05, 0.0), steel)
+	# Corner posts.
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			_part(crate, Vector3(0.14, CRATE.y - 0.1, 0.14),
+					Vector3(sx * (half.x - 0.07), -0.05,
+						sz * (half.z - 0.07)), steel)
+	# Hazard banding round the sides: amber and black, alternating.
+	var bands := 8
+	for i in bands:
+		var tint := amber if i % 2 == 0 else dark
+		var along := -half.x + CRATE.x * (float(i) + 0.5) / float(bands)
+		for sz: float in [-1.0, 1.0]:
+			_part(crate, Vector3(CRATE.x / float(bands), 0.2, 0.03),
+					Vector3(along, 0.05, sz * (half.z + 0.015)), tint)
+		var across := -half.z + CRATE.z * (float(i) + 0.5) / float(bands)
+		for sx: float in [-1.0, 1.0]:
+			_part(crate, Vector3(0.03, 0.2, CRATE.z / float(bands)),
+					Vector3(sx * (half.x + 0.015), 0.05, across), tint)
+	# Buffers fore and aft.
+	for sz: float in [-1.0, 1.0]:
+		_part(crate, Vector3(CRATE.x * 0.7, 0.22, 0.1),
+				Vector3(0.0, -0.18, sz * (half.z + 0.05)), dark)
+	# Guide shoes, resting on the rails either side.
+	var rail_top := RAIL_Y - CRATE.y * 0.5
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-0.6, 0.6]:
+			_part(crate, Vector3(0.36, 0.1, 0.4),
+					Vector3(sx * (DOOR_HALF + 0.2), rail_top + 0.05, sz),
+					steel)
+			_part(crate, Vector3(0.08, 0.3, 0.3),
+					Vector3(sx * (half.x + 0.04), rail_top + 0.15, sz), steel)
+
+
+## A mesh-only part of something, in that thing's frame.
+func _part(under: Node3D, size: Vector3, at: Vector3,
+		material: Material) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	node.mesh = mesh
+	node.material_override = material
+	node.position = at
+	under.add_child(node)
+	return node
+
+
+## What the carriage reads as now, and for how long a LIGHTENED lasts.
+func _refresh_readout() -> void:
+	if class_readout == null or crate == null:
+		return
+	var reads := crate.mass_class().to_upper()
+	var text := "SERVICE CARRIAGE  %d kg\nREADS %s" % [int(CRATE_KG), reads]
+	if crate.statuses != null and crate.statuses.has("lightened"):
+		text = "SERVICE CARRIAGE  %d kg\nLIGHTENED: READS %s  %.0f s" % [
+				int(CRATE_KG), reads,
+				ceilf(crate.statuses.remaining_of("lightened"))]
+	if class_readout.text != text:
+		class_readout.text = text
 
 
 func _the_shutter() -> void:
@@ -326,6 +432,11 @@ func _the_graph() -> void:
 			{"plate": null if disconnected else plate,
 				"bolt_lever": bolt, "shutter": shutter},
 			"unweighted switch")
+	# D-07: THE BOLT IS A PERMANENT CONTROL AND LOOKS IT. Once its LATCH
+	# is set -- pulled, or restored from the save -- it stays thrown and
+	# says what it did, instead of springing back like the drive.
+	bolt.locks_with = "bolt"
+	bolt.done_label = "BOLT HELD -- CROSSING OPEN, RETURN STAIR DOWN"
 	add_child(graph)
 	# §3: "Reaching and operating it makes the useful crossing persistent
 	# without requiring the temporary Status to remain active forever."
@@ -383,8 +494,19 @@ func _signs() -> void:
 	if development_signs:
 		_sign("ARRIVAL  A", Vector3(0.0, 2.4, -ROOM_HALF.y + 1.0),
 				Color(0.8, 0.85, 0.95), 46)
-	_sign("SERVICE LOCKOUT\nHEAVY CLASS", Vector3(0.0, 2.6, RECESS_Z - 2.0),
-			Color(1.0, 0.55, 0.3), 32)
+	# WHAT EACH THING DOES, where it is -- never the order to do it in
+	# (PT-05: "did not understand the goal"). The crossing, what shuts
+	# it, what changes a load's class, what holds the crossing for good.
+	_sign("WEIGHBRIDGE -- HEAVY CLASS\nA HEAVY LOAD ON IT SHUTS THE CROSSING",
+			Vector3(0.0, 2.6, WEIGH_SOUTH - 0.4), Color(1.0, 0.55, 0.3), 30)
+	_sign("SERVICE CROSSING", Vector3(0.0, SILL_Y + 2.35, NORTH_Z - 0.35),
+			Color(0.85, 0.9, 1.0), 30)
+	_sign("LIGHTENER\nA LOAD IT HITS READS LIGHTER FOR %d s"
+			% int(LIGHTENED_SECONDS), Vector3(-ROOM_HALF.x + 0.7, 2.4, 3.0),
+			Color(0.55, 0.9, 1.0), 24)
+	_sign("HOLD-OPEN BOLT\nKEEPS THE CROSSING OPEN\nAND LOWERS THE RETURN STAIR",
+			Vector3(0.0, SILL_Y + 1.4, NORTH_Z + 1.4), Color(0.55, 1.0, 0.7),
+			24)
 	if development_signs:
 		_sign("EX50-033 -- development scenario, not a Zone",
 				Vector3(0.0, 1.2, -ROOM_HALF.y + 1.0),

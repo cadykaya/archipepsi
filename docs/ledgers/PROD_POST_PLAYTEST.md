@@ -704,3 +704,102 @@ orders first: "the bridge must not admit a Zone lever before
   whose saved Zones keep their step-once plates (M-1). Once Dess's
   composer writes the lever, a new route shows a bolt lever that stays
   thrown and says the way is open. A plate is only ever a held sensor.
+
+## CP2 — `H-UNWEIGHTED` (PT-05, D12's card) — repaired
+
+PT-05: "saw an indestructible crate moved very slowly by a lever, did
+not understand the goal, and walked to the Check." D12 (Dess's
+H-RELEASE-C) is the contract. It says what must be true, and the
+physical proposal is Prod's. Both proposals below were agreed by Dess
+(N-1, N-2), and N-2 is flagged to the owner.
+
+- **Reproductions, on the room as it stood** (unchanged from `76b0952`):
+  - **The Check claimed from the floor**
+    (`H-UNWEIGHTED_repro_census.log`).
+    - The new census found 7 floor cells under the north wall's high
+      return gap from which a hop puts the Check inside the claim ray's
+      3 m.
+    - Played: the real player walked from the arrival to one of them
+      and hopped, the prompt read "[E] CLAIM CHECK 055", and a claim
+      went out with nothing solved.
+  - **The gallery reached from the carriage in transit.**
+    - Ridden toward the recess, the carriage was a step within a
+      running jump of the sill before its weight reached the plate.
+    - A single ride-and-jump landed on G with `lightened` never applied.
+    - The sweep that now guards it reproduces this on the old plate: 7
+      of 14 jump points reach G, from 3.4 m to 1.6 m from the wall.
+- **The room card, as built:**
+
+| Field | Now |
+|---|---|
+| Arrival read | Upper doorway with "SERVICE CROSSING", the sill too high, the carriage in its bay. The weighbridge reads "A HEAVY LOAD ON IT SHUTS THE CROSSING" |
+| Visible objective | The Check on G's middle, straight through the upper doorway: where the scenario's own goal plate always stood |
+| Obstruction | The sill (1.9 m), and the weighbridge that holds the crossing shut while the HEAVY carriage is anywhere it is a step within reach |
+| Controls | The service drive (2.3 m/s, was 1.1); the LIGHTENER, whose sign says what it does; the HOLD-OPEN BOLT on G, whose sign says it keeps the crossing open and lowers the return stair |
+| State | Carriage placed: shut. Placed and `lightened`: open, with the step still there. The carriage's own readout says what it reads, and for how long |
+| Valid alternates | Blink, double jump and grapple reach G (V-10: 24, 9 and 7 arrivals); a lighter object in the recess; standing in the closing shutter (interlock). None is nerfed |
+| Refused bypasses | Any claim from outside G, by walk, hop, rail, carriage, blink, double jump or grapple. The carriage ridden in transit |
+| Reward | The claim on G. Not gated on the bolt (D12 R1) |
+| Return | Back down through the return gap after any arrival; the bolt's stair after it is pulled. The bolt stays thrown and says so |
+| Reset/reload | Unchanged: the bolt persistent, `lightened` ephemeral, the carriage package-local |
+
+- **What changed:**
+  - The Check's objective volume moved within G. In the room's own
+    frame it was at x 6.0, z 9.5, beside the return gap; it is now at
+    x 0.0, z 10.2, beyond the upper doorway, 3.35 m from the nearest
+    floor cell. In the registry's frame (entry at z 0) that is
+    `[6.0, 1.9, 16.75]` to `[0.0, 1.9, 17.45]`: registry geometry (N-1,
+    agreed).
+  - The HEAVY plate runs back along the drive lane as a **weighbridge**
+    to z 2.3, so the carriage is on it wherever it is a step within
+    reach of the sill. Parked, it is clear of it, so §4's opening state
+    is unchanged: the crossing starts open (N-2, agreed).
+  - The drive runs at 2.3 m/s, where it was 1.1.
+  - There are signs for the crossing, the weighbridge, the lightener and
+    the bolt. They say what each thing does, never the order to do it
+    in.
+  - The carriage has a live readout ("READS HEAVY", "LIGHTENED: READS
+    MEDIUM 6 s").
+  - The carriage is dressed as guided service hardware: frame, deck,
+    buffers, hazard banding, and guide shoes on the rails. It is meshes
+    only and provisional, for Arty's H-MACHINE-ART; the collider is the
+    same 2 x 1 x 2 m box.
+  - The bolt now stays thrown once its latch is set, restored saves
+    included: "BOLT HELD -- CROSSING OPEN, RETURN STAIR DOWN" (D-07's
+    permanence, `CallLever.done_label`).
+- **`godot-minor-claim`**, new and in CI, has 17 checks on the played
+  candidate:
+  - every declared minor is built as itself;
+  - a claim census of each hosted room, with a played witness when it
+    finds anything;
+  - G unreached from the arrival as built;
+  - V-10 at the schema maxima: 8,680 blinks, plus double-jump and
+    grapple flights, with zero claims off G;
+  - the ride sweep of 14 jump points;
+  - the return after an alternate arrival, and again after the bolt.
+- **Sabotages** (`H-UNWEIGHTED_sabotages.log`), each restored
+  byte-for-byte: the Check back at its old spot (SU-1), the old plate
+  and drive (SU-2), the bolt springing back (SU-3), the return gap
+  walled up (SU-4) and the Unweighted shell refused (SU-5). Each fails
+  by name.
+  - Two of them first exposed holes in this suite, fixed before it was
+    trusted.
+  - The ride sweep counted a landing on the sill as a miss, so on the
+    old plate it passed. It now counts the crossing, and fails there.
+  - A refused shell made the census measure one room fewer and pass.
+    The suite now requires every declared minor.
+- **`godot-unweighted`'s crate-top walk.** The walker counted 1.4 m from
+  the carriage's centre as arrived. That is also its south edge, where a
+  body perches off the floor. The room as it was passed. The repaired
+  room perched, with each change (weighbridge, drive speed, skin,
+  readout) reverted in turn. The walk now goes into the top's footprint
+  and waits to land. The assertion is unchanged, and 70 checks are
+  green.
+- **What the owner will notice:**
+  - The Check is visible through the upper doorway and can only be
+    taken on the gallery.
+  - The carriage drives twice as fast, looks like a guided machine, and
+    says what it weighs.
+  - Standing on it while it drives no longer gets you up. The lightener
+    is the way, or a movement power.
+  - The bolt stays thrown once pulled.

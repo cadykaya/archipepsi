@@ -609,6 +609,15 @@ godot-flyer-room: godot-import  # the played room's flyers wait, dive and die
 	  exit 1; \
 	fi
 
+godot-minor-claim: godot-import  # V-09: no minor's Check before its room is solved
+	@out=$$($(GODOT) --headless --path godot -- --minor-claim 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT MINOR CLAIM TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
 # CP1 (post-playtest) H-RESUME-R, offline: what the Zone builds from a
 # saved encounter record, read before the first physics step. The
 # two-process proof is `godot-resume-live`.

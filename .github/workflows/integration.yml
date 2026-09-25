@@ -161,6 +161,7 @@ jobs:
           make godot-combat-fairness
           make godot-flyer-room
           make godot-resume
+          make godot-minor-claim
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live

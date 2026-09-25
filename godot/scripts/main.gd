@@ -63,6 +63,7 @@ const DRIVERS := {
 	"--combat-fairness-test": preload("res://tests/combat_fairness_driver.gd"),
 	"--flyer-room": preload("res://tests/flyer_room_driver.gd"),
 	"--resume-test": preload("res://tests/resume_driver.gd"),
+	"--minor-claim": preload("res://tests/minor_claim_driver.gd"),
 	"--boot-test": preload("res://tests/boot_driver.gd"),
 	"--legibility-test": preload("res://tests/legibility_driver.gd"),
 	"--content-test": preload("res://tests/content_driver.gd"),
