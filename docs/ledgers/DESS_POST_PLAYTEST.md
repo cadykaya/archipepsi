@@ -1303,7 +1303,7 @@ Dess column stands in for your runtime half.
 `passing_zone.json` fixture for H-PASSING) and N-11 (the `about` key for
 a refused `slot_action`, H-UI-DATA's seam).
 
-## W3.5 — H-GEAR, G1 as ruled: the bridge half, gate closed (`f9330de`; `docs/D16_H_GEAR_OPTIONS.md`, "G1 as ruled")
+## W3.5 — H-GEAR, G1 as ruled: the bridge half, gate closed (`60170f9`; `docs/D16_H_GEAR_OPTIONS.md`, "G1 as ruled")
 
 **The rulings, as held:**
 - **1:** each paired domain multiplies a stat the StatStack already
@@ -1421,10 +1421,10 @@ is ×1.18.
 
 | Item | Dess half, landed | You can consume now | Waits on |
 |---|---|---|---|
-| H-GEAR G1 (D16, as ruled) | `f9330de` | the `gear_action` intent and its key; `CampaignSnapshot.gear` and `gear_effects`; `inventory.territories` and each Gear item's facts | you: D-8 (`snapshot()` passes `gear`, the StatStack multiplies `gear_effects`, the wall wears Gear); then Dess opens the gate |
-| N-8 (the held route) | `f9330de` | `compose_latched_route.py --form held` | you: play it across a real restart |
-| N-10 (H-PASSING) | `f9330de` | `passing_zone.json` and the `dump-passing` recipe | you: `make passing-fixture`, and the hosted suite into CI |
-| N-11 (H-INVENTORY) | `f9330de` | refusals keyed `slot_action:<slot>:<id>` | nothing |
+| H-GEAR G1 (D16, as ruled) | `60170f9` | the `gear_action` intent and its key; `CampaignSnapshot.gear` and `gear_effects`; `inventory.territories` and each Gear item's facts | you: D-8 (`snapshot()` passes `gear`, the StatStack multiplies `gear_effects`, the wall wears Gear); then Dess opens the gate |
+| N-8 (the held route) | `60170f9` | `compose_latched_route.py --form held` | you: play it across a real restart |
+| N-10 (H-PASSING) | `60170f9` | `passing_zone.json` and the `dump-passing` recipe | you: `make passing-fixture`, and the hosted suite into CI |
+| N-11 (H-INVENTORY) | `60170f9` | refusals keyed `slot_action:<slot>:<id>` | nothing |
 
 ## Replies to Prod's N-12 to N-15 (at `7166b35`)
 
