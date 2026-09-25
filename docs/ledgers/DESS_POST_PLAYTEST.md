@@ -887,3 +887,104 @@ it on this fixture:
 If you want a `held-route-fixture` make target beside
 `latched-route-fixture`, it is yours to add. The command above is its
 recipe.
+
+## The owner's rulings on D-02, D-03, D-04, D-01 compatibility and Unweighted (2026-09-25, verbatim)
+
+> Your independent Wave 0–2 work and D-01 landing are accepted. Keep the
+> current compatibility boundaries and evidence exactly as landed.
+>
+> **D-02 — approved with one semantic constraint.** The game owns the
+> mechanical requirement for a featured Echo. For Blindside, that means an
+> Echo must provide the actual traversal capability the room requires.
+> Epsilon may name, style and author the Echo within that mechanical
+> contract, and there must be a deterministic guaranteed fallback if
+> generated content fails the requirement. `grapple_pull_target` must not
+> satisfy a traversal `grapple` requirement merely because it belongs to
+> the same broad family or shares the name. Moving an enemy does not prove
+> that the player can perform the crossing. Fix DESS-26 accordingly and
+> make the capability contract distinguish the affordance that the gate
+> actually requires.
+>
+> **D-03 — approved.** Finish Blindside now with rewards that are not AP
+> Checks. Do not place an AP Check behind the capability gate until
+> Archipelago's own logic declares that prerequisite and can prove the
+> capability obtainable. Keep capability events in the AP logic as an
+> explicit deferred task; this ruling postpones that integration rather
+> than deleting it.
+>
+> **D-04 — approved.** Do not deliver manipulation verbs until a real
+> room/mechanic has a consumer for one. Do not revive the conflicting
+> migration rule. When Prod identifies a concrete consumer, bring the
+> smallest verb contract required by that mechanic.
+>
+> **D-01 compatibility — your current behavior is approved.** Existing
+> campaigns do not automatically gain self-addressed Echoes. The legacy
+> default stays false. A deliberate developer/owner opt-in for an old
+> campaign may exist for testing if useful, but there is no silent
+> migration and no inferred entitlement from an old save.
+>
+> **Unweighted — your ruling is also approved.** Riding the carriage and
+> jumping to the sill without using `lightened` is not the valid alternate
+> route described by EX50-033. Prod should prevent that accidental
+> geometry bypass while preserving the authored `lightened` alternate.
+>
+> You may now continue the remaining ready Wave 3 work already present in
+> the approved handoff scope. H-GEAR remains limited to the 16 costed
+> domains. Do not implement D-04 manipulation verbs, and do not fake around
+> work that genuinely requires Prod's integration half.
+
+### Deferred, explicitly (not deleted)
+
+- **H-AP-GATE: capability events in the AP logic** (D-03 option E,
+  `O05-05.5`). Archipelago declares the prerequisite and proves the
+  capability obtainable; the bridge proves the event is physically true
+  (the featured Check's qualifying Echo, and its Zone allocated as soon
+  as AP logic can reach it). Until then no AP Check, AP-relevant key or
+  Zone exit sits behind a capability gate: §29.5a as written, enforced by
+  `topology.reachability`.
+- **H-ATOM-DELIVERY** (D-04, `O05-08.5`). It opens when Prod names a real
+  consumer, and then Dess brings the smallest verb contract that mechanic
+  needs. The Amalgam's migration rule stays retired.
+
+## DESS-26 — fixed: a traversal capability is answered only by moving the player
+
+Owner ruling D-02: "`grapple_pull_target` must not satisfy a traversal
+`grapple` requirement [...] make the capability contract distinguish the
+affordance that the gate actually requires."
+
+**The contract, in `schemas/mechanics.py`:**
+- `PLAYER_TRAVERSAL_PRIMITIVES` lists the primitives that move the
+  player's own body. It is read off what the runtime does:
+  - `_grapple` bites a `StaticBody3D` and pulls the player;
+  - `grapple_swing` is a held tether on one;
+  - `grapple_pull_target` hits only enemies and moves the enemy.
+- The ECHOES catalog still files all three under movement. That is
+  right for authoring and gates nothing.
+- `grapple` is now the anchor-grapples (`grapple_to_surface`,
+  `grapple_swing`). So is the `grapple_anchor` affordance, since pulling
+  an enemy never touches an anchor.
+- `CAPABILITY_AFFORDANCES` states what each capability certifies.
+  `TRAVERSAL_CAPABILITIES` names those answered by moving the player, and
+  a test holds every one of them to `PLAYER_TRAVERSAL_PRIMITIVES`, so a
+  future family member cannot get in on a shared name.
+
+**What it changes.** A campaign owning only an enemy pull no longer
+counts as able to grapple or to use grapple anchors, which was physically
+true all along. Nothing is written to any save, since capabilities are
+derived. No composer emits a grapple-gated edge yet
+(`featured_acquisition` is not composed), so no saved route depends on
+the old answer.
+
+**Test change, on purpose.** `test_grapple_is_satisfied_by_any_member_of_the_family`
+asserted the ruled-out behaviour. It is now
+`..._by_every_grapple_that_moves_the_player`, plus two new tests:
+- the enemy pull satisfies no traversal capability and no anchor;
+- every traversal capability is answered by moving the player.
+
+**Evidence:**
+- 3 sabotages fail by name: the enemy pull put back into `grapple`, into
+  the anchor, or into the traversal set.
+- `make export` changed nothing.
+- The packet mirror of `mechanics.py` is copied, and `check_packet` is
+  clean.
+- Bridge suite: 2145 passed.

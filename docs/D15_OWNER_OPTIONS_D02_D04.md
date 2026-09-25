@@ -7,7 +7,13 @@ any of these branches is built. Each section gives:
 - my recommendation;
 - what your pick unblocks.
 
-Nothing here is implemented.
+**Ruled 2026-09-25 (verbatim in `docs/ledgers/DESS_POST_PLAYTEST.md`):**
+- **D-02:** A, with the constraint that `grapple_pull_target` never
+  satisfies a traversal `grapple`. That is DESS-26, fixed in the
+  capability contract.
+- **D-03:** C now. Capability events (E) are an explicit deferred task.
+- **D-04:** H. When Prod names a consumer, the smallest verb contract it
+  needs; the migration rule stays retired.
 
 ---
 

@@ -234,9 +234,26 @@ def _check_rule_references(component, components, aliases, seq: int) -> None:
 #: rather than as a second taxonomy: "can this campaign grapple" is
 #: "does it own an action whose primitive is in the grapple family", and
 #: that question has exactly one right answer, held here.
+#: THE PRIMITIVES THAT MOVE THE PLAYER'S OWN BODY -- what a traversal
+#: requirement has to be answered with (owner ruling D-02, 2026-09-25:
+#: "Moving an enemy does not prove that the player can perform the
+#: crossing"). Read off what the runtime does, not the catalog's grouping:
+#: `_grapple` bites a `StaticBody3D` and pulls the PLAYER to it and
+#: `grapple_swing` is a held tether on one (`echo_runtime.gd`), while
+#: `grapple_pull_target` hits only enemies and moves THE ENEMY. The ECHOES
+#: catalog files all three under movement (`echo.MOVEMENT_PRIMITIVES`),
+#: which is right for authoring and says nothing about a crossing.
+PLAYER_TRAVERSAL_PRIMITIVES: tuple[str, ...] = (
+    "dash", "air_dash", "double_jump", "wall_kick", "glide", "hover",
+    "blink", "grapple_to_surface", "grapple_swing")
+
+#: The anchor-grapples: what bites a fixed surface and carries the player.
+_ANCHOR_GRAPPLES: tuple[str, ...] = ("grapple_to_surface", "grapple_swing")
+
 AFFORDANCE_REQUIREMENTS: dict[str, dict[str, tuple[str, ...]]] = {
-    "grapple_anchor": {"primitives": (
-        "grapple_to_surface", "grapple_pull_target", "grapple_swing")},
+    # DESS-26: an anchor is used by a grapple that bites it; pulling an
+    # enemy never touches one.
+    "grapple_anchor": {"primitives": _ANCHOR_GRAPPLES},
     "breakable_wall": {"primitives": (
         "slam_ground", "melee_swing", "melee_thrust", "arc_lob",
         "beam_sustained")},
@@ -292,11 +309,28 @@ ACTIVITY_CAPABILITIES: dict[str, dict[str, tuple[str, ...]]] = {
     "cross_long_gap": {"primitives": (
         "dash", "air_dash", "double_jump", "wall_kick", "glide", "hover",
         "blink", "grapple_to_surface", "grapple_swing")},
-    # The same family `grapple_anchor` names, for the same reason.
-    "grapple": {"primitives": (
-        "grapple_to_surface", "grapple_pull_target", "grapple_swing")},
+    # Pull yourself to, or swing from, a fixed anchor -- the same
+    # anchor-grapples `grapple_anchor` names. NOT `grapple_pull_target`
+    # (owner ruling D-02, DESS-26): it shares the family and the name,
+    # and it moves an enemy, which proves nothing about a crossing.
+    "grapple": {"primitives": _ANCHOR_GRAPPLES},
     "blink": {"primitives": ("blink",)},
 }
+
+#: WHAT EACH CAPABILITY CERTIFIES -- the affordance a gate asking for it
+#: actually requires. A traversal capability is answered only by
+#: primitives that move the player (`PLAYER_TRAVERSAL_PRIMITIVES`), which
+#: a test holds for every entry, so a future family member cannot slip in
+#: on a shared name.
+CAPABILITY_AFFORDANCES: dict[str, str] = {
+    "ranged_hit": "hit a target at range",
+    "cross_long_gap": "move the player across more than base movement "
+                      "covers",
+    "grapple": "pull the player to, or swing them from, a fixed anchor",
+    "blink": "teleport the player a short distance",
+}
+TRAVERSAL_CAPABILITIES: tuple[str, ...] = ("cross_long_gap", "grapple",
+                                           "blink")
 
 #: Capabilities the permanent baseline satisfies for every player in every
 #: campaign, forever. Case A of the guarantee model.
