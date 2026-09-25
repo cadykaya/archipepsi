@@ -112,8 +112,66 @@ def compose_legacy_step_once_route(zone: Zone) -> LatchedRoute:
     return _compose(zone, _step_once_graph, "plate and latch")
 
 
-def _compose(zone: Zone, graph_for, what: str) -> LatchedRoute:
-    """Put the chain `graph_for(room)` builds on one legal doorway."""
+def _held_graph(room_id: str) -> dict:
+    """D13 1d: an object-only plate held down by its weight, driving the
+    shutter directly -- open only while the weight rests on it."""
+    return {
+        "room_id": room_id,
+        "sensors": [{"node_id": HELD_PLATE_ID, "kind": "PRESSURE_PLATE",
+                     "requires_class": "MEDIUM", "counts_player": False,
+                     "held_by": WEIGHT_ID}],
+        "nodes": [],
+        "actuators": [{"actuator_id": SHUTTER_ID,
+                       "driven_by": HELD_PLATE_ID}],
+    }
+
+
+#: The held route's plate and its weight: a 40 kg MEDIUM hand carry,
+#: homed beside its plate, never allowed across the door it holds.
+HELD_PLATE_ID = "weight_plate"
+WEIGHT_ID = "counterweight"
+WEIGHT_KG = 40.0
+
+
+def _add_weight(raw: dict, near: str, far: str) -> bool:
+    """Home the weight in the plate's room; its volume is that room and
+    one plain near-side neighbour, never the far side. False if the room
+    has no such neighbour."""
+    order = [c["id"] for c in raw["chambers"]]
+    locked = {d.get("edge_id") for c in raw["chambers"]
+              for d in c.get("doors", ()) if d.get("usage") == "LOCKED"}
+    neighbours = sorted(
+        (e["room_b"] if e["room_a"] == near else e["room_a"]
+         for e in raw["edges"]
+         if near in (e["room_a"], e["room_b"])
+         and far not in (e["room_a"], e["room_b"])
+         and e.get("realization", "JOINED") == "JOINED"
+         and e.get("direction", "BIDIRECTIONAL") == "BIDIRECTIONAL"
+         and not e.get("opened_by") and not e.get("requires_state")
+         and not e.get("capability") and e["edge_id"] not in locked),
+        key=order.index)
+    if not neighbours:
+        return False
+    raw["transported_objects"] = [*raw.get("transported_objects", []), {
+        "object_id": WEIGHT_ID, "allowed_volume": [neighbours[0], near],
+        "home_room_id": near, "carriable": True, "mass_kg": WEIGHT_KG}]
+    return True
+
+
+def compose_held_route(zone: Zone) -> LatchedRoute:
+    """D13 1d: `plate -> shutter` held open by a declared weight.
+
+    An explicit step for a fixture and Prod's acceptance (H-PRESSURE-R),
+    never a default: whether the engine builds and plays it is Prod's to
+    show. The same search as the latch route, the same room rules.
+    """
+    return _compose(zone, _held_graph, "held plate and its weight",
+                    extra=_add_weight)
+
+
+def _compose(zone: Zone, graph_for, what: str, extra=None) -> LatchedRoute:
+    """Put the chain `graph_for(room)` builds on one legal doorway.
+    `extra(raw, near, far)` may add to a candidate, or reject it."""
     if zone.room_graphs or any(e.opened_by for e in zone.edges):
         return LatchedRoute(zone, None,
                             "the Zone already declares a room graph or a "
@@ -161,6 +219,10 @@ def _compose(zone: Zone, graph_for, what: str) -> LatchedRoute:
         raw = {**base, "edges": [dict(e) for e in base["edges"]]}
         raw["edges"][index]["opened_by"] = SHUTTER_ID
         raw["room_graphs"] = [graph_for(near)]
+        if extra is not None and not extra(raw, near, far):
+            refusals.append(f"{raw['edges'][index]['edge_id']}: no room "
+                            "for what the route needs beside it")
+            continue
         try:
             candidate = Zone.model_validate(raw)
         except ValueError as exc:
@@ -178,5 +240,5 @@ def _compose(zone: Zone, graph_for, what: str) -> LatchedRoute:
             f"into '{far}'; reachable before the route it opens")
     return LatchedRoute(
         zone, None,
-        "no doorway in this Zone can carry the latch legally"
+        "no doorway in this Zone can carry the route legally"
         + (f": {refusals[0]}" if refusals else " (no candidate edges)"))

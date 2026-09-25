@@ -845,3 +845,45 @@ also refuses:
 **Next:**
 - a composer and a fixture for Prod's acceptance (1d-ii);
 - 1c after Prod's lever placement.
+
+
+## W1.2 — 1d-ii: the held-route composer and its fixture
+
+**The composer.** `latched_route.compose_held_route` puts D13 1d's
+route on a real Zone through the same search and room rules as the
+latch route:
+- an object-only MEDIUM plate held by a 40 kg `counterweight`, driving
+  the shutter directly;
+- the weight homed in the plate's room, with its volume that room plus
+  one plain near-side neighbour, never the far side.
+
+It is an explicit step and never a default. The candidate profile does
+not run it.
+
+**The fixture.** `godot/tests/fixtures/held_route_zone.json`: the played
+Zone with the held plate in c002 and the shutter across `e:c002:c003`.
+- Regenerate it from `bridge/` with
+  `python -m archipepsi_bridge.playtest dump-held --out ../godot/tests/fixtures/held_route_zone.json`.
+- A currency test names that command.
+
+**Evidence:**
+- The composed route is sound: it passes reachability, and acceptance
+  raises no D-07 error.
+- The fixture is current.
+- A too-light weight, or one allowed across the door, makes the composer
+  decline rather than emit.
+- The shared decline message now says "route", not "latch".
+- Bridge suite: 2143 passed.
+
+**Note D-4 (Dess → Prod), for H-PRESSURE-R's held arrangement.** Play
+it on this fixture:
+- the weight carried onto the plate opens the door, which stays open
+  while it rests there;
+- lifting the weight while the player is in the doorway uses your
+  closure interlock;
+- a reload restores the weight's pose from `object_poses`, so the door
+  opens with no plate state saved.
+
+If you want a `held-route-fixture` make target beside
+`latched-route-fixture`, it is yours to add. The command above is its
+recipe.

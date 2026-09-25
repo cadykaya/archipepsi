@@ -561,6 +561,33 @@ def _dump_latched(args) -> int:
     return 0
 
 
+def held_route_zone():
+    """D13 1d's fixture: the played Zone with a door held open by a
+    declared weight on its plate, or None. The input to Prod's
+    acceptance of H-PRESSURE-R's held route."""
+    from .latched_route import compose_held_route
+    zone = played_zone()
+    if zone is None:
+        return None
+    out = compose_held_route(zone)
+    return out.zone if out.emitted else None
+
+
+def _dump_held(args) -> int:
+    zone = held_route_zone()
+    if zone is None:
+        print("could not compose a held route onto the played Zone",
+              file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(zone.model_dump_json(indent=1), encoding="utf-8")
+    graph = zone.room_graphs[0]
+    edge = next(e for e in zone.edges if e.opened_by)
+    print(f"wrote {args.out}  (held plate in '{graph.room_id}', shutter "
+          f"across '{edge.edge_id}')")
+    return 0
+
+
 def candidate_zone(steps: str):
     """The played Zone with the CANDIDATE profile's `steps` applied, or
     None if any asked-for step declined.
@@ -654,6 +681,12 @@ def main(argv=None) -> int:
     latched.add_argument(
         "--out", type=Path,
         default=Path("godot/tests/fixtures/latched_route_zone.json"))
+    held = sub.add_parser(
+        "dump-held", help="write the played Zone with D13 1d's held "
+        "route composed onto it, for Prod's acceptance")
+    held.add_argument(
+        "--out", type=Path,
+        default=Path("godot/tests/fixtures/held_route_zone.json"))
     cand = sub.add_parser(
         "dump-candidate", help="write the played Zone with the CANDIDATE "
         "profile's steps applied (candidate.py), for Prod's acceptances")
@@ -666,6 +699,8 @@ def main(argv=None) -> int:
         return _dump(args)
     if args.command == "dump-latched":
         return _dump_latched(args)
+    if args.command == "dump-held":
+        return _dump_held(args)
     if args.command == "dump-candidate":
         return _dump_candidate(args)
     return report(args.save_dir)

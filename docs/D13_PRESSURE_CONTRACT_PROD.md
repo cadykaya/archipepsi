@@ -7,7 +7,13 @@ consume.
 step-once Zones keep their saved behaviour, and new composition never
 produces them). Both are verbatim in `docs/ledgers/DESS_POST_PLAYTEST.md`.
 
-**Code waits for the W0.1 handback.** Everything below names its file.
+**Status (2026-09-25):**
+- 1a and 1b landed at `d2ffea0`.
+- 1d's bridge half landed: the rules at `bca85d4`, then the composer and
+  the fixture `godot/tests/fixtures/held_route_zone.json`.
+- 1c waits for your lever placement.
+
+Everything below names its file.
 
 ---
 

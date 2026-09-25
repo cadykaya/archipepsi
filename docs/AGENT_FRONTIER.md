@@ -17,7 +17,8 @@
      `inventory` and `zone_map` are **done** (note D-3);
   6. DESS-23 **done**;
   7. 1c after Prod's lever placement;
-  8. 1d.
+  8. 1d: the bridge half is **done**, and so are the composer and fixture
+     (note D-4 to Prod).
 - Answers to N-1/N-2/N-3 and note D-1 are in the Dess ledger.
 
 **Done without shared edits** (details in the ledger):

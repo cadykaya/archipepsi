@@ -162,3 +162,45 @@ def test_the_map_reads_a_held_door_as_live():
     door = next(c for c in view.connectors if c.edge_id == DOOR)
     assert door.state == "unknown"
     assert "live" in door.reason
+
+
+# --- the composer and its fixture (for Prod's acceptance) ------------------
+
+def test_the_composer_puts_a_sound_held_route_on_the_real_zone():
+    from archipepsi_bridge.latched_route import compose_held_route
+    from archipepsi_bridge.playtest import played_zone
+    out = compose_held_route(played_zone())
+    assert out.emitted, out.note
+    zone = out.zone
+    assert TP.reachability(zone).ok, TP.reachability(zone).errors
+    (graph,) = zone.room_graphs
+    (plate,) = graph.sensors
+    assert plate.held_by == "counterweight" and not plate.counts_player
+    assert graph.nodes == ()                 # no latch: held, not stepped
+    weight = next(o for o in zone.transported_objects
+                  if o.object_id == plate.held_by)
+    edge = next(e for e in zone.edges if e.opened_by)
+    far = edge.room_b if graph.room_id == edge.room_a else edge.room_a
+    assert weight.home_room_id == graph.room_id
+    assert far not in weight.allowed_volume
+    errors = validate_zone(zone, expected_zone_id=zone.zone_id,
+                           allocated_location_ids=list(
+                               zone.reward_location_ids),
+                           owned_echo_ids=[])
+    assert not any("held sensor" in e for e in errors), errors
+
+
+def test_the_held_route_fixture_is_the_zone_the_composer_emits():
+    from archipepsi_bridge.playtest import held_route_zone
+    fixture = LEGACY.parent / "held_route_zone.json"
+    assert fixture.is_file(), (
+        f"{fixture} is missing; run `python -m archipepsi_bridge.playtest "
+        "dump-held --out ../godot/tests/fixtures/held_route_zone.json` "
+        "from bridge/")
+    live = held_route_zone()
+    assert live is not None
+    assert json.loads(fixture.read_text(encoding="utf-8")) == json.loads(
+        live.model_dump_json()), (
+        "the held-route fixture is stale; regenerate it with `python -m "
+        "archipepsi_bridge.playtest dump-held --out "
+        "../godot/tests/fixtures/held_route_zone.json` from bridge/")
