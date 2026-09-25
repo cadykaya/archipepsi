@@ -1,40 +1,46 @@
 # AGENT FRONTIER
 
-## BRIDGE LANE — Dess resumed; handback TAKEN at `f332fff` — 2026-09-24
+## BRIDGE LANE — approved independent work DONE; waiting on Prod and the owner — 2026-09-25
 
-- **Dess is the single writer of the released files from `5f348ab`
-  onward** (Prod's entry: `PROD_POST_PLAYTEST.md` W0.1). Prod asks for
-  shared changes by note.
-- **The shared edits land in this order:**
-  1. DESS-25 **done**;
-  2. H-PRESSURE-C step 1 (1a + 1b) **done**. The candidate composes no
-     latch route until 1c (note D-1 to Prod);
-  3. DESS-21 **done**;
-  4. the D-01 protocol field **done**. Prod's integration comes next
-     (D14 §7);
-  5. discovery and the snapshot's inventory and map. Discovery is
-     **done** (`RoomEntered`, note D-2 to Prod), and the snapshot's
-     `inventory` and `zone_map` are **done** (note D-3);
-  6. DESS-23 **done**;
-  7. 1c after Prod's lever placement;
-  8. 1d: the bridge half is **done**, and so are the composer and fixture
-     (note D-4 to Prod).
-- Answers to N-1/N-2/N-3 and note D-1 are in the Dess ledger.
+**Dess is the single writer of the released files from `5f348ab`
+onward.** Prod asks for shared changes by note. The detail of every
+item is in `docs/ledgers/DESS_POST_PLAYTEST.md`.
 
-**Done without shared edits** (details in the ledger):
-- W0.2, the H-SEAMS review: DESS-19 to DESS-23.
-- W1.1: the M-2 replay boundaries.
-- W1.3: room cards, plus a claim with no latch gate.
-- W1.4: the key audit. 80/80 sample keys are met before their locks.
-- W1.2: the pressure contract.
-- W2.1: the inventory view.
-- W2.2: the map view.
-- D-01: the self-addressed Echo contract (D14). It includes a
-  per-campaign policy, so a legacy save never grows Echoes.
-- D-02/D-03/D-04: options brought to the owner (D15). **Waiting for her
-  selection; nothing on those branches is built.**
+**Landed since the handback:**
+- DESS-25 and DESS-21.
+- DESS-23: a key must open something, checked at acceptance.
+- DESS-24: the plate advice.
+- DESS-27: `make candidate-fixture` works again.
+- H-PRESSURE-C:
+  - 1a + 1b: no new plate latches; legacy Zones play as saved (M-1);
+  - 1d's bridge half: a door held by a declared weight;
+  - the held-route composer and `held_route_zone.json`.
+- D-01's protocol field, off by default. Legacy saves never grow
+  Echoes.
+- Discovery (`visited_rooms`, `RoomEntered`), and the snapshot's
+  `inventory` and `zone_map`, computed on the model.
 
-Their snapshot wiring, and the fixes above, now land in that order.
+**Waiting on Prod (notes D-1 to D-4 in the ledger):**
+- lever placement in `RoomGraphs`, then Dess lands 1c by adopting
+  Prod's patch;
+- D14 §7, the D-01 integration: creation, the grant filter, the reveal,
+  and the `test_full_loop.py` change it names;
+- sending `room_entered`;
+- reading `inventory` and `zone_map`;
+- playing the held route;
+- `candidate_live_driver.gd`'s shutter count (0 until 1c);
+- CI (N-3).
+
+**Waiting on the owner:**
+- D-02, D-03 and D-04. The options are in D15; nothing on those
+  branches is built.
+- DESS-26 (`grapple_pull_target` counted as a traversal grapple) lands
+  with D-02.
+- Dess's N-2 reading: a base-kit carriage ride-jump is not EX50-033's
+  valid alternate.
+
+**Not started:** W3.5 H-GEAR and the other Wave 3 items. The owner's
+go-ahead named D-01 only, so they are not assumed.
 
 **CI is not running.** Every PR-gate and Integration run has failed
 within about four seconds, with no log, since at least `6ebbc90`, for
