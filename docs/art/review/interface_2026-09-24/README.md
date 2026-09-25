@@ -14,6 +14,7 @@ at 3x with nearest so you are looking at the actual pixels.
 | --- | --- |
 | `FACE_grid_and_selection.png` | A window, a header well with a total, a 4x3 grid of cells, one of them selected, and a count in every cell. |
 | `PANELS_at_four_sizes.png` | The three treatments at 10x10 (authored), 24x16, 60x28 and 118x40. The corners are the same pixels in all four. |
+| `SHEET_numerals.png` | Every glyph at 8x, with the cyan line marking the advance each one declares. `1`'s line sits a column left of the rest — that is the whole metrics proof, as a picture. |
 
 ## The three treatments
 
