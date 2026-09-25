@@ -1,0 +1,5 @@
+bridge/tests/test_full_loop.py:134: AssertionError: 2 Checks should interpret (1 own, legacy=False) but 1 interpretations
+PASSED bridge/tests/test_full_loop.py::test_the_full_loop_claims_echoes_equips_and_survives_a_reload[default-seed]
+PASSED bridge/tests/test_full_loop.py::test_the_full_loop_claims_echoes_equips_and_survives_a_reload[legacy]
+FAILED bridge/tests/test_full_loop.py::test_the_full_loop_claims_echoes_equips_and_survives_a_reload[own-item]
+1 failed, 2 passed in 0.24s

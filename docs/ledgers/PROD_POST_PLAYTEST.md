@@ -269,6 +269,94 @@ where the new rule would refuse a lever.
     says an item fits, so a refusal needs a race, such as an item merged
     away between the snapshot and the press.
 
+- **N-12 (D14 §7, D-01): one setup step moved in your pinned test.**
+  `test_a_legacy_campaign_mints_nothing_for_its_own_item` claimed the
+  Check, and then removed the policy field to make the save legacy.
+  - That was a legacy confirmation only while creation left the policy
+    off. With creation setting it (D14 §3), the claim ran under the
+    policy and minted the Echo before the conversion, so the test failed
+    on the integration.
+  - It now converts before the claim. Every assertion is as it was, and
+    "at confirmation" is now actually exercised. The sabotage "the
+    policy ignored" (D01-3) fails it.
+  - D14 §7 gives Prod "the combined tests above", and this edit is the
+    only one made to your file. If you want it phrased differently, say
+    so and it is yours to rewrite.
+  - Two more assertions encoded historical B-1, and they changed for the
+    same reason: `test_campaign_soak.py` ("an Echo from an unconfirmed
+    location" meant foreign) and `integration_driver.gd` ("N foreign
+    checks -> N interpretations").
+- **N-13 (D-5, for `featured.py`; one question).**
+  `fallback_interpretation` builds an Echo with no concepts.
+  - The pipeline's semantic step refuses an Echo without them
+    (`reading_errors`). It validates its own fallback the same way, and
+    treats a refusal as a generator bug: it raises. Unlabelled, the one
+    fallback that must always hold would have crashed the grant.
+  - Prod's pipeline now stamps the §15 reading on it, as on every
+    deterministic Echo (`_read_and_label`). What the Echo does is
+    unchanged, and `test_featured_grant.py` asserts both.
+  - **The question:** should `fallback_interpretation` carry concepts
+    itself, so it validates on its own? If it does, the test tells us to
+    drop the label ("the requirement's Echo now carries concepts").
+- **N-14 (answers D-6): confirmed, with one room constraint.**
+  - **The field:** `RailSpan.control_placement: Literal["ground",
+    "gantry"] = "ground"`, confirmed. `RailNetworks` reads it:
+    - `ground` is today's lever, at the control room's arrival plus
+      `CONTROL_OFFSET`;
+    - `gantry` is the development scenario's build.
+  - **The geometry, as measured in `railway_scenario.gd`:**
+    - a 4.0 x 0.4 x 4.0 m deck whose centre is 3.1 m above the floor
+      the player grapples from. A standing jump tops out at 1.33 m, and
+      there is no mantle;
+    - the plate the hookshot bites is 7.2 m above that floor, over the
+      deck's near lip (2 m from its centre, toward the approach);
+    - the lever stands on the deck, facing the approach, on a support
+      post. No stairs: that is the owner's rule, not a placeholder;
+    - it is reached by the proven requirement (`grapple_to_surface`,
+      range at least 20, pull at least 14). A 14 m/s pull tops out
+      4.45 m above where it started.
+  - **The constraint the composer must meet:** rooms have ceilings at
+    `wall_height`, and procedural arenas top out at 8.0 m
+    (`PROCEDURAL_ARENA_MAX_HEIGHT`). A 7.2 m plate therefore needs a
+    control room at the top of that range.
+    - Proposal: a gantry control demands `wall_height >= 8.0` and clear
+      floor for the deck plus its approach.
+    - My build will refuse a room that is shorter, reported in
+      `refused` like any other network it cannot build. It will not
+      lower the measured numbers to fit.
+    - If you would rather have the search size the room, the number to
+      carry is the same.
+  - **Sequence, as you proposed:** your 1 and 2 as search-only rules;
+    then my 3, the gantry placement; then your 4, the composer.
+- **N-15 (H-GRAPHS; two asks and one question).**
+  - **AND, DIRECT and SEQUENCE have no consumer.** No room in the design
+    library and nothing the composer emits uses them.
+    - `05_INHERITED`: they "require useful real consumers", and O05-07
+      says "do not emit an unused catalogue". So Prod builds none of
+      them until a room names one.
+    - **Ask:** is one planned? A SEQUENCE needs §19.2's exact reset
+      rule, and I would build it against that room.
+  - **The five signal verbs reach a player only through an Echo, and no
+    primitive exists** (`schemas/echo.py` has none).
+    - Prod lands the runtime first, runtime-only, as O05-08's
+      manipulation verbs did: §19.7's overrides at step 1, §14.3's
+      legality, expiry after `magnitude` seconds, BRIDGE refused when it
+      would make a cycle, and nothing touching a macro setter. It will be
+      exercised on graphs that real rooms already run.
+    - **Ask:** a `signal_verb` primitive (the verb, `magnitude` seconds,
+      `range` metres), when you choose to add one.
+  - **Question: is a recorded LATCH a macro setter?** Here a LATCH the
+    bridge records (`record_latch`) is persistent progression. The Zone
+    map and the journal read it as "open now".
+    - §14.4 says no verb may drive a macro setter. My proposal: yes, it
+      is one. A verb's override is never seen by a recorded LATCH's set
+      input, because latches read the unoverridden values.
+    - So a verb can hold a door open "long enough to slip through"; it
+      can never set a latch.
+    - The runtime lands with that rule, because it is the reading of
+      §14.4 that can never create progression. If you rule otherwise,
+      the change is one function.
+
 ## Evidence rules (PROD_START)
 
 - **Every repair has:**
@@ -2699,3 +2787,303 @@ prettier button label."
   - Owner usability is the owner's to judge. The Glyph-authored look
     waits on Arty (H-GLYPH-KIT).
   - These are local results. Remote CI does not run (N-6).
+
+## 0.4 — D-01 (D14 §7, Prod's half): a local Echo from your own original — landed (`9844ba5`)
+
+D14 §1: "In a campaign under this policy, Epsilon also makes a local
+Echo from that original, **whoever the recipient is, the player
+included.**" §3: "A new campaign is created with `True`." §7 gives Prod,
+in one commit: "creation sets `True`; the `grant_echo` and
+`echo_backlog_sweep` filter; the confirmation text; the reveal; the
+combined tests above."
+
+- **Reproduced first**, on `a2115b6` (the CP4 head), by a scratch test
+  on the real engine and mock AP (`D-01_repro_test.py.txt`). **6 of 6
+  requirements fail** (`D-01_before.log`):
+  - **D1:** a new campaign is created with the policy off, in memory
+    and on disk;
+  - **D2:** an own Check confirmed (`MockSeed-3`'s Epsilon Coin,
+    89100006) mints nothing: "echo_89100006 minted 0 times";
+  - **D3:** its card reads only `('Epsilon Coin', 'Delivered to you.')`;
+  - **D4:** after a crash before the append, the reload mints nothing;
+  - **D5:** so no Echo is written, and there is nothing to keep;
+  - **D6:** with a failing provider, there is no Echo, fallback or
+    otherwise.
+  - **Controls, green before and after:** C1, the original is counted
+    once; C2, a foreign Check is unchanged; C3, a legacy campaign mints
+    nothing for its own item.
+  - **After the change: 9 of 9** (`D-01_after.log`).
+- **Two findings in my own tests, fixed before landing:**
+  - **D01-F1: a control that measured the wrong thing.** C1 counted
+    every received item, and failed on the unchanged code (0 → 2). On
+    each confirmation the mock also has another player find one of
+    yours. The test now counts this Check's original only (sent by this
+    slot, with this item id), and checks that keys and coins are counted
+    from ReceivedItems alone.
+  - **D01-F2: a check that could not fail.** D5 compared the Echo
+    before and after the reload. The fallback provider is deterministic,
+    so a regenerated Echo would compare equal. The committed test counts
+    the requests the provider receives instead (`CountingProvider`).
+- **What changed:**
+  - **`campaign.py`:**
+    - creation sets `self_addressed_echoes=True`. This is the only
+      creation path; every other construction copies an existing save;
+    - **`yields_echo(location_id)`** holds the whole rule: a foreign
+      original always yields an Echo, and your own only in a campaign
+      created under the policy. `grant_echo` and `echo_backlog_sweep`
+      both ask it, so the rule has one place;
+    - the rest of the grant is as it was: one at a time, the same
+      request, validated generation with the deterministic fallback, the
+      append, and the same budget (interacted Checks now, others at most
+      3 per load).
+  - **`transactions.finalize`:** one card per confirmed Check.
+    - Your own item: "CHECK CONFIRMED", the item, "Delivered to you.".
+      Under D-01 the Echo half follows the blank line: "EPSILON ECHO
+      ACQUIRED", the Echo's name and its description. The card carries
+      the Echo's id.
+    - A foreign item's card is unchanged. So is a legacy campaign's own
+      card: `grant_echo` answers None.
+  - **The reveal:** `RevealLayer` already splits a card on its first
+    blank line and, given an Echo id, adds that Echo's effects in the
+    inventory's words. So your own item's card now shows two halves, as
+    a foreign one does. `RevealLayer.shown()` (new) reads the card back
+    for the suites.
+- **Tests:**
+  - **`bridge/tests/test_self_echo_integration.py`** (new, 9 tests), one
+    per D14 §6 line:
+    - the policy is on at creation, and still on after a reload;
+    - an own Check gives one Echo, and its original is counted once, by
+      AP alone. That still holds after a second grant, a sweep, a
+      duplicate append and a reload;
+    - the card;
+    - a foreign Check is unchanged;
+    - the legacy card;
+    - a failing provider falls back under the same id, and is not asked
+      again;
+    - a crash before the append is granted once on reload, and
+      announced;
+    - a written Echo is never asked for again (provider requests
+      counted);
+    - your own Checks confirmed elsewhere wait in the foreign queue: 3
+      this load, the rest on the next.
+    - **On the unchanged code, 7 fail and the 2 controls pass**
+      (`D-01_tests_on_unchanged.log`).
+  - **`test_full_loop.py`:** "ONE ECHO PER FOREIGN CHECK, AND NOT ONE PER
+    CHECK" becomes one Echo per Check for a new campaign and one per
+    foreign Check for a legacy one, as D14 §6 asks.
+    - The default seed's first Zone holds none of your own items, so on
+      it both counts are the same number and prove nothing.
+    - The loop now runs three ways: the default seed; `MockSeed-3`,
+      whose first Zone holds one of yours; and `MockSeed-3` as a legacy
+      campaign.
+    - On the unchanged code only the own-item loop fails: "2 Checks
+      should interpret (1 own, legacy=False) but 1 interpretations"
+      (`D-01_full_loop_on_unchanged.log`).
+  - **`test_campaign_soak.py` encoded the same B-1,** and the first full
+    run found it: "an Echo from an unconfirmed location: {89100027,
+    89100020, 89100013, 89100006}", four of your own Checks.
+    - Its "confirmed" meant "foreign and confirmed". It now means
+      confirmed.
+    - It also asserts what its header always said and never checked:
+      every Check played and confirmed produced its Echo. 25 seeds.
+  - **Dess's pinned `test_self_echo_boundaries.py`: one setup step
+    moved** (note N-12). The legacy test converted the save to legacy
+    after the claim. That was a legacy confirmation only while creation
+    left the policy off. It now converts before the claim, and every
+    assertion is as it was.
+  - **`integration_driver.gd`** (`godot-integration`, a whole campaign,
+    live):
+    - "N foreign checks -> N interpretations" becomes "30 Checks (k
+      your own) -> 30 interpretations, one each";
+    - each of your own items' cards, as the live bridge sent it, reads
+      "Delivered to you." then its Echo;
+    - the real card shows both halves, with the Echo's effects.
+  - **`dual_real.py`** (two Archipepsi slots on a real server):
+    - its "an Echo for its OWN item" check now applies to a legacy
+      campaign only;
+    - it also checks that every Echo names a location its campaign
+      confirmed.
+    - **Not exercised (D01-F3).** `make dual-real` cannot reach it. On
+      a fresh two-slot seed, its first claim is refused: "Zone
+      'zone_001' has not had its layout accepted (layout_state
+      UNCERTIFIED)". The harness claims without certifying a layout,
+      which the certification guard refuses. It fails identically on
+      the checkpoint without D-01 (`D-01_dual_real_on_6b57326.log`).
+      This is the same rot `test_full_loop.py`'s docstring records for
+      `smoke.py`. It is open, below.
+- **Played live** on `dc66f2f` (D-01 rebased onto the CP4 checkpoint,
+  with D-5 on top; `D-01_live.tsv`). The frontier's 14 live suites all
+  passed, 14:43 to 15:06 UTC:
+  - **`godot-integration`,** a whole campaign to ALL_CHECKS_CLEARED:
+    - "30 Checks (4 your own) -> 30 interpretations, one each";
+    - "each own item's card: 'Delivered to you.', then EPSILON ECHO
+      ACQUIRED with its Echo (4 cards; wrong: [])";
+    - "the real card shows both halves: 'Epsilon Coin / Delivered to
+      you.' above the rule; the Echo, and its 3 effect line(s), below
+      it".
+
+    `godot-integration-quiet` says the same.
+  - **The other twelve:** the variant, the candidate (all 9 phases),
+    both consumable runs, the latched, lever, transport and reversible
+    routes, resume, ordinary, reload and the zone audit.
+  - `make test` on the same head: 2,249 passed
+    (`D-01_D-5_make_test_on_dc66f2f.log`).
+- **Sabotages** (`D-01_sabotages.log`), each restored byte for byte
+  (sha256):
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| D01-1 | a new campaign created with the policy off | `test_a_new_campaign_is_created_with_the_policy_on` (+7) |
+| D01-2 | the old filter back: your own item never yields an Echo | `test_an_own_check_yields_one_echo_and_its_original_once`, the own-item full loop and all 25 soak seeds (32 in all) |
+| D01-3 | the policy ignored: a legacy campaign's own item yields one | Dess's `test_a_legacy_campaign_mints_nothing_for_its_own_item`, the legacy card and the legacy full loop |
+| D01-4 | the sweep keeps the old filter, so a lost own grant never resumes | `test_a_crash_before_the_append_is_granted_once_on_reload` (+1) |
+| D01-5 | your own Checks confirmed elsewhere skip the lazy budget | `test_own_checks_confirmed_elsewhere_wait_in_the_foreign_queue` |
+| D01-6 | your own card without its Echo half | `test_the_card_says_delivered_to_you_then_the_echo` (+1) |
+| D01-7 | your own card without the Echo's id, so the reveal cannot show its effects | the same test (+1) |
+| D01-8 | your own card as a reveal "SENT TO" you | the same test (+1) |
+| D01-9 | a written Echo asked for again (the grant not idempotent) | `test_a_failing_provider_falls_back_under_the_same_id` |
+| D01-G1 | the card shows an Echo's effects only on a foreign reveal (`reveal.gd`) | `godot-integration`: "the real card shows both halves" |
+| D01-G2 | the old filter back, played live | `godot-integration`: "30 Checks (4 your own) -> 26 interpretations ... none missing [89100006, 89100013, 89100020, 89100027]", and both card checks |
+
+- **The sabotage run: 11 of 11, each on its first run.** The nine
+  bridge rows ran on `2c4d721`: D-01 before its rebase, byte-identical
+  in what it changes. The two live rows ran on `dc66f2f`.
+  - The live rows' first log also counted "2 script errors". That was
+    the make recipe's own `grep "SCRIPT ERROR"` text. The runner now
+    counts only Godot's error lines and was rerun: 0.
+
+- **What stays open:**
+  - **D01-F3: `make dual-real` has not been able to claim since the
+    certification guard.** It is not in the frontier or CI, so nothing
+    noticed. Repairing it means certifying a layout the way
+    `conftest.enter_zone` does, with the evidence labelled synthetic as
+    `test_full_loop.py`'s is. That is its own change.
+  - **The prompt:** the provider still calls every item "foreign" (D14
+    §2). That wording is the Epsilon lane's.
+  - **D14 §5 is unchanged:** B-2/D-02 (qualification) and B-3/D-03
+    (pre-seed representation).
+  - **A legacy campaign cannot opt in.** D14 §3: turning the policy on
+    would be "a visible act the owner asks for", and it is not part of
+    this contract.
+- **What the owner will notice:**
+  - In a new campaign, a Check holding one of your own items (a Signal
+    Key, a coin) now also gives you an Echo. It appears on the card
+    under "Delivered to you.", with what it does.
+  - The item itself still arrives once, through Archipelago.
+  - Campaigns you have already saved behave as before.
+
+## 0.4 — D-5 (Dess's note): H-QUALIFY at the grant — the featured Echo supplies its function — landed (`dc66f2f`)
+
+Dess's note D-5, "the pipeline's half": at grant, the requirement for the
+Zone record whose `featured_acquisition` names the location; the request
+carries `req.describe()`; `featured.check` joins the semantic step; after
+the one repair fails, `featured.fallback_interpretation` replaces the
+generic fallback. Combined tests: "a provider returning an enemy pull
+yields the qualifying fallback; a good provider's Echo is kept; the same
+holds for self-addressed and foreign originals."
+
+- **Reproduced first**, on `2c4d721` (D-01), with the committed tests
+  (`D-5_before.log`). **7 of 10 fail:**
+  - the provider is never told the function: the request has no field
+    for it;
+  - an enemy pull is accepted for the featured Check, own and foreign:
+    "the featured Echo does not supply the requirement";
+  - with the fallback provider, own and foreign, the item's heuristics
+    hand over no grapple ("the featured Echo must supply
+    grapple_to_surface");
+  - the requirement's own Echo has no labelled form;
+  - an Echo that does not fold crashes the grant (D05-F2, below).
+  - **Controls, green before and after:** a provider's Echo that
+    supplies the function is kept, own and foreign; the same enemy pull
+    on a Check no Zone features is accepted. That last one is what makes
+    every refusal above the featured check's, and not another rule's.
+  - **After the change: 10 of 10** (`D-5_after.log`).
+- **Two findings, both repaired here:**
+  - **D05-F1: the one fallback that must always hold would raise.**
+    `featured.fallback_interpretation` builds an Echo with no concepts,
+    and the pipeline's semantic step refuses an Echo without them
+    (`reading_errors`). It also validates its own fallback, and treats a
+    refusal as "a bug in our own generator": it raises. Found before
+    wiring, by calling the two together. The pipeline now stamps the §15
+    reading on the requirement's Echo, as it does on every deterministic
+    Echo (`_read_and_label`). The function is unchanged, and the test
+    asserts it. Note N-13 asks Dess whether the concepts belong in
+    `featured.py` itself.
+  - **D05-F2: an Echo that does not fold crashed the grant.** No
+    semantic check asked whether an Echo folds onto this campaign's log.
+    An Echo that CREATEs an id the campaign already owns passed them all,
+    and the append then raised mid-grant: "component 'act_hook' already
+    exists". That left a confirmed Check with no Echo and no card, and
+    the same failure at every later sweep. This predates D-5. The
+    featured check folds the candidate too, so it met the crash first.
+    `fold_errors` now refuses such an Echo in the semantic step: it is
+    repaired like any other invalid Echo, then replaced by the fallback.
+- **What changed:**
+  - **`epsilon/requests.py`:** `EchoGenerationRequest.required_function`,
+    None for every Check but a featured one. It is bounded at 400
+    characters, not `MAX_TEXT_LEN`: the grapple's statement alone is 185.
+  - **`campaign.py`:**
+    - `featured_requirement(location_id)` reads the requirement off the
+      Zone whose `featured_acquisition` names the location, never off the
+      recipient;
+    - `grant_echo` passes it, its statement, the log and the next
+      sequence to the pipeline.
+  - **`epsilon/base.py`:**
+    - the semantic step runs as before. Only an Echo that passes it is
+      folded: first `fold_errors`, then, for a featured Check,
+      `featured.check`;
+    - a featured Check's fallback is `featured_fallback`.
+  - **`epsilon/fallback.py`:** `featured_fallback` is Dess's
+    `fallback_interpretation`, labelled.
+- **Tests:** `bridge/tests/test_featured_grant.py` (new, 10). The Zone is
+  built through the real transitions and the Check claimed through the
+  real transaction:
+  - the provider is told the function, and only for the featured Check;
+  - an enemy pull is refused, repaired once (the repair names the
+    missing function), and replaced by the requirement's own Echo. It
+    supplies the function, carries concepts, and is announced. Own and
+    foreign;
+  - an Echo that supplies it is kept as written, asked once, own and
+    foreign;
+  - the same enemy pull elsewhere is accepted (the control);
+  - the fallback provider still hands over a working grapple, own and
+    foreign;
+  - the requirement's Echo reads as its item, and labelling changes
+    nothing it does;
+  - an Echo that would not fold is repaired and never appended.
+- **Sabotages** (`D-5_sabotages.log`), each restored byte for byte
+  (sha256):
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| D05-1 | the provider is never told the function | `test_the_provider_is_told_the_function_and_only_for_that_check` |
+| D05-2 | the featured check not applied | `test_an_enemy_pull_is_replaced_by_the_requirements_own_echo`, own and foreign (4 in all) |
+| D05-3 | the generic fallback in place of the requirement's own | `test_the_fallback_provider_still_hands_over_a_working_grapple`, own and foreign (4 in all) |
+| D05-4 | the requirement's Echo left unlabelled | `test_the_requirements_echo_reads_as_its_item`, and four grants that raise "fallback echo generator produced invalid output: concepts must not be empty" (D05-F1, reproduced) |
+| D05-5 | the requirement read off the recipient (own Checks exempt) | `test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[own]` (+1) |
+| D05-6 | an Echo that would not fold is not refused | `test_an_echo_that_would_not_fold_is_repaired_never_appended` |
+| D05-7 | every Check held to the featured requirement | `test_the_same_enemy_pull_elsewhere_is_accepted` (+2) |
+| D05-8 | the absent requirement serialised as null in every request | the "told" test, and the pre-art baseline's two guards |
+
+- **The sabotage run: 8 of 8, each on its first run.**
+- **Found by the first full run, repaired:** the new field, null on
+  every request, changed the pre-art baseline (`make baseline`). That
+  baseline is retaken only deliberately, in its own commit. The field
+  is now absent unless it is set, so every other request serialises
+  exactly as before: the baseline, the archive, and the provider's
+  input. D05-8 re-breaks it.
+- **Played:** the same 14 live suites as D-01, on the same head
+  (`dc66f2f`). No composed Zone features a Check yet, so they exercise
+  the fold check (D05-F2) on every grant and the featured path on none.
+
+- **What stays open:**
+  - **No composed Zone features a Check yet.** The composer's half is
+    Dess's D-6, which waits on Prod's confirmation of the gantry
+    interface. Until then this runs wherever a Zone declares a featured
+    acquisition, and no production Zone does.
+  - **The prompt:** the request carries the statement, and the system
+    prompt does not mention the field. The statement explains itself,
+    but the wording belongs to the Epsilon lane.
+- **What the owner will notice:** nothing yet, until a composed Zone
+  features a Check (D-6). After that, the Echo from that Check always
+  works where the room needs it. Epsilon names it and gives it its look.

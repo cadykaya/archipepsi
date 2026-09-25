@@ -1,0 +1,163 @@
+"""D-5 sabotages: break one rule, confirm a named failure, restore.
+
+Same protocol as D-01's: each row edits one file in the wt-d05 work tree,
+runs the tests named for it, records every failing test, and restores
+the file byte for byte (sha256 checked). A row is CAUGHT only when the
+test it names is among the failures.
+"""
+from __future__ import annotations
+
+import hashlib
+import subprocess
+import sys
+from pathlib import Path
+
+TREE = Path(__file__).resolve().parent / "wt-d05"
+CAMPAIGN = "bridge/archipepsi_bridge/campaign.py"
+BASE = "bridge/archipepsi_bridge/epsilon/base.py"
+FALLBACK = "bridge/archipepsi_bridge/epsilon/fallback.py"
+FAST = ["tests/test_featured_grant.py", "tests/test_featured_requirement.py",
+        "tests/test_self_echo_integration.py"]
+
+# (id, what, file, old, new, tests, the failure that must be among them)
+ROWS = [
+    ("D05-1", "the provider is never told the function", CAMPAIGN,
+     """                        requirement.describe() if requirement else None)),""",
+     """                        None)),""",
+     FAST, "test_the_provider_is_told_the_function_and_only_for_that_check"),
+    ("D05-2", "the featured check not applied", BASE,
+     """        if not errors and featured is not None:
+            errors = FEATURED.check(log, e, featured, next_seq)""",
+     """        if False:
+            errors = FEATURED.check(log, e, featured, next_seq)""",
+     FAST, "test_an_enemy_pull_is_replaced_by_the_requirements_own_echo"),
+    ("D05-3", "the generic fallback in place of the requirement's own", BASE,
+     """        if featured is not None:
+            return featured_fallback(featured, r)""",
+     """        if False:
+            return featured_fallback(featured, r)""",
+     FAST, "test_the_fallback_provider_still_hands_over_a_working_grapple"),
+    ("D05-4", "the requirement's Echo left unlabelled (no concepts)",
+     FALLBACK,
+     """    return _read_and_label(echo.model_dump(mode="json"), request)""",
+     """    return echo.model_dump(mode="json")""",
+     FAST, "test_the_requirements_echo_reads_as_its_item"),
+    ("D05-5", "the requirement read off the recipient (own Checks exempt)",
+     CAMPAIGN,
+     """        for record in self.save.zones:
+            if record.zone is not None:
+                requirement = featured.requirement_for(record.zone,""",
+     """        if self.ap.scouts[location_id].recipient_is_self:
+            return None
+        for record in self.save.zones:
+            if record.zone is not None:
+                requirement = featured.requirement_for(record.zone,""",
+     FAST, "test_an_enemy_pull_is_replaced_by_the_requirements_own_echo[own]"),
+    ("D05-6", "an Echo that would not fold is not refused", BASE,
+     """        if not errors:
+            errors = fold_errors(e, log, next_seq)""",
+     """        if False:
+            errors = fold_errors(e, log, next_seq)""",
+     FAST, "test_an_echo_that_would_not_fold_is_repaired_never_appended"),
+    ("D05-7", "every Check held to the featured requirement", CAMPAIGN,
+     """                requirement = featured.requirement_for(record.zone,
+                                                       location_id)""",
+     """                requirement = featured.FEATURED_REQUIREMENTS["grapple"]""",
+     FAST, "test_the_same_enemy_pull_elsewhere_is_accepted"),
+]
+ROWS.append(
+    ("D05-8", "the absent requirement serialised as null in every request",
+     "bridge/archipepsi_bridge/epsilon/requests.py",
+     """        if isinstance(data, dict) and data.get("required_function") is None:
+            data.pop("required_function", None)""",
+     """        if False:
+            data.pop("required_function", None)""",
+     FAST + ["tests/test_playtest_baseline.py"],
+     "test_the_provider_is_told_the_function_and_only_for_that_check"))
+LIVE_ROWS = []
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _apply(rel, old, new):
+    path = TREE / rel
+    original = path.read_bytes()
+    text = original.decode("utf-8")
+    if text.count(old) != 1:
+        return None, None, f"SETUP ERROR: anchor found {text.count(old)} " \
+                           f"times in {rel}"
+    path.write_bytes(text.replace(old, new).encode("utf-8"))
+    return path, original, None
+
+
+def main() -> int:
+    only = set(sys.argv[1:])
+    lines, caught, total = [], 0, 0
+    for rid, what, rel, old, new, tests, expect in ROWS:
+        if only and rid not in only:
+            continue
+        total += 1
+        path, original, error = _apply(rel, old, new)
+        if error:
+            lines.append(f"{rid} {error}")
+            continue
+        before = hashlib.sha256(original).hexdigest()
+        try:
+            out = subprocess.run(
+                [sys.executable, "-m", "pytest", "-q", "-p",
+                 "no:cacheprovider", "--tb=line", *tests],
+                cwd=TREE / "bridge", capture_output=True, text=True,
+                timeout=1200)
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        failed = sorted({l.split("::", 1)[1].split(" ")[0]
+                         for l in out.stdout.splitlines()
+                         if l.startswith("FAILED ")})
+        hit = any(expect in f for f in failed)
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    {'CAUGHT' if hit else 'NOT CAUGHT'} by {expect} "
+                     f"-- {len(failed)} failing test(s); restored byte for "
+                     f"byte: {restored}")
+        for f in failed:
+            lines.append(f"      FAILED {f}")
+        for l in out.stdout.splitlines():
+            if ": AssertionError" in l or "Error:" in l:
+                lines.append(f"        {l.split('/tests/')[-1][:220]}")
+    for rid, what, rel, old, new, expect in LIVE_ROWS:
+        if rid not in only:
+            continue
+        total += 1
+        path, original, error = _apply(rel, old, new)
+        if error:
+            lines.append(f"{rid} {error}")
+            continue
+        before = hashlib.sha256(original).hexdigest()
+        try:
+            out = subprocess.run(["make", "godot-integration"], cwd=TREE,
+                                 capture_output=True, text=True, timeout=1500)
+            log = out.stdout + out.stderr
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        fails = sorted({l[6:] for l in log.splitlines()
+                        if l.startswith("FAIL: ")})
+        errors = sum(1 for l in log.splitlines() if "SCRIPT ERROR" in l)
+        hit = any(expect in f for f in fails)
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    {'CAUGHT' if hit else 'NOT CAUGHT'} -- "
+                     f"{len(fails)} failing check(s), {errors} script "
+                     f"error(s); restored byte for byte: {restored}")
+        for f in fails:
+            lines.append(f"      FAIL: {f[:300]}")
+    lines.append(f"\n{caught} of {total} sabotages caught")
+    print("\n".join(lines))
+    return 0 if caught == total else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

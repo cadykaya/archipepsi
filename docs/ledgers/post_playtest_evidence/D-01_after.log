@@ -1,0 +1,16 @@
+# D-01 reproduction on a2115b6 + the D-01 change (uncommitted), 2026-09-25T13:34:07Z
+.........                                                                [100%]
+==================================== PASSES ====================================
+___________ test_D6_a_failing_provider_falls_back_under_the_same_id ____________
+------------------------------ Captured log call -------------------------------
+=========================== short test summary info ============================
+PASSED bridge/tests/test_zz_d01_repro.py::test_D1_a_new_campaign_is_created_with_the_policy_on
+PASSED bridge/tests/test_zz_d01_repro.py::test_D2_an_own_check_mints_one_echo_keyed_by_the_check
+PASSED bridge/tests/test_zz_d01_repro.py::test_D3_the_confirmation_says_delivered_then_the_echo
+PASSED bridge/tests/test_zz_d01_repro.py::test_D4_a_crash_before_the_append_is_granted_once_on_reload
+PASSED bridge/tests/test_zz_d01_repro.py::test_D5_a_written_echo_is_never_rerolled_on_reload
+PASSED bridge/tests/test_zz_d01_repro.py::test_D6_a_failing_provider_falls_back_under_the_same_id
+PASSED bridge/tests/test_zz_d01_repro.py::test_C1_the_original_is_counted_exactly_once
+PASSED bridge/tests/test_zz_d01_repro.py::test_C2_a_foreign_check_is_unchanged
+PASSED bridge/tests/test_zz_d01_repro.py::test_C3_a_legacy_campaign_mints_nothing_for_its_own_item
+9 passed in 0.50s

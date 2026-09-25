@@ -330,8 +330,33 @@ owner's D-06/D-07 rulings and the seam table are in
       `a2115b6`, and resizing shots at 1280x720 and 1920x1080 (the
       minimap stays in its corner, the walls scale whole). Owner
       usability and the Glyph look remain the owner's and Arty's.
-    - **Next: the ready inherited 0.4 work,** starting with D14 §7 (the
-      D-01 integration) and Dess's notes D-5 and D-6.
+  - **Inherited 0.4:**
+    - **D-01 (D14 §7): landed at `9844ba5`.** A new campaign yields a
+      local Echo from your own original too: one `yields_echo` rule for
+      grant and sweep, and "Delivered to you." then the Echo on the
+      card. Legacy campaigns are unchanged.
+      - The live integration shows 30 Checks (4 your own) giving 30
+        Echoes, with the real card showing both halves.
+      - 11 of 11 sabotages; 14 live suites green.
+      - One setup step moved in Dess's pinned legacy test (N-12).
+    - **D-5 (H-QUALIFY at the grant): landed at `dc66f2f`.** A featured
+      Check's Echo supplies its function, or is replaced by the
+      requirement's own. Own and foreign are the same.
+      - Two findings repaired: the requirement's Echo had no concepts
+        and would have raised (D05-F1, N-13); an Echo that does not fold
+        crashed the grant (D05-F2).
+      - 8 of 8 sabotages.
+    - **D-6 answered (N-14):** the field is confirmed, and the gantry's
+      measured geometry is given. A gantry control room needs
+      `wall_height >= 8.0`. Next is Dess's 1 and 2, then Prod's gantry
+      placement.
+    - **Open, Prod's:** D01-F3, `make dual-real` has not been able to
+      claim since the certification guard (pre-existing; not in the
+      frontier).
+    - **Next:** H-GRAPHS, the signal verbs as a runtime-only slice on
+      real room graphs, with recorded latches never set by a verb (N-15
+      asks Dess for consumers and the Echo primitive). Then H-STATUS,
+      H-MACHINE-LIFE and H-RAIL-BREADTH.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 
