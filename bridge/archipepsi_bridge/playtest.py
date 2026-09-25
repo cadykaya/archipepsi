@@ -527,13 +527,15 @@ def _dump(args) -> int:
 
 
 def latched_route_zone():
-    """The played Zone with P14's latch route composed onto it, or None.
+    """M-1's LEGACY fixture: the played Zone with D-10's retired
+    step-once plate route composed onto it, or None.
 
-    The input to Prod's played acceptance for the latch -- walk in, step
-    on the plate, step off, walk through, reload, still open -- and a
-    Zone the bridge has validated end to end: schema, then reachability.
-    Derived from `played_zone()` by an explicit step, so the Zone the
-    baseline plays is untouched.
+    A save composed before D-07 holds exactly this, and M-1 keeps it
+    playing as saved -- walk in, step on the plate, step off, walk
+    through, reload, still open -- so it stays the input to that replay.
+    New composition never makes it; `lever_route_zone` is what the
+    production step emits. Derived from `played_zone()` by an explicit
+    step, so the Zone the baseline plays is untouched.
     """
     # M-1's legacy fixture: the retired step-once chain, kept so a save
     # composed before D-07 can still be replayed and tested as saved.
@@ -557,6 +559,34 @@ def _dump_latched(args) -> int:
     graph = zone.room_graphs[0]
     edge = next(e for e in zone.edges if e.opened_by)
     print(f"wrote {args.out}  (plate in '{graph.room_id}', shutter across "
+          f"'{edge.edge_id}')")
+    return 0
+
+
+def lever_route_zone():
+    """D13 1c's fixture: the played Zone with the production latch step
+    -- `lever -> LATCH -> shutter` -- composed onto it, or None. The
+    input to Prod's acceptance of H-PRESSURE-R's permanent route: pull
+    the lever, walk through, reload, still open."""
+    from .latched_route import compose_latched_route
+    zone = played_zone()
+    if zone is None:
+        return None
+    out = compose_latched_route(zone)
+    return out.zone if out.emitted else None
+
+
+def _dump_lever(args) -> int:
+    zone = lever_route_zone()
+    if zone is None:
+        print("could not compose a lever route onto the played Zone",
+              file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(zone.model_dump_json(indent=1), encoding="utf-8")
+    graph = zone.room_graphs[0]
+    edge = next(e for e in zone.edges if e.opened_by)
+    print(f"wrote {args.out}  (lever in '{graph.room_id}', shutter across "
           f"'{edge.edge_id}')")
     return 0
 
@@ -608,23 +638,15 @@ def candidate_zone(steps: str):
 
 
 def _must_emit(asked, out) -> set[str]:
-    """Every asked step, less one declined BY POLICY.
-
-    D-07 retired the latch step's plate. Until `RoomGraphs` places a
-    lever (D13 1c), that step declines with exactly
-    `DECLINED_UNTIL_LEVERS`, and a fixture without it is the profile's
-    true output. Any other decline still means a partial fixture, which
-    is refused, as before.
-    """
+    """Every asked step. Any decline means a partial fixture, which is
+    refused. (The latch step's policy decline, D-07's wait for a
+    placeable lever, ended with D13 1c.)"""
     from .candidate import steps_of
-    from .latched_route import DECLINED_UNTIL_LEVERS
     # Steps only (DESS-27): `all` also names the profile's OPTIONS, such
     # as `consumables`, which configure a campaign and never "emit" --
     # comparing against them refused every `make candidate-fixture` run
     # since the option joined the profile.
-    return set(steps_of(asked)) - {
-        step for step, emitted, note in out.steps
-        if not emitted and note == DECLINED_UNTIL_LEVERS}
+    return set(steps_of(asked))
 
 
 def transport_zone():
@@ -676,11 +698,17 @@ def main(argv=None) -> int:
     dumper.add_argument("--out", type=Path,
                         default=Path("godot/tests/fixtures/played_zone.json"))
     latched = sub.add_parser(
-        "dump-latched", help="write the played Zone with P14's latch "
-        "route composed onto it, for Prod's played acceptance")
+        "dump-latched", help="write M-1's legacy fixture: the played Zone "
+        "with the retired step-once plate route composed onto it")
     latched.add_argument(
         "--out", type=Path,
         default=Path("godot/tests/fixtures/latched_route_zone.json"))
+    lever = sub.add_parser(
+        "dump-lever", help="write the played Zone with D13 1c's lever "
+        "route composed onto it, for Prod's acceptance")
+    lever.add_argument(
+        "--out", type=Path,
+        default=Path("godot/tests/fixtures/lever_route_zone.json"))
     held = sub.add_parser(
         "dump-held", help="write the played Zone with D13 1d's held "
         "route composed onto it, for Prod's acceptance")
@@ -699,6 +727,8 @@ def main(argv=None) -> int:
         return _dump(args)
     if args.command == "dump-latched":
         return _dump_latched(args)
+    if args.command == "dump-lever":
+        return _dump_lever(args)
     if args.command == "dump-held":
         return _dump_held(args)
     if args.command == "dump-candidate":

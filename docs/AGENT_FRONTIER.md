@@ -14,22 +14,24 @@ item is in `docs/ledgers/DESS_POST_PLAYTEST.md`.
 - H-PRESSURE-C:
   - 1a + 1b: no new plate latches; legacy Zones play as saved (M-1);
   - 1d's bridge half: a door held by a declared weight;
-  - the held-route composer and `held_route_zone.json`.
+  - the held-route composer and `held_route_zone.json`;
+  - 1c: the lever is placeable and a route sensor. The production
+    composer emits `lever -> LATCH -> shutter` (`lever_route_zone.json`),
+    and the candidate composes it again in c009.
 - D-01's protocol field, off by default. Legacy saves never grow
   Echoes.
 - Discovery (`visited_rooms`, `RoomEntered`), and the snapshot's
   `inventory` and `zone_map`, computed on the model.
 
-**Waiting on Prod (notes D-1 to D-4 in the ledger):**
-- lever placement in `RoomGraphs`, then Dess lands 1c by adopting
-  Prod's patch;
+**Waiting on Prod (notes D-2 to D-7 in the ledger):**
 - D14 §7, the D-01 integration: creation, the grant filter, the reveal,
   and the `test_full_loop.py` change it names;
 - sending `room_entered`;
 - reading `inventory` and `zone_map`;
 - playing the held route;
-- `candidate_live_driver.gd`'s shutter count (0 until 1c);
-- CI (N-3).
+- D-7: run `godot-candidate-live` on the regenerated candidate (the
+  route shutter is back), and play `lever_route_zone.json` as composed
+  in `godot-latched-route-live`; fixture make targets are Prod's to add.
 
 **Wave 3, owner-approved 2026-09-25:**
 - DESS-26 is fixed: an enemy pull is not a crossing.
@@ -45,11 +47,16 @@ item is in `docs/ledgers/DESS_POST_PLAYTEST.md`.
   confirmation.
 - H-AP-GATE and H-ATOM-DELIVERY are explicitly deferred (ledger).
 
-**Waiting on the owner:** H-GEAR's options (D16).
+**Waiting on the owner:**
+- H-GEAR's options (D16);
+- CI (Prod's N-6).
 
 **CI is not running.** Every PR-gate and Integration run has failed
 within about four seconds, with no log, since at least `6ebbc90`, for
-both lanes. The owner needs to look at Actions itself. Meanwhile:
+both lanes. Prod diagnosed it (N-6): the jobs never get a runner
+(`runner_id` 0), an account-level refusal, typically the Actions
+billing or spending limit. Only the owner can clear it, under GitHub
+Settings -> Billing and plans and Settings -> Actions. Meanwhile:
 - run the suite locally, exactly as the gate does (ledger, "CI does not
   run");
 - one gate-only failure is already hidden by it (DESS-25).

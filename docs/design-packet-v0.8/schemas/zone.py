@@ -1695,15 +1695,16 @@ class Zone(Strict):
                     f"a signal graph names room '{graph.room_id}', which "
                     "this Zone does not have")
             # O05-07: A ZONE ASKS ONLY FOR WHAT ITS BUILDER PLACES.
-            # `RoomGraphs` puts a class plate down; a button is run by the
-            # same runtime but placed only by a room that owns its lever.
+            # `RoomGraphs` puts a class plate or a lever down (D-07, D13
+            # 1c); a shot target is run by the same runtime but placed
+            # only by a room that owns its machine.
             for sensor in graph.sensors:
                 if sensor.kind not in ZONE_PLACEABLE_SENSOR_KINDS:
                     raise ValueError(
                         f"room '{graph.room_id}' declares a {sensor.kind} "
                         f"('{sensor.node_id}'); the Zone builder places "
-                        f"{list(ZONE_PLACEABLE_SENSOR_KINDS)} only. A "
-                        "button belongs to a room that owns its machine")
+                        f"{list(ZONE_PLACEABLE_SENSOR_KINDS)} only. That "
+                        "sensor belongs to a room that owns its machine")
         return self
 
     @model_validator(mode="after")
@@ -1740,8 +1741,19 @@ class Zone(Strict):
         held requirement. Rest open and released closed is a plate that
         shuts the way for good, and a route the player's own step can
         seal is a softlock. What passes is a chain that is open once the
-        plate has been stepped on and left: `plate -> LATCH -> shutter`,
-        or a `NOT` chain that only ever denies while it is held.
+        one action is done: `lever -> LATCH -> shutter` -- D-07's
+        visibly permanent control, the shape the composer emits (D13
+        1c) -- or a `NOT` chain that only ever denies while it is held.
+        A lever is pulled, not stood on, so the plate's body rule says
+        nothing about it.
+
+        **`plate -> LATCH -> shutter` still LOADS.** It is D-10's
+        step-once plate, which D-07 rejects: "A pressure plate must not
+        permanently latch merely because I stepped on it once." A save
+        composed before the ruling holds one, and M-1 keeps it playing
+        as saved, so it is refused where a Zone is ACCEPTED
+        (`validate_zone`, D13 1a) and never composed -- not here, where
+        every save is loaded.
 
         Whether the plate's room can be reached WITHOUT the route it
         opens is a question about the whole Zone graph, and
@@ -1793,6 +1805,11 @@ class Zone(Strict):
                 self._held_route_is_sound(edge, graph, sensors, chain)
                 continue
             for sensor in sensors:
+                # A LEVER IS PULLED, NOT STOOD ON (D-07, D13 1c): the
+                # interact verb is the guaranteed base kit, so the
+                # plate's body rule describes nothing about it.
+                if sensor.kind != "PRESSURE_PLATE":
+                    continue
                 if plate_accepts_player(sensor.requires_class,
                                         sensor.counts_player):
                     continue
@@ -1823,15 +1840,17 @@ class Zone(Strict):
                     f"'{edge.opened_by}', which is closed at rest and "
                     "closed again once the plate is left -- so the player "
                     "has to hold it open to walk through it. That is D-8 "
-                    "§11.2's held requirement, which is UNSUPPORTED until "
-                    "a declared weight can hold the plate (D13 1d). A "
-                    "permanent opening needs a lever, not a latched plate "
-                    "(D-07)")
+                    "§11.2's held requirement: legal only when the plate "
+                    "names the weight that holds it down (`held_by`, D13 "
+                    "1d). A permanent opening needs a lever into a LATCH, "
+                    "not a latched plate (D-07)")
+            lever = all(s.kind == "PULSE_BUTTON" for s in sensors)
+            act = "pulling the lever" if lever else "stepping on the plate"
             raise ValueError(
                 f"edge '{edge.edge_id}' is opened by '{edge.opened_by}', "
-                "which starts open and is SHUT FOR GOOD by stepping on "
-                "the plate -- a latch after an inversion. A route the "
-                "player's own step can seal permanently is a softlock")
+                f"which starts open and is SHUT FOR GOOD by {act} -- a "
+                "latch after an inversion. A route the player's own "
+                "action can seal permanently is a softlock")
         return self
 
     def _held_route_is_sound(self, edge, graph, sensors, chain) -> None:

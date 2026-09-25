@@ -1114,3 +1114,123 @@ and source-owned clamped multipliers. The support gate opens only once
 Prod's StatStack applies them.
 
 **Nothing is implemented.** `SUPPORTED_GEAR_DOMAINS` stays empty.
+
+## W1.2 — H-PRESSURE-C step 3 (1c): the lever, admitted
+
+**Unblocked by Prod's N-5.** `RoomGraphs` has placed a `PULSE_BUTTON`
+as a thrown bolt since `2346261`, and the engine keeps its own placeable
+list, which includes the lever (N-4). So the bridge half lands on its
+own, adopting Prod's offered patch
+(`post_playtest_evidence/H-PRESSURE-R_bridge_half_offer.patch`), adapted
+to the split composer.
+
+**What landed:**
+- `signal_graph.py`: `PULSE_BUTTON` joins `ZONE_PLACEABLE_SENSOR_KINDS`
+  and `ROUTE_SENSOR_KINDS`, with Prod's D-07 comments.
+- `zone.py`:
+  - the plate's body rule skips a lever, which is pulled, not stood on;
+  - the placeable refusal now names a target, not a button;
+  - the held-requirement refusal now says a plate is legal when it names
+    its weight (`held_by`, 1d), and a permanent opening needs a lever
+    into a LATCH;
+  - the softlock refusal names the lever's action ("by pulling the
+    lever") when a lever is the control;
+  - the docstring records that `plate -> LATCH -> shutter` still loads
+    (M-1) and is refused at acceptance (1a).
+- `latched_route.py`: `compose_latched_route` emits
+  `lever -> LATCH -> shutter` through the shared search.
+  `DECLINED_UNTIL_LEVERS` is gone. The legacy entry is unchanged.
+- `playtest.py`: `lever_route_zone()` and `dump-lever`. `_must_emit`
+  compares steps only, because the policy excuse has ended.
+- `tools/compose_latched_route.py`, the live suite's seeding tool, gains
+  `--form lever`. The default stays `legacy`, so every existing caller
+  runs exactly as before. It had no test; it now has four, each form
+  landing on its own fixture and refused against the other's.
+- Regenerated, never hand-edited:
+  - `candidate_zone.json` gains exactly the c009 lever route and its
+    edge's `opened_by`;
+  - `lever_route_zone.json` is new: the lever in c002, the shutter
+    across `e:c002:c003`;
+  - `constants.gd` changes one line: `SIGNAL_ZONE_PLACEABLE_SENSORS`
+    gains `PULSE_BUTTON`;
+  - the packet mirrors of `signal_graph.py` and `zone.py`. The HEAD
+    mirrors were identical before the copy, and `check_packet` is clean.
+
+**Adapted from Prod's patch, and why:**
+- Prod's docstring put the step-once refusal "where Zones are MADE".
+  1a refuses it at acceptance (`validate_zone`), so the docstring says
+  that.
+- The held-requirement message keeps DESS-24. For a plate it gives no
+  "put a LATCH between" advice, because that is D-07's rejected chain. A
+  bare lever never reaches the message: the room graph refuses it first
+  ("move for one tick").
+- Prod's "no composition emits a plate that latches" merged into the
+  existing test. That test now covers the production latch step and the
+  lever fixture too. It asks both the validator's helper and Prod's
+  independent `upstream` walk, so a blind helper cannot hide a plate.
+- Prod's "a save composed before D-07 still loads" was already held by
+  1b's legacy restore test.
+
+**Tests:**
+- New:
+  - the lever route is accepted end to end (model, search, acceptance);
+  - it opens for good after one pull;
+  - a bare lever is refused;
+  - a lever softlock is named as a pull;
+  - the lever's latch is recorded, survives a reload, and the map reads
+    the door open;
+  - the near and far route searches run for the plate and the lever;
+  - the legacy entry still makes only M-1's plate, on the doorway the
+    lever takes;
+  - both route fixtures are current.
+- Changed on purpose, each to assert the new rule:
+  - the composer tests use the production entry;
+  - the production-decline test is replaced by the emission tests;
+  - the candidate profile expects every step emitted and one lever
+    graph, and its placement test reads the profile's own lever;
+  - `test_signal_graph`'s placeable test accepts the lever and refuses
+    a target.
+
+**Sabotages.** Each one failed by name and was restored byte-for-byte:
+
+| # | rule removed | caught by |
+|---|---|---|
+| S1 | lever out of `ROUTE_SENSOR_KINDS` | the lever route tests, the composer tests (17) |
+| S2 | lever out of `ZONE_PLACEABLE_SENSOR_KINDS` | the same, and the placeable test (18) |
+| S3 | the plate body rule applied to a lever | the lever route tests (17) |
+| S4 | the softlock names the plate | the lever softlock test |
+| S5 | the composer emits the retired plate | emission, acceptance, fixture, no-latching-plate (9) |
+| S6 | the composer declines again | the emission tests (15) |
+| S7 | the validator's helper blinded and the composer emits a plate | the independent walk: `['c002/step_plate']` |
+| S8 | the lever fixture edited | the fixture test |
+| T1 | the tool's lever form composes the plate | its two lever cases |
+| T2 | the tool skips the fixture comparison | both refusal cases |
+| T3 | the tool ignores `--form` | its two lever cases |
+
+**Suites:** the bridge suite, run as the gate runs it, gives 2175 passed
+and 4 skipped. The schema suite gives 131, and `check_packet` is clean.
+
+**Note D-7 (Dess → Prod), for H-PRESSURE-R and the live suites:**
+1. The candidate composes the lever route again, in c009 across
+   `e:c009:c010`.
+   - `godot-candidate-live` (your `9d79fb7`) now demands the third
+     doorway and the route shutter back. Please run it on the
+     regenerated `candidate_zone.json`.
+   - Its `LATCH_POLICY_DECLINE` branch can no longer be reached.
+2. `lever_route_zone.json` is the production composer's output on the
+   played Zone: the lever in c002, the shutter across `e:c002:c003`.
+   That is the same room and door as the legacy plate and your explicit
+   substitution. `godot-latched-route-live` can play it as composed
+   (N-5): seed with `tools/compose_latched_route.py --form lever
+   --expect ../godot/tests/fixtures/lever_route_zone.json`. Without
+   `--form`, the tool is M-1's legacy replay, unchanged.
+3. The Makefile is yours, so I did not touch it. If you want targets,
+   the recipes are:
+   - `lever-route-fixture`: `cd bridge && $(PY) -m archipepsi_bridge.playtest dump-lever --out ../godot/tests/fixtures/lever_route_zone.json`;
+   - `held-route-fixture`: the same, with `dump-held` and
+     `held_route_zone.json`.
+   The `latched-route-fixture` comment still calls it P14's acceptance
+   input; it is now M-1's legacy input.
+4. `SIGNAL_ZONE_PLACEABLE_SENSORS` is now plate and lever, so your
+   `godot-signal-graph` subset check should pass. Godot cannot run here,
+   so none of the live suites were run by me.

@@ -22,11 +22,19 @@ fixture rather than a lookalike. Nothing is re-keyed to make the two
 agree: if the live campaign ever drifts from the fixture this says where
 and fails.
 
+**Two forms (D-07, D13 1c).** `--form legacy`, the default, is M-1's
+replay: the retired step-once plate, as a save made before the ruling
+holds it, against `latched_route_zone.json`. `--form lever` is the
+production route -- a lever, a LATCH and the shutter -- against
+`lever_route_zone.json`, for when the live suite plays the lever as
+composed. The default keeps every existing caller exactly as it was.
+
 It is a DEVELOPMENT tool, like `give_consumable.py`: it edits a save on
 disk through the real `CampaignSave` model and `store.write_save`, and
 nothing here runs in a shipped path.
 
-    python tools/compose_latched_route.py <save-dir> [--expect <zone.json>]
+    python tools/compose_latched_route.py <save-dir> [--form legacy|lever]
+        [--expect <zone.json>]
 """
 from __future__ import annotations
 
@@ -36,12 +44,18 @@ import sys
 from pathlib import Path
 
 from archipepsi_bridge import store
-# M-1's legacy replay: the retired step-once chain (D-07), seeded the way
-# a save composed before the ruling holds it. Never a production path.
+# `legacy` is M-1's replay: the retired step-once chain (D-07), seeded the
+# way a save composed before the ruling holds it. `lever` is D13 1c's
+# production route.
 from archipepsi_bridge.latched_route import (  # noqa: E402
-    compose_legacy_step_once_route as compose_latched_route)
+    compose_latched_route, compose_legacy_step_once_route)
 from archipepsi_bridge.schemas import protocol as P
 from archipepsi_bridge.schemas.zone import Zone
+
+
+#: `--form`: which route the step composes.
+COMPOSERS = {"legacy": compose_legacy_step_once_route,
+             "lever": compose_latched_route}
 
 
 def only_save(save_dir: Path) -> Path:
@@ -75,6 +89,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("save_dir", type=Path)
     ap.add_argument("--expect", type=Path, default=None,
                     help="the Zone JSON the composed Zone must equal")
+    ap.add_argument("--form", choices=tuple(COMPOSERS), default="legacy",
+                    help="legacy: M-1's step-once plate (the default); "
+                    "lever: D13 1c's production route")
     args = ap.parse_args(argv)
 
     path = only_save(args.save_dir)
@@ -95,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"{rec.zone_id} already declares a room graph")
 
     before = digest(rec.zone)
-    out = compose_latched_route(rec.zone)
+    out = COMPOSERS[args.form](rec.zone)
     if not out.emitted:
         raise SystemExit(f"the composer declined {rec.zone_id}: {out.note}")
     composed = out.zone
@@ -121,7 +138,8 @@ def main(argv: list[str] | None = None) -> int:
     graph = composed.room_graphs[0]
     edge = next(e for e in composed.edges if e.opened_by)
     print(f"{path.name}: {rec.zone_id} {before} -> {digest(composed)}, "
-          f"plate and latch in '{graph.room_id}', shutter across "
+          f"{'lever' if args.form == 'lever' else 'plate'} and latch in "
+          f"'{graph.room_id}', shutter across "
           f"'{edge.edge_id}'"
           + (f"; identical to {args.expect.name}, no re-keying"
              if args.expect is not None else ""))

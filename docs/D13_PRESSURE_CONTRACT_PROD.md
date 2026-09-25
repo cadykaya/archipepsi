@@ -11,7 +11,11 @@ produces them). Both are verbatim in `docs/ledgers/DESS_POST_PLAYTEST.md`.
 - 1a and 1b landed at `d2ffea0`.
 - 1d's bridge half landed: the rules at `bca85d4`, then the composer and
   the fixture `godot/tests/fixtures/held_route_zone.json`.
-- 1c waits for your lever placement.
+- 1c landed on your lever placement (`2346261`): the lever is a Zone
+  sensor and a route sensor, the production composer emits
+  `lever -> LATCH -> shutter`, and its fixture is
+  `godot/tests/fixtures/lever_route_zone.json`. The candidate profile
+  composes the lever route again (c009 across `e:c009:c010`).
 
 Everything below names its file.
 
@@ -34,8 +38,8 @@ Everything below names its file.
   profile's re-certification discards a whole Zone that introduces a
   `validate_zone` error. A refusal landed alone would silently drop
   every candidate Zone's other steps.
-- **Until you place levers (1c) it declines, with its reason.** Once
-  they exist it emits the lever form.
+- **Until you placed levers it declined, with its reason.** Since 1c it
+  emits the lever form.
 - The fixture regenerates.
 - Files: `latched_route.py`, the fixtures.
 
@@ -48,11 +52,12 @@ Everything below names its file.
   - the route validator settles a pulse source the way it settles a
     plate: rest closed; pulled, so latched; open for good;
   - a lever needs no class or weight — it is base kit.
-- **`RoomGraphs` does not read the bridge's placeable list**
-  (`godot/scripts` has no reference to it). So the bridge must not admit
-  a Zone lever before `RoomGraphs` can place one, or the bridge accepts
-  a door the engine refuses to build. **This lands as one integration
-  with your lever placement, not before it.**
+- **Corrected by Prod's N-4:** `RoomGraphs` did read the bridge's
+  placeable list, and refused anything outside it. It now keeps its own
+  list (`PLACEABLE_SENSOR_KINDS`: plate and lever), and
+  `godot-signal-graph` asserts that whatever the bridge exports as
+  placeable is in it. The order held either way: the bridge admitted
+  the lever only after `RoomGraphs` could place one.
 
 **1d. The live-pressure route: a plate held by a guaranteed weight.**
 
@@ -124,7 +129,8 @@ Files: `schemas/signal_graph.py`, `schemas/zone.py`, `topology.py`.
 ## 4. What is yours
 
 - **H-PRESSURE-R:**
-  - replace the step-once passage with the lever form (once 1c lands);
+  - replace the step-once passage with the lever form (1c has landed:
+    play `lever_route_zone.json` as composed);
   - or build the held-weight arrangement (1d) where the local weight is
     solvable;
   - closure safety when the weight is lifted;

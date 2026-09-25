@@ -835,7 +835,7 @@
   {
    "id": "c015",
    "flavor": null,
-   "reward_location_id": null,
+   "reward_location_id": 89100055,
    "features": [],
    "doors": [
     {
@@ -861,14 +861,14 @@
     },
     {
      "socket_id": "side_right",
-     "usage": "USED",
-     "edge_id": "e:c015:c024",
+     "usage": "SEALED",
+     "edge_id": null,
      "key_id": null,
      "colour": null
     }
    ],
    "arrive_edge": "e:c014:c015",
-   "depart_edge": "e:c015:c024",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -1083,7 +1083,7 @@
   {
    "id": "c020",
    "flavor": null,
-   "reward_location_id": null,
+   "reward_location_id": 89100025,
    "features": [],
    "doors": [
     {
@@ -1109,14 +1109,14 @@
     },
     {
      "socket_id": "side_right",
-     "usage": "USED",
-     "edge_id": "e:c020:c025",
+     "usage": "SEALED",
+     "edge_id": null,
      "key_id": null,
      "colour": null
     }
    ],
    "arrive_edge": "e:c018:c020",
-   "depart_edge": "e:c020:c025",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -1299,85 +1299,6 @@
     }
    ],
    "elevation": null
-  },
-  {
-   "id": "c024",
-   "flavor": null,
-   "reward_location_id": 89100055,
-   "features": [],
-   "doors": [
-    {
-     "socket_id": "entry",
-     "usage": "USED",
-     "edge_id": "e:c015:c024",
-     "key_id": null,
-     "colour": null
-    },
-    {
-     "socket_id": "exit",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
-    }
-   ],
-   "arrive_edge": "e:c015:c024",
-   "depart_edge": null,
-   "keys": [],
-   "additional_reward_location_ids": [],
-   "activities": [],
-   "shell_id": "minor_unweighted_switch",
-   "size_class": null,
-   "intent": [],
-   "type": "arena",
-   "width": 15.7,
-   "depth": 17.7,
-   "wall_height": 6.0,
-   "objective": "reach_reward",
-   "enemies": [],
-   "elevation": null
-  },
-  {
-   "id": "c025",
-   "flavor": null,
-   "reward_location_id": 89100025,
-   "features": [],
-   "doors": [
-    {
-     "socket_id": "entry",
-     "usage": "USED",
-     "edge_id": "e:c020:c025",
-     "key_id": null,
-     "colour": null
-    },
-    {
-     "socket_id": "exit",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
-    }
-   ],
-   "arrive_edge": "e:c020:c025",
-   "depart_edge": null,
-   "keys": [],
-   "additional_reward_location_ids": [],
-   "activities": [],
-   "shell_id": "minor_counterfire_arcade",
-   "size_class": null,
-   "intent": [],
-   "type": "arena",
-   "width": 29.2,
-   "depth": 17.7,
-   "wall_height": 8.0,
-   "objective": "reach_reward",
-   "enemies": [
-    {
-     "archetype": "ranged",
-     "count": 1
-    }
-   ],
-   "elevation": null
   }
  ],
  "edges": [
@@ -1398,13 +1319,8 @@
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",
    "capability": null,
-   "opened_by": null,
-   "requires_state": [
-    {
-     "variable_id": "span_alignment",
-     "state": "lowered"
-    }
-   ]
+   "opened_by": "route_shutter",
+   "requires_state": []
   },
   {
    "edge_id": "e:c003:c004",
@@ -1434,12 +1350,7 @@
    "realization": "JOINED",
    "capability": null,
    "opened_by": null,
-   "requires_state": [
-    {
-     "variable_id": "cell_power",
-     "state": "powered"
-    }
-   ]
+   "requires_state": []
   },
   {
    "edge_id": "e:c006:c007",
@@ -1478,7 +1389,7 @@
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",
    "capability": null,
-   "opened_by": "route_shutter",
+   "opened_by": null,
    "requires_state": []
   },
   {
@@ -1690,26 +1601,6 @@
    "capability": null,
    "opened_by": null,
    "requires_state": []
-  },
-  {
-   "edge_id": "e:c015:c024",
-   "room_a": "c015",
-   "room_b": "c024",
-   "direction": "BIDIRECTIONAL",
-   "realization": "JOINED",
-   "capability": null,
-   "opened_by": null,
-   "requires_state": []
-  },
-  {
-   "edge_id": "e:c020:c025",
-   "room_a": "c020",
-   "room_b": "c025",
-   "direction": "BIDIRECTIONAL",
-   "realization": "JOINED",
-   "capability": null,
-   "opened_by": null,
-   "requires_state": []
   }
  ],
  "plugs": [
@@ -1772,94 +1663,12 @@
  ],
  "rail_networks": [],
  "featured_acquisition": null,
- "zone_state": [
-  {
-   "variable_id": "span_alignment",
-   "states": [
-    "stowed",
-    "lowered"
-   ],
-   "initial": "stowed",
-   "lifetime": "reversible",
-   "setter": {
-    "room_id": "c002",
-    "selects": [
-     "stowed",
-     "lowered"
-    ],
-    "capability": null
-   },
-   "readers": [
-    {
-     "room_id": "c003",
-     "mechanism": "lamp",
-     "when": [
-      "lowered"
-     ]
-    }
-   ],
-   "mandatory": false
-  },
-  {
-   "variable_id": "cell_power",
-   "states": [
-    "dark",
-    "powered"
-   ],
-   "initial": "dark",
-   "lifetime": "permanent",
-   "setter": {
-    "room_id": "c005",
-    "selects": [
-     "powered"
-    ],
-    "capability": null
-   },
-   "readers": [
-    {
-     "room_id": "c005",
-     "mechanism": "lamp",
-     "when": [
-      "powered"
-     ]
-    },
-    {
-     "room_id": "c006",
-     "mechanism": "lamp",
-     "when": [
-      "powered"
-     ]
-    }
-   ],
-   "mandatory": true
-  }
- ],
- "transported_objects": [
-  {
-   "object_id": "power_cell",
-   "allowed_volume": [
-    "c004",
-    "c005"
-   ],
-   "home_room_id": "c004",
-   "required": true,
-   "carriable": true,
-   "mass_kg": 40.0,
-   "movement": "hand_carried"
-  }
- ],
- "object_consumers": [
-  {
-   "mechanism_id": "cell_socket",
-   "room_id": "c005",
-   "accepts": "power_cell",
-   "sets_variable": "cell_power",
-   "sets_state": "powered"
-  }
- ],
+ "zone_state": [],
+ "transported_objects": [],
+ "object_consumers": [],
  "room_graphs": [
   {
-   "room_id": "c009",
+   "room_id": "c002",
    "sensors": [
     {
      "node_id": "route_lever",

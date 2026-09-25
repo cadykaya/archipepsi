@@ -116,18 +116,32 @@ DamageTag = Literal[
 SUPPORTED_TARGET_TAGS: tuple[str, ...] = ("RANGED",)
 
 #: O05-07. What a ZONE's own `room_graphs` may declare: the sensors the
-#: Zone builder can PLACE. `RoomGraphs` puts a class plate down beside the
-#: doorway its chain serves; a `PULSE_BUTTON` is evaluated by the same
-#: runtime but placed only by a room that owns its machine -- EX50-033's
-#: bolt lever -- so a Zone declaring one would be asking the builder for
-#: something it cannot put down.
-ZONE_PLACEABLE_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE",)
+#: Zone builder can PLACE. `RoomGraphs` puts a class plate, or a lever,
+#: down beside the doorway its chain serves.
+#:
+#: **The lever is D-07's** (owner ruling, 2026-09-24): "Pressure plates
+#: are held sensors [...] If a puzzle needs a permanent change, use a
+#: visibly different permanent control such as a lever, locking bolt,
+#: latch mechanism [...] The existing latch machinery can absolutely be
+#: reused underneath." A `PULSE_BUTTON` is that control: one pull, one
+#: pulse, into the same `LATCH`. It is EX50-033's bolt lever, which the
+#: Zone builder places too since Prod's `2346261` (D13 1c); the engine's
+#: own list is asserted to contain this one (godot-signal-graph).
+ZONE_PLACEABLE_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE",
+                                               "PULSE_BUTTON")
 
 #: The chains a ROUTE gate may hang on: the shapes the route search and
 #: the Zone validator reason about (D-10 §5, `phases`). A gate driven
 #: through anything else is refused by name rather than certified by
 #: arithmetic that was written for a single plate.
-ROUTE_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE",)
+#:
+#: `phases` settles a lever exactly as it settles a plate -- pulled, then
+#: let go -- and the route search reads only the LATCH on the drive path,
+#: whichever sensor sets it. So `lever -> LATCH -> shutter` is certified
+#: by the same arithmetic: closed at rest, open after the one pull. A
+#: bare `lever -> shutter` would move for one tick, which the room graph
+#: refuses before any route rule is asked.
+ROUTE_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE", "PULSE_BUTTON")
 ROUTE_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH")
 
 #: §19.1: every port is one form. What each supported sensor PRODUCES.

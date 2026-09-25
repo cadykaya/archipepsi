@@ -623,14 +623,21 @@ def test_upstream_walks_every_input_and_a_chain_as_before():
 
 
 def test_a_zone_asks_only_for_what_its_builder_places():
-    """`RoomGraphs` puts plates down. A button is run by the same runtime
-    and placed only by a room that owns its lever, so a Zone may not ask
-    the builder for one."""
+    """`RoomGraphs` puts plates and levers down -- the lever is D-07's
+    visibly permanent control (owner ruling, 2026-09-24; D13 1c). A shot
+    target is run by the same runtime and placed only by a room that owns
+    its machine, so a Zone may not ask the builder for one."""
+    _zone([_chain(
+        sensors=[_BUTTON],
+        nodes=[{"node_id": "held", "kind": "LATCH",
+                "inputs": ["bolt_lever"]}],
+        actuators=[{"actuator_id": "s", "driven_by": "held"}])])
     with pytest.raises(ValidationError, match="Zone builder places"):
         _zone([_chain(
-            sensors=[_BUTTON],
+            sensors=[{"node_id": "mark", "kind": "SHOOTABLE_TARGET",
+                      "mode": "PULSE"}],
             nodes=[{"node_id": "held", "kind": "LATCH",
-                    "inputs": ["bolt_lever"]}],
+                    "inputs": ["mark"]}],
             actuators=[{"actuator_id": "s", "driven_by": "held"}])])
 
 
@@ -770,8 +777,8 @@ def test_only_a_target_is_shot():
 
 
 def test_a_zone_may_not_ask_its_builder_for_a_target():
-    """`RoomGraphs` places plates; a target is placed by the room that
-    owns its receiver, as a button is by the room that owns its lever."""
+    """`RoomGraphs` places plates and levers; a target is placed by the
+    room that owns its receiver."""
     with pytest.raises(ValidationError, match="Zone builder places"):
         _zone([_timed()])
 

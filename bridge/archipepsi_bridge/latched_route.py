@@ -25,12 +25,17 @@ reason.
 "Pressure plates are held sensors [...] If a puzzle needs a permanent
 change, use a visibly different permanent control such as a lever". D-10
 chose a `MEDIUM` plate that counted the player, a `LATCH` and a shutter:
-step on it once and walk through. Two entry points now share one search:
+step on it once and walk through. Three entry points now share one
+search:
 
-  `compose_latched_route`         the production step. It **declines**
-                                  until `RoomGraphs` can place a lever
-                                  (D13 1c); then it emits
-                                  `lever -> LATCH -> shutter`.
+  `compose_latched_route`         the production step: a LEVER, a
+                                  `LATCH` and the shutter (D13 1c) --
+                                  pull it once and walk through. The
+                                  engine places the lever by a measured
+                                  floor search (Prod's `2346261`).
+  `compose_held_route`            D13 1d: a plate held down by its
+                                  declared weight, open only while held.
+                                  An explicit step, never a default.
   `compose_legacy_step_once_route` the retired plate chain, kept ONLY to
                                   regenerate M-1's legacy fixture and to
                                   seed its replay suite. No production
@@ -51,18 +56,21 @@ from .topology import reachability
 #: Room-local ids; the graph is room-local by construction, so they
 #: cannot collide with anything in another room.
 PLATE_ID = "step_plate"
+LEVER_ID = "route_lever"
 LATCH_ID = "held"
 SHUTTER_ID = "route_shutter"
 
-#: WHERE A PLATE MAY STAND (P5-11): rooms with open floor. A
+#: WHERE A CONTROL MAY STAND (P5-11): rooms with open floor. A
 #: `platform_path` is islands over a kill pit and a `tower` is floors over
 #: a drop, and a corridor is a lane -- its floor is the way through, and
 #: the engine's clear-floor search keeps 2.6 m from everything placed.
-#: P14's own played acceptance stands its plate in an arena.
+#: P14's own played acceptance stands its plate in an arena. A lever
+#: needs the same floor: the engine refuses a spot with anything solid
+#: over its footprint or no clear side to stand at (`2346261`).
 _PLATE_ROOM_TYPES = ("arena", "treasure_room")
 
-#: Prefer a plate that is not in the entrance itself -- a latch at spawn
-#: is stepped on before the player knows it is there -- and fall back to
+#: Prefer a control that is not in the entrance itself -- a latch at
+#: spawn is set before the player knows it is there -- and fall back to
 #: the entrance only if nothing further in is legal.
 _PREFER_FROM = 1
 
@@ -91,16 +99,22 @@ def _step_once_graph(room_id: str) -> dict:
     }
 
 
-#: Why the production step emits nothing today (D13 1b).
-DECLINED_UNTIL_LEVERS = (
-    "D-07: a pressure plate is a held sensor, so a permanent route needs a "
-    "lever; the Zone builder cannot place one yet (D13 1c lands with "
-    "RoomGraphs' lever placement), so no latch route is composed")
+def _lever_graph(room_id: str) -> dict:
+    """D-07's permanent control (D13 1c): one pull, one pulse, into the
+    LATCH that holds the shutter open for good."""
+    return {
+        "room_id": room_id,
+        "sensors": [{"node_id": LEVER_ID, "kind": "PULSE_BUTTON"}],
+        "nodes": [{"node_id": LATCH_ID, "kind": "LATCH",
+                   "inputs": [LEVER_ID]}],
+        "actuators": [{"actuator_id": SHUTTER_ID, "driven_by": LATCH_ID}],
+    }
 
 
 def compose_latched_route(zone: Zone) -> LatchedRoute:
-    """The production step. Declines until a lever can be placed."""
-    return LatchedRoute(zone, None, DECLINED_UNTIL_LEVERS)
+    """The production step: `lever -> LATCH -> shutter` on one legal
+    doorway, or the Zone unchanged with the reason."""
+    return _compose(zone, _lever_graph, "lever and latch")
 
 
 def compose_legacy_step_once_route(zone: Zone) -> LatchedRoute:
@@ -179,7 +193,7 @@ def _compose(zone: Zone, graph_for, what: str, extra=None) -> LatchedRoute:
     order = {c.id: i for i, c in enumerate(zone.chambers)}
     # ONE CONTROL PER ROOM (O05-13, P5-11). A room already holding another
     # relationship's control -- a Zone-state setter, a carried object's
-    # home, the socket it goes into -- has spent the clear floor a plate
+    # home, the socket it goes into -- has spent the clear floor a control
     # needs. In the candidate profile's first played combination the
     # lever took c002's floor and the engine refused this plate by name
     # ("no clear floor for sensor 'step_plate'"). Declined here, where the
@@ -203,10 +217,10 @@ def _compose(zone: Zone, graph_for, what: str, extra=None) -> LatchedRoute:
         if near in occupied:
             continue          # one control per room
         if kinds.get(near) not in _PLATE_ROOM_TYPES:
-            continue          # a plate needs clear walkable floor
-        # AND THE DOOR IT OPENS ON THE PLATE'S FLOOR (P5-8's rule): a
-        # shutter 28 m over the plate, across a launch arc, is not the
-        # consequence a player standing on it can see.
+            continue          # a control needs clear walkable floor
+        # AND THE DOOR IT OPENS ON THE CONTROL'S FLOOR (P5-8's rule): a
+        # shutter 28 m over the control, across a launch arc, is not the
+        # consequence a player working it can see.
         if _off_the_floor(zone, near, {edge.edge_id}
                           | ({arrive[near]} if arrive.get(near) else set()),
                           heights):
