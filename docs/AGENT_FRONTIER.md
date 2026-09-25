@@ -1,11 +1,17 @@
 # AGENT FRONTIER
 
-## BRIDGE LANE — approved independent work DONE; waiting on Prod and the owner — 2026-09-25
+## BRIDGE LANE — HOLDING at the Wave 3 checkpoint (owner, 2026-09-25)
+
+**Hold.** The owner accepted `462bf42` and `bab79db` as the Wave 3
+checkpoint, ruled D16, and said: do not begin 0.5. Resume an approved
+seam only when Prod hands back a listed bridge dependency; otherwise
+hold. 0.5 opens deliberately, as a team.
 
 **Dess is the single writer of the released files from `5f348ab`
 onward.** Prod asks for shared changes by note. The detail of every
-item is in `docs/ledgers/DESS_POST_PLAYTEST.md`, whose last section is
-the readiness table: what Prod can consume now, and what waits on whom.
+item is in `docs/ledgers/DESS_POST_PLAYTEST.md`. Its "Readiness for
+Prod" table, and the readiness update at its end, say what Prod can
+consume now and what waits on whom.
 
 **Landed since the handback:**
 - DESS-25 and DESS-21.
@@ -23,25 +29,32 @@ the readiness table: what Prod can consume now, and what waits on whom.
   Echoes.
 - Discovery (`visited_rooms`, `RoomEntered`), and the snapshot's
   `inventory` and `zone_map`, computed on the model.
+- H-GEAR G1 as ruled, the bridge half with its gate closed: the piece,
+  wearing it (`gear_action`), and `gear_effects` for the StatStack.
+- Prod's hand-backs: N-8 (`--form held`), N-10 (`passing_zone.json`),
+  N-11 (the `slot_action` refusal key).
 
-**Waiting on Prod (notes D-2 to D-7 in the ledger):**
+**Waiting on Prod (notes D-2 to D-8 in the ledger):**
 - D14 §7, the D-01 integration: creation, the grant filter, the reveal,
   and the `test_full_loop.py` change it names;
 - sending `room_entered`;
 - reading `inventory` and `zone_map`;
-- playing the held route;
-- D-7: run `godot-candidate-live` on the regenerated candidate (the
-  route shutter is back), and play `lever_route_zone.json` as composed
-  in `godot-latched-route-live`; fixture make targets are Prod's to add.
+- D-7.2 and D-7.3: `godot-latched-route-live` on the lever, and the
+  fixture make targets (candidate-live already ran green, N-7);
+- D-8, Gear:
+  - `snapshot()` passes `gear`;
+  - the StatStack multiplies `gear_effects`;
+  - the Equipment wall wears Gear.
+  Then Dess opens the gate in one commit and retakes the baseline.
 
 **Wave 3, owner-approved 2026-09-25:**
 - DESS-26 is fixed: an enemy pull is not a crossing.
 - H-QUALIFY's contract has landed (`schemas/featured.py`). The pipeline
   wiring is note D-5 to Prod.
-- **H-GEAR is stopped with options (D16) for the owner.** The design
-  conflicts on the clause budget and on piece shapes, no transaction is
-  approved, and only 3 of 16 domains have a runtime. The recommendation
-  is G1, the Legs slice. Nothing is built.
+- **H-GEAR is ruled (G1) and its bridge half has landed, gate closed.**
+  Speed, jump and landing on the runtime's own stats, profound pieces
+  only, from Echoes only, with HIGH derived and never stored. The gate
+  opens after Prod's D-8.
 - **Blindside's composition (O05-05.2 for H-BLINDSIDE):** the interface
   is proposed in note D-6 (a `gantry` span control, rails in the search,
   your gantry placement first, the composer after). It waits for Prod's
@@ -49,8 +62,9 @@ the readiness table: what Prod can consume now, and what waits on whom.
 - H-AP-GATE and H-ATOM-DELIVERY are explicitly deferred (ledger).
 
 **Waiting on the owner:**
-- H-GEAR's options (D16);
-- CI (Prod's N-6).
+- CI (Prod's N-6);
+- optionally, the one G1 interpretation: the stack's ×1.6 speed cap
+  stands, not §16.5's ×1.45 (D16, "G1 as ruled").
 
 **CI is not running.** Every PR-gate and Integration run has failed
 within about four seconds, with no log, since at least `6ebbc90`, for

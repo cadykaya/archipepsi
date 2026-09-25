@@ -1259,3 +1259,169 @@ Dess column stands in for your runtime half.
 | H-ATOM-DELIVERY (D-04) | deferred by ruling, recorded | nothing | a real consumer you name, then the smallest verb contract |
 | H-GEAR | options `07584fc` (D16) | nothing | the owner's rulings |
 | CI | none | nothing | the owner (your N-6) |
+
+## The owner's rulings on D16 (H-GEAR) and the Wave 3 checkpoint (2026-09-25, verbatim)
+
+> Checkpoint accepted.
+>
+> `462bf42` and `bab79db` count as the completed Dess-side Wave 3 bridge checkpoint.
+>
+> The lever result is approved as landed:
+> - new permanent routes use lever → latch → shutter
+> - M-1 legacy step-once plate saves continue loading and behaving as saved
+> - the replay tool may support both forms while keeping legacy as its current default
+> - the live Godot verification remains Production’s responsibility
+>
+> D16 / Gear rulings:
+>
+> 1. Approve G1 for movement stats.
+>
+> Pair speed, jump and landing Gear only with the corresponding runtime stats that already exist. Do not create a second or parallel Gear-stat system.
+>
+> 2. Approve strongest single-stat pieces only for now.
+>
+> Until a clause catalogue exists, a Gear piece should express one bounded, understandable stat effect. Do not invent compound/affix combinations ahead of that catalogue.
+>
+> 3. Approve no Forge or Static acquisition path.
+>
+> For this scope, Gear comes only from Archipelago items’ Echoes. Do not add Forge, Static or another acquisition economy for Gear.
+>
+> 4. Approve the later HIGH restriction.
+>
+> At most one HIGH piece may be effective/equipped at once.
+>
+> Treat HIGH as a balance/classification rule, not as part of persistent item identity, so later balancing does not require save migration.
+>
+> After landing the ready D16 work under those rulings, stop at the Wave 3 frontier.
+>
+> Do not begin the 0.5 programme yet. Production still has the outstanding D-2 through D-7 integration seams and Arty is still completing the current interface work. We’ll open 0.5 deliberately as a team once the current 0.4 integration frontier is synchronized.
+>
+> If Production hands back a currently listed bridge dependency, you may resume that approved seam without waiting for a new general go-ahead. Otherwise hold at the Wave 3 checkpoint.
+
+**Handed back since, and taken under that rule:** Prod's N-8 (a
+`--form held` for the replay tool, D-4's seam), N-10 (a
+`passing_zone.json` fixture for H-PASSING) and N-11 (the `about` key for
+a refused `slot_action`, H-UI-DATA's seam).
+
+## W3.5 — H-GEAR, G1 as ruled: the bridge half, gate closed (`f9330de`; `docs/D16_H_GEAR_OPTIONS.md`, "G1 as ruled")
+
+**The rulings, as held:**
+- **1:** each paired domain multiplies a stat the StatStack already
+  moves: speed `move_speed` ×1.18, jump `jump_height` ×1.30, landing
+  `air_control` ×1.90 (Design 1 §16.1's LARGE values). There is no
+  Gear-only stat and no Gear-only clamp.
+- **2:** one domain at `mag_profound`. Another domain, a weaker
+  magnitude or a second intrinsic is refused, and each refusal names
+  its ruling.
+- **3:** a piece is an Echo component (`kind: "gear"`). A save wearing a
+  piece its log never made is refused on load.
+- **4:** a piece stores atoms only, as the grammar's parallel lists.
+  Factor, territory and tier are derived when read, so neither a
+  rebalance nor HIGH's later two-atom shape needs a migration.
+
+**Landed:**
+- `schemas/gear.py`: `GEAR_EFFECTS`, `LEGAL_MAGNITUDES`,
+  `refuse_illegal_piece`, `effects_of`, `worn_effects`, `TERRITORIES`.
+  The gate's refusal now names the paired stat and what opens it.
+- `schemas/echo.py`: `GearComponent` joins the union, and the `gear_`
+  id prefix is admitted. `gear` joins `COMPONENT_KINDS`, which is what
+  a provider is offered, only once the gate opens.
+- `schemas/mechanics.py`: the fold refuses a link to or from Gear.
+  Upgrade, modify and merge already refused any kind they do not list.
+- `schemas/protocol.py`: `GearSlots` and `_reject_unwearable`;
+  `CampaignSave.gear` and `CampaignSnapshot.gear`; the computed
+  `gear_effects`; the `GearAction` intent.
+- `schemas/transitions.py`: `gear_action`.
+- `schemas/inventory_view.py`: `activation: "worn"`, `GearFacts` per
+  Gear item, and `territories`.
+- `server.py` and `campaign.py` (the intent seams): the route, the
+  handler, and the `about` key.
+- `epsilon/requests.py`: `gear_domains` and `gear_magnitudes` are
+  offered only with the gate open. Until then the request is
+  byte-identical, so the playtest baseline did not move. It is retaken
+  deliberately in the gate-opening commit.
+- Regenerated, never hand-edited:
+  - `generated/echo.schema.json` and `protocol.schema.json`;
+  - Prod's `equipment_snapshot.json` and `journal_snapshot.json`, by
+    their own unchanged targets. The diffs are additive only: an empty
+    `gear`, `gear_effects: {}` and four empty territories.
+- The packet mirrors of all six schema files. `check_packet` is clean.
+- Not exported: the factor table. The engine reads derived numbers from
+  the snapshot. An exported table would invite the second derivation
+  ruling 1 forbids.
+
+**The gate stays closed** until Prod's half is in (note D-8), the
+lever's order.
+
+**One interpretation, for the owner.** §16.5's ×1.45 walk-speed cap is
+not applied. The stack's existing `SPEED_MULT_MAX` (×1.6) is the one
+envelope, because ruling 1 forbids a Gear-only clamp and changing the
+stack's cap would change existing traits. A profound speed piece alone
+is ×1.18.
+
+## Prod's hand-backs, answered
+
+- **N-11 (H-INVENTORY):** `_about` returns `slot_action:<slot>:<id>`, and
+  `slot_action:<slot>:` for a clear. The whole path is tested: parse,
+  route, refuse, and the error frame's key.
+- **N-8 (the held route):** `tools/compose_latched_route.py --form held
+  --expect ../godot/tests/fixtures/held_route_zone.json`. The composed
+  save carries the counterweight, whose pose the bridge keeps across a
+  restart. Each form lands on its own fixture and is refused against
+  the others'.
+- **N-10 (H-PASSING):** `godot/tests/fixtures/passing_zone.json` is the
+  candidate campaign's `zone_002`, as the live bridge designs it: Zone 1
+  generated and abandoned, then the portal asked again. It is never the
+  played Zone relabelled.
+  - EX50-011 is hosted as `c025` and EX50-021 as `c024`, matching your
+    N-9.
+  - The recipe for your `make passing-fixture`: `cd bridge && $(PY) -m
+    archipepsi_bridge.playtest dump-passing --out
+    ../godot/tests/fixtures/passing_zone.json`.
+  - A currency test names it.
+
+**Suites:** the bridge suite gives 2216 passed and 4 skipped; the schema suite gives 131; `check_packet` is clean.
+
+**Sabotages.** Each one failed by name and was restored byte-for-byte:
+
+| # | rule removed | caught by |
+|---|---|---|
+| G1 | the pairing | the unpaired-domain cases (4) |
+| G2 | the magnitude rule | slight and marked |
+| G3 | the one-intrinsic rule | the two-atom case |
+| G4 | the gate | the closed-gate test |
+| G5 | `gear` always advertised | the closed-gate test, the baseline (3) |
+| G6 | the load-time wear check | forged, territory and kind cases (4) |
+| G7 | the territory check | the HEAD case |
+| G8 | the link refusal | the link case |
+| G9 | a tier stored on the piece | the atoms-only test |
+| G10 | a Gear-only 1.45 clamp | the no-clamp test |
+| G11 | Gear shown as always-on | the inventory test |
+| G12 | the snapshot ignoring what is worn | three effect tests |
+| G13 | atoms offered while closed | the closed-gate test, the baseline (3) |
+| G14 | `gear` required in a save | 45, the old-save case among them |
+| N11a/b | the two `about` keys | three cases each |
+| N8 | the held form composing the lever | its fixture case |
+| N10 | Zone 1 passed off as the passing Zone | the currency test |
+
+**Note D-8 (Dess → Prod), for Gear:**
+1. `campaign.snapshot()` should pass `gear=save.gear`. It is one line,
+   and the function is yours; until it is in, the snapshot shows
+   nothing worn.
+2. `stat_stack.gd` should multiply `gear_effects[stat]` into each stat's
+   product, beside traits, statuses and pulses, before `clamp_stat`.
+   There is no separate clamp.
+3. The Equipment wall: the four `inventory.territories`, `gear_action`,
+   and the refusal key `gear_action:<territory>:<id>`.
+4. The prompt, once the gate opens, authors atoms only.
+5. Tell me when 1 to 3 are in. The gate then opens in one bridge
+   commit, with the baseline retaken in it.
+
+## Readiness update: added since the table (at the hold)
+
+| Item | Dess half, landed | You can consume now | Waits on |
+|---|---|---|---|
+| H-GEAR G1 (D16, as ruled) | `f9330de` | the `gear_action` intent and its key; `CampaignSnapshot.gear` and `gear_effects`; `inventory.territories` and each Gear item's facts | you: D-8 (`snapshot()` passes `gear`, the StatStack multiplies `gear_effects`, the wall wears Gear); then Dess opens the gate |
+| N-8 (the held route) | `f9330de` | `compose_latched_route.py --form held` | you: play it across a real restart |
+| N-10 (H-PASSING) | `f9330de` | `passing_zone.json` and the `dump-passing` recipe | you: `make passing-fixture`, and the hosted suite into CI |
+| N-11 (H-INVENTORY) | `f9330de` | refusals keyed `slot_action:<slot>:<id>` | nothing |

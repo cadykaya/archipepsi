@@ -5,6 +5,10 @@ costed domains. Before building it, I checked what those 16 can actually
 be, and the design itself conflicts in four places. So, by your rule,
 this is a stop with options rather than a build. Nothing is implemented.
 
+**Ruled 2026-09-25: G1, with all four rulings** (verbatim in
+`docs/ledgers/DESS_POST_PLAYTEST.md`). The bridge half has landed with
+its gate closed; see "G1 as ruled" at the end.
+
 ---
 
 ## What the check found
@@ -93,3 +97,67 @@ So H-GEAR's "approved transaction consumers" is an empty set.
    comes only from Archipelago items' Echoes.
 4. **For later, when HIGH arrives:** read "at most one HIGH" as the
    rule.
+
+---
+
+## G1 as ruled: what landed, and what is Prod's (note D-8)
+
+**How each ruling is held in the bridge:**
+- **1, the existing runtime stats.** Speed multiplies `move_speed`, jump
+  multiplies `jump_height` and landing multiplies `air_control`: three
+  of the nine stats the StatStack already moves for traits. The factors
+  are Design 1 §16.1's LARGE values: 1.18, 1.30 and 1.90. There is no
+  Gear-only stat and no Gear-only clamp. The stack's one floor and
+  envelope clamp the whole product, as they do for traits.
+- **2, one bounded stat effect.** One domain at `mag_profound`. Anything
+  else is refused with its reason: another domain, a weaker magnitude,
+  or a second intrinsic.
+- **3, only from Echoes.** A piece is an Echo component (`kind: "gear"`).
+  No transaction creates one, and a save that wears a piece its log
+  never made is refused on load.
+- **4, HIGH is derived.** A piece stores only its atoms: `domains` and
+  `magnitudes`, as lists of length 1 today. Its factor, its territory
+  and its tier are derived each time they are read. So a rebalance
+  needs no migration, and neither does HIGH's arrival as a two-atom
+  piece. The at-most-one-HIGH rule will sit where worn pieces become
+  effects (`gear.worn_effects`); nothing can be HIGH yet.
+
+**What the bridge now has:**
+- the piece: `GearComponent` in `schemas/echo.py`, with its atoms, its
+  refusals and the gate;
+- the pairing and derivation: `schemas/gear.py` (`GEAR_EFFECTS`,
+  `effects_of`, `worn_effects`);
+- wearing it:
+  - `CampaignSave.gear`, four territory slots, checked against the fold
+    like `slots` and empty on any older save;
+  - the `gear_action` transition and intent;
+  - refusals named `gear_action:<territory>:<component_id>`;
+- reading it:
+  - `CampaignSnapshot.gear` and the computed `gear_effects`
+    (stat → factor);
+  - each Gear item in the inventory view carries its territory,
+    effects, tier and whether it is worn, and the view lists the four
+    territories.
+
+**The gate is closed.** `SUPPORTED_GEAR_DOMAINS` is empty, so no piece
+can exist yet and no Epsilon request offers one. It opens to the three
+paired domains in one bridge commit after Prod's half, the lever's
+order. That commit also retakes the playtest baseline, deliberately,
+because the request then changes.
+
+**Prod's half, then the gate:**
+1. `campaign.snapshot()` passes `gear=save.gear` (one line; that
+   function is yours).
+2. `stat_stack.gd` multiplies `gear_effects[stat]` into each stat's
+   product, beside traits, statuses and pulses, before `clamp_stat`.
+3. The Equipment wall shows the four territories (`inventory.territories`),
+   sends `gear_action` and attributes its refusals by key.
+4. The Epsilon prompt, when the gate opens, authors Gear as atoms
+   (`allowed.gear_domains`, `allowed.gear_magnitudes`), never numbers.
+
+**One interpretation, for Skyiah to overrule if she wishes.** Design 1
+§16.5 caps walk speed at ×1.45. The existing stack caps `move_speed` at
+×1.6 (`SPEED_MULT_MAX`). Ruling 1 forbids a Gear-only clamp, and moving
+the stack's cap would change existing traits, so the stack's 1.6
+stands. A profound speed piece alone is ×1.18, well under either cap.
+
