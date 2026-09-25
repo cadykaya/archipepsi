@@ -567,8 +567,8 @@ func _place_hit_marker() -> void:
 #: what Godot calls that button.
 #:
 #: Exported from `constants.py` rather than written here and again in
-#: `inventory.gd`. Two copies is how the fifth slot ends up labelled on
-#: one screen and "?" on the other.
+#: the menu. Two copies is how the fifth slot ends up labelled on one
+#: screen and "?" on the other.
 
 
 ## All four slots at once (S7). One line each, the highlighted one marked:

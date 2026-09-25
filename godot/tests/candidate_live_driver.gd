@@ -1133,10 +1133,11 @@ func _abandon_from_the_pause_menu(zone_id: String) -> bool:
 			+ "with the bridge still connected (H-PAUSE)")
 	await _action_event("inventory")
 	await _shell_at_rest(shell)
-	_check(shell.front() == "equipment" and main.inventory.visible
-			and main.inventory.get_viewport()
+	_check(shell.front() == "equipment" and main.equipment.visible
+			and main.equipment.get_viewport()
 				== shell.page_viewport("equipment"),
-			"Tab turns it to the Equipment wall, the inventory drawn there")
+			"Tab turns it to the Equipment wall, the equipment face drawn "
+			+ "there")
 	await _equip_while_paused()
 	await _action_event("menu_page_right")
 	await _shell_at_rest(shell)
@@ -1166,47 +1167,63 @@ func _abandon_from_the_pause_menu(zone_id: String) -> bool:
 ## the wall is repainted from it. HARNESS STEP, declared: the loadout is
 ## then put back as it was, by the same intent, so the phases after this
 ## one play the loadout they always did.
+## H-INVENTORY, live: an equip made on the Equipment wall with the world
+## paused is a REQUEST until the real bridge's snapshot carries it -- the
+## face shows it PENDING, then ACCEPTED -- and the world stays paused
+## throughout (H-PAUSE: the bridge is not paused).
 func _equip_while_paused() -> void:
 	var before: Dictionary = BridgeClient.slots().duplicate()
-	var equip := _first_button(main.inventory, ["REPLACE ", "TO "])
-	if equip == null:
-		_note("no Echo on the Equipment wall to equip; the paused equip is "
-				+ "not exercised in this campaign")
+	var face: EquipmentFace = main.equipment
+	var pick := {}
+	for row: Dictionary in EquipmentQuery.items(BridgeClient.snapshot):
+		var home := EquipmentQuery.home_slot(row)
+		if home != "" and EquipmentQuery.equipped_in(row) == "" \
+				and EquipmentQuery.held_back(row) == "":
+			pick = row
+			break
+	if pick.is_empty():
+		_note("nothing owned is off its key; the paused equip is not "
+				+ "exercised in this campaign")
+		return
+	var cid := str(pick["component_id"])
+	var slot := EquipmentQuery.home_slot(pick)
+	face.select(cid)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var equip := face.detail_root().find_child("Equip", true, false) as Button
+	if equip == null or equip.disabled:
+		_check(false, "the Equipment wall offers to equip %s (%s)" % [cid,
+				"missing" if equip == null else "disabled"])
 		return
 	var label := equip.text
 	equip.pressed.emit()
+	# READ AT THE PRESS, not a frame later: a local bridge answers inside
+	# one frame, and the answer is read by the client's own `_process`.
+	# Nothing can resolve the request before that poll, so this is the
+	# state the player sees until then.
+	var pending := face.requests.is_pending(slot)
 	var changed := func() -> bool: return BridgeClient.slots() != before
 	var answered := await _await_live("the equip's answer, the world paused",
 			changed, 10.0)
 	var diff: Array = []
-	for slot: Variant in BridgeClient.slots().keys():
-		if BridgeClient.slots().get(slot) != before.get(slot):
-			diff.append("%s: %s -> %s" % [slot, before.get(slot),
-					BridgeClient.slots().get(slot)])
+	for key: Variant in BridgeClient.slots().keys():
+		if BridgeClient.slots().get(key) != before.get(key):
+			diff.append("%s: %s -> %s" % [key, before.get(key),
+					BridgeClient.slots().get(key)])
 	await get_tree().process_frame
-	_check(answered and get_tree().paused
-			and (not is_instance_valid(equip) or equip.is_queued_for_deletion()),
-			"'%s' pressed on the Equipment wall with the world paused: the "
-			% label + "bridge answered (%s), the world is still paused, and "
-			% [diff] + "the wall was repainted from the answer")
-	for slot: Variant in before.keys():
-		if BridgeClient.slots().get(slot) != before.get(slot):
-			BridgeClient.send_intent({"type": "slot_action", "slot": slot,
-					"component_id": before.get(slot)})
+	var answer := face.requests.answer(slot)
+	_check(pending and answered and get_tree().paused
+			and str(answer.get("state", "")) == EquipRequests.ACCEPTED,
+			"'%s' pressed on the Equipment wall with the world paused: " \
+			% label + "PENDING until the bridge answered (%s), then " % [diff]
+			+ "ACCEPTED from its snapshot (%s), the world still paused"
+			% answer.get("state", "no answer"))
+	for key: Variant in before.keys():
+		if BridgeClient.slots().get(key) != before.get(key):
+			BridgeClient.send_intent({"type": "slot_action", "slot": key,
+					"component_id": before.get(key)})
 	await _await_live("the loadout put back",
 			func() -> bool: return BridgeClient.slots() == before, 10.0)
-
-
-func _first_button(root: Node, prefixes: Array) -> Button:
-	for node: Node in root.find_children("*", "Button", true, false):
-		var button := node as Button
-		if button == null or button.disabled \
-				or button.is_queued_for_deletion():
-			continue
-		for prefix: String in prefixes:
-			if button.text.begins_with(prefix):
-				return button
-	return null
 
 
 ## An action as a device delivers it: an event through the engine's input

@@ -7,11 +7,15 @@ extends Node
 ## what order rows come out in, and which side of the actives/passives
 ## split an Echo lands on — and this is where those answers are checked.
 ##
-## **NO WIDGETS HERE ON PURPOSE.** `inventory.gd` turns these into
-## `Control`s and is exercised for real by `hud_driver.gd`, which builds
-## an `InventoryLayer` and scrapes its labels. Splitting the question from
-## the painting means the question can be asked directly rather than by
+## **NO WIDGETS HERE ON PURPOSE.** Splitting the question from the
+## painting means the question can be asked directly rather than by
 ## reading text off a panel.
+##
+## The panel these answers were built for, the Echo archive, is gone:
+## H-INVENTORY replaced it with an item face (`EquipmentQuery`, tested by
+## `equipment_face_driver.gd`). The product still asks `ArchiveQuery.matches`
+## -- of every Echo that touched an item -- and the rest stays tested here
+## until it is retired deliberately.
 
 var _failures := 0
 var _checks := 0

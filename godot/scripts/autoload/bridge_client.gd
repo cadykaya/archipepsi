@@ -125,6 +125,15 @@ const _INTENT_LOG_CAP := 64
 ## what the drivers read.
 var assume_sent := false
 
+## WHETHER AN INTENT SENT NOW WOULD LEAVE THIS PROCESS -- exactly
+## `send_intent`'s own test, so a control that asks this before offering
+## itself cannot be told one thing and then do another. `assume_sent`
+## counts here as it does there: a headless driver stands a menu in its
+## online state the same way it stands a send in its sent one.
+func can_send() -> bool:
+	return assume_sent \
+			or _socket.get_ready_state() == WebSocketPeer.STATE_OPEN
+
 func send_intent(intent: Dictionary) -> bool:
 	sent_intents.append(intent)
 	if sent_intents.size() > _INTENT_LOG_CAP:
@@ -349,6 +358,14 @@ func owned_component(component_id: String) -> Dictionary:
 func slots() -> Dictionary:
 	var s: Variant = snapshot.get("slots")
 	return s if typeof(s) == TYPE_DICTIONARY else {}
+
+## H-UI-DATA: the menu's items and slots as the bridge projected them
+## (`CampaignSnapshot.inventory`, Dess's `inventory_view.py`). The menu
+## joins it to `mechanics.owned` by component id and derives nothing the
+## view already answers. Empty from a bridge older than the field.
+func inventory_view() -> Dictionary:
+	var view: Variant = snapshot.get("inventory")
+	return view if typeof(view) == TYPE_DICTIONARY else {}
 
 ## The Action in a slot, as the runtime wants it. Empty when the slot is
 ## clear — which is a legal, playable state: the Static Pulse is never the
@@ -774,6 +791,17 @@ func charges_left(component_id: String) -> int:
 	# subtracting only the highest index would let the second fire free.
 	var spent := int(charges) - left
 	return maxi(left - _outstanding(component_id, spent), 0)
+
+## Uses asked for and not yet answered (D-9 §2): the press is waiting on
+## the bridge, and nothing has reached the world. What the equipment face
+## shows as PENDING AUTHORISATION -- a fact about this process's requests,
+## which the bridge deliberately does not mirror (D-9 §3).
+func awaiting_authorization(component_id: String) -> int:
+	var n := 0
+	for raw: Variant in _held(component_id):
+		if bool((raw as Dictionary).get("awaiting", false)):
+			n += 1
+	return n
 
 ## What it started with, for "2 of 3". Zero when it is not a consumable.
 func charges_total(component_id: String) -> int:

@@ -3,12 +3,15 @@ extends RefCounted
 ## WHAT THE ECHO ARCHIVE IS SHOWING — search, sort and the split between
 ## what you equip and what is simply true.
 ##
-## Separate from `InventoryLayer` because this is the half with answers in
-## it. Whether "grap" finds the Hookshot, whether sorting by source game
+## Whether "grap" finds the Hookshot, whether sorting by source game
 ## groups the two Ocarina Echoes together, and whether a trait-only Echo
 ## lands under ALWAYS ON are all questions with a right answer, and none
-## of them need a `Control` to ask. `inventory.gd` builds widgets from
-## what this returns.
+## of them need a `Control` to ask.
+##
+## The Echo archive this answered for is gone (H-INVENTORY replaced it with
+## the item face). `matches` is still the one test of whether an Echo
+## answers to a search: `EquipmentQuery.matches` asks it of every Echo
+## that touched an item, so the words on the Echo still find the item.
 ##
 ## **THE SPLIT IS THE OWNER'S COMPLAINT.** The archive was one scrolling
 ## list with actives and passives interleaved and no way to search it. An

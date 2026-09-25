@@ -1,10 +1,12 @@
 extends Node
 ## The S3 HUD suite (`make godot-hud`): the §7.1 safe palette, the §12
 ## source identity package (glyph, sound family, particle style), the §7
-## pressure valve, and the §15.4 / ECHOES §11 archive provenance chains.
+## pressure valve, and the shared effect formatter's upgrade line. (The
+## archive's provenance chains moved to the item face with H-INVENTORY:
+## `equipment_face_driver.gd`.)
 ##
-## Boots the real project (`--hud-test`) because ResourceMeters,
-## ResourcePool and InventoryLayer all read the BridgeClient autoload and a
+## Boots the real project (`--hud-test`) because ResourceMeters and
+## ResourcePool read the BridgeClient autoload and a
 ## `--script` run never instantiates it. Needs no bridge: the snapshot is a
 ## fixture injected directly — derived from a REAL fold on the Python side
 ## (create Magic Meter ← Ocarina of Time; create Vigor ← Dark Souls;
@@ -51,12 +53,10 @@ func _ready() -> void:
 	_glyph_pins()
 	_source_identity_package()
 	_pressure_valve()
-	_archive_provenance()
+	_the_upgrade_line()
 	_the_loadout_rows()
 	await _the_travel_panel()
 	_the_navigation_schematic()
-	await _the_split_on_the_real_panel()
-	await _the_search_box_keeps_its_place()
 
 	if failures == 0:
 		print("GODOT HUD TESTS OK")
@@ -407,7 +407,16 @@ func _pressure_valve() -> void:
 	meters.free()
 	pool.free()
 
-# --- §15.4 / ECHOES §11: provenance in the archive ------------------------
+# --- the shared effect formatter's upgrade arm ------------------------------
+#
+# The provenance chain, the concepts Epsilon read and the mixed/upgrade-only
+# split used to be asserted here on the Echo archive (`InventoryLayer`). The
+# archive is gone -- H-INVENTORY replaced it with the item face -- and those
+# assertions moved with the thing they are about, onto the item face, on a
+# snapshot the bridge's own model built: `equipment_face_driver.gd`
+# (`_history_and_reads`, `_the_split_and_the_filter`,
+# `_the_search_box_keeps_its_place`). What stays is the formatter, which
+# the reveal card still reads.
 
 func _labels_under(node: Node, out: Array[String]) -> void:
 	if node is Label:
@@ -415,38 +424,14 @@ func _labels_under(node: Node, out: Array[String]) -> void:
 	for child in node.get_children():
 		_labels_under(child, out)
 
-func _archive_provenance() -> void:
-	var inventory := InventoryLayer.new()
-	inventory._ready()
-	inventory.rebuild()
-	var labels: Array[String] = []
-	_labels_under(inventory._list, labels)
-
-	_check(_count_containing(labels, "MAGIC METER  Mk II") == 2,
-			"the two-entry chain appears under BOTH the creator's row and "
-			+ "the upgrader's")
-	_check(_count_containing(labels, "Mk I  Magic Meter ← Magic Upgrade  (Ocarina of Time)") == 2,
-			"the chain starts with the creating item")
-	_check(_count_containing(labels, "Mk II  +40 max_value ← Estus Shard  (Dark Souls)") == 2,
-			"the upgrade names its item, its game and the fold's note")
-	_check(_count_containing(labels, "VIGOR  Mk I") == 0,
-			"a chain of one stays silent")
-	# S10 put the mode on the same row. It was worth nothing before —
-	# every interpretation said "literal" because the fallback hardcoded
-	# it — and now says how far Epsilon travelled from the item.
-	_check(_count_containing(
-			labels, "read literal: magic / green / capacity") == 1,
-			"the concepts Epsilon read are on the row, with the mode")
-	_check(_count_containing(labels, "read mechanical: capacity / shard") == 1,
-			"an interpretation that reworked something says so")
+func _the_upgrade_line() -> void:
+	var lines: Array[String] = []
+	for echo: Dictionary in BridgeClient.interpretations():
+		lines.append_array(EffectSummary.lines(echo))
 	# The shared formatter's upgrade arm first RAN under this suite, and it
 	# was a Python `%+g` no GDScript understands. Hold the rendered line.
-	_check(_count_containing(labels, "Upgrades res_magic (+40 max_value)") == 1,
-			"the effect summary renders an upgrade operation")
-	_check(_count_containing(labels, "No Echoes yet") == 0,
-			"the archive is not empty")
-
-	inventory.free()
+	_check(_count_containing(lines, "Upgrades res_magic (+40 max_value)") == 1,
+			"the effect summary renders an upgrade operation: %s" % [lines])
 
 func _count_containing(labels: Array[String], needle: String) -> int:
 	var count := 0
@@ -505,181 +490,3 @@ func _source_identity_package() -> void:
 			"the package carries all four §12 fields")
 
 
-# --- the Echo menu, on the painted panel rather than on ArchiveQuery -------
-
-## The snapshot the two panel cases below run against: one Echo that
-## makes BOTH an Action and a passive, and one that only upgrades an
-## Action it did not create.
-##
-## Both were misfiled. `is_passive` asked whether an Echo created an
-## Action, so an UPGRADE-ONLY Echo created nothing and landed under
-## ALWAYS ON — the owner caught it — and a MIXED one has to land under
-## ACTIONS despite carrying a passive, or the thing you can equip is in
-## the section of things you cannot.
-const MIXED_FIXTURE := """{"type":"campaign_snapshot",
-"mechanics":{"owned":[
- {"kind":"action","mk":1,"provenance":[],"component":{"kind":"action",
-  "component_id":"act_lash","display_name":"Lash","description":"Crack.",
-  "slot":"echo_a","cooldown":1.0,
-  "primitive":{"type":"melee_swing","damage":6.0,"reach":2.5,
-   "arc_degrees":90.0}}},
- {"kind":"trait","mk":1,"provenance":[],"component":{"kind":"trait",
-  "component_id":"trt_sure","display_name":"Surefoot",
-  "description":"Steady.","stat":"move_speed","operation":"add",
-  "value":0.5}}]},
-"slots":{"echo_a":null,"echo_b":null,"mobility":null,"utility":null,
- "consumable":null},
-"consumable_uses":[],"consumable_generation":0,
-"interpretations":[
- {"schema_version":8,"echo_id":"echo_1","interpretation_seq":0,
-  "source_location_id":89100201,"source_item_name":"Whip",
-  "source_game":"Castlevania","source_recipient_name":"cv_player",
-  "concepts":["reach"],"mode":"literal","display_name":"Braided Lash",
-  "description":"A whip, and the footing to use it.","tags":[],
-  "operations":[
-   {"op":"create","component":{"kind":"action","component_id":"act_lash",
-    "display_name":"Lash","description":"Crack.","slot":"echo_a",
-    "cooldown":1.0,"primitive":{"type":"melee_swing","damage":6.0,
-     "reach":2.5,"arc_degrees":90.0}}},
-   {"op":"create","component":{"kind":"trait","component_id":"trt_sure",
-    "display_name":"Surefoot","description":"Steady.",
-    "stat":"move_speed","operation":"add","value":0.5}}]},
- {"schema_version":8,"echo_id":"echo_2","interpretation_seq":1,
-  "source_location_id":89100202,"source_item_name":"Leather Grip",
-  "source_game":"Castlevania","source_recipient_name":"cv_player",
-  "concepts":["grip"],"mode":"mechanical","display_name":"Leather Grip",
-  "description":"Shorter swing, faster.","tags":[],
-  "operations":[{"op":"upgrade","target":"act_lash",
-   "field":"cooldown","delta":-0.2}]}]}"""
-
-
-func _headings_under(node: Node, out: Array[String]) -> void:
-	if node is Label and (node as Label).text.begins_with("ACTIONS"):
-		out.append((node as Label).text)
-	elif node is Label and (node as Label).text.begins_with("ALWAYS ON"):
-		out.append((node as Label).text)
-	for child in node.get_children():
-		_headings_under(child, out)
-
-
-func _section_of(inventory: InventoryLayer, needle: String) -> String:
-	"""Which heading a row falls under, by walking the list in order."""
-	var section := ""
-	for child: Node in inventory._list.get_children():
-		var labels: Array[String] = []
-		_labels_under(child, labels)
-		for text: String in labels:
-			if text.begins_with("ACTIONS"):
-				section = "ACTIONS"
-			elif text.begins_with("ALWAYS ON"):
-				section = "ALWAYS ON"
-			elif needle.to_lower() in text.to_lower():
-				return section
-	return ""
-
-
-## MIXED AND UPGRADE-ONLY, on the panel the player actually reads.
-func _the_split_on_the_real_panel() -> void:
-	print("  -- the split: mixed and upgrade-only Echoes")
-	var kept: Dictionary = BridgeClient.snapshot
-	BridgeClient.snapshot = JSON.parse_string(MIXED_FIXTURE)
-	var inventory := InventoryLayer.new()
-	inventory._ready()
-	inventory.rebuild()
-	# `_repaint` clears the old rows with `queue_free`, which lands at the
-	# END of the frame. Reading the list before then sees the previous
-	# painting as well as the new one, and the first draft of this case
-	# found rows a filter had already removed.
-	await get_tree().process_frame
-
-	_check(_section_of(inventory, "Braided Lash") == "ACTIONS",
-			"a MIXED Echo files under ACTIONS — the half you equip wins")
-	_check(_section_of(inventory, "Leather Grip") == "ACTIONS",
-			"and an UPGRADE-ONLY Echo does too, though it created nothing")
-	var headings: Array[String] = []
-	_headings_under(inventory, headings)
-	_check(_count_containing(headings, "ACTIONS (2)") == 1,
-			"both are counted as Actions, got %s" % [headings])
-	_check(_count_containing(headings, "ALWAYS ON (0)") == 1,
-			"and ALWAYS ON is empty: the trait rode in on the mixed Echo "
-			+ "and is not a row of its own")
-
-	# The slot filter is the other half of the owner's ask, and it has to
-	# survive an upgrade-only Echo: the Action it upgrades is what says
-	# which key it belongs to.
-	inventory._slot_filter = "echo_a"
-	inventory.rebuild()
-	await get_tree().process_frame
-	_check(_section_of(inventory, "Leather Grip") == "ACTIONS",
-			"filtering to the key it upgrades still shows it")
-	inventory._slot_filter = "mobility"
-	inventory.rebuild()
-	await get_tree().process_frame
-	_check(_section_of(inventory, "Leather Grip") == "",
-			"and filtering to a key it has nothing to do with hides it")
-
-	inventory.free()
-	BridgeClient.snapshot = kept
-
-
-## TYPING IS NOT INTERRUPTED BY A SNAPSHOT.
-##
-## A property to PROVE rather than a feature to add — and the first draft
-## of this case proved nothing. It asserted that focus and the caret
-## survive `rebuild()`, which they do; but deleting the restore in
-## `rebuild()` left it GREEN, because in this tree the restore never
-## fires. `_search` lives in `tools`, a sibling of the two containers a
-## repaint empties, so nothing frees it and nothing takes its focus.
-##
-## The structural fact is the load-bearing one, so the case asserts it
-## directly. `rebuild()`'s `had_focus` dance is belt-and-braces for a
-## future in which the toolbar IS rebuilt; the reason typing survives
-## today is that the box is not in the part of the tree that gets thrown
-## away, and THAT is what a refactor would break.
-func _the_search_box_keeps_its_place() -> void:
-	print("  -- the search box keeps focus and caret across a snapshot")
-	var kept: Dictionary = BridgeClient.snapshot
-	BridgeClient.snapshot = JSON.parse_string(MIXED_FIXTURE)
-	var inventory := InventoryLayer.new()
-	# A real tree, because focus is a tree-level fact: a LineEdit outside
-	# one can never hold it, and the case would pass vacuously.
-	get_tree().root.add_child(inventory)
-	inventory.visible = true
-	inventory._search.text = "lash"
-	inventory._search.grab_focus()
-	inventory._search.caret_column = 2
-	_check(inventory._search.has_focus(), "the box has focus to begin with")
-
-	inventory.rebuild()            # as a snapshot arriving would
-	await get_tree().process_frame
-	_check(inventory._search.has_focus(),
-			"a snapshot mid-search does not steal focus")
-	_check(inventory._search.caret_column == 2,
-			"and the caret stays where it was, got %d"
-			% inventory._search.caret_column)
-	_check(inventory._search.text == "lash",
-			"and so does what was typed")
-
-	# WHY it survives, asserted rather than assumed. A repaint frees the
-	# children of `_loadout` and of `_list`; the search box is under
-	# neither, and that separation is the whole mechanism.
-	_check(not inventory._loadout.is_ancestor_of(inventory._search)
-			and not inventory._list.is_ancestor_of(inventory._search),
-			"because the box is outside both containers a repaint empties")
-	var typed := inventory._search
-	inventory._paint_loadout()
-	inventory._repaint()
-	await get_tree().process_frame
-	_check(is_instance_valid(typed) and typed == inventory._search,
-			"so the painting passes that do the freeing never free it")
-
-	# ...AND TYPING IS NOT PLAYING is the other half, but the thing that
-	# holds player input is `Main._update_modal`, which reaches for a
-	# pause menu, a shop, a reveal, a station panel and a live Zone.
-	# Standing all of that up here to read one boolean would be a worse
-	# test than the one in `consumable_driver.gd`, which drives SYNTHETIC
-	# INPUT at a real Player and watches whether the verb fires.
-
-	get_tree().root.remove_child(inventory)
-	inventory.free()
-	BridgeClient.snapshot = kept

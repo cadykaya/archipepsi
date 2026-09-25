@@ -1,0 +1,48 @@
+exit=1
+EI-1 [equip_requests.gd] an equip is resolved by ANY snapshot (optimistic)
+    case _pending_then_accepted: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-2 [equip_requests.gd] a refusal resolves the first request whatever it names
+    case _refusals_and_a_lost_link: CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+EI-3 [equip_requests.gd] an error with no `about` counts as a refusal
+    case _refusals_and_a_lost_link: CAUGHT -- 4 failing check(s), 0 script error(s); restored byte for byte: True
+EI-4 [equipment_face.gd] the key paints the pending pick as held (optimistic)
+    case _pending_then_accepted: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-5 [equipment_query.gd] an upgrade becomes an item of its own (a tile per history link)
+    case _one_item_one_tile: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-6 [equipment_query.gd] a key filter keeps the always-on half
+    case _the_split_and_the_filter: NOT CAUGHT -- 0 failing check(s), 0 script error(s); restored byte for byte: True
+EI-7 [equipment_query.gd] owning no consumable reads as owning one off the key
+    case _the_consumable_key: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-8 [equipment_face.gd] the consumable key ignores the link
+    case _the_consumable_key: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-9 [equipment_face.gd] the consumable key ignores a use awaiting the bridge
+    case _the_consumable_key: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-10 [equipment_seen.gd] a campaign met for the first time is all NEW
+    case _a_new_item_is_marked: CAUGHT -- 5 failing check(s), 0 script error(s); restored byte for byte: True
+EI-11 [equipment_seen.gd] inspecting an item does not clear NEW
+    case _a_new_item_is_marked: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-12 [equipment_face.gd] a repaint takes focus from the search box
+    case _the_search_box_keeps_its_place: CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+EI-13 [menu_shell.gd] the shell forgets a text field has the keys
+    case _typing_is_not_playing: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-14 [project.godot] the pad's A is not ui_accept (the default map)
+    case _keyboard_and_controller: CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+EI-15 [equipment_face.gd] the equip controls scroll with the detail (the first layout)
+    case _the_mouse: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-16 [equipment_query.gd] a spent spare is offered
+    case _an_empty_spare_is_not_offered: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-17 [equipment_face.gd] a second press is offered while the first waits
+    case _pending_then_accepted: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-18 [equipment_query.gd] the comparison runs this → now
+    case _pending_then_accepted: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-19 [equipment_query.gd] history drops the upgrades
+    case _history_and_reads: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-20 [equipment_face.gd] arriving at the wall, nothing takes focus
+    case _keyboard_and_controller: CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+EI-21 [equipment_face.gd] a link lost mid-request stays pending
+    case _refusals_and_a_lost_link: CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+EI-22 [equipment_snapshot.json] the fixture hand-edited (Cinder Charge 2 -> 3 left in base)
+    test_equipment_fixture.py: CAUGHT; restored byte for byte: True
+21 of 22 sabotages caught
+
+[exited with code 0]

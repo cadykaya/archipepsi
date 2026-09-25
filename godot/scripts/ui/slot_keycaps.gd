@@ -36,6 +36,19 @@ static func of(slot: String) -> String:
 	return fallback
 
 
+## The same, for any input action: the hints on the pause interface name
+## the real bindings ("[Q] turn left") rather than a keycap typed into a
+## string, which is a second authority the moment the player rebinds.
+static func of_action(action: String, fallback := "?") -> String:
+	if not InputMap.has_action(action):
+		return fallback
+	for event: InputEvent in InputMap.action_get_events(action):
+		var named := _name_of(event)
+		if named != "":
+			return named
+	return fallback
+
+
 static func _name_of(event: InputEvent) -> String:
 	if event is InputEventMouseButton:
 		return str(_MOUSE_NAMES.get(

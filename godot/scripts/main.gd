@@ -12,13 +12,14 @@ var zone: ZoneController
 var menu: MainMenu
 var hud: Hud
 var reveal: RevealLayer
-var inventory: InventoryLayer
+## H-INVENTORY (CP3): the Equipment wall. Replaced the Echo archive, a
+## list of events with a 3D frame around it, by items on three regions.
+var equipment: EquipmentFace
 var shop: ShopUI
 var station_panel: StationPanel
 var pause_menu: PauseMenu
 ## H-3D-SHELL (CP3): the one pause interface, four walls of a box. The
-## pause menu and the inventory are its first two walls, unchanged in what
-## they say and send.
+## pause menu is its Settings wall and `equipment` its Equipment wall.
 var menu_shell: MenuShell
 var debug: DebugOverlay
 ## F5, review-only. See `nav_schematic.gd`: not a map feature, and
@@ -109,6 +110,7 @@ const DRIVERS := {
 	"--counterfire-hosted": preload("res://tests/counterfire_hosted_driver.gd"),
 	"--passing-hosted": preload("res://tests/passing_hosted_driver.gd"),
 	"--menu-shell": preload("res://tests/menu_shell_driver.gd"),
+	"--equipment-face": preload("res://tests/equipment_face_driver.gd"),
 	"--reversible": preload("res://tests/reversible_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
@@ -349,8 +351,13 @@ func boot() -> void:
 	add_child(reveal)
 	menu_shell = MenuShell.new()
 	add_child(menu_shell)
-	inventory = InventoryLayer.new()
-	menu_shell.page_viewport("equipment").add_child(inventory)
+	equipment = EquipmentFace.new()
+	menu_shell.page_root("equipment").add_child(equipment)
+	# The wall facing the player holds focus, or a keyboard or controller
+	# has nothing to move from.
+	menu_shell.page_changed.connect(func(page: String) -> void:
+		if page == "equipment":
+			equipment.take_focus())
 	shop = ShopUI.new()
 	add_child(shop)
 	pause_menu = PauseMenu.new()
@@ -366,7 +373,6 @@ func boot() -> void:
 	menu.mock_pressed.connect(_on_menu_mock)
 	reveal.reveal_started.connect(_update_modal)
 	reveal.reveal_finished.connect(_update_modal)
-	inventory.closed.connect(_update_modal)
 	shop.closed.connect(_update_modal)
 	station_panel.closed.connect(_update_modal)
 	station_panel.warp_chosen.connect(_on_station_warp_chosen)
@@ -439,8 +445,6 @@ func _on_snapshot(_snapshot: Dictionary) -> void:
 			elif zone != null:
 				zone.refresh()
 				_sync_equipped()
-	if inventory.visible:
-		inventory.rebuild()
 	if shop.visible:
 		shop.rebuild()
 	hud.refresh_echo()
@@ -621,7 +625,7 @@ func _toggle_inventory() -> void:
 ## and closes it from there), so this only ever opens.
 func _open_menu(page: String) -> void:
 	pause_menu.open(view == View.ZONE)
-	inventory.open()
+	equipment.open()
 	menu_shell.open(page)
 
 
@@ -632,8 +636,7 @@ func _close_menu() -> void:
 
 func _on_menu_closed() -> void:
 	pause_menu.visible = false
-	if inventory.visible:
-		inventory.close()
+	equipment.close()
 	_update_modal()
 
 func _toggle_shop() -> void:

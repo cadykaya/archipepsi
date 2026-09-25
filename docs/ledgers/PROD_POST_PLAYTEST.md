@@ -245,6 +245,29 @@ where the new rule would refuse a lever.
     - `make godot-passing-hosted PASSING_ZONE=<path>` plays it. Its
       default is `godot/tests/fixtures/passing_zone.json`, the file this
       note asks for.
+- **N-11 (for H-INVENTORY; one ask).** A refused `slot_action` has no
+  answer that names it. `_about` in `server.py` builds a key for the
+  consumable intents and for `zone_state_selected`, and returns "" for
+  `slot_action`.
+  - **Why it matters now:** the Equipment wall shows an equip as PENDING
+    until a snapshot carries it, as the zone-state controls do. An error
+    whose `about` is empty means "unchecked", never "yours", so the wall
+    cannot attribute a refusal to the equip that caused it.
+  - **The ask:** `_about` returns `slot_action:<slot>:<component_id>`
+    for a `slot_action`, with nothing after the last colon for "clear
+    this key". That is the same domain-key shape as
+    `zone_state_selected:<zone>:<variable>:<state>`, and
+    `handle_slot_action` already raises `IntentError`, so the server's
+    existing `exc.about or _about(message)` path would carry it.
+  - **The client half is in and tested** (`EquipRequests.key`, matched
+    exactly and on nothing else). `godot-equipment-face` delivers that
+    key in a synthetic `error` frame and shows it resolving. Until the
+    bridge sends it, a refusal is shown as the bridge's latest,
+    unattributed, and the request waits until the link drops or the
+    player picks again.
+  - **How often it can happen:** the wall only offers the keys the view
+    says an item fits, so a refusal needs a race, such as an item merged
+    away between the snapshot and the press.
 
 ## Evidence rules (PROD_START)
 
@@ -1617,3 +1640,288 @@ packet's own proposal:
     open.
   - A consumable used just before opening the menu goes off when you
     close it, once, for one charge.
+
+## CP3 — `H-INVENTORY` (§5): the Equipment wall, three regions on the inventory view — landed, on provisional art
+
+§5 asks for three regions on the Equipment wall: the equipped build, a
+grid of owned items, and the selected item's detail and comparison. They
+must fit the data that exists, and every equip must follow the
+authority. The wall is built on Dess's `CampaignSnapshot.inventory`
+(H-UI-DATA). Its look is provisional until Arty's Glyph kit
+(H-GLYPH-KIT) arrives; the wall says so in its footer.
+
+- **Reproduced first**, on cb8dbd6 (`H-INVENTORY_before.log`). The wall
+  then held the Echo archive (`InventoryLayer`). A scratch driver asked
+  it §5's questions on the same real snapshots the new suite uses. Its
+  source is `H-INVENTORY_repro_driver.gd.txt`; it is evidence, not a
+  suite. **9 of 9 requirements fail:**
+  - **R1:** one Action is offered for equipping by 2 separate rows: its
+    creating Echo's, and the upgrade-only Leather Grip's.
+  - **R2:** the wall is one scrolling list of 12 rows under a loadout
+    bar. There is no grid and no selected-item detail.
+  - **R3:** an equip pressed with no link changes none of the wall's 100
+    texts.
+  - **R4:** an equip that was sent changes nothing until a snapshot
+    arrives. There is no pending state.
+  - **R5:** a refusal naming that exact equip changes nothing, and no
+    text on the wall carries the bridge's reason.
+  - **R6:** the consumable key reads "—" when you own none and when you
+    own two.
+  - **R7:** offline and online, it reads the same "2 / 3".
+  - **R8:** with a use awaiting the bridge, it shows a smaller number and
+    no word saying why.
+  - **R9:** after Glow Seed arrives, no text says NEW.
+- **What changed:**
+  - **`EquipmentFace`** (new, `godot/scripts/ui/equipment_face.gd`) is
+    the wall's content, mounted where `Main` mounted the archive. It has
+    three regions:
+    - **EQUIPPED:** the five keys the game has (`Constants.SLOT_NAMES`).
+      Each shows what is on it, its real binding (`SlotKeycaps`), a way
+      to clear it, and the latest request's answer. The consumable key
+      says which of its states it is in, in words, with its count.
+    - **OWNED:** a grid with one tile per owned item and never one per
+      Echo. Each tile has a provisional icon (a tinted square and a
+      word), the name, Mk, uses left, the key it is on, and NEW. Search
+      and sort are above the grid. A key filter shows what goes on that
+      key, says the always-on items are hidden, and puts SHOW ALL beside
+      that.
+    - **DETAIL:** what the item does, how it is used (activation and
+      every restriction), what it costs, and how it differs from what is
+      on its key (now → this). Then why EQUIP is not offered, if it is
+      not; the other items from the same Echo; and HISTORY, folded after
+      the summary: the whole provenance chain and what Epsilon read.
+  - **`EquipmentQuery`** (new) holds every answer with a right or wrong
+    to it, with no Control involved. An item is an entry of the view,
+    joined to `mechanics.owned` by component id, so upgrades are
+    history on the item. Which key an item goes on is the view's
+    `compatible_slots`, never derived again.
+  - **`EquipRequests`** (new): an equip is a request, and it has five
+    answers:
+    - PENDING;
+    - ACCEPTED, when a snapshot carries the key holding it;
+    - REFUSED, on an exact `about` key only;
+    - NOT SENT;
+    - LOST, when the link drops mid-request.
+
+    One request per key, and the newest wins. It follows the pattern
+    `zone_state_selected` already uses.
+  - **`EquipmentSeen`** (new): the NEW marker. It is kept per campaign,
+    like `Favourites`, and never touches the save.
+    - The first time a campaign is met, what it already owns counts as
+      seen.
+    - A new item stays NEW until it is inspected, not merely until the
+      menu opens.
+  - **`EffectSummary`** now covers all 28 Action primitives (six had a
+    line) and the status-on-hit modifier. The reveal card reads it too.
+  - **`BridgeClient`** gains three accessors:
+    - `inventory_view()`;
+    - `can_send()`, which is `send_intent`'s own test;
+    - `awaiting_authorization()`, D-9's pending uses.
+  - **`SlotKeycaps.of_action`** lets the wall's hints name the real
+    bindings.
+  - **Removed:** `InventoryLayer` (the archive). Its tests moved to the
+    item face; the table below maps each one.
+  - **The fixture is real:** `make equipment-fixture` builds seven
+    variants as `CampaignSnapshot`s from the bridge's own model, so the
+    `inventory` in them is the projection itself.
+    `bridge/tests/test_equipment_fixture.py` keeps the JSON equal to
+    its generator. It also checks that every log could have been granted
+    and that each variant holds the state it is named for.
+- **Two findings from the first runs, both repaired:**
+  - **EI-F1: a controller could move but never press.** Godot's default
+    `ui_accept` in 4.5.1 is Enter, keypad Enter and Space. It has no
+    pad button, so the d-pad moved focus around the wall and A did
+    nothing. `pause` and `inventory` had no pad binding either.
+    - `project.godot` now binds pad A to `ui_accept` (Godot's three
+      keys kept), Start to `pause`, and Back to `inventory`.
+    - The first run's "A chooses: act_bolt" (it stayed on the previous
+      item) is in the raw `H-INVENTORY_first_run.log.gz`. EI-14 re-breaks
+      it.
+  - **EI-F2: EQUIP scrolled out of reach.** A long comparison pushed
+    the button below the detail's fold, and a click through the box at
+    its position hit nothing ("a click on REPLACE sends it: []").
+    - The decision controls, the reason and the request's answer now
+      sit in a fixed footer under the scrolled detail.
+    - Both scrolls follow keyboard focus.
+    - EI-15 re-breaks it.
+- **Played:**
+  - **`godot-equipment-face`** (new, 107 checks;
+    `H-INVENTORY_after.log`). It runs on the real 3D shell, with real
+    snapshots delivered through `BridgeClient._handle`. The same 9
+    requirements, measured the same way, all hold:
+    - **R1:** one tile per inventory item (9 of 9). Leather Grip is not
+      a tile. Pressing every equip control on the wall offers Braided
+      Lash once. Its Mk II line (+4 damage ← Longshot) is in its
+      history.
+    - **R2:** the three regions sit side by side inside the 1280×720
+      page, under the wall's title, on the Equipment wall's own page
+      viewport. There is a row for each of the 5 keys.
+    - **R3:** offline, EQUIP is not offered and says why, the
+      non-drag equip sends nothing, and the EQUIPPED column says the
+      link is down. A send that fails (stub sender) reads NOT SENT on
+      its key.
+    - **R4:** "REPLACE BRAIDED LASH ON RMB" sends one `slot_action`.
+      - The key still shows Braided Lash and says the request is
+        waiting.
+      - A second press is not offered while it waits.
+      - An unrelated snapshot answers nothing.
+      - The snapshot that carries it moves the key and reads ACCEPTED.
+      - TAKE OFF is a request too.
+    - **R5:** an `error` with no `about` resolves nothing and is shown
+      as the bridge's, unattributed. So does one naming another request.
+      The exact key reads REFUSED, with the bridge's reason; the key
+      never showed Arc Bolt; and EQUIP is offered again. A lost link
+      reads LOST.
+    - **R6–R8:** the consumable key reads six different ways: none
+      owned, owned and not equipped, equipped at 0 / 3 with what refills
+      it, ready at 2 / 3, disconnected (count kept), and "1 use waiting
+      for the bridge's answer" beside the HUD's 1 / 3. With nothing in
+      flight, the client's count equals the view's in every variant.
+    - **R9:** a campaign met for the first time marks nothing NEW. Glow
+      Seed arrives NEW, and only it. OWNED counts it. Inspecting it
+      clears it. A campaign met already holding it does not call it
+      new.
+    - **The detail:**
+      - Cinder Charge reads "Thrown: bursts for 30 damage within 3.0 m
+        after 1.5 s", "Hits leave burning for 3.0 s", its key, and that
+        the status lands on enemies.
+      - It shows "2 of 3 uses left", its cooldown, and "3 uses per
+        supply. Entering a Zone refills it".
+      - Warding Loop says it does nothing while Arc Bolt is off its key,
+        and that it is on once Arc Bolt is.
+    - **Input:**
+      - Q, C and E typed into search go into the box. The box does not
+        turn, no intent leaves, and no key event gets past the shell.
+      - Arriving on the wall, the selected tile holds focus.
+      - Arrows and the d-pad move focus; Enter and A choose; A on EQUIP
+        sends it.
+      - A click carried through the 3D stage chooses a tile, presses
+        REPLACE and filters by key.
+      - Turning to the journal and back keeps the item, the request and
+        focus.
+      - Escape closes the menu; an answer that lands while it is closed
+        is there on reopening.
+  - **`godot-candidate-live`**, through the real bridge, in a real Zone,
+    with the world paused (`H-INVENTORY_candidate_live_next.log`, all 9
+    phases green). "EQUIP ON RMB" on the Equipment wall was PENDING at
+    the press. The bridge answered (echo_a: none → `act_l89100025`) and
+    the request read ACCEPTED from that snapshot, the world still
+    paused. The loadout was put back as a declared harness step.
+    - **The first live run failed this check, on the check's own race.**
+      A local bridge answers inside one frame. Read one frame after the
+      press, the request had already been answered
+      (`H-INVENTORY_candidate_live_first.log`). It is now read at the
+      press, before the client's next poll can answer it. The re-run is
+      green.
+  - Also green (`H-INVENTORY_suites.log`):
+    - `godot-hud`, `godot-boot`, `godot-archive`;
+    - `godot-consumable` (87 checks), `godot-menu-shell` (23),
+      `godot-consumable-restart`;
+    - `godot-test`, `godot-lab`, `godot-stats`, `godot-legible`,
+      `godot-reload` and `godot-integration`;
+    - `test_equipment_fixture.py` (3) and `test_ci_coverage.py`.
+- **Screenshots** (`H-INVENTORY_shots/`, under xvfb, opengl3), each at
+  1280×720 and 1920×1080: the comparison, the history, and the
+  consumable key filtered. Plus the exhausted key and the offline wall
+  at 1280×720. Looking at them found two legibility
+  defects, both repaired:
+  - **The comparison was noisy.** It listed every field only one kind
+    of attack has ("Pellets: — → 1", "Spread: — → 0°", "Flight time:
+    1.5 s → —"). One-sided fields now appear only if they decide
+    something: damage, range, radius, amount, duration, cooldown, uses.
+  - **Units wrapped away from their numbers** ("after 1.5" on one line,
+    "s" on the next). The wall now draws a no-break space there.
+  - EI-23 and EI-24 re-break each one.
+- **Declared harness steps:**
+  - `assume_sent` stands the link up or down;
+  - refusals arrive as `error` frames carrying the key the bridge does
+    not attach yet (N-11);
+  - one NOT SENT comes from a stub sender;
+  - the controller case focuses EQUIP directly before pressing A. Tab is
+    the shell's own key, so there is no focus-next to walk there with;
+  - between cases, outstanding requests are cleared. A request is real
+    state that survives a close.
+- **The archive's tests, moved with the thing they are about:**
+
+| Was (on `InventoryLayer`) | Now (on the item face, real snapshots) |
+|---|---|
+| hud `_archive_provenance`: the chain, the reads | face `_history_and_reads`: the chain in order, once; both reads |
+| hud `_archive_provenance`: "Upgrades res_magic (+40 max_value)" | hud `_the_upgrade_line`, on `EffectSummary` directly (the reveal reads it) |
+| hud `_the_split_on_the_real_panel`: mixed and upgrade-only Echoes, the key filter | face `_the_split_and_the_filter` and `_one_item_one_tile` |
+| hud `_the_search_box_keeps_its_place` | face `_the_search_box_keeps_its_place`, on the real shell's page viewport |
+| consumable `_the_menu_shows_an_exhausted_supply_and_what_refills_it` | face `_the_consumable_key` (0 / 3 on the key, what refills it) and `_an_empty_spare_is_not_offered` |
+| boot: the archive opens in the middle | face `_three_regions`: inside the page, under the title, on the wall's own viewport |
+
+- **Sabotages** (`H-INVENTORY_sabotages.log`), each restored byte for
+  byte (sha256), each against the case that should catch it:
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| EI-1 | an equip is resolved by ANY snapshot (optimistic) | `_pending_then_accepted`: "an unrelated snapshot answers nothing" |
+| EI-2 | a refusal resolves the first request, whatever it names | `_refusals_and_a_lost_link`: "a refusal naming another request resolves nothing" (+1) |
+| EI-3 | an error with no `about` counts as a refusal | `_refusals_and_a_lost_link`: 4 failures, from "a refusal naming another request resolves nothing" |
+| EI-4 | the key paints the pending pick as held (optimistic) | `_pending_then_accepted`: "the key still shows what the bridge confirmed: 'Arc Bolt'" |
+| EI-5 | an upgrade becomes an item of its own (a tile per history link) | `_one_item_one_tile`: "one tile per inventory item, 11 of 9" (act_lash and res_magic twice) |
+| EI-6 | a key filter keeps the always-on half | `_the_split_and_the_filter`: "the RMB key shows what goes on it" lists the three always-on items (+3). **Not caught on the first run**; see below |
+| EI-7 | owning no consumable reads as owning one off the key | `_the_consumable_key`: "none owned says so" (it read "You own 0 consumables: pick one") |
+| EI-8 | the consumable key ignores the link | `_the_consumable_key`: "disconnected says so, count kept" |
+| EI-9 | the consumable key ignores a use awaiting the bridge | `_the_consumable_key`: "a use awaiting the bridge says so" (a bare "1 / 3") |
+| EI-10 | a campaign met for the first time is all NEW | `_a_new_item_is_marked`: 5 failures, from "marks nothing new" |
+| EI-11 | inspecting an item does not clear NEW | `_a_new_item_is_marked`: "inspecting it is noticing it: the marker goes" |
+| EI-12 | a repaint takes focus from the search box | `_the_search_box_keeps_its_place`: "a snapshot mid-search keeps focus, caret 2 and text 'lash'" (+1) |
+| EI-13 | the shell forgets a text field has the keys | `_typing_is_not_playing`: "the letters go into the box ('')" |
+| EI-14 | the pad's A is not `ui_accept` (Godot's default map; EI-F1) | `_keyboard_and_controller`: "A chooses: act_bolt", "A on EQUIP sends it: []" |
+| EI-15 | the equip controls scroll with the detail (the first layout; EI-F2) | `_the_mouse`: "a click on REPLACE sends it: []" |
+| EI-16 | a spent spare is offered | `_an_empty_spare_is_not_offered`: "a spent spare is not offered, and says a Zone refills it" |
+| EI-17 | a second press is offered while the first waits | `_pending_then_accepted`: "a second press is not offered while it waits" |
+| EI-18 | the comparison runs this → now | `_pending_then_accepted`: "the comparison is against what is on the key, now → this" |
+| EI-19 | history drops the upgrades | `_history_and_reads`: "the whole chain, in order, once" (the Mk I line alone) |
+| EI-20 | arriving at the wall, nothing takes focus | `_keyboard_and_controller`: "an arrow key moves focus to another control on the wall: nothing" (+1) |
+| EI-21 | a link lost mid-request stays pending | `_refusals_and_a_lost_link`: "a link lost mid-request is LOST, not pending forever" |
+| EI-22 | the fixture hand-edited (Cinder Charge 3 left, not 2) | `test_equipment_fixture.py::test_the_committed_fixture_matches_its_generator` |
+| EI-23 | a field only one side has is listed as a difference again | `_pending_then_accepted`: "a field only one kind of attack has is not listed as a difference" |
+| EI-24 | units may wrap away from their numbers again | `_the_detail_answers`: "a number keeps its unit on its line" |
+
+- **The sabotage runs:**
+  - **The first run: 21 of 22** (`H-INVENTORY_sabotages_first.log`).
+    **EI-6 passed.** The rule "a key filter hides the always-on half"
+    lived twice: in `EquipmentQuery.grid` and again as a guard in the
+    face. Breaking the query's copy was masked by the face's guard.
+  - **The fix:** the face now draws what the query returns, and a
+    direct check asks the query itself. EI-6 alone was re-run
+    (`H-INVENTORY_sabotage_EI-6_rerun.log`): caught, 4 failures.
+  - **The final run, on the final code: 24 of 24.** EI-23 and EI-24
+    were added with the two legibility repairs above.
+
+- **What stays open:**
+  - **The Glyph-authored final look.** The icons, fonts and panels are
+    placeholders. They do not satisfy §9 or CP3's "one Glyph equipment
+    face", which waits on Arty's H-GLYPH-KIT.
+  - **N-11:** a refused `slot_action` has no `about` from the bridge.
+    Until it does, a refusal shows as the bridge's, unattributed, and
+    the request waits until the link drops or the player picks again.
+    The wall only offers the keys the view says an item fits, so a
+    refusal needs a race, such as an item merged away between the
+    snapshot and the press.
+  - **Drag and drop is not offered.** §5 allows it but does not require
+    it. Without it, there is no drag to dangle across a turn or a close.
+  - `ArchiveQuery`'s Echo-level split and sort are now used by no
+    screen. `matches` is still used, by the item search. The rest stays
+    tested (`godot-archive`) until it is retired on purpose.
+  - A new item is marked on the wall only. The HUD's pickup
+    announcement is unchanged.
+  - Owner usability and visual approval is a separate result.
+- **What the owner will notice:**
+  - Tab opens Equipment as three columns:
+    - your five keys on the left;
+    - everything you own as tiles in the middle;
+    - the one you picked on the right, with what it does and how it
+      compares with what is on its key now.
+  - An upgrade is part of the item it upgraded, not a second copy of it.
+  - Pressing EQUIP shows "waiting for the bridge" on the key until the
+    game confirms it. If the game refuses, the key says why.
+  - The Q key says which state it is in: none owned, one to pick, empty
+    until a Zone refills it, waiting, or offline.
+  - A new item is marked NEW until you look at it.
+  - A controller works on every wall now: the d-pad moves, A presses,
+    Start closes and Back opens Equipment.

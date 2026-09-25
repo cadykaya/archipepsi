@@ -217,10 +217,31 @@ owner's D-06/D-07 rulings and the seam table are in
       - Played by the shell suite, the live consumable suite (the race,
         and a respawn that waits) and the live candidate suite (a real
         equip with the world paused). MP-1 to MP-6 each fail by name.
-    - **Next:** `H-INVENTORY`, the three-region equipment face on
-      Dess's `H-UI-DATA` (`CampaignSnapshot.inventory`, which is in). Its
-      final look waits on Arty's `H-GLYPH-KIT`, so it starts on
-      explicitly provisional assets.
+    - `H-INVENTORY` (§5): **landed, on provisional art.**
+      - The Equipment wall's three regions: the five keys; a grid of owned
+        items, one tile per item (upgrades are history); and the selected
+        item's detail and comparison. It reads Dess's
+        `CampaignSnapshot.inventory` joined to `mechanics.owned`, and
+        `InventoryLayer` (the archive) is gone.
+      - An equip is PENDING until a snapshot carries it; REFUSED only on
+        an exact `about` key (N-11 asks Dess for the `slot_action` key);
+        NOT SENT or LOST otherwise. The consumable key names its states.
+        A new item is marked NEW until it is inspected.
+      - Mouse through the 3D stage, keyboard and controller. Pad A,
+        Start and Back are now bound: `ui_accept` had no pad button
+        (EI-F1).
+      - Reproduced first: 9 of 9 requirements failed on the archive.
+        `godot-equipment-face` (new, in CI, 107 checks) passes all 9, on
+        real `CampaignSnapshot`s (`make equipment-fixture`, guarded by
+        `test_equipment_fixture.py`). The live candidate suite equips
+        through the real bridge with the world paused. 24 of 24
+        sabotages fail by name; the first run missed EI-6, which was
+        fixed.
+      - The Glyph-authored final look is still owed (H-GLYPH-KIT); the
+        placeholders do not satisfy it.
+    - **Next: the CP3 checkpoint.** The full frontier, once, on a frozen
+      revision. Then CP4: `H-MINIMAP`, `H-3D-MAP` and `H-JOURNAL`, on
+      Dess's `zone_map` (H-MAP-DATA) and the `room_entered` intent (D-2).
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

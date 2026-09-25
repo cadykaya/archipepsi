@@ -271,7 +271,6 @@ func _run() -> void:
 	await _a_disconnect_after_the_engine_counted_it_costs_the_charge()
 	await _a_cancel_does_not_forget_an_earlier_launch()
 	await _swapping_away_and_back_is_not_a_refill()
-	await _the_menu_shows_an_exhausted_supply_and_what_refills_it()
 	await _a_held_player_does_not_fire_while_the_archive_is_open()
 
 	BridgeClient.assume_sent = false
@@ -721,56 +720,12 @@ func _swapping_away_and_back_is_not_a_refill() -> void:
 	_check(_effects == 1, "the resumed supply fires with no refill")
 
 
-## THE MENU SAYS WHAT IT IS AND WHAT BRINGS IT BACK. An exhausted
-## consumable that reads as gone is the control that looks broken; one
-## that reads as live is the control that does nothing.
-func _the_menu_shows_an_exhausted_supply_and_what_refills_it() -> void:
-	print("  -- the menu: 0 / 3, still equipped, and why")
-	await _reset(CHARGES)
-	var inventory := InventoryLayer.new()
-	add_child(inventory)
-	inventory.rebuild()
-	await get_tree().process_frame
-
-	var texts := _label_texts(inventory)
-	var slot_row := ""
-	for text: String in texts:
-		if text.contains("Cinder Charge") and text.contains("/"):
-			slot_row = text
-			break
-	_check(slot_row.contains("0 / %d" % CHARGES),
-			"the slot row reads '0 / %d', not a blank" % CHARGES)
-
-	var spent_button: Button = null
-	for button: Button in _buttons(inventory):
-		if button.text == "SPENT":
-			spent_button = button
-			break
-	_check(spent_button != null, "the equip button says SPENT")
-	if spent_button != null:
-		_check(spent_button.disabled,
-				"and is disabled — it cannot fire, so it does not offer to")
-		_check(spent_button.tooltip_text.contains("Zone"),
-				"and says a Zone refills it: '%s'" % spent_button.tooltip_text)
-	inventory.queue_free()
-
-
-func _label_texts(node: Node) -> Array[String]:
-	var out: Array[String] = []
-	if node is Label:
-		out.append((node as Label).text)
-	for child: Node in node.get_children():
-		out.append_array(_label_texts(child))
-	return out
-
-
-func _buttons(node: Node) -> Array[Button]:
-	var out: Array[Button] = []
-	if node is Button:
-		out.append(node as Button)
-	for child: Node in node.get_children():
-		out.append_array(_buttons(child))
-	return out
+## THE MENU SAYS WHAT IT IS AND WHAT BRINGS IT BACK -- asserted on the item
+## face now (H-INVENTORY), on real snapshots: `equipment_face_driver.gd`'s
+## `_the_consumable_key` (equipped at 0 / 3, still on the key, what refills
+## it) and `_an_empty_spare_is_not_offered` (a spent supply off the key is
+## not offered, and says a Zone refills it). This suite's snapshot is
+## hand-built and carries no `inventory`, which the face reads.
 
 
 ## TYPING IS NOT PLAYING, on the real input path.

@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted godot-menu-shell menu-shell-shots lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted godot-menu-shell menu-shell-shots godot-equipment-face equipment-face-shots equipment-fixture lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -47,6 +47,11 @@ rules-fixture:
 
 verbs-fixture:
 	$(PY) bridge/archipepsi_bridge/fixtures/make_verbs_snapshot.py
+
+# H-INVENTORY's snapshots are real `CampaignSnapshot`s, so the face is
+# tested against the inventory Dess's projection actually emits.
+equipment-fixture:
+	$(PY) bridge/archipepsi_bridge/fixtures/make_equipment_snapshot.py
 
 # The PRE-ART playtest baseline. Regenerate DELIBERATELY and in its own
 # commit: retaking it means the playtest before it and the playtest after
@@ -1206,6 +1211,27 @@ SHOTS_DIR ?= /tmp/archipepsi-menu-shell
 menu-shell-shots: godot-import
 	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
 	  --rendering-driver opengl3 -- --menu-shell --shots=$(SHOTS_DIR) 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# H-INVENTORY (CP3): THE EQUIPMENT WALL, three regions on Dess's
+# `CampaignSnapshot.inventory`: the keys, a grid of owned items (items,
+# never Echo events), and the selected item's detail and comparison. An
+# equip is a request until a snapshot carries it; a refusal is shown on
+# the exact `about` key only; the consumable key names its five states;
+# mouse, keyboard and controller all reach it through the 3D shell.
+# `equipment-face-shots` renders it under xvfb at 1280x720 and 1920x1080.
+godot-equipment-face: godot-import  # the equipment wall: regions, requests, input
+	@out=$$($(GODOT) --headless --path godot -- --equipment-face 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT EQUIPMENT FACE OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-equipment-face: script errors in the run"; exit 1; fi
+
+EQUIPMENT_SHOTS_DIR ?= /tmp/archipepsi-equipment-face
+equipment-face-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --equipment-face \
+	  --shots=$(EQUIPMENT_SHOTS_DIR) 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
 # D13 1d / Dess's D-4: A DOORWAY HELD OPEN BY A DECLARED WEIGHT, on
