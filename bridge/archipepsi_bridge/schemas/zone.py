@@ -33,6 +33,7 @@ try:  # works standalone and when copied into a package
     from .signal_graph import (RoomGraph, phases, upstream,
                                ROUTE_NODE_KINDS, ROUTE_SENSOR_KINDS,
                                ZONE_PLACEABLE_SENSOR_KINDS)
+    from .featured import FEATURED_REQUIREMENTS
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
@@ -46,6 +47,7 @@ except ImportError:  # pragma: no cover
     from signal_graph import (RoomGraph, phases, upstream,
                               ROUTE_NODE_KINDS, ROUTE_SENSOR_KINDS,
                               ZONE_PLACEABLE_SENSOR_KINDS)
+    from featured import FEATURED_REQUIREMENTS
 
 #: Every joining socket name a procedural room can be given, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
@@ -2551,6 +2553,18 @@ def validate_zone(
     # doors" at its purest. The composer never makes one (0 of 80 in the
     # sample); this refuses one at acceptance, and never on load.
     errors.extend(_keys_that_open_nothing(zone))
+
+    # D-02: A FEATURED ACQUISITION NAMES A PROVEN FUNCTION. The Echo its
+    # Check yields is held to a requirement the room was shown to be
+    # crossed with (`featured.FEATURED_REQUIREMENTS`); a capability with
+    # none would be a name-only claim nothing can qualify against.
+    featured = getattr(zone, "featured_acquisition", None)
+    if featured is not None and \
+            featured.capability not in FEATURED_REQUIREMENTS:
+        errors.append(
+            f"the featured acquisition asks for '{featured.capability}', "
+            "which no proven requirement covers; its Echo could not be "
+            "held to a real function")
 
     return errors
 

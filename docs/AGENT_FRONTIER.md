@@ -31,16 +31,16 @@ item is in `docs/ledgers/DESS_POST_PLAYTEST.md`.
 - `candidate_live_driver.gd`'s shutter count (0 until 1c);
 - CI (N-3).
 
-**Waiting on the owner:**
-- D-02, D-03 and D-04. The options are in D15; nothing on those
-  branches is built.
-- DESS-26 (`grapple_pull_target` counted as a traversal grapple) lands
-  with D-02.
-- Dess's N-2 reading: a base-kit carriage ride-jump is not EX50-033's
-  valid alternate.
+**Wave 3, owner-approved 2026-09-25:**
+- DESS-26 is fixed: an enemy pull is not a crossing.
+- H-QUALIFY's contract has landed (`schemas/featured.py`). The pipeline
+  wiring is note D-5 to Prod.
+- H-GEAR (16 costed domains) is next.
+- H-AP-GATE and H-ATOM-DELIVERY are explicitly deferred (ledger).
 
-**Not started:** W3.5 H-GEAR and the other Wave 3 items. The owner's
-go-ahead named D-01 only, so they are not assumed.
+**Waiting on the owner:**
+- Nothing open. D-02, D-03, D-04, D-01's compatibility and the
+  Unweighted reading were all ruled on 2026-09-25.
 
 **CI is not running.** Every PR-gate and Integration run has failed
 within about four seconds, with no log, since at least `6ebbc90`, for

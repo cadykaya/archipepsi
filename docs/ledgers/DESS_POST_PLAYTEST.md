@@ -988,3 +988,67 @@ asserted the ruled-out behaviour. It is now
 - The packet mirror of `mechanics.py` is copied, and `check_packet` is
   clean.
 - Bridge suite: 2145 passed.
+
+## W3.2 — H-QUALIFY, Dess's half: the featured Echo's mechanical contract (`schemas/featured.py`)
+
+**D-02 as ruled.** The game owns the requirement; Epsilon names and
+styles within it; a deterministic fallback always qualifies.
+
+**The requirement is a proven function, not a label.** For Blindside's
+gantry:
+- `FEATURED_REQUIREMENTS["grapple"]` is `grapple_to_surface` with range
+  ≥ 20 and pull ≥ 14. The pedestal grapple the development scenario
+  reaches the deck with is exactly that (`railway_scenario.gd:43-57,
+  361-364, 747-756`).
+- `grapple_swing` is also a `grapple`, but nothing has measured it on
+  the gantry, so it does not qualify there.
+- A requirement may only name a primitive that moves the player within
+  its traversal capability. That is DESS-26's contract, enforced by the
+  model.
+- `validate_zone` now refuses a featured acquisition whose capability
+  has no proven requirement (no name-only claim).
+
+**`check(log, candidate, requirement, next_seq)`** folds the candidate
+onto the log as `append_interpretation` would stamp it, and passes only
+if **this** Echo created or changed a non-consumable Action meeting
+every floor:
+- an upgrade that makes an owned grapple reach counts;
+- an owned grapple does not excuse an Echo that supplies nothing;
+- an enemy pull, a swing, a short range, a weak pull or a consumable are
+  each told why.
+
+**`fallback_interpretation(...)`** is deterministic, uses the
+requirement's own floors, and is named from the item. A Signal Key
+yields a working grapple.
+
+**Recipient-independent.** A featured Check's Echo is held to the same
+requirement whoever the original was addressed to (D-01 makes the Echo
+exist either way).
+
+**Evidence:**
+- `tests/test_featured_requirement.py`: 18 tests.
+- 7 sabotages, each failing its target: any primitive passes, the floors
+  are ignored, a consumable passes, an owned grapple excuses the Echo,
+  the fallback is too weak, the featured room is unguarded, a
+  requirement may name anything.
+- One v0.8 packet copy of `featured.py`; the `zone.py` mirror copied;
+  `check_packet` clean; export unchanged.
+- Bridge suite: 2163 passed.
+
+**Note D-5 (Dess → Prod): the pipeline's half, in `epsilon/*` and
+`campaign.py`'s grant path, which were not released to me:**
+1. **At grant:** `req = featured.requirement_for(zone, location_id)` for
+   the Zone record whose `featured_acquisition` names the location.
+2. **Request:** carry `req.describe()`, for example as
+   `EchoGenerationRequest.required_function`, so the provider authors
+   within the contract.
+3. **Semantic step:** add
+   `featured.check(save.interpretations, candidate, req, save.next_interpretation_seq)`
+   to the validation checks when `req` is set.
+4. **After the one repair still fails:** substitute
+   `featured.fallback_interpretation(req, location_id=…, item_name=…, source_game=…, recipient_name=…)`
+   for the generic fallback.
+5. **Combined tests:**
+   - a provider returning an enemy pull yields the qualifying fallback;
+   - a good provider's Echo is kept;
+   - the same holds for self-addressed and foreign originals.
