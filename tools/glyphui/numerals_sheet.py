@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Track A -- the numerals, big enough to look at.
 
-    python3 tools/glyphui/numerals_sheet.py [out dir]
+    python3 tools/glyphui/numerals_sheet.py [out dir] [face]
 
-`assets/ui/ui_numerals.png` is 72x8. It is the right size for the
-engine and the wrong size for a person, so this draws the same pixels
+A face's page is the right size for the engine and the wrong size for a
+person -- `ui_numerals.png` is 72x8 -- so this draws the same pixels
 magnified, one cell per character, with the advance each glyph declares
 marked on it.
+
+`face` defaults to `ui_numerals`; pass `ui_text` for the text face.
 
 Nothing here is authored: the sheet is composed from the committed page
 and the committed `.fnt`, so it cannot disagree with the font. If a
@@ -30,9 +32,9 @@ CELL_BG = (38, 41, 45)
 PEN = (57, 215, 200)
 
 
-def glyphs():
+def glyphs(face):
     """(char, x, y, w, h, advance) for every character in the .fnt."""
-    text = open(os.path.join(UI, "ui_numerals.fnt"), encoding="utf-8").read()
+    text = open(os.path.join(UI, "%s.fnt" % face), encoding="utf-8").read()
     out = []
     for line in text.splitlines():
         if not line.startswith("char id="):
@@ -46,8 +48,9 @@ def glyphs():
 def main():
     out_dir = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
         REPO, "docs", "art", "review", "interface_2026-09-24")
-    page = Image.open(os.path.join(UI, "ui_numerals.png")).convert("RGBA")
-    cells = glyphs()
+    face = sys.argv[2] if len(sys.argv) > 2 else "ui_numerals"
+    page = Image.open(os.path.join(UI, "%s.png" % face)).convert("RGBA")
+    cells = glyphs(face)
     if not cells:
         print("numerals-sheet: FAIL -- the .fnt declares no characters",
               file=sys.stderr)
@@ -55,7 +58,7 @@ def main():
 
     cw = cells[0][3] * ZOOM
     ch = cells[0][4] * ZOOM
-    cols = 6
+    cols = 6 if len(cells) <= 12 else 13
     rows = (len(cells) + cols - 1) // cols
     sheet = Image.new("RGB", (PAD + cols * (cw + PAD),
                               PAD + rows * (ch + PAD + 14)), BACK)
@@ -79,11 +82,10 @@ def main():
             sx = cx + adv * ZOOM
             if sx < sheet.size[0]:
                 px[sx, cy + dy] = PEN
-    path = os.path.join(out_dir, "SHEET_numerals.png")
+    path = os.path.join(out_dir, "SHEET_%s.png" % face.replace("ui_", ""))
     sheet.save(path)
-    print("numerals-sheet: %d glyph(s) at %dx -> %s"
-          % (len(cells), ZOOM, os.path.relpath(path, REPO)))
-    print("  advances: %s" % ", ".join("%s=%d" % (c[0], c[5]) for c in cells))
+    print("numerals-sheet: %d glyph(s) of %s at %dx -> %s"
+          % (len(cells), face, ZOOM, os.path.relpath(path, REPO)))
     return 0
 
 

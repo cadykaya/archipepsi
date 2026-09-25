@@ -14,7 +14,27 @@ at 3x with nearest so you are looking at the actual pixels.
 | --- | --- |
 | `FACE_grid_and_selection.png` | A window, a header well with a total, a 4x3 grid of cells, one of them selected, and a count in every cell. |
 | `PANELS_at_four_sizes.png` | The three treatments at 10x10 (authored), 24x16, 60x28 and 118x40. The corners are the same pixels in all four. |
-| `SHEET_numerals.png` | Every glyph at 8x, with the cyan line marking the advance each one declares. `1`'s line sits a column left of the rest — that is the whole metrics proof, as a picture. |
+| `SHEET_numerals.png` | Every numeral at 8x, with the cyan line marking the advance each one declares. `1`'s line sits a column left of the rest — that is the whole metrics proof, as a picture. |
+| `SHEET_text.png` | The text face: 52 characters — capitals, the numerals' own digits unchanged, and the punctuation a label needs. |
+
+## The text face
+
+`ui_text` is what the interface talks with. **Capitals only**: a 6x8
+cell gives five rows above the baseline, and lowercase needs an
+x-height plus ascenders and descenders inside the same five — at that
+size the descender either collides with the next line or is one pixel
+and reads as dirt. A mixed-case face wants a taller cell, not a
+squeezed one.
+
+**There is no separate heading face, on purpose.** The import
+measurement showed the imported font scaling to exactly 2x, so a
+heading is this face at 16 px. A second alphabet at double size would
+be two things to keep in step for a result the engine already gives,
+and they would drift the first time only one was corrected.
+
+The digits are the numerals' own rows, unchanged. A UI that spells `12`
+one way in a label and another in a count has two fonts pretending to
+be one.
 
 ## The three treatments
 

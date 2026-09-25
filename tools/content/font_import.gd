@@ -19,6 +19,9 @@ extends SceneTree
 ## They must agree. If they do not, the sidecar is carrying different
 ## metrics from the source and the committed font is a lie.
 
+## Every face in `assets/ui/`. A new face with no gate is the thing the
+## suite exists to stop, and `ui_text` arrived after this harness did.
+const FACES := ["ui_numerals", "ui_text"]
 const FONT := "res://_harness/ui_numerals.fnt"
 ## The same font with ONE byte changed: `1` advances 5 like everything
 ## else. See `_sabotage()`.
@@ -37,6 +40,71 @@ const ABSENT := "A#z "
 const PAIR_ONES := 8.0
 const PAIR_NOUGHTS := 10.0
 
+
+## What the `.fnt` itself declares: `{base, advances: {char: px}}`.
+## Read from the file rather than restated here, so a face can be added
+## without this harness learning its alphabet -- and so the check is
+## against what SHIPPED, not against what I remember authoring.
+func _declared(path: String) -> Dictionary:
+	var out := {"base": -1.0, "advances": {}, "rects": {}}
+	for line in FileAccess.get_file_as_string(path).split("\n"):
+		if line.begins_with("common "):
+			for bit in line.split(" "):
+				if bit.begins_with("base="):
+					out["base"] = float(bit.substr(5))
+		elif line.begins_with("char id="):
+			var id := -1
+			var adv := -1.0
+			var rx := 0
+			var ry := 0
+			var rw := 0
+			var rh := 0
+			for bit in line.split(" "):
+				if bit.begins_with("id="):
+					id = int(bit.substr(3))
+				elif bit.begins_with("xadvance="):
+					adv = float(bit.substr(9))
+				elif bit.begins_with("x="):
+					rx = int(bit.substr(2))
+				elif bit.begins_with("y="):
+					ry = int(bit.substr(2))
+				elif bit.begins_with("width="):
+					rw = int(bit.substr(6))
+				elif bit.begins_with("height="):
+					rh = int(bit.substr(7))
+			if id >= 0 and adv >= 0.0:
+				out["advances"][char(id)] = adv
+				out["rects"][char(id)] = Rect2i(rx, ry, rw, rh)
+	return out
+
+
+## Every declared advance, composed by the engine and checked against
+## the file. `"11"` narrower than `"00"` was one pair; this is all of
+## them, for every face.
+##
+## NOTE WHAT THIS CANNOT SEE. Both sides read the same `.fnt`, so a
+## corrupted advance moves the expectation with it -- sabotage-tested by
+## changing `A` to xadvance=9, which this passed. It proves the engine
+## LAYS OUT with per-glyph advances rather than a fixed cell, which is
+## the metrics claim and would fail if Godot ignored xadvance. It does
+## not prove the file matches the art. `_advance_matches_ink` does that.
+func _advances_compose(font: Font, face: String,
+		declared: Dictionary) -> void:
+	var advances: Dictionary = declared["advances"]
+	var checked := 0
+	for ch: String in advances:
+		if ch == " ":
+			continue
+		var want: float = float(advances[ch]) * 2.0
+		var got := _measure(font, ch + ch)
+		if not is_equal_approx(got, want):
+			_bad("%s: '%s' twice measures %s and its row declares xadvance %s, so it should measure %s"
+				 % [face, ch, got, advances[ch], want])
+			return
+		checked += 1
+	print("[fontimport] %s: %d advance(s) compose exactly as declared"
+		  % [face, checked])
+
 ## The keys both paths must report identically: they are the FONT, not
 ## the engine's handling of it. `noughts_at_2x` is deliberately not here
 ## -- see `_scaling()`, where the difference is asserted on purpose.
@@ -50,6 +118,47 @@ const IMPORTER_SCALE_MODE := TextServer.FIXED_SIZE_SCALE_ENABLED
 
 var _faults: Array[String] = []
 var _notes := {}
+
+
+## The declaration against the ART, which is the check with an
+## independent second opinion: the advance a glyph should have is a fact
+## about where its ink stops, and the page is read from disk rather than
+## through the importer.
+##
+## `fontkit.advance_of` puts the pen one column past the rightmost ink,
+## and ink begins at cell x = 1, so `advance == rightmost_local_x + 1`.
+func _advance_matches_ink(face: String, declared: Dictionary,
+		rects: Dictionary) -> void:
+	var page := Image.new()
+	if page.load(ProjectSettings.globalize_path(
+			"res://_harness/%s.png" % face)) != OK:
+		_bad("%s: could not read its page to check the advances against "
+			 % face + "the ink")
+		return
+	var advances: Dictionary = declared["advances"]
+	var checked := 0
+	for ch: String in advances:
+		var r: Rect2i = rects[ch]
+		var rightmost := -1
+		for gy in r.size.y:
+			for gx in r.size.x:
+				if page.get_pixel(r.position.x + gx,
+						r.position.y + gy).a > 0.5:
+					rightmost = maxi(rightmost, gx)
+		if rightmost < 0:
+			continue  # a blank glyph has no ink to measure
+		var want := float(rightmost + 1)
+		if not is_equal_approx(float(advances[ch]), want):
+			# ONE format call. GDScript has no `%r`, and splitting a
+			# format across a `+` let the second half bind its
+			# arguments while the first printed its own placeholders --
+			# a fault message that could not say what faulted.
+			_bad("%s: '%s' declares xadvance %s and its ink stops at local x=%d, so the pen should travel %s. The file and the art disagree"
+				 % [face, ch, advances[ch], rightmost, want])
+			return
+		checked += 1
+	print("[fontimport] %s: %d advance(s) match where the ink stops"
+		  % [face, checked])
 
 
 func _bad(what: String) -> void:
@@ -66,6 +175,43 @@ func _init() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:
 		out = args[0]
+
+	# --- every face, against its own declaration ----------------------
+	#
+	# The rest of this harness measures ONE face against constants typed
+	# into it, which was right while there was one face and stopped
+	# being right the moment `ui_text` arrived with 52 characters. This
+	# loop reads each face's `.fnt` and checks the engine against what
+	# SHIPPED rather than against what I remember authoring.
+	for face in FACES:
+		var path := "res://_harness/%s.fnt" % face
+		if not FileAccess.file_exists(path):
+			_bad("%s is not staged; a face in assets/ui with no gate is "
+				 % face + "a face nothing checks")
+			continue
+		var declared := _declared(path)
+		if declared["advances"].is_empty():
+			_bad("%s declares no characters" % face)
+			continue
+		var loaded: Variant = load(path)
+		if not (loaded is FontFile):
+			_bad("%s: load() gave %s, not a FontFile" % [face, loaded])
+			continue
+		var f: FontFile = loaded
+		if not is_equal_approx(f.get_ascent(SIZE), float(declared["base"])):
+			_bad("%s: ascent %s, and its .fnt declares base=%s"
+				 % [face, f.get_ascent(SIZE), declared["base"]])
+		var absent := ""
+		for ch: String in declared["advances"]:
+			if not f.has_char(ch.unicode_at(0)):
+				absent += ch
+		if absent != "":
+			_bad("%s: has_char says no to %s, which its own .fnt declares"
+				 % [face, absent])
+		_advances_compose(f, face, declared)
+		_advance_matches_ink(face, declared, declared["rects"])
+		_notes[face] = {"characters": declared["advances"].size(),
+			"base": declared["base"], "ascent": f.get_ascent(SIZE)}
 
 	# --- path 1: the imported resource --------------------------------
 	var imported: Variant = load(FONT)

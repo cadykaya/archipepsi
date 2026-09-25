@@ -163,7 +163,7 @@ func _check(role: String) -> void:
 		var env: Dictionary = _envelopes[role]
 		for key: String in ["size", "centre_y", "hover_height", "flying"]:
 			if not env.has(key):
-				_fail("Constants.ENEMY_ENVELOPES[%s] has no %r -- this "
+				_fail("Constants.ENEMY_ENVELOPES[%s] has no '%s' -- this "
 						% [role, key]
 						+ "harness was written against a different shape "
 						+ "and would check nothing.")
@@ -210,7 +210,7 @@ func _check(role: String) -> void:
 	entry["anchors_declared"] = declared
 	for want: String in declared:
 		if not (out["names"] as Array).has(want):
-			_fail("%s declares an anchor %r that did not survive export "
+			_fail("%s declares an anchor '%s' that did not survive export "
 					% [role, want]
 					+ "-- a runtime has nothing to fetch by that name")
 	if declared.is_empty():

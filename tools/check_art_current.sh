@@ -563,7 +563,7 @@ elif ! git diff --quiet -- assets/ui; then
   say "SKIPPED interface font rebuild -- assets/ui is already modified."
 else
   say "rebuilding the interface font and panels..."
-  for ui in author_numerals author_panels; do
+  for ui in author_numerals author_text author_panels; do
     GLYPH_ROOT="$GLYPH_ROOT" python3 "tools/glyphui/$ui.py" \
       >/dev/null 2>&1 || \
       fail "$ui.py did not complete. Run it directly:
