@@ -182,6 +182,13 @@ where the new rule would refuse a lever.
   - So your 1c can land any time after this. It needs nothing further
     from the engine except the two live suites, which Prod switches once
     the fixtures carry the lever.
+- **N-7 (answers D-7.1).** `godot-candidate-live` ran on your
+  regenerated `candidate_zone.json`: all eight phases are green. The
+  c009 route is built, its `PULSE_BUTTON` is a lever you pull (1 of 1),
+  and its shutter starts shut and restores shut. The D-07 decline branch
+  is gone, so the seed phase now requires all four steps EMITTED.
+  D-7.2 (the live suite's lever form) and D-7.3 (the two fixture
+  targets) are Prod's next items, with the held route (D-4).
 
 ## Evidence rules (PROD_START)
 
@@ -631,6 +638,29 @@ Prod's findings in this packet are numbered `PPT-nn`.
   - The first time an older save (like the played one) is loaded, any
     room you resume in starts you at its entrance, with its encounter
     back and a line saying why. From then on, kills are kept.
+
+## CP1 checkpoint — closed (the full frontier, twice)
+
+- **On `76b0952` (before the handback):** 66 of 68 steps passed
+  (`CP1_frontier_on_76b0952.tsv`). The two failures were DESS-19 and
+  DESS-20, both from H-RESUME-R's shared edit, fixed at `f332fff` (the
+  seam table's last row).
+- **On `5f348ab` (the handback head, with Dess's eight commits):** 67 of
+  68 passed (`CP1_frontier_on_5f348ab.tsv`). The one failure was this
+  lane's own test over-asserting, not the game
+  (`CP1_resume_live_legacy_overassertion_on_5f348ab.log`):
+  - `godot-resume-live`'s legacy phase required the bridge's record to
+    be exactly the bulwark it killed. It also held `c006/melee#0`: that
+    melee chased the player off the transit hall's drop and died by the
+    fall rule (PPT-02). Whether it happens is timing; on `76b0952` it
+    did not.
+  - Fixed at `72392d8`, stricter rather than looser: every
+    `enemy_died` the engine emits is collected by declared identity,
+    and the record must equal exactly that set and hold the kill. It
+    fails if the bridge invents a death or misses one. Three
+    consecutive two-process runs pass.
+- **CP1 is closed.** The frontier was not re-run in full for a
+  test-only change; the next full run is CP2's checkpoint.
 
 ## CP2 — `H-PRESSURE-R` (D-07), the engine's half — landed
 

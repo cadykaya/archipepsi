@@ -115,25 +115,29 @@ owner's D-06/D-07 rulings and the seam table are in
     - an older save's encounter is treated as unknown, not as cleared;
     - `godot-resume-live` (two processes) and `godot-resume` are new,
       both in CI.
-  - **CP1 checkpoint.**
-    - The full frontier ran on `76b0952`: 66 of 68 steps passed.
-    - The two failures were DESS-19 and DESS-20, both mine. They are
-      fixed at `f332fff`, which is also on top of Dess's 8 commits
-      (`make test` 2149 passed).
-    - The full frontier on the handback head is next, as the checkpoint
-      record.
-  - **CP2, against D12/D13, in a Prod work tree until landed:**
-    - `H-PRESSURE-R`: the lever placement, runtime only, lands first
-      (D13's order). Legacy plates are placed as before (M-1).
-    - `H-UNWEIGHTED`: two bypasses reproduced by play.
-      - The Check can be claimed from the floor through the return gap.
-      - A carriage ridden in transit reaches G with no `lightened`.
-      - Repairs: move the goal within G (N-1) and a weighbridge along
-        the lane (N-2); a faster drive, a live class readout and
-        guided-service hardware.
-    - `godot-minor-claim` is new: a claim-reach census of every hosted
-      minor, plus played witnesses.
-    - Then `H-PASSING` and `H-COUNTERFIRE`.
+  - **CP1 checkpoint: closed.**
+    - The full frontier ran on `76b0952` (66 of 68) and on the handback
+      head `5f348ab` (67 of 68).
+    - The failures were DESS-19/20 (fixed at `f332fff`) and then this
+      lane's own `godot-resume-live` legacy check over-asserting (fixed
+      at `72392d8`: the record must equal the deaths the engine saw).
+- **CP2, against D12/D13:**
+  - `H-PRESSURE-R`, engine half: landed (`2346261`). A `PULSE_BUTTON`
+    is a lever that stays thrown once its latch is set; legacy plates
+    are placed as before (M-1). Dess's 1c followed (`462bf42`), and
+    `godot-candidate-live` is green on the regenerated candidate, with
+    every step emitted and the c009 route built as a lever (N-7).
+  - `H-UNWEIGHTED`: **repaired and landed.** Two bypasses were
+    reproduced by play: the Check claimed from the floor through the
+    return gap, and the carriage ridden in transit to G. The goal moved
+    within G (N-1); a weighbridge along the lane (N-2); a faster drive,
+    signs, a live class readout, guided-service hardware; the bolt stays
+    thrown. `godot-minor-claim` (new, in CI) is a claim census of every
+    hosted minor, with played witnesses, V-10 at the schema maxima, a
+    ride sweep and the return. Sabotages SU-1 to SU-5 each fail by name.
+  - **Next:** H-PRESSURE-R part 2 (the live suite's lever form, D-7.2;
+    the fixture targets, D-7.3; playing the held route, D-4), then
+    `H-COUNTERFIRE`, then `H-PASSING`, then CP2's full frontier.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 
