@@ -1552,6 +1552,25 @@ def fallback_echo(request: EchoGenerationRequest, *,
     return _read_and_label(as_disposition(interpretation, request), request)
 
 
+def featured_fallback(requirement, request: EchoGenerationRequest) -> dict:
+    """H-QUALIFY (D-5, step 4): the Echo a featured Check falls back to.
+
+    Its function is the requirement's own proven floors, and its name and
+    text come from the item (`featured.fallback_interpretation`, Dess's).
+    The §15 reading is stamped on last, as on every deterministic Echo
+    (`_read_and_label`): the requirement's Echo carries no concepts of its
+    own, and an Echo without them is refused by `reading_errors` -- so
+    without this step the one fallback that must always hold would raise.
+    """
+    from ..schemas import featured as F
+    echo = F.fallback_interpretation(
+        requirement, location_id=request.source.location_id,
+        item_name=request.source.item_name,
+        source_game=request.source.source_game,
+        recipient_name=request.source.recipient_name)
+    return _read_and_label(echo.model_dump(mode="json"), request)
+
+
 def as_disposition(interpretation: dict, request: EchoGenerationRequest, *,
                    enhancement: bool = True, reading=reading_of) -> dict:
     """The strongest claim this interpretation can make on what is already

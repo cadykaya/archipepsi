@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (BaseModel, ConfigDict, Field, model_serializer,
+                      model_validator)
 
 from .. import content_value as V
 from .. import echo_projection as P
@@ -362,6 +363,27 @@ class EchoGenerationRequest(Strict):
     #: disposition could usefully touch. Empty on a fresh campaign, where
     #: there is nothing to relate to and CREATE is the only honest answer.
     relevance_hint: str = Field(default="", max_length=C.MAX_TEXT_LEN)
+    #: H-QUALIFY (D-02, Dess's note D-5): the function a FEATURED Check's
+    #: Echo must supply, as `FeaturedRequirement.describe()` states it.
+    #: None for every other Check. The game owns the requirement and the
+    #: grant enforces it (`featured.check`); the provider names and styles
+    #: within it, and one that misses it is repaired, then replaced by the
+    #: requirement's own deterministic Echo. Bounded, like every request
+    #: field, but not by `MAX_TEXT_LEN`: the grapple's statement alone is
+    #: 185 characters, and it grows by one clause per floor.
+    #:
+    #: **Absent, not null, when there is none** (`_absent_requirement`):
+    #: every other Echo request -- the provider's input, the archive, the
+    #: pre-art baseline -- serialises exactly as it did before the field.
+    required_function: str | None = Field(default=None, max_length=400)
+
+    @model_serializer(mode="wrap")
+    def _absent_requirement(self, handler):
+        data = handler(self)
+        if isinstance(data, dict) and data.get("required_function") is None:
+            data.pop("required_function", None)
+        return data
+
     allowed: dict = Field(default_factory=lambda: allowed_for())
     composition_rules: tuple[str, ...] = (
         "an interpretation carries 1-4 operations",

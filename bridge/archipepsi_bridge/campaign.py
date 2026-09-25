@@ -27,6 +27,7 @@ from .epsilon.requests import (
     EchoPlayerState, EchoSource, OwnedComponentSummary, OwnedLinkSummary,
     allowed_for)
 from .schemas import constants as C
+from .schemas import featured
 from .schemas import transitions as T
 from .schemas.mechanics import (
     Mechanics, derive_mechanics, owned_affordance_tags, owned_capabilities)
@@ -1953,7 +1954,9 @@ class CampaignEngine:
     # Echo generation
     # ------------------------------------------------------------------
 
-    def _echo_request(self, location_id: int) -> EchoGenerationRequest:
+    def _echo_request(self, location_id: int, *,
+                      required_function: str | None = None
+                      ) -> EchoGenerationRequest:
         s = self.ap.scouts[location_id]
         save = self.save
         mechanics = save.derive()
@@ -1988,7 +1991,21 @@ class CampaignEngine:
                 _clamp_ap_string(s.item_name),
                 _clamp_ap_string(s.recipient_game)),
             preferred_modes=preferred_modes(save.epsilon_creativity),
-            relevance_hint=_relevance_hint(mechanics))
+            relevance_hint=_relevance_hint(mechanics),
+            required_function=required_function)
+
+    def featured_requirement(self, location_id: int):
+        """H-QUALIFY (D-5): the function this Check's Echo must supply, or
+        None. Read off the Zone whose `featured_acquisition` names the
+        location, never off the recipient: under D-01 an own Check's Echo
+        exists too, and it is held to the same requirement."""
+        for record in self.save.zones:
+            if record.zone is not None:
+                requirement = featured.requirement_for(record.zone,
+                                                       location_id)
+                if requirement is not None:
+                    return requirement
+        return None
 
     def yields_echo(self, location_id: int) -> bool:
         """Whether confirming this Check releases a local Echo.
@@ -2020,10 +2037,15 @@ class CampaignEngine:
             if self.save.interpretation_by_id(echo_id) is not None:
                 return echo_id
             self.provider.creativity = save.epsilon_creativity
+            requirement = self.featured_requirement(location_id)
             outcome = await generate_echo_validated(
-                self.provider, self._echo_request(location_id),
+                self.provider, self._echo_request(
+                    location_id, required_function=(
+                        requirement.describe() if requirement else None)),
                 mechanics=derive_mechanics(self.save.interpretations),
-                archive_dir=self.archive_dir)
+                archive_dir=self.archive_dir,
+                featured=requirement, log=self.save.interpretations,
+                next_seq=self.save.next_interpretation_seq)
             self._apply(T.append_interpretation(self.save, outcome.value))
             if outcome.used_fallback and self.provider_name != "fallback":
                 await self._notify("fallback_used",
