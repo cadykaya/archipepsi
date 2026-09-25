@@ -2,10 +2,11 @@
 
 *Arty*
 
-**Nothing in this file has been applied.** Owner ruling, 2026-09-25:
-*"Do not silently apply the four proposed enemy art changes. Package
-them as a compact owner review set."* The priority order below is yours,
-not mine.
+**RULED 2026-09-25. The decisions are recorded inline below.**
+
+The sheet was written under *"Do not silently apply the four proposed
+enemy art changes. Package them as a compact owner review set."* It is
+kept as the record of what was asked and what came back.
 
 Every number comes from `README.md` in this folder and regenerates with
 `tools/content/run_enemy_silhouettes.sh` +
@@ -63,7 +64,16 @@ rely on body value at all.
   say *"you can use this"* about something that wants to hurt you, so
   this option needs its own colour decision before it can be costed.
 
-> **Decision:** 1A / 1B / 1C / not now →
+> **RULED: 1A**, with a condition — *"Develop a raised enemy-body value
+> ramp, but do not land it from the concrete-room result alone. Render
+> and measure the candidate against all six theme families first and
+> make sure it does not simply move the collision into a pale
+> environment."*
+>
+> **And a standing prohibition:** *"Do not use `signal` as an enemy
+> rim/readability colour."* That closes 1C's colour question in the
+> only direction it could have gone — `signal` means "you can use
+> this", and an enemy is not that.
 
 ---
 
@@ -97,7 +107,9 @@ Head-on it is a brute at 82% overlap.
 * **Options:** widen the shield plate past the body, notch its top
   edge, or set it forward so it reads as a separate plane.
 
-> **Decision:** 2A and 2B / one of them / neither →
+> **RULED: both 2A and 2B**, *after* the Tier-1 candidate is settled,
+> and *"keep these within their existing declared envelopes where
+> possible."* Not started: Tier 1 comes first by the owner's ordering.
 
 ---
 
@@ -117,7 +129,9 @@ nothing to do.
 `docs/art-requests/2026-09-25-brute-visible-body-vs-collider.md`. If
 they rule that the visible body moves, it is a small change on my side.
 
-> **Decision:** 3A / 3B / defer both →
+> **RULED: 3A deferred.** 3B stays with Production — the 6.7 cm
+> measurement is accepted as evidence, and which contract moves is
+> theirs to decide.
 
 ---
 

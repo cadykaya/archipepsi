@@ -2363,6 +2363,34 @@ all four touch art already in the tree: a non-width tell for `ranged`, a
 head-on tell for `bulwark`, a family-wide value lift (palette-level, the
 owner's call), and then a re-measure with motion.
 
+### Rulings, 2026-09-25 — what is decided and what is next
+
+**Enemies.** Tier 1 is **1A**: a raised enemy-body value ramp — but it
+may **not** land from the concrete-room result alone. The candidate is
+rendered and measured against **all six theme families** first, to
+prove it does not just move the collision into a pale environment.
+`signal` is **not** available as an enemy rim or readability colour.
+2A and 2B (a non-width tell for `ranged`, a head-on shield tell for
+`bulwark`) follow **after** Tier 1 settles, within their existing
+declared envelopes where possible. 3A deferred. 3B is Production's.
+
+**Interface.** The 1 px bevel stays; the minimum-cell/border system is
+not enlarged for isolated readability. The panel/grid language is
+accepted as the **structural** interface language — not a declaration
+that the visual identity is finished. `dead`-chrome stays provisional,
+and the locked/spent collision stays on the record for when state art
+arrives.
+
+**Packs.** T01 accepted as a candidate and allowed to stay a near
+relative of `temple_ruin` — difference is not to be manufactured for
+its own sake. T05's sign accent accepted; its floor calmed to large
+flags with setts kept for borders and the gutter.
+
+**One open transient.** A single font-gate failure did not reproduce
+and has no explanation. Gate output is now KEPT on failure
+(`$GATELOG`), because a clean rerun is not an explanation for a failure
+nobody looked at.
+
 ### Next
 
 C stays blocked on the revised machinery/puzzle bounds; E stays reserve.

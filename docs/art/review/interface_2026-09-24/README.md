@@ -64,7 +64,16 @@ that collision is where it will show up, and the answer will probably
 be a value band rather than a new family: chrome in `dead`'s dark half,
 item state in its light half.
 
-**2. One pixel of bevel.** On a dark background in
+**2. One pixel of bevel. — RULED, 2026-09-25: keep it.**
+
+> *"The distinction is sufficient in composed context; do not enlarge
+> the entire minimum-cell/border system for isolated readability."*
+
+Also ruled: the current panel/grid language is accepted as **the
+structural interface language** — which is not a statement that the
+visual identity is finished. The original note is kept below.
+
+On a dark background in
 `PANELS_at_four_sizes`, `panel` and `well` take a moment to tell apart —
 the bevel is 1 px, though it carries 0.341 L\* of separation. In context,
 in `FACE_grid_and_selection`, wells sitting on a panel read as recesses

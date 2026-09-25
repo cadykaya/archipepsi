@@ -38,8 +38,8 @@
   },
   "twilight_town/temple_ruin/floor": {
    "covers_m": 4.0,
-   "mean_value": 0.372,
-   "sha256_16": "ac6e516404c276e9",
+   "mean_value": 0.3734,
+   "sha256_16": "777c722c214c1ce7",
    "size_px": 128,
    "texture": "theme/pack_twilight_town_temple_ruin_floor.png"
   },

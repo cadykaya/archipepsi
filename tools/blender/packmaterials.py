@@ -216,15 +216,47 @@ def _town_wall(canvas, surface, theme):
 
 
 def _town_floor(canvas, surface, theme):
+    """Paved square: large flags, with setts kept for the borders.
+
+    OWNER RULING, 2026-09-25: *"Calm T05's floor: prefer larger floor
+    fields/flags, retaining the small setts primarily at edges, borders
+    or transitions. The wall treatment already supplies substantial pack
+    identity and the current full-floor pattern is unnecessarily busy."*
+
+    The first cut laid 0.26 m setts across the whole 4 m tile, which is
+    a great deal of line under a wall that is already doing the talking.
+    Setts survive where a paver would actually use them -- the border
+    band and the gutter -- and the middle is four big flags.
+    """
     base, accent, trim = mat.ramps(theme)
     canvas.rect(0, 0, surface.size, surface.size, trim[1])
-    paintkit.tonal_drift(canvas, surface, amount=0.06, cell_metres=0.8)
-    # Setts: small, staggered, regular. A town square is paved by
-    # somebody who was paid by the square metre.
+    paintkit.tonal_drift(canvas, surface, amount=0.06, cell_metres=0.9)
+
+    # Setts over everything first, then the middle taken back. Painting
+    # the band directly would mean re-deriving `coursed`'s stagger by
+    # hand for four strips, and a border whose bond disagrees with
+    # itself at the corners is worse than no border.
     mat.coursed(canvas, surface, trim[0], trim[2], 0.26, 0.26,
                 stagger=0.5, tag="sett")
-    # A gutter, off centre, because drainage follows the fall of the
-    # street and not the middle of the texture.
+    band = surface.texels(0.45)
+    inner = surface.size - band * 2
+    canvas.rect(band, band, inner, inner, trim[1])
+    paintkit.tonal_drift(canvas, surface, amount=0.04, cell_metres=1.4)
+
+    # Four flags in the field, and the joint between them. A flag is
+    # read by its JOINT, so the joint gets a dark line and a lit lip --
+    # the same one-shadow-one-lip grammar the rest of the game paves in.
+    mid = surface.size // 2
+    canvas.hline(mid, band, surface.size - band - 1, trim[0])
+    canvas.vline(mid, band, surface.size - band - 1, trim[0])
+    if mid + 1 < surface.size - band:
+        canvas.hline(mid + 1, band, surface.size - band - 1, trim[2])
+        canvas.vline(mid + 1, band, surface.size - band - 1, trim[2])
+    canvas.outline(band, band, inner, inner, trim[0])
+
+    # The gutter, off centre, because drainage follows the fall of the
+    # street and not the middle of the texture. It cuts the flags, which
+    # is what a channel cut into paving does.
     gx = int(surface.size * 0.30)
     half = max(1, surface.texels(0.10))
     for y in range(surface.size):

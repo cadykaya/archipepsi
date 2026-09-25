@@ -53,6 +53,22 @@ Nothing here puts a pack on the ladder. `candidate` means "rows exist
 in the art lane's exported descriptor", which is the whole of what this
 lane may grant. `THEME_PACK_STATUS` is Production's and stays empty.
 
+## RULED, 2026-09-25
+
+* **T01 accepted for candidate status.** *"It is allowed to remain a
+  closer relative of `temple_ruin`; do not manufacture difference for
+  its own sake."* So item 2 below is answered and the wall stands.
+* **T05's revised sign accent accepted.** Item 1 is closed: the board
+  is timber with a cream field, the green cut to a keyline, and
+  stencilled lettering.
+* **T05's floor calmed**, per item 3: large flags in the field with the
+  setts kept for the border band and the gutter. The wall was already
+  carrying the pack's identity and the full-sett floor was competing
+  with it.
+
+The three items below are kept as written, because what was asked is
+worth reading beside what was decided.
+
 ## Three things worth your eye
 
 1. **T05's accent is too close to the family's.** Its painted sign

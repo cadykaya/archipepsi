@@ -54,6 +54,12 @@ cd "$ROOT"
 BLENDER="${BLENDER:-$ROOT/.tools/blender/blender}"
 PATHS="assets/art_palette.json assets/art_budgets.json assets/models assets/textures assets/ui"
 status=0
+#: Gate output, kept ONLY when a gate fails. The owner's note on the
+#: one-off font-gate failure: *"If it recurs, investigate and capture
+#: the interaction rather than treating a subsequent clean rerun as the
+#: explanation."* A gate that ran into `/dev/null` leaves nothing to
+#: investigate, so the transient is now recoverable by default.
+GATELOG="$(mktemp -d)"
 
 say() { printf 'check-art: %s\n' "$1"; }
 fail() { printf 'check-art: FAIL -- %s\n' "$1"; status=1; }
@@ -195,7 +201,7 @@ fi
 # rebuild below.
 if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   say "the Batch 043 import examples..."
-  tools/content/run_import_examples.sh >/dev/null 2>&1 || \
+  tools/content/run_import_examples.sh >"$GATELOG/run_import_examples.log" 2>&1 || \
     fail "import_examples: the asset interface quoted in
     docs/art/BATCH_043_INTEGRATION.md no longer matches the exported assets.
     Run
@@ -203,7 +209,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
     tools/content/run_import_examples.sh"
 
   say "the repaired doorway crossings..."
-  tools/content/run_crossing_test.sh >/dev/null 2>&1 || \
+  tools/content/run_crossing_test.sh >"$GATELOG/run_crossing_test.log" 2>&1 || \
     fail "crossing: a player-shaped body can no longer walk one of the three
     repaired joins, at the origin or placed and yawed. Run
 
@@ -219,7 +225,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # single generic region is the pre-§11.3 behaviour: one answer for
   # however many doors a room has.
   say "per-socket arrival regions..."
-  tools/content/run_arrival_test.sh >/dev/null 2>&1 || \
+  tools/content/run_arrival_test.sh >"$GATELOG/run_arrival_test.log" 2>&1 || \
     fail "arrival: an opening has no arrival region named after it, or a
     declared region is unsupported, blocked, or cannot be walked into the
     room from. Run
@@ -232,7 +238,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # what Production owns. The envelope numbers are read from their
   # constants, not restated here.
   say "the 0.4 setpiece visuals still fit Production's envelope..."
-  tools/content/run_setpiece_fit.sh >/dev/null 2>&1 || \
+  tools/content/run_setpiece_fit.sh >"$GATELOG/run_setpiece_fit.log" 2>&1 || \
     fail "setfit: a setpiece visual no longer imports, lost a named part,
     left Production's envelope, or brought a collider, body, light, camera
     or script along with it. Run
@@ -245,7 +251,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # remembered number exports a span 48 mm short of the far rail, which
   # is exactly what a sabotage run produced. This is what caught it.
   say "the yard kit still fits the MEASURED Blindside yard..."
-  tools/content/run_yardkit_fit.sh >/dev/null 2>&1 || \
+  tools/content/run_yardkit_fit.sh >"$GATELOG/run_yardkit_fit.log" 2>&1 || \
     fail "yardfit: a yard visual no longer imports, lost a named part,
     stopped fitting the measured yard, or brought a collider, body,
     light, camera or script along with it. Run
@@ -256,7 +262,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # yaws through the corner, so a fitting that clears a dock at S1 may
   # not clear one at S2 -- and the sweep is the only thing that asks.
   say "the loaded skiff still sweeps the route without fouling a dock..."
-  tools/content/run_skiff_sweep.sh >/dev/null 2>&1 || \
+  tools/content/run_skiff_sweep.sh >"$GATELOG/run_skiff_sweep.log" 2>&1 || \
     fail "sweep: a fitting on the skiff now enters a dock pad somewhere
     on the route, or a rider can no longer see over the cover. Run
 
@@ -267,7 +273,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # lives, and it will turn from a note into a pass the moment
   # _collect_tint_parts also considers surface materials.
   say "the ten enemy roles against their published envelopes..."
-  tools/content/run_enemy_readiness.sh >/dev/null 2>&1 || \
+  tools/content/run_enemy_readiness.sh >"$GATELOG/run_enemy_readiness.log" 2>&1 || \
     fail "enemyready: a role no longer imports, left its published
     envelope, lost a declared anchor, or grew one that stands proud of
     the body. Run
@@ -279,7 +285,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # not a kilogram gauge, a lane marking under the shot line, and a
   # return gate with no tread on it.
   say "the other three 0.4 rooms keep their kits' promises..."
-  tools/content/run_roomkit_fit.sh >/dev/null 2>&1 || \
+  tools/content/run_roomkit_fit.sh >"$GATELOG/run_roomkit_fit.log" 2>&1 || \
     fail "roomfit: a room visual no longer imports, lost a named part,
     broke one of the A06-A08 promises, or brought a collider, light,
     camera, script or animation along with it. Run
@@ -290,7 +296,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # 043's face, three commitments that cannot be confused, and labels
   # nobody baked.
   say "the cross-room kit keeps A09's distinctions..."
-  tools/content/run_connect_fit.sh >/dev/null 2>&1 || \
+  tools/content/run_connect_fit.sh >"$GATELOG/run_connect_fit.log" 2>&1 || \
     fail "connfit: a connection visual no longer imports, its band
     stopped matching Batch 043's run face, two of the three commitments
     became the same shape, or a runtime-populated field went missing.
@@ -302,7 +308,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # projectiles is an owner decision, not a defect. What this catches
   # is the meshes failing to import or profile at all.
   say "Art's projectiles through Production's legibility rule..."
-  tools/content/run_projectile_legibility.sh >/dev/null 2>&1 || \
+  tools/content/run_projectile_legibility.sh >"$GATELOG/run_projectile_legibility.log" 2>&1 || \
     fail "projleg: a projectile no longer imports or no longer profiles
     through ProjectileSilhouette. The pairwise legibility numbers are
     REPORTED, not refused -- see the batch 051 handoff. Run
@@ -315,7 +321,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # file. It is cheap to re-measure and the whole family -- panels,
   # keycaps, item counts -- is built on top of it.
   say "the interface font's metrics through Godot's own importer..."
-  tools/content/run_font_import.sh >/dev/null 2>&1 || \
+  tools/content/run_font_import.sh >"$GATELOG/run_font_import.log" 2>&1 || \
     fail "fontimport: the committed bitmap font no longer imports with its
     declared baseline and per-glyph advances intact. An engine upgrade can
     do this, and a panel renders it as plausible-looking wrong numbers. Run
@@ -326,7 +332,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # corners is the failure that looks fine in a screenshot at the one
   # size it was authored for.
   say "the interface panels through Godot's own NinePatchRect..."
-  tools/content/run_nine_slice.sh >/dev/null 2>&1 || \
+  tools/content/run_nine_slice.sh >"$GATELOG/run_nine_slice.log" 2>&1 || \
     fail "nineslice: a committed panel no longer nine-slices -- its
     corners distort, an edge resamples, or the texture stopped importing
     lossless. Run
@@ -339,7 +345,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # matters most: a candidate pack does NOT bind, and the family
   # answers instead.
   say "game-pack rows through Production's own resolver..."
-  tools/content/run_pack_resolution.sh >/dev/null 2>&1 || \
+  tools/content/run_pack_resolution.sh >"$GATELOG/run_pack_resolution.log" 2>&1 || \
     fail "packres: a pack row no longer resolves as D-11 says -- it binds
     while unregistered, the family stopped answering for a candidate, a
     row's declared size or coverage does not match the texture, or the
@@ -361,7 +367,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # their envelope constants and their friction derivation over Art's
   # export, and refuses to keep checking a derivation they have changed.
   say "the physics props against the envelope that must move them..."
-  tools/content/run_manipulation_readiness.sh >/dev/null 2>&1 || \
+  tools/content/run_manipulation_readiness.sh >"$GATELOG/run_manipulation_readiness.log" 2>&1 || \
     fail "manipready: a prop's exported mass_class or envelope verdict
     disagrees with Production's own numbers, a rung of the mass ladder
     has emptied, or MassClass / ManipulableBody have moved under it. Run
@@ -369,7 +375,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
     tools/content/run_manipulation_readiness.sh"
 
   say "the status kit against the runtime that exists..."
-  tools/content/run_status_readiness.sh >/dev/null 2>&1 || \
+  tools/content/run_status_readiness.sh >"$GATELOG/run_status_readiness.log" 2>&1 || \
     fail "statusready: a kind in ECHO_STATUS_KINDS has no glyph, a glyph
     claims runtime targets the runtime does not give it, the vocabulary
     map no longer lands on a real target kind, or one of apply()'s three
@@ -378,7 +384,7 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
     tools/content/run_status_readiness.sh"
 
   say "the theme pack binding, and its control..."
-  tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
+  tools/content/run_theme_bind.sh >"$GATELOG/run_theme_bind.log" 2>&1 || \
     fail "theme-bind: Production's ThemeMaterials no longer binds the
     exported pack's authored pixels to a material, the pixels no longer
     survive the import, or the missing-row control stopped falling back.
@@ -533,7 +539,7 @@ for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
            run_connect_fit.sh run_projectile_legibility.sh \
            run_font_import.sh run_nine_slice.sh \
            run_pack_resolution.sh; do
-  grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
+  grep -q "^[[:space:]]*tools/content/$gate >" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."
 done
@@ -641,5 +647,11 @@ else
   fi
 fi
 
-[ $status -eq 0 ] && say "PASS -- every generated asset matches its source."
+if [ $status -eq 0 ]; then
+  rm -rf "$GATELOG"
+  say "PASS -- every generated asset matches its source."
+else
+  say "gate output kept at $GATELOG -- read it before re-running. A
+  clean rerun is not an explanation for a failure you did not look at."
+fi
 exit $status
