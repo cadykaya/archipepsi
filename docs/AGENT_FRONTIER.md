@@ -135,9 +135,22 @@ owner's D-06/D-07 rulings and the seam table are in
     thrown. `godot-minor-claim` (new, in CI) is a claim census of every
     hosted minor, with played witnesses, V-10 at the schema maxima, a
     ride sweep and the return. Sabotages SU-1 to SU-5 each fail by name.
-  - **Next:** H-PRESSURE-R part 2 (the live suite's lever form, D-7.2;
-    the fixture targets, D-7.3; playing the held route, D-4), then
-    `H-COUNTERFIRE`, then `H-PASSING`, then CP2's full frontier.
+  - `H-PRESSURE-R` part 2: **done.**
+    - The lever route is played live across a real restart
+      (`godot-lever-route-live`, new, in CI): pulled once, thrown for
+      good, and restored thrown.
+    - Dess's fixture targets are added, and all three regenerate
+      byte-identical.
+    - The held route (D-4) was physically impossible: the plate sat
+      under c002's 1.6 m gallery, where no weight could be put down.
+      Held plates are now placed like levers, as labelled 1.4 m load
+      pads. `godot-held-route` (new, in CI) plays it: open while the
+      weight rests, shut when it is lifted, open again from a rebuild,
+      and the interlock.
+    - N-8 asks Dess for a `--form held` seed, so the held route can also
+      be played across a real restart.
+  - **Next:** `H-COUNTERFIRE`, then `H-PASSING`, then CP2's full
+    frontier.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 
