@@ -62,7 +62,7 @@ static func take(player: Player, box: AABB, arrival: Vector3,
 	var reward_rid := reward.get_rid()
 	for key: Variant in reached.keys():
 		var cell: Vector3 = cells[key]
-		for rise: float in [0.0, apex() * 0.5, apex()]:
+		for rise: float in rises_at(space, cell, skip):
 			var eye := cell + Vector3(0.0, Constants.PLAYER_EYE_HEIGHT
 					+ rise, 0.0)
 			if _claims(space, eye, target, reward_rid, skip):
@@ -97,6 +97,34 @@ static func reaches_near(result: Dictionary, point: Vector3,
 		if (cells[key] as Vector3).distance_to(point) <= within:
 			return true
 	return false
+
+
+## HOW HIGH A HOP CAN LIFT THE EYE STANDING AT `foot`: nothing, half the
+## apex and the apex -- each capped by the headroom. Under a low ceiling
+## the head stops at the ceiling, and an eye placed inside a slab would
+## see straight through it (a ray does not hit the shape it starts in),
+## so an uncapped hop claims through floors nobody can see through.
+static func rises_at(space: PhysicsDirectSpaceState3D, foot: Vector3,
+		skip: Array[RID]) -> Array:
+	var up := PhysicsRayQueryParameters3D.create(foot + Vector3.UP * 0.1,
+			foot + Vector3.UP * (Constants.PLAYER_HEIGHT + apex()))
+	up.exclude = skip
+	var hit := space.intersect_ray(up)
+	var cap := apex()
+	if not hit.is_empty():
+		cap = clampf((hit["position"] as Vector3).y - foot.y
+				- Constants.PLAYER_HEIGHT, 0.0, apex())
+	var out: Array = [0.0]
+	for rise: float in [minf(apex() * 0.5, cap), cap]:
+		if rise > float(out.back()) + 0.01:
+			out.append(rise)
+	return out
+
+
+## The same, asked for a player standing at `foot`.
+static func rises_for(player: Player, foot: Vector3) -> Array:
+	var skip: Array[RID] = [player.get_rid()]
+	return rises_at(player.get_world_3d().direct_space_state, foot, skip)
 
 
 ## The jump's apex, the law's own number.

@@ -1152,3 +1152,69 @@ took Check." The packet asks, in this order:
   - The release stays thrown, and its stair can now be walked to.
   - The upper level is a proper deck, with nothing to fall off into.
   - The Check stands in the far corner of the deck.
+
+## CP2 — `H-PASSING` (PT-06, PT-07, D12's card): reproduced, and the proposal stated before rebuilding
+
+Delivery plan §4 and D12's card ask that the proposal ("a visible
+machinery-locked cabinet or a destination mechanism") be stated before
+the room is rebuilt. It is stated here, and the rebuild follows in its
+own commit.
+
+- **Played on the hosted room as it stands** (zone_002/c025; the Zone
+  captured unedited from the real bridge by `godot-candidate-live`'s
+  next phase, never committed; N-10 asks Dess for the fixture;
+  `H-PASSING_repro.log`).
+  - **PT-06 reproduced.** 233 cells reached from the arrival claim the
+    Check with no transfer made. They all stand on the recovery floor
+    just west of G, where a hop lifts the eye to 3.9 m, 0.1 m under G's
+    floor, and the claim ray skims over G's west lip. Played: the real
+    player walked there, hopped, read "[E] CLAIM CHECK 047", and a claim
+    went out.
+  - **Moving the Check cannot fix it.** The Check was moved over 45
+    spots on G and the census re-taken at each: every spot is still
+    claimed from that floor, 10 cells at the least. G is 2.95 m wide,
+    the claim reaches 3 m, and the lip stands 0.1 m above a hopping
+    eye. Unweighted's and Counterfire's repair does not work here.
+  - **PT-07 reproduced.** Of four arrivals spread over G, three did not
+    release the service stair; only an arrival near the 1.5 m goal plate
+    does. A blink or a grapple to G's far side leaves a player 4 m up
+    with no way down, which is the owner's "no recognizable return
+    except random teleport".
+  - **G is not reached from the arrival with the base kit**, and once
+    released, the stair walks back down to A.
+  - **The census's own error, fixed on the way.** A hop was placed
+    without headroom, so under a low ceiling (G's slab over the
+    recovery floor) the eye sat inside the slab and saw through it. The
+    hop is now capped at the headroom (`ClaimCensus.rises_at`). The fix
+    can only ever report fewer claims, so the earlier rooms' passes
+    stand.
+- **The proposal:**
+  - **A destination, opened by the machine: not a cabinet.**
+    - The Check stays on G. Reaching G is the objective, and the
+      carriers are how you get there.
+    - A cabinet whose lock is a machine state would either refuse a
+      legal arrival (R1) or impose an input order the owner ruled out.
+  - **G's west edge becomes a glass screen, with a gate at the shuttle's
+    dock.**
+    - The gate opens only while H stands docked at G. That is PT-06's
+      "real machinery-operated release condition": the shuttle opens the
+      gallery.
+    - Nothing on the floor below sees through the glass or reaches over
+      it. While H is docked its deck covers the floor under the lip,
+      so nothing below reaches over it then either.
+    - The screen stays glass, so G and its Check are seen from the
+      arrival (the card's "arrival read").
+  - **The stair is released by an arrival anywhere on G**: a volume
+    over all of G replaces the 1.5 m plate, for every arrival R3 names.
+  - **Controls labelled by what they do, and grouped as boards.** Their
+    identities are unchanged: "CALL SHUTTLE EAST -- TO THE GALLERY",
+    "HOLD SHUTTLE", "RESET BOTH CARRIERS", and so on.
+    - The shelf says it is the lift's top.
+    - The gate says it opens while the shuttle is docked.
+    - Nothing prints the order of operations.
+  - **What stays:** V's pause at the transfer plane, H's schedule,
+    STOP-and-transfer, RESET, the recovery floor and its stair, the
+    service stair and the carriers' persistence.
+    - Blink or grapple to H stays the qualified alternate, as the card
+      lists it.
+    - V-10 will say what the screen does to any other movement arrival.

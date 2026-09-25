@@ -173,7 +173,7 @@ func _mobility(controller: ZoneController, rid: String, box: AABB,
 				tally["arrivals"] += 1
 				tally["by"]["blink"] += 1
 				continue
-			for rise: float in [0.0, ClaimCensus.apex()]:
+			for rise: float in ClaimCensus.rises_for(player, landed):
 				var eye := landed + Vector3(0.0,
 						Constants.PLAYER_EYE_HEIGHT + rise, 0.0)
 				if ClaimCensus.claims_from(player, eye, reward):
