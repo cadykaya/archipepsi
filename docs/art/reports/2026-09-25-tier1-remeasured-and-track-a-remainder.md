@@ -153,8 +153,8 @@ That is a silhouette with no identity left, so I have not proposed it.
 **Why two, not three.** With three bands, `temple_ruin` would keep
 today's skin, since it already clears walls, floors and dim, but its
 opening would stay at 0.029. With two, it clears (0.117). One band, with
-everything at k 0.10, scores higher everywhere and costs identity in all
-six rooms.
+everything at k 0.10, scores at least as high in every cell and costs
+identity in all six rooms.
 
 **Identity.** Same silhouettes, same shared ramp, hue and chroma held
 where the gamut allows, markings unchanged, no per-room palette, no

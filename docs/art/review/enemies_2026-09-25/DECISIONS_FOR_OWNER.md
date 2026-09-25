@@ -178,8 +178,8 @@ today's skin — it already clears walls, floors and dim — but its opening
 would stay at 0.029; in the standard band its opening clears (0.117).
 The script picks the grouping that darkens least in total and breaks
 ties on the worst opening; for three bands that is `temple_ruin` k 1.00
-plus the two above. One band (all six at k 0.10) scores higher
-everywhere and costs identity in all six rooms.
+plus the two above. One band (all six at k 0.10) scores at least as
+high in every cell and costs identity in all six rooms.
 
 **Identity.** Bands scale the body ramp's L\* only: same silhouettes,
 same shared ramp, hue and chroma held where the gamut allows, markings
