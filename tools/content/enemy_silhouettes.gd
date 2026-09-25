@@ -20,11 +20,11 @@ extends SceneTree
 ## harness renders at native size and measures there rather than
 ## rendering large and trusting that it would have survived shrinking.
 ##
-## Two passes per role. A LIT pass under the room's own light -- one
-## lamp at the theme's own colour and energy, no rig -- which is the
-## evidence. And a SILHOUETTE pass, flat black on transparent, which is
-## the measurement: the outline alone, with hue and material taken away
-## so they cannot do the work that shape is supposed to do.
+## One pass per role: a SILHOUETTE pass, flat black on transparent,
+## which is the measurement -- the outline alone, with hue and material
+## taken away so they cannot do the work that shape is supposed to do.
+## The lit lineup that used to sit beside it, and every VALUE number, now
+## live in `enemy_contrast.gd` (see the note at the end of `_run`).
 
 const ROLES := ["artillery", "beacon", "brute", "bulwark", "charger",
 	"diver", "drifter", "melee", "ranged", "scuttler"]
@@ -33,11 +33,7 @@ const ROLES := ["artillery", "beacon", "brute", "bulwark", "charger",
 ## player cannot tell apart -- and the first version of this harness
 ## rendered one view and would have called that family distinct.
 const YAWS := [0, 45, 90]
-## Every house family, because the owner's condition on the Tier-1
-## candidate is that it must not simply move the collision into a pale
-## environment. A value answer proved in one room is not an answer.
-const THEMES := ["concrete_facility", "rusted_industrial", "neon_transit",
-	"gothic_stone", "temple_ruin", "void_glitch"]
+
 const SHOT := Vector2i(1920, 1080)
 
 var _bench: GDScript
@@ -46,8 +42,7 @@ var _models := ""
 var _distance := 18.0
 var _fov := 90.0
 var _budget_px := 48.0
-var _min_value := 0.10
-var _min_interactable := 0.18
+
 var _faults: Array[String] = []
 var _rows := {}
 var _envelope := {}
@@ -78,8 +73,7 @@ func _init() -> void:
 	_distance = float(budgets["enemy_review_distance_m"])
 	_fov = float(budgets["dimensions"]["camera_fov_deg"])
 	_budget_px = float(budgets["enemy_aggro_px_1080p"])
-	_min_value = float(budgets["min_value_separation"])
-	_min_interactable = float(budgets["min_interactable_separation"])
+
 	var manifest: Variant = JSON.parse_string(
 			FileAccess.get_file_as_string(a[3]))
 	if typeof(manifest) != TYPE_DICTIONARY:
@@ -298,304 +292,17 @@ func _run() -> void:
 				  % [role, worst_w, worst_at]
 				  + "%.3f m tall -- outside the volume that can be hit"
 				  % worst_h)
-	_rows["_contrast"] = {}
-	var regions := await _lineup_regions()
-	for theme in THEMES:
-		await _lineup(theme, regions)
+	# The lineup frames and every VALUE measurement moved to
+	# `enemy_contrast.gd` on 2026-09-25. This file measured contrast for
+	# a while, and it did it wrong twice over: under the wrong light (the
+	# docstring said "one lamp at the theme's own colour and energy" and
+	# the code lit all six themes with concrete_facility's), and with an
+	# L* that summed the viewport's sRGB-ENCODED channels as if they were
+	# linear light -- which read #777777 as 0.740 instead of 0.500. Every
+	# value this file ever reported, Track B's "0.067 L*" included, is on
+	# that wrong scale. The new harness calibrates itself against known
+	# greys before it measures anything.
 	_finish()
-
-
-func _lineup(theme: String, regions: Dictionary) -> void:
-	## The evidence frame: all ten at the review distance, under the
-	## ROOM'S light -- one lamp at the theme's own colour and energy, no
-	## rig. `02` PT-10 asks for the lineup judged without studio
-	## lighting, and a three-point rig is exactly the thing that makes a
-	## silhouette look resolved when it is not.
-	var view := _viewport(false)
-	_camera(view)
-	var holder := Node3D.new()
-	view.add_child(holder)
-	_room(holder, theme)
-	var x := 0.0
-	var placed := 0
-	var widths := []
-	for role in ROLES:
-		var model: Node3D = _bench.call("load_glb",
-				"%s/enemy_role_%s.glb" % [_models, role])
-		if model == null:
-			continue
-		holder.add_child(model)
-		var box: AABB = _bench.call("aabb_of", model)
-		widths.append(box.size.x)
-		x += box.size.x * 0.5
-		model.position = Vector3(x - box.get_center().x,
-				-box.position.y - 1.0, -_distance)
-		x += box.size.x * 0.5 + 0.55
-		placed += 1
-	if placed == 0:
-		_bad("the lineup placed nothing")
-		return
-	# Centre the row on the camera.
-	holder.position = Vector3(-x * 0.5, 0.0, 0.0)
-
-	var env := (view.get_node_or_null("WorldEnvironment") as WorldEnvironment)
-	if env != null:
-		env.environment.ambient_light_color = Color("eaf2ff")
-		env.environment.ambient_light_energy = 0.75
-	var lamp := OmniLight3D.new()
-	# concrete_facility's own light, from the palette's engine anchors.
-	lamp.light_color = Color("eaf2ff")
-	lamp.light_energy = 3.0
-	lamp.omni_range = 70.0
-	lamp.position = Vector3(0.0, 5.5, -_distance + 5.0)
-	view.add_child(lamp)
-
-	await process_frame
-	await process_frame
-	var image := view.get_texture().get_image()
-	# FREE IT BEFORE BUILDING THE NEXT ONE. Two SubViewports alive at
-	# once, both UPDATE_ALWAYS, and `get_texture()` on the second came
-	# back with the FIRST one's picture -- the region masks were the lit
-	# room, so every role measured the same 1.56 million pixels and
-	# reported an identical L* to three decimals. Ten different models
-	# cannot do that, which is the only reason it was caught.
-	#
-	# The regions are computed ONCE by the caller and handed in: the
-	# bodies do not move between themes, only the room behind them.
-	view.queue_free()
-	await process_frame
-
-	# --- how far does the family sit from the wall behind it? ---------
-	#
-	# The silhouette pass is the BEST case a shape will ever get: black
-	# on nothing. This is the real one -- bodies against the wall they
-	# stand in front of -- and "they look dark" is not a finding until
-	# it is a number. The palette's own thresholds are the yardstick:
-	# min_value_separation 0.10, min_interactable_separation 0.18, in
-	# CIE L*.
-	var body := 0.0
-	var body_n := 0
-	var wall := 0.0
-	var wall_n := 0
-	# Per role, so the owner's prioritisation has something to sort by.
-	# A family mean says the set is dim; it does not say which of them
-	# to fix first.
-	var per_role := {}
-	for role in regions:
-		var sum := 0.0
-		var n := 0
-		var region: Image = regions[role]
-		for py in image.get_height():
-			for px in image.get_width():
-				if region.get_pixel(px, py).a > 0.5:
-					sum += _lstar(image.get_pixel(px, py))
-					n += 1
-		# A GUARD FOR THE BUG THAT GOT THROUGH ONCE. An enemy 18 m away
-		# occupies a few thousand pixels of a 1920x1080 frame. When the
-		# region masks were silently the lit room instead, every role
-		# "covered" 1,565,136 px -- three quarters of the screen -- and
-		# every role reported an identical L* to three decimals. Ten
-		# different models cannot do that, and nothing failed.
-		var share := float(n) / float(image.get_width() * image.get_height())
-		if share > 0.10:
-			_bad("%s's region covers %.0f%% of the frame. That is not an "
-				 % [role, share * 100.0]
-				 + "enemy at %.0f m -- the mask is picking up the room, "
-				 % _distance + "and every contrast number here is wrong")
-		if n > 0:
-			per_role[role] = {"lstar": snappedf(sum / float(n), 0.001),
-				"px": n}
-	for py in image.get_height():
-		for px in image.get_width():
-			var lit := image.get_pixel(px, py)
-			var covered := false
-			for role in regions:
-				if regions[role].get_pixel(px, py).a > 0.5:
-					covered = true
-					break
-			if covered:
-				body += _lstar(lit)
-				body_n += 1
-			elif py > image.get_height() * 0.30 \
-					and py < image.get_height() * 0.52:
-				# A band of wall at the row's own height, so the
-				# comparison is against what is actually behind them
-				# rather than against the whole frame.
-				wall += _lstar(lit)
-				wall_n += 1
-	if body_n > 0 and wall_n > 0:
-		var bl := body / float(body_n)
-		var wl := wall / float(wall_n)
-		_rows["_contrast"][theme] = {
-			"body_lstar": snappedf(bl, 0.001),
-			"wall_lstar": snappedf(wl, 0.001),
-			"separation_lstar": snappedf(absf(bl - wl), 0.001),
-			"body_px": body_n,
-		}
-		var sep := absf(bl - wl)
-		_rows["_contrast"][theme]["clears_value_rule"] = sep >= _min_value
-		_rows["_contrast"][theme]["clears_interactable_rule"] = \
-				sep >= _min_interactable
-		print("[enemysil] %-19s body L* %.3f, wall %.3f -- %.3f apart%s"
-			  % [theme, bl, wl, sep,
-				 "" if sep >= _min_interactable else "   SHORT of %.2f"
-				 % _min_interactable])
-		# REPORTED, not refused. This measures art that is already in the
-		# tree, against a threshold the palette sets for a different
-		# question; turning it into a gate here would be this lane
-		# quietly imposing a rule nobody agreed to. The owner decides
-		# what to do with the number.
-		print("[enemysil]   min_value_separation %.2f: %s"
-			  % [_min_value, "clears" if sep >= _min_value else "SHORT"])
-		print("[enemysil]   min_interactable_separation %.2f: %s -- and an "
-			  % [_min_interactable,
-				 "clears" if sep >= _min_interactable else "SHORT"]
-			  + "enemy is the most interactable thing in the room")
-		# Worst first: that is the order the fixes want to be made in.
-		var ranked: Array = per_role.keys() if theme == THEMES[0] else []
-		ranked.sort_custom(func(a, b):
-				return absf(float(per_role[a]["lstar"]) - wl) \
-						< absf(float(per_role[b]["lstar"]) - wl))
-		for role in ranked:
-			var rl: float = float(per_role[role]["lstar"])
-			var rsep := absf(rl - wl)
-			per_role[role]["separation_lstar"] = snappedf(rsep, 0.001)
-			per_role[role]["clears_interactable_rule"] = \
-					rsep >= _min_interactable
-			print("[enemysil]   %-10s L* %.3f, %.3f from the wall%s"
-				  % [role, rl, rsep,
-					 "" if rsep >= _min_interactable else "   SHORT"])
-		_rows["_contrast"][theme]["per_role"] = per_role
-
-	_bench.call("label", image, "PROPOSAL -- NOT OWNER-APPROVED",
-			Vector2i(16, 16), Color(1, 0.86, 0.3))
-	_bench.call("label", image, "TEN ROLES AT %.0f M -- THE AGGRO RADIUS. "
-			% _distance + "ONE ROOM LAMP, NO RIG.", Vector2i(16, 36),
-			Color(0.84, 0.86, 0.90))
-	_bench.call("label", image, "NO AUDIO, NO CAPTIONS, NO COLLIDER "
-			+ "OVERLAY. LEFT TO RIGHT: " + ", ".join(ROLES).to_upper(),
-			Vector2i(16, 54), Color(0.66, 0.70, 0.76))
-	if image.save_png("%s/LINEUP_%s_at_%.0fm.png"
-			% [_out, theme, _distance]) != OK:
-		_bad("could not write the lineup frame")
-	print("[enemysil] lineup: %d role(s) in %s at %.0f m, one room lamp"
-		  % [placed, theme, _distance])
-
-
-## CIE L*, 0..1 -- the same measure `palette.py` uses, so a separation
-## here means what a separation means everywhere else in this lane.
-func _lstar(c: Color) -> float:
-	var y := 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
-	var l := (116.0 * pow(y, 1.0 / 3.0) - 16.0) if y > 0.008856 \
-			else (903.3 * y)
-	return clampf(l / 100.0, 0.0, 1.0)
-
-
-## The same ten bodies in the same places with no room and no light, one
-## render per role with the others hidden, so every pixel is attributed
-## to exactly one enemy. Rebuilt rather than taken from the lit frame by
-## thresholding: that would be a guess at which dark pixels are a robot,
-## and the darkness is the finding.
-##
-## Per role rather than colour-coded in one pass, because a colour read
-## back through a viewport has been through sRGB and tone mapping, and
-## decoding an index out of it is a guess wearing a number.
-func _lineup_regions() -> Dictionary:
-	var view := _viewport(true)
-	_camera(view)
-	var holder := Node3D.new()
-	view.add_child(holder)
-	var models := {}
-	var x := 0.0
-	for role in ROLES:
-		var model: Node3D = _bench.call("load_glb",
-				"%s/enemy_role_%s.glb" % [_models, role])
-		if model == null:
-			continue
-		holder.add_child(model)
-		var box: AABB = _bench.call("aabb_of", model)
-		x += box.size.x * 0.5
-		model.position = Vector3(x - box.get_center().x,
-				-box.position.y - 1.0, -_distance)
-		x += box.size.x * 0.5 + 0.55
-		_flatten(model)
-		models[role] = model
-	holder.position = Vector3(-x * 0.5, 0.0, 0.0)
-
-	var out := {}
-	for role in models:
-		for other in models:
-			models[other].visible = other == role
-		await process_frame
-		await process_frame
-		var got := view.get_texture().get_image()
-		if OS.get_environment("ENEMYSIL_DEBUG") != "":
-			got.save_png("%s/DEBUG_region_%s.png" % [_out, role])
-		out[role] = got
-	view.queue_free()
-	return out
-
-
-func _lineup_mask(_widths: Array) -> Image:
-	var view := _viewport(true)
-	_camera(view)
-	var holder := Node3D.new()
-	view.add_child(holder)
-	var x := 0.0
-	for role in ROLES:
-		var model: Node3D = _bench.call("load_glb",
-				"%s/enemy_role_%s.glb" % [_models, role])
-		if model == null:
-			continue
-		holder.add_child(model)
-		var box: AABB = _bench.call("aabb_of", model)
-		x += box.size.x * 0.5
-		model.position = Vector3(x - box.get_center().x,
-				-box.position.y - 1.0, -_distance)
-		x += box.size.x * 0.5 + 0.55
-		_flatten(model)
-	holder.position = Vector3(-x * 0.5, 0.0, 0.0)
-	await process_frame
-	await process_frame
-	var out := view.get_texture().get_image()
-	view.queue_free()
-	return out
-
-
-func _surface(path: String, size: Vector2, at: Vector3,
-		rot: Vector3) -> MeshInstance3D:
-	var mesh := PlaneMesh.new()
-	mesh.size = size
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	var mat := StandardMaterial3D.new()
-	var tex: Variant = load(path)
-	if tex != null:
-		mat.albedo_texture = tex
-		# The binding contract: nearest, repeating. A room judged
-		# through a filter the game does not use is a different room.
-		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
-		mat.texture_repeat = true
-		mat.uv1_scale = Vector3(size.x / 4.0, size.y / 4.0, 1.0)
-	mi.material_override = mat
-	mi.position = at
-	mi.rotation = rot
-	return mi
-
-
-func _room(holder: Node3D, theme: String) -> void:
-	## A floor and a back wall in the shipped theme, because a lineup
-	## against a flat void is the EASIEST case a silhouette will ever
-	## face and no player is ever shown one. `covers_m` is 4.0, so the
-	## UV scale is metres over four.
-	holder.add_child(_surface(
-			"res://content/theme/%s_floor.png" % theme,
-			Vector2(80.0, 60.0), Vector3(0.0, -1.0, -_distance),
-			Vector3.ZERO))
-	holder.add_child(_surface(
-			"res://content/theme/%s_wall.png" % theme,
-			Vector2(80.0, 16.0), Vector3(0.0, 7.0, -_distance - 7.0),
-			Vector3(deg_to_rad(90.0), 0.0, 0.0)))
 
 
 func _finish() -> void:

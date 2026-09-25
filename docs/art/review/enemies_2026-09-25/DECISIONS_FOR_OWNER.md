@@ -8,13 +8,231 @@ The sheet was written under *"Do not silently apply the four proposed
 enemy art changes. Package them as a compact owner review set."* It is
 kept as the record of what was asked and what came back.
 
-Every number comes from `README.md` in this folder and regenerates with
-`tools/content/run_enemy_silhouettes.sh` +
-`tools/content/enemy_readability.py`.
+Silhouette numbers regenerate with `tools/content/run_enemy_silhouettes.sh`
++ `tools/content/enemy_readability.py`. Value numbers regenerate with
+`tools/content/run_enemy_contrast.sh` (today) and
+`tools/content/run_enemy_value_sweep.sh` (the sweep and the candidate).
+
+---
+
+## Tier 1, re-measured — READ THIS FIRST
+
+> **RULED 2026-09-25 (on the section "measured in all six families"
+> below):** *"Use the smallest practical set of theme-dependent VALUE
+> BANDS ... dark-wall band for `void_glitch` ... around or below 0.15;
+> middle band for `rusted_industrial`, around or below 0.20; normal band
+> for `gothic_stone`, `concrete_facility`, `temple_ruin`, and
+> `neon_transit`, around or below 0.27. Those are measured target
+> ceilings, not source constants to copy blindly ... validate the
+> candidate bands not only against the six wall lineups but also against
+> representative floor backgrounds and deliberately dim room lighting."*
+
+**Nothing has landed, and this goes back to you — because the numbers
+that ruling stands on were wrong, and I made both errors.**
+
+### What was wrong: the instrument, twice
+
+1. **Wrong light.** The old harness lit all six rooms with
+   `concrete_facility`'s lamp, rendered through the review bench's
+   filmic tonemapper with no fog, and never created an environment, so
+   its ambient settings did nothing. The game uses each room's own lamp,
+   ambient 0.35 in the room's light colour, fog at 0.012 in the room's
+   void colour, and Godot's default (linear) tonemapper.
+2. **Wrong L\*.** It computed L\* by summing the viewport's
+   sRGB-*encoded* channels as if they were linear light. That reads
+   `#777777` as **0.740** instead of 0.500, lifts near-black to about
+   0.29, and compresses every separation in the range the enemies live
+   in.
+
+So every *value* number in this folder before today is on a wrong
+scale: Track B's **0.067**, the per-role list under it, the six-wall
+table further down, the ≤ 0.152 / ≥ 0.681 gap, and therefore the three
+ceilings you ruled on. The *silhouette* numbers (overlap, pixel sizes,
+the brute's 6.7 cm overflow) do not use L\* and regenerate
+byte-identical; they stand.
+
+**Corrected, like for like:** in `concrete_facility` at 18 m the family
+sits **0.131** L\* from the wall, not 0.067 — `diver` 0.099 weakest,
+`artillery` 0.146 strongest, the same order as before.
+
+The instrument now checks itself before it measures anything: three
+unshaded grey cards go through the same viewport and must read back at
+their CIE L\* (computed offline, not by the harness) within 0.01, or the
+run stops. With the old conversion put back, it refuses — it reads
+0.552 / 0.740 / 0.882 for 0.249 / 0.500 / 0.752. The runner also refuses
+if Production's fog, ambient, background, void colour, theme lights or
+tonemapper stop matching what the harness copies.
+
+### The corrected picture
+
+Separation = background L\* − body L\*: **positive means the body is
+the darker**. ✓ clears the palette's 0.10 value rule, ✓✓ its 0.18
+interactable rule, ✗ neither. Four cases per room, each room under its
+own light and fog, at 18 m:
+
+* **wall** — level view, the room's own wall behind the row;
+* **floor** — from 45° above, the row against the room's own floor;
+* **dim** — the wall view with lamp and ambient at 35%;
+* **opening** — *new*: the wall view with no wall, the row against what
+  an exit, a drop or a window shows — the room's fogged void. Added
+  because it is the one backdrop that can be darker than a dark enemy,
+  which is exactly your *"disappear into ... shadows"*.
+
+Today's skin (`contrast_current/`):
+
+| room | wall | floor | dim | opening |
+| --- | --- | --- | --- | --- |
+| `concrete_facility` | +0.131 ✓ *(bg 0.355)* | +0.066 ✗ *(bg 0.292)* | +0.099 ✗ *(bg 0.232)* | -0.044 ✗ *(bg 0.180)* |
+| `rusted_industrial` | +0.023 ✗ *(bg 0.216)* | +0.001 ✗ *(bg 0.195)* | +0.031 ✗ *(bg 0.144)* | -0.022 ✗ *(bg 0.171)* |
+| `neon_transit` | +0.140 ✓ *(bg 0.354)* | +0.016 ✗ *(bg 0.231)* | +0.104 ✓ *(bg 0.225)* | -0.071 ✗ *(bg 0.143)* |
+| `gothic_stone` | +0.075 ✗ *(bg 0.235)* | +0.065 ✗ *(bg 0.226)* | +0.060 ✗ *(bg 0.149)* | -0.012 ✗ *(bg 0.148)* |
+| `temple_ruin` | +0.145 ✓ *(bg 0.375)* | +0.139 ✓ *(bg 0.370)* | +0.108 ✓ *(bg 0.260)* | +0.029 ✗ *(bg 0.259)* |
+| `void_glitch` | +0.059 ✗ *(bg 0.370)* | -0.002 ✗ *(bg 0.311)* | +0.074 ✗ *(bg 0.315)* | +0.125 ✓ *(bg 0.436)* |
+
+Three things follow.
+
+**The rooms are much darker than the wrong scale said** — walls
+0.216–0.375, floors 0.195–0.370, dim 0.144–0.315.
+
+**On walls, floors and in dim light the body is below its background
+in every room, so darker is better in all three.** There is no floor
+or shadow trade-off in those cases: a darker body separates more from
+floors and in dim light too, measured, not assumed. The weak cells
+today are `rusted_industrial` (the room is dark and low-contrast: 0.001
+on its floor) and `void_glitch` (its bright cyan fog lifts the body
+onto its own floor).
+
+**Openings are different.** In four rooms the fogged void (0.143–0.180)
+is *darker* than the walls, and today's body sits just above it.
+Darkening the body passes **through** the void's value on the way down:
+at a mid-dark band the enemy vanishes against an opening (`neon_transit`
+at k 0.55: 0.009; `concrete_facility` at k 0.70: 0.010). Your concern,
+measured — in a case you did not name.
+
+**And fog sets a hard floor.** At 18 m the fog replaces about a fifth of
+whatever the body is with fog colour, so even a pure-black, fully matte
+body renders at the fog's own value:
+
+| room | fog floor L* | wall | floor | dim | opening |
+| --- | --- | --- | --- | --- | --- |
+| `concrete_facility` | 0.043 | +0.312 ✓✓ | +0.249 ✓✓ | +0.189 ✓✓ | +0.137 ✓ |
+| `rusted_industrial` | 0.040 | +0.176 ✓ | +0.155 ✓ | +0.104 ✓ | +0.131 ✓ |
+| `neon_transit` | 0.031 | +0.323 ✓✓ | +0.200 ✓✓ | +0.194 ✓✓ | +0.112 ✓ |
+| `gothic_stone` | 0.032 | +0.203 ✓✓ | +0.194 ✓✓ | +0.117 ✓ | +0.116 ✓ |
+| `temple_ruin` | 0.082 | +0.293 ✓✓ | +0.288 ✓✓ | +0.178 ✓ | +0.177 ✓ |
+| `void_glitch` | 0.188 | +0.182 ✓✓ | +0.123 ✓ | +0.127 ✓ | +0.248 ✓✓ |
+
+
+### What value can do — the sweep
+
+`tools/content/run_enemy_value_sweep.sh` builds the ten enemies at seven
+body lightnesses — the ramp's L\* scaled by k with a\* and b\* held, so
+hue and chroma survive; the markings untouched; geometry untouched — and
+measures each in all 24 cells. `CHART_separation_by_lightness.png` is
+the whole result in one picture; `value_bands/derivation.txt` is the
+arithmetic.
+
+* **Lightest step clearing 0.10 on wall + floor + dim:**
+  `temple_ruin` k 1.00 (today's skin already does), `concrete_facility`
+  k 0.70, `neon_transit` k 0.40, `gothic_stone` k 0.40.
+  `rusted_industrial` and `void_glitch`: **no paint step** — only the
+  black-matte limit clears them.
+* **0.18 on wall + floor + dim: no step, in no room.** Even pure black
+  matte misses 0.18 in every `rusted_industrial` case (0.176 / 0.155 /
+  0.104), in dim light in `gothic_stone` and `temple_ruin`, and on
+  `void_glitch`'s floor and in its dim light.
+
+### The candidate: TWO bands — not landed
+
+| band | k | rooms |
+| --- | --- | --- |
+| standard | 0.40 | `concrete_facility`, `neon_transit`, `gothic_stone`, `temple_ruin` |
+| deep | 0.10 | `rusted_industrial`, `void_glitch` |
+
+Measured as one run (`value_bands/candidate_two_bands/`):
+
+| room | band | wall | floor | dim | opening |
+| --- | --- | --- | --- | --- | --- |
+| `concrete_facility` | k0.40 | +0.233 ✓✓ | +0.171 ✓ | +0.157 ✓ | +0.058 ✗ |
+| `rusted_industrial` | k0.10 | +0.147 ✓ | +0.127 ✓ | +0.093 ✗ | +0.102 ✓ |
+| `neon_transit` | k0.40 | +0.243 ✓✓ | +0.121 ✓ | +0.163 ✓ | +0.032 ✗ |
+| `gothic_stone` | k0.40 | +0.156 ✓ | +0.148 ✓ | +0.100 ✓ | +0.069 ✗ |
+| `temple_ruin` | k0.40 | +0.233 ✓✓ | +0.228 ✓✓ | +0.153 ✓ | +0.117 ✓ |
+| `void_glitch` | k0.10 | +0.158 ✓ | +0.100 ✗ | +0.118 ✓ | +0.224 ✓✓ |
+
+* **Walls, floors, dim light: clears 0.10 in all six rooms but two
+  cells** — `rusted_industrial` dim 0.093, which no paint clears (black
+  matte: 0.104), and `void_glitch` floor at 0.0999, on the threshold
+  with its fog floor at 0.123.
+* **Clears 0.18 on the wall** in three rooms (was: none).
+* **Openings:** clears 0.10 in `rusted_industrial`, `temple_ruin`,
+  `void_glitch`; **short in three** — `concrete_facility` 0.058,
+  `neon_transit` 0.032, `gothic_stone` 0.069. Today those three are
+  short too, on the other side (the body slightly *lighter* than the
+  void); the band trades a small lighter-than-void gap for a small
+  darker-than-void one, and `neon_transit`'s gets smaller (0.071 → 0.032).
+
+**Why two and not three.** Three bands would leave `temple_ruin` on
+today's skin — it already clears walls, floors and dim — but its opening
+would stay at 0.029; in the standard band its opening clears (0.117).
+The script picks the grouping that darkens least in total and breaks
+ties on the worst opening; for three bands that is `temple_ruin` k 1.00
+plus the two above. One band (all six at k 0.10) scores higher
+everywhere and costs identity in all six rooms.
+
+**Identity.** Bands scale the body ramp's L\* only: same silhouettes,
+same shared ramp, hue and chroma held where the gamut allows, markings
+unchanged, no per-room palette, no `signal`. The cost is real at the
+deep band: at k 0.10 the body is near-black and its hue survives mostly
+in the plating lines. Measured with the default-theme skin in all six
+rooms; per-room skins differ only in those plating lines and bolts
+(the room's darkest base step), and would be re-measured at landing.
+
+### Decisions needed
+
+1. **The threshold.** 0.18 across walls, floors and dim light is out
+   of reach of paint in every room, and pure black matte misses it in
+   seven of the eighteen cells.
+   *Recommend:* the palette's own 0.10 value rule is the enemy standard;
+   0.18 is reported where it is met.
+2. **The bands.** *Recommend:* the two above. Alternatives, all
+   measured: three (`temple_ruin` unchanged — worse openings); one
+   (everything deep — better numbers, identity gone everywhere).
+3. **Openings.** Value cannot clear them in `concrete_facility`,
+   `neon_transit` and `gothic_stone` without going to pure black, matte,
+   markings included — the only treatment that clears 0.10 in all 24
+   cells, and it is a silhouette with no identity left. Options:
+   (a) accept openings as a known limit of a value-only fix;
+   (b) a value-independent tell — 1C — which needs a colour you have not
+   assigned (`signal` is closed);
+   (c) the void and fog colours, which are Production's.
+   *Recommend:* (a) now, and (b) as a study after the motion review,
+   since movement may carry the read against a void on its own.
+4. **The two cells short even with the bands** (`rusted_industrial`
+   dim, `void_glitch` floor): accept, or send `rusted_industrial`'s room
+   lighting to Production as the root cause.
+
+### What landing would change — and what it would not
+
+Landing would rebuild the ten enemies per room (`ART_THEME` and the
+band's `ENEMY_LIGHTNESS`), re-measure per-room skins, and deliver the
+band map as data (`value_bands.json` → `partitions["2"]["by_theme"]`).
+
+**It would not change what the game shows today.** Production's
+shipping enemies are built in code (`enemy.gd`, `_build_melee` /
+`_ranged` / `_flyer` / `_brute`) and painted with
+`ThemeMaterials.accent_mat` / `trim_mat` — the room's own accent and
+trim, which is exactly what L-08 forbids — and nothing in Production
+loads the art lane's `enemy_role_*` models (verified at Production's
+head, `d82a36e`). The bands take effect when the models are integrated,
+not before.
 
 ---
 
 ## Tier 1 — family-wide value separation
+
+> **SUPERSEDED — wrong light and wrong L\* scale; see "Tier 1,
+> re-measured" above.** Kept as the record of what you ruled on.
 
 **The problem, measured.** At 18 m in a lit room the family sits
 **0.067 L\*** from the wall behind it. The palette asks for 0.10
@@ -77,6 +295,10 @@ rely on body value at all.
 
 ### Tier 1, measured in all six families — and the condition bites
 
+> **SUPERSEDED — every number in this section is on the wrong scale;
+> see "Tier 1, re-measured" above.** Kept because the band ruling was
+> made on it.
+
 The six-theme measurement was the condition on landing 1A. It came back
 with a result that decides the direction rather than confirming it, so
 **nothing has been changed and this goes back to you.**
@@ -130,10 +352,14 @@ recognition: the same brute would not be the same value in two rooms.
 
 > **Decision needed:** down to ≤ 0.152 / up to ≥ 0.681 / per-theme /
 > relax the threshold for enemies →
+>
+> **RULED: per-theme value bands, as few as the evidence permits** —
+> quoted in full at "Tier 1, re-measured" above, which is where it was
+> carried out and where it came back.
 
-Reproduce with `tools/content/run_enemy_silhouettes.sh` (six
-`LINEUP_<theme>_at_18m.png` frames) then
-`tools/content/enemy_value_bands.py`.
+The `LINEUP_<theme>_at_18m.png` frames this section cited were rendered
+under the wrong light and have been removed; `contrast_current/` holds
+their replacements.
 
 ---
 

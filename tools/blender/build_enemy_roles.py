@@ -107,6 +107,19 @@ import palette as pal  # noqa: E402
 THEME = common.THEME
 OUT = "batch030/enemies"
 
+#: TIER 1 exploration. A lightness factor on the enemy body's CIE L*
+#: (`propkit.value_band`), for building band CANDIDATES to measure. Unset,
+#: this builder is exactly what it was and the shipped models rebuild
+#: byte-identical. Set, it builds into a scratch tree beside the other
+#: non-shipping builds and never touches `assets/models/`: a candidate is
+#: evidence for a decision, not an asset.
+LIGHTNESS = float(os.environ.get("ENEMY_LIGHTNESS", "1.0"))
+if LIGHTNESS != 1.0:
+    _scratch = os.path.join(common.REPO_ROOT, "assets", "themed",
+                            "_enemy_lightness_%.2f" % LIGHTNESS)
+    common.MODEL_DIR = os.path.join(_scratch, "models")
+    common.TEXTURE_DIR = os.path.join(_scratch, "textures")
+
 #: Read from Production, never redefined here. If these drift, the models
 #: and the colliders drift with them and the whole point is lost.
 ENVELOPES = {
@@ -691,6 +704,7 @@ def main():
             common.assign(obj, common.make_textured_material(
                 "%s_%s" % (name, r),
                 propkit.enemy_skin(THEME, "%s_%s" % (name, r),
+                                   lightness=LIGHTNESS,
                                    marking=marking).to_blender(
                     "%s_%s_t" % (name, r)),
                 roughness=pal.roughness(THEME) if rough is None
@@ -747,8 +761,13 @@ def main():
         })
         report[name] = record
 
-    out = os.path.join(common.REPO_ROOT, "assets", "models", "batch030",
-                       "enemies", "manifest.json")
+    # Through MODEL_DIR, not a hardcoded shipped path. Before 2026-09-25
+    # this wrote to assets/models/ unconditionally, so ANY scratch build
+    # -- an ART_THEME run as much as a lightness candidate -- would have
+    # replaced the shipped manifest with a scratch one while exporting
+    # its models somewhere else entirely.
+    out = os.path.join(common.MODEL_DIR, "batch030", "enemies",
+                       "manifest.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as handle:
         json.dump(report, handle, indent=2, sort_keys=True)

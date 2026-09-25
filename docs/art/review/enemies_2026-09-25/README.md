@@ -17,7 +17,8 @@ width or hue. Every number below is the project's own:
 
 | File | What it is |
 | --- | --- |
-| `LINEUP_at_18m.png` | All ten at review distance, in a room, under **one** lamp at the theme's own colour and energy. No rig. |
+| `contrast_current/` | All ten at review distance in all six rooms, four cases each (wall, floor, dim, opening), under each room's own light, ambient and fog — `CONTRAST_<room>_<case>.png` and `contrast.json`. Replaces the `LINEUP_*` frames, which were lit wrongly and are gone. |
+| `value_bands/` | Tier 1: the lightness sweep, the derived bands, the two-band candidate measured, `CHART_separation_by_lightness.png` and `SHEET_today_vs_two_bands.png`. A candidate; nothing landed. |
 | `SHEET_silhouettes.png` | Every outline, black on white, at native size. Rows are roles; columns are yaw 0 / 45 / 90. |
 | `MASK_<role>_y<yaw>.png` | The outlines themselves, native size — the measurement's input. |
 | `silhouettes.json` | Per-role pixel size, fill, aspect, and the visible body against its declared envelope. |
@@ -46,37 +47,47 @@ overlap of any pair *before* any normalisation.
 
 ## The bigger finding is value, not outline
 
+> **RE-MEASURED 2026-09-25.** The value numbers this section first
+> carried (0.420 against 0.488, **0.067** apart, and a per-role list
+> from `diver` 0.014 to `artillery` 0.111) came from a harness that lit
+> the room with the wrong lamp, through the wrong tonemapper, with no
+> fog, and computed L\* from sRGB-encoded pixels as if they were linear.
+> They are withdrawn. The numbers below are from `contrast_current/`,
+> which calibrates its L\* against known greys before it measures.
+
 The silhouette test is the kindest test a shape will ever get — black on
-nothing. In the room, against the wall they stand in front of:
+nothing. In `concrete_facility`, under its own light and fog, against
+the wall they stand in front of:
 
 ```
-the family reads at L* 0.420, the wall at L* 0.488 -- 0.067 apart
-  min_value_separation        0.10   SHORT
+the family reads at L* 0.224, the wall at L* 0.355 -- 0.131 apart
+  min_value_separation        0.10   clears
   min_interactable_separation 0.18   SHORT
 ```
 
-**The family fails both of the palette's separation rules**, and an
-enemy is the most interactable thing in the room. This affects all ten
-at once, and no amount of outline work on two pairs will move it.
-
-Per role, worst first — this is the order the fixes want to be made in:
+Per role, worst first:
 
 | role | body L\* | from the wall | clears 0.10 | clears 0.18 |
 | --- | --- | --- | --- | --- |
-| `diver` | 0.474 | **0.014** | no | no |
-| `drifter` | 0.454 | 0.034 | no | no |
-| `charger` | 0.447 | 0.041 | no | no |
-| `bulwark` | 0.439 | 0.049 | no | no |
-| `brute` | 0.421 | 0.067 | no | no |
-| `melee` | 0.416 | 0.072 | no | no |
-| `ranged` | 0.408 | 0.080 | no | no |
-| `scuttler` | 0.400 | 0.088 | no | no |
-| `beacon` | 0.391 | 0.097 | no | no |
-| `artillery` | 0.377 | **0.111** | yes | no |
+| `diver` | 0.256 | **0.099** | no | no |
+| `drifter` | 0.254 | 0.101 | yes | no |
+| `charger` | 0.240 | 0.115 | yes | no |
+| `beacon` | 0.232 | 0.123 | yes | no |
+| `bulwark` | 0.227 | 0.128 | yes | no |
+| `brute` | 0.220 | 0.135 | yes | no |
+| `melee` | 0.218 | 0.137 | yes | no |
+| `ranged` | 0.217 | 0.138 | yes | no |
+| `scuttler` | 0.215 | 0.140 | yes | no |
+| `artillery` | 0.209 | **0.146** | yes | no |
 
-`diver` is the extreme case: at **0.014 L\*** it is, in value terms,
-the wall. Only `artillery` clears even the ordinary value rule, and
-nothing clears the interactable one.
+**Value is still the bigger finding — but because of the other rooms,
+not this one.** On `concrete_facility`'s wall the family clears the
+ordinary rule. On floors, in dim light and in the other five rooms it
+does not: the weakest role sits **0.001** from the background on
+`rusted_industrial`'s wall and floor, on `neon_transit`'s floor and on
+`void_glitch`'s floor. That affects all ten at once, and no outline work
+on two pairs will move it. The full 24-cell picture, and what a value
+band can and cannot do about it, is Tier 1 in `DECISIONS_FOR_OWNER.md`.
 
 > **Correction.** An earlier version of this README reported the family
 > separation as 0.165 and said it cleared the value rule. That number
@@ -109,7 +120,10 @@ Getting that wrong reported six.
   moment it moves, and that is not an argument for leaving it — it is a
   reason the next pass should be animated.
 * **Three angles only**, and no pitch.
-* **One theme.** The lineup room is `concrete_facility`. The contrast
-  number would move in `void_glitch` or `rusted_industrial`.
+* **One theme for the silhouettes.** Outlines do not depend on the
+  room. Value does, and is now measured in all six rooms and four cases
+  (`contrast_current/`).
+* **One distance.** Everything is at 18 m. Nearer, the fog lifts a body
+  less and every value separation grows.
 * **No player.** Nothing here tests reading an enemy while something
   else is happening, which is the only condition that actually matters.

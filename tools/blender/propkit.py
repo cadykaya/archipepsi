@@ -356,7 +356,485 @@ def hero_face(theme, name, family, label):
 # enemies
 # ----------------------------------------------------------------------
 
-def enemy_skin(theme, name, marking="dead"):
+
+# ----------------------------------------------------------------------
+# Enemy VALUE bands -- Tier 1, owner ruling 2026-09-25
+# ----------------------------------------------------------------------
+#
+# *"Preserve enemy identity across those bands: do not change the role's
+# silhouette; do not give each theme an unrelated enemy palette;
+# preserve the shared hue/chroma/material language as much as possible;
+# vary the value treatment only as far as needed."*
+#
+# So a band is ONE number: a factor on CIE L*, with a* and b* held. Hue
+# (the a*/b* angle) and chroma (their length) are unchanged by
+# construction; only lightness moves. The grime family's browns are low
+# enough in chroma that holding a*/b* while L* drops stays inside sRGB,
+# and anything that would not is clamped rather than wrapped.
+#
+# The markings are NOT transformed. `dead` and `hazard` are semantic
+# families with meanings of their own -- the telegraph is the only
+# orange an enemy shows -- and a band that re-valued them would be
+# spending those meanings to fix a body.
+
+_D65 = (0.95047, 1.0, 1.08883)
+
+
+def _srgb_to_linear(c):
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def _linear_to_srgb(c):
+    c = max(0.0, min(1.0, c))
+    return 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
+
+
+def _lab_f(t):
+    return t ** (1 / 3) if t > 0.008856 else 7.787 * t + 16 / 116
+
+
+def _lab_finv(t):
+    return t ** 3 if t ** 3 > 0.008856 else (t - 16 / 116) / 7.787
+
+
+def hex_to_lab(hex_value):
+    r, g, b = (_srgb_to_linear(int(hex_value[i:i + 2], 16) / 255.0)
+               for i in (1, 3, 5))
+    x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / _D65[0]
+    y = (0.2126 * r + 0.7152 * g + 0.0722 * b) / _D65[1]
+    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / _D65[2]
+    fx, fy, fz = _lab_f(x), _lab_f(y), _lab_f(z)
+    return 116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)
+
+
+def lab_to_hex(l, a, b):
+    fy = (l + 16) / 116
+    x = _lab_finv(fy + a / 500) * _D65[0]
+    y = _lab_finv(fy) * _D65[1]
+    z = _lab_finv(fy - b / 200) * _D65[2]
+    rl = 3.2406 * x - 1.5372 * y - 0.4986 * z
+    gl = -0.9689 * x + 1.8758 * y + 0.0415 * z
+    bl = 0.0557 * x - 0.2040 * y + 1.0570 * z
+    return "#%02x%02x%02x" % tuple(
+        int(round(_linear_to_srgb(c) * 255)) for c in (rl, gl, bl))
+
+
+def value_band(hex_value, lightness):
+    """The same colour at `lightness` times its L*. Hue and chroma kept."""
+    if lightness == 1.0:
+        return hex_value
+    l, a, b = hex_to_lab(hex_value)
+    return lab_to_hex(l * lightness, a, b)
+
+
+def enemy_skin(theme, name, marking="dead", lightness=1.0):
+    """An enemy's skin, and the one rule that decides it.
+
+    > **An enemy never wears its room's colours.**
+
+    The first enemy pass painted all three melee concepts with
+    `painted_metal`, which builds from the THEME accent -- so in
+    concrete_facility they came out institutional steel blue, the same
+    family as the wall panels and the doorway trim behind them. At 18 m and
+    46 px that is camouflage. `ENEMY_AGGRO_RADIUS` is where the player has
+    to see one, and a figure sharing a value and a hue with the architecture
+    is a figure the player finds by being hit.
+
+    So enemies are built from the shared `grime` family, which every theme
+    also uses for dirt, plus the theme's DARKEST base step. That makes an
+    enemy read as something that came out of the building's underside
+    rather than as part of its finish. The only saturated colour on the body
+    is the marking family, and there is very little of it.
+
+    **MEASURED 2026-09-25 -- and the first measurement was wrong.** This
+    docstring used to claim the skin "sits below every theme's wall in
+    value", and a first correction replaced that with numbers from a
+    harness that lit every room with one room's lamp and computed L* from
+    sRGB-ENCODED pixels as if they were linear light. Both are withdrawn.
+
+    Measured properly -- each room's own light, ambient and fog as
+    `zone_builder.gd` sets them, L* calibrated against known greys -- the
+    body renders at L* 0.16-0.31 and sits BELOW its background in every
+    room on walls, floors and in dim light (separation 0.001 to 0.145:
+    `rusted_industrial` barely separates at all). The one backdrop it
+    sits ABOVE is an opening onto the room's fogged void, in four rooms.
+
+    `lightness` scales the body ramp's L* with a* and b* held, so hue and
+    chroma survive; the markings are untouched. Darker is better on
+    walls, floors and in dim light in every room, but the fog puts a
+    floor under how dark a body can render at 18 m, and in the four
+    dark-void rooms darkening passes THROUGH the void's value on the way.
+    `tools/content/run_enemy_value_sweep.sh` measures all of it and
+    `enemy_value_bands.py` derives the bands; nothing here changes on the
+    strength of it until the owner rules. See
+    `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`.
+    """
+    base, accent, trim = _ramps(theme)
+    fill = base[TONES[tone]]
+    surf = surface(theme, name)
+    canvas = paintkit.Canvas(PROP_SIZE, fill)
+    paintkit.tonal_drift(canvas, surf, amount=0.06, cell_metres=0.5)
+    paintkit.broad_patches(canvas, surf,
+                           [base[max(0, TONES[tone] - 1)],
+                            base[min(3, TONES[tone] + 1)]],
+                           cell_metres=0.28, density=0.22, strength=0.26)
+    paintkit.panel_grid(canvas, surf, trim[0], base[3],
+                        pitch_metres=0.5, vertical_pitch_metres=0.5)
+    surf.seams = tuple(range(0, PROP_SIZE, surf.texels(0.5)))
+    surf.bolt_pitch = surf.texels(0.25)
+    paintkit.bolts(canvas, surf, trim[0], base[3], inset=3)
+    if band:
+        # An identification band in the theme's own DARK step, not the
+        # accent. It still makes a row of identical boxes read as a row.
+        top = surf.texels(0.62)
+        height = surf.texels(0.12)
+        canvas.rect(0, top, PROP_SIZE, height,
+                    accent[1] if accent_band else trim[1])
+        canvas.hline(top - 1, 0, PROP_SIZE - 1, base[3])
+        canvas.hline(top + height, 0, PROP_SIZE - 1, trim[0])
+    if label:
+        width = paintkit.text_width(label)
+        paintkit.text(canvas, surf, (PROP_SIZE - width) // 2,
+                      surf.texels(0.34), label, trim[0])
+    paintkit.speckle(canvas, surf, trim[0],
+                     paintkit.zone_or(paintkit.near_seams(surf, 0.06),
+                                      paintkit.near_edges(surf, 0.10)),
+                     density=0.16, strength=0.5)
+    paintkit.edge_wear(canvas, surf, base[0], surf.texels(wear), strength=0.9)
+    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.45)
+    return canvas
+
+
+def quiet_painted(theme, name, seam_metres=0.5, wear=0.10, tone="mid",
+                  bolts=True):
+    """A painted field that lets the SHAPE be the thing you see.
+
+    ## Why this exists beside `painted_metal` rather than replacing it
+
+    `painted_metal` is tuned for the 1-2 m props Batch 001 built: broad
+    patches on a 0.28 m cell, bolts every 0.25 m, and a speckle field near
+    every seam and edge. On a 1.0 m crate that reads as worn facility steel.
+    On Batch 043's object family it does not, and the reason is frequency
+    rather than taste.
+
+    These objects are 0.25 m to 1.8 m. The UV projection is world-space at a
+    fixed 64 texels/m, so a 0.34 m power cell samples a 0.34 m window of a
+    2.0 m texture -- and a 0.28 m patch cell, a 0.25 m bolt pitch and a
+    16% speckle field all land inside it at once. Every feature the
+    treatment has arrives on every face, and the result is a dense,
+    high-contrast crust that obscures the silhouette and competes with the
+    dark handling fittings, which are the one thing on these objects that
+    has to read first.
+
+    `painted_metal` is NOT changed, because every approved batch wears it
+    and re-skinning them all is not this batch's decision to take.
+
+    ## What this does instead
+
+    A near-flat field, DELIBERATE seams, and wear only where a thing is
+    actually handled:
+
+      * one tonal drift at a metre scale, so the field is not dead flat;
+      * no broad patches at all;
+      * panel seams at a pitch the CALLER chooses, so an object gets seams
+        that suit its size instead of a fixed 0.5 m grid;
+      * bolts on the seams only, at half the old density, and optional;
+      * edge wear at a shorter reach and lower strength;
+      * one grime pool, weaker.
+
+    The reserved-colour rules are untouched: everything here comes from the
+    theme's own base and trim ramps, and no universal grammar colour appears.
+    Texel density is unchanged at `PROP_DENSITY`.
+    """
+    base, accent, trim = _ramps(theme)
+    del accent
+    fill = base[TONES[tone]]
+    surf = surface(theme, name)
+    canvas = paintkit.Canvas(PROP_SIZE, fill)
+    # A single slow drift. `painted_metal` uses 0.06 at 0.5 m, which at prop
+    # scale is a visible mottle; 0.035 at 1.1 m reads as a painted surface
+    # that is not perfectly even, which is all it is for.
+    paintkit.tonal_drift(canvas, surf, amount=0.035, cell_metres=1.1)
+    paintkit.panel_grid(canvas, surf, trim[0], base[min(3, TONES[tone] + 1)],
+                        pitch_metres=seam_metres,
+                        vertical_pitch_metres=seam_metres)
+    surf.seams = tuple(range(0, PROP_SIZE, surf.texels(seam_metres)))
+    if bolts:
+        # Half the density of the default. A bolt every 0.25 m on a 0.34 m
+        # object is a row of rivets on something the size of a lunchbox.
+        surf.bolt_pitch = surf.texels(seam_metres)
+        paintkit.bolts(canvas, surf, trim[0], base[3], inset=3)
+    # Wear, and ONLY at the edges -- no speckle field. An object is worn
+    # where it is handled and where it is knocked, not uniformly.
+    paintkit.edge_wear(canvas, surf, base[0], surf.texels(wear),
+                       strength=0.55)
+    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.22)
+    return canvas
+
+
+def bare_metal(theme, name, wear=0.2):
+    """Unpainted, oxidised steel: pipes, braces, debris, broken machinery."""
+    base, accent, trim = _ramps(theme)
+    surf = surface(theme, name)
+    canvas = paintkit.Canvas(PROP_SIZE, base[1])
+    paintkit.tonal_drift(canvas, surf, amount=0.08, cell_metres=0.4)
+    paintkit.broad_patches(canvas, surf, [base[0], accent[0]],
+                           cell_metres=0.24, density=0.30, strength=0.35)
+    paintkit.speckle(canvas, surf, base[0], lambda x, y: 1.0,
+                     density=0.06, strength=0.45)
+    paintkit.edge_wear(canvas, surf, accent[0], surf.texels(wear), strength=1.0)
+    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.55)
+    return canvas
+
+
+def console(theme, name, label="rdy"):
+    """A terminal face: dark bezel, a lit screen, a row of indicator marks.
+
+    The screen is the `signal` family, never the theme's accent. A terminal
+    is an interactable, and an interactable that speaks in its theme's colour
+    is one the player has to re-learn in every theme.
+    """
+    base, accent, trim = _ramps(theme)
+    surf = surface(theme, name)
+    canvas = paintkit.Canvas(PROP_SIZE, trim[0])
+    paintkit.tonal_drift(canvas, surf, amount=0.05, cell_metres=0.4)
+    # Bezel, then screen recess, then the screen itself: three values, so
+    # the screen reads as set INTO something rather than stuck on.
+    inset = surf.texels(0.10)
+    canvas.rect(inset, inset, PROP_SIZE - 2 * inset, PROP_SIZE - 2 * inset,
+                trim[1])
+    recess = surf.texels(0.16)
+    canvas.rect(recess, recess, PROP_SIZE - 2 * recess, PROP_SIZE - 2 * recess,
+                pal.universal("dead", 0))
+    screen = surf.texels(0.20)
+    canvas.rect(screen, screen, PROP_SIZE - 2 * screen, PROP_SIZE - 2 * screen,
+                pal.universal("signal", 0))
+    # Scanlines, drawn as whole texel rows because that is what a CRT is.
+    for y in range(screen, PROP_SIZE - screen, 2):
+        canvas.hline(y, screen, PROP_SIZE - screen - 1,
+                     pal.universal("signal", 1))
+    # Readout blocks: a machine saying something, in a language nobody has
+    # to read. Rows are placed on a grid, never scattered.
+    row_h = surf.texels(0.07)
+    for i in range(5):
+        y = screen + surf.texels(0.06) + i * row_h * 2
+        if y + row_h >= PROP_SIZE - screen:
+            break
+        width = int((0.3 + 0.6 * surf.hash.breaker("row", 0, i))
+                    * (PROP_SIZE - 2 * screen - surf.texels(0.12)))
+        canvas.rect(screen + surf.texels(0.06), y, width, row_h,
+                    pal.universal("signal", 3))
+    width = paintkit.text_width(label)
+    paintkit.text(canvas, surf, PROP_SIZE - screen - width - 3,
+                  PROP_SIZE - screen - 8, label, pal.universal("send", 3))
+    paintkit.speckle(canvas, surf, trim[0], paintkit.near_edges(surf, 0.10),
+                     density=0.14, strength=0.5)
+    paintkit.edge_wear(canvas, surf, base[0], surf.texels(0.08), strength=0.7)
+    return canvas
+
+
+def placard(theme, name, label="warn"):
+    """A wall sign: hazard border, one short word, universal colours only."""
+    base, accent, trim = _ramps(theme)
+    surf = surface(theme, name)
+    canvas = paintkit.Canvas(PROP_SIZE, pal.universal("hazard", 3))
+    border = surf.texels(0.08)
+    paintkit.hazard_stripes(canvas, 0, 0, PROP_SIZE, border,
+                            pal.universal("hazard", 0),
+                            pal.universal("hazard", 3),
+                            pitch=max(3, surf.texels(0.06)))
+    paintkit.hazard_stripes(canvas, 0, PROP_SIZE - border, PROP_SIZE, border,
+                            pal.universal("hazard", 0),
+                            pal.universal("hazard", 3),
+                            pitch=max(3, surf.texels(0.06)))
+    canvas.rect(0, border, PROP_SIZE, PROP_SIZE - 2 * border,
+                pal.universal("hazard", 2))
+    width = paintkit.text_width(label)
+    paintkit.text(canvas, surf, (PROP_SIZE - width) // 2, PROP_SIZE // 2 - 3,
+                  label, pal.universal("hazard", 0))
+    paintkit.speckle(canvas, surf, trim[0], paintkit.near_edges(surf, 0.06),
+                     density=0.18, strength=0.55)
+    paintkit.edge_wear(canvas, surf, trim[0], surf.texels(0.06), strength=0.8)
+    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.35)
+    return canvas
+
+
+# ----------------------------------------------------------------------
+# hero tier -- the objects AUTHORED_CONTENT.md calls identity
+# ----------------------------------------------------------------------
+
+HERO_DENSITY = pal.budgets()["texel_density"]["hero"]["target"]
+HERO_SIZE = 128
+HERO_METRES = HERO_SIZE / float(HERO_DENSITY)
+
+
+def hero_surface(name):
+    return paintkit.Surface(HERO_SIZE, HERO_METRES, "prop",
+                            floor_edge="bottom",
+                            seed="archipepsi/hero/%s" % name)
+
+
+def hero_shell(theme, name, family, label=None, lit_band=True):
+    """The shared skin every hero object wears, whatever its silhouette.
+
+    `family` is a UNIVERSAL family name -- `signal` for a Check, `identity`
+    for Epsilon, `send` for a transmission surface. Never a theme colour:
+    these are the objects the player learns once and must recognise in all
+    six themes, and a theme-tinted Check is a Check that has to be re-learned
+    in temple_ruin.
+
+    Three concepts of one object share this function on purpose. If the
+    three Check concepts differed in paint as well as in silhouette, the
+    review would be asking two questions at once and could answer neither.
+    """
+    base, accent, trim = _ramps(theme)
+    surf = hero_surface(name)
+    canvas = paintkit.Canvas(HERO_SIZE, trim[1])
+    paintkit.tonal_drift(canvas, surf, amount=0.05, cell_metres=0.4)
+    paintkit.broad_patches(canvas, surf, [trim[0], trim[2]],
+                           cell_metres=0.22, density=0.20, strength=0.30)
+    # Heavy machined casing: deep panel divisions and real bolts. A hero
+    # object has to survive being looked at from 1 m as well as from 40.
+    paintkit.panel_grid(canvas, surf, trim[0], trim[2],
+                        pitch_metres=0.34, vertical_pitch_metres=0.34)
+    surf.seams = tuple(range(0, HERO_SIZE, surf.texels(0.34)))
+    surf.bolt_pitch = surf.texels(0.17)
+    paintkit.bolts(canvas, surf, trim[0], trim[2], inset=3)
+    if lit_band:
+        # THE dominant cue. One band, full width, in the universal family --
+        # everything else on the object is subordinate to it, and nothing
+        # else is allowed to be this bright. If two things compete for the
+        # eye at 35 px, neither wins.
+        top = surf.texels(0.30)
+        height = max(3, surf.texels(0.10))
+        canvas.rect(0, top, HERO_SIZE, height, pal.universal(family, 3))
+        canvas.hline(top - 1, 0, HERO_SIZE - 1, pal.universal("dead", 0))
+        canvas.hline(top + height, 0, HERO_SIZE - 1, pal.universal("dead", 0))
+        # A darker echo of the band below it: the value sandwich the palette
+        # check exists to guarantee. Whichever way a theme's wall goes, one
+        # half of the pair separates from it.
+        canvas.rect(0, top + height + 1, HERO_SIZE, max(2, height // 2),
+                    pal.universal(family, 0))
+    if label:
+        width = paintkit.text_width(label)
+        paintkit.text(canvas, surf, (HERO_SIZE - width) // 2,
+                      surf.texels(0.62), label, pal.universal(family, 2))
+    paintkit.speckle(canvas, surf, trim[0],
+                     paintkit.zone_or(paintkit.near_seams(surf, 0.04),
+                                      paintkit.near_edges(surf, 0.06)),
+                     density=0.14, strength=0.5)
+    paintkit.edge_wear(canvas, surf, base[0], surf.texels(0.06), strength=0.8)
+    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.35)
+    return canvas
+
+
+def hero_face(theme, name, family, label):
+    """The interaction face: what the player aims at and presses.
+
+    Deliberately a different texture from the shell. AUTHORED_CONTENT.md
+    requires that "can I use this?" is never a guess, and the cheapest
+    honest answer is that the usable part of an object does not look like
+    the rest of it.
+    """
+    base, accent, trim = _ramps(theme)
+    surf = hero_surface(name + "_face")
+    canvas = paintkit.Canvas(HERO_SIZE, pal.universal("dead", 0))
+    inset = surf.texels(0.06)
+    canvas.rect(inset, inset, HERO_SIZE - 2 * inset, HERO_SIZE - 2 * inset,
+                pal.universal(family, 0))
+    core = surf.texels(0.10)
+    canvas.rect(core, core, HERO_SIZE - 2 * core, HERO_SIZE - 2 * core,
+                pal.universal(family, 2))
+    # Concentric rings, snapped to texels. A target, drawn the way a 1998
+    # texture drew a target.
+    for i in range(3):
+        ring = core + surf.texels(0.05) * (i + 1)
+        canvas.outline(ring, ring, HERO_SIZE - 2 * ring, HERO_SIZE - 2 * ring,
+                       pal.universal(family, 3 if i % 2 else 0))
+    width = paintkit.text_width(label)
+    paintkit.text(canvas, surf, (HERO_SIZE - width) // 2, HERO_SIZE // 2 - 3,
+                  label, pal.universal(family, 0))
+    paintkit.speckle(canvas, surf, trim[0], paintkit.near_edges(surf, 0.05),
+                     density=0.16, strength=0.5)
+    return canvas
+
+
+# ----------------------------------------------------------------------
+# enemies
+# ----------------------------------------------------------------------
+
+
+# ----------------------------------------------------------------------
+# Enemy VALUE bands -- Tier 1, owner ruling 2026-09-25
+# ----------------------------------------------------------------------
+#
+# *"Preserve enemy identity across those bands: do not change the role's
+# silhouette; do not give each theme an unrelated enemy palette;
+# preserve the shared hue/chroma/material language as much as possible;
+# vary the value treatment only as far as needed."*
+#
+# So a band is ONE number: a factor on CIE L*, with a* and b* held. Hue
+# (the a*/b* angle) and chroma (their length) are unchanged by
+# construction; only lightness moves. The grime family's browns are low
+# enough in chroma that holding a*/b* while L* drops stays inside sRGB,
+# and anything that would not is clamped rather than wrapped.
+#
+# The markings are NOT transformed. `dead` and `hazard` are semantic
+# families with meanings of their own -- the telegraph is the only
+# orange an enemy shows -- and a band that re-valued them would be
+# spending those meanings to fix a body.
+
+_D65 = (0.95047, 1.0, 1.08883)
+
+
+def _srgb_to_linear(c):
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def _linear_to_srgb(c):
+    c = max(0.0, min(1.0, c))
+    return 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
+
+
+def _lab_f(t):
+    return t ** (1 / 3) if t > 0.008856 else 7.787 * t + 16 / 116
+
+
+def _lab_finv(t):
+    return t ** 3 if t ** 3 > 0.008856 else (t - 16 / 116) / 7.787
+
+
+def hex_to_lab(hex_value):
+    r, g, b = (_srgb_to_linear(int(hex_value[i:i + 2], 16) / 255.0)
+               for i in (1, 3, 5))
+    x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / _D65[0]
+    y = (0.2126 * r + 0.7152 * g + 0.0722 * b) / _D65[1]
+    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / _D65[2]
+    fx, fy, fz = _lab_f(x), _lab_f(y), _lab_f(z)
+    return 116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)
+
+
+def lab_to_hex(l, a, b):
+    fy = (l + 16) / 116
+    x = _lab_finv(fy + a / 500) * _D65[0]
+    y = _lab_finv(fy) * _D65[1]
+    z = _lab_finv(fy - b / 200) * _D65[2]
+    rl = 3.2406 * x - 1.5372 * y - 0.4986 * z
+    gl = -0.9689 * x + 1.8758 * y + 0.0415 * z
+    bl = 0.0557 * x - 0.2040 * y + 1.0570 * z
+    return "#%02x%02x%02x" % tuple(
+        int(round(_linear_to_srgb(c) * 255)) for c in (rl, gl, bl))
+
+
+def value_band(hex_value, lightness):
+    """The same colour at `lightness` times its L*. Hue and chroma kept."""
+    if lightness == 1.0:
+        return hex_value
+    l, a, b = hex_to_lab(hex_value)
+    return lab_to_hex(l * lightness, a, b)
+
+
+def enemy_skin(theme, name, marking="dead", lightness=1.0):
     """An enemy's skin, and the one rule that decides it.
 
     > **An enemy never wears its room's colours.**
@@ -395,18 +873,23 @@ def enemy_skin(theme, name, marking="dead"):
     `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`.
     """
     base, accent, trim = _ramps(theme)
+    # The band, applied to the BODY inputs only. At lightness 1.0 every
+    # call below returns its input unchanged, so the shipped skin
+    # rebuilds byte-identical -- the currency check proves it.
+    base = tuple(value_band(c, lightness) for c in base)
+    grime = [value_band(pal.grime(i), lightness) for i in range(3)]
     surf = surface(theme, name)
-    canvas = paintkit.Canvas(PROP_SIZE, pal.grime(1))
+    canvas = paintkit.Canvas(PROP_SIZE, grime[1])
     paintkit.tonal_drift(canvas, surf, amount=0.08, cell_metres=0.30)
-    paintkit.broad_patches(canvas, surf, [pal.grime(0), pal.grime(2)],
+    paintkit.broad_patches(canvas, surf, [grime[0], grime[2]],
                            cell_metres=0.18, density=0.32, strength=0.38)
     # Plating: tighter than a prop's, because an enemy is a small object seen
     # close during a fight and far during the approach.
-    paintkit.panel_grid(canvas, surf, pal.grime(0), base[0],
+    paintkit.panel_grid(canvas, surf, grime[0], base[0],
                         pitch_metres=0.22, vertical_pitch_metres=0.22)
     surf.seams = tuple(range(0, PROP_SIZE, surf.texels(0.22)))
     surf.bolt_pitch = surf.texels(0.11)
-    paintkit.bolts(canvas, surf, pal.grime(0), base[1], inset=2)
+    paintkit.bolts(canvas, surf, grime[0], base[1], inset=2)
     # ONE marking band, narrow, and NOT in the hazard family.
     #
     # This defaulted to `hazard` -- orange -- while the enemy builder's own
@@ -424,9 +907,9 @@ def enemy_skin(theme, name, marking="dead"):
     top = surf.texels(0.46)
     height = max(2, surf.texels(0.045))
     canvas.rect(0, top, PROP_SIZE, height, pal.universal(marking, 1))
-    canvas.hline(top - 1, 0, PROP_SIZE - 1, pal.grime(0))
-    canvas.hline(top + height, 0, PROP_SIZE - 1, pal.grime(0))
-    paintkit.speckle(canvas, surf, pal.grime(0),
+    canvas.hline(top - 1, 0, PROP_SIZE - 1, grime[0])
+    canvas.hline(top + height, 0, PROP_SIZE - 1, grime[0])
+    paintkit.speckle(canvas, surf, grime[0],
                      paintkit.zone_or(paintkit.near_seams(surf, 0.03),
                                       paintkit.near_edges(surf, 0.05)),
                      density=0.18, strength=0.55)
