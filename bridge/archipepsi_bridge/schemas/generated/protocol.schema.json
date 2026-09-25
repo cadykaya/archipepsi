@@ -508,6 +508,46 @@
         "title": "ExitZone",
         "type": "object"
       },
+      "GearAction": {
+        "additionalProperties": false,
+        "description": "D16 G1: wear an owned piece of Gear in its territory, or clear the\nterritory with a null id. The checks -- owned, Gear, its own\nterritory -- are `CampaignSave`'s, as `slot_action`'s are.",
+        "properties": {
+          "type": {
+            "const": "gear_action",
+            "title": "Type",
+            "type": "string"
+          },
+          "territory": {
+            "enum": [
+              "HEAD",
+              "TORSO",
+              "ARMS",
+              "LEGS"
+            ],
+            "title": "Territory",
+            "type": "string"
+          },
+          "component_id": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Component Id"
+          }
+        },
+        "required": [
+          "type",
+          "territory"
+        ],
+        "title": "GearAction",
+        "type": "object"
+      },
       "GrantLocalReward": {
         "additionalProperties": false,
         "description": "Record a local reward the player earned (ECHOES.md \u00a714.2).\n\nClient-initiated because the world is where a note is found, and\nvalidated here because the save is where it is kept. There is no field\nthat could name an AP item, location or Check \u2014 the intent is\nstructurally incapable of the mistake \u00a714.2 forbids, rather than\ntrusted not to make it.",
@@ -1320,6 +1360,7 @@
         "enemy_defeated": "#/$defs/EnemyDefeated",
         "enter_zone": "#/$defs/EnterZone",
         "exit_zone": "#/$defs/ExitZone",
+        "gear_action": "#/$defs/GearAction",
         "grant_local_reward": "#/$defs/GrantLocalReward",
         "hello": "#/$defs/Hello",
         "key_collected": "#/$defs/KeyCollected",
@@ -1380,6 +1421,9 @@
       },
       {
         "$ref": "#/$defs/SlotAction"
+      },
+      {
+        "$ref": "#/$defs/GearAction"
       },
       {
         "$ref": "#/$defs/AuthorizeConsumable"
@@ -1455,7 +1499,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -1764,7 +1808,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -2598,6 +2642,9 @@
           "slots": {
             "$ref": "#/$defs/SlotAssignment"
           },
+          "gear": {
+            "$ref": "#/$defs/GearSlots"
+          },
           "local_rewards": {
             "default": [],
             "items": {
@@ -2684,6 +2731,15 @@
             "description": "H-UI-DATA: the menu's items and slots.\n\nRead from the fold and slots above, never folded again. The menu\ndoes not reconstruct upgrade arithmetic, and an item's history is\nattached to it, not repeated as extra equippables. See\n`inventory_view`.",
             "readOnly": true
           },
+          "gear_effects": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "D16 G1: the factor each runtime stat takes from the Gear worn.\n\nDerived here from the worn pieces' atoms (`gear.worn_effects`),\nnever stored. The StatStack multiplies it in with every trait,\nstatus and pulse, BEFORE its one floor and envelope: nothing\nclamps Gear alone (owner ruling 1). Empty when nothing is worn.",
+            "readOnly": true,
+            "title": "Gear Effects",
+            "type": "object"
+          },
           "zone_map": {
             "anyOf": [
               {
@@ -2711,6 +2767,7 @@
           "hub",
           "available_capabilities",
           "inventory",
+          "gear_effects",
           "zone_map",
           "coins_available"
         ],
@@ -3114,6 +3171,7 @@
               "mapping": {
                 "action": "#/$defs/ActionComponent",
                 "affordance": "#/$defs/AffordanceComponent",
+                "gear": "#/$defs/GearComponent",
                 "info": "#/$defs/InfoComponent",
                 "resource": "#/$defs/ResourceComponent",
                 "rule": "#/$defs/RuleComponent",
@@ -3143,6 +3201,9 @@
               },
               {
                 "$ref": "#/$defs/InfoComponent"
+              },
+              {
+                "$ref": "#/$defs/GearComponent"
               }
             ],
             "title": "Component"
@@ -3684,6 +3745,171 @@
         "title": "FeaturedAcquisition",
         "type": "object"
       },
+      "GearComponent": {
+        "additionalProperties": false,
+        "description": "D16 G1 (owner rulings, 2026-09-25): a piece of Gear, as its atoms.\n\nWorn in its domain's territory -- one of Design 1 \u00a716.1's four -- it\nmultiplies the runtime stat its domain is paired with (ruling 1),\nthrough the StatStack every trait already feeds. Its atoms are the\ngrammar's own parallel lists (`gear.composition_cost`,\n`gear.one_piece_shape`), one of each today (ruling 2).\n\n**Atoms only.** No factor, no territory and no tier is stored: each is\nderived (`gear.effects_of`, `gear.territory_of`, `gear.one_piece_shape`)\nso a rebalance -- or HIGH's arrival as a two-atom piece -- never\nmigrates a save (ruling 4). Epsilon picks the atoms, never the numbers.\nIt comes only from an Echo, which is to say from an Archipelago item\n(ruling 3): no transaction mints one.",
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "gear",
+            "title": "Kind",
+            "type": "string"
+          },
+          "domains": {
+            "items": {
+              "maxLength": 32,
+              "pattern": "^[a-z_]+$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Domains",
+            "type": "array"
+          },
+          "magnitudes": {
+            "items": {
+              "maxLength": 32,
+              "pattern": "^[a-z_]+$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Magnitudes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "domains",
+          "magnitudes"
+        ],
+        "title": "GearComponent",
+        "type": "object"
+      },
+      "GearFacts": {
+        "additionalProperties": false,
+        "description": "What a piece of Gear does, derived from its atoms (D16 G1).",
+        "properties": {
+          "territory": {
+            "enum": [
+              "HEAD",
+              "TORSO",
+              "ARMS",
+              "LEGS"
+            ],
+            "title": "Territory",
+            "type": "string"
+          },
+          "effects": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Effects",
+            "type": "object"
+          },
+          "tier": {
+            "enum": [
+              "USEFUL",
+              "HIGH"
+            ],
+            "title": "Tier",
+            "type": "string"
+          },
+          "worn": {
+            "default": false,
+            "title": "Worn",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "territory",
+          "effects",
+          "tier"
+        ],
+        "title": "GearFacts",
+        "type": "object"
+      },
+      "GearSlots": {
+        "additionalProperties": false,
+        "description": "D16 G1: which owned piece of Gear is worn in each territory.\n\nDesign 1 \u00a716.1's four slots, one named field each for the reason\n`SlotAssignment` gives: the grammar is the game's. A piece fits only\nits own domain's territory, so which piece goes where is read off the\npiece (`_reject_unwearable`), never declared here. Today every paired\ndomain is a LEGS domain, so only `LEGS` can hold anything.\n\nAbsent from a save written before it, and then empty: nothing was\nworn, so nothing is invented and nothing migrates.",
+        "properties": {
+          "HEAD": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Head"
+          },
+          "TORSO": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Torso"
+          },
+          "ARMS": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arms"
+          },
+          "LEGS": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Legs"
+          }
+        },
+        "title": "GearSlots",
+        "type": "object"
+      },
       "Glide": {
         "additionalProperties": false,
         "properties": {
@@ -4069,7 +4295,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -4127,7 +4353,8 @@
           "activation": {
             "enum": [
               "slotted",
-              "always_on"
+              "always_on",
+              "worn"
             ],
             "title": "Activation",
             "type": "string"
@@ -4197,6 +4424,17 @@
             },
             "title": "Siblings",
             "type": "array"
+          },
+          "gear": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/GearFacts"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -4223,6 +4461,14 @@
               "$ref": "#/$defs/SlotView"
             },
             "title": "Slots",
+            "type": "array"
+          },
+          "territories": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/TerritoryView"
+            },
+            "title": "Territories",
             "type": "array"
           },
           "consumable_generation": {
@@ -4313,14 +4559,14 @@
           "source": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Source",
             "type": "string"
           },
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -4731,14 +4977,14 @@
           "absorbed": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Absorbed",
             "type": "string"
           },
           "survivor": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Survivor",
             "type": "string"
           },
@@ -4772,7 +5018,7 @@
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -4987,6 +5233,7 @@
               "mapping": {
                 "action": "#/$defs/ActionComponent",
                 "affordance": "#/$defs/AffordanceComponent",
+                "gear": "#/$defs/GearComponent",
                 "info": "#/$defs/InfoComponent",
                 "resource": "#/$defs/ResourceComponent",
                 "rule": "#/$defs/RuleComponent",
@@ -5016,6 +5263,9 @@
               },
               {
                 "$ref": "#/$defs/InfoComponent"
+              },
+              {
+                "$ref": "#/$defs/GearComponent"
               }
             ],
             "title": "Component"
@@ -5623,7 +5873,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -5727,7 +5977,7 @@
           "resource_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Resource Id",
             "type": "string"
           },
@@ -5821,7 +6071,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -6444,7 +6694,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -6530,6 +6780,47 @@
           "magnitude"
         ],
         "title": "StatusComponent",
+        "type": "object"
+      },
+      "TerritoryView": {
+        "additionalProperties": false,
+        "description": "One of Design 1 \u00a716.1's four Gear territories (D16 G1).",
+        "properties": {
+          "territory": {
+            "enum": [
+              "HEAD",
+              "TORSO",
+              "ARMS",
+              "LEGS"
+            ],
+            "title": "Territory",
+            "type": "string"
+          },
+          "holds": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Holds"
+          },
+          "accepts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Accepts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "territory"
+        ],
+        "title": "TerritoryView",
         "type": "object"
       },
       "TopologyEdge": {
@@ -6826,7 +7117,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -6887,7 +7178,7 @@
               {
                 "maxLength": 32,
                 "minLength": 5,
-                "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+                "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
                 "type": "string"
               },
               {
@@ -7154,7 +7445,7 @@
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -8042,7 +8333,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -8351,7 +8642,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -9347,6 +9638,7 @@
               "mapping": {
                 "action": "#/$defs/ActionComponent",
                 "affordance": "#/$defs/AffordanceComponent",
+                "gear": "#/$defs/GearComponent",
                 "info": "#/$defs/InfoComponent",
                 "resource": "#/$defs/ResourceComponent",
                 "rule": "#/$defs/RuleComponent",
@@ -9376,6 +9668,9 @@
               },
               {
                 "$ref": "#/$defs/InfoComponent"
+              },
+              {
+                "$ref": "#/$defs/GearComponent"
               }
             ],
             "title": "Component"
@@ -9917,6 +10212,171 @@
         "title": "FeaturedAcquisition",
         "type": "object"
       },
+      "GearComponent": {
+        "additionalProperties": false,
+        "description": "D16 G1 (owner rulings, 2026-09-25): a piece of Gear, as its atoms.\n\nWorn in its domain's territory -- one of Design 1 \u00a716.1's four -- it\nmultiplies the runtime stat its domain is paired with (ruling 1),\nthrough the StatStack every trait already feeds. Its atoms are the\ngrammar's own parallel lists (`gear.composition_cost`,\n`gear.one_piece_shape`), one of each today (ruling 2).\n\n**Atoms only.** No factor, no territory and no tier is stored: each is\nderived (`gear.effects_of`, `gear.territory_of`, `gear.one_piece_shape`)\nso a rebalance -- or HIGH's arrival as a two-atom piece -- never\nmigrates a save (ruling 4). Epsilon picks the atoms, never the numbers.\nIt comes only from an Echo, which is to say from an Archipelago item\n(ruling 3): no transaction mints one.",
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "gear",
+            "title": "Kind",
+            "type": "string"
+          },
+          "domains": {
+            "items": {
+              "maxLength": 32,
+              "pattern": "^[a-z_]+$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Domains",
+            "type": "array"
+          },
+          "magnitudes": {
+            "items": {
+              "maxLength": 32,
+              "pattern": "^[a-z_]+$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Magnitudes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "domains",
+          "magnitudes"
+        ],
+        "title": "GearComponent",
+        "type": "object"
+      },
+      "GearFacts": {
+        "additionalProperties": false,
+        "description": "What a piece of Gear does, derived from its atoms (D16 G1).",
+        "properties": {
+          "territory": {
+            "enum": [
+              "HEAD",
+              "TORSO",
+              "ARMS",
+              "LEGS"
+            ],
+            "title": "Territory",
+            "type": "string"
+          },
+          "effects": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Effects",
+            "type": "object"
+          },
+          "tier": {
+            "enum": [
+              "USEFUL",
+              "HIGH"
+            ],
+            "title": "Tier",
+            "type": "string"
+          },
+          "worn": {
+            "default": false,
+            "title": "Worn",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "territory",
+          "effects",
+          "tier"
+        ],
+        "title": "GearFacts",
+        "type": "object"
+      },
+      "GearSlots": {
+        "additionalProperties": false,
+        "description": "D16 G1: which owned piece of Gear is worn in each territory.\n\nDesign 1 \u00a716.1's four slots, one named field each for the reason\n`SlotAssignment` gives: the grammar is the game's. A piece fits only\nits own domain's territory, so which piece goes where is read off the\npiece (`_reject_unwearable`), never declared here. Today every paired\ndomain is a LEGS domain, so only `LEGS` can hold anything.\n\nAbsent from a save written before it, and then empty: nothing was\nworn, so nothing is invented and nothing migrates.",
+        "properties": {
+          "HEAD": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Head"
+          },
+          "TORSO": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Torso"
+          },
+          "ARMS": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arms"
+          },
+          "LEGS": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Legs"
+          }
+        },
+        "title": "GearSlots",
+        "type": "object"
+      },
       "Glide": {
         "additionalProperties": false,
         "properties": {
@@ -10302,7 +10762,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -10360,7 +10820,8 @@
           "activation": {
             "enum": [
               "slotted",
-              "always_on"
+              "always_on",
+              "worn"
             ],
             "title": "Activation",
             "type": "string"
@@ -10430,6 +10891,17 @@
             },
             "title": "Siblings",
             "type": "array"
+          },
+          "gear": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/GearFacts"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -10456,6 +10928,14 @@
               "$ref": "#/$defs/SlotView"
             },
             "title": "Slots",
+            "type": "array"
+          },
+          "territories": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/TerritoryView"
+            },
+            "title": "Territories",
             "type": "array"
           },
           "consumable_generation": {
@@ -10546,14 +11026,14 @@
           "source": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Source",
             "type": "string"
           },
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -10964,14 +11444,14 @@
           "absorbed": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Absorbed",
             "type": "string"
           },
           "survivor": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Survivor",
             "type": "string"
           },
@@ -11005,7 +11485,7 @@
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -11142,6 +11622,7 @@
               "mapping": {
                 "action": "#/$defs/ActionComponent",
                 "affordance": "#/$defs/AffordanceComponent",
+                "gear": "#/$defs/GearComponent",
                 "info": "#/$defs/InfoComponent",
                 "resource": "#/$defs/ResourceComponent",
                 "rule": "#/$defs/RuleComponent",
@@ -11171,6 +11652,9 @@
               },
               {
                 "$ref": "#/$defs/InfoComponent"
+              },
+              {
+                "$ref": "#/$defs/GearComponent"
               }
             ],
             "title": "Component"
@@ -11778,7 +12262,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -11882,7 +12366,7 @@
           "resource_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Resource Id",
             "type": "string"
           },
@@ -11976,7 +12460,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -12599,7 +13083,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -12685,6 +13169,47 @@
           "magnitude"
         ],
         "title": "StatusComponent",
+        "type": "object"
+      },
+      "TerritoryView": {
+        "additionalProperties": false,
+        "description": "One of Design 1 \u00a716.1's four Gear territories (D16 G1).",
+        "properties": {
+          "territory": {
+            "enum": [
+              "HEAD",
+              "TORSO",
+              "ARMS",
+              "LEGS"
+            ],
+            "title": "Territory",
+            "type": "string"
+          },
+          "holds": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Holds"
+          },
+          "accepts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Accepts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "territory"
+        ],
+        "title": "TerritoryView",
         "type": "object"
       },
       "TopologyEdge": {
@@ -12981,7 +13506,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -13042,7 +13567,7 @@
               {
                 "maxLength": 32,
                 "minLength": 5,
-                "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+                "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
                 "type": "string"
               },
               {
@@ -13309,7 +13834,7 @@
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -14273,6 +14798,9 @@
       "slots": {
         "$ref": "#/$defs/SlotAssignment"
       },
+      "gear": {
+        "$ref": "#/$defs/GearSlots"
+      },
       "local_rewards": {
         "default": [],
         "items": {
@@ -14359,6 +14887,15 @@
         "description": "H-UI-DATA: the menu's items and slots.\n\nRead from the fold and slots above, never folded again. The menu\ndoes not reconstruct upgrade arithmetic, and an item's history is\nattached to it, not repeated as extra equippables. See\n`inventory_view`.",
         "readOnly": true
       },
+      "gear_effects": {
+        "additionalProperties": {
+          "type": "number"
+        },
+        "description": "D16 G1: the factor each runtime stat takes from the Gear worn.\n\nDerived here from the worn pieces' atoms (`gear.worn_effects`),\nnever stored. The StatStack multiplies it in with every trait,\nstatus and pulse, BEFORE its one floor and envelope: nothing\nclamps Gear alone (owner ruling 1). Empty when nothing is worn.",
+        "readOnly": true,
+        "title": "Gear Effects",
+        "type": "object"
+      },
       "zone_map": {
         "anyOf": [
           {
@@ -14386,6 +14923,7 @@
       "hub",
       "available_capabilities",
       "inventory",
+      "gear_effects",
       "zone_map",
       "coins_available"
     ],

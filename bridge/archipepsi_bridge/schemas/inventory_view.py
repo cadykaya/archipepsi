@@ -30,6 +30,13 @@ every snapshot, and could disagree with the first.
                    menu offers exactly these, so a refusal is something
                    the player never has to be shown.
   equipped_in      the slot holding it now, or none.
+  gear             for a piece of Gear (D16 G1): its territory, the
+                   runtime stat it multiplies and by how much, its tier,
+                   and whether it is worn. All derived from its atoms at
+                   read time, never stored, so the menu shows what the
+                   StatStack will apply and a rebalance needs no
+                   migration. A worn piece is `worn`, not `slotted`: it
+                   fills a territory, not a key.
   charges_*        a consumable's supply. `charges_left == 0` while
                    equipped is LEGAL (owner decision, 2026-09-22): it
                    stays selected, exhausted, until the refill.
@@ -52,9 +59,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 try:
     from . import constants as C
+    from . import gear as G
     from .echo import SlotName
 except ImportError:  # pragma: no cover
     import constants as C
+    import gear as G
     from echo import SlotName
 
 
@@ -62,16 +71,26 @@ class _Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class GearFacts(_Strict):
+    """What a piece of Gear does, derived from its atoms (D16 G1)."""
+    territory: G.Territory
+    #: runtime stat -> the factor the StatStack multiplies in.
+    effects: dict[str, float]
+    tier: Literal["USEFUL", "HIGH"]
+    worn: bool = False
+
+
 class InventoryItem(_Strict):
     #: The fold's own id: the menu reads name, kind, mk and history from
     #: `mechanics.owned` under it.
     component_id: str
-    activation: Literal["slotted", "always_on"]
+    activation: Literal["slotted", "always_on", "worn"]
     compatible_slots: tuple[SlotName, ...] = ()
     equipped_in: SlotName | None = None
     charges_max: int | None = None
     charges_left: int | None = None
     siblings: tuple[str, ...] = ()
+    gear: GearFacts | None = None
 
 
 class SlotView(_Strict):
@@ -81,9 +100,18 @@ class SlotView(_Strict):
     accepts: tuple[str, ...] = ()
 
 
+class TerritoryView(_Strict):
+    """One of Design 1 §16.1's four Gear territories (D16 G1)."""
+    territory: G.Territory
+    holds: str | None = None
+    #: Owned Gear the authority would accept here, in fold order.
+    accepts: tuple[str, ...] = ()
+
+
 class InventoryView(_Strict):
     items: tuple[InventoryItem, ...] = ()
     slots: tuple[SlotView, ...] = ()
+    territories: tuple[TerritoryView, ...] = ()
     #: Echoed on every consumable intent (D-9); here so the menu that
     #: shows a supply also knows which supply it is showing.
     consumable_generation: int = Field(default=0, ge=0)
@@ -109,12 +137,14 @@ def charges_left(mechanics, consumable_uses, component_id: str) -> int:
 def inventory_view(save) -> InventoryView:
     """The inventory, as the authority sees it right now."""
     return inventory_of(save.derive(), save.slots, save.consumable_uses,
-                        save.consumable_generation)
+                        save.consumable_generation, gear=save.gear)
 
 
 def inventory_of(mechanics, slots, consumable_uses,
-                 consumable_generation: int) -> InventoryView:
+                 consumable_generation: int, gear=None) -> InventoryView:
     """The same view from what a snapshot already carries."""
+    worn = dict(gear.worn()) if gear is not None else {}
+    wearing = set(worn.values())
     held = dict(slots.assigned())
     equipped = {cid: slot for slot, cid in held.items()}
     created_by: dict[int, list[str]] = {}
@@ -128,6 +158,7 @@ def inventory_of(mechanics, slots, consumable_uses,
     for owned in mechanics.owned:
         comp = owned.component
         is_action = owned.kind == "action"
+        is_gear = owned.kind == "gear"
         charges = getattr(comp, "charges", None) if is_action else None
         born = next((p.interpretation_seq for p in owned.provenance
                      if p.operation == "create"), None)
@@ -135,19 +166,32 @@ def inventory_of(mechanics, slots, consumable_uses,
                          if c != owned.component_id)
         items.append(InventoryItem(
             component_id=owned.component_id,
-            activation="slotted" if is_action else "always_on",
+            activation=("slotted" if is_action
+                        else "worn" if is_gear else "always_on"),
             compatible_slots=(comp.slot,) if is_action else (),
             equipped_in=equipped.get(owned.component_id),
             charges_max=charges,
             charges_left=(charges_left(mechanics, consumable_uses,
                                        owned.component_id)
                           if charges is not None else None),
-            siblings=siblings))
+            siblings=siblings,
+            gear=GearFacts(
+                territory=G.territory_of(comp.domains[0]),
+                effects=G.effects_of(comp.domains, comp.magnitudes),
+                tier=G.one_piece_shape(comp.domains, comp.magnitudes),
+                worn=owned.component_id in wearing) if is_gear else None))
 
     slot_views = tuple(SlotView(
         slot=slot, holds=held.get(slot),
         accepts=tuple(i.component_id for i in items
                       if slot in i.compatible_slots))
         for slot in C.SLOT_NAMES)
+    territory_views = tuple(TerritoryView(
+        territory=territory, holds=worn.get(territory),
+        accepts=tuple(i.component_id for i in items
+                      if i.gear is not None
+                      and i.gear.territory == territory))
+        for territory in G.TERRITORIES)
     return InventoryView(items=tuple(items), slots=slot_views,
+                         territories=territory_views,
                          consumable_generation=consumable_generation)

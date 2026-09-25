@@ -57,8 +57,10 @@ from pydantic import (BaseModel, ConfigDict, Field, field_validator,
 
 try:
     from . import constants as C
+    from . import gear as G
 except ImportError:  # pragma: no cover
     import constants as C
+    import gear as G
 
 SCHEMA_VERSION = 8
 
@@ -74,7 +76,7 @@ class Strict(BaseModel):
 #: Component ids are prefixed by kind so a malformed target is a parse error
 #: rather than a runtime surprise, and so a human reading a log can tell what
 #: an operation is pointing at.
-COMPONENT_ID_PATTERN = r"^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$"
+COMPONENT_ID_PATTERN = r"^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$"
 ComponentId = Annotated[
     str, Field(min_length=5, max_length=32, pattern=COMPONENT_ID_PATTERN)
 ]
@@ -1040,23 +1042,66 @@ class InfoComponent(ComponentBase):
     ]
 
 
+_ATOM = Field(max_length=32, pattern=r"^[a-z_]+$")
+
+
+class GearComponent(ComponentBase):
+    """D16 G1 (owner rulings, 2026-09-25): a piece of Gear, as its atoms.
+
+    Worn in its domain's territory -- one of Design 1 §16.1's four -- it
+    multiplies the runtime stat its domain is paired with (ruling 1),
+    through the StatStack every trait already feeds. Its atoms are the
+    grammar's own parallel lists (`gear.composition_cost`,
+    `gear.one_piece_shape`), one of each today (ruling 2).
+
+    **Atoms only.** No factor, no territory and no tier is stored: each is
+    derived (`gear.effects_of`, `gear.territory_of`, `gear.one_piece_shape`)
+    so a rebalance -- or HIGH's arrival as a two-atom piece -- never
+    migrates a save (ruling 4). Epsilon picks the atoms, never the numbers.
+    It comes only from an Echo, which is to say from an Archipelago item
+    (ruling 3): no transaction mints one.
+    """
+    kind: Literal["gear"]
+    domains: tuple[Annotated[str, _ATOM], ...] = Field(min_length=1,
+                                                        max_length=2)
+    magnitudes: tuple[Annotated[str, _ATOM], ...] = Field(min_length=1,
+                                                           max_length=2)
+
+    @model_validator(mode="after")
+    def _a_piece_the_rulings_allow(self):
+        G.refuse_illegal_piece(self.domains, self.magnitudes)
+        return self
+
+
+#: Ruling 1's "runtime stats that already exist", held: every paired stat
+#: is one an Echo trait already moves.
+assert {stat for stat, _ in G.GEAR_EFFECTS.values()} <= set(
+    get_args(TraitStat)), "a Gear domain is paired with a stat no trait has"
+
+
 Component = Annotated[
     Union[
         ActionComponent, TraitComponent, ResourceComponent, RuleComponent,
-        StatusComponent, AffordanceComponent, InfoComponent,
+        StatusComponent, AffordanceComponent, InfoComponent, GearComponent,
     ],
     Field(discriminator="kind"),
 ]
 
+#: The kinds an interpretation may create, which is also what a provider
+#: is offered (`capabilities.IMPLEMENTED_COMPONENT_KINDS` is this tuple).
+#: `gear` joins it only once a domain is supported: until the StatStack
+#: applies a worn piece, the union still parses one so the closed gate
+#: refuses it BY NAME, but no request invites a piece every validator
+#: would then refuse.
 COMPONENT_KINDS = (
     "action", "trait", "resource", "rule", "status", "affordance", "info",
-)
+) + (("gear",) if G.SUPPORTED_GEAR_DOMAINS else ())
 
 #: Which id prefix each kind must use. Enforced by `CreateOperation`, so a
 #: `res_` id can never name an Action.
 KIND_PREFIX = {
     "action": "act", "trait": "trait", "resource": "res", "rule": "rule",
-    "status": "status", "affordance": "aff", "info": "info",
+    "status": "status", "affordance": "aff", "info": "info", "gear": "gear",
 }
 
 

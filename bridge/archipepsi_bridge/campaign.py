@@ -1880,6 +1880,18 @@ class CampaignEngine:
             raise IntentError(str(exc)) from exc
         await self.broadcast_snapshot()
 
+    async def handle_gear_action(
+        self, territory: str, component_id: str | None
+    ) -> None:
+        """D16 G1: wear or clear a piece of Gear. A refusal is named by
+        `server._about` (`gear_action:<territory>:<component_id>`)."""
+        self._require_save()
+        try:
+            self._apply(T.gear_action(self.save, territory, component_id))
+        except ValueError as exc:
+            raise IntentError(str(exc)) from exc
+        await self.broadcast_snapshot()
+
     async def handle_set_creativity(self, value: int) -> None:
         self._require_save()
         self._apply(set_creativity(self.save, value))

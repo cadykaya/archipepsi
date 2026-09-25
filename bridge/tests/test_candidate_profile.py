@@ -291,3 +291,29 @@ def test_the_whole_profile_fixture_is_the_zone_the_profile_emits():
         live.model_dump_json()), (
         "the candidate fixture is stale; regenerate it with "
         "`make candidate-fixture`")
+
+
+def test_the_passing_fixture_is_the_candidate_campaign_s_second_zone():
+    """Prod's N-10: EX50-011 is hosted only where the offer order reaches
+    it, which in the candidate campaign is `zone_002`. The fixture is that
+    Zone as the real engine designs it -- Zone 1 generated and abandoned,
+    the portal asked again -- never the played Zone relabelled."""
+    from pathlib import Path
+    from archipepsi_bridge.minor_hosting import offer_order
+    from archipepsi_bridge.playtest import passing_zone
+    recipe = ("python -m archipepsi_bridge.playtest dump-passing --out "
+              "../godot/tests/fixtures/passing_zone.json` from `bridge/")
+    fixture = (Path(__file__).resolve().parents[2]
+               / "godot/tests/fixtures/passing_zone.json")
+    assert fixture.is_file(), f"{fixture} is missing; run `{recipe}`"
+    live = passing_zone()
+    assert live is not None, "the second Zone no longer hosts EX50-011"
+    assert live.zone_id == "zone_002"
+    order = [c.shell_id for c in offer_order(live.zone_id)]
+    assert order.index("minor_passing_platforms") < order.index(
+        "minor_unweighted_switch")
+    assert "minor_passing_platforms" in {c.shell_id for c in live.chambers}
+    assert reachability(live).ok, reachability(live).errors
+    assert json.loads(fixture.read_text(encoding="utf-8")) == json.loads(
+        live.model_dump_json()), (
+        f"the passing fixture is stale; regenerate it with `{recipe}`")

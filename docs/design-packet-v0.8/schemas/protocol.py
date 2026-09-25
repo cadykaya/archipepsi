@@ -48,6 +48,7 @@ from pydantic import (
 
 try:
     from . import constants as C
+    from . import gear as G
     from .echo import EchoInterpretation, SlotName
     from . import mechanics as M
     from .mechanics import Mechanics, derive_mechanics
@@ -56,6 +57,7 @@ try:
     from . import map_view as MV
 except ImportError:  # pragma: no cover
     import constants as C
+    import gear as G
     from echo import EchoInterpretation, SlotName
     import mechanics as M
     from mechanics import Mechanics, derive_mechanics
@@ -910,6 +912,67 @@ def _reject_unslottable(slots, mechanics) -> None:
             )
 
 
+class GearSlots(Strict):
+    """D16 G1: which owned piece of Gear is worn in each territory.
+
+    Design 1 §16.1's four slots, one named field each for the reason
+    `SlotAssignment` gives: the grammar is the game's. A piece fits only
+    its own domain's territory, so which piece goes where is read off the
+    piece (`_reject_unwearable`), never declared here. Today every paired
+    domain is a LEGS domain, so only `LEGS` can hold anything.
+
+    Absent from a save written before it, and then empty: nothing was
+    worn, so nothing is invented and nothing migrates.
+    """
+    HEAD: str | None = Field(default=None, max_length=32)
+    TORSO: str | None = Field(default=None, max_length=32)
+    ARMS: str | None = Field(default=None, max_length=32)
+    LEGS: str | None = Field(default=None, max_length=32)
+
+    def worn(self) -> tuple[tuple[str, str], ...]:
+        return tuple((t, getattr(self, t)) for t in G.TERRITORIES
+                     if getattr(self, t) is not None)
+
+    def with_piece(self, territory: str,
+                   component_id: str | None) -> "GearSlots":
+        if territory not in G.TERRITORIES:
+            raise ValueError(
+                f"unknown territory '{territory}'; §16.1's four are "
+                f"{list(G.TERRITORIES)}")
+        return GearSlots.model_validate(
+            {**self.model_dump(), territory: component_id})
+
+
+def _reject_unwearable(gear, mechanics) -> None:
+    """A territory may only wear Gear the campaign owns, in its own place.
+
+    Against the fold, as `_reject_unslottable` is. A piece exists only
+    because an Echo made it -- Gear comes from Archipelago items' Echoes
+    and no transaction mints one (owner ruling 3) -- so a worn id nothing
+    folded is a forged piece, and it is refused on every path that builds
+    a save.
+    """
+    for territory, component_id in gear.worn():
+        owned = mechanics.by_id(component_id)
+        if owned is None:
+            raise ValueError(
+                f"territory '{territory}' wears '{component_id}', which is "
+                "not owned")
+        if owned.kind != "gear":
+            raise ValueError(
+                f"territory '{territory}' wears '{component_id}', which is a "
+                f"'{owned.kind}'; only Gear is worn")
+        home = G.territory_of(owned.component.domains[0])
+        if home != territory:
+            raise ValueError(
+                f"'{component_id}' is {home} Gear and cannot be worn on "
+                f"{territory}")
+
+
+def _worn_pieces(gear, mechanics) -> list:
+    return [mechanics.by_id(cid).component for _, cid in gear.worn()]
+
+
 def _reject_impossible_charges(uses, mechanics) -> None:
     """A consumable cannot be spent past its charges.
 
@@ -1204,6 +1267,9 @@ class CampaignSave(Strict):
     #: derived from the log — see `_reject_nonmonotonic_seq`.
     next_interpretation_seq: int = Field(default=0, ge=0)
     slots: SlotAssignment = Field(default_factory=lambda: SlotAssignment())
+    #: D16 G1: the Gear worn per territory. Checked against the fold, like
+    #: `slots`; its effect is derived (`gear_effects`), never stored.
+    gear: GearSlots = Field(default_factory=lambda: GearSlots())
 
     zones: tuple[ZoneRecord, ...] = ()
     active_zone_id: str | None = None
@@ -1225,6 +1291,7 @@ class CampaignSave(Strict):
         # constructed, so it can never be written to disk.
         _folded = derive_mechanics(self.interpretations)
         _reject_unslottable(self.slots, _folded)
+        _reject_unwearable(self.gear, _folded)
         _reject_impossible_charges(self.consumable_uses, _folded)
         _reject_duplicate_pending(self.pending_checks)
         _reject_unbacked_pending(self.pending_checks, self.zones)
@@ -1851,6 +1918,8 @@ class CampaignSnapshot(Strict):
     interpretation_count: int = Field(default=0, ge=0)
     mechanics: Mechanics = Field(default_factory=lambda: Mechanics())
     slots: SlotAssignment = Field(default_factory=lambda: SlotAssignment())
+    #: D16 G1: the Gear worn, mirrored from the save like `slots`.
+    gear: GearSlots = Field(default_factory=lambda: GearSlots())
     #: What the player has found that Archipelago does not care about
     #: (§14.2). Mirrored from the save rather than folded: a local reward
     #: derives nothing and grants no mechanic, so it has no business in
@@ -1923,7 +1992,19 @@ class CampaignSnapshot(Strict):
         """
         return IV.inventory_of(self.mechanics, self.slots,
                                self.consumable_uses,
-                               self.consumable_generation)
+                               self.consumable_generation, gear=self.gear)
+
+    @computed_field
+    @property
+    def gear_effects(self) -> dict[str, float]:
+        """D16 G1: the factor each runtime stat takes from the Gear worn.
+
+        Derived here from the worn pieces' atoms (`gear.worn_effects`),
+        never stored. The StatStack multiplies it in with every trait,
+        status and pulse, BEFORE its one floor and envelope: nothing
+        clamps Gear alone (owner ruling 1). Empty when nothing is worn.
+        """
+        return G.worn_effects(_worn_pieces(self.gear, self.mechanics))
 
     @computed_field
     @property
@@ -1976,6 +2057,7 @@ class CampaignSnapshot(Strict):
         # Against the mechanics actually sent, not a re-fold: if the two
         # ever disagreed, the client would render one and validate the other.
         _reject_unslottable(self.slots, self.mechanics)
+        _reject_unwearable(self.gear, self.mechanics)
 
         both = sorted(set(self.checked_location_ids)
                       & set(self.missing_location_ids))
@@ -2497,6 +2579,15 @@ class SlotAction(Strict):
     component_id: str | None = Field(default=None, max_length=32)
 
 
+class GearAction(Strict):
+    """D16 G1: wear an owned piece of Gear in its territory, or clear the
+    territory with a null id. The checks -- owned, Gear, its own
+    territory -- are `CampaignSave`'s, as `slot_action`'s are."""
+    type: Literal["gear_action"]
+    territory: G.Territory
+    component_id: str | None = Field(default=None, max_length=32)
+
+
 class AuthorizeConsumable(Strict):
     """Ask the bridge to count a charge BEFORE launching the effect.
 
@@ -2705,7 +2796,7 @@ ClientMessage = Annotated[
     Union[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
-        SlotAction, AuthorizeConsumable,
+        SlotAction, GearAction, AuthorizeConsumable,
         ReleaseConsumableAuthorization,
         UseConsumable, GrantLocalReward, SetCreativity,
         DebugCommand,

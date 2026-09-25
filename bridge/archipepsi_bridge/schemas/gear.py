@@ -26,6 +26,8 @@ from typing import Literal, get_args
 
 Territory = Literal["HEAD", "TORSO", "ARMS", "LEGS"]
 MagnitudeAtom = Literal["mag_slight", "mag_marked", "mag_profound"]
+#: Design 1 §16.1's four territories, in its fixed host order.
+TERRITORIES: tuple[str, ...] = get_args(Territory)
 
 #: Design 4 §16.1. What a magnitude atom costs, and which of Design 1
 #: §16.1's three scalars it selects on the chosen domain.
@@ -73,7 +75,11 @@ UNCOSTED_DOMAINS: tuple[str, ...] = tuple(
     if atom not in DOMAIN_COST)
 
 #: Which domains the runtime actually implements. **Empty, and that is
-#: the honest value.** Nothing consumes Gear yet.
+#: the honest value.** Nothing consumes Gear yet. D16 G1 (owner rulings,
+#: 2026-09-25) pairs three domains with runtime stats (`GEAR_EFFECTS`
+#: below), and this opens to exactly those in the one commit that follows
+#: Prod's StatStack multiplying a worn piece in (note D-8) -- the lever's
+#: order: the bridge never admits what the engine cannot yet do.
 SUPPORTED_GEAR_DOMAINS: tuple[str, ...] = ()
 
 ALL_DOMAINS: tuple[str, ...] = tuple(
@@ -136,10 +142,14 @@ def refuse_unsupported_domain(domain: str) -> None:
     """
     territory_of(domain)                         # unknown atom raises first
     if domain not in SUPPORTED_GEAR_DOMAINS:
+        paired = GEAR_EFFECTS.get(domain)
         raise ValueError(
             f"domain '{domain}' is named by §16 and no runtime implements "
             "it; Gear cannot be composed yet. This is the vocabulary, not "
-            "an offer")
+            "an offer"
+            + (f" (it is paired with '{paired[0]}', and opens once the "
+               "StatStack applies a worn piece: D16 G1, note D-8)"
+               if paired else ""))
 
 
 def one_piece_shape(domains, magnitudes) -> str:
@@ -165,3 +175,123 @@ def one_piece_shape(domains, magnitudes) -> str:
     raise ValueError(
         f"§16.1 defines one-atom and two-atom pieces; {len(domains)} is "
         "neither")
+
+
+# --------------------------------------------------------------------------
+# D16 G1, as ruled (owner, 2026-09-25): the Legs slice
+# --------------------------------------------------------------------------
+
+#: Ruling 1: "Pair speed, jump and landing Gear only with the
+#: corresponding runtime stats that already exist. Do not create a second
+#: or parallel Gear-stat system." Each paired domain names the stat the
+#: runtime's StatStack already moves (`stat_stack.gd`, the nine an Echo
+#: trait moves) and Design 1 §16.1's SMALL / MEDIUM / LARGE value for its
+#: template, as a multiplier. A worn piece is therefore one more factor in
+#: the one stack, under the stack's own floor and envelope; no clamp here
+#: is Gear's alone.
+#:
+#:   dom_speed    INT_MOVE_SPEED       +5 / +11 / +18 %   move_speed
+#:   dom_jump     INT_JUMP_HEIGHT      +8 / +18 / +30 %   jump_height
+#:                (the runtime launches at the square root of the factor,
+#:                so the factor IS the height)
+#:   dom_landing  INT_LANDING_CONTROL  air accel          air_control
+#:                                     +25 / +55 / +90 %
+#:
+#: Every other domain is unpaired (D16 §1): twelve have no runtime at
+#: all, `dom_mobility_recharge` has no cooldown scaling, and `dom_crit`,
+#: `dom_barrier` and `dom_handling` each match two templates.
+GEAR_EFFECTS: dict[str, tuple[str, dict[str, float]]] = {
+    "dom_speed": ("move_speed", {"mag_slight": 1.05, "mag_marked": 1.11,
+                                 "mag_profound": 1.18}),
+    "dom_jump": ("jump_height", {"mag_slight": 1.08, "mag_marked": 1.18,
+                                 "mag_profound": 1.30}),
+    "dom_landing": ("air_control", {"mag_slight": 1.25, "mag_marked": 1.55,
+                                    "mag_profound": 1.90}),
+}
+PAIRED_DOMAINS: tuple[str, ...] = tuple(GEAR_EFFECTS)
+
+#: Ruling 2: "Until a clause catalogue exists, a Gear piece should express
+#: one bounded, understandable stat effect." One domain, at the one
+#: magnitude that makes a whole piece without a trigger clause: profound
+#: puts every paired domain inside USEFUL's band alone (speed 96, jump 90,
+#: landing 88), where slight and marked would need a clause nobody has
+#: written.
+LEGAL_MAGNITUDES: tuple[str, ...] = ("mag_profound",)
+
+assert set(GEAR_EFFECTS) <= set(DOMAIN_COST), "a paired domain has no cost"
+assert all(set(factors) == set(MAGNITUDE_COST)
+           for _, factors in GEAR_EFFECTS.values()), (
+    "a paired template is missing one of §16.1's three magnitudes")
+assert all(f >= 1.0 for _, factors in GEAR_EFFECTS.values()
+           for f in factors.values()), (
+    "Design 1 §16.1: no intrinsic may ever reduce a movement constant")
+assert all(USEFUL_BAND[0] <= composition_cost((d,), (m,)) <= USEFUL_BAND[1]
+           for d in GEAR_EFFECTS for m in LEGAL_MAGNITUDES), (
+    "a legal piece falls outside USEFUL's band without a clause")
+assert set(SUPPORTED_GEAR_DOMAINS) <= set(GEAR_EFFECTS), (
+    "a supported domain pairs with no runtime stat")
+
+
+def refuse_illegal_piece(domains, magnitudes) -> None:
+    """Why a piece with these atoms may not exist, or nothing.
+
+    In the order a reader needs it: the shape, the pairing (ruling 1), the
+    magnitude (ruling 2), and last the gate -- so a piece that could never
+    be legal says why, rather than only that the runtime is not ready.
+    """
+    shape = one_piece_shape(domains, magnitudes)   # arity and territory
+    if shape != "USEFUL":
+        raise ValueError(
+            f"a {shape} piece carries {len(domains)} intrinsics; until a "
+            "clause catalogue exists a piece expresses one bounded stat "
+            "effect (owner ruling 2, 2026-09-25)")
+    for domain in domains:
+        territory_of(domain)                        # unknown atom raises
+        if domain not in GEAR_EFFECTS:
+            raise ValueError(
+                f"domain '{domain}' pairs with no runtime stat; Gear is "
+                f"paired only with speed, jump and landing "
+                f"{sorted(GEAR_EFFECTS)} (owner ruling 1, 2026-09-25)")
+    for magnitude in magnitudes:
+        if magnitude not in MAGNITUDE_COST:
+            raise ValueError(f"'{magnitude}' is not a §16.1 magnitude atom")
+        if magnitude not in LEGAL_MAGNITUDES:
+            raise ValueError(
+                f"'{magnitude}' is not a whole piece without a trigger "
+                "clause; the strongest single-stat piece "
+                f"{list(LEGAL_MAGNITUDES)} is the only one until a clause "
+                "catalogue exists (owner ruling 2, 2026-09-25)")
+    for domain in domains:
+        refuse_unsupported_domain(domain)           # the gate, last
+
+
+def effects_of(domains, magnitudes) -> dict[str, float]:
+    """The factor each runtime stat takes from one piece.
+
+    Derived from the atoms at read time and never stored on the piece, so
+    a rebalance of `GEAR_EFFECTS` moves every save at once, with no
+    migration -- the same reason a piece's tier is `one_piece_shape`'s
+    answer and not a field (owner ruling 4, 2026-09-25).
+    """
+    out: dict[str, float] = {}
+    for domain, magnitude in zip(domains, magnitudes, strict=True):
+        stat, factors = GEAR_EFFECTS[domain]
+        out[stat] = out.get(stat, 1.0) * factors[magnitude]
+    return out
+
+
+def worn_effects(pieces) -> dict[str, float]:
+    """The factor each runtime stat takes from everything worn.
+
+    `pieces` are worn Gear components. One territory holds one piece, and
+    today every paired domain is a LEGS domain, so at most one contributes.
+    **When HIGH pieces exist** (ruling 4: "At most one HIGH piece may be
+    effective/equipped at once"), this is where the rule is enforced, on
+    the derived tier, so reclassifying a piece never touches a save.
+    """
+    out: dict[str, float] = {}
+    for piece in pieces:
+        for stat, factor in effects_of(piece.domains,
+                                       piece.magnitudes).items():
+            out[stat] = out.get(stat, 1.0) * factor
+    return out

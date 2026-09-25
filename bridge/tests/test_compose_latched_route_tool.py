@@ -5,8 +5,8 @@ it takes the latch step on a save the real path generated and refuses
 unless the result is the fixture the standalone suite plays. `legacy`,
 the default, is M-1's replay of the retired step-once plate; `lever` is
 the production route, for when the live suite plays the lever as
-composed. Each form must land on exactly its own fixture, and never on
-the other's.
+composed; `held` is 1d's weight on a plate (Prod's N-8). Each form must
+land on exactly its own fixture, and never on another's.
 """
 from __future__ import annotations
 
@@ -47,6 +47,7 @@ def _generated_save(tmp_path: Path) -> Path:
 @pytest.mark.parametrize("form, fixture, sensor", [
     (None, "latched_route_zone.json", "PRESSURE_PLATE"),
     ("lever", "lever_route_zone.json", "PULSE_BUTTON"),
+    ("held", "held_route_zone.json", "PRESSURE_PLATE"),
 ])
 def test_each_form_lands_on_exactly_its_own_fixture(tmp_path, form,
                                                     fixture, sensor):
@@ -57,11 +58,19 @@ def test_each_form_lands_on_exactly_its_own_fixture(tmp_path, form,
     assert TOOL.main(argv) == 0
     zone = store.load_save(path).active_zone.zone
     assert [s.kind for s in zone.room_graphs[0].sensors] == [sensor]
+    # The held form carries its weight into the save, where the bridge
+    # keeps its pose across a restart.
+    held_by = zone.room_graphs[0].sensors[0].held_by
+    assert held_by == ("counterweight" if form == "held" else None)
+    assert (held_by in {o.object_id for o in zone.transported_objects}) \
+        == (form == "held")
 
 
 @pytest.mark.parametrize("form, fixture", [
     (None, "lever_route_zone.json"),
     ("lever", "latched_route_zone.json"),
+    ("held", "latched_route_zone.json"),
+    (None, "held_route_zone.json"),
 ])
 def test_a_form_never_passes_for_the_other_s_fixture(tmp_path, form,
                                                      fixture):

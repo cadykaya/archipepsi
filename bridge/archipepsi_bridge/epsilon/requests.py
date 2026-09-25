@@ -16,6 +16,7 @@ from .. import content_value as V
 from .. import echo_projection as P
 from ..schemas import constants as C
 from ..schemas import echo as E
+from ..schemas import gear as G
 from ..schemas import zone as Z
 from ..schemas import mechanics as M
 from . import capabilities as CAP
@@ -299,7 +300,7 @@ def allowed_for(*, consumable: bool = False) -> dict:
     candidate profile's `consumables` option (O05-11.4) -- asks for the
     consumable slot as well. `generate_echo_validated` admits exactly the
     slots advertised here, so the two cannot disagree."""
-    return {
+    allowed = {
         "operations": list(CAP.IMPLEMENTED_OPERATION_KINDS),
         "modes": list(E.INTERPRETATION_MODES),
         "component_kinds": list(CAP.IMPLEMENTED_COMPONENT_KINDS),
@@ -312,6 +313,15 @@ def allowed_for(*, consumable: bool = False) -> dict:
         "rule_conditions": list(CAP.IMPLEMENTED_CONDITION_KINDS),
         "rule_effects": list(CAP.IMPLEMENTED_EFFECT_KINDS),
     }
+    # D16 G1: the atoms a piece of Gear may carry -- never a number, which
+    # is derived. Only once the gate opens, exactly when `gear` joins
+    # `component_kinds`: until then the request is byte-for-byte what it
+    # was, and the playtest baseline that records it is retaken in the
+    # gate-opening commit, deliberately, as its rule asks.
+    if G.SUPPORTED_GEAR_DOMAINS:
+        allowed["gear_domains"] = list(G.SUPPORTED_GEAR_DOMAINS)
+        allowed["gear_magnitudes"] = list(G.LEGAL_MAGNITUDES)
+    return allowed
 
 
 class EchoGenerationRequest(Strict):

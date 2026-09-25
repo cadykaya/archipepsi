@@ -1507,6 +1507,19 @@ def slot_action(
     return _rebuild(save, slots=save.slots.with_slot(slot, component_id))
 
 
+def gear_action(
+    save: CampaignSave, territory: str, component_id: str | None
+) -> CampaignSave:
+    """Wear an owned piece of Gear in its territory, or clear it (D16 G1).
+
+    `slot_action`'s shape, for the same reason: the checks that matter --
+    owned, Gear, its own territory -- live in `CampaignSave`'s validator,
+    so they hold on every path that can build a save. What the piece does
+    is never written here; it is derived from its atoms when read.
+    """
+    return _rebuild(save, gear=save.gear.with_piece(territory, component_id))
+
+
 def spend_charge(save: CampaignSave, component_id: str,
                  use_index: int, generation: int) -> CampaignSave:
     """Spend one use of a consumable. It stays equipped when empty.
@@ -1767,7 +1780,7 @@ TRANSITIONS = (
     start_generation, accept_zone, enter_zone, complete_zone, abandon_zone,
     release_location, claim_zone_check, buy_shop_stock, confirm_check,
     rollback_shop_purchase, restock_shop, append_interpretation,
-    slot_action, grant_local_reward,
+    slot_action, gear_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
     record_defeat,
     record_room_entered,

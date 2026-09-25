@@ -38,12 +38,22 @@ def _about(m) -> str:
     than stay pending forever. The key is domain-derived, the house rule
     (`zone_state_selected:<zone>:<variable>:<state>`). Every other refusal
     is read and forgotten, and "" correctly says "unchecked" for them.
+
+    H-INVENTORY (Prod's N-11) adds `slot_action`: the Equipment wall shows
+    an equip as PENDING until a snapshot carries it, so its refusal must
+    name it -- `slot_action:<slot>:<component_id>`, with nothing after the
+    last colon for "clear this key". D16 G1's `gear_action` is the same
+    request on a territory, and is named the same way.
     """
     if getattr(m, "type", "") in ("use_consumable", "authorize_consumable",
                                   "release_consumable_authorization"):
         return use_consumable_key(m.component_id, m.generation, m.use_index)
     if getattr(m, "type", "") == "zone_state_selected":
         return f"zone_state_selected:{m.zone_id}:{m.variable_id}:{m.state}"
+    if getattr(m, "type", "") == "slot_action":
+        return f"slot_action:{m.slot}:{m.component_id or ''}"
+    if getattr(m, "type", "") == "gear_action":
+        return f"gear_action:{m.territory}:{m.component_id or ''}"
     return ""
 
 
@@ -171,6 +181,8 @@ class BridgeServer:
             await transactions.buy_shop_stock(engine, m.location_id)
         elif m.type == "slot_action":
             await engine.handle_slot_action(m.slot, m.component_id)
+        elif m.type == "gear_action":
+            await engine.handle_gear_action(m.territory, m.component_id)
         elif m.type == "authorize_consumable":
             await engine.handle_authorize_consumable(m.component_id,
                                                      m.use_index,

@@ -649,6 +649,76 @@ def _must_emit(asked, out) -> set[str]:
     return set(steps_of(asked))
 
 
+def passing_zone():
+    """Prod's N-10: the candidate campaign's SECOND Zone, or None if the
+    lifecycle does not reach it or it does not host EX50-011.
+
+    Built the way the bridge the live suite starts builds it (`--ap=mock
+    --epsilon=fallback --mock-scale=default --candidate=all`), by the
+    campaign's ordinary lifecycle: Zone 1 is generated and abandoned,
+    which returns its Checks to the pool, and the portal designs
+    `zone_002`, whose offer order (`minor_hosting.offer_order`) turns once
+    and so offers Passing Platforms second, ahead of Unweighted -- where
+    `zone_001`'s offers it last, with no dead end left. Nothing is
+    relabelled: a `zone_001` renamed would be a Zone no campaign serves.
+    The input to Prod's `godot-passing-hosted`.
+    """
+    import asyncio
+    import tempfile
+
+    from .campaign import CampaignEngine
+    from .candidate import parse
+    from .epsilon import FallbackEpsilonProvider
+    from .mock_ap import MockAPBackend
+
+    async def generated(engine):
+        for _ in range(600):
+            await asyncio.sleep(0)
+            active = engine.save.active_zone if engine.save else None
+            if active is not None and active.zone is not None:
+                return active
+        return None
+
+    async def build(save_dir: Path):
+        engine = CampaignEngine(provider=FallbackEpsilonProvider(),
+                                provider_name="fallback", save_dir=save_dir,
+                                candidate_steps=parse("all"))
+        engine.backend = MockAPBackend(engine, config=PLAYTEST_CONFIG)
+        await engine.backend.connect("", "Skyiah", "")
+        for _ in range(40):
+            await asyncio.sleep(0)
+        await engine.handle_request_next_zone(False)
+        first = await generated(engine)
+        if first is None:
+            return None
+        await engine.handle_abandon_zone(first.zone_id)
+        await engine.handle_request_next_zone(False)
+        second = await generated(engine)
+        return second.zone if second is not None else None
+
+    with tempfile.TemporaryDirectory() as scratch:
+        zone = asyncio.run(build(Path(scratch)))
+    if zone is None or not any(c.shell_id == "minor_passing_platforms"
+                               for c in zone.chambers):
+        return None
+    return zone
+
+
+def _dump_passing(args) -> int:
+    zone = passing_zone()
+    if zone is None:
+        print("the candidate campaign's second Zone hosts no EX50-011",
+              file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(zone.model_dump_json(indent=1), encoding="utf-8")
+    room = next(c.id for c in zone.chambers
+                if c.shell_id == "minor_passing_platforms")
+    print(f"wrote {args.out}  ({zone.zone_id}, EX50-011 hosted as "
+          f"'{room}')")
+    return 0
+
+
 def transport_zone():
     """O05-02's fixture: the played Zone with the `transport` step."""
     return candidate_zone("transport")
@@ -715,6 +785,12 @@ def main(argv=None) -> int:
     held.add_argument(
         "--out", type=Path,
         default=Path("godot/tests/fixtures/held_route_zone.json"))
+    passing = sub.add_parser(
+        "dump-passing", help="write the candidate campaign's second Zone, "
+        "which hosts EX50-011, for Prod's godot-passing-hosted (N-10)")
+    passing.add_argument(
+        "--out", type=Path,
+        default=Path("godot/tests/fixtures/passing_zone.json"))
     cand = sub.add_parser(
         "dump-candidate", help="write the played Zone with the CANDIDATE "
         "profile's steps applied (candidate.py), for Prod's acceptances")
@@ -731,6 +807,8 @@ def main(argv=None) -> int:
         return _dump_lever(args)
     if args.command == "dump-held":
         return _dump_held(args)
+    if args.command == "dump-passing":
+        return _dump_passing(args)
     if args.command == "dump-candidate":
         return _dump_candidate(args)
     return report(args.save_dir)

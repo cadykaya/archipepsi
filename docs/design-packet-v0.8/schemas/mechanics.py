@@ -1005,6 +1005,19 @@ def derive_mechanics(log) -> Mechanics:
                         f"interpretation_seq {seq}: link source and target "
                         f"resolve to the same component '{source}'"
                     )
+                # D16 G1: A PIECE OF GEAR IS ITS ATOMS AND NOTHING ELSE.
+                # Powering, filling, gating or scaling one would be the
+                # compound effect ruling 2 withholds until a clause
+                # catalogue exists. (Upgrade, modify and merge already
+                # refuse any kind they do not list.)
+                for end, cid in (("source", source), ("target", target)):
+                    if components[cid].kind == "gear":
+                        raise FoldError(
+                            f"interpretation_seq {seq}: link {end} '{cid}' "
+                            "is Gear, which links to nothing: one bounded "
+                            "stat effect per piece until a clause "
+                            "catalogue exists (owner ruling 2)"
+                        )
                 links.append(LinkEdge(link=op.link, source=source,
                                       target=target, strength=op.strength))
                 record(target, "link", f"{op.link} from {source}")

@@ -23,6 +23,13 @@
    }
   ],
   "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
   "hub": {
    "accepts_zone_request": true,
    "ap_online": true,
@@ -483,6 +490,7 @@
      ],
      "component_id": "act_lash",
      "equipped_in": "echo_a",
+     "gear": null,
      "siblings": [
       "trait_grip"
      ]
@@ -494,6 +502,7 @@
      "compatible_slots": [],
      "component_id": "trait_grip",
      "equipped_in": null,
+     "gear": null,
      "siblings": [
       "act_lash"
      ]
@@ -507,6 +516,7 @@
      ],
      "component_id": "act_dash",
      "equipped_in": "mobility",
+     "gear": null,
      "siblings": []
     },
     {
@@ -518,6 +528,7 @@
      ],
      "component_id": "act_bolt",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -527,6 +538,7 @@
      "compatible_slots": [],
      "component_id": "res_magic",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -536,6 +548,7 @@
      "compatible_slots": [],
      "component_id": "trait_ward",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -547,6 +560,7 @@
      ],
      "component_id": "act_lens",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -558,6 +572,7 @@
      ],
      "component_id": "act_cinder",
      "equipped_in": "consumable",
+     "gear": null,
      "siblings": []
     },
     {
@@ -569,6 +584,7 @@
      ],
      "component_id": "act_flask",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -580,6 +596,7 @@
      ],
      "component_id": "act_glow",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     }
    ],
@@ -619,6 +636,28 @@
      ],
      "holds": "act_cinder",
      "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
     }
    ]
   },
@@ -1011,6 +1050,13 @@
    }
   ],
   "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
   "hub": {
    "accepts_zone_request": true,
    "ap_online": true,
@@ -1425,6 +1471,7 @@
      ],
      "component_id": "act_lash",
      "equipped_in": "echo_a",
+     "gear": null,
      "siblings": [
       "trait_grip"
      ]
@@ -1436,6 +1483,7 @@
      "compatible_slots": [],
      "component_id": "trait_grip",
      "equipped_in": null,
+     "gear": null,
      "siblings": [
       "act_lash"
      ]
@@ -1449,6 +1497,7 @@
      ],
      "component_id": "act_dash",
      "equipped_in": "mobility",
+     "gear": null,
      "siblings": []
     },
     {
@@ -1460,6 +1509,7 @@
      ],
      "component_id": "act_bolt",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -1469,6 +1519,7 @@
      "compatible_slots": [],
      "component_id": "res_magic",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -1478,6 +1529,7 @@
      "compatible_slots": [],
      "component_id": "trait_ward",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -1489,6 +1541,7 @@
      ],
      "component_id": "act_lens",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -1500,6 +1553,7 @@
      ],
      "component_id": "act_cinder",
      "equipped_in": "consumable",
+     "gear": null,
      "siblings": []
     },
     {
@@ -1511,6 +1565,7 @@
      ],
      "component_id": "act_flask",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     }
    ],
@@ -1549,6 +1604,28 @@
      ],
      "holds": "act_cinder",
      "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
     }
    ]
   },
@@ -1903,6 +1980,13 @@
    }
   ],
   "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
   "hub": {
    "accepts_zone_request": true,
    "ap_online": true,
@@ -2317,6 +2401,7 @@
      ],
      "component_id": "act_lash",
      "equipped_in": "echo_a",
+     "gear": null,
      "siblings": [
       "trait_grip"
      ]
@@ -2328,6 +2413,7 @@
      "compatible_slots": [],
      "component_id": "trait_grip",
      "equipped_in": null,
+     "gear": null,
      "siblings": [
       "act_lash"
      ]
@@ -2341,6 +2427,7 @@
      ],
      "component_id": "act_dash",
      "equipped_in": "mobility",
+     "gear": null,
      "siblings": []
     },
     {
@@ -2352,6 +2439,7 @@
      ],
      "component_id": "act_bolt",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -2361,6 +2449,7 @@
      "compatible_slots": [],
      "component_id": "res_magic",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -2370,6 +2459,7 @@
      "compatible_slots": [],
      "component_id": "trait_ward",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -2381,6 +2471,7 @@
      ],
      "component_id": "act_lens",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -2392,6 +2483,7 @@
      ],
      "component_id": "act_cinder",
      "equipped_in": "consumable",
+     "gear": null,
      "siblings": []
     },
     {
@@ -2403,6 +2495,7 @@
      ],
      "component_id": "act_flask",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     }
    ],
@@ -2441,6 +2534,28 @@
      ],
      "holds": "act_cinder",
      "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
     }
    ]
   },
@@ -2790,6 +2905,13 @@
   "consumable_generation": 1,
   "consumable_uses": [],
   "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
   "hub": {
    "accepts_zone_request": true,
    "ap_online": true,
@@ -3112,6 +3234,7 @@
      ],
      "component_id": "act_lash",
      "equipped_in": "echo_a",
+     "gear": null,
      "siblings": [
       "trait_grip"
      ]
@@ -3123,6 +3246,7 @@
      "compatible_slots": [],
      "component_id": "trait_grip",
      "equipped_in": null,
+     "gear": null,
      "siblings": [
       "act_lash"
      ]
@@ -3136,6 +3260,7 @@
      ],
      "component_id": "act_dash",
      "equipped_in": "mobility",
+     "gear": null,
      "siblings": []
     },
     {
@@ -3147,6 +3272,7 @@
      ],
      "component_id": "act_bolt",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -3156,6 +3282,7 @@
      "compatible_slots": [],
      "component_id": "res_magic",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -3165,6 +3292,7 @@
      "compatible_slots": [],
      "component_id": "trait_ward",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -3176,6 +3304,7 @@
      ],
      "component_id": "act_lens",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     }
    ],
@@ -3211,6 +3340,28 @@
      "accepts": [],
      "holds": null,
      "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
     }
    ]
   },
@@ -3489,6 +3640,13 @@
    }
   ],
   "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
   "hub": {
    "accepts_zone_request": true,
    "ap_online": true,
@@ -3903,6 +4061,7 @@
      ],
      "component_id": "act_lash",
      "equipped_in": "echo_a",
+     "gear": null,
      "siblings": [
       "trait_grip"
      ]
@@ -3914,6 +4073,7 @@
      "compatible_slots": [],
      "component_id": "trait_grip",
      "equipped_in": null,
+     "gear": null,
      "siblings": [
       "act_lash"
      ]
@@ -3927,6 +4087,7 @@
      ],
      "component_id": "act_dash",
      "equipped_in": "mobility",
+     "gear": null,
      "siblings": []
     },
     {
@@ -3938,6 +4099,7 @@
      ],
      "component_id": "act_bolt",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -3947,6 +4109,7 @@
      "compatible_slots": [],
      "component_id": "res_magic",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -3956,6 +4119,7 @@
      "compatible_slots": [],
      "component_id": "trait_ward",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -3967,6 +4131,7 @@
      ],
      "component_id": "act_lens",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -3978,6 +4143,7 @@
      ],
      "component_id": "act_cinder",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -3989,6 +4155,7 @@
      ],
      "component_id": "act_flask",
      "equipped_in": "consumable",
+     "gear": null,
      "siblings": []
     }
    ],
@@ -4027,6 +4194,28 @@
      ],
      "holds": "act_flask",
      "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
     }
    ]
   },
@@ -4381,6 +4570,13 @@
    }
   ],
   "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
   "hub": {
    "accepts_zone_request": true,
    "ap_online": true,
@@ -4795,6 +4991,7 @@
      ],
      "component_id": "act_lash",
      "equipped_in": null,
+     "gear": null,
      "siblings": [
       "trait_grip"
      ]
@@ -4806,6 +5003,7 @@
      "compatible_slots": [],
      "component_id": "trait_grip",
      "equipped_in": null,
+     "gear": null,
      "siblings": [
       "act_lash"
      ]
@@ -4819,6 +5017,7 @@
      ],
      "component_id": "act_dash",
      "equipped_in": "mobility",
+     "gear": null,
      "siblings": []
     },
     {
@@ -4830,6 +5029,7 @@
      ],
      "component_id": "act_bolt",
      "equipped_in": "echo_a",
+     "gear": null,
      "siblings": []
     },
     {
@@ -4839,6 +5039,7 @@
      "compatible_slots": [],
      "component_id": "res_magic",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -4848,6 +5049,7 @@
      "compatible_slots": [],
      "component_id": "trait_ward",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -4859,6 +5061,7 @@
      ],
      "component_id": "act_lens",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -4870,6 +5073,7 @@
      ],
      "component_id": "act_cinder",
      "equipped_in": "consumable",
+     "gear": null,
      "siblings": []
     },
     {
@@ -4881,6 +5085,7 @@
      ],
      "component_id": "act_flask",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     }
    ],
@@ -4919,6 +5124,28 @@
      ],
      "holds": "act_cinder",
      "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
     }
    ]
   },
@@ -5273,6 +5500,13 @@
    }
   ],
   "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
   "hub": {
    "accepts_zone_request": true,
    "ap_online": true,
@@ -5687,6 +5921,7 @@
      ],
      "component_id": "act_lash",
      "equipped_in": "echo_a",
+     "gear": null,
      "siblings": [
       "trait_grip"
      ]
@@ -5698,6 +5933,7 @@
      "compatible_slots": [],
      "component_id": "trait_grip",
      "equipped_in": null,
+     "gear": null,
      "siblings": [
       "act_lash"
      ]
@@ -5711,6 +5947,7 @@
      ],
      "component_id": "act_dash",
      "equipped_in": "mobility",
+     "gear": null,
      "siblings": []
     },
     {
@@ -5722,6 +5959,7 @@
      ],
      "component_id": "act_bolt",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -5731,6 +5969,7 @@
      "compatible_slots": [],
      "component_id": "res_magic",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -5740,6 +5979,7 @@
      "compatible_slots": [],
      "component_id": "trait_ward",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -5751,6 +5991,7 @@
      ],
      "component_id": "act_lens",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -5762,6 +6003,7 @@
      ],
      "component_id": "act_cinder",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     },
     {
@@ -5773,6 +6015,7 @@
      ],
      "component_id": "act_flask",
      "equipped_in": null,
+     "gear": null,
      "siblings": []
     }
    ],
@@ -5811,6 +6054,28 @@
      ],
      "holds": null,
      "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
     }
    ]
   },

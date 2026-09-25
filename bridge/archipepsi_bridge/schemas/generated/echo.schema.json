@@ -7,7 +7,7 @@
         "component_id": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Component Id",
           "type": "string"
         },
@@ -227,7 +227,7 @@
         "component_id": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Component Id",
           "type": "string"
         },
@@ -678,6 +678,7 @@
             "mapping": {
               "action": "#/$defs/ActionComponent",
               "affordance": "#/$defs/AffordanceComponent",
+              "gear": "#/$defs/GearComponent",
               "info": "#/$defs/InfoComponent",
               "resource": "#/$defs/ResourceComponent",
               "rule": "#/$defs/RuleComponent",
@@ -707,6 +708,9 @@
             },
             {
               "$ref": "#/$defs/InfoComponent"
+            },
+            {
+              "$ref": "#/$defs/GearComponent"
             }
           ],
           "title": "Component"
@@ -849,6 +853,68 @@
         "type"
       ],
       "title": "Effect",
+      "type": "object"
+    },
+    "GearComponent": {
+      "additionalProperties": false,
+      "description": "D16 G1 (owner rulings, 2026-09-25): a piece of Gear, as its atoms.\n\nWorn in its domain's territory -- one of Design 1 \u00a716.1's four -- it\nmultiplies the runtime stat its domain is paired with (ruling 1),\nthrough the StatStack every trait already feeds. Its atoms are the\ngrammar's own parallel lists (`gear.composition_cost`,\n`gear.one_piece_shape`), one of each today (ruling 2).\n\n**Atoms only.** No factor, no territory and no tier is stored: each is\nderived (`gear.effects_of`, `gear.territory_of`, `gear.one_piece_shape`)\nso a rebalance -- or HIGH's arrival as a two-atom piece -- never\nmigrates a save (ruling 4). Epsilon picks the atoms, never the numbers.\nIt comes only from an Echo, which is to say from an Archipelago item\n(ruling 3): no transaction mints one.",
+      "properties": {
+        "component_id": {
+          "maxLength": 32,
+          "minLength": 5,
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
+          "title": "Component Id",
+          "type": "string"
+        },
+        "display_name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "kind": {
+          "const": "gear",
+          "title": "Kind",
+          "type": "string"
+        },
+        "domains": {
+          "items": {
+            "maxLength": 32,
+            "pattern": "^[a-z_]+$",
+            "type": "string"
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "title": "Domains",
+          "type": "array"
+        },
+        "magnitudes": {
+          "items": {
+            "maxLength": 32,
+            "pattern": "^[a-z_]+$",
+            "type": "string"
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "title": "Magnitudes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "component_id",
+        "display_name",
+        "description",
+        "kind",
+        "domains",
+        "magnitudes"
+      ],
+      "title": "GearComponent",
       "type": "object"
     },
     "Glide": {
@@ -1089,7 +1155,7 @@
         "component_id": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Component Id",
           "type": "string"
         },
@@ -1180,14 +1246,14 @@
         "source": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Source",
           "type": "string"
         },
         "target": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Target",
           "type": "string"
         },
@@ -1285,14 +1351,14 @@
         "absorbed": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Absorbed",
           "type": "string"
         },
         "survivor": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Survivor",
           "type": "string"
         },
@@ -1326,7 +1392,7 @@
         "target": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Target",
           "type": "string"
         },
@@ -1534,7 +1600,7 @@
         "component_id": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Component Id",
           "type": "string"
         },
@@ -1638,7 +1704,7 @@
         "resource_id": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Resource Id",
           "type": "string"
         },
@@ -1685,7 +1751,7 @@
         "component_id": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Component Id",
           "type": "string"
         },
@@ -1875,7 +1941,7 @@
         "component_id": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Component Id",
           "type": "string"
         },
@@ -1969,7 +2035,7 @@
         "component_id": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Component Id",
           "type": "string"
         },
@@ -2030,7 +2096,7 @@
             {
               "maxLength": 32,
               "minLength": 5,
-              "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+              "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
               "type": "string"
             },
             {
@@ -2064,7 +2130,7 @@
         "target": {
           "maxLength": 32,
           "minLength": 5,
-          "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+          "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
           "title": "Target",
           "type": "string"
         },
