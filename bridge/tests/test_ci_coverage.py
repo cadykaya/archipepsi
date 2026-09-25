@@ -43,7 +43,18 @@ NOT_A_SUITE = {"godot-import", "godot-integration",
                # answer that means anything. It is the tool you reach for
                # when the offline census names a case, and what it
                # reports is a description rather than a pass or a fail.
-               "godot-named-case"}
+               "godot-named-case",
+               # NO ZONE TO PLAY YET. `godot-passing-hosted` (H-PASSING)
+               # plays EX50-011 as a composed Zone hosts it, and no fixture
+               # carries such a Zone: the candidate hosts it only in
+               # zone_002, which exists once a live campaign has reached
+               # it. Until Dess's `passing_zone.json` lands (note N-10 in
+               # `PROD_POST_PLAYTEST.md`) it runs by hand on a capture
+               # (`make godot-candidate-live CANDIDATE_DUMP=<path>`, then
+               # `PASSING_ZONE=<path>`), and `godot-candidate-live` plays
+               # the same hosted room in CI. Give it a CI step the day the
+               # fixture lands.
+               "godot-passing-hosted"}
 
 
 #: HYPHENS INCLUDED. This read `godot-[a-z]+`, which stops dead at the
