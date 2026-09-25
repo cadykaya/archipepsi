@@ -1,0 +1,507 @@
+{
+ "aspect_gate": 2.0,
+ "norm_px": 96,
+ "pairs": [
+  {
+   "aspect_ratio": 1.07,
+   "pair": [
+    "melee",
+    "ranged"
+   ],
+   "raw": 0.692,
+   "scaled": 0.856,
+   "stretched": 0.889,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 1.03,
+   "pair": [
+    "brute",
+    "bulwark"
+   ],
+   "raw": 0.667,
+   "scaled": 0.825,
+   "stretched": 0.83,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.47,
+   "pair": [
+    "charger",
+    "drifter"
+   ],
+   "raw": 0.774,
+   "scaled": 0.776,
+   "stretched": 0.738,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.0,
+   "pair": [
+    "bulwark",
+    "melee"
+   ],
+   "raw": 0.45,
+   "scaled": 0.748,
+   "stretched": 0.744,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 2.02,
+   "pair": [
+    "diver",
+    "scuttler"
+   ],
+   "raw": 0.645,
+   "scaled": 0.718,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.18,
+   "pair": [
+    "artillery",
+    "brute"
+   ],
+   "raw": 0.416,
+   "scaled": 0.682,
+   "stretched": 0.685,
+   "yaw": 90
+  },
+  {
+   "aspect_ratio": 1.07,
+   "pair": [
+    "bulwark",
+    "ranged"
+   ],
+   "raw": 0.319,
+   "scaled": 0.662,
+   "stretched": 0.691,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 1.5,
+   "pair": [
+    "artillery",
+    "melee"
+   ],
+   "raw": 0.637,
+   "scaled": 0.64,
+   "stretched": 0.631,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.16,
+   "pair": [
+    "diver",
+    "drifter"
+   ],
+   "raw": 0.391,
+   "scaled": 0.64,
+   "stretched": 0.74,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.61,
+   "pair": [
+    "artillery",
+    "bulwark"
+   ],
+   "raw": 0.547,
+   "scaled": 0.639,
+   "stretched": 0.616,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 1.61,
+   "pair": [
+    "brute",
+    "drifter"
+   ],
+   "raw": 0.17,
+   "scaled": 0.621,
+   "stretched": 0.703,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 1.48,
+   "pair": [
+    "charger",
+    "diver"
+   ],
+   "raw": 0.297,
+   "scaled": 0.619,
+   "stretched": 0.684,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 1.47,
+   "pair": [
+    "bulwark",
+    "charger"
+   ],
+   "raw": 0.294,
+   "scaled": 0.6,
+   "stretched": 0.884,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.44,
+   "pair": [
+    "brute",
+    "melee"
+   ],
+   "raw": 0.24,
+   "scaled": 0.591,
+   "stretched": 0.749,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 1.73,
+   "pair": [
+    "charger",
+    "scuttler"
+   ],
+   "raw": 0.216,
+   "scaled": 0.584,
+   "stretched": 0.639,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 1.42,
+   "pair": [
+    "brute",
+    "charger"
+   ],
+   "raw": 0.204,
+   "scaled": 0.555,
+   "stretched": 0.778,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.83,
+   "pair": [
+    "artillery",
+    "ranged"
+   ],
+   "raw": 0.463,
+   "scaled": 0.543,
+   "stretched": 0.662,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.43,
+   "pair": [
+    "artillery",
+    "drifter"
+   ],
+   "raw": 0.355,
+   "scaled": 0.541,
+   "stretched": 0.716,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 2.16,
+   "pair": [
+    "bulwark",
+    "drifter"
+   ],
+   "raw": 0.288,
+   "scaled": 0.534,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.53,
+   "pair": [
+    "brute",
+    "ranged"
+   ],
+   "raw": 0.17,
+   "scaled": 0.516,
+   "stretched": 0.721,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 2.34,
+   "pair": [
+    "drifter",
+    "scuttler"
+   ],
+   "raw": 0.348,
+   "scaled": 0.477,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.96,
+   "pair": [
+    "beacon",
+    "ranged"
+   ],
+   "raw": 0.303,
+   "scaled": 0.444,
+   "stretched": 0.497,
+   "yaw": 90
+  },
+  {
+   "aspect_ratio": 1.38,
+   "pair": [
+    "artillery",
+    "charger"
+   ],
+   "raw": 0.438,
+   "scaled": 0.437,
+   "stretched": 0.611,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 1.84,
+   "pair": [
+    "beacon",
+    "melee"
+   ],
+   "raw": 0.344,
+   "scaled": 0.397,
+   "stretched": 0.507,
+   "yaw": 90
+  },
+  {
+   "aspect_ratio": 2.3,
+   "pair": [
+    "drifter",
+    "melee"
+   ],
+   "raw": 0.486,
+   "scaled": 0.384,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 2.5,
+   "pair": [
+    "bulwark",
+    "diver"
+   ],
+   "raw": 0.113,
+   "scaled": 0.352,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 2.42,
+   "pair": [
+    "brute",
+    "diver"
+   ],
+   "raw": 0.078,
+   "scaled": 0.34,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 2.46,
+   "pair": [
+    "drifter",
+    "ranged"
+   ],
+   "raw": 0.478,
+   "scaled": 0.333,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 2.06,
+   "pair": [
+    "charger",
+    "melee"
+   ],
+   "raw": 0.519,
+   "scaled": 0.32,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 3.23,
+   "pair": [
+    "artillery",
+    "beacon"
+   ],
+   "raw": 0.252,
+   "scaled": 0.295,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 3.8,
+   "pair": [
+    "brute",
+    "scuttler"
+   ],
+   "raw": 0.06,
+   "scaled": 0.295,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 2.9,
+   "pair": [
+    "beacon",
+    "brute"
+   ],
+   "raw": 0.235,
+   "scaled": 0.293,
+   "stretched": null,
+   "yaw": 90
+  },
+  {
+   "aspect_ratio": 2.73,
+   "pair": [
+    "beacon",
+    "bulwark"
+   ],
+   "raw": 0.295,
+   "scaled": 0.29,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 2.34,
+   "pair": [
+    "artillery",
+    "diver"
+   ],
+   "raw": 0.242,
+   "scaled": 0.281,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 2.51,
+   "pair": [
+    "charger",
+    "ranged"
+   ],
+   "raw": 0.425,
+   "scaled": 0.265,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 3.38,
+   "pair": [
+    "artillery",
+    "scuttler"
+   ],
+   "raw": 0.142,
+   "scaled": 0.263,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 5.05,
+   "pair": [
+    "bulwark",
+    "scuttler"
+   ],
+   "raw": 0.105,
+   "scaled": 0.262,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 3.51,
+   "pair": [
+    "diver",
+    "melee"
+   ],
+   "raw": 0.31,
+   "scaled": 0.194,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 5.46,
+   "pair": [
+    "melee",
+    "scuttler"
+   ],
+   "raw": 0.206,
+   "scaled": 0.181,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 4.98,
+   "pair": [
+    "diver",
+    "ranged"
+   ],
+   "raw": 0.266,
+   "scaled": 0.166,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 5.82,
+   "pair": [
+    "ranged",
+    "scuttler"
+   ],
+   "raw": 0.228,
+   "scaled": 0.159,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 6.27,
+   "pair": [
+    "beacon",
+    "drifter"
+   ],
+   "raw": 0.17,
+   "scaled": 0.146,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 4.44,
+   "pair": [
+    "beacon",
+    "charger"
+   ],
+   "raw": 0.132,
+   "scaled": 0.132,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 7.56,
+   "pair": [
+    "beacon",
+    "diver"
+   ],
+   "raw": 0.102,
+   "scaled": 0.084,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 14.85,
+   "pair": [
+    "beacon",
+    "scuttler"
+   ],
+   "raw": 0.106,
+   "scaled": 0.07,
+   "stretched": null,
+   "yaw": 45
+  }
+ ],
+ "threshold": 0.8,
+ "yaws": [
+  0,
+  45,
+  90
+ ]
+}

@@ -2331,8 +2331,34 @@ Three questions for the owner are in its README.
 the art lane's exported descriptor"; `THEME_PACK_STATUS` is Production's
 and stays `{}`.
 
-### Next: Track B
+### Track B — MEASURED. Three findings, no enemy changed.
 
-The distance-readable enemy lineup, judged without audio, captions,
-collider overlays or studio lighting. C stays blocked on the revised
-machinery/puzzle bounds; E stays reserve.
+`tools/content/run_enemy_silhouettes.sh` renders the ten roles at the
+project's own review distance (18 m, 90 deg, 48 px) at three yaws, and
+`tools/content/enemy_readability.py` measures how far apart the outlines
+are. Evidence: `docs/art/review/enemies_2026-09-25/`.
+
+1. **The named failure does not reproduce.** Artillery's nearest
+   neighbour by outline is brute at 0.682, well under the 0.80 line.
+2. **Two other pairs fail the same test** — `melee / ranged` at 0.856
+   and `brute / bulwark` at 0.825. melee/ranged IS PT-10's "a different
+   width is not a different silhouette", on a different pair.
+3. **Value outranks outline.** In a lit room the family sits 0.165 L*
+   from the wall behind it: clears `min_value_separation` (0.10), short
+   of `min_interactable_separation` (0.18), and an enemy is the most
+   interactable thing in the room. It affects all ten at once.
+
+Plus one envelope overflow: `brute`'s visible body is 0.067 m wider than
+its declared envelope head-on (the PT-12 seam). Reported, not fixed.
+
+**Four changes are proposed in the report and none is made**, because
+all four touch art already in the tree: a non-width tell for `ranged`, a
+head-on tell for `bulwark`, a family-wide value lift (palette-level, the
+owner's call), and then a re-measure with motion.
+
+### Next
+
+C stays blocked on the revised machinery/puzzle bounds; E stays reserve.
+Track A's remainder — body text, headings, keycaps, the shared symbol
+set, page arrows — is ready work. Item and state art still waits on
+Production's slot vocabulary.
