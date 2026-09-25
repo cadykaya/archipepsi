@@ -33,6 +33,11 @@ const ROLES := ["artillery", "beacon", "brute", "bulwark", "charger",
 ## player cannot tell apart -- and the first version of this harness
 ## rendered one view and would have called that family distinct.
 const YAWS := [0, 45, 90]
+## Every house family, because the owner's condition on the Tier-1
+## candidate is that it must not simply move the collision into a pale
+## environment. A value answer proved in one room is not an answer.
+const THEMES := ["concrete_facility", "rusted_industrial", "neon_transit",
+	"gothic_stone", "temple_ruin", "void_glitch"]
 const SHOT := Vector2i(1920, 1080)
 
 var _bench: GDScript
@@ -293,11 +298,14 @@ func _run() -> void:
 				  % [role, worst_w, worst_at]
 				  + "%.3f m tall -- outside the volume that can be hit"
 				  % worst_h)
-	await _lineup()
+	_rows["_contrast"] = {}
+	var regions := await _lineup_regions()
+	for theme in THEMES:
+		await _lineup(theme, regions)
 	_finish()
 
 
-func _lineup() -> void:
+func _lineup(theme: String, regions: Dictionary) -> void:
 	## The evidence frame: all ten at the review distance, under the
 	## ROOM'S light -- one lamp at the theme's own colour and energy, no
 	## rig. `02` PT-10 asks for the lineup judged without studio
@@ -307,7 +315,7 @@ func _lineup() -> void:
 	_camera(view)
 	var holder := Node3D.new()
 	view.add_child(holder)
-	_room(holder)
+	_room(holder, theme)
 	var x := 0.0
 	var placed := 0
 	var widths := []
@@ -351,6 +359,9 @@ func _lineup() -> void:
 	# room, so every role measured the same 1.56 million pixels and
 	# reported an identical L* to three decimals. Ten different models
 	# cannot do that, which is the only reason it was caught.
+	#
+	# The regions are computed ONCE by the caller and handed in: the
+	# bodies do not move between themes, only the room behind them.
 	view.queue_free()
 	await process_frame
 
@@ -362,7 +373,6 @@ func _lineup() -> void:
 	# it is a number. The palette's own thresholds are the yardstick:
 	# min_value_separation 0.10, min_interactable_separation 0.18, in
 	# CIE L*.
-	var regions := await _lineup_regions()
 	var body := 0.0
 	var body_n := 0
 	var wall := 0.0
@@ -416,20 +426,20 @@ func _lineup() -> void:
 	if body_n > 0 and wall_n > 0:
 		var bl := body / float(body_n)
 		var wl := wall / float(wall_n)
-		_rows["_contrast"] = {
+		_rows["_contrast"][theme] = {
 			"body_lstar": snappedf(bl, 0.001),
 			"wall_lstar": snappedf(wl, 0.001),
 			"separation_lstar": snappedf(absf(bl - wl), 0.001),
 			"body_px": body_n,
 		}
 		var sep := absf(bl - wl)
-		_rows["_contrast"]["min_value_separation"] = _min_value
-		_rows["_contrast"]["min_interactable_separation"] = _min_interactable
-		_rows["_contrast"]["clears_value_rule"] = sep >= _min_value
-		_rows["_contrast"]["clears_interactable_rule"] = \
+		_rows["_contrast"][theme]["clears_value_rule"] = sep >= _min_value
+		_rows["_contrast"][theme]["clears_interactable_rule"] = \
 				sep >= _min_interactable
-		print("[enemysil] the family reads at L* %.3f against a wall at "
-			  % bl + "%.3f -- %.3f apart" % [wl, sep])
+		print("[enemysil] %-19s body L* %.3f, wall %.3f -- %.3f apart%s"
+			  % [theme, bl, wl, sep,
+				 "" if sep >= _min_interactable else "   SHORT of %.2f"
+				 % _min_interactable])
 		# REPORTED, not refused. This measures art that is already in the
 		# tree, against a threshold the palette sets for a different
 		# question; turning it into a gate here would be this lane
@@ -442,7 +452,7 @@ func _lineup() -> void:
 				 "clears" if sep >= _min_interactable else "SHORT"]
 			  + "enemy is the most interactable thing in the room")
 		# Worst first: that is the order the fixes want to be made in.
-		var ranked := per_role.keys()
+		var ranked: Array = per_role.keys() if theme == THEMES[0] else []
 		ranked.sort_custom(func(a, b):
 				return absf(float(per_role[a]["lstar"]) - wl) \
 						< absf(float(per_role[b]["lstar"]) - wl))
@@ -455,7 +465,7 @@ func _lineup() -> void:
 			print("[enemysil]   %-10s L* %.3f, %.3f from the wall%s"
 				  % [role, rl, rsep,
 					 "" if rsep >= _min_interactable else "   SHORT"])
-		_rows["_contrast"]["per_role"] = per_role
+		_rows["_contrast"][theme]["per_role"] = per_role
 
 	_bench.call("label", image, "PROPOSAL -- NOT OWNER-APPROVED",
 			Vector2i(16, 16), Color(1, 0.86, 0.3))
@@ -465,10 +475,11 @@ func _lineup() -> void:
 	_bench.call("label", image, "NO AUDIO, NO CAPTIONS, NO COLLIDER "
 			+ "OVERLAY. LEFT TO RIGHT: " + ", ".join(ROLES).to_upper(),
 			Vector2i(16, 54), Color(0.66, 0.70, 0.76))
-	if image.save_png("%s/LINEUP_at_%.0fm.png" % [_out, _distance]) != OK:
+	if image.save_png("%s/LINEUP_%s_at_%.0fm.png"
+			% [_out, theme, _distance]) != OK:
 		_bad("could not write the lineup frame")
-	print("[enemysil] lineup: %d role(s) at %.0f m under one room lamp"
-		  % [placed, _distance])
+	print("[enemysil] lineup: %d role(s) in %s at %.0f m, one room lamp"
+		  % [placed, theme, _distance])
 
 
 ## CIE L*, 0..1 -- the same measure `palette.py` uses, so a separation
@@ -572,15 +583,17 @@ func _surface(path: String, size: Vector2, at: Vector3,
 	return mi
 
 
-func _room(holder: Node3D) -> void:
+func _room(holder: Node3D, theme: String) -> void:
 	## A floor and a back wall in the shipped theme, because a lineup
 	## against a flat void is the EASIEST case a silhouette will ever
 	## face and no player is ever shown one. `covers_m` is 4.0, so the
 	## UV scale is metres over four.
-	holder.add_child(_surface("res://content/theme/concrete_facility_floor.png",
+	holder.add_child(_surface(
+			"res://content/theme/%s_floor.png" % theme,
 			Vector2(80.0, 60.0), Vector3(0.0, -1.0, -_distance),
 			Vector3.ZERO))
-	holder.add_child(_surface("res://content/theme/concrete_facility_wall.png",
+	holder.add_child(_surface(
+			"res://content/theme/%s_wall.png" % theme,
 			Vector2(80.0, 16.0), Vector3(0.0, 7.0, -_distance - 7.0),
 			Vector3(deg_to_rad(90.0), 0.0, 0.0)))
 

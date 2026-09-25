@@ -75,6 +75,66 @@ rely on body value at all.
 > only direction it could have gone — `signal` means "you can use
 > this", and an enemy is not that.
 
+### Tier 1, measured in all six families — and the condition bites
+
+The six-theme measurement was the condition on landing 1A. It came back
+with a result that decides the direction rather than confirming it, so
+**nothing has been changed and this goes back to you.**
+
+| theme | wall L\* | separation from the body at 0.420 |
+| --- | --- | --- |
+| `void_glitch` | 0.332 | 0.088 — the body is **above** this wall |
+| `rusted_industrial` | 0.384 | 0.036 — **above** this one too |
+| `gothic_stone` | 0.451 | 0.031 |
+| `concrete_facility` | 0.488 | 0.068 |
+| `temple_ruin` | 0.495 | 0.075 |
+| `neon_transit` | 0.501 | 0.081 |
+
+Two things fall out of that table.
+
+**First, a premise in the code was false.** `propkit.enemy_skin`'s
+docstring claimed the skin *"sits below every theme's wall in value"*.
+It sits above two of the six. Corrected in place, with the measurement.
+
+**Second, the walls span 0.169 — less than twice the 0.18 threshold —
+so no single body value between them can clear it anywhere.** One value
+works only:
+
+* **at or below L\* 0.152**, darker than every wall; or
+* **at or above L\* 0.681**, paler than every wall.
+
+The current 0.420 sits in the middle of that gap, which is the worst
+place available. (Even the ordinary 0.10 rule needs ≤ 0.232 or ≥ 0.601.)
+
+So *"raise the enemy-body value ramp"* has a specific cost: to work
+everywhere it must go to **0.681**, which makes an enemy paler than
+every wall in the game and the brightest thing in most rooms. That is
+not only the pale-environment collision you asked me to watch for — it
+also runs into the game's own language, where bright *is* light and
+signal. I do not think that is what you meant by "raised", so I have
+not built it.
+
+**What I would do instead, and why.** Go the other way, to **≤ 0.152**.
+It clears 0.18 in all six, it is monotonic (there is no theme where
+darker is worse), and it is the direction `enemy_skin` was already
+reaching for — *"something that came out of the building's underside"*.
+The cost is that enemies become genuinely dark, which wants checking
+against low-light areas rather than assumed.
+
+**A third option the code is already shaped for.** `enemy_skin` takes
+the theme, so the body value *could* differ per room — darker than
+0.308 in `concrete_facility`, darker than 0.204 in `rusted_industrial`,
+and so on. That is not "wearing the room's colours" (L-08's rule); it
+is deliberately contrasting with them. The cost is cross-room
+recognition: the same brute would not be the same value in two rooms.
+
+> **Decision needed:** down to ≤ 0.152 / up to ≥ 0.681 / per-theme /
+> relax the threshold for enemies →
+
+Reproduce with `tools/content/run_enemy_silhouettes.sh` (six
+`LINEUP_<theme>_at_18m.png` frames) then
+`tools/content/enemy_value_bands.py`.
+
 ---
 
 ## Tier 2 — the two genuinely confused pairs

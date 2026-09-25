@@ -370,11 +370,29 @@ def enemy_skin(theme, name, marking="dead"):
     is a figure the player finds by being hit.
 
     So enemies are built from the shared `grime` family, which every theme
-    also uses for dirt, plus the theme's DARKEST base step. That does two
-    things at once: it sits below every theme's wall in value, and it makes
-    an enemy read as something that came out of the building's underside
+    also uses for dirt, plus the theme's DARKEST base step. That makes an
+    enemy read as something that came out of the building's underside
     rather than as part of its finish. The only saturated colour on the body
     is the marking family, and there is very little of it.
+
+    **MEASURED 2026-09-25, and one sentence of this was wrong.** This
+    docstring used to claim the skin "sits below every theme's wall in
+    value". It does not. Rendered at the review distance in all six
+    families, the body reads at L* 0.420 against walls from 0.332
+    (`void_glitch`) to 0.501 (`neon_transit`) -- so it is ABOVE two of
+    the six, and its separation is 0.031 to 0.088 where the palette asks
+    0.18 of anything interactable.
+
+    The walls span 0.169, which is less than twice that threshold, so no
+    single body value between them can clear it anywhere: one value
+    works only at or below L* 0.152, or at or above L* 0.681. The
+    current value sits in the middle of the gap, which is the worst
+    place available.
+
+    `tools/content/enemy_value_bands.py` recomputes all of that from the
+    measurement, and nothing here has been changed on the strength of
+    it -- the direction is an owner decision. See
+    `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`.
     """
     base, accent, trim = _ramps(theme)
     surf = surface(theme, name)
