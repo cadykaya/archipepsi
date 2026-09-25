@@ -2663,3 +2663,39 @@ prettier button label."
     right: sensitivity, invert look, field of view, motion, volume. They
     take effect at once and are remembered.
   - The pause menu's own buttons are exactly as they were.
+
+## CP4 checkpoint — closed (the full frontier)
+
+- **On `a2115b6` (H-JOURNAL's head): 82 of 82 steps passed,** 13:07 to
+  14:35 UTC (`CP4_frontier_on_a2115b6.tsv`).
+  - The steps are CP3's 77 and this checkpoint's five:
+    - the three suites CP4 added to CI: `godot-minimap` (30 checks),
+      `godot-map-face` (52) and `godot-journal-face` (36);
+    - `map_snapshot.json` and `journal_snapshot.json` regenerated from
+      source: byte-identical, and restored.
+  - `make test`: 2,228 passed (`CP4_make_test_on_a2115b6.log`). Every
+    live suite passed too, among them `godot-candidate-live` (all 9
+    phases), both integrations and the return journey.
+  - The tree was clean at the start. At the end it differed only in the
+    placement fixtures `godot-zone-audit` rewrites, which were restored.
+- **Resizing** (CP4's proof names it). The minimap, the Map wall, and
+  the Journal and Settings walls were each shot at 1280x720 and at
+  1920x1080, by the suites' own shot modes (`--shots-size`, new;
+  `CP4_resize_shots.log`):
+  - the minimap stays anchored to the window's bottom-right corner, with
+    the room's name above it, at both sizes;
+  - the walls are pages rendered to a texture on the shell's 3D walls,
+    so they scale as a whole. At 1920x1080 nothing is clipped, nothing
+    overlaps, and every line is readable;
+  - the 1920x1080 set is in `CP4_resize/`. The minimap's full frames
+    are at 256 colours, with lossless crops of the plate, and checked
+    against the raw render: no colour merged. The walls are lossless.
+    The 1280x720 frames are the ones each item already committed.
+- **CP4 is closed, on provisional art.** The packet's CP4 proof is
+  "Actual names/gates/current data, rotation/zoom/drag/input tests,
+  reload, resizing and owner usability".
+  - The first five are in the three items' suites and live runs, and
+    resizing is above.
+  - Owner usability is the owner's to judge. The Glyph-authored look
+    waits on Arty (H-GLYPH-KIT).
+  - These are local results. Remote CI does not run (N-6).

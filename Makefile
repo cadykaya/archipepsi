@@ -1254,10 +1254,13 @@ godot-minimap: godot-import  # the minimap: real shapes, the bridge's states
 	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
 	  echo "godot-minimap: script errors in the run"; exit 1; fi
 
+# The window the minimap, map-wall and journal shots are taken at.
+SHOTS_SIZE ?= 1280x720
 MINIMAP_SHOTS_DIR ?= /tmp/archipepsi-minimap
 minimap-shots: godot-import
-	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
-	  --rendering-driver opengl3 -- --minimap --shots=$(MINIMAP_SHOTS_DIR) 2>&1 \
+	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --minimap --shots=$(MINIMAP_SHOTS_DIR) \
+	  --shots-size=$(SHOTS_SIZE) 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
 # H-3D-MAP (CP4, V-21): THE MAP WALL, on the real shell and the real
@@ -1274,8 +1277,9 @@ godot-map-face: godot-import  # the map wall: render-only, one projection
 
 MAP_FACE_SHOTS_DIR ?= /tmp/archipepsi-map-face
 map-face-shots: godot-import
-	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
-	  --rendering-driver opengl3 -- --map-face --shots=$(MAP_FACE_SHOTS_DIR) 2>&1 \
+	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --map-face --shots=$(MAP_FACE_SHOTS_DIR) \
+	  --shots-size=$(SHOTS_SIZE) 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
 # H-JOURNAL (CP4, §8): THE JOURNAL WALL AND THE SETTINGS WALL, on the
@@ -1292,8 +1296,9 @@ godot-journal-face: godot-import  # the journal and settings walls
 
 JOURNAL_SHOTS_DIR ?= /tmp/archipepsi-journal-face
 journal-face-shots: godot-import
-	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
-	  --rendering-driver opengl3 -- --journal-face --shots=$(JOURNAL_SHOTS_DIR) 2>&1 \
+	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --journal-face --shots=$(JOURNAL_SHOTS_DIR) \
+	  --shots-size=$(SHOTS_SIZE) 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
 EQUIPMENT_SHOTS_DIR ?= /tmp/archipepsi-equipment-face

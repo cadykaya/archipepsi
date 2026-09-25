@@ -72,6 +72,8 @@ func _run() -> void:
 	await _frames(3)
 	var shots := _shots_dir()
 	if shots != "":
+		get_window().size = _shots_size()
+		await _frames(3)
 		await _shoot(shots)
 		_finish()
 		return
@@ -487,6 +489,16 @@ func _shots_dir() -> String:
 		if arg.begins_with("--shots="):
 			return arg.substr("--shots=".length())
 	return ""
+
+## `--shots-size=WxH`: the window the screenshots are taken at (CP4's
+## "resizing" proof). Absent, the suite's own 1280 x 720.
+func _shots_size() -> Vector2i:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--shots-size="):
+			var parts := arg.substr("--shots-size=".length()).split("x")
+			if parts.size() == 2:
+				return Vector2i(int(parts[0]), int(parts[1]))
+	return Vector2i(1280, 720)
 
 
 func _shoot(dir: String) -> void:

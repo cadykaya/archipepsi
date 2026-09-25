@@ -326,8 +326,12 @@ owner's D-06/D-07 rulings and the seam table are in
       - 17 of 17 sabotages fail by name, on the first run.
       - Open: rebinding has no screen yet; "new campaign" is offered
         nowhere in the menus; captions is stored but read by nothing.
-    - **Next: the CP4 checkpoint** (the full frontier on a frozen
-      revision), then the ready inherited 0.4 work.
+    - **CP4 checkpoint: closed.** 82 of 82 frontier steps on
+      `a2115b6`, and resizing shots at 1280x720 and 1920x1080 (the
+      minimap stays in its corner, the walls scale whole). Owner
+      usability and the Glyph look remain the owner's and Arty's.
+    - **Next: the ready inherited 0.4 work,** starting with D14 §7 (the
+      D-01 integration) and Dess's notes D-5 and D-6.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 
