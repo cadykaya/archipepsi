@@ -2455,7 +2455,8 @@ generated constant -- so the gate now pins the guard as THREE parts
 (the member's source, the lookup through it, and the empty-list
 refusal, which the old one-line pin never required). Proven load-bearing
 both ways: the pre-`d82a36e` source fails it, and so does the current
-source with only the refusal removed. PASS, 6 notes, evidence unchanged.
+source with only the refusal removed. PASS, 6 notes, evidence unchanged,
+and a clean rerun of the whole of `check_art_current.sh` then PASSED.
 
 ### Next
 

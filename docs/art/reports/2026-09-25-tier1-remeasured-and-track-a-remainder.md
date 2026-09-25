@@ -274,8 +274,10 @@ roles included) and the exported content passed, except ONE:
 moved the "designed but unimplemented" guard into a member. The rule is
 the same, so the gate is re-pinned as three required parts. It passes,
 and it fails on both the pre-`d82a36e` source and the current source
-with the refusal line removed. A clean rerun of the whole suite: *see
-below.*
+with the refusal line removed. **A clean rerun of the whole suite then
+PASSED** — every engine gate, the interface rebuild, every Blender
+rebuild and the exported content: *"PASS -- every generated asset
+matches its source."* No failure, no skip.
 
 ## 8. Next
 
