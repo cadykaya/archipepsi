@@ -23,8 +23,26 @@ const CONTRACT := "res://_harness/panels.json"
 
 var _names: Array = []
 var _spec := {}
-var MARGIN := 0
+## left, top, right, bottom -- the treatment under test's patch margins.
+var M := {"left": 0, "top": 0, "right": 0, "bottom": 0}
 var SRC := Vector2i.ZERO
+
+## WHERE each ring role is, per treatment -- this file's own knowledge of
+## the geometry, NOT read from the contract. The contract says what
+## colour a role is; if it also said where to look, a treatment drawn in
+## the wrong place with a contract written from the same mistake would
+## grade itself. Positions are from the top-left; a negative coordinate
+## counts from the far edge (-1 is the last pixel). `clear` is a pixel
+## that must be fully transparent: the keycap's cut corners.
+const BEVEL := {"outline": [[0, 0], [-1, -1]], "light": [[1, 1]],
+	"dark": [[-2, -2]], "face": [["mid", "mid"]]}
+const GEOMETRY := {
+	"panel": BEVEL, "well": BEVEL, "selected": BEVEL,
+	"keycap": {"outline": [[1, 0], [0, 1], [-2, -1], [-1, -2]],
+		"light": [[1, 1], [1, -4], [-2, 1]], "face": [["mid", "mid"]],
+		"lip": [["mid", -2], ["mid", -3]],
+		"clear": [[0, 0], [-1, 0], [0, -1], [-1, -1]]},
+}
 ## Deliberately not a multiple of the source, and not square: a bug that
 ## happens to work at an exact 2x or on a square would survive a nicer
 ## number.
@@ -56,10 +74,12 @@ func _init() -> void:
 	await _run()
 
 
-func _render(texture: Texture2D, margin: int) -> Image:
+func _render(texture: Texture2D, margins: Dictionary) -> Image:
 	var view := SubViewport.new()
 	view.size = DRAW
-	view.transparent_bg = false
+	# Transparent, so a keycap's cut corners come back as the holes they
+	# are rather than as whatever colour the viewport clears to.
+	view.transparent_bg = true
 	view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	root.add_child(view)
 	var patch := NinePatchRect.new()
@@ -68,10 +88,10 @@ func _render(texture: Texture2D, margin: int) -> Image:
 	# flat centre would survive it anyway, which is exactly why the
 	# filter is set explicitly rather than inferred from a passing test.
 	patch.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	patch.patch_margin_left = margin
-	patch.patch_margin_top = margin
-	patch.patch_margin_right = margin
-	patch.patch_margin_bottom = margin
+	patch.patch_margin_left = int(margins["left"])
+	patch.patch_margin_top = int(margins["top"])
+	patch.patch_margin_right = int(margins["right"])
+	patch.patch_margin_bottom = int(margins["bottom"])
 	patch.position = Vector2.ZERO
 	patch.size = DRAW
 	view.add_child(patch)
@@ -82,20 +102,32 @@ func _render(texture: Texture2D, margin: int) -> Image:
 	return image
 
 
+## Two pixels are the same if they are the same colour -- or both fully
+## transparent, whatever RGB sits under the zero alpha. That RGB is not
+## art: Godot's importer rewrites it on purpose ("fix alpha border") so
+## filtering never bleeds a black fringe, and nothing draws it.
+func _same_px(a: Color, b: Color) -> bool:
+	return (a.a == 0.0 and b.a == 0.0) or a.is_equal_approx(b)
+
+
 ## The four corners, at their authored size, in the four corners of the
-## rendered rectangle. Returns "" when they all match.
+## rendered rectangle. Returns "" when they all match. Each corner is as
+## wide as its side's margin and as tall as its end's, so a keycap's
+## deep bottom lip is checked as the 3-row corner it is.
 func _corner_faults(got: Image, want: Image) -> String:
 	for corner in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1),
 			Vector2i(1, 1)]:
-		for dy in MARGIN:
-			for dx in MARGIN:
-				var sx: int = dx if corner.x == 0 else SRC.x - MARGIN + dx
-				var sy: int = dy if corner.y == 0 else SRC.y - MARGIN + dy
-				var gx: int = dx if corner.x == 0 else DRAW.x - MARGIN + dx
-				var gy: int = dy if corner.y == 0 else DRAW.y - MARGIN + dy
+		var cw: int = M["left"] if corner.x == 0 else M["right"]
+		var ch: int = M["top"] if corner.y == 0 else M["bottom"]
+		for dy in ch:
+			for dx in cw:
+				var sx: int = dx if corner.x == 0 else SRC.x - cw + dx
+				var sy: int = dy if corner.y == 0 else SRC.y - ch + dy
+				var gx: int = dx if corner.x == 0 else DRAW.x - cw + dx
+				var gy: int = dy if corner.y == 0 else DRAW.y - ch + dy
 				var a := want.get_pixel(sx, sy)
 				var b := got.get_pixel(gx, gy)
-				if not a.is_equal_approx(b):
+				if not _same_px(a, b):
 					return ("corner %s: rendered (%d,%d) is %s, authored "
 						% [corner, gx, gy, b] + "(%d,%d) is %s"
 						% [sx, sy, a])
@@ -104,18 +136,19 @@ func _corner_faults(got: Image, want: Image) -> String:
 
 func _run() -> void:
 	for name in _names:
+		var faults_before := _faults.size()
 		var declared: Dictionary = _spec[name]
 		var insets: Dictionary = declared["insets"]
-		# NinePatchRect takes four margins and this art declares one
-		# border width. A panel with unequal insets is legal and would
-		# need a different call, so it is refused here rather than
-		# silently tested with the left one on all four sides.
-		MARGIN = int(insets["left"])
-		for edge in ["top", "right", "bottom"]:
-			if int(insets[edge]) != MARGIN:
-				_bad("%s declares unequal insets %s; this harness draws "
-					 % [name, insets] + "one margin on all four sides")
-				continue
+		# NinePatchRect takes four margins, and a keycap's are unequal
+		# (its front lip is deeper than its top edge), so all four are
+		# carried through rather than one border width assumed.
+		for edge in ["left", "top", "right", "bottom"]:
+			M[edge] = int(insets[edge])
+		if not GEOMETRY.has(name):
+			_bad("%s: this harness does not know where %s's rings are, "
+				 % [name, name] + "so it cannot check them -- add it to "
+				 + "GEOMETRY rather than skipping it")
+			continue
 		SRC = Vector2i(int(declared["size"][0]), int(declared["size"][1]))
 		var path := "res://_harness/panel_%s.png" % name
 		var texture: Variant = load(path)
@@ -133,17 +166,25 @@ func _run() -> void:
 		# check here that does not compare the panel to itself: a ring
 		# painted some other colour fails, however well it stretches.
 		var colours: Dictionary = declared["colours"]
-		for role in [["outline", Vector2i(0, 0)],
-				["light", Vector2i(1, 1)],
-				["dark", Vector2i(SRC.x - 2, SRC.y - 2)],
-				["face", Vector2i(SRC.x / 2, SRC.y / 2)]]:
-			var at: Vector2i = role[1]
-			var want := Color(colours[role[0]])
-			var have := authored.get_pixel(at.x, at.y)
-			if not have.is_equal_approx(want):
-				_bad("%s: the %s ring at %s is #%s, and the contract "
-					 % [name, role[0], at, have.to_html(false)]
-					 + "declares %s" % colours[role[0]])
+		var where: Dictionary = GEOMETRY[name]
+		for role in where:
+			for p in where[role]:
+				var at := _at(p)
+				var have := authored.get_pixel(at.x, at.y)
+				if role == "clear":
+					if have.a != 0.0:
+						_bad("%s: %s must be transparent (a cut corner) "
+							 % [name, at] + "and is #%s"
+							 % have.to_html(true))
+					continue
+				if not colours.has(role):
+					_bad("%s: the contract has no %s colour" % [name, role])
+					continue
+				var want := Color(colours[role])
+				if not have.is_equal_approx(want):
+					_bad("%s: the %s ring at %s is #%s, and the contract "
+						 % [name, role, at, have.to_html(false)]
+						 + "declares %s" % colours[role])
 
 		# The import must not repaint the art. A UI texture that came
 		# back lossy would still look right at a glance and would be
@@ -153,17 +194,26 @@ func _run() -> void:
 			_bad("%s: could not read the source png back" % name)
 		else:
 			var moved := 0
+			var under_alpha := 0
 			for y in SRC.y:
 				for x in SRC.x:
-					if not on_disk.get_pixel(x, y).is_equal_approx(
-							authored.get_pixel(x, y)):
+					var a := on_disk.get_pixel(x, y)
+					var b := authored.get_pixel(x, y)
+					if not _same_px(a, b):
 						moved += 1
+					elif not a.is_equal_approx(b):
+						under_alpha += 1
 			if moved > 0:
 				_bad("%s: the importer changed %d of %d pixels -- this "
 					 % [name, moved, SRC.x * SRC.y]
 					 + "texture is not arriving lossless")
+			if under_alpha > 0:
+				print("[nineslice] %s: the importer rewrote the RGB under "
+					  % name + "%d fully transparent pixel(s) (fix alpha "
+					  % under_alpha + "border) -- invisible, recorded")
+				_notes["%s_rgb_under_alpha_rewritten" % name] = under_alpha
 
-		var got: Image = await _render(texture, MARGIN)
+		var got: Image = await _render(texture, M)
 		var bad := _corner_faults(got, authored)
 		if bad != "":
 			_bad("%s stretched its corners. %s" % [name, bad])
@@ -172,44 +222,68 @@ func _run() -> void:
 		# is uniform along the stretched axis, so every pixel of the
 		# rendered band must equal the authored band's first column/row:
 		# anything else is the edge being resampled.
-		for x in range(MARGIN, DRAW.x - MARGIN):
-			for y in MARGIN:
+		# All four bands: the far ones matter as much, and on a keycap
+		# the bottom band is the lip.
+		for x in range(M["left"], DRAW.x - M["right"]):
+			for y in M["top"]:
 				if not got.get_pixel(x, y).is_equal_approx(
-						authored.get_pixel(MARGIN, y)):
+						authored.get_pixel(M["left"], y)):
 					_bad("%s: top edge pixel (%d,%d) is %s, the authored "
 						 % [name, x, y, got.get_pixel(x, y)]
-						 + "band is %s" % authored.get_pixel(MARGIN, y))
+						 + "band is %s" % authored.get_pixel(M["left"], y))
 					break
-		for y in range(MARGIN, DRAW.y - MARGIN):
-			for x in MARGIN:
+			for dy in M["bottom"]:
+				var gy: int = DRAW.y - M["bottom"] + dy
+				var sy: int = SRC.y - M["bottom"] + dy
+				if not got.get_pixel(x, gy).is_equal_approx(
+						authored.get_pixel(M["left"], sy)):
+					_bad("%s: bottom edge pixel (%d,%d) is %s, the "
+						 % [name, x, gy, got.get_pixel(x, gy)]
+						 + "authored band is %s"
+						 % authored.get_pixel(M["left"], sy))
+					break
+		for y in range(M["top"], DRAW.y - M["bottom"]):
+			for x in M["left"]:
 				if not got.get_pixel(x, y).is_equal_approx(
-						authored.get_pixel(x, MARGIN)):
+						authored.get_pixel(x, M["top"])):
 					_bad("%s: left edge pixel (%d,%d) is %s, the authored "
 						 % [name, x, y, got.get_pixel(x, y)]
-						 + "band is %s" % authored.get_pixel(x, MARGIN))
+						 + "band is %s" % authored.get_pixel(x, M["top"]))
+					break
+			for dx in M["right"]:
+				var gx: int = DRAW.x - M["right"] + dx
+				var sx: int = SRC.x - M["right"] + dx
+				if not got.get_pixel(gx, y).is_equal_approx(
+						authored.get_pixel(sx, M["top"])):
+					_bad("%s: right edge pixel (%d,%d) is %s, the "
+						 % [name, gx, y, got.get_pixel(gx, y)]
+						 + "authored band is %s"
+						 % authored.get_pixel(sx, M["top"]))
 					break
 
 		# And the centre is the face colour, all of it.
 		var face := authored.get_pixel(SRC.x / 2, SRC.y / 2)
 		var strays := 0
-		for y in range(MARGIN, DRAW.y - MARGIN):
-			for x in range(MARGIN, DRAW.x - MARGIN):
+		for y in range(M["top"], DRAW.y - M["bottom"]):
+			for x in range(M["left"], DRAW.x - M["right"]):
 				if not got.get_pixel(x, y).is_equal_approx(face):
 					strays += 1
 		if strays > 0:
 			_bad("%s: %d pixel(s) in the stretched centre are not the "
 				 % [name, strays] + "face colour %s" % face)
 
-		# The frame is unbroken: at this size the outline is the first
-		# and last row and column of the whole rectangle.
-		var outline := authored.get_pixel(0, 0)
+		# The frame is unbroken: along every stretched span the outline
+		# is the first and last row and column of the whole rectangle.
+		# (The corners were checked pixel for pixel above -- which is
+		# what lets a keycap's cut corners be transparent here.)
+		var outline := Color(colours["outline"])
 		var broken := 0
-		for x in DRAW.x:
+		for x in range(M["left"], DRAW.x - M["right"]):
 			if not got.get_pixel(x, 0).is_equal_approx(outline):
 				broken += 1
 			if not got.get_pixel(x, DRAW.y - 1).is_equal_approx(outline):
 				broken += 1
-		for y in DRAW.y:
+		for y in range(M["top"], DRAW.y - M["bottom"]):
 			if not got.get_pixel(0, y).is_equal_approx(outline):
 				broken += 1
 			if not got.get_pixel(DRAW.x - 1, y).is_equal_approx(outline):
@@ -217,14 +291,81 @@ func _run() -> void:
 		if broken > 0:
 			_bad("%s: the outline is broken in %d place(s) around a %s "
 				 % [name, broken, DRAW] + "panel")
+		if _faults.size() > faults_before:
+			print("[nineslice] %s: %d fault(s) above"
+				  % [name, _faults.size() - faults_before])
+			continue
 		_notes[name] = {"drawn": [DRAW.x, DRAW.y], "corners": "exact",
-			"outline": "unbroken", "centre_face": face.to_html(false)}
-		print("[nineslice] %s: %dx%d authored, drawn %dx%d -- corners "
+			"outline": "unbroken", "centre_face": face.to_html(false),
+			"margins": M.duplicate()}
+		print("[nineslice] %s: %dx%d authored, drawn %dx%d, margins "
 			  % [name, SRC.x, SRC.y, DRAW.x, DRAW.y]
-			  + "exact, edges one-axis, centre flat, outline unbroken")
+			  + "%s -- corners exact, edges one-axis, centre flat, "
+			  % [[M["left"], M["top"], M["right"], M["bottom"]]]
+			  + "outline unbroken")
 
 	await _sabotage()
+	if _spec.has("keycap"):
+		await _sabotage_unequal()
 	_finish()
+
+
+## A GEOMETRY coordinate to a pixel: negatives count from the far edge,
+## "mid" is the centre.
+func _at(p: Array) -> Vector2i:
+	var out := Vector2i.ZERO
+	for axis in 2:
+		var size: int = SRC.x if axis == 0 else SRC.y
+		var v: Variant = p[axis]
+		var n: int = size / 2 if typeof(v) == TYPE_STRING \
+				else (int(v) if int(v) >= 0 else size + int(v))
+		if axis == 0:
+			out.x = n
+		else:
+			out.y = n
+	return out
+
+
+func _sabotage_unequal() -> void:
+	## The keycap is the first treatment whose four margins differ. A
+	## harness that quietly drew it with one margin all round would still
+	## pass most of the checks above, so: the keycap drawn with its
+	## BOTTOM margin set to its top one. The lip's third row is then
+	## stretched as edge, and the bottom corners MUST come out wrong.
+	var texture: Variant = load("res://_harness/panel_keycap.png")
+	if texture == null:
+		_bad("the unequal-margin sabotage could not load the keycap")
+		return
+	var declared: Dictionary = _spec["keycap"]["insets"]
+	var wrong := declared.duplicate()
+	wrong["bottom"] = declared["top"]
+	SRC = Vector2i(int(_spec["keycap"]["size"][0]),
+			int(_spec["keycap"]["size"][1]))
+	var got: Image = await _render(texture, wrong)
+	for edge in declared:
+		M[edge] = int(declared[edge])
+	# Nearest-neighbour stretching can hand the corner check back the
+	# very lip row it expects, so the centre is read too: with the lip
+	# treated as stretchable, lip-coloured rows land inside what the
+	# DECLARED margins say is flat face.
+	var authored: Image = texture.get_image()
+	var bad := _corner_faults(got, authored)
+	if bad == "":
+		var face := authored.get_pixel(SRC.x / 2, SRC.y / 2)
+		for y in range(M["top"], DRAW.y - M["bottom"]):
+			for x in range(M["left"], DRAW.x - M["right"]):
+				if bad == "" and not got.get_pixel(x, y).is_equal_approx(face):
+					bad = "centre pixel (%d,%d) is %s, not the face %s" \
+							% [x, y, got.get_pixel(x, y), face]
+	if bad == "":
+		_bad("unequal-margin sabotage NOT detected: the keycap drawn with "
+			 + "its bottom margin equal to its top still matched, so the "
+			 + "corner check cannot see a lip")
+		_notes["unequal_sabotage_detected"] = false
+		return
+	print("[nineslice] sabotage: keycap bottom margin %d -> %s"
+		  % [wrong["bottom"], bad])
+	_notes["unequal_sabotage_detected"] = true
 
 
 func _sabotage() -> void:
@@ -238,7 +379,13 @@ func _sabotage() -> void:
 	if texture == null:
 		_bad("the sabotage pass could not load a texture")
 		return
-	var got: Image = await _render(texture, 0)
+	var declared: Dictionary = _spec["panel"]["insets"]
+	SRC = Vector2i(int(_spec["panel"]["size"][0]),
+			int(_spec["panel"]["size"][1]))
+	for edge in declared:
+		M[edge] = int(declared[edge])
+	var got: Image = await _render(texture, {"left": 0, "top": 0,
+			"right": 0, "bottom": 0})
 	var bad := _corner_faults(got, texture.get_image())
 	if bad == "":
 		_bad("sabotage NOT detected: with every patch margin set to 0 the "
@@ -260,8 +407,8 @@ func _finish() -> void:
 		fh.store_string(JSON.stringify(_notes, "\t", true, true))
 		fh.close()
 	if _faults.is_empty():
-		print("[nineslice] PASS -- three panels nine-slice correctly in "
-			  + "Godot %s" % _notes["engine"])
+		print("[nineslice] PASS -- %d treatments nine-slice correctly in "
+			  % _names.size() + "Godot %s" % _notes["engine"])
 	else:
 		push_error("[nineslice] %d fault(s)" % _faults.size())
 	quit(0 if _faults.is_empty() else 1)

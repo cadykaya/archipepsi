@@ -21,7 +21,9 @@ trap cleanup EXIT
 cleanup; mkdir -p "$H"
 
 cp "$UI"/panel_*.png "$UI/panels.json" "$UI/ui_numerals.fnt" \
-   "$UI/ui_numerals.png" "$H/"
+   "$UI/ui_numerals.png" "$UI/ui_text.fnt" "$UI/ui_text.png" \
+   "$UI"/icon_*.png "$UI/icons.json" "$H/"
+cp "$ROOT/assets/art_palette.json" "$H/"
 cp "$ROOT/tools/artpreview/artbench.gd" "$H/artbench.gd"
 cp "$ROOT/tools/content/interface_face.gd" "$H/interface_face.gd"
 

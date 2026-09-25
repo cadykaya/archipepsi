@@ -21,7 +21,7 @@ cleanup() { rm -rf "$H"; }
 trap cleanup EXIT
 cleanup; mkdir -p "$H"
 
-for name in panel well selected; do
+for name in panel well selected keycap; do
   [ -f "$PANELS/panel_$name.png" ] || {
     echo "no panel_$name.png in $PANELS" >&2; exit 2; }
   cp "$PANELS/panel_$name.png" "$H/"

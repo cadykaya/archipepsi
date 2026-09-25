@@ -339,6 +339,16 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_nine_slice.sh"
 
+  # The symbols and page arrows: lossless, one ink, a clear 1 px margin,
+  # and the four arrows still one arrow mirrored and turned.
+  say "the interface symbols through Godot's own importer..."
+  tools/content/run_ui_icons.sh >"$GATELOG/run_ui_icons.log" 2>&1 || \
+    fail "uiicons: a committed interface symbol no longer imports as
+    drawn -- it lost its margin, gained an ink, or an arrow stopped being
+    its partner mirrored. Run
+
+    tools/content/run_ui_icons.sh"
+
   # Track D. The rows being legal D-11 (section 3b) and the engine
   # actually resolving them that way are different claims. This is the
   # second, through Production's own ThemePack -- including the one that
@@ -537,7 +547,7 @@ for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
            run_yardkit_fit.sh run_skiff_sweep.sh \
            run_enemy_readiness.sh run_roomkit_fit.sh \
            run_connect_fit.sh run_projectile_legibility.sh \
-           run_font_import.sh run_nine_slice.sh \
+           run_font_import.sh run_nine_slice.sh run_ui_icons.sh \
            run_pack_resolution.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
@@ -563,15 +573,17 @@ elif ! git diff --quiet -- assets/ui; then
   say "SKIPPED interface font rebuild -- assets/ui is already modified."
 else
   say "rebuilding the interface font and panels..."
-  for ui in author_numerals author_text author_panels; do
+  for ui in author_numerals author_text author_panels author_icons; do
     GLYPH_ROOT="$GLYPH_ROOT" python3 "tools/glyphui/$ui.py" \
       >/dev/null 2>&1 || \
       fail "$ui.py did not complete. Run it directly:
     GLYPH_ROOT=$GLYPH_ROOT python3 tools/glyphui/$ui.py"
   done
-  if ! git diff --quiet -- assets/ui; then
+  # `status`, not `diff`: an authoring script that starts writing a NEW
+  # file is drift too, and `git diff` cannot see an untracked one.
+  if [ -n "$(git status --porcelain -- assets/ui)" ]; then
     fail "the committed interface art is out of date with its source:"
-    git diff --stat -- assets/ui | sed 's/^/    /'
+    git status --porcelain -- assets/ui | sed 's/^/    /'
   fi
 fi
 

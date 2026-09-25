@@ -21,6 +21,20 @@ nine-slice's corners are drawn at their authored size at every panel
 size, so every pixel in that border is visible forever and there is
 nowhere to hide a soft edge.
 
+## And a keycap, which is the same idea with a different edge
+
+  * `keycap`   -- a key the prompt names ("E", "TAB"). Twelve square,
+                  corners cut, a two-pixel front LIP along the bottom:
+                  a key is a raised face you press DOWN, and the lip is
+                  its depth. So it is not a symmetric bevel, and its
+                  insets are not equal -- left 2, top 2, right 1,
+                  bottom 3 -- which Godot's NinePatchRect takes as four
+                  separate margins.
+
+It is a separate size, so it is checked as its own set of one, and it
+draws in the same `dead` chrome as the panels: the KEY is not the thing
+you operate, the object is, so it does not get `signal`.
+
 ## The colours are the project's, and the palette gets a veto
 
 Every colour here is read out of `assets/art_palette.json` rather than
@@ -86,6 +100,25 @@ def role_at(x, y):
     return "dark"
 
 
+#: The keycap: twelve square, its own geometry.
+KW = KH = 12
+#: left, top, right, bottom -- measured INWARD from each edge.
+KEYCAP_INSETS = {"left": 2, "top": 2, "right": 1, "bottom": 3}
+
+
+def keycap_role_at(x, y):
+    """None is transparent: the four cut corners."""
+    if (x, y) in ((0, 0), (KW - 1, 0), (0, KH - 1), (KW - 1, KH - 1)):
+        return None
+    if x == 0 or y == 0 or x == KW - 1 or y == KH - 1:
+        return "outline"
+    if y >= KH - 3:
+        return "lip"
+    if y == 1 or x == 1:
+        return "light"
+    return "face"
+
+
 def ramps():
     p = art_palette.palette()
     return (p["universal"]["dead"]["ramp"], p["universal"]["signal"]["ramp"],
@@ -114,6 +147,14 @@ def treatments():
     }
 
 
+def keycaps():
+    dead, _, _, _ = ramps()
+    # The panel's four inks, re-cast: the lip is the key's front face in
+    # shadow, so it takes the panel's `dark`.
+    return {"keycap": {"outline": dead[0], "light": dead[3],
+                       "lip": dead[1], "face": dead[2]}}
+
+
 def check_separation(kit):
     """The palette's own rules, applied before anything is drawn.
 
@@ -123,9 +164,10 @@ def check_separation(kit):
     _, _, min_value, min_interactable = ramps()
     problems = []
     for name, roles in kit.items():
-        for a, b in (("light", "face"), ("dark", "face"),
+        shade = "lip" if "lip" in roles else "dark"
+        for a, b in (("light", "face"), (shade, "face"),
                      ("outline", "face"), ("outline", "light"),
-                     ("outline", "dark")):
+                     ("outline", shade)):
             sep = art_palette.separation(roles[a], roles[b])
             if sep < min_value:
                 problems.append(
@@ -145,32 +187,47 @@ def check_separation(kit):
     return problems
 
 
-def runs(roles):
+def runs(roles, at=role_at, w=W, h=H):
     """Contiguous same-role horizontal runs, as ((x0, y), (x1, y), role).
 
     One `pixels.draw` per run rather than per pixel: a 10x10 panel is 100
     pixels and 30-odd runs, and a transaction per pixel is a minute of
-    node startup for nothing.
+    node startup for nothing. A role of None is left transparent.
     """
     out = []
-    for y in range(H):
+    for y in range(h):
         x = 0
-        while x < W:
-            role = role_at(x, y)
+        while x < w:
+            role = at(x, y)
             start = x
-            while x < W and role_at(x, y) == role:
+            while x < w and at(x, y) == role:
                 x += 1
-            out.append(((start, y), (x - 1, y), role))
+            if role is not None:
+                out.append(((start, y), (x - 1, y), role))
     return out
 
 
-ARTIFACTS = tuple("panel_%s.png" % n for n in ("panel", "well", "selected"))
+ARTIFACTS = tuple("panel_%s.png" % n
+                  for n in ("panel", "well", "selected", "keycap"))
+
+#: Per treatment: (role function, width, height, insets). The panels
+#: share one geometry; the keycap has its own.
+GEOMETRY = {
+    "panel": (role_at, W, H, {k: BORDER for k in
+                              ("left", "top", "right", "bottom")}),
+    "well": (role_at, W, H, {k: BORDER for k in
+                             ("left", "top", "right", "bottom")}),
+    "selected": (role_at, W, H, {k: BORDER for k in
+                                 ("left", "top", "right", "bottom")}),
+    "keycap": (keycap_role_at, KW, KH, KEYCAP_INSETS),
+}
 
 
 def main():
     out_dir = os.path.abspath(sys.argv[1] if len(sys.argv) > 1
                               else os.path.join(REPO, "assets", "ui"))
     kit = treatments()
+    kit.update(keycaps())
     problems = check_separation(kit)
     if problems:
         for p in problems:
@@ -209,8 +266,9 @@ def main():
 
     record = {}
     for name, roles in kit.items():
+        at, w, h, want = GEOMETRY[name]
         made = ses.txn({"creates": ["variant"]}, [
-            ("variant.create", {"name": name, "width": W, "height": H,
+            ("variant.create", {"name": name, "width": w, "height": h,
                                 "color_mode": "indexed", "palette": pal,
                                 "asset": asset}),
         ], "the %s canvas" % name)
@@ -222,14 +280,14 @@ def main():
             ("pixels.draw", {"cel": cel, "shape": "line",
                              "points": [list(a), list(b)],
                              "value": {"entry": entry_of[roles[role]]}})
-            for a, b, role in runs(roles)
+            for a, b, role in runs(roles, at, w, h)
         ], "the %s bevel" % name)
 
         # The stretchable centre, declared as an ordinary region so it is
         # revisioned and attributed like everything else. The insets
         # FOLLOW from it -- they are not declared twice.
-        centre = [[x, y] for y in range(BORDER, H - BORDER)
-                  for x in range(BORDER, W - BORDER)]
+        centre = [[x, y] for y in range(want["top"], h - want["bottom"])
+                  for x in range(want["left"], w - want["right"])]
         ses.txn({"creates": ["region"], "variants": [variant]}, [
             ("region.create", {"variant": variant, "name": "nine_slice",
                                "extents": {frame: centre}}),
@@ -244,12 +302,11 @@ def main():
         texture = "res://content/ui/panel_%s.png" % name
         results = ses.batch([
             {"command": "export.define_preset",
-             "input": ses.sheet_preset("panel_%s" % name, [variant], W, H)},
+             "input": ses.sheet_preset("panel_%s" % name, [variant], w, h)},
             {"command": "x-glyph.nine_slice", "input": {"variant": variant}},
             {"command": "x-glyph.godot_nine_patch",
              "input": {"variant": variant, "texture": texture,
-                       "insets": {"left": BORDER, "top": BORDER,
-                                  "right": BORDER, "bottom": BORDER}}},
+                       "insets": want}},
             {"command": "export.run",
              "input": {"preset": "$1.preset", "destination": work}},
         ], label=name)
@@ -260,14 +317,13 @@ def main():
         if slice_.get("faults"):
             raise SystemExit("[panels] %s's nine-slice is not usable" % name)
         insets = slice_["insets"]
-        if insets != {"left": BORDER, "top": BORDER,
-                      "right": BORDER, "bottom": BORDER}:
+        if insets != want:
             raise SystemExit(
                 "[panels] %s: Glyph derived insets %s from the declared "
-                "centre and this script drew a %d px border. Right and "
-                "bottom are measured INWARD from those edges -- if they "
-                "came back as coordinates, everything downstream is wrong"
-                % (name, insets, BORDER))
+                "centre and this script drew %s. Right and bottom are "
+                "measured INWARD from those edges -- if they came back as "
+                "coordinates, everything downstream is wrong"
+                % (name, insets, want))
         if patch["patch_margins"] != insets:
             raise SystemExit("[panels] %s: patch margins %s do not match "
                              "the insets %s"
@@ -286,7 +342,7 @@ def main():
         shutil.move(os.path.join(work, fresh[0]),
                     os.path.join(work, "panel_%s.png" % name))
         record[name] = {
-            "size": [W, H], "insets": insets,
+            "size": [w, h], "insets": insets,
             "patch_margins": patch["patch_margins"],
             "stretchable_centre": patch["stretchable_centre"],
             "colours": roles, "proposed_texture": texture,
@@ -296,15 +352,17 @@ def main():
                  patch["stretchable_centre"]))
         record[name]["variant"] = variant
 
-    # --- the three are one set ----------------------------------------
+    # --- the three panels are one set; the keycap is its own ----------
     same = ses.run("x-glyph.check_set",
-                   {"variants": [record[n].pop("variant") for n in record],
+                   {"variants": [record[n].pop("variant") for n in
+                                 ("panel", "well", "selected")],
                     "require_same_size": True})
     if same.get("faults"):
         for fault in same["faults"]:
             print("[panels] SET FAULT: %s" % json.dumps(fault))
         raise SystemExit("[panels] the three panels are not one set")
     print("[panels] check_set: one set, all %dx%d" % (W, H))
+    record["keycap"].pop("variant")
 
     for name in ARTIFACTS:
         shutil.copyfile(os.path.join(work, name),

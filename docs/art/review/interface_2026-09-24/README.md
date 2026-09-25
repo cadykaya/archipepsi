@@ -48,6 +48,42 @@ They differ only in where the light is. A recess and a relief are the
 same object lit from the other side, and giving them separate face
 colours would have made them two objects that have to be kept in step.
 
+## Keycaps, symbols and page arrows — `PROMPTS_keycaps_and_symbols`
+
+Added 2026-09-25, the rest of Track A. **Candidates; nothing here is
+owner-approved.**
+
+* **keycap** — the key a prompt names: `E`, `Q`, `TAB`. Twelve square,
+  corners cut, and a two-pixel **front lip** along the bottom, because
+  a key is a raised face you press *down* and the lip is its depth. So
+  its insets are unequal (left 2, top 2, right 1, bottom 3) and it
+  stretches to fit the key's name. Same `dead` chrome as the panels: the
+  key is not the thing you operate, the object is, so it gets no
+  `signal`.
+* **Page arrows** — left, right, up, down. One arrow drawn once; the
+  other three are it mirrored and turned, and the gate re-derives them
+  from the imported pixels to prove it.
+* **circuit, control, exit, blocked** — `exit` and `blocked` share one
+  door frame on purpose: they are the same place in two states, and the
+  bars across the opening are the whole difference.
+
+Every symbol is **one ink on transparency**. The colour that says
+"usable" or "locked" is a STATE, applied by the interface at runtime, so
+it is recorded in `assets/ui/icons.json` and not painted in. The bottom
+row of the sheet shows that recorded intent: `circuit` powered and
+unpowered, `control` operable (`signal`, the only colour an interactable
+may be) and not, `exit` open, `blocked` in `dead`.
+
+**One thing for Production, not a decision:** the ink is the text face's
+off-white (`#e8eef6`), so tinting by `modulate` gives each family
+3–9% darker per channel than the palette's own value. Either tint by
+replacement or ask for white ink.
+
+Gates: `run_nine_slice.sh` (now four treatments, four margins each, and
+a sabotage that draws the keycap with its lip treated as stretchable)
+and `run_ui_icons.sh` (lossless, one ink, a clear 1 px margin, arrows
+re-derived).
+
 ## What to look at
 
 **The corners.** That is the whole claim of a nine-slice: the 10x10 box

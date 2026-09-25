@@ -1,4 +1,33 @@
 {
+  "keycap": {
+    "colours": {
+      "face": "#717985",
+      "light": "#9ba5b6",
+      "lip": "#4a4f57",
+      "outline": "#26292d"
+    },
+    "insets": {
+      "bottom": 3,
+      "left": 2,
+      "right": 1,
+      "top": 2
+    },
+    "patch_margins": {
+      "bottom": 3,
+      "left": 2,
+      "right": 1,
+      "top": 2
+    },
+    "proposed_texture": "res://content/ui/panel_keycap.png",
+    "size": [
+      12,
+      12
+    ],
+    "stretchable_centre": [
+      9,
+      7
+    ]
+  },
   "panel": {
     "colours": {
       "dark": "#4a4f57",

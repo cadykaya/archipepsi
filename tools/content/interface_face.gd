@@ -24,8 +24,11 @@ const FONT_SIZE := 8
 var _bench: GDScript
 var _out := ""
 var _font: FontFile
+var _text: FontFile
 var _panels := {}
 var _spec := {}
+var _icons := {}
+var _palette := {}
 
 
 func _init() -> void:
@@ -38,29 +41,38 @@ func _init() -> void:
 		return
 	_spec = JSON.parse_string(
 		FileAccess.get_file_as_string("res://_harness/panels.json"))
-	for name in ["panel", "well", "selected"]:
+	for name in ["panel", "well", "selected", "keycap"]:
 		_panels[name] = load("res://_harness/panel_%s.png" % name)
 	_font = load("res://_harness/ui_numerals.fnt") as FontFile
-	if _font == null:
-		push_error("[face] the bitmap font did not load")
+	_text = load("res://_harness/ui_text.fnt") as FontFile
+	if _font == null or _text == null:
+		push_error("[face] a bitmap font did not load")
 		quit(1)
 		return
+	_icons = JSON.parse_string(
+		FileAccess.get_file_as_string("res://_harness/icons.json"))
+	_palette = JSON.parse_string(
+		FileAccess.get_file_as_string("res://_harness/art_palette.json"))
 	await _face()
 	await _sizes()
-	print("[face] wrote 2 sheet(s) to %s" % _out)
+	await _prompts()
+	print("[face] wrote 3 sheet(s) to %s" % _out)
 	quit(0)
 
 
 func _patch(parent: Node, name: String, at: Vector2i,
 		size: Vector2i) -> NinePatchRect:
-	var m := int(_spec[name]["insets"]["left"])
+	# All four margins from the contract: the keycap's are unequal (its
+	# front lip is deeper than its top edge), and this used to apply the
+	# left one everywhere.
+	var insets: Dictionary = _spec[name]["insets"]
 	var patch := NinePatchRect.new()
 	patch.texture = _panels[name]
 	patch.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	patch.patch_margin_left = m
-	patch.patch_margin_top = m
-	patch.patch_margin_right = m
-	patch.patch_margin_bottom = m
+	patch.patch_margin_left = int(insets["left"])
+	patch.patch_margin_top = int(insets["top"])
+	patch.patch_margin_right = int(insets["right"])
+	patch.patch_margin_bottom = int(insets["bottom"])
 	patch.position = Vector2(at)
 	patch.size = Vector2(size)
 	parent.add_child(patch)
@@ -191,4 +203,97 @@ func _sizes() -> void:
 			"panel, well, selected -- rows top to bottom",
 			"each at 10x10 authored, then 24x16, 60x28, 118x40",
 			"the corners are the same pixels at every size"])
+	view.queue_free()
+
+
+## A line of ui_text at its authored size.
+func _say(parent: Node, text: String, at: Vector2i) -> int:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_override("font", _text)
+	label.add_theme_font_size_override("font_size", FONT_SIZE)
+	label.add_theme_color_override("font_color", Color(0.91, 0.93, 0.96))
+	label.position = Vector2(at)
+	parent.add_child(label)
+	return int(_text.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			FONT_SIZE).x)
+
+
+## A keycap sized to its key's name: the name sits on the face, which is
+## everything inside the insets minus the lip.
+func _key(parent: Node, text: String, at: Vector2i) -> int:
+	var insets: Dictionary = _spec["keycap"]["insets"]
+	var w := int(_text.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			FONT_SIZE).x) + int(insets["left"]) + int(insets["right"]) + 2
+	_patch(parent, "keycap", at, Vector2i(w, 12))
+	_say(parent, text, at + Vector2i(int(insets["left"]) + 1,
+			int(insets["top"])))
+	return w
+
+
+func _symbol(parent: Node, name: String, at: Vector2i, tint: Color) -> void:
+	var rect := TextureRect.new()
+	rect.texture = load("res://_harness/%s" % _icons[name]["file"])
+	rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	rect.modulate = tint
+	rect.position = Vector2(at)
+	parent.add_child(rect)
+
+
+func _tint(family: String) -> Color:
+	## The recorded intent from icons.json, turned into a colour: the
+	## chrome ink unchanged, `dead` its second step (recessive on a well),
+	## `signal` its third (the step the selected outline uses).
+	if family == "chrome ink":
+		return Color.WHITE
+	var ramp: Array = _palette["universal"][family]["ramp"]
+	return Color(str(ramp[1] if family == "dead" else ramp[2]))
+
+
+func _prompts() -> void:
+	## Keycaps, page arrows and the shared symbols, composed on the same
+	## chrome as the grid. The symbols are shown in the tint icons.json
+	## RECORDS for each state -- intent, not state art: the interface
+	## applies it at runtime, and Production's vocabulary decides states.
+	var view := SubViewport.new()
+	view.size = Vector2i(236, TOP + PAD + 3 * 20 + PAD)
+	view.transparent_bg = false
+	view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	root.add_child(view)
+	_patch(view, "panel", Vector2i.ZERO, view.size)
+
+	var y := TOP + PAD
+	var x := PAD * 2
+	for pair in [["E", "OPEN"], ["Q", "BACK"], ["TAB", "MAP"]]:
+		x += _key(view, pair[0], Vector2i(x, y)) + 3
+		x += _say(view, pair[1], Vector2i(x, y + 2)) + 10
+
+	y += 20
+	_patch(view, "well", Vector2i(PAD * 2, y - 2), Vector2i(view.size.x
+			- PAD * 4, 16))
+	x = PAD * 2 + 3
+	_symbol(view, "arrow_left", Vector2i(x, y), Color.WHITE)
+	x += 14
+	x += _say(view, "PAGE 2/5", Vector2i(x, y + 2)) + 2
+	_symbol(view, "arrow_right", Vector2i(x, y), Color.WHITE)
+	x += 26
+	_symbol(view, "arrow_up", Vector2i(x, y), Color.WHITE)
+	x += 14
+	_symbol(view, "arrow_down", Vector2i(x, y), Color.WHITE)
+
+	y += 20
+	_patch(view, "well", Vector2i(PAD * 2, y - 2), Vector2i(view.size.x
+			- PAD * 4, 16))
+	x = PAD * 2 + 3
+	for pair in [["circuit", "powered"], ["circuit", "unpowered"],
+			["control", "operable"], ["control", "not operable"],
+			["exit", "open"], ["blocked", "blocked"]]:
+		var family: String = _icons[pair[0]]["tint_by_state"][pair[1]]
+		_symbol(view, pair[0], Vector2i(x, y), _tint(family))
+		x += 16 if pair[1] in ["powered", "operable", "open"] else 26
+	await _shoot(view, "PROMPTS_keycaps_and_symbols", [
+			"keycaps: ui_text on the keycap nine-slice, 12 px tall",
+			"page arrows round a page count; scroll up and down",
+			"circuit on/off, control usable/not, exit open, blocked:",
+			"the tint icons.json RECORDS per state -- intent only"])
 	view.queue_free()
