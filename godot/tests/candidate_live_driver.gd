@@ -1175,7 +1175,8 @@ func _equip_while_paused() -> void:
 	var before: Dictionary = BridgeClient.slots().duplicate()
 	var face: EquipmentFace = main.equipment
 	var pick := {}
-	for row: Dictionary in EquipmentQuery.items(BridgeClient.snapshot):
+	for row: Dictionary in EquipmentQuery.items(BridgeClient.snapshot,
+			BridgeClient.interpretations()):
 		var home := EquipmentQuery.home_slot(row)
 		if home != "" and EquipmentQuery.equipped_in(row) == "" \
 				and EquipmentQuery.held_back(row) == "":

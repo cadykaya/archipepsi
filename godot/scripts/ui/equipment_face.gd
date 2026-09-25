@@ -226,7 +226,7 @@ func is_open() -> bool:
 func rebuild() -> void:
 	var snapshot: Dictionary = BridgeClient.snapshot
 	_campaign = EquipmentSeen.campaign_key(snapshot)
-	_rows = EquipmentQuery.items(snapshot)
+	_rows = EquipmentQuery.items(snapshot, BridgeClient.interpretations())
 	var ids: Array = []
 	for row: Dictionary in _rows:
 		ids.append(str(row.get("component_id", "")))

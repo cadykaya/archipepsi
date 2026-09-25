@@ -119,11 +119,15 @@ static func slot_title(slot: String) -> String:
 ## Mk and history, plus the Echoes that touched it (for their concepts and
 ## for search). In the view's order, which is the fold's.
 ##
+## `echoes` is `BridgeClient.interpretations()`, passed in rather than read
+## off the snapshot: the log can be elided from a snapshot on the wire, and
+## the accessor is the one place that puts it back.
+##
 ## An item the view names and the fold does not is SKIPPED, with a
 ## warning, rather than drawn from what the view alone says: the two come
 ## from one snapshot and cannot disagree, and if they ever do, an item
 ## with no name, no description and no history is a fabrication.
-static func items(snapshot: Dictionary) -> Array:
+static func items(snapshot: Dictionary, echoes_in: Array) -> Array:
 	var view: Variant = snapshot.get("inventory")
 	if typeof(view) != TYPE_DICTIONARY:
 		return []
@@ -137,7 +141,7 @@ static func items(snapshot: Dictionary) -> Array:
 			owned[str(entry.get("component", {}).get("component_id", ""))] \
 					= entry
 	var echoes := {}
-	for raw: Variant in snapshot.get("interpretations", []):
+	for raw: Variant in echoes_in:
 		if typeof(raw) == TYPE_DICTIONARY:
 			echoes[int((raw as Dictionary).get("interpretation_seq", -1))] \
 					= raw

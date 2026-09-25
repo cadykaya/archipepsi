@@ -314,7 +314,8 @@ func _three_regions() -> void:
 			"the owned items are a grid of tiles")
 	var detail_texts := _texts(face.detail_root())
 	var name := EquipmentQuery.name_of(EquipmentQuery.item_by_id(
-			EquipmentQuery.items(BridgeClient.snapshot), face.selected()))
+			EquipmentQuery.items(BridgeClient.snapshot,
+			BridgeClient.interpretations()), face.selected()))
 	_check(_has(detail_texts, name) and _has(detail_texts, "WHAT IT DOES")
 			and _has(detail_texts, "HOW IT IS USED")
 			and _has(detail_texts, "WHAT IT COSTS"),
@@ -673,8 +674,9 @@ func _the_split_and_the_filter() -> void:
 			"the RMB key shows what goes on it: %s" % [_tile_ids()])
 	_check(_sections() == ["ON A KEY (2 of 6)"],
 			"counted as 2 of 6, the always-on half hidden: %s" % [_sections()])
-	var asked := EquipmentQuery.grid(EquipmentQuery.items(
-			BridgeClient.snapshot), "", 0, "echo_a")
+	var rows := EquipmentQuery.items(BridgeClient.snapshot,
+			BridgeClient.interpretations())
+	var asked := EquipmentQuery.grid(rows, "", 0, "echo_a")
 	_check((asked["always_on"] as Array).is_empty()
 			and (asked["slotted"] as Array).size() == 2,
 			"and that is the query's answer, not only the painting's")
