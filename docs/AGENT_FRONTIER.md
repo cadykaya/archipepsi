@@ -189,8 +189,16 @@ owner's D-06/D-07 rulings and the seam table are in
       (`make godot-candidate-live CANDIDATE_DUMP=<path>`).
     - `godot-candidate-live` plays the carriers' route through the real
       bridge, and its restart restores the gate open.
-  - **Next:** CP2's full frontier on a frozen revision, then CP3 (the 3D
-    shell and one Glyph equipment face).
+  - **CP2 checkpoint: closed.** The full frontier on `6e1c60b` passed 73
+    of 74 steps. The one failure was the CI-coverage test finding
+    `godot-passing-hosted` unlisted; it was fixed at `22f59c1`, and
+    `make test` there passes 2,221.
+  - **Next: CP3.**
+    - `H-3D-SHELL` is in progress: a real box of four walls in its own
+      World3D, the camera turning between them.
+    - Then `H-PAUSE`.
+    - `H-INVENTORY` waits on Arty's `H-GLYPH-KIT`. Dess's `H-UI-DATA`
+      (`CampaignSnapshot.inventory`) is in.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

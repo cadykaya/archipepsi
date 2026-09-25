@@ -1372,3 +1372,29 @@ runs found; both changes are measured below.
   - Every lever says what it does when you aim at it.
   - Getting onto G anywhere opens the stair back down, and the stair's
     head says where it goes.
+
+## CP2 checkpoint — closed (the full frontier)
+
+- **On `6e1c60b` (H-PASSING's head):** 73 of 74 steps passed, 06:24 to
+  07:45 UTC (`CP2_frontier_on_6e1c60b.tsv`).
+  - The steps are CP1's 68 and this checkpoint's six:
+    - the four suites CP2 added to CI: `godot-counterfire-hosted`,
+      `godot-held-route`, `godot-minor-claim` and
+      `godot-lever-route-live`;
+    - `godot-passing-hosted`, on the capture (not in CI; N-10);
+    - the three route fixtures regenerated from source: byte-identical,
+      and restored.
+  - **The one failure was `make test`,** 1 of 2,221
+    (`CP2_make_test_on_6e1c60b.log`). `test_ci_coverage` found
+    `godot-passing-hosted` neither run by CI nor listed in
+    `NOT_A_SUITE`. It was a real finding, and this lane's own: the target
+    was added without saying why CI does not run it.
+  - **Fixed at `22f59c1`.** The target is listed in `NOT_A_SUITE` with
+    its reason (no fixture carries a Zone that hosts EX50-011; N-10), the
+    way `godot-return-journey` is. `make test` on `22f59c1`: 2,221 passed
+    (`CP2_make_test_on_22f59c1.log`).
+  - The tree at the end differed only in `captures.json`'s provenance
+    stamp, which `godot-zone-audit` writes. It was restored.
+- **CP2 is closed.** As at CP1, the frontier was not re-run in full for
+  a change to a test's list. These are local results; remote CI was not
+  polled.
