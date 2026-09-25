@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live godot-lever-route-live lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -424,12 +424,26 @@ zone-fixture:
 	cd bridge && $(PY) -m archipepsi_bridge.playtest dump \
 	  --out ../godot/tests/fixtures/played_zone.json
 
-# P14. The played Zone with the latch route composed onto it -- the
-# input to Prod's played acceptance (walk in, step on the plate, step
-# off, walk through, reload). Regenerated from source, never edited.
+# P14, now M-1's legacy input: the played Zone with the retired
+# step-once plate route (D-07) that a saved Zone may still hold, replayed
+# by `godot-latched-route-live`'s legacy form (step on, step off, walk
+# through, reload). Regenerated from source, never edited.
 latched-route-fixture:
 	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-latched \
 	  --out ../godot/tests/fixtures/latched_route_zone.json
+
+# D13 1c: the played Zone with the production composer's lever route
+# (the lever in c002, the shutter across e:c002:c003), played by
+# `godot-lever-route-live`. Regenerated from source, never edited.
+lever-route-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-lever \
+	  --out ../godot/tests/fixtures/lever_route_zone.json
+
+# D13 1d: the played Zone with a doorway held by a declared weight on an
+# object-only plate. Regenerated from source, never edited.
+held-route-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-held \
+	  --out ../godot/tests/fixtures/held_route_zone.json
 
 # O05-02 / O05-04: the played Zone with one CANDIDATE profile step applied
 # (`candidate.py`, the same code the opt-in generation profile runs).
@@ -833,7 +847,15 @@ godot-latched-route: godot-import  # the latch route, played end to end
 #
 # To play the same candidate by hand, seed a save the same way and point
 # the ordinary client at it: see docs/P14_LATCHED_ROUTE_REPLAY.md.
+#
+# LATCH_FORM picks the route (D-07, D13 1c): `legacy`, the default, is
+# M-1's step-once plate; `lever` is what the composer now writes, pulled
+# once and thrown for good (`godot-lever-route-live`). The seed tool and
+# the driver both take it, and the driver fails if the served Zone
+# declares the other form's control.
 LATCH_SAVES := $(CURDIR)/.latched-route-saves
+LATCH_FORM ?= legacy
+LATCH_EXPECT = $(if $(filter lever,$(LATCH_FORM)),lever_route_zone.json,latched_route_zone.json)
 godot-latched-route-live: godot-import
 	rm -rf $(LATCH_SAVES)
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_SAVES) \
@@ -849,7 +871,8 @@ godot-latched-route-live: godot-import
 	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-latched-seed.log; \
 	  echo "-- no campaign was seeded"; exit $$STATUS; fi
 	cd bridge && PYTHONPATH=. $(PY) tools/compose_latched_route.py \
-	  $(LATCH_SAVES) --expect ../godot/tests/fixtures/latched_route_zone.json
+	  $(LATCH_SAVES) --form $(LATCH_FORM) \
+	  --expect ../godot/tests/fixtures/$(LATCH_EXPECT)
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_SAVES) \
 	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
 	  --mock-scale=default & \
@@ -857,11 +880,12 @@ godot-latched-route-live: godot-import
 	kill -0 $$BRIDGE_PID 2>/dev/null || { \
 	  echo "the bridge did not load the composed save"; exit 1; }; \
 	$(GODOT) --headless --path godot -- --latched-live=play \
+	  --latched-form=$(LATCH_FORM) \
 	  --latched-save-dir=$(LATCH_SAVES) > /tmp/archipepsi-latched-play.log 2>&1; \
 	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
 	grep -E "^(  ok|  NOTE|FAIL|played|GODOT LATCHED)" /tmp/archipepsi-latched-play.log; \
 	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
-	grep -q "GODOT LATCHED LIVE PLAY OK" /tmp/archipepsi-latched-play.log || exit 1
+	grep -qE "GODOT LATCHED LIVE (LEVER )?PLAY OK" /tmp/archipepsi-latched-play.log || exit 1
 	@echo "-- both processes restart: the bridge too, from its own save --"
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_SAVES) \
 	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
@@ -870,12 +894,20 @@ godot-latched-route-live: godot-import
 	kill -0 $$BRIDGE_PID 2>/dev/null || { \
 	  echo "the restarted bridge did not come back"; exit 1; }; \
 	$(GODOT) --headless --path godot -- --latched-live=restore \
+	  --latched-form=$(LATCH_FORM) \
 	  --latched-save-dir=$(LATCH_SAVES) > /tmp/archipepsi-latched-restore.log 2>&1; \
 	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
 	grep -E "^(  ok|  NOTE|FAIL|GODOT LATCHED)" /tmp/archipepsi-latched-restore.log; \
 	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
-	grep -q "GODOT LATCHED LIVE RESTORE OK" /tmp/archipepsi-latched-restore.log \
+	grep -qE "GODOT LATCHED LIVE (LEVER )?RESTORE OK" /tmp/archipepsi-latched-restore.log \
 	  || exit 1
+
+# D13 1c's lever route, through the same real bridge and restart: the
+# bolt pulled once with the real interact, accepted and saved, thrown for
+# good, and restored thrown with the way open.
+godot-lever-route-live:
+	$(MAKE) godot-latched-route-live LATCH_FORM=lever \
+	  LATCH_SAVES=$(CURDIR)/.lever-route-saves
 
 # O05-03: THE TRANSPORT JOURNEY THROUGH A REAL BRIDGE, ACROSS TWO REAL
 # RESTARTS. A disposable default-scale mock campaign whose bridge runs the

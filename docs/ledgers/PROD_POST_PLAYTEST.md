@@ -833,3 +833,47 @@ physical proposal is Prod's. Both proposals below were agreed by Dess
   - Standing on it while it drives no longer gets you up. The lightener
     is the way, or a movement power.
   - The bolt stays thrown once pulled.
+
+## CP2 — `H-PRESSURE-R`: the lever route played live (Dess's D-7.2, D-7.3)
+
+Dess's 1c (`462bf42`) composes `lever -> LATCH -> shutter`, and
+`lever_route_zone.json` is that composer's output on the played Zone:
+the lever in c002, the shutter across `e:c002:c003`.
+
+- **`godot-latched-route-live` takes a form** (`LATCH_FORM`, default
+  `legacy`).
+  - The seed tool gets `--form` and the matching `--expect` fixture.
+  - The driver gets `--latched-form=`. It checks that the served Zone
+    declares that form's control (a `PRESSURE_PLATE` for legacy, a
+    `PULSE_BUTTON` for the lever) and that the control is built as
+    one, before it plays anything.
+  - The legacy form is unchanged apart from that check: M-1's replay
+    still steps on and off the plate (play 19, restore 13).
+- **`godot-lever-route-live`** (new, in CI) runs the lever form in its
+  own save directory (`H-PRESSURE-R_lever_live.log`):
+  - seed: the real path generates zone_001 with no graph; the tool
+    composes the lever route, identical to the fixture;
+  - play (20 checks): the arena cleared with the base kit; the bolt
+    pulled once with the real interact; one real `latch_fired`,
+    accepted, in the snapshot and in the save file on disk; the forged
+    latches refused; the bolt stays thrown and says so ("BOLT THROWN --
+    THE WAY IS OPEN"); the way open with nobody at the lever; through
+    into c003;
+  - restore (14 checks), both processes new: the latch handed back
+    before the first evaluation, the way open at once, nothing
+    announced, **the bolt restored thrown** and never pulled in this
+    process, and the doorway walked through.
+- **Sabotages** (`H-PRESSURE-R_lever_live_sabotages.log`), each
+  restored byte for byte:
+  - SL-1, a restored latch no longer locks its lever (only a fresh throw
+    does): the restore fails by name, "the bolt is restored THROWN"
+    reading `[E] THROW BOLT -- OPENS THE SHUTTER`.
+  - SL-2, the play phase told `legacy` on a lever seed: it fails at the
+    form check before playing.
+- **The fixture targets (D-7.3):** `lever-route-fixture` and
+  `held-route-fixture` are added with Dess's recipes, and
+  `latched-route-fixture`'s comment now calls its fixture M-1's legacy
+  input. All three regenerate byte-identical to the committed fixtures.
+- **What the owner will notice:** nothing new in the played candidate
+  (M-1). A newly composed route shows the bolt, which is covered here
+  across a real restart.

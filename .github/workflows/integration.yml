@@ -172,6 +172,9 @@ jobs:
       - name: The latch route through a real bridge and a restart
         run: make godot-latched-route-live
 
+      - name: The lever route (D-07) through a real bridge and a restart
+        run: make godot-lever-route-live
+
       - name: A carried cell through a real bridge and two restarts
         run: make godot-transport-live
 

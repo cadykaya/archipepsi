@@ -27,6 +27,14 @@ extends "res://tests/latched_route_driver.gd"
 ##            the doorway is walked into c003 without the plate being
 ##            touched at all.
 ##
+## **TWO FORMS (`--latched-form=legacy|lever`, D-07, D13 1c).** `legacy`,
+## the default, is M-1's replay: the retired step-once plate a saved Zone
+## may still hold, stepped on and off. `lever` is what the composer now
+## writes (`lever_route_zone.json`): a bolt lever pulled once with the real
+## interact, which stays thrown and says so, before and after the restart.
+## The served Zone must declare the form's control, so a seed of the other
+## form fails rather than playing the wrong route.
+##
 ## **BESIDE `Main`, like `ReloadDriver`**, because `Main` is what is under
 ## test: `_to_zone` is what hands the saved latch to the Zone before its
 ## graph is first evaluated, and a driver that built its own
@@ -34,6 +42,9 @@ extends "res://tests/latched_route_driver.gd"
 
 const PHASE_FLAG := "--latched-live="
 const SAVE_DIR_FLAG := "--latched-save-dir="
+const FORM_FLAG := "--latched-form="
+## The route's control each form declares.
+const FORM_SENSOR := {"legacy": "PRESSURE_PLATE", "lever": "PULSE_BUTTON"}
 const ZONE_ID := "zone_001"
 
 var main: Node
@@ -48,6 +59,11 @@ var _forged := 0
 
 static func phase_from_cmdline() -> String:
 	return _arg(PHASE_FLAG)
+
+
+## `legacy` unless the command line names the lever.
+static func form_from_cmdline() -> String:
+	return "lever" if _arg(FORM_FLAG) == "lever" else "legacy"
 
 
 static func _arg(flag: String) -> String:
@@ -80,6 +96,8 @@ func _finish() -> void:
 			"jump", "fire_pulse"]:
 		Input.action_release(action)
 	var phase := phase_from_cmdline().to_upper()
+	if form_from_cmdline() == "lever":
+		phase = "LEVER " + phase
 	if failures == 0:
 		print("GODOT LATCHED LIVE %s OK (%d checks, %d notes)"
 				% [phase, checks, notes.size()])
@@ -151,12 +169,25 @@ func _route(controller: ZoneController, zone_data: Dictionary) -> Dictionary:
 			if str(edge.get("room_a", "")) == room \
 			else str(edge.get("room_a", ""))
 	var box: AABB = controller.room_bounds[room]
-	var plate: ClassPlate = graph.sensors.values()[0]
+	# THE FORM THE SEED WAS COMPOSED IN, declared and built: a plate for
+	# the legacy replay, a lever for the composer's route.
+	var kind := _route_sensor_kind(zone_data)
+	var control: Node3D = graph.sensors.values()[0]
+	var form := form_from_cmdline()
+	var built := (control is CallLever) if form == "lever" \
+			else (control is ClassPlate)
+	_check(kind == FORM_SENSOR[form] and built,
+			"the %s form: the Zone declares a %s and it is built as a %s"
+			% [form, kind, "lever" if control is CallLever
+				else "plate" if control is ClassPlate else "?"])
+	if not built:
+		return {}
 	return {"graph": graph, "room": room, "far_room": far_room,
 			"frame": frame, "box": box,
 			"far_box": controller.room_bounds[far_room],
 			"inward": _inward_of(frame, box),
-			"plate": plate,
+			"plate": control if control is ClassPlate else null,
+			"lever": control if control is CallLever else null,
 			"shutter": (graph.actuators.values()[0] as Dictionary)["node"],
 			"ref": "%s/%s" % [graph.package_id(),
 				_latch_id(zone_data, room)]}
@@ -299,22 +330,33 @@ func _play() -> void:
 	player.died.connect(func() -> void: _deaths += 1)
 	var shutter: ServiceShutter = route["shutter"]
 	var plate: ClassPlate = route["plate"]
-	_check(not shutter.is_open() and not plate.satisfied()
-			and _served_latches().is_empty(),
-			"the route starts shut and unlatched")
+	var lever: CallLever = route["lever"]
+	_check(not shutter.is_open() and _served_latches().is_empty()
+			and (not plate.satisfied() if plate != null
+				else not lever.locked and lever.pulls == 0),
+			"the route starts shut and unlatched, its %s untouched"
+			% ("plate" if plate != null else "lever"))
 
-	# ---- TO THE PLATE, with the body -----------------------------------
+	# ---- TO THE CONTROL, with the body ---------------------------------
 	await _walk_into(controller, room)
 	var fight := await _clear_room(controller, room)
 	_check(int(fight["left"]) == 0 and _deaths == 0,
 			"the arena is cleared with the base kit: %s" % _account(fight))
 	for _i in 60:
 		await get_tree().physics_frame
-	await _walk_to(player, plate.global_position, AABB(), 900, false, 0.3)
-	var on := await _wait_for(func() -> bool: return plate.satisfied(), 60)
-	_check(on and _player_on(plate, player),
-			"STEP ON: the player's own body satisfies the plate (%s)"
-			% [plate.reading()])
+	if plate != null:
+		await _walk_to(player, plate.global_position, AABB(), 900, false,
+				0.3)
+		var on := await _wait_for(func() -> bool: return plate.satisfied(),
+				60)
+		_check(on and _player_on(plate, player),
+				"STEP ON: the player's own body satisfies the plate (%s)"
+				% [plate.reading()])
+	else:
+		var thrown := await _throw(controller, lever)
+		_check(thrown and lever.pulls == 1,
+				"THROW: the player's own interact pulls the bolt (%d pull(s))"
+				% lever.pulls)
 	var reported := await _wait_for(
 			func() -> bool: return _zone_reports() == 1, 60)
 	_check(reported and _latch_reports().back() == {"type": "latch_fired",
@@ -346,13 +388,28 @@ func _play() -> void:
 	# ---- OFF, AND THROUGH ----------------------------------------------
 	var door: Vector3 = (route["frame"] as Dictionary)["position"]
 	var inward: Vector3 = route["inward"]
+	if lever != null:
+		# D-07: IT LOOKS PERMANENT BECAUSE IT IS -- the arm stays thrown and
+		# the prompt says what it did, with nobody at it.
+		for _i in 60:
+			await get_tree().physics_frame
+		_check(lever.locked and lever.swing() >= 0.99
+				and not lever.interact_prompt().begins_with("[E]"),
+				"the bolt STAYS THROWN and says so: '%s' (arm %.2f)"
+				% [lever.interact_prompt(), lever.swing()])
 	await _walk_to(player, door + inward * 1.4, AABB(), 600, false, 0.5)
-	await _wait_for(func() -> bool: return not plate.satisfied(), 60)
+	if plate != null:
+		await _wait_for(func() -> bool: return not plate.satisfied(), 60)
 	var opened := await _wait_for(func() -> bool: return shutter.is_open(),
 			300)
-	_check(not _player_on(plate, player) and opened,
-			"STEP OFF: nobody on the plate and the way is open (%.2f)"
-			% shutter.openness())
+	if plate != null:
+		_check(not _player_on(plate, player) and opened,
+				"STEP OFF: nobody on the plate and the way is open (%.2f)"
+				% shutter.openness())
+	else:
+		_check(opened and lever.pulls == 1,
+				"WALKED AWAY: nobody at the lever and the way is open "
+				+ "(%.2f)" % shutter.openness())
 	var far_room := str(route["far_room"])
 	var far_box: AABB = route["far_box"]
 	await _walk_into(controller, far_room)
@@ -397,12 +454,14 @@ func _restore() -> void:
 	var graph: SignalGraph = route["graph"]
 	var shutter: ServiceShutter = route["shutter"]
 	var plate: ClassPlate = route["plate"]
+	var lever: CallLever = route["lever"]
 	var player: Player = controller.player
 	# Every contact from here on, however brief, not a sample.
-	(plate.get_node("Sensor") as Area3D).body_entered.connect(
-			func(body: Node3D) -> void:
-				if body == player:
-					_touched_plate = true)
+	if plate != null:
+		(plate.get_node("Sensor") as Area3D).body_entered.connect(
+				func(body: Node3D) -> void:
+					if body == player:
+						_touched_plate = true)
 
 	# ---- RESTORED BEFORE THE FIRST EVALUATION --------------------------
 	_check(ref in _served_latches(),
@@ -418,6 +477,13 @@ func _restore() -> void:
 			+ "than opening (%.2f)" % shutter.openness())
 	_check(controller.latches_fired().is_empty() and _latch_reports().is_empty(),
 			"and nothing was announced: no new decision, no `latch_fired`")
+	if lever != null:
+		# THE RESTORED BOLT IS THROWN, not waiting to be pulled again: a
+		# permanent control reads permanent on a reload too (D-07).
+		_check(lever.locked and lever.pulls == 0
+				and not lever.interact_prompt().begins_with("[E]"),
+				"the bolt is restored THROWN, never pulled in this process: "
+				+ "'%s'" % lever.interact_prompt())
 
 	if not await _await_live("the bridge accepts the replayed layout",
 			func() -> bool: return controller.layout_verdict == "ACCEPTED",
@@ -426,7 +492,7 @@ func _restore() -> void:
 	_last_hp = player.hp
 	player.died.connect(func() -> void: _deaths += 1)
 
-	# ---- THROUGH, WITHOUT THE PLATE ------------------------------------
+	# ---- THROUGH, WITHOUT THE CONTROL ----------------------------------
 	var room := str(route["room"])
 	await _walk_into(controller, room)
 	var fight := await _clear_room(controller, room)
@@ -443,12 +509,18 @@ func _restore() -> void:
 			< 0.0, "on the far side of the door plane (%.1f m past it)"
 			% -_side_of(route["frame"], route["inward"],
 				player.global_position))
-	_check(not _touched_plate and not plate.satisfied(),
-			"WITHOUT THE PLATE: the body never entered its sensing volume")
+	if plate != null:
+		_check(not _touched_plate and not plate.satisfied(),
+				"WITHOUT THE PLATE: the body never entered its sensing volume")
+	else:
+		_check(lever.pulls == 0 and lever.locked,
+				"WITHOUT THE LEVER: never pulled, still thrown (%d pull(s))"
+				% lever.pulls)
 	_check(_latch_reports().is_empty() and controller.latches_fired().is_empty()
 			and _served_latches() == [ref],
 			"and nothing was announced on the way: the record is still "
 			+ "exactly %s" % [_served_latches()])
 	_note("restored route walked: portal -> %s -> doorway -> %s, %.1f m "
 			% [room, far_room, door.distance_to(player.global_position)]
-			+ "past the door, plate untouched, %d death(s)" % _deaths)
+			+ "past the door, %s untouched, %d death(s)"
+			% ["plate" if plate != null else "lever", _deaths])

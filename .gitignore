@@ -30,6 +30,7 @@ godot-path.txt
 .consumable-restart-saves/
 .reload-saves/
 .latched-route-saves/
+.lever-route-saves/
 .transport-saves/
 .reversible-saves/
 .candidate-saves/
