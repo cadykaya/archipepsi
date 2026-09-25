@@ -239,9 +239,15 @@ owner's D-06/D-07 rulings and the seam table are in
         fixed.
       - The Glyph-authored final look is still owed (H-GLYPH-KIT); the
         placeholders do not satisfy it.
-    - **Next: the CP3 checkpoint.** The full frontier, once, on a frozen
-      revision. Then CP4: `H-MINIMAP`, `H-3D-MAP` and `H-JOURNAL`, on
-      Dess's `zone_map` (H-MAP-DATA) and the `room_entered` intent (D-2).
+  - **CP3 checkpoint: closed.** The full frontier on `33af28d` passed 76
+    of 77 steps. `make test` found two failures, both this lane's: the
+    evidence screenshots had no licence record, and the equipment query
+    read the Echo log off the snapshot. Both were fixed at `5f44b5c`,
+    where `make test` passes 2,224, with the face and live candidate
+    suites green. The Glyph-authored look is still owed (H-GLYPH-KIT).
+  - **CP4 (next): `H-MINIMAP`, then `H-3D-MAP` and `H-JOURNAL`.** They
+    read Dess's `zone_map` (H-MAP-DATA) and send the `room_entered`
+    intent (D-2).
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

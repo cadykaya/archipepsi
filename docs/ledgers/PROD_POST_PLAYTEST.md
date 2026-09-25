@@ -1925,3 +1925,43 @@ authority. The wall is built on Dess's `CampaignSnapshot.inventory`
   - A new item is marked NEW until you look at it.
   - A controller works on every wall now: the d-pad moves, A presses,
     Start closes and Back opens Equipment.
+
+## CP3 checkpoint — closed (the full frontier)
+
+- **On `33af28d` (H-INVENTORY's head):** 76 of 77 steps passed, 09:35
+  to 10:59 UTC (`CP3_frontier_on_33af28d.tsv`).
+  - The steps are CP2's 74 and this checkpoint's three:
+    - the two suites CP3 added to CI, `godot-menu-shell` and
+      `godot-equipment-face`;
+    - `equipment_snapshot.json` regenerated from source: byte-identical,
+      and restored.
+  - **The one failure was `make test`,** 2 of 2,224
+    (`CP3_make_test_on_33af28d.log`). Both were real findings, and this
+    lane's own:
+    - **`test_every_bundled_binary_is_first_party_or_licensed`:** the
+      evidence screenshots were tracked binaries with no licence record.
+      They were H-3D-SHELL's (since `f7876d0`) and H-INVENTORY's. No
+      step between checkpoints runs `make test`, so the first commit to
+      add one went unnoticed until this run.
+    - **`test_no_consumer_reads_the_raw_field_behind_the_accessor`:**
+      `equipment_query.gd` read the Echo log off the snapshot. The log
+      can be elided on the wire, and only
+      `BridgeClient.interpretations()` puts it back.
+  - **Fixed at `5f44b5c`:**
+    - The evidence folder is listed as first-party in
+      `assets/LICENSES.json`, as `docs/evidence/` already is. Its images
+      are renders of this game, made by its own make targets.
+    - The query takes the log from the accessor.
+  - **Verified on `5f44b5c`**, for the code the fix touched:
+    - `make test`: 2,224 passed (`CP3_make_test_on_5f44b5c.log`);
+    - `godot-equipment-face`: 107 checks
+      (`CP3_equipment_face_on_5f44b5c.log`);
+    - `godot-candidate-live`: all 9 phases, with the paused equip PENDING
+      then ACCEPTED (`CP3_candidate_live_on_5f44b5c.log`).
+  - The tree at the end differed only in the placement fixtures
+    `godot-zone-audit` rewrites. They were restored.
+- **CP3 is closed, on provisional art.** The packet's CP3 names "one
+  Glyph equipment face". The face is built and working, but its art is a
+  placeholder; the Glyph-authored look waits on Arty's H-GLYPH-KIT and is
+  not claimed. As at CP1 and CP2, the frontier was not re-run in full for
+  a fix this size. These are local results; remote CI was not polled.
