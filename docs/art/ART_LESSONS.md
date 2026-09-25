@@ -1978,3 +1978,34 @@ recomputed by a separate script reading the PNGs, which agreed.
 **The check that would have caught it was cheap and obvious in
 hindsight: assert the measurement's own inputs are the size they must
 be.** A mask is a claim about area; areas have expected magnitudes.
+
+---
+
+## The archive is assembled by a script now, because a hand forgets one
+
+CLAUDE.md is explicit: *"the Markdown and the images go out together as
+a single `.zip`"*. The first Track D archive went out without the tile
+comparison its own report argues from — family beside both packs, same
+role, same zoom, the picture the whole "history, not hue" claim rests
+on. The rule was clear. The archive was assembled by hand, and a hand
+drops one file out of nine without noticing.
+
+The owner asked whether the images were all in there. They were not.
+
+> **A rule you follow by remembering is a rule you will break on a
+> tired day. If the rule is worth having, give it something that
+> refuses.**
+
+`tools/art_package.sh` copies the WHOLE review directory and then
+checks every image in it against the built zip's own listing. A missing
+picture fails the build rather than arriving as a report referring to
+something nobody can see.
+
+Two things it got wrong while being written, both worth keeping:
+
+* an empty string passed as the "no README" argument is still a
+  positional argument, and fell through to the extra-directory loop;
+* piping `find` into `while` runs the loop in a **subshell**, so the
+  `missing` counter would have been incremented in a process that then
+  exits — a checker whose count can never rise, which is precisely the
+  failure it exists to stop. It reads from a temp file instead.
