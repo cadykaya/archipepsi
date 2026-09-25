@@ -126,13 +126,24 @@ func _nearest_living(controller: ZoneController, at: Vector3) -> float:
 func _through_the_portal_counting() -> Dictionary:
 	var tally := {"during_build": 0, "after": 0, "damage_after": 0.0,
 		"controller": null, "placed_at": Vector3.INF, "nearest": INF,
-		"living_at_control": -1, "room_at_control": ""}
+		"living_at_control": -1, "room_at_control": "", "died": []}
 	var hooked := [false]
 	var watcher := func() -> void:
 		var zone := main.zone as ZoneController
 		if hooked[0] or zone == null or zone.player == null:
 			return
 		hooked[0] = true
+		# EVERY DEATH THE ENGINE SEES, by declared identity, from the
+		# moment the Zone exists -- so a record can be held to exactly
+		# what died, not to what this harness happened to kill (PPT-02:
+		# c006's melee can chase the player off the hall's drop and die
+		# by the fall rule, and that death is recorded like any other).
+		for record: Dictionary in zone._chambers:
+			for raw: Variant in record["enemies"]:
+				if is_instance_valid(raw):
+					(raw as Enemy).enemy_died.connect(
+							func(dead: Enemy) -> void:
+								(tally["died"] as Array).append(dead.member))
 		zone.player.damaged_from.connect(func(_at: Vector3) -> void:
 			if zone.layout_verdict == "ACCEPTED":
 				tally["after"] += 1
@@ -357,7 +368,12 @@ func _legacy() -> void:
 				var d: Variant = _defeated_served()
 				return typeof(d) == TYPE_ARRAY and (d as Array).has(killed),
 			5.0)
-	_check(typeof(_defeated_served()) == TYPE_ARRAY
-			and (_defeated_served() as Array) == [killed],
-			"from this point the record is kept: the bridge holds %s"
-			% [_defeated_served()])
+	var died: Array = (tally["died"] as Array).duplicate()
+	died.sort()
+	var held: Array = (_defeated_served() as Array).duplicate() \
+			if typeof(_defeated_served()) == TYPE_ARRAY else []
+	held.sort()
+	_check(held.has(killed) and held == died,
+			"from this point the record is kept: the bridge holds exactly "
+			+ "the members the engine saw die, %s (died %s; killed here %s)"
+			% [held, died, killed])
