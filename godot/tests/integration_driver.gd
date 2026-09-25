@@ -42,6 +42,9 @@ var _zones_exhausted := 0
 ## because reporting it as "a verdict timed out" describes the symptom
 ## and hides the cause.
 var _router_refusals := 0
+## Every card the bridge sent for a Check: a foreign item's reveal and an
+## own item's confirmation (D-01).
+var _cards: Array[Dictionary] = []
 
 func _check(condition: bool, message: String) -> void:
 	if condition:
@@ -54,6 +57,10 @@ func _check(condition: bool, message: String) -> void:
 func _ready() -> void:
 	BridgeClient.error_received.connect(
 			func(_err: Dictionary) -> void: _error_count += 1)
+	BridgeClient.notification_received.connect(
+			func(note: Dictionary) -> void:
+				if str(note.get("kind", "")) in ["check_confirmed", "reveal"]:
+					_cards.append(note))
 	_run()
 
 func _finish(code: int) -> void:
@@ -186,16 +193,32 @@ func _run() -> void:
 			"all 30 checks confirmed")
 	_check(bool(snapshot.get("hub", {}).get("goal_sent", false)),
 			"goal reported")
-	var foreign := 0
-	for scout: Dictionary in snapshot.get("scouted", []):
-		if not scout.get("recipient_is_self", false):
-			foreign += 1
+	# ONE ECHO PER CHECK (D-01): the bridge creates this campaign under the
+	# policy, so the player's own items yield an Echo too. This read "one
+	# per FOREIGN Check" until D-01, which was historical B-1; a legacy
+	# campaign still would, which the bridge suite pins.
+	var scouted: Array = snapshot.get("scouted", [])
+	var own := 0
+	for scout: Dictionary in scouted:
+		if scout.get("recipient_is_self", false):
+			own += 1
 	var interpretations: Array = snapshot.get("interpretations", [])
+	var sources := {}
+	for entry: Dictionary in interpretations:
+		sources[int(entry.get("source_location_id", -1))] = true
+	var unechoed: Array = []
+	for scout: Dictionary in scouted:
+		if not sources.has(int(scout.get("location_id", -1))):
+			unechoed.append(int(scout.get("location_id", -1)))
 	# GDScript has no implicit adjacent-string concatenation; the `+` is
 	# load-bearing, not style.
-	_check(interpretations.size() == foreign,
-			("%d foreign checks -> %d interpretations, none missing, "
-			+ "none duplicated") % [foreign, interpretations.size()])
+	_check(own > 0 and interpretations.size() == scouted.size()
+				and sources.size() == interpretations.size()
+				and unechoed.is_empty(),
+			("%d Checks (%d your own) -> %d interpretations, one each, "
+			+ "none missing %s, none duplicated") % [scouted.size(), own,
+			interpretations.size(), str(unechoed)])
+	_check_own_item_cards()
 	# The log is the save; the fold is what the game plays. Both have to be
 	# whole, and the sequence has to be the unique, gapless thing the
 	# ordering depends on.
@@ -623,6 +646,53 @@ func _binds_button(action: String, button: MouseButton) -> bool:
 			return true
 	return false
 
+## D-01, on the live bridge's own cards: your own item is "Delivered to
+## you.", then EPSILON ECHO ACQUIRED with the Echo it yielded, carrying the
+## Echo's id -- and the real card shows both halves, the Echo's with its
+## effects.
+func _check_own_item_cards() -> void:
+	var own: Array[Dictionary] = []
+	for card: Dictionary in _cards:
+		if str(card.get("kind", "")) == "check_confirmed":
+			own.append(card)
+	var wrong: Array = []
+	for card: Dictionary in own:
+		var echo := BridgeClient.echo_by_id(str(card.get("echo_id", "")))
+		var lines: Array = card.get("lines", [])
+		if echo.is_empty() or lines.size() != 6 \
+				or lines.slice(1, 4) != ["Delivered to you.", "",
+					"EPSILON ECHO ACQUIRED"] \
+				or str(lines[4]) != str(echo.get("display_name", "")) \
+				or str(lines[5]) != str(echo.get("description", "")):
+			wrong.append(card.get("location_id"))
+	_check(not own.is_empty() and wrong.is_empty(),
+			("each own item's card: 'Delivered to you.', then EPSILON ECHO "
+			+ "ACQUIRED with its Echo (%d cards; wrong: %s)")
+			% [own.size(), str(wrong)])
+	if own.is_empty():
+		return
+	var card: Dictionary = own[0]
+	var echo := BridgeClient.echo_by_id(str(card.get("echo_id", "")))
+	var layer := RevealLayer.new()
+	add_child(layer)
+	layer.enqueue(card)
+	var shown := layer.shown()
+	var lines: Array = card.get("lines", [])
+	# The Echo half is the bridge's four lines, then what the Echo does in
+	# the words the inventory uses (`EffectSummary`).
+	var effects := EffectSummary.lines(echo)
+	var echo_half: Array = lines.slice(3)
+	echo_half.append("")
+	echo_half.append_array(effects)
+	_check(str(shown["sent"]) == "%s\nDelivered to you." % str(lines[0])
+				and not effects.is_empty()
+				and str(shown["echo"]) == "\n".join(echo_half)
+				and bool(shown["divider"]),
+			("the real card shows both halves: '%s' above the rule; the "
+			+ "Echo, and its %d effect line(s), below it")
+			% [str(shown["sent"]).replace("\n", " / "), effects.size()])
+	layer.queue_free()
+
 func _test_reveal_splits_the_two_halves() -> void:
 	## DESIGN §16: the card has to make it unmistakable that the other
 	## player got the real item and you got Epsilon's reinterpretation. The
@@ -638,7 +708,8 @@ func _test_reveal_splits_the_two_halves() -> void:
 			"12 pellets"],
 			"the Echo half is everything after it")
 
-	# A self-recipient check has no Echo half at all.
+	# A legacy campaign's own item has no Echo half at all. (A new
+	# campaign's has one, D-01: `_check_own_item_cards` plays it live.)
 	var own: Array = RevealLayer.split_halves(
 			["Signal Key", "Delivered to you."])
 	_check(own[0].size() == 2 and own[1].is_empty(),

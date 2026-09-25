@@ -128,12 +128,15 @@ def test_a_legacy_campaign_mints_nothing_for_its_own_item(tmp_path):
         mine, _ = _split(engine, zone_id)
         assert mine, "the mock seed placed no self-addressed item here"
         loc = mine[0]
-        await transactions.claim_check(engine, zone_id, loc)
-        assert loc in engine.ap.checked
+        # Legacy BEFORE the claim. A new campaign is created with the
+        # policy on (D14 §3, since the integration), so converting after
+        # the claim would test a campaign that confirmed under the policy.
         raw = engine.save.model_dump(mode="json")
         assert POLICY_FIELD in raw, "the policy field is gone from the save"
         raw.pop(POLICY_FIELD)
         engine.save = P.CampaignSave.model_validate(raw)
+        await transactions.claim_check(engine, zone_id, loc)
+        assert loc in engine.ap.checked
         before = len(engine.save.interpretations)
         assert await engine.grant_echo(loc) is None
         await engine.echo_backlog_sweep()

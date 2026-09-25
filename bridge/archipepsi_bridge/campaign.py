@@ -788,7 +788,12 @@ class CampaignEngine:
                 scale=CampaignScale(
                     location_count=scale.location_count,
                     zone_target_checks=scale.zone_target_checks,
-                    zone_budget=scale.zone_budget))
+                    zone_budget=scale.zone_budget),
+                # D-01 (D14 §3): a new campaign yields a local Echo from
+                # its own originals too. Only creation turns this on; a
+                # save written without it loads as a legacy campaign and
+                # stays one.
+                self_addressed_echoes=True)
             self._apply(fresh)
             log.info("created campaign %s at %d locations / %d per Zone / "
                      "%d budget (track order: %s)",
@@ -1985,12 +1990,28 @@ class CampaignEngine:
             preferred_modes=preferred_modes(save.epsilon_creativity),
             relevance_hint=_relevance_hint(mechanics))
 
-    async def grant_echo(self, location_id: int) -> str | None:
-        """Generate and persist the Echo for a confirmed foreign location.
-        Returns the echo_id, or None when no Echo applies. Idempotent."""
-        save = self.save
+    def yields_echo(self, location_id: int) -> bool:
+        """Whether confirming this Check releases a local Echo.
+
+        A foreign original always does. The player's own does only in a
+        campaign created under D-01 (D14 §3): a legacy campaign keeps "no
+        Echo for your own item" for its whole life, at confirmation, on
+        reload and in every later sweep. The grant and the sweep both ask
+        here, so the rule has one place."""
         scout = self.ap.scouts.get(location_id)
-        if scout is None or scout.recipient_is_self:
+        if scout is None:
+            return False
+        return (not scout.recipient_is_self
+                or self.save.self_addressed_echoes)
+
+    async def grant_echo(self, location_id: int) -> str | None:
+        """Generate and persist the Echo for a confirmed location that
+        yields one (`yields_echo`). Returns the echo_id, or None when no
+        Echo applies. Idempotent: the id is the Check's, so a retry, a
+        reload or a second confirmation answers with the Echo already
+        written and mints nothing."""
+        save = self.save
+        if not self.yields_echo(location_id):
             return None
         echo_id = f"echo_{location_id}"
         if save.interpretation_by_id(echo_id) is not None:
@@ -2023,8 +2044,10 @@ class CampaignEngine:
         return out
 
     async def echo_backlog_sweep(self) -> None:
-        """Foreign confirmed locations without an Echo. Interacted ones
-        generate now; the rest lazily, at most 3 per load, one at a time."""
+        """Confirmed locations that yield an Echo (`yields_echo`) and have
+        none: a grant a crash cut off before its append. Interacted ones
+        generate now; the rest lazily, at most 3 per load, one at a time.
+        An Echo already written is never regenerated."""
         save = self.save
         interacted = self._interacted_location_ids()
 
@@ -2037,8 +2060,7 @@ class CampaignEngine:
                     (echo.display_name,), location_id=loc, echo_id=echo_id)
 
         for loc in sorted(self.ap.checked):
-            scout = self.ap.scouts.get(loc)
-            if scout is None or scout.recipient_is_self:
+            if not self.yields_echo(loc):
                 continue
             if save.interpretation_by_id(f"echo_{loc}") is not None:
                 continue

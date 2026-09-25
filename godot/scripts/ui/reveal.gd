@@ -85,6 +85,13 @@ func enqueue(note: Dictionary) -> void:
 	if not _showing:
 		_show_next()
 
+## What the card shows now, half by half: for the suites, and for anything
+## that has to ask what the player is reading.
+func shown() -> Dictionary:
+	return {"title": _title.text, "sent": _body.text,
+			"echo": _echo_body.text if _echo_body.visible else "",
+			"divider": _divider.visible, "visible": visible}
+
 ## Splits the bridge's card text into the two halves the packet describes.
 ## The bridge composes that text and marks the boundary with a blank line;
 ## if it ever stops doing so, everything renders as the first half rather
@@ -132,8 +139,9 @@ func _show_next() -> void:
 			echo_lines.append_array(EffectSummary.lines(echo))
 	_body.text = "\n".join(sent_lines)
 	_echo_body.text = "\n".join(echo_lines)
-	# No Echo half means no rule to divide: a self-recipient check gets one
-	# block, not one block and an empty gap where the payoff should be.
+	# No Echo half means no rule to divide: a legacy campaign's own item
+	# (D-01: a new campaign's has an Echo too) gets one block, not one
+	# block and an empty gap where the payoff should be.
 	var has_echo := not echo_lines.is_empty()
 	_divider.visible = has_echo
 	_echo_body.visible = has_echo
