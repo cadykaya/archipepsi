@@ -230,6 +230,19 @@ func _gate_on(controller: ZoneController, edge_id: String) \
 	return null
 
 
+## The bridge's reason for composing no latch route until the engine can
+## place a lever (`latched_route.DECLINED_UNTIL_LEVERS`, D13 step 1).
+const LATCH_POLICY_DECLINE := "D-07: a pressure plate is a held sensor"
+
+
+## Route actuators the Zone declares: the shutters its room graphs drive.
+func _declared_route_actuators(zone: Dictionary) -> int:
+	var count := 0
+	for raw: Variant in zone.get("room_graphs", []) as Array:
+		count += ((raw as Dictionary).get("actuators", []) as Array).size()
+	return count
+
+
 ## P14's route shutters: every ServiceShutter a room graph drives.
 func _route_shutters(controller: ZoneController) -> Array:
 	var out: Array = []
@@ -284,8 +297,14 @@ func _seed() -> void:
 				"%s is not gated twice" % str(edge.get("edge_id", "")))
 		if state or latch:
 			gated.append(str(edge.get("edge_id", "")))
-	_check(gated.size() == 3,
-			"three relationships on three doorways: %s" % [gated])
+	# AS MANY AS THE ZONE DECLARES. Three while the profile composed a
+	# latch route; since D13 step 1 the latch step declines by policy until
+	# the lever route lands (Dess's D-1), and then there are three again.
+	var declared := (zone.get("zone_state", []) as Array).size() \
+			+ _declared_route_actuators(zone)
+	_check(gated.size() == declared and declared >= 2,
+			"one doorway per declared relationship: %d declared, gated %s"
+			% [declared, gated])
 	# AND WHAT EACH STEP DID, as the bridge recorded it.
 	var record_path := _arg(SAVE_DIR_FLAG).path_join("candidate") \
 			.path_join("%s.json" % ZONE_ID)
@@ -293,13 +312,24 @@ func _seed() -> void:
 			FileAccess.get_file_as_string(record_path))
 	var steps: Array = (record as Dictionary).get("steps", []) \
 			if typeof(record) == TYPE_DICTIONARY else []
+	# EVERY STEP EMITTED -- or the latch step declined BY POLICY, with the
+	# bridge's own D-07 reason, exactly as `make candidate-fixture` accepts
+	# (DESS-27). Any other decline is a partial profile and fails here.
 	_check(typeof(record) == TYPE_DICTIONARY
 			and (record as Dictionary).get("profile") == PROFILE
 			and steps.size() == PROFILE.size()
 			and steps.all(func(s: Variant) -> bool:
-				return bool((s as Dictionary).get("emitted", false))),
-			"the bridge recorded all %d steps EMITTED in %s"
-			% [PROFILE.size(), record_path])
+				var step: Dictionary = s
+				return bool(step.get("emitted", false)) or (
+						str(step.get("step", "")) == "latched_route"
+						and str(step.get("note", "")).begins_with(
+							LATCH_POLICY_DECLINE))),
+			"the bridge recorded all %d steps, each EMITTED or the latch "
+			% PROFILE.size() + "step declined by D-07 policy: %s in %s"
+			% [steps.map(func(x: Variant) -> String:
+				return "%s=%s" % [(x as Dictionary).get("step", "?"),
+					"EMITTED" if bool((x as Dictionary).get("emitted", false))
+					else "declined"]), record_path])
 	print("seeded: %s generated with the whole candidate profile" % ZONE_ID)
 
 
@@ -333,17 +363,20 @@ func _play() -> void:
 	var lever := _lever(controller)
 	var socket := _socket(controller)
 	var shutters := _route_shutters(controller)
+	var routes := _declared_route_actuators(_zone_data)
 	_check(span_gate != null and cell_gate != null and lever != null
 			and socket != null and controller.objects.body_of(CELL) != null
-			and shutters.size() == 1,
+			and shutters.size() == routes,
 			"built: the lever, its gate, the cell, its socket and gate, and "
-			+ "P14's shutter (%d)" % shutters.size())
+			+ "every route shutter the Zone declares (%d built, %d declared)"
+			% [shutters.size(), routes])
 	if span_gate == null or cell_gate == null or lever == null \
-			or socket == null or shutters.is_empty():
+			or socket == null or shutters.size() != routes:
 		return
 	_check(span_gate.shutter.is_shut() and cell_gate.shutter.is_shut()
-			and (shutters[0] as ServiceShutter).is_shut(),
-			"all three doorways start shut")
+			and shutters.all(func(sh: Variant) -> bool:
+				return (sh as ServiceShutter).is_shut()),
+			"every gated doorway starts shut (%d)" % (2 + routes))
 	var nearest := INF
 	for plate: Variant in _plates(controller):
 		nearest = minf(nearest, (plate as Node3D).global_position
@@ -414,8 +447,10 @@ func _play() -> void:
 	_check(cell_open and bool(through["inside"]),
 			"the cell's doorway opened and the player walked into %s"
 			% cell_beyond)
-	_check((shutters[0] as ServiceShutter).is_shut(),
-			"and P14's branch is still shut: nothing here latched it")
+	_check(shutters.all(func(sh: Variant) -> bool:
+				return (sh as ServiceShutter).is_shut()),
+			"and any route branch is still shut: nothing here latched it "
+			+ "(%d)" % shutters.size())
 	_check(beyond != "", "the lever's consequence was in %s" % beyond)
 	await _leave()
 	print("played: lever lowered, cell installed; leaving for the restart")
@@ -444,8 +479,11 @@ func _restore() -> void:
 			and socket != null and socket.installed_object == CELL
 			and _copies(CELL) == 1,
 			"the cell is seated, one copy, and its doorway open at load")
-	_check(shutters.size() == 1 and (shutters[0] as ServiceShutter).is_shut(),
-			"P14's branch is still shut: restored as it was left")
+	_check(shutters.size() == _declared_route_actuators(_zone_data)
+			and shutters.all(func(sh: Variant) -> bool:
+				return (sh as ServiceShutter).is_shut()),
+			"every route branch is still shut: restored as it was left (%d)"
+			% shutters.size())
 	await _settle(30)
 	_check(_intents("zone_state_selected").is_empty()
 			and _intents("object_consumed").is_empty()
