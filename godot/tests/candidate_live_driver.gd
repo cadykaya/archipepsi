@@ -1127,12 +1127,17 @@ func _abandon_from_the_pause_menu(zone_id: String) -> bool:
 			and player != null and player.held_by("modal"),
 			"Escape opens the pause interface on its Settings wall, the "
 			+ "pause menu drawn there, and the player is held")
+	_check(get_tree().paused and PauseClaims.owners() == ["menu"]
+			and BridgeClient.online,
+			"and the world is paused behind it, by the menu's claim alone, "
+			+ "with the bridge still connected (H-PAUSE)")
 	await _action_event("inventory")
 	await _shell_at_rest(shell)
 	_check(shell.front() == "equipment" and main.inventory.visible
 			and main.inventory.get_viewport()
 				== shell.page_viewport("equipment"),
 			"Tab turns it to the Equipment wall, the inventory drawn there")
+	await _equip_while_paused()
 	await _action_event("menu_page_right")
 	await _shell_at_rest(shell)
 	var armed := shell.front() == "settings" \
@@ -1144,14 +1149,64 @@ func _abandon_from_the_pause_menu(zone_id: String) -> bool:
 	if not confirmed:
 		return false
 	await get_tree().process_frame
-	_check(not shell.is_open() and (player == null
-			or not is_instance_valid(player) or not player.held_by("modal")),
-			"and the pause interface closes behind the abandon, the player "
-			+ "released")
+	_check(not shell.is_open() and not get_tree().paused
+			and (player == null or not is_instance_valid(player)
+				or not player.held_by("modal")),
+			"and the pause interface closes behind the abandon: the world "
+			+ "runs again and the player is released")
 	var offering := func() -> bool:
 		return BridgeClient.hub_mode() == "ZONE_AVAILABLE" and main.hub != null
 	return await _await_live("%s abandoned, the Hub offering a new Zone"
 			% zone_id, offering, 30.0)
+
+
+## ONE REAL EQUIP, WITH THE WORLD PAUSED (CP3: "one real equip/refusal";
+## H-PAUSE: the AP world is not paused). The Equipment wall's own button is
+## pressed; the bridge's answer arrives while the world stands still, and
+## the wall is repainted from it. HARNESS STEP, declared: the loadout is
+## then put back as it was, by the same intent, so the phases after this
+## one play the loadout they always did.
+func _equip_while_paused() -> void:
+	var before: Dictionary = BridgeClient.slots().duplicate()
+	var equip := _first_button(main.inventory, ["REPLACE ", "TO "])
+	if equip == null:
+		_note("no Echo on the Equipment wall to equip; the paused equip is "
+				+ "not exercised in this campaign")
+		return
+	var label := equip.text
+	equip.pressed.emit()
+	var changed := func() -> bool: return BridgeClient.slots() != before
+	var answered := await _await_live("the equip's answer, the world paused",
+			changed, 10.0)
+	var diff: Array = []
+	for slot: Variant in BridgeClient.slots().keys():
+		if BridgeClient.slots().get(slot) != before.get(slot):
+			diff.append("%s: %s -> %s" % [slot, before.get(slot),
+					BridgeClient.slots().get(slot)])
+	await get_tree().process_frame
+	_check(answered and get_tree().paused
+			and (not is_instance_valid(equip) or equip.is_queued_for_deletion()),
+			"'%s' pressed on the Equipment wall with the world paused: the "
+			% label + "bridge answered (%s), the world is still paused, and "
+			% [diff] + "the wall was repainted from the answer")
+	for slot: Variant in before.keys():
+		if BridgeClient.slots().get(slot) != before.get(slot):
+			BridgeClient.send_intent({"type": "slot_action", "slot": slot,
+					"component_id": before.get(slot)})
+	await _await_live("the loadout put back",
+			func() -> bool: return BridgeClient.slots() == before, 10.0)
+
+
+func _first_button(root: Node, prefixes: Array) -> Button:
+	for node: Node in root.find_children("*", "Button", true, false):
+		var button := node as Button
+		if button == null or button.disabled \
+				or button.is_queued_for_deletion():
+			continue
+		for prefix: String in prefixes:
+			if button.text.begins_with(prefix):
+				return button
+	return null
 
 
 ## An action as a device delivers it: an event through the engine's input

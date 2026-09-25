@@ -21,9 +21,13 @@ extends CanvasLayer
 ## event is pushed to. There is no physics query in it -- a paused world
 ## must not need its physics server to make a menu clickable (§4).
 ##
-## **WHAT IS NOT HERE YET.** Pausing the world is H-PAUSE's; the equipment
-## face on Glyph assets is H-INVENTORY's; the map and the journal are
-## H-3D-MAP's and H-JOURNAL's. A page nobody has filled says so, rather
+## **THE WORLD STOPS BEHIND IT (H-PAUSE).** Open, it holds a `PauseClaims`
+## claim named "menu": the dungeon, its physics and its timers stop, and
+## this node and the bridge client keep running. Closing releases only its
+## own claim.
+##
+## **WHAT IS NOT HERE YET.** The equipment face on Glyph assets is
+## H-INVENTORY's; the map and the journal are H-3D-MAP's and H-JOURNAL's. A page nobody has filled says so, rather
 ## than pretending to be finished (§5 of the delivery plan: "the blank
 ## other faces are an explicitly incomplete slice").
 
@@ -58,6 +62,9 @@ const FILL := 0.86
 ## One quarter turn. A reduced-motion turn is a cut to the next wall,
 ## the same four walls in the same order.
 const TURN_SECONDS := 0.42
+
+## The claim this interface holds on the world while it is open.
+const PAUSE_CLAIM := "menu"
 
 ## A reduced-motion turn is a cut (§3). It follows the accessibility
 ## setting that already exists for exactly this: `motion_intensity` at 0
@@ -112,6 +119,7 @@ func open(page := "settings") -> void:
 	_face(_front, true)
 	visible = true
 	_set_rendering(true)
+	PauseClaims.claim(get_tree(), PAUSE_CLAIM)
 	opened.emit(PAGES[_front])
 	page_changed.emit(PAGES[_front])
 
@@ -124,7 +132,15 @@ func close() -> void:
 	_turning = null
 	visible = false
 	_set_rendering(false)
+	PauseClaims.release(get_tree(), PAUSE_CLAIM)
 	closed.emit()
+
+
+## Freed while open -- a scene change, a test tearing down -- it must not
+## leave the world held still.
+func _exit_tree() -> void:
+	if visible and PauseClaims.held_by(PAUSE_CLAIM):
+		PauseClaims.release(get_tree(), PAUSE_CLAIM)
 
 
 func is_open() -> bool:
@@ -383,7 +399,6 @@ func _build_page(index: int) -> void:
 	var root := Panel.new()
 	root.name = "Root"
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.size = Vector2(PAGE_PIXELS)
 	page.add_child(root)
 	var title := Label.new()
 	title.name = "Title"

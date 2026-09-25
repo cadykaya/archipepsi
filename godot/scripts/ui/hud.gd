@@ -643,7 +643,9 @@ func toast(text: String, color := Color.WHITE, seconds := 3.5) -> void:
 	label.add_theme_font_size_override("font_size", 17)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_toast_box.add_child(label)
-	var timer := get_tree().create_timer(seconds)
+	# PAUSES WITH THE WORLD (H-PAUSE): a toast raised behind the pause
+	# interface is still there to read when it closes.
+	var timer := get_tree().create_timer(seconds, false)
 	timer.timeout.connect(label.queue_free)
 
 func set_crosshair_visible(value: bool) -> void:

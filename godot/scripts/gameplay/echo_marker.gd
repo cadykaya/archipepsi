@@ -41,5 +41,7 @@ static func spawn(parent: Node, at: Vector3, color: Color,
 	var spin := marker.create_tween().set_loops()
 	spin.tween_property(head, "rotation:y", TAU, 2.4).from(0.0)
 
-	var timer := marker.get_tree().create_timer(duration)
+	# PAUSES WITH THE WORLD (H-PAUSE): a SceneTree timer runs through a
+	# pause unless it is told not to.
+	var timer := marker.get_tree().create_timer(duration, false)
 	timer.timeout.connect(marker.queue_free)

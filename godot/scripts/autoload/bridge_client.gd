@@ -41,6 +41,10 @@ var _retry_timer := 0.0
 var _was_connecting := false
 
 func _ready() -> void:
+	# THE AP WORLD IS NOT PAUSED (H-PAUSE). A paused game keeps its
+	# connection and takes what is legitimately delivered while the pause
+	# interface is open; snapshots, notifications and refusals still arrive.
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_open()
 
 func _open() -> void:

@@ -630,7 +630,16 @@ func _on_consumable_denied(_component_id: String, _use_index: int,
 
 
 func _on_consumable_authorized(component_id: String,
-		_use_index: int) -> void:
+		use_index: int) -> void:
+	# AN ANSWER THAT LANDS WHILE THE WORLD IS PAUSED WAITS FOR IT (H-PAUSE,
+	# `04_3D_MENU_MAP_AND_GLYPH.md` §4). The charge is paid -- the engine
+	# moved `spent` and wrote the save -- so it is not refunded. But the
+	# effect does not go into a stopped world: an instant one would change
+	# it while it is stopped. It is kept, with its reservation still open,
+	# and fires once, on the first step the world takes again.
+	if is_inside_tree() and get_tree().paused:
+		_answered_while_paused.append([component_id, use_index])
+		return
 	var slotted := str(BridgeClient.slotted_action("consumable").get(
 			"component_id", ""))
 	if component_id != slotted:
@@ -691,6 +700,10 @@ func _say_exhausted() -> void:
 ## press that returned early is what separates an expenditure from a
 ## refund, and this flag is where it lives.
 var _launched := false
+
+## Authorisations that arrived while the world was paused, as
+## `[component_id, use_index]`, fired on the next physics step.
+var _answered_while_paused: Array = []
 
 func _note_launch() -> void:
 	_launched = true
@@ -787,6 +800,14 @@ func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	_refresh_derived_stats(delta)
+	# THE WORLD IS RUNNING AGAIN, so an answer that landed during the pause
+	# fires now -- once. (This step is the first thing a paused body does.)
+	if not _answered_while_paused.is_empty():
+		var held := _answered_while_paused.duplicate()
+		_answered_while_paused.clear()
+		for raw: Variant in held:
+			var pair: Array = raw
+			_on_consumable_authorized(str(pair[0]), int(pair[1]))
 
 	# ON A RAIL, the rail moves you (P3.0). Not a cutscene: the speed is
 	# the speed you brought, gravity still acts along the path so a climb
@@ -1310,7 +1331,9 @@ func _die() -> void:
 	for runtime: EchoRuntime in runtimes.values():
 		runtime.cancel_holds()
 	died.emit()
-	var timer := get_tree().create_timer(Constants.RESPAWN_DELAY)
+	# PAUSES WITH THE WORLD (H-PAUSE): a SceneTree timer runs through a
+	# pause unless it is told not to.
+	var timer := get_tree().create_timer(Constants.RESPAWN_DELAY, false)
 	timer.timeout.connect(_respawn)
 
 func _respawn() -> void:

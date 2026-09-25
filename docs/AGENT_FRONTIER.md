@@ -207,9 +207,20 @@ owner's D-06/D-07 rulings and the seam table are in
         and `godot-candidate-live` drives it through real input.
         `make menu-shell-shots` renders it.
       - MS-1 to MS-8 each fail by name.
-    - **Next: `H-PAUSE`,** the world stopped behind the shell. Then
-      `H-INVENTORY`, which waits on Arty's `H-GLYPH-KIT`. Dess's
-      `H-UI-DATA` (`CampaignSnapshot.inventory`) is in.
+    - `H-PAUSE` (V-16, V-17): **landed.**
+      - `PauseClaims` (named claims on `SceneTree.paused`); the shell
+        holds "menu" while open.
+      - The bridge client runs through a pause, and five gameplay and HUD
+        timers now pause with the world.
+      - A consumable answer that lands during the pause fires once on
+        resume, and is not refunded.
+      - Played by the shell suite, the live consumable suite (the race,
+        and a respawn that waits) and the live candidate suite (a real
+        equip with the world paused). MP-1 to MP-6 each fail by name.
+    - **Next:** `H-INVENTORY`, the three-region equipment face on
+      Dess's `H-UI-DATA` (`CampaignSnapshot.inventory`, which is in). Its
+      final look waits on Arty's `H-GLYPH-KIT`, so it starts on
+      explicitly provisional assets.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

@@ -1539,7 +1539,7 @@ godot-consumable-live: godot-import
 	  exit $$STATUS; \
 	fi
 	cd bridge && PYTHONPATH=. $(PY) tools/give_consumable.py \
-	  $(CONSUMABLE_SAVES) --charges 4
+	  $(CONSUMABLE_SAVES) --charges 5
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(CONSUMABLE_SAVES) \
 	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
 	BRIDGE_PID=$$!; sleep 2; \

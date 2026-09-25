@@ -1,0 +1,32 @@
+== MP-1 the interface does not pause the world (shell): rc=1 GODOT MENU SHELL TESTS: 1 failures in 23 checks
+FAIL: open for 0.7 s: the world is paused -- a node got no frames, a body did not fall, a 0.3 s timer did not fire
+  restored godot/scripts/ui/menu_shell.gd
+== MP-2 the bridge client pauses with the world (consumable): rc=2 GODOT CONSUMABLE LIVE TESTS: 1 failure(s)
+FAIL: timed out waiting for the engine's answer, with the world paused
+if grep -qE "SCRIPT ERROR" /tmp/archipepsi-consumable-live.log; then \
+  restored godot/scripts/autoload/bridge_client.gd
+== MP-3 an answer that lands during the pause fires into the stopped world (consumable): rc=2 GODOT CONSUMABLE LIVE TESTS: 1 failure(s)
+FAIL: answered while paused (1 authorised): nothing went into the stopped world, a second later (1 effect(s))
+if grep -qE "SCRIPT ERROR" /tmp/archipepsi-consumable-live.log; then \
+  restored godot/scripts/gameplay/player.gd
+== MP-4 the respawn timer runs through the pause again (consumable): rc=2 GODOT CONSUMABLE LIVE TESTS: 1 failure(s)
+FAIL: dead, then paused for 2.5 s -- past the 1.5 s respawn delay: still dead, because the respawn waits for the world
+if grep -qE "SCRIPT ERROR" /tmp/archipepsi-consumable-live.log; then \
+  restored godot/scripts/gameplay/player.gd
+== MP-5 closing releases every claim, not only its own (shell): rc=1 GODOT MENU SHELL TESTS: 1 failures in 23 checks
+FAIL: closing it releases its own claim only: another owner's pause holds ([])
+  restored godot/scripts/gameplay/pause_claims.gd
+== MP-6 a held answer is never let go, and fires every step (consumable): rc=2 GODOT CONSUMABLE LIVE TESTS: 10 failure(s)
+FAIL: a press at zero puts nothing in the world
+FAIL: across the outage the save authorised exactly the effects that ran (4 authorised, 32 run)
+FAIL: and a press once the link is back works normally (4)
+FAIL: and the player was told, rather than the button dying quietly
+FAIL: and the save authorised every one of them and no others (5 authorised, 42 run)
+FAIL: and the save authorised exactly the effects that ran (3 authorised, 13 run)
+FAIL: closed, the world runs and the effect fires once (2)
+FAIL: no more effects ran than the supply ever held (42 of 5)
+FAIL: nothing went into the world (3 effect(s))
+FAIL: timed out waiting for the engine to catch up
+if grep -qE "SCRIPT ERROR" /tmp/archipepsi-consumable-live.log; then \
+  restored godot/scripts/gameplay/player.gd
+== done

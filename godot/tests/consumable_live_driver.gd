@@ -252,6 +252,8 @@ func _run() -> void:
 
 	await _an_accepted_use_is_counted_by_the_save(player)
 	await _the_deduction_holds_while_the_answer_is_in_flight(player)
+	await _an_answer_that_lands_during_a_pause_waits_for_it(player)
+	await _a_death_s_respawn_waits_for_the_world(player)
 	await _a_stale_supply_is_refused_and_names_what_it_refused()
 	await _presses_made_offline_are_resent_and_counted_once(player)
 	await _the_last_charge_is_the_last_effect(player)
@@ -322,6 +324,94 @@ func _the_deduction_holds_while_the_answer_is_in_flight(
 	_check(_authorised() == _effects,
 			"effects run (%d) still equal charges authorised (%d)"
 			% [_effects, _authorised()])
+
+
+## H-PAUSE: THE RACE `04_3D_MENU_MAP_AND_GLYPH.md` §4 NAMES -- "the player
+## requested consumable authorization, then paused before the response."
+##
+## Paused by the real pause interface (`MenuShell`), opened in the same
+## frame as the press. The engine's answer arrives while the world is
+## stopped, because the bridge client runs through a pause. Then:
+##   - the charge is paid, and it is not refunded;
+##   - nothing goes into the stopped world;
+##   - when the interface closes, the effect fires -- once -- and the save
+##     has authorised exactly the effects that ran.
+##
+## Not covered here: a disconnect DURING the pause. The client's D-9 rule
+## for a dropped link (`_abandon_awaiting`) is unchanged by a pause, since
+## the client keeps running, and the outage case below is where it is
+## played.
+func _an_answer_that_lands_during_a_pause_waits_for_it(
+		player: Player) -> void:
+	print("  -- the answer lands while the world is paused")
+	var authorised := _authorised()
+	var before := _effects
+	var left := BridgeClient.charges_left(CID)
+	var shell := MenuShell.new()
+	add_child(shell)
+	await get_tree().process_frame
+	await _ready_to_press(player)
+	player.press_slot("consumable")
+	shell.open("equipment")
+	var paused_at_once := get_tree().paused
+	if not await _await("the engine's answer, with the world paused",
+			func() -> bool: return _authorised() > authorised, 10.0):
+		shell.close()
+		shell.queue_free()
+		return
+	var linger := Time.get_ticks_msec() + 1000
+	while Time.get_ticks_msec() < linger:
+		await get_tree().process_frame
+	_check(paused_at_once and get_tree().paused and _effects == before,
+			"answered while paused (%d authorised): nothing went into the "
+			% (_authorised() - authorised) + "stopped world, a second later "
+			+ "(%d effect(s))" % (_effects - before))
+	_check(BridgeClient.charges_left(CID) == left - 1,
+			"and the charge is spent, not refunded (%d of %d)"
+			% [BridgeClient.charges_left(CID), left])
+	shell.close()
+	await _settles(func() -> bool: return _effects > before, 5.0)
+	var after := Time.get_ticks_msec() + 1000
+	while Time.get_ticks_msec() < after:
+		await get_tree().process_frame
+	_check(not get_tree().paused and _effects == before + 1,
+			"closed, the world runs and the effect fires once (%d)"
+			% (_effects - before))
+	await _settles(func() -> bool: return _authorised() == _effects, 10.0)
+	_check(_authorised() == _effects,
+			"and the save authorised exactly the effects that ran "
+			+ "(%d authorised, %d run)" % [_authorised(), _effects])
+	shell.queue_free()
+	await get_tree().process_frame
+
+
+## H-PAUSE: A DEATH'S RESPAWN WAITS FOR THE WORLD. The respawn delay is a
+## SceneTree timer, and a SceneTree timer runs through a pause unless it is
+## told not to -- so a player who died and opened the menu would have come
+## back behind it.
+func _a_death_s_respawn_waits_for_the_world(player: Player) -> void:
+	print("  -- a death behind the pause interface")
+	var shell := MenuShell.new()
+	add_child(shell)
+	await get_tree().process_frame
+	player.take_damage(1.0e9)
+	var died := player._dead
+	shell.open("settings")
+	var hold := Time.get_ticks_msec() \
+			+ int((Constants.RESPAWN_DELAY + 1.0) * 1000.0)
+	while Time.get_ticks_msec() < hold:
+		await get_tree().process_frame
+	_check(died and player._dead,
+			"dead, then paused for %.1f s -- past the %.1f s respawn delay: "
+			% [Constants.RESPAWN_DELAY + 1.0, Constants.RESPAWN_DELAY]
+			+ "still dead, because the respawn waits for the world")
+	shell.close()
+	var back := await _settles(func() -> bool: return not player._dead,
+			Constants.RESPAWN_DELAY + 3.0)
+	_check(back and is_equal_approx(player.hp, Constants.PLAYER_MAX_HP),
+			"closed, the respawn follows (hp %.0f)" % player.hp)
+	shell.queue_free()
+	await get_tree().process_frame
 
 
 ## A USE THAT NAMES A SUPPLY THIS SAVE DOES NOT HAVE is refused, and the

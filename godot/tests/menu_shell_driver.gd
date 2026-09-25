@@ -23,6 +23,10 @@ extends Node
 ##   the keys       a focused text field keeps Q and E; Tab turns to
 ##                  Equipment and closes from it; Escape closes;
 ##   reduced motion a cut, the same walls in the same order.
+##   the world stops (H-PAUSE)  a pausable node, a falling body and a
+##                  pause-aware timer all stand still while it is open,
+##                  and run on when it closes; it still turns meanwhile;
+##                  and closing it releases only its own claim.
 ##
 ## Every click and key here is an `InputEvent` parsed into the engine the
 ## way a device's is; nothing calls a button's handler directly.
@@ -34,6 +38,17 @@ var _checks := 0
 var _notes := 0
 var shell: MenuShell = null
 var pressed := {}
+## Set by a pause-aware timer's timeout. On the node, not in a closure: a
+## lambda captures a local by value.
+var _timer_fired := false
+
+
+## A node that counts the frames it is given.
+class Ticker extends Node:
+	var ticks := 0
+
+	func _process(_delta: float) -> void:
+		ticks += 1
 
 
 func _check(ok: bool, message: String) -> void:
@@ -84,6 +99,7 @@ func _run() -> void:
 	await _the_pointer()
 	await _the_keys()
 	await _reduced_motion()
+	await _the_world_stops()
 	_finish("GODOT MENU SHELL")
 
 
@@ -386,6 +402,61 @@ func _reduced_motion() -> void:
 			"settings"],
 			"with motion_intensity at 0 each turn is a cut, through the same "
 			+ "walls in the same order: %s" % [seen])
+
+
+# ---------------------------------------------------------------------------
+# H-PAUSE: the world stops behind it
+# ---------------------------------------------------------------------------
+
+func _the_world_stops() -> void:
+	print("  -- the world stops behind it (H-PAUSE)")
+	var ticker := Ticker.new()
+	add_child(ticker)
+	var body := RigidBody3D.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = SphereShape3D.new()
+	body.add_child(shape)
+	add_child(body)
+	_timer_fired = false
+	get_tree().create_timer(0.3, false).timeout.connect(func() -> void:
+		_timer_fired = true)
+	await _frames(3)
+	shell.open("settings")
+	var ticks := ticker.ticks
+	var height := body.global_position.y
+	var until := Time.get_ticks_msec() + 700
+	while Time.get_ticks_msec() < until:
+		await get_tree().process_frame
+	_check(get_tree().paused and ticker.ticks == ticks
+			and absf(body.global_position.y - height) < 0.000001
+			and not _timer_fired,
+			"open for 0.7 s: the world is paused -- a node got no frames, a "
+			+ "body did not fall, a 0.3 s timer did not fire")
+	var bridge_runs := BridgeClient.process_mode == Node.PROCESS_MODE_ALWAYS \
+			and BridgeClient.can_process()
+	_check(bridge_runs, "the bridge client runs through it: the AP world "
+			+ "is not paused")
+	await _key(KEY_Q)
+	await _rest()
+	_check(shell.front() == "equipment",
+			"and the interface itself still turns while the world is still")
+	PauseClaims.claim(get_tree(), "test_other_owner")
+	shell.close()
+	await _frames(2)
+	_check(get_tree().paused and PauseClaims.owners() == ["test_other_owner"],
+			"closing it releases its own claim only: another owner's pause "
+			+ "holds (%s)" % [PauseClaims.owners()])
+	PauseClaims.release(get_tree(), "test_other_owner")
+	var runs := Time.get_ticks_msec() + 700
+	while Time.get_ticks_msec() < runs:
+		await get_tree().process_frame
+	_check(not get_tree().paused and ticker.ticks > ticks
+			and body.global_position.y < height - 0.01 and _timer_fired,
+			"once nobody holds it the world runs on: %d frames, the body "
+			% (ticker.ticks - ticks) + "fell %.2f m, the timer fired"
+			% (height - body.global_position.y))
+	ticker.queue_free()
+	body.queue_free()
 
 
 # ---------------------------------------------------------------------------

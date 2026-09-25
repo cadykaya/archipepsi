@@ -157,7 +157,9 @@ func _show_next() -> void:
 	if tones != null:
 		tones.play("goal" if note.get("kind") == "goal_reached" else "echo")
 	_play_slam()
-	var timer := get_tree().create_timer(hold)
+	# PAUSES WITH THE WORLD (H-PAUSE): a SceneTree timer runs through a
+	# pause unless it is told not to.
+	var timer := get_tree().create_timer(hold, false)
 	timer.timeout.connect(_show_next)
 
 ## Animates opacity rather than scale: a scale punch needs a pivot from the

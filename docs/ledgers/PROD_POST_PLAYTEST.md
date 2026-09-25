@@ -1520,3 +1520,100 @@ a flat tab strip squeezed to nothing.
   - The map and journal walls are placeholders that say so.
   - The owner has not seen it in-engine; usability and visual approval
     stay open.
+
+## CP3 — `H-PAUSE` (V-16, V-17): the world stops behind the interface — landed
+
+§4: "Pause is a world boundary, not an input hold." The policy is the
+packet's own proposal:
+- the dungeon, AI, projectiles, physics machinery, cooldowns and the
+  lifetimes of temporary effects stop advancing;
+- the interface keeps animating;
+- the external AP world is not paused.
+
+- **Before:** opening the pause menu or the inventory only held the
+  player's input (the named `modal` hold). Everything else went on
+  behind it: enemies, machinery, timers, and the effects of the bridge's
+  answers.
+- **What changed:**
+  - **`PauseClaims`** (new) makes `SceneTree.paused` a set of named
+    claims, like the player's input holds. The world runs again only
+    when nobody holds one.
+    - The shell holds "menu" while it is open, and releases only its own
+      claim.
+    - Freed while open, it lets its claim go.
+  - **`BridgeClient` runs through a pause** (`PROCESS_MODE_ALWAYS`): the
+    connection, snapshots, notifications and refusals stay live.
+  - **Five SceneTree timers now pause with the world.** They ran through
+    a pause by default: the respawn delay, a tracer's life, an echo
+    marker's life, a HUD toast and a reveal's hold.
+  - **The race §4 names:** a consumable asked for, then a pause before
+    the answer. The policy is proposed here; D-9's accounting is
+    unchanged:
+    - an answer that lands while paused is kept;
+    - the charge is paid, and it is not refunded;
+    - nothing goes into the stopped world, since an instant effect would
+      change it while it is stopped;
+    - the effect fires once, on the first step the world takes again.
+    - If the slot changed during the pause, the existing slot-change rule
+      applies: the authorisation is released and nothing fires.
+  - **The audit found nothing else.** No other gameplay code used a
+    SceneTree timer or the wall clock for game state. One cosmetic idle
+    orbit reads the clock; it simply resumes where it is.
+- **Played:**
+  - **`godot-menu-shell`** (23 checks, all with the world paused while
+    the shell is open; `H-PAUSE_menu_shell.log`):
+    - open for 0.7 s, a pausable node gets no frames, a rigid body does
+      not fall, and a 0.3 s timer does not fire;
+    - the bridge client runs, and the interface still turns;
+    - another owner's claim survives the shell's close;
+    - once nobody holds a claim, the world runs on: 102 frames, the body
+      falls 2.40 m, and the timer fires.
+  - **`godot-consumable-live`**, through a real bridge
+    (`H-PAUSE_consumable_live.log`):
+    - the race: answered while paused (1 authorised), and a second later
+      nothing has gone into the stopped world;
+    - the charge is spent, not refunded (2 of 3);
+    - closed, the effect fires once, and the save authorised exactly
+      the effects that ran (3 and 3);
+    - a death behind the interface: dead, then paused 2.5 s, past the
+      1.5 s respawn delay, and still dead. Closed, the respawn follows.
+  - **`godot-candidate-live`**, through a real bridge, in a real Zone,
+    with real Escape and Tab (`H-PAUSE_candidate_live.log`):
+    - the world is paused behind the interface, by the menu's claim
+      alone, and the bridge is still connected;
+    - **one real equip with the world paused:** "TO Shift" pressed on
+      the Equipment wall. The bridge answered (mobility: none ->
+      `act_l89100055`), the world stayed paused, and the wall was
+      repainted from the answer. The loadout was then put back, as a
+      declared harness step;
+    - after the abandon, the world runs again and the player is
+      released.
+  - Also green: `godot-consumable-restart`, `godot-boot`, `godot-hud`,
+    `godot-archive`.
+  - The live consumable seeding is now 5 charges (it was 4), so that the
+    drain case still drains one.
+- **Sabotages** (`H-PAUSE_sabotages.log`), each restored byte for byte,
+  each against the suite that should catch it:
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| MP-1 | the interface does not pause the world | shell: "open for 0.7 s: the world is paused" |
+| MP-2 | the bridge client pauses with the world | consumable: the answer never arrives while paused ("timed out waiting for the engine's answer, with the world paused") |
+| MP-3 | an answer during the pause fires into the stopped world | consumable: "nothing went into the stopped world ... (1 effect(s))" |
+| MP-4 | the respawn timer runs through the pause again | consumable: "still dead, because the respawn waits for the world" |
+| MP-5 | closing releases every claim, not only its own | shell: "another owner's pause holds ([])" |
+| MP-6 | a held answer is never let go | consumable: ten failures, from "the effect fires once (2)" to "42 run of 5" |
+
+- **What stays open:**
+  - **A disconnect during the pause is not played.** D-9's dropped-link
+    rule (`_abandon_awaiting`) applies unchanged, because the client
+    keeps running; the outage case plays it unpaused.
+  - Audio players pause with the tree, which is Godot's own behaviour;
+    that is not separately tested.
+- **What the owner will notice:**
+  - Escape stops the game. Enemies, shots and machines freeze behind the
+    menu, and carry on from where they were when it closes.
+  - Items and answers from the multiworld still arrive while the menu is
+    open.
+  - A consumable used just before opening the menu goes off when you
+    close it, once, for one charge.
