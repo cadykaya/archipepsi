@@ -102,6 +102,62 @@ signal fired(package: String, node_id: String)
 ## What a thrown permanent lever says, once its change is made.
 const PERMANENT_LEVER_DONE := "BOLT THROWN -- THE WAY IS OPEN"
 
+## H-GRAPHS: DESIGN 3 §14's SIGNAL VERBS, the player's interface to the
+## machine. RUNTIME-ONLY until an Echo delivers them (note N-15): no
+## Echo primitive carries one yet, so nothing in play calls `apply_verb`.
+##
+## Each is temporary, lasting `magnitude` seconds, and §19.7 applies it at
+## evaluation step 1, as an override on a node's output: INVERT,
+## HOLD_SIGNAL and CUT replace what the node computed; BRIDGE adds an
+## edge, which ORs its source into the destination's input. PROBE changes
+## nothing and reveals the node (`probe`).
+##
+## **A VERB NEVER SETS A LATCH** (N-15, §14.4). A LATCH here is a decision
+## the campaign records, so it is set from the VERIFIED values -- the
+## graph evaluated with no verb applied (`verified`) -- and nothing else.
+## A verb can hold a door open long enough to slip through, and the door
+## shuts when it expires; it cannot open a route for good. CUT on a
+## latch reports it OFF for the duration and leaves the record alone.
+##
+## **There is no macro setter in a room graph.** The header's rule 2: a
+## room graph reads macro state and never writes it. So §14.3's last row
+## has nothing to guard here, and the persistent decision a verb could
+## reach -- a recorded latch -- is guarded above.
+const VERBS := ["PROBE", "BRIDGE", "INVERT", "HOLD_SIGNAL", "CUT"]
+## §14.3, by what the target is, for the kinds this runtime evaluates.
+## "BRIDGE_FROM" and "BRIDGE_TO" are its "source only" and "destination
+## only". A kind with no row takes no verb at all: DIRECT, AND, SEQUENCE
+## and the rest have no consumer yet (N-15), and each row lands with its
+## node, not before it (O05-07: no unused catalogue).
+const VERB_LEGALITY := {
+	"SENSOR": ["PROBE", "BRIDGE_FROM", "INVERT", "HOLD_SIGNAL", "CUT"],
+	"NOT": ["PROBE", "BRIDGE_FROM", "BRIDGE_TO", "INVERT", "HOLD_SIGNAL",
+			"CUT"],
+	"OR": ["PROBE", "BRIDGE_FROM", "BRIDGE_TO", "INVERT", "HOLD_SIGNAL",
+			"CUT"],
+	"TIMER": ["PROBE", "BRIDGE_FROM", "BRIDGE_TO", "HOLD_SIGNAL", "CUT"],
+	"LATCH": ["PROBE", "BRIDGE_FROM", "CUT"],
+	"ACTUATOR": ["PROBE", "BRIDGE_TO", "INVERT", "HOLD_SIGNAL", "CUT"],
+}
+
+## `id -> {"verb": String, "left": float}`: INVERT, HOLD_SIGNAL or CUT on
+## a sensor, a node or an actuator's input. A second verb on the same
+## target replaces the first.
+var overrides: Dictionary = {}
+## BRIDGE's temporary edges: `[{"from": id, "to": id, "left": float}]`.
+var bridges: Array = []
+## What PROBE has revealed, and for how much longer: `id -> seconds`.
+var probes: Dictionary = {}
+## THE VERIFIED CONFIGURATION: every value with no verb applied. A
+## recorded LATCH is set from these (N-15), and the machine returns to
+## them when the last verb expires.
+var verified: Dictionary = {}
+## The TIMERs under the verbs, beside `timers` (the verified ones). A
+## bridged or held pulse restarts only these.
+var _live_timers: Dictionary = {}
+## Evaluation order while a BRIDGE stands; declaration order otherwise.
+var _bridged_order: Array = []
+
 
 ## BIND A DECLARED GRAPH TO A ROOM'S OWN MACHINES (O05-07).
 ##
@@ -306,18 +362,50 @@ func _physics_process(delta: float) -> void:
 ## announces. Nothing runs, nothing is evaluated. Split out so a suite
 ## can step it by hand, in the idiom every machine here uses.
 func advance(delta: float) -> void:
-	if timers.is_empty():
+	if timers.is_empty() and _live_timers.is_empty() and overrides.is_empty() \
+			and bridges.is_empty() and probes.is_empty():
 		return
-	var lapsed := false
-	for id: Variant in timers.keys():
-		var left := float(timers[id]) - delta
-		if left <= 0.0:
-			timers.erase(id)
+	var lapsed := _run_down(timers, delta)
+	lapsed = _run_down(_live_timers, delta) or lapsed
+	# A VERB EXPIRING is a change no sensor announces, like a TIMER's.
+	for id: Variant in overrides.keys():
+		var entry: Dictionary = overrides[id]
+		entry["left"] = float(entry["left"]) - delta
+		if float(entry["left"]) <= 0.0:
+			overrides.erase(id)
 			lapsed = true
-		else:
-			timers[id] = left
+	var standing: Array = []
+	for raw: Variant in bridges:
+		var edge: Dictionary = raw
+		edge["left"] = float(edge["left"]) - delta
+		if float(edge["left"]) > 0.0:
+			standing.append(edge)
+	if standing.size() != bridges.size():
+		bridges = standing
+		_bridged_order = _topological(bridges)
+		lapsed = true
+	_run_down(probes, delta)
+	if lapsed and not verbs_standing() and not is_same(verified, values):
+		# THE LAST VERB IS GONE: the verified track is the machine again,
+		# and what the verbs did to the live one is dropped with them.
+		# (Split only; an ordinary TIMER lapse has one track already.)
+		_live_timers.clear()
+		values = verified.duplicate()
 	if lapsed:
 		evaluate()
+
+
+## Count every entry down by `delta`; true when one ran out.
+static func _run_down(clock: Dictionary, delta: float) -> bool:
+	var lapsed := false
+	for id: Variant in clock.keys():
+		var left := float(clock[id]) - delta
+		if left <= 0.0:
+			clock.erase(id)
+			lapsed = true
+		else:
+			clock[id] = left
+	return lapsed
 
 
 ## Seconds a TIMER has left; 0 when it is OFF.
@@ -328,19 +416,39 @@ func timer_left(node_id: String) -> float:
 ## ONE TICK. Sensors, then logic in declaration order, then the
 ## actuators -- so every node reads values from this tick and none from
 ## the last one.
+##
+## **TWO TRACKS ONLY WHILE A VERB STANDS** (H-GRAPHS). With none, there is
+## one track, exactly as before the verbs: `values` and `timers` are the
+## machine, and `verified` is `values`. While one stands, `verified` is
+## the graph with no verb applied -- it sets the latches and keeps the
+## verified TIMERs -- and `values` is the graph as the verbs leave it,
+## which drives the actuators.
 func evaluate(settle := false) -> void:
 	ticks += 1
+	var split := verbs_standing()
+	if not split:
+		verified = values
 	for key: Variant in sensors.keys():
-		values[key] = _read(str(key))
-	for raw: Variant in nodes:
+		var id := str(key)
+		var read := _read(id)
+		verified[id] = read
+		values[id] = _overridden(id, read)
+	for raw: Variant in (_bridged_order if not bridges.is_empty() else nodes):
 		var node: Dictionary = raw
-		values[str(node["id"])] = _resolve(node)
+		var id := str(node["id"])
+		if not split:
+			values[id] = _resolve(node, values, timers, true)
+			continue
+		verified[id] = _resolve(node, verified, timers, true)
+		values[id] = _overridden(id, _resolve(node, values, _live_timers,
+				false))
 	for key: Variant in actuators.keys():
 		var binding: Dictionary = actuators[key]
 		var driven := str(binding.get("driven_by", ""))
 		if not values.has(driven):
 			continue
-		_drive(binding, bool(values[driven]), settle)
+		var value := bool(values[driven]) or _bridged_into(str(key), values)
+		_drive(binding, _overridden(str(key), value), settle)
 
 
 ## §19.2's node semantics. An unknown kind returns false rather than
@@ -356,36 +464,44 @@ func evaluate(settle := false) -> void:
 ## after the player steps off, so stepping on the plate once opens the
 ## way and the player can then walk through it. That is one action, and
 ## it is the difference between a machine in a room and a route.
-func _resolve(node: Dictionary) -> bool:
+##
+## `vals` and `clock` are one track's values and TIMERs. On the live track
+## a standing BRIDGE ORs its source into this node's input.
+func _resolve(node: Dictionary, vals: Dictionary, clock: Dictionary,
+		is_verified: bool) -> bool:
 	var inputs: Array = node.get("inputs", []) as Array
 	if inputs.is_empty():
 		return false
 	var id := str(node.get("id", ""))
+	var bridged := false if is_verified else _bridged_into(id, vals)
 	match str(node.get("kind", "")):
 		"NOT":
-			return not bool(values.get(str(inputs[0]), false))
+			return not (bool(vals.get(str(inputs[0]), false)) or bridged)
 		"OR":
 			# §19.2: ON when any input is ON. Two to four Booleans, which
 			# the schema checked; a pulse cannot reach here (§19.1).
 			for feed: Variant in inputs:
-				if bool(values.get(str(feed), false)):
+				if bool(vals.get(str(feed), false)):
 					return true
-			return false
+			return bridged
 		"TIMER":
 			# §19.2: ON for `duration` after a pulse; "a new pulse restarts
 			# it". The schema proved the input is a pulse and the duration
 			# is there. `advance` runs it down.
-			if bool(values.get(str(inputs[0]), false)):
-				timers[id] = float(node.get("duration", 0.0))
-			return timer_left(id) > 0.0
+			if bool(vals.get(str(inputs[0]), false)) or bridged:
+				clock[id] = float(node.get("duration", 0.0))
+			return float(clock.get(id, 0.0)) > 0.0
 		"LATCH":
 			# SET BY A TRUE INPUT AND NEVER RESET. §19.2's latch has no
 			# clear in this slice, because the puzzle it is here for is
 			# "open it once and walk through", and a latch that could
 			# clear is a door that can shut behind you.
+			#
+			# SET ON THE VERIFIED TRACK ONLY (N-15): the live track reads
+			# the record, so no verb upstream can make the decision.
 			if latched.has(id):
 				return true
-			if bool(values.get(str(inputs[0]), false)):
+			if is_verified and bool(vals.get(str(inputs[0]), false)):
 				latched[id] = true
 				fired.emit(package_id(), id)
 				lock_permanent_levers()
@@ -393,6 +509,27 @@ func _resolve(node: Dictionary) -> bool:
 			return false
 		_:
 			return false
+
+
+## Whether a standing BRIDGE into `id` carries an ON source this tick.
+func _bridged_into(id: String, vals: Dictionary) -> bool:
+	for raw: Variant in bridges:
+		var edge: Dictionary = raw
+		if str(edge["to"]) == id and bool(vals.get(str(edge["from"]), false)):
+			return true
+	return false
+
+
+## A node's value as the verbs leave it (§19.7 step 1).
+func _overridden(id: String, computed: bool) -> bool:
+	match str((overrides.get(id, {}) as Dictionary).get("verb", "")):
+		"INVERT":
+			return not computed
+		"HOLD_SIGNAL":
+			return true
+		"CUT":
+			return false
+	return computed
 
 
 func _drive(binding: Dictionary, value: bool, settle := false) -> void:
@@ -416,4 +553,177 @@ func reading() -> String:
 	for raw: Variant in nodes:
 		var node: Dictionary = raw
 		parts.append("%s=%s" % [node["id"], values.get(node["id"], "?")])
+	for id: Variant in overrides.keys():
+		parts.append("%s under %s" % [id,
+				(overrides[id] as Dictionary)["verb"]])
+	for raw: Variant in bridges:
+		parts.append("BRIDGE %s->%s" % [(raw as Dictionary)["from"],
+				(raw as Dictionary)["to"]])
 	return "%s: %s" % [room_id, ", ".join(parts)]
+
+
+# ---------------------------------------------------------------------------
+# H-GRAPHS: the signal verbs (Design 3 §14, §19.7). Runtime-only.
+# ---------------------------------------------------------------------------
+
+## Whether any INVERT, HOLD_SIGNAL, CUT or BRIDGE is standing. PROBE
+## changes nothing, so it does not count.
+func verbs_standing() -> bool:
+	return not overrides.is_empty() or not bridges.is_empty()
+
+
+## The first verb splits the machine in two: both tracks start from where
+## it stands now, TIMERs included, so the verified one carries on exactly
+## as if no verb had come.
+func _split() -> void:
+	if verbs_standing():
+		return
+	verified = values.duplicate()
+	_live_timers = timers.duplicate()
+
+
+## What `id` is for §14.3: "SENSOR", a logic node's kind, or "ACTUATOR"
+## (its input); "" when this graph has no such thing.
+func target_kind(id: String) -> String:
+	if sensors.has(id):
+		return "SENSOR"
+	for raw: Variant in nodes:
+		if str((raw as Dictionary)["id"]) == id:
+			return str((raw as Dictionary).get("kind", ""))
+	if actuators.has(id):
+		return "ACTUATOR"
+	return ""
+
+
+## APPLY ONE SIGNAL VERB (§14.1) to `target` for `magnitude` seconds; a
+## BRIDGE runs from `target` to `destination`.
+##
+## Returns `{"ok": true}` -- and for PROBE, `"probe"`, what it reveals --
+## or `{"ok": false, "reason": ...}` with NOTHING CHANGED: a refused verb
+## is refused before it touches the graph, so it costs nothing (§19.7).
+## Applied at once, as the next tick's step 1.
+func apply_verb(verb: String, target: String, magnitude: float,
+		destination := "") -> Dictionary:
+	if not verb in VERBS:
+		return _refused("'%s' is not a signal verb" % verb)
+	if magnitude <= 0.0:
+		return _refused("a signal verb lasts a positive number of seconds")
+	var kind := target_kind(target)
+	if kind == "":
+		return _refused("'%s' is not part of %s's machine" % [target, room_id])
+	var legal: Array = VERB_LEGALITY.get(kind, [])
+	match verb:
+		"PROBE":
+			probes[target] = magnitude
+			return {"ok": true, "probe": probe(target)}
+		"BRIDGE":
+			if not "BRIDGE_FROM" in legal:
+				return _refused("%s (%s) cannot be a BRIDGE's source (§14.3)"
+						% [target, kind])
+			var to_kind := target_kind(destination)
+			if to_kind == "":
+				return _refused("'%s' is not part of %s's machine"
+						% [destination, room_id])
+			if not "BRIDGE_TO" in (VERB_LEGALITY.get(to_kind, []) as Array):
+				return _refused("%s (%s) cannot be a BRIDGE's destination "
+						% [destination, to_kind] + "(§14.3)")
+			var trial: Array = bridges.duplicate(true)
+			trial.append({"from": target, "to": destination,
+					"left": magnitude})
+			var order := _topological(trial)
+			if order.size() != nodes.size():
+				return _refused("a BRIDGE from %s to %s would close a cycle "
+						% [target, destination] + "(§19.7)")
+			_split()
+			bridges = trial
+			_bridged_order = order
+		_:
+			if not verb in legal:
+				return _refused("%s (%s) cannot take %s (§14.3)"
+						% [target, kind, verb])
+			_split()
+			overrides[target] = {"verb": verb, "left": magnitude}
+	evaluate()
+	return {"ok": true}
+
+
+## §14.1's PROBE: "a node's current value, its inputs, and its governing
+## predicate". `value` is what the machine does now; `verified` is what it
+## would do with no verb standing; `verb` is the one on it, if any.
+func probe(id: String) -> Dictionary:
+	var kind := target_kind(id)
+	var out := {"id": id, "kind": kind,
+			"value": bool(values.get(id, false)),
+			"verified": bool(verified.get(id, false)),
+			"verb": str((overrides.get(id, {}) as Dictionary).get("verb", "")),
+			"inputs": [], "predicate": kind}
+	var feeds: Array = []
+	if kind == "ACTUATOR":
+		feeds = [str((actuators[id] as Dictionary).get("driven_by", ""))]
+		out["value"] = bool(values.get(feeds[0], false))
+	for raw: Variant in nodes:
+		var node: Dictionary = raw
+		if str(node["id"]) != id:
+			continue
+		feeds = (node.get("inputs", []) as Array).duplicate()
+		match kind:
+			"TIMER":
+				out["predicate"] = "TIMER %.1fs, %.1fs left" % [
+						float(node.get("duration", 0.0)),
+						float(_live_timers.get(id, 0.0))]
+			"LATCH":
+				out["predicate"] = "LATCH, %s" % (
+						"set" if latched.has(id) else "not set")
+	for raw: Variant in bridges:
+		if str((raw as Dictionary)["to"]) == id:
+			feeds.append(str((raw as Dictionary)["from"]))
+	for feed: Variant in feeds:
+		(out["inputs"] as Array).append({"id": str(feed),
+				"value": bool(values.get(str(feed), false))})
+	return out
+
+
+## Declaration order, with `edges` (BRIDGEs) honoured: a node comes after
+## every node it reads. Fewer nodes than declared means a cycle. Sensors
+## are evaluated first and actuators last, so only a node-to-node edge
+## can move anything.
+func _topological(edges: Array) -> Array:
+	var ids := {}
+	for raw: Variant in nodes:
+		ids[str((raw as Dictionary)["id"])] = true
+	var reads := {}
+	for raw: Variant in nodes:
+		var node: Dictionary = raw
+		var id := str(node["id"])
+		var from: Array = []
+		for feed: Variant in node.get("inputs", []) as Array:
+			if ids.has(str(feed)):
+				from.append(str(feed))
+		for edge: Variant in edges:
+			if str((edge as Dictionary)["to"]) == id \
+					and ids.has(str((edge as Dictionary)["from"])):
+				from.append(str((edge as Dictionary)["from"]))
+		reads[id] = from
+	var placed := {}
+	var order: Array = []
+	var moved := true
+	while moved and order.size() < nodes.size():
+		moved = false
+		for raw: Variant in nodes:
+			var id := str((raw as Dictionary)["id"])
+			if placed.has(id):
+				continue
+			var ready := true
+			for need: Variant in reads[id]:
+				if not placed.has(need):
+					ready = false
+					break
+			if ready:
+				placed[id] = true
+				order.append(raw)
+				moved = true
+	return order
+
+
+static func _refused(reason: String) -> Dictionary:
+	return {"ok": false, "reason": reason}

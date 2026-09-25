@@ -152,6 +152,7 @@ jobs:
           make godot-consumable
           make godot-encounter
           make godot-signal-graph
+          make godot-signal-verbs
           make godot-latched-route
           make godot-theme-pack
           make godot-carry

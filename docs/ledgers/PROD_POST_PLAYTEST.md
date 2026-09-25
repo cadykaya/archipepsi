@@ -3087,3 +3087,137 @@ holds for self-addressed and foreign originals."
 - **What the owner will notice:** nothing yet, until a composed Zone
   features a Check (D-6). After that, the Echo from that Check always
   works where the room needs it. Epsilon names it and gives it its look.
+
+## 0.4 — H-GRAPHS, slice 1: the five signal verbs on the graphs real rooms run — landed, runtime-only
+
+Design 3 §14 and §19.7. `05_INHERITED` O05-07.4: "Five signal verbs and
+temporary override expiry not started." The evidence H-GRAPHS asks for:
+"Actual input→consequence, override expiry, persistence and refusal."
+
+- **Reproduced first:** `godot-signal-verbs` (new) against the
+  unchanged runtime of `7166b35` (`H-GRAPHS_before.log`). **26 of 32
+  checks fail**, which is every verb. The six that pass are controls:
+  the rooms' starting states, the real lever throwing its bolt, and "a
+  rebuilt room carries no verb".
+- **What changed, `signal_graph.gd`:**
+  - **`apply_verb(verb, target, magnitude, destination)`:** PROBE,
+    BRIDGE, INVERT, HOLD_SIGNAL and CUT, each for `magnitude` seconds.
+    - §19.7: INVERT, HOLD_SIGNAL and CUT override a node's output at
+      evaluation step 1, and BRIDGE ORs its source into the
+      destination's input.
+    - A verb can target a sensor, a logic node, or an actuator's input.
+  - **§14.3's legality**, by what the target is, for the kinds this
+    runtime evaluates. A refusal says why and changes nothing.
+  - **BRIDGE** is refused when it would close a cycle (§19.7). While one
+    stands, each node is evaluated after everything it reads.
+  - **Expiry:** a verb runs down on the graph's own clock, and its
+    expiry re-evaluates the machine, as a TIMER's does.
+  - **N-15's conservative rule.** While a verb stands, the machine runs
+    on two tracks:
+    - the verified track, with no verb, sets the recorded LATCHes and
+      keeps the verified TIMERs;
+    - the live track drives the actuators.
+
+    So a verb can hold a door open but can never set a latch. CUT on a
+    set latch reports it OFF for the duration and leaves the record
+    alone.
+  - **PROBE** reveals the value, the verified value, the inputs and the
+    predicate, and changes nothing.
+  - **Nothing a verb does is saved:** overrides and bridges are runtime
+    state, and a rebuilt room has none.
+- **Two findings in my own work, repaired:**
+  - **HG-F1, caught by the existing suites.** The first version always
+    ran two tracks. `godot-signal-graph` drives a node by writing
+    `values`, and `godot-counterfire` fast-forwards its window by
+    writing `timers`. Both are documented idioms, and the second track
+    read neither: a latch never set, and a window never closed (8
+    checks, `H-GRAPHS_first_runtime.log`).
+    - Now, with no verb standing, there is one track, exactly as
+      before. The first verb splits the machine from where it stands,
+      TIMERs included, and the last one's expiry merges it back.
+    - Both suites pass again (61 and 59).
+  - **HG-F2, caught by the reproduction.** Nine checks passed on the
+    unchanged runtime for the wrong reason:
+    - seven "...when it expires" checks held because nothing had been
+      applied;
+    - two refusal checks held because the old runtime refused
+      everything.
+
+    Each expiry check now requires the verb to have been standing, and
+    each refusal check requires its own reason. On the old runtime the
+    passes fell from 15 to the 6 controls.
+  - **Scope, trimmed before landing:** §14.3 has rows for DIRECT, AND,
+    SEQUENCE, COUNTER, SELECTOR, THRESHOLD and DELAY, and none of them
+    is evaluated here. Their rows were dropped (O05-07: "do not emit an
+    unused catalogue"). A kind with no row takes no verb.
+- **Played:** `godot-signal-verbs` (new, in CI, 32 checks;
+  `H-GRAPHS_after.log`), on four graphs the game builds for real:
+  - **the held route** (D-07's plate to shutter,
+    `held_route_zone.json` through the real `ZoneController`):
+    - HOLD_SIGNAL on the empty plate opens the shutter while the plate
+      itself still reads empty (verified OFF);
+    - the shutter shuts when the verb expires;
+    - INVERT on the shutter's input does the same;
+  - **the latched route** (plate to LATCH to shutter):
+    - HOLD_SIGNAL on the plate never sets the latch;
+    - HOLD_SIGNAL on the shutter's input holds the way open, and it
+      shuts on expiry with nothing recorded;
+    - HOLD_SIGNAL and INVERT on the LATCH are refused (§14.3);
+    - a rebuilt Zone carries no verb and no latch;
+  - **EX50-033**, with its real crate on its drive:
+    - INVERT on the NOT turns the shutter over;
+    - a BRIDGE from the plate into the OR makes the crate that holds the
+      shutter shut hold it open, for 3 s;
+    - a BRIDGE from the OR back into the NOT is refused as a cycle;
+    - bad BRIDGE ends are refused (§14.3);
+    - HOLD_SIGNAL on the bolt lever never throws the bolt, and the real
+      lever still throws it, once;
+    - CUT on the thrown bolt shuts the way for its duration with the
+      record untouched, and the way reopens after;
+  - **EX50-021:**
+    - INVERT on the TIMER is refused;
+    - HOLD_SIGNAL on the TIMER holds the window open past its 8 s, and
+      then it shuts;
+    - PROBE on the release LATCH reveals it and changes nothing;
+    - an unknown verb, a zero duration and an unknown node are each
+      refused with their own reason.
+  - **Also green on the final runtime** (`H-GRAPHS_suites.log`):
+    `godot-signal-graph` (61), `godot-counterfire` (59),
+    `godot-unweighted` (70), `godot-counterfire-hosted` (25),
+    `godot-latched-route` (73), `godot-held-route` (33).
+- **Sabotages** (`H-GRAPHS_sabotages.log`), each restored byte for byte
+  (sha256):
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| HG-1 | a recorded LATCH set from the live track | "HOLD_SIGNAL on the plate never sets the recorded LATCH (N-15)", and the bolt's (3 in all) |
+| HG-2 | §14.3 ignored: a TIMER takes INVERT | "a TIMER cannot take INVERT (§14.3)" |
+| HG-3 | a BRIDGE that closes a cycle is not refused | "would close a cycle, and is refused with nothing changed" (+1) |
+| HG-4 | a verb never expires | every expiry check (16 in all) |
+| HG-5 | a BRIDGE carries nothing into its destination | "BRIDGE from the plate into the OR" |
+| HG-6 | CUT on a latch clears the record | "and the record is untouched" (+1) |
+| HG-7 | the verified track reads the verbs too | "its verified value is OFF", and the latch checks (4 in all) |
+| HG-8 | PROBE changes the machine | "PROBE ... changes nothing" (+1) |
+| HG-9 | §14.3 ignored: a LATCH takes HOLD_SIGNAL | "a LATCH cannot take HOLD_SIGNAL (§14.3)" (+1) |
+
+- **The sabotage run:** 9 of 9 on the first run. After the table trim
+  and one refinement (the merge back to one track runs only after a real
+  split, not on every ordinary TIMER lapse), all nine were run again on
+  the final runtime: 9 of 9.
+- **What stays open:**
+  - **No Echo delivers a verb, and none will until a room consumes one.**
+    That is Dess's reply to N-15, under the owner's D-04 principle. §14.2's
+    targeting belongs to that delivery:
+    - seen nodes only, within range and line of sight;
+    - BRIDGE's two activations within 10 s.
+
+    This slice takes node ids.
+  - **DIRECT, AND and SEQUENCE are not built.** None is planned in 0.4,
+    and no room names one (Dess's reply to N-15).
+  - **N-15's question is answered:** a recorded LATCH is a macro setter
+    (Dess). That is the rule this slice implements.
+  - **No presentation:** PROBE's reveal, and a node standing under a
+    verb, have no visual yet.
+- **What the owner will notice:** nothing yet, because no Echo carries a
+  verb. Underneath, the rooms' machines now answer Design 3's five
+  verbs, and none of them can open a way for good.

@@ -110,6 +110,7 @@ const DRIVERS := {
 	"--consumable-live": preload("res://tests/consumable_live_driver.gd"),
 	"--encounter": preload("res://tests/encounter_driver.gd"),
 	"--signal-graph": preload("res://tests/signal_graph_driver.gd"),
+	"--signal-verbs": preload("res://tests/signal_verb_driver.gd"),
 	"--latched-route": preload("res://tests/latched_route_driver.gd"),
 	"--theme-pack": preload("res://tests/theme_pack_driver.gd"),
 	"--carry": preload("res://tests/carry_driver.gd"),

@@ -379,9 +379,18 @@ owner's D-06/D-07 rulings and the seam table are in
     - **Open, Prod's:** D01-F3, `make dual-real` has not been able to
       claim since the certification guard (pre-existing; not in the
       frontier).
-    - **Next:** H-GRAPHS, the signal verbs as a runtime-only slice on
-      real room graphs, with recorded latches never set by a verb (N-15
-      asks Dess for consumers and the Echo primitive). Then H-STATUS,
+    - **H-GRAPHS slice 1: landed, runtime-only.** Design 3's five
+      signal verbs on the graph runtime: §19.7 overrides at step 1,
+      §14.3 legality, cycles refused, expiry, PROBE. A verb never sets a
+      recorded latch (N-15's conservative rule).
+      - `godot-signal-verbs` (new, in CI, 32 checks) plays them on four
+        real graphs: the held and latched routes, EX50-033 and EX50-021.
+      - 9 of 9 sabotages. The old runtime fails 26 of 32.
+      - Dess confirmed that a recorded latch is a macro setter. There
+        is no Echo primitive, and no DIRECT, AND or SEQUENCE, until a
+        room consumes one.
+    - **Next:** D-9, the gantry placement in `RailNetworks` (D-6 step 3;
+      Dess's steps 1 and 2 landed at `9bed879`). Then H-STATUS,
       H-MACHINE-LIFE and H-RAIL-BREADTH.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
