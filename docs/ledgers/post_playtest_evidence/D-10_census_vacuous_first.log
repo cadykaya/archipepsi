@@ -1,0 +1,19 @@
+# D-10 census evidence: the first run: 12 arena chamber ids, one Zone seed.
+# Filtered from the raw log: 660 'p3a:' lines removed (the authored-shell selection census the ZoneController prints for every room of every build; mode=none throughout).
+# Run by hand, so the make target's own filter was applied here: 1643 WARNING/backtrace lines removed (the unconnected bridge's 'layout_result' intent, and the engine's rail refusal warning).
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+width	depth	fits	of	refusals (summed)	ms per build
+16	16	8	12	outside the room 2104, on the track 1360, not clear 114, within the base kit's reach 22	56
+18	18	7	12	outside the room 3050, on the track 2310, not clear 390, within the base kit's reach 28, off the floor 2	62
+20	20	10	12	outside the room 1388, on the track 1080, off the floor 4, not clear 339, within the base kit's reach 77	79
+22	22	12	12	-	77
+24	24	12	12	-	83
+26	26	12	12	-	91
+28	28	12	12	-	101
+28	20	12	12	-	87
+20	28	12	12	-	84
+28	16	10	12	outside the room 1556, on the track 768, not clear 703, within the base kit's reach 213	92
+16	28	12	12	-	76
+
+GANTRY CENSUS DONE: the smallest square arena every sampled layout (12) takes: 22 x 22

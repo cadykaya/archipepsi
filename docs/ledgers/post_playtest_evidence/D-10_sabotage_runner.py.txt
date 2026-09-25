@@ -1,0 +1,102 @@
+"""D-10 sabotages: break one rule, confirm a named failure, restore.
+
+Same protocol as the D-9 and H-STATUS-2 runners: each row edits one file
+in the wt-census work tree, runs `make godot-gantry-census`, records every
+FAIL line, and restores the file byte for byte (sha256 checked). A row is
+CAUGHT only when the check it names is among the failures. Run only when
+no other Godot suite is running.
+"""
+from __future__ import annotations
+
+import hashlib
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+TREE = Path(os.environ.get("D10_TREE",
+                           Path(__file__).resolve().parent / "wt-census"))
+RN = "godot/scripts/generation/rail_networks.gd"
+CD = "godot/tests/gantry_census_driver.gd"
+TARGET = "godot-gantry-census"
+
+# (id, what, file, old, new, the check that must fail)
+ROWS = [
+    ("D10-1", "the margins tripled (0.5 -> 1.5 m)", RN,
+     "const GANTRY_MARGIN := 0.5", "const GANTRY_MARGIN := 1.5",
+     "the composer's rule"),
+    ("D10-2", "the search three times coarser (1 -> 3 m)", RN,
+     "const GANTRY_STEP := 1.0", "const GANTRY_STEP := 3.0",
+     "the composer's rule"),
+    ("D10-3", "a gantry that does not fit is left out, its control on the "
+     "ground (a silent fallback)", RN,
+     "\t\tif frame.has(\"refused\"):\n"
+     "\t\t\treturn {\"refused\": \"span '%s' puts its gantry in room '%s': %s\"\n"
+     "\t\t\t\t\t% [str(span_dict.get(\"span_id\", \"\")), room,\n"
+     "\t\t\t\t\t\tframe[\"refused\"]]}\n",
+     "\t\tif frame.has(\"refused\"):\n\t\t\tcontinue\n",
+     "the control (16 x 16) refuses no layout"),
+    ("D10-4", "the census's zone ids all one (the D10-F2 mistake)", CD,
+     "\t\"0/0\": \"zone_census_01\", \"+90/0\": \"zone_census_00\",\n"
+     "\t\"-90/0\": \"zone_census_04\", \"0/+90\": \"zone_census_30\",\n"
+     "\t\"0/-90\": \"zone_census_16\", \"+90/-90\": \"zone_census_02\",\n"
+     "\t\"-90/+90\": \"zone_census_06\",\n",
+     "\t\"0/0\": \"zone_census_01\", \"+90/0\": \"zone_census_01\",\n"
+     "\t\"-90/0\": \"zone_census_01\", \"0/+90\": \"zone_census_01\",\n"
+     "\t\"0/-90\": \"zone_census_01\", \"+90/-90\": \"zone_census_01\",\n"
+     "\t\"-90/+90\": \"zone_census_01\",\n",
+     "the sample did not build the chain shapes it names"),
+]
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main() -> int:
+    only = set(sys.argv[1:])
+    lines, caught, total = [], 0, 0
+    for rid, what, rel, old, new, expect in ROWS:
+        if only and rid not in only:
+            continue
+        total += 1
+        path = TREE / rel
+        original = path.read_bytes()
+        text = original.decode("utf-8")
+        if text.count(old) != 1:
+            lines.append(f"{rid} SETUP ERROR: anchor found {text.count(old)}"
+                         f" times in {rel}")
+            print(lines[-1], flush=True)
+            continue
+        before = hashlib.sha256(original).hexdigest()
+        path.write_bytes(text.replace(old, new).encode("utf-8"))
+        try:
+            out = subprocess.run(["make", TARGET], cwd=TREE,
+                                 capture_output=True, text=True, timeout=1800)
+            log = out.stdout + out.stderr
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        fails = [l[6:] for l in log.splitlines() if l.startswith("FAIL: ")]
+        errors = sum(1 for l in log.splitlines()
+                     if l.lstrip().startswith("SCRIPT ERROR"))
+        hit = any(expect in f for f in fails)
+        caught += hit
+        rows = [l for l in log.splitlines()
+                if l[:1].isdigit() and "\t" in l and l.count("\t") >= 4]
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    {'CAUGHT' if hit else 'NOT CAUGHT'} by \"{expect}\""
+                     f" -- exit {out.returncode}, {errors} script error(s);"
+                     f" restored byte for byte: {restored}")
+        for f in fails:
+            lines.append(f"      FAIL: {f[:400]}")
+        for r in rows:
+            lines.append(f"        {r[:200]}")
+        print("\n".join(lines[-(len(fails) + len(rows) + 2):]), flush=True)
+    lines.append(f"\n{caught} of {total} sabotages caught")
+    print(lines[-1])
+    return 0 if caught == total else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

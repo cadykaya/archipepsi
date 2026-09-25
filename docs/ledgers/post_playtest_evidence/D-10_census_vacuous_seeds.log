@@ -1,0 +1,19 @@
+# D-10 census evidence: 72 'layouts' = 24 chamber ids x 3 Zone seeds the engine never reads (D10-F2).
+# Filtered from the raw log: 3960 'p3a:' lines removed (the authored-shell selection census the ZoneController prints for every room of every build; mode=none throughout).
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+width	depth	fits	of	refusals (summed)	ms per build
+16	16	36	72	outside the room 18936, on the track 12240, not clear 1029, within the base kit's reach 195	59
+18	18	30	72	outside the room 25620, on the track 19404, not clear 3309, within the base kit's reach 213, off the floor 6	64
+20	20	60	72	outside the room 8328, on the track 6480, off the floor 12, not clear 2055, within the base kit's reach 453	76
+22	22	72	72	-	83
+24	24	72	72	-	87
+26	26	72	72	-	98
+28	28	72	72	-	113
+28	20	72	72	-	97
+20	28	72	72	-	89
+28	16	63	72	outside the room 7002, on the track 3456, not clear 3063, within the base kit's reach 1041, off the floor 18	86
+16	28	69	72	outside the room 2334, on the track 2280, not clear 216, within the base kit's reach 30	77
+
+the smallest square arena every sampled layout (72) takes: 22 x 22
+GANTRY CENSUS OK (every sampled layout with both spans 22 m or more takes a gantry)

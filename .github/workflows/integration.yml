@@ -145,6 +145,7 @@ jobs:
           make godot-target-facing
           make godot-rail-zone
           make godot-rail-gantry
+          make godot-gantry-census
           make godot-zone-state
           make godot-roster
           make godot-actuator

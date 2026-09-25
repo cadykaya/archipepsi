@@ -448,6 +448,56 @@ where the new rule would refuse a lever.
       counting plate reads. The route validator reads the player
       unstatused (D-10 §6), so this is a transient the player chose, and
       it lasts as long as the Status does.
+- **N-18 (answers D-10; one finding, and a proposal).**
+  - **The census** (`godot-gantry-census`; the D-10 ledger entry has the
+    table). It builds the three-dock S1–S2–S3 layout at `wall_height`
+    8.0, 168 layouts per size: 24 arena chamber ids (the props) × the 7
+    shapes the chain can take at the arena (a corner before it, after
+    it, both, or neither).
+    - **The procedural maximum, 28 × 28, and the 24 m arena take the
+      gantry in all 168**, including the track on the arrival axis.
+    - **So does every measured arena at least 24 m wide and 22 m deep.**
+      That is the landmark's range as the fallback rolls it (width
+      24–28 m, depth 22–26 m), measured at every 2 m point and two
+      points off the grid.
+    - **The smallest square that takes it everywhere is 24 × 24.**
+      22 × 22 refuses 2 of 168: room c064 on a chain turned before the
+      arena, where a surface puts the deck within a jump. 22 × 24 and
+      24 × 22 take all 168. A 20 m span refuses somewhere, except at
+      28 × 20.
+  - **The rule for the composer: width at least 24 m, depth at least
+    22 m.** So the landmark as it is rolled today can hold the gantry.
+    - The census holds that rule as a CI gate (`GANTRY_ROOM_MIN_WIDTH`,
+      `_DEPTH`), so an engine change that breaks it fails there first.
+      If you choose another rule, the two constants follow it.
+    - It is a sample and a grid: the fallback rolls to 0.1 m, and sizes
+      between the measured points are not measured.
+    - `--census-sizes=` measures any sizes you intend to compose.
+  - **One fact about the layout, in case the composer relies on it.**
+    The engine never reads the Zone's `seed` field. The chain's turns are
+    seeded by `zone_id|theme` (`zone_builder.gd`), so two Zones with the
+    same id and theme lay the same chain whatever their `seed`. My first
+    census varied `seed`, measured a third of what it claimed, and gave
+    a wrong rule (D10-F2).
+  - **The finding (D10-F1): a refused gantry never reaches you.**
+    - The engine keeps rail refusals on the controller, and the
+      `layout_result` does not carry them.
+    - That was safe under D-4, because the only refusal was one your
+      schema already makes unreachable.
+    - A gantry refusal is reachable from a valid Zone. That Zone would be
+      accepted without its railway, and every Check past a mandatory span
+      would be out of reach.
+    - The rule makes it rare in the sample, not impossible.
+  - **Proposal:** a network refused with a mandatory span should fail
+    the layout, so the Zone is recomposed and not played. There are two
+    shapes, and the choice is yours, since the protocol is:
+    - (a) `LayoutResult` carries the refusals, and acceptance refuses on
+      a mandatory one;
+    - (b) the engine sends `build_failed` for it (the NO-LAYOUT path).
+      This only works if a retry does not recompose the same room, or it
+      fails the same way.
+
+    The engine half is mine either way.
 
 ## Evidence rules (PROD_START)
 
@@ -3754,3 +3804,141 @@ Design 5 §15.2's exact effects:
   four. When Dess declares them, a self-anchor holds you against every
   shove in the room, and an anchored crate stays put, in the air if that
   is where it was.
+
+## 0.4 — D-10 (Dess's note; D-6 step 4): which arenas take the measured gantry — measured, and held as a gate
+
+Dess's note D-10: "Please measure whether the gantry fits in the arena
+sizes the composer can produce: the procedural maximum footprint at
+`wall_height` 8.0, and the 24 m arena you found works, each with the
+track crossing the room on the arrival axis, as the three-dock S1–S2–S3
+layout would lay it. With the smallest size that fits, the composer
+takes its room choice from your numbers, not from a guess."
+
+- **What was measured** (`godot-gantry-census`, new):
+  - the three-dock layout that `godot-rail-gantry` builds, run through
+    the real `ZoneController`, with the arena at `wall_height` 8.0;
+  - at each size, 168 layouts: 24 arena chamber ids × 7 chain shapes.
+    - The props are seeded by the arena's chamber id.
+    - The chain's shape is seeded by the zone id. A corner may turn the
+      chain before the arena, after it, or both, the second turning
+      back, and that gives seven shapes.
+    - `0/0` is the track on the arrival axis, straight through: the case
+      D-10 names. The other six are what the engine lays for other zone
+      ids.
+  - Whether a gantry stands is the engine's own answer
+    (`RailNetworks.gantry_frame`).
+- **The answer.** Each cell is the number of the 168 sampled layouts
+  that take the gantry. · means not measured. In bold: all 168.
+
+| width ↓ \ depth → | 16 | 18 | 20 | 22 | 24 | 26 | 28 |
+|---|---|---|---|---|---|---|---|
+| 16 | 58 | · | · | · | · | · | 137 |
+| 18 | · | 62 | · | · | · | · | · |
+| 20 | · | · | 125 | · | · | · | 166 |
+| 22 | · | · | 150 | 166 | **168** | **168** | **168** |
+| 24 | · | · | 157 | **168** | **168** | **168** | **168** |
+| 26 | · | · | · | **168** | **168** | **168** | **168** |
+| 28 | 144 | · | **168** | **168** | **168** | **168** | **168** |
+
+  - **Width at least 24 m and depth at least 22 m: every sampled layout
+    takes the gantry.**
+    - That holds at every 2 m point of the range, and at two points off
+      the grid (25.3 × 23.7 and 27.1 × 25.4).
+    - That range is the landmark arena as the fallback composer rolls it
+      (`epsilon/fallback.py`: width 24–28 m, depth 22–26 m), and it
+      includes the procedural maximum, 28 × 28.
+  - **The smallest square is 24 × 24.**
+    - 22 × 22 refuses 2 layouts. Both are room c064, with the chain
+      turned before the arena (`-90/0`, `-90/+90`).
+    - In both, every position that passed the room, track and clearance
+      tests was within the base kit's reach (62 and 105 of them).
+      Nearest the arrival, a jump from a surface 2.6 m up (1.8 m in the
+      other) lands on the deck.
+    - 22 × 24 and 24 × 22 take all 168.
+  - **On the arrival axis alone (`0/0`, D-10's case),** 22 × 22 takes
+    all 24, as does every measured size with both spans at least 22 m.
+  - **Below that:** a 20 m span refuses somewhere, except at 28 × 20. At
+    16 × 16, 58 of 168 layouts take the gantry.
+- **It is a sample and a grid, stated as one.** The claim covers 168
+  layouts per size, at the sizes in the table. The fallback rolls to
+  0.1 m, and a size between the measured points is not measured. What
+  happens when a composed Zone refuses is D10-F1.
+- **D10-F2 (my census): the Zone's `seed` field is not the layout's
+  seed.**
+  - The census's first version varied `seed` (7, 101, 2027) as the
+    chain's axis, and its write-up said that three seeds give three
+    track angles.
+  - Checking that sentence found that nothing in the engine reads
+    `seed`. The chain is seeded by `zone_id|theme`
+    (`zone_builder.gd`), so every layout had been built three times,
+    and every count it gave was a multiple of three
+    (`D-10_census_vacuous_seeds.log`).
+  - The turned chains had never been built. The rule the first census
+    gave, "both spans at least 22 m", was wrong: with them built,
+    22 × 22 refuses 2 of 168 and 20 × 28 refuses 2
+    (`D-10_census_7shapes_first.log`, which fails that rule).
+  - It was found before anything was committed. Its first sabotages
+    (`D-10_sabotages_vacuous.log`) caught what they broke, and the
+    sample they ran on was still a third of what it claimed.
+  - **The census now reads each build's chain shape back from where the
+    Zone put its rooms,** and fails if a zone id did not build the shape
+    it is named for. Sabotage D10-4 is that mistake, remade.
+- **The gate** (`godot-gantry-census`, in CI after `godot-rail-gantry`;
+  `D-10_census.log`, 4 min 15 s):
+  - 13 sizes × 168 layouts:
+    - the landmark's range at every 2 m point;
+    - the two points off the grid;
+    - 28 × 28;
+    - and the control, 16 × 16.
+  - It fails if an arena at least 24 m wide and 22 m deep refuses any
+    sampled layout (`GANTRY_ROOM_MIN_WIDTH`, `_DEPTH`: the composer's
+    rule, which follow Dess's choice).
+  - It fails if the control refuses none, since then the census cannot
+    see a refusal. It refuses 110.
+  - It fails if a zone id builds a chain shape other than its own.
+  - `--census-sizes=24x22,26x22` measures any other sizes on request.
+  - The boundary table above comes from two more runs:
+    `D-10_census_7shapes_first.log` (squares and long arenas) and
+    `D-10_boundary.log` (16 sizes around the edge, each refusing layout
+    named).
+- **Sabotages** (`D-10_sabotages.log`), each restored byte for byte
+  (sha256):
+
+| # | Rule broken | Caught by |
+|---|---|---|
+| D10-1 | the margins tripled (0.5 → 1.5 m) | "the composer's rule": 24 × 22 takes 145 of 168, and six sizes in all break it |
+| D10-2 | the placement search three times coarser (1 → 3 m) | "the composer's rule": 24 × 22 takes 128, and seven sizes in all break it |
+| D10-3 | a gantry that does not fit is left out and its control stands on the ground (a silent fallback) | "the control (16 x 16) refuses no layout: the census cannot see a refusal" |
+| D10-4 | the census's zone ids all one (the D10-F2 mistake, remade) | "the sample did not build the chain shapes it names" |
+
+  4 of 4. The runner is `D-10_sabotage_runner.py.txt`. The first census's
+  two sabotages are kept (`D-10_sabotages_vacuous.log`): they were caught,
+  on a sample a third the size it claimed.
+
+- **The cost:** 89–106 ms per Zone build at the gated sizes, search
+  included, and 61 ms at 16 × 16.
+- **D10-F1, for Dess (N-18): a refused gantry is a silent, unsolvable
+  Zone.**
+  - Rail refusals are kept on the controller (`rail_refusals`), and are
+    not in the `layout_result` the bridge judges.
+  - Under D-4 that was safe, because a refusal could not be reached from
+    a validated Zone: the schema refuses the non-consecutive span, which
+    was the only case.
+  - A gantry refusal can be reached. A schema-valid Zone whose room
+    cannot hold one is built without its railway, and the Checks beyond
+    a mandatory span cannot be reached.
+  - The rule makes that rare in the sample. It cannot make it
+    impossible. N-18 proposes the fix.
+- **Evidence** (`post_playtest_evidence/`):
+  - the gate as committed: `D-10_census.log`;
+  - the boundary: `D-10_census_7shapes_first.log` and `D-10_boundary.log`;
+  - D10-F2: `D-10_census_vacuous_first.log` (12 layouts),
+    `D-10_census_vacuous_seeds.log` (72, a third of them distinct) and
+    `D-10_sabotages_vacuous.log`;
+  - the sabotages: `D-10_sabotages.log` and `D-10_sabotage_runner.py.txt`.
+  - Each census log has the per-build `p3a:` shell-selection lines
+    filtered out, and says how many. The two runs made by hand also have
+    the make target's own filter applied.
+- **What the owner will notice:** nothing yet. It is what lets the
+  composer, D-6 step 4, put the Blindside gantry in a room the engine
+  will build.

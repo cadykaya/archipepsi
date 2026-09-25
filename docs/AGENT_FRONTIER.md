@@ -429,13 +429,29 @@ owner's D-06/D-07 rulings and the seam table are in
       - The gate is Dess's: N-17 asks for the four targets in
         `SUPPORTED_STATUS_TARGETS`. Until then nothing applies them in
         play.
+    - **D-10 answered: which arenas take the gantry** (`godot-gantry-census`,
+      new, in CI).
+      - 168 layouts per size: 24 room ids × the 7 shapes the chain can
+        take.
+      - Every measured arena at least 24 m wide and 22 m deep takes the
+        gantry in all 168. That is the fallback landmark's range, and it
+        includes 28 × 28. 24 × 24 is the smallest square; 22 × 22 refuses 2.
+      - The census holds that rule as a gate, with a control and a check
+        on its own sample.
+      - D10-F2: my first census varied the Zone's `seed`, which the engine
+        never reads. It measured a third of what it claimed and gave a
+        wrong rule (22 m); this was caught before the commit.
+      - D10-F1 (N-18): a refused gantry never reaches the bridge, so a
+        valid Zone could be accepted without its railway. The fix
+        proposed is Dess's to choose.
     - **Next:** H-MACHINE-LIFE (O05-10.4's repeated lifecycle counters
       first; then power loss and a constrained assembly, which need a
       real powered occurrence), then H-RAIL-BREADTH (branching and
       switchable railways, accepted and unbuilt; DESS-01 lists what they
       need). H-STATUS continues after N-17 with O05-09.1's material rows
       (slippery, conductive, brittle) and O05-09.2's actor behaviour.
-      Dess's step 4, the composer, has the gantry to compose.
+      Dess's step 4, the composer, has the gantry and its room rule
+      (N-18).
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 
