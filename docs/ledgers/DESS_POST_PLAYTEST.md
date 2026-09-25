@@ -1425,6 +1425,7 @@ is ×1.18.
 | N-8 (the held route) | `60170f9` | `compose_latched_route.py --form held` | you: play it across a real restart |
 | N-10 (H-PASSING) | `60170f9` | `passing_zone.json` and the `dump-passing` recipe | you: `make passing-fixture`, and the hosted suite into CI |
 | N-11 (H-INVENTORY) | `60170f9` | refusals keyed `slot_action:<slot>:<id>` | nothing |
+| D-6 steps 1 and 2 (H-BLINDSIDE) | `9bed879` | `RailSpan.control_placement`; the gantry room rule; rides in the search; D-03 beyond a gantry | you: step 3, the gantry placement (D-9); then Dess's step 4 |
 
 ## Replies to Prod's N-12 to N-15 (at `7166b35`)
 
@@ -1462,3 +1463,110 @@ is ×1.18.
     is the reading that can never create progression, and the bridge
     already records a latch only from a firing the runtime reports
     (`record_latch`).
+
+## D-6 steps 1 and 2 — Blindside's gantry field and the rail search (`9bed879`; Prod's N-14 handed it back)
+
+**Step 1, the field** (`schemas/zone.py`):
+- `RailSpan.control_placement` is `ground` (the default, and every span
+  declared before it) or `gantry`.
+- What operating it needs is derived, never declared:
+  `CONTROL_PLACEMENT_CAPABILITY["gantry"]` is `grapple`, DESS-26's anchor
+  grapple, whose proven crossing is `FEATURED_REQUIREMENTS["grapple"]`.
+- A gantry must name its room, and that room must be a procedural arena
+  at least `GANTRY_MIN_WALL_HEIGHT` (8.0 m) tall, as N-14 measured.
+  Authored shells are refused until one is measured for a gantry.
+  Clear floor for the deck and the approach stays the engine's measured
+  refusal and the composer's room choice.
+- It is a new field, so no saved Zone can hold a gantry, and the check is
+  safe on load.
+
+**Step 2, a span is a ride** (`topology.py`):
+- Each declared span is a search-only `_RailEdge` between its docks'
+  rooms. A ride binds no doorway and carries no lock (the plug case), and
+  it runs both ways, because the carrier is called back along its route.
+- A span with a control waits on a permanent variable set in the control
+  room, under the handle its latch is recorded by (`network/latch`). For
+  a gantry, that setter needs `grapple`. A span with no control ships
+  commissioned.
+
+**Beyond a gantry, local rewards only (D-03), as D-6 said.** A room
+reached only over a gantry ride, and only because this Zone hands the
+grapple over, holds no Check, no key and not the exit. If the AP logic
+declares the grapple (`declared_capabilities`), the ride is as visible
+to it as any gate, and the ordinary rules answer.
+
+**DESS-28, a material contract conflict for the owner.** Sabotaging the
+gantry scoping found it. The same reasoning applies to any gate that
+only this Zone's own acquisition opens, not just to a gantry:
+- the search places Checks, keys and the exit with the Zone's own
+  acquisition (`_explore_acquiring`);
+- capability events are not in the AP logic yet (H-AP-GATE, deferred by
+  D-03), so the logic cannot see that such a gate needs the capability;
+- §29.5a (2026-09-05) forbids AP-relevant content behind an undeclared
+  gate.
+
+But P02's case C was designed as exactly that: "you will be able to do
+this because you acquire it here", with the exit past the gate. Its
+tests say so (`test_featured_acquisition.py`, case C), and so does
+D-8's composer when a Zone features an acquisition (three
+`test_cross_room_composer.py` cases).
+
+I tried the general rule and it held everywhere else: 2 P02 tests and 3
+composer tests changed, and nothing else. I reverted it, because it
+overturns an accepted design, and D-03 speaks of Blindside's gate. No
+production path composes a featured acquisition today, so the conflict
+is latent until something does. The options:
+- **(a) Generalise §29.5a now** *(recommended)*. Until H-AP-GATE, an
+  in-Zone acquisition may gate only local rewards. P02's case C and
+  D-8's featured composer apply to non-AP content, and their tests are
+  rewritten to that. A spine gate can never qualify, because it always
+  has the exit behind it.
+- **(b) Keep case C as designed.** Accept that, until H-AP-GATE, the AP
+  logic does not see these gates, and add the gantry rule alone, as
+  now.
+- **(c) Something else** you prefer.
+
+**Suites:** the bridge suite gives 2251 passed and 4 skipped; `check_packet` is clean.
+
+**No existing test changed.**
+
+**New tests** (`test_rail_gantry.py`, 14):
+- the field and its derivation;
+- a gantry's room, too low or unnamed;
+- a room reached only by riding;
+- a ride that waits for its control;
+- a span that ships commissioned;
+- the latch's handle, and a setter that needs the grapple;
+- a gantry as a gate the AP logic must declare;
+- no Check beyond a gantry opened by the Zone's own grapple;
+- local rewards only there, which is sound;
+- a ground lever imposing nothing.
+
+**Sabotages.** Each one failed by name and was restored byte-for-byte:
+
+| # | rule removed | caught by |
+|---|---|---|
+| R1 | rides not searched | six ride and gate cases |
+| R2 | a ride ignoring its control | the waiting, gate and D-03 cases |
+| R3 | a gantry needing nothing | the latch, gate and D-03 cases |
+| R4 | no rule beyond a gantry | the D-03 case |
+| R6 | a ride one way only | five, via "every room can be left" |
+| R7 | any room holding a gantry | the two height cases |
+| R8 | a gantry with no room | its case |
+
+"Every ride treated as a gantry" is not caught, and cannot be by a test
+that should exist. A ground ride needs nothing, so it is always
+reachable without the acquisition. The scoping matters only for
+non-rail gates, which is DESS-28's open question. A test pinning the
+scoped answer there would enshrine the gap.
+
+**Note D-9 (Dess → Prod), for your step 3:**
+- `RailSpan.control_placement` is in the schema and in
+  `generated/zone.schema.json`. A declared gantry is refused unless its
+  room is a procedural arena of at least 8.0 m, so your build only ever
+  meets rooms your numbers fit.
+- Your step 3, the gantry placement in `RailNetworks`, comes next. My
+  step 4, the composer, follows it.
+- Until then no composer emits a gantry, and D-03 keeps the S3 branch to
+  local rewards: the search now refuses anything AP-relevant there
+  unless the AP logic declares the grapple.

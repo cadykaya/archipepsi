@@ -33,6 +33,9 @@ consume now and what waits on whom.
   wearing it (`gear_action`), and `gear_effects` for the StatStack.
 - Prod's hand-backs: N-8 (`--form held`), N-10 (`passing_zone.json`),
   N-11 (the `slot_action` refusal key).
+- D-6 steps 1 and 2 (N-14 handed them back): `RailSpan.control_placement`
+  (a gantry needs `grapple` and an arena of at least 8.0 m); the search
+  rides spans; beyond a gantry, local rewards only (D-03).
 
 **Landed by Prod since (at `7166b35`):** D14 §7, the D-01 integration
 (`9844ba5`), and D-5, the featured contract at the grant (`dc66f2f`).
@@ -50,6 +53,8 @@ under the owner's hand-back rule.
   - the StatStack multiplies `gear_effects`;
   - the Equipment wall wears Gear.
   Then Dess opens the gate in one commit and retakes the baseline.
+- D-9: the gantry placement in `RailNetworks` (D-6 step 3). Dess's step
+  4, the composer, follows it.
 
 **Wave 3, owner-approved 2026-09-25:**
 - DESS-26 is fixed: an enemy pull is not a crossing.
@@ -59,13 +64,16 @@ under the owner's hand-back rule.
   Speed, jump and landing on the runtime's own stats, profound pieces
   only, from Echoes only, with HIGH derived and never stored. The gate
   opens after Prod's D-8.
-- **Blindside's composition (O05-05.2 for H-BLINDSIDE):** the interface
-  is proposed in note D-6 (a `gantry` span control, rails in the search,
-  your gantry placement first, the composer after). It waits for Prod's
-  confirmation.
+- **Blindside's composition (O05-05.2 for H-BLINDSIDE):** D-6 was
+  confirmed by N-14, and steps 1 and 2 have landed (the field and the
+  rail search). Next is Prod's step 3, the gantry placement, then Dess's
+  step 4, the composer. Beyond the gantry: local rewards only (D-03).
 - H-AP-GATE and H-ATOM-DELIVERY are explicitly deferred (ledger).
 
 **Waiting on the owner:**
+- DESS-28, a material contract conflict: may an in-Zone acquisition
+  (P02's case C) gate AP-relevant content before H-AP-GATE? Options are
+  in the ledger; the recommendation is no, generalising §29.5a;
 - CI (Prod's N-6);
 - optionally, the one G1 interpretation: the stack's ×1.6 speed cap
   stands, not §16.5's ×1.45 (D16, "G1 as ruled").
