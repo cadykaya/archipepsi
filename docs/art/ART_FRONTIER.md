@@ -2306,8 +2306,33 @@ panels use the `dead` ramp provisionally. See the report.
 shared circuit / blocked-exit / control symbols; page arrows. Item and
 state art waits on Production's real slot vocabulary, per ruling 3.
 
-### Next: Track D, then Track B
+### Track D — DONE for T01 + T05. Rows are in the descriptor.
 
-D consumes D-11 — `pack_textures` rows for **T01 + T05** at `candidate`
-status, validated by `theme_packs.pack_table_problems`. Then B, the
-distance-readable enemy lineup.
+Each pack ships `wall`, `floor` and `accent` of its own
+(`tools/blender/packmaterials.py`, built by `build_pack_materials.py`)
+and yields every other role to `temple_ruin`. Six rows, keyed
+`<pack>/<theme>/<role>`, emitted by `verify_theme_set.py --write` with
+the same schema function that builds a family row.
+
+Two gates, neither holding this lane's own opinion of D-11:
+
+* `tools/content/check_pack_table.py` fetches Production's
+  `theme_packs.py` read-only and runs `pack_table_problems` on the real
+  descriptor; it also asserts the rows are THERE, because a descriptor
+  with no pack table is legal and reports no problems.
+* `tools/content/run_pack_resolution.sh` resolves every row through
+  Production's own `ThemePack` in the engine, and asserts the thing
+  that matters: **a candidate does not bind** and the family answers.
+
+Evidence: `docs/art/review/packs_2026-09-24/` — one shell, three skins.
+Three questions for the owner are in its README.
+
+**Status is not this lane's to grant.** `candidate` means "rows exist in
+the art lane's exported descriptor"; `THEME_PACK_STATUS` is Production's
+and stays `{}`.
+
+### Next: Track B
+
+The distance-readable enemy lineup, judged without audio, captions,
+collider overlays or studio lighting. C stays blocked on the revised
+machinery/puzzle bounds; E stays reserve.

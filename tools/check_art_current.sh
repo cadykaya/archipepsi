@@ -333,6 +333,20 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
 
     tools/content/run_nine_slice.sh"
 
+  # Track D. The rows being legal D-11 (section 3b) and the engine
+  # actually resolving them that way are different claims. This is the
+  # second, through Production's own ThemePack -- including the one that
+  # matters most: a candidate pack does NOT bind, and the family
+  # answers instead.
+  say "game-pack rows through Production's own resolver..."
+  tools/content/run_pack_resolution.sh >/dev/null 2>&1 || \
+    fail "packres: a pack row no longer resolves as D-11 says -- it binds
+    while unregistered, the family stopped answering for a candidate, a
+    row's declared size or coverage does not match the texture, or the
+    review override leaked. Run
+
+    tools/content/run_pack_resolution.sh"
+
   # A13. Batch 043 drew Design 6 §15.2's thirteen statuses and checked
   # every example against §15.2's own target lists, which is the right
   # check against the design and not a check against the engine. This is
@@ -517,7 +531,8 @@ for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
            run_yardkit_fit.sh run_skiff_sweep.sh \
            run_enemy_readiness.sh run_roomkit_fit.sh \
            run_connect_fit.sh run_projectile_legibility.sh \
-           run_font_import.sh run_nine_slice.sh; do
+           run_font_import.sh run_nine_slice.sh \
+           run_pack_resolution.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."
