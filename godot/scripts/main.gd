@@ -16,6 +16,10 @@ var inventory: InventoryLayer
 var shop: ShopUI
 var station_panel: StationPanel
 var pause_menu: PauseMenu
+## H-3D-SHELL (CP3): the one pause interface, four walls of a box. The
+## pause menu and the inventory are its first two walls, unchanged in what
+## they say and send.
+var menu_shell: MenuShell
 var debug: DebugOverlay
 ## F5, review-only. See `nav_schematic.gd`: not a map feature, and
 ## nothing in the game reads it.
@@ -104,6 +108,7 @@ const DRIVERS := {
 	"--held-route": preload("res://tests/held_route_driver.gd"),
 	"--counterfire-hosted": preload("res://tests/counterfire_hosted_driver.gd"),
 	"--passing-hosted": preload("res://tests/passing_hosted_driver.gd"),
+	"--menu-shell": preload("res://tests/menu_shell_driver.gd"),
 	"--reversible": preload("res://tests/reversible_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
@@ -342,12 +347,14 @@ func boot() -> void:
 	reveal = RevealLayer.new()
 	reveal.tones = tones
 	add_child(reveal)
+	menu_shell = MenuShell.new()
+	add_child(menu_shell)
 	inventory = InventoryLayer.new()
-	add_child(inventory)
+	menu_shell.page_viewport("equipment").add_child(inventory)
 	shop = ShopUI.new()
 	add_child(shop)
 	pause_menu = PauseMenu.new()
-	add_child(pause_menu)
+	menu_shell.page_viewport("settings").add_child(pause_menu)
 	station_panel = StationPanel.new()
 	add_child(station_panel)
 	debug = DebugOverlay.new()
@@ -370,7 +377,10 @@ func boot() -> void:
 	# is invented here and `abandon_zone` is not reachable from a
 	# station.
 	station_panel.return_to_hub_chosen.connect(_on_return_to_hub)
-	pause_menu.resumed.connect(_update_modal)
+	# RESUME, RETURN TO HUB and ABANDON all end in the pause menu's own
+	# `close()`, and that closes the whole interface.
+	pause_menu.resumed.connect(_close_menu)
+	menu_shell.closed.connect(_on_menu_closed)
 	pause_menu.return_to_hub_requested.connect(_on_return_to_hub)
 	pause_menu.abandon_confirmed.connect(_on_abandon)
 
@@ -599,10 +609,31 @@ func _to_hub() -> void:
 	_update_modal()
 
 func _toggle_inventory() -> void:
+	if menu_shell.is_open():
+		menu_shell.close()
+	else:
+		_open_menu("equipment")
+	_update_modal()
+
+
+## Escape opens it on Settings and Tab on Equipment. Once it is open the
+## shell owns those keys itself (Escape closes it; Tab turns to Equipment
+## and closes it from there), so this only ever opens.
+func _open_menu(page: String) -> void:
+	pause_menu.open(view == View.ZONE)
+	inventory.open()
+	menu_shell.open(page)
+
+
+func _close_menu() -> void:
+	menu_shell.close()
+	_update_modal()
+
+
+func _on_menu_closed() -> void:
+	pause_menu.visible = false
 	if inventory.visible:
 		inventory.close()
-	else:
-		inventory.open()
 	_update_modal()
 
 func _toggle_shop() -> void:
@@ -1010,20 +1041,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if view == View.MENU:
 		return
 	if event.is_action_pressed("pause"):
-		if inventory.visible:
-			inventory.close()
-		elif shop.visible:
+		if shop.visible:
 			shop.close()
-		elif pause_menu.visible:
-			pause_menu.close()
-		else:
-			pause_menu.open(view == View.ZONE)
+		elif not menu_shell.is_open():
+			_open_menu("settings")
 		_update_modal()
 	elif event.is_action_pressed("inventory"):
-		if inventory.visible:
-			inventory.close()
-		else:
-			inventory.open()
+		if not menu_shell.is_open():
+			_open_menu("equipment")
 		_update_modal()
 	elif event.is_action_pressed("cycle_echo"):
 		_cycle_echo(1, _highlighted_slot())
@@ -1091,7 +1116,7 @@ func _refresh_nav() -> void:
 			zone.stations_reached(), zone.current_room())
 
 func _update_modal() -> void:
-	var modal: bool = pause_menu.visible or inventory.visible \
+	var modal: bool = menu_shell.is_open() \
 			or shop.visible or reveal.visible or station_panel.visible
 	var player: Player = null
 	if hub != null:
@@ -1106,7 +1131,7 @@ func _update_modal() -> void:
 		else:
 			player.release("modal")
 	hud.set_crosshair_visible(not modal)
-	if view == View.MENU or pause_menu.visible or inventory.visible \
+	if view == View.MENU or menu_shell.is_open() \
 			or shop.visible or station_panel.visible:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:

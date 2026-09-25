@@ -193,12 +193,23 @@ owner's D-06/D-07 rulings and the seam table are in
     of 74 steps. The one failure was the CI-coverage test finding
     `godot-passing-hosted` unlisted; it was fixed at `22f59c1`, and
     `make test` there passes 2,221.
-  - **Next: CP3.**
-    - `H-3D-SHELL` is in progress: a real box of four walls in its own
-      World3D, the camera turning between them.
-    - Then `H-PAUSE`.
-    - `H-INVENTORY` waits on Arty's `H-GLYPH-KIT`. Dess's `H-UI-DATA`
-      (`CampaignSnapshot.inventory`) is in.
+  - **CP3:**
+    - `H-3D-SHELL` (V-18): **landed.**
+      - A box of four walls in its own World3D, with the camera turning
+        between them: left goes Settings, Equipment, Map, Journal.
+      - The pointer reaches the front page by geometry, with no physics.
+      - Q/E, the bumpers and the on-screen arrows turn it; Escape
+        closes it; Tab opens it on Equipment.
+      - Reduced motion is a cut.
+      - In the game, the pause menu and the inventory are its first two
+        walls.
+      - `godot-menu-shell` (new, in CI, 18 checks) covers it headless,
+        and `godot-candidate-live` drives it through real input.
+        `make menu-shell-shots` renders it.
+      - MS-1 to MS-8 each fail by name.
+    - **Next: `H-PAUSE`,** the world stopped behind the shell. Then
+      `H-INVENTORY`, which waits on Arty's `H-GLYPH-KIT`. Dess's
+      `H-UI-DATA` (`CampaignSnapshot.inventory`) is in.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

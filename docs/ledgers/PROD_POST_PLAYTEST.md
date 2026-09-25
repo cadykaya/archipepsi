@@ -1398,3 +1398,125 @@ runs found; both changes are measured below.
 - **CP2 is closed.** As at CP1, the frontier was not re-run in full for
   a change to a test's list. These are local results; remote CI was not
   polled.
+
+## CP3 — `H-3D-SHELL` (V-18): the pause interface in real 3D — landed
+
+`04_3D_MENU_MAP_AND_GLYPH.md` §1 and §3: four inward-facing pages in
+actual 3D space, the owner's inside of a box. Turning left proceeds
+Settings, Equipment, Map, Journal and back to Settings; right reverses
+it. Not a picture on a rectangle, not a cube seen from outside, and not
+a flat tab strip squeezed to nothing.
+
+- **Before:** Escape opened a flat pause panel, and Tab a separate flat
+  inventory. Both were `CanvasLayer`s over the game, with nothing 3D.
+- **What was built** (`godot/scripts/ui/menu_shell.gd`, new):
+  - **A box in its own `World3D`** (a SubViewport with `own_world_3d`).
+    It has four walls, a floor, a ceiling and corner pillars. The camera
+    stands at the centre. Nothing of the dungeon is in it: walls,
+    lights, physics or field of view.
+  - **A turn is the camera turning,** a quarter turn eased over 0.42 s.
+    At rest the front wall faces the camera squarely and fills 86% of
+    the view's height. With `motion_intensity` at 0 (the existing
+    motion-sickness option) a turn is a cut instead, through the same
+    walls in the same order.
+  - **Live pages.** Each wall shows its own SubViewport's texture, with
+    an ordinary Control tree in it.
+  - **The pointer is carried by geometry.** The ray from the camera
+    through the pointer, met with the front wall's plane, gives the page
+    pixel the event is pushed to. There is no physics query: H-PAUSE
+    must not need the physics server to make a menu clickable.
+    - Clicks during a turn are dropped.
+    - A focused text field keeps its letters: Q and E type there and do
+      not turn.
+  - **Input:**
+    - Q and E, or the gamepad bumpers (`menu_page_left` /
+      `menu_page_right`, new actions), turn the box;
+    - large on-screen arrows turn it too;
+    - Escape closes it from any wall;
+    - Tab turns to Equipment, and closes from there.
+  - **The two walls not built yet say so:** "The map is not built yet
+    (H-3D-MAP). This wall holds its place." Likewise the journal.
+  - **In the game** (`main.gd`), the pause menu and the inventory are its
+    first two walls, unchanged in what they say and send. Escape opens
+    it on Settings and Tab on Equipment. RESUME, RETURN TO HUB and
+    ABANDON each close it; the named `modal` hold still applies.
+- **Played** (`godot-menu-shell`, new, in CI, 18 checks;
+  `H-3D-SHELL_after.log`). Every click and key there is an `InputEvent`
+  parsed into the engine.
+  - **The box:**
+    - its own World3D;
+    - four walls, each 1.0 m from the camera at the centre and facing it
+      squarely.
+  - **The order:** left, right and by the on-screen arrows.
+  - **A turn is a turn:**
+    - the camera's yaw runs monotonically from 0 to 90 degrees;
+    - no wall moves, turns or scales;
+    - halfway round, two walls are in view.
+  - **At rest:** the front wall is square and fills 0.86 of the height.
+  - **The pointer:**
+    - a click where the Settings button is drawn presses it;
+    - the same point, with Equipment in front, presses Equipment's
+      button and not Settings';
+    - mid-turn, a click where the arriving wall's button is drawn at that
+      moment presses nothing, and the same button is pressed once the
+      turn is at rest.
+  - **The keys:** a clicked text field types "qe"; Tab and Escape
+    behave as above.
+  - **Reduced motion:** a cut, in order.
+- **In the real game, through the real bridge** (`godot-candidate-live`,
+  whose `next` phase abandons a Zone from the pause menu;
+  `H-3D-SHELL_candidate_live.log`). Real Escape and Tab actions go
+  through the input pipeline. Three new checks:
+  - Escape opens the interface on its Settings wall with the pause menu
+    drawn there, and the player is held;
+  - Tab turns it to the Equipment wall, with the inventory drawn there;
+  - after ABANDON ZONE and CONFIRM ABANDON, it closes behind the abandon
+    and the player is released.
+  All eight phases are green.
+- **What it draws** (`make menu-shell-shots`, xvfb and OpenGL at 1280 by
+  720; `H-3D-SHELL_shots/`):
+  - the four walls at rest, and the frame halfway from Settings to
+    Equipment;
+  - each is at least 93% page or box, not background.
+  - The pages read unmirrored, and the turn shows both walls in
+    perspective from inside the box.
+- **Found and fixed on the way:**
+  - A headless window is 64 by 64 whatever `project.godot` says. At that
+    size the left arrow covered the centre of the page, so the driver
+    sizes its window to 1280 by 720.
+  - In Godot 4, `position` is from the parent's corner, not from the
+    anchor, and it put both arrows above the screen. They are now placed
+    by offsets from their anchors.
+  - Each wall is narrower than the box's side, so the thin corner posts
+    left a gap that showed mid-turn. The corners are now pillars that
+    meet both walls' edges.
+- **Sabotages** (`H-3D-SHELL_sabotages.log`), each restored byte for
+  byte. The sabotage run came before the pillars' colour changed, which
+  is the only change since.
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| MS-1 | the pointer always reaches the first wall | "the same point, with Equipment in front, presses Equipment's button", and three more |
+| MS-2 | a turn is a cut, not a turn | "the camera's yaw runs monotonically ... over 1 frame" and "halfway round, both in view" |
+| MS-3 | a focused text field loses Q and E | "a clicked text field keeps Q and E" |
+| MS-4 | the order reversed (left turns right) | "turning LEFT visits ...", the reduced-motion order, and the pointer checks that depend on it |
+| MS-5 | clicks reach the page mid-turn | "a click in the middle of a turn ... presses nothing", **after** the check was strengthened (below) |
+| MS-6 | the box in the dungeon's world | "the box renders in its own World3D" |
+| MS-7 | Escape does not close it | "Escape closes it from any wall" |
+| MS-8 | the walls face out of the box | "four walls ... facing it squarely", and the square-at-rest check |
+
+- **A check that passed for the wrong reason:** MS-5 first **passed**.
+  The mid-turn click landed where the arriving wall had no button, so
+  "presses nothing" held with or without the guard. The check now puts
+  a button on the arriving wall and clicks where it is drawn 70% of the
+  way through the turn. MS-5 fails it, and the unsabotaged shell passes
+  it.
+- **What it is not yet:**
+  - The world behind it does not pause: that is `H-PAUSE`, next.
+  - The pages are the old flat UIs drawn on the walls, in the engine's
+    default theme. The equipment face on Glyph assets is `H-INVENTORY`,
+    which waits on Arty's `H-GLYPH-KIT`; the arrows and panels are
+    Glyph's to supply.
+  - The map and journal walls are placeholders that say so.
+  - The owner has not seen it in-engine; usability and visual approval
+    stay open.

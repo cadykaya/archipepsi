@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted godot-menu-shell menu-shell-shots lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -1189,6 +1189,24 @@ godot-passing-hosted: godot-import  # EX50-011 hosted, played
 	printf '%s\n' "$$out" | grep -q "GODOT PASSING HOSTED OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
 	  echo "godot-passing-hosted: script errors in the run"; exit 1; fi
+
+# H-3D-SHELL (CP3, V-18): THE PAUSE INTERFACE IN REAL 3D. Four walls of a
+# box in its own World3D, the camera turning between them (left: Settings,
+# Equipment, Map, Journal), the pointer carried to the front page by
+# geometry, the keys, and reduced motion as a cut. `menu-shell-shots`
+# renders it for real under xvfb and writes the frames to SHOTS_DIR.
+godot-menu-shell: godot-import  # the 3D shell: box, order, turn, input
+	@out=$$($(GODOT) --headless --path godot -- --menu-shell 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT MENU SHELL OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-menu-shell: script errors in the run"; exit 1; fi
+
+SHOTS_DIR ?= /tmp/archipepsi-menu-shell
+menu-shell-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --menu-shell --shots=$(SHOTS_DIR) 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
 # D13 1d / Dess's D-4: A DOORWAY HELD OPEN BY A DECLARED WEIGHT, on
 # `held_route_zone.json` (`make held-route-fixture`). The real player

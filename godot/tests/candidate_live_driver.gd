@@ -1112,23 +1112,66 @@ func _standing_on(body: Player, machine: Node3D) -> bool:
 			and (under as Node).get_parent() == machine)
 
 
-## The in-Zone pause menu, as a player works it: ABANDON ZONE..., then
-## CONFIRM ABANDON -- each the menu's own button, pressed.
+## The in-Zone pause menu, as a player works it: Escape opens the pause
+## interface (H-3D-SHELL) on its Settings wall, which is the pause menu;
+## Tab turns it to Equipment, where the inventory is, and E back; then
+## ABANDON ZONE..., then CONFIRM ABANDON -- each the menu's own button,
+## pressed -- and the interface closes behind the abandon.
 func _abandon_from_the_pause_menu(zone_id: String) -> bool:
+	var shell: MenuShell = main.menu_shell
 	var menu: PauseMenu = main.pause_menu
-	menu.open(true)
-	await get_tree().process_frame
-	var armed := _press_button(menu, "ABANDON ZONE")
+	var player: Player = main.zone.player if main.zone != null else null
+	await _action_event("pause")
+	_check(shell.is_open() and shell.front() == "settings" and menu.visible
+			and menu.get_viewport() == shell.page_viewport("settings")
+			and player != null and player.held_by("modal"),
+			"Escape opens the pause interface on its Settings wall, the "
+			+ "pause menu drawn there, and the player is held")
+	await _action_event("inventory")
+	await _shell_at_rest(shell)
+	_check(shell.front() == "equipment" and main.inventory.visible
+			and main.inventory.get_viewport()
+				== shell.page_viewport("equipment"),
+			"Tab turns it to the Equipment wall, the inventory drawn there")
+	await _action_event("menu_page_right")
+	await _shell_at_rest(shell)
+	var armed := shell.front() == "settings" \
+			and _press_button(menu, "ABANDON ZONE")
 	await get_tree().process_frame
 	var confirmed := armed and _press_button(menu, "CONFIRM ABANDON")
 	_check(armed and confirmed, "the pause menu's ABANDON ZONE, then "
 			+ "CONFIRM ABANDON, pressed")
 	if not confirmed:
 		return false
+	await get_tree().process_frame
+	_check(not shell.is_open() and (player == null
+			or not is_instance_valid(player) or not player.held_by("modal")),
+			"and the pause interface closes behind the abandon, the player "
+			+ "released")
 	var offering := func() -> bool:
 		return BridgeClient.hub_mode() == "ZONE_AVAILABLE" and main.hub != null
 	return await _await_live("%s abandoned, the Hub offering a new Zone"
 			% zone_id, offering, 30.0)
+
+
+## An action as a device delivers it: an event through the engine's input
+## pipeline, so `_input` and `_unhandled_input` see it. (`Input.action_press`
+## only sets what polling reads.)
+func _action_event(action: String) -> void:
+	for down: bool in [true, false]:
+		var event := InputEventAction.new()
+		event.action = action
+		event.pressed = down
+		Input.parse_input_event(event)
+		await get_tree().process_frame
+	await get_tree().process_frame
+
+
+func _shell_at_rest(shell: MenuShell) -> void:
+	var deadline := Time.get_ticks_msec() + 3000
+	while shell.is_turning() and Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
+	await get_tree().process_frame
 
 
 func _press_button(root: Node, prefix: String) -> bool:

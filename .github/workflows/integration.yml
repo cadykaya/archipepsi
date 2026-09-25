@@ -164,6 +164,7 @@ jobs:
           make godot-flyer-room
           make godot-resume
           make godot-minor-claim
+          make godot-menu-shell
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live
