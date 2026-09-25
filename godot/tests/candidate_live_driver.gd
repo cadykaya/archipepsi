@@ -438,6 +438,18 @@ func _play() -> void:
 	var into := await _walk_into(controller, consumer_room)
 	_check(bool(into["inside"]) and player.carry.holding(),
 			"carried across the connector into %s" % consumer_room)
+	# H-MINIMAP, live: the cell in hand is not the door powered. The
+	# bridge's map says so, and the minimap draws it as a blocker in the
+	# power circuit's colour.
+	var door_edge := str(cell_edge.get("edge_id", ""))
+	var carried_gate := _map_gate(door_edge)
+	var drawn := _minimap_row(door_edge)
+	_check(str(carried_gate.get("state")) == "blocked"
+			and str(drawn.get("state")) == "blocked"
+			and str(drawn.get("symbol")) == "P",
+			"H-MINIMAP: carrying the cell, the bridge's map has %s " % door_edge
+			+ "blocked ('%s') and the minimap draws a P blocker there"
+			% str(carried_gate.get("reason")))
 	await _approach(controller, socket, 1.4, socket.global_position
 			+ Vector3(0.0, ObjectSocket.BASE.y * 0.6, 0.0))
 	_check(player._last_prompt == "[E] INSTALL",
@@ -460,6 +472,21 @@ func _play() -> void:
 	_check(cell_open and bool(through["inside"]),
 			"the cell's doorway opened and the player walked into %s"
 			% cell_beyond)
+	var mapped_open := await _await_live("the bridge's map to open %s"
+			% door_edge, func() -> bool:
+				return str(_map_gate(door_edge).get("state")) == "open", 10.0)
+	_check(mapped_open and str(_minimap_row(door_edge).get("state")) == "open",
+			"H-MINIMAP: installed, the bridge's map opens %s and the " % door_edge
+			+ "minimap follows it")
+	var walked: Array = controller.rooms_entered().keys()
+	var discovered := await _await_live("the bridge to record every room "
+			+ "walked", func() -> bool:
+				var known := _map_discovered()
+				return walked.all(func(r: Variant) -> bool:
+					return known.has(str(r))), 10.0)
+	_check(discovered and walked.size() >= 3,
+			"H-MINIMAP (D-2): every room walked is discovered in the bridge's "
+			+ "map (%d: %s)" % [walked.size(), walked])
 	_check(shutters.all(func(sh: Variant) -> bool:
 				return (sh as ServiceShutter).is_shut()),
 			"and any route branch is still shut: nothing here latched it "
@@ -502,6 +529,30 @@ func _restore() -> void:
 			and _intents("object_consumed").is_empty()
 			and _intents("object_transported").is_empty(),
 			"and nothing was announced: the restore reported nothing back")
+	# H-MINIMAP: what was walked before the restart is on the map from the
+	# bridge's record, not from walking it again.
+	var known := _map_discovered()
+	var drawn: Array = main.minimap.rooms_drawn().map(
+			func(r: Dictionary) -> String: return str(r["id"]))
+	var socket_room := str((_zone_data.get("object_consumers", [])
+			as Array)[0].get("room_id", ""))
+	var beyond := str(_edge_for(VARIABLE)["room_b"])
+	_check(known.has(socket_room) and known.has(beyond)
+			and drawn.has(socket_room) and drawn.has(beyond),
+			"H-MINIMAP: after the restart the bridge's map still has %s and "
+			% socket_room + "%s discovered, " % beyond
+			+ "and the minimap draws them (%d rooms drawn)" % drawn.size())
+	# §6: "An accepted permanent opening survives re-entry." The cell was
+	# installed before the restart; its door is open on the bridge's map
+	# now, and the minimap draws it open.
+	var power_edge := str(_edge_for(VARIABLE).get("edge_id", ""))
+	var power_gate := _map_gate(power_edge)
+	var power_row := _minimap_row(power_edge)
+	_check(str(power_gate.get("state")) == "open"
+			and str(power_row.get("state")) == "open",
+			"H-MINIMAP: the power door opened before the restart is open "
+			+ "after it, on the bridge's map (%s) and on the minimap (%s)"
+			% [str(power_gate.get("state")), str(power_row.get("state"))])
 
 
 # ---------------------------------------------------------------------------
@@ -1225,6 +1276,31 @@ func _equip_while_paused() -> void:
 					"component_id": before.get(key)})
 	await _await_live("the loadout put back",
 			func() -> bool: return BridgeClient.slots() == before, 10.0)
+
+
+## The bridge's map, for one connector (`CampaignSnapshot.zone_map`).
+func _map_gate(edge_id: String) -> Dictionary:
+	for raw: Variant in BridgeClient.zone_map().get("connectors", []):
+		if str((raw as Dictionary).get("edge_id", "")) == edge_id:
+			return raw
+	return {}
+
+
+func _map_discovered() -> Dictionary:
+	var out := {}
+	for raw: Variant in BridgeClient.zone_map().get("rooms", []):
+		if bool((raw as Dictionary).get("discovered", false)):
+			out[str((raw as Dictionary).get("room_id", ""))] = true
+	return out
+
+
+## What the HUD's minimap is drawing for one connector.
+func _minimap_row(edge_id: String) -> Dictionary:
+	main.minimap.rebuild()
+	for row: Dictionary in main.minimap.connectors_drawn():
+		if str(row["edge_id"]) == edge_id:
+			return row
+	return {}
 
 
 ## An action as a device delivers it: an event through the engine's input

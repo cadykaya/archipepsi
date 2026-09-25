@@ -245,9 +245,40 @@ owner's D-06/D-07 rulings and the seam table are in
     read the Echo log off the snapshot. Both were fixed at `5f44b5c`,
     where `make test` passes 2,224, with the face and live candidate
     suites green. The Glyph-authored look is still owed (H-GLYPH-KIT).
-  - **CP4 (next): `H-MINIMAP`, then `H-3D-MAP` and `H-JOURNAL`.** They
-    read Dess's `zone_map` (H-MAP-DATA) and send the `room_entered`
-    intent (D-2).
+  - **CP4:**
+    - `H-MINIMAP` (V-20): **landed, on provisional art.**
+      - A map on the HUD in every Zone, north-up and centred on you. It
+        draws:
+        - the rooms found, as their built envelopes;
+        - connectors along their built chains;
+        - blockers in their circuit's colour, with a reason letter: K,
+          P, M, E, or `?` for unknown;
+        - return plugs as rings;
+        - other floors as outlines with a drawn up or down mark.
+
+        The room you're in is named by the bridge (M-3).
+      - It reads Dess's `zone_map` (H-MAP-DATA) and decides nothing.
+        The game now sends `room_entered` (D-2) the first time you
+        stand in a room, and resends it on each snapshot until the
+        bridge's map shows the room.
+      - Reproduced first: 2 of 2 requirements failed on `5f44b5c`.
+        `godot-minimap` (new, in CI, 30 checks) runs on the candidate
+        Zone against `map_view` fixtures (`make map-fixture`, guarded by
+        `test_map_fixture.py`).
+      - The live candidate suite shows the power door blocked while the
+        cell is carried, open once it's installed, and still open after
+        the restart. Every walked room is discovered.
+      - 14 of 14 sabotages fail by name; the first run missed MM-8,
+        which was fixed.
+      - Five findings were repaired before commit, among them:
+        - Godot's default font has no ▲ or ▼, so the floor marks are now
+          drawn shapes;
+        - the evidence screenshots' palette reduction had merged circuit
+          colours, so the evidence is now checked against the raw render.
+      - Still owed: the Glyph look (H-GLYPH-KIT), Arty's circuit family
+        (H-CIRCUITS), and D-3's live "transitioning" overlay (ledger).
+    - **Next: `H-3D-MAP`, then `H-JOURNAL`.** Both read the same
+      `zone_map` through `MinimapModel`.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

@@ -140,6 +140,19 @@ var room_bounds := {}
 ## five approaches off a ledge, because a route that climbs is not flat.
 var room_routes := {}
 
+## `edge_id -> the committed join`: its two sockets and the connector
+## chain between them, each piece with its `entry` and `exit` (H-MINIMAP).
+## The builder's own answer, kept like `room_routes`, so the maps draw a
+## corridor where it actually runs -- turning and climbing -- rather than
+## a straight line between room centres, which is the error the old
+## traversal harness made on a 76 m connector (04 §6).
+var room_joins := {}
+
+## `edge_id -> where a return plug stands`, in world space (H-MINIMAP).
+## A plug is a connector with no corridor: the bridge lists it
+## (`traversal_only`), and the maps mark it where the device is.
+var plug_positions := {}
+
 ## OBJECTS THE PLAYER CARRIES BETWEEN ROOMS (P16). `object_rooms_carried`
 ## is what the snapshot said, assigned before `setup` like every other
 ## carried fact.
@@ -445,6 +458,7 @@ func setup(zone_dict: Dictionary) -> void:
 		_has_bounds = true
 	offer_rooms = build["chambers"]
 	room_routes = build.get("links", {})
+	room_joins = build.get("joins", {})
 	playtime.begin(build["chambers"].size())
 	# THE OFFER BINDING (owner ruling, 2026-09-03). The Zone's root is in
 	# the tree now, so its colliders are about to be real -- one physics
@@ -632,6 +646,7 @@ func setup(zone_dict: Dictionary) -> void:
 	for raw: Variant in build.get("plugs", []):
 		var plug: ReturnPlug = raw
 		plug.traversed.connect(_on_plug_traversed)
+		plug_positions[plug.edge_id] = plug.global_position
 	for raw_key: Variant in build.get("keys", []):
 		var key: ZoneKey = raw_key
 		# A KEY ALREADY COLLECTED IS NOT REBUILT.
@@ -1331,6 +1346,28 @@ func _on_lock_opened(room: String, socket: String) -> void:
 ## construction: `_rooms_entered` starts empty on every `setup`.
 func rooms_entered() -> Dictionary:
 	return _rooms_entered.duplicate()
+
+## D-2's resend. A room this session walked that the bridge's map does
+## not yet show as discovered is reported again -- the record is monotone
+## and a resend is harmless, so a send lost to a dropped link heals on the
+## next snapshot instead of leaving the room off the map for good. Stops
+## by itself: once the map shows the room, it is not in the difference.
+func resend_undiscovered() -> Array:
+	var zone_map: Dictionary = BridgeClient.zone_map()
+	if str(zone_map.get("zone_id", "")) != zone_id:
+		return []
+	var known := {}
+	for raw: Variant in zone_map.get("rooms", []):
+		var row: Dictionary = raw
+		if bool(row.get("discovered", false)):
+			known[str(row.get("room_id", ""))] = true
+	var sent: Array = []
+	for room: Variant in _rooms_entered:
+		if str(room) != "" and not known.has(str(room)):
+			BridgeClient.send_intent({"type": "room_entered",
+					"zone_id": zone_id, "room_id": str(room)})
+			sent.append(str(room))
+	return sent
 
 ## Which room the body is in right now, or "".
 func current_room() -> String:
@@ -2099,6 +2136,7 @@ func _push_objective_state(record: Dictionary) -> void:
 
 ## Called on every campaign snapshot while this Zone is loaded.
 func refresh() -> void:
+	resend_undiscovered()
 	for record: Dictionary in _chambers:
 		var reward: RewardObject = record["reward"]
 		if reward != null:
@@ -2134,7 +2172,13 @@ func _track_chamber() -> void:
 		if bounds.has_point(player.global_position):
 			if index != _current_chamber:
 				_current_chamber = index
-				_rooms_entered[_room_id_of(index)] = true
+				var room := _room_id_of(index)
+				if not _rooms_entered.has(room):
+					# D-2: the room joins the map. Once per session here;
+					# `resend_undiscovered` covers a send that was lost.
+					BridgeClient.send_intent({"type": "room_entered",
+							"zone_id": zone_id, "room_id": room})
+				_rooms_entered[room] = true
 				playtime.enter_chamber(index)
 				playtime.enter_chamber_activities(index)
 				chamber_entered.emit(index)

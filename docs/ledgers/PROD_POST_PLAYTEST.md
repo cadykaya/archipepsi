@@ -1965,3 +1965,283 @@ authority. The wall is built on Dess's `CampaignSnapshot.inventory`
   placeholder; the Glyph-authored look waits on Arty's H-GLYPH-KIT and is
   not claimed. As at CP1 and CP2, the frontier was not re-run in full for
   a fix this size. These are local results; remote CI was not polled.
+
+## CP4 — `H-MINIMAP` (V-20, `04` §6–§7): the map that stays on screen — landed, on provisional art
+
+§7 asks for a map that stays on screen while you explore and fight. It
+shows where you are and which way you face, the connectors near you as
+they actually run, useful known markers, and a floor convention that
+can't be misread. §6 sets the rules it shares with the 3D map:
+
+- shape comes from the built level, never from the overview graph;
+- state comes from the authority, and a colour is never a permission;
+- nothing undiscovered is drawn;
+- a blocker carries its circuit's colour and a symbol for its reason.
+
+The state is Dess's `CampaignSnapshot.zone_map` (H-MAP-DATA). The room
+name follows M-3.
+
+- **Reproduced first**, on `5f44b5c`, with a scratch driver
+  (`H-MINIMAP_repro_driver.gd.txt`; evidence, not a suite). **2 of 2
+  requirements fail** (`H-MINIMAP_before.log`):
+  - **M1:** in a Zone, Main's HUD has 129 controls and none of them is
+    a map. The only map in the game is the F5 review schematic
+    (`NavSchematic`), which is off by default.
+  - **M2:** the player walked c002, c003 and c004 (4 rooms entered,
+    counting the arrival), and `room_entered` was sent for none of
+    them. The bridge's map could not learn a room by walking it (Dess's
+    D-2).
+  - **The control, on the new code: 0 of 2 fail**
+    (`H-MINIMAP_control.log`). The HUD has a `Minimap` among 132
+    controls, and `room_entered` went for c002, c003 and c004. M1's
+    message ends with the same fixed sentence about the F5 schematic in
+    both runs. In the control it is stale text, not a measurement.
+- **What changed:**
+  - **`Minimap`** (new, `godot/scripts/ui/minimap.gd`) sits at the
+    bottom right of the HUD in a Zone and is hidden in the Hub. It is
+    236 px square, north-up and centred on the player, at 3.2 px a metre
+    (about 74 m across). Above it is the name of the room you are in. It
+    draws:
+    - each room you have found as its built envelope, with your own room
+      brighter;
+    - rooms a floor above or below as outlines, with a small triangle
+      pointing up or down;
+    - each connector the bridge lists, along its built path: socket,
+      each piece's entry and exit, socket;
+    - each blocked connector in its circuit's colour, with a diamond
+      halfway along it carrying the reason: K key, P power or setting,
+      M mechanism, E an Echo to equip, and `?` when the state is
+      unknown;
+    - each return plug the bridge lists as a ring where the device
+      stands;
+    - you, as an arrow pointing the way you face.
+  - **`MinimapModel`** (new) holds the rules, with no Control: which
+    rooms and connectors, each path and its midpoint, the reason letter,
+    the circuit colours and the floors.
+  - **`ZoneController`:**
+    - keeps the builder's joins (`room_joins`), as it already keeps
+      `room_routes`, and each plug's position (`plug_positions`);
+    - sends `room_entered` the first time the player stands in a room in
+      a session (D-2);
+    - on every snapshot, sends it again for any room this session walked
+      that the bridge's map doesn't show as discovered
+      (`resend_undiscovered`). The record is monotone and the bridge
+      answers a repeat with nothing, so a send lost to a dropped link
+      heals on the next snapshot, and the resending stops by itself. It
+      only ever names rooms the Zone declares: the builder's exit room
+      is not a chamber, so the bridge's refusal of an undeclared room
+      can't turn into a resend on every snapshot.
+  - **`BridgeClient.zone_map()`**, and **`Main`** binds the minimap to
+    each Zone and unbinds it in the Hub.
+  - **Dess's notes:** this answers D-2 (send `room_entered`) and the
+    minimap's part of D-3 (read `zone_map`). The 3D map and the journal
+    read it next.
+  - **The fixture is real:** `make map-fixture` writes
+    `godot/tests/fixtures/map_snapshot.json`. It holds Dess's
+    `map_view` of the candidate Zone after real transitions
+    (`record_room_entered`, `record_key`, `record_object_transported`,
+    `record_object_consumed`, `record_zone_state`), in seven variants.
+    `bridge/tests/test_map_fixture.py` keeps the JSON equal to its
+    generator and checks that each variant holds the state it is named
+    for.
+  - **The candidate phases now fail on a runtime error.** Each phase
+    of `godot-candidate-live` now fails on "SCRIPT ERROR" or "String
+    formatting error" in its Godot log, as every other Godot suite
+    already did. See the first live run below.
+- **Findings while building it, all repaired before this commit:**
+  - **MM-F1: a pit read as a storey.** The first draft took a room's
+    floor from its envelope's bottom, so a room with a pit sat 70.6 m
+    below the rest. A room's floor is now its arrival height
+    (`room_places`), where a body stands. MM-10 re-breaks it.
+  - **MM-F2: two circuits, one colour.** The first draft coloured a
+    circuit by a hash of its id. In the candidate Zone the span's
+    circuit and the power circuit came out the same colour, which §6
+    forbids ("two unrelated circuits in one place need distinct
+    identity"). Colours are now dealt:
+    - a key circuit keeps its key's colour;
+    - every other circuit takes the next colour from a palette that
+      contains no key colour, in the Zone's declaration order.
+
+    So the power circuit can't read as the green key's door, and a
+    colour never changes as more of the map is found. MM-8 re-breaks it.
+  - **MM-F3: the floor marks would have been blanks.** The first draft
+    typed ▲ and ▼, and Godot's default font has neither (nor ◆ or ↩;
+    checked with `Font.has_char`). §9: "unsupported characters must
+    have a visible fallback rather than blanks". The marks are now
+    drawn triangles. The suite asks what the plate actually drew: every
+    character it typed must be in the font it typed it in. MM-12
+    re-breaks it.
+  - **MM-F4: the return plugs were listed but not drawn.** The model's
+    comment said a plug "is drawn as a marker", but the plate skipped
+    anything without a path, and the suite's "every connector drawn"
+    counted the model's list, not the plate. A plug is now a ring where
+    its device stands, and the suite counts the rings drawn. The bridge
+    lists a plug only once its own room is found: with five rooms found,
+    none of the Zone's eight is drawn. MM-13 and MM-14 re-break it.
+  - **MM-F5: the evidence images lied about colour.** The screenshots
+    were first palette-reduced whole. That merged the red key's blocker
+    and the route shutter's magenta one into a single pink, and in
+    places turned the magenta blocker and the yellow player arrow cyan
+    (29 merged pixels in the c009 frame). The renders were right; the
+    copies were not. The evidence is now made by
+    `H-MINIMAP_shots_evidence.py.txt`:
+    - the full frames are reduced to 256 colours without dithering;
+    - the crops of the map are lossless;
+    - every output is checked against its raw render, and fails if two
+      clearly different colours come out as one.
+  - **Two of the suite's own checks were wrong at first:**
+    - The turning-connector check first assumed a turning corridor is
+      at least 1.2× as long as the line between its ends. That doesn't
+      hold in this Zone. It now measures how far the drawn path strays
+      from that line.
+    - The repro's first M1 looked for the HUD before `Main.boot()` had
+      built it, so it would have failed on any code. It now boots Main
+      first; the before and control runs above are the fixed driver.
+- **Played:**
+  - **`godot-minimap`** (new, 30 checks; `H-MINIMAP_after.log`)
+    runs on the candidate Zone, built for real by `ZoneController`. Each
+    of the fixture's maps is put in the client's snapshot as the
+    bridge's `zone_map`:
+    - **The shapes are the built level.** Every room is drawn as its
+      built envelope (25 of 25). The connector that turns most,
+      e:c004:c005, strays 4.6 m from the line between its ends. It is
+      drawn through 11 points, each the built chain's, in order.
+    - **Entering a room reports it:**
+      - c002 is on the map the moment the player stands in it;
+      - `room_entered` goes once, and walking back in doesn't send it
+        again;
+      - a snapshot whose map lacks c002 resends it, and once the map
+        shows it, nothing is resent.
+    - **The room is named by the bridge** ("Arena 1" for c002), never
+      by the save's id (M-3).
+    - **Nothing undiscovered is drawn:** only rooms found or walked,
+      and only connectors the bridge lists.
+    - **The green circuit:**
+      - carrying the cell, the power door is a P blocker in
+        `state:cell_power`, marked on the connector through the door;
+      - its colour is one no other circuit in the Zone shares: not the
+        green key's, not the span's;
+      - installed, the bridge's map opens it and the map follows;
+      - five declared circuits get the palette's five colours, in
+        order.
+    - **A reversible closure comes back:** the span reads open lowered
+      and blocked when put back.
+    - **You are the centre,** north-up, at 3.2 px a metre.
+    - **Floors:**
+      - c001, c009 and c021 sit at their arrival heights (c009 at
+        31.6 m);
+      - a 1 m step is the same floor, and 3 m up or down is another;
+      - from c001, 14 rooms are on other floors, and exactly that
+        many triangles are drawn.
+    - **Every character on the map is in its font.**
+    - **The ways back:** each of the 8 plugs the bridge lists is a
+      ring at its device, and none is drawn before it is listed.
+  - **`godot-candidate-live`**, through the real bridge in a real Zone
+    (`H-MINIMAP_candidate_live.log`, all 9 phases green):
+    - carrying the cell, the bridge's map has e:c005:c006 blocked ("set
+      by a control in Arena 2"), and the minimap draws a P blocker
+      there;
+    - installed, the bridge's map opens it and the minimap follows;
+    - every room walked is discovered in the bridge's map: c001 to
+      c006. This is D-2 end to end;
+    - after the restart, the bridge's map still has c005 and c006
+      discovered, and the minimap draws them;
+    - after the restart, the power door is still open on the bridge's
+      map and on the minimap. §6: "an accepted permanent opening
+      survives re-entry".
+    - **The first live run was green, but printed its restore message
+      unformatted** ("%s", "%d"; `H-MINIMAP_candidate_live_first.log`).
+      This was my format-string bug in the new check. Godot logged it
+      twice as "String formatting error"
+      (`H-MINIMAP_candidate_live_first_restore_godot.log`), and no
+      candidate phase gated on that. The message is fixed, and the
+      phases now gate on it. Applied to that first restore log, the new
+      gate's condition fails it.
+    - **After the live run,** one null guard went into
+      `Main._clear_world` (the minimap is unbound only if `boot()` built
+      it). `godot-boot`, `godot-hud` and `godot-minimap` were re-run on
+      it, green.
+  - **The suites that assert exact intents are still green.**
+    `room_entered` is a new intent sent from ordinary walking. Four
+    suites assert exact or empty intent lists: rail junction, affordance,
+    activity and lab. They ran with 17 other Zone-heavy suites, one at a
+    time, and all 21 pass (`H-MINIMAP_suites.log`; raw logs in
+    `H-MINIMAP_suites_raw.log.gz`).
+    - `room_entered` and its resend were in place for all 21.
+    - MM-F3 and MM-F4 landed while the batch ran. The first 10 suites
+      ran before those repairs, latched route straddled them, and
+      transport onward ran the final code. The repairs touch no intent,
+      and the CP4 frontier re-runs every suite on one frozen revision.
+- **Screenshots** (`H-MINIMAP_shots/`, under xvfb with opengl3, at
+  1280×720, each with a lossless 2× crop of the map):
+  - the span blocked in c002;
+  - the power door blocked (carrying) and open (installed) in c005;
+  - every room found, seen from c009.
+- **Sabotages** (`H-MINIMAP_sabotages.log`), each restored byte for
+  byte (sha256):
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| MM-1 | a connector is drawn socket to socket (a straight line) | `_the_shapes_are_the_built_level`: "turns: its drawn path strays 0.0 m ... through 0 points" |
+| MM-2 | every built room is drawn, found or not | `_nothing_undiscovered_is_drawn`: "26 of 26 rooms drawn ... none beyond: [c006 ... exit]" (+1) |
+| MM-3 | every built join is drawn, listed by the bridge or not | `_nothing_undiscovered_is_drawn`: "every connector drawn is one the bridge lists (7)" |
+| MM-4 | entering a room reports nothing (the old behaviour) | `_entering_a_room_reports_it`: "`room_entered` for c002 went once: []" (+2) |
+| MM-5 | a lost report is never resent | `_entering_a_room_reports_it`: "a snapshot whose map lacks it resends it: []" |
+| MM-6 | reports are resent whatever the bridge's map says | `_entering_a_room_reports_it`: "once the bridge's map shows it, nothing is resent: [c001, c002]" |
+| MM-7 | the room is named by its save id | `_names_come_from_the_bridge`: "the label reads the bridge's name for c002: 'c002'" (+1) |
+| MM-8 | a circuit's colour is a hash of its id (the first draft; MM-F2) | `_the_green_circuit`: "five circuits get the palette's five colours, in declared order". **Not caught on the first run**; see below |
+| MM-9 | the map decides a gate itself (everything open) | `_the_green_circuit`: "carrying the cell: the door is a P blocker ...: open" (+2) |
+| MM-10 | a room's floor is its envelope's bottom (the first draft; MM-F1) | `_floors`: 3 failures, from "c001's floor is its arrival height" |
+| MM-11 | the fixture hand-edited (the power door open while carried) | `test_map_fixture.py::test_the_committed_fixture_matches_its_generator` |
+| MM-12 | the floor marks typed as the font's ▲ and ▼ (the first draft; MM-F3) | `_what_the_plate_draws`: "every character on the map is in the font ...; missing: ▲" (14 of them) |
+| MM-13 | a way back is never marked (MM-F4) | `_the_ways_back`: "8 listed, 0 placed, 0 drawn" |
+| MM-14 | every plug the build has is marked, listed by the bridge or not | `_the_ways_back`: "none is drawn before the bridge lists it: 8 of the Zone's 8" (+1) |
+
+- **The sabotage runs:**
+  - **The first run: 10 of 11** (`H-MINIMAP_sabotages_first.log`).
+    **MM-8 passed.** A hash of the id happened to give this Zone's
+    three non-key circuits three different colours, so the check that
+    they differ held by luck. A check now deals five declared circuits
+    and asks for the palette's five colours in declared order. MM-8
+    alone was re-run (`H-MINIMAP_sabotage_MM-8_rerun.log`) and was
+    caught.
+  - **The second run: 11 of 11** (`H-MINIMAP_sabotages_second.log`).
+  - **The final run, on the final code: 14 of 14**, with MM-12 to MM-14
+    added for MM-F3 and MM-F4.
+- **What stays open:**
+  - **The Glyph-authored final look.** The plate, the shapes and the
+    font are placeholders (H-GLYPH-KIT), and the circuit colours are
+    provisional until Arty's circuit family (H-CIRCUITS).
+  - **A room name the font can't draw.** The suite checks the names
+    this Zone shows. An authored name with a character Godot's default
+    font lacks would still come out blank until Glyph's font family
+    carries a fallback.
+  - **D-3's live "transitioning" overlay is not drawn.** A passage in
+    motion shows the bridge's record. That record is conservative in the
+    direction §6 cares about: closing a reversible passage records it
+    blocked at once, so "a jammed, closing or unknown passage is not
+    silently labelled open" holds, and unknown reads `?`. An opening
+    passage reads open for the second or so it is still moving. The
+    overlay would read each connector's shutter, which is more than this
+    item needed.
+  - **Details wait for the 3D map.** The minimap shows the reason as a
+    letter; the reason's words ("set by a control in Arena 2") are for
+    the map wall (§7: "full names/details can appear on focus or the
+    large map").
+  - **The earlier evidence folders** (H-3D-SHELL, H-INVENTORY) were
+    reduced the same way as MM-F5. They show layout and text rather
+    than circuit colours, and were not re-checked.
+  - Owner usability and visual approval is a separate result.
+- **What the owner will notice:**
+  - A map in the bottom-right corner in every Zone, with the room
+    you're in named above it.
+  - Rooms look like the rooms, and a corridor that turns is drawn
+    turning.
+  - Only what you have found is on it.
+  - A blocked door is a coloured diamond on its corridor, with a letter
+    saying why: K a key, P power, M a mechanism. The power door stays
+    blocked while you carry the cell and opens on the map when the cell
+    is installed.
+  - Rooms on other floors are outlines with a little up or down
+    triangle.
+  - A ring marks a way back.

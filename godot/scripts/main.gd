@@ -21,6 +21,8 @@ var pause_menu: PauseMenu
 ## H-3D-SHELL (CP3): the one pause interface, four walls of a box. The
 ## pause menu is its Settings wall and `equipment` its Equipment wall.
 var menu_shell: MenuShell
+## H-MINIMAP (CP4): the map that stays on screen in a Zone, on the HUD.
+var minimap: Minimap
 var debug: DebugOverlay
 ## F5, review-only. See `nav_schematic.gd`: not a map feature, and
 ## nothing in the game reads it.
@@ -111,6 +113,7 @@ const DRIVERS := {
 	"--passing-hosted": preload("res://tests/passing_hosted_driver.gd"),
 	"--menu-shell": preload("res://tests/menu_shell_driver.gd"),
 	"--equipment-face": preload("res://tests/equipment_face_driver.gd"),
+	"--minimap": preload("res://tests/minimap_driver.gd"),
 	"--reversible": preload("res://tests/reversible_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
@@ -344,6 +347,8 @@ func boot() -> void:
 			rule_runtime.notify("check_claimed"))
 	hud = Hud.new()
 	add_child(hud)
+	minimap = Minimap.new()
+	hud.add_child(minimap)
 	hud.meters.pool = resource_pool
 	hud.visible = false
 	reveal = RevealLayer.new()
@@ -520,6 +525,8 @@ func _clear_world() -> void:
 		child.queue_free()
 	hub = null
 	zone = null
+	if minimap != null:
+		minimap.bind(null)
 	if rule_runtime != null:
 		rule_runtime.player = null
 		rule_runtime.echo_runtime = null
@@ -796,6 +803,7 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.layout_refused.connect(_on_layout_refused)
 	zone.travel_panel_requested.connect(_on_travel_panel_requested)
 	hud.bind_player(zone.player)
+	minimap.bind(zone)
 	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	zone.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
 	# Only the connect ticks here: a kill already has the death tone that

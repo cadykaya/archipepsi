@@ -359,6 +359,15 @@ func slots() -> Dictionary:
 	var s: Variant = snapshot.get("slots")
 	return s if typeof(s) == TYPE_DICTIONARY else {}
 
+## H-MAP-DATA: the active Zone's map as far as the player has found it
+## (`CampaignSnapshot.zone_map`, Dess's `map_view.py`): rooms with their
+## presentation names, connectors with a gate state and its reason, and
+## circuits. One projection for the minimap, the 3D map and the journal;
+## none of them computes a gate of its own. Empty with no Zone.
+func zone_map() -> Dictionary:
+	var view: Variant = snapshot.get("zone_map")
+	return view if typeof(view) == TYPE_DICTIONARY else {}
+
 ## H-UI-DATA: the menu's items and slots as the bridge projected them
 ## (`CampaignSnapshot.inventory`, Dess's `inventory_view.py`). The menu
 ## joins it to `mechanics.owned` by component id and derives nothing the
