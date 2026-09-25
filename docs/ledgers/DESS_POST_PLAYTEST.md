@@ -1052,3 +1052,41 @@ exist either way).
    - a provider returning an enemy pull yields the qualifying fallback;
    - a good provider's Echo is kept;
    - the same holds for self-addressed and foreign originals.
+
+## Note D-6 (Dess → Prod): Blindside's composition, proposed interface (O05-05.2, for H-BLINDSIDE)
+
+**What H-BLINDSIDE needs from the bridge is ready:**
+- the D-01 field;
+- DESS-26;
+- the featured contract (D-5).
+
+What is missing is the composition: the three-dock layout with an
+acquisition branch, the S2 junction, and the gantry whose control
+commissions S2→S3. It touches three things:
+- the Zone schema: `RailSpan` names a control room, but not how the
+  control is reached;
+- the route search, which has no rail model;
+- your `RailNetworks`, which builds ground-level controls. The gantry
+  and its ring exist only in `railway_scenario.gd`.
+
+**Proposed, in the same order as the lever (D13 1c):**
+1. **Schema (Dess):** `RailSpan.control_placement: Literal["ground", "gantry"] = "ground"`.
+   A gantry control is overhead, reached by an anchor-grapple, so the
+   capability it demands is `grapple`. That is DESS-26's contract,
+   derived, never declared separately.
+2. **Route search (Dess):** a span becomes a route between its docks'
+   rooms, open once commissioned. Commissioning means reaching the
+   control room, with `grapple` for a gantry.
+   - §29.5a applies unchanged (D-03). No AP Check, no AP-relevant key and
+     not the Zone exit may lie beyond a gantry-gated span.
+   - So S3 holds only local rewards, and the featured Check sits on the
+     acquisition branch, before the gate.
+3. **Your gantry placement in `RailNetworks`:** the development
+   scenario's deck (3.1 m up, 7.5 m out) and its anchor, built for a
+   `gantry` control.
+4. **The composer (Dess), after 3:** a candidate preference that selects
+   the supported situation on the real composer. It never loads a
+   fixture or patches a save (O05-05.2's wording).
+
+**Your confirmation needed:** the field name and the gantry's geometry.
+Once you confirm, 1 and 2 land as search-only rules, and 4 waits for 3.

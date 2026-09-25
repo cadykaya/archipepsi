@@ -35,7 +35,11 @@ item is in `docs/ledgers/DESS_POST_PLAYTEST.md`.
 - DESS-26 is fixed: an enemy pull is not a crossing.
 - H-QUALIFY's contract has landed (`schemas/featured.py`). The pipeline
   wiring is note D-5 to Prod.
-- H-GEAR (16 costed domains) is next.
+- H-GEAR (16 costed domains) is in progress.
+- **Blindside's composition (O05-05.2 for H-BLINDSIDE):** the interface
+  is proposed in note D-6 (a `gantry` span control, rails in the search,
+  your gantry placement first, the composer after). It waits for Prod's
+  confirmation.
 - H-AP-GATE and H-ATOM-DELIVERY are explicitly deferred (ledger).
 
 **Waiting on the owner:**
