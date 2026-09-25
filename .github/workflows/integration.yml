@@ -167,6 +167,7 @@ jobs:
           make godot-menu-shell
           make godot-equipment-face
           make godot-minimap
+          make godot-map-face
 
       - name: One consumable charge, from a keypress to the save
         run: make godot-consumable-live

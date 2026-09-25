@@ -1,0 +1,195 @@
+"""H-3D-MAP sabotages: break one rule, confirm a named failure, restore.
+
+Same protocol as H-INVENTORY's and H-MINIMAP's: each row edits one file
+in the wt-cp2 work tree, runs the map face suite, records its FAIL lines,
+and restores the file byte for byte (sha256 checked).
+"""
+from __future__ import annotations
+
+import hashlib
+import subprocess
+import sys
+from pathlib import Path
+
+TREE = Path(__file__).resolve().parent / "wt-cp2"
+GODOT = [str(TREE / "godot-bin" / "godot"), "--headless", "--path",
+         str(TREE / "godot"), "--", "--map-face"]
+FACE = "godot/scripts/ui/map_face.gd"
+
+ROWS = [
+    ("MF-1", "a room gets a roof (no cutaway)", FACE,
+     '''	_quad(st, Vector3(x0, y0, z0), Vector3(x1, y0, z0), Vector3(x1, y0, z1),
+			Vector3(x0, y0, z1))''',
+     '''	_quad(st, Vector3(x0, y0, z0), Vector3(x1, y0, z0), Vector3(x1, y0, z1),
+			Vector3(x0, y0, z1))
+	_quad(st, Vector3(x0, y1, z0), Vector3(x1, y1, z0), Vector3(x1, y1, z1),
+			Vector3(x0, y1, z1))''',
+     "and none has a roof"),
+    ("MF-2", "a connector is built end to end (a straight line)", FACE,
+     '''	for i in path.size():
+		var y := ys[i] if i < ys.size() else 0.0
+		out.append(Vector3(path[i].x, y, path[i].y))
+	return out''',
+     '''	for i in path.size():
+		var y := ys[i] if i < ys.size() else 0.0
+		out.append(Vector3(path[i].x, y, path[i].y))
+	if out.size() > 2:
+		return [out[0], out[out.size() - 1]]
+	return out''',
+     "is built along its chain, point for point"),
+    ("MF-3", "the wall colours circuits by itself (a hash of the id)", FACE,
+     '''	colours = MinimapModel.circuit_colours(zone.zone)''',
+     '''	colours = {}
+	for row: Dictionary in connectors:
+		for cid: Variant in row["circuits"]:
+			colours[cid] = MinimapModel.PALETTE[absi(hash(str(cid)))
+					% MinimapModel.PALETTE.size()]''',
+     "in the same colours"),
+    ("MF-4", "every connector gets an indicator, open or not", FACE,
+     '''		if state != "open":
+			_add_blocker(eid, row, mark, tint)''',
+     '''		if true:
+			_add_blocker(eid, row, mark, tint)''',
+     "the indicator is gone"),
+    ("MF-5", "every built room is shown, found or not", FACE,
+     '''	var rooms := MinimapModel.rooms(zone_map, zone.room_bounds,
+			zone.rooms_entered(), zone.current_room(), floors)''',
+     '''	var rooms := MinimapModel.rooms(zone_map, zone.room_bounds,
+			zone.room_bounds, zone.current_room(), floors)''',
+     "nothing beyond them"),
+    ("MF-6", "the miniature carries collision (a body per room)", FACE,
+     '''		_world_root.add_child(room)
+		_room_nodes[id] = room''',
+     '''		_world_root.add_child(room)
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		shape.shape = BoxShape3D.new()
+		body.add_child(shape)
+		room.add_child(body)
+		_room_nodes[id] = room''',
+     "none with a script; nothing else"),
+    ("MF-7", "no cache: the same map is built again", FACE,
+     '''	if signature == _signature:
+		return''',
+     '''	if false:
+		return''',
+     "is not built again"),
+    ("MF-8", "the wall builds while the menu is closed", FACE,
+     '''	if not showing:
+		_stick.clear()
+		return''',
+     '''	if false:
+		_stick.clear()
+		return''',
+     "nothing is built while the menu is closed"),
+    ("MF-9", "the indicator does not pulse", FACE,
+     '''	for eid: String in _blocker_nodes:
+		(_blocker_nodes[eid] as Node3D).scale = Vector3.ONE * s''',
+     '''	for eid: String in _blocker_nodes:
+		(_blocker_nodes[eid] as Node3D).scale = Vector3.ONE''',
+     "and it pulses"),
+    ("MF-10", "the arrow keys do not turn the map", FACE,
+     '''		KEY_LEFT:
+			turn_view(-YAW_STEP, 0.0)
+		KEY_RIGHT:
+			turn_view(YAW_STEP, 0.0)''',
+     '''		KEY_LEFT:
+			pass
+		KEY_RIGHT:
+			pass''',
+     "Right turns the map"),
+    ("MF-11", "one floor at a time shows every floor", FACE,
+     '''		var visible := floor_filter == -1 or band == floor_filter''',
+     '''		var visible := true''',
+     "PgUp shows your floor alone"),
+    ("MF-12", "every floor is solid (no ghosts)", FACE,
+     '''		var solid := band == (mine if floor_filter == -1 else floor_filter)''',
+     '''		var solid := true''',
+     "the others ghosts"),
+    ("MF-13", "a stick held across a page turn keeps turning the map", FACE,
+     '''	if _is_front():
+		_apply_sticks(delta)
+	else:
+		_stick.clear()''',
+     '''	_apply_sticks(delta)''',
+     "a stick still held when the page turned away turns nothing"),
+    ("MF-14", "the view resets whenever the wall is not shown", FACE,
+     '''	if not showing:
+		_stick.clear()
+		return''',
+     '''	if not showing:
+		_stick.clear()
+		if zone != null and is_instance_valid(zone):
+			yaw = 30.0
+			pitch = 55.0
+			distance = 80.0
+			floor_filter = -1
+			recentre()
+		return''',
+     "and so do a close and a reopen"),
+    ("MF-15", "a way on to an unfound room names it by its save id", FACE,
+     '''		var where := ("to " + other_name) if other_name != "" \\
+				else "a way on, not yet walked"''',
+     '''		var where := "to " + (other_name if other_name != "" else other)''',
+     "and no save id"),
+    ("MF-16", "the Hub keeps the last Zone's miniature", FACE,
+     '''		_floors = []
+		_clear_world()
+		_signature = 0''',
+     '''		_floors = []
+		_signature = 0''',
+     "draws nothing"),
+    ("MF-17", "building the wall sends a state-setting intent", FACE,
+     '''func _build_world() -> void:
+	_clear_world()''',
+     '''func _build_world() -> void:
+	BridgeClient.send_intent({"type": "station_reached",
+			"zone_id": zone.zone_id, "station_id": "map"})
+	_clear_world()''',
+     "opening it and building it (1 build) sent nothing"),
+]
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main() -> int:
+    only = set(sys.argv[1:])
+    rows = [r for r in ROWS if not only or r[0] in only]
+    lines, caught = [], 0
+    for rid, what, rel, old, new, expect in rows:
+        path = TREE / rel
+        original = path.read_bytes()
+        before = sha(path)
+        text = original.decode("utf-8")
+        if text.count(old) != 1:
+            lines.append(f"{rid} SETUP ERROR: anchor found "
+                         f"{text.count(old)} times in {rel}")
+            continue
+        path.write_bytes(text.replace(old, new).encode("utf-8"))
+        try:
+            out = subprocess.run(GODOT, capture_output=True, text=True,
+                                 timeout=900, cwd=TREE)
+            log = out.stdout + out.stderr
+        finally:
+            path.write_bytes(original)
+        restored = sha(path) == before
+        fails = sorted({l[6:] for l in log.splitlines()
+                        if l.startswith("FAIL: ")})
+        errors = sum(1 for l in log.splitlines() if "SCRIPT ERROR" in l)
+        hit = any(expect in f for f in fails)
+        caught += hit
+        lines.append(f"{rid} [{rel.split('/')[-1]}] {what}")
+        lines.append(f"    {'CAUGHT' if hit else 'NOT CAUGHT'} -- "
+                     f"{len(fails)} failing check(s), {errors} script "
+                     f"error(s); restored byte for byte: {restored}")
+        for f in fails:
+            lines.append(f"      FAIL: {f[:300]}")
+    lines.append(f"\n{caught} of {len(rows)} sabotages caught")
+    print("\n".join(lines))
+    return 0 if caught == len(rows) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

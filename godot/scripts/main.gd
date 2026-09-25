@@ -23,6 +23,8 @@ var pause_menu: PauseMenu
 var menu_shell: MenuShell
 ## H-MINIMAP (CP4): the map that stays on screen in a Zone, on the HUD.
 var minimap: Minimap
+## H-3D-MAP (CP4): the shell's Map wall, a miniature of the Zone.
+var map_face: MapFace
 var debug: DebugOverlay
 ## F5, review-only. See `nav_schematic.gd`: not a map feature, and
 ## nothing in the game reads it.
@@ -114,6 +116,7 @@ const DRIVERS := {
 	"--menu-shell": preload("res://tests/menu_shell_driver.gd"),
 	"--equipment-face": preload("res://tests/equipment_face_driver.gd"),
 	"--minimap": preload("res://tests/minimap_driver.gd"),
+	"--map-face": preload("res://tests/map_face_driver.gd"),
 	"--reversible": preload("res://tests/reversible_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
@@ -358,6 +361,8 @@ func boot() -> void:
 	add_child(menu_shell)
 	equipment = EquipmentFace.new()
 	menu_shell.page_root("equipment").add_child(equipment)
+	map_face = MapFace.new()
+	menu_shell.page_root("map").add_child(map_face)
 	# The wall facing the player holds focus, or a keyboard or controller
 	# has nothing to move from.
 	menu_shell.page_changed.connect(func(page: String) -> void:
@@ -527,6 +532,8 @@ func _clear_world() -> void:
 	zone = null
 	if minimap != null:
 		minimap.bind(null)
+	if map_face != null:
+		map_face.bind(null)
 	if rule_runtime != null:
 		rule_runtime.player = null
 		rule_runtime.echo_runtime = null
@@ -804,6 +811,7 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.travel_panel_requested.connect(_on_travel_panel_requested)
 	hud.bind_player(zone.player)
 	minimap.bind(zone)
+	map_face.bind(zone)
 	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	zone.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
 	# Only the connect ticks here: a kill already has the death tone that

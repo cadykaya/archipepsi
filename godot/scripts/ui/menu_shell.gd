@@ -26,10 +26,11 @@ extends CanvasLayer
 ## this node and the bridge client keep running. Closing releases only its
 ## own claim.
 ##
-## **WHAT IS NOT HERE YET.** The equipment face on Glyph assets is
-## H-INVENTORY's; the map and the journal are H-3D-MAP's and H-JOURNAL's. A page nobody has filled says so, rather
-## than pretending to be finished (§5 of the delivery plan: "the blank
-## other faces are an explicitly incomplete slice").
+## **WHAT IS NOT HERE YET.** The journal is H-JOURNAL's. A page nobody
+## has filled says so, rather than pretending to be finished (§5 of the
+## delivery plan: "the blank other faces are an explicitly incomplete
+## slice"). The Equipment wall is `EquipmentFace` and the Map wall is
+## `MapFace`, both mounted by `Main`; their Glyph art is still owed.
 
 signal opened(page: String)
 signal closed
@@ -47,7 +48,6 @@ const TITLES := {
 ## What an unfilled wall says, so that it reads as unfinished rather than
 ## as an empty page of a finished menu. A filler removes it ("Incomplete").
 const INCOMPLETE := {
-	"map": "The map is not built yet (H-3D-MAP). This wall holds its place.",
 	"journal": "The journal is not built yet (H-JOURNAL). This wall holds "
 			+ "its place.",
 }

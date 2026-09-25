@@ -2245,3 +2245,229 @@ name follows M-3.
   - Rooms on other floors are outlines with a little up or down
     triangle.
   - A ring marks a way back.
+
+## CP4 — `H-3D-MAP` (V-21, `04` §6–§7): the Map wall, a miniature you can turn — landed, on provisional art
+
+§7 asks the Map wall for a miniature you can rotate, zoom and pan. It
+must offer cutaway roofs or one floor at a time so stacked rooms stay
+readable, recentre on you, and tell your floor from the others. It must
+keep what you were inspecting through page changes, and its controls
+must not compete with the page-turn arrows. It must be **render-only**:
+"never duplicate live scripts, collision, enemies, reward nodes, sounds
+or state setters". Opening it must not send a Check, and it must be
+cached and measured on a representative built Zone. §6's green circuit
+has the 3D map draw "a small pulsing green indicator" on the passage.
+§10 asks that a real named blocked door match both maps and change when
+its circuit operates.
+
+- **Reproduced first**, on `8a4d5ed` (H-MINIMAP's head), with a scratch
+  driver on the real `Main` (`H-3D-MAP_repro_driver.gd.txt`; evidence,
+  not a suite). **4 of 4 requirements fail** (`H-3D-MAP_before.log`):
+  - **R1:** the map wall has no 3D view and no mesh. It says "The map is
+    not built yet (H-3D-MAP). This wall holds its place."
+  - **R2:** after Right, =, W and PgUp, nothing on the map page changes.
+  - **R3:** carrying the cell (the bridge's map has the power door
+    blocked), the wall has no blocker indicator.
+  - **R4:** none of the 5 rooms found is named on the wall.
+  - **The control, on the new code: 0 of 4 fail**
+    (`H-3D-MAP_control.log`): one 3D view, the power door among 3
+    indicators, and all 5 places named.
+- **What changed:**
+  - **`MapFace`** (new, `godot/scripts/ui/map_face.gd`) is the Map
+    wall's content. `Main` mounts it on the shell's map page, as it
+    mounts the Equipment wall, and binds it to each Zone. It has two
+    parts.
+  - **The miniature** is a `SubViewport` with its own `World3D`:
+    - each room found is its built envelope, cut away: a floor and a
+      2.4 m wall, never a roof;
+    - each connector is a beam along its built chain, in 3D;
+    - each blocked or unknown connector has a pulsing sphere in its
+      circuit's colour, with the reason's letter over it;
+    - each way back is a ring where its device stands;
+    - you are a yellow cone pointing the way you face, drawn over
+      everything;
+    - the room you are in, and a place you pick, carry their names.
+  - **The column beside it** says where you are and which floors are
+    shown. It lists the places you know; picking one centres the view on
+    it and lists each way on with its state and the bridge's reason. It
+    counts the ways back and lists the controls.
+  - **One projection, two views.** The wall asks `MinimapModel` exactly
+    what the minimap asks (rooms, connectors, circuit colours, floors),
+    of the same sources. It decides no gate, name or colour.
+  - **Render-only:** meshes and labels only, no scripts, in a world of
+    their own. Building it sends nothing, and the Zone is not touched.
+  - **Cached:** it builds when first shown, and then only when what it
+    shows has changed. On the candidate Zone with every room found (25
+    rooms, 32 connectors), a build takes 7.6 ms headless. That time is
+    the scene building; uploading to a GPU is not in it.
+  - **Controls that leave the page turns alone.** The shell takes Q, E,
+    the shoulders, Tab and Escape before the wall sees them. The map
+    takes:
+    - drag, the arrows or the right stick to turn and tilt;
+    - the wheel, + and -, or the triggers to zoom;
+    - right-drag, WASD or the left stick to pan;
+    - C, Home or pad Y to recentre on you;
+    - PgUp and PgDn, or the d-pad's up and down, for one floor at a
+      time (your own first, then up or down, then every floor again);
+    - [ and ], or the d-pad's left and right, for the next place you
+      know.
+  - **Floors:** with every floor shown, yours is solid and the others
+    are ghosts.
+  - **What you were looking at stays:** the view, the floor and the
+    picked place survive page turns and closes. Only another Zone resets
+    them. In the Hub the wall says there is no map there.
+  - **`MenuShell`:** the Map wall no longer carries its "not built yet"
+    note; the Journal's stays.
+  - **`BridgeClient.sent_total`** counts every intent sent. The live
+    suite uses it to see what went while the map was open, because
+    `sent_intents` is capped.
+- **Findings from the first runs and renders, all repaired:**
+  - **MF-F1: a node named by its edge id could not be found.** Godot
+    rewrites the `:` in `Blocker_e:c005:c006`, so a lookup by that name
+    returned nothing. The pulse check read nothing, and the repro's R3
+    probe would have been blind on the new code. Each node now carries
+    its edge id as metadata. The repro reads that, and its before run
+    was repeated with the fixed probe.
+  - **MF-F2: the column ran under the shell's ">" arrow.** One label
+    did not wrap, so the column grew to its longest line. Every label
+    now wraps at the column's width, and the column stops short of the
+    arrow.
+  - **MF-F3: the column had no height limit.** A long detail or a long
+    list of ways back would push it off the page. The detail scrolls in
+    a fixed height, and the ways back are a count; each place's own
+    detail names its way back.
+  - **MF-F4: you were hard to find.** Your marker was small, pale and
+    under the room's name. It is larger, brighter and drawn over
+    everything, and the name stands higher.
+  - **MF-F5: the Hub rule lived twice.** Both `bind()` and `refresh()`
+    cleared the miniature, so a sabotage of either would be masked by
+    the other (as EI-6 was). It now lives in `refresh()` alone, and
+    MF-16 re-breaks it.
+- **Played:**
+  - **`godot-map-face`** (new, in CI, 52 checks; `H-3D-MAP_after.log`)
+    runs on the real `MenuShell` and the candidate Zone built for real.
+    Keys, pad and pointer go in as device events, through the shell:
+    - **The wall is filled:** the map, and no "not built yet" note.
+    - **The shapes are the built level:** 25 of 25 rooms stand on their
+      built envelopes at their arrival heights, and none has a roof.
+      e:c004:c005 is built point for point along its chain.
+    - **One projection:** in four variants, both maps show the same
+      rooms, the same names, and the same blockers in the same colours
+      with the same letters.
+    - **Render-only:** 98 nodes (1 `Node3D`, 65 `MeshInstance3D`, 32
+      `Label3D`), none with a script. A real build inside the check
+      sent nothing, and the Zone's 5,382 nodes are untouched.
+    - **The cache:** the same map is not built again, and a changed map
+      is built once. Nothing is built while the menu is closed; the
+      build happens on opening.
+    - **The green circuit:** carrying the cell, a P indicator in the
+      power circuit's colour stands on the connector through the door,
+      and it pulses (8 sizes in 0.9 s). Once the cell is installed, it
+      is gone.
+    - **The span:** no indicator while lowered, and a P again once put
+      back.
+    - **Floors:** 4 floors are known.
+      - Standing on floor 1, your 11 rooms are solid and the 14 others
+        are ghosts.
+      - PgUp shows your floor alone, then the one above, and past the
+        top every floor again.
+    - **The keys:**
+      - Right, Up, = and - turn, tilt and zoom, and zoom stops at 260 m;
+      - W and D pan, and C comes back to you;
+      - none of the 16 map keys turns the page, and Q still does.
+    - **The pad:**
+      - the d-pad shows one floor and picks a place;
+      - the right stick turns the map while held and stops when let go;
+      - Y comes back to you;
+      - a stick still held when the page turns away turns nothing.
+    - **The pointer, through the 3D stage:** a drag turns the map, a
+      right-drag pans it, the wheel zooms, and a click picks a place.
+    - **What you were looking at stays:** the view, the floor and the
+      place survive a turn to the journal and back, and a close and
+      reopen.
+    - **Places:**
+      - the list is exactly the rooms found or walked;
+      - picking Arena 1 names it and each way on, with the bridge's
+        reasons, and shows no save id;
+      - all 8 ways back are rings.
+    - **The Hub:** the wall says there is no map there, and draws
+      nothing.
+  - **`godot-candidate-live`**, through the real bridge in a real Zone
+    (`H-3D-MAP_candidate_live.log`, all 9 phases). The map wall is
+    opened as a player opens it: Escape, then Q twice, with the world
+    paused.
+    - **Carrying the cell:** the power door is a P indicator on the wall,
+      in the colour the minimap uses, and nothing was sent but the
+      Zone's own `room_entered` resends.
+    - **Installed:** the indicator is gone. The circuit operated, and
+      both maps changed (§10).
+    - **After the restart:** no indicator on it.
+  - **Also green** on this code: `godot-menu-shell`, `godot-boot`,
+    `godot-hud`, `godot-equipment-face` and `godot-minimap`
+    (`H-3D-MAP_suites.log`).
+- **Screenshots** (`H-3D-MAP_shots/`, under xvfb with opengl3, at
+  1280×720, the wall on the real shell):
+  - every floor, from c009;
+  - your floor alone, from c001;
+  - the power door blocked, then open, from c005, with Arena 2 picked.
+  - Looking at them found MF-F2, MF-F3 and MF-F4 above.
+- **Sabotages** (`H-3D-MAP_sabotages.log`), each restored byte for byte
+  (sha256):
+
+| # | Rule removed | Caught by |
+|---|---|---|
+| MF-1 | a room gets a roof (no cutaway) | `_the_shapes_are_the_built_level`: "and none has a roof" |
+| MF-2 | a connector built end to end (a straight line) | `_the_shapes_are_the_built_level`: "e:c004:c005 is built along its chain, point for point" |
+| MF-3 | the wall colours circuits itself (a hash of the id) | `_one_projection_two_views`: "the same blockers in the same colours", in all 4 variants |
+| MF-4 | every connector gets an indicator, open or not | `_one_projection_two_views` ("the same 32 blockers") and `_the_green_circuit`: "installed: ... the indicator is gone" (7 in all) |
+| MF-5 | every built room is shown, found or not | `_one_projection_two_views` ("the same 26 rooms") and `_places_and_ways_back`: "nothing beyond them" (5 in all) |
+| MF-6 | the miniature carries collision (a body per room) | `_render_only`: "148 nodes of ... StaticBody3D: 25, CollisionShape3D: 25 ... nothing else: [StaticBody3D, CollisionShape3D]" |
+| MF-7 | no cache: the same map is built again | `_the_cache`: "the same map asked for again is not built again" (+1) |
+| MF-8 | the wall builds while the menu is closed | `_the_cache`: "and nothing is built while the menu is closed" |
+| MF-9 | the indicator does not pulse | `_the_green_circuit`: "and it pulses" |
+| MF-10 | the arrow keys do not turn the map | `_keys_turn_the_map_not_the_page`: "Right turns the map" |
+| MF-11 | one floor at a time shows every floor | `_floors_and_cutaway`: "PgUp shows your floor alone" |
+| MF-12 | every floor is solid (no ghosts) | `_floors_and_cutaway`: "yours solid (25 rooms), the others ghosts (0)" (+1) |
+| MF-13 | a stick held across a page turn keeps turning the map | `_the_pad`: "a stick still held when the page turned away turns nothing" (+2, among them the journal-and-back view) |
+| MF-14 | the view resets whenever the wall is not shown | `_what_you_were_looking_at_stays`: "and so do a close and a reopen" |
+| MF-15 | a way on to an unfound room is named by its save id | `_places_and_ways_back`: "and no save id" |
+| MF-16 | the Hub keeps the last Zone's miniature (MF-F5's one home) | `_the_hub`: "... and draws nothing" |
+| MF-17 | building the wall sends a state-setting intent | `_render_only`: "opening it and building it (1 build) sent nothing: [station_reached]". **Not caught on the first run**; see below |
+
+- **The sabotage runs:**
+  - **The first run: 16 of 17** (`H-3D-MAP_sabotages_first.log`).
+    **MF-17 passed.** The "opening it and building it sent nothing"
+    check came right after a case that had built the same map. The
+    cache answered, nothing was built inside the check, and a map that
+    sent an intent on every build passed it.
+  - **The fix:** the case now builds another map first, so the build
+    it measures is real, and it asserts that a build happened inside
+    the window. MF-17 alone was re-run
+    (`H-3D-MAP_sabotage_MF-17_rerun.log`) and was caught.
+  - **The final run, on the final code: 17 of 17**
+    (`H-3D-MAP_sabotages.log`).
+- **What stays open:**
+  - **The Glyph-authored final look.** The miniature's materials, the
+    column's fonts and the markers are placeholders (H-GLYPH-KIT), and
+    the circuit colours are provisional (H-CIRCUITS).
+  - **D-3's live "transitioning" overlay** is not drawn here either;
+    see H-MINIMAP.
+  - **Measured headless.** Building the scene is timed; GPU upload and
+    frame cost on the owner's machine are not. The miniature is about
+    100 nodes and is drawn only while the menu is open.
+  - **A place is a room.** Keys, terminals and objectives are not
+    listed: the bridge's map carries circuits by room, and naming a
+    control's place is the bridge's reason text, shown on a picked
+    place.
+  - Owner usability and visual approval is a separate result.
+- **What the owner will notice:**
+  - Escape, then Q twice (or Tab then Q) brings up the map: the Zone as
+    a small model you can turn with the mouse, the arrows or a stick.
+  - Rooms are open-topped, so you can see into rooms below, and PgUp
+    shows one floor at a time.
+  - A blocked door is a small pulsing ball in its circuit's colour with
+    a letter. The power door's disappears once the cell is in.
+  - Pick a place on the right to see its name and each way out,
+    including why a blocked one is blocked.
+  - The map stays where you left it when you turn away or close the
+    menu.

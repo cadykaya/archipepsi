@@ -450,6 +450,19 @@ func _play() -> void:
 			"H-MINIMAP: carrying the cell, the bridge's map has %s " % door_edge
 			+ "blocked ('%s') and the minimap draws a P blocker there"
 			% str(carried_gate.get("reason")))
+	# H-3D-MAP, live (§10: "A real named blocked door matches both maps"):
+	# the map wall, opened as a player opens it, shows the same blocker in
+	# the same colour.
+	var wall := await _map_wall(door_edge)
+	var wall_row: Dictionary = wall["row"]
+	_check(bool(wall["opened"]) and str(wall_row.get("state")) == "blocked"
+			and str(wall_row.get("symbol")) == "P"
+			and wall_row.get("colour") == main.minimap.colours.get(
+				"state:cell_power"),
+			"H-3D-MAP: on the map wall, opened with the world paused, %s " \
+			% door_edge + "is a P indicator in the colour the minimap uses")
+	_check(bool(wall["quiet"]),
+			"and opening the map, turning to it and closing it sent nothing")
 	await _approach(controller, socket, 1.4, socket.global_position
 			+ Vector3(0.0, ObjectSocket.BASE.y * 0.6, 0.0))
 	_check(player._last_prompt == "[E] INSTALL",
@@ -478,6 +491,11 @@ func _play() -> void:
 	_check(mapped_open and str(_minimap_row(door_edge).get("state")) == "open",
 			"H-MINIMAP: installed, the bridge's map opens %s and the " % door_edge
 			+ "minimap follows it")
+	var wall_open := await _map_wall(door_edge)
+	_check(bool(wall_open["opened"])
+			and (wall_open["row"] as Dictionary).is_empty(),
+			"H-3D-MAP: installed, the map wall's indicator on %s is gone "
+			% door_edge + "(its circuit operated; both maps changed)")
 	var walked: Array = controller.rooms_entered().keys()
 	var discovered := await _await_live("the bridge to record every room "
 			+ "walked", func() -> bool:
@@ -553,6 +571,10 @@ func _restore() -> void:
 			"H-MINIMAP: the power door opened before the restart is open "
 			+ "after it, on the bridge's map (%s) and on the minimap (%s)"
 			% [str(power_gate.get("state")), str(power_row.get("state"))])
+	var wall_after := await _map_wall(power_edge)
+	_check(bool(wall_after["opened"])
+			and (wall_after["row"] as Dictionary).is_empty(),
+			"H-3D-MAP: and on the map wall there is no indicator on it")
 
 
 # ---------------------------------------------------------------------------
@@ -1292,6 +1314,39 @@ func _map_discovered() -> Dictionary:
 		if bool((raw as Dictionary).get("discovered", false)):
 			out[str((raw as Dictionary).get("room_id", ""))] = true
 	return out
+
+
+## THE MAP WALL, OPENED AS A PLAYER OPENS IT: Escape opens the pause
+## interface on Settings, Q turns left twice (Settings, Equipment, Map),
+## and Escape closes it. Returns whether the map wall faced the camera
+## with the world paused, the wall's blocker row for `edge_id` (empty when
+## there is none), and whether anything was sent meanwhile.
+func _map_wall(edge_id: String) -> Dictionary:
+	var shell: MenuShell = main.menu_shell
+	var sent := BridgeClient.sent_total
+	await _action_event("pause")
+	await _action_event("menu_page_left")
+	await _shell_at_rest(shell)
+	await _action_event("menu_page_left")
+	await _shell_at_rest(shell)
+	for _i in 4:
+		await get_tree().process_frame
+	var opened := shell.is_open() and shell.front() == "map" \
+			and get_tree().paused
+	var row := {}
+	for raw: Dictionary in main.map_face.blockers_shown():
+		if str(raw["edge_id"]) == edge_id:
+			row = raw
+	await _action_event("pause")
+	await get_tree().process_frame
+	# What went while the map was open. A `room_entered` resend is the
+	# Zone's own (D-2), not the map's; anything else would be the map's.
+	var fresh := BridgeClient.sent_total - sent
+	var went: Array = BridgeClient.sent_intents.slice(
+			maxi(BridgeClient.sent_intents.size() - fresh, 0))
+	return {"opened": opened and not shell.is_open(), "row": row,
+			"quiet": went.all(func(i: Dictionary) -> bool:
+				return i.get("type") == "room_entered")}
 
 
 ## What the HUD's minimap is drawing for one connector.

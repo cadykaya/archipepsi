@@ -1,0 +1,103 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_unweighted_switch mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+  -- the map wall is filled
+  ok: the map wall holds the map, and no 'not built yet' note
+  ok: the miniature is built and its camera is the view's (21 nodes)
+  -- the shapes are the built level
+  ok: every room is its built envelope, standing at its arrival height (25 of 25)
+  ok: and none has a roof: a room is its floor and a low wall (25 of 25)
+  ok: e:c004:c005 is built along its chain, point for point, in 3D (11 points; it climbs 0.0 m)
+  -- one projection, two views
+  ok: walked: the same 5 rooms under the same names, and the same 3 blockers in the same colours with the same letters, on both maps
+  ok: carried: the same 5 rooms under the same names, and the same 3 blockers in the same colours with the same letters, on both maps
+  ok: powered: the same 5 rooms under the same names, and the same 2 blockers in the same colours with the same letters, on both maps
+  ok: all_rooms: the same 25 rooms under the same names, and the same 7 blockers in the same colours with the same letters, on both maps
+  -- render-only
+  ok: the miniature is 98 nodes of { "Node3D": 1, "MeshInstance3D": 65, "Label3D": 32 }, none with a script; nothing else: [] []
+  ok: opening it and building it (1 build) sent nothing: []
+  ok: and the Zone itself is untouched (5382 nodes before and after)
+  NOTE: built from 25 rooms and 32 connectors in 7.9 ms
+  -- the cache
+  ok: the same map asked for again is not built again (9 builds)
+  ok: a changed map is built once: 9 -> 10
+  ok: and nothing is built while the menu is closed
+  ok: until it is opened
+  -- the green circuit
+  ok: carrying the cell: a P indicator in the power circuit's colour on the power door: { "edge_id": "e:c005:c006", "state": "blocked", "symbol": "P", "colour": (1.0, 0.55, 0.15, 1.0), "at": (-61.8146, 1.53, 91.14595), "visible": true }
+  ok: standing on the connector through the door
+  ok: and it pulses (8 sizes in 0.9 s)
+  ok: installed: the bridge's map opens it, and the indicator is gone
+  -- a reversible closure comes back
+  ok: the span: no indicator lowered, a P indicator put back
+  -- floors
+  ok: 4 floors known; you stand on floor 1
+  ok: every floor shown: yours solid (11 rooms), the others ghosts (14)
+  ok: PgUp shows your floor alone: 11 rooms, none from another
+  ok: PgUp again: the floor above (1)
+  ok: and past the top, every floor again
+  -- the keys
+  ok: Right turns the map (30 -> 45), not the page
+  ok: Up tilts it (55.0 -> 62.5)
+  ok: = zooms in (80.0 -> 64.0)
+  ok: - zooms out (100.0)
+  ok: and stops at 260 m
+  ok: W and D pan (55.2 m)
+  ok: C: back to you
+  ok: none of the map's keys turns the page: ["map", "map", "map", "map", "map", "map", "map", "map", "map", "map", "map", "map", "map", "map", "map", "map"]
+  ok: and Q still does: the map -> 'journal'
+  -- the pad
+  ok: the d-pad's up shows one floor: 0
+  ok: its right picks a place: c001
+  ok: the right stick turns it while held, and stops when let go (45 -> 54)
+  ok: Y: back to you
+  ok: and the page never turned
+  ok: a stick still held when the page turned away turns nothing
+  -- the pointer
+  ok: a drag across the miniature turns it (54 -> 78)
+  ok: a right-drag pans it (23.4 m)
+  ok: the wheel zooms (260.0 -> 208.0)
+  ok: a click on a place picks it: c002
+  -- what you were looking at stays
+  ok: a turn to the journal and back keeps the view, the floor and the place: [93.1, 62.5, 166.4, (-57.34, 2.53, 23.0), 1, "c004"]
+  ok: and so do a close and a reopen
+  -- places and ways back
+  ok: the places you know are the rooms found or walked, and nothing beyond them: ["c001", "c002", "c003", "c004", "c005"]
+  ok: picking Arena 1 says its name and each way on, with the bridge's reasons:
+ARENA 1
+Your floor
+- to Corridor 1: open
+- to Platform Path 1: blocked: set by a control in Arena 1
+- a way on, not yet walked: open
+  ok: and no save id
+  ok: every way back the bridge lists is a ring where it stands (8)
+  -- the Hub
+  ok: in the Hub the wall says there is no map here, and draws nothing
+
+GODOT MAP FACE OK (52 checks, 1 notes)

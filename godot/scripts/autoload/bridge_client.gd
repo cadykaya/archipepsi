@@ -110,6 +110,9 @@ func _process(delta: float) -> void:
 ## and a log of what was SENT answers that without a test-only hook in the
 ## send path. Bounded: this is a diagnostic, not a queue.
 var sent_intents: Array[Dictionary] = []
+## Every intent ever sent, counted: `sent_intents` is capped, so only this
+## says how many went while something was watching.
+var sent_total := 0
 const _INTENT_LOG_CAP := 64
 
 ## TEST SEAM: report a send as accepted with no socket behind it.
@@ -135,6 +138,7 @@ func can_send() -> bool:
 			or _socket.get_ready_state() == WebSocketPeer.STATE_OPEN
 
 func send_intent(intent: Dictionary) -> bool:
+	sent_total += 1
 	sent_intents.append(intent)
 	if sent_intents.size() > _INTENT_LOG_CAP:
 		sent_intents.pop_front()

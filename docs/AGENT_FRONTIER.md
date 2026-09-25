@@ -277,8 +277,32 @@ owner's D-06/D-07 rulings and the seam table are in
           colours, so the evidence is now checked against the raw render.
       - Still owed: the Glyph look (H-GLYPH-KIT), Arty's circuit family
         (H-CIRCUITS), and D-3's live "transitioning" overlay (ledger).
-    - **Next: `H-3D-MAP`, then `H-JOURNAL`.** Both read the same
-      `zone_map` through `MinimapModel`.
+    - `H-3D-MAP` (V-21): **landed, on provisional art.**
+      - The Map wall is a miniature of the Zone you can turn, tilt,
+        zoom and pan, by mouse, keys or pad. None of its controls turns
+        the page.
+      - Rooms are cut away (a floor and a low wall, no roof). PgUp and
+        PgDn show one floor at a time; with every floor shown, yours is
+        solid and the others are ghosts.
+      - Blockers are pulsing spheres in their circuit's colour, with a
+        letter; ways back are rings; you are a cone.
+      - Beside the model: the places you know. Picking one centres on it
+        and lists its ways on with the bridge's reasons.
+      - One projection with the minimap (`MinimapModel`), render-only
+        (meshes and labels, no scripts, its own `World3D`), cached, and
+        measured at 7.6 ms for the candidate Zone headless.
+      - The view survives turns and closes.
+      - Reproduced first: 4 of 4 requirements failed on `8a4d5ed`.
+        `godot-map-face` (new, in CI, 52 checks) runs on the real shell
+        and candidate Zone.
+      - The live candidate suite opens the wall through real input with
+        the world paused: the power door is a P in the minimap's colour
+        while the cell is carried, gone once it's installed, and still
+        gone after the restart.
+      - 17 of 17 sabotages fail by name; the first run missed MF-17 (a
+        no-send check the cache made vacuous), which was fixed.
+    - **Next: `H-JOURNAL`** (the Journal wall, and campaign information
+      on Settings), then the CP4 checkpoint.
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 
