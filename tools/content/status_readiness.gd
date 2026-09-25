@@ -45,15 +45,24 @@ var _problems: Array[String] = []
 var _notes: Array[String] = []
 var _log := {}
 
-## The three refusals, as `status_effects.gd` spells them. Each is a
-## SUBSTRING of their source and is required to be found there.
+## The three refusals, as `status_effects.gd` spells them. Each is one or
+## more SUBSTRINGS of their source, ALL required to be found there.
+##
+## Re-read at Production `d82a36e` ("H-STATUS slice 2"), which moved the
+## supported-targets table into a member so its tests can substitute it.
+## The runtime default is still the generated constant, so the guard is
+## the same rule; it is pinned as three parts now -- the member's source,
+## the lookup through it, and the refusal itself, which the one-line pin
+## this replaced never required at all.
 const GUARDS := {
 	"unknown kind":
-		"if not kind in Constants.ECHO_STATUS_KINDS:",
+		["if not kind in Constants.ECHO_STATUS_KINDS:"],
 	"designed but unimplemented":
-		"var targets: Array = Constants.ECHO_STATUS_SUPPORTED_TARGETS.get(kind, [])",
+		["var supported: Dictionary = Constants.ECHO_STATUS_SUPPORTED_TARGETS",
+		 "var targets: Array = supported.get(kind, [])",
+		 "if targets.is_empty():"],
 	"unsupported target":
-		"if not side in targets:",
+		["if not side in targets:"],
 }
 
 ## The five target kinds Amalgam §15.1 names, as `status_effects.gd`'s own
@@ -126,13 +135,14 @@ func _load_production() -> bool:
 				+ "confirmed to still exist.")
 		return false
 	for label: String in GUARDS:
-		if not source.contains(GUARDS[label]):
-			_fail(("StatusEffects.apply no longer contains its '%s' "
-					% label) + "guard:\n      %s\n    " % GUARDS[label]
-					+ "This harness checks that rule on Production's "
-					+ "behalf and is not entitled to keep checking a "
-					+ "rule they have rewritten. Re-read apply().")
-			return false
+		for part: String in GUARDS[label]:
+			if not source.contains(part):
+				_fail(("StatusEffects.apply no longer contains its '%s' "
+						% label) + "guard:\n      %s\n    " % part
+						+ "This harness checks that rule on Production's "
+						+ "behalf and is not entitled to keep checking a "
+						+ "rule they have rewritten. Re-read apply().")
+				return false
 	if not source.contains(SIDES_COMMENT):
 		_fail("status_effects.gd no longer names §15.1's five target "
 				+ "kinds as " + SIDES_COMMENT + ", so the vocabulary "

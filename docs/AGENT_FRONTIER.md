@@ -78,6 +78,19 @@ a font parsed with `load_bitmap_font()` at runtime does not scale unless
 you set `fixed_size_scale_mode`, and the importer's mode allows
 fractional scaling of a pixel face.
 
+**2026-09-25 — an instrument error, and a finding for Production.** The
+art lane's enemy-value harness computed CIE L\* by summing a viewport
+image's **sRGB-encoded** channels as if they were linear light
+(`#777777` read as 0.740, not 0.500), and lit every room with one room's
+lamp. Every enemy VALUE number before this date is on that wrong scale,
+including the Tier 1 ceilings the owner ruled on; the replacement
+(`tools/content/run_enemy_contrast.sh`) calibrates against known greys
+before it measures. **Any lane computing L\* from `get_image()` pixels
+must linearise first** (`Color.srgb_to_linear()`). And Production's
+shipping enemies are built in code in the room's own accent and trim
+(`enemy.gd`), which L-08 forbids; art-lane value bands take effect only
+when its models are integrated. Tier 1 is back with the owner — §11.
+
 Two things from it that other lanes need:
 
 * **Batch 045 delivers visual identities for the four 0.4 setpieces**

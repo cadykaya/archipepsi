@@ -2306,9 +2306,29 @@ deferred rather than settled: `dead` also means *unpowered, locked,
 spent, offline*, so a locked slot on chrome of the same family will not
 read — which surfaces when item/state art arrives.
 
-**Still to author in Track A:** body text, headings and keycaps; the
-shared circuit / blocked-exit / control symbols; page arrows. Item and
-state art waits on Production's real slot vocabulary, per ruling 3.
+**Track A's remainder is AUTHORED (2026-09-25, candidates).**
+
+* **Body text and headings** — `ui_text` (accepted): one uppercase face,
+  headings at its exact 2x. Gate: `run_font_import.sh`, whose advance
+  check derives ink from the page on disk.
+* **Keycaps** — `panel_keycap.png` in `panels.json`: 12x12, corners cut,
+  a 2 px front lip, `dead` chrome. Its insets are UNEQUAL (left 2, top
+  2, right 1, bottom 3) and `run_nine_slice.sh` now carries four margins
+  and its own per-treatment knowledge of where each ring is; a sabotage
+  draws the keycap with its bottom margin wrong and must be caught (it
+  is, by the centre-flat check -- nearest-neighbour stretching hands
+  the corner check back the very lip row it expects).
+* **Symbols and page arrows** — `icon_{circuit,control,exit,blocked}`
+  and `icon_arrow_{left,right,up,down}` + `icons.json`: 12x12, one ink,
+  a 1 px clear margin (the first drawing broke that on four symbols
+  while the docstring promised it; `author_icons.py` now reads every
+  exported page back and refuses it). The tint each takes by state is
+  RECORDED in `icons.json`, not baked. Gate: `run_ui_icons.sh` --
+  lossless import, one ink, the margin, and the arrows re-derived from
+  the imported pixels with Godot's own flip/rotate.
+* Evidence: `docs/art/review/interface_2026-09-24/PROMPTS_keycaps_and_symbols.png`.
+
+Item and state art still waits on Production's real slot vocabulary.
 
 ### Track D — DONE for T01 + T05. Rows are in the descriptor.
 
@@ -2347,13 +2367,15 @@ are. Evidence: `docs/art/review/enemies_2026-09-25/`.
 2. **Two other pairs fail the same test** — `melee / ranged` at 0.856
    and `brute / bulwark` at 0.825. melee/ranged IS PT-10's "a different
    width is not a different silhouette", on a different pair.
-3. **Value outranks outline.** In a lit room the family sits **0.067
-   L\*** from the wall behind it, failing BOTH `min_value_separation`
-   (0.10) and `min_interactable_separation` (0.18) — and an enemy is
-   the most interactable thing in the room. `diver` is 0.014 from the
-   wall; only `artillery` clears even the ordinary rule. It affects all
-   ten at once. (An earlier note here said 0.165 and "clears the value
-   rule"; that came from a broken occupancy mask and is corrected.)
+3. **Value outranks outline.** RE-MEASURED 2026-09-25: the 0.067 L\*
+   first reported here came from a harness with the wrong lamp, the
+   wrong tonemapper, no fog and an L\* computed from sRGB-encoded
+   pixels. Measured properly (`run_enemy_contrast.sh`, which calibrates
+   itself against known greys), the family sits **0.131** from
+   `concrete_facility`'s wall and clears the ordinary rule there -- but
+   in the other rooms, on floors and in dim light it does not: the
+   weakest role is **0.001** from the background in three rooms. It
+   still affects all ten at once.
 
 Plus one envelope overflow: `brute`'s visible body is 0.067 m wider than
 its declared envelope head-on (the PT-12 seam). Reported, not fixed.
@@ -2391,9 +2413,54 @@ and has no explanation. Gate output is now KEPT on failure
 (`$GATELOG`), because a clean rerun is not an explanation for a failure
 nobody looked at.
 
+### Ruling, 2026-09-25 (third) — value bands; and what came back
+
+**RULED:** the smallest practical set of theme-dependent VALUE BANDS,
+ceilings ~0.15 (`void_glitch`) / ~0.20 (`rusted_industrial`) / ~0.27
+(the other four), validated against floors and dim light as well as
+walls; identity preserved; `signal` reserved; two bands preferred over
+three. Tier 2 (2A, 2B) after Tier 1 is settled and measured; then a
+motion-readability review. Track A: `ui_text` accepted, headings at 2x.
+
+**Came back, NOT landed** (`DECISIONS_FOR_OWNER.md`, "Tier 1,
+re-measured"):
+
+* **The ceilings were derived on a wrong instrument** -- wrong light
+  AND an L\* that read sRGB-encoded pixels as linear (`#777777` -> 0.740).
+  Fixed, self-calibrating, sabotage-proven; the runner also refuses if
+  Production's fog, ambient, void colour, lights or tonemapper drift.
+* **Corrected:** on walls, floors and in dim light the body is below
+  its background in every room, so darker is better -- no floor/shadow
+  trade-off there. A NEW case, the row against an opening onto the
+  room's fogged void, is where it bites: in four rooms the void is darker
+  than the walls and a mid-dark band makes enemies vanish against it.
+  Fog floors the darkest a body can render at 18 m (0.031-0.188).
+* **Candidate: two bands** -- k 0.40 for `concrete_facility`,
+  `neon_transit`, `gothic_stone`, `temple_ruin`; k 0.10 for
+  `rusted_industrial`, `void_glitch`. Clears 0.10 on walls, floors and
+  dim light everywhere but two cells (one no paint can clear); 0.18 is
+  out of reach of paint in every room; openings stay short in three.
+* **Four decisions are the owner's:** the threshold (0.10 recommended),
+  the bands, openings (accept / a value-independent tell / Production's
+  void colour), and the two short cells.
+* **Landing changes nothing in the game yet:** Production's enemies are
+  code-built in the room's accent and trim (`enemy.gd`, verified at
+  `d82a36e`) and load no art-lane model.
+
+**One gate re-pinned to Production's own refactor.** `statusready`
+failed the suite at Production `d82a36e` ("H-STATUS slice 2"), which
+moved `StatusEffects.apply`'s supported-targets table into a member so
+its tests can substitute it. Same rule, runtime default still the
+generated constant -- so the gate now pins the guard as THREE parts
+(the member's source, the lookup through it, and the empty-list
+refusal, which the old one-line pin never required). Proven load-bearing
+both ways: the pre-`d82a36e` source fails it, and so does the current
+source with only the refusal removed. PASS, 6 notes, evidence unchanged.
+
 ### Next
 
-C stays blocked on the revised machinery/puzzle bounds; E stays reserve.
-Track A's remainder — body text, headings, keycaps, the shared symbol
-set, page arrows — is ready work. Item and state art still waits on
-Production's slot vocabulary.
+**Tier 1 waits on the owner** (four decisions above). **Tier 2 waits on
+Tier 1** being settled, then the motion review. Track A's remainder is
+authored and gated; its visual identity stays open. C stays blocked on
+the revised machinery/puzzle bounds; E stays reserve. Item and state
+art still waits on Production's slot vocabulary.

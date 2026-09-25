@@ -1969,7 +1969,8 @@ What noticed was not a check. It was that all ten roles reported
 > thought to write is looking at the thing you did not think of.**
 
 The real figure is **0.067** — the family fails both separation rules,
-not neither. Two fixes went in: the lit viewport is freed before the
+not neither. *(Later the same day 0.067 turned out to be on a wrong L\*
+scale too; the lesson after next is that one.)* Two fixes went in: the lit viewport is freed before the
 next one is built, and the harness now refuses any region covering more
 than 10% of the frame, because an enemy 18 m away occupies a few
 thousand pixels and not a million. The corrected numbers were then
@@ -2009,3 +2010,51 @@ Two things it got wrong while being written, both worth keeping:
   `missing` counter would have been incremented in a process that then
   exits — a checker whose count can never rise, which is precisely the
   failure it exists to stop. It reads from a temp file instead.
+
+---
+
+## A sabotage test proves a check can fail. It does not prove a measurement is right.
+
+The enemy contrast harness was sabotage-tested more than anything else
+this lane has written: masks that must refuse a region over 10% of the
+frame, a second script re-reading the PNGs, an environment copied from
+Production and refused if the copy drifts. The owner ruled on its
+numbers twice. Its L\* was wrong the whole time.
+
+`_lstar` summed the viewport image's channels with the Rec. 709 weights
+and took the cube root. The channels `get_image()` returns are
+**sRGB-encoded**, not linear light, so `#777777` — L\* 0.500 by
+definition — read as **0.740**; near-black read as about 0.29; and
+every separation in the dark range the enemies live in came out
+compressed. The error is monotonic, so on its own it never reordered
+the roles -- and a plausible ranking is exactly what makes a wrong scale
+look trustworthy.
+
+What found it was not a check. A diagnostic painted every enemy pure
+black and matte, which should leave nothing but fog, and the harness
+said the black body was L\* 0.29 in a room whose fog it could compute
+at about 0.18. A mix of black and fog cannot be brighter than the fog.
+The saved frame said the body pixels were `(14, 15, 16)`.
+
+> **Point the instrument at something whose answer you already know
+> before you point it at anything else.** Sabotage asks "can this
+> check fail?" Calibration asks "does this number mean what it says?"
+> They are different questions, and this harness only ever asked the
+> first.
+
+The harness now renders three unshaded grey cards before every run and
+refuses to measure unless they read back at their CIE L\* — values
+computed offline from the sRGB definition, not by the function under
+test. Putting the old conversion back makes it refuse, which is the
+calibration's own sabotage.
+
+Two smaller things from the same day, same shape:
+
+* **A docstring promised a 1 px margin and four of eight symbols ran to
+  the cell edge.** A claim in prose is not a rule. `author_icons.py` now
+  reads every exported page back and refuses ink on the outer ring.
+* **A new gate passed with an empty log.** `run_godot` echoes only
+  lines carrying its tag, and the gate printed under a different one.
+  Exit 0 from a gate that said nothing proves nothing; the tag is fixed
+  and the pass line is now visible.
+

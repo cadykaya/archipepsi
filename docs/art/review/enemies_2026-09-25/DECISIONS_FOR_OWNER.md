@@ -52,8 +52,9 @@ the brute's 6.7 cm overflow) do not use L\* and regenerate
 byte-identical; they stand.
 
 **Corrected, like for like:** in `concrete_facility` at 18 m the family
-sits **0.131** L\* from the wall, not 0.067 — `diver` 0.099 weakest,
-`artillery` 0.146 strongest, the same order as before.
+sits **0.131** L\* from the wall, not 0.067 — `diver` 0.099 weakest and
+`artillery` 0.146 strongest, the same two ends as before; `beacon` moves
+from ninth to fourth.
 
 The instrument now checks itself before it measures anything: three
 unshaded grey cards go through the same viewport and must read back at
