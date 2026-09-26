@@ -353,6 +353,18 @@ func owned_components(kind := "") -> Array:
 			out.append(entry)
 	return out
 
+## Every owned consumable's component, in the fold's order: whatever
+## carries a charge count, which is what `charges_total` and
+## `charges_left` read too. Owned, not carried -- a spent supply is
+## still one.
+func owned_consumables() -> Array:
+	var out: Array = []
+	for entry: Dictionary in mechanics().get("owned", []):
+		var component: Dictionary = entry.get("component", {})
+		if component.get("charges") != null:
+			out.append(component)
+	return out
+
 func owned_component(component_id: String) -> Dictionary:
 	for entry: Dictionary in mechanics().get("owned", []):
 		if entry.get("component", {}).get("component_id", "") == component_id:

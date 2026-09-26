@@ -601,6 +601,22 @@ static func consumable_state(rows: Array, holds: Variant, left: int,
 	return {"state": "ready", "count": count, "text": ""}
 
 
+## THE CONSUMABLE KEY'S STATE NOW, from the client's own view: the one
+## reading the equipment wall, a refused press and the arrival pointer
+## share, so a player never reads two sentences for one state.
+##
+## Builds the item rows, so it is for an event -- a press, an arrival --
+## and not for a HUD repainting every cooldown frame.
+static func live_consumable_state() -> Dictionary:
+	var rows := items(BridgeClient.snapshot, BridgeClient.interpretations())
+	var holds: Variant = BridgeClient.slots().get("consumable")
+	var cid := "" if holds == null else str(holds)
+	return consumable_state(rows, holds,
+			BridgeClient.charges_left(cid) if cid != "" else 0,
+			BridgeClient.awaiting_authorization(cid) if cid != "" else 0,
+			BridgeClient.can_send())
+
+
 static func mk_roman(n: int) -> String:
 	const NUMERALS := ["I", "II", "III", "IV", "V", "VI", "VII", "VIII",
 			"IX", "X", "XI", "XII"]

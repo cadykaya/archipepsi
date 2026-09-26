@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-signal-verbs godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted godot-menu-shell menu-shell-shots godot-equipment-face equipment-face-shots equipment-fixture godot-minimap minimap-shots map-fixture godot-map-face map-face-shots godot-journal-face journal-face-shots journal-fixture lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-rail-gantry godot-rail-network godot-gantry-census godot-machine-life godot-enemy-footing godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-status-kinetic godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-signal-verbs godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted godot-menu-shell menu-shell-shots godot-equipment-face equipment-face-shots equipment-fixture godot-minimap minimap-shots map-fixture godot-map-face map-face-shots godot-journal-face journal-face-shots journal-fixture lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-rail-gantry godot-rail-network godot-gantry-census godot-machine-life godot-bombs bomb-fixture godot-enemy-footing godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-status-kinetic godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -62,6 +62,9 @@ map-fixture:
 # candidate Zone after real transitions (H-JOURNAL).
 journal-fixture:
 	$(PY) bridge/archipepsi_bridge/fixtures/make_journal_snapshot.py
+
+bomb-fixture:  # H-BOMBS: the candidate campaign, played to its first consumable
+	$(PY) bridge/archipepsi_bridge/fixtures/make_bomb_snapshots.py
 
 # The PRE-ART playtest baseline. Regenerate DELIBERATELY and in its own
 # commit: retaking it means the playtest before it and the playtest after
@@ -1432,6 +1435,15 @@ godot-enemy-footing: godot-import  # ML-F1/F2: no enemy leaves the world unfough
 
 godot-machine-life: godot-import  # O05-10.4: repeated lifecycles accrue nothing
 	@out=$$($(GODOT) --headless --path godot -- --machine-life 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-bombs: godot-import  # H-BOMBS (PT-09, V-15): a natural consumable, noticed, carried, used
+	@out=$$($(GODOT) --headless --path godot -- --bombs 2>&1); \
 	status=$$?; printf '%s\n' "$$out" \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
 	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \

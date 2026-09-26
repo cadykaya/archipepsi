@@ -149,6 +149,7 @@ jobs:
           make godot-gantry-census
           make godot-enemy-footing
           make godot-machine-life
+          make godot-bombs
           make godot-zone-state
           make godot-roster
           make godot-actuator

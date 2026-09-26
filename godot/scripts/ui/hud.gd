@@ -55,6 +55,12 @@ const _KILL_TIME := 0.45
 var _voice_label: Label
 var _voice: EpsilonVoice = EpsilonVoice.new()
 var _voice_fade := 0.0
+#: H-BOMBS: the consumables owned at the last snapshot, and the campaign
+#: they belong to. A campaign met for the first time is a baseline, not
+#: news: what it already owns was acquired before this process saw it.
+var _consumables_campaign := ""
+var _consumables_owned := {}
+
 ## HP fraction that counts as being in trouble, and the fraction you have
 ## to climb back above before it counts again — without the gap, hovering
 ## on the threshold makes Epsilon comment on every stray pellet.
@@ -490,6 +496,7 @@ func bind_player(player: Player) -> void:
 	player.died.connect(_on_player_died)
 	player.damaged_from.connect(_on_damaged_from)
 	player.hit_confirmed.connect(_on_hit_confirmed)
+	player.consumable_refused.connect(_on_consumable_refused)
 	_hit_fade = 0.0
 	_hit_marker.visible = false
 	_reset_confirmation()
@@ -580,6 +587,10 @@ func _loadout_text(highlighted: String) -> String:
 		var action := BridgeClient.slotted_action(slot)
 		var mark := "▸" if slot == highlighted else " "
 		var keycap: String = SlotKeycaps.of(slot)
+		if slot == "consumable":
+			rows.append("%s %-5s %s" % [mark, keycap,
+					_consumable_row(action)])
+			continue
 		if action.is_empty():
 			rows.append("%s %-5s —" % [mark, keycap])
 			continue
@@ -591,6 +602,37 @@ func _loadout_text(highlighted: String) -> String:
 				action.get("display_name", "?"),
 				"  Mk %d" % mk if mk > 1 else ""])
 	return "\n".join(rows)
+
+## THE CONSUMABLE KEY'S ROW, in the states a player has to tell apart
+## (H-BOMBS, V-15: "absent/owned/empty cases distinguished").
+##
+## It read "—" whether the player owned no consumable or owned one that
+## was on no key, and a carried one showed its name and never its count,
+## so an empty supply looked exactly like a full one. Now:
+##
+##   none owned            —
+##   owned, on no key      — Bomb Bag owned, not carried
+##   carried               Bomb Bag  2 / 3
+##   carried, spent        Bomb Bag  0 / 3  EMPTY
+##
+## Read from the fold and the client's count (`charges_left`, less uses
+## still in flight), both already in memory: this repaints on every
+## cooldown frame, so it builds no item rows.
+func _consumable_row(action: Dictionary) -> String:
+	if action.is_empty():
+		var owned := BridgeClient.owned_consumables()
+		if owned.is_empty():
+			return "—"
+		if owned.size() == 1:
+			return "— %s owned, not carried" % str(
+					(owned[0] as Dictionary).get("display_name", "?"))
+		return "— %d owned, none carried" % owned.size()
+	var cid := str(action.get("component_id", ""))
+	var mk := int(BridgeClient.owned_component(cid).get("mk", 1))
+	var left := BridgeClient.charges_left(cid)
+	return "%s%s  %d / %d%s" % [action.get("display_name", "?"),
+			"  Mk %d" % mk if mk > 1 else "", left,
+			BridgeClient.charges_total(cid), "  EMPTY" if left <= 0 else ""]
 
 ## `cooldown < 0` means "ask the runtime" — a plain default of 0.0 made
 ## every snapshot repaint the bar as fully ready mid-cooldown.
@@ -647,6 +689,70 @@ func toast(text: String, color := Color.WHITE, seconds := 3.5) -> void:
 	# interface is still there to read when it closes.
 	var timer := get_tree().create_timer(seconds, false)
 	timer.timeout.connect(label.queue_free)
+
+## A toast, unless the same words are already on screen. For what a
+## player can repeat as fast as they can press a key: a refusal said once
+## per press stacks a column of identical lines.
+func say_once(text: String, color := Color.WHITE, seconds := 3.5) -> void:
+	for child: Node in _toast_box.get_children():
+		if child is Label and not child.is_queued_for_deletion() \
+				and (child as Label).text == text:
+			return
+	toast(text, color, seconds)
+
+
+## THE CONSUMABLE KEY WAS PRESSED AND NOTHING HAPPENED: say why, in the
+## equipment wall's own sentence for the key's state (H-BOMBS, PT-09).
+##
+## A key that has no sentence to say -- one with charges, online, nothing
+## waiting -- was refused by the engine, and the engine's refusal is
+## already on screen (`Main._on_bridge_error`), so nothing is added.
+func _on_consumable_refused(_why: String) -> void:
+	var state := EquipmentQuery.live_consumable_state()
+	var text := str(state.get("text", ""))
+	if text == "":
+		return
+	if str(state.get("state", "")) == "owned_not_equipped":
+		text += " Open " + _where_to_carry()
+	say_once(text, Color(1.0, 0.75, 0.4))
+
+
+## Where a consumable is put on its key, with the key that opens it.
+static func _where_to_carry() -> String:
+	return "EQUIPMENT [%s]." % SlotKeycaps.of_action("inventory", "TAB")
+
+
+## A CONSUMABLE THAT JUST ARRIVED, WITH NOTHING ON ITS KEY, IS POINTED AT
+## ITS KEY -- once (H-BOMBS, PT-09: "absent versus unnoticed").
+##
+## Its card already names it and says "Slot: CONSUMABLE"; what the card
+## cannot say is that no key holds it yet and where it is put on one, and
+## a player who never opens the equipment wall never finds out. Said when
+## the snapshot first owns it, so it cannot repeat: the next snapshot owns
+## the same set. Nothing is said when the key already holds a supply --
+## the card is enough there, and that player knows where the key is.
+func point_at_new_consumables(snapshot: Dictionary) -> void:
+	var campaign := EquipmentSeen.campaign_key(snapshot)
+	var owned := {}
+	for component: Dictionary in BridgeClient.owned_consumables():
+		owned[str(component.get("component_id", ""))] = str(
+				component.get("display_name", "?"))
+	var fresh: Array = []
+	if campaign == _consumables_campaign:
+		for cid: String in owned:
+			if not _consumables_owned.has(cid):
+				fresh.append(cid)
+	_consumables_campaign = campaign
+	_consumables_owned = owned
+	if fresh.is_empty() \
+			or not BridgeClient.slotted_action("consumable").is_empty():
+		return
+	var key := SlotKeycaps.of("consumable")
+	for cid: String in fresh:
+		toast("%s is a consumable for %s. Put it on the key from %s"
+				% [owned[cid], key, _where_to_carry()],
+				Color(0.7, 1.0, 0.9), 9.0)
+
 
 func set_crosshair_visible(value: bool) -> void:
 	_crosshair.visible = value

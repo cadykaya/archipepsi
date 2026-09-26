@@ -4497,3 +4497,184 @@ occurrence (P17.5), and nothing is promoted into generation.
   - a composed, played junction occurrence (P17.5).
 - **What the owner will notice:** nothing yet. It is the machine a
   switchable railway needs, waiting for a Zone that asks for one.
+
+## 0.4 — H-BOMBS, slice 1 (PT-09, V-15): absent until Zone 6, then unnoticed, and dead in the Hub — repaired (client)
+
+`13_WORK_QUEUE` H-BOMBS: "Matching current-save diagnosis and normal
+acquisition/equip/use receipt. V-15; absent versus unnoticed
+distinguished; no artificial grant as evidence." V-15: "Natural candidate
+claim, not injected component | Item discoverable, compatible equip and
+real authorized use; absent/owned/empty cases distinguished." PT-09 says
+not to use the old schema-8 upload, and not to take a free bomb as proof
+that a bomb can be found.
+
+This slice is the diagnosis and the client repair, replayed on the
+engine's own snapshots of a naturally claimed Bomb Bag. **The live receipt
+-- the same claim, equip and use over a real socket in a real Zone 6 --
+is slice 2 and has not run.**
+
+- **The owner's save is not here.** They offered to send the played
+  `.diagnostic-candidate` save; it has not arrived, and nothing below
+  reads it. The diagnosis reconstructs the campaign they played from the
+  same inputs: `Diagnostic Campaign - Candidate` is mock AP, the
+  deterministic fallback provider, DEFAULT scale and `--candidate=all`,
+  and the mock's placements are a function of its config and seed alone
+  (`H-BOMBS_diagnosis.py`). It plays that campaign as a thorough player
+  would: every allocated Check claimed, Zone after Zone. It ran at the
+  owner's build, `a745637`, and at this branch's head. The two runs
+  differ in one place: at the head, Zone 5's four self-addressed Checks
+  also yield local Echoes (D-01, which landed after the owner's build).
+  Every consumable is the same in both.
+- **HB-F1, absent: no consumable exists before Zone 6.** Zones 1–5 hold
+  none, and the Hub shop never stocks one, whether or not the player buys
+  what it does stock (`H-BOMBS_diagnosis_{nobuy,buy,a745637}.log`).
+  - The first is the **Bomb Bag**: the Echo of Check 89100140, the
+    fourth of Zone 6's 15 Checks in id order. It is created
+    (`CreateOperation`), 3 charges, "Thrown: bursts for 34 damage within
+    4.0 m after 1.4 s".
+  - Four more Bomb Bag Checks in the same Zone upgrade it to Mk 5.
+  - Where the Bomb Bags sit is the mock multiworld's placement --
+    Archipelago's randomized truth -- so this is the campaign's shape,
+    not a defect. Nothing here moves one earlier or grants one.
+  - **So:** a player who stopped before Zone 6 had no bomb to find. One
+    who reached it met the next two findings. The save would say which:
+    whether `echo_89100140` is in its log, whether `slots.consumable` was
+    ever set, and whether any use was authorized.
+- **HB-F2, unnoticed: the client could not tell absent, owned and empty
+  apart, and said nothing when the key did nothing.**
+  - The HUD's consumable row read `Q —` with none owned and with a Bomb
+    Bag owned and on no key. Carried, it showed the name and never the
+    count, so a spent supply looked exactly like a full one.
+  - Pressing the key with nothing on it was **silent**:
+    `Player._say_exhausted` returned before saying anything when the key
+    was empty.
+  - A spent supply's refusal emitted `Player.exhausted`, which **nothing
+    in the game connected**. Its doc said "so the HUD can say which
+    supply"; only the consumable suites listened.
+  - The Bomb Bag's card said `Slot: CONSUMABLE`. No key held it, and
+    nothing said where one is put on.
+- **HB-F3, dead in the Hub: something put on a key in the Hub never
+  reached the key.** Only the Zone re-equipped on a snapshot. The Hub's
+  player was equipped once, when the Hub was built.
+  - So a Bomb Bag equipped at the equipment wall in the Hub, and pressed
+    there -- the Echo Lab is in the Hub for exactly this -- asked the
+    bridge, which **granted** the use and moved `spent`. The press then
+    found an empty runtime and **handed the charge back**, silently:
+    "0 thrown; the key's runtime holds 'nothing'; sent
+    [authorize_consumable, release_consumable_authorization]".
+  - The same holds for every key. An Echo equipped in the Hub did
+    nothing new until the next Zone.
+  - The lab suite equips its runtime by hand, which is why nothing
+    caught this.
+- **The repair (client only; no schema, bridge or save change).**
+  - **The key's row** (`Hud._consumable_row`): `—` for none owned;
+    `— Bomb Bag owned, not carried` (or `— 2 owned, none carried`);
+    carried as `Bomb Bag  2 / 3`; spent as `Bomb Bag  0 / 3  EMPTY`.
+    It reads the fold and the client's own count (`charges_left`, less
+    uses in flight), the number the equipment wall shows.
+  - **A press that does nothing says why.** Every such press emits
+    `Player.consumable_refused`, whether or not the key holds anything.
+    `Player.exhausted` keeps firing exactly where it did, so the
+    consumable suites' contract is unchanged.
+    - The HUD answers in the equipment wall's own sentence for the key's
+      state (`EquipmentQuery.live_consumable_state`, one reading shared
+      by the wall and the press): "No consumable owned yet…", "Nothing
+      on Q. You own 1 consumable: pick one to carry. Open EQUIPMENT
+      [Tab].", "Empty. It stays on Q, and entering a Zone refills it.",
+      offline, waiting.
+    - Said once while it is on screen, not once per press
+      (`Hud.say_once`).
+    - A use the engine refused adds nothing: the engine's refusal is
+      already on screen from `Main._on_bridge_error`.
+  - **The arrival points at the key** (`Hud.point_at_new_consumables`,
+    from `Main._on_snapshot`): "Bomb Bag is a consumable for Q. Put it
+    on the key from EQUIPMENT [Tab]."
+    - Only when a snapshot first owns it and the key holds nothing, so
+      it cannot repeat.
+    - A campaign first met already owning one is a baseline, not news.
+      A restarted game is not told its old bag just arrived; the row
+      still says it is owned and not carried.
+  - **The Hub re-equips on every snapshot**, as the Zone does
+    (`Main._sync_equipped`).
+- **Evidence: `make godot-bombs`** (new, in CI; `bombs_driver.gd` beside
+  the real `Main`). It runs in the Hub on `bomb_snapshots.json`.
+  - **The fixture is the campaign's own**, not a component typed in
+    (`make bomb-fixture`, `make_bomb_snapshots.py`). The candidate is
+    played to the Bomb Bag's Check and claimed through
+    `transactions.claim_check`; that claim's notices are recorded as the
+    wire carries them.
+    - It is slotted by `handle_slot_action` and spent through the real
+      authorize/use handlers.
+    - The rest of Zone 6 is claimed, the player leaves through the exit,
+      and Zone 7 is entered: the refill.
+    - The one refusal is the real server's `dispatch` answering a press
+      minted before that refill: "authorization 1 was minted against
+      supply 6; the current supply is 7".
+    - Deterministic: identical sha256 on two runs. Five unused snapshot
+      fields are left out and `meta.omitted` names them.
+    - **Guarded** by `bridge/tests/test_bomb_fixture.py`: the committed
+      JSON is the generator's, and each variant is the state it is named
+      for. A one-character hand edit fails it ("run `make bomb-fixture`;
+      the JSON is generated, not edited").
+  - **It checks:**
+    - the provenance;
+    - the four rows;
+    - a press in each state, and presses repeated;
+    - the card and the pointer, and no repeat;
+    - first sight;
+    - EQUIP ON Q from the Bomb Bag's own card: one `slot_action`, then
+      TAKE OFF Q on the engine's answer;
+    - the refused use, said once;
+    - the granted use: one bomb thrown, one `use_consumable`, `2 / 3`;
+    - the refill: `0 / 3  EMPTY` becomes `3 / 3`.
+  - **Before (the unchanged client, `2a573fe`):** 17 of 34 checks fail
+    (`H-BOMBS_before_full.log`). They are HB-F2's rows, presses and
+    pointer, and HB-F3's thrown bomb.
+    - The 17 that pass are controls: provenance, the card, the equipment
+      wall's own equip, the refused use, and a first sight saying
+      nothing.
+    - The first reproduction had 14 checks: 8 failed on the product, and
+      one on the driver's own reading of the fixture
+      (`component.component_id`), fixed in the driver
+      (`H-BOMBS_first.log`, `H-BOMBS_before.log`). It ran on the first
+      fixture, whose four snapshots are field for field those of the
+      final one.
+  - **After: 34 of 34** (`H-BOMBS_after.log`), 26 s.
+  - **Sabotages: 11 of 11 caught**, each file restored byte for byte
+    (`H-BOMBS_sabotages.log`, `H-BOMBS_runner.py`). Four put the old
+    code back and reproduce: the row, the silent empty key, no pointer,
+    and the Hub that never re-equips. Seven break one rule each:
+    - the refusal unwired;
+    - every press toasted;
+    - the pointer on every snapshot;
+    - first sight taken for news;
+    - the engine's refusal said twice;
+    - a denial not counted;
+    - EMPTY unmarked.
+  - **Not claimed:** the count while a use is in flight never reaches the
+    screen. The row repaints on the answer, so no check reads it, and the
+    choice of the client's count over the fold's is for agreement with
+    the equipment wall.
+- **Regression** (`H-BOMBS_regression_suites.tsv`,
+  `H-BOMBS_regression_live.tsv`): 19 offline suites that go through
+  `Main`, the HUD, the equipment wall or the consumable key, all green.
+  Among them: `godot-consumable` (87, `exhausted` counted as before),
+  `godot-equipment-face` (107), `godot-hud`, `godot-lab`,
+  `godot-archive`, `godot-menu-shell`, `godot-machine-life` (41) and
+  `godot-reload`. And 12 live suites, every phase over a real socket:
+  `godot-consumable-live`, `godot-consumable-restart`,
+  `godot-ordinary-live`, `godot-resume-live`, `godot-candidate-live`
+  (310 s), the three `godot-integration` runs, and the latched, lever,
+  reversible and transport routes. `make test`: 2,301 passed
+  (`H-BOMBS_make_test.log`). No suite
+  printed a `SCRIPT ERROR`; the only matches in the logs are make
+  echoing its own recipes' `grep "SCRIPT ERROR"`.
+- **What the owner will notice:** a bomb they own says so on the HUD,
+  whether or not it is on a key. The key counts down to EMPTY, and a
+  press that does nothing says why. The bag points at Q when it arrives.
+  Equipping it in the Hub and trying it there works.
+- **Slice 2, next: the live receipt.** The Bomb Bag claimed in a real
+  Zone 6 by the real client over a real socket; then equipped from the
+  equipment wall, thrown, counted by the save, emptied, and refilled in
+  Zone 7. `godot-consumable-live` still gives its consumable by
+  `give_consumable.py`, and stays the expenditure proof, not this one.

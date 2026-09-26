@@ -500,9 +500,29 @@ owner's D-06/D-07 rulings and the seam table are in
         - RB-F4 (open, slice 2): a declared railway builds no control a
           player can command it with.
       - No Zone declares a switch yet. The schema half is Dess's (N-19).
-    - **Next:** H-BOMBS (PT-09/V-15): the live half of a naturally
-      acquired consumable -- noticed, equipped, used, and absent, owned
-      and empty told apart. O05-11 proved the bridge half.
+    - **H-BOMBS slice 1 (PT-09/V-15): absent until Zone 6, then
+      unnoticed, and dead in the Hub -- repaired (client).** The owner's
+      save has not arrived; the diagnosis replays their campaign from
+      the same inputs, at `a745637` and at head.
+      - HB-F1 (absent): no consumable before Zone 6. The first is the
+        Bomb Bag of Check 89100140, and the shop never stocks one.
+      - HB-F2 (unnoticed): the HUD row read the same for none and for
+        owned-not-carried, and showed no count. An empty key was silent,
+        and `Player.exhausted` was connected to nothing.
+      - HB-F3: Hub snapshots never re-equipped the Hub player. A Bomb
+        Bag equipped in the Hub had its use granted and silently handed
+        back.
+      - Repaired: the row (`— Bomb Bag owned, not carried`,
+        `2 / 3`, `0 / 3  EMPTY`); a press that does nothing says why in
+        the equipment wall's words, once; the arrival points at Q and
+        EQUIPMENT; the Hub re-equips.
+      - `godot-bombs` (new, in CI; `make bomb-fixture`, the campaign's
+        own snapshots): 34 checks. The unchanged client fails 17 of them.
+        11 of 11 sabotages caught; 19 offline and 12 live suites green.
+    - **Next:** H-BOMBS slice 2, the live receipt: the Bomb Bag claimed
+      in a real Zone 6 by the real client over a real socket, equipped
+      from the equipment wall, thrown, counted by the save, emptied and
+      refilled in Zone 7. No `give_consumable.py`.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

@@ -276,6 +276,12 @@ func _ready() -> void:
 		var life_driver := MachineLifeDriver.new()
 		life_driver.main = self
 		add_child(life_driver)
+	# H-BOMBS (PT-09, V-15): a naturally acquired consumable, as the player
+	# is told about it -- `Main`'s wiring, so beside `Main`.
+	if BombsDriver.requested():
+		var bombs_driver := BombsDriver.new()
+		bombs_driver.main = self
+		add_child(bombs_driver)
 
 ## Enter the curated Stage 3A showcase.
 ##
@@ -470,6 +476,7 @@ func _on_snapshot(_snapshot: Dictionary) -> void:
 				_to_zone(BridgeClient.active_zone()["zone"])
 			elif hub != null:
 				hub.refresh()
+				_sync_equipped()
 		View.ZONE:
 			if mode == "NO_CAMPAIGN":
 				_to_menu()
@@ -481,11 +488,23 @@ func _on_snapshot(_snapshot: Dictionary) -> void:
 				_sync_equipped()
 	if shop.visible:
 		shop.rebuild()
+	hud.point_at_new_consumables(_snapshot)
 	hud.refresh_echo()
 
+## THE KEYS FOLLOW THE SNAPSHOT IN THE HUB AS IN A ZONE (H-BOMBS).
+##
+## Only the Zone re-equipped on a snapshot; the Hub's player was equipped
+## once, when the Hub was built, and never again. So something put on a
+## key IN THE HUB -- the equipment wall is open there too, and the Echo
+## Lab is there for trying it -- stayed off the key's runtime until the
+## next Zone: the HUD named it, the bridge granted its use, and the press
+## handed the charge straight back with nothing thrown. A Bomb Bag
+## equipped in the Hub did nothing in the Hub.
 func _sync_equipped() -> void:
 	if zone != null and zone.player != null:
 		_equip_all_slots(zone.player)
+	elif hub != null and hub.player != null:
+		_equip_all_slots(hub.player)
 
 ## S7: four slots, four runtimes, each fed the Action the fold says is in
 ## it. An empty slot is legal and stays empty — the Static Pulse is what

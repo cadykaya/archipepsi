@@ -28,9 +28,20 @@ signal jumped
 ## by the ride itself, so nothing can report a catch that did not happen.
 signal rail_caught(at: Vector3)
 signal rail_released(at: Vector3)
-## The consumable slot was pressed with nothing left. Carries the name so
-## the HUD can say which supply and that entering a Zone refills it.
+## A supply ON THE KEY refused a press: nothing left, every charge
+## already asked for, or a use the bridge would not grant. Carries its
+## name. The count the consumable suites keep of refusals; what the
+## player READS is `consumable_refused`, which also covers a key with
+## nothing on it.
 signal exhausted(supply_name: String)
+## THE CONSUMABLE KEY WAS PRESSED AND NOTHING HAPPENED (H-BOMBS, PT-09).
+## Every such press, whether or not anything is on the key: none owned,
+## owned and not carried, empty, waiting, offline, refused. `why` is ""
+## for a press refused here before anything was asked, else the denial's
+## own reason. The HUD turns the key's state into words
+## (`EquipmentQuery.live_consumable_state`), so the player hears the same
+## sentence the equipment wall shows.
+signal consumable_refused(why: String)
 ## What the hand did or refused, for the HUD: "CARRYING · 18 kg",
 ## "TOO HEAVY TO CARRY · 61 kg (limit 60 kg)", "DROPPED", ...
 signal carry_feedback(text: String, ok: bool)
@@ -612,7 +623,7 @@ func press_slot(slot: String) -> void:
 	var component_id := str(BridgeClient.slotted_action(
 			"consumable").get("component_id", ""))
 	if BridgeClient.reserve_consumable(component_id).is_empty():
-		_say_exhausted()
+		_say_refused()
 		return
 	var runtime: EchoRuntime = runtimes[slot]
 	if runtime.cooldown_remaining > 0.0:
@@ -631,8 +642,8 @@ func press_slot(slot: String) -> void:
 ## same reason an empty supply is: a button that does nothing in silence
 ## reads as broken.
 func _on_consumable_denied(_component_id: String, _use_index: int,
-		_why: String) -> void:
-	_say_exhausted()
+		why: String) -> void:
+	_say_refused(why)
 
 
 func _on_consumable_authorized(component_id: String,
@@ -694,7 +705,13 @@ func _has_a_charge() -> bool:
 
 ## Say why nothing happened, and what brings it back. An exhausted
 ## supply that refuses in silence reads as a broken button.
-func _say_exhausted() -> void:
+##
+## **AN EMPTY KEY IS SAID TOO** (H-BOMBS). This returned before saying
+## anything when nothing was on the key, so a player who owned no
+## consumable -- or owned one and had not put it on the key -- pressed
+## it and got silence, the same silence as a key that does not exist.
+func _say_refused(why := "") -> void:
+	consumable_refused.emit(why)
 	var action: Dictionary = BridgeClient.slotted_action("consumable")
 	if action.is_empty():
 		return
