@@ -592,9 +592,18 @@ owner's D-06/D-07 rulings and the seam table are in
     - **CK7: 92 of 92 on `bfcf64e`** (HB-F4a + HB-F4e), one run on one
       revision, every live suite alone on the machine
       (`CK7_frontier_on_bfcf64e.tsv`).
-    - **Next:** the CK8 frontier on the HB-F4c revision, then HB-F4a-3
-      (zone_008) and HB-F4f. PT-09 is met live, and a player reaches the
-      Bomb Bag with no Zone discarded on the way.
+    - **CK8: 92 of 92 on `adfb76c`** (HB-F4c), one run on one
+      revision (`CK8_frontier_on_adfb76c.tsv`).
+    - **HB-O1, ruled by the owner (2026-09-26, verbatim in the ledger):**
+      pickup cards are informational, not gameplay-modal. Q (any valid
+      gameplay input) passes through and acts normally; the card may
+      stay or fade, and is never merely closed by the press. Transient
+      overlays never silently eat gameplay input; a block that must
+      stay says why. Cause: `Main._update_modal` counts `reveal.visible`
+      as modal.
+    - **Next:** HB-F4a-3 (zone_008's `c016`), then HB-O1 as ruled, then
+      HB-F4f. PT-09 is met live, and a player reaches the Bomb Bag with
+      no Zone discarded on the way.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

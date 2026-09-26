@@ -5497,3 +5497,59 @@ is not what happened, and the report HB-F4 read was itself wrong.**
 - **Regression:** the full frontier runs on the frozen revision holding
   this before it is pushed (CK8, the next section).
 - **Next:** HB-F4a-3 (zone_008's `c016`) and HB-F4f.
+
+## CK8 checkpoint — the full frontier on `adfb76c` (HB-F4c)
+
+- **On `adfb76c` (the HB-F4c head): 92 of 92 steps passed,** in one run
+  on that one revision, 11:12–12:41 UTC
+  (`CK8_frontier_on_adfb76c.tsv`).
+  - The steps are CK7's 92, unchanged.
+  - It covers every commit since CK7's revision (`bfcf64e`): the CK7
+    record and HB-F4c. Dess pushed nothing in between.
+  - `make test`: 2,304 passed (`CK8_make_test_on_adfb76c.log`).
+  - No log has a line starting `SCRIPT ERROR`. Eight logs contain the
+    words, all in the Makefile's own echoed recipe, none from the
+    engine.
+  - Every live suite passed, run one at a time with nothing else on the
+    machine.
+  - `godot-zone-audit` (step 22) rewrote the one placement fixture's
+    provenance stamp, as at every checkpoint. It was restored after the
+    run.
+  - These are local results; remote CI does not run (N-6).
+
+## Owner ruling on HB-O1 — pickup cards are informational, not gameplay-modal (2026-09-26)
+
+HB-O1 (H-BOMBS slice 2) observed that a pickup card holds the controls, Q
+included, and outlasts the equipment wall, so a Q pressed under it did
+nothing and said nothing. I left it for the owner. The ruling, verbatim:
+
+> "For the pickup-card question: don't silently eat Q.
+>
+> Treat pickup cards as informational rather than gameplay-modal. If Q is
+> a valid gameplay action while the card is visible, let it pass through
+> and perform the action normally. The card can remain, dismiss, or
+> accelerate its fade afterward.
+>
+> Don't make Q merely close the card instead of doing what Q normally
+> does.
+>
+> More generally: transient informational overlays should never silently
+> consume unrelated gameplay inputs. If an input truly has to be blocked,
+> the UI needs to say why rather than just losing the press."
+
+- **The cause, located.** `Main._update_modal` counts `reveal.visible`
+  (the pickup card) as modal, beside the menus, the shop and the
+  station panel. So a visible card puts the player under the `modal`
+  hold and every gameplay input is frozen. `reveal.gd` still carries
+  the original note: "freeze input, show the card, play the sound, hold
+  ~2 seconds".
+- **What I will build.**
+  - The card leaves the modal set. Q, and any other valid gameplay
+    input, passes through and does what it normally does. The card
+    stays up or fades faster; it is never merely closed by the press.
+  - An audit of every other transient overlay and every `Player.hold`
+    reason. A press that genuinely has to stay blocked says why.
+  - A regression drives the owner's own sequence: EQUIPMENT open with
+    the card still up, the wall closed, then Q. It passes only if the
+    throw is authorised and counted.
+- **Order.** After HB-F4a-3 (zone_008), as agreed.
