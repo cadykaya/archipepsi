@@ -545,6 +545,37 @@ where the new rule would refuse a lever.
     - The first composed one could not be ridden.
     - My slice 2 builds CALL levers for every declared railway. The
       network builder already does.
+- **N-20 (HB-F4: the owner's candidate campaign built 5 of its first 12
+  Zones; one composition finding for you).** Found by H-BOMBS slice 2
+  walking `Diagnostic Campaign - Candidate` live. The HB-F4 ledger entry
+  has the evidence.
+  - **What happens.** At the owner's build `a745637` and at head alike, 7
+    of the first 12 Zones cannot be played. Each fails three times and
+    the Hub offers the discard:
+    - zone_004 and zone_011: the engine cannot place a room (router, mine:
+      HB-F4a).
+    - zone_005, zone_006, zone_009 and zone_012: the bridge refuses the
+      layout on aperture polarity. A prop of mine stood in a declared
+      side doorway; repaired engine-side (HB-F4b). zone_006 also has a
+      connector of mine laid through two doorways (HB-F4c, open).
+    - zone_010 and zone_012: a pressure-door chain certificate whose
+      declared latch does not fire in every run (HB-F4e, mine, open).
+    - After HB-F4b, the campaign takes a new path, and 10 of its first 12
+      Zones build. zone_004 and zone_008 still fail in the router.
+  - **Your half: a retry composes the same Zone.** This was measured by
+    digest across the walks: seven failing Zones at `a745637`, seven at
+    head, and two on HB-F4b. Every one kept a single composition over
+    its three attempts.
+    - So the NO-LAYOUT budget cannot escape anything the engine fails on
+      deterministically. It spends its three attempts on one answer, then
+      the Hub offers the discard.
+    - This is the caveat to (b) in N-18, now with a case: the owner's own
+      campaign.
+  - **Proposal, yours to shape:** let the attempt number reach the
+    composer (a different branch host, shell or side socket), so a second
+    attempt is a second Zone. My router work stands either way, since a
+    first composition that lays out is the better outcome. This is the
+    net under it.
 
 ## Evidence rules (PROD_START)
 
@@ -4500,6 +4531,16 @@ occurrence (P17.5), and nothing is promoted into generation.
 
 ## 0.4 — H-BOMBS, slice 1 (PT-09, V-15): absent until Zone 6, then unnoticed, and dead in the Hub — repaired (client)
 
+> **Corrected by HB-F4 (the next section).** The diagnosis walk below
+> certified every Zone with the test suite's layout helper, which never
+> fails. Its "Zone 6" is therefore the sixth Zone the campaign would offer
+> if every Zone laid out. Played by the client, zone_004 to zone_006 do
+> not build, and the owner's campaign reaches no Bomb Bag by its eighth
+> Zone, at `a745637` or at this slice's head. After HB-F4b the first
+> Bomb Bag Checks are zone_007's. HB-F2, HB-F3 and the fixture stand: the
+> Bomb Bag `godot-bombs` reads is still one the campaign made, claimed
+> through the real transaction.
+
 `13_WORK_QUEUE` H-BOMBS: "Matching current-save diagnosis and normal
 acquisition/equip/use receipt. V-15; absent versus unnoticed
 distinguished; no artificial grant as evidence." V-15: "Natural candidate
@@ -4525,7 +4566,8 @@ is slice 2 and has not run.**
   differ in one place: at the head, Zone 5's four self-addressed Checks
   also yield local Echoes (D-01, which landed after the owner's build).
   Every consumable is the same in both.
-- **HB-F1, absent: no consumable exists before Zone 6.** Zones 1–5 hold
+- **HB-F1, absent: no consumable exists before Zone 6** (corrected by
+  HB-F4: the Zone is wrong, see the note above). Zones 1–5 hold
   none, and the Hub shop never stocks one, whether or not the player buys
   what it does stock (`H-BOMBS_diagnosis_{nobuy,buy,a745637}.log`).
   - The first is the **Bomb Bag**: the Echo of Check 89100140, the
@@ -4678,3 +4720,178 @@ is slice 2 and has not run.**
   equipment wall, thrown, counted by the save, emptied, and refilled in
   Zone 7. `godot-consumable-live` still gives its consumable by
   `give_consumable.py`, and stays the expenditure proof, not this one.
+
+## 0.4 — HB-F4 (found by H-BOMBS): the owner's candidate campaign built 5 of its first 12 Zones — the doorway props repaired (10 of 12 on the new path); the router and one certificate open
+
+H-BOMBS slice 2 walks `Diagnostic Campaign - Candidate` live, Zone after
+Zone, to its first Bomb Bag. It uses a real bridge (mock AP, the
+fallback provider, DEFAULT scale, `--candidate=all`) and the real client.
+**It could not get there.**
+
+- **The campaign, played as the client plays it.** `HB-F4_layout_walk.py`
+  replays the campaign on the real paths at both ends:
+  - each Zone is laid out and measured by the tree's own `ZoneBuilder`,
+    `RoomAudit.measure_layout` and `ChainCertificate`, as
+    `graph_driver --sample` does;
+  - the bridge's own `handle_layout_result`, `handle_build_failed` and
+    `handle_abandon_zone` take the result;
+  - an accepted Zone has every Check claimed and is left by its exit. A
+    Zone the bridge gives up on is discarded, as the Hub tells a player
+    to.
+
+  Each attempt carries a digest of the Zone content the bridge composed
+  for it.
+
+  | Zone | at `a745637` (owner's build) and at head `34d0aad` | on HB-F4b |
+  |---|---|---|
+  | zone_001–003 | accepted | accepted |
+  | zone_004 | BUILD FAILED ×3: branch room `c015` off `c013` cannot be placed; discarded | the same (HB-F4a) |
+  | zone_005 | REFUSED ×3: `c005/side_right` measured solid; discarded | accepted (the same composition) |
+  | zone_006 | REFUSED ×3: `c005/side_left`, `c017/side_right`, `c021/entry` solid; discarded | a different zone_006, accepted |
+  | zone_007 | accepted | accepted: **the first Bomb Bag Checks**, 89100161, 89100392, 89100413 |
+  | zone_008 | accepted | BUILD FAILED ×3: room `c016` cannot be placed; discarded (HB-F4a) |
+  | zone_009 | REFUSED ×3: `c006/side_left`, `c018/side_left` solid; discarded | accepted |
+  | zone_010 | REFUSED ×3: the `c001_pd0` certificate; discarded | accepted |
+  | zone_011 | BUILD FAILED ×3: the exit room cannot be placed; discarded | accepted |
+  | zone_012 | REFUSED ×3: `c018/side_left` solid, and the `c001_pd0` certificate; discarded | accepted |
+
+  - Logs: `HB-F4_layout_walk_{a745637,head,fixed}.log`.
+  - `a745637` and head match line for line. Their digests differ only
+    because Zone content carries revision fields.
+- **What it meant for the playtest.** At the owner's build, a player who
+  goes past Zone 3 is told "ZONE COULD NOT BE BUILT" or "LAYOUT REFUSED"
+  three times, then "ZONE FAILED TO BUILD — discard it".
+  - That happens at zone_004, 005 and 006, and again at 009, 010, 011
+    and 012. Only 5 of the first 12 Zones build, and none of the five
+    holds a Bomb Bag.
+  - The playtest report does not mention it. That fits a playtest that
+    stopped by Zone 3, which is also where PT-09's bombs are **absent**:
+    no consumable exists in Zones 1–3.
+  - Live, the slice 2 driver reproduced it through the client's own
+    paths (`HB-F4_live_reach_first.log`, bridge log beside it):
+    - zone_004 and zone_005 failed and were discarded at the Hub's
+      console;
+    - zone_006's first refusal arrived, and the driver then stopped on
+      its own bug. It counted the failure toasts still on screen, and
+      one expired just as the next arrived. Slice 2 now logs every
+      toast.
+  - That run's notes say each Zone's compositions "were the same". The
+    driver asserted this without measuring it. The digests above are the
+    measurement, and slice 2's driver now digests each Zone it enters.
+- **This corrects H-BOMBS slice 1's HB-F1.** "No consumable before Zone 6"
+  came from a walk that certified every Zone with the test suite's
+  layout helper, which never fails.
+  - After HB-F4b, the first Bomb Bag Checks come in zone_007: the seventh
+    Zone offered and the sixth that builds.
+  - The fixture `godot-bombs` reads is still a Bomb Bag the campaign
+    itself made, created by the provider and claimed through the real
+    transaction. Only the Zone it was said to come from was wrong.
+- **Every failing composition, measured again on HB-F4b.**
+  `HB-F4_remeasure.py` lays each saved composition out on a tree and
+  judges it with that tree's `layout.validate`.
+  - The control is the unfixed tree. It reproduces every walk refusal
+    word for word (`HB-F4_remeasure_unfixed.log`).
+  - On HB-F4b (`HB-F4_remeasure_hbf4b.log`):
+    - zone_005 and zone_009 are ACCEPTED;
+    - zone_006 keeps only `c017/side_right` and `c021/entry`;
+    - zone_012 keeps only the certificate;
+    - zone_004, zone_010 and zone_011 are unchanged.
+  - The compositions are `HB-F4_zone_<id>_<digest>.json`.
+- **Five findings.**
+  - **HB-F4a (router placement, mine, open).** A room the bounded search
+    cannot stand clear of the rooms before it. It shows up in three
+    places:
+    - zone_004: "branch room 'c015' off 'c013' could not be placed
+      clear of the 66 room(s) already standing". `c015` is a procedural
+      `platform_path` hung off corridor `c013`'s side door. It has no
+      shell, so this is not September's oversized-authored-shell case.
+    - zone_008 (HB-F4b's path): "room 'c016' could not be placed clear
+      of the 60 room(s) before it".
+    - zone_011 (the old path): "the exit room could not be placed clear
+      of the 70 room(s) before it".
+  - **HB-F4b (props, mine, REPAIRED).** `_theme_props` stands two
+    colliding floor props against the side walls at a random run:
+    `rusted_industrial`'s oil drums and `temple_ruin`'s column stumps.
+    `_greeble_room`'s crates already keep out of a cut side doorway;
+    `_theme_props` never learned to.
+    - It blocked five doorways in four Zones.
+    - The live run's engine diagnostics name the body: 0.84 x 0.95 x
+      0.84 m, 0.00 m inside zone_005's `c005/side_right` on all three
+      compositions, and 0.45 m inside zone_006's `c005/side_left`.
+  - **HB-F4c (connector, mine, open).** The connector between zone_006's
+    `c017/side_right` and `c021/entry` blocks both doorways. The rooms
+    stand 5 m apart, the router laid two 5 m connector pieces across the
+    gap, and the chain runs about 2 m into each room. `c021` is the
+    EX50-033 Unweighted Switch minor (`minor_unweighted_switch`).
+  - **HB-F4d (composition, Dess's, note N-20).** A retry composes the
+    same Zone. Measured, not assumed: every Zone that failed in the three
+    walks kept one digest across its three attempts. That is seven Zones
+    at `a745637`, seven at head and two on HB-F4b.
+    - So the three-attempt NO-LAYOUT budget cannot escape a failure the
+      engine makes deterministically.
+    - It spends three attempts on one answer.
+  - **HB-F4e (chain certificate, mine, open).** Room `c001` in zone_010
+    and zone_012 carries a pressure-door package, `c001_pd0`. The
+    certificate refuses its declared latch `plate_loaded`: it "did not
+    latch in every run; three runs each latching a different part is not
+    three successes".
+    - The certificate is doing its job.
+    - The open question is why the plate's run cannot be reproduced. It
+      predates the post-playtest pressure work: `a745637` refuses it
+      too.
+- **The repair (HB-F4b, engine only).** `_theme_props` now takes the
+  room's door plan (`cut_plan`, which counts USED and LOCKED as cut).
+  `_greeble_room` and the corridor builder pass it in.
+  - A drum or stump on a wall with a cut side door is moved clear of the
+    doorway, using the crates' own `_clear_of_side_door`. If the wall
+    cannot hold it clear, it is dropped.
+  - Rolled first, then moved: the RNG stream is untouched. A room without
+    a cut side door, and every non-colliding wall prop, stands exactly
+    where it stood.
+  - `godot-zone-audit` regenerated `godot/tests/fixtures/placement/*.json`,
+    as it does on every run. The controller digest had moved with slice
+    1's `player.gd`, so the stamp is refreshed here. No payload changed.
+- **Evidence: `godot-room-contract` gains a doorway census**
+  (`_test_no_prop_stands_in_an_assigned_side_doorway`).
+  - It covers every theme and both producers that carry side doors: 24
+    ids across four sizes each, 288 rooms. Each is built with both side
+    doors cut, one USED and one LOCKED.
+  - The owner's two rooms are built by name: the same id, size and theme
+    roll the same drum.
+  - In all, 290 rooms and 1,159 USED or LOCKED doors, each measured by
+    the probe the bridge's evidence comes from.
+  - **Before:** 23 doors solid (`HB-F4_room_contract_before.log`):
+    - the owner's two;
+    - 21 census doors, all in the two themes with colliding wall props
+      (16 `rusted_industrial`, 5 `temple_ruin`).
+    The four themes whose wall props do not collide are the controls,
+    with 0 solid.
+  - **After:** 0 of 1,159 (`HB-F4_room_contract_after.log`).
+  - **Sabotages:** 4 of 4 caught, each file restored byte for byte
+    (`HB-F4b_sabotages.log`, `HB-F4b_runner.py`). Each one trips only
+    the checks it should:
+    - the drum put back as it was: the owner's two rooms and the census;
+    - the stump put back as it was: the census only (the owner's rooms
+      are `rusted_industrial`);
+    - the corridor builder not passing its door plan: zone_005's
+      corridor only;
+    - the arena not passing it: zone_006's arena only.
+- **Regression** (`HB-F4b_regression_suites.tsv`): 17 geometry, build
+  and play suites green, and no `SCRIPT ERROR` in any of them:
+  - `godot-test`, `godot-room`, `godot-zone-audit`, `godot-graphs`,
+    `godot-activity`, `godot-legible`;
+  - `godot-traverse` (37 checks), `godot-exit-reach` (81),
+    `godot-return-placement`, `godot-build-failure`, `godot-affordance`;
+  - `godot-physics` (68), `godot-movement`, `godot-content`,
+    `godot-encounter` (51), `godot-theme-pack` (30) and
+    `godot-integration`.
+
+  `godot-room-contract`, with its census, is the after log above.
+  `bridge/tests/test_placement_contract.py` reads the regenerated
+  fixtures: 17 passed (`HB-F4b_placement_contract.log`).
+- **Next:** HB-F4a, HB-F4c and HB-F4e.
+  - On the new path, these are what still keep a player out of 2 of the
+    first 12 Zones. The old path matters only to a save that already
+    holds those Zones.
+  - H-BOMBS slice 2's live receipt runs on this fix, through zone_004's
+    discard, to zone_007's Bomb Bag.

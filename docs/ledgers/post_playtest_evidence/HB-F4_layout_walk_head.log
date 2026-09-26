@@ -1,0 +1,36 @@
+# layout walk, head tree wt-bombs at 34d0aad, 04:51 UTC
+zone_001 [e2dd51ae74e3]: ACCEPTED (457 ms, layout_state ACCEPTED), 15 Checks
+zone_002 [83cab638c71e]: ACCEPTED (519 ms, layout_state ACCEPTED), 15 Checks
+zone_003 [86832f692325]: ACCEPTED (418 ms, layout_state ACCEPTED), 15 Checks
+zone_004 [d2bf871d5f29]: BUILD FAILED (2522 ms): branch room 'c015' off 'c013' could not be placed clear of the 66 room(s) already standing
+zone_004 [d2bf871d5f29]: BUILD FAILED (2492 ms): branch room 'c015' off 'c013' could not be placed clear of the 66 room(s) already standing
+zone_004 [d2bf871d5f29]: BUILD FAILED (2500 ms): branch room 'c015' off 'c013' could not be placed clear of the 66 room(s) already standing
+zone_004: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_005 [ed6d6b265524]: LAYOUT REFUSED: zone zone_005 layout refused (LAYOUT_REFUSED): door 'c005/side_right' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree
+zone_005 [ed6d6b265524]: LAYOUT REFUSED: zone zone_005 layout refused (LAYOUT_REFUSED): door 'c005/side_right' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree
+zone_005 [ed6d6b265524]: LAYOUT REFUSED: zone zone_005 layout refused (LAYOUT_REFUSED): door 'c005/side_right' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree
+zone_005: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_006 [3f7da9f7dcae]: LAYOUT REFUSED: zone zone_006 layout refused (LAYOUT_REFUSED): door 'c005/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree; door 'c017/side_right' is USED and the engine measured it as solid; the declaration and the geometry disagree; door 'c021/entry' is USED and the engine measured it as solid; the declaration and the geometry disagree
+zone_006 [3f7da9f7dcae]: LAYOUT REFUSED: zone zone_006 layout refused (LAYOUT_REFUSED): door 'c005/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree; door 'c017/side_right' is USED and the engine measured it as solid; the declaration and the geometry disagree; door 'c021/entry' is USED and the engine measured it as solid; the declaration and the geometry disagree
+zone_006 [3f7da9f7dcae]: LAYOUT REFUSED: zone zone_006 layout refused (LAYOUT_REFUSED): door 'c005/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree; door 'c017/side_right' is USED and the engine measured it as solid; the declaration and the geometry disagree; door 'c021/entry' is USED and the engine measured it as solid; the declaration and the geometry disagree
+zone_006: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_007 [16d1c5f3ccc2]: ACCEPTED (2362 ms, layout_state ACCEPTED), 15 Checks
+zone_008 [1bcdec470f2d]: ACCEPTED (213 ms, layout_state ACCEPTED), 4 Checks
+zone_009 [ba9ae1a2ad50]: LAYOUT REFUSED: zone zone_009 layout refused (LAYOUT_REFUSED): door 'c006/side_left' is USED and the engine measured it as solid; the declaration and the geometry disagree; door 'c018/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree
+zone_009 [ba9ae1a2ad50]: LAYOUT REFUSED: zone zone_009 layout refused (LAYOUT_REFUSED): door 'c006/side_left' is USED and the engine measured it as solid; the declaration and the geometry disagree; door 'c018/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree
+zone_009 [ba9ae1a2ad50]: LAYOUT REFUSED: zone zone_009 layout refused (LAYOUT_REFUSED): door 'c006/side_left' is USED and the engine measured it as solid; the declaration and the geometry disagree; door 'c018/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree
+zone_009: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_010 [64b65729399d]: LAYOUT REFUSED: zone zone_010 layout refused (LAYOUT_REFUSED): chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+zone_010 [64b65729399d]: LAYOUT REFUSED: zone zone_010 layout refused (LAYOUT_REFUSED): chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+zone_010 [64b65729399d]: LAYOUT REFUSED: zone zone_010 layout refused (LAYOUT_REFUSED): chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+zone_010: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_011 [2431cc0dd8fc]: BUILD FAILED (480 ms): the exit room could not be placed clear of the 70 room(s) before it
+zone_011 [2431cc0dd8fc]: BUILD FAILED (452 ms): the exit room could not be placed clear of the 70 room(s) before it
+zone_011 [2431cc0dd8fc]: BUILD FAILED (445 ms): the exit room could not be placed clear of the 70 room(s) before it
+zone_011: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_012 [06041737245b]: LAYOUT REFUSED: zone zone_012 layout refused (LAYOUT_REFUSED): door 'c018/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree; chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+zone_012 [06041737245b]: LAYOUT REFUSED: zone zone_012 layout refused (LAYOUT_REFUSED): door 'c018/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree; chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+zone_012 [06041737245b]: LAYOUT REFUSED: zone zone_012 layout refused (LAYOUT_REFUSED): door 'c018/side_left' is LOCKED and the engine measured it as solid; the declaration and the geometry disagree; chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+zone_012: ZONE_FAILED -> abandoned, its Checks back to the pool
+FIRST BOMB BAG: None
+exit 0

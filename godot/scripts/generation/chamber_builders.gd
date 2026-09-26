@@ -993,7 +993,8 @@ static func _greeble_rng(chamber: Dictionary, theme: String) -> RandomNumberGene
 ## Structural ribs + a ceiling beam every few metres along a corridor-like
 ## space, plus wall vents and a sagging cable run.
 static func _greeble_corridor(root: Node3D, length: float, width: float,
-		height: float, theme: String, rng: RandomNumberGenerator) -> void:
+		height: float, theme: String, rng: RandomNumberGenerator,
+		cut := {}) -> void:
 	var trim := ThemeMaterials.trim_mat(theme)
 	var accent := ThemeMaterials.accent_mat(theme)
 	var rib_count := maxi(1, int(length / 6.0))
@@ -1022,7 +1023,7 @@ static func _greeble_corridor(root: Node3D, length: float, width: float,
 		_box(root, Vector3(0.06, 0.06, seg_length + 0.05),
 				Vector3(cable_x, height - 0.25 - sag, z0 + seg_length / 2.0),
 				trim, false)
-	_theme_props(root, theme, rng, width, length, height)
+	_theme_props(root, theme, rng, width, length, height, cut)
 	# Occasionally, Epsilon leaves a note.
 	if rng.randf() < 0.3:
 		_graffiti(root, Vector3(
@@ -1067,7 +1068,7 @@ static func _graffiti(root: Node3D, at: Vector3, theme: String,
 ## depth/length; positions stay inside [1.2, span_z - 1.2].
 static func _theme_props(root: Node3D, theme: String,
 		rng: RandomNumberGenerator, span_x: float, span_z: float,
-		height: float) -> void:
+		height: float, cut := {}) -> void:
 	var wall_x := span_x / 2.0
 	# Colliding floor props are allowed only where the leftover lane still
 	# admits the widest actor (the 1.8 m brute) with margin. A
@@ -1078,6 +1079,18 @@ static func _theme_props(root: Node3D, theme: String,
 	for i in count:
 		var z := rng.randf_range(1.4, span_z - 1.4)
 		var side := -1.0 if rng.randf() < 0.5 else 1.0
+		# A FLOOR PROP THAT HUGS A SIDE WALL MUST NOT STAND IN ITS DOORWAY
+		# (HB-F4), which is the lesson `_greeble_room`'s crates learned
+		# and these never did. An oil drum rolled into `c005/side_right`
+		# of the owner's zone_005 and `c005/side_left` of zone_006, and
+		# the bridge refused both layouts on aperture polarity until the
+		# player could only discard the Zones. Only the two COLLIDING
+		# floor props need it -- a sconce, a plate or a sign on the wall
+		# stops no one -- and they are ROLLED FIRST, THEN MOVED, so the rng
+		# stream is untouched and a room without a side door is
+		# byte-identical to what it was.
+		var door_cut := bool(cut.get(
+				"side_left" if side < 0.0 else "side_right", false))
 		match theme:
 			"gothic_stone":
 				# Torch sconce: iron bracket, a flame that glows.
@@ -1095,10 +1108,15 @@ static func _theme_props(root: Node3D, theme: String,
 			"rusted_industrial":
 				if floor_props_ok:
 					# Oil drums against the wall, sometimes stacked.
+					var stacked := rng.randf() < 0.4
+					var drum_z := _clear_of_side_door(z, 2.0 * 0.42,
+							span_z) if door_cut else z
+					if is_nan(drum_z):
+						continue
 					var drum := _cylinder_prop(root, 0.42, 0.95,
-							Vector3(side * (wall_x - 0.75), 0.48, z),
+							Vector3(side * (wall_x - 0.75), 0.48, drum_z),
 							ThemeMaterials.accent_mat(theme))
-					if rng.randf() < 0.4:
+					if stacked:
 						var top := drum.duplicate()
 						top.position.y += 0.95
 						root.add_child(top)
@@ -1157,9 +1175,13 @@ static func _theme_props(root: Node3D, theme: String,
 								Color(0.35, 0.5, 0.28), 0.15), false)
 				else:
 					var stump_height := rng.randf_range(0.6, 1.6)
+					var stump_z := _clear_of_side_door(z, 2.0 * 0.55,
+							span_z) if door_cut else z
+					if is_nan(stump_z):
+						continue
 					_cylinder_prop(root, 0.55, stump_height,
 							Vector3(side * (wall_x - 0.85),
-								stump_height / 2.0, z),
+								stump_height / 2.0, stump_z),
 							ThemeMaterials.wall_mat(theme))
 			"concrete_facility":
 				# Bolted warning plate.
@@ -1372,7 +1394,7 @@ static func _greeble_room(root: Node3D, width: float, depth: float,
 	# it is solved with a non-hazard channel -- neutral architectural
 	# contrast, light placement, a trim or value change, or the future
 	# approved signage language -- not by putting the orange back.
-	_theme_props(root, theme, rng, width, depth, height)
+	_theme_props(root, theme, rng, width, depth, height, cut)
 
 # ---------------------------------------------------------------------------
 
@@ -1476,7 +1498,7 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 		_light(root, Vector3(0, height - 0.3,
 				length * (i + 0.5) / count), theme)
 	_greeble_corridor(root, length, width, height, theme,
-			_greeble_rng(chamber, theme))
+			_greeble_rng(chamber, theme), corridor_cut)
 	var spawns: Array = []
 	for group: Dictionary in chamber.get("enemies", []):
 		for i in int(group.get("count", 0)):

@@ -116,6 +116,7 @@ func _run() -> void:
 	await _test_the_actual_player_leaves_c015_and_c005_on_foot()
 	await _test_a_composed_room_carves_every_assigned_door()
 	await _test_a_sealed_door_that_is_a_hole_is_caught()
+	await _test_no_prop_stands_in_an_assigned_side_doorway()
 	await _test_the_layout_result_commits_the_whole_chain()
 	await _test_a_spent_budget_is_a_timeout_and_not_infeasibility()
 	await _test_a_return_plug_lands_somewhere_a_player_fits()
@@ -2911,6 +2912,111 @@ func _test_a_composed_room_carves_every_assigned_door() -> void:
 	rooms_checked += 1
 	(result["root"] as Node3D).queue_free()
 	await get_tree().process_frame
+
+## NO PROP STANDS IN A SIDE DOORWAY THE COMPOSER ASSIGNED (HB-F4).
+##
+## `_greeble_room` learned to keep its perimeter crates clear of a cut
+## side door. `_theme_props` never did, and two of its colliding floor
+## props hug the side walls at a random run: `rusted_industrial`'s oil
+## drums (0.84 m across, 0.95 m tall) and `temple_ruin`'s column stumps.
+## In the owner's own campaign that stood a drum in `c005/side_right` of
+## zone_005 and in `c005/side_left` of zone_006. The bridge refused each
+## Zone's layout on aperture polarity, three compositions running, and
+## the only way on was to discard them.
+##
+## A CENSUS, because where a prop stands is a function of the room's id,
+## size and theme (`_greeble_rng`): every theme, both producers that carry
+## side doors, and a spread of ids and sizes, each room built with both
+## side doors cut -- one USED, one LOCKED -- and every declared door
+## measured by the probe the bridge's evidence comes from. And the
+## owner's two rooms by name: the same id, size and theme roll the same
+## drum.
+func _test_no_prop_stands_in_an_assigned_side_doorway() -> void:
+	print("  -- CENSUS: no prop stands in an assigned side doorway")
+	var plan := [["entry", "USED"], ["exit", "USED"],
+			["side_left", "USED"], ["side_right", "LOCKED"]]
+	var cases: Array = []
+	# THE OWNER'S TWO, as the campaign composed them.
+	cases.append(["zone_005 c005", "rusted_industrial",
+			{"id": "c005", "type": "corridor", "width": 7.9, "length": 11.0,
+				"objective": "reach_exit", "enemies": [],
+				"doors": _doors([["entry", "USED"], ["exit", "USED"],
+					["side_left", "USED"], ["side_right", "LOCKED"]])}])
+	cases.append(["zone_006 c005", "rusted_industrial",
+			{"id": "c005", "type": "arena", "width": 22.0, "depth": 12.1,
+				"wall_height": 5.9, "objective": "reach_exit",
+				"enemies": [],
+				"doors": _doors([["entry", "USED"], ["exit", "USED"],
+					["side_left", "LOCKED"], ["side_right", "SEALED"]])}])
+	var arenas := [[22.0, 12.1], [17.9, 21.6], [20.0, 18.0], [16.5, 14.0]]
+	var corridors := [[7.9, 11.0], [9.5, 14.0], [8.4, 20.0], [7.1, 10.1]]
+	for theme: String in Constants.THEMES:
+		for i in 24:
+			var a: Array = arenas[i % arenas.size()]
+			cases.append(["%s arena census_%d" % [theme, i], theme,
+					{"id": "census_%d" % i, "type": "arena", "width": a[0],
+						"depth": a[1], "wall_height": 5.5,
+						"objective": "reach_exit", "enemies": [],
+						"doors": _doors(plan)}])
+			var c: Array = corridors[i % corridors.size()]
+			cases.append(["%s corridor census_%d" % [theme, i], theme,
+					{"id": "census_%d" % i, "type": "corridor",
+						"width": c[0], "length": c[1],
+						"objective": "reach_exit", "enemies": [],
+						"doors": _doors(plan)}])
+	var measured_doors := 0
+	var blocked: Array = []
+	var owners := {}
+	# In batches, each room 80 m from the last, so no room's walls stand
+	# in another's doorway and the tree never holds all of them at once.
+	const BATCH := 40
+	var at := 0
+	while at < cases.size():
+		var built: Array = []
+		for k in range(at, mini(at + BATCH, cases.size())):
+			var case: Array = cases[k]
+			var result := ContentInstantiator.build_chamber(
+					case[2] as Dictionary, str(case[1]))
+			var root := result.get("root") as Node3D
+			if root == null:
+				_check(false, "%s did not build" % str(case[0]))
+				continue
+			root.position = Vector3(80.0 * float(k - at), 0.0, 0.0)
+			add_child(root)
+			built.append([case, result])
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		for pair: Array in built:
+			var case: Array = pair[0]
+			var result: Dictionary = pair[1]
+			var root := result["root"] as Node3D
+			var measured := RoomAudit.aperture_polarity(result,
+					root.global_transform, _space())
+			for raw: Variant in (case[2] as Dictionary)["doors"]:
+				var door: Dictionary = raw
+				var socket := str(door["socket_id"])
+				if str(door["usage"]) == "SEALED":
+					continue
+				measured_doors += 1
+				var hole := bool(measured.get(socket, false))
+				if str(case[0]).begins_with("zone_"):
+					owners["%s/%s" % [case[0], socket]] = hole
+				if not hole:
+					blocked.append("%s/%s (%s)" % [case[0], socket,
+							str(door["usage"])])
+			root.queue_free()
+		await get_tree().process_frame
+		at += BATCH
+	rooms_checked += cases.size()
+	_check(owners.get("zone_005 c005/side_right", false)
+			and owners.get("zone_006 c005/side_left", false),
+			"the owner's two rooms: zone_005 c005/side_right and zone_006 "
+			+ "c005/side_left, both LOCKED, are holes (%s)" % str(owners))
+	_check(blocked.is_empty(),
+			"%d declared doors across %d rooms in %d themes, and none "
+			% [measured_doors, cases.size(), Constants.THEMES.size()]
+			+ "measures solid (blocked: %s)" % str(blocked))
+
 
 ## The negative case, and the reason the probe cannot be skipped.
 ##

@@ -506,6 +506,10 @@ owner's D-06/D-07 rulings and the seam table are in
       the same inputs, at `a745637` and at head.
       - HB-F1 (absent): no consumable before Zone 6. The first is the
         Bomb Bag of Check 89100140, and the shop never stocks one.
+        **Corrected by HB-F4:** that walk certified every Zone with a
+        layout helper that never fails. Played by the client, the
+        owner's campaign reaches no Bomb Bag by its eighth Zone; after
+        HB-F4b the first Bomb Bag Checks are zone_007's.
       - HB-F2 (unnoticed): the HUD row read the same for none and for
         owned-not-carried, and showed no count. An empty key was silent,
         and `Player.exhausted` was connected to nothing.
@@ -519,10 +523,30 @@ owner's D-06/D-07 rulings and the seam table are in
       - `godot-bombs` (new, in CI; `make bomb-fixture`, the campaign's
         own snapshots): 34 checks. The unchanged client fails 17 of them.
         11 of 11 sabotages caught; 19 offline and 12 live suites green.
-    - **Next:** H-BOMBS slice 2, the live receipt: the Bomb Bag claimed
-      in a real Zone 6 by the real client over a real socket, equipped
-      from the equipment wall, thrown, counted by the save, emptied and
-      refilled in Zone 7. No `give_consumable.py`.
+    - **HB-F4 (found by H-BOMBS slice 2): the owner's candidate
+      campaign built 5 of its first 12 Zones.** At `a745637` and at head
+      alike, zones 4, 5, 6, 9, 10, 11 and 12 each fail three times with
+      one composition, and the Hub offers the discard. The playtest
+      report does not mention it.
+      - HB-F4b, repaired: `_theme_props` stood `rusted_industrial`'s
+        drums and `temple_ruin`'s stumps in cut side doorways. It now
+        keeps them clear, as the crates already were.
+        - `godot-room-contract` gains a doorway census: 23 of 1,159
+          doors solid before (the owner's two among them), 0 after.
+        - 4 of 4 sabotages caught; 17 regression suites green.
+        - On the new path 10 of 12 Zones build.
+      - Open, mine:
+        - HB-F4a, router placement: zone_004 `c015`, zone_008 `c016`,
+          zone_011's exit room.
+        - HB-F4c: a connector laid through zone_006's two doorways.
+        - HB-F4e: the `c001_pd0` pressure-door certificate, whose latch
+          does not fire in every run (zone_010, zone_012).
+      - Dess's: N-20, a retry composes the same Zone.
+    - **Next:** H-BOMBS slice 2, the live receipt. The real client claims
+      the Bomb Bag over a real socket in zone_007, reached through
+      zone_004's discard. It is equipped from the equipment wall, thrown,
+      counted by the save, emptied and refilled, with no
+      `give_consumable.py`. Then HB-F4a, HB-F4c and HB-F4e.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.
