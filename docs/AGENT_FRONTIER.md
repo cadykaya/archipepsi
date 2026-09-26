@@ -476,6 +476,9 @@ owner's D-06/D-07 rulings and the seam table are in
       - Power loss, a constrained assembly and a powered machine's
         occupied/reversing/reset stay open, for want of an occurrence
         that has them.
+    - **CK6 checkpoint: 88 of 88 on `d4fc7fe`** (ML-F1/F2 and
+      H-MACHINE-LIFE slice 1), in one run on one revision
+      (`CK6_frontier_on_d4fc7fe.tsv`). `make test`: 2,299 passed.
     - **Next:** H-RAIL-BREADTH (branching and
       switchable railways, accepted and unbuilt; DESS-01 lists what they
       need). H-STATUS continues after N-17 with O05-09.1's material rows

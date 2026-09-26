@@ -4215,3 +4215,26 @@ has no dedicated measurement ... no counter is read across cycles."
   exists yet.
 - **What the owner will notice:** nothing. It is evidence that entering,
   leaving and dying do not leave anything behind.
+
+## CK6 checkpoint — the full frontier on `d4fc7fe` (ML-F1/F2, H-MACHINE-LIFE slice 1)
+
+- **On `d4fc7fe` (the ML-F and H-MACHINE-LIFE head): 88 of 88 steps
+  passed,** in one run on that one revision, 00:15–01:52 UTC
+  (`CK6_frontier_on_d4fc7fe.tsv`).
+  - The steps are CK5's 86 and the two suites added since:
+    - `godot-enemy-footing` (12 checks);
+    - `godot-machine-life` (41).
+  - It covers every commit since CK5's revision (`ccaac5c`): the CK5
+    record and ML-F1/F2 with H-MACHINE-LIFE slice 1. Dess pushed nothing
+    in between.
+  - `make test`: 2,299 passed (`CK6_make_test_on_d4fc7fe.log`).
+  - No log has a line starting `SCRIPT ERROR`. Seven logs contain the
+    words, all in the Makefile's own echoed recipe (the `grep "SCRIPT
+    ERROR"` gates of the live targets), none from the engine. Every live
+    suite passed, among them `godot-candidate-live`,
+    `godot-resume-live` and both integrations.
+  - `godot-zone-audit` (step 22) rewrites the five placement fixtures,
+    provenance stamps only, as at every checkpoint. They were restored
+    after step 41, while the run continued; nothing after step 22 reads
+    them.
+  - These are local results; remote CI does not run (N-6).
