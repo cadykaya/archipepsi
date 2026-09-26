@@ -1,0 +1,259 @@
+{
+  "cf_alcove_frame": {
+    "min_y": 0.0,
+    "nodes": 6,
+    "parts": [
+      "alcove_sill",
+      "alcove_jamb_-1",
+      "alcove_reveal_-1",
+      "alcove_jamb_1",
+      "alcove_reveal_1",
+      "alcove_lintel"
+    ],
+    "size": [
+      3.10000000000000009,
+      2.76000000000000023,
+      0.5
+    ]
+  },
+  "cf_gunner_mount": {
+    "min_y": 0.0,
+    "nodes": 6,
+    "parts": [
+      "gunner_deck",
+      "gunner_parapet",
+      "gunner_coping",
+      "muzzle_mount",
+      "telegraph_face",
+      "gunner_ammo"
+    ],
+    "size": [
+      1.73999999999999999,
+      1.06000000000000005,
+      1.72999999999999998
+    ]
+  },
+  "cf_lane_mark": {
+    "min_y": 0.0,
+    "nodes": 6,
+    "parts": [
+      "lane_band",
+      "lane_rib_0",
+      "lane_rib_1",
+      "lane_rib_2",
+      "lane_rib_3",
+      "lane_kerb"
+    ],
+    "size": [
+      0.599999999999999978,
+      0.0400000000000000008,
+      2.0
+    ],
+    "top": 0.0400000000000000008
+  },
+  "cf_release_bolt": {
+    "min_y": 0.0,
+    "nodes": 5,
+    "parts": [
+      "bolt_case",
+      "bolt_shot",
+      "bolt_seat",
+      "bolt_lever",
+      "bolt_plate"
+    ],
+    "size": [
+      0.560000000000000053,
+      0.680000000000000049,
+      1.13000000000000012
+    ]
+  },
+  "cf_shutter_track": {
+    "interval_pips": 8,
+    "min_y": -1.30000000000000004,
+    "nodes": 11,
+    "parts": [
+      "track_head",
+      "track_rail_-1",
+      "track_rail_1",
+      "interval_pip_0",
+      "interval_pip_1",
+      "interval_pip_2",
+      "interval_pip_3",
+      "interval_pip_4",
+      "interval_pip_5",
+      "interval_pip_6",
+      "interval_pip_7"
+    ],
+    "size": [
+      0.700000000000000067,
+      2.85999999999999988,
+      2.80000000000000027
+    ]
+  },
+  "pp_call_post": {
+    "min_y": 0.0,
+    "nodes": 7,
+    "parts": [
+      "call_base",
+      "call_post",
+      "call_head",
+      "call_lamp",
+      "travel_up",
+      "travel_down",
+      "stop_face"
+    ],
+    "size": [
+      0.340000000000000024,
+      1.43999999999999995,
+      0.350000000000000033
+    ]
+  },
+  "pp_lift_guide": {
+    "min_y": 0.0,
+    "nodes": 9,
+    "parts": [
+      "lift_mast",
+      "lift_mast_b",
+      "lift_tie_0",
+      "lift_tie_1",
+      "lift_tie_2",
+      "lift_tie_3",
+      "lift_rope",
+      "lift_channel",
+      "lift_weight"
+    ],
+    "size": [
+      1.15999999999999992,
+      2.0,
+      0.479999999999999982
+    ]
+  },
+  "pp_recovery_mark": {
+    "min_y": 0.0,
+    "nodes": 6,
+    "parts": [
+      "recovery_pad",
+      "recovery_edge_x-1",
+      "recovery_edge_y-1",
+      "recovery_edge_x1",
+      "recovery_edge_y1",
+      "recovery_arrow"
+    ],
+    "size": [
+      3.39999999999999991,
+      0.0350000000000000033,
+      3.39999999999999991
+    ]
+  },
+  "pp_shuttle_guide": {
+    "min_y": -0.200000000000000011,
+    "nodes": 7,
+    "parts": [
+      "shuttle_beam",
+      "shuttle_screw",
+      "shuttle_collar_0",
+      "shuttle_collar_1",
+      "shuttle_collar_2",
+      "shuttle_collar_3",
+      "shuttle_shoe"
+    ],
+    "size": [
+      0.340000000000000024,
+      0.419999999999999984,
+      2.0
+    ]
+  },
+  "pp_transfer_edge": {
+    "min_y": 0.0,
+    "nodes": 6,
+    "parts": [
+      "edge_nosing",
+      "edge_band",
+      "edge_post_-1",
+      "edge_cap_-1",
+      "edge_post_1",
+      "edge_cap_1"
+    ],
+    "rail_top": 1.10000000000000009,
+    "size": [
+      4.04000000000000004,
+      1.10000000000000009,
+      0.550000000000000044
+    ]
+  },
+  "problems": [],
+  "uw_applicator": {
+    "min_y": 0.0,
+    "nodes": 5,
+    "parts": [
+      "applicator_case",
+      "applicator_cowl",
+      "applicator_emitter",
+      "applicator_feed",
+      "applicator_foot"
+    ],
+    "size": [
+      0.719999999999999973,
+      1.30000000000000004,
+      0.780000000000000027
+    ]
+  },
+  "uw_drive_housing": {
+    "min_y": 0.0,
+    "nodes": 9,
+    "parts": [
+      "drive_case",
+      "drive_cap",
+      "drive_lever",
+      "drive_grip",
+      "drive_rail",
+      "drive_stanchion_0",
+      "drive_stanchion_1",
+      "drive_stanchion_2",
+      "drive_stanchion_3"
+    ],
+    "size": [
+      0.869999999999999996,
+      1.33000000000000007,
+      5.44000000000000039
+    ]
+  },
+  "uw_plate_frame": {
+    "class_marks": 3,
+    "min_y": 0.0,
+    "nodes": 9,
+    "parts": [
+      "plate_frame",
+      "recess_wall_x-1",
+      "recess_wall_y-1",
+      "recess_wall_x1",
+      "recess_wall_y1",
+      "glyph_carrier",
+      "class_mark_0",
+      "class_mark_1",
+      "class_mark_2"
+    ],
+    "size": [
+      2.89999999999999991,
+      0.900000000000000022,
+      2.91999999999999993
+    ]
+  },
+  "uw_return_rail": {
+    "min_y": 0.0,
+    "nodes": 6,
+    "parts": [
+      "return_sill",
+      "return_post_-1",
+      "return_post_1",
+      "release_bar",
+      "return_head",
+      "release_catch"
+    ],
+    "size": [
+      3.0,
+      1.66000000000000014,
+      0.299999999999999989
+    ]
+  }
+}

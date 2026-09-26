@@ -1,0 +1,249 @@
+{
+  "tp_tw_alley_buttress": {
+    "anchor": "floor",
+    "batch": "059",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "a brick pier that carries a WIRE, not a roof: corbelled, with a catenary bracket and stay",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_kingdom_hearts_2",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "tw_bt_base",
+      "tw_bt_corbel_a",
+      "tw_bt_corbel_b",
+      "tw_bt_bracket",
+      "tw_bt_stay",
+      "tw_bt_eye"
+    ],
+    "path": "batch059/twilight/tp_tw_alley_buttress.glb",
+    "shares_family_with": "tp_ocarina_of_time (T01), deliberately. The owner's completion criteria say reuse is encouraged and a useful variant is not a duplicate merely because its construction is shared. Two packs in one family, in one shell, under the same four cameras, is the TEST of that claim rather than an accident of it.",
+    "size": [
+      0.7,
+      1.07,
+      3.6
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "TWILIGHT TOWN, THE SERVICE ALLEY BEHIND TRAM COMMON -- brick piers carrying tram cable, a hoarding nailed over a bricked-up window, a shop awning, and a length of rail nobody has relaid",
+    "subtheme_is_a_choice": "Kingdom Hearts 2 has a dozen worlds and three of them are whole architectures on their own. Blending Twilight Town, Hollow Bastion and The World That Never Was is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 84
+  },
+  "tp_tw_awning_gate": {
+    "anchor": "floor",
+    "batch": "059",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "SOFT GOODS on a hard frame: a rolled shop awning and its folded arms, which no other pack and no house family has",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_kingdom_hearts_2",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "tw_aw_jamb_l",
+      "tw_aw_arm_l",
+      "tw_aw_jamb_r",
+      "tw_aw_arm_r",
+      "tw_aw_roll",
+      "tw_aw_valance"
+    ],
+    "path": "batch059/twilight/tp_tw_awning_gate.glb",
+    "shares_family_with": "tp_ocarina_of_time (T01), deliberately. The owner's completion criteria say reuse is encouraged and a useful variant is not a duplicate merely because its construction is shared. Two packs in one family, in one shell, under the same four cameras, is the TEST of that claim rather than an accident of it.",
+    "size": [
+      3.08,
+      0.6,
+      3.54
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "TWILIGHT TOWN, THE SERVICE ALLEY BEHIND TRAM COMMON -- brick piers carrying tram cable, a hoarding nailed over a bricked-up window, a shop awning, and a length of rail nobody has relaid",
+    "subtheme_is_a_choice": "Kingdom Hearts 2 has a dozen worlds and three of them are whole architectures on their own. Blending Twilight Town, Hollow Bastion and The World That Never Was is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 84
+  },
+  "tp_tw_hoarding": {
+    "anchor": "floor",
+    "batch": "059",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "the wall is COVERED, in four thicknesses -- brick infill, boards, batten, torn bills -- where one flat board would just be a board",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_kingdom_hearts_2",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "tw_hd_infill",
+      "tw_hd_sill",
+      "tw_hd_board_0",
+      "tw_hd_board_1",
+      "tw_hd_board_2",
+      "tw_hd_board_3",
+      "tw_hd_batten",
+      "tw_hd_bill"
+    ],
+    "path": "batch059/twilight/tp_tw_hoarding.glb",
+    "shares_family_with": "tp_ocarina_of_time (T01), deliberately. The owner's completion criteria say reuse is encouraged and a useful variant is not a duplicate merely because its construction is shared. Two packs in one family, in one shell, under the same four cameras, is the TEST of that claim rather than an accident of it.",
+    "size": [
+      2.16,
+      0.288,
+      3.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "TWILIGHT TOWN, THE SERVICE ALLEY BEHIND TRAM COMMON -- brick piers carrying tram cable, a hoarding nailed over a bricked-up window, a shop awning, and a length of rail nobody has relaid",
+    "subtheme_is_a_choice": "Kingdom Hearts 2 has a dozen worlds and three of them are whole architectures on their own. Blending Twilight Town, Hollow Bastion and The World That Never Was is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 108
+  },
+  "tp_tw_street_lantern": {
+    "anchor": "floor",
+    "batch": "059",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "one pane of four simply ABSENT; a dark pane is a dark pane, a hole is a lantern somebody broke",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_kingdom_hearts_2",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "tw_sl_neck",
+      "tw_sl_cap",
+      "tw_sl_finial",
+      "tw_sl_base",
+      "tw_sl_pane_l",
+      "tw_sl_pane_r",
+      "tw_sl_pane_b"
+    ],
+    "path": "batch059/twilight/tp_tw_street_lantern.glb",
+    "shares_family_with": "tp_ocarina_of_time (T01), deliberately. The owner's completion criteria say reuse is encouraged and a useful variant is not a duplicate merely because its construction is shared. Two packs in one family, in one shell, under the same four cameras, is the TEST of that claim rather than an accident of it.",
+    "size": [
+      0.32,
+      0.48,
+      0.83
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "TWILIGHT TOWN, THE SERVICE ALLEY BEHIND TRAM COMMON -- brick piers carrying tram cable, a hoarding nailed over a bricked-up window, a shop awning, and a length of rail nobody has relaid",
+    "subtheme_is_a_choice": "Kingdom Hearts 2 has a dozen worlds and three of them are whole architectures on their own. Blending Twilight Town, Hollow Bastion and The World That Never Was is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 96
+  },
+  "tp_tw_tram_call": {
+    "anchor": "floor",
+    "batch": "059",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "batch043's wall-switch contract as a municipal tram call: a pull in a slot, in a cast surround",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_kingdom_hearts_2",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "tw_tc_surround",
+      "tw_tc_slot",
+      "tw_tc_pull",
+      "tw_tc_label"
+    ],
+    "path": "batch059/twilight/tp_tw_tram_call.glb",
+    "shares_family_with": "tp_ocarina_of_time (T01), deliberately. The owner's completion criteria say reuse is encouraged and a useful variant is not a duplicate merely because its construction is shared. Two packs in one family, in one shell, under the same four cameras, is the TEST of that claim rather than an accident of it.",
+    "size": [
+      0.44,
+      0.215,
+      0.54
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "TWILIGHT TOWN, THE SERVICE ALLEY BEHIND TRAM COMMON -- brick piers carrying tram cable, a hoarding nailed over a bricked-up window, a shop awning, and a length of rail nobody has relaid",
+    "subtheme_is_a_choice": "Kingdom Hearts 2 has a dozen worlds and three of them are whole architectures on their own. Blending Twilight Town, Hollow Bastion and The World That Never Was is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 60
+  },
+  "tp_tw_tram_track": {
+    "anchor": "floor",
+    "batch": "059",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "floor dressing that was LAID AND THEN NEGLECTED -- a DISPLACED section with a lifted sett, never a continuous rail, because continuous rail reads as walkable infrastructure and floor is Production's",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_kingdom_hearts_2",
+    "painted_with": "temple_ruin",
+    "parts": [
+      "tw_tt_chair",
+      "tw_tt_end",
+      "tw_tt_sett_0",
+      "tw_tt_sett_1",
+      "tw_tt_sett_2",
+      "tw_tt_sett_3"
+    ],
+    "path": "batch059/twilight/tp_tw_tram_track.glb",
+    "shares_family_with": "tp_ocarina_of_time (T01), deliberately. The owner's completion criteria say reuse is encouraged and a useful variant is not a duplicate merely because its construction is shared. Two packs in one family, in one shell, under the same four cameras, is the TEST of that claim rather than an accident of it.",
+    "size": [
+      1.451,
+      0.468,
+      0.13
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "TWILIGHT TOWN, THE SERVICE ALLEY BEHIND TRAM COMMON -- brick piers carrying tram cable, a hoarding nailed over a bricked-up window, a shop awning, and a length of rail nobody has relaid",
+    "subtheme_is_a_choice": "Kingdom Hearts 2 has a dozen worlds and three of them are whole architectures on their own. Blending Twilight Town, Hollow Bastion and The World That Never Was is the average the owner ruled out.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries against 81 catalogued games, and this is one of the 75 without. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 84
+  }
+}

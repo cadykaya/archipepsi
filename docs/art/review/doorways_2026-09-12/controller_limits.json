@@ -1,0 +1,592 @@
+{
+  "jump_up": {
+    "highest_climbed_m": 1.5,
+    "rows": [
+      {
+        "climbed": true,
+        "rise": 0.02,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.04,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.06,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.08,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.1,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.12,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.14,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.16,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.18,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.2,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.22,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.24,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.26,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.28,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.3,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.32,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.34,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.36,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.38,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.4,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.45,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.5,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.55,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.6,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.65,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.7,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.75,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.8,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.85,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": true,
+        "rise": 0.9,
+        "stood_at": 0.906
+      },
+      {
+        "climbed": false,
+        "rise": 0.95,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": true,
+        "rise": 1.0,
+        "stood_at": 1.002
+      },
+      {
+        "climbed": true,
+        "rise": 1.05,
+        "stood_at": 1.053
+      },
+      {
+        "climbed": true,
+        "rise": 1.1,
+        "stood_at": 1.101
+      },
+      {
+        "climbed": true,
+        "rise": 1.15,
+        "stood_at": 1.152
+      },
+      {
+        "climbed": true,
+        "rise": 1.2,
+        "stood_at": 1.2
+      },
+      {
+        "climbed": true,
+        "rise": 1.25,
+        "stood_at": 1.257
+      },
+      {
+        "climbed": true,
+        "rise": 1.3,
+        "stood_at": 1.305
+      },
+      {
+        "climbed": true,
+        "rise": 1.35,
+        "stood_at": 1.356
+      },
+      {
+        "climbed": true,
+        "rise": 1.4,
+        "stood_at": 1.407
+      },
+      {
+        "climbed": true,
+        "rise": 1.45,
+        "stood_at": 1.458
+      },
+      {
+        "climbed": true,
+        "rise": 1.5,
+        "stood_at": 1.506
+      },
+      {
+        "climbed": false,
+        "rise": 1.55,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.6,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.65,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.7,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.75,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.8,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.85,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.9,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.95,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 2.0,
+        "stood_at": 0.0
+      }
+    ]
+  },
+  "walk_up": {
+    "highest_climbed_m": 0.12,
+    "rows": [
+      {
+        "climbed": true,
+        "rise": 0.02,
+        "stood_at": 0.027
+      },
+      {
+        "climbed": true,
+        "rise": 0.04,
+        "stood_at": 0.051
+      },
+      {
+        "climbed": true,
+        "rise": 0.06,
+        "stood_at": 0.066
+      },
+      {
+        "climbed": true,
+        "rise": 0.08,
+        "stood_at": 0.081
+      },
+      {
+        "climbed": true,
+        "rise": 0.1,
+        "stood_at": 0.105
+      },
+      {
+        "climbed": true,
+        "rise": 0.12,
+        "stood_at": 0.126
+      },
+      {
+        "climbed": false,
+        "rise": 0.14,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.16,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.18,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.2,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.22,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.24,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.26,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.28,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.3,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.32,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.34,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.36,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.38,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.4,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.45,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.5,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.55,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.6,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.65,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.7,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.75,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.8,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.85,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.9,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 0.95,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.0,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.05,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.1,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.15,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.2,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.25,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.3,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.35,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.4,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.45,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.5,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.55,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.6,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.65,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.7,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.75,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.8,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.85,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.9,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 1.95,
+        "stood_at": 0.0
+      },
+      {
+        "climbed": false,
+        "rise": 2.0,
+        "stood_at": 0.0
+      }
+    ]
+  },
+  "walk_up_a_ramp": {
+    "rows": [
+      {
+        "climbed_m": 6.01,
+        "degrees": 10.0,
+        "reached_the_top": true
+      },
+      {
+        "climbed_m": 6.01,
+        "degrees": 15.0,
+        "reached_the_top": true
+      },
+      {
+        "climbed_m": 6.0,
+        "degrees": 20.0,
+        "reached_the_top": true
+      },
+      {
+        "climbed_m": 6.0,
+        "degrees": 25.0,
+        "reached_the_top": true
+      },
+      {
+        "climbed_m": 6.01,
+        "degrees": 30.0,
+        "reached_the_top": true
+      },
+      {
+        "climbed_m": 6.01,
+        "degrees": 35.0,
+        "reached_the_top": true
+      },
+      {
+        "climbed_m": 6.01,
+        "degrees": 40.0,
+        "reached_the_top": true
+      },
+      {
+        "climbed_m": 6.0,
+        "degrees": 44.0,
+        "reached_the_top": true
+      },
+      {
+        "climbed_m": 6.0,
+        "degrees": 46.0,
+        "reached_the_top": true
+      },
+      {
+        "climbed_m": 0.0,
+        "degrees": 48.0,
+        "reached_the_top": false
+      },
+      {
+        "climbed_m": 0.0,
+        "degrees": 50.0,
+        "reached_the_top": false
+      }
+    ],
+    "steepest_degrees": 46.0
+  }
+}

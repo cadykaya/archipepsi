@@ -1,0 +1,111 @@
+{
+  "_ink": "#ffffff",
+  "_tints": {
+    "chrome ink": {
+      "hex": "#e8eef6",
+      "is": "the text face's ink (fontkit.TEXT_INK)"
+    },
+    "dead": {
+      "family": "dead",
+      "hex": "#4a4f57",
+      "is": "universal.dead.ramp[1] -- recessive on a well, the keycap lip's step",
+      "step": 1
+    },
+    "signal": {
+      "family": "signal",
+      "hex": "#39d7c8",
+      "is": "universal.signal.ramp[2] -- the step the selected panel's outline uses",
+      "step": 2
+    }
+  },
+  "arrow_down": {
+    "file": "icon_arrow_down.png",
+    "means": "scroll down",
+    "size": [
+      12,
+      12
+    ],
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "arrow_left": {
+    "file": "icon_arrow_left.png",
+    "means": "page back",
+    "size": [
+      12,
+      12
+    ],
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "arrow_right": {
+    "file": "icon_arrow_right.png",
+    "means": "page forward",
+    "size": [
+      12,
+      12
+    ],
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "arrow_up": {
+    "file": "icon_arrow_up.png",
+    "means": "scroll up",
+    "size": [
+      12,
+      12
+    ],
+    "tint_by_state": {
+      "any": "chrome ink"
+    }
+  },
+  "blocked": {
+    "file": "icon_blocked.png",
+    "means": "the same way out, closed",
+    "size": [
+      12,
+      12
+    ],
+    "tint_by_state": {
+      "blocked": "dead"
+    }
+  },
+  "circuit": {
+    "file": "icon_circuit.png",
+    "means": "a powered junction in the conduit network",
+    "size": [
+      12,
+      12
+    ],
+    "tint_by_state": {
+      "powered": "chrome ink",
+      "unpowered": "dead"
+    }
+  },
+  "control": {
+    "file": "icon_control.png",
+    "means": "a thing the player can operate",
+    "size": [
+      12,
+      12
+    ],
+    "tint_by_state": {
+      "not operable": "dead",
+      "operable": "signal"
+    }
+  },
+  "exit": {
+    "file": "icon_exit.png",
+    "means": "a way out of the room",
+    "size": [
+      12,
+      12
+    ],
+    "tint_by_state": {
+      "open": "chrome ink"
+    }
+  }
+}

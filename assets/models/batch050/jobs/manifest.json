@@ -1,0 +1,440 @@
+{
+  "job_beat_cue": {
+    "anchor": "as-built",
+    "batch": "050",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "changes_no_placement": true,
+    "fitted_to": {
+      "drift_radius": 2.5,
+      "envelope_source": "Constants.ENEMY_ENVELOPES via build_enemy_roles.ENVELOPES -- one source",
+      "jobs": {
+        "artillery": "watch",
+        "beacon": "tend",
+        "brute": "watch",
+        "bulwark": "watch",
+        "charger": "patrol",
+        "diver": "drift",
+        "drifter": "drift",
+        "melee": "patrol",
+        "ranged": "watch",
+        "scuttler": "patrol"
+      },
+      "patrol_radius": 4.5,
+      "post_tolerance": 1.5,
+      "production_ref": "claude/archipepsi-0-4-blindside"
+    },
+    "kind": "job_prop",
+    "not_changed": [
+      "encounter placement",
+      "any job behaviour",
+      "collision",
+      "any approved asset"
+    ],
+    "parts": [
+      "beat_turn",
+      "beat_wear"
+    ],
+    "path": "batch050/jobs/job_beat_cue.glb",
+    "serves_jobs": [
+      "patrol"
+    ],
+    "serves_roles": [
+      "melee",
+      "charger",
+      "scuttler"
+    ],
+    "size": [
+      1.4,
+      1.4,
+      0.03
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 36
+  },
+  "job_charge_socket": {
+    "anchor": "as-built",
+    "batch": "050",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "changes_no_placement": true,
+    "fitted_to": {
+      "drift_radius": 2.5,
+      "envelope_source": "Constants.ENEMY_ENVELOPES via build_enemy_roles.ENVELOPES -- one source",
+      "jobs": {
+        "artillery": "watch",
+        "beacon": "tend",
+        "brute": "watch",
+        "bulwark": "watch",
+        "charger": "patrol",
+        "diver": "drift",
+        "drifter": "drift",
+        "melee": "patrol",
+        "ranged": "watch",
+        "scuttler": "patrol"
+      },
+      "patrol_radius": 4.5,
+      "post_tolerance": 1.5,
+      "production_ref": "claude/archipepsi-0-4-blindside"
+    },
+    "kind": "job_prop",
+    "not_changed": [
+      "encounter placement",
+      "any job behaviour",
+      "collision",
+      "any approved asset"
+    ],
+    "parts": [
+      "socket_throat",
+      "socket_lamp",
+      "socket_lead"
+    ],
+    "path": "batch050/jobs/job_charge_socket.glb",
+    "serves_jobs": [],
+    "serves_roles": [],
+    "size": [
+      0.5,
+      0.21,
+      0.57
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 48
+  },
+  "job_drift_perch": {
+    "anchor": "as-built",
+    "batch": "050",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "changes_no_placement": true,
+    "fitted_to": {
+      "drift_radius": 2.5,
+      "envelope_source": "Constants.ENEMY_ENVELOPES via build_enemy_roles.ENVELOPES -- one source",
+      "jobs": {
+        "artillery": "watch",
+        "beacon": "tend",
+        "brute": "watch",
+        "bulwark": "watch",
+        "charger": "patrol",
+        "diver": "drift",
+        "drifter": "drift",
+        "melee": "patrol",
+        "ranged": "watch",
+        "scuttler": "patrol"
+      },
+      "patrol_radius": 4.5,
+      "post_tolerance": 1.5,
+      "production_ref": "claude/archipepsi-0-4-blindside"
+    },
+    "kind": "job_prop",
+    "not_changed": [
+      "encounter placement",
+      "any job behaviour",
+      "collision",
+      "any approved asset"
+    ],
+    "parts": [
+      "perch_yoke",
+      "perch_arm_-1",
+      "perch_cradle_-1",
+      "perch_arm_1",
+      "perch_cradle_1",
+      "perch_lamp"
+    ],
+    "path": "batch050/jobs/job_drift_perch.glb",
+    "serves_jobs": [
+      "drift"
+    ],
+    "serves_roles": [
+      "drifter",
+      "diver"
+    ],
+    "size": [
+      1.28,
+      0.3,
+      1.64
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 84
+  },
+  "job_inspect_panel": {
+    "anchor": "as-built",
+    "batch": "050",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "changes_no_placement": true,
+    "fitted_to": {
+      "drift_radius": 2.5,
+      "envelope_source": "Constants.ENEMY_ENVELOPES via build_enemy_roles.ENVELOPES -- one source",
+      "jobs": {
+        "artillery": "watch",
+        "beacon": "tend",
+        "brute": "watch",
+        "bulwark": "watch",
+        "charger": "patrol",
+        "diver": "drift",
+        "drifter": "drift",
+        "melee": "patrol",
+        "ranged": "watch",
+        "scuttler": "patrol"
+      },
+      "patrol_radius": 4.5,
+      "post_tolerance": 1.5,
+      "production_ref": "claude/archipepsi-0-4-blindside"
+    },
+    "kind": "job_prop",
+    "not_changed": [
+      "encounter placement",
+      "any job behaviour",
+      "collision",
+      "any approved asset"
+    ],
+    "parts": [
+      "inspect_guts",
+      "inspect_door",
+      "inspect_hinge",
+      "inspect_latch"
+    ],
+    "path": "batch050/jobs/job_inspect_panel.glb",
+    "serves_jobs": [],
+    "serves_roles": [],
+    "size": [
+      0.9,
+      0.235,
+      1.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "job_post_plate": {
+    "anchor": "as-built",
+    "batch": "050",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "changes_no_placement": true,
+    "fitted_to": {
+      "drift_radius": 2.5,
+      "envelope_source": "Constants.ENEMY_ENVELOPES via build_enemy_roles.ENVELOPES -- one source",
+      "jobs": {
+        "artillery": "watch",
+        "beacon": "tend",
+        "brute": "watch",
+        "bulwark": "watch",
+        "charger": "patrol",
+        "diver": "drift",
+        "drifter": "drift",
+        "melee": "patrol",
+        "ranged": "watch",
+        "scuttler": "patrol"
+      },
+      "patrol_radius": 4.5,
+      "post_tolerance": 1.5,
+      "production_ref": "claude/archipepsi-0-4-blindside"
+    },
+    "kind": "job_prop",
+    "not_changed": [
+      "encounter placement",
+      "any job behaviour",
+      "collision",
+      "any approved asset"
+    ],
+    "parts": [
+      "post_edge_x-1",
+      "post_edge_y-1",
+      "post_edge_x1",
+      "post_edge_y1",
+      "post_centre"
+    ],
+    "path": "batch050/jobs/job_post_plate.glb",
+    "serves_jobs": [
+      "patrol"
+    ],
+    "serves_roles": [
+      "melee",
+      "charger",
+      "scuttler"
+    ],
+    "size": [
+      3.0,
+      3.0,
+      0.035
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "job_tend_pedestal": {
+    "anchor": "as-built",
+    "batch": "050",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "changes_no_placement": true,
+    "fitted_to": {
+      "drift_radius": 2.5,
+      "envelope_source": "Constants.ENEMY_ENVELOPES via build_enemy_roles.ENVELOPES -- one source",
+      "jobs": {
+        "artillery": "watch",
+        "beacon": "tend",
+        "brute": "watch",
+        "bulwark": "watch",
+        "charger": "patrol",
+        "diver": "drift",
+        "drifter": "drift",
+        "melee": "patrol",
+        "ranged": "watch",
+        "scuttler": "patrol"
+      },
+      "patrol_radius": 4.5,
+      "post_tolerance": 1.5,
+      "production_ref": "claude/archipepsi-0-4-blindside"
+    },
+    "kind": "job_prop",
+    "not_changed": [
+      "encounter placement",
+      "any job behaviour",
+      "collision",
+      "any approved asset"
+    ],
+    "parts": [
+      "tend_stem",
+      "tend_cradle",
+      "tend_core",
+      "tend_duct"
+    ],
+    "path": "batch050/jobs/job_tend_pedestal.glb",
+    "serves_jobs": [
+      "tend"
+    ],
+    "serves_roles": [
+      "beacon"
+    ],
+    "size": [
+      0.8,
+      0.8,
+      1.47
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 60
+  },
+  "job_tool_rack": {
+    "anchor": "as-built",
+    "batch": "050",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "changes_no_placement": true,
+    "fitted_to": {
+      "drift_radius": 2.5,
+      "envelope_source": "Constants.ENEMY_ENVELOPES via build_enemy_roles.ENVELOPES -- one source",
+      "jobs": {
+        "artillery": "watch",
+        "beacon": "tend",
+        "brute": "watch",
+        "bulwark": "watch",
+        "charger": "patrol",
+        "diver": "drift",
+        "drifter": "drift",
+        "melee": "patrol",
+        "ranged": "watch",
+        "scuttler": "patrol"
+      },
+      "patrol_radius": 4.5,
+      "post_tolerance": 1.5,
+      "production_ref": "claude/archipepsi-0-4-blindside"
+    },
+    "kind": "job_prop",
+    "not_changed": [
+      "encounter placement",
+      "any job behaviour",
+      "collision",
+      "any approved asset"
+    ],
+    "parts": [
+      "rack_shelf",
+      "tool_slot_0",
+      "tool_slot_1",
+      "tool_slot_2",
+      "rack_foot"
+    ],
+    "path": "batch050/jobs/job_tool_rack.glb",
+    "serves_jobs": [],
+    "serves_roles": [],
+    "size": [
+      0.84,
+      0.34,
+      1.2
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  },
+  "job_watch_post": {
+    "anchor": "as-built",
+    "batch": "050",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "changes_no_placement": true,
+    "fitted_to": {
+      "drift_radius": 2.5,
+      "envelope_source": "Constants.ENEMY_ENVELOPES via build_enemy_roles.ENVELOPES -- one source",
+      "jobs": {
+        "artillery": "watch",
+        "beacon": "tend",
+        "brute": "watch",
+        "bulwark": "watch",
+        "charger": "patrol",
+        "diver": "drift",
+        "drifter": "drift",
+        "melee": "patrol",
+        "ranged": "watch",
+        "scuttler": "patrol"
+      },
+      "patrol_radius": 4.5,
+      "post_tolerance": 1.5,
+      "production_ref": "claude/archipepsi-0-4-blindside"
+    },
+    "kind": "job_prop",
+    "not_changed": [
+      "encounter placement",
+      "any job behaviour",
+      "collision",
+      "any approved asset"
+    ],
+    "parts": [
+      "post_column",
+      "post_head",
+      "post_lamp",
+      "post_shelf",
+      "post_kerb"
+    ],
+    "path": "batch050/jobs/job_watch_post.glb",
+    "serves_jobs": [
+      "watch"
+    ],
+    "serves_roles": [
+      "ranged",
+      "brute",
+      "bulwark",
+      "artillery"
+    ],
+    "size": [
+      2.9,
+      2.6,
+      1.77
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "triangles": 72
+  }
+}

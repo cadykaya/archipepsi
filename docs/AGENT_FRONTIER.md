@@ -47,6 +47,655 @@ assets.
 
 ## Completed: v0.8 Echoes 2.0 (S1–S10) and the pre-playtest pass
 
+## Art branch — canonical
+
+The single authoritative art lane is **`claude/archipepsi-art`**, and
+**PR #5** (base `claude/archipepsi-build-inzshp`) is its canonical PR —
+that base is what keeps the art diff properly scoped.
+
+`claude/archipepsi-art-setup-9qsbss` was a temporary setup branch. It was a
+clean linear continuation and has been **fast-forwarded into
+`claude/archipepsi-art`** (merge base 649a6cc, no force, no history
+rewritten, no commits lost). PR #6, opened from it against `main`, is
+**superseded** — it showed the whole stacked project history rather than an
+art diff. Do not maintain two active art branches.
+
+## Art batches — state 2026-09-02, with 2026-09-13 and 2026-09-22 head notes
+
+**2026-09-22 — THE ART LANE IS PRODUCING AGAIN.** The owner opened the
+**0.4 Arty Overnight assignment**: 38 packages, 228 explicit actions, in a
+stated priority order. `docs/art/ART_FRONTIER.md` **§11** is the art lane's
+live frontier as of 2026-09-24 (§10 is the assignment it continues);
+read that, not this section, for what art does next.
+
+**2026-09-24 — the art lane's named technical risk is closed.** A Glyph
+bitmap font and a Glyph nine-slice both import into **Godot 4.5.1** with
+their metrics intact, measured in the engine by
+`tools/content/run_font_import.sh` and `tools/content/run_nine_slice.sh`.
+The guide's own proof named 4.3, so this was the thing the whole
+interface track stood on. Two engine facts other lanes need are in §11:
+a font parsed with `load_bitmap_font()` at runtime does not scale unless
+you set `fixed_size_scale_mode`, and the importer's mode allows
+fractional scaling of a pixel face.
+
+**2026-09-25 — an instrument error, and a finding for Production.** The
+art lane's enemy-value harness computed CIE L\* by summing a viewport
+image's **sRGB-encoded** channels as if they were linear light
+(`#777777` read as 0.740, not 0.500), and lit every room with one room's
+lamp. Every enemy VALUE number before this date is on that wrong scale,
+including the Tier 1 ceilings the owner ruled on; the replacement
+(`tools/content/run_enemy_contrast.sh`) calibrates against known greys
+before it measures. **Any lane computing L\* from `get_image()` pixels
+must linearise first** (`Color.srgb_to_linear()`). And Production's
+shipping enemies are built in code in the room's own accent and trim
+(`enemy.gd`), which L-08 forbids; art-lane value bands take effect only
+when its models are integrated. Tier 1 is back with the owner — §11.
+
+**2026-09-26 — the enemy checkpoint is reached, and the art lane HOLDS.**
+
+What the owner ruled, and what landed:
+* **Tier 1** is ruled as ART: 0.10 CIE L\* separation at 18 m, two value
+  bands, openings a documented limitation, and two measured exceptions.
+  It landed as two sets of the same enemies (`batch030/enemies/`,
+  `batch030/enemies_deep/`, mapped by `enemy_value_bands.json`). It is
+  not active in the shipping game.
+* **Track A's** symbols, keycap and page arrows are approved. The
+  tintable symbols now ship in pure white ink.
+* **Facing:** the art models used to face +Z and now face -Z, as
+  `enemy.gd`'s do.
+
+Done, and RULED 2026-09-26 (second):
+* **Tier 2** re-cut `ranged` and `bulwark`, and both are ACCEPTED.
+* **The motion review** is done.
+* **The eye:** Production keeps its existing eye on the art models, and
+  the windup flare is not to be dropped.
+* **`void_glitch` floor** is not retired. Aggregate and per-role
+  contrast are now labelled separately.
+
+Both are in `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`.
+
+Findings other lanes need:
+* Production's shipping enemy builders paint with the room's own accent
+  and trim, which breaks L-08.
+* Integrating the art models drops `enemy.gd`'s emissive eye, including
+  its windup flare. The models have no Eye node, and both `_set_eye` and
+  the damage tint need a `material_override` that a glTF import does not
+  set. RULED: Production preserves its eye.
+* At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
+
+**Now: TRACK A2 — STOPPED for owner selection** (§11). The three
+studies are delivered in `docs/art/review/menu_studies_2026-09-26/`:
+LEAF (Inventory), LENS (Map) and THREAD (Journal → Map). Each is in
+motion and in reduced motion, from the isolated prototype in
+`tools/menu_studies/`. Wait for the owner's choice. Only after it
+comes do the Glyph asset requirements and the state/transition handoff
+for Production follow. There is no production-menu redesign before
+then. It opens neither 0.5 nor Track C or E.
+
+Two things from it that other lanes need:
+
+* **Batch 045 delivers visual identities for the four 0.4 setpieces**
+  (Blindside, Passing Platforms, Counterfire Arcade, Unweighted Switch),
+  fitted against Production `claude/archipepsi-0-4-blindside` @ `f404410`.
+  Handoff: `docs/art-requests/2026-09-22-setpiece-visual-handoff.md`.
+  They are CANDIDATES — imported and fit-checked, **not** runtime-bound
+  and **not** owner-approved.
+* ~~**A handrail at a natural height on a rideable deck would break the
+  gantry guarantee.**~~ **STRUCK 2026-09-22.** `GANTRY_Y` 3.1 is measured
+  above the RAIL at 0.6, so the gantry platform spans world **3.50–3.90**,
+  and it is **3.5 m away horizontally** from the skiff deck. Nothing on
+  that deck reaches it. **If you are reaching for a 0.4 constant, check
+  what it is relative to** — this one cost Batch 045 its headline finding
+  and left the skiff's guard rails half a metre below the cover welded
+  beside them.
+* **Batch 046 delivers the Blindside junction** — track, docks, the
+  repairable span and the gantry machinery, fourteen assets. Handoff:
+  `docs/art-requests/2026-09-22-yardkit-handoff.md`. Same CANDIDATE
+  state.
+* **Three measured findings in the 0.4 yard, all Production's to
+  decide.** The gantry column tops at 3.10 against a platform underside
+  at 3.50, a 0.40 m gap. The track floats 0.425 m over the yard floor
+  with nothing under it. And a landmark on the acquisition branch cannot
+  be taller than a person without crossing somebody's view of the
+  grapple ring.
+* **The theme-pack library target is now EVERY included Archipelago
+  game, not the packet's eighteen.** Dated snapshot in
+  `docs/art/theme-packs/catalogue.json`: **81 included games**, 63
+  beyond the first wave, taken from `https://archipelago.gg/games` with
+  the page's SHA-256 recorded. Community-only APWorlds are deliberately
+  separate and not counted. Ledger: `docs/art/theme-packs/COVERAGE.md`,
+  gated by `tools/content/check_pack_coverage.py`. **Every row is not
+  started.**
+* **`Constants.THEME_BY_GAME_HINT` is a per-game hook that selects one
+  of six HOUSE THEMES** -- a tint, not a pack -- and `ThemePack` loads
+  one descriptor from a fixed path. A library of 81 packs needs a keyed
+  lookup and a pack-aware hint. Integration dependency for Prod/Dess;
+  Art has not built a second loader.
+* **AND THERE IS NOWHERE TO PUT A PACK'S PIXELS.** Sharper than the
+  missing hook, and a different problem. `THEME_PACK.json` is a flat
+  `themes` list of six with `textures` keyed `"<theme>/<role>"` -- no
+  pack namespace. A game pack's materials can enter it only by becoming
+  a SEVENTH HOUSE THEME, and 39 files here name `temple_ruin`
+  (navigation, lights, landmarks, dressing, secrets, the content export,
+  four verifiers). Eighty-one packs cannot be seventy-five more entries
+  in that list. Pack CONTENT -- meshes, motifs, dressing, control
+  housings -- is not blocked; a pack's MATERIAL SET is. Prod/Dess pick:
+  packs become themes, or `THEME_PACK.json` grows a `packs` namespace
+  and `ThemePack` resolves one. Art has not picked, because picking by
+  writing files is a second loader through the back door.
+  `docs/art/theme-packs/COVERAGE.md` §3.
+* **An authored enemy would take NO damage tint.**
+  `Enemy._collect_tint_parts` takes only meshes whose
+  `material_override` is a `StandardMaterial3D`, and a glTF import puts
+  its materials on the surfaces. Measured across all ten roles: zero
+  tintable parts. Production's to fix; the proposed one-line fallback is
+  in `docs/art-requests/2026-09-22-enemy-readiness-handoff.md`.
+* **The ten enemy roles now carry named attachment anchors** and are
+  gated by `tools/content/run_enemy_readiness.sh`. Req 31 is unchanged:
+  seven are art-ready and not spawnable.
+* **Batch 047 delivers the skiff's fitted parts** — shield, end guard,
+  traction truck, and a bare hull variant. Handoff:
+  `docs/art-requests/2026-09-22-skiffkit-handoff.md`.
+* **Their track beam is 0.175 m inside the bottom of the carrier deck**
+  (track spans 0.425–0.775, deck 0.600–1.000), so nothing fits under
+  the deck. The traction trucks hang beside the beam at ±0.45.
+* **The gap between S2 and S3 is 14.048 m and no constant says so** —
+  three of the rail's five control points sit on a Catmull-Rom corner.
+  `tools/content/run_yard_measure.sh` evaluates it with Production's own
+  `RailPath`, read-only, into `assets/models/batch046/yard_fit.json`.
+  Anything fitting that yard should read that file rather than a
+  remembered number.
+
+* **The status kit drew the DESTINATION and the runtime runs the
+  ORIGIN.** `Constants.ECHO_STATUS_KINDS` is a closed vocabulary of 24
+  that `StatusEffects.apply` refuses anything outside;
+  `ECHO_STATUS_KINDS_IMPLEMENTED` names the 13 with a runtime effect.
+  Batch 043 drew Design 6 §15.2's thirteen and **the overlap was two**.
+  Batch 052 draws the other eleven, so the kit now covers the whole
+  vocabulary, gated by `tools/content/run_status_readiness.sh` — which
+  reads Production's constants AND their `apply()` guards and refuses
+  to keep checking a guard they have rewritten.
+* **Three implemented statuses have nowhere on screen to go.** `haste`,
+  `low_profile` and `regenerating` are implemented on `self` **alone**,
+  and the kit's whole model is a marker anchored to a target. The
+  player is the camera. `STATUS_runtime_*.png` places ten of thirteen
+  and says so. **The persistent HUD tier is the answer and it has no
+  owner** — an integration question for Prod, in
+  `docs/art-requests/2026-09-22-status-readiness-handoff.md`.
+
+* **§10.3 draws the carry line at 60 kg and
+  `Constants.ENVELOPE_MASS_KG` is 120.** Batch 043's physics props
+  signal what a HAND could do, and the game lifts with a 700 N field at
+  20 m. Three props the envelope can carry -- plate 60, drum 70, girder
+  95 -- wear the "a device has to" language. **CORRECTED by the owner:
+  the two numbers govern DIFFERENT MECHANISMS** -- §10.3 is ordinary
+  pickup (carriable AND <= 60 kg), ENVELOPE_MASS_KG 120 is the qualified
+  manipulation-provider envelope beside force and range. Both right, the
+  grips are right, nothing needs redesigning. Art distinguishes hand
+  handling from device/constraint attachment.
+* **`phys_cart` at 180 kg is exactly the heaviest thing the envelope can
+  push** -- 700.0 N against 700 N -- and **`phys_movable_cover` at 220
+  cannot be pushed at all**, though its own docstring says it exists to
+  be got behind. `lightened` rescues neither: it changes CLASS, not
+  kilograms, and `receive_force` is unscaled.
+  `tools/content/run_manipulation_readiness.sh` measures all of it with
+  Production's own constants, ladder, friction derivation and project
+  gravity. Handoff:
+  `docs/art-requests/2026-09-22-manipulation-handoff.md`.
+
+* **The Glyph toolchain candidate was trialled, not adopted; the
+  addendum's `87db9e2` has now been taken too.** Separate worktree,
+  baseline `6c80b63` unmoved and re-verified. The authoring build does
+  NOT move: Batches 043 and 052 record that SHA beside every asset.
+  `check_tiling` is worth having as a REPORTING step. Both addendum
+  repairs verified over real stdio JSON-RPC, not in process: 35 tools on
+  the default surface with `transaction` **required** on all nine
+  mutations that take one, and `memory_query`, `candidate_submit`,
+  `comment_list`, `question_raise`, `question_list` all present. One
+  edit -> commit -> image LOOKED AT -> reopen -> export cycle ran end to
+  end as a granted artist distinct from the owner, and `memory.promote`
+  on my own candidate refused: *reserved to the Lead Owner and not
+  available under any grant*, even with `scopes:["*"]`. Five interface
+  frictions reported, one of them a real gap (`palette.create` answers a
+  malformed colour with an internal TypeError where
+  `palette.create_entry` preconditions it). **Opening a `.glyph` writes
+  to it** -- five `verify` runs modified six tracked fixtures by
+  checkpointing their WAL; restored.
+  `docs/art/reports/2026-09-22-glyph-toolchain-trial.md` §5.
+* **THE PACK BLOCKER IS ANSWERED. D-11 IS DELIVERED AND CONSUMED.**
+  Read from source at the packet's review ref `a7456373`, unchanged at
+  that branch's head `d92b637`: `Zone.theme_pack` (optional, `^[a-z0-9_]+$`,
+  <= 24), a flat sibling `pack_textures` table keyed `<pack>/<theme>/<role>`
+  **whose rows are exactly a `textures` row** (this lane's already are),
+  exact-pack-key-then-family resolution with **no pack role hop**,
+  `hazard` protected as universal, partial packs legal, and
+  `theme_packs.pack_table_problems()` written as the art lane's gate.
+  Status ladder `candidate` -> `selectable` -> `approved` (owner only);
+  `THEME_PACK_STATUS` is `{}`.
+  **No seventh house theme, no second loader, and none was built.**
+  Two of my own findings change: the **family runway is superseded** (a
+  pack ships its own rows; the family is the backstop for roles it does
+  not ship, not its identity), and the **T05 Twilight-vs-Forest finding
+  becomes actionable** -- that is the pair D-11 separates.
+* **POST-PLAYTEST HANDOFF v1.0 RECEIVED (2026-09-24). ASSIGNMENT
+  ACKNOWLEDGED; PLAN ONLY, NOTHING STARTED.** The owner played 0.4: more
+  fun, the power-cell installation is a keeper, and the inventory is
+  miserable. Art's order is now **A** the Glyph interface family (fonts,
+  nine-slice panels, icons, and the shared circuit / blocked-exit /
+  control symbols for a LIVE inventory face -- never a painted
+  whole-screen image), **B** a distance-readable enemy lineup judged
+  without audio or collider overlays, **C** machinery placeholders
+  against revised puzzle bounds (receiver z-fight fixed in source
+  during replacement, not as its own task), **D** consume D-11 and
+  finish T01 + T05, then **E** the A15-A19 reserve.
+  **Track D is the only one ready today; C is blocked on Prod/Dess's
+  revised puzzle bounds.** Four unresolved decisions and six cross-lane
+  dependencies are named in `docs/art/ART_PLAN_2026-09-24.md`.
+  No watchers, subscriptions or scheduled work exist or were created.
+* **T07 (Dark Souls III, THE HIGH WALL OF LOTHRIC) IS THE LAST PACK WITH
+  A HOUSE FAMILY OF ITS OWN.** Batch 061, `gothic_stone`. T06 counted
+  two families remaining and was wrong: **`void_glitch` is unusable** --
+  it is Archipepsi's own missing-texture theme, an editor checkerboard
+  with the word `null` across it, mapped to Archipepsi itself. A game
+  pack painted in it would mean "this texture failed to load".
+  **So every pack from T08 must share pixels with an earlier pack or
+  wait for the namespace, and 74 packs are behind.** T06's report
+  carries the correction in place.
+* **A FOURTH GATE: `packgates.assert_fits_corridor`.** Nothing a pack
+  ships may exceed `corridor_height` (3.6). T02's dial mark reached
+  3.78, T03's shutter head 3.62, T07's springers 3.68 -- three packs
+  poking through a ceiling, and the only thing that ever noticed was a
+  human reading the manifest's `size` field. Unconditional in
+  `packkit.build`; caught T07 and cleared the other six.
+* **And one thing no gate can say.** T07's buttress springing was two
+  stepped wedges, `assert_parts_touch` was satisfied by a 14 cm overlap,
+  and the frame showed a staircase hanging in mid-air. **A gate can say
+  a thing is attached; it can never say it is legible.** That is the
+  case for the in-engine frames existing at all.
+  `docs/art/review/lothric_2026-09-22/README.md`.
+* **T06 (DOOM 1993, THE UAC TECHBASE) makes six packs -- AND THE FAMILY
+  RUNWAY IS NOW A DEADLINE.** Batch 060, `concrete_facility`.
+  T05 proved two packs sharing a house family read as one place. The
+  workaround since has been one unused family per pack. There are SIX
+  families: `temple_ruin` (T01, T05), `rusted_industrial` (T02, T04),
+  `neon_transit` (T03), `concrete_facility` (T06). **`gothic_stone` and
+  `void_glitch` are unused and 75 packs remain, so the workaround runs
+  out at T08 and every pack from T09 must share pixels or wait.**
+  A deadline rather than an opinion; recorded per pack as
+  `family_runway`.
+  Also: `concrete_facility`'s accent marks a thing as SIGNIFICANT and
+  its own docstring says a colour that marks everything marks nothing,
+  so it is spent on the blast chevrons and the keycard lamps and
+  nowhere else. Third family whose trim/accent semantics had to be read
+  before use.
+  `docs/art/review/foundry_2026-09-22/README.md`.
+* **T04 (Super Metroid, THE WRECKED SHIP) and T05 (Kingdom Hearts 2,
+  TWILIGHT TOWN SERVICE ALLEY) make it five packs, one shell, four
+  cameras, and the switch housing in the same place on the same wall in
+  all five.** Batches 058 and 059.
+  **T04: the hint covers 6 of 81 games.** T02's disagreement was an
+  argument; this is a number. 75 of 81 -- Super Metroid among them --
+  have no hint at all, so for nine games in ten there is nothing to
+  agree or disagree with. And the pressure door's COAMING was refused:
+  a 0.10 m sill across the doorway is FLOOR, floor is Production's
+  whatever its height, and a 0.10 m step is under the 0.12 m walk-up so
+  the foothold rule would never have seen it.
+  **T05 WAS AN EXPERIMENT AND IT FAILED USEFULLY.** It shares
+  `temple_ruin` with T01 on purpose, to test the owner's "a variant is
+  not a duplicate merely because its construction is shared". The shapes
+  ARE different and legible as different -- and the frame still reads as
+  a warmer Forest Temple, because `temple_ruin`'s accent is mossy stone
+  so awning canvas reads as foliage. **The geometry says "boarded-up
+  shopfront", the pixels say "overgrown temple", the pixels win.**
+  Strongest argument in five packs for the pack namespace, and it is a
+  picture rather than an assertion. The awning's valance was refused for
+  hanging 6 cm below the door head -- T04's coaming and T05's valance
+  are the same rule seen from both ends of the same opening.
+  `docs/art/review/wreck_2026-09-22/`, `.../twilight_2026-09-22/`.
+* **T03 (Bomb Rush Cyberfunk, BRINK TERMINAL AFTER HOURS) makes it three
+  packs, three subthemes, one shell.** Six assets (Batch 057), four
+  frames from the same cameras as T01 and T02.
+  **THE HINT IS USUALLY RIGHT AND THAT IS THE PROBLEM:** T01 agreed, T03
+  agreed, T02 did not. A hint that is always wrong gets noticed; one
+  right two times in three does not.
+  **Two checks got stricter, neither found by reading code.**
+  `assert_opening_clear` grazed in height but not width and called a
+  shutter guide tangent at exactly 1.20 m an intrusion "by 0.000 m"; and
+  the in-engine check tested VERTICES, which cannot see a box spanning
+  0 to 3.2 -- **its own sabotage step caught that**, three packs late.
+  Per triangle now; T01 and T02 re-verified.
+  `tools/blender/packkit.py` joins `packgates`: all three builders share
+  the Painter and the build loop, and `build_forest_temple` rebuilds
+  byte-identical through it.
+  `docs/art/review/brink_2026-09-22/README.md`.
+* **T02 (Super Mario 64, TICK TOCK CLOCK) likewise -- and it found two
+  things T01 could not.** Six assets (Batch 056), four frames from the
+  SAME cameras in the SAME shell as T01 so the packs compare frame for
+  frame. (1) **The per-game hint and the pack's material disagree:**
+  `THEME_BY_GAME_HINT` says `concrete_facility`, a clock movement's
+  nearest family by material is `rusted_industrial`. The hint picks by
+  GAME; a treatment follows what a pack is MADE OF. Two questions, one
+  field. (2) **`rusted_industrial`'s `trim` IS the universal hazard
+  band**, and the colour is never decorative in any theme for any
+  reason -- the first pass shipped a clock movement in warning stripes.
+  `trim_plain` is trim minus danger. Every later pack reaching for that
+  family will hit it.
+  Shared now, because 79 packs remain: `tools/blender/packgates.py`
+  (the three Blender gates) and `tools/content/pack_views.gd` +
+  `packlayouts/<pack>.json` (the shell and the imported-geometry check;
+  the layout is art and is data).
+  `docs/art/review/clockwork_2026-09-22/README.md`.
+* **T01 (Ocarina of Time, Forest Temple) has content AND context; it is
+  not complete.** Six assets, four in-engine frames dressing a
+  Production-grey shell with a 2.4 x 3.2 opening, and a fourth gate that
+  runs in the ENGINE on the imported `.glb` -- 120 vertices against the
+  opening, sabotage-tested in the same run. Photographing it changed the
+  art: `tp_ft_root_mass` read as fallen timber and was rebuilt as growth.
+  **Missing: its material treatment**, because `THEME_PACK.json` has no
+  pack namespace. Prod/Dess's seam; no second loader.
+  **Catalogue and completion coverage are now separate numbers**:
+  catalogue 81/81, completed 0/81, in progress 1.
+  `docs/art/review/forest_temple_2026-09-22/README.md`,
+  `docs/art/theme-packs/COVERAGE.md`.
+* **THE COURSE RHYTHM BREAKS AT THE TILE EDGE, AND IT TOOK THREE TRIES
+  TO SAY WHY.** A 128 px tile covers 4 m; anything drawn with
+  `range(0, size, step)` repeats at `step` inside the tile and at
+  `size % step` across its edge. **Three live paths** compute such a
+  step: `materials.surface_for()`'s seams at 1.2 m = 38 px (which paint
+  no line, but aim `near_seams()` speckle at thirteen call sites, place
+  every `bolts()` row and start two weep-streak loops);
+  `paintkit.panel_grid`, at 1.2/1.35/2.0/0.90/0.60/0.55/0.40/0.30 m per
+  treatment and per axis; and inline loops inside the treatments at
+  dimensions `panel_grid` never sees -- ribs 1.0 m, soffit ribs 0.6 m,
+  station tile 0.30 m, mortar joint 0.42 m, masonry course/block pairs,
+  seven bolt pitches from 0.18 to 0.5 m. `paintkit.panel_seams` is the
+  only dead one.
+  **The first two accounts of this were wrong and are recorded as wrong**
+  in `check_theme_courses.py` and `build_theme_candidate.py`: "it is
+  `surface_for`" and then, over-correcting, "`surface_for` paints
+  nothing, it is `panel_grid`". A `panel_grid`-only shim left
+  `concrete_facility_wall_ribbed` byte-identical -- that branch takes no
+  `panel_grid` call at all and still measures a 38 px rhythm -- which is
+  how the incompleteness was caught rather than argued.
+  **CANDIDATE PREPARED, NOT APPLIED.** `paintkit.SNAP_COURSES` (off by
+  default) snaps every wrapping pitch to a divisor of the tile;
+  `build_theme_candidate.py` turns it on and writes 37 textures to
+  `assets/textures/theme_candidate/`. Shipped measures 4 broken
+  axis/texture pairs, the candidate 0. The shipped set rebuilds
+  byte-identical with the flag off, proven by `check_art_current.sh`,
+  not asserted. **The cost is real:** the divisors of 128 are the powers
+  of two, so 1.35 m has nowhere nearer than 1.0 m and gothic_stone's
+  masonry lands on an exact 2:1 course-to-block that reads more
+  mechanical than the laid wall it replaces. 18 of 22 pitches move.
+  **A LOOK DECISION FOR THE OWNER.** Evidence:
+  `docs/art/review/course_candidate_2026-09-22/` (24 m of wall, six
+  repeats, shipped above and candidate below in one frame, plus the
+  shipped shell twice with one set each);
+  `docs/art/reports/2026-09-22-course-candidate.md`.
+  `tools/content/check_theme_courses.py` prints the measurement on every
+  suite run; `--strict` turns it into a gate the day somebody rules, and
+  it refuses (exit 3) if any of the three paths changes under it.
+* **CI is red repository-wide and it is not the art branch's.** Both
+  checks die in 3-6 seconds with logs that 404, on PR #5 and equally on
+  PR #12's unrelated branch -- before any test body runs. One re-run
+  spent, same result. `tools/check_art_current.sh` is green locally on
+  every art head. Explained on PR #5.
+
+**Scheduling override (owner, 2026-09-22): heartbeat, watchers,
+subscriptions, scheduled check-ins and automatic re-arming stay OFF.**
+This overrides the older "resume the routine the moment a task exists"
+rule in `docs/art/ART_FRONTIER.md`. A large queue existing is **not** a
+reason to re-arm.
+
+~~**THE ART LANE IS WAITING ON AN OWNER VERDICT, NOT IDLE-WITH-WORK-TO-DO.**
+Do not start work in it on a wake-up. Read this section and stop.~~
+Superseded 2026-09-22 by the assignment above. Batches 023–030 and 044
+remain pending owner review; that is unchanged and is not a blocker.
+
+**2026-09-13 — three things another lane may need, from
+`docs/art/reports/2026-09-13-presentation-study.md`:**
+
+1. ~~**`shell_yard_gantry`'s two doorways are refused.**~~ **WRONG,
+   withdrawn same day.** `shells.is_offerable` *reports*
+   `doorways_off_the_body` and returns regardless, because a manifest
+   rule cannot see floor and the assembled crossing decides. Art's gate
+   now reports the 0.395 m without failing. **No socket repair is
+   requested.**
+2. ~~**The binder used to prove it is a proposal not wired into the
+   game.**~~ **WRONG, withdrawn same day: the runtime binder exists.**
+   `ThemeMaterials._material` asks `ThemePack.texture_for` first and
+   falls back to `ProcTextures` on null. The art-side binder is deleted.
+   What survives is the check nothing else makes — the pixels the GPU
+   samples, against the authored PNG, through the real import — run
+   against the material Production builds.
+3. **Production reads shell sockets by kind and by name**, so a three- or
+   four-connection room is readable. **A four-connection asset is still
+   not a four-neighbour room in a generated Zone.**
+4. **Every opening now declares its own arrival region**, named after its
+   socket — Art's half of §11.3. Handoff:
+   `docs/art-requests/2026-09-13-capacity-and-arrival-handoff.md`. It
+   also corrects the capacity claim for `shell_bay_terminus`, which has
+   **no `exit` socket** and is a destination, not a through-room.
+5. ~~**Lettering cannot be fixed in UVs.**~~ **WRONG, withdrawn.**
+   An authored `.glb` shell keeps the materials Blender baked:
+   `ContentInstantiator` performs no material operation at all
+   ("material" appears zero times in it), while `chamber_builders.gd`
+   names `ThemeMaterials` 46 times. Themed materials are the PROCEDURAL
+   path. The UV repair therefore lands, and is proved on both faces of a
+   two-sided sign and with the room rotated. **The mirrored stencil is
+   still real on the procedural path** — that is a separate, unfiled
+   item, not Batch 044's.
+6. **"LEAF" IS NOT "DEAD END".** A branch destination in this
+   implementation can still host onward branches. Production's
+   `dead_ends` is a measured degree (`n == 1` adjacency); Art's
+   `dead_end` is a shape tag describing a treatment, and **nothing in
+   Production reads it**. Measured: from the Terminus's approach the
+   one-neighbour and two-neighbour states are pixel-identical (the mouth
+   hides both side openings); from inside, an assigned branch is plainly
+   a way on. Evaluate a one-neighbour assignment separately.
+7. **`shell_bay_terminus` cannot be composed at all today**, and it is a
+   PRODUCER limit, not a door count: `topology.compose_chain` returns
+   `edges=()` when any chamber lacks the literal `entry`+`exit` pair, and
+   `compose_with_branch` calls it first and returns immediately. So one
+   destination room in the list seals every room's doors. A leaf is
+   rejected before it can become a leaf. Dess's and Prod's to resolve.
+
+**ALL TWELVE AUTHORED ROOM SHELLS PASS** (owner, 2026-09-04). The eight
+P2 shells passed on 2026-09-02 after Production certified them at
+`6640d86`; the hall and the three Wave 1 rooms were promoted on
+2026-09-04 with owner form approval, Production's technical certification
+at `7e13f44` and an independent audit at `f97545f` all agreeing. Nothing
+in the pack is `pending` except the three projectile substitutions.
+
+**`pass` DOES NOT MEAN THE MOVEMENT OFFERS ARE LIVE.** The four large
+rooms carry `rail_route`, `launch_source`/`launch_target` and
+`grapple_point` declarations reserved against a player-facing
+movement-package consumer that is **not implemented**. A passing shell
+can be placed, entered and walked end to end today; nobody can ride its
+rail. Report:
+`docs/art/reports/2026-09-04-wave1-promotion.md`.
+
+**THE LARGE ROOM LIBRARY IS APPROVED AND WAVE 1 IS BUILT.** The owner
+approved the ten-room slate (`docs/art/LARGE_ROOM_SLATE.md`) and the
+3 / 4 / 3 wave plan. Wave 1 -- `shell_plenum_helix` (20x72x20, a 129 m
+rail), `shell_yard_gantry` (84x16x52) and `shell_span_basin` (30x22x90)
+-- is authored, verified and, since 2026-09-04, `review: "pass"`.
+Package: `docs/art/review/wave1/`. **Wave 2 is four rooms and does NOT
+start on a wake-up.** The Wave 1 verdict it was waiting on has arrived
+and is a promotion, not an instruction to continue: Wave 2 needs its own
+owner brief.
+
+**`shell_hall_transit` is repaired** against Production's final walk law
+at `b37fe07`: two of its three climbs were built backwards, and all three
+were single wedges the import-time flood could not see through.
+`shell_tower_spiral`'s `platform_8_to_deck` is a `gap`, from Production's
+own probe.
+
+**PHYSICAL-TRUTH REPAIR LANDED (2026-09-03).** The seven items of the
+plenum/hall/span brief are done and measured:
+
+* the three plenum collars ship as **12 convex sectors each** (117 -> 150
+  colliders, same 1656 triangles). `roomcollision.assert_convex` now
+  refuses ANY non-convex collider at build time, in all six builders
+  that author collision — a
+  `-convcolonly` node imports as the convex HULL of its vertices, so an
+  annulus was shipping as a filled disc.
+* every collar destination is on the band and none on the machine axis:
+  three `landing_N_to_collar_K` endpoints, three `enemy_anchors`, the
+  `check_anchor`, the `reward` and the launch target, all through one
+  `_collar_point`, which now shares `_collar_axis` with the bridge that
+  builds the spur.
+* **`shell_plenum_helix`'s launch serves the LOW collar now, not the
+  middle one.** Measured over 4537 floor stances on a 0.25 m grid: the
+  top collar is reachable from none, the middle from five, the low from
+  141. The reward stays on the middle collar.
+* the plenum rail, the hall rail and the span rail were all rerouted off
+  geometry their BAKED curve was inside; the plenum's grapple_1 moved a
+  metre inward for its swing room.
+
+New gates, both in `tools/verify_content_pack.sh`:
+`tools/content/measure_offers.py` measures every declared rail, launch
+and grapple against the shipped collider triangles, and
+`tools/content/replay_audited.py` replays the pre-repair pack out of git
+and FAILS unless every audited finding still comes back.
+`tools/content/sabotage_offers.py` is their negative-control suite and
+runs from `tools/sabotage_checks.sh`.
+
+**AND THE TWO LAUNCH PADS, on the owner's ruling of the same day:** keep
+both launches, move both pads the least that clears them. The hall's and
+the span's flights each went through the platform they land on — 0.08 m
+at first contact, 0.643 m and 0.806 m at their worst. An arc's shape is
+fixed by its two heights, so neither could be dodged along z: the hall's
+pad goes **3.00 m west to (9, 0, 18)** and the span's **7.02 m to
+(−7, 0, 45)**, out from under the deck, and onto the basin's face. Both
+are the nearest round metre that leaves a flying body the 0.325 m a rail
+beam must keep. Targets, landings, routes and radii unchanged, and
+`measure_offers.RAISED` is empty again. Reports:
+`docs/art/reports/2026-09-03-physical-truth-repair.md` and
+`docs/art/reports/2026-09-03-launch-pads.md`.
+
+**RESOLVED 2026-09-04 — `launch_source.radius`.** Settled at Production
+`833fe80` and guarded at `7e13f44`: `launch_source.position` is the exact
+**foot-contact** launch origin, and `radius` reserves space for the
+constructed pad — it is **not** a disc of possible ballistic origins. All
+four large-room pads are correct as authored. *Superseded history: this
+was previously recorded here as an open Production question.*
+
+**RESOLVED — req 40.** `ShellValidator` is kind-aware through
+`TraversalLaw`; it no longer applies base-kit jump bounds to continuous
+walks or to ramps. Fixed before the Wave 1 promotion, so no room in the
+library is refused by it. *Superseded history: this was previously
+recorded here as needing Production.*
+
+**THEME PACK: PREPARED AND PROVED, NOT BUILT (2026-09-10).** Two
+inspection-only batches, no asset rebuilt and all twelve shells
+byte-identical. The role contract is reconciled against
+`ARCHIPEPSI_THEME_PACK_SYSTEM_AUTHORITY_20260903.txt`; all 597 shipped
+material slots classify (0 canonical, 597 legacy, 0 unknown) and Godot
+preserves every name exactly, so a binder can recover the role at runtime
+with no manifest field; and one shipped room has been shown wearing two
+themes **at once**, by per-surface override, with the shared mesh
+unchanged and the collision digest identical. Reports:
+`docs/art/reports/2026-09-10-theme-pack-preparation.md` and
+`docs/art/reports/2026-09-10-batch041-two-themes.md`.
+
+**What is left is PRODUCTION's, and there are four of them:** a ruling on
+`hazard` (the authority makes it a required per-theme role; the art lane's
+standing rule is that hazard is a universal colour no theme may re-tint,
+and no theme has a hazard texture), the `material mode` and
+`protected_materials` fields the registry entry schema does not have,
+somewhere for the 37-PNG theme texture set to ship, and the binder itself.
+**Do not start canonical `<role>` renaming on a wake-up** — it would
+change all twelve shells' bytes to buy tidiness a legacy-aware binder does
+not need.
+
+**ECMS GLYPH IS AVAILABLE AND HAS BEEN RUN (2026-09-10).**
+`cadykaya/ECMS-GLYPH` at **`727129e1`** on `main` — the implementation
+merge. An earlier note in this lane read the frozen authority snapshot
+`0cf872d` and concluded Glyph was "a specification, not a program"; that is
+**superseded**, and the difference was the branch, not the project. `npm ci`
+and `npm run build` are clean on Node 22, the worked example runs, and one
+128 × 128 `concrete_facility` wall has been authored through it on the house
+palette and structure, then bound onto real room geometry through Batch
+041's override path. **It ships nowhere** and no approved asset changed.
+Report: `docs/art/reports/2026-09-10-glyph-first-texture.md`.
+
+Two things a later agent should not have to rediscover. **Glyph's indexed
+colour has no partial mix**, and the house look is built from partial mixes,
+so a Glyph-authored surface comes out crisper than `materials.py`'s — a
+direction question, not a defect. And **the owner has settled `hazard`**:
+every pack must resolve the role, but may resolve it to the same shared
+universal material; separate theme-coloured hazard textures are not
+required.
+
+**001–022 PASS. 031–037 PASS** (031; 032 *with boundary*; 033 *audit, build
+nothing*; 034 *the visual principle*; 035-R; 036-R; 037-R *with a documented
+caveat*; boss audit *accepted, build nothing*).
+
+**PENDING owner review: 023–030 only.** Nothing about them is actionable
+without a verdict.
+
+### The boundary — do NOT start the next art system
+
+Two systems are being designed by the owner and a design collaborator, each
+arriving as its own owner-authored brief:
+
+1. **Modular Echo visual construction / kitbash system**
+2. **Diegetic in-world interface system**
+
+Until those briefs exist:
+
+- **No Batch 038.**
+- **Do not design or mass-produce Echo visual parts.** Requirement 32 is
+  *only* the architectural seam — the Echo family must be visible through a
+  swappable / composable `EchoPart` seam. The three built ranged / melee /
+  grapple forms are **proof-of-seam only**, and are explicitly not approval
+  of seven fixed family models, a final attachment grammar, a final part
+  taxonomy, runtime composition rules, family silhouette rules, or
+  provenance / source influence rules.
+- **Do not expand the interaction kit** into menus, terminals, Archive UI,
+  Forge UI, Zone-selection UI, or any other large physical interface.
+- **No heartbeat, no polling, no autonomous expansion.**
+
+### Rules locked by the post-030 review, worth carrying forward
+
+- **If a distinction must survive gameplay distance, the distinguishing
+  feature must affect object-scale SILHOUETTE.** Surface is what distance
+  takes away first.
+- Three channels on any operable object: **silhouette/structure** = what
+  kind of thing; **interaction hardware** = yes this one is operable;
+  **state treatment** = what it is doing now. The plate/bezel may stay as
+  standardized hardware only while it is not the sole source of truth and
+  does not rely on hue alone.
+- Secrets: **no universal secret colour**; a cue is a **deviation from a
+  learned environmental pattern**; a smaller reliable vocabulary beats a
+  padded one. **Stop revising secrets until real in-game Zone testing.**
+- Enemy surface: **plate** = proud slab / impact-bearing; **mechanism** =
+  recessed, ribbed, rodded exposed function. No role colours.
+- Accepted caveat: brute vs scuttler surface identity is weak. **Do not
+  alter the approved scuttler silhouette or body to force a stronger
+  surface distinction** — revisit only with gameplay evidence.
+
+**Still blocked, and deliberately not routed around:** requirement 31 —
+`ENEMY_ARCHETYPES` is still `("melee", "ranged", "brute")`, so seven roles
+have a body, a collider, a telegraph seat and a surface, and no way to be
+spawned.
+
+**The art heartbeat is PAUSED** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled
+2026-08-29) under the owner's rule: pause the routine when there is no work,
+resume it when there is a task. **Do not re-enable it on an idle lane.** PR
+#5 activity still wakes the session directly, so nothing is missed.
+
+Earlier decisions standing: `objective_marker`, `arch_objective_socket`,
+`arch_signage_mount` and `arch_affordance_socket` all struck, each because
+nothing places them. `arch_vista_socket` still blocked on a contract.
+Requirement 23: engine `trim_mat` maps to authored `trim_plain`. The Batch
+023 landmark audit was corrected on 2026-08-29 — Production **has** an
+authored-content pipeline (`ContentRegistry`, `ContentInstantiator`,
+`landmark` as a real L4 category); what is missing is the `.glb` →
+`res://content/` scene step, a `landmark_id`, a placement path and a landmark
+envelope. Requirement 24, reworded.
+
 ## Open decision, deliberately not guessed
 `challenge_marker` (§14.2) and its `challenge_timer` readout (§14.1) have a complete bridge half — grantable, recorded, `best_seconds` improves — and no world half, because neither section says where a run starts, what ends it, or what counts as one. `test_stage_tripwires.py::test_the_challenge_marker_still_has_no_challenge` names the decision and comes due when it is made.
 

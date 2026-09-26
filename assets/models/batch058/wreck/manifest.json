@@ -1,0 +1,249 @@
+{
+  "tp_ws_bulkhead_panel": {
+    "anchor": "floor",
+    "batch": "058",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "the inspection hatch let go and is still on one HINGE; a hatch on the floor is debris, a hatch still attached is an accident",
+    "hazard_band": "USED, and deliberately. rusted_industrial's `trim` is the universal hazard band; T02 reached for this family and had to refuse it everywhere because a clock room has no hazard boundaries. A derelict is nothing but hazard boundaries -- the pressure threshold, the lamp cage, the severed conduit -- so those carry the band and everything else carries `trim_plain`.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_super_metroid",
+    "painted_with": "rusted_industrial",
+    "parts": [
+      "ws_bp_rib_low",
+      "ws_bp_rib_high",
+      "ws_bp_pocket",
+      "ws_bp_hinge",
+      "ws_bp_hatch",
+      "ws_bp_cut"
+    ],
+    "path": "batch058/wreck/tp_ws_bulkhead_panel.glb",
+    "size": [
+      2.16,
+      0.652,
+      3.0
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE WRECKED SHIP -- the derelict: corroded frame members, a hull panel blown open, a pressure door nobody dogged shut, and the plating that came out with the blast",
+    "subtheme_is_a_choice": "Super Metroid has six regions and five of them are CAVES, which is terrain. The Wrecked Ship is the one that is architecture, and architecture is what a theme pack ships.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries and the catalogue holds 81 games, so 75 of 81 -- including this one -- have no hint at all. A selection mechanism covering 7% of the catalogue is not a mechanism with an exception in it. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 84
+  },
+  "tp_ws_debris_fan": {
+    "anchor": "floor",
+    "batch": "058",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "floor dressing that BLEW OUT -- plates at spreading angles all pointing back at one origin, where a pile would point at nothing",
+    "hazard_band": "USED, and deliberately. rusted_industrial's `trim` is the universal hazard band; T02 reached for this family and had to refuse it everywhere because a clock room has no hazard boundaries. A derelict is nothing but hazard boundaries -- the pressure threshold, the lamp cage, the severed conduit -- so those carry the band and everything else carries `trim_plain`.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_super_metroid",
+    "painted_with": "rusted_industrial",
+    "parts": [
+      "ws_df_flare",
+      "ws_df_plate_0",
+      "ws_df_plate_1",
+      "ws_df_plate_2",
+      "ws_df_shard"
+    ],
+    "path": "batch058/wreck/tp_ws_debris_fan.glb",
+    "size": [
+      1.686,
+      0.932,
+      0.2
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE WRECKED SHIP -- the derelict: corroded frame members, a hull panel blown open, a pressure door nobody dogged shut, and the plating that came out with the blast",
+    "subtheme_is_a_choice": "Super Metroid has six regions and five of them are CAVES, which is terrain. The Wrecked Ship is the one that is architecture, and architecture is what a theme pack ships.",
+    "texel_density": 31.8,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries and the catalogue holds 81 games, so 75 of 81 -- including this one -- have no hint at all. A selection mechanism covering 7% of the catalogue is not a mechanism with an exception in it. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 72
+  },
+  "tp_ws_dogging_lever": {
+    "anchor": "floor",
+    "batch": "058",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "batch043's wall-switch contract as a dogging lever in a recessed pocket -- thrown, not pressed",
+    "hazard_band": "USED, and deliberately. rusted_industrial's `trim` is the universal hazard band; T02 reached for this family and had to refuse it everywhere because a clock room has no hazard boundaries. A derelict is nothing but hazard boundaries -- the pressure threshold, the lamp cage, the severed conduit -- so those carry the band and everything else carries `trim_plain`.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_super_metroid",
+    "painted_with": "rusted_industrial",
+    "parts": [
+      "ws_dl_reveal",
+      "ws_dl_quadrant",
+      "ws_dl_lever",
+      "ws_dl_knob"
+    ],
+    "path": "batch058/wreck/tp_ws_dogging_lever.glb",
+    "size": [
+      0.46,
+      0.225,
+      0.54
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE WRECKED SHIP -- the derelict: corroded frame members, a hull panel blown open, a pressure door nobody dogged shut, and the plating that came out with the blast",
+    "subtheme_is_a_choice": "Super Metroid has six regions and five of them are CAVES, which is terrain. The Wrecked Ship is the one that is architecture, and architecture is what a theme pack ships.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries and the catalogue holds 81 games, so 75 of 81 -- including this one -- have no hint at all. A selection mechanism covering 7% of the catalogue is not a mechanism with an exception in it. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 60
+  },
+  "tp_ws_lamp_cage": {
+    "anchor": "floor",
+    "batch": "058",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "a caged emergency lamp hanging OFF TRUE; a straight fitting is one somebody maintains",
+    "hazard_band": "USED, and deliberately. rusted_industrial's `trim` is the universal hazard band; T02 reached for this family and had to refuse it everywhere because a clock room has no hazard boundaries. A derelict is nothing but hazard boundaries -- the pressure threshold, the lamp cage, the severed conduit -- so those carry the band and everything else carries `trim_plain`.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_super_metroid",
+    "painted_with": "rusted_industrial",
+    "parts": [
+      "ws_lc_gimbal",
+      "ws_lc_body",
+      "ws_lc_glass",
+      "ws_lc_bar_0",
+      "ws_lc_bar_1",
+      "ws_lc_bar_2"
+    ],
+    "path": "batch058/wreck/tp_ws_lamp_cage.glb",
+    "size": [
+      0.346,
+      0.523,
+      0.52
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE WRECKED SHIP -- the derelict: corroded frame members, a hull panel blown open, a pressure door nobody dogged shut, and the plating that came out with the blast",
+    "subtheme_is_a_choice": "Super Metroid has six regions and five of them are CAVES, which is terrain. The Wrecked Ship is the one that is architecture, and architecture is what a theme pack ships.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries and the catalogue holds 81 games, so 75 of 81 -- including this one -- have no hint at all. A selection mechanism covering 7% of the catalogue is not a mechanism with an exception in it. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 84
+  },
+  "tp_ws_pressure_door": {
+    "anchor": "floor",
+    "batch": "058",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "the opening is dressed as a PRESSURE BOUNDARY: dogging lugs, seal channel, marked threshold",
+    "hazard_band": "USED, and deliberately. rusted_industrial's `trim` is the universal hazard band; T02 reached for this family and had to refuse it everywhere because a clock room has no hazard boundaries. A derelict is nothing but hazard boundaries -- the pressure threshold, the lamp cage, the severed conduit -- so those carry the band and everything else carries `trim_plain`.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_super_metroid",
+    "painted_with": "rusted_industrial",
+    "parts": [
+      "ws_pd_jamb_l",
+      "ws_pd_lug_l0",
+      "ws_pd_lug_l1",
+      "ws_pd_lug_l2",
+      "ws_pd_threshold_l",
+      "ws_pd_jamb_r",
+      "ws_pd_lug_r0",
+      "ws_pd_lug_r1",
+      "ws_pd_lug_r2",
+      "ws_pd_threshold_r"
+    ],
+    "path": "batch058/wreck/tp_ws_pressure_door.glb",
+    "size": [
+      3.08,
+      0.48,
+      3.54
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE WRECKED SHIP -- the derelict: corroded frame members, a hull panel blown open, a pressure door nobody dogged shut, and the plating that came out with the blast",
+    "subtheme_is_a_choice": "Super Metroid has six regions and five of them are CAVES, which is terrain. The Wrecked Ship is the one that is architecture, and architecture is what a theme pack ships.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries and the catalogue holds 81 games, so 75 of 81 -- including this one -- have no hint at all. A selection mechanism covering 7% of the catalogue is not a mechanism with an exception in it. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 132
+  },
+  "tp_ws_stanchion": {
+    "anchor": "floor",
+    "batch": "058",
+    "carries": "mesh and named parts only. No collider, body, trigger, light, camera, script or animation.",
+    "distinct": "a ship's FRAME MEMBER with its own service run burst out of it -- boxed and flanged, never round",
+    "hazard_band": "USED, and deliberately. rusted_industrial's `trim` is the universal hazard band; T02 reached for this family and had to refuse it everywhere because a clock room has no hazard boundaries. A derelict is nothing but hazard boundaries -- the pressure threshold, the lamp cage, the severed conduit -- so those carry the band and everything else carries `trim_plain`.",
+    "kind": "theme_pack_content",
+    "material_treatment": "MISSING, AND NAMED AS MISSING. THEME_PACK.json has no pack namespace, so a pack's own material set cannot be filed without becoming a seventh house theme. See docs/art/theme-packs/COVERAGE.md section 3. These are painted in the nearest existing family; a tint is NOT the pack's treatment.",
+    "not_changed": [
+      "collision",
+      "placement",
+      "any runtime state",
+      "the engine's door opening",
+      "any approved asset"
+    ],
+    "pack": "tp_super_metroid",
+    "painted_with": "rusted_industrial",
+    "parts": [
+      "ws_st_flange_f",
+      "ws_st_flange_b",
+      "ws_st_foot",
+      "ws_st_conduit",
+      "ws_st_tear",
+      "ws_st_spill"
+    ],
+    "path": "batch058/wreck/tp_ws_stanchion.glb",
+    "size": [
+      0.74,
+      1.07,
+      3.6
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "status": "PROPOSAL -- visual only, review-pending, not a production default",
+    "subtheme": "THE WRECKED SHIP -- the derelict: corroded frame members, a hull panel blown open, a pressure door nobody dogged shut, and the plating that came out with the blast",
+    "subtheme_is_a_choice": "Super Metroid has six regions and five of them are CAVES, which is terrain. The Wrecked Ship is the one that is architecture, and architecture is what a theme pack ships.",
+    "texel_density": 32.0,
+    "texels_per_metre": 32,
+    "theme_hint_coverage": "NONE. Constants.THEME_BY_GAME_HINT holds 6 entries and the catalogue holds 81 games, so 75 of 81 -- including this one -- have no hint at all. A selection mechanism covering 7% of the catalogue is not a mechanism with an exception in it. See docs/art/theme-packs/COVERAGE.md section 2.",
+    "theme_hint_says": null,
+    "triangles": 84
+  }
+}

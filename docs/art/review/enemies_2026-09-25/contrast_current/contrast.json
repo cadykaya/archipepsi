@@ -1,0 +1,1401 @@
+{
+	"_faults": [],
+	"_meta": {
+		"ambient_energy": 0.349999999999999978,
+		"dim_factor": 0.349999999999999978,
+		"distance_m": 18.0,
+		"engine": "4.5.1-stable (official)",
+		"environment_source": "zone_builder.gd, claude/archipepsi-0-4-blindside",
+		"fog_density": 0.0120000000000000002,
+		"fov_deg": 90.0,
+		"min_interactable_separation": 0.179999999999999993,
+		"min_value_separation": 0.100000000000000006,
+		"tonemapper": "default (linear)"
+	},
+	"concrete_facility": {
+		"dim": {
+			"background_lstar": 0.232000000000000012,
+			"body_above_background": false,
+			"body_lstar": 0.0739999999999999963,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#eaf2ff",
+				"energy": 1.04999999999999982
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0710000000000000075,
+					"separation": 0.161000000000000004
+				},
+				"beacon": {
+					"lstar": 0.0739999999999999963,
+					"separation": 0.158000000000000002
+				},
+				"brute": {
+					"lstar": 0.0720000000000000084,
+					"separation": 0.160000000000000003
+				},
+				"bulwark": {
+					"lstar": 0.0790000000000000008,
+					"separation": 0.152999999999999997
+				},
+				"charger": {
+					"lstar": 0.0749999999999999972,
+					"separation": 0.157000000000000001
+				},
+				"diver": {
+					"lstar": 0.0820000000000000034,
+					"separation": 0.149999999999999994
+				},
+				"drifter": {
+					"lstar": 0.0800000000000000017,
+					"separation": 0.151999999999999996
+				},
+				"melee": {
+					"lstar": 0.0729999999999999954,
+					"separation": 0.159000000000000002
+				},
+				"ranged": {
+					"lstar": 0.0690000000000000058,
+					"separation": 0.163000000000000006
+				},
+				"scuttler": {
+					"lstar": 0.0720000000000000084,
+					"separation": 0.160000000000000003
+				}
+			},
+			"separation": 0.158000000000000002
+		},
+		"floor": {
+			"background_lstar": 0.291999999999999982,
+			"body_above_background": false,
+			"body_lstar": 0.120999999999999996,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#eaf2ff",
+				"energy": 3.0
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.111000000000000001,
+					"separation": 0.180999999999999994
+				},
+				"beacon": {
+					"lstar": 0.116000000000000006,
+					"separation": 0.17599999999999999
+				},
+				"brute": {
+					"lstar": 0.117000000000000007,
+					"separation": 0.175000000000000017
+				},
+				"bulwark": {
+					"lstar": 0.126000000000000001,
+					"separation": 0.166000000000000009
+				},
+				"charger": {
+					"lstar": 0.131000000000000005,
+					"separation": 0.161000000000000004
+				},
+				"diver": {
+					"lstar": 0.144000000000000017,
+					"separation": 0.147999999999999993
+				},
+				"drifter": {
+					"lstar": 0.130000000000000004,
+					"separation": 0.162000000000000005
+				},
+				"melee": {
+					"lstar": 0.119000000000000009,
+					"separation": 0.173000000000000015
+				},
+				"ranged": {
+					"lstar": 0.115000000000000005,
+					"separation": 0.176999999999999991
+				},
+				"scuttler": {
+					"lstar": 0.112000000000000002,
+					"separation": 0.179999999999999993
+				}
+			},
+			"separation": 0.171000000000000013
+		},
+		"models": "/home/user/archipepsi/assets/models/batch030/enemies",
+		"models_sha256": {
+			"artillery": "7d70cd42d43e172109842b682d46e4302a2e2fa1ac118046be0552779b6a8677",
+			"beacon": "3c0b32cfe582987790cb38f628ff360cd29355bf2dbcd96a4748a098045bd13b",
+			"brute": "6dcd04a107f63124401c907b3a723f6b040a092ede45574d56e0a2d0469d2966",
+			"bulwark": "f08f31662cffd721401f96e0d84884936280f33e5d021ebc115eeaa43aa09872",
+			"charger": "cf85cf1d0d5848b1a652cc04a7319b2ecf79efd4198ff8af4b1767bed80778e0",
+			"diver": "94c51e68314eaaaccfc62d2fa16e284a6d2a26f65ad0fcb0604ba754a37dbcff",
+			"drifter": "104d9d94c3d10efd38a80028b9304dc3ed7ed5aa83901943f098b1041292f0ff",
+			"melee": "9b3d8c253634a1f8389dc93cda25833c6376643f9b5aa6e1da8dcb4a7748a7e8",
+			"ranged": "2391a1c26cea2cb5644e172c916d451a4d21baaf087368a5911506fa55291d31",
+			"scuttler": "d87fc12adb52737e5eb3518ed07d84d2e84fb1112eaaa730c6cbde99d745190e"
+		},
+		"opening": {
+			"background_lstar": 0.179999999999999993,
+			"body_above_background": false,
+			"body_lstar": 0.120999999999999996,
+			"clears_interactable": false,
+			"clears_value": false,
+			"light": {
+				"color": "#eaf2ff",
+				"energy": 3.0
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.111000000000000001,
+					"separation": 0.0690000000000000058
+				},
+				"beacon": {
+					"lstar": 0.118000000000000008,
+					"separation": 0.0619999999999999996
+				},
+				"brute": {
+					"lstar": 0.118000000000000008,
+					"separation": 0.0619999999999999996
+				},
+				"bulwark": {
+					"lstar": 0.131000000000000005,
+					"separation": 0.0490000000000000019
+				},
+				"charger": {
+					"lstar": 0.126000000000000001,
+					"separation": 0.0539999999999999994
+				},
+				"diver": {
+					"lstar": 0.139000000000000012,
+					"separation": 0.0410000000000000017
+				},
+				"drifter": {
+					"lstar": 0.132000000000000006,
+					"separation": 0.048000000000000001
+				},
+				"melee": {
+					"lstar": 0.118000000000000008,
+					"separation": 0.0619999999999999996
+				},
+				"ranged": {
+					"lstar": 0.110000000000000001,
+					"separation": 0.0700000000000000067
+				},
+				"scuttler": {
+					"lstar": 0.114000000000000004,
+					"separation": 0.0660000000000000031
+				}
+			},
+			"separation": 0.0590000000000000038
+		},
+		"wall": {
+			"background_lstar": 0.354999999999999982,
+			"body_above_background": false,
+			"body_lstar": 0.120999999999999996,
+			"clears_interactable": true,
+			"clears_value": true,
+			"light": {
+				"color": "#eaf2ff",
+				"energy": 3.0
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.111000000000000001,
+					"separation": 0.243999999999999995
+				},
+				"beacon": {
+					"lstar": 0.118000000000000008,
+					"separation": 0.237000000000000016
+				},
+				"brute": {
+					"lstar": 0.118000000000000008,
+					"separation": 0.237000000000000016
+				},
+				"bulwark": {
+					"lstar": 0.131000000000000005,
+					"separation": 0.224000000000000005
+				},
+				"charger": {
+					"lstar": 0.126000000000000001,
+					"separation": 0.229000000000000009
+				},
+				"diver": {
+					"lstar": 0.139000000000000012,
+					"separation": 0.215999999999999998
+				},
+				"drifter": {
+					"lstar": 0.132000000000000006,
+					"separation": 0.223000000000000004
+				},
+				"melee": {
+					"lstar": 0.118000000000000008,
+					"separation": 0.237000000000000016
+				},
+				"ranged": {
+					"lstar": 0.110000000000000001,
+					"separation": 0.244999999999999996
+				},
+				"scuttler": {
+					"lstar": 0.114000000000000004,
+					"separation": 0.240999999999999992
+				}
+			},
+			"separation": 0.234000000000000014
+		}
+	},
+	"gothic_stone": {
+		"dim": {
+			"background_lstar": 0.148999999999999994,
+			"body_above_background": false,
+			"body_lstar": 0.0490000000000000019,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffb45e",
+				"energy": 0.699999999999999956
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.048000000000000001,
+					"separation": 0.101000000000000006
+				},
+				"beacon": {
+					"lstar": 0.0490000000000000019,
+					"separation": 0.100000000000000006
+				},
+				"brute": {
+					"lstar": 0.048000000000000001,
+					"separation": 0.101000000000000006
+				},
+				"bulwark": {
+					"lstar": 0.0500000000000000028,
+					"separation": 0.0990000000000000047
+				},
+				"charger": {
+					"lstar": 0.048000000000000001,
+					"separation": 0.101000000000000006
+				},
+				"diver": {
+					"lstar": 0.0520000000000000046,
+					"separation": 0.0970000000000000029
+				},
+				"drifter": {
+					"lstar": 0.0510000000000000037,
+					"separation": 0.0980000000000000038
+				},
+				"melee": {
+					"lstar": 0.048000000000000001,
+					"separation": 0.101000000000000006
+				},
+				"ranged": {
+					"lstar": 0.0470000000000000001,
+					"separation": 0.102000000000000007
+				},
+				"scuttler": {
+					"lstar": 0.048000000000000001,
+					"separation": 0.101000000000000006
+				}
+			},
+			"separation": 0.100000000000000006
+		},
+		"floor": {
+			"background_lstar": 0.226000000000000006,
+			"body_above_background": false,
+			"body_lstar": 0.0779999999999999999,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffb45e",
+				"energy": 2.0
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0739999999999999963,
+					"separation": 0.151999999999999996
+				},
+				"beacon": {
+					"lstar": 0.0759999999999999981,
+					"separation": 0.149999999999999994
+				},
+				"brute": {
+					"lstar": 0.0759999999999999981,
+					"separation": 0.149999999999999994
+				},
+				"bulwark": {
+					"lstar": 0.0810000000000000026,
+					"separation": 0.14499999999999999
+				},
+				"charger": {
+					"lstar": 0.0840000000000000052,
+					"separation": 0.142000000000000015
+				},
+				"diver": {
+					"lstar": 0.0919999999999999984,
+					"separation": 0.134000000000000008
+				},
+				"drifter": {
+					"lstar": 0.0840000000000000052,
+					"separation": 0.142000000000000015
+				},
+				"melee": {
+					"lstar": 0.076999999999999999,
+					"separation": 0.148999999999999994
+				},
+				"ranged": {
+					"lstar": 0.0749999999999999972,
+					"separation": 0.150999999999999995
+				},
+				"scuttler": {
+					"lstar": 0.0739999999999999963,
+					"separation": 0.151999999999999996
+				}
+			},
+			"separation": 0.146999999999999992
+		},
+		"models": "/home/user/archipepsi/assets/models/batch030/enemies",
+		"models_sha256": {
+			"artillery": "7d70cd42d43e172109842b682d46e4302a2e2fa1ac118046be0552779b6a8677",
+			"beacon": "3c0b32cfe582987790cb38f628ff360cd29355bf2dbcd96a4748a098045bd13b",
+			"brute": "6dcd04a107f63124401c907b3a723f6b040a092ede45574d56e0a2d0469d2966",
+			"bulwark": "f08f31662cffd721401f96e0d84884936280f33e5d021ebc115eeaa43aa09872",
+			"charger": "cf85cf1d0d5848b1a652cc04a7319b2ecf79efd4198ff8af4b1767bed80778e0",
+			"diver": "94c51e68314eaaaccfc62d2fa16e284a6d2a26f65ad0fcb0604ba754a37dbcff",
+			"drifter": "104d9d94c3d10efd38a80028b9304dc3ed7ed5aa83901943f098b1041292f0ff",
+			"melee": "9b3d8c253634a1f8389dc93cda25833c6376643f9b5aa6e1da8dcb4a7748a7e8",
+			"ranged": "2391a1c26cea2cb5644e172c916d451a4d21baaf087368a5911506fa55291d31",
+			"scuttler": "d87fc12adb52737e5eb3518ed07d84d2e84fb1112eaaa730c6cbde99d745190e"
+		},
+		"opening": {
+			"background_lstar": 0.147999999999999993,
+			"body_above_background": false,
+			"body_lstar": 0.0779999999999999999,
+			"clears_interactable": false,
+			"clears_value": false,
+			"light": {
+				"color": "#ffb45e",
+				"energy": 2.0
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0739999999999999963,
+					"separation": 0.0739999999999999963
+				},
+				"beacon": {
+					"lstar": 0.0779999999999999999,
+					"separation": 0.0700000000000000067
+				},
+				"brute": {
+					"lstar": 0.076999999999999999,
+					"separation": 0.0710000000000000075
+				},
+				"bulwark": {
+					"lstar": 0.0840000000000000052,
+					"separation": 0.0640000000000000013
+				},
+				"charger": {
+					"lstar": 0.0810000000000000026,
+					"separation": 0.067000000000000004
+				},
+				"diver": {
+					"lstar": 0.0879999999999999949,
+					"separation": 0.0599999999999999978
+				},
+				"drifter": {
+					"lstar": 0.086000000000000007,
+					"separation": 0.0619999999999999996
+				},
+				"melee": {
+					"lstar": 0.0759999999999999981,
+					"separation": 0.0720000000000000084
+				},
+				"ranged": {
+					"lstar": 0.0720000000000000084,
+					"separation": 0.0759999999999999981
+				},
+				"scuttler": {
+					"lstar": 0.0739999999999999963,
+					"separation": 0.0739999999999999963
+				}
+			},
+			"separation": 0.0700000000000000067
+		},
+		"wall": {
+			"background_lstar": 0.235000000000000014,
+			"body_above_background": false,
+			"body_lstar": 0.0779999999999999999,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffb45e",
+				"energy": 2.0
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0739999999999999963,
+					"separation": 0.161000000000000004
+				},
+				"beacon": {
+					"lstar": 0.0779999999999999999,
+					"separation": 0.157000000000000001
+				},
+				"brute": {
+					"lstar": 0.0759999999999999981,
+					"separation": 0.159000000000000002
+				},
+				"bulwark": {
+					"lstar": 0.0840000000000000052,
+					"separation": 0.150999999999999995
+				},
+				"charger": {
+					"lstar": 0.0810000000000000026,
+					"separation": 0.153999999999999998
+				},
+				"diver": {
+					"lstar": 0.0879999999999999949,
+					"separation": 0.146999999999999992
+				},
+				"drifter": {
+					"lstar": 0.086000000000000007,
+					"separation": 0.148999999999999994
+				},
+				"melee": {
+					"lstar": 0.0759999999999999981,
+					"separation": 0.159000000000000002
+				},
+				"ranged": {
+					"lstar": 0.0720000000000000084,
+					"separation": 0.163000000000000006
+				},
+				"scuttler": {
+					"lstar": 0.0739999999999999963,
+					"separation": 0.161000000000000004
+				}
+			},
+			"separation": 0.156
+		}
+	},
+	"neon_transit": {
+		"dim": {
+			"background_lstar": 0.225000000000000006,
+			"body_above_background": false,
+			"body_lstar": 0.0609999999999999987,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#7cf2ff",
+				"energy": 1.39999999999999991
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0560000000000000012,
+					"separation": 0.169000000000000011
+				},
+				"beacon": {
+					"lstar": 0.0599999999999999978,
+					"separation": 0.165000000000000008
+				},
+				"brute": {
+					"lstar": 0.0590000000000000038,
+					"separation": 0.166000000000000009
+				},
+				"bulwark": {
+					"lstar": 0.0660000000000000031,
+					"separation": 0.159000000000000002
+				},
+				"charger": {
+					"lstar": 0.0630000000000000004,
+					"separation": 0.162000000000000005
+				},
+				"diver": {
+					"lstar": 0.0710000000000000075,
+					"separation": 0.153999999999999998
+				},
+				"drifter": {
+					"lstar": 0.067000000000000004,
+					"separation": 0.158000000000000002
+				},
+				"melee": {
+					"lstar": 0.0599999999999999978,
+					"separation": 0.165000000000000008
+				},
+				"ranged": {
+					"lstar": 0.0550000000000000003,
+					"separation": 0.170000000000000012
+				},
+				"scuttler": {
+					"lstar": 0.0580000000000000029,
+					"separation": 0.16700000000000001
+				}
+			},
+			"separation": 0.163000000000000006
+		},
+		"floor": {
+			"background_lstar": 0.231000000000000011,
+			"body_above_background": false,
+			"body_lstar": 0.110000000000000001,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#7cf2ff",
+				"energy": 4.0
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0970000000000000029,
+					"separation": 0.134000000000000008
+				},
+				"beacon": {
+					"lstar": 0.103000000000000008,
+					"separation": 0.128000000000000003
+				},
+				"brute": {
+					"lstar": 0.104999999999999996,
+					"separation": 0.126000000000000001
+				},
+				"bulwark": {
+					"lstar": 0.116000000000000006,
+					"separation": 0.115000000000000005
+				},
+				"charger": {
+					"lstar": 0.120999999999999996,
+					"separation": 0.110000000000000001
+				},
+				"diver": {
+					"lstar": 0.13600000000000001,
+					"separation": 0.0950000000000000011
+				},
+				"drifter": {
+					"lstar": 0.119999999999999996,
+					"separation": 0.111000000000000001
+				},
+				"melee": {
+					"lstar": 0.107999999999999999,
+					"separation": 0.122999999999999998
+				},
+				"ranged": {
+					"lstar": 0.103000000000000008,
+					"separation": 0.128000000000000003
+				},
+				"scuttler": {
+					"lstar": 0.0990000000000000047,
+					"separation": 0.132000000000000006
+				}
+			},
+			"separation": 0.120999999999999996
+		},
+		"models": "/home/user/archipepsi/assets/models/batch030/enemies",
+		"models_sha256": {
+			"artillery": "7d70cd42d43e172109842b682d46e4302a2e2fa1ac118046be0552779b6a8677",
+			"beacon": "3c0b32cfe582987790cb38f628ff360cd29355bf2dbcd96a4748a098045bd13b",
+			"brute": "6dcd04a107f63124401c907b3a723f6b040a092ede45574d56e0a2d0469d2966",
+			"bulwark": "f08f31662cffd721401f96e0d84884936280f33e5d021ebc115eeaa43aa09872",
+			"charger": "cf85cf1d0d5848b1a652cc04a7319b2ecf79efd4198ff8af4b1767bed80778e0",
+			"diver": "94c51e68314eaaaccfc62d2fa16e284a6d2a26f65ad0fcb0604ba754a37dbcff",
+			"drifter": "104d9d94c3d10efd38a80028b9304dc3ed7ed5aa83901943f098b1041292f0ff",
+			"melee": "9b3d8c253634a1f8389dc93cda25833c6376643f9b5aa6e1da8dcb4a7748a7e8",
+			"ranged": "2391a1c26cea2cb5644e172c916d451a4d21baaf087368a5911506fa55291d31",
+			"scuttler": "d87fc12adb52737e5eb3518ed07d84d2e84fb1112eaaa730c6cbde99d745190e"
+		},
+		"opening": {
+			"background_lstar": 0.143000000000000016,
+			"body_above_background": false,
+			"body_lstar": 0.110000000000000001,
+			"clears_interactable": false,
+			"clears_value": false,
+			"light": {
+				"color": "#7cf2ff",
+				"energy": 4.0
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0970000000000000029,
+					"separation": 0.0459999999999999992
+				},
+				"beacon": {
+					"lstar": 0.105999999999999997,
+					"separation": 0.0369999999999999982
+				},
+				"brute": {
+					"lstar": 0.106999999999999998,
+					"separation": 0.0360000000000000042
+				},
+				"bulwark": {
+					"lstar": 0.121999999999999997,
+					"separation": 0.0210000000000000013
+				},
+				"charger": {
+					"lstar": 0.117000000000000007,
+					"separation": 0.0260000000000000023
+				},
+				"diver": {
+					"lstar": 0.132000000000000006,
+					"separation": 0.0109999999999999994
+				},
+				"drifter": {
+					"lstar": 0.122999999999999998,
+					"separation": 0.0200000000000000004
+				},
+				"melee": {
+					"lstar": 0.105999999999999997,
+					"separation": 0.0369999999999999982
+				},
+				"ranged": {
+					"lstar": 0.0970000000000000029,
+					"separation": 0.0459999999999999992
+				},
+				"scuttler": {
+					"lstar": 0.101000000000000006,
+					"separation": 0.0420000000000000026
+				}
+			},
+			"separation": 0.0330000000000000016
+		},
+		"wall": {
+			"background_lstar": 0.353999999999999981,
+			"body_above_background": false,
+			"body_lstar": 0.110000000000000001,
+			"clears_interactable": true,
+			"clears_value": true,
+			"light": {
+				"color": "#7cf2ff",
+				"energy": 4.0
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0970000000000000029,
+					"separation": 0.257000000000000006
+				},
+				"beacon": {
+					"lstar": 0.105999999999999997,
+					"separation": 0.247999999999999998
+				},
+				"brute": {
+					"lstar": 0.106999999999999998,
+					"separation": 0.246999999999999997
+				},
+				"bulwark": {
+					"lstar": 0.121999999999999997,
+					"separation": 0.232000000000000012
+				},
+				"charger": {
+					"lstar": 0.117000000000000007,
+					"separation": 0.237000000000000016
+				},
+				"diver": {
+					"lstar": 0.132000000000000006,
+					"separation": 0.222000000000000003
+				},
+				"drifter": {
+					"lstar": 0.122999999999999998,
+					"separation": 0.231000000000000011
+				},
+				"melee": {
+					"lstar": 0.105999999999999997,
+					"separation": 0.247999999999999998
+				},
+				"ranged": {
+					"lstar": 0.0970000000000000029,
+					"separation": 0.257000000000000006
+				},
+				"scuttler": {
+					"lstar": 0.101000000000000006,
+					"separation": 0.253000000000000003
+				}
+			},
+			"separation": 0.243999999999999995
+		}
+	},
+	"rusted_industrial": {
+		"dim": {
+			"background_lstar": 0.144000000000000017,
+			"body_above_background": false,
+			"body_lstar": 0.0500000000000000028,
+			"clears_interactable": false,
+			"clears_value": false,
+			"light": {
+				"color": "#ffd9a0",
+				"energy": 0.770000000000000018
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0500000000000000028,
+					"separation": 0.0940000000000000002
+				},
+				"beacon": {
+					"lstar": 0.0490000000000000019,
+					"separation": 0.0950000000000000011
+				},
+				"brute": {
+					"lstar": 0.0490000000000000019,
+					"separation": 0.0950000000000000011
+				},
+				"bulwark": {
+					"lstar": 0.0529999999999999985,
+					"separation": 0.0909999999999999976
+				},
+				"charger": {
+					"lstar": 0.0490000000000000019,
+					"separation": 0.0950000000000000011
+				},
+				"diver": {
+					"lstar": 0.0520000000000000046,
+					"separation": 0.0919999999999999984
+				},
+				"drifter": {
+					"lstar": 0.0510000000000000037,
+					"separation": 0.0929999999999999993
+				},
+				"melee": {
+					"lstar": 0.0490000000000000019,
+					"separation": 0.0950000000000000011
+				},
+				"ranged": {
+					"lstar": 0.048000000000000001,
+					"separation": 0.096000000000000002
+				},
+				"scuttler": {
+					"lstar": 0.0500000000000000028,
+					"separation": 0.0940000000000000002
+				}
+			},
+			"separation": 0.0940000000000000002
+		},
+		"floor": {
+			"background_lstar": 0.195000000000000007,
+			"body_above_background": false,
+			"body_lstar": 0.067000000000000004,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffd9a0",
+				"energy": 2.20000000000000018
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0630000000000000004,
+					"separation": 0.132000000000000006
+				},
+				"beacon": {
+					"lstar": 0.0619999999999999996,
+					"separation": 0.133000000000000007
+				},
+				"brute": {
+					"lstar": 0.0650000000000000022,
+					"separation": 0.130000000000000004
+				},
+				"bulwark": {
+					"lstar": 0.0710000000000000075,
+					"separation": 0.123999999999999999
+				},
+				"charger": {
+					"lstar": 0.0720000000000000084,
+					"separation": 0.122999999999999998
+				},
+				"diver": {
+					"lstar": 0.0810000000000000026,
+					"separation": 0.114000000000000004
+				},
+				"drifter": {
+					"lstar": 0.0700000000000000067,
+					"separation": 0.125
+				},
+				"melee": {
+					"lstar": 0.0660000000000000031,
+					"separation": 0.129000000000000004
+				},
+				"ranged": {
+					"lstar": 0.0619999999999999996,
+					"separation": 0.133000000000000007
+				},
+				"scuttler": {
+					"lstar": 0.0630000000000000004,
+					"separation": 0.132000000000000006
+				}
+			},
+			"separation": 0.127000000000000002
+		},
+		"models": "/home/user/archipepsi/assets/models/batch030/enemies_deep",
+		"models_sha256": {
+			"artillery": "31df50e8c56acd287be3a1b47cd9cfbfe2935d874e7b82e2b4a9f76b8de03ff3",
+			"beacon": "b7a3fb69e67d3cb2d5f7ee14bfe12a36011d422c380506bd235ea7a8f4ba03e9",
+			"brute": "e9fd2b6d48c796cb33e29c93c0d45668ec349d1c0d60357ea745fb4a260cb4d8",
+			"bulwark": "98c30179cc327d08518053dfae1ccb62c1a91aac525e215170bd3b14dd12ca8a",
+			"charger": "ffcdda2a720447768e6ca8a85b78058f65dbee8cd5b716db9ecc98d94a4425e7",
+			"diver": "00e0997602c93392fc430029e7e5066975380d49e023db88f64633bd2166b28f",
+			"drifter": "a21e175a5178087b4636198e1fda40c40ac7816a07dd2aacf4141b380831c31f",
+			"melee": "8b6394f7a884988971bec8280b9c0ff8915dc68d437f78406c80951270facbcb",
+			"ranged": "3f45c3cb0edbf350f37eab84854017ca209fc3fded7f0a9af097fbdf430173a8",
+			"scuttler": "defdc79fcc1552154525f77dbafef8ddd74733487775fb6cb8b2b70411bd931a"
+		},
+		"opening": {
+			"background_lstar": 0.171000000000000013,
+			"body_above_background": false,
+			"body_lstar": 0.0680000000000000049,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffd9a0",
+				"energy": 2.20000000000000018
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0630000000000000004,
+					"separation": 0.107999999999999999
+				},
+				"beacon": {
+					"lstar": 0.0640000000000000013,
+					"separation": 0.106999999999999998
+				},
+				"brute": {
+					"lstar": 0.0660000000000000031,
+					"separation": 0.104999999999999996
+				},
+				"bulwark": {
+					"lstar": 0.0759999999999999981,
+					"separation": 0.0950000000000000011
+				},
+				"charger": {
+					"lstar": 0.0690000000000000058,
+					"separation": 0.102000000000000007
+				},
+				"diver": {
+					"lstar": 0.076999999999999999,
+					"separation": 0.0940000000000000002
+				},
+				"drifter": {
+					"lstar": 0.0720000000000000084,
+					"separation": 0.0990000000000000047
+				},
+				"melee": {
+					"lstar": 0.0660000000000000031,
+					"separation": 0.104999999999999996
+				},
+				"ranged": {
+					"lstar": 0.0609999999999999987,
+					"separation": 0.110000000000000001
+				},
+				"scuttler": {
+					"lstar": 0.0650000000000000022,
+					"separation": 0.105999999999999997
+				}
+			},
+			"separation": 0.103000000000000008
+		},
+		"wall": {
+			"background_lstar": 0.215999999999999998,
+			"body_above_background": false,
+			"body_lstar": 0.0680000000000000049,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffd9a0",
+				"energy": 2.20000000000000018
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.0630000000000000004,
+					"separation": 0.152999999999999997
+				},
+				"beacon": {
+					"lstar": 0.0640000000000000013,
+					"separation": 0.151999999999999996
+				},
+				"brute": {
+					"lstar": 0.0660000000000000031,
+					"separation": 0.149999999999999994
+				},
+				"bulwark": {
+					"lstar": 0.0759999999999999981,
+					"separation": 0.140000000000000013
+				},
+				"charger": {
+					"lstar": 0.0690000000000000058,
+					"separation": 0.146999999999999992
+				},
+				"diver": {
+					"lstar": 0.076999999999999999,
+					"separation": 0.139000000000000012
+				},
+				"drifter": {
+					"lstar": 0.0720000000000000084,
+					"separation": 0.144000000000000017
+				},
+				"melee": {
+					"lstar": 0.0660000000000000031,
+					"separation": 0.149999999999999994
+				},
+				"ranged": {
+					"lstar": 0.0609999999999999987,
+					"separation": 0.154999999999999999
+				},
+				"scuttler": {
+					"lstar": 0.0650000000000000022,
+					"separation": 0.150999999999999995
+				}
+			},
+			"separation": 0.146999999999999992
+		}
+	},
+	"temple_ruin": {
+		"dim": {
+			"background_lstar": 0.260000000000000009,
+			"body_above_background": false,
+			"body_lstar": 0.105999999999999997,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffe9b8",
+				"energy": 0.90999999999999992
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.105999999999999997,
+					"separation": 0.153999999999999998
+				},
+				"beacon": {
+					"lstar": 0.107999999999999999,
+					"separation": 0.151999999999999996
+				},
+				"brute": {
+					"lstar": 0.104999999999999996,
+					"separation": 0.154999999999999999
+				},
+				"bulwark": {
+					"lstar": 0.109,
+					"separation": 0.150999999999999995
+				},
+				"charger": {
+					"lstar": 0.104999999999999996,
+					"separation": 0.154999999999999999
+				},
+				"diver": {
+					"lstar": 0.111000000000000001,
+					"separation": 0.148999999999999994
+				},
+				"drifter": {
+					"lstar": 0.110000000000000001,
+					"separation": 0.149999999999999994
+				},
+				"melee": {
+					"lstar": 0.105999999999999997,
+					"separation": 0.153999999999999998
+				},
+				"ranged": {
+					"lstar": 0.104000000000000009,
+					"separation": 0.156
+				},
+				"scuttler": {
+					"lstar": 0.105999999999999997,
+					"separation": 0.153999999999999998
+				}
+			},
+			"separation": 0.152999999999999997
+		},
+		"floor": {
+			"background_lstar": 0.369999999999999996,
+			"body_above_background": false,
+			"body_lstar": 0.142000000000000015,
+			"clears_interactable": true,
+			"clears_value": true,
+			"light": {
+				"color": "#ffe9b8",
+				"energy": 2.60000000000000009
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.13600000000000001,
+					"separation": 0.234000000000000014
+				},
+				"beacon": {
+					"lstar": 0.139000000000000012,
+					"separation": 0.231000000000000011
+				},
+				"brute": {
+					"lstar": 0.138000000000000012,
+					"separation": 0.232000000000000012
+				},
+				"bulwark": {
+					"lstar": 0.144000000000000017,
+					"separation": 0.226000000000000006
+				},
+				"charger": {
+					"lstar": 0.147999999999999993,
+					"separation": 0.222000000000000003
+				},
+				"diver": {
+					"lstar": 0.159000000000000002,
+					"separation": 0.210999999999999993
+				},
+				"drifter": {
+					"lstar": 0.148999999999999994,
+					"separation": 0.221000000000000002
+				},
+				"melee": {
+					"lstar": 0.141000000000000014,
+					"separation": 0.229000000000000009
+				},
+				"ranged": {
+					"lstar": 0.138000000000000012,
+					"separation": 0.232000000000000012
+				},
+				"scuttler": {
+					"lstar": 0.137000000000000011,
+					"separation": 0.233000000000000013
+				}
+			},
+			"separation": 0.228000000000000008
+		},
+		"models": "/home/user/archipepsi/assets/models/batch030/enemies",
+		"models_sha256": {
+			"artillery": "7d70cd42d43e172109842b682d46e4302a2e2fa1ac118046be0552779b6a8677",
+			"beacon": "3c0b32cfe582987790cb38f628ff360cd29355bf2dbcd96a4748a098045bd13b",
+			"brute": "6dcd04a107f63124401c907b3a723f6b040a092ede45574d56e0a2d0469d2966",
+			"bulwark": "f08f31662cffd721401f96e0d84884936280f33e5d021ebc115eeaa43aa09872",
+			"charger": "cf85cf1d0d5848b1a652cc04a7319b2ecf79efd4198ff8af4b1767bed80778e0",
+			"diver": "94c51e68314eaaaccfc62d2fa16e284a6d2a26f65ad0fcb0604ba754a37dbcff",
+			"drifter": "104d9d94c3d10efd38a80028b9304dc3ed7ed5aa83901943f098b1041292f0ff",
+			"melee": "9b3d8c253634a1f8389dc93cda25833c6376643f9b5aa6e1da8dcb4a7748a7e8",
+			"ranged": "2391a1c26cea2cb5644e172c916d451a4d21baaf087368a5911506fa55291d31",
+			"scuttler": "d87fc12adb52737e5eb3518ed07d84d2e84fb1112eaaa730c6cbde99d745190e"
+		},
+		"opening": {
+			"background_lstar": 0.259000000000000008,
+			"body_above_background": false,
+			"body_lstar": 0.142000000000000015,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffe9b8",
+				"energy": 2.60000000000000009
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.13600000000000001,
+					"separation": 0.122999999999999998
+				},
+				"beacon": {
+					"lstar": 0.141000000000000014,
+					"separation": 0.118000000000000008
+				},
+				"brute": {
+					"lstar": 0.139000000000000012,
+					"separation": 0.119999999999999996
+				},
+				"bulwark": {
+					"lstar": 0.148999999999999994,
+					"separation": 0.110000000000000001
+				},
+				"charger": {
+					"lstar": 0.144000000000000017,
+					"separation": 0.115000000000000005
+				},
+				"diver": {
+					"lstar": 0.153999999999999998,
+					"separation": 0.104999999999999996
+				},
+				"drifter": {
+					"lstar": 0.149999999999999994,
+					"separation": 0.109
+				},
+				"melee": {
+					"lstar": 0.139000000000000012,
+					"separation": 0.119999999999999996
+				},
+				"ranged": {
+					"lstar": 0.134000000000000008,
+					"separation": 0.125
+				},
+				"scuttler": {
+					"lstar": 0.138000000000000012,
+					"separation": 0.120999999999999996
+				}
+			},
+			"separation": 0.117000000000000007
+		},
+		"wall": {
+			"background_lstar": 0.375,
+			"body_above_background": false,
+			"body_lstar": 0.142000000000000015,
+			"clears_interactable": true,
+			"clears_value": true,
+			"light": {
+				"color": "#ffe9b8",
+				"energy": 2.60000000000000009
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.13600000000000001,
+					"separation": 0.239000000000000018
+				},
+				"beacon": {
+					"lstar": 0.141000000000000014,
+					"separation": 0.234000000000000014
+				},
+				"brute": {
+					"lstar": 0.139000000000000012,
+					"separation": 0.236000000000000015
+				},
+				"bulwark": {
+					"lstar": 0.148999999999999994,
+					"separation": 0.226000000000000006
+				},
+				"charger": {
+					"lstar": 0.144000000000000017,
+					"separation": 0.231000000000000011
+				},
+				"diver": {
+					"lstar": 0.153999999999999998,
+					"separation": 0.221000000000000002
+				},
+				"drifter": {
+					"lstar": 0.149999999999999994,
+					"separation": 0.225000000000000006
+				},
+				"melee": {
+					"lstar": 0.139000000000000012,
+					"separation": 0.236000000000000015
+				},
+				"ranged": {
+					"lstar": 0.134000000000000008,
+					"separation": 0.240999999999999992
+				},
+				"scuttler": {
+					"lstar": 0.138000000000000012,
+					"separation": 0.237000000000000016
+				}
+			},
+			"separation": 0.233000000000000013
+		}
+	},
+	"void_glitch": {
+		"dim": {
+			"background_lstar": 0.315000000000000002,
+			"body_above_background": false,
+			"body_lstar": 0.196000000000000008,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffffff",
+				"energy": 1.22499999999999987
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.19900000000000001,
+					"separation": 0.116000000000000006
+				},
+				"beacon": {
+					"lstar": 0.198000000000000009,
+					"separation": 0.117000000000000007
+				},
+				"brute": {
+					"lstar": 0.195000000000000007,
+					"separation": 0.119999999999999996
+				},
+				"bulwark": {
+					"lstar": 0.198000000000000009,
+					"separation": 0.117000000000000007
+				},
+				"charger": {
+					"lstar": 0.192000000000000004,
+					"separation": 0.122999999999999998
+				},
+				"diver": {
+					"lstar": 0.197000000000000008,
+					"separation": 0.118000000000000008
+				},
+				"drifter": {
+					"lstar": 0.196000000000000008,
+					"separation": 0.119000000000000009
+				},
+				"melee": {
+					"lstar": 0.197000000000000008,
+					"separation": 0.118000000000000008
+				},
+				"ranged": {
+					"lstar": 0.197000000000000008,
+					"separation": 0.118000000000000008
+				},
+				"scuttler": {
+					"lstar": 0.19900000000000001,
+					"separation": 0.116000000000000006
+				}
+			},
+			"separation": 0.119000000000000009
+		},
+		"floor": {
+			"background_lstar": 0.310999999999999999,
+			"body_above_background": false,
+			"body_lstar": 0.210999999999999993,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffffff",
+				"energy": 3.5
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.210999999999999993,
+					"separation": 0.100000000000000006
+				},
+				"beacon": {
+					"lstar": 0.208000000000000018,
+					"separation": 0.103000000000000008
+				},
+				"brute": {
+					"lstar": 0.207000000000000017,
+					"separation": 0.104000000000000009
+				},
+				"bulwark": {
+					"lstar": 0.211999999999999994,
+					"separation": 0.0990000000000000047
+				},
+				"charger": {
+					"lstar": 0.213999999999999996,
+					"separation": 0.0970000000000000029
+				},
+				"diver": {
+					"lstar": 0.223000000000000004,
+					"separation": 0.0879999999999999949
+				},
+				"drifter": {
+					"lstar": 0.212999999999999995,
+					"separation": 0.0980000000000000038
+				},
+				"melee": {
+					"lstar": 0.209999999999999992,
+					"separation": 0.101000000000000006
+				},
+				"ranged": {
+					"lstar": 0.208999999999999991,
+					"separation": 0.102000000000000007
+				},
+				"scuttler": {
+					"lstar": 0.211999999999999994,
+					"separation": 0.0990000000000000047
+				}
+			},
+			"separation": 0.100000000000000006
+		},
+		"models": "/home/user/archipepsi/assets/models/batch030/enemies_deep",
+		"models_sha256": {
+			"artillery": "31df50e8c56acd287be3a1b47cd9cfbfe2935d874e7b82e2b4a9f76b8de03ff3",
+			"beacon": "b7a3fb69e67d3cb2d5f7ee14bfe12a36011d422c380506bd235ea7a8f4ba03e9",
+			"brute": "e9fd2b6d48c796cb33e29c93c0d45668ec349d1c0d60357ea745fb4a260cb4d8",
+			"bulwark": "98c30179cc327d08518053dfae1ccb62c1a91aac525e215170bd3b14dd12ca8a",
+			"charger": "ffcdda2a720447768e6ca8a85b78058f65dbee8cd5b716db9ecc98d94a4425e7",
+			"diver": "00e0997602c93392fc430029e7e5066975380d49e023db88f64633bd2166b28f",
+			"drifter": "a21e175a5178087b4636198e1fda40c40ac7816a07dd2aacf4141b380831c31f",
+			"melee": "8b6394f7a884988971bec8280b9c0ff8915dc68d437f78406c80951270facbcb",
+			"ranged": "3f45c3cb0edbf350f37eab84854017ca209fc3fded7f0a9af097fbdf430173a8",
+			"scuttler": "defdc79fcc1552154525f77dbafef8ddd74733487775fb6cb8b2b70411bd931a"
+		},
+		"opening": {
+			"background_lstar": 0.435999999999999999,
+			"body_above_background": false,
+			"body_lstar": 0.210999999999999993,
+			"clears_interactable": true,
+			"clears_value": true,
+			"light": {
+				"color": "#ffffff",
+				"energy": 3.5
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.209999999999999992,
+					"separation": 0.226000000000000006
+				},
+				"beacon": {
+					"lstar": 0.209999999999999992,
+					"separation": 0.226000000000000006
+				},
+				"brute": {
+					"lstar": 0.208999999999999991,
+					"separation": 0.227000000000000007
+				},
+				"bulwark": {
+					"lstar": 0.216999999999999998,
+					"separation": 0.219
+				},
+				"charger": {
+					"lstar": 0.208999999999999991,
+					"separation": 0.227000000000000007
+				},
+				"diver": {
+					"lstar": 0.217999999999999999,
+					"separation": 0.217999999999999999
+				},
+				"drifter": {
+					"lstar": 0.213999999999999996,
+					"separation": 0.222000000000000003
+				},
+				"melee": {
+					"lstar": 0.209999999999999992,
+					"separation": 0.226000000000000006
+				},
+				"ranged": {
+					"lstar": 0.208000000000000018,
+					"separation": 0.228000000000000008
+				},
+				"scuttler": {
+					"lstar": 0.210999999999999993,
+					"separation": 0.225000000000000006
+				}
+			},
+			"separation": 0.224000000000000005
+		},
+		"wall": {
+			"background_lstar": 0.369999999999999996,
+			"body_above_background": false,
+			"body_lstar": 0.210999999999999993,
+			"clears_interactable": false,
+			"clears_value": true,
+			"light": {
+				"color": "#ffffff",
+				"energy": 3.5
+			},
+			"per_role": {
+				"artillery": {
+					"lstar": 0.209999999999999992,
+					"separation": 0.160000000000000003
+				},
+				"beacon": {
+					"lstar": 0.209999999999999992,
+					"separation": 0.160000000000000003
+				},
+				"brute": {
+					"lstar": 0.208999999999999991,
+					"separation": 0.161000000000000004
+				},
+				"bulwark": {
+					"lstar": 0.216999999999999998,
+					"separation": 0.152999999999999997
+				},
+				"charger": {
+					"lstar": 0.208999999999999991,
+					"separation": 0.161000000000000004
+				},
+				"diver": {
+					"lstar": 0.217999999999999999,
+					"separation": 0.151999999999999996
+				},
+				"drifter": {
+					"lstar": 0.213999999999999996,
+					"separation": 0.156
+				},
+				"melee": {
+					"lstar": 0.209999999999999992,
+					"separation": 0.160000000000000003
+				},
+				"ranged": {
+					"lstar": 0.208000000000000018,
+					"separation": 0.162000000000000005
+				},
+				"scuttler": {
+					"lstar": 0.210999999999999993,
+					"separation": 0.159000000000000002
+				}
+			},
+			"separation": 0.159000000000000002
+		}
+	}
+}

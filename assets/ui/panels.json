@@ -1,0 +1,118 @@
+{
+  "keycap": {
+    "colours": {
+      "face": "#717985",
+      "light": "#9ba5b6",
+      "lip": "#4a4f57",
+      "outline": "#26292d"
+    },
+    "insets": {
+      "bottom": 3,
+      "left": 2,
+      "right": 1,
+      "top": 2
+    },
+    "patch_margins": {
+      "bottom": 3,
+      "left": 2,
+      "right": 1,
+      "top": 2
+    },
+    "proposed_texture": "res://content/ui/panel_keycap.png",
+    "size": [
+      12,
+      12
+    ],
+    "stretchable_centre": [
+      9,
+      7
+    ]
+  },
+  "panel": {
+    "colours": {
+      "dark": "#4a4f57",
+      "face": "#717985",
+      "light": "#9ba5b6",
+      "outline": "#26292d"
+    },
+    "insets": {
+      "bottom": 3,
+      "left": 3,
+      "right": 3,
+      "top": 3
+    },
+    "patch_margins": {
+      "bottom": 3,
+      "left": 3,
+      "right": 3,
+      "top": 3
+    },
+    "proposed_texture": "res://content/ui/panel_panel.png",
+    "size": [
+      10,
+      10
+    ],
+    "stretchable_centre": [
+      4,
+      4
+    ]
+  },
+  "selected": {
+    "colours": {
+      "dark": "#26292d",
+      "face": "#717985",
+      "light": "#85fff3",
+      "outline": "#39d7c8"
+    },
+    "insets": {
+      "bottom": 3,
+      "left": 3,
+      "right": 3,
+      "top": 3
+    },
+    "patch_margins": {
+      "bottom": 3,
+      "left": 3,
+      "right": 3,
+      "top": 3
+    },
+    "proposed_texture": "res://content/ui/panel_selected.png",
+    "size": [
+      10,
+      10
+    ],
+    "stretchable_centre": [
+      4,
+      4
+    ]
+  },
+  "well": {
+    "colours": {
+      "dark": "#9ba5b6",
+      "face": "#717985",
+      "light": "#4a4f57",
+      "outline": "#26292d"
+    },
+    "insets": {
+      "bottom": 3,
+      "left": 3,
+      "right": 3,
+      "top": 3
+    },
+    "patch_margins": {
+      "bottom": 3,
+      "left": 3,
+      "right": 3,
+      "top": 3
+    },
+    "proposed_texture": "res://content/ui/panel_well.png",
+    "size": [
+      10,
+      10
+    ],
+    "stretchable_centre": [
+      4,
+      4
+    ]
+  }
+}

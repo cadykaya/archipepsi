@@ -1,0 +1,51 @@
+{
+  "balance_is_meaningless_here": "ProjectileSilhouette.profile measures balance per PART -- its own comment says a bounding box cannot say where along a single cone the wide end is. All three of Art's projectiles export as ONE joined mesh, so balance is 0.5 by construction and the second half of reads_apart cannot fire for them at all, whatever their shape.",
+  "falling": {
+    "balance": 0.5,
+    "cross": 0.440000000000000002,
+    "elongation": 1.0,
+    "length": 0.440000000000000002,
+    "parts": 1
+  },
+  "lobbed": {
+    "balance": 0.5,
+    "cross": 0.630000000000000004,
+    "elongation": 0.967999999999999972,
+    "length": 0.609999999999999987,
+    "parts": 1
+  },
+  "pairs": {
+    "falling/lobbed": {
+      "balance_gap": 0.0,
+      "elongation_ratio": 1.03299999999999992,
+      "reads_apart": false
+    },
+    "falling/straight": {
+      "balance_gap": 0.0,
+      "elongation_ratio": 1.0,
+      "reads_apart": false
+    },
+    "lobbed/straight": {
+      "balance_gap": 0.0,
+      "elongation_ratio": 1.03299999999999992,
+      "reads_apart": false
+    }
+  },
+  "problems": [],
+  "reports": [
+    "falling and lobbed do not read apart by Production's rule: elongation ratio 1.033 against 1.80, balance gap 0.000 against 0.15.",
+    "falling and straight do not read apart by Production's rule: elongation ratio 1.000 against 1.80, balance gap 0.000 against 0.15.",
+    "lobbed and straight do not read apart by Production's rule: elongation ratio 1.033 against 1.80, balance gap 0.000 against 0.15."
+  ],
+  "straight": {
+    "balance": 0.5,
+    "cross": 0.440000000000000002,
+    "elongation": 1.0,
+    "length": 0.440000000000000002,
+    "parts": 1
+  },
+  "thresholds": {
+    "LEGIBLE_BALANCE": 0.149999999999999994,
+    "LEGIBLE_RATIO": 1.80000000000000004
+  }
+}

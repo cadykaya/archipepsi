@@ -1,0 +1,208 @@
+{
+  "pack": "tp_super_metroid",
+  "models": "batch058/wreck",
+  "prefix": "WS",
+  "caption_note": "Material treatment MISSING: painted in rusted_industrial. This game has NO entry in THEME_BY_GAME_HINT -- nor do 74 others.",
+  "surround": "tp_ws_pressure_door",
+  "light": {
+    "ambient": [
+      0.52,
+      0.58,
+      0.62
+    ],
+    "ambient_energy": 0.32,
+    "fog": 0.02,
+    "fog_color": [
+      0.11,
+      0.14,
+      0.15
+    ],
+    "lamps": [
+      {
+        "at": [
+          4.35,
+          2.45,
+          -1.0
+        ],
+        "range": 9.0,
+        "energy": 2.9,
+        "color": [
+          0.96,
+          0.84,
+          0.62
+        ],
+        "why": "the emergency lamp, still working and hanging off true. A derelict with no light at all is a black frame; a derelict lit evenly is a corridor."
+      },
+      {
+        "at": [
+          0.0,
+          2.2,
+          -7.2
+        ],
+        "range": 14.0,
+        "energy": 1.5,
+        "color": [
+          0.6,
+          0.74,
+          0.72
+        ],
+        "why": "whatever is on the other side of the pressure door -- cold, and the only cold light in the room"
+      },
+      {
+        "at": [
+          -3.4,
+          1.2,
+          1.0
+        ],
+        "range": 6.0,
+        "energy": 1.2,
+        "color": [
+          0.9,
+          0.58,
+          0.4
+        ],
+        "why": "low and warm off the blown panel, so the debris fan has a direction to point away from"
+      }
+    ]
+  },
+  "place": [
+    {
+      "id": "tp_ws_pressure_door",
+      "at": [
+        0.0,
+        0.0,
+        -4.8
+      ],
+      "yaw": 0,
+      "why": "on the opening, chamber side. No coaming -- floor is Production's."
+    },
+    {
+      "id": "tp_ws_stanchion",
+      "at": [
+        -2.7,
+        0.0,
+        -3.4
+      ],
+      "yaw": 0,
+      "why": "clear of the approach; the burst faces into the room"
+    },
+    {
+      "id": "tp_ws_stanchion",
+      "at": [
+        2.7,
+        0.0,
+        -3.4
+      ],
+      "yaw": 180,
+      "why": "turned away, so only one of the two shows its tear -- two identical wounds read as a pattern, not as damage"
+    },
+    {
+      "id": "tp_ws_bulkhead_panel",
+      "at": [
+        -4.8,
+        0.0,
+        -1.2
+      ],
+      "yaw": 90,
+      "why": "the hull faces the room and its plate must SHOW: at -4.90 the 0.14 m plate sat entirely inside the 0.4 m wall and the frame read as ribs floating on grey"
+    },
+    {
+      "id": "tp_ws_lamp_cage",
+      "at": [
+        4.78,
+        2.3,
+        -1.0
+      ],
+      "yaw": -90,
+      "why": "high on the opposite wall, hanging off true"
+    },
+    {
+      "id": "tp_ws_dogging_lever",
+      "at": [
+        1.82,
+        1.15,
+        -4.74
+      ],
+      "yaw": 0,
+      "why": "batch043's wall-switch contract: beside the door, at hand height -- the same place as T01's, T02's and T03's"
+    },
+    {
+      "id": "tp_ws_debris_fan",
+      "at": [
+        -3.6,
+        0.0,
+        0.2
+      ],
+      "yaw": -8,
+      "why": "fanning AWAY from the blown panel, which is the wall it came out of"
+    },
+    {
+      "id": "tp_ws_debris_fan",
+      "at": [
+        2.6,
+        0.0,
+        1.9
+      ],
+      "yaw": 148
+    }
+  ],
+  "shots": [
+    {
+      "name": "WS_approach",
+      "eye": [
+        0.0,
+        1.7,
+        4.4
+      ],
+      "look": [
+        0.0,
+        1.6,
+        -5.0
+      ],
+      "check_opening": true,
+      "caption": "Approach -- grey is Production's; the pack is what sits on it"
+    },
+    {
+      "name": "WS_panel",
+      "eye": [
+        1.6,
+        1.7,
+        1.4
+      ],
+      "look": [
+        -4.7,
+        1.6,
+        -1.6
+      ],
+      "caption": "The hatch still on one hinge, and the cut conduit behind it"
+    },
+    {
+      "name": "WS_threshold",
+      "eye": [
+        0.0,
+        1.7,
+        -9.6
+      ],
+      "look": [
+        0.0,
+        1.6,
+        -2.0
+      ],
+      "caption": "Through the 2.4 x 3.2 opening -- lugs clear of it, and NO coaming: floor is Production's"
+    },
+    {
+      "name": "WS_chamber",
+      "eye": [
+        3.9,
+        3.1,
+        4.4
+      ],
+      "look": [
+        -0.7,
+        0.7,
+        -2.2
+      ],
+      "caption": "The derelict -- six pieces, one place, routes unchanged"
+    }
+  ]
+}

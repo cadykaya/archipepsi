@@ -1,0 +1,5160 @@
+# ART REVIEW — the owner's ledger
+
+**Only the owner turns `PENDING` into `PASS`.** The art lane may mark an
+objective failure; it may never mark an aesthetic success, and it may not
+pick a winner among concepts.
+
+> # STYLE LOCK IS PASSED.
+> Recorded 2026-08-28 from the owner's Batch 002-R verdict. Mass production
+> is unlocked; the locked DNA is at the top of this document and is not
+> reopened by anyone but the owner. Passing Style Lock does **not** approve
+> future assets — see *Review process after Style Lock* at the end.
+
+| Status | Means |
+| --- | --- |
+| `PENDING` | Built, measured, evidence rendered. Awaiting the owner. |
+| `PASS` | The owner has approved it. Only the owner writes this. |
+| `REVISE` | Owner wants changes; the note says what. |
+| `SELECTED` | Owner chose this concept as the direction; the asset itself is still `PENDING`. |
+| `KEPT` | Not selected, not discarded. Preserved for later use. |
+
+**Where the images are:** [`review/batch001/`](review/batch001/) · [`review/batch002/`](review/batch002/)
+
+
+---
+
+# STYLE LOCK — PASSED
+
+> STYLE LOCK = PASS. The revised Epsilon installation lands. [...] Lock this
+> design language.
+
+The owner's Batch 002-R verdict, recorded verbatim in substance. **These are
+foundations now.** Nothing below is an art-lane opinion and none of it may be
+reopened, softened or "cleaned up" by this lane.
+
+## HUMAN FACILITY
+
+- cold grey / white / pale-blue abandoned research facility
+- industrial corridors, pipes, vents, rails, catwalks
+- old institutional machinery
+- cold overall lighting
+- localized warm-yellow utility pools
+- **no global sepia wash**
+
+## EPSILON
+
+- invasive alien technology
+- hostile / uncanny shape language
+- neon-green internal / emissive identity
+- **asymmetry**
+- machinery that penetrates / replaces / commandeers human infrastructure
+
+## CHECK
+
+- pedestal / beacon **A**
+- distinct Archipelago identity
+- **NOT Epsilon green**
+
+## PORTAL
+
+- human architectural hardware + alien wound / intrusion
+- the current portal DNA is approved
+
+## GRAPPLE
+
+- **both** anchors approved
+- soffit overhead anchor
+- jib directional / wall-side anchor
+
+## ENEMIES
+
+- the current family and silhouette language are approved
+- the current expanded role set is worth preserving
+- **flying enemies are a core category**, because grapple traversal creates
+  useful vertical combat
+
+## The Epsilon installation, specifically
+
+`PASS`. Preserve, and do not symmetrize or clean up the alien side:
+
+- giant human-facing display
+- operator desk / control surface
+- wall-scale racks and machine housings
+- cold old research-facility construction
+- asymmetric Epsilon intrusion
+- neon-green alien structures
+- alien components physically intersecting / replacing human hardware
+- visible contrast between original machine and foreign takeover
+
+**Do not redesign the installation before production** unless an integration
+problem proves it necessary.
+
+### Production note on the display — NOT a blocker
+
+The giant display is an **Epsilon presentation surface**. It is where the
+player looks when interacting with Epsilon; the alien physical mass is what
+explains who now owns the computer. States to build toward, later:
+
+| State | What the screen does |
+| --- | --- |
+| Dormant / inactive | Old dark glass, dead terminal, faint static, damaged human interface. |
+| Epsilon active / speaking | Alien-green UI takeover — strange diagrams, waveforms, symbols, text. Display behaviour visibly foreign to the original computer. |
+| Generation / portal activity | More aggressive activity, corruption, telemetry. |
+
+The current model ships the dormant state and nothing else. Anything
+animated is deferred with the rest of the animation question.
+
+---
+
+# Review process AFTER Style Lock
+
+Style Lock passing does **not** mean every future asset is approved. The
+gate moved; it did not disappear.
+
+| Needs a review sheet | Can move faster |
+| --- | --- |
+| Major hero assets | Routine variations that clearly inherit locked DNA |
+| New enemy families or roles | Additional instances of an approved module family |
+| New theme landmarks | Re-skins of approved geometry into an approved theme |
+| **Anything establishing new visual DNA** | Fixes to something already approved |
+
+And the rule that has not changed and does not change: **if a genuinely new
+style question appears, surface it and continue elsewhere.** This lane does
+not invent subjective owner decisions to unblock itself.
+
+## The production order the owner set
+
+Assets that let the game replace its procedural / debug-looking presentation
+with the approved authored vocabulary come first.
+
+1. Hub / permanent spaces, and the Epsilon installation
+2. Core interactables
+3. Common architecture
+4. The enemy production family
+5. Movement affordances
+6. Universal props
+7. Room-shell vocabulary
+8. The six theme kits
+9. Presentation / polish assets
+
+## The enemy roster target, recorded
+
+Eventually a broad classic-FPS ecosystem, roughly **~20 distinct enemies**
+if the roles stay meaningful. Doom / Doom II / Doom 64 / Half-Life 1 are
+references for the **breadth of combat roles**, never for copied designs.
+Archipepsi's own equivalents in function: common pressure, melee, ranged,
+flyers, artillery, flankers, chargers, defensive units, support,
+specialists, elites, miniboss-scale threats.
+
+> Do not make twenty cosmetic variants of the same enemy. Each addition
+> should justify itself through silhouette + combat role.
+
+---
+
+## Batch 001 — the owner's verdict, recorded
+
+**Overall: STYLE LANGUAGE = PASS WITH REVISIONS. Do not begin mass
+production. Do one Style Lock revision batch first.**
+
+### The art direction this settled
+
+> The facility and Epsilon are **two different civilisations**, and the
+> contrast between them is what the game leans on.
+
+| | |
+| --- | --- |
+| **Human / facility** | Abandoned research facility. Cold grey concrete, white and pale-blue painted walls, yellow utility lighting, corridors, vents, pipes, rails, catwalks. Old, human, institutional, mechanical. *Already working.* |
+| **Epsilon** | Truly alien technology **embedded into** that old facility. Not another machine — an intrusion. Big-ass computer energy. **Neon green** dominant. Hostile, uncanny, glowing, humming, invasive. Not designed by the same civilisation as the building. |
+
+> **Epsilon is not part of the building style. Epsilon is a foreign
+> intelligence inhabiting, infecting and embedding itself into old
+> infrastructure.**
+
+Applied to: Epsilon's presence, the portal, Epsilon-owned devices, the glow
+and light language, and any visual state showing Epsilon influence or
+corruption. Recorded in `ART_BIBLE.md` §1a.
+
+### Selections
+
+| | Owner's decision | Status |
+| --- | --- | --- |
+| **Epsilon** | **B — suspended core.** An installation/presence, not furniture (A) or a wall console (C). Revise toward alien intrusion. | `SELECTED` |
+| **Check** | **A — pedestal.** Decisively strongest at room distance; B disappears into architecture, C reads as another terminal. Revise lightly. | `SELECTED` |
+| **Portal** | **B — collar**, as *direction*. Neither is final. | `SELECTED` |
+| **Enemies** | **All three kept and reinterpreted as the three archetypes.** A→melee, B→ranged, C→brute. | `SELECTED` |
+| **Anchor** | **A — soffit** primary. B kept as a possible wall/side-mounted variant. | `SELECTED` / `KEPT` |
+| Epsilon A, C · Check B, C · Portal A | Not selected. Not deleted. | `KEPT` |
+
+---
+
+## Batch 001-R — the revision. Everything below is PENDING.
+
+### A · Epsilon B — the intrusion
+
+`A_epsilon_b_core.png`
+
+| | |
+| --- | --- |
+| Asked for | Large alien computer, visibly embedded into facility infrastructure, more uncanny and invasive, neon green dominant, **less lamp/cone energy** in the core, slight asymmetry welcome, machine-shrine energy — without losing the distance silhouette. |
+| Kept | The open frame with a void through it — the only silhouette in the kit with a hole in it. Still 249 px at 6 m. |
+| Changed | **Three materials, and the split is the concept.** The bottom third is ordinary bolted facility grey; the alien mass bursts out of it and takes nothing from the theme at all. The core is now four hard-edged shards at unrelated angles, not a tapered prism. Arms are different lengths at different angles. Conduits leave the base into the floor. Green comes out of the *seams*, from inside. |
+| Metrics | 284 tris · 1.40 × 1.28 × 2.63 m · 249 px at 6 m |
+| Status | **PENDING** |
+
+The palette change is repo-wide: `identity` moved from violet `#b45cff` to
+neon green `#57ff1f`, leaning yellow deliberately so it can never be
+confused with `void_glitch` cyan or `signal` teal. A hue-separation check now
+enforces 45° between those three, and is sabotage-proved.
+
+### B · Check A — signal mast
+
+`B_check_a_pedestal.png` · in context: `I_room_check_a_pedestal.png`
+
+| | |
+| --- | --- |
+| Asked for | Slightly more industrial / signal-device, slightly less magical-pedestal. Keep the beacon top and across-room readability. |
+| Changed | The lathe-turned octagonal plinth and four radiating crown arms — the "magical" part — are gone. Bolted box base, a conduit running out into the floor, stay bars, and a caged emitter head. Same silhouette family, built by a contractor. |
+| Metrics | 300 tris · 0.96 × 1.04 × 2.22 m · 41 px at 30 m |
+| Status | **PENDING** |
+
+### C · Portal B — the breach
+
+`C_portal_b_collar.png`
+
+| | |
+| --- | --- |
+| Asked for | Push toward *"something has happened to / opened through the architecture"* rather than *"special doorway frame"*. Inherit the facility-vs-Epsilon contrast. Keep a distinctive dead silhouette without relying on future VFX. |
+| Changed | Three materials: cold facility jambs (now staggered left against right, with rubble at the foot — material came *out* of this wall), an irregular alien collar gripping the aperture with anchor spikes driven into the stone, and green only where the two meet. |
+| Dead state | The ragged breach, the asymmetric collar and the spikes are all geometry. Every emissive surface can be off and the silhouette still reads. |
+| Metrics | 412 tris · 3.50 × 1.26 × 4.36 m · 80 px at 30 m |
+| Status | **PENDING** |
+
+### D · The three archetypes
+
+`D_enemy_lineup_18m.png` · `_silhouette.png` · `_clay.png` — **all three in
+one frame at aggro range**, plus individual sheets.
+
+Each is now built to **its own archetype's collision box**, which is what
+changed the models rather than the labels:
+
+| | Box (m) | Tris | At 18 m | The read |
+| --- | --- | --- | --- | --- |
+| `enemy_melee_stooped` | 0.8 × 1.6 × 0.8 | 460 | 46 px | Forward mass ahead of the feet, working arms, terminal weight in the fists |
+| `enemy_ranged_tripod` | 0.7 × 1.4 × 0.7 | 368 | 41 px | Three planted legs, a mast, all mass in one asymmetric weapon housing. `speed 0.0` — it never closes, and the silhouette says so |
+| `enemy_brute_squat` | 1.8 × 2.6 × 1.8 | 424 | 77 px | More than double the melee on every axis. Chest wider than tall and low, short thick legs, head sunk in |
+
+**Shared family cues, deliberately few:** the same dark `grime` plating that
+sits below every theme's wall in value, and **a green optic** — green is
+Epsilon's colour, so a green eye says *this belongs to the thing in the
+Hub*.
+
+**Hazard orange is absent, and that is a rule.** Green says *whose this is*;
+orange says *what is about to happen*. Reserving orange for telegraphs means
+a windup is the only orange an enemy ever shows.
+
+A new build guard refuses any enemy filling under 80 % of its collision
+height — it caught the brute at 78 % on the first build.
+
+Status: **PASS** (all three) — *"ENEMY FAMILY / SILHOUETTE LANGUAGE = PASS.
+Keep the current roster concepts."* Locked at the 002 review, together with
+the seven roles proposed in 002.
+
+### E · Anchor
+
+`E_anchor_a_soffit.png` (primary) · `E_anchor_b_jib.png` (kept)
+
+| | |
+| --- | --- |
+| `anchor_a_soffit` | Owner's primary. 160 tris · 111 px at 5 m. **PENDING** |
+| `anchor_b_jib` | Kept as a candidate wall/side-mounted directional variant. Unchanged. **KEPT** |
+
+### F · Architecture — revised for hierarchy
+
+`F_arch_*.png`. One new module, one deepened.
+
+| | |
+| --- | --- |
+| `arch_wall_ribbed` **(new)** | Four pilasters standing 0.22 m proud. The room read as *"every surface exposes the same exact 4 m panel rhythm"*; the answer is a second rhythm, not less structure — and it is geometry rather than paint, because a painted rib casts nothing. 108 tris. |
+| `arch_ceiling_beam` | Downstand deepened 0.45 → 0.60 m so it throws a real shadow band. 3.4 m headroom remains. |
+| Everything else | Unchanged. |
+
+### G · Props — the accent problem
+
+`G_prop_*.png`
+
+Asked for: stop crates, machinery, pipes, rails and utility objects all
+inheriting the theme accent; use accent selectively.
+
+Every painted prop now declares a **tone** taken from the theme's *base*
+ramp — the cold institutional greys the facility is actually built from —
+and the accent survives only as a band on the minority that earn one. In
+`concrete_facility` the kit is now a row of different greys with a teal
+terminal screen and an orange warning sign among them, instead of eight blue
+objects.
+
+Status: **PASS** — carried by *"FACILITY ARCHITECTURE = PASS. Keep this as
+the baseline human/facility language."* The props are painted from the
+facility's own ramps and are part of that baseline.
+
+### H · Materials, and two in-engine probes
+
+| | |
+| --- | --- |
+| `H_material_concrete_facility.png` | Now six roles. See the room notes below. **PENDING** |
+| `H_probe_void_glitch_room.png` + `_greyscale` | **The probe you asked for.** **PENDING** |
+| `H_probe_rusted_industrial_room.png` + `_greyscale` | Not requested — added because it costs one command and de-risks the next batch. **PENDING** |
+| `H_material_rusted_industrial.png` | Unchanged, as instructed. **PENDING** |
+
+Both probes are the *same room, same modules, same meshes* with only the
+theme material swapped — which incidentally proves the runtime model the
+asset registry will need: one authored mesh, six theme materials, selected
+by Godot.
+
+**My honest read on void_glitch:** the floor works — a dark checker with a
+cyan editor grid reads as a missing world you can still fight on. The walls
+and ceiling at full-saturation magenta are, to my eye, past usable for a
+room you spend time in. If you want it kept, the cheapest fix is to drop the
+magenta to the ramp's dark step on large surfaces and keep full saturation
+for accents and the floor grid. Your call.
+
+### I · The composed room
+
+`I_room_wide.png` · `I_room_greyscale.png` · `I_room_near.png` ·
+`I_room_warmlight_proposal.png` · `I_room_check_*.png`
+
+Asked for: stronger separation between floor / walls / ceiling / trim, more
+structural depth and local shadow, less uniform 4 m rhythm, accent
+supporting hierarchy rather than turning everything blue — while preserving
+the 1998 brush language and **not** solving it with modern detail or greeble.
+
+**The value hierarchy was measurable, not a matter of taste.** Floor sat at
+L\* 0.59, wall at 0.76, and the ceiling *borrowed the wall texture* — so the
+three surfaces filling most of the frame spanned 0.17 between them. The
+palette check passed the whole time, because 0.17 clears the 0.10 floor.
+
+Now four separated values spanning 0.56:
+
+| | L\* | |
+| --- | --- | --- |
+| trim | 0.20 | structural, darkest thing in the room |
+| floor | 0.42 | walked on, dirtiest, no longer the mid value |
+| ceiling | 0.59 | its own role, ribbed one way — never a wall lying down |
+| wall | 0.76 | pale institutional paint, with a dark base course along the bottom 0.85 m |
+
+Plus: alternating plain and ribbed wall bays, a deeper downstand, and the
+kick rail's accent cut from a third of its cycle to a thin stripe.
+
+**Two things I did not change, because they are not mine to change:**
+
+- **Yellow utility lighting.** `THEME_MATERIALS` gives `concrete_facility`
+  `light_color: #eaf2ff`, a cool white. That is engineering's anchor.
+  `I_room_warmlight_proposal.png` is the same room relit warm and labelled
+  as *not engine truth* — if you like it, it is a one-line ask to
+  engineering, not an art change.
+- **Shadows.** `chamber_builders._light` sets `shadow_enabled = false`. A
+  bench that switched them on would be showing depth the game does not
+  render. The added depth here comes from geometry that shades *itself*.
+
+Room: 3,272 / 12,000 triangles.
+
+Status: **PASS** — *"FACILITY ARCHITECTURE = PASS. Keep this as the baseline
+human/facility language."* Locked at the 002 review, with the lighting
+clarification that became the `LIGHTING RULE = PASS` entry.
+
+---
+
+## Objective state — verified, not claimed
+
+| Check | Result |
+| --- | --- |
+| `engine_truth.py` | PASS |
+| `palette.py` | PASS — including the new 45° hue separation between `signal`, `identity` and `glitch` |
+| `check_docs_metrics.py` | PASS — every figure above matches the build |
+| `sabotage_checks.sh` | PASS — every guard fires on its own bug |
+| `check_art_current.sh` | PASS — byte-identical rebuilds |
+| Budgets / density / mechanical fit | every asset |
+
+**None of this is an argument that the art is good.**
+
+---
+
+## What I am asking for on 001-R
+
+1. Does the revised room read as an **abandoned research facility** now?
+2. Does Epsilon B read as an **alien intrusion** into it, or still as
+   another machine?
+3. Do the three archetypes read as **one ecosystem, three threats** at 18 m?
+4. Is the neon green right, and is the green-optic / orange-telegraph split
+   the right division?
+5. void_glitch: usable as-is, or does the magenta need dropping on large
+   surfaces?
+6. The warm-light proposal: worth asking engineering for?
+
+Statuses stay `PENDING` until you say otherwise, and there is no mass
+production after this batch either — the gate holds until you lift it.
+
+---
+
+## Batch 002 — the owner's verdict, recorded
+
+**Overall: MOST OF THE STYLE LOCK IS APPROVED.** Six items were asked for and
+six were built; five came back `PASS`, and Epsilon takes one more targeted
+revision before Style Lock is declared.
+
+> If the revised Epsilon installation lands, I expect to declare STYLE LOCK
+> PASSED. Do NOT begin broad mass production until I approve that final
+> Epsilon revision.
+
+### What is LOCKED
+
+| | Verdict | What the lock means |
+| --- | --- | --- |
+| **Facility architecture** | `PASS` | The baseline human / facility language. |
+| **Lighting rule** | `PASS` | Cold overall facility; white / pale-blue / grey surfaces; localized yellow utility pools; **never** globally warm the room. |
+| **Check A** | `PASS` | The pedestal / beacon identity stays separate from Epsilon green. |
+| **Grapple anchors A + B** | `PASS` | Both kept. A = common ceiling / soffit. B = directional wall / side / jib. |
+| **Portal language** | `PASS` | The human-architecture + alien-intrusion split is the DNA. Future variants may get stranger; this split does not change. |
+| **Enemy family / silhouettes** | `PASS` | The roster reads at gameplay distance and the role diversity is good. |
+
+**The expanded enemy roster is the first production family and must not be
+reduced back to melee / ranged / brute.**
+
+### Enemy roster — the future direction, recorded now so it is not re-derived
+
+The owner's long-term target: a broad classic-FPS-style ecosystem — common
+enemies, flyers, flankers, artillery, support, bruisers, elites, specialist
+weirdos, miniboss-scale threats — **inspired by the ROLE COVERAGE** of
+Doom / Doom II / Doom 64 / Half-Life 1 and **never copying their designs**.
+Roughly **~20 distinct types over time** is acceptable provided each stays
+mechanically distinct, visually readable, and part of the same
+Epsilon-fabricated family. **Flying enemies are a core combat category, not
+a novelty**, because the grapple gives the game verticality.
+
+Not now. The roster does not grow again until Style Lock is passed.
+
+### Everything built for 002, as reviewed
+
+**Where the images are:** [`review/batch002/`](review/batch002/)
+
+The 001-R verdict locked the facility, kept both anchors, approved Check A
+and preserved the three enemy silhouettes, and asked for six things. Each is
+answered below with what it is and what to look at.
+
+### A · Epsilon — a room-scale computer installation
+
+> a BIG OLD COMPUTER INSTALLATION with an ALIEN CORE / INTRUSION embedded in
+> or erupting through it.
+
+`epsilon_installation` — **1396 triangles, 8.80 × 2.61 × 3.55 m**, floor
+anchored. Seven bays of abandoned facility mainframe on a 1.2 m module,
+2.9 m tall, with two bays destroyed and an alien mass erupting through the
+gap, past the cornice and out along the neighbouring cabinet fronts.
+
+This **replaces the 1.4 × 1.4 × 2.8 m envelope** the 001 concepts were built
+to. It is now the largest authored object in the project, `hub.gd` has no
+contract for it, and that is an interface item, not an oversight.
+
+What changed beyond scale:
+
+* **The bank is dark.** It was painted from the theme's base ramp and
+  rendered as the palest thing in frame. It comes from the trim and grime
+  ramps now, and nothing on the human half is allowed above `trim[2]`.
+* **Nothing on the human half glows.** Every monitor is dead glass in a
+  geometric bezel. The intrusion is the only lit thing.
+* **The veins step.** A straight emissive bar across a cabinet front read as
+  a highlighter stroke; they run along seams and turn at them now.
+* **The green is green again.** It was rendering as clipped yellow-white.
+  See `ART_LESSONS.md` L-29 and L-30 — this was a real colour bug and it
+  affected every emissive surface in the project.
+
+Look at: `A_epsilon_installation.png` (wide, silhouette, clay, 1.8 m scale
+rod, 8 m play distance), `_medium.png` at 4 m, `_close.png` at 2 m, and
+`A_epsilon_in_room.png` / `_oblique.png` for it standing in a room.
+
+Status: **PASS** — superseded by the 002-R revision below, which the owner passed.
+
+### B · Facility lighting — cold room, local warm pools
+
+> Do NOT turn the whole room warm. Warm yellow light should appear as
+> localized utility pools / fixtures within a still-cold environment.
+
+The ceiling lamps stay on the engine's own `#eaf2ff` at energy 3.0 and set
+the room's temperature. The warmth arrives as three small wall fixtures at
+2.1 m on a **2.6 m range** — short enough that the falloff lands inside the
+room — running **dimmer** than the ceiling, so the hierarchy is not
+inverted. `arch_utility_lamp`, **96 triangles, 0.34 × 0.44 × 0.28 m**,
+wall anchored, with a `send`-amber lens: `hazard` orange is the telegraph,
+`signal` teal is interactables and `identity` green is Epsilon, so none of
+them may be spent on a lamp.
+
+Look at: `I_room_utility_pools.png`, its greyscale, `I_room_utility_pool_near.png`,
+and `I_room_warmlight_rejected.png` — the 001-R globally-warm version, kept
+and labelled rather than deleted.
+
+Status: **PASS** — locked. Cold facility, localized warm pools, never a globally warm room.
+
+### C · Portal — the human/alien split pushed
+
+`portal_b2_wound` — **512 triangles, 3.59 × 1.29 × 4.45 m**. B-R showed a
+hole with jambs; this shows the **wall it was made in**: panels, a base
+course, a bolted architrave and a concrete lintel. The alien mass is no
+longer polite about it — lopsided, piled up on one side, across the lintel,
+spilling onto the floor and occluding part of the opening.
+
+The values are deliberately inverted against the installation: that is a
+dark machine with a green intrusion, this is a **pale wall** with a dark
+green-black one. The intrusion never matches; what it fails to match
+changes.
+
+B and B-R are both kept.
+
+Look at: `C_portal_b2_wound.png`.
+
+Status: **PASS** — the human-architecture + alien-intrusion split is locked as the portal DNA. Future variants may get stranger; the split does not.
+
+### D · The enemy family — seven proposed roles
+
+> Do NOT copy official Doom / Doom II / Doom 64 / Half-Life 1 enemy designs
+> directly. But DO study the ROLE COVERAGE and roster logic.
+
+Every one of these starts from a sentence about what it does **to the
+player**; the silhouette is derived from that sentence afterwards. Nothing
+is drawn from a remembered picture.
+
+| ID | Role | Tris | Size |
+| --- | --- | --- | --- |
+| `enemy_scuttler` | SCUTTLER — costs attention | 212 | 1.19 × 0.59 × 0.54 m |
+| `enemy_charger` | CHARGER — one telegraphed rush | 176 | 0.86 × 1.62 × 1.03 m |
+| `enemy_bulwark` | BULWARK — cannot be fought frontally | 280 | 1.45 × 0.83 × 1.92 m |
+| `enemy_artillery` | ARTILLERY — indirect, denies ground | 144 | 0.63 × 0.75 × 1.52 m |
+| `enemy_beacon` | BEACON — makes everything near it worse | 152 | 0.57 × 0.61 × 2.12 m |
+| `enemy_drifter` | DRIFTER (flyer) — owns the ceiling | 208 | 1.25 × 1.24 × 0.84 m |
+| `enemy_diver` | DIVER (flyer) — contests the grapple arc | 84 | 0.61 × 1.05 × 0.35 m |
+
+The three approved archetypes are untouched. Ten roles is a lot to tell
+apart in the 48 px a 1.6 m enemy occupies at `ENEMY_AGGRO_RADIUS`, so no two
+share a governing shape: upright / tripod / squat-enormous / wide-and-low /
+long-and-low / flat slab / tube-up / thin mast / horizontal disc / forward
+dart. **Six of the ten do not meet the ground plane the same way**, which
+does more for separation than any amount of surface detail.
+
+**Their collision boxes are a PROPOSAL.** `enemy.gd` defines exactly three
+sizes; everything past the trio has no engine counterpart, and every
+manifest entry says `"engine_box": false`.
+
+Look at: `D_enemy_family_18m.png` and `D_enemy_family_silhouette.png` — two
+ranks of five, both at 18 m, true 1080p scale then 2×.
+
+Status: **PASS** — the family reads at gameplay distance and the role diversity is good. This roster is the first production family and is not to be reduced.
+
+### E · Grapple anchors — what each one is FOR
+
+Both kept, as instructed. A soffit is the ceiling case and is unchanged. B
+was ceiling-anchored, which left "wall variant" existing only as a sentence,
+so `anchor_b_wall_jib` — **168 triangles, 0.62 × 1.25 × 0.72 m**, wall
+anchored — is the same arm turned onto a wall plate with the brace doing the
+job it was always drawn for.
+
+The difference is mechanical: a ceiling anchor is reached from below and
+swings any direction; a wall jib puts the eye out from the wall at a chosen
+height, so its swing has a **direction**. Its 2.6 m plate height is an art
+proposal — `affordance_features.gd` has no wall-mounted anchor.
+
+Look at: `E_anchor_a_use.png` and `E_anchor_b_use.png`. Both carry the 1.8 m
+rod at the jump's 4.67 m flat reach and an orange bar at the 1.33 m jump
+apex, because an anchor that does not beat a jump is decoration.
+
+Status: **PASS** — both kept. A is the common ceiling anchor, B the directional wall one.
+
+### F · The family board (optional item)
+
+One row of facility objects and one row of Epsilon objects, on one floor,
+under one light, from one camera — the only honest way to test a claim about
+two visual languages. Then the same frame in greyscale, because a split that
+exists only in hue will not survive a dark corridor.
+
+Look at: `F_style_board.png` and `F_style_board_greyscale.png`.
+
+Status: **PASS** — the two languages hold apart.
+
+---
+
+## Objective state for 002 — verified, not claimed
+
+| Check | Result |
+| --- | --- |
+| `engine_truth.py` | PASS — now also reading the engine's lighting energies |
+| `palette.py` | PASS |
+| `check_docs_metrics.py` | PASS — 40 of 40 built assets quoted and verified |
+| `sabotage_checks.sh` | see the commit; every guard still fires on its own bug |
+| `check_art_current.sh` | byte-identical rebuilds |
+| Budgets / density / mechanical fit | every asset, including the seven proposals |
+
+**None of this is an argument that the art is good.**
+
+---
+
+## What I am asking for on 002
+
+1. Does the installation read as **a big old computer with something
+   erupting through it**, or still as a sculpture?
+2. Is the cold-room-with-warm-pools lighting the split you meant?
+3. Is the portal's human/alien contrast far enough now?
+4. Of the seven proposed roles: which are in, which are out, which need
+   rethinking? Are the two flyers the flyers you wanted?
+5. Is the wall jib worth keeping as a second anchor, or does A cover it?
+6. Anything in the family board that does **not** belong to the language it
+   is filed under?
+
+No mass production. Statuses stay `PENDING` until you say otherwise.
+
+---
+
+## Batch 002-R — the targeted Epsilon revision. PENDING.
+
+**Where the images are:** [`review/batch002/`](review/batch002/), the
+`A_epsilon_*` sheets.
+
+The 002 review passed the scale and the idea and named one thing:
+
+> Right now it reads more like "big server installation". I want it to also
+> read like "a huge computer a researcher could physically walk up to and
+> operate".
+
+### What changed
+
+`epsilon_installation` — **1644 triangles, 9.02 × 3.48 × 3.55 m**, floor anchored.
+Same seven-bay module, same wall-sized presence, same rack language, same
+hostile green. Three changes, and nothing else was touched.
+
+**1 · The middle three bays are now an OPERATOR CONSOLE.** Every part of it
+answers "how would you use this?", and every height comes from engineering:
+
+| Part | What it says |
+| --- | --- |
+| Desk top at 0.95 m | You stand at this. It is not a shelf. |
+| Footwell under it | Your feet go here, so you can get close. |
+| Raked control panel | Your hands go here, angled toward you. |
+| Monitor at eye + 0.45 m | You look slightly UP at it. Oversized, institutional. |
+| Instrument strip between them | The row you read while your hands are busy. |
+| Two auxiliary screens, unlevel | A control room has more than one display, and they are never level. |
+| Floor grating, worn | Somebody stood here. For a long time. |
+
+The console is built OUT from the rack line in layers — bezel, hood, panel,
+desk, floor plate, each projecting further than the one behind it — because
+at any distance the parts of this object are the same value, and depth is
+the only thing separating them. It also wears a **different skin**: switch
+banks and patch rows, not cabinet louvres. With one map over everything the
+console was a differently shaped piece of the same wall.
+
+**2 · The breach moved to one END.** Bays 5 and 6, hard right. Not the
+middle.
+
+**3 · The mass reaches back INTO the console it wrecked.** A limb over the
+desk's right end with fingers gripping it; a spur through the right side of
+the monitor housing; alien plate flush where the console's own right-hand
+skin used to be; green conduits running left along the human cable tray they
+hijacked; buttons overtaken at the panel's right end. Nothing mirrors.
+
+The console's right third is being taken. Its left two thirds are still a
+machine a person could use. The sentence, in that order: **humans built this
+computer, then something foreign took it over.**
+
+### The rule that survived
+
+**Nothing on the human half glows.** The monitor is dead glass — except
+where the alien is through it, which is not the console powering up. That is
+the review's "monitor behaving strangely", and the light arrives from inside
+the housing.
+
+Its screen material also went from roughness 0.25 to 0.50: at 0.25 a 2.7 m
+console screen caught a specular off the key light broad enough to look like
+a picture, and a highlight that reads as a display breaks that rule exactly
+as completely as emission would.
+
+### The five views
+
+| Image | What it answers |
+| --- | --- |
+| `A_epsilon_in_room.png` · `_oblique.png` | **Wide, in a room.** Does it read as an installation at all? |
+| `A_epsilon_operator.png` | **The frontal operator view** — eye height, one pace back, aimed level so the desk top is visible. This is the shot the revision exists for. |
+| `A_epsilon_oblique.png` | From the alien end, looking back across the console. |
+| `A_epsilon_fusion.png` | Close, where the mass comes over the desk and through the screen. |
+| `A_epsilon_value.png` | The operator frame with the hue removed. If the split only exists in green it will not survive a dark room. |
+
+Plus `A_epsilon_installation.png` at 8 m, `_medium.png` at 4 m and
+`_close.png` at 2 m, all rebuilt.
+
+Status: **PASS** — *"The revised Epsilon installation lands."* See
+**STYLE LOCK — PASSED** at the top of this document for what must be
+preserved.
+
+---
+
+## What I asked for on 002-R, and the answers
+
+1. Does it now read as **a huge computer somebody operated**, rather than a
+   server installation?
+2. Is the takeover asymmetric enough — does the right-hand third read as
+   *taken* rather than as decorated?
+3. Is the console face at the right scale against the racks, or should it
+   be larger still?
+
+Nothing else in the batch was touched. The roster did not grow, no theme
+production started, and every 002 `PASS` stands as you wrote it.
+
+---
+
+# PRODUCTION
+
+Style Lock passed, so what follows is production rather than style. Batches
+here are **not** automatically approved: they inherit locked DNA, and the
+review policy at the top of this document says which ones still need a sheet.
+
+## Batch 003 — the Hub
+
+The owner's production order opens with *Hub / permanent spaces*, and the
+Hub is also the room where the game most looks like a prototype: every
+fixture in `hub/hub.gd` is an untextured `BoxMesh` or `PrismMesh` with a
+flat colour on it.
+
+Nothing in this batch establishes new visual DNA. Each fixture is the locked
+facility language applied to an object that already exists, at an envelope
+read out of `hub.gd` rather than chosen.
+
+### The fixtures
+
+| ID | Tris | Size (m) | Replaces in `hub.gd` |
+| --- | --- | --- | --- |
+| `hub_shop_counter` | 332 | 2.60 × 1.00 × 2.45 | shop `SimpleStation` |
+| `hub_archive_terminal` | 460 | 2.54 × 1.00 × 2.45 | inventory `SimpleStation` |
+| `hub_abandon_station` | 92 | 1.12 × 1.00 × 1.27 | `AbandonConsole` |
+| `hub_campaign_board` | 104 | 5.48 × 0.37 × 3.18 | `_build_campaign_board` backing plate |
+| `hub_controls_board` | 104 | 4.28 × 0.37 × 2.98 | `_build_controls_board` backing plate |
+
+Both boards are **housings only**. The campaign board's 30 cells carry
+`SourceIdentity` tints derived from the actual multiworld and the controls
+board carries text; an authored asset that baked either would be wrong the
+first time the data moved.
+
+The shop and the archive share their counter bones on purpose — same
+institution's furniture, at the same 0.95 m work height the Epsilon console
+uses — and differ entirely above the counter: a roller shutter and stock
+against a card-index bank. The abandon console is the only fixture in the
+Hub wearing `hazard`, because throwing away a generated Zone is the one
+thing in that room that happens *to* you.
+
+### The architecture
+
+| ID | Tris | Size (m) | Why it exists |
+| --- | --- | --- | --- |
+| `arch_wall_upper` | 172 | 4.00 × 0.80 × 1.00 | the 1 m course that takes a 4 m wall to the Hub's 5 m |
+| `arch_pilaster` | 60 | 0.60 × 0.35 × 5.00 | 22 m is not a multiple of 4; the remainder becomes structure |
+| `hub_lab_doorway` | 84 | 3.94 × 0.74 × 3.66 | `_cut_lab_doorway` cuts a hole; this is the lining that makes it a doorway |
+
+`hub.gd` builds a 5.0 m room and the approved kit is a 4.0 m module. Of the
+three ways to close a 1 m gap, only one is architecture: put the services
+band up there, which is what a real facility does with the metre above a
+partition. The seam under it becomes a structural line instead of an
+accident. `arch_pilaster` exists because 22 m is not a multiple of 4.
+
+The band is painted from the **trim** ramp, not the accent one. On the
+accent it came out as a steel-blue stripe running round all four walls at
+the 4 m line — a hundred square metres of the colour whose only job is to
+mark a thing as significant, which is the Batch 001 "accent carrying too
+much" failure at room scale.
+
+### Evidence
+
+| Image | What it answers |
+| --- | --- |
+| `I_hub_from_spawn.png` | The Hub from the player's spawn, at 22 × 16 × 5 m, every fixture where `hub.gd` puts it. |
+| `I_hub_greyscale.png` | The same without colour. |
+| `I_hub_shop_wall.png` | Walking up to the shop: counter, Lab doorway, and a warm utility pool on the opposite wall. |
+| `I_hub_back_wall.png` | The portal and the Epsilon installation. |
+| `H_*.png` · `F_*.png` | Per-asset sheets for all eight. |
+
+Authored triangles in the composed Hub: **10,564**.
+
+### One thing that is a proposal, not a reading
+
+Every position in the Hub preview comes out of `hub.gd` except one. The
+Epsilon installation is placed at **x −5.5, z 14.2** on the back wall, and
+`hub.gd` has no fixture for it at all — the generic terminal envelope it
+does have is 2.0 × 3.0 × 0.8 m against the installation's 9.02 × 3.48 ×
+3.55 m.
+
+That back-wall run is the only 9 m of Hub wall not already spoken for, and
+it puts Epsilon in the player's eyeline on the turn from spawn. **It also
+clashes with the abandon console at (−8.6, 0, 13.6).** Art is not resolving
+that quietly: it is interface item 4 in `ART_FRONTIER.md`, and it needs an
+engineering decision about a reserved bay.
+
+Status: **PENDING** — production work, inheriting locked DNA. Flagged for a
+look rather than a verdict; the Hub is a permanent space and permanent
+spaces are worth one.
+
+## Batch 004 — the Echo Lab
+
+Tier 1's other permanent space. The Lab is a 16 × 26 × 6 m annexe you reach
+by walking, which is what makes *base movement can always leave the Lab*
+structural rather than a rule to remember — and it is the room in the game
+with the most untextured primitives in it. Every fixture in
+`hub/lab_fixtures.gd` is a `BoxMesh` or `CapsuleMesh` with a `glow_material`
+on it.
+
+Nothing here establishes new visual DNA.
+
+### The Lab is a MEASURING ROOM, and that decides everything
+
+The Hub is where you are; the Lab is where you find out what you can do.
+Every fixture answers a question about the player's own movement, so its
+numbers have to be **exactly** the engine's — and they are read from
+`engine_truth`, not remembered.
+
+| ID | Tris | Size (m) | What it answers |
+| --- | --- | --- | --- |
+| `lab_dummy` | 320 | 0.90 × 0.79 × 1.78 | nothing. It is what you practise ON |
+| `lab_height_markers` | 132 | 0.46 × 7.10 × 6.00 | how high did that send me — against 1.00 m and 1.333 m |
+| `lab_runway_measure` | 96 | 3.12 × 4.05 × 0.09 | how far did that carry me — against 4.667 m |
+| `lab_hazard` | 132 | 1.54 × 1.54 × 1.60 | what happens if I touch it |
+| `lab_moving_target` | 232 | 0.90 × 0.63 × 1.41 | can I lead a moving shot |
+| `lab_reset_pad` | 156 | 1.60 × 1.60 × 0.36 | how do I put the room back |
+| `lab_notice_board` | 104 | 3.54 × 0.40 × 1.39 | what changed since last time |
+
+The two graduated fixtures carry no decorative marks. On the height wall
+every metre gets a plain tick and only **1.000 m** (`MAX_VERTICAL_STEP`, what
+you can walk up) and **1.333 m** (`JUMP_APEX`, what a jump gets you without a
+trait) are called out — wider, projecting further, and lit. A wall where all
+the marks look equally important is a wall you have to count. On the runway
+module the **4.667 m** `JUMP_FLAT_REACH` mark falls 0.667 m into the second
+module, which is why the module is `module_floor` anchored: laid the other
+way round it would put the mark at 3.33.
+
+### Where hazard orange actually belongs
+
+`lab_hazard` is the one object in the game that is permanently a telegraph.
+A fixture whose entire job is *this will hurt you* is exactly what the
+hazard family is reserved for — which is the same rule that says it has no
+business on an enemy's body. It has real diagonal stripes, snapped to whole
+texels, and an emitter at the family's **orange** step rather than its pale
+salmon one.
+
+The training dummy deliberately gets neither. It wears the facility's
+painted plate rather than `enemy_skin`, has no optic, and its silhouette is
+a symmetrical post — the one shape the entire enemy roster avoids. A dummy
+that reads as an enemy teaches the player to shoot the wrong silhouette.
+
+### Evidence
+
+Shot with the new camera rig from `tools/shots/batch004_lab.json`: `L_*.png`,
+50 mm at three-quarter for the objects, 35 mm square-on for the two
+graduated fixtures — what they are FOR is being read straight.
+
+### Status: PASS — the owner's verdict, recorded 2026-08-28
+
+> The full Batch 004 Echo Lab furniture set is approved. The important
+> thing here is that it reads as FACILITY TEST EQUIPMENT rather than
+> enemies, rewards, or generic sci-fi props.
+
+Kept by name, and not reopened: the height-marker wall language, the
+runway / distance measurement language, the hazard-orange crate as the
+deliberate hazard telegraph, the symmetric non-enemy dummy, the moving
+target's test-fixture identity, the reset pad, the notice-board housing.
+
+And one rule restated as a rule rather than an observation:
+
+> Keep orange rare and semantically tied to hazard / warning rather than
+> letting it become general decoration.
+
+Routine production may continue from this language.
+
+---
+
+## Batch 005 — the Check, produced, and its four states
+
+Tier 2 opens with core interactables, and `ASSET_INVENTORY.md` §2 opens with
+the Check. `AUTHORED_CONTENT.md` says why: thirty of them across a campaign
+makes it the most repeated moment in the game. Batch 001 concepted three
+silhouettes, you selected **A** revised, and Style Lock passed it — but what
+existed was a *review model*, one joined mesh that stands still. This is the
+produced one.
+
+### The split is `reward.gd`'s, not a composition choice
+
+`reward.gd` builds the Check out of five children and then drives three of
+them independently: `ItemVisual` spins, bobs and is repainted per **state**;
+`DestinationRing` is repainted per **recipient world**; `SendBeam` is
+spawned, scaled and faded on confirm. One joined mesh cannot do any of that,
+so this batch exports along those node boundaries and reads every dimension
+out of that file.
+
+| ID | Tris | Size (m) | Anchor |
+| --- | --- | --- | --- |
+| `check_mast` | 288 | 0.96 × 1.04 × 2.22 | floor |
+| `check_item_locked` | 28 | 0.26 × 0.26 × 0.04 | module_floor |
+| `check_item_available` | 84 | 0.28 × 0.28 × 0.28 | module_floor |
+| `check_item_sending` | 112 | 0.26 × 0.26 × 0.31 | module_floor |
+| `check_item_confirmed` | 112 | 0.78 × 0.78 × 0.35 | module_floor |
+| `check_destination_ring` | 160 | 1.90 × 1.90 × 0.12 | module_floor |
+| `check_send_beam` | 28 | 0.74 × 0.74 × 40.00 | module_floor |
+
+The mast's geometry is **imported** from `build_concept_check.py` rather than
+copied, so the silhouette you passed has exactly one source and cannot drift.
+
+### Two kinds of variation, and only one of them can be authored
+
+- **State is a closed set of four.** A closed set can be authored, so it is:
+  four meshes, swapped. That keeps the authored surface in every state — a
+  runtime `material_override` would replace it — and it lets state differ in
+  **form** as well as hue, which matters for a player who cannot rely on hue.
+- **Destination is an open set** derived from the multiworld:
+  `ThemeMaterials.color_for_game()` can return a colour for any game in the
+  room. That cannot be authored, so the ring and the beam are single flat
+  materials the engine tints, and their **form** carries the read alone.
+
+If engineering keeps `material_override` on the item instead of swapping
+meshes, nothing breaks — `check_item_available` is a fine mesh to override.
+The batch just delivers more when the decision goes the other way.
+
+### The four states, and what makes them different
+
+Every state is a **cradle** — an octagonal socket plate on the cage floor,
+present in all four because it is the fixture — plus what sits in it.
+
+| State | The item | Family | `reward.gd` energy |
+| --- | --- | --- | --- |
+| locked | nothing. An empty cradle | `dead` | 0.4 |
+| available | the full spindle, the largest lit area of the four | `signal` | 1.8 |
+| sending | the spindle stretched into a column toward the cap | `send` | 1.2 |
+| confirmed | a husk that has collapsed and engulfed the cage (005-R) | `dead` | 0.2 |
+
+So four silhouettes, not four hues: `K_item_family_silhouette.png` is the
+sheet that proves it. Locked and confirmed share the `dead` family on
+purpose — the engine gives them 0.4 and 0.2 — and are told apart by the
+cradle being **empty** against **occupied**.
+
+### What reads at 39.6 m, and what does not — measured, not claimed
+
+`art_budgets.json` puts the Check's review distance at 39.6 m, the largest
+arena diagonal. At the engine's own 90° camera on a 1080p frame:
+
+| Part | Size | Pixels |
+| --- | --- | --- |
+| the collision box the budget quotes | 2.6 m | 35 |
+| the mast as built | 2.22 m | 30 |
+| the destination ring | 1.90 m across | 26 |
+| the item, in its cage | 0.28 m | 4 |
+
+`K_state_family_far.png` is the four states at that distance, and
+`K_state_family_far_inset.png` is the same pixels at 4× with no filtering.
+Read it before the pretty sheets. **Available and sending separate by hue
+across three or four pixels of cage. Locked and confirmed do not separate at
+all.**
+
+That is not a defect this lane can fix by modelling: 4 px is 4 px. In the
+running game they will separate, because `reward.gd` drops the destination
+ring to 0.35 emission energy when locked and leaves it at 1.5 otherwise —
+26 px of channel against the item's 4. **The ring is therefore load-bearing
+for the distance read**, which nothing wrote down before. Interface
+requirement 11 records it; if the ring's locked dimming is ever removed,
+locked and confirmed become the same object across a room.
+
+The sheet cannot show that, because the ring's material here is authored and
+the engine's is not. Saying so is more useful than a sheet that implies
+otherwise.
+
+### The one paint change from the approved model, stated plainly
+
+The concept's base collar wore the `send` family, because in a joined review
+model it *was* the destination ring. It is not any more: `reward.gd`'s ring
+has outer radius 1.02 — 1.90 m across as an octagon, nearly twice the
+collar — and it lives on the floor. So the collar is repainted structural and
+the `send` channel moves to the ring at the engine's own radii. Silhouette,
+proportion and the lit band are untouched.
+
+The ring itself is **eight pads and a curb**, not a solid band. Built as the
+plain octagonal tube it came out the brightest object in the frame — a gold
+mat with a Check standing on it, which is the `hero_shell` rule (*if two
+things compete for the eye at 35 px, neither wins*) broken by the channel
+that is not even carrying state. Turning it down is only half a fix, because
+the engine can tint it back up; the half that survives an override is form.
+
+### Evidence
+
+Shot from `tools/shots/batch005_check.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `K_state_family.png` | **start here** — the four states on the mast, one camera, one frame |
+| `K_state_family_far.png` · `_far_inset.png` | the same four at 39.6 m, and those pixels at 4× |
+| `K_check_assembled.png` | mast, item and ring together, with grey / silhouette / clay |
+| `K_check_operator.png` | walk-up at eye height on the engine's own lens |
+| `K_check_far_read.png` | one Check at 39.6 m |
+| `K_check_cage_detail.png` | the caged head at 85 mm — 20 mm clearance so it can spin |
+| `K_item_family*.png` | the four items alone, lit / grey / silhouette |
+| `K_destination_ring.png` · `K_send_beam.png` | the two the engine tints |
+
+### Status: PASS IN DIRECTION, with one required revision — 2026-08-28
+
+Approved and not reopened: mast proportions, the interaction face, the
+cage/head, the destination ring, the structural base collar, the item
+presentation, the send beam, the overall Archipelago identity, and its
+separation from Epsilon green.
+
+The four-state vocabulary is approved and is to be kept as written:
+
+| State | What it is |
+| --- | --- |
+| locked | empty cradle |
+| available | bright solid item |
+| sending | vertically stretched / transmitting item |
+| confirmed | spent dark husk |
+
+The base collar question is settled too:
+
+> The old concept collar represented SEND because it was doing the job now
+> owned by the much larger engine destination ring. Now that the
+> destination ring is a separate real runtime component, the collar
+> becoming structural is sensible.
+
+One thing was required before the batch is a full `PASS`, and it is what
+the 39.6 m sheet was built to find:
+
+> LOCKED and CONFIRMED do not separate strongly enough at ~39.6 m.
+> Do NOT solve this solely by leaning on destination-ring brightness.
+> The MAST / HEAD ITSELF needs one additional non-hue state cue.
+
+with the reasons given: floor rings can be occluded, distance flattens
+intensity differences, brightness is weaker than shape, and state
+recognition must not require colour perception. See **Batch 005-R** below.
+
+---
+
+## Batch 005-R — the targeted revision. PENDING.
+
+One change, in one file, to one state. Nothing else in Batch 005 was
+touched: the mast is the same 288-triangle mesh, the ring and the beam are
+untouched, and locked, available and sending are what you approved.
+
+### What the measurement said, and why the first attempt was thrown away
+
+The instruction ruled out the ring and ruled out hue, so the cue had to be
+form on the head itself. The first attempt put a **shutter inside the
+cage** — a heavy disc that descends the uprights and rests on the husk.
+It is a good object and it does not work, for a reason that only shows up
+in a number:
+
+> At 39.6 m the mast's cage interior is **5 pixels tall**.
+
+Filling those five pixels moved the cage box from 58% background to 48%.
+Real, and nowhere near enough to hang a state read on. So the cue moved
+**outside** the cage, which is the fourth option in your list:
+
+> the spent husk occupies a deliberately larger / different negative-space
+> pattern
+
+The husk has collapsed. It has swelled out of its cradle, swallowed the
+cage uprights and overflowed the hood — 0.78 m across against the head's
+0.64 — so the head goes from *an open lantern you can see daylight
+through* to *a solid lump*.
+
+### Measured at 39.6 m, on the engine's own lens, at 1080p
+
+Background fraction inside the cage band — the five pixels the cage
+interior occupies. Lower is more solid:
+
+| State | Head width | Background in the cage band |
+| --- | --- | --- |
+| locked | 10 px | **43%** |
+| available | 10 px | 44% |
+| sending | 10 px | 49% |
+| confirmed | 11 px | **16%** |
+
+The three unspent states cluster within six points of each other; confirmed
+sits 27 points clear of locked. That is a luminance-and-occupancy cue: no
+hue, no floor ring, no text, and it holds from any angle because every part
+of the item is rotationally symmetric.
+
+Rotational symmetry is also not decoration. `reward.gd` spins `ItemVisual`
+only while locked or available and never resets the angle, so a confirmed
+item with a front would be left facing wherever the spin happened to stop.
+
+### What it says, which matters as much as whether it reads
+
+Locked is a Check that has not happened yet: an empty cradle in an open
+cage. Confirmed is one that has: the thing in it came apart and ran out
+over the housing. Same family, same mast, same word — *a spent dark husk* —
+and now unmistakably spent.
+
+### One more thing the revision fixed, found by measuring
+
+The `dead` states were built with `make_signal_material`, and that function
+makes a glow survive being lit — at **every** saturation. Measured against
+the mast head at (68, 82, 101), the locked cradle rendered (114, 120, 131)
+and the confirmed husk (102, 109, 121). **The deadest things on the object
+were the brightest.** Both now get albedo and no emission at all, and
+`reward.gd`'s own 0.4 / 0.2 energies can add whatever the engine wants on
+top. Visibility at range was never the item's job: `hero_shell` paints a
+lit `signal` band on the mast that is on in all four states.
+
+### Status: PASS — the owner's verdict, recorded 2026-08-28
+
+> The targeted Check revision works. LOCKED vs CONFIRMED now separates at
+> ~39.6 m through actual head form / negative space rather than hue or the
+> destination ring. The confirmed spent husk becoming a larger solid mass
+> is exactly the kind of cue requested. Lock it.
+
+**Batch 005 is now fully `PASS`.** And the luminance correction is kept as
+a rule, not an incident: *dead / spent components should not accidentally
+be the brightest parts of the Check before runtime effects are applied.*
+
+### Evidence — the five sheets the verdict asked for
+
+`docs/art/review/batch005r/`
+
+| Image | What it answers |
+| --- | --- |
+| `R_state_family.png` | the four states, one camera, one frame |
+| `R_state_family_silhouette.png` | the same as shape only |
+| `R_state_family_far.png` | 39.6 m on the engine's lens |
+| `R_state_family_far_inset.png` | **those pixels at 4×, unfiltered** |
+| `R_head_compare.png` · `_silhouette` | the two that had to separate, at 85 mm |
+| `R_state_family_grey.png` · `_far_grey` | the value read |
+
+The full Batch 005 set has been re-rendered in place, because the confirmed
+mesh moved and a stale sheet is a sheet that lies.
+
+---
+
+## Batch 006 — the ways out
+
+The two remaining Pri-A rows in `ASSET_INVENTORY.md` §2 that do not need a
+new visual language. Both are openings the player walks through and both
+are still procedural in the engine.
+
+| ID | Tris | Size (m) | Replaces |
+| --- | --- | --- | --- |
+| `portal_core_locked` | 108 | 2.38 × 0.20 × 3.31 | `exit_portal.gd` `Core`, sealed |
+| `portal_core_unlocked` | 108 | 2.38 × 0.17 × 3.29 | the same, open |
+| `door_standard` | 144 | 2.72 × 0.62 × 3.38 | the gap `chamber_builders.gd` cuts — currently nothing at all |
+
+`objective_marker` and `signage_module` are the other two unbuilt rows and
+are **deliberately not here** — see the question at the end.
+
+### The portal frame is already yours, and stays built
+
+`portal_b2_wound` is the approved breach and this batch does not rebuild
+it. `exit_portal.gd` names two meshes and only the `Core` changes at
+runtime, so only the core needed producing.
+
+### What "sealed" looks like, and why it is not a new colour
+
+The engine paints the core green when unlocked and a dark desaturated red
+when sealed. The palette has no red family, and the three that could be
+borrowed all mean something else: `hazard` is *what is about to happen*,
+`dead` is *spent*, `send` is *this leaves for the multiworld*. A sealed
+exit is none of those. It is the same alien wound, shut.
+
+So both states stay in `identity` — the family the approved concept already
+uses here — and the difference is **form**:
+
+- **sealed** — the wound has grown over. A ridged, lopsided, opaque
+  membrane filling the aperture, at the family's darkest step.
+- **open** — the same growth torn back to the edges, with three teeth left
+  pointing inward, and a way through.
+
+Solid against holed reads at any distance, in any tint, and to a player who
+cannot tell the two hues apart — the rule your 005 verdict set.
+
+### The door is structure, and wears structure's paint
+
+`DOOR_WIDTH` 2.4, `DOOR_HEIGHT` 3.2, `WALL_THICKNESS` 0.4, all read from
+the engine. It is the theme's **trim**, painted by the same function the
+architecture kit uses, and not a universal family: a lining in `signal`
+teal would be promising an interaction, and a corridor of doorways would
+then promise seven that do not exist.
+
+No modelled bolt heads. Eight of them cost 96 triangles against an
+`architecture_module` ceiling of 250, and the budget's own message is the
+rule — over budget means delete geometry and paint it instead. What the
+triangles bought instead is a kick plate on each face, because the part of
+a doorway that actually takes damage is the bottom 400 mm.
+
+### Status: PASS — 2026-08-28
+
+Portal states `PASS`, standard door `PASS`. Kept: sealed as an alien-grown
+obstruction / closed wound, open as a visibly torn usable passage, the same
+approved frame, and the `identity` family **rather than inventing a false
+red / hazard semantic**.
+
+The door wearing theme trim is approved on its own terms:
+
+> A normal doorway should not advertise itself as a gameplay interaction
+> merely because it exists.
+
+And the surfaced question was handled the way it should be:
+
+> The surfaced `objective_marker` / `signage_module` question is correctly
+> treated as NEW visual-language work. Do not invent that language
+> silently. Continue elsewhere until we review it as its own coherent
+> batch.
+
+### The question this batch is surfacing rather than answering
+
+`objective_marker` (three objectives: `reach_reward`, `kill_all`,
+`platform_to_goal`) and `signage_module` ("navigation vocabulary; must read
+the same in all six themes") are both a **language** rather than a fixture.
+A sign system that has to mean one thing across six themes is new visual
+DNA, and `ART_FRONTIER.md` says to surface those and continue elsewhere.
+Surfaced; this was elsewhere.
+
+Status: **PENDING** — production work inheriting locked DNA.
+
+---
+
+## Batch 007 — the kit that moves you
+
+Tier 3 opens with the architecture kit: `ASSET_INVENTORY.md` §6 lists
+twenty-nine modules and nine were built. Five of the twenty unbuilt ones are
+**Pri A**, and they are all the same kind of thing — the pieces that get the
+player from one height to another and from one room to the next.
+
+| ID | Tris | Size (m) | Replaces |
+| --- | --- | --- | --- |
+| `arch_stair` | 112 | 3.04 × 4.00 × 2.00 | a stack of boxes |
+| `arch_ramp` | 36 | 2.96 × 4.00 × 1.49 | a stretched box |
+| `arch_ledge` | 48 | 4.00 × 2.50 × 0.87 | a floating slab |
+| `arch_connector_straight` | 108 | 4.00 × 4.80 × 4.40 | `chamber_builders.gd` corridor walls |
+| `arch_corner_left` | 84 | 4.80 × 4.80 × 4.40 | the same, turning |
+| `arch_corner_right` | 84 | 4.80 × 4.80 × 4.40 | its mirror |
+
+Nothing here establishes new visual DNA. Every one is the approved facility
+language on a module the generator already builds out of primitives.
+
+### The heights are the engine's, and they are the whole point
+
+A traversal module whose dimensions were chosen for looks would teach the
+player a lie about their own movement:
+
+- **The stair climbs 2.0 m** — twice `MAX_VERTICAL_STEP` and above
+  `JUMP_APEX`, so it is the first height that is neither walkable nor
+  jumpable. A stair that climbed less would be decoration on a step. Its
+  risers are 0.25 m and it is `BRUTE_LANE` wide (2.6 m), so the largest
+  enemy can use it.
+- **The ramp climbs exactly `JUMP_APEX`, 1.333 m.** That is the sharpest
+  fact about a ramp in this game: the player can jump it, and the things
+  that need it are the things that cannot.
+- **The ledge projects `MIN_PLATFORM_SIZE`, 2.5 m** — the smallest landing
+  the generator will place — and its front edge is what you clear a
+  `SAFE_BASE_JUMP_GAP` of 2.6 m to reach. It is anchored at the surface you
+  stand on rather than the bottom of its brackets, because that is the only
+  height anyone cares about.
+- **The corridor pieces are 4.0 m wide and 3.6 m high inside**,
+  `CORRIDOR_WIDTH_MIN` and `CORRIDOR_HEIGHT`. Built at the minimum on
+  purpose: a module authored at the maximum cannot be used in the narrow
+  case, and the narrow case is the one `zone.py` reaches for most.
+
+`T_climb_scale.png` puts the stair and the ramp beside `lab_dummy`, which is
+1.78 m against the player's 1.80 — the climb is a judgement, not a caption.
+
+### Two corners, not one rotated
+
+`arch_corner_right` is a mirror rather than `arch_corner_left` turned round,
+because rotating one puts the services tray and the skirting seam on the
+wrong side of the corridor. Both carry a chamfer across the inside of the
+turn: a square inner angle is a corner nothing was ever built into, and it
+puts a 90° pinch in the brute lane.
+
+### Where triangles went, and where they did not
+
+The ramp has **no modelled grip battens**. Six of them cost 72 triangles
+against an `architecture_module` ceiling of 250, and a tread pattern is
+exactly the sort of thing `assert_budget` means by *paint it instead*. The
+triangles bought kerbs, which cannot be painted, because a kerb's whole job
+is to be a silhouette that says **this edge is a drop**.
+
+### Evidence
+
+`docs/art/review/batch007/`, from `tools/shots/batch007_traversal.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `T_corner_turn.png` | **start here** — standing in the junction, both bores, at the engine's lens |
+| `T_corridor_eye.png` | standing in a straight run |
+| `T_corridor_run.png` · `_grey` | six modules assembled, from outside — the seams are the 4 m grid |
+| `T_climb_scale.png` · `_grey` · `_silhouette` | stair and ramp against a 1.78 m figure |
+| `T_stair.png` · `T_ramp.png` · `T_ledge.png` | each on its own |
+| `T_corner_left.png` | the junction as an object |
+
+### Status: PASS — 2026-08-28
+
+The corridor assembly reads correctly at player eye level. Approved:
+straight corridor grammar, corner / junction grammar, stair, ramp, ledge.
+
+> Preserve the rule that traversal dimensions come from ENGINE TRUTH rather
+> than aesthetic guesses. The fact that the stair / ramp / ledge were
+> dimensioned against actual movement bounds is important, especially as
+> production Zones become much larger and more compositionally complex.
+
+These are legal authored vocabulary for Epsilon / Godot integration, and
+**routine expansion of this architectural grammar may continue.**
+
+---
+
+## Batch 008 — the three projectiles
+
+Tier 4 is the enemy production family, and most of it is blocked: seven of
+the ten concepted roles are waiting on colliders (interface requirement 7)
+and the telegraph is waiting on a node that does not exist (requirement 14).
+`enemy_projectile` is the Pri-A row with nothing in its way.
+
+| ID | Tris | Size (m) |
+| --- | --- | --- |
+| `enemy_projectile_straight` | 104 | 0.44 × 0.44 × 0.30 |
+| `enemy_projectile_falling` | 152 | 0.44 × 0.44 × 0.29 |
+| `enemy_projectile_lobbed` | 192 | 0.63 × 0.61 × 0.47 |
+
+### Why three, when the engine draws one
+
+`echo_projectile.gd` describes three shapes as one primitive family, and
+they demand three different reactions:
+
+| Kind | How the engine knows | What the player must do |
+| --- | --- | --- |
+| straight | `gravity_scale` 0 | step sideways |
+| falling | `gravity_scale` > 0 | get out from under it |
+| lobbed | `blast_radius` > 0 | get clear of where it lands |
+
+Today all three are one `SphereMesh`, scaled 1.5× for a lob. So the single
+visual distinction the engine draws is size — the least useful of the three
+— and the two that decide whether the player steps sideways or runs are not
+drawn at all.
+
+### Hue is already spent, so form carries everything
+
+`EchoProjectile.tint` is **the source world's colour**: the projectile is
+painted with whichever multiworld game the Echo came from. That is an open
+set, exactly like the Check's destination ring, so nothing about hue is
+available to say which kind of projectile this is — and each of these is
+one flat material the engine overrides.
+
+- **straight** — a tight spindle with a hard equatorial ring of blades.
+  Wider than it is tall, so it does not read as something that will drop.
+- **falling** — a point at the bottom under a swept skirt. It says *the
+  ground under this is the problem* from any angle.
+- **lobbed** — bulkier, segmented, with a proud fuse band and six studs.
+  Something with an inside, that is going to come apart.
+
+Built at the engine's own 1.5× for the lob rather than relying on the
+multiplier, so the mesh is right either way.
+
+### Not oriented, on purpose
+
+`_ready` builds the visual and never rotates it; `_physics_process`
+integrates a velocity. A dart shape would fly sideways as often as not, so
+each of these reads from any angle around the vertical — and the vertical
+asymmetry is deliberate, because that is the one axis whose orientation the
+engine does keep.
+
+### Evidence
+
+`docs/art/review/batch008/`, from `tools/shots/batch008_projectile.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `X_projectile_family.png` · `_grey` · `_silhouette` | do the three separate by shape alone |
+| `X_projectile_above.png` · `_silhouette` | from overhead — the angle a falling shot is met from |
+| `X_projectile_in_hub.png` · `_grey` | **in the real room at 12 m**, on the engine's lens |
+
+The Hub shot is the trackability test, and it is **one theme of six**. The
+other five are behind the theme-kit gate `ART_FRONTIER.md` already records.
+Saying so beats a sheet that implies the test was done.
+
+### Status: PASS AS ART ASSETS — 2026-08-28
+
+> Straight / falling / lobbed correctly spend SHAPE rather than hue on
+> attack type. That is the right semantic split because source-world / Echo
+> tint already owns the projectile's color.
+
+Kept as written: straight's simple single lateral profile, falling's
+doubled / vertically differentiated profile, lobbed's substantially larger
+and heavier silhouette. The 12 m Hub evidence is sufficient for art
+approval.
+
+**Not a blocker, but recorded:** an engine-integration check is still owed
+— that moving projectiles stay trackable, that the three reactions stay
+readable during actual gameplay, and that readability holds in all six
+theme environments. That is playtest validation, not a model problem, and
+these are not to be redesigned pre-emptively unless it fails. Interface
+requirement 17.
+
+---
+
+## Batch 009 — the six remaining affordances
+
+`ASSET_INVENTORY.md` §5 lists seven affordances and one was built: the
+grapple anchors, which you passed at Style Lock. The other six are all real
+— `affordance_features.gd` places every one of them today out of `BoxMesh`,
+`CylinderMesh` and `TorusMesh`, at footprints that file states.
+
+| ID | Tris | Size (m) | Anchor |
+| --- | --- | --- | --- |
+| `breakwall_panel` | 112 | 0.40 × 2.42 × 2.60 | floor |
+| `water_basin` | 124 | 1.64 × 1.64 × 0.23 | floor |
+| `rail_beam` | 132 | 0.46 × 6.25 × 1.68 | floor |
+| `wind_ring` | 160 | 1.64 × 1.64 × 0.17 | centre |
+| `wind_perch` | 80 | 1.50 × 1.50 × 0.64 | ceiling |
+| `bounce_pad` | 160 | 2.03 × 2.03 × 0.42 | floor |
+| `movplat_deck` | 144 | 2.40 × 2.40 × 0.72 | floor |
+
+### One rule, and it is the inventory's own
+
+> The seven look the same everywhere or they teach nothing.
+
+An affordance is a promise about what the player's body can do, and a
+promise that has to be re-learnt in each of six themes is not one. So all
+seven wear the **`signal`** family — the same one the approved grapple
+anchors wear — and what differs is form:
+
+| | The promise, in shape |
+| --- | --- |
+| breakwall | a fractured panel with a struck face and a fitted frame |
+| water | a lip you can see over, with a modelled step out |
+| rail | a continuous unbroken top face, hard stops at both ends |
+| wind ring | an open ring whose vanes are angled **up** |
+| wind perch | a platform with a catching lip |
+| bounce | a drum under compression, not a disc on the floor |
+| movplat | a deck with treads and a guide slot saying which way |
+
+`A_affordance_family_silhouette.png` is the sheet that tests it: seven
+shapes, no hue, and each still says something different.
+
+### What that conflicts with, surfaced rather than fixed
+
+`affordance_features.gd` tints these six ad hoc today: the breakable wall
+takes the theme's hazard colour, water `(0.35, 0.75, 0.95)`, the rail
+`(0.9, 0.7, 0.95)`, wind `(0.7, 0.95, 0.9)`, and the bounce pad and moving
+platform take the theme's accent and trim.
+
+Four of those are not in `art_palette.json` at all. Two vary per theme — so
+the family does **not** currently look the same everywhere. And the rail's
+violet sits beside `glitch`, which in this palette means *cosmetic
+corruption that means nothing mechanically*: an affordance wearing it tells
+the player the opposite of the truth.
+
+That is engineering's file and this lane does not edit it. Interface
+requirement 15 records it; these are built to the rule the inventory states,
+and the sheets show that rather than today's tints.
+
+### Two things the engine keeps
+
+The breakable panel's **cracks** are the engine's channel — it draws three
+bars and shrinks them as the panel's health drops — so nothing here paints
+any. And `wind_ring` is one mark, not three: the engine stacks three of them
+up the column at 1.2 m intervals, and `A_wind_column.png` shows it that way.
+
+### Evidence
+
+`docs/art/review/batch009/`, from `tools/shots/batch009_affordances.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `A_affordance_family.png` · `_grey` · `_silhouette` | **start here** — one family, seven promises |
+| `A_wind_column.png` | the updraft as the engine stacks it |
+| `A_rail_beam.png` · `A_bounce_pad.png` · `A_breakwall_panel.png` | each on its own |
+| `A_movplat_water.png` | the two that are read from above |
+
+### Status: PASS — 2026-08-28, and the interface question is decided
+
+> This is exactly the universal gameplay-language direction I want:
+> **ONE FAMILY, SEVEN PROMISES.**
+
+Approved by name: the bounce pad's circular impact read, the rail beam and
+support language, the breakwall panel, the moving platform's directional
+deck, the water lip / basin language, and the stacked wind rings with their
+perch.
+
+And the conflict this batch surfaced is **ruled in art's favour**:
+
+> AFFORDANCES SHOULD NOT EACH RECEIVE AN ARBITRARY UNIQUE COLOR.
+>
+> - all optional traversal affordances use the approved SIGNAL family
+> - silhouette / form tells the player WHICH affordance it is
+> - SIGNAL color tells the player THIS IS AN AFFORDANCE / CAPABILITY
+>   OPPORTUNITY
+> - theme does not redefine that semantic
+> - source-game color does not redefine that semantic
+> - Epsilon green does not replace that semantic
+
+with two engine-owned dynamic channels explicitly preserved: the breakable
+wall's damage / crack state, and the wind ring count and stack
+presentation. Interface requirement 15 is no longer a question — it is a
+requirement for Production Engineering, and no gameplay behaviour changes
+from this branch.
+
+---
+
+## Batch 010 — the dressing the generator actually places
+
+### The finding first, because it matters more than the three props
+
+`ASSET_INVENTORY.md` §8 lists twenty-two universal props — `prop_barrel`,
+`prop_locker`, `prop_canister`, `prop_fan`. **Nothing places any of them.**
+
+`chamber_builders._theme_props` is the only thing in the generator that
+puts dressing in a Zone, and it places exactly one prop per *theme*:
+
+| Theme | What every Zone actually gets | Was it in the inventory? |
+| --- | --- | --- |
+| concrete_facility | a bolted warning plate | no |
+| rusted_industrial | an oil drum, sometimes stacked, or a wall valve | no |
+| gothic_stone | a torch sconce with a lit flame | no |
+| neon_transit | hanging signage | no |
+| temple_ruin | root tendrils, or a column stump | no |
+| void_glitch | a `Label3D` reading `prop_missing.mdl` | no |
+
+So the inventory's prop section described a library the game does not use,
+and the six props every Zone in the game *does* contain were not in it at
+all. §9's *signature dressing props* row is their home and it was `—` for
+all six themes. Both are corrected.
+
+### What was built, and what was not
+
+| ID | Tris | Size (m) | Theme |
+| --- | --- | --- | --- |
+| `prop_wall_plate` | 84 | 0.90 × 0.10 × 0.62 | concrete_facility |
+| `prop_oil_drum` | 184 | 0.78 × 0.78 × 0.95 | rusted_industrial |
+| `prop_valve_wheel` | 176 | 0.62 × 0.23 × 0.62 | rusted_industrial |
+
+Three, gated by which theme material families exist —
+`materials.built_themes()` is concrete_facility, rusted_industrial and
+void_glitch. A gothic torch sconce cannot be painted before gothic_stone has
+a family, and building it against another theme's ramps is a prop that gets
+rebuilt.
+
+**void_glitch's is deliberately left alone.** Its prop is a text label
+reading `prop_missing.mdl` — the prop that never loaded — and authoring a
+mesh for it would destroy the joke, which is that theme's whole identity.
+
+### The drum stacks, so it tiles
+
+`_theme_props` duplicates the drum at `position.y += 0.95` four times in
+ten. It is therefore exactly 0.95 tall with flat full-width faces, its
+rolling hoops are recessed inside the body radius, and its bung is flush
+rather than proud — a 20 mm boss would make every stacked pair
+interpenetrate by exactly that. `D_drum_stack.png` is two of them on each
+other, which is the only way to know.
+
+### Evidence
+
+`docs/art/review/batch010/`, from `tools/shots/batch010_dressing.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `D_drum_stack.png` · `_grey` | does the drum tile |
+| `D_dressing_family.png` · `_silhouette` | three of six, side by side |
+| `D_wall_plate.png` · `D_valve_wheel.png` | each on its own |
+
+One thing to look at: the warning plate is a 0.9 × 0.6 m field of hazard
+orange, and it is the *only* dressing a concrete_facility Zone gets. That
+is what `hazard_mat` already does and it is semantically right — a warning
+plate is a warning — but it is also the largest single area of orange
+anywhere in the facility, so it is worth your eye against the Batch 004
+rule that orange stays rare.
+
+### Status: PASS AS ASSETS — 2026-08-28
+
+The three dressing assets are approved, and two decisions are kept as rules:
+
+> The 0.95 m drum height / flush bung decision is correct. Preserve engine
+> stacking compatibility rather than adding decorative geometry that causes
+> deterministic intersections.
+>
+> Leaving void_glitch's `prop_missing.mdl` joke unmodeled is also correct.
+> Do not "fix" deliberate missing-content identity.
+
+And the finding is promoted to standing practice:
+
+> **ASSET_INVENTORY must describe assets the runtime can actually place, and
+> assets the runtime actually places must not be absent from the inventory.**
+> Continue finding and correcting discrepancies of that kind.
+
+#### The orange placement rule
+
+The plate is approved and its orange does **not** violate the Batch 004
+semantic, because it genuinely is a warning object. But:
+
+> ORANGE MUST REMAIN WARNING / HAZARD LANGUAGE. Do not allow the warning
+> plate to become generic facility wallpaper simply because it is currently
+> the only facility dressing prop. Do NOT recolor this approved warning
+> plate merely to make it generic. Instead, give generic facility dressing
+> its own neutral assets later.
+
+`_theme_props` does currently place it as the "put decoration here" slot for
+`concrete_facility` — one to two per chamber at a random height and a random
+position along the run, with no notion of whether anything there warrants a
+warning. That is interface requirement 18.
+
+---
+
+## Batch 011 — rails that bend
+
+Owner request: *"can we do a spline for the rail? So like it has cool bends
+and stuff and we can ride one"*. Yes — and the interesting part of the
+answer is which bends the game can afford today.
+
+| ID | Tris | Size (m) | Path |
+| --- | --- | --- | --- |
+| `rail_arc_rise` | 408 | 0.42 × 6.36 × 2.74 | 11 points |
+| `rail_arc_launch` | 480 | 0.42 × 6.36 × 2.84 | 13 points |
+| `rail_arc_weave` | 480 | 0.89 × 6.36 × 1.54 | 13 points |
+
+### The footprint decides which bends exist
+
+`affordance_features.FOOTPRINT["rail"]` is `half_width 0.5, half_depth 3.5`,
+height 3.6 — so a rail's whole footprint is **1.0 m wide, 7.0 long, 3.6
+tall**:
+
+- **Vertical bends are free.** There is 3.6 m of headroom and a straight
+  rail uses 1.7 of it. `rail_arc_rise` climbs 1.30 m; `rail_arc_launch`
+  dips 0.75 and then rises 1.55 past where it started.
+- **Lateral bends are not.** The rail is 0.42 m across, leaving 0.27 m
+  either side of the centreline. `rail_arc_weave` is exactly that — a real
+  S, and a gentle one, and that is the footprint's decision rather than a
+  design choice.
+
+A proper banked turn needs a wider `half_width`, and that is **interface
+requirement 16** rather than a model nobody can place.
+
+### Why they are polylines, and the contract that comes with it
+
+`_rail` hangs an `AffordanceNodes.Volume` over the beam — an axis-aligned
+box `Area3D`. **A box cannot follow a curve**, so a swept spline would be a
+rail the player falls straight through.
+
+A polyline can: one box per segment, oriented along its own segment, is
+implementable with the class that already exists. So each rail is built
+from an explicit chain of straight segments, and **its manifest entry
+carries `ride_path`** — the same points the mesh was swept along, in metres,
+in the asset's own space.
+
+> The mesh and the ride come from one list of points.
+
+That is the whole ask of engineering here. A second description of the
+curve, written by hand beside the first, is a description that drifts.
+
+### Two shaping decisions worth your eye
+
+- **The launch dips at 40% of the run, not the middle.** A symmetric valley
+  gives back exactly what it took and reads as decoration. Off-centre, the
+  second half is longer and shallower, so the rail trades height for
+  distance — which is what a launch is.
+- **The posts are generated from the path**, dropped wherever the deck is
+  more than 0.45 m up, so a rail that changes shape cannot end up with its
+  posts in mid-air. Ends keep Batch 009's hard stops, which matter more on
+  a launch than on a straight.
+
+### Not decided here
+
+Speed, friction and lift on a curve are gameplay. `_rail`'s lane runs
+`{friction_scale: 0.05, speed_scale: 1.25, gravity_scale: 0.85}`, and a dip
+that converts height into speed may want different numbers. This lane does
+not pick them; `rail_arc_launch` is shaped so the question is worth asking.
+
+### Evidence
+
+`docs/art/review/batch011/`, from `tools/shots/batch011_rails.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `R_rail_family.png` · `_grey` · `_silhouette` | **start here** — all three side-on, with Batch 009's straight for scale |
+| `R_rail_ride.png` | riding at the launch, on the engine's own lens |
+| `R_rail_launch.png` | the launch alone — where the low point sits |
+| `R_rail_weave_above.png` | the weave from above: ± 0.27 m is all there is |
+
+### Status: PASS — 2026-08-28
+
+The curved rail family is approved: the Batch 009 straight, plus rise,
+launch and weave. *"The vertical variation is especially valuable. These
+already create more interesting traversal opportunities than flat rails."*
+
+The contract is approved as a contract:
+
+> **THE MESH AND THE RIDE PATH COME FROM THE SAME POINT LIST.** Preserve
+> `ride_path` as the authoritative geometric path shared by visual mesh and
+> runtime riding geometry. Do not independently hand-author visual rail and
+> collision/ride path.
+
+One ride volume per straight polyline segment is confirmed as a valid
+integration direction, and the footprint limit is retained as **future
+expansion, not a blocker**: 1.0 m permits the approved weave and not the
+banked turns the owner eventually wants. *"Do not fake a dramatic lateral
+curve inside an invalid footprint."* Broader lateral curves, banked turns
+and longer linked rail compositions come after a wider legal footprint is
+agreed with engineering — requirement 16.
+
+Speed and friction on dips and rises stay engineering's and playtesting's:
+*"Art should provide the path, not silently define movement physics."*
+
+---
+
+## Batch 012 — the three unbuilt themes
+
+Style Lock opened theme production, and this closes the largest single gap
+in the project: `neon_transit`, `gothic_stone` and `temple_ruin` had no
+material family, so every theme-specific asset behind them was blocked and
+half the game looked like the other half.
+
+**Nothing here is invented.** §9 of `ASSET_INVENTORY.md` already recorded
+each theme's identity, and each treatment implements the line written there:
+
+| Theme | Structure | History it carries |
+| --- | --- | --- |
+| `neon_transit` | glazed tile grid, grout, signage band | stains from above, wet floor, ground-in dirt at the grout |
+| `gothic_stone` | coursed ashlar, iron banding | soot, chipped arrises, mortar loss |
+| `temple_ruin` | cut sandstone, brass mechanism | cracks, root intrusion, wind polish and drift |
+
+Five roles each — wall, floor, ceiling, trim, accent — at the same 128 px
+over 4.00 m, 32 texels/m as the approved three. **Six of six themes now
+build.**
+
+### Three things that are decisions rather than transcription
+
+- **Coursed stone is not a grid.** `panel_grid` is right for a panelled
+  wall and wrong for a wall that was *laid*: the whole read of ashlar is
+  that no vertical joint continues past its own course. A new `_coursed`
+  helper staggers each course and jitters the offset off the nominal bond,
+  because a perfectly alternating bond is a machine's bond.
+- **The wet floor is darker, not shinier.** `neon_transit` gets broad
+  pools that are darker and slightly bluer. A painted specular highlight
+  moves with the camera in every engine and does not move in a texture, so
+  it is a lie that only works from one place.
+- **Temple's wind polish is two opposite gradients**, which is why it is
+  not one `tonal_drift` call: the upper part of a ruin wall is scoured pale
+  and the lower part holds drift. Its roots come from the top edge and fork
+  as they descend — a root that started halfway down a wall is a squiggle.
+
+### Evidence
+
+`docs/art/review/batch012/`
+
+| Image | What it answers |
+| --- | --- |
+| `H_probe_*_room.png` | **start here** — each theme in engine, in a composed room |
+| `H_probe_*_greyscale.png` | does it hold without hue |
+| `H_material_*.png` | the five roles at 4× nearest-neighbour, for judging the paint |
+
+The probe rooms are the same bench and the same 3,272-triangle room the
+approved themes were judged in, with only the material family swapped —
+which is also the runtime model these are built for: **one authored mesh,
+six theme materials, selected by Godot.**
+
+### Status: PASS — locked as BASE MATERIAL FAMILIES, 2026-08-28
+
+All three approved, completing base material coverage for all six themes.
+Neon's glazed tile identity, dark floor and cyan transit language; gothic's
+coursed masonry and darker structural iron, *"readable without relying on
+hue"*; temple's sandstone, root intrusion and warm aged identity, *"clearly
+separates from gothic and facility"*.
+
+> The common probe-room comparison is useful because it demonstrates that
+> the same authored geometry can acquire a meaningfully different identity
+> through theme materials alone.
+
+#### A material family is not a complete theme
+
+Recorded so nothing downstream mistakes one for the other:
+
+> Passing Batch 012 does NOT mean every theme is visually finished. These
+> are the approved material foundations. Later theme identity may
+> additionally come from lighting, theme-specific dressing, architecture
+> variants, landmarks, decals/signage, environmental history, props and
+> local composition.
+
+And specifically about the probe room's own fixture:
+
+> The fluorescent fixture in the probe room is useful as a controlled
+> comparison tool. It does NOT mean final Gothic Stone spaces must look
+> like castles illuminated by office fluorescents.
+
+So the probe stays a **control**: same room, same fixture, same camera, only
+the material family swapped — that is what makes it a comparison. Production
+theme kits develop their own lighting and dressing language separately, and
+a probe render is never evidence about a theme's lighting.
+
+---
+
+## Batch 013 — the dressing the other three themes place
+
+Chosen straight off the owner's steer for Batch 010: *keep expanding
+ACTUALLY PLACEABLE production vocabulary rather than merely increasing an
+inventory number.* Batch 012 unblocked these by building their material
+families; `_theme_props` places every one of them in every Zone of its
+theme today, out of primitives.
+
+| ID | Tris | Size (m) | Theme |
+| --- | --- | --- | --- |
+| `prop_sconce` | 84 | 0.24 × 0.38 × 0.49 | gothic_stone |
+| `prop_sconce_flame` | 112 | 0.22 × 0.19 × 0.22 | gothic_stone |
+| `prop_transit_sign` | 96 | 1.62 × 0.16 × 0.69 | neon_transit |
+| `prop_root_fall` | 112 | 0.26 × 0.26 × 1.04 | temple_ruin |
+| `prop_column_stump` | 140 | 1.15 × 1.15 × 1.20 | temple_ruin |
+
+**Every prop the generator places is now authored** except void_glitch's,
+which is a text label and stays one.
+
+### Three things the engine keeps, and the mesh is built around each
+
+- **The sign's text.** `_theme_props` puts one of six lines on a `Label3D`
+  — "PLATFORM ε", "MIND THE STATIC". The board is a *housing*, exactly like
+  the Hub's campaign board: a baked line would be wrong the first time the
+  list changed and identical on every sign in the Zone.
+- **The root's length**, randomised between 1.2 m and the room height less
+  0.6. So the root is a **1.0 m section with flat ends that tiles**, not one
+  fixed length that would have to be stretched — and stretching smears a
+  texture along its own axis, which is instantly readable as stretching.
+- **The stump's height**, 0.6 to 1.6 m. Authored at 1.20, the midpoint,
+  with all its detail in the **top 0.4 m**, so an instance the engine scales
+  still has a broken top rather than a stretched one.
+
+### The flame is warm light, not hazard
+
+`ART_BIBLE.md` §2 puts warm yellow in the game as *localized utility pools /
+fixtures within a still-cold environment*, and a torch is the purest case of
+that rule: an actual fire, in an actual bracket, lighting a few actual
+metres. It takes the `send` family — the same amber the utility lamps wear —
+and explicitly **not** `hazard`, because Batch 004's verdict reserved orange
+for warning and the Batch 010 verdict restated it. A flame is not a warning.
+
+**The bench cannot judge this one, and that is worth saying rather than
+working around.** `ART_LESSONS` L-03: only the Compatibility renderer starts
+in this sandbox, so there is no glow — and a flame is the most
+glow-dependent object in the project. What the sheet shows is the unbloomed
+mass. It is built squat and wide rather than tall and tapered because that
+is the shape that survives the absence: fire is widest near its source, and
+a cone is a hat at any exposure. Three passes went into that and the third
+is the one to look at.
+
+### The bracket had to come back up in value
+
+Iron is dark, and at both `dark` and `mid` on gothic_stone's base ramp the
+bracket rendered as a single black blob with no form in it — no arm, no
+bowl, no straps. The theme's own value hierarchy already puts the room dark;
+a fixture inside it has to come back up, so the sconce is painted `light`.
+`G_sconce_pair.png` is the bracket with and without its fire, because they
+are two nodes in the engine and it has to read as a bracket when the fire is
+not drawn.
+
+### Evidence
+
+`docs/art/review/batch013/`, from `tools/shots/batch013_theme_dressing.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `G_theme_dressing_family.png` · `_grey` · `_silhouette` | **start here** — all five, three themes |
+| `G_sconce_pair.png` | bracket alone, then lit |
+| `G_root_stack.png` | three sections stacked — the length is the engine's |
+| `G_transit_sign.png` · `G_column_stump.png` | each on its own |
+
+Status: **PENDING** — production work inheriting locked DNA.
+
+---
+
+## Batch 014 — a light fixture family for every theme
+
+`ASSET_INVENTORY.md` §9 listed *light fixture family, 1–2, Pri A* and it was
+blank for all six themes. Two fixtures existed and both were
+concrete_facility's — so five of six themes were lit by facility hardware,
+which is the Batch 012 note verbatim: *"final Gothic Stone spaces must not
+look like castles illuminated by office fluorescents."*
+
+| Theme | Hung | Wall / bracket |
+| --- | --- | --- |
+| concrete_facility | `arch_light_fixture` (B1) | `arch_utility_lamp` (B2) |
+| rusted_industrial | `light_rusted_cage` 240 | `light_rusted_clamp` 104 |
+| neon_transit | `light_neon_channel` 72 | `light_neon_edge` 60 |
+| gothic_stone | `light_gothic_corona` 256 | `light_gothic_lantern` 184 |
+| temple_ruin | `light_temple_bowl` 212 | `light_temple_niche` 140 |
+| void_glitch | `light_void_absent` 84 | `light_void_debug` 60 |
+
+**concrete_facility builds nothing here, and that is the point.** Its family
+exists and you approved it; a third would be padding a batch rather than
+filling a gap. It is in every sheet as the control.
+
+### The test this batch lives or dies by
+
+> Do not rely only on bulb/emissive hue. … I especially want to see whether
+> the physical fixtures remain distinguishable without hue.
+
+`L_light_family_silhouette.png` is that test, and it is the sheet to open
+first: twelve fixtures, no colour, twelve different objects — strip, caged
+can, long trough, ring on three chains, bowl on three chains, a bracket with
+a hole in it, a box floating with struts at wrong angles; and below, lamp
+box, clamp cone, edge blade, peaked lantern, stone niche.
+
+Every design was chosen for its outline first and its emitter second.
+
+### What each theme's construction language is doing
+
+- **rusted_industrial** — a cage, because a work light in a refinery is
+  caged; and a clamp-on with a cable, deliberately asymmetric, because that
+  is the fixture somebody *carried in* rather than the one installed with
+  the building. Two different sentences about the same theme.
+- **neon_transit** — the least ornamental fixture in the batch, on purpose.
+  Your brief warned against making every fixture a giant neon sign, so the
+  ceiling light is a flush recessed trough that reads as part of the soffit,
+  and the platform-edge strip is the only fixture here whose emissive face
+  points at the **floor**: you never see the source, only the wash.
+- **gothic_stone** — a corona hung from one point on three chains, the way a
+  thing gets hung from a vault, with candle stubs that are what stop the
+  ring reading as a hoop. The lantern has a **roof**, because a flat-topped
+  box on a wall is a junction box and a flame needs a chimney.
+- **temple_ruin** — two materials with the join as the story: the carved
+  boss is the building, the brass bowl is what somebody hung from it. And
+  the niche is the only fixture in the batch that is a **hole** rather than
+  an object — cut into the masonry, not fixed to it.
+- **void_glitch** — the mount is there and the fixture is not, and the light
+  happens anyway; plus a placeholder that shipped, untextured and hanging
+  from nothing with its struts missing the box. It is the only asset in the
+  project that deliberately uses `make_material` with no painted canvas.
+  Both still function as light sources, which was the one hard requirement.
+
+### What art did not decide
+
+The gameplay light. `chamber_builders._light` places its `OmniLight3D`s at
+the theme's energy, range 12, shadows off, and that stays engineering's
+contract. Every fixture here is a **housing**: the emissive face says where
+the light comes from, and the light comes from the engine. None of them is
+bright enough to light a room, because a fixture that were is a fixture you
+cannot look at.
+
+### Evidence
+
+`docs/art/review/batch014/`
+
+| Image | What it answers |
+| --- | --- |
+| `L_light_family_silhouette.png` | **start here** — twelve fixtures, no hue |
+| `L_light_family.png` · `_grey` | the same lit, and its value read |
+| `L_pair_*.png` | each theme's two, alone, same camera |
+| `H_probe_*_room.png` · `_greyscale` | **the common comparison room** — same geometry, same camera, same bench as Batch 012, each theme now under its own fixture |
+
+The probe rooms are a direct A/B against Batch 012's: identical rooms, one
+variable changed. Gothic's is the one to compare.
+
+Status: **PENDING** — theme-identity work, not self-marked.
+
+---
+
+## Batch 015 — the corridor shell family
+
+`ASSET_INVENTORY.md` §7 is L3 and had nothing in it. It replaces
+`chamber_builders.build`'s five procedural chamber types, and it is the
+level the owner named as the point of the whole tier: *stop Epsilon from
+visibly repeating one room.*
+
+### What a shell asset IS
+
+`corridor()` is **parametric** — it reads `length`, `width` and a height
+that grows when the chamber carries an affordance — so no single mesh fits
+every case, and the alternative was ruled out:
+
+> Do not stretch collision-critical shells generically just to create
+> variants. Prefer authored discrete forms / size classes where gameplay
+> geometry matters.
+
+So a shell is **one glb at one discrete size**, built from the same
+primitives as every other batch, and its manifest entry carries what the
+runtime needs to place it: `exit_offset`, `bounds`, `interior`,
+`check_anchor`, `enemy_anchors`, `affordance_anchor`, `sightline`. Semantic
+intent, not a resource path.
+
+### The four, and the difference each one is for
+
+| Shell | Size | Tris | Sightline | What it does that the others do not |
+| --- | --- | --- | --- | --- |
+| `shell_corridor_narrow` | 4.0 × 14 m | 132 | 14.0 | `CORRIDOR_WIDTH_MIN`, no cover. `BRUTE_LANE` is 2.60, so a brute leaves 0.70 m either side: the corridor you cannot get past |
+| `shell_corridor_bays` | 6.0 × 16 m | 408 | 16.0 | recesses every 4 m, alternating sides. Cover, a flank, and the only corridor with pockets a Check can sit in off the walking line |
+| `shell_corridor_stepped` | 5.0 × 16 m | 132 | 8.0 | a 1.00 m step mid-run — exactly `MAX_VERTICAL_STEP`, so it is walkable and reads walkable — plus a ledge at 2.60 over the low half |
+| `shell_corridor_gallery` | 8.0 × 20 m | 240 | 20.0 | a walkway at 2.60 m, out of a base jump's reach. Two routes, and the only corridor where something can hold above you |
+
+Every dimension sits inside `zone.py`'s corridor bounds (6–30 m long,
+4–10 m wide) and the ceiling is `CORRIDOR_HEIGHT` except where a feature
+needs more, which is `corridor()`'s own rule. The gallery's stair uses
+`arch_stair`'s 0.325 m riser so the two kits agree. Nothing here is an
+aesthetic guess; the numbers come from `engine_truth`.
+
+Well under the 12000-triangle room budget — a shell is an envelope, and the
+props, fixtures and affordances that dress it come from Batches 009–014.
+
+### One claim withdrawn
+
+The first pass gave `shell_corridor_bays` a `sightline` of **6.4**, on the
+reasoning that alternating recesses make a corridor you have to weave down.
+The entry render disproves it: all 16 m of floor is visible from the mouth.
+A recess in the side of a straight lane is **cover, not occlusion**, and
+`sightline` is a number `zone.py` would have consumed.
+
+So the number is now 16.0 and the family's story changed rather than the
+geometry: bays earn their place on **routing, encounter and Check
+placement**, which are three of the axes named for this tier, and the
+definition of `sightline` is now something a render can be held against —
+*how far down the run the floor stays visible from the entrance at eye
+height* — rather than a mood word. (L-51.)
+
+### What is weakest here, stated rather than hidden
+
+The bays read **quietly** from the entrance. At 1.6 m deep in a 3.6 m
+ceiling, an opening 16 m away is a dark band, and the head over it is
+doing most of the work. `S_bays_approach.png` is the honest frame: the
+pocket reads on approach, not down the length. If that is not enough, the
+fix is more likely a fixture inside each bay (Batch 014 language) than a
+deeper recess, because depth costs lane width the corridor does not have.
+
+### Evidence
+
+`docs/art/review/batch015/`
+
+| Image | What it answers |
+| --- | --- |
+| `S_narrow_entry.png` | the pressure corridor, full sightline, nowhere to go |
+| `S_bays_entry.png` | the lane stays open 16 m — the corrected claim, shown |
+| `S_bays_approach.png` | the pocket as a pocket, from where a player meets it |
+| `S_stepped_entry.png` | the 1.00 m step, and the far floor it hides |
+| `S_stepped_from_high.png` | the same corridor from the high half: nothing hidden the other way |
+| `S_gallery_entry.png` | two routes, the stair, the deck out of reach |
+| `S_gallery_high.png` | the high ground a ranged enemy holds — or you do |
+
+All seven are the engine's own lens at eye height, because a corridor's
+whole design is what you can see when you step into it.
+
+Status: **PENDING** — the family's readability is a judgement, not
+self-marked.
+
+---
+
+## Batch 016 — the arena shell family
+
+The second of §7's six families, and the one the game spends its fights in.
+`zone.py`'s `ArenaChamber` is 10–28 m square with walls 4–8 m, carries up to
+four enemy groups, and takes one of two objectives — `kill_all` or
+`reach_reward`. A boss room is an arena holding one brute.
+
+### What makes four arenas four rooms
+
+A corridor differs from a corridor in what you can **see**. An arena differs
+from an arena in what you can **do**, because an arena is a floor plate with
+a fight on it and the real variables are only three: where cover is, what is
+above, and how the plate divides.
+
+So these four are one subtraction, one addition, one storey and one
+division — not one room at four sizes.
+
+| Shell | Size | Tris | Open floor | Cover reach | What it does |
+| --- | --- | --- | --- | --- | --- |
+| `shell_arena_pit` | 18 × 18 × 6 m | 312 | 1.000 | 0.000 | the middle drops exactly `MAX_VERTICAL_STEP`, so the fight is in a bowl and the rim is high ground you can *walk* to. The Check is down in it |
+| `shell_arena_pillars` | 22 × 22 × 5 m | 744 | 0.915 | 0.786 | a 4 × 4 column grid on a 4.4 m pitch. Cover in the middle of the plate, and every 3.2 m aisle clears a 1.8 m brute |
+| `shell_arena_balcony` | 26 × 24 × 8 m | 480 | 0.982 | 0.338 | spans and wall height near `zone.py`'s ceiling, with a walkway at 3.2 m on three sides. One open plate below, ranged ground above |
+| `shell_arena_split` | 20 × 20 × 5 m | 288 | 0.952 | 0.521 | a 1.80 m barrier — above `JUMP_APEX` 1.333, so it must be gone around — with two gaps. Sightline 10 m, and the Check is on the far side |
+
+### Two measured keys instead of one asserted one
+
+Batch 015 learned that a manifest number a render contradicts is worse than
+no number (L-51). Arenas needed the same discipline, and the first attempt
+failed it in a different way: `open_floor` is honest and *does not
+discriminate* — sixteen columns eat 8% of a 22 m plate, so all four scored
+0.92–1.00.
+
+That number is still worth keeping, because it is exactly the engine's own
+rule made checkable: `_greeble_room` hugs its crates to the walls so *the
+arena floor stays fightable*, and these shells put cover in the middle
+without eating the plate. But the number that separates the family is
+**`cover_reach`** — the fraction of the floor within `brute_reach` of
+something to hide behind, because that is the distance a brute closes and
+therefore the distance at which cover is cover. It reads 0.000 / 0.338 /
+0.521 / 0.786, which is the family's actual spread.
+
+Both are sampled on a 0.10 m grid from the footprints the builder records
+as it places them, so neither can drift from the geometry.
+
+### What art did not decide, and is surfacing instead
+
+**Room chambers have no ceiling.** `_perimeter` builds a floor and four
+walls; `_greeble_room` adds corner buttresses and floor crates and nothing
+overhead. Corridors are roofed and arenas are not, so a Zone chaining one
+into the other joins a closed space to an open one at the doorway.
+
+These shells include a ceiling at `wall_height`, because that is the only
+reading in which the chain is continuous — and it is recorded as
+**interface requirement 19** rather than assumed. If open-sky arenas are
+intended for some themes (`void_glitch` and `temple_ruin` both have a case),
+the ceiling comes out and nothing else changes.
+
+Nor does this batch place cover randomly. `arena()`'s three rng boxes and
+`_greeble_room`'s two-to-four crates are the engine's dressing pass and
+still are. What a shell owns is the structure that has to be the same every
+time a Check is placed against it.
+
+### What is weakest here
+
+The pit reads **shallowly head-on**. One metre of drop across twelve is
+about five degrees of visual angle from the entrance, and
+`A_pit_entry.png` needs its near lip in frame to say what the room is;
+`A_pit_rim.png` is where the shape becomes obvious. Deepening it is not
+available — 1.00 m is `MAX_VERTICAL_STEP`, and one centimetre more turns a
+walkable bowl into a trap that needs a ramp. If the read is not enough, the
+fix is a fixture or a rail on the rim, not a deeper hole.
+
+### Evidence
+
+`docs/art/review/batch016/`
+
+| Image | What it answers |
+| --- | --- |
+| `A_pit_entry.png` · `A_pit_rim.png` | the bowl, head-on and from the rim |
+| `A_pillars_entry.png` · `A_pillars_aisle.png` | the grid, down the clear centre aisle and from inside it |
+| `A_balcony_entry.png` · `A_balcony_deck.png` | the boss room, and the ground above it |
+| `A_split_entry.png` · `A_split_gap.png` | the barrier hiding the far floor, and the gap you commit through |
+
+The four `_entry` frames are the comparison: same lens, same eye height,
+same ambient, four different problems.
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 017 — the platform-path family
+
+Third of §7's six families, and the only one where getting a number
+slightly wrong makes the game unfinishable.
+
+### The bound that is not a number
+
+`PlatformPathChamber` bounds `gap_size` and `vertical_step` **jointly**.
+v0.4 bounded them independently, both could be maxed, and the real margin
+was 1.17× rather than the 1.56× the flat-jump derivation advertised. So
+`engine_truth` now carries `C.max_safe_gap` as a **function**, not a
+figure: a shell asks the engine how far a jump reaches at the height it
+built, rather than remembering a number that was true at one step.
+
+Every mandatory jump is measured **edge to edge** between platform
+footprints — centre to centre would flatter every layout here — and
+`_assert_reachable` runs that over each consecutive pair before anything is
+exported:
+
+| Shell | Segments | Step | Gap | Worst jump | Bound at that step |
+| --- | --- | --- | --- | --- | --- |
+| `shell_path_ascent` | 5 | 1.00 | 1.80 | **1.800** | 2.00 |
+| `shell_path_stagger` | 6 | 0.50 | 2.20 | **2.309** | 2.40 |
+| `shell_path_spans` | 3 | 0.00 | 2.40 | **2.400** | 2.60 |
+
+The stagger's 2.309 is the interesting one. Platforms alternate 1.6 m
+either side of the centre line, so neighbours differ by 3.2 m laterally —
+0.7 m more than a 2.5 m platform's own width — and that 0.7 costs
+`sqrt(2.20² + 0.70²)` against a 2.40 m bound. The lateral offset is free
+right up to the platform width and priced beyond it, which is a fact about
+the geometry rather than a rule of thumb.
+
+### What differs, given how little is free
+
+`platform_path()` fixes more than the other builders: an 8.0 m width, 4.0 m
+ledges, 2.5 m square platforms, a rise of `step` per segment, enemies
+waiting on the **end ledge** rather than on the route, and a 40 m void
+below. What is left to author is the shape of the route and what the walls
+say about why the floor is gone.
+
+| Shell | Tris | What it does |
+| --- | --- | --- |
+| `shell_path_ascent` | 300 | the climb. Every landing at `MAX_VERTICAL_STEP`, straight up the centre, and a stub of the original floor slab left on both walls at the height the platforms are climbing back to |
+| `shell_path_stagger` | 312 | the same climb made into a route. Every jump turns you, so a shooter on the end ledge is never at the same angle twice |
+| `shell_path_spans` | 216 | not a climb at all. `vertical_step` may be 0.0, and a flat path is a different chamber rather than an easier one: three 6 m beams, the far ledge visible from the first step |
+
+### Two contracts these carry that no earlier shell did
+
+`exit_offset` has a **Y**. `platform_path()` returns `Vector3(0, rise,
+total)` because you leave at the top of what you climbed; every shell in
+Batches 015 and 016 exited at grade. Writing `(0, 0, total)` out of habit
+would have stacked the next chamber five metres below its own doorway.
+
+`bounds` reaches **40 m below** the origin. The void is engine-owned —
+`FALL_KILL_Y` is where a fall stops being a fall — and these shells model
+8 m of shaft, which is as far as anyone sees into an 8 m slot from above,
+carrying the real figures in the manifest rather than modelling forty
+metres of nothing.
+
+### No ceiling, and this time deliberately
+
+Interface requirement 19 is about **room** chambers, roofed in a corridor
+and open in an arena for no stated reason. A platform path is not that
+case: `platform_path()` builds its side walls `wall_height + 40` tall,
+running 20 m above the top of the climb. That is a chamber deliberately
+open to a shaft, and these keep it. Requirement 19 is unchanged.
+
+### What the bench could not do, and now can
+
+The three-light rig is built for a **subject on a backdrop**, where the key
+clears the model and dies on the floor. An open-topped shell is the size of
+the rig's own scale: the first pass put the key square onto one wall and
+rendered it pure white. `key_energy` is now a scene-group option in
+`shoot.sh` alongside `ambient`, defaulting to the old 1.25 so nothing
+already shot moves, and this batch is at 0.70 (L-56).
+
+### Evidence
+
+`docs/art/review/batch017/`
+
+| Image | What it answers |
+| --- | --- |
+| `P_*_over.png` | **start here** — the whole route from above. The stagger's alternation only reads from this frame |
+| `P_ascent_start.png` · `P_stagger_start.png` · `P_spans_start.png` | what the player is asked to read from the start ledge |
+| `P_ascent_mid.png` · `P_stagger_mid.png` | mid-route, where the next jump is the only thing that matters |
+| `P_spans_back.png` | from the end ledge — where `platform_path()` spawns its enemies, never on the route |
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 018 — the tower family
+
+Fourth of §7's six families. A tower is a 12 m square shaft climbed from
+the floor to a deck at the top of the back wall, and `TowerChamber` gives
+art exactly **one** number: `floors`, 2 to 5. The side, the 3.0 m floor
+spacing, the central column and where the exit is carved are all
+`tower()`'s, and these three keep every one of them.
+
+### What one number buys
+
+`floors` moves `total_rise` between 6 and 15 m inside a 12 m square — the
+whole range from a room with a gallery to a genuine shaft. So the three sit
+at the bottom, middle and top of it, and each answers the climb
+differently, because 6 m and 15 m are not the same problem at two scales.
+
+| Shell | Floors | Rise | Tris | Worst jump | The climb is |
+| --- | --- | --- | --- | --- | --- |
+| `shell_tower_collapsed` | 2 | 6 m | 528 | 0.800 | two storeys of floor slab that fell in, alternating far and near. You climb over the wreckage, and each 10.8 × 6.6 m half-floor is somewhere a fight can stand |
+| `shell_tower_spiral` | 3 | 9 m | 636 | 1.700 | the canonical square helix at `tower()`'s own inset and spacing, built as slabs cantilevered off the wall on brackets. A stairwell whose stairs are gone |
+| `shell_tower_gantry` | 5 | 15 m | 852 | 0.100 | maintenance access up the core: a full landing every 3.0 m — `tower()`'s own `per_floor` — joined by short flights. The only tower where the top is out of sight from the bottom |
+
+All three against a 2.00 m bound at `MAX_VERTICAL_STEP`.
+
+### The check paid for itself on its first run
+
+`routecheck` is now a shared module rather than two copies — Batch 017's
+platform paths and this batch enforce the same rule, so the two families
+cannot drift apart on what a legal climb is. The platform-path shells
+rebuild byte-identical after the extraction.
+
+Its first run on new geometry **refused a shell**. `shell_tower_collapsed`
+originally alternated its surviving half-floors **left and right**, which
+put a 3.60 m crossing between them against a 2.00 m bound — an
+unfinishable level that no render would have shown, because from every
+camera it looks like two floors with a gap. Alternating in **depth**
+instead means each climb happens on the slab below it and no jump ever
+crosses open shaft.
+
+Towers pass `require_gap=False`. `tower()` spaces its 2.6 m platforms 2.4 m
+apart, so the procedural spiral **overlaps** and the mandatory climb is
+very nearly a staircase. Failing a shell for being easier than a jump would
+be inventing a rule the engine does not have.
+
+### A number that was wrong for a subtle reason
+
+Every shell first reported a worst jump of about **1.93 m** against the
+2.00 m bound — alarming, and false. The route was measured from the
+*doorway*, but a tower's ground floor is a full 12 × 12 slab: the player
+walks under the first platform and steps up. Measured from the ground the
+same three shells read 0.800, 1.700 and 0.100.
+
+The geometry never changed. What changed is that the check now starts where
+the player actually stands, and a number that says "nearly illegal" about a
+step nobody has to make is worse than no number (L-58).
+
+### What all three keep
+
+The **central column**. `tower()` builds a 2.2 m core and says what it is
+for — it "blocks straight-line ranged fire across it" — so that is a
+gameplay property, not decoration. Every shell here has one; they differ in
+how it is dressed (capital, banded, riven) and never in whether it exists.
+
+The **exit at the summit**, carved in the back wall at `top_y` with a deck
+across the back and a bridge strip out through it. `exit_offset` is
+`(0, rise, 14.2)`. A tower that exited at grade would be a room.
+
+### Evidence
+
+`docs/art/review/batch018/`
+
+| Image | What it answers |
+| --- | --- |
+| `T_*_entry.png` | the question a tower asks: from the door, looking up |
+| `T_*_over.png` | the whole route, from over the open shaft |
+| `T_collapsed_upper.png` | standing on the upper half-floor, over the tear |
+| `T_spiral_climb.png` | part way up, where the helix turns |
+| `T_gantry_landing.png` | the third landing, two storeys above the door |
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 019 — treasure rooms and corners: §7 complete
+
+The last two families, and the two with the least room to move. That is the
+interesting part.
+
+### Treasure rooms: three answers to *why the reward is here*
+
+`TreasureRoomChamber` has **no dimensional parameters at all**. `side` 8.0
+and `height` 4.5 are literals in `treasure_room()`, `reward_position` is
+`Vector3(0, 1.0, side / 2)` — the centre of the room, on a two-step plinth
+— and the schema's whole content is *small safe reward room, exactly one
+reward, never enemies*.
+
+So all three shells put the reward in exactly the same place, in exactly
+the same box, and differ only in the room around it:
+
+| Shell | Tris | The room says |
+| --- | --- | --- |
+| `shell_treasure_vault` | 360 | **this was protected** — heavy frames on both doors, a curb ring keeping the floor clear around the plinth, a coffered ceiling |
+| `shell_treasure_cache` | 456 | **this was stored** — racking on three walls with empties on the shelves, and the plinth reading as the one pallet nobody took |
+| `shell_treasure_coffer` | 384 | **this was displayed** — the ceiling steps up into a closed pocket 0.90 m deep over the plinth, carried down by four pilasters |
+
+The coffer's pocket is **closed**. A light well open to the sky in a
+windowless facility would be a hole, and `treasure_room()` roofs itself
+deliberately — which is also the evidence that sharpened interface
+requirement 19: corridors, corners and treasure rooms all close their tops,
+and only arenas and towers do not. It is not a rule that rooms are open; it
+is that two of the five were never closed.
+
+Every shelf in the cache sits behind the plinth's 3.0 m footprint and clear
+of both 2.4 m door lanes, and the empties are on shelves, never on the
+floor. A safe room the player has to squeeze through is not a safe room.
+
+### Corners: two, and the render corrected the name
+
+`corner()` produces a left turn and a right turn and nothing else, so two
+mirrored shells is the honest answer: a player who learns to read one turn
+should read the other without relearning it.
+
+Which of `turn` +1 and −1 is *left* is derived rather than assumed, and the
+first pass got it backwards. `corner(+1)` exits through the **+X** wall,
+`zone_builder`'s `_rot` maps +Z to +X under a +90° yaw, and in Godot a node
+facing +Z has been yawed 180° so its right is world −X — making +X the
+player's **left**. The review render disagreed with its own caption, and
+the fix was the **name**, not the camera (L-61).
+
+### What these deliberately do not copy
+
+`corner()` marks its turn with a 0.06 × 1.0 × 2.0 stripe in
+`ThemeMaterials.hazard_mat` — hazard orange, used as a navigation cue. The
+Batch 010 ruling is that **orange must remain warning / hazard language**
+and that generic facility dressing gets its own neutral vocabulary. A turn
+is not a warning.
+
+These corners carry no hazard material. The turn is marked by **form**: a
+stepped chamfer on the far edge of the opening, where a player walking in
+sees it head-on; a deep reveal on both jambs; and the skirting carried
+around. And the write-up says plainly that the **opening itself is the
+primary cue** — at 6 m across, nothing has to announce it — with the form
+marker secondary.
+
+That is **interface requirement 20**, and it is surfaced rather than
+decided. Art has not removed a gameplay cue on its own authority; it has
+declined to spend orange on it and asked what should replace it. If the
+engine keeps its stripe, a chamber will contradict the asset standing in
+it, and orange stops meaning anything for the second time.
+
+### Evidence
+
+`docs/art/review/batch019/`
+
+| Image | What it answers |
+| --- | --- |
+| `R_treasure_family.png` | **start here** — the three from above. Same box, same reward position, three rooms |
+| `R_vault_entry.png` · `R_cache_entry.png` · `R_coffer_entry.png` | the same camera in each, which is the comparison |
+| `R_coffer_under.png` | at the plinth, looking up into the pocket — a recess, not a hole |
+| `R_corner_left.png` · `R_corner_right.png` | one design and its reflection |
+| `R_corner_turning.png` | mid-turn, facing the exit: where `corner()` paints orange and this does not |
+
+Status: **PENDING** — not self-marked.
+
+### Tier 7 is complete
+
+Nineteen shells across six families: 4 corridors, 4 arenas, 3 platform
+paths, 3 towers, 3 treasure rooms, 2 corners. `ASSET_INVENTORY.md` §7 was
+empty five batches ago.
+
+---
+
+# Owner verdicts — 2026-08-28, the whole pending queue
+
+**003, 013, 014, 015, 016, 017, 018 and 019 are all `PASS`.** The queue is
+clear, and Tier 7's completed room-shell vocabulary is approved production
+vocabulary for Epsilon / Godot integration.
+
+## Batch 003 — the Hub — PASS
+
+Approved: shop counter, archive terminal, abandon station, campaign board
+housing, controls board housing, upper wall / service band, pilaster, Lab
+doorway, and the composed Hub treatment. *The shared institutional
+construction language works.*
+
+Two things confirmed as correct rather than accidental: the boards remaining
+**housings** for runtime data and text, and the **abandon station** being the
+one Hub fixture allowed hazard language — because abandoning a generated Zone
+is an actual destructive action.
+
+### Interface requirement 4 — RESOLVED: Epsilon gets the reserved bay
+
+> The room-scale Epsilon installation is a hero asset and should keep the
+> proposed prominent back-wall presence.
+
+**Do not** shrink Epsilon, move it somewhere visually secondary, or redesign
+it around the abandon station. Production Engineering moves or reserves the
+much smaller abandon console somewhere outside Epsilon's footprint, keeping
+it obvious and reachable near the Zone workflow.
+
+That closes the placement conflict Batch 002 raised, in the installation's
+favour.
+
+## Batch 013 — theme dressing — PASS
+
+Approved: gothic sconce, the separate sconce flame, the neon transit sign
+housing, the tiled temple root section, the temple broken column stump.
+
+Called out as correct: the transit sign staying a **housing** for a runtime
+`Label3D`, the root **tiling** rather than stretching, the stump preserving
+its broken top while its shaft can vary, and the flame using warm / `send`
+family light rather than hazard orange.
+
+### One integration note, not an art blocker
+
+> The flame should receive another visual check inside the real Godot
+> rendering path with its intended glow/bloom. The authoring sandbox cannot
+> fairly judge that effect.
+
+This is L-03 named from the other side: the preview runs Compatibility, which
+has no glow, so nothing rendered on this bench has ever shown one. **Do not
+redesign the flame before that test unless an actual in-engine failure
+appears.** Recorded as interface requirement 21.
+
+## Batch 014 — the six-theme light fixture families — PASS
+
+> The silhouette sheet answers the important question: these are
+> distinguishable by construction / form rather than merely changing emissive
+> colour.
+
+**Locked as the theme fixture families**: concrete facility's existing
+institutional fixtures; rusted industrial's caged installed work light and
+asymmetric portable/clamped fixture; neon transit's infrastructure
+strip/channel and edge-integrated light; gothic stone's suspended iron corona
+and peaked lantern; temple ruin's suspended crafted bowl and architectural
+niche; void glitch's missing-fixture language and broken debug placeholder.
+
+The gameplay light itself stays engineering- and runtime-owned. **Art owns
+the housing and the visual language.**
+
+## Batch 015 — corridor shells — PASS
+
+Approved: narrow / pressure, alternating bays, stepped, gallery. *They
+represent meaningfully different spatial problems rather than simple size
+variants.*
+
+On the bays, which this lane flagged as its own weakest read:
+
+> The bays are subtle from the entrance, but they are still useful as
+> encounter, cover and Check-placement pockets. Do NOT deepen them merely to
+> improve the beauty shot if that sacrifices legal lane width. Lighting /
+> dressing inside a bay may later strengthen its read naturally.
+
+And on the withdrawn claim: *the correction from a false 6.4 m sightline to
+the real 16 m sightline is exactly the right response to review evidence.*
+
+## Batch 016 — arena shells — PASS
+
+Approved: pit, pillar grid, balcony, split. *These create four different
+combat / composition problems.*
+
+> Do not deepen the pit beyond the legal traversal bound merely to make it
+> more dramatic. The shallow pit is acceptable because its geometry is
+> gameplay-valid and its shape becomes clear as the player approaches / rims
+> it.
+
+## Interface requirement 19 — RESOLVED: rooms are enclosed by default
+
+**Normal room shells are enclosed by default** — corridors, arenas, towers,
+treasure rooms and corners alike. The authored arena and tower roofs are
+therefore correct.
+
+Open sky, open roofs, missing ceilings and structural breaches are allowed
+later, but only as **explicit authored or semantic variants** — an open
+courtyard arena, a collapsed-roof arena, an exterior industrial arena, a
+ruined temple chamber, a void-open chamber, a deliberate breach — each with
+proper boundary, collision and navigation treatment.
+
+> A missing ceiling must never accidentally be interpreted as intentional
+> content.
+
+**Platform paths are the existing deliberate exception**: their open vertical
+shaft is part of the traversal design and stays open. Production Engineering
+aligns procedural and fallback chamber construction with this rule.
+
+## Batch 017 — platform paths — PASS
+
+Approved: ascent, stagger, spans. *The overhead sheets clearly demonstrate
+three different routes.*
+
+> Preserve the shared ENGINE TRUTH route validation. The important rule
+> remains: actual consecutive traversal geometry is measured and proven
+> against the base-kit bound. Do not replace that with nominal per-field
+> checks.
+
+The exit carrying its actual vertical offset is confirmed correct.
+
+## Batch 018 — towers — PASS
+
+Approved: collapsed floors, spiral/helix, maintenance gantry. *These
+successfully turn the same tower contract into three different climbs.*
+
+The central column stays: **gameplay grammar, not decoration.**
+
+> The shared routecheck catching the original impossible 3.6 m crossing is
+> excellent evidence that the validation path is doing useful work. Do not
+> weaken that validation.
+
+## Batch 019 — treasure rooms and corners — PASS
+
+Approved: vault (*protected*), cache (*stored*), coffer (*displayed*), and
+both mirrored corners.
+
+> This is exactly what shell variation should accomplish: same envelope, same
+> reward location, different spatial / environmental story.
+
+## P2 owner form review — ALL EIGHT SHELLS PASS (2026-09-02)
+
+The F3 verdicts above passed these shells **as art**. This is the separate
+verdict on the **P2 form** — the version carrying the P1 room contract,
+authored collision, and the collapsed/spiral deck-well repairs — reviewed
+from `docs/art/review/p2_owner/` (36 frames).
+
+Production certified them physically at `6640d86`: room contract
+satisfied, **zero findings**. The owner then approved all eight.
+
+| family | shells | verdict |
+| --- | --- | --- |
+| corridor (corner-shaped) | `shell_corner_left`, `shell_corner_right` | **PASS** |
+| treasure_room | `shell_treasure_vault`, `_cache`, `_coffer` | **PASS** |
+| tower | `shell_tower_collapsed`, `_spiral`, `_gantry` | **PASS** |
+
+They export `review: "pass"`; `is_shippable()` no longer refuses them.
+
+**Approved: spatial FORM** — identity, scale, route and read, composition
+usefulness, and the two deck-well repairs. **Not a claim that dressing is
+complete.** Three notes carried forward as NON-BLOCKING:
+
+- the collapsed and spiral **deck wells may receive lip / frame / railing
+  / support language** during later dressing;
+- gantry's **`landing_4`/deck coplanar z-fight is cleanup**, on
+  pre-existing F3 geometry, not a shell defect;
+- the vault's **"protected" identity is to be strengthened with props,
+  barriers, sound and lighting — not by redesigning the shell.**
+
+The three projectile visuals are untouched by this and remain `pending`.
+
+## Interface requirement 20 — RESOLVED: remove the hazard-orange turn stripe
+
+**Hazard orange remains reserved for hazard / warning semantics. "A corridor
+turns here" is not a hazard.**
+
+The authored corner's form language is sufficient as the default: the opening
+itself, the deep jamb reveal, the stepped/chamfered edge, and the
+skirting/architecture carrying through the turn. Production Engineering stops
+applying `hazard_mat` as a generic navigation marker on normal corners.
+
+If playtesting later shows turns need more wayfinding, it is solved with a
+non-hazard channel — neutral architectural contrast, light placement, a trim
+or value change, or the future approved signage / navigation language.
+
+> Do NOT spend hazard orange on ordinary navigation.
+
+## Tier 7 — the room-shell vocabulary — PASS
+
+All 19 shells across the six families are approved production vocabulary:
+4 corridor, 4 arena, 3 platform path, 3 tower, 3 treasure room, 2 corner.
+
+The rule for what comes next is explicit, and it is not a count:
+
+> The goal going forward is NOT to make arbitrary variants merely to increase
+> the count. Expand shell families when a new variant creates a meaningfully
+> different route, combat problem, vertical relationship, sightline,
+> traversal problem, Check-placement opportunity, or optional-space
+> opportunity.
+
+## Blockers reconfirmed
+
+`objective_marker` and `signage_module` stay blocked until navigation
+language is deliberately reviewed. Enemy roles stay blocked on the missing
+engineering contracts rather than inventing fake colliders or nodes in the
+art lane. Unplaceable bulk prop production stays deprioritized until there is
+an actual runtime placement path.
+
+---
+
+## Batch 020 — architecture Pri-B, the structural half
+
+Tier 3 has 29 modules. Batch 001 built the Pri-A surfaces and Batch 007 the
+five Pri-A traversal pieces; this takes the seven Pri-B modules that are
+**what a chamber is made of**, and leaves the services and openings to 021.
+
+### These replace geometry that already exists
+
+Every module here has a procedural counterpart in `chamber_builders`, so
+none of the numbers are invented:
+
+| Source | Figure |
+| --- | --- |
+| `_greeble_corridor` rib | 0.22 wide × height × 0.35 deep, at ±(width/2 − 0.13), one every ~6 m |
+| `_greeble_corridor` ceiling beam | width × 0.25 × 0.35, at height − 0.12 |
+| `_greeble_room` corner buttress | 0.50 × height × 0.50 at ±(width/2 − 0.3) |
+
+Where a module has no procedural counterpart — the wall variants, the
+grate — it is built to the kit's own 4.0 m `MODULE` and the engine's 0.40 m
+wall thickness, so it tiles against Batch 001's panels.
+
+| Module | Tris | What it is for |
+| --- | --- | --- |
+| `arch_wall_variant_a` | 72 | a service band at 2.20 m with a recessed field above and below: the wall a corridor has when something runs along it. 2.20 is above `player_eye_height` 1.60 and below `reach_standing` 2.93 |
+| `arch_wall_variant_b` | 60 | a 1.60 × 2.60 recessed bay with a stepped head. 2.60 is `tallest_actor`, so nothing the engine can spawn is taller than the hole it stands in front of |
+| `arch_ceiling_plain` | 60 | the flat 4 m bay Batch 001's coffered ceiling is the alternative to. A kit needs the plain one or the detailed one has nothing to be a change from |
+| `arch_trim_ceiling` | 48 | `_greeble_corridor`'s ceiling beam **with the rib feet that carry it**. The procedural one floats 0.12 m under the ceiling with nothing holding it up; the rib and the beam are one structural bay in the engine's own layout |
+| `arch_floor_grate` | 204 | real bars over a 0.30 m void, on a 0.32 m pitch. `brushkit.grate` exists for this and its docstring is the reason to use it: a grate's job is to be a silhouette you see light and geometry through |
+| `arch_column` | 60 | a freestanding column on the buttress's 0.50 m footprint, base and capital built **to the surfaces they meet** rather than to their own centres (L-55) |
+| `arch_beam_span` | 76 | a beam across a 4 m bay with a haunch at each end. `arch_trim_ceiling` is a beam *under* a ceiling; this one spans a bay that has none |
+
+### The budget did what it is for
+
+The grate came in at **264 triangles against the architecture_module
+ceiling of 250**, and the guard's rule is *delete geometry and paint it
+instead — never optimise the mesh, and never raise the ceiling to fit one
+asset*. So the bar pitch went from 0.24 m to 0.32 m and three bearers
+became one: 204 triangles, and a truer grating besides. Industrial bar
+grating you walk on is nearer 0.32 than the fine mesh a drain cover uses.
+
+### What is not in this batch, and why
+
+`arch_signage_mount` and `arch_objective_socket` are Pri B and stay
+**blocked with the navigation language**. They are mount points for
+`objective_marker` and `signage_module`, and a socket's size and shape
+prejudge what plugs into it — building one now would decide the language
+sideways. `arch_vista_socket` is Pri C with no engine contract to build
+against.
+
+### Evidence
+
+`docs/art/review/batch020/`
+
+| Image | What it answers |
+| --- | --- |
+| `K_bay_in_situ.png` | **start here** — two wall bays, two ceiling bays and the trim, assembled. A kit part is only right if it is right next to another one |
+| `K_walls_pair.png` · `_silhouette` | the two new panels, lit and as shape |
+| `K_structure_pair.png` | column and grate |
+| `K_overhead_family.png` | ceiling bay, trim and beam span from below, which is the only place any of them is seen |
+| `K_wall_a.png` · `K_wall_b.png` | each panel alone |
+| `K_grate.png` | the bars, the void and the bearer |
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 021 — architecture Pri-B/C, the services and openings
+
+Batch 020 took the seven modules a chamber is made **of**. These are the
+six it is fitted **out** with, and they finish every Tier 3 row that has an
+engine contract to build against.
+
+| Module | Pri | Tris | Where its numbers come from |
+| --- | --- | --- | --- |
+| `arch_vent` | B | 116 | `_greeble_corridor` builds a 0.08 × 0.7 × 1.1 wall vent as a flat accent box. Same opening, with seven real louvres over a recess |
+| `arch_duct` | B | 96 | no procedural counterpart. 0.46 deep hung 0.22 clear, inside `CEILING_GAP` 0.5, with a flanged joint at mid-run |
+| `arch_catwalk` | B | 220 | deck at **2.60** — `SAFE_BASE_JUMP_GAP`, and the height the approved gallery corridor and balcony arena already use |
+| `arch_tunnel_bore` | B | 156 | a 4 m section at `corridor_width_min` 4.0 across |
+| `arch_secret_alcove` | B | 68 | `_secret_alcove`, exactly |
+| `arch_window` | C | 108 | `door_width` 2.40 wide, sill 1.00, head at `door_height` 3.20 |
+
+### Three decisions worth stating
+
+**The bore has a flat invert.** A perfectly round tunnel would be a
+different construction language from the rest of the facility, and it would
+have no floor. This is a horseshoe: flat walkable invert, straight
+springing to 1.20 m, and a twelve-segment crown over it —
+`max_radial_segments` permits twelve above a 1.5 m radius. Rings every 2 m
+are what make it read as bored and lined rather than as a pipe.
+
+**The catwalk is 1.60 m wide, deliberately not `brute_lane` 2.60.** The
+player is 0.80 across, so that is two body widths, and something a brute
+cannot follow you onto is the point of a catwalk. Its deck height is not a
+new number either: 2.60 is what Batch 015's gallery corridor and Batch
+016's balcony arena already use, so a catwalk dropped into either lands
+level rather than introducing a third height.
+
+**The alcove is built to the letter of `_secret_alcove`.** The same
+1.8 × 0.3 × 2.4 slab with its **top** at the lip rather than its centre,
+and the same 0.12 × 0.35 lip rail inset 0.06 from the inward edge —
+non-colliding in the engine, *so a hard landing is never bounced back off a
+rail you meant to clear*. Built at `SECRET_LIP_MAX` 4.20, which puts the
+underside at 3.90, well over `secret_underside_min` 2.75 (`TALLEST_ACTOR` +
+0.15): below that the slab stops being a secret and becomes a wall the
+brute walks into.
+
+`DESIGN` §19 permits exactly one thing up there — *a plaque and nothing
+else* — so a plaque is modelled and nothing else is. No reward, no exit, no
+objective. The room plays identically if you never reach it.
+
+### The budget did its job again
+
+`arch_catwalk` came in at **280 against the 250 ceiling**. Nine treads
+became six and three posts a side became two: 220 triangles. Same rule as
+Batch 020's grate — delete geometry, never raise the ceiling.
+
+### Tier 3 after this batch
+
+28 of 31 rows in §3 are built. What remains:
+
+- `arch_signage_mount` and `arch_objective_socket` — **blocked with the
+  navigation language.** A socket's size and shape prejudge what plugs into
+  it.
+- `arch_affordance_socket` — **buildable and deferred, not blocked.** The
+  seven affordances it would mount are approved and built (Batch 009), so
+  this one has a contract; it just was not in this batch's scope.
+- `arch_vista_socket` — Pri C with no engine contract to build against.
+
+### Evidence
+
+`docs/art/review/batch021/`
+
+| Image | What it answers |
+| --- | --- |
+| `S_bore_inside.png` | **start here** — three bore sections chained, from inside |
+| `S_catwalk.png` | the deck, treads, stringers, rails and brackets |
+| `S_alcove.png` | the alcove from below, which is where a player sees it |
+| `S_vent.png` · `S_services_family.png` | the louvres, and the two services together |
+| `S_bore.png` | the horseshoe section alone |
+| `S_window.png` · `_silhouette` | the opening, lit and as shape |
+
+Every camera here is a solving one except `S_bore_inside`, which says in
+its own note why it is placed: the point of that shot is where you stand
+(L-62).
+
+Status: **PENDING** — not self-marked.
+
+## Batch 022 — PROPOSAL: the navigation language
+
+Not production. This proposes a language that does not exist yet, and the
+full argument and evidence live in `docs/art/review/batch022/README.md`.
+
+The batch is small because the engine turned out to have already solved
+most of it. `zone_controller._process` drives a HUD waypoint that names
+the nearest actionable Check, ranks `available` over `locked`, states
+`SENDING` / `READY` / locked / `EXIT`, and falls through to the exit
+portal when every Check is confirmed — so **which objective, how far,
+what state** are answered. The two questions left are *which way from
+here* and *what is this place*, and this batch is those and nothing else.
+
+Four modules, one language: `nav_blade` (60 tris), `nav_panel` (60),
+`nav_chevron` (68), `nav_hanger` (84). All prop tier at 64.0 texels/m.
+Faces are blank; wording is runtime data, as `chamber_builders` already
+does for the transit sign.
+
+The family carries no hue, and `F_collapse.png` shows why that is
+arithmetic rather than preference: HUD EXIT and HUD READY are 2% apart in
+luminance, SEND and HUD READY are 0.3% apart. Those distinctions run
+entirely on hue, so the channel is spent. The sheet also declines the
+flattering version of the claim — the signage field at luma 0.806 sits
+right beside EXIT green at 0.805, and is not a spare value. It does not
+need one: its meaning is the glyph and where it is bolted.
+
+
+| module | job |
+|---|---|
+| `nav_blade` | perpendicular to the wall, read along a corridor. Runtime text. |
+| `nav_panel` | flush beside a threshold at eye height. Runtime text. |
+| `nav_chevron` | direction, as an ink arrowhead on a pale field. |
+| `nav_hanger` | the ceiling-hung blade, for a junction with no wall. |
+
+Metrics moved to the Batch 022-R section below, where every module is
+listed per theme. Quoting them here as well would mean one number in two
+places, which is how a ledger goes quietly stale.
+
+Direction is deliberately **not** baked into the blade. A blade with an
+arrow in it can only ever mean "right", and which way `STAIR C` lies is a
+fact about the junction, not the mesh.
+
+Recorded honestly rather than fixed: at the 5.4 m gameplay distance of
+`A_junction.png` the arrow carries and the text does not. The signs were
+not enlarged to disguise it.
+
+Two recommendations for the owner, both derived from the engine rather
+than asserted:
+
+- **`objective_marker` — strike it.** `reach_reward` is marked by the
+  Check itself (Batch 005, PASS). `kill_all` has nothing to mark. For
+  `platform_to_goal`, `goal_area_position` `(0, rise + 1.0, total - ledge)`
+  and `reward_position` `(0, rise, total - ledge / 2.0)` are 2.0 m apart on
+  the same top ledge, so a player walking to the waypointed Check crosses
+  the goal area on the way. A marker would sit 2 m from a Check that
+  already reads in four states.
+- **`signage_module` — let it become this four-module family** rather than
+  one object.
+
+Status: **PENDING** — not self-marked.
+
+### Owner decisions on the two structural questions, 2026-08-29
+
+Both recommendations were accepted. The **assets themselves are still
+PENDING** and are not marked PASS; what follows settles the vocabulary, not
+the visual review.
+
+**`objective_marker` — STRUCK from the current required art vocabulary.**
+The reasoning was accepted as given: the Check is already the world marker
+for `reach_reward`, `kill_all` has no destination object to mark, and
+`platform_to_goal`'s goal area is crossed naturally on the approach to the
+waypointed Check about 2 m away. A separate marker would duplicate the HUD
+waypoint, the Check, or both.
+
+The scope matters and is recorded so it is not over-read later: **this is
+not a permanent prohibition on world objective markers.** It says no
+*current* objective type requires one. A future objective introducing a
+destination that is not represented by an existing world object, not
+naturally crossed while following the HUD, and genuinely improved by
+world-side marking may reopen the question deliberately. No speculative
+asset is kept in the inventory against that possibility.
+
+**`signage_module` — the four-module family is accepted** as the
+architecture: `nav_blade`, `nav_panel`, `nav_chevron`, `nav_hanger`.
+Direction remains placement/runtime truth rather than baked into the
+primary sign mesh, and runtime wording remains runtime-owned.
+
+## Batch 020 — PASS
+
+All seven modules PASS (owner, 2026-08-29). No revision requested.
+
+`K_bay_in_situ` demonstrates that the parts compose as one architectural
+construction system rather than seven unrelated props. The wall variants
+are meaningfully different without becoming decorative novelties;
+`arch_trim_ceiling` reads as a supported structural bay rather than a
+floating beam; and the grate reads as actual bars over depth rather than a
+flat "grate" surface.
+
+## Batch 021 — PARTIAL PASS
+
+PASS: `arch_vent`, `arch_catwalk`, `arch_tunnel_bore`, `arch_secret_alcove`,
+`arch_window`.
+
+The horseshoe bore direction is approved and `S_bore_inside` proves the
+sections tile into a coherent tunnel. The 1.60 m catwalk width is accepted
+as the intentional non-brute route. The window opening / reveal / mullion
+language and the secret alcove are approved.
+
+`arch_duct` was held for one reason: the evidence did not show it well
+enough. `S_services_family` renders it edge-on and small, so silhouette,
+construction, attachment and section seams were not reviewable.
+
+### Batch 021-R — the duct evidence
+
+Two sheets, in `docs/art/review/batch021r/`. **The asset is unchanged.**
+
+`R_duct_detail` is a close three-quarter: the flange at both ends and at
+mid-run, two hangers with straps, the 0.62 × 0.46 section hung 0.22 clear
+inside `CEILING_GAP` 0.5. `R_duct_run` chains two sections under two
+`arch_ceiling_plain` bays from below — the duct module is 4.0 m and the
+bay is 4.0 × 4.0, so they share one grid and the seam lands on a flange.
+
+Two errors on the way, both already-written lessons re-earned: a ceiling
+anchored asset given the runner's floor backdrop rendered as a grey plane
+with two specks on it (L-63), and the first run shot was aimed from *above*
+a ceiling, which is a view no player will ever have.
+
+The renders were made to expose a problem if one existed. They did not, so
+the asset was not touched.
+
+## Batch 022-R — the six-theme evidence
+
+The original `D_themes` showed three themes and said the other three were
+behind the Style Lock gate. That was true when written and is not now:
+Style Lock passed, Batch 012 built the remaining treatments, and all six
+carry the `trim` and `wall` roles this family is made of. **The caption was
+stale rather than the claim untested.**
+
+Every module is now **built once per theme** and wears that theme's own
+trim — 4 modules × 6 themes = 24 assets. One concrete sign re-lit six ways
+would have proved nothing. The sheet holds camera, lens, lighting and
+reading distance identical across all six panels, with a neutral backdrop
+held constant so the signage is the only variable.
+
+| module | tris | size (m) | runtime text budget |
+|---|---|---|---|
+| `nav_blade_concrete_facility` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_blade_rusted_industrial` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_blade_neon_transit` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_blade_gothic_stone` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_blade_temple_ruin` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_blade_void_glitch` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_panel_concrete_facility` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_panel_rusted_industrial` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_panel_neon_transit` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_panel_gothic_stone` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_panel_temple_ruin` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_panel_void_glitch` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_chevron_concrete_facility` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_chevron_rusted_industrial` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_chevron_neon_transit` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_chevron_gothic_stone` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_chevron_temple_ruin` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_chevron_void_glitch` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_hanger_concrete_facility` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+| `nav_hanger_rusted_industrial` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+| `nav_hanger_neon_transit` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+| `nav_hanger_gothic_stone` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+| `nav_hanger_temple_ruin` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+| `nav_hanger_void_glitch` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+
+Geometry is identical across the six themes for a given module — only the texture differs, because the theme enters through the trim the sign is made of. The rows are listed in full because the ledger checks every built asset, and an asset the ledger cannot see is one nobody can check.
+
+`text_max_chars_at_22px` is new and is the answer to "does the text fit":
+the builder now measures the pale field and records its centre, its usable
+width, and the character budget that implies.
+
+### Two findings
+
+**The blade's text was mis-centred, and it showed.** `nav_blade`'s bracket
+hangs off −X, so `module_floor` centring leaves the pale field 0.155 m to
+the +X side of the object origin. Every early sheet placed text at the
+object position, so it sat that far left of its own field and overran the
+frame at one end. The builder now records `face_centre_x_m` and the scenes
+apply it. This is L-67 again: a number an asset is designed around belongs
+in its manifest.
+
+**The family inherits hazard striping in one theme — NOT FIXED, owner's
+call.** `materials._rust_trim` paints a *universal* hazard band into the
+`rusted_industrial` trim texture, deliberately and correctly: in that theme
+a walkway edge is the thing most likely to kill you, and it uses
+`pal.universal("hazard")` rather than the theme's own orange so the player
+does not re-learn it per theme.
+
+The navigation family is built from `trim`. So in one of six themes a
+wayfinding sign wears hazard stripes — and the palette's rule for that
+colour is *"this will hurt you. Never used decoratively, in any theme, for
+any reason."* `G_hazard_collision.png` shows it beside a theme whose trim
+carries no band.
+
+This was not fixed unilaterally because the fix touches a locked rule.
+Three options, with a recommendation:
+
+1. **Add a `trim_plain` role** — the same per-theme trim treatment without
+   the walkway-edge safety band, for fixtures that are not walkway edges.
+   Additive: no approved asset changes, the family keeps theme-owned trim,
+   and the collision disappears. **Recommended.**
+2. **Build the family from `wall`** — neutral in all six, but signs would
+   read as building fabric rather than as fixtures.
+3. **Accept it** — rejected here, because it breaks a locked rule.
+
+The four navigation assets stay PENDING on this.
+
+Status: **PENDING** — not self-marked.
+
+## Batch 021-R — PASS, and Batch 021 is now fully PASS
+
+`arch_duct` PASS (owner, 2026-08-29). The new evidence resolved the hold.
+`R_duct_detail` demonstrates the rectangular service-duct silhouette, the
+end and mid-run flanges, the hangers and straps, and the ceiling-service
+construction language; `R_duct_run` demonstrates that repeated 4.0 m
+sections compose cleanly on the shared ceiling grid, that the join lands on
+a flange rather than a gap, and that the attachment reads from the player's
+side. No redesign requested, and the asset was never changed.
+
+## Batch 022-R — six-theme evidence accepted; the hazard correction
+
+The six-theme requirement is **satisfied**: the family survives all six,
+the neutral field and glyph remain the semantic carrier, each theme still
+contributes structural treatment, and the corrected text centring reads.
+
+The `rusted_industrial` render exposed one real semantic collision, and the
+owner ruled on it.
+
+### `trim_plain` — theme trim without hazard semantics
+
+One material role was carrying two meanings: *rusted industrial structural
+trim* and *danger*. `materials._rust_trim` paints a universal hazard band,
+which is correct wherever the geometry really is a walkway edge, a
+machinery boundary, a drop or a warning surface — and wrong on a sign that
+says `STAIR C`.
+
+The fix separates the meanings rather than removing the band.
+`_rust_trim_common(..., hazard)` now backs two roles: `trim` keeps the band
+and is **unchanged**, and `trim_plain` replaces it with the same recessed
+band in the theme's own darkest trim, so the construction, wear and value
+relationships survive and only the semantic marking is gone.
+
+For the other five themes `trim_plain` **is** their existing trim function,
+because their trim never carried hazard semantics in the first place. Only
+`rusted_industrial` needed a second treatment.
+
+It is not a new navigation colour and not a new semantic gameplay channel.
+It is theme trim, minus danger. Approved assets that correctly use the
+hazard-bearing treatment are untouched.
+
+`G_hazard_corrected.png` is the before/after, with the "before" read out of
+git so the comparison is the shipped asset rather than a reconstruction.
+Both halves of the requirement hold: the hazard language is gone, and the
+fixture still reads as rusted industrial rather than as a generic sign that
+lost its theme.
+
+### The integration seam, recorded rather than resolved
+
+Checking the engine before assuming a contract change was needed turned up
+the reverse of the expected problem. `generation/theme_materials.gd`
+**already** separates the two: `trim_mat(theme)` is
+`_material(theme, "trim", "panel")` and `hazard_mat(theme)` is
+`_material(theme, "accent", "hazard")`. The runtime's `trim` has never
+carried a hazard band — the conflation was art-side only.
+
+So no engine change was made and none is needed today; `trim_plain` lives
+entirely in the art authoring pipeline. The seam matters when the authored
+materials replace the procedural ones, because the role names do not map
+one to one: engine `trim_mat` corresponds to art **`trim_plain`**, and
+art's hazard-bearing `trim` corresponds to where the engine would call
+`hazard_mat`. A migration that maps `trim` to `trim` will put hazard
+striping on every rusted-industrial fixture. Recorded as interface
+requirement 23 for Production Engineering.
+
+The four navigation assets remain **PENDING** the owner's verdict on this
+correction. Nothing in the signage family was redesigned: this is a
+material-semantic correction only.
+
+## Batch 022 — PASS
+
+All four navigation assets approved (owner, 2026-08-29): `nav_blade`,
+`nav_panel`, `nav_chevron`, `nav_hanger`, in all six themes.
+
+The corrected `rusted_industrial` treatment satisfied both halves: the
+universal hazard language is gone from ordinary navigation, and the
+fixtures still unmistakably belong to the theme. The regenerated six-theme
+sheet passed — the family survives all six while preserving the intended
+semantic hierarchy: **neutral field, glyph / form, placement / orientation,
+runtime-owned wording.** Theme treatment remains construction language, not
+navigation meaning.
+
+Interface requirement 23 stands as recorded: engine `trim_mat` maps to
+authored `trim_plain`, engine `hazard_mat` maps to the authored
+hazard-bearing treatment, no Production Engineering change is required
+today, and the warning is preserved that a naive authored-art migration
+mapping `trim` to `trim` would incorrectly put hazard striping on ordinary
+rusted-industrial fixtures.
+
+## Batch 023 — PROPOSAL: theme landmark language
+
+**PENDING. Proposal scale, not runtime truth.** Full write-up and the
+contract audit: `docs/art/review/batch023/README.md`.
+
+### The audit, before any modelling
+
+`grep -rn landmark` over `godot/`, `bridge/` and `assets/` returns three
+hits and none is an engine concept — `max_triangles.landmark = 2500` and one
+asset exporting under that tier. **Today "landmark" means a polygon
+ceiling.** Epsilon cannot select one, the room shells carry no landmark
+anchor among their check / enemy / affordance / bay anchors, and nothing
+reserves a footprint.
+
+**CORRECTED 2026-08-29 — the paragraph above was audited against the wrong
+branch.** It searched the art lane's base, 73 commits behind Production.
+Re-audited read-only against `claude/archipepsi-echoes-continuation-b1adno`,
+all four of its claims are false: `ContentRegistry` loads and validates JSON
+manifests, `ContentInstantiator` routes *authored scene -> validated
+fallback*, and **`landmark` is a real L4 category** in both `content.py` and
+`content_registry.gd`. It is not a polygon tier. `LANDMARK_RATIO` in
+`composition.py` is a DIFFERENT sense of the word — the biggest room in a
+Zone — and accounts for most of Production's mentions.
+
+What is actually missing is narrower, and is four steps of which only the
+second works today: (1) approved `.glb` -> importable scene under
+`res://content/` — MISSING, the Godot project holds zero `.glb` and excludes
+`assets/`; (2) registry entry — POSSIBLE NOW; (3) selection — MISSING, no
+`landmark_id` on the chamber schema; (4) placement — MISSING, no
+instantiation path and **no envelope**: `NEEDS_FOOTPRINT` covers `cluster`
+only, and `Constants` publishes `CLUSTER_MAX_*` with no `LANDMARK_`
+equivalent. Interface requirement 24, reworded. Every entry still carries
+`integration_ready: false` — now for those three reasons rather than for a
+missing pipeline. Full working in `review/batch023/README.md`.
+
+### Places, not props
+
+The first pass built six OBJECTS — a ladle, a bell frame, a shaft — each
+alone in an empty room. They were the wrong deliverable: a landmark you walk
+around is a prop at landmark scale, and the target is *"the Zone with the
+giant ___"*, which is a memory of a place. Each of these is a hero structure
+plus the architecture that makes it somewhere you were — a ground route, a
+route above it, something to look down from, and usually something visible
+and unreachable.
+
+| place | theme | tris | size (m) | spatial job |
+|---|---|---|---|---|
+| `lm_drop_test_hall` | concrete_facility | 644 | 16.30 × 16.30 × 17.95 | loop around a central void |
+| `lm_process_tower` | rusted_industrial | 1396 | 13.00 × 14.00 × 17.06 | spiral route up a leaning mass |
+| `lm_stacked_interchange` | neon_transit | 632 | 15.80 × 21.10 × 14.90 | two platforms around a void |
+| `lm_bell_breach` | gothic_stone | 796 | 16.90 × 16.00 × 13.86 | three levels, one event |
+| `lm_collapsed_ziggurat` | temple_ruin | 452 | 25.00 × 25.00 × 12.45 | the ruin IS the route |
+| `lm_reentrant_room` | void_glitch | 372 | 24.08 × 18.87 × 9.28 | space that lies about itself |
+
+The spatial jobs differ deliberately: a loop around a void, a spiral up a
+leaning mass, two platforms stacked around a void, three levels telling one
+event, a ruin whose collapse IS the route, and a room that intersects
+itself. Six variations on "big object in the middle of the room" would not
+punctuate a 20-room Zone.
+
+**Art provides affordance; the engine owns mechanics.** The routes are
+shapes, not rules — nothing invents grapple, teleport, boss, Check
+placement, local-key, checkpoint or reachability behaviour, and no landmark
+requires an unapproved capability for mandatory traversal.
+
+**No Epsilon monuments.** Each answers what its place was for or what
+happened there, from its own construction history. Epsilon is what arrives
+later; these have to read without it.
+
+### What the renders changed
+
+Six interiors were photographed from outside their own walls, so a hall, an
+interchange and an undercroft each rendered as a box with a wall facing
+camera. The builder now records `eye_from` / `eye_at`, because it is the
+only thing that knows where the hero feature is. The human reference was
+offset from the camera blindly and landed behind it. An interior lit by a
+rig meant for an object on a backdrop came out half-black. And the void
+room's viewpoint sat inside one of its own copies, hiding the intersection
+that is its entire idea.
+
+### Budget note, surfaced not hidden
+
+All six fit the 2500-triangle `landmark` tier (372–1396), but that tier is
+defined as *"an L4 set piece — one per room at most, seen from across it"*,
+which is an OBJECT budget. These are places. The numbers fit; the definition
+does not.
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 024 — PROPOSAL: Epsilon presentation states and the presentation arc
+
+**PENDING.** Presentation only. Nothing invents a gameplay effect, a
+corruption mechanic or a progression rule. Full working in
+`review/batch024/README.md`.
+
+Uses the already-`PASS` 002-R giant-computer DNA, unchanged. Audited
+read-only against `claude/archipepsi-echoes-continuation-b1adno` — the
+current Production head, and this time the right branch (L-72).
+
+**The audit finding.** `godot/scripts/ui/epsilon_voice.gd` is the only
+Epsilon presentation code that exists, and it is a BARK SELECTOR: 18 event
+kinds, a PRIORITY order, a 6 s cooldown, a 4 s dwell. It answers *what
+Epsilon says*, not *what the installation looks like while it says it*.
+There is no presentation-state enum and no binding from a bark to a
+material. Of the six states below, exactly **one — `speaking` — has a
+runtime signal today**; `thinking`, `interpreted` and `refusal` exist
+bridge-side but are never surfaced to the scene, and `focus` does not exist
+at all. Interface requirement 25.
+
+**Two inherited rules, not reopened.** Nothing on the human half glows — a
+state that lit the console would say the facility came back on. And emissive
+saturation **0.40 is the ceiling**, measured by 002-R's own sweep: the green
+channel pins at 255 between 0.40 and 0.60. So the states modulate below it.
+
+**One hue, six states.** `identity` green is all Epsilon gets, so the
+language is value, extent, rhythm, aperture and orientation — the same
+arithmetic Batch 022 ran for navigation.
+
+| asset | state | tris | size (m) | emissive | runtime signal |
+|---|---|---|---|---|---|
+| `eps_state_dormant` | listening; present, not working | 392 | 2.46 × 1.42 × 2.90 | 0.10 | no |
+| `eps_state_thinking` | generating; the work is interior | 428 | 2.46 × 1.42 × 2.90 | 0.22 | no |
+| `eps_state_speaking` | a line is airing, broad and undirected | 420 | 2.46 × 1.42 × 2.90 | 0.34 | **yes** |
+| `eps_state_interpreted` | it finished — read from CLOSURE, not level | 480 | 2.46 × 1.42 × 2.90 | 0.28 | no |
+| `eps_state_refusal` | it declined; dropout to `dead`, not `glitch` | 380 | 2.46 × 1.42 × 2.90 | 0.06 | no |
+| `eps_state_focus` | attending to YOU; one narrow bore that points | 448 | 2.46 × 1.42 × 2.90 | 0.34 | no |
+
+All six share an identical footprint on purpose: a comparison sheet whose
+panels differ in two ways proves nothing about either.
+
+**The arc is EXTENT, not brightness.** Emission is held at 0.24 across all
+three stages, so the comparison cannot be won by turning the light up.
+
+| asset | stage | tris | size (m) | fronts gone |
+|---|---|---|---|---|
+| `eps_arc_early` | localized, tentative | 240 | 4.90 × 1.71 × 2.90 | bay 3 |
+| `eps_arc_middle` | established, confident | 288 | 4.90 × 1.71 × 2.90 | bays 2, 3 |
+| `eps_arc_late` | deeply embedded, proprietorial | 516 | 5.29 × 1.71 × 3.89 | bays 1, 2, 3 |
+
+### Stated rather than hidden
+
+`speaking` and `focus` sit at the same 0.34 and are the tightest pair in the
+set — told apart only by breadth and direction. They are distinguishable on
+the sheet, and they are the pair most at risk if the language is pushed.
+
+### What the renders changed
+
+The first rig lit the human console brighter than the intrusion: the raked
+control panel caught the key broadside and read as a LIT control surface,
+breaking 002-R's one rule as completely as an emission would. The first
+framing cropped to the mass alone, turning a state language that lives on an
+operator console into six pictures of a lump. And the arc sheet showed no
+intrusion at all in EARLY — because `_bank()` built a cabinet front on every
+bay and sealed the mass behind it. Two camera revisions were spent nudging
+before the geometry was suspected; 002-R had said all along that erupted
+bays have their fronts gone.
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 025 — PROPOSAL: the Forge, and Questionable Goods
+
+**PENDING.** Physical and presentation identity only — no mechanic is
+designed here. Full working in `review/batch025/README.md`.
+
+**The audit found one of the two already has a home.** `hub_anchors.gd`
+lists `"shop"` in `REQUIRED`, commented `# QUESTIONABLE GOODS`, at
+`(-9.4, 0, 2.4)`. Its comment records a playtest failure: at `D * 0.45` the
+counter overlapped the Lab doorway (z 4.5–7.5) and made the Lab unreachable.
+So `qg_counter` is authored to that contract — 3.0 m of wall run centred on
+z = 2.4, clearing the doorway by 0.6 m — and the builder **asserts** it.
+
+**The Forge has no anchor, no scene, no script and no constant**, only an
+open question in `RESEARCH_MEMO.md` §7. Proposal scale, no placement claim.
+Interface requirement 26.
+
+**`EPSILON_COIN_COUNT` is 10 for a whole campaign**, which is why the Forge
+has one coin socket and not a hopper.
+
+| asset | state | tris | size (m) | reads as |
+|---|---|---|---|---|
+| `forge_bench` | idle | 1036 | 4.25 × 1.17 × 2.19 | process made visible |
+| `forge_bench_working` | working | 1112 | 4.25 × 1.17 × 2.19 | process made visible |
+| `qg_counter` | — | 412 | 3.39 × 1.40 × 2.40 | transaction made opaque |
+
+**Four stations in order** — analysis, destabilisation, reinterpretation,
+reconstruction — with a transfer rail running the whole length that bridges
+the third station on bare rails. The third station is **empty on purpose**:
+there is no machine that decides what something could mean, and drawing one
+would make the Forge a factory. The selector is one seven-position dial, not
+a tree.
+
+### What the renders changed
+
+The operator plate sat directly in front of the reinterpretation void,
+hiding the batch's whole argument behind its least important feature.
+Nothing carried direction of travel until the transfer rail was added — four
+instruments on a table are four instruments on a table. Absence photographs
+exactly like darkness, so the missing bench top needed a lined shaft under it
+to read as a hole. Analysis and destabilisation shared a silhouette and are
+opposite acts. And Questionable Goods first came back as clean pale sheet
+steel — a *new* counter, the opposite of the brief.
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 026 — PROPOSAL: the checkpoint / re-entry station
+
+**PENDING.** Visual language only — no spawn, healing, fast-travel or save
+rule is decided. Full working in `review/batch026/README.md`.
+
+**The audit.** `player.gd` carries `var _spawn_transform: Transform3D` and
+`func set_spawn(xform)`, plus `RESPAWN_DELAY = 1.5` and a SIGNAL LOST
+overlay. That is one slot holding one transform **with no identity**: no
+checkpoint entity, no state, and nowhere to record which station is current.
+Of the three states below, **zero have a runtime representation today.**
+Interface requirement 27.
+
+**The colour answer is no colour.** The brief forbids confusion with Check
+cyan, Epsilon green and hazard orange; every saturated family in the palette
+is already spoken for, and Batch 022 settled that the answer is not to spend
+a new one. So the checkpoint is **the one important object in the room that
+does not glow** — read by posture first, then value, never hue.
+
+| asset | state | tris | size (m) | emits |
+|---|---|---|---|---|
+| `checkpoint_inactive` | folded flat into the pad, dark | 200 | 2.51 × 2.51 × 0.41 | no |
+| `checkpoint_activated` | raised, cross-arms out, bands high | 308 | 2.51 × 2.51 × 3.08 | no |
+| `checkpoint_anchor` | canopy deployed, one lamp under it | 448 | 2.51 × 2.51 × 3.08 | one achromatic lamp |
+
+Bands are **horizontal** because hazard marking is diagonal: the two must
+differ in geometry, not only hue, so they stay distinct in grey scale. The
+pad rim also rises with the state, so a player looking at their feet gets an
+answer. Universal rather than themed — system furniture like the Check.
+
+Exported at the `interactable` tier (900), not `prop` (300), after the first
+build failed the prop ceiling at 308. The rule to delete geometry rather than
+raise a ceiling applies to an asset already in the right tier; a 2.5 m
+station the player activates is an interactable, and trimming a survey mast
+to a hand-prop budget would have fixed a labelling mistake with the wrong
+tool.
+
+### What sheet B found that it was not looking for
+
+The luma row shows **Check cyan and Epsilon green collapsing to nearly the
+same value**, hazard orange only slightly darker. Stated as an observation,
+not a finding: those neighbours are crude lit boxes standing in for the three
+families, so it is evidence about the hues and not about the Check or the
+Epsilon installation as built. Whether it matters is the owner's call.
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 027 — PROPOSAL: pickups, loot and resource readability
+
+**PENDING.** Visual proposals only — no resource mechanic or denomination is
+decided. Full working in `review/batch027/README.md`.
+
+**The audit changed the batch's shape.** Of the five requested pickups, two
+are backed by a real Production item (`ITEM_NAME_EPSILON_COIN`, count 10;
+`ITEM_NAME_EPSILON_STATIC`, count 18) and **health and ammo are backed by
+nothing at all** — no item, no constant, no entity. `LOW_HEALTH_FRACTION`
+says the player *has* health; nothing says health is a thing you pick up. And
+`local_reward.gd`'s `KINDS` catalog is **closed** by design, with no
+container kind in it, so a loot container is not a seventh kind art may add.
+Interface requirement 28.
+
+**Colour is licensed, not chosen.** `glitch` is used for Epsilon Static
+because that family is literally defined as Epsilon Static; `identity` appears
+on the coin as a *mark*, not a material. `send`, `signal` and `hazard` are all
+refused: a coin is not a transmission beam, a pickup is not an interactable
+prompt, and hazard is never decorative. Health and ammo therefore get **no hue
+at all**, which is why the silhouette sheet is the load-bearing evidence.
+
+| asset | represents | tris | size (m) | real item |
+|---|---|---|---|---|
+| `pickup_coin` | Epsilon Coin | 212 | 0.59 × 0.59 × 0.48 | yes |
+| `pickup_health` | health | 184 | 0.59 × 0.59 × 0.39 | **no** |
+| `pickup_resource` | combat resource / ammo | 176 | 0.59 × 0.59 × 0.22 | **no** |
+| `pickup_special` | Epsilon Static | 188 | 0.59 × 0.59 × 0.47 | yes |
+| `pickup_cache` | secret cache / container | 160 | 0.66 × 0.59 × 0.55 | **no** |
+
+All five share one hexagonal mat — learned once it means *you can take
+this*, so the object above it is free to be only about which thing it is. The
+coin is the only object in the game presented as valuable: a thick milled
+disc on edge in a cradle, at hand scale, its desirability a specular story
+rather than an emissive one, because brightness is how the Check, Epsilon and
+hazard already speak.
+
+### What the silhouette sheet caught
+
+`pickup_resource` and `pickup_special` first read as the same object — two
+blocks of similar proportion on identical mats, which is doubly wrong because
+the special is the corrupted one. They are now separated on both axes, and
+the slug gained a third lobe at an unrelated angle: two lobes still read as a
+taper, three read as something that grew wrong. A lit hero shot would not
+have found this, and neither would a triangle count.
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 028 — PROPOSAL: the interaction primitive kit
+
+**PENDING.** Visual language only — mechanics are Production's. Full working
+in `review/batch028/README.md`.
+
+**The audit.** `interactable_contract.gd` exists but is about the **AP Check
+specifically**: `STATES := ["locked", "available", "sending", "confirmed"]`
+plus an anti-spoiler `leak()` check. That vocabulary fits none of the nine
+primitives — a weight button is not *sending*. Interface requirement 29.
+Its `REQUIRED_PARTS` (`state_visual`, `state_label`) **is** real, however, and
+this kit is authored to it: every primitive carries one identifiable
+`state_visual` region.
+
+**The grammar is the deliverable, not the nine objects.** *The plate is the
+state; everything else is the verb.* One recessed `signal`-cyan plate, in the
+same relation to each object's own affordance, so all nine answer *what is
+this doing right now* in the same place — which frees the rest of each object
+to be entirely about what it does. Cause and effect follows without a wire: a
+switch and the thing it drives carry the same plate, and one plate on three
+doors says one switch drives three.
+
+`signal` is licensed here — "the only colour an interactable prompt, rim or
+reveal face is allowed to be" — and Batch 026's checkpoint deliberately does
+not take it, because a checkpoint is walked onto rather than operated.
+
+| asset | verb the shape must say | tris | size (m) |
+|---|---|---|---|
+| `int_carryable` | GRIP HERE | 252 | 0.64 × 0.48 × 0.66 |
+| `int_weight_button` | THIS GOES DOWN | 144 | 0.96 × 1.05 × 0.23 |
+| `int_wall_switch` | THROW THIS | 152 | 0.39 × 0.55 × 1.54 |
+| `int_door_mechanism` | THIS DRIVES THAT | 228 | 1.20 × 0.55 × 2.30 |
+| `int_logic_indicator` | THIS IS COUNTING | 192 | 0.30 × 0.23 × 1.73 |
+| `int_launcher` | IT THROWS YOU, THAT WAY | 188 | 0.90 × 0.96 × 0.62 |
+| `int_breakable` | THIS ONE FAILS | 252 | 1.14 × 0.24 × 1.90 |
+| `int_key_receiver` | SOMETHING GOES IN HERE | 168 | 0.48 × 0.34 × 1.56 |
+| `int_machinery` | IT IS PART WAY | 244 | 1.16 × 0.78 × 1.25 |
+
+Not Portal, deliberately: the carryable is a handled industrial crate rather
+than a symbol-faced cube, and the button is a rectangular floor pad with a
+skirt rather than a round dish with a beam. Nothing is round-and-glowing,
+nothing is a companion, no primitive is coloured as a pair.
+
+### Read with the captions covered — two verbs failed
+
+`int_wall_switch` did not say THROW THIS: a 0.07 m lever vanished into its
+own housing and the object read as a post with a box on top. `int_machinery`
+did not say IT IS PART WAY: a 0.16 m carriage was lost among rotor, housing
+and bed — the travel indicator was a detail *on* the machine when it needed
+to be the loudest thing on it. Both rebuilt. Both the same failure: a verb
+present in the design and absent from the silhouette.
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 029 — PROPOSAL: the secret clue language
+
+**PENDING.** Visual language only. Full working in
+`review/batch029/README.md`.
+
+**This batch had the most contract to work with.** `"secret"` is a real
+socket kind in `schemas/content.py` — `Literal[..., "secret", "vista",
+"presentation"]` with a position and yaw — and `content_value.SECRET_VALUE`
+is 8. There is even an assist already: `secret_ping` is an Echo readout,
+which means the visual language must be the **primary** channel with the ping
+as an Echo-granted extra. A cue that only works once you have the right Echo
+is not a cue. What is missing is narrow: the socket says *where*, nothing
+says what a cue *looks like*, and no tier can be declared so a Zone teaches
+before it tests. Interface requirement 30.
+
+**A secret cue is not a thing; it is a deviation from a pattern.** So every
+asset is a whole wall-and-floor section carrying both the repeating baseline
+and the one place it fails, and the sheet is a game with a pass mark: if you
+cannot find it, that tier is wrong. No secret colour, no beacon — a colour is
+a label, and a label is the opposite of a thing you notice.
+
+| asset | cue | tier | theme | tris | size (m) |
+|---|---|---|---|---|---|
+| `secret_construction_seam` | construction seam | medium | concrete_facility | 540 | 7.20 × 3.82 × 3.40 |
+| `secret_displaced_panel` | displaced panel | learning | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
+| `secret_service_access` | service access | medium | rusted_industrial | 552 | 7.20 × 3.82 × 3.40 |
+| `secret_light_leak` | light leak | learning | gothic_stone | 552 | 7.20 × 3.82 × 3.40 |
+| ~~`secret_repeated_motif`~~ | ~~repeated motif~~ | ~~subtle~~ | ~~temple_ruin~~ | — | **DELETED in 036** — counting fine surface marks does not resolve at player distance in this rendering language. A premise failure, not a tuning one. |
+| `secret_partial_sightline` | partial sightline | medium | neon_transit | 552 | 7.20 × 4.07 × 3.40 |
+| `secret_wear_traffic` | wear and traffic | subtle | concrete_facility | 552 | 7.20 × 3.82 × 3.40 |
+| `secret_broken_construction` | broken construction | learning | rusted_industrial | 600 | 7.20 × 3.82 × 3.40 |
+| `secret_unreachable_space` | unreachable space | subtle | void_glitch | 576 | 7.20 × 4.47 × 3.40 |
+| `secret_tier_learning` | displaced panel | learning | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
+| `secret_tier_medium` | displaced panel | medium | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
+| `secret_tier_subtle` | displaced panel | subtle | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
+
+### The sheet's verdict on itself — five of nine
+
+Read cold, with the captions naming only the pattern and the tier:
+`construction_seam`, `displaced_panel`, `broken_construction` and
+`wear_traffic` **read**; `service_access` reads weakly; `light_leak` is **too
+weak for a learning tier**; `repeated_motif` **fails** — the marks do not
+resolve at player distance, so counting may be the wrong kind of cue for this
+engine; `partial_sightline` is **ambiguous in `neon_transit`**, whose own
+trim is bright vertical lines competing with the cue; and
+`unreachable_space` was **not testable**, its ledge sitting above the frame
+at a 1.6 m eye.
+
+`wear_traffic` is the most useful failure: it is the clearest cue in the set
+while carrying the hardest tier, so it is **mis-tiered** — which says wear is
+a strong channel worth using more, not less.
+
+### What the renders changed
+
+Square-on is the worst possible angle for these cues: a panel 14 cm proud has
+no silhouette and casts no visible shadow face-on — and it is not even the
+representative angle, since a player walks *along* a corridor. The rig now
+rakes. And the deviation sat mid-run, where a 90° FOV shrinks the middle bays
+hard; it is now at the near end, where a player actually passes it.
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 030 — the ten approved enemy roles, at their published envelopes
+
+**PENDING.** Visual treatment only — no attack, AI, health, status effect,
+boss behaviour or telegraph timing is invented. Full working in
+`review/batch030/README.md`.
+
+**The audit corrects this lane's own frontier.** Requirement 7 is
+**RESOLVED**: `ENEMY_ENVELOPES` publishes all ten roles, with the reason
+stated in Production's own comment — *"the envelope is the box the art lane
+declared for the role, so a model and a collider cannot be built to different
+numbers."* Requirement 14 is **RESOLVED** too: `enemy.gd` carries
+`telegraph_started` / `telegraph_finished` / `telegraph_progress()` and a
+`telegraph_origin: Marker3D` at the collider centre, outside the `visual`
+container so a flinch cannot drag it.
+
+So this is not a proposal in the way 023–029 were. Every model is authored to
+its role's exact published envelope and **the builder asserts the fit** —
+four roles' limbs had to be pulled in during the build, which is the
+assertion working.
+
+**Requirement 31 is what remains:** `ENEMY_ARCHETYPES` is still
+`("melee", "ranged", "brute")`. Seven of the ten have an agreed body, an
+agreed collider and a telegraph seat, and no way to be spawned.
+
+| asset | tris | built (m) | envelope (m) | placeable |
+|---|---|---|---|---|
+| `enemy_role_melee` | 400 | 0.78 × 0.69 × 1.55 | 0.80 × 1.60 × 0.80 | yes |
+| `enemy_role_ranged` | 328 | 0.62 × 0.55 × 1.36 | 0.70 × 1.40 × 0.70 | yes |
+| `enemy_role_brute` | 344 | 1.80 × 1.66 × 2.40 | 1.80 × 2.60 × 1.80 | yes |
+| `enemy_role_charger` | 460 | 0.90 × 1.88 × 0.84 | 0.90 × 1.05 × 1.90 | **no** |
+| `enemy_role_bulwark` | 464 | 1.45 × 0.82 × 1.97 | 1.45 × 2.05 × 0.85 | **no** |
+| `enemy_role_scuttler` | 476 | 1.24 × 1.16 × 0.34 | 1.30 × 0.62 × 1.20 | **no** |
+| `enemy_role_artillery` | 408 | 1.18 × 1.25 × 1.50 | 1.25 × 1.55 × 1.25 | **no** |
+| `enemy_role_beacon` | 460 | 0.55 × 0.55 × 2.20 | 0.62 × 2.20 × 0.62 | **no** |
+| `enemy_role_diver` | 264 | 0.70 × 1.13 × 0.40 | 0.70 × 0.50 × 1.20 | **no** |
+| `enemy_role_drifter` | 476 | 1.25 × 1.25 × 0.82 | 1.35 × 0.95 × 1.35 | **no** |
+
+`ranged` and `bulwark` were re-cut on 2026-09-26 for Tier 2 (a silhouette
+tell each, inside the same envelopes). Their rows above are the re-cut
+models; the evidence is `docs/art/review/enemies_2026-09-25/tier2/`.
+
+
+**A10.3, added 2026-09-22: every role now carries named attachment
+nodes.** All ten used to arrive as a SINGLE joined mesh -- the readiness
+harness found that first -- so a runtime had nowhere to hang a muzzle
+flash, a warning or a status glyph. Each role now exports its anchors as
+their own objects, embedded 40 mm inside the body and placed off the
+body's MEASURED box (envelope fractions put eight of them outside the
+geometry, and the containment gate refused them):
+
+| role | anchors |
+|---|---|
+| `artillery` | `anchor_muzzle`, `anchor_warn`, `anchor_weak`, `anchor_effect` |
+| `beacon` | `anchor_muzzle`, `anchor_warn`, `anchor_effect` |
+| `brute` | `anchor_strike`, `anchor_warn`, `anchor_weak`, `anchor_effect` |
+| `bulwark` | `anchor_shield`, `anchor_weak`, `anchor_warn`, `anchor_effect` |
+| `charger` | `anchor_strike`, `anchor_warn`, `anchor_weak`, `anchor_effect` |
+| `diver` | `anchor_muzzle`, `anchor_warn`, `anchor_effect` |
+| `drifter` | `anchor_warn`, `anchor_effect` |
+| `melee` | `anchor_strike`, `anchor_warn`, `anchor_effect` |
+| `ranged` | `anchor_muzzle`, `anchor_warn`, `anchor_effect` |
+| `scuttler` | `anchor_strike`, `anchor_warn`, `anchor_effect` |
+
+**`Enemy._collect_tint_parts` would find NONE of them, and none of the
+bodies either.** It takes only meshes whose `material_override` is a
+`StandardMaterial3D`, and a glTF import puts its materials on the
+surfaces. Measured, all ten: **0 tintable parts**. That is Production's
+to decide; see `docs/art-requests/2026-09-22-enemy-readiness-handoff.md`.
+
+Variety comes from proportion rather than size, because the box is fixed: the
+threat end is the heavy end, every role carries a telegraph seat at
+`centre_y` (reserved geometry, not a telegraph, and it does not animate), and
+flyers are modelled around their collider centre at the published
+`hover_height` rather than standing. `hazard` appears only on the beacon, the
+one role whose envelope is a fixture rather than a body, and there as a band
+rather than a wash.
+
+### What this batch did NOT achieve
+
+**All ten wear the same skin.** Surface treatment does no work to separate
+roles — at distance the family reads as ten brown panelled masses of
+different shapes. Silhouette and envelope compliance are done; **role
+identity in the surface is not**, and that is the obvious next revision. The
+brief asked for stronger visual treatment; this delivers the half that could
+be verified against a contract and does not pretend the material half is
+finished.
+
+Status: **PENDING** — not self-marked.
+
+
+---
+
+## Gap pass 031–037 — post-030 targeted work
+
+**All PENDING.** Full working in each batch's `review/batchNNN/README.md`,
+plus `review/BOSS_AUDIT.md`.
+
+### 031 — the local Zone key family
+
+The A-vs-B question is settled by the receiver: a keyway is a picture of its
+key, so **the part the receiver reads must be universal and everything else
+may be themed.** Shank, shoulder and bit are identical everywhere; only the
+grip is themed. Channels are **counted, never coloured** — N lugs plus the
+shoulder notch rotated N steps, two redundant carriers of one fact. Not a
+keycard, not a fantasy key: a machined interlock blank. Sits on Batch 027's
+pickup mat unchanged.
+
+| asset | channel / theme | tris | size (m) |
+|---|---|---|---|
+| `zkey_ch1` | 1 | 288 | 0.59 × 0.59 × 0.19 |
+| `zkey_ch1_rusted_industrial` | 1 | 288 | 0.59 × 0.59 × 0.19 |
+| `zkey_ch1_void_glitch` | 1 | 288 | 0.59 × 0.59 × 0.19 |
+| `zkey_ch2` | 2 | 300 | 0.59 × 0.59 × 0.19 |
+| `zkey_ch3` | 3 | 312 | 0.59 × 0.59 × 0.19 |
+| `zkey_receiver_ch1` | 1 | 136 | 0.42 × 0.30 × 1.48 |
+| `zkey_receiver_ch2` | 2 | 148 | 0.42 × 0.30 × 1.48 |
+| `zkey_receiver_ch3` | 3 | 160 | 0.42 × 0.30 × 1.48 |
+
+### 032 — baseline melee and the viewmodel seam
+
+**A viewmodel contract already exists** — `$Camera3D/Viewmodel` with named
+`Device`, `Tip`, `EchoPart`, `EchoTip` children, and `EchoRuntime` already
+paints `EchoPart` with the Echo's **source world** and `EchoTip` with the
+**slot**. Everything here is built to those exact dimensions.
+
+**The Forge finding (requirement 32):** a reforge from ranged to grapple
+changes **nothing** on the viewmodel — same source, so the same body colour;
+same button, so the same tip. The one operation the Forge exists to perform
+is invisible in the view the player looks at all game. The fix is not
+hundreds of Echo weapons: it is **one node made swappable by family**, with
+form carrying family while colour keeps source and the tip keeps slot. Three
+of seven forms built as evidence; the deliverable is the seam, not the roster.
+
+The baseline melee is the Static Pulse device's own **discharge fork** — a
+facility grounding prong, swung because it is what is in your hand. Not a
+sword, not a crowbar, not a knife, and **not Epsilon-modified**: the Static
+Pulse is the one thing in the game that is yours.
+
+| asset | binds to | tris | size (m) |
+|---|---|---|---|
+| `vm_device_melee` | $Camera3D/Viewmodel/Device | 96 | 0.15 × 0.68 × 0.18 |
+| `vm_device_stowed` | $Camera3D/Viewmodel/Device | 96 | 0.15 × 0.45 × 0.23 |
+| `vm_echopart_grapple` | $Camera3D/Viewmodel/EchoPart | 76 | 0.10 × 0.06 × 0.25 |
+| `vm_echopart_melee` | $Camera3D/Viewmodel/EchoPart | 44 | 0.10 × 0.07 × 0.23 |
+| `vm_echopart_ranged` | $Camera3D/Viewmodel/EchoPart | 64 | 0.10 × 0.08 × 0.28 |
+
+### 034 — hard progression gates
+
+**The tell is finish quality, not signage.** Broken is ragged; installed is
+neat. Each gate is built twice — finished, and as the ragged non-gate it must
+not be confused with — because that pair *is* the evidence. `gate_blink_*` is
+a proposal only and carries `has_mechanical_contract: false`.
+
+| asset | family | tris | size (m) |
+|---|---|---|---|
+| `gate_blink_proposal` | None | 352 | 8.00 × 5.00 × 5.50 |
+| `gate_blink_proposal_ragged` | None | 96 | 8.00 × 5.00 × 5.50 |
+| `gate_break` | breakable_wall | 228 | 8.00 × 5.00 × 5.50 |
+| `gate_break_ragged` | breakable_wall | 120 | 8.00 × 5.00 × 5.50 |
+| `gate_grapple` | grapple_anchor | 260 | 8.00 × 5.00 × 5.50 |
+| `gate_grapple_ragged` | grapple_anchor | 84 | 8.00 × 5.00 × 5.50 |
+| `gate_launch` | bounce_pad | 152 | 8.00 × 5.00 × 5.50 |
+| `gate_launch_ragged` | bounce_pad | 92 | 8.00 × 5.00 × 5.50 |
+
+### 035 — interactable vs decorative
+
+Six decoys, each a near-miss of a Batch 028 primitive. **Sheet D failed as a
+test** — solvable by spotting cyan — so sheet E suppresses the state plate,
+and that is the result. Three pairs read, one is weak, and **two fail**:
+carryable vs fixed crate, and key receiver vs welded hatch.
+
+**The finding: the structural grammar is distance-limited by the size of the
+tell.** Object-scale differences (lever, rack, rail, travel) carry at 4.5 m;
+hand-scale ones (a grip, a keyway) do not. That means the state plate is not
+a status indicator on small interactables — **it is the only affordance cue
+that survives the distance.**
+
+| asset | shadows | tris | size (m) |
+|---|---|---|---|
+| `dec_bulkhead` | int_door_mechanism | 72 | 1.30 × 0.33 × 2.30 |
+| `dec_console_dead` | int_wall_switch | 108 | 0.39 × 0.27 × 1.51 |
+| `dec_crate_fixed` | int_carryable | 120 | 0.58 × 0.50 × 0.51 |
+| `dec_hatch_welded` | int_key_receiver | 68 | 0.48 × 0.34 × 1.58 |
+| `dec_panel_blind` | int_breakable | 84 | 1.14 × 0.20 × 1.90 |
+| `dec_pipe_fixed` | int_machinery | 88 | 1.11 × 0.68 × 0.97 |
+
+### 036 (029-R) — secret cues
+
+`repeated_motif` **deleted** — a premise failure, not a tuning one.
+`wear_traffic` re-tiered subtle → learning (it was the clearest cue carrying
+the hardest tier, which says wear is a strong channel).
+`broken_construction` learning → subtle. `light_leak` strengthened and now
+spills onto the floor. `partial_sightline` moved off `neon_transit`, whose own
+trim competed with it. `unreachable_space`'s ledge lowered into frame — it had
+never actually been tested. **Eight cues, not nine.**
+
+### 037 (030-R) — enemy surface role identity
+
+Silhouettes and envelopes **unchanged**. One rule: **armour goes where the
+role takes or deals impact; mechanism shows where it does not.** Three
+treatments — `plate` matte, `mech` oily, `body` — and armour is told from
+mechanism by **material property, not hue**, so L-08 still holds and nothing
+shifts with the room. Not ten colours.
+
+### Boss audit — audit only, nothing built
+
+Arenas and landmarks can plausibly host an elite; `EnemyEnvelope` already
+permits up to 6 m without a contract change; the budget table already has
+tiers above `enemy`, and the ten roles use under 40% of theirs. **The missing
+piece is a telegraph vocabulary, not a body** — `enemy.gd` publishes the
+signals and Batch 030 reserved the seats, but nothing is authored for any
+`kind` and no `kind` vocabulary exists. Recorded as a dependency; not started.
+
+Status: **all PENDING** — none self-marked.
+
+---
+
+# Owner review — the post-030 gap pass (2026-08-29)
+
+## 031 zone keys — PASS
+
+Four things are locked and are not open again:
+
+- **the part the keyway reads is UNIVERSAL** — one shank, one shoulder, one
+  keyway relationship, shared by every key and every receiver;
+- **channel coding is STRUCTURAL, never colour** — channel N is N lugs and a
+  notch rotated N × 40°, so a player counts rather than matching a hue;
+- **the grip is themed** — that is where a key belongs to a world;
+- **it is a machined interlock**, not a keycard and not a fantasy artefact.
+
+## 032 the baseline melee — PASS, with a boundary
+
+The melee device passes. The ranged / melee / grapple `EchoPart` forms built
+beside it are **proof of the attachment seam and nothing more** — explicitly
+*not* approval of a final seven-fixed-forms system, and Art must **not**
+expand them into seven production family models.
+
+Interface requirement 32 is reworded accordingly: *"the Echo family must be
+visible through a swappable / composable `EchoPart` seam."* **The owner will
+design a modular Echo kitbash system separately**; the seam exists to receive
+it.
+
+## 033 the Zone exit AUDIT — PASS, and BUILD NOTHING
+
+The audit's recommendation is the outcome. Three things are recorded for
+Production and are Production's to fix in Production's own file:
+
+1. the **existing exit portal is sufficient** — no new portal asset;
+2. the lifecycle needs **more than a boolean visual state**;
+3. **locked / dead must not use hazard-red semantics.** A locked exit is not
+   a hazard; `dead` is the family whose own definition contains the word
+   *locked*.
+
+## 034 hard gates — the VISUAL PRINCIPLE passes
+
+Locked: an intentional capability route reads as **finished, installed,
+deliberate**; broken geometry reads as **ragged, incomplete, a construction
+failure**. Blink / teleport stays **proposal-only** — no mechanical contract,
+so no production asset.
+
+## Boss audit — accepted, builds nothing
+
+The finding stands as a recorded dependency: **the missing piece is a
+telegraph vocabulary, not a body.**
+
+---
+
+# The three revisions the owner sent back (delivered, PENDING re-review)
+
+## 035-R — object scale, and the plate as redundant hardware
+
+The owner's ruling was **do both**: raise the hand-scale structural tells to
+object scale *and* keep the standardized interaction hardware as a
+**redundant** learned cue — never the sole source of truth, never something
+that needs colour vision.
+
+**The rule adopted: a tell that has to survive gameplay distance must change
+the object's SILHOUETTE, not its surface.** Both failing pairs differed only
+by a hand-scale feature (6 cm grips vs 3 cm mouldings; a 9 cm keyway vs a
+scribed outline). Both were *legal* under the derived floor —
+`min_feature_fraction` 0.08 of a 0.42 m crate is 3.4 cm and 6 cm is about
+seven screen pixels at 4.5 m — and both still failed, because **two screen
+pixels is enough to see that a form exists and nowhere near enough to tell
+which form it is.**
+
+| pair | now separates on |
+|---|---|
+| carryable vs fixed crate | a bail arch with a hole through it over feet with daylight under them, against a solid lifting boss on a crate sitting flush in a welded fillet |
+| key receiver vs welded hatch | an open throat — two cheeks with the top open between them, a **fork** in the outline — against a flush slab with the beads run over the seam |
+| breakable vs blind panel | shards at their own depths, broken in relief, against one flat coursed field |
+
+The state plate is now **hardware**: a recess, a raised **bezel**, and the
+lit face inset behind it, so it survives greyscale. Three independent
+channels result — silhouette says *what kind of thing*, interaction hardware
+says *yes this one is operable*, state treatment says *what it is doing now*.
+
+A third sheet was added because the second was still leaky: the bezel is body
+geometry and no decoy has one, so "find the bezel" solved sheet B without
+using the grammar. **`C_recognition_silhouette.png` is flat black on a lit
+backdrop** — no material, no emission, no bezel, no colour. It immediately
+caught one more failure: the first revised receiver closed its throat with a
+lintel, and **a cavity in a front face does not break an outline**. Opening
+the top turned the head into a fork. **All six pairs now separate in pure
+silhouette**, weakest being breakable vs blind.
+
+## 036-R — the secret cue package
+
+No redesign; the artifact was the problem. `A_secret_cues.png` said EIGHT and
+visibly contained six, because the panel index was moved to four columns
+while the sheet WIDTH stayed at three — cues 4 and 8 were blitted off the
+right edge, and the sheet was re-rendered and not looked at. Fixed, verified
+by reading the image (2800 × 1080, eight cues), and `batch029/README.md`
+rewritten to the current eight-cue state with the history preserved.
+
+## 037-R — enemy surfaces
+
+Bodies and silhouettes **unchanged**, per instruction. The first pass told
+armour from mechanism by *roughness*, which at mid range reads as shadow
+rather than as a different kind of thing. **The difference is now carried by
+construction:** `plate` is a slab seated proud of a recess (the face shrinks
+to 88%, the backing keeps the declared extent); `mech` is ribbed and rodded.
+No role colours.
+
+Two roles were also **mislabelled and are retagged**: the scuttler's carapace
+and the beacon's head were tagged `plate` — the largest mass on the two roles
+captioned *"barely armoured at all"* and *"no armour at all"*. Both are now
+`body`. Materially a no-op, since `body` and `plate` share a material, but a
+label should not contradict the rule the sheet exists to prove.
+
+`C_enemy_surfaces.png` is the evidence: five role pairs at **4.0 m** on **one
+camera** — one lens, one distance, one azimuth, level — plus a maximum-size
+detail. It took three passes to become valid. A fixed 3.4 m standoff put the
+hovering drifter above the frame; a standoff that *scaled* with the crown
+fixed that and broke the sheet, because a surface comparison shot from five
+different distances is not a comparison. The final version sizes one distance
+from the widest pair, and had to count **depth** in that width: at a
+three-quarter azimuth a 1.8 × 1.8 m brute is 2.24 m wide on screen and ran
+off its own left edge.
+
+**Honest result: it reads in four of five pairs and in the detail.** The weak
+pair is brute / scuttler — the caption claims "barely armoured at all" and
+the scuttler still reads as a fairly solid dome. The retag is the honest half
+of the fix; the other half would be a body change, which is out of scope by
+instruction. Recorded, not worked around.
+
+Status: **035-R, 036-R and 037-R are PENDING re-review** — none self-marked.
+
+---
+
+# Owner review — the three revisions (2026-08-29)
+
+Reviewed against the packaged sheets. **All three pass.**
+
+## 035-R — interactable vs decorative. PASS
+
+Two things are locked.
+
+> **If a distinction must survive gameplay distance, the distinguishing
+> feature must affect object-scale SILHOUETTE.**
+
+And the redundant interaction-hardware direction, now the standing rule for
+every operable object:
+
+| channel | question it answers |
+|---|---|
+| silhouette / structure | **what kind of thing** this is |
+| interaction hardware | **yes, this object is operable** |
+| state treatment | **what it is doing now** |
+
+The interaction plate / bezel **may remain** as standardized physical
+hardware, provided it is **not the sole source of truth** and **does not rely
+on hue alone**. The pure-silhouette sheet is **accepted evidence**. Breakable
+vs blind panel is the weakest pair and is still acceptable.
+
+## 036-R — secret cues. PASS
+
+The corrected eight-cue package is accepted. Locked:
+
+- **no universal secret colour;**
+- a secret cue is a **deviation from a learned environmental pattern**;
+- a **smaller reliable vocabulary is preferred over padding the set**;
+- `repeated_motif` **remains deleted**;
+- the current tiering is accepted.
+
+> **Stop revising this system until it has real in-game Zone testing.**
+
+## 037-R — enemy surface role identity. PASS WITH DOCUMENTED CAVEAT
+
+The surface construction rule is accepted:
+
+- **plate** = a proud slab, impact-bearing construction;
+- **mechanism** = recessed, ribbed, rodded — exposed function.
+
+No role colours. Shared enemy-family ancestry is preserved. The close
+comparison sheet demonstrates the system sufficiently.
+
+### The caveat, recorded as ACCEPTED rather than outstanding
+
+Brute vs scuttler surface identity remains weak: the scuttler still reads
+more armoured than its description implies. **Accepted for now.**
+
+> **Do NOT alter the approved scuttler silhouette or body solely to force a
+> stronger surface distinction.** Its silhouette already carries substantial
+> role identity, so surface treatment may remain *supporting* information
+> here.
+
+Revisit only if later gameplay testing shows a real recognition problem, and
+only with gameplay evidence. This is a closed item with a known limit, not an
+open defect.
+
+## The post-030 pass, final state
+
+| batch | verdict |
+|---|---|
+| 031 zone keys | **PASS** |
+| 032 viewmodel + baseline melee | **PASS WITH BOUNDARY** |
+| 033 Zone exit | **PASS AUDIT / BUILD NOTHING** |
+| 034 hard gates | **PASS VISUAL PRINCIPLE** |
+| 035-R recognition | **PASS** |
+| 036-R secret cues | **PASS** |
+| 037-R enemy surfaces | **PASS WITH DOCUMENTED CAVEAT** |
+| boss audit | **ACCEPTED / BUILD NOTHING** |
+
+## The boundary that follows
+
+**The art lane is intentionally idle.** Two systems are being designed by the
+owner and a design collaborator first, each arriving as its own brief:
+**modular Echo visual construction / kitbash**, and **diegetic in-world
+interface**.
+
+Requirement 32 remains **only the architectural seam**. The three existing
+`EchoPart` forms are **proof-of-seam only** and are explicitly not approval
+of seven fixed family models, a final attachment grammar, a final part
+taxonomy, runtime composition rules, family silhouette rules, or provenance /
+source influence rules.
+
+The interaction kit must **not** be independently expanded into menus,
+terminals, Archive UI, Forge UI, Zone-selection UI, or any other large
+physical interface.
+
+**No Batch 038. No heartbeat. No polling. No autonomous expansion.**
+
+---
+
+## P2 — the eight authored shells. PASS (owner, 2026-09-02)
+
+Recorded in full in `ART_FRONTIER.md`. `shell_tower_collapsed`,
+`shell_tower_spiral`, `shell_tower_gantry`, `shell_treasure_vault`,
+`shell_treasure_cache`, `shell_treasure_coffer`, `shell_corner_left`,
+`shell_corner_right` — all eight PASS on spatial FORM, after Production
+certified them physically at `6640d86` with zero room-contract findings.
+Package: `docs/art/review/p2_owner/`.
+
+The PASS is of form, not of dressing. The non-blocking notes stand:
+collapsed and spiral deck wells may take lip / frame / railing / support
+language later; the gantry's `landing_4` / deck coplanar z-fight is
+cleanup; the vault's "protected" identity wants props, barriers, sound and
+lighting rather than shell redesign.
+
+## P3 — `shell_hall_transit`, the first LARGE room
+
+> ### OWNER VERDICT: **FORM PASS WITH TWO CHANGES**, on the library review.
+>
+> Production certified the repaired geometry at `fc2cc41` — authored path
+> confirmed, structural 0, measured 0, mandatory circulation clean — and
+> the owner then passed the room's form subject to two changes, both of
+> which have landed:
+>
+> 1. **Three `grapple_point` offers** on the collar rings, at
+>    `0.0, 9.2, 28.8`, `5.2, 19.2, 34.0` and `0.0, 27.2, 39.2`. Optional
+>    movement; the base walking route is complete without them.
+> 2. **`ring_s_to_ring_e`** closes the collar walk from a C into a loop —
+>    one optional `walk` over geometry that was already there.
+>
+> Everything else is preserved: the flat-tread flights, the plinths as
+> geometry rather than stand surfaces, the rail, the launch pair, the
+> open central vertical reservation. Contract now **12 surfaces, 12
+> traversal (9 mandatory), 10 sockets, 6 offers, 71 collision pieces**.
+> Evidence: `docs/art/review/hall_owner_verdict/`.
+>
+> **The shell still exports `review: "pending"`.** A form verdict is not
+> a review state Art may write, and Production has not yet recertified
+> the changed contract.
+
+**The figures below are the P3 record, from before both repairs and the
+verdict.** They are deliberately not re-rendered.
+
+`docs/art/review/p3_owner/` — eight views and six overlays, with a README
+that answers the P3 brief item by item. 40 × 38 × 60 m, ~91,000 m³, 552
+triangles, 41 convex colliders, three movement offers against Production's
+`af620d8` contract.
+
+| Shell | Metrics | Layers | Landmark |
+| --- | --- | --- | --- |
+| `shell_hall_transit` | 924 tris · 41.20 × 60.00 × 39.60 m · 32.0 texels/m | basin 0, west gallery 11, ring/landing/gantry 21, exit platform 28 | a machine armature — four 4 m columns and three collar rings around a 12 m open shaft, topping out at 30 m |
+
+The declared envelope is 40 × 38 × 60 m interior; the measured box is
+41.20 × 60.00 × 39.60 in the art manifest's Blender order (width, length,
+height), which is the 0.60 m boundary wall on each face. `size_godot` is
+what the pack carries and `assert_axis_order` proves the swap at build
+time.
+
+What the owner is being asked, precisely: **is this the big open area the
+P3 direction asked for** — one volume holding several local gameplay
+spaces around a dominant landmark, with a visible distant destination, and
+compatible with rail, launch and future vertical movement without being
+any of their dedicated rooms.
+
+One item in the package is a question rather than a claim: `O5_overhead`
+marks the structure a grapple anchor would hang from. `grapple_anchor` is
+not in `OFFER_KINDS`, so no offer was invented for it.
+
+**Nothing follows this shell.** No second LARGE room, no family, no Batch
+038. **No heartbeat. No polling. No autonomous expansion.**
+
+
+## Wave 1 of the LARGE room library — three shells
+
+> ### OWNER VERDICT: **FORM PASS, all three.**
+>
+> * **Plenum** — PASS.
+> * **Yard** — PASS, and **keep its current ~16 m height**. The question
+>   Art raised about the proportion is settled: the horizontal contrast
+>   is wanted.
+> * **Span** — PASS, and **keep the intentional one-way mid-span drop**.
+>   Free descent, costly ascent, on the record as deliberate.
+>
+> No geometry changed for any of these. All three still export
+> `review: "pending"`.
+>
+> ### TECHNICAL REPAIR under the authored-entry ruling
+>
+> Production measured **plenum 2, yard 5, span 4** before its own
+> correction pass. All eleven were reproduced by running Production's
+> unmodified `RoomAudit` in a detached read-only worktree at `fc2cc41`.
+>
+> * **Three** are the audit assuming a room's entry is its local origin
+>   — plenum enters at y=68, yard at x=−43, span at y=14. Superseded by
+>   the ruling; **Production's, and untouched.**
+> * **Eight** were Art's, and all eight were one mistake: a declared
+>   point carrying the *centre* of the thing it names. Seven `cover`
+>   sockets sat inside their own cover block; the plenum's `reward` sat
+>   inside the machine. All eight repaired at the source.
+>
+> **No geometry moved** — same triangles, same colliders, same surfaces,
+> traversal, size and offers. Re-running the same audit: plenum 0/1,
+> yard 0/1, span 0/1, the remainder being the entry finding in each.
+> Evidence: `docs/art/review/wave1_repair/`.
+
+`docs/art/review/wave1/` — four views each, and a README that answers the
+brief room by room. All three are `review: "pending"`; Art does not write
+`pass`.
+
+| Shell | Metrics | Proportion | Landmark |
+| --- | --- | --- | --- |
+| `shell_plenum_helix` | 1668 tris · 21.20 × 20.00 × 73.60 m · 32.0 texels/m | 1 : 3.6 tall | a machine column hung from the roof, never founded, with three walkable collars |
+| `shell_yard_gantry` | 540 tris · 85.20 × 52.00 × 17.60 m · 32.0 texels/m | 5.3 : 1 wide | an 84 m gantry crane spanning the full width at 12 m |
+| `shell_span_basin` | 672 tris · 31.20 × 90.00 × 23.60 m · 32.0 texels/m | 3 : 1 long | one 90 m deck on two pylons, with a walkable basin under all of it |
+
+### Batch 044 — the first branching rooms (2026-09-13, PENDING)
+
+Two junctions and a side destination. Proposal art: `review: "pending"`,
+not exported to `godot/content/`, and Art does not write `pass`. Every
+route in all three is flat, because the measured walk-up limit of the
+current player is **0.12 m** — see
+`docs/art/reports/2026-09-13-branching-rooms.md`.
+
+| Shell | Metrics | Connections | Plan |
+| --- | --- | --- | --- |
+| `shell_junction_triad` | 672 tris · 26.00 × 26.00 × 8.66 m · 32.0 texels/m | 3 ways | a T of arms round an open middle, the branch and the bay opening together |
+| `shell_junction_cross` | 948 tris · 30.00 × 30.00 × 9.66 m · 32.0 texels/m | 4 ways | a plated machine you walk around: a 7.5 m working bay on two sides, a 2.5 m service passage on the other two |
+| `shell_bay_terminus` | 516 tris · 18.00 × 22.00 × 7.66 m · 32.0 texels/m | 1 used + 2 closable | narrow in, opens out, stops at a recessed end wall |
+
+Measured boxes are Blender-ordered (width, length, height) and include
+the 0.60 m boundary wall on each face; the pack carries `size_godot`.
+
+The question Wave 1 was built to answer: **does LARGE work at proportions
+other than the hall's?** The three were chosen to be as unlike each other
+as the slate allows rather than to be the three best ideas, so that a
+wrong answer costs three rooms instead of ten.
+
+**Nothing follows until the owner reviews these.** Wave 2 is four rooms
+and Wave 3 is three; neither starts on a wake-up.
+
+### Batch 045 — the four 0.4 setpieces get visual identities (2026-09-22, PENDING)
+
+Nine assets for four rooms that work today out of `BoxMesh`. Candidate
+art: imported and fit-checked, **not** runtime-bound and **not**
+owner-approved — three separate states, and this batch claims the first
+two. Fitted against Production `claude/archipepsi-0-4-blindside` @
+`f404410`. Handoff:
+`docs/art-requests/2026-09-22-setpiece-visual-handoff.md`.
+
+| Asset | Metrics | For | Note |
+| --- | --- | --- | --- |
+| `sp_skiff_deck` | 300 tris · 4.00 × 4.16 × 1.49 m · 32.0 texels/m | Blindside carrier | `RailCarrier` deck, origin at the box centre; curb 0.08, nothing above node +0.95 |
+| `sp_dock_stand` | 72 tris · 0.80 × 0.80 × 1.27 m · 32.0 texels/m | Blindside dock | two levers and a readout, standing beside the dock inside its footprint |
+| `sp_hoist_car` | 132 tris · 4.00 × 4.00 × 1.48 m · 32.0 texels/m | Passing Platforms, vertical | the climbing car: direction before it moves |
+| `sp_crossing_carrier` | 96 tris · 4.04 × 4.00 × 0.88 m · 32.0 texels/m | Passing Platforms, horizontal | the crossing car, low enough to read as the other journey |
+| `sp_receiver_hood` | 72 tris · 2.40 × 1.14 × 1.70 m · 32.0 texels/m | Counterfire receiver | a hood over the receiver at `RECEIVER_Z` −7.0 |
+| `sp_lane_screen` | 60 tris · 0.34 × 3.00 × 1.37 m · 32.0 texels/m | Counterfire lane | lane-edge protection, not a wall across the lane |
+| `sp_shutter_leaf` | 60 tris · 0.48 × 2.40 × 2.60 m · 32.0 texels/m | Counterfire shutter | authored about its box centre; no pivot invented |
+| `sp_weight_plate` | 72 tris · 2.40 × 2.40 × 0.16 m · 32.0 texels/m | Unweighted sensor | the plate the switch reads, 0.16 under the 0.12 walk-up plus its own sill |
+| `sp_ballast_crate` | 132 tris · 2.12 × 2.12 × 1.00 m · 32.0 texels/m | Unweighted crate | **exactly 1.0 m in every state** against `MAX_VERTICAL_STEP` 1.0 |
+
+All nine at **32 texels/m — the architecture band, not the prop band's
+64.** A skiff at 64 standing against docks and yard walls at 32 reads as
+a different game's asset pasted in; the fit decision beat the tier table.
+
+~~**A handrail at a natural height would break the gantry guarantee.**
+A railing cap at 1.1 m sits at world 2.1, and 2.1 + 1.333 = 3.43, above
+`GANTRY_Y` 3.1. Nothing on a rideable deck rises past world 1.75.~~
+**STRUCK 2026-09-22 — wrong twice over, found by measuring the yard for
+Batch 046.** `GANTRY_Y` is measured above the RAIL at 0.6, so the
+platform spans world **3.50–3.90**; and it sits **3.5 m away
+horizontally** (lateral 5.5–9.5 against a deck at ±2.0). A railing cap
+at 2.1 reaches 3.433 straight up and 3.100 after crossing the gap —
+under the platform on both counts. Even Production's own solid 1.25 m
+shield reaches only 3.583 and 3.250.
+
+The cap survives as an **art** rule: nothing on a rideable deck stands
+taller than the `SHIELD_HEIGHT` cover Production already welds to it
+(world 2.25). The skiff's guard rails, which the old cap had left at
+world 1.75 — half a metre below that cover — now stand at 2.05.
+
+Measured boxes are Blender-ordered (width, depth, height); the manifest
+carries `size_axes` and the runtime order.
+
+### Batch 046 — the Blindside junction (2026-09-22, PENDING)
+
+Fourteen assets for the yard the 0.4 setpieces run through: track, dock
+edges, the repairable span and the gantry machinery. Candidate art:
+imported and fit-checked, **not** runtime-bound and **not**
+owner-approved. Fitted against Production `claude/archipepsi-0-4-blindside`
+@ `f404410`. Handoff: `docs/art-requests/2026-09-22-yardkit-handoff.md`.
+
+| Asset | Metrics | Item | Note |
+| --- | --- | --- | --- |
+| `yk_track_module` | 72 tris · 0.50 × 1.00 × 0.30 m · 32.0 texels/m | A04.1 | one metre of track, tiling; heads meet flush |
+| `yk_track_pier` | 36 tris · 0.80 × 0.80 × 0.42 m · 32.0 texels/m | A04.1 | **their track floats 0.425 m** over the yard floor; this is that gap |
+| `yk_track_end` | 84 tris · 0.54 × 0.60 × 0.48 m · 32.0 texels/m | A04.1 | a stop, not a taper -- the missing track must read as missing |
+| `yk_dock_edge` | 72 tris · 1.10 × 7.00 × 0.09 m · 32.0 texels/m | A04.2 | local x = 0 **is** the line the deck's outer edge arrives on |
+| `yk_dock_buffer` | 48 tris · 0.46 × 0.46 × 0.86 m · 32.0 texels/m | A04.2 | stands outboard of the receiver posts at lateral 2.60 |
+| `yk_dock_locker` | 76 tris · 0.78 × 1.50 × 0.86 m · 32.0 texels/m | A04.2 | the limited service furniture, inside the footprint |
+| `yk_span_beam` | 168 tris · 0.57 × 14.05 × 0.66 m · 32.0 texels/m | A04.3 | **14.05 m, measured** -- the aligned mesh meets both track ends |
+| `yk_switch_stand` | 60 tris · 0.50 × 1.37 × 0.77 m · 32.0 texels/m | A04.4 | **candidate**: the carrier has no switchable routing to report |
+| `yk_gantry_head` | 72 tris · 3.00 × 1.38 × 0.70 m · 32.0 texels/m | A05.1 | closes the 0.40 m between their column top and platform underside |
+| `yk_gantry_winch` | 76 tris · 1.35 × 1.10 × 1.00 m · 32.0 texels/m | A05.1 | its own asset -- the platform separates it from the head |
+| `yk_gantry_anchor` | 72 tris · 3.30 × 1.80 × 1.53 m · 32.0 texels/m | A05.2 | adapts the mounting, never the target; clear of the ring |
+| `yk_lever_housing` | 84 tris · 0.90 × 0.90 × 0.73 m · 32.0 texels/m | A05.3 | arm, lamp, linkage and service panel each addressable |
+| `yk_branch_mast` | 96 tris · 0.90 × 1.30 × 1.62 m · 32.0 texels/m | A05.4/5 | **1.62 m because the sight corridor said so**, same blade both faces |
+| `yk_branch_conduit` | 60 tris · 0.46 × 2.00 × 0.30 m · 32.0 texels/m | A05.4 | 2 m tiling run, the continuity back to the junction |
+
+**Every number is MEASURED, not remembered.**
+`assets/models/batch046/yard_fit.json` is written by
+`tools/content/run_yard_measure.sh`, which rebuilds Production's rail
+from Production's five control points with Production's own `RailPath`
+and evaluates it. The gap between S2 and S3 is **14.048 m** and no
+reading of `railway_scenario.gd` yields it — three of the five control
+points sit on a Catmull-Rom corner. The builder was sabotaged with a
+remembered 14.0 and produced a clean beam 48 mm short; the import
+harness caught it.
+
+**Three findings, all Production's to decide:** their gantry column tops
+at 3.10 against a platform underside at 3.50, a 0.40 m gap; their track
+floats 0.425 m over the yard floor with nothing under it; and a landmark
+on the acquisition branch cannot be taller than a person without
+crossing somebody's view of the grapple ring.
+
+Measured boxes are Blender-ordered (width, depth, height); the manifest
+carries `size_axes` and the runtime order.
+
+### Batch 048 — Passing Platforms, Counterfire Arcade, Unweighted Switch (2026-09-22, PENDING)
+
+A06, A07 and A08: the same treatment Blindside got, for the other three
+0.4 rooms. Candidate art, same three states. Handoff:
+`docs/art-requests/2026-09-22-roomkits-handoff.md`.
+
+| Asset | Metrics | Item | Note |
+| --- | --- | --- | --- |
+| `pp_lift_guide` | 108 tris · 1.16 × 0.48 × 2.00 m · 32.0 texels/m | A06.1 | masts, ties, rope and a counterweight in its channel; **no standable face** |
+| `pp_shuttle_guide` | 100 tris · 0.34 × 2.00 × 0.42 m · 32.0 texels/m | A06.1 | a **screw**, not a rope -- the two drives are told apart by mechanism |
+| `pp_transfer_edge` | 72 tris · 4.04 × 0.55 × 1.10 m · 32.0 texels/m | A06.2 | rail at Production's `RAIL_HEIGHT` 1.10; **nothing crosses the edge line** |
+| `pp_call_post` | 84 tris · 0.34 × 0.35 × 1.44 m · 32.0 texels/m | A06.3 | `call_lamp`, `travel_up/down`, `stop_face`, each addressable |
+| `pp_recovery_mark` | 72 tris · 3.40 × 3.40 × 0.04 m · 32.0 texels/m | A06.4 | a landing pad, not a hazard border; 0.03 m tall so nothing is covered |
+| `cf_gunner_mount` | 72 tris · 1.74 × 1.73 × 1.06 m · 32.0 texels/m | A07.2 | on the published `ranged` envelope; open at the back so killing it stays possible |
+| `cf_lane_mark` | 72 tris · 0.60 × 2.00 × 0.04 m · 32.0 texels/m | A07.3 | **ribbed, not coloured**; 0.04 m against a shot at 0.85 |
+| `cf_alcove_frame` | 72 tris · 3.10 × 0.50 × 2.76 m · 32.0 texels/m | A07.3 | a deep reveal is what says 'in here, not there' |
+| `cf_shutter_track` | 132 tris · 0.70 × 2.80 × 2.86 m · 32.0 texels/m | A07.4 | **eight named pips, one per `OPEN_SECONDS`** -- and no clock in the asset |
+| `cf_release_bolt` | 60 tris · 0.56 × 1.13 × 0.68 m · 32.0 texels/m | A07.5 | a bolt driven home: unreadable as a countdown, which is the distinction |
+| `uw_plate_frame` | 108 tris · 2.90 × 2.92 × 0.90 m · 32.0 texels/m | A08.2 | **three discrete class marks, no dial** -- a class read is not a kilogram gauge |
+| `uw_drive_housing` | 108 tris · 0.87 × 5.44 × 1.33 m · 32.0 texels/m | A08.3 | lever and rail **outside** the crate's 4.6 m travel corridor |
+| `uw_applicator` | 60 tris · 0.72 × 0.78 × 1.30 m · 32.0 texels/m | A08.5 | the housing; LIGHTENED itself is Production's state hook |
+| `uw_return_rail` | 72 tris · 3.00 × 0.30 × 1.66 m · 32.0 texels/m | A08.5 | a drop bar, and **deliberately not a stair** |
+
+**Three gates, and two of them were wrong before they were right.**
+
+`assert_no_footholds` refuses any upward face 0.35 m square above the
+measured 0.12 m walk-up, on every asset in open space — A06.2's
+"decorative cables and counterweights must not look like alternate
+climbable routes", held as a rule rather than a promise.
+
+`assert_stops_at_edge` refuses anything crossing the deck's edge line
+into the 0.2 m hop. ~~Its first version refused anything whose span fell
+between the gap and half a metre past it, as "bridge-sized"~~ — and duly
+refused a 0.3 m nosing lying flat **on** the deck. A rule about size
+cannot tell a bridge from a doormat; a rule about position can.
+
+`assert_clear_of_corridor` keeps the drive housing out of the crate's
+4.6 m travel path. It first reported the guide rail *inside* a corridor
+it runs beside, because `set_origin_group` had recentred an asset whose
+whole contract is that local y = 0 is the park position. Three assets
+are now exported **as-built**, with `origin_means` saying what their
+origin is.
+
+**All four import-side promises were sabotage-tested:** five pips
+instead of eight, a `kg_gauge_*` part on the class plate, a lane rib
+raised into the shot line, and a tread on the return gate. Each was
+refused, the last two by the builder before the export even happened.
+
+Measured boxes are Blender-ordered (width, depth, height).
+
+### Batch 054 — T01: the first game pack's CONTENT (2026-09-22, PENDING)
+
+Six assets. Candidate art, same three states. Source:
+`tools/blender/build_forest_temple.py`.
+
+**The subtheme is chosen and stated, which is half the job.** The packet's
+concept for Ocarina of Time is *Grove Relay Temple*; this batch takes the
+**Forest Temple** reading of it — overgrown cut stone, timber, and roots that
+have won. Not the market, not the lake, not the volcano, and not an average.
+
+| Asset | Metrics | Parts | What makes it this pack's, not the house family's |
+| --- | --- | --- | --- |
+| `tp_ft_column` | 84 tris · 0.76 × 0.78 × 3.60 m · 32.0 texels/m | 6 | a root has climbed it; the house column is clean |
+| `tp_ft_wall_relief` | 84 tris · 2.16 × 0.37 × 3.00 m · 32.0 texels/m | 6 | the panel is SPLIT, and the split is the subject |
+| `tp_ft_alcove_torch` | 72 tris · 0.62 × 0.46 × 1.10 m · 32.0 texels/m | 5 | timber hood over a stone bowl, not a metal sconce |
+| `tp_ft_door_surround` | 60 tris · 3.08 × 0.46 × 3.54 m · 32.0 texels/m | 4 | bossed jambs; dressing around a fixed opening |
+| `tp_ft_switch_housing` | 60 tris · 0.50 × 0.36 × 0.58 m · 32.0 texels/m | 4 | batch043's wall-switch contract in timber |
+| `tp_ft_root_mass` | 96 tris · 1.65 × 0.60 × 0.22 m · 32.0 texels/m | 7 | floor dressing the house family has none of: it swells, kinks and forks, and nothing in it meets anything square |
+
+**Half of a pack is deliberately absent, and named as absent.** Scoping this
+batch found that `THEME_PACK.json` has no pack namespace (`COVERAGE.md` §3):
+a pack's material set can only be filed by becoming a seventh house theme.
+So these are **shapes, motifs, dressing and a stateful-control housing** —
+the half that needs no namespace — painted in `temple_ruin`, the nearest
+existing family. **A tint is not this pack's treatment and is not claimed to
+be one.** The T01 coverage row reads `content yes, materials no`.
+
+**054-R — the kit in a room, and what the room showed.**
+`tools/content/run_pack_views.sh tp_ocarina_of_time` assembles the six against a
+Production-grey shell with a 2.4 × 3.2 opening cut in it, and photographs it
+four ways: `docs/art/review/forest_temple_2026-09-22/`.
+
+It changed the art. **`tp_ft_root_mass` read as two fallen timber beams** —
+a 1.60 × 0.34 × 0.10 slab with three boxes crossing it square, and at
+0.10 m tall the silhouette was all it had. Rebuilt as five segments swelling
+0.22 → 0.05 m, each with its own yaw so the run bends twice, a knuckle taller
+than either segment it joins where it turns, and a fork leaving **at** the
+knuckle at a shallow angle. 48 → 96 tris. It also gains the `route` check it
+never had, which was backwards for the one piece in the set that sits on the
+floor.
+
+`assert_parts_touch` caught the rebuild's real defect and **not the one it
+names**: `brushkit.block`'s `rotation_z` is DEGREES, I handed it radians, and
+a 54° fork became 0.95°. The check said "not connected"; the defect was "not
+bent". A gate that fires for the wrong stated reason is still a gate that
+fired.
+
+**A fourth gate, in the engine.** The three above run in Blender, on the
+source. The `.glb` Godot loads is a different artefact, so an export or import
+that moved something would pass all three and still block the door. The
+harness walks the **imported** surround's 120 vertices in its own local frame
+and fails if any lands inside the opening — and sabotage-tests itself in the
+same run, shifting the surround 0.5 m, requiring the refusal, then withdrawing
+the planted failure. Its first version used the AABB and was worthless: a door
+surround's bounding box necessarily encloses the doorway. That is what a
+surround *is*.
+
+**Three gates, all sabotage-tested, and two were wrong first.**
+
+`assert_opening_clear` keeps `chamber_builders.gd`'s 2.40 × 3.20 m opening
+the engine's. It caught a real error — a door boss centred on the jamb but
+0.08 m wider, overhanging **0.04 m into the doorway**; the boss now projects
+in depth, out of the wall, where a boss belongs. It also called a *tangency*
+an intrusion first: the lintel's underside is authored at `door_height`
+exactly, floating-point delivered 3.1999999999999997, and a bare `>=`
+reported a 2.74 m intrusion. A millimetre of graze fixed it — the third time
+this session that lesson has been re-learned, after `skiff_sweep` in metres
+and `manipulation_readiness` in newtons.
+
+`assert_no_emitters` keeps illumination engine-owned: `export_content_pack.py`
+refuses an authored housing carrying its own `Light3D`, and this catches it at
+build time instead of at export.
+
+`assert_no_footholds` **refused the column's own plinth**, and that was the
+rule being too blunt rather than the art being wrong: a 0.22 m base under a
+3.6 m column is not a way up, because what is above it is more column. It
+gained an exemption — and **the exemption was then too permissive, which
+sabotage found**: a standalone 2.16 × 0.58 m ledge went unrefused because the
+lintel three metres above overlapped it by *two centimetres*. The exemption
+now asks whether a standable 0.35 m patch survives the coverage, and the
+sabotage refuses.
+
+**Nothing is runtime-bound**, no collider or light rides along, and the
+engine's door opening is unchanged.
+
+### Batch 053 — A14: the props signal a hand, the game lifts with a field (2026-09-22, PENDING)
+
+No new asset. Batch 043's twelve physics props, re-exported with one part
+renamed, twenty-two state nodes added and an `envelope` verdict declared.
+Handoff: `docs/art-requests/2026-09-22-manipulation-handoff.md`.
+
+**Design 2 §10.3 draws the carry line at 60 kg.
+`Constants.ENVELOPE_MASS_KG` is 120.** Batch 043's fittings follow §10.3
+exactly — grips below 60 kg, attach pads above — and its module docstring
+states the rule: *"A hand grip means a hand can lift it."* The game does not
+manipulate with hands. `MANIPULATE_VERBS` are HOLD, PULL and PUSH, performed
+by a 700 N field at up to 20 m that holds 120 kg. So `phys_plate` (60),
+`phys_drum` (70) and `phys_girder` (95) wear *a device has to* and the field
+can pick all three up. ~~**One of those two numbers is wrong and neither lane
+owns both**~~, so no fitting was moved on the strength of it.
+
+**CORRECTED 2026-09-22 (owner):** ~~one of those two numbers is wrong~~ —
+**they govern different mechanisms.** §10.3, inherited by Amalgam, is
+ORDINARY PICKUP (`carriable` AND `mass <= 60`); `ENVELOPE_MASS_KG` 120 is
+the QUALIFIED MANIPULATION-PROVIDER envelope, beside force and range. Both
+correct. Batch 043's grips follow the hand rule because a grip is a hand
+affordance, and nothing needs redesigning. Art's job is to distinguish hand
+handling from device/constraint attachment — which `grip_*` against
+`attach_*` already does. The ask to Prod/Dess is to verify the pickup and
+ability consumers preserve that distinction, not to pick a number.
+
+
+
+| prop | kg | class | HOLD | PUSH | needs |
+| --- | ---: | --- | --- | --- | ---: |
+| `phys_key_component` | 8 | light | yes | yes | 31.1 N |
+| `phys_generic` | 15 | light | yes | yes | 58.3 N |
+| `phys_power_cell` | 40 | medium | yes | yes | 155.6 N |
+| `phys_mechanical_part` | 55 | medium | yes | yes | 213.9 N |
+| `phys_plate` | 60 | medium | yes | yes | 233.3 N |
+| `phys_drum` | 70 | medium | yes | yes | 272.2 N |
+| `phys_girder` | 95 | medium | yes | yes | 369.4 N |
+| `phys_weighted` | 140 | heavy | **no** | yes | 544.4 N |
+| `phys_cart` | 180 | heavy | **no** | **at the limit** | **700.0 N** |
+| `phys_movable_cover` | 220 | heavy | **no** | **no** | 855.6 N |
+| `phys_ballast` | 320 | heavy | **no** | **no** | 1244.4 N |
+| `phys_anchor_block` | 500 | fixed | **no** | **no** | 1944.4 N |
+
+**`phys_cart` sits exactly on the push limit.** `mu` is
+`2/3 × 700 / (120 × 9.8)` = 0.39683, and 0.39683 × 180 × 9.8 = 700.0 N
+against 700 N. Reported as *at the limit* rather than forced into yes or no,
+because rounding a tie is reporting floating point as a design fact — the
+`skiff_sweep` GRAZE lesson, applied to newtons.
+
+**`phys_movable_cover` cannot be pushed by the envelope at all**, and its own
+docstring says *"It exists to be got behind."* At 855.6 N against 700 it is
+scenery. Its mass is §10.1's, so Art cannot lower it.
+
+**And `lightened` rescues none of them.** It is the one status
+`ECHO_STATUS_SUPPORTED_TARGETS` implements on an `object` and it moves ten of
+twelve one rung down the ladder — but `receive_force` applies its newtons
+**unscaled** and `impulse_scale()` doubles only an impulse. It doubles one
+shove and changes nothing about a sustained push.
+
+**Three changes to the art, all in-lane:**
+
+| | |
+| --- | --- |
+| `phys_cart`'s `grip_bar` → `push_bar` | 180 kg carrying a part named for a hand. The intent lived only in its `proposes` string, where no runtime reading node names ever sees it. **A prefix that means two things means neither.** |
+| eleven props gain `lightened_panel_0/1` | the one object-implemented status had nowhere to show on eleven of twelve. `phys_anchor_block` gets none — it is `manipulable: false`. |
+| every prop declares `envelope` | `hold`, `push`, `push_force_n`, so *can the player move this* is answered in the manifest |
+
+**Every exported size is unchanged to within half a millimetre.**
+`ManipulableBody.create` derives a `BoxShape3D` from a size this family
+declares, so `assert_flush_with_body` refuses any state fitting that stands
+proud of the body's measured box.
+
+**Eight sabotages, eight refusals.** Five against Production's inputs (a
+moved `MassClass` threshold, a changed friction derivation, a `receive_force`
+that started scaling, an emptied rung, a prop with no mass) and three against
+Art's declarations (a drifted `mass_class`, a drifted `hold`, a tangency
+called a clean push). Two build-time gates were sabotaged too:
+`assert_grip_is_hand_scale` and `assert_flush_with_body`.
+
+**Nothing is runtime-bound and no collision is shipped** — not derived, not
+exported, not evidence, unchanged from Batch 043.
+
+### Batch 052 — A13: the eleven statuses the runtime could already raise (2026-09-22, PENDING)
+
+Eleven glyphs and eleven markers, drawn into the existing Batch 043 kit.
+Candidate art, same three states. Handoff:
+`docs/art-requests/2026-09-22-status-readiness-handoff.md`.
+Decisions 5–9: `docs/art/review/status_2026-09-11/DECISIONS_FOR_OWNER.md`.
+
+**The kit drew the destination and the runtime runs the origin.** Batch 043
+drew Design 6 §15.2's thirteen. `Constants.ECHO_STATUS_KINDS` is a **closed**
+vocabulary of 24 — `StatusEffects.apply` refuses anything outside it — and
+`ECHO_STATUS_KINDS_IMPLEMENTED` names the 13 with a runtime effect. **The
+overlap between what was drawn and what is implemented was two.** Eleven
+conditions the game can put on a target today had nothing on screen to say
+so; eleven of the kit's markers were for kinds `apply()` refuses outright.
+
+| Status | Family (Art's) | Runtime targets (Production's) | Sentence (Art's) | Because the runtime |
+| --- | --- | --- | --- | --- |
+| `slowed` | KINETIC | self, enemy | *"Losing way."* | `ground_friction` x (1 - 0.4*mag) -- `slippery`'s channel, other direction |
+| `frozen` | KINETIC | self, enemy | *"Sealed where it stands."* | the same channel at 0.6, plus the enemy attack/move lock |
+| `shocked` | MATERIAL | self, enemy | *"Current still in it."* | +10% taken and half-rate cooldown recovery -- `conductive`'s other half |
+| `poisoned` | MATERIAL | self, enemy | *"Eating away at it."* | 2.0*mag of `dot_per_second()`; `burning` is the other 4.0 |
+| `marked` | COGNITIVE | enemy | *"Chosen, and it knows."* | +25% incoming, and the one status `_refresh_damage_tint` already reads |
+| `stunned` | PERMISSION | enemy | *"Switched off, briefly."* | no attack AND no move -- `silenced` and `rooted` at once |
+| `vulnerable` | COGNITIVE | self, enemy | *"Everything lands harder."* | `damage_taken` x 1.5, both sides. **Not** `exposed`; see decision 6 |
+| `empowered` | COGNITIVE | self, enemy | *"Hitting harder than it should."* | `damage_dealt` x 1.5. **The weakest family call in the eleven**; decision 7 |
+| `low_profile` | COGNITIVE | self | *"Harder to notice."* | halves the enemy's aggro radius. **self-only -- no world anchor** |
+| `haste` | KINETIC | self | *"Faster than it was."* | the one status on `move_speed`. **self-only -- no world anchor** |
+| `regenerating` | MATERIAL | self | *"Coming back."* | `regen_per_second()`. **self-only -- no world anchor** |
+
+All eleven at **16 × 16** glyph / **32 × 32** marker, the kit's native sizes.
+ECHOES §8 names them and stops, so family, targets, sentence and duration
+each carry a `*_source` field in `status_kit.json` saying what was quoted and
+what was proposed. **No fifth family was invented** — §15.2 settled the count
+at four deliberately.
+
+**A13's evidence is `tools/content/run_status_readiness.sh`**, which loads
+Production's real `constants.gd` AND their real `status_effects.gd`, and
+refuses to keep checking a guard they have rewritten:
+
+```
+[statusready] PASS -- every kind apply() admits is drawn, and every
+              runtime claim matches the runtime; 5 note(s)
+```
+
+Five sabotages, five refusals: a kind with its glyph removed; a glyph
+claiming a target `ECHO_STATUS_SUPPORTED_TARGETS` does not give it; a
+vocabulary map landing on a target kind that does not exist; a typo'd kind;
+and one of `apply()`'s three guards rewritten.
+
+**The finding to hand on: three of the thirteen have nowhere to go.**
+`haste`, `low_profile` and `regenerating` are implemented on `self` alone,
+and this kit's whole presentation model is *a marker anchored to a target*.
+The player is the camera. The preview's new runtime-legality assertion found
+it by refusing to render two of them on enemy stand-ins;
+`STATUS_runtime_*.png` places **ten of thirteen** and says so in its caption.
+The answer is the persistent HUD tier, which this kit mocks and does not
+design — an integration question with no owner.
+
+**A new build-time gate, and it bit its own author twice.**
+`author_status_kit.mjs` checked exactly one thing about a hand-drawn body:
+that it was 16 rows of 16 characters. It now measures every pair as
+`1 − max sqrt(IoU(body) · IoU(outline))` over ±2 px offsets and the
+horizontal mirror, floor **0.25**, named-pair bar **0.45** — both measured
+off the existing kit rather than picked (its own closest pair is
+`brittle`/`shatterpoint` at 0.304, which Batch 043's comment already
+defends; the named pairs' measured minimum is 0.507).
+
+- **`shocked`** was refused at **0.295** against `brittle` — a block with a
+  jagged void is a block with a jagged crack, and both are MATERIAL, so the
+  family frame could not have separated them either. Redrawn with the
+  discharge outside the body: **0.51**.
+- **`low_profile`** was never refused — 0.364, past the floor — and was
+  redrawn anyway, because it appeared in the kit's twenty closest pairs
+  **five times**: a tall rectangle with interior structure, like `brittle`,
+  `phased`, `shatterpoint` and `updraft`. Now a slab over a small body:
+  **0.608**.
+
+**Two documentation defects fixed in place, both of the same kind.**
+`SHEET_markers.png` drew on a hardcoded `cols = 7, rows = 3` and silently
+showed 21 of 32 markers under a title reading *the thirteen statuses and
+eight compounds*; grid and title are derived now. And `status_kit.json`
+recorded the player tick as `#ffd45c` (`send`) for the entire time
+`DECISIONS_FOR_OWNER.md` has said the owner's ruling 2 (*the tick is
+neutral*) was **applied** — the art was right and the manifest was wrong,
+in the one field a reader would trust it for. The colour block is derived
+from the palette the pixels come from now, and reads `#f6f9fb`.
+
+**Nothing here is runtime-bound.** There is no status presentation path in
+the engine at all.
+
+### Batch 051 — A12: telegraphs, role reads and impacts (2026-09-22, PENDING)
+
+Eleven assets. Candidate art, same three states. Handoff:
+`docs/art-requests/2026-09-22-combatfx-handoff.md`.
+
+| Asset | Metrics | Item | Note |
+| --- | --- | --- | --- |
+| `fx_telegraph_ring` | 280 tris · 2.29 × 2.14 × 0.09 m · 32.0 texels/m | A12.2 | twelve ticks, a **CLOSED** ending and a **BROKEN** one; hole ≥ 60% so it never covers the face |
+| `fx_charger_lane` | 72 tris · 0.90 × 6.00 × 0.03 m · 32.0 texels/m | A12.3 | a lane, not an arrow — the rush is unsteerable. Flat. |
+| `fx_bulwark_face` | 60 tris · 1.45 × 0.13 × 1.57 m · 32.0 texels/m | A12.3 | to the published 1.45 × 0.85 envelope, so it claims no extra coverage |
+| `fx_warned_ground` | 112 tris · 2.40 × 2.40 × 0.03 m · 32.0 texels/m | A12.3 | **open** in the middle: a filled disc hides the landing edge |
+| `fx_beacon_range` | 124 tris · 3.36 × 3.44 × 0.03 m · 32.0 texels/m | A12.3 | how far the thing that makes it worse reaches |
+| `fx_diver_trail` | 60 tris · 0.56 × 0.60 × 2.55 m · 32.0 texels/m | A12.1/3 | narrowing down, within the diver's 0.70 × 1.20 footprint |
+| `fx_hit_wall` | 84 tris · 0.62 × 0.06 × 0.33 m · 32.0 texels/m | A12.4 | it stopped, and the surface took it |
+| `fx_hit_shield` | 60 tris · 0.79 × 0.37 × 0.62 m · 32.0 texels/m | A12.4 | **REFUSED** — convex, sliding off, no penetration |
+| `fx_hit_body` | 60 tris · 0.25 × 0.68 × 0.25 m · 32.0 texels/m | A12.4 | **DAMAGING** — narrow and going IN. Checked against the dome. |
+| `fx_hit_miss` | 24 tris · 0.05 × 1.05 × 0.05 m · 32.0 texels/m | A12.4 | the quietest of the five; a miss that looks like a hit teaches nothing |
+| `fx_hit_interrupt` | 36 tris · 0.57 × 0.57 × 0.16 m · 26.9 texels/m | A12.4 | shares `ring_cancel`'s BROKEN language, and nothing else's |
+
+**A12.1's inspection produced the batch's biggest result, and it is not
+a mesh.** `ProjectileSilhouette` publishes a legibility contract —
+`LEGIBLE_RATIO` 1.8, `LEGIBLE_BALANCE` 0.15, `reads_apart(a, b)` — and
+**nothing had ever run it against Art's meshes.**
+`tools/content/run_projectile_legibility.sh` does, through their own
+`profile()`:
+
+| | length | cross | elongation | balance | parts |
+|---|---|---|---|---|---|
+| `straight` | 0.440 | 0.440 | 1.000 | 0.500 | 1 |
+| `falling` | 0.440 | 0.440 | 1.000 | 0.500 | 1 |
+| `lobbed` | 0.610 | 0.630 | 0.968 | 0.500 | 1 |
+
+**All three pairs fail**, with elongation ratios of 1.000–1.033 against
+1.80 and balance gaps of 0.000 against 0.15. And the balance half
+**cannot fire at all**: `profile()` measures balance per PART — its own
+comment says a bounding box cannot say where along a single cone the
+wide end is — and all three export as one joined mesh, so balance is
+0.5 by construction whatever the shape.
+
+**This is reported, not refused.** Batch 008 was authored and approved
+under a different rule: it reads by silhouette KIND, and `straight()`'s
+docstring says its blades make it "wider than it is tall so it does not
+read as something that will drop" — deliberately not elongated. Two
+defensible rules, and they cannot both govern. That is the owner's
+decision, and treating a diagnostic as a refusal is the mistake the
+Yard doorways already taught this lane.
+
+**A12.5 is a real test, not three pictures**: the same rig and the same
+camera against pale, dark and busy backdrops, with the backdrop as the
+only variable. The busy one is panelled rather than noisy, because what
+breaks a read is competing structure.
+
+### Batch 050 — A11: enemy jobs and the spaces that host them (2026-09-22, PENDING)
+
+Eight props for the four jobs `Constants.ENEMY_JOBS` actually declares.
+Candidate art, same three states. Handoff:
+`docs/art-requests/2026-09-22-jobs-handoff.md`.
+
+| Asset | Job | Note |
+| --- | --- | --- |
+| `job_watch_post` | 72 tris · 2.90 × 2.60 × 1.77 m · 32.0 texels/m | watch | the column stands **outside** the brute's 1.95 m turning circle |
+| `job_tend_pedestal` | 60 tris · 0.80 × 0.80 × 1.47 m · 32.0 texels/m | tend | what a beacon sweeps at half rate for; outside its own turning circle |
+| `job_drift_perch` | 84 tris · 1.28 × 0.30 × 1.64 m · 32.0 texels/m | drift | **hung**, and narrower than the 2.5 m orbit minus the flyer |
+| `job_charge_socket` | 48 tris · 0.50 × 0.21 × 0.57 m · 32.0 texels/m | any | 0.5 m, role-agnostic — the honest alternative to a universal dock |
+| `job_inspect_panel` | 60 tris · 0.90 × 0.23 × 1.00 m · 32.0 texels/m | any | `inspect_door` has two positions and `inspect_guts` is behind it |
+| `job_tool_rack` | 72 tris · 0.84 × 0.34 × 1.20 m · 32.0 texels/m | any | three `tool_slot_*`, so a taken tool has somewhere to not be |
+| `job_post_plate` | 72 tris · 3.00 × 3.00 × 0.04 m · 32.0 texels/m | patrol | 3.0 m across — `ENEMY_POST_TOLERANCE` 1.5, doubled. Flat. |
+| `job_beat_cue` | 36 tris · 1.40 × 1.40 × 0.03 m · 32.0 texels/m | patrol | a scuff, **not a path**: `_patrol` picks a RANDOM point on the circle |
+
+**A11 was not blocked, and the inventory said so.** `ENEMY_JOBS`
+declares patrol / watch / drift / tend with `ENEMY_JOB_SPEED` 0.45,
+`ENEMY_PATROL_PAUSE` 1.2, `ENEMY_PATROL_RADIUS` 4.5,
+`ENEMY_POST_TOLERANCE` 1.5 and `ENEMY_SWEEP_RATE` 0.7 — and `enemy.gd`
+implements all four. So A11.6's "if no runtime job contract exists yet"
+escape does not apply.
+
+**Four jobs, four working areas, read out of `enemy.gd` rather than
+guessed.** `_patrol` walks to a random point on a 4.5 m circle and
+pauses 1.2 s — a 9 m disc, walked over. `_drift` orbits at **2.5 m**
+and never descends — a ring at the role's hover height. `watch` and
+`tend` hold the post and sweep `rotation.y` — a cylinder the role's own
+width, because it has to turn around.
+
+`assert_clear_of_job` checks a prop against the served role's published
+envelope; `assert_flat` keeps a floor cue under the 0.12 m walk-up,
+because A11.4 says a decorative mark is not a promise of reachable
+geometry. Sabotage-tested three ways — a column moved inside the
+turning circle, a cue raised into a step, a perch widened into the
+flyer's orbit — all refused.
+
+**A11.1's motion clips are not delivered**, and the blocker is A10.4's,
+not A11's: there is no authored-visual path into `Enemy.visual`, no
+animation owner, and gameplay already scales that node. A11.1 forbids
+inventing a behavioural controller to stage an animation in the same
+sentence it asks for clips.
+
+**An anchor is an attachment POINT, not a display surface.** The
+idle-to-alert frames first lit `anchor_warn` itself and nothing
+appeared — correctly, since Batch 030's anchors are 40 mm markers
+embedded inside the body and the readiness harness refuses one that
+stands proud. The frames now do what a runtime would: read the
+anchor's transform and attach something there.
+
+### Batch 049 — A09: cross-room machinery and branch identity (2026-09-22, PENDING)
+
+Fourteen assets extending Batch 043's conduit language into a
+branch-scale vocabulary. Candidate art, same three states. Handoff:
+`docs/art-requests/2026-09-22-connect-handoff.md`.
+
+| Asset | Metrics | Item | Note |
+| --- | --- | --- | --- |
+| `conn_run_elbow` | 84 tris · 0.61 × 0.61 × 0.56 m · 32.0 texels/m | A09.1 | the run turns and the band follows, at Batch 043's own 0.50 m face |
+| `conn_run_tee` | 84 tris · 1.00 × 0.71 × 0.56 m · 32.0 texels/m | A09.1 | **two declared bands** -- a fork whose halves cannot differ cannot show which way |
+| `conn_junction_box` | 84 tris · 1.04 × 0.35 × 1.04 m · 32.0 texels/m | A09.1 | four `port_*`, a lid, and terminals worth opening for |
+| `conn_wall_pass` | 60 tris · 0.52 × 0.60 × 0.52 m · 32.0 texels/m | A09.1 | the collar-and-sleeve that makes two rooms one installation |
+| `conn_reader_panel` | 84 tris · 0.78 × 0.15 × 0.58 m · 32.0 texels/m | A09.2 | blank `label_field`; **four state nodes**, not four textures |
+| `conn_set_dial` | 176 tris · 0.34 × 0.16 × 0.34 m · 32.0 texels/m | A09.2 | **PERSISTENT** -- a detent ring: something that holds a position |
+| `conn_hold_paddle` | 76 tris · 0.26 × 0.45 × 0.90 m · 32.0 texels/m | A09.2 | **HELD** -- a visible spring and a stop; it wants to come back |
+| `conn_repair_seal` | 60 tris · 0.98 × 0.27 × 0.42 m · 32.0 texels/m | A09.2 | **PERMANENT** -- a lever behind a frangible tab; using it breaks a thing |
+| `conn_id_plaque` | 60 tris · 0.98 × 0.18 × 0.50 m · 32.0 texels/m | A09.3 | the SAME asset at both ends; `nav_blade` bolts to `blade_seat` |
+| `conn_flag_ack` | 48 tris · 0.26 × 0.46 × 0.79 m · 32.0 texels/m | A09.4 | two positions, no third, no animation |
+| `conn_breaker` | 48 tris · 0.44 × 0.34 × 0.64 m · 32.0 texels/m | A09.4 | handle position is the state; `breaker_window` shows which |
+| `conn_gauge` | 64 tris · 0.30 × 0.17 × 0.30 m · 32.0 texels/m | A09.4 | a continuous read -- and here, unlike A08.2's plate, that is right |
+| `conn_relay_cabinet` | 84 tris · 0.98 × 0.58 × 2.14 m · 32.0 texels/m | A09.5 | nonblocking: 0.9 m of floor, nothing to stand on |
+| `conn_service_stack` | 76 tris · 0.72 × 0.93 × 2.46 m · 32.0 texels/m | A09.5 | the generator end of the same installation |
+
+**It extends Batch 043 rather than replacing it.** Every piece keeps the
+2.00 × 0.50 m run's face height and the separate `state_band`
+convention, so a run, an elbow and a tee show the same state at the same
+pitch. `assert_band_face` refuses a piece whose band is a different
+width — a corner whose band changes size is a different system, not the
+same run turning.
+
+**A09.2's real requirement is that three commitments must not share a
+pose**, and colour does not survive a theme change — so they are three
+different machines, checked by silhouette. `assert_commitments_differ`
+refuses if any two are within 5 cm on every axis.
+
+**No signal bus, no animation.** A09.1 says the model is a readable
+presentation of declared relationships, and A09.4 says art must not
+animate success ahead of the authoritative result. Every moving part is
+a node with declared positions.
+
+**The foothold rule gained an upper bound, and that is a correction.**
+It had none, so it refused the TOP of a two-metre relay cabinet — which
+a player cannot jump onto, since a standing jump tops out at 1.333 m
+with no mantle. A rule that refuses correct art gets switched off. Both
+this batch and Batch 048 now bound it by the measured jump; re-verified,
+and re-sabotaged with a waist-high ledge, which is still refused.
+
+### Batch 047 — the skiff's fitted parts (2026-09-22, PENDING)
+
+A03.2 and A03.3. Batch 045 gave the skiff a hull; these are the parts
+fitted to it, and the hull gained a bare variant so a fitted guard has
+somewhere to go instead of doubling the one already baked in. Candidate
+art, same three states. Handoff:
+`docs/art-requests/2026-09-22-skiffkit-handoff.md`.
+
+| Asset | Metrics | Item | Note |
+| --- | --- | --- | --- |
+| `sp_skiff_shield` | 120 tris · 0.64 × 4.00 × 1.25 m · 32.0 texels/m | A03.2 | Production's own 0.3 x 1.25 x 4.0 cover box, given a face. Cap and kick eat INTO the 1.25, never above it; three `shield_mount_*` brackets |
+| `sp_skiff_rail` | 84 tris · 3.70 × 0.24 × 1.05 m · 32.0 texels/m | A03.2 | the end guard as a FITTED part, with `rail_mount_*` clips. Tops at 1.05 over the deck, under the shield |
+| `sp_skiff_bogie` | 140 tris · 0.33 × 1.60 × 0.43 m · 32.0 texels/m | A03.3 | the traction truck, **beside** the beam, not under it. `roller_0/1` are nodes; nothing is animated |
+| `sp_skiff_deck_bare` | 180 tris · 4.00 × 4.16 × 1.29 m · 32.0 texels/m | A03.2 | the same hull with no end guards, so the fitted ones have somewhere to go |
+
+**The cover height is not Art's to change.** `_shield()` builds a
+0.3 × 1.25 × 4.0 `CollisionShape3D` on an `AnimatableBody3D`, so the
+cover is real and solid. `assert_cover_intact` refuses any visual whose
+top rises above `SHIELD_HEIGHT`: a coping that adds 6 cm adds 6 cm to
+what a rider has to shoot over.
+
+**The bogie cannot go under the deck, and that is a finding.** Their
+track pieces span world 0.425–0.775 and the deck spans 0.600–1.000, so
+**the beam is already 0.175 m inside the bottom of the deck**. There is
+no space beneath it for a truck. The pair hangs at ±0.45, clear of the
+0.5 m beam, reaching in with contact shoes — outside-frame trucks on a
+centre beam, which is the only arrangement this geometry allows.
+
+**A03.5, measured over the whole route.**
+`tools/content/run_skiff_sweep.sh` poses the loaded carrier at every
+half metre of rail using `RailCarrier.pose()`'s own arithmetic and
+checks the fittings against all three dock pads: **no intrusion, swept
+envelope 29.09 × 2.00 × 30.14 m**, and a standing rider's eye clears
+the cover by **0.35 m** in every pose, because the shield rotates with
+the deck.
+
+---
+
+
+## Batch 056 — T02, the second game pack. Super Mario 64, TICK TOCK CLOCK
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_ck_gear_column` | 160 tris · 1.33 × 0.72 × 3.60 m · 32.0 texels/m | 7 | the column is a SHAFT: it transmits torque, and the house column holds a roof up |
+| `tp_ck_wall_movement` | 172 tris · 2.16 × 0.27 × 3.00 m · 32.0 texels/m | 8 | the panel is PARTED and the works show through, held by a bridge the way a movement is |
+| `tp_ck_door_bezel` | 72 tris · 3.08 × 0.46 × 3.54 m · 32.0 texels/m | 5 | the opening is dressed as a DIAL: minute marks up the jambs and XII over the head |
+| `tp_ck_fallen_hand` | 88 tris · 1.65 × 0.39 × 0.11 m · 31.8 texels/m | 5 | floor dressing that FELL, where T01's grew — and it is bent, because a straight one is bar stock |
+| `tp_ck_pendulum_lamp` | 64 tris · 0.34 × 0.35 × 0.96 m · 32.0 texels/m | 3 | the fitting hangs and swings; no house family has a light that is also a moving part |
+| `tp_ck_key_escutcheon` | 60 tris · 0.46 × 0.20 × 0.54 m · 32.0 texels/m | 4 | batch043's wall-switch contract WOUND, not pressed: a square arbor with a handle on it |
+
+**The subtheme is chosen and stated: Tick Tock Clock.** Super Mario 64 has
+fifteen courses and the packet's T02 concept, "Clockwork Garden", has two
+halves. This is the clockwork half; Peach's hedged courtyard is the
+deliberate second subtheme and is **not** built, because a courtyard and a
+movement do not share a material culture and pretending they do is how a
+pack stops reading as a place.
+
+**THE HINT AND THE SUBJECT DISAGREE, AND THAT IS THE FINDING.**
+`Constants.THEME_BY_GAME_HINT` maps Super Mario 64 to `concrete_facility`.
+A clock movement is brass, steel and oil, so the nearest family **by
+material** is `rusted_industrial`. The hint picks a family by GAME; a
+treatment follows what the pack is MADE OF. **Two questions, one field.**
+For T01 they happened to agree. The manifest records both as
+`theme_hint_says` beside `painted_with`, so the mismatch is data rather
+than a remark in a report — and it is the clearest argument yet for
+`COVERAGE.md` §3's pack namespace.
+
+**Nothing here wears the hazard band, and that is a rule, not a taste.**
+`rusted_industrial`'s `trim` role paints a universal hazard band, and the
+colour is never decorative in any theme for any reason. The first pass
+painted the gear wheels and door marks with `trim` and `accent`, and the
+room showed it at once: **a clock movement in warning stripes, and a dial
+mark stencilled `hot`.** They paint `trim_plain` now — trim, minus danger —
+and collide as `trim`, because `roomcollision.paint_role` knows four
+classes and `trim_plain` is not one. **T01 never hit this** because
+`temple_ruin`'s trim carries no hazard semantics; every later pack that
+reaches for `rusted_industrial` will.
+
+**Two shapes were wrong and the manifest said so before any render did.**
+`_wheel` first built gears from two crossed boxes with `rotation_z` — the
+only rotation `brushkit.block` offers — which makes a gear lying FLAT:
+right on a vertical shaft, wrong on a wall. `tp_ck_wall_movement` measured
+**0.88 m deep on a 0.12 m plate**, because a 0.62 m square turned 45° in
+plan pokes 0.44 m straight through the wall it is mounted on. And the
+door bezel's XII, stacked above the lintel, topped out at **3.78 m against
+a 3.60 m ceiling**. A pack that does not fit the room it dresses is not
+dressing it. Both are now prisms and a face-mounted mark.
+
+**056-R — and the room changed the art twice more.** `CK_approach` showed
+three flat discs stacked on each column reading as **flanges on a pipe**:
+a disc on a vertical shaft seen from eye height is a horizontal line, and
+a gear is only a gear face on. The column now carries an upright wheel
+with a pinion meshing below it. Then the wheels still read as **slabs**
+until each got a raised hub — one prism, 28 triangles, and the difference
+between a gear and a stop sign.
+
+Evidence: `docs/art/review/clockwork_2026-09-22/`, four frames from
+`tools/content/run_pack_views.sh tp_super_mario_64`.
+
+**Still not complete**, and for the same reason as T01: no material
+treatment, no runtime selection, not imported, no owner review.
+
+
+## Batch 057 — T03, the third game pack. Bomb Rush Cyberfunk, BRINK TERMINAL AFTER HOURS
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_br_concourse_pillar` | 84 tris · 0.80 × 0.80 × 3.60 m · 32.0 texels/m | 6 | tagged and worn through at grind height; the house pillar is clean tile because the house station still has staff in it |
+| `tp_br_board_panel` | 96 tris · 2.16 × 0.41 × 3.00 m · 32.0 texels/m | 7 | a departure board caught MID-FLIP: one slat still turning says "until recently", where a board merely off reads as a missing texture |
+| `tp_br_shutter_head` | 72 tris · 3.08 × 0.48 × 3.56 m · 32.0 texels/m | 5 | the opening is dressed as a shuttered concourse gate — head box, guide lips, bottom rail parked above the head |
+| `tp_br_torn_rail` | 72 tris · 1.65 × 0.43 × 0.26 m · 31.9 texels/m | 5 | floor dressing that was RIDDEN OFF, where T01's grew and T02's fell |
+| `tp_br_strip_light` | 96 tris · 1.28 × 0.20 × 0.18 m · 32.0 texels/m | 7 | a municipal batten with ONE TUBE OUT — the tell is a material difference, never an emissive one |
+| `tp_br_validator_plate` | 60 tris · 0.44 × 0.23 × 0.54 m · 32.0 texels/m | 4 | batch043's wall-switch contract as a ticket validator |
+
+**Subtheme chosen and stated: Brink Terminal, after hours.** Bomb Rush
+Cyberfunk has six boroughs; a terminal is the half of that game which is
+**architecture** rather than terrain, and architecture is what a theme pack
+ships.
+
+**The hint, the material and the subject all agree — and that is the
+finding.** `THEME_BY_GAME_HINT` says `neon_transit`; the nearest family by
+material culture is `neon_transit`; the subtheme is a transit terminal.
+**Three for three.** T01 agreed too. **T02 did not.** Two agreements and one
+disagreement is the shape of the argument for `COVERAGE.md` §3: *the hint is
+usually right and cannot be relied on*, which is a worse problem than a hint
+that is always wrong, because nobody notices the one case. Recorded as
+`theme_hint_agrees` in the manifest — agreement is data too, not silence.
+
+**The hazard band was checked rather than assumed this time.** T02 shipped a
+clock movement in warning stripes before anyone noticed `rusted_industrial`'s
+`trim` IS the universal hazard band. T03 looked first: only that family
+splits `trim` from `trim_plain`, and `neon_transit`'s trim is a **signage
+band** with no danger semantics. `trim` and `accent` are both used
+deliberately here and neither is a warning.
+
+### The gate learned a millimetre, and the harness found a hole in itself
+
+**`packgates.assert_opening_clear` now grazes in WIDTH as well as height.**
+A roller shutter's guide lip has its inner face **on** the opening edge —
+that is what a guide is — and `tp_br_shutter_head` authored it at exactly
+1.20 m. Blender's float32 delivered 1.1999999 and the gate reported an
+intrusion *"by 0.000 m"*. Refusing correct architecture is the fastest way
+to get a gate switched off. **A 5 mm intrusion still fails, and that is
+checked rather than assumed.** Fourth time this lane has learned the same
+lesson: `skiff_sweep` in metres, `manipulation_readiness` in newtons, the
+T01 lintel in height, and now a jamb in width.
+
+**And the in-engine check was wrong in a second way, which its OWN SABOTAGE
+STEP found.** The vertex test caught T01's door boss because that boss has
+corners at 3.00 and 3.20 m. **A roller shutter's guide is one box spanning
+0 to 3.2, whose only vertices are at the extremes the test excludes** — so
+shifted half a metre into the doorway it registered *nothing*, and the run
+failed with "the opening check did not notice a surround shifted 0.5 m into
+the doorway". It now measures **per triangle**, asking the same question
+`packgates` asks per object: does this triangle's box overlap the opening's
+volume by more than a graze, in width **and** height? T01 and T02 were
+re-verified under it and still pass.
+
+**Three wrong versions of one check, and every one was caught by the check
+itself rather than by a reviewer.** That is what the sabotage step is for.
+
+Evidence: `docs/art/review/brink_2026-09-22/`, four frames from the same
+four camera positions in the same shell as T01 and T02.
+
+**Still not complete:** no material treatment, no runtime selection, not
+imported, no owner review.
+
+
+## Batch 058 — T04, the fourth game pack. Super Metroid, THE WRECKED SHIP
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_ws_stanchion` | 84 tris · 0.74 × 1.07 × 3.60 m · 32.0 texels/m | 6 | a ship's **frame member** with its own service run burst out of it — boxed and flanged, never round |
+| `tp_ws_bulkhead_panel` | 84 tris · 2.16 × 0.65 × 3.00 m · 32.0 texels/m | 6 | the inspection hatch let go and is still on **one hinge**; a hatch on the floor is debris, a hatch still attached is an accident |
+| `tp_ws_pressure_door` | 132 tris · 3.08 × 0.48 × 3.54 m · 32.0 texels/m | 10 | the opening is dressed as a **pressure boundary**: dogging lugs, seal channel, marked threshold |
+| `tp_ws_debris_fan` | 72 tris · 1.69 × 0.93 × 0.20 m · 31.8 texels/m | 5 | floor dressing that **blew out** — plates at spreading angles all pointing back at one origin, where a pile points at nothing |
+| `tp_ws_lamp_cage` | 84 tris · 0.35 × 0.52 × 0.52 m · 32.0 texels/m | 6 | a caged emergency lamp hanging **off true**; a straight fitting is one somebody maintains |
+| `tp_ws_dogging_lever` | 60 tris · 0.46 × 0.23 × 0.54 m · 32.0 texels/m | 4 | Batch 043's wall-switch contract as a dogging lever in a recessed pocket — **thrown**, not pressed |
+
+**Subtheme chosen and stated: the Wrecked Ship.** Super Metroid has six
+regions and five of them are **caves**, which is terrain. The Wrecked Ship
+is the one that is architecture, and architecture is what a theme pack
+ships.
+
+### THIS IS THE FIRST PACK WITH NO HINT AT ALL
+
+`Constants.THEME_BY_GAME_HINT` holds **six** entries. The catalogue holds
+**81 games**. So **75 of 81 — including this one — have no hint.**
+
+T01 and T03 found the hint agreeing with the pack's material culture; T02
+found it disagreeing. This is sharper than either: for nine games in ten
+there is nothing to agree or disagree with. **A selection mechanism
+covering 7% of the catalogue is not a mechanism with an exception in it; it
+is a mechanism for six games.** Recorded as `theme_hint_says: null` plus the
+count, so the gap is a number in the manifest rather than a sentence here.
+
+### The hazard band means something here, which is the contrast with T02
+
+Same family as T02, opposite answer, **and the difference is the geometry
+rather than the taste.** T02 reached for `rusted_industrial` and had to
+refuse its `trim` everywhere, because nothing in a clock room is a hazard
+boundary. A derelict is nothing but hazard boundaries: the pressure
+threshold, the lamp cage, the severed conduit. Those carry the band;
+everything else carries `trim_plain`.
+
+### The coaming is the one part of a pressure door art cannot ship
+
+A real pressure door has a raised sill you step over, and the first cut of
+`tp_ws_pressure_door` had one — 0.10 m tall, full width, across the
+doorway. **The gate refused it by 2.740 m and was right.**
+
+It does not narrow the opening's *width*. It lays **floor** inside an
+opening the player walks through, and floor is Production's whatever its
+height. **A 0.10 m step is also under the 0.12 m walk-up**, so the foothold
+rule would never have seen it — the opening rule is the only thing between
+a plausible detail and art changing a walking surface.
+
+What survives is the **mark without the step**: a banded cheek at the foot
+of each jamb, outside the opening. If the coaming should exist, it is
+Production's to place and collide.
+
+### And the foothold rule shrank a lamp
+
+`ws_lc_body` at 0.30 m square and 16° measures 0.37 m in plan, above the
+0.12 m walk-up with nothing tall enough above it to cover it. The lamp
+hangs on a wall at 2.3 m in the room, so in *world* terms it is not a step
+— **but the gate measures the asset's own frame and cannot know where it
+will be hung, which is the correct thing for it to do.** Shrinking a lamp
+is cheaper than an exception. Same shape as T02's pendulum bob.
+
+### 058-R — and the room found one more
+
+The bulkhead panel first sat at x −4.90 with a 0.14 m plate, **entirely
+inside the 0.4 m wall**, so the frame read as ribs floating on grey. The
+hull is the subject of that piece; it is at −4.80 now and stands proud.
+
+Evidence: `docs/art/review/wreck_2026-09-22/`, four frames from the same
+four camera positions in the same shell as T01, T02 and T03.
+
+**Still not complete:** no material treatment, no runtime selection, not
+imported, no owner review.
+
+
+## Batch 059 — T05. Kingdom Hearts 2, TWILIGHT TOWN SERVICE ALLEY — and the experiment that failed usefully
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_tw_alley_buttress` | 84 tris · 0.70 × 1.07 × 3.60 m · 32.0 texels/m | 6 | a brick pier that carries a **wire**, not a roof: corbelled, with a catenary bracket and stay |
+| `tp_tw_hoarding` | 108 tris · 2.16 × 0.29 × 3.00 m · 32.0 texels/m | 8 | the wall is **covered**, in four thicknesses — brick infill, boards, batten, torn bills |
+| `tp_tw_awning_gate` | 84 tris · 3.08 × 0.60 × 3.54 m · 32.0 texels/m | 6 | **soft goods on a hard frame**: a rolled shop awning and its folded arms |
+| `tp_tw_tram_track` | 84 tris · 1.45 × 0.47 × 0.13 m · 32.0 texels/m | 6 | floor dressing **laid and then neglected** — a displaced section with a lifted sett, never a continuous rail |
+| `tp_tw_street_lantern` | 96 tris · 0.32 × 0.48 × 0.83 m · 32.0 texels/m | 7 | one pane of four simply **absent** |
+| `tp_tw_tram_call` | 60 tris · 0.44 × 0.21 × 0.54 m · 32.0 texels/m | 4 | Batch 043's wall-switch contract as a municipal **tram call** |
+
+**Subtheme chosen and stated: Twilight Town, the service alley behind Tram
+Common.** Kingdom Hearts 2 has a dozen worlds and three of them are whole
+architectures on their own; blending them is the average the owner ruled
+out. No hint for this game either — one of the 75.
+
+### THIS PACK WAS AN EXPERIMENT AND IT RETURNED A NEGATIVE RESULT
+
+**It shares `temple_ruin` with T01 on purpose.** The owner's completion
+criteria say reuse is encouraged and *a useful visual variant is not a
+duplicate merely because its construction is shared*. Two packs in one
+family, in one shell, under the same four cameras, is the **test** of that
+claim rather than an accident of it.
+
+**The test says the claim does not hold today, and the reason is exactly
+the namespace.**
+
+The shapes are different and they are legible as different. `TW_hoarding`
+shows all four thicknesses — wall, brick infill, boards, batten, bill —
+and the silhouette does its job. The piers are corbelled where T01's are
+rooted. The gate is soft goods where T01's is bossed stone.
+
+**And the frame still reads as a warmer Forest Temple**, because
+`temple_ruin`'s `accent` is mossy stone, so the awning canvas reads as
+foliage and the timber boards read as green stone panels.
+
+> **The geometry is saying "boarded-up shopfront" and the pixels are
+> saying "overgrown temple". The pixels win.**
+
+That is the strongest single argument in this run for `COVERAGE.md` §3's
+pack namespace, and it is a picture rather than an assertion. It is also
+why **T05 is deliberately not lit or posed to hide it**: the honest frame
+is the useful one.
+
+### The valance is T04's coaming at the other end of the same hole
+
+A real shop awning's valance hangs below the door head. The first cut put
+it at `DOOR_H + 0.05`, lower edge at 3.14 m — **six centimetres inside the
+opening** — and the gate refused it by 2.550 m. That is what a valance
+*does*, and it is still headroom, and headroom in Production's doorway is
+Production's. The canopy ships **rolled**.
+
+### And the setts had to be bedded, not scattered
+
+`assert_parts_touch` called two of the four floating at 3–4 cm. It was
+right in a way that is also the art note: a sett that is not touching the
+rail is a stone lying in a street, and **the whole read of that piece is
+that the rail was bedded in them.**
+
+Evidence: `docs/art/review/twilight_2026-09-22/`, same shell, same four
+cameras as T01–T04.
+
+**Still not complete**, and here the missing material treatment is not one
+line of boilerplate — it is **the finding**.
+
+
+## Batch 060 — T06. DOOM 1993, THE UAC TECHBASE — and the runway has two packs left
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_dm_bank_column` | 132 tris · 0.74 × 0.62 × 3.60 m · 32.0 texels/m | 10 | a column that carries **information** — the one column in the set whose job is to be looked *at* |
+| `tp_dm_screen_wall` | 108 tris · 2.16 × 0.55 × 3.00 m · 32.0 texels/m | 8 | the wall is an **interface**, and the hand-run cable **loops** are the subject: screens are furniture, loops are people solving something |
+| `tp_dm_blast_frame` | 72 tris · 3.08 × 0.60 × 3.56 m · 32.0 texels/m | 5 | the opening dressed as a **marked blast door** — and the chevrons are where this family's `accent` is spent |
+| `tp_dm_spill_trough` | 72 tris · 1.77 × 0.86 × 0.15 m · 32.0 texels/m | 5 | floor dressing that **contains** something, grating dragged off and dropped skewed |
+| `tp_dm_light_recess` | 60 tris · 1.00 × 0.34 × 0.80 m · 32.0 texels/m | 4 | the light is a stepped **recess**, not a fitting on a wall — the only pack whose lamp is a *hole* |
+| `tp_dm_keycard_reader` | 60 tris · 0.44 × 0.17 × 0.54 m · 32.0 texels/m | 4 | Batch 043's wall-switch contract as a **keycard reader** |
+
+**Subtheme chosen and stated: the UAC techbase, containment level.** DOOM
+1993 has three episodes and they are three different places. **Hell is the
+famous half and it is also the half that is terrain** — rock, flesh, fire.
+The techbase is the architecture.
+
+### THE FAMILY RUNWAY HAS TWO PACKS LEFT IN IT
+
+T05 proved two packs sharing a house family read as one place and that
+different shapes cannot save them. The workaround since has been to give
+each pack a family nobody has used. **Count it:**
+
+```
+temple_ruin        T01, T05      already doubled — T05 is the proof
+rusted_industrial  T02, T04      already doubled
+neon_transit       T03
+concrete_facility  T06           ← this one
+gothic_stone       —
+void_glitch        —
+```
+
+**Two families unused. 75 packs behind this one.** The workaround runs out
+at **T08**, and every pack from **T09** must share pixels with an earlier
+one or wait.
+
+**That is a deadline rather than an opinion**, and it is the sharpest form
+the namespace argument has taken in six packs. Recorded in the manifest as
+`family_runway`, so it is data.
+
+### Where the accent is spent, and why that is a rule
+
+`concrete_facility`'s `_concrete_accent` docstring says it: the accent
+marks a thing as **significant**, and *a colour that marks everything marks
+nothing* — a review note this lane already paid for once. So this pack
+spends it on exactly two things: the blast frame's chevrons and the
+keycard reader's lamp column. **The four racks on the bank column do not
+get it**, because four racks on a column are not four significant things.
+
+### Two gates, both routine by now
+
+`assert_parts_touch` caught the hand-run cable loops floating 6 cm off
+anything at 1.30 m. **A cable that touches nothing is not untidy, it is
+floating** — they loop just above the desk now and drop behind it, which
+is also where hand-run cable actually goes.
+
+The no-foothold rule caught the grating **leaned** against the trough
+lip: 0.16 m tall in a 0.72 × 0.47 m footprint, above the 0.12 m walk-up.
+A 0.66 m grating cannot shrink under the 0.35 m plan limit and
+`brushkit.block` only turns about Z, so there is no steep lean to be had.
+**Dragged off and dropped skewed says "somebody took this off" just as
+well**, and the skew is what stops it reading as replaced.
+
+Evidence: `docs/art/review/foundry_2026-09-22/`, same shell, same four
+cameras as T01–T05.
+
+**Still not complete:** no material treatment, no runtime selection, not
+imported, no owner review.
+
+
+## 2026-09-24 — the course ruling, applied per treatment
+
+**The owner ruled on the Batch 055 candidate PER TREATMENT.** Not
+wholesale, not by flipping a global default, and not into props.
+
+| family | ruling | state |
+|---|---|---|
+| `concrete_facility` | **accept** | **shipping** |
+| `neon_transit` | **accept** | **shipping** |
+| `gothic_stone` | **do not accept** — investigate a 0.5 / 1.5 m bond | unchanged |
+| `rusted_industrial`, `temple_ruin`, `void_glitch` | pending, no owner-facing visual evidence yet | unchanged |
+
+`paintkit.SNAP_COURSES` (a global flag) is gone. In its place
+**`SNAP_COURSE_THEMES`**, a set naming the two accepted families, and
+**`SNAP_ALL_COURSES`**, the review override `build_theme_candidate.py`
+uses to render the pending treatments — *not* a way to ship an unruled
+one.
+
+**Props are excluded structurally rather than by remembering to.** Only
+`materials.surface_for` gives a `Surface` a `theme`; `propkit`'s two
+constructors pass none, so a prop can never match a snapped family
+however that set is later edited.
+
+**Eight textures moved, in exactly the two accepted families** — checked
+against the descriptor, not asserted: the 8 rows whose `sha256_16`
+changed are those 8, and no row outside them moved.
+
+**Two `BREAKS` remain in the shipped set and both are on treatments the
+owner did not accept.** `gothic_stone_accent` (`v 18 wrap 2`) and
+`rusted_industrial_wall` (`h 7 wrap 9`). That is the ruling working.
+
+**A pipeline step I had been skipping, found by the measurement not
+moving.** `build_materials.py` → `verify_theme_set.py --write` →
+**`export_content_pack.py`** → `import_godot_content.sh`. I ran the first,
+second and fourth; the third is what copies `assets/textures/theme/` into
+`godot/content/theme/`. The import re-ran happily over the *old* pixels
+and reported 37 sidecars, and the course checker — which reads the
+imported copy — showed the pre-ruling numbers. **An import that reports
+success over stale inputs is the failure mode worth naming:** nothing
+errored, and the only thing that caught it was a number that should have
+changed and did not.
+
+Evidence: `docs/art/review/course_ruling_2026-09-24/`, four same-scale
+strips plus the shipped shell before and after, from
+`tools/content/run_course_ruling.sh`.
+
+## Batch 061 — T07. Dark Souls III, THE HIGH WALL OF LOTHRIC — the last pack with a family of its own
+
+**PROPOSAL.** Not imported, not runtime-bound, not owner-approved.
+
+| asset | metrics | parts | what makes it this pack's |
+|---|---|---|---|
+| `tp_ds_buttress_pier` | 68 tris · 0.78 × 1.87 × 3.60 m · 32.0 texels/m | 5 | a pier that reaches **sideways**: it carries thrust. Every other column in seven packs carries load straight down. |
+| `tp_ds_aqueduct_wall` | 80 tris · 2.16 × 0.47 × 3.00 m · 32.0 texels/m | 7 | a wall that **carried water** — and the corbels continue **past** the break |
+| `tp_ds_iron_door_arch` | 76 tris · 3.08 × 0.48 × 3.57 m · 32.0 texels/m | 6 | a pointed arch **above** a square head, which is how a real wall carries one under the other |
+| `tp_ds_fallen_voussoir` | 56 tris · 1.43 × 0.55 × 0.22 m · 31.6 texels/m | 5 | floor dressing that **collapsed** with two stones **still keyed** to each other |
+| `tp_ds_brazier` | 88 tris · 0.47 × 0.65 × 1.51 m · 32.0 texels/m | 5 | the only light in seven packs that stands **on the floor** and can be walked around |
+| `tp_ds_lever_stone` | 56 tris · 0.46 × 0.20 × 0.54 m · 32.0 texels/m | 4 | Batch 043's contract **carved in**: the recess *is* the housing |
+
+**Subtheme chosen and stated: the High Wall of Lothric, the aqueduct run.**
+The hint agrees — third agreement in seven. Running tally: agree,
+**disagree**, agree, none, none, none, agree.
+
+### THE RUNWAY IS ONE PACK, NOT TWO — T06 COUNTED WRONG
+
+T06 said two families remained. **It is one, and T07 is it.**
+
+`void_glitch` is not a sixth option. It is Archipepsi's own
+**missing-texture theme** — an editor checkerboard with the word `null`
+written across it — and `THEME_BY_GAME_HINT` maps it to Archipepsi itself.
+Painting The Wind Waker in it would not be a pack wearing another pack's
+clothes; **it would be a pack wearing the clothes that mean "this texture
+failed to load".**
+
+> **The workaround ends at T07. Every pack from T08 on must share pixels
+> with an earlier pack, or wait for the namespace. 74 packs are behind
+> this one.**
+
+### A FOURTH GATE, because three packs tripped over the same thing silently
+
+**`packgates.assert_fits_corridor`.** Nothing a pack ships may exceed
+`corridor_height` (3.6 m).
+
+T02's dial mark topped out at **3.78 m**. T03's shutter head reached
+**3.62** at its first size. T07's arch springers reached **3.68**. All
+three were poking through a ceiling, and the only thing that ever noticed
+was a human reading the manifest's `size` field afterwards.
+
+A surround is the usual offender because it is the one piece that *has* to
+reach above the 3.2 m door head — and 0.4 m is not much room for a lintel
+plus whatever sits on it. **The gate is unconditional in `packkit.build`:
+every pack ships into the same corridors, and a piece too tall for them is
+not something a pack declares its way out of.** It caught T07 and cleared
+the other six.
+
+### The no-foothold rule improved two compositions
+
+**The voussoirs.** A 0.34 m-deep wedge turned 12° measures 0.48 × 0.42 in
+plan at 0.22 m — a step. 0.24 m deep is a real arch-stone proportion and
+clears it, so the **keyed pair keeps its height**; the loose stones could
+not be narrowed at any believable proportion, so they **lie at 0.11 m**,
+under the walk-up, which is what a stone that bounced does anyway. **Two
+standing and two down reads as a collapse; four standing reads as a
+display.**
+
+**The brazier.** A 0.54 m bowl at 0.86 m is a face a player stands in.
+Raised to 1.40 m its top clears the jump — **and a brazier at head height
+on a stand is what Lothric's actually are**, so the rule pushed this
+toward the source rather than away from it.
+
+### And one thing no gate can say
+
+The buttress springing was first two stepped wedges. `assert_parts_touch`
+was satisfied — they overlapped by 14 cm — and in `DS_chamber` they read
+as **a staircase hanging in mid-air**. A flying buttress is a continuous
+ramp; two steps of it are two steps. One longer wedge now.
+
+**A gate can say a thing is attached. It can never say it is legible.**
+
+Evidence: `docs/art/review/lothric_2026-09-22/`.
+
+**Still not complete:** no material treatment, no runtime selection, not
+imported, no owner review.
+
+## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
+
+**All four large shells are `review: "pass"`.** Three authorities had to
+agree, and they answer three different questions:
+
+| | |
+| --- | --- |
+| owner form approval | the rendered form of each room, with conditions named below |
+| Production technical certification | `7e13f44` — real capsules in the shipped collision |
+| independent audit | `f97545f` — structurally and physically clean, one authored value raised |
+
+| Shell | Form verdict | Condition, and its state |
+| --- | --- | --- |
+| `shell_hall_transit` | **FORM PASS** | three `grapple_point` offers on the collar rings, and the collar walking loop closed — **both completed**, and the mandatory route is still walkable with no package |
+| `shell_plenum_helix` | **FORM PASS** | preserve top-entry / bottom-exit — **entry still at y = 68**, exit at the floor |
+| `shell_yard_gantry` | **FORM PASS** | preserve the approved ~16 m height — **still 84.0 × 16.0 × 52.0 m** |
+| `shell_span_basin` | **FORM PASS** | preserve the intentional one-way drop — **unchanged**, the mid-span fall is still a route and still one-way |
+
+The audit's one finding was the yard's launch pad at y = 0.5 over a floor
+whose top is 0.00, corrected at `466fd4e` before this flip.
+
+**The physical-truth work did not reopen the review.** Between the form
+verdicts and this promotion, collision and movement-offer *data* were
+corrected — collars decomposed into convex sectors, nine declared points
+moved off the machine axis, three rails rerouted off geometry their baked
+curves were inside, four launch pads put on a real surface. No approved
+architectural form was redesigned: every shell `.glb` came out of that
+work byte-identical except the plenum's, and that changed only in its
+collision node count.
+
+> **`pass` is not "the movement offers work yet."** It says the shell is
+> approved and shippable as a room. Its `rail_route`, `launch_source` /
+> `launch_target` and `grapple_point` offers are declarations reserved
+> against a **player-facing movement-package consumer that is not
+> implemented**. A passing shell can be placed, entered and walked end to
+> end today; nobody can ride its rail. Two readinesses, and reading one
+> as the other is the conflation the projectile note was written about.
+
+The three projectile substitutions **remain `pending`**, and every other
+content review state is unchanged. **Wave 2 has still not started.**
