@@ -33,6 +33,7 @@ shift 4
 OUT="${ART_PACKAGE_OUT:-${TMPDIR:-/tmp}}/artpkg"
 STAGE="$OUT/$SLUG"
 
+REVIEW="${REVIEW%/}"
 [ -d "$REVIEW" ] || { echo "no review dir at $REVIEW" >&2; exit 2; }
 [ -f "$REPORT" ] || { echo "no report at $REPORT" >&2; exit 2; }
 
@@ -59,13 +60,19 @@ listing="$(unzip -Z1 "$OUT/$SLUG.zip")"
 # then exits, and the count would always come back 0. A checker whose
 # counter cannot rise is the exact failure this script exists to stop.
 found="$(mktemp)"
+# Moving captures count as pictures too: a review that argues from an
+# MP4 or an animated WebP is as blind without it as without a PNG.
 find "$REVIEW" -type f \( -name '*.png' -o -name '*.jpg' \
-     -o -name '*.svg' -o -name '*.gif' \) > "$found"
+     -o -name '*.svg' -o -name '*.gif' -o -name '*.webp' \
+     -o -name '*.mp4' \) > "$found"
 missing=0
+# By the path inside the review, not the basename: when several folders
+# each hold a `motion.mp4` or a `stills/01_rest.png`, a basename match
+# would let one folder's file stand in for another's missing one.
 while IFS= read -r img; do
-  base="$(basename "$img")"
-  printf '%s\n' "$listing" | grep -qF -- "/$base" || {
-    echo "art-package: MISSING from the archive: $base" >&2
+  rel="${img#"$REVIEW"/}"
+  printf '%s\n' "$listing" | grep -qxF -- "$SLUG/review/$rel" || {
+    echo "art-package: MISSING from the archive: $rel" >&2
     missing=$((missing + 1))
   }
 done < "$found"
@@ -76,5 +83,5 @@ if [ "$missing" -ne 0 ]; then
   exit 1
 fi
 
-count=$(printf '%s\n' "$listing" | grep -cE '\.(png|jpg|svg|gif)$' || true)
+count=$(printf '%s\n' "$listing" | grep -cE '\.(png|jpg|svg|gif|webp|mp4)$' || true)
 echo "art-package: $OUT/$SLUG.zip -- $count image(s), all of $REVIEW's present"
