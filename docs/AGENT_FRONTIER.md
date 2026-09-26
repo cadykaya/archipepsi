@@ -582,10 +582,12 @@ owner's D-06/D-07 rulings and the seam table are in
       - 5 of 5 sabotages caught. Where the Bomb Bags are is harness
         knowledge from the mock's own placement; the suite checks the
         client is not told.
-    - **Next:** the CK7 frontier on the frozen HB-F4a + HB-F4e
-      revision, then HB-F4c (the connector), HB-F4a-3 and HB-F4f. PT-09
-      is met live, and a player reaches the Bomb Bag with no Zone
-      discarded on the way.
+    - **CK7: 92 of 92 on `bfcf64e`** (HB-F4a + HB-F4e), one run on one
+      revision, every live suite alone on the machine
+      (`CK7_frontier_on_bfcf64e.tsv`).
+    - **Next:** HB-F4c (the connector through zone_006's two doorways),
+      then HB-F4a-3 and HB-F4f. PT-09 is met live, and a player reaches
+      the Bomb Bag with no Zone discarded on the way.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

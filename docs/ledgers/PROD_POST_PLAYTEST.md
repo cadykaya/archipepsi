@@ -5357,3 +5357,31 @@ not be reproduced.
 - **Regression:** the full frontier runs once, on the frozen revision
   holding HB-F4a and this (CK7, the next section).
 - **Next:** HB-F4c, then HB-F4a-3 and HB-F4f.
+
+## CK7 checkpoint — the full frontier on `bfcf64e` (HB-F4a, HB-F4e)
+
+- **On `bfcf64e` (the HB-F4a and HB-F4e head): 92 of 92 steps passed,**
+  in one run on that one revision, 08:54–10:23 UTC
+  (`CK7_frontier_on_bfcf64e.tsv`).
+  - The steps are CK6's 88, plus the four added since:
+    - `godot-rail-network` (70 checks);
+    - `godot-bombs` (37);
+    - `make bomb-fixture`, which regenerates `bomb_snapshots.json`
+      byte for byte;
+    - `godot-bombs-live`, whose three phases pass.
+  - It covers every commit since CK6's revision (`d4fc7fe`): the CK6
+    record, H-RAIL-BREADTH slice 1, H-BOMBS slices 1 and 2, HB-F4b,
+    HB-F4a and HB-F4e. Dess pushed nothing in between.
+  - `make test`: 2,304 passed (`CK7_make_test_on_bfcf64e.log`).
+  - No log has a line starting `SCRIPT ERROR`. Eight logs contain the
+    words, all in the Makefile's own echoed recipe, none from the
+    engine.
+  - Every live suite passed, run one at a time with nothing else on the
+    machine: `godot-candidate-live`, `godot-resume-live`,
+    `godot-bombs-live` and both integrations among them.
+  - `godot-build-failure` passed on its new fixture, the owner's
+    zone_008.
+  - `godot-zone-audit` (step 22) rewrites the placement fixtures,
+    provenance stamps only, as at every checkpoint. The one stamp it
+    changed was restored after the run. Nothing after step 22 reads it.
+  - These are local results; remote CI does not run (N-6).
