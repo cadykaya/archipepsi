@@ -60,20 +60,32 @@ Read the room's band from it; don't restate it.
 fog. The enemy body must separate from what is behind it by **0.10** CIE
 L\* at 18 m, on walls, floors and in dim light. **0.18** is a reference
 only: the fog makes it physically unreachable with paint in some rooms.
-The landed sets meet 0.10 in every one of those cells except two, which
-the owner accepted as measured exceptions:
+**The grade is on the AGGREGATE**: all ten roles' body pixels pooled
+against the background. On that grade the landed sets meet 0.10 in every
+one of those cells except two, which the owner accepted as measured
+exceptions:
 
-* **`void_glitch` floor: 0.0999.** On the boundary.
+* **`void_glitch` floor: 0.0999.** On the boundary. It is **not
+  retired** (RULED 2026-09-26). The aggregate now reads 0.100, but per
+  role five of the ten are below 0.10, the diver lowest at 0.088.
 * **`rusted_industrial` dim: 0.093.** No paint clears it; pure black,
   fully matte reaches 0.104. **If `rusted_industrial` stays unreadable
   in the integrated build, the owner has ruled that is a room-lighting /
   runtime issue for Production**, not an enemy-paint one.
 
+**Per role — reported, not graded.** The evidence records each role on
+its own as well (`per_role` in `contrast.json`). Single roles fall below
+0.10 inside cells whose aggregate clears: `gothic_stone` dim (diver
+0.097, drifter 0.098, bulwark 0.099) and `neon_transit` floor (diver
+0.095). `tools/content/check_enemy_bands.py` prints both readings,
+labelled.
+
 **A documented limitation.** An enemy seen against a dark fogged
-*opening* (an exit, a drop, a window onto the void) can sink into it in
-four rooms. The owner has ruled against changing global void colours or
-adding an enemy colour for now. It is revisited only after Tier 2, the
-motion review and integrated gameplay evidence.
+*opening* (an exit, a drop, a window onto the void) can sink into it. In
+the aggregate, three rooms fall below 0.10 there. The owner has ruled
+against changing global void colours or adding an enemy colour for now.
+Tier 2 and the motion review are done, so it is revisited only on
+integrated gameplay evidence.
 
 **Integrating it** means loading each room's enemies from its band's
 folder instead of building them in code. Nothing else about an enemy
@@ -91,31 +103,56 @@ behind. Every anchor is inside a real part of the body now, not merely
 inside its bounding box, and none shows at any angle. The A10 handoff
 carries a dated correction.
 
-**Two roles are re-cut (Tier 2, 2026-09-26, for owner review).** `ranged`
-and `bulwark` have new silhouettes. Both sit inside the same envelopes,
+**Two roles are re-cut (Tier 2), ACCEPTED by the owner 2026-09-26.**
+`ranged` and `bulwark` have new silhouettes. Both sit inside the same envelopes,
 with the same named anchors, in both bands. Three anchors moved with
 the shapes:
 * `ranged` `anchor_muzzle` is now at the tip of a long emitter: 1.29 m
-  up, 0.23 m to one side and 0.20 m forward. `Enemy.muzzle()` fires from
-  1.2 m up on the centreline, which puts the shot 0.32 m from the muzzle
-  the player sees. Before the re-cut the gap was 0.39 m, most of it
-  height: the old muzzle sat 0.32 m below the shot.
+  up, 0.23 m to one side and 0.20 m forward.
 * `ranged` `anchor_warn` is 1.22 m up.
 * `bulwark` `anchor_warn` is 1.71 m up, under its sighting notch.
 
-Evidence: `docs/art/review/enemies_2026-09-25/tier2/`. Hold integration
-of these two shapes until the owner rules on them.
+Evidence: `docs/art/review/enemies_2026-09-25/tier2/`.
 
-**Integrating the art models as they stand drops the eye.** At
-`27363fe`, each of `enemy.gd`'s builders gives its enemy an emissive
-`Eye`, which `_set_eye` drives: dim at idle, brighter once it has
-noticed you, and flaring at every windup. The art models carry no eye.
-Even if they did, `_set_eye` reaches only a `material_override`, and a
-glTF import sets none; this is the damage-tint gap again. An eye needs a
-colour, and the owner has not ruled on one, so the art lane has built
-nothing. Integration needs an answer for the eye first. The options are
-in `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`, Motion
-review §3.
+### Three things integration must carry across (RULED 2026-09-26)
+
+**1. The eye stays: Production preserves its existing eye on the art
+models.** At `27363fe` each of `enemy.gd`'s builders gives its enemy an
+emissive `Eye`, and `_set_eye` drives it through three states: dim at
+idle, brighter once it has noticed you (alert), and flaring at every
+attack windup. The ruling:
+* **Keep it:** the existing red/orange colours and the idle, alert and
+  windup behaviour.
+* **Do not drop the windup flare** when the models are integrated.
+* **Production owns** the runtime attachment and the state driver.
+* **An anchor, if needed:** the art lane can provide a narrowly scoped
+  placement anchor, *after* the two sides agree the attachment contract.
+  None is built yet. Tell the art lane where the eye must seat, and in
+  whose transform.
+* **Not a new palette.** This preserves an existing gameplay cue. It is
+  not approval for a new enemy palette, a body glow or a signal-coloured
+  rim.
+* **Not an openings fix.** Do not claim the eye solves visibility against
+  openings until the integrated game tests it.
+
+**2. The damage-feedback / material hook.** Two runtime paths touch
+material *overrides*, and a glTF import sets none; its materials are on
+the mesh surfaces:
+* `Enemy._collect_tint_parts` only unshares meshes whose
+  `material_override` is a `StandardMaterial3D`. So an art model takes
+  **no damage tint** (the A10 blocker, still open). The readiness gate
+  prints it for all ten roles.
+* `_set_eye` reaches the eye through `material_override` too. So an eye
+  seated inside a glTF would not flare either, unless the runtime
+  attaches its own or reads surface materials.
+
+**3. The shot starts 0.32 m from the muzzle the player sees.**
+`Enemy.muzzle()` fires from 1.2 m up on the centreline. The accepted
+`ranged` carries its muzzle at 1.29 m up, 0.23 m to one side and 0.20 m
+forward. Before the re-cut the gap was 0.39 m, most of it height. **The
+authored muzzle should inform the integration** (`anchor_muzzle` is the
+named node). The art is not to be distorted around a hard-coded shot
+origin.
 
 **Held by the art lane's suite** (`tools/check_art_current.sh`):
 - `tools/content/check_enemy_bands.py` proves both sets are the same

@@ -104,9 +104,13 @@ What the owner ruled, and what landed:
 * **Facing:** the art models used to face +Z and now face -Z, as
   `enemy.gd`'s do.
 
-Done and waiting on the owner:
-* **Tier 2** re-cut `ranged` and `bulwark`. It is for owner review.
+Done, and RULED 2026-09-26 (second):
+* **Tier 2** re-cut `ranged` and `bulwark`, and both are ACCEPTED.
 * **The motion review** is done.
+* **The eye:** Production keeps its existing eye on the art models, and
+  the windup flare is not to be dropped.
+* **`void_glitch` floor** is not retired. Aggregate and per-role
+  contrast are now labelled separately.
 
 Both are in `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`.
 
@@ -116,11 +120,13 @@ Findings other lanes need:
 * Integrating the art models drops `enemy.gd`'s emissive eye, including
   its windup flare. The models have no Eye node, and both `_set_eye` and
   the damage tint need a `material_override` that a glTF import does not
-  set. The owner decides the eye.
+  set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Hold:** no Track C or E unless their blockers clear or a new owner
-decision is needed (§11).
+**Now: TRACK A2 — the dynamic 3D interface** (§11). The work is three
+low-detail spatial-interaction studies, in motion, in an isolated
+art-lane prototype, and then a stop for owner selection. It opens
+neither 0.5 nor Track C or E.
 
 Two things from it that other lanes need:
 

@@ -2489,7 +2489,7 @@ and a clean rerun of the whole of `check_art_current.sh` then PASSED.
   face -Z, with a per-role front-part assertion and a readiness gate
   that checks which way each model faces. Every anchor sits inside a
   part, and the silhouette harness proves that no anchor shows.
-* **Tier 2, for owner review.** `ranged` braces a long diagonal emitter
+* **Tier 2 — ACCEPTED 2026-09-26.** `ranged` braces a long diagonal emitter
   and stands with its legs apart. `bulwark` is a mantlet: two ears with a
   sighting notch between them, on two runners. Worst-angle overlap:
   melee/ranged 0.856 → 0.605 and brute/bulwark 0.825 → 0.701. No pair of
@@ -2505,23 +2505,83 @@ and a clean rerun of the whole of `check_art_current.sh` then PASSED.
     weakly.
   * **The swell** is 3 px or less on the flyers and the charger at 18 m.
   * **The eye.** Integrating the art models would drop Production's
-    emissive eye and its windup flare. That is a decision for the owner,
-    because an eye needs a colour.
+    emissive eye and its windup flare. RULED: Production keeps it (see
+    below).
   * **Openings.** Motion adds no value contrast. An approach grows the
     outline by at most 0.17 px per frame.
 * **Stale evidence regenerated.** The A10 frames (pre-band skin, anchor
   bumps) and the A11 job frames (props from before 236acf8).
 
-### Next — HOLD (2026-09-26)
+### Ruling, 2026-09-26 (second) — the checkpoint is accepted; Track A2 opens
 
-The checkpoint the owner set is reached. **Hold.** Track C stays blocked
-on the revised machinery/puzzle bounds, and Track E stays reserve; open
-neither unless its blocker clears or a new owner decision is needed.
+**RULED — the enemy checkpoint is accepted as an art-lane delivery:**
+* **Tier 2:** both re-cuts are accepted, with their envelopes, facing and
+  anchor placement.
+* **The eye:** Production PRESERVES ITS EXISTING EYE on the art models:
+  the red/orange colours, and the idle, alert and windup behaviour.
+  * The windup flare must not be dropped at integration.
+  * Production owns the attachment and the state driver.
+  * The art lane may add a narrowly scoped anchor, but only after the
+    attachment contract is agreed.
+  * It is not a new palette, a body glow or a signal rim.
+  * It is not claimed to help at openings until the integrated game
+    tests it.
+* **The handoff** keeps the damage-tint / material-hook issue and the
+  0.32 m muzzle gap explicit. The authored muzzle informs the
+  integration; the art is not bent round a hard-coded origin.
+* **Contrast:** the Tier-1 treatment and its limitations stand.
+  * `void_glitch` floor is **not retired**. The aggregate clears, but
+    per role the diver is at 0.088.
+  * Aggregate and per-role are labelled separately; `check_enemy_bands.py`
+    prints both.
+  * No new sweep.
+* **Four evidence scopes, kept apart:** the three-angle comparison, the
+  15° full turn, the source-derived motion review, and integrated
+  gameplay (NOT verified).
+* **3A** stays deferred, and **3B** stays with Production.
 
-Waiting on the owner:
-* the Tier 2 re-cuts, accept or reject;
-* the eye, one of three options;
-* anything that follows from integrated gameplay at openings.
+**NEXT ASSIGNMENT — TRACK A2, THE DYNAMIC 3D INTERFACE.** This is the
+design/prototype part, on the art side, and it does not wait for
+Production's 0.4 queue.
 
-Item and state art still waits on Production's slot vocabulary.
+Groundwork:
+* Read Production's menu and its inventory/map contracts read-only, and
+  record the revision.
+* Re-check the equipment vocabulary before carrying the blocker forward.
+
+Preserve:
+* the real four-face 3D menu;
+* the leftward order Settings/Pause → Inventory → Map → Objectives/Lore
+  → Settings;
+* the real semantics;
+* Production's ownership of runtime, input, data binding and saves.
+
+The faces' contents may be recomposed. "Dynamic" means selection, depth,
+overlap, unfolding, displacement, focus and transitions. It does not
+mean neon, rivets, technical labels, clipped corners or rectangle
+dashboards.
+
+**First deliverable:** three genuinely different, low-detail
+spatial-interaction studies, at least one on Map and one on Inventory.
+* Each runs in a small isolated art-lane prototype, with short captures
+  and a reduced-motion/resting view.
+* Each shows five moments: rest, select (with useful information),
+  change selection, the adjacent face, and return.
+* Real data shapes only, with sample data labelled. No invented slots or
+  states, and the map's connectivity stays truthful.
+
+Usability rules:
+* readable at gameplay size;
+* clear mouse and controller focus;
+* no drifting controls;
+* interruptible transitions;
+* reduced motion keeps the same information;
+* no cinematic waits.
+
+**Then STOP for owner selection.** After the choice come the Glyph asset
+requirements and a state/transition handoff. It opens neither 0.5 nor
+Track C or E.
+
+### Next — Track A2, the three studies
+
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

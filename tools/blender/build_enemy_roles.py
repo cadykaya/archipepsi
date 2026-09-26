@@ -138,9 +138,17 @@ ACCEPTANCE = {
     "min_separation": 0.10,
     "aspirational_separation": 0.18,
     "cases": ["wall", "floor", "dim"],
+    # RULED 2026-09-26: aggregate and per-role are labelled separately.
+    "graded_on": "the AGGREGATE: all ten roles' body pixels pooled against "
+                 "what is behind them. Each role's own separation is "
+                 "recorded beside it in the evidence and reported, not "
+                 "graded; a pooled cell can clear with single roles short",
     "exceptions": [
         {"room": "void_glitch", "case": "floor",
-         "accepted_because": "on the 0.10 boundary (measured 0.0999)"},
+         "accepted_because": "on the 0.10 boundary (measured 0.0999)",
+         "status": "NOT retired (RULED 2026-09-26): the aggregate now "
+                   "reads 0.100, but per role five of ten are below "
+                   "0.10, the diver lowest at 0.088"},
         {"room": "rusted_industrial", "case": "dim",
          "accepted_because": "paint cannot clear it (measured 0.093; "
                              "pure black matte reaches 0.104). If it is "
@@ -148,8 +156,9 @@ ACCEPTANCE = {
                              "room-lighting/runtime issue for Production"},
     ],
     "limitation": "dark fogged openings: measured and documented, not "
-                  "fixed by value; revisit only after Tier 2, the motion "
-                  "review and integrated gameplay evidence",
+                  "fixed by value. Tier 2 and the motion review are done "
+                  "(2026-09-26); it is revisited only on integrated "
+                  "gameplay evidence",
 }
 
 #: EXPLORATION: `ENEMY_LIGHTNESS=<k>` builds ONE set at that factor into a

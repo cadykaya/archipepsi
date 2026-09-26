@@ -4,6 +4,36 @@
 
 **RULED 2026-09-25. The decisions are recorded inline below.**
 
+> **RULED 2026-09-26 — the enemy checkpoint is accepted as an art-lane
+> delivery.**
+> * **Tier 2:** both re-cuts are accepted, with their envelopes, facing
+>   and anchor placement.
+> * **The eye:** Production keeps its existing eye on the art models.
+> * **Tier 1:** the treatment and its limitations stand. The
+>   `void_glitch` floor exception is not retired.
+> * **3A** stays deferred; **3B** stays with Production.
+>
+> Each ruling is recorded where it applies below.
+
+### Four evidence scopes, kept apart (RULED 2026-09-26)
+
+| scope | what it is | where |
+| --- | --- | --- |
+| **Three-angle comparison** | Track B's outline overlap at yaw 0 / 45 / 90, and the Tier-2 before/after on the same three | `SHEET_silhouettes.png`, `readability.json`, `tier2/` |
+| **Full-turn comparison** | the same metric at every 15°, same-yaw and across yaws | `motion/turn/`, `motion/motion.json`, `CHART_turn_overlap.png` |
+| **Source-derived motion review** | Production's motion rules read from its source at `27363fe` and applied to rigid models: speeds, turns, windup swell, flinch | `motion/`, `tools/content/enemy_motion_review.py` |
+| **Integrated gameplay** | **not verified by any delivery here.** Production does not load the art models. | — |
+
+A number from one scope is not evidence in another. In particular,
+nothing below claims how an enemy reads in the integrated game.
+
+**Aggregate and per-role contrast are labelled separately
+(RULED 2026-09-26).** Every Tier-1 cell is graded on the AGGREGATE,
+which pools all ten roles' body pixels against the background.
+`contrast.json` also records each role on its own, under `per_role`. A
+pooled cell can clear while single roles in it do not.
+`tools/content/check_enemy_bands.py` prints the two apart.
+
 The sheet was written under *"Do not silently apply the four proposed
 enemy art changes. Package them as a compact owner review set."* It is
 kept as the record of what was asked and what came back.
@@ -242,9 +272,24 @@ rooms; per-room skins differ only in those plating lines and bolts
 > - same geometry and markings in both sets;
 > - the deep set darker;
 > - `contrast_current/` tied by sha256 to the shipped files and meeting
->   0.10 everywhere but the two accepted cells.
+>   0.10 in the AGGREGATE everywhere but the two accepted cells.
 >
 > Production's flag: `docs/art-requests/2026-09-26-enemy-value-bands-and-L08.md`.
+
+> **Per role — reported, not graded (labelled 2026-09-26).** This is the
+> committed `contrast_current/contrast.json`, read and not re-measured.
+> Accepted cases where single roles fall below 0.10:
+>
+> | cell | aggregate | roles below 0.10 |
+> | --- | --- | --- |
+> | `void_glitch` floor *(exception)* | 0.100, clears | diver 0.088, charger 0.097, drifter 0.098, bulwark 0.099, scuttler 0.099 |
+> | `rusted_industrial` dim *(exception)* | 0.094, short | all ten, lowest bulwark 0.091 |
+> | `gothic_stone` dim | 0.100, clears | diver 0.097, drifter 0.098, bulwark 0.099 |
+> | `neon_transit` floor | 0.121, clears | diver 0.095 |
+>
+> **RULED 2026-09-26: the `void_glitch` floor exception is NOT retired.**
+> The aggregate clears, but the roles above do not. This labelling does
+> not reopen the treatment and does not commission another sweep.
 
 ### What landing would change — and what it would not
 
@@ -435,7 +480,12 @@ Head-on it is a brute at 82% overlap.
 
 ### Tier 2 — built and measured, for your review (2026-09-26)
 
-**Not approved — yours to rule on.** Both re-cuts are in the art lane's
+> **RULED 2026-09-26: both re-cuts are ACCEPTED.** Keep the diagonal
+> emitter and separated stance for `ranged`, and the notched mantlet on
+> two runners for `bulwark`. Keep the measured envelopes, the corrected
+> facing and the anchor placement.
+
+*As submitted:* not yet approved at the time. Both re-cuts are in the art lane's
 models, both bands. Nothing in Production loads those models, so this is
 not active in the shipping game. The shapes before it are at `fa16cfe`.
 
@@ -487,8 +537,8 @@ each other on the metric's own canvas, so the tell is the coloured area.
   `gothic_stone` dim now reads 0.100 (was 0.101) and still clears on the
   unrounded flag.
 
-**Your call:** accept both re-cuts, either one, or neither. A rejected
-re-cut goes back to its `fa16cfe` shape in the builder.
+~~**Your call:** accept both re-cuts, either one, or neither.~~
+**Ruled: both accepted.**
 
 ---
 
@@ -605,7 +655,21 @@ effect on the art models at the review distance:
 For the two flyers and the charger, the swell moves the outline by 3 px
 or less.
 
-**The eye — a decision is needed.** Today's code-built enemies carry an
+> **RULED 2026-09-26: Production PRESERVES ITS EXISTING EYE on the art
+> models**, in the existing red and orange, with its idle, alert and
+> attack-windup behaviour.
+> * **What the ruling is not:** it preserves an existing gameplay cue. It
+>   does not approve a new enemy palette, a body glow or a
+>   signal-coloured rim.
+> * **Integration must not drop the windup flare.**
+> * **Who owns what:** the art lane may provide a narrowly scoped
+>   placement anchor if Production needs one, *after* the two agree the
+>   attachment contract. Production owns the runtime attachment and the
+>   state driver.
+> * **Openings:** the eye is **not** claimed to help with opening
+>   visibility until the integrated game tests it.
+
+**The eye — as it was put to you.** Today's code-built enemies carry an
 emissive `Eye` in hard-coded red and orange, and it is the only emissive
 part of their bodies. Production drives it in three states:
 * dim while the enemy is idle;
@@ -664,8 +728,10 @@ proposed. Two things matter for the integrated check you asked for:
   not rendered.
 * **One distance, and no pitch.**
 
-**Your call:** the eye, above. Everything else in this section is
-information. The checkpoint is reached, and the lane holds.
+~~**Your call:** the eye, above.~~ **Ruled: Production keeps its eye**
+(see the ruling at the top of §3). Everything else in this section is
+information, and belongs to the source-derived scope. None of it is
+integrated-gameplay evidence.
 
 ---
 

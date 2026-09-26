@@ -36,6 +36,15 @@ themselves and the project palette, never the builder's constants:
    band and the sha256 of every committed GLB; and it must clear the
    ruled minimum on every accepted case except the accepted exceptions.
    Evidence measured on other models is stale, and says so.
+
+   **Aggregate and per-role are two different numbers, and are labelled
+   as such (RULED 2026-09-26).** The ruling grades the AGGREGATE: all ten
+   roles' body pixels pooled against the background. The harness also
+   records each role on its own, and a pooled cell can clear while single
+   roles in it do not -- `void_glitch` floor pools to 0.100 with the
+   diver at 0.088. So per-role shortfalls are REPORTED beside the grade,
+   never folded into it and never read as a reason to retire an
+   exception. Retiring one is the owner's call, not this script's.
 """
 
 import hashlib
@@ -247,6 +256,8 @@ def main():
                         "minimum is %s" % (ev["_meta"]["min_value_separation"],
                                            acc["min_separation"]))
     exceptions = {(e["room"], e["case"]) for e in acc["exceptions"]}
+    floor_line = float(acc["min_separation"])
+    per_role_short = []
     stale = []
     for room in rooms:
         row = ev.get(room)
@@ -273,16 +284,30 @@ def main():
             sep = float(cell["separation"])
             ok = bool(cell["clears_value"]) and \
                 not cell["body_above_background"]
+            low = sorted((float(v["separation"]), r) for r, v in
+                         cell.get("per_role", {}).items()
+                         if float(v["separation"]) < floor_line)
             if (room, case) in exceptions:
-                if ok:
-                    notes.append("%s %s now clears (%.3f) -- the accepted "
-                                 "exception can be retired" % (room, case,
-                                                               sep))
+                notes.append(
+                    "%s %s -- an accepted exception, not retired: aggregate "
+                    "%.3f (%s); per role, %s" % (
+                        room, case, sep,
+                        "clears" if ok else "short",
+                        "%d of %d below %.2f, lowest %s %.3f" % (
+                            len(low), len(cell.get("per_role", {})),
+                            floor_line, low[0][1], low[0][0])
+                        if low else "every role clears"))
                 continue
+            if low:
+                per_role_short.append("%s %s (aggregate %.3f): %s" % (
+                    room, case, sep, ", ".join(
+                        "%s %.3f" % (r, v) for v, r in low)))
             if not ok:
                 problems.append("%s %s: %.3f against a ruled minimum of "
                                 "%.2f, and it is not an accepted exception"
                                 % (room, case, sep, acc["min_separation"]))
+    for line in per_role_short:
+        notes.append("per role, reported and not graded -- %s" % line)
     if stale:
         problems.append("the evidence was measured on other models (%d of "
                         "%d files differ, e.g. %s). Re-run "

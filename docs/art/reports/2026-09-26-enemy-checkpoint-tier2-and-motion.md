@@ -2,6 +2,19 @@
 
 *Arty*
 
+> **RULED and CORRECTED 2026-09-26.** The checkpoint is accepted:
+> * **Tier 2:** both re-cuts are accepted.
+> * **The eye:** Production keeps its existing eye.
+>
+> **One suggestion below was wrong.** §1 offered to retire the
+> `void_glitch` floor exception because it "now clears". Only the
+> AGGREGATE clears (0.100). Per role, five of the ten are below 0.10,
+> the diver at 0.088, so the exception is **not** retired. Aggregate and
+> per-role numbers are now labelled separately everywhere. The tables
+> below are aggregates. The four evidence scopes are kept apart in
+> `review/DECISIONS_FOR_OWNER.md`; none of this report is
+> integrated-gameplay evidence.
+
 **Branch `claude/archipepsi-art`, PR #5.** Everything you asked for on
 2026-09-26 is done, and the lane now holds:
 * **Tier 1** landed, as art. It is not active in the shipping game.
