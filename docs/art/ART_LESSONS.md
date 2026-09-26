@@ -2131,3 +2131,46 @@ more changed than the two re-cut roles.
 > **After a change to a shared input -- a palette, a skin, a baked
 > texture set -- regenerate every folder that renders it, then diff
 > what moved. The diff is how you learn which evidence was stale.**
+
+## Time a motion by the part the player can see
+
+THREAD's thread was cast with an ease-out over its whole length. Most of
+that length is round the corner, on the map wall, out of sight. So the
+part you can see, from the line to the corner, flashed past in two
+frames, and the ease spent its slow end where nobody was looking. An
+even pace made the visible run a readable cast of about 0.17 s, with the
+same total time.
+
+> **An ease shapes the whole path, and the player sees only part of it.
+> Choose the curve for the visible part.**
+
+## A focus colour must stay apart from every colour the data can bring
+
+Signal was checked against the palette's own ramps. It was never checked
+against the colours the DATA supplies: Production's provisional circuit
+colours. One of them, `state:span_alignment` #4de6f2, is ΔE2000 10.1
+from signal, where every other circuit colour is at least 21.8 away. It
+showed up only when a signal-coloured thread landed on a span-alignment
+gate and could not be told from it.
+
+> **Measure a focus or selection colour against everything a screen can
+> put beside it, including colours the data brings in, and not only
+> against the palette it was drawn from.**
+
+## Look at WHERE two frames differ before explaining why
+
+The studies compare every settled frame of the motion run with the
+reduced run's. LENS differed on about 0.1% of its pixels. I explained it
+as a tween's last step, `lerp(from, to, 1.0)`, landing a float's width
+off the value that reduced motion sets outright. So I changed the kit to
+snap finished tracks onto their target, and re-captured. The numbers
+did not move at all. A mask of the differing pixels showed why: every
+one of them sits on a gate mark. Reduced motion holds the gates' pulse
+still, and motion does not. That difference is the one the study
+intends, and the bounding box had been pointing at it from the start.
+(The snap stays, because an animation should end exactly on its target.
+But it fixed nothing that was visible.)
+
+> **Before explaining a difference, look at where it is. A number says
+> how much; only a mask of the pixels says what. The assembler now
+> writes that mask beside every settled frame that differs.**

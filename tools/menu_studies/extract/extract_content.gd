@@ -94,13 +94,13 @@ func _map(zone: Node) -> Dictionary:
 	# The journal's own saves carry their own zone_map of the same Zone:
 	# a study that joins the two faces reads both from ONE save.
 	var journal: Dictionary = _json("res://tests/fixtures/journal_snapshot.json")
-	for variant: String in ["progressed", "latched"]:
+	for variant: String in ["walked", "progressed", "latched"]:
 		fixture["journal_" + variant] = {"zone_map":
 			(journal[variant] as Dictionary)["zone_map"]}
 	var client: Node = root.get_node("BridgeClient")
 	var out := {}
 	for variant: String in ["walked", "carried", "powered", "all_rooms",
-			"journal_progressed", "journal_latched"]:
+			"journal_walked", "journal_progressed", "journal_latched"]:
 		client.set("snapshot", {"type": "campaign_snapshot",
 			"zone_map": (fixture[variant] as Dictionary)["zone_map"]})
 		var face: Control = load("res://scripts/ui/map_face.gd").new()

@@ -2582,6 +2582,49 @@ Usability rules:
 requirements and a state/transition handoff. It opens neither 0.5 nor
 Track C or E.
 
-### Next — Track A2, the three studies
+### Track A2 — the three studies are DELIVERED; STOPPED for selection
+
+**2026-09-26.** Package: `docs/art/review/menu_studies_2026-09-26/`.
+Report: `docs/art/reports/2026-09-26-a2-three-menu-studies.md`. All of
+it is CANDIDATE; nothing is approved.
+
+The three studies:
+* **LEAF (Inventory).** The thing opens where it is. Each row is one of
+  Production's five keys. The picked item unfolds in place, and its
+  neighbours step aside.
+* **LENS (Map).** The wall is a window onto the Zone's miniature. A pick
+  moves the whole miniature rigidly, and the detail is on a tethered
+  card.
+* **THREAD (Journal → Map).** A journal line's thread runs round the
+  corner to the passage it names on the map. The two are the same
+  record, from the same save.
+
+How they were made:
+* Each runs in `tools/menu_studies/`, in `godot/_harness`, which is
+  deleted after the run. They are captured in motion and in reduced
+  motion, at 1920 × 1080.
+* The words are Production's own fixtures, answered by Production's own
+  code, and labelled SAMPLE DATA on every frame.
+* **Groundwork, at Production `3b96bc4`, read-only:** the equipment
+  vocabulary is **NOT missing**. It has five `SLOT_NAMES` and four Gear
+  territories. What is missing is any Gear piece:
+  `SUPPORTED_GEAR_DOMAINS` is empty.
+
+**Found:**
+* **Glyph gaps.**
+  * `ui_text` lacks `;` `—` `→` `[` `]`.
+  * There are no mouse or pad symbols.
+  * The circuit letters K/P/M are mapped provisionally.
+* **Signal has a near twin.** `state:span_alignment` #4de6f2 is ΔE2000
+  10.1 from signal.
+* **Production finding.** `MapFace._pulse` ignores reduced motion.
+
+**Next, only after the owner selects:**
+* the Glyph asset requirements;
+* a state/transition handoff for Production.
+
+Not before, and there is no production-menu redesign until then.
+
+### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

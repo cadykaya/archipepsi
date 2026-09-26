@@ -8665,6 +8665,1023 @@
     "zone_id": "zone_001"
    }
   },
+  "journal_walked": {
+   "blockers": [
+    {
+     "at": [
+      -21.7,
+      0.0,
+      23.0
+     ],
+     "colour": "#4de6f2",
+     "edge_id": "e:c002:c003",
+     "state": "blocked",
+     "symbol": "P",
+     "visible": true
+    },
+    {
+     "at": [
+      -61.815,
+      1.53,
+      91.146
+     ],
+     "colour": "#ff8c26",
+     "edge_id": "e:c005:c006",
+     "state": "blocked",
+     "symbol": "P",
+     "visible": true
+    },
+    {
+     "at": [
+      -36.19,
+      1.53,
+      76.3
+     ],
+     "colour": "#598cff",
+     "edge_id": "e:c005:c014",
+     "state": "blocked",
+     "symbol": "K",
+     "visible": true
+    }
+   ],
+   "colours": {
+    "key:blue": "#598cff",
+    "key:gold": "#ffd140",
+    "key:green": "#59e673",
+    "key:red": "#f24d47",
+    "machine:c009:route_shutter": "#f266bf",
+    "state:cell_power": "#ff8c26",
+    "state:span_alignment": "#4de6f2"
+   },
+   "connectors": [
+    {
+     "circuits": [],
+     "edge_id": "e:c001:c002",
+     "gates": [
+      "none"
+     ],
+     "mark_at": [
+      0.0,
+      19.767
+     ],
+     "path": [
+      [
+       0.0,
+       15.0
+      ],
+      [
+       0.0,
+       20.0
+      ],
+      [
+       -3.4,
+       23.0
+      ],
+      [
+       -3.4,
+       23.0
+      ]
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c001",
+     "room_b": "c002",
+     "state": "open",
+     "symbol": "",
+     "ys": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "circuits": [
+      "state:span_alignment"
+     ],
+     "edge_id": "e:c002:c003",
+     "gates": [
+      "zone_state"
+     ],
+     "mark_at": [
+      -21.7,
+      23.0
+     ],
+     "path": [
+      [
+       -19.2,
+       23.0
+      ],
+      [
+       -24.2,
+       23.0
+      ],
+      [
+       -24.2,
+       23.0
+      ]
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 1",
+     "room_a": "c002",
+     "room_b": "c003",
+     "state": "blocked",
+     "symbol": "P",
+     "ys": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    {
+     "circuits": [],
+     "edge_id": "e:c003:c004",
+     "gates": [
+      "none"
+     ],
+     "mark_at": [
+      -51.44,
+      23.0
+     ],
+     "path": [
+      [
+       -48.94,
+       23.0
+      ],
+      [
+       -53.94,
+       23.0
+      ],
+      [
+       -53.94,
+       23.0
+      ]
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c003",
+     "room_b": "c004",
+     "state": "open",
+     "symbol": "",
+     "ys": [
+      1.53,
+      1.53,
+      1.53
+     ]
+    },
+    {
+     "circuits": [],
+     "edge_id": "e:c004:c005",
+     "gates": [
+      "none"
+     ],
+     "mark_at": [
+      -63.34,
+      45.766
+     ],
+     "path": [
+      [
+       -56.94,
+       26.4
+      ],
+      [
+       -56.94,
+       31.4
+      ],
+      [
+       -60.34,
+       34.4
+      ],
+      [
+       -63.34,
+       37.8
+      ],
+      [
+       -63.34,
+       42.8
+      ],
+      [
+       -63.34,
+       47.8
+      ],
+      [
+       -63.34,
+       52.8
+      ],
+      [
+       -63.34,
+       57.8
+      ],
+      [
+       -63.34,
+       62.8
+      ],
+      [
+       -63.34,
+       67.8
+      ],
+      [
+       -63.34,
+       67.8
+      ]
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c004",
+     "room_b": "c005",
+     "state": "open",
+     "symbol": "",
+     "ys": [
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53
+     ]
+    },
+    {
+     "circuits": [
+      "state:cell_power"
+     ],
+     "edge_id": "e:c005:c006",
+     "gates": [
+      "zone_state"
+     ],
+     "mark_at": [
+      -61.815,
+      91.146
+     ],
+     "path": [
+      [
+       -63.34,
+       84.8
+      ],
+      [
+       -63.34,
+       89.8
+      ],
+      [
+       -59.94,
+       92.8
+      ],
+      [
+       -56.94,
+       96.2
+      ],
+      [
+       -56.94,
+       96.2
+      ]
+     ],
+     "realization": "joined",
+     "reason": "set by a control in Arena 2",
+     "room_a": "c005",
+     "room_b": "c006",
+     "state": "blocked",
+     "symbol": "P",
+     "ys": [
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53
+     ]
+    },
+    {
+     "circuits": [
+      "key:blue"
+     ],
+     "edge_id": "e:c005:c014",
+     "gates": [
+      "key"
+     ],
+     "mark_at": [
+      -36.19,
+      76.3
+     ],
+     "path": [
+      [
+       -53.69,
+       76.3
+      ],
+      [
+       -48.69,
+       76.3
+      ],
+      [
+       -43.69,
+       76.3
+      ],
+      [
+       -38.69,
+       76.3
+      ],
+      [
+       -33.69,
+       76.3
+      ],
+      [
+       -28.69,
+       76.3
+      ],
+      [
+       -23.69,
+       76.3
+      ],
+      [
+       -18.69,
+       76.3
+      ],
+      [
+       -18.69,
+       76.3
+      ]
+     ],
+     "realization": "joined",
+     "reason": "locked -- blue key; you hold it",
+     "room_a": "c005",
+     "room_b": "c014",
+     "state": "blocked",
+     "symbol": "K",
+     "ys": [
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53
+     ]
+    },
+    {
+     "circuits": [],
+     "edge_id": "e:c002:c018",
+     "gates": [
+      "none"
+     ],
+     "mark_at": [
+      -11.3,
+      32.4
+     ],
+     "path": [
+      [
+       -11.3,
+       29.9
+      ],
+      [
+       -11.3,
+       34.9
+      ],
+      [
+       -11.3,
+       34.9
+      ]
+     ],
+     "realization": "joined",
+     "reason": "",
+     "room_a": "c002",
+     "room_b": "c018",
+     "state": "open",
+     "symbol": "",
+     "ys": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "details": {
+    "c001": "CORRIDOR 1\nYour floor\n- to Arena 1: open",
+    "c002": "ARENA 1\nYour floor\n- to Corridor 1: open\n- to Platform Path 1: blocked: set by a control in Arena 1\n- a way on, not yet walked: open",
+    "c003": "PLATFORM PATH 1\nYour floor\n- to Arena 1: blocked: set by a control in Arena 1\n- to Corridor 2: open",
+    "c004": "CORRIDOR 2\n1 floor up\n- to Platform Path 1: open\n- to Arena 2: open",
+    "c005": "ARENA 2\nYour floor\n- to Corridor 2: open\n- a way on, not yet walked: blocked: set by a control in Arena 2\n- a way on, not yet walked: blocked: locked -- blue key; you hold it"
+   },
+   "floors": [
+    0.0,
+    2.53
+   ],
+   "points": {
+    "e:c001:c002": [
+     [
+      0.0,
+      0.0,
+      15.0
+     ],
+     [
+      0.0,
+      0.0,
+      20.0
+     ],
+     [
+      -3.4,
+      0.0,
+      23.0
+     ],
+     [
+      -3.4,
+      0.0,
+      23.0
+     ]
+    ],
+    "e:c002:c003": [
+     [
+      -19.2,
+      0.0,
+      23.0
+     ],
+     [
+      -24.2,
+      0.0,
+      23.0
+     ],
+     [
+      -24.2,
+      0.0,
+      23.0
+     ]
+    ],
+    "e:c002:c018": [
+     [
+      -11.3,
+      0.0,
+      29.9
+     ],
+     [
+      -11.3,
+      0.0,
+      34.9
+     ],
+     [
+      -11.3,
+      0.0,
+      34.9
+     ]
+    ],
+    "e:c003:c004": [
+     [
+      -48.94,
+      1.53,
+      23.0
+     ],
+     [
+      -53.94,
+      1.53,
+      23.0
+     ],
+     [
+      -53.94,
+      1.53,
+      23.0
+     ]
+    ],
+    "e:c004:c005": [
+     [
+      -56.94,
+      1.53,
+      26.4
+     ],
+     [
+      -56.94,
+      1.53,
+      31.4
+     ],
+     [
+      -60.34,
+      1.53,
+      34.4
+     ],
+     [
+      -63.34,
+      1.53,
+      37.8
+     ],
+     [
+      -63.34,
+      1.53,
+      42.8
+     ],
+     [
+      -63.34,
+      1.53,
+      47.8
+     ],
+     [
+      -63.34,
+      1.53,
+      52.8
+     ],
+     [
+      -63.34,
+      1.53,
+      57.8
+     ],
+     [
+      -63.34,
+      1.53,
+      62.8
+     ],
+     [
+      -63.34,
+      1.53,
+      67.8
+     ],
+     [
+      -63.34,
+      1.53,
+      67.8
+     ]
+    ],
+    "e:c005:c006": [
+     [
+      -63.34,
+      1.53,
+      84.8
+     ],
+     [
+      -63.34,
+      1.53,
+      89.8
+     ],
+     [
+      -59.94,
+      1.53,
+      92.8
+     ],
+     [
+      -56.94,
+      1.53,
+      96.2
+     ],
+     [
+      -56.94,
+      1.53,
+      96.2
+     ]
+    ],
+    "e:c005:c014": [
+     [
+      -53.69,
+      1.53,
+      76.3
+     ],
+     [
+      -48.69,
+      1.53,
+      76.3
+     ],
+     [
+      -43.69,
+      1.53,
+      76.3
+     ],
+     [
+      -38.69,
+      1.53,
+      76.3
+     ],
+     [
+      -33.69,
+      1.53,
+      76.3
+     ],
+     [
+      -28.69,
+      1.53,
+      76.3
+     ],
+     [
+      -23.69,
+      1.53,
+      76.3
+     ],
+     [
+      -18.69,
+      1.53,
+      76.3
+     ],
+     [
+      -18.69,
+      1.53,
+      76.3
+     ]
+    ]
+   },
+   "rooms": [
+    {
+     "floor_y": 0.0,
+     "here": true,
+     "id": "c001",
+     "name": "Corridor 1",
+     "rect": {
+      "position": [
+       -3.95,
+       0.0
+      ],
+      "size": [
+       7.9,
+       15.0
+      ]
+     },
+     "type": "corridor"
+    },
+    {
+     "floor_y": 0.0,
+     "here": false,
+     "id": "c002",
+     "name": "Arena 1",
+     "rect": {
+      "position": [
+       -19.2,
+       16.1
+      ],
+      "size": [
+       15.8,
+       13.8
+      ]
+     },
+     "type": "arena"
+    },
+    {
+     "floor_y": 0.0,
+     "here": false,
+     "id": "c003",
+     "name": "Platform Path 1",
+     "rect": {
+      "position": [
+       -48.94,
+       19.0
+      ],
+      "size": [
+       24.74,
+       8.0
+      ]
+     },
+     "type": "platform_path"
+    },
+    {
+     "floor_y": 2.53,
+     "here": false,
+     "id": "c004",
+     "name": "Corridor 2",
+     "rect": {
+      "position": [
+       -60.74,
+       19.6
+      ],
+      "size": [
+       6.8,
+       6.8
+      ]
+     },
+     "type": "corridor"
+    },
+    {
+     "floor_y": 1.53,
+     "here": false,
+     "id": "c005",
+     "name": "Arena 2",
+     "rect": {
+      "position": [
+       -72.99,
+       67.8
+      ],
+      "size": [
+       19.3,
+       17.0
+      ]
+     },
+     "type": "arena"
+    }
+   ],
+   "zone_map": {
+    "circuits": [
+     {
+      "circuit_id": "key:blue",
+      "connectors": [
+       "e:c005:c014"
+      ],
+      "kind": "key",
+      "objects": [],
+      "rooms": [
+       "c003",
+       "c005"
+      ]
+     },
+     {
+      "circuit_id": "key:gold",
+      "connectors": [],
+      "kind": "key",
+      "objects": [],
+      "rooms": [
+       "c002"
+      ]
+     },
+     {
+      "circuit_id": "key:green",
+      "connectors": [],
+      "kind": "key",
+      "objects": [],
+      "rooms": [
+       "c004"
+      ]
+     },
+     {
+      "circuit_id": "key:red",
+      "connectors": [],
+      "kind": "key",
+      "objects": [],
+      "rooms": [
+       "c002"
+      ]
+     },
+     {
+      "circuit_id": "state:cell_power",
+      "connectors": [
+       "e:c005:c006"
+      ],
+      "kind": "setting",
+      "objects": [
+       "power_cell"
+      ],
+      "rooms": [
+       "c005"
+      ]
+     },
+     {
+      "circuit_id": "state:span_alignment",
+      "connectors": [
+       "e:c002:c003"
+      ],
+      "kind": "setting",
+      "objects": [],
+      "rooms": [
+       "c002"
+      ]
+     }
+    ],
+    "connectors": [
+     {
+      "circuits": [],
+      "direction": "BIDIRECTIONAL",
+      "edge_id": "e:c001:c002",
+      "gates": [
+       "none"
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c001",
+      "room_b": "c002",
+      "state": "open"
+     },
+     {
+      "circuits": [
+       "state:span_alignment"
+      ],
+      "direction": "BIDIRECTIONAL",
+      "edge_id": "e:c002:c003",
+      "gates": [
+       "zone_state"
+      ],
+      "realization": "joined",
+      "reason": "set by a control in Arena 1",
+      "room_a": "c002",
+      "room_b": "c003",
+      "state": "blocked"
+     },
+     {
+      "circuits": [],
+      "direction": "BIDIRECTIONAL",
+      "edge_id": "e:c003:c004",
+      "gates": [
+       "none"
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c003",
+      "room_b": "c004",
+      "state": "open"
+     },
+     {
+      "circuits": [],
+      "direction": "BIDIRECTIONAL",
+      "edge_id": "e:c004:c005",
+      "gates": [
+       "none"
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c004",
+      "room_b": "c005",
+      "state": "open"
+     },
+     {
+      "circuits": [
+       "state:cell_power"
+      ],
+      "direction": "BIDIRECTIONAL",
+      "edge_id": "e:c005:c006",
+      "gates": [
+       "zone_state"
+      ],
+      "realization": "joined",
+      "reason": "set by a control in Arena 2",
+      "room_a": "c005",
+      "room_b": "c006",
+      "state": "blocked"
+     },
+     {
+      "circuits": [
+       "key:blue"
+      ],
+      "direction": "BIDIRECTIONAL",
+      "edge_id": "e:c005:c014",
+      "gates": [
+       "key"
+      ],
+      "realization": "joined",
+      "reason": "locked -- blue key; you hold it",
+      "room_a": "c005",
+      "room_b": "c014",
+      "state": "blocked"
+     },
+     {
+      "circuits": [],
+      "direction": "BIDIRECTIONAL",
+      "edge_id": "e:c002:c018",
+      "gates": [
+       "none"
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c002",
+      "room_b": "c018",
+      "state": "open"
+     }
+    ],
+    "rooms": [
+     {
+      "discovered": true,
+      "name": "Corridor 1",
+      "room_id": "c001",
+      "type": "corridor"
+     },
+     {
+      "discovered": true,
+      "name": "Arena 1",
+      "room_id": "c002",
+      "type": "arena"
+     },
+     {
+      "discovered": true,
+      "name": "Platform Path 1",
+      "room_id": "c003",
+      "type": "platform_path"
+     },
+     {
+      "discovered": true,
+      "name": "Corridor 2",
+      "room_id": "c004",
+      "type": "corridor"
+     },
+     {
+      "discovered": true,
+      "name": "Arena 2",
+      "room_id": "c005",
+      "type": "arena"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c006",
+      "type": "arena"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c007",
+      "type": "corridor"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c008",
+      "type": "platform_path"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c009",
+      "type": "arena"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c010",
+      "type": "corridor"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c011",
+      "type": "arena"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c012",
+      "type": "platform_path"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c013",
+      "type": "corridor"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c014",
+      "type": "arena"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c015",
+      "type": "arena"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c016",
+      "type": "corridor"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c017",
+      "type": "platform_path"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c018",
+      "type": "arena"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c019",
+      "type": "corridor"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c020",
+      "type": "arena"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c021",
+      "type": "platform_path"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c022",
+      "type": "corridor"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c023",
+      "type": "arena"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c024",
+      "type": "arena"
+     },
+     {
+      "discovered": false,
+      "name": null,
+      "room_id": "c025",
+      "type": "arena"
+     }
+    ],
+    "zone_id": "zone_001"
+   }
+  },
   "powered": {
    "blockers": [
     {

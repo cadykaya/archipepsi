@@ -123,10 +123,14 @@ Findings other lanes need:
   set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Now: TRACK A2 — the dynamic 3D interface** (§11). The work is three
-low-detail spatial-interaction studies, in motion, in an isolated
-art-lane prototype, and then a stop for owner selection. It opens
-neither 0.5 nor Track C or E.
+**Now: TRACK A2 — STOPPED for owner selection** (§11). The three
+studies are delivered in `docs/art/review/menu_studies_2026-09-26/`:
+LEAF (Inventory), LENS (Map) and THREAD (Journal → Map). Each is in
+motion and in reduced motion, from the isolated prototype in
+`tools/menu_studies/`. Wait for the owner's choice. Only after it
+comes do the Glyph asset requirements and the state/transition handoff
+for Production follow. There is no production-menu redesign before
+then. It opens neither 0.5 nor Track C or E.
 
 Two things from it that other lanes need:
 
