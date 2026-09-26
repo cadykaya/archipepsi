@@ -3,28 +3,6 @@
  "norm_px": 96,
  "pairs": [
   {
-   "aspect_ratio": 1.07,
-   "pair": [
-    "melee",
-    "ranged"
-   ],
-   "raw": 0.692,
-   "scaled": 0.856,
-   "stretched": 0.889,
-   "yaw": 45
-  },
-  {
-   "aspect_ratio": 1.03,
-   "pair": [
-    "brute",
-    "bulwark"
-   ],
-   "raw": 0.667,
-   "scaled": 0.825,
-   "stretched": 0.83,
-   "yaw": 0
-  },
-  {
    "aspect_ratio": 1.47,
    "pair": [
     "charger",
@@ -34,17 +12,6 @@
    "scaled": 0.776,
    "stretched": 0.738,
    "yaw": 0
-  },
-  {
-   "aspect_ratio": 1.0,
-   "pair": [
-    "bulwark",
-    "melee"
-   ],
-   "raw": 0.45,
-   "scaled": 0.748,
-   "stretched": 0.744,
-   "yaw": 45
   },
   {
    "aspect_ratio": 2.02,
@@ -58,6 +25,28 @@
    "yaw": 0
   },
   {
+   "aspect_ratio": 1.28,
+   "pair": [
+    "brute",
+    "bulwark"
+   ],
+   "raw": 0.556,
+   "scaled": 0.701,
+   "stretched": 0.743,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 1.43,
+   "pair": [
+    "artillery",
+    "bulwark"
+   ],
+   "raw": 0.553,
+   "scaled": 0.697,
+   "stretched": 0.672,
+   "yaw": 45
+  },
+  {
    "aspect_ratio": 1.18,
    "pair": [
     "artillery",
@@ -67,17 +56,6 @@
    "scaled": 0.68,
    "stretched": 0.684,
    "yaw": 90
-  },
-  {
-   "aspect_ratio": 1.07,
-   "pair": [
-    "bulwark",
-    "ranged"
-   ],
-   "raw": 0.319,
-   "scaled": 0.662,
-   "stretched": 0.691,
-   "yaw": 45
   },
   {
    "aspect_ratio": 1.5,
@@ -104,23 +82,23 @@
   {
    "aspect_ratio": 1.61,
    "pair": [
-    "artillery",
-    "bulwark"
-   ],
-   "raw": 0.546,
-   "scaled": 0.637,
-   "stretched": 0.615,
-   "yaw": 45
-  },
-  {
-   "aspect_ratio": 1.61,
-   "pair": [
     "brute",
     "drifter"
    ],
    "raw": 0.17,
    "scaled": 0.621,
    "stretched": 0.703,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 1.12,
+   "pair": [
+    "bulwark",
+    "melee"
+   ],
+   "raw": 0.411,
+   "scaled": 0.618,
+   "stretched": 0.643,
    "yaw": 45
   },
   {
@@ -135,15 +113,15 @@
    "yaw": 45
   },
   {
-   "aspect_ratio": 1.47,
+   "aspect_ratio": 1.73,
    "pair": [
-    "bulwark",
-    "charger"
+    "melee",
+    "ranged"
    ],
-   "raw": 0.294,
-   "scaled": 0.6,
-   "stretched": 0.884,
-   "yaw": 0
+   "raw": 0.525,
+   "scaled": 0.605,
+   "stretched": 0.764,
+   "yaw": 45
   },
   {
    "aspect_ratio": 1.44,
@@ -168,6 +146,17 @@
    "yaw": 45
   },
   {
+   "aspect_ratio": 1.47,
+   "pair": [
+    "bulwark",
+    "charger"
+   ],
+   "raw": 0.313,
+   "scaled": 0.583,
+   "stretched": 0.871,
+   "yaw": 0
+  },
+  {
    "aspect_ratio": 1.42,
    "pair": [
     "brute",
@@ -176,17 +165,6 @@
    "raw": 0.204,
    "scaled": 0.555,
    "stretched": 0.778,
-   "yaw": 0
-  },
-  {
-   "aspect_ratio": 1.83,
-   "pair": [
-    "artillery",
-    "ranged"
-   ],
-   "raw": 0.463,
-   "scaled": 0.543,
-   "stretched": 0.662,
    "yaw": 0
   },
   {
@@ -201,26 +179,26 @@
    "yaw": 45
   },
   {
+   "aspect_ratio": 1.57,
+   "pair": [
+    "beacon",
+    "ranged"
+   ],
+   "raw": 0.337,
+   "scaled": 0.532,
+   "stretched": 0.578,
+   "yaw": 90
+  },
+  {
    "aspect_ratio": 2.16,
    "pair": [
     "bulwark",
     "drifter"
    ],
-   "raw": 0.288,
-   "scaled": 0.534,
+   "raw": 0.306,
+   "scaled": 0.509,
    "stretched": null,
    "yaw": 0
-  },
-  {
-   "aspect_ratio": 1.53,
-   "pair": [
-    "brute",
-    "ranged"
-   ],
-   "raw": 0.17,
-   "scaled": 0.516,
-   "stretched": 0.721,
-   "yaw": 45
   },
   {
    "aspect_ratio": 2.21,
@@ -234,15 +212,26 @@
    "yaw": 90
   },
   {
-   "aspect_ratio": 1.96,
+   "aspect_ratio": 1.95,
    "pair": [
-    "beacon",
+    "bulwark",
     "ranged"
    ],
-   "raw": 0.303,
-   "scaled": 0.444,
-   "stretched": 0.497,
-   "yaw": 90
+   "raw": 0.231,
+   "scaled": 0.476,
+   "stretched": 0.791,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 2.79,
+   "pair": [
+    "artillery",
+    "ranged"
+   ],
+   "raw": 0.382,
+   "scaled": 0.465,
+   "stretched": null,
+   "yaw": 45
   },
   {
    "aspect_ratio": 1.38,
@@ -254,6 +243,17 @@
    "scaled": 0.437,
    "stretched": 0.611,
    "yaw": 0
+  },
+  {
+   "aspect_ratio": 2.49,
+   "pair": [
+    "brute",
+    "ranged"
+   ],
+   "raw": 0.134,
+   "scaled": 0.435,
+   "stretched": null,
+   "yaw": 45
   },
   {
    "aspect_ratio": 1.84,
@@ -278,17 +278,6 @@
    "yaw": 45
   },
   {
-   "aspect_ratio": 2.5,
-   "pair": [
-    "bulwark",
-    "diver"
-   ],
-   "raw": 0.113,
-   "scaled": 0.352,
-   "stretched": null,
-   "yaw": 0
-  },
-  {
    "aspect_ratio": 2.42,
    "pair": [
     "brute",
@@ -300,15 +289,15 @@
    "yaw": 0
   },
   {
-   "aspect_ratio": 2.46,
+   "aspect_ratio": 2.5,
    "pair": [
-    "drifter",
-    "ranged"
+    "bulwark",
+    "diver"
    ],
-   "raw": 0.478,
-   "scaled": 0.333,
+   "raw": 0.12,
+   "scaled": 0.334,
    "stretched": null,
-   "yaw": 45
+   "yaw": 0
   },
   {
    "aspect_ratio": 2.06,
@@ -355,15 +344,15 @@
    "yaw": 90
   },
   {
-   "aspect_ratio": 2.73,
+   "aspect_ratio": 1.73,
    "pair": [
     "beacon",
     "bulwark"
    ],
-   "raw": 0.295,
-   "scaled": 0.29,
-   "stretched": null,
-   "yaw": 45
+   "raw": 0.282,
+   "scaled": 0.284,
+   "stretched": 0.477,
+   "yaw": 90
   },
   {
    "aspect_ratio": 2.34,
@@ -377,15 +366,15 @@
    "yaw": 0
   },
   {
-   "aspect_ratio": 2.51,
+   "aspect_ratio": 3.99,
    "pair": [
-    "charger",
+    "drifter",
     "ranged"
    ],
-   "raw": 0.425,
-   "scaled": 0.265,
+   "raw": 0.378,
+   "scaled": 0.278,
    "stretched": null,
-   "yaw": 0
+   "yaw": 45
   },
   {
    "aspect_ratio": 3.38,
@@ -404,8 +393,19 @@
     "bulwark",
     "scuttler"
    ],
-   "raw": 0.105,
-   "scaled": 0.262,
+   "raw": 0.112,
+   "scaled": 0.249,
+   "stretched": null,
+   "yaw": 0
+  },
+  {
+   "aspect_ratio": 2.45,
+   "pair": [
+    "charger",
+    "ranged"
+   ],
+   "raw": 0.312,
+   "scaled": 0.203,
    "stretched": null,
    "yaw": 0
   },
@@ -432,28 +432,6 @@
    "yaw": 45
   },
   {
-   "aspect_ratio": 4.98,
-   "pair": [
-    "diver",
-    "ranged"
-   ],
-   "raw": 0.266,
-   "scaled": 0.166,
-   "stretched": null,
-   "yaw": 45
-  },
-  {
-   "aspect_ratio": 5.82,
-   "pair": [
-    "ranged",
-    "scuttler"
-   ],
-   "raw": 0.227,
-   "scaled": 0.16,
-   "stretched": null,
-   "yaw": 45
-  },
-  {
    "aspect_ratio": 6.27,
    "pair": [
     "beacon",
@@ -461,6 +439,17 @@
    ],
    "raw": 0.17,
    "scaled": 0.146,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
+   "aspect_ratio": 8.09,
+   "pair": [
+    "diver",
+    "ranged"
+   ],
+   "raw": 0.239,
+   "scaled": 0.135,
    "stretched": null,
    "yaw": 45
   },
@@ -474,6 +463,17 @@
    "scaled": 0.132,
    "stretched": null,
    "yaw": 0
+  },
+  {
+   "aspect_ratio": 9.45,
+   "pair": [
+    "ranged",
+    "scuttler"
+   ],
+   "raw": 0.214,
+   "scaled": 0.13,
+   "stretched": null,
+   "yaw": 45
   },
   {
    "aspect_ratio": 7.56,

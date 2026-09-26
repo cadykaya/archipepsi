@@ -3504,15 +3504,19 @@ agreed collider and a telegraph seat, and no way to be spawned.
 | asset | tris | built (m) | envelope (m) | placeable |
 |---|---|---|---|---|
 | `enemy_role_melee` | 400 | 0.78 × 0.69 × 1.55 | 0.80 × 1.60 × 0.80 | yes |
-| `enemy_role_ranged` | 320 | 0.57 × 0.66 × 1.37 | 0.70 × 1.40 × 0.70 | yes |
+| `enemy_role_ranged` | 328 | 0.62 × 0.55 × 1.36 | 0.70 × 1.40 × 0.70 | yes |
 | `enemy_role_brute` | 344 | 1.80 × 1.66 × 2.40 | 1.80 × 2.60 × 1.80 | yes |
 | `enemy_role_charger` | 460 | 0.90 × 1.88 × 0.84 | 0.90 × 1.05 × 1.90 | **no** |
-| `enemy_role_bulwark` | 440 | 1.45 × 0.82 × 1.99 | 1.45 × 2.05 × 0.85 | **no** |
+| `enemy_role_bulwark` | 464 | 1.45 × 0.82 × 1.97 | 1.45 × 2.05 × 0.85 | **no** |
 | `enemy_role_scuttler` | 476 | 1.24 × 1.16 × 0.34 | 1.30 × 0.62 × 1.20 | **no** |
 | `enemy_role_artillery` | 408 | 1.18 × 1.25 × 1.50 | 1.25 × 1.55 × 1.25 | **no** |
 | `enemy_role_beacon` | 460 | 0.55 × 0.55 × 2.20 | 0.62 × 2.20 × 0.62 | **no** |
 | `enemy_role_diver` | 264 | 0.70 × 1.13 × 0.40 | 0.70 × 0.50 × 1.20 | **no** |
 | `enemy_role_drifter` | 476 | 1.25 × 1.25 × 0.82 | 1.35 × 0.95 × 1.35 | **no** |
+
+`ranged` and `bulwark` were re-cut on 2026-09-26 for Tier 2 (a silhouette
+tell each, inside the same envelopes). Their rows above are the re-cut
+models; the evidence is `docs/art/review/enemies_2026-09-25/tier2/`.
 
 
 **A10.3, added 2026-09-22: every role now carries named attachment

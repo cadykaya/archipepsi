@@ -429,7 +429,66 @@ Head-on it is a brute at 82% overlap.
 
 > **RULED: both 2A and 2B**, *after* the Tier-1 candidate is settled,
 > and *"keep these within their existing declared envelopes where
-> possible."* Not started: Tier 1 comes first by the owner's ordering.
+> possible."* **Directed 2026-09-26**, Tier 1 settled: *"ranged gets a
+> non-width silhouette tell; bulwark gets a clear head-on shield tell;
+> keep existing envelopes where practical."*
+
+### Tier 2 — built and measured, for your review (2026-09-26)
+
+**Not approved — yours to rule on.** Both re-cuts are in the art lane's
+models, both bands. Nothing in Production loads those models, so this is
+not active in the shipping game. The shapes before it are at `fa16cfe`.
+
+**`ranged` — a braced gunner.** The emitter is now LONG and carried
+DIAGONALLY across the body, from the back of one hip to past the opposite
+shoulder, and its muzzle is the highest point on the figure. The legs
+stand APART with daylight between them, where `melee` stands on one
+block. Neither tell is a width.
+
+**`bulwark` — a mantlet.** Head-on its outline is drawn as the brute's
+NEGATIVE at both ends. Where the brute has its small head, the shield has
+a sighting NOTCH between two ears at its top corners. Where the brute
+stands on one block of legs, the shield stands on two RUNNERS at its own
+edges, with floor showing between them. The body and legs behind are kept
+out of both gaps. The face is still one uninterrupted plate, as 037-R
+approved it.
+
+Scaled outline overlap, the confusability measure, with the bar at 0.80,
+before → after:
+
+| pair | yaw 0 | yaw 45 | yaw 90 |
+| --- | --- | --- | --- |
+| `melee` / `ranged` | 0.788 → **0.496** | 0.856 → **0.605** | 0.825 → **0.563** |
+| `brute` / `bulwark` | 0.825 → **0.677** | 0.710 → **0.701** | 0.523 → **0.553** |
+
+Track B quoted each pair at its worst angle only. That hid that
+`melee`/`ranged` also failed at 90° (0.825). It no longer fails at any
+angle. `tier2/SHEET_tier2_before_after.png` shows both pairs laid over
+each other on the metric's own canvas, so the tell is the coloured area.
+
+* **The family:** 0 of 45 pairs at 0.80 or above. The highest is now
+  `charger`/`drifter` at 0.776, which is 3A: deferred and untouched. Two
+  pairs rose, and both stay clear of the bar: `artillery`/`bulwark` 0.637 →
+  0.697 (yaw 45) and `beacon`/`ranged` 0.444 → 0.532 (yaw 90).
+* **Held:**
+  * Both envelopes. `ranged` is built 0.62 wide × 0.55 deep × 1.36 m
+    high, inside 0.70 × 0.70 × 1.40. `bulwark` is 1.45 × 0.82 × 1.97
+    inside 1.45 × 0.85 × 2.05.
+  * The readiness gate: fit, facing, and every anchor inside a part.
+  * No anchor pixel at any yaw.
+* **Anchors moved with the shapes; their names did not change:**
+  * `ranged` `anchor_muzzle`: 0.88 m → 1.29 m up, at the emitter's tip.
+  * `ranged` `anchor_warn`: 1.27 → 1.22 m, with the lower head.
+  * `bulwark` `anchor_warn`: 1.81 → 1.71 m, centred in the shield under
+    the notch. Left at its old height it would have been in the notch's
+    air, and the embed rule walked it sideways onto an ear.
+* **Tier 1 re-measured on the re-cut:** no family cell moved more than
+  0.001, and no pass/fail flipped. `check_enemy_bands` passes.
+  `gothic_stone` dim now reads 0.100 (was 0.101) and still clears on the
+  unrounded flag.
+
+**Your call:** accept both re-cuts, either one, or neither. A rejected
+re-cut goes back to its `fa16cfe` shape in the builder.
 
 ---
 

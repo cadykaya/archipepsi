@@ -193,6 +193,18 @@ L\* at 0.40 of this skin in four rooms (`enemies/`) and 0.10 in two
 are in `docs/art/review/enemies_2026-09-25/`. The sheets below predate the
 bands and show the undarkened skin.
 
+**Since 2026-09-26, `ranged` and `bulwark` are also re-cut** (Tier 2, for
+owner review). Each has a silhouette tell inside its same envelope:
+* `ranged` carries a long emitter diagonally across the body, and stands
+  with its legs apart.
+* `bulwark` is a mantlet: two runners at its edges, and a sighting notch
+  between two ears.
+
+Its face is still one uninterrupted plate. The sheets and both tables above
+show the shapes before the re-cut. The current metrics are in the
+`ART_REVIEW.md` ledger, and the evidence is in
+`docs/art/review/enemies_2026-09-25/tier2/`.
+
 ## Sheets
 
 | | |

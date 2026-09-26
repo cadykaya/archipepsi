@@ -19,6 +19,7 @@ width or hue. Every number below is the project's own:
 | --- | --- |
 | `contrast_current/` | **The landed Tier-1 treatment** (RULED 2026-09-26): all ten at review distance in all six rooms, each room's enemies in their own value band, four cases each (wall, floor, dim, opening), under each room's own light, ambient and fog — `CONTRAST_<room>_<case>.png` and `contrast.json`, which records the sha256 of every model it measured. Replaces the `LINEUP_*` frames, which were lit wrongly and are gone. The pre-band family is `value_bands/sweep/k1.00.json`. |
 | `value_bands/` | Tier 1: the lightness sweep, the derived bands, the two-band candidate measured, `CHART_separation_by_lightness.png` and `SHEET_today_vs_two_bands.png`. A candidate; nothing landed. |
+| `tier2/` | **Tier 2** (2026-09-26, for owner review): `SHEET_tier2_before_after.png` lays the two flagged pairs over each other on the metric's own canvas, before and after, and adds the two re-cut roles at native size. `before/` holds Track B's masks and `readability.json`, frozen. Drawn by `tools/content/enemy_tier2_sheet.py`. |
 | `SHEET_silhouettes.png` | Every outline, black on white, at native size. Rows are roles; columns are yaw 0 / 45 / 90. |
 | `MASK_<role>_y<yaw>.png` | The outlines themselves, native size — the measurement's input. |
 | `silhouettes.json` | Per-role pixel size, fill, aspect, and the visible body against its declared envelope. |
@@ -41,6 +42,12 @@ failure PT-10 describes, applied to a different pair:
 | --- | --- | --- | --- |
 | **melee / ranged** | **0.856** (yaw 45) | 0.692 | Two small humanoids. Ranged is a slightly narrower melee. One closes with you and one shoots you, and at 18 m you cannot tell which. |
 | **brute / bulwark** | **0.825** (yaw 0) | 0.667 | Two broad blocks head-on. Bulwark is a slab and reads as one in profile — but not from the front, which is where you meet it. |
+
+> **Tier 2, 2026-09-26:** both pairs are re-cut and now measure 0.605
+> (`melee`/`ranged`) and 0.701 (`brute`/`bulwark`) at their worst angles.
+> The masks, sheet and `readability.json` in this folder are regenerated
+> for the re-cut models; Track B's own are frozen in `tier2/before/`. See
+> `DECISIONS_FOR_OWNER.md`, Tier 2.
 
 `charger / drifter` is worth a look too: at 0.774 raw it has the highest
 overlap of any pair *before* any normalisation.

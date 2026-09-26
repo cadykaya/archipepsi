@@ -91,6 +91,21 @@ behind. Every anchor is inside a real part of the body now, not merely
 inside its bounding box, and none shows at any angle. The A10 handoff
 carries a dated correction.
 
+**Two roles are re-cut (Tier 2, 2026-09-26, for owner review).** `ranged`
+and `bulwark` have new silhouettes. Both sit inside the same envelopes,
+with the same named anchors, in both bands. Three anchors moved with
+the shapes:
+* `ranged` `anchor_muzzle` is now at the tip of a long emitter: 1.29 m
+  up, 0.23 m to one side and 0.20 m forward. `Enemy.muzzle()` fires from
+  1.2 m up on the centreline, which puts the shot 0.32 m from the muzzle
+  the player sees. Before the re-cut the gap was 0.39 m, most of it
+  height: the old muzzle sat 0.32 m below the shot.
+* `ranged` `anchor_warn` is 1.22 m up.
+* `bulwark` `anchor_warn` is 1.71 m up, under its sighting notch.
+
+Evidence: `docs/art/review/enemies_2026-09-25/tier2/`. Hold integration
+of these two shapes until the owner rules on them.
+
 **Held by the art lane's suite** (`tools/check_art_current.sh`):
 - `tools/content/check_enemy_bands.py` proves both sets are the same
   geometry and markings, byte for byte, and that the deep set is darker.

@@ -266,7 +266,8 @@ ANCHORS = {
     "melee":     [("anchor_strike",   0.26,   0.42,  0.72),
                   ("anchor_warn",     0.0,    0.18,  0.92),
                   ("anchor_effect",   0.0,    0.0,   0.60)],
-    "ranged":    [("anchor_muzzle",   0.22,   0.45,  0.68),
+    # At the shroud on the tip of the long emitter (Tier 2).
+    "ranged":    [("anchor_muzzle",   0.43,   0.41,  0.95),
                   ("anchor_warn",     0.0,    0.20,  0.90),
                   ("anchor_effect",   0.0,    0.0,   0.62)],
     "brute":     [("anchor_strike",   0.34,   0.34,  0.52),
@@ -279,9 +280,11 @@ ANCHORS = {
                   ("anchor_effect",   0.0,    0.0,   0.55)],
     # The shield IS the front, so the weak side is behind it. That is
     # the role's whole proposition and the anchor says so.
+    # anchor_warn sits in the shield just under the sighting notch (Tier 2):
+    # at 0.90 it was in the notch's air and walked sideways onto an ear.
     "bulwark":   [("anchor_shield",   0.0,    0.44,  0.62),
                   ("anchor_weak",     0.0,   -0.42,  0.56),
-                  ("anchor_warn",     0.0,    0.20,  0.90),
+                  ("anchor_warn",     0.0,    0.20,  0.87),
                   ("anchor_effect",   0.0,    0.0,   0.58)],
     "scuttler":  [("anchor_strike",   0.0,    0.42,  0.58),
                   ("anchor_warn",     0.0,    0.14,  0.86),
@@ -426,22 +429,84 @@ def _melee(w, h, d):
 
 
 def _ranged(w, h, d):
+    """A braced gunner. TIER 2 (RULED 2026-09-26): *"ranged gets a
+    non-width silhouette tell"*.
+
+    Track B measured it as a narrower melee -- the same head, the same
+    T of shoulders, the same block of legs; 0.856 on the scaled overlap
+    at 45 degrees. The tell is two SHAPES, and neither is a width:
+
+    * the emitter is LONG and carried DIAGONALLY across the body, from
+      the back of one hip to above the opposite shoulder, so its muzzle is
+      the highest point on the figure -- a line through the outline from
+      every angle, and the thing that shoots is the thing you see;
+    * the legs stand APART, braced to fire. The melee stands on
+      one block; this has daylight between its feet.
+
+    Inside the same 0.70 x 1.40 x 0.70 envelope, which the build asserts.
+    """
     out = []
-    out += _tag(brushkit.block("legs", (w * 0.56, d * 0.50, h * 0.46),
-                               (0.0, 0.0, h * 0.23)), "body")
-    out += _tag(brushkit.block("torso", (w * 0.74, d * 0.60, h * 0.34),
-                               (0.0, 0.04, h * 0.63)), "body")
-    # Recessed body, and ONE emitter carried out front: the read is the
-    # muzzle, because that is where the danger comes from.
-    out += _tag(brushkit.block("arm", (w * 0.30, d * 0.78, h * 0.16),
-                               (w * 0.28, -d * 0.20, h * 0.62)), "plate")
-    out += _tag(brushkit.prism("emitter", w * 0.15, d * 0.34, 8,
-                               (w * 0.28, -d * 0.36, h * 0.62)), "plate")
-    emitter = out[-1][0]
-    brushkit.spin(emitter, "x", 90.0)
-    out += _tag(brushkit.block("head", (w * 0.34, d * 0.36, h * 0.12),
-                               (0.0, 0.02, h * 0.92)), "plate")
+    for sx in (-1.0, 1.0):
+        out += _tag(brushkit.block("leg_%d" % int(sx),
+                                   (w * 0.18, d * 0.34, h * 0.44),
+                                   (sx * w * 0.22, 0.0, h * 0.22)), "body")
+    out += _tag(brushkit.block("pelvis", (w * 0.52, d * 0.36, h * 0.08),
+                               (0.0, 0.0, h * 0.47)), "body")
+    out += _tag(brushkit.block("torso", (w * 0.58, d * 0.52, h * 0.30),
+                               (0.0, d * 0.04, h * 0.66)), "body")
+    # Hunched to the sight: the head sits lower than the melee's, so the
+    # muzzle clears it.
+    out += _tag(brushkit.block("head", (w * 0.30, d * 0.34, h * 0.11),
+                               (0.0, d * 0.02, h * 0.865)), "plate")
+    # The barrel, from the back of its left hip to above its right
+    # shoulder: the builder's front is -y, so the figure's right is -x.
+    # Built along +y and turned into line; `_diagonal` checks where its
+    # ends landed.
+    base = (w * 0.33, d * 0.16, h * 0.40)
+    tip = (-w * 0.36, -d * 0.36, h * 0.93)
+    out += _tag(_diagonal("emitter", base, tip, w * 0.115), "plate")
+    # The shroud at the muzzle: it holds anchor_muzzle, and at 18 m it is
+    # the knot at the end of the line.
+    along = [t - b for b, t in zip(base, tip)]
+    length = sum(a * a for a in along) ** 0.5
+    near = tuple(t - a / length * 0.05 for t, a in zip(tip, along))
+    far = tuple(t + a / length * 0.03 for t, a in zip(tip, along))
+    out += _tag(_diagonal("muzzle", near, far, w * 0.16), "plate")
     return out
+
+
+def _diagonal(name, start, end, thick):
+    """A square bar from `start` to `end`, whatever its direction.
+
+    `brushkit.spin` turns geometry about its own centre, so the bar is
+    built along +y at the midpoint and turned twice: about x to lift it,
+    then about z to aim it. The turn signs are Blender's and easy to get
+    backwards, so the ends are measured afterwards and a bar that did not
+    land where it was sent does not build.
+    """
+    from mathutils import Vector
+    a, b = Vector(start), Vector(end)
+    along = b - a
+    length = along.length
+    mid = (a + b) * 0.5
+    bar = brushkit.block(name, (thick, length, thick), tuple(mid))
+    u = along.normalized()
+    lift = math.degrees(math.asin(max(-1.0, min(1.0, u.z))))
+    aim = math.degrees(math.atan2(-u.x, u.y))
+    brushkit.spin(bar, "x", lift)
+    brushkit.spin(bar, "z", aim)
+    # The four corners nearest each end must average to that end, to
+    # within the bar's thickness.
+    pts = [bar.matrix_world @ v.co for v in bar.data.vertices]
+    ends = sorted(pts, key=lambda p: (p - a).length)
+    near_a = sum(ends[:4], Vector()) / 4.0
+    near_b = sum(ends[-4:], Vector()) / 4.0
+    if (near_a - a).length > thick or (near_b - b).length > thick:
+        raise SystemExit("%s: the bar was sent from %s to %s and landed at "
+                         "%s .. %s -- the turn is the wrong way round"
+                         % (name, tuple(a), tuple(b), tuple(near_a),
+                            tuple(near_b)))
+    return bar
 
 
 def _brute(w, h, d):
@@ -486,23 +551,52 @@ def _charger(w, h, d):
 
 
 def _bulwark(w, h, d):
+    """A wall that walks: a mantlet. TIER 2 (RULED 2026-09-26): *"bulwark
+    gets a clear head-on shield tell"*.
+
+    Track B measured it as the brute head-on -- two big dark slabs, 0.825
+    on the scaled overlap. Head-on the shield IS this silhouette, so the
+    tell is the shield's own outline, and it is drawn as the brute's
+    NEGATIVE at both ends:
+
+    * where the brute has its small head, the shield has its sighting
+      NOTCH, between two ears at its top corners;
+    * where the brute stands on one block of legs, the shield stands on
+      two RUNNERS at its own edges, with floor showing between them.
+
+    Nothing may fill either gap, so the body behind starts above the
+    shield's lower edge, the legs are the runners, and the ribs stop
+    inside the face. The face itself is still one uninterrupted plate
+    (037-R). All inside 1.45 x 2.05 x 0.85.
+    """
     out = []
-    # A wall that walks: 1.45 wide and 0.85 thin. The face is the object.
-    out += _tag(brushkit.block("shield", (w, d * 0.30, h * 0.70),
-                               (0.0, -d * 0.32, h * 0.52)), "plate")
-    for i in range(3):
-        out += _tag(brushkit.block("rib_%d" % i, (w * 0.10, d * 0.16, h * 0.66),
-                                   (-w * 0.30 + i * w * 0.30, -d * 0.44,
-                                    h * 0.52)), "body")
-    out += _tag(brushkit.block("body", (w * 0.52, d * 0.52, h * 0.54),
-                               (0.0, d * 0.18, h * 0.44)), "body")
+    y_face, thick = -d * 0.32, d * 0.30
+    z_lo, z_hi = h * 0.22, h * 0.86        # the shield's lower, upper edge
+    out += _tag(brushkit.block("shield", (w, thick, z_hi - z_lo),
+                               (0.0, y_face, (z_lo + z_hi) * 0.5)), "plate")
     for sx in (-1.0, 1.0):
-        out += _tag(brushkit.block("foot_%d" % int(sx),
-                                   (w * 0.20, d * 0.60, h * 0.20),
-                                   (sx * w * 0.24, d * 0.10, h * 0.10)),
-                    "body")
-    out += _tag(brushkit.block("crown", (w * 0.88, d * 0.22, h * 0.10),
-                               (0.0, -d * 0.30, h * 0.92)), "plate")
+        # An ear at each top corner; the notch between them is 0.40 w.
+        out += _tag(brushkit.block("ear_%d" % int(sx),
+                                   (w * 0.30, thick, h * 0.10),
+                                   (sx * w * 0.35, y_face, z_hi + h * 0.05)),
+                    "plate")
+        # A runner under each edge, deep enough to stand on: the shield's
+        # own edge carried to the floor.
+        out += _tag(brushkit.block("runner_%d" % int(sx),
+                                   (w * 0.14, d * 0.86, z_lo + h * 0.04),
+                                   (sx * w * 0.43, -d * 0.04,
+                                    (z_lo + h * 0.04) * 0.5)), "body")
+    # Ribs down the face, inside its outline.
+    for i, x in enumerate((-w * 0.30, 0.0, w * 0.30)):
+        out += _tag(brushkit.block("rib_%d" % i,
+                                   (w * 0.10, d * 0.16, h * 0.58),
+                                   (x, -d * 0.44, h * 0.54)), "body")
+    # The body behind, carried on a yoke between the runners; both start
+    # at the shield's lower edge, so the floor shows under it head-on.
+    out += _tag(brushkit.block("body", (w * 0.52, d * 0.52, h * 0.47),
+                               (0.0, d * 0.18, h * 0.475)), "body")
+    out += _tag(brushkit.block("yoke", (w * 0.86, d * 0.20, h * 0.06),
+                               (0.0, d * 0.22, z_lo + h * 0.03)), "body")
     return out
 
 
@@ -697,12 +791,14 @@ def _surface(role, w, h, d):
     elif role == "ranged":
         # A housing over the emitter, and a sensor block on the head: it
         # aims, so the protected things are the barrel and the eye.
-        plate("emitter_housing", (w * 0.38, d * 0.34, h * 0.20),
-              (w * 0.26, -d * 0.06, h * 0.62))
-        plate("sensor", (w * 0.26, d * 0.16, h * 0.07),
-              (0.0, -d * 0.16, h * 0.92))
+        # The housing is where the long emitter is held, across the
+        # front of the torso; the feed is open at the barrel's butt.
+        plate("emitter_housing", (w * 0.30, d * 0.22, h * 0.14),
+              (-w * 0.02, -d * 0.20, h * 0.64))
+        plate("sensor", (w * 0.22, d * 0.14, h * 0.06),
+              (0.0, -d * 0.18, h * 0.87))
         mech("feed", (w * 0.14, d * 0.20, h * 0.16),
-             (-w * 0.24, d * 0.14, h * 0.60))
+             (w * 0.20, d * 0.20, h * 0.58))
 
     elif role == "brute":
         # Armoured EVERYWHERE and nothing exposed. Mass is the whole idea,
@@ -804,10 +900,13 @@ SURFACE_STORY = {
 
 ROLES = {
     "melee": (_melee, "upright, forward-weighted; the arms are the threat"),
-    "ranged": (_ranged, "recessed body, one carried emitter -- read the muzzle"),
+    "ranged": (_ranged, "a braced gunner: a long emitter across the body, "
+                        "its muzzle the highest point, daylight between "
+                        "its feet"),
     "brute": (_brute, "mass over reach: a slab of shoulders, a small head"),
     "charger": (_charger, "a battering ram -- the long axis IS the attack"),
-    "bulwark": (_bulwark, "a wall that walks: broad face, almost no depth"),
+    "bulwark": (_bulwark, "a wall that walks: a mantlet on two runners, "
+                          "a sighting notch between its ears"),
     "scuttler": (_scuttler, "flat and splayed, legs out, body low"),
     "artillery": (_artillery, "a seated mortar: braced base, elevated barrel"),
     "beacon": (_beacon, "a mast, not a creature -- a fixture that took sides"),

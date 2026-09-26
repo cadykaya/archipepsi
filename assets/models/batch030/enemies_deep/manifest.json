@@ -192,13 +192,13 @@
     "path": "batch030/enemies_deep/enemy_role_bulwark.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": false,
-    "reads_as": "a wall that walks: broad face, almost no depth",
+    "reads_as": "a wall that walks: a mantlet on two runners, a sighting notch between its ears",
     "role": "bulwark",
     "scale_basis": "authored to the published envelope",
     "size": [
       1.45,
       0.816,
-      1.988
+      1.968
     ],
     "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "surface_rule": "armour goes where the role takes or deals impact; mechanism shows where it does not",
@@ -206,7 +206,7 @@
     "telegraph_seat_at_centre_y_m": 1.025,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 440,
+    "triangles": 464,
     "value_band": "deep",
     "value_band_rooms": [
       "rusted_industrial",
@@ -452,13 +452,13 @@
     "path": "batch030/enemies_deep/enemy_role_ranged.glb",
     "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
     "placeable_today": true,
-    "reads_as": "recessed body, one carried emitter -- read the muzzle",
+    "reads_as": "a braced gunner: a long emitter across the body, its muzzle the highest point, daylight between its feet",
     "role": "ranged",
     "scale_basis": "authored to the published envelope",
     "size": [
-      0.574,
-      0.663,
-      1.372
+      0.616,
+      0.546,
+      1.361
     ],
     "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "surface_rule": "armour goes where the role takes or deals impact; mechanism shows where it does not",
@@ -466,7 +466,7 @@
     "telegraph_seat_at_centre_y_m": 0.7,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 320,
+    "triangles": 328,
     "value_band": "deep",
     "value_band_rooms": [
       "rusted_industrial",

@@ -17,6 +17,16 @@
 >    before, 8 across 6 after the turn). Each is now walked into an actual
 >    part, and the silhouette harness renders every view with the anchors
 >    hidden and requires the same silhouette to the pixel.
+> 3. **The 30 review frames were stale, and are regenerated.** The
+>    runtime frames showed the pre-band skin, and the outlines still
+>    carried the anchor bumps. They are rebuilt from today's models:
+>    * each role in its standard value band (Tier 1, RULED);
+>    * `ranged` and `bulwark` in their Tier 2 re-cut, which is for owner
+>      review and inside the same envelopes;
+>    * no anchor showing.
+>
+>    `readiness.json` changed only in those two roles' size and
+>    triangle count.
 >
 > Nothing about the envelopes, the colliders or the anchor NAMES changed.
 > See `2026-09-26-enemy-value-bands-and-L08.md`.
