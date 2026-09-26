@@ -1349,15 +1349,22 @@ static func _body_box(who: Node) -> AABB:
 		var fitted := child as CollisionShape3D
 		if fitted == null or fitted.shape == null:
 			continue
-		var size := Vector3.ZERO
+		var local := AABB()
 		var cube := fitted.shape as BoxShape3D
+		var ball := fitted.shape as SphereShape3D
 		if cube != null:
-			size = cube.size
+			local = AABB(-cube.size / 2.0, cube.size)
+		elif ball != null:
+			local = AABB(-Vector3.ONE * ball.radius,
+					Vector3.ONE * ball.radius * 2.0)
 		else:
-			var ball := fitted.shape as SphereShape3D
-			size = Vector3.ONE * ball.radius * 2.0 if ball != null \
-					else fitted.shape.get_debug_mesh().get_aabb().size
-		return AABB(fitted.global_position - size / 2.0, size)
+			local = fitted.shape.get_debug_mesh().get_aabb()
+		# TURNED WITH THE BODY (HB-F4c). This took the shape's size at the
+		# shape's position, unturned, so a connector's side wall laid
+		# along x was reported 0.4 m along x and 5 m along z -- a wall
+		# reaching two metres into the room it actually stood beside.
+		# HB-F4 wrote its first reading of the owner's zone_006 from that.
+		return fitted.global_transform * local
 	var body := who as Node3D
 	if body != null:
 		return AABB(body.global_position, Vector3.ZERO)

@@ -556,10 +556,17 @@ owner's D-06/D-07 rulings and the seam table are in
           itself. 6 of 6 sabotages caught.
         - With HB-F4a, 11 of the owner's 12 Zones build; the census
           accepts 37 of 39.
+      - HB-F4c, repaired (router): a door still owed a branch is kept
+        for it. `c015 -> c018`'s route crossed `c017`'s side door before
+        `c021` was hung there. HB-F4 had blamed the connector itself,
+        from a blocker report that turned walls 90°; that report is
+        repaired too.
+        - The owner's zone_006 lays out; the census accepts 38 of 39.
+        - `godot-room-contract` lays it out and checks every door, every
+          crossing and every owed box; 6 of 6 sabotages caught.
       - Open, mine:
         - HB-F4a-3: zone_008's `c016` (a 16-attempt ladder builds it at
           5.5 s of the 6 s budget; not taken).
-        - HB-F4c: a connector laid through zone_006's two doorways.
         - HB-F4f: two features resolved onto one stretch of wall
           (zone_012 `c001`: the rail's note hangs inside the powered
           door's alcove).
@@ -585,9 +592,9 @@ owner's D-06/D-07 rulings and the seam table are in
     - **CK7: 92 of 92 on `bfcf64e`** (HB-F4a + HB-F4e), one run on one
       revision, every live suite alone on the machine
       (`CK7_frontier_on_bfcf64e.tsv`).
-    - **Next:** HB-F4c (the connector through zone_006's two doorways),
-      then HB-F4a-3 and HB-F4f. PT-09 is met live, and a player reaches
-      the Bomb Bag with no Zone discarded on the way.
+    - **Next:** the CK8 frontier on the HB-F4c revision, then HB-F4a-3
+      (zone_008) and HB-F4f. PT-09 is met live, and a player reaches the
+      Bomb Bag with no Zone discarded on the way.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

@@ -1,0 +1,26 @@
+RC-1 [zone_builder.gd] REPRO: no door is owed a branch
+    CAUGHT by "every door candidate zone_006 assigns measures a hole" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every door candidate zone_006 assigns measures a hole (39 holes; solid: ["c017/side_right", "c021/entry"])
+      FAIL: no join's connector stands inside another join's (70 pieces; crossing: ["e:c015:c018 x e:c017:c021", "e:c015:c018 x e:c017:c021"])
+RC-2 [zone_builder.gd] a branch's own branches are not owed when they queue
+    CAUGHT by "every door candidate zone_006 assigns measures a hole" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every door candidate zone_006 assigns measures a hole (39 holes; solid: ["c017/side_right", "c021/entry"])
+      FAIL: no join's connector stands inside another join's (70 pieces; crossing: ["e:c015:c018 x e:c017:c021", "e:c015:c018 x e:c017:c021"])
+RC-3 [zone_builder.gd] an owed door is a preference, dropped by the fallback
+    CAUGHT by "every door candidate zone_006 assigns measures a hole" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every door candidate zone_006 assigns measures a hole (39 holes; solid: ["c017/side_right", "c021/entry"])
+      FAIL: no join's connector stands inside another join's (70 pieces; crossing: ["e:c015:c018 x e:c017:c021", "e:c015:c018 x e:c017:c021"])
+RC-4 [zone_builder.gd] the owed box ignores the socket's turn
+    CAUGHT by "every branch door is owed exactly the connector its branch lays" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every branch door is owed exactly the connector its branch lays (10 doors; mis-owed: ["c005/side_left owed [[P: (56.49999, 1.36, -92.9), S: (5.0, 4.6, 4.0)]], laid [P: (54.49999, 1.36, -90.9), S: (4.0, 4.6, 5.0)]", "c015/side_left owed [[P: (46.94999, 1.36, -76.95), S: (4.0, 4.6, 5.0)]], laid [P: (43.94999, 1.36, -78.95), S: (5.0, 4.6, 4.0)]", "c015/side_right owed [[P: (62.04999, 1.36, -76.95), S
+RC-5 [zone_builder.gd] the owed box stands at the room, not at its door
+    CAUGHT by "every branch door is owed exactly the connector its branch lays" -- exit 2, 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every door candidate zone_006 assigns measures a hole (39 holes; solid: ["c017/side_right", "c021/entry"])
+      FAIL: no join's connector stands inside another join's (70 pieces; crossing: ["e:c015:c018 x e:c017:c021", "e:c015:c018 x e:c017:c021"])
+      FAIL: every branch door is owed exactly the connector its branch lays (10 doors; mis-owed: ["c005/side_left owed [[P: (38.44999, 1.36, -101.9), S: (4.0, 4.6, 5.0)]], laid [P: (44.49999, 1.36, -90.9), S: (4.0, 4.6, 5.0)]", "c015/side_left owed [[P: (41.49999, 1.36, -87.9), S: (5.0, 4.6, 4.0)]], laid [P: (33.94999, 1.36, -78.95), S: (5.0, 4.6, 4.0)]", "c015/side_right owed [[P: (46.49999, 1.36, -87.9), S:
+RC-6 [room_audit.gd] REPRO: the blocker report sizes a body unturned
+    CAUGHT by "a 0.4 x 5.0 m wall turned a quarter is reported 5.0 m along x" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a 0.4 x 5.0 m wall turned a quarter is reported 5.0 m along x and 0.4 m along z (reported (0.4, 3.6, 5.0))
+
+6 of 6 sabotages caught; 0 of 0 controls hold
+runner exit 0

@@ -4818,7 +4818,9 @@ fallback provider, DEFAULT scale, `--candidate=all`) and the real client.
     - The live run's engine diagnostics name the body: 0.84 x 0.95 x
       0.84 m, 0.00 m inside zone_005's `c005/side_right` on all three
       compositions, and 0.45 m inside zone_006's `c005/side_left`.
-  - **HB-F4c (connector, mine, open).** The connector between zone_006's
+  - **HB-F4c (connector, mine, open)** (corrected by HB-F4c: another
+    join's route crossed the gap; the report read here turned walls 90°;
+    see that section). The connector between zone_006's
     `c017/side_right` and `c021/entry` blocks both doorways. The rooms
     stand 5 m apart, the router laid two 5 m connector pieces across the
     gap, and the chain runs about 2 m into each room. `c021` is the
@@ -5385,3 +5387,113 @@ not be reproduced.
     provenance stamps only, as at every checkpoint. The one stamp it
     changed was restored after the run. Nothing after step 22 reads it.
   - These are local results; remote CI does not run (N-6).
+
+## 0.4 — HB-F4c (router): a door still owed a branch is kept for it — the owner's zone_006 lays out
+
+HB-F4 left the owner's zone_006 refused because `c017/side_right` and
+`c021/entry` measured solid, three compositions running. HB-F4 wrote the
+cause down as the connector between the two rooms, laid "two 5 m pieces
+across the gap" and running "about 2 m into each room". **Measured, that
+is not what happened, and the report HB-F4 read was itself wrong.**
+
+- **The cause, measured** (`HB-F4c_probe{,2,3}_zone_006.log`,
+  `HB-F4c_probe{,2,3}_tool.gd`). A probe lays the composition out
+  exactly as the layout walk does and prints where every room, join and
+  doorway stands, every body in each doorway with its real extent, and
+  which joins lay pieces in the gap.
+  - The connector from `c017` to `c021` is right: one 5 m piece in the
+    5 m gap, where its bounds say.
+  - Another join's route crosses the gap at right angles. `e:c015:c018`
+    runs five 5 m connectors along x at z -76.95. Its side walls stand
+    0.25 m inside `c017`'s side door and 0.35 m inside `c021`'s entry,
+    and the probe capsule hits exactly those two walls.
+  - The order explains it. `c015` has two branches, `c017` and `c018`,
+    and `c017` has one of its own, `c021`, the Unweighted Switch minor.
+    The branch queue places `c017`, then `c018`, then `c021`.
+  - When `c017` was placed, `_socket_reservations` kept its side door's
+    corridor clear of everything already standing. Nothing kept it clear
+    of what came after: `c018`'s route was laid across it. `c021`'s
+    bridging connector, laid always and never checked, then landed under
+    that route.
+- **Why HB-F4 read it wrong: HB-F4c-2, the blocker report turned a wall
+  90°.**
+  - `RoomAudit._body_box` sized a blocking body by its shape's size at
+    the shape's position, and did not rotate it with the body.
+  - The crossing wall is 5 m along x and 0.4 m along z. The report said
+    0.4 m along x and 5 m along z, which looks like a connector's side
+    wall reaching 2 m into the room.
+  - The report feeds only diagnostics: the controller's warning for a
+    door that measures solid, and probes like this one. It decided
+    nothing.
+- **The repair (engine only).**
+  - `ZoneBuilder._build_once`: every door a branch is queued on is owed
+    from the moment it queues until the branch is taken off the queue.
+    No other branch's route may cross it (`_owed_bridge`,
+    `_owe_pending`). The owed box is the bridging connector exactly as
+    the branch lays it.
+  - Not a preference, unlike HB-F4a's spine corridor. The bridging
+    connector is laid whatever stands there, so a route across it is a
+    blocked door. A branch that cannot route around an owed door is a
+    wedge, and the ladder moves an earlier room.
+  - `RoomAudit._body_box` reports a body's box rotated with the body.
+- **Evidence.**
+  - The owner's zone_006, laid out and judged by this tree's engine and
+    bridge: ACCEPTED (it was LAYOUT_REFUSED).
+  - **Census** (`HB-F4c_census.log`): 38 of 39 compositions accepted,
+    against 37 on HB-F4e. Only zone_006 changes, and no acceptance is
+    lost. The one that still fails is zone_008 (HB-F4a-3).
+  - **`godot-room-contract` gains `_test_a_branch_door_is_kept_for_its_branch`.**
+    - It lays out the owner's zone_006 (new fixture
+      `godot/tests/fixtures/router/candidate_zone_006.json`) with the
+      shipping `build` and the played budget.
+    - It measures every assigned door with the probe the bridge's
+      evidence comes from, and requires that no join's connector stands
+      inside another's.
+    - And every branch door must be owed exactly the connector its branch
+      then lays. A box turned or offset from the real one can still keep
+      one Zone's route away by luck, as the first RC-4 showed (below).
+    - Before the repair both fail, naming `c017/side_right`,
+      `c021/entry` and `e:c015:c018 x e:c017:c021`
+      (`HB-F4c_room_contract_before.log`).
+    - After, both pass (`HB-F4c_room_contract_after.log`).
+  - **And `_test_a_blocker_is_reported_turned_with_its_body`.** A 0.4 x
+    5 m wall turned a quarter, as every connector across a gap is, must
+    be reported 5 m along x and 0.4 m along z, centred where it stands.
+    - Its first run failed on float error in my own check: 0.400024
+      against 0.4, under `is_equal_approx`'s tolerance of about 1e-5. It
+      now compares to a centimetre, which is enough for a diagnostic.
+  - **The owner's campaign** (`HB-F4c_layout_walk.log`): unchanged from
+    HB-F4e, 11 of 12 accepted, with zone_008 alone failing. On the
+    current path zone_006 is a different composition, which already laid
+    out; this repair is for the one the owner's path met before HB-F4a.
+- **Sabotages: 6 of 6 caught**, each file restored byte for byte
+  (`HB-F4c_sabotages.log`, `HB-F4c_runner.py`).
+  - RC-1, REPRO: no door is owed a branch. Caught: the two doors measure
+    solid and the two joins cross.
+  - RC-2: a branch's own branches are not owed when they queue. Caught
+    the same way, since `c021` is `c017`'s own branch.
+  - RC-3: an owed door is a preference, dropped by the fallback. Caught
+    the same way.
+    - I first wrote this row as a control, expecting a preference to be
+      enough, as it is for HB-F4a's spine corridor. It broke.
+    - `c018`'s route cannot keep the spine's corridor and the door
+      together, and the fallback without the door crosses it. The rule
+      has to be hard, and this Zone shows it.
+  - RC-4: the owed box ignores the socket's turn. Caught by "every branch
+    door is owed exactly the connector its branch lays".
+    - Before that check existed it was NOT caught: the turned box still
+      happened to keep `c018`'s route off this door
+      (`HB-F4c_sabotages_first.log`). That is why the check exists.
+  - RC-5: the owed box stands at the room, not at its door. Caught by
+    the same check, and by the doors.
+  - RC-6, REPRO: the blocker report sizes a body unturned. Caught by
+    the turned-wall check.
+  - I stopped one run myself and started it again. It had been started
+    against the float error above, and it was interrupted so its
+    `finally` put the sabotaged file back. The file was then checked
+    against its anchor.
+  - Twice I read a stale "runner exit" left by an earlier run as the
+    current one. The waits now delete the old log first.
+- **Regression:** the full frontier runs on the frozen revision holding
+  this before it is pushed (CK8, the next section).
+- **Next:** HB-F4a-3 (zone_008's `c016`) and HB-F4f.

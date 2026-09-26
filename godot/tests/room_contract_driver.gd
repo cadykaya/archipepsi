@@ -119,6 +119,8 @@ func _run() -> void:
 	await _test_no_prop_stands_in_an_assigned_side_doorway()
 	await _test_a_junction_keeps_what_it_owes()
 	await _test_no_prop_stands_in_a_feature()
+	await _test_a_branch_door_is_kept_for_its_branch()
+	await _test_a_blocker_is_reported_turned_with_its_body()
 	await _test_the_layout_result_commits_the_whole_chain()
 	await _test_a_spent_budget_is_a_timeout_and_not_infeasibility()
 	await _test_a_return_plug_lands_somewhere_a_player_fits()
@@ -3063,6 +3065,151 @@ func _test_no_prop_stands_in_an_assigned_side_doorway() -> void:
 			% [measured_doors, cases.size(), Constants.THEMES.size()]
 			+ "measures solid (blocked: %s)" % str(blocked))
 
+
+## A DOOR STILL OWED A BRANCH IS KEPT FOR IT (HB-F4c).
+##
+## The owner's candidate zone_006: `c015` has two branches, `c017` and
+## `c018`, and `c017` has one of its own, `c021`, the Unweighted Switch
+## minor, on its `side_right`. The branch queue places `c017`, then
+## `c018`, then `c021`. When `c018`'s route was laid, `c017`'s side door
+## was declared and not yet used, and nothing kept the space in front of
+## it. The route ran five connectors straight across it, 0.25 m clear of
+## the doorway, and `c021`'s bridging connector -- laid always, and never
+## checked -- landed underneath. Both doors measured solid, and the bridge
+## refused the Zone three compositions running.
+##
+## Laid out by the shipping `ZoneBuilder.build` with the played budget,
+## standing in the tree, measured by the probe the bridge's evidence comes
+## from: every door the Zone assigns must be a hole, and no join's
+## connector may stand inside another's.
+func _test_a_branch_door_is_kept_for_its_branch() -> void:
+	print("  -- HB-F4c: a door still owed a branch is kept for it")
+	var path := "res://tests/fixtures/router/candidate_zone_006.json"
+	var zone: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(zone) != TYPE_DICTIONARY:
+		_check(false, "%s is not a Zone" % path)
+		return
+	var built := ZoneBuilder.build(zone as Dictionary, "",
+			ZoneController.PLACEMENT_BUDGET_MS, {})
+	_check(not built.has("failed"), "candidate zone_006 builds (%s)"
+			% str(built.get("failed", "LAYOUT_OK")))
+	if built.has("failed"):
+		return
+	var root := built["root"] as Node3D
+	# Well clear of anything an earlier test stood up.
+	root.position = Vector3(0.0, 0.0, 600.0)
+	add_child(root)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var solid: Array = []
+	var holes := 0
+	for entry: Dictionary in built.get("chambers", []):
+		var rid := str((entry["chamber"] as Dictionary).get("id", ""))
+		var room: Dictionary = entry["build"]
+		var measured := RoomAudit.aperture_polarity(room,
+				(entry["node"] as Node3D).global_transform, _space())
+		for raw: Variant in room.get("doors", []):
+			var door: Dictionary = raw
+			if str(door.get("usage", "USED")) == "SEALED":
+				continue
+			var socket := str(door.get("socket_id", ""))
+			if bool(measured.get(socket, false)):
+				holes += 1
+			else:
+				solid.append("%s/%s" % [rid, socket])
+	_check(solid.is_empty(),
+			"every door candidate zone_006 assigns measures a hole "
+			+ "(%d holes; solid: %s)" % [holes, str(solid)])
+	# AND THE MECHANISM, named: no join's connector inside another's.
+	var pieces: Array = []
+	var joins: Dictionary = built.get("joins", {})
+	for jid: String in joins:
+		for raw: Variant in (joins[jid] as Dictionary).get("chain", []):
+			pieces.append([jid, ((raw as Dictionary).get("bounds", AABB())
+					as AABB).grow(-0.05)])
+	var crossings: Array = []
+	for i in pieces.size():
+		for k in range(i + 1, pieces.size()):
+			if str(pieces[i][0]) == str(pieces[k][0]):
+				continue
+			if (pieces[i][1] as AABB).intersects(pieces[k][1] as AABB):
+				crossings.append("%s x %s" % [pieces[i][0], pieces[k][0]])
+	_check(crossings.is_empty(),
+			"no join's connector stands inside another join's (%d pieces; "
+			% pieces.size() + "crossing: %s)" % str(crossings))
+	# AND WHAT IS OWED IS WHAT IS LAID: the box a queued door is kept
+	# clear by is the bridging connector its branch then lays, for every
+	# branch door of the Zone. A box turned or offset from the real one
+	# can still happen to keep this one Zone's route away; this cannot.
+	var shape := ZoneBuilder._connector_shape(str((zone as Dictionary).get(
+			"theme", "")))
+	var owed := 0
+	var misowed: Array = []
+	for entry: Dictionary in built.get("chambers", []):
+		var chamber: Dictionary = entry["chamber"]
+		var xform: Transform3D = entry["xform"]
+		for raw: Variant in chamber.get("doors", []):
+			var door: Dictionary = raw
+			var socket := str(door.get("socket_id", ""))
+			var eid := str(door.get("edge_id", ""))
+			if not socket.begins_with("side_") or not joins.has(eid) \
+					or str((joins[eid] as Dictionary).get("room_a", "")) \
+						!= str(chamber.get("id", "")):
+				continue
+			var chain: Array = (joins[eid] as Dictionary).get("chain", [])
+			if chain.is_empty():
+				continue
+			var laid: AABB = (chain[0] as Dictionary).get("bounds", AABB())
+			var boxes := ZoneBuilder._owed_bridge({"from": chamber,
+					"at": xform.origin, "yaw": xform.basis.get_euler().y,
+					"build": entry["build"], "branch": {"socket_id": socket}},
+					shape)
+			owed += 1
+			if boxes.size() != 1 \
+					or not (boxes[0] as AABB).position.is_equal_approx(
+						laid.position) \
+					or not (boxes[0] as AABB).size.is_equal_approx(laid.size):
+				misowed.append("%s/%s owed %s, laid %s" % [
+						str(chamber.get("id", "")), socket, str(boxes), str(laid)])
+	_check(owed > 0 and misowed.is_empty(),
+			"every branch door is owed exactly the connector its branch "
+			+ "lays (%d doors; mis-owed: %s)" % [owed, str(misowed)])
+	root.queue_free()
+	await get_tree().process_frame
+
+## A BLOCKER IS REPORTED WHERE IT STANDS, TURNED WITH ITS BODY (HB-F4c).
+##
+## `RoomAudit.aperture_blockers` says what stands in a door that measures
+## solid, and how big it is. It sized the body by its shape, unturned: a
+## connector's side wall laid along x read as one laid along z, reaching
+## into the room beside it. A wall of the connector's own size, turned a
+## quarter as every connector across a gap is, must read as it stands.
+func _test_a_blocker_is_reported_turned_with_its_body() -> void:
+	var holder := Node3D.new()
+	holder.position = Vector3(0.0, 0.0, 700.0)
+	holder.rotation.y = PI / 2.0
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.4, 3.6, 5.0)
+	shape.shape = box
+	body.add_child(shape)
+	body.position = Vector3(1.0, 1.8, 2.0)
+	holder.add_child(body)
+	add_child(holder)
+	await get_tree().physics_frame
+	var reported := RoomAudit._body_box(body)
+	# To a centimetre: a quarter turn leaves float error in the fifth
+	# decimal, and the report is a diagnostic, not a measurement.
+	var off := (reported.size - Vector3(5.0, 3.6, 0.4)).abs()
+	_check(off.x < 0.01 and off.y < 0.01 and off.z < 0.01,
+			"a 0.4 x 5.0 m wall turned a quarter is reported 5.0 m along x "
+			+ "and 0.4 m along z (reported %s)" % str(reported.size))
+	_check(reported.get_center().distance_to(body.global_position) < 0.01,
+			"...and centred where the body stands (%s, body at %s)"
+			% [str(reported.get_center()), str(body.global_position)])
+	holder.queue_free()
+	await get_tree().process_frame
 
 ## NO PROP STANDS ON THE FLOOR AN AFFORDANCE FEATURE OCCUPIES (HB-F4e).
 ##

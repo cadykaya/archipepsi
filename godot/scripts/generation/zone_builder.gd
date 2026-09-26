@@ -1293,6 +1293,37 @@ static func _owed_exit(build: Dictionary, shape: Dictionary,
 			out.append(_world_aabb(raw as AABB, origin, yaw))
 	return out
 
+## THE BRIDGING CONNECTOR A QUEUED BRANCH WILL LAY (HB-F4c), in the world:
+## the box in front of its parent's socket, computed exactly as the branch
+## lays it. A branch always gets that one connector, whatever stands there
+## by then, so a route laid across the box before the branch is hung
+## blocks the door with certainty.
+static func _owed_bridge(job: Dictionary, shape: Dictionary) -> Array:
+	var branch: Dictionary = job["branch"]
+	var mouth := branch_mouth(job.get("build", {}), job["from"],
+			str(branch.get("socket_id", "side_left")))
+	if mouth.is_empty():
+		return []
+	var p_yaw := float(job["yaw"])
+	var at: Vector3 = (job["at"] as Vector3) \
+			+ _rot(p_yaw, mouth["position"] as Vector3)
+	return [_world_aabb(shape["bounds"] as AABB, at,
+			p_yaw + float(mouth["turn"]))]
+
+## Which door a queued branch job hangs on.
+static func _owed_key(job: Dictionary) -> String:
+	return "%s/%s" % [str((job["from"] as Dictionary).get("id", "")),
+			str((job["branch"] as Dictionary).get("socket_id", "side_left"))]
+
+## Every queued job's door, owed until the job is taken off the queue.
+static func _owe_pending(pending: Array, owed: Dictionary,
+		shape: Dictionary) -> void:
+	for raw: Variant in pending:
+		var job: Dictionary = raw
+		var key := _owed_key(job)
+		if not owed.has(key):
+			owed[key] = _owed_bridge(job, shape)
+
 ## Two reservation ladders, rung by rung, into one.
 ##
 ## MEASURED AND REJECTED: A THIRD RUNG HOLDING THE BRANCH ROOM'S OWN
@@ -2224,8 +2255,23 @@ static func _build_once(zone: Dictionary, theme_override := "",
 		# the whole subtree is placed, a branch's branch included.
 		var spine_owed := [] if replaying \
 				else _owed_exit(result, shape, origin, yaw)
+		# AND EVERY DOOR STILL OWED A BRANCH (HB-F4c). A room's declared
+		# branch doors were kept clear of what already stood when the
+		# room was placed (`_socket_reservations`), and of nothing placed
+		# after it. The queue hangs a room's branches after its siblings'
+		# (the owner's zone_006: `c017`, then `c018`, then `c017`'s
+		# `c021`), so `c018`'s route was laid across `c017`'s side door
+		# and `c021`'s bridging connector landed under it. A door is owed
+		# from the moment its branch is queued until the branch is taken
+		# off the queue, and no other branch's route may cross it. Not a
+		# preference, unlike the spine's way on: the bridging connector
+		# is laid whatever stands there, so a crossing is a blocked door.
+		var sockets_owed := {}
+		if not replaying:
+			_owe_pending(pending, sockets_owed, shape)
 		while not pending.is_empty():
 			var job: Dictionary = pending.pop_front()
+			sockets_owed.erase(_owed_key(job))
 			var parent: Dictionary = job["from"]
 			var p_origin: Vector3 = job["at"]
 			var p_yaw: float = float(job["yaw"])
@@ -2308,13 +2354,17 @@ static func _build_once(zone: Dictionary, theme_override := "",
 			var b_reserve := _socket_reservations(b_result, b_chamber,
 					_declared_branch_sockets(graph_branches, b_chamber),
 					shape)
+			var owed_doors: Array = []
+			for boxes: Variant in sockets_owed.values():
+				owed_doors.append_array(boxes as Array)
 			var b_plan := {"ok": false}
 			if b_replaying:
 				b_plan = {"ok": true}
 			elif not spine_owed.is_empty():
 				b_plan = _plan_route(shape, corners,
 						b_result["bounds"] as AABB, b_entry, b_cursor,
-						b_yaw, spine_owed + placed, 0, b_reserve)
+						b_yaw, owed_doors + spine_owed + placed, 0,
+						b_reserve)
 				if OS.get_cmdline_user_args().has("--router-diag"):
 					print("  OWED %s off %s via %s: %s after %d pose(s)"
 							% [str(b_chamber.get("id", "?")),
@@ -2324,7 +2374,7 @@ static func _build_once(zone: Dictionary, theme_override := "",
 			if not b_replaying and not bool(b_plan["ok"]):
 				b_plan = _plan_route(shape, corners,
 						b_result["bounds"] as AABB, b_entry, b_cursor,
-						b_yaw, placed, 0, b_reserve)
+						b_yaw, owed_doors + placed, 0, b_reserve)
 			if not bool(b_plan["ok"]):
 				if OS.get_cmdline_user_args().has("--router-diag"):
 					var _span: AABB = placed[0]
@@ -2438,6 +2488,8 @@ static func _build_once(zone: Dictionary, theme_override := "",
 					pending.append({"from": b_chamber, "at": b_origin,
 							"yaw": float(b_walked["yaw"]),
 							"build": b_result, "branch": raw_deeper})
+			if not replaying:
+				_owe_pending(pending, sockets_owed, shape)
 			# ON `built_chambers`, so a branch is a room to everything
 			# downstream: its Checks, activities and enemies are wired by
 			# the same controller code that wires the chain's.
