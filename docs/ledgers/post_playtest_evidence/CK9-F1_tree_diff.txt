@@ -1,0 +1,8 @@
+# CK9-F1: the Zone godot-flyer-room plays (godot/tests/fixtures/candidate_zone.json),
+# built by ZoneBuilder.build on 3b96bc4 (CK8's revision) and on 22fdbda (HB-F4a-3),
+# every Node3D dumped in tree order with its global position (CK9-F1_tree_probe_tool.gd).
+# nodes: 3b96bc4 4761, 22fdbda 4761
+# raw (unnormalised) diff lines: 7982, every one an auto-generated name
+# diff of the two TREE dumps with Godot's auto-generated names (@Class@N) normalised to @Class@:
+# sed -E 's/@([A-Za-z0-9_]+)@[0-9]+/@\1@/g' on each, then diff
+# lines of difference: 0

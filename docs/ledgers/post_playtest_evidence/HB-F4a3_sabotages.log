@@ -1,0 +1,12 @@
+RA3-1 [zone_builder.gd] REPRO: the way on is not owed the room it arrives at
+    CAUGHT by "candidate zone_008 builds" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: candidate zone_008 builds (7 attempt(s), nudged { "c011": 2, "c008": 2, "c007": 2 }): room 'c016' could not be placed clear of the 60 room(s) before it
+      FAIL: candidate zone_008b builds (7 attempt(s), nudged { "c016": 2, "c011": 2, "c008": 2 }): room 'c016' could not be placed clear of the 58 room(s) before it
+RA3-2 [zone_builder.gd] the room is owed at a connector's size, not its own
+    CAUGHT by "candidate zone_008b builds" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: candidate zone_008b builds (7 attempt(s), nudged { "c016": 2, "c011": 2, "c008": 2 }): room 'c016' could not be placed clear of the 53 room(s) before it
+RA3-3 [zone_builder.gd] the room is owed where the corridor starts, not where it ends
+    CAUGHT by "candidate zone_008b builds" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: candidate zone_008b builds (7 attempt(s), nudged { "c016": 2, "c011": 2, "c008": 2 }): room 'c016' could not be placed clear of the 53 room(s) before it
+
+3 of 3 sabotages caught; 0 of 0 controls hold

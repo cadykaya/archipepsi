@@ -1,0 +1,32 @@
+RF-1 [return_plug.gd; make godot-room-contract] REPRO: the plug charges whatever its occupant is doing
+    CAUGHT by "with the Static Pulse held down" -- exit 2, 6 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: CK9-F1: standing on the plug with the Static Pulse held down for 4.0 s does not return (11 shot(s); fired 1 time(s))
+      FAIL: CK9-F1: …and the device says why ('RETURN', expected 'RETURN · NOT WHILE FIGHTING')
+      FAIL: CK9-F1: …and once the firing stops the return still owes a quiet second and the whole hold: it fired -100 frame(s) after the last shot, of 178 owed
+      FAIL: CK9-F1: standing on the plug while being hit every 0.5 s does not return (fired [["p:fight:start", 3021]])
+      FAIL: CK9-F1: a shot 1.5 s into the charge drops it: the return then owes a quiet second and the whole hold again (fired 30 frame(s) after the shot, of 178 owed)
+      FAIL: CK9-F1: standing on the plug while using an Action every 0.5 s does not return (fired [["p:fight:start", 3394]])
+RF-2 [player.gd; make godot-room-contract] being hurt is not fighting
+    CAUGHT by "while being hit every 0.5 s does not return" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: CK9-F1: standing on the plug while being hit every 0.5 s does not return (fired [["p:fight:start", 3187]])
+RF-3 [return_plug.gd; make godot-room-contract] a fight pauses the charge instead of dropping it
+    CAUGHT by "into the charge drops it" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: CK9-F1: a shot 1.5 s into the charge drops it: the return then owes a quiet second and the whole hold again (fired 90 frame(s) after the shot, of 178 owed)
+RF-4 [return_plug.gd; make godot-room-contract] no quiet owed: a fight holds the plug only on its own frame
+    CAUGHT by "with the Static Pulse held down" -- exit 2, 6 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: CK9-F1: standing on the plug with the Static Pulse held down for 4.0 s does not return (11 shot(s); fired 1 time(s))
+      FAIL: CK9-F1: …and the device says why ('RETURN', expected 'RETURN · NOT WHILE FIGHTING')
+      FAIL: CK9-F1: …and once the firing stops the return still owes a quiet second and the whole hold: it fired -100 frame(s) after the last shot, of 118 owed
+      FAIL: CK9-F1: standing on the plug while being hit every 0.5 s does not return (fired [["p:fight:start", 3041]])
+      FAIL: CK9-F1: a shot 1.5 s into the charge drops it: the return then owes a quiet second and the whole hold again (fired 30 frame(s) after the shot, of 118 owed)
+      FAIL: CK9-F1: standing on the plug while using an Action every 0.5 s does not return (fired [["p:fight:start", 3414]])
+RF-5 [return_plug.gd; make godot-room-contract] the device does not say why it is not charging
+    CAUGHT by "and the device says why" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: CK9-F1: …and the device says why ('RETURN', expected 'RETURN · NOT WHILE FIGHTING')
+RF-6 [player.gd; make godot-room-contract] using an Action is not fighting
+    CAUGHT by "while using an Action every 0.5 s does not return" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: CK9-F1: standing on the plug while using an Action every 0.5 s does not return (fired [["p:fight:start", 3887]])
+RF-C1 [return_plug.gd; make godot-room-contract] CONTROL: a longer hold is still a hold a fight resets
+    CONTROL HOLDS -- exit 0, 0 failing check(s), 0 script error(s); restored byte for byte: True
+
+6 of 6 sabotages caught; 1 of 1 controls hold

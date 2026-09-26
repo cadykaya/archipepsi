@@ -1,0 +1,34 @@
+zone_001 [e2dd51ae74e3]: ACCEPTED (492 ms, layout_state ACCEPTED), 15 Checks
+zone_002 [83cab638c71e]: ACCEPTED (487 ms, layout_state ACCEPTED), 15 Checks
+zone_003 [86832f692325]: ACCEPTED (337 ms, layout_state ACCEPTED), 15 Checks
+zone_004 [d2bf871d5f29]: ACCEPTED (1787 ms, layout_state ACCEPTED), 15 Checks
+zone_005 [84d01f563879]: ACCEPTED (218 ms, layout_state ACCEPTED), 4 Checks
+zone_006 [dcb604e77b35]: ACCEPTED (365 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100140, 89100161, 89100308, 89100392, 89100413]
+zone_007 [e259250fea63]: ACCEPTED (385 ms, layout_state ACCEPTED), 15 Checks
+zone_008 [1e2f761b817e]: ACCEPTED (378 ms, layout_state ACCEPTED), 15 Checks
+zone_009 [e278daf8d689]: ACCEPTED (432 ms, layout_state ACCEPTED), 15 Checks
+zone_010 [4e377788eadb]: ACCEPTED (399 ms, layout_state ACCEPTED), 15 Checks
+zone_011 [6fe12c951a5e]: ACCEPTED (451 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100056, 89100098, 89100182, 89100224, 89100434]
+zone_012 [487a24e0f581]: ACCEPTED (410 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100203, 89100371]
+zone_013 [74495995ef07]: BUILD FAILED (1941 ms): room 'c013' could not be placed clear of the 54 room(s) before it
+zone_013 [74495995ef07]: BUILD FAILED (2050 ms): room 'c013' could not be placed clear of the 54 room(s) before it
+zone_013 [74495995ef07]: BUILD FAILED (2007 ms): room 'c013' could not be placed clear of the 54 room(s) before it
+zone_013: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_014 [31ec79274f44]: ACCEPTED (399 ms, layout_state ACCEPTED), 15 Checks
+zone_015 [707c13353230]: ACCEPTED (343 ms, layout_state ACCEPTED), 15 Checks
+zone_016 [39560f9df1ba]: ACCEPTED (379 ms, layout_state ACCEPTED), 15 Checks
+zone_017 [65f37d7248a1]: ACCEPTED (1483 ms, layout_state ACCEPTED), 15 Checks
+zone_018 [5083fb6edf09]: ACCEPTED (352 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100245]
+zone_019 [e0b4b081a704]: BUILD FAILED (2752 ms): room 'c016' could not be placed clear of the 55 room(s) before it
+zone_019 [e0b4b081a704]: BUILD FAILED (2945 ms): room 'c016' could not be placed clear of the 55 room(s) before it
+zone_019 [e0b4b081a704]: BUILD FAILED (2810 ms): room 'c016' could not be placed clear of the 55 room(s) before it
+zone_019: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_020 [9d16935dacb5]: ACCEPTED (402 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100035, 89100077, 89100287, 89100329, 89100350]
+zone_021 [929cc979a642]: ACCEPTED (396 ms, layout_state ACCEPTED), 15 Checks
+zone_022 [5d3385459fd6]: BUILD FAILED (1950 ms): room 'c013' could not be placed clear of the 65 room(s) before it
+zone_022 [5d3385459fd6]: BUILD FAILED (1941 ms): room 'c013' could not be placed clear of the 65 room(s) before it
+zone_022 [5d3385459fd6]: BUILD FAILED (2142 ms): room 'c013' could not be placed clear of the 65 room(s) before it
+zone_022: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_023 [7a1351d32c41]: ACCEPTED (371 ms, layout_state ACCEPTED), 15 Checks
+zone_024 [20b420637e1d]: ACCEPTED (514 ms, layout_state ACCEPTED), 15 Checks
+FIRST BOMB BAG: ('zone_006', [89100140, 89100161, 89100308, 89100392, 89100413])

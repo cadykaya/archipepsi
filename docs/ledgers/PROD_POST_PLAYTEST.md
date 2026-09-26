@@ -5630,6 +5630,23 @@ stand, and the bounded ladder ran out. **Measured, and now repaired.**
     "candidate zone_008b builds".
   - RA3-3: the room is owed where the corridor starts. Caught the same
     way.
+- **The evidence was regenerated after the container loss** (CK9,
+  below). The logs named above were lost unpushed with `841041a`. They
+  were produced again on its rebuild, `22fdbda`, in the new container,
+  one run at a time, with the same tools (`HB-F4a_census.sh` for the
+  census). Each ran in the working tree at `3b96bc4` holding
+  `22fdbda`'s files, checked identical with `git diff` before the tree
+  was reset. `HB-F4a3_layout_walk.log` is the rebuild's own walk, the
+  one that matched the lost commit's recorded digests.
+  - Every verdict is the one recorded: the census and both variants,
+    the owner's first 24 Zones with the same digests and verdicts, the
+    suite before and after, the gate on zone_013, and 3 of 3 sabotages.
+  - Only timings moved: the census took 248 s (234 s recorded), and
+    zone_008 was accepted in 378 ms (352 ms recorded).
+  - Two runs follow in the next commit, queued behind HB-O1's
+    verification: the walk's repeat with its compositions dumped
+    (`HB-F4a3_layout_walk_repeat.log`), and the first sabotage run
+    (`HB-F4a3_sabotages_first.log`).
 - **HB-F4g (router, mine, open): three more Zones of the owner's campaign
   fail placement**, found by walking it further.
   - zone_013 (`74495995ef07`, room `c013`), zone_019 (`e0b4b081a704`,
@@ -5680,3 +5697,147 @@ stand, and the bounded ladder ran out. **Measured, and now repaired.**
     mistake. A green push waited on a checkpoint that a reclaimed
     container can take with it; verified work now goes out as soon as
     its own checks pass, with the frontier after.
+
+## 0.4 — CK9-F1 (return plug): a fight holds the return — `godot-flyer-room`'s player was being sent home mid-fight
+
+CK9's one red step, `godot-flyer-room` on `841041a`: "1 of 5 killed" in
+61 s. It passed at CK5, CK6, CK7 and CK8. **Measured to its cause, and
+repaired** (`2643982`).
+
+- **Two machines.** The diagnosis was made on `841041a`, in the container
+  that was later reclaimed, and its logs went with it. What the session
+  transcript kept of it is in `CK9-F1_transcript_extract.txt`, verbatim.
+  Everything was measured again in the new container, on the rebuilt
+  revisions: `22fdbda` for `841041a`, `3b96bc4` for CK8's revision, and
+  the repair, `2643982`. The files named below are those runs.
+- **HB-F4a-3 builds the same Zone.** The suite plays
+  `candidate_zone.json`.
+  - Laid out on CK8's revision and on `22fdbda`, every room's pose and
+    every join is the same (`CK9-F1_layout_on_{3b96bc4,22fdbda}.log`).
+  - Built and dumped whole, the two trees are the same 4,761 nodes,
+    each class and each position (`CK9-F1_tree_on_*.log.gz`,
+    `CK9-F1_tree_diff.txt`). This holds once Godot's auto-generated
+    node names are set aside. All 7,982 raw differences are those
+    names: the counter advances for the three rooms HB-F4a-3 builds to
+    measure and frees. `841041a` gave the same figures.
+  - Nothing in the enemies or the controller is keyed to a node's name
+    or instance id.
+- **The failure follows the divers, not the revision**
+  (`CK9-F1_flyer_runs.txt`, every run alone on the machine; raw logs in
+  `CK9-F1_flyer_run_logs.tar.gz`).
+  - On the first machine, `841041a` failed 4 of 6 runs, each "1 of 5"
+    in about 61 s, and CK8's revision passed 3 of 3, each clearing in
+    exactly 12.0 s.
+  - On this one it went the other way. CK8's revision failed 1 of 3:
+    the same "1 of 5", in 60.9 s, with the Zone start's station pad
+    entered. `22fdbda` passed 6 of 6, clearing in 7.0 or 7.1 s.
+  - A flyer circles its post on the wall clock: `Enemy._drift` reads
+    `Time.get_ticks_msec()`. So where each diver is when the fight
+    starts depends on how long the process took to get there: the
+    machine, and, on the first machine, HB-F4a-3's build, which builds
+    three rooms to measure them and so is a little slower.
+  - So the defect below predates HB-F4a-3. The divers' phase decides
+    which revision shows it.
+- **The cause, measured** on the first machine (the diagnostic clear of
+  15:24 in `CK9-F1_transcript_extract.txt`). The evidence is an
+  instrumented copy of the suite's clearing loop, never committed
+  (`CK9-F1_diag_patch.py`). Every two seconds it prints the player,
+  each diver, and what the aim ray hits.
+  - At frame 0 of the clear, the player stands in `c011` with all five
+    divers alive and in sight, and one dies.
+  - At frame 120 the player stands in `c001`, the Zone start, 144 m
+    away. No death is recorded.
+  - `p:c011:start`, the room's return plug, stands 2.8 m from where the
+    clear began. The clear fires from the floor and strafes. It stood
+    inside the plug's 1.4 m for the plug's two seconds, and the plug
+    carried it home with four divers alive.
+  - The station pad in the failing logs is `c001`'s, where it landed.
+    I had first read that pad as the player leaving the room.
+  - On this machine the same instrumented clear passed 4 of 4 on
+    `22fdbda`, as the plain runs did (`CK9-F1_flyer_run_logs.tar.gz`).
+    To reproduce it here, a phase sweep shifts the divers' circle
+    through one period, on `22fdbda`, on CK8's revision and on the
+    repair. It is queued behind HB-O1's verification, and its result
+    follows in the next commit.
+- **This is the owner's report on the plug, word for word:** "The
+  things that send you to the beginning of the branch should not hair
+  trigger if I breathe on it — I'm in combat or trying to solve a
+  problem and BAM I'm at the start of the zone."
+  - The two-second hold answered a brush. It does not answer a player
+    who stands on the device to fight.
+  - Standing is how a diver is fought, since it strikes only a player
+    who leaves the ground.
+- **The repair (engine).**
+  - `Player` keeps a fight clock: the seconds since it last fired the
+    Pulse, used an Action (`action_used`) or was hurt (`take_damage`),
+    counted on the physics clock (`fought_within`).
+  - `ReturnPlug` does not charge for an occupant who fought within
+    `FIGHT_QUIET_SECONDS` (1.0 s).
+    - The charge drops to nothing, exactly as walking out drops it.
+    - The label reads "RETURN · NOT WHILE FIGHTING".
+    - A deliberate return is unchanged: stand in it without fighting
+      for two seconds.
+  - The one quiet second and the label's words are my choices within
+    the owner's report, and are for the owner to overrule.
+- **Evidence.**
+  - `godot-room-contract` gains `_test_a_fight_holds_the_return`: a
+    plug and a player on a bare floor, far from everything else
+    (`CK9-F1_room_contract_after.log`). Every figure below is the one
+    the first machine gave.
+    - Standing still returns after the hold (121 frames; 120 owed).
+    - With the Pulse held down for four seconds it does not return, and
+      the device says why. Once the firing stops, the return owes a
+      quiet second and the whole hold, counted from the last shot:
+      181 frames, 178 owed.
+    - Hit every half second: no return.
+    - An Action every half second: no return. The case emits the
+      runtime's own `action_used`, the signal a real Action sends when
+      it runs.
+    - One shot 1.5 s into a charge drops it rather than pausing it:
+      181 frames after the shot, 178 owed.
+    - The two frames of slack in "owed" are stated in the test. Whether
+      the plug or the player steps first moves the firing by a frame. A
+      paused charge fires about 45 frames early, and no quiet at all
+      about 60.
+    - The first version of the test counted from the button's release,
+      not the last shot. It passed at exactly its threshold (162 of
+      162), because the last shot can fall up to 21 frames before the
+      release. It now reads the frame of each shot and each firing.
+  - `godot-flyer-room` on the repair: 6 of 6 passed here, as on the
+    first machine. Alone that proves little, since `22fdbda` passes
+    6 of 6 here too: which phase a run meets is the machine's. The
+    phase sweep is the like-for-like comparison.
+- **Sabotages: 6 of 6 caught, and the control holds.** Each file was
+  restored byte for byte (`CK9-F1_sabotages.log`, `CK9-F1_runner.py`).
+  The verdicts are the first machine's, and so is every count in them.
+  - RF-1, REPRO: the plug charges whatever its occupant is doing. Six
+    checks fail:
+    - 11 shots in four seconds, and the plug fired during them, 100
+      frames before the last shot;
+    - the label read "RETURN";
+    - hits and Actions did not stop it;
+    - a shot mid-charge kept the charge, so it fired 30 frames later.
+  - RF-2: being hurt is not fighting. Caught by the hits case.
+  - RF-3: a fight pauses the charge instead of dropping it. Caught by
+    the mid-charge shot.
+  - RF-4: no quiet owed, so a fight holds the plug only on the frame of
+    a shot. Caught by the Pulse held down (6 fail).
+  - RF-5: the device says nothing. Caught by "the device says why".
+  - RF-6: using an Action is not fighting. Caught by the Action case.
+  - RF-C1, CONTROL: a 2.5 s hold instead of 2.0 is still a hold a fight
+    resets. Everything holds; every figure is read off the constants.
+- **Recorded, not changed.**
+  - **Plug placement.** The owner asked for plugs "only at the end of a
+    long branch, with a warping effect". That rule lives in shared
+    `topology.py` and is still open.
+    - `c011` is an arena mid-branch, with `c012` behind a red lock.
+    - It carries a plug because it is a dead end until the red key is
+      found.
+  - **CK9-F2 (enemies, mine, open): a flyer's circling reads the wall
+    clock**, so the same revision plays a different fight on a faster
+    or slower machine.
+    - That variance is what exposed this defect, and it moved between
+      machines, so it is not all loss.
+    - Moving `_drift` to the physics clock would make a run
+      reproducible. It changes nothing a player sees, and is not done
+      here.

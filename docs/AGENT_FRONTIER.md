@@ -616,11 +616,26 @@ owner's D-06/D-07 rulings and the seam table are in
       failed: its player was carried out of `c011` mid-fight by the
       room's return plug (CK9-F1). HB-F4a-3 builds the same Zone node for
       node. It only moved the wall-clock phase of the divers' circling,
-      which exposed the plug. `841041a` waits for the repair, unpushed.
-    - **Next:** CK9-F1 (a fight holds a return plug's charge), then
-      HB-O1 as ruled, then one frontier on the combined head and one
-      push; then HB-F4g and HB-F4f. PT-09 is met live, and a player
-      reaches the Bomb Bag with no Zone discarded on the way.
+      which exposed the plug. `841041a` was lost unpushed with the
+      container; its rebuild, `22fdbda`, is pushed.
+    - **CK9-F1, repaired (return plug): a fight holds the return.** The
+      clear stood on `p:c011:start` for its two seconds and was sent to
+      the Zone start with four divers alive. That is the owner's "I'm
+      in combat ... BAM I'm at the start of the zone". A plug no longer
+      charges for a player who fired, used an Action or was hurt in the
+      last second; the charge drops, and the label says why.
+      - `godot-room-contract` holds the rule (6 of 6 sabotages caught).
+        `godot-flyer-room` passes 6 of 6 on the repair.
+      - The failure follows the divers' wall-clock phase, not the
+        revision: `841041a` failed 4 of 6 on the first machine, and
+        on the new one CK8's revision failed 1 of 3 while `22fdbda`
+        passed 6 of 6. A phase sweep to reproduce it here is queued.
+      - Recorded: plug placement is still the owner's open rule; CK9-F2,
+        flyers circle on the wall clock.
+    - **Next:** HB-O1 as ruled (rebuilt, being verified), then one
+      frontier on the combined head (CK10); then HB-F4g and HB-F4f.
+      PT-09 is met live, and a player reaches the Bomb Bag with no Zone
+      discarded on the way.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

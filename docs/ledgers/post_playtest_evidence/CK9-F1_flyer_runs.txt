@@ -1,0 +1,25 @@
+# godot-flyer-room, the new container, run alone on the machine, one line per run
+# (the first machine's runs, on 841041a, 3b96bc4 and the repair, are in CK9-F1_transcript_extract.txt)
+# 22fdbda (HB-F4a-3, the rebuild of 841041a): 6 runs
+22fdbda run_1.log: jumping] telegraphs 9, dives 9, impacts 8 | killed 5 of 5 in 7.0 s | station pad entered: 0
+22fdbda run_2.log: jumping] telegraphs 13, dives 13, impacts 12 | killed 5 of 5 in 7.0 s | station pad entered: 0
+22fdbda run_3.log: jumping] telegraphs 5, dives 5, impacts 3 | killed 5 of 5 in 7.1 s | station pad entered: 0
+22fdbda run_4.log: jumping] telegraphs 5, dives 5, impacts 3 | killed 5 of 5 in 7.1 s | station pad entered: 0
+22fdbda run_5.log: jumping] telegraphs 5, dives 5, impacts 3 | killed 5 of 5 in 7.1 s | station pad entered: 0
+22fdbda run_6.log: jumping] telegraphs 5, dives 5, impacts 5 | killed 5 of 5 in 7.0 s | station pad entered: 0
+# 3b96bc4 (CK8's revision, the code of adfb76c): 3 runs
+3b96bc4 run_1.log: jumping] telegraphs 4, dives 4, impacts 3 | killed 1 of 5 in 60.9 s | station pad entered: 1
+3b96bc4 run_2.log: jumping] telegraphs 5, dives 5, impacts 4 | killed 5 of 5 in 7.0 s | station pad entered: 0
+3b96bc4 run_3.log: jumping] telegraphs 10, dives 10, impacts 9 | killed 5 of 5 in 7.0 s | station pad entered: 0
+# 22fdbda with the clear instrumented (CK9-F1_diag_patch.py), up to 4 runs, stopping at a failure: 4 runs
+22fdbda-diag run_1.log: jumping] telegraphs 11, dives 11, impacts 10 | killed 5 of 5 in 7.0 s | station pad entered: 0
+22fdbda-diag run_2.log: jumping] telegraphs 10, dives 10, impacts 10 | killed 5 of 5 in 7.0 s | station pad entered: 0
+22fdbda-diag run_3.log: jumping] telegraphs 10, dives 10, impacts 9 | killed 5 of 5 in 7.0 s | station pad entered: 0
+22fdbda-diag run_4.log: jumping] telegraphs 5, dives 5, impacts 3 | killed 5 of 5 in 12.1 s | station pad entered: 0
+# 2643982 (the repair): 6 runs
+2643982 run_1.log: jumping] telegraphs 5, dives 5, impacts 2 | killed 5 of 5 in 7.0 s | station pad entered: 0
+2643982 run_2.log: jumping] telegraphs 14, dives 10, impacts 9 | killed 5 of 5 in 8.2 s | station pad entered: 0
+2643982 run_3.log: jumping] telegraphs 5, dives 5, impacts 5 | killed 5 of 5 in 7.0 s | station pad entered: 0
+2643982 run_4.log: jumping] telegraphs 14, dives 14, impacts 12 | killed 5 of 5 in 7.0 s | station pad entered: 0
+2643982 run_5.log: jumping] telegraphs 5, dives 5, impacts 3 | killed 5 of 5 in 7.1 s | station pad entered: 0
+2643982 run_6.log: jumping] telegraphs 5, dives 5, impacts 3 | killed 5 of 5 in 7.0 s | station pad entered: 0
