@@ -377,6 +377,14 @@ static func _build_activities(result: Dictionary, chamber: Dictionary,
 				occupied.append(claimed as AABB)
 			activities.append(built)
 			index += 1
+	# AND NOW THAT EVERY ELEMENT IN THE ROOM EXISTS, which way each shot
+	# target looks -- and, for one that no rotation can aim, the
+	# smallest bounded move that gives it a shot. An unmounted target
+	# claims a square, so a turn cannot invalidate the avoid-lists
+	# above; a MOVE can, which is why both lists are handed over rather
+	# than left behind. `aim_shot_targets` rewrites the claims it
+	# invalidates.
+	Activities.aim_shot_targets(root, activities, occupied)
 	return activities
 
 ## WHICH ROOM to build. Every return here is a room; none of them is a
@@ -899,6 +907,10 @@ static func authored_door_plan(entry: Dictionary,
 			"socket_id": declared,
 			"usage": usage,
 			"position": _vector(socket.get("position", []), Vector3.ZERO),
+			# The manifest declares which way the opening faces, and a
+			# shell's `exit` is often NOT the back wall (the corner shell
+			# puts it at 90 degrees). Carried so nothing has to guess.
+			"yaw": float(socket.get("yaw", 0.0)),
 			"width": float(socket.get("width", 2.4)),
 			"height": float(socket.get("height", 3.2)),
 			"passable": usage != "SEALED",

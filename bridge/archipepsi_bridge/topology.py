@@ -24,13 +24,19 @@ try:
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from .schemas import constants as C
     from .schemas import mechanics as M
-    from .schemas.zone import Zone, procedural_sockets_for
+    from .schemas.zone import (CONTROL_PLACEMENT_CAPABILITY, Zone,
+                               procedural_sockets_for)
+    from .schemas import signal_graph as SG
+    from .schemas.physics import GRAPH_PACKAGE_PREFIX
 except ImportError:  # pragma: no cover
     from schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from schemas import constants as C
     from schemas import mechanics as M
-    from schemas.zone import Zone, procedural_sockets_for
+    from schemas.zone import (CONTROL_PLACEMENT_CAPABILITY, Zone,
+                              procedural_sockets_for)
+    from schemas import signal_graph as SG
+    from schemas.physics import GRAPH_PACKAGE_PREFIX
 
 #: What a chain needs from any room: a way in and a way out.
 #:
@@ -1159,8 +1165,12 @@ def apply(zone, product: GraphProduct):
 class Reach:
     """What a graph search can establish, and the errors it found."""
 
-    #: Every `(room, keys)` the player can get into.
-    states: frozenset[tuple[str, frozenset[str]]]
+    #: Every `(room, keys, macro)` the player can get into. The third
+    #: component is the declared Zone-state tuple in `Zone.zone_state`
+    #: order, and is `()` for a Zone that declares none -- ONE shape
+    #: rather than two, so nothing has to ask which kind of state it is
+    #: holding.
+    states: frozenset[tuple[str, frozenset[str], tuple[str, ...]]]
     #: Every room appearing in any reachable state.
     rooms: frozenset[str]
     errors: tuple[str, ...] = ()
@@ -1189,7 +1199,8 @@ def _door_on(doors_by_room, room: str, edge_id: str):
 
 
 def _passable(edge, frm: str, held: frozenset[str], doors_by_room,
-              ignore_keys: frozenset[str], have: frozenset[str]) -> bool:
+              ignore_keys: frozenset[str], have: frozenset[str],
+              macro: dict[str, str] | None = None) -> bool:
     """Can the player cross `edge` from `frm`, holding `held` and `have`?
 
     `ignore_keys` names keys treated as never held, which is how "is this
@@ -1204,6 +1215,13 @@ def _passable(edge, frm: str, held: frozenset[str], doors_by_room,
         return False
     if edge.capability and edge.capability not in have:
         return False
+    # D-8. §5.6 step 6a's predicate, finally evaluated. Checked beside
+    # the capability and before the plug shortcut below, because a route
+    # condition is a property of the ROUTE, not a lock on a door -- a
+    # plug carries no lock and can still be a span that is not there.
+    for cond in edge.requires_state:
+        if (macro or {}).get(cond.variable_id) != cond.state:
+            return False
     if edge.realization == "TRAVERSAL_ONLY":
         return True          # a plug binds no geometry and carries no lock
     for side in edge.rooms:
@@ -1222,42 +1240,147 @@ def _passable(edge, frm: str, held: frozenset[str], doors_by_room,
 def _explore(start: str, edges, doors_by_room, keys_by_room,
              have: frozenset[str],
              ignore_keys: frozenset[str] = frozenset(),
-             start_held: frozenset[str] = frozenset()) -> Reach:
-    """Every `(room, keys)` reachable from `start`, under `have`.
+             start_held: frozenset[str] = frozenset(),
+             zone_state=(), start_macro: tuple[str, ...] | None = None
+             ) -> Reach:
+    """Every `(room, keys, macro)` reachable from `start`, under `have`.
 
-    One function for both questions a search here ever asks — from the
+    One function for every question a search here ever asks — from the
     entrance empty-handed, and from a room mid-run with keys already in
     hand — because two of them drifted apart once already.
+
+    **D-8: the third component.** §4.10's state vector has six parts and
+    this search saw one of them. It now sees two, and the rule that
+    makes the second tractable is §19.7's own: **a variable changes only
+    in its setter's room**, so reaching that room is a precondition of
+    every state it unlocks. The product stays bounded because
+    `Zone.zone_state` is bounded and each variable holds 2 to 4 states.
+
+    `zone_state` empty means a one-element macro component — the empty
+    tuple — so a Zone that declares nothing is searched exactly as
+    before, over the same states, at the same cost.
     """
     incident: dict[str, list] = {}
     for e in edges:
         incident.setdefault(e.room_a, []).append(e)
         incident.setdefault(e.room_b, []).append(e)
 
+    order = tuple(v.variable_id for v in zone_state)
+    base = (tuple(v.initial for v in zone_state) if start_macro is None
+            else tuple(start_macro))
+    #: room -> the variables the player can operate while standing in it.
+    setters: dict[str, list[tuple[int, tuple[str, ...], str | None]]] = {}
+    for i, v in enumerate(zone_state):
+        setters.setdefault(v.setter.room_id, []).append(
+            (i, tuple(v.setter.selects), v.setter.capability))
+
     def collect(room: str, held: frozenset[str]) -> frozenset[str]:
         got = {k.key_id for k in keys_by_room.get(room, ())}
         return held | (got - ignore_keys)
 
-    first = (start, collect(start, start_held))
+    first = (start, collect(start, start_held), base)
     seen = {first}
     queue = [first]
     while queue:
-        room, held = queue.pop()
+        room, held, macro = queue.pop()
+
+        # THE PLAYER IS THE BRIDGE (§19.7). Standing in a setter's room
+        # is what lets the Zone's state change; nothing else in this
+        # search can move it, which is the whole reason the crossing is
+        # tractable and the reason a self-locking configuration shows up
+        # here as a state the exit cannot be reached from.
+        #
+        # BUT STANDING IN THE ROOM IS NOT OPERATING THE CONTROL (owner
+        # correction 2). Blindside's gantry is 4.6 m up with no mantle
+        # and no stairs; walking in underneath it is not reaching it.
+        # A setter declaring a capability is impassable without it --
+        # not skipped, not assumed, impassable -- exactly as an edge
+        # requiring one already is.
+        for idx, selects, needs in setters.get(room, ()):
+            if needs is not None and needs not in have:
+                continue
+            for chosen in selects:
+                if macro[idx] == chosen:
+                    continue
+                nxt = (room, held, macro[:idx] + (chosen,) + macro[idx + 1:])
+                if nxt not in seen:
+                    seen.add(nxt)
+                    queue.append(nxt)
+
+        by_id = dict(zip(order, macro))
         for e in incident.get(room, ()):
             if not _passable(e, room, held, doors_by_room, ignore_keys,
-                             have):
+                             have, by_id):
                 continue
             nxt_room = e.other(room)
-            nxt = (nxt_room, collect(nxt_room, held))
+            nxt = (nxt_room, collect(nxt_room, held), macro)
             if nxt not in seen:
                 seen.add(nxt)
                 queue.append(nxt)
     return Reach(states=frozenset(seen),
-                 rooms=frozenset(r for r, _ in seen))
+                 rooms=frozenset(r for r, _, _ in seen))
+
+
+def _explore_acquiring(zone, entry: str, edges, doors_by_room, keys_by_room,
+                       base: frozenset[str], zone_state=(),
+                       start_held: frozenset[str] = frozenset(),
+                       start_macro: tuple[str, ...] | None = None) -> Reach:
+    """P02.1 -- before-acquisition and after-acquisition, kept apart.
+
+    The Zone's featured acquisition is a capability the player does not
+    have at the door and does have after claiming it. Two things would
+    both be wrong, and the owner named both:
+
+    - Handing it over at Zone entry -- *"do not supply a promised tool at
+      Zone entry"*. Every gate would open from the start and the
+      midpoint sequence would prove nothing.
+    - Granting it on reaching the room -- *"reaching the Check's room
+      must not automatically grant its capability"*. That is the same
+      error one room later.
+
+    So the search runs in ORDER. First from the entrance without it,
+    which is the only set that may be used to prove the featured room is
+    itself reachable. Then, from **each state the player can actually be
+    in while standing in that room** -- their keys and the Zone state
+    they arrived with -- onward, holding it.
+
+    The union is what the player can reach over the whole visit. It is
+    not a bigger search of the same question: the two halves answer
+    different questions and `reachability` uses each for the one it
+    answers.
+
+    **Monotone by construction.** A claimed Check is never unclaimed, so
+    there is no state in which the player holds it and later does not,
+    and the union needs no fixed point. If a second in-Zone acquisition
+    is ever added, this becomes a loop to a fixed point and the
+    assumption stops holding -- written down here rather than discovered.
+    """
+    before = _explore(entry, edges, doors_by_room, keys_by_room, base,
+                      start_held=start_held, zone_state=zone_state,
+                      start_macro=start_macro)
+    featured = getattr(zone, "featured_acquisition", None)
+    if featured is None or featured.room_id not in before.rooms:
+        return before
+
+    granted = base | {featured.capability}
+    if granted == base:
+        return before                    # already guaranteed; nothing new
+
+    states = set(before.states)
+    rooms = set(before.rooms)
+    for room, held, macro in before.states:
+        if room != featured.room_id:
+            continue
+        after = _explore(room, edges, doors_by_room, keys_by_room, granted,
+                         start_held=held, zone_state=zone_state,
+                         start_macro=macro)
+        states |= after.states
+        rooms |= after.rooms
+    return Reach(states=frozenset(states), rooms=frozenset(rooms))
 
 
 def _key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
-                          have: frozenset[str]) -> list[str]:
+                          have: frozenset[str], zone_state=()) -> list[str]:
     """SOLUTIONS_CATALOGUE §2 rule 2, asked directly.
 
     A key behind its own lock is caught by rule 1. A CHAIN is not the
@@ -1280,8 +1403,17 @@ def _key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
         for other in where:
             if other == key_id:
                 continue
+            # D-8. THE SEARCH HAS TO KNOW ABOUT ZONE STATE HERE TOO.
+            # Without it this explores at the INITIAL macro state only,
+            # so a gated edge looks permanently shut, every key beyond
+            # it looks unfetchable, and the result is a cycle report
+            # about a Zone that has no cycle. One search knowing what
+            # another does not is this project's oldest failure and it
+            # was reintroduced here in the same change that added the
+            # component -- caught by `test_the_consequence_is_real`.
             got = _explore(entry, zone.edges, doors_by_room, keys_by_room,
-                           have, ignore_keys=frozenset({other}))
+                           have, ignore_keys=frozenset({other}),
+                           zone_state=zone_state)
             if room not in got.rooms:
                 blocking.add(other)
         needs[key_id] = blocking
@@ -1307,7 +1439,8 @@ def _key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
 
 
 def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
-               keys_by_room, have: frozenset[str]) -> tuple[str, ...]:
+               keys_by_room, have: frozenset[str],
+               zone_state=(), zone=None, have_at=None) -> tuple[str, ...]:
     """SOLUTIONS_CATALOGUE §0-bis condition 4, and **it never changes the
     verdict**. It says which KIND of failure a refused Zone has.
 
@@ -1343,14 +1476,29 @@ def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
     when it is cheapest to keep.
     """
     trapped: dict[str, frozenset[str]] = {}
-    memo: dict[tuple[str, frozenset[str]], bool] = {}
-    for room, held in sorted(real.states, key=lambda st: (st[0], sorted(st[1]))):
+    memo: dict[tuple[str, frozenset[str], tuple[str, ...]], bool] = {}
+    for room, held, macro in sorted(
+            real.states, key=lambda st: (st[0], sorted(st[1]), st[2])):
         if room in ways_out:
             continue
-        key = (room, held)
+        # THE MACRO IS PART OF THE SITUATION, not scenery. A room you can
+        # walk back out of while the span is home may be one you cannot
+        # while it is stowed, and a memo keyed without it would answer
+        # the second question with the first question's answer.
+        key = (room, held, macro)
         if key not in memo:
-            back = _explore(room, edges, doors_by_room, keys_by_room, have,
-                            start_held=held)
+            # The way back may run through the claim, same as the way
+            # on: a player who has not picked up the featured Echo yet
+            # can still go and get it before retreating.
+            base = have_at(key) if have_at is not None else have
+            back = (_explore_acquiring(
+                        zone, room, edges, doors_by_room, keys_by_room,
+                        base, zone_state=zone_state, start_held=held,
+                        start_macro=macro)
+                    if zone is not None else
+                    _explore(room, edges, doors_by_room, keys_by_room, have,
+                             start_held=held, zone_state=zone_state,
+                             start_macro=macro))
             memo[key] = bool(back.rooms & ways_out)
         if not memo[key] and room not in trapped:
             trapped[room] = held
@@ -1365,6 +1513,256 @@ def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
         "cannot retreat past is not hard progression (§0-bis condition "
         "4); it is a Zone holding its Checks with the player stuck "
         "inside it",)
+
+# --------------------------------------------------------------------------
+# P14. A route a room-graph latch opens, as the search sees it.
+# --------------------------------------------------------------------------
+
+class _Setter:
+    __slots__ = ("room_id", "selects", "capability")
+
+    def __init__(self, room_id: str, capability: str | None = None):
+        self.room_id = room_id
+        self.selects = ("set",)
+        self.capability = capability
+
+
+class _LatchVariable:
+    """A route latch, modelled as a PERMANENT variable -- for the search
+    only, and never persisted as one.
+
+    It is the same monotone fact D-8's permanent variables are: it
+    becomes true in exactly one room and never goes back. The setter's
+    room is the plate's room, because the plate is in the graph's room
+    (§19.7: a room graph is room-local by construction), and it carries
+    no capability because the Zone validator has already refused any
+    chain the guaranteed kit cannot operate. In the SAVE it is a latch
+    in `latched`, `ROOM_PERSISTENT`, and nothing here changes that.
+    """
+    __slots__ = ("variable_id", "initial", "states", "lifetime", "setter")
+
+    def __init__(self, ref: str, room_id: str,
+                 capability: str | None = None):
+        self.variable_id = ref
+        self.initial = "unset"
+        self.states = ("unset", "set")
+        self.lifetime = "permanent"
+        # A rail span's control may need one (D-6's gantry); a room
+        # graph's never does, for the reason above.
+        self.setter = _Setter(room_id, capability)
+
+
+class _Condition:
+    __slots__ = ("variable_id", "state")
+
+    def __init__(self, variable_id: str):
+        self.variable_id = variable_id
+        self.state = "set"
+
+
+class _LatchedEdge:
+    """An edge whose crossing also waits on its latch."""
+
+    def __init__(self, edge, conditions):
+        self._edge = edge
+        self.requires_state = tuple(edge.requires_state) + tuple(conditions)
+
+    def __getattr__(self, name):
+        return getattr(self._edge, name)
+
+
+class _Searched:
+    """A Zone as the route search sees it.
+
+    **One substitution point, on purpose.** D-8's first cut threaded the
+    Zone-state tuple through the searches by hand and missed one --
+    `_key_graph_is_acyclic` saw a gated edge as permanently shut and
+    reported a cycle that did not exist. Everything in `reachability`
+    reads `zone.edges` and `zone.zone_state`, so handing it this view
+    gives every check the latches at once, including the helpers that
+    read the Zone themselves.
+    """
+
+    def __init__(self, zone, edges, zone_state):
+        self._zone = zone
+        self.edges = edges
+        self.zone_state = zone_state
+
+    def __getattr__(self, name):
+        return getattr(self._zone, name)
+
+
+def _held_weights(zone):
+    """-> `(edge_id, plate_room, object_id, home, volume)` per held route.
+
+    D13 1d: what `reachability` must prove about each weight -- that it
+    can be fetched, and carried to its plate, without the door it holds.
+    """
+    graphs = {a.actuator_id: g for g in (zone.room_graphs or ())
+              for a in g.actuators}
+    objects = {o.object_id: o for o in (zone.transported_objects or ())}
+    out = []
+    for edge in zone.edges:
+        graph = graphs.get(getattr(edge, "opened_by", None))
+        if graph is None:
+            continue
+        sensors, _ = SG.upstream(graph, edge.opened_by)
+        for sensor in sensors:
+            weight = objects.get(getattr(sensor, "held_by", None))
+            if weight is not None:
+                out.append((edge.edge_id, graph.room_id, weight.object_id,
+                            weight.home_room_id,
+                            frozenset(weight.allowed_volume)))
+    return tuple(out)
+
+
+def _carry_path(zone, home: str, plate_room: str, volume, without: str
+                ) -> bool:
+    """Is there a PLAIN way from the weight's home to its plate, inside
+    its volume? Conservative on purpose: only ungated, traversable edges
+    between volume rooms, never the door it holds. It may refuse an
+    arrangement a key or a lever would make possible; it never certifies
+    a carry that cannot happen."""
+    seen, stack = {home}, [home]
+    while stack:
+        room = stack.pop()
+        if room == plate_room:
+            return True
+        for e in zone.edges:
+            if e.edge_id == without or room not in e.rooms:
+                continue
+            nxt = e.other(room)
+            if (nxt in volume and nxt not in seen and e.traversable(room)
+                    and not e.requires_state and not e.capability
+                    and getattr(e, "opened_by", None) is None
+                    and not _locked(zone, e.edge_id)):
+                seen.add(nxt)
+                stack.append(nxt)
+    return False
+
+
+def _locked(zone, edge_id: str) -> bool:
+    return any(d.edge_id == edge_id and d.usage == "LOCKED"
+               for c in zone.chambers for d in c.doors)
+
+
+def _route_latches(zone):
+    """-> (searched zone, triggers) for every latch-opened route.
+
+    An `opened_by` edge whose chain RESTS OPEN -- a `NOT` chain that only
+    denies while held -- needs nothing: the player can simply leave the
+    plate alone. One that rests CLOSED waits on the latches on its drive
+    path, each of which is set by standing in the plate's room. A shape
+    that is closed after the one action never gets here: the Zone
+    validator refused it.
+    """
+    graphs = {a.actuator_id: g for g in (zone.room_graphs or ())
+              for a in g.actuators}
+    extra: dict[str, _LatchVariable] = {}
+    triggers: list[tuple[str, str, str]] = []
+    edges = []
+    for edge in zone.edges:
+        graph = graphs.get(getattr(edge, "opened_by", None))
+        if graph is None or SG.phases(graph, edge.opened_by)["rest"]:
+            edges.append(edge)
+            continue
+        sensors, nodes = SG.upstream(graph, edge.opened_by)
+        conds = []
+        # D13 1d: A HELD ROUTE opens once its weight rests on the plate:
+        # a variable set in the plate's room, like a latch -- sound only
+        # because `reachability` refuses a weight that cannot be fetched
+        # to that room without the door it holds (`_held_weights`).
+        if any(getattr(s, "held_by", None) for s in sensors):
+            ref = f"held_{graph.room_id}/{edge.edge_id}"
+            extra.setdefault(ref, _LatchVariable(ref, graph.room_id))
+            conds.append(_Condition(ref))
+            triggers.append((edge.edge_id, graph.room_id, ref))
+        for node in nodes:
+            if node.kind != "LATCH":
+                continue
+            ref = f"{GRAPH_PACKAGE_PREFIX}{graph.room_id}/{node.node_id}"
+            extra.setdefault(ref, _LatchVariable(ref, graph.room_id))
+            conds.append(_Condition(ref))
+            triggers.append((edge.edge_id, graph.room_id, ref))
+        edges.append(_LatchedEdge(edge, conds) if conds else edge)
+    if not extra:
+        return zone, ()
+    state = tuple(getattr(zone, "zone_state", ()) or ()) + tuple(
+        extra.values())
+    return _Searched(zone, tuple(edges), state), tuple(triggers)
+
+
+class _RailEdge:
+    """A rail span as the search sees it: the carrier's ride between its
+    docks' rooms (D-6 step 2). For the search only; the Zone declares the
+    span, never an edge.
+
+    A ride binds no doorway and carries no lock, which is exactly the
+    plug case `_passable` already knows (`TRAVERSAL_ONLY`). It runs both
+    ways -- the carrier is called back along the same route -- so a room
+    past it is left the way it was reached. A span with a control waits
+    on its commissioning latch, and a latch, once set, stays set.
+    """
+    realization = "TRAVERSAL_ONLY"
+    direction = "BIDIRECTIONAL"
+    capability = None
+    opened_by = None
+
+    def __init__(self, edge_id: str, room_a: str, room_b: str, conditions):
+        self.edge_id = edge_id
+        self.room_a = room_a
+        self.room_b = room_b
+        self.requires_state = tuple(conditions)
+
+    @property
+    def rooms(self) -> tuple[str, str]:
+        return (self.room_a, self.room_b)
+
+    def traversable(self, frm: str) -> bool:
+        return frm in (self.room_a, self.room_b)
+
+    def other(self, frm: str) -> str:
+        return self.room_b if frm == self.room_a else self.room_a
+
+
+def _route_rails(zone):
+    """-> (searched zone, gantry ride ids): every declared span as a ride.
+
+    A span with a control is commissioned by standing at the control --
+    a permanent variable set in the control room, under the persistence
+    handle the span's latch is recorded by (`network/latch`). A gantry's
+    control needs `grapple` to operate (`CONTROL_PLACEMENT_CAPABILITY`),
+    which the search already reads off a setter as it does off an edge.
+    A span with no control ships commissioned: an open ride.
+    """
+    networks = tuple(getattr(zone, "rail_networks", ()) or ())
+    if not networks:
+        return zone, frozenset()
+    extra: dict[str, _LatchVariable] = {}
+    rides = []
+    gantry: set[str] = set()
+    for net in networks:
+        room_of = {d.dock_id: d.room_id for d in net.docks}
+        for span in net.spans:
+            a, b = room_of[span.from_dock], room_of[span.to_dock]
+            if a == b:
+                continue                 # a ride inside one room joins none
+            conds = []
+            if span.control_room_id is not None:
+                ref = f"{net.network_id}/{span.latch_id}"
+                extra.setdefault(ref, _LatchVariable(
+                    ref, span.control_room_id,
+                    CONTROL_PLACEMENT_CAPABILITY[span.control_placement]))
+                conds.append(_Condition(ref))
+            ride = f"rail:{net.network_id}/{span.span_id}"
+            rides.append(_RailEdge(ride, a, b, conds))
+            if span.control_placement == "gantry":
+                gantry.add(ride)
+    state = tuple(getattr(zone, "zone_state", ()) or ()) + tuple(
+        extra.values())
+    return (_Searched(zone, tuple(zone.edges) + tuple(rides), state),
+            frozenset(gantry))
+
 
 def reachability(zone, entry_id: str | None = None,
                  exit_id: str | None = None,
@@ -1399,6 +1797,8 @@ def reachability(zone, entry_id: str | None = None,
     """
     if not zone.edges:
         return Reach(states=frozenset(), rooms=frozenset())
+    zone, triggers = _route_latches(zone)
+    zone, gantry = _route_rails(zone)
 
     chambers = list(zone.chambers)
     entry = entry_id or chambers[0].id
@@ -1407,14 +1807,29 @@ def reachability(zone, entry_id: str | None = None,
     keys_by_room = {c.id: c.keys for c in chambers}
 
     have = guaranteed_capabilities(declared_capabilities)
-    every = have | {e.capability for e in zone.edges if e.capability}
+    zstate = tuple(getattr(zone, "zone_state", ()) or ())
+    # SETTER CAPABILITIES ARE GATES TOO (owner correction 2). A control
+    # you cannot operate without the grapple gates everything downstream
+    # of the state it sets, exactly as an edge requiring it does -- so it
+    # belongs in the same undeclared-gate accounting. Collecting only
+    # edge capabilities would have left a hole in "no undeclared
+    # mandatory gate" in the same change that added a new kind of gate.
+    every = (have
+             | {e.capability for e in zone.edges if e.capability}
+             | {v.setter.capability for v in zstate if v.setter.capability})
     undeclared = sorted(every - have)
 
     errors: list[str] = []
-    real = _explore(entry, zone.edges, doors_by_room, keys_by_room, have)
+    # P02.1/P02.4. THE ACQUISITION MODEL IS CONNECTED HERE, and until now
+    # it was not: `established_in_zone` produced case C's set and nothing
+    # consumed it, while `capability_guarantee` had no production caller
+    # at all. A producer and a consumer that never meet are two halves of
+    # a guarantee nobody is making.
+    real = _explore_acquiring(zone, entry, zone.edges, doors_by_room,
+                              keys_by_room, have, zone_state=zstate)
     ideal = (real if not undeclared else
              _explore(entry, zone.edges, doors_by_room, keys_by_room,
-                      every))
+                      every, zone_state=zstate))
 
     def blame(what: str, rooms_needed) -> None:
         """Say what is unreachable, and whether a gate is why."""
@@ -1432,10 +1847,136 @@ def reachability(zone, entry_id: str | None = None,
         if rest:
             errors.append(f"{what} {rest} are not reachable at all")
 
+    # DESS-29: A PLAYER PAST THE CLAIM IS HOLDING THE TOOL. A search
+    # state is (room, keys, Zone state), and nothing in it says the
+    # featured capability was picked up -- so every check that searches
+    # again FROM a state (can the exit still be reached; can the room
+    # still be left) used to start without it, as if the grapple used to
+    # get there had been dropped. A state reachable only after the claim
+    # is searched from holding it. (Masked while case C had the exit
+    # ahead of the gate; the DESS-28 ruling's local-rewards shape needs
+    # the walk back.)
+    featured_cap = getattr(getattr(zone, "featured_acquisition", None),
+                           "capability", None)
+    plain = None
+    if featured_cap is not None and featured_cap not in have:
+        plain = _explore(entry, zone.edges, doors_by_room, keys_by_room,
+                         have, zone_state=zstate)
+    tooled = have | ({featured_cap} if plain is not None else set())
+
+    def have_at(state) -> frozenset[str]:
+        return (frozenset(tooled) if plain is not None
+                and state not in plain.states else have)
+
     blame("the exit", [exit_room])
     blame("Check-bearing room(s)",
           [c.id for c in chambers if c.reward_ids])
     blame("key-bearing room(s)", [c.id for c in chambers if c.keys])
+
+    # DESS-28, owner ruling (a), 2026-09-25: A CAPABILITY ACQUIRED INSIDE
+    # A ZONE MAY GATE LOCAL REWARDS ONLY -- a temporary safety boundary
+    # until H-AP-GATE lands capability events in the Archipelago logic.
+    #
+    # The rules above search with the Zone's own acquisition
+    # (`_explore_acquiring`), which is right for what the player can
+    # reach. It is not what the AP logic can see: until capability events
+    # are represented there, it cannot see or prove that a gate opened
+    # by this Zone's own tool needs it. So that tool may not be required
+    # to reach an AP Check, required progression (a key) or the Zone's
+    # exit. With the capability declared (`declared_capabilities`) the
+    # gate is as visible as any other and nothing here fires.
+    #
+    # NOT a deletion of P02's case C: once capability events are in the
+    # AP logic, case C returns under its declared prerequisite, and this
+    # block is what is removed. D-6's gantry is the first such gate.
+    if featured_cap is not None and featured_cap not in have:
+        for what, rooms in (
+                ("the exit", [exit_room]),
+                ("Check-bearing room", [c.id for c in chambers
+                                        if c.reward_ids]),
+                ("key-bearing room", [c.id for c in chambers if c.keys])):
+            for room in rooms:
+                if room in real.rooms and room not in plain.rooms:
+                    where = (f"beyond gantry {sorted(gantry)}" if gantry
+                             else "behind a capability gate")
+                    errors.append(
+                        f"{what} '{room}' is reachable only with "
+                        f"'{featured_cap}' acquired in this Zone, "
+                        f"{where}; until capability events are in the "
+                        "Archipelago logic (H-AP-GATE), a capability "
+                        "acquired in a Zone gates local rewards only "
+                        "(§29.5a, owner ruling on DESS-28)")
+
+    # D-1. YOU MAY NOT NEED THE GRAPPLE TO REACH THE GRAPPLE.
+    #
+    # The featured acquisition is what `established_in_zone` hands to
+    # `capability_guarantee` case C, and case C says "you will be able to
+    # do this because you acquire it here". That proof is circular the
+    # moment the room holding the acquisition is itself reachable only
+    # WITH the thing it hands over -- the guarantee would hold, the
+    # generator would place content behind it, and the player would be
+    # stopped at the door by the lack of exactly what is on the other
+    # side of it.
+    #
+    # Checked by taking the capability away and exploring again, rather
+    # than by trusting that the caller left it out: a caller that wires
+    # case C into `declared_capabilities` is the specific mistake this
+    # exists to catch, and it would make the room look reachable.
+    featured = getattr(zone, "featured_acquisition", None)
+    if featured is not None:
+        without = have - {featured.capability}
+        reach_without = (real if without == have else _explore(
+            entry, zone.edges, doors_by_room, keys_by_room, without,
+            zone_state=zstate))
+        if featured.room_id not in reach_without.rooms:
+            errors.append(
+                f"the featured acquisition is in room "
+                f"'{featured.room_id}', which is not reachable without "
+                f"'{featured.capability}' -- the capability that room "
+                "hands over; the guarantee for it would be circular")
+
+    # P14. THE TRIGGER BEFORE THE ROUTE IT OPENS. A plate that can only
+    # be reached through the door it opens would leave everything past
+    # that door unreachable, and the rules above would say so -- as "not
+    # reachable at all", without naming why. Asked the D-1 way instead:
+    # is the plate's room reachable without the latch, and with it?
+    order = [v.variable_id for v in zstate]
+    for edge_id, plate_room, ref in triggers:
+        if plate_room in real.rooms:
+            continue
+        preset = tuple("set" if vid == ref else v.initial
+                       for vid, v in zip(order, zstate))
+        with_it = _explore(entry, zone.edges, doors_by_room, keys_by_room,
+                           have, zone_state=zstate, start_macro=preset)
+        if plate_room in with_it.rooms:
+            errors.append(
+                f"the plate that opens edge '{edge_id}' is in room "
+                f"'{plate_room}', which is reachable only through that "
+                "edge -- the trigger is behind the route it opens")
+        else:
+            errors.append(
+                f"the plate that opens edge '{edge_id}' is in room "
+                f"'{plate_room}', which is not reachable at all")
+
+    # D13 1d. THE WEIGHT BEFORE THE ROUTE IT HOLDS. The variable above is
+    # set in the plate's room, which is honest only if the weight is
+    # there to be set down: fetchable without the door, and carriable
+    # from its home to the plate inside its volume.
+    for edge_id, plate_room, obj, home, volume in _held_weights(zone):
+        without = _explore(entry, [e for e in zone.edges
+                                   if e.edge_id != edge_id],
+                           doors_by_room, keys_by_room, have,
+                           zone_state=zstate)
+        if home not in without.rooms:
+            errors.append(
+                f"weight '{obj}' holds edge '{edge_id}' open and is homed "
+                f"in '{home}', which cannot be reached without that edge "
+                "-- the weight is behind the route it holds")
+        elif not _carry_path(zone, home, plate_room, volume, edge_id):
+            errors.append(
+                f"weight '{obj}' cannot be carried from '{home}' to its "
+                f"plate in '{plate_room}' along plain doorways inside its "
+                "volume")
 
     # §0-bis CONDITION 4. The catalogue calls this load-bearing and
     # nothing was enforcing it: every rule above asks whether the player
@@ -1444,19 +1985,36 @@ def reachability(zone, entry_id: str | None = None,
     # finishing is still leaving.
     errors.extend(_escapable(real, frozenset({entry, exit_room}),
                              zone.edges, doors_by_room, keys_by_room,
-                             have))
+                             have, zone_state=zstate, zone=zone,
+                             have_at=have_at))
 
     # R subset E, over STATES rather than rooms: a room you can stand in
     # holding the wrong keys is a different situation from the same room
     # holding the right ones, and only the state form catches it.
     stranded = []
-    for room, held in sorted(real.states):
+    for room, held, macro in sorted(real.states):
         if room == exit_room:
             continue
-        onward = _explore(room, zone.edges, doors_by_room, keys_by_room,
-                          have, start_held=held)
+        # ONWARD MEANS ONWARD INCLUDING THE CLAIM. Asking this with the
+        # plain search says the exit is unreachable from the entrance of
+        # every Zone whose exit lies past its own featured acquisition --
+        # which is the shape the acquisition is FOR.
+        onward = _explore_acquiring(zone, room, zone.edges, doors_by_room,
+                                    keys_by_room, have_at((room, held, macro)),
+                                    zone_state=zstate,
+                                    start_held=held, start_macro=macro)
         if exit_room not in onward.rooms:
-            stranded.append(f"{room} holding {sorted(held) or 'nothing'}")
+            # D-8. THIS IS WHERE A SELF-LOCKING CONFIGURATION SURFACES.
+            # Setting a permanent variable that closes the only way on is
+            # a reachable state the exit cannot be reached from, and
+            # R subset E has refused exactly that shape since it was
+            # written -- it simply had no macro component to see it in.
+            where = f"{room} holding {sorted(held) or 'nothing'}"
+            if macro:
+                where += " with Zone state " + ",".join(
+                    f"{vid}={st}" for vid, st
+                    in zip([v.variable_id for v in zstate], macro))
+            stranded.append(where)
     if stranded:
         errors.append(
             "R is not a subset of E; the exit is unreachable from: "
@@ -1472,12 +2030,14 @@ def reachability(zone, entry_id: str | None = None,
             # different fault from a room nothing reaches.
             without = _explore(entry, zone.edges, doors_by_room,
                                keys_by_room, have,
-                               ignore_keys=frozenset({k.key_id}))
+                               ignore_keys=frozenset({k.key_id}),
+                               zone_state=zstate)
             if c.id in without.rooms:
                 continue
             granted = _explore(entry, zone.edges, doors_by_room,
                                keys_by_room, have,
-                               start_held=frozenset({k.key_id}))
+                               start_held=frozenset({k.key_id}),
+                               zone_state=zstate)
             if c.id in granted.rooms:
                 errors.append(
                     f"key '{k.key_id}' is behind a lock only it opens; "
@@ -1485,6 +2045,6 @@ def reachability(zone, entry_id: str | None = None,
                     "reachable without it")
 
     errors.extend(_key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
-                                        have))
+                                        have, zone_state=zstate))
     return Reach(states=real.states, rooms=real.rooms,
                  errors=tuple(errors))

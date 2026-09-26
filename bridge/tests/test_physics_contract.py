@@ -688,3 +688,85 @@ def test_a_harness_record_validates_and_is_bound_to_its_package():
         "b42a0d5ef34c8706 for this package and Python now computes "
         f"{evidence.content_digest}"
     )
+
+
+# --------------------------------------------------------------------------
+# §10.3's carry line — a second mass, deliberately kept a second thing.
+# --------------------------------------------------------------------------
+
+def test_the_carry_line_reaches_the_engine_and_stays_out_of_the_envelope():
+    """Exported like the envelope, checked apart from it.
+
+    **Not folded into the loop above**, though it would have fitted
+    there in three characters. The envelope is three numbers a HOST must
+    meet to count as a qualified manipulation provider; the carry line
+    is a property of the OBJECT and governs ordinary pickup. A single
+    loop over all four would be the first place a reader met them as one
+    rule, and the two are already one `_MASS_KG` apart in spelling.
+    """
+    import re
+
+    gd = GD_CONSTANTS.read_text(encoding="utf-8")
+    found = re.search(r"^const CARRY_MASS_KG = ([-\d.e+]+)$", gd, re.M)
+    assert found, (
+        "§10.3's carry line is no longer exported, so the engine is back "
+        "to having only the envelope's 120 kg to reach for")
+    assert float(found.group(1)) == pytest.approx(P.CARRY_MASS_KG)
+    assert P.CARRY_MASS_KG < P.ENVELOPE_MASS_KG, (
+        "the carry line has reached or passed the provider envelope; if "
+        "these two numbers are ever meant to be equal, that is a design "
+        "amendment and not a tuning pass")
+
+
+def test_no_part_of_a_host_is_an_input_to_ordinary_pickup():
+    """`carriable_by_hand` takes the object, and nothing else.
+
+    Gear, Mods and Abilities resolve the provider envelope at the entry
+    check (§4.2). None of them is an input to §10.3. The moment a host
+    became an argument here, a loadout would start deciding what a hand
+    can hold — which is the same mistake as reading 120 as the carry
+    limit, arriving through a parameter list instead of a constant.
+    """
+    import inspect
+
+    assert list(inspect.signature(P.carriable_by_hand).parameters) == [
+        "carriable", "mass_kg"]
+
+
+@pytest.mark.parametrize("mass,carried", [
+    (0.1, True), (30.0, True), (59.9, True),
+    (60.0, True),           # §10.3 reads `<=`; the line itself passes.
+    (60.1, False),
+    (100.0, False),         # Inside the envelope. Still not picked up.
+    (P.ENVELOPE_MASS_KG, False),
+])
+def test_the_flag_and_the_kilograms_are_both_required(mass, carried):
+    assert P.carriable_by_hand(True, mass) is carried
+    assert P.carriable_by_hand(False, mass) is False, (
+        "a mass test alone would put a grip on PLATE, which is exactly "
+        "60 kg and is not carriable")
+
+
+def test_neither_mass_can_be_read_bare_in_the_generated_file():
+    """The two masses print a line apart, and one is the familiar name.
+
+    Prod's `3b67921`: every existing manipulation call site already uses
+    `ENVELOPE_MASS_KG`, so a carry verb written against "the mass
+    constant" lands on 120 kg and makes `WEIGHTED` carriable — which
+    Design 2 changed from Design 1 on purpose. The bridge cannot write
+    the verb, so what it does instead is make sure neither number is met
+    without the line saying which question it answers.
+    """
+    gd = GD_CONSTANTS.read_text(encoding="utf-8").splitlines()
+    for name, must_say in (("ENVELOPE_MASS_KG", "NOT the pickup limit"),
+                           ("CARRY_MASS_KG", "NOT the envelope above")):
+        at = next(i for i, line in enumerate(gd)
+                  if line.startswith(f"const {name} = "))
+        note = []
+        while at and gd[at - 1].startswith("## "):
+            at -= 1
+            note.insert(0, gd[at][3:])
+        joined = " ".join(note)
+        assert must_say in joined, (
+            f"{name} is exported with no note distinguishing it from the "
+            f"other mass; what precedes it is {joined!r}")

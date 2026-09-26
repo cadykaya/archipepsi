@@ -1,5 +1,2229 @@
 # AGENT FRONTIER
 
+## BRIDGE LANE — HOLDING at the Wave 3 checkpoint (owner, 2026-09-25)
+
+**Hold.** Wave 3 is complete on the Dess side (owner, 2026-09-25). The
+owner ruled D16, the Gear speed cap and DESS-28, and said: do not begin
+0.5. Resume only if Prod hands back an approved integration seam or a
+genuinely new owner decision is needed. 0.5 opens deliberately, as a
+team.
+
+**Dess is the single writer of the released files from `5f348ab`
+onward.** Prod asks for shared changes by note. The detail of every
+item is in `docs/ledgers/DESS_POST_PLAYTEST.md`. Its "Readiness for
+Prod" table, and the readiness update at its end, say what Prod can
+consume now and what waits on whom.
+
+**Landed since the handback:**
+- DESS-25 and DESS-21.
+- DESS-23: a key must open something, checked at acceptance.
+- DESS-24: the plate advice.
+- DESS-27: `make candidate-fixture` works again.
+- H-PRESSURE-C:
+  - 1a + 1b: no new plate latches; legacy Zones play as saved (M-1);
+  - 1d's bridge half: a door held by a declared weight;
+  - the held-route composer and `held_route_zone.json`;
+  - 1c: the lever is placeable and a route sensor. The production
+    composer emits `lever -> LATCH -> shutter` (`lever_route_zone.json`),
+    and the candidate composes it again in c009.
+- D-01's protocol field, off by default. Legacy saves never grow
+  Echoes.
+- Discovery (`visited_rooms`, `RoomEntered`), and the snapshot's
+  `inventory` and `zone_map`, computed on the model.
+- H-GEAR G1 as ruled, the bridge half with its gate closed: the piece,
+  wearing it (`gear_action`), and `gear_effects` for the StatStack.
+- Prod's hand-backs: N-8 (`--form held`), N-10 (`passing_zone.json`),
+  N-11 (the `slot_action` refusal key).
+- D-6 steps 1 and 2 (N-14 handed them back): `RailSpan.control_placement`
+  (a gantry needs `grapple` and an arena of at least 8.0 m); the search
+  rides spans; beyond a gantry, local rewards only (D-03).
+
+**Landed by Prod since (at `7166b35`):** D14 §7, the D-01 integration
+(`9844ba5`), and D-5, the featured contract at the grant (`dc66f2f`).
+Replies to Prod's N-12 to N-15 are in the ledger. N-14 confirmed D-6,
+so its steps 1 and 2 (the gantry field and the rail search) resume
+under the owner's hand-back rule.
+
+**Waiting on Prod (notes D-2 to D-8 in the ledger):**
+- sending `room_entered`;
+- reading `inventory` and `zone_map`;
+- D-7.2 and D-7.3: `godot-latched-route-live` on the lever, and the
+  fixture make targets (candidate-live already ran green, N-7);
+- D-8, Gear:
+  - `snapshot()` passes `gear`;
+  - the StatStack multiplies `gear_effects`;
+  - the Equipment wall wears Gear.
+  Then Dess opens the gate in one commit and retakes the baseline.
+- D-10: Prod's D-9 (the gantry placement) landed at `82068a9`. Dess's
+  step 4, the composer, needs the arena sizes measured first (N-16's
+  offer). The note names the sizes to measure.
+
+**Wave 3, owner-approved 2026-09-25:**
+- DESS-26 is fixed: an enemy pull is not a crossing.
+- H-QUALIFY's contract has landed (`schemas/featured.py`). The pipeline
+  wiring is note D-5 to Prod.
+- **H-GEAR is ruled (G1) and its bridge half has landed, gate closed.**
+  Speed, jump and landing on the runtime's own stats, profound pieces
+  only, from Echoes only, with HIGH derived and never stored. The gate
+  opens after Prod's D-8.
+- **Blindside's composition (O05-05.2 for H-BLINDSIDE):** D-6 was
+  confirmed by N-14, and steps 1 and 2 have landed (the field and the
+  rail search). Next is Prod's step 3, the gantry placement, then Dess's
+  step 4, the composer. Beyond the gantry: local rewards only (D-03).
+- H-AP-GATE and H-ATOM-DELIVERY are explicitly deferred (ledger).
+
+**Ruled and landed:**
+- the Gear speed cap: the stack's ×1.6 stands, and no Gear clamp;
+- DESS-28, option (a): until H-AP-GATE, a capability acquired in a Zone
+  gates local rewards only. It is a temporary boundary; P02's case C
+  returns under a declared prerequisite.
+- DESS-29 was found and fixed while landing it: a player past the claim
+  holds the tool.
+
+**Waiting on the owner:** CI (Prod's N-6).
+
+**CI is not running.** Every PR-gate and Integration run has failed
+within about four seconds, with no log, since at least `6ebbc90`, for
+both lanes. Prod diagnosed it (N-6): the jobs never get a runner
+(`runner_id` 0), an account-level refusal, typically the Actions
+billing or spending limit. Only the owner can clear it, under GitHub
+Settings -> Billing and plans and Settings -> Actions. Meanwhile:
+- run the suite locally, exactly as the gate does (ledger, "CI does not
+  run");
+- one gate-only failure is already hidden by it (DESS-25).
+
+The owner's M-1/M-2/M-3 rulings are recorded verbatim in the same
+ledger:
+
+- **M-1:** legacy step-once Zones keep their saved behaviour; new
+  composition never emits it.
+- **M-2:** an unknown encounter is reconstructed from its safe arrival,
+  with **no duplicated one-shot Check, reward, key or monotone state**.
+- **M-3:** map names are presentation only.
+
+---
+
+## PROD LANE — post-playtest repair: CP0 → CP4, then inherited 0.4 (owner-approved 2026-09-24)
+
+**In progress.** The packet is `docs/ledgers/post_playtest_v1.0/` (verbatim;
+Prod's brief is `dispatch/PROD_START.md`). The execution log, the
+owner's D-06/D-07 rulings and the seam table are in
+`docs/ledgers/PROD_POST_PLAYTEST.md`. The start is preserved at
+`review/post-playtest-start-a745637`.
+
+- **Order:** CP1 fair combat and safe resume → CP2 the three rooms and
+  the pressure/latch presentation → CP3 the rotating 3D shell with one
+  equipment face → CP4 inventory, minimap, 3D map and journal → the
+  ready inherited 0.4 work.
+- **No heartbeat, watcher, subscription or schedule.**
+- **W0.1 handback to Dess: RECORDED at `f332fff`.** Every file on
+  Dess's list is released, and Prod keeps none. See
+  `PROD_POST_PLAYTEST.md`, "W0.1".
+  - Prod's in-flight bridge half for D13 1b/1c is offered as a patch,
+    not landed.
+  - From here, Prod asks for shared changes by note (N-1 to N-3 are
+    there).
+- **CP1 progress:**
+  - `H-ARTILLERY` is done (`6ebbc90`).
+  - `H-FLYER-HIT` is done: a flyer's body is drawn and hit at its
+    envelope's hover height. Flyers now hang lower than in the played
+    candidate. `godot-combat-fairness` has 29 checks.
+  - `H-FLYER-AI` is done:
+    - the diver's trigger now follows the jump (a shared edit, in the
+      seam table);
+    - dives commit only within reach and in sight, and land only with
+      nothing solid between;
+    - the drifter telegraphs its shot;
+    - an enemy's eye shows whether it is idle, watching or committing;
+    - `godot-flyer-room` (new, in CI) plays the owner's `c011`.
+  - `H-RESUME-R` is done (D-06):
+    - defeated members are recorded by declared identity
+      (`room/archetype#n`), a shared edit in the seam table;
+    - they are never rebuilt;
+    - a resumed player is never placed among the living, and is told
+      why;
+    - an older save's encounter is treated as unknown, not as cleared;
+    - `godot-resume-live` (two processes) and `godot-resume` are new,
+      both in CI.
+  - **CP1 checkpoint: closed.**
+    - The full frontier ran on `76b0952` (66 of 68) and on the handback
+      head `5f348ab` (67 of 68).
+    - The failures were DESS-19/20 (fixed at `f332fff`) and then this
+      lane's own `godot-resume-live` legacy check over-asserting (fixed
+      at `72392d8`: the record must equal the deaths the engine saw).
+- **CP2, against D12/D13:**
+  - `H-PRESSURE-R`, engine half: landed (`2346261`). A `PULSE_BUTTON`
+    is a lever that stays thrown once its latch is set; legacy plates
+    are placed as before (M-1). Dess's 1c followed (`462bf42`), and
+    `godot-candidate-live` is green on the regenerated candidate, with
+    every step emitted and the c009 route built as a lever (N-7).
+  - `H-UNWEIGHTED`: **repaired and landed.** Two bypasses were
+    reproduced by play: the Check claimed from the floor through the
+    return gap, and the carriage ridden in transit to G. The goal moved
+    within G (N-1); a weighbridge along the lane (N-2); a faster drive,
+    signs, a live class readout, guided-service hardware; the bolt stays
+    thrown. `godot-minor-claim` (new, in CI) is a claim census of every
+    hosted minor, with played witnesses, V-10 at the schema maxima, a
+    ride sweep and the return. Sabotages SU-1 to SU-5 each fail by name.
+  - `H-PRESSURE-R` part 2: **done.**
+    - The lever route is played live across a real restart
+      (`godot-lever-route-live`, new, in CI): pulled once, thrown for
+      good, and restored thrown.
+    - Dess's fixture targets are added, and all three regenerate
+      byte-identical.
+    - The held route (D-4) was physically impossible: the plate sat
+      under c002's 1.6 m gallery, where no weight could be put down.
+      Held plates are now placed like levers, as labelled 1.4 m load
+      pads. `godot-held-route` (new, in CI) plays it: open while the
+      weight rests, shut when it is lifted, open again from a rebuild,
+      and the interlock.
+    - N-8 asks Dess for a `--form held` seed, so the held route can also
+      be played across a real restart.
+  - `H-COUNTERFIRE` (PT-04, V-11): **identified, played, repaired.**
+    - Identified: the offer order hosts EX50-021 twice (zone_001 c025 and
+      zone_002 c024), which is the owner's "two Counterfires". Their
+      "emergency" target is the room's own receiver, and their route
+      (shoot its face from the lane) is legitimate, so nothing was
+      removed.
+    - Legibility: the trip says what it opens, the conduit glows through
+      the window, the shutter counts down, and the release stays thrown
+      (after a restart too).
+    - Two found defects fixed, both geometry:
+      - PPT-05: two holes to the fall plane beside the flank;
+      - PPT-06: the Check blocked the 1.7 m flank, cutting off the
+        release's stair.
+      The pocket is now a solid deck. The Check sits in the flank's
+      corner (registry, N-9), because at its old spot V-10 found a
+      double-jump claim from below.
+    - `godot-counterfire-hosted` (new, in CI, 25 checks) covers the
+      owner's route, the kill-first fallback, a void census, the hood
+      census, V-10 and both returns. `godot-candidate-live` plays the
+      bait route live.
+  - `H-PASSING` (PT-06, PT-07): **reproduced, proposed, repaired.**
+    - Reproduced on the hosted room: 233 floor cells claimed the Check
+      over G's west lip, and three of four arrivals on G left no way
+      back.
+    - G is now a glass gallery on three sides, up to the walls' tops.
+      Both extents were measured: the west edge alone left claims over
+      the north railing, and door-high glass let a double jump claim it
+      (SP-9).
+    - Its one door is a glass gate at the shuttle's dock, open only
+      while the shuttle stands docked there, and it never shuts on a
+      body.
+    - Any arrival on G releases the stair, which is signed; every
+      control says what it does.
+    - `godot-passing-hosted` (new, 24 checks) plays both censuses (0
+      claims), the gate from A's board, the arrivals, the interlock, the
+      restore and V-10 (no claim off G). It is not in CI until N-10's
+      fixture lands; it runs on a capture
+      (`make godot-candidate-live CANDIDATE_DUMP=<path>`).
+    - `godot-candidate-live` plays the carriers' route through the real
+      bridge, and its restart restores the gate open.
+  - **CP2 checkpoint: closed.** The full frontier on `6e1c60b` passed 73
+    of 74 steps. The one failure was the CI-coverage test finding
+    `godot-passing-hosted` unlisted; it was fixed at `22f59c1`, and
+    `make test` there passes 2,221.
+  - **CP3:**
+    - `H-3D-SHELL` (V-18): **landed.**
+      - A box of four walls in its own World3D, with the camera turning
+        between them: left goes Settings, Equipment, Map, Journal.
+      - The pointer reaches the front page by geometry, with no physics.
+      - Q/E, the bumpers and the on-screen arrows turn it; Escape
+        closes it; Tab opens it on Equipment.
+      - Reduced motion is a cut.
+      - In the game, the pause menu and the inventory are its first two
+        walls.
+      - `godot-menu-shell` (new, in CI, 18 checks) covers it headless,
+        and `godot-candidate-live` drives it through real input.
+        `make menu-shell-shots` renders it.
+      - MS-1 to MS-8 each fail by name.
+    - `H-PAUSE` (V-16, V-17): **landed.**
+      - `PauseClaims` (named claims on `SceneTree.paused`); the shell
+        holds "menu" while open.
+      - The bridge client runs through a pause, and five gameplay and HUD
+        timers now pause with the world.
+      - A consumable answer that lands during the pause fires once on
+        resume, and is not refunded.
+      - Played by the shell suite, the live consumable suite (the race,
+        and a respawn that waits) and the live candidate suite (a real
+        equip with the world paused). MP-1 to MP-6 each fail by name.
+    - `H-INVENTORY` (§5): **landed, on provisional art.**
+      - The Equipment wall's three regions: the five keys; a grid of owned
+        items, one tile per item (upgrades are history); and the selected
+        item's detail and comparison. It reads Dess's
+        `CampaignSnapshot.inventory` joined to `mechanics.owned`, and
+        `InventoryLayer` (the archive) is gone.
+      - An equip is PENDING until a snapshot carries it; REFUSED only on
+        an exact `about` key (N-11 asks Dess for the `slot_action` key);
+        NOT SENT or LOST otherwise. The consumable key names its states.
+        A new item is marked NEW until it is inspected.
+      - Mouse through the 3D stage, keyboard and controller. Pad A,
+        Start and Back are now bound: `ui_accept` had no pad button
+        (EI-F1).
+      - Reproduced first: 9 of 9 requirements failed on the archive.
+        `godot-equipment-face` (new, in CI, 107 checks) passes all 9, on
+        real `CampaignSnapshot`s (`make equipment-fixture`, guarded by
+        `test_equipment_fixture.py`). The live candidate suite equips
+        through the real bridge with the world paused. 24 of 24
+        sabotages fail by name; the first run missed EI-6, which was
+        fixed.
+      - The Glyph-authored final look is still owed (H-GLYPH-KIT); the
+        placeholders do not satisfy it.
+  - **CP3 checkpoint: closed.** The full frontier on `33af28d` passed 76
+    of 77 steps. `make test` found two failures, both this lane's: the
+    evidence screenshots had no licence record, and the equipment query
+    read the Echo log off the snapshot. Both were fixed at `5f44b5c`,
+    where `make test` passes 2,224, with the face and live candidate
+    suites green. The Glyph-authored look is still owed (H-GLYPH-KIT).
+  - **CP4:**
+    - `H-MINIMAP` (V-20): **landed, on provisional art.**
+      - A map on the HUD in every Zone, north-up and centred on you. It
+        draws:
+        - the rooms found, as their built envelopes;
+        - connectors along their built chains;
+        - blockers in their circuit's colour, with a reason letter: K,
+          P, M, E, or `?` for unknown;
+        - return plugs as rings;
+        - other floors as outlines with a drawn up or down mark.
+
+        The room you're in is named by the bridge (M-3).
+      - It reads Dess's `zone_map` (H-MAP-DATA) and decides nothing.
+        The game now sends `room_entered` (D-2) the first time you
+        stand in a room, and resends it on each snapshot until the
+        bridge's map shows the room.
+      - Reproduced first: 2 of 2 requirements failed on `5f44b5c`.
+        `godot-minimap` (new, in CI, 30 checks) runs on the candidate
+        Zone against `map_view` fixtures (`make map-fixture`, guarded by
+        `test_map_fixture.py`).
+      - The live candidate suite shows the power door blocked while the
+        cell is carried, open once it's installed, and still open after
+        the restart. Every walked room is discovered.
+      - 14 of 14 sabotages fail by name; the first run missed MM-8,
+        which was fixed.
+      - Five findings were repaired before commit, among them:
+        - Godot's default font has no ▲ or ▼, so the floor marks are now
+          drawn shapes;
+        - the evidence screenshots' palette reduction had merged circuit
+          colours, so the evidence is now checked against the raw render.
+      - Still owed: the Glyph look (H-GLYPH-KIT), Arty's circuit family
+        (H-CIRCUITS), and D-3's live "transitioning" overlay (ledger).
+    - `H-3D-MAP` (V-21): **landed, on provisional art.**
+      - The Map wall is a miniature of the Zone you can turn, tilt,
+        zoom and pan, by mouse, keys or pad. None of its controls turns
+        the page.
+      - Rooms are cut away (a floor and a low wall, no roof). PgUp and
+        PgDn show one floor at a time; with every floor shown, yours is
+        solid and the others are ghosts.
+      - Blockers are pulsing spheres in their circuit's colour, with a
+        letter; ways back are rings; you are a cone.
+      - Beside the model: the places you know. Picking one centres on it
+        and lists its ways on with the bridge's reasons.
+      - One projection with the minimap (`MinimapModel`), render-only
+        (meshes and labels, no scripts, its own `World3D`), cached, and
+        measured at 7.6 ms for the candidate Zone headless.
+      - The view survives turns and closes.
+      - Reproduced first: 4 of 4 requirements failed on `8a4d5ed`.
+        `godot-map-face` (new, in CI, 52 checks) runs on the real shell
+        and candidate Zone.
+      - The live candidate suite opens the wall through real input with
+        the world paused: the power door is a P in the minimap's colour
+        while the cell is carried, gone once it's installed, and still
+        gone after the restart.
+      - 17 of 17 sabotages fail by name; the first run missed MF-17 (a
+        no-send check the cache made vacuous), which was fixed.
+    - `H-JOURNAL` (§8): **landed, on provisional art.**
+      - The Journal wall lists:
+        - objectives, in the Hub's own words, or in a Zone its Checks;
+        - what you did here, from the Zone's record, each thing with
+          what it opened;
+        - what is still shut, with the bridge's reasons;
+        - the places found;
+        - each Echo's note, newest first.
+
+        No unfound room is named.
+      - The Settings wall adds the campaign (seed, player, modes,
+        Checks, Zones, link) and the options the game applies:
+        sensitivity, invert look, field of view (live), motion, and
+        master volume (now wired to the Master bus). They are saved at
+        once. The pause menu's actions are unchanged.
+      - Reproduced first: 6 of 6 requirements failed on `c5db77a`.
+        `godot-journal-face` (new, in CI, 36 checks) runs on the model's
+        own snapshots (`make journal-fixture`, guarded by
+        `test_journal_fixture.py`).
+      - The live candidate suite reads the journal ("Installed the power
+        cell"), before and after the restart, and the campaign with the
+        link up.
+      - 17 of 17 sabotages fail by name, on the first run.
+      - Open: rebinding has no screen yet; "new campaign" is offered
+        nowhere in the menus; captions is stored but read by nothing.
+    - **CP4 checkpoint: closed.** 82 of 82 frontier steps on
+      `a2115b6`, and resizing shots at 1280x720 and 1920x1080 (the
+      minimap stays in its corner, the walls scale whole). Owner
+      usability and the Glyph look remain the owner's and Arty's.
+  - **Inherited 0.4:**
+    - **D-01 (D14 §7): landed at `9844ba5`.** A new campaign yields a
+      local Echo from your own original too: one `yields_echo` rule for
+      grant and sweep, and "Delivered to you." then the Echo on the
+      card. Legacy campaigns are unchanged.
+      - The live integration shows 30 Checks (4 your own) giving 30
+        Echoes, with the real card showing both halves.
+      - 11 of 11 sabotages; 14 live suites green.
+      - One setup step moved in Dess's pinned legacy test (N-12).
+    - **D-5 (H-QUALIFY at the grant): landed at `dc66f2f`.** A featured
+      Check's Echo supplies its function, or is replaced by the
+      requirement's own. Own and foreign are the same.
+      - Two findings repaired: the requirement's Echo had no concepts
+        and would have raised (D05-F1, N-13); an Echo that does not fold
+        crashed the grant (D05-F2).
+      - 8 of 8 sabotages.
+    - **D-6 answered (N-14):** the field is confirmed, and the gantry's
+      measured geometry is given. A gantry control room needs
+      `wall_height >= 8.0`. Next is Dess's 1 and 2, then Prod's gantry
+      placement.
+    - **Open, Prod's:** D01-F3, `make dual-real` has not been able to
+      claim since the certification guard (pre-existing; not in the
+      frontier).
+    - **H-GRAPHS slice 1: landed, runtime-only.** Design 3's five
+      signal verbs on the graph runtime: §19.7 overrides at step 1,
+      §14.3 legality, cycles refused, expiry, PROBE. A verb never sets a
+      recorded latch (N-15's conservative rule).
+      - `godot-signal-verbs` (new, in CI, 32 checks) plays them on four
+        real graphs: the held and latched routes, EX50-033 and EX50-021.
+      - 9 of 9 sabotages. The old runtime fails 26 of 32.
+      - Dess confirmed that a recorded latch is a macro setter. There
+        is no Echo primitive, and no DIRECT, AND or SEQUENCE, until a
+        room consumes one.
+    - **D-9 landed: a span's control on a gantry** (D-6 step 3).
+      - `RailNetworks` builds the scenario's measured gantry, relative to
+        the floor the player grapples from: a deck 2.9 m up, and a plate
+        6.2 m up over its near lip. There are no stairs.
+      - Its position is searched in the control room, nearest the
+        arrival first. A position must be off the track, on floor, and
+        clear where the player climbs and lands.
+      - The base kit's reach is measured per room: nothing it reaches
+        may be within a jump of the deck.
+      - The lever is worked only from the deck (`worked_from`, D09-F1:
+        at the top of a jump beside the lip, the probe reached it).
+      - A room it does not fit is refused by name. Nothing is built for
+        that network, and the Zone still builds.
+      - `godot-rail-gantry` (new, in CI, 37 checks) plays the base kit
+        failing and the grapple landing on the deck, then starting the
+        span. 17 of 17 sabotages; the old engine fails 10 of 16.
+      - N-16 to Dess: N-14's 3.1 m and 7.2 m were measured from the
+        scenario's ground, and the played apex is 1.40 m. A gantry needs
+        a large arena: in the suite's Zone, 16 m has no position and
+        24 m has one.
+    - **H-STATUS slice 2 landed, runtime-only: the KINETIC pair on every
+      target the runtime models.**
+      - `anchored` on the player: held against every impulse, no walk and
+        no jump. Its movement Echoes refuse unpaid, and everything else is
+        permitted. A rail lets it go and a launch pad will not fire it. It
+        reads `FIXED`.
+      - `anchored` on an object: frozen in place, and refused by the
+        verbs, the push and the hands.
+      - `lightened` on the player and on an enemy: a knock at ×2. The
+        player reads `LIGHT`.
+      - Applying either removes the other.
+      - `godot-status-kinetic` (new, in CI, 35 checks). The old runtime
+        fails 21 of them. 17 of 17 sabotages.
+      - The gate is Dess's: N-17 asks for the four targets in
+        `SUPPORTED_STATUS_TARGETS`. Until then nothing applies them in
+        play.
+    - **D-10 answered: which arenas take the gantry** (`godot-gantry-census`,
+      new, in CI).
+      - 168 layouts per size: 24 room ids × the 7 shapes the chain can
+        take.
+      - Every measured arena at least 24 m wide and 22 m deep takes the
+        gantry in all 168. That is the fallback landmark's range, and it
+        includes 28 × 28. 24 × 24 is the smallest square; 22 × 22 refuses 2.
+      - The census holds that rule as a gate, with a control and a check
+        on its own sample.
+      - D10-F2: my first census varied the Zone's `seed`, which the engine
+        never reads. It measured a third of what it claimed and gave a
+        wrong rule (22 m); this was caught before the commit.
+      - D10-F1 (N-18): a refused gantry never reaches the bridge, so a
+        valid Zone could be accepted without its railway. The fix
+        proposed is Dess's to choose.
+    - **CK5 checkpoint: 86 of 86 on `ccaac5c`** (D-01 through D-10, and
+      Dess's G1, D-6 1–2 and DESS-28), in two parts on one revision
+      because the container restarted mid-run
+      (`CK5_frontier_on_ccaac5c.tsv`). `make test`: 2,299 passed.
+    - **ML-F1/F2 repaired: enemies left the world with nobody fighting
+      them** (found by H-MACHINE-LIFE).
+      - 280 of 768 fixture enemies were built inside a solid: a station,
+        crate, cover box, pedestal or shell piece. One went through its
+        floor on its first step.
+      - Patrol beats were drawn at random over drops.
+      - Every such fall was saved as a defeat (D-06) that a `kill_all`
+        counts: a room cleared with nobody in it.
+      - The repair:
+        - a footing pass at the end of `ZoneController.setup` sets each
+          enemy down on its floor and moves one that does not stand
+          (268 moved);
+        - a patrol beat stops where the floor does;
+        - an idle walk stops at a ledge;
+        - a chase is unchanged (PPT-02).
+      - `godot-enemy-footing` (new, in CI, 12 checks). The unchanged
+        runtime fails 6 of 12. 9 of 9 sabotages.
+    - **H-MACHINE-LIFE slice 1: repeated lifecycles accrue nothing**
+      (O05-10.4's counters).
+      - `godot-machine-life` (new, in CI, 41 checks) runs through the
+        real `Main`: 5 rounds of the Hub, the candidate and the Passing
+        Zone, levers pulled and deaths taken.
+      - 50, 59 and 58 counters read the same in rounds 2–5: nodes,
+        orphans, connections on `BridgeClient` and `Main`'s long-lived
+        nodes, groups, caches, and `Main`'s per-Zone progress.
+      - Power loss, a constrained assembly and a powered machine's
+        occupied/reversing/reset stay open, for want of an occurrence
+        that has them.
+    - **CK6 checkpoint: 88 of 88 on `d4fc7fe`** (ML-F1/F2 and
+      H-MACHINE-LIFE slice 1), in one run on one revision
+      (`CK6_frontier_on_d4fc7fe.tsv`). `make test`: 2,299 passed.
+    - **H-RAIL-BREADTH slice 1: a railway with points in it -- landed,
+      runtime-only** (DESS-01 items 1-2, the engine half).
+      - `RailNetworkCarrier`: a tree of lines joined at points.
+        `RailCarrier` is unchanged, and on a chain the two carriers stop
+        at the same docks, offsets and frames.
+      - `RailPoints`: §21.6's own `RAIL_SWITCH`, whose tongue swings and
+        locks before a leg is live.
+      - Recall from any dock over commissioned track sets the points on
+        the way; holds, power and restore are covered.
+      - `godot-rail-network` (new, in CI): 70 checks, 24 s. 15 of 15
+        sabotages caught.
+      - Findings:
+        - RB-F1: §21.6 alone let a dispatched carrier meet a throw at
+          speed; answered by a route lock.
+        - RB-F2: a reset moved a rail switch under an actor.
+        - RB-F3: an unpowered ordered carrier drove on command.
+        - RB-F5: `RailPath` refused a flat rail whose length is a whole
+          number of steps.
+        - RB-F4 (open, slice 2): a declared railway builds no control a
+          player can command it with.
+      - No Zone declares a switch yet. The schema half is Dess's (N-19).
+    - **H-BOMBS slice 1 (PT-09/V-15): absent until Zone 6, then
+      unnoticed, and dead in the Hub -- repaired (client).** The owner's
+      save has not arrived; the diagnosis replays their campaign from
+      the same inputs, at `a745637` and at head.
+      - HB-F1 (absent): no consumable before Zone 6. The first is the
+        Bomb Bag of Check 89100140, and the shop never stocks one.
+        **Corrected by HB-F4:** that walk certified every Zone with a
+        layout helper that never fails. Played by the client, the
+        owner's campaign reaches no Bomb Bag by its eighth Zone; after
+        HB-F4b the first Bomb Bag Checks are zone_007's.
+      - HB-F2 (unnoticed): the HUD row read the same for none and for
+        owned-not-carried, and showed no count. An empty key was silent,
+        and `Player.exhausted` was connected to nothing.
+      - HB-F3: Hub snapshots never re-equipped the Hub player. A Bomb
+        Bag equipped in the Hub had its use granted and silently handed
+        back.
+      - Repaired: the row (`— Bomb Bag owned, not carried`,
+        `2 / 3`, `0 / 3  EMPTY`); a press that does nothing says why in
+        the equipment wall's words, once; the arrival points at Q and
+        EQUIPMENT; the Hub re-equips.
+      - `godot-bombs` (new, in CI; `make bomb-fixture`, the campaign's
+        own snapshots): 34 checks. The unchanged client fails 17 of them.
+        11 of 11 sabotages caught; 19 offline and 12 live suites green.
+    - **HB-F4 (found by H-BOMBS slice 2): the owner's candidate
+      campaign built 5 of its first 12 Zones.** At `a745637` and at head
+      alike, zones 4, 5, 6, 9, 10, 11 and 12 each fail three times with
+      one composition, and the Hub offers the discard. The playtest
+      report does not mention it.
+      - HB-F4b, repaired: `_theme_props` stood `rusted_industrial`'s
+        drums and `temple_ruin`'s stumps in cut side doorways. It now
+        keeps them clear, as the crates already were.
+        - `godot-room-contract` gains a doorway census: 23 of 1,159
+          doors solid before (the owner's two among them), 0 after.
+        - 4 of 4 sabotages caught; 17 regression suites green.
+        - On the new path 10 of 12 Zones build.
+      - HB-F4a, repaired (router): the exit room backtracks like any
+        other room, and a branch keeps the spine's way on clear.
+        - zone_004 and zone_011 build. The census goes from 32 to 35
+          of 39.
+        - `godot-room-contract` lays the three Zones out: 3 of 3
+          sabotages caught, 2 of 2 controls hold.
+        - `godot-build-failure`'s Zone started routing, so its fixture
+          is now the owner's zone_008.
+        - On the new path 10 of 12 Zones build, and `godot-bombs-live`
+          reaches the first Bomb Bag, zone_006's, with no discard.
+      - HB-F4e, repaired (props): the certificate latched nothing in
+        any run (`[[], [], []]`; HB-F4 had read it as intermittent). A
+        `temple_ruin` column stump stood in `c001`'s powered door run.
+        - A corridor's colliding props now keep a body's radius clear of
+          every feature's floor (`AffordanceFeatures.footprints`).
+        - `godot-room-contract` gains a feature census, 474 features in
+          290 corridors: 64 props on a feature's floor before, none after.
+          The owner's two rooms are certified by `ChainCertificate`
+          itself. 6 of 6 sabotages caught.
+        - With HB-F4a, 11 of the owner's 12 Zones build; the census
+          accepts 37 of 39.
+      - HB-F4c, repaired (router): a door still owed a branch is kept
+        for it. `c015 -> c018`'s route crossed `c017`'s side door before
+        `c021` was hung there. HB-F4 had blamed the connector itself,
+        from a blocker report that turned walls 90°; that report is
+        repaired too.
+        - The owner's zone_006 lays out; the census accepts 38 of 39.
+        - `godot-room-contract` lays it out and checks every door, every
+          crossing and every owed box; 6 of 6 sabotages caught.
+      - Open, mine:
+        - HB-F4a-3: zone_008's `c016` (a 16-attempt ladder builds it at
+          5.5 s of the 6 s budget; not taken).
+        - HB-F4f: two features resolved onto one stretch of wall
+          (zone_012 `c001`: the rail's note hangs inside the powered
+          door's alcove).
+      - Dess's: N-20, a retry composes the same Zone.
+    - **H-BOMBS slice 2 (PT-09/V-15): the campaign's own Bomb Bag,
+      live.** `godot-bombs-live` (new, in CI) runs three phases, each a
+      new bridge beside a new client:
+      - reach (10 checks): through zone_004's discard to zone_007, with
+        nothing owned;
+      - claim (28): the pedestal and [E], equip from the wall, three
+        throws each authorised and counted by the save, then EMPTY;
+      - refill (7): through zone_008's discard; entering zone_009
+        refills the supply.
+      - HB-F5, repaired: live, the card for a new Echo never said what
+        it was. The card came before the snapshot, and it now fills in
+        when the snapshot lands. `godot-bombs` delivers the live order
+        (37 checks).
+      - HB-O1, for the owner: a card holds the controls, Q included, and
+        outlasts the equipment wall.
+      - 5 of 5 sabotages caught. Where the Bomb Bags are is harness
+        knowledge from the mock's own placement; the suite checks the
+        client is not told.
+    - **CK7: 92 of 92 on `bfcf64e`** (HB-F4a + HB-F4e), one run on one
+      revision, every live suite alone on the machine
+      (`CK7_frontier_on_bfcf64e.tsv`).
+    - **CK8: 92 of 92 on `adfb76c`** (HB-F4c), one run on one
+      revision (`CK8_frontier_on_adfb76c.tsv`).
+    - **HB-O1, ruled by the owner (2026-09-26, verbatim in the ledger):**
+      pickup cards are informational, not gameplay-modal. Q (any valid
+      gameplay input) passes through and acts normally; the card may
+      stay or fade, and is never merely closed by the press. Transient
+      overlays never silently eat gameplay input; a block that must
+      stay says why. Cause: `Main._update_modal` counts `reveal.visible`
+      as modal.
+    - **Next:** HB-F4a-3 (zone_008's `c016`), then HB-O1 as ruled, then
+      HB-F4f. PT-09 is met live, and a player reaches the Bomb Bag with
+      no Zone discarded on the way.
+      - H-RAIL-BREADTH slice 2 waits on N-19.
+      - H-STATUS continues after N-17 with O05-09.1's material rows
+        (slippery, conductive, brittle) and O05-09.2's actor behaviour.
+      - Dess's step 4, the composer, has the gantry and its room rule
+        (N-18).
+
+## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
+
+**Handed off here.** The frozen full run on `46bf023` was green: 64 of 64 steps passed, 16:50–17:55 UTC
+(`docs/ledgers/ov05_evidence/FROZEN_RUN.md`). The handoff commit on top
+of it changes documents and the zone audit's own provenance stamp only.
+These are local results; remote CI was not polled.
+
+- **The owner's review:** `docs/ledgers/PROD_OV05_MORNING_REVIEW.md`
+  (filled; §4 is yours).
+- **Per-unit status of all 85 units:** `docs/ledgers/PROD_OV05_READY_QUEUE.md`.
+- **The route and the answers:** `PROD_OV05_ROUTE.md` and
+  `PROD_OV05_ANSWERS.md`.
+
+**No heartbeat, watcher, subscription or scheduled job is armed.** The
+next task starts by turning one on, if it needs one. Dess and Arty stay
+paused. Every edit this lane made to Dess's files is in the ledger's
+shared-seam table for her review, and the packet copies now mirror the
+bridge (P5-20).
+
+**The exact remaining queue** (ready work, in the plan's order):
+
+- **O05-05.2–.7:** blocked on B-1, B-2 and B-3 (policies).
+- **O05-07.2:** AND, DIRECT and SEQUENCE, with a consumer each.
+- **O05-07.4:** the five signal verbs.
+- **O05-08.5:** a boundary (the atom grammar, or an interim
+  representation), owner/Dess.
+- **O05-09.1:** the rest of it:
+  - `anchored` on objects and the player;
+  - `lightened` on enemies and the player;
+  - `slippery`;
+  - `conductive`, which needs an electric hazard;
+  - `brittle`, which needs an object-targeted delivery decision.
+- **O05-09.2–.5:** not started.
+- **O05-10.2 / 10.4:** a constrained assembly in the candidate, and
+  counters measured across cycles.
+- **O05-10:** power loss.
+- **O05-12:** not started.
+- **O05-16.2–.5:** not started.
+
+### The batch, as it went
+
+**Assignment:** the owner's Overnight 05 work order,
+`docs/ledgers/ov05/01_EXECUTION_PLAN.md` (verbatim copy, checksums
+verified). Execution log, shared-seam table for Dess, and findings P5-1
+to P5-16: `docs/ledgers/PROD_OV05.md`. Branch
+`claude/archipepsi-0-4-blindside`. The start is protected as
+`review/ov05-start-330c555`. **No heartbeat, watcher, subscription or
+scheduled job is armed.** Dess and Arty stay paused, and this lane is the
+one writer.
+
+**Where it stands (details in the ledger rows):**
+
+- **O05-01, hand carry: closed** (`ae8bcb7`).
+- **O05-02/03, the required cell: verified.**
+  - `godot-transport` passes 106/106. `godot-transport-live` passes all
+    four phases: seed 6, place 16, install 18, restore 12. Real
+    restarts, with the save read back off disk.
+  - The composer only uses one-floor, walkable rooms (P5-2, P5-8).
+- **O05-04, the reversible lever: verified.**
+  - `godot-reversible` 32/32. `godot-reversible-live` seed 3,
+    select 9, restore 3. `godot-zone-state` 60, after the P5-10 fix.
+- **O05-05, the Blindside loop: reconciled and BLOCKED; M2 is partial.**
+  - Three policies are missing: a featured Check can hold the player's
+    own item; nothing qualifies the grant; there is no pre-seed AP
+    representation.
+  - The composed railway's span persistence is fixed (P5-9).
+- **O05-13, the candidate profile: played whole.**
+  - `godot-candidate-live` seed 38, play 20, restore 5. Its first run
+    found P5-11 (two controls in one room); fixed.
+  - The profile's Zone is re-certified by `validate_zone`, and a result
+    that introduces an error is discarded whole.
+  - Bounded sample: 12 cases (`docs/ledgers/ov05_evidence/candidate_sample.json`).
+    Every case was certified and kept its Checks; transport declined
+    once, by name.
+- **O05-06, the minors: all three integrated, played and restarted.**
+  - The candidate `minors` step ADDS each minor behind its own dead-end
+    arena (P5-13) and moves that arena's Check onto it. Each Zone has
+    room for two, so the offer order turns with the Zone
+    (`minor_hosting.offer_order`, this lane's rule, recorded for Dess):
+    zone_001 hosts EX50-033 + EX50-021, zone_002 EX50-021 + EX50-011.
+    Sample at `3f6c1d3`: EX50-033 in 7 of 12 Zones, EX50-021 in 7,
+    EX50-011 in 8; all certified, every Check kept.
+  - EX50-021's gunner is the chamber's own declared enemy (§9).
+  - EX50-011's carriers persist their REST (pose, destination, hold) in
+    the new `ZoneProgress.carrier_states` (`PUZZLE_LOCAL`), recorded only
+    at rest and accepted only for a declared carrier and stop. Played in
+    zone_002, reached by abandoning zone_001 from the pause menu; a
+    restart restores the shuttle HELD mid-track and the route is
+    finished from it.
+  - `godot-candidate-live` now has eight phases: seed 40, play 20,
+    restore 5, minor 32, minor_restore 15, next 21, next_restore 18,
+    next_final 7 (one run at `400ed37`, with the other live suites
+    green around it).
+  - Findings this segment: P5-16 (EX50-033's rails were a bypass), P5-17
+    (the room audit measured side exits on the far wall), P5-18
+    (EX50-011's stair ended against a railing). Earlier: P5-12 (budget),
+    P5-14 (the mock forgot confirmed Checks).
+- **O05-07, the shared graph: slice 1 done.** EX50-033's chain is
+  declared in its minor contract and run by the shared `SignalGraph`:
+  PULSE_BUTTON and OR join, with §19.1's port forms enforced. A Zone may
+  still declare only plates, and a route gate still hangs only on
+  plate/NOT/LATCH. `godot-unweighted` 69, where 7 checks read the graph
+  itself, plus a sabotage showing the runtime is what drives the room.
+  EX50-021 is deliberately not routed: its window is the shutter's own
+  timer. Landed at `a718654`, with `godot-candidate-live` all eight
+  phases.
+- **O05-07 slice 2: EX50-021 through the graph: done.** The arcade's
+  own chain, as §3 names it: the receiver's pulse feeds an 8 s TIMER;
+  the TIMER and the release's LATCH meet in an OR that drives the
+  shutter. TIMER and SHOOTABLE_TARGET (PULSE) join. `[RANGED]` is a
+  floor, not a filter, because the runtime has no damage tags; that gap
+  is stated. `ServiceShutter` lost its private clock. Slice 1's
+  "not routed" note misread §3 and is corrected. `godot-counterfire` 55;
+  candidate-live all eight phases; `make test-bridge` 1907.
+- **O05-11: consumables promoted for the candidate only.** The
+  `candidate.OPTIONS` option `consumables` is included in `all`; its
+  requests advertise the slot and the gate admits exactly that.
+  Production stays STAGED. Offered the slot, the fallback reads a Bomb
+  Bag as three stun bombs. Claim, fold, slot, authorize, settle and
+  reload are proven through the real engine with one arranged item name.
+  The BOUNDARY (the sequel rule folded every Bomb Bag into an owned lob)
+  is SETTLED by the owner's direction of 2026-09-23 and applied. A
+  sequel needs the same reading of both sources, the same slot and a
+  change of at least 25%, never the verb alone. The campaign's own Bomb
+  Bag is now bombs, unarranged. Capacity is not an upgradable field
+  (named gap). P5-19: projectiles now apply their on-hit status.
+- **O05-08: answered, and bounded.** The verb RUNTIME is a faithful,
+  bounded integration within authority. Echo DELIVERY needs the
+  Amalgam's composition grammar (atoms, costs, discriminators), which
+  the running Echo model does not implement for any verb, so a
+  primitive would be a parallel path. That is a design boundary, not a
+  missing mapping. Qualification waits on delivery.
+- **O05-08.1: PUSH, PULL, HOLD, ALIGN and SETTLE, runtime only.**
+  - One §14.2 table (`Manipulation.target_refusal`) serves every
+    targeted verb.
+  - HOLD sweeps its step at up to 8 m/s, passes through actors, and
+    watches 7 release conditions. ALIGN turns over 0.3 s, then holds on
+    the solver's axis lock for 2.5 s. SETTLE leaves FIXED, withheld and
+    machine-driven bodies alone.
+  - Design 2's acceptance items 5, 7, 8, 9, 10, 20, 21 and 28 are proven
+    by direct invocation. `make godot-verb-runtime`: 56 checks, 1 note,
+    10 sabotages.
+  - Named source conflict: SETTLE's forced sleep holds an unsupported
+    body in mid-air (0.003 m in 1 s) against PIN's short-duration
+    rationale. It is unreachable while nothing delivers the verb.
+- **O05-08.2: TETHER, PIN, ROTATE and the relations ledger, runtime
+  only.**
+  - One per-caster `VerbRelations` holds HOLD, PIN and TETHER: §31.2
+    exclusivity, and §14.4's 3 (never past 6).
+  - PIN is a static freeze that bears weight.
+  - TETHER takes two activations (×1.05; `too_long` refunds nothing) and
+    is ephemeral.
+  - ROTATE lands on a hinge's limit and holds it (two versions that left
+    the limit to the joint failed and are recorded). A FIXED body is
+    ROTATE's only on a hinge.
+  - Acceptance items 11, 12, 13, 17, 22 and 23. `godot-verb-runtime` 73
+    checks, 11 sabotages.
+- **O05-08.3: ATTACH and DETACH, runtime only.**
+  - A weld is ONE body: two GIRDERs make 190 kg, HEAVY. The chain is
+    capped at 4.
+  - DETACH gives both bodies back at their world transforms, at rest.
+  - `interact` undoes only a player's own weld.
+  - §4.8's `material` and `attach_points` exist and are empty by
+    default. Persistence of a weld is named, not built.
+  - Items 14, 15 and 16. `godot-verb-runtime` 82 checks, 7 sabotages.
+- **O05-08.4: LIGHTEN_FIELD and ANCHOR_FIELD, runtime only.**
+  - A field scales the body's KILOGRAMS, and the class follows; a
+    Status steps the CLASS and keeps the kilograms. Neither touches the
+    other's field.
+  - Fields never stack: the scale is always of the body's own
+    kilograms. The later field wins, and an earlier one still running
+    takes the body back.
+  - Membership is continuous (a stated reading), and eligibility reads
+    the body's own kilograms, so an ANCHOR_FIELD never drops the body it
+    made FIXED.
+  - A weld under a field keeps its own kilograms. Enemies are left
+    alone: they have no `mass_kg`, the same gap as PUSH/PULL.
+  - Read through the two real sensors: a field that crosses a class
+    line releases both `ClassPlate` and `PoweredLink`. One that changes
+    the kilograms without changing the class releases only the kilogram
+    plate (EX50-033 §6). `lightened` releases only the class plate.
+  - Items 18 and 19. `godot-verb-runtime` 95 checks, 9 sabotages. The
+    item-19 check first read the mass once, and a sabotage passed it,
+    so it now reads every tick.
+  - The `anchored` Status has no runtime yet (O05-09), so a field
+    leaving an `anchored` body alone is stated, not played.
+- **O05-09.1, first slice: `rooted` and `anchored` on an enemy.**
+  - Both: no step of its own (the approach, the job walk, a charger's
+    rush, a diver's dive, a flyer's station), and attacks continue.
+  - A knock moves a rooted enemy and not an anchored one. The verbs read
+    an anchored enemy as FIXED.
+  - Declared on `enemy` only, in the change that implements it.
+    `rooted` is the family's first fully supported Status.
+  - Proven through a real on-hit in a declared arena (injected Echo) and
+    per role. `godot-status-family` 15 checks, 10 sabotages.
+  - Named gaps: an enemy's mass class, anchored on an object or the
+    player, the §15.4 roll/cap pipeline, and §15.8 feedback.
+- **O05-14: reconciled, nothing to bind.** No delivered enemy or
+  machinery models exist; the 3 projectile visuals stay `pending`.
+- **O05-10 in part: 10.1 audit, 10.3 reversal, 10.4 isolation.** Every
+  doorway machine this run built is one `ServiceShutter` through the
+  shared `SafeClosure`. EX50-021's shutter reverses mid-closure from
+  where it was (0.591, no snap). Two arcades keep two windows, and a
+  room freed mid-window reaches nothing. Each check was sabotaged. Power
+  loss and a constrained assembly remain untested here.
+  `godot-counterfire` 59.
+- **O05-07.5, sensor safety: done (tests only).** Class-not-sum,
+  duplicate occupancy (every plate answer recorded), a repeated pull,
+  and a stale callback, each through the graph and each sabotaged.
+  `godot-signal-graph` 57, `godot-unweighted` 70. Repeated shots wait
+  on SHOOTABLE_TARGET.
+- **O05-15, the launcher: built.**
+  - `Diagnostic Campaign - Candidate (Windows).bat`, or
+    `python -m archipepsi_bridge.diagnostic --candidate`.
+  - Owner route: `docs/ledgers/PROD_OV05_ROUTE.md`. Answers:
+    `docs/ledgers/PROD_OV05_ANSWERS.md`.
+  - Review frames: `make candidate-shots`, through the player's camera.
+
+**Next, in the plan's order:**
+
+1. O05-07 further slices (TIMER/AND/DIRECT and sensors each with a
+   real consumer; signal verbs), then O05-08 onward
+   (manipulation verbs, Status, machinery interruptions, consumables,
+   encounters, art binding). O05-10.2's Passing Platforms half is done
+   with O05-06.2.
+2. The O05-17 frozen run and ZIP.
+
+## PROD LANE — P14 played and persisted, D-11 on the geometry: integration batch closed — 2026-09-23
+
+**STOPPED here, by instruction.** This batch consumed Dess's `9ef2676`
+(P14) and `83a8e7e` (D-11) and nothing else. Dess and Arty are paused.
+Do not continue into P12, P16, P19, new theme packs or broader campaign
+generation without a new instruction. **No heartbeat, watcher,
+subscription or scheduled job is armed**: the next task starts by
+turning one on, if it needs one.
+
+**Tested revision:** `57e962e` on `claude/archipepsi-0-4-blindside`,
+frozen (clean tree) for the whole run. The handoff commit on top of it
+changes documents only. These are **local results**. Remote CI
+availability is a separate question and was not polled.
+
+| set, as CI runs it | local result on `57e962e` |
+|---|---|
+| `make test` | **1933 passed** (627 subtests), 211 s |
+| `make smoke`; `python3 docs/design-packet-v0.8/check_packet.py`; `make export` + `git diff --exit-code` over the generated artifacts | green; nothing stale |
+| `make godot-import`; `make doctor` | green |
+| the 41 "Headless Godot suites" (the CI step's list). New in this batch: `godot-latched-route` **38 checks** and `godot-theme-pack` **30 checks**. Changed: `godot-mass-class` 59, `godot-signal-graph` 46 | **41 / 41 OK** |
+| `godot-consumable-live`, `godot-consumable-restart`, `godot-latched-route-live` (seed 2 / play 18 / restore 12), `godot-ordinary-live`, `godot-integration`, `godot-integration-quiet`, `godot-integration-variant-live`, `godot-reload` | **8 / 8 OK** |
+| `make version` | ok |
+
+**56 of 56 steps passed, and nothing failed or was re-run.** The run
+took 01:56–02:38 UTC. `make godot-zone-audit` restamped its five
+generated placement captures (`controller_digest`, `source_commit`),
+because `zone_controller.gd` changed. Those restamps are committed with
+this handoff, and `test_placement_contract.py` passes on them.
+
+**P14: delivered.** The per-row detail is in
+`docs/D10_P14_PROD_ANSWER.md` §7.
+
+- `ClassPlate.counts_player` is false by default, and EX50-033 is
+  unchanged.
+- `Player.mass_class()` reads the exported mass and ladder. Only
+  `ClassPlate` reads a player's class.
+- The route shutter is built across the `opened_by` doorway from the
+  committed door frame.
+- Accepted latches are restored before the first graph evaluation and
+  settled without an announcement.
+- `godot-latched-route` (38 checks) plays the fixture with the real
+  body: arrive, clear the arena with the base kit, press at the shut
+  doorway, step on, step off, walk into `c003` and back. The control
+  with no `LATCH` is stopped at the door.
+- `godot-latched-route-live` (seed 2 / play 18 / restore 12 checks)
+  runs on a disposable save:
+  - the real path generates `zone_001`, and the compose tool proves it
+    is exactly Dess's fixture (`508868a38b2fd508`, no re-keying);
+  - the real `Main` enters and gets the bridge's own verdict;
+  - the real `latch_fired` is accepted and read off the save file as
+    `graph_c002/held`;
+  - forged latches are refused (uncommitted, unknown latch, no graph,
+    unplaced room);
+  - both processes restart, and the route is open before the plate,
+    with nothing announced.
+
+**D-11: delivered.** The per-row detail is in
+`docs/D11_THEME_PACK_PROD_ANSWER.md` §7.
+
+- The resolution order is the exact `<pack>/<theme>/<role>` first, then
+  the family chain unchanged. There is no pack hop.
+- The `(pack, theme, role)` cache and a pack-keyed material cache.
+- Only `selectable` or `approved` packs bind.
+- Universal-role pack rows are refused.
+- The Zone binds its pack and the Hub binds none (owner-replaced), so
+  nothing leaks.
+- `godot-theme-pack` (30 checks) proves it on the materials of built
+  meshes, with in-memory test-scoped packs. `make theme-pack-shots`
+  renders it.
+
+**Engine defects found and fixed on the way:**
+
+- Enemies acted on a player the layout verdict was holding: 80 hp lost
+  at the arrival to five artillery shells.
+- A declared route gate read as a solid doorway, and the bridge refused
+  the live layout.
+
+Both have regression checks and were sabotage-checked.
+
+**Launch or replay the latch-route candidate:**
+
+```
+make godot-latched-route          # standalone, ~95 s
+make godot-latched-route-live     # seed -> compose -> play -> restart -> restore, ~85 s
+make latched-route-play           # by hand, windowed, on .latched-route-play/ (FRESH=1 reseeds)
+```
+
+`docs/P14_LATCHED_ROUTE_REPLAY.md` says what to do in the game.
+
+**Limits, stated:**
+
+- The by-hand launch was not run windowed here, because there is no
+  display. The same client path runs headless in the live gate.
+- The latch closes one permanent interaction, not the cross-room puzzle
+  programme.
+- No production pack is selectable, and `THEME_PACK_STATUS` is `{}`.
+- Consumables stay staged as agreed; D-9 was not reopened.
+- **Observed in passing, not worked:** artillery shells hit a
+  stationary player here. Five shells did exactly 80 hp to the held
+  player at 20.6 m. That is a data point for the P08 note in
+  `NEXT_STEPS.md`, not a P08 test.
+
+---
+
+## BRIDGE LANE — P14's latch on a route, and D-11's pack identity: handed off — 2026-09-22
+
+**Tested revision:** `83a8e7e` on `claude/archipepsi-0-4-blindside`.
+`make test` **1887 passed, 6 skipped**; `check_packet` green; exports
+and both Zone fixtures regenerated through `make export`,
+`make zone-fixture` and `make latched-route-fixture`. **No Godot suite
+was run in this container** — there is no engine binary here — so every
+engine-side claim below is Prod's to verify.
+
+**Delivered:** `9ef2676` (P14 bridge half) and `83a8e7e` (D-11 bridge
+half). Exact contracts: `docs/D10_P14_PROD_ANSWER.md` §5 and
+`docs/D11_THEME_PACK_PROD_ANSWER.md` §5.
+
+**P14.** LATCH is supported and exported (one input, no reset; a latch
+set at rest is refused everywhere). `SensorNode.counts_player` defaults
+false, preserving EX50-033. The route validator reads the chain that
+drives the gating actuator and uses `plate_accepts_player` — the flag
+first, so the player's mass alone never counts for an object-only
+plate. Reachability models each route latch as a permanent variable
+(search only) and refuses a trigger behind its own route by name.
+`record_latch` accepts `graph_<room>` only for a declared LATCH in the
+accepted Zone with a committed layout that placed the room; `graph_` is
+reserved from physics packages, whose path is unchanged.
+`compose_latched_route` (explicit step) → `latched_route_zone.json`:
+plate and latch in `c002`, shutter across `e:c002:c003`.
+
+**D-11.** `Zone.theme_pack` beside the unchanged six families; candidate
+(descriptor rows) / selectable / approved (`THEME_PACK_STATUS`, empty)
+kept apart; `pack_textures` contract and `resolution_order` with no
+pack hop; universal roles refused for packs. Nothing selected, no asset
+touched.
+
+**Remaining runtime work, Prod's:** P14 — `ClassPlate` honours
+`counts_player`; `Player.mass_class()` from `PLAYER_MASS_KG`;
+`RoomGraphs.build` places the shutter across the `opened_by` doorway;
+the played acceptance on `latched_route_zone.json` (step on, step off,
+walk through with the base kit, normal save/reload, still open).
+D-11 — the pack key in `_resolve`, `(pack, theme, role)` cache keys,
+universal-role refusals for packs. **D-9** stays as agreed
+(authorization before launch); consumables remain staged until the
+combined feature is ready for promotion.
+
+---
+
+## BRIDGE LANE — three proposals on the table, one of them load-bearing — 2026-09-22
+
+Coordination round. Each of these is one half of a contract with two
+owners, and each says so in its own file rather than being announced as
+settled.
+
+**D-9 — consumable expenditure (`docs/D9_CONSUMABLE_ACCOUNTING_PROD.md`).**
+A dropped socket and a dead process fail differently: retaining and
+retransmitting an in-memory pending list closes the first completely and
+cannot close the second. So the charge moves at AUTHORIZE time, before
+anything irreversible, and reaches the disk there;
+`ConsumableAuthorization` exists only so an unlaunched attempt can be
+cancelled. Keyed by `(component, generation, use_index)` — the trio the
+spend already checks — so two presses in one cooldown are two records
+and cancelling the second leaves the first standing. Proven across a
+real process boundary on the bridge side. **Not proven end to end**: the
+client still launches first and reports after. Found on the way: the
+settle branch was unreachable behind the "next index due" check.
+
+**D-10 — the chain on a route (`docs/D10_P14_CHAIN_ON_A_ROUTE_PROD.md`).**
+`TopologyEdge.opened_by` puts the gate on the edge, where reachability
+reads. The base-kit question is arithmetic: the player is 80 kg
+(MEDIUM) and §10.3 caps carrying at 60 kg (also MEDIUM), so `HEAVY`
+needs a pushed object and therefore a capability `graph.Capability`
+deliberately cannot name — the declared HEAVY chain may not gate a
+route, and the refusal says that instead of inventing a prerequisite.
+**The finding:** with `PRESSURE_PLATE` and `NOT`, a chain can only DENY
+a route. `plate → NOT → shutter` rests open; `plate → shutter` rests
+closed and is D-8 §11.2's held requirement wearing a room graph.
+Opening a route needs `LATCH`, which §19.2 names and nothing
+implements. Two candidates put to Prod.
+
+**D-11 — game-pack identity (`docs/D11_THEME_PACK_IDENTITY_PROD.md`).**
+One optional `Zone.theme_pack` beside the unchanged six-member
+`Zone.theme`, one extra lookup key ahead of the existing fallback chain.
+**Deliberately unbuilt** pending agreement.
+
+---
+
+## BRIDGE LANE — the carry line exists, and the killed write is a real kill — 2026-09-22
+
+**Mass semantics, verified rather than assumed.** Design 2 §10.3 governs
+ordinary pickup (`carriable == true` AND `mass_kg <= 60`);
+`ENVELOPE_MASS_KG`'s 120 is one of three numbers a HOST must meet to be
+a qualified manipulation provider. The 120 side was correct everywhere
+it appeared. **The 60 side had no consumer at all** — design prose and
+one art preview's row labels, no named constant on either side — so
+nothing conflated them and nothing enforced §10.3 either. It was already
+load-bearing in one place: `TransportedObject`'s own first sentence is
+"an object the player carries between rooms", and a 320 kg `BALLAST`
+validated. `physics.CARRY_MASS_KG` and `carriable_by_hand` now name it
+once, exported, with `TransportedObject` handed the case that fails it.
+Prod's `3b67921` correctly kept the residual: **no runtime consumer**,
+because the carry verb is P12. A GDScript helper for a verb that does
+not exist would be the inert framework this lane refused for P14, so
+instead the exporter attaches a note to each mass and a test fails if
+either is met bare in `constants.gd`.
+
+**P04's cold-restart evidence, corrected on the owner's finding.** The
+permanent/reversible case said in its docstring that the reversal ran
+after the restart and then reversed an in-process round trip **in the
+parent**. `_resumed_in_a_fresh_process` now runs resumed transitions
+inside the restarted interpreter and asserts there, with two harness
+self-proofs first; a second case carries the campaign forward in the
+child. **The PID check proves the harness, not the lifecycle** — a
+normal bridge/client restart and restored gameplay are unwritten and are
+Prod's.
+
+**P04.6 has a real killed write now.** SIGKILL *inside* `write_save` at
+its three actual windows, with a previous save on disk; the old payload
+survives all three. Sabotage-confirmed against a naive writer, which
+also surfaced that a torn primary raises `SaveUnreadable` rather than
+returning `None`. The stray-`.tmp` case is renamed for what it does.
+
+**UNFINISHED is not PROHIBITED.** The §10.3 binding was right about the
+rule and wrong about its reach: with only one shape available, a 320 kg
+object came back refused by the carry line and there was no way to say
+what was meant, so the schema encoded a ban the design never made.
+`TransportedObject.movement` now separates the two questions.
+`manipulated` is IN the vocabulary and refused as UNFINISHED, naming
+what is missing — route validation that knows the object needs
+`capability:core:manipulate` (`topology.py` does not read
+`transported_objects` at all), the physical runtime, and a
+doorway-clearance check on the object's own footprint.
+
+**The bulwark's back is reachable with the base kit.** Bounded turning
+at 90 deg/s, a 0.5 s commitment it cannot turn through, 0.9 s helpless
+after. `bulwark_opening()`: a player at contact range circles at
+167.1 deg/s for a net 77.1, clears the 69.5 deg shield half-angle in
+0.90 s — half of one swing — and the 1.4 s no-turn window sweeps
+234 deg, still 187 under a 0.8 strafe allowance. Instant tracking is
+sabotage-confirmed to fail the same check. **The played acceptance is
+OPEN**: geometry against a brief is not counterplay, and one test exists
+purely to fail if the tuning stops saying so.
+
+**P16's same-room check is a precondition, not physical proof.** It
+refuses a client that contradicts its own earlier transport report. It
+does not establish that anything was carried. Relabelled.
+
+**DESS-16 — the doorway clearance.** `brute` fails worst (0.700 m near
+edge against a 1.2 m half-width) and is an approved base-kit role that
+**predates the composition widening**, so this is a latent defect the
+widening made more common, not a regression it introduced. `melee`
+clears at exactly 1.200 because `IN_THE_DOORWAY` was derived for a body
+with the player's radius. `ENEMY_ENVELOPES` already exports
+`lane_width`, so the fix needs no new number — it is Prod's nudge.
+
+---
+
+## ENGINE LANE — the press asks first; the bulwark from the door; LATCH built — 2026-09-22
+
+**Consumables: the process boundary is closed.** D-9 converged with
+Dess on *authorise before the irreversible effect*, and Prod took Dess's
+shape (`docs/D9_CONSUMABLE_PROD_ANSWER.md`) because it can refund a press
+that never launched and mine could not. `press_slot` now asks and fires
+nothing; the snapshot in which the engine moved `spent` and wrote the
+save is what runs `activate()`. Offline is a refusal with feedback. A
+disconnect with a press unanswered is abandoned — neither fired late nor
+refunded blind — and the reconnect snapshot answers it both ways.
+
+`make godot-consumable-restart` is the owner's case with a real process
+boundary: authorise, fire, drop the report, **kill Godot with a signal**,
+relaunch a fresh process on the same unrefilled deployment. It reads
+*"the save says 1 of 3 used … a press in the new process spends the NEXT
+charge"*. Restoring launch-then-report fails it, and the marker line
+states the defect alone: *"1 effect(s), save authorised 0 of 3"*.
+`consumable_driver.gd` is at 91 and several cases now assert the opposite
+of this morning, with their history kept. **Still staged**:
+`IMPLEMENTED_ACTION_SLOTS` does not advertise `consumable`.
+
+**The bulwark acceptance now starts at the door.** The controller's own
+arrival, walked in on `move_forward` through real collision: 8.6 m in,
+16.5 → 5.9 m in 1.2 s, cleared in 9.9 s at 60/100 hp; stable over five
+runs. The placed-start case is kept as isolated counterplay evidence.
+Tuning stays provisional for human playtest.
+
+**P14: B chosen, LATCH built, and unreachable on purpose.**
+`docs/D10_P14_PROD_ANSWER.md` answers Dess: `plate → LATCH → shutter`.
+The runtime evaluates and restores LATCH (44 checks, sabotaged); the
+schema has not admitted it, so a declaration is refused as a gap. **Two
+findings for Dess:** the player cannot load a `ClassPlate` today (the
+EX50-033 exclusion is applied everywhere and `Player` has no
+`mass_class()`), so "MEDIUM is base kit" needs `SensorNode.counts_player`;
+and **`record_latch` refuses a room-graph latch** — I had claimed it
+needed nothing new, and it does. Reported under `graph_<room>` pending
+the bridge change. **Nothing about the route consequence is played.**
+
+**ThemePack: agreed** (`docs/D11_THEME_PACK_PROD_ANSWER.md`). Two fields,
+the pack taking no role hop of its own so the one-hop rule survives, a
+flat descriptor keyed like `textures`, universal roles refused for packs
+as for themes. Bridge half first; the engine half is inert until a Zone
+names a pack.
+
+**Also:** the APWorld's vendored `constants.py` had drifted and `make
+export` now copies it; `.ordinary-live-saves/` is untracked. Full
+frontier before this round: 46/46.
+
+**Open:** P14's played route (both halves in D-10 §4), P16 and P04's
+Godot halves, OV04 P12, and the ThemePack engine half after Dess's.
+
+
+## ENGINE LANE — the fight walks, the charge crosses a wire, a Zone asks for a chain — 2026-09-22
+
+**`godot-encounter` is a gate now, ten runs for ten.** It ran about one
+in five red before, always the three-scuttler `kill_all` case, and three
+consecutive direct re-runs could not reproduce it — so the fight was
+made to account for itself, and the next failure named the cause in one
+line: `1800 frames, 1 left, 82 shots / 0 landed, range 20.4-20.4 m, the
+ray hit Reward_89100002 (StaticBody3D) instead`. One range number twice
+across thirty seconds is a body that never moved: a 30x28 room can place
+a scuttler 20.4 m from the arrival point, outside the 18 m aggro radius,
+with the reward pedestal on the line. Nothing there was a finding about
+`scuttler`, `kill_all` or the placement — **a fight where the player
+never moves is not a played fight**, and `_fight` walks now, sliding
+along whatever it runs into. The bulwark's played acceptance stands:
+cleared in 8.8 s with 50 of 100 hp, base kit only, continuous fight with
+real movement and attacks.
+
+**`godot-consumable-live`: one charge, from a keypress to the save, over
+a real socket.** The spend was checked in two halves that never met —
+Python arithmetic on one side, a client with `assume_sent` and a
+hand-written snapshot on the other — and both could pass while the pair
+was broken. The live target asks the only question that matters: HOW
+MANY EFFECTS RAN, AND HOW MANY CHARGES DID THE SAVE AUTHORISE. Effects
+are counted from `EchoRuntime.action_used`; authorisation is read out of
+the snapshot's `consumable_uses`. Twenty checks, and the line it exists
+for reads **"4 authorised, 4 run"** — two presses made with the socket
+genuinely down, both resent on reconnect, both counted exactly once.
+
+The campaign owns a consumable because `tools/give_consumable.py` puts
+one in the save between two bridge runs, through the real models and the
+real store: the fallback provider emits no `consumable`-slot Action, the
+slot is still staged, and this target is about the expenditure rather
+than about generation. **`IMPLEMENTED_ACTION_SLOTS` still does not
+advertise `consumable`.**
+
+**One sabotage it catches and one it does not, said out loud.** Dropping
+the generation check from `spend_charge` fails it twice, the second
+failure being the exact harm — "3 authorised, 2 run". Restoring
+`_in_flight.clear()` on the disconnect path PASSES here, because the
+sequence can only reach that transition with nothing held; that property
+is proven in `consumable_driver.gd`, which fails three checks under the
+same sabotage, and the live driver's docstring says so.
+
+**P14's consumer exists: a Zone can ASK for the signal chain.**
+`RoomGraphs.build` reads `Zone.room_graphs` and puts the plate, the NOT
+and the shutter in the named room off the committed layout —
+`RailNetworks`' move, for the same reason. `SignalGraph` evaluates in
+declaration order, which the schema already guarantees is topological
+order. The vocabulary is refused rather than dropped and a typo gets a
+different answer from a gap (`NAND` is not one of the eleven; `AND` is
+one of them with no runtime; `LEVER` is the same on §20's sensors), and
+nothing is ever half-built. `SUPPORTED_ACTUATOR_OPS` is exported so the
+refusal reads the same list the Zone was validated against.
+
+**It does NOT gate a route, and that is a boundary rather than a
+shortcut.** `RoomGraph` declares no capability gate, so a chain that
+sealed an exit would be a physical gate the AP logic never declared —
+SOLUTIONS_CATALOGUE §0-bis's one prohibition. Putting a graph on the
+route needs the declaration to carry the gate: a schema change with
+Dess's half in it.
+
+**The player-exclusion case cannot tell two rules apart, and says so.**
+Deleting `ClassPlate`'s player-group skip fails none of the suite,
+because `Player` has no `mass_class()` either. The case pins the
+behaviour and names what it cannot attribute rather than showing a green
+tick for §3.
+
+**Open, and unchanged by any of this:** P16's Godot half (player-operated
+transport into a consuming mechanism; live Status continuity across room
+boundaries with normal expiry), P04's Godot half (a normal bridge/client
+restart and restored gameplay), OV04 P12's twelve manipulation verbs —
+which must read `CARRY_MASS_KG`, not `ENVELOPE_MASS_KG` — and the
+ThemePack identity extension to agree with Dess.
+
+
+## ENGINE LANE — the Echo menu answers its own questions now — 2026-09-22
+
+**From the owner, after playing.** The Echo menu was "a scrolling list
+with no search or sort, and mixed passives with actives". `godot-archive`
+is new at 23 checks.
+
+The five slots are the top of the screen — what is on each key, what
+replacing it costs, and the consumable's remaining uses — and clicking a
+slot filters the list to what fits it. Search matches name, source game,
+source item, description and concepts; sort offers newest / name /
+source game; ACTIONS and ALWAYS ON are two counted sections. The
+"1 of 3" form matters: a search hiding two things otherwise reads as
+owning one.
+
+**A fifth slot, `consumable`, on Q.** A consumable is an Action with
+`charges` — not a new component kind, and not a zero-regen `Resource`,
+because a Resource is a HUD channel with an economy and three uses of one
+grenade has no decisions in it. Slot and charges imply each other
+structurally. Charges persist (the fold says what the campaign was given;
+button presses are not in it), and **refill on entering a Zone** by the
+owner's decision. The supply is permanently owned: the last charge leaves
+it equipped at `0 / max` saying what refills it.
+
+**WHICH entries count as a refill is this lane's proposal, not a ruling**,
+isolated in `transitions._refill_is_due` so it can be replaced without
+touching the spend. As proposed, it refills when the deployment target
+changes — so a re-entry, a reload and a Hub round trip do not restock, but
+**A → B → A refills at both changes** and Hub → B → A is a restock loop one
+Zone long. Per-Zone expenditure persistence is a different policy and the
+owner has the decision.
+
+**The spend is a compare-and-swap on the supply AND the use.** `use_index`
+alone cannot reject a stale request across a refill: an old use 1 is exactly
+the first index due afterwards, and an old use 3 matches again once two new
+uses have landed. `consumable_generation` is minted by the refill and nothing
+else, mirrored on the snapshot and echoed on the intent — the
+`proposal_id`/`attempt` shape, not a second convention. `BridgeError.about`
+carries the domain key of what was refused, so a client can release a spend
+it is holding; it was the only server→client message with no identity at all.
+
+**THE ADVERTISEMENT WAS WITHDRAWN AND THE ORDERING CORRECTED.** The
+spend was right about messages and wrong about expenditure: the effect
+fired on `action_used` and the client paid afterwards, so an offline
+press ran an UNPAID activation and a refusal refunded a charge whose
+effect was already in the world — one charge, two activations. Two of
+this lane's own tests asserted that as the specification.
+
+The order is **reserve → launch → report**. `reserve_consumable` takes
+the charge before anything irreversible happens; `release_reservation`
+is the only refund there is and it is pre-launch, when nothing has been
+sent; `commit_consumable` reports a launch and keeps the charge spent
+whatever the answer is; a refusal marks the reservation DISPUTED and
+never hands it back. `IMPLEMENTED_ACTION_SLOTS` withholds `consumable`
+again and the baseline is back to four slots.
+
+`TestAuthoritativeExpenditure` counts how many charges the SAVE gave up
+rather than how many messages went out — a retry is one expenditure, a
+delayed response does not double-charge, refused attempts spend nothing,
+a stale supply spends none of the new one. Four sabotages caught; a
+fifth was not caught and so was not a sabotage, which is recorded
+because it is the shape of a test that proves less than it claims.
+
+**`make godot-consumable` is 61 checks** — the runtime half, on a
+real Player, EchoRuntime and InventoryLayer. It counts charges accepted
+AND actions run in every case, because those are two numbers. Three
+sabotages caught. It found a real bug: `inventory.gd::_row` derived equip
+buttons from a `create`-only loop while the list derived sections from the
+fold, so an upgrade-only Echo was filed under ACTIONS and drawn as ALWAYS
+ON with nothing to equip.
+
+**Two silent five-slot bugs, found by reading rather than by failing.**
+`resource_meters.gd` and CLEAR ALL both spelled the four names out, so a
+consumable's cost would never register as paid and "clear all" would
+leave it equipped. The keycap table lived in two Godot files; it is
+exported now, and restoring the local copy makes the HUD render "? —".
+`Hud._loadout_text()` had no test anywhere — the one slot-facing surface
+with none — and that sabotage is what its new case catches.
+
+**Live gameplay consequence, stated rather than buried:** widening
+`SLOT_NAMES` widens `IMPLEMENTED_ACTION_SLOTS`, so Epsilon may now emit
+consumables into new campaigns. That is what makes the slot real instead
+of inert support. The Playtest 2.5 baseline was retaken for it; `zones`
+is byte-identical.
+
+
+## ENGINE LANE — the cargo swings, and §21's twelve are all built — 2026-09-22
+
+**OV04 P13. `godot-constraints` is new at 67 checks.** Amalgam §14.8 and
+§26.5 pinned from Design 2, plus §21.10's three actuators — the ones
+`Actuator` refused by name when P15 landed §21's other nine. **All
+twelve actuator kinds build now.**
+
+**The headline is one measurement the Amalgam names itself:** *"A crane
+in Design 2 is a `PULLEY` with a load on one end and a `WINCH` driving
+it. Its cargo swings. Design 1's crane was a `PATH_MACHINE` whose cargo
+was a child transform and could not."* An 80 kg cargo dropped 2.4 m out
+from its anchor swings in to 0.00 m while the rope still holds it up.
+
+**Two solvers, and the split is the substrate's.** Godot has a hinge and
+a slider with real limits, so `HINGE`, `SLIDER`, `SEESAW` and a hinge
+`PENDULUM` are those. It has nothing for a taut-only distance constraint
+or two ropes sharing a total length, so `ROPE`, `CHAIN`, `PULLEY` and
+`COUNTERWEIGHT` are solved here at §14.8's fixed eight iterations.
+Consequence, declared rather than hidden: `breakable_at` is offered only
+where a real constraint force exists, and asking for it on a hinge is
+**refused by name**.
+
+**The solver diverged to 1e18 on its first run.** `apply_central_impulse`
+outside `_integrate_forces` is queued and does not change
+`linear_velocity` until the next step, so eight passes each applied the
+same full correction. It carries its own working velocity now.
+
+**Two things the obvious implementation got wrong.** A brake is a motor
+held at zero, not limits squeezed onto the current value — Godot
+measures limits in the joint's frame and this class measures `value` in
+the body's. And a `DRIVER` cannot turn a locked hinge: §23.5 rule 28
+pairs a `BRAKE` with every mandatory-route `DRIVER`, so the brake winning
+is what stalls the driver rather than letting whichever wrote the motor
+last decide.
+
+**P14 is NOT this lane's to build.** DESS-09 measured it and the argument
+holds: the engine has one signal chain (`PoweredLink`), no node
+vocabulary, no conduit, no graph, and declaring Design 1 §19's eleven
+node types now would be a framework no room uses — which P14.5 warns
+against in its own words.
+
+
+## ENGINE LANE — §21's actuator contract, and the door reverses now — 2026-09-22
+
+**OV04 P15. `godot-actuator` is new at 93 checks**, and it is the first
+suite in this lane whose subject is a document section rather than a
+room: Amalgam §21, all of it this engine can reach.
+
+**The engine had six actuators and no contract.** `ServiceShutter`,
+`RailCarrier`, `ShuttleDeck`, `RailJunction`, `PoweredLink`'s door and
+`LaunchSolver`'s pad were each built for the room that needed them, and
+no two of them answered "the input reversed halfway" or "the power went
+out" the same way — because nobody had asked. §21.1 calls its transition
+table "the complete answer… it applies to every actuator kind", so
+`Actuator` is that answer written once, `SafeClosure` is §21.2's
+interlock written once beside it, and `Constants.ACTUATOR_POWER_LOSS` is
+§21.1.1's table with no holes in it.
+
+**C4a is closed.** The shutter stopped where it was and waited, which
+never crushed anybody and was half the rule. §21.2 requires a refused
+closure to stop, **reverse to fully open**, and retry every 1.0 s,
+repeating — because a panel parked halfway still narrows the doorway it
+was asked to clear, and gives the person under it no sign that stepping
+aside is what it is waiting for. It reverses now, on the contract class
+and on the shipped machine, and its protected set widened from the
+player to §21.2's "player or any `required = true` object" — which P16's
+transported objects now carry as a group on the body.
+
+**The suite did not cover its own defect on the first attempt.** Both
+interlock cases opened the door fully, put a body in the doorway, and
+only then asked it to shut: the panel never started moving, so "stopped"
+and "reversed" were the same number, and reverting the repair left the
+suite green. §21.2's subject is a closure that has *begun*. Corrected, the
+same revert produces **nine failures**.
+
+**Nine of twelve kinds build; three are refused by name.** §21.10's
+`WINCH`, `BRAKE` and `DRIVER` drive a constraint solver this engine does
+not have. They are in the vocabulary and in the power-loss table so the
+table has no hole, and `Actuator.create` refuses them, which is the
+honest report of where the substrate ends. That is **P13**.
+
+**Also closed on machines that are in rooms today:** `ShuttleDeck` (the
+LIFT) and `RailCarrier` (the MOVING_PLATFORM) had no notion of power at
+all. Both now hold at the exact position they were caught at and resume
+the errand they were on — §21.1.1's asymmetry argument is that a lift
+which drops when a generator fails can strand or kill the player, and no
+interlock helps, because the danger is the motion.
+
+**Next ready Prod packages:** P12 (manipulation verbs), P13 (constraints
++ §21.10's three), P14 (signal graph and sensors), P10/P11 (remaining
+Statuses and compounds), P17 (railway switching). **P08 stays blocked**
+on seven content-value integers only the owner can set.
+
+
+## BRIDGE LANE — four corrections applied, and the composer emits — 2026-09-22
+
+**Two of the owner's four corrections were defects in rules I had
+shipped and sabotage-proven**, which is worth saying plainly: a rule can
+be correctly implemented, fully tested, and still be the wrong rule.
+
+**Correction 2 was the real one.** The search let the player set any
+variable whose setter's room they could reach, so Blindside's gantry —
+4.6 m up, no mantle, no stairs — became operable the moment they walked
+in underneath it. The search was granting itself a capability.
+`ZoneStateSetter.capability` now declares what operating a control costs
+beyond reaching its room, setter capabilities join the undeclared-gate
+accounting, and §4.0's "a reversible variable cannot strand you" is
+**withdrawn**: `selects` proves a reversal *operation* exists, not that
+the player can reach it. Physical operability evidence stays the engine
+lane's.
+
+**Correction 4:** the cross-room rule had become a content restriction.
+It now requires what it actually claims — at least one consequence
+somewhere else — and allows a reader beside the control too.
+
+**Correction 1:** held cross-room mechanics are **UNSUPPORTED, not
+unfair**. I withdrew the fairness argument; they stay in the design and
+the bounded §19.7 rule-2 amendment is drafted and ready to bring.
+Reversible configuration is approved for the first Blindside
+integration and is not a substitute.
+
+**Correction 3:** the consecutive-dock rule describes the ordered-route
+implementation and does **not** retire branching railways from the
+design. `RailJunction` is not a track fork, and Blindside's acquisition
+branch is walked, not ridden. DESS-01 lists the five pieces a branching
+configuration would still need.
+
+**The composer emits** (`cross_room.py`): handed a really composed Zone,
+it derives a control in `c002` and a consequence in `c023`, 21 rooms
+apart, gating a real edge — nothing in it names a room. It is a step,
+not a default, so `played_zone_digest` and the 0.3 comparison do not
+move. `transitions.record_zone_state` is the authoritative update path.
+
+**DESS-02: one guarantee was vacuous.** The composer claims it declines
+rather than emitting something broken; sabotaging that check left all
+fourteen controls green, because no candidate was ever unsolvable. The
+missing case — a Zone granting a capability, composed for a run not
+guaranteed it — now exists, and the sabotage fails.
+
+**Findings are lane-prefixed from here** (`DESS-nn` / `PROD-nn`). The
+flat series collided twice in two merges and both were spent renumbering.
+
+**Not done:** Prod's runtime half, physical acceptance, transported
+objects (explicit unfinished 0.4 row), and the featured-acquisition/AP
+delivery, which no macro declaration or dev grant proves.
+
+## BRIDGE LANE — D-8 agreed, and the bridge half of cross-room is in — 2026-09-22
+
+**The contract came out the same from both lanes.** Prod's
+`docs/D8_CROSS_ROOM_PROD.md` and my
+`docs/design-proposals/D8_CROSS_ROOM_STATE_CONTRACT.md` were written
+without either of us seeing the other's. Both name Amalgam §19.7, both
+quote *"a puzzle that should change the Zone drives a setter package's
+interaction, which the player then performs"* as the reason the
+forbidden global signal bus is unrepresentable rather than merely
+banned, and both call it D-8.
+
+**The crossing, as data:** a player interaction in the setter's room
+writes a declared handle, and the destination room's graph reads it.
+Rooms never address each other at any step. `Zone.zone_state` declares
+the variables `physics.state_vector_product` has budgeted since before
+anything could name one; `StateCondition` gives `TopologyEdge` the
+predicate §5.6 step 6a always claimed to evaluate; `_explore` carries a
+third state component; `ZoneProgress.macro_state` is overwritten rather
+than accumulated, and stays out of monotone `latched`.
+
+**§4.0 is the rule to argue with.** Lifetime is *proven* by the
+declaration: `permanent` means the setter selects exactly one non-initial
+state, `reversible` means it can always go back. The owner's "do not
+silently replace a live requirement with a permanent latch" is then
+unwritable rather than discouraged.
+
+**F-26: my own test found the defect.** Threading the macro component
+through five of six searches left `_key_graph_is_acyclic` at the initial
+state, so a gated edge looked shut and a Zone with no cycle reported
+one. One search knowing what another does not — reintroduced by the
+change that added the thing it is about, and caught only because the
+acceptance case runs on the really composed 23-room Zone instead of a
+three-room fixture.
+
+**Not done:** no composer emits a relationship, the engine half is
+unbuilt by agreement, and no physical acceptance has been run. `make
+test` 1631 passed, 6 skipped.
+
+**Also this batch — F-24**, answering Prod's three D-4 questions: spans
+must join consecutive docks (refused in the schema, where a Zone that
+cannot be built should not validate), `docks` order *is* the route
+order, and `home_dock` exists now with the engine's own default.
+
+## ENGINE LANE — target facing is a gate, and a Zone can ask for a railway — 2026-09-22
+
+### The bounded nudge, and 27 of 27
+
+`godot-target-facing` is **in CI**. The entry in `NOT_A_SUITE` always said it
+would come out "the moment that repair lands", and it has.
+
+The nudge is generic — no room, element or world coordinate is named. Any
+unmounted SHOT target that no rotation can aim gets a bounded walk in **its own
+local frame**, `-basis.z` first, so the first thing tried is backing away from
+whatever it is looking at. 0.05 m steps to 0.50 m, **distance-first**, so the
+first candidate that survives is the smallest that exists. Rotation stays the
+first answer; a case pins that in a room where every target can simply be
+turned, **none of them moves**.
+
+Four gates, all required: footprint (no solid, no other claim, no reservation —
+reservations count for a move although they do not count for a facing),
+support (`_floor_under`), route (floor and headroom where a player would
+stand), and the shot at the **unchanged** 2.0 m. The claim follows the element:
+the affected activity's footprints are recomputed by the same `_footprints`
+that produced them.
+
+**Two defects found building it, both measured.** The 0.35 m courtesy padding
+is for keeping content off *content* — tested against architecture it rejected
+every nudge for a collision the element was already in (local x 6.1, partition
+at 6.7, silhouette clear, padded claim overlapping). And the firing ladder
+started at 2.0 m, i.e. *past* the window it was meant to check, so a target
+with exactly its clearance and something solid just beyond read as unshootable
+while a player could stand at 1.5 m and hit it.
+
+The diagnostic Zone's case moved **0.10 m** back along its own facing — exactly
+the proposal the census had measured.
+
+### D-4 consumed: `Zone.rail_networks` builds a real railway
+
+`make godot-rail-zone`, **23 checks**, in CI. `ZoneController` reads the
+contract Dess landed at `704f379` and `RailNetworks` builds it: docks at the
+declared rooms' arrivals, a `RailPath` through them, a span per declaration
+carrying its own `latch_id`, an `AlignmentControl` in the room
+`control_room_id` names. A null control means the span ships commissioned,
+because that is what the schema says it means.
+
+Certified: every dock stands in the room its declaration names; a span with a
+control starts **refused** and one without starts open; the control is in its
+own room; and a Zone rebuilt knowing the latch fired comes up **commissioned**
+— §5.4a recomputed from the latch, with nothing having saved a span.
+
+**F-22, and the engine refuses rather than guesses.** The schema declares a
+graph (`from_dock`/`to_dock`, any two of eight); `RailCarrier` runs one ordered
+route. A non-adjacent span has no link to commission, so it is refused **by
+name**, the network builds nothing, and the Zone still builds — a composition
+finding on `rail_refusals`, not a crash. Three concrete questions go back to
+the bridge lane: must spans join neighbours, is `docks` order the route order,
+and is there a `home_dock`. Only the first can make a Zone unbuildable.
+
+### Dess's deliveries integrated
+
+`704f379` RailNetwork (consumed above), `c0d5446` the support-target export
+(collapsed onto one name, F-21), and `96b6fdd` **D-1/D-2 the acquisition
+binding** — `Zone.featured_acquisition` and `established_in_zone`, the producer
+`capability_guarantee`'s case C never had. Merged clean; bridge suite **1650
+passed + 627 subtests**. She notes nothing composes a featured Zone yet: that
+composer half is this lane's, and is the next M2 step.
+
+### The 2026-09-22 scope clarification: cross-room puzzles are 0.4
+
+Recorded, measured and handed over — **no implementation**, because the owner's
+instruction is *"agree the shared contract before competing implementations are
+written"* and the contract is Dess's (D-8).
+
+**§19.7 already pins the architecture**, so nothing needs inventing: room
+graphs read macro state and never write it; the machine graph has no logic
+nodes and is evaluated on macro change only; and *"a puzzle that should change
+the Zone drives a setter package's interaction, which the player then performs
+— the latch does not reach across rooms on its own."* That sentence is the
+owner's "no permanent-latch shortcut" and "no global signal bus", already
+written down.
+
+**F-23, and it is the whole gap: every piece of Zone-scope state the engine has
+is monotone.** Latches, keys, station reached-ness — all one-way. `PoweredLink`
+is live-only and cannot write anything. Between permanent and gone-with-the-
+frame there is nothing, so a cross-room puzzle on today's engine could only be
+a latch. §20's `MACRO_STATE`/`MACRO_SELECTOR` and §21's macro effect types are
+pinned and absent (`grep -rn macro godot/scripts/` returns nothing), while
+`physics.py` already budgets macro variables against §4.10 — the accounting
+exists, the declaration does not.
+
+**Two rule questions, named rather than hidden** (`docs/D8_CROSS_ROOM_PROD.md`
+§4). §19.7 does not cover transported objects; and **§19.7 rule 2 makes a
+cross-room HELD requirement impossible**, since a held input is room-layer live
+state and room graphs may not write macro state. Recommendation: express it as
+reversible Zone configuration, which needs no amendment. The amendment that
+would be needed otherwise is stated so the choice is visible.
+
+**Acceptance case designed**: Blindside's major + acquisition branch, distinct
+room IDs, through the real composition path — the central junction keeps its
+alignment control, and one meaningful interaction elsewhere in the branch
+changes a mechanism or route in another room. Finding the featured Echo is
+necessary and **not sufficient**. Seven proofs, including that a rebuilt
+destination binds by variable id and never to the setter's node.
+
+Matrix: **M6**, 0.4 completion, not started, blocked on D-8.
+
+### Still open, and not touched here
+
+- **H1/H2 enemy variety** — 3 of 10 declared roles have behaviour. Separate
+  explicit workstream, active in the queue.
+- **The rest of the Amalgam catalogue** — 11 kinds named and unsupported.
+- **No composer declares a railway or a featured acquisition yet**, so neither
+  has been ridden or played. Build-and-certify is not the same as played, and
+  the rows say so.
+- The three EX50 rooms remain **playable development scenarios**; their
+  interlocks, campaign integration and save requirements are open rows.
+
+
+## ENGINE LANE — the Unweighted Switch stands, and the boundary caught a lie — 2026-09-21
+
+**EX50-033 is a room you can walk.** `make godot-unweighted`, **61 checks**, in
+CI. `--unweighted` builds it; `--disconnected` is §11's control.
+
+The contradiction is real and measured: the upper sill at **1.9 m** is above a
+baseline jump from the floor (apex **1.333 m**, from generated `Constants`) and
+**0.433 m** inside one from the crate top at 1.0 m. The 200 kg crate is the only
+step; the recess floor it must stand in is a HEAVY `ClassPlate` wired to the
+shutter through a NOT. Placing the step you need closes the route you want.
+
+**`lightened` resolves it by moving the class and not the kilograms**, through
+the real path — `ManipulableBody.apply_status` into a `StatusEffects` at target
+kind `object`, refused at the engine's own boundary if the runtime does not
+implement the pair. No stand-in, no room-local vocabulary.
+
+| measured in the room, on its own crate | before | while `lightened` |
+|---|---|---|
+| kilograms | 200.0 | **200.0** |
+| mass class | HEAVY | **MEDIUM** |
+| crate top | 0.99 m | **0.99 m**, ray still stops on it |
+| one impulse | 0.1957 m/s | **0.3913 m/s** (x2.00) |
+| plate, nothing having moved | satisfied | **released** |
+| shutter | shut | **open** |
+
+**And then it expires**, which is the half a room that only measured the opening
+would never have found: at 8.0 s the class returns, the plate re-satisfies with
+nothing having moved, and the shutter shuts again. That is why the bolt exists,
+and the suite shows it outlasting the Status — crossing still open, return stair
+still built, after the same expiry that shut the unbolted door.
+
+The route is **walked**: drive lever, shot applicator (line of sight asserted,
+not assumed), climb — feet settled at 0.99 m on the crate top — crossing at
+z 7.02, bolt, goal.
+
+### F-20 — the support table under-declared what the engine implements
+
+`SUPPORTED_STATUS_TARGETS["vulnerable"]` said `("enemy",)`. The engine
+implements it **twice**: `stat_stack.gd:93` multiplies the PLAYER's
+`damage_taken`, `enemy.gd:434` multiplies the enemy's. Invisible while support
+was asked per KIND; asking per TARGET turned `godot-stats` red on three cases,
+including the cleanse order's own "`vulnerable`, which the player does suffer".
+
+**Declared to match the runtime, not the other way about.** A target the engine
+implements may not be refused, exactly as one it does not may not be allowed.
+Reverting the row alone brings all three failures back.
+
+The acceptance sweep was the weaker shape of the question — one `self` container
+against `ECHO_STATUS_KINDS_IMPLEMENTED`, which only ever asked whether a kind
+was accepted *somewhere*. It now sweeps 13 kinds across all five §15.1 targets
+and asks both halves: accepted where declared; elsewhere no entry, no active
+state, no `status_applied`.
+
+### One export of the pair, not two
+
+Dess exported the same map as `ECHO_STATUS_SUPPORTED_TARGETS` (`c0d5446`) while
+this lane exported it as `ECHO_STATUS_TARGETS` (`fb11161`) — she branched before
+mine landed. The merge **collapses them**; hers stands (her lane, her file, and
+`SUPPORTED` is what the map is) and the three engine consumers are renamed onto
+it. Two spellings of one fact is the thing this repository keeps uncreating.
+
+### Target facing: 1 of 27 open, and the nudge is measured
+
+`e13e7e0` took 7 wrong-facing targets to **1**. The survivor is
+`ActivityElement_4` in `c002` at `(-17.1, 2.2, 29.1)`, facing -X, blocked at
+**1.90 m** against a 2.0 m window — **10 cm short** — with a wall 1.25 m behind.
+
+Per the owner's direction, the census now reports a **bounded** proposal rather
+than searching: half a metre of travel in 5 cm steps, along the facing axis and
+the two perpendiculars, at the *same* clearance every other target is held to,
+rejecting any candidate that is not standing in open air or leaves the room.
+
+> **PROPOSAL: move 0.10 m back along its own facing**, to
+> `(-17.00, 2.20, 29.10)` — same room, same 2.0 m clearance, no rotation.
+
+The wall behind goes 1.25 m → 1.15 m and the target is unmounted, so it owes
+nothing back there. **Measured and reported, not applied**: it moves an element
+in a shipping Zone's generation and ripples into the placement fixtures, so it
+waits on the owner's word. `godot-target-facing` stays out of CI until it lands.
+
+**FULL FRONTIER GREEN at `cf70a98`, on a frozen tree** (`git diff --stat HEAD`
+empty at the start of the run): Python **1597 passed, 5 skipped**, and **30
+Godot suites** — boot, test, hud, rules, stats, lab, affordance, verbs, blink,
+content, activity, room, room-contract, graphs, movement, zone-audit, legible,
+physics, traverse, return-placement, build-failure, exit-reach, passenger-carry,
+rail-carrier, rail-junction, passing-platforms, counterfire, mass-class,
+**unweighted**, reload.
+
+The run was made in a separate `git worktree` at that commit so the main tree
+stayed free for the documents. **The first attempt reported all thirty suites
+FAILED and none of it was gameplay evidence**: `godot-bin/godot` is untracked
+and lives only in the main checkout, so `make godot-import` could not find a
+binary. Linking it and re-running gave the result above. An infrastructure
+failure that looks exactly like thirty broken suites is worth writing down.
+
+The only file the run itself changed is
+`godot/tests/fixtures/placement/captures.json`, and only its own
+`source_commit` stamp — the census re-attesting which commit produced it. That
+stamp is carried into the checkpoint rather than reverted.
+
+`godot-target-facing` is not in that list and is not a gate; it still reports
+its one open case, now with the measured proposal above.
+
+### Still open, and not touched by this checkpoint
+
+- **H1/H2 enemy variety** — a separate workstream on the recovered roster.
+- **The rest of the Amalgam Status catalogue** — 11 kinds named and unsupported;
+  `lightened` crossed on ONE target and the other four still refuse it.
+- **EX50-011 / EX50-021 / EX50-033 are playable development scenarios.** Their
+  interlocks, campaign integration and save requirements are not discharged by
+  their route tests and remain open rows.
+
+
+## ENGINE LANE — EX50-033: class is not kilograms, and the Status is missing — 2026-09-21
+
+**The ledger's open question is answered, and the answer is "neither".** The
+question was whether the engine had EX50-033's semantic mass-class sensor or a
+summed-kilogram plate. It had **no mass class at all** — `mass_kg` is a number
+on `ManipulableBody`, `PoweredLink` adds it up, and nothing anywhere read a
+class.
+
+`make godot-mass-class`, **36 checks**, in CI.
+
+**§10 says what to do before building anything**, and it was done in that order:
+"Before building a platform room, verify that the same object remains
+collidable while the plate's output changes under LIGHTENED." And it names the
+**decisive negative control**: "replaces the class plate with a summed-kilogram
+sensor without changing the Status... That control prevents the implementation
+from conflating two distinct mass vocabularies."
+
+The summed sensor is not written for the occasion. It is `PoweredLink`, the one
+that already ships.
+
+| measured, one crate, both sensors | class plate | summed kilograms |
+|---|---|---|
+| 200 kg crate at rest | held (HEAVY) | held (200 kg) |
+| class dropped one step, kilograms untouched | **released** | **still 200 kg** |
+| 50 kg taken off, class unchanged (still HEAVY) | **still held** | **reading fell to 150** |
+| 300 kg of MEDIUM debris | not satisfied | over a 120 kg threshold |
+
+The two vocabularies disagree in both directions, which is §6's "A mass-field
+ability that changes kilograms without changing the plate's semantic class may
+not release the plate" as well as §10's control. And the crate is still a step:
+a body dropped on the lightened crate comes to rest on its top, and the crate
+has not moved, shrunk or fallen.
+
+**The thresholds are transcribed, not chosen.**
+`docs/design-proposals/02_PHYSICS_IS_THE_GAME.md` §10.2 pins them — LIGHT below
+30 kg, MEDIUM to 120, HEAVY to 400, FIXED above that or unmanipulable — and the
+suite checks all six boundaries at three decimal places, because a
+transcription is exactly the thing that goes wrong at its edges.
+
+**F-15: `lightened` is not in the engine, and adding it is not a one-liner.**
+The accepted design has it (Design 5 §15.2: 8.0 s, magnitude 0.40, "`mass_class`
+drops one step"). `Constants.ECHO_STATUS_KINDS` does not, and that list is a
+GENERATED artifact from the bridge schema's closed `StatusKind`. Widening it is
+a shared-schema change — and worse, `StatusEffects.apply`'s own comment explains
+why it is not a line: a kind the schema admits and no system implements is
+"inert, because nothing reads it, yet still satisfying `status_active`
+conditions and `status_applied` edges". `lightened`'s specified effect spans
+impulse, wind, conveyors and Physics eligibility as well as class. That is
+**B3**, and it is raised as **D-7** rather than taken.
+
+So the class is lowered by `ManipulableBody.shift_class_provisionally`, named so
+it cannot be mistaken for the Status, and every claim measured through it says
+so. **That does not weaken the claims**: what is measured is what the two
+SENSORS do when a class moves and kilograms do not, which is true whatever moved
+the class.
+
+**And EX50-033's room is deliberately not built.** Building a playable room
+round a stand-in for its central mechanic is the coherent proposal dressed as
+evidence this ledger exists to prevent. The recess, the sill, the guide track,
+the far bolt and the return stair are named in the scope matrix as not started,
+blocked on D-7.
+
+**M3 stands at two of three**, with the third's blocker identified rather than
+guessed at.
+
+
+## ENGINE LANE — EX50-021: an enemy's shot as the input to a machine — 2026-09-21
+
+**The second of the three approved minors.** `--counterfire`: a firing lane
+with an emergency impact trip at the south end, hooded against the side you
+arrive from, and a gunner covering the lane from the north gallery. Stand in
+the lane, let it commit a shot, step into the alcove — the projectile carries
+on into the stance you left and trips the receiver, which opens a service
+shutter for eight seconds.
+
+`make godot-counterfire`, **44 checks and 2 notes**, in CI.
+
+**The specification names its own critical dependency and it did not exist.**
+EX50-021 §12: "projectile-source acceptance at the receiver." §3: "Existing
+player-only target filters must not be assumed to support this." Read rather
+than assumed — and `EnemyProjectile` delivered `take_damage` to a body in
+group `"player"` and to nothing else. Anything else it touched simply stopped
+it.
+
+**The extension is the smallest one that works, because the obvious one is
+wrong.** Letting an enemy projectile call `Damageable.hit` on whatever it
+touches is not a bounded extension; it is a change to what every damageable
+node in the game means, and the first casualty is `BreakablePanel` — a gunner
+opening the affordance whose capability the player is charged for. So a machine
+**opts in**, through `Damageable.HOSTILE_INPUT`, and the suite asserts that an
+ordinary shot element — damageable, hit by every player weapon — is untouched
+by hostile fire.
+
+**And the hood is steel, not a rule.** §3 asks for "physical directionality,
+not an owner-ID exception", so a real Static Pulse fired from the arrival side
+stops on real geometry, and the same weapon from the lane side operates the
+same plate. Both halves are measured from two real standing positions.
+
+| measured | value |
+|---|---|
+| flight, muzzle to stance (12.3 m at 14 m/s) | 0.88 s |
+| the step into cover | 0.43 s |
+| shutter interval left on reaching the service route | 5.4 s of 8 |
+| the ranged archetype's windup | **none** — `_say("shot")` is a tone at the instant of firing |
+
+**§11's three bars, all three met.** The committed shot lands in the vacated
+stance (continuous play: nothing knows the enemy is about to fire, and the
+dodge is a keypress made on seeing the projectile exist). `--blocked` puts real
+steel across the lane and the shutter does not open — and the blocker is SOUTH
+of the stance on purpose, because one north of it would break the gunner's line
+of sight and the counterpart would then be failing for the wrong reason. And
+with the gunner killed before any hit, the room still finishes: up the lane, an
+ordinary Static Pulse on the plate, through the shutter, up to the flank, the
+manual release, the goal — every metre walked.
+
+**F-14** records both runtime facts. **What is not answered, and cannot be by a
+test, is whether the bait is fair.** §12 says exactly that. The margin is
+reported as a number so a playtest has something to disagree with.
+
+**Next:** EX50-033 Unweighted Switch, the last of the three. One question
+first: its sensor is a semantic mass-class / LIGHTENED interaction, **not** a
+summed-kilogram plate, and which of the two the engine has is not established.
+
+
+## ENGINE LANE — EX50-011 Passing Platforms, built to its own bar — 2026-09-21
+
+**The first of the three approved minors is playable and measured.**
+`--passing-platforms`: a 28×22 m chamber where a lift `V` rises from the
+arrival floor to an upper shelf, pausing 2.5 s at the transfer plane on the
+way, and a shuttle `H` crosses at that height to a goal gallery. Neither
+reaches `G` alone. You choose when to start each.
+
+`make godot-passing-platforms`, **63 checks and 7 notes**, in CI.
+
+**§11's bar, both halves.** A continuous body run from the arrival floor boards
+the lift, transfers to the shuttle with both machines commanded and moving, and
+reaches `G` — nothing placed, nothing snapped, every command a keypress on a
+lever the body is looking at, and the three deck railings counted before and
+after. Then the counterpart: `--parted` shifts the shuttle's track so nothing
+passes, **the same interval between LAUNCH and the step is replayed**, and `G`
+is not reached. The walks are not replayed frame-by-frame and the suite says so
+where it does it — a body arriving one frame late would fire its interact into
+the air and fail for a reason that has nothing to do with whether the tracks
+pass.
+
+**§10's alternative is built, not prose.** "Stop H near the transfer, ride V,
+board H, restart. If no accessible control permits that sequence, the paper
+alternative is false and must be removed or built rather than left as
+reassuring prose." There is a STOP at the arrival floor and a restart lever on
+the shuttle's own deck, and the patient route is walked end to end.
+
+| measured (§10) | value |
+|---|---|
+| overlap, for a 1 / 2 / 3 s board-and-launch | 2.17 / 2.68 / 1.75 s |
+| the same, in the parted room | 0.00 s |
+| relative speed at the transfer | 1.50 m/s |
+| deck pairs that ever intersect | 0 of 1681 — they never share a `z` |
+| fall from a missed transfer | 2.89 m, **0 HP** |
+
+**Four findings.** F-10: the recovery floor had two strips of nothing in it,
+three metres wide and the full depth of the room, and **nothing walked found
+it** — the coverage census §10 asks for did, before anyone had an opinion about
+where the floor should reach. F-11: `add_child` throws a colliding node name
+away rather than making it readable, so the shuttle's second railing was
+`@StaticBody3D@93` and a name-based census reported two railings of three.
+F-12: §8 asks for the fall damage to be verified, and the answer is that **this
+runtime has none at any height** — the recovery floor costs time, not health,
+and that is an engine-wide default rather than anything this room does. F-13:
+an instrument error — a body resting on a *stationary* deck can finish a frame
+having slid against nothing, so `get_slide_collision` alone said it was not
+aboard.
+
+**One shared change to tested code.** `RailCarrier.top_speed` and `accel` are
+now per-carrier, defaulting to the skiff's 7.0 / 3.0, so a maintenance shuttle
+can run EX50-011's 1.5 m/s without a second class. `godot-rail-carrier` 73,
+`godot-rail-junction` 140, `godot-passenger-carry` 4 — all re-run, all green.
+
+**The lift is a new class and the shuttle is not.** A finite WEST HOLD / TRAVEL
+EAST / EAST HOLD / TRAVEL WEST schedule *is* a two-dock railway with a
+fail-safe stop, so `H` is a `RailCarrier`. A rail carrier on a vertical path
+stands its deck on end — `RailPath` refuses past 75°, correctly — so `V` is a
+`ShuttleDeck`. The two share `StopTravel` and nothing else.
+
+**Not built, and named:** §9's save behaviour (there is no 0.4 save
+representation — D-6), §8's boarding gates and interlocks, §7's later
+encounter, which the specification itself defers. The full scope/status matrix,
+including everything not started and which Dess handoff blocks which row, is in
+`docs/ledgers/HUGE_BATCH_LEDGER.md`.
+
+**Next:** EX50-021 Counterfire Arcade, then EX50-033 Unweighted Switch. Both
+unblocked, neither started. EX50-033 carries an open question first — its
+sensor is a semantic mass-class / LIGHTENED interaction, not a summed-kilogram
+plate, and which of the two the engine has is not yet established.
+
+
+## ENGINE LANE — the yard was answering an easier question — 2026-09-21
+
+**Measured before anything was changed: the base kit could walk to S3.** With
+the span still up and nothing in the mobility slot, a walked route round the
+outside of the track — 42.3 m, no teleports — ended standing on S3's platform.
+`_yard` laid one continuous slab and `_docks` put steps at every dock, S3
+included; both were conveniences from assembling the place, and neither had ever
+been measured.
+
+**So the commissioned link was restoring VEHICLE SERVICE and nothing more,
+while the scenario read as though it opened a destination.** Those are two
+claims. The yard now makes both checkable: the floor is four slabs around a
+hole, S3 stands on an island inside it, and a dock over the hole gets no steps
+— a flight of stairs rising out of a void is a bridge.
+
+| claim | measurement |
+|---|---|
+| destination access is gated | the walk ends in the hole at `y = -25.03`; narrowest gap round S3 is 6.0 m; a run-up and a jump from the far rim also ends in the hole |
+| vehicle service is what the repair restores | same yard, span home, the carrier crosses to S3 in 10.9 s |
+
+**And the island is not a trap.** Step off, send the skiff away, and one Static
+Pulse at S3's forward chevron brings it back — the direction controls are
+commands to the RAILWAY rather than calls placed at a dock. Held as a case, not
+remembered.
+
+**None of this is a progression claim.** It is dev scaffolding; it establishes
+that the scenario shows what it is meant to show, and nothing about an AP
+guarantee, a capability gate or a composed Zone.
+
+**The three EX50 originals are in the repository**, byte-for-byte under
+`docs/design-library/EX50_entries/`, with their digests verified after the copy
+and an authority note that keeps paper proposals distinct from runtime evidence.
+`make godot-rail-junction`, 140 checks.
+
+
+## ENGINE LANE — the second binding, and a name I will not invent under — 2026-09-21
+
+**`--railway --bracing` builds the same railway with the span held by a clamp
+instead of by a gantry control.** A different relationship, not a relabel: the
+first configuration asks the player to REACH a control and operate it, this one
+asks them to remove what is holding the span up. The accepted consequence is
+identical — the same latch, the same commissioned link — and what differs is the
+verb and what it is aimed at.
+
+**IT IS NOT A SECOND ACQUISITION LOOP**, and the addendum is explicit about why:
+`ranged_hit` establishes no newly acquired capability, because the starting
+player already shoots the transport receivers. It is an existing-tool objective
+variant and is labelled one everywhere it appears.
+
+**THE TWO ARE ALTERNATIVES, NEVER BOTH.** A yard offering a gantry *and* a clamp
+the base kit can shoot is a yard where the acquisition branch is optional, which
+is the guaranteed walking bypass under another name. The suite checks that the
+bracing configuration has no gantry, no pedestal and no hook.
+
+**EX50-011, EX50-021 AND EX50-033 ARE BLOCKED, AND NOT ON ENGINEERING.** Their
+specifications came from the uploaded batch package and are not in this
+repository. This lane will not invent content under names the owner gave
+specific meanings to. The parts they were chosen to share — `RailCarrier`,
+`RailReceiver`, `RailSpan`, the latch chain — all exist and are tested; what is
+missing is the design.
+
+Also: the scenario now draws the real HUD, bound the way `main.gd` binds it for
+a Zone. A yard with shooters in it and no health readout is a yard where being
+killed is a surprise.
+
+`make godot-rail-junction`, 124 checks.
+
+
+## ENGINE LANE — the whole loop, walked — 2026-09-21
+
+**`_walked_end_to_end` places nothing.** The body walks from S1's platform onto
+the deck, fires one Static Pulse at the chevron, rides to S2, is refused for
+want of track when it fires again, steps off, turns onto the branch walkway,
+walks it to the pedestal, takes the hookshot with the interact key, walks back,
+stands on the platform, pulls itself onto the gantry with the mobility key,
+throws the lever, comes down, steps aboard and rides to S3. Every metre is
+walked, ridden or pulled; every command is a key. 114 checks, stable over four
+runs.
+
+**IT IS KEPT APART FROM THE OTHER EVIDENCE, which is the point.** The plan asks
+that continuous play evidence not be blended with placed-near-target,
+pre-unlocked, direct-handler and synthetic-state runs, and the ledger now has a
+table saying which case is which. The one stated simplification here is that the
+shooters are removed: this case measures the ROUTE, the fight has its own case,
+and a walk that failed because the player was killed halfway would report the
+route broken when it is not.
+
+**Two things the walk found that the measured cases could not.** Steering
+straight at the pedestal walks a body off the platform's outer edge before it
+ever reaches the walkway — a player would see the walkway, and the steering had
+to. And standing a metre and a half out from the platform's centre puts the body
+UNDER the gantry's overhang, so the pull takes it into the underside rather than
+over the lip: where you stand to fire is part of the shot.
+
+**FULL FRONTIER GREEN at `88cb607`:** Python 1604 + 627 subtests, and 26 Godot
+suites — activity, affordance, blink, boot, build-failure, content, exit-reach,
+graphs, hud, lab, legible, movement, passenger-carry, physics, rail-carrier,
+rail-junction, reload, return-placement, room, room-contract, rules, stats,
+test, traverse, verbs, zone-audit.
+
+
+## ENGINE LANE — the ride is not a tram ride — 2026-09-21
+
+Three `ranged` shooters stand beside the S1-to-S2 leg on **alternating sides**,
+and the skiff carries **chest-high cover on one edge of its deck**. The deck
+turns through the corner and the cover turns with it, so a rider who wants to
+stay behind it has to move — which is the movement `godot-passenger-carry`
+was talking about when it recorded that a carrier's deck must be sized from
+the rider rather than inherited from `MovingPlatform`.
+
+The shield is part of the carrier's own body rather than a static body riding
+on it: an `AnimatableBody3D` with `sync_to_physics` carries its own shapes
+exactly, and a separate body standing on the deck would be a second thing to
+keep in step. It sits on the side AWAY from the docks, because the carrier's
+own +X is the side its platforms stand on and a shield there would be a wall
+between the player and the only way aboard.
+
+**What the suite holds, and what it does not.** Held: the shooters are real
+enemies, they are not all on one side, the shield stops a shot from its side
+while nothing on the carrier stops one from the other, and a shot fired from
+the moving deck damages a shooter. **Not held: whether the fight is any good.**
+That is a playtest question and the suite does not pretend to answer it.
+
+`make godot-rail-junction`, 96 checks.
+
+
+## ENGINE LANE — see it, cross to it, come back and open it — 2026-09-21
+
+**M2-mech.** The railway scenario now carries the whole first loop. The gantry
+that lowers the span is **overhead and out of reach**; the branch that supplies
+the tool leaves the S2 dock and passes under it; the pedestal there hands over
+`grapple_to_surface`; a ledge beside it is somewhere to learn it where a miss
+costs nothing; and the same control the player could see from the junction opens
+with it on the way back. That is the Blindside review's cause **B** and the
+owner's approved first configuration.
+
+**IT IS NOT M2 AND IT IS NOT MULTIWORLD-SAFE, and it says so on a sign.** The
+Echo is handed over by the scenario's own pedestal, not by an AP Check, an
+interpretation fold or a snapshot. The acquisition contract is M2's completion
+requirement, it is Dess's, and it is not built. What this proves is the
+EXPERIENCE; it proves nothing about progression.
+
+**THE STAIRS ARE GONE.** The owner's direction is explicit — do not add a
+guaranteed ordinary walking bypass to avoid the acquisition work — and a
+placeholder that lets you skip the loop is not a placeholder for the loop.
+
+**F-07: THE GRAPPLE IS A VERB THE BALLISTICS HAVE TO ALLOW.** `_grapple` sets
+`velocity` toward the hit point and `player.gd` then lerps the HORIZONTAL part
+toward the walk intent every frame: the vertical survives, most of the lateral
+does not. Under this gravity (~21.9 m/s², measured from the arc) a 14 m/s pull
+tops out 4.45 m above where it started. A gantry 3.8 m up and ten metres out was
+outside that envelope — the first cut peaked 2.7 m and the player landed where
+they started, and the second clipped its head on the gantry's own underside.
+Fixed in the GEOMETRY: 3.1 m up, 7.5 m out, plate above the inner lip.
+**Nothing in `player.gd` was changed** — its damping is production behaviour and
+a feel change to it is the owner's call.
+
+One defect repaired because the grapple is now load-bearing: `_grapple` burned
+the cooldown and the power draw on a shot at the sky, while `_blink` and
+`_grapple_swing` both refund. It refunds now, and so does a shot that lands on
+something that is not a `StaticBody3D`.
+
+**An instrument error, caught before reporting:** reading the cooldown one
+physics frame after the press reported the Echo broken while the pull it fired
+was in the air. A press issued from a coroutine lands between frames.
+
+**NEXT:** the loop is playable and unplayed.
+
+
+## ENGINE LANE — the railway is a place you can stand — 2026-09-21
+
+**`godot --path godot -- --railway`.** Board at S1, shoot the chevron pointing
+toward S2, ride; S2 to S3 is refused for want of track; climb the gantry stair,
+press E on the lever, watch the span swing down and lock; ride to S3. The plan
+calls M1 *"independently playable"* and until this existed nothing let anyone
+walk into it.
+
+**IT IS NOT A ZONE, and the distinction is load bearing.** No Checks, no exit,
+no composition, no campaign, no bridge connection — it runs *before* `boot()`
+and returns. Scaffolding in the `ShowcaseZone` tradition: it runs only when an
+operator asks for it by name and cannot be reached by accident. The gantry's
+stairs stand in for the grapple M2's acquisition branch will grant, and the
+scenario says so on a sign, because walking the player up to a control the
+design says is grappled to would misrepresent the design it exists to show.
+
+**THREE DEFECTS THE SCREENSHOTS FOUND AND NO TEST WOULD HAVE.** `make
+railway-shots` renders the place and `godot-rail-junction` passed throughout
+every one of these:
+
+- **The gantry stair reached nothing** — four metres short of the platform and
+  two metres below it. The lever was unreachable, and the scenario turns on
+  reaching it. `_stair` now takes both ends and solves the count and tread from
+  them.
+- **The stowed span read as more track.** Swung aside about the vertical, a
+  fourteen-metre beam lands across the yard at an angle that looks like rail.
+  Raised instead — a drawbridge — *"the bridge is up"* reads from anywhere.
+- **The direction chevron was a rectangle.** A `PrismMesh` shows its triangle
+  along one axis only, so aiming the apex down the track left the player
+  looking at the extrusion. Before that it was buried inside the plate
+  entirely, because the plate is turned to face the dock.
+
+These are facts about legibility and reachability. The suite now builds the
+scenario and holds the parts a test can hold: the controls are wired and aimed
+along the track, the platforms are at deck height, the player lands on one, and
+the far end of the locked span meets S3 to within 0.01 m.
+
+**NEXT:** the railway is playable and unplayed. Walking it is worth more than
+the next feature, because everything after this reuses its parts.
+
+
+## ENGINE LANE — the first thing that stays fixed — 2026-09-21
+
+**M1, the engine half.** A player pulls a lever; a span of track swings home and
+locks; the link the carrier was refused on becomes crossable; and coming back
+later finds the railway repaired. `make godot-rail-junction`, 49 checks, in CI.
+
+**THE CLIENT HAD NEVER SENT A LATCH.** `ZoneProgress.latched`, `LatchFired` and
+`record_latch` have been on the bridge since the physics slice landed --
+monotone, idempotent by `package_id/latch_id`, refusing any latch the committed
+manifest does not declare, and tested including reload survival and the
+snapshot. Every `latched` in this lane was prose in a comment.
+`ZoneController.report_latch` is the missing half, and `main.gd` now unions
+`progress.latched` into `latches_carried` beside keys, locks and stations.
+
+**FOUR LIFETIMES, MEASURED SEPARATELY**, because a system that treated them
+alike would either lose a repair the player earned or resurrect a moment they
+did not. The accepted repair persists and is RECOMPUTED at build time, never
+separately saved (§5.4a). A span left mid-travel leaves nothing behind -- that
+is the case that stops "accepted consequence" collapsing into "something
+happened". The lever comes back armed. The carrier is parked on a dock this
+build supports, never resumed from a saved transform.
+
+**A RESTORE REPORTS NOTHING**, and the suite checks it: re-emitting the latch
+would be the client telling the bridge a fact the bridge told the client, and on
+a monotone set that noise is indistinguishable from a real latch.
+
+**BLOCKED, AND NOT WORKED AROUND: a junction inside a real composed Zone.** A
+physics package binds to `feature:<tag>` or `shell:<shell_id>`
+(`layout.py::_content_refs`), and §13.2 forbids a `features:` tag from
+mattering. Nothing in the Zone schema declares rail content, so the composer
+cannot ask for a junction and the engine must not invent one. That is **D-4**,
+and it is Dess's. One saved latch does not prove general persistence and is not
+reported as if it did.
+
+**`godot-return-journey` HAD BEEN RED SINCE `19c5d8e`.** The return plug stopped
+being a tripwire that frame; two of its three consumers were updated and the
+third -- the only one CI does not run -- was not. Its own guard file's thesis is
+*"a suite nobody runs is worse than no suite"*. Repaired by holding in the pad
+rather than by relaxing the assertion, and the entry is now checked to fire
+NOTHING. The suite runs green end to end, including the three legs its CI
+exclusion note calls blocked; that note may be stale and the exclusion was left
+alone rather than changed without the owner.
+
+**NEXT:** make M1 playable. Nothing yet lets the owner walk into it.
+
+
+## ENGINE LANE — the railway: a carrier, its controls, and a beam that was in the wrong place — 2026-09-21
+
+**0.4 line only.** `claude/archipepsi-0-4-blindside`, branched from `19c5d8e`.
+The 0.3 comparison build on `claude/archipepsi-echoes-continuation-b1adno` is
+untouched. Durable detail lives in `docs/ledgers/HUGE_BATCH_LEDGER.md`.
+
+**P0 SAID THE CARRY WORKS, SO THE CANDIDATE `player.gd` REPAIRS WERE WITHDRAWN.**
+Four hypothesised hazards (the step-down walker's raw `move_and_collide`, the
+step-up teleport, world-space walk targets, `is_on_floor()`-gated control) were
+named in the plan as likely repairs. None of them bit: four cases, all ABOARD,
+grounded on 1200 of 1200 measured frames. Measurement, not reading.
+
+**`RailCarrier` IS `MovingPlatform` WITH A PATH.** An `AnimatableBody3D` with
+`sync_to_physics = true` advancing an offset along a `RailPath`. Docks are
+ordered; `links[i]` joins dock `i` to `i+1`; a link that is not commissioned is
+missing rail and the request is **refused at the dock, by name**, not glided
+over. `godot-rail-carrier` is 73 checks — travel, stop, refusal, repair, repeat
+shot, reverse, fail-safe hold, and a real `Player` carried round the corner
+(DRIFT 0.124 m, GROUNDED 273/273, ABOARD yes).
+
+**TWO DEFECTS FOUND BEFORE IT SHIPPED.** The textbook `v^2/2a` brake undershoots
+by `v*delta/2` — 0.058 m at 7 m/s and 60 Hz, further than `DOCK_EPSILON` — so
+the carrier would stutter into every dock; replaced by a speed ceiling of
+`sqrt(2*ACCEL*remaining)`. And `hold(true)` left the carrier between docks where
+every later command answered *"there is no dock behind this carrier"*: a
+fail-safe that can never be released is a trap with a passenger in it.
+
+**THE BEAM WAS NOT WHERE THE RIDE IS.** `RailPath` gained Catmull-Rom handles in
+P3.5; `build_rail` still swept the CONTROL points. On a four-point bent route the
+ride leaves that chord by **0.744 m** — the beam is 0.35 m thick. Swept along the
+ride: **0.030 m**. Every rail shipped today is two points, `bow()` 0.0000, and is
+swept exactly as before; the suite asserts that. `_the_rail_mesh_and_ride_come_from_one_path`
+was asserting the divergence, so it now reads against the swept route and keeps
+its sabotage resistance explicitly (the swept runs must not all be one length).
+14 pieces checked where 3 were.
+
+**A CONTROL IS SHOT, AND A COMMAND IS MOMENTARY.** `RailReceiver` wraps
+`ActivityElement` SHOT — the organ that already builds a `TargetBody` a ray can
+reach and joins `Damageable.GROUP` — and re-arms, because an element LATCHES and
+a latching direction control is a one-shot lever. The re-arm window is also the
+debounce: a shotgun's pellets are one request. `RailControls` collects a frame of
+commands and resolves them together, so FORWARD and BACK in the same instant
+**cancel and say so** rather than racing. Proven through
+`Player._fire_static_pulse`, not by calling the element.
+
+**NEXT:** P4/M1 — the first persistent machine chain. A player-performed setter
+interaction fires the never-yet-sent `latch_fired`; the link's commissioned state
+is **recomputed from the latch at build time**, never separately saved (§5.4a).
+
+
 ## ENGINE LANE — the exit that was a wall, and the plug that was a trap — 2026-09-20
 
 **TWENTY OF TWENTY SAMPLE ZONES COULD NOT BE FINISHED.** The playtest

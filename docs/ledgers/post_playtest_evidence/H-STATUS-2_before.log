@@ -1,0 +1,78 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- THE GATE IS THE CONTRACT'S
+   GDScript backtrace (most recent call first):
+  ok: anchored on self: the production gate refuses it, as the contract table does not yet declare it
+   GDScript backtrace (most recent call first):
+  ok: anchored on object: the production gate refuses it, as the contract table does not yet declare it
+   GDScript backtrace (most recent call first):
+  ok: lightened on self: the production gate refuses it, as the contract table does not yet declare it
+   GDScript backtrace (most recent call first):
+  ok: lightened on enemy: the production gate refuses it, as the contract table does not yet declare it
+  -- AN ANCHORED PLAYER DOES NOT MOVE (played)
+FAIL: a second held forward: the free player walks 7.00 m, the anchored one 6.999 m (movement 0.0)
+FAIL: a second held forward: the free player walks 7.00 m, the anchored one 6.999 m (movement 0.0)
+FAIL: jump: the free player rises 1.40 m (1 jump), the anchored one 1.400 m and no `jumped` for a rule to answer (1)
+FAIL: jump: the free player rises 1.40 m (1 jump), the anchored one 1.400 m and no `jumped` for a rule to answer (1)
+FAIL: a knock (7, 3, 0): the free player is thrown 0.42 m and 0.21 m up, the anchored one 0.421 m and 0.213 m up (immune to all impulse)
+FAIL: a knock (7, 3, 0): the free player is thrown 0.42 m and 0.21 m up, the anchored one 0.421 m and 0.213 m up (immune to all impulse)
+FAIL: a velocity written from outside (6, 12, 4) moves it 0.448 m and 3.100 m up
+FAIL: a velocity written from outside (6, 12, 4) moves it 0.448 m and 3.100 m up
+  ok: anchored three metres up, it comes down and stands (y 0.00)
+  -- PRESSING INTO A STEP AND A CRATE (played)
+FAIL: pressing forward: a free player climbs the 0.5 m step (0.50 m) and shoves the crate 7.69 m; anchored, it climbs 0.503 m and shoves 7.341 m
+FAIL: pressing forward: a free player climbs the 0.5 m step (0.50 m) and shoves the crate 7.69 m; anchored, it climbs 0.503 m and shoves 7.341 m
+  -- A PAD AND A RAIL CARRY IT NOWHERE
+p3a: launch FIRED from (-30.000000, 0.950000, -20.000000) at (37.032806, 12.961481, 18.516403)
+p3a: launch FIRED from (-30.000000, 0.950000, -20.000000) at (37.032806, 12.961481, 18.516403)
+FAIL: a launch pad fires the free player (1) and not the anchored one (1), which stays 9.719 m from where it stood
+FAIL: a launch pad fires the free player (1) and not the anchored one (1), which stays 9.719 m from where it stood
+p3a: rail CAUGHT at (20.000000, 2.000000, -28.000408)
+FAIL: a grind rail catches the free player (true); anchored, it lets go (false) and does not catch it again (true)
+FAIL: a grind rail catches the free player (true); anchored, it lets go (false) and does not catch it again (true)
+  -- ALL OTHER ACTIONS PERMITTED (played)
+  ok: free, the dash fires (cooldown 0.61) and carries the player 0.50 m
+FAIL: anchored, the dash refuses before it is paid for (cooldown 0.62), moves nothing (0.500 m), and says why: []
+FAIL: anchored, the dash refuses before it is paid for (cooldown 0.62), moves nothing (0.500 m), and says why: []
+  ok: anchored, the shield fires (cooldown 0.92)
+  ok: anchored, a lever in reach is pulled
+  -- ITS CLASS, AND ITS END
+FAIL: a HEAVY plate that counts the player: MEDIUM leaves it unpressed; anchored, the player reads medium and it is unpressed
+FAIL: a HEAVY plate that counts the player: MEDIUM leaves it unpressed; anchored, the player reads medium and it is unpressed
+  ok: a second later it has run out: MEDIUM again, the plate released, and the player walks 4.49 m
+  -- A LIGHTENED PLAYER
+FAIL: its class drops a step: medium -> medium
+FAIL: its class drops a step: medium -> medium
+FAIL: the same knock (4 m/s) gives the plain player 4.00 m/s and the lightened one 4.00 (incoming impulse x2.0)
+FAIL: the same knock (4 m/s) gives the plain player 4.00 m/s and the lightened one 4.00 (incoming impulse x2.0)
+  ok: it walks as far (4.67 m against 4.67) and jumps as high (1.40 m)
+FAIL: anchoring it removes the lightness [true, true, "medium"], and lightening it the anchor [true, true, "medium"]
+FAIL: anchoring it removes the lightness [true, true, "medium"], and lightening it the anchor [true, true, "medium"]
+  -- A LIGHTENED ENEMY
+FAIL: the same 8 m/s knock: the plain enemy takes 8.0 m/s and goes 0.31 m, the lightened one 8.0 m/s and 0.31 m (incoming impulse x2.0)
+FAIL: the same 8 m/s knock: the plain enemy takes 8.0 m/s and goes 0.31 m, the lightened one 8.0 m/s and 0.31 m (incoming impulse x2.0)
+  ok: to the verbs it is still an actor whose mass is not modelled: no class to drop a step
+FAIL: anchored over it, the knock moves it 0.000 m; lightened over that, 0.00 m again
+FAIL: anchored over it, the knock moves it 0.000 m; lightened over that, 0.00 m again
+  -- AN ANCHORED OBJECT
+  ok: it reads FIXED (fixed; the same crate plain is medium)
+FAIL: a 5 m/s impulse moves the plain crate 1.53 m; the anchored one, with a 3 kN push on top, 6.702 m
+FAIL: a 5 m/s impulse moves the plain crate 1.53 m; the anchored one, with a 3 kN push on top, 6.702 m
+FAIL: the verbs refuse it (fixed), so does a push (), and the hands say 'CAN'T CARRY THAT'
+FAIL: the verbs refuse it (fixed), so does a push (), and the hands say 'CAN'T CARRY THAT'
+FAIL: walked into for a second and a half, it gives 4.278 m
+FAIL: walked into for a second and a half, it gives 4.278 m
+FAIL: anchored three metres up, it hangs there (y 1.21); when the Status ends it is thawed and falls (y 0.49)
+FAIL: anchored three metres up, it hangs there (y 1.21); when the Status ends it is thawed and falls (y 0.49)
+  NOTE: walking into the anchored crate the player went 10.33 m
+FAIL: an impulse landed while anchored is not released when the anchor ends: thawed, the crate has moved 1.534 m
+FAIL: an impulse landed while anchored is not released when the anchor ends: thawed, the crate has moved 1.534 m
+  -- THE ANCHOR AMONG THE OTHER HOLDS
+  ok: a bolted crate anchored and released is still frozen (the anchor thaws only what it froze)
+FAIL: anchored over lightened it is FIXED and frozen [true, 2.0, "fixed", false]; lightened over that it is thawed and LIGHT [true, false, "fixed"], and the same impulse moves it 1.96 m to a plain crate's 0.68
+FAIL: anchored over lightened it is FIXED and frozen [true, 2.0, "fixed", false]; lightened over that it is thawed and LIGHT [true, false, "fixed"], and the same impulse moves it 1.96 m to a plain crate's 0.68
+  ok: a HEAVY plate: the MEDIUM crate leaves it unpressed, anchored it is pressed, and when the anchor ends unpressed -- the plate reads the crate's class as it is, not as it was
+FAIL: a carried crate anchored is let go ([]) and stays where it was (0.057 m)
+FAIL: a carried crate anchored is let go ([]) and stays where it was (0.057 m)
+GODOT STATUS KINETIC: 21 failures in 35 checks
+make: *** [Makefile:617: godot-status-kinetic] Error 1

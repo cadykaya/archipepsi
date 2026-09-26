@@ -1,0 +1,164 @@
+rm -rf /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.consumable-saves
+cd bridge && ARCHIPEPSI_SAVE_DIR=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.consumable-saves \
+  python3 -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+BRIDGE_PID=$!; sleep 2; \
+kill -0 $BRIDGE_PID 2>/dev/null || { \
+  echo "bridge did not start (port already serving?)"; exit 1; }; \
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/godot-bin/godot --headless --path godot -- --consumable-live --seed-only \
+  > /tmp/archipepsi-consumable-seed.log 2>&1; \
+STATUS=$?; kill $BRIDGE_PID 2>/dev/null; wait $BRIDGE_PID 2>/dev/null; \
+if [ $STATUS -ne 0 ]; then \
+  tail -20 /tmp/archipepsi-consumable-seed.log; \
+  echo "-- no campaign was created; there is nothing to seed"; \
+  exit $STATUS; \
+fi
+2026-09-25 08:23:13,444 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 08:23:13,446 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 08:23:13,459 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:23:13,459 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:23:13,459 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:23:13,459 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:23:13,460 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:23:13,462 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (f7876d0ca3ba*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, prototype scale (30 locations, 3 Checks per Zone)
+    epsilon     fallback
+    saves       /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.consumable-saves
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+    (no campaign there yet; it is created on first connect)
+
+2026-09-25 08:23:13,529 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-25 08:23:13,530 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-25 08:23:21,155 websockets.server INFO connection open
+2026-09-25 08:23:21,156 archipepsi.server INFO client connected (1 total)
+2026-09-25 08:23:21,169 archipepsi.mock_ap WARNING mock room not written to /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.consumable-saves/1b7b4f118d2f3db5__Skyiah.mock_room: [Errno 2] No such file or directory: '/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.consumable-saves/1b7b4f118d2f3db5__Skyiah.mock_room.tmp'
+2026-09-25 08:23:21,169 archipepsi.mock_ap INFO mock AP connected: 30 locations scouted
+2026-09-25 08:23:21,171 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 30 locations / 3 per Zone / 200 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 08:23:21,190 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-25 08:23:21,191 archipepsi.server INFO client disconnected (0 left)
+cd bridge && PYTHONPATH=. python3 tools/give_consumable.py \
+  /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.consumable-saves --charges 5
+1b7b4f118d2f3db5__Skyiah.json: act_live_charge owned and equipped, 5 charges, supply generation 0
+cd bridge && ARCHIPEPSI_SAVE_DIR=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.consumable-saves \
+  python3 -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+BRIDGE_PID=$!; sleep 2; \
+kill -0 $BRIDGE_PID 2>/dev/null || { \
+  echo "bridge did not restart"; exit 1; }; \
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/godot-bin/godot --headless --path godot -- --consumable-live \
+  > /tmp/archipepsi-consumable-live.log 2>&1; \
+STATUS=$?; kill $BRIDGE_PID 2>/dev/null; \
+grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" \
+  /tmp/archipepsi-consumable-live.log; \
+if [ $STATUS -ne 0 ]; then exit $STATUS; fi; \
+grep -q "GODOT CONSUMABLE LIVE TESTS OK" \
+  /tmp/archipepsi-consumable-live.log || exit 1; \
+if grep -qE "SCRIPT ERROR" /tmp/archipepsi-consumable-live.log; then \
+  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+  exit 1; \
+fi
+2026-09-25 08:23:22,376 archipepsi.mock_ap INFO mock AP connected: 450 locations scouted
+2026-09-25 08:23:22,379 archipepsi.campaign INFO created campaign 1b7b4f118d2f3db5__Skyiah.json at 450 locations / 15 per Zone / 1000 budget (track order: Bomb Rush Cyberfunk → Dark Souls III → Super Mario 64 → Borderlands 2 → Archipepsi → Ocarina of Time)
+2026-09-25 08:23:22,393 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:23:22,393 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:23:22,393 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:23:22,393 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:23:22,393 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+2026-09-25 08:23:22,396 archipepsi.shells INFO shell 'shell_yard_gantry' declares a doorway off its envelope: 'entry' by 0.39 m; 'exit' by 0.39 m (a report, not a refusal -- the crossing test decides)
+
+  Archipepsi bridge v0.1.0  (f7876d0ca3ba*)
+    listening   ws://127.0.0.1:38290   (Godot connects here)
+    archipelago MOCK - offline fixture campaign, prototype scale (30 locations, 3 Checks per Zone)
+    epsilon     fallback
+    saves       /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/.consumable-saves
+    zone 1      31b0c6aeae37de93   (23 rooms, 15 Checks, 903 points)
+
+2026-09-25 08:23:22,460 websockets.server INFO server listening on 127.0.0.1:38290
+2026-09-25 08:23:22,460 archipepsi.server INFO bridge listening on ws://127.0.0.1:38290
+2026-09-25 08:23:29,926 websockets.server INFO connection open
+2026-09-25 08:23:29,926 archipepsi.server INFO client connected (1 total)
+2026-09-25 08:23:29,940 archipepsi.mock_ap INFO mock AP connected: 30 locations scouted
+2026-09-25 08:23:29,941 archipepsi.campaign INFO loaded campaign 1b7b4f118d2f3db5__Skyiah.json at 30 locations
+2026-09-25 08:23:38,141 archipepsi.server INFO client disconnected (0 left)
+2026-09-25 08:23:38,644 websockets.server INFO connection open
+2026-09-25 08:23:38,645 archipepsi.server INFO client connected (1 total)
+2026-09-25 08:23:40,784 archipepsi.server ERROR client handler ended
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-cp2/bridge/archipepsi_bridge/server.py", line 106, in handler
+    async for raw in ws:
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 224, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/websockets/asyncio/connection.py", line 279, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-09-25 08:23:40,785 archipepsi.server INFO client disconnected (0 left)
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  ok: the campaign owns a multi-charge consumable (5)
+  ok: and it is equipped in the consumable slot
+  -- an accepted use, all the way to the save
+  NOTE: press to effect: 82 ms, upper bound including this driver's frame-poll granularity and the engine's save write
+  ok: one press, one effect, once it was paid for
+  ok: and the save authorised exactly one charge (1)
+  ok: one fewer left, from the engine's count and not a local tally (4 of 5)
+  -- the deduction while the answer is in flight
+  ok: the charge is gone from the moment it is asked for (3)
+  ok: and it is not deducted twice when the snapshot lands (3)
+  ok: effects run (2) still equal charges authorised (2)
+  -- the answer lands while the world is paused
+  ok: answered while paused (1 authorised): nothing went into the stopped world, a second later (0 effect(s))
+  ok: and the charge is spent, not refunded (2 of 3)
+  ok: closed, the world runs and the effect fires once (1)
+  ok: and the save authorised exactly the effects that ran (3 authorised, 3 run)
+  -- a death behind the pause interface
+  ok: dead, then paused for 2.5 s -- past the 1.5 s respawn delay: still dead, because the respawn waits for the world
+  ok: closed, the respawn follows (hp 100)
+  -- a supply this save does not have, refused by identity
+WARNING: bridge error [bridge]: 'act_live_charge' use 4 was minted against supply 1; the current supply is 0. It was refilled after the press, so this use no longer exists
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:181)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+  ok: the refusal names the exact spend it refused ('use_consumable:act_live_charge:1:4')
+  ok: and nothing was spent (3)
+  -- presses with the socket down
+WARNING: intent 'authorize_consumable' dropped: bridge offline
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:135)
+         [1] authorize_consumable (res://scripts/autoload/bridge_client.gd:497)
+         [2] press_slot (res://scripts/gameplay/player.gd:615)
+         [3] _press_now (res://tests/consumable_live_driver.gd:159)
+         [4] _presses_made_offline_are_resent_and_counted_once (res://tests/consumable_live_driver.gd:481)
+         [5] _await (res://tests/consumable_live_driver.gd:105)
+  ok: nothing went into the world (0 effect(s))
+  ok: and the player was told, rather than the button dying quietly
+  ok: the engine counted nothing (3)
+  ok: and the charge is still there (2 of 2)
+  ok: the supply survives the outage intact (2 of 2)
+  ok: and a press once the link is back works normally (1)
+  ok: across the outage the save authorised exactly the effects that ran (4 authorised, 4 run)
+  -- the supply runs out
+  ok: the supply is empty (0 left)
+  ok: no more effects ran than the supply ever held (5 of 5)
+  ok: and the save authorised every one of them and no others (5 authorised, 5 run)
+  ok: a press at zero puts nothing in the world
+  ok: the empty supply is still equipped, at 0 of 5
+  ok: and it said so: the exhausted feedback fired 2 time(s)
+GODOT CONSUMABLE LIVE TESTS OK (1 notes)
+
+real	0m41.060s
+user	0m25.978s
+sys	0m2.149s

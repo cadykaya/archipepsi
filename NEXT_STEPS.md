@@ -1,5 +1,986 @@
 # Archipepsi — build state
 
+## 2026-09-23 (engine) — Overnight 05: physical carry to a consumer, a reversible lever, three minors in Zones, twelve verbs and two Statuses in the engine
+
+**HANDED OFF.** This was the owner's Overnight 05 work order
+(`docs/ledgers/ov05/`, verbatim). One writer; Dess and Arty paused.
+
+- **Verified:** one frozen revision, `46bf023`, green: 64 of 64 steps passed, 16:50–17:55 UTC
+  (`docs/ledgers/ov05_evidence/FROZEN_RUN.md`).
+- **Owner review:** `docs/ledgers/PROD_OV05_MORNING_REVIEW.md`.
+- **Per-unit status:** `docs/ledgers/PROD_OV05_READY_QUEUE.md`.
+- **Every row's evidence, and the shared-seam table for Dess:**
+  `docs/ledgers/PROD_OV05.md`.
+
+**The revision map** (`330c555` → handoff):
+
+| commits | what |
+|---|---|
+| `ae8bcb7` | O05-01 hand carry, operated through the real player |
+| `5902920`, `d92d723`, `f1fc737`, `f4a938e` | O05-02/03/04 (transport, restart, the reversible lever), O05-05.1 reconciliation and P5-9, the candidate launcher, the whole profile played |
+| `83044c3`, `6f96ca9`, `38f3fc4`, `074627f`, `6cbe5f2`, `a63a319`, `400ed37`, `3f6c1d3`, `0f4715a` | O05-06: all three minors in composed Zones, played and restarted; the sample regenerated |
+| `a718654`, `4276835`, `384497b` | O05-07: the minors' own chains through the shared graph; sensor safety |
+| `4d006e5` | O05-10: a real mid-motion reversal; two isolated arcades |
+| `65f3ef4`, `b27bee5` | O05-11: the candidate's consumable slot; the owner's related-Echoes rule |
+| `7ca5945`, `394817b`, `2b60770`, `0f4c335`, `38b104f`, `44f2e0e` | O05-08.1–.4: the twelve verbs, runtime only |
+| `7abb338`, `73b7b87` | O05-09.1: `rooted` and `anchored` on an enemy |
+| `46bf023` | P5-20: the design packet mirrors this lane's schema edits |
+| handoff | documents, and the zone audit's provenance stamp |
+
+**Blocked, and on whom:**
+
+- O05-05 (the featured Echo at Blindside): three policies, B-1..B-3.
+- O05-08.5 (delivering the verbs): the atom-grammar representation.
+
+Both are owner/Dess decisions. The remaining ready queue is at the head
+of `docs/AGENT_FRONTIER.md`.
+
+## 2026-09-23 (engine) — integration batch: P14 played and persisted, D-11 on the geometry
+
+**CLOSED AND STOPPED.** This was one bounded batch. It consumed Dess's
+P14 (`9ef2676`) and D-11 (`83a8e7e`) deliveries, verified the combined
+result on one frozen revision (`57e962e`), and stopped. It had three
+commits:
+
+- `e522b15`: the P14 runtime rows and the played acceptance
+  (`godot-latched-route`). Also the enemy layout-hold gate.
+- `ca20f63`: persistence through the real bridge and a restart
+  (`godot-latched-route-live`), `tools/compose_latched_route.py`,
+  `make latched-route-play`, and the declared-route-gate aperture fix.
+- `57e962e`: the D-11 engine half (`godot-theme-pack`,
+  `make theme-pack-shots`).
+
+**What it proved:**
+
+- The latch route is played with the real body from the Zone's own
+  arrival: shut before activation, stepped on, stepped off, and walked
+  through into `c003` and back.
+- The latch route is persisted through the real bridge. The latch is
+  accepted and on disk, forged latches are refused, and after both
+  processes restart the route is open before the plate, with nothing
+  announced.
+- A Zone's game pack reaches the geometry by the exact row first, then
+  the family unchanged, with no pack hop. Nothing leaks to another
+  Zone or the Hub, the status is respected, and hazard is refused.
+
+The per-row detail is in `docs/D10_P14_PROD_ANSWER.md` §7 and
+`docs/D11_THEME_PACK_PROD_ANSWER.md` §7. The frozen results are in
+`docs/AGENT_FRONTIER.md`, and the replay in
+`docs/P14_LATCHED_ROUTE_REPLAY.md`.
+
+**Two defects it found, both fixed:**
+
+1. `enemy._find_player` now ignores a player held by `LAYOUT_HOLD`. The
+   verdict wait lasts seconds, and artillery shelled the frozen player
+   from the next room.
+2. `SpaceProbe.is_placed_content` now treats a shutter in the
+   `RoomGraphs.ROUTE_GATE` group as content in its doorway, as a
+   `LockedDoor` is. The bridge had refused the live layout because the
+   shut gate read as a solid `USED` door.
+
+**Not done, deliberately:**
+
+- P12, P16, P19, new theme packs and broader campaign generation.
+- Any production pack selection. `THEME_PACK_STATUS` stays `{}`.
+- Consumable promotion. D-9 was not reopened.
+- The windowed by-hand launch was not exercised, because there is no
+  display in this container.
+
+---
+
+## 2026-09-22 (engine) — P08: an enemy shot has never been proven to hit
+
+**OPEN, WELL-EVIDENCED, AND NOT A HARNESS FAULT.** A `ranged` at 14.7 m and
+an `artillery` at 19.8 m, both inside their own aggro range, against a player
+who stands still for fifteen seconds in a real generated arena:
+
+```
+ranged 14.7m AWAKE cd=0.7, artillery 19.8m AWAKE cd=1.6;
+windups started: ranged x7, artillery x4; 1 shots in the world
+    ...and the player took 0.0 hp.
+```
+
+Seven and four windups is each role firing at very close to its designed rate
+(cooldown 2.0 and 3.4 over fifteen seconds is 7.5 and 4.4). Projectiles exist
+in the world. **Eleven committed attacks landed nothing.**
+
+**Nothing in the repository has ever asserted that an enemy shot damages the
+player.** Only two suites touch `fire_at`/`_fire_projectile`: this new one,
+and `counterfire_driver`, whose subject is EX50-021 — a hostile shot as an
+input to a MACHINE, not to a player. `roster_driver`'s artillery case asserts
+that it telegraphs, that a shell is in the air, that it will not fire inside
+its minimum range, and that **a player who LEFT the marked ground is unhurt**.
+Every one of those is about firing or about *not* hitting. The positive case
+— a shot reaching someone who stayed — has no test anywhere.
+
+So this is a GAP rather than a regression, and it is the shape P08 exists to
+catch: a role that behaves correctly on a bare stage and does not deliver in
+a composed room.
+
+**Ruled out so far:** it is not aggro (both AWAKE), not rate (11 windups),
+not the projectile existing (counted in `current_scene`, where `enemy.gd:1002`
+puts them), and not collision layers — nothing in the project sets
+`collision_layer`/`collision_mask` at all, so the projectile's Area3D mask and
+the player's CharacterBody3D layer are both Godot's default 1.
+
+**Next step, and it needs a run rather than a read:** instrument
+`EnemyProjectile._on_body_entered` and the shot's path to find out whether the
+area never overlaps the player, overlaps and takes the machine branch, or is
+freed first. A shot teleported 0.23 m per frame by
+`global_position += direction * speed * delta` against a 0.4 m capsule should
+not tunnel, but that is the assumption to test first.
+
+**Do not read this as a difficulty finding.** It says the shots do not connect,
+not that the roles are weak; `ENEMY_VALUE` is a content budget and nothing
+here measures difficulty.
+
+## 2026-09-22 (engine) — the correction: one charge, one authorized activation
+
+**The owner withdrew the consumable advertisement, and was right to.** The
+spend transaction was correct about messages and wrong about expenditure, and
+two of my own tests asserted the wrong behaviour as the specification:
+
+- `_a_send_that_failed_is_never_held` expected the effect to RUN, nothing to
+  be sent, and the charge to remain. That is an **unpaid activation**, and it
+  repeats for as long as the bridge is down.
+- `_a_refusal_returns_the_charge_without_rerunning_the_effect` refunded a
+  charge whose effect was already in the world, and then asserted that a new
+  press fires. **One charge, two activations.**
+
+Not replaying the effect on a refusal is necessary and it is not sufficient.
+The defect was the ORDER: the effect fired on `EchoRuntime.action_used` and
+the client tried to pay for it afterwards.
+
+### The ordering, corrected
+
+**Reserve → launch → report.** `BridgeClient.reserve_consumable` takes the
+charge locally before anything irreversible happens and returns `{}` when
+there is nothing to take, which is the exhausted case. The effect is only
+allowed to run against a reservation that succeeded.
+
+- **Pre-launch failure is the only refund there is.** `activate()` returns
+  early on a cooldown, an unmet condition or a closed gate; nothing entered
+  the world and nothing has been SENT, which is what makes the refund safe —
+  there is no message for the engine to accept later.
+  `release_reservation` does this and nothing else.
+- **`commit_consumable` reports a launch and keeps the charge spent whatever
+  the answer is.** A failed send does not un-fire a grenade: the honest state
+  is a charge the player spent against a campaign that has not recorded it,
+  never a charge they get to spend again. It reconciles on the next
+  authoritative snapshot.
+- **A refusal marks the reservation DISPUTED and never refunds it.** The
+  engine did not record the expenditure; it did not say the grenade came
+  back. The mark is what stops the client waiting forever for a `spent` that
+  will never arrive — it settles on the next refill or resync instead.
+
+`Player.press_slot` carries the order, and `_launched` (set by
+`action_used`) is what separates an expenditure from a refund.
+
+### Coverage that counts expenditure, not messages
+
+`godot-consumable` is 61 checks. The two corrected cases now assert the
+opposite of what they used to: an offline press costs its charge and three
+more offline presses fire NOTHING, and a refusal leaves the charge spent with
+no second activation available.
+
+`TestAuthoritativeExpenditure` in `test_consumable_slot.py` is the other
+half — it drives sequences the way a session does and counts **how many
+charges the save actually gave up**. A retried message is one expenditure,
+not three; a delayed response does not double-charge; five refused attempts
+spend nothing; a whole stale supply spends none of the new one. A suite that
+counted messages would have scored the offline bug as four expenditures and
+the refund bug as one.
+
+**Four sabotages, all caught:** refund-on-refusal (4 failures), drop the
+reservation when the send fails — the real old bug — (3 failures, "4 effects
+total"), drop the engine's generation check (2), and let the engine saturate
+instead of refusing (3). A fifth sabotage was NOT caught and was therefore
+not a sabotage: reserving after launch instead of before changes nothing
+while the reservation still happens unconditionally, which is worth recording
+because it is the shape of a test that proves less than it claims.
+
+`IMPLEMENTED_ACTION_SLOTS` withholds `consumable` again and the baseline is
+back to four slots. It is the second time this slot has been staged, and the
+guard now reads `STAGED = {"consumable"}` once more.
+
+## 2026-09-22 (engine) — mass semantics: the two limits, and which is real
+
+**Asked by the owner: do the pickup and ability consumers preserve the
+distinction?** Design 2 §10.3 governs ORDINARY PICKUP — an object is
+carriable if `carriable = true` **and** `mass_kg <= 60.0`; above that it is
+manipulable only (`docs/design-proposals/02_PHYSICS_IS_THE_GAME.md:561`).
+`ENVELOPE_MASS_KG = 120.0` is a different number for a different thing: the
+qualified manipulation-provider envelope, alongside force and range.
+
+**Audited, and the distinction is intact — by absence.**
+
+- `ENVELOPE_MASS_KG` appears in exactly three places and every one of them is
+  the provider envelope: `schemas/physics.py` (the package's `mass_limit_kg`
+  floor and the provider comparison), `manipulation.gd` (the same two), and
+  `replay_harness.gd` (`provider_mass_kg`). It never stands in for pickup.
+- **When this was audited the ordinary-pickup rule did not exist at all** —
+  no `carriable` field, no 60 kg threshold, no carry verb. **Dess has since
+  landed the bridge half** (`a8eb469`): `physics.CARRY_MASS_KG = 60.0` and
+  `carriable_by_hand(carriable, mass_kg)`, exported to `constants.gd`. That
+  part of the audit is superseded and is corrected here rather than left
+  standing.
+- **The engine half is still missing, and that is where the risk always
+  was.** `CARRY_MASS_KG` is in `constants.gd` and **nothing in
+  `godot/scripts/` reads it** — there is no carry or lift verb, because the
+  twelve manipulation verbs are OV04 P12 and P12 has not been built.
+
+So no consumer confuses the two limits today, because the pickup limit has no
+consumer at all.
+
+**THE RISK IS P12, AND THIS IS THE WARNING FOR WHOEVER BUILDS IT.**
+`Constants` now holds BOTH numbers, which is better than one and is also the
+new hazard: a carry verb written against `ENVELOPE_MASS_KG` — the older, more
+familiar name, and the one every existing manipulation call site uses — would
+silently adopt 120 kg and make `WEIGHTED` carriable — which Design 2 changed FROM Design 1 deliberately, and
+which the packet calls "a real difference in feel: Design 1's cube puzzles
+are walked; Design 2's are pushed, pulled, and dropped".
+
+The constant exists now and its runtime does not, so the pairing P12 owes is
+the same either way: the carry verb reads `CARRY_MASS_KG` and never
+`ENVELOPE_MASS_KG`, with the refusal case above 60 kg and a `WEIGHTED` body
+that refuses to be carried and accepts being manipulated.
+
+## 2026-09-22 (engine) — the Echo menu, and a fifth slot for consumables
+
+From the owner, after playing: the Echo menu was "a scrolling list with no
+search or sort, and mixed passives with actives", and should have "an
+equipable slot for each type (on shift, on right click, consumables, etc)".
+Three of the four they named already existed; consumables did not exist at all.
+
+### The screen
+
+`make godot-archive` — new at **23 checks**, in CI.
+
+The five slots are the top of the screen now: what is on each key, what
+replacing it costs, and for the consumable how many uses are left. Clicking a
+slot filters the list to what fits it. A `LineEdit` searches name, source
+game, source item, description and concepts; an `OptionButton` sorts by
+newest / name / source game. ACTIONS and ALWAYS ON are two labelled sections,
+counted as "1 of 3" so a search that is hiding things does not read as owning
+fewer.
+
+`ArchiveQuery` (`godot/scripts/ui/archive_query.gd`) holds the part with
+answers in it, so search/sort/split are tested directly rather than by
+scraping labels. `inventory.gd` keeps every row internal that was already
+good: source line, concepts and mode tint, effect summary, provenance chains,
+favourites, replace-comparison.
+
+### The consumable slot
+
+A consumable is an **Action with `charges`**, not a new component kind and not
+a zero-regen `Resource` (a Resource is a HUD channel with an economy; three
+uses of one grenade has no decisions in it). Slot and charges imply each other
+structurally, so both one-sided forms are unrepresentable.
+
+Charges are persisted — the fold says what the campaign was *given*, and how
+many times a button was pressed is not derivable from it — spent through
+`transitions.spend_charge`, and **refill on entering a Zone** (owner decision).
+The last charge does NOT empty the slot: the supply is permanently owned, and
+it stays equipped at `0 / max` saying what refills it (owner decision, and a
+reversal of what this lane first built). `Q` is the key.
+
+**WHICH entries count as a refill is this lane's proposal, not the owner's
+ruling**, and it is isolated in one predicate, `transitions._refill_is_due`,
+so the owner can replace the policy without touching the spend transaction.
+As proposed: refill when the deployment target changes. A re-entry, a reload
+and a Hub round trip back to the same Zone are the same deployment continued
+and do not restock — but **A → B → A refills at both changes**, so returning
+to A hands over a fresh supply rather than A's remaining one, and Hub → B → A
+is a working restock loop at the price of one extra Zone. That is the honest
+cost of a one-string rule; per-Zone expenditure persistence is a different
+policy needing a record per Zone, and the owner has that decision.
+`test_a_b_a_refills_on_both_changes` asserts the behaviour rather than
+endorsing it, and is the case that changes if the ruling goes the other way.
+
+**The spend is a compare-and-swap on two things: which supply, and which use
+of it.** `use_index` alone cannot reject a stale request across a refill — an
+old use 1 arriving at a fresh supply *is* the first index due, and an old use 3
+matches again once two legitimate new uses have been spent. So the engine mints
+a `consumable_generation` on every refill and nothing else; the snapshot
+mirrors it, the client captures it when the button goes down and echoes it, and
+a use naming a supply that no longer exists is refused on identity. Same shape
+as `proposal_id`/`attempt`, which is the protocol's one existing correlation
+convention — not a second one. The Zone id could not have stood in: it is
+reused on every return.
+
+**A real bug the new tests earned.** `inventory.gd::_row` derived its
+equip buttons from a private `create`-only loop while the LIST derived its
+sections from `ArchiveQuery.is_passive`, which resolves against the fold.
+So an upgrade-only Echo was filed under ACTIONS — correctly — and then
+painted the "ALWAYS ON" badge with no equip control, because its Action
+was created by a different Echo. Filed as a decision, drawn as a fact. It
+now calls `ArchiveQuery.actions_of(echo, owned)`, the same resolution the
+classifier uses, which also makes the button describe the component as it
+IS rather than as it was created (a Mk III Action was offering its Mk I
+self).
+
+**`BridgeError` gained `about`,** a domain key (`use_consumable:<component>:
+<generation>:<index>`) filled in by the refusing side. It was the only
+server→client message with no identity field at all, which is fine for a
+refusal the player reads and forgets and fatal for one the client has to
+*undo*: a spend held in flight against an unattributable refusal is held
+forever, and after a refill it is a charge short of the *new* supply. Empty
+for every refusal that existed before, and empty means unchecked, never stale.
+
+**A fourth wrong-reason pass, caught by sabotage rather than by reading.**
+The first draft of the search-box case asserted that focus and the caret
+survive a rebuild. Deleting `rebuild()`'s restore left it green: `_search`
+sits in `tools`, a sibling of the two containers a repaint empties, so
+nothing ever frees it and the restore never fires. The case now asserts
+that structural separation directly, which is the thing a refactor would
+actually break. Running the sabotage is what found it; reading the code
+had not.
+
+### The runtime gate: `make godot-consumable`, 53 checks
+
+A new driver for what the fifth slot DOES, against a real `Player`, a
+real `EchoRuntime` and a real `InventoryLayer` — `archive_driver.gd`
+stays widget-free and asks what the menu shows. It counts TWO numbers in
+every case: charges the engine accepted, and actions that actually ran.
+They are not the same number, and the spend transaction exists to keep
+them equal. Covered: a consumable delivering real damage and a real
+`burning` Status through the ordinary effect path (and that Status
+expiring normally); zero-charge refusal costing no cooldown and leaving
+the supply equipped; two presses on one charge firing once; a refusal
+restoring the count without re-running the effect, and the next press
+firing; unattributed and mismatched refusals releasing nothing; a
+snapshot that has not caught up releasing nothing; a refill retiring a
+use in flight; a failed send never being held; reconnect dropping
+everything; swap-away-and-back resuming live without a refill; and a real
+`fire_consumable` press doing nothing while the player holds "modal".
+
+Three sabotages were run against it and all three were caught: settle on
+any snapshot, release on any error, and drop the in-flight subtraction —
+the last of which broke "EXACTLY ONE action resolved", which is the whole
+point of the transaction.
+
+`Player.press_slot` was extracted from `_physics_process` so the driver
+presses the REAL gate instead of a copy of it, and `BridgeClient` gained
+`assume_sent`, a documented test seam: a headless driver has no bridge to
+succeed against, so without it nothing downstream of a successful send
+could be tested at all. The case about failing sends clears it.
+
+### Two silent five-slot bugs, found by looking
+
+`resource_meters.gd:213` and `inventory.gd`'s CLEAR ALL both spelled the four
+slot names out: a consumable's resource cost would never have registered as
+paid, and "clear all" would have left it equipped. The keycap table lived in
+two Godot files and is exported from `constants.py` now — restoring the local
+copy produces a HUD row reading `? —`.
+
+`Hud._loadout_text()` had **no test anywhere** and was the one slot-facing
+surface with none. It has one, and the sabotage above is what it catches.
+
+### The slot is advertised now
+
+`IMPLEMENTED_ACTION_SLOTS` withheld `consumable` through all of the above,
+because that list is the promise that a slot the schema admits is a slot the
+runtime can EXECUTE. It is `C.SLOT_NAMES` now, and nothing is staged: the
+spend is a compare-and-swap on the supply and the use, a refused spend can be
+released by the client, an exhausted supply stays equipped and says what
+refills it, and a consumable delivers real damage and a real Status through
+the ordinary effect path.
+
+**This is a live gameplay change, not a menu one.** Epsilon may now emit
+consumables into new campaigns, which is what makes the slot real rather than
+inert. The Playtest 2.5 baseline was regenerated deliberately in the same
+commit and the diff was read before committing: four `allowed.slots` lists
+gain `consumable` and NOTHING else moves — `zones` is byte-identical and all
+four interpretations are unchanged.
+
+The staged-support guard in `test_s1_review_fixes.py` keeps its two-property
+form rather than going back to equality, with `STAGED` now empty. Equality is
+what would let a slot be added to the schema and advertised in the same
+breath; an empty staged set still says "everything withheld is withheld on
+purpose", and the next staged slot only has to be named there.
+
+### Still red, and not this work: `godot-reload`
+
+`godot-reload` fails deterministically on the last leg of its named case —
+the player walks from `c005` toward `c014` through a doorway they have
+already opened and ends 69.1 m short, at the same coordinates every run.
+
+**It is not the consumable work.** Bisected across four worktrees: green at
+`06622ac` and at `f404410`, red at `b153656` and at every commit since,
+including `c296c38` which is before any of this. `b153656` is "Seven roles
+reach ordinary composition" — the enemy-composition widening — and it
+regenerated `godot/tests/fixtures/played_zone.json`, whose rooms now carry
+`artillery`, `bulwark`, `diver` and `beacon` where they carried `melee` and
+`ranged`.
+
+**Diagnosed, and it is not what I expected.** The walker now reports a block
+instead of a distance, and it says: *"BLOCKED -- no enemy within 4 m; ahead:
+@StaticBody3D"*. Not an enemy. My arithmetic hypothesis was wrong and the
+run is what said so.
+
+What it actually is, from the anchors the instrumented run printed:
+
+- c005 spans x ∈ [-60.2, -40.9]; c014 spans x ∈ [35.5, 59.3]. **They are 76 m
+  apart**, joined by a long connector.
+- The player goes THROUGH the locked doorway (mouth at x = -40.9, blocked at
+  x = -30.5, so ten metres past it) and is then in no room at all — in the
+  connector — facing static geometry. The connector turns; the walker does not.
+- `reload_driver._walk` steers a straight line with two hand-placed waypoints.
+  That was enough while the two rooms were close. The composition widening
+  changed every room's `room_value`, so the allocator produced a differently
+  shaped Zone, and a straight line is no longer a route.
+
+So the claim under test — *the doorway the key opened is passable* — is
+satisfied: the player is ten metres past it. The ASSERTION is stronger than
+the claim; it asks them to arrive inside c014, which is a 76 m walk through a
+turning connector. **The fix is to make the walker follow the connector**
+(`graph_driver._walk_into` already treats doorways as waypoints and is the
+model), not to narrow the assertion — narrowing it to fit is weakening a test
+to pass it, and the c005 → c014 leg is a real route a player has to make.
+
+**A latent issue found on the way, and it is NOT this failure.**
+`ContentInstantiator.IN_THE_DOORWAY` is `DOOR_WIDTH / 2 + PLAYER_RADIUS` =
+1.6 m: it clears a spawn from a doorway by the *player's* radius and never
+by the *enemy's*. With `melee` (half-width 0.4) the body's near edge lands at
+1.2 m, exactly the door edge. Every widened GROUND role is wider than that —
+`bulwark` 1.45, `scuttler` 1.3, `artillery` 1.25 — so their near edges land
+at 0.88, 0.95 and 0.98 m, INSIDE the 1.2 m door half-width. The comment above
+that constant records that one enemy standing in `c002/entry` turned
+`godot-integration` red for three runs, which is the same failure. Nothing
+observed has been traced to it yet, so it is recorded rather than claimed:
+the clearance should take the enemy's own `lane_width`, and a case should
+place each ground role beside a door and walk a player through.
+
+---
+
+## 2026-09-22 (engine) — OV04 P13: the eight constraint kinds, genuinely simulated
+
+`make godot-constraints` — new at **67 checks**, in CI. Amalgam §14.8 and §26.5, pinned from
+Design 2, plus §21.10's three constraint-driven actuators. **All twelve of
+§21's actuator kinds build now**; P15 shipped nine and refused three by name,
+and this is the three.
+
+### What did not exist before
+
+`Constraints` (`godot/scripts/gameplay/constraints.gd`): the eight kinds, the
+fixed eight-iteration solver, `breakable_at` with §10.5's required-object
+rebuild, §14.8's four-link chain cap, the no-runtime-creation rule with
+`TETHER` as its one exception, and the no-sleep-while-moving rule.
+
+`Actuator.constrained()`: `WINCH`, `BRAKE` and `DRIVER`, each refusing a
+constraint family §21.10 does not give it, and each with its own §21.1.1
+power-loss answer — hold, engage, release-and-lock.
+
+### The measurement the package is for
+
+The Amalgam names it: *"A crane in Design 2 is a `PULLEY` with a load on one
+end and a `WINCH` driving it. Its cargo swings. Design 1's crane was a
+`PATH_MACHINE` whose cargo was a child transform and could not. That is the
+single most visible difference between the two proposals in play."* An 80 kg
+cargo dropped 2.4 m out from its anchor swings in underneath; a child transform
+would still be 2.4 m out.
+
+### Two solvers, and why
+
+Godot has a hinge and a slider with real limits, so `HINGE`, `SLIDER`, `SEESAW`
+and a hinge `PENDULUM` are those. It has nothing for a taut-only distance
+constraint or for two ropes sharing a total length, so `ROPE`, `CHAIN`,
+`PULLEY` and `COUNTERWEIGHT` are solved here at §14.8's fixed eight iterations.
+
+Consequences that are declared rather than hidden: `breakable_at` is offered
+only on the four kinds that report a real constraint force, and a `breakable_at`
+on a hinge is **refused by name**.
+
+### Two things the obvious implementation got wrong
+
+A brake is **a motor held at zero**, not a pair of angular limits squeezed onto
+the current value: Godot measures limits in the joint's frame and this class
+measures `value` in the body's, so "lock it where it is" would have snapped the
+hinge to wherever those disagreed. And a `DRIVER` **cannot turn a locked
+hinge** — §23.5 rule 28 pairs a `BRAKE` with every mandatory-route `DRIVER`, so
+the two meeting is designed, and the brake winning is what stalls the driver
+rather than letting whichever wrote the motor last decide.
+
+### The solver diverged to 1e18 on its first run
+
+`apply_central_impulse` outside `_integrate_forces` is queued on the physics
+server and does **not** change `linear_velocity` until the next step. So eight
+Gauss-Seidel passes each read the same unchanged velocity, each computed the
+same full correction, and eight full corrections landed on a body that needed
+one. It carries its own working velocity across the iterations now and hands
+the server one impulse per body per tick — which is also what makes `force_of`
+exact.
+
+### P-5, recorded not answered
+
+An under-rated rope on a `required` object breaks and rebuilds three times and
+then holds: each rebuild puts the load back **at rest** at `home_transform`,
+and a load at rest does not snatch. It does not loop. Hanging a required load
+on a rope it snaps is still a composition error §23.5 should catch, not a
+runtime one. Not answered with a rule this lane invented.
+
+### What this does NOT do
+
+§21.11's macro deferral (a `POWER_OFF` waiting while the player stands on the
+gantry) is the macro layer's. §14's twelve manipulation verbs are P12's —
+`TETHER`'s seam into this solver exists and the verb does not. `attach_surface`
+and `constraint_anchor` offer types (§28.8) are not authored into the Zone
+schema yet.
+
+---
+
+## 2026-09-22 (engine) — OV04 P15: §21's actuator contract, and C4a closed
+
+`make godot-actuator` — **93 checks, in CI.** Amalgam §21, as far as this
+engine can reach it.
+
+### What did not exist before
+
+`Actuator` (`godot/scripts/gameplay/actuator.gd`) is §21.1's common contract:
+twelve kinds, the transition table, `path` interpolation over `Transform3D`
+(so a `PATH_MACHINE` is a crane and not only a slider), §21.4's lift selector,
+§21.6's 10 m rail-switch clearance queue, §21.7's inert-on-power-loss pad,
+§21.8's hazard controller and §21.9's light controller.
+
+`SafeClosure` (`godot/scripts/gameplay/safe_closure.gd`) is §21.2's interlock
+as a shared rule, in the way `StopTravel` is shared arithmetic: what "blocked"
+means and how the panel moves stay with the machine, so `ServiceShutter`
+(accelerating) and `Actuator` (linear) obey one interlock without sharing a
+motion law.
+
+`Constants.ACTUATOR_KINDS`, `ACTUATOR_POWER_LOSS`, `SAFE_CLOSURE_RETRY_SECONDS`,
+`RAIL_SWITCH_CLEARANCE_M`, `REQUIRED_OBJECT_GROUP` — declared in
+`bridge/archipepsi_bridge/schemas/constants.py` and regenerated, never
+hand-edited.
+
+### C4a, closed
+
+`service_shutter.gd` stopped where it was and waited. `01_RELIABLE_CORE.md:2318`
+requires a refused closure to stop, **reverse to fully open**, and retry after
+1.0 s, repeating indefinitely. It reverses now, and §21.2's protected set
+widened from the player alone to "the player or any `required = true` object" —
+which P16's `TransportedObjects` now marks on the body itself, because the
+interlock asks its question of whatever is standing in the doorway.
+
+New readouts: `refusals()`, `reversing()`, `retry_left()` on both the shutter
+and the contract class.
+
+### Two defects the cases found in the new code
+
+`reset()` ended when it arrived, so an actuator whose input still said `ON`
+travelled home and set off again immediately — a reset that reset nothing. A
+reset now holds until the next command. And the shutter's `overrun` read
+`goal <= 0.0`, which stays true after a successful closure, so the readout
+froze at the last refusal's value for the rest of the Zone's life.
+
+### The suite did not cover its own defect on the first attempt
+
+Both interlock cases opened the door fully, put a body in the doorway, and only
+then asked it to shut — so the panel never started moving and "stopped where it
+was" and "reversed to fully open" were the same number. Reverting the repair
+left the suite green. §21.2's subject is a closure that has *begun*; corrected,
+the same revert produces **nine failures**.
+
+### Shipped machines, not only the new class
+
+`ShuttleDeck` (LIFT) and `RailCarrier` (MOVING_PLATFORM) had no notion of power.
+Both now hold at the exact position they were caught at and resume the errand
+they were on. `power()` is deliberately not `hold()` on the carrier: `hold()`
+clears `target_dock` because a fail-safe stop means no errand, and reusing it
+would bring a carrier back powered and parked halfway down a span with its
+passenger aboard and nothing to say where it was headed.
+
+### What this does NOT do
+
+§21.10's `WINCH`, `BRAKE` and `DRIVER` are declared in the vocabulary and in the
+power-loss table and are **refused by name** by `Actuator.create`; they need the
+constraint solver, which is P13. §21.11's macro-effect deferral belongs with the
+signal/macro work. §21.3's velocity retention on leaving a platform is
+`sync_to_physics`'s and is measured by `godot-physics`. The six shipped machines
+keep their own motion curves — `Actuator` is the contract they consult for the
+rules that must be the same everywhere, not a rewrite of six working machines.
+
+---
+
+## 2026-09-22 (engine) — target facing is a gate, D-4 is consumed, cross-room is scoped
+
+**Landed.** `godot-target-facing` is in CI: 27 of 27 SHOT targets shootable,
+after a generic bounded nudge in the element's own local frame (0.05 m steps to
+0.50 m, distance-first, rotation still the first answer). Two defects found
+building it — the footprint padding is for content not architecture, and the
+firing ladder started past the window it was checking.
+
+**D-4 consumed.** `make godot-rail-zone`, 23 checks, in CI. `ZoneController`
+reads `Zone.rail_networks` and `RailNetworks` builds a real `RailJunction`
+across composed rooms. A span with a control starts refused; one without ships
+commissioned; a Zone rebuilt knowing the latch comes up commissioned. F-22: the
+schema declares a graph and the carrier runs a route, so a non-adjacent span is
+refused by name rather than guessed at, with three concrete questions back to
+the bridge lane.
+
+**Dess integrated**: `704f379` RailNetwork, `c0d5446` the support-target export
+(collapsed onto one name), `96b6fdd` **D-1/D-2 the acquisition binding**.
+Bridge suite 1650 passed + 627 subtests.
+
+### The cross-room scope clarification — recorded, not implemented
+
+Owner, 2026-09-22: puzzles must support branch- and Zone-spanning
+relationships, and this is **0.4 completion**. Matrix row **M6** added, blocked
+on **D-8**.
+
+Deliberately no implementation: *"agree the shared contract before competing
+implementations are written"*, and the contract is Dess's. The engine lane's
+half is `docs/D8_CROSS_ROOM_PROD.md` — what exists (measured), what §19.7
+already settles, the five state classes mapped, the two rule questions with
+their proposed amendments, and the acceptance-case design on Blindside's major
++ acquisition branch through the real composition path.
+
+**F-23 is the gap in one line: every piece of Zone-scope state the engine has
+is monotone.** So a cross-room puzzle today could only be a latch — the exact
+shortcut both the owner and §19.7 forbid.
+
+### Unchanged
+
+The three EX50 rooms remain playable development scenarios. H1/H2 enemy
+variety stays an active, separate workstream. No new setpiece roster. Review
+snapshot, 0.3 comparison and original saves untouched; scheduled work off.
+
+
+## 2026-09-21 (engine) — the Unweighted Switch, and the declaration the boundary caught
+
+**What landed.** EX50-033's room, `lightened`'s real runtime, the per-target
+application boundary, and the two corrections that boundary turned up — as one
+checkpoint, because a room that starts a Status and a table saying which
+Statuses may start are the same fact.
+
+### The room — `make godot-unweighted`, 61 checks, in CI
+
+`--unweighted` builds it. A 16×14 m chamber whose upper sill at **1.9 m** is
+above a baseline jump from the floor (apex **1.333 m**) and **0.433 m** inside
+one from the 200 kg crate's 1.0 m top. The recess the crate must stand in is
+floored by a HEAVY `ClassPlate` wired to the shutter through a NOT, so placing
+the step you need closes the route you want.
+
+`lightened` resolves it by moving the CLASS and not the kilograms — through
+`ManipulableBody.apply_status` into a real `StatusEffects` at target kind
+`object`. **No stand-in**: `shift_class_provisionally` is gone.
+
+Measured in the room, on its own crate: kilograms unmoved at 200.0, class
+HEAVY→MEDIUM, crate top still 0.99 m with a ray still stopping on it, one
+impulse 0.1957→0.3913 m/s (×2.00), plate released with nothing having moved,
+shutter open. Then the 8.0 s runs out and all of it comes back — which is why
+the bolt exists, and the suite shows the bolt outlasting the same expiry that
+shuts the unbolted door. §11's control (`--disconnected`) builds the same room
+with the plate's output unwired and shows the expected response *failing*. The
+route is walked end to end: lever, shot, climb, crossing, bolt, goal.
+
+`ServiceShutter` gains `command(open)` — `trip()` is a timed door and this is a
+safety lockout driven by a live signal.
+
+### F-20 — `vulnerable` was declared on one side and implemented on two
+
+`stat_stack.gd:93` multiplies the PLAYER's `damage_taken`; `enemy.gd:434`
+multiplies the enemy's; the table said `("enemy",)`. Invisible while support was
+asked per kind. Declared to match the runtime — reverting the row brings the
+three `godot-stats` failures back — and the acceptance sweep rewritten to ask
+both halves across all five §15.1 targets. All thirteen implemented kinds were
+audited against their consumers; `vulnerable` was the only wrong row.
+
+### F-21 — two exports of one map, collapsed
+
+Dess exported the same table as `ECHO_STATUS_SUPPORTED_TARGETS` (`c0d5446`)
+while this lane exported it as `ECHO_STATUS_TARGETS` (`fb11161`); she branched
+before mine landed. The merge keeps **hers** and renames the three engine
+consumers onto it.
+
+### Target facing — 1 of 27, and the nudge is measured
+
+The census now carries a **bounded** proposal step (half a metre in 5 cm steps,
+three axes, same clearance, same room). For `ActivityElement_4` in `c002`:
+**move 0.10 m back along its own facing**, to `(-17.00, 2.20, 29.10)`.
+**Reported, not applied** — it moves an element in a shipping Zone's generation.
+`godot-target-facing` stays in `NOT_A_SUITE` until it lands.
+
+### What this checkpoint does NOT do
+
+- **H1/H2 enemy variety** — separate explicit workstream, untouched.
+- **The rest of the Amalgam Status catalogue** — 11 kinds named and
+  unsupported; `lightened` crossed on ONE target.
+- **EX50-011 / EX50-021 / EX50-033 remain playable development scenarios.**
+  Their interlocks, campaign integration and save requirements are not
+  discharged by their route tests.
+- No save migration, AP guarantee, economy decision or production default
+  change. Review snapshot, 0.3 comparison and original saves untouched.
+  Scheduled work stays off.
+
+
+## 2026-09-21 (engine) — EX50-033: the property distinction, and the Status that is missing
+
+Same 0.4 line, same draft PR #12. The ledger's open question about EX50-033 is
+answered and its decisive control is built; its room is not, and the reason is
+named rather than worked around.
+
+### The open question, answered
+
+**Neither vocabulary existed as a gameplay concept.** `mass_kg` is a number on
+`ManipulableBody`; `PoweredLink` adds it up; no semantic mass class was anywhere
+in the engine. So EX50-033 §10's "decisive negative control" could not have been
+run at all before this.
+
+### What exists now that did not
+
+- `MassClass` — the class ladder and its thresholds, **transcribed** from
+  `docs/design-proposals/02_PHYSICS_IS_THE_GAME.md` §10.2 rather than chosen
+  here, with `read()` already honouring `lightened` and `anchored` for the day
+  they exist.
+- `ClassPlate` — a plate that reads class and **never sums**. §8: "Optional
+  debris cannot accumulate into HEAVY on this semantic plate." The player is
+  excluded by name, per §3.
+- `ManipulableBody.mass_class()`, a `statuses` seam for the real Status, and
+  `shift_class_provisionally()` — a room-local class shift with the Status's
+  exact shape and a name that cannot be mistaken for it. The class does not read
+  `freeze`: a crate parked on a guide track is still a manipulable HEAVY crate,
+  and reading the physical flag would let a parking brake change what a sensor
+  sees.
+- Gate: `godot-mass-class` (36 checks), in `integration.yml`.
+
+`ManipulableBody` gains `set_physics_process(false)` at ready, so a body nobody
+has touched costs exactly what it used to — that class is measured by the replay
+harness for determinism and must not grow a per-frame cost.
+
+### The finding
+
+**F-15 — `lightened` is not in the engine, and adding it is not a one-liner.**
+The accepted design specifies it (Design 5 §15.2). `Constants.ECHO_STATUS_KINDS`
+does not contain it, and that list is a GENERATED artifact from the bridge
+schema's closed `StatusKind`. Widening it is a shared-schema change of the same
+kind as D-3 and D-4 — and `StatusEffects.apply`'s own comment says why it is not
+merely a line: a kind the schema admits and no system implements is the inert
+component the staged gates exist to prevent, and `lightened`'s effect spans
+impulse, wind, conveyors and Physics eligibility as well as class. That is
+workstream **B3**, raised as **D-7**, not taken.
+
+### Still open
+
+- **EX50-033's room** — recess, sill, guide track, service drive, far bolt,
+  return stair — is **not started, deliberately**. §10 orders the work and the
+  verification it asks for first is done; building the room round a stand-in for
+  its central Status would be the coherent proposal dressed as evidence.
+- **D-7** joins the handoff table: `lightened` and `anchored` in the closed
+  `StatusKind` with their specified effects. It blocks `E-033-status` and so
+  `E-033-room`, and nothing else — the four verified E-033 rows do not wait on
+  it.
+- **Blocked only where named**, unchanged: M2's completion on D-1; a junction in
+  a composed Zone on D-4; the 0.4 save representation on D-6. Dess and Arty
+  remain unassigned.
+- **Scheduled work is off.** No heartbeat, no watchers, no subscriptions.
+
+
+## 2026-09-21 (engine) — EX50-021 Counterfire Arcade: the second minor
+
+Same 0.4 line, same draft PR #12. Two of the three approved minors are now
+built and measured; the ledger's scope/status matrix carries the rest.
+
+### What exists now that did not
+
+- `Damageable.HOSTILE_INPUT` — a declared opt-in for machines an enemy's
+  committed shot may operate. Nothing that has not opted in changes behaviour
+  at all, which is the whole difference between a bounded extension and a
+  change to what every damageable node in the game means.
+- `Enemy.muzzle()` / `Enemy.fire_at(aim)` — where a shot starts and a way to
+  commit one at a point. `_fire_projectile` is now the AI's caller of the
+  second; a suite is the other, so a projectile path can be measured without a
+  body standing in it. The aim is still taken once, at the muzzle, and nothing
+  steers it afterwards.
+- `EnemyProjectile` delivers to a declared hostile input, and spends itself on
+  the first impact so one shot is counted once.
+- `ImpactReceiver` — a shot element wrapped in a real steel hood, declared as a
+  hostile input and re-armed on an interval, because the timer it drives
+  refreshes.
+- `ServiceShutter` — a timed panel with a physical doorway volume and an
+  interlock that will not close on somebody. Third consumer of `StopTravel`.
+- `CounterfireArcade` (`--counterfire`, `--counterfire --blocked`) with its own
+  launchers. Development scaffolding, not a Zone.
+- Gate: `godot-counterfire` (44 checks, 2 notes), in `integration.yml`.
+
+### The finding
+
+**F-14 — two things about the runtime the specification told me not to
+assume.** A hostile projectile could not operate any machine at all: the filter
+was `is_in_group("player")` and everything else merely stopped the shot. And
+the ranged archetype has no windup — only the brute telegraphs — so the
+projectile itself is the entire warning: 0.88 s of flight against a measured
+0.43 s step into cover.
+
+One thing the runtime already had right, by accident: the ranged archetype's
+`speed` is `0.0`, so the gunner holds its gallery instead of walking down the
+lane, which is exactly what §7 asks for.
+
+### Still open
+
+- **EX50-033 Unweighted Switch** — the last of the three, not started, and it
+  needs one question answered first: its sensor is a semantic mass-class /
+  LIGHTENED interaction, **not** a summed-kilogram plate, and which of the two
+  the engine actually has is not established.
+- **Whether the bait is fair is not answered** and a test cannot answer it.
+  §12 says so itself. The margin is a number; a number is not a playtest.
+- **Blocked only where named:** M2's completion on D-1; a junction inside a
+  composed Zone on D-4; the 0.4 save representation on D-6 (which is what
+  `E-011-save` and `E-021-save` wait on); genuine Epsilon objective selection
+  on D-5. Dess and Arty remain unassigned.
+- **Scheduled work is off.** No heartbeat, no watchers, no subscriptions.
+
+
+## 2026-09-21 (engine) — EX50-011 Passing Platforms: the first minor
+
+**On `claude/archipepsi-0-4-blindside`, draft PR #12, the same 0.4 development
+line as the railway. The 0.3 comparison build (PR #4) is untouched, and the
+playable M2-mech snapshot is preserved as `review/0.4-m2mech-snapshot` at
+`206167e`.** The durable record is `docs/ledgers/HUGE_BATCH_LEDGER.md`, which
+now carries a full scope/status matrix including everything not started and
+which Dess handoff blocks which row.
+
+### What exists now that did not
+
+- `ShuttleDeck` — a LEVEL deck running between ordered stops on a straight
+  axis, with an **authored dwell declared as a property of the stop**. It is a
+  new class rather than a `RailCarrier` on a vertical rail because that
+  arithmetic stands the deck on end and drops the passenger; `RailPath` refuses
+  a path past 75° for the same underlying reason and that refusal is right.
+- `StopTravel` — the one authoring of how a machine gets from one stop to the
+  next, shared by the lift and the railway rather than copied. EX50-011 §9's
+  "shared machinery contract", made literal.
+- `CallLever` — a repeatable interact lever. Deliberately not `AlignmentControl`,
+  which is one-shot because the span it sends home is monotone; a call control
+  turns on being able to send a carrier back and try again.
+- `PassingPlatforms` (`--passing-platforms`, `--passing-platforms --parted`) —
+  the room, with its own launchers. Development scaffolding, not a Zone.
+- `RailCarrier.top_speed` / `accel` — per-carrier now, defaulting to the skiff's
+  7.0 / 3.0. The shuttle runs EX50-011's 1.5 m/s service speed without a second
+  class. `godot-rail-carrier` (73), `godot-rail-junction` (140) and
+  `godot-passenger-carry` (4) were re-run after the change and are green.
+- Gate: `godot-passing-platforms` (63 checks, 7 notes), in `integration.yml`.
+
+### What the specification asked for, and what was done about it
+
+EX50-011 sets its own bars and they were taken literally rather than restated.
+
+| bar | outcome |
+|---|---|
+| §11 a continuous body run from `A` boards `V`, transfers to `H` with all motion active, reaches `G` | walked, ridden and pulled; nothing placed, nothing snapped, railings counted before and after |
+| §11 a counterpart with `H`'s track shifted must not report the same commanded timing successful | `--parted`; the LAUNCH-to-step interval is replayed, `G` is not reached, the body ends on the recovery floor |
+| §10 measure overlap duration, relative velocity, railing collision, the landing, recovery-floor coverage | 2.17 / 2.68 / 1.75 s for a 1 / 2 / 3 s board-and-launch; 1.50 m/s; rays both ways; 2.89 m onto the recovery floor; a downward-ray census over the whole transfer level |
+| §10 the lowest-pressure solution must be present or removed | built: a STOP at the arrival floor and a restart lever on the shuttle's own deck, walked end to end |
+| §8 the actual maximum fall height and damage must be verified | 2.89 m, **0 HP** — see F-12 |
+| §8 repeated presses cannot queue arrivals; an old command cannot restart a stopped carrier | both asserted, with the refusal named |
+| §9 save behaviour | **not built.** There is no 0.4 save representation (D-6), no campaign under this scenario, nothing that could restore a carrier pose. Recorded as paper rather than covered by a test that would re-read the specification back to itself |
+
+### The findings
+
+- **F-10 — the recovery floor had two strips of nothing in it.** Three metres
+  wide, the full depth of the room, a fall past `FALL_KILL_Y`, in a room whose
+  §2 forbids exactly that. **No walked route went near it.** The coverage census
+  §10 asks for found it and reported eleven points with nothing underneath.
+  The same lesson F-09 paid for in the yard: a room is not proved safe by the
+  routes somebody thought to walk.
+- **F-11 — a duplicate node name is thrown away, not made readable.**
+  `add_child` assigns `@StaticBody3D@93` rather than renaming; the shuttle's
+  second railing lost its name and a name-based census found two of three. The
+  count is now read from the decks' own children.
+- **F-12 — §8's fall question has an answer the paper did not anticipate.**
+  This runtime applies **no fall damage at any height**; the only fatal fall is
+  past `FALL_KILL_Y = -30`. The recovery floor costs time and position, not
+  health — which is an engine-wide default, not something this room achieves.
+  If fall damage is ever introduced, this room's §8 claim must be re-measured.
+- **F-13 — an instrument error, caught before it was reported.** A body resting
+  on a *stationary* deck can finish a physics frame having slid against
+  nothing, so `get_slide_collision` alone reports it is not aboard. It looked
+  for about a minute like a defect in the very alternative §10 demands be
+  built. The fix is a downward ray as the fallback.
+
+### Still open
+
+- **EX50-021 Counterfire Arcade** and **EX50-033 Unweighted Switch** — both
+  unblocked, neither started. EX50-033 needs one question answered first: its
+  sensor is a semantic mass-class / LIGHTENED interaction, **not** a
+  summed-kilogram plate, and which of the two the engine actually has is not
+  established.
+- **Not built in EX50-011, and named rather than left to be found:** §9's save
+  behaviour (D-6), §8's boarding gates and interlocks — the shelf's lift
+  opening is unrailed when the lift is away, an 8.0 m drop — and §7's later
+  encounter, which the specification itself defers.
+- **Blocked only where named:** M2's completion on D-1; a junction inside a
+  composed Zone on D-4; the 0.4 save representation on D-6; genuine Epsilon
+  objective selection on D-5. Nothing else in the scope table waits on a lane
+  that has not accepted a handoff, and Dess and Arty remain unassigned.
+- **Scheduled work is off.** No heartbeat, no watchers, no subscriptions.
+
+
+## 2026-09-21 (engine) — the 0.4 line: the Blindside railway
+
+**A separate development line, `claude/archipepsi-0-4-blindside`, branched from
+`19c5d8e`. The 0.3 comparison build (PR #4) is untouched.** Draft PR #12.
+The batch's own durable record is `docs/ledgers/HUGE_BATCH_LEDGER.md` — task
+states, findings F-01 to F-08, the evidence-class table, and what is blocked on
+whom. This entry is the project-level summary.
+
+### What exists now that did not
+
+- `RailCarrier`, `RailReceiver`, `RailControls`, `RailSpan`,
+  `AlignmentControl`, `RailJunction` — the vehicle, its shootable controls,
+  the movable track, the lever and the machinery that owns the only state on
+  the railway that outlives a session.
+- `ZoneController.report_latch` — **the client half of the latch contract, which
+  had never been built.** The bridge half has been complete and tested since the
+  physics slice landed; every `latched` in the engine lane was prose in a
+  comment. `main.gd` now unions `progress.latched` into `latches_carried`
+  beside the keys, locks and stations it already carried.
+- `RailwayScenario` (`--railway`, `--railway --bracing`) — development
+  scaffolding, not a Zone, with its own launchers.
+- Gates: `godot-passenger-carry`, `godot-rail-carrier` (73),
+  `godot-rail-junction` (124), all in `integration.yml`. `make railway-shots`
+  renders the scenario for looking at.
+
+### The measurements that changed decisions
+
+- **The carry works.** Four `player.gd` repairs the plan named as likely were
+  **withdrawn on the evidence**: 1200 of 1200 frames grounded, none of the four
+  hazards bit.
+- **The beam was not where the ride is** — 0.744 m off on a bent route against a
+  0.35 m beam, because `RailPath` gained smoothing in P3.5 and `build_rail`
+  still swept the control points. 0.030 m after. Shipped rails are unchanged,
+  and the suite asserts that.
+- **The grapple is a verb the ballistics have to allow.** 21.9 m/s² measured off
+  the arc; a 14 m/s pull tops out 4.45 m above where it started. The gantry was
+  moved into that envelope. **`player.gd` was not touched** — its movement
+  damping is production feel and a change to it is the owner's.
+
+### Two defects in work that had already landed
+
+- **`godot-return-journey` had been red since `19c5d8e`** — the return plug
+  stopped being a tripwire that frame and only two of its three consumers were
+  updated. The third is the one CI does not run. Repaired by holding in the pad;
+  the entry is now asserted to fire *nothing*.
+- **Remote CI has not started a job on this branch at all** (F-08): both
+  workflows end in three to five seconds with no runner assigned, on every
+  commit including a docs-only one. Account-level, no fix to port, reported once
+  on the PR. The full frontier was run locally on a fixed tree instead.
+
+### Blocked, and on whom
+
+- **A junction inside a real composed Zone — D-4 (Dess).** A physics package
+  binds only to `feature:<tag>` or `shell:<shell_id>`, and §13.2 forbids a
+  features tag from mattering. The composer cannot ask for rail content and the
+  engine must not invent it.
+- **M2's completion** stays gated on the acquisition contract (§5), as approved.
+  M2-mech proves the experience and nothing about progression.
+- **EX50-011, EX50-021, EX50-033** — their specifications are not in this
+  repository. The parts they were chosen to share all exist; what is missing is
+  the design.
+
+Heartbeat, watchers and scheduled check-ins remain off.
+
+
 ## 2026-09-20 (engine) — the exit that was a wall, and the plug that was a trap
 
 Both items came out of the morning playtest, reproduced before diagnosis

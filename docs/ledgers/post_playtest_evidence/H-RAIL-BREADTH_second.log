@@ -1,0 +1,87 @@
+# H-RAIL-BREADTH second run: the lead point removed and a leg's end tangent given, at the clamped half-length: 3.52 degrees.
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- SHAPE: a fork laid from its declaration
+  ok: the Y network lays out ([])
+  ok: …as three lines -- the heel and two legs -- meeting at one set of points (3 lines)
+  ok: the points stand 11.0 m beyond the fork dock S
+  ok: …and no dock stands inside their 10.0 m clearance (nearest 11.0 m): a parked carrier never holds the points
+FAIL: every leg starts where the heel ends (0.0000 m) and in the direction it arrives (3.52 deg): a change of line at the points is neither a jump nor a jolt
+FAIL: every leg starts where the heel ends (0.0000 m) and in the direction it arrives (3.52 deg): a change of line at the points is neither a jump nor a jolt
+  -- REFUSALS: what is not a network says why
+  ok: a loop is refused by name ('5 docks joined by 5 spans: a network is one tree (docks - 1 spans, all joined); a loop or a detached dock is n')
+  ok: track dividing at S with no switch is refused by name ('dock 'S' joins 3 tracks and declares no switch; where track divides, something has to choose')
+  ok: a leg dock inside the points' clearance is refused by name ('dock 'A1' stands 8.4 m from points 'p', inside the 10.0 m clearance: a carrier parked there would hold the poi')
+  ok: a switch with one leg is refused by name ('switch 'p' has 1 leg(s); a turnout chooses between at least two; dock 'S' joins 3 tracks and declares no switc')
+  ok: a heel that arrives from beyond the legs is refused by name ('switch 'p': its heel from 'T' arrives heading away from its legs, so the track would double back through the p')
+  ok: a refused network is still built as a carrier, lays no track, and refuses every command saying why
+  -- BRANCH SELECTION: throwing the points moves track
+  ok: parked at S, the points set for A1
+  ok: FORWARD from S is taken
+  ok: …and the carrier arrives at A1, changing line at the points with no step longer than 0.175 m (largest 0.129 m)
+  ok: …and BACK brings it to S again
+  ok: a throw to B1 from S applies at once ('set') and, until the tongue arrives, joins neither leg
+  ok: …so FORWARD is refused ('the points at p are between legs; wait for them to lock') and nothing moves
+  ok: the tongue MOVED -- it swung 74.5 deg onto B1's leg and locked there: the track changed, not a flag
+  ok: FORWARD from S is taken
+  ok: …and now it runs to B1 and stands on B1's track (0.000 m off it): the carrier follows the tongue
+  -- POINTS AGAINST: a leg that ends at the tongue
+  ok: from B1, 20 m off, the points are thrown to A1 at once
+  ok: BACK from B1 is refused ('the points at p are set for A1, not for this track'): it is not routed onto the other leg, and nothing moves
+  -- ROUTE LOCK: occupied and committed points (§21.6, RB-F1)
+  ok: three frames out, the carrier is 11.00 m from the points -- outside §21.6's clearance, so distance alone would let a throw through
+  ok: …but it is committed to them, so the throw to B1 is QUEUED ('queued'), never dropped
+  ok: …and the carrier arrives at A1, the route it was sent on
+  ok: …and once it is clear the queued throw applies: the points go to B1
+  ok: 3 m beyond the points, no longer committed to them, the carrier still holds them by §21.6's distance: 'queued'
+  ok: …and the throw applies once it is clear of them
+  ok: CONTROL (the lock off -- the distance rule alone): the same throw applies at once ('set'), and the carrier is stopped dead at the points (0.20 m from them): the defect RB-F1 names
+  -- CONFLICTS: two commands at once, and a hand on the lever
+  ok: FORWARD and BACK in the same moment: the network does neither, and says so
+  ok: a call waiting for the points to reach A1 is CANCELLED, not fought, when a hand throws them back ('the points at p were thrown to B1 while the call waited')
+  -- UNAVAILABLE LINK: missing track on one leg
+  ok: the points set for A1 but S-A1 not commissioned: FORWARD is refused ('no commissioned track between S and A1 (span sa)') and nothing moves
+  ok: …and a call from A2, beyond it, is refused before anything moves ('the track between S and A1 is not commissioned (span sa)')
+  ok: …while the other leg runs: aligning one leg can never lay the other, and missing one blocks only it
+  ok: a span on that leg locks home through the junction, which commissions exactly edge 2 and reports its latch once
+  ok: …and FORWARD from S now reaches A1
+  -- RECALL: every dock calls, from every other dock
+  ok: a player at each of the five docks calls the carrier from each of the other four: 20 of 20 arrive, no step longer than 0.175 m (largest 0.130 m) []
+  ok: from B1 to A2 -- another branch -- it stops only where the route turns back, at S, and runs through A1 without stopping (stops: ["S", "A2"])
+  ok: …reporting its states as it goes: ["executing", "queued", "executing", "completed"]
+  -- HOLDS: power loss and the fail-safe stop, on a network
+  ok: power lost 6 m short of the points: the carrier holds there
+  ok: …and the points it is committed to stay locked through the outage: a throw is QUEUED ('queued')
+  ok: …and a command with no power is refused, not driven
+  ok: power restored, it carries on to A1, the route it left on
+  ok: …and the queued throw applies behind it
+  ok: a fail-safe stop holds the carrier on the leg, 12 m past the points
+  ok: …the points are thrown behind it, and released it may not go back through them: the track behind it ends at the tongue ('the points at p are set for B1, not for this track')
+  ok: …set back, BACK is taken
+  ok: …and it returns to S
+  ok: stranded between docks by a hold, a call still brings it home to T
+  -- RB-F3: an unpowered ordered carrier
+  ok: with no power, a travel command is refused and the carrier does not move (offset 0.000 m)
+  ok: …power restored, it is taken
+  ok: …and it runs to the next dock
+  -- RB-F2: a rail switch's reset is a branch change
+  ok: with an actor 4 m from the junction, a reset is QUEUED like any throw and the tongue stays put (t 1.00, branch 1)
+  ok: …and applies once the rail is clear (t 0.00)
+  ok: …and a route lock holds a reset exactly as a present actor does
+  -- RESTORE: points and carrier rebuilt from saved facts
+  ok: the points come back set for B1, the tongue already there
+  ok: …and the carrier parks at the declared home B1, not dock 0
+  ok: …and nothing is reported: a restore is not a throw and not a journey
+  ok: …and the restored network runs: a call at T brings it from B1
+  ok: a setting restores by leg index as well as by the leg's dock
+  -- ORDERED: a chain on both carriers
+  ok: a chain of four docks and no switch: the network carrier and the ordered carrier stop at the same docks, at the same offsets (largest difference 0.00000 m), in the same frames (0)
+  -- LEVERS: call and points, pulled
+  ok: a CALL lever at each of the five docks and a POINTS lever at the fork
+  ok: …each standing 3.6 m from the track, clear of the deck
+  ok: pulling A2's CALL lever brings the carrier there from T (executing)
+  ok: pulling the POINTS lever throws them to the other leg
+  ok: …and B1's CALL lever brings it over from A2
+  MEASURED 66 check(s), 0 note(s)
+GODOT RAIL NETWORK FAILED (1 of 66 checks)
+make: *** [Makefile:1407: godot-rail-network] Error 1

@@ -1,0 +1,40 @@
+# D-10 census evidence: the first run with the 7 chain shapes; it breaks the 22 m rule.
+# Filtered from the raw log: 9240 'p3a:' lines removed (the authored-shell selection census the ZoneController prints for every room of every build; mode=none throughout).
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+width	depth	fits	of	refusals (summed)	ms per build
+16	16	58	168	outside the room 57860, on the track 37161, not clear 3360, within the base kit's reach 618, off the floor 1	60
+18	18	62	168	outside the room 64660, on the track 47470, not clear 9029, within the base kit's reach 1364, off the floor 13	72
+20	20	125	168	outside the room 29842, on the track 23842, off the floor 71, not clear 6320, within the base kit's reach 2017	79
+22	22	166	168	outside the room 1556, on the track 1314, off the floor 2, not clear 489, within the base kit's reach 167	85
+24	24	168	168	-	89
+26	26	168	168	-	96
+28	28	168	168	-	104
+28	20	168	168	-	93
+20	28	166	168	outside the room 1724, on the track 1647, off the floor 2, not clear 513, within the base kit's reach 218	88
+28	16	144	168	outside the room 18672, on the track 10637, not clear 7055, within the base kit's reach 2487, off the floor 29	90
+16	28	137	168	outside the room 24118, on the track 22272, not clear 3102, within the base kit's reach 726, off the floor 2	83
+
+by the chain's turn before the arena / after it (0/0: the track on the arrival axis), of 24 each:
+width	depth	0/0	+90/0	-90/0	0/+90	0/-90	+90/-90	-90/+90
+16	16	12	4	5	10	9	8	10
+18	18	10	3	13	17	3	1	15
+20	20	20	18	20	21	17	12	17
+22	22	24	24	23	24	24	24	23
+24	24	24	24	24	24	24	24	24
+26	26	24	24	24	24	24	24	24
+28	28	24	24	24	24	24	24	24
+28	20	24	24	24	24	24	24	24
+20	28	24	24	24	23	24	24	23
+28	16	21	20	21	21	21	19	21
+16	28	23	5	23	23	22	18	23
+
+the smallest square arena every sampled layout (168) takes: 24 x 24
+every size was built in all 7 chain shapes
+FAIL: the composer's rule (both spans 22 m or more) is broken: 22 x 22 takes 166 of 168
+GANTRY CENSUS: FAILED
+make: *** [Makefile:1407: godot-gantry-census] Error 1
+
+real	3m25.309s
+user	3m16.389s
+sys	0m7.922s

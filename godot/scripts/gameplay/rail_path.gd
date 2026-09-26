@@ -62,7 +62,19 @@ var _points: PackedVector3Array = PackedVector3Array()
 ## so an authored rail of two points builds the identical geometry it
 ## built before. Handles are how a later slice adds smoothing without
 ## moving anything.
-static func from_points(points: PackedVector3Array) -> RailPath:
+##
+## **`start_dir` and `end_dir`, when given, set the direction the path
+## leaves its first point and arrives at its last** (H-RAIL-BREADTH). A
+## turnout's leg must leave the points along the heel, and the clamped
+## end tangent below points straight at the leg's first dock instead --
+## a kink at the points that a carrier crosses at speed. The direction is
+## given; the length is the end span's own, the usual choice for a cubic
+## that leaves a point along a set direction and bends toward the next.
+## (The clamped half-length was tried first and bent late and tight:
+## 3.5 degrees in a leg's first 0.1 m, a 1.6 m radius at the points.)
+## Every existing rail passes neither, and builds exactly as before.
+static func from_points(points: PackedVector3Array,
+		start_dir := Vector3.ZERO, end_dir := Vector3.ZERO) -> RailPath:
 	var made := RailPath.new()
 	made._points = points
 	var curve := Curve3D.new()
@@ -87,6 +99,12 @@ static func from_points(points: PackedVector3Array) -> RailPath:
 		var before: Vector3 = points[maxi(i - 1, 0)]
 		var after: Vector3 = points[mini(i + 1, points.size() - 1)]
 		var tangent := (after - before) * 0.5 * TENSION
+		if i == 0 and start_dir != Vector3.ZERO:
+			tangent = start_dir.normalized() * (after - points[i]).length() \
+					* TENSION
+		elif i == points.size() - 1 and end_dir != Vector3.ZERO:
+			tangent = end_dir.normalized() * (points[i] - before).length() \
+					* TENSION
 		curve.set_point_in(i, -tangent / 3.0)
 		curve.set_point_out(i, tangent / 3.0)
 	made._curve = curve
@@ -242,7 +260,14 @@ func polyline(step := BAKE_INTERVAL) -> PackedVector3Array:
 	var out := PackedVector3Array()
 	var span := length()
 	var walk := maxf(step, 0.01)
-	var n := int(ceil(span / walk))
+	# A LENGTH A HAIR PAST A WHOLE NUMBER OF STEPS (RB-F5). The baked
+	# length is a single-precision sum, so a straight 31 m rail reads a
+	# little over 31, and `ceil` asked for one step more than there is:
+	# the last two samples were both the end, a segment of no length, and
+	# `violations` read it as a 90-degree pitch and refused a flat rail.
+	# A last step shorter than a thousandth of a step is that rounding,
+	# not track; any longer one is kept, as before.
+	var n := int(ceil(span / walk - 0.001))
 	for i in n + 1:
 		out.append(at(minf(float(i) * walk, span)))
 	return out

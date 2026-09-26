@@ -54,9 +54,11 @@ class TestTheFamilyIsTheApprovedTen:
         first production family and must not be reduced back to melee /
         ranged / brute*."""
         assert len(C.ENEMY_ROLES) == 10
-        assert APPROVED_FAMILY - set(C.ENEMY_ARCHETYPES) == {
-            "charger", "bulwark", "scuttler", "artillery", "beacon",
-            "diver", "drifter"}
+        # UPDATED, and in the direction the review asked for. This used
+        # to assert the seven were NOT placeable, which was true while
+        # they had no behaviour and is the opposite of the goal. All ten
+        # are implemented now, so the stronger claim is asserted instead.
+        assert set(C.ENEMY_ARCHETYPES) == APPROVED_FAMILY
 
     def test_asking_for_an_unknown_role_raises_rather_than_guessing(self):
         with pytest.raises(KeyError, match="no agreed physical envelope"):
@@ -84,8 +86,38 @@ class TestAnEnvelopeIsPhysicalOnly:
                     "block; it would spawn with no behaviour")
 
     def test_the_content_value_table_scores_only_placeable_roles(self):
+        """Nothing is priced that cannot be placed. The other direction
+        is NOT asserted, and the difference is a real gap rather than a
+        loosened rule: `ENEMY_ARCHETYPES` means the engine implements
+        the role, `ENEMY_VALUE` means a Zone's budget knows its cost,
+        and seven roles now have the first and not the second."""
         from archipepsi_bridge import content_value as V
-        assert set(V.ENEMY_VALUE) == set(C.ENEMY_ARCHETYPES)
+        assert set(V.ENEMY_VALUE) <= set(C.ENEMY_ARCHETYPES)
+
+    def test_composable_means_priced_and_the_gap_is_named(self):
+        """A composer that placed an unpriced role would charge it
+        nothing and hand the player a Zone whose budget is a fiction."""
+        from archipepsi_bridge import content_value as V
+        assert set(V.COMPOSABLE_ENEMY_ROLES) == set(V.ENEMY_VALUE)
+        assert set(V.COMPOSABLE_ENEMY_ROLES) | set(V.UNPRICED_ENEMY_ROLES) \
+            == set(C.ENEMY_ARCHETYPES)
+        assert not set(V.COMPOSABLE_ENEMY_ROLES) & set(V.UNPRICED_ENEMY_ROLES)
+
+    def test_pricing_an_unpriced_role_raises_rather_than_scoring_zero(self):
+        import pytest as _pytest
+        from archipepsi_bridge import content_value as V
+        for role in V.UNPRICED_ENEMY_ROLES:
+            with _pytest.raises(KeyError, match="no approved content value"):
+                V.enemy_value(role)
+
+    def test_a_room_admits_only_roles_that_physically_fit_in_it(self):
+        """P08.2. A drifter holds station 2.55 m up, so a room with a
+        2.2 m ceiling cannot hold one however placeable it is."""
+        big = set(C.roles_that_fit(16.0, 15.0, 5.0))
+        low = set(C.roles_that_fit(6.0, 5.0, 2.2))
+        assert big == set(C.ENEMY_ROLES)
+        assert "drifter" not in low and "brute" not in low
+        assert low < big
 
 
 class TestFloorAndFlyingAreExplicit:
@@ -240,3 +272,36 @@ class TestEveryRoleFitsTheRoomsItWillStandIn:
             BUILDERS_GD, "CORRIDOR_HEIGHT"), (
             "a flyer that cannot fit down a corridor cannot be placed at "
             "all; this is the bound that decides it")
+
+
+class TestTheComposerPlacesOnlyRolesThatFit:
+    """P08.2 as a property of real output, not only of the helper.
+
+    `roles_that_fit` is a guard for the roles that are not composable
+    yet. This asserts it is not also papering over a defect today: every
+    enemy the composer actually places is one its room can hold.
+    """
+
+    def test_every_placed_role_fits_the_room_it_is_placed_in(self):
+        from archipepsi_bridge.playtest import played_zone
+        zone = played_zone()
+        assert zone is not None
+        offences = []
+        for chamber in zone.chambers:
+            dims = (getattr(chamber, "width", None),
+                    getattr(chamber, "depth", None),
+                    getattr(chamber, "wall_height", None))
+            if None in dims:
+                continue          # not a dimensioned room kind
+            fits = set(C.roles_that_fit(*dims))
+            for group in getattr(chamber, "enemies", ()) or ():
+                if group.archetype not in fits:
+                    offences.append((chamber.id, group.archetype, dims))
+        assert not offences, offences
+
+    def test_the_check_is_not_vacuous_it_saw_real_enemies(self):
+        """A sweep over zero rooms passes for the wrong reason."""
+        from archipepsi_bridge.playtest import played_zone
+        zone = played_zone()
+        placed = sum(len(getattr(c, "enemies", ()) or ()) for c in zone.chambers)
+        assert placed >= 5, f"only {placed} enemy groups; nothing was checked"

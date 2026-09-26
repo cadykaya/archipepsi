@@ -51,12 +51,148 @@ ENVELOPE_FORCE_N = 700.0
 ENVELOPE_RANGE_M = 20.0
 ENVELOPE_MASS_KG = 120.0
 
+#: Design 2 §10.3's ordinary-pickup line, and **not a fourth envelope
+#: number**.
+#:
+#: These two masses answer different questions and collapsing them into
+#: one rule would be wrong in both directions. `ENVELOPE_MASS_KG` (120)
+#: is one of THREE numbers -- with force and range -- that a *host* must
+#: meet to count as a qualified manipulation provider (§29.3.2); it
+#: bounds what a `PUSH`, `PULL` or `HOLD` may act on. `CARRY_MASS_KG`
+#: (60) is a property of the *object* and governs ordinary pickup:
+#: §10.3, *"an object is carriable if `carriable = true` and
+#: `mass_kg <= 60.0`. Above that it is manipulable only."*
+#:
+#: A 100 kg crate sits inside the provider envelope and is still not
+#: something the player picks up. Reading 120 as the carry limit would
+#: hand the player a crate in both hands; reading 60 as the envelope
+#: would refuse a qualified host the crate it is authored to push.
+CARRY_MASS_KG = 60.0
+
+#: Design 2 §10.2's class ladder, and §6.1's player.
+#:
+#: Transcribed onto the bridge because something here has to DERIVE
+#: what a mechanism demands of a player, and a ladder that lives only
+#: in `mass_class.gd` is a ladder this side has to guess at. Two
+#: spellings of one fact is the failure; one spelling, exported, is the
+#: fix.
+#:
+#: `PLAYER_MASS_KG` is not decoration: a `PRESSURE_PLATE` reads a
+#: semantic class, so whether the player's own body satisfies one is a
+#: question about this number, and it is the difference between a
+#: puzzle the base kit solves and a puzzle that needs a capability.
+MASS_LIGHT_BELOW = 30.0
+MASS_MEDIUM_BELOW = 120.0
+MASS_HEAVY_BELOW = 400.0
+PLAYER_MASS_KG = 80.0
+
+MASS_CLASSES = ("LIGHT", "MEDIUM", "HEAVY", "FIXED")
+
+
+def mass_class(mass_kg: float, manipulable: bool = True) -> str:
+    """§10.2, derived and never declared.
+
+    A thing that cannot be manipulated at all is `FIXED` whatever it
+    weighs -- §10.2's second clause, and the reason a bolted 5 kg
+    bracket is not `LIGHT`.
+    """
+    if not manipulable or mass_kg >= MASS_HEAVY_BELOW:
+        return "FIXED"
+    if mass_kg >= MASS_MEDIUM_BELOW:
+        return "HEAVY"
+    if mass_kg >= MASS_LIGHT_BELOW:
+        return "MEDIUM"
+    return "LIGHT"
+
+
+def plate_accepts_player(requires_class: str, counts_player: bool) -> bool:
+    """Does standing on this plate load it? `ClassPlate`'s rule, restated.
+
+    **The flag first, and the mass only if the flag says the body
+    counts.** `ClassPlate.occupants()` skips the player unless the plate
+    is told to count them, so for an object-only plate the answer is no
+    whatever the player weighs. Only then does the runtime compare
+    classes -- `MassClass.at_least(player, requires)` over §10.2's
+    ladder -- and `Player.mass_class()` is the class of `PLAYER_MASS_KG`
+    (Prod, D-10 answer §2).
+
+    **What this deliberately does not count.** A carried object: the
+    player's hands are not the player's body, and a plate held by an
+    object names that object (`SensorNode.held_by`, D13 1d), where the
+    Zone checks the weight can really hold it. A pushed object: walking
+    a crate onto a plate is a physics claim nobody has proven, and
+    progression is not where to find out. An earlier revision of this
+    derivation counted both, and counted the player's mass for a plate
+    that ignores the player -- which described an interaction the
+    runtime refuses.
+    """
+    if not counts_player:
+        return False
+    body = mass_class(PLAYER_MASS_KG)
+    return MASS_CLASSES.index(body) >= MASS_CLASSES.index(requires_class)
+
+
+#: The namespace room-graph latches are recorded under: `graph_<room>`.
+#:
+#: `LatchFired.package_id` is `^[a-z0-9_]+$`, so no separator character
+#: is available, and a bare room id would share one namespace with the
+#: physics packages `record_latch` already validates. **Reserved:** a
+#: physics package may not take a name in it, or a physics latch and a
+#: room-graph latch could be recorded under one identity.
+GRAPH_PACKAGE_PREFIX = "graph_"
+
+#: O05-06. The namespace a hosted minor's latches are recorded under:
+#: `minor_<room>`. Reserved for the reason `graph_` is -- a physics
+#: package named into it would share an identity with a minor's latch.
+#: What a minor may record is its occurrence contract's, not the engine's
+#: (`schemas/minors.py`).
+MINOR_PACKAGE_PREFIX = "minor_"
+
+#: Every reserved namespace, each with what it is reserved for.
+RESERVED_PACKAGE_PREFIXES = {GRAPH_PACKAGE_PREFIX: "room-graph latches",
+                             MINOR_PACKAGE_PREFIX: "hosted minors' latches"}
+
+
+def refuse_reserved_package_id(package_id: str,
+                               what: str = "physics package") -> None:
+    for prefix, owner in RESERVED_PACKAGE_PREFIXES.items():
+        if package_id.startswith(prefix):
+            raise ValueError(
+                f"{what} '{package_id}' takes the "
+                f"'{prefix}' prefix, which is reserved for {owner}; a "
+                "latch recorded under it would share an identity "
+                "with one of theirs")
+
 #: §4.10. The verifier's whole budget, unchanged from Design 3.
 STATE_VECTOR_BOUND = 4096
 
 #: §4.10. Latches compete with macro variables for that budget, so the
 #: count promoted into the vector is capped on its own as well.
 MAX_VECTOR_LATCHES = 8
+
+
+# --------------------------------------------------------------------------
+# Ordinary pickup — a property of the OBJECT, not of the host.
+# --------------------------------------------------------------------------
+
+def carriable_by_hand(carriable: bool, mass_kg: float) -> bool:
+    """§10.3's ordinary-pickup test: the flag AND the kilograms.
+
+    **Both clauses, and the flag is not redundant.** `PLATE` is exactly
+    60 kg -- on the line, not over it -- and is still not carriable,
+    because §10.1's flag says it is handled with lifting slots rather
+    than a grip. A kilogram test on its own would put a grip on it.
+
+    **Nothing about the host reaches this function**, which is the
+    point: no Gear, Mod or Ability widens ordinary pickup. A host that
+    clears §29.3.2's envelope may push a 100 kg crate; it still may not
+    pick one up. The two rules live in one module so the distinction is
+    written down where a reader will meet both, and they take different
+    arguments so neither can be called with the other's data.
+
+    The kilogram comparison is `<=`: 60.0 itself passes.
+    """
+    return bool(carriable) and float(mass_kg) <= CARRY_MASS_KG
 
 
 # --------------------------------------------------------------------------
@@ -244,6 +380,11 @@ class PhysicsPackage(Strict):
 
     package_id: str = Field(min_length=1, max_length=32,
                             pattern=r"^[a-z0-9_]+$")
+
+    @model_validator(mode="after")
+    def _the_graph_namespace_is_reserved(self):
+        refuse_reserved_package_id(self.package_id)
+        return self
     latch_conditions: tuple[LatchCondition, ...] = Field(default=(),
                                                          max_length=16)
     #: Which of `latch_conditions`, by index, the verifier reasons about.
@@ -420,6 +561,11 @@ class ReplayEvidence(Strict):
 
     package_id: str = Field(min_length=1, max_length=32,
                             pattern=r"^[a-z0-9_]+$")
+
+    @model_validator(mode="after")
+    def _the_graph_namespace_is_reserved(self):
+        refuse_reserved_package_id(self.package_id)
+        return self
     content_digest: str = Field(min_length=16, max_length=16,
                                 pattern=r"^[0-9a-f]{16}$")
     provider_force_n: float = Field(ge=0.0)
@@ -482,6 +628,11 @@ class PlacedPackage(Strict):
 
     package_id: str = Field(min_length=1, max_length=32,
                             pattern=r"^[a-z0-9_]+$")
+
+    @model_validator(mode="after")
+    def _the_graph_namespace_is_reserved(self):
+        refuse_reserved_package_id(self.package_id)
+        return self
     zone_id: str = Field(min_length=1, max_length=32,
                          pattern=r"^[a-z0-9_]+$")
     room_id: str = Field(min_length=1, max_length=24,

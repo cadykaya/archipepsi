@@ -88,7 +88,23 @@ Geometry is prisms, wedges and ramps as much as boxes. A room built only from ax
 
 # 5. Enemy catalog
 
+The approved family is **ten**. The prototype trio:
+
 `melee` moves at the player with a short-range attack. `ranged` holds position and fires slow visible projectiles. `brute` is large, slow, high-health, hits hard, and serves as the POC boss.
+
+The seven the roster added, each doing what its recovered brief says:
+
+| role | what it does | ground or air |
+|---|---|---|
+| `charger` | telegraphs a charge, aim fixed once the windup opens, unsteerable commitment with the recovery window as the opening | ground |
+| `bulwark` | shrugs off most of a hit inside a frontal arc and nothing from behind | ground |
+| `scuttler` | small, fast and fragile — closes distance in seconds | ground |
+| `artillery` | stationary, lobs a shell with a real flight time and a ground mark, and does nothing at close quarters | ground |
+| `beacon` | barely hurts anything itself; it makes the enemies around it worse | ground |
+| `diver` | ignores a grounded player and commits when they leave the ground | air |
+| `drifter` | holds station well above the floor and never comes down | air |
+
+**Implemented is not composable.** All ten have behaviour and physical envelopes. A role also needs an approved **content value** before a Zone may be composed with it, and seven do not have one yet — see `content_value.UNPRICED_ENEMY_ROLES`. Composition places only what it can score, because a role scored at zero is free content and makes a Zone's budget a fiction.
 
 Stats are in `schemas/constants.py` and are binding. They are chosen so the worst legal Zone is roughly 25 seconds of sustained Static Pulse fire — bounded on purpose, since the limits alone would otherwise permit a four-minute plinkfest.
 

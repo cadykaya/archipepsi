@@ -81,14 +81,58 @@ IMPLEMENTED_EFFECT_KINDS = (
 #: Action on any of them is reachable. This was the last gate still
 #: narrower than the contract: every slot the schema admits is now a
 #: button, which is what the gate was waiting for.
-IMPLEMENTED_ACTION_SLOTS = C.SLOT_NAMES
+#: `consumable` was STAGED -- in the vocabulary and deliberately not
+#: advertised -- until the whole path behind it was proven, because this
+#: list is the promise that a slot the schema admits is a slot the
+#: runtime can EXECUTE. Vocabulary is not executable support.
+#:
+#: **WITHDRAWN, 2026-09-22, and this is the second time it has been
+#: staged.** It was advertised once and the owner withdrew it, because
+#: the path was not complete in the way that matters:
+#:
+#:   A FAILED SEND RAN THE EFFECT AND CHARGED NOTHING. The grenade left
+#:   the hand, the bridge never heard about it, and the count was
+#:   unreduced -- a free activation, which the suite ASSERTED as correct.
+#:   A REFUSAL REFUNDED A CHARGE WHOSE EFFECT HAD ALREADY HAPPENED, and
+#:   the refunded charge was then usable for a second press. One charge,
+#:   two activations.
+#:
+#: Not replaying an effect on a refusal is necessary and it is not
+#: sufficient. What this list promises is that a slot the schema admits
+#: is a slot the runtime can EXECUTE, and executing a consumable means
+#: one charge buys exactly one authorized activation.
+#:
+#: It gains `consumable` again when the commitment ordering holds --
+#: authorize, then launch, and never refund a charge whose effect is
+#: already in the world -- with client/bridge coverage that counts
+#: ACCEPTED EXPENDITURE rather than messages sent. The baseline is
+#: retaken deliberately then.
+IMPLEMENTED_ACTION_SLOTS = tuple(
+    slot for slot in C.SLOT_NAMES if slot != "consumable")
+
+#: O05-11.4: THE EXPLICIT OVERNIGHT CANDIDATE PROFILE'S SLOTS -- all five.
+#: The condition above holds now: the press authorises first and waits
+#: for the snapshot, launches only on `consumable_authorized`, releases a
+#: launch that did not happen and commits one that did (`player.gd`), and
+#: `godot-consumable-live` / `-restart` count accepted expenditure across
+#: a dropped socket and a killed process. The owner's instruction is to
+#: promote for the candidate profile only, so this is advertised only
+#: when a request is built under `candidate.OPTIONS`' `consumables`, and
+#: the production list above stays staged, unchanged, with its test.
+CANDIDATE_ACTION_SLOTS = tuple(C.SLOT_NAMES)
 
 IMPLEMENTED_MODIFIER_TYPES = ("recoil_self", "knockback_target",
                               "apply_status_on_hit")
 
 
-def validate_stage_support(interpretation: EchoInterpretation) -> list[str]:
+def validate_stage_support(
+        interpretation: EchoInterpretation, *,
+        slots: tuple[str, ...] = IMPLEMENTED_ACTION_SLOTS) -> list[str]:
     """Reject schema-valid mechanics the current runtime cannot execute.
+
+    `slots` is what the request ADVERTISED (O05-11): the gate admits
+    exactly that, so a slot reaches a save only through a request that
+    offered it. The default is production's.
 
     This is intentionally independent from structural schema validation. A
     Resource, Rule, LINK, etc. is *valid v0.8 data*, but accepting it before
@@ -145,7 +189,7 @@ def validate_stage_support(interpretation: EchoInterpretation) -> list[str]:
             continue
 
         if component.kind == "action":
-            if component.slot not in IMPLEMENTED_ACTION_SLOTS:
+            if component.slot not in slots:
                 errors.append(
                     f"action slot '{component.slot}' is not wired by the "
                     "current runtime"

@@ -1,0 +1,15 @@
+H-3D-MAP: the suites the map wall touches, one at a time, in wt-cp2
+godot-map-face: exit=0 GODOT MAP FACE OK (52 checks, 1 notes)
+godot-menu-shell: exit=0 GODOT MENU SHELL OK (23 checks, 2 notes)
+godot-boot: exit=0 GODOT BOOT TESTS OK
+godot-hud: exit=0 GODOT HUD TESTS OK
+godot-equipment-face: exit=0 GODOT EQUIPMENT FACE OK (107 checks, 1 notes)
+godot-minimap: exit=0 GODOT MINIMAP OK (30 checks, 1 notes)
+godot-candidate-live: exit=0 GODOT CANDIDATE LIVE NEXT_FINAL OK (8 checks, 1 notes)
+
+Re-run on the final code (the Hub clear single-sourced; the no-send check fixed):
+godot-map-face: exit=0 GODOT MAP FACE OK (52 checks, 1 notes)
+godot-boot: exit=0 GODOT BOOT TESTS OK
+godot-hud: exit=0 GODOT HUD TESTS OK
+godot-menu-shell: exit=0 GODOT MENU SHELL OK (23 checks, 2 notes)
+godot-candidate-live: exit=0 GODOT CANDIDATE LIVE NEXT_FINAL OK (8 checks, 1 notes)

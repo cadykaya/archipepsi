@@ -8,19 +8,37 @@ extends Node
 
 const ACTIVITY_RESULT_SECONDS = 2.0
 const ACTIVITY_TOUCH_RADIUS = 1.1
+const ACTUATOR_EPSILON = 0.001
+const ACTUATOR_KINDS = ["DOOR", "BRIDGE", "MOVING_PLATFORM", "LIFT", "PATH_MACHINE", "RAIL_SWITCH", "LAUNCHPAD", "HAZARD_CONTROLLER", "LIGHT_CONTROLLER", "WINCH", "BRAKE", "DRIVER"]
+const ACTUATOR_POWER_LOSS = {"DOOR": "close", "BRIDGE": "hold", "MOVING_PLATFORM": "hold", "LIFT": "hold", "PATH_MACHINE": "hold", "RAIL_SWITCH": "hold", "LAUNCHPAD": "inert", "HAZARD_CONTROLLER": "disable", "LIGHT_CONTROLLER": "unlit", "WINCH": "hold", "BRAKE": "engage", "DRIVER": "hold"}
+const ACTUATOR_TRAVEL_SECONDS = 2.0
 const AFFORDANCE_DYNAMIC_CHANNELS = ["breakable_wall_damage", "wind_ring_count"]
 const AFFORDANCE_SIGNAL_HEX = "#39d7c8"
 const AFFORDANCE_SIGNAL_RGB = [0.2235294117647059, 0.8431372549019608, 0.7843137254901961]
 const AIR_CONTROL = 0.4
+const ARTILLERY_BLAST_RADIUS = 3.2
+const ARTILLERY_FLIGHT_SECONDS = 1.6
+const ARTILLERY_MIN_RANGE = 8.0
 const AUTHORED_AREA_BUDGET = 4000.0
 const BAND_DOOR_MARGIN = 2.0
 const BAND_RAMP_MIN_RUN = 3.0
 const BAND_RAMP_RUN_FACTOR = 3.0
 const BASE_KIT_TAGS = ["bounce_pad", "moving_platform", "powered_door"]
+const BEACON_MAGNITUDE = 0.5
+const BEACON_RADIUS = 12.0
+const BEACON_REFRESH = 1.0
 const BRIDGE_HOST = "127.0.0.1"
 const BRIDGE_PORT = 38290
 const BRUTES_PER_BUDGET_POINT = 0.005
+const BULWARK_COMMIT_SECONDS = 0.5
+const BULWARK_FRONTAL_ARMOUR = 0.85
+const BULWARK_RECOVERY_SECONDS = 0.9
+const BULWARK_SHIELD_DOT = 0.35
+const BULWARK_TURN_RATE_DEG_S = 90.0
 const CHAMBER_TYPES = ["corridor", "arena", "platform_path", "tower", "treasure_room"]
+const CHARGER_RECOVERY_SECONDS = 1.4
+const CHARGER_RUSH_SECONDS = 1.1
+const CHARGER_RUSH_SPEED = 13.0
 const CLUSTER_ANCHORS = ["floor_wall", "floor_corner", "wall", "ceiling"]
 const CLUSTER_CLEARANCE = 0.4
 const CLUSTER_FLOOR_ANCHORS = ["floor_wall", "floor_corner"]
@@ -29,10 +47,22 @@ const CLUSTER_MAX_HEIGHT = 4.0
 const CLUSTER_MAX_WIDTH = 6.0
 const CLUSTER_MOUNTED_UNDERSIDE_MIN = 2.75
 const COIN_SHARE_OF_NON_KEY = 0.35714285714285715
+const CONSTRAINT_BREAKABLE_KINDS = ["ROPE", "CHAIN", "PULLEY", "COUNTERWEIGHT"]
+const CONSTRAINT_CHAIN_CAP = 4
+const CONSTRAINT_CORRECTION = 0.4
+const CONSTRAINT_JOINT_KINDS = ["HINGE", "SLIDER", "SEESAW", "PENDULUM"]
+const CONSTRAINT_KINDS = ["HINGE", "SLIDER", "ROPE", "CHAIN", "PULLEY", "COUNTERWEIGHT", "SEESAW", "PENDULUM"]
+const CONSTRAINT_RUNTIME_CREATABLE = ["ROPE"]
+const CONSTRAINT_SETTLED_DELTA = 0.01
+const CONSTRAINT_SOLVED_KINDS = ["ROPE", "CHAIN", "PULLEY", "COUNTERWEIGHT"]
+const CONSTRAINT_SOLVER_ITERATIONS = 8
+const CONSUMABLE_CHARGES_MAX = 9
 const COYOTE_TIME = 0.12
 const DEFAULT_LOCATION_COUNT = 450
 const DEFAULT_ZONE_BUDGET = 1000
 const DEFAULT_ZONE_TARGET_CHECKS = 15
+const DIVER_DIVE_SECONDS = 0.9
+const DIVER_TRIGGER_HEIGHT = 0.8
 const ECHO_COOLDOWN_MAX = 15.0
 const ECHO_COOLDOWN_MIN = 0.15
 const ECHO_EFFECTS_MAX = 3
@@ -40,9 +70,16 @@ const ECHO_EFFECTS_MIN = 1
 const ECHO_MAX_OPERATIONS = 4
 const ENEMIES_PER_BUDGET_POINT = 0.07
 const ENEMY_AGGRO_RADIUS = 18.0
-const ENEMY_ARCHETYPES = ["melee", "ranged", "brute"]
+const ENEMY_ARCHETYPES = ["melee", "ranged", "brute", "charger", "bulwark", "drifter", "diver", "scuttler", "artillery", "beacon"]
 const ENEMY_FALL_KILL_Y = -30.0
+const ENEMY_INTEREST_SECONDS = 4.0
+const ENEMY_JOBS = {"melee": "patrol", "ranged": "watch", "brute": "watch", "charger": "patrol", "bulwark": "watch", "drifter": "drift", "diver": "drift", "scuttler": "patrol", "artillery": "watch", "beacon": "tend"}
+const ENEMY_JOB_SPEED = 0.45
+const ENEMY_PATROL_PAUSE = 1.2
+const ENEMY_PATROL_RADIUS = 4.5
+const ENEMY_POST_TOLERANCE = 1.5
 const ENEMY_ROLES = ["melee", "ranged", "brute", "charger", "bulwark", "scuttler", "artillery", "beacon", "diver", "drifter"]
+const ENEMY_SWEEP_RATE = 0.7
 const EPSILON_COIN_COUNT = 10
 const EPSILON_STATIC_COUNT = 18
 const FALL_KILL_Y = -30.0
@@ -57,6 +94,7 @@ const FIRST_NON_FINALE_LOCATION_ID = 89100001
 const FLAG_PROGRESSION = 1
 const FLAG_TRAP = 4
 const FLAG_USEFUL = 2
+const FLYER_HOVER_Y = 4.2
 const FLYING_ENEMY_ROLES = ["diver", "drifter"]
 const GOAL_LOCATION_ID = 89100030
 const GRAVITY = 24.0
@@ -116,15 +154,18 @@ const PROCEDURAL_ARENA_MIN_HEIGHT = 4.0
 const PROCEDURAL_ARENA_MIN_SPAN = 10.0
 const PROCEDURAL_SOCKET_CAPACITY = {"platform_path": ["entry", "exit"], "tower": ["entry", "exit"]}
 const PROVIDER_TIMEOUT_SECONDS = 60.0
+const RAIL_SWITCH_CLEARANCE_M = 10.0
 const RANGED_PROJECTILE_SPEED = 14.0
 const REFERENCE_ECHO_COOLDOWN = 0.8
 const REFERENCE_ECHO_DAMAGE = 12.0
 const REFERENCE_ECHO_PELLETS = 3
 const REPAIR_ATTEMPTS = 1
+const REQUIRED_OBJECT_GROUP = "required_object"
 const RESPAWN_DELAY = 1.5
 const ROOMS_PER_BUDGET_POINT = 0.015
 const RULE_FIRINGS_PER_TICK_CAP = 8
 const SAFE_BASE_JUMP_GAP = 2.6
+const SAFE_CLOSURE_RETRY_SECONDS = 1.0
 const SAFE_GAP_MARGIN = 0.64
 const SAFE_STEP_MARGIN = 0.75
 const SECONDS_PER_ACTIVITY_ELEMENT = 4.0
@@ -137,7 +178,8 @@ const SHOP_RESTOCK_EVERY_ZONES = 2
 const SHOP_STOCK_SIZE = 2
 const SIDE_SOCKETS = ["side_left", "side_right"]
 const SIGNAL_KEY_COUNT = 2
-const SLOT_NAMES = ["echo_a", "echo_b", "mobility", "utility"]
+const SLOT_KEYCAPS = {"echo_a": "RMB", "echo_b": "MMB", "mobility": "SHIFT", "utility": "C", "consumable": "Q"}
+const SLOT_NAMES = ["echo_a", "echo_b", "mobility", "utility", "consumable"]
 const SPEED_MULT_MAX = 1.6
 const SPEED_MULT_MIN = 0.9
 const STATIC_GLITCH_UNITS_PER_ITEM = 1
@@ -157,6 +199,10 @@ const THEMES = ["concrete_facility", "rusted_industrial", "neon_transit", "gothi
 const THEME_BY_GAME_HINT = {"Super Mario 64": "concrete_facility", "Ocarina of Time": "temple_ruin", "Bomb Rush Cyberfunk": "neon_transit", "Dark Souls III": "gothic_stone", "Borderlands 2": "rusted_industrial", "Archipepsi": "void_glitch"}
 const THEME_MATERIALS = {"concrete_facility": {"base_color": "#b9bcb6", "accent_color": "#4f6f8f", "trim_color": "#2e3338", "light_color": "#eaf2ff", "light_energy": 3.0, "roughness": 0.85, "noise": "speckle"}, "rusted_industrial": {"base_color": "#8a5a3b", "accent_color": "#c8722c", "trim_color": "#3d2a1e", "light_color": "#ffd9a0", "light_energy": 2.2, "roughness": 0.95, "noise": "rust"}, "neon_transit": {"base_color": "#d8d4c8", "accent_color": "#18b7c4", "trim_color": "#1b1d26", "light_color": "#7cf2ff", "light_energy": 4.0, "roughness": 0.35, "noise": "tile"}, "gothic_stone": {"base_color": "#6b6560", "accent_color": "#3a3f4a", "trim_color": "#241f1c", "light_color": "#ffb45e", "light_energy": 2.0, "roughness": 0.9, "noise": "brick"}, "temple_ruin": {"base_color": "#c2a878", "accent_color": "#5f7a4a", "trim_color": "#7a6034", "light_color": "#ffe9b8", "light_energy": 2.6, "roughness": 0.8, "noise": "sandstone"}, "void_glitch": {"base_color": "#2b2b3a", "accent_color": "#ff00e6", "trim_color": "#00ffbf", "light_color": "#ffffff", "light_energy": 3.5, "roughness": 0.5, "noise": "checker"}}
 const THEME_MATERIAL_KEYS = ["base_color", "accent_color", "trim_color", "light_color", "light_energy", "roughness", "noise"]
+const THEME_PACK_STATES = ["candidate", "selectable", "approved"]
+const THEME_PACK_STATUS = {}
+const THEME_PACK_TABLE = "pack_textures"
+const THEME_UNIVERSAL_ROLES = ["hazard"]
 const TIER_COUNT = 3
 const TIER_SIZE = 10
 const TOWER_MAX_FLOORS = 5
@@ -175,7 +221,21 @@ const ZONE_TARGET_CHECKS_MAX = 30
 const ZONE_TARGET_CHECKS_MIN = 1
 const ENVELOPE_FORCE_N = 700.0
 const ENVELOPE_RANGE_M = 20.0
+## What a qualified PUSH/PULL/HOLD may act on (§29.3.2), together
+## with ENVELOPE_FORCE_N and ENVELOPE_RANGE_M. A property of the
+## HOST. NOT the pickup limit — see CARRY_MASS_KG below.
 const ENVELOPE_MASS_KG = 120.0
+## Design 2 §10.3's ordinary-pickup line: an object is carriable
+## if `carriable == true` AND `mass_kg <= 60.0`; above it the
+## object is manipulable only. A property of the OBJECT, and no
+## Gear, Mod or Ability widens it. NOT the envelope above: a host
+## that clears 120 kg may push a 100 kg crate and still may not
+## pick one up.
+const CARRY_MASS_KG = 60.0
+const MASS_LIGHT_BELOW = 30.0
+const MASS_MEDIUM_BELOW = 120.0
+const MASS_HEAVY_BELOW = 400.0
+const PLAYER_MASS_KG = 80.0
 const MANIPULATE_VERBS = ["HOLD", "PULL", "PUSH"]
 
 ## Largest gap a MANDATORY jump may span, landing this much
@@ -209,6 +269,13 @@ const ENEMY_STATS = {
 	"melee": {"hp": 24.0, "damage": 6.0, "cooldown": 1.0, "speed": 4.0, "reach": 2.0},
 	"ranged": {"hp": 16.0, "damage": 8.0, "cooldown": 2.0, "speed": 0.0, "reach": 40.0},
 	"brute": {"hp": 120.0, "damage": 18.0, "cooldown": 1.6, "speed": 2.2, "reach": 2.5},
+	"charger": {"hp": 40.0, "damage": 14.0, "cooldown": 3.0, "speed": 3.0, "reach": 14.0},
+	"bulwark": {"hp": 90.0, "damage": 10.0, "cooldown": 1.8, "speed": 1.6, "reach": 2.4},
+	"drifter": {"hp": 44.0, "damage": 7.0, "cooldown": 2.2, "speed": 2.4, "reach": 22.0},
+	"diver": {"hp": 20.0, "damage": 12.0, "cooldown": 2.8, "speed": 7.0, "reach": 18.0},
+	"scuttler": {"hp": 12.0, "damage": 3.0, "cooldown": 0.8, "speed": 6.5, "reach": 1.8},
+	"artillery": {"hp": 30.0, "damage": 16.0, "cooldown": 3.4, "speed": 0.0, "reach": 34.0},
+	"beacon": {"hp": 36.0, "damage": 2.0, "cooldown": 2.0, "speed": 1.2, "reach": 2.0},
 }
 
 # Enemy physical envelopes, keyed by role. PHYSICAL ONLY -- an
@@ -246,4 +313,38 @@ const ECHO_DEFERRED_PRIMITIVES = {}
 # nothing reads it -- while still satisfying `status_active`
 # conditions and `status_applied` edges, and `cleanse` can never
 # remove it, because it is not in the cleanse order.
-const ECHO_STATUS_KINDS = ["burning", "slowed", "frozen", "shocked", "poisoned", "marked", "stunned", "vulnerable", "empowered", "low_profile", "haste", "regenerating"]
+const ECHO_STATUS_KINDS = ["lightened", "anchored", "slippery", "confused", "turncoat", "blinded", "exposed", "silenced", "rooted", "phased", "burning", "conductive", "brittle", "slowed", "frozen", "shocked", "poisoned", "marked", "stunned", "vulnerable", "empowered", "low_profile", "haste", "regenerating"]
+
+# The subset the RUNTIME implements an effect for. While it equals
+# the list above nothing changes; when a designed kind is admitted
+# ahead of its runtime, this is what the bridge refuses to emit and
+# what the engine can assert it can honour. NO STATUS BEFORE ITS
+# EFFECT -- the vocabulary may run ahead of the runtime, a campaign
+# may not.
+const ECHO_STATUS_KINDS_IMPLEMENTED = ["lightened", "rooted", "anchored", "burning", "slowed", "frozen", "shocked", "poisoned", "marked", "stunned", "vulnerable", "empowered", "low_profile", "haste", "regenerating"]
+
+# WHICH TARGETS each supported kind is implemented FOR.
+#
+# The kind list above cannot answer target applicability, and a
+# boundary that guards on it alone admits `lightened` on a
+# surface the moment `lightened` works on an object. Support is
+# per kind AND per target because those are different runtime
+# work; this is that table, so the Godot application boundary can
+# refuse the pair rather than the name.
+const ECHO_STATUS_SUPPORTED_TARGETS = {"lightened": ["object"], "rooted": ["enemy"], "anchored": ["enemy"], "burning": ["self", "enemy"], "slowed": ["self", "enemy"], "frozen": ["self", "enemy"], "shocked": ["self", "enemy"], "poisoned": ["self", "enemy"], "marked": ["enemy"], "stunned": ["enemy"], "vulnerable": ["self", "enemy"], "empowered": ["self", "enemy"], "low_profile": ["self"], "haste": ["self"], "regenerating": ["self"]}
+
+# P14. The room signal graph vocabulary, and what is IMPLEMENTED.
+#
+# Design 1 19.2's eleven node types and Amalgam 20's eighteen
+# sensors are the complete sets, because a vocabulary with holes
+# cannot tell 'not supported yet' from 'not a thing'. The
+# SUPPORTED lists are what a Zone may actually use, and they are
+# small on purpose: today they describe the one chain that runs,
+# a HEAVY class plate through a NOT into a shutter.
+const SIGNAL_NODE_KINDS = ["DIRECT", "AND", "OR", "NOT", "TIMER", "LATCH", "SEQUENCE", "COUNTER", "SELECTOR", "DELAY", "THRESHOLD"]
+const SIGNAL_NODE_KINDS_IMPLEMENTED = ["NOT", "LATCH", "OR", "TIMER"]
+const SIGNAL_SENSOR_KINDS = ["PRESSURE_PLATE", "PULSE_BUTTON", "TIMED_BUTTON", "LEVER", "SHOOTABLE_TARGET", "OBJECT_SOCKET", "PROXIMITY_SENSOR", "ENCOUNTER_CLEAR", "HACK_TERMINAL", "WEIGHT_THRESHOLD", "CONSTRAINT_STATE", "ATTACH_SENSOR", "MACRO_STATE", "MACRO_SELECTOR", "ROOM_VISITED", "STATUS_SENSOR", "STATUS_VOLUME_SENSOR", "COMPOUND_SENSOR"]
+const SIGNAL_SENSOR_KINDS_IMPLEMENTED = ["PRESSURE_PLATE", "PULSE_BUTTON", "SHOOTABLE_TARGET"]
+const SIGNAL_ACTUATOR_OPS_IMPLEMENTED = ["command"]
+const SIGNAL_ZONE_PLACEABLE_SENSORS = ["PRESSURE_PLATE", "PULSE_BUTTON"]
+const MINOR_SIGNAL_GRAPHS = {"minor_unweighted_switch": {"room_id": "minor", "sensors": [{"node_id": "plate", "kind": "PRESSURE_PLATE", "requires_class": "HEAVY", "counts_player": false}, {"node_id": "bolt_lever", "kind": "PULSE_BUTTON", "counts_player": false}], "nodes": [{"node_id": "unloaded", "kind": "NOT", "inputs": ["plate"]}, {"node_id": "bolt", "kind": "LATCH", "inputs": ["bolt_lever"]}, {"node_id": "open", "kind": "OR", "inputs": ["unloaded", "bolt"]}], "actuators": [{"actuator_id": "shutter", "driven_by": "open", "operation": "command"}]}, "minor_counterfire_arcade": {"room_id": "minor", "sensors": [{"node_id": "receiver", "kind": "SHOOTABLE_TARGET", "counts_player": false, "mode": "PULSE"}, {"node_id": "release_lever", "kind": "PULSE_BUTTON", "counts_player": false}], "nodes": [{"node_id": "window", "kind": "TIMER", "inputs": ["receiver"], "duration": 8.0}, {"node_id": "release", "kind": "LATCH", "inputs": ["release_lever"]}, {"node_id": "open", "kind": "OR", "inputs": ["window", "release"]}], "actuators": [{"actuator_id": "shutter", "driven_by": "open", "operation": "command"}]}}

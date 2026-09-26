@@ -16,9 +16,9 @@ lucky one:
 
   - the campaign reaches the goal, and reports it exactly once
   - no location is ever allocated to two live Zones at once
-  - no Check is ever claimed twice, and every confirmed foreign Check
-    yields exactly one Echo (I9's log is append-only, so a duplicate is
-    permanent)
+  - no Check is ever claimed twice, and every confirmed Check yields
+    exactly one Echo -- the player's own included, in a new campaign
+    (D-01) -- (I9's log is append-only, so a duplicate is permanent)
   - the allocator never starves: a Zone is always offerable while
     unallocated non-finale locations remain (the §11.5 shop rule)
   - the save validates after every single transition
@@ -137,13 +137,19 @@ def test_a_whole_campaign_holds_together_on_any_seed(tmp_path, seed):
     assert len(watcher.claimed) == len(set(watcher.claimed)), (
         "a location was claimed twice")
 
-    # Every foreign Check that confirmed produced exactly one Echo, and
-    # every Echo names a Check that confirmed.
-    foreign = {loc for loc in engine.ap.checked
-               if (s := engine.ap.scouts.get(loc)) is not None
-               and not s.recipient_is_self}
+    # Every Echo names a Check that confirmed, and every Check played
+    # here that confirmed produced one (the watcher pins "exactly one").
+    # The soak plays a NEW campaign, whose own Checks yield an Echo too
+    # (D-01, `docs/D14_SELF_ADDRESSED_ECHO_PROD.md` §1). Until then this
+    # read "foreign" for "confirmed", which was historical B-1; a legacy
+    # campaign's own Checks still yield none, which
+    # `test_self_echo_boundaries.py` pins.
+    assert engine.save.self_addressed_echoes, "the soak plays a new campaign"
+    confirmed = {loc for loc in engine.ap.checked if loc in engine.ap.scouts}
     echoed = {i.source_location_id for i in engine.save.interpretations}
-    assert echoed <= foreign, f"an Echo from an unconfirmed location: {echoed - foreign}"
+    assert echoed <= confirmed, f"an Echo from an unconfirmed location: {echoed - confirmed}"
+    played = confirmed & set(watcher.claimed)
+    assert played <= echoed, f"a Check confirmed with no Echo: {played - echoed}"
 
 
 def test_the_allocator_never_starves_on_any_seed(tmp_path):

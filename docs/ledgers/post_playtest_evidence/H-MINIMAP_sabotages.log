@@ -1,0 +1,53 @@
+MM-1 [minimap_model.gd] a connector is drawn socket to socket (a straight line)
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: ? turns: its drawn path strays 0.0 m from the line between its ends, through 0 points (0.0 m along)
+MM-2 [minimap_model.gd] every built room is drawn, found or not
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: 26 of 26 rooms drawn, all discovered or walked; none beyond: ["c006", "c007", "c008", "c009", "c010", "c011", "c012", "c013", "c014", "c015", "c016", "c017", "c018", "c019", "c020", "c021", "c022", "c023", "c024", "c025", "exit"]
+      FAIL: every room is drawn as its built envelope (26 of 25)
+MM-3 [minimap_model.gd] every built join is drawn, listed by the bridge or not
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every connector drawn is one the bridge lists (7)
+MM-4 [zone_controller.gd] entering a room reports nothing (the old behaviour)
+    CAUGHT -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a snapshot whose map lacks it resends it: ["c002"]
+      FAIL: and `room_entered` for c002 went once: []
+      FAIL: walking back in does not send it again
+MM-5 [zone_controller.gd] a lost report is never resent
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a snapshot whose map lacks it resends it: []
+MM-6 [zone_controller.gd] reports are resent whatever the bridge's map says
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and once the bridge's map shows it, nothing is resent: ["c001", "c002"]
+MM-7 [minimap_model.gd] the room is named by its save id
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and it is not the save's id
+      FAIL: the label reads the bridge's name for c002: 'c002' (expected 'Arena 1')
+MM-8 [minimap_model.gd] a circuit's colour comes from a hash of its id (the first draft)
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: five circuits get the palette's five colours, in declared order
+MM-9 [minimap_model.gd] the map decides a gate itself (everything open)
+    CAUGHT -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: carrying the cell: the door is a P blocker in its circuit: open P ["state:cell_power"]
+      FAIL: every character on the map is in the font it is drawn in (0 strings typed, and the name 'Corridor 1'); missing: []
+      FAIL: the span reads open lowered and blocked put back: open, open
+MM-10 [minimap_model.gd] a room's floor is its envelope's bottom (the first draft)
+    CAUGHT -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: c001's floor is its arrival height (0.0)
+      FAIL: c009's floor is its arrival height (31.6)
+      FAIL: c021's floor is its arrival height (0.0)
+MM-12 [minimap.gd] the floor marks are typed as the font's ▲ and ▼ (the first draft)
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every character on the map is in the font it is drawn in (21 strings typed, and the name 'Corridor 1'); missing: ["▲", "▲", "▲", "▲", "▲", "▲", "▲", "▲", "▲", "▲", "▲", "▲", "▲", "▲"]
+MM-13 [minimap.gd] a way back is never marked (the plugs are not passed)
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every way back the bridge lists is a ring where its device stands (8 listed, 0 placed, 0 drawn)
+MM-14 [minimap_model.gd] every plug the build has is marked, listed by the bridge or not
+    CAUGHT -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and none is drawn before the bridge lists it: 8 of the Zone's 8, with five rooms found
+      FAIL: every connector drawn is one the bridge lists (7)
+MM-11 [map_snapshot.json] the fixture hand-edited (the power door open while carried)
+    test_map_fixture.py: CAUGHT; restored byte for byte: True
+      FAILED tests/test_map_fixture.py::test_the_committed_fixture_matches_its_generator
+
+14 of 14 sabotages caught

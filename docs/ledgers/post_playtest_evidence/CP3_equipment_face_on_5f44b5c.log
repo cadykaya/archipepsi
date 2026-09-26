@@ -1,0 +1,881 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- R1: items, not events
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: one tile per inventory item, 9 of 9: ["act_bolt", "act_cinder", "act_dash", "act_flask", "act_lash", "act_lens", "res_magic", "trait_grip", "trait_ward"]
+  ok: the upgrade-only Echo is not a tile of its own
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: one control offers to equip Braided Lash, got 1 (the old wall had 2)
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: Leather Grip's upgrade is Braided Lash's history instead
+  -- R2: three regions
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: EQUIPPED, OWNED and DETAIL are all there
+  ok: a row for each of the game's 5 keys, and no others: ["echo_a", "echo_b", "mobility", "utility", "consumable"]
+  ok: the owned items are a grid of tiles
+  ok: the detail shows the selected item (Braided Lash): what it does, how it is used, what it costs
+  ok: side by side inside the (1280, 720) page, not overlapping: [P: (40.0, 92.0), S: (320.0, 576.0)] | [P: (376.0, 92.0), S: (440.0, 576.0)] | [P: (832.0, 92.0), S: (408.0, 576.0)]
+  ok: under the wall's title, not over it
+  ok: on the Equipment wall's own page, in the box
+  -- R3: no link
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: offline, EQUIP is not offered and says why: ["Offline: a change of equipment needs the bridge\'s answer."]
+  ok: and the non-drag equip sends nothing
+  ok: the EQUIPPED column says the link is down: 'OFFLINE — the keys show what the bridge last confirmed. Changes wait for the link.'
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a send that did not leave is NOT SENT on its key, not silent
+  -- R4: pending, then accepted by a snapshot
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: the button names the key and what it replaces: 'REPLACE BRAIDED LASH ON RMB'
+  ok: the comparison is against what is on the key, now → this
+  ok: and a field only one kind of attack has is not listed as a difference
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: one slot_action, for Arc Bolt on echo_a: [{ "type": "slot_action", "slot": "echo_a", "component_id": "act_bolt" }]
+  ok: the key still shows what the bridge confirmed: 'Braided Lash  Mk II'
+  ok: and says the request is waiting
+  ok: a second press is not offered while it waits
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: an unrelated snapshot answers nothing
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: the snapshot that carries it moves the key: 'Arc Bolt'
+  ok: and the request reads ACCEPTED
+  ok: Arc Bolt now offers to come off its key
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: TAKE OFF sends a clear and waits for it: [{ "type": "slot_action", "slot": "echo_a", "component_id": <null> }]
+  -- R5: refused, and the link lost
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: an error with no `about` resolves nothing
+  ok: it is shown as the bridge's, unattributed: 'The bridge refused a request: the bridge is busy'
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a refusal naming another request resolves nothing
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: the exact key is REFUSED, with the bridge's reason
+  ok: and the key never showed Arc Bolt
+  ok: EQUIP is offered again after the refusal
+  NOTE: the live bridge does not attach `about` to a slot_action refusal yet (N-11, Dess's `_about`); this is the client half
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a link lost mid-request is LOST, not pending forever
+  -- R6-R8: the consumable key
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: none owned says so: ["Q", "CONSUMABLE", "—", "No consumable owned yet. One arrives as an Echo, like any other item."]
+  ok: owned but not equipped says so: ["Q", "CONSUMABLE", "—", "Nothing on Q. You own 2 consumables: pick one to carry."]
+  ok: and the two read differently (the old key read '—' for both)
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: equipped and empty: 0 / 3, still on the key, and what refills it: ["Q", "CONSUMABLE", "Cinder Charge     0 / 3", "✕", "Empty. It stays on Q, and entering a Zone refills it."]
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: ready: 'Cinder Charge     2 / 3'
+  ok: disconnected says so, count kept: ["Q", "CONSUMABLE", "Cinder Charge     2 / 3", "✕", "OFFLINE: a use needs the bridge\'s answer, so none can be made until it is back."]
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a use awaiting the bridge says so, beside the count the HUD shows: 'Cinder Charge     1 / 3' ["Q", "CONSUMABLE", "Cinder Charge     1 / 3", "✕", "1 use waiting for the bridge\'s answer."]
+  ok: base act_cinder: the client counts 2, the view 2.0
+  ok: base act_flask: the client counts 2, the view 2.0
+  ok: exhausted act_cinder: the client counts 0, the view 0.0
+  ok: exhausted act_flask: the client counts 2, the view 2.0
+  ok: unequipped act_cinder: the client counts 2, the view 2.0
+  ok: unequipped act_flask: the client counts 2, the view 2.0
+  ok: spent_spare act_cinder: the client counts 0, the view 0.0
+  ok: spent_spare act_flask: the client counts 2, the view 2.0
+  -- R9: a new item
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a campaign met for the first time marks nothing new: []
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: Glow Seed arrives marked NEW, and only it: ["act_glow"]
+  ok: the OWNED heading counts it
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: inspecting it is noticing it: the marker goes
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: met for the first time already holding it, it is not new
+  -- the detail
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a number keeps its unit on its line (a no-break space)
+  ok: Cinder Charge: 'Thrown: bursts for 30 damage within 3.0 m after 1.5 s'
+  ok: Cinder Charge: 'Hits leave burning for 3.0 s'
+  ok: Cinder Charge: 'On a key: Q (CONSUMABLE). Press it to use.'
+  ok: Cinder Charge: 'The status lands on enemies it hits.'
+  ok: Cinder Charge: '2 of 3 uses left.'
+  ok: Cinder Charge: 'Cooldown 1 s.'
+  ok: Cinder Charge: '3 uses per supply. Entering a Zone refills it.'
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a trait that needs an Action says it is doing nothing now
+  ok: and, being passive, offers no switch and says why
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: with Arc Bolt on its key, it says it is on
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: an empty key's candidate reads EQUIP ON C: 'EQUIP ON C'
+  -- the split, the key filter, search
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: six things go on keys and three are simply on: ["ON A KEY (6)", "ALWAYS ON (3)"]
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: the mixed Echo's Action names its other half
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: and its Trait names the Action -- neither half dropped
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: the RMB key shows what goes on it: ["act_bolt", "act_lash"]
+  ok: counted as 2 of 6, the always-on half hidden: ["ON A KEY (2 of 6)"]
+  ok: and that is the query's answer, not only the painting's
+  ok: and it says so, with the way back beside it
+  ok: picking the key shows what is on it, to compare against
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: MOBILITY: ["act_dash"]
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: SHOW ALL brings back all nine
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: searching an upgrade's item finds the item it upgraded: ["res_magic"]
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a game's name finds everything from it: ["act_cinder", "act_lash", "act_lens", "res_magic", "trait_grip", "trait_ward"]
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: no match says so
+  -- history and what Epsilon read
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: history starts folded, after the summary
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: the whole chain, in order, once: ["Mk I  Magic Meter ← Magic Upgrade  (Ocarina of Time)", "Mk II  +40 max_value ← Estus Shard  (Dark Souls)"]
+  ok: with what Epsilon read for each: ["read literal: magic / green / capacity  (Magic Meter)", "read mechanical: capacity / shard  (Estus Shard)"]
+  -- the search box keeps focus and caret across a snapshot
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: the box has focus to begin with
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a snapshot mid-search keeps focus, caret 2 and text 'lash'
+  ok: because the box is outside everything a repaint empties
+  -- typing Q, C and E into search
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a click through the box puts the caret in the search field
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: the letters go into the box ('qce') and the box does not turn
+  ok: no intent left: no consumable (Q), no utility (C)
+  ok: and no key event got past the shell to the game (0 leaked)
+  -- keyboard and controller
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: Q turns Settings to Equipment
+  ok: arriving, the selected tile holds focus: tile:res_magic
+  ok: an arrow key moves focus to another control on the wall: tile:trait_grip
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: Enter on a tile chooses it: act_bolt
+  ok: the d-pad moves focus: tile:trait_ward
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: A chooses: act_lens
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: A on EQUIP sends it: [{ "type": "slot_action", "slot": "utility", "component_id": "act_lens" }]
+  -- the mouse, through the box
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a click on a tile, carried through the 3D stage, chooses it
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a click on REPLACE sends it: [{ "type": "slot_action", "slot": "consumable", "component_id": "act_flask" }]
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a click on a key shows what goes on it
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  -- turning away and back, closing and reopening
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: to the journal and back: still Arc Bolt
+  ok: a turn neither answers nor drops the request
+  ok: and focus is back on its tile
+  ok: Escape closes it
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: reopened: the same item, the key as the bridge left it
+  -- an empty supply off its key
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: a spent spare is not offered, and says a Zone refills it
+  ok: its tile reads 0/3
+     GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: the same supply ON its key at 0 / 3 stays, and can come off
+
+GODOT EQUIPMENT FACE OK (107 checks, 1 notes)

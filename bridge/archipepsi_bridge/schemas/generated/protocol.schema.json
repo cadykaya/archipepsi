@@ -169,6 +169,42 @@
         "title": "ApDisconnect",
         "type": "object"
       },
+      "AuthorizeConsumable": {
+        "additionalProperties": false,
+        "description": "Ask the bridge to count a charge BEFORE launching the effect.\n\n**PROPOSED, NOT AGREED.** The client half is Prod's and is\nunwritten, so this is the bridge's side of a contract that has\none owner per file and must have one shape. The proposal, the\ntwo boundaries it distinguishes and what it asks of the client\nare in `docs/D9_CONSUMABLE_ACCOUNTING_PROD.md`; if the engine\nlane prefers another accounting shape, this is the half that\nmoves.\n\nSent while the press is still cancellable and nothing irreversible\nhas happened. The bridge writes the expenditure to the save and\nanswers; only then may the client launch. A client that launches\nfirst and reports afterwards is relying on a report surviving the\nprocess, and it does not.\n\nThe trio is `use_consumable`'s, unchanged, so the authorization and\nthe report that settles it are the same compare-and-swap.",
+        "properties": {
+          "type": {
+            "const": "authorize_consumable",
+            "title": "Type",
+            "type": "string"
+          },
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Component Id",
+            "type": "string"
+          },
+          "use_index": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Use Index",
+            "type": "integer"
+          },
+          "generation": {
+            "minimum": 0,
+            "title": "Generation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "component_id",
+          "use_index",
+          "generation"
+        ],
+        "title": "AuthorizeConsumable",
+        "type": "object"
+      },
       "BuildFailed": {
         "additionalProperties": false,
         "description": "The engine could not CONSTRUCT this proposal. There is no layout.\n\n**This is not a refused layout, and conflating the two would be a\nlie in both directions.** `LayoutResult` carries geometry the engine\nbuilt and the bridge then judged; this says the engine never got\nthat far -- `ZoneBuilder` could not route the rooms, so there is\nnothing to measure and nothing to validate. Sending an empty or\npart-built `layout` to borrow the refusal path would be fabricated\nevidence: the validator would report a geometry error for a\ngeometry that was never laid down.\n\n**And it is not a generation-stage rejection either.** A proposal\nthe bridge refuses before it is offered never reaches a client;\n`last_generation_error` is where that is reported. This one passed\ncomposition, was offered, was entered, and failed in the engine.\n\n**Why the bridge needs to hear it at all.** Without this message a\nfailed build is silent: `ZoneController.setup` returns, no\n`layout_result` is ever sent, and the record sits ACTIVE waiting for\na verdict that is not coming. The Hub stays in ZONE_ACTIVE, offering\na way back into a Zone that cannot be built, and the campaign cannot\nmove. What follows from this message is exactly what follows from a\nrefusal -- `refuse_layout`, so the attempt is charged, a FRESH\nproposal is composed again inside the budget, a COMMITTED one is\nparked with its manifest intact, and past the budget the Zone goes\nDORMANT and the Hub offers ABANDON.\n\n`attempt` and `proposal_id` carry the same meaning and the same\nguards as on `LayoutResult`: which build this is the outcome of.\nThey are what stop a late failure spending a replacement's budget.",
@@ -249,6 +285,63 @@
           "location_id"
         ],
         "title": "BuyShopStock",
+        "type": "object"
+      },
+      "CarrierRested": {
+        "additionalProperties": false,
+        "description": "O05-06.2. A hosted minor's carrier came to rest.\n\nSent only at rest -- parked at a stop, held by a STOP, or pausing in\na declared dwell -- never mid-travel (Amalgam \u00a75.3). The package is\nthe minor's (`minor_<room>`); the bridge accepts it only for a\ncarrier and stop the room's minor contract declares, and stores the\noffset the engine measured without inventing one.",
+        "properties": {
+          "type": {
+            "const": "carrier_rested",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "package_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Package Id",
+            "type": "string"
+          },
+          "carrier_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Carrier Id",
+            "type": "string"
+          },
+          "t": {
+            "title": "T",
+            "type": "number"
+          },
+          "destination": {
+            "default": "",
+            "maxLength": 32,
+            "pattern": "^[A-Za-z0-9_]*$",
+            "title": "Destination",
+            "type": "string"
+          },
+          "held": {
+            "default": false,
+            "title": "Held",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "package_id",
+          "carrier_id",
+          "t"
+        ],
+        "title": "CarrierRested",
         "type": "object"
       },
       "ChamberDwell": {
@@ -335,6 +428,38 @@
         "title": "DebugCommand",
         "type": "object"
       },
+      "EnemyDefeated": {
+        "additionalProperties": false,
+        "description": "An encounter member defeated (H-RESUME-R, D-06).\n\nIdempotent by `member`, because the target record is monotone: the\nsame defeat twice is one defeat, and a resend after a dropped\nconnection is the normal case. `member` is the declared identity\n`room/archetype#n` (see `ZoneProgress.defeated`), which the bridge\nchecks against the Zone's own declaration before it is recorded.",
+        "properties": {
+          "type": {
+            "const": "enemy_defeated",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "member": {
+            "maxLength": 64,
+            "minLength": 5,
+            "pattern": "^[a-z0-9_]+/[a-z]+#[0-9]{1,3}$",
+            "title": "Member",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "member"
+        ],
+        "title": "EnemyDefeated",
+        "type": "object"
+      },
       "EnterZone": {
         "additionalProperties": false,
         "description": "Player walked into the portal. Moves GENERATED -> ACTIVE.\n\nv0.4 had no such intent, which is why GENERATED was unreachable and\nunrecoverable.",
@@ -381,6 +506,46 @@
           "zone_id"
         ],
         "title": "ExitZone",
+        "type": "object"
+      },
+      "GearAction": {
+        "additionalProperties": false,
+        "description": "D16 G1: wear an owned piece of Gear in its territory, or clear the\nterritory with a null id. The checks -- owned, Gear, its own\nterritory -- are `CampaignSave`'s, as `slot_action`'s are.",
+        "properties": {
+          "type": {
+            "const": "gear_action",
+            "title": "Type",
+            "type": "string"
+          },
+          "territory": {
+            "enum": [
+              "HEAD",
+              "TORSO",
+              "ARMS",
+              "LEGS"
+            ],
+            "title": "Territory",
+            "type": "string"
+          },
+          "component_id": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Component Id"
+          }
+        },
+        "required": [
+          "type",
+          "territory"
+        ],
+        "title": "GearAction",
         "type": "object"
       },
       "GrantLocalReward": {
@@ -656,6 +821,211 @@
         "title": "LockOpened",
         "type": "object"
       },
+      "ObjectConsumed": {
+        "additionalProperties": false,
+        "description": "O05-02. A declared consumer took the object it was waiting for.\n\nNames the MECHANISM, not the object: the consumer's declaration says\nwhich object it accepts and which state it sets, so a client cannot\nchoose either. `record_object_consumed` refuses it unless the save\nalready has that object in the consumer's own room.",
+        "properties": {
+          "type": {
+            "const": "object_consumed",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "mechanism_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Mechanism Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "mechanism_id"
+        ],
+        "title": "ObjectConsumed",
+        "type": "object"
+      },
+      "ObjectRecovered": {
+        "additionalProperties": false,
+        "description": "O05-03 / \u00a710.5. A required object was lost and put back home.\n\nRecovery is a separate event from an arrival, so a correction is\nnever silent. Refused for a consumed object: an installed object is\nnot lost.",
+        "properties": {
+          "type": {
+            "const": "object_recovered",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "object_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Object Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "object_id"
+        ],
+        "title": "ObjectRecovered",
+        "type": "object"
+      },
+      "ObjectSettled": {
+        "additionalProperties": false,
+        "description": "O05-03. A transported object came to rest after the hand put it down.\n\nValidated like `ObjectTransported` (declared object, room inside its\nvolume) and additionally refused for an object a consumer has taken.\nThe pose is the engine's measurement; the bridge bounds it and\nstores it, and never invents one.",
+        "properties": {
+          "type": {
+            "const": "object_settled",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "object_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Object Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "position": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Position",
+            "type": "array"
+          },
+          "yaw": {
+            "maximum": 7.0,
+            "minimum": -7.0,
+            "title": "Yaw",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "object_id",
+          "room_id",
+          "position",
+          "yaw"
+        ],
+        "title": "ObjectSettled",
+        "type": "object"
+      },
+      "ObjectTransported": {
+        "additionalProperties": false,
+        "description": "P16. A transported object arrived in a room.\n\nIdempotent by `(object_id, room_id)` and **not monotone**, same as\n`ZoneStateSelected` and for the same reason: carrying it back is the\nmechanic working, not a replay to reject.\n\nValidated against the accepted Zone: the object must be one the Zone\ndeclares and the room must be inside the `allowed_volume` \u00a710.5 gave\nit. An object reported into a room it may not enter is refused\nrather than recorded -- a save that accepted it would describe a\nworld the composer never allowed.",
+        "properties": {
+          "type": {
+            "const": "object_transported",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "object_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Object Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "object_id",
+          "room_id"
+        ],
+        "title": "ObjectTransported",
+        "type": "object"
+      },
+      "ReleaseConsumableAuthorization": {
+        "additionalProperties": false,
+        "description": "Cancel an authorized attempt that **never launched**.\n\nOnly the process that authorized can know that, so the claim is the\nclient's. What the bridge enforces is that the attempt being\ncancelled is the newest one \u2014 which is also why a client that has\njust relaunched cannot refund a dead process's expenditure.",
+        "properties": {
+          "type": {
+            "const": "release_consumable_authorization",
+            "title": "Type",
+            "type": "string"
+          },
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Component Id",
+            "type": "string"
+          },
+          "use_index": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Use Index",
+            "type": "integer"
+          },
+          "generation": {
+            "minimum": 0,
+            "title": "Generation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "component_id",
+          "use_index",
+          "generation"
+        ],
+        "title": "ReleaseConsumableAuthorization",
+        "type": "object"
+      },
       "RequestNextZone": {
         "additionalProperties": false,
         "description": "Generate the next Zone.\n\n`finale` picks WHICH Zone \u2014 ordinary, or the reserved Check 030 Zone \u2014\nand never whether one may be started. Admission is `HubStatus\n.accepts_zone_request` for both values, so the ordinary and finale paths\ncannot drift apart; `finale=True` additionally requires\n`HubStatus.finale_offered`.\n\nConcretely, the bridge refuses this intent whenever a Zone is held, and\n`GENERATING` counts as held. v0.5 only barred it for GENERATED and\nACTIVE, so a second request arriving while the provider was still working\nstarted a second allocation against the same eligible pool.",
@@ -675,6 +1045,38 @@
           "type"
         ],
         "title": "RequestNextZone",
+        "type": "object"
+      },
+      "RoomEntered": {
+        "additionalProperties": false,
+        "description": "The player entered a room (H-MAP-DATA): it joins the map.\n\nIdempotent by room, because the record is monotone: a room entered\ntwice is found once, and a resend after a dropped connection is the\nnormal case. Checked against the accepted Zone's declaration.",
+        "properties": {
+          "type": {
+            "const": "room_entered",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "room_id"
+        ],
+        "title": "RoomEntered",
         "type": "object"
       },
       "SetCreativity": {
@@ -716,7 +1118,8 @@
               "echo_a",
               "echo_b",
               "mobility",
-              "utility"
+              "utility",
+              "consumable"
             ],
             "title": "Slot",
             "type": "string"
@@ -787,6 +1190,82 @@
           "station_id"
         ],
         "title": "StationReached",
+        "type": "object"
+      },
+      "UseConsumable": {
+        "additionalProperties": false,
+        "description": "Spend one charge of the Action in the consumable slot.\n\nClient-initiated because only the client knows the button was pressed\nand the Action actually fired. It names the component rather than the\nslot so a charge cannot be spent against whatever happens to be\nslotted by the time the message lands.",
+        "properties": {
+          "type": {
+            "const": "use_consumable",
+            "title": "Type",
+            "type": "string"
+          },
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Component Id",
+            "type": "string"
+          },
+          "use_index": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Use Index",
+            "type": "integer"
+          },
+          "generation": {
+            "minimum": 0,
+            "title": "Generation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "component_id",
+          "use_index",
+          "generation"
+        ],
+        "title": "UseConsumable",
+        "type": "object"
+      },
+      "ZoneStateSelected": {
+        "additionalProperties": false,
+        "description": "D-8. A player operated a setter and chose a Zone state.\n\n**P-3's gap, closed.** `ZoneProgress.with_macro` and\n`transitions.record_zone_state` both existed and there was no\nmessage that could reach them, so the engine had a selection it\ncould not report. `ZoneState.as_reported()` was what it *would*\nsend; this is the thing it sends.\n\n**Idempotent by `(variable_id, state)` and NOT monotone**, which is\nthe difference from `LatchFired` and the reason this is its own\nintent rather than a field on that one. Selecting a state the\nvariable already holds is absorbed; selecting a different one is a\nlegitimate second event, because a reversible variable going back is\nthe mechanic working rather than a replay to be rejected.\n\n**Validated against the accepted Zone**, like every sibling here:\n`record_zone_state` refuses a variable the Zone does not declare, a\nstate it does not have, and -- the one a latch analogy misses -- a\nstate no setter can select. \u00a719.7 says nothing but a player\noperating a setter moves Zone state, so a state nothing selects is\none nothing could have set.",
+        "properties": {
+          "type": {
+            "const": "zone_state_selected",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "variable_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Variable Id",
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "variable_id",
+          "state"
+        ],
+        "title": "ZoneStateSelected",
         "type": "object"
       },
       "ZoneTiming": {
@@ -872,12 +1351,16 @@
         "abandon_zone": "#/$defs/AbandonZone",
         "ap_connect": "#/$defs/ApConnect",
         "ap_disconnect": "#/$defs/ApDisconnect",
+        "authorize_consumable": "#/$defs/AuthorizeConsumable",
         "build_failed": "#/$defs/BuildFailed",
         "buy_shop_stock": "#/$defs/BuyShopStock",
+        "carrier_rested": "#/$defs/CarrierRested",
         "claim_check": "#/$defs/ClaimCheck",
         "debug_command": "#/$defs/DebugCommand",
+        "enemy_defeated": "#/$defs/EnemyDefeated",
         "enter_zone": "#/$defs/EnterZone",
         "exit_zone": "#/$defs/ExitZone",
+        "gear_action": "#/$defs/GearAction",
         "grant_local_reward": "#/$defs/GrantLocalReward",
         "hello": "#/$defs/Hello",
         "key_collected": "#/$defs/KeyCollected",
@@ -885,11 +1368,19 @@
         "layout_result": "#/$defs/LayoutResult",
         "leave_zone": "#/$defs/LeaveZone",
         "lock_opened": "#/$defs/LockOpened",
+        "object_consumed": "#/$defs/ObjectConsumed",
+        "object_recovered": "#/$defs/ObjectRecovered",
+        "object_settled": "#/$defs/ObjectSettled",
+        "object_transported": "#/$defs/ObjectTransported",
+        "release_consumable_authorization": "#/$defs/ReleaseConsumableAuthorization",
         "request_next_zone": "#/$defs/RequestNextZone",
+        "room_entered": "#/$defs/RoomEntered",
         "set_creativity": "#/$defs/SetCreativity",
         "slot_action": "#/$defs/SlotAction",
         "start_mock_campaign": "#/$defs/StartMockCampaign",
         "station_reached": "#/$defs/StationReached",
+        "use_consumable": "#/$defs/UseConsumable",
+        "zone_state_selected": "#/$defs/ZoneStateSelected",
         "zone_timing": "#/$defs/ZoneTiming"
       },
       "propertyName": "type"
@@ -932,6 +1423,18 @@
         "$ref": "#/$defs/SlotAction"
       },
       {
+        "$ref": "#/$defs/GearAction"
+      },
+      {
+        "$ref": "#/$defs/AuthorizeConsumable"
+      },
+      {
+        "$ref": "#/$defs/ReleaseConsumableAuthorization"
+      },
+      {
+        "$ref": "#/$defs/UseConsumable"
+      },
+      {
         "$ref": "#/$defs/GrantLocalReward"
       },
       {
@@ -956,6 +1459,30 @@
         "$ref": "#/$defs/LatchFired"
       },
       {
+        "$ref": "#/$defs/ZoneStateSelected"
+      },
+      {
+        "$ref": "#/$defs/ObjectTransported"
+      },
+      {
+        "$ref": "#/$defs/ObjectSettled"
+      },
+      {
+        "$ref": "#/$defs/ObjectConsumed"
+      },
+      {
+        "$ref": "#/$defs/ObjectRecovered"
+      },
+      {
+        "$ref": "#/$defs/CarrierRested"
+      },
+      {
+        "$ref": "#/$defs/EnemyDefeated"
+      },
+      {
+        "$ref": "#/$defs/RoomEntered"
+      },
+      {
         "$ref": "#/$defs/LayoutResult"
       },
       {
@@ -972,7 +1499,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -998,7 +1525,8 @@
               "echo_a",
               "echo_b",
               "mobility",
-              "utility"
+              "utility",
+              "consumable"
             ],
             "title": "Slot",
             "type": "string"
@@ -1157,6 +1685,20 @@
             "maxItems": 2,
             "title": "Modifiers",
             "type": "array"
+          },
+          "charges": {
+            "anyOf": [
+              {
+                "maximum": 9,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges"
           }
         },
         "required": [
@@ -1226,13 +1768,47 @@
         "title": "ActivityPrimitive",
         "type": "object"
       },
+      "ActuatorBinding": {
+        "additionalProperties": false,
+        "description": "What a graph value drives. The machine, named, in this room.",
+        "properties": {
+          "actuator_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Actuator Id",
+            "type": "string"
+          },
+          "driven_by": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Driven By",
+            "type": "string"
+          },
+          "operation": {
+            "default": "command",
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z_]+$",
+            "title": "Operation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actuator_id",
+          "driven_by"
+        ],
+        "title": "ActuatorBinding",
+        "type": "object"
+      },
       "AffordanceComponent": {
         "additionalProperties": false,
         "properties": {
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -1373,14 +1949,30 @@
           },
           "status": {
             "enum": [
+              "lightened",
+              "anchored",
+              "slippery",
+              "confused",
+              "turncoat",
+              "blinded",
+              "exposed",
+              "silenced",
+              "rooted",
+              "phased",
               "burning",
+              "conductive",
+              "brittle",
               "slowed",
               "frozen",
               "shocked",
               "poisoned",
               "marked",
               "stunned",
-              "vulnerable"
+              "vulnerable",
+              "empowered",
+              "low_profile",
+              "haste",
+              "regenerating"
             ],
             "title": "Status",
             "type": "string"
@@ -1767,6 +2359,7 @@
       },
       "BridgeError": {
         "additionalProperties": false,
+        "description": "A refused or failed intent, reported rather than swallowed.\n\n**THE ONE SERVER MESSAGE WITH NO IDENTITY**, until `about`. `scope`,\n`recoverable` and `message` say what went wrong and nothing about\nwhat it went wrong ON, so two failed intents produce indistinguishable\nframes and a client can only toast the string. That is survivable for\na refusal the player reads and forgets, and not survivable for one\nthe client has to UNDO \u2014 a spend it is holding in flight stays held\nforever, subtracting from a count it will never be allowed to spend.",
         "properties": {
           "type": {
             "const": "error",
@@ -1790,6 +2383,12 @@
           "message": {
             "maxLength": 160,
             "title": "Message",
+            "type": "string"
+          },
+          "about": {
+            "default": "",
+            "maxLength": 160,
+            "title": "About",
             "type": "string"
           }
         },
@@ -2043,6 +2642,9 @@
           "slots": {
             "$ref": "#/$defs/SlotAssignment"
           },
+          "gear": {
+            "$ref": "#/$defs/GearSlots"
+          },
           "local_rewards": {
             "default": [],
             "items": {
@@ -2050,6 +2652,20 @@
             },
             "title": "Local Rewards",
             "type": "array"
+          },
+          "consumable_uses": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ConsumableUse"
+            },
+            "title": "Consumable Uses",
+            "type": "array"
+          },
+          "consumable_generation": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Consumable Generation",
+            "type": "integer"
           },
           "active_zone": {
             "anyOf": [
@@ -2110,6 +2726,32 @@
             "title": "Available Capabilities",
             "type": "array"
           },
+          "inventory": {
+            "$ref": "#/$defs/InventoryView",
+            "description": "H-UI-DATA: the menu's items and slots.\n\nRead from the fold and slots above, never folded again. The menu\ndoes not reconstruct upgrade arithmetic, and an item's history is\nattached to it, not repeated as extra equippables. See\n`inventory_view`.",
+            "readOnly": true
+          },
+          "gear_effects": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "D16 G1: the factor each runtime stat takes from the Gear worn.\n\nDerived here from the worn pieces' atoms (`gear.worn_effects`),\nnever stored. The StatStack multiplies it in with every trait,\nstatus and pulse, BEFORE its one floor and envelope: nothing\nclamps Gear alone (owner ruling 1). Empty when nothing is worn.",
+            "readOnly": true,
+            "title": "Gear Effects",
+            "type": "object"
+          },
+          "zone_map": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/MapView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "H-MAP-DATA: the active Zone's map, as far as the player has\nfound it; `None` with no Zone. One projection for the minimap,\nthe 3D map and the journal (`map_view`).",
+            "readOnly": true
+          },
           "coins_available": {
             "description": "Derived, never stored \u2014 `DESIGN.md` \u00a712 said so and v0.6 shipped it\nas a free integer that could read 9999 against zero received.",
             "readOnly": true,
@@ -2124,6 +2766,9 @@
           "epsilon_provider",
           "hub",
           "available_capabilities",
+          "inventory",
+          "gear_effects",
+          "zone_map",
           "coins_available"
         ],
         "title": "CampaignSnapshot",
@@ -2295,6 +2940,30 @@
           "type"
         ],
         "title": "Condition",
+        "type": "object"
+      },
+      "ConsumableUse": {
+        "additionalProperties": false,
+        "description": "How many of a consumable's charges have been spent.\n\n**Persisted, and deliberately not folded.** The fold is over the\ninterpretation log, which says what the campaign was GIVEN; how many\ntimes the player has pressed a button is not in it and cannot be\nderived from it. So this is campaign state, it moves only through\n`transitions.spend_charge`, and it is stored the way\n`local_rewards` is -- a tuple of small records rather than a dict,\nbecause a dict key can disagree with the id inside its value.",
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Component Id",
+            "type": "string"
+          },
+          "spent": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Spent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "component_id",
+          "spent"
+        ],
+        "title": "ConsumableUse",
         "type": "object"
       },
       "CorridorChamber": {
@@ -2502,6 +3171,7 @@
               "mapping": {
                 "action": "#/$defs/ActionComponent",
                 "affordance": "#/$defs/AffordanceComponent",
+                "gear": "#/$defs/GearComponent",
                 "info": "#/$defs/InfoComponent",
                 "resource": "#/$defs/ResourceComponent",
                 "rule": "#/$defs/RuleComponent",
@@ -2531,6 +3201,9 @@
               },
               {
                 "$ref": "#/$defs/InfoComponent"
+              },
+              {
+                "$ref": "#/$defs/GearComponent"
               }
             ],
             "title": "Component"
@@ -3010,7 +3683,14 @@
             "enum": [
               "melee",
               "ranged",
-              "brute"
+              "brute",
+              "charger",
+              "bulwark",
+              "drifter",
+              "diver",
+              "scuttler",
+              "artillery",
+              "beacon"
             ],
             "title": "Archetype",
             "type": "string"
@@ -3027,6 +3707,207 @@
           "count"
         ],
         "title": "EnemyGroup",
+        "type": "object"
+      },
+      "FeaturedAcquisition": {
+        "additionalProperties": false,
+        "description": "D-1. The capability this Zone is built to hand the player, and the\nCheck that hands it over.\n\n**This is a binding, not a subsystem.** Every part it joins already\nexisted: AP allocates the location, `append_interpretation` folds the\nconfirmed item into an Echo, `owned_capabilities` reads the fold, and\n`capability_guarantee` case C takes an `established_earlier` set that\nhad no producer. This names which capability a Zone establishes so\nthat set can be produced, and `established_in_zone` below produces it.\n\n**The foreign item is untouched.** Nothing here replaces, consumes or\nrewrites what Archipelago delivers: `EchoInterpretation` keeps\n`source_item_name`, `source_game` and `source_recipient_name`\nverbatim, and this only says which location the Zone is counting on.",
+        "properties": {
+          "capability": {
+            "enum": [
+              "blink",
+              "cross_long_gap",
+              "grapple",
+              "ranged_hit"
+            ],
+            "title": "Capability",
+            "type": "string"
+          },
+          "location_id": {
+            "maximum": 89100600,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability",
+          "location_id",
+          "room_id"
+        ],
+        "title": "FeaturedAcquisition",
+        "type": "object"
+      },
+      "GearComponent": {
+        "additionalProperties": false,
+        "description": "D16 G1 (owner rulings, 2026-09-25): a piece of Gear, as its atoms.\n\nWorn in its domain's territory -- one of Design 1 \u00a716.1's four -- it\nmultiplies the runtime stat its domain is paired with (ruling 1),\nthrough the StatStack every trait already feeds. Its atoms are the\ngrammar's own parallel lists (`gear.composition_cost`,\n`gear.one_piece_shape`), one of each today (ruling 2).\n\n**Atoms only.** No factor, no territory and no tier is stored: each is\nderived (`gear.effects_of`, `gear.territory_of`, `gear.one_piece_shape`)\nso a rebalance -- or HIGH's arrival as a two-atom piece -- never\nmigrates a save (ruling 4). Epsilon picks the atoms, never the numbers.\nIt comes only from an Echo, which is to say from an Archipelago item\n(ruling 3): no transaction mints one.",
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "gear",
+            "title": "Kind",
+            "type": "string"
+          },
+          "domains": {
+            "items": {
+              "maxLength": 32,
+              "pattern": "^[a-z_]+$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Domains",
+            "type": "array"
+          },
+          "magnitudes": {
+            "items": {
+              "maxLength": 32,
+              "pattern": "^[a-z_]+$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Magnitudes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "domains",
+          "magnitudes"
+        ],
+        "title": "GearComponent",
+        "type": "object"
+      },
+      "GearFacts": {
+        "additionalProperties": false,
+        "description": "What a piece of Gear does, derived from its atoms (D16 G1).",
+        "properties": {
+          "territory": {
+            "enum": [
+              "HEAD",
+              "TORSO",
+              "ARMS",
+              "LEGS"
+            ],
+            "title": "Territory",
+            "type": "string"
+          },
+          "effects": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Effects",
+            "type": "object"
+          },
+          "tier": {
+            "enum": [
+              "USEFUL",
+              "HIGH"
+            ],
+            "title": "Tier",
+            "type": "string"
+          },
+          "worn": {
+            "default": false,
+            "title": "Worn",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "territory",
+          "effects",
+          "tier"
+        ],
+        "title": "GearFacts",
+        "type": "object"
+      },
+      "GearSlots": {
+        "additionalProperties": false,
+        "description": "D16 G1: which owned piece of Gear is worn in each territory.\n\nDesign 1 \u00a716.1's four slots, one named field each for the reason\n`SlotAssignment` gives: the grammar is the game's. A piece fits only\nits own domain's territory, so which piece goes where is read off the\npiece (`_reject_unwearable`), never declared here. Today every paired\ndomain is a LEGS domain, so only `LEGS` can hold anything.\n\nAbsent from a save written before it, and then empty: nothing was\nworn, so nothing is invented and nothing migrates.",
+        "properties": {
+          "HEAD": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Head"
+          },
+          "TORSO": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Torso"
+          },
+          "ARMS": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arms"
+          },
+          "LEGS": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Legs"
+          }
+        },
+        "title": "GearSlots",
         "type": "object"
       },
       "Glide": {
@@ -3414,7 +4295,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -3460,6 +4341,144 @@
           "readout"
         ],
         "title": "InfoComponent",
+        "type": "object"
+      },
+      "InventoryItem": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "title": "Component Id",
+            "type": "string"
+          },
+          "activation": {
+            "enum": [
+              "slotted",
+              "always_on",
+              "worn"
+            ],
+            "title": "Activation",
+            "type": "string"
+          },
+          "compatible_slots": {
+            "default": [],
+            "items": {
+              "enum": [
+                "echo_a",
+                "echo_b",
+                "mobility",
+                "utility",
+                "consumable"
+              ],
+              "type": "string"
+            },
+            "title": "Compatible Slots",
+            "type": "array"
+          },
+          "equipped_in": {
+            "anyOf": [
+              {
+                "enum": [
+                  "echo_a",
+                  "echo_b",
+                  "mobility",
+                  "utility",
+                  "consumable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Equipped In"
+          },
+          "charges_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges Max"
+          },
+          "charges_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges Left"
+          },
+          "siblings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Siblings",
+            "type": "array"
+          },
+          "gear": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/GearFacts"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "component_id",
+          "activation"
+        ],
+        "title": "InventoryItem",
+        "type": "object"
+      },
+      "InventoryView": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/InventoryItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "slots": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/SlotView"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "territories": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/TerritoryView"
+            },
+            "title": "Territories",
+            "type": "array"
+          },
+          "consumable_generation": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Consumable Generation",
+            "type": "integer"
+          }
+        },
+        "title": "InventoryView",
         "type": "object"
       },
       "KnockbackTarget": {
@@ -3540,14 +4559,14 @@
           "source": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Source",
             "type": "string"
           },
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -3566,6 +4585,265 @@
           "target"
         ],
         "title": "LinkOperation",
+        "type": "object"
+      },
+      "LogicNode": {
+        "additionalProperties": false,
+        "description": "One of \u00a719.2's eleven, taking named inputs from earlier nodes.",
+        "properties": {
+          "node_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "DIRECT",
+              "AND",
+              "OR",
+              "NOT",
+              "TIMER",
+              "LATCH",
+              "SEQUENCE",
+              "COUNTER",
+              "SELECTOR",
+              "DELAY",
+              "THRESHOLD"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "maxLength": 32,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Inputs",
+            "type": "array"
+          },
+          "duration": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 120.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Duration"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind",
+          "inputs"
+        ],
+        "title": "LogicNode",
+        "type": "object"
+      },
+      "MapCircuit": {
+        "additionalProperties": false,
+        "properties": {
+          "circuit_id": {
+            "title": "Circuit Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "key",
+              "setting",
+              "machine"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "rooms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "connectors": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Connectors",
+            "type": "array"
+          },
+          "objects": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Objects",
+            "type": "array"
+          }
+        },
+        "required": [
+          "circuit_id",
+          "kind"
+        ],
+        "title": "MapCircuit",
+        "type": "object"
+      },
+      "MapConnector": {
+        "additionalProperties": false,
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "room_a": {
+            "title": "Room A",
+            "type": "string"
+          },
+          "room_b": {
+            "title": "Room B",
+            "type": "string"
+          },
+          "realization": {
+            "title": "Realization",
+            "type": "string"
+          },
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "gates": {
+            "default": [
+              "none"
+            ],
+            "items": {
+              "enum": [
+                "none",
+                "key",
+                "zone_state",
+                "machine",
+                "capability"
+              ],
+              "type": "string"
+            },
+            "title": "Gates",
+            "type": "array"
+          },
+          "circuits": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Circuits",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "unknown",
+              "blocked",
+              "open"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_id",
+          "room_a",
+          "room_b",
+          "realization",
+          "direction",
+          "state"
+        ],
+        "title": "MapConnector",
+        "type": "object"
+      },
+      "MapRoom": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "discovered": {
+            "title": "Discovered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "room_id",
+          "type",
+          "discovered"
+        ],
+        "title": "MapRoom",
+        "type": "object"
+      },
+      "MapView": {
+        "additionalProperties": false,
+        "properties": {
+          "zone_id": {
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "rooms": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapRoom"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "connectors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapConnector"
+            },
+            "title": "Connectors",
+            "type": "array"
+          },
+          "circuits": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapCircuit"
+            },
+            "title": "Circuits",
+            "type": "array"
+          }
+        },
+        "required": [
+          "zone_id"
+        ],
+        "title": "MapView",
         "type": "object"
       },
       "Mechanics": {
@@ -3699,14 +4977,14 @@
           "absorbed": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Absorbed",
             "type": "string"
           },
           "survivor": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Survivor",
             "type": "string"
           },
@@ -3740,7 +5018,7 @@
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -3882,6 +5160,70 @@
         "title": "Notification",
         "type": "object"
       },
+      "ObjectConsumer": {
+        "additionalProperties": false,
+        "description": "P16. The machine at the far end that takes the object.\n\n**Transport without a consumer is not a puzzle**, and reporting\nownership and a room was the overbroad part of P16's first pass: an\nobject can arrive somewhere it is allowed to be and have nothing\nhappen. The generator in the union's own sentence -- *\"a `BURNING`\npower cell carried three rooms to a generator\"* -- is this.\n\n**The consequence goes through D-8's handle, not through a new\nchannel.** A consumer that accepts its object sets a declared\nZone-state variable, which the rest of the Zone already knows how to\nread. Nothing here addresses another room, nothing writes to a\nmachine layer, and there is no second mechanism for \"something\nhappened over there\".",
+        "properties": {
+          "mechanism_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Mechanism Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "accepts": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Accepts",
+            "type": "string"
+          },
+          "sets_variable": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sets Variable"
+          },
+          "sets_state": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sets State"
+          }
+        },
+        "required": [
+          "mechanism_id",
+          "room_id",
+          "accepts"
+        ],
+        "title": "ObjectConsumer",
+        "type": "object"
+      },
       "OwnedComponent": {
         "additionalProperties": false,
         "description": "A folded component plus the display facts a client needs.\n\nThe bridge folds; the client never does. Re-implementing the fold in\nGDScript would be a second source of truth for the one thing that must be\nidentical everywhere.",
@@ -3891,6 +5233,7 @@
               "mapping": {
                 "action": "#/$defs/ActionComponent",
                 "affordance": "#/$defs/AffordanceComponent",
+                "gear": "#/$defs/GearComponent",
                 "info": "#/$defs/InfoComponent",
                 "resource": "#/$defs/ResourceComponent",
                 "rule": "#/$defs/RuleComponent",
@@ -3920,6 +5263,9 @@
               },
               {
                 "$ref": "#/$defs/InfoComponent"
+              },
+              {
+                "$ref": "#/$defs/GearComponent"
               }
             ],
             "title": "Component"
@@ -4358,6 +5704,156 @@
         "title": "PullPickup",
         "type": "object"
       },
+      "RailDock": {
+        "additionalProperties": false,
+        "description": "A place the carrier can be parked, in a room that exists.",
+        "properties": {
+          "dock_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Dock Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dock_id",
+          "room_id"
+        ],
+        "title": "RailDock",
+        "type": "object"
+      },
+      "RailNetwork": {
+        "additionalProperties": false,
+        "description": "The docks and spans of one railway inside one Zone.\n\n**`docks` is the ROUTE ORDER, not a collection** -- F-22 question 2.\nThe engine reads the declaration order as the carrier's route order\nbecause it is the only ordering available, and nothing in the schema\nsaid so. It says so here, and `_a_span_joins_docks_the_route_visits\n_in_turn` below is defined against it: without a stated order,\n\"consecutive\" would not mean anything.",
+        "properties": {
+          "network_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Network Id",
+            "type": "string"
+          },
+          "docks": {
+            "items": {
+              "$ref": "#/$defs/RailDock"
+            },
+            "maxItems": 8,
+            "minItems": 2,
+            "title": "Docks",
+            "type": "array"
+          },
+          "spans": {
+            "items": {
+              "$ref": "#/$defs/RailSpan"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Spans",
+            "type": "array"
+          },
+          "home_dock": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Home Dock"
+          }
+        },
+        "required": [
+          "network_id",
+          "docks",
+          "spans"
+        ],
+        "title": "RailNetwork",
+        "type": "object"
+      },
+      "RailSpan": {
+        "additionalProperties": false,
+        "description": "One link between two docks, and the control that commissions it.\n\n`latch_id` is the persistence handle: a commissioned span is the\nrepair that survives leaving and coming back, and it is recorded\nthrough the same latch machinery a physics package already uses.",
+        "properties": {
+          "span_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Span Id",
+            "type": "string"
+          },
+          "from_dock": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "From Dock",
+            "type": "string"
+          },
+          "to_dock": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "To Dock",
+            "type": "string"
+          },
+          "control_room_id": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Control Room Id"
+          },
+          "latch_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Latch Id",
+            "type": "string"
+          },
+          "mandatory": {
+            "default": false,
+            "title": "Mandatory",
+            "type": "boolean"
+          },
+          "control_placement": {
+            "default": "ground",
+            "enum": [
+              "ground",
+              "gantry"
+            ],
+            "title": "Control Placement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "span_id",
+          "from_dock",
+          "to_dock",
+          "latch_id"
+        ],
+        "title": "RailSpan",
+        "type": "object"
+      },
       "RecoilSelf": {
         "additionalProperties": false,
         "properties": {
@@ -4386,7 +5882,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -4490,7 +5986,7 @@
           "resource_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Resource Id",
             "type": "string"
           },
@@ -4531,13 +6027,60 @@
         "title": "RestoreResource",
         "type": "object"
       },
+      "RoomGraph": {
+        "additionalProperties": false,
+        "description": "One room's signal graph. Acyclic, room-local, evaluated in a tick.\n\n**It cannot reach another room, and not because a rule forbids it.**\nEvery input names a node of this graph, so there is nothing an edge\ncould point at outside it -- \u00a719.7's rule 2 holds structurally\nrather than by inspection, which is what keeps the forbidden global\nsignal bus unwritable rather than merely banned.",
+        "properties": {
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "sensors": {
+            "items": {
+              "$ref": "#/$defs/SensorNode"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Sensors",
+            "type": "array"
+          },
+          "nodes": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/LogicNode"
+            },
+            "maxItems": 8,
+            "title": "Nodes",
+            "type": "array"
+          },
+          "actuators": {
+            "items": {
+              "$ref": "#/$defs/ActuatorBinding"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Actuators",
+            "type": "array"
+          }
+        },
+        "required": [
+          "room_id",
+          "sensors",
+          "actuators"
+        ],
+        "title": "RoomGraph",
+        "type": "object"
+      },
       "RuleComponent": {
         "additionalProperties": false,
         "properties": {
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -4764,6 +6307,127 @@
         "title": "ScoutedLocation",
         "type": "object"
       },
+      "SensorNode": {
+        "additionalProperties": false,
+        "description": "A source. Produces a value; reads nothing from the graph.",
+        "properties": {
+          "node_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "PRESSURE_PLATE",
+              "PULSE_BUTTON",
+              "TIMED_BUTTON",
+              "LEVER",
+              "SHOOTABLE_TARGET",
+              "OBJECT_SOCKET",
+              "PROXIMITY_SENSOR",
+              "ENCOUNTER_CLEAR",
+              "HACK_TERMINAL",
+              "WEIGHT_THRESHOLD",
+              "CONSTRAINT_STATE",
+              "ATTACH_SENSOR",
+              "MACRO_STATE",
+              "MACRO_SELECTOR",
+              "ROOM_VISITED",
+              "STATUS_SENSOR",
+              "STATUS_VOLUME_SENSOR",
+              "COMPOUND_SENSOR"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "requires_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "LIGHT",
+                  "MEDIUM",
+                  "HEAVY"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Requires Class"
+          },
+          "counts_player": {
+            "default": false,
+            "title": "Counts Player",
+            "type": "boolean"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "PULSE",
+                  "TOGGLE"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mode"
+          },
+          "required_tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "enum": [
+                    "RANGED",
+                    "MELEE",
+                    "PROJECTILE",
+                    "BEAM",
+                    "EXPLOSIVE",
+                    "PHYSICS",
+                    "FIRE",
+                    "ENVIRONMENTAL"
+                  ],
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Required Tags"
+          },
+          "held_by": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Held By"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind"
+        ],
+        "title": "SensorNode",
+        "type": "object"
+      },
       "Shield": {
         "additionalProperties": false,
         "properties": {
@@ -4895,7 +6559,7 @@
       },
       "SlotAssignment": {
         "additionalProperties": false,
-        "description": "Which owned Action sits in each of the four slots.\n\nFour named fields rather than a dict: the slot grammar belongs to the\ngame, not to generation, so it is structural. Epsilon assigns an Action\na slot *category*; the player chooses which owned Action fills it.\nLMB is not here at all \u2014 Static Pulse is never replaced.",
+        "description": "Which owned Action sits in each of the five slots.\n\nFour named fields rather than a dict: the slot grammar belongs to the\ngame, not to generation, so it is structural. Epsilon assigns an Action\na slot *category*; the player chooses which owned Action fills it.\nLMB is not here at all \u2014 Static Pulse is never replaced.",
         "properties": {
           "echo_a": {
             "anyOf": [
@@ -4948,9 +6612,89 @@
             ],
             "default": null,
             "title": "Utility"
+          },
+          "consumable": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Consumable"
           }
         },
         "title": "SlotAssignment",
+        "type": "object"
+      },
+      "SlotView": {
+        "additionalProperties": false,
+        "properties": {
+          "slot": {
+            "enum": [
+              "echo_a",
+              "echo_b",
+              "mobility",
+              "utility",
+              "consumable"
+            ],
+            "title": "Slot",
+            "type": "string"
+          },
+          "holds": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Holds"
+          },
+          "accepts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Accepts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slot"
+        ],
+        "title": "SlotView",
+        "type": "object"
+      },
+      "StateCondition": {
+        "additionalProperties": false,
+        "description": "A route condition over a declared Zone-state variable.\n\nD-8 \u00a74. Amalgam \u00a75.6 step 6a says every `TopologyEdge` predicate is\nevaluated against the restored macro state -- and until now the edge\nhad no predicate to evaluate, so the design described a check the\ncode could not express.\n\n**It names the VARIABLE, never the setter's node.** The variable is\nrestored at \u00a75.6 step 4; the setter's node is rebuilt at steps 9-10\nand may be a different object afterwards, which `M1-visible` already\nasserts of the span, the lever and the carrier. A condition that\nnamed the node would name something that does not exist yet when it\nis evaluated.",
+        "properties": {
+          "variable_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Variable Id",
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "variable_id",
+          "state"
+        ],
+        "title": "StateCondition",
         "type": "object"
       },
       "StatusComponent": {
@@ -4959,7 +6703,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -4982,7 +6726,19 @@
           },
           "status": {
             "enum": [
+              "lightened",
+              "anchored",
+              "slippery",
+              "confused",
+              "turncoat",
+              "blinded",
+              "exposed",
+              "silenced",
+              "rooted",
+              "phased",
               "burning",
+              "conductive",
+              "brittle",
               "slowed",
               "frozen",
               "shocked",
@@ -5001,7 +6757,10 @@
           "target": {
             "enum": [
               "self",
-              "enemy"
+              "enemy",
+              "object",
+              "surface",
+              "volume"
             ],
             "title": "Target",
             "type": "string"
@@ -5030,6 +6789,47 @@
           "magnitude"
         ],
         "title": "StatusComponent",
+        "type": "object"
+      },
+      "TerritoryView": {
+        "additionalProperties": false,
+        "description": "One of Design 1 \u00a716.1's four Gear territories (D16 G1).",
+        "properties": {
+          "territory": {
+            "enum": [
+              "HEAD",
+              "TORSO",
+              "ARMS",
+              "LEGS"
+            ],
+            "title": "Territory",
+            "type": "string"
+          },
+          "holds": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Holds"
+          },
+          "accepts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Accepts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "territory"
+        ],
+        "title": "TerritoryView",
         "type": "object"
       },
       "TopologyEdge": {
@@ -5093,6 +6893,29 @@
             ],
             "default": null,
             "title": "Capability"
+          },
+          "opened_by": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Opened By"
+          },
+          "requires_state": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/StateCondition"
+            },
+            "maxItems": 4,
+            "title": "Requires State",
+            "type": "array"
           }
         },
         "required": [
@@ -5303,7 +7126,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -5364,7 +7187,7 @@
               {
                 "maxLength": 32,
                 "minLength": 5,
-                "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+                "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
                 "type": "string"
               },
               {
@@ -5384,6 +7207,71 @@
           "multiplier"
         ],
         "title": "TraitComponent",
+        "type": "object"
+      },
+      "TransportedObject": {
+        "additionalProperties": false,
+        "description": "P16 / D-8 lifetime 5. An object the player carries between rooms.\n\n**Neither macro state nor a latch**, which is why \u00a719.7 does not\ncover it: rooms may not write macro state, and an object is not\nmonotone -- you can carry it back. Two settled rules meet here and\nonly one of them needed an amendment:\n\n- **Persistence was already settled by \u00a710.5.** `allowed_volume` is\n  a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`.\n  No amendment, and the union's own example sentence is a `BURNING`\n  power cell carried three rooms to a generator.\n- **Authority was not.** Prod's `D8_CROSS_ROOM_PROD` \u00a74 question 1,\n  accepted and narrowed in D-8 \u00a711.1: a transported object is\n  room-layer state **whose owning room is its current room**, and\n  crossing a boundary is a TRANSFER rather than a write to the\n  machine layer. \u00a719.7 rule 2 stays intact.\n\n**What is NOT here, and what that does NOT mean.** The object's\nStatuses are absent from this declaration because \u00a75.1 puts every\n`ActiveStatus` in `EPHEMERAL` -- they are not SAVED.\n\n**CORRECTED, 2026-09-22 (owner).** An earlier revision of this\ndocstring went on to say a `BURNING` cell \"arrives having been\ncarried three rooms and not still burning\", which conflated two\ndifferent things: what survives a save, and what survives a\ndoorway. **Carrying an object between rooms during live play is not\na reload.** A Status on it follows its own duration and removal\nrules; walking through a door is not an event that cleanses\nanything, and inventing a doorway cleanse would be inventing a\nmechanic.\n\nThe paragraph above quotes the union's own example sentence -- *\"a\n`BURNING` power cell carried three rooms to a generator\"* -- which\nonly means anything if the cell is still alight when it gets there.\nThe earlier text contradicted the sentence it had just cited.\n\nWhat remains true: the Status is not written to the save, so a cell\nalight when the player quits is not alight when they load. That is\n\u00a75.1, and it is a statement about saves alone.",
+        "properties": {
+          "object_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Object Id",
+            "type": "string"
+          },
+          "allowed_volume": {
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 2,
+            "title": "Allowed Volume",
+            "type": "array"
+          },
+          "home_room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Home Room Id",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "carriable": {
+            "title": "Carriable",
+            "type": "boolean"
+          },
+          "mass_kg": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 100000.0,
+            "title": "Mass Kg",
+            "type": "number"
+          },
+          "movement": {
+            "default": "hand_carried",
+            "enum": [
+              "hand_carried",
+              "manipulated"
+            ],
+            "title": "Movement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object_id",
+          "allowed_volume",
+          "home_room_id",
+          "carriable",
+          "mass_kg"
+        ],
+        "title": "TransportedObject",
         "type": "object"
       },
       "TreasureRoomChamber": {
@@ -5566,7 +7454,7 @@
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -5675,6 +7563,21 @@
             "title": "Theme",
             "type": "string"
           },
+          "theme_pack": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Theme Pack"
+          },
           "designer_note": {
             "anyOf": [
               {
@@ -5750,6 +7653,62 @@
             },
             "maxItems": 8,
             "title": "Plugs",
+            "type": "array"
+          },
+          "rail_networks": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/RailNetwork"
+            },
+            "maxItems": 2,
+            "title": "Rail Networks",
+            "type": "array"
+          },
+          "featured_acquisition": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/FeaturedAcquisition"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "zone_state": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneStateVariable"
+            },
+            "maxItems": 4,
+            "title": "Zone State",
+            "type": "array"
+          },
+          "transported_objects": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/TransportedObject"
+            },
+            "maxItems": 4,
+            "title": "Transported Objects",
+            "type": "array"
+          },
+          "object_consumers": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ObjectConsumer"
+            },
+            "maxItems": 4,
+            "title": "Object Consumers",
+            "type": "array"
+          },
+          "room_graphs": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/RoomGraph"
+            },
+            "maxItems": 4,
+            "title": "Room Graphs",
             "type": "array"
           }
         },
@@ -5871,6 +7830,151 @@
             ],
             "default": null,
             "title": "Resume Anchor"
+          },
+          "macro_state": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Macro State",
+            "type": "array"
+          },
+          "object_rooms": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Object Rooms",
+            "type": "array"
+          },
+          "object_poses": {
+            "default": [],
+            "items": {
+              "maxItems": 6,
+              "minItems": 6,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Object Poses",
+            "type": "array"
+          },
+          "consumed_objects": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Consumed Objects",
+            "type": "array"
+          },
+          "carrier_states": {
+            "default": [],
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 8,
+            "title": "Carrier States",
+            "type": "array"
+          },
+          "defeated": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 512,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Defeated"
+          },
+          "visited_rooms": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 40,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Visited Rooms"
           }
         },
         "title": "ZoneProgress",
@@ -6044,6 +8148,161 @@
         ],
         "title": "ZoneRecord",
         "type": "object"
+      },
+      "ZoneStateReader": {
+        "additionalProperties": false,
+        "description": "A room whose local mechanism responds to the variable.\n\nD-8 \u00a74, answering Prod's \u00a73 question 3. **The reader names the\nvariable and never the setter's node**, which is what makes the\nstale reference the owner warned about impossible to write rather\nthan merely discouraged -- see `Zone._a_reader_is_somewhere_else`.",
+        "properties": {
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "mechanism": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Mechanism",
+            "type": "string"
+          },
+          "when": {
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "When",
+            "type": "array"
+          }
+        },
+        "required": [
+          "room_id",
+          "mechanism",
+          "when"
+        ],
+        "title": "ZoneStateReader",
+        "type": "object"
+      },
+      "ZoneStateSetter": {
+        "additionalProperties": false,
+        "description": "Where the player performs the interaction, and what it may select.\n\nD-8 \u00a74, answering Prod's \u00a73 question 2. \u00a719.7 is explicit that the\ncrossing happens because **the player performs a setter package's\ninteraction** -- so a setter has a room, and that room is the one\nthe player has to be standing in.",
+        "properties": {
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "selects": {
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Selects",
+            "type": "array"
+          },
+          "capability": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ranged_hit",
+                  "grapple",
+                  "blink",
+                  "cross_long_gap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Capability"
+          }
+        },
+        "required": [
+          "room_id",
+          "selects"
+        ],
+        "title": "ZoneStateSetter",
+        "type": "object"
+      },
+      "ZoneStateVariable": {
+        "additionalProperties": false,
+        "description": "One declared cross-room relationship: `ZoneState.macro`, named.\n\nThe bridge has budgeted macro variables since `physics.py` was\nwritten -- `state_vector_product` multiplies a tuple of state counts\nagainst \u00a74.10's bound -- and has never been able to NAME one. This\nis the declaration that arithmetic was waiting for.\n\n**The three-step crossing, as data** (D-8 \u00a72, from \u00a719.7): a player\ninteraction in `setter.room_id` writes `variable_id`, and each\nreader's room graph reads it. Rooms never address each other at any\nstep, which is why the forbidden global signal bus is not ruled out\nby a rule here -- it is unrepresentable.",
+        "properties": {
+          "variable_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Variable Id",
+            "type": "string"
+          },
+          "states": {
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 2,
+            "title": "States",
+            "type": "array"
+          },
+          "initial": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Initial",
+            "type": "string"
+          },
+          "lifetime": {
+            "enum": [
+              "reversible",
+              "permanent"
+            ],
+            "title": "Lifetime",
+            "type": "string"
+          },
+          "setter": {
+            "$ref": "#/$defs/ZoneStateSetter"
+          },
+          "readers": {
+            "items": {
+              "$ref": "#/$defs/ZoneStateReader"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Readers",
+            "type": "array"
+          },
+          "mandatory": {
+            "default": false,
+            "title": "Mandatory",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "variable_id",
+          "states",
+          "initial",
+          "lifetime",
+          "setter",
+          "readers"
+        ],
+        "title": "ZoneStateVariable",
+        "type": "object"
       }
     },
     "discriminator": {
@@ -6083,7 +8342,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -6109,7 +8368,8 @@
               "echo_a",
               "echo_b",
               "mobility",
-              "utility"
+              "utility",
+              "consumable"
             ],
             "title": "Slot",
             "type": "string"
@@ -6268,6 +8528,20 @@
             "maxItems": 2,
             "title": "Modifiers",
             "type": "array"
+          },
+          "charges": {
+            "anyOf": [
+              {
+                "maximum": 9,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges"
           }
         },
         "required": [
@@ -6337,13 +8611,47 @@
         "title": "ActivityPrimitive",
         "type": "object"
       },
+      "ActuatorBinding": {
+        "additionalProperties": false,
+        "description": "What a graph value drives. The machine, named, in this room.",
+        "properties": {
+          "actuator_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Actuator Id",
+            "type": "string"
+          },
+          "driven_by": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Driven By",
+            "type": "string"
+          },
+          "operation": {
+            "default": "command",
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z_]+$",
+            "title": "Operation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actuator_id",
+          "driven_by"
+        ],
+        "title": "ActuatorBinding",
+        "type": "object"
+      },
       "AffordanceComponent": {
         "additionalProperties": false,
         "properties": {
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -6484,14 +8792,30 @@
           },
           "status": {
             "enum": [
+              "lightened",
+              "anchored",
+              "slippery",
+              "confused",
+              "turncoat",
+              "blinded",
+              "exposed",
+              "silenced",
+              "rooted",
+              "phased",
               "burning",
+              "conductive",
+              "brittle",
               "slowed",
               "frozen",
               "shocked",
               "poisoned",
               "marked",
               "stunned",
-              "vulnerable"
+              "vulnerable",
+              "empowered",
+              "low_profile",
+              "haste",
+              "regenerating"
             ],
             "title": "Status",
             "type": "string"
@@ -7094,6 +9418,30 @@
         "title": "Condition",
         "type": "object"
       },
+      "ConsumableUse": {
+        "additionalProperties": false,
+        "description": "How many of a consumable's charges have been spent.\n\n**Persisted, and deliberately not folded.** The fold is over the\ninterpretation log, which says what the campaign was GIVEN; how many\ntimes the player has pressed a button is not in it and cannot be\nderived from it. So this is campaign state, it moves only through\n`transitions.spend_charge`, and it is stored the way\n`local_rewards` is -- a tuple of small records rather than a dict,\nbecause a dict key can disagree with the id inside its value.",
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Component Id",
+            "type": "string"
+          },
+          "spent": {
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Spent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "component_id",
+          "spent"
+        ],
+        "title": "ConsumableUse",
+        "type": "object"
+      },
       "CorridorChamber": {
         "additionalProperties": false,
         "description": "Connector. Has no objective, so enemies here gate nothing.",
@@ -7299,6 +9647,7 @@
               "mapping": {
                 "action": "#/$defs/ActionComponent",
                 "affordance": "#/$defs/AffordanceComponent",
+                "gear": "#/$defs/GearComponent",
                 "info": "#/$defs/InfoComponent",
                 "resource": "#/$defs/ResourceComponent",
                 "rule": "#/$defs/RuleComponent",
@@ -7328,6 +9677,9 @@
               },
               {
                 "$ref": "#/$defs/InfoComponent"
+              },
+              {
+                "$ref": "#/$defs/GearComponent"
               }
             ],
             "title": "Component"
@@ -7807,7 +10159,14 @@
             "enum": [
               "melee",
               "ranged",
-              "brute"
+              "brute",
+              "charger",
+              "bulwark",
+              "drifter",
+              "diver",
+              "scuttler",
+              "artillery",
+              "beacon"
             ],
             "title": "Archetype",
             "type": "string"
@@ -7824,6 +10183,207 @@
           "count"
         ],
         "title": "EnemyGroup",
+        "type": "object"
+      },
+      "FeaturedAcquisition": {
+        "additionalProperties": false,
+        "description": "D-1. The capability this Zone is built to hand the player, and the\nCheck that hands it over.\n\n**This is a binding, not a subsystem.** Every part it joins already\nexisted: AP allocates the location, `append_interpretation` folds the\nconfirmed item into an Echo, `owned_capabilities` reads the fold, and\n`capability_guarantee` case C takes an `established_earlier` set that\nhad no producer. This names which capability a Zone establishes so\nthat set can be produced, and `established_in_zone` below produces it.\n\n**The foreign item is untouched.** Nothing here replaces, consumes or\nrewrites what Archipelago delivers: `EchoInterpretation` keeps\n`source_item_name`, `source_game` and `source_recipient_name`\nverbatim, and this only says which location the Zone is counting on.",
+        "properties": {
+          "capability": {
+            "enum": [
+              "blink",
+              "cross_long_gap",
+              "grapple",
+              "ranged_hit"
+            ],
+            "title": "Capability",
+            "type": "string"
+          },
+          "location_id": {
+            "maximum": 89100600,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability",
+          "location_id",
+          "room_id"
+        ],
+        "title": "FeaturedAcquisition",
+        "type": "object"
+      },
+      "GearComponent": {
+        "additionalProperties": false,
+        "description": "D16 G1 (owner rulings, 2026-09-25): a piece of Gear, as its atoms.\n\nWorn in its domain's territory -- one of Design 1 \u00a716.1's four -- it\nmultiplies the runtime stat its domain is paired with (ruling 1),\nthrough the StatStack every trait already feeds. Its atoms are the\ngrammar's own parallel lists (`gear.composition_cost`,\n`gear.one_piece_shape`), one of each today (ruling 2).\n\n**Atoms only.** No factor, no territory and no tier is stored: each is\nderived (`gear.effects_of`, `gear.territory_of`, `gear.one_piece_shape`)\nso a rebalance -- or HIGH's arrival as a two-atom piece -- never\nmigrates a save (ruling 4). Epsilon picks the atoms, never the numbers.\nIt comes only from an Echo, which is to say from an Archipelago item\n(ruling 3): no transaction mints one.",
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "gear",
+            "title": "Kind",
+            "type": "string"
+          },
+          "domains": {
+            "items": {
+              "maxLength": 32,
+              "pattern": "^[a-z_]+$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Domains",
+            "type": "array"
+          },
+          "magnitudes": {
+            "items": {
+              "maxLength": 32,
+              "pattern": "^[a-z_]+$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Magnitudes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "domains",
+          "magnitudes"
+        ],
+        "title": "GearComponent",
+        "type": "object"
+      },
+      "GearFacts": {
+        "additionalProperties": false,
+        "description": "What a piece of Gear does, derived from its atoms (D16 G1).",
+        "properties": {
+          "territory": {
+            "enum": [
+              "HEAD",
+              "TORSO",
+              "ARMS",
+              "LEGS"
+            ],
+            "title": "Territory",
+            "type": "string"
+          },
+          "effects": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Effects",
+            "type": "object"
+          },
+          "tier": {
+            "enum": [
+              "USEFUL",
+              "HIGH"
+            ],
+            "title": "Tier",
+            "type": "string"
+          },
+          "worn": {
+            "default": false,
+            "title": "Worn",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "territory",
+          "effects",
+          "tier"
+        ],
+        "title": "GearFacts",
+        "type": "object"
+      },
+      "GearSlots": {
+        "additionalProperties": false,
+        "description": "D16 G1: which owned piece of Gear is worn in each territory.\n\nDesign 1 \u00a716.1's four slots, one named field each for the reason\n`SlotAssignment` gives: the grammar is the game's. A piece fits only\nits own domain's territory, so which piece goes where is read off the\npiece (`_reject_unwearable`), never declared here. Today every paired\ndomain is a LEGS domain, so only `LEGS` can hold anything.\n\nAbsent from a save written before it, and then empty: nothing was\nworn, so nothing is invented and nothing migrates.",
+        "properties": {
+          "HEAD": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Head"
+          },
+          "TORSO": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Torso"
+          },
+          "ARMS": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arms"
+          },
+          "LEGS": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Legs"
+          }
+        },
+        "title": "GearSlots",
         "type": "object"
       },
       "Glide": {
@@ -8211,7 +10771,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -8257,6 +10817,144 @@
           "readout"
         ],
         "title": "InfoComponent",
+        "type": "object"
+      },
+      "InventoryItem": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "title": "Component Id",
+            "type": "string"
+          },
+          "activation": {
+            "enum": [
+              "slotted",
+              "always_on",
+              "worn"
+            ],
+            "title": "Activation",
+            "type": "string"
+          },
+          "compatible_slots": {
+            "default": [],
+            "items": {
+              "enum": [
+                "echo_a",
+                "echo_b",
+                "mobility",
+                "utility",
+                "consumable"
+              ],
+              "type": "string"
+            },
+            "title": "Compatible Slots",
+            "type": "array"
+          },
+          "equipped_in": {
+            "anyOf": [
+              {
+                "enum": [
+                  "echo_a",
+                  "echo_b",
+                  "mobility",
+                  "utility",
+                  "consumable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Equipped In"
+          },
+          "charges_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges Max"
+          },
+          "charges_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charges Left"
+          },
+          "siblings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Siblings",
+            "type": "array"
+          },
+          "gear": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/GearFacts"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "component_id",
+          "activation"
+        ],
+        "title": "InventoryItem",
+        "type": "object"
+      },
+      "InventoryView": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/InventoryItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "slots": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/SlotView"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "territories": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/TerritoryView"
+            },
+            "title": "Territories",
+            "type": "array"
+          },
+          "consumable_generation": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Consumable Generation",
+            "type": "integer"
+          }
+        },
+        "title": "InventoryView",
         "type": "object"
       },
       "KnockbackTarget": {
@@ -8337,14 +11035,14 @@
           "source": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Source",
             "type": "string"
           },
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -8363,6 +11061,265 @@
           "target"
         ],
         "title": "LinkOperation",
+        "type": "object"
+      },
+      "LogicNode": {
+        "additionalProperties": false,
+        "description": "One of \u00a719.2's eleven, taking named inputs from earlier nodes.",
+        "properties": {
+          "node_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "DIRECT",
+              "AND",
+              "OR",
+              "NOT",
+              "TIMER",
+              "LATCH",
+              "SEQUENCE",
+              "COUNTER",
+              "SELECTOR",
+              "DELAY",
+              "THRESHOLD"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "maxLength": 32,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Inputs",
+            "type": "array"
+          },
+          "duration": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 120.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Duration"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind",
+          "inputs"
+        ],
+        "title": "LogicNode",
+        "type": "object"
+      },
+      "MapCircuit": {
+        "additionalProperties": false,
+        "properties": {
+          "circuit_id": {
+            "title": "Circuit Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "key",
+              "setting",
+              "machine"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "rooms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "connectors": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Connectors",
+            "type": "array"
+          },
+          "objects": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Objects",
+            "type": "array"
+          }
+        },
+        "required": [
+          "circuit_id",
+          "kind"
+        ],
+        "title": "MapCircuit",
+        "type": "object"
+      },
+      "MapConnector": {
+        "additionalProperties": false,
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "room_a": {
+            "title": "Room A",
+            "type": "string"
+          },
+          "room_b": {
+            "title": "Room B",
+            "type": "string"
+          },
+          "realization": {
+            "title": "Realization",
+            "type": "string"
+          },
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "gates": {
+            "default": [
+              "none"
+            ],
+            "items": {
+              "enum": [
+                "none",
+                "key",
+                "zone_state",
+                "machine",
+                "capability"
+              ],
+              "type": "string"
+            },
+            "title": "Gates",
+            "type": "array"
+          },
+          "circuits": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Circuits",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "unknown",
+              "blocked",
+              "open"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_id",
+          "room_a",
+          "room_b",
+          "realization",
+          "direction",
+          "state"
+        ],
+        "title": "MapConnector",
+        "type": "object"
+      },
+      "MapRoom": {
+        "additionalProperties": false,
+        "properties": {
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "discovered": {
+            "title": "Discovered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "room_id",
+          "type",
+          "discovered"
+        ],
+        "title": "MapRoom",
+        "type": "object"
+      },
+      "MapView": {
+        "additionalProperties": false,
+        "properties": {
+          "zone_id": {
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "rooms": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapRoom"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "connectors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapConnector"
+            },
+            "title": "Connectors",
+            "type": "array"
+          },
+          "circuits": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/MapCircuit"
+            },
+            "title": "Circuits",
+            "type": "array"
+          }
+        },
+        "required": [
+          "zone_id"
+        ],
+        "title": "MapView",
         "type": "object"
       },
       "Mechanics": {
@@ -8496,14 +11453,14 @@
           "absorbed": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Absorbed",
             "type": "string"
           },
           "survivor": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Survivor",
             "type": "string"
           },
@@ -8537,7 +11494,7 @@
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -8601,6 +11558,70 @@
         "title": "ModifyOperation",
         "type": "object"
       },
+      "ObjectConsumer": {
+        "additionalProperties": false,
+        "description": "P16. The machine at the far end that takes the object.\n\n**Transport without a consumer is not a puzzle**, and reporting\nownership and a room was the overbroad part of P16's first pass: an\nobject can arrive somewhere it is allowed to be and have nothing\nhappen. The generator in the union's own sentence -- *\"a `BURNING`\npower cell carried three rooms to a generator\"* -- is this.\n\n**The consequence goes through D-8's handle, not through a new\nchannel.** A consumer that accepts its object sets a declared\nZone-state variable, which the rest of the Zone already knows how to\nread. Nothing here addresses another room, nothing writes to a\nmachine layer, and there is no second mechanism for \"something\nhappened over there\".",
+        "properties": {
+          "mechanism_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Mechanism Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "accepts": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Accepts",
+            "type": "string"
+          },
+          "sets_variable": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sets Variable"
+          },
+          "sets_state": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sets State"
+          }
+        },
+        "required": [
+          "mechanism_id",
+          "room_id",
+          "accepts"
+        ],
+        "title": "ObjectConsumer",
+        "type": "object"
+      },
       "OwnedComponent": {
         "additionalProperties": false,
         "description": "A folded component plus the display facts a client needs.\n\nThe bridge folds; the client never does. Re-implementing the fold in\nGDScript would be a second source of truth for the one thing that must be\nidentical everywhere.",
@@ -8610,6 +11631,7 @@
               "mapping": {
                 "action": "#/$defs/ActionComponent",
                 "affordance": "#/$defs/AffordanceComponent",
+                "gear": "#/$defs/GearComponent",
                 "info": "#/$defs/InfoComponent",
                 "resource": "#/$defs/ResourceComponent",
                 "rule": "#/$defs/RuleComponent",
@@ -8639,6 +11661,9 @@
               },
               {
                 "$ref": "#/$defs/InfoComponent"
+              },
+              {
+                "$ref": "#/$defs/GearComponent"
               }
             ],
             "title": "Component"
@@ -9077,6 +12102,156 @@
         "title": "PullPickup",
         "type": "object"
       },
+      "RailDock": {
+        "additionalProperties": false,
+        "description": "A place the carrier can be parked, in a room that exists.",
+        "properties": {
+          "dock_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Dock Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dock_id",
+          "room_id"
+        ],
+        "title": "RailDock",
+        "type": "object"
+      },
+      "RailNetwork": {
+        "additionalProperties": false,
+        "description": "The docks and spans of one railway inside one Zone.\n\n**`docks` is the ROUTE ORDER, not a collection** -- F-22 question 2.\nThe engine reads the declaration order as the carrier's route order\nbecause it is the only ordering available, and nothing in the schema\nsaid so. It says so here, and `_a_span_joins_docks_the_route_visits\n_in_turn` below is defined against it: without a stated order,\n\"consecutive\" would not mean anything.",
+        "properties": {
+          "network_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Network Id",
+            "type": "string"
+          },
+          "docks": {
+            "items": {
+              "$ref": "#/$defs/RailDock"
+            },
+            "maxItems": 8,
+            "minItems": 2,
+            "title": "Docks",
+            "type": "array"
+          },
+          "spans": {
+            "items": {
+              "$ref": "#/$defs/RailSpan"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Spans",
+            "type": "array"
+          },
+          "home_dock": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Home Dock"
+          }
+        },
+        "required": [
+          "network_id",
+          "docks",
+          "spans"
+        ],
+        "title": "RailNetwork",
+        "type": "object"
+      },
+      "RailSpan": {
+        "additionalProperties": false,
+        "description": "One link between two docks, and the control that commissions it.\n\n`latch_id` is the persistence handle: a commissioned span is the\nrepair that survives leaving and coming back, and it is recorded\nthrough the same latch machinery a physics package already uses.",
+        "properties": {
+          "span_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Span Id",
+            "type": "string"
+          },
+          "from_dock": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "From Dock",
+            "type": "string"
+          },
+          "to_dock": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "To Dock",
+            "type": "string"
+          },
+          "control_room_id": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Control Room Id"
+          },
+          "latch_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Latch Id",
+            "type": "string"
+          },
+          "mandatory": {
+            "default": false,
+            "title": "Mandatory",
+            "type": "boolean"
+          },
+          "control_placement": {
+            "default": "ground",
+            "enum": [
+              "ground",
+              "gantry"
+            ],
+            "title": "Control Placement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "span_id",
+          "from_dock",
+          "to_dock",
+          "latch_id"
+        ],
+        "title": "RailSpan",
+        "type": "object"
+      },
       "RecoilSelf": {
         "additionalProperties": false,
         "properties": {
@@ -9105,7 +12280,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -9209,7 +12384,7 @@
           "resource_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Resource Id",
             "type": "string"
           },
@@ -9250,13 +12425,60 @@
         "title": "RestoreResource",
         "type": "object"
       },
+      "RoomGraph": {
+        "additionalProperties": false,
+        "description": "One room's signal graph. Acyclic, room-local, evaluated in a tick.\n\n**It cannot reach another room, and not because a rule forbids it.**\nEvery input names a node of this graph, so there is nothing an edge\ncould point at outside it -- \u00a719.7's rule 2 holds structurally\nrather than by inspection, which is what keeps the forbidden global\nsignal bus unwritable rather than merely banned.",
+        "properties": {
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "sensors": {
+            "items": {
+              "$ref": "#/$defs/SensorNode"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Sensors",
+            "type": "array"
+          },
+          "nodes": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/LogicNode"
+            },
+            "maxItems": 8,
+            "title": "Nodes",
+            "type": "array"
+          },
+          "actuators": {
+            "items": {
+              "$ref": "#/$defs/ActuatorBinding"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Actuators",
+            "type": "array"
+          }
+        },
+        "required": [
+          "room_id",
+          "sensors",
+          "actuators"
+        ],
+        "title": "RoomGraph",
+        "type": "object"
+      },
       "RuleComponent": {
         "additionalProperties": false,
         "properties": {
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -9483,6 +12705,127 @@
         "title": "ScoutedLocation",
         "type": "object"
       },
+      "SensorNode": {
+        "additionalProperties": false,
+        "description": "A source. Produces a value; reads nothing from the graph.",
+        "properties": {
+          "node_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Node Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "PRESSURE_PLATE",
+              "PULSE_BUTTON",
+              "TIMED_BUTTON",
+              "LEVER",
+              "SHOOTABLE_TARGET",
+              "OBJECT_SOCKET",
+              "PROXIMITY_SENSOR",
+              "ENCOUNTER_CLEAR",
+              "HACK_TERMINAL",
+              "WEIGHT_THRESHOLD",
+              "CONSTRAINT_STATE",
+              "ATTACH_SENSOR",
+              "MACRO_STATE",
+              "MACRO_SELECTOR",
+              "ROOM_VISITED",
+              "STATUS_SENSOR",
+              "STATUS_VOLUME_SENSOR",
+              "COMPOUND_SENSOR"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "requires_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "LIGHT",
+                  "MEDIUM",
+                  "HEAVY"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Requires Class"
+          },
+          "counts_player": {
+            "default": false,
+            "title": "Counts Player",
+            "type": "boolean"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "PULSE",
+                  "TOGGLE"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mode"
+          },
+          "required_tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "enum": [
+                    "RANGED",
+                    "MELEE",
+                    "PROJECTILE",
+                    "BEAM",
+                    "EXPLOSIVE",
+                    "PHYSICS",
+                    "FIRE",
+                    "ENVIRONMENTAL"
+                  ],
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Required Tags"
+          },
+          "held_by": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Held By"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind"
+        ],
+        "title": "SensorNode",
+        "type": "object"
+      },
       "Shield": {
         "additionalProperties": false,
         "properties": {
@@ -9614,7 +12957,7 @@
       },
       "SlotAssignment": {
         "additionalProperties": false,
-        "description": "Which owned Action sits in each of the four slots.\n\nFour named fields rather than a dict: the slot grammar belongs to the\ngame, not to generation, so it is structural. Epsilon assigns an Action\na slot *category*; the player chooses which owned Action fills it.\nLMB is not here at all \u2014 Static Pulse is never replaced.",
+        "description": "Which owned Action sits in each of the five slots.\n\nFour named fields rather than a dict: the slot grammar belongs to the\ngame, not to generation, so it is structural. Epsilon assigns an Action\na slot *category*; the player chooses which owned Action fills it.\nLMB is not here at all \u2014 Static Pulse is never replaced.",
         "properties": {
           "echo_a": {
             "anyOf": [
@@ -9667,9 +13010,89 @@
             ],
             "default": null,
             "title": "Utility"
+          },
+          "consumable": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Consumable"
           }
         },
         "title": "SlotAssignment",
+        "type": "object"
+      },
+      "SlotView": {
+        "additionalProperties": false,
+        "properties": {
+          "slot": {
+            "enum": [
+              "echo_a",
+              "echo_b",
+              "mobility",
+              "utility",
+              "consumable"
+            ],
+            "title": "Slot",
+            "type": "string"
+          },
+          "holds": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Holds"
+          },
+          "accepts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Accepts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slot"
+        ],
+        "title": "SlotView",
+        "type": "object"
+      },
+      "StateCondition": {
+        "additionalProperties": false,
+        "description": "A route condition over a declared Zone-state variable.\n\nD-8 \u00a74. Amalgam \u00a75.6 step 6a says every `TopologyEdge` predicate is\nevaluated against the restored macro state -- and until now the edge\nhad no predicate to evaluate, so the design described a check the\ncode could not express.\n\n**It names the VARIABLE, never the setter's node.** The variable is\nrestored at \u00a75.6 step 4; the setter's node is rebuilt at steps 9-10\nand may be a different object afterwards, which `M1-visible` already\nasserts of the span, the lever and the carrier. A condition that\nnamed the node would name something that does not exist yet when it\nis evaluated.",
+        "properties": {
+          "variable_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Variable Id",
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "variable_id",
+          "state"
+        ],
+        "title": "StateCondition",
         "type": "object"
       },
       "StatusComponent": {
@@ -9678,7 +13101,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -9701,7 +13124,19 @@
           },
           "status": {
             "enum": [
+              "lightened",
+              "anchored",
+              "slippery",
+              "confused",
+              "turncoat",
+              "blinded",
+              "exposed",
+              "silenced",
+              "rooted",
+              "phased",
               "burning",
+              "conductive",
+              "brittle",
               "slowed",
               "frozen",
               "shocked",
@@ -9720,7 +13155,10 @@
           "target": {
             "enum": [
               "self",
-              "enemy"
+              "enemy",
+              "object",
+              "surface",
+              "volume"
             ],
             "title": "Target",
             "type": "string"
@@ -9749,6 +13187,47 @@
           "magnitude"
         ],
         "title": "StatusComponent",
+        "type": "object"
+      },
+      "TerritoryView": {
+        "additionalProperties": false,
+        "description": "One of Design 1 \u00a716.1's four Gear territories (D16 G1).",
+        "properties": {
+          "territory": {
+            "enum": [
+              "HEAD",
+              "TORSO",
+              "ARMS",
+              "LEGS"
+            ],
+            "title": "Territory",
+            "type": "string"
+          },
+          "holds": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Holds"
+          },
+          "accepts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Accepts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "territory"
+        ],
+        "title": "TerritoryView",
         "type": "object"
       },
       "TopologyEdge": {
@@ -9812,6 +13291,29 @@
             ],
             "default": null,
             "title": "Capability"
+          },
+          "opened_by": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Opened By"
+          },
+          "requires_state": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/StateCondition"
+            },
+            "maxItems": 4,
+            "title": "Requires State",
+            "type": "array"
           }
         },
         "required": [
@@ -10022,7 +13524,7 @@
           "component_id": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Component Id",
             "type": "string"
           },
@@ -10083,7 +13585,7 @@
               {
                 "maxLength": 32,
                 "minLength": 5,
-                "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+                "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
                 "type": "string"
               },
               {
@@ -10103,6 +13605,71 @@
           "multiplier"
         ],
         "title": "TraitComponent",
+        "type": "object"
+      },
+      "TransportedObject": {
+        "additionalProperties": false,
+        "description": "P16 / D-8 lifetime 5. An object the player carries between rooms.\n\n**Neither macro state nor a latch**, which is why \u00a719.7 does not\ncover it: rooms may not write macro state, and an object is not\nmonotone -- you can carry it back. Two settled rules meet here and\nonly one of them needed an amendment:\n\n- **Persistence was already settled by \u00a710.5.** `allowed_volume` is\n  a list of rooms and a multi-room carryable is `ZONE_PERSISTENT`.\n  No amendment, and the union's own example sentence is a `BURNING`\n  power cell carried three rooms to a generator.\n- **Authority was not.** Prod's `D8_CROSS_ROOM_PROD` \u00a74 question 1,\n  accepted and narrowed in D-8 \u00a711.1: a transported object is\n  room-layer state **whose owning room is its current room**, and\n  crossing a boundary is a TRANSFER rather than a write to the\n  machine layer. \u00a719.7 rule 2 stays intact.\n\n**What is NOT here, and what that does NOT mean.** The object's\nStatuses are absent from this declaration because \u00a75.1 puts every\n`ActiveStatus` in `EPHEMERAL` -- they are not SAVED.\n\n**CORRECTED, 2026-09-22 (owner).** An earlier revision of this\ndocstring went on to say a `BURNING` cell \"arrives having been\ncarried three rooms and not still burning\", which conflated two\ndifferent things: what survives a save, and what survives a\ndoorway. **Carrying an object between rooms during live play is not\na reload.** A Status on it follows its own duration and removal\nrules; walking through a door is not an event that cleanses\nanything, and inventing a doorway cleanse would be inventing a\nmechanic.\n\nThe paragraph above quotes the union's own example sentence -- *\"a\n`BURNING` power cell carried three rooms to a generator\"* -- which\nonly means anything if the cell is still alight when it gets there.\nThe earlier text contradicted the sentence it had just cited.\n\nWhat remains true: the Status is not written to the save, so a cell\nalight when the player quits is not alight when they load. That is\n\u00a75.1, and it is a statement about saves alone.",
+        "properties": {
+          "object_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Object Id",
+            "type": "string"
+          },
+          "allowed_volume": {
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 2,
+            "title": "Allowed Volume",
+            "type": "array"
+          },
+          "home_room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Home Room Id",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "carriable": {
+            "title": "Carriable",
+            "type": "boolean"
+          },
+          "mass_kg": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 100000.0,
+            "title": "Mass Kg",
+            "type": "number"
+          },
+          "movement": {
+            "default": "hand_carried",
+            "enum": [
+              "hand_carried",
+              "manipulated"
+            ],
+            "title": "Movement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object_id",
+          "allowed_volume",
+          "home_room_id",
+          "carriable",
+          "mass_kg"
+        ],
+        "title": "TransportedObject",
         "type": "object"
       },
       "TreasureRoomChamber": {
@@ -10285,7 +13852,7 @@
           "target": {
             "maxLength": 32,
             "minLength": 5,
-            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "pattern": "^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$",
             "title": "Target",
             "type": "string"
           },
@@ -10394,6 +13961,21 @@
             "title": "Theme",
             "type": "string"
           },
+          "theme_pack": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Theme Pack"
+          },
           "designer_note": {
             "anyOf": [
               {
@@ -10469,6 +14051,62 @@
             },
             "maxItems": 8,
             "title": "Plugs",
+            "type": "array"
+          },
+          "rail_networks": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/RailNetwork"
+            },
+            "maxItems": 2,
+            "title": "Rail Networks",
+            "type": "array"
+          },
+          "featured_acquisition": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/FeaturedAcquisition"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "zone_state": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneStateVariable"
+            },
+            "maxItems": 4,
+            "title": "Zone State",
+            "type": "array"
+          },
+          "transported_objects": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/TransportedObject"
+            },
+            "maxItems": 4,
+            "title": "Transported Objects",
+            "type": "array"
+          },
+          "object_consumers": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ObjectConsumer"
+            },
+            "maxItems": 4,
+            "title": "Object Consumers",
+            "type": "array"
+          },
+          "room_graphs": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/RoomGraph"
+            },
+            "maxItems": 4,
+            "title": "Room Graphs",
             "type": "array"
           }
         },
@@ -10590,6 +14228,151 @@
             ],
             "default": null,
             "title": "Resume Anchor"
+          },
+          "macro_state": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Macro State",
+            "type": "array"
+          },
+          "object_rooms": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Object Rooms",
+            "type": "array"
+          },
+          "object_poses": {
+            "default": [],
+            "items": {
+              "maxItems": 6,
+              "minItems": 6,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Object Poses",
+            "type": "array"
+          },
+          "consumed_objects": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 4,
+            "title": "Consumed Objects",
+            "type": "array"
+          },
+          "carrier_states": {
+            "default": [],
+            "items": {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "type": "array"
+            },
+            "maxItems": 8,
+            "title": "Carrier States",
+            "type": "array"
+          },
+          "defeated": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 512,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Defeated"
+          },
+          "visited_rooms": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 40,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Visited Rooms"
           }
         },
         "title": "ZoneProgress",
@@ -10712,6 +14495,161 @@
           "generation_index"
         ],
         "title": "ZoneRecord",
+        "type": "object"
+      },
+      "ZoneStateReader": {
+        "additionalProperties": false,
+        "description": "A room whose local mechanism responds to the variable.\n\nD-8 \u00a74, answering Prod's \u00a73 question 3. **The reader names the\nvariable and never the setter's node**, which is what makes the\nstale reference the owner warned about impossible to write rather\nthan merely discouraged -- see `Zone._a_reader_is_somewhere_else`.",
+        "properties": {
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "mechanism": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Mechanism",
+            "type": "string"
+          },
+          "when": {
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "When",
+            "type": "array"
+          }
+        },
+        "required": [
+          "room_id",
+          "mechanism",
+          "when"
+        ],
+        "title": "ZoneStateReader",
+        "type": "object"
+      },
+      "ZoneStateSetter": {
+        "additionalProperties": false,
+        "description": "Where the player performs the interaction, and what it may select.\n\nD-8 \u00a74, answering Prod's \u00a73 question 2. \u00a719.7 is explicit that the\ncrossing happens because **the player performs a setter package's\ninteraction** -- so a setter has a room, and that room is the one\nthe player has to be standing in.",
+        "properties": {
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "selects": {
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Selects",
+            "type": "array"
+          },
+          "capability": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ranged_hit",
+                  "grapple",
+                  "blink",
+                  "cross_long_gap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Capability"
+          }
+        },
+        "required": [
+          "room_id",
+          "selects"
+        ],
+        "title": "ZoneStateSetter",
+        "type": "object"
+      },
+      "ZoneStateVariable": {
+        "additionalProperties": false,
+        "description": "One declared cross-room relationship: `ZoneState.macro`, named.\n\nThe bridge has budgeted macro variables since `physics.py` was\nwritten -- `state_vector_product` multiplies a tuple of state counts\nagainst \u00a74.10's bound -- and has never been able to NAME one. This\nis the declaration that arithmetic was waiting for.\n\n**The three-step crossing, as data** (D-8 \u00a72, from \u00a719.7): a player\ninteraction in `setter.room_id` writes `variable_id`, and each\nreader's room graph reads it. Rooms never address each other at any\nstep, which is why the forbidden global signal bus is not ruled out\nby a rule here -- it is unrepresentable.",
+        "properties": {
+          "variable_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Variable Id",
+            "type": "string"
+          },
+          "states": {
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 2,
+            "title": "States",
+            "type": "array"
+          },
+          "initial": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Initial",
+            "type": "string"
+          },
+          "lifetime": {
+            "enum": [
+              "reversible",
+              "permanent"
+            ],
+            "title": "Lifetime",
+            "type": "string"
+          },
+          "setter": {
+            "$ref": "#/$defs/ZoneStateSetter"
+          },
+          "readers": {
+            "items": {
+              "$ref": "#/$defs/ZoneStateReader"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Readers",
+            "type": "array"
+          },
+          "mandatory": {
+            "default": false,
+            "title": "Mandatory",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "variable_id",
+          "states",
+          "initial",
+          "lifetime",
+          "setter",
+          "readers"
+        ],
+        "title": "ZoneStateVariable",
         "type": "object"
       }
     },
@@ -10878,6 +14816,9 @@
       "slots": {
         "$ref": "#/$defs/SlotAssignment"
       },
+      "gear": {
+        "$ref": "#/$defs/GearSlots"
+      },
       "local_rewards": {
         "default": [],
         "items": {
@@ -10885,6 +14826,20 @@
         },
         "title": "Local Rewards",
         "type": "array"
+      },
+      "consumable_uses": {
+        "default": [],
+        "items": {
+          "$ref": "#/$defs/ConsumableUse"
+        },
+        "title": "Consumable Uses",
+        "type": "array"
+      },
+      "consumable_generation": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Consumable Generation",
+        "type": "integer"
       },
       "active_zone": {
         "anyOf": [
@@ -10945,6 +14900,32 @@
         "title": "Available Capabilities",
         "type": "array"
       },
+      "inventory": {
+        "$ref": "#/$defs/InventoryView",
+        "description": "H-UI-DATA: the menu's items and slots.\n\nRead from the fold and slots above, never folded again. The menu\ndoes not reconstruct upgrade arithmetic, and an item's history is\nattached to it, not repeated as extra equippables. See\n`inventory_view`.",
+        "readOnly": true
+      },
+      "gear_effects": {
+        "additionalProperties": {
+          "type": "number"
+        },
+        "description": "D16 G1: the factor each runtime stat takes from the Gear worn.\n\nDerived here from the worn pieces' atoms (`gear.worn_effects`),\nnever stored. The StatStack multiplies it in with every trait,\nstatus and pulse, BEFORE its one floor and envelope: nothing\nclamps Gear alone (owner ruling 1). Empty when nothing is worn.",
+        "readOnly": true,
+        "title": "Gear Effects",
+        "type": "object"
+      },
+      "zone_map": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/MapView"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "H-MAP-DATA: the active Zone's map, as far as the player has\nfound it; `None` with no Zone. One projection for the minimap,\nthe 3D map and the journal (`map_view`).",
+        "readOnly": true
+      },
       "coins_available": {
         "description": "Derived, never stored \u2014 `DESIGN.md` \u00a712 said so and v0.6 shipped it\nas a free integer that could read 9999 against zero received.",
         "readOnly": true,
@@ -10959,6 +14940,9 @@
       "epsilon_provider",
       "hub",
       "available_capabilities",
+      "inventory",
+      "gear_effects",
+      "zone_map",
       "coins_available"
     ],
     "title": "CampaignSnapshot",

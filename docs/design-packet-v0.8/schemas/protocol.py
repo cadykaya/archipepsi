@@ -48,16 +48,22 @@ from pydantic import (
 
 try:
     from . import constants as C
+    from . import gear as G
     from .echo import EchoInterpretation, SlotName
     from . import mechanics as M
     from .mechanics import Mechanics, derive_mechanics
     from .zone import ActivityCapability, ActivityKind, Zone
+    from . import inventory_view as IV
+    from . import map_view as MV
 except ImportError:  # pragma: no cover
     import constants as C
+    import gear as G
     from echo import EchoInterpretation, SlotName
     import mechanics as M
     from mechanics import Mechanics, derive_mechanics
     from zone import ActivityCapability, ActivityKind, Zone
+    import inventory_view as IV
+    import map_view as MV
 
 PROTOCOL_VERSION = 8
 
@@ -183,6 +189,151 @@ class ZoneProgress(Strict):
     #: accumulated, and losing it costs a walk rather than a run.
     resume_anchor: str | None = Field(default=None, max_length=64)
 
+    #: D-8. The current state of each declared Zone-state variable, as
+    #: `(variable_id, state)` pairs sorted by id -- §5.1's
+    #: `ZoneState.macro`, restored at §5.6 step 4.
+    #:
+    #: **NOT `latched`, and the separation is the point.** A reversible
+    #: variable's current state is not a monotone fact: `lowered` today
+    #: may be `stowed` tomorrow because the player put it back, which is
+    #: what `reversible` MEANS. Riding `latched` would either make the
+    #: set non-monotone -- breaking the resume-safety argument in this
+    #: class's own docstring -- or quietly convert every reversible
+    #: relationship into a permanent one, which is the silent latch the
+    #: 0.4 scope clarification forbids by name.
+    #:
+    #: So it joins `resume_anchor` as a field that is OVERWRITTEN rather
+    #: than accumulated. A `permanent` variable is monotone by the
+    #: declaration that `ZoneStateVariable` validates, not by the
+    #: container it is stored in.
+    #:
+    #: **The name.** `ZoneState` in this module is the campaign
+    #: lifecycle literal, so calling this `zone_state` would give one
+    #: spelling two meanings. `macro_state` is the Amalgam's own word
+    #: for the value; `Zone.zone_state` is the DECLARATION of which
+    #: variables exist, and this is what they currently are.
+    macro_state: tuple[tuple[str, str], ...] = Field(
+        default=(), max_length=4)
+
+    #: P16. Where each declared transported object currently is, as
+    #: `(object_id, room_id)` pairs sorted by id. §10.5: a multi-room
+    #: carryable is `ZONE_PERSISTENT`.
+    #:
+    #: **The ROOM, and nothing else about the object.** Its Statuses are
+    #: `EPHEMERAL` by §5.1, so they are not written to the save -- a
+    #: cell alight when the player quits is not alight when they load.
+    #:
+    #: **That is a statement about saves and not about doorways**
+    #: (corrected 2026-09-22). Carrying the object between rooms during
+    #: live play is not a reload: a Status on it follows its own
+    #: duration and removal rules, and a doorway cleanse would be an
+    #: invented mechanic. The union's example -- a `BURNING` power cell
+    #: carried three rooms to a generator -- depends on it arriving
+    #: still alight.
+    #:
+    #: Overwritten rather than accumulated, like `macro_state` and
+    #: `resume_anchor`: an object carried back is not a replay to reject.
+    object_rooms: tuple[tuple[str, str], ...] = Field(
+        default=(), max_length=4)
+
+    #: O05-03. Where a transported object CAME TO REST, per object:
+    #: `(object_id, room_id, x, y, z, yaw)`, rounded to the millimetre.
+    #: Amalgam §5.6 step 10 restores physical configurations "at saved
+    #: transforms", and §30.6.1 keeps `PLACED` room-indexed because "a
+    #: required cell dropped in room B stays in room B". The room alone
+    #: put a restored object back at the room's arrival point, which is
+    #: not where the player left it.
+    #:
+    #: **A pose is recorded only once the object has settled**, never
+    #: mid-carry or mid-fall (§5.3's rule against saving a moving
+    #: `PUZZLE_LOCAL` body). A pose in a room the object is no longer in
+    #: is stale and is dropped by `with_object_in`, so the save can never
+    #: say "in room C, at a point in room B".
+    object_poses: tuple[tuple[str, str, float, float, float, float], ...] = \
+        Field(default=(), max_length=4)
+
+    #: O05-02. Objects a consumer has TAKEN (§30.6.1's `CONSUMED`), as
+    #: `(object_id, mechanism_id)` rows sorted by object. Monotone: the
+    #: declared consumers take and never give back. A consumed object is
+    #: never rebuilt loose, so re-entering the room or restarting can
+    #: never produce a second copy beside the installed one.
+    #:
+    #: **Which consumer took it is part of the fact.** Without it, a
+    #: second consumer asking for an object already installed elsewhere
+    #: looked exactly like the first one's delivery reported again, and a
+    #: scenery consumer (whose consequence trivially "already holds")
+    #: was absorbed as a repeat.
+    consumed_objects: tuple[tuple[str, str], ...] = Field(default=(),
+                                                          max_length=4)
+
+    #: O05-06.2. Where each saved carrier CAME TO REST, as
+    #: `(minor_<room>/<carrier>, t, destination, held)` rows sorted by
+    #: ref: `t` the machine's own offset along its path in metres (to
+    #: the millimetre), `destination` the stop it stands at or is bound
+    #: for (empty when a hold has cleared its errand), `held` whether a
+    #: STOP or a dwell holds it there.
+    #:
+    #: EX50-011 §9: "Carrier poses, destinations and hold states are
+    #: package-local. A stable save restores each at its saved pose
+    #: before the player." Amalgam §5.2 puts machinery `t` in
+    #: `PUZZLE_LOCAL`, and §5.3 refuses a save while such a body moves,
+    #: so **only a carrier at rest is recorded**: parked at a stop,
+    #: held by a STOP, or pausing in a declared dwell. A carrier the
+    #: player quits mid-travel comes back at its last rest.
+    #:
+    #: **A dwell comes back HELD** (§9: "a carrier in a dwell state can
+    #: remain safely held until the player resumes"), so a restored lift
+    #: never leaves from under a player because the application was
+    #: closed for an hour.
+    #:
+    #: Overwritten rather than accumulated, like `macro_state`: a carrier
+    #: sent back is not a replay to reject.
+    carrier_states: tuple[tuple[str, float, str, bool], ...] = Field(
+        default=(), max_length=8)
+
+    #: H-RESUME-R (owner ruling D-06, 2026-09-24). The encounter members
+    #: this player has DEFEATED here, as `room/archetype#n`: the n-th
+    #: spawn of that archetype in that room's declared `enemies`, counted
+    #: in declaration order -- the order every room builder lays them out
+    #: in. Derived from the declaration alone: never an engine node path,
+    #: and nothing about a live enemy (health, timers, position) is saved.
+    #:
+    #: **`None` is not "nobody".** It is a Zone whose save has no record
+    #: -- one written before this field existed -- so its encounter state
+    #: is UNKNOWN. The engine then builds every member (no cleared room is
+    #: invented), restores the player at the resume room's arrival rather
+    #: than among them (no ambush), and says so; the first defeat recorded
+    #: after that makes this a tuple, which is the new persistence taking
+    #: over "from that point onward". `()` would be "known, and nobody has
+    #: fallen".
+    #:
+    #: **Monotone.** "Reloading is not an encounter-reset event": a member
+    #: once defeated is never built again in this Zone, which is also what
+    #: will make a later drop once-only. Checked against the declaration
+    #: by `transitions.record_defeat`; the bridge's check is consistency
+    #: evidence, and the engine's lifecycle is the evidence of the kill.
+    defeated: tuple[str, ...] | None = Field(default=None, max_length=512)
+    #: H-MAP-DATA. The rooms of this Zone the player has entered: what the
+    #: map may name and draw (`map_view`).
+    #:
+    #: `None` means no discovery record yet, which is every Zone saved
+    #: before this field existed. Discovery is then what the save PROVES
+    #: (`map_view.derived_discovery`: the entrance, key rooms, opened
+    #: locks, latches, defeats, object rooms, set variables). The first room
+    #: entered records those rooms plus itself. They are facts the save
+    #: already holds, so nothing is invented. `()` would be "known, and
+    #: nothing entered".
+    #:
+    #: **Monotone:** a room once found stays on the map. It is checked
+    #: against the declaration by `transitions.record_room_entered`.
+    visited_rooms: tuple[str, ...] | None = Field(
+        default=None, max_length=C.ZONE_MAX_CHAMBERS)
+
+    def with_visited(self, rooms) -> "ZoneProgress":
+        merged = tuple(sorted({*(self.visited_rooms or ()), *rooms}))
+        return self if merged == self.visited_rooms else self.model_copy(
+            update={"visited_rooms": merged})
+
     def with_key(self, key_id: str) -> "ZoneProgress":
         if key_id in self.collected_keys:
             return self
@@ -200,6 +351,119 @@ class ZoneProgress(Strict):
         return self if ref in self.latched else self.model_copy(update={
             "latched": tuple(sorted({*self.latched, ref}))})
 
+    def with_macro(self, variable_id: str, state: str) -> "ZoneProgress":
+        """Set a Zone-state variable, replacing whatever it held.
+
+        The replacement is the whole difference from `with_latch`: a
+        latch that has fired stays fired, and a variable that has been
+        set can be set again.
+        """
+        kept = {v: st for v, st in self.macro_state}
+        if kept.get(variable_id) == state:
+            return self
+        kept[variable_id] = state
+        return self.model_copy(update={
+            "macro_state": tuple(sorted(kept.items()))})
+
+    def macro(self, variable_id: str) -> str | None:
+        """What that variable currently holds, or `None` if unset."""
+        return dict(self.macro_state).get(variable_id)
+
+    def with_object_in(self, object_id: str, room_id: str) -> "ZoneProgress":
+        """Record where a transported object now is, replacing where it was.
+
+        A TRANSFER, not a machine-layer write (D-8 §11.1): the object's
+        owning room becomes its current room and no room's graph wrote
+        anything to another room to make that happen. The player carried
+        it, which is §19.7's "the player is the bridge" in its most
+        literal form.
+        """
+        kept = {o: r for o, r in self.object_rooms}
+        if kept.get(object_id) == room_id:
+            return self
+        kept[object_id] = room_id
+        # A POSE IN THE ROOM IT LEFT IS STALE, and is dropped with the
+        # move rather than left to contradict the room.
+        poses = tuple(row for row in self.object_poses
+                      if row[0] != object_id or row[1] == room_id)
+        return self.model_copy(update={
+            "object_rooms": tuple(sorted(kept.items())),
+            "object_poses": poses})
+
+    def with_object_pose(self, object_id: str, room_id: str,
+                         position: tuple[float, float, float],
+                         yaw: float) -> "ZoneProgress":
+        """Record where an object came to rest (O05-03), in its room."""
+        row = (object_id, room_id, round(float(position[0]), 3),
+               round(float(position[1]), 3), round(float(position[2]), 3),
+               round(float(yaw), 4))
+        kept = {r[0]: r for r in self.object_poses}
+        if kept.get(object_id) == row:
+            return self
+        kept[object_id] = row
+        return self.with_object_in(object_id, room_id).model_copy(
+            update={"object_poses": tuple(sorted(kept.values()))})
+
+    def without_object_pose(self, object_id: str) -> "ZoneProgress":
+        if not any(r[0] == object_id for r in self.object_poses):
+            return self
+        return self.model_copy(update={"object_poses": tuple(
+            r for r in self.object_poses if r[0] != object_id)})
+
+    def object_pose(self, object_id: str):
+        """`(room_id, (x, y, z), yaw)` or `None`."""
+        for row in self.object_poses:
+            if row[0] == object_id:
+                return row[1], (row[2], row[3], row[4]), row[5]
+        return None
+
+    def with_consumed(self, object_id: str,
+                      mechanism_id: str) -> "ZoneProgress":
+        """Installed in `mechanism_id`. Taking an object a DIFFERENT
+        consumer already holds is a caller's error, raised rather than
+        recorded, so the save can never name two homes for one object."""
+        held = self.consumed_by(object_id)
+        if held == mechanism_id:
+            return self
+        if held is not None:
+            raise ValueError(
+                f"'{object_id}' is already installed in '{held}'")
+        return self.without_object_pose(object_id).model_copy(update={
+            "consumed_objects": tuple(sorted(
+                {*self.consumed_objects, (object_id, mechanism_id)}))})
+
+    def with_carrier(self, ref: str, t: float, destination: str,
+                     held: bool) -> "ZoneProgress":
+        """Record where a carrier came to rest, replacing its last rest."""
+        row = (ref, round(float(t), 3), destination, bool(held))
+        kept = {r[0]: r for r in self.carrier_states}
+        if kept.get(ref) == row:
+            return self
+        kept[ref] = row
+        return self.model_copy(update={
+            "carrier_states": tuple(sorted(kept.values()))})
+
+    def carrier(self, ref: str):
+        """`(t, destination, held)` for that carrier, or `None`."""
+        for row in self.carrier_states:
+            if row[0] == ref:
+                return row[1], row[2], row[3]
+        return None
+
+    def consumed(self, object_id: str) -> bool:
+        return self.consumed_by(object_id) is not None
+
+    def consumed_by(self, object_id: str) -> str | None:
+        """The consumer holding that object, or `None`."""
+        for obj, mechanism in self.consumed_objects:
+            if obj == object_id:
+                return mechanism
+        return None
+
+    def object_room(self, object_id: str) -> str | None:
+        """Which room that object is in, or `None` if it has not moved."""
+        return dict(self.object_rooms).get(object_id)
+
     def with_station(self, station_id: str) -> "ZoneProgress":
         if station_id in self.reached_stations:
             return self
@@ -207,6 +471,85 @@ class ZoneProgress(Strict):
             "reached_stations": tuple(
                 sorted({*self.reached_stations, station_id})),
             "resume_anchor": station_id})
+
+    def with_defeated(self, member: str) -> "ZoneProgress":
+        """A member defeated. From an unknown record (`None`), the first
+        defeat starts the record: the engine built every member on that
+        entry, so what falls from then on is exactly what is known."""
+        known = self.defeated if self.defeated is not None else ()
+        if self.defeated is not None and member in known:
+            return self
+        return self.model_copy(update={
+            "defeated": tuple(sorted({*known, member}))})
+
+
+#: §5.1's five persistence categories, and which one each saved field of
+#: `ZoneProgress` belongs to.
+#:
+#: **This replaces a field-NAME scan** (owner correction, 2026-09-22).
+#: The earlier guard failed on any field whose name contained `pose`,
+#: `transform`, `velocity` or `elapsed`, which generalised
+#: `rail_junction.gd`'s supported-dock policy into a universal ban on
+#: physical saved state. EX50-011 §9 asks for the opposite in so many
+#: words: *"carrier poses, destinations and hold states are
+#: package-local. A stable save restores each at its saved pose before
+#: the player."* A runtime comment about one railway does not supersede
+#: a selected spec about another package.
+#:
+#: **The two contracts differ for a stateable reason.** A `RailSpan` is
+#: COMMISSIONABLE: whether its link exists depends on a latch, so a
+#: carrier restored to a transform may be standing on track this build
+#: did not commission, and restoring it to a supported dock is the
+#: safety rule. Passing Platforms' carriers run a fixed schedule on a
+#: path that always exists, so there is nothing for a saved pose to
+#: contradict. Conditional path, restore to a dock; unconditional path,
+#: restore the pose.
+SAVE_FIELD_CATEGORY: dict[str, str] = {
+    "collected_keys": "ROOM_PERSISTENT",
+    "opened_locks": "ROOM_PERSISTENT",
+    "reached_stations": "ROOM_PERSISTENT",
+    "latched": "ROOM_PERSISTENT",
+    "resume_anchor": "ZONE_PERSISTENT",
+    "macro_state": "ZONE_PERSISTENT",
+    "object_rooms": "ZONE_PERSISTENT",
+    # O05-02/03: a multi-room carryable is ZONE_PERSISTENT (Amalgam §10,
+    # pinning Design 3 §10.5), and so is where it rests and whether a
+    # consumer has taken it.
+    "object_poses": "ZONE_PERSISTENT",
+    "consumed_objects": "ZONE_PERSISTENT",
+    # O05-06.2: machinery `t` is `PUZZLE_LOCAL` (Amalgam §5.2), and a
+    # Passing Platforms carrier's rest is saved by its own package's
+    # contract (EX50-011 §9) -- the unconditional-path case above.
+    "carrier_states": "PUZZLE_LOCAL",
+    # H-RESUME-R: which declared members of a room's encounter have
+    # fallen is that room's own fact, kept like a lock opened.
+    "defeated": "ROOM_PERSISTENT",
+    # H-MAP-DATA: that a room has been entered is that room's own fact,
+    # kept like a station reached.
+    "visited_rooms": "ROOM_PERSISTENT",
+}
+
+
+def categorise_save_field(name: str, category: str) -> str | None:
+    """Is it legal to persist a field of this category? `None` if so.
+
+    The rule §5.4a actually states, rather than a rule about spelling:
+    a **derived live value** is never serialized, because a save holding
+    one could disagree with the graph that recomputes it. `EPHEMERAL` is
+    precisely the category of things rebuilt rather than restored, so a
+    field in it has no business in a save; every other category is
+    permitted and it is the package's own contract that decides which
+    one applies.
+    """
+    known = {"EPHEMERAL", "PUZZLE_LOCAL", "ROOM_PERSISTENT",
+             "ZONE_PERSISTENT", "AP_PERSISTENT"}
+    if category not in known:
+        return f"'{name}' declares category '{category}', which §5.1 has no row for"
+    if category == "EPHEMERAL":
+        return (f"'{name}' is declared EPHEMERAL and is in a save; §5.1 says "
+                "EPHEMERAL state is rebuilt on restore, so persisting it "
+                "would let the save disagree with what rebuilds it")
+    return None
 
 
 class ZoneRecord(Strict):
@@ -502,7 +845,7 @@ def _reject_underfunded_ledger(coins_spent: int, pending) -> None:
 
 
 class SlotAssignment(Strict):
-    """Which owned Action sits in each of the four slots.
+    """Which owned Action sits in each of the five slots.
 
     Four named fields rather than a dict: the slot grammar belongs to the
     game, not to generation, so it is structural. Epsilon assigns an Action
@@ -513,6 +856,14 @@ class SlotAssignment(Strict):
     echo_b: str | None = Field(default=None, max_length=32)
     mobility: str | None = Field(default=None, max_length=32)
     utility: str | None = Field(default=None, max_length=32)
+    #: The one that runs out. Its occupant declares `charges`, and
+    #: spending the last one does NOT clear this field: the supply is
+    #: permanently owned, so an exhausted one stays selected at
+    #: `0 / max`, says it is exhausted and says what refills it
+    #: (`transitions.spend_charge`). This comment said the opposite,
+    #: which was the behaviour before the owner's ruling of
+    #: 2026-09-22 and never the behaviour after it.
+    consumable: str | None = Field(default=None, max_length=32)
 
     def assigned(self) -> tuple[tuple[str, str], ...]:
         return tuple(
@@ -520,12 +871,16 @@ class SlotAssignment(Strict):
             for slot, value in (
                 ("echo_a", self.echo_a), ("echo_b", self.echo_b),
                 ("mobility", self.mobility), ("utility", self.utility),
+                ("consumable", self.consumable),
             )
             if value is not None
         )
 
     def with_slot(self, slot: str, component_id: str | None) -> "SlotAssignment":
-        if slot not in ("echo_a", "echo_b", "mobility", "utility"):
+        # THE LIST IS THE EXPORTED ONE. Spelling it here again is how a
+        # fifth slot gets added everywhere except the one place that
+        # refuses it.
+        if slot not in C.SLOT_NAMES:
             raise ValueError(f"unknown slot '{slot}'")
         return SlotAssignment.model_validate(
             {**self.model_dump(), slot: component_id}
@@ -557,6 +912,104 @@ def _reject_unslottable(slots, mechanics) -> None:
             )
 
 
+class GearSlots(Strict):
+    """D16 G1: which owned piece of Gear is worn in each territory.
+
+    Design 1 §16.1's four slots, one named field each for the reason
+    `SlotAssignment` gives: the grammar is the game's. A piece fits only
+    its own domain's territory, so which piece goes where is read off the
+    piece (`_reject_unwearable`), never declared here. Today every paired
+    domain is a LEGS domain, so only `LEGS` can hold anything.
+
+    Absent from a save written before it, and then empty: nothing was
+    worn, so nothing is invented and nothing migrates.
+    """
+    HEAD: str | None = Field(default=None, max_length=32)
+    TORSO: str | None = Field(default=None, max_length=32)
+    ARMS: str | None = Field(default=None, max_length=32)
+    LEGS: str | None = Field(default=None, max_length=32)
+
+    def worn(self) -> tuple[tuple[str, str], ...]:
+        return tuple((t, getattr(self, t)) for t in G.TERRITORIES
+                     if getattr(self, t) is not None)
+
+    def with_piece(self, territory: str,
+                   component_id: str | None) -> "GearSlots":
+        if territory not in G.TERRITORIES:
+            raise ValueError(
+                f"unknown territory '{territory}'; §16.1's four are "
+                f"{list(G.TERRITORIES)}")
+        return GearSlots.model_validate(
+            {**self.model_dump(), territory: component_id})
+
+
+def _reject_unwearable(gear, mechanics) -> None:
+    """A territory may only wear Gear the campaign owns, in its own place.
+
+    Against the fold, as `_reject_unslottable` is. A piece exists only
+    because an Echo made it -- Gear comes from Archipelago items' Echoes
+    and no transaction mints one (owner ruling 3) -- so a worn id nothing
+    folded is a forged piece, and it is refused on every path that builds
+    a save.
+    """
+    for territory, component_id in gear.worn():
+        owned = mechanics.by_id(component_id)
+        if owned is None:
+            raise ValueError(
+                f"territory '{territory}' wears '{component_id}', which is "
+                "not owned")
+        if owned.kind != "gear":
+            raise ValueError(
+                f"territory '{territory}' wears '{component_id}', which is a "
+                f"'{owned.kind}'; only Gear is worn")
+        home = G.territory_of(owned.component.domains[0])
+        if home != territory:
+            raise ValueError(
+                f"'{component_id}' is {home} Gear and cannot be worn on "
+                f"{territory}")
+
+
+def _worn_pieces(gear, mechanics) -> list:
+    return [mechanics.by_id(cid).component for _, cid in gear.worn()]
+
+
+def _reject_impossible_charges(uses, mechanics) -> None:
+    """A consumable cannot be spent past its charges.
+
+    **Exhausted AND equipped is a legal state** (owner decision,
+    2026-09-22). A consumable is a permanently owned refillable supply,
+    not a thing you use up and lose: it stays selected at `0 / max` with
+    exhausted feedback, and only an explicit equipment change replaces
+    it. What is refused is USING one that is empty, which
+    `transitions.spend_charge` does, and a count that has drifted past
+    what the supply ever held, which is here.
+    """
+    seen: set[str] = set()
+    for use in uses:
+        if use.component_id in seen:
+            raise ValueError(
+                f"'{use.component_id}' has two use records; a consumable "
+                f"has one count"
+            )
+        seen.add(use.component_id)
+        owned = mechanics.by_id(use.component_id)
+        if owned is None:
+            raise ValueError(
+                f"'{use.component_id}' has uses recorded but is not owned"
+            )
+        charges = getattr(owned.component, "charges", None)
+        if owned.kind != "action" or charges is None:
+            raise ValueError(
+                f"'{use.component_id}' has uses recorded but is not a "
+                f"consumable"
+            )
+        if use.spent > charges:
+            raise ValueError(
+                f"'{use.component_id}' has {use.spent} uses recorded "
+                f"against {charges} charges"
+            )
+
+
 def _reject_nonmonotonic_seq(interpretations, next_seq: int) -> None:
     """`interpretation_seq` is assigned once and never reused.
 
@@ -583,6 +1036,55 @@ def _reject_duplicate_ids(items, attr: str, label: str) -> None:
     ids = [getattr(i, attr) for i in items]
     if len(set(ids)) != len(ids):
         raise ValueError(f"duplicate {label}")
+
+
+class ConsumableAuthorization(Strict):
+    """A charge counted **before** the effect that spends it exists.
+
+    **The hole this closes.** The client's reserve/launch/report is an
+    in-memory list. Retaining and retransmitting it survives a dropped
+    socket, and it does not survive the process: launch an effect, lose
+    the report, kill Godot, relaunch into the same unrefilled
+    deployment, and a bridge that only ever learned about expenditure
+    from a report still believes the charge is there. Nothing in a
+    cleared local dictionary is reconciliation.
+
+    **So the charge is spent at AUTHORIZE time, not at report time.**
+    `spent` moves the moment this record is written, and this record
+    exists only to allow the one thing authorize-before-launch would
+    otherwise lose: cancelling an attempt that never launched. A crash
+    between authorize and launch therefore BURNS the charge. That is the
+    cost of the chosen shape, it is the conservative direction — a lost
+    report can never duplicate a charge, only forfeit one — and it is
+    stated here rather than discovered by a player.
+
+    **Keyed by the trio the design already uses.** `(component,
+    generation, use_index)` is the same compare-and-swap identity
+    `use_consumable` checks, so there is no second convention and no
+    opaque id to mint, lose or forge. It is also why two presses during
+    one cooldown cannot overwrite each other: they are different
+    indices, so cancelling the second preserves the first.
+    """
+    component_id: str = Field(min_length=1, max_length=32)
+    #: The supply it counts against, so an authorization outstanding
+    #: across a refill is refused on identity like every other stale use.
+    generation: int = Field(default=0, ge=0)
+    use_index: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
+
+
+class ConsumableUse(Strict):
+    """How many of a consumable's charges have been spent.
+
+    **Persisted, and deliberately not folded.** The fold is over the
+    interpretation log, which says what the campaign was GIVEN; how many
+    times the player has pressed a button is not in it and cannot be
+    derived from it. So this is campaign state, it moves only through
+    `transitions.spend_charge`, and it is stored the way
+    `local_rewards` is -- a tuple of small records rather than a dict,
+    because a dict key can disagree with the id inside its value.
+    """
+    component_id: str = Field(min_length=1, max_length=32)
+    spent: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
 
 
 class EarnedLocalReward(Strict):
@@ -685,6 +1187,72 @@ class CampaignSave(Strict):
     local_rewards: tuple[EarnedLocalReward, ...] = Field(
         default=(), max_length=C.MAX_LOCAL_REWARDS)
 
+    #: Charges spent, per consumable. Absent for every campaign that has
+    #: never held one, which is every campaign written before the slot
+    #: existed -- so an old save loads unchanged rather than migrating.
+    consumable_uses: tuple[ConsumableUse, ...] = ()
+    #: Charges authorized and not yet reported as launched.
+    #:
+    #: **Already counted in `consumable_uses`** — an authorization moves
+    #: `spent` when it is written, and this is the record that lets an
+    #: UNLAUNCHED attempt be cancelled. So it is not a second ledger to
+    #: add up; subtracting it again would double-charge.
+    #:
+    #: **Deliberately not mirrored on the snapshot.** Only the process
+    #: that made an authorization knows whether the effect launched, and
+    #: that is the one fact a release turns on. A fresh client is handed
+    #: the reduced `charges_left` and nothing it could release — which
+    #: is the point, because it cannot know what the dead process did.
+    consumable_authorizations: tuple[ConsumableAuthorization, ...] = ()
+    #: WHICH DEPLOYMENT THOSE USES BELONG TO — the `zone_id` the player
+    #: was last sent into. Charges refill when a deployment BEGINS, and
+    #: this is what tells one beginning from a repeat: `enter_zone` is
+    #: called again on re-entry, on a generation retry and on a reconnect,
+    #: and none of those is a new deployment.
+    #:
+    #: Empty for a campaign that has never deployed, which is also every
+    #: save written before the field existed.
+    consumable_deployment: str = Field(default="", max_length=64)
+    #: WHICH SUPPLY THOSE USES BELONG TO. Monotonic, minted only by a
+    #: refill, never reused — so a use minted against an old supply
+    #: carries a number that no longer exists and is refused on identity
+    #: rather than on arithmetic.
+    #:
+    #: `use_index` alone cannot do that job. An old use 1 arriving after
+    #: a refill matches the first use due (`1 == 0 + 1`), and an old use
+    #: 3 matches again once two legitimate new uses have brought the
+    #: count to 2. Both eat a charge from the fresh supply. The Zone id
+    #: is not enough either: it is reused every time you go back.
+    #:
+    #: Same shape as `proposal_id`/`attempt` — the server mints, the
+    #: snapshot mirrors, the client captures at the moment it acts and
+    #: echoes on the next intent. Zero for a campaign that has never
+    #: deployed, which is also every save written before the field
+    #: existed.
+    consumable_generation: int = Field(default=0, ge=0)
+    #: D-01 (`docs/D14_SELF_ADDRESSED_ECHO_PROD.md` §3). Whether a Check
+    #: whose original is addressed to this slot also yields a local Echo.
+    #:
+    #: **Fixed per campaign.** A new campaign is created with it on. A save
+    #: written before the field existed loads with it OFF and keeps its
+    #: behaviour for its whole life: its own items are delivered to it and
+    #: no Echo appears for them -- not at confirmation, not on load, not
+    #: in a later backlog sweep. Nothing grows in an existing save because
+    #: the code changed. The Echo is never the item either way: the
+    #: original is Archipelago's and counted once; the Echo is the fold's.
+    self_addressed_echoes: bool = False
+
+    def charges_left(self, component_id: str) -> int:
+        """Uses remaining on a consumable. Zero for anything that is not
+        one, so a caller never has to ask twice.
+
+        A read of the save rather than a transition: it returns a number,
+        and `transitions.py`'s census is the list of things that return a
+        `CampaignSave`.
+        """
+        return IV.charges_left(self.derive(), self.consumable_uses,
+                               component_id)
+
     #: The interpretation log: append-only, ordered by `interpretation_seq`,
     #: and the ONLY persisted form of what the player has earned. Live
     #: mechanics are a fold over it (`mechanics.derive_mechanics`) and are
@@ -699,6 +1267,9 @@ class CampaignSave(Strict):
     #: derived from the log — see `_reject_nonmonotonic_seq`.
     next_interpretation_seq: int = Field(default=0, ge=0)
     slots: SlotAssignment = Field(default_factory=lambda: SlotAssignment())
+    #: D16 G1: the Gear worn per territory. Checked against the fold, like
+    #: `slots`; its effect is derived (`gear_effects`), never stored.
+    gear: GearSlots = Field(default_factory=lambda: GearSlots())
 
     zones: tuple[ZoneRecord, ...] = ()
     active_zone_id: str | None = None
@@ -718,7 +1289,10 @@ class CampaignSave(Strict):
         # Folding here means a corrupt log is unrepresentable rather than
         # merely detected later: a CampaignSave that cannot fold cannot be
         # constructed, so it can never be written to disk.
-        _reject_unslottable(self.slots, derive_mechanics(self.interpretations))
+        _folded = derive_mechanics(self.interpretations)
+        _reject_unslottable(self.slots, _folded)
+        _reject_unwearable(self.gear, _folded)
+        _reject_impossible_charges(self.consumable_uses, _folded)
         _reject_duplicate_pending(self.pending_checks)
         _reject_unbacked_pending(self.pending_checks, self.zones)
         _reject_underfunded_ledger(self.coins_spent, self.pending_checks)
@@ -1278,7 +1852,14 @@ class CampaignSnapshot(Strict):
     bridge_connected: bool
     ap_connected: bool
     ap_mode: Literal["real", "mock"]
-    epsilon_provider: Literal["claude", "mock", "fallback"]
+    #: `sample` is a DIAGNOSTIC axis, not a shipping one: it serves one
+    #: named proposal out of the declared sample so a case the offline
+    #: census names can be put in front of a real client and a real
+    #: bridge. Listed here because the snapshot is a closed vocabulary
+    #: and an unlisted provider makes every snapshot unserialisable --
+    #: which is how the first run of it failed, with the client unable to
+    #: connect at all rather than with a word about the provider.
+    epsilon_provider: Literal["claude", "mock", "fallback", "sample"]
     race_mode: bool = False
 
     #: AP-derived counters are meaningful only when this is true.
@@ -1337,12 +1918,25 @@ class CampaignSnapshot(Strict):
     interpretation_count: int = Field(default=0, ge=0)
     mechanics: Mechanics = Field(default_factory=lambda: Mechanics())
     slots: SlotAssignment = Field(default_factory=lambda: SlotAssignment())
+    #: D16 G1: the Gear worn, mirrored from the save like `slots`.
+    gear: GearSlots = Field(default_factory=lambda: GearSlots())
     #: What the player has found that Archipelago does not care about
     #: (§14.2). Mirrored from the save rather than folded: a local reward
     #: derives nothing and grants no mechanic, so it has no business in
     #: `mechanics` — but a note you found stays found, and the client is
     #: what has to stop drawing a pickup it already has.
     local_rewards: tuple[EarnedLocalReward, ...] = ()
+    #: Charges spent, per consumable, so the client can show what is
+    #: left. The component's `charges` is already in `mechanics`; this is
+    #: the half that moves, and the client subtracts rather than counting
+    #: its own button presses -- a second count is a second truth.
+    consumable_uses: tuple[ConsumableUse, ...] = ()
+    #: The supply those uses belong to, mirrored from the save for the
+    #: client to capture and echo on `use_consumable`. It is also how the
+    #: client knows a refill happened: a snapshot under a different
+    #: generation retires every use it still had in flight, so a request
+    #: from the old supply can never be subtracted from the new one.
+    consumable_generation: int = Field(default=0, ge=0)
 
     active_zone: ZoneRecord | None = None
     #: The identity of the proposal `active_zone` holds, for the client
@@ -1388,6 +1982,44 @@ class CampaignSnapshot(Strict):
 
     @computed_field
     @property
+    def inventory(self) -> IV.InventoryView:
+        """H-UI-DATA: the menu's items and slots.
+
+        Read from the fold and slots above, never folded again. The menu
+        does not reconstruct upgrade arithmetic, and an item's history is
+        attached to it, not repeated as extra equippables. See
+        `inventory_view`.
+        """
+        return IV.inventory_of(self.mechanics, self.slots,
+                               self.consumable_uses,
+                               self.consumable_generation, gear=self.gear)
+
+    @computed_field
+    @property
+    def gear_effects(self) -> dict[str, float]:
+        """D16 G1: the factor each runtime stat takes from the Gear worn.
+
+        Derived here from the worn pieces' atoms (`gear.worn_effects`),
+        never stored. The StatStack multiplies it in with every trait,
+        status and pulse, BEFORE its one floor and envelope: nothing
+        clamps Gear alone (owner ruling 1). Empty when nothing is worn.
+        """
+        return G.worn_effects(_worn_pieces(self.gear, self.mechanics))
+
+    @computed_field
+    @property
+    def zone_map(self) -> MV.MapView | None:
+        """H-MAP-DATA: the active Zone's map, as far as the player has
+        found it; `None` with no Zone. One projection for the minimap,
+        the 3D map and the journal (`map_view`).
+        """
+        rec = self.active_zone
+        if rec is None or rec.zone is None:
+            return None
+        return MV.map_of(rec, self.mechanics, self.slots)
+
+    @computed_field
+    @property
     def coins_available(self) -> int:
         """Derived, never stored — `DESIGN.md` §12 said so and v0.6 shipped it
         as a free integer that could read 9999 against zero received."""
@@ -1425,6 +2057,7 @@ class CampaignSnapshot(Strict):
         # Against the mechanics actually sent, not a re-fold: if the two
         # ever disagreed, the client would render one and validate the other.
         _reject_unslottable(self.slots, self.mechanics)
+        _reject_unwearable(self.gear, self.mechanics)
 
         both = sorted(set(self.checked_location_ids)
                       & set(self.missing_location_ids))
@@ -1644,6 +2277,57 @@ class LayoutResult(Strict):
                                     max_length=16, pattern=r"^[0-9a-f]{16}$")
 
 
+class BuildFailed(Strict):
+    """The engine could not CONSTRUCT this proposal. There is no layout.
+
+    **This is not a refused layout, and conflating the two would be a
+    lie in both directions.** `LayoutResult` carries geometry the engine
+    built and the bridge then judged; this says the engine never got
+    that far -- `ZoneBuilder` could not route the rooms, so there is
+    nothing to measure and nothing to validate. Sending an empty or
+    part-built `layout` to borrow the refusal path would be fabricated
+    evidence: the validator would report a geometry error for a
+    geometry that was never laid down.
+
+    **And it is not a generation-stage rejection either.** A proposal
+    the bridge refuses before it is offered never reaches a client;
+    `last_generation_error` is where that is reported. This one passed
+    composition, was offered, was entered, and failed in the engine.
+
+    **Why the bridge needs to hear it at all.** Without this message a
+    failed build is silent: `ZoneController.setup` returns, no
+    `layout_result` is ever sent, and the record sits ACTIVE waiting for
+    a verdict that is not coming. The Hub stays in ZONE_ACTIVE, offering
+    a way back into a Zone that cannot be built, and the campaign cannot
+    move. What follows from this message is exactly what follows from a
+    refusal -- `refuse_layout`, so the attempt is charged, a FRESH
+    proposal is composed again inside the budget, a COMMITTED one is
+    parked with its manifest intact, and past the budget the Zone goes
+    DORMANT and the Hub offers ABANDON.
+
+    `attempt` and `proposal_id` carry the same meaning and the same
+    guards as on `LayoutResult`: which build this is the outcome of.
+    They are what stop a late failure spending a replacement's budget.
+    """
+    type: Literal["build_failed"]
+    zone_id: str = _ID
+    #: The engine's own reason, as `ZoneBuilder` reported it.
+    #:
+    #: Bounded like every other text that reaches a snapshot. An
+    #: over-long refusal string has already cost this project one hang:
+    #: `CampaignSnapshot` raised on construction, which killed the
+    #: generation task and the broadcast with it, and left the client in
+    #: GENERATING forever. The client trims before sending and the
+    #: bridge trims again before storing -- neither trusts the other.
+    reason: str = Field(default="", max_length=C.MAX_TEXT_LEN)
+    #: Which ATTEMPT failed, echoed from `ZoneReady`; see `LayoutResult`.
+    attempt: int | None = Field(default=None, ge=0,
+                                le=MAX_LAYOUT_REFUSALS)
+    #: Which PROPOSAL failed, echoed from `ZoneReady`; see `LayoutResult`.
+    proposal_id: str | None = Field(default=None, min_length=16,
+                                    max_length=16, pattern=r"^[0-9a-f]{16}$")
+
+
 class KeyCollected(Strict):
     """A Zone-local key picked up.
 
@@ -1685,6 +2369,126 @@ class LatchFired(Strict):
                           pattern=r"^[a-z0-9_]+$")
 
 
+class ZoneStateSelected(Strict):
+    """D-8. A player operated a setter and chose a Zone state.
+
+    **P-3's gap, closed.** `ZoneProgress.with_macro` and
+    `transitions.record_zone_state` both existed and there was no
+    message that could reach them, so the engine had a selection it
+    could not report. `ZoneState.as_reported()` was what it *would*
+    send; this is the thing it sends.
+
+    **Idempotent by `(variable_id, state)` and NOT monotone**, which is
+    the difference from `LatchFired` and the reason this is its own
+    intent rather than a field on that one. Selecting a state the
+    variable already holds is absorbed; selecting a different one is a
+    legitimate second event, because a reversible variable going back is
+    the mechanic working rather than a replay to be rejected.
+
+    **Validated against the accepted Zone**, like every sibling here:
+    `record_zone_state` refuses a variable the Zone does not declare, a
+    state it does not have, and -- the one a latch analogy misses -- a
+    state no setter can select. §19.7 says nothing but a player
+    operating a setter moves Zone state, so a state nothing selects is
+    one nothing could have set.
+    """
+    type: Literal["zone_state_selected"]
+    zone_id: str = _ID
+    variable_id: str = Field(min_length=1, max_length=24,
+                             pattern=r"^[a-z0-9_]+$")
+    state: str = Field(min_length=1, max_length=24,
+                       pattern=r"^[a-z0-9_]+$")
+
+
+class ObjectTransported(Strict):
+    """P16. A transported object arrived in a room.
+
+    Idempotent by `(object_id, room_id)` and **not monotone**, same as
+    `ZoneStateSelected` and for the same reason: carrying it back is the
+    mechanic working, not a replay to reject.
+
+    Validated against the accepted Zone: the object must be one the Zone
+    declares and the room must be inside the `allowed_volume` §10.5 gave
+    it. An object reported into a room it may not enter is refused
+    rather than recorded -- a save that accepted it would describe a
+    world the composer never allowed.
+    """
+    type: Literal["object_transported"]
+    zone_id: str = _ID
+    object_id: str = Field(min_length=1, max_length=24,
+                           pattern=r"^[a-z0-9_]+$")
+    room_id: str = Field(min_length=1, max_length=24,
+                         pattern=r"^[a-z0-9_]+$")
+
+
+class ObjectSettled(Strict):
+    """O05-03. A transported object came to rest after the hand put it down.
+
+    Validated like `ObjectTransported` (declared object, room inside its
+    volume) and additionally refused for an object a consumer has taken.
+    The pose is the engine's measurement; the bridge bounds it and
+    stores it, and never invents one.
+    """
+    type: Literal["object_settled"]
+    zone_id: str = _ID
+    object_id: str = Field(min_length=1, max_length=24,
+                           pattern=r"^[a-z0-9_]+$")
+    room_id: str = Field(min_length=1, max_length=24,
+                         pattern=r"^[a-z0-9_]+$")
+    position: tuple[float, float, float]
+    yaw: float = Field(ge=-7.0, le=7.0)
+
+
+class ObjectConsumed(Strict):
+    """O05-02. A declared consumer took the object it was waiting for.
+
+    Names the MECHANISM, not the object: the consumer's declaration says
+    which object it accepts and which state it sets, so a client cannot
+    choose either. `record_object_consumed` refuses it unless the save
+    already has that object in the consumer's own room.
+    """
+    type: Literal["object_consumed"]
+    zone_id: str = _ID
+    mechanism_id: str = Field(min_length=1, max_length=32,
+                              pattern=r"^[a-z0-9_]+$")
+
+
+class ObjectRecovered(Strict):
+    """O05-03 / §10.5. A required object was lost and put back home.
+
+    Recovery is a separate event from an arrival, so a correction is
+    never silent. Refused for a consumed object: an installed object is
+    not lost.
+    """
+    type: Literal["object_recovered"]
+    zone_id: str = _ID
+    object_id: str = Field(min_length=1, max_length=24,
+                           pattern=r"^[a-z0-9_]+$")
+
+
+class CarrierRested(Strict):
+    """O05-06.2. A hosted minor's carrier came to rest.
+
+    Sent only at rest -- parked at a stop, held by a STOP, or pausing in
+    a declared dwell -- never mid-travel (Amalgam §5.3). The package is
+    the minor's (`minor_<room>`); the bridge accepts it only for a
+    carrier and stop the room's minor contract declares, and stores the
+    offset the engine measured without inventing one.
+    """
+    type: Literal["carrier_rested"]
+    zone_id: str = _ID
+    package_id: str = Field(min_length=1, max_length=32,
+                            pattern=r"^[a-z0-9_]+$")
+    carrier_id: str = Field(min_length=1, max_length=32,
+                            pattern=r"^[a-z0-9_]+$")
+    t: float
+    #: The stop it stands at or is bound for; empty only when held with
+    #: no errand.
+    destination: str = Field(default="", max_length=32,
+                             pattern=r"^[A-Za-z0-9_]*$")
+    held: bool = False
+
+
 class LockOpened(Strict):
     """A locked door opened, identified by the door rather than the key.
 
@@ -1708,6 +2512,34 @@ class StationReached(Strict):
     zone_id: str = _ID
     station_id: str = Field(min_length=1, max_length=48,
                             pattern=r"^[a-z0-9_:]+$")
+
+
+class EnemyDefeated(Strict):
+    """An encounter member defeated (H-RESUME-R, D-06).
+
+    Idempotent by `member`, because the target record is monotone: the
+    same defeat twice is one defeat, and a resend after a dropped
+    connection is the normal case. `member` is the declared identity
+    `room/archetype#n` (see `ZoneProgress.defeated`), which the bridge
+    checks against the Zone's own declaration before it is recorded.
+    """
+    type: Literal["enemy_defeated"]
+    zone_id: str = _ID
+    member: str = Field(min_length=5, max_length=64,
+                        pattern=r"^[a-z0-9_]+/[a-z]+#[0-9]{1,3}$")
+
+
+class RoomEntered(Strict):
+    """The player entered a room (H-MAP-DATA): it joins the map.
+
+    Idempotent by room, because the record is monotone: a room entered
+    twice is found once, and a resend after a dropped connection is the
+    normal case. Checked against the accepted Zone's declaration.
+    """
+    type: Literal["room_entered"]
+    zone_id: str = _ID
+    room_id: str = Field(min_length=1, max_length=24,
+                         pattern=r"^[a-z0-9_]+$")
 
 
 class ClaimCheck(Strict):
@@ -1745,6 +2577,84 @@ class SlotAction(Strict):
     type: Literal["slot_action"]
     slot: SlotName
     component_id: str | None = Field(default=None, max_length=32)
+
+
+class GearAction(Strict):
+    """D16 G1: wear an owned piece of Gear in its territory, or clear the
+    territory with a null id. The checks -- owned, Gear, its own
+    territory -- are `CampaignSave`'s, as `slot_action`'s are."""
+    type: Literal["gear_action"]
+    territory: G.Territory
+    component_id: str | None = Field(default=None, max_length=32)
+
+
+class AuthorizeConsumable(Strict):
+    """Ask the bridge to count a charge BEFORE launching the effect.
+
+    **PROPOSED, NOT AGREED.** The client half is Prod's and is
+    unwritten, so this is the bridge's side of a contract that has
+    one owner per file and must have one shape. The proposal, the
+    two boundaries it distinguishes and what it asks of the client
+    are in `docs/D9_CONSUMABLE_ACCOUNTING_PROD.md`; if the engine
+    lane prefers another accounting shape, this is the half that
+    moves.
+
+    Sent while the press is still cancellable and nothing irreversible
+    has happened. The bridge writes the expenditure to the save and
+    answers; only then may the client launch. A client that launches
+    first and reports afterwards is relying on a report surviving the
+    process, and it does not.
+
+    The trio is `use_consumable`'s, unchanged, so the authorization and
+    the report that settles it are the same compare-and-swap.
+    """
+    type: Literal["authorize_consumable"]
+    component_id: str = Field(min_length=1, max_length=32)
+    use_index: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
+    generation: int = Field(ge=0)
+
+
+class ReleaseConsumableAuthorization(Strict):
+    """Cancel an authorized attempt that **never launched**.
+
+    Only the process that authorized can know that, so the claim is the
+    client's. What the bridge enforces is that the attempt being
+    cancelled is the newest one — which is also why a client that has
+    just relaunched cannot refund a dead process's expenditure.
+    """
+    type: Literal["release_consumable_authorization"]
+    component_id: str = Field(min_length=1, max_length=32)
+    use_index: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
+    generation: int = Field(ge=0)
+
+
+class UseConsumable(Strict):
+    """Spend one charge of the Action in the consumable slot.
+
+    Client-initiated because only the client knows the button was pressed
+    and the Action actually fired. It names the component rather than the
+    slot so a charge cannot be spent against whatever happens to be
+    slotted by the time the message lands.
+    """
+    type: Literal["use_consumable"]
+    component_id: str = Field(min_length=1, max_length=32)
+    #: WHICH USE THIS IS MEANT TO BE — the first, the second. The engine
+    #: accepts it only if it is the next one due, which is what makes a
+    #: duplicate, a retry and a use minted before a refill all harmless
+    #: without storing an identifier for any of them.
+    use_index: int = Field(ge=1, le=C.CONSUMABLE_CHARGES_MAX)
+    #: WHICH SUPPLY THAT INDEX COUNTS AGAINST — captured from the
+    #: snapshot at the moment the button was pressed. `use_index` alone
+    #: cannot reject a use minted before a refill: index 1 from the old
+    #: supply is exactly the first index due after the refill, and an old
+    #: index 3 matches again once two new uses have been spent. The
+    #: generation makes both of those a mismatch.
+    #:
+    #: Required, unlike `proposal_id`, where absent legitimately means
+    #: "this client never saw a proposal". Every snapshot carries a
+    #: generation, so there is no honest reason to omit this one, and
+    #: "unchecked" is the hole this field exists to close.
+    generation: int = Field(ge=0)
 
 
 class GrantLocalReward(Strict):
@@ -1886,9 +2796,14 @@ ClientMessage = Annotated[
     Union[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
-        SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
+        SlotAction, GearAction, AuthorizeConsumable,
+        ReleaseConsumableAuthorization,
+        UseConsumable, GrantLocalReward, SetCreativity,
+        DebugCommand,
         ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
-        LayoutResult,
+        ZoneStateSelected, ObjectTransported, ObjectSettled, ObjectConsumed,
+        ObjectRecovered, CarrierRested, EnemyDefeated, RoomEntered,
+        LayoutResult, BuildFailed,
     ],
     Field(discriminator="type"),
 ]
@@ -1964,10 +2879,31 @@ class Notification(Strict):
 
 
 class BridgeError(Strict):
+    """A refused or failed intent, reported rather than swallowed.
+
+    **THE ONE SERVER MESSAGE WITH NO IDENTITY**, until `about`. `scope`,
+    `recoverable` and `message` say what went wrong and nothing about
+    what it went wrong ON, so two failed intents produce indistinguishable
+    frames and a client can only toast the string. That is survivable for
+    a refusal the player reads and forgets, and not survivable for one
+    the client has to UNDO — a spend it is holding in flight stays held
+    forever, subtracting from a count it will never be allowed to spend.
+    """
     type: Literal["error"]
     scope: Literal["ap", "epsilon", "bridge", "protocol"]
     recoverable: bool
     message: str = Field(max_length=C.MAX_TEXT_LEN)
+    #: WHAT THIS REFUSAL WAS ABOUT, as a domain key the refusing side
+    #: builds from the intent — `use_consumable:<component>:<gen>:<index>`
+    #: — never an opaque token the client made up. That is the house rule
+    #: everywhere identity is echoed (`key_id`, `use_index`,
+    #: `LatchFired.(package_id, latch_id)`): the name of the thing, so a
+    #: replay or a stale frame names something that can be checked.
+    #:
+    #: Empty for every refusal that existed before this field, and empty
+    #: means UNCHECKED, never "stale" — the `proposal_id` rule. A client
+    #: resolves a pending operation on an exact match and on nothing else.
+    about: str = Field(default="", max_length=C.MAX_TEXT_LEN)
 
 
 ServerMessage = Annotated[

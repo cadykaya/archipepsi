@@ -31,7 +31,111 @@ from .schemas import constants as C
 
 #: Per enemy, by archetype. A brute is worth far more than its head count:
 #: it changes how a room is fought, not just how long.
-ENEMY_VALUE = {"melee": 3, "ranged": 4, "brute": 10}
+#: **The three approved anchors, and seven PROVISIONAL entries** added
+#: 2026-09-22 under the owner's authorisation to choose and revise them
+#: on the 0.4 candidate. They are **chosen, not derived**, and they are
+#: not final.
+#:
+#: What the anchors say the scale measures: `melee` 3 is the baseline
+#: threat, `ranged` 4 is one point more for forcing you to break line of
+#: sight or close distance, and `brute` 10 is a role that changes the
+#: whole room rather than lengthening it. Note that `ranged` outranks
+#: `melee` on *less* health and *less* dps -- which is why no formula
+#: over `ENEMY_STATS` can reproduce this table, and why these seven are
+#: judgements placed against those three rather than computed.
+#:
+#: Each provisional entry, and the reasoning it can be argued with:
+#:
+#: * `scuttler` **2** -- below `melee`. One scuttler asks less of the
+#:   player than one melee; it is a pressure unit whose count does the
+#:   work, and pricing it at 3 would make a swarm unaffordable for the
+#:   wrong reason.
+#: * `beacon` **4** -- level with `ranged`, for a different reason. It
+#:   barely hurts anything; what it changes is target ORDER, and a
+#:   priority target is a real tactical demand.
+#: * `artillery` **5** -- above `ranged`. It changes where you are
+#:   willing to stand and asks you to read ground marks, but it has a
+#:   total dead zone inside its minimum range, so it is not a `bulwark`.
+#: * `charger` **5** -- level with `artillery`, from the other side. A
+#:   telegraphed unsteerable commitment changes your FOOTWORK, which is
+#:   a different demand from `ranged`'s positioning and about as large.
+#: * `diver` **6** -- above both. It punishes leaving the ground, which
+#:   removes an option the player otherwise always has.
+#: * `drifter` **6** -- level with `diver`. It denies melee entirely by
+#:   holding a height, so a room containing one requires an answer for
+#:   altitude rather than rewarding one.
+#: * `bulwark` **7** -- the closest to `brute` and deliberately short of
+#:   it. Shrugging most of a frontal hit forces flanking, which changes
+#:   how the room is fought; it does not dominate the room the way a
+#:   brute does.
+#:
+#: **THIS IS A CONTENT-BUDGET SCORE, NOT MEASURED DIFFICULTY.** It says
+#: how much a role is worth toward what a Zone is allowed to contain. It
+#: is not a difficulty rating, it has never been played against, and a
+#: Zone scoring 156 is not "22% harder" than one scoring 128 -- that
+#: comparison would need a playtest, and the seven entries below have
+#: had none.
+#:
+#: **STATUS: PROVISIONAL, on the 0.4 candidate.** The three anchors are
+#: approved; the seven are authorised tuning, expected to be revised,
+#: and they are not final. `PROVISIONAL_ENEMY_VALUES` below names which
+#: is which so nothing downstream has to infer it from a comment.
+#:
+#: **Revise them.** They are one table, they are charged correctly
+#: wherever a role is placed, and nothing downstream reads a second copy.
+ENEMY_VALUE = {
+    # approved
+    "melee": 3, "ranged": 4, "brute": 10,
+    # provisional, 2026-09-22
+    "scuttler": 2, "beacon": 4, "artillery": 5, "charger": 5,
+    "diver": 6, "drifter": 6, "bulwark": 7,
+}
+
+#: Which entries are approved and which are authorised tuning. Derived
+#: from the two sets rather than restated, so promoting one to approved
+#: is a single edit.
+APPROVED_ENEMY_VALUES: tuple[str, ...] = ("melee", "ranged", "brute")
+PROVISIONAL_ENEMY_VALUES: tuple[str, ...] = tuple(
+    role for role in ENEMY_VALUE if role not in APPROVED_ENEMY_VALUES)
+
+#: Roles the COMPOSER may place: implemented AND priced.
+#:
+#: **Implemented is not the same as composable, and conflating them was
+#: the defect.** `ENEMY_ARCHETYPES` means "the engine has behaviour for
+#: this" and is all ten since the roster landed. `ENEMY_VALUE` means
+#: "a Zone's content budget has a score for this" and is still three.
+#: A composer that placed an unpriced role would charge it nothing and
+#: hand the player a Zone whose budget is a fiction.
+COMPOSABLE_ENEMY_ROLES = tuple(
+    role for role in C.ENEMY_ARCHETYPES if role in ENEMY_VALUE)
+
+#: Implemented, playable, and NOT composable until someone prices it.
+#:
+#: **This is an owner decision and it is one integer per role.** The
+#: three approved values cannot be derived from `ENEMY_STATS`: `ranged`
+#: is worth MORE than `melee` (4 against 3) while having less hp, less
+#: dps and no melee threat, because content value scores how much a role
+#: changes the way a room is fought rather than how long it takes to
+#: kill. A formula fitted to hp and damage would rank them the other way
+#: round and contradict the owner's own numbers, so none is offered.
+UNPRICED_ENEMY_ROLES = tuple(
+    role for role in C.ENEMY_ARCHETYPES if role not in ENEMY_VALUE)
+
+
+def enemy_value(archetype: str) -> int:
+    """The score one of these adds to a Zone's content budget.
+
+    Raises rather than scoring zero. `ENEMY_VALUE.get(role, 0)` is how an
+    unpriced role becomes free content: the budget check passes, the
+    room fills, and nothing says the accounting was wrong.
+    """
+    try:
+        return ENEMY_VALUE[archetype]
+    except KeyError:
+        raise KeyError(
+            f"enemy role '{archetype}' has no approved content value; it "
+            f"cannot be composed until one is set. Unpriced: "
+            f"{sorted(UNPRICED_ENEMY_ROLES)}") from None
 
 #: Per affordance feature. An optional route is real content even though
 #: nothing mandatory may depend on it -- arguably especially then.
@@ -138,7 +242,14 @@ def room_value(chamber) -> int:
     total = 0
 
     for group in getattr(chamber, "enemies", ()) or ():
-        total += ENEMY_VALUE.get(group.archetype, 0) * group.count
+        # PER-ROLE, AND IT RAISES. `.get(role, 0)` was the last silent
+        # zero in the accounting: an implemented-but-unpriced role would
+        # score nothing here and the room would read as cheaper than it
+        # is. `Archetype` derives from what the ENGINE implements and
+        # `ENEMY_VALUE` from what is PRICED, so the two can legitimately
+        # diverge again -- and when they do this is the right place to
+        # be loud rather than quietly wrong.
+        total += enemy_value(group.archetype) * group.count
 
     total += AFFORDANCE_VALUE * len(getattr(chamber, "features", ()) or ())
 

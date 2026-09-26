@@ -28,6 +28,23 @@ signal jumped
 ## by the ride itself, so nothing can report a catch that did not happen.
 signal rail_caught(at: Vector3)
 signal rail_released(at: Vector3)
+## A supply ON THE KEY refused a press: nothing left, every charge
+## already asked for, or a use the bridge would not grant. Carries its
+## name. The count the consumable suites keep of refusals; what the
+## player READS is `consumable_refused`, which also covers a key with
+## nothing on it.
+signal exhausted(supply_name: String)
+## THE CONSUMABLE KEY WAS PRESSED AND NOTHING HAPPENED (H-BOMBS, PT-09).
+## Every such press, whether or not anything is on the key: none owned,
+## owned and not carried, empty, waiting, offline, refused. `why` is ""
+## for a press refused here before anything was asked, else the denial's
+## own reason. The HUD turns the key's state into words
+## (`EquipmentQuery.live_consumable_state`), so the player hears the same
+## sentence the equipment wall shows.
+signal consumable_refused(why: String)
+## What the hand did or refused, for the HUD: "CARRYING · 18 kg",
+## "TOO HEAVY TO CARRY · 61 kg (limit 60 kg)", "DROPPED", ...
+signal carry_feedback(text: String, ok: bool)
 
 #: ECHOES §9's control grammar, one binding per slot. LMB is the Static
 #: Pulse and appears nowhere here: its identity is untouchable, so it is
@@ -37,6 +54,10 @@ const SLOT_ACTIONS := {
 	"echo_b": "fire_echo_b",
 	"mobility": "fire_mobility",
 	"utility": "fire_utility",
+	# THE ONE THAT RUNS OUT. Its own key rather than a mode on another,
+	# because a consumable you have to cycle to is a consumable you
+	# forget you are carrying.
+	"consumable": "fire_consumable",
 }
 
 const MOUSE_SENSITIVITY := 0.0022
@@ -93,6 +114,11 @@ func holds() -> Array:
 	out.sort()
 	return out
 
+## Whether one named claim stands, for a reader that means that claim and
+## not the others -- `enemy.gd` asks about the layout verdict only.
+func held_by(reason: String) -> bool:
+	return _holds.has(reason)
+
 var gravity_mult := 1.0
 var speed_mult := 1.0
 ## The rest of the S5 derived stat stack, refreshed every physics frame
@@ -128,12 +154,28 @@ var _swing_anchor := Vector3.ZERO
 var _swing_force := 0.0
 var _swing_time := 0.0
 
+## WHICH SLOT STARTED EACH PLAYER-SIDE EFFECT, or "" for none.
+##
+## Cleanup is shared; cancellation is not. Death ends everything the body
+## is carrying. Unequipping ONE Echo ends only what THAT Echo started --
+## and without a name on each effect those are the same call, so swapping
+## a combat Echo would drop the tether a mobility Echo is holding you on.
+##
+## `_launch_flight` deliberately carries no owner: a launch pad started
+## it, no Echo owns it, and no slot change may drop you out of the sky.
+var _swing_owner := ""
+var _slam_owner := ""
+
 var _pulse_cooldown := 0.0
 var _coyote := 0.0
 var _jump_buffer := 0.0
 var _dead := false
 var _spawn_transform: Transform3D
 var _interact_target: Node = null
+## ORDINARY HAND CARRY (Design 2 §10.3-10.4). Not an Echo: every player
+## has hands.
+var carry: HandCarry = null
+var _last_prompt := ""
 var _step_accumulator := 0.0
 var _step_toggle := false
 var _airborne_time := 0.0
@@ -253,7 +295,9 @@ var _rider: RailRider = null
 ## the player is in world, and comparing the two directly is how a rail
 ## in a placed Zone came to be catchable from across the map.
 func offer_rail(rail: RailPath, to_world := Transform3D.IDENTITY) -> void:
-	if _rider != null or _dead:
+	# An anchored body is immune to "wind, conveyor" (Design 5 §15.2), and
+	# a grind rail is the conveyor this game has.
+	if _rider != null or _dead or anchored():
 		return
 	var caught := RailRider.catch(rail, global_position, velocity, to_world)
 	if caught.is_empty():
@@ -379,14 +423,18 @@ func _ride(delta: float) -> void:
 	global_position = step["position"]
 	velocity = step["velocity"]
 	if not bool(step["riding"]):
-		_rider = null
-		rail_released.emit(global_position)
-		Telemetry.rail_released(global_position)
-		# Off a rail is airborne, and a coyote frame here would give a
-		# free second jump to anyone who let go near the ground.
-		_coyote = 0.0
-		_jump_buffer = 0.0
+		_leave_rail()
 	_update_camera_feel(delta)
+
+## Off the rail, from wherever that happened.
+func _leave_rail() -> void:
+	_rider = null
+	rail_released.emit(global_position)
+	Telemetry.rail_released(global_position)
+	# Off a rail is airborne, and a coyote frame here would give a
+	# free second jump to anyone who let go near the ground.
+	_coyote = 0.0
+	_jump_buffer = 0.0
 
 func enter_volume(volume: Node, influence: Dictionary) -> void:
 	_volumes[volume] = influence
@@ -508,10 +556,10 @@ static func create() -> Player:
 	viewmodel.add_child(flash)
 
 	# S7: one runtime per slot (ECHOES §9). Cooldowns, held state and
-	# airtime budgets belong to the Action, so four buttons need four of
-	# them — sharing one would let a dash and a grapple contend for a
-	# single cooldown, which is the bug the four-slot loadout exists to
-	# make impossible.
+	# airtime budgets belong to the Action, so each button needs its own —
+	# sharing one would let a dash and a grapple contend for a single
+	# cooldown, which is the bug the per-slot loadout exists to make
+	# impossible.
 	for slot: String in Constants.SLOT_NAMES:
 		var runtime := Node.new()
 		runtime.name = "EchoRuntime_" + slot
@@ -520,10 +568,175 @@ static func create() -> Player:
 		runtime.slot = slot
 		runtime.player_ref = player
 		player.runtimes[slot] = runtime
+		if slot == "consumable":
+			# THE ANSWER IS WHAT FIRES IT, so the player listens for the
+			# answer. Connected here, where the runtimes are built, so a
+			# player that exists at all has this wire.
+			if not BridgeClient.consumable_authorized.is_connected(
+					player._on_consumable_authorized):
+				BridgeClient.consumable_authorized.connect(
+						player._on_consumable_authorized)
+			if not BridgeClient.consumable_denied.is_connected(
+					player._on_consumable_denied):
+				BridgeClient.consumable_denied.connect(
+						player._on_consumable_denied)
+			# DID THE PRESS ACTUALLY PUT SOMETHING IN THE WORLD?
+			# `activate()` returns early on cooldown, on an unmet
+			# condition and on a closed gate, and a press that resolved
+			# into nothing must not be paid for. This is what tells the
+			# two apart; `press_slot` reads it.
+			runtime.action_used.connect(player._note_launch)
 	return player
+
+
+## ONE SLOT'S BUTTON GOING DOWN, gate and all.
+##
+## Named rather than left inline in `_physics_process` so the tests press
+## the REAL gate instead of a copy of it. The consumable path has two
+## counts that must stay equal -- charges accepted and actions run -- and
+## a test that reimplemented this decision would be measuring its own
+## arithmetic rather than the game's.
+func press_slot(slot: String) -> void:
+	set_highlighted_slot(slot)
+	# AN EMPTY SUPPLY REFUSES BEFORE IT COSTS ANYTHING. Like an unmet
+	# condition, not like a miss: no cooldown is charged and no effect
+	# runs, because a press that could never have resolved must not be
+	# paid for. The supply stays equipped at 0 -- exhausted, not gone.
+	if slot != "consumable":
+		runtimes[slot].activate()
+		return
+
+	# THE PRESS ASKS. IT DOES NOT FIRE.
+	#
+	# D-9: the expenditure is authorised BEFORE anything irreversible
+	# happens, because an effect that launched and whose report was lost
+	# lives only in this process's memory -- kill Godot between the two
+	# and the charge is spendable again. Asking first makes a lost
+	# message an effect that never happened.
+	#
+	# The two things knowable WITHOUT the engine are checked here, so an
+	# obviously dead press never reaches the bridge: nothing left in the
+	# supply, and the Action's own cooldown. Everything else --
+	# conditions, gates, link costs -- is `activate()`'s to refuse, and
+	# it refuses on the far side of the authorisation, which is what
+	# `release_authorization` is for.
+	var component_id := str(BridgeClient.slotted_action(
+			"consumable").get("component_id", ""))
+	if BridgeClient.reserve_consumable(component_id).is_empty():
+		_say_refused()
+		return
+	var runtime: EchoRuntime = runtimes[slot]
+	if runtime.cooldown_remaining > 0.0:
+		BridgeClient.release_reservation(component_id)
+		return
+	BridgeClient.authorize_consumable(component_id)
+
+
+## THE CHARGE IS PAID FOR. **Now** the effect may happen.
+##
+## Reached from `BridgeClient.consumable_authorized`, which fires on the
+## snapshot in which the engine moved `spent` and wrote the save. A
+## press that resolves into nothing here still costs nothing: the
+## authorisation is released, which is the only refund there is.
+## THE PRESS WAS REFUSED, and nothing happened. Said out loud for the
+## same reason an empty supply is: a button that does nothing in silence
+## reads as broken.
+func _on_consumable_denied(_component_id: String, _use_index: int,
+		why: String) -> void:
+	_say_refused(why)
+
+
+func _on_consumable_authorized(component_id: String,
+		use_index: int) -> void:
+	# AN ANSWER THAT LANDS WHILE THE WORLD IS PAUSED WAITS FOR IT (H-PAUSE,
+	# `04_3D_MENU_MAP_AND_GLYPH.md` §4). The charge is paid -- the engine
+	# moved `spent` and wrote the save -- so it is not refunded. But the
+	# effect does not go into a stopped world: an instant one would change
+	# it while it is stopped. It is kept, with its reservation still open,
+	# and fires once, on the first step the world takes again.
+	if is_inside_tree() and get_tree().paused:
+		_answered_while_paused.append([component_id, use_index])
+		return
+	var slotted := str(BridgeClient.slotted_action("consumable").get(
+			"component_id", ""))
+	if component_id != slotted:
+		# The slot changed between the press and the answer. Nothing
+		# will fire, so give it back rather than firing the wrong thing.
+		BridgeClient.release_authorization(component_id)
+		return
+	_launched = false
+	runtimes["consumable"].activate()
+	if not _launched:
+		BridgeClient.release_authorization(component_id)
+		return
+	BridgeClient.commit_consumable(component_id)
+
+
+## THE PLAYER'S OWN MASS CLASS: `PLAYER_MASS_KG` on the exported ladder,
+## which is `MEDIUM` at 80 kg.
+##
+## **Only a plate that opts in ever reads it.** `ClassPlate` skips the
+## player group unless its declaration sets `counts_player`, so EX50-033's
+## object-only plate is untouched; and every other class consumer is typed
+## to `ManipulableBody` (`manipulation.gd`, `affordance_nodes.gd`), while
+## the sensors that sum weight read `.mass`, which a `Player` does not
+## have. Adding this method changes what exactly one thing can see.
+##
+## **Two Statuses move it, and this is the line that says so.** Design 5
+## §15.2: `anchored` makes the class `FIXED` and `lightened` drops it one
+## step, to `LIGHT`. The bridge's route validator reads the player at
+## `PLAYER_MASS_KG` with nothing applied (D-10 §6), so a route it
+## certified opens for the player as they are without either; a plate the
+## player's own Status changes is a transient of their choosing, and
+## lasts as long as the Status does.
+func mass_class() -> String:
+	return MassClass.read(Constants.PLAYER_MASS_KG, true, statuses)
+
+
+## Is there anything left in the consumable slot? Counts what is in
+## flight, so two presses inside one round trip cannot both fire.
+func _has_a_charge() -> bool:
+	var action: Dictionary = BridgeClient.slotted_action("consumable")
+	if action.is_empty():
+		return false
+	return BridgeClient.charges_left(
+			str(action.get("component_id", ""))) > 0
+
+
+## Say why nothing happened, and what brings it back. An exhausted
+## supply that refuses in silence reads as a broken button.
+##
+## **AN EMPTY KEY IS SAID TOO** (H-BOMBS). This returned before saying
+## anything when nothing was on the key, so a player who owned no
+## consumable -- or owned one and had not put it on the key -- pressed
+## it and got silence, the same silence as a key that does not exist.
+func _say_refused(why := "") -> void:
+	consumable_refused.emit(why)
+	var action: Dictionary = BridgeClient.slotted_action("consumable")
+	if action.is_empty():
+		return
+	exhausted.emit(str(action.get("display_name", "Supply")))
+
+
+## THE CONSUMABLE'S EFFECT REACHED THE WORLD.
+##
+## Set by `EchoRuntime.action_used`, read by `press_slot`, and that is
+## the whole of it: the distinction between a press that fired and a
+## press that returned early is what separates an expenditure from a
+## refund, and this flag is where it lives.
+var _launched := false
+
+## Authorisations that arrived while the world was paused, as
+## `[component_id, use_index]`, fired on the next physics step.
+var _answered_while_paused: Array = []
+
+func _note_launch() -> void:
+	_launched = true
+
 
 func _ready() -> void:
 	add_to_group("player")
+	carry = HandCarry.new(self)
 	_spawn_transform = global_transform
 	statuses.side = "self"
 	stat_stack.statuses = statuses
@@ -612,12 +825,24 @@ func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	_refresh_derived_stats(delta)
+	# THE WORLD IS RUNNING AGAIN, so an answer that landed during the pause
+	# fires now -- once. (This step is the first thing a paused body does.)
+	if not _answered_while_paused.is_empty():
+		var held := _answered_while_paused.duplicate()
+		_answered_while_paused.clear()
+		for raw: Variant in held:
+			var pair: Array = raw
+			_on_consumable_authorized(str(pair[0]), int(pair[1]))
 
 	# ON A RAIL, the rail moves you (P3.0). Not a cutscene: the speed is
 	# the speed you brought, gravity still acts along the path so a climb
 	# costs and a drop pays, and jump gets you off whenever you like. It
 	# returns EARLY because a grind that also ran the walk solve would be
 	# two things steering one body.
+	# ...UNLESS ANCHORED: the rail is a conveyor, and an anchored body is
+	# immune to one. It lets go where it is.
+	if _rider != null and anchored():
+		_leave_rail()
 	if _rider != null:
 		_ride(delta)
 		return
@@ -671,7 +896,9 @@ func _physics_process(delta: float) -> void:
 	if not input_frozen:
 		if Input.is_action_just_pressed("jump"):
 			_jump_buffer = Constants.JUMP_BUFFER
-		if _jump_buffer > 0.0 and _coyote > 0.0:
+		# ANCHORED: "jump blocked" (Design 5 §15.2) -- no jump, and no
+		# `jumped` for a rule to answer, since none happened.
+		if _jump_buffer > 0.0 and _coyote > 0.0 and not anchored():
 			# Height scales with the square of launch speed, so a
 			# jump_height multiplier rides in as its square root.
 			velocity.y = Constants.JUMP_VELOCITY * sqrt(jump_mult)
@@ -684,7 +911,8 @@ func _physics_process(delta: float) -> void:
 		var direction := (transform.basis
 				* Vector3(input_dir.x, 0, input_dir.y)).normalized()
 		var speed := Constants.WALK_SPEED * speed_mult \
-				* float(env["speed_scale"])
+				* float(env["speed_scale"]) * carry.speed_factor() \
+				* (0.0 if anchored() else 1.0)
 		# Friction below base is how a downside is allowed to express
 		# (§10): slippier control, never a shorter jump.
 		# A grind rail's lane multiplies ground friction down, so a dash
@@ -715,7 +943,8 @@ func _physics_process(delta: float) -> void:
 		# are going. See `_shove_what_i_walked_into`.
 		_walk_intent = Vector3(direction.x * speed, 0.0, direction.z * speed)
 
-		if Input.is_action_pressed("fire_pulse"):
+		# CARRYING BLOCKS THE WEAPON PRIMARY (Design 1 §10.2).
+		if Input.is_action_pressed("fire_pulse") and not carry.holding():
 			_fire_static_pulse()
 		# The Static Pulse keeps LMB and is never any of these. Each slot
 		# owns exactly one binding, so "which button was that" and "which
@@ -723,13 +952,21 @@ func _physics_process(delta: float) -> void:
 		for slot: String in SLOT_ACTIONS:
 			var action: String = SLOT_ACTIONS[slot]
 			if Input.is_action_just_pressed(action):
-				set_highlighted_slot(slot)
-				runtimes[slot].activate()
+				# ...AND MOBILITY. Abilities stay usable: a defensive one
+				# unavailable because you are holding a cube is a death
+				# the player cannot explain (Design 1 §10.2).
+				if slot == "mobility" and carry.holding():
+					carry_feedback.emit("MOBILITY BLOCKED WHILE CARRYING",
+							false)
+				else:
+					press_slot(slot)
 			if Input.is_action_just_released(action):
 				runtimes[slot].release()
-		if Input.is_action_just_pressed("interact") \
-				and _interact_target != null:
-			_interact_target.interact(self)
+		if Input.is_action_just_pressed("interact"):
+			if carry.holding():
+				carry.on_interact(_interact_target)
+			elif _interact_target != null:
+				_interact_target.interact(self)
 	elif _launch_flight:
 		# A frozen player steers nothing, so the carrier arrives intact.
 		_carry_launch(Vector3.ZERO)
@@ -737,6 +974,11 @@ func _physics_process(delta: float) -> void:
 		velocity.x = lerpf(velocity.x, 0.0, 0.2)
 		velocity.z = lerpf(velocity.z, 0.0, 0.2)
 		_walk_intent = Vector3.ZERO
+
+	# ANCHORED, LAST, so it holds against every source above -- a knock, a
+	# rule's impulse, a pad, an updraft, a swing, the player's own Echo.
+	if anchored():
+		_hold_anchored()
 
 	var falling_speed := -velocity.y
 	var was_airborne := not is_on_floor()
@@ -749,6 +991,7 @@ func _physics_process(delta: float) -> void:
 		_resolve_pending_slam()
 	_update_footsteps(delta, falling_speed)
 	_update_camera_feel(delta)
+	carry.update(delta)
 	_update_interact_target()
 
 	if global_position.y < Constants.FALL_KILL_Y:
@@ -1097,8 +1340,33 @@ func take_damage(amount: float,
 ## External shoves come through here so `knockback_resist` has one place
 ## to push back. Self-chosen recoil (the shotgun's travel plan) does not —
 ## resisting your own movement tech would be a downside wearing a buff.
+##
+## Design 5 §15.2: an `anchored` body is "immune to all impulse", and a
+## `lightened` one takes "incoming impulse x2.0".
 func receive_knockback(impulse: Vector3) -> void:
+	# An anchored body takes it and keeps none of it: `_hold_anchored`
+	# overwrites the velocity every frame before anything moves.
+	if statuses.has("lightened"):
+		impulse *= ManipulableBody.LIGHTENED_IMPULSE
 	velocity += impulse / maxf(knockback_resist_mult, 0.25)
+
+
+## `anchored` on the player (Design 5 §15.2): "player movement 0.0, jump
+## blocked, all other actions permitted", and "immune to all impulse".
+## So nothing moves the body across the floor or lifts it, whoever asks;
+## gravity still brings it down, as it does an anchored enemy. The Echo
+## actions that ARE movement refuse before they are paid for
+## (`EchoRuntime._conditions_met`); every other action is untouched.
+func anchored() -> bool:
+	return statuses.has("anchored")
+
+
+func _hold_anchored() -> void:
+	velocity.x = 0.0
+	velocity.z = 0.0
+	velocity.y = minf(velocity.y, 0.0)
+	_end_launch_flight()
+	end_swing()
 
 func heal(amount: float) -> void:
 	# `regen` is a multiplier on recovery received — the game has no base
@@ -1108,6 +1376,13 @@ func heal(amount: float) -> void:
 
 func _die() -> void:
 	_dead = true
+	# WHAT THE HAND HELD IS PUT DOWN WHERE IT WAS, at rest. Recovery is
+	# the object's own business (§10.5), not a side effect of dying.
+	if carry != null and carry.holding():
+		carry.release("death")
+	# EVERY transient effect, not only the launch arc. See
+	# `cancel_transient_effects` for the two that used to survive.
+	cancel_transient_effects()
 	# `_physics_process` returns early while dead, so the arc would
 	# otherwise sit inert until respawn. Ending it here keeps "am I in a
 	# launch" answerable at every moment rather than only at the ones
@@ -1118,12 +1393,17 @@ func _die() -> void:
 	for runtime: EchoRuntime in runtimes.values():
 		runtime.cancel_holds()
 	died.emit()
-	var timer := get_tree().create_timer(Constants.RESPAWN_DELAY)
+	# PAUSES WITH THE WORLD (H-PAUSE): a SceneTree timer runs through a
+	# pause unless it is told not to.
+	var timer := get_tree().create_timer(Constants.RESPAWN_DELAY, false)
 	timer.timeout.connect(_respawn)
 
 func _respawn() -> void:
 	global_transform = _spawn_transform
 	velocity = Vector3.ZERO
+	# BELT AND BRACES, and not redundant: `died` is emitted from `_die`
+	# and a listener can commit something during the respawn delay.
+	cancel_transient_effects()
 	# Also the out-of-bounds recovery: falling past `FALL_KILL_Y` kills,
 	# so this is where a player who flew off the map comes back, and they
 	# must not come back still carrying the arc that threw them.
@@ -1137,15 +1417,26 @@ func _update_interact_target() -> void:
 	var target: Node = null
 	if not hit.is_empty():
 		var collider: Variant = hit["collider"]
-		if is_instance_valid(collider) and collider.has_method("interact"):
+		if is_instance_valid(collider) and (collider.has_method("interact")
+				or collider.has_method("install_refusal")):
 			target = collider
-	if target != _interact_target:
-		_interact_target = target
-		var prompt := ""
-		if target != null and target.has_method("interact_prompt"):
-			prompt = target.interact_prompt()
-		elif target != null:
-			prompt = "[E] INTERACT"
+	_interact_target = target
+	# THE PROMPT IS WHAT `interact` WOULD DO NOW, which depends on the
+	# hand as well as on the target -- so it is recomputed every frame and
+	# emitted when its text changes, not only when the target does.
+	var prompt := ""
+	if carry != null and carry.holding():
+		if target != null and target.has_method("install_refusal"):
+			var why: String = target.install_refusal(carry.body)
+			prompt = "[E] INSTALL" if why == "" else why
+		else:
+			prompt = "[E] DROP"
+	elif target != null and target.has_method("interact_prompt"):
+		prompt = target.interact_prompt()
+	elif target != null and target.has_method("interact"):
+		prompt = "[E] INTERACT"
+	if prompt != _last_prompt:
+		_last_prompt = prompt
 		interact_prompt_changed.emit(prompt)
 
 ## Pays out a committed `slam_ground` on the frame the body touches down.
@@ -1181,10 +1472,51 @@ func _resolve_pending_slam() -> void:
 ## Starts a `grapple_swing` tether. The anchor is a point, not a node: the
 ## geometry it was cast at is static, and holding a reference would keep a
 ## freed chamber alive across a zone change.
-func begin_swing(anchor: Vector3, force: float, duration: float) -> void:
+func begin_swing(anchor: Vector3, force: float, duration: float,
+		owner := "") -> void:
 	_swing_anchor = anchor
 	_swing_force = force
 	_swing_time = duration
+	_swing_owner = owner
+
+## Commit a slam, remembering which slot committed it.
+func commit_slam(slam: Dictionary, owner := "") -> void:
+	pending_slam = slam
+	_slam_owner = owner
+
+## End the tether. `by` is the slot asking; "" is death, and ends it
+## whoever owns it.
+func end_swing(by := "") -> void:
+	if _swing_time <= 0.0:
+		return
+	if by != "" and by != _swing_owner:
+		return
+	_swing_time = 0.0
+	_swing_force = 0.0
+	_swing_anchor = Vector3.ZERO
+	_swing_owner = ""
+
+func cancel_slam(by := "") -> void:
+	if pending_slam.is_empty():
+		return
+	if by != "" and by != _slam_owner:
+		return
+	pending_slam = {}
+	_slam_owner = ""
+
+## Everything the body is carrying that must not outlive a death.
+##
+## Two of these outlived one. `_swing_time` was frozen rather than
+## cleared -- `_update_swing` is polled AFTER the `if _dead: return`
+## guard, so a player who died mid-swing came back with the timer intact
+## and the tether resumed pulling them toward an anchor in a part of the
+## room they were no longer in. `pending_slam` did the same: a slam
+## committed before dying detonated on the first landing after respawn,
+## at the respawn point.
+func cancel_transient_effects() -> void:
+	end_swing()
+	cancel_slam()
+	_end_launch_flight()
 
 ## A tether pulls you toward the anchor along the rope and leaves the
 ## tangential component alone — that difference is the whole reason this is
@@ -1257,8 +1589,13 @@ func _shove_what_i_walked_into() -> void:
 		var speed := _walk_intent.dot(into)
 		if speed <= 0.0:
 			continue
-		body.sleeping = false
-		body.apply_central_impulse(
+		# THROUGH THE BODY'S OWN FUNNEL. This is an IMPULSE, and Design 5
+		# §15.2 gives `lightened` "incoming impulse x2.0" -- so a crate
+		# that is carrying it takes twice as much from the same shove.
+		# One of only two places in the engine that puts force on a
+		# `RigidBody3D`, which is why the scaling can live in the body
+		# rather than being remembered at each call site.
+		body.receive_impulse(
 				into * speed * SHOVE_MASS_KG * get_physics_process_delta_time())
 
 ## How hard the player is trying to walk this frame, in m/s, before the

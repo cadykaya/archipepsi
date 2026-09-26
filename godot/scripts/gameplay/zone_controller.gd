@@ -122,6 +122,101 @@ var _activity_note := ""
 
 ## `room_id -> world AABB`, from the committed layout.
 var room_bounds := {}
+
+## `room_id -> the connector chain that REACHES it`, in build order, as
+## the router solved it. Each piece records where it is entered and left,
+## including its `y`.
+##
+## Kept for the same reason `room_bounds` is: something outside the
+## builder needs to know the committed shape of the level, and
+## re-deriving it is the second answer `zone_builder` exists to avoid.
+## A straight line between two rooms is not a route — the connector
+## turns, and it climbs — so anything that has to GET somewhere in this
+## Zone (a harness walking a leg, a future escort, a path preview) has to
+## follow the pieces rather than aim through the walls between them.
+##
+## `graph_driver` already learned this the expensive way: steering
+## waypoints projected onto the body's current height walked three of
+## five approaches off a ledge, because a route that climbs is not flat.
+var room_routes := {}
+
+## `edge_id -> the committed join`: its two sockets and the connector
+## chain between them, each piece with its `entry` and `exit` (H-MINIMAP).
+## The builder's own answer, kept like `room_routes`, so the maps draw a
+## corridor where it actually runs -- turning and climbing -- rather than
+## a straight line between room centres, which is the error the old
+## traversal harness made on a 76 m connector (04 §6).
+var room_joins := {}
+
+## `edge_id -> where a return plug stands`, in world space (H-MINIMAP).
+## A plug is a connector with no corridor: the bridge lists it
+## (`traversal_only`), and the maps mark it where the device is.
+var plug_positions := {}
+
+## OBJECTS THE PLAYER CARRIES BETWEEN ROOMS (P16). `object_rooms_carried`
+## is what the snapshot said, assigned before `setup` like every other
+## carried fact.
+var objects: TransportedObjects = null
+var object_rooms_carried := {}
+## O05-03: `ZoneProgress.object_poses` as `{object_id: [room, Vector3,
+## yaw]}` and `consumed_objects` as `{object_id: mechanism_id}`, assigned
+## before `setup` like every other carried fact.
+var object_poses_carried := {}
+var objects_consumed_carried := {}
+## O05-06.2: `ZoneProgress.carrier_states` as `{minor_<room>/<carrier>:
+## [t, destination, held]}` -- each hosted minor carrier's last accepted
+## rest (EX50-011 §9). Assigned before `setup`, like every carried fact.
+var carrier_states_carried := {}
+## Every carrier rest this controller reported, in order, as
+## `[package, carrier, t, destination, held]`. For the suites.
+var carrier_reports: Array = []
+var object_refusals: Array[String] = []
+## The consumers this Zone built (P16's receiving sites), and what the
+## engine refused to build.
+var object_sockets: Array = []
+var object_socket_refusals: Array[String] = []
+## The doorways a declared Zone-state condition closes, and what was
+## refused (O05-02 / O05-04).
+var state_gates: Array = []
+var state_gate_refusals: Array[String] = []
+## Variables an `ObjectConsumer` sets. Their setter is the installation,
+## so no lever is built and no `zone_state_selected` is ever sent.
+var _consumer_owned: Array = []
+## O05-04: selections sent and not yet answered, `{variable: state}`.
+## The engine shows the operation at once; the campaign decides whether
+## it stands. Resolved by a snapshot carrying the value (ACCEPTED) or by
+## a refusal whose `about` names it exactly (REFUSED, and put back).
+var zone_state_pending := {}
+## Every answer, in order: `[variable, state, accepted, why]`.
+var zone_state_answers: Array = []
+var _reverting := false
+
+## THE ZONE'S REVERSIBLE CONFIGURATION (D-8). Declared by
+## `Zone.zone_state`, set by a control the player operates, read by
+## machinery in other rooms.
+var zone_state: ZoneState = null
+var _zone_state_built := {}
+var zone_state_refusals: Array[String] = []
+## What the snapshot said the variables held. Assigned before `setup`
+## exactly as `latches_carried` and `keys_carried` are.
+var macro_carried := {}
+
+## THE ZONE'S DECLARED RAILWAYS, and what the engine refused to build.
+##
+## `rail_refusals` is deliberately public and deliberately not an error:
+## a declaration the carrier cannot honour is a finding about the Zone,
+## and a suite that can read it is how that finding becomes a report
+## instead of a silence.
+var _rail := {}
+var rail_refusals: Array[String] = []
+## THE ZONE'S DECLARED SIGNAL GRAPHS (P14), and what the engine refused
+## to build. Same posture, for the same reason: a chain the runtime
+## cannot honour is a finding about the Zone, not an error to drop a
+## player out of it over.
+var signal_graphs: Array[SignalGraph] = []
+var signal_graph_refusals: Array[String] = []
+## O05-06: `[{room_id, hosted}]`, the minors this Zone's rooms are.
+var minors: Array = []
 ## Each room's committed frame: `{position, yaw, arrival}` in world
 ## space, off the same layout `room_bounds` comes from.
 var room_places := {}
@@ -138,10 +233,20 @@ var exit_departs_from := ""
 ## deriving it a second time from room bounds is how the third answer
 ## starts. Empty on a Zone with no door assignments.
 var door_positions := {}
+## `"<room_id>/<socket_id>" -> {position, yaw, width, height}`: the whole
+## committed frame of each doorway, where `door_positions` has only the
+## point. A thing that stands ACROSS a doorway -- P14's route shutter --
+## needs which way the opening runs and how big it is.
+var door_frames := {}
 ## MONOTONE, and that is what makes a resume safe. A Zone's key set and
 ## its opened-lock set only ever grow, so a reload can never put the
 ## player back behind a door they already opened.
 var _keys_held := {}
+## Latches this Zone has already reported, by `package_id/latch_id`.
+## The bridge is idempotent on these and a resend is the normal case
+## after a dropped connection, but a machine that re-reported on every
+## rebuild would be sending the bridge back what the bridge just sent.
+var _latches_fired := {}
 var _locks_open := {}
 var _zone_locks: Array = []
 var _stations: Array = []
@@ -212,6 +317,26 @@ var _zone_locations: Array[int] = []
 ## could be standing on the far side of one when it happened.
 var keys_carried := {}
 var locks_carried := {}
+## Latches this Zone has already fired, by `package_id/latch_id`, as the
+## snapshot's `progress.latched` reports them. A machine reads this at
+## BUILD time and recomputes what the latch implies; nothing about the
+## consequence is separately saved (§5.4a).
+var latches_carried := {}
+## H-RESUME-R (owner ruling D-06): THE ENCOUNTER AS IT WAS LEFT.
+##
+## `null` when the save holds no per-enemy record for this Zone -- one
+## written before the record existed -- and the encounter state is then
+## UNKNOWN: every member is built, as it always was, because a guessed
+## clear would be a fabricated one. A set otherwise, `member -> true`:
+## the declared members the player defeated, which are never built.
+## "Reloading is not an encounter-reset event." Set before `setup` by
+## whoever is carrying progress, like `keys_carried`.
+var defeated_carried: Variant = null
+## Members defeated during this entry, reported and remembered.
+var _defeated_now := {}
+## What the player was told on entry about WHERE they were put and why,
+## "" when nothing needed saying. Read by the resume suite.
+var resume_notice := ""
 ## activity id -> the room it stands in, for station repair.
 var _activity_room := {}
 var resume_anchor := ""
@@ -253,9 +378,18 @@ var _has_bounds := false
 var playtime := PlaytimeLog.new()
 const _QUIET_BEFORE_ASIDE := 75.0
 
+## A Zone leaving the world gives up its pack, if it still holds it.
+func _exit_tree() -> void:
+	ThemeMaterials.release_pack(self)
+
 func setup(zone_dict: Dictionary) -> void:
 	zone = zone_dict
 	zone_id = zone.get("zone_id", "")
+	# THE ZONE'S GAME PACK, bound before anything is built (D-11) -- or
+	# none, which replaces whatever the last Zone bound. `theme_pack` is
+	# JSON null on every Zone that names none, and `str(null)` is not "".
+	var named: Variant = zone_dict.get("theme_pack")
+	ThemeMaterials.bind_pack(str(named) if named != null else "", self)
 	# WHICH PROPOSAL THIS BUILD IS OF, taken NOW and not when the result
 	# is sent (`AMALGAM_BRIDGE.md` §5.9).
 	#
@@ -323,6 +457,8 @@ func setup(zone_dict: Dictionary) -> void:
 				else _world_bounds.merge(box)
 		_has_bounds = true
 	offer_rooms = build["chambers"]
+	room_routes = build.get("links", {})
+	room_joins = build.get("joins", {})
 	playtime.begin(build["chambers"].size())
 	# THE OFFER BINDING (owner ruling, 2026-09-03). The Zone's root is in
 	# the tree now, so its colliders are about to be real -- one physics
@@ -354,11 +490,164 @@ func setup(zone_dict: Dictionary) -> void:
 			"position": place.get("position", Vector3.ZERO),
 			"yaw": float(place.get("yaw", 0.0)),
 			"arrival": place.get("arrival", Vector3.ZERO)}
+	# THE DECLARED CROSS-ROOM RELATIONSHIPS (D-8). Before the railways,
+	# because both read `room_places` and this one owns state the rest of
+	# the Zone may read.
+	zone_state = ZoneState.new()
+	zone_state.name = "ZoneState"
+	add_child(zone_state)
+	zone_state.declare(zone_dict.get("zone_state", []) as Array)
+	# THE SAVED VALUES, BEFORE ANYTHING IS BUILT, so every mechanism
+	# comes up in the position the snapshot implies rather than at its
+	# initial and then jumping.
+	zone_state.restore(macro_carried)
+	_consumer_owned.clear()
+	for raw_consumer: Variant in zone_dict.get("object_consumers", []) \
+			as Array:
+		if typeof(raw_consumer) == TYPE_DICTIONARY \
+				and (raw_consumer as Dictionary).get("sets_variable") != null:
+			_consumer_owned.append(str(
+					(raw_consumer as Dictionary)["sets_variable"]))
+	_zone_state_built = ZoneStateBuild.build(self,
+			zone_dict.get("zone_state", []) as Array, zone_state,
+			room_places, room_bounds,
+			str(zone_dict.get("theme", "concrete_facility")),
+			_consumer_owned)
+	for why: String in _zone_state_built.get("refused", []) as Array:
+		zone_state_refusals.append(why)
+		push_warning("zone_state refused: %s" % why)
+	zone_state.changed.connect(_on_zone_state_changed)
+	BridgeClient.snapshot_received.connect(_on_snapshot_for_state)
+	BridgeClient.error_received.connect(_on_refusal_for_state)
+
+	# THE TRANSPORTED OBJECTS (P16 / D-8 lifetime 5). After the rooms
+	# have committed places and bounds, because an object's owning room
+	# is decided by which room CONTAINS it.
+	objects = TransportedObjects.new()
+	objects.name = "TransportedObjects"
+	add_child(objects)
+	for why: String in objects.declare(
+			zone_dict.get("transported_objects", []) as Array,
+			room_bounds, object_rooms_carried, room_places, self,
+			object_poses_carried, objects_consumed_carried):
+		object_refusals.append(why)
+		push_warning("transported object refused: %s" % why)
+	objects.transported.connect(_on_object_transported)
+	objects.settled.connect(_on_object_settled)
+	objects.recovered.connect(_on_object_recovered)
+	_build_sockets(zone_dict.get("object_consumers", []) as Array,
+			str(zone_dict.get("theme", "concrete_facility")))
+
+	# THE DECLARED RAILWAYS (D-4). Built here and not in the chamber
+	# loop, because a network spans ROOMS: its docks are in different
+	# chambers and its path is only computable once every one of them has
+	# a committed place. `room_places` is that commitment, read rather
+	# than re-derived.
+	_rail = RailNetworks.build(self, zone_dict.get("rail_networks", []),
+			room_places, str(zone_dict.get("theme", "concrete_facility")),
+			room_bounds)
+	for why: String in _rail.get("refused", []) as Array:
+		# REPORTED, NOT RAISED. A network the engine cannot honour is a
+		# composition finding for whoever authored the Zone; crashing a
+		# player out of a Zone over it would be the wrong end of the
+		# problem, and building half of one would be worse.
+		rail_refusals.append(why)
+		push_warning("rail network refused: %s" % why)
+	for raw_junction: Variant in _rail.get("junctions", []) as Array:
+		var junction: RailJunction = raw_junction
+		junction.latch_fired.connect(_on_rail_latch)
+		# RECOMPUTED FROM THE LATCH, never restored from a saved span.
+		# §5.4a: the decision persists and the machine is rebuilt from
+		# it, so a span commissioned last visit is commissioned again
+		# here without the engine being told the state of any object.
+		junction.restore_from(latches_accepted())
+
+	# THE DECLARED SIGNAL GRAPHS (P14). After the railways and for the
+	# same reason: the chain is placed off `room_places` and
+	# `room_bounds`, and both are committed by now. A graph is
+	# ROOM-LOCAL -- §19.7 rule 2 -- but its actuator may stand IN a
+	# doorway the room built, which is why the edges, the chambers'
+	# build results and the doorway frames go in too.
+	door_frames = (build.get("door_frames", {}) as Dictionary).duplicate()
+	# THE DOORWAYS A ZONE-STATE CONDITION CLOSES. Only a variable with
+	# something a player can operate may shut one: a lever the build
+	# made, or a consumer socket that stands in its room.
+	var operable: Array = []
+	for id: Variant in _zone_state_built.get("built", []) as Array:
+		if not str(id) in _consumer_owned:
+			operable.append(str(id))
+	for raw_socket: Variant in object_sockets:
+		var socket: ObjectSocket = raw_socket
+		if socket.sets_variable != "":
+			operable.append(socket.sets_variable)
+	var gated := StateGates.build(self,
+			zone_dict.get("edges", []) as Array,
+			build.get("chambers", []) as Array, door_frames, zone_state,
+			operable, str(zone_dict.get("theme", "concrete_facility")))
+	state_gates = gated.get("gates", []) as Array
+	for why: String in gated.get("refused", []) as Array:
+		state_gate_refusals.append(why)
+		push_warning("state gate refused: %s" % why)
+	var graphs := RoomGraphs.build(self,
+			zone_dict.get("room_graphs", []) as Array,
+			room_places, room_bounds,
+			str(zone_dict.get("theme", "concrete_facility")),
+			zone_dict.get("edges", []) as Array,
+			build.get("chambers", []) as Array, door_frames)
+	for raw_graph: Variant in graphs.get("graphs", []) as Array:
+		var graph: SignalGraph = raw_graph
+		# THE DECISIONS COME BACK BEFORE THE MACHINE RUNS, and they come
+		# back from the campaign's latch record rather than from
+		# anything the engine was told about the shutter. §5.4a: the
+		# decision persists, the machine is rebuilt from it. The
+		# railway's junctions do exactly this two blocks up.
+		#
+		# **ORDER: restore, THEN start.** `start()` is the graph's first
+		# evaluation, and it SETTLES the machines rather than commanding
+		# them -- so a route the record says is open is open on the
+		# first tick, with nothing slid shut and reopened in front of
+		# the player. A restored latch emits nothing, so nothing is
+		# reported back to the bridge that the bridge just sent.
+		graph.fired.connect(_on_rail_latch)
+		graph.restore_from(latches_accepted())
+		graph.start()
+		signal_graphs.append(graph)
+	for why: String in graphs.get("refused", []) as Array:
+		signal_graph_refusals.append(why)
+		push_warning("signal graph refused: %s" % why)
+	RoomGraphs.name_the_weights(zone_dict.get("room_graphs", []) as Array,
+			objects)
+	# THE HOSTED MINORS (O05-06). A minor is a whole room the builder has
+	# already instantiated from its shell, so it is found rather than
+	# built. §5.4a again: the bolt is the decision that persists, and it
+	# comes back from the latch record BEFORE the player can see the
+	# room -- `restore_bolt` announces nothing, so nothing is reported
+	# back that the bridge just sent. A bolt pulled from here on is.
+	minors.clear()
+	for raw_minor: Variant in MinorRooms.hosted_in(build):
+		var minor: Dictionary = raw_minor
+		var hosted: HostedMinor = minor["hosted"]
+		var rid := str(minor["room_id"])
+		var package := MinorRooms.package_of(rid)
+		hosted.restore(MinorRooms.accepted_for(rid, latches_accepted()))
+		# EX50-011 §9: "A stable save restores each at its saved pose
+		# before the player" -- the carriers' last accepted rests, put back
+		# silently, before anyone can see the room.
+		hosted.restore_carriers(MinorRooms.carriers_for(rid,
+				carrier_states_carried))
+		hosted.latched.connect(func(latch_id: String) -> void:
+			report_latch(package, latch_id))
+		hosted.said.connect(_on_minor_said)
+		hosted.carrier_rested.connect(func(carrier_id: String, t: float,
+				destination: String, held: bool) -> void:
+			report_carrier(package, carrier_id, t, destination, held))
+		minors.append(minor)
 	door_positions = (build.get("doors", {}) as Dictionary).duplicate()
 	exit_departs_from = str(build.get("exit_departs_from", ""))
 	for raw: Variant in build.get("plugs", []):
 		var plug: ReturnPlug = raw
 		plug.traversed.connect(_on_plug_traversed)
+		plug_positions[plug.edge_id] = plug.global_position
 	for raw_key: Variant in build.get("keys", []):
 		var key: ZoneKey = raw_key
 		# A KEY ALREADY COLLECTED IS NOT REBUILT.
@@ -447,6 +736,13 @@ func setup(zone_dict: Dictionary) -> void:
 	player.damaged_from.connect(func(_source: Vector3) -> void:
 		_note_engagement())
 	player.died.connect(func() -> void: _encounter_chamber = -1)
+	# A minor applies its own death rule (EX50-011 §9: before completion,
+	# the carriers go home).
+	player.died.connect(func() -> void:
+		for raw_minor: Variant in minors:
+			var hosted: HostedMinor = (raw_minor as Dictionary)["hosted"]
+			if is_instance_valid(hosted):
+				hosted.player_died())
 
 	# Optional ledges (DESIGN §19). Walked, not searched: nothing is
 	# reported anywhere, so reaching one only ever earns a remark.
@@ -553,8 +849,24 @@ func setup(zone_dict: Dictionary) -> void:
 					Vector3.ZERO))
 		var middle: Vector3 = (result["bounds"] as AABB).position \
 				+ (result["bounds"] as AABB).size / 2.0
+		# EACH MEMBER BY ITS DECLARED IDENTITY, and a defeated one never
+		# built (D-06). The n-th spawn of an archetype in this room is
+		# `room/archetype#n`: every builder lays the declared groups out
+		# in declaration order, and the bridge derives the same identity
+		# from the same declaration, so neither reads the other. Skipped
+		# here, at build time, the fallen are absent before anything can
+		# perceive or attack -- not removed a frame later.
+		var room_id := str(chamber.get("id", ""))
+		var ordinals := {}
 		for spawn: Dictionary in result.get("enemy_spawns", []):
-			var enemy := Enemy.create(spawn["archetype"], theme)
+			var role := str(spawn["archetype"])
+			var n := int(ordinals.get(role, 0))
+			ordinals[role] = n + 1
+			var member := "%s/%s#%d" % [room_id, role, n]
+			if _is_defeated(member):
+				continue
+			var enemy := Enemy.create(role, theme)
+			enemy.member = member
 			add_child(enemy)
 			enemy.global_position = xform * ContentInstantiator \
 					.out_of_any_doorway(spawn["position"], mouths, middle)
@@ -585,7 +897,6 @@ func setup(zone_dict: Dictionary) -> void:
 		for index in locations.size():
 			var reward := RewardObject.create(
 					int(locations[index]), zone_id, theme)
-			add_child(reward)
 			# Spread along the room's axis, staying on the walking lane
 			# the affordance rule keeps features OFF (see
 			# `affordance_driver._a_check_sits_on_the_lane...`). Offsetting
@@ -593,7 +904,12 @@ func setup(zone_dict: Dictionary) -> void:
 			# may occupy, and put one behind a rail.
 			var offset := Vector3(
 					0.0, 0.0, float(index) * REWARD_SPACING)
-			reward.global_position = xform * (anchor + offset)
+			# PLACED BEFORE IT ENTERS THE TREE (ML-F1). A body moved after
+			# it entered is missing from the physics queries of the same
+			# frame, so the footing pass below stood enemies inside this
+			# pedestal (16 across the fixtures). Same place either way.
+			reward.position = to_local(xform * (anchor + offset))
+			add_child(reward)
 			record["rewards"].append(reward)
 			if index == 0:
 				record["reward"] = reward
@@ -613,7 +929,15 @@ func setup(zone_dict: Dictionary) -> void:
 					_on_goal_area_entered.bind(record))
 
 		_chambers.append(record)
+	_settle_enemy_footing()
 	_evaluate_objectives()
+	# D-06: WITH EVERY MEMBER NOW BUILT OR SKIPPED, the resumed player is
+	# never left standing among the living. Still inside `setup`, so no
+	# physics step has run and nothing has perceived anything.
+	if is_instance_valid(player):
+		var safe := _never_among_the_living(player.global_transform)
+		if not safe.is_equal_approx(player.global_transform):
+			player.set_spawn(safe)
 	refresh()
 	if is_finale and hud != null:
 		hud.say_line("finale_open")
@@ -663,6 +987,49 @@ func setup(zone_dict: Dictionary) -> void:
 ## `key_collected` is idempotent by `key_id` because the target set is
 ## monotone: the same key twice is one key, a resend after a dropped
 ## connection is the normal case, and neither is an error.
+## `member -> {"from", "to", "fault"}` for every enemy the footing pass
+## moved, and `member -> fault` for any it found nowhere to stand.
+var enemy_footing_moves := {}
+var enemy_footing_refusals := {}
+
+
+## EVERY ENEMY STANDS CLEAR OF WHAT WAS BUILT ROUND IT (ML-F1).
+##
+## A spawn is laid out by its room's builder, and the station, crates,
+## cover and pedestals by others that do not ask where it went: 280 of
+## the 768 enemies in 23 fixture Zones were built inside one of them.
+## The physics pushes each out on its first step -- and through a thin
+## floor when down is the nearest way out, which put the passing Zone's
+## arena scuttler under its floor in 7 of 8 builds, falling to a defeat
+## nobody made. So, with every room built and before any physics step,
+## each enemy standing in a solid or over no floor is moved to the
+## nearest spot in its room that stands (`EnemyFooting.clear_spot`), and
+## every ground enemy is set down on its floor, where its first step
+## would have landed it. Its post is taken where it stands on its first
+## frame, so the post moves with it.
+func _settle_enemy_footing() -> void:
+	var space := get_world_3d().direct_space_state
+	for record: Dictionary in _chambers:
+		var room: AABB = record.get("bounds", AABB())
+		for raw: Variant in record.get("enemies", []) as Array:
+			if not is_instance_valid(raw):
+				continue
+			var enemy: Enemy = raw
+			var spot := EnemyFooting.clear_spot(space, enemy.envelope,
+					enemy.global_position, room, EnemyFooting.bodies_of(enemy))
+			if not bool(spot["found"]):
+				enemy_footing_refusals[enemy.member] = str(spot["fault"])
+				push_warning("zone: enemy %s has nowhere to stand (%s)"
+						% [enemy.member, spot["fault"]])
+				continue
+			if float(spot["moved"]) > 0.0:
+				enemy_footing_moves[enemy.member] = {
+						"from": enemy.global_position, "to": spot["at"],
+						"fault": str(spot["fault"])}
+			# Set down on its floor either way: where it would have landed.
+			enemy.global_position = spot["at"]
+
+
 func _on_key_collected(key_id: String) -> void:
 	if _keys_held.has(key_id):
 		return
@@ -673,6 +1040,308 @@ func _on_key_collected(key_id: String) -> void:
 	_open_what_the_keys_allow()
 	if hud != null:
 		hud.toast(_what_that_key_did(key_id), ZoneKey.tint(key_id), 4.5)
+
+## A physics latch fired in this Zone, and the intent that records it.
+##
+## THE CLIENT HAS NEVER SENT ONE. `ZoneProgress.latched`, `LatchFired`
+## and `record_latch` have been on the bridge since the physics slice
+## landed -- monotone, idempotent by `package_id/latch_id`, and refusing
+## any latch the committed manifest does not declare -- and every
+## `latched` in this lane was prose in a comment. This is the client
+## half.
+##
+## **Only an accepted consequence reaches here.** A machine reports when
+## its latch condition is genuinely satisfied, never when a Zone is
+## rebuilt from a latch that already fired: §5.4a persists the decision,
+## and re-reporting it would be the engine telling the bridge a fact the
+## bridge told the engine.
+func report_latch(package_id: String, latch_id: String) -> void:
+	var ref := "%s/%s" % [package_id, latch_id]
+	if _latches_fired.has(ref):
+		return
+	_latches_fired[ref] = true
+	BridgeClient.send_intent({"type": "latch_fired",
+			"zone_id": zone_id, "package_id": package_id,
+			"latch_id": latch_id})
+
+## O05-06.2: a hosted minor's carrier came to rest. Sent every time,
+## because a rest is overwritten rather than accumulated: the bridge
+## absorbs one it already holds. Only a carrier AT REST reaches here
+## (Amalgam §5.3); a restored rest is never reported.
+func report_carrier(package_id: String, carrier_id: String, t: float,
+		destination: String, held: bool) -> void:
+	carrier_reports.append([package_id, carrier_id, t, destination, held])
+	BridgeClient.send_intent({"type": "carrier_rested",
+			"zone_id": zone_id, "package_id": package_id,
+			"carrier_id": carrier_id, "t": t, "destination": destination,
+			"held": held})
+
+## What a minor's own machinery says -- "LIGHTENED -- crate reads MEDIUM",
+## "BOLT ENGAGED" -- on the HUD the player has, since a hosted minor has
+## no readout of its own.
+func _on_minor_said(text: String) -> void:
+	if hud != null:
+		hud.toast(text, Color(0.7, 1.0, 0.8), 3.0)
+
+## An object the player is carrying has entered a different room.
+##
+## Reported through the bridge lane's `object_transported`, which is
+## idempotent by `(object_id, room_id)` and not monotone -- carrying
+## something back is the mechanic working, exactly as with a reversible
+## Zone-state variable.
+##
+## **The room, and nothing about its Statuses.** §5.1 makes them
+## `EPHEMERAL`, so none is ever sent to be saved -- which is a statement
+## about saves only. The live body crosses the doorway with its Statuses
+## and they run out on their own clocks (owner, 2026-09-22).
+func _on_object_transported(object_id: String, room_id: String) -> void:
+	object_moves.append([object_id, room_id])
+	BridgeClient.send_intent({"type": "object_transported",
+			"zone_id": zone_id, "object_id": object_id,
+			"room_id": room_id})
+
+
+## O05-03.1: the object came to rest. The settled pose is what a restart
+## puts it back at; a pose mid-carry or mid-fall is never sent.
+func _on_object_settled(object_id: String, room_id: String,
+		position: Vector3, yaw: float) -> void:
+	object_settles.append([object_id, room_id, position, yaw])
+	BridgeClient.send_intent({"type": "object_settled",
+			"zone_id": zone_id, "object_id": object_id,
+			"room_id": room_id,
+			"position": [position.x, position.y, position.z], "yaw": yaw})
+
+
+## §10.4: the object was put back home as the same object. Its own intent
+## rather than a transfer, so "it went somewhere illegal" and "put it
+## back" stay two events, and the bridge drops the stale pose.
+func _on_object_recovered(object_id: String, room_id: String) -> void:
+	object_recoveries.append([object_id, room_id])
+	BridgeClient.send_intent({"type": "object_recovered",
+			"zone_id": zone_id, "object_id": object_id})
+
+
+## O05-02.3: an object was installed in its consumer. The transfer into
+## the consumer's room is reported first when the socket's room is not
+## already the object's room -- the seated body IS in that room now --
+## and then the consumption, which the bridge checks against it.
+func _on_object_installed(mechanism_id: String, object_id: String,
+		socket_room: String) -> void:
+	object_installs.append([mechanism_id, object_id])
+	# `room_of` is the last room reported: every change of it is sent.
+	if objects.room_of(object_id) != socket_room:
+		objects.seat_in(object_id, socket_room)
+		_on_object_transported(object_id, socket_room)
+	BridgeClient.send_intent({"type": "object_consumed",
+			"zone_id": zone_id, "mechanism_id": mechanism_id})
+
+
+## Build every declared consumer's receiving site in its room.
+func _build_sockets(consumers: Array, theme: String) -> void:
+	object_sockets.clear()
+	for raw: Variant in consumers:
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var one: Dictionary = raw
+		var mechanism := str(one.get("mechanism_id", ""))
+		var room := str(one.get("room_id", ""))
+		var accepts := str(one.get("accepts", ""))
+		if not room_places.has(room):
+			object_socket_refusals.append(
+					"consumer '%s' stands in room '%s', which this Zone "
+					% [mechanism, room] + "did not build")
+			continue
+		if not accepts in objects.ids():
+			object_socket_refusals.append(
+					"consumer '%s' takes '%s', which this Zone did not "
+					% [mechanism, accepts] + "build")
+			continue
+		var socket := ObjectSocket.create(one, theme)
+		add_child(socket)
+		var place: Dictionary = room_places[room]
+		var yaw := float(place.get("yaw", 0.0))
+		socket.global_position = ZoneStateBuild._inside(
+				(place.get("arrival", Vector3.ZERO) as Vector3)
+				+ Basis(Vector3.UP, yaw) * SOCKET_OFFSET,
+				room_bounds.get(room, AABB()) as AABB)
+		socket.global_position.y = (place.get("arrival", Vector3.ZERO)
+				as Vector3).y
+		socket.bind(zone_state, objects)
+		socket.installed.connect(
+				func(m: String, o: String) -> void:
+					_on_object_installed(m, o, room))
+		object_sockets.append(socket)
+	for why: String in object_socket_refusals:
+		push_warning("object consumer refused: %s" % why)
+
+## Where a consumer's socket stands, relative to its room's arrival and
+## turned with the room: to one side of the way in, a few steps along.
+const SOCKET_OFFSET := Vector3(1.8, 0.0, 2.6)
+
+var object_settles: Array = []
+var object_recoveries: Array = []
+var object_installs: Array = []
+
+## Every crossing this Zone has seen, in order. Live, not saved: the
+## ROOM is what persists and the route it took to get there does not.
+var object_moves: Array = []
+
+## A Zone-state variable changed, because a player operated its control.
+##
+## **P-3's gap, closed from the other side.** This reported nothing
+## outward for one checkpoint, because `ZoneProgress.with_macro` existed
+## and no message could reach it -- the engine had a selection it could
+## not send. The bridge lane's `zone_state_selected` is that message,
+## and it is deliberately NOT `latch_fired`: idempotent by
+## `(variable_id, state)` and not monotone, because a reversible
+## variable going back is the mechanic working rather than a replay to
+## be rejected.
+##
+## Sent on the CHANGE and not on every selection: `ZoneState.select`
+## absorbs a re-selection of the state a variable already holds (§19.7
+## rule 5), so this signal only fires when something actually moved.
+##
+## **Except a variable a consumer sets.** Its change is reported as the
+## installation (`object_consumed`), which is the operation the bridge
+## accepts; a `zone_state_selected` for it would be refused there, and
+## rightly: no message alone stands in for the delivery.
+func _on_zone_state_changed(variable_id: String, state: String) -> void:
+	zone_state_changes.append([variable_id, state])
+	if variable_id in _consumer_owned or _reverting:
+		return
+	zone_state_pending[variable_id] = state
+	_setter_status(variable_id, "PENDING")
+	_state_toast("%s -> %s · SENT" % [variable_id.to_upper(), state.to_upper()],
+			Color(0.9, 0.85, 0.5))
+	BridgeClient.send_intent({"type": "zone_state_selected",
+			"zone_id": zone_id, "variable_id": variable_id,
+			"state": state})
+
+
+## The campaign's own values for this Zone, off the last snapshot.
+func _served_macro() -> Dictionary:
+	var record := BridgeClient.active_zone()
+	if str(record.get("zone_id", "")) != zone_id:
+		return {}
+	var progress: Variant = record.get("progress", {})
+	var out := {}
+	if typeof(progress) != TYPE_DICTIONARY:
+		return out
+	for row: Variant in (progress as Dictionary).get("macro_state", []) \
+			as Array:
+		if typeof(row) == TYPE_ARRAY and (row as Array).size() == 2:
+			out[str((row as Array)[0])] = str((row as Array)[1])
+	return out
+
+
+## ACCEPTED: a snapshot carries the value the control selected.
+func _on_snapshot_for_state(_snapshot: Dictionary) -> void:
+	if zone_state_pending.is_empty():
+		return
+	var macro := _served_macro()
+	for variable: Variant in zone_state_pending.keys():
+		var state := str(zone_state_pending[variable])
+		if str(macro.get(str(variable), "")) != state:
+			continue
+		zone_state_pending.erase(variable)
+		zone_state_answers.append([str(variable), state, true, ""])
+		_setter_status(str(variable), "ACCEPTED")
+		_state_toast("%s -> %s · ACCEPTED" % [str(variable).to_upper(),
+				state.to_upper()], Color(0.45, 1.0, 0.7))
+
+
+## REFUSED: the bridge's answer names exactly this selection. The value
+## goes back to what the campaign holds (or the declared initial), and
+## the doorway and readers follow it back.
+func _on_refusal_for_state(err: Dictionary) -> void:
+	var about := str(err.get("about", ""))
+	var prefix := "zone_state_selected:%s:" % zone_id
+	if not about.begins_with(prefix):
+		return
+	var parts := about.substr(prefix.length()).split(":")
+	if parts.size() != 2:
+		return
+	var variable := parts[0]
+	var state := parts[1]
+	if str(zone_state_pending.get(variable, "")) != state:
+		return
+	zone_state_pending.erase(variable)
+	var back := str(_served_macro().get(variable,
+			zone_state.initial_of(variable)))
+	_reverting = true
+	zone_state.revert(variable, back)
+	_reverting = false
+	var why := str(err.get("message", ""))
+	zone_state_answers.append([variable, state, false, why])
+	_setter_status(variable, "REFUSED")
+	_state_toast("%s -> %s · REFUSED: %s" % [variable.to_upper(),
+			state.to_upper(), why], Color(1.0, 0.55, 0.3))
+
+
+func _setter_status(variable_id: String, status: String) -> void:
+	for raw: Variant in zone_state_setters():
+		# A CONTROL CAN BE GONE while its variable still holds -- the
+		# zone-state suite frees one on purpose -- and a freed lever has
+		# no status to show. Checked before the typed read, which is what
+		# raises on a freed instance.
+		if not is_instance_valid(raw):
+			continue
+		var control := raw as ZoneStateBuild.ZoneStateSetterControl
+		if control != null and control.variable_id == variable_id:
+			control.status = status
+
+
+func _state_toast(text: String, color: Color) -> void:
+	if hud != null:
+		hud.toast(text, color, 3.0)
+
+## Every change this Zone has seen, in order. Live, not saved: the
+## VALUES are what persist, and the sequence that produced them is
+## exactly the history `with_macro` overwrites rather than accumulates.
+var zone_state_changes: Array = []
+
+## The relationships this Zone actually built.
+func zone_state_setters() -> Array:
+	return (_zone_state_built.get("setters", []) as Array).duplicate()
+
+func zone_state_readers() -> Array:
+	return (_zone_state_built.get("readers", []) as Array).duplicate()
+
+## A declared railway's span locked. The junction has already decided the
+## consequence is accepted; this is only the reporting half, and
+## `report_latch` is idempotent by `package_id/latch_id`, so a span that
+## locks twice in one session still tells the bridge once.
+func _on_rail_latch(package_id: String, latch_id: String) -> void:
+	report_latch(package_id, latch_id)
+
+## The railways this Zone actually built, for a suite that has to ask
+## whether a declaration became a machine.
+func rail_junctions() -> Array:
+	return (_rail.get("junctions", []) as Array).duplicate()
+
+func rail_carriers() -> Array:
+	return (_rail.get("carriers", []) as Array).duplicate()
+
+## Every latch this Zone has reported. A copy: the set is this Zone's.
+func latches_fired() -> Dictionary:
+	return _latches_fired.duplicate()
+
+## Every latch this Zone should treat as already fired: what came in
+## with the snapshot, plus anything reported since it was taken.
+##
+## UNION, for the same reason keys and stations are a union: an intent
+## sent in the same breath as leaving may not be in the snapshot yet,
+## both sides are monotone, and taking both can neither lose progress
+## nor invent it.
+func latches_accepted() -> Array:
+	var out := {}
+	for ref: Variant in latches_carried:
+		out[str(ref)] = true
+	for ref: Variant in _latches_fired:
+		out[str(ref)] = true
+	var refs: Array = out.keys()
+	refs.sort()
+	return refs
 
 ## Every lock the held keys AND capabilities admit, opened at once.
 ##
@@ -726,6 +1395,28 @@ func _on_lock_opened(room: String, socket: String) -> void:
 ## construction: `_rooms_entered` starts empty on every `setup`.
 func rooms_entered() -> Dictionary:
 	return _rooms_entered.duplicate()
+
+## D-2's resend. A room this session walked that the bridge's map does
+## not yet show as discovered is reported again -- the record is monotone
+## and a resend is harmless, so a send lost to a dropped link heals on the
+## next snapshot instead of leaving the room off the map for good. Stops
+## by itself: once the map shows the room, it is not in the difference.
+func resend_undiscovered() -> Array:
+	var zone_map: Dictionary = BridgeClient.zone_map()
+	if str(zone_map.get("zone_id", "")) != zone_id:
+		return []
+	var known := {}
+	for raw: Variant in zone_map.get("rooms", []):
+		var row: Dictionary = raw
+		if bool(row.get("discovered", false)):
+			known[str(row.get("room_id", ""))] = true
+	var sent: Array = []
+	for room: Variant in _rooms_entered:
+		if str(room) != "" and not known.has(str(room)):
+			BridgeClient.send_intent({"type": "room_entered",
+					"zone_id": zone_id, "room_id": str(room)})
+			sent.append(str(room))
+	return sent
 
 ## Which room the body is in right now, or "".
 func current_room() -> String:
@@ -921,6 +1612,77 @@ func warp_to(from_id: String, to_id: String) -> void:
 ## The keys and the opened locks, for whoever is carrying progress out.
 func keys_held() -> Dictionary:
 	return _keys_held.duplicate()
+
+## The members defeated during this entry, for whoever carries progress
+## across a Hub return before the snapshot has caught up.
+func defeated_members() -> Dictionary:
+	return _defeated_now.duplicate()
+
+## Was this declared member defeated, by the save or during this entry?
+func _is_defeated(member: String) -> bool:
+	if _defeated_now.has(member):
+		return true
+	return typeof(defeated_carried) == TYPE_DICTIONARY \
+			and (defeated_carried as Dictionary).has(member)
+
+## THE RESUMED PLAYER IS NEVER PUT AMONG THE LIVING (D-06, PT-16).
+##
+## A resume restores the player at the station they last reached -- and
+## every large room has one, near its middle, in the same space its
+## encounter holds. Two cases put living enemies there: a partly cleared
+## room, whose survivors return to their posts, and a save with no
+## per-enemy record, whose members are all built because nothing proves
+## any fell. Either way, standing the player where they left off would
+## put them among the living, and "do not place them around an
+## unchanged player location and call it an exact continuation".
+##
+## So when the room the resume point stands in holds any living member
+## of its encounter, the player is restored at THAT ROOM'S ARRIVAL -- the
+## doorway its encounter was composed to be entered from -- and told
+## why. The rest of the saved world is untouched. This runs inside
+## `setup`, before the first physics step, so nothing has perceived or
+## attacked anything yet; and the enemies ignore a player held for the
+## layout verdict in any case (`Enemy._find_player`).
+func _never_among_the_living(spawn_at: Transform3D) -> Transform3D:
+	resume_notice = ""
+	# ONLY A RESUME. An ordinary entry starts at the Zone's own arrival,
+	# which is by construction the doorway it was composed to be entered
+	# from: there is nothing to move and nothing to say.
+	if _station_by_id(resume_anchor) == null:
+		return spawn_at
+	var room := ""
+	for raw: Variant in room_bounds:
+		if (room_bounds[raw] as AABB).has_point(spawn_at.origin):
+			room = str(raw)
+			break
+	if room == "":
+		return spawn_at
+	var living := 0
+	for record: Dictionary in _chambers:
+		if str((record["chamber"] as Dictionary).get("id", "")) != room:
+			continue
+		for enemy: Variant in record["enemies"]:
+			if is_instance_valid(enemy) and not (enemy as Enemy)._dead:
+				living += 1
+	if living == 0:
+		return spawn_at
+	var arrival: Variant = RoomGraphs.place_of(room_places, room) \
+			.get("arrival")
+	if typeof(arrival) != TYPE_VECTOR3:
+		return spawn_at
+	var name := room.to_upper()
+	if defeated_carried == null:
+		resume_notice = ("NO RECORD OF WHICH ENEMIES FELL IN THIS SAVE -- "
+				+ "%s'S ENCOUNTER IS BACK. YOU START AT ITS ENTRANCE."
+				% name)
+	else:
+		resume_notice = ("%d LEFT IN %s -- YOU START AT ITS ENTRANCE."
+				% [living, name])
+	# TOLD, not silent (V-07: "no invented clear flags, silent reset").
+	if hud != null:
+		hud.toast(resume_notice, Color(1.0, 0.78, 0.35), 7.0)
+	return Transform3D(spawn_at.basis, (arrival as Vector3)
+			+ Vector3(0, 0.3, 0))
 
 func locks_opened() -> Dictionary:
 	return _locks_open.duplicate()
@@ -1314,6 +2076,12 @@ func _note_engagement() -> void:
 
 
 func _on_enemy_died(enemy: Enemy, record: Dictionary) -> void:
+	# REPORTED BY DECLARED IDENTITY, once (D-06). Idempotent on the
+	# bridge too -- the record is monotone -- so a resend is harmless.
+	if enemy.member != "" and not _defeated_now.has(enemy.member):
+		_defeated_now[enemy.member] = true
+		BridgeClient.send_intent({"type": "enemy_defeated",
+				"zone_id": zone_id, "member": enemy.member})
 	var remaining := _live_enemy_count()
 	playtime.note_enemy_died(remaining)
 	if remaining <= 0:
@@ -1417,6 +2185,7 @@ func _push_objective_state(record: Dictionary) -> void:
 
 ## Called on every campaign snapshot while this Zone is loaded.
 func refresh() -> void:
+	resend_undiscovered()
 	for record: Dictionary in _chambers:
 		var reward: RewardObject = record["reward"]
 		if reward != null:
@@ -1452,7 +2221,13 @@ func _track_chamber() -> void:
 		if bounds.has_point(player.global_position):
 			if index != _current_chamber:
 				_current_chamber = index
-				_rooms_entered[_room_id_of(index)] = true
+				var room := _room_id_of(index)
+				if not _rooms_entered.has(room):
+					# D-2: the room joins the map. Once per session here;
+					# `resend_undiscovered` covers a send that was lost.
+					BridgeClient.send_intent({"type": "room_entered",
+							"zone_id": zone_id, "room_id": room})
+				_rooms_entered[room] = true
 				playtime.enter_chamber(index)
 				playtime.enter_chamber_activities(index)
 				chamber_entered.emit(index)

@@ -1,0 +1,54 @@
+# D-10 census evidence: 16 sizes around the edge, each refusing layout named (--census-sizes=).
+# Filtered from the raw log: 13440 'p3a:' lines removed (the authored-shell selection census the ZoneController prints for every room of every build; mode=none throughout).
+# Run by hand, so the make target's own filter was applied here: 32415 WARNING/backtrace lines removed (the unconnected bridge's 'layout_result' intent, and the engine's rail refusal warning, whose text the census prints itself).
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+width	depth	fits	of	refusals (summed)	ms per build
+22	22	166	168	outside the room 1556, on the track 1314, off the floor 2, not clear 489, within the base kit's reach 167	88
+  refused: c064 at -90/0: no position in the room takes the measured gantry (1764 tried: 778 outside the room, 645 on the track, 2 off the floor, 277 not clear, 62 within the base kit's reach); nearest the arrival, a jump from a surface 2.6 m up, 6.5 m from the deck, lands on it 2.9 m up
+  refused: c064 at -90/+90: no position in the room takes the measured gantry (1764 tried: 778 outside the room, 669 on the track, 212 not clear, 105 within the base kit's reach); nearest the arrival, a jump from a surface 1.8 m up, 4.7 m from the deck, lands on it 2.9 m up
+20	28	166	168	outside the room 1724, on the track 1647, off the floor 2, not clear 513, within the base kit's reach 218	90
+  refused: c149 at 0/+90: no position in the room takes the measured gantry (2052 tried: 862 outside the room, 844 on the track, 2 off the floor, 251 not clear, 93 within the base kit's reach); nearest the arrival, a jump from a surface 1.9 m up, 6.0 m from the deck, lands on it 2.9 m up
+  refused: c149 at -90/+90: no position in the room takes the measured gantry (2052 tried: 862 outside the room, 803 on the track, 262 not clear, 125 within the base kit's reach); nearest the arrival, a jump from a surface 1.9 m up, 6.0 m from the deck, lands on it 2.9 m up
+22	20	150	168	outside the room 13248, on the track 10487, not clear 3617, within the base kit's reach 1372, off the floor 4	81
+22	24	168	168	-	88
+22	26	168	168	-	89
+22	28	168	168	-	93
+24	20	157	168	outside the room 8558, on the track 6607, not clear 2842, within the base kit's reach 1219, off the floor 2	90
+24	22	168	168	-	92
+26	22	168	168	-	93
+28	22	168	168	-	97
+24	26	168	168	-	95
+24	28	168	168	-	98
+26	24	168	168	-	96
+26	28	168	168	-	103
+28	24	168	168	-	100
+28	26	168	168	-	103
+
+by the chain's turn before the arena / after it (0/0: the track on the arrival axis), of 24 each:
+width	depth	0/0	+90/0	-90/0	0/+90	0/-90	+90/-90	-90/+90
+22	22	24	24	23	24	24	24	23
+20	28	24	24	24	23	24	24	23
+22	20	23	22	21	24	21	19	20
+22	24	24	24	24	24	24	24	24
+22	26	24	24	24	24	24	24	24
+22	28	24	24	24	24	24	24	24
+24	20	24	23	22	24	21	21	22
+24	22	24	24	24	24	24	24	24
+26	22	24	24	24	24	24	24	24
+28	22	24	24	24	24	24	24	24
+24	26	24	24	24	24	24	24	24
+24	28	24	24	24	24	24	24	24
+26	24	24	24	24	24	24	24	24
+26	28	24	24	24	24	24	24	24
+28	24	24	24	24	24	24	24	24
+28	26	24	24	24	24	24	24	24
+
+the smallest square arena every sampled layout (168) takes: none
+every size was built in all 7 chain shapes
+FAIL: the composer's rule (both spans 22 m or more) is broken: 22 x 22 takes 166 of 168
+GANTRY CENSUS: FAILED
+
+real	4m53.038s
+user	4m45.973s
+sys	0m4.971s

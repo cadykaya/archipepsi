@@ -1,0 +1,29 @@
+Source: direct owner messages in this conversation. Selected relevant messages verbatim; not an export of the entire chat. No timestamp or local build hash is asserted.
+
+--- Early room/combat feedback ---
+that room needs to be tuned a lot more, all of the new ones do. the puzzle is cool but the game doesnt factor in that i can teleport and double jump. it needs glass walls in certain spots, larger rooms, so the puzzle cant be instantly solved by having a movement ability. assisted is cool, but solved before you bother figuring out the puzzle is confusing and lame. that puzzle specifically you use levers to manouver a cart to get to the check, but i can just jump at the check andd get it (no movement ability required oops) soo i think locking a check behind a box or a door that requires the puzzle to be solved makes more sense than havng it on an open platform. also the bomb enemies SUCKK they attack you through walls. from other rooms!! and the flying ones like dont attack the player? and their hitbox is above their body. very strange.
+
+--- Tests 1–6 ---
+1. I noticed the lever only when it opened a door i can see. In the future i think everything should be color coded to what it does. So a dark green door opens with a dark green lever.
+
+2. Yes, and it was very cool to stick it in the power receiver. The yellow box on the reciever was clipping into its other geometry and z fighting but the whole model is also mega ugly so im not worried about fixing a minor visual bug on a model we will replace.
+
+3. Dont like. It works but pressure plates need pressure to be on. Thats the point of them.
+
+4. Ill need to go back and try it again. I think there were two and i couldn’t for the life of me figure them out. There was a target that i shot and it opened an emergency access door with a check. Soo i did that and left. If ik thinking of the right place
+
+5. Yea this room showed up twice. Again, very confusing on what im meant to do or what i even want from the room. The crate is indestructible like almost everything, a lever moved it back and forth super super slowly, and then like idk there was a check so i just grabbed it and left. Very confusing puzzle and i didnt stop to solve it because i can just walk up to the check and grab it
+
+6. Same problem, cool lever system but its hard to figure out the solution or even the problem. The models are soo undermade and everything has the same texture so that everything kinda meshes together. And again i can just walk up to the check and grab it. There werent any enemies in the room and it was a branch end with no way back except to randomly teleport. The mini map should just always be on, and the pause menu needs a 3d map. My vote is to take the actual map and make a small copy the player can look at
+
+--- Tests 7–10 and reload ---
+7. The echo menu is miserable i with i had a screenshot. It should be the baldurs gate inventory. I already made one in caster guide to fishing.
+8. Never found one OR i didnt notice. Again the echo menu suuucks
+9. I could recognize different threats by audio but visually they all have the same look the models have a little variety but the bomb guy is just a wide version of a different model. They need to be obvious from a distance
+10. Navigation was okay, i believe we need that 3d map. Escape should pause the game and pull up a baldurs gate 3 esque equipment menu, big arrows left and right to move to the next screen(imagine the menus as attached to the inside of a box thats on your head, pressing the left arrow spins the box until the next face is facing you. Ocarina of time and majoras mask do this its awesome.) we can have a pause menu be what we immediately see with setings and what not, then left takes us to inventory, left again to map, and left again to objectives/lore/story etc. left once more takes us back to the settings menu. Sorry for the off topic but its important lol. That and we need names for both large and setpeice maps. Not ‘014’ but ‘crossfire arcade’ on the mini map and the 3d map. Also both maps need to color code blocked exits. If i need a green power supply to put in a green pedestal to open a green powered door(and all of them are in different rooms maybe) then the connector between the accessible room and the room behind the door should have a green blocker on the minimaps connector. And the area should have a small pulsing green indicator on the 3d map. Reloading the game puts you in the same room you left, with items where you left them. It also respawns all enemies soo if you clear out a room and save, reloading puts you in the middle of a room of enemies and your flanked from all sides
+
+--- 3D/Glyph requirement ---
+Menu should exist in 3d space and be made with GLYPH since glyph can make fonts and textures, and has good godot import tools now
+
+--- Positive overall result ---
+games a lot more fun

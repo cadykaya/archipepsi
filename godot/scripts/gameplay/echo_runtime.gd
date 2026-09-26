@@ -120,6 +120,15 @@ func _cancel_held_state() -> void:
 	# `_hover_tick` stopped running and `_end_hover` was never reached:
 	# permanent zero gravity, from swapping slots at the wrong moment.
 	_end_hover()
+	_dash_window = 0.0
+	# ...AND THE PLAYER-SIDE EFFECTS THIS SLOT STARTED. Only this
+	# slot's: a tether the mobility Echo is holding you on has nothing
+	# to do with swapping the combat Echo, and must survive it. Death
+	# is the caller that ends everything, and it reaches the body
+	# directly through `Player.cancel_transient_effects`.
+	if player != null:
+		player.end_swing(slot)
+		player.cancel_slam(slot)
 
 func refresh_viewmodel() -> void:
 	_refresh_viewmodel_attachment()
@@ -551,7 +560,21 @@ func _scan_mark(prim: Dictionary) -> void:
 
 ## Whether a conditional verb could resolve right now. Kept in one place so
 ## `activate()` reads as a list of verbs rather than a thicket of guards.
+## THE PRIMITIVES WHOSE EFFECT IS THE PLAYER'S OWN MOVEMENT. `anchored`
+## is "movement 0.0, jump blocked, all other actions permitted" (Design 5
+## §15.2): these ARE movement, so they refuse before the cooldown is
+## charged -- and say so -- rather than paying for a dash the anchor then
+## stops dead. A recoil, a slam, a pull on an enemy: actions, permitted,
+## and whatever they would move the player the anchor holds.
+const MOVES_THE_PLAYER := ["dash", "air_dash", "double_jump", "wall_kick",
+		"glide", "blink", "grapple_to_surface", "grapple_swing", "hover"]
+const ANCHORED_REFUSAL := "ANCHORED -- FIXED IN PLACE"
+
 func _conditions_met() -> bool:
+	if _primitive_type() in MOVES_THE_PLAYER and player != null \
+			and player.anchored():
+		player.carry_feedback.emit(ANCHORED_REFUSAL, false)
+		return false
 	match _primitive_type():
 		"slam_ground", "air_dash", "double_jump":
 			if player.is_on_floor():
@@ -668,11 +691,11 @@ func _melee_thrust(prim: Dictionary) -> Array[Node]:
 ## commitment: you give up the rest of your jump to land it.
 func _slam_ground(prim: Dictionary) -> void:
 	player.velocity.y = -float(prim["descent_force"])
-	player.pending_slam = {
+	player.commit_slam({
 		"damage": float(prim["damage"]),
 		"radius": float(prim["radius"]),
 		"tint": source_color(),
-	}
+	}, slot)
 
 func _swing_arc_effect(reach: float, half_arc: float) -> void:
 	# Three spokes rather than a mesh: the sweep is legible, and it costs
@@ -751,6 +774,10 @@ func _launch(projectile: EchoProjectile, modifiers: Array,
 	for modifier: Dictionary in modifiers:
 		if modifier.get("type") == "knockback_target":
 			projectile.knockback = float(modifier["force"])
+		elif modifier.get("type") == "apply_status_on_hit":
+			# The projectile outlives this call, so it carries the status
+			# to whatever it hits rather than this applying it now.
+			projectile.statuses.append(modifier)
 	# The projectile outlives this call, so it confirms its own hit.
 	projectile.shooter = player
 	# Before add_child: _ready builds the visual, and a tint assigned after
@@ -1010,15 +1037,26 @@ func _inside_zone_bounds(landing: Vector3) -> bool:
 func _grapple(prim: Dictionary) -> void:
 	var hit := player.camera_ray(float(prim["range"]))
 	if hit.is_empty():
+		# A SHOT AT THE SKY COSTS NOTHING. `_blink` and `_grapple_swing`
+		# both refund a press that found no surface, and this did not:
+		# it burned the cooldown and the power draw on a miss. With the
+		# grapple as the featured Echo, that is the difference between
+		# learning to aim it and being punished for trying.
+		_refund_press()
 		return
 	var target: Variant = hit["collider"]
-	if is_instance_valid(target) and target is StaticBody3D:
-		var pull: Vector3 = (hit["position"]
-				- player.global_position).normalized()
-		player.velocity = pull * float(prim["pull_force"])
-		Tracer.spawn(get_tree().current_scene,
-				player.global_position + Vector3.UP * 1.2, hit["position"],
-				source_color(), 0.15, source_particles())
+	# THE SAME REFUND FOR A SURFACE THAT IS NOT ONE. A shot that
+	# lands on an enemy or a moving body is a miss for THIS verb, and
+	# the player has no way to tell the two misses apart.
+	if not (is_instance_valid(target) and target is StaticBody3D):
+		_refund_press()
+		return
+	var pull: Vector3 = (hit["position"]
+			- player.global_position).normalized()
+	player.velocity = pull * float(prim["pull_force"])
+	Tracer.spawn(get_tree().current_scene,
+			player.global_position + Vector3.UP * 1.2, hit["position"],
+			source_color(), 0.15, source_particles())
 
 ## Reels a LIGHT enemy in. `max_target_hp` is what stops it being a way to
 ## drag a brute off its perch and into a corner.
@@ -1057,7 +1095,7 @@ func _grapple_swing(prim: Dictionary) -> void:
 		_refund_press()
 		return
 	player.begin_swing(hit["position"], float(prim["tether_force"]),
-			float(prim["max_duration"]))
+			float(prim["max_duration"]), slot)
 	Tracer.spawn(get_tree().current_scene,
 			player.global_position + Vector3.UP * 1.2, hit["position"],
 			source_color(), 0.2, source_particles())

@@ -1,0 +1,2080 @@
+# Overnight 05 — the engine lane's execution log
+
+**Prod (runtime/integration), single writer this run.** The work order is
+`docs/ledgers/ov05/01_EXECUTION_PLAN.md`, with its ready queue in
+`03_READY_QUEUE.md`. The packet was copied verbatim from the owner's ZIP,
+and every file matched `SHA256SUMS.txt`. Dess and Arty are paused.
+Findings are `P5-n`. Rows close with a revision, evidence and a scope
+limit. This file is the investigation history; code comments state
+contracts.
+
+## Start (O05-00.1)
+
+- Branch `claude/archipepsi-0-4-blindside` at `330c555`, equal to
+  origin, clean tree. That checkpoint is preserved at the NEW ref
+  `review/ov05-start-330c555`; nothing existing was overwritten.
+- These refs stay untouched: `claude/archipepsi-echoes-continuation-b1adno`,
+  `review/0.4-m2mech-snapshot` and the 0.3 comparison.
+- Last frozen full run: `57e962e`, 56/56 local steps
+  (`docs/AGENT_FRONTIER.md`). The tree reported at `330c555` is taken as
+  delivered at the scope stated there and is not re-run as a baseline.
+- **Available here:**
+  - Godot 4.5.1 headless, plus xvfb + opengl3 for captures;
+  - Python 3.11.15;
+  - the Archipelago checkout, so a local real multiworld can run with
+    no credentials;
+  - 4 cores and 15 GB.
+- **Not available:** `ANTHROPIC_API_KEY` is unset, so live Epsilon
+  cannot run. Deterministic fallback only, labelled as such. No window
+  and no Windows host.
+- **Processes:** only this session's. No heartbeat, watcher,
+  subscription, schedule or remote-CI polling.
+- EX50-011/021/033: the packet's recovered backups are byte-identical to
+  `docs/design-library/EX50_entries/`, so the repository copy governs.
+
+## O05 → P map
+
+| O05 | P rows |
+|---|---|
+| 00 | P00 / P23 |
+| 01 | P12 prerequisite / P16 |
+| 02 | P16.1–.5 / P03 |
+| 03 | P04 / P16 |
+| 04 | P03 / P04 / P15 |
+| 05 | P01 / P02 / M2 |
+| 06 | P01.2 / P05 |
+| 07 | P14 |
+| 08 | P12 / P13 / P18 |
+| 09 | P09–P11 |
+| 10 | P04 / P13 / P15 |
+| 11 | D-9 / P18 / P19 |
+| 12 | P07 / P08 / P21 |
+| 13 | P01 / P02 / P19 |
+| 14 | P08.1 / P21.4 / D-11 |
+| 15 | P21 / P23 |
+| 16 | P07 / P10–P20 / P22 |
+| 17 | P23 |
+
+## Temporary shared-seam ownership — for Dess's later review
+
+The owner authorised bounded Python/schema/export/test edits for this
+run, against accepted semantics only. Each seam is named, with its source
+rule, before it is edited. Rows are appended as edits land:
+
+| file / symbol | accepted rule | change | commit |
+|---|---|---|---|
+| `schemas/protocol.py` `ZoneProgress.object_poses`, `consumed_objects`, `with_object_pose` / `without_object_pose` / `with_consumed` | Amalgam §5.6 step 10 (required physical configurations restored "at saved transforms"); §30.6.1 `ObjectState` AT_HOME / CARRIED / PLACED(room) / CONSUMED; §10.5 (a multi-room carryable is `ZONE_PERSISTENT`) | two bounded fields (max 4 each), both `ZONE_PERSISTENT` in `SAVE_FIELD_CATEGORY`. A pose is a settled room + position + yaw, never a node path. Consumption is monotone and drops the pose | O05-02 commit |
+| `protocol.py` intents `ObjectSettled`, `ObjectConsumed`, `ObjectRecovered` | D-8 §11.1 (the owning room is the current room; a crossing is a transfer); P16 `ObjectConsumer`; §10.4 recovery | three client intents, each routed to one transition. None of them is sufficient on its own: consumption still needs the transfer into the consumer's room first | O05-02 commit |
+| `transitions.py` `record_zone_state` | D-8 §4: the setter is "where the player performs the interaction". For a variable an `ObjectConsumer` sets, that interaction is installing the object | refuses a `(variable, state)` any consumer sets, so a raw `zone_state_selected` cannot stand in for the delivery | O05-02 commit |
+| `transitions.py` `record_object_consumed` | P16 uniqueness (O05-02.4) | the first install consumes the object. A repeat is absorbed only when its consequence already holds; anything else is refused | O05-02 commit |
+| `transitions.py` `recover_transported_object` | §10.4 recovery keeps the object's identity | refuses an installed object (no duplicate) and drops a stale pose | O05-02 commit |
+| `transitions.py` `record_object_settled` (new) | §5.6 step 10 | records a settled pose only for a declared, unconsumed object, in a room inside its volume, at finite coordinates | O05-02 commit |
+| `campaign.py` `handle_progress`, `server.py` routing | existing progress dispatch | the three intents above | O05-02 commit |
+| `cross_room.compose_zone_state` (Dess's D-8 composer) | D-8 "one gate per doorway", the rule P14's composer already applies from its side | (a) skips a gated edge that already carries `opened_by` or `requires_state` (P5-1); (b) new keyword `reader_order="furthest"|"nearest"`, **default unchanged**. `"nearest"` keeps reveal and return at the control's junction (O05-04.2) | O05-04 commit |
+| `server._about` | the existing `BridgeError.about` convention (domain key; empty means unchecked) | adds `zone_state_selected:<zone>:<variable>:<state>`, so the lever's PENDING can be resolved as REFUSED on an exact match | O05-04 commit |
+| `candidate.py` (new), `CampaignEngine.candidate_steps`, `--candidate` | O05-13: an opt-in profile, off by default; the pattern of `quiet_generation` | runs `zone_state`, `latched_route`, `transport` after the graph is proved and before `accept_zone`. On host re-selection it is re-applied from a stripped Zone. Records each step, emitted or declined, under `<save dir>/candidate/` | O05-02 commit |
+| `playtest.dump-candidate` (replaces the new `dump-transport`) | fixtures generated from source | the transport and reversible fixtures are `candidate.apply` on the played Zone, with freshness tests | O05-02 commit |
+| `transport_route.py` (new) | P16 `TransportedObject`/`ObjectConsumer`; D-8 `permanent` lifetime; §0-bis (a declared gate is allowed, an undeclared one never is) | an explicit composer step in the same shape as `cross_room.py` and `latched_route.py`. It is never a default, so digests and comparisons do not move | O05-02 commit |
+| `transitions.record_latch` + `_accepted_rail_latches` (new) | `RailSpan.latch_id` "is the persistence handle: a commissioned span is the repair that survives leaving and coming back, recorded through the same latch machinery a physics package already uses" (zone.py) | a third, separately evidenced path for a declared railway's controlled span (P5-9); the physics and `graph_` paths are unchanged | `d92d723` |
+| `diagnostic.py` (launcher) | O05-15.1: "reuse the current launch/bootstrap idioms"; the follow-up 02 slot/marker rule | `--candidate[=STEPS]` mode: its own slot, a profile marker, a banner naming the profile and that nothing is staged. The single write moved into one `_mark` shared by both markers | `d92d723` |
+| `latched_route.compose_latched_route` (Dess's P14 composer) | P5-1's "one gate per doorway", extended to rooms: one relationship's control per room; P5-2/P5-8's walkable, one-floor rooms | skips a plate room already holding a Zone-state setter, a carried object's home or its socket (P5-11); stands plates only in arenas and treasure rooms, on the floor of the doorway they open. **P14 alone composes exactly as before** (c002; tested) | this checkpoint |
+| `candidate.STEPS` order | O05-13 | `zone_state, transport, latched_route` (was `zone_state, latched_route, transport`): P14, the step with the widest choice of rooms, now goes last (P5-11) | this checkpoint |
+| `CampaignEngine._candidate` re-certification | O05-13.3 "rejected hosts/choices must not silently drop allocated Checks"; acceptance does not re-run `validate_zone` | the profile's Zone is re-run through `validate_zone` with the provider's own offer and allocation, and through the whole Zone schema. A result that INTRODUCES an error is discarded whole and recorded (`certified`, `refused_by_validate_zone`) | this checkpoint |
+| `CampaignEngine` certify call: `zone_budget` | `epsilon/base.py`: the provider is accepted "against `request.campaign.zone_budget`"; "accepting against the default instead held a 1000-point Zone to a 200-point Zone's limits" | the re-certification passes the same budget (P5-12). Before, the prototype's 200 points applied and the "already failing" comparison hid it | O05-06 commit |
+| `schemas/minors.py` (new) | O05-06.1 "select each minor by its actual space, entrances, mechanisms, reward and recovery requirements"; EX50-033 §3/§5 (the bolt is the persistent fact, the crate package-local, LIGHTENED ephemeral) | the occurrence contract: shell, catalogue id, host chamber type, the way in, the sealed openings, the latches it may record (`bolt`), completion and recovery in words. Space and doorways stay the registry entry's | O05-06 commit |
+| `schemas/physics.py` `MINOR_PACKAGE_PREFIX`, `RESERVED_PACKAGE_PREFIXES`, `refuse_reserved_package_id` | the `graph_` reservation's own reason: a physics latch must not share an identity with another kind | `minor_` reserved beside `graph_`; the existing message is unchanged for `graph_` | O05-06 commit |
+| `transitions.record_latch` + `_accepted_minor_latches` (new) | the graph path's four facts (accepted Zone, committed layout, placed room, declared latch) | a fourth, separately evidenced path: `minor_<room>/<latch>` only for a room the ACCEPTED Zone builds from a contracted minor shell, only that contract's latches, and never a name a rail network also has | O05-06 commit |
+| `shells.is_offerable` | `AUTHORED_CONTENT.md`: the offer is what a provider may choose | an entry tagged `minor` is never offered; only the candidate `minors` step places one | `83044c3` |
+| `godot/content/registry/minor_rooms.json` (new pack) | S12 registry contract; no `review` field = not art | `minor_unweighted_switch`: the scenario's own room (`UnweightedSwitchRoom`) hosted by `UnweightedSwitchHosted`, a doorway in A's wall and the way on cut at the sill in G | `83044c3` |
+| `minor_hosting.py` (new), `candidate.STEPS` += `minors`, `candidate.strip` (+ `unhost`) | O05-06.1/.4/.5; P5-13 (no counted content removed); "an incompatible host declines by name" | the minor is ADDED behind a dead-end arena and takes that arena's Check; the parent keeps its fight and objective. Runs last. `strip` hands the Check back so re-hosting still works | O05-06 commit |
+| `CampaignEngine._certify_offer` | `validate_zone` refuses a shell the offer lacks; the provider's offer never has a minor | when the profile includes `minors`, the certification offer is the provider's plus each minor's own registry rule -- and nothing looser | O05-06 commit |
+| `mock_ap.MockServerState.bound/store`, `MockAPBackend.for_campaign`, `server._connect_mock` | `MockServerState`'s own docstring: "truth that survives quit/reload/reconnect"; a real Archipelago room keeps confirmed Checks | the mock room is kept beside the campaign's save and resumed only with it (P5-14). Test and harness code that shares an unbound state is unchanged | O05-06 commit |
+| `schemas/minors.py` `MinorContract.enemies`; the `minor_counterfire_arcade` contract | EX50-021 §9 (the gunner follows "the source encounter persistence") | a minor may declare the chamber's own enemies; the composer writes them into the chamber, so the Zone spawns and owns the encounter | `6cbe5f2` |
+| `minor_hosting.compose_minor` (every contract, each behind its own dead end) | O05-06.5: "The composer does not need to place all three in every Zone" (so it MAY place more than one) | `HostedMinor.rooms`; a minor is never a parent | `6cbe5f2` |
+| `minor_rooms.json` `minor_counterfire_arcade`, `HostedMinor` (Godot, new), `CounterfireArcadeRoom` extraction | as for EX50-033 | a second minor shell; `HostedMinor` is the one interface a Zone uses for any minor (`latched`, `said`, `restore`) | `6cbe5f2` |
+| `ZoneController.minors`, `MinorRooms` (Godot, new) | §5.4a (the decision persists; the machine is rebuilt from it) | a hosted minor is FOUND in its room; its bolt is restored from `latches_accepted()` before anyone sees it and reported as `minor_<room>/bolt` when pulled; its lines go to the HUD | O05-06 commit |
+| `schemas/protocol.py` `ZoneProgress.carrier_states`, `with_carrier`; `SAVE_FIELD_CATEGORY["carrier_states"] = "PUZZLE_LOCAL"` | EX50-011 §9 ("Carrier poses, destinations and hold states are package-local. A stable save restores each at its saved pose before the player"; a dwell restores held); Amalgam §5.2 (machinery `t` is `PUZZLE_LOCAL`), §5.3 (no save while a `PUZZLE_LOCAL` body moves), §5.6 step 9; `SAVE_FIELD_CATEGORY`'s own note (a path that always exists restores the pose) | one bounded field (max 8): `(minor_<room>/<carrier>, t, destination, held)`, overwritten rather than accumulated, like `macro_state`. Only a carrier AT REST is ever recorded | `400ed37` |
+| `protocol.py` intent `CarrierRested` | as above | one client intent, routed to one transition | `400ed37` |
+| `transitions.record_carrier_rested` (new); `_accepted_minor_latches` split into `_accepted_minor_contract` | the minor path's four facts (accepted Zone, committed layout, placed room, contracted shell) | records a rest only for a carrier the hosted minor's contract declares, at one of its declared stops (or held with no errand), at a finite offset. The latch path's checks and messages are unchanged | `400ed37` |
+| `schemas/minors.py` `MinorContract.carriers`; the `minor_passing_platforms` contract | O05-06.2; EX50-011 §3 (a lift A/TRANSFER/SHELF and a shuttle WEST/EAST), §4 (the stair at G), §9 | the stair is the latch; the carriers and their stops are declared, so the bridge refuses a machine or stop the minor does not have | `400ed37` |
+| `campaign.py` `handle_progress`, `server.py` routing | existing progress dispatch | `carrier_rested` | `400ed37` |
+| `ShuttleDeck._place` (Godot) | P5-15's rule: a machine places itself in its parent's frame | the lift is placed with `position`, not `global_position`. Every existing parent is at the origin, so nothing else moves | `400ed37` |
+| `RailCarrier.frame_from_parent` (Godot, opt-in, default off) | `to_world` "maps the path into world"; a room at a Zone transform knows its frame only once it is in the tree | when set, `_ready` takes `to_world` from the parent. Off everywhere else, so the Zone railway and its tests are unchanged | `400ed37` |
+| `HostedMinor.carrier_rested` / `restore_carriers` / `player_died`; `ZoneController` reports and restores them | EX50-011 §9 (restore before the player; before completion, death restores the initial transport configuration) | a minor may report a carrier at rest and is handed its saved rests before anyone sees the room | `400ed37` |
+| `minor_hosting.offer_order` (new) | O05-06.5 "The composer does not need to place all three in every Zone"; O05-06.1 "select each minor" | this lane's selection rule: the contract order turns with the Zone's ordinal, so a campaign meets every minor. With a fixed order, EX50-011 was hosted in 0 of 12 sample Zones. `zone_001` is unchanged | `400ed37` |
+| `RoomAudit._openings_are_holes` + `_exit_facing` (Godot) | the 2026-09-03 owner ruling for entries ("the entry is where the room says it is") | the exit probe stands on the wall the declared `exit_yaw` faces. Before, a side exit was measured on the far wall (P5-17) | `400ed37` |
+| `schemas/signal_graph.py` `SUPPORTED_NODE_KINDS` += `OR`, `SUPPORTED_SENSOR_KINDS` += `PULSE_BUTTON`; `SENSOR_OUTPUT_FORM`, `NODE_INPUT_FORMS`, `ZONE_PLACEABLE_SENSOR_KINDS`, `ROUTE_SENSOR_KINDS`/`ROUTE_NODE_KINDS` (new) | Design 1 §19.1 (ports: "a graph connecting mismatched forms fails validation at composition, never at runtime"), §19.2 (OR: 2–4 Boolean inputs; LATCH: pulse `set`), §20 (PULSE_BUTTON: Pulse); O05-07.2 "add support/export only with the working consumer; nothing silently becomes OR or a no-op" | two kinds join, each with its consumer (EX50-033's chain). Port forms are checked, so a pulse feeding a Boolean reader, or driving a machine by itself, is refused. The P14 LATCH's Boolean set is kept as that slice's accepted rule | `a718654` |
+| `signal_graph.settle`, `upstream` | the runtime's evaluation order (§19.3) | generalized from chains to trees: OR is any of its inputs, and `upstream` walks every input. A single chain comes back exactly as before (tested) | `a718654` |
+| `schemas/zone.py` room-graph and route validators | D-10 §5 (a route hangs on the guaranteed base kit); P14's `phases` reasons about one plate through NOT/LATCH | a Zone may declare only sensors its builder PLACES (plates). A route gate hangs only on a PRESSURE_PLATE through NOT/LATCH; anything else is refused by name. The same OR as a machine in a room is legal. The composed P14 routes are unchanged | `a718654` |
+| `schemas/minors.py` `MinorContract.graph`; EX50-033's declared chain | EX50-033 §3 (the HEAVY plate under a NOT; the bolt holds the crossing); `SignalGraph`'s own header ("the scenario keeps its own wiring ... rewriting it to go through here would change a working room to prove a point about a different one") | the minor's chain is declared in its contract and validated by the Zone graph schema. Its LATCH ids are exactly the contract's latches, so a fired latch is still `minor_<room>/bolt` and existing saves read the same. Exported to Godot as `Constants.MINOR_SIGNAL_GRAPHS` | `a718654` |
+| `SignalGraph` (Godot): pulse sensors, `OR`, `restore_latch` | §19.3 ("pulses live for exactly one tick") | a `CallLever` source is a PULSE_BUTTON, raised for one evaluation and cleared. An unbound source reads OFF. `restore_latch` puts a latch back by id, silently, for a room that owns its graph | `a718654` |
+| `RoomGraphs` (Godot) | as the Zone validator | refuses a sensor it cannot place, instead of placing a plate for it | `a718654` |
+| `UnweightedSwitchRoom` (Godot) | O05-07.3 "route an existing minor ... relationship through the shared implementation while preserving its specialized semantics and standalone comparison" | the room binds its own plate, bolt lever and shutter to the declared ids, and the shared runtime drives the shutter. What the room keeps is its lines and the return stair. The §11 control is the plate sensor left unbound | `a718654` |
+| `schemas/signal_graph.py`: `SUPPORTED_NODE_KINDS` += `TIMER`, `SUPPORTED_SENSOR_KINDS` += `SHOOTABLE_TARGET`; `DamageTag`, `SUPPORTED_TARGET_TAGS`, `TIMER_MAX_SECONDS` (new); `SensorNode.mode`/`required_tags`, `LogicNode.duration` (new, optional) | Design 1 §19.2 (TIMER: 1 Pulse, ON for `duration`, a new pulse restarts it), §19.6 (TIMER is EPHEMERAL), §20/§20.2 (SHOOTABLE_TARGET: `mode: PULSE \| TOGGLE`, `required_tags` default `[RANGED]`); EX50-021 §3 | two kinds join with EX50-021's chain. TOGGLE is refused: nothing reads it. `required_tags` accepts exactly `[RANGED]`, because the runtime has no damage tags and its SHOT path counts any hit (see the O05-07 slice 2 notes). `TIMER_MAX_SECONDS` is `ActivityPrimitive.time_limit`'s 120 s ceiling, a bound this lane chose | `384497b` |
+| `schemas/minors.py`: the `minor_counterfire_arcade` contract's `graph` | EX50-021 §3 ("the receiver emits one pulse per valid hit"; "the eight-second TIMER refreshes on another valid receiver hit. Its output opens the service shutter"), §9 ("the receiver timer is ephemeral") | the chain is declared, and its LATCH id is the contract's `release`, so a pulled release is still `minor_<room>/release` | `384497b` |
+| `SignalGraph` (Godot): `ImpactReceiver` pulses, `TIMER` + `advance`/`timer_left`, `bind_declared`/`source_is` (moved up from `UnweightedSwitchRoom`) | §19.3; §19.2 | a receiver's valid hit is a one-tick pulse, and TIMERs run down on the physics tick; a TIMER running out re-evaluates the graph. A room binds its machines by declared id; a machine of the wrong kind is left unbound and reported | `384497b` |
+| `ServiceShutter` (Godot): `trip`, `open_seconds`, `left` removed; `create(...)` loses its `seconds` parameter (5 call sites, one of them a test's) | EX50-021 §3 names the TIMER as the window's owner | the shutter is commanded like every actuator. A second clock would be a second answer to how long the way stays open | `384497b` |
+| `CounterfireArcadeRoom` (Godot) | O05-07.3 | the room binds its receiver, release lever and shutter to the declared ids; the shared runtime drives the shutter. The room keeps its lines and the release stair | `384497b` |
+| `godot/tests/fixtures/latched_route_zone.json` (Dess's P14 fixture) and `candidate_zone.json`, regenerated with their make targets | "Regenerated from source, never edited" | the only change is three `null` keys per graph (`mode`, `required_tags`, `duration`): the new optional fields, dumped the way `requires_class` already is. `proposal_digest` is derived and never stored, so no save is affected | `384497b` |
+| `candidate.OPTIONS` (new), `parse` / `steps_of` / `options_of`; `CampaignEngine.candidate_options` (new) | O05-11.4 "enable the complete function for the explicit overnight candidate profile"; O05-13's "off by default" | an option is switched on by the same spec, and `all` includes it; the engine keeps options apart from Zone steps, so every Zone-profile test is unchanged | `65f3ef4` |
+| `epsilon/capabilities.CANDIDATE_ACTION_SLOTS` (new); `validate_stage_support(..., slots=)` | the file's own promotion condition (authorize, then launch; count accepted expenditure), met by `player.gd` and the D-9 suites | the gate admits exactly the slots the request advertised. `IMPLEMENTED_ACTION_SLOTS` is untouched and still withholds `consumable` | `65f3ef4` |
+| `epsilon/requests.allowed_for` (new; the request's default factory); `epsilon/base.generate_echo_validated` | as above | a request advertises the consumable slot only when built with `consumable=True`; the default is byte-for-byte the old dict (tested) | `65f3ef4` |
+| `epsilon/fallback`: the explosive rule's consumable reading (`_consumable`, new) | O05-11.3 "a deterministic supported candidate provider must be able to produce and deliver a consumable ... include real damage and a currently supported Status" | only when the request offers the slot: three of the weapon reading's own lob, plus `stunned` 1.5 s. Otherwise unchanged, and no other item reads differently (tested) | `65f3ef4` |
+| `__main__._candidate_line`, `--candidate` help; `diagnostic.candidate_steps` message | O05-15.1 "print ... profile ... and any staged functions" | the option is printed with the steps | `65f3ef4` |
+| `EchoProjectile.statuses` + `_apply_statuses` (new); `EchoRuntime._launch` | the schema's pairing of `apply_status_on_hit` with any damage primitive (P5-19) | a projectile carries its status modifiers to what it damages | `65f3ef4` |
+| `Manipulation.impulse_verb` (Godot, new), with `IMPULSE_PROFILES`, the two §14.4 ceilings and nine refusal names; `_within_ceilings`, `_in_sight` | Design 2 §14.2 (eligibility), §14.3 (PUSH/PULL: one impulse on commit, `clamp(force / mass_kg, 0, 30)`, the three profiles' numbers), §14.4 (30 m/s; 14 m/s vertical); Design 5 §15.2 (`lightened`) | a new static verb beside the replay harness's held-force `push`, which is untouched. Offered to nothing: no Echo Action, no generation, no qualification reads it | `7ca5945` |
+| `ManipulableBody.physics_permitted` (Godot, new; default true) | Design 2 §4.8 `PhysicalObject.physics_permitted : bool = true`; §14.2's progression rule | read only by `impulse_verb`, for bodies in the required-object group. Nothing sets it false yet | `7ca5945` |
+| `Manipulation.target_refusal` (new; `impulse_verb` now asks it), `in_sight` (was `_in_sight`), `ACTOR_RULE`, `PHYSICS_PROFILES` (was `IMPULSE_PROFILES`) | §14.2's table, read once for PUSH, PULL, HOLD and ALIGN; its actor rule ("Never HOLD, ATTACH, TETHER, ROTATE, ALIGN, DETACH, SETTLE") | PUSH/PULL answers unchanged (23 checks); an enemy is `actor_rule` for a verb the rule never admits, `actor_mass_unmodelled` for one it admits | `394817b` |
+| `Manipulation.settle`, `SETTLE_PROFILES`, `DRIVEN` (new) | §14.3 SETTLE and its profile; §14.2's volume line-of-sight rule | runtime only; offered to nothing | `394817b` |
+| `VerbHold`, `VerbAlign` (Godot, new files) | §14.3 HOLD and ALIGN; §14.4's carry distance; §31.2 for the one relation that exists | runtime only; offered to nothing | `394817b` |
+| `Constraints.GROUP` + `_ready`, `driven(body)`, `involves(id, body)`, `Link.driven_frame` (stamped by `wind` and `drive`) | §14.3 SETTLE ("does not affect constrained objects currently driven by machinery"); §14.3 HOLD's constraint release | additive queries; the solver's behaviour is unchanged (`godot-constraints` 67, `godot-actuator` 93) | `394817b` |
+| `epsilon/requests.OwnedComponentSummary`: `origin`, `origin_game`, `slot` (new, defaulted) | owner direction 2026-09-23 ("Epsilon makes that interpretation using the new source and the existing collection"; "Preserve source provenance") | a request names each owned component's first source and its slot. Old callers stay valid (empty reads as related to nothing) | `b27bee5` |
+| `campaign.owned_summaries` (new; the request uses it) | as above | the one builder of the summary | `b27bee5` |
+| `epsilon/fallback`: `_READINGS`, `_reads`, `reading_of`, `_MEANINGFUL`, `_meaningful_delta` (new); `_fallback_echo_create`'s 23 keyword conditions read the table; `_as_sequel` and `as_disposition(reading=)` | owner direction 2026-09-23 ("sharing an Action primitive does not establish that two items are the same family"; "An upgrade must produce a meaningful, visible change"; "Preserve the existing item's useful function") | a sequel needs the same verb, the same reading of both sources and the same slot, and a change of at least 25%. The chain's outputs are unchanged, because the words moved and not the rules | `b27bee5` |
+| `epsilon/mock.mock_reading` (new); `_mock_echo` passes it | as above | mock relates items by its own catalog reading | `b27bee5` |
+| `epsilon/claude.ECHO_SYSTEM`: a "RELATED ITEMS" paragraph | as above | a model provider is told the rule and the new fields | `b27bee5` |
+| `VerbPin`, `VerbTether` (+ `Pending`), `VerbRotate`, `VerbRelations` (Godot, new files) | §14.3 PIN, TETHER and ROTATE; §14.4 `max_relations`; §31.2 exclusivity | runtime only; offered to nothing | `2b60770` |
+| `VerbHold` joins `VerbRelations` (its private second-HOLD rule is removed); `bodies()`/`active()` | §31.2, which covers HOLD, PIN and TETHER alike | HOLD's 23 checks unchanged | `2b60770` |
+| `Manipulation.target_refusal(..., turns_on_a_hinge)` | §14.2: FIXED responds to "`ROTATE` about a constrained axis" | a FIXED body on a hinge skips FIXED and the mass limit; every other caller unchanged (default false) | `2b60770` |
+| `Constraints.tether(...anchor_a, anchor_b)`, `untether`, `turn`, `hinge_of`, `hinge_axis`, `limits_of`, `breakable_at_of`; `drive(..., by_machine)`; `Link.runtime` | §14.8 (only TETHER is made at runtime, so only a tether is unmade); §14.3 ROTATE; SETTLE's machinery test | additive; `godot-constraints` 67 and `godot-actuator` 93 unchanged | `2b60770` |
+| `AttachPoint`, `VerbAttach` (Godot, new files) | §14.3 ATTACH/DETACH; §4.8 `AttachPoint` | runtime only; offered to nothing | `0f4c335` |
+| `ManipulableBody.material`, `attach_points`, `welds`, `welded_into` (new; empty by default); `interact`/`interact_prompt` first undo a PLAYER weld | §4.8 `material`, `attach_points`; O05-08.3 "Keep the base interaction for undoing player-created attachment" | no authored body has a material or a point, and nothing makes a weld outside the tests, so every existing `interact` is unchanged (`godot-carry`) | `0f4c335` |
+| `Constraints.sever(id)` | §14.3 DETACH "breaks a `ConstraintSpec` whose `breakable_at` is non-null" | breaks through the solver's own `_check_break`; refuses an unbreakable one | `0f4c335` |
+| `VerbField` (Godot, new file) | §14.3 LIGHTEN_FIELD/ANCHOR_FIELD and their profiles; §14.4 radius ceiling 8.0 m and multiplier range 0.30–3.00; §10.2 derivation | runtime only; offered to nothing | `38b104f` |
+| `ManipulableBody.own_mass`, `field` (new; -1 and null by default) | §14.3 "Fields do not stack" | set only by a field; every other reader still reads `mass`, which is the body's own kilograms whenever no field scales it | `38b104f` |
+| `VerbAttach._own`, `_set_own` (new); ATTACH gives a held part back from its field before the weld | §14.3 ATTACH with the fields: item 14's 190 kg is the girders' own kilograms | with no field, the O05-08.3 arithmetic exactly (its checks unchanged) | `38b104f` |
+| `SUPPORTED_STATUS_TARGETS["rooted"]` and `["anchored"]` = `("enemy",)` (bridge schema; exported to `constants.gd`) | Design 5 §15.2 (Amalgam §15.2); D-7's rule that support is declared in the change that lands the effect | the on-hit modifier, a `StatusComponent` at an enemy and an `apply_status` rule effect admit both; every other target is refused as before | `7abb338` |
+| `Enemy._held_in_place()` (new) read by the approach, `_work`, the rush, the dive and the station hold; the anchored knock discard in `_physics_process` | Design 5 §15.2 `rooted`, `anchored` | no other Status's behaviour changes (`godot-roster`, `godot-encounter` unchanged) | `7abb338` |
+| `Manipulation.target_refusal`: an anchored enemy is `fixed` for PUSH, PULL and PIN | Design 5 §15.2 `anchored` ("immune to ... Physics"); Design 2 item 63 | every other enemy answer unchanged (`godot-verb-runtime`) | `7abb338` |
+| `StatusEffects._CLEANSE_ORDER["enemy"]` gains `anchored`, `rooted` | D-7: a kind outside the cleanse order can never be removed | `cleanse` aims only at the player today | `7abb338` |
+
+## Reconciliation (O05-00.2): the immediately relevant rows only
+
+| Row | Evidence at `330c555` | Class |
+|---|---|---|
+| Ordinary hand carry (Design 2 §10.3–10.4 → Design 1 §10.2–10.3) | `ManipulableBody` has no pickup. The player's interact ray exists (`player._update_interact_target`, 3 m, `interact()`/`interact_prompt()`) | **missing** |
+| `TransportedObject` declaration | `schemas/zone.py`: `carriable`, `mass_kg`, `movement`, `allowed_volume`, `home_room_id`, `required`, plus the carry-line refusal | present |
+| `TransportedObjects` runtime | `transported_objects.gd` builds one body per declaration, tracks its room through connectors, reports `object_transported` and recovers an object that leaves its volume. **But** the body is a fixed 18 kg crate that cannot be picked up (the declared mass is ignored), recovery is immediate rather than §10.4's 1.0 s, and a consumed object would respawn loose | partial |
+| `ObjectConsumer` | Schema, plus the `record_object_consumed` transition (the object must be in the consumer's room; sets the D-8 variable). **No protocol intent, no Godot consumer, no consumed state** | bridge partial / runtime missing |
+| Object persistence | `ZoneProgress.object_rooms` holds the room only. Amalgam §5.6 step 10 restores required physical configurations "at saved transforms", and §30.6.1 names `CONSUMED` | partial |
+| Recovery transition | `recover_transported_object` exists, with no intent to reach it | partial |
+| D-8 macro setters/readers | `zone_state.gd`, `record_zone_state`, the `zone_state_selected` intent | present (to be exercised at O05-04) |
+| Acquisition consumers | reconciled at O05-05.1 | — |
+
+## Rows
+
+### O05-01 — ordinary hand carry, operated (P12 prerequisite / P16) — closed
+
+- **Built.** `godot/scripts/gameplay/hand_carry.gd` implements Design 2
+  §10.3–10.4. `ManipulableBody` gains `carriable`, `carried_by`,
+  `installed_in`, `interact` and `interact_prompt`. `Player` routes
+  `interact` to the carry, applies the 0.85 factor for `MEDIUM`, blocks
+  the Static Pulse and the `mobility` slot, and drops the object on
+  death. The HUD shows carry feedback.
+- **Slot mapping (Prod's reading, recorded).** Design 1 blocks the
+  "Weapon primary" and "Mobility" and permits "Abilities". In this game
+  the Static Pulse is the Weapon primary and the `mobility` slot is
+  Mobility. `echo_a`, `echo_b`, `utility` and `consumable` are the
+  Abilities. Melee, the Weapon secondary, weapon cycling and hacking do
+  not exist here.
+- **Evidence (actual input, world effect).** `make godot-carry` gives
+  32 checks and 1 note. A real `Player` in a real physics room is driven
+  with `Input.action_press` on `interact`, `move_forward`, `fire_pulse`
+  and the mobility slot. The driver checks:
+  - the pose, 1.20 m out, following yaw and pitch;
+  - the blocked slots;
+  - a walk into a wall: the object touches it and is never inside it,
+    is held short, then dropped at the feet once flush;
+  - a drop at rest, then pickup again;
+  - the refusals with their exact text: not carriable at 18 kg, 60.00 kg
+    accepted, 60.01 kg refused, a `LIGHTENED` 70 kg object refused
+    because kilograms are unchanged;
+  - walking speed 1.0 for `LIGHT`, 0.85 for `MEDIUM` and 1.0 for
+    `LIGHTENED` `MEDIUM`;
+  - the Archive's modal hold;
+  - death while carrying.
+- **Sabotage.** With the kilogram limit removed, 4 checks fail. With
+  the sweep removed, 2 fail. The `LIGHTENED` case first passed
+  vacuously: a previous press dropped the object it was about to test.
+  It now releases first and asserts the exact refusal.
+- **Regression on the same tree:** physics 68, mass-class 59,
+  unweighted 61, passing-platforms 63, hud, boot, verbs and
+  room-contract all OK.
+- **Scope limit.** This is a purpose-built physics room, not a composed
+  Zone. `LIGHTENED` is applied directly with `apply_status` here; the
+  real source is exercised in O05-02.5. There is no consumer yet; that
+  is O05-02.
+
+### O05-02 — a required object carried across rooms and installed (P16) — verified
+
+- **Built from the delivered declaration.**
+  - `transport_route.compose_transport` derives the object from a
+    composed Zone: a 40 kg `power_cell` that is `required`, `carriable`
+    and hand carried.
+  - The allowed volume is a run of the spine, home first. The composer
+    only uses walkable room types (P5-2) that sit on one floor (P5-8).
+  - It adds an `ObjectConsumer` in the run's last room, a permanent D-8
+    variable, lamps, and `requires_state` on the next spine edge.
+  - It refuses the placement unless `reachability` shows the run is
+    reachable with the gate shut, and the exit is not.
+  - The engine spawns the object once, at home. A consumed object is
+    never spawned loose.
+- **Real connections and consumer.**
+  - The real `Player` is driven with `Input.action_press`. It picks the
+    cell up with the interact ray and carries it across the connector.
+    The cell is never recovered while between rooms.
+  - It installs the cell with `interact` at the `ObjectSocket`. Being in
+    the same room does nothing; a different carriable object is refused
+    ("WRONG PART").
+  - The declared doorway (`StateGates`, P5-4) opens and the player walks
+    through.
+  - On the played Zone the run is c004 → c005, gated at `e:c005:c006`.
+- **Authority and uniqueness** (bridge-tested; `test_transport_route.py`,
+  51 tests):
+  - Python holds the room, the pose and the consumption.
+  - A forged transfer, pose, value or install is refused by name. The
+    live suite repeats these refusals against the real bridge.
+  - An installed object cannot move, settle or recover.
+  - A second consumer is refused.
+- **Status continuity, separately.** Unweighted Switch's real `SHOT`
+  applicator makes the cell LIGHTENED (factor 1.00, down from 0.85). The
+  same body is carried over the threshold, and the Status expires on its
+  own 8.0 s clock. The kilograms stay 40 throughout, and nothing about
+  the Status is sent for saving.
+- **Evidence.** `make godot-transport` gave **106/106** on the tree
+  committed as `5902920`: 10 cases, 6 notes. Every note is the declared
+  P5-7 Bulwark harness removal.
+
+### O05-03 — restore and recover the journey — verified, the live restart included
+
+- **Persisted facts.** `ZoneProgress.object_poses` records a settled
+  room, position and yaw, never a node path. `consumed_objects` records
+  the installation. Both are `ZONE_PERSISTENT`. `Main._to_zone` hands
+  both to the Zone before it is built (P5-3).
+- **Two restart points (live).** `make godot-transport-live` runs four
+  processes of each side against one disposable save:
+  - `seed`, `place` (put down in c005), then restart;
+  - `install` (the same body picked up and installed; forgeries
+    refused), then restart;
+  - `restore` (seated at load, doorway open, nothing announced).
+
+  On `d92d723`, seed and place passed (6 and 16 checks). Install failed
+  in the driver itself: its cached copy of the served Zone was empty
+  after the restart. The fix is committed with this row. **Re-run at
+  `400ed37`**, in the batch recorded under O05-06: seed 6, place 16,
+  install 18, restore 12, all four phases OK.
+- **Recovery without solving.** Covered by `godot-transport`:
+  - out of the volume: home after 1.0 s, and not before 0.5 s;
+  - destroyed: the same identity is back after 2.0 s;
+  - out of bounds: home at once;
+  - death: dropped where it was held, still owned;
+  - interrupted beside the socket: restored loose, not installed.
+- **Reset domains.** The object's facts are its own. Installing changes
+  only its variable (bridge test). The reversible lever, the P14 latch
+  and keys survive side by side in the combined candidate Zone (see
+  O05-13).
+
+### O05-04 — a reversible lever changes another room's doorway — verified
+
+- **Bound to D-8.** `compose_zone_state(mechanism="lamp",
+  reader_order="nearest")` produces the following on the played Zone:
+  - the control in c002;
+  - `requires_state` on `e:c002:c003`;
+  - a lamp in c003, the first room past the gate (O05-04.2).
+
+  `span_bolt` would have been refused by the engine (P5-6).
+- **Source feedback and a useful consequence.** Pulling the lever makes
+  it read PENDING. The bridge's snapshot makes it read ACCEPTED, or a
+  refusal whose `about` names that exact selection makes it read
+  REFUSED and reverts it. The consequence is the doorway itself, not
+  only text: it opens, and closes on reversal.
+- **Reversal, occupancy, escape** (`godot-reversible`, **32/32** on
+  `5902920` and again on `d92d723`):
+  - both configurations are played;
+  - reversal is played;
+  - the closing state with the player in the doorway is held as
+    "CLOSING QUEUED · DOORWAY OCCUPIED", with three interlock refusals;
+  - the close applies by itself once the doorway is clear;
+  - the base-kit way back is kept.
+- **Restart with the chosen configuration** (`godot-reversible-live`,
+  OK on `d92d723`):
+  - seed: 3 checks;
+  - select: 9 checks. The status is recorded frame by frame, PENDING
+    then ACCEPTED. The value is on disk. A forged selection is refused
+    by its own key;
+  - restore: 3 checks. The doorway is open at load and walked through
+    without touching the lever.
+
+### O05-05 — the featured Echo at Blindside (M2) — reconciled; the integrated loop is BLOCKED, M2 partial
+
+**O05-05.1, what runs today** (read at `5902920` by one read-only helper;
+the claims marked ✓ were re-checked by hand):
+
+| seam | state |
+|---|---|
+| claim → pending → AP send → confirm | runs. `reward.gd` `claim_check` → `transactions.claim_check` → `T.claim_zone_check`, then `backend.check_locations` (real `ap_client` or `mock_ap`) → `T.confirm_check` |
+| a foreign item → a local Echo | runs, **for a foreign item only** ✓ (`transactions.py` ~118-133: a self-recipient item is "Delivered to you" and mints nothing). Interpretation is validate → one repair → deterministic fallback; `append_interpretation` is idempotent per `echo_id`; `derive()` folds |
+| equip through the menu | runs. `InventoryLayer` → `slot_action` → `T.slot_action` → snapshot → `EchoRuntime.set_equipped`. No auto-equip |
+| the grapple itself | runs (`echo_runtime._grapple`, `player.camera_ray`, cooldown, a miss refunded) |
+| D-1/D-2 featured acquisition | declared and tested at the bridge: `Zone.featured_acquisition`, `established_in_zone`, case C, the circularity refusal (`topology._explore_acquiring`). **No composer emits it** |
+| `Zone.rail_networks` | built by `RailNetworks` in composed Zones (track, carrier, junction, span, a GROUND-level control). **No composer emits it**; no direction receivers are built outside `railway_scenario.gd`; `topology.reachability` has no rail model |
+| rail span persistence | **was broken — fixed here, P5-9** |
+| the gantry, the grapple ring, the pedestal grant, the S3 hole | exist only in `railway_scenario.gd` (the M2-mech development scenario, labelled a shortcut) |
+
+**The exact blockers** — each a policy the packet does not choose and
+this lane may not invent (`06_SOURCES_AND_LIMITS.md`: "does not
+authorize weakening the guarantee to finish M2"):
+
+- **B-1, allocation edge case: the featured Check can hold the player's
+  own item.** Only a foreign item mints an Echo ✓. A featured Check
+  holding a Signal Key or coin would hand over nothing. Choosing the
+  featured Check by its scouted recipient is the move
+  `SOLUTIONS_CATALOGUE.md` §1 option 3 rejects ("leaks hidden scouting
+  information into level structure"). Which Check is featured, and what
+  a self item does there, is Dess's/the owner's call.
+- **B-2, qualification: nothing makes the Echo supply the function.**
+  `EchoGenerationRequest` has no required-capability field ✓
+  (`epsilon/requests.py`), nothing refuses a non-qualifying
+  interpretation for a featured Check, and the fallback yields a grapple
+  only when the item's NAME suggests one. `qualifies_for_gap` and
+  `capability_guarantee` have no production caller. "Use only the
+  selected fallback/repair rules" (O05-05.6): no rule is selected for a
+  provider that does not qualify.
+- **B-3, pre-seed AP representation.** The APWorld declares Signal-Key
+  tier rules only ✓ (`apworld/archipepsi/__init__.py`).
+  `docs/AP_CAPABILITY_LOGIC.md` is a proposal ("Nothing here is
+  implemented"; the shape "is an owner decision"). Production never
+  passes `declared_capabilities`, so Option C governs: a capability
+  gate may sit only where no AP location is behind it.
+- **Latent risk, recorded rather than acted on:** `_explore_acquiring`
+  lets Checks or the exit sit behind the FEATURED gate (case C). With
+  B-1 and B-2 open, a composer that emitted `featured_acquisition` today
+  could produce an unwinnable seed. None does. It must not until B-1..B-3
+  are settled.
+
+**What that leaves (O05-05.2-.7).** The required progression gate stays
+unavailable, and M2 is **partial**: the physical loop is proved only in
+the development scenario (M2-mech, pedestal grant, labelled as such);
+the claim, delivery, interpretation, equip and grapple halves each run
+through real campaign machinery, separately. No walking bypass, no
+faked foreign item, no candidate `blindside` step (the profile still
+refuses the name). Composing the three-dock structure without the gate
+it exists for would be a railway demo, not Blindside.
+
+**Engine work that does not wait on the policy, when M2 resumes** (none
+started, so nothing is half-built): direction receivers for composed
+railways; a rail path that follows the committed doorways rather than a
+curve through room arrivals; a declared control height/capability and
+the overhead gantry; the S3 destination; a rail model in
+`topology.reachability`.
+
+### O05-06 — the existing minors in game context — all three integrated and played
+
+- **O05-06.1, the occurrence contract.** `schemas/minors.py` states what
+  the registry cannot: the host chamber type, the one way in, the sealed
+  openings, the latches the room records, and completion and recovery in
+  words. Space and doorways stay the registry entry's own
+  (`minor_rooms.json`). A minor is never offered to a provider
+  (`shells.is_offerable`); only the candidate `minors` step places one.
+- **Extraction, not duplication (O05-06.1).** `UnweightedSwitchRoom` is
+  the scenario's room, moved out whole. Two owners, one implementation:
+  - `--unweighted` (development, still labelled so): 61 checks OK;
+  - `UnweightedSwitchHosted`, the registry shell: a doorway in A's wall,
+    G walled in with the way on cut at the sill, and the scenario's
+    stand-in goal plate removed, because the goal is the Zone's Check.
+  - `godot-room-contract`: the minor shell PASSES, and both doorways are
+    crossed by a real body (3.10 and 3.11 m past, 0.08 m of dip).
+- **O05-06.4, selection.** The `minors` step (`minor_hosting.py`) runs
+  last in the candidate profile. It ADDS the minor as a new room behind a
+  dead-end arena, off the parent's side doorway, and moves that arena's
+  one Check onto the minor's gallery (P5-13).
+  - A parent is: an arena; not the first room; holding no key and no
+    other relationship's control; with exactly one Check; entered by an
+    ungated doorway; with a free side socket.
+  - Otherwise the step declines by name, listing each room's reason.
+  - The Zone is schema-validated, reachability-proved and re-certified
+    (`validate_zone` with the minor's own shell rule added to the offer,
+    and the Zone's real budget, P5-12). `strip` hands the Check back so
+    re-hosting still works.
+  - Frozen sample (regenerated at `6cbe5f2`, both contracts): the step
+    emitted in 12 of 12, every case certified, every allocated Check
+    kept. EX50-033 was hosted in 12 of 12 and EX50-021 in 10 of 12; in
+    zone_004 and zone_012 EX50-021 declined by name, because the one
+    remaining dead end had already taken EX50-033 and every other room
+    holds a relationship's control, a key or no free side socket.
+    The first frozen run declined zone_012: its one
+    dead end has a right-hand gallery, which stands in a `side_right`
+    doorway. The step now tries each free side socket, and the Zone
+    schema judges each one (`test_a_gallery_on_the_preferred_side_...`).
+    A decline lists the dead ends' reasons first.
+- **O05-06.4, persistence.** The bolt is `minor_<room>/bolt`, a reserved
+  namespace, accepted only for a room the ACCEPTED Zone builds from a
+  contracted shell (`test_minor_hosting.py`, 23 tests). `ZoneController`
+  finds the hosted room, restores the bolt from the latch record before
+  anyone sees it, reports it when it is pulled, and sends the room's own
+  lines to the HUD.
+- **O05-06.5, reward and return.** The Check stands at the shell's
+  objective on the gallery and is claimed once through the ordinary
+  claim path. The way back is the room's own: the return gap, then the
+  return stair the bolt adds. The parent keeps its return plug.
+- **Played (`make godot-candidate-live`, now five phases, all OK):**
+  seed 39, play 20, restore 5, minor 16 and minor_restore 10 checks.
+  - **seed:** the served Zone matches `candidate_zone.json` field for
+    field, minor room `c024` included. All four steps are recorded
+    EMITTED and certified.
+  - **minor:** the controller finds the minor in its own room. It is
+    built from its shell and stands as built: bolt free, crate parked, no
+    stair, no stand-in goal. Its Check stands on the gallery, 1.90 m up.
+    HARNESS STEP, declared: the player is placed at c015's arrival
+    (reaching it crosses P14's plate and two locked doors, which their
+    own suites play). From there the player, by hand:
+    - clears c015 with the base kit;
+    - walks through the doorway the profile added (14.9 m);
+    - pulls the drive: the crate lands on the HEAVY plate and the crossing
+      SHUTS;
+    - shoots the applicator with the Static Pulse: LIGHTENED is on the
+      crate, and the crossing OPENS with the crate still on the plate;
+    - stands on the crate top (0.99 m) and goes through onto the gallery;
+    - pulls the bolt: ACCEPTED, `minor_c024/bolt` is in the save;
+    - claims Check 89100055: CONFIRMED, with exactly one claim intent.
+  - **minor_restore:** both processes are new, and nothing is done before
+    these checks:
+    - the bolt holds, the crossing is open, and the 8-step return stair
+      stands;
+    - the crate is parked and LIGHTENED is gone (package-local and
+      ephemeral);
+    - the Check stays claimed (this needed P5-14).
+    Then the crate is driven back onto the HEAVY plate by hand and the
+    crossing STAYS OPEN, because the restored bolt holds it. No latch and
+    no claim is sent back.
+- **O05-06.3, EX50-021 Counterfire Arcade: integrated and played.**
+  - **Extraction.** `CounterfireArcadeRoom` is the scenario's room,
+    moved out whole and placed in its own frame. `--counterfire` owns one
+    at the origin (still 44 checks OK). `CounterfireArcadeHosted` is the
+    registry shell `minor_counterfire_arcade`, and it differs from the
+    scenario in four ways:
+    - a doorway in the arrival wall;
+    - the annex closed (the scenario stood in a void);
+    - a sealed way on at the flank's height, as EX50-033's hosted room
+      has one;
+    - no stand-in goal plate.
+  - **The gunner is the Zone's.** EX50-021 §9 says "Enemy position and
+    health follow the source encounter persistence rather than a new
+    puzzle-owned copy". So the contract declares one `ranged` enemy for
+    the chamber, the shell's `enemy_spawn` volume is the gallery post,
+    and the hosted room builds none. The Zone spawns, tracks and
+    persists it like any other enemy.
+  - **Hosting.** The `minors` step now hosts every contracted minor,
+    each behind its own dead end; a parent that took one is no longer a
+    dead end, and a minor is never a parent. On the played Zone,
+    EX50-021 is `c025` behind `c020` and EX50-033 is `c024` behind
+    `c015`. Its latch is `minor_<room>/release`.
+  - **Played (`minor` phase):**
+    - HARNESS STEP, declared: placed at c020's arrival.
+    - c020 itself is walked past, not fought. Its two ranged enemies
+      stand on an elevation band the scripted fighter cannot reach.
+      Measured: three deaths, not one landing a hit.
+    - At the stance, facing the gallery, nothing is pressed: the Zone's
+      gunner commits a shot.
+    - The player dodges into the alcove. The enemy's own projectile
+      carries on down the lane and trips the receiver.
+    - Through the shutter with 5.6 s of its interval left, then up the
+      supported route onto the flank (2.96 m).
+    - The release is pulled and ACCEPTED as `minor_c025/release`.
+    - Check 89100025 is CONFIRMED.
+    - The shot detector takes only a projectile inside the room heading
+      south: the first run picked up one of c020's ranged enemies
+      shooting through the doorway.
+  - **Restart (`minor_restore` phase):** before anyone acts, the room is
+    released, the shutter open with its panel physically raised, and the
+    fixed stair standing. The Check stays claimed. 20 s later (two and a
+    half intervals, nothing shot) the shutter is still open.
+- **O05-06.2, EX50-011 Passing Platforms: integrated, played, and
+  restarted from a non-default platform state.**
+  - **Extraction.** `PassingPlatformsRoom` is the scenario's room, moved
+    out whole and placed in its own frame. `--passing-platforms` owns one
+    at the origin (63 checks unchanged, then 70 with the checks below).
+    The lift now places itself in its parent's frame (`ShuttleDeck._place`,
+    P5-15's rule), and the shuttle takes its frame from the room when it
+    enters the tree (`RailCarrier.frame_from_parent`, opt-in, off for the
+    Zone's own railways). `PassingPlatformsHosted` is the registry shell
+    `minor_passing_platforms`: a doorway in the arrival wall at x = 0, and
+    the way on cut behind G at G's height for the Zone to seal. The plate
+    on G stays: it is §4's "arriving at G" that releases the stair. The
+    Zone's Check stands at the objective on G.
+  - **What persists.** The stair is the latch `minor_<room>/stair`. Each
+    carrier's rest is `minor_<room>/<carrier>` in the new
+    `ZoneProgress.carrier_states` (`PUZZLE_LOCAL`, Amalgam §5.2): pose,
+    destination and hold, reported only AT REST (arrived, STOP, or a
+    declared dwell), because §5.3 refuses to save a moving machine. The
+    bridge accepts a rest only for a carrier and stop the contract
+    declares (`record_carrier_rested`, 11 bridge tests). A dwell comes
+    back HELD (§9). Before completion, a death sends both carriers home
+    by the ordinary commands (§9 with §8's no-teleport rule).
+  - **Where it appears (a selection rule, recorded for Dess).** Every
+    sample Zone has at most two dead ends a minor can take, and with a
+    fixed order EX50-011 was hosted in 0 of 12. `minor_hosting.
+    offer_order` turns the order with the Zone's ordinal: `zone_001`
+    keeps EX50-033 + EX50-021 (the evidence above is unchanged), and
+    `zone_002` offers EX50-021, EX50-011, EX50-033. The other two minors
+    already had their own live proofs, so EX50-011 is played in
+    `zone_002`.
+  - **Reached by the ordinary lifecycle (`next` phase).** zone_001
+    re-entered and abandoned from the pause menu (ABANDON ZONE, CONFIRM
+    ABANDON); the portal designs zone_002 with the whole profile; the
+    bridge's record shows EX50-011 built as `c025` behind `c015`; the
+    layout is ACCEPTED.
+  - **Played, before the restart (`next`, 21 checks):**
+    - HARNESS STEP, declared: placed at c015's arrival, then walked in.
+    - H EAST pulled at A. HARNESS STEP, declared: the player is killed
+      through the damage path. The shuttle went home from 1.52 m by
+      ordinary motion (largest step 0.054 m, the docking snap included),
+      and its rest at WEST was reported.
+    - H EAST again, then STOP H at A as the shuttle crossed the
+      rendezvous: HELD at 8.075 m with no errand, ACCEPTED as
+      `minor_c025/shuttle` = [8.075, "", true].
+  - **Restarted (`next_restore`, 18 checks).** Before the player: the
+    shuttle HELD at 8.075 m, as saved, with 0.0000 m of drift over a
+    second, and no rest reported back. Then the patient route (§6) was
+    finished FROM the restored shuttle: onto the lift at A, LAUNCH, its
+    dwell reported as a held rest bound for SHELF, the step across onto
+    the held shuttle, H ON EAST from its own deck, carried to EAST,
+    walked off onto G, the stair ACCEPTED as `minor_c025/stair`, Check
+    89100005 CONFIRMED, and the lift, left to its schedule, came to rest
+    at SHELF.
+  - **Restarted again (`next_final`, 7 checks).** The stair stands with
+    G's railing open where it lands, the shuttle at EAST and the lift at
+    SHELF exactly as last saved, the Check still claimed, and the stair
+    walked from A up onto G with both carriers elsewhere. Nothing is
+    sent back.
+  - **Whole run, one process chain, at `400ed37`:** `godot-candidate-
+    live` seed 40, play 20, restore 5, minor 32, minor_restore 15,
+    next 21, next_restore 18, next_final 7, all OK. Around it, with no
+    regressions: `make test-bridge` 1883 passed, 1 skipped;
+    `godot-passing-platforms` 70; room-contract; actuator 93;
+    rail-carrier 73; rail-junction 140; rail-zone 25; room; zone-audit;
+    content; counterfire 44; unweighted 62; zone-state 60; transport-live
+    6/16/18/12; reversible-live 3/9/6; latched-route-live 2/18/12;
+    consumable-live OK. `godot-zone-audit` rewrote the placement
+    fixtures' `controller_digest`, stale since O05-01 changed
+    `player.gd` (committed apart, `3f6c1d3`).
+  - **Direct-handler checks, labelled as such** (`godot-passing-
+    platforms`): a lift stopped in its dwell reports [4.0, "SHELF",
+    held]; handed to a second room it waits five seconds without
+    leaving, and LAUNCH resumes it to SHELF; the shuttle restores held
+    at 7.25 m.
+
+### O05-07 — the shared graph, broadened through a real consumer — slice 1 done
+
+- **The consumer is EX50-033's own chain.** The room wired it by hand:
+  the HEAVY plate through a NOT into the shutter, and the bolt holding
+  the crossing open. It is now declared in the minor's occurrence
+  contract (`MinorContract.graph`) and run by the shared `SignalGraph`,
+  in both the `--unweighted` scenario and the hosted room:
+
+      plate (PRESSURE_PLATE, HEAVY) -> NOT (unloaded) --.
+                                                         OR (open) -> shutter
+      bolt_lever (PULSE_BUTTON) -> LATCH (bolt) --------'
+
+  The room binds its own plate, lever and shutter to the declaration's
+  ids and keeps only presentation: its lines and the return stair. The
+  LATCH id is the contract's latch, so a pulled bolt is still
+  `minor_<room>/bolt` and a restored one comes back through
+  `restore_latch`, silently.
+- **Two kinds join, with §19.1's port forms.** `PULSE_BUTTON` (a pulse,
+  one tick) and `OR` (2–4 Booleans). A pulse feeding a Boolean reader,
+  or driving a machine by itself, is refused at composition. The P14
+  LATCH's Boolean set is kept (D-10 option B). `settle` and `upstream`
+  now handle trees; a single chain comes back as before.
+- **What a Zone may ask for did not widen.** A Zone may declare only
+  sensors its builder places (plates), and `RoomGraphs` refuses anything
+  else instead of placing a plate for it. A route gate hangs only on a
+  plate through NOT/LATCH, the shapes the route search reasons about;
+  an OR in front of a route is refused by name. The same OR as a machine
+  in a room is legal.
+- **Evidence.**
+  - Bridge: 13 new tests, and 4 sabotages each fail their test (port
+    forms twice, the route rule, the placeable rule).
+  - `godot-unweighted` 69: the 62 comparison checks unchanged, plus 7
+    that read the graph itself. They check the bindings, the node order,
+    and OPEN at rest. With the crate on the plate: plate ON, NOT OFF,
+    OR OFF, and the graph shuts the crossing. The bolt's one-tick pulse
+    sets the LATCH, and the OR holds the crossing open with the plate
+    still loaded. On the next tick the pulse is gone and the latch holds.
+    §11's control leaves the plate sensor declared and unbound.
+  - Sabotage: with the runtime's OR always false, the chain fails
+    throughout, the complete route included, so the shared runtime is
+    what opens and holds the crossing, not leftover wiring.
+  - Unchanged: `godot-signal-graph` 46, `godot-latched-route` 38,
+    `godot-graphs`, `make test-bridge` 1897 passed.
+  - In a Zone, through the real bridge: `godot-candidate-live`, all
+    eight phases, the same counts as at `400ed37` (40/20/5/32/15/21/
+    18/7). That includes the hosted EX50-033 in c024: the bolt pulled
+    and accepted as `minor_c024/bolt`, then restored before anyone
+    acts, and still holding the crossing with the crate back on the
+    plate.
+- **~~Not routed, and why: EX50-021.~~ CORRECTED in slice 2.** This
+  said the window was the shutter's own timer "by design", citing
+  `ServiceShutter`'s comment and EX50-021 §3/§9. §3 says the opposite:
+  "the eight-second TIMER refreshes on another valid receiver hit. Its
+  output opens the service shutter." §9 calls it "the receiver timer".
+  The shutter's clock was an implementation shortcut, and the note
+  mistook it for the source's intent. EX50-021 is now routed (below).
+- **Also fixed:** `test_a_zone_with_no_edges_is_declined_with_the_reason`
+  (O05-02, this lane's) had skipped on every run. Its Zone could not be
+  validated without edges. It now builds a Zone that can, and runs; the
+  bridge suite has no skips.
+- **Still unsupported, individually:** AND, DIRECT, TIMER, SEQUENCE,
+  COUNTER, SELECTOR, DELAY, THRESHOLD; fifteen of the eighteen sensors;
+  all five signal verbs (O05-07.4).
+
+### O05-07.5 — sensor distinctions and safety, on the graph runtime
+
+Tests only; no runtime change was needed. Each case runs through the
+graph, not just the sensor, and each was sabotaged.
+
+- **A class is not a sum.** Two MEDIUM bodies of 100 kg, 200 kg
+  together against HEAVY's 120 kg floor, stand on a HEAVY plate. The
+  plate is not satisfied, the NOT stays true and the shutter stays
+  open. The plate-level pair already existed
+  (`mass_class_driver._debris_does_not_add_up`); this one is the graph
+  reading the plate. Sabotage: a plate that adds up kilograms fails it.
+- **Duplicate occupancy.** Two HEAVY bodies are one answer, not a
+  count. Taking one off must not change the plate's answer even for a
+  frame; the check records every `occupancy_changed` the plate emits.
+  Only the last one leaving releases it, once. Sabotage: a plate that
+  releases for one frame when any body leaves fails it with answers
+  `[false, true]`, although its end state (NOT false, shutter shut)
+  looked right. That is why the check records answers, not only the end
+  state.
+- **A repeated pulse.** A second pull fires nothing more:
+  - in the suite, the LATCH fires once;
+  - in EX50-033, the LATCH fires once and the room engages once.
+  Sabotage: a held LATCH that re-fires on a pulse fails both suites,
+  with "LATCH fired 2 time(s), the room engaged 1". The room's own
+  `bolted` guard would have hidden it, so the check counts the latch.
+- **Stale callbacks.** A lever outlives the graph that wired it:
+  - freeing the graph leaves nothing on the lever, so no pull can reach
+    a graph that is gone;
+  - its replacement, started twice, is wired once and hears one pull
+    once.
+  Stated plainly: both hold at the engine as well. Godot drops a freed
+  target's connections, and it refuses an identical second connection
+  with an error. So removing the graph's own wire-once guard does not
+  fail the check; it adds the engine's error to the log (confirmed).
+- **Already covered, not repeated:**
+  - removal (`_a_heavy_occupant_closes_it_and_leaving_opens_it`);
+  - player participation per sensor (`_the_player_is_not_an_occupant`,
+    and `mass_class_driver._counts_player_is_the_only_door` for the
+    decisive `counts_player` pair);
+  - a pulse's normal expiry after one tick (`godot-unweighted`);
+  - route requirements widened only through the named route kinds
+    (slice 1).
+- **Waits on its producer:** repeated SHOTS need SHOOTABLE_TARGET in the
+  graph, and the expiry of a temporary override needs O05-07.4's verbs.
+- **Evidence:** `godot-signal-graph` 57 (46 + 11);
+  `godot-unweighted` 70 (69 + 1).
+
+### O05-07 — slice 2: EX50-021's own chain, through the graph — done
+
+- **The consumer is the arcade's own contract.** EX50-021 §3 names the
+  parts: "the receiver emits one pulse per valid hit", "the eight-second
+  TIMER refreshes on another valid receiver hit. Its output opens the
+  service shutter", and the manual release is permanent. §9: "The
+  receiver timer is ephemeral." Declared in the minor's contract and run
+  by `SignalGraph`, in the `--counterfire` scenario and in the hosted
+  room alike:
+
+      receiver (SHOOTABLE_TARGET, PULSE) -> TIMER (window, 8 s) --.
+                                                                  OR (open) -> shutter
+      release_lever (PULSE_BUTTON) -> LATCH (release) ------------'
+
+  It is the same tree as EX50-033's, with a TIMER where the NOT was. The
+  LATCH id is the contract's `release`, so saves read the same.
+- **Two kinds join, each with this consumer.**
+  - `TIMER`: one pulse in; ON for `duration` after it; a new pulse
+    restarts it (§19.2); EPHEMERAL (§19.6). The runtime runs TIMERs down
+    on the physics tick, and a TIMER running out re-evaluates the graph.
+    That is the one change no sensor announces.
+  - `SHOOTABLE_TARGET`, in PULSE mode: `ImpactReceiver`, which already
+    reuses the activity SHOT path (07.1's "reuse SHOT/STAND/TOUCH ...
+    paths"), with its 0.4 s re-arm as the debounce. TOGGLE is refused:
+    nothing reads it.
+- **A stated gap: `[RANGED]` is a floor, not a filter.** §20.2's
+  `required_tags` defaults to `[RANGED]`. The runtime has no damage
+  tags: `take_damage` carries an amount, a direction and a knockback,
+  and the SHOT path counts any hit, "a melee swing" included. So every
+  ranged hit operates the receiver and a Static Pulse always suffices,
+  which is what §20.2 requires of a mandatory target. But a swing or a
+  blast would operate it too. A target requiring MELEE or EXPLOSIVE
+  would be operated by a Static Pulse, the opposite of what it says, so
+  the schema accepts exactly `[RANGED]` and refuses every other tag set
+  by name. Enforcing tags means a DamageRequest carrying them through
+  every damage call site. That is a cross-cutting change this lane did
+  not make, so it is recorded here for review.
+- **One clock, not two.** `ServiceShutter` kept its own timer (`trip`,
+  `open_seconds`, `left`), and the arcade tripped it directly. It is
+  now commanded like every actuator, and the window is the TIMER's.
+  `create(...)` lost its `seconds` parameter: five call sites, one of
+  them a test's (`actuator_driver`), which passed the value positionally.
+- **A shared binder.** `SignalGraph.bind_declared` moved up from
+  EX50-033's room now that there are two. It also checks that each
+  declared sensor's machine is of its kind. A lever bound under a
+  target's id is left unbound (reads OFF) and reported, rather than run
+  as something the declaration never described.
+- **Tests changed, and why.**
+  - `counterfire_driver`'s interlock case opened the shutter with
+    `trip()` and ran it out with `shutter.left = 0.2`. It now opens it
+    with a hit on the receiver's own target body and runs out the
+    graph's TIMER. The assertions are unchanged, and the case now
+    exercises the path the room actually uses.
+  - Two "(%.1f s left)" messages read the removed `shutter.left`; they
+    read the TIMER now (`window_left()`).
+  - The wrapper's `_on_release` test hook pulls the lever through its
+    own `interact`, so the graph hears it.
+  - Two bridge tests pin the supported sets. They now list TIMER and
+    SHOOTABLE_TARGET, and everything else is still refused.
+- **Fixtures regenerated, not edited:** `latched_route_zone.json` (Dess's
+  P14 fixture) and `candidate_zone.json`. Each gains three `null` keys
+  per graph (`mode`, `required_tags`, `duration`), dumped the way
+  `requires_class` already is. The content is otherwise identical,
+  checked key by key. `proposal_digest` is derived and never stored, so
+  no save is affected. Omitting the keys instead needs pydantic 2.11's
+  `exclude_if`; the pin is `>=2.6`, and raising it would be a tooling
+  upgrade.
+- **Evidence.**
+  - Bridge: 10 new tests; `make test-bridge` 1907 passed, none skipped.
+  - Four schema sabotages each fail exactly their own test: a TIMER fed
+    a Boolean, any tags accepted, TOGGLE accepted, and duration made
+    optional.
+  - `godot-counterfire` **55** (44 + 11). The 44 played and primitive
+    checks are unchanged in assertion; the committed hostile shot, the
+    fallback Static Pulse, the interlock and the release now run through
+    the graph. The 11 new checks read the graph itself:
+    - the bindings, and the node order TIMER/LATCH/OR;
+    - the declared 8 s equals the room's §2 `OPEN_SECONDS`;
+    - SHUT at rest;
+    - one hit is one pulse, TIMER ON at about 8 s;
+    - on the next tick the pulse is gone and the window holds;
+    - REPEATED SHOTS: a second hit restarts the window (6.38 s → 7.98 s),
+      and a third inside the re-arm is not a third pulse;
+    - expiry: window OFF, OR OFF, shutter shut;
+    - the release LATCH fires once and holds the OR through a later
+      expiry.
+  - Runtime sabotages, each failing its checks:
+    - a TIMER that does not restart ("6.38 s left, then 6.37 s");
+    - an expiry that does not re-evaluate (the interlock and expiry
+      cases);
+    - receivers ignored (every played "shutter opened" fails, so the
+      graph is what drives the room);
+    - a binder that accepts any kind.
+  - `godot-signal-graph` 59 (+2, the binder), `godot-unweighted` 70,
+    `godot-actuator` 93, `godot-graphs`, `godot-latched-route` 38,
+    `godot-content`, `godot-encounter` 51, `godot-room-contract`,
+    `godot-zone-audit`, and, because `StateGates` drives the same panel,
+    `godot-zone-state` 60, `godot-reversible` 32 and `godot-transport`
+    106: all OK, all at their previous counts.
+  - Live, through the real bridge:
+    - `godot-candidate-live`, all eight phases at the same counts as
+      before (40/20/5/32/15/21/18/7). The hosted arcade in c025: the
+      Zone's own gunner's shot trips the receiver, the player goes
+      through "inside its interval (5.6 s left)", read from the TIMER,
+      and the release is accepted as `minor_c025/release`. On restart it
+      is restored through `restore_latch` before anyone acts, and still
+      holds the shutter two and a half windows later.
+    - `godot-latched-route-live` against the regenerated fixture: 2/18/12.
+
+### O05-10 — machinery through interruptions, on this run's occurrences — 10.1, 10.3, 10.4 in part
+
+- **10.1, the audit, limited to the machine kinds this run touched.**
+  - **`ServiceShutter`**: every doorway machine this run built uses
+    this one panel class:
+    - EX50-021's shutter, commanded by its graph's TIMER;
+    - EX50-033's, by its graph's NOT/OR;
+    - the P14 route panel (`RoomGraphs`);
+    - O05-04's `StateGates` doorway (`settle`/`command`).
+
+    Its closure is §21.2's through the shared `SafeClosure`, which
+    `Actuator` also uses, so no second safety helper exists. Since
+    O05-07 slice 2 it keeps no clock of its own either.
+  - **`RailCarrier` / `ShuttleDeck`** (EX50-011) step through the shared
+    `StopTravel`. They carry the player, so §21.1.1 has them hold.
+  - **Power loss is untested here, stated:** no occurrence built this
+    run has a power source, a `HAZARD_CONTROLLER` or a
+    `LIGHT_CONTROLLER`. §21.1.1's per-kind rows stay an explicitly
+    untested family for these occurrences. The P15 construction suite's
+    coverage is not a substitute (§10's "Done").
+- **10.3, interrupted operations.**
+  - **A real mid-motion reversal, on EX50-021's shutter**
+    (`godot-counterfire`, new): the window runs out and the panel goes
+    down. At 0.591 open, with the doorway clear (this is not the
+    interlock), a hit arrives. The panel goes back up from 0.591, never
+    lower, with no step larger than 0.014 of its travel in a frame, and
+    opens fully. That is §21.1's "reverse immediately from the current
+    `t`. No snap, no pause, no completion of the current leg".
+    Sabotage: a shutter that ignores commands mid-motion finishes the
+    leg (lowest 0.000) and fails it.
+  - **Blocked closure, reopen and retry:** the arcade's interlock case,
+    now through the graph. The window expires with the player in the
+    doorway, the panel holds open (3.1 s over), and it shuts once the
+    doorway is clear.
+  - **A queued change:** O05-04's "CLOSING QUEUED · DOORWAY OCCUPIED",
+    applied by itself once clear (`godot-reversible` 32).
+  - **No restart from stale input:** a pulse is gone on the next tick
+    (EX50-021 and EX50-033). EX50-011's death reset leaves its carriers
+    at their reset rest until a new call (O05-06.2).
+- **10.4, ownership and isolation.**
+  - **Two arcades, two windows** (`godot-counterfire`, new). A hit on
+    one opens its own window (6.38 s) and not the other's. The first is
+    freed mid-window. The other stays shut, and a room built in its
+    place starts shut with no window, evaluated exactly once. Sabotage:
+    TIMERs shared across graphs (`static var timers`) fails both checks
+    and an existing one.
+  - **A freed graph's lever wiring reaches nothing**, and its
+    replacement is wired once (O05-07.5).
+- **Remaining, individually:**
+  - 10.2's "separately selected constrained assembly": no constrained
+    assembly is in the candidate. Its Passing Platforms half was done
+    with O05-06.2.
+  - 10.4's "counters or resources do not accrue repeated effects after
+    several enter/leave/restart cycles" has no dedicated measurement.
+    The candidate-live chain restarts the process eight times, and its
+    restore checks assert nothing is announced twice, but no counter is
+    read across cycles.
+  - Power loss (above).
+- **Evidence:** `godot-counterfire` 59 (55 + 4).
+
+### O05-11 — the consumable slot, for the candidate only — promoted; natural acquisition bounded by an open rule
+
+- **Commitment ordering holds, so promotion was allowed (11.1/11.2).**
+  The condition in `capabilities.py` was "authorize, then launch, and
+  never refund a charge whose effect is already in the world, with
+  coverage that counts accepted expenditure". It is met:
+  - the press only reserves and authorizes;
+  - `_on_consumable_authorized` launches, then commits, or releases a
+    launch that did not happen;
+  - `godot-consumable-live` and `-restart` count accepted spends across
+    a dropped socket and a killed process.
+
+  Nothing new was needed there. That is inspected, not re-tested.
+- **Candidate-only promotion (11.4).**
+  - `candidate.OPTIONS = ("consumables",)`. It is switched on by the
+    same `--candidate` spec, and `all` includes it. It is not a Zone
+    step: the engine keeps it in `candidate_options`, apart from
+    `candidate_steps`, so every "is the profile on" test still asks
+    about Zone composition.
+  - Under it, `_echo_request` advertises all five slots
+    (`allowed_for(consumable=True)`). `generate_echo_validated` admits
+    exactly the slots the request advertised.
+  - **Production is unchanged:** `IMPLEMENTED_ACTION_SLOTS` still
+    withholds `consumable`, and `test_s1_review_fixes`' STAGED
+    assertion is untouched.
+  - The launcher prints the option in its profile line. A candidate slot
+    made before this commit resumes only under its own profile, and the
+    refusal names `--candidate=zone_state,transport,latched_route,minors`.
+- **The provider's reading (11.3).** Offered the slot, the fallback reads
+  a Bomb Bag as three of the same bomb: the weapon reading's `arc_lob`
+  (34 damage, 4 m), plus a 1.5 s `stunned` on what the blast catches.
+  That is real damage and a supported Status. Not offered, it is the
+  weapon, exactly as before, and no other item reads differently.
+- **Acquired, folded, slotted, spent, kept (bridge, real engine).**
+  `test_the_candidate_acquires_uses_and_keeps_a_bomb_bag` runs a mock
+  campaign under the option through these real steps:
+  - the Check is claimed;
+  - the fallback reads the item as the consumable, and it validates;
+  - the fold owns it with 3 charges;
+  - `handle_slot_action` slots it;
+  - `handle_authorize_consumable` and `handle_use_consumable` settle
+    one use;
+  - the save reloads from disk with 2 left, still slotted.
+
+  **One thing is arranged, and the test says so:** the first Check's
+  item NAME is set to "Bomb Bag". Its id, recipient and flags are kept,
+  so allocation is untouched. The next point is why.
+- **THE BOUNDARY — SETTLED by the owner on 2026-09-23 (see "Owner
+  direction: related Echoes" below). What follows is the finding as it
+  stood; the pinned test is replaced by one that proves the natural
+  path.** In the mock's own campaigns the sequel rule took the bomb.
+  Unarranged, every Bomb Bag reaches a campaign that already
+  owns a lob (prototype seeds default and Soak00–07; default scale).
+  Those lobs come from items no keyword rule matches ("Boomerang",
+  "Revelation Scroll", "Restoration Wine"), which fall through to the
+  fallback's default "throw it" `arc_lob`. `_as_sequel`, ECHOES §11's
+  "a sequel when the campaign already owns the item's verb", keys the
+  family on the primitive alone, so the consumable CREATE becomes that
+  weapon's UPGRADE (pinned:
+  `test_in_the_mock_s_own_campaign_the_sequel_rule_takes_it`).
+  - **Whether a consumable shares a family with a verb you always have
+    is a design decision, not a missing mapping.** ECHOES v0.8 predates
+    the consumable slot, and no accepted source settles it. Changing the
+    family key would redesign S6's evolution rule, so it is left for Dess
+    and the owner.
+  - Until then, a candidate played on the deterministic provider will
+    rarely hold a consumable. A live model sees the slot offered and may
+    create one.
+- **Runtime:** P5-19 (above) makes the bomb's stun, and any projectile's
+  status, actually land. `godot-consumable` 91, `godot-verbs`,
+  `godot-stats`, `godot-lab`, `godot-archive` 23, `godot-hud` and
+  `godot-legible` are OK.
+- **Not claimed:** a live Godot run of this naturally acquired bomb. The
+  live consumable suites use `give_consumable.py`, a test setup, and a
+  hitscan charge. The bomb's client path is the same `EchoRuntime`
+  press, now with its status proven in `godot-verbs`.
+
+### Owner direction: related Echoes (2026-09-23) — applied; the O05-11 boundary settled
+
+- **The direction, verbatim:** "Similar or similar-sounding source items
+  are an opportunity for Epsilon to upgrade an existing item OR create a
+  new one. Similarity does not force a merge, and sharing an Action
+  primitive does not establish that two items are the same family. [...]
+  An upgrade must produce a meaningful, visible change. Preserve the
+  existing item's useful function; a substantial trade-off should
+  normally be a separate item/variant rather than an involuntary
+  replacement. Use supported mechanics and existing validation/budgets.
+  Preserve source provenance, original multiworld delivery, and
+  consumable expenditure. This settles the creative choice, not
+  permission to bypass accounting or fabricate unsupported behavior."
+- **What was wrong.** The deterministic providers keyed a "family" on
+  `action:<primitive>` (`_as_sequel`, S6). A Bomb Bag was therefore the
+  upgrade of any lob the player owned, and a Boomerang or a Revelation
+  Scroll the default happened to render as a lob counted. That is the
+  O05-11 boundary above.
+- **The request now names what each owned thing came from.**
+  `OwnedComponentSummary` gains `origin`, `origin_game` (its first
+  provenance row) and `slot`. It is built in one place,
+  `campaign.owned_summaries`, which the campaign and the new tests share.
+  A provider judging "the new source and the existing collection" can now
+  see the collection's sources, not only its verbs.
+- **The deterministic rule (`fallback._as_sequel`).** A sequel needs
+  three things:
+  1. **The same verb or stat.** Necessary, because the upgrade lands on
+     a field the owned component has, but no longer sufficient.
+  2. **The same reading of the two sources.** Each provider uses its own
+     reading:
+     - the fallback's `reading_of`, the keyword table `_READINGS`. It is
+       now the chain's ONLY word list, so what builds an item and what
+       relates two items cannot drift apart (a source-level test holds
+       this);
+     - mock's `mock_reading`, its catalog concept, else the fallback's.
+
+     An item nothing specific reads (the fallback's hashed default) is
+     related to nothing.
+  3. **The same slot.** A consumable does not upgrade a weapon, nor the
+     reverse, so each keeps its function.
+
+  Then the change must be meaningful: at least a quarter of the field's
+  current value, or the ladder's own step where that is larger, rounded
+  away from zero and inside the field's bounds. Otherwise the item is
+  created. `_MEANINGFUL = 0.25` is this provider's reading of
+  "meaningful", a tuning constant rather than a game rule.
+- **A model provider is told the same rule.** A "RELATED ITEMS" paragraph
+  in `claude.ECHO_SYSTEM` names the new fields.
+- **What it produces** (fallback, Ocarina of Time):
+  - Hookshot → Longshot → Clawshot: one grapple at Mk III (range +6.25,
+    pull +3.75).
+  - Bombs → Bomb Bag → Bombchu: one Bombs at Mk III (damage +8.5, then
+    radius +1.0). Each description reads "The same Bombs, heavier/wider".
+  - Ocarina (a default lob), then Bomb Bag: two items.
+  - Weapon Bombs, then a consumable Bomb Bag: two items, in either order.
+  - Mock: Hover, Iron and Pegasus Boots (all read `mock:footing`) are one
+    wall-kick at Mk III.
+- **O05-11.3 without the arrangement.** The unarranged prototype
+  campaign reaches its own Bomb Bag in the Hub shop, and it is now a
+  consumable CREATE. Every lob the campaign already owned is unchanged
+  (the component and its Mk). The bag is slotted, one charge is
+  authorised and spent, and the count survives a reload: 2 left. The
+  arranged test stays as the faster route.
+- **What is not changed.** Validation, budgets, the fold, the upgrade
+  vocabulary, provenance (every source still credited at its location),
+  delivery, and consumable accounting. An upgrade of a consumable leaves
+  a spent charge spent (tested). Stricter relatedness means more CREATEs
+  in a campaign; the existing soft and hard budgets govern them,
+  unchanged.
+- **A gap, named and not built: capacity.** The owner's example lists
+  "capacity" among what a Bomb Bag may improve. `charges` is not an
+  upgradable field (`UPGRADABLE_FIELDS`), so no provider can raise it.
+  Making it one would decide how a raised capacity meets a supply already
+  part-spent in the current Zone, which is consumable accounting. That is
+  outside "supported mechanics and existing validation", so it waits for
+  a decision. Until then a related bomb item improves damage and radius.
+- **Evidence.**
+  - `tests/test_related_echoes.py` (new: 11 tests, 14 cases) and the replaced
+    engine test
+    `test_unarranged_the_campaign_s_own_bomb_bag_is_bombs`.
+  - `test_dispositions`, `test_upgrade_headroom`, `test_fallback_variety`
+    unchanged and green; `make test-bridge` 1934 passed. The playtest
+    baseline's tripwires all pass: its generator still produces it, so
+    it is not retaken.
+  - **Sabotages, each restored:**
+
+    | # | Sabotage | Failing test |
+    |---|---|---|
+    | R1 | the verb alone makes a family | `test_a_shared_primitive_is_not_a_family` |
+    | R2 | a default reading counts as a kind | `test_two_items_nothing_reads_are_not_related` |
+    | R3 | no slot check | `…consumable_does_not_upgrade_a_weapon…` and the request test |
+    | R4 | no meaningful floor | all four meaningful chains |
+    | R5 | mock does not pass its reading | `test_mock_judges_by_its_own_reading` |
+
+    The engine test is held by both R1's rule and R3's rule, so each of
+    those sabotages alone leaves it green. Each rule has its own
+    isolating unit test.
+
+### O05-08 — manipulation: what is a missing mapping and what is a decision (owner's question, answered)
+
+- **What the accepted sources pin.**
+  - **Delivery**, Amalgam §11.7: the twelve verbs enter "through the
+    `effect` dimension of the Ability grammar, each carrying a
+    non-costed discriminator" (`physics_verb` / `field_verb`) on costed
+    atoms:
+    - `effect_physics_basic` (24): PUSH, PULL, ALIGN, SETTLE;
+    - `effect_physics_hold` (30): HOLD, ROTATE, PIN, TETHER;
+    - `effect_physics_structural` (34): ATTACH, DETACH;
+    - `effect_mass_field` (32): the two fields;
+    - `effect_physics_master` (62, `tier_min` HIGH): all twelve.
+
+    An Ability is a composition, e.g. `ab_physics_light` = `form_press`
+    + `effect_physics_basic` + `target_actor` + `recharge_cooldown_short`
+    + `scaling_flat`, `physics_verb = PUSH` (§ table at line 768).
+  - **Legal forms**, Design 2 §12.9: PRESS / HOLD / CHARGE_RELEASE, and
+    RESOURCE / COOLDOWN, never ACTION.
+  - **Behaviour**, Design 2 §14.2–§14.4: eligibility, per-verb effect,
+    profile numbers, limits.
+  - **Qualification**, §29.3: `capability:core:manipulate` is Boolean
+    membership in {PUSH, PULL, HOLD}, and the envelope is 700 N / 20 m /
+    120 kg.
+- **What the running Echo representation is:** ECHOES v0.8's Action,
+  meaning one primitive from a closed catalog (28 plus 3 modifiers),
+  bounded numbers, a slot, a cooldown, up to 2 modifiers and optional
+  charges. There are no atoms, compositions, costs or discriminators,
+  for ANY verb. The bridge implements no part of the Amalgam's
+  composition grammar (searched).
+- **Fields the current representation cannot carry faithfully:**
+  1. the atom identity and its cost (24/30/34/32/62);
+  2. `tier_min` HIGH for the master atom;
+  3. the separate `form` / `target` / `scaling` dimensions of a
+     composition;
+  4. `physics_verb` as an atom's discriminator, i.e. the rule that
+     verbs within one atom are "priced equivalently";
+  5. CHARGE_RELEASE on a verb. The running model has charge only on
+     `charge_shot`, a damage primitive.
+
+  RESOURCE recharge IS carriable (`powers` links), and a cooldown is.
+- **Verdict, in three separate parts (none substitutes for another).**
+  1. **Verb runtime: a bounded, faithful integration is possible and is
+     within this batch's authority.** §14.2/§14.3 are exact: the
+     impulse formula and its 30 m/s and 14 m/s clamps, HOLD's
+     1.5–6.0 m distance, 8 m/s and release conditions, ALIGN's
+     0.3 s + 2.5 s, SETTLE's exclusions, PIN's durations. It builds on
+     `Manipulation` / `ManipulableBody`. Evidence would be direct
+     invocation, labelled "runtime, not delivered". Per 08.5 it stays
+     unavailable to generation, because a verb that no Action reaches
+     is not enabled.
+  2. **Normal Echo delivery: a genuine design boundary, not a missing
+     mapping.** Adding a `physics_verb` primitive to the ECHOES catalog
+     would carry the verb and a profile's resolved numbers, but not the
+     atom semantics: cost, tier, which verbs share a price. It would
+     also be a second delivery path beside the composition grammar the
+     accepted design names as the path. That is the parallel ability
+     system the owner excludes. Delivery needs either the composition
+     grammar (a replacement of the Echo representation, Dess's model)
+     or an explicit decision on how atoms are represented in the
+     interim.
+  3. **Mandatory-route qualification** exists as data and code
+     (`physics.MANIPULATE_VERBS`, `Manipulation.Envelope`,
+     `grants_manipulate`). It qualifies a HOST, so it has nothing to
+     read until delivery exists.
+- **What this lane will do next inside that line:** the verb runtime,
+  one verb family at a time, labelled runtime-only, unavailable to
+  generation. Nothing is delivered, and there are no primitives or
+  shortcuts.
+
+### O05-08.1 — PULL/HOLD/ALIGN/SETTLE (with PUSH) — runtime only, verified by direct invocation
+
+#### PUSH and PULL (`7ca5945`)
+
+
+- **What exists now.** `Manipulation.impulse_verb(verb, target, eye,
+  aim, profile, space, exclude)` in
+  `godot/scripts/gameplay/manipulation.gd`, and
+  `ManipulableBody.physics_permitted` (Design 2 §4.8's field and its
+  default, true). Nothing else changed: the replay harness's held-force
+  `push` is untouched, and no bridge file moved.
+- **Built to the contract, in this refusal order:**
+  1. not PUSH or PULL; a profile §14.3 does not name;
+  2. no target (§12.3: "A verb aimed at nothing spends nothing");
+  3. the player (§14.2: never a target);
+  4. an enemy — see the boundary below;
+  5. not a `ManipulableBody` (scenery);
+  6. `FIXED` by `mass_class()`: bolted, 400 kg or more, or anchored.
+     §14.2 leaves FIXED to DETACH and ROTATE;
+  7. over the profile's mass limit, unless Design 5 §15.2's door
+     applies (a lightened HEAVY body is eligible), read through the same
+     `_lightened_into_reach` the held-force `push` uses;
+  8. beyond the profile's range, eye to origin;
+  9. a required object whose `physics_permitted` is false;
+  10. no line of sight from the eye to the body's origin.
+
+  Then one impulse: `clamp(force / mass_kg, 0, 30)` along the aim
+  (PUSH) or against it (PULL), doubled when `lightened`, and bounded by
+  §14.4 after the doubling: 30 m/s overall, 14 m/s vertically. The
+  result reports the velocity the body actually receives.
+- **Profiles (§14.3):** light 20 m / 700 N / 120 kg; standard 24 m /
+  1400 N / 260 kg; strong 28 m / 2600 N / 400 kg.
+- **The one boundary inside the family: enemies.** §14.2 admits PUSH
+  and PULL on an actor, and §14.3 divides by the target's `mass_kg`. No
+  enemy in this runtime has a mass, so its velocity would be a number
+  this lane invented. An enemy is refused by name
+  (`actor_mass_unmodelled`). Giving enemies masses is a design value,
+  not a mapping. Bosses take no verb in any case.
+- **Evidence: `make godot-verb-runtime` (new, in CI), 23 checks.**
+  Evidence class: DIRECT INVOCATION, RUNTIME ONLY, on real bodies in a
+  real physics world.
+  - PUSH: 700 N on 40 kg is 17.50 m/s, and the body leaves the eye
+    along the aim at 17.12 m/s. Half a second later it is at 8.87 m/s:
+    one impulse, not a held force.
+  - PULL: 1400 N on 50 kg is 28 m/s, back along the aim.
+  - Ceilings: 2600 N on 10 kg would be 260 m/s and is 30.0. Aimed
+    steeply up (26 m/s of it vertical), it leaves at 14.0 m/s
+    vertically, and the body's own vertical speed is 13.22 m/s.
+  - `lightened`: a 100 kg body goes 7.0 m/s plain and 14.0 lightened. A
+    150 kg body against the 120 kg limit is refused (`too_heavy`), then
+    admitted once lightened.
+  - Every refusal is named, and each one aimed at a rigid body is shown
+    to move nothing: one frame later the body has 0.000 m/s of sideways
+    speed. The cases: `not_an_impulse_verb`, `unknown_profile`,
+    `no_target`, `out_of_reach` (21 m against 20; the strong profile's
+    28 m then reaches it), `too_heavy` (130 kg), `fixed` (a bolted 20 kg
+    bracket; 450 kg under the strong profile), `not_permitted` (after
+    the same required body responded by default), `no_line_of_sight`
+    (a wall), `never_the_player`, `actor_mass_unmodelled`,
+    `not_manipulable`.
+- **Sabotages (each restored, each failing by name):**
+  - S1: remove the vertical ceiling. 2 failures: 25.7 m/s vertical.
+  - S2: an impulse lands before eligibility is decided. 7 failures:
+    every refused rigid body "has moved" at 1.957 m/s, and the ceiling
+    check reads 14.89.
+  - S3: skip the line-of-sight test. The wall case fails (17.1 m/s).
+  - S4: shut the lightened door. The HEAVY case fails.
+  - The first S4 attempt proved something else. A check message that
+    read a refused result's velocity raised a script error, which ended
+    the case before its check was counted. Every velocity read is now
+    refusal-safe, and S4 fails by name with all 23 checks counted.
+    (That attempt's first anchor also matched `push`'s identical line
+    and applied nothing. It was rerun on a unique anchor.)
+- **Neighbours unchanged:** `godot-physics` 68, `godot-constraints` 67,
+  `godot-carry` 32, `godot-unweighted` 70, `godot-mass-class` 59.
+- **What this does not prove, and is not claimed:** delivery (no Echo
+  Action reaches the verb), qualification (it qualifies a host only
+  once delivery exists), or any played use. Generation is unaffected:
+  `physics.MANIPULATE_VERBS` and `grants_manipulate` are unchanged, and
+  nothing advertises the verb.
+#### HOLD, ALIGN and SETTLE (this commit)
+
+- **One eligibility table.** `Manipulation.target_refusal` answers §14.2
+  for every targeted verb, so PUSH, PULL, HOLD and ALIGN cannot drift
+  apart. Its actor rule refuses an enemy as `actor_rule` for a verb the
+  rule never admits (HOLD, ALIGN), and as `actor_mass_unmodelled` for one
+  it admits but this runtime cannot compute (PUSH, PULL, PIN).
+- **A reading, stated.** HOLD and ALIGN have no profile table of their
+  own. They are verbs of the same family (§12.1 `PHYSICS_VERB`) and read
+  the `ab_physics_*` row's `range` and `verb_mass_limit`, the only numbers
+  the family has.
+- **HOLD (`VerbHold`).** 3.5 m ahead of the eye by default, clamped to
+  1.5–6.0 m. How far one wheel notch moves it is the input's choice; no
+  input reaches the verb, and the source does not say.
+  - **Motion.** Each tick, the step toward the hold point (at most 8 m/s
+    of it) is swept with the body's own shape and collision exceptions,
+    then slid once along what it met. The body stays dynamic, gravity is
+    suspended while it is held, and rotation is left to the solver.
+  - **The first version was wrong, and the test said so.** Driving the
+    velocity straight at a hold point under the floor left the crate
+    resting 7 cm inside the floor (centre 0.329 m where resting is
+    0.400). The solver cancels the approach, but only slowly undoes a
+    penetration it is driven back into every tick. Swept, it rests at
+    0.400 and meets the floor at 0.399. That is `HandCarry`'s rule for
+    what a carried object meets, applied to a dynamic body.
+  - **Actors.** A collision exception both ways with every enemy and the
+    player, kept after release until the two stop overlapping. A crate
+    released inside an enemy falls through it; it is not thrown out
+    (0.37 m/s sideways at most). When the two are apart, both exceptions
+    go.
+  - **Release.** Watched by the hold: the target beyond `range × 1.5`;
+    line of sight blocked for 0.5 s without a break; a constraint the
+    body is one end of breaking; the caster's `died`; the target leaving
+    the tree (room unload or destroyed); the caster leaving the tree (a
+    Zone exit). A second HOLD on the same body releases the first
+    (§31.2, for the one relation that exists). Input release and save
+    are the caller's to call, and nothing delivers the verb yet.
+  - **Not here.** `max_relations` across HOLD, PIN and TETHER, which
+    waits on those verbs. HOLD on a hand-carried body: the sources do not
+    say, and it is not handled.
+- **ALIGN (`VerbAlign`).** It turns to the nearest of the 24
+  axis-aligned orientations. The turn is an angular velocity recomputed
+  each tick from the angle and time left of the 0.3 s. For 2.5 s after
+  that, the solver's own angular axis locks hold the orientation, and
+  linear velocity is never touched. The body's own locks are restored
+  afterwards, and a second ALIGN replaces the first.
+- **SETTLE (`Manipulation.settle`).** Profile `ab_settle_standard`: 25 m
+  range, 8 m radius. Line of sight is to the volume centre only, stopping
+  5 cm short of the surface point the aim ray found. A body is in the
+  volume when its origin is.
+  - **Zeroed and put to sleep.** Velocities are zeroed on the call, and
+    the body is put to sleep on the next physics frame.
+  - **Left alone, by name:** `fixed`; `not_permitted`;
+    `driven_by_machinery` (`Constraints.driven`: a WINCH changing the
+    length, or a DRIVER's motor turning it, this tick or the last).
+  - **Never eligible:** actors. Only a `ManipulableBody` is eligible.
+  - **No mass limit.** The profile has no `verb_mass_limit`, so nothing
+    lighter than `FIXED` is refused by its kilograms.
+- **A source conflict, named and not resolved.**
+  - **The pair:** §14.3 SETTLE, which "forces `sleeping = true` on the
+    next tick", against §14.3 PIN's rationale ("ignoring gravity ...
+    why `PIN` duration is short") and §14.4's bounded improvised
+    structures.
+  - **What the letter does here:** a body settled with nothing under it
+    is asleep, and the solver does not move a sleeping body, gravity
+    included. It fell 0.003 m in 1 s (measured as a note, not asserted).
+    That is an indefinite PIN in all but name.
+  - **What is done about it:** SETTLE is built to the letter. Nothing
+    delivers it, so no player can reach this. The choice goes to Dess or
+    the owner before delivery (for example, sleep only a supported body),
+    and none is made here.
+- **Evidence: `make godot-verb-runtime`, 56 checks and 1 note.**
+  Evidence class: DIRECT INVOCATION, RUNTIME ONLY. HOLD's caster is a
+  real `Player`, so its camera, body and death are real.
+  - **Design 2's own acceptance items:**
+    - 5: 700 N on 120 kg gives 5.8333 m/s.
+    - 28: 120.0 kg moves; 120.1 kg is `too_heavy`.
+    - 7: 10,000 random verbs, angles and masses (8,235 applied, the
+      second half lightened). The highest upward speed is 14.0000 m/s,
+      and the highest speed is 30.0000.
+    - 8: a held body stays within 0.000 m of `hold_distance` for 2 s,
+      under the 0.1 m bound.
+    - 9: the clamp is 1.5–6.0 m.
+    - 10: a 0.700 rad turn takes 19 ticks observed (the lock lands on
+      tick 19 of a 0.3 s = 18-tick turn), with 0.359 rad left at tick 9.
+      It arrives within 0.0015 rad and holds for 149 observed ticks
+      (2.5 s is 150) through an off-centre knock. It falls exactly with
+      a twin that has no ALIGN (0.000 m apart).
+    - 20: three sliding crates are zeroed and asleep on the next tick,
+      and have moved 0.0000 m half a second later. A winch's load keeps
+      rising at 1.50 m/s.
+    - 21: 7,998 aimed verbs are all `never_the_player`, 2,002 SETTLE
+      volumes around the player never touch it, and the player moves
+      0.0000 m.
+  - **HOLD in motion:** the body reaches the hold point after 28 ticks,
+    never faster than 7.83 m/s or 0.130 m in a tick. It follows the
+    caster sideways at the same bound.
+  - **Every watched release:** `out_of_range` (held at about 28 m,
+    released past 30 m). `occluded`: 20 ticks behind a wall is not
+    enough and the count restarts, then 30 ticks release it.
+    `constraint_broke` (a 200 N rope). `target_gone`, `superseded`,
+    `caster_gone` and `death`. Each release restores gravity.
+  - **SETTLE refusals:** 26 m (`out_of_reach`); a wall before the centre
+    (`no_line_of_sight`); an unknown profile.
+- **Sabotages (10, each restored):**
+
+  | # | Sabotage | Result |
+  |---|---|---|
+  | H1 | remove the step cap alone | **passes**: the velocity cap enforces the same 8 m/s bound. Not a gap; the next row shows the bound is tested |
+  | H1b | remove both caps | 4 failures: 217 m/s, 3.6 m in a tick, and the out-of-range case changes |
+  | H2 | remove the sweep | the floor case fails (centre 0.329 m) |
+  | H3 | no actor exceptions | 2 failures (the enemy case) |
+  | H4 | occlusion never resets | the hold releases after 9 ticks instead of 30 |
+  | H5 | no constraint watch | the hold is never released by the broken rope |
+  | A1 | ALIGN snaps | the turn reads 0.000 rad |
+  | A2 | ALIGN holds with no lock | 2.33 rad off through the knock |
+  | S1 | SETTLE ignores machinery | the winch's load is settled; 2 failures |
+  | S2 | SETTLE never sleeps | item 20 fails |
+- **Neighbours unchanged:** `godot-constraints` 67, `godot-actuator` 93,
+  `godot-physics` 68, `godot-carry` 32, `godot-mass-class` 59,
+  `godot-unweighted` 70, `godot-transport` 106.
+- **Still not claimed:** delivery, qualification, or a played use.
+  `physics.MANIPULATE_VERBS` and `grants_manipulate` are unchanged, and
+  nothing offers these verbs to generation.
+- **Remaining O05-08:** see O05-08.2 below; 08.3 (ATTACH, DETACH) and
+  08.4 (the mass fields) are not started. 08.5 (delivery and
+  qualification) stays behind the design boundary above.
+
+### O05-08.2 — TETHER, PIN, ROTATE, and the relations they share — runtime only
+
+- **One relations ledger (`VerbRelations`), per caster.** It holds HOLD,
+  PIN and TETHER, the three §14.4 counts ("held, pinned, tethered,
+  combined").
+  - §31.2 comes first: a new relation on an object already under one
+    releases that one (`superseded`).
+  - Then §14.4: at `max_relations` (3) the oldest goes (`max_relations`).
+  - `RULE_RELATION_COUNT` raises the cap by its magnitude and never past
+    6. No rule reaches it yet; the cap is the contract's.
+  - HOLD's own second-HOLD rule is gone, replaced by the ledger.
+    ROTATE is not a relation.
+- **PIN (`VerbPin`).**
+  - Profiles: `ab_pin_brief` 20 m / 6 s / 260 kg / 2 at once;
+    `ab_pin_long` 16 m / 14 s / 400 kg / 1.
+  - "FIXED in world space" is the solver's static freeze: the body
+    collides and bears weight, and nothing moves it. Its semantic mass
+    class is untouched (a reading, stated: FIXED here is where the body
+    is, not what a class plate reads). On release it is unfrozen at rest.
+  - A pin past the profile's `max_pinned` releases that profile's oldest.
+  - It ends on expiry, on DETACH (a `release` reason; the verb is 08.3),
+    on the ledger, or when its body leaves the tree.
+  - An enemy is `actor_mass_unmodelled`: §14.2 admits PIN on one, and
+    the mass limit reads a mass no enemy has.
+- **TETHER (`VerbTether`), two activations.**
+  - `first` commits one end. `Pending.second` ties the rope or refuses,
+    and is spent either way ("refunds nothing"). Profiles:
+    `ab_tether_light` 22 m / 14 m / 2500 N / 2 at once;
+    `ab_tether_strong` 18 m / 10 m / 6000 N / 3.
+  - **Where the rope is tied (a reading, stated).** A surface struck (the
+    world, a static body, a FIXED object) is an anchor at the struck
+    point. A manipulable body is tied at its origin, which is where
+    `Constraints` ties a rope. The length (×1.05) is measured between
+    those two points, so the rope is exactly as slack as the contract
+    says the moment it is tied.
+  - The rope is `Constraints.tether`, the §14.8 seam, which now takes a
+    world anchor. `untether` removes only a runtime tether.
+  - EPHEMERAL. It is watched for the caster's death, the caster leaving
+    the tree (Zone exit), an end body leaving the tree (room unload or
+    destroyed), the rope breaking, and the solver leaving the tree. Save
+    is the caller's `release(save)`.
+  - One past the profile's `concurrent` releases its oldest.
+  - §14.2 at each end: an enemy is `actor_rule`, the player is
+    `never_the_player`, and a point past the range is `out_of_reach`.
+- **ROTATE (`VerbRotate`), while held.**
+  - **A free body:** its angular velocity is held at 2.5 rad/s about the
+    view axis.
+  - **A body on a hinge** (`Constraints.hinge_of`: HINGE, SEESAW or hinge
+    PENDULUM): the hinge's motor turns it the way the view axis turns it,
+    at up to 2.5 rad/s. The rate is slowed to land on the limit and is
+    zero there (held, not pushed on). "Within `limit_lower` /
+    `limit_upper`" is the verb's to keep.
+  - **Two versions that left the limit to the joint were measured and
+    were wrong, and the test caught both.**
+    - Aimed toward the limit value (a DRIVER's `drive`), it reversed on
+      the soft limit's small overshoot and chattered: 0.042 rad of
+      wander in a second.
+    - Told only which way to turn (the new `Constraints.turn`), it drove
+      through Godot's soft limit to 2.418 rad on a 1.2 rad hinge.
+  - **Strength (a reading, stated).** ROTATE has no profile of its own.
+    It reads the `ab_physics_*` row, and its `force` (§12.1: "force in
+    newtons") is the motor's per-step bound.
+  - A hand is not machinery: ROTATE's `turn` does not mark the hinge
+    driven, so SETTLE's exclusion stays about machines.
+  - **§14.2.** A FIXED body is refused unless it has a hinge. A 500 kg
+    drawbridge on one is ROTATE's by its axis, with its weight not
+    measured (`target_refusal(..., turns_on_a_hinge)`). A lighter hinged
+    body still meets its mass limit. An enemy is `actor_rule`.
+  - A hinge whose axis is square to the view gets nothing, which is the
+    literal physics of turning "about the view axis".
+- **Evidence: `make godot-verb-runtime`, 73 checks and 1 note.**
+  - 13: 260 kg pinned on `ab_pin_brief` moves 0.0000 m for 359 physics
+    frames (the release fires on the 360th tick's processing), then
+    expires and falls. A 140 kg load rests on it 0.640 m above its
+    centre (0.65 is resting) at 0.000 m/s.
+  - 11: a beam's underside and a crate 9 m below make a ROPE of
+    9.453 m, breakable at 2500 N.
+  - 12: a 15.0 m span against 14 m is `too_long` on the second
+    activation; a retry is `spent`, and no rope is made.
+  - 17: the hinged valve reaches 1.2 rad, never exceeds 1.200, and sits
+    there still driven with 0.0000 rad of wander. A free body spins at
+    2.41 rad/s about the view axis (2.5 less one tick of its angular
+    damping).
+  - 22: a pin, a tether and a hold make three; a fourth releases the
+    pin (the oldest). The cap is +1 → 4, and +9 → 6.
+  - 23: pinning the held crate releases the HOLD; one relation, not two.
+  - Also: `max_pinned`, `concurrent`, save, a tied body destroyed, and
+    the caster's death; the refusals for 300 kg, an enemy, the player
+    and range.
+- **Sabotages (11, each restored and each failing by name):**
+
+  | # | Sabotage | Failure |
+  |---|---|---|
+  | P1 | the pin does not freeze | item 13, 39 m of fall, and the load |
+  | P2 | `max_pinned` not kept | the max_pinned check |
+  | T1 | no ×1.05 | item 11 reads 9.003 |
+  | T2 | no `max_length` | item 12 |
+  | T3 | a refused second refunds | item 12 (its retry then ties the rope, and the run ends at 70 checks) |
+  | T4 | death not watched | the ephemeral check |
+  | R1 | ROTATE ignores the limits | item 17 reads 2.418 |
+  | R2 | no hinge exception | the 500 kg drawbridge |
+  | L1 | no exclusivity | item 23 and four HOLD checks |
+  | L2 | no cap | item 22 |
+  | L3 | the cap can pass 6 | +9 reads 12 |
+- **Neighbours unchanged:** `godot-constraints` 67, `godot-actuator` 93,
+  `godot-physics` 68.
+- **Not claimed:** delivery, qualification, played use. A pinned body's
+  interaction with hand carry is undefined by the sources and not
+  handled.
+
+### O05-08.3 — ATTACH and DETACH — runtime only
+
+- **§4.8's two fields, added and empty.** `ManipulableBody.material` is
+  one of METAL, STONE, WOOD, COMPOSITE or GLASS, or "" for a body nothing
+  has declared. `attach_points` holds `AttachPoint`s (`local_transform`,
+  `accepts_materials`, `occupied_by`). No room authors either, so ATTACH
+  has nothing to join outside its tests. A body of undeclared material
+  cannot be attached (`no_material`); no material is guessed.
+- **A weld is ONE body.** Item 14 asks for "two `GIRDER`s into one body
+  of `190 kg`, class `HEAVY`", so the weld is not a joint.
+  - The held part's own shapes and visuals move into the target's
+    assembly root, renamed so nothing collides with the root's own
+    `hull`.
+  - The root takes on the part's mass. The part waits out of the world:
+    frozen, no layers, hidden.
+  - The part's origin goes on the attach point.
+  - A held assembly attached to another is flattened onto the new root,
+    so the chain count and every part's mass stay exact.
+  - The HOLD that carried the part ends as `attached`.
+- **ATTACH's checks, in order:** held; not the same assembly; the point
+  exists; the point is within 4.0 m of the eye; the held body has a
+  declared material; the point accepts it; the point is unoccupied; the
+  chain after the weld is at most 4.
+- **DETACH gives back exactly that** (item 16). The part is put where it
+  is in the assembly now. Its own nodes return under their own names, its
+  flags and mass are restored, both bodies are at rest, and the point is
+  freed. Other parts stay where they are. DETACH at a constraint breaks
+  it through the solver's own break path only when its `breakable_at` is
+  non-null (`Constraints.sever`), and refuses an unbreakable one.
+- **The base kit's undo.** `interact` on an assembly first undoes its
+  newest PLAYER weld (prompt "DETACH"), so a player with no DETACH Echo
+  cannot softlock their own construction. An authored weld is never
+  undone that way. Until something makes a weld, `interact` is exactly
+  what it was.
+- **Not here: persistence.** §14.3's "Attachment is `PUZZLE_LOCAL` and
+  survives save, reload, and reset within its group" needs a save record.
+  Nothing delivers the verb, so it is named rather than built.
+- **Evidence: `make godot-verb-runtime`, 82 checks and 1 note.**
+  - 14: two 95 kg GIRDERs become one body of 190 kg, class heavy. A push
+    on the root carries the welded girder's own hull 0.24 m.
+  - 15: four make a chain of 4 (380 kg). A fifth is refused
+    `chain_full` and stays in the hand.
+  - 16: DETACH puts the girder back 0.0000 m from its world transform,
+    its own `hull` back under its own name, both bodies at rest, and the
+    root at 285 kg; the rest of the chain is untouched.
+  - `interact` undoes the player's newest weld and leaves an authored
+    one.
+  - Refusals: WOOD at a METAL point, an undeclared material, a point
+    past 4 m, an occupied point, nothing held.
+  - DETACH on constraints: breakable breaks, unbreakable is refused.
+- **Sabotages (7, each restored, each failing by name):**
+  - A1, the weld adds no mass: items 14, 15 and 16 read 95 kg.
+  - A2, no chain cap: item 15 reads a chain of 5, and the later checks
+    follow.
+  - A3, DETACH leaves the part where it was welded: 0.34 m off.
+  - A5, the undo takes authored welds too.
+  - A6, no material check: the refusal check. Its first version hit a
+    null in the test's own fixture; the fixture is now null-safe and the
+    sabotage fails by name.
+  - A7, the shapes stay on the part: "moves as one" reads 0.00 m.
+  - A8, sever breaks the unbreakable.
+
+  The sabotage runner for O05-08.2 and this read stdout only. A script
+  error there (stderr) would not have shown in its summary, though
+  `make` fails on one; the runner now merges both.
+- **Neighbours unchanged:** `godot-carry` 32 (the `interact` path),
+  `godot-constraints` 67, `godot-physics` 68, `godot-mass-class` 59,
+  `godot-unweighted` 70, `godot-transport` 106.
+
+### O05-08.4 — LIGHTEN_FIELD and ANCHOR_FIELD — runtime only, apart from the Statuses
+
+- **Kilograms, not class.** A field scales the body's actual `mass`, and
+  the class follows the kilograms (§10.2 derives it). The Statuses
+  `lightened` and `anchored` (Design 5 §15.2) work the other way: they
+  step the class, or make it FIXED, and leave the kilograms alone. A
+  field never touches `statuses`, and a Status never touches `mass`. A
+  body under both reads the class its scaled kilograms derive, stepped
+  by its Status.
+- **The two §14.3 profiles, within §14.4's bounds.**
+  - `ab_mass_light`: 20 m range, 7 m radius, 10 s, ×0.35.
+  - `ab_mass_heavy`: 20 m range, 6 m radius, 8 s, ×2.50.
+  - The radius ceiling is 8 m, and the multiplier stays within
+    0.30–3.00.
+  - A LIGHTEN_FIELD must scale below 1 and an ANCHOR_FIELD above 1
+    (`wrong_direction`). Anything else is `not_a_field`.
+  - Line of sight is needed to the centre only; §14.2 treats fields as
+    volumes.
+- **Not stacked; the later wins.** The scale always applies to the
+  body's own kilograms (`ManipulableBody.own_mass`), never to a scaled
+  mass. A body inside two fields takes the one applied later. When that
+  one ends, an earlier field still running takes it back.
+- **Membership is continuous — a stated reading.** "Every eligible
+  object whose origin is inside a sphere ... for `duration`" is read as
+  a volume that governs what is inside it while it lasts. A body
+  carried in is scaled; one carried out gets its own kilograms back. The
+  other reading, a snapshot at the moment of the cast, is not taken.
+- **Eligibility reads the body's own kilograms.** Otherwise an
+  ANCHOR_FIELD that takes a 320 kg BALLAST to 800 kg would make it FIXED
+  and drop it from the field that did so.
+  - Eligible means a `ManipulableBody` whose own class is not FIXED and
+    which is not a required object whose package withholds physics.
+  - §14.2: FIXED objects "respond to no verb except `DETACH` and
+    `ROTATE`". The Status `anchored` makes a body FIXED
+    (`MassClass.read`), and Design 2's interaction table agrees:
+    "`ANCHORED` × any verb ... No effect on the target". The Status
+    itself cannot be applied yet, because no runtime implements it on an
+    object (that is O05-09). So a field leaving an `anchored` body alone
+    is read from the rule here, not played, and its check lands with
+    O05-09.
+  - The profiles have no `verb_mass_limit`.
+- **Enemies: the PUSH/PULL gap again.** §14.2's actor rule and item 25
+  admit both fields on enemies, but an enemy has no `mass_kg` in this
+  runtime. The field leaves it alone rather than invent one. This is
+  O05-08.1's `actor_mass_unmodelled`, not a new rule. The player is
+  never a target.
+- **A weld under a field keeps its kilograms.** ATTACH and DETACH add
+  and remove a body's own kilograms, never the field's scaling of them
+  (`VerbAttach._own`/`_set_own`). A part leaving the world is first
+  given back by its field. With no field, the arithmetic is O05-08.3's.
+- **Ending.** A field ends on the 600th physics frame of its 10 s and
+  gives back every body it scales. It does the same if its host leaves
+  the tree (the room unloads).
+- **The source pair, named.** Design 2's interaction table has
+  "`LIGHTENED` × `WEIGHT_THRESHOLD`: Threshold reads the reduced
+  `mass_kg`". That describes Design 2's own Status. The runtime's
+  `lightened` is Design 5 §15.2's, which EX50-033 was built on: it keeps
+  the kilograms. O05-08.4's instruction to keep the fields "distinct
+  from LIGHTENED/ANCHORED Status semantics" settles which reading this
+  unit follows. The fields carry the reduced kilograms; the Status does
+  not.
+- **Not here.**
+  - The cast time (0.15 s) belongs to the activation (§12.2/§12.3), and
+    nothing delivers the verb.
+  - Nothing in the runtime blows objects about, so Design 2 §26's wind
+    consequence has no consumer yet. Any consumer that reads the class
+    or the kilograms reads the field.
+- **Evidence: `make godot-verb-runtime`, 95 checks and 1 note.**
+  - Item 18: a 320 kg BALLAST in a LIGHTEN_FIELD at 0.35 is 112 kg,
+    class MEDIUM, with no Status on it. Before the field, the light
+    profile's PUSH refuses it (`too_heavy`); inside the field, it admits
+    it. The field itself moves it 0.0000 m. After 600 physics frames it
+    is 320 kg again, class HEAVY.
+  - Item 19: an ANCHOR_FIELD laid over it wins and does not stack. It
+    reads 800 kg (not 280) and FIXED on each of 12 consecutive ticks.
+    When that field ends, the earlier one, still running, takes it back
+    at 112 kg.
+  - A `lightened` 100 kg crate reads LIGHT. In a field it is 35 kg, its
+    derived MEDIUM stepped to LIGHT. Out of the field it is 100 kg
+    again, with the Status still on it.
+  - Membership: a crate outside the field is 20 kg, 7 kg once carried
+    in, and 20 kg once carried out.
+  - Left alone inside the volume: a 450 kg (FIXED) body, and a required
+    object whose package withholds physics.
+  - Refused: the wrong direction for the profile, a centre 25 m off, a
+    wall before the centre, and a field §14.1 does not name.
+  - A weld: two girders welded inside a LIGHTEN_FIELD are 66.5 kg
+    (190 × 0.35). With the field gone they are 190 kg; detached, 95 kg
+    each.
+  - The two real sensors, `ClassPlate` (one occupant's class) and
+    `PoweredLink` (summed kilograms, 150 kg), each with a 320 kg BALLAST
+    on it:
+    - A LIGHTEN_FIELD makes both 112 kg, MEDIUM, and both plates let go.
+      With the field gone, both hold again.
+    - EX50-033 §6, kilograms without a class: at 380 kg the field gives
+      133 kg, still HEAVY. The class plate holds and the kilogram plate
+      lets go.
+    - `lightened` does the reverse: the class plate lets go, and the
+      kilogram plate, still reading 320 kg, holds. With the Status
+      cleared, both hold.
+    - The first version of these checks failed on correct readings. It
+      asked `field != null` after the field had ended, and a freed
+      object reads as null. The check now records whether the field was
+      laid when it is laid.
+- **Sabotages (9, each restored, each failing by name):**
+  - F1, the scale stacks: item 19 reads 280 kg, class heavy.
+  - F2, expiry gives nothing back: item 18 reads 112 kg after expiry,
+    and the Status and weld checks follow.
+  - F3, a snapshot rather than a volume: the crate carried out keeps
+    7 kg.
+  - F4, eligibility reads the scaled mass. **It passed at first.**
+    Item 19 read the mass once, and the flicker it causes (the body
+    dropped as FIXED at 800 kg, taken again at 320 kg) shows 800 on
+    every other tick. The check now reads every tick, and F4 fails it
+    ("320 to 800").
+  - F5, an earlier field keeps what a later one takes: item 19 reads
+    112 kg.
+  - F6, the weld counts scaled kilograms: 128.2 kg in the field and
+    95 kg without it.
+  - F7, FIXED is not left alone: the 450 kg body reads 157.5 kg.
+  - F8, no direction check: the refusal check reads an empty refusal.
+  - F9, a field steps the class instead of scaling the kilograms (it
+    applies `lightened`): 8 failures, including items 18 and 19 and
+    both new sensor checks, where the BALLAST stays 320 kg and the
+    kilogram plate never lets go.
+- **Neighbours unchanged:** `godot-carry` 32 (the `interact` path),
+  `godot-constraints` 67, `godot-physics` 68, `godot-mass-class` 59,
+  `godot-unweighted` 70, `godot-transport` 106.
+
+### O05-09.1 — `rooted` and `anchored` on an enemy: the first slice
+
+- **What crossed, and where.** `rooted` and `anchored` on the `enemy`
+  target, and nothing else. Both are declared in
+  `SUPPORTED_STATUS_TARGETS` in the change that implements them, and the
+  export gives the engine the same map. The on-hit modifier, a
+  `StatusComponent` aimed at an enemy and an `apply_status` rule effect
+  now admit both. Every other target is refused, as before.
+  - `rooted`'s only §15.2 target is an actor, so it is the first Status
+    in the family with every target supported.
+  - `anchored` on an object (a body fixed in place) and on the player
+    (movement 0, jump blocked) are other runtimes, and neither is built.
+- **The exact effects (Design 5 §15.2).**
+  - Both: the enemy cannot move under its own power, and its attacks
+    continue. Every own-power motion reads `Enemy._held_in_place()`:
+    - the approach;
+    - the job walk (patrol, drift, the walk back to its post);
+    - a charger's rush;
+    - a diver's dive;
+    - a flyer's station hold.
+
+    Turning, attacking and a beacon's pulse do not move it, so none of
+    them is withheld.
+  - `rooted` is still knocked about ("can still be pushed, pulled, and
+    thrown, unlike `anchored`"). A knock runs down at the rate an enemy
+    standing in reach sheds one.
+  - `anchored` is immune to all impulse. A knock is discarded, and its
+    horizontal velocity is held at 0 ("Fixed in place").
+  - To the manipulation verbs, an anchored enemy is `fixed`, where it
+    was `actor_mass_unmodelled`. A rooted enemy is still
+    `actor_mass_unmodelled`: rooting forbids its own steps, not being
+    pushed.
+- **Per-role readings, stated.**
+  - A charger's attack IS a rush, so a held charger lunges where it
+    stands. It reaches only a player already in contact, and it still
+    goes into its recovery.
+  - A diver's dive happens where it hangs.
+  - A held flyer neither climbs back to its station nor falls. §15.2
+    asks neither of it, and holding station is its own power.
+  - A bulwark still turns, at its own bounded rate, to meet the player.
+  - An enemy caught mid-stride sheds its momentum over about 0.15 m
+    under `rooted` (the standing run-down) and stops dead under
+    `anchored`.
+- **Not here, named.**
+  - `anchored`'s "`mass_class` becomes `FIXED`". No enemy has a mass
+    class in this runtime (O05-08.1's `actor_mass_unmodelled`), so a
+    plate does not count an anchored enemy. The verbs are its only
+    consumer.
+  - Wind and conveyors: nothing in the runtime blows or conveys an
+    enemy.
+  - "`LIGHTENED` and `ANCHORED` never coexist" (Design 2 item 61) needs
+    both on one target. `lightened` is object-only and `anchored`
+    enemy-only, so no target can carry both yet. The rule lands with the
+    first target that supports both.
+  - Design 5 §15.4's roll, cap and susceptibility pipeline is not in the
+    runtime for any Status, legacy or new: an application applies.
+  - §15.8's feedback (the HUD sentence and particles) is not built for
+    these, as for the legacy kinds. Stopping is the visible sign.
+  - Delivery. No provider emits either. The fallback has no reading that
+    roots or anchors, and none is invented here. A model provider's
+    `rooted` or `anchored` on-hit is now admitted, as D-7 intended
+    ("Emittable only when Prod declares the effect").
+- **Evidence: `make godot-status-family` (new), 15 checks and 1 note.**
+  Direct application, on a bare floor:
+  - Rooted mid-stride, a melee enemy sheds its momentum in 0.15 m, then
+    takes no step: 0.0001 m in 1.5 s. An unrooted one closes 5.99 m.
+  - Attacks continue: the player stepping into its reach takes 6.0, and
+    it struck without stepping. A knock of 8 m/s still moves it 0.31 m.
+  - Anchored mid-stride, it stops dead: 0.0000 m. The same knock moves
+    it 0.0000 m, and moves the rooted one 0.31 m.
+  - To the verbs: the anchored enemy is `fixed`; the rooted and the
+    plain enemy are `actor_mass_unmodelled`; HOLD is `actor_rule`. The
+    anchored one's blow still lands (6.0).
+  - Rooted for 1.0 s, it holds; expired, it closes 2.81 m in the next
+    second.
+  - A rooted charger's rush goes 0.000 m and still ends in its recovery;
+    an unrooted one's carries 14.94 m. A rooted diver's dive goes
+    0.000 m; an unrooted one's 2.33 m.
+  - A rooted drifter holds where it hangs (0.000 m in 2 s, y 4.69); an
+    unrooted one drifts 1.92 m. Put a metre below its station, the
+    rooted one stays (0.000 m) and the unrooted one climbs 0.90 m back.
+  - A rooted bulwark turns 92° to meet the player and takes no step.
+
+  **The real path (integrated, with an injected Echo).** A declared
+  Zone's arena, the controller's own player and the real `fire_echo`
+  binding. A projectile Action whose on-hit Status is `rooted` hits a
+  real melee enemy that was closing at 1.00 m per quarter-second from
+  10.6 m. The enemy is damaged (23/24) and rooted. It sheds its stride
+  in 0.16 m, then takes no step: 0.0001 m in the next second. The Echo
+  was handed to the runtime (`set_equipped`), not delivered by a
+  provider.
+- **Bridge.** `test_status_guarantee.py`:
+  - New: the two kinds crossed on the enemy only. Every other target is
+    refused; the on-hit modifier and the rule effect admit both.
+  - Its pinned facts are updated as its own docstring asks ("update this
+    control to record the progress"). `anchored` is no longer the
+    named-only example (`phased` is). The named-only sweep equals
+    exactly the unsupported §15.2 Statuses, which replaces a floor of 10
+    that nine would have failed. The supported count is 15, with 4 in
+    the family. `rooted` is finished, `anchored` lacks object and self,
+    and 9 Statuses have no support.
+  - `make test-bridge`: 1,933 passed. `make export` changed only the two
+    support lines of `constants.gd`.
+- **Sabotages (10, each restored, each failing by name):**
+  - S1, nothing is held in place: 9 failures, every rooted case.
+  - S2, anchored takes a knock: it slides 0.15 m and a knock moves it
+    0.31 m.
+  - S3, rooted refuses a knock too: 0.00 m.
+  - S4, a held enemy withholds its attack: the player takes 0.0, for
+    rooted and for anchored.
+  - S5, the approach is not held: 6 failures, including the real path
+    (4.00 m in the second after rooting).
+  - S6, the rush carries: 14.94 m.
+  - S7, the dive carries: 2.33 m.
+  - S8, the station is held: the rooted drifter climbs 0.90 m back. The
+    first probe for this, a downward knock, measured nothing: a flyer's
+    station hold overwrites its vertical velocity every frame, so the
+    knock never moved the unrooted control either. The probe is now a
+    direct displacement.
+  - S9, the job walk is not held: the rooted drifter drifts 1.92 m.
+  - S10, an anchored enemy is only unmodelled: the verbs read
+    `actor_mass_unmodelled`. The container restarted during this run;
+    both files were checked against the intended diff and S10 was run
+    again on its own.
+- **A test-setup finding, recorded.** A player and an enemy created in
+  the same frame: the player's body stood at the world origin for one
+  physics step, where the bulwark was placed. The bulwark was lifted
+  onto it, and carried 8 m when the player's own position arrived. Two
+  runs measured that ride as a step. The suite now creates the player
+  first and lets it settle. The encounter driver's warm-up comment
+  records a similar symptom. Whether a real Zone can place an enemy
+  where its player is first created is not examined here.
+- **Neighbours unchanged** (run on `7abb338`): `godot-roster` 52,
+  `godot-encounter` 51, `godot-stats` OK (its sweep now covers the two
+  new pairs), `godot-verbs` OK (on-hit statuses), `godot-verb-runtime`
+  95, `godot-unweighted` 70, `godot-counterfire` 59.
+
+### O05-14 — existing visual work — reconciled; nothing it may bind
+
+- **14.1.** The checkout has no delivered enemy or machinery models. The
+  registry holds 12 room shells, 6 fixtures and 3 projectile visuals.
+  18 are `pass` and bound; the 3 projectiles are `pending`. Pending is
+  not approval, and they stay unbound.
+- **14.2.** D-11's exact-role lookup, family fallback, pack-aware caches
+  and universal-role refusals are unchanged since OV04 (#128). No seam
+  is added without a delivery to consume.
+- **14.3.** No candidate pack is available to review. `THEME_PACK_STATUS`
+  stays `{}`, and Arty stays paused.
+
+### O05-13 — the candidate composer profile — built; the whole profile played live
+
+- **Candidate configuration, not fixture laundering (O05-13.1).**
+  - The `--candidate[=STEPS]` bridge flag is off by default. It is
+    applied inside the real generation path, after the graph is proved
+    and before `accept_zone`.
+  - Each step derives its relationship from the Zone the campaign really
+    composed, or declines by name.
+  - Order: `zone_state, transport, latched_route` (P5-11). Nothing is
+    loaded from a file and nothing edits a save.
+- **Re-certified, not trusted (O05-13.3).**
+  - The profile's Zone is re-run through `validate_zone` with the
+    provider's own offer and allocation, and through the whole Zone
+    schema.
+  - A result that introduces an error is discarded whole, and the record
+    says `certified: false` and names the rule.
+  - The test drops an allocated Check and asserts the provider's Zone
+    survives. With re-certification disabled, that test fails.
+- **Every outcome recorded.** `<save dir>/candidate/<zone>.json` holds:
+  - the profile and the provider;
+  - every step, emitted or declined, with its reason;
+  - the proposal digest and the certification.
+- **The whole profile, played (`make godot-candidate-live`, new):**
+  - **seed:** 38 checks. The served Zone is `candidate_zone.json` field
+    for field. It has three relationships on three doorways
+    (`e:c002:c003`, `e:c005:c006`, `e:c009:c010`), and all three steps
+    are recorded EMITTED.
+  - **play:** 20 checks, 1 note (the P5-7 harness). All three are built
+    and nothing is refused. The lever is pulled and ACCEPTED, and its
+    doorway opens. The cell is carried from c004 into c005, installed
+    and ACCEPTED. The player walks into c006. P14's branch stays shut.
+  - **restore:** 5 checks. Both processes are new. The lever's doorway
+    is open at load, the cell is seated (one copy) with its doorway
+    open, P14's shutter is still shut, and nothing is announced.
+  - The first run of this suite found P5-11.
+- **Bounded sample (O05-13.3).** `bridge/tools/candidate_sample.py`
+  freezes its inputs before running: count 12, `C.DEFAULT_CONFIG` mock
+  multiworld, fallback provider, whole profile, revision. It records
+  every case in `docs/ledgers/ov05_evidence/candidate_sample.json`.
+  - `zone_state` emitted in 12 of 12 cases.
+  - `latched_route` emitted in 12 of 12.
+  - `minors` emitted in 12 of 12. Regenerated at `3f6c1d3` (clean) with
+    all three contracts and the offer order turning per Zone:
+    EX50-033 in 7, EX50-021 in 7, EX50-011 in 8. Each Zone hosts two, or
+    one where only one dead end qualifies (zone_004, zone_012), and the
+    rest decline by name. zone_002 hosts EX50-011 as `c025` behind
+    `c015`, the same rooms as the live run; its Check differs because
+    that run's zone_001 was played before it was abandoned.
+  - `transport` emitted in 11 of 12. zone_002 declined by name: its
+    platform path and transit hall leave no walkable, one-floor run
+    inside the home window.
+  - **Every case was certified and kept all its allocated Checks.**
+  - The layout verdict is not in this sample: it is the bridge half
+    only.
+- **Scope limit.** The deterministic fallback provider composed
+  everything; no live model was used. The composers are a small
+  canonical set (O05-13.2), not an expressive ceiling.
+
+### O05-15 — a launchable candidate — built
+
+- **One launcher family (O05-15.1).**
+  - `Diagnostic Campaign - Candidate (Windows).bat`, or
+    `python -m archipepsi_bridge.diagnostic --candidate`.
+  - It uses its own slot (`candidate`) and resumes by default; `--new`
+    starts a fresh one.
+  - A marker records the slot's mode and profile, and the launcher
+    refuses to continue it any other way.
+  - The banner prints the revision, the profile, mock AP, fallback
+    Epsilon, the default scale and "staged: nothing".
+  - The direct scenario launchers are unchanged, for comparison.
+- **Normal lifecycle (O05-15.2).** The real Main, client and bridge, and
+  the shipped input paths. Nothing is seeded. The diagnostic drivers
+  stay separate modes.
+- **Owner review (O05-15.4).** `PROD_OV05_ROUTE.md` (spoiler-light) and
+  `PROD_OV05_ANSWERS.md` (answers, with the evidence class of each
+  claim). `make candidate-shots` renders the review frames under xvfb.
+  It is diagnostic and asserts nothing.
+- **Not claimed.** Windows execution. The `.bat` is read, and the Python
+  module it delegates to is tested (`test_diagnostic_launcher.py`,
+  45 tests).
+
+## Findings (`P5-n`)
+
+- **P5-1 — two composers gate one doorway.** On the played Zone, D-10's
+  `compose_latched_route` puts P14's shutter on `e:c002:c003` through
+  `opened_by`. Dess's `compose_zone_state` then puts `requires_state` on
+  that same edge. The logic is sound, because both conditions must hold.
+  The world is not: a doorway takes one shutter. `StateGates` therefore
+  refuses a state gate on an edge that also carries `opened_by`, by name,
+  and leaves that doorway to the latch shutter. The logic stays stricter
+  than the world, which never traps anyone. Resolution belongs to the
+  composer's owner and is **open for Dess**. The candidate profile
+  (O05-13) has to choose an order, or skip that edge.
+- **P5-2 — a required carry was routed through a platform path.** The
+  first `compose_transport` run chose c002→c003→c004 on the played Zone.
+  c003 is a `platform_path`: islands over a kill pit. A cell fumbled
+  there can come to rest where nobody reaches it, and §10.4's "at rest
+  5 s, unreachable" recovery is not implemented. The played acceptance
+  found it. The composer now carries only through corridors, arenas and
+  treasure rooms, and the run became c004→c005→c006.
+- **P5-3 — D-8 values and P16 rooms were never restored in the real
+  client.** `Main._to_zone` passed keys, locks, stations and latches from
+  the snapshot. It never passed `macro_state` or `object_rooms`, so a
+  D-8 selection or a carried object's room survived only in synthetic
+  suites that set the controller fields by hand. `_to_zone` now passes
+  all four object and state fields from the snapshot alone: the rooms,
+  the poses, the consumption, and the D-8 values.
+- **P5-4 — `requires_state` edges were never physically enforced.**
+  `topology.reachability` honoured them, and nothing in Godot read them.
+  The route was shut in logic and open in the world. New
+  `StateGates` puts a declared shutter in the edge's own doorway, bound
+  to the variable by id. It sits in the `ROUTE_GATE` group, so the
+  aperture evidence still reads the doorway as an opening.
+- **P5-5 — the transported-object runtime predated carry.** It built a
+  fixed 18 kg crate whatever the declaration said. It recovered on the
+  first frame instead of after §10.4's 1.0 s, and it reported a recovery
+  as an ordinary transfer home. It had no consumed state, so an
+  installed object would have respawned loose. All four are fixed. The
+  D-8 driver's recovery case now asserts the delay, including that the
+  object is not recovered before 1.0 s. Its "between rooms" proxy was a
+  point 400 m above the Zone, which is out of bounds by §10.4. It is now
+  a real point beside a room, with the out-of-bounds case asserted
+  separately.
+- **P5-6 — the D-8 composer's reader mechanism is not one the engine
+  builds.** `compose_zone_state` defaults to `mechanism="span_bolt"`.
+  `ZoneStateBuild` implements `barrier` and `lamp` and refuses anything
+  else by name, which also drops that variable's setter. For O05-04.
+- **P5-7 — a scripted two-Bulwark fight is not stable evidence.** c005
+  holds two Bulwarks in a pit arena. Four orbit policies were tried: plain
+  strafing, a 4–6 m band, 2.8–3.8 m, and 3.6–4.6 m. Each cleared the room
+  on some starts and lost the player on others. Two reasons, both
+  measured. Their slam lands within reach × 1.4 = 3.36 m. And at 90°/s
+  a Bulwark out-turns any orbit wide enough to stay clear of the slam.
+  The designed opening is the 0.9 s recovery after a swing, and baiting
+  that reliably is AI play, not transport evidence. The transport and
+  reversible suites therefore remove Bulwarks through the real damage
+  path, from behind, as a **declared and counted harness step**, and
+  fight the artillery arena with the base kit as P14's suite does.
+  Bulwark counterplay stays `godot-encounter`'s played acceptance.
+
+- **P5-8 — the delivery opened a door 27 m overhead, and a check passed
+  anyway.** After P5-2 the run was c004→c005→c006, with the socket in
+  c006. c006 is `shell_hall_transit`: entered at the floor, left 28 m up
+  by a launch arc. The carried cell never reached c007, because the door
+  the delivery opened was overhead. The journey's "pressed at the shut
+  doorway, the player stays on this side" check passed regardless: it
+  measured which side of the door plane the player was on, and the
+  player was 27 m below the door. Two fixes. First, the composer now reads
+  each shell's doorway heights from the registry, the same data the
+  engine builds from. Every room of the journey has to be one floor
+  (within 0.5 m) across its way in, its carry doorways and the door the
+  delivery opens. An unmeasured shell is declined, not guessed flat. The
+  played Zone's run is now c004→c005, gated at `e:c005:c006`. The longer
+  runs are refused by name ("'exit' at 28 m ... a hand carry is a walk").
+  Second, the driver asserts that the player stands at the doorway, on
+  its floor, before it reads the side.
+- **P5-9 — a composed railway's commissioned span could not be saved.**
+  `RailSpan.latch_id` is documented as the handle a commissioned span
+  persists under, and the engine reports it (`RailJunction.latch_fired`
+  → `report_latch(network_id, latch_id)`). But `record_latch` accepted
+  only P14's `graph_` latches and the committed manifest's physics
+  packages, and a railway is neither, so the bridge refused every
+  composed span a player commissioned and it was gone at the next load.
+  `godot-rail-zone` fills `latches_carried` directly, so it never saw
+  this. Fixed with a third, separately evidenced path. The ACCEPTED Zone
+  must declare the network; the layout must be committed; the committed
+  layout must have placed every dock room; and only a span with a
+  control can latch, since one without ships commissioned. A name that
+  is both a physics package and a network is refused as ambiguous.
+  Covered by `bridge/tests/test_rail_latch_record.py`, 9 tests. Before
+  the fix, 7 of 8 failed with "accepted no physics package 'yard'".
+- **P5-10 — the lever status assigned a freed control.** O05-04's
+  `_setter_status` read each setter into a typed variable. The
+  zone-state suite frees a control on purpose, and the typed read then
+  raised "Trying to assign invalid previously freed instance". The
+  suite's own 60 checks passed, but `make godot-zone-state` fails on
+  any script error, and the regression batch caught it. The controller
+  now skips an invalid instance before the typed read.
+- **P5-11 — two relationships' controls in one room, and one of them
+  lost.** In the first played combination of the whole candidate profile
+  (`godot-candidate-live`), `zone_state` put the reversible lever in c002
+  and `latched_route` put P14's plate in c002 as well. The engine refused
+  P14's graph by name: "no clear floor for sensor 'step_plate' on this
+  side of the doorway it opens". So the branch's shutter was never built,
+  and the doorway was logically gated and physically open. This is the
+  combination the candidate launcher actually plays; each step's own
+  suite had passed alone. Fixed in the composers, where rooms are chosen:
+  - one relationship's control per room;
+  - P14's plate only in open rooms (arena, treasure room) on the floor of
+    the doorway it opens;
+  - the profile order is now zone_state, transport, latched_route, so
+    that P14, the step with the widest choice of rooms, goes last.
+
+  On the played Zone the plate is now in c009 and the shutter is across
+  `e:c009:c010`. P14 composed alone is unchanged (c002).
+- **P5-12 — the profile's re-certification judged a 1000-point Zone
+  against a 200-point budget.** O05-13.3's `certify` called
+  `validate_zone` without `zone_budget`, so the prototype's 200 points
+  applied: every default-scale Zone read as "31 enemies, limit is 14".
+  The "refuse only what the profile introduced" comparison hid it,
+  because the error was already present on the graphed Zone. It surfaced
+  when the first version of the minor step removed two enemies: the count
+  in the message changed, the string no longer matched, and all 12 sample
+  cases were discarded. `epsilon/base.py` names this exact mistake. The
+  call now passes `request.campaign.zone_budget`, and
+  `test_certification_is_held_to_the_budget_the_provider_was` pins the
+  call site: with the argument removed, it fails.
+- **P5-13 — substituting a minor for a room empties the Zone below its
+  content floor.** The first minor step turned a dead-end arena INTO
+  EX50-033. With the budget restored (P5-12), all 12 sample Zones then
+  refused it. The fallback composes to within a few points of the floor
+  (the played Zone holds 903 against a 900 minimum), and
+  `content_value.room_value` has no row for a minor. So the replaced
+  arena's enemies and activity left the count, and even the cheapest host
+  (38 points) took the Zone out of its band. Valuing a minor is a row in
+  Dess's table (CAMPAIGN_SCALE.md 5) and is not invented here. The step
+  now ADDS the minor as a new room behind a dead-end arena and moves that
+  arena's Check onto the minor's gallery. "An AP Check is not content",
+  so nothing counted is removed; the parent keeps its fight and its
+  objective. Emitted in 12 of 12 sample Zones, all certified. **Question
+  for Dess:** should a hosted minor carry a content value of its own? It
+  currently counts only through the table's existing objective and space
+  rows (4 points on the played Zone).
+- **P5-14 — a restarted mock campaign forgot every confirmed Check.**
+  `MockServerState` says it is "truth that survives quit/reload/
+  reconnect". It survived reconnects only, because it lived in the
+  bridge's memory. The save deliberately keeps no copy of Archipelago's
+  truth. So in a mock campaign (which is what the diagnostic and
+  candidate launchers play), quitting and relaunching turned every
+  confirmed Check back into unchecked: its pedestal became claimable, and
+  claiming it delivered its item a second time. `godot-candidate-live`'s
+  `minor_restore` phase found this by asserting the minor's Check was
+  still claimed after a restart. The room is now kept beside the
+  campaign's own save (`<save stem>.mock_room`, not `.json`, so
+  the save stays the only `.json` in its folder) and resumed only when that
+  save exists, so a new campaign never inherits an old room. An unbound
+  `MockServerState`, which tests share in one process, behaves exactly as
+  before. Covered by `test_mock_room_persistence.py`, 5 tests; with
+  `store()` disabled, 4 of them fail.
+- **P5-15 — a hosted room's shutter stood near the world origin.**
+  `ServiceShutter` placed its panel and its doorway interlock at
+  `global_position = shut_at`. That was right for every owner standing at
+  the world origin (the Zone's state gates and P14's graphs) and wrong
+  for a room that carries its own shutter and is placed elsewhere.
+  Hosted in the Zone, EX50-033's panel stood near the origin while its
+  state read shut. The first `minor` run passed anyway, because it read
+  `is_shut()`, which is the panel's offset and not where the panel is.
+  The shutter now works in its parent's frame; for owners at the origin
+  that is the same frame. The minor phase now checks the panel is IN the
+  crossing when shut, has the player stand on the crate and fail to walk
+  through, and after the restart checks the panel is physically raised.
+- **P5-16 — EX50-033's guide rails were a way round the whole room.**
+  The rails that keep the crate in its channel were 1.4 m tall, walkable,
+  and ran to the doorway. The jump apex is 1.33 m, so the rail is out of
+  reach from the floor but not from the parked crate (1.0 + 1.33), and
+  from the rail top the sill is (1.4 + 1.33 > 1.9). That route crosses
+  while the empty plate holds the crossing open: no step placed, no
+  LIGHTENED. It was found when the live suite's "standing on the crate
+  top" check measured the player at 1.35 m after the Zone's layout
+  changed the approach, i.e. standing on a rail. The rails are now
+  0.45 m (0.45 + 1.33 = 1.78, under the sill), and `godot-unweighted`
+  asserts that a jump from them stays under the sill (62 checks). The
+  scenario had passed 61 checks with this route open.
+- **P5-17 — the room audit measured every exit on the room's far wall.**
+  `RoomAudit._openings_are_holes` probed "the exit" at
+  `(exit.x, exit.y, bounds.end.z)`. For a room whose `exit_yaw` turns the
+  way on to a side wall, that is not the doorway: beside EX50-021's flank
+  it was open air, so that exit passed without being looked at, and
+  beside EX50-011's gallery it was a wall corner, so a doorway a real
+  body crosses was reported sealed. The probe now stands on the wall the
+  exit faces (`_exit_facing`, from `exit_yaw`, the way the entry was
+  corrected on 2026-09-03). Sabotage: with EX50-011's aperture filled,
+  the audit reports the exit sealed at (14.25, 4.0, 13.75), the real
+  doorway. Every shell passes the room contract.
+- **P5-18 — EX50-011's service stair ended against a railing.** The
+  stair released at G runs up to G's south edge, which carries a 1.1 m
+  railing. So a body walked up it stopped on the top step
+  (`pp_stair_before.log`: feet at z = -1.475, G starts at z = -1).
+  The first version of the new check passed anyway: it tested only x
+  and height, which the top step also satisfies, and its walker hopped
+  whenever it stalled (the jump apex clears 1.1 m). The check now walks
+  without ever jumping and requires the body on G, and it failed. The
+  railing is now cut where the stair lands, and only once the stair
+  exists, since before that the edge is a 4 m drop. Up and down both
+  pass, and `next_final` walks it in the Zone.
+- **P5-19 — a projectile's `apply_status_on_hit` was applied to no one.**
+  `EchoRuntime._launch` handed a projectile its `knockback_target` and
+  dropped every other modifier. So a rocket, a lob or a charge shot
+  carrying a status did its damage and applied nothing, silently. Yet
+  the schema pairs the modifier with any damage primitive, and the stage
+  gate admitted it.
+  - **Who it touched:** any projectile Action with a status, including
+    an owned projectile weapon the fallback's "enhancement" reading
+    gives a status.
+  - **The fix:** the projectile carries the modifiers and applies them,
+    through the target's own `StatusEffects.apply`, to what its direct
+    hit lands on and to every enemy its blast reaches.
+  - **Evidence:** `godot-verbs` fires a straight shot and a lob at real
+    enemies. With the handoff removed, both checks fail with the enemy
+    damaged and carrying no status.
+
+- **P5-20 — this lane's schema edits never reached the design packet.**
+  The O05-17 frozen run's step 3 (`check_packet.py`) failed on
+  `73b7b87` with 8 disagreements:
+  - `minors.py` was in the bridge but not in the packet;
+  - `echo.py`, `export.py`, `physics.py`, `protocol.py`,
+    `signal_graph.py`, `transitions.py` and `zone.py` differed between
+    the two.
+
+  The packet is the contract. Dess's own commits change the bridge and
+  the packet copy together. This lane's eight schema commits (`5902920`
+  to `7abb338`, every edit in the shared-seam table) changed only the
+  bridge. The checker is not in CI, and the focused checks this lane
+  ran never called it, so nothing caught the drift until the full run.
+  - **Scope, checked:** every packet copy was byte-identical to the
+    bridge as it stood at `57e962e`. The whole difference is this
+    batch's edits.
+  - **The fix:** the eight files are copied from the bridge into
+    `docs/design-packet-v0.8/schemas/`, docs only. `check_packet.py`
+    now reads "prose matches the models across 11 documents", exit 0.
+    No packet prose was touched.
+  - **For Dess:** the packet now carries this lane's edits. They are the
+    shared-seam table's rows, awaiting her review like the bridge side.
+  - **The run:** it was stopped at step 8 and restarted from step 1 on
+    the corrected revision, so one frozen revision carries every step.

@@ -1,0 +1,7 @@
+Archipepsi post-playtest handoff v1.0 — Dess
+
+Attached is the SAME full handoff packet for all three lanes. Start with dispatch/DESS_START.md, then only the root sections it points you to. The all-in-one file is optional; do not read all historical references as a wake-up prerequisite.
+
+This packet preserves a745637, all 85 OV05 units and the full parent 0.4 scope. It separates owner playtest findings/new UI requirements from proposed implementations and future 0.5/0.6 design. No old saves, source history or approved assets are discarded. D-11's pack namespace is already delivered; the new menu is actual 3D and uses Glyph, not a fake tab effect.
+
+Wait for my explicit instruction to resume/execute if this arrives only for review. When told to proceed, follow your prepared starting brief and continue genuinely ready authorized tasks rather than stopping after one small integration. Shared files have one writer. No heartbeat, watcher, subscription, automatic reset-time wake-up or scheduled job. Send concise evidence and exact remaining task IDs at a real checkpoint.

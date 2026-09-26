@@ -1,0 +1,98 @@
+# CK6 checkpoint frontier on d4fc7fe: 88 steps, one run on one revision, 00:15-01:52 UTC.
+# The five placement fixtures `godot-zone-audit` (step 22) rewrites -- provenance stamps only -- were restored
+# after step 41; no later step reads them. Columns: step, command, exit code, seconds, result line.
+rev d4fc7fe1f6836293f5c13cb0ca3b2804466aff49
+start 00:15:15
+tree_at_start 0
+first_step 1
+1	make test	0	214	2299 passed, 6 warnings, 627 subtests passed in 211.63s (0:0
+2	make smoke	0	1	SMOKE OK — bridge-only loop: connect, scout, allocate, gen
+3	python3 docs/design-packet-v0.8/check_packet.py	0	2	prose matches the models across 11 documents (1365 known ide
+4	make export && git diff --exit-code -- bridge/archipepsi_bridge/schemas/generated godot/scripts/autoload/constants.gd apworld/archipepsi/constants.py	0	0	
+5	make godot-import	0	14	
+6	make doctor	0	4	
+7	make godot-boot	0	21	GODOT BOOT TESTS OK
+8	make godot-test	0	28	GODOT CHAMBER TESTS OK
+9	make godot-hud	0	21	GODOT HUD TESTS OK
+10	make godot-rules	0	20	GODOT RULES TESTS OK
+11	make godot-stats	0	21	GODOT STATS TESTS OK
+12	make godot-lab	0	21	GODOT LAB TESTS OK
+13	make godot-affordance	0	23	GODOT AFFORDANCE TESTS OK
+14	make godot-verbs	0	23	GODOT VERBS TESTS OK
+15	make godot-blink	0	23	GODOT BLINK TESTS OK
+16	make godot-content	0	20	GODOT CONTENT TESTS OK
+17	make godot-activity	0	39	GODOT ACTIVITY TESTS OK
+18	make godot-room	0	21	GODOT ROOM TESTS OK
+19	make godot-room-contract	0	143	GODOT ROOM CONTRACT TESTS OK
+20	make godot-graphs	0	132	GODOT GRAPH TESTS OK
+21	make godot-movement	0	22	GODOT MOVEMENT TESTS OK
+22	make godot-zone-audit	0	25	GODOT ZONE AUDIT OK
+23	make godot-legible	0	20	GODOT LEGIBILITY TESTS OK
+24	make godot-physics	0	134	GODOT PHYSICS TESTS OK (68 checks)
+25	make godot-traverse	0	61	GODOT TRAVERSE TESTS OK (37 checks)
+26	make godot-return-placement	0	20	GODOT RETURN PLACEMENT OK
+27	make godot-build-failure	0	23	GODOT RELOAD TESTS OK (6 checks)
+28	make godot-exit-reach	0	36	GODOT EXIT REACH OK (81 checks)
+29	make godot-passenger-carry	0	42	GODOT PASSENGER CARRY OK (4 checks)
+30	make godot-rail-carrier	0	26	GODOT RAIL CARRIER OK (73 checks)
+31	make godot-rail-junction	0	118	GODOT RAIL JUNCTION OK (140 checks)
+32	make godot-passing-platforms	0	90	GODOT PASSING PLATFORMS OK (70 checks, 7 notes)
+33	make godot-counterfire	0	81	GODOT COUNTERFIRE OK (59 checks, 2 notes)
+34	make godot-counterfire-hosted	0	282	GODOT COUNTERFIRE HOSTED OK (25 checks, 1 notes)
+35	make godot-mass-class	0	39	GODOT MASS CLASS OK (59 checks, 1 notes)
+36	make godot-unweighted	0	105	GODOT UNWEIGHTED OK (70 checks, 2 notes)
+37	make godot-target-facing	0	20	GODOT TARGET FACING OK (2 checks)
+38	make godot-rail-zone	0	22	GODOT RAIL ZONE OK (25 checks, 2 notes)
+39	make godot-rail-gantry	0	38	GODOT RAIL GANTRY OK (41 checks, 3 notes)
+40	make godot-gantry-census	0	251	GANTRY CENSUS OK (every sampled layout of an arena width 24 
+41	make godot-enemy-footing	0	69	GODOT ENEMY FOOTING OK (12 checks)
+42	make godot-machine-life	0	162	GODOT MACHINE LIFE OK (41 checks, 5 rounds)
+43	make godot-zone-state	0	28	GODOT ZONE STATE OK (60 checks, 3 notes)
+44	make godot-roster	0	60	GODOT ROSTER OK (52 checks, 5 notes)
+45	make godot-actuator	0	36	GODOT ACTUATOR OK (93 checks, 1 notes)
+46	make godot-constraints	0	101	GODOT CONSTRAINTS OK (67 checks, 2 notes)
+47	make godot-archive	0	21	GODOT ARCHIVE OK (23 checks, 0 notes)
+48	make godot-consumable	0	22	GODOT CONSUMABLE TESTS OK (87 checks)
+49	make godot-encounter	0	87	GODOT ENCOUNTER TESTS OK (51 checks, 2 notes)
+50	make godot-signal-graph	0	39	GODOT SIGNAL GRAPH TESTS OK (61 checks, 0 notes)
+51	make godot-signal-verbs	0	51	GODOT SIGNAL VERBS OK (32 checks, 0 notes)
+52	make godot-latched-route	0	123	GODOT LATCHED ROUTE TESTS OK (73 checks, 4 notes)
+53	make godot-theme-pack	0	21	GODOT THEME PACK TESTS OK (30 checks, 0 notes)
+54	make godot-carry	0	44	GODOT CARRY TESTS OK (32 checks, 1 notes)
+55	make godot-transport	0	391	GODOT TRANSPORT TESTS OK (106 checks, 6 notes)
+56	make godot-held-route	0	108	GODOT HELD ROUTE OK (33 checks, 1 notes)
+57	make godot-reversible	0	106	GODOT REVERSIBLE TESTS OK (32 checks, 0 notes)
+58	make godot-verb-runtime	0	77	GODOT VERB RUNTIME OK (95 checks, 1 notes)
+59	make godot-status-family	0	44	GODOT STATUS FAMILY OK (15 checks, 1 notes)
+60	make godot-status-kinetic	0	58	GODOT STATUS KINETIC OK (35 checks, 1 notes)
+61	make godot-combat-fairness	0	187	GODOT COMBAT FAIRNESS OK (50 checks, 0 notes)
+62	make godot-flyer-room	0	46	GODOT FLYER ROOM OK (7 checks, 0 notes)
+63	make godot-resume	0	24	GODOT RESUME TESTS OK (12 checks, 0 notes)
+64	make godot-minor-claim	0	105	GODOT MINOR CLAIM TESTS OK (17 checks, 4 notes)
+65	make godot-passing-hosted PASSING_ZONE=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/passing_zone_capture2.json	0	128	GODOT PASSING HOSTED OK (24 checks, 4 notes)
+66	make godot-consumable-live	0	42	GODOT CONSUMABLE LIVE TESTS OK (1 notes)
+67	make godot-consumable-restart	0	37	GODOT CONSUMABLE LIVE TESTS OK (1 notes)
+68	make godot-latched-route-live	0	82	GODOT LATCHED LIVE RESTORE OK (13 checks, 1 notes)
+69	make godot-lever-route-live	0	80	GODOT LATCHED LIVE LEVER RESTORE OK (14 checks, 1 notes)
+70	make godot-transport-live	0	167	GODOT TRANSPORT LIVE RESTORE OK (12 checks, 0 notes)
+71	make godot-reversible-live	0	83	GODOT REVERSIBLE LIVE RESTORE OK (6 checks, 0 notes)
+72	make godot-candidate-live	0	309	GODOT CANDIDATE LIVE NEXT_FINAL OK (8 checks, 1 notes)
+73	make godot-resume-live	0	101	GODOT RESUME LIVE LEGACY OK (6 checks, 0 notes)
+74	make godot-ordinary-live	0	41	GODOT RELOAD TESTS OK (10 checks)
+75	make godot-integration	0	155	GODOT INTEGRATION OK
+76	make godot-integration-quiet	0	158	GODOT INTEGRATION OK
+77	make godot-integration-variant-live	0	31	GODOT INTEGRATION OK
+78	make godot-reload	0	58	GODOT RELOAD TESTS OK (20 checks)
+79	make version	0	1	
+80	make latched-route-fixture lever-route-fixture held-route-fixture && git diff --exit-code -- godot/tests/fixtures/latched_route_zone.json godot/tests/fixtures/lever_route_zone.json godot/tests/fixtures/held_route_zone.json; rc=$?; git checkout -- godot/tests/fixtures/latched_route_zone.json godot/tests/fixtures/lever_route_zone.json godot/tests/fixtures/held_route_zone.json; exit $rc	0	1	
+81	make godot-menu-shell	0	29	GODOT MENU SHELL OK (23 checks, 2 notes)
+82	make godot-equipment-face	0	28	GODOT EQUIPMENT FACE OK (107 checks, 1 notes)
+83	make equipment-fixture && git diff --exit-code -- godot/tests/fixtures/equipment_snapshot.json; rc=$?; git checkout -- godot/tests/fixtures/equipment_snapshot.json; exit $rc	0	0	
+84	make godot-minimap	0	22	GODOT MINIMAP OK (30 checks, 1 notes)
+85	make map-fixture && git diff --exit-code -- godot/tests/fixtures/map_snapshot.json; rc=$?; git checkout -- godot/tests/fixtures/map_snapshot.json; exit $rc	0	1	
+86	make godot-map-face	0	25	GODOT MAP FACE OK (52 checks, 1 notes)
+87	make godot-journal-face	0	21	GODOT JOURNAL FACE OK (36 checks, 0 notes)
+88	make journal-fixture && git diff --exit-code -- godot/tests/fixtures/journal_snapshot.json; rc=$?; git checkout -- godot/tests/fixtures/journal_snapshot.json; exit $rc	0	1	
+end 01:52:53
+tree_at_end 
+DONE

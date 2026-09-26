@@ -1,0 +1,185 @@
+D01-1 [campaign.py] a new campaign created with the policy off
+    CAUGHT by test_a_new_campaign_is_created_with_the_policy_on -- 8 failing test(s); restored byte for byte: True
+      FAILED test_a_crash_before_the_append_is_granted_once_on_reload
+      FAILED test_a_failing_provider_falls_back_under_the_same_id
+      FAILED test_a_new_campaign_is_created_with_the_policy_on
+      FAILED test_a_written_echo_is_never_asked_for_again
+      FAILED test_an_own_check_yields_one_echo_and_its_original_once
+      FAILED test_own_checks_confirmed_elsewhere_wait_in_the_foreign_queue
+      FAILED test_the_card_says_delivered_to_you_then_the_echo
+      FAILED test_the_full_loop_claims_echoes_equips_and_survives_a_reload[own-item]
+        E   AssertionError: assert False is True
+        test_self_echo_integration.py:128: AssertionError: assert False is True
+        E   AssertionError: the own Check yielded no Echo
+        test_self_echo_integration.py:147: AssertionError: the own Check yielded no Echo
+        E   AttributeError: 'NoneType' object has no attribute 'display_name'
+        test_self_echo_integration.py:186: AttributeError: 'NoneType' object has no attribute 'display_name'
+        E   AssertionError: no Echo, fallback or otherwise
+        test_self_echo_integration.py:245: AssertionError: no Echo, fallback or otherwise
+        E   AssertionError: minted 0 times
+        test_self_echo_integration.py:281: AssertionError: minted 0 times
+        E   AssertionError: []
+        test_self_echo_integration.py:335: AssertionError: []
+        E   AssertionError: 2 Checks should interpret (1 own, legacy=False) but 1 interpretations
+        test_full_loop.py:134: AssertionError: 2 Checks should interpret (1 own, legacy=False) but 1 interpretations
+D01-2 [campaign.py] the old filter back: an own item never yields an Echo
+    CAUGHT by test_an_own_check_yields_one_echo_and_its_original_once -- 32 failing test(s); restored byte for byte: True
+      FAILED test_a_crash_before_the_append_is_granted_once_on_reload
+      FAILED test_a_failing_provider_falls_back_under_the_same_id
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak00]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak01]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak02]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak03]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak04]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak05]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak06]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak07]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak08]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak09]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak10]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak11]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak12]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak13]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak14]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak15]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak16]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak17]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak18]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak19]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak20]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak21]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak22]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak23]
+      FAILED test_a_whole_campaign_holds_together_on_any_seed[Soak24]
+      FAILED test_a_written_echo_is_never_asked_for_again
+      FAILED test_an_own_check_yields_one_echo_and_its_original_once
+      FAILED test_own_checks_confirmed_elsewhere_wait_in_the_foreign_queue
+      FAILED test_the_card_says_delivered_to_you_then_the_echo
+      FAILED test_the_full_loop_claims_echoes_equips_and_survives_a_reload[own-item]
+        E   AssertionError: the own Check yielded no Echo
+        test_self_echo_integration.py:147: AssertionError: the own Check yielded no Echo
+        E   AttributeError: 'NoneType' object has no attribute 'display_name'
+        test_self_echo_integration.py:186: AttributeError: 'NoneType' object has no attribute 'display_name'
+        E   AssertionError: no Echo, fallback or otherwise
+        test_self_echo_integration.py:245: AssertionError: no Echo, fallback or otherwise
+        E   AssertionError: minted 0 times
+        test_self_echo_integration.py:281: AssertionError: minted 0 times
+        E   AssertionError: []
+        test_self_echo_integration.py:335: AssertionError: []
+        E   AssertionError: 2 Checks should interpret (1 own, legacy=False) but 1 interpretations
+        test_full_loop.py:134: AssertionError: 2 Checks should interpret (1 own, legacy=False) but 1 interpretations
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        E   AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+        test_campaign_soak.py:152: AssertionError: a Check confirmed with no Echo: {89100027, 89100020, 89100013, 89100006}
+D01-3 [campaign.py] the policy ignored: a legacy campaign's own item yields one
+    CAUGHT by test_a_legacy_campaign_mints_nothing_for_its_own_item -- 3 failing test(s); restored byte for byte: True
+      FAILED test_a_legacy_campaign_mints_nothing_for_its_own_item
+      FAILED test_a_legacy_card_is_delivered_to_you_and_nothing_more
+      FAILED test_the_full_loop_claims_echoes_equips_and_survives_a_reload[legacy]
+        E   AssertionError: assert ('check_confi...s, quickly.')) == ('check_confi...red to you.'))
+        test_self_echo_integration.py:227: AssertionError: assert ('check_confi...s, quickly.')) == ('check_confi...red to you.'))
+        E   AssertionError: assert 'echo_89100006' is None
+        test_self_echo_boundaries.py:141: AssertionError: assert 'echo_89100006' is None
+        E   AssertionError: 1 Checks should interpret (1 own, legacy=True) but 2 interpretations
+        test_full_loop.py:134: AssertionError: 1 Checks should interpret (1 own, legacy=True) but 2 interpretations
+D01-4 [campaign.py] the sweep keeps the old filter (a lost own grant never resumes)
+    CAUGHT by test_a_crash_before_the_append_is_granted_once_on_reload -- 2 failing test(s); restored byte for byte: True
+      FAILED test_a_crash_before_the_append_is_granted_once_on_reload
+      FAILED test_own_checks_confirmed_elsewhere_wait_in_the_foreign_queue
+        E   AssertionError: minted 0 times
+        test_self_echo_integration.py:281: AssertionError: minted 0 times
+        E   AssertionError: []
+        test_self_echo_integration.py:335: AssertionError: []
+D01-5 [campaign.py] own Checks confirmed elsewhere skip the lazy budget
+    CAUGHT by test_own_checks_confirmed_elsewhere_wait_in_the_foreign_queue -- 1 failing test(s); restored byte for byte: True
+      FAILED test_own_checks_confirmed_elsewhere_wait_in_the_foreign_queue
+        E   AssertionError: [89100006, 89100013, 89100020, 89100027]
+        test_self_echo_integration.py:335: AssertionError: [89100006, 89100013, 89100020, 89100027]
+D01-6 [transactions.py] the own card without its Echo half
+    CAUGHT by test_the_card_says_delivered_to_you_then_the_echo -- 2 failing test(s); restored byte for byte: True
+      FAILED test_a_failing_provider_falls_back_under_the_same_id
+      FAILED test_the_card_says_delivered_to_you_then_the_echo
+        E   AssertionError: assert ('Epsilon Coi...ered to you.') == ('Epsilon Coi...es, quickly.')
+        test_self_echo_integration.py:184: AssertionError: assert ('Epsilon Coi...ered to you.') == ('Epsilon Coi...es, quickly.')
+        E   AssertionError: assert ('Epsilon Coi...ered to you.') == ('Epsilon Coi...es, quickly.')
+        test_self_echo_integration.py:251: AssertionError: assert ('Epsilon Coi...ered to you.') == ('Epsilon Coi...es, quickly.')
+D01-7 [transactions.py] the own card without the Echo's id (the reveal cannot show its effects)
+    CAUGHT by test_the_card_says_delivered_to_you_then_the_echo -- 2 failing test(s); restored byte for byte: True
+      FAILED test_a_failing_provider_falls_back_under_the_same_id
+      FAILED test_the_card_says_delivered_to_you_then_the_echo
+        E   AssertionError: assert None == 'echo_89100006'
+        test_self_echo_integration.py:188: AssertionError: assert None == 'echo_89100006'
+        E   AssertionError: assert (1 == 1 and None == 'echo_89100006')
+        test_self_echo_integration.py:250: AssertionError: assert (1 == 1 and None == 'echo_89100006')
+D01-8 [transactions.py] the own card as a reveal 'SENT TO' the player
+    CAUGHT by test_the_card_says_delivered_to_you_then_the_echo -- 2 failing test(s); restored byte for byte: True
+      FAILED test_a_legacy_card_is_delivered_to_you_and_nothing_more
+      FAILED test_the_card_says_delivered_to_you_then_the_echo
+        E   AssertionError: assert ('reveal', 'SENT TO SKYIAH') == ('check_confi...CK CONFIRMED')
+        test_self_echo_integration.py:182: AssertionError: assert ('reveal', 'SENT TO SKYIAH') == ('check_confi...CK CONFIRMED')
+        E   AssertionError: assert ('reveal', 'S...'Archipepsi')) == ('check_confi...red to you.'))
+        test_self_echo_integration.py:227: AssertionError: assert ('reveal', 'S...'Archipepsi')) == ('check_confi...red to you.'))
+D01-9 [campaign.py] a written Echo asked for again (grant not idempotent)
+    CAUGHT by test_a_failing_provider_falls_back_under_the_same_id -- 1 failing test(s); restored byte for byte: True
+      FAILED test_a_failing_provider_falls_back_under_the_same_id
+
+9 of 9 sabotages caught
+
+# live rows, on dc66f2f (D01_TREE=wt-d05)
+D01-G1 [reveal.gd] the card shows an Echo's effects only on a foreign reveal
+    CAUGHT -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: the real card shows both halves: 'Epsilon Coin / Delivered to you.' above the rule; the Echo, and its 3 effect line(s), below it
+D01-G2 [campaign.py] the old filter back, played live: an own item yields nothing
+    CAUGHT -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: 30 Checks (4 your own) -> 26 interpretations, one each, none missing [89100006, 89100013, 89100020, 89100027], none duplicated
+      FAIL: each own item's card: 'Delivered to you.', then EPSILON ECHO ACQUIRED with its Echo (4 cards; wrong: [89100006.0, 89100027.0, 89100020.0, 89100013.0])
+      FAIL: the real card shows both halves: 'Epsilon Coin / Delivered to you.' above the rule; the Echo, and its 0 effect line(s), below it
+
+2 of 2 sabotages caught

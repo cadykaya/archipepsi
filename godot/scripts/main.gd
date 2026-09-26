@@ -12,10 +12,23 @@ var zone: ZoneController
 var menu: MainMenu
 var hud: Hud
 var reveal: RevealLayer
-var inventory: InventoryLayer
+## H-INVENTORY (CP3): the Equipment wall. Replaced the Echo archive, a
+## list of events with a 3D frame around it, by items on three regions.
+var equipment: EquipmentFace
 var shop: ShopUI
 var station_panel: StationPanel
 var pause_menu: PauseMenu
+## H-3D-SHELL (CP3): the one pause interface, four walls of a box. The
+## pause menu is its Settings wall and `equipment` its Equipment wall.
+var menu_shell: MenuShell
+## H-MINIMAP (CP4): the map that stays on screen in a Zone, on the HUD.
+var minimap: Minimap
+## H-3D-MAP (CP4): the shell's Map wall, a miniature of the Zone.
+var map_face: MapFace
+## H-JOURNAL (CP4): the Journal wall, and the Settings wall's campaign and
+## options beside the pause menu.
+var journal: JournalFace
+var settings_face: SettingsFace
 var debug: DebugOverlay
 ## F5, review-only. See `nav_schematic.gd`: not a map feature, and
 ## nothing in the game reads it.
@@ -58,6 +71,12 @@ const DRIVERS := {
 	"--lab-test": preload("res://tests/lab_driver.gd"),
 	"--affordance-test": preload("res://tests/affordance_driver.gd"),
 	"--verbs-test": preload("res://tests/verbs_driver.gd"),
+	"--verb-runtime-test": preload("res://tests/verb_runtime_driver.gd"),
+	"--status-family-test": preload("res://tests/status_family_driver.gd"),
+	"--combat-fairness-test": preload("res://tests/combat_fairness_driver.gd"),
+	"--flyer-room": preload("res://tests/flyer_room_driver.gd"),
+	"--resume-test": preload("res://tests/resume_driver.gd"),
+	"--minor-claim": preload("res://tests/minor_claim_driver.gd"),
 	"--boot-test": preload("res://tests/boot_driver.gd"),
 	"--legibility-test": preload("res://tests/legibility_driver.gd"),
 	"--content-test": preload("res://tests/content_driver.gd"),
@@ -74,6 +93,45 @@ const DRIVERS := {
 	"--traverse-test": preload("res://tests/traverse_driver.gd"),
 	"--target-facing": preload("res://tests/target_facing_driver.gd"),
 	"--exit-reach": preload("res://tests/exit_reach_driver.gd"),
+	"--passenger-carry": preload("res://tests/passenger_carry_driver.gd"),
+	"--rail-carrier": preload("res://tests/rail_carrier_driver.gd"),
+	"--rail-junction": preload("res://tests/rail_junction_driver.gd"),
+	"--passing-platforms-test": preload(
+		"res://tests/passing_platforms_driver.gd"),
+	"--counterfire-test": preload("res://tests/counterfire_driver.gd"),
+	"--unweighted-test": preload("res://tests/unweighted_driver.gd"),
+	"--rail-zone": preload("res://tests/rail_zone_driver.gd"),
+	"--rail-gantry": preload("res://tests/rail_gantry_driver.gd"),
+	"--rail-network": preload("res://tests/rail_network_driver.gd"),
+	"--gantry-census": preload("res://tests/gantry_census_driver.gd"),
+	"--enemy-footing": preload("res://tests/enemy_footing_driver.gd"),
+	"--status-kinetic": preload("res://tests/status_kinetic_driver.gd"),
+	"--zone-state": preload("res://tests/zone_state_driver.gd"),
+	"--roster": preload("res://tests/roster_driver.gd"),
+	"--actuator": preload("res://tests/actuator_driver.gd"),
+	"--constraints": preload("res://tests/constraint_driver.gd"),
+	"--archive": preload("res://tests/archive_driver.gd"),
+	"--consumable": preload("res://tests/consumable_driver.gd"),
+	"--consumable-live": preload("res://tests/consumable_live_driver.gd"),
+	"--encounter": preload("res://tests/encounter_driver.gd"),
+	"--signal-graph": preload("res://tests/signal_graph_driver.gd"),
+	"--signal-verbs": preload("res://tests/signal_verb_driver.gd"),
+	"--latched-route": preload("res://tests/latched_route_driver.gd"),
+	"--theme-pack": preload("res://tests/theme_pack_driver.gd"),
+	"--carry": preload("res://tests/carry_driver.gd"),
+	"--transport": preload("res://tests/transport_driver.gd"),
+	"--held-route": preload("res://tests/held_route_driver.gd"),
+	"--counterfire-hosted": preload("res://tests/counterfire_hosted_driver.gd"),
+	"--passing-hosted": preload("res://tests/passing_hosted_driver.gd"),
+	"--menu-shell": preload("res://tests/menu_shell_driver.gd"),
+	"--equipment-face": preload("res://tests/equipment_face_driver.gd"),
+	"--minimap": preload("res://tests/minimap_driver.gd"),
+	"--map-face": preload("res://tests/map_face_driver.gd"),
+	"--journal-face": preload("res://tests/journal_face_driver.gd"),
+	"--reversible": preload("res://tests/reversible_driver.gd"),
+	"--mass-class": preload("res://tests/mass_class_driver.gd"),
+	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),
+	"--candidate-shots": preload("res://tests/candidate_shot_driver.gd"),
 }
 
 func _ready() -> void:
@@ -83,6 +141,56 @@ func _ready() -> void:
 			headless_test = true
 			add_child((DRIVERS[flag] as GDScript).new())
 			return
+	# THE RAILWAY, for an operator who asks for it by name (0.4, M1).
+	#
+	# BEFORE `boot()` AND INSTEAD OF IT: the scenario is not a Zone, has
+	# no campaign and opens no bridge connection, so there is nothing for
+	# the menu, the snapshot or the save to be about. Like the Stage 3A
+	# showcase it is scaffolding, and like that one it cannot be reached
+	# without the flag.
+	if "--railway" in user_args:
+		var yard := RailwayScenario.new()
+		# `--bracing` selects the SECOND binding instead of the
+		# first: the span is held by a clamp the base kit can shoot
+		# rather than by a control the hookshot has to reach. They
+		# are alternatives, never both -- a yard with both would be
+		# a yard where the acquisition branch is optional.
+		yard.binding = RailwayScenario.BRACING_BINDING \
+				if "--bracing" in user_args \
+				else RailwayScenario.GANTRY_BINDING
+		add_child(yard)
+		return
+	# EX50-011 PASSING PLATFORMS (0.4, M3), by name and only by name, for
+	# the reasons above: a minor situation, not a Zone, no campaign, no
+	# bridge connection.
+	if "--passing-platforms" in user_args:
+		var room := PassingPlatforms.new()
+		# `--parted` is the specification's own counterexample: the same
+		# room with `H`'s track shifted so no overlap exists. A commanded
+		# timing that reports success in BOTH was measuring its own
+		# commands rather than the world.
+		room.parted = "--parted" in user_args
+		add_child(room)
+		return
+	# EX50-021 COUNTERFIRE ARCADE (0.4, M3), by name and only by name.
+	if "--counterfire" in user_args:
+		var arcade := CounterfireArcade.new()
+		# `--blocked` is the specification's counterpart: a real blocker
+		# between the muzzle and the receiver. The shutter must not open.
+		arcade.blocked = "--blocked" in user_args
+		add_child(arcade)
+		return
+	# EX50-033 UNWEIGHTED SWITCH (0.4, M3), by name and only by name.
+	if "--unweighted" in user_args:
+		var switch := UnweightedSwitch.new()
+		# `--disconnected` is §11's control: the plate's output is not
+		# wired to the shutter. A suite that only ever watched the
+		# shutter open would pass on a room where the plate did nothing,
+		# so the expected response has to be shown FAILING when the one
+		# link is cut.
+		switch.disconnected = "--disconnected" in user_args
+		add_child(switch)
+		return
 	boot()
 	# THE STAGE 3A SHOWCASE, and only when an operator asks for it by
 	# name. Without `--playtest3a` this branch does nothing at all and
@@ -129,6 +237,57 @@ func _ready() -> void:
 		var reload_driver := ReloadDriver.new()
 		reload_driver.main = self
 		add_child(reload_driver)
+	# P14's latch route through the real bridge and a restart, beside the
+	# real `Main` for the same reason: `_to_zone` is what hands a saved
+	# latch to the Zone before its graph is first evaluated.
+	if LatchedRouteLiveDriver.phase_from_cmdline() != "":
+		var latched_driver := LatchedRouteLiveDriver.new()
+		latched_driver.main = self
+		add_child(latched_driver)
+	# O05-03's transport journey across two real restarts, beside `Main`
+	# for the same reason: `_to_zone` is what hands the saved object,
+	# pose and installation to the Zone before it is built.
+	if TransportLiveDriver.phase_from_cmdline() != "":
+		var transport_driver := TransportLiveDriver.new()
+		transport_driver.main = self
+		add_child(transport_driver)
+	# O05-04.5's reversible lever through a real bridge and a restart.
+	if ReversibleLiveDriver.phase_from_cmdline() != "":
+		var reversible_driver := ReversibleLiveDriver.new()
+		reversible_driver.main = self
+		add_child(reversible_driver)
+	# O05-13/15: the whole candidate profile in one Zone, the combination
+	# the candidate launcher plays, through a real bridge and a restart.
+	if CandidateLiveDriver.phase_from_cmdline() != "":
+		var candidate_driver := CandidateLiveDriver.new()
+		candidate_driver.main = self
+		add_child(candidate_driver)
+	# H-RESUME-R: an encounter resumed as it was left, through a real
+	# bridge and a restart, beside `Main` for the same reason -- `_to_zone`
+	# is what hands the saved encounter to the Zone before it is built.
+	if ResumeLiveDriver.resume_phase() != "":
+		var resume_driver := ResumeLiveDriver.new()
+		resume_driver.main = self
+		add_child(resume_driver)
+	# O05-10.4: repeated lifecycles accrue nothing, beside `Main` because
+	# what outlives a Zone is `Main`'s. No bridge: the Zone record a
+	# bridge would serve is set on `BridgeClient.snapshot`.
+	if MachineLifeDriver.requested():
+		var life_driver := MachineLifeDriver.new()
+		life_driver.main = self
+		add_child(life_driver)
+	# H-BOMBS (PT-09, V-15): a naturally acquired consumable, as the player
+	# is told about it -- `Main`'s wiring, so beside `Main`.
+	if BombsDriver.requested():
+		var bombs_driver := BombsDriver.new()
+		bombs_driver.main = self
+		add_child(bombs_driver)
+	# H-BOMBS slice 2: the Bomb Bag the campaign gives, claimed, carried,
+	# thrown and refilled through a real bridge and two restarts.
+	if BombsLiveDriver.bombs_phase() != "":
+		var bombs_live_driver := BombsLiveDriver.new()
+		bombs_live_driver.main = self
+		add_child(bombs_live_driver)
 
 ## Enter the curated Stage 3A showcase.
 ##
@@ -177,6 +336,11 @@ var _zone_resume := {}
 var _zone_stations := {}
 var _zone_keys := {}
 var _zone_locks_open := {}
+var _zone_latches := {}
+## H-RESUME-R: encounter members defeated, per Zone, for the in-flight
+## half -- a defeat reported in the same breath as leaving may not be in
+## the snapshot yet. Only ever grows, like the sets above.
+var _zone_defeats := {}
 
 ## Everything the real game needs, extracted so a test can call it.
 ##
@@ -216,17 +380,34 @@ func boot() -> void:
 			rule_runtime.notify("check_claimed"))
 	hud = Hud.new()
 	add_child(hud)
+	minimap = Minimap.new()
+	hud.add_child(minimap)
 	hud.meters.pool = resource_pool
 	hud.visible = false
 	reveal = RevealLayer.new()
 	reveal.tones = tones
 	add_child(reveal)
-	inventory = InventoryLayer.new()
-	add_child(inventory)
+	menu_shell = MenuShell.new()
+	add_child(menu_shell)
+	equipment = EquipmentFace.new()
+	menu_shell.page_root("equipment").add_child(equipment)
+	map_face = MapFace.new()
+	menu_shell.page_root("map").add_child(map_face)
+	journal = JournalFace.new()
+	menu_shell.page_root("journal").add_child(journal)
+	settings_face = SettingsFace.new()
+	menu_shell.page_root("settings").add_child(settings_face)
+	# The saved volume, from the first sound on.
+	SettingsFace.apply_volume()
+	# The wall facing the player holds focus, or a keyboard or controller
+	# has nothing to move from.
+	menu_shell.page_changed.connect(func(page: String) -> void:
+		if page == "equipment":
+			equipment.take_focus())
 	shop = ShopUI.new()
 	add_child(shop)
 	pause_menu = PauseMenu.new()
-	add_child(pause_menu)
+	menu_shell.page_viewport("settings").add_child(pause_menu)
 	station_panel = StationPanel.new()
 	add_child(station_panel)
 	debug = DebugOverlay.new()
@@ -238,7 +419,6 @@ func boot() -> void:
 	menu.mock_pressed.connect(_on_menu_mock)
 	reveal.reveal_started.connect(_update_modal)
 	reveal.reveal_finished.connect(_update_modal)
-	inventory.closed.connect(_update_modal)
 	shop.closed.connect(_update_modal)
 	station_panel.closed.connect(_update_modal)
 	station_panel.warp_chosen.connect(_on_station_warp_chosen)
@@ -249,7 +429,10 @@ func boot() -> void:
 	# is invented here and `abandon_zone` is not reachable from a
 	# station.
 	station_panel.return_to_hub_chosen.connect(_on_return_to_hub)
-	pause_menu.resumed.connect(_update_modal)
+	# RESUME, RETURN TO HUB and ABANDON all end in the pause menu's own
+	# `close()`, and that closes the whole interface.
+	pause_menu.resumed.connect(_close_menu)
+	menu_shell.closed.connect(_on_menu_closed)
 	pause_menu.return_to_hub_requested.connect(_on_return_to_hub)
 	pause_menu.abandon_confirmed.connect(_on_abandon)
 
@@ -299,6 +482,7 @@ func _on_snapshot(_snapshot: Dictionary) -> void:
 				_to_zone(BridgeClient.active_zone()["zone"])
 			elif hub != null:
 				hub.refresh()
+				_sync_equipped()
 		View.ZONE:
 			if mode == "NO_CAMPAIGN":
 				_to_menu()
@@ -308,15 +492,25 @@ func _on_snapshot(_snapshot: Dictionary) -> void:
 			elif zone != null:
 				zone.refresh()
 				_sync_equipped()
-	if inventory.visible:
-		inventory.rebuild()
 	if shop.visible:
 		shop.rebuild()
+	hud.point_at_new_consumables(_snapshot)
 	hud.refresh_echo()
 
+## THE KEYS FOLLOW THE SNAPSHOT IN THE HUB AS IN A ZONE (H-BOMBS).
+##
+## Only the Zone re-equipped on a snapshot; the Hub's player was equipped
+## once, when the Hub was built, and never again. So something put on a
+## key IN THE HUB -- the equipment wall is open there too, and the Echo
+## Lab is there for trying it -- stayed off the key's runtime until the
+## next Zone: the HUD named it, the bridge granted its use, and the press
+## handed the charge straight back with nothing thrown. A Bomb Bag
+## equipped in the Hub did nothing in the Hub.
 func _sync_equipped() -> void:
 	if zone != null and zone.player != null:
 		_equip_all_slots(zone.player)
+	elif hub != null and hub.player != null:
+		_equip_all_slots(hub.player)
 
 ## S7: four slots, four runtimes, each fed the Action the fold says is in
 ## it. An empty slot is legal and stays empty — the Static Pulse is what
@@ -385,6 +579,10 @@ func _clear_world() -> void:
 		child.queue_free()
 	hub = null
 	zone = null
+	if minimap != null:
+		minimap.bind(null)
+	if map_face != null:
+		map_face.bind(null)
 	if rule_runtime != null:
 		rule_runtime.player = null
 		rule_runtime.echo_runtime = null
@@ -478,10 +676,30 @@ func _to_hub() -> void:
 	_update_modal()
 
 func _toggle_inventory() -> void:
-	if inventory.visible:
-		inventory.close()
+	if menu_shell.is_open():
+		menu_shell.close()
 	else:
-		inventory.open()
+		_open_menu("equipment")
+	_update_modal()
+
+
+## Escape opens it on Settings and Tab on Equipment. Once it is open the
+## shell owns those keys itself (Escape closes it; Tab turns to Equipment
+## and closes it from there), so this only ever opens.
+func _open_menu(page: String) -> void:
+	pause_menu.open(view == View.ZONE)
+	equipment.open()
+	menu_shell.open(page)
+
+
+func _close_menu() -> void:
+	menu_shell.close()
+	_update_modal()
+
+
+func _on_menu_closed() -> void:
+	pause_menu.visible = false
+	equipment.close()
 	_update_modal()
 
 func _toggle_shop() -> void:
@@ -577,6 +795,36 @@ func _to_zone(zone_dict: Dictionary) -> void:
 			progress.get("collected_keys", []), _zone_keys.get(zid, {}))
 	zone.locks_carried = _union_progress(
 			progress.get("opened_locks", []), _zone_locks_open.get(zid, {}))
+	# LATCHES, read back the same way. What persists is the accepted
+	# consequence; a machine recomputes what it implies when it is built
+	# and nothing about the mechanism's own state is saved (§5.4a).
+	zone.latches_carried = _union_progress(
+			progress.get("latched", []), _zone_latches.get(zid, {}))
+	# THE ENCOUNTER AS IT WAS LEFT (D-06). `null` from the bridge is a
+	# save with no per-enemy record -- the encounter state is UNKNOWN and
+	# stays so here, unless this process has itself recorded a defeat in
+	# the Zone since (then it is known from that entry on).
+	var saved_defeats: Variant = progress.get("defeated")
+	if saved_defeats == null and not _zone_defeats.has(zid):
+		zone.defeated_carried = null
+	else:
+		zone.defeated_carried = _union_progress(
+				saved_defeats if saved_defeats != null else [],
+				_zone_defeats.get(zid, {}))
+	# D-8 VALUES AND P16 OBJECTS, from the bridge alone (O05-03). These
+	# are not monotone sets -- a reversible variable goes back, an object
+	# is carried back -- so the union rule above cannot apply, and there
+	# is no in-flight half to add: the bridge reads one socket in order
+	# (`server.py`), so the snapshot that comes with this entry already
+	# includes every intent sent before the request that produced it. The
+	# engine keeps no copy of its own that could outvote the save.
+	zone.macro_carried = _pairs(progress.get("macro_state", []))
+	zone.object_rooms_carried = _pairs(progress.get("object_rooms", []))
+	zone.objects_consumed_carried = _pairs(
+			progress.get("consumed_objects", []))
+	zone.object_poses_carried = _poses(progress.get("object_poses", []))
+	zone.carrier_states_carried = _carriers(
+			progress.get("carrier_states", []))
 	# THE COMMITTED LAYOUT, when this Zone has one. `ZoneReady` carries
 	# the manifest the bridge accepted on the first visit, and replaying
 	# it is what makes the Zone the player walks back into the Zone they
@@ -611,6 +859,8 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.layout_refused.connect(_on_layout_refused)
 	zone.travel_panel_requested.connect(_on_travel_panel_requested)
 	hud.bind_player(zone.player)
+	minimap.bind(zone)
+	map_face.bind(zone)
 	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	zone.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
 	# Only the connect ticks here: a kill already has the death tone that
@@ -757,6 +1007,46 @@ func _on_return_to_hub() -> void:
 ##
 ## `ZoneController` asks these `has()`, so the shape is a set keyed by id
 ## and the value is only ever `true`.
+## `[[a, b], ...]` off the wire as `{a: b}`.
+static func _pairs(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for row: Variant in raw as Array:
+		if typeof(row) == TYPE_ARRAY and (row as Array).size() == 2:
+			out[str((row as Array)[0])] = str((row as Array)[1])
+	return out
+
+
+## `object_poses` off the wire, `[[object, room, x, y, z, yaw], ...]`, as
+## `{object: [room, Vector3, yaw]}`.
+static func _poses(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for row: Variant in raw as Array:
+		if typeof(row) != TYPE_ARRAY or (row as Array).size() != 6:
+			continue
+		var r: Array = row
+		out[str(r[0])] = [str(r[1]),
+				Vector3(float(r[2]), float(r[3]), float(r[4])), float(r[5])]
+	return out
+
+
+## `carrier_states` off the wire, `[[ref, t, destination, held], ...]`,
+## as `{ref: [t, destination, held]}`.
+static func _carriers(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for row: Variant in raw as Array:
+		if typeof(row) != TYPE_ARRAY or (row as Array).size() != 4:
+			continue
+		var r: Array = row
+		out[str(r[0])] = [float(r[1]), str(r[2]), bool(r[3])]
+	return out
+
+
 static func _union_progress(saved: Variant, held: Variant) -> Dictionary:
 	var out := {}
 	if typeof(saved) == TYPE_ARRAY:
@@ -775,6 +1065,12 @@ func _remember_zone_progress() -> void:
 	_zone_stations[zone.zone_id] = zone.stations_reached()
 	_zone_keys[zone.zone_id] = zone.keys_held()
 	_zone_locks_open[zone.zone_id] = zone.locks_opened()
+	_zone_latches[zone.zone_id] = zone.latches_fired()
+	var defeated := zone.defeated_members()
+	if not defeated.is_empty() or _zone_defeats.has(zone.zone_id):
+		var known: Dictionary = _zone_defeats.get(zone.zone_id, {})
+		known.merge(defeated)
+		_zone_defeats[zone.zone_id] = known
 
 func _on_abandon() -> void:
 	pause_menu.close()
@@ -813,20 +1109,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if view == View.MENU:
 		return
 	if event.is_action_pressed("pause"):
-		if inventory.visible:
-			inventory.close()
-		elif shop.visible:
+		if shop.visible:
 			shop.close()
-		elif pause_menu.visible:
-			pause_menu.close()
-		else:
-			pause_menu.open(view == View.ZONE)
+		elif not menu_shell.is_open():
+			_open_menu("settings")
 		_update_modal()
 	elif event.is_action_pressed("inventory"):
-		if inventory.visible:
-			inventory.close()
-		else:
-			inventory.open()
+		if not menu_shell.is_open():
+			_open_menu("equipment")
 		_update_modal()
 	elif event.is_action_pressed("cycle_echo"):
 		_cycle_echo(1, _highlighted_slot())
@@ -894,7 +1184,7 @@ func _refresh_nav() -> void:
 			zone.stations_reached(), zone.current_room())
 
 func _update_modal() -> void:
-	var modal: bool = pause_menu.visible or inventory.visible \
+	var modal: bool = menu_shell.is_open() \
 			or shop.visible or reveal.visible or station_panel.visible
 	var player: Player = null
 	if hub != null:
@@ -909,7 +1199,7 @@ func _update_modal() -> void:
 		else:
 			player.release("modal")
 	hud.set_crosshair_visible(not modal)
-	if view == View.MENU or pause_menu.visible or inventory.visible \
+	if view == View.MENU or menu_shell.is_open() \
 			or shop.visible or station_panel.visible:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:

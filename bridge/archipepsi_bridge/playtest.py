@@ -526,6 +526,235 @@ def _dump(args) -> int:
     return 0
 
 
+def latched_route_zone():
+    """M-1's LEGACY fixture: the played Zone with D-10's retired
+    step-once plate route composed onto it, or None.
+
+    A save composed before D-07 holds exactly this, and M-1 keeps it
+    playing as saved -- walk in, step on the plate, step off, walk
+    through, reload, still open -- so it stays the input to that replay.
+    New composition never makes it; `lever_route_zone` is what the
+    production step emits. Derived from `played_zone()` by an explicit
+    step, so the Zone the baseline plays is untouched.
+    """
+    # M-1's legacy fixture: the retired step-once chain, kept so a save
+    # composed before D-07 can still be replayed and tested as saved.
+    from .latched_route import (
+        compose_legacy_step_once_route as compose_latched_route)
+    zone = played_zone()
+    if zone is None:
+        return None
+    out = compose_latched_route(zone)
+    return out.zone if out.emitted else None
+
+
+def _dump_latched(args) -> int:
+    zone = latched_route_zone()
+    if zone is None:
+        print("could not compose a latch route onto the played Zone",
+              file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(zone.model_dump_json(indent=1), encoding="utf-8")
+    graph = zone.room_graphs[0]
+    edge = next(e for e in zone.edges if e.opened_by)
+    print(f"wrote {args.out}  (plate in '{graph.room_id}', shutter across "
+          f"'{edge.edge_id}')")
+    return 0
+
+
+def lever_route_zone():
+    """D13 1c's fixture: the played Zone with the production latch step
+    -- `lever -> LATCH -> shutter` -- composed onto it, or None. The
+    input to Prod's acceptance of H-PRESSURE-R's permanent route: pull
+    the lever, walk through, reload, still open."""
+    from .latched_route import compose_latched_route
+    zone = played_zone()
+    if zone is None:
+        return None
+    out = compose_latched_route(zone)
+    return out.zone if out.emitted else None
+
+
+def _dump_lever(args) -> int:
+    zone = lever_route_zone()
+    if zone is None:
+        print("could not compose a lever route onto the played Zone",
+              file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(zone.model_dump_json(indent=1), encoding="utf-8")
+    graph = zone.room_graphs[0]
+    edge = next(e for e in zone.edges if e.opened_by)
+    print(f"wrote {args.out}  (lever in '{graph.room_id}', shutter across "
+          f"'{edge.edge_id}')")
+    return 0
+
+
+def held_route_zone():
+    """D13 1d's fixture: the played Zone with a door held open by a
+    declared weight on its plate, or None. The input to Prod's
+    acceptance of H-PRESSURE-R's held route."""
+    from .latched_route import compose_held_route
+    zone = played_zone()
+    if zone is None:
+        return None
+    out = compose_held_route(zone)
+    return out.zone if out.emitted else None
+
+
+def _dump_held(args) -> int:
+    zone = held_route_zone()
+    if zone is None:
+        print("could not compose a held route onto the played Zone",
+              file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(zone.model_dump_json(indent=1), encoding="utf-8")
+    graph = zone.room_graphs[0]
+    edge = next(e for e in zone.edges if e.opened_by)
+    print(f"wrote {args.out}  (held plate in '{graph.room_id}', shutter "
+          f"across '{edge.edge_id}')")
+    return 0
+
+
+def candidate_zone(steps: str):
+    """The played Zone with the CANDIDATE profile's `steps` applied, or
+    None if any asked-for step declined.
+
+    The input to Prod's played acceptances for O05-02 (`transport`) and
+    O05-04 (`zone_state`): the same `candidate.apply` the opt-in
+    generation profile runs inside the engine, on the same played Zone,
+    so the fixture a suite plays is the Zone the profile produces, not a
+    lookalike. The Zone the baseline plays is untouched.
+    """
+    from .candidate import apply, parse
+    zone = played_zone()
+    if zone is None:
+        return None
+    asked = parse(steps)
+    out = apply(zone, asked)
+    return out.zone if set(out.emitted) == _must_emit(asked, out) else None
+
+
+def _must_emit(asked, out) -> set[str]:
+    """Every asked step. Any decline means a partial fixture, which is
+    refused. (The latch step's policy decline, D-07's wait for a
+    placeable lever, ended with D13 1c.)"""
+    from .candidate import steps_of
+    # Steps only (DESS-27): `all` also names the profile's OPTIONS, such
+    # as `consumables`, which configure a campaign and never "emit" --
+    # comparing against them refused every `make candidate-fixture` run
+    # since the option joined the profile.
+    return set(steps_of(asked))
+
+
+def passing_zone():
+    """Prod's N-10: the candidate campaign's SECOND Zone, or None if the
+    lifecycle does not reach it or it does not host EX50-011.
+
+    Built the way the bridge the live suite starts builds it (`--ap=mock
+    --epsilon=fallback --mock-scale=default --candidate=all`), by the
+    campaign's ordinary lifecycle: Zone 1 is generated and abandoned,
+    which returns its Checks to the pool, and the portal designs
+    `zone_002`, whose offer order (`minor_hosting.offer_order`) turns once
+    and so offers Passing Platforms second, ahead of Unweighted -- where
+    `zone_001`'s offers it last, with no dead end left. Nothing is
+    relabelled: a `zone_001` renamed would be a Zone no campaign serves.
+    The input to Prod's `godot-passing-hosted`.
+    """
+    import asyncio
+    import tempfile
+
+    from .campaign import CampaignEngine
+    from .candidate import parse
+    from .epsilon import FallbackEpsilonProvider
+    from .mock_ap import MockAPBackend
+
+    async def generated(engine):
+        for _ in range(600):
+            await asyncio.sleep(0)
+            active = engine.save.active_zone if engine.save else None
+            if active is not None and active.zone is not None:
+                return active
+        return None
+
+    async def build(save_dir: Path):
+        engine = CampaignEngine(provider=FallbackEpsilonProvider(),
+                                provider_name="fallback", save_dir=save_dir,
+                                candidate_steps=parse("all"))
+        engine.backend = MockAPBackend(engine, config=PLAYTEST_CONFIG)
+        await engine.backend.connect("", "Skyiah", "")
+        for _ in range(40):
+            await asyncio.sleep(0)
+        await engine.handle_request_next_zone(False)
+        first = await generated(engine)
+        if first is None:
+            return None
+        await engine.handle_abandon_zone(first.zone_id)
+        await engine.handle_request_next_zone(False)
+        second = await generated(engine)
+        return second.zone if second is not None else None
+
+    with tempfile.TemporaryDirectory() as scratch:
+        zone = asyncio.run(build(Path(scratch)))
+    if zone is None or not any(c.shell_id == "minor_passing_platforms"
+                               for c in zone.chambers):
+        return None
+    return zone
+
+
+def _dump_passing(args) -> int:
+    zone = passing_zone()
+    if zone is None:
+        print("the candidate campaign's second Zone hosts no EX50-011",
+              file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(zone.model_dump_json(indent=1), encoding="utf-8")
+    room = next(c.id for c in zone.chambers
+                if c.shell_id == "minor_passing_platforms")
+    print(f"wrote {args.out}  ({zone.zone_id}, EX50-011 hosted as "
+          f"'{room}')")
+    return 0
+
+
+def transport_zone():
+    """O05-02's fixture: the played Zone with the `transport` step."""
+    return candidate_zone("transport")
+
+
+def reversible_zone():
+    """O05-04's fixture: the played Zone with the `zone_state` step."""
+    return candidate_zone("zone_state")
+
+
+def candidate_all_zone():
+    """O05-13/15's fixture: the played Zone with the WHOLE profile, in
+    its order -- what `--candidate` (all steps) composes, and what the
+    candidate launcher's campaign plays."""
+    from .candidate import STEPS
+    return candidate_zone(",".join(STEPS))
+
+
+def _dump_candidate(args) -> int:
+    from .candidate import apply, parse
+    zone = played_zone()
+    if zone is None:
+        print("no played Zone to compose onto", file=sys.stderr)
+        return 1
+    out = apply(zone, parse(args.steps))
+    for step, emitted, note in out.steps:
+        print(f"  {step}: {'EMITTED' if emitted else 'declined'} -- {note}")
+    if set(out.emitted) != _must_emit(parse(args.steps), out):
+        print("a step declined; nothing written", file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(out.zone.model_dump_json(indent=1), encoding="utf-8")
+    print(f"wrote {args.out}")
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m archipepsi_bridge.playtest",
@@ -538,11 +767,50 @@ def main(argv=None) -> int:
         "dump", help="write the played Zone as JSON, for the Godot audit")
     dumper.add_argument("--out", type=Path,
                         default=Path("godot/tests/fixtures/played_zone.json"))
+    latched = sub.add_parser(
+        "dump-latched", help="write M-1's legacy fixture: the played Zone "
+        "with the retired step-once plate route composed onto it")
+    latched.add_argument(
+        "--out", type=Path,
+        default=Path("godot/tests/fixtures/latched_route_zone.json"))
+    lever = sub.add_parser(
+        "dump-lever", help="write the played Zone with D13 1c's lever "
+        "route composed onto it, for Prod's acceptance")
+    lever.add_argument(
+        "--out", type=Path,
+        default=Path("godot/tests/fixtures/lever_route_zone.json"))
+    held = sub.add_parser(
+        "dump-held", help="write the played Zone with D13 1d's held "
+        "route composed onto it, for Prod's acceptance")
+    held.add_argument(
+        "--out", type=Path,
+        default=Path("godot/tests/fixtures/held_route_zone.json"))
+    passing = sub.add_parser(
+        "dump-passing", help="write the candidate campaign's second Zone, "
+        "which hosts EX50-011, for Prod's godot-passing-hosted (N-10)")
+    passing.add_argument(
+        "--out", type=Path,
+        default=Path("godot/tests/fixtures/passing_zone.json"))
+    cand = sub.add_parser(
+        "dump-candidate", help="write the played Zone with the CANDIDATE "
+        "profile's steps applied (candidate.py), for Prod's acceptances")
+    cand.add_argument("steps", help="'all' or a comma list of steps")
+    cand.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.command == "check":
         return _check(args)
     if args.command == "dump":
         return _dump(args)
+    if args.command == "dump-latched":
+        return _dump_latched(args)
+    if args.command == "dump-lever":
+        return _dump_lever(args)
+    if args.command == "dump-held":
+        return _dump_held(args)
+    if args.command == "dump-passing":
+        return _dump_passing(args)
+    if args.command == "dump-candidate":
+        return _dump_candidate(args)
     return report(args.save_dir)
 
 

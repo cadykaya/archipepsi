@@ -5,7 +5,7 @@ This module IS the Echo specification. `ECHOES.md` is its prose.
 An Echo is no longer a thing you equip. It is an **interpretation** of one
 foreign Archipelago item, and it contributes **components**:
 
-    Action      needs a button; occupies one of four slots
+    Action      needs a button; occupies one of five slots
     Trait       continuous modifier of a derived stat
     Resource    a HUD channel with its own economy
     Rule        EVENT -> CONDITIONS -> COST -> EFFECTS
@@ -15,6 +15,10 @@ foreign Archipelago item, and it contributes **components**:
 
 Only Actions occupy a slot. Everything else is true once owned, which is why
 a Check can matter for the rest of the run without ever being equipped.
+
+Four of the five slots hold a verb you always have. The fifth, `consumable`,
+holds one that runs out: it declares `charges`, and spending the last one
+empties the slot for good.
 
 An interpretation carries 1-4 **operations**, and this is where build
 evolution comes from: `CREATE` introduces a component, while `UPGRADE`,
@@ -48,12 +52,15 @@ import math
 
 from typing import Annotated, Literal, Union, get_args
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (BaseModel, ConfigDict, Field, field_validator,
+                      model_validator)
 
 try:
     from . import constants as C
+    from . import gear as G
 except ImportError:  # pragma: no cover
     import constants as C
+    import gear as G
 
 SCHEMA_VERSION = 8
 
@@ -69,7 +76,7 @@ class Strict(BaseModel):
 #: Component ids are prefixed by kind so a malformed target is a parse error
 #: rather than a runtime surprise, and so a human reading a log can tell what
 #: an operation is pointing at.
-COMPONENT_ID_PATTERN = r"^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$"
+COMPONENT_ID_PATTERN = r"^(act|trait|res|rule|status|aff|info|gear)_[a-z0-9_]{1,24}$"
 ComponentId = Annotated[
     str, Field(min_length=5, max_length=32, pattern=COMPONENT_ID_PATTERN)
 ]
@@ -440,12 +447,21 @@ class KnockbackTarget(Strict):
 class ApplyStatusOnHit(Strict):
     """How *Fire Flower* becomes an upgrade to a gun you already own."""
     type: Literal["apply_status_on_hit"]
-    status: Literal[
-        "burning", "slowed", "frozen", "shocked", "poisoned", "marked",
-        "stunned", "vulnerable",
-    ]
+    #: A FOURTH SPELLING OF THE VOCABULARY, removed. This listed eight
+    #: kinds by hand, which is the same eight `SUPPORTED_STATUS_TARGETS`
+    #: marks as implemented on `enemy` -- so it was a transcription that
+    #: had to be kept in step with three other lists, and nothing checked
+    #: that it was. Derived now: the gate answers "can the runtime do
+    #: this to the thing I just hit", which is the real question.
+    status: StatusKind
     duration: float = Field(ge=0.5, le=12)
     magnitude: float = Field(ge=0.05, le=3.0)
+
+    @field_validator("status")
+    @classmethod
+    def _the_runtime_can_do_this_to_the_target(cls, value):
+        refuse_unsupported_status(value, "enemy")
+        return value
 
 
 Modifier = Annotated[
@@ -484,10 +500,41 @@ ConditionKind = Literal[
     "enemy_within", "slot_is", "zone_is_finale", "status_active",
 ]
 
+#: THE 0.4 DESTINATION VOCABULARY — Amalgam §15.2, thirteen Statuses in
+#: four families. Owner decision 2026-09-21 (B2 architectural direction).
+#:
+#: Design 5's twelve plus `exposed`, restored per Amalgam §0.4 without its
+#: crit clause. NOT the inherited twelve: §15.2 "modifies Design 5 §15.2",
+#: and taking the twelve as the target would miss the union's one addition.
+#:
+#: **Naming a Status here does not make it emittable.** Support is
+#: declared separately in `SUPPORTED_STATUS_TARGETS` and checked at every
+#: application path. See that table for why the two must not be one.
 StatusKind = Literal[
-    "burning", "slowed", "frozen", "shocked", "poisoned", "marked",
+    # KINETIC
+    "lightened", "anchored", "slippery",
+    # COGNITIVE
+    "confused", "turncoat", "blinded", "exposed",
+    # PERMISSION
+    "silenced", "rooted", "phased",
+    # MATERIAL
+    "burning", "conductive", "brittle",
+    # --- the ECHOES.md vocabulary that ships today -------------------
+    # Retained, NOT unioned into the destination: these are the kinds a
+    # committed 0.3 component may already name, and deleting them would
+    # break old saves this batch is forbidden to migrate. Their handling
+    # is the compatibility table in D7_LIGHTENED_STATUS_CONTRACT.md §3;
+    # `burning` appears in both lists and the two meanings differ.
+    "slowed", "frozen", "shocked", "poisoned", "marked",
     "stunned", "vulnerable", "empowered", "low_profile", "haste",
     "regenerating",
+]
+
+#: Amalgam §15.1's five target kinds. `self`/`enemy` are the ECHOES.md
+#: spelling and are kept so old components still parse; `object`,
+#: `surface` and `volume` are what §15.1 adds and what EX50-033 needs.
+StatusTarget = Literal[
+    "self", "enemy", "object", "surface", "volume",
 ]
 
 #: The closed status vocabulary, as a tuple, so the client can be checked
@@ -497,6 +544,171 @@ StatusKind = Literal[
 #: `cleanse` could never remove it because it is not in the cleanse order.
 #: A typo produced a status that was permanent and did nothing.
 STATUS_KINDS = get_args(StatusKind)
+
+#: WHAT THE RUNTIME CAN ACTUALLY HONOUR, AND ON WHAT.
+#:
+#: **Declared, never derived.** The first version of this read
+#: `IMPLEMENTED_STATUS_KINDS = STATUS_KINDS`, which made support a
+#: consequence of being named -- so every kind added to the vocabulary
+#: admitted itself, and the gate protected nothing at the only moment it
+#: was needed. Owner correction, 2026-09-21. Support is now a separate
+#: table that has to be edited on purpose, in the change that adds the
+#: effect.
+#:
+#: The value is the target kinds the runtime implements FOR THAT STATUS,
+#: because "supported" is not one fact: `lightened` on an object and
+#: `lightened` on a surface are different runtime work, and a kind that
+#: works on one is not thereby working on the other.
+#:
+#: Today this is the ECHOES.md twelve on `self`/`enemy`, plus §15.2's
+#: `lightened` on an `object` and `rooted` and `anchored` on an `enemy`
+#: -- exactly what the runtime implements, no more and no less. Every
+#: other §15.2 kind is named by the vocabulary above and supported by
+#: nothing, which is the honest state and is what the application paths
+#: refuse.
+SUPPORTED_STATUS_TARGETS: dict[str, tuple[str, ...]] = {
+    # KINETIC. `lightened` on an OBJECT is implemented: mass class drops
+    # one step, incoming impulse doubles, influence volumes act on it and
+    # manipulation eligibility reads the class. Declared here in the same
+    # change that lands those effects and their tests, per this table's
+    # own rule. Not `self`/`enemy`: nothing implements it on an actor, and
+    # not `surface`/`volume`: those are different runtime work.
+    "lightened": ("object",),
+    # KINETIC and PERMISSION, on an ENEMY (O05-09.1), declared in the
+    # change that lands their effects and tests. Design 5 §15.2: `rooted`
+    # "cannot move under its own power; can still be pushed, pulled, and
+    # thrown, unlike `anchored`; attacks continue". `anchored` holds
+    # movement at 0 with attacks continuing, and is "immune to all
+    # impulse": a knock does not move it and the manipulation verbs
+    # refuse it as FIXED. `enemy.gd` implements both. Not `anchored` on
+    # an `object` or on `self`: a body fixed in place, and a player whose
+    # jump is blocked, are two other runtimes, and neither exists yet.
+    "rooted": ("enemy",),
+    "anchored": ("enemy",),
+    "burning": ("self", "enemy"),
+    "slowed": ("self", "enemy"),
+    "frozen": ("self", "enemy"),
+    "shocked": ("self", "enemy"),
+    "poisoned": ("self", "enemy"),
+    "marked": ("enemy",),
+    "stunned": ("enemy",),
+    # BOTH SIDES, and the engine has always said so. This read
+    # `("enemy",)` while `stat_stack.gd:93` multiplies the PLAYER's
+    # `damage_taken` by it and `enemy.gd:434` multiplies the enemy's --
+    # two implementations, one declared. The under-declaration was
+    # invisible while support was per KIND; the moment the engine began
+    # asking per TARGET, `godot-stats` went red on the three cases that
+    # cover the player half, including the cleanse order's own
+    # "`vulnerable`, which the player does suffer". Declared to match the
+    # runtime, not the other way about. Owner direction, 2026-09-21:
+    # a kind implemented on one target must not be allowed on another --
+    # which cuts both ways, and a target it IS implemented on may not be
+    # refused. `marked` and `stunned` above stay enemy-only: `enemy.gd`
+    # reads them and nothing on the player does.
+    "vulnerable": ("self", "enemy"),
+    # BOTH SIDES, and the enemy half arrived with `Enemy._hit_for`
+    # (OV04 P06). A `beacon`'s entire brief is "makes everything near it
+    # worse", and it does it by applying this to its neighbours through
+    # the ordinary boundary -- so `enemy` is declared here in the change
+    # that made an empowered enemy actually hit harder, per this table's
+    # own rule. `stat_stack.gd:96` remains the `self` implementation.
+    "empowered": ("self", "enemy"),
+    "low_profile": ("self",),
+    "haste": ("self",),
+    "regenerating": ("self",),
+}
+
+#: A typo guard, and deliberately ONE-WAY: everything declared supported
+#: must be a real kind, and nothing is supported merely by being real.
+for _k in SUPPORTED_STATUS_TARGETS:
+    assert _k in get_args(StatusKind), f"{_k} is supported but not named"
+
+IMPLEMENTED_STATUS_KINDS: tuple[str, ...] = tuple(SUPPORTED_STATUS_TARGETS)
+
+
+#: P10.5. THE AMALGAM'S THIRTEEN, and the targets §15.2 specifies for
+#: each. Design 5 §15.2's twelve plus `exposed`, restored by §0.4.
+#:
+#: **Why this exists as data.** `SUPPORTED_STATUS_TARGETS` has thirteen
+#: entries and the Amalgam's family has thirteen members, and they are
+#: NOT the same thirteen -- eleven of the supported ones are retained
+#: ECHOES kinds. A count that matches by coincidence is exactly what
+#: P10.5 means by "a fixed catalogue count must never hide an incomplete
+#: family", so the family is written down and the coverage is computed
+#: rather than eyeballed.
+#:
+#: **The target names are TRANSLATED, deliberately** (P09.4: "target
+#: taxonomy aliases must map intentionally; `self` is not automatically
+#: every player/actor target"). Design 5 writes targets as actor /
+#: object / surface / volume / player; §15.1's five runtime kinds are
+#: self / enemy / object / surface / volume. The mapping used here, and
+#: used nowhere implicitly:
+#:
+#:   player -> self     the Status is on the character the player drives
+#:   actor  -> enemy    the Status is on an NPC combatant
+#:
+#: A row listing both `actor` and `player` therefore lists both `self`
+#: and `enemy`, and a row listing only `actor` does NOT get `self`.
+AMALGAM_STATUS_TARGETS: dict[str, tuple[str, ...]] = {
+    # KINETIC
+    "lightened":  ("enemy", "object", "self"),
+    "anchored":   ("enemy", "object", "self"),
+    "slippery":   ("object", "surface", "self"),
+    # COGNITIVE
+    "confused":   ("enemy",),
+    "turncoat":   ("enemy",),
+    "blinded":    ("enemy",),
+    "exposed":    ("enemy",),          # actor only, per §15.2 and §15.3
+    # PERMISSION
+    "silenced":   ("enemy",),
+    "rooted":     ("enemy",),
+    "phased":     ("enemy", "object", "surface", "self"),
+    # MATERIAL
+    "burning":    ("enemy", "object", "surface", "volume", "self"),
+    "conductive": ("enemy", "object", "surface", "self"),
+    "brittle":    ("object", "surface"),   # never an actor -- Law 27
+}
+
+for _k in AMALGAM_STATUS_TARGETS:
+    assert _k in get_args(StatusKind), f"{_k} is in the family but unnamed"
+for _k, _ts in AMALGAM_STATUS_TARGETS.items():
+    for _t in _ts:
+        assert _t in get_args(StatusTarget), f"{_k} names target {_t}"
+assert len(AMALGAM_STATUS_TARGETS) == 13, "§15.2 is thirteen Statuses"
+
+
+def amalgam_status_coverage() -> dict[str, tuple[str, ...]]:
+    """Which §15.2 targets are still unsupported, per Status.
+
+    A row present with an empty tuple is complete. A row absent means
+    the Status has no support at all. Nothing here reports a percentage:
+    the missing pairs are the answer.
+    """
+    gaps: dict[str, tuple[str, ...]] = {}
+    for kind, specified in AMALGAM_STATUS_TARGETS.items():
+        have = set(SUPPORTED_STATUS_TARGETS.get(kind, ()))
+        gaps[kind] = tuple(t for t in specified if t not in have)
+    return gaps
+
+
+def refuse_unsupported_status(kind: str, target: str | None = None) -> None:
+    """The ONE gate, used by every path that can start a Status.
+
+    `StatusComponent`, `ApplyStatusOnHit` and the `apply_status` effect
+    are three doors into the same room, and gating one of them leaves a
+    named-but-unimplemented kind reachable through the other two.
+    """
+    supported = SUPPORTED_STATUS_TARGETS.get(kind)
+    if supported is None:
+        raise ValueError(
+            f"status '{kind}' is named by the design but no runtime effect "
+            "implements it, so it may not be emitted; declare it in "
+            "SUPPORTED_STATUS_TARGETS in the same change that gives it an "
+            "effect")
+    if target is not None and target not in supported:
+        raise ValueError(
+            f"status '{kind}' is not implemented for target '{target}'; "
+            f"the runtime supports it on {list(supported)}")
 
 TraitStat = Literal[
     "move_speed", "jump_height", "gravity", "air_control", "ground_friction",
@@ -557,6 +769,25 @@ class Effect(Strict):
     radius: float = Field(default=0.0, ge=0.0, le=20.0)
     direction: ImpulseDirection | None = None
 
+    @model_validator(mode="after")
+    def _apply_status_names_a_status_the_runtime_has(self):
+        """THE THIRD DOOR, and the one that was not even typed.
+
+        `subject` is a free `[a-z0-9_]+` string here because it names a
+        resource, a stat, a status or a slot depending on `type`. For
+        `apply_status` that meant a rule could start any string at all --
+        not merely an unimplemented kind, but a misspelt one, which is
+        the permanent-and-inert status `STATUS_KINDS`' comment records.
+
+        Kind only, not target: this atom does not carry one. Which thing
+        the rule applies it to is the runtime's, and it is checked there.
+        """
+        if self.type == "apply_status":
+            if self.subject is None:
+                raise ValueError("apply_status names no status in `subject`")
+            refuse_unsupported_status(self.subject)
+        return self
+
 
 LOCAL_REWARD_KINDS = (
     "epsilon_note", "challenge_marker", "cosmetic_grant", "hub_decoration",
@@ -611,7 +842,8 @@ PALETTE_COLORS = (
 #: out — a type cannot be built from a runtime tuple — so a test asserts
 #: the two agree.
 SLOT_NAMES = C.SLOT_NAMES
-SlotName = Literal["echo_a", "echo_b", "mobility", "utility"]
+SlotName = Literal["echo_a", "echo_b", "mobility", "utility",
+                   "consumable"]
 
 
 # ---------------------------------------------------------------------------
@@ -631,6 +863,36 @@ class ActionComponent(ComponentBase):
     cooldown: float = Field(ge=C.ECHO_COOLDOWN_MIN, le=C.ECHO_COOLDOWN_MAX)
     primitive: ActionPrimitive
     modifiers: tuple[Modifier, ...] = Field(default=(), max_length=2)
+    #: HOW MANY USES A CONSUMABLE HAS. `None` for every other Action,
+    #: which is simply available whenever its cooldown allows.
+    #:
+    #: Not a `Resource` with zero regen, although that would express the
+    #: pool: a Resource is a HUD channel with an economy, and the eight
+    #: palette colours and three presentations exist for channels the
+    #: player manages. Three uses of one grenade is a property of the
+    #: grenade, and giving it a channel would put an economy on the HUD
+    #: for something with no decisions in it.
+    charges: int | None = Field(
+        default=None, ge=1, le=C.CONSUMABLE_CHARGES_MAX)
+
+    @model_validator(mode="after")
+    def _the_consumable_slot_is_the_one_that_runs_out(self):
+        """Slot and charges imply each other, structurally.
+
+        Either half alone is a bug with a plausible reading: an Action in
+        the consumable slot with no charges is a consumable that never
+        runs out, and charges on a `mobility` Action is a dash that
+        silently stops working with no counter anywhere to say why. The
+        file says "structural rules beat validators that have to be
+        remembered", so this is the rule rather than a note.
+        """
+        if (self.slot == "consumable") != (self.charges is not None):
+            raise ValueError(
+                "an Action declares `charges` exactly when its slot is "
+                f"'consumable'; got slot '{self.slot}' with "
+                f"charges={self.charges}"
+            )
+        return self
 
     @model_validator(mode="after")
     def _modifiers_need_something_that_hits(self):
@@ -745,9 +1007,22 @@ class RuleComponent(ComponentBase):
 class StatusComponent(ComponentBase):
     kind: Literal["status"]
     status: StatusKind
-    target: Literal["self", "enemy"]
+    target: StatusTarget
     duration: float = Field(ge=0.5, le=30.0)
     magnitude: float = Field(ge=0.05, le=3.0)
+
+    @model_validator(mode="after")
+    def _no_status_before_its_effect(self):
+        """Kind AND target, because support is not one fact.
+
+        Checked after both fields are known: `lightened` on an object
+        and `lightened` on a surface are different runtime work, and a
+        kind implemented for one is not thereby implemented for the
+        other. A widened `StatusTarget` without this would let a
+        supported kind be aimed at a target nothing handles.
+        """
+        refuse_unsupported_status(self.status, self.target)
+        return self
 
 
 class AffordanceComponent(ComponentBase):
@@ -767,23 +1042,66 @@ class InfoComponent(ComponentBase):
     ]
 
 
+_ATOM = Field(max_length=32, pattern=r"^[a-z_]+$")
+
+
+class GearComponent(ComponentBase):
+    """D16 G1 (owner rulings, 2026-09-25): a piece of Gear, as its atoms.
+
+    Worn in its domain's territory -- one of Design 1 §16.1's four -- it
+    multiplies the runtime stat its domain is paired with (ruling 1),
+    through the StatStack every trait already feeds. Its atoms are the
+    grammar's own parallel lists (`gear.composition_cost`,
+    `gear.one_piece_shape`), one of each today (ruling 2).
+
+    **Atoms only.** No factor, no territory and no tier is stored: each is
+    derived (`gear.effects_of`, `gear.territory_of`, `gear.one_piece_shape`)
+    so a rebalance -- or HIGH's arrival as a two-atom piece -- never
+    migrates a save (ruling 4). Epsilon picks the atoms, never the numbers.
+    It comes only from an Echo, which is to say from an Archipelago item
+    (ruling 3): no transaction mints one.
+    """
+    kind: Literal["gear"]
+    domains: tuple[Annotated[str, _ATOM], ...] = Field(min_length=1,
+                                                        max_length=2)
+    magnitudes: tuple[Annotated[str, _ATOM], ...] = Field(min_length=1,
+                                                           max_length=2)
+
+    @model_validator(mode="after")
+    def _a_piece_the_rulings_allow(self):
+        G.refuse_illegal_piece(self.domains, self.magnitudes)
+        return self
+
+
+#: Ruling 1's "runtime stats that already exist", held: every paired stat
+#: is one an Echo trait already moves.
+assert {stat for stat, _ in G.GEAR_EFFECTS.values()} <= set(
+    get_args(TraitStat)), "a Gear domain is paired with a stat no trait has"
+
+
 Component = Annotated[
     Union[
         ActionComponent, TraitComponent, ResourceComponent, RuleComponent,
-        StatusComponent, AffordanceComponent, InfoComponent,
+        StatusComponent, AffordanceComponent, InfoComponent, GearComponent,
     ],
     Field(discriminator="kind"),
 ]
 
+#: The kinds an interpretation may create, which is also what a provider
+#: is offered (`capabilities.IMPLEMENTED_COMPONENT_KINDS` is this tuple).
+#: `gear` joins it only once a domain is supported: until the StatStack
+#: applies a worn piece, the union still parses one so the closed gate
+#: refuses it BY NAME, but no request invites a piece every validator
+#: would then refuse.
 COMPONENT_KINDS = (
     "action", "trait", "resource", "rule", "status", "affordance", "info",
-)
+) + (("gear",) if G.SUPPORTED_GEAR_DOMAINS else ())
 
 #: Which id prefix each kind must use. Enforced by `CreateOperation`, so a
 #: `res_` id can never name an Action.
 KIND_PREFIX = {
     "action": "act", "trait": "trait", "resource": "res", "rule": "rule",
-    "status": "status", "affordance": "aff", "info": "info",
+    "status": "status", "affordance": "aff", "info": "info", "gear": "gear",
 }
 
 

@@ -1,0 +1,21 @@
+# layout walk on wt-hbf4a at ce2852a + HB-F4a (final shape), 07:55 UTC
+zone_001 [e2dd51ae74e3]: ACCEPTED (290 ms, layout_state ACCEPTED), 15 Checks
+zone_002 [83cab638c71e]: ACCEPTED (328 ms, layout_state ACCEPTED), 15 Checks
+zone_003 [86832f692325]: ACCEPTED (307 ms, layout_state ACCEPTED), 15 Checks
+zone_004 [d2bf871d5f29]: ACCEPTED (1377 ms, layout_state ACCEPTED), 15 Checks
+zone_005 [84d01f563879]: ACCEPTED (196 ms, layout_state ACCEPTED), 4 Checks
+zone_006 [dcb604e77b35]: ACCEPTED (274 ms, layout_state ACCEPTED), 15 Checks, Bomb Bag at [89100140, 89100161, 89100308, 89100392, 89100413]
+zone_007 [e259250fea63]: ACCEPTED (311 ms, layout_state ACCEPTED), 15 Checks
+zone_008 [1e2f761b817e]: BUILD FAILED (1878 ms): room 'c016' could not be placed clear of the 58 room(s) before it
+zone_008 [1e2f761b817e]: BUILD FAILED (1696 ms): room 'c016' could not be placed clear of the 58 room(s) before it
+zone_008 [1e2f761b817e]: BUILD FAILED (1846 ms): room 'c016' could not be placed clear of the 58 room(s) before it
+zone_008: ZONE_FAILED -> abandoned, its Checks back to the pool
+zone_009 [ba61ac8a9287]: ACCEPTED (330 ms, layout_state ACCEPTED), 15 Checks
+zone_010 [a2eac4f78c9f]: ACCEPTED (951 ms, layout_state ACCEPTED), 15 Checks
+zone_011 [ab1da679c970]: ACCEPTED (287 ms, layout_state ACCEPTED), 15 Checks
+zone_012 [ce1163f5a49d]: LAYOUT REFUSED: zone zone_012 layout refused (LAYOUT_REFUSED): chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+zone_012 [ce1163f5a49d]: LAYOUT REFUSED: zone zone_012 layout refused (LAYOUT_REFUSED): chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+zone_012 [ce1163f5a49d]: LAYOUT REFUSED: zone zone_012 layout refused (LAYOUT_REFUSED): chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+zone_012: ZONE_FAILED -> abandoned, its Checks back to the pool
+FIRST BOMB BAG: ('zone_006', [89100140, 89100161, 89100308, 89100392, 89100413])
+exit 0

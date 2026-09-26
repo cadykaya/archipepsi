@@ -1,0 +1,339 @@
+# OFFERED TO DESS, NOT LANDED (W0.1 handback, recorded in PROD_POST_PLAYTEST.md).
+# Prod's in-flight bridge half for D13 1b/1c, written under the exception before D13 existed,
+# against 76b0952. Source files and their tests only: the Zone fixtures and generated exports
+# regenerate from these (make export; make latched-route-fixture; make candidate-fixture).
+# It does NOT implement D13 1a (validate_zone refusal) or 1d (held weight). Adopt, adapt or discard.
+
+diff --git a/bridge/archipepsi_bridge/latched_route.py b/bridge/archipepsi_bridge/latched_route.py
+index 457123f..7f43c4e 100644
+--- a/bridge/archipepsi_bridge/latched_route.py
++++ b/bridge/archipepsi_bridge/latched_route.py
+@@ -21,9 +21,16 @@ latch that sets on build) and then through `topology.reachability`
+ strands). If nothing passes, the Zone comes back unchanged with the
+ reason.
+ 
+-What it emits is the chain D-10 chose: a `MEDIUM` plate that counts the
+-player, a `LATCH`, a shutter -- **step on it once, walk through**. The
+-guaranteed base kit and nothing else; no capability on the edge.
++What it emits is D-07's chain (owner ruling, 2026-09-24): a LEVER, a
++`LATCH`, a shutter -- **pull it once, walk through**. D-10 chose a
++`MEDIUM` plate that counted the player, stepped on once; D-07 rejects
++that presentation -- "a pressure plate must not permanently latch merely
++because I stepped on it once [...] use a visibly different permanent
++control such as a lever [...] The existing latch machinery can
++absolutely be reused underneath." So the latch, the shutter, the edge
++and the route search are unchanged, and the thing the player operates
++is a control that looks permanent because it is. The guaranteed base kit
++(the interact verb) and nothing else; no capability on the edge.
+ """
+ from __future__ import annotations
+ 
+@@ -34,19 +41,19 @@ from .topology import reachability
+ 
+ #: Room-local ids; the graph is room-local by construction, so they
+ #: cannot collide with anything in another room.
+-PLATE_ID = "step_plate"
++LEVER_ID = "route_lever"
+ LATCH_ID = "held"
+ SHUTTER_ID = "route_shutter"
+ 
+-#: WHERE A PLATE MAY STAND (P5-11): rooms with open floor. A
++#: WHERE THE CONTROL MAY STAND (P5-11): rooms with open floor. A
+ #: `platform_path` is islands over a kill pit and a `tower` is floors over
+ #: a drop, and a corridor is a lane -- its floor is the way through, and
+ #: the engine's clear-floor search keeps 2.6 m from everything placed.
+-#: P14's own played acceptance stands its plate in an arena.
++#: P14's own played acceptance stands its control in an arena.
+ _PLATE_ROOM_TYPES = ("arena", "treasure_room")
+ 
+-#: Prefer a plate that is not in the entrance itself -- a latch at spawn
+-#: is stepped on before the player knows it is there -- and fall back to
++#: Prefer a control that is not in the entrance itself -- a latch at
++#: spawn is set before the player knows it is there -- and fall back to
+ #: the entrance only if nothing further in is legal.
+ _PREFER_FROM = 1
+ 
+@@ -66,16 +73,15 @@ class LatchedRoute:
+ def _graph(room_id: str) -> dict:
+     return {
+         "room_id": room_id,
+-        "sensors": [{"node_id": PLATE_ID, "kind": "PRESSURE_PLATE",
+-                     "requires_class": "MEDIUM", "counts_player": True}],
++        "sensors": [{"node_id": LEVER_ID, "kind": "PULSE_BUTTON"}],
+         "nodes": [{"node_id": LATCH_ID, "kind": "LATCH",
+-                   "inputs": [PLATE_ID]}],
++                   "inputs": [LEVER_ID]}],
+         "actuators": [{"actuator_id": SHUTTER_ID, "driven_by": LATCH_ID}],
+     }
+ 
+ 
+ def compose_latched_route(zone: Zone) -> LatchedRoute:
+-    """Put `plate -> LATCH -> shutter` on one legal doorway of `zone`."""
++    """Put `lever -> LATCH -> shutter` on one legal doorway of `zone`."""
+     if zone.room_graphs or any(e.opened_by for e in zone.edges):
+         return LatchedRoute(zone, None,
+                             "the Zone already declares a room graph or a "
+@@ -107,10 +113,10 @@ def compose_latched_route(zone: Zone) -> LatchedRoute:
+         if near in occupied:
+             continue          # one control per room
+         if kinds.get(near) not in _PLATE_ROOM_TYPES:
+-            continue          # a plate needs clear walkable floor
+-        # AND THE DOOR IT OPENS ON THE PLATE'S FLOOR (P5-8's rule): a
+-        # shutter 28 m over the plate, across a launch arc, is not the
+-        # consequence a player standing on it can see.
++            continue          # a control needs clear walkable floor
++        # AND THE DOOR IT OPENS ON THE CONTROL'S FLOOR (P5-8's rule): a
++        # shutter 28 m over the control, across a launch arc, is not the
++        # consequence a player standing at it can see.
+         if _off_the_floor(zone, near, {edge.edge_id}
+                           | ({arrive[near]} if arrive.get(near) else set()),
+                           heights):
+@@ -136,7 +142,7 @@ def compose_latched_route(zone: Zone) -> LatchedRoute:
+         edge_id = raw["edges"][index]["edge_id"]
+         return LatchedRoute(
+             candidate, edge_id,
+-            f"plate and latch in '{near}', shutter across '{edge_id}' "
++            f"lever and latch in '{near}', shutter across '{edge_id}' "
+             f"into '{far}'; reachable before the route it opens")
+     return LatchedRoute(
+         zone, None,
+diff --git a/bridge/archipepsi_bridge/schemas/signal_graph.py b/bridge/archipepsi_bridge/schemas/signal_graph.py
+index b5b416f..e76284a 100644
+--- a/bridge/archipepsi_bridge/schemas/signal_graph.py
++++ b/bridge/archipepsi_bridge/schemas/signal_graph.py
+@@ -116,18 +116,31 @@ DamageTag = Literal[
+ SUPPORTED_TARGET_TAGS: tuple[str, ...] = ("RANGED",)
+ 
+ #: O05-07. What a ZONE's own `room_graphs` may declare: the sensors the
+-#: Zone builder can PLACE. `RoomGraphs` puts a class plate down beside the
+-#: doorway its chain serves; a `PULSE_BUTTON` is evaluated by the same
+-#: runtime but placed only by a room that owns its machine -- EX50-033's
+-#: bolt lever -- so a Zone declaring one would be asking the builder for
+-#: something it cannot put down.
+-ZONE_PLACEABLE_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE",)
++#: Zone builder can PLACE. `RoomGraphs` puts a class plate, or a lever,
++#: down beside the doorway its chain serves.
++#:
++#: **The lever is D-07's** (owner ruling, 2026-09-24): "Pressure plates
++#: are held sensors [...] If a puzzle needs a permanent change, use a
++#: visibly different permanent control such as a lever, locking bolt,
++#: latch mechanism [...] The existing latch machinery can absolutely be
++#: reused underneath." A `PULSE_BUTTON` is that control: one pull, one
++#: pulse, into the same `LATCH`. It is EX50-033's bolt lever, which the
++#: Zone builder now places too.
++ZONE_PLACEABLE_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE",
++                                               "PULSE_BUTTON")
+ 
+ #: The chains a ROUTE gate may hang on: the shapes the route search and
+ #: the Zone validator reason about (D-10 §5, `phases`). A gate driven
+ #: through anything else is refused by name rather than certified by
+ #: arithmetic that was written for a single plate.
+-ROUTE_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE",)
++#:
++#: `phases` settles a lever exactly as it settles a plate -- pulled, then
++#: let go -- and the route search reads only the LATCH on the drive path,
++#: whichever sensor sets it. So `lever -> LATCH -> shutter` is certified
++#: by the same arithmetic: closed at rest, open after the one pull. A
++#: bare `lever -> shutter` is closed again the tick after the pulse, which
++#: is the held requirement the validator refuses by name.
++ROUTE_SENSOR_KINDS: tuple[str, ...] = ("PRESSURE_PLATE", "PULSE_BUTTON")
+ ROUTE_NODE_KINDS: tuple[str, ...] = ("NOT", "LATCH")
+ 
+ #: §19.1: every port is one form. What each supported sensor PRODUCES.
+diff --git a/bridge/archipepsi_bridge/schemas/zone.py b/bridge/archipepsi_bridge/schemas/zone.py
+index 99f3aa2..cef7502 100644
+--- a/bridge/archipepsi_bridge/schemas/zone.py
++++ b/bridge/archipepsi_bridge/schemas/zone.py
+@@ -1688,15 +1688,16 @@ class Zone(Strict):
+                     f"a signal graph names room '{graph.room_id}', which "
+                     "this Zone does not have")
+             # O05-07: A ZONE ASKS ONLY FOR WHAT ITS BUILDER PLACES.
+-            # `RoomGraphs` puts a class plate down; a button is run by the
+-            # same runtime but placed only by a room that owns its lever.
++            # `RoomGraphs` puts a class plate or a lever down (D-07); a
++            # shot target is run by the same runtime but placed only by a
++            # room that owns its machine.
+             for sensor in graph.sensors:
+                 if sensor.kind not in ZONE_PLACEABLE_SENSOR_KINDS:
+                     raise ValueError(
+                         f"room '{graph.room_id}' declares a {sensor.kind} "
+                         f"('{sensor.node_id}'); the Zone builder places "
+-                        f"{list(ZONE_PLACEABLE_SENSOR_KINDS)} only. A "
+-                        "button belongs to a room that owns its machine")
++                        f"{list(ZONE_PLACEABLE_SENSOR_KINDS)} only. That "
++                        "sensor belongs to a room that owns its machine")
+         return self
+ 
+     @model_validator(mode="after")
+@@ -1733,8 +1734,19 @@ class Zone(Strict):
+         held requirement. Rest open and released closed is a plate that
+         shuts the way for good, and a route the player's own step can
+         seal is a softlock. What passes is a chain that is open once the
+-        plate has been stepped on and left: `plate -> LATCH -> shutter`,
+-        or a `NOT` chain that only ever denies while it is held.
++        one action is done: `lever -> LATCH -> shutter` -- D-07's
++        visibly permanent control, the shape the composer emits -- or a
++        `NOT` chain that only ever denies while it is held.
++
++        **`plate -> LATCH -> shutter` still LOADS.** It is D-10's
++        step-once plate, which D-07 (2026-09-24) rejects as a
++        presentation: "A pressure plate must not permanently latch merely
++        because I stepped on it once." No composer emits it any more, but
++        a save composed before the ruling holds one, and a validator that
++        refused it here would make that save unreadable -- which
++        09 §PT-03 forbids in as many words. So it is refused where Zones
++        are MADE (`latched_route.compose_latched_route`, and the test
++        that no composition emits it), not where they are loaded.
+ 
+         Whether the plate's room can be reached WITHOUT the route it
+         opens is a question about the whole Zone graph, and
+@@ -1779,6 +1791,11 @@ class Zone(Strict):
+                     "LATCH chains the route search reasons about. Put "
+                     "that machine inside the room, where it gates nothing")
+             for sensor in sensors:
++                # A LEVER IS PULLED, NOT STOOD ON (D-07): the interact
++                # verb is the guaranteed base kit, so the plate's body
++                # rule describes nothing about it.
++                if sensor.kind != "PRESSURE_PLATE":
++                    continue
+                 if plate_accepts_player(sensor.requires_class,
+                                         sensor.counts_player):
+                     continue
+@@ -1808,10 +1825,11 @@ class Zone(Strict):
+                 raise ValueError(
+                     f"edge '{edge.edge_id}' is opened by "
+                     f"'{edge.opened_by}', which is closed at rest and "
+-                    "closed again once the plate is left -- so the player "
+-                    "has to hold it open to walk through it. That is D-8 "
+-                    "§11.2's held requirement, which is UNSUPPORTED; put "
+-                    "a LATCH between the plate and the machine")
++                    "closed again once the plate is left or the pulse has "
++                    "passed -- so the player has to hold it open to walk "
++                    "through it. That is D-8 §11.2's held requirement, "
++                    "which is UNSUPPORTED; put a LATCH between the control "
++                    "and the machine")
+             raise ValueError(
+                 f"edge '{edge.edge_id}' is opened by '{edge.opened_by}', "
+                 "which starts open and is SHUT FOR GOOD by stepping on "
+diff --git a/bridge/tests/test_p14_latched_route.py b/bridge/tests/test_p14_latched_route.py
+index 15e849b..641af2c 100644
+--- a/bridge/tests/test_p14_latched_route.py
++++ b/bridge/tests/test_p14_latched_route.py
+@@ -280,12 +280,84 @@ def test_the_composer_puts_a_legal_latch_route_on_the_real_zone():
+     # The trigger is on the near side of the door it opens.
+     other = edge.room_b if graph.room_id == edge.room_a else edge.room_a
+     assert order.index(graph.room_id) < order.index(other)
+-    # And it is the chosen chain: counts the player, latches, no gate.
+-    assert graph.sensors[0].counts_player is True
++    # And it is D-07's chain: a LEVER -- a visibly permanent control --
++    # into the latch, and no gate. Never a plate that latches because it
++    # was stepped on once.
++    assert [s.kind for s in graph.sensors] == ["PULSE_BUTTON"]
+     assert [n.kind for n in graph.nodes] == ["LATCH"]
+     assert edge.capability is None
+ 
+ 
++# --------------------------------------------------------------------------
++# D-07 (owner ruling, 2026-09-24): pressure plates are held sensors
++# --------------------------------------------------------------------------
++
++def _lever_route(*, latched: bool = True, edge_index: int = 0) -> dict:
++    """`lever -> LATCH -> shutter` (or a bare `lever -> shutter`) on one
++    edge of the composed Zone, as raw data for `Zone.model_validate`."""
++    raw = composed().model_dump()
++    edge = raw["edges"][edge_index]
++    raw["room_graphs"] = [{
++        "room_id": edge["room_a"],
++        "sensors": [{"node_id": "route_lever", "kind": "PULSE_BUTTON"}],
++        "nodes": ([{"node_id": "held", "kind": "LATCH",
++                    "inputs": ["route_lever"]}] if latched else []),
++        "actuators": [{"actuator_id": "route_shutter",
++                       "driven_by": "held" if latched else "route_lever"}],
++    }]
++    edge["opened_by"] = "route_shutter"
++    return raw
++
++
++def test_a_lever_route_is_certified_as_the_plate_route_was():
++    """Pulled once, let go: closed at rest, open after -- the same
++    arithmetic, and the same route search, as the plate it replaces."""
++    zone = Zone.model_validate(_lever_route())
++    assert reachability(zone).ok
++
++
++def test_a_lever_straight_to_a_shutter_is_a_held_requirement():
++    """A pulse is gone the tick after it arrives, so a shutter driven by
++    one directly would move for one tick -- a door no one could walk
++    through. Refused structurally, before the route rules are asked."""
++    with pytest.raises(ValueError, match="move for one tick"):
++        Zone.model_validate(_lever_route(latched=False))
++
++
++def test_a_save_composed_before_d07_still_loads():
++    """09 §PT-03: "Existing old saves must not become unreadable because a
++    new content validator disapproves their original declaration." The
++    step-once plate is refused where Zones are MADE, not where they load."""
++    zone = latched_route()
++    assert zone.room_graphs[0].sensors[0].kind == "PRESSURE_PLATE"
++    assert reachability(zone).ok
++
++
++def _plates_that_latch(zone) -> list[str]:
++    """Every plate a LATCH is fed from, in any room graph of `zone`."""
++    from archipepsi_bridge.schemas import signal_graph as SG
++    out = []
++    for graph in zone.room_graphs or ():
++        for actuator in graph.actuators:
++            sensors, nodes = SG.upstream(graph, actuator.actuator_id)
++            if any(n.kind == "LATCH" for n in nodes):
++                out += [f"{graph.room_id}/{s.node_id}" for s in sensors
++                        if s.kind == "PRESSURE_PLATE"]
++    return out
++
++
++def test_no_composition_emits_a_plate_that_latches():
++    """D-07: "A pressure plate must not permanently latch merely because
++    I stepped on it once." Over every Zone the composers make today: P14's
++    route on the played Zone, and the whole candidate profile."""
++    from archipepsi_bridge.playtest import (candidate_all_zone,
++                                            latched_route_zone)
++    for name, zone in (("latched route", latched_route_zone()),
++                       ("candidate profile", candidate_all_zone())):
++        assert zone is not None, f"the {name} composition declined"
++        assert _plates_that_latch(zone) == [], (name, _plates_that_latch(zone))
++
++
+ def test_the_composer_does_not_stack_onto_a_zone_that_has_one():
+     from archipepsi_bridge.latched_route import compose_latched_route
+     once = compose_latched_route(composed())
+diff --git a/bridge/tests/test_signal_graph.py b/bridge/tests/test_signal_graph.py
+index d464ff8..97bb174 100644
+--- a/bridge/tests/test_signal_graph.py
++++ b/bridge/tests/test_signal_graph.py
+@@ -619,14 +619,21 @@ def test_upstream_walks_every_input_and_a_chain_as_before():
+ 
+ 
+ def test_a_zone_asks_only_for_what_its_builder_places():
+-    """`RoomGraphs` puts plates down. A button is run by the same runtime
+-    and placed only by a room that owns its lever, so a Zone may not ask
+-    the builder for one."""
++    """`RoomGraphs` puts plates and levers down -- the lever is D-07's
++    visibly permanent control (owner ruling, 2026-09-24). A shot target
++    is run by the same runtime and placed only by a room that owns its
++    machine, so a Zone may not ask the builder for one."""
++    _zone([_chain(
++        sensors=[_BUTTON],
++        nodes=[{"node_id": "held", "kind": "LATCH",
++                "inputs": ["bolt_lever"]}],
++        actuators=[{"actuator_id": "s", "driven_by": "held"}])])
+     with pytest.raises(ValidationError, match="Zone builder places"):
+         _zone([_chain(
+-            sensors=[_BUTTON],
++            sensors=[{"node_id": "mark", "kind": "SHOOTABLE_TARGET",
++                      "mode": "PULSE"}],
+             nodes=[{"node_id": "held", "kind": "LATCH",
+-                    "inputs": ["bolt_lever"]}],
++                    "inputs": ["mark"]}],
+             actuators=[{"actuator_id": "s", "driven_by": "held"}])])
+ 
+ 

@@ -1,0 +1,186 @@
+# H-UNWEIGHTED after: work tree on d06a882 + the Unweighted repair, 2026-09-25T01:04:20Z, godot 4.5.1 headless
+## make godot-minor-claim
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_unweighted_switch mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:131)
+         [1] _on_object_settled (res://scripts/gameplay/zone_controller.gd:1043)
+         [2] _watch_rest (res://scripts/gameplay/transported_objects.gd:373)
+         [3] _physics_process (res://scripts/gameplay/transported_objects.gd:350)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:131)
+         [1] _on_enemy_died (res://scripts/gameplay/zone_controller.gd:1995)
+         [2] die (res://scripts/enemies/enemy.gd:1580)
+         [3] _physics_process (res://scripts/enemies/enemy.gd:425)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:131)
+         [1] send_layout_result (res://scripts/gameplay/zone_controller.gd:1811)
+         [2] _publish_layout (res://scripts/gameplay/zone_controller.gd:1625)
+         [3] _certify_physics (res://scripts/gameplay/zone_controller.gd:1733)
+         [4] of_build (res://scripts/gameplay/chain_certificate.gd:141)
+         [5] of_room (res://scripts/gameplay/chain_certificate.gd:81)
+         [6] certify (res://scripts/gameplay/chain_certificate.gd:228)
+         [7] replay (res://scripts/gameplay/replay_harness.gd:78)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _await_verdict (res://scripts/gameplay/zone_controller.gd:1684)
+  ok: every minor the played Zone declares is built as itself: declared ["c024", "c025"], hosted ["c024", "c025"]
+  -- c025 (Chamber_c025), as built, nothing operated
+  ok: c025 holds its Check
+  NOTE: c025: 4875 standable cells, 3737 reached from the arrival with the base kit, 0 claim the Check (506 ms)
+  ok: c025: the census walks the room (3737 cells reached)
+  ok: c025: NO CLAIM BEFORE THE ROOM IS SOLVED -- 0 reached cell(s) claim the Check, in the hosted room's own frame: []
+  ok: c025: control -- from beside the Check (eye (-22.900000, 4.600000, 67.599998)) the same test claims it
+  -- c024 (Chamber_c024), as built, nothing operated
+  ok: c024 holds its Check
+  NOTE: c024: 2697 standable cells, 1855 reached from the arrival with the base kit, 0 claim the Check (223 ms)
+  ok: c024: the census walks the room (1855 cells reached)
+  ok: c024: NO CLAIM BEFORE THE ROOM IS SOLVED -- 0 reached cell(s) claim the Check, in the hosted room's own frame: []
+  ok: c024: control -- from beside the Check (eye (26.000000, 5.000000, 100.000000)) the same test claims it
+  -- c024: the gallery, as built, from the arrival
+  ok: c024: G is NOT reached from the arrival with the base kit, the room as built (1855 cells reached)
+  -- c024: movement assistance, the room as built (V-10)
+  NOTE: c024 mobility: 8680 blinks (2877 moved), 18 flights, 40 arrived on G (by blink 24, double jump 9, grapple 7)
+  ok: c024: V-10 -- no blink, double jump or grapple puts the Check in claim reach from anywhere but G (8680 blinks (2877 moved), 18 flights, 40 arrived on G (by blink 24, double jump 9, grapple 7)); off-goal claims: []
+  ok: c024: and movement is not nerfed: 40 attempt(s) arrived on G, which D12 accepts as a legal arrival
+  -- c024: the carriage in transit, ridden, nothing LIGHTENED
+  ok: c024: the SERVICE DRIVE pulled by hand
+  NOTE: c024 transit jumps: 4.9 m:no 4.6 m:no 4.3 m:no 4.0 m:no 3.7 m:no 3.4 m:no 3.1 m:no 2.8 m:no 2.5 m:no 2.2 m:no 1.9 m:no 1.6 m:no 1.3 m:no 1.0 m:no
+  ok: c024: NO CROSSING FROM THE CARRIAGE IN TRANSIT -- ridden and jumped at 14 points of its travel, nothing LIGHTENED; reached G from: []
+  -- c024: the return, after an alternate arrival and after the bolt
+  ok: c024: ALTERNATE ARRIVAL, crossing shut, nothing pulled: the arrival floor is reached from G (the return gap)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:131)
+         [1] report_latch (res://scripts/gameplay/zone_controller.gd:997)
+         [2] <anonymous lambda> (res://scripts/gameplay/zone_controller.gd:622)
+         [3] <anonymous lambda> (res://scripts/content/unweighted_switch_hosted.gd:48)
+         [4] _engage (res://scripts/content/unweighted_switch_room.gd:461)
+         [5] <anonymous lambda> (res://scripts/content/unweighted_switch_room.gd:446)
+         [6] _resolve (res://scripts/gameplay/signal_graph.gd:390)
+         [7] evaluate (res://scripts/gameplay/signal_graph.gd:337)
+         [8] _on_pulse (res://scripts/gameplay/signal_graph.gd:284)
+         [9] interact (res://scripts/gameplay/call_lever.gd:95)
+         [10] _physics_process (res://scripts/gameplay/player.gd:916)
+  ok: c024: the HOLD-OPEN BOLT pulled by hand on G: the stair is down (8 steps) and the bolt stays thrown, saying so: 'BOLT HELD -- CROSSING OPEN, RETURN STAIR DOWN'
+  ok: c024: and the crossing is held open with the carriage still on the weighbridge; the arrival floor is reached from G
+GODOT MINOR CLAIM TESTS OK (17 checks, 4 notes)
+## make godot-unweighted
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- THE ROOM, as §2 and §4 describe it
+  ok: plate, shutter, crate, applicator, bolt, drive and goal
+  ok: the crate is 200 kg
+  ok: ...which reads heavy
+  ok: the plate requires HEAVY or heavier
+  ok: §4: the crate is parked, so the plate is OFF
+  ok: §4: ...and the shutter is open
+  -- THE CONTRADICTION: 1.9 m, from two different floors
+  ok: from the floor, a jump reaches 1.333 m and the sill is 1.90 m
+  ok: ...and it is above a step-up of 1.00 m too, so there is no walking bypass
+  ok: from the crate top at 1.00 m, a jump reaches 2.333 m
+  ok: the guide rails are no step: 0.45 m, and a jump from them reaches 1.783 m, under the sill
+  NOTE: margin from the crate top is 0.433 m
+  -- PLACING THE STEP CLOSES THE ROUTE
+  ok: BEFORE: the shutter is open
+  ok: DURING: the plate reads one occupant, ["heavy"]
+  ok: ...and is satisfied
+  ok: ...counting the crate and not the player (§3)
+  ok: AFTER: the shutter is shut, openness 0.000
+  -- CLASS VERSUS KILOGRAMS, through the real Status
+  ok: the route is closed to begin with
+  ok: the Status is on a real StatusEffects at target `object`
+  ok: ...and `lightened` is actually active on it
+  ok: THE KILOGRAMS DO NOT MOVE: still 200.0 kg
+  ok: THE CLASS DOES: HEAVY -> medium, one step
+  ok: the plate stops being satisfied without the crate moving
+  ok: and the shutter opens, openness 1.000
+  -- COLLISION IS UNTOUCHED: the step is still a step
+  ok: the crate top stays at 0.990 m
+  ok: a ray from above stops on it before AND while lightened
+  ok: ...while the class is medium, so the change is semantic only
+  -- THE APPROVED PHYSICAL EFFECT, on this crate
+  ok: an impulse moves it 0.1957 m/s, and 0.3913 m/s lightened (x2.00)
+  ok: ...on the same 200 kg, so it is the SCALING that changed
+  -- THROUGH EXPIRY: the window shuts by itself
+  ok: open while the Status runs
+  ok: after 8.0 s the Status has expired
+  ok: ...the crate reads heavy again
+  ok: ...the plate is satisfied again, with nothing having moved
+  ok: ...and the shutter has shut, openness 0.000
+  ok: the bolt was never touched
+  -- §9: THE BOLT IS PERMANENT AND THE STATUS IS NOT
+  ok: the crossing is open
+  ok: the bolt is engaged
+  ok: ...and the fixed return stair now exists (0 -> 8 steps)
+  ok: the Status has expired
+  ok: ...and the plate is satisfied again
+  ok: AND THE SHUTTER IS STILL OPEN: the bolt outranks the plate
+  ok: ...and the stair is still there
+  -- THE CHAIN: the contract's graph, run by the shared runtime
+  ok: the room's plate, bolt lever and shutter are bound to the contract's declared ids, the shutter driven by 'open'
+  ok: the declared nodes, in order: ["NOT", "LATCH", "OR"]
+  ok: at rest the graph reads OPEN and the crossing is open
+  ok: the crate on the plate: plate ON, NOT OFF, OR OFF, and the graph shut the crossing
+  ok: a second pull fires nothing more: the LATCH fired 1 time(s), the room engaged 1
+  ok: the bolt's one-tick pulse set the LATCH, and the OR holds the crossing open with the plate still loaded
+  ok: and on the next tick the pulse is gone -- the lever reads OFF -- while the LATCH still holds the crossing open
+  ok: §11's control: the plate sensor is declared and left unbound
+  -- A REFUSED APPLICATION CHANGES NOTHING
+  ok: 'burning' on an object is refused, not stored
+  ok: 'anchored' on an object is refused, not stored
+  ok: 'slippery' on an object is refused, not stored
+  ok: ...and no success event was emitted: []
+  ok: the crate still reads heavy
+  ok: the plate and the shutter are exactly as they were
+  -- §11's CONTROL: the plate's output goes nowhere
+  ok: the room is built with the link cut
+  ok: the shutter starts open, as before
+  ok: the plate IS satisfied: the sensor is not what was cut
+  ok: ...AND THE SHUTTER DID NOT CLOSE -- the expected response fails, which is what the control is for
+  ok: ...and releasing it changes nothing either, because nothing downstream is listening
+  -- THE COMPLETE ROUTE, walked
+  ok: arrival A is below the sill, at 0.00 m
+  ok: the SERVICE DRIVE lever is reachable and pulls
+  ok: the step is placed, and the crossing has closed
+  ok: the shot has line of sight to the applicator, and sees the applicator
+  ok: ...and the applicator fired (1 trigger(s))
+  ok: ...and the crate is carrying `lightened`
+  ok: the crossing has opened
+  ok: the player is STANDING on the crate top, feet at 0.99 m
+  ok: the player is through the doorway at z 6.88
+  ok: the HOLD-OPEN BOLT is pulled
+  ok: THE GOAL IS REACHED, on foot, from arrival A
+  NOTE: route completed with the Status expiring behind the player: `lightened` active at the goal = true
+
+GODOT UNWEIGHTED OK (70 checks, 2 notes)

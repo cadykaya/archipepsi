@@ -357,10 +357,24 @@ static func _openings_are_holes(room: Dictionary, to_world: Transform3D,
 	# from. Stated as "away from the middle of the room" rather than as a
 	# fixed axis, which is what made it wrong for a side entry -- and for
 	# a room entered at its origin this is exactly the -Z it always was.
+	#
+	# THE EXIT IS ON THE WALL IT FACES (O05-06.2, P5-17). The +Z rule
+	# above is right for an exit that leaves straight on, and it is what a
+	# tower's summit needs; for a room whose declared `exit_yaw` turns the
+	# way on to a SIDE wall it measured a point on the far wall instead --
+	# open air beside EX50-021's flank, which therefore passed without its
+	# doorway being looked at, and a wall corner beside EX50-011's
+	# gallery, which failed with a sealed door that a real body crosses.
+	var exit_out := _exit_facing(room)
+	var exit_wall := Vector3(exit_at.x, exit_at.y, bounds.end.z)
+	if absf(exit_out.x) > 0.5:
+		exit_wall = Vector3(bounds.end.x if exit_out.x > 0.0
+				else bounds.position.x, exit_at.y, exit_at.z)
+	elif exit_out.z < -0.5:
+		exit_wall = Vector3(exit_at.x, exit_at.y, bounds.position.z)
 	for door: Array in [
 			["the entry", entry_at, _outward(entry_at, bounds)],
-			["the exit", Vector3(exit_at.x, exit_at.y, bounds.end.z),
-				Vector3.BACK]]:
+			["the exit", exit_wall, exit_out]]:
 		var at: Vector3 = door[1]
 		var into: Vector3 = door[2]
 		# From just outside the plane to just inside it. Short on
@@ -1223,6 +1237,13 @@ static func _nowhere_to_stand(space: PhysicsDirectSpaceState3D,
 ## the room through it. Derived rather than declared because a room may
 ## be entered on any face and an artist should not have to also state
 ## which way is out.
+## The way the room's exit faces, from its declared `exit_yaw` (degrees,
+## as the chain reads it): +Z when the room declares none.
+static func _exit_facing(room: Dictionary) -> Vector3:
+	var yaw := deg_to_rad(float(room.get("exit_yaw", 0.0)))
+	var out := Basis(Vector3.UP, yaw) * Vector3.BACK
+	return Vector3(roundf(out.x), 0.0, roundf(out.z))
+
 static func _outward(at: Vector3, bounds: AABB) -> Vector3:
 	var away := at - bounds.get_center()
 	away.y = 0.0
@@ -1328,15 +1349,22 @@ static func _body_box(who: Node) -> AABB:
 		var fitted := child as CollisionShape3D
 		if fitted == null or fitted.shape == null:
 			continue
-		var size := Vector3.ZERO
+		var local := AABB()
 		var cube := fitted.shape as BoxShape3D
+		var ball := fitted.shape as SphereShape3D
 		if cube != null:
-			size = cube.size
+			local = AABB(-cube.size / 2.0, cube.size)
+		elif ball != null:
+			local = AABB(-Vector3.ONE * ball.radius,
+					Vector3.ONE * ball.radius * 2.0)
 		else:
-			var ball := fitted.shape as SphereShape3D
-			size = Vector3.ONE * ball.radius * 2.0 if ball != null \
-					else fitted.shape.get_debug_mesh().get_aabb().size
-		return AABB(fitted.global_position - size / 2.0, size)
+			local = fitted.shape.get_debug_mesh().get_aabb()
+		# TURNED WITH THE BODY (HB-F4c). This took the shape's size at the
+		# shape's position, unturned, so a connector's side wall laid
+		# along x was reported 0.4 m along x and 5 m along z -- a wall
+		# reaching two metres into the room it actually stood beside.
+		# HB-F4 wrote its first reading of the owner's zone_006 from that.
+		return fitted.global_transform * local
 	var body := who as Node3D
 	if body != null:
 		return AABB(body.global_position, Vector3.ZERO)

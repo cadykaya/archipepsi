@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-traverse godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-signal-verbs godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted godot-menu-shell menu-shell-shots godot-equipment-face equipment-face-shots equipment-fixture godot-minimap minimap-shots map-fixture godot-map-face map-face-shots godot-journal-face journal-face-shots journal-fixture lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-rail-gantry godot-rail-network godot-gantry-census godot-machine-life godot-bombs godot-bombs-live bomb-fixture godot-enemy-footing godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-status-kinetic godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -27,9 +27,18 @@ test-bridge:
 test-apworld:
 	$(PY) -m pytest apworld/tests -q
 
+# EVERY COPY OF THE CONSTANTS, FROM THE ONE SOURCE. `constants.py` is
+# the binding file; the GDScript is generated from it and the APWorld
+# vendors it verbatim, because an APWorld ships to Archipelago without
+# this repository around it. The vendored copy is HERE rather than left
+# to be remembered: it drifted once already -- the enemy stat table
+# landed in the source and not in the copy, and `make test` carried the
+# failure for several commits while `make test-bridge`, which does not
+# run the APWorld suite, stayed green.
 export:
 	cd bridge/archipepsi_bridge/schemas && $(PY) export.py generated
 	cp bridge/archipepsi_bridge/schemas/generated/constants.gd godot/scripts/autoload/constants.gd
+	cp bridge/archipepsi_bridge/schemas/constants.py apworld/archipepsi/constants.py
 
 # The rule suite's snapshot is a real fold, and this is the fold that
 # makes it. Regenerate rather than editing the JSON.
@@ -38,6 +47,24 @@ rules-fixture:
 
 verbs-fixture:
 	$(PY) bridge/archipepsi_bridge/fixtures/make_verbs_snapshot.py
+
+# H-INVENTORY's snapshots are real `CampaignSnapshot`s, so the face is
+# tested against the inventory Dess's projection actually emits.
+equipment-fixture:
+	$(PY) bridge/archipepsi_bridge/fixtures/make_equipment_snapshot.py
+
+# The maps' state is Dess's `map_view` of the candidate Zone after real
+# transitions, so the minimap is tested against the map the bridge sends.
+map-fixture:
+	$(PY) bridge/archipepsi_bridge/fixtures/make_map_snapshot.py
+
+# The journal's snapshots: the model's own CampaignSnapshot over the
+# candidate Zone after real transitions (H-JOURNAL).
+journal-fixture:
+	$(PY) bridge/archipepsi_bridge/fixtures/make_journal_snapshot.py
+
+bomb-fixture:  # H-BOMBS: the candidate campaign, played to its first consumable
+	$(PY) bridge/archipepsi_bridge/fixtures/make_bomb_snapshots.py
 
 # The PRE-ART playtest baseline. Regenerate DELIBERATELY and in its own
 # commit: retaking it means the playtest before it and the playtest after
@@ -381,6 +408,15 @@ zone-shots: godot-import
 	  --rendering-driver opengl3 -- --zone-shots 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
+# Five pictures of the `--railway` development scenario. Diagnostic and
+# not in CI: it asserts nothing, it needs a display, and
+# `godot-rail-junction` is what makes the claims. Output is
+# `user://railway_shots`, outside the repository.
+railway-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1600x1000x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --railway-shots 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
 # Which refusals has anything ever triggered? Mutes one at a time and
 # reports the survivors. See bridge/tools/mutate.py for what a survivor
 # means -- it is not automatically a missing test.
@@ -405,6 +441,40 @@ physics-vectors:
 zone-fixture:
 	cd bridge && $(PY) -m archipepsi_bridge.playtest dump \
 	  --out ../godot/tests/fixtures/played_zone.json
+
+# P14, now M-1's legacy input: the played Zone with the retired
+# step-once plate route (D-07) that a saved Zone may still hold, replayed
+# by `godot-latched-route-live`'s legacy form (step on, step off, walk
+# through, reload). Regenerated from source, never edited.
+latched-route-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-latched \
+	  --out ../godot/tests/fixtures/latched_route_zone.json
+
+# D13 1c: the played Zone with the production composer's lever route
+# (the lever in c002, the shutter across e:c002:c003), played by
+# `godot-lever-route-live`. Regenerated from source, never edited.
+lever-route-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-lever \
+	  --out ../godot/tests/fixtures/lever_route_zone.json
+
+# D13 1d: the played Zone with a doorway held by a declared weight on an
+# object-only plate. Regenerated from source, never edited.
+held-route-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-held \
+	  --out ../godot/tests/fixtures/held_route_zone.json
+
+# O05-02 / O05-04: the played Zone with one CANDIDATE profile step applied
+# (`candidate.py`, the same code the opt-in generation profile runs).
+# Generated, never hand-edited.
+transport-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-candidate \
+	  transport --out ../godot/tests/fixtures/transport_zone.json
+reversible-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-candidate \
+	  zone_state --out ../godot/tests/fixtures/reversible_zone.json
+candidate-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump-candidate \
+	  all --out ../godot/tests/fixtures/candidate_zone.json
 
 # Invariant I14 (ACCEPTANCE_TESTS 5.7). Boots the real project rather than
 # using `--script`: a SceneTree script never instantiates the autoloads, so
@@ -489,6 +559,12 @@ QUIET_SAVES := $(CURDIR)/.integration-saves-quiet
 # reading.
 VARIANT_SAVES := $(CURDIR)/.integration-saves-variant
 JOURNEY_SAVES := $(CURDIR)/.journey-saves
+# And the consumable sequence's own folder. It is SEEDED between two
+# bridge runs, so it must never be a directory anyone else is using.
+CONSUMABLE_SAVES := $(CURDIR)/.consumable-saves
+# And the process-boundary run's own, because it deliberately leaves a
+# campaign mid-expenditure and the socket sequence must not inherit it.
+RESTART_SAVES := $(CURDIR)/.consumable-restart-saves
 
 # The S2/S5 action-runner suite: press, release, cancel and death, with a
 # real player over a real floor.
@@ -509,6 +585,87 @@ godot-boot: godot-import       # the real startup path, and the transition that 
 	@out=$$($(GODOT) --headless --path godot -- --boot-test 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT BOOT TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# O05-08.1-.4: PUSH, PULL, HOLD, ALIGN, SETTLE, PIN, TETHER, ROTATE,
+# ATTACH, DETACH, LIGHTEN_FIELD and ANCHOR_FIELD, and the relations
+# ledger, runtime only (Design 2 §14.2-14.4, §31.2), by direct
+# invocation. No Echo Action reaches them; see PROD_OV05.md, O05-08.
+godot-verb-runtime: godot-import  # twelve verbs' runtime, not their delivery
+	@out=$$($(GODOT) --headless --path godot -- --verb-runtime-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT VERB RUNTIME OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# O05-09.1: `rooted` and `anchored` on an enemy (Design 5 §15.2) -- no
+# step of its own, attacks kept; a knock moves a rooted enemy and not an
+# anchored one -- per role, and once through a real on-hit in a declared
+# arena. See PROD_OV05.md, O05-09.1.
+godot-status-family: godot-import  # the effective Statuses on their real consumers
+	@out=$$($(GODOT) --headless --path godot -- --status-family-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT STATUS FAMILY OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+godot-status-kinetic: godot-import  # H-STATUS: anchored and lightened on every modelled target
+	@out=$$($(GODOT) --headless --path godot -- --status-kinetic 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT STATUS KINETIC OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# CP1 (post-playtest): fair combat, counted in cumulative events --
+# artillery knowledge, shell path and blast cover, with a low-cover
+# positive control. See PROD_POST_PLAYTEST.md, H-ARTILLERY.
+godot-combat-fairness: godot-import  # no shell through walls, roofs or cover
+	@out=$$($(GODOT) --headless --path godot -- --combat-fairness-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT COMBAT FAIRNESS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# CP1 (post-playtest) H-FLYER-AI: the five divers of the played Zone's
+# c011, in the real ZoneController -- the real player walks the spine to
+# them, stands, jumps and clears the room, and every number is counted
+# from an event (V-05).
+godot-flyer-room: godot-import  # the played room's flyers wait, dive and die
+	@out=$$($(GODOT) --headless --path godot -- --flyer-room 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT FLYER ROOM OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+godot-minor-claim: godot-import  # V-09: no minor's Check before its room is solved
+	@out=$$($(GODOT) --headless --path godot -- --minor-claim 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT MINOR CLAIM TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# CP1 (post-playtest) H-RESUME-R, offline: what the Zone builds from a
+# saved encounter record, read before the first physics step. The
+# two-process proof is `godot-resume-live`.
+godot-resume: godot-import  # the fallen stay fallen; the player never among the living
+	@out=$$($(GODOT) --headless --path godot -- --resume-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT RESUME TESTS OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
 	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \
@@ -577,6 +734,771 @@ godot-traverse: godot-import   # walking to things, with the real controller
 
 godot-exit-reach: godot-import  # can the player actually reach the exit
 	@out=$$($(GODOT) --headless --path godot -- --exit-reach 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-passenger-carry: godot-import  # is a body carried on a moving deck
+	@out=$$($(GODOT) --headless --path godot -- --passenger-carry 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-rail-carrier: godot-import  # does the railway travel, stop and refuse
+	@out=$$($(GODOT) --headless --path godot -- --rail-carrier 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-rail-junction: godot-import  # lever, span, latch, and coming back
+	@out=$$($(GODOT) --headless --path godot -- --rail-junction 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-passing-platforms: godot-import  # EX50-011: two carriers, one meeting
+	@out=$$($(GODOT) --headless --path godot -- --passing-platforms-test 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-counterfire: godot-import  # EX50-021: a hostile shot as an input
+	@out=$$($(GODOT) --headless --path godot -- --counterfire-test 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-roster: godot-import  # OV04 P06: the seven additional enemy roles
+	@out=$$($(GODOT) --headless --path godot -- --roster 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-actuator: godot-import  # OV04 P15: §21's actuator contract
+	@out=$$($(GODOT) --headless --path godot -- --actuator 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-constraints: godot-import  # OV04 P13: §14.8's eight kinds
+	@out=$$($(GODOT) --headless --path godot -- --constraints 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-archive: godot-import  # the Echo archive: search, sort, the split
+	@out=$$($(GODOT) --headless --path godot -- --archive 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+# THE GENERATED ENCOUNTER, PLAYED. Declared cases, not all ten roles in
+# one room: the roles are built by the same composer a campaign uses,
+# the player is the controller's own, the input is the real input path,
+# and the fight ends in `kill_all` or it does not end.
+#
+# It ran about one in five red before it was a target, always on the
+# three-scuttler case, and the cause was the harness: the fight held
+# the trigger from a fixed spot, so a body placed outside the 18 m
+# aggro radius never woke and eighty-two shots went into the reward
+# pedestal in front of it. It walks now. Ten consecutive green runs
+# bought this line.
+# P14: A ZONE ASKS FOR A SIGNAL CHAIN AND GETS ONE. The plate, the NOT
+# and the shutter `unweighted_switch` hard-wires, built instead from
+# `Zone.room_graphs` -- and every other node and sensor §19.2 and §20
+# name refused, with a typo told apart from a gap.
+godot-signal-graph: godot-import  # the declared room graph, built and run
+	@out=$$($(GODOT) --headless --path godot -- --signal-graph 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT SIGNAL GRAPH TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# H-GRAPHS: Design 3 §14's five signal verbs on the graphs real rooms run
+# (the held and latched routes, EX50-033, EX50-021). Runtime-only until
+# an Echo delivers them (N-15).
+godot-signal-verbs: godot-import  # the five signal verbs, on real graphs
+	@out=$$($(GODOT) --headless --path godot -- --signal-verbs 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT SIGNAL VERBS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# P14: THE DECLARED ROUTE, PLAYED. Dess's `latched_route_zone.json`
+# (`make latched-route-fixture`) entered from its own arrival with the
+# real body on `move_forward` through real collision: the arena cleared
+# with the base kit, the doorway shown shut by pressing at it, the
+# player-enabled plate stepped on (one real `latch_fired`), stepped off,
+# and the actual doorway walked into c003 and back. The control takes
+# the LATCH out and the same walk is stopped at the door.
+godot-latched-route: godot-import  # the latch route, played end to end
+	@out=$$($(GODOT) --headless --path godot -- --latched-route 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT LATCHED ROUTE TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# P14: THE SAME ROUTE THROUGH A REAL BRIDGE, AND BACK AFTER A RESTART.
+# A disposable default-scale mock campaign (the scale Dess's fixture was
+# composed at). The real path generates zone_001; `compose_latched_route.py`
+# takes D-10's explicit step on it and checks the result IS
+# `latched_route_zone.json` (no re-keying); the real `Main` enters it
+# through the portal, the bridge certifies the layout, and the plate is
+# stepped on -- the real `latch_fired` accepted and read back off the save
+# file, forged latches refused. Then BOTH processes restart from the save
+# alone, and the route is open before anyone reaches the plate.
+#
+# To play the same candidate by hand, seed a save the same way and point
+# the ordinary client at it: see docs/P14_LATCHED_ROUTE_REPLAY.md.
+#
+# LATCH_FORM picks the route (D-07, D13 1c): `legacy`, the default, is
+# M-1's step-once plate; `lever` is what the composer now writes, pulled
+# once and thrown for good (`godot-lever-route-live`). The seed tool and
+# the driver both take it, and the driver fails if the served Zone
+# declares the other form's control.
+LATCH_SAVES := $(CURDIR)/.latched-route-saves
+LATCH_FORM ?= legacy
+LATCH_EXPECT = $(if $(filter lever,$(LATCH_FORM)),lever_route_zone.json,latched_route_zone.json)
+godot-latched-route-live: godot-import
+	rm -rf $(LATCH_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --latched-live=seed \
+	  > /tmp/archipepsi-latched-seed.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|FAIL|seeded|GODOT LATCHED)" /tmp/archipepsi-latched-seed.log; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-latched-seed.log; \
+	  echo "-- no campaign was seeded"; exit $$STATUS; fi
+	cd bridge && PYTHONPATH=. $(PY) tools/compose_latched_route.py \
+	  $(LATCH_SAVES) --form $(LATCH_FORM) \
+	  --expect ../godot/tests/fixtures/$(LATCH_EXPECT)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "the bridge did not load the composed save"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --latched-live=play \
+	  --latched-form=$(LATCH_FORM) \
+	  --latched-save-dir=$(LATCH_SAVES) > /tmp/archipepsi-latched-play.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|played|GODOT LATCHED)" /tmp/archipepsi-latched-play.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	grep -qE "GODOT LATCHED LIVE (LEVER )?PLAY OK" /tmp/archipepsi-latched-play.log || exit 1
+	@echo "-- both processes restart: the bridge too, from its own save --"
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "the restarted bridge did not come back"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --latched-live=restore \
+	  --latched-form=$(LATCH_FORM) \
+	  --latched-save-dir=$(LATCH_SAVES) > /tmp/archipepsi-latched-restore.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|GODOT LATCHED)" /tmp/archipepsi-latched-restore.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	grep -qE "GODOT LATCHED LIVE (LEVER )?RESTORE OK" /tmp/archipepsi-latched-restore.log \
+	  || exit 1
+
+# D13 1c's lever route, through the same real bridge and restart: the
+# bolt pulled once with the real interact, accepted and saved, thrown for
+# good, and restored thrown with the way open.
+godot-lever-route-live:
+	$(MAKE) godot-latched-route-live LATCH_FORM=lever \
+	  LATCH_SAVES=$(CURDIR)/.lever-route-saves
+
+# O05-03: THE TRANSPORT JOURNEY THROUGH A REAL BRIDGE, ACROSS TWO REAL
+# RESTARTS. A disposable default-scale mock campaign whose bridge runs the
+# opt-in CANDIDATE profile (`--candidate=transport`): the real generation
+# path composes zone_001 and the profile adds the journey before the Zone
+# is accepted -- no save is edited. SEED checks it is `transport_zone.json`
+# exactly. Then three more process pairs, each a new bridge beside a new
+# client with only the save crossing: PLACE (carry the cell partway and put
+# it down), INSTALL (restart 1: it is where it was put down; carry on and
+# install), RESTORE (restart 2: installed at load, the doorway open, and
+# the player walks through).
+TRANSPORT_SAVES := $(CURDIR)/.transport-saves
+TRANSPORT_BRIDGE = cd bridge && ARCHIPEPSI_SAVE_DIR=$(TRANSPORT_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --candidate=transport
+define transport_phase
+	$(TRANSPORT_BRIDGE) & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start for $(1) (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --transport-live=$(1) \
+	  --transport-save-dir=$(TRANSPORT_SAVES) \
+	  > /tmp/archipepsi-transport-$(1).log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|seeded|placed|installed|GODOT TRANSPORT)" \
+	  /tmp/archipepsi-transport-$(1).log; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-transport-$(1).log; \
+	  exit $$STATUS; fi
+endef
+godot-transport-live: godot-import
+	rm -rf $(TRANSPORT_SAVES)
+	$(call transport_phase,seed)
+	$(call transport_phase,place)
+	@echo "-- restart 1: both processes new, only the save crosses --"
+	$(call transport_phase,install)
+	@echo "-- restart 2: both processes new again --"
+	$(call transport_phase,restore)
+
+# O05-04.5: THE REVERSIBLE LEVER THROUGH A REAL BRIDGE AND A RESTART. The
+# bridge runs the CANDIDATE profile's `zone_state` step, so the real
+# generation path composes the lever (SEED checks it is
+# `reversible_zone.json`). SELECT pulls it -- PENDING, then ACCEPTED off
+# the snapshot, and on disk -- refuses a forged selection by its own key,
+# walks through and leaves it LOWERED. RESTORE: both processes new, the
+# doorway open at load, walked through without touching the lever.
+REVERSIBLE_SAVES := $(CURDIR)/.reversible-saves
+define reversible_phase
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(REVERSIBLE_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --candidate=zone_state & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start for $(1) (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --reversible-live=$(1) \
+	  --reversible-save-dir=$(REVERSIBLE_SAVES) \
+	  > /tmp/archipepsi-reversible-$(1).log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|seeded|selected|GODOT REVERSIBLE)" \
+	  /tmp/archipepsi-reversible-$(1).log; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-reversible-$(1).log; \
+	  exit $$STATUS; fi
+endef
+godot-reversible-live: godot-import
+	rm -rf $(REVERSIBLE_SAVES)
+	$(call reversible_phase,seed)
+	$(call reversible_phase,select)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call reversible_phase,restore)
+
+# O05-13/15: THE WHOLE CANDIDATE PROFILE IN ONE ZONE, the combination the
+# candidate launcher (`archipepsi_bridge.diagnostic --candidate`) plays.
+# SEED checks the served Zone is `candidate_zone.json` and that the bridge
+# recorded every step EMITTED; PLAY builds all three, pulls the lever,
+# carries and installs the cell and walks through; RESTORE (both processes
+# new) finds lever, cell and P14's shutter as they were left.
+CANDIDATE_SAVES := $(CURDIR)/.candidate-saves
+define candidate_phase
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(CANDIDATE_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --candidate=all & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start for $(1) (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --candidate-live=$(1) \
+	  --candidate-save-dir=$(CANDIDATE_SAVES) \
+	  $(if $(CANDIDATE_DUMP),--candidate-dump-zone=$(CANDIDATE_DUMP)) \
+	  > /tmp/archipepsi-candidate-$(1).log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|seeded|played|GODOT CANDIDATE)" \
+	  /tmp/archipepsi-candidate-$(1).log; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-candidate-$(1).log; \
+	  exit $$STATUS; fi; \
+	if grep -qE "SCRIPT ERROR|String formatting error" \
+	  /tmp/archipepsi-candidate-$(1).log; then \
+	  echo "candidate phase $(1): runtime errors in the run"; exit 1; fi
+endef
+godot-candidate-live: godot-import
+	rm -rf $(CANDIDATE_SAVES)
+	$(call candidate_phase,seed)
+	$(call candidate_phase,play)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call candidate_phase,restore)
+	$(call candidate_phase,minor)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call candidate_phase,minor_restore)
+	$(call candidate_phase,next)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call candidate_phase,next_restore)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call candidate_phase,next_final)
+
+# H-RESUME-R (post-playtest CP1): AN ENCOUNTER RESUMES AS IT WAS LEFT
+# (D-06). The candidate profile's c005 -- two bulwarks and the station a
+# resume returns to. Each phase is a new client beside a new bridge; only
+# the save crosses. `legacy` runs on a COPY made after `partial`, with the
+# per-enemy record stripped by `tools/strip_encounter_record.py`, which
+# refuses any directory but such a copy.
+RESUME_SAVES := $(CURDIR)/.resume-saves
+RESUME_LEGACY := $(CURDIR)/.resume-saves-legacy
+define resume_phase
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(2) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --candidate=all & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start for $(1) (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --resume-live=$(1) \
+	  --resume-save-dir=$(2) \
+	  > /tmp/archipepsi-resume-$(1).log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|seeded|played|restored|legacy|GODOT RESUME)" \
+	  /tmp/archipepsi-resume-$(1).log; \
+	if grep -qE "SCRIPT ERROR|String formatting error" \
+	  /tmp/archipepsi-resume-$(1).log; then \
+	  echo "-- a runtime error was raised in $(1)"; exit 1; fi; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-resume-$(1).log; \
+	  exit $$STATUS; fi
+endef
+godot-resume-live: godot-import
+	rm -rf $(RESUME_SAVES) $(RESUME_LEGACY)
+	$(call resume_phase,seed,$(RESUME_SAVES))
+	$(call resume_phase,partial,$(RESUME_SAVES))
+	cp -r $(RESUME_SAVES) $(RESUME_LEGACY)
+	$(PY) tools/strip_encounter_record.py $(RESUME_LEGACY)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call resume_phase,partial_restore,$(RESUME_SAVES))
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call resume_phase,clear_restore,$(RESUME_SAVES))
+	@echo "-- the legacy copy: both processes new, a save without the record --"
+	$(call resume_phase,legacy,$(RESUME_LEGACY))
+
+# P14: THE LATCH-ROUTE CANDIDATE, BY HAND. Opt-in and disposable: its own
+# save directory, a default-scale mock campaign whose zone_001 is Dess's
+# `latched_route_zone.json` -- the same seed and explicit compose step
+# `godot-latched-route-live` takes, identity checked. Nothing else is read
+# or written, and the ordinary campaign never composes a latch.
+#   make latched-route-play           seed once, then the bridge + the game
+#   make latched-route-play FRESH=1   discard that save and seed again
+# In the game: MOCK CAMPAIGN, then the portal. Quit and run it again (no
+# FRESH) to come back to the same save. docs/P14_LATCHED_ROUTE_REPLAY.md.
+LATCH_PLAY_SAVES := $(CURDIR)/.latched-route-play
+latched-route-play: godot-import
+	$(if $(FRESH),rm -rf $(LATCH_PLAY_SAVES))
+	@if ls $(LATCH_PLAY_SAVES)/*.json >/dev/null 2>&1; then \
+	  echo "-- reusing $(LATCH_PLAY_SAVES) (FRESH=1 seeds it again)"; \
+	else \
+	  cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_PLAY_SAVES) \
+	    $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	    --mock-scale=default > /tmp/archipepsi-latched-play-seed.log 2>&1 & \
+	  BRIDGE_PID=$$!; sleep 2; \
+	  $(GODOT) --headless --path godot -- --latched-live=seed \
+	    > /tmp/archipepsi-latched-play-seed-client.log 2>&1; \
+	  STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	  if [ $$STATUS -ne 0 ]; then \
+	    tail -20 /tmp/archipepsi-latched-play-seed-client.log; exit $$STATUS; fi; \
+	  (cd bridge && PYTHONPATH=. $(PY) tools/compose_latched_route.py \
+	    $(LATCH_PLAY_SAVES) \
+	    --expect ../godot/tests/fixtures/latched_route_zone.json) || exit 1; \
+	fi
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(LATCH_PLAY_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; exit 1; }; \
+	$(GODOT) --path godot; \
+	kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; true
+
+# D-11: A ZONE'S GAME PACK, THROUGH THE REAL MATERIAL PATH. Real Zones
+# and the real Hub are built and the meshes the builders made are read:
+# no pack is unchanged; a selectable pack's exact row wins; a missing role
+# is the family's (and a pack takes no hop); two packs over one family
+# share nothing; no pack again is the family again; the Hub is no Zone's;
+# a pack's hazard row is refused; a candidate or unlisted pack binds
+# nothing. The packs are in-memory and test-scoped: THEME_PACK.json and
+# the production THEME_PACK_STATUS ({}) are untouched.
+godot-theme-pack: godot-import  # Zone.theme_pack, on the geometry
+	@out=$$($(GODOT) --headless --path godot -- --theme-pack 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT THEME PACK TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The same arena wall rendered under no pack, test pack A and test pack
+# B, for a reviewer. Diagnostic and not in CI: it asserts nothing and it
+# needs a display; `godot-theme-pack` makes the claims. Output is
+# `user://theme_pack_shots`, outside the repository.
+# O05-15.4: review frames of the candidate Zone (`candidate_zone.json`),
+# each relationship before and after. Diagnostic and not in CI: it asserts
+# nothing and needs a display. Output is `user://candidate_shots`.
+candidate-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --candidate-shots 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+theme-pack-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --theme-pack --shots 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# O05-01: ORDINARY HAND CARRY, OPERATED. A real Player, driven through
+# `interact`, `move_forward`, `fire_pulse` and the mobility slot: pick up,
+# follow the view, walk into a wall (never inside it), put down at rest,
+# pick up again; the refusals (not carriable at the same mass; 60.00 kg
+# yes, 60.01 kg no; LIGHTENED changes class, not kilograms); the 0.85
+# walking factor for MEDIUM; the Archive's hold; dying while carrying.
+godot-carry: godot-import  # Design 2 §10.3-10.4 hand carry, played
+	@out=$$($(GODOT) --headless --path godot -- --carry 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT CARRY TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# O05-02/03: A REQUIRED OBJECT, CARRIED BETWEEN ROOMS AND INSTALLED, on
+# `transport_zone.json` (`make transport-fixture`). The real player clears
+# the rooms, fetches the 40 kg cell with `interact`, carries it through two
+# connectors, installs it in the socket with the interact ray and walks
+# through the doorway it opens. Then: restore installed (one copy, gate
+# open at load), restore at a settled mid-branch pose, the wrong object
+# refused, out-of-volume recovery after 1.0 s, death while carrying,
+# destruction (2.0 s), interruption beside the socket, and LIGHTENED
+# crossing the threshold on the same body.
+godot-transport: godot-import  # P16 carry + install, played
+	@out=$$($(GODOT) --headless --path godot -- --transport 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT TRANSPORT TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-transport: script errors in the run"; exit 1; fi
+
+# H-COUNTERFIRE (PT-04, D12, V-11): EX50-021 AS THE PLAYED ZONE HOSTS IT
+# (`candidate_zone.json`, zone_001/c025). What the room says as built and
+# while the window runs; the Zone's gunner killed with the base kit and
+# the receiver shot by hand from the lane (the owner's route, and the
+# kill-first fallback); no step off anywhere reached drops out of the
+# world; the hood as a census; V-10 at the schema maxima; and the way
+# back, without the release and with it.
+godot-counterfire-hosted: godot-import  # EX50-021 hosted, played
+	@out=$$($(GODOT) --headless --path godot -- --counterfire-hosted 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT COUNTERFIRE HOSTED OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-counterfire-hosted: script errors in the run"; exit 1; fi
+
+# H-PASSING (PT-06, PT-07, D12): EX50-011 AS THE CANDIDATE'S SECOND ZONE
+# HOSTS IT (zone_002/c025). The census as built and with the shuttle
+# docked; what the room says; the shuttle opening G's glass gate from A's
+# board and shutting it when called away; V-10 at the schema maxima; an
+# arrival anywhere on G releasing the stair, walked back down; and the
+# gate held open over a player standing in it. Until Dess's fixture lands
+# (N-10) the Zone is a capture of the one the bridge serves --
+# `make godot-candidate-live CANDIDATE_DUMP=<path>` writes it -- passed
+# as PASSING_ZONE=<path>, and the target is not in CI.
+PASSING_ZONE ?= res://tests/fixtures/passing_zone.json
+godot-passing-hosted: godot-import  # EX50-011 hosted, played
+	@out=$$($(GODOT) --headless --path godot -- --passing-hosted \
+	  --passing-zone=$(PASSING_ZONE) 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT PASSING HOSTED OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-passing-hosted: script errors in the run"; exit 1; fi
+
+# H-3D-SHELL (CP3, V-18): THE PAUSE INTERFACE IN REAL 3D. Four walls of a
+# box in its own World3D, the camera turning between them (left: Settings,
+# Equipment, Map, Journal), the pointer carried to the front page by
+# geometry, the keys, and reduced motion as a cut. `menu-shell-shots`
+# renders it for real under xvfb and writes the frames to SHOTS_DIR.
+godot-menu-shell: godot-import  # the 3D shell: box, order, turn, input
+	@out=$$($(GODOT) --headless --path godot -- --menu-shell 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT MENU SHELL OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-menu-shell: script errors in the run"; exit 1; fi
+
+SHOTS_DIR ?= /tmp/archipepsi-menu-shell
+menu-shell-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --menu-shell --shots=$(SHOTS_DIR) 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# H-INVENTORY (CP3): THE EQUIPMENT WALL, three regions on Dess's
+# `CampaignSnapshot.inventory`: the keys, a grid of owned items (items,
+# never Echo events), and the selected item's detail and comparison. An
+# equip is a request until a snapshot carries it; a refusal is shown on
+# the exact `about` key only; the consumable key names its five states;
+# mouse, keyboard and controller all reach it through the 3D shell.
+# `equipment-face-shots` renders it under xvfb at 1280x720 and 1920x1080.
+godot-equipment-face: godot-import  # the equipment wall: regions, requests, input
+	@out=$$($(GODOT) --headless --path godot -- --equipment-face 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT EQUIPMENT FACE OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-equipment-face: script errors in the run"; exit 1; fi
+
+# H-MINIMAP (CP4, V-20): THE MAP THAT STAYS ON SCREEN, on the real
+# candidate Zone: rooms as their built envelopes, connectors along their
+# built chains (a turning corridor drawn turning), the room you are in by
+# the bridge's name, `room_entered` sent and resent until the bridge's map
+# shows it (D-2), and blockers in their circuit's colour with a reason
+# symbol -- the green circuit blocked while the cell is carried and open
+# once it is installed, the reversible span closing again.
+godot-minimap: godot-import  # the minimap: real shapes, the bridge's states
+	@out=$$($(GODOT) --headless --path godot -- --minimap 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT MINIMAP OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-minimap: script errors in the run"; exit 1; fi
+
+# The window the minimap, map-wall and journal shots are taken at.
+SHOTS_SIZE ?= 1280x720
+MINIMAP_SHOTS_DIR ?= /tmp/archipepsi-minimap
+minimap-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --minimap --shots=$(MINIMAP_SHOTS_DIR) \
+	  --shots-size=$(SHOTS_SIZE) 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# H-3D-MAP (CP4, V-21): THE MAP WALL, on the real shell and the real
+# candidate Zone: a render-only miniature (meshes and labels in its own
+# World3D, nothing of the Zone's), the same projection as the minimap,
+# cutaway rooms and one floor at a time, and its own keys, pad and
+# pointer -- none of which turns the page.
+godot-map-face: godot-import  # the map wall: render-only, one projection
+	@out=$$($(GODOT) --headless --path godot -- --map-face 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT MAP FACE OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-map-face: script errors in the run"; exit 1; fi
+
+MAP_FACE_SHOTS_DIR ?= /tmp/archipepsi-map-face
+map-face-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --map-face --shots=$(MAP_FACE_SHOTS_DIR) \
+	  --shots-size=$(SHOTS_SIZE) 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# H-JOURNAL (CP4, §8): THE JOURNAL WALL AND THE SETTINGS WALL, on the
+# real shell: objectives in the Hub's own words, what was done in the
+# Zone and what it opened, what is still shut and why, the places found,
+# the earned notes -- and nothing unfound named; the campaign beside the
+# pause menu's unchanged actions, and the options that are applied.
+godot-journal-face: godot-import  # the journal and settings walls
+	@out=$$($(GODOT) --headless --path godot -- --journal-face 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT JOURNAL FACE OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-journal-face: script errors in the run"; exit 1; fi
+
+JOURNAL_SHOTS_DIR ?= /tmp/archipepsi-journal-face
+journal-face-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --journal-face --shots=$(JOURNAL_SHOTS_DIR) \
+	  --shots-size=$(SHOTS_SIZE) 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+EQUIPMENT_SHOTS_DIR ?= /tmp/archipepsi-equipment-face
+equipment-face-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --equipment-face \
+	  --shots=$(EQUIPMENT_SHOTS_DIR) 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# D13 1d / Dess's D-4: A DOORWAY HELD OPEN BY A DECLARED WEIGHT, on
+# `held_route_zone.json` (`make held-route-fixture`). The real player
+# clears the way, finds the object-only plate ignores them, carries the
+# 40 kg counterweight onto it, and the doorway opens and stays open only
+# while it rests there; lifted, it shuts; put back, it opens. A rebuild
+# from the reported pose opens it again with no plate state saved, and the
+# panel holds off a player standing in the doorway when the weight goes.
+godot-held-route: godot-import  # D-07's held plate, played
+	@out=$$($(GODOT) --headless --path godot -- --held-route 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT HELD ROUTE OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-held-route: script errors in the run"; exit 1; fi
+
+# O05-04: A REVERSIBLE BRANCH ACTION CHANGES ACCESS ELSEWHERE, on
+# `reversible_zone.json` (`make reversible-fixture`). The real player clears
+# c002, finds the doorway shut, operates the lever (PENDING until a bridge
+# answers), walks through the doorway it opened, comes back and reverses
+# it. Then a required crate carried into the opening holds the closure
+# QUEUED until it is carried back out, and the way in stays open. Restored
+# lowered and stowed; and (synthetic) a refusal naming the selection puts
+# it back.
+godot-reversible: godot-import  # D-8 reversible lever, played
+	@out=$$($(GODOT) --headless --path godot -- --reversible 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT REVERSIBLE TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "godot-reversible: script errors in the run"; exit 1; fi
+
+godot-encounter: godot-import  # generated rooms, fought with the base kit
+	@out=$$($(GODOT) --headless --path godot -- --encounter 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT ENCOUNTER TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+godot-consumable: godot-import  # the fifth slot at runtime: charges, races, refusals
+	@out=$$($(GODOT) --headless --path godot -- --consumable 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-zone-state: godot-import  # D-8: a puzzle that crosses rooms
+	@out=$$($(GODOT) --headless --path godot -- --zone-state 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-rail-zone: godot-import  # D-4: a Zone that asks for a railway
+	@out=$$($(GODOT) --headless --path godot -- --rail-zone 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-rail-gantry: godot-import  # D-9: a span's control on a gantry
+	@out=$$($(GODOT) --headless --path godot -- --rail-gantry 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-rail-network: godot-import  # H-RAIL-BREADTH: points, recall, holds
+	@out=$$($(GODOT) --headless --path godot -- --rail-network 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-gantry-census: godot-import  # D-10: which arenas take the gantry
+	@out=$$($(GODOT) --headless --path godot -- --gantry-census 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-enemy-footing: godot-import  # ML-F1/F2: no enemy leaves the world unfought
+	@out=$$($(GODOT) --headless --path godot -- --enemy-footing 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-machine-life: godot-import  # O05-10.4: repeated lifecycles accrue nothing
+	@out=$$($(GODOT) --headless --path godot -- --machine-life 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-bombs: godot-import  # H-BOMBS (PT-09, V-15): a natural consumable, noticed, carried, used
+	@out=$$($(GODOT) --headless --path godot -- --bombs 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+BOMBS_SAVES := $(CURDIR)/.bombs-saves
+# HARNESS KNOWLEDGE: the Checks the mock multiworld filled with a Bomb
+# Bag, from its own placement. The client is not told what an unclaimed
+# Check holds, so the suite is, and says so. Recursive (`=`): computed
+# only when a bombs phase runs.
+BOMB_BAG_IDS = $(shell cd bridge && $(PY) -m \
+  archipepsi_bridge.fixtures.mock_placements "Bomb Bag")
+# H-BOMBS slice 2: one phase of the Bomb Bag's live receipt. A new bridge
+# (the candidate launcher's: mock AP, fallback, DEFAULT scale,
+# --candidate=all) beside a new client; only the save crosses.
+define bombs_phase
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(BOMBS_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --candidate=all & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start for $(1) (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --bombs-live=$(1) \
+	  --bombs-save-dir=$(BOMBS_SAVES) --bombs-bag-ids=$(BOMB_BAG_IDS) \
+	  > /tmp/archipepsi-bombs-$(1).log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|reached|claimed|GODOT BOMBS LIVE)" \
+	  /tmp/archipepsi-bombs-$(1).log; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-bombs-$(1).log; \
+	  exit $$STATUS; fi; \
+	if grep -qE "SCRIPT ERROR|String formatting error" \
+	  /tmp/archipepsi-bombs-$(1).log; then \
+	  echo "bombs phase $(1): runtime errors in the run"; exit 1; fi
+endef
+godot-bombs-live: godot-import  # H-BOMBS slice 2: the Bomb Bag claimed, carried, thrown and refilled, live
+	rm -rf $(BOMBS_SAVES)
+	$(call bombs_phase,reach)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call bombs_phase,claim)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call bombs_phase,refill)
+
+godot-unweighted: godot-import  # EX50-033: the room the class change opens
+	@out=$$($(GODOT) --headless --path godot -- --unweighted-test 2>&1); \
+	status=$$?; printf '%s\n' "$$out" \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised"; exit 1; \
+	fi; \
+	exit $$status
+
+godot-mass-class: godot-import  # class vs kilograms: two sensors, one crate
+	@out=$$($(GODOT) --headless --path godot -- --mass-class 2>&1); \
 	status=$$?; printf '%s\n' "$$out" \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING)|^ *(at:|GDScript backtrace|\[[0-9]+\] )"; \
 	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
@@ -685,13 +1607,14 @@ godot-ordinary-live: godot-import
 # `ZoneController.setup` returns without creating a player when
 # `ZoneBuilder` cannot route the rooms, and `Main._to_zone` used to carry
 # on into `hud.bind_player(zone.player)` -- a null. This hands the real
-# `Main` a Zone the router genuinely cannot place (`zone_08` of the
-# declared sample, under the id it was dumped as) and checks what the
-# player is left with: no crash, no half-built level in the tree, a Hub
-# with a live player in it, and the failure reported to the bridge.
+# `Main` a Zone the router genuinely cannot place (the owner's candidate
+# zone_008, HB-F4a-3, under the id it was composed under) and checks what
+# the player is left with: no crash, no half-built level in the tree, a
+# Hub with a live player in it, and the failure reported to the bridge.
 #
-# The live half -- a real bridge, the bounded recovery and the parked
-# Zone -- is `make godot-named-case CASE=zone_08 AT=8`.
+# It was `zone_08` of the declared sample until HB-F4a made that Zone
+# route: its live half was `make godot-named-case CASE=zone_08 AT=8`, and
+# the HB-F4a census now lays that Zone out.
 godot-build-failure: godot-import
 	$(GODOT) --headless --path godot -- --reload-phase=build-failure \
 	  > /tmp/archipepsi-build-failure.log 2>&1; \
@@ -750,6 +1673,104 @@ godot-named-case: godot-import
 	  echo "-- printed its report is not a pass: the missing-player"; \
 	  echo "-- crash after a failed build printed one."; \
 	  grep -m5 "SCRIPT ERROR" /tmp/archipepsi-named-case.log; \
+	  exit 1; \
+	fi
+
+# THE CONSUMABLE SPEND, END TO END. Three phases, and the middle one is
+# why this is not a single command:
+#
+#   1. A bridge makes a real campaign, through the real `on_ap_ready`.
+#      The driver connects, asks for it and stops.
+#   2. `tools/give_consumable.py` appends one interpretation to that
+#      save. The fallback provider does not emit a `consumable`-slot
+#      Action -- the slot is staged -- and this target is about the
+#      expenditure rather than about generation.
+#   3. A bridge is started again on the seeded save, and the driver
+#      plays the sequence: an accepted use, a deduction held across a
+#      round trip, a refusal that names what it refused, presses made
+#      with the socket down and resent on reconnect, and the empty
+#      supply. The measure is EFFECTS RUN against CHARGES AUTHORISED.
+#
+# The bridge is stopped between phases on purpose: a live engine holds
+# the campaign in memory and would write it back over the seed.
+# THE PROCESS BOUNDARY, which is a DIFFERENT boundary from a dropped
+# socket and the one `_in_flight` cannot close by itself.
+#
+# Phase 3 authorises a charge, lets the effect happen with the settle
+# report dropped, and kills its own process with a signal. Phase 4 is a
+# genuinely fresh Godot against the same bridge and the same unrefilled
+# deployment: it holds no list, no reservation and no memory, and
+# everything it knows comes off the save. If the supply could be reused,
+# phase 4's press would mint index 1 again and buy a second effect from
+# the charge phase 3 already paid for.
+#
+# Phase 3 is EXPECTED to die, so its exit status proves nothing and is
+# not read; the marker line it prints before the signal is.
+godot-consumable-restart: godot-import
+	rm -rf $(RESTART_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RESTART_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+	BRIDGE_PID=$$!; sleep 2; \
+	$(GODOT) --headless --path godot -- --consumable-live --seed-only \
+	  > /tmp/archipepsi-restart-seed.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-restart-seed.log; \
+	  echo "-- no campaign was created"; exit $$STATUS; fi
+	cd bridge && PYTHONPATH=. $(PY) tools/give_consumable.py \
+	  $(RESTART_SAVES) --charges 3
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RESTART_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+	BRIDGE_PID=$$!; sleep 2; \
+	$(GODOT) --headless --path godot -- --consumable-live \
+	  --kill-after-launch > /tmp/archipepsi-restart-die.log 2>&1; \
+	grep -q "KILLED AFTER AUTHORISING" /tmp/archipepsi-restart-die.log || { \
+	  kill $$BRIDGE_PID 2>/dev/null; \
+	  tail -25 /tmp/archipepsi-restart-die.log; \
+	  echo "-- the first process never authorised anything, so there is"; \
+	  echo "-- no expenditure for the second one to fail to reuse"; \
+	  exit 1; }; \
+	grep "KILLED AFTER AUTHORISING" /tmp/archipepsi-restart-die.log; \
+	$(GODOT) --headless --path godot -- --consumable-live \
+	  --after-kill > /tmp/archipepsi-restart-back.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; \
+	grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" \
+	  /tmp/archipepsi-restart-back.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	grep -q "GODOT CONSUMABLE LIVE TESTS OK" \
+	  /tmp/archipepsi-restart-back.log || exit 1
+
+godot-consumable-live: godot-import
+	rm -rf $(CONSUMABLE_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(CONSUMABLE_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --consumable-live --seed-only \
+	  > /tmp/archipepsi-consumable-seed.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	if [ $$STATUS -ne 0 ]; then \
+	  tail -20 /tmp/archipepsi-consumable-seed.log; \
+	  echo "-- no campaign was created; there is nothing to seed"; \
+	  exit $$STATUS; \
+	fi
+	cd bridge && PYTHONPATH=. $(PY) tools/give_consumable.py \
+	  $(CONSUMABLE_SAVES) --charges 5
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(CONSUMABLE_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not restart"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --consumable-live \
+	  > /tmp/archipepsi-consumable-live.log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; \
+	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" \
+	  /tmp/archipepsi-consumable-live.log; \
+	if [ $$STATUS -ne 0 ]; then exit $$STATUS; fi; \
+	grep -q "GODOT CONSUMABLE LIVE TESTS OK" \
+	  /tmp/archipepsi-consumable-live.log || exit 1; \
+	if grep -qE "SCRIPT ERROR" /tmp/archipepsi-consumable-live.log; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \
 	fi
 

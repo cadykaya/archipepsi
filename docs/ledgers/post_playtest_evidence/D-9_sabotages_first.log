@@ -1,0 +1,81 @@
+D09-1 [rail_networks.gd] a gantry span gets the ground lever (the old build)
+    CAUGHT by "a gantry was built for span s0" -- 6 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a gantry to grapple to (built: false)
+      FAIL: a gantry was built for span s0
+      FAIL: at the top of a jump beside the lip (eye 0.00 m) the probe finds the lever on 0 frame(s), and it does not move
+      FAIL: no jump at the lip puts the base kit on the deck (0 of 3 attempts jumped where they meant to; peak 0.00 m; the deck is at 2.9)
+      FAIL: the base kit cannot operate the control from the floor
+      FAIL: the control is not the ground lever at the arrival ((-4.200000, 0.000000, 20.000000); the ground spot is (-4.200000, 0.000000, 20.000000))
+D09-2 [rail_networks.gd] the deck lowered to 2.6 m
+    NOT CAUGHT by "the deck's top stands" -- 6 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a gantry to grapple to (built: false)
+      FAIL: one junction (0)
+      FAIL: the bare arena takes a gantry: no position in the room takes the measured gantry (2116 tried: 862 outside the room, 773 on the track, 229 not clear, 252 within the base kit's reach); nearest the arrival, a jump from a surface 1.9 m up, 6.3 m from the deck, lan
+      FAIL: the network was not refused: ["span \'s0\' puts its gantry in room \'c002\': no position in the room takes the measured gantry (2116 tried: 862 outside the room, 773 on the track, 229 not clear, 252 within the base kit\'s reach); nearest the arrival, a jump fr
+      FAIL: there is a control to try for
+      FAIL: two gantries in c002: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': no position in the room takes the measured gantry (2116 tried: 862 outside the room, 773 on the track, 229 not clear, 252 within the base kit's
+D09-3 [rail_networks.gd] the plate over the deck's middle, not its near lip
+    CAUGHT by "the plate hangs over the deck's near lip" -- 10 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a standing jump peaks at 0.70 m, the apex the reach field uses (1.40)
+      FAIL: and offered there: 'REACHED FROM THE GANTRY'
+      FAIL: and pulling it starts the span (done false, travelling false)
+      FAIL: at the top of a jump beside the lip (eye 2.30 m) the probe finds the lever on 0 frame(s), and it does not move
+      FAIL: no jump at the lip puts the base kit on the deck (0 of 3 attempts jumped where they meant to; peak 0.70 m; the deck is at 2.9)
+      FAIL: the hookshot is aimed at the gantry's plate
+      FAIL: the lever is in reach from the deck
+      FAIL: the plate hangs over the deck's near lip (0.00 m from its centre, half the deck is 2.00)
+      FAIL: the pull puts the player on the deck (0.00 m up)
+      FAIL: the span commissions under its declared latch []
+D09-4 [rail_networks.gd] the track ignored
+    NOT CAUGHT by "the track passes" -- 0 failing check(s), 0 script error(s); restored byte for byte: True
+D09-5 [rail_networks.gd] the gantry's lever worked from anywhere
+    CAUGHT by "at the top of a jump beside the lip" -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and what it says there is why: ''
+      FAIL: at the top of a jump beside the lip (eye 3.00 m) the probe finds the lever on 13 frame(s), and it does not move
+      FAIL: the base kit cannot operate the control from the floor
+D09-6 [alignment_control.gd] standing on the deck not asked
+    CAUGHT by "at the top of a jump beside the lip" -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and what it says there is why: ''
+      FAIL: at the top of a jump beside the lip (eye 3.00 m) the probe finds the lever on 13 frame(s), and it does not move
+      FAIL: the base kit cannot operate the control from the floor
+D09-7 [alignment_control.gd] the lever offered to a player off the deck
+    CAUGHT by "and what it says there is why" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and what it says there is why: '[E] ALIGN S0'
+D09-8 [rail_networks.gd] the placement does not ask the base kit's reach
+    CAUGHT by "and the room does not put its gantry there" -- 3 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and the base kit cannot reach its deck
+      FAIL: and the room does not put its gantry there: moved to (-6.500000, 2.700000, 25.400000)
+      FAIL: the same block 1.3 m up is not -- a jump from it tops out at 2.70 m (the control): a jump from a surface 1.9 m up, 6.0 m from the deck, lands on it 2.9 m up
+D09-9 [rail_networks.gd] a jump onto the deck never counted
+    CAUGHT by "a gallery the base kit climbs to" -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a gallery the base kit climbs to, a metre from the deck, is refused: (passed)
+      FAIL: and the room does not put its gantry there: moved to (-6.500000, 2.700000, 25.400000)
+D09-10 [rail_networks.gd] the continuous apex (1.33 m), not the played one
+    NOT CAUGHT by "a gallery the base kit climbs to" -- 0 failing check(s), 0 script error(s); restored byte for byte: True
+D09-11 [rail_networks.gd] the flight volumes not measured
+    CAUGHT by "a crate in the column the pull climbs" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a crate in the column the pull climbs moves the gantry: to (-6.500000, 0.000000, 29.900000)
+D09-12 [rail_networks.gd] no floor asked for under the approach and the post
+    NOT CAUGHT by "across a gap in the floor" -- 0 failing check(s), 0 script error(s); restored byte for byte: True
+D09-13 [rail_networks.gd] the room's height not asked
+    CAUGHT by "a 5 m arena" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a 5 m arena: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': no position in the room takes the measured gantry (2116 tried: 862 outside the room, 773 on the track, 481 not clear)
+D09-14 [rail_networks.gd] two gantries to a room
+    CAUGHT by "two gantries in c002" -- 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: two gantries in c002: refused by name, nothing built, the Zone still up -- (not refused)
+D09-15 [zone_controller.gd] the Zone does not pass its rooms' bounds
+    CAUGHT by "the network was not refused" -- 7 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a 5 m arena: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': the room has no committed place
+      FAIL: a gantry to grapple to (built: false)
+      FAIL: an 8 x 8 arena: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': the room has no committed place
+      FAIL: one junction (0)
+      FAIL: the network was not refused: ["span \'s0\' puts its gantry in room \'c002\': the room has no committed place"]
+      FAIL: there is a control to try for
+      FAIL: two gantries in c002: refused by name, nothing built, the Zone still up -- span 's0' puts its gantry in room 'c002': the room has no committed place
+D09-16 [rail_networks.gd] a refused gantry quietly becomes a ground lever
+    CAUGHT by "a 5 m arena" -- 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: a 5 m arena: refused by name, nothing built, the Zone still up -- (not refused)
+      FAIL: an 8 x 8 arena: refused by name, nothing built, the Zone still up -- (not refused)
+
+12 of 16 sabotages caught
+exit 1

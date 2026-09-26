@@ -1,0 +1,36 @@
+# the nine sabotages on the final code.
+# Filtered: 0 lines of per-build 'p3a:' selection census and engine WARNING/backtrace lines (the offline bridge's dropped intents) removed.
+MLF-1 [zone_controller.gd] the footing pass never runs
+    CAUGHT by "no enemy is built inside a solid" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: no enemy is built inside a solid (280 are): candidate_zone.json c002/artillery#2 at (-16.000000, 0.200000, 23.000000), inside Reward_89100076 (reward.gd under zone_controller.gd); candidate_zone.json c002/artillery#3 at (-14.700000, 0.200000, 20.100000), inside @StaticBody3D@260 (StaticBody3D under 
+      FAIL: passing_zone.json, 3 builds of 4 s with nobody near: no enemy drops 2 m, no defeat is sent (4 drops, 2 defeats): c023/scuttler#1 build 0, c023/scuttler#1 build 0 (defeated), c023/scuttler#1 build 2, c023/scuttler#1 build 2 (defeated)
+MLF-2 [enemy_footing.gd] the fit test does not see solids
+    CAUGHT by "no enemy is built inside a solid" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: no enemy is built inside a solid (268 are): candidate_zone.json c002/artillery#2 at (-16.000000, 0.000000, 23.000000), inside Reward_89100076 (reward.gd under zone_controller.gd); candidate_zone.json c018/beacon#0 at (-5.900000, 0.000000, 42.200001), inside WarpStation_st_c018 (warp_station.gd under
+      FAIL: passing_zone.json, 3 builds of 4 s with nobody near: no enemy drops 2 m, no defeat is sent (10 drops, 5 defeats): c023/scuttler#1 build 0, c023/scuttler#2 build 0, c023/scuttler#1 build 0 (defeated), c023/scuttler#2 build 0 (defeated), c015/charger#0 build 1, c023/scuttler#1 build 1
+MLF-3 [zone_controller.gd] a reward pedestal moved after it enters the tree
+    CAUGHT by "no enemy is built inside a solid" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: no enemy is built inside a solid (15 are): candidate_zone.json c002/artillery#2 at (-16.000000, 0.000000, 23.000000), inside Reward_89100076 (reward.gd under zone_controller.gd); passing_zone.json c023/scuttler#2 at (19.400000, 36.500000, 209.800003), inside Reward_89100034 (reward.gd under zone_con
+      FAIL: passing_zone.json, 3 builds of 4 s with nobody near: no enemy drops 2 m, no defeat is sent (2 drops, 1 defeats): c023/scuttler#2 build 0, c023/scuttler#2 build 0 (defeated)
+MLF-4 [enemy_footing.gd] judged where it was placed, not where it lands
+    CAUGHT by "every enemy the pass moved stood inside something" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every enemy the pass moved stood inside something where it would have landed (13 did not): candidate_zone.json c002/artillery#3 from (-14.700000, 0.200000, 20.100000) (the pass said: inside @StaticBody3D@260); candidate_zone.json c002/artillery#4 from (-11.300000, 0.200000, 18.900000) (the pass said
+MLF-9 [enemy_footing.gd] a head grazing a ceiling counted as inside
+    CAUGHT by "every enemy the pass moved stood inside something" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: every enemy the pass moved stood inside something where it would have landed (5 did not): zone_09.json c010/melee#1 from (164.500000, 33.000000, 118.500000) (the pass said: inside @StaticBody3D@59482); zone_10.json c013/melee#1 from (29.900000, 4.400000, -155.900009) (the pass said: inside @StaticBo
+MLF-5 [enemy.gd] a patrol beat drawn at random again
+    CAUGHT by "every beat's path from the post keeps to the floor" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: candidate_zone.json: every beat's path from the post keeps to the floor (37 do not): c006/melee#0: beat (-79.599998, 1.500000, 108.200005) leaves the floor 0.50 m out; c006/melee#0: beat (-80.300003, 1.500000, 104.400002) leaves the floor 0.50 m out; c006/melee#0: beat (-74.500000, 1.500000, 101.300
+      FAIL: passing_zone.json: every beat's path from the post keeps to the floor (46 do not): c015/charger#0: beat (41.400002, 31.900000, 101.900002) leaves the floor 3.00 m out; c015/charger#0: beat (40.000000, 31.900000, 100.800003) leaves the floor 4.25 m out; c015/charger#0: from (47.799999, 31.900000, 96.
+MLF-6 [enemy.gd] the walk from where it stands not checked
+    CAUGHT by "every beat's path from the post keeps to the floor" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: passing_zone.json: every beat's path from the post keeps to the floor (6 do not): c015/charger#0: from (45.900002, 31.900000, 101.599998), beat (39.600002, 31.900000, 100.300003) leaves the floor 3.25 m out; c015/charger#0: from (41.400002, 31.900000, 100.099998), beat (44.600002, 31.900000, 102.200
+MLF-7 [enemy.gd] the ledge guard off
+    CAUGHT by "it stops on the slab" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: walking home to a post past the edge, it stops on the slab: furthest 6.60 m out (edge at 3.00), lowest -77.52 m relative
+      FAIL: and takes up a post on the slab, not the one past the edge (returning false, post 8.00 m out)
+MLF-8 [enemy.gd] a walk home that meets a ledge keeps its old post
+    CAUGHT by "takes up a post on the slab" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: and takes up a post on the slab, not the one past the edge (returning true, post 8.00 m out)
+
+9 of 9 sabotages caught

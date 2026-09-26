@@ -148,6 +148,16 @@ melee, or turn a full resource into sword beams, or introduce a \
 health-at-full conditional. `relevance_hint` and `player_state` say what \
 is already there.
 
+RELATED ITEMS. An item similar to something the player owns is an \
+opportunity to UPGRADE that thing or to CREATE a new one, and similarity \
+never forces a merge. Sharing an Action primitive does not make two items \
+the same family: a bag of bombs is not a better boomerang because both are \
+thrown. Judge it from the new source and the collection: each entry in \
+`owned_components` names the item it came from (`origin`, `origin_game`) \
+and how it is held (`slot`). An UPGRADE must be a meaningful, visible \
+change that keeps what the owned thing is useful for; a substantial \
+trade-off is a separate item, not an involuntary replacement.
+
 Respect `budget_headroom`: `[owned, soft, hard]` per component kind. Past \
 soft, prefer UPGRADE / MODIFY / LINK / MERGE over another CREATE. Past \
 hard, CREATE is refused outright.

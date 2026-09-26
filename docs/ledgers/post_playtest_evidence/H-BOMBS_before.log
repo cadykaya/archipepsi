@@ -1,0 +1,27 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- PROVENANCE: a Bomb Bag the campaign made, not one given
+  ok: the Bomb Bag is the Echo of Check 89100140 in Zone 6, created by the provider (["CreateOperation"])
+  ok: before its Check the campaign owns no consumable; after it, exactly this one (act_l89100140)
+  ok: nothing puts it on a key for the player; the slot action does
+  -- THE KEY ON THE HUD: none, owned, carried, empty
+    none_owned   Q     —
+    acquired     Q     —
+    carried      Q     Bomb Bag
+    spent        Q     Bomb Bag
+FAIL: owning a Bomb Bag that is on no key reads differently from owning none ('  Q     —' / '  Q     —')
+FAIL: …and names what is owned
+FAIL: carried, the key shows its count (  Q     Bomb Bag)
+FAIL: empty, it shows 0 / 3 and reads as empty (  Q     Bomb Bag)
+  -- PRESSING THE KEY in each state
+FAIL: none_owned: pressing the key says why nothing happened ('No consumable owned yet' expected, heard [])
+FAIL: acquired: pressing the key says why nothing happened ('You own 1 consumable' expected, heard [])
+FAIL: spent: pressing the key says why nothing happened ('Empty' expected, heard [])
+  ok: carried with charges left: the press asks the bridge for a use and refuses nothing (awaiting 1, heard [])
+  -- THE ARRIVAL: the card, and a word about the key
+  ok: the card shows the Bomb Bag and its slot (EPSILON ECHO ACQUIRED | Bomb Bag | Three of them. Lob one, count, regret nothing. |  | Thrown: bursts for 34 damage within 4.0 m after 1.4 s | Hits leave stunned for 1.5 s | 3.0s cooldown | Slot: CONSUMABLE)
+FAIL: a word points at the key it goes on, once (heard ["EPSILON COIN RECEIVED"])
+  ok: …and the next snapshot does not say it again
+
+GODOT BOMBS TESTS: 8 failures in 14 checks
+make: *** [Makefile:1446: godot-bombs] Error 1

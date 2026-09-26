@@ -10,6 +10,7 @@ before any network send that depends on it.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import uuid
 from collections import defaultdict
@@ -23,8 +24,10 @@ from .epsilon import (
     generate_echo_validated, generate_zone_validated,
 )
 from .epsilon.requests import (
-    EchoPlayerState, EchoSource, OwnedComponentSummary, OwnedLinkSummary)
+    EchoPlayerState, EchoSource, OwnedComponentSummary, OwnedLinkSummary,
+    allowed_for)
 from .schemas import constants as C
+from .schemas import featured
 from .schemas import transitions as T
 from .schemas.mechanics import (
     Mechanics, derive_mechanics, owned_affordance_tags, owned_capabilities)
@@ -38,10 +41,11 @@ from .schemas.protocol import (
     ZoneReady, ZoneRecord,
 )
 from .schemas import protocol as P
+from .schemas.zone import Zone, validate_zone
 from .echo_projection import detail_examples, history_view
 from . import instrumentation
 from . import layout as layout_check
-from . import quiet
+from . import candidate, minor_hosting, quiet, shells
 from . import store
 from . import topology
 
@@ -51,11 +55,34 @@ MAX_LAZY_ECHOES_PER_LOAD = 3
 
 
 class IntentError(Exception):
-    """A refused intent. Answered with a recoverable `error`, never a crash."""
+    """A refused intent. Answered with a recoverable `error`, never a crash.
 
-    def __init__(self, message: str, scope: str = "bridge"):
+    `about` is the domain key of the thing that was refused, for the one
+    kind of refusal a client cannot merely read and forget: one it is
+    holding an operation open against. Empty everywhere else, and empty
+    means "unchecked" rather than "not yours" — a client resolves a
+    pending operation on an exact match and on nothing else.
+    """
+
+    def __init__(self, message: str, scope: str = "bridge",
+                 about: str = ""):
         super().__init__(message)
         self.scope = scope
+        self.about = about
+
+
+def use_consumable_key(component_id: str, generation: int,
+                       use_index: int) -> str:
+    """The domain key of one consumable spend, for `BridgeError.about`.
+
+    Built from the intent's own fields on both sides rather than from a
+    token either side invented — the house rule wherever identity is
+    echoed (`key_id`, `use_index`, `LatchFired.(package_id, latch_id)`).
+    Two spends of the same component differ by index; the same index
+    either side of a refill differs by generation; so an exact match is
+    exactly one operation and can never resolve a different one.
+    """
+    return f"use_consumable:{component_id}:{generation}:{use_index}"
 
 
 def set_creativity(save: CampaignSave, value: int) -> CampaignSave:
@@ -83,6 +110,33 @@ def _clamp_ap_string(text: str) -> str:
     """AP-sourced strings are untrusted: clamp and strip control chars."""
     cleaned = "".join(ch for ch in text if ch.isprintable())
     return cleaned[:C.MAX_AP_STRING_LEN] or "?"
+
+
+def owned_summaries(mechanics) -> tuple[OwnedComponentSummary, ...]:
+    """The owned component graph as an Echo request carries it (S6), in
+    one place, so the campaign and the tests that judge a provider by it
+    cannot describe the same component two ways.
+
+    `origin`, `origin_game` and `slot` are the owner's direction of
+    2026-09-23 made readable: whether a new item upgrades an owned one or
+    becomes a new thing is Epsilon's reading of "the new source and the
+    existing collection", so the collection names what each thing came
+    from and how it is held -- not only its verb.
+    """
+    return tuple(
+        OwnedComponentSummary(
+            component_id=owned.component_id,
+            kind=owned.kind,
+            display_name=owned.component.display_name,
+            mk=owned.mk,
+            upgradable=upgradable_field_info(owned.component),
+            detail=_component_detail(owned.component),
+            modifiers=tuple(
+                m.type for m in getattr(owned.component, "modifiers", ())),
+            origin=_clamp_ap_string(owned.provenance[0].source_item_name),
+            origin_game=_clamp_ap_string(owned.provenance[0].source_game),
+            slot=str(getattr(owned.component, "slot", None) or ""))
+        for owned in mechanics.owned)
 
 
 def budget_headroom(mechanics) -> dict:
@@ -232,7 +286,8 @@ class CampaignEngine:
     def __init__(self, *, provider, provider_name: str,
                  save_dir: Path | None = None,
                  archive_dir: Path | None = None,
-                 quiet_generation: bool = False):
+                 quiet_generation: bool = False,
+                 candidate_steps: tuple[str, ...] = ()):
         self.provider = provider
         self.provider_name = provider_name
         self.save_dir = save_dir or store.DEFAULT_SAVE_DIR
@@ -247,6 +302,18 @@ class CampaignEngine:
         #: that shipped. It is a PREVIEW for review, not a budget
         #: ruling, and no campaign setting reads it.
         self.quiet_generation = quiet_generation
+        #: O05-13: the CANDIDATE profile's steps, or `()` for off. Off is
+        #: the default and the promise: with it off `candidate` is never
+        #: called and every Zone is composed exactly as it always was.
+        #: On, the named relationship composers run on each Zone after its
+        #: graph is proved and before it is accepted (`candidate.py`).
+        self.candidate_steps = candidate.steps_of(tuple(candidate_steps))
+        #: O05-11: the profile's OPTIONS, kept apart from its Zone steps
+        #: so every "is the profile on" test above still asks about Zone
+        #: composition. `consumables` advertises the consumable slot in
+        #: this campaign's Echo requests (`_echo_request`).
+        self.candidate_options = candidate.options_of(
+            tuple(candidate_steps))
 
         self.backend: APBackend | None = None
         self.save: CampaignSave | None = None
@@ -646,6 +713,8 @@ class CampaignEngine:
             mechanics=save.derive() if save else Mechanics(),
             slots=save.slots if save else SlotAssignment(),
             local_rewards=save.local_rewards if save else (),
+            consumable_uses=save.consumable_uses if save else (),
+            consumable_generation=save.consumable_generation if save else 0,
             active_zone=save.active_zone if save else None,
             # Derived here on every send, from the record just above it,
             # so the identity and the content it identifies cannot come
@@ -720,7 +789,12 @@ class CampaignEngine:
                 scale=CampaignScale(
                     location_count=scale.location_count,
                     zone_target_checks=scale.zone_target_checks,
-                    zone_budget=scale.zone_budget))
+                    zone_budget=scale.zone_budget),
+                # D-01 (D14 §3): a new campaign yields a local Echo from
+                # its own originals too. Only creation turns this on; a
+                # save written without it loads as a legacy campaign and
+                # stays one.
+                self_addressed_echoes=True)
             self._apply(fresh)
             log.info("created campaign %s at %d locations / %d per Zone / "
                      "%d budget (track order: %s)",
@@ -1074,7 +1148,25 @@ class CampaignEngine:
         # around before anything is stored. Doing it after acceptance
         # would mean a Zone existed in a save with an unproved graph.
         try:
-            composed = _with_graph(outcome.value)
+            composed = self._candidate(
+                _with_graph(outcome.value),
+                certify=lambda z: validate_zone(
+                    z, expected_zone_id=request.zone_id,
+                    allocated_location_ids=list(
+                        record.allocated_location_ids),
+                    owned_echo_ids=[e.echo_id
+                                    for e in self.save.interpretations],
+                    owned_affordance_tags=request.unlocked_affordances,
+                    guaranteed_capabilities=(
+                        request.guaranteed_capabilities),
+                    # THE BUDGET THE PROVIDER WAS HELD TO (P5-12). Left
+                    # out, `validate_zone` falls back to the prototype's
+                    # 200 points and a default-scale Zone reads as 31
+                    # enemies over a cap of 14 -- which the comparison
+                    # below hid as "already failing" until a step
+                    # changed the count.
+                    zone_budget=request.campaign.zone_budget,
+                    **self._certify_offer(shells.offer_of(request))))
         except topology.GraphRefused as exc:
             # THE SAME BOUNDED RECOVERY a failed generation already has,
             # because this IS a Zone that could not be built. Nothing is
@@ -1110,7 +1202,13 @@ class CampaignEngine:
         """
         barred = tuple(sorted(set(rec.unhostable_rooms) | set(rooms)))
         try:
-            regraphed = _with_graph(rec.zone, barred=barred)
+            # A CANDIDATE ZONE IS RE-COMPOSED FROM A CLEAN ZONE: every
+            # relationship the profile added is bound to the old graph's
+            # edges, so it is stripped, the graph recomposed, and the
+            # profile applied again to what came out.
+            base = (candidate.strip(rec.zone) if self.candidate_steps
+                    else rec.zone)
+            regraphed = self._candidate(_with_graph(base, barred=barred))
         except topology.GraphRefused as exc:
             # Barring the room left a Zone that cannot be composed —
             # a leaf with nowhere to hang, most likely. That is the
@@ -1149,6 +1247,86 @@ class CampaignEngine:
             used_fallback=self.save.zone_by_id(rec.zone_id).used_fallback))
         await self.broadcast_snapshot()
         return True
+
+    def _certify_offer(self, offer: dict) -> dict:
+        """The shell offer the candidate profile is certified against.
+
+        The provider's own, unless the profile hosts minors: a minor is
+        never offered to a provider, so `validate_zone` would refuse the
+        step's shell for not having been offered. Then it is the
+        provider's offer plus each minor's own registry rule, which is
+        what the step placed it against (`minor_hosting.certify_offer`).
+        """
+        if "minors" not in self.candidate_steps:
+            return offer
+        return minor_hosting.certify_offer(offer)
+
+    def _candidate(self, zone, certify=None):
+        """The CANDIDATE profile on a proved Zone, or the Zone unchanged.
+
+        Every step's outcome -- emitted or declined, and why -- goes to
+        the log and to `<save dir>/candidate/<zone>.json`, a local record
+        like the playtime file: nothing in the campaign reads it back.
+
+        **RE-CERTIFIED, NOT TRUSTED (O05-13.3).** The provider's Zone went
+        through `validate_zone` before the profile touched it, and
+        acceptance does not validate again, so a step that broke a rule
+        -- dropped an allocated Check, named an unoffered shell -- would
+        otherwise reach a save unexamined. `certify` is the same
+        `validate_zone`, with the same offer and allocation the provider
+        was held to, and the whole Zone schema is re-run. A profile
+        result that INTRODUCES an error is DISCARDED WHOLE: the Zone goes
+        on exactly as the provider made it, and the record says which
+        rule refused what.
+        """
+        if not self.candidate_steps:
+            return zone
+        applied = candidate.apply(zone, self.candidate_steps)
+        refused: list[str] = []
+        if certify is not None and applied.emitted:
+            # WHAT THE PROFILE INTRODUCED, and only that. `validate_zone`
+            # judges a provider's Zone BEFORE its graph is composed, and a
+            # graphed Zone can already fail a rule the graph changed (the
+            # enemy budget counts rooms the graph adds) -- so the profile
+            # is refused for an error its own Zone has and the graphed
+            # Zone it started from does not.
+            already = set(certify(zone) or ())
+            refused = [e for e in (certify(applied.zone) or ())
+                       if e not in already]
+            # AND THE SCHEMA, whole: a composer that built its Zone with
+            # `model_copy` skipped every model validator.
+            try:
+                Zone.model_validate_json(applied.zone.model_dump_json())
+            except ValueError as exc:
+                refused.insert(0, f"the Zone schema refused it: {exc}")
+        if refused:
+            log.warning("zone %s: the candidate profile's Zone failed "
+                        "validate_zone and is discarded: %s", zone.zone_id,
+                        "; ".join(refused[:3]))
+            applied = candidate.Applied(zone, tuple(
+                (st, False, f"discarded with the whole profile: "
+                            f"validate_zone refused it ({refused[0]})")
+                for st, _em, _no in applied.steps))
+        for step, emitted, note in applied.steps:
+            log.info("zone %s: candidate %s %s: %s", zone.zone_id, step,
+                     "EMITTED" if emitted else "declined", note)
+        try:
+            out = Path(self.save_dir) / "candidate"
+            out.mkdir(parents=True, exist_ok=True)
+            (out / f"{zone.zone_id}.json").write_text(json.dumps({
+                "zone_id": zone.zone_id,
+                "profile": list(self.candidate_steps),
+                "provider": self.provider_name,
+                "steps": [{"step": st, "emitted": em, "note": no}
+                          for st, em, no in applied.steps],
+                "proposal_digest": layout_check.proposal_digest(
+                    applied.zone),
+                "certified": not refused,
+                "refused_by_validate_zone": refused[:8],
+            }, indent=1), encoding="utf-8")
+        except OSError as exc:                       # pragma: no cover
+            log.warning("candidate record not written: %s", exc)
+        return applied.zone
 
     async def _generation_failed(self, zone_id: str, error: str,
                                  detail: str) -> None:
@@ -1335,9 +1513,19 @@ class CampaignEngine:
         and a player who left for the Hub mid-report should not have a
         key land in whichever Zone is current.
 
-        **Idempotent, and quietly so.** Every target set is monotone, so
-        the same event twice is one event. A resend after a dropped
-        connection is the normal case and must never be an error.
+        **Idempotent, and quietly so.** The same event twice is one
+        event, and a resend after a dropped connection is the normal
+        case rather than an error.
+
+        **But not every target is monotone any more** (D-8). The key,
+        lock, station and latch sets only grow, so "the same event
+        twice" and "a repeat is absorbed" mean the same thing for them.
+        `zone_state_selected` writes `macro_state`, which is
+        OVERWRITTEN: re-selecting the state a variable already holds is
+        absorbed exactly as before, and selecting a DIFFERENT state is a
+        legitimate second event rather than a replay -- a reversible
+        variable going back is the mechanic working. The idempotence
+        here is per `(variable, state)`, not per variable.
         """
         if self.save is None:
             raise IntentError("no campaign loaded")
@@ -1362,6 +1550,34 @@ class CampaignEngine:
             elif intent.type == "lock_opened":
                 nxt = T.record_lock(self.save, intent.zone_id,
                                     intent.room_id, intent.socket_id)
+            elif intent.type == "zone_state_selected":
+                nxt = T.record_zone_state(self.save, intent.zone_id,
+                                          intent.variable_id, intent.state)
+            elif intent.type == "object_transported":
+                nxt = T.record_object_transported(
+                    self.save, intent.zone_id, intent.object_id,
+                    intent.room_id)
+            elif intent.type == "object_settled":
+                nxt = T.record_object_settled(
+                    self.save, intent.zone_id, intent.object_id,
+                    intent.room_id, intent.position, intent.yaw)
+            elif intent.type == "object_consumed":
+                nxt = T.record_object_consumed(
+                    self.save, intent.zone_id, intent.mechanism_id)
+            elif intent.type == "object_recovered":
+                nxt = T.recover_transported_object(
+                    self.save, intent.zone_id, intent.object_id)
+            elif intent.type == "enemy_defeated":
+                nxt = T.record_defeat(self.save, intent.zone_id,
+                                      intent.member)
+            elif intent.type == "room_entered":
+                nxt = T.record_room_entered(self.save, intent.zone_id,
+                                            intent.room_id)
+            elif intent.type == "carrier_rested":
+                nxt = T.record_carrier_rested(
+                    self.save, intent.zone_id, intent.package_id,
+                    intent.carrier_id, intent.t, intent.destination,
+                    intent.held)
             else:
                 nxt = T.record_station(self.save, intent.zone_id,
                                        intent.station_id)
@@ -1588,12 +1804,90 @@ class CampaignEngine:
             self._start_generation_task(intent.zone_id)
         await self.broadcast_snapshot()
 
+    async def handle_use_consumable(self, component_id: str,
+                                     use_index: int,
+                                     generation: int) -> None:
+        """Spend one charge. It stays equipped when empty (§9).
+
+        Refusals are the transition's, and they are reported rather than
+        swallowed: a client that has lost count of its own charges is a
+        client whose HUD is lying, and finding out here is the cheap way
+        to learn it.
+
+        **THE REFUSAL CARRIES THE KEY OF WHAT IT REFUSED.** The client is
+        holding this spend in flight — subtracting it from the count it
+        draws so a second press cannot spend the same charge — and a
+        refusal it cannot attribute is one it can never release. The
+        count would stay a charge short for the rest of the session, and
+        after a refill it would be a charge short of the *new* supply.
+        """
+        self._require_save()
+        try:
+            self._apply(T.spend_charge(self.save, component_id,
+                                       use_index, generation))
+        except ValueError as exc:
+            raise IntentError(
+                str(exc),
+                about=use_consumable_key(component_id, generation,
+                                         use_index)) from exc
+        await self.broadcast_snapshot()
+
+    async def handle_authorize_consumable(self, component_id: str,
+                                          use_index: int,
+                                          generation: int) -> None:
+        """Count the charge before the client launches anything.
+
+        The refusal carries the same key as the spend's, because the
+        client is holding this attempt open in exactly the same way --
+        and an authorization it cannot attribute is one it can never
+        release, which leaves the supply a charge short for the session.
+        """
+        self._require_save()
+        try:
+            self._apply(T.authorize_consumable(
+                self.save, component_id, use_index=use_index,
+                generation=generation))
+        except ValueError as exc:
+            raise IntentError(
+                str(exc),
+                about=use_consumable_key(component_id, generation,
+                                         use_index)) from exc
+        await self.broadcast_snapshot()
+
+    async def handle_release_consumable_authorization(
+            self, component_id: str, use_index: int,
+            generation: int) -> None:
+        """Give back a charge whose effect never launched."""
+        self._require_save()
+        try:
+            self._apply(T.release_consumable_authorization(
+                self.save, component_id, use_index=use_index,
+                generation=generation))
+        except ValueError as exc:
+            raise IntentError(
+                str(exc),
+                about=use_consumable_key(component_id, generation,
+                                         use_index)) from exc
+        await self.broadcast_snapshot()
+
     async def handle_slot_action(
         self, slot: str, component_id: str | None
     ) -> None:
         self._require_save()
         try:
             self._apply(T.slot_action(self.save, slot, component_id))
+        except ValueError as exc:
+            raise IntentError(str(exc)) from exc
+        await self.broadcast_snapshot()
+
+    async def handle_gear_action(
+        self, territory: str, component_id: str | None
+    ) -> None:
+        """D16 G1: wear or clear a piece of Gear. A refusal is named by
+        `server._about` (`gear_action:<territory>:<component_id>`)."""
+        self._require_save()
+        try:
+            self._apply(T.gear_action(self.save, territory, component_id))
         except ValueError as exc:
             raise IntentError(str(exc)) from exc
         await self.broadcast_snapshot()
@@ -1672,11 +1966,15 @@ class CampaignEngine:
     # Echo generation
     # ------------------------------------------------------------------
 
-    def _echo_request(self, location_id: int) -> EchoGenerationRequest:
+    def _echo_request(self, location_id: int, *,
+                      required_function: str | None = None
+                      ) -> EchoGenerationRequest:
         s = self.ap.scouts[location_id]
         save = self.save
         mechanics = save.derive()
         return EchoGenerationRequest(
+            allowed=allowed_for(
+                consumable="consumables" in self.candidate_options),
             source=EchoSource(
                 location_id=location_id,
                 item_name=_clamp_ap_string(s.item_name),
@@ -1692,18 +1990,7 @@ class CampaignEngine:
                 signal_keys=self.ap.signal_keys,
                 coins_available=max(
                     0, self.ap.coins_received - save.coins_spent),
-                owned_components=tuple(
-                    OwnedComponentSummary(
-                        component_id=owned.component_id,
-                        kind=owned.kind,
-                        display_name=owned.component.display_name,
-                        mk=owned.mk,
-                        upgradable=upgradable_field_info(owned.component),
-                        detail=_component_detail(owned.component),
-                        modifiers=tuple(
-                            m.type for m in
-                            getattr(owned.component, "modifiers", ())))
-                    for owned in mechanics.owned),
+                owned_components=owned_summaries(mechanics),
                 owned_links=tuple(
                     OwnedLinkSummary(link=edge.link, source=edge.source,
                                      target=edge.target)
@@ -1716,14 +2003,44 @@ class CampaignEngine:
                 _clamp_ap_string(s.item_name),
                 _clamp_ap_string(s.recipient_game)),
             preferred_modes=preferred_modes(save.epsilon_creativity),
-            relevance_hint=_relevance_hint(mechanics))
+            relevance_hint=_relevance_hint(mechanics),
+            required_function=required_function)
+
+    def featured_requirement(self, location_id: int):
+        """H-QUALIFY (D-5): the function this Check's Echo must supply, or
+        None. Read off the Zone whose `featured_acquisition` names the
+        location, never off the recipient: under D-01 an own Check's Echo
+        exists too, and it is held to the same requirement."""
+        for record in self.save.zones:
+            if record.zone is not None:
+                requirement = featured.requirement_for(record.zone,
+                                                       location_id)
+                if requirement is not None:
+                    return requirement
+        return None
+
+    def yields_echo(self, location_id: int) -> bool:
+        """Whether confirming this Check releases a local Echo.
+
+        A foreign original always does. The player's own does only in a
+        campaign created under D-01 (D14 §3): a legacy campaign keeps "no
+        Echo for your own item" for its whole life, at confirmation, on
+        reload and in every later sweep. The grant and the sweep both ask
+        here, so the rule has one place."""
+        scout = self.ap.scouts.get(location_id)
+        if scout is None:
+            return False
+        return (not scout.recipient_is_self
+                or self.save.self_addressed_echoes)
 
     async def grant_echo(self, location_id: int) -> str | None:
-        """Generate and persist the Echo for a confirmed foreign location.
-        Returns the echo_id, or None when no Echo applies. Idempotent."""
+        """Generate and persist the Echo for a confirmed location that
+        yields one (`yields_echo`). Returns the echo_id, or None when no
+        Echo applies. Idempotent: the id is the Check's, so a retry, a
+        reload or a second confirmation answers with the Echo already
+        written and mints nothing."""
         save = self.save
-        scout = self.ap.scouts.get(location_id)
-        if scout is None or scout.recipient_is_self:
+        if not self.yields_echo(location_id):
             return None
         echo_id = f"echo_{location_id}"
         if save.interpretation_by_id(echo_id) is not None:
@@ -1732,10 +2049,15 @@ class CampaignEngine:
             if self.save.interpretation_by_id(echo_id) is not None:
                 return echo_id
             self.provider.creativity = save.epsilon_creativity
+            requirement = self.featured_requirement(location_id)
             outcome = await generate_echo_validated(
-                self.provider, self._echo_request(location_id),
+                self.provider, self._echo_request(
+                    location_id, required_function=(
+                        requirement.describe() if requirement else None)),
                 mechanics=derive_mechanics(self.save.interpretations),
-                archive_dir=self.archive_dir)
+                archive_dir=self.archive_dir,
+                featured=requirement, log=self.save.interpretations,
+                next_seq=self.save.next_interpretation_seq)
             self._apply(T.append_interpretation(self.save, outcome.value))
             if outcome.used_fallback and self.provider_name != "fallback":
                 await self._notify("fallback_used",
@@ -1756,8 +2078,10 @@ class CampaignEngine:
         return out
 
     async def echo_backlog_sweep(self) -> None:
-        """Foreign confirmed locations without an Echo. Interacted ones
-        generate now; the rest lazily, at most 3 per load, one at a time."""
+        """Confirmed locations that yield an Echo (`yields_echo`) and have
+        none: a grant a crash cut off before its append. Interacted ones
+        generate now; the rest lazily, at most 3 per load, one at a time.
+        An Echo already written is never regenerated."""
         save = self.save
         interacted = self._interacted_location_ids()
 
@@ -1770,8 +2094,7 @@ class CampaignEngine:
                     (echo.display_name,), location_id=loc, echo_id=echo_id)
 
         for loc in sorted(self.ap.checked):
-            scout = self.ap.scouts.get(loc)
-            if scout is None or scout.recipient_is_self:
+            if not self.yields_echo(loc):
                 continue
             if save.interpretation_by_id(f"echo_{loc}") is not None:
                 continue

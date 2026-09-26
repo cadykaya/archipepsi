@@ -1,0 +1,30 @@
+== make minimap-shots SHOTS_SIZE=1280x720
+  ok: saved minimap_all_rooms_from_c009.png
+GODOT MINIMAP OK (4 checks, 0 notes)
+     at: cleanup (core/object/object.cpp:2514)
+== make map-face-shots SHOTS_SIZE=1280x720
+  ok: saved map_power_door_blocked_from_c005.png
+  ok: saved map_power_door_open_from_c005.png
+GODOT MAP FACE OK (4 checks, 0 notes)
+== make journal-face-shots SHOTS_SIZE=1280x720
+         [7] replay (res://scripts/gameplay/replay_harness.gd:78)
+  ok: saved settings_in_a_zone.png
+GODOT JOURNAL FACE OK (3 checks, 0 notes)
+== make minimap-shots SHOTS_SIZE=1920x1080
+         [0] _await_verdict (res://scripts/gameplay/zone_controller.gd:1723)
+  ok: saved minimap_all_rooms_from_c009.png
+GODOT MINIMAP OK (4 checks, 0 notes)
+== make map-face-shots SHOTS_SIZE=1920x1080
+  ok: saved map_power_door_blocked_from_c005.png
+  ok: saved map_power_door_open_from_c005.png
+GODOT MAP FACE OK (4 checks, 0 notes)
+== make journal-face-shots SHOTS_SIZE=1920x1080
+         [7] replay (res://scripts/gameplay/replay_harness.gd:78)
+  ok: saved settings_in_a_zone.png
+GODOT JOURNAL FACE OK (3 checks, 0 notes)
+== mm_shots_evidence.py on minimap_1920x1080
+minimap_all_rooms_from_c009.png: full frame 0 merge(s), crop 0 merge(s)
+minimap_power_door_blocked_in_c005.png: full frame 0 merge(s), crop 0 merge(s)
+minimap_power_door_open_in_c005.png: full frame 0 merge(s), crop 0 merge(s)
+minimap_span_blocked_in_c002.png: full frame 0 merge(s), crop 0 merge(s)
+no colour merged

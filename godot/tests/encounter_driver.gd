@@ -1,0 +1,1075 @@
+extends Node
+## THE WIDENED ENCOUNTERS, PLAYED (`make godot-encounter`).
+##
+## OV04 P08's other half. `roster_driver.gd` asks whether each role
+## BEHAVES — one or two bodies on a bare floor, driven by hand, with the
+## role as the subject. It says so itself: *"No encounter, no Zone, no
+## walked route... whether encounters USE these roles is P08's question
+## and a different suite's."* This is that suite.
+##
+## **A BRIDGE-VALID ENEMY LIST IS NOT A PLAYED ENCOUNTER.** The
+## composition widening made seven more roles composable, which means a
+## generated Zone can now ask for them — and "the schema accepted it" is
+## not the same claim as "a player can fight it and finish the room".
+## Every case here builds a real `ZoneController` from a DECLARED Zone,
+## drops the controller's own player in, drives the REAL input path, and
+## plays until the room is clear or the budget runs out.
+##
+## **DECLARED, and deliberately not exhaustive.** Each case names the
+## roles it is about. Nothing forces all ten into one Zone: that is not a
+## room anyone would generate, and a suite that built one would be
+## measuring a fixture rather than a composition.
+##
+## **The enemy-value score is a content budget and not measured
+## difficulty** (`content_value.ENEMY_VALUE`). Nothing here reads it, and
+## nothing here concludes anything about it: a room at 22 is not
+## "harder" than one at 18, and whether these fights are FUN is a
+## playtest question the owner has not been given the chance to answer.
+## What is asked is narrower and checkable: do they attack, can they be
+## fought, and does the room finish.
+
+const DT := 1.0 / 60.0
+
+var failures := 0
+var checks := 0
+var notes := 0
+
+
+func _check(ok: bool, message: String) -> void:
+	checks += 1
+	if ok:
+		print("  ok: %s" % message)
+		return
+	failures += 1
+	printerr("FAIL: %s" % message)
+	print("FAIL: %s" % message)
+
+
+func _note(message: String) -> void:
+	notes += 1
+	print("  NOTE: %s" % message)
+
+
+func _ready() -> void:
+	_run()
+
+
+func _run() -> void:
+	# WARM THE TREE BEFORE THE FIRST BUILD. `_ready` runs before any
+	# physics frame has happened, and the first `ZoneController` built
+	# there placed nothing: the player sat at world origin with both
+	# enemies stacked on top of it, which reported as "melee do not
+	# attack" for four runs. Every case after the first was fine because
+	# frames had elapsed by then -- the tell that it was warm-up and not
+	# the role.
+	for _i in 10:
+		await get_tree().physics_frame
+
+	await _a_room_of_melee_fights_back_and_can_be_cleared()
+	await _indirect_fire_reaches_a_player_who_stands_still()
+	await _a_bulwark_can_be_flanked_by_moving()
+	await _the_bulwark_is_fought_from_where_the_player_walks_in()
+	await _a_room_of_flyers_is_completable_from_the_ground()
+	await _a_beacon_dies_like_anything_else()
+	await _the_room_is_not_clear_until_every_body_is()
+
+	if failures == 0:
+		print("GODOT ENCOUNTER TESTS OK (%d checks, %d notes)"
+				% [checks, notes])
+		get_tree().quit(0)
+	else:
+		print("GODOT ENCOUNTER TESTS: %d failures in %d checks"
+				% [failures, checks])
+		get_tree().quit(1)
+
+
+# ---------------------------------------------------------------------------
+# The Zone
+# ---------------------------------------------------------------------------
+
+## One arena that has to be cleared, carrying exactly the groups a case
+## declares. `kill_all` is the objective under test: it is the one whose
+## completion depends on the bodies rather than on where the player
+## walks.
+func _zone(groups: Array, width := 26.0, depth := 24.0) -> Dictionary:
+	return {
+		"schema_version": 7, "zone_id": "zone_fight", "seed": 11,
+		"theme": "concrete_facility",
+		"chambers": [{
+			"id": "c001", "type": "arena", "theme": "concrete_facility",
+			"width": width, "depth": depth, "wall_height": 6.0,
+			"objective": "kill_all", "reward_location_id": 89100002,
+			"activities": [], "features": [], "enemies": groups,
+			"rewards": [], "interactables": [],
+		}],
+	}
+
+
+func _built(zone: Dictionary) -> ZoneController:
+	var controller := ZoneController.new()
+	get_tree().root.add_child(controller)
+	# **THE STAT STACK NEEDS ITS POOL, exactly as `main.gd:476` gives it
+	# one.** Without it the player's derived `move_speed` is not valid
+	# and the body cannot walk -- while the Static Pulse, which reads no
+	# movement stat, keeps firing. That asymmetry is why the bulwark case
+	# looked like a failed flank: shots landed, and the player walked
+	# 1.9 m in twenty-three seconds. A driver that builds a
+	# `ZoneController` by hand owes it the wiring `main.gd` does.
+	var pool := ResourcePool.new()
+	pool.name = "ResourcePool"
+	controller.add_child(pool)
+	controller.setup(zone)
+	if controller.player != null:
+		controller.player.stat_stack.pool = pool
+	# DID THE ZONE EVEN BUILD? A case that plays a room which was never
+	# laid out measures nothing and reports it as a behaviour failure:
+	# every body sits at the origin, nothing has a floor, and "0.0 hp
+	# lost" reads like a role that does not attack. `roster_driver`
+	# learned the same lesson when four of its enemies fell out of the
+	# world and it went on counting freed bodies.
+	if not controller.layout_failed.is_empty():
+		_check(false, "the declared Zone did not lay out: %s"
+				% controller.layout_failed)
+	# SETTLE BEFORE MEASURING ANYTHING. A flyer takes its hover height
+	# under its own `_physics_process`; two frames after `setup` every
+	# body is still standing where it was placed, so an altitude check
+	# there measures the SPAWN and not the role. Half a second is enough
+	# for `drifter` (2.55 m) and `diver` (1.9 m) to have climbed.
+	for _i in 30:
+		await get_tree().physics_frame
+	# ONE PLAYER IN THE WORLD. `Enemy._find_player` takes `players[0]`,
+	# so a stale body left in the group by an earlier case is the one
+	# every enemy here would notice, aim at and shell -- while the real
+	# player stands somewhere else taking nothing.
+	var bodies := get_tree().get_nodes_in_group("player").size()
+	_check(bodies == 1,
+			"exactly one player is in the world (found %d)" % bodies)
+	var player: Player = controller.player
+	_check(player != null and controller.room_bounds.has("c001")
+			and (controller.room_bounds["c001"] as AABB).grow(2.0)
+				.has_point(player.global_position),
+			"the player starts inside the declared room (at %v, room %s)"
+			% [Vector3.ZERO if player == null else player.global_position,
+				str(controller.room_bounds.get("c001", AABB()))])
+	return controller
+
+
+func _drop(controller: ZoneController) -> void:
+	Input.action_release("fire_pulse")
+	Input.action_release("move_left")
+	Input.action_release("move_right")
+	Input.action_release("move_forward")
+	# **GONE BEFORE THE NEXT CASE BUILDS.** `queue_free` is deferred, and
+	# a controller still in the tree still has a player in the "player"
+	# group -- which matters because `Enemy._find_player` takes
+	# `players[0]`, the FIRST one it finds. A leftover from the previous
+	# case would be the one every enemy in the next case aimed at.
+	controller.queue_free()
+	for _i in 4:
+		await get_tree().process_frame
+		await get_tree().physics_frame
+
+
+func _record(controller: ZoneController) -> Dictionary:
+	for record: Dictionary in controller._chambers:
+		if str(record["chamber"].get("id", "")) == "c001":
+			return record
+	return {}
+
+
+func _living(record: Dictionary) -> Array:
+	var out: Array = []
+	for enemy: Variant in record.get("enemies", []):
+		if is_instance_valid(enemy) and not (enemy as Enemy)._dead:
+			out.append(enemy)
+	return out
+
+
+# ---------------------------------------------------------------------------
+# Playing
+# ---------------------------------------------------------------------------
+
+## AIM AT A BODY — at its CENTRE, which is not where its origin is.
+##
+## A harness setup and not a result: the player's own look is not under
+## test, and a suite that also had to solve aiming would fail for two
+## reasons at once and report one. But it has to aim the way a player
+## aims, or it measures its own marksmanship.
+##
+## **THE FIRST VERSION AIMED AT THE FEET** and the damage told on it. An
+## enemy's `global_position` is its origin, and `ENEMY_ENVELOPES` puts
+## every body's mass well above that: `bulwark` is 2.05 m tall with its
+## centre at 1.025, `drifter` hovers with its centre at 2.55. Aiming at
+## the origin put the ray into the floor in front of a grounded body and
+## under a flying one — the bulwark took 20.4 s to die instead of the
+## 5.3 s its 90 hp implies at 17 dps, and the two flyers killed a player
+## who never landed a shot on them. Neither was a finding about the
+## roles; both were a finding about this function.
+func _aim_at(player: Player, target: Node3D) -> void:
+	var eye := player.camera.global_position
+	var centre: Vector3 = target.global_position
+	var envelope: Dictionary = Constants.ENEMY_ENVELOPES.get(
+			(target as Enemy).archetype, {})
+	if envelope.has("centre_y"):
+		centre.y += float(envelope["centre_y"])
+	var to: Vector3 = centre - eye
+	if to.length() < 0.01:
+		return
+	# **THE BODY, NOT ONLY THE CAMERA.** Strafing is relative to the
+	# PLAYER's yaw, and this used to turn the camera alone -- so
+	# `move_left` walked a fixed world direction while the camera swung
+	# to follow the enemy. The player wandered off instead of circling,
+	# and the bulwark case read that as "the flank does not work". The
+	# same split `counterfire_driver._aim` already gets right: the body
+	# yaws, the camera pitches.
+	player.rotation.y = atan2(-to.x, -to.z)
+	player.camera.rotation.x = atan2(to.y,
+			Vector2(to.x, to.z).length())
+	player.camera.rotation.y = 0.0
+	player.camera.rotation.z = 0.0
+
+
+## FIGHT UNTIL THE ROOM IS CLEAR, with the base kit and nothing else.
+##
+## The Static Pulse, through `Input.action_press("fire_pulse")` and the
+## player's own `_physics_process` — not `_fire_static_pulse()` called
+## by hand. A room that can only be cleared by a harness reaching past
+## the input path is a room no player can clear.
+##
+## **IT WALKS.** The first version stood still and held the trigger, and
+## that is not a played fight -- it is a turret. It failed intermittently
+## and the instrumentation below named why in one line: `1800 frames, 1
+## left, 82 shots / 0 landed, range 20.4-20.4 m, the ray hit
+## Reward_89100002 (StaticBody3D) instead`. A scuttler placed 20.4 m away
+## in a 30x28 room is outside the 18 m aggro radius, so it never woke and
+## never moved -- the range band is one number twice -- and the reward
+## pedestal stood between it and the player, so eighty-two shots went
+## into the pedestal. Nothing there was a finding about `scuttler`,
+## `kill_all` or the placement; a player who cannot hit what they are
+## aiming at walks until they can, and this now does.
+##
+## Returns what happened, so a case can assert on the fight and not only
+## on its outcome.
+func _fight(controller: ZoneController, record: Dictionary,
+		budget := 2400) -> Dictionary:
+	var player: Player = controller.player
+	player.input_frozen = false
+	var opened: float = player.hp
+	var lowest: float = player.hp
+	var frames := 0
+	_watch_the_gun(player)
+	var near := INF
+	var far := 0.0
+	var walked := 0.0
+	var was: Vector3 = player.global_position
+	var last: Node3D = null
+	var advancing := false
+	var stuck := 0
+	var sidestep := "move_right"
+	var sidestepping := 0
+	Input.action_press("fire_pulse")
+	while frames < budget:
+		var alive := _living(record)
+		if alive.is_empty():
+			break
+		last = alive[0] as Node3D
+		_aim_at(player, last)
+		var gap: float = player.global_position.distance_to(
+				last.global_position)
+		near = minf(near, gap)
+		far = maxf(far, gap)
+		# **CLOSE THE GROUND WHEN THE SHOT WILL NOT ARRIVE.** A player
+		# who cannot hit what they are aiming at walks until they can.
+		# The body is already yawed at the target, so forward is toward
+		# it. Held off inside melee range, where advancing further only
+		# pushes into the body.
+		var want := (gap > 2.5
+				and _marksmanship(player, last) != "on target")
+		if want != advancing:
+			advancing = want
+			if advancing:
+				Input.action_press("move_forward")
+			else:
+				Input.action_release("move_forward")
+				Input.action_release(sidestep)
+				sidestepping = 0
+		# **WALKING INTO THE THING IN THE WAY IS NOT GETTING PAST IT.**
+		# Forward is straight at the target, so a pedestal on that line
+		# stops the player dead against it and the advance above would
+		# hold the key there for the rest of the budget. Slide along it
+		# instead, and take the other way round if that side is shut too
+		# -- the same answer `_circle_and_fight` needed against the entry
+		# wall.
+		if sidestepping > 0:
+			sidestepping -= 1
+			if sidestepping == 0:
+				Input.action_release(sidestep)
+		elif advancing and stuck > 20:
+			stuck = 0
+			sidestep = ("move_right" if sidestep == "move_left"
+					else "move_left")
+			sidestepping = 45
+			Input.action_press(sidestep)
+		await get_tree().physics_frame
+		var step := was.distance_to(player.global_position)
+		stuck = stuck + 1 if advancing and step < 0.02 else 0
+		walked += step
+		was = player.global_position
+		lowest = minf(lowest, player.hp)
+		frames += 1
+		if player._dead:
+			break
+	Input.action_release("fire_pulse")
+	Input.action_release("move_forward")
+	Input.action_release("move_left")
+	Input.action_release("move_right")
+	player.input_frozen = true
+	var out := {"frames": frames, "left": _living(record).size(),
+			"opened": opened, "lowest": lowest,
+			"hurt": opened - lowest, "died": player._dead,
+			"shots": _shots, "landed": _landed,
+			"near": near, "far": far, "walked": walked,
+			"marksmanship": _marksmanship(player, last)}
+	_stop_watching_the_gun(player)
+	return out
+
+
+## WHY A FIGHT WENT THE WAY IT DID, in one line a failure can carry.
+##
+## **A timeout that says only "still alive after 1800 frames" names no
+## cause**, and this suite has already spent five rounds on findings that
+## were the harness rather than the roles. Shots fired versus hits
+## confirmed separates "the pulse never connected" from "it connected and
+## something absorbed it"; the range band separates either from a target
+## that was never inside `STATIC_PULSE_RANGE`; and the ray taken at the
+## end names whatever stood in the way.
+var _shots := 0
+var _landed := 0
+
+
+func _watch_the_gun(player: Player) -> void:
+	_shots = 0
+	_landed = 0
+	if not player.fired_pulse.is_connected(_on_pulse):
+		player.fired_pulse.connect(_on_pulse)
+	if not player.hit_confirmed.is_connected(_on_landed):
+		player.hit_confirmed.connect(_on_landed)
+
+
+func _stop_watching_the_gun(player: Player) -> void:
+	if player.fired_pulse.is_connected(_on_pulse):
+		player.fired_pulse.disconnect(_on_pulse)
+	if player.hit_confirmed.is_connected(_on_landed):
+		player.hit_confirmed.disconnect(_on_landed)
+
+
+func _on_pulse() -> void:
+	_shots += 1
+
+
+func _on_landed(_killed: bool) -> void:
+	_landed += 1
+
+
+## What the shot that would be fired right now would hit, named.
+func _marksmanship(player: Player, target: Node3D) -> String:
+	if target == null or not is_instance_valid(target):
+		return "no target"
+	var hit := player.camera_ray(Constants.STATIC_PULSE_RANGE)
+	if hit.is_empty():
+		return "the ray hit NOTHING"
+	var collider: Object = hit["collider"]
+	if collider == target:
+		return "on target"
+	return "the ray hit %s (%s) instead" % [
+			(collider as Node).name if collider is Node else str(collider),
+			(collider as Node).get_class() if collider is Node else "?"]
+
+
+## A fight's own account of itself, for a message.
+func _account(fight: Dictionary) -> String:
+	return ("%d frames, %d left, %d shots / %d landed, range %.1f-%.1f m, "
+			% [int(fight["frames"]), int(fight["left"]),
+				int(fight.get("shots", -1)), int(fight.get("landed", -1)),
+				float(fight.get("near", 0.0)), float(fight.get("far", 0.0))]
+			+ "walked %.1f m, %s" % [float(fight.get("walked", 0.0)),
+				str(fight.get("marksmanship", "?"))])
+
+
+## WHAT HAPPENED OVER AN INTERVAL, per role: launches and shots seen.
+## **Counted as events, not sampled at the end.**
+##
+## Three faults got here before this did, and all three were mine:
+##
+##   A SINGLE SAMPLE. Enemies mid-windup were counted at ONE instant.
+##   Artillery's windup is about a second inside a 3.4 s cooldown, so an
+##   instant has roughly a one-in-three chance of catching one even when
+##   it is firing normally -- the zero was evidence of almost nothing.
+##   THE WRONG NODE. Shots were looked for among this driver's children;
+##   `enemy.gd` adds them to `current_scene`.
+##   ONLY ONE KIND OF SHOT. `EnemyProjectile` was counted and
+##   `ArtilleryShell` was not, so the role whose whole point is indirect
+##   fire contributed nothing to the count used to judge it.
+##
+## `seen` is a high-water mark of shots alive at any sampled frame, so
+## it is a floor on how many were fired rather than a total; the damage
+## is the only number here that is a fact about the player.
+var _tally: Dictionary = {}
+var _damage_at_start := 0.0
+
+
+var _arrivals := 0
+## **CUMULATIVE DAMAGE, NOT AN ENDPOINT DIFFERENCE.** A start-vs-end hp
+## comparison cannot see a player who died and respawned: `_respawn`
+## restores full health, so ten landed hits worth 80-160 damage read as
+## "lost 0.0 hp" and the roles that dealt them read as harmless. That is
+## exactly what happened, and it is why the zero-damage finding was
+## reported for several rounds before this counter existed.
+var _taken := 0.0
+var _deaths := 0
+var _last_hp := 0.0
+
+
+func _watch(controller: ZoneController, record: Dictionary) -> void:
+	_tally = {}
+	_arrivals = 0
+	_taken = 0.0
+	_deaths = 0
+	_last_hp = controller.player.hp
+	_damage_at_start = controller.player.hp
+	controller.player.died.connect(func() -> void: _deaths += 1)
+	# **WAS `take_damage` REACHED AT ALL?** `damaged_from` is emitted
+	# inside it, after the arithmetic, so a count of zero says the call
+	# never happened and a count above zero with no hp lost says
+	# something absorbed it. Those are different defects and the damage
+	# figure alone cannot tell them apart -- which is the last thing
+	# still unknown about the zero-damage finding.
+	controller.player.damaged_from.connect(
+			func(_from: Vector3) -> void: _arrivals += 1)
+	for enemy: Variant in _living(record):
+		var body := enemy as Enemy
+		var role := body.archetype
+		_tally[role] = {"launched": 0, "seen": 0}
+		body.telegraph_started.connect(
+				func(_kind: String, _duration: float) -> void:
+					var row: Dictionary = _tally[role]
+					row["launched"] = int(row["launched"]) + 1
+					_tally[role] = row)
+
+
+## Sample the shots in the world, every frame of a watch, so one with a
+## short flight is not missed between samples.
+##
+## **BOTH KINDS, BY SHAPE.** `EnemyProjectile` is an `Area3D` carrying
+## `speed` and `direction`; `ArtilleryShell` is a `Node3D` carrying
+## `origin`, `target` and `seconds`. Neither is a global type -- both are
+## inner classes of `enemy.gd` -- and referencing one by name is what
+## stopped this driver compiling once already.
+func _sample_shots() -> void:
+	var scene := get_tree().current_scene
+	if scene == null:
+		return
+	var alive: Dictionary = {}
+	var near: Dictionary = {}
+	# HOW CLOSE A SHOT EVER GETS is what separates "it misses" from "it
+	# arrives and nothing happens". Those are different defects: one is
+	# aim or flight, the other is the impact test.
+	var body: Node3D = null
+	for node: Node in get_tree().get_nodes_in_group("player"):
+		body = node as Node3D
+		break
+	for child: Node in scene.get_children():
+		var kind := ""
+		if child.get("speed") != null and child.get("direction") != null:
+			kind = "shot"
+		elif child.get("target") != null and child.get("seconds") != null \
+				and child.get("origin") != null:
+			kind = "shell"
+		if kind == "":
+			continue
+		alive[kind] = int(alive.get(kind, 0)) + 1
+		if body != null and child is Node3D:
+			near[kind] = minf(float(near.get(kind, INF)),
+					(child as Node3D).global_position.distance_to(
+							body.global_position))
+	for role: Variant in _tally:
+		var row: Dictionary = _tally[role]
+		var kind := "shell" if str(role) == "artillery" else "shot"
+		row["seen"] = maxi(int(row["seen"]), int(alive.get(kind, 0)))
+		row["nearest"] = minf(float(row.get("nearest", INF)),
+				float(near.get(kind, INF)))
+		_tally[role] = row
+
+
+func _tally_report(controller: ZoneController) -> String:
+	var hurt := _taken
+	if _tally.is_empty():
+		return "nothing was watched"
+	var parts: Array[String] = []
+	for role: Variant in _tally:
+		var row: Dictionary = _tally[role]
+		var nearest: float = float(row.get("nearest", INF))
+		parts.append("%s launched %d, seen %d, nearest %s"
+				% [str(role), int(row["launched"]), int(row["seen"]),
+					"never measured" if nearest == INF
+					else "%.2f m" % nearest])
+	return ", ".join(parts) + "; %d hits reached take_damage; " % _arrivals \
+			+ "player took %.1f hp across %d death(s)" % [hurt, _deaths]
+
+
+## LET THE ROOM HIT BACK while the player does nothing.
+##
+## **THIS IS HOW THREAT IS MEASURED, and the first draft got it wrong.**
+## That version asserted on the damage taken DURING the kill run, which
+## made "is this room a threat" a question about how fast the harness
+## shoots: two melee need about three seconds to close and the base kit
+## killed them in three and a bit, so a room full of live enemies
+## reported "0.0 hp lost" and the case failed for a reason that had
+## nothing to do with the roles in it.
+##
+## Standing still asks the question directly. Clearability is the other
+## half and `_fight` answers that one; they are separate measurements
+## because they are separate claims.
+func _stand_still(controller: ZoneController, frames: int) -> float:
+	var player: Player = controller.player
+	player.input_frozen = false
+	var opened: float = player.hp
+	for _i in frames:
+		await get_tree().physics_frame
+		_sample_shots()
+		# EVERY DROP, SUMMED. A respawn puts hp back up, so only the
+		# falls are damage and the rises are not healing.
+		if player.hp < _last_hp:
+			_taken += _last_hp - player.hp
+		_last_hp = player.hp
+	player.input_frozen = true
+	return _taken
+
+
+## WHY A ROOM DID NOT ENGAGE, in the failure rather than in a later run.
+##
+## "0.0 hp lost" is the symptom of at least three different problems --
+## the bodies are out of aggro range, the player spawned somewhere the
+## room is not, or the role does not attack -- and they want different
+## fixes. `ENEMY_AGGRO_RADIUS` is 18 m, widened per role to its own
+## reach, so the distance is the first thing worth knowing.
+func _engagement(controller: ZoneController, record: Dictionary) -> String:
+	var player: Player = controller.player
+	var parts: Array[String] = []
+	for enemy: Variant in _living(record):
+		var body := enemy as Enemy
+		var gap := body.global_position.distance_to(player.global_position)
+		# NOTICED IS THE DECISIVE BIT. An enemy that never noticed is a
+		# range or a visibility problem; one that noticed and did not
+		# attack is a problem in the attack itself, and the distance
+		# alone cannot tell those apart.
+		parts.append("%s %.1fm %s cd=%.1f" % [body.archetype, gap,
+				"AWAKE" if body._has_noticed else "asleep",
+				body._attack_cooldown])
+	var box: AABB = record.get("bounds", AABB())
+	return "player at %v (%s the room), aggro %.0f m; %s" % [
+			player.global_position,
+			"inside" if box.has_point(player.global_position) else "OUTSIDE",
+			Constants.ENEMY_AGGRO_RADIUS,
+			"nothing alive" if parts.is_empty() else ", ".join(parts)]
+
+
+# ---------------------------------------------------------------------------
+# The cases
+# ---------------------------------------------------------------------------
+
+## THE BASELINE, and everything else is a variation on it. Two `melee`
+## close, hurt the player, die to the base kit, and the room reports
+## itself finished.
+func _a_room_of_melee_fights_back_and_can_be_cleared() -> void:
+	print("  -- melee x2: they close, they hurt, the room clears")
+	var controller := await _built(_zone([
+			{"archetype": "melee", "count": 2}]))
+	var record := _record(controller)
+	_check(not record.is_empty(), "the declared arena became a room")
+	_check(_living(record).size() == 2,
+			"both declared bodies are in it, got %d"
+			% _living(record).size())
+	_check(not bool(record["satisfied"]),
+			"and it does NOT start satisfied — two enemies are alive")
+
+	var hurt := await _stand_still(controller, 420)
+	_check(hurt > 0.0,
+			"they close and they hit: seven seconds of doing nothing "
+			+ "cost %.1f hp -- %s" % [hurt, _engagement(controller, record)])
+
+	var fight := await _fight(controller, record)
+	_check(int(fight["left"]) == 0,
+			"and the room clears with the base kit -- %s"
+			% _account(fight))
+	_check(not bool(fight["died"]),
+			"without the player dying (%.1f hp left)"
+			% controller.player.hp)
+	controller._evaluate_objectives()
+	_check(bool(record["satisfied"]),
+			"kill_all is satisfied now that nothing is alive")
+	await _drop(controller)
+
+
+## INDIRECT FIRE DENIES GROUND, which only means something if standing
+## on it costs. `artillery` has speed 0 and reach 34 -- it never closes,
+## so a player who is never hurt by it is a player it is not reaching.
+func _indirect_fire_reaches_a_player_who_stands_still() -> void:
+	print("  -- ranged + artillery: standing still costs")
+	var controller := await _built(_zone([
+			{"archetype": "ranged", "count": 1},
+			{"archetype": "artillery", "count": 1}], 30.0, 28.0))
+	var record := _record(controller)
+	_check(_living(record).size() == 2, "both are placed")
+
+	# DID THEY SHOOT AT ALL? "No damage" is the symptom of two different
+	# problems — a role that never attacks, and a role that attacks and
+	# misses — and they want opposite fixes. Watched across the whole
+	# fifteen seconds, not sampled at the end of it.
+	_watch(controller, record)
+	var hurt := await _stand_still(controller, 900)
+	_check(hurt > 0.0,
+			"a player who does nothing for fifteen seconds is hurt -- %s"
+			% _tally_report(controller)
+			+ " -- %s" % _engagement(controller, record))
+
+	var fight := await _fight(controller, record)
+	_check(int(fight["left"]) == 0,
+			"and the room is still clearable -- %s" % _account(fight))
+	await _drop(controller)
+
+
+## THE ROLE WHOSE COUNTERPLAY THE BASE KIT HAS TO BE ABLE TO USE.
+##
+## `bulwark` is in the ordinary, ungated encounter pool, so its
+## weakness must be reachable with the guaranteed kit and real movement.
+## It was not: every role snapped to face the player with `look_at`, so
+## the rear arc the armour leaves open could never be arrived at, and
+## "cannot be fought frontally" was in practice "cannot be fought".
+## `ENEMY_STATS["bulwark"]` declares a `turn_rate` now and the facing is
+## held through a windup.
+##
+## **TWO KINDS OF EVIDENCE, KEPT APART.** The armour itself is checked
+## synthetically -- two `take_damage` calls from computed WORLD
+## POSITIONS on either side of the body -- and that is machine
+## arithmetic, not a played exchange. The counterplay is then played:
+## the player circles with real movement while firing, and the room has
+## to finish. Neither stands in for the other.
+func _a_bulwark_can_be_flanked_by_moving() -> void:
+	print("  -- bulwark: the rear arc is reachable, and the room clears")
+	var controller := await _built(_zone([
+			{"archetype": "bulwark", "count": 1}], 34.0, 32.0))
+	var record := _record(controller)
+	_check(_living(record).size() == 1, "one bulwark is placed")
+	var target: Enemy = _living(record)[0]
+
+	# --- SYNTHETIC: the armour is directional ------------------------
+	#
+	# Attacker positions computed from the enemy's OWN basis, not from
+	# world axes. `take_damage` recovers the attacker as
+	# `global_position - direction`, so the direction to pass is
+	# `enemy - attacker`. Handing it `Vector3.BACK` names a point one
+	# metre along world -Z, which only happens to be "in front" when the
+	# body is unrotated -- and this one turns.
+	var full: float = target.hp
+	var forward: Vector3 = -target.global_transform.basis.z
+	var in_front: Vector3 = target.global_position + forward * 3.0
+	var behind: Vector3 = target.global_position - forward * 3.0
+	target.take_damage(20.0, target.global_position - in_front, 0.0)
+	var frontal: float = full - target.hp
+	target.hp = full
+	target.take_damage(20.0, target.global_position - behind, 0.0)
+	var rear: float = full - target.hp
+	target.hp = full
+	_check(frontal < rear * 0.5,
+			"SYNTHETIC: a hit from in front does %.1f, one from behind "
+			% frontal + "does %.1f" % rear)
+	_check(frontal > 0.0,
+			"SYNTHETIC: the front is armoured, not invulnerable (%.1f)"
+			% frontal)
+
+	# --- PLAYED: the opening is usable, and the room finishes --------
+	var opened: float = controller.player.hp
+	var fight := await _circle_and_fight(controller, record, target, 3600)
+	_check(int(fight["left"]) == 0,
+			"PLAYED: circling with the base kit clears the room in %d "
+			% int(fight["frames"]) + "frames (player %s)"
+			% ("DIED" if bool(fight["died"]) else "alive"))
+	_check(not bool(fight["died"]),
+			"PLAYED: and the player survives it (%.1f of %.1f hp)"
+			% [controller.player.hp, opened])
+	controller._evaluate_objectives()
+	_check(bool(record["satisfied"]),
+			"PLAYED: kill_all is satisfied")
+	_check(float(fight["widest"]) > 70.0,
+			"PLAYED: the orbit reached %.0f degrees off its nose, past "
+			% float(fight["widest"]) + "the %.0f-degree shield cone "
+			% rad_to_deg(acos(Constants.BULWARK_SHIELD_DOT))
+			+ "(closest approach %.1f m, walked %.1f m at speed_mult "
+			% [float(fight["closest"]), float(fight["walked"])]
+			+ "%.2f, top speed %.2f m/s, holds [%s], from %v to %v)"
+			% [controller.player.speed_mult, float(fight["top_speed"]),
+				str(fight["holds"]), fight["from"],
+				controller.player.global_position])
+	_note("bulwark, played: %s after %.1f s with %.0f of %.0f hp left. "
+			% ["cleared" if int(fight["left"]) == 0 else "NOT cleared",
+				float(fight["frames"]) * DT, controller.player.hp, opened]
+			+ "BULWARK_TURN_RATE_DEG_S %.0f, commit %.1fs, recovery "
+			% [Constants.BULWARK_TURN_RATE_DEG_S,
+				Constants.BULWARK_COMMIT_SECONDS]
+			+ "%.1fs are PROVISIONAL and the played acceptance is what "
+			% Constants.BULWARK_RECOVERY_SECONDS
+			+ "closes them.")
+	await _drop(controller)
+
+
+## THE SAME FIGHT, STARTED WHERE THE PLAYER ACTUALLY ARRIVES.
+##
+## **The placed-start case is isolated counterplay evidence and not the
+## whole acceptance.** It sets the player four metres from the bulwark
+## in open floor, which shows the rear arc is reachable and says nothing
+## about getting there from the door. A room whose opening is only
+## usable from a spot the harness teleported to is a room no player
+## reaches that spot in.
+##
+## So this one starts at the controller's own arrival -- the point a
+## connector delivers a player to, against the entry wall -- walks in on
+## ordinary input through ordinary collision, and only then fights. Both
+## cases are kept: this is the acceptance, that one is the isolation.
+func _the_bulwark_is_fought_from_where_the_player_walks_in() -> void:
+	print("  -- bulwark: in through the door, then fought")
+	var controller := await _built(_zone([
+			{"archetype": "bulwark", "count": 1}], 34.0, 32.0))
+	var record := _record(controller)
+	_check(_living(record).size() == 1, "one bulwark is placed")
+	var target: Enemy = _living(record)[0]
+	var player: Player = controller.player
+	var arrival: Vector3 = player.global_position
+	var box: AABB = record.get("bounds", AABB())
+	_check(box.grow(1.0).has_point(arrival),
+			"the player starts at the room's own arrival (%v)" % arrival)
+	var start_gap := arrival.distance_to(target.global_position)
+
+	var walk := await _walk_in_from_the_door(controller, target)
+	_check(float(walk["walked"]) > 3.0,
+			"they WALK in: %.1f m covered on move_forward alone, from %v "
+			% [float(walk["walked"]), walk["from"]]
+			+ "to %v (%.1f m from the bulwark, was %.1f)"
+			% [walk["to"], float(walk["gap"]), start_gap])
+	_check(bool(walk["arrived"]),
+			"and they reach the fighting space in %.1f s"
+			% (float(walk["frames"]) * DT))
+	_check(float(walk["gap"]) < start_gap,
+			"having closed the ground, not drifted (%.1f m -> %.1f m)"
+			% [start_gap, float(walk["gap"])])
+
+	# NOTHING PLACED. The fight begins from wherever the walk ended.
+	var opened: float = player.hp
+	var fight := await _circle_and_fight(controller, record, target,
+			3600, false)
+	_check(int(fight["left"]) == 0,
+			"ARRIVAL: the bulwark dies in a fight entered on foot (%d "
+			% int(fight["frames"]) + "frames, player %s)"
+			% ("DIED" if bool(fight["died"]) else "alive"))
+	_check(not bool(fight["died"]),
+			"ARRIVAL: and the player survives it (%.1f of %.1f hp)"
+			% [player.hp, opened])
+	controller._evaluate_objectives()
+	_check(bool(record["satisfied"]),
+			"ARRIVAL: kill_all is satisfied")
+	_note("bulwark, from the arrival: walked %.1f m in, then %s after "
+			% [float(walk["walked"]),
+				"cleared" if int(fight["left"]) == 0 else "NOT cleared"]
+			+ "%.1f s with %.0f of %.0f hp left. Tuning stays PROVISIONAL "
+			% [float(fight["frames"]) * DT, player.hp, opened]
+			+ "for human playtest.")
+	await _drop(controller)
+
+
+## WALK IN FROM THE DOOR, with nothing placed and nothing teleported.
+##
+## The controller spawns the player at the room's ARRIVAL -- the point a
+## connector delivers them to -- and this walks from there into the
+## fighting space on `move_forward` alone, yawed at the target, sliding
+## along whatever it meets. It is the half `_circle_and_fight`'s
+## placement skips over, and the half a player actually does first.
+##
+## Returns where it started, where it stopped, how far it walked and
+## whether it got within `reach` of the target.
+func _walk_in_from_the_door(controller: ZoneController, target: Enemy,
+		reach := 6.0, budget := 900) -> Dictionary:
+	var player: Player = controller.player
+	player.input_frozen = false
+	var from: Vector3 = player.global_position
+	var was := from
+	var walked := 0.0
+	var frames := 0
+	var stuck := 0
+	var sidestep := "move_right"
+	var sidestepping := 0
+	Input.action_press("move_forward")
+	while frames < budget:
+		if not is_instance_valid(target) or target._dead or player._dead:
+			break
+		_aim_at(player, target)
+		if player.global_position.distance_to(target.global_position) \
+				<= reach:
+			break
+		# The entry wall is exactly what pinned the first version of the
+		# orbit, so walking in has to be able to get off it too.
+		if sidestepping > 0:
+			sidestepping -= 1
+			if sidestepping == 0:
+				Input.action_release(sidestep)
+		elif stuck > 20:
+			stuck = 0
+			sidestep = ("move_right" if sidestep == "move_left"
+					else "move_left")
+			sidestepping = 45
+			Input.action_press(sidestep)
+		await get_tree().physics_frame
+		frames += 1
+		var step := was.distance_to(player.global_position)
+		stuck = stuck + 1 if step < 0.02 else 0
+		walked += step
+		was = player.global_position
+	Input.action_release("move_forward")
+	Input.action_release("move_left")
+	Input.action_release("move_right")
+	var gap := (player.global_position.distance_to(target.global_position)
+			if is_instance_valid(target) else 0.0)
+	return {"from": from, "to": player.global_position,
+			"walked": walked, "frames": frames, "gap": gap,
+			"arrived": gap <= reach}
+
+
+## CIRCLE AND SHOOT: real movement, the real input path, no teleports.
+##
+## The player strafes around the target while firing, which is the
+## counterplay the role is described as having. `move_left` is held and
+## the camera is re-aimed each frame, so the body genuinely travels
+## around the enemy and the shots genuinely have to connect.
+func _circle_and_fight(controller: ZoneController, record: Dictionary,
+		target: Enemy, budget: int, place := true) -> Dictionary:
+	var player: Player = controller.player
+	player.input_frozen = false
+	# **STAND IN THE OPEN BEFORE CIRCLING.** A harness setup, not a
+	# result: the controller spawns the player at the room's ARRIVAL,
+	# which is against the entry wall, and strafing from there walks
+	# straight into it. The body reached 6.97 m/s for one frame and then
+	# covered 1.9 m in twenty-three seconds -- pinned, not still, and
+	# certainly not circling. Everything after this line is walked.
+	#
+	# **AND IT IS A PLACEMENT, WHICH IS WHY IT IS OPTIONAL.** Four metres
+	# from the enemy in open floor is isolated counterplay evidence: it
+	# shows the opening is usable, and it says nothing about getting to
+	# the fighting space from the door. `place = false` leaves the player
+	# exactly where the controller spawned them, for the case that walks
+	# in first.
+	var box: AABB = record.get("bounds", AABB())
+	if place and box.has_volume():
+		var middle: Vector3 = box.position + box.size / 2.0
+		var out: Vector3 = middle - target.global_position
+		out.y = 0.0
+		if out.length() < 0.5:
+			out = Vector3(1.0, 0.0, 0.0)
+		player.global_position = target.global_position \
+				+ out.normalized() * 4.0 + Vector3.UP * 1.0
+		player.velocity = Vector3.ZERO
+		for _settle in 10:
+			await get_tree().physics_frame
+	var opened_at := player.global_position
+	var frames := 0
+	# **DID THE ORBIT ACTUALLY GET ROUND?** `BULWARK_SHIELD_DOT` is 0.35,
+	# a cone of about 70 degrees either side of its facing, so the player
+	# only has to reach ~70 degrees off the nose to be doing full damage.
+	# Measuring it is what separates "the turn rate is too fast" from
+	# "the harness never circled", and those want opposite answers.
+	var widest := 0.0
+	var closest := INF
+	# DID THE BODY ACTUALLY TRAVEL? An orbit that reaches zero degrees
+	# is either a perfect tracker or a player standing still, and the
+	# distance walked is what tells those apart.
+	var walked := 0.0
+	var was := player.global_position
+	# **STOP GUESSING WHY IT DID NOT MOVE.** Three hypotheses have been
+	# wrong in a row -- a stale player, an unwired resource pool, a zero
+	# speed multiplier -- and each cost a five-minute run. The state that
+	# actually gates `_physics_process`'s movement block is `input_frozen`,
+	# which is `not _holds.is_empty()`: setting it false erases only the
+	# "direct" key, so any OTHER hold (the controller takes `LAYOUT_HOLD`
+	# and releases it on a bridge verdict this harness never delivers)
+	# leaves the body frozen while the Static Pulse still fires.
+	var holds_seen := ""
+	var top_speed := 0.0
+	Input.action_press("fire_pulse")
+	var strafe := "move_left"
+	Input.action_press(strafe)
+	var stuck := 0
+	while frames < budget:
+		if _living(record).is_empty() or player._dead:
+			break
+		_aim_at(player, target)
+		await get_tree().physics_frame
+		frames += 1
+		var step := player.global_position.distance_to(was)
+		# A CIRCLE THAT MEETS A WALL TURNS ROUND. `enemy.gd` does the
+		# same for its own bodies: a side that stayed blocked is not
+		# retried forever. Without it one wall ends the orbit for good.
+		stuck = stuck + 1 if step < 0.01 else 0
+		if stuck > 20:
+			Input.action_release(strafe)
+			strafe = "move_right" if strafe == "move_left" \
+					else "move_left"
+			Input.action_press(strafe)
+			stuck = 0
+		walked += step
+		was = player.global_position
+		top_speed = maxf(top_speed,
+				Vector2(player.velocity.x, player.velocity.z).length())
+		if holds_seen == "":
+			holds_seen = "none" if player.holds().is_empty() \
+					else ", ".join(PackedStringArray(player.holds()))
+		if is_instance_valid(target) and not target._dead:
+			var facing: Vector3 = -target.global_transform.basis.z
+			var toward: Vector3 = player.global_position \
+					- target.global_position
+			toward.y = 0.0
+			if toward.length() > 0.01:
+				widest = maxf(widest, rad_to_deg(facing.normalized()
+						.angle_to(toward.normalized())))
+				closest = minf(closest, toward.length())
+	Input.action_release("move_left")
+	Input.action_release("move_right")
+	Input.action_release("fire_pulse")
+	player.input_frozen = true
+	return {"frames": frames, "left": _living(record).size(),
+			"died": player._dead, "widest": widest, "walked": walked,
+			"holds": holds_seen, "top_speed": top_speed,
+			"from": opened_at,
+			"closest": 0.0 if closest == INF else closest}
+
+
+## HOLD THE TRIGGER ON ONE BODY for a fixed span, and report nothing --
+## the caller measures what it wants from the target itself.
+func _shoot_for(controller: ZoneController, target: Enemy,
+		frames: int) -> void:
+	var player: Player = controller.player
+	player.input_frozen = false
+	Input.action_press("fire_pulse")
+	for _i in frames:
+		if not is_instance_valid(target) or target._dead:
+			break
+		_aim_at(player, target)
+		await get_tree().physics_frame
+	Input.action_release("fire_pulse")
+	player.input_frozen = true
+
+
+## FLYERS HOLD ALTITUDE, and a grounded player has to be able to finish
+## the room anyway. `drifter` denies melee by height; if the base kit
+## could not reach it, a Zone containing one would be unsolvable for a
+## player who never earned an air Echo.
+func _a_room_of_flyers_is_completable_from_the_ground() -> void:
+	print("  -- drifter + diver: killable from the floor")
+	var controller := await _built(_zone([
+			{"archetype": "drifter", "count": 1},
+			{"archetype": "diver", "count": 1}], 30.0, 28.0))
+	var record := _record(controller)
+	_check(_living(record).size() == 2, "both flyers are placed")
+	# THE BODY, NOT THE PIVOT. PT-12 keeps a flyer's pivot on the floor
+	# and hangs its body at the envelope's hover height above it, so the
+	# pivot's height says nothing about reach. This read the pivot, and
+	# passed only because the drifter was built inside the room's warp
+	# station and held station on its roof, pivot 2.03 m up (ML-F1). What
+	# denies melee is the body above the floor under it.
+	var above := 0
+	var heights: Array[String] = []
+	for enemy: Variant in _living(record):
+		var flyer: Enemy = enemy
+		var body := flyer.body_centre()
+		var floor_y := _floor_under_body(flyer)
+		heights.append("%s %.2f m" % [flyer.archetype, body.y - floor_y])
+		if body.y - floor_y > 1.6:
+			above += 1
+	_check(above > 0,
+			"at least one hangs its body more than 1.6 m above the floor under "
+			+ "it (%d of 2: %s), so this is a height problem and not a walk-up"
+			% [above, ", ".join(heights)])
+	var fight := await _fight(controller, record, 3600)
+	_check(int(fight["left"]) == 0,
+			"and the room finishes from the ground (player %s) -- %s"
+			% ["DIED" if bool(fight["died"]) else "alive", _account(fight)])
+	_check(not bool(fight["died"]),
+			"with the player alive — a room a grounded player cannot "
+			+ "survive is a room that needs an air Echo to be solvable, "
+			+ "and nothing declares that gate")
+	await _drop(controller)
+
+
+## The first world surface under a flyer's body, stepping past actors.
+func _floor_under_body(flyer: Enemy) -> float:
+	var from := flyer.body_centre()
+	var skip: Array[RID] = [flyer.get_rid()]
+	for _try in 6:
+		var query := PhysicsRayQueryParameters3D.create(from,
+				from + Vector3.DOWN * 60.0)
+		query.exclude = skip
+		var hit := flyer.get_world_3d().direct_space_state.intersect_ray(query)
+		if hit.is_empty():
+			return from.y
+		if not (hit["collider"] is CharacterBody3D):
+			return (hit["position"] as Vector3).y
+		skip.append(hit["rid"])
+	return from.y
+
+
+## A BEACON MAKES ITS NEIGHBOURS WORSE, and is itself an ordinary body.
+## Its own damage is 2.0 -- the lowest in the roster -- so a room that
+## contained only beacons would be a room with no threat in it. Paired,
+## which is how it is meant to appear.
+func _a_beacon_dies_like_anything_else() -> void:
+	print("  -- beacon + melee: the support role is a target")
+	var controller := await _built(_zone([
+			{"archetype": "beacon", "count": 1},
+			{"archetype": "melee", "count": 1}]))
+	var record := _record(controller)
+	_check(_living(record).size() == 2, "both are placed")
+	var hurt := await _stand_still(controller, 420)
+	_check(hurt > 0.0,
+			"the pair is a threat: %.1f hp for standing still -- %s"
+			% [hurt, _engagement(controller, record)])
+	var fight := await _fight(controller, record, 3000)
+	_check(int(fight["left"]) == 0,
+			"and both die like anything else -- %s" % _account(fight))
+	await _drop(controller)
+
+
+## THE OBJECTIVE IS ABOUT BODIES, not about time or intent. One survivor
+## has to keep the room open, or `kill_all` is a timer wearing an
+## objective's name.
+func _the_room_is_not_clear_until_every_body_is() -> void:
+	print("  -- kill_all: one survivor keeps the room open")
+	var controller := await _built(_zone([
+			{"archetype": "scuttler", "count": 3}], 30.0, 28.0))
+	var record := _record(controller)
+	var placed := _living(record).size()
+	_check(placed == 3, "three scuttlers are placed, got %d" % placed)
+
+	# Kill all but one, directly: the fight itself is the previous
+	# cases' subject, and this one is about the predicate.
+	var alive := _living(record)
+	for i in range(alive.size() - 1):
+		(alive[i] as Enemy).take_damage(9999.0, Vector3.FORWARD, 0.0)
+	await get_tree().physics_frame
+	controller._evaluate_objectives()
+	_check(_living(record).size() == 1, "one is left")
+	_check(not bool(record["satisfied"]),
+			"and the room is NOT satisfied with a body still standing")
+
+	var fight := await _fight(controller, record, 1800)
+	_check(int(fight["left"]) == 0, "the last one dies -- %s" % _account(fight))
+	controller._evaluate_objectives()
+	_check(bool(record["satisfied"]),
+			"and only then is the room clear -- %s" % _account(fight))
+	await _drop(controller)

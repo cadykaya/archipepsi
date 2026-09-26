@@ -1,0 +1,1187 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_hub (res://scripts/main.gd:607)
+       [6] _on_snapshot (res://scripts/main.gd:429)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_hub (res://scripts/main.gd:607)
+       [6] _on_snapshot (res://scripts/main.gd:429)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_hub (res://scripts/main.gd:607)
+       [6] _on_snapshot (res://scripts/main.gd:429)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_zone (res://scripts/main.gd:798)
+       [6] _on_snapshot (res://scripts/main.gd:436)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_zone (res://scripts/main.gd:798)
+       [6] _on_snapshot (res://scripts/main.gd:436)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_zone (res://scripts/main.gd:798)
+       [6] _on_snapshot (res://scripts/main.gd:436)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_unweighted_switch mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+  ok: back in zone_001, the Zone the campaign holds
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] open (res://scripts/ui/equipment_face.gd:212)
+       [7] _open_menu (res://scripts/main.gd:628)
+       [8] _unhandled_input (res://scripts/main.gd:1050)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] open (res://scripts/ui/equipment_face.gd:212)
+       [7] _open_menu (res://scripts/main.gd:628)
+       [8] _unhandled_input (res://scripts/main.gd:1050)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] open (res://scripts/ui/equipment_face.gd:212)
+       [7] _open_menu (res://scripts/main.gd:628)
+       [8] _unhandled_input (res://scripts/main.gd:1050)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] consumable_state (res://scripts/ui/equipment_query.gd:565)
+       [3] _slot_row (res://scripts/ui/equipment_face.gd:456)
+       [4] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [5] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [6] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [7] open (res://scripts/ui/equipment_face.gd:212)
+       [8] _open_menu (res://scripts/main.gd:628)
+       [9] _unhandled_input (res://scripts/main.gd:1050)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] use_lines (res://scripts/ui/equipment_query.gd:381)
+       [3] _paint_detail (res://scripts/ui/equipment_face.gd:670)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:383)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] open (res://scripts/ui/equipment_face.gd:212)
+       [7] _open_menu (res://scripts/main.gd:628)
+       [8] _unhandled_input (res://scripts/main.gd:1050)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _paint_actions (res://scripts/ui/equipment_face.gd:761)
+       [3] _paint_detail (res://scripts/ui/equipment_face.gd:691)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:383)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] open (res://scripts/ui/equipment_face.gd:212)
+       [7] _open_menu (res://scripts/main.gd:628)
+       [8] _unhandled_input (res://scripts/main.gd:1050)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] open (res://scripts/ui/equipment_face.gd:212)
+       [6] _open_menu (res://scripts/main.gd:628)
+       [7] _unhandled_input (res://scripts/main.gd:1050)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] open (res://scripts/ui/equipment_face.gd:212)
+       [6] _open_menu (res://scripts/main.gd:628)
+       [7] _unhandled_input (res://scripts/main.gd:1050)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] open (res://scripts/ui/equipment_face.gd:212)
+       [6] _open_menu (res://scripts/main.gd:628)
+       [7] _unhandled_input (res://scripts/main.gd:1050)
+WARNING: bridge error [bridge]: ValueError: Zone 'zone_001' already carries layout 69893cf6508fee18; a committed layout is replayed, never replaced
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _handle (res://scripts/autoload/bridge_client.gd:190)
+         [1] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] consumable_state (res://scripts/ui/equipment_query.gd:565)
+       [3] _slot_row (res://scripts/ui/equipment_face.gd:456)
+       [4] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [5] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [6] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] use_lines (res://scripts/ui/equipment_query.gd:381)
+       [3] _paint_detail (res://scripts/ui/equipment_face.gd:670)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:383)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _paint_actions (res://scripts/ui/equipment_face.gd:761)
+       [3] _paint_detail (res://scripts/ui/equipment_face.gd:691)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:383)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+  ok: Escape opens the pause interface on its Settings wall, the pause menu drawn there, and the player is held
+  ok: and the world is paused behind it, by the menu's claim alone, with the bridge still connected (H-PAUSE)
+  ok: Tab turns it to the Equipment wall, the equipment face drawn there
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] consumable_state (res://scripts/ui/equipment_query.gd:565)
+       [3] _slot_row (res://scripts/ui/equipment_face.gd:456)
+       [4] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [5] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [6] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] consumable_state (res://scripts/ui/equipment_query.gd:565)
+       [3] _slot_row (res://scripts/ui/equipment_face.gd:456)
+       [4] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [5] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [6] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] _repaint_deferred (res://scripts/ui/equipment_face.gd:375)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] consumable_state (res://scripts/ui/equipment_query.gd:565)
+       [3] _slot_row (res://scripts/ui/equipment_face.gd:456)
+       [4] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [5] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [6] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [7] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [8] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [9] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [6] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [7] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [6] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [7] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [6] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [7] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+  ok: 'EQUIP ON RMB' pressed on the Equipment wall with the world paused: PENDING until the bridge answered (["echo_a: <null> -> act_l89100025"]), then ACCEPTED from its snapshot (ACCEPTED), the world still paused
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _slot_row (res://scripts/ui/equipment_face.gd:409)
+       [3] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [4] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [5] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [6] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] consumable_state (res://scripts/ui/equipment_query.gd:565)
+       [3] _slot_row (res://scripts/ui/equipment_face.gd:456)
+       [4] _paint_slots (res://scripts/ui/equipment_face.gd:394)
+       [5] _repaint (res://scripts/ui/equipment_face.gd:381)
+       [6] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [7] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [8] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [9] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [6] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [7] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [6] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [7] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of_action (res://scripts/ui/slot_keycaps.gd:46)
+       [2] _paint_lines (res://scripts/ui/equipment_face.gd:816)
+       [3] _repaint (res://scripts/ui/equipment_face.gd:384)
+       [4] rebuild (res://scripts/ui/equipment_face.gd:238)
+       [5] _on_snapshot (res://scripts/ui/equipment_face.gd:344)
+       [6] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [7] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+  ok: the pause menu's ABANDON ZONE, then CONFIRM ABANDON, pressed
+  ok: and the pause interface closes behind the abandon: the world runs again and the player is released
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_hub (res://scripts/main.gd:607)
+       [6] _on_snapshot (res://scripts/main.gd:444)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_hub (res://scripts/main.gd:607)
+       [6] _on_snapshot (res://scripts/main.gd:444)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_hub (res://scripts/main.gd:607)
+       [6] _on_snapshot (res://scripts/main.gd:444)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+  ok: abandoned by the ordinary lifecycle: one 'abandon_zone', and the Hub offers a new Zone
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_zone (res://scripts/main.gd:798)
+       [6] _on_snapshot (res://scripts/main.gd:436)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_zone (res://scripts/main.gd:798)
+       [6] _on_snapshot (res://scripts/main.gd:436)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] bind_player (res://scripts/ui/hud.gd:500)
+       [5] _to_zone (res://scripts/main.gd:798)
+       [6] _on_snapshot (res://scripts/main.gd:436)
+       [7] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [8] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+p3a: room c001       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c006       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_passing_platforms mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_002 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+  ok: the portal designed and opened zone_002
+  ok: the bridge recorded the minors step hosting EX50-011 in zone_002: EX50-021 Counterfire Arcade built as 'c024' behind the dead end 'c014' (its 'side_right' doorway); 'c014''s Check 89100051 moved into the minor, at its objectiv
+  ok: the controller found it in its room
+  ok: c025 is built from the minor's own shell
+  ok: as built: the lift at A, the shuttle at WEST, no service stair
+  ok: its Check stands on the goal gallery G, 4.00 m up
+  ok: the minor c025 stands behind c015
+  NOTE: HARNESS STEP: placed at c015's arrival (50.750000, 31.850000, 92.399994)
+  ok: walked from c015 into the minor c025 through the doorway the profile added (20.3 m, 0 death(s))
+  ok: H EAST pulled at A by hand; the shuttle under way (1.52 m along)
+  NOTE: HARNESS STEP: the player is killed through the damage path, to exercise EX50-011 §9's death rule
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+  ok: the player died before completing it, and the shuttle went home from 1.52 m by ordinary motion: largest single step 0.054 m against 0.088
+  ok: its rest at WEST was reported: ["minor_c025", "shuttle", 0.0, "WEST", false]
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+  ok: the minor c025 stands behind c015
+  NOTE: HARNESS STEP: placed at c015's arrival (50.750000, 31.850000, 92.399994)
+  ok: walked from c015 into the minor c025 through the doorway the profile added (20.3 m, 0 death(s))
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+  ok: H EAST, then STOP H at A as the shuttle crossed the rendezvous: HELD between its berths, 8.08 m along
+  ok: the held rest was reported with no errand: ["minor_c025", "shuttle", 8.07501983642578, "", true]
+  ok: ACCEPTED: 'minor_c025/shuttle' rests at [8.075, "", true] in the save
+  ok: and the lift's saved rest is its berth at A, unheld: [0.0, "A", false]
+  ok: left unfinished: the Check unclaimed, no service stair
+played: EX50-011 in c025 set up -- minor_c025/shuttle held at 8.075 m
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+ERROR: Not supported by this display server.
+   at: keyboard_get_keycode_from_physical (servers/display_server.cpp:1193)
+   GDScript backtrace (most recent call first):
+       [0] _name_of (res://scripts/ui/slot_keycaps.gd:62)
+       [1] of (res://scripts/ui/slot_keycaps.gd:33)
+       [2] _loadout_text (res://scripts/ui/hud.gd:582)
+       [3] refresh_echo (res://scripts/ui/hud.gd:603)
+       [4] _on_snapshot (res://scripts/main.gd:450)
+       [5] _handle (res://scripts/autoload/bridge_client.gd:174)
+       [6] _process (res://scripts/autoload/bridge_client.gd:85)
+GODOT CANDIDATE LIVE NEXT OK (26 checks, 3 notes)

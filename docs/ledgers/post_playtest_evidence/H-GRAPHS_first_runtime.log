@@ -1,0 +1,15 @@
+# HG-F1: the first runtime (always two tracks), the two suites that caught it
+== godot-signal-graph
+FAIL: a true input sets it
+FAIL: and it says so ONCE ([])
+FAIL: under a package of its own, not the bare room id ([])
+FAIL: and it HOLDS when the input goes away -- which is what lets one action open a way and then walk through it
+FAIL: it does not re-announce itself every tick (0)
+== godot-counterfire
+FAIL: the interval expired 0.0 s ago and the shutter is still open
+FAIL: the interval expired 0.0 s ago and the shutter is still open
+FAIL: the TIMER ran out: the window OFF, the OR OFF, and the shutter shut
+FAIL: the TIMER ran out: the window OFF, the OR OFF, and the shutter shut
+FAIL: the window ran out and the panel is partway down, the doorway clear (1.000)
+FAIL: the window ran out and the panel is partway down, the doorway clear (1.000)
+GODOT COUNTERFIRE FAILED (3 of 59)

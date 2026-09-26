@@ -1,0 +1,66 @@
+extends Node
+## H-MINIMAP REPRODUCTION, on the revision before it (5f44b5c). Scratch:
+## evidence, not a suite. Asks §7 / D-2 of the real game as it was.
+
+var failing := 0
+var cases := 0
+
+
+func _requirement(id: String, holds: bool, measured: String) -> void:
+	cases += 1
+	if holds:
+		print("REQUIREMENT %s HOLDS: %s" % [id, measured])
+	else:
+		failing += 1
+		print("REQUIREMENT %s FAILS: %s" % [id, measured])
+
+
+func _ready() -> void:
+	await get_tree().process_frame
+	# Main skips boot() for a driver; boot it, as the boot suite does, so
+	# the HUD the game builds is the one asked.
+	var main: Node = get_parent()
+	main.call("boot")
+	await get_tree().process_frame
+	# The HUD the game builds: is there a map on it?
+	var hud: Node = main.get("hud") if main != null else null
+	var maps: Array = []
+	if hud != null:
+		for node: Node in hud.find_children("*", "", true, false):
+			if node.get_class() == "Control" and str(node.name).to_lower() \
+					.contains("map"):
+				maps.append(node.name)
+	var controls := hud.find_children("*", "Control", true, false).size() \
+			if hud != null else -1
+	_requirement("M1 a map stays on screen in a Zone",
+			hud != null and not maps.is_empty(),
+			"Main's HUD found: %s, with %d controls, %d of them a map %s; " \
+			% [hud != null, controls, maps.size(), maps] + "the only map is "
+			+ "the F5 review schematic (NavSchematic), off by default")
+	# Walk three rooms of the candidate Zone and see what the bridge hears.
+	var zone_data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(
+			"res://tests/fixtures/candidate_zone.json"))
+	BridgeClient.assume_sent = true
+	var zone := ZoneController.new()
+	var pool := ResourcePool.new()
+	pool.name = "ResourcePool"
+	zone.add_child(pool)
+	get_tree().root.add_child(zone)
+	zone.setup(zone_data)
+	await get_tree().process_frame
+	BridgeClient.sent_intents.clear()
+	for room: String in ["c002", "c003", "c004"]:
+		var box: AABB = zone.room_bounds[room]
+		zone.player.global_position = box.get_center()
+		zone._track_chamber()
+		await get_tree().process_frame
+	var reported: Array = []
+	for intent: Dictionary in BridgeClient.sent_intents:
+		if intent.get("type") == "room_entered":
+			reported.append(intent.get("room_id"))
+	_requirement("M2 entering a room reports it (D-2)", reported.size() == 3,
+			"walked c002, c003, c004 (%d entered in the session); room_entered "
+			% zone.rooms_entered().size() + "sent for %s" % [reported])
+	print("MINIMAP REPRO: %d of %d requirements fail on 5f44b5c"
+			% [failing, cases])
+	get_tree().quit(0)

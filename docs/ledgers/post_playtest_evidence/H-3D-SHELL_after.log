@@ -1,0 +1,39 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+If you want to set size, change the anchors or consider using set_deferred().
+     GDScript backtrace (most recent call first):
+If you want to set size, change the anchors or consider using set_deferred().
+     GDScript backtrace (most recent call first):
+If you want to set size, change the anchors or consider using set_deferred().
+     GDScript backtrace (most recent call first):
+If you want to set size, change the anchors or consider using set_deferred().
+     GDScript backtrace (most recent call first):
+  -- the box
+  ok: the box renders in its own World3D, not the dungeon's
+  NOTE: screen (1280.000000, 720.000000), stage container (1280.000000, 720.000000), stage viewport (1280.000000, 720.000000)
+  ok: four walls, each 1.0 m from the camera at the centre and facing it squarely (wrong: [])
+  NOTE: wall centres, in page order: [(0.0, 0.0, -1.0), (-1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0)]
+  -- the order
+  ok: turning LEFT (Q) visits ["settings", "equipment", "map", "journal", "settings"]
+  ok: turning right (E) reverses it: ["settings", "journal", "map", "equipment", "settings"]
+  ok: and by the large on-screen arrows, clicked: ["settings", "equipment", "settings"]
+  -- a turn is the camera turning, not a squeeze
+  ok: the camera's yaw runs monotonically from 0 to 90 degrees over 61 frames (0.42 s)
+  ok: no wall moved, turned or scaled while it did (moved: [])
+  ok: and halfway round, Settings and Equipment are both in view
+  -- at rest, the front wall is square and readable
+  ok: the front wall faces the camera squarely (-1.00000) and fills 0.86 of the view's height (meant: 0.86)
+  -- the pointer reaches the front page, and only it
+  ok: a click where Settings' button is drawn ((640.000000, 347.000000)) presses it
+  ok: the same point, with Equipment in front, presses Equipment's button and not Settings'
+  ok: a click in the middle of a turn, where the arriving wall's button is drawn at that moment ((556.000000, 347.000000)), presses nothing
+  ok: and the same button, clicked once the turn has come to rest, is pressed
+  ok: a point off the front wall maps to no page pixel
+  -- the keys
+  ok: a clicked text field has focus and keeps Q and E: 'qe', still on journal
+  ok: Tab turns to Equipment (equipment), and from Equipment it closes
+  ok: Escape closes it from any wall
+  -- reduced motion
+  ok: with motion_intensity at 0 each turn is a cut, through the same walls in the same order: ["settings", "equipment", "map", "journal", "settings"]
+
+GODOT MENU SHELL OK (18 checks, 2 notes)

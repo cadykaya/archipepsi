@@ -1,0 +1,50 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:364)
+OpenGL API 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.1 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 20.1.2, 256 bits)
+libpulse.so.0: cannot open shared object file: No such file or directory
+libpulse.so.0: cannot open shared object file: No such file or directory
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5204:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5727:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+     at: initialize (servers/audio_server.cpp:244)
+
+  ok: saved equipment_compare_1280x720.png (1280x720)
+  ok: saved equipment_history_1280x720.png (1280x720)
+  ok: saved equipment_consumable_key_1280x720.png (1280x720)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _reattach_echo_log (res://scripts/autoload/bridge_client.gd:255)
+         [1] _handle (res://scripts/autoload/bridge_client.gd:160)
+         [2] _deliver (res://tests/equipment_face_driver.gd:144)
+         [3] _open (res://tests/equipment_face_driver.gd:150)
+         [4] _shoot (res://tests/equipment_face_driver.gd:997)
+         [5] _frames (res://tests/equipment_face_driver.gd:939)
+  ok: saved equipment_compare_1920x1080.png (1920x1080)
+  ok: saved equipment_history_1920x1080.png (1920x1080)
+  ok: saved equipment_consumable_key_1920x1080.png (1920x1080)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _reattach_echo_log (res://scripts/autoload/bridge_client.gd:255)
+         [1] _handle (res://scripts/autoload/bridge_client.gd:160)
+         [2] _deliver (res://tests/equipment_face_driver.gd:144)
+         [3] _open (res://tests/equipment_face_driver.gd:150)
+         [4] _shoot (res://tests/equipment_face_driver.gd:1016)
+         [5] _frames (res://tests/equipment_face_driver.gd:939)
+  ok: saved equipment_exhausted_1280x720.png (1280x720)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _reattach_echo_log (res://scripts/autoload/bridge_client.gd:255)
+         [1] _handle (res://scripts/autoload/bridge_client.gd:160)
+         [2] _deliver (res://tests/equipment_face_driver.gd:144)
+         [3] _open (res://tests/equipment_face_driver.gd:150)
+         [4] _shoot (res://tests/equipment_face_driver.gd:1020)
+         [5] _close (res://tests/equipment_face_driver.gd:167)
+         [6] _frames (res://tests/equipment_face_driver.gd:939)
+  ok: saved equipment_offline_1280x720.png (1280x720)
+
+EQUIPMENT FACE SHOTS OK (8 checks, 0 notes)

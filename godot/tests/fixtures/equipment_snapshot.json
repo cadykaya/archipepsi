@@ -1,0 +1,6409 @@
+{
+ "acquired": {
+  "active_proposal_id": "",
+  "active_zone": null,
+  "ap_connected": true,
+  "ap_mode": "mock",
+  "ap_state_is_current": false,
+  "available_capabilities": [
+   "cross_long_gap",
+   "ranged_hit"
+  ],
+  "bridge_connected": true,
+  "checked_location_ids": [],
+  "coins_available": 0,
+  "coins_received": 0,
+  "coins_spent": 0,
+  "completed_zone_count": 0,
+  "consumable_generation": 1,
+  "consumable_uses": [
+   {
+    "component_id": "act_cinder",
+    "spent": 1
+   }
+  ],
+  "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
+  "hub": {
+   "accepts_zone_request": true,
+   "ap_online": true,
+   "detail": "",
+   "discard_zone_id": "",
+   "discard_zone_name": "",
+   "finale_offered": false,
+   "finale_progress": 0,
+   "finale_required": 24,
+   "finale_unlocked": false,
+   "generation_in_progress": false,
+   "goal_sent": false,
+   "headline": "A Zone is ready.",
+   "holding_finale": false,
+   "mode": "ZONE_AVAILABLE",
+   "portal_enabled": true,
+   "postgame": false,
+   "resume_zone_id": "",
+   "resume_zone_name": "",
+   "revisitable": [],
+   "signal_keys": 0,
+   "signal_keys_required": 2
+  },
+  "interpretation_count": 11,
+  "interpretations": [
+   {
+    "concepts": [
+     "lash",
+     "reach",
+     "grip"
+    ],
+    "description": "A cord that bites, and the grip to hold it.",
+    "display_name": "Braided Lash",
+    "echo_id": "echo_89100001",
+    "interpretation_seq": 0,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lash",
+       "cooldown": 1.2,
+       "description": "Throws a weighted cord that bites what it hits.",
+       "display_name": "Braided Lash",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "bounces": 0,
+        "damage": 14.0,
+        "gravity_scale": 0.0,
+        "lifetime": 1.5,
+        "speed": 30.0,
+        "type": "projectile_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     },
+     {
+      "component": {
+       "component_id": "trait_grip",
+       "description": "Your footing is surer.",
+       "display_name": "Sure Grip",
+       "kind": "trait",
+       "multiplier": 1.1,
+       "requires_equipped": null,
+       "scaled_by": null,
+       "stat": "move_speed"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Hookshot",
+    "source_location_id": 89100001,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "grip"
+    ],
+    "description": "A longer cord for the lash you already carry.",
+    "display_name": "Leather Grip",
+    "echo_id": "echo_89100002",
+    "interpretation_seq": 1,
+    "mode": "literal",
+    "operations": [
+     {
+      "delta": 4.0,
+      "field": "damage",
+      "op": "upgrade",
+      "target": "act_lash"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Longshot",
+    "source_location_id": 89100002,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "speed",
+     "boots"
+    ],
+    "description": "A burst of speed along the ground.",
+    "display_name": "Sprint Coil",
+    "echo_id": "echo_89100003",
+    "interpretation_seq": 2,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_dash",
+       "cooldown": 2.0,
+       "description": "Dashes forward.",
+       "display_name": "Sprint Coil",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "force": 12.0,
+        "type": "dash"
+       },
+       "slot": "mobility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Pegasus Boots",
+    "source_location_id": 89100003,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bolt",
+     "range"
+    ],
+    "description": "A bolt that flies straight and far.",
+    "display_name": "Arc Bolt",
+    "echo_id": "echo_89100004",
+    "interpretation_seq": 3,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_bolt",
+       "cooldown": 0.8,
+       "description": "Fires a bolt straight down the sight line.",
+       "display_name": "Arc Bolt",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "damage": 9.0,
+        "pellets": 1,
+        "range": 40.0,
+        "spread_degrees": 0.0,
+        "type": "hitscan_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Crossbow",
+    "source_location_id": 89100004,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "magic",
+     "green",
+     "capacity"
+    ],
+    "description": "A reserve of green power.",
+    "display_name": "Magic Meter",
+    "echo_id": "echo_89100005",
+    "interpretation_seq": 4,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "component_id": "res_magic",
+       "description": "Green power, held.",
+       "display_name": "Magic Meter",
+       "initial_fraction": 1.0,
+       "kind": "resource",
+       "max_value": 60.0,
+       "palette_color": "violet",
+       "pip_count": null,
+       "presentation": "bar",
+       "regen_delay": 0.0,
+       "regen_per_second": 0.0
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Magic Upgrade",
+    "source_location_id": 89100005,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "capacity",
+     "shard"
+    ],
+    "description": "The meter holds more.",
+    "display_name": "Estus Shard",
+    "echo_id": "echo_89100006",
+    "interpretation_seq": 5,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "delta": 40.0,
+      "field": "max_value",
+      "op": "upgrade",
+      "target": "res_magic"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Estus Shard",
+    "source_location_id": 89100006,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ward",
+     "mirror"
+    ],
+    "description": "Steadier hands while the bolt is on your key.",
+    "display_name": "Warding Loop",
+    "echo_id": "echo_89100007",
+    "interpretation_seq": 6,
+    "mode": "conceptual",
+    "operations": [
+     {
+      "component": {
+       "component_id": "trait_ward",
+       "description": "Knocked about less while Arc Bolt is equipped.",
+       "display_name": "Warding Loop",
+       "kind": "trait",
+       "multiplier": 1.5,
+       "requires_equipped": "act_bolt",
+       "scaled_by": null,
+       "stat": "knockback_resist"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Mirror Shield",
+    "source_location_id": 89100007,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "sight",
+     "truth"
+    ],
+    "description": "Marks what hides.",
+    "display_name": "Scan Lens",
+    "echo_id": "echo_89100008",
+    "interpretation_seq": 7,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lens",
+       "cooldown": 6.0,
+       "description": "Marks enemies in view.",
+       "display_name": "Scan Lens",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "duration": 8.0,
+        "range": 30.0,
+        "type": "scan_mark"
+       },
+       "slot": "utility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Lens of Truth",
+    "source_location_id": 89100008,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bomb",
+     "fuse"
+    ],
+    "description": "A fused charge you throw.",
+    "display_name": "Cinder Charge",
+    "echo_id": "echo_89100009",
+    "interpretation_seq": 8,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 3,
+       "component_id": "act_cinder",
+       "cooldown": 1.0,
+       "description": "A lobbed charge that bursts and sets things alight.",
+       "display_name": "Cinder Charge",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 3.0,
+         "magnitude": 0.5,
+         "status": "burning",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 30.0,
+        "fuse": 1.5,
+        "launch_force": 12.0,
+        "radius": 3.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Bomb Bag",
+    "source_location_id": 89100009,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ice",
+     "flask"
+    ],
+    "description": "A flask that bursts cold.",
+    "display_name": "Frost Flask",
+    "echo_id": "echo_89100010",
+    "interpretation_seq": 9,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 2,
+       "component_id": "act_flask",
+       "cooldown": 1.0,
+       "description": "A lobbed flask that bursts and slows.",
+       "display_name": "Frost Flask",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 4.0,
+         "magnitude": 0.4,
+         "status": "slowed",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 18.0,
+        "fuse": 1.0,
+        "launch_force": 11.0,
+        "radius": 4.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Ice Trap",
+    "source_location_id": 89100010,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "flash",
+     "seed"
+    ],
+    "description": "A seed that bursts in a flash.",
+    "display_name": "Glow Seed",
+    "echo_id": "echo_89100011",
+    "interpretation_seq": 10,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 4,
+       "component_id": "act_glow",
+       "cooldown": 1.0,
+       "description": "A lobbed seed that bursts and stuns.",
+       "display_name": "Glow Seed",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 1.5,
+         "magnitude": 1.0,
+         "status": "stunned",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 6.0,
+        "fuse": 0.6,
+        "launch_force": 10.0,
+        "radius": 4.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Deku Nut",
+    "source_location_id": 89100011,
+    "source_recipient_name": "Link",
+    "tags": []
+   }
+  ],
+  "interpretations_complete": true,
+  "inventory": {
+   "consumable_generation": 1,
+   "items": [
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_lash",
+     "equipped_in": "echo_a",
+     "gear": null,
+     "siblings": [
+      "trait_grip"
+     ]
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_grip",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": [
+      "act_lash"
+     ]
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "mobility"
+     ],
+     "component_id": "act_dash",
+     "equipped_in": "mobility",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_bolt",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "res_magic",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_ward",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "utility"
+     ],
+     "component_id": "act_lens",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 2,
+     "charges_max": 3,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_cinder",
+     "equipped_in": "consumable",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 2,
+     "charges_max": 2,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_flask",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 4,
+     "charges_max": 4,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_glow",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    }
+   ],
+   "slots": [
+    {
+     "accepts": [
+      "act_lash",
+      "act_bolt"
+     ],
+     "holds": "act_lash",
+     "slot": "echo_a"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "slot": "echo_b"
+    },
+    {
+     "accepts": [
+      "act_dash"
+     ],
+     "holds": "act_dash",
+     "slot": "mobility"
+    },
+    {
+     "accepts": [
+      "act_lens"
+     ],
+     "holds": null,
+     "slot": "utility"
+    },
+    {
+     "accepts": [
+      "act_cinder",
+      "act_flask",
+      "act_glow"
+     ],
+     "holds": "act_cinder",
+     "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
+    }
+   ]
+  },
+  "last_generation_error": null,
+  "local_rewards": [],
+  "mechanics": {
+   "aliases": [],
+   "channel_order": [
+    "res_magic"
+   ],
+   "links": [],
+   "owned": [
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lash",
+      "cooldown": 1.2,
+      "description": "Throws a weighted cord that bites what it hits.",
+      "display_name": "Braided Lash",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "bounces": 0,
+       "damage": 18.0,
+       "gravity_scale": 0.0,
+       "lifetime": 1.5,
+       "speed": 30.0,
+       "type": "projectile_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Braided Lash",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 1,
+       "note": "+4 damage",
+       "operation": "upgrade",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Longshot",
+       "source_location_id": 89100002,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_grip",
+      "description": "Your footing is surer.",
+      "display_name": "Sure Grip",
+      "kind": "trait",
+      "multiplier": 1.1,
+      "requires_equipped": null,
+      "scaled_by": null,
+      "stat": "move_speed"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Sure Grip",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_dash",
+      "cooldown": 2.0,
+      "description": "Dashes forward.",
+      "display_name": "Sprint Coil",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "force": 12.0,
+       "type": "dash"
+      },
+      "slot": "mobility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 2,
+       "note": "Sprint Coil",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Pegasus Boots",
+       "source_location_id": 89100003,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_bolt",
+      "cooldown": 0.8,
+      "description": "Fires a bolt straight down the sight line.",
+      "display_name": "Arc Bolt",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "damage": 9.0,
+       "pellets": 1,
+       "range": 40.0,
+       "spread_degrees": 0.0,
+       "type": "hitscan_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 3,
+       "note": "Arc Bolt",
+       "operation": "create",
+       "source_game": "Dark Souls",
+       "source_item_name": "Crossbow",
+       "source_location_id": 89100004,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "res_magic",
+      "description": "Green power, held.",
+      "display_name": "Magic Meter",
+      "initial_fraction": 1.0,
+      "kind": "resource",
+      "max_value": 100.0,
+      "palette_color": "violet",
+      "pip_count": null,
+      "presentation": "bar",
+      "regen_delay": 0.0,
+      "regen_per_second": 0.0
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 4,
+       "note": "Magic Meter",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Magic Upgrade",
+       "source_location_id": 89100005,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 5,
+       "note": "+40 max_value",
+       "operation": "upgrade",
+       "source_game": "Dark Souls",
+       "source_item_name": "Estus Shard",
+       "source_location_id": 89100006,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_ward",
+      "description": "Knocked about less while Arc Bolt is equipped.",
+      "display_name": "Warding Loop",
+      "kind": "trait",
+      "multiplier": 1.5,
+      "requires_equipped": "act_bolt",
+      "scaled_by": null,
+      "stat": "knockback_resist"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 6,
+       "note": "Warding Loop",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Mirror Shield",
+       "source_location_id": 89100007,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lens",
+      "cooldown": 6.0,
+      "description": "Marks enemies in view.",
+      "display_name": "Scan Lens",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "duration": 8.0,
+       "range": 30.0,
+       "type": "scan_mark"
+      },
+      "slot": "utility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 7,
+       "note": "Scan Lens",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Lens of Truth",
+       "source_location_id": 89100008,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 3,
+      "component_id": "act_cinder",
+      "cooldown": 1.0,
+      "description": "A lobbed charge that bursts and sets things alight.",
+      "display_name": "Cinder Charge",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 3.0,
+        "magnitude": 0.5,
+        "status": "burning",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 30.0,
+       "fuse": 1.5,
+       "launch_force": 12.0,
+       "radius": 3.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 8,
+       "note": "Cinder Charge",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Bomb Bag",
+       "source_location_id": 89100009,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 2,
+      "component_id": "act_flask",
+      "cooldown": 1.0,
+      "description": "A lobbed flask that bursts and slows.",
+      "display_name": "Frost Flask",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 4.0,
+        "magnitude": 0.4,
+        "status": "slowed",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 18.0,
+       "fuse": 1.0,
+       "launch_force": 11.0,
+       "radius": 4.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 9,
+       "note": "Frost Flask",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Ice Trap",
+       "source_location_id": 89100010,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 4,
+      "component_id": "act_glow",
+      "cooldown": 1.0,
+      "description": "A lobbed seed that bursts and stuns.",
+      "display_name": "Glow Seed",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 1.5,
+        "magnitude": 1.0,
+        "status": "stunned",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 6.0,
+       "fuse": 0.6,
+       "launch_force": 10.0,
+       "radius": 4.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 10,
+       "note": "Glow Seed",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Deku Nut",
+       "source_location_id": 89100011,
+       "source_recipient_name": "Link"
+      }
+     ]
+    }
+   ]
+  },
+  "missing_location_ids": [],
+  "pending_checks": [],
+  "protocol_version": 8,
+  "race_mode": false,
+  "scouted": [],
+  "seed_name": "EQUIPFIXTURE",
+  "shop": {
+   "created_after_zone_count": 0,
+   "stock": []
+  },
+  "signal_keys": 0,
+  "slot_id": 0,
+  "slot_name": "Pepsi",
+  "slots": {
+   "consumable": "act_cinder",
+   "echo_a": "act_lash",
+   "echo_b": null,
+   "mobility": "act_dash",
+   "utility": null
+  },
+  "static_glitch_units": 0,
+  "static_received": 0,
+  "team": 0,
+  "type": "campaign_snapshot",
+  "unlocked_tier": 0,
+  "zone_map": null
+ },
+ "base": {
+  "active_proposal_id": "",
+  "active_zone": null,
+  "ap_connected": true,
+  "ap_mode": "mock",
+  "ap_state_is_current": false,
+  "available_capabilities": [
+   "cross_long_gap",
+   "ranged_hit"
+  ],
+  "bridge_connected": true,
+  "checked_location_ids": [],
+  "coins_available": 0,
+  "coins_received": 0,
+  "coins_spent": 0,
+  "completed_zone_count": 0,
+  "consumable_generation": 1,
+  "consumable_uses": [
+   {
+    "component_id": "act_cinder",
+    "spent": 1
+   }
+  ],
+  "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
+  "hub": {
+   "accepts_zone_request": true,
+   "ap_online": true,
+   "detail": "",
+   "discard_zone_id": "",
+   "discard_zone_name": "",
+   "finale_offered": false,
+   "finale_progress": 0,
+   "finale_required": 24,
+   "finale_unlocked": false,
+   "generation_in_progress": false,
+   "goal_sent": false,
+   "headline": "A Zone is ready.",
+   "holding_finale": false,
+   "mode": "ZONE_AVAILABLE",
+   "portal_enabled": true,
+   "postgame": false,
+   "resume_zone_id": "",
+   "resume_zone_name": "",
+   "revisitable": [],
+   "signal_keys": 0,
+   "signal_keys_required": 2
+  },
+  "interpretation_count": 10,
+  "interpretations": [
+   {
+    "concepts": [
+     "lash",
+     "reach",
+     "grip"
+    ],
+    "description": "A cord that bites, and the grip to hold it.",
+    "display_name": "Braided Lash",
+    "echo_id": "echo_89100001",
+    "interpretation_seq": 0,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lash",
+       "cooldown": 1.2,
+       "description": "Throws a weighted cord that bites what it hits.",
+       "display_name": "Braided Lash",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "bounces": 0,
+        "damage": 14.0,
+        "gravity_scale": 0.0,
+        "lifetime": 1.5,
+        "speed": 30.0,
+        "type": "projectile_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     },
+     {
+      "component": {
+       "component_id": "trait_grip",
+       "description": "Your footing is surer.",
+       "display_name": "Sure Grip",
+       "kind": "trait",
+       "multiplier": 1.1,
+       "requires_equipped": null,
+       "scaled_by": null,
+       "stat": "move_speed"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Hookshot",
+    "source_location_id": 89100001,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "grip"
+    ],
+    "description": "A longer cord for the lash you already carry.",
+    "display_name": "Leather Grip",
+    "echo_id": "echo_89100002",
+    "interpretation_seq": 1,
+    "mode": "literal",
+    "operations": [
+     {
+      "delta": 4.0,
+      "field": "damage",
+      "op": "upgrade",
+      "target": "act_lash"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Longshot",
+    "source_location_id": 89100002,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "speed",
+     "boots"
+    ],
+    "description": "A burst of speed along the ground.",
+    "display_name": "Sprint Coil",
+    "echo_id": "echo_89100003",
+    "interpretation_seq": 2,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_dash",
+       "cooldown": 2.0,
+       "description": "Dashes forward.",
+       "display_name": "Sprint Coil",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "force": 12.0,
+        "type": "dash"
+       },
+       "slot": "mobility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Pegasus Boots",
+    "source_location_id": 89100003,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bolt",
+     "range"
+    ],
+    "description": "A bolt that flies straight and far.",
+    "display_name": "Arc Bolt",
+    "echo_id": "echo_89100004",
+    "interpretation_seq": 3,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_bolt",
+       "cooldown": 0.8,
+       "description": "Fires a bolt straight down the sight line.",
+       "display_name": "Arc Bolt",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "damage": 9.0,
+        "pellets": 1,
+        "range": 40.0,
+        "spread_degrees": 0.0,
+        "type": "hitscan_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Crossbow",
+    "source_location_id": 89100004,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "magic",
+     "green",
+     "capacity"
+    ],
+    "description": "A reserve of green power.",
+    "display_name": "Magic Meter",
+    "echo_id": "echo_89100005",
+    "interpretation_seq": 4,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "component_id": "res_magic",
+       "description": "Green power, held.",
+       "display_name": "Magic Meter",
+       "initial_fraction": 1.0,
+       "kind": "resource",
+       "max_value": 60.0,
+       "palette_color": "violet",
+       "pip_count": null,
+       "presentation": "bar",
+       "regen_delay": 0.0,
+       "regen_per_second": 0.0
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Magic Upgrade",
+    "source_location_id": 89100005,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "capacity",
+     "shard"
+    ],
+    "description": "The meter holds more.",
+    "display_name": "Estus Shard",
+    "echo_id": "echo_89100006",
+    "interpretation_seq": 5,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "delta": 40.0,
+      "field": "max_value",
+      "op": "upgrade",
+      "target": "res_magic"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Estus Shard",
+    "source_location_id": 89100006,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ward",
+     "mirror"
+    ],
+    "description": "Steadier hands while the bolt is on your key.",
+    "display_name": "Warding Loop",
+    "echo_id": "echo_89100007",
+    "interpretation_seq": 6,
+    "mode": "conceptual",
+    "operations": [
+     {
+      "component": {
+       "component_id": "trait_ward",
+       "description": "Knocked about less while Arc Bolt is equipped.",
+       "display_name": "Warding Loop",
+       "kind": "trait",
+       "multiplier": 1.5,
+       "requires_equipped": "act_bolt",
+       "scaled_by": null,
+       "stat": "knockback_resist"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Mirror Shield",
+    "source_location_id": 89100007,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "sight",
+     "truth"
+    ],
+    "description": "Marks what hides.",
+    "display_name": "Scan Lens",
+    "echo_id": "echo_89100008",
+    "interpretation_seq": 7,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lens",
+       "cooldown": 6.0,
+       "description": "Marks enemies in view.",
+       "display_name": "Scan Lens",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "duration": 8.0,
+        "range": 30.0,
+        "type": "scan_mark"
+       },
+       "slot": "utility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Lens of Truth",
+    "source_location_id": 89100008,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bomb",
+     "fuse"
+    ],
+    "description": "A fused charge you throw.",
+    "display_name": "Cinder Charge",
+    "echo_id": "echo_89100009",
+    "interpretation_seq": 8,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 3,
+       "component_id": "act_cinder",
+       "cooldown": 1.0,
+       "description": "A lobbed charge that bursts and sets things alight.",
+       "display_name": "Cinder Charge",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 3.0,
+         "magnitude": 0.5,
+         "status": "burning",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 30.0,
+        "fuse": 1.5,
+        "launch_force": 12.0,
+        "radius": 3.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Bomb Bag",
+    "source_location_id": 89100009,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ice",
+     "flask"
+    ],
+    "description": "A flask that bursts cold.",
+    "display_name": "Frost Flask",
+    "echo_id": "echo_89100010",
+    "interpretation_seq": 9,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 2,
+       "component_id": "act_flask",
+       "cooldown": 1.0,
+       "description": "A lobbed flask that bursts and slows.",
+       "display_name": "Frost Flask",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 4.0,
+         "magnitude": 0.4,
+         "status": "slowed",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 18.0,
+        "fuse": 1.0,
+        "launch_force": 11.0,
+        "radius": 4.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Ice Trap",
+    "source_location_id": 89100010,
+    "source_recipient_name": "Link",
+    "tags": []
+   }
+  ],
+  "interpretations_complete": true,
+  "inventory": {
+   "consumable_generation": 1,
+   "items": [
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_lash",
+     "equipped_in": "echo_a",
+     "gear": null,
+     "siblings": [
+      "trait_grip"
+     ]
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_grip",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": [
+      "act_lash"
+     ]
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "mobility"
+     ],
+     "component_id": "act_dash",
+     "equipped_in": "mobility",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_bolt",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "res_magic",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_ward",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "utility"
+     ],
+     "component_id": "act_lens",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 2,
+     "charges_max": 3,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_cinder",
+     "equipped_in": "consumable",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 2,
+     "charges_max": 2,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_flask",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    }
+   ],
+   "slots": [
+    {
+     "accepts": [
+      "act_lash",
+      "act_bolt"
+     ],
+     "holds": "act_lash",
+     "slot": "echo_a"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "slot": "echo_b"
+    },
+    {
+     "accepts": [
+      "act_dash"
+     ],
+     "holds": "act_dash",
+     "slot": "mobility"
+    },
+    {
+     "accepts": [
+      "act_lens"
+     ],
+     "holds": null,
+     "slot": "utility"
+    },
+    {
+     "accepts": [
+      "act_cinder",
+      "act_flask"
+     ],
+     "holds": "act_cinder",
+     "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
+    }
+   ]
+  },
+  "last_generation_error": null,
+  "local_rewards": [],
+  "mechanics": {
+   "aliases": [],
+   "channel_order": [
+    "res_magic"
+   ],
+   "links": [],
+   "owned": [
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lash",
+      "cooldown": 1.2,
+      "description": "Throws a weighted cord that bites what it hits.",
+      "display_name": "Braided Lash",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "bounces": 0,
+       "damage": 18.0,
+       "gravity_scale": 0.0,
+       "lifetime": 1.5,
+       "speed": 30.0,
+       "type": "projectile_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Braided Lash",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 1,
+       "note": "+4 damage",
+       "operation": "upgrade",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Longshot",
+       "source_location_id": 89100002,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_grip",
+      "description": "Your footing is surer.",
+      "display_name": "Sure Grip",
+      "kind": "trait",
+      "multiplier": 1.1,
+      "requires_equipped": null,
+      "scaled_by": null,
+      "stat": "move_speed"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Sure Grip",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_dash",
+      "cooldown": 2.0,
+      "description": "Dashes forward.",
+      "display_name": "Sprint Coil",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "force": 12.0,
+       "type": "dash"
+      },
+      "slot": "mobility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 2,
+       "note": "Sprint Coil",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Pegasus Boots",
+       "source_location_id": 89100003,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_bolt",
+      "cooldown": 0.8,
+      "description": "Fires a bolt straight down the sight line.",
+      "display_name": "Arc Bolt",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "damage": 9.0,
+       "pellets": 1,
+       "range": 40.0,
+       "spread_degrees": 0.0,
+       "type": "hitscan_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 3,
+       "note": "Arc Bolt",
+       "operation": "create",
+       "source_game": "Dark Souls",
+       "source_item_name": "Crossbow",
+       "source_location_id": 89100004,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "res_magic",
+      "description": "Green power, held.",
+      "display_name": "Magic Meter",
+      "initial_fraction": 1.0,
+      "kind": "resource",
+      "max_value": 100.0,
+      "palette_color": "violet",
+      "pip_count": null,
+      "presentation": "bar",
+      "regen_delay": 0.0,
+      "regen_per_second": 0.0
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 4,
+       "note": "Magic Meter",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Magic Upgrade",
+       "source_location_id": 89100005,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 5,
+       "note": "+40 max_value",
+       "operation": "upgrade",
+       "source_game": "Dark Souls",
+       "source_item_name": "Estus Shard",
+       "source_location_id": 89100006,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_ward",
+      "description": "Knocked about less while Arc Bolt is equipped.",
+      "display_name": "Warding Loop",
+      "kind": "trait",
+      "multiplier": 1.5,
+      "requires_equipped": "act_bolt",
+      "scaled_by": null,
+      "stat": "knockback_resist"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 6,
+       "note": "Warding Loop",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Mirror Shield",
+       "source_location_id": 89100007,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lens",
+      "cooldown": 6.0,
+      "description": "Marks enemies in view.",
+      "display_name": "Scan Lens",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "duration": 8.0,
+       "range": 30.0,
+       "type": "scan_mark"
+      },
+      "slot": "utility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 7,
+       "note": "Scan Lens",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Lens of Truth",
+       "source_location_id": 89100008,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 3,
+      "component_id": "act_cinder",
+      "cooldown": 1.0,
+      "description": "A lobbed charge that bursts and sets things alight.",
+      "display_name": "Cinder Charge",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 3.0,
+        "magnitude": 0.5,
+        "status": "burning",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 30.0,
+       "fuse": 1.5,
+       "launch_force": 12.0,
+       "radius": 3.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 8,
+       "note": "Cinder Charge",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Bomb Bag",
+       "source_location_id": 89100009,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 2,
+      "component_id": "act_flask",
+      "cooldown": 1.0,
+      "description": "A lobbed flask that bursts and slows.",
+      "display_name": "Frost Flask",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 4.0,
+        "magnitude": 0.4,
+        "status": "slowed",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 18.0,
+       "fuse": 1.0,
+       "launch_force": 11.0,
+       "radius": 4.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 9,
+       "note": "Frost Flask",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Ice Trap",
+       "source_location_id": 89100010,
+       "source_recipient_name": "Link"
+      }
+     ]
+    }
+   ]
+  },
+  "missing_location_ids": [],
+  "pending_checks": [],
+  "protocol_version": 8,
+  "race_mode": false,
+  "scouted": [],
+  "seed_name": "EQUIPFIXTURE",
+  "shop": {
+   "created_after_zone_count": 0,
+   "stock": []
+  },
+  "signal_keys": 0,
+  "slot_id": 0,
+  "slot_name": "Pepsi",
+  "slots": {
+   "consumable": "act_cinder",
+   "echo_a": "act_lash",
+   "echo_b": null,
+   "mobility": "act_dash",
+   "utility": null
+  },
+  "static_glitch_units": 0,
+  "static_received": 0,
+  "team": 0,
+  "type": "campaign_snapshot",
+  "unlocked_tier": 0,
+  "zone_map": null
+ },
+ "exhausted": {
+  "active_proposal_id": "",
+  "active_zone": null,
+  "ap_connected": true,
+  "ap_mode": "mock",
+  "ap_state_is_current": false,
+  "available_capabilities": [
+   "cross_long_gap",
+   "ranged_hit"
+  ],
+  "bridge_connected": true,
+  "checked_location_ids": [],
+  "coins_available": 0,
+  "coins_received": 0,
+  "coins_spent": 0,
+  "completed_zone_count": 0,
+  "consumable_generation": 1,
+  "consumable_uses": [
+   {
+    "component_id": "act_cinder",
+    "spent": 3
+   }
+  ],
+  "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
+  "hub": {
+   "accepts_zone_request": true,
+   "ap_online": true,
+   "detail": "",
+   "discard_zone_id": "",
+   "discard_zone_name": "",
+   "finale_offered": false,
+   "finale_progress": 0,
+   "finale_required": 24,
+   "finale_unlocked": false,
+   "generation_in_progress": false,
+   "goal_sent": false,
+   "headline": "A Zone is ready.",
+   "holding_finale": false,
+   "mode": "ZONE_AVAILABLE",
+   "portal_enabled": true,
+   "postgame": false,
+   "resume_zone_id": "",
+   "resume_zone_name": "",
+   "revisitable": [],
+   "signal_keys": 0,
+   "signal_keys_required": 2
+  },
+  "interpretation_count": 10,
+  "interpretations": [
+   {
+    "concepts": [
+     "lash",
+     "reach",
+     "grip"
+    ],
+    "description": "A cord that bites, and the grip to hold it.",
+    "display_name": "Braided Lash",
+    "echo_id": "echo_89100001",
+    "interpretation_seq": 0,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lash",
+       "cooldown": 1.2,
+       "description": "Throws a weighted cord that bites what it hits.",
+       "display_name": "Braided Lash",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "bounces": 0,
+        "damage": 14.0,
+        "gravity_scale": 0.0,
+        "lifetime": 1.5,
+        "speed": 30.0,
+        "type": "projectile_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     },
+     {
+      "component": {
+       "component_id": "trait_grip",
+       "description": "Your footing is surer.",
+       "display_name": "Sure Grip",
+       "kind": "trait",
+       "multiplier": 1.1,
+       "requires_equipped": null,
+       "scaled_by": null,
+       "stat": "move_speed"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Hookshot",
+    "source_location_id": 89100001,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "grip"
+    ],
+    "description": "A longer cord for the lash you already carry.",
+    "display_name": "Leather Grip",
+    "echo_id": "echo_89100002",
+    "interpretation_seq": 1,
+    "mode": "literal",
+    "operations": [
+     {
+      "delta": 4.0,
+      "field": "damage",
+      "op": "upgrade",
+      "target": "act_lash"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Longshot",
+    "source_location_id": 89100002,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "speed",
+     "boots"
+    ],
+    "description": "A burst of speed along the ground.",
+    "display_name": "Sprint Coil",
+    "echo_id": "echo_89100003",
+    "interpretation_seq": 2,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_dash",
+       "cooldown": 2.0,
+       "description": "Dashes forward.",
+       "display_name": "Sprint Coil",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "force": 12.0,
+        "type": "dash"
+       },
+       "slot": "mobility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Pegasus Boots",
+    "source_location_id": 89100003,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bolt",
+     "range"
+    ],
+    "description": "A bolt that flies straight and far.",
+    "display_name": "Arc Bolt",
+    "echo_id": "echo_89100004",
+    "interpretation_seq": 3,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_bolt",
+       "cooldown": 0.8,
+       "description": "Fires a bolt straight down the sight line.",
+       "display_name": "Arc Bolt",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "damage": 9.0,
+        "pellets": 1,
+        "range": 40.0,
+        "spread_degrees": 0.0,
+        "type": "hitscan_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Crossbow",
+    "source_location_id": 89100004,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "magic",
+     "green",
+     "capacity"
+    ],
+    "description": "A reserve of green power.",
+    "display_name": "Magic Meter",
+    "echo_id": "echo_89100005",
+    "interpretation_seq": 4,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "component_id": "res_magic",
+       "description": "Green power, held.",
+       "display_name": "Magic Meter",
+       "initial_fraction": 1.0,
+       "kind": "resource",
+       "max_value": 60.0,
+       "palette_color": "violet",
+       "pip_count": null,
+       "presentation": "bar",
+       "regen_delay": 0.0,
+       "regen_per_second": 0.0
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Magic Upgrade",
+    "source_location_id": 89100005,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "capacity",
+     "shard"
+    ],
+    "description": "The meter holds more.",
+    "display_name": "Estus Shard",
+    "echo_id": "echo_89100006",
+    "interpretation_seq": 5,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "delta": 40.0,
+      "field": "max_value",
+      "op": "upgrade",
+      "target": "res_magic"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Estus Shard",
+    "source_location_id": 89100006,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ward",
+     "mirror"
+    ],
+    "description": "Steadier hands while the bolt is on your key.",
+    "display_name": "Warding Loop",
+    "echo_id": "echo_89100007",
+    "interpretation_seq": 6,
+    "mode": "conceptual",
+    "operations": [
+     {
+      "component": {
+       "component_id": "trait_ward",
+       "description": "Knocked about less while Arc Bolt is equipped.",
+       "display_name": "Warding Loop",
+       "kind": "trait",
+       "multiplier": 1.5,
+       "requires_equipped": "act_bolt",
+       "scaled_by": null,
+       "stat": "knockback_resist"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Mirror Shield",
+    "source_location_id": 89100007,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "sight",
+     "truth"
+    ],
+    "description": "Marks what hides.",
+    "display_name": "Scan Lens",
+    "echo_id": "echo_89100008",
+    "interpretation_seq": 7,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lens",
+       "cooldown": 6.0,
+       "description": "Marks enemies in view.",
+       "display_name": "Scan Lens",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "duration": 8.0,
+        "range": 30.0,
+        "type": "scan_mark"
+       },
+       "slot": "utility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Lens of Truth",
+    "source_location_id": 89100008,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bomb",
+     "fuse"
+    ],
+    "description": "A fused charge you throw.",
+    "display_name": "Cinder Charge",
+    "echo_id": "echo_89100009",
+    "interpretation_seq": 8,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 3,
+       "component_id": "act_cinder",
+       "cooldown": 1.0,
+       "description": "A lobbed charge that bursts and sets things alight.",
+       "display_name": "Cinder Charge",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 3.0,
+         "magnitude": 0.5,
+         "status": "burning",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 30.0,
+        "fuse": 1.5,
+        "launch_force": 12.0,
+        "radius": 3.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Bomb Bag",
+    "source_location_id": 89100009,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ice",
+     "flask"
+    ],
+    "description": "A flask that bursts cold.",
+    "display_name": "Frost Flask",
+    "echo_id": "echo_89100010",
+    "interpretation_seq": 9,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 2,
+       "component_id": "act_flask",
+       "cooldown": 1.0,
+       "description": "A lobbed flask that bursts and slows.",
+       "display_name": "Frost Flask",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 4.0,
+         "magnitude": 0.4,
+         "status": "slowed",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 18.0,
+        "fuse": 1.0,
+        "launch_force": 11.0,
+        "radius": 4.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Ice Trap",
+    "source_location_id": 89100010,
+    "source_recipient_name": "Link",
+    "tags": []
+   }
+  ],
+  "interpretations_complete": true,
+  "inventory": {
+   "consumable_generation": 1,
+   "items": [
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_lash",
+     "equipped_in": "echo_a",
+     "gear": null,
+     "siblings": [
+      "trait_grip"
+     ]
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_grip",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": [
+      "act_lash"
+     ]
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "mobility"
+     ],
+     "component_id": "act_dash",
+     "equipped_in": "mobility",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_bolt",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "res_magic",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_ward",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "utility"
+     ],
+     "component_id": "act_lens",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 0,
+     "charges_max": 3,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_cinder",
+     "equipped_in": "consumable",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 2,
+     "charges_max": 2,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_flask",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    }
+   ],
+   "slots": [
+    {
+     "accepts": [
+      "act_lash",
+      "act_bolt"
+     ],
+     "holds": "act_lash",
+     "slot": "echo_a"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "slot": "echo_b"
+    },
+    {
+     "accepts": [
+      "act_dash"
+     ],
+     "holds": "act_dash",
+     "slot": "mobility"
+    },
+    {
+     "accepts": [
+      "act_lens"
+     ],
+     "holds": null,
+     "slot": "utility"
+    },
+    {
+     "accepts": [
+      "act_cinder",
+      "act_flask"
+     ],
+     "holds": "act_cinder",
+     "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
+    }
+   ]
+  },
+  "last_generation_error": null,
+  "local_rewards": [],
+  "mechanics": {
+   "aliases": [],
+   "channel_order": [
+    "res_magic"
+   ],
+   "links": [],
+   "owned": [
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lash",
+      "cooldown": 1.2,
+      "description": "Throws a weighted cord that bites what it hits.",
+      "display_name": "Braided Lash",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "bounces": 0,
+       "damage": 18.0,
+       "gravity_scale": 0.0,
+       "lifetime": 1.5,
+       "speed": 30.0,
+       "type": "projectile_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Braided Lash",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 1,
+       "note": "+4 damage",
+       "operation": "upgrade",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Longshot",
+       "source_location_id": 89100002,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_grip",
+      "description": "Your footing is surer.",
+      "display_name": "Sure Grip",
+      "kind": "trait",
+      "multiplier": 1.1,
+      "requires_equipped": null,
+      "scaled_by": null,
+      "stat": "move_speed"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Sure Grip",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_dash",
+      "cooldown": 2.0,
+      "description": "Dashes forward.",
+      "display_name": "Sprint Coil",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "force": 12.0,
+       "type": "dash"
+      },
+      "slot": "mobility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 2,
+       "note": "Sprint Coil",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Pegasus Boots",
+       "source_location_id": 89100003,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_bolt",
+      "cooldown": 0.8,
+      "description": "Fires a bolt straight down the sight line.",
+      "display_name": "Arc Bolt",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "damage": 9.0,
+       "pellets": 1,
+       "range": 40.0,
+       "spread_degrees": 0.0,
+       "type": "hitscan_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 3,
+       "note": "Arc Bolt",
+       "operation": "create",
+       "source_game": "Dark Souls",
+       "source_item_name": "Crossbow",
+       "source_location_id": 89100004,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "res_magic",
+      "description": "Green power, held.",
+      "display_name": "Magic Meter",
+      "initial_fraction": 1.0,
+      "kind": "resource",
+      "max_value": 100.0,
+      "palette_color": "violet",
+      "pip_count": null,
+      "presentation": "bar",
+      "regen_delay": 0.0,
+      "regen_per_second": 0.0
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 4,
+       "note": "Magic Meter",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Magic Upgrade",
+       "source_location_id": 89100005,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 5,
+       "note": "+40 max_value",
+       "operation": "upgrade",
+       "source_game": "Dark Souls",
+       "source_item_name": "Estus Shard",
+       "source_location_id": 89100006,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_ward",
+      "description": "Knocked about less while Arc Bolt is equipped.",
+      "display_name": "Warding Loop",
+      "kind": "trait",
+      "multiplier": 1.5,
+      "requires_equipped": "act_bolt",
+      "scaled_by": null,
+      "stat": "knockback_resist"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 6,
+       "note": "Warding Loop",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Mirror Shield",
+       "source_location_id": 89100007,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lens",
+      "cooldown": 6.0,
+      "description": "Marks enemies in view.",
+      "display_name": "Scan Lens",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "duration": 8.0,
+       "range": 30.0,
+       "type": "scan_mark"
+      },
+      "slot": "utility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 7,
+       "note": "Scan Lens",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Lens of Truth",
+       "source_location_id": 89100008,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 3,
+      "component_id": "act_cinder",
+      "cooldown": 1.0,
+      "description": "A lobbed charge that bursts and sets things alight.",
+      "display_name": "Cinder Charge",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 3.0,
+        "magnitude": 0.5,
+        "status": "burning",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 30.0,
+       "fuse": 1.5,
+       "launch_force": 12.0,
+       "radius": 3.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 8,
+       "note": "Cinder Charge",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Bomb Bag",
+       "source_location_id": 89100009,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 2,
+      "component_id": "act_flask",
+      "cooldown": 1.0,
+      "description": "A lobbed flask that bursts and slows.",
+      "display_name": "Frost Flask",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 4.0,
+        "magnitude": 0.4,
+        "status": "slowed",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 18.0,
+       "fuse": 1.0,
+       "launch_force": 11.0,
+       "radius": 4.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 9,
+       "note": "Frost Flask",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Ice Trap",
+       "source_location_id": 89100010,
+       "source_recipient_name": "Link"
+      }
+     ]
+    }
+   ]
+  },
+  "missing_location_ids": [],
+  "pending_checks": [],
+  "protocol_version": 8,
+  "race_mode": false,
+  "scouted": [],
+  "seed_name": "EQUIPFIXTURE",
+  "shop": {
+   "created_after_zone_count": 0,
+   "stock": []
+  },
+  "signal_keys": 0,
+  "slot_id": 0,
+  "slot_name": "Pepsi",
+  "slots": {
+   "consumable": "act_cinder",
+   "echo_a": "act_lash",
+   "echo_b": null,
+   "mobility": "act_dash",
+   "utility": null
+  },
+  "static_glitch_units": 0,
+  "static_received": 0,
+  "team": 0,
+  "type": "campaign_snapshot",
+  "unlocked_tier": 0,
+  "zone_map": null
+ },
+ "none_owned": {
+  "active_proposal_id": "",
+  "active_zone": null,
+  "ap_connected": true,
+  "ap_mode": "mock",
+  "ap_state_is_current": false,
+  "available_capabilities": [
+   "cross_long_gap",
+   "ranged_hit"
+  ],
+  "bridge_connected": true,
+  "checked_location_ids": [],
+  "coins_available": 0,
+  "coins_received": 0,
+  "coins_spent": 0,
+  "completed_zone_count": 0,
+  "consumable_generation": 1,
+  "consumable_uses": [],
+  "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
+  "hub": {
+   "accepts_zone_request": true,
+   "ap_online": true,
+   "detail": "",
+   "discard_zone_id": "",
+   "discard_zone_name": "",
+   "finale_offered": false,
+   "finale_progress": 0,
+   "finale_required": 24,
+   "finale_unlocked": false,
+   "generation_in_progress": false,
+   "goal_sent": false,
+   "headline": "A Zone is ready.",
+   "holding_finale": false,
+   "mode": "ZONE_AVAILABLE",
+   "portal_enabled": true,
+   "postgame": false,
+   "resume_zone_id": "",
+   "resume_zone_name": "",
+   "revisitable": [],
+   "signal_keys": 0,
+   "signal_keys_required": 2
+  },
+  "interpretation_count": 8,
+  "interpretations": [
+   {
+    "concepts": [
+     "lash",
+     "reach",
+     "grip"
+    ],
+    "description": "A cord that bites, and the grip to hold it.",
+    "display_name": "Braided Lash",
+    "echo_id": "echo_89100001",
+    "interpretation_seq": 0,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lash",
+       "cooldown": 1.2,
+       "description": "Throws a weighted cord that bites what it hits.",
+       "display_name": "Braided Lash",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "bounces": 0,
+        "damage": 14.0,
+        "gravity_scale": 0.0,
+        "lifetime": 1.5,
+        "speed": 30.0,
+        "type": "projectile_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     },
+     {
+      "component": {
+       "component_id": "trait_grip",
+       "description": "Your footing is surer.",
+       "display_name": "Sure Grip",
+       "kind": "trait",
+       "multiplier": 1.1,
+       "requires_equipped": null,
+       "scaled_by": null,
+       "stat": "move_speed"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Hookshot",
+    "source_location_id": 89100001,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "grip"
+    ],
+    "description": "A longer cord for the lash you already carry.",
+    "display_name": "Leather Grip",
+    "echo_id": "echo_89100002",
+    "interpretation_seq": 1,
+    "mode": "literal",
+    "operations": [
+     {
+      "delta": 4.0,
+      "field": "damage",
+      "op": "upgrade",
+      "target": "act_lash"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Longshot",
+    "source_location_id": 89100002,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "speed",
+     "boots"
+    ],
+    "description": "A burst of speed along the ground.",
+    "display_name": "Sprint Coil",
+    "echo_id": "echo_89100003",
+    "interpretation_seq": 2,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_dash",
+       "cooldown": 2.0,
+       "description": "Dashes forward.",
+       "display_name": "Sprint Coil",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "force": 12.0,
+        "type": "dash"
+       },
+       "slot": "mobility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Pegasus Boots",
+    "source_location_id": 89100003,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bolt",
+     "range"
+    ],
+    "description": "A bolt that flies straight and far.",
+    "display_name": "Arc Bolt",
+    "echo_id": "echo_89100004",
+    "interpretation_seq": 3,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_bolt",
+       "cooldown": 0.8,
+       "description": "Fires a bolt straight down the sight line.",
+       "display_name": "Arc Bolt",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "damage": 9.0,
+        "pellets": 1,
+        "range": 40.0,
+        "spread_degrees": 0.0,
+        "type": "hitscan_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Crossbow",
+    "source_location_id": 89100004,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "magic",
+     "green",
+     "capacity"
+    ],
+    "description": "A reserve of green power.",
+    "display_name": "Magic Meter",
+    "echo_id": "echo_89100005",
+    "interpretation_seq": 4,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "component_id": "res_magic",
+       "description": "Green power, held.",
+       "display_name": "Magic Meter",
+       "initial_fraction": 1.0,
+       "kind": "resource",
+       "max_value": 60.0,
+       "palette_color": "violet",
+       "pip_count": null,
+       "presentation": "bar",
+       "regen_delay": 0.0,
+       "regen_per_second": 0.0
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Magic Upgrade",
+    "source_location_id": 89100005,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "capacity",
+     "shard"
+    ],
+    "description": "The meter holds more.",
+    "display_name": "Estus Shard",
+    "echo_id": "echo_89100006",
+    "interpretation_seq": 5,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "delta": 40.0,
+      "field": "max_value",
+      "op": "upgrade",
+      "target": "res_magic"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Estus Shard",
+    "source_location_id": 89100006,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ward",
+     "mirror"
+    ],
+    "description": "Steadier hands while the bolt is on your key.",
+    "display_name": "Warding Loop",
+    "echo_id": "echo_89100007",
+    "interpretation_seq": 6,
+    "mode": "conceptual",
+    "operations": [
+     {
+      "component": {
+       "component_id": "trait_ward",
+       "description": "Knocked about less while Arc Bolt is equipped.",
+       "display_name": "Warding Loop",
+       "kind": "trait",
+       "multiplier": 1.5,
+       "requires_equipped": "act_bolt",
+       "scaled_by": null,
+       "stat": "knockback_resist"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Mirror Shield",
+    "source_location_id": 89100007,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "sight",
+     "truth"
+    ],
+    "description": "Marks what hides.",
+    "display_name": "Scan Lens",
+    "echo_id": "echo_89100008",
+    "interpretation_seq": 7,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lens",
+       "cooldown": 6.0,
+       "description": "Marks enemies in view.",
+       "display_name": "Scan Lens",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "duration": 8.0,
+        "range": 30.0,
+        "type": "scan_mark"
+       },
+       "slot": "utility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Lens of Truth",
+    "source_location_id": 89100008,
+    "source_recipient_name": "Link",
+    "tags": []
+   }
+  ],
+  "interpretations_complete": true,
+  "inventory": {
+   "consumable_generation": 1,
+   "items": [
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_lash",
+     "equipped_in": "echo_a",
+     "gear": null,
+     "siblings": [
+      "trait_grip"
+     ]
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_grip",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": [
+      "act_lash"
+     ]
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "mobility"
+     ],
+     "component_id": "act_dash",
+     "equipped_in": "mobility",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_bolt",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "res_magic",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_ward",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "utility"
+     ],
+     "component_id": "act_lens",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    }
+   ],
+   "slots": [
+    {
+     "accepts": [
+      "act_lash",
+      "act_bolt"
+     ],
+     "holds": "act_lash",
+     "slot": "echo_a"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "slot": "echo_b"
+    },
+    {
+     "accepts": [
+      "act_dash"
+     ],
+     "holds": "act_dash",
+     "slot": "mobility"
+    },
+    {
+     "accepts": [
+      "act_lens"
+     ],
+     "holds": null,
+     "slot": "utility"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
+    }
+   ]
+  },
+  "last_generation_error": null,
+  "local_rewards": [],
+  "mechanics": {
+   "aliases": [],
+   "channel_order": [
+    "res_magic"
+   ],
+   "links": [],
+   "owned": [
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lash",
+      "cooldown": 1.2,
+      "description": "Throws a weighted cord that bites what it hits.",
+      "display_name": "Braided Lash",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "bounces": 0,
+       "damage": 18.0,
+       "gravity_scale": 0.0,
+       "lifetime": 1.5,
+       "speed": 30.0,
+       "type": "projectile_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Braided Lash",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 1,
+       "note": "+4 damage",
+       "operation": "upgrade",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Longshot",
+       "source_location_id": 89100002,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_grip",
+      "description": "Your footing is surer.",
+      "display_name": "Sure Grip",
+      "kind": "trait",
+      "multiplier": 1.1,
+      "requires_equipped": null,
+      "scaled_by": null,
+      "stat": "move_speed"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Sure Grip",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_dash",
+      "cooldown": 2.0,
+      "description": "Dashes forward.",
+      "display_name": "Sprint Coil",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "force": 12.0,
+       "type": "dash"
+      },
+      "slot": "mobility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 2,
+       "note": "Sprint Coil",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Pegasus Boots",
+       "source_location_id": 89100003,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_bolt",
+      "cooldown": 0.8,
+      "description": "Fires a bolt straight down the sight line.",
+      "display_name": "Arc Bolt",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "damage": 9.0,
+       "pellets": 1,
+       "range": 40.0,
+       "spread_degrees": 0.0,
+       "type": "hitscan_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 3,
+       "note": "Arc Bolt",
+       "operation": "create",
+       "source_game": "Dark Souls",
+       "source_item_name": "Crossbow",
+       "source_location_id": 89100004,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "res_magic",
+      "description": "Green power, held.",
+      "display_name": "Magic Meter",
+      "initial_fraction": 1.0,
+      "kind": "resource",
+      "max_value": 100.0,
+      "palette_color": "violet",
+      "pip_count": null,
+      "presentation": "bar",
+      "regen_delay": 0.0,
+      "regen_per_second": 0.0
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 4,
+       "note": "Magic Meter",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Magic Upgrade",
+       "source_location_id": 89100005,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 5,
+       "note": "+40 max_value",
+       "operation": "upgrade",
+       "source_game": "Dark Souls",
+       "source_item_name": "Estus Shard",
+       "source_location_id": 89100006,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_ward",
+      "description": "Knocked about less while Arc Bolt is equipped.",
+      "display_name": "Warding Loop",
+      "kind": "trait",
+      "multiplier": 1.5,
+      "requires_equipped": "act_bolt",
+      "scaled_by": null,
+      "stat": "knockback_resist"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 6,
+       "note": "Warding Loop",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Mirror Shield",
+       "source_location_id": 89100007,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lens",
+      "cooldown": 6.0,
+      "description": "Marks enemies in view.",
+      "display_name": "Scan Lens",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "duration": 8.0,
+       "range": 30.0,
+       "type": "scan_mark"
+      },
+      "slot": "utility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 7,
+       "note": "Scan Lens",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Lens of Truth",
+       "source_location_id": 89100008,
+       "source_recipient_name": "Link"
+      }
+     ]
+    }
+   ]
+  },
+  "missing_location_ids": [],
+  "pending_checks": [],
+  "protocol_version": 8,
+  "race_mode": false,
+  "scouted": [],
+  "seed_name": "EQUIPFIXTURE",
+  "shop": {
+   "created_after_zone_count": 0,
+   "stock": []
+  },
+  "signal_keys": 0,
+  "slot_id": 0,
+  "slot_name": "Pepsi",
+  "slots": {
+   "consumable": null,
+   "echo_a": "act_lash",
+   "echo_b": null,
+   "mobility": "act_dash",
+   "utility": null
+  },
+  "static_glitch_units": 0,
+  "static_received": 0,
+  "team": 0,
+  "type": "campaign_snapshot",
+  "unlocked_tier": 0,
+  "zone_map": null
+ },
+ "spent_spare": {
+  "active_proposal_id": "",
+  "active_zone": null,
+  "ap_connected": true,
+  "ap_mode": "mock",
+  "ap_state_is_current": false,
+  "available_capabilities": [
+   "cross_long_gap",
+   "ranged_hit"
+  ],
+  "bridge_connected": true,
+  "checked_location_ids": [],
+  "coins_available": 0,
+  "coins_received": 0,
+  "coins_spent": 0,
+  "completed_zone_count": 0,
+  "consumable_generation": 1,
+  "consumable_uses": [
+   {
+    "component_id": "act_cinder",
+    "spent": 3
+   }
+  ],
+  "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
+  "hub": {
+   "accepts_zone_request": true,
+   "ap_online": true,
+   "detail": "",
+   "discard_zone_id": "",
+   "discard_zone_name": "",
+   "finale_offered": false,
+   "finale_progress": 0,
+   "finale_required": 24,
+   "finale_unlocked": false,
+   "generation_in_progress": false,
+   "goal_sent": false,
+   "headline": "A Zone is ready.",
+   "holding_finale": false,
+   "mode": "ZONE_AVAILABLE",
+   "portal_enabled": true,
+   "postgame": false,
+   "resume_zone_id": "",
+   "resume_zone_name": "",
+   "revisitable": [],
+   "signal_keys": 0,
+   "signal_keys_required": 2
+  },
+  "interpretation_count": 10,
+  "interpretations": [
+   {
+    "concepts": [
+     "lash",
+     "reach",
+     "grip"
+    ],
+    "description": "A cord that bites, and the grip to hold it.",
+    "display_name": "Braided Lash",
+    "echo_id": "echo_89100001",
+    "interpretation_seq": 0,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lash",
+       "cooldown": 1.2,
+       "description": "Throws a weighted cord that bites what it hits.",
+       "display_name": "Braided Lash",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "bounces": 0,
+        "damage": 14.0,
+        "gravity_scale": 0.0,
+        "lifetime": 1.5,
+        "speed": 30.0,
+        "type": "projectile_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     },
+     {
+      "component": {
+       "component_id": "trait_grip",
+       "description": "Your footing is surer.",
+       "display_name": "Sure Grip",
+       "kind": "trait",
+       "multiplier": 1.1,
+       "requires_equipped": null,
+       "scaled_by": null,
+       "stat": "move_speed"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Hookshot",
+    "source_location_id": 89100001,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "grip"
+    ],
+    "description": "A longer cord for the lash you already carry.",
+    "display_name": "Leather Grip",
+    "echo_id": "echo_89100002",
+    "interpretation_seq": 1,
+    "mode": "literal",
+    "operations": [
+     {
+      "delta": 4.0,
+      "field": "damage",
+      "op": "upgrade",
+      "target": "act_lash"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Longshot",
+    "source_location_id": 89100002,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "speed",
+     "boots"
+    ],
+    "description": "A burst of speed along the ground.",
+    "display_name": "Sprint Coil",
+    "echo_id": "echo_89100003",
+    "interpretation_seq": 2,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_dash",
+       "cooldown": 2.0,
+       "description": "Dashes forward.",
+       "display_name": "Sprint Coil",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "force": 12.0,
+        "type": "dash"
+       },
+       "slot": "mobility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Pegasus Boots",
+    "source_location_id": 89100003,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bolt",
+     "range"
+    ],
+    "description": "A bolt that flies straight and far.",
+    "display_name": "Arc Bolt",
+    "echo_id": "echo_89100004",
+    "interpretation_seq": 3,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_bolt",
+       "cooldown": 0.8,
+       "description": "Fires a bolt straight down the sight line.",
+       "display_name": "Arc Bolt",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "damage": 9.0,
+        "pellets": 1,
+        "range": 40.0,
+        "spread_degrees": 0.0,
+        "type": "hitscan_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Crossbow",
+    "source_location_id": 89100004,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "magic",
+     "green",
+     "capacity"
+    ],
+    "description": "A reserve of green power.",
+    "display_name": "Magic Meter",
+    "echo_id": "echo_89100005",
+    "interpretation_seq": 4,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "component_id": "res_magic",
+       "description": "Green power, held.",
+       "display_name": "Magic Meter",
+       "initial_fraction": 1.0,
+       "kind": "resource",
+       "max_value": 60.0,
+       "palette_color": "violet",
+       "pip_count": null,
+       "presentation": "bar",
+       "regen_delay": 0.0,
+       "regen_per_second": 0.0
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Magic Upgrade",
+    "source_location_id": 89100005,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "capacity",
+     "shard"
+    ],
+    "description": "The meter holds more.",
+    "display_name": "Estus Shard",
+    "echo_id": "echo_89100006",
+    "interpretation_seq": 5,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "delta": 40.0,
+      "field": "max_value",
+      "op": "upgrade",
+      "target": "res_magic"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Estus Shard",
+    "source_location_id": 89100006,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ward",
+     "mirror"
+    ],
+    "description": "Steadier hands while the bolt is on your key.",
+    "display_name": "Warding Loop",
+    "echo_id": "echo_89100007",
+    "interpretation_seq": 6,
+    "mode": "conceptual",
+    "operations": [
+     {
+      "component": {
+       "component_id": "trait_ward",
+       "description": "Knocked about less while Arc Bolt is equipped.",
+       "display_name": "Warding Loop",
+       "kind": "trait",
+       "multiplier": 1.5,
+       "requires_equipped": "act_bolt",
+       "scaled_by": null,
+       "stat": "knockback_resist"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Mirror Shield",
+    "source_location_id": 89100007,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "sight",
+     "truth"
+    ],
+    "description": "Marks what hides.",
+    "display_name": "Scan Lens",
+    "echo_id": "echo_89100008",
+    "interpretation_seq": 7,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lens",
+       "cooldown": 6.0,
+       "description": "Marks enemies in view.",
+       "display_name": "Scan Lens",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "duration": 8.0,
+        "range": 30.0,
+        "type": "scan_mark"
+       },
+       "slot": "utility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Lens of Truth",
+    "source_location_id": 89100008,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bomb",
+     "fuse"
+    ],
+    "description": "A fused charge you throw.",
+    "display_name": "Cinder Charge",
+    "echo_id": "echo_89100009",
+    "interpretation_seq": 8,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 3,
+       "component_id": "act_cinder",
+       "cooldown": 1.0,
+       "description": "A lobbed charge that bursts and sets things alight.",
+       "display_name": "Cinder Charge",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 3.0,
+         "magnitude": 0.5,
+         "status": "burning",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 30.0,
+        "fuse": 1.5,
+        "launch_force": 12.0,
+        "radius": 3.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Bomb Bag",
+    "source_location_id": 89100009,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ice",
+     "flask"
+    ],
+    "description": "A flask that bursts cold.",
+    "display_name": "Frost Flask",
+    "echo_id": "echo_89100010",
+    "interpretation_seq": 9,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 2,
+       "component_id": "act_flask",
+       "cooldown": 1.0,
+       "description": "A lobbed flask that bursts and slows.",
+       "display_name": "Frost Flask",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 4.0,
+         "magnitude": 0.4,
+         "status": "slowed",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 18.0,
+        "fuse": 1.0,
+        "launch_force": 11.0,
+        "radius": 4.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Ice Trap",
+    "source_location_id": 89100010,
+    "source_recipient_name": "Link",
+    "tags": []
+   }
+  ],
+  "interpretations_complete": true,
+  "inventory": {
+   "consumable_generation": 1,
+   "items": [
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_lash",
+     "equipped_in": "echo_a",
+     "gear": null,
+     "siblings": [
+      "trait_grip"
+     ]
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_grip",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": [
+      "act_lash"
+     ]
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "mobility"
+     ],
+     "component_id": "act_dash",
+     "equipped_in": "mobility",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_bolt",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "res_magic",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_ward",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "utility"
+     ],
+     "component_id": "act_lens",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 0,
+     "charges_max": 3,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_cinder",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 2,
+     "charges_max": 2,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_flask",
+     "equipped_in": "consumable",
+     "gear": null,
+     "siblings": []
+    }
+   ],
+   "slots": [
+    {
+     "accepts": [
+      "act_lash",
+      "act_bolt"
+     ],
+     "holds": "act_lash",
+     "slot": "echo_a"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "slot": "echo_b"
+    },
+    {
+     "accepts": [
+      "act_dash"
+     ],
+     "holds": "act_dash",
+     "slot": "mobility"
+    },
+    {
+     "accepts": [
+      "act_lens"
+     ],
+     "holds": null,
+     "slot": "utility"
+    },
+    {
+     "accepts": [
+      "act_cinder",
+      "act_flask"
+     ],
+     "holds": "act_flask",
+     "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
+    }
+   ]
+  },
+  "last_generation_error": null,
+  "local_rewards": [],
+  "mechanics": {
+   "aliases": [],
+   "channel_order": [
+    "res_magic"
+   ],
+   "links": [],
+   "owned": [
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lash",
+      "cooldown": 1.2,
+      "description": "Throws a weighted cord that bites what it hits.",
+      "display_name": "Braided Lash",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "bounces": 0,
+       "damage": 18.0,
+       "gravity_scale": 0.0,
+       "lifetime": 1.5,
+       "speed": 30.0,
+       "type": "projectile_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Braided Lash",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 1,
+       "note": "+4 damage",
+       "operation": "upgrade",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Longshot",
+       "source_location_id": 89100002,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_grip",
+      "description": "Your footing is surer.",
+      "display_name": "Sure Grip",
+      "kind": "trait",
+      "multiplier": 1.1,
+      "requires_equipped": null,
+      "scaled_by": null,
+      "stat": "move_speed"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Sure Grip",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_dash",
+      "cooldown": 2.0,
+      "description": "Dashes forward.",
+      "display_name": "Sprint Coil",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "force": 12.0,
+       "type": "dash"
+      },
+      "slot": "mobility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 2,
+       "note": "Sprint Coil",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Pegasus Boots",
+       "source_location_id": 89100003,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_bolt",
+      "cooldown": 0.8,
+      "description": "Fires a bolt straight down the sight line.",
+      "display_name": "Arc Bolt",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "damage": 9.0,
+       "pellets": 1,
+       "range": 40.0,
+       "spread_degrees": 0.0,
+       "type": "hitscan_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 3,
+       "note": "Arc Bolt",
+       "operation": "create",
+       "source_game": "Dark Souls",
+       "source_item_name": "Crossbow",
+       "source_location_id": 89100004,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "res_magic",
+      "description": "Green power, held.",
+      "display_name": "Magic Meter",
+      "initial_fraction": 1.0,
+      "kind": "resource",
+      "max_value": 100.0,
+      "palette_color": "violet",
+      "pip_count": null,
+      "presentation": "bar",
+      "regen_delay": 0.0,
+      "regen_per_second": 0.0
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 4,
+       "note": "Magic Meter",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Magic Upgrade",
+       "source_location_id": 89100005,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 5,
+       "note": "+40 max_value",
+       "operation": "upgrade",
+       "source_game": "Dark Souls",
+       "source_item_name": "Estus Shard",
+       "source_location_id": 89100006,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_ward",
+      "description": "Knocked about less while Arc Bolt is equipped.",
+      "display_name": "Warding Loop",
+      "kind": "trait",
+      "multiplier": 1.5,
+      "requires_equipped": "act_bolt",
+      "scaled_by": null,
+      "stat": "knockback_resist"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 6,
+       "note": "Warding Loop",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Mirror Shield",
+       "source_location_id": 89100007,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lens",
+      "cooldown": 6.0,
+      "description": "Marks enemies in view.",
+      "display_name": "Scan Lens",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "duration": 8.0,
+       "range": 30.0,
+       "type": "scan_mark"
+      },
+      "slot": "utility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 7,
+       "note": "Scan Lens",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Lens of Truth",
+       "source_location_id": 89100008,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 3,
+      "component_id": "act_cinder",
+      "cooldown": 1.0,
+      "description": "A lobbed charge that bursts and sets things alight.",
+      "display_name": "Cinder Charge",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 3.0,
+        "magnitude": 0.5,
+        "status": "burning",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 30.0,
+       "fuse": 1.5,
+       "launch_force": 12.0,
+       "radius": 3.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 8,
+       "note": "Cinder Charge",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Bomb Bag",
+       "source_location_id": 89100009,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 2,
+      "component_id": "act_flask",
+      "cooldown": 1.0,
+      "description": "A lobbed flask that bursts and slows.",
+      "display_name": "Frost Flask",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 4.0,
+        "magnitude": 0.4,
+        "status": "slowed",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 18.0,
+       "fuse": 1.0,
+       "launch_force": 11.0,
+       "radius": 4.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 9,
+       "note": "Frost Flask",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Ice Trap",
+       "source_location_id": 89100010,
+       "source_recipient_name": "Link"
+      }
+     ]
+    }
+   ]
+  },
+  "missing_location_ids": [],
+  "pending_checks": [],
+  "protocol_version": 8,
+  "race_mode": false,
+  "scouted": [],
+  "seed_name": "EQUIPFIXTURE",
+  "shop": {
+   "created_after_zone_count": 0,
+   "stock": []
+  },
+  "signal_keys": 0,
+  "slot_id": 0,
+  "slot_name": "Pepsi",
+  "slots": {
+   "consumable": "act_flask",
+   "echo_a": "act_lash",
+   "echo_b": null,
+   "mobility": "act_dash",
+   "utility": null
+  },
+  "static_glitch_units": 0,
+  "static_received": 0,
+  "team": 0,
+  "type": "campaign_snapshot",
+  "unlocked_tier": 0,
+  "zone_map": null
+ },
+ "swapped": {
+  "active_proposal_id": "",
+  "active_zone": null,
+  "ap_connected": true,
+  "ap_mode": "mock",
+  "ap_state_is_current": false,
+  "available_capabilities": [
+   "cross_long_gap",
+   "ranged_hit"
+  ],
+  "bridge_connected": true,
+  "checked_location_ids": [],
+  "coins_available": 0,
+  "coins_received": 0,
+  "coins_spent": 0,
+  "completed_zone_count": 0,
+  "consumable_generation": 1,
+  "consumable_uses": [
+   {
+    "component_id": "act_cinder",
+    "spent": 1
+   }
+  ],
+  "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
+  "hub": {
+   "accepts_zone_request": true,
+   "ap_online": true,
+   "detail": "",
+   "discard_zone_id": "",
+   "discard_zone_name": "",
+   "finale_offered": false,
+   "finale_progress": 0,
+   "finale_required": 24,
+   "finale_unlocked": false,
+   "generation_in_progress": false,
+   "goal_sent": false,
+   "headline": "A Zone is ready.",
+   "holding_finale": false,
+   "mode": "ZONE_AVAILABLE",
+   "portal_enabled": true,
+   "postgame": false,
+   "resume_zone_id": "",
+   "resume_zone_name": "",
+   "revisitable": [],
+   "signal_keys": 0,
+   "signal_keys_required": 2
+  },
+  "interpretation_count": 10,
+  "interpretations": [
+   {
+    "concepts": [
+     "lash",
+     "reach",
+     "grip"
+    ],
+    "description": "A cord that bites, and the grip to hold it.",
+    "display_name": "Braided Lash",
+    "echo_id": "echo_89100001",
+    "interpretation_seq": 0,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lash",
+       "cooldown": 1.2,
+       "description": "Throws a weighted cord that bites what it hits.",
+       "display_name": "Braided Lash",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "bounces": 0,
+        "damage": 14.0,
+        "gravity_scale": 0.0,
+        "lifetime": 1.5,
+        "speed": 30.0,
+        "type": "projectile_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     },
+     {
+      "component": {
+       "component_id": "trait_grip",
+       "description": "Your footing is surer.",
+       "display_name": "Sure Grip",
+       "kind": "trait",
+       "multiplier": 1.1,
+       "requires_equipped": null,
+       "scaled_by": null,
+       "stat": "move_speed"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Hookshot",
+    "source_location_id": 89100001,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "grip"
+    ],
+    "description": "A longer cord for the lash you already carry.",
+    "display_name": "Leather Grip",
+    "echo_id": "echo_89100002",
+    "interpretation_seq": 1,
+    "mode": "literal",
+    "operations": [
+     {
+      "delta": 4.0,
+      "field": "damage",
+      "op": "upgrade",
+      "target": "act_lash"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Longshot",
+    "source_location_id": 89100002,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "speed",
+     "boots"
+    ],
+    "description": "A burst of speed along the ground.",
+    "display_name": "Sprint Coil",
+    "echo_id": "echo_89100003",
+    "interpretation_seq": 2,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_dash",
+       "cooldown": 2.0,
+       "description": "Dashes forward.",
+       "display_name": "Sprint Coil",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "force": 12.0,
+        "type": "dash"
+       },
+       "slot": "mobility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Pegasus Boots",
+    "source_location_id": 89100003,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bolt",
+     "range"
+    ],
+    "description": "A bolt that flies straight and far.",
+    "display_name": "Arc Bolt",
+    "echo_id": "echo_89100004",
+    "interpretation_seq": 3,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_bolt",
+       "cooldown": 0.8,
+       "description": "Fires a bolt straight down the sight line.",
+       "display_name": "Arc Bolt",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "damage": 9.0,
+        "pellets": 1,
+        "range": 40.0,
+        "spread_degrees": 0.0,
+        "type": "hitscan_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Crossbow",
+    "source_location_id": 89100004,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "magic",
+     "green",
+     "capacity"
+    ],
+    "description": "A reserve of green power.",
+    "display_name": "Magic Meter",
+    "echo_id": "echo_89100005",
+    "interpretation_seq": 4,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "component_id": "res_magic",
+       "description": "Green power, held.",
+       "display_name": "Magic Meter",
+       "initial_fraction": 1.0,
+       "kind": "resource",
+       "max_value": 60.0,
+       "palette_color": "violet",
+       "pip_count": null,
+       "presentation": "bar",
+       "regen_delay": 0.0,
+       "regen_per_second": 0.0
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Magic Upgrade",
+    "source_location_id": 89100005,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "capacity",
+     "shard"
+    ],
+    "description": "The meter holds more.",
+    "display_name": "Estus Shard",
+    "echo_id": "echo_89100006",
+    "interpretation_seq": 5,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "delta": 40.0,
+      "field": "max_value",
+      "op": "upgrade",
+      "target": "res_magic"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Estus Shard",
+    "source_location_id": 89100006,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ward",
+     "mirror"
+    ],
+    "description": "Steadier hands while the bolt is on your key.",
+    "display_name": "Warding Loop",
+    "echo_id": "echo_89100007",
+    "interpretation_seq": 6,
+    "mode": "conceptual",
+    "operations": [
+     {
+      "component": {
+       "component_id": "trait_ward",
+       "description": "Knocked about less while Arc Bolt is equipped.",
+       "display_name": "Warding Loop",
+       "kind": "trait",
+       "multiplier": 1.5,
+       "requires_equipped": "act_bolt",
+       "scaled_by": null,
+       "stat": "knockback_resist"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Mirror Shield",
+    "source_location_id": 89100007,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "sight",
+     "truth"
+    ],
+    "description": "Marks what hides.",
+    "display_name": "Scan Lens",
+    "echo_id": "echo_89100008",
+    "interpretation_seq": 7,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lens",
+       "cooldown": 6.0,
+       "description": "Marks enemies in view.",
+       "display_name": "Scan Lens",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "duration": 8.0,
+        "range": 30.0,
+        "type": "scan_mark"
+       },
+       "slot": "utility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Lens of Truth",
+    "source_location_id": 89100008,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bomb",
+     "fuse"
+    ],
+    "description": "A fused charge you throw.",
+    "display_name": "Cinder Charge",
+    "echo_id": "echo_89100009",
+    "interpretation_seq": 8,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 3,
+       "component_id": "act_cinder",
+       "cooldown": 1.0,
+       "description": "A lobbed charge that bursts and sets things alight.",
+       "display_name": "Cinder Charge",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 3.0,
+         "magnitude": 0.5,
+         "status": "burning",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 30.0,
+        "fuse": 1.5,
+        "launch_force": 12.0,
+        "radius": 3.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Bomb Bag",
+    "source_location_id": 89100009,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ice",
+     "flask"
+    ],
+    "description": "A flask that bursts cold.",
+    "display_name": "Frost Flask",
+    "echo_id": "echo_89100010",
+    "interpretation_seq": 9,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 2,
+       "component_id": "act_flask",
+       "cooldown": 1.0,
+       "description": "A lobbed flask that bursts and slows.",
+       "display_name": "Frost Flask",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 4.0,
+         "magnitude": 0.4,
+         "status": "slowed",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 18.0,
+        "fuse": 1.0,
+        "launch_force": 11.0,
+        "radius": 4.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Ice Trap",
+    "source_location_id": 89100010,
+    "source_recipient_name": "Link",
+    "tags": []
+   }
+  ],
+  "interpretations_complete": true,
+  "inventory": {
+   "consumable_generation": 1,
+   "items": [
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_lash",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": [
+      "trait_grip"
+     ]
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_grip",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": [
+      "act_lash"
+     ]
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "mobility"
+     ],
+     "component_id": "act_dash",
+     "equipped_in": "mobility",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_bolt",
+     "equipped_in": "echo_a",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "res_magic",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_ward",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "utility"
+     ],
+     "component_id": "act_lens",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 2,
+     "charges_max": 3,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_cinder",
+     "equipped_in": "consumable",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 2,
+     "charges_max": 2,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_flask",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    }
+   ],
+   "slots": [
+    {
+     "accepts": [
+      "act_lash",
+      "act_bolt"
+     ],
+     "holds": "act_bolt",
+     "slot": "echo_a"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "slot": "echo_b"
+    },
+    {
+     "accepts": [
+      "act_dash"
+     ],
+     "holds": "act_dash",
+     "slot": "mobility"
+    },
+    {
+     "accepts": [
+      "act_lens"
+     ],
+     "holds": null,
+     "slot": "utility"
+    },
+    {
+     "accepts": [
+      "act_cinder",
+      "act_flask"
+     ],
+     "holds": "act_cinder",
+     "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
+    }
+   ]
+  },
+  "last_generation_error": null,
+  "local_rewards": [],
+  "mechanics": {
+   "aliases": [],
+   "channel_order": [
+    "res_magic"
+   ],
+   "links": [],
+   "owned": [
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lash",
+      "cooldown": 1.2,
+      "description": "Throws a weighted cord that bites what it hits.",
+      "display_name": "Braided Lash",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "bounces": 0,
+       "damage": 18.0,
+       "gravity_scale": 0.0,
+       "lifetime": 1.5,
+       "speed": 30.0,
+       "type": "projectile_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Braided Lash",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 1,
+       "note": "+4 damage",
+       "operation": "upgrade",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Longshot",
+       "source_location_id": 89100002,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_grip",
+      "description": "Your footing is surer.",
+      "display_name": "Sure Grip",
+      "kind": "trait",
+      "multiplier": 1.1,
+      "requires_equipped": null,
+      "scaled_by": null,
+      "stat": "move_speed"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Sure Grip",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_dash",
+      "cooldown": 2.0,
+      "description": "Dashes forward.",
+      "display_name": "Sprint Coil",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "force": 12.0,
+       "type": "dash"
+      },
+      "slot": "mobility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 2,
+       "note": "Sprint Coil",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Pegasus Boots",
+       "source_location_id": 89100003,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_bolt",
+      "cooldown": 0.8,
+      "description": "Fires a bolt straight down the sight line.",
+      "display_name": "Arc Bolt",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "damage": 9.0,
+       "pellets": 1,
+       "range": 40.0,
+       "spread_degrees": 0.0,
+       "type": "hitscan_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 3,
+       "note": "Arc Bolt",
+       "operation": "create",
+       "source_game": "Dark Souls",
+       "source_item_name": "Crossbow",
+       "source_location_id": 89100004,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "res_magic",
+      "description": "Green power, held.",
+      "display_name": "Magic Meter",
+      "initial_fraction": 1.0,
+      "kind": "resource",
+      "max_value": 100.0,
+      "palette_color": "violet",
+      "pip_count": null,
+      "presentation": "bar",
+      "regen_delay": 0.0,
+      "regen_per_second": 0.0
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 4,
+       "note": "Magic Meter",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Magic Upgrade",
+       "source_location_id": 89100005,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 5,
+       "note": "+40 max_value",
+       "operation": "upgrade",
+       "source_game": "Dark Souls",
+       "source_item_name": "Estus Shard",
+       "source_location_id": 89100006,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_ward",
+      "description": "Knocked about less while Arc Bolt is equipped.",
+      "display_name": "Warding Loop",
+      "kind": "trait",
+      "multiplier": 1.5,
+      "requires_equipped": "act_bolt",
+      "scaled_by": null,
+      "stat": "knockback_resist"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 6,
+       "note": "Warding Loop",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Mirror Shield",
+       "source_location_id": 89100007,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lens",
+      "cooldown": 6.0,
+      "description": "Marks enemies in view.",
+      "display_name": "Scan Lens",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "duration": 8.0,
+       "range": 30.0,
+       "type": "scan_mark"
+      },
+      "slot": "utility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 7,
+       "note": "Scan Lens",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Lens of Truth",
+       "source_location_id": 89100008,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 3,
+      "component_id": "act_cinder",
+      "cooldown": 1.0,
+      "description": "A lobbed charge that bursts and sets things alight.",
+      "display_name": "Cinder Charge",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 3.0,
+        "magnitude": 0.5,
+        "status": "burning",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 30.0,
+       "fuse": 1.5,
+       "launch_force": 12.0,
+       "radius": 3.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 8,
+       "note": "Cinder Charge",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Bomb Bag",
+       "source_location_id": 89100009,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 2,
+      "component_id": "act_flask",
+      "cooldown": 1.0,
+      "description": "A lobbed flask that bursts and slows.",
+      "display_name": "Frost Flask",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 4.0,
+        "magnitude": 0.4,
+        "status": "slowed",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 18.0,
+       "fuse": 1.0,
+       "launch_force": 11.0,
+       "radius": 4.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 9,
+       "note": "Frost Flask",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Ice Trap",
+       "source_location_id": 89100010,
+       "source_recipient_name": "Link"
+      }
+     ]
+    }
+   ]
+  },
+  "missing_location_ids": [],
+  "pending_checks": [],
+  "protocol_version": 8,
+  "race_mode": false,
+  "scouted": [],
+  "seed_name": "EQUIPFIXTURE",
+  "shop": {
+   "created_after_zone_count": 0,
+   "stock": []
+  },
+  "signal_keys": 0,
+  "slot_id": 0,
+  "slot_name": "Pepsi",
+  "slots": {
+   "consumable": "act_cinder",
+   "echo_a": "act_bolt",
+   "echo_b": null,
+   "mobility": "act_dash",
+   "utility": null
+  },
+  "static_glitch_units": 0,
+  "static_received": 0,
+  "team": 0,
+  "type": "campaign_snapshot",
+  "unlocked_tier": 0,
+  "zone_map": null
+ },
+ "unequipped": {
+  "active_proposal_id": "",
+  "active_zone": null,
+  "ap_connected": true,
+  "ap_mode": "mock",
+  "ap_state_is_current": false,
+  "available_capabilities": [
+   "cross_long_gap",
+   "ranged_hit"
+  ],
+  "bridge_connected": true,
+  "checked_location_ids": [],
+  "coins_available": 0,
+  "coins_received": 0,
+  "coins_spent": 0,
+  "completed_zone_count": 0,
+  "consumable_generation": 1,
+  "consumable_uses": [
+   {
+    "component_id": "act_cinder",
+    "spent": 1
+   }
+  ],
+  "epsilon_provider": "mock",
+  "gear": {
+   "ARMS": null,
+   "HEAD": null,
+   "LEGS": null,
+   "TORSO": null
+  },
+  "gear_effects": {},
+  "hub": {
+   "accepts_zone_request": true,
+   "ap_online": true,
+   "detail": "",
+   "discard_zone_id": "",
+   "discard_zone_name": "",
+   "finale_offered": false,
+   "finale_progress": 0,
+   "finale_required": 24,
+   "finale_unlocked": false,
+   "generation_in_progress": false,
+   "goal_sent": false,
+   "headline": "A Zone is ready.",
+   "holding_finale": false,
+   "mode": "ZONE_AVAILABLE",
+   "portal_enabled": true,
+   "postgame": false,
+   "resume_zone_id": "",
+   "resume_zone_name": "",
+   "revisitable": [],
+   "signal_keys": 0,
+   "signal_keys_required": 2
+  },
+  "interpretation_count": 10,
+  "interpretations": [
+   {
+    "concepts": [
+     "lash",
+     "reach",
+     "grip"
+    ],
+    "description": "A cord that bites, and the grip to hold it.",
+    "display_name": "Braided Lash",
+    "echo_id": "echo_89100001",
+    "interpretation_seq": 0,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lash",
+       "cooldown": 1.2,
+       "description": "Throws a weighted cord that bites what it hits.",
+       "display_name": "Braided Lash",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "bounces": 0,
+        "damage": 14.0,
+        "gravity_scale": 0.0,
+        "lifetime": 1.5,
+        "speed": 30.0,
+        "type": "projectile_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     },
+     {
+      "component": {
+       "component_id": "trait_grip",
+       "description": "Your footing is surer.",
+       "display_name": "Sure Grip",
+       "kind": "trait",
+       "multiplier": 1.1,
+       "requires_equipped": null,
+       "scaled_by": null,
+       "stat": "move_speed"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Hookshot",
+    "source_location_id": 89100001,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "grip"
+    ],
+    "description": "A longer cord for the lash you already carry.",
+    "display_name": "Leather Grip",
+    "echo_id": "echo_89100002",
+    "interpretation_seq": 1,
+    "mode": "literal",
+    "operations": [
+     {
+      "delta": 4.0,
+      "field": "damage",
+      "op": "upgrade",
+      "target": "act_lash"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Longshot",
+    "source_location_id": 89100002,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "speed",
+     "boots"
+    ],
+    "description": "A burst of speed along the ground.",
+    "display_name": "Sprint Coil",
+    "echo_id": "echo_89100003",
+    "interpretation_seq": 2,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_dash",
+       "cooldown": 2.0,
+       "description": "Dashes forward.",
+       "display_name": "Sprint Coil",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "force": 12.0,
+        "type": "dash"
+       },
+       "slot": "mobility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Pegasus Boots",
+    "source_location_id": 89100003,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bolt",
+     "range"
+    ],
+    "description": "A bolt that flies straight and far.",
+    "display_name": "Arc Bolt",
+    "echo_id": "echo_89100004",
+    "interpretation_seq": 3,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_bolt",
+       "cooldown": 0.8,
+       "description": "Fires a bolt straight down the sight line.",
+       "display_name": "Arc Bolt",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "damage": 9.0,
+        "pellets": 1,
+        "range": 40.0,
+        "spread_degrees": 0.0,
+        "type": "hitscan_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Crossbow",
+    "source_location_id": 89100004,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "magic",
+     "green",
+     "capacity"
+    ],
+    "description": "A reserve of green power.",
+    "display_name": "Magic Meter",
+    "echo_id": "echo_89100005",
+    "interpretation_seq": 4,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "component_id": "res_magic",
+       "description": "Green power, held.",
+       "display_name": "Magic Meter",
+       "initial_fraction": 1.0,
+       "kind": "resource",
+       "max_value": 60.0,
+       "palette_color": "violet",
+       "pip_count": null,
+       "presentation": "bar",
+       "regen_delay": 0.0,
+       "regen_per_second": 0.0
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Magic Upgrade",
+    "source_location_id": 89100005,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "capacity",
+     "shard"
+    ],
+    "description": "The meter holds more.",
+    "display_name": "Estus Shard",
+    "echo_id": "echo_89100006",
+    "interpretation_seq": 5,
+    "mode": "mechanical",
+    "operations": [
+     {
+      "delta": 40.0,
+      "field": "max_value",
+      "op": "upgrade",
+      "target": "res_magic"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Dark Souls",
+    "source_item_name": "Estus Shard",
+    "source_location_id": 89100006,
+    "source_recipient_name": "Solaire",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ward",
+     "mirror"
+    ],
+    "description": "Steadier hands while the bolt is on your key.",
+    "display_name": "Warding Loop",
+    "echo_id": "echo_89100007",
+    "interpretation_seq": 6,
+    "mode": "conceptual",
+    "operations": [
+     {
+      "component": {
+       "component_id": "trait_ward",
+       "description": "Knocked about less while Arc Bolt is equipped.",
+       "display_name": "Warding Loop",
+       "kind": "trait",
+       "multiplier": 1.5,
+       "requires_equipped": "act_bolt",
+       "scaled_by": null,
+       "stat": "knockback_resist"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Mirror Shield",
+    "source_location_id": 89100007,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "sight",
+     "truth"
+    ],
+    "description": "Marks what hides.",
+    "display_name": "Scan Lens",
+    "echo_id": "echo_89100008",
+    "interpretation_seq": 7,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_lens",
+       "cooldown": 6.0,
+       "description": "Marks enemies in view.",
+       "display_name": "Scan Lens",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "duration": 8.0,
+        "range": 30.0,
+        "type": "scan_mark"
+       },
+       "slot": "utility"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Lens of Truth",
+    "source_location_id": 89100008,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "bomb",
+     "fuse"
+    ],
+    "description": "A fused charge you throw.",
+    "display_name": "Cinder Charge",
+    "echo_id": "echo_89100009",
+    "interpretation_seq": 8,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 3,
+       "component_id": "act_cinder",
+       "cooldown": 1.0,
+       "description": "A lobbed charge that bursts and sets things alight.",
+       "display_name": "Cinder Charge",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 3.0,
+         "magnitude": 0.5,
+         "status": "burning",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 30.0,
+        "fuse": 1.5,
+        "launch_force": 12.0,
+        "radius": 3.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Ocarina of Time",
+    "source_item_name": "Bomb Bag",
+    "source_location_id": 89100009,
+    "source_recipient_name": "Link",
+    "tags": []
+   },
+   {
+    "concepts": [
+     "ice",
+     "flask"
+    ],
+    "description": "A flask that bursts cold.",
+    "display_name": "Frost Flask",
+    "echo_id": "echo_89100010",
+    "interpretation_seq": 9,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": 2,
+       "component_id": "act_flask",
+       "cooldown": 1.0,
+       "description": "A lobbed flask that bursts and slows.",
+       "display_name": "Frost Flask",
+       "kind": "action",
+       "modifiers": [
+        {
+         "duration": 4.0,
+         "magnitude": 0.4,
+         "status": "slowed",
+         "type": "apply_status_on_hit"
+        }
+       ],
+       "primitive": {
+        "damage": 18.0,
+        "fuse": 1.0,
+        "launch_force": 11.0,
+        "radius": 4.0,
+        "type": "arc_lob"
+       },
+       "slot": "consumable"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "A Link to the Past",
+    "source_item_name": "Ice Trap",
+    "source_location_id": 89100010,
+    "source_recipient_name": "Link",
+    "tags": []
+   }
+  ],
+  "interpretations_complete": true,
+  "inventory": {
+   "consumable_generation": 1,
+   "items": [
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_lash",
+     "equipped_in": "echo_a",
+     "gear": null,
+     "siblings": [
+      "trait_grip"
+     ]
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_grip",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": [
+      "act_lash"
+     ]
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "mobility"
+     ],
+     "component_id": "act_dash",
+     "equipped_in": "mobility",
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "echo_a"
+     ],
+     "component_id": "act_bolt",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "res_magic",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "always_on",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [],
+     "component_id": "trait_ward",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": null,
+     "charges_max": null,
+     "compatible_slots": [
+      "utility"
+     ],
+     "component_id": "act_lens",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 2,
+     "charges_max": 3,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_cinder",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    },
+    {
+     "activation": "slotted",
+     "charges_left": 2,
+     "charges_max": 2,
+     "compatible_slots": [
+      "consumable"
+     ],
+     "component_id": "act_flask",
+     "equipped_in": null,
+     "gear": null,
+     "siblings": []
+    }
+   ],
+   "slots": [
+    {
+     "accepts": [
+      "act_lash",
+      "act_bolt"
+     ],
+     "holds": "act_lash",
+     "slot": "echo_a"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "slot": "echo_b"
+    },
+    {
+     "accepts": [
+      "act_dash"
+     ],
+     "holds": "act_dash",
+     "slot": "mobility"
+    },
+    {
+     "accepts": [
+      "act_lens"
+     ],
+     "holds": null,
+     "slot": "utility"
+    },
+    {
+     "accepts": [
+      "act_cinder",
+      "act_flask"
+     ],
+     "holds": null,
+     "slot": "consumable"
+    }
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
+    }
+   ]
+  },
+  "last_generation_error": null,
+  "local_rewards": [],
+  "mechanics": {
+   "aliases": [],
+   "channel_order": [
+    "res_magic"
+   ],
+   "links": [],
+   "owned": [
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lash",
+      "cooldown": 1.2,
+      "description": "Throws a weighted cord that bites what it hits.",
+      "display_name": "Braided Lash",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "bounces": 0,
+       "damage": 18.0,
+       "gravity_scale": 0.0,
+       "lifetime": 1.5,
+       "speed": 30.0,
+       "type": "projectile_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Braided Lash",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 1,
+       "note": "+4 damage",
+       "operation": "upgrade",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Longshot",
+       "source_location_id": 89100002,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_grip",
+      "description": "Your footing is surer.",
+      "display_name": "Sure Grip",
+      "kind": "trait",
+      "multiplier": 1.1,
+      "requires_equipped": null,
+      "scaled_by": null,
+      "stat": "move_speed"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 0,
+       "note": "Sure Grip",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Hookshot",
+       "source_location_id": 89100001,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_dash",
+      "cooldown": 2.0,
+      "description": "Dashes forward.",
+      "display_name": "Sprint Coil",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "force": 12.0,
+       "type": "dash"
+      },
+      "slot": "mobility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 2,
+       "note": "Sprint Coil",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Pegasus Boots",
+       "source_location_id": 89100003,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_bolt",
+      "cooldown": 0.8,
+      "description": "Fires a bolt straight down the sight line.",
+      "display_name": "Arc Bolt",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "damage": 9.0,
+       "pellets": 1,
+       "range": 40.0,
+       "spread_degrees": 0.0,
+       "type": "hitscan_damage"
+      },
+      "slot": "echo_a"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 3,
+       "note": "Arc Bolt",
+       "operation": "create",
+       "source_game": "Dark Souls",
+       "source_item_name": "Crossbow",
+       "source_location_id": 89100004,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "res_magic",
+      "description": "Green power, held.",
+      "display_name": "Magic Meter",
+      "initial_fraction": 1.0,
+      "kind": "resource",
+      "max_value": 100.0,
+      "palette_color": "violet",
+      "pip_count": null,
+      "presentation": "bar",
+      "regen_delay": 0.0,
+      "regen_per_second": 0.0
+     },
+     "mk": 2,
+     "provenance": [
+      {
+       "interpretation_seq": 4,
+       "note": "Magic Meter",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Magic Upgrade",
+       "source_location_id": 89100005,
+       "source_recipient_name": "Link"
+      },
+      {
+       "interpretation_seq": 5,
+       "note": "+40 max_value",
+       "operation": "upgrade",
+       "source_game": "Dark Souls",
+       "source_item_name": "Estus Shard",
+       "source_location_id": 89100006,
+       "source_recipient_name": "Solaire"
+      }
+     ]
+    },
+    {
+     "component": {
+      "component_id": "trait_ward",
+      "description": "Knocked about less while Arc Bolt is equipped.",
+      "display_name": "Warding Loop",
+      "kind": "trait",
+      "multiplier": 1.5,
+      "requires_equipped": "act_bolt",
+      "scaled_by": null,
+      "stat": "knockback_resist"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 6,
+       "note": "Warding Loop",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Mirror Shield",
+       "source_location_id": 89100007,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": null,
+      "component_id": "act_lens",
+      "cooldown": 6.0,
+      "description": "Marks enemies in view.",
+      "display_name": "Scan Lens",
+      "kind": "action",
+      "modifiers": [],
+      "primitive": {
+       "duration": 8.0,
+       "range": 30.0,
+       "type": "scan_mark"
+      },
+      "slot": "utility"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 7,
+       "note": "Scan Lens",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Lens of Truth",
+       "source_location_id": 89100008,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 3,
+      "component_id": "act_cinder",
+      "cooldown": 1.0,
+      "description": "A lobbed charge that bursts and sets things alight.",
+      "display_name": "Cinder Charge",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 3.0,
+        "magnitude": 0.5,
+        "status": "burning",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 30.0,
+       "fuse": 1.5,
+       "launch_force": 12.0,
+       "radius": 3.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 8,
+       "note": "Cinder Charge",
+       "operation": "create",
+       "source_game": "Ocarina of Time",
+       "source_item_name": "Bomb Bag",
+       "source_location_id": 89100009,
+       "source_recipient_name": "Link"
+      }
+     ]
+    },
+    {
+     "component": {
+      "charges": 2,
+      "component_id": "act_flask",
+      "cooldown": 1.0,
+      "description": "A lobbed flask that bursts and slows.",
+      "display_name": "Frost Flask",
+      "kind": "action",
+      "modifiers": [
+       {
+        "duration": 4.0,
+        "magnitude": 0.4,
+        "status": "slowed",
+        "type": "apply_status_on_hit"
+       }
+      ],
+      "primitive": {
+       "damage": 18.0,
+       "fuse": 1.0,
+       "launch_force": 11.0,
+       "radius": 4.0,
+       "type": "arc_lob"
+      },
+      "slot": "consumable"
+     },
+     "mk": 1,
+     "provenance": [
+      {
+       "interpretation_seq": 9,
+       "note": "Frost Flask",
+       "operation": "create",
+       "source_game": "A Link to the Past",
+       "source_item_name": "Ice Trap",
+       "source_location_id": 89100010,
+       "source_recipient_name": "Link"
+      }
+     ]
+    }
+   ]
+  },
+  "missing_location_ids": [],
+  "pending_checks": [],
+  "protocol_version": 8,
+  "race_mode": false,
+  "scouted": [],
+  "seed_name": "EQUIPFIXTURE",
+  "shop": {
+   "created_after_zone_count": 0,
+   "stock": []
+  },
+  "signal_keys": 0,
+  "slot_id": 0,
+  "slot_name": "Pepsi",
+  "slots": {
+   "consumable": null,
+   "echo_a": "act_lash",
+   "echo_b": null,
+   "mobility": "act_dash",
+   "utility": null
+  },
+  "static_glitch_units": 0,
+  "static_received": 0,
+  "team": 0,
+  "type": "campaign_snapshot",
+  "unlocked_tier": 0,
+  "zone_map": null
+ }
+}

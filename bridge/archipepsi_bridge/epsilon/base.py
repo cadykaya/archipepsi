@@ -23,11 +23,12 @@ from ..schemas import constants as C
 from ..schemas.echo import (
     EchoInterpretation, budget_errors, target_errors,
     validate_interpretation)
-from ..schemas.mechanics import EMPTY_MECHANICS
+from ..schemas import featured as FEATURED
+from ..schemas.mechanics import EMPTY_MECHANICS, FoldError, derive_mechanics
 from .. import shells as _shells
 from ..schemas.zone import Zone, validate_zone
 from . import capabilities as CAP
-from .fallback import fallback_echo, fallback_zone
+from .fallback import fallback_echo, fallback_zone, featured_fallback
 from .requests import EchoGenerationRequest, ZoneGenerationRequest
 
 log = logging.getLogger("archipepsi.epsilon")
@@ -217,29 +218,73 @@ def reading_errors(interpretation, request) -> list[str]:
     return []
 
 
+def fold_errors(interpretation, log, next_seq: int) -> list[str]:
+    """What `append_interpretation` would refuse, said before the grant
+    appends it (D05-F2).
+
+    No other check asks whether an Echo folds onto THIS campaign's log. An
+    Echo that CREATEs an id the campaign already owns passed every one of
+    them, and the append then raised mid-grant: the Check confirmed, no
+    Echo, no card, and the same failure again at every sweep. Refused
+    here, it is repaired like any other invalid Echo, and then replaced by
+    the fallback. Stamped as the append would stamp it.
+    """
+    stamped = EchoInterpretation.model_validate(
+        {**interpretation.model_dump(), "interpretation_seq": next_seq})
+    try:
+        derive_mechanics(tuple(log) + (stamped,))
+    except FoldError as exc:
+        return [f"this Echo does not fold onto the campaign: {exc}"]
+    return []
+
+
 async def generate_echo_validated(
         provider: EpsilonProvider, request: EchoGenerationRequest, *,
         mechanics=None,
         archive_dir: Path | None = None,
-        timeout: float = C.PROVIDER_TIMEOUT_SECONDS) -> GenerationOutcome:
+        timeout: float = C.PROVIDER_TIMEOUT_SECONDS,
+        featured=None, log=(), next_seq: int = 0) -> GenerationOutcome:
     """`mechanics` is the campaign's current fold, for the §16 budgets.
 
     Optional so that every existing caller and test keeps working with no
     budget applied — passing nothing means "judge this Echo on its own",
     which is exactly what the older callers meant. The campaign passes it.
+
+    `log` and `next_seq` are the campaign's Echo log and the sequence
+    this Echo will be stamped with: an Echo that would not fold onto them
+    is refused (`fold_errors`). `featured` is the requirement a FEATURED
+    Check's Echo is held to (H-QUALIFY, D-5). When set, an Echo that does not supply it is refused
+    and repaired like any other invalid one, and the fallback is the
+    requirement's own, which always supplies it. None changes nothing.
     """
     live = EMPTY_MECHANICS if mechanics is None else mechanics
+
+    def semantic(e) -> list[str]:
+        errors = (
+            validate_interpretation(
+                e, expected_source_location_id=request.source.location_id)
+            + CAP.validate_stage_support(e, slots=tuple(
+                request.allowed.get("slots", CAP.IMPLEMENTED_ACTION_SLOTS)))
+            + budget_errors(e, live)
+            + target_errors(e, live)
+            + reading_errors(e, request))
+        # Only an Echo that passes the rest is folded: both checks below
+        # fold it onto the log, and a fold is not asked of what is already
+        # known to be wrong.
+        if not errors:
+            errors = fold_errors(e, log, next_seq)
+        if not errors and featured is not None:
+            errors = FEATURED.check(log, e, featured, next_seq)
+        return errors
+
+    def build_fallback(r):
+        if featured is not None:
+            return featured_fallback(featured, r)
+        return fallback_echo(r, mechanics=live)
+
     return await _pipeline(
         provider, request, kind="echo",
         generation_id=request.required_echo_id, adapter=_ECHO_ADAPTER,
-        semantic=lambda e: (
-            validate_interpretation(
-                e, expected_source_location_id=request.source.location_id)
-            + CAP.validate_stage_support(e)
-            + budget_errors(e, live)
-            + target_errors(e, live)
-            + reading_errors(e, request)
-        ),
-        build_fallback=lambda r: fallback_echo(r, mechanics=live),
+        semantic=semantic, build_fallback=build_fallback,
         archive_dir=archive_dir,
         timeout=timeout)

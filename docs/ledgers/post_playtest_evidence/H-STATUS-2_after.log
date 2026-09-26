@@ -1,0 +1,56 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- THE GATE IS THE CONTRACT'S
+   GDScript backtrace (most recent call first):
+  ok: anchored on self: the production gate refuses it, as the contract table does not yet declare it
+   GDScript backtrace (most recent call first):
+  ok: anchored on object: the production gate refuses it, as the contract table does not yet declare it
+   GDScript backtrace (most recent call first):
+  ok: lightened on self: the production gate refuses it, as the contract table does not yet declare it
+   GDScript backtrace (most recent call first):
+  ok: lightened on enemy: the production gate refuses it, as the contract table does not yet declare it
+  -- AN ANCHORED PLAYER DOES NOT MOVE (played)
+  ok: a second held forward: the free player walks 7.00 m, the anchored one 0.000 m (movement 0.0)
+  ok: jump: the free player rises 1.40 m (1 jump), the anchored one 0.000 m and no `jumped` for a rule to answer (0)
+  ok: a knock (7, 3, 0): the free player is thrown 0.42 m and 0.21 m up, the anchored one 0.000 m and 0.000 m up (immune to all impulse)
+  ok: a velocity written from outside (6, 12, 4) moves it 0.000 m and 0.000 m up
+  ok: anchored three metres up, it comes down and stands (y 0.00)
+  -- PRESSING INTO A STEP AND A CRATE (played)
+  ok: pressing forward: a free player climbs the 0.5 m step (0.50 m) and shoves the crate 7.69 m; anchored, it climbs 0.0000 m and shoves 0.000 m
+  -- A PAD AND A RAIL CARRY IT NOWHERE
+p3a: launch FIRED from (-30.000000, 0.950000, -20.000000) at (37.032806, 12.961481, 18.516403)
+  ok: a launch pad fires the free player (1) and not the anchored one (0), which stays 0.000 m from where it stood
+p3a: rail CAUGHT at (20.000000, 2.000000, -28.000408)
+p3a: rail RELEASED at (20.000000, 2.000000, -27.550171)
+  ok: a grind rail catches the free player (true); anchored, it lets go (true) and does not catch it again (false)
+  -- ALL OTHER ACTIONS PERMITTED (played)
+  ok: free, the dash fires (cooldown 0.61) and carries the player 0.50 m
+  ok: anchored, the dash refuses before it is paid for (cooldown 0.00), moves nothing (0.000 m), and says why: ["ANCHORED -- FIXED IN PLACE"]
+  ok: anchored, the shield fires (cooldown 0.92)
+  ok: anchored, a lever in reach is pulled
+  -- ITS CLASS, AND ITS END
+  ok: a HEAVY plate that counts the player: MEDIUM leaves it unpressed; anchored, the player reads fixed and it is pressed
+  ok: a second later it has run out: MEDIUM again, the plate released, and the player walks 4.49 m
+  -- A LIGHTENED PLAYER
+  ok: its class drops a step: medium -> light
+  ok: the same knock (4 m/s) gives the plain player 4.00 m/s and the lightened one 8.00 (incoming impulse x2.0)
+  ok: it walks as far (4.67 m against 4.67) and jumps as high (1.40 m)
+  ok: anchoring it removes the lightness [true, false, "fixed"], and lightening it the anchor [false, true, "light"]
+  -- A LIGHTENED ENEMY
+  ok: the same 8 m/s knock: the plain enemy takes 8.0 m/s and goes 0.31 m, the lightened one 16.0 m/s and 0.62 m (incoming impulse x2.0)
+  ok: to the verbs it is still an actor whose mass is not modelled: no class to drop a step
+  ok: anchored over it, the knock moves it 0.000 m; lightened over that, 0.62 m again
+  -- AN ANCHORED OBJECT
+  ok: it reads FIXED (fixed; the same crate plain is medium)
+  ok: a 5 m/s impulse moves the plain crate 1.53 m; the anchored one, with a 3 kN push on top, 0.000 m
+  ok: the verbs refuse it (fixed), so does a push (fixed), and the hands say 'FIXED IN PLACE'
+  ok: walked into for a second and a half, it gives 0.000 m
+  ok: anchored three metres up, it hangs there (y 3.00); when the Status ends it is thawed and falls (y 0.49)
+  NOTE: walking into the anchored crate the player went 3.09 m
+  ok: an impulse landed while anchored is not released when the anchor ends: thawed, the crate has moved 0.000 m
+  -- THE ANCHOR AMONG THE OTHER HOLDS
+  ok: a bolted crate anchored and released is still frozen (the anchor thaws only what it froze)
+  ok: anchored over lightened it is FIXED and frozen [false, 1.0, "fixed", true]; lightened over that it is thawed and LIGHT [false, false, "light"], and the same impulse moves it 1.96 m to a plain crate's 0.68
+  ok: a HEAVY plate: the MEDIUM crate leaves it unpressed, anchored it is pressed, and when the anchor ends unpressed -- the plate reads the crate's class as it is, not as it was
+  ok: a carried crate anchored is let go (["DROPPED · FIXED IN PLACE"]) and stays where it was (0.000 m)
+GODOT STATUS KINETIC OK (35 checks, 1 notes)

@@ -1,0 +1,9 @@
+H-JOURNAL: the suites the walls touch, one at a time, in wt-cp2 (after the sabotage run)
+sabotages exit=0 17 of 17 sabotages caught
+godot-journal-face: exit=0 GODOT JOURNAL FACE OK (36 checks, 0 notes)
+godot-menu-shell: exit=0 GODOT MENU SHELL OK (23 checks, 2 notes)
+godot-boot: exit=0 GODOT BOOT TESTS OK
+godot-hud: exit=0 GODOT HUD TESTS OK
+godot-equipment-face: exit=0 GODOT EQUIPMENT FACE OK (107 checks, 1 notes)
+godot-map-face: exit=0 GODOT MAP FACE OK (52 checks, 1 notes)
+godot-candidate-live: exit=0 GODOT CANDIDATE LIVE NEXT_FINAL OK (8 checks, 1 notes)

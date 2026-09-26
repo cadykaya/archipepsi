@@ -413,13 +413,21 @@ async def prove_concurrent_zones_do_not_cross(a: Player, b: Player) -> None:
             _check(loc in p.engine.ap.checked,
                    f"{p.slot} claimed {loc} and AP does not have it checked")
 
-    # An Echo belongs to the campaign that earned it, and to no other.
+    # An Echo belongs to the campaign that earned it, and to no other: it
+    # names a location that campaign confirmed. Its own original yields
+    # one only in a campaign created under D-01 (D14 §3); a legacy
+    # campaign's never does.
     for owner, other in ((a, b), (b, a)):
         for interpretation in owner.save.interpretations:
             scout = owner.engine.ap.scouts[interpretation.source_location_id]
-            _check(not scout.recipient_is_self,
+            _check(interpretation.source_location_id in owner.engine.ap.checked,
+                   f"{owner.slot} granted an Echo for "
+                   f"{interpretation.source_location_id}, which it never "
+                   f"confirmed")
+            _check(owner.save.self_addressed_echoes
+                   or not scout.recipient_is_self,
                    f"{owner.slot} granted an Echo for {interpretation.source_location_id}, "
-                   f"which is its OWN item")
+                   f"which is its OWN item, in a legacy campaign")
             _check(interpretation.source_item_name == scout.item_name,
                    f"{owner.slot}'s Echo for "
                    f"{interpretation.source_location_id} names "

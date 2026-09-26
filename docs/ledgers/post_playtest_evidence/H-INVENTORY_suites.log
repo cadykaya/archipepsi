@@ -1,0 +1,64 @@
+===== make godot-hud
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+GODOT HUD TESTS OK
+===== make godot-boot
+         [3] _the_travel_panel_reaches_the_real_consumers (res://tests/boot_driver.gd:207)
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+GODOT BOOT TESTS OK
+===== make godot-archive
+-- the counts --
+  ok: the totals count everything owned
+  ok: …and stay at 3 while a search shows 1, so the heading can say '1 of 3'
+
+GODOT ARCHIVE OK (23 checks, 0 notes)
+===== make godot-consumable
+  ok: the same press, held, does nothing
+  ok: and asks the bridge for nothing
+  ok: and it is not even refused — the press never reached the slot
+  ok: closing the archive gives the key back
+GODOT CONSUMABLE TESTS OK (87 checks)
+===== make godot-menu-shell
+  ok: and the interface itself still turns while the world is still
+  ok: closing it releases its own claim only: another owner's pause holds (["test_other_owner"])
+  ok: once nobody holds it the world runs on: 102 frames, the body fell 2.40 m, the timer fired
+
+GODOT MENU SHELL OK (23 checks, 2 notes)
+===== make godot-test
+
+chambers: doorway 2.4 m, brute 1.8 m, clearance 0.30 a side
+    spiral: laid out
+GODOT CHAMBER TESTS OK
+===== make godot-lab
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+GODOT LAB TESTS OK
+===== make godot-stats
+   GDScript backtrace (most recent call first):
+GODOT STATS TESTS OK
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+     at: cleanup (core/object/object.cpp:2514)
+===== make godot-legible
+check locked     top 2.51 height 1.45 width 1.11 parts 4
+check available  top 2.05 height 0.70 width 0.70 parts 1
+check confirmed  top 1.28 height 0.28 width 1.00 parts 1
+GODOT LEGIBILITY TESTS OK
+===== make godot-reload
+   GDScript backtrace (most recent call first):
+   GDScript backtrace (most recent call first):
+  ok: the player walked from 'c005' through the doorway they had already opened and into 'c014': they are at (35.06905, 1.530827, 55.30869) and it is [P: (35.51, 0.53, 41.3), S: (23.8, 9.0, 27.2)] (8 frames, 3.6 m from its arrival)
+GODOT RELOAD TESTS OK (20 checks)
+===== make godot-integration
+ERROR: Pages in use exist at exit in PagedAllocator: N7Variant5Pools12BucketMediumE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:169)
+ERROR: Pages in use exist at exit in PagedAllocator: N7Variant5Pools11BucketSmallE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:169)
+===== make godot-consumable-restart
+  ok: a press in the new process spends the NEXT charge, not the dead one's: the save is at 2 of 3
+  ok: leaving 1
+  NOTE: across the process boundary: 2 charge(s) authorised in total, 1 effect(s) run in THIS process, and the supply was never handed back
+GODOT CONSUMABLE LIVE TESTS OK (1 notes)

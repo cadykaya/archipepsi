@@ -1,0 +1,273 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  OWED c009 off c008 via side_left: 2 box(es), routed after 10 pose(s); placed so far 19
+       owed (-193.470001, 33.029999, -38.400009) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -43.400009) size (4.000000, 4.599998, 5.000000)
+  OWED c010 off c009 via side_left: 2 box(es), routed after 2 pose(s); placed so far 29
+       owed (-193.470001, 33.029999, -38.400009) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -43.400009) size (4.000000, 4.599998, 5.000000)
+  OWED c012 off c011 via side_left: 4 box(es), routed after 13 pose(s); placed so far 34
+       owed (-193.470001, 33.029999, -53.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -58.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-200.419998, 33.029999, -45.450012) size (5.000000, 4.599998, 4.000004)
+       owed (-205.419998, 33.029999, -45.450012) size (5.000000, 4.599998, 4.000004)
+  OWED c015 off c011 via side_right: 2 box(es), routed after 1 pose(s); placed so far 47
+       owed (-193.470001, 33.029999, -53.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -58.500008) size (4.000000, 4.599998, 5.000000)
+  OWED c013 off c012 via side_left: 4 box(es), routed after 6 pose(s); placed so far 49
+       owed (-193.470001, 33.029999, -53.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -58.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-121.070007, 33.029999, -68.250008) size (4.000000, 4.599998, 5.000000)
+       owed (-121.070007, 33.029999, -73.250008) size (4.000000, 4.599998, 5.000000)
+  OWED c014 off c012 via side_right: 2 box(es), routed after 1 pose(s); placed so far 53
+       owed (-193.470001, 33.029999, -53.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -58.500008) size (4.000000, 4.599998, 5.000000)
+  OWED c017 off c015 via side_left: 4 box(es), routed after 1 pose(s); placed so far 55
+       owed (-193.470001, 33.029999, -53.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -58.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-208.819992, 33.029999, -35.750008) size (4.000000, 4.599998, 5.000000)
+       owed (-208.819992, 33.029999, -30.750008) size (4.000000, 4.599998, 5.000000)
+  OWED c018 off c015 via side_right: 2 box(es), routed after 1 pose(s); placed so far 57
+       owed (-193.470001, 33.029999, -53.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -58.500008) size (4.000000, 4.599998, 5.000000)
+  OWED c020 off c013 via side_right: 2 box(es), routed after 8 pose(s); placed so far 59
+       owed (-193.470001, 33.029999, -53.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -58.500008) size (4.000000, 4.599998, 5.000000)
+  OWED c021 off c017 via side_left: 2 box(es), routed after 4 pose(s); placed so far 67
+       owed (-193.470001, 33.029999, -53.500008) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -58.500008) size (4.000000, 4.599998, 5.000000)
+  DIAG spine c016: cursor=(-191.470001, 34.029999, -53.500008) yaw=-180 room=(7.900000, 6.200000, 13.200000) entry=(0.000000, 0.000000, 0.000000)
+       budget=72 poses tested=15 corners entered=6
+       first pose overlaps rooms: []
+       overlaps placed[66/71] at (-196.319992, 33.029999, -65.150009) size (5.000000, 4.599998, 4.000000); shared (4.100006, 4.599998, 4.000000)
+       overlaps placed[67/71] at (-191.319992, 33.029999, -66.150009) size (6.000000, 4.599998, 6.000000); shared (3.799988, 4.599998, 6.000000)
+       overlaps placed[68/71] at (-191.319992, 33.029999, -72.550011) size (6.000000, 4.599998, 6.000000); shared (3.799988, 4.599998, 0.149994)
+       first pose box (-195.419998, 33.029999, -66.700005) size (7.899994, 6.200001, 13.199997)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=true link_fits=true
+  OWED c009 off c008 via side_left: 2 box(es), routed after 10 pose(s); placed so far 19
+       owed (-193.470001, 33.029999, -38.400009) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -43.400009) size (4.000000, 4.599998, 5.000000)
+  OWED c010 off c009 via side_left: 2 box(es), routed after 2 pose(s); placed so far 29
+       owed (-193.470001, 33.029999, -38.400009) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -43.400009) size (4.000000, 4.599998, 5.000000)
+  OWED c012 off c011 via side_left: 4 box(es), routed after 14 pose(s); placed so far 36
+       owed (-199.869995, 33.029999, -59.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-206.819992, 33.029999, -51.850014) size (5.000000, 4.599998, 4.000004)
+       owed (-211.819992, 33.029999, -51.850014) size (5.000000, 4.599998, 4.000004)
+  OWED c015 off c011 via side_right: 2 box(es), routed after 1 pose(s); placed so far 50
+       owed (-199.869995, 33.029999, -59.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+  OWED c013 off c012 via side_left: 4 box(es), routed after 1 pose(s); placed so far 52
+       owed (-199.869995, 33.029999, -59.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-122.470001, 33.029999, -74.650009) size (4.000000, 4.599998, 5.000000)
+       owed (-122.470001, 33.029999, -79.650009) size (4.000000, 4.599998, 5.000000)
+  OWED c014 off c012 via side_right: 2 box(es), routed after 1 pose(s); placed so far 54
+       owed (-199.869995, 33.029999, -59.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+  OWED c017 off c015 via side_left: 4 box(es), routed after 1 pose(s); placed so far 56
+       owed (-199.869995, 33.029999, -59.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-215.219986, 33.029999, -42.150009) size (4.000000, 4.599998, 5.000000)
+       owed (-215.219986, 33.029999, -37.150009) size (4.000000, 4.599998, 5.000000)
+  OWED c018 off c015 via side_right: 2 box(es), routed after 1 pose(s); placed so far 58
+       owed (-199.869995, 33.029999, -59.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+  OWED c020 off c013 via side_right: 2 box(es), routed after 4 pose(s); placed so far 60
+       owed (-199.869995, 33.029999, -59.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+  OWED c021 off c017 via side_left: 2 box(es), routed after 4 pose(s); placed so far 64
+       owed (-199.869995, 33.029999, -59.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+  DIAG spine c016: cursor=(-197.869995, 34.029999, -59.900009) yaw=-180 room=(7.900000, 6.200000, 13.200000) entry=(0.000000, 0.000000, 0.000000)
+       budget=74 poses tested=15 corners entered=6
+       first pose overlaps rooms: []
+       overlaps placed[63/68] at (-202.719986, 33.029999, -71.550011) size (5.000000, 4.599998, 4.000000); shared (4.100006, 4.599998, 4.000000)
+       overlaps placed[64/68] at (-197.719986, 33.029999, -72.550011) size (6.000000, 4.599998, 6.000000); shared (3.799988, 4.599998, 6.000000)
+       overlaps placed[65/68] at (-197.719986, 33.029999, -78.950012) size (6.000000, 4.599998, 6.000000); shared (3.799988, 4.599998, 0.149994)
+       first pose box (-201.819992, 33.029999, -73.100006) size (7.899994, 6.200001, 13.199997)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=true link_fits=true
+  OWED c009 off c008 via side_left: 2 box(es), routed after 10 pose(s); placed so far 19
+       owed (-193.470001, 33.029999, -38.400009) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -43.400009) size (4.000000, 4.599998, 5.000000)
+  OWED c010 off c009 via side_left: 2 box(es), routed after 2 pose(s); placed so far 29
+       owed (-193.470001, 33.029999, -38.400009) size (4.000000, 4.599998, 5.000000)
+       owed (-193.470001, 33.029999, -43.400009) size (4.000000, 4.599998, 5.000000)
+  OWED c012 off c011 via side_left: 4 box(es), routed after 4 pose(s); placed so far 37
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -69.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-206.819992, 33.029999, -56.850014) size (5.000000, 4.599998, 4.000004)
+       owed (-211.819992, 33.029999, -56.850014) size (5.000000, 4.599998, 4.000004)
+  OWED c015 off c011 via side_right: 2 box(es), routed after 1 pose(s); placed so far 41
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -69.900009) size (4.000000, 4.599998, 5.000000)
+  OWED c013 off c012 via side_left: 4 box(es), routed after 17 pose(s); placed so far 43
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -69.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-172.470001, 33.029999, -79.650009) size (4.000000, 4.599998, 5.000000)
+       owed (-172.470001, 33.029999, -84.650009) size (4.000000, 4.599998, 5.000000)
+  OWED c014 off c012 via side_right: 2 box(es), routed after 1 pose(s); placed so far 57
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -69.900009) size (4.000000, 4.599998, 5.000000)
+  OWED c017 off c015 via side_left: 4 box(es), routed after 1 pose(s); placed so far 59
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -69.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-215.219986, 33.029999, -47.150009) size (4.000000, 4.599998, 5.000000)
+       owed (-215.219986, 33.029999, -42.150009) size (4.000000, 4.599998, 5.000000)
+  OWED c018 off c015 via side_right: 2 box(es), routed after 1 pose(s); placed so far 61
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -69.900009) size (4.000000, 4.599998, 5.000000)
+  OWED c020 off c013 via side_right: 2 box(es), FELL BACK after 1 pose(s); placed so far 63
+       owed (-199.869995, 33.029999, -64.900009) size (4.000000, 4.599998, 5.000000)
+       owed (-199.869995, 33.029999, -69.900009) size (4.000000, 4.599998, 5.000000)
+  DIAG c020 off c013: mouth=(-165.570007, 34.029999, -91.600014) yaw=-90 room=(30.000000, 9.000000, 18.500000)
+       placed=63 span=(-223.719986, -12.000000, -112.520004)..(3.399994, 45.049999, 23.599991)
+       first pose overlaps room c014 (platform_path)
+       step 0 room_fits=false link_fits=false
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=true link_fits=true
+  OWED c009 off c008 via side_left: 2 box(es), FELL BACK after 24 pose(s); placed so far 30
+       owed (-125.770004, 33.029999, -26.100008) size (5.000000, 4.599998, 4.000000)
+       owed (-120.770004, 33.029999, -26.100008) size (5.000000, 4.599998, 4.000000)
+  DIAG c009 off c008: mouth=(-131.920013, 34.029999, -12.550007) yaw=-360 room=(21.700001, 6.700000, 10.100000)
+       placed=30 span=(-194.470001, -12.000000, -30.650009)..(3.399994, 41.029999, 23.600006)
+       first pose overlaps room c004 (arena)
+       first pose overlaps room c005 (arena)
+       first pose overlaps room c006 (corridor)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=true link_fits=true
+  OWED c009 off c008 via side_left: 2 box(es), FELL BACK after 24 pose(s); placed so far 31
+       owed (-120.770004, 33.029999, -26.100008) size (5.000000, 4.599998, 4.000000)
+       owed (-115.770004, 33.029999, -26.100008) size (5.000000, 4.599998, 4.000000)
+  DIAG c009 off c008: mouth=(-126.920006, 34.029999, -12.550007) yaw=-360 room=(21.700001, 6.700000, 10.100000)
+       placed=31 span=(-194.470001, -12.000000, -30.650009)..(3.399994, 41.029999, 23.600006)
+       first pose overlaps room c004 (arena)
+       first pose overlaps room c005 (arena)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=false link_fits=true
+       step 6 room_fits=true link_fits=true
+  OWED c009 off c008 via side_left: 2 box(es), routed after 1 pose(s); placed so far 27
+       owed (-146.260010, 33.029999, 75.209999) size (4.000000, 4.599998, 4.999992)
+       owed (-146.260010, 33.029999, 80.209991) size (4.000000, 4.599998, 5.000000)
+  OWED c010 off c009 via side_left: 2 box(es), routed after 1 pose(s); placed so far 29
+       owed (-146.260010, 33.029999, 75.209999) size (4.000000, 4.599998, 4.999992)
+       owed (-146.260010, 33.029999, 80.209991) size (4.000000, 4.599998, 5.000000)
+  OWED c012 off c011 via side_left: 4 box(es), routed after 5 pose(s); placed so far 36
+       owed (-139.860016, 33.029999, 101.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-133.910019, 33.029999, 94.660004) size (5.000000, 4.599998, 4.000000)
+       owed (-128.910019, 33.029999, 94.660004) size (5.000000, 4.599998, 4.000000)
+  OWED c015 off c011 via side_right: 2 box(es), routed after 1 pose(s); placed so far 41
+       owed (-139.860016, 33.029999, 101.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+  OWED c013 off c012 via side_left: 4 box(es), routed after 4 pose(s); placed so far 43
+       owed (-139.860016, 33.029999, 101.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-172.260010, 33.029999, 116.460007) size (4.000000, 4.599998, 5.000000)
+       owed (-172.260010, 33.029999, 121.460007) size (4.000000, 4.599998, 5.000000)
+  OWED c014 off c012 via side_right: 2 box(es), routed after 1 pose(s); placed so far 47
+       owed (-139.860016, 33.029999, 101.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+  OWED c017 off c015 via side_left: 4 box(es), routed after 1 pose(s); placed so far 49
+       owed (-139.860016, 33.029999, 101.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-124.510017, 33.029999, 83.960007) size (4.000000, 4.599998, 5.000000)
+       owed (-124.510017, 33.029999, 78.960007) size (4.000000, 4.599998, 5.000000)
+  OWED c018 off c015 via side_right: 2 box(es), routed after 1 pose(s); placed so far 51
+       owed (-139.860016, 33.029999, 101.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+  OWED c020 off c013 via side_right: 2 box(es), routed after 1 pose(s); placed so far 53
+       owed (-139.860016, 33.029999, 101.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+  OWED c021 off c017 via side_left: 2 box(es), routed after 9 pose(s); placed so far 55
+       owed (-139.860016, 33.029999, 101.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+  DIAG spine c016: cursor=(-137.860016, 34.029999, 106.709999) yaw=0 room=(7.900000, 6.200000, 13.200000) entry=(0.000000, 0.000000, 0.000000)
+       budget=80 poses tested=57 corners entered=24
+       first pose overlaps rooms: []
+       overlaps placed[54/59] at (-138.010010, 33.029999, 114.360001) size (5.000000, 4.599998, 4.000000); shared (4.099991, 4.599998, 4.000000)
+       overlaps placed[55/59] at (-144.010010, 33.029999, 113.360001) size (6.000000, 4.599998, 6.000000); shared (3.800003, 4.599998, 6.000000)
+       overlaps placed[56/59] at (-143.010010, 33.029999, 119.760002) size (4.000000, 4.599998, 5.000000); shared (2.800003, 4.599998, 0.149994)
+       first pose box (-141.810013, 33.029999, 106.709999) size (7.899994, 6.200001, 13.199997)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=false link_fits=false
+       step 6 room_fits=false link_fits=false
+       step 7 room_fits=false link_fits=false
+       step 8 room_fits=false link_fits=false
+       step 9 room_fits=true link_fits=true
+  OWED c009 off c008 via side_left: 2 box(es), routed after 1 pose(s); placed so far 28
+       owed (-146.260010, 33.029999, 80.209999) size (4.000000, 4.599998, 4.999992)
+       owed (-146.260010, 33.029999, 85.209991) size (4.000000, 4.599998, 5.000000)
+  OWED c010 off c009 via side_left: 2 box(es), routed after 1 pose(s); placed so far 30
+       owed (-146.260010, 33.029999, 80.209999) size (4.000000, 4.599998, 4.999992)
+       owed (-146.260010, 33.029999, 85.209991) size (4.000000, 4.599998, 5.000000)
+  OWED c012 off c011 via side_left: 4 box(es), routed after 5 pose(s); placed so far 37
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 111.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-133.910019, 33.029999, 99.660004) size (5.000000, 4.599998, 4.000000)
+       owed (-128.910019, 33.029999, 99.660004) size (5.000000, 4.599998, 4.000000)
+  OWED c015 off c011 via side_right: 2 box(es), routed after 1 pose(s); placed so far 42
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 111.709999) size (4.000000, 4.599998, 5.000000)
+  OWED c013 off c012 via side_left: 4 box(es), routed after 4 pose(s); placed so far 44
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 111.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-172.260010, 33.029999, 121.460007) size (4.000000, 4.599998, 5.000000)
+       owed (-172.260010, 33.029999, 126.460007) size (4.000000, 4.599998, 5.000000)
+  OWED c014 off c012 via side_right: 2 box(es), routed after 1 pose(s); placed so far 48
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 111.709999) size (4.000000, 4.599998, 5.000000)
+  OWED c017 off c015 via side_left: 4 box(es), routed after 1 pose(s); placed so far 50
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 111.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-124.510017, 33.029999, 88.960007) size (4.000000, 4.599998, 5.000000)
+       owed (-124.510017, 33.029999, 83.960007) size (4.000000, 4.599998, 5.000000)
+  OWED c018 off c015 via side_right: 2 box(es), routed after 1 pose(s); placed so far 52
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 111.709999) size (4.000000, 4.599998, 5.000000)
+  OWED c020 off c013 via side_right: 2 box(es), routed after 1 pose(s); placed so far 54
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 111.709999) size (4.000000, 4.599998, 5.000000)
+  OWED c021 off c017 via side_left: 2 box(es), routed after 9 pose(s); placed so far 56
+       owed (-139.860016, 33.029999, 106.709999) size (4.000000, 4.599998, 5.000000)
+       owed (-139.860016, 33.029999, 111.709999) size (4.000000, 4.599998, 5.000000)
+  DIAG spine c016: cursor=(-137.860016, 34.029999, 111.709999) yaw=0 room=(7.900000, 6.200000, 13.200000) entry=(0.000000, 0.000000, 0.000000)
+       budget=81 poses tested=57 corners entered=24
+       first pose overlaps rooms: []
+       overlaps placed[55/60] at (-138.010010, 33.029999, 119.360001) size (5.000000, 4.599998, 4.000000); shared (4.099991, 4.599998, 4.000000)
+       overlaps placed[56/60] at (-144.010010, 33.029999, 118.360001) size (6.000000, 4.599998, 6.000000); shared (3.800003, 4.599998, 6.000000)
+       overlaps placed[57/60] at (-143.010010, 33.029999, 124.760002) size (4.000000, 4.599998, 5.000008); shared (2.800003, 4.599998, 0.149994)
+       first pose box (-141.810013, 33.029999, 111.709999) size (7.899994, 6.200001, 13.199997)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=false link_fits=false
+       step 6 room_fits=false link_fits=false
+       step 7 room_fits=false link_fits=false
+       step 8 room_fits=false link_fits=false
+       step 9 room_fits=true link_fits=true
+godot exit 0
+RESULT: room 'c016' could not be placed clear of the 60 room(s) before it

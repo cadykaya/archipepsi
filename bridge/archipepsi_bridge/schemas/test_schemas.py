@@ -2174,4 +2174,10 @@ def test_slot_names_and_the_slot_literal_cannot_drift():
         import constants as K
     assert set(get_args(SlotName)) == set(SLOT_NAMES)
     assert SLOT_NAMES == K.SLOT_NAMES
-    assert len(SLOT_NAMES) == 4
+    assert len(SLOT_NAMES) == 5
+    # THE KEYCAP TABLE IS A THIRD SPELLING, and the one the player reads.
+    # A slot with no keycap renders "?" on the HUD rather than failing,
+    # so nothing else would catch it.
+    assert set(K.SLOT_KEYCAPS) == set(SLOT_NAMES)
+    assert len(set(K.SLOT_KEYCAPS.values())) == len(SLOT_NAMES), (
+        "two slots share a keycap")

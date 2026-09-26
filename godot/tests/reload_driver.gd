@@ -192,21 +192,24 @@ func _run() -> void:
 ## the Hub already torn down by `_clear_world` and the unbuildable Zone
 ## still in the tree.
 ##
-## **The failure is real and is not injected.** `zone_08` of the
-## declared sample, served under the id it was dumped as, is content the
-## router genuinely cannot place -- the offline census has reported no
-## manifest for it since it was dumped, and the live
-## `godot-named-case CASE=zone_08 AT=8` run reproduces it through a
-## bridge. Nothing here forces a failure or fakes a return value; the
-## router is asked the same question and gives the same answer.
+## **The failure is real and is not injected.** The owner's candidate
+## zone_008 (HB-F4's composition `3e6768297297`), served under the id it
+## was composed under, is content the router genuinely cannot place:
+## room `c016` cannot stand clear of the sixty rooms before it (HB-F4a-3,
+## open). The owner's campaign discards it three compositions running,
+## and the HB-F4a census reports no manifest for it. Nothing here forces
+## a failure or fakes a return value; the router is asked the same
+## question and gives the same answer.
 ##
 ## **If this Zone ever starts routing, this gate fails LOUDLY** rather
 ## than passing on a build that succeeded. What it guards is the
-## HANDOFF, not the routing, so the fixture would have to be replaced
-## with another engine-failure case -- not deleted, and not quietly
-## satisfied by a Zone that built.
+## HANDOFF, not the routing, so the fixture has to be replaced with
+## another engine-failure case -- not deleted, and not quietly satisfied
+## by a Zone that built. That has happened once: this was `zone_08` of
+## the declared sample until HB-F4a gave a branch the spine's way on and
+## the router placed it.
 func _build_failure() -> void:
-	const CASE := "res://tests/fixtures/sample/zone_08.json"
+	const CASE := "res://tests/fixtures/router/candidate_zone_008.json"
 	if not FileAccess.file_exists(CASE):
 		_check(false, "the engine-failure fixture %s is missing" % CASE)
 		_finish(1)
@@ -1436,7 +1439,26 @@ func _resume() -> void:
 			if inward.length() > 0.01:
 				await _walk(zone.player,
 						mouth + inward.normalized() * 3.5, box)
-	var walk := await _walk(zone.player, to_at, box)
+	# ALONG THE CONNECTOR, not across it.
+	#
+	# This walked a straight line at the far room's arrival, and that was
+	# enough while the two rooms were near neighbours. They are not any
+	# more: the composition widening changed every room's value, the
+	# allocator produced a differently shaped Zone, and c005 and c014
+	# came out 76 m apart joined by a connector that TURNS. The body went
+	# through the doorway, got ten metres, and walked into the outside of
+	# the corner -- in no room at all, facing static geometry -- and the
+	# leg then reported "69.1 m from its arrival", which describes the
+	# distance and not the problem.
+	#
+	# `room_routes` is the chain the router actually solved, with each
+	# piece's own exit and its own height. Walking it is what
+	# `graph_driver._walk_into` has always done, and the claim is
+	# unchanged: the doorway is passable and the room beyond it is
+	# reachable on foot. A straight line was never the claim -- it was an
+	# assumption about the shape of a Zone, and the Zone changed.
+	var walk := await _walk_the_connector(zone, str(notes["branch"]),
+			to_at, box)
 	# INSIDE THE ROOM, not within a metre of a point in it.
 	#
 	# The walk crosses a doorway, a connector and a turn, and a straight
@@ -1450,7 +1472,9 @@ func _resume() -> void:
 			% str(notes["room"]) + "already opened and into '%s': they "
 			% str(notes["branch"]) + "are at %s and it is %s (%d frames, "
 			% [str(at), str(box), int(walk["frames"])]
-			+ "%.1f m from its arrival)" % float(walk["closest"]))
+			+ "%.1f m from its arrival)" % float(walk["closest"])
+			+ ("; BLOCKED -- %s" % str(walk["against"])
+				if bool(walk.get("blocked", false)) else ""))
 	_finish(0)
 
 
@@ -1509,10 +1533,24 @@ func _walk(player: Player, goal: Vector3,
 		stop_inside := AABB()) -> Dictionary:
 	var closest := INF
 	var still := 0
+	# FRAMES SINCE THE WALK LAST GOT MEASURABLY NEARER.
+	#
+	# `still` cannot answer that question, and the reason is the nudge
+	# below: a genuinely blocked body reaches `still == 24`, jumps,
+	# and has `still` reset to 0 -- so `still > 90` is unreachable and a
+	# wedged walk burns the whole 900-frame budget bouncing in place.
+	# That is how the c005 -> c014 leg reported "900 frames, 69.1 m"
+	# when what actually happened was "blocked eight metres past the
+	# doorway", which are very different findings.
+	#
+	# Progress toward the goal is the thing no nudge can fake: a body
+	# jumping on the spot moves, and gets no closer.
+	var idle := 0
 	var last := player.global_position
 	Input.action_press("move_forward", 1.0)
 	var used := 0
 	var ended := player.global_position
+	var blocked := false
 	for i in WALK_FRAMES:
 		used = i + 1
 		var here := player.global_position
@@ -1520,8 +1558,16 @@ func _walk(player: Player, goal: Vector3,
 		if stop_inside.has_volume() and stop_inside.grow(0.5).has_point(here):
 			break
 		var flat := Vector2(goal.x - here.x, goal.z - here.z)
+		idle = 0 if flat.length() < closest - 0.05 else idle + 1
 		closest = minf(closest, flat.length())
 		if flat.length() <= ARRIVED:
+			break
+		if idle > 240:
+			# Four seconds of walking into something. Say so, and say
+			# what: a leg that ends short because the route is blocked
+			# and one that ends short because the budget ran out are
+			# different failures, and the message used to be the same.
+			blocked = true
 			break
 		player.rotation.y = atan2(-flat.x, -flat.y)
 		# A BODY PRESSED AGAINST SOMETHING TRIES TO CLIMB IT, which is
@@ -1545,4 +1591,68 @@ func _walk(player: Player, goal: Vector3,
 	Input.action_release("move_forward")
 	return {"arrived": Vector2(goal.x - ended.x, goal.z - ended.z).length()
 				<= ARRIVED,
-			"at": ended, "frames": used, "closest": closest}
+			"at": ended, "frames": used, "closest": closest,
+			"blocked": blocked,
+			"against": _what_is_against(player) if blocked else ""}
+
+
+## FOLLOW THE COMMITTED ROUTE INTO A ROOM, piece by piece.
+##
+## Returns the last leg's result, so a caller reads it exactly as it read
+## a single `_walk`. A leg that lands inside the destination ends the
+## walk early -- arriving is arriving, and the remaining waypoints are
+## then behind the body.
+func _walk_the_connector(zone: ZoneController, room: String,
+		arrival: Vector3, box: AABB) -> Dictionary:
+	var steps: Array[Vector3] = []
+	for raw: Variant in (zone.room_routes.get(room, []) as Array):
+		var piece: Dictionary = raw
+		if piece.has("exit"):
+			steps.append(piece["exit"])
+	steps.append(arrival)
+	# NO ROUTE IS NOT AN EXCUSE TO GUESS. A room the router reached
+	# without any connector is a neighbour, and the straight line to its
+	# arrival is the honest walk for it.
+	var walk: Dictionary = {}
+	for step: Vector3 in steps:
+		if box.grow(0.5).has_point(zone.player.global_position):
+			break
+		walk = await _walk(zone.player, step, box)
+		if bool(walk.get("blocked", false)):
+			# A BLOCKED PIECE IS THE ANSWER. Carrying on to the next
+			# waypoint would steer the body back across whatever it is
+			# stuck against and report the LAST leg's distance, which is
+			# how a route failure disguises itself as a short walk.
+			break
+	if walk.is_empty():
+		walk = await _walk(zone.player, arrival, box)
+	return walk
+
+
+## WHAT A WEDGED BODY IS WEDGED ON, named rather than left to guesswork.
+##
+## The widened enemy composition put roles into ordinary rooms that had
+## never held them, so "the player did not get there" now has an answer
+## that is not always geometry. A walk that reports a distance and not a
+## cause cannot tell an obstructing enemy from a wall, and those want
+## opposite fixes.
+func _what_is_against(player: Player) -> String:
+	var near: Array[String] = []
+	for node: Node in player.get_tree().get_nodes_in_group("enemies"):
+		var body := node as Node3D
+		if body == null or not is_instance_valid(body):
+			continue
+		var gap := body.global_position.distance_to(player.global_position)
+		if gap <= 4.0:
+			near.append("%s@%.1fm" % [
+				str(body.get("archetype") if "archetype" in body
+						else body.name), gap])
+	var ahead := player.camera_ray(2.5, -player.global_transform.basis.z)
+	var wall := ""
+	if not ahead.is_empty() and ahead.get("collider") != null:
+		wall = str((ahead["collider"] as Node).name)
+	if near.is_empty():
+		return "no enemy within 4 m; ahead: %s" % ("nothing" if wall == ""
+				else wall)
+	return "enemies near: %s; ahead: %s" % [", ".join(near),
+			"nothing" if wall == "" else wall]

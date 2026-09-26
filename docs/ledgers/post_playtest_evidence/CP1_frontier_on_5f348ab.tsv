@@ -1,0 +1,74 @@
+rev 5f348ab824ca587e82d3f2a1049def3e0e4e3d44
+start 23:17:36
+tree_at_start 0
+1	make test	0	203	2152 passed, 6 warnings, 627 subtests passed in 200.76s (0:0
+2	make smoke	0	1	SMOKE OK — bridge-only loop: connect, scout, allocate, gen
+3	python3 docs/design-packet-v0.8/check_packet.py	0	1	prose matches the models across 11 documents (1325 known ide
+4	make export && git diff --exit-code -- bridge/archipepsi_bridge/schemas/generated godot/scripts/autoload/constants.gd apworld/archipepsi/constants.py	0	1	
+5	make godot-import	0	13	
+6	make doctor	0	4	
+7	make godot-boot	0	18	GODOT BOOT TESTS OK
+8	make godot-test	0	26	GODOT CHAMBER TESTS OK
+9	make godot-hud	0	18	GODOT HUD TESTS OK
+10	make godot-rules	0	18	GODOT RULES TESTS OK
+11	make godot-stats	0	19	GODOT STATS TESTS OK
+12	make godot-lab	0	19	GODOT LAB TESTS OK
+13	make godot-affordance	0	20	GODOT AFFORDANCE TESTS OK
+14	make godot-verbs	0	21	GODOT VERBS TESTS OK
+15	make godot-blink	0	22	GODOT BLINK TESTS OK
+16	make godot-content	0	19	GODOT CONTENT TESTS OK
+17	make godot-activity	0	37	GODOT ACTIVITY TESTS OK
+18	make godot-room	0	19	GODOT ROOM TESTS OK
+19	make godot-room-contract	0	142	GODOT ROOM CONTRACT TESTS OK
+20	make godot-graphs	0	130	GODOT GRAPH TESTS OK
+21	make godot-movement	0	21	GODOT MOVEMENT TESTS OK
+22	make godot-zone-audit	0	22	GODOT ZONE AUDIT OK
+23	make godot-legible	0	21	GODOT LEGIBILITY TESTS OK
+24	make godot-physics	0	131	GODOT PHYSICS TESTS OK (68 checks)
+25	make godot-traverse	0	59	GODOT TRAVERSE TESTS OK (37 checks)
+26	make godot-return-placement	0	19	GODOT RETURN PLACEMENT OK
+27	make godot-build-failure	0	20	GODOT RELOAD TESTS OK (6 checks)
+28	make godot-exit-reach	0	33	GODOT EXIT REACH OK (81 checks)
+29	make godot-passenger-carry	0	41	GODOT PASSENGER CARRY OK (4 checks)
+30	make godot-rail-carrier	0	24	GODOT RAIL CARRIER OK (73 checks)
+31	make godot-rail-junction	0	116	GODOT RAIL JUNCTION OK (140 checks)
+32	make godot-passing-platforms	0	86	GODOT PASSING PLATFORMS OK (70 checks, 7 notes)
+33	make godot-counterfire	0	80	GODOT COUNTERFIRE OK (59 checks, 2 notes)
+34	make godot-mass-class	0	36	GODOT MASS CLASS OK (59 checks, 1 notes)
+35	make godot-unweighted	0	175	GODOT UNWEIGHTED OK (70 checks, 2 notes)
+36	make godot-target-facing	0	20	GODOT TARGET FACING OK (2 checks)
+37	make godot-rail-zone	0	21	GODOT RAIL ZONE OK (25 checks, 2 notes)
+38	make godot-zone-state	0	25	GODOT ZONE STATE OK (60 checks, 3 notes)
+39	make godot-roster	0	57	GODOT ROSTER OK (52 checks, 5 notes)
+40	make godot-actuator	0	36	GODOT ACTUATOR OK (93 checks, 1 notes)
+41	make godot-constraints	0	100	GODOT CONSTRAINTS OK (67 checks, 2 notes)
+42	make godot-archive	0	18	GODOT ARCHIVE OK (23 checks, 0 notes)
+43	make godot-consumable	0	22	GODOT CONSUMABLE TESTS OK (91 checks)
+44	make godot-encounter	0	84	GODOT ENCOUNTER TESTS OK (51 checks, 2 notes)
+45	make godot-signal-graph	0	35	GODOT SIGNAL GRAPH TESTS OK (59 checks, 0 notes)
+46	make godot-latched-route	0	93	GODOT LATCHED ROUTE TESTS OK (38 checks, 2 notes)
+47	make godot-theme-pack	0	19	GODOT THEME PACK TESTS OK (30 checks, 0 notes)
+48	make godot-carry	0	41	GODOT CARRY TESTS OK (32 checks, 1 notes)
+49	make godot-transport	0	392	GODOT TRANSPORT TESTS OK (106 checks, 6 notes)
+50	make godot-reversible	0	106	GODOT REVERSIBLE TESTS OK (32 checks, 0 notes)
+51	make godot-verb-runtime	0	76	GODOT VERB RUNTIME OK (95 checks, 1 notes)
+52	make godot-status-family	0	43	GODOT STATUS FAMILY OK (15 checks, 1 notes)
+53	make godot-combat-fairness	0	185	GODOT COMBAT FAIRNESS OK (50 checks, 0 notes)
+54	make godot-flyer-room	0	47	GODOT FLYER ROOM OK (7 checks, 0 notes)
+55	make godot-resume	0	21	GODOT RESUME TESTS OK (12 checks, 0 notes)
+56	make godot-consumable-live	0	34	GODOT CONSUMABLE LIVE TESTS OK (1 notes)
+57	make godot-consumable-restart	0	35	GODOT CONSUMABLE LIVE TESTS OK (1 notes)
+58	make godot-latched-route-live	0	78	GODOT LATCHED LIVE RESTORE OK (12 checks, 1 notes)
+59	make godot-transport-live	0	163	GODOT TRANSPORT LIVE RESTORE OK (12 checks, 0 notes)
+60	make godot-reversible-live	0	81	GODOT REVERSIBLE LIVE RESTORE OK (6 checks, 0 notes)
+61	make godot-candidate-live	0	295	GODOT CANDIDATE LIVE NEXT_FINAL OK (7 checks, 1 notes)
+62	make godot-resume-live	2	92	GODOT RESUME LIVE CLEAR_RESTORE OK (3 checks, 0 notes)
+63	make godot-ordinary-live	0	30	GODOT RELOAD TESTS OK (10 checks)
+64	make godot-integration	0	107	GODOT INTEGRATION OK
+65	make godot-integration-quiet	0	108	GODOT INTEGRATION OK
+66	make godot-integration-variant-live	0	27	GODOT INTEGRATION OK
+67	make godot-reload	0	55	GODOT RELOAD TESTS OK (20 checks)
+68	make version	0	0	
+end 00:27:17
+tree_at_end  M godot/tests/fixtures/placement/captures.json 
+DONE

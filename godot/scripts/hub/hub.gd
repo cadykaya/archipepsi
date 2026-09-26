@@ -70,12 +70,19 @@ var _seen_goal_sent := false
 var _seen_complete := false
 
 func _ready() -> void:
+	# THE HUB IS NO ZONE'S, and names no game pack (D-11). Bound rather
+	# than assumed, so a Zone that has not finished leaving cannot paint
+	# the Hub -- or the Echo Lab built inside it -- with its own.
+	ThemeMaterials.bind_pack("", self)
 	_build_room()
 	player = Player.create()
 	add_child(player)
 	# Face +Z: the portal and boards are on the far wall.
 	player.set_spawn(Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.8, 3.0)))
 	refresh()
+
+func _exit_tree() -> void:
+	ThemeMaterials.release_pack(self)
 
 func _process(delta: float) -> void:
 	if hud == null:

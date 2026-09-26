@@ -1,0 +1,1172 @@
+{
+  "schema": "archipepsi-team-handoff-queue-v1",
+  "prepared": "2026-09-24",
+  "execution_armed": false,
+  "reference_commit": "a7456373fc76d1c4f8148ccd6b1c6c0beb0eab70",
+  "note": "These are work/integration slices, not counts of distinct new features. Inherited units map to existing work and must not be counted twice. A chosen freeze can include additional ready UI/inherited slices; future phases need explicit activation.",
+  "count": 60,
+  "tasks": [
+    {
+      "id": "H-START",
+      "phase": "SETUP",
+      "title": "Preserve and reconcile the integrated reference",
+      "primary_lane": "Prod",
+      "dependencies": [],
+      "decision_dependencies": [],
+      "detail_document": "00_READ_FIRST.md",
+      "deliverable": "Protected working checkpoint, actual profile/branch/save identity, one ownership note",
+      "acceptance_evidence": "Original save hashes unchanged; current branch read; no full baseline rerun as ritual",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-SEAMS",
+      "phase": "SETUP",
+      "title": "Adopt or repair OV05 shared-seam deliveries",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-START"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "09_CONTRACTS_AND_DECISIONS.md",
+      "deliverable": "Concise reviewed shared-seam table and named ownership",
+      "acceptance_evidence": "Correct prior work retained; actual defects/tests identified",
+      "inherits_ov05_ids": [
+        "O05-00.3"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-ARTILLERY",
+      "phase": "REPAIR",
+      "title": "Target acquisition, shell collision and blast cover",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-START"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "03_DELIVERY_PLAN.md",
+      "deliverable": "Fair indirect-fire path and occlusion repair",
+      "acceptance_evidence": "V-01–03; actual open-path positive control; geometry blocks sealed-room attacks",
+      "inherits_ov05_ids": [
+        "O05-12.2",
+        "O05-12.4"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-FLYER-HIT",
+      "phase": "REPAIR",
+      "title": "Visible flyer body and damage volume agree",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-START"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "02_PLAYTEST_FINDINGS.md",
+      "deliverable": "Correct visual/collider/muzzle/hover transform alignment",
+      "acceptance_evidence": "V-04 normal camera shots; deliberate misses still miss; matching Art review",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-FLYER-AI",
+      "phase": "REPAIR",
+      "title": "Identify and test actual flyer attack states",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-FLYER-HIT"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "02_PLAYTEST_FINDINGS.md",
+      "deliverable": "Role-specific diagnosis/fix and readable waiting/attacking",
+      "acceptance_evidence": "V-05 with events/deaths; no endpoint-HP or bot-aim fiction",
+      "inherits_ov05_ids": [
+        "O05-12.4"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-RESUME-C",
+      "phase": "REPAIR",
+      "title": "Encounter continuation and compatibility contract",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [
+        "D-06"
+      ],
+      "detail_document": "09_CONTRACTS_AND_DECISIONS.md",
+      "deliverable": "Stable identity/defeat/reset/restoration contract using existing save authority",
+      "acceptance_evidence": "Bridge state and idempotence cases; old absence explicitly handled",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-RESUME-R",
+      "phase": "REPAIR",
+      "title": "Resume a cleared/part-cleared room fairly",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-RESUME-C"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "03_DELIVERY_PLAN.md",
+      "deliverable": "Defeated membership restored before perception; safe player restoration",
+      "acceptance_evidence": "V-06–07 two-process lifecycle; object facts preserved; no farming duplicate",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-PRESSURE-C",
+      "phase": "REPAIR",
+      "title": "Live pressure versus explicit persistent release",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [
+        "D-07"
+      ],
+      "detail_document": "09_CONTRACTS_AND_DECISIONS.md",
+      "deliverable": "Revised applicable contract and solvable route fixture",
+      "acceptance_evidence": "Held output and explicit latching interaction distinguished; no unsolvable stand-and-walk gate",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-PRESSURE-R",
+      "phase": "REPAIR",
+      "title": "Replace misleading step-once plate route",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-PRESSURE-C"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "03_DELIVERY_PLAN.md",
+      "deliverable": "A readable lever/bolt or genuinely held-pressure route",
+      "acceptance_evidence": "V-08; actual route and closure/restart; general LATCH retained",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-RELEASE-C",
+      "phase": "REPAIR",
+      "title": "Hosted minor goal/release/return contract",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "09_CONTRACTS_AND_DECISIONS.md",
+      "deliverable": "Three room cards and legal reward/alternate-route conditions",
+      "acceptance_evidence": "Allocation/return/known movement modeled; no secret input sequence",
+      "inherits_ov05_ids": [
+        "O05-06.1",
+        "O05-06.5"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-UNWEIGHTED",
+      "phase": "REPAIR",
+      "title": "Repair Unweighted meaning and direct pickup",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-RELEASE-C"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "03_DELIVERY_PLAN.md",
+      "deliverable": "Readable dual-use crate, tuned drive, real reward obstruction and safe return",
+      "acceptance_evidence": "V-09–10/12; hosted normal inputs and expiry; not only standalone driver",
+      "inherits_ov05_ids": [
+        "O05-06.4"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-PASSING",
+      "phase": "REPAIR",
+      "title": "Repair Passing goal, controls, pickup and return",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-RELEASE-C"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "03_DELIVERY_PLAN.md",
+      "deliverable": "Coherent lift/shuttle room with machine outcome and visible return",
+      "acceptance_evidence": "V-09–10/12 including baseline jump and alternate entry/claim",
+      "inherits_ov05_ids": [
+        "O05-06.2",
+        "O05-06.5"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-COUNTERFIRE",
+      "phase": "REPAIR",
+      "title": "Identify Counterfire and preserve valid fallback",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-RELEASE-C"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "03_DELIVERY_PLAN.md",
+      "deliverable": "Main and designed alternate route with understandable causality",
+      "acceptance_evidence": "V-11; actual occurrence identified; gunner-dead condition does not strand reward",
+      "inherits_ov05_ids": [
+        "O05-06.3"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-CIRCUITS",
+      "phase": "REPAIR",
+      "title": "Control/destination visual and semantic mapping",
+      "primary_lane": "Arty",
+      "dependencies": [
+        "H-PRESSURE-C",
+        "H-RELEASE-C"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "04_3D_MENU_MAP_AND_GLYPH.md",
+      "deliverable": "Shared matching colour/symbol/action-state family",
+      "acceptance_evidence": "V-13 on actual lever/cell/receiver/door, no conflicting key/power meanings",
+      "inherits_ov05_ids": [
+        "O05-04.2",
+        "O05-12.5"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-KEYS",
+      "phase": "REPAIR",
+      "title": "Audit local key payoffs and visibility",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "06_VERSION_0_5_PROGRAMME.md",
+      "deliverable": "Candidate local key/realized lock audit and targeted defect repair",
+      "acceptance_evidence": "V-14; distinguish no lock from open/unseen lock; no unjustified global rescope",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-BOMBS",
+      "phase": "REPAIR",
+      "title": "Natural consumable acquisition and discoverability",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "02_PLAYTEST_FINDINGS.md",
+      "deliverable": "Matching current-save diagnosis and normal acquisition/equip/use receipt",
+      "acceptance_evidence": "V-15; absent versus unnoticed distinguished; no artificial grant as evidence",
+      "inherits_ov05_ids": [
+        "O05-11.3",
+        "O05-11.4"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-UI-DATA",
+      "phase": "UI",
+      "title": "One live inventory view over current fold",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "04_3D_MENU_MAP_AND_GLYPH.md",
+      "deliverable": "Resolved current item/slot/state presentation contract",
+      "acceptance_evidence": "Mixed/upgrade-only/refused/pending fixtures; no second fold",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-GLYPH-KIT",
+      "phase": "UI",
+      "title": "First menu font/panel/icon asset family",
+      "primary_lane": "Arty",
+      "dependencies": [
+        "H-START"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "11_TOOLCHAIN_AND_ART_RECONCILIATION.md",
+      "deliverable": "New/copy-based Glyph sources, exports and actual target import trial",
+      "acceptance_evidence": "V-22 in Godot 4.5.1; metadata/source receipts; originals unchanged",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-3D-SHELL",
+      "phase": "UI",
+      "title": "Four real inward-facing rotating menu pages",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-START"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "04_3D_MENU_MAP_AND_GLYPH.md",
+      "deliverable": "Real 3D scene, correct face order and live input mapping",
+      "acceptance_evidence": "V-18; scene transforms plus actual interacted render; not flat tab squeeze",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-PAUSE",
+      "phase": "UI",
+      "title": "Pause ownership, callbacks and authority races",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-3D-SHELL"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "04_3D_MENU_MAP_AND_GLYPH.md",
+      "deliverable": "Paused world with usable menu, preserved other holds and safe in-flight accounting",
+      "acceptance_evidence": "V-16–17; no game-input leakage or delayed grenade launch/free refund",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-INVENTORY",
+      "phase": "UI",
+      "title": "Usable Glyph/Caster-reference equipment face",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-UI-DATA",
+        "H-GLYPH-KIT",
+        "H-PAUSE"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "04_3D_MENU_MAP_AND_GLYPH.md",
+      "deliverable": "Current inventory/equipment/search/detail/compare with real equip authority",
+      "acceptance_evidence": "V-19/22; human find/compare/equip and empty/owned/charged distinctions",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-MAP-DATA",
+      "phase": "UI",
+      "title": "Shared known room/gate/circuit map facts",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SEAMS",
+        "H-RELEASE-C"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "09_CONTRACTS_AND_DECISIONS.md",
+      "deliverable": "Stable names/discovery/current gate projection for two maps and journal",
+      "acceptance_evidence": "Actual known-state fixtures; no auto-solved gate from possession; no secrets leaked",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-MINIMAP",
+      "phase": "UI",
+      "title": "Always-visible normal-play map with named barriers",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-MAP-DATA",
+        "H-CIRCUITS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "04_3D_MENU_MAP_AND_GLYPH.md",
+      "deliverable": "Named readable current location/connectors/colour-coded blockers",
+      "acceptance_evidence": "V-20; actual green circuit transitions and replay; readable floor convention",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-3D-MAP",
+      "phase": "UI",
+      "title": "Interactive miniature of actual built dungeon",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-MAP-DATA",
+        "H-3D-SHELL",
+        "H-GLYPH-KIT"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "04_3D_MENU_MAP_AND_GLYPH.md",
+      "deliverable": "Rotate/zoom/pan/cutaway actual geometry, names and pulsing blockers",
+      "acceptance_evidence": "V-20–21; turns/heights real; no actors/colliders/reward scripts cloned",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-JOURNAL",
+      "phase": "UI",
+      "title": "Settings and earned objective/journal faces",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-MAP-DATA",
+        "H-3D-SHELL"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "04_3D_MENU_MAP_AND_GLYPH.md",
+      "deliverable": "Useful actual current objectives/known discoveries and accurate lifecycle controls",
+      "acceptance_evidence": "No invented campaign, spoilers or altered abandon policy; page navigation/focus works",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-UI-REVIEW",
+      "phase": "UI",
+      "title": "Integrated spatial menu usability and stability",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-INVENTORY",
+        "H-MINIMAP",
+        "H-3D-MAP",
+        "H-JOURNAL"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "10_VERIFICATION_AND_OWNER_REVIEW.md",
+      "deliverable": "One reusable menu with correct input, readable art and stable selected state",
+      "acceptance_evidence": "Actual owner task; resize/high-DPI/focus/drag/reload; world clocks stopped",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-ENEMY-ART",
+      "phase": "ART",
+      "title": "Distance-readable existing enemy lineup",
+      "primary_lane": "Arty",
+      "dependencies": [
+        "H-FLYER-HIT"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "11_TOOLCHAIN_AND_ART_RECONCILIATION.md",
+      "deliverable": "Distinct silhouettes/weapon/motion family against current collision bounds",
+      "acceptance_evidence": "Normal-distance/mixed-light frames; no audio/nameplate required for threat distinction",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-MACHINE-ART",
+      "phase": "ART",
+      "title": "Revised selected-room machinery visual replacement",
+      "primary_lane": "Arty",
+      "dependencies": [
+        "H-UNWEIGHTED",
+        "H-PASSING",
+        "H-COUNTERFIRE",
+        "H-CIRCUITS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "11_TOOLCHAIN_AND_ART_RECONCILIATION.md",
+      "deliverable": "Readable machinery/cell/receiver assets with unchanged gameplay boundaries",
+      "acceptance_evidence": "Real occurrence fit/pivots/collision clearance; source-fixed clipping, no new footholds",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-PACKS",
+      "phase": "ART",
+      "title": "Consume delivered D-11 and finish existing treatments",
+      "primary_lane": "Arty",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [
+        "D-09",
+        "D-11"
+      ],
+      "detail_document": "11_TOOLCHAIN_AND_ART_RECONCILIATION.md",
+      "deliverable": "Updated stale blocker and small material-pack integration candidates",
+      "acceptance_evidence": "Exact flat pack table/caches/hazard rules; actual authored pixels visible; approval not fabricated",
+      "inherits_ov05_ids": [
+        "O05-14.1",
+        "O05-14.2",
+        "O05-14.3"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-COURSES",
+      "phase": "ART",
+      "title": "Obtain and apply only a selected course treatment",
+      "primary_lane": "Arty",
+      "dependencies": [
+        "H-START"
+      ],
+      "decision_dependencies": [
+        "D-10"
+      ],
+      "detail_document": "11_TOOLCHAIN_AND_ART_RECONCILIATION.md",
+      "deliverable": "Treatment-specific review and source change only after ruling",
+      "acceptance_evidence": "Before/after in repeated geometry; 18/22 changed pitches disclosed",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-SELF-ECHO",
+      "phase": "INHERITED",
+      "title": "Implement accepted self-addressed local grant contract",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [
+        "D-01"
+      ],
+      "detail_document": "09_CONTRACTS_AND_DECISIONS.md",
+      "deliverable": "Original delivery plus distinct local grant identity/recovery",
+      "acceptance_evidence": "Self/foreign/retry/reload cases; no cloned AP item",
+      "inherits_ov05_ids": [
+        "O05-05.2"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-QUALIFY",
+      "phase": "INHERITED",
+      "title": "Qualify actual featured function and fallback",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SELF-ECHO"
+      ],
+      "decision_dependencies": [
+        "D-02"
+      ],
+      "detail_document": "09_CONTRACTS_AND_DECISIONS.md",
+      "deliverable": "Qualified real range/target/slot/function contract and fallback",
+      "acceptance_evidence": "Recipient/reward semantics and real function tests, not capability-label proof",
+      "inherits_ov05_ids": [
+        "O05-05.3",
+        "O05-05.6"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-AP-GATE",
+      "phase": "INHERITED",
+      "title": "Pre-seed representation of earned capability access",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-QUALIFY"
+      ],
+      "decision_dependencies": [
+        "D-03"
+      ],
+      "detail_document": "09_CONTRACTS_AND_DECISIONS.md",
+      "deliverable": "Owner-selected AP/progression representation with generated proof",
+      "acceptance_evidence": "Acquisition reachable before requirement; recipient unchanged; no live-seed rewrite",
+      "inherits_ov05_ids": [
+        "O05-05.5"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-BLINDSIDE",
+      "phase": "INHERITED",
+      "title": "Finish earned Blindside return loop",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-QUALIFY",
+        "H-AP-GATE"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "05_INHERITED_0_4_QUEUE.md",
+      "deliverable": "Branch acquisition→useful gantry→commissioned span→Checks→return/restart",
+      "acceptance_evidence": "Normal continuous player/AP journey; no injected grapple or mandatory walking bypass",
+      "inherits_ov05_ids": [
+        "O05-05.2",
+        "O05-05.3",
+        "O05-05.4",
+        "O05-05.5",
+        "O05-05.6",
+        "O05-05.7"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-ATOM-DELIVERY",
+      "phase": "INHERITED",
+      "title": "Resolve grammar and deliver implemented manipulation",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [
+        "D-04"
+      ],
+      "detail_document": "09_CONTRACTS_AND_DECISIONS.md",
+      "deliverable": "Effective grammar or approved bounded representation plus actual earned consumer",
+      "acceptance_evidence": "Create/fold/equip/activate/qualify persists; no parallel primitive system",
+      "inherits_ov05_ids": [
+        "O05-08.5"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-GRAPHS",
+      "phase": "INHERITED",
+      "title": "Remaining useful graph nodes and signal verbs",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "05_INHERITED_0_4_QUEUE.md",
+      "deliverable": "AND/DIRECT/SEQUENCE and five signal verbs as needed by real consumers",
+      "acceptance_evidence": "Actual input→consequence, override expiry, persistence and refusal",
+      "inherits_ov05_ids": [
+        "O05-07.2",
+        "O05-07.4",
+        "O05-16.1"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-STATUS",
+      "phase": "INHERITED",
+      "title": "Remaining supported Status-target behavior and compounds",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "05_INHERITED_0_4_QUEUE.md",
+      "deliverable": "Per-target consumers/delivery for remaining kinetic/material/actor/collision/compound work",
+      "acceptance_evidence": "Behavior in world; no legacy corruption or actor damage substitute",
+      "inherits_ov05_ids": [
+        "O05-09.1",
+        "O05-09.2",
+        "O05-09.3",
+        "O05-09.4",
+        "O05-09.5",
+        "O05-16.1"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-MACHINE-LIFE",
+      "phase": "INHERITED",
+      "title": "Power, assembly and repeated lifecycle evidence",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "05_INHERITED_0_4_QUEUE.md",
+      "deliverable": "Real powered/constrained occurrence and ownership isolation",
+      "acceptance_evidence": "Power loss/restoration, occupied/reversing/reset, weld/assembly scope and repeated counters",
+      "inherits_ov05_ids": [
+        "O05-10.1",
+        "O05-10.2",
+        "O05-10.4"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-RAIL-BREADTH",
+      "phase": "INHERITED",
+      "title": "Switchable rail network and safe recall",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "05_INHERITED_0_4_QUEUE.md",
+      "deliverable": "Physical branch selection and occupied-switch/recall/restoration",
+      "acceptance_evidence": "Actual track changes; no teleport across uncommissioned link",
+      "inherits_ov05_ids": [
+        "O05-16.2"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-GEAR",
+      "phase": "INHERITED",
+      "title": "Priced Gear/mod and approved transaction consumers",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "05_INHERITED_0_4_QUEUE.md",
+      "deliverable": "Selected legal priced domains routed through current fold/equip",
+      "acceptance_evidence": "Real source-owned effect, clamps, save and transaction; uncosted domains named",
+      "inherits_ov05_ids": [
+        "O05-16.3",
+        "O05-16.4"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-PERFORMANCE",
+      "phase": "INHERITED",
+      "title": "Measure assembled candidate and bounded recovery",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-UI-REVIEW"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "10_VERIFICATION_AND_OWNER_REVIEW.md",
+      "deliverable": "Actual menu+combat+machinery resource profile and recovery fixes",
+      "acceptance_evidence": "Main/physics/render separated; lifecycle leak and refusal denominators; no timeout padding",
+      "inherits_ov05_ids": [
+        "O05-16.5"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-05-ROOM",
+      "phase": "0.5",
+      "title": "One four-pillar situation and quieter connectors",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-UNWEIGHTED",
+        "H-PASSING",
+        "H-COUNTERFIRE"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "06_VERSION_0_5_PROGRAMME.md",
+      "deliverable": "Selected authored situation with shared combat/environment/item/traversal relationships",
+      "acceptance_evidence": "Human choice explanation and usable returns; not four unrelated activity bins",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-05-COMPOSE",
+      "phase": "0.5",
+      "title": "Purposeful room/connector generation and local-key payoff",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-05-ROOM",
+        "H-KEYS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "06_VERSION_0_5_PROGRAMME.md",
+      "deliverable": "Generation uses proven relationships and calm connective space",
+      "acceptance_evidence": "Normal candidate samples include refusals; all Checks retained and local locks meaningful",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-05-FACTIONS",
+      "phase": "0.5",
+      "title": "Bounded nonrobot faction roles",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-ENEMY-ART"
+      ],
+      "decision_dependencies": [
+        "D-12"
+      ],
+      "detail_document": "06_VERSION_0_5_PROGRAMME.md",
+      "deliverable": "Native Multiworld and raider role briefs alongside security",
+      "acceptance_evidence": "Distinct purpose/counterplay/appearance; provisional budgets not difficulty claims",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-05-LIVING",
+      "phase": "0.5",
+      "title": "Perception, routines and real world interaction",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-05-FACTIONS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "06_VERSION_0_5_PROGRAMME.md",
+      "deliverable": "One useful noncombat job, faction relationship and actual mechanism interaction",
+      "acceptance_evidence": "No telepathy; real consequences; protected permanent state and required-item recovery",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-05-DEATH",
+      "phase": "0.5",
+      "title": "Readable faction-appropriate defeat and aftermath",
+      "primary_lane": "Arty",
+      "dependencies": [
+        "H-05-FACTIONS",
+        "H-RESUME-R"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "06_VERSION_0_5_PROGRAMME.md",
+      "deliverable": "Distinct defeat visuals/sound cues, bounded debris and safe hit-state integration",
+      "acceptance_evidence": "Immediate death recognition; cosmetic blast not automatic damage; no blocked passages",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-05-SALVAGE",
+      "phase": "0.5",
+      "title": "Useful drop loop and agreed upgrade sink",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-05-DEATH",
+        "H-GEAR"
+      ],
+      "decision_dependencies": [
+        "D-14"
+      ],
+      "detail_document": "06_VERSION_0_5_PROGRAMME.md",
+      "deliverable": "One priced useful material loop with once-only transactions",
+      "acceptance_evidence": "Environmental kills/reload uniqueness/pickup recovery; no meaningless scrap counter",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-05-SHARDS",
+      "phase": "0.5",
+      "title": "Named permanent breachpoint progression rewards",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-AP-GATE"
+      ],
+      "decision_dependencies": [
+        "D-03",
+        "D-12"
+      ],
+      "detail_document": "06_VERSION_0_5_PROGRAMME.md",
+      "deliverable": "Guaranteed intact boss shard access distinct from spending materials",
+      "acceptance_evidence": "No RNG softlock, no revisit fee, declared pre-seed dependence",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-05-BRANCH",
+      "phase": "0.5",
+      "title": "Gradual setpiece branch rollout",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-05-COMPOSE",
+        "H-05-LIVING"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "06_VERSION_0_5_PROGRAMME.md",
+      "deliverable": "One developing situation spanning rooms with lasting return payoff",
+      "acceptance_evidence": "Play/revise before expanding catalogue; not three drills joined together",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-06-VISUAL",
+      "phase": "0.6",
+      "title": "Saved generated weapon-appearance pipeline",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-GLYPH-KIT",
+        "H-ATOM-DELIVERY"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "07_VERSION_0_6_ECHO_PROGRAMME.md",
+      "deliverable": "One prepared visual skin on supported behavior with stable saved identity",
+      "acceptance_evidence": "No pickup-time art stall, no redraw on restart, silhouette/collision agreement",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-06-SIDE",
+      "phase": "0.6",
+      "title": "One real auxiliary weapon",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-06-VISUAL"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "07_VERSION_0_6_ECHO_PROGRAMME.md",
+      "deliverable": "Visible auxiliary implement with supported effects and sockets",
+      "acceptance_evidence": "Own real action/authority, not a decorative sprite claiming a function",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-06-COMPANION",
+      "phase": "0.6",
+      "title": "One useful generated companion",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-06-VISUAL",
+        "H-05-LIVING"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "07_VERSION_0_6_ECHO_PROGRAMME.md",
+      "deliverable": "Bounded cooperative actor with observable action and lifecycle",
+      "acceptance_evidence": "No arbitrary hostility flip, universal interaction or appearance-defined powers",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-06-TEMPORAL",
+      "phase": "0.6",
+      "title": "Literal temporary source item",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-06-VISUAL",
+        "H-PAUSE"
+      ],
+      "decision_dependencies": [
+        "D-14"
+      ],
+      "detail_document": "07_VERSION_0_6_ECHO_PROGRAMME.md",
+      "deliverable": "Recognizable temporary item over retained ordinary equipment",
+      "acceptance_evidence": "Start-on-use, pause/reload remaining time, Hub expiry and independent AP identity",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-06-CREATURE",
+      "phase": "0.6",
+      "title": "Echo-creature population and Temporal remains",
+      "primary_lane": "Arty",
+      "dependencies": [
+        "H-06-VISUAL",
+        "H-05-DEATH"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "07_VERSION_0_6_ECHO_PROGRAMME.md",
+      "deliverable": "Distinct reconstruction actor presentation plus validated behavior/drop identity",
+      "acceptance_evidence": "Native versus Echo recognizable; actual threat and once-only remains",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-06-CONVERTER",
+      "phase": "0.6",
+      "title": "Temporal-shard workshop and retry opportunity",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-06-TEMPORAL",
+        "H-06-CREATURE",
+        "H-05-SALVAGE"
+      ],
+      "decision_dependencies": [
+        "D-14"
+      ],
+      "detail_document": "07_VERSION_0_6_ECHO_PROGRAMME.md",
+      "deliverable": "Small coherent physical converter with agreed stock/cost/lifetime",
+      "acceptance_evidence": "Boss retry restores opportunity, not refundable duplicable currency",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-06-WIND-BOSS",
+      "phase": "0.6",
+      "title": "Optional wind/displacement/spike encounter",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-06-CONVERTER",
+        "H-05-SHARDS"
+      ],
+      "decision_dependencies": [
+        "D-13",
+        "D-14"
+      ],
+      "detail_document": "07_VERSION_0_6_ECHO_PROGRAMME.md",
+      "deliverable": "Compatibility-approved positional boss and useful side branch",
+      "acceptance_evidence": "Actual displacement/contact, viable guaranteed kit, no hidden wind multiplier",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-STORY-LINKS",
+      "phase": "STORY",
+      "title": "Resolve remaining first-chapter operating choices",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-SEAMS"
+      ],
+      "decision_dependencies": [
+        "D-12"
+      ],
+      "detail_document": "08_STORY_AND_CHAPTER_HANDOFF.md",
+      "deliverable": "Finite dependency/route explanation with unresolved choices explicit",
+      "acceptance_evidence": "World signals/physical interference preserved; no invented caller/simulation",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-STORY-FIRST",
+      "phase": "STORY",
+      "title": "First physical rift chapter",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-STORY-LINKS",
+        "H-05-COMPOSE",
+        "H-05-SHARDS"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "08_STORY_AND_CHAPTER_HANDOFF.md",
+      "deliverable": "Revival→real guarded terminal→local warp foothold",
+      "acceptance_evidence": "World demonstrates objective, Epsilon limit and lasting access without lore dump",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-STORY-RAID",
+      "phase": "STORY",
+      "title": "Later raid and Epsilon extraction direction",
+      "primary_lane": "Dess",
+      "dependencies": [
+        "H-STORY-FIRST"
+      ],
+      "decision_dependencies": [
+        "D-12",
+        "D-15"
+      ],
+      "detail_document": "08_STORY_AND_CHAPTER_HANDOFF.md",
+      "deliverable": "Chosen theft target/portable substrate and clear consequences",
+      "acceptance_evidence": "One Epsilon, actual inhabited endpoints, meaningful possible player escape",
+      "inherits_ov05_ids": [],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "FUTURE—NOT ACTIVATED",
+      "implemented_by_this_handoff": false
+    },
+    {
+      "id": "H-FREEZE",
+      "phase": "DELIVERY",
+      "title": "Freeze the selected coherent review candidate",
+      "primary_lane": "Prod",
+      "dependencies": [
+        "H-ARTILLERY",
+        "H-FLYER-AI",
+        "H-RESUME-R",
+        "H-PRESSURE-R",
+        "H-UNWEIGHTED",
+        "H-PASSING",
+        "H-COUNTERFIRE"
+      ],
+      "decision_dependencies": [],
+      "detail_document": "10_VERIFICATION_AND_OWNER_REVIEW.md",
+      "deliverable": "Source-pinned playable handoff with route/answers/raw logs and exact scope",
+      "acceptance_evidence": "Full current frontier on one revision; Windows status honest; no unattended jobs",
+      "inherits_ov05_ids": [
+        "O05-17.1",
+        "O05-17.2",
+        "O05-17.3",
+        "O05-17.4",
+        "O05-17.5",
+        "O05-17.6"
+      ],
+      "basis": "Proposed implementation of recorded owner direction",
+      "status": "PLANNED—NOT DISPATCHED",
+      "implemented_by_this_handoff": false
+    }
+  ]
+}

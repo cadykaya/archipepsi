@@ -1,0 +1,94 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- A: another room, behind an intact wall
+  ok: through an intact wall from the next room, in 10 s: 0 shells committed, 0 launched, 0 hits, 0 hp lost -- it may not shell what it cannot see
+  -- B: under a roof, seen through the open side
+  ok: under an intact roof, in 10 s: 0 shells committed, 0 launched, 0 hits, 0 hp lost -- no shell through the slab
+  -- F: hidden behind a wall the arc could clear
+  ok: unseen behind 2.5 m, in 10 s: 0 shells committed, 0 hits -- no shell at what it cannot see, though the arc would clear the wall
+  -- C: a blast on the far side of a wall (a shell built by hand)
+   GDScript backtrace (most recent call first):
+  ok: a blast 2.4 m away, behind a 6 m wall: 0 hits, 0 hp lost -- the wall is cover
+   GDScript backtrace (most recent call first):
+  ok: the control: the same blast in the open lands 1 hit (16 hp)
+  -- D: a wall raised across a shell's path in flight
+   GDScript backtrace (most recent call first):
+  ok: a wall across its path mid-flight: 0 hits, 0 hp lost -- it detonates on the wall
+  -- E: the control -- low cover is not a roof
+  ok: over 0.6 m cover, in 10 s: 3 shells committed, 3 launched, 3 hits, 48 hp lost -- the repair did not silence artillery
+  -- drifter: seen, hit and placed where the contract says
+  ok: drifter: the body the player sees is centred 0.02 m from the box a shot can hit (seen 2.57 m, hittable 2.55 m)
+  ok: drifter: what is seen and what is hittable are the same box, not two that merely share a centre (seen [P: (-0.6615, 2.133211, -0.6615), S: (1.323, 0.874, 1.323)], hittable [P: (-0.675, 2.076211, -0.675), S: (1.35, 0.95, 1.35)])
+  ok: drifter: its body holds at 2.55 m above the floor, where its envelope's hover height (2.55 m, the collider's centre above the floor) puts it
+  ok: drifter: its shots start inside the body the player sees (muzzle (0.0, 2.551211, 0.0), seen [P: (-0.6615, 2.133211, -0.6615), S: (1.323, 0.874, 1.323)])
+  ok: drifter: having noticed the player, it faces them (0 deg off)
+  ok: drifter at 4 m: aimed at the middle of its visible body, the Static Pulse hits it 3 time(s) (44.0 -> 26.0 hp)
+  ok: drifter at 9 m: aimed at the middle of its visible body, the Static Pulse hits it 2 time(s) (44.0 -> 32.0 hp)
+  ok: drifter at 18 m: aimed at the middle of its visible body, the Static Pulse hits it 3 time(s) (44.0 -> 26.0 hp)
+  ok: drifter: aimed 0.45 m above its visible body, the Static Pulse misses (0 hit(s), 44.0 -> 44.0 hp)
+  ok: drifter: aimed 0.45 m below its visible body, the Static Pulse misses (0 hit(s), 44.0 -> 44.0 hp)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _authored_projectile (res://scripts/content/content_instantiator.gd:597)
+         [1] projectile_visual (res://scripts/content/content_instantiator.gd:579)
+         [2] _ready (res://scripts/gameplay/echo_projectile.gd:73)
+         [3] _a_flyer_is_hit_where_it_is_seen (res://tests/combat_fairness_driver.gd:412)
+         [4] _fire (res://tests/combat_fairness_driver.gd:429)
+         [5] _settle (res://tests/combat_fairness_driver.gd:74)
+  ok: drifter: an explosive Echo shot aimed at its visible body damages it (44.0 -> 34.8 hp)
+  -- diver: seen, hit and placed where the contract says
+  ok: diver: the body the player sees is centred 0.00 m from the box a shot can hit (seen 1.90 m, hittable 1.90 m)
+  ok: diver: what is seen and what is hittable are the same box, not two that merely share a centre (seen [P: (-0.35, 1.661211, -0.564), S: (0.7, 0.48, 1.148)], hittable [P: (-0.35, 1.651211, -0.6), S: (0.7, 0.5, 1.2)])
+  ok: diver: its body holds at 1.90 m above the floor, where its envelope's hover height (1.90 m, the collider's centre above the floor) puts it
+  ok: diver: its shots start inside the body the player sees (muzzle (0.0, 1.901211, 0.0), seen [P: (-0.35, 1.661211, -0.564), S: (0.7, 0.48, 1.148)])
+  ok: diver: having noticed the player, it faces them (0 deg off)
+  ok: diver at 4 m: aimed at the middle of its visible body, the Static Pulse hits it 3 time(s) (20.0 -> 2.0 hp)
+  ok: diver at 9 m: aimed at the middle of its visible body, the Static Pulse hits it 2 time(s) (20.0 -> 8.0 hp)
+  ok: diver at 18 m: aimed at the middle of its visible body, the Static Pulse hits it 3 time(s) (20.0 -> 2.0 hp)
+  ok: diver: aimed 0.45 m above its visible body, the Static Pulse misses (0 hit(s), 20.0 -> 20.0 hp)
+  ok: diver: aimed 0.45 m below its visible body, the Static Pulse misses (0 hit(s), 20.0 -> 20.0 hp)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _authored_projectile (res://scripts/content/content_instantiator.gd:597)
+         [1] projectile_visual (res://scripts/content/content_instantiator.gd:579)
+         [2] _ready (res://scripts/gameplay/echo_projectile.gd:73)
+         [3] _a_flyer_is_hit_where_it_is_seen (res://tests/combat_fairness_driver.gd:412)
+         [4] _fire (res://tests/combat_fairness_driver.gd:429)
+         [5] _settle (res://tests/combat_fairness_driver.gd:74)
+  ok: diver: an explosive Echo shot aimed at its visible body damages it (20.0 -> 10.7 hp)
+  -- DRIFTER: every state, counted from events
+    [drifter / stationary on the ground] noticed 360/360 frames, off the floor 0, airborne by the diver's rule 0, sight 360; telegraphs 0, launched 3, impacts 3, damage 21.0, deaths 0
+FAIL: drifter, stationary player in range and sight: it attacks (0 telegraphed, 3 launched, 3 impacts, 21.0 damage)
+FAIL: drifter, stationary player in range and sight: it attacks (0 telegraphed, 3 launched, 3 impacts, 21.0 damage)
+FAIL: drifter: every shot is telegraphed before it leaves (a shot with nothing to see first cannot be dodged)
+FAIL: drifter: every shot is telegraphed before it leaves (a shot with nothing to see first cannot be dodged)
+    [drifter / strafing on the ground] noticed 360/360 frames, off the floor 0, airborne by the diver's rule 0, sight 360; telegraphs 0, launched 3, impacts 1, damage 7.0, deaths 0
+  ok: drifter, strafing player: it keeps attacking (3 launched, 1 impacts)
+    [drifter / jumping] noticed 360/360 frames, off the floor 310, airborne by the diver's rule 0, sight 360; telegraphs 0, launched 3, impacts 3, damage 21.0, deaths 0
+  ok: drifter, jumping player: it attacks whether or not the player is in the air (3 launched, 310 frames off the floor)
+    [drifter / behind a wall] noticed 360/360 frames, off the floor 0, airborne by the diver's rule 0, sight 0; telegraphs 0, launched 0, impacts 0, damage 0.0, deaths 0
+  ok: drifter, player behind a wall: nothing launched, nothing lands (0, 0)
+    [drifter / out of range] noticed 0/360 frames, off the floor 0, airborne by the diver's rule 0, sight 360; telegraphs 0, launched 0, impacts 0, damage 0.0, deaths 0
+  ok: drifter, player 30 m away (reach 22): nothing launched (0)
+  -- DIVER: every state, counted from events
+    [diver / stationary on the ground] noticed 360/360 frames, off the floor 0, airborne by the diver's rule 0, sight 360; telegraphs 0, launched 0, impacts 0, damage 0.0, deaths 0
+  ok: diver, stationary player on the ground: it has noticed them (360/360 frames) and WAITS -- nothing launched (0)
+  ok: diver, waiting: its nose is on the player -- it reads as watching, not idle (7 deg off)
+FAIL: diver, waiting: it holds within a dive's reach of the player (8.1 m; a dive carries 6.3 m and lands within 1.6 m)
+FAIL: diver, waiting: it holds within a dive's reach of the player (8.1 m; a dive carries 6.3 m and lands within 1.6 m)
+    [diver / strafing on the ground] noticed 360/360 frames, off the floor 0, airborne by the diver's rule 0, sight 360; telegraphs 0, launched 0, impacts 0, damage 0.0, deaths 0
+  ok: diver, strafing player on the ground: it still waits (0)
+    [diver / jumping] noticed 360/360 frames, off the floor 310, airborne by the diver's rule 0, sight 360; telegraphs 0, launched 0, impacts 0, damage 0.0, deaths 0
+FAIL: diver, ORDINARY jumps: leaving the ground draws a dive (310 frames off the floor, 0 airborne by its rule, 0 dives)
+FAIL: diver, ORDINARY jumps: leaving the ground draws a dive (310 frames off the floor, 0 airborne by its rule, 0 dives)
+FAIL: diver, jumping player who stays put: a dive lands (0 impacts, 0.0 damage)
+FAIL: diver, jumping player who stays put: a dive lands (0 impacts, 0.0 damage)
+    [diver / held in the air (direct handler)] noticed 360/360 frames, off the floor 360, airborne by the diver's rule 360, sight 360; telegraphs 3, launched 2, impacts 1, damage 12.0, deaths 0
+  ok: diver, player held where a grapple arc puts them: it dives and lands (2 dives, 1 impacts, 12.0 damage)
+    [diver / in the air behind a wall] noticed 360/360 frames, off the floor 360, airborne by the diver's rule 360, sight 0; telegraphs 3, launched 2, impacts 0, damage 0.0, deaths 0
+FAIL: diver, airborne player behind a wall: no dive, nothing lands (2, 0)
+FAIL: diver, airborne player behind a wall: no dive, nothing lands (2, 0)
+    [diver / jumping out of range] noticed 0/360 frames, off the floor 310, airborne by the diver's rule 0, sight 360; telegraphs 0, launched 0, impacts 0, damage 0.0, deaths 0
+  ok: diver, player jumping 30 m away: no dive (0)
+GODOT COMBAT FAIRNESS: 6 failures in 44 checks
+make: *** [Makefile:591: godot-combat-fairness] Error 1

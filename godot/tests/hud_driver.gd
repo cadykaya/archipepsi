@@ -1,10 +1,12 @@
 extends Node
 ## The S3 HUD suite (`make godot-hud`): the §7.1 safe palette, the §12
 ## source identity package (glyph, sound family, particle style), the §7
-## pressure valve, and the §15.4 / ECHOES §11 archive provenance chains.
+## pressure valve, and the shared effect formatter's upgrade line. (The
+## archive's provenance chains moved to the item face with H-INVENTORY:
+## `equipment_face_driver.gd`.)
 ##
-## Boots the real project (`--hud-test`) because ResourceMeters,
-## ResourcePool and InventoryLayer all read the BridgeClient autoload and a
+## Boots the real project (`--hud-test`) because ResourceMeters and
+## ResourcePool read the BridgeClient autoload and a
 ## `--script` run never instantiates it. Needs no bridge: the snapshot is a
 ## fixture injected directly — derived from a REAL fold on the Python side
 ## (create Magic Meter ← Ocarina of Time; create Vigor ← Dark Souls;
@@ -51,7 +53,8 @@ func _ready() -> void:
 	_glyph_pins()
 	_source_identity_package()
 	_pressure_valve()
-	_archive_provenance()
+	_the_upgrade_line()
+	_the_loadout_rows()
 	await _the_travel_panel()
 	_the_navigation_schematic()
 
@@ -61,6 +64,61 @@ func _ready() -> void:
 	else:
 		print("GODOT HUD TESTS: %d failures" % failures)
 		get_tree().quit(1)
+
+## EVERY SLOT HAS A ROW, AND EVERY ROW HAS A KEYCAP.
+##
+## `Hud._loadout_text` had no test at all — it was the one slot-facing
+## surface with none — and it is exactly the shape that rots quietly: it
+## iterates `Constants.SLOT_NAMES` but looked its keycaps up in a private
+## table, so adding a fifth slot produced a row reading "? —" that
+## nothing would have caught.
+func _the_loadout_rows() -> void:
+	print("  -- LOADOUT: one row per slot, each with a real keycap")
+	var hud := Hud.new()
+	add_child(hud)
+	var rows := hud._loadout_text("echo_a").split("\n")
+	_check(rows.size() == Constants.SLOT_NAMES.size(),
+			"a row per slot (%d of %d)"
+			% [rows.size(), Constants.SLOT_NAMES.size()])
+	for row: String in rows:
+		_check(not row.contains("?"),
+				"no row is labelled with an unknown keycap: '%s'" % row)
+	for slot: String in Constants.SLOT_NAMES:
+		# AGAINST THE ONE AUTHORITY, not against the exported default.
+		# `SlotKeycaps.of` reads the real binding and falls back to the
+		# constant; comparing the row to the constant would pass while
+		# the two disagreed, which is the bug being prevented.
+		var keycap := SlotKeycaps.of(slot)
+		var seen := false
+		for row: String in rows:
+			if row.contains(keycap):
+				seen = true
+		_check(seen, "'%s' shows its key, %s" % [slot, keycap])
+	_check(hud._loadout_text("mobility").contains("▸"),
+			"the highlighted slot is marked")
+
+	# AND THE LABEL FOLLOWS A REBIND. S21 lets the player move a slot to
+	# another key; a fixed table would keep saying the old one, which is
+	# worse than no label because it is confidently wrong.
+	var action: String = Player.SLOT_ACTIONS["utility"]
+	var before := SlotKeycaps.of("utility")
+	var rebound := InputEventKey.new()
+	rebound.physical_keycode = KEY_F9
+	InputMap.action_erase_events(action)
+	InputMap.action_add_event(action, rebound)
+	var after := SlotKeycaps.of("utility")
+	_check(after != before and after.contains("F9"),
+			"rebinding the utility slot moves its label (%s -> %s)"
+			% [before, after])
+	_check(hud._loadout_text("echo_a").contains(after),
+			"…and the HUD row shows the new key, not the old default")
+	InputMap.action_erase_events(action)
+	_check(SlotKeycaps.of("utility")
+			== str(Constants.SLOT_KEYCAPS["utility"]),
+			"…and with no binding at all it falls back to the exported "
+			+ "default rather than to nothing")
+	hud.queue_free()
+
 
 # --- the station travel panel ---------------------------------------------
 
@@ -349,7 +407,16 @@ func _pressure_valve() -> void:
 	meters.free()
 	pool.free()
 
-# --- §15.4 / ECHOES §11: provenance in the archive ------------------------
+# --- the shared effect formatter's upgrade arm ------------------------------
+#
+# The provenance chain, the concepts Epsilon read and the mixed/upgrade-only
+# split used to be asserted here on the Echo archive (`InventoryLayer`). The
+# archive is gone -- H-INVENTORY replaced it with the item face -- and those
+# assertions moved with the thing they are about, onto the item face, on a
+# snapshot the bridge's own model built: `equipment_face_driver.gd`
+# (`_history_and_reads`, `_the_split_and_the_filter`,
+# `_the_search_box_keeps_its_place`). What stays is the formatter, which
+# the reveal card still reads.
 
 func _labels_under(node: Node, out: Array[String]) -> void:
 	if node is Label:
@@ -357,38 +424,14 @@ func _labels_under(node: Node, out: Array[String]) -> void:
 	for child in node.get_children():
 		_labels_under(child, out)
 
-func _archive_provenance() -> void:
-	var inventory := InventoryLayer.new()
-	inventory._ready()
-	inventory.rebuild()
-	var labels: Array[String] = []
-	_labels_under(inventory._list, labels)
-
-	_check(_count_containing(labels, "MAGIC METER  Mk II") == 2,
-			"the two-entry chain appears under BOTH the creator's row and "
-			+ "the upgrader's")
-	_check(_count_containing(labels, "Mk I  Magic Meter ← Magic Upgrade  (Ocarina of Time)") == 2,
-			"the chain starts with the creating item")
-	_check(_count_containing(labels, "Mk II  +40 max_value ← Estus Shard  (Dark Souls)") == 2,
-			"the upgrade names its item, its game and the fold's note")
-	_check(_count_containing(labels, "VIGOR  Mk I") == 0,
-			"a chain of one stays silent")
-	# S10 put the mode on the same row. It was worth nothing before —
-	# every interpretation said "literal" because the fallback hardcoded
-	# it — and now says how far Epsilon travelled from the item.
-	_check(_count_containing(
-			labels, "read literal: magic / green / capacity") == 1,
-			"the concepts Epsilon read are on the row, with the mode")
-	_check(_count_containing(labels, "read mechanical: capacity / shard") == 1,
-			"an interpretation that reworked something says so")
+func _the_upgrade_line() -> void:
+	var lines: Array[String] = []
+	for echo: Dictionary in BridgeClient.interpretations():
+		lines.append_array(EffectSummary.lines(echo))
 	# The shared formatter's upgrade arm first RAN under this suite, and it
 	# was a Python `%+g` no GDScript understands. Hold the rendered line.
-	_check(_count_containing(labels, "Upgrades res_magic (+40 max_value)") == 1,
-			"the effect summary renders an upgrade operation")
-	_check(_count_containing(labels, "No Echoes yet") == 0,
-			"the archive is not empty")
-
-	inventory.free()
+	_check(_count_containing(lines, "Upgrades res_magic (+40 max_value)") == 1,
+			"the effect summary renders an upgrade operation: %s" % [lines])
 
 func _count_containing(labels: Array[String], needle: String) -> int:
 	var count := 0
@@ -445,3 +488,5 @@ func _source_identity_package() -> void:
 			"...and it is the glyph that separates them here")
 	_check(oot.has("accent") and oot.has("sound_pitch"),
 			"the package carries all four §12 fields")
+
+
