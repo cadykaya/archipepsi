@@ -219,6 +219,11 @@ Production's slot vocabulary.
 * **Build determinism:** a rebuild of both bands was byte-identical
   across all 23 model and manifest files, so the evidence stays bound
   to the right hashes.
+* **The full suite** (`tools/check_art_current.sh`) **passes** on the
+  committed state, including `check_enemy_bands.py`, the readiness gate
+  and the docs-metrics check. Every generated asset rebuilds identical
+  to its source, and the run left no drift in the tree. The font-gate
+  transient did not recur.
 * **Not measured:** a player, or an integrated build.
 * **Placeability:** at `27363fe` all ten roles are in
   `ENEMY_ARCHETYPES`. The art lane's own frames still print "not
