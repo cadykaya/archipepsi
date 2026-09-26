@@ -1,0 +1,12 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+RAIL feature rail node StaticBody3D at (-2.528, 1.1, 5.5)
+RAIL feature moving_platform node AnimatableBody3D at (2.8, 0.4, 11.97)
+RAIL feature powered_door node Node3D at (-2.8, 0.0, 5.5)
+RAIL  alcove solid at (-3.5, 1.55, 7.65) size (0.2, 3.1, 2.1)
+RAIL  alcove solid at (-2.1, 1.55, 7.65) size (0.2, 3.1, 2.1)
+RAIL  alcove solid at (-2.8, 1.55, 8.7) size (1.6, 3.1, 0.2)
+RAIL  alcove solid at (-2.8, 3.1, 7.65) size (1.6, 0.2, 2.1)
+RAIL  link (plate) at (-2.8, 0.0, 4.7)
+RAIL reward @Area3D@54 at (-2.528, 1.6, 7.9)
+RAIL reward @Area3D@56 at (2.8, 3.7, 11.97)

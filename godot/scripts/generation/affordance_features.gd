@@ -231,17 +231,11 @@ static func _clear_of_side_doors(z: float, chamber: Dictionary,
 static func place_all(root: Node3D, chamber: Dictionary, theme: String,
 		width: float, depth: float, height: float) -> Array:
 	var built: Array = []
-	for index in (chamber.get("features", []) as Array).size():
+	for placed: Dictionary in _placements(chamber, width, depth):
+		var index := int(placed["index"])
 		var feature: Dictionary = chamber["features"][index]
-		var tag := str(feature.get("tag", ""))
-		if not fits(width, tag, depth):
-			# Too small for THIS tag, on either axis. Dropped rather than
-			# crammed in: features are optional, and one built into a wall
-			# or across a doorway is worse than one absent.
-			continue
-		var origin := resolve_position(
-				feature.get("at", [0.5, 0.5]), width, depth, tag)
-		origin.z = _clear_of_side_doors(origin.z, chamber, depth, tag)
+		var tag := str(placed["tag"])
+		var origin: Vector3 = placed["origin"]
 		# Zone-scoped, because the bridge's idempotence key is the reward
 		# id alone. Chamber-scoped ids repeat across Zones — the fallback
 		# emits `c1` and `c3` in every one — so the second Zone's note
@@ -266,6 +260,57 @@ static func place_all(root: Node3D, chamber: Dictionary, theme: String,
 			node.set_meta("affordance_tag", tag)
 			built.append(node)
 	return built
+
+## Where each feature a chamber declares will stand: `{index, tag,
+## origin}` for every one that fits, in declaration order. `origin.z` is
+## `INF` for one no end of the room holds clear of its own side doorway,
+## which `place_all` drops loudly.
+##
+## ONE RESOLUTION, TWO READERS (HB-F4e). `place_all` builds from it, and
+## `footprints` tells the room's own props where the features will be.
+## Two copies of this arithmetic would be two answers to where a feature
+## stands.
+static func _placements(chamber: Dictionary, width: float,
+		depth: float) -> Array:
+	var out: Array = []
+	for index in (chamber.get("features", []) as Array).size():
+		var feature: Dictionary = chamber["features"][index]
+		var tag := str(feature.get("tag", ""))
+		if not fits(width, tag, depth):
+			# Too small for THIS tag, on either axis. Dropped rather than
+			# crammed in: features are optional, and one built into a wall
+			# or across a doorway is worse than one absent.
+			continue
+		var origin := resolve_position(
+				feature.get("at", [0.5, 0.5]), width, depth, tag)
+		origin.z = _clear_of_side_doors(origin.z, chamber, depth, tag)
+		out.append({"index": index, "tag": tag, "origin": origin})
+	return out
+
+## THE FLOOR EVERY FEATURE WILL OCCUPY, as `Rect2`s in the room's own
+## x/z: `FOOTPRINT`'s reach either side of where `place_all` puts it.
+##
+## Features go in after the room is built, so the room's colliding
+## props are rolled before anything says where a feature will stand.
+## Measured on the owner's zone_010 and zone_012 (HB-F4e): `temple_ruin`
+## stood a column stump inside the `c001` powered door's run, between
+## the crate and the plate. The crate stopped against it, or was pinned
+## by it before anyone pushed, and the certificate's three runs latched
+## nothing. The bridge refused both Zones, three compositions each. The
+## props ask this first.
+static func footprints(chamber: Dictionary, width: float,
+		depth: float) -> Array:
+	var out: Array = []
+	for placed: Dictionary in _placements(chamber, width, depth):
+		var origin: Vector3 = placed["origin"]
+		if not is_finite(origin.z):
+			continue
+		var reach: Dictionary = FOOTPRINT.get(str(placed["tag"]), {})
+		var half_width: float = float(reach.get("half_width", 1.2))
+		var half_depth: float = float(reach.get("half_depth", 1.2))
+		out.append(Rect2(origin.x - half_width, origin.z - half_depth,
+				2.0 * half_width, 2.0 * half_depth))
+	return out
 
 static func _build(root: Node3D, tag: String, theme: String,
 		origin: Vector3, width: float, depth: float, height: float,

@@ -4830,8 +4830,11 @@ fallback provider, DEFAULT scale, `--candidate=all`) and the real client.
     - So the three-attempt NO-LAYOUT budget cannot escape a failure the
       engine makes deterministically.
     - It spends three attempts on one answer.
-  - **HB-F4e (chain certificate, mine, open).** Room `c001` in zone_010
-    and zone_012 carries a pressure-door package, `c001_pd0`. The
+  - **HB-F4e (chain certificate, mine, open)** (corrected by HB-F4e:
+    the plate latched in none of the three runs, `[[], [], []]`, because
+    a column stump stood in the crate's way; see that section). Room
+    `c001` in zone_010 and zone_012 carries a pressure-door package,
+    `c001_pd0`. The
     certificate refuses its declared latch `plate_loaded`: it "did not
     latch in every run; three runs each latching a different part is not
     three successes".
@@ -5224,3 +5227,133 @@ are two defects and one open case.
   `godot/tests/fixtures/sample/`.
 - **Next:** HB-F4e, the pressure-door certificate, which now stands on
   the new path as well. Then HB-F4c and HB-F4a-3.
+
+## 0.4 — HB-F4e (props): a column stump stood in the powered door's run, and the plate never latched — the owner's zone_010 and zone_012 now lay out
+
+HB-F4 left the owner's zone_010 and zone_012 refused on the `c001_pd0`
+certificate, three compositions each. I had written it up as a latch
+that fires in some runs and not others, and asked why the run could
+not be reproduced.
+
+- **That reading was wrong, and the evidence was there.**
+  - The bridge's sentence is "declares latch(es) ['plate_loaded'] that
+    did not latch in every run". It names a latch missing from ANY run,
+    so it covers a latch that never fires.
+  - The certificate's own evidence, laid out by the engine on both
+    compositions: `per_run_latched` is `[[], [], []]`. The plate
+    latched in none of the three runs, every time
+    (`HB-F4e_layout_before.log`).
+  - HB-F4's text is marked corrected where it stands. The frontier's
+    suspects, the moving platform's phase and the rail, are not what
+    stops the crate.
+- **The cause, measured** (`HB-F4e_probe_zone_{010,012}.log`,
+  `HB-F4e_probe_tool.gd`). A probe replays the chain as
+  `ChainCertificate.certify` does and names what the crate touches.
+  - zone_010: pushed, the crate goes 0.4 m and turns aside. It stops
+    against a cylinder 1.1 m across and 1.0 m tall at room-local
+    (3.1, 3.47): `temple_ruin`'s column stump, standing between the
+    crate (z 2.5) and the plate (z 4.7).
+  - zone_012: a stump 0.69 m tall at (-3.1, 2.91) stands against the
+    crate's face. The settle pushes the crate out of it, pinned, and it
+    moves in no run.
+- **Why.** Only a corridor carries features. Its colliding floor props
+  are rolled while it is built (`_theme_props`: `rusted_industrial`'s
+  oil drums, `temple_ruin`'s column stumps). `AffordanceFeatures
+  .place_all` builds the features after that, and neither knew where the
+  other stood. It is HB-F4b's defect with a different neighbour: there
+  a prop stood in a doorway, here in a feature.
+- **The repair (engine only).**
+  - `AffordanceFeatures._placements` says where each declared feature
+    will stand, computed once. `place_all` builds from it.
+    `footprints` reports each feature's floor: `FOOTPRINT`'s reach
+    around the spot `place_all` uses.
+  - The corridor asks for `footprints` before it rolls its props.
+    `_theme_props` keeps its two colliding floor props a body's radius
+    clear of every feature, as HB-F4b keeps them clear of a doorway.
+    - A prop that would stand on a feature's floor moves to whichever
+      end of it is nearer and still clear of the doorway and of every
+      feature.
+    - If no end is clear, the room does without the prop.
+  - Rolled first, then moved: the RNG stream is untouched. A corridor
+    with no feature, and every prop already clear, stands exactly where
+    it stood.
+- **Evidence.**
+  - The owner's two compositions, laid out and judged by this tree's
+    engine and bridge, are both ACCEPTED
+    (`HB-F4e_remeasure.log`). Each certificate now reads
+    `[["plate_loaded"], ["plate_loaded"], ["plate_loaded"]]`
+    (`HB-F4e_layout_after.log`).
+  - **The owner's campaign, replayed on HB-F4a and this**
+    (`HB-F4e_layout_walk.log`): 11 of 12 Zones are accepted. zone_012
+    is accepted, and holds a Bomb Bag Check of its own (89100224). Only
+    zone_008 fails (HB-F4a-3).
+  - **The census, on the same tree** (`HB-F4e_census.log`): 37 of 39
+    compositions are accepted. HB-F4a left 35. The owner's zone_010 and
+    zone_012 compositions are the two gained. The two that still fail
+    are candidate zone_006 (HB-F4c) and zone_008 (HB-F4a-3).
+  - **`godot-room-contract` gains `_test_no_prop_stands_in_a_feature`.**
+    - A census: every theme and every feature tag, 48 ids, six sizes,
+      three positions along the wall, some beside an open side door.
+      That is 474 features in 290 corridors, the owner's two among them.
+    - Each corridor is built in `ChamberBuilders.build`'s two steps.
+      Every body in the corridor before its features go in is a prop,
+      and each prop is measured against every feature's floor, with a
+      body's radius between.
+    - Each feature `place_all` then builds must stand inside the floor
+      `footprints` reported, so the props cannot be kept off the wrong
+      floor.
+    - And no prop moved off a feature may stand in a side doorway.
+    - The owner's two rooms, built as composed, are certified by
+      `ChainCertificate` itself. All three runs must latch.
+  - Before the repair (`HB-F4e_room_contract_before.log`):
+    - 64 props stood on a feature's floor or within a body's radius of
+      it, in 46 corridors: 38 drums, 23 stumps, and 3 in the owner's
+      two rooms.
+    - Both owner rooms: `[[], [], []]`.
+  - After (`HB-F4e_room_contract_after.log`):
+    - None does. 174 props stand in the census against 191 before; the
+      17 with no clear end of their wall run are no longer built.
+    - No feature is astray, and no prop is in a doorway.
+    - Both owner rooms latch in all three runs.
+- **Which tree each run was on.** The before-run and the sabotages ran
+  on `ce2852a` plus this change, before it was moved onto HB-F4a. HB-F4a
+  touches none of the files involved. The after-run, the walk and the
+  census ran on HB-F4a plus this.
+- **Sabotages: 6 of 6 caught**, each file restored byte for byte
+  (`HB-F4e_sabotages.log`, `HB-F4e_runner.py`). A row is caught only
+  when every check it names fails.
+  - RE-1, REPRO: the corridor tells its props nothing. It fails the
+    census (66 hits, as before the repair) and both owner rooms
+    (`[[], [], []]`).
+  - RE-2: a column stump ignores the features. It fails the census
+    (28 hits) and both owner rooms.
+  - RE-3: an oil drum ignores the features. It fails the census
+    (38 hits). The owner's rooms are `temple_ruin`, so they stand.
+  - RE-4: no body's width between a prop and a feature. It fails "within
+    a body's radius of it" (62 hits).
+  - RE-5: `footprints` forgets the side-doorway move `place_all` makes.
+    It fails "every feature `place_all` builds stands inside a floor":
+    72 features astray.
+  - RE-6: a prop moved off a feature may land in a side doorway. It
+    fails the doorway check: 21 props in a doorway.
+- **Two things the census measured, recorded and not changed.**
+  - **HB-F4f (placement, mine, open): two features on one stretch of
+    wall.**
+    - zone_012's composer declared its rail and its powered door both
+      at `[0.18, 0.3]`, and `resolve_position` placed them on the same
+      stretch of wall (`HB-F4e_rail_probe_zone_012.log`).
+    - The rail's beam runs through the door's opening 1.1 m up. Its
+      note hangs inside the door's alcove, at (-2.53, 1.6, 7.9), so a
+      player reaches it only through the door.
+    - The crate passes under the beam, so the certificate is not
+      affected. Nothing keeps two features apart today.
+  - **Two features do not stand exactly on their `FOOTPRINT`.**
+    - `_breakable_wall` builds its nook at its own x, up to 0.2 m
+      toward the wall from the resolved spot. Its back wall reaches
+      0.075 m past the footprint.
+    - The wind volume's base is not under the node `place_all` returns.
+    - A prop kept a body's radius clear of the footprint is clear of
+      both.
+- **Regression:** the full frontier runs once, on the frozen revision
+  holding HB-F4a and this (CK7, the next section).
+- **Next:** HB-F4c, then HB-F4a-3 and HB-F4f.

@@ -994,7 +994,7 @@ static func _greeble_rng(chamber: Dictionary, theme: String) -> RandomNumberGene
 ## space, plus wall vents and a sagging cable run.
 static func _greeble_corridor(root: Node3D, length: float, width: float,
 		height: float, theme: String, rng: RandomNumberGenerator,
-		cut := {}) -> void:
+		cut := {}, keep_out := []) -> void:
 	var trim := ThemeMaterials.trim_mat(theme)
 	var accent := ThemeMaterials.accent_mat(theme)
 	var rib_count := maxi(1, int(length / 6.0))
@@ -1023,7 +1023,7 @@ static func _greeble_corridor(root: Node3D, length: float, width: float,
 		_box(root, Vector3(0.06, 0.06, seg_length + 0.05),
 				Vector3(cable_x, height - 0.25 - sag, z0 + seg_length / 2.0),
 				trim, false)
-	_theme_props(root, theme, rng, width, length, height, cut)
+	_theme_props(root, theme, rng, width, length, height, cut, keep_out)
 	# Occasionally, Epsilon leaves a note.
 	if rng.randf() < 0.3:
 		_graffiti(root, Vector3(
@@ -1068,7 +1068,7 @@ static func _graffiti(root: Node3D, at: Vector3, theme: String,
 ## depth/length; positions stay inside [1.2, span_z - 1.2].
 static func _theme_props(root: Node3D, theme: String,
 		rng: RandomNumberGenerator, span_x: float, span_z: float,
-		height: float, cut := {}) -> void:
+		height: float, cut := {}, keep_out := []) -> void:
 	var wall_x := span_x / 2.0
 	# Colliding floor props are allowed only where the leftover lane still
 	# admits the widest actor (the 1.8 m brute) with margin. A
@@ -1089,6 +1089,10 @@ static func _theme_props(root: Node3D, theme: String,
 		# stops no one -- and they are ROLLED FIRST, THEN MOVED, so the rng
 		# stream is untouched and a room without a side door is
 		# byte-identical to what it was.
+		#
+		# AND NOT IN A FEATURE (HB-F4e): `keep_out` is the floor every
+		# affordance feature will occupy (`AffordanceFeatures.footprints`),
+		# on the same terms.
 		var door_cut := bool(cut.get(
 				"side_left" if side < 0.0 else "side_right", false))
 		match theme:
@@ -1109,8 +1113,8 @@ static func _theme_props(root: Node3D, theme: String,
 				if floor_props_ok:
 					# Oil drums against the wall, sometimes stacked.
 					var stacked := rng.randf() < 0.4
-					var drum_z := _clear_of_side_door(z, 2.0 * 0.42,
-							span_z) if door_cut else z
+					var drum_z := _floor_prop_z(z, side * (wall_x - 0.75),
+							0.42, span_z, door_cut, keep_out)
 					if is_nan(drum_z):
 						continue
 					var drum := _cylinder_prop(root, 0.42, 0.95,
@@ -1175,8 +1179,8 @@ static func _theme_props(root: Node3D, theme: String,
 								Color(0.35, 0.5, 0.28), 0.15), false)
 				else:
 					var stump_height := rng.randf_range(0.6, 1.6)
-					var stump_z := _clear_of_side_door(z, 2.0 * 0.55,
-							span_z) if door_cut else z
+					var stump_z := _floor_prop_z(z, side * (wall_x - 0.85),
+							0.55, span_z, door_cut, keep_out)
 					if is_nan(stump_z):
 						continue
 					_cylinder_prop(root, 0.55, stump_height,
@@ -1327,6 +1331,62 @@ static func _clear_of_side_door(along: float, size: float,
 	if near >= low:
 		return near
 	return NAN
+
+## Where a colliding floor prop of `radius` at `x` may stand along its
+## wall, given where it was rolled: clear of an assigned side doorway
+## (HB-F4) and of every feature the room will build (HB-F4e). `NAN`
+## when nowhere on the wall is clear of both, and the room does without
+## it.
+##
+## A body's radius is kept between the prop and a feature, as the
+## doorway rule keeps one. A feature a player cannot get behind is not
+## one they can use.
+##
+## HB-F4b'S ANSWER, UNCHANGED, WHEN THE ROOM BUILDS NO FEATURE, and the
+## rolled spot wherever it is already clear. Only a prop that would
+## stand in a feature's floor moves: to the nearer end of that floor,
+## or to the other, whichever is clear of the doorway and of every
+## feature and stays on the wall run the doorway rule uses.
+static func _floor_prop_z(rolled: float, x: float, radius: float,
+		span_z: float, door_cut: bool, keep_out: Array) -> float:
+	var z := _clear_of_side_door(rolled, 2.0 * radius, span_z) \
+			if door_cut else rolled
+	if is_nan(z) or keep_out.is_empty():
+		return z
+	var reach := radius + Constants.PLAYER_RADIUS
+	var offered: Array = [z]
+	for raw: Variant in keep_out:
+		var floor_of: Rect2 = raw
+		if x + reach <= floor_of.position.x or x - reach >= floor_of.end.x:
+			continue
+		# A hair past the edge, so float rounding cannot leave the prop
+		# touching the floor it was moved off.
+		offered.append(floor_of.position.y - reach - 0.01)
+		offered.append(floor_of.end.y + reach + 0.01)
+	var best := NAN
+	for raw: Variant in offered:
+		var at := float(raw)
+		if at != z and (at < 2.0 or at > span_z - 2.0):
+			continue
+		if door_cut and _clear_of_side_door(at, 2.0 * radius,
+				span_z) != at:
+			continue
+		if _in_a_feature(at, x, reach, keep_out):
+			continue
+		if is_nan(best) or absf(at - z) < absf(best - z):
+			best = at
+	return best
+
+## Does a prop reaching `reach` from (x, z) stand on any feature's floor?
+static func _in_a_feature(z: float, x: float, reach: float,
+		keep_out: Array) -> bool:
+	for raw: Variant in keep_out:
+		var floor_of: Rect2 = raw
+		if x + reach > floor_of.position.x and x - reach < floor_of.end.x \
+				and z + reach > floor_of.position.y \
+				and z - reach < floor_of.end.y:
+			return true
+	return false
 
 ## Corner buttresses, perimeter crates and a hazard strip for room-like
 ## spaces. Crates hug the walls so the arena floor stays fightable.
@@ -1497,8 +1557,11 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	for i in count:
 		_light(root, Vector3(0, height - 0.3,
 				length * (i + 0.5) / count), theme)
+	# Before the greebles, because the props are rolled there and the
+	# features are built after (HB-F4e).
 	_greeble_corridor(root, length, width, height, theme,
-			_greeble_rng(chamber, theme), corridor_cut)
+			_greeble_rng(chamber, theme), corridor_cut,
+			AffordanceFeatures.footprints(chamber, width, length))
 	var spawns: Array = []
 	for group: Dictionary in chamber.get("enemies", []):
 		for i in int(group.get("count", 0)):

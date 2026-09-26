@@ -1,0 +1,31 @@
+RE-1 [chamber_builders.gd] REPRO: the corridor tells its props nothing about its features
+    CAUGHT by "no prop stands on a feature's floor" + "zone_010 c001: its powered door's plate latches in all three runs" + "zone_012 c001: its powered door's plate latches in all three runs" -- exit 2, 3 failing check(s), 0 script error(s); restored byte for byte: True
+      census: 474 features across 290 corridors in 6 themes; 191 props inside them; 66 on a feature's floor, 0 in a side doorway, 0 features astray
+      FAIL: 474 features across 290 corridors in 6 themes, measured against 191 props inside them, and no prop stands on a feature's floor or within a body's radius of it (standing: ["zone_010 c001: @StaticBody3D@73834 at x 2.55..3.65 z 2.92..4.02", "zone_010 c001: @StaticBody3D@73837 at x -3.65..-2.55 z 1.82..2.92", "zone_010 c001: @StaticBody3D@73837 at x -3.65..-2.55 z 1.82..2.92", "zone_012 c001: @StaticB
+      FAIL: zone_010 c001: its powered door's plate latches in all three runs of the certificate (1 package(s), per run [[], [], []])
+      FAIL: zone_012 c001: its powered door's plate latches in all three runs of the certificate (1 package(s), per run [[], [], []])
+RE-2 [chamber_builders.gd] a column stump ignores the features
+    CAUGHT by "no prop stands on a feature's floor" + "zone_010 c001: its powered door's plate latches in all three runs" + "zone_012 c001: its powered door's plate latches in all three runs" -- exit 2, 3 failing check(s), 0 script error(s); restored byte for byte: True
+      census: 474 features across 290 corridors in 6 themes; 183 props inside them; 28 on a feature's floor, 0 in a side doorway, 0 features astray
+      FAIL: 474 features across 290 corridors in 6 themes, measured against 183 props inside them, and no prop stands on a feature's floor or within a body's radius of it (standing: ["zone_010 c001: @StaticBody3D@73834 at x 2.55..3.65 z 2.92..4.02", "zone_010 c001: @StaticBody3D@73837 at x -3.65..-2.55 z 1.82..2.92", "zone_010 c001: @StaticBody3D@73837 at x -3.65..-2.55 z 1.82..2.92", "zone_012 c001: @StaticB
+      FAIL: zone_010 c001: its powered door's plate latches in all three runs of the certificate (1 package(s), per run [[], [], []])
+      FAIL: zone_012 c001: its powered door's plate latches in all three runs of the certificate (1 package(s), per run [[], [], []])
+RE-3 [chamber_builders.gd] an oil drum ignores the features
+    CAUGHT by "no prop stands on a feature's floor" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      census: 474 features across 290 corridors in 6 themes; 182 props inside them; 38 on a feature's floor, 0 in a side doorway, 0 features astray
+      FAIL: 474 features across 290 corridors in 6 themes, measured against 182 props inside them, and no prop stands on a feature's floor or within a body's radius of it (standing: ["rusted_industrial feature_census_0: @StaticBody3D@76905 at x 2.78..3.62 z 2.51..3.35", "rusted_industrial feature_census_2: @StaticBody3D@77054 at x -3.87..-3.03 z 8.82..9.66", "rusted_industrial feature_census_3: @StaticBody3D@
+RE-4 [chamber_builders.gd] a prop may stand against a feature, with no body's width between
+    CAUGHT by "within a body's radius of it" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      census: 474 features across 290 corridors in 6 themes; 188 props inside them; 62 on a feature's floor, 0 in a side doorway, 0 features astray
+      FAIL: 474 features across 290 corridors in 6 themes, measured against 188 props inside them, and no prop stands on a feature's floor or within a body's radius of it (standing: ["zone_010 c001: @StaticBody3D@73834 at x 2.55..3.65 z 9.01..10.11", "zone_012 c001: @StaticBody3D@73907 at x -3.65..-2.55 z 9.01..10.11", "zone_012 c001: @StaticBody3D@73907 at x -3.65..-2.55 z 9.01..10.11", "rusted_industrial fe
+RE-5 [affordance_features.gd] the footprint forgets the side-doorway move place_all makes
+    CAUGHT by "every feature `place_all` builds stands inside a floor" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      census: 582 features across 290 corridors in 6 themes; 172 props inside them; 0 on a feature's floor, 0 in a side doorway, 72 features astray
+      FAIL: every feature `place_all` builds stands inside a floor `footprints` reports (astray: ["concrete_facility feature_census_1: \'breakable_wall\' built at x -2.90 z 11.05", "concrete_facility feature_census_4: \'wind_volume\' built at x -2.80 z 3.50", "concrete_facility feature_census_10: \'water_volume\' built at x -2.80 z 3.50", "concrete_facility feature_census_13: \'bounce_pad\' built at x -2.60 z
+RE-6 [chamber_builders.gd] a prop moved off a feature may land in a side doorway
+    CAUGHT by "no prop stands within a body's radius of an open side doorway" -- exit 2, 1 failing check(s), 0 script error(s); restored byte for byte: True
+      census: 474 features across 290 corridors in 6 themes; 184 props inside them; 0 on a feature's floor, 21 in a side doorway, 0 features astray
+      FAIL: and no prop stands within a body's radius of an open side doorway (standing in one: ["rusted_industrial feature_census_10/side_left: @StaticBody3D@77559 at z 4.71..5.55", "rusted_industrial feature_census_10/side_left: _StaticBody3D_77559 at z 4.71..5.55", "rusted_industrial feature_census_17/side_right: @StaticBody3D@78021 at z 6.01..6.85", "rusted_industrial feature_census_28/side_left: @StaticB
+
+6 of 6 sabotages caught
+runner exit 0

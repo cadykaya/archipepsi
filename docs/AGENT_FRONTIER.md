@@ -545,12 +545,24 @@ owner's D-06/D-07 rulings and the seam table are in
           is now the owner's zone_008.
         - On the new path 10 of 12 Zones build, and `godot-bombs-live`
           reaches the first Bomb Bag, zone_006's, with no discard.
+      - HB-F4e, repaired (props): the certificate latched nothing in
+        any run (`[[], [], []]`; HB-F4 had read it as intermittent). A
+        `temple_ruin` column stump stood in `c001`'s powered door run.
+        - A corridor's colliding props now keep a body's radius clear of
+          every feature's floor (`AffordanceFeatures.footprints`).
+        - `godot-room-contract` gains a feature census, 474 features in
+          290 corridors: 64 props on a feature's floor before, none after.
+          The owner's two rooms are certified by `ChainCertificate`
+          itself. 6 of 6 sabotages caught.
+        - With HB-F4a, 11 of the owner's 12 Zones build; the census
+          accepts 37 of 39.
       - Open, mine:
         - HB-F4a-3: zone_008's `c016` (a 16-attempt ladder builds it at
           5.5 s of the 6 s budget; not taken).
         - HB-F4c: a connector laid through zone_006's two doorways.
-        - HB-F4e: the `c001_pd0` pressure-door certificate, whose latch
-          does not fire in every run (zone_010, zone_012).
+        - HB-F4f: two features resolved onto one stretch of wall
+          (zone_012 `c001`: the rail's note hangs inside the powered
+          door's alcove).
       - Dess's: N-20, a retry composes the same Zone.
     - **H-BOMBS slice 2 (PT-09/V-15): the campaign's own Bomb Bag,
       live.** `godot-bombs-live` (new, in CI) runs three phases, each a
@@ -570,9 +582,10 @@ owner's D-06/D-07 rulings and the seam table are in
       - 5 of 5 sabotages caught. Where the Bomb Bags are is harness
         knowledge from the mock's own placement; the suite checks the
         client is not told.
-    - **Next:** HB-F4e (the pressure-door certificate), then HB-F4c
-      (the connector) and HB-F4a-3. PT-09 is met live, and on HB-F4a a
-      player reaches the Bomb Bag with no Zone discarded on the way.
+    - **Next:** the CK7 frontier on the frozen HB-F4a + HB-F4e
+      revision, then HB-F4c (the connector), HB-F4a-3 and HB-F4f. PT-09
+      is met live, and a player reaches the Bomb Bag with no Zone
+      discarded on the way.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

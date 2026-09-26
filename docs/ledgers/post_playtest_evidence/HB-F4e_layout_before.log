@@ -1,0 +1,3 @@
+# the layout walk's tool (ZoneBuilder + RoomAudit + ChainCertificate.of_build) on ce2852a, before HB-F4e, the owner's compositions from HB-F4
+zone_010 [64b65729399d] room c001 package c001_pd0: per_run_latched [[], [], []]; latch plate >= 36.0000; solution ['push crate -0.0000 1.0000 0.7500', 'settle']; laid out in 673 ms
+zone_012 [06041737245b] room c001 package c001_pd0: per_run_latched [[], [], []]; latch plate >= 36.0000; solution ['push crate -0.0237 0.9997 0.8000', 'settle']; laid out in 326 ms

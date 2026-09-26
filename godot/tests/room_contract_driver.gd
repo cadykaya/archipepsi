@@ -118,6 +118,7 @@ func _run() -> void:
 	await _test_a_sealed_door_that_is_a_hole_is_caught()
 	await _test_no_prop_stands_in_an_assigned_side_doorway()
 	await _test_a_junction_keeps_what_it_owes()
+	await _test_no_prop_stands_in_a_feature()
 	await _test_the_layout_result_commits_the_whole_chain()
 	await _test_a_spent_budget_is_a_timeout_and_not_infeasibility()
 	await _test_a_return_plug_lands_somewhere_a_player_fits()
@@ -3062,6 +3063,263 @@ func _test_no_prop_stands_in_an_assigned_side_doorway() -> void:
 			% [measured_doors, cases.size(), Constants.THEMES.size()]
 			+ "measures solid (blocked: %s)" % str(blocked))
 
+
+## NO PROP STANDS ON THE FLOOR AN AFFORDANCE FEATURE OCCUPIES (HB-F4e).
+##
+## A corridor's colliding floor props are rolled by `_theme_props` before
+## `AffordanceFeatures.place_all` builds its features, and neither knew
+## where the other stood. In the owner's zone_010 and zone_012 that stood
+## a `temple_ruin` column stump in `c001`'s powered door run, between the
+## crate and the plate. In zone_010 the crate stopped against it. In
+## zone_012 the stump pinned it before anything pushed. The certificate's
+## three runs latched nothing, and the bridge refused both Zones, three
+## compositions running.
+##
+## TWO HALVES.
+## - A CENSUS, because where a prop stands is a function of the room's
+##   id, size and theme (`_greeble_rng`): every theme, every feature tag,
+##   a spread of ids, sizes and positions, some beside an open side
+##   doorway. Each corridor is built in `ChamberBuilders.build`'s two
+##   steps. Every body standing inside the corridor before its features
+##   go in is a prop, and each is measured against the floor each
+##   feature will occupy (`AffordanceFeatures.footprints`), with a
+##   body's radius between them. Then each feature `place_all` builds
+##   must stand inside a floor `footprints` reported.
+## - THE OWNER'S TWO ROOMS, built as the campaign composed them and
+##   certified by `ChainCertificate` itself. The plate must latch in all
+##   three runs, which is the claim the bridge refused.
+func _test_no_prop_stands_in_a_feature() -> void:
+	print("  -- CENSUS: no prop stands on a feature's floor")
+	var owners := {
+		"zone_010 c001": {"id": "c001", "zone_id": "zone_010",
+			"type": "corridor", "width": 7.9, "length": 12.0,
+			"objective": "reach_exit", "enemies": [],
+			"features": [
+				{"tag": "moving_platform", "at": [0.18, 0.3], "note": null},
+				{"tag": "powered_door", "at": [0.82, 0.3], "note": null},
+				{"tag": "rail", "at": [0.18, 0.5], "note": null}],
+			"doors": _doors([["entry", "SEALED"], ["exit", "USED"],
+				["side_left", "SEALED"], ["side_right", "SEALED"]])},
+		"zone_012 c001": {"id": "c001", "zone_id": "zone_012",
+			"type": "corridor", "width": 7.9, "length": 17.1,
+			"objective": "reach_exit", "enemies": [],
+			"features": [
+				{"tag": "rail", "at": [0.18, 0.3], "note": null},
+				{"tag": "moving_platform", "at": [0.82, 0.7], "note": null},
+				{"tag": "powered_door", "at": [0.18, 0.3], "note": null}],
+			"doors": _doors([["entry", "SEALED"], ["exit", "USED"],
+				["side_left", "SEALED"], ["side_right", "SEALED"]])},
+	}
+	var cases: Array = []
+	for name: String in owners:
+		cases.append([name, "temple_ruin", owners[name]])
+	var tags: Array = AffordanceFeatures.FOOTPRINT.keys()
+	var sizes := [[7.9, 12.0], [7.9, 17.1], [8.4, 14.0], [9.5, 20.0],
+			[7.9, 11.0], [8.8, 16.0]]
+	var along := [0.3, 0.5, 0.7]
+	var sides := [[["side_left", "SEALED"], ["side_right", "SEALED"]],
+			[["side_left", "USED"], ["side_right", "SEALED"]],
+			[["side_left", "SEALED"], ["side_right", "LOCKED"]]]
+	for theme: String in Constants.THEMES:
+		for i in 48:
+			var size: Array = sizes[i % sizes.size()]
+			var plan := [["entry", "USED"], ["exit", "USED"]]
+			plan.append_array(sides[i % sides.size()])
+			cases.append(["%s feature_census_%d" % [theme, i], theme,
+					{"id": "feature_census_%d" % i, "zone_id": "census",
+						"type": "corridor", "width": size[0],
+						"length": size[1], "objective": "reach_exit",
+						"enemies": [],
+						"features": [
+							{"tag": tags[i % tags.size()],
+								"at": [0.18, along[i % 3]], "note": null},
+							{"tag": tags[(i + 3) % tags.size()],
+								"at": [0.82, along[(i + 1) % 3]],
+								"note": null}],
+						"doors": _doors(plan)}])
+	var features := 0
+	var props := 0
+	var standing: Array = []
+	var astray: Array = []
+	var in_doorways: Array = []
+	for case: Array in cases:
+		var chamber: Dictionary = case[2]
+		var theme := str(case[1])
+		var width := float(chamber["width"])
+		var length := float(chamber["length"])
+		var cut := ChamberBuilders.cut_plan(chamber)
+		var floors := AffordanceFeatures.footprints(chamber, width, length)
+		features += floors.size()
+		# THE ROOM AS `ChamberBuilders.build` MAKES IT, in its two steps.
+		# The corridor first, with its props, measured before any feature
+		# is in it -- so every body standing inside it is a prop -- and
+		# then the features `place_all` adds to the same room.
+		var shell := ChamberBuilders.corridor(chamber, theme)
+		var root := shell["root"] as Node3D
+		var height := float(shell["room_height"])
+		for shape: CollisionShape3D in _collision_shapes(root):
+			# A BODY, and not a sensor.
+			if not shape.get_parent() is PhysicsBody3D:
+				continue
+			var box := _local_box(shape, root)
+			# THE ROOM ITSELF IS NOT A PROP: the floor slab ends at y 0,
+			# the side walls stand on the wall line, the end walls at
+			# either threshold and the ceiling at `height`. What is left
+			# stands on the floor inside the room.
+			if box.position.y < -0.01 or box.end.y > height - 0.3 \
+					or box.position.x < -width / 2.0 \
+						+ ChamberBuilders.WALL_THICKNESS / 2.0 \
+					or box.end.x > width / 2.0 \
+						- ChamberBuilders.WALL_THICKNESS / 2.0 \
+					or box.position.z < ChamberBuilders.WALL_THICKNESS \
+					or box.end.z > length - ChamberBuilders.WALL_THICKNESS:
+				continue
+			props += 1
+			var reach := Constants.PLAYER_RADIUS
+			# AND A PROP MOVED OFF A FEATURE HAS NOT BEEN MOVED INTO A
+			# DOORWAY: HB-F4b's rule, a body's radius clear of the opening
+			# in a cut side wall, still holds for it.
+			var wall_side := "side_left" if box.get_center().x < 0.0 \
+					else "side_right"
+			# A millimetre's grace either side: `_clear_of_side_door`
+			# stands a prop exactly on the line, and float rounding must
+			# not read that as over it.
+			if bool(cut.get(wall_side, false)) \
+					and box.end.z + reach > (length
+						- ChamberBuilders.DOOR_WIDTH) / 2.0 + 0.001 \
+					and box.position.z - reach < (length
+						+ ChamberBuilders.DOOR_WIDTH) / 2.0 - 0.001:
+				in_doorways.append("%s/%s: %s at z %.2f..%.2f" % [
+						str(case[0]), wall_side, shape.get_parent().name,
+						box.position.z, box.end.z])
+			for raw: Variant in floors:
+				var floor_of: Rect2 = raw
+				if box.end.x + reach > floor_of.position.x \
+						and box.position.x - reach < floor_of.end.x \
+						and box.end.z + reach > floor_of.position.y \
+						and box.position.z - reach < floor_of.end.y:
+					standing.append("%s: %s at x %.2f..%.2f z %.2f..%.2f"
+							% [str(case[0]), shape.get_parent().name,
+								box.position.x, box.end.x, box.position.z,
+								box.end.z])
+		# AND THE FLOOR IS WHERE THE FEATURE IS. The props are kept off
+		# the floor `footprints` reports, so a footprint that is not
+		# where `place_all` builds would keep them off the wrong floor.
+		for raw: Variant in AffordanceFeatures.place_all(root, chamber,
+				theme, width, length, height):
+			var node := raw as Node3D
+			var at := _local_origin(node, root)
+			var inside := false
+			for floor_raw: Variant in floors:
+				inside = inside or (floor_raw as Rect2).has_point(
+						Vector2(at.x, at.z))
+			if not inside:
+				astray.append("%s: '%s' built at x %.2f z %.2f" % [
+						str(case[0]), str(node.get_meta("affordance_tag",
+							"?")), at.x, at.z])
+		root.free()
+	rooms_checked += cases.size()
+	print("    %d features across %d corridors in %d themes; %d props "
+			% [features, cases.size(), Constants.THEMES.size(), props]
+			+ "inside them; %d on a feature's floor, %d in a side doorway, "
+			% [standing.size(), in_doorways.size()]
+			+ "%d features astray" % astray.size())
+	_check(astray.is_empty(),
+			"every feature `place_all` builds stands inside a floor "
+			+ "`footprints` reports (astray: %s)" % str(astray))
+	_check(standing.is_empty(),
+			"%d features across %d corridors in %d themes, measured "
+			% [features, cases.size(), Constants.THEMES.size()]
+			+ "against %d props inside them, and no prop stands on " % props
+			+ "a feature's floor or within a body's radius of it "
+			+ "(standing: %s)" % str(standing))
+	_check(in_doorways.is_empty(),
+			"and no prop stands within a body's radius of an open side "
+			+ "doorway (standing in one: %s)" % str(in_doorways))
+	# THE OWNER'S TWO, certified by the certificate the bridge reads.
+	for name: String in owners:
+		var chamber: Dictionary = owners[name]
+		var built := ContentInstantiator.build_chamber(chamber,
+				"temple_ruin")
+		var root := built.get("root") as Node3D
+		if root == null:
+			_check(false, "%s did not build" % name)
+			continue
+		# Well clear of anything an earlier test stood up.
+		root.position = Vector3(-400.0, 0.0, 0.0)
+		add_child(root)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var certified := await ChainCertificate.of_room(get_tree(),
+				str(chamber["zone_id"]), chamber, root,
+				root.global_transform * (built["bounds"] as AABB))
+		var runs: Array = []
+		if certified.size() == 1:
+			runs = (((certified[0] as Dictionary)["package"]
+					as Dictionary)["evidence"] as Dictionary).get(
+						"per_run_latched", [])
+		var latched := 0
+		for run: Variant in runs:
+			if (run as Array).has("plate_loaded"):
+				latched += 1
+		print("    %s: %d package(s), per run %s" % [name,
+				certified.size(), str(runs)])
+		_check(certified.size() == 1 and runs.size() == 3 and latched == 3,
+				"%s: its powered door's plate latches in all three runs "
+				% name + "of the certificate (%d package(s), per run %s)"
+				% [certified.size(), str(runs)])
+		root.queue_free()
+		await get_tree().process_frame
+
+## Every collision shape in a subtree, in tree order.
+func _collision_shapes(root: Node) -> Array:
+	var out: Array = []
+	for node: Node in root.find_children("*", "CollisionShape3D", true,
+			false):
+		out.append(node)
+	return out
+
+## A node's origin in the room's own frame, from the transforms between
+## them: the room is measured before it is in any tree.
+func _local_origin(node: Node3D, root: Node3D) -> Vector3:
+	var xf := Transform3D.IDENTITY
+	var at: Node = node
+	while at != null and at != root:
+		if at is Node3D:
+			xf = (at as Node3D).transform * xf
+		at = at.get_parent()
+	return xf.origin
+
+## A shape's box in the room's own frame, from the transforms between
+## them: the room is measured before it is in any tree.
+func _local_box(shape: CollisionShape3D, root: Node3D) -> AABB:
+	var xf := Transform3D.IDENTITY
+	var at: Node = shape
+	while at != null and at != root:
+		if at is Node3D:
+			xf = (at as Node3D).transform * xf
+		at = at.get_parent()
+	var local := AABB()
+	if shape.shape is BoxShape3D:
+		var size := (shape.shape as BoxShape3D).size
+		local = AABB(-size / 2.0, size)
+	elif shape.shape is CylinderShape3D:
+		var cylinder := shape.shape as CylinderShape3D
+		local = AABB(Vector3(-cylinder.radius, -cylinder.height / 2.0,
+				-cylinder.radius), Vector3(2.0 * cylinder.radius,
+				cylinder.height, 2.0 * cylinder.radius))
+	elif shape.shape is SphereShape3D:
+		var r := (shape.shape as SphereShape3D).radius
+		local = AABB(Vector3(-r, -r, -r), Vector3(2.0 * r, 2.0 * r, 2.0 * r))
+	elif shape.shape is CapsuleShape3D:
+		var capsule := shape.shape as CapsuleShape3D
+		local = AABB(Vector3(-capsule.radius, -capsule.height / 2.0,
+				-capsule.radius), Vector3(2.0 * capsule.radius,
+				capsule.height, 2.0 * capsule.radius))
+	else:
+		local = shape.shape.get_debug_mesh().get_aabb() \
+				if shape.shape != null else AABB()
+	return xf * local
 
 ## The negative case, and the reason the probe cannot be skipped.
 ##
