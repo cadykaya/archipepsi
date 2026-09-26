@@ -17,7 +17,7 @@ width or hue. Every number below is the project's own:
 
 | File | What it is |
 | --- | --- |
-| `contrast_current/` | All ten at review distance in all six rooms, four cases each (wall, floor, dim, opening), under each room's own light, ambient and fog — `CONTRAST_<room>_<case>.png` and `contrast.json`. Replaces the `LINEUP_*` frames, which were lit wrongly and are gone. |
+| `contrast_current/` | **The landed Tier-1 treatment** (RULED 2026-09-26): all ten at review distance in all six rooms, each room's enemies in their own value band, four cases each (wall, floor, dim, opening), under each room's own light, ambient and fog — `CONTRAST_<room>_<case>.png` and `contrast.json`, which records the sha256 of every model it measured. Replaces the `LINEUP_*` frames, which were lit wrongly and are gone. The pre-band family is `value_bands/sweep/k1.00.json`. |
 | `value_bands/` | Tier 1: the lightness sweep, the derived bands, the two-band candidate measured, `CHART_separation_by_lightness.png` and `SHEET_today_vs_two_bands.png`. A candidate; nothing landed. |
 | `SHEET_silhouettes.png` | Every outline, black on white, at native size. Rows are roles; columns are yaw 0 / 45 / 90. |
 | `MASK_<role>_y<yaw>.png` | The outlines themselves, native size — the measurement's input. |

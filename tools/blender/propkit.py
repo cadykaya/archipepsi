@@ -465,9 +465,12 @@ def enemy_skin(theme, name, marking="dead", lightness=1.0):
     floor under how dark a body can render at 18 m, and in the four
     dark-void rooms darkening passes THROUGH the void's value on the way.
     `tools/content/run_enemy_value_sweep.sh` measures all of it and
-    `enemy_value_bands.py` derives the bands; nothing here changes on the
-    strength of it until the owner rules. See
-    `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`.
+    `enemy_value_bands.py` derives the bands.
+
+    **RULED 2026-09-26: two bands.** `build_enemy_roles.py` ships the
+    body at `lightness` 0.40 for four rooms and 0.10 for two
+    (`VALUE_BANDS` / `ROOM_BAND` there); nothing ships at 1.0 any more.
+    See `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`.
     """
     base, accent, trim = _ramps(theme)
     fill = base[TONES[tone]]
@@ -873,9 +876,10 @@ def enemy_skin(theme, name, marking="dead", lightness=1.0):
     `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`.
     """
     base, accent, trim = _ramps(theme)
-    # The band, applied to the BODY inputs only. At lightness 1.0 every
-    # call below returns its input unchanged, so the shipped skin
-    # rebuilds byte-identical -- the currency check proves it.
+    # The band, applied to the BODY inputs only; the marking below is
+    # untouched, which `check_enemy_bands.py` verifies on the pixels.
+    # At lightness 1.0 every call returns its input unchanged -- every
+    # OTHER caller of this module keeps its skin byte-identical.
     base = tuple(value_band(c, lightness) for c in base)
     grime = [value_band(pal.grime(i), lightness) for i in range(3)]
     surf = surface(theme, name)

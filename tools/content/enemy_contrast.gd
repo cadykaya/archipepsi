@@ -159,7 +159,14 @@ func _run() -> void:
 			var key := "%s|%s" % [dir, mode]
 			if not cache.has(key):
 				cache[key] = await _regions(dir, mode)
-		_rows[theme] = {"models": dir}
+		# WHICH models, not just where: the sha256 of every file measured,
+		# so `check_enemy_bands.py` can refuse evidence that no longer
+		# describes the committed models.
+		var shas := {}
+		for role in ROLES:
+			shas[role] = FileAccess.get_sha256(
+					"%s/enemy_role_%s.glb" % [dir, role])
+		_rows[theme] = {"models": dir, "models_sha256": shas}
 		for case in CASES:
 			var mode := "elevated" if case == "floor" else "level"
 			await _measure(theme, dir, case, cache["%s|%s" % [dir, mode]])

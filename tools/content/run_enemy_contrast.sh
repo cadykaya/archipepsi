@@ -6,7 +6,9 @@
 #
 # `models.json` maps each theme to a model directory, which is how a
 # band candidate is measured: the themes in a band point at that band's
-# build. Omitted, every theme uses the shipped art-lane models.
+# build. Omitted, every theme uses ITS OWN shipped band, read from the
+# generated `assets/models/batch030/enemy_value_bands.json` -- so the
+# default run measures the treatment as it landed (RULED 2026-09-26).
 set -e
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 GODOT="${GODOT:-$ROOT/.tools/godot}"
@@ -25,10 +27,15 @@ if [ -z "$MAP" ]; then
   python3 - "$ROOT" "$MAP" <<'PY'
 import json, sys
 root, out = sys.argv[1], sys.argv[2]
-d = root + "/assets/models/batch030/enemies"
-json.dump({t: d for t in ("concrete_facility", "rusted_industrial",
-    "neon_transit", "gothic_stone", "temple_ruin", "void_glitch")},
-    open(out, "w"))
+bands = json.load(open(root + "/assets/models/batch030/enemy_value_bands.json"))
+rooms = ("concrete_facility", "rusted_industrial", "neon_transit",
+         "gothic_stone", "temple_ruin", "void_glitch")
+missing = [t for t in rooms if t not in bands["room_band"]]
+if missing:
+    sys.exit("run_enemy_contrast: no value band for %s" % missing)
+json.dump({t: root + "/assets/models/" +
+           bands["bands"][bands["room_band"][t]]["models"] for t in rooms},
+          open(out, "w"))
 PY
 fi
 # The environment in enemy_contrast.gd is copied from Production's

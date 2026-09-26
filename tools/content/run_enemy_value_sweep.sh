@@ -22,16 +22,17 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BLENDER="${BLENDER:-$ROOT/.tools/blender/blender}"
 OUT="${1:-$ROOT/docs/art/review/enemies_2026-09-25/value_bands}"
 GRID="${ENEMY_SWEEP_GRID:-1.00 0.85 0.70 0.55 0.40 0.25 0.10}"
-SHIPPED="$ROOT/assets/models/batch030/enemies"
 [ -x "$BLENDER" ] || { echo "no blender at $BLENDER" >&2; exit 2; }
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$OUT/sweep"
 
+# EVERY step, 1.00 included, is a scratch build. Before the bands landed
+# (2026-09-26) k 1.00 was the shipped folder; it now holds the standard
+# band, and a sweep that read it as "today's skin" would measure k 0.40
+# twice and call one of them 1.00.
 models_for() {
-  if [ "$1" = "1.00" ]; then echo "$SHIPPED"
-  else echo "$ROOT/assets/themed/_enemy_lightness_$1/models/batch030/enemies"
-  fi
+  echo "$ROOT/assets/themed/_enemy_lightness_$1/models/batch030/enemies"
 }
 
 map_all() {  # every theme -> one model dir
@@ -44,11 +45,9 @@ PY
 }
 
 for k in $GRID; do
-  if [ "$k" != "1.00" ]; then
-    ENEMY_LIGHTNESS="$k" "$BLENDER" --background \
-      --python "$ROOT/tools/blender/build_enemy_roles.py" > "$TMP/build_$k.log" 2>&1 \
-      || { tail -20 "$TMP/build_$k.log" >&2; echo "build k$k failed" >&2; exit 1; }
-  fi
+  ENEMY_LIGHTNESS="$k" "$BLENDER" --background \
+    --python "$ROOT/tools/blender/build_enemy_roles.py" > "$TMP/build_$k.log" 2>&1 \
+    || { tail -20 "$TMP/build_$k.log" >&2; echo "build k$k failed" >&2; exit 1; }
   map_all "$(models_for "$k")" "$TMP/map_$k.json"
   "$ROOT/tools/content/run_enemy_contrast.sh" "$TMP/run_$k" "$TMP/map_$k.json" \
     > "$TMP/run_$k.log" 2>&1 \
@@ -57,7 +56,7 @@ for k in $GRID; do
   echo "[sweep] k$k measured"
 done
 
-map_all "$SHIPPED" "$TMP/map_black.json"
+map_all "$(models_for 1.00)" "$TMP/map_black.json"
 ENEMY_CONTRAST_BLACK=1 ENEMY_CONTRAST_MATTE=1 \
   "$ROOT/tools/content/run_enemy_contrast.sh" "$TMP/run_black" "$TMP/map_black.json" \
   > "$TMP/run_black.log" 2>&1 \
@@ -72,8 +71,6 @@ import json, sys
 bands = json.load(open(sys.argv[1]))["partitions"]["2"]["by_theme"]
 root = sys.argv[3]
 def d(k):
-    if abs(k - 1.0) < 1e-9:
-        return root + "/assets/models/batch030/enemies"
     return root + "/assets/themed/_enemy_lightness_%.2f/models/batch030/enemies" % k
 json.dump({t: d(k) for t, k in bands.items()}, open(sys.argv[2], "w"))
 PY

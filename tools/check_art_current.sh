@@ -108,6 +108,19 @@ python3 tools/content/verify_theme_set.py >/dev/null || \
 
     python3 tools/content/verify_theme_set.py"
 
+# --- 3a. Tier 1: the enemy value bands carry the ruling -----------------
+# RULED 2026-09-26: two bands, one set of enemies. Same geometry and
+# markings in both, the deep one darker, and the committed measurement
+# tied by sha256 to these exact models and meeting the ruled acceptance --
+# so a repainted enemy cannot ship on evidence measured before it.
+python3 tools/content/check_enemy_bands.py >/dev/null 2>&1 || \
+  fail "enemy-bands: the shipped enemy value bands no longer carry the
+  ruling -- geometry or markings differ between bands, the deep band is
+  not darker, or contrast_current/ was measured on other models or misses
+  the ruled 0.10. Run
+
+    python3 tools/content/check_enemy_bands.py"
+
 # --- 3b. D-11: the game packs' rows, judged by Production's own code ----
 #
 # `pack_table_problems` is the contract. This lane does not get to hold

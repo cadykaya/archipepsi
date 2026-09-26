@@ -213,6 +213,39 @@ rooms; per-room skins differ only in those plating lines and bolts
    dim, `void_glitch` floor): accept, or send `rusted_industrial`'s room
    lighting to Production as the root cause.
 
+> **RULED 2026-09-26.**
+>
+> 1. *"Approve 0.10 as the practical enemy-vs-environment art acceptance
+>    threshold at 18 m."* 0.18 stays a strong/aspirational reference,
+>    not a hard enemy-paint gate.
+> 2. *"Approve the measured two-band candidate"* — standard 40% for
+>    `concrete_facility`, `neon_transit`, `gothic_stone`, `temple_ruin`;
+>    deep 10% for `rusted_industrial`, `void_glitch`. *"Keep the shared
+>    enemy hue/material identity and semantic markings; this is a value
+>    treatment, not six unrelated palettes. ... Do not claim it is active
+>    in the shipping game until Production actually loads the art-lane
+>    enemy models."* And flag to Production that its shipping builders
+>    violate L-08 on their own.
+> 3. Openings: *"a documented Tier-1 limitation for now."* No global
+>    void-colour change, no new semantic enemy colour. Land Tier 1,
+>    complete Tier 2, run the motion review; only then, with integrated
+>    evidence, a non-value cue proposal if one is still needed.
+> 4. Both short cells accepted as explicit measured exceptions; a still-
+>    unreadable `rusted_industrial` in the integrated build is Production's
+>    room-lighting/runtime issue.
+>
+> **LANDED 2026-09-26.** Both sets ship: `assets/models/batch030/enemies/`
+> (standard) and `.../enemies_deep/` (deep), byte-identical to the
+> candidate measured above. The map is generated data,
+> `assets/models/batch030/enemy_value_bands.json`.
+> `tools/content/check_enemy_bands.py` holds the ruling in the suite:
+> - same geometry and markings in both sets;
+> - the deep set darker;
+> - `contrast_current/` tied by sha256 to the shipped files and meeting
+>   0.10 everywhere but the two accepted cells.
+>
+> Production's flag: `docs/art-requests/2026-09-26-enemy-value-bands-and-L08.md`.
+
 ### What landing would change — and what it would not
 
 Landing would rebuild the ten enemies per room (`ART_THEME` and the

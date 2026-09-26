@@ -186,6 +186,13 @@ rather than a body — and even there as a marked band, never a wash. No enemy
 takes `signal`, `identity` or `send`: a thing that hurts you is not a thing
 you can use, is not Epsilon, and does not leave for the multiworld.
 
+**Since 2026-09-26 the skin ships in two value bands** (RULED): the body's
+L\* at 0.40 of this skin in four rooms (`enemies/`) and 0.10 in two
+(`enemies_deep/`), hue, chroma, materials and markings unchanged. The map is
+`assets/models/batch030/enemy_value_bands.json`; the measurement and ruling
+are in `docs/art/review/enemies_2026-09-25/`. The sheets below predate the
+bands and show the undarkened skin.
+
 ## Sheets
 
 | | |
