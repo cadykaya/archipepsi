@@ -36,6 +36,22 @@ const HEIGHT := 3.0
 ## Two seconds is long enough to be a decision and short enough not to
 ## be a chore, and walking out cancels it with nothing spent.
 const HOLD_SECONDS := 2.0
+## A FIGHT HOLDS THE RETURN (CK9-F1). The two seconds answered a brush;
+## they did not answer a player who stands on the device to fight -- and
+## standing is how a diver is fought, since it strikes only a player who
+## leaves the ground. `godot-flyer-room`'s player, clearing `c011` with
+## the Static Pulse, stood on `p:c011:start` for two seconds and was
+## carried to the Zone start with four divers alive, which is the
+## owner's report word for word: "I'm in combat ... and BAM I'm at the
+## start of the zone."
+##
+## So a player who has fired, used an Action or been hurt within this
+## long does not charge it. The charge drops to nothing, exactly as
+## walking out drops it, and the label says why; the return is taken
+## from a quiet second onwards, with the whole hold still owed.
+const FIGHT_QUIET_SECONDS := 1.0
+## What the device says while a fight holds it.
+const FIGHTING_LABEL := "RETURN · NOT WHILE FIGHTING"
 ## Idle glow, and what it climbs to while charging.
 const IDLE_ENERGY := 0.9
 const CHARGED_ENERGY := 7.0
@@ -48,6 +64,8 @@ var _spent := false
 ## leaves, so a cancelled return costs nothing and leaves no state.
 var _held := 0.0
 var _inside := false
+## The player standing in it, whose fight holds the charge.
+var _occupant: Player = null
 var _face: MeshInstance3D
 var _ring: MeshInstance3D
 var _label: Label3D
@@ -146,6 +164,7 @@ func _on_body_entered(body: Node3D) -> void:
 		return
 	_inside = true
 	_held = 0.0
+	_occupant = body as Player
 
 ## LEAVING CANCELS, AND COSTS NOTHING. The device goes straight back to
 ## idle rather than holding a partial charge, because a return that
@@ -157,6 +176,7 @@ func _on_body_exited(body: Node3D) -> void:
 	_inside = false
 	_held = 0.0
 	_spent = false
+	_occupant = null
 	_idle()
 
 ## CHARGED IN PHYSICS TIME, because that is the clock the contact it
@@ -165,6 +185,11 @@ func _on_body_exited(body: Node3D) -> void:
 ## thing being held were counted against two different clocks.
 func _physics_process(delta: float) -> void:
 	if not _inside or _spent:
+		return
+	if _occupant != null and is_instance_valid(_occupant) \
+			and _occupant.fought_within(FIGHT_QUIET_SECONDS):
+		_held = 0.0
+		_held_back()
 		return
 	_held += delta
 	var t := clampf(_held / HOLD_SECONDS, 0.0, 1.0)
@@ -189,6 +214,16 @@ func _charging(t: float) -> void:
 	if _label != null:
 		_label.text = "RETURNING  %.1f" % maxf(
 				HOLD_SECONDS - _held, 0.0)
+
+## Held by a fight: nothing charged, and the label says why.
+func _held_back() -> void:
+	_idle()
+	if _label != null:
+		_label.text = FIGHTING_LABEL
+
+## What the device's label reads now, for a suite that has to ask.
+func label_text() -> String:
+	return _label.text if _label != null else ""
 
 func _idle() -> void:
 	if _ring != null:

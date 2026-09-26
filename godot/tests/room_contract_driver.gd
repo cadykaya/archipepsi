@@ -121,6 +121,7 @@ func _run() -> void:
 	await _test_no_prop_stands_in_a_feature()
 	await _test_a_branch_door_is_kept_for_its_branch()
 	await _test_a_blocker_is_reported_turned_with_its_body()
+	await _test_a_fight_holds_the_return()
 	await _test_the_layout_result_commits_the_whole_chain()
 	await _test_a_spent_budget_is_a_timeout_and_not_infeasibility()
 	await _test_a_return_plug_lands_somewhere_a_player_fits()
@@ -3193,6 +3194,173 @@ func _test_a_branch_door_is_kept_for_its_branch() -> void:
 ## connector's side wall laid along x read as one laid along z, reaching
 ## into the room beside it. A wall of the connector's own size, turned a
 ## quarter as every connector across a gap is, must read as it stands.
+## CK9-F1: A FIGHT HOLDS THE RETURN PLUG.
+##
+## `godot-flyer-room`'s player, clearing `c011` with the Static Pulse,
+## stood on `p:c011:start` for two seconds and was carried to the Zone
+## start with four divers alive -- the owner's report word for word ("I'm
+## in combat ... and BAM I'm at the start of the zone"), which the
+## two-second hold answered for a brush and not for a player standing to
+## fight. A player who fired, used an Action or was hurt within
+## `FIGHT_QUIET_SECONDS` does not charge it, and the charge drops to
+## nothing, as walking out drops it.
+##
+## A plug and a player on a bare floor, far from everything else:
+##   - standing still returns, and not before the hold (the ruled rule);
+##   - standing with the Pulse held down does not, for twice the hold, and
+##     the device says why; let go, and the return still owes a quiet
+##     second and the whole hold;
+##   - standing while being hit does not;
+##   - a shot mid-charge drops the charge rather than pausing it;
+##   - standing while an Action is used does not.
+func _test_a_fight_holds_the_return() -> void:
+	var stage := Node3D.new()
+	stage.position = Vector3(-3000.0, 0.0, 0.0)
+	add_child(stage)
+	var ground := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(24.0, 1.0, 24.0)
+	shape.shape = box
+	shape.position = Vector3(0.0, -0.5, 0.0)
+	ground.add_child(shape)
+	stage.add_child(ground)
+	var plug := ReturnPlug.create("p:fight:start", "zone_start", "pad", "")
+	stage.add_child(plug)
+	# Each firing, with the physics frame it happened on: the quiet a
+	# return owes is counted from the last shot, not from a button.
+	var fired: Array = []
+	plug.traversed.connect(func(edge: String, _to: String) -> void:
+		fired.append([edge, Engine.get_physics_frames()]))
+	var player := Player.create()
+	stage.add_child(player)
+	var dt := maxf(get_physics_process_delta_time(), 0.001)
+	var hold := int(ReturnPlug.HOLD_SECONDS / dt)
+	var quiet := int(ReturnPlug.FIGHT_QUIET_SECONDS / dt)
+	# TWO FRAMES OF SLACK, and why: whether the plug or the player takes
+	# its physics step first moves the firing by a frame, and a sum of
+	# sixtieths can land a hair either side of a whole second. A charge
+	# that kept its progress through a shot fires about 45 frames early
+	# here, and one that owed no quiet about 60 -- nowhere near two.
+	var owed := hold + quiet - 2
+
+	# 1. THE RULED RULE: standing still returns, after the hold.
+	await _onto_the_plug(player, plug)
+	var still := await _frames_until_fired(fired, hold * 3)
+	_check(fired.size() == 1 and still >= int(hold * 0.9),
+			"CK9-F1: standing still on a return plug returns after its hold "
+			+ "(%d frame(s), of %d owed; fired %s)" % [still, hold,
+				str(fired)])
+
+	# 2. THE PULSE HELD DOWN, for twice the hold.
+	fired.clear()
+	await _onto_the_plug(player, plug)
+	var shots := [0, 0]
+	var count := func() -> void:
+		shots[0] += 1
+		shots[1] = Engine.get_physics_frames()
+	player.fired_pulse.connect(count)
+	Input.action_press("fire_pulse")
+	var said := ""
+	for i in hold * 2:
+		await get_tree().physics_frame
+		if i == hold:
+			said = plug.label_text()
+	Input.action_release("fire_pulse")
+	player.fired_pulse.disconnect(count)
+	var while_fighting := fired.size()
+	await _frames_until_fired(fired, (hold + quiet) * 3)
+	var after: int = int(fired[0][1]) - int(shots[1]) \
+			if fired.size() == 1 else -1
+	_check(while_fighting == 0 and shots[0] >= 3,
+			"CK9-F1: standing on the plug with the Static Pulse held down "
+			+ "for %.1f s does not return (%d shot(s); fired %d time(s))"
+			% [ReturnPlug.HOLD_SECONDS * 2.0, shots[0], while_fighting])
+	_check(said == ReturnPlug.FIGHTING_LABEL,
+			"CK9-F1: …and the device says why ('%s', expected '%s')"
+			% [said, ReturnPlug.FIGHTING_LABEL])
+	_check(fired.size() == 1 and after >= owed,
+			"CK9-F1: …and once the firing stops the return still owes a "
+			+ "quiet second and the whole hold: it fired %d frame(s) after "
+			% after + "the last shot, of %d owed" % owed)
+
+	# 3. BEING HIT, every half second for twice the hold.
+	fired.clear()
+	await _onto_the_plug(player, plug)
+	var every := maxi(1, int(0.5 / dt))
+	for i in hold * 2:
+		if i % every == 0:
+			player.take_damage(1.0, player.global_position
+					+ Vector3(0.0, 1.0, 2.0))
+		await get_tree().physics_frame
+	_check(fired.is_empty(),
+			"CK9-F1: standing on the plug while being hit every 0.5 s does "
+			+ "not return (fired %s)" % str(fired))
+	await _frames_until_fired(fired, (hold + quiet) * 3)
+
+	# 4. ONE SHOT MID-CHARGE drops the charge; it does not pause it.
+	fired.clear()
+	await _onto_the_plug(player, plug)
+	for _i in int(hold * 0.75):
+		await get_tree().physics_frame
+	var one := [0]
+	var shot := func() -> void: one[0] = Engine.get_physics_frames()
+	player.fired_pulse.connect(shot)
+	Input.action_press("fire_pulse")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release("fire_pulse")
+	player.fired_pulse.disconnect(shot)
+	await _frames_until_fired(fired, (hold + quiet) * 3)
+	var dropped: int = int(fired[0][1]) - int(one[0]) \
+			if fired.size() == 1 and int(one[0]) > 0 else -1
+	_check(dropped >= owed,
+			"CK9-F1: a shot %.1f s into the charge drops it: the return then "
+			% (ReturnPlug.HOLD_SECONDS * 0.75) + "owes a quiet second and "
+			+ "the whole hold again (fired %d frame(s) after the shot, of "
+			% dropped + "%d owed)" % owed)
+	# 5. AN ACTION USED: the signal a slot's runtime emits when an Action
+	# runs, every half second for twice the hold.
+	fired.clear()
+	await _onto_the_plug(player, plug)
+	var runtime: EchoRuntime = player.runtimes["echo_a"]
+	for i in hold * 2:
+		if i % every == 0:
+			runtime.action_used.emit()
+		await get_tree().physics_frame
+	_check(fired.is_empty(),
+			"CK9-F1: standing on the plug while using an Action every 0.5 s "
+			+ "does not return (fired %s)" % str(fired))
+	await _frames_until_fired(fired, (hold + quiet) * 3)
+	print("  CK9-F1 return plug: still %d frame(s), after the Pulse %d, "
+			% [still, after] + "after one shot mid-charge %d; hold %d, "
+			% [dropped, hold] + "quiet %d" % quiet)
+	stage.queue_free()
+	await get_tree().physics_frame
+
+
+## Onto the plug's centre, from outside it, so it arms afresh: a plug that
+## fired stays spent until the body leaves.
+func _onto_the_plug(player: Player, plug: ReturnPlug) -> void:
+	player.velocity = Vector3.ZERO
+	player.global_position = plug.global_position + Vector3(8.0, 0.1, 0.0)
+	for _i in 4:
+		await get_tree().physics_frame
+	player.velocity = Vector3.ZERO
+	player.global_position = plug.global_position + Vector3(0.0, 0.1, 0.0)
+	for _i in 2:
+		await get_tree().physics_frame
+
+
+## Physics frames until the plug has fired, or `budget`.
+func _frames_until_fired(fired: Array, budget: int) -> int:
+	var waited := 0
+	while waited < budget and fired.is_empty():
+		await get_tree().physics_frame
+		waited += 1
+	return waited
+
+
 func _test_a_blocker_is_reported_turned_with_its_body() -> void:
 	var holder := Node3D.new()
 	holder.position = Vector3(0.0, 0.0, 700.0)

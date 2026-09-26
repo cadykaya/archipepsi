@@ -119,6 +119,19 @@ func holds() -> Array:
 func held_by(reason: String) -> bool:
 	return _holds.has(reason)
 
+## SECONDS SINCE THIS BODY LAST FOUGHT: fired the Static Pulse, used any
+## slot's Action, or was hurt. Counted on the physics clock. `ReturnPlug`
+## reads it: a player in a fight is not deliberately waiting on a return
+## (CK9-F1).
+var _since_fight := INF
+
+## Whether this body fought within the last `seconds`.
+func fought_within(seconds: float) -> bool:
+	return _since_fight < seconds
+
+func _note_fight() -> void:
+	_since_fight = 0.0
+
 var gravity_mult := 1.0
 var speed_mult := 1.0
 ## The rest of the S5 derived stat stack, refreshed every physics frame
@@ -743,6 +756,9 @@ func _ready() -> void:
 	fired_pulse.connect(func() -> void:
 		kick_viewmodel(0.05)
 		muzzle_flash(1.6, Color(0.75, 0.85, 1.0)))
+	fired_pulse.connect(_note_fight)
+	for runtime: EchoRuntime in runtimes.values():
+		runtime.action_used.connect(_note_fight)
 
 ## Evaluate the stack and let statuses breathe. Runs at the top of every
 ## physics frame so `scaled_by` traits track live fractions.
@@ -821,6 +837,7 @@ func _physics_process(delta: float) -> void:
 	# instead.
 	if not is_inside_tree() or get_world_3d() == null:
 		return
+	_since_fight += delta
 	_pulse_cooldown = maxf(0.0, _pulse_cooldown - delta)
 	if _dead:
 		return
@@ -1334,6 +1351,7 @@ func take_damage(amount: float,
 	hp = maxf(0.0, hp - amount)
 	hp_changed.emit(hp, total_shield())
 	damaged_from.emit(source_position)
+	_note_fight()
 	if hp <= 0.0:
 		_die()
 
