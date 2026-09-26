@@ -897,7 +897,6 @@ func setup(zone_dict: Dictionary) -> void:
 		for index in locations.size():
 			var reward := RewardObject.create(
 					int(locations[index]), zone_id, theme)
-			add_child(reward)
 			# Spread along the room's axis, staying on the walking lane
 			# the affordance rule keeps features OFF (see
 			# `affordance_driver._a_check_sits_on_the_lane...`). Offsetting
@@ -905,7 +904,12 @@ func setup(zone_dict: Dictionary) -> void:
 			# may occupy, and put one behind a rail.
 			var offset := Vector3(
 					0.0, 0.0, float(index) * REWARD_SPACING)
-			reward.global_position = xform * (anchor + offset)
+			# PLACED BEFORE IT ENTERS THE TREE (ML-F1). A body moved after
+			# it entered is missing from the physics queries of the same
+			# frame, so the footing pass below stood enemies inside this
+			# pedestal (16 across the fixtures). Same place either way.
+			reward.position = to_local(xform * (anchor + offset))
+			add_child(reward)
 			record["rewards"].append(reward)
 			if index == 0:
 				record["reward"] = reward
@@ -925,6 +929,7 @@ func setup(zone_dict: Dictionary) -> void:
 					_on_goal_area_entered.bind(record))
 
 		_chambers.append(record)
+	_settle_enemy_footing()
 	_evaluate_objectives()
 	# D-06: WITH EVERY MEMBER NOW BUILT OR SKIPPED, the resumed player is
 	# never left standing among the living. Still inside `setup`, so no
@@ -982,6 +987,49 @@ func setup(zone_dict: Dictionary) -> void:
 ## `key_collected` is idempotent by `key_id` because the target set is
 ## monotone: the same key twice is one key, a resend after a dropped
 ## connection is the normal case, and neither is an error.
+## `member -> {"from", "to", "fault"}` for every enemy the footing pass
+## moved, and `member -> fault` for any it found nowhere to stand.
+var enemy_footing_moves := {}
+var enemy_footing_refusals := {}
+
+
+## EVERY ENEMY STANDS CLEAR OF WHAT WAS BUILT ROUND IT (ML-F1).
+##
+## A spawn is laid out by its room's builder, and the station, crates,
+## cover and pedestals by others that do not ask where it went: 280 of
+## the 768 enemies in 23 fixture Zones were built inside one of them.
+## The physics pushes each out on its first step -- and through a thin
+## floor when down is the nearest way out, which put the passing Zone's
+## arena scuttler under its floor in 7 of 8 builds, falling to a defeat
+## nobody made. So, with every room built and before any physics step,
+## each enemy standing in a solid or over no floor is moved to the
+## nearest spot in its room that stands (`EnemyFooting.clear_spot`), and
+## every ground enemy is set down on its floor, where its first step
+## would have landed it. Its post is taken where it stands on its first
+## frame, so the post moves with it.
+func _settle_enemy_footing() -> void:
+	var space := get_world_3d().direct_space_state
+	for record: Dictionary in _chambers:
+		var room: AABB = record.get("bounds", AABB())
+		for raw: Variant in record.get("enemies", []) as Array:
+			if not is_instance_valid(raw):
+				continue
+			var enemy: Enemy = raw
+			var spot := EnemyFooting.clear_spot(space, enemy.envelope,
+					enemy.global_position, room, EnemyFooting.bodies_of(enemy))
+			if not bool(spot["found"]):
+				enemy_footing_refusals[enemy.member] = str(spot["fault"])
+				push_warning("zone: enemy %s has nowhere to stand (%s)"
+						% [enemy.member, spot["fault"]])
+				continue
+			if float(spot["moved"]) > 0.0:
+				enemy_footing_moves[enemy.member] = {
+						"from": enemy.global_position, "to": spot["at"],
+						"fault": str(spot["fault"])}
+			# Set down on its floor either way: where it would have landed.
+			enemy.global_position = spot["at"]
+
+
 func _on_key_collected(key_id: String) -> void:
 	if _keys_held.has(key_id):
 		return

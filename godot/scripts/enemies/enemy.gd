@@ -154,6 +154,16 @@ var _interest := 0.0
 ## Patrol bookkeeping: which end of the beat it is walking to, and how
 ## long it is pausing there.
 var _beat := Vector3.ZERO
+## ML-F2: a floored beat is drawn this many ways round the compass, and is
+## no beat under this length.
+const PATROL_TRIES := 8
+const PATROL_MIN_BEAT := 1.0
+## ML-F2's guard on an idle walk: how far ahead, and how often.
+const LEDGE_LOOK := 1.0
+const LEDGE_CHECK_FRAMES := 6
+var _ledge_countdown := 0
+var _ledge_blocked := false
+var _own_rids: Array[RID] = []
 var _beat_set := false
 var _pause := 0.0
 ## True while walking back to the post after losing interest. Public,
@@ -860,9 +870,12 @@ func _patrol(delta: float, speed: float) -> void:
 		velocity.z = lerpf(velocity.z, 0.0, 0.3)
 		return
 	if not _beat_set:
-		var angle := randf() * TAU
-		_beat = post + Vector3(cos(angle), 0.0, sin(angle)) \
-				* Constants.ENEMY_PATROL_RADIUS
+		var beat := _floored_beat()
+		if beat == Vector3.INF:
+			# Nowhere the floor goes: it stands its post, and draws again.
+			_pause = Constants.ENEMY_PATROL_PAUSE
+			return
+		_beat = beat
 		_beat_set = true
 	var toward := Vector3(_beat.x - global_position.x, 0.0,
 			_beat.z - global_position.z)
@@ -871,6 +884,46 @@ func _patrol(delta: float, speed: float) -> void:
 		_pause = Constants.ENEMY_PATROL_PAUSE
 		return
 	_walk(toward.normalized(), speed)
+
+
+## A BEAT THE FLOOR REACHES (ML-F2).
+##
+## The direction is still drawn at random, so two patrollers side by side
+## do not march in lockstep. What changed is that the beat stops where
+## the floor does, measured by `EnemyFooting.walkable` from the post, and
+## the walk to it from where this enemy now stands must keep to the floor
+## too. A post near a drop drew beats over it: the candidate's transit
+## hall walked its melee off the edge a second after the Zone was built.
+## The draw goes round the compass from where it fell; a beat shorter
+## than `PATROL_MIN_BEAT` is none, and `Vector3.INF` means stand.
+func _floored_beat() -> Vector3:
+	var space := get_world_3d().direct_space_state
+	var own := _own_bodies()
+	var start := randf() * TAU
+	for k in PATROL_TRIES:
+		var angle := start + TAU * float(k) / float(PATROL_TRIES)
+		var dir := Vector3(cos(angle), 0.0, sin(angle))
+		var reach := EnemyFooting.walkable(space, post, dir,
+				Constants.ENEMY_PATROL_RADIUS, own)
+		if reach < PATROL_MIN_BEAT:
+			continue
+		var beat := post + dir * reach
+		var from_here := Vector3(beat.x - global_position.x, 0.0,
+				beat.z - global_position.z)
+		if from_here.length() > EnemyFooting.WALK_SAMPLE \
+				and EnemyFooting.walkable(space, global_position, from_here,
+					from_here.length(), own) \
+					< from_here.length() - EnemyFooting.WALK_SAMPLE:
+			continue
+		return beat
+	return Vector3.INF
+
+
+## This enemy's own bodies, which its floor and wall probes see through.
+func _own_bodies() -> Array[RID]:
+	if _own_rids.is_empty():
+		_own_rids = EnemyFooting.bodies_of(self)
+	return _own_rids
 
 
 ## A flyer circling its station. Slow, and it never descends: "owns the
@@ -895,11 +948,43 @@ func _drift(delta: float, speed: float) -> void:
 ## one answer, and so the sidestep recovery above keeps working: it
 ## measures actual displacement, which a job walk produces exactly as a
 ## chase does.
+##
+## AN IDLE WALK DOES NOT STEP OFF A LEDGE (ML-F2's guard). Every
+## `LEDGE_CHECK_FRAMES` frames, on the floor, `LEDGE_LOOK` ahead. It
+## catches what a floored beat cannot: a walk home from wherever a fight
+## left the enemy, and a floor that moved. A flyer has no floor to keep.
+## A chase does not come through here, and is unchanged (PPT-02).
 func _walk(dir: Vector3, speed: float) -> void:
+	if dir.length() > 0.05 and is_on_floor() \
+			and not bool(envelope.get("flying", false)):
+		_ledge_countdown -= 1
+		if _ledge_countdown <= 0:
+			_ledge_countdown = LEDGE_CHECK_FRAMES
+			_ledge_blocked = not EnemyFooting.floor_ahead(
+					get_world_3d().direct_space_state, global_position, dir,
+					LEDGE_LOOK, _own_bodies())
+		if _ledge_blocked:
+			velocity.x = lerpf(velocity.x, 0.0, 0.5)
+			velocity.z = lerpf(velocity.z, 0.0, 0.5)
+			_at_a_ledge()
+			return
 	velocity.x = lerpf(velocity.x, dir.x * speed, 0.15)
 	velocity.z = lerpf(velocity.z, dir.z * speed, 0.15)
 	if dir.length() > 0.05:
 		look_at(global_position + dir, Vector3.UP)
+
+
+## Stopped at an edge. The beat past it is dropped, and the next is drawn
+## from the floor. A walk home that met one takes up its post here
+## instead: an enemy that cannot walk back safely guards where it stands.
+func _at_a_ledge() -> void:
+	_beat_set = false
+	_pause = Constants.ENEMY_PATROL_PAUSE
+	if returning:
+		returning = false
+		post = global_position
+	_ledge_blocked = false
+	_ledge_countdown = 0
 
 
 # ------------------------------------------------ OV04 P06 role work

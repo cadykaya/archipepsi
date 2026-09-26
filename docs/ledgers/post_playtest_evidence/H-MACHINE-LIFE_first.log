@@ -1,0 +1,91 @@
+# the lifecycle suite's first run: rounds unalike from fabricated defeats.
+# Filtered: 270 lines of per-build 'p3a:' selection census and engine WARNING/backtrace lines (the offline bridge's dropped intents) removed.
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+
+  -- AT THE HUB, after each round (round 1 is the fresh one)
+    Main._zone_defeats                           base 0  1  1  2  2  2
+    Main._zone_resume                            base 0  2  2  2  2  2
+    ProcTextures._cache                          base 0  2  2  2  2  2
+    ThemeMaterials._cache                        base 4  10  10  10  10  10
+    ThemePack._cache                             base 4  10  10  10  10  10
+    Tones._enemy_cache                           base 0  1  1  1  1  1
+    objects                                      base 2953  3019  3019  3019  3019  3019
+    resources                                    base 233  237  237  237  237  237
+    (42 more counters read the same every time; the nodes: 578  578  578  578  578)
+
+  -- IN CANDIDATE, after its operations, each round
+    Main._zone_defeats                           0  1  1  2  2
+    Main._zone_resume                            0  2  2  2  2
+    group damageable                             84  84  83  83  83
+    group enemies                                36  36  35  35  35
+    nodes                                        5724  5761  5747  5747  5747
+    objects                                      12774  12835  12808  12805  12804
+    (53 more counters read the same every time; the nodes: 5724  5761  5747  5747  5747)
+
+  -- IN PASSING, after its operations, each round
+    Main._zone_defeats                           0  1  2  2  2
+    Main._zone_resume                            1  2  2  2  2
+    objects                                      13428  13425  13429  13428  13427
+    (55 more counters read the same every time; the nodes: 6063  6063  6063  6063  6063)
+  ok: the readings are live: the candidate Zone holds 5724 nodes, the Hub 578
+FAIL: at the Hub, rounds 2-5: every counter reads what round 2 read (50 counters): Main._zone_defeats [1, 2, 2, 2]
+FAIL: in candidate, rounds 2-5: every counter reads what round 2 read (59 counters): nodes [5761, 5747, 5747, 5747]; objects [12835, 12808, 12805, 12804]; Main._zone_defeats [1, 1, 2, 2]; group damageable [84, 83, 83, 83]; group enemies [36, 35, 35, 35]
+FAIL: in passing, rounds 2-5: every counter reads what round 2 read (58 counters): objects [13425, 13429, 13428, 13427]; Main._zone_defeats [1, 2, 2, 2]
+
+  -- WHAT THE OPERATIONS DID IN CANDIDATE, each round
+    round 1: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+    round 2: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+    round 3: {"by type":{"enemy_defeated":1,"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"pulls":1,"respawned":2,"sent":5,"state changes":1,"verdict":"ACCEPTED"}
+    round 4: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+    round 5: {"by type":{"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"pulls":1,"respawned":2,"sent":4,"state changes":1,"verdict":"ACCEPTED"}
+  ok: candidate, round 1: the layout is accepted (ACCEPTED)
+  ok: candidate, round 1: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 1: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 2: the layout is accepted (ACCEPTED)
+  ok: candidate, round 2: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 2: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 3: the layout is accepted (ACCEPTED)
+  ok: candidate, round 3: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 3: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 4: the layout is accepted (ACCEPTED)
+  ok: candidate, round 4: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 4: 1 lever pull(s) sent 1 zone_state_selected
+  ok: candidate, round 5: the layout is accepted (ACCEPTED)
+  ok: candidate, round 5: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: candidate, round 5: 1 lever pull(s) sent 1 zone_state_selected
+FAIL: candidate, round 3 sends what round 2 sent: 5 {"enemy_defeated":1,"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1} (round 2: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1})
+  ok: candidate, round 4 sends what round 2 sent: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1} (round 2: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1})
+  ok: candidate, round 5 sends what round 2 sent: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1} (round 2: 4 {"layout_result":1,"object_settled":1,"room_entered":1,"zone_state_selected":1})
+
+  -- WHAT THE OPERATIONS DID IN PASSING, each round
+    round 1: {"by type":{"carrier_rested":4,"enemy_defeated":1,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"pulls":1,"respawned":2,"sent":8,"state changes":1,"verdict":"ACCEPTED"}
+    round 2: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+    round 3: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+    round 4: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+    round 5: {"by type":{"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1},"deaths logged":2,"died":2,"pulls":1,"respawned":2,"sent":7,"state changes":1,"verdict":"ACCEPTED"}
+  ok: passing, round 1: the layout is accepted (ACCEPTED)
+  ok: passing, round 1: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 1: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 2: the layout is accepted (ACCEPTED)
+  ok: passing, round 2: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 2: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 3: the layout is accepted (ACCEPTED)
+  ok: passing, round 3: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 3: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 4: the layout is accepted (ACCEPTED)
+  ok: passing, round 4: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 4: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 5: the layout is accepted (ACCEPTED)
+  ok: passing, round 5: 2 deaths made 2 deaths, 2 respawns and 2 logged
+  ok: passing, round 5: 1 lever pull(s) sent 1 zone_state_selected
+  ok: passing, round 3 sends what round 2 sent: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1} (round 2: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1})
+  ok: passing, round 4 sends what round 2 sent: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1} (round 2: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1})
+  ok: passing, round 5 sends what round 2 sent: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1} (round 2: 7 {"carrier_rested":4,"layout_result":1,"room_entered":1,"zone_state_selected":1})
+  ok: the candidate has a zone-state lever to pull (1)
+GODOT MACHINE LIFE TESTS: 4 failures in 41 checks
+make: *** [Makefile:1416: godot-machine-life] Error 1
+
+real	2m47.931s
+user	1m0.880s
+sys	0m5.334s

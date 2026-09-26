@@ -1,0 +1,22 @@
+# 18 enemy-sensitive suites on the repaired runtime (574714c + ML-F working changes), before the commit.
+# Step 6 failed on the flyer case's pivot measure (see ML-F_encounter_flyers_before.log); corrected and rerun green: ML-F_encounter_after.log.
+tree 574714c + ML-F working changes
+1	make godot-test	0	28	GODOT CHAMBER TESTS OK
+2	make godot-physics	0	134	GODOT PHYSICS TESTS OK (68 checks)
+3	make godot-counterfire-hosted	0	282	GODOT COUNTERFIRE HOSTED OK (25 checks, 1 notes)
+4	make godot-unweighted	0	105	GODOT UNWEIGHTED OK (70 checks, 2 notes)
+5	make godot-roster	0	60	GODOT ROSTER OK (52 checks, 5 notes)
+6	make godot-encounter	2	88	GODOT ENCOUNTER TESTS: 1 failures in 51 checks
+7	make godot-latched-route	0	123	GODOT LATCHED ROUTE TESTS OK (73 checks, 4 notes)
+8	make godot-transport	0	392	GODOT TRANSPORT TESTS OK (106 checks, 6 notes)
+9	make godot-reversible	0	105	GODOT REVERSIBLE TESTS OK (32 checks, 0 notes)
+10	make godot-combat-fairness	0	186	GODOT COMBAT FAIRNESS OK (50 checks, 0 notes)
+11	make godot-flyer-room	0	46	GODOT FLYER ROOM OK (7 checks, 0 notes)
+12	make godot-resume	0	24	GODOT RESUME TESTS OK (12 checks, 0 notes)
+13	make godot-minor-claim	0	105	GODOT MINOR CLAIM TESTS OK (17 checks, 4 notes)
+14	make godot-passing-hosted PASSING_ZONE=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/passing_zone_capture2.json	0	127	GODOT PASSING HOSTED OK (24 checks, 4 notes)
+15	make godot-integration	0	155	GODOT INTEGRATION OK
+16	make godot-integration-quiet	0	156	GODOT INTEGRATION OK
+17	make godot-resume-live	0	100	GODOT RESUME LIVE LEGACY OK (6 checks, 0 notes)
+18	make godot-candidate-live	0	310	GODOT CANDIDATE LIVE NEXT_FINAL OK (8 checks, 1 notes)
+DONE

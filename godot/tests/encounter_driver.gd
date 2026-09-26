@@ -977,13 +977,25 @@ func _a_room_of_flyers_is_completable_from_the_ground() -> void:
 			{"archetype": "diver", "count": 1}], 30.0, 28.0))
 	var record := _record(controller)
 	_check(_living(record).size() == 2, "both flyers are placed")
+	# THE BODY, NOT THE PIVOT. PT-12 keeps a flyer's pivot on the floor
+	# and hangs its body at the envelope's hover height above it, so the
+	# pivot's height says nothing about reach. This read the pivot, and
+	# passed only because the drifter was built inside the room's warp
+	# station and held station on its roof, pivot 2.03 m up (ML-F1). What
+	# denies melee is the body above the floor under it.
 	var above := 0
+	var heights: Array[String] = []
 	for enemy: Variant in _living(record):
-		if (enemy as Node3D).global_position.y > 1.6:
+		var flyer: Enemy = enemy
+		var body := flyer.body_centre()
+		var floor_y := _floor_under_body(flyer)
+		heights.append("%s %.2f m" % [flyer.archetype, body.y - floor_y])
+		if body.y - floor_y > 1.6:
 			above += 1
 	_check(above > 0,
-			"at least one is off the floor (%d of 2), so this is a "
-			% above + "height problem and not a walk-up")
+			"at least one hangs its body more than 1.6 m above the floor under "
+			+ "it (%d of 2: %s), so this is a height problem and not a walk-up"
+			% [above, ", ".join(heights)])
 	var fight := await _fight(controller, record, 3600)
 	_check(int(fight["left"]) == 0,
 			"and the room finishes from the ground (player %s) -- %s"
@@ -993,6 +1005,23 @@ func _a_room_of_flyers_is_completable_from_the_ground() -> void:
 			+ "survive is a room that needs an air Echo to be solvable, "
 			+ "and nothing declares that gate")
 	await _drop(controller)
+
+
+## The first world surface under a flyer's body, stepping past actors.
+func _floor_under_body(flyer: Enemy) -> float:
+	var from := flyer.body_centre()
+	var skip: Array[RID] = [flyer.get_rid()]
+	for _try in 6:
+		var query := PhysicsRayQueryParameters3D.create(from,
+				from + Vector3.DOWN * 60.0)
+		query.exclude = skip
+		var hit := flyer.get_world_3d().direct_space_state.intersect_ray(query)
+		if hit.is_empty():
+			return from.y
+		if not (hit["collider"] is CharacterBody3D):
+			return (hit["position"] as Vector3).y
+		skip.append(hit["rid"])
+	return from.y
 
 
 ## A BEACON MAKES ITS NEIGHBOURS WORSE, and is itself an ordinary body.

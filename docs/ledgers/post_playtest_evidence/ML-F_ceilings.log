@@ -1,0 +1,14 @@
+# the two ceiling grazes: the pass's stand vs the test's landed floor.
+# Filtered: 63 lines of per-build 'p3a:' selection census and engine WARNING/backtrace lines (the offline bridge's dropped intents) removed.
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+CASE sample/zone_19.json c013/ranged#2 move { "from": (-151.15, 36.26, 145.5), "to": (-152.1067, 36.08, 143.1903), "fault": "inside @StaticBody3D@1826" }
+  floor_under(from) = 36.060; stand (-151.149994, 36.080002, 145.500000) fault 'inside @StaticBody3D@1826'; size (0.700000, 1.400000, 0.700000) centre_y 0.7
+  at the product's stand: c013/ranged#2 hits  < @StaticBody3D@1826(StaticBody3D) < @MeshInstance3D@1824(MeshInstance3D) < Chamber_c013(Node3D) < Zone_zone_019(Node3D) now at (-150.149994, 37.680000, 146.360001) shape BoxShape3D (20.5, 0.4, 5.32)
+  at the landed floor (test): c013/ranged#2 hits nothing
+  first ray hit from from+0.5: @StaticBody3D@1802 at (-151.149994, 36.060001, 145.500000)
+CASE sample/zone_09.json c010/melee#1 move { "from": (164.5092, 33.04, 118.5407), "to": (164.8628, 32.86, 118.8943), "fault": "inside @StaticBody3D@5978" }
+  floor_under(from) = 32.840; stand (164.509247, 32.860001, 118.540703) fault 'inside @StaticBody3D@5978'; size (0.800000, 1.600000, 0.800000) centre_y 0.8
+  at the product's stand: c010/melee#1 hits  < @StaticBody3D@5978(StaticBody3D) < @MeshInstance3D@5976(MeshInstance3D) < Chamber_c010(Node3D) < Zone_zone_009(Node3D) now at (161.199997, 34.660000, 115.745995) shape BoxShape3D (5.292, 0.4, 15.6)
+  at the landed floor (test): c010/melee#1 hits nothing
+  first ray hit from from+0.5: @StaticBody3D@5948 at (164.509247, 32.840000, 118.540703)

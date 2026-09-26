@@ -1,0 +1,67 @@
+# godot-encounter's flyer case on the unchanged runtime, with the flyers' pivots and bodies printed: the drifter holds station on the warp station's roof.
+# Filtered: 254 lines of per-build 'p3a:' selection census and engine WARNING/backtrace lines removed.
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- melee x2: they close, they hurt, the room clears
+  ok: exactly one player is in the world (found 1)
+  ok: the player starts inside the declared room (at (0.000000, 0.000061, 1.200000), room [P: (-13.0, -1.0, 0.0), S: (26.0, 7.0, 24.0)])
+  ok: the declared arena became a room
+  ok: both declared bodies are in it, got 2
+  ok: and it does NOT start satisfied — two enemies are alive
+  ok: they close and they hit: seven seconds of doing nothing cost 48.0 hp -- player at (0.000000, 0.000061, 1.200000) (inside the room), aggro 18 m; melee 1.4m AWAKE cd=0.4, melee 1.4m AWAKE cd=0.7
+  ok: and the room clears with the base kit -- 155 frames, 0 left, 8 shots / 8 landed, range 1.4-1.4 m, walked 0.0 m, the ray hit @StaticBody3D@108 (StaticBody3D) instead
+  ok: without the player dying (34.0 hp left)
+  ok: kill_all is satisfied now that nothing is alive
+  -- ranged + artillery: standing still costs
+  ok: exactly one player is in the world (found 1)
+  ok: the player starts inside the declared room (at (0.000000, 0.000061, 1.200000), room [P: (-15.0, -1.0, 0.0), S: (30.0, 7.0, 28.0)])
+  ok: both are placed
+  ok: a player who does nothing for fifteen seconds is hurt -- ranged launched 7, seen 1, nearest 1.13 m, artillery launched 5, seen 1, nearest 0.52 m; 10 hits reached take_damage; player took 100.0 hp across 1 death(s) -- player at (0.000000, 0.000684, 1.200000) (inside the room), aggro 18 m; ranged 14.7m AWAKE cd=0.7, artillery 19.8m AWAKE cd=2.1
+  ok: and the room is still clearable -- 155 frames, 0 left, 8 shots / 8 landed, range 14.7-19.8 m, walked 0.0 m, the ray hit @StaticBody3D@422 (StaticBody3D) instead
+  -- bulwark: the rear arc is reachable, and the room clears
+  ok: exactly one player is in the world (found 1)
+  ok: the player starts inside the declared room (at (0.000000, 0.000098, 1.200000), room [P: (-17.0, -1.0, 0.0), S: (34.0, 7.0, 32.0)])
+  ok: one bulwark is placed
+  ok: SYNTHETIC: a hit from in front does 3.0, one from behind does 20.0
+  ok: SYNTHETIC: the front is armoured, not invulnerable (3.0)
+  ok: PLAYED: circling with the base kit clears the room in 529 frames (player alive)
+  ok: PLAYED: and the player survives it (50.0 of 100.0 hp)
+  ok: PLAYED: kill_all is satisfied
+  ok: PLAYED: the orbit reached 178 degrees off its nose, past the 70-degree shield cone (closest approach 1.7 m, walked 61.0 m at speed_mult 1.00, top speed 6.98 m/s, holds [none], from (5.812397, 0.700942, 15.089210) to (9.109201, 0.000941, 14.755696))
+  NOTE: bulwark, played: cleared after 8.8 s with 50 of 100 hp left. BULWARK_TURN_RATE_DEG_S 90, commit 0.5s, recovery 0.9s are PROVISIONAL and the played acceptance is what closes them.
+  -- bulwark: in through the door, then fought
+  ok: exactly one player is in the world (found 1)
+  ok: the player starts inside the declared room (at (0.000000, 0.000098, 1.200000), room [P: (-17.0, -1.0, 0.0), S: (34.0, 7.0, 32.0)])
+  ok: one bulwark is placed
+  ok: the player starts at the room's own arrival ((0.000000, 0.000098, 1.200000))
+  ok: they WALK in: 8.6 m covered on move_forward alone, from (0.000000, 0.000098, 1.200000) to (5.080678, 0.000098, 8.107765) (5.9 m from the bulwark, was 16.5)
+  ok: and they reach the fighting space in 1.2 s
+  ok: having closed the ground, not drifted (16.5 m -> 5.9 m)
+  ok: ARRIVAL: the bulwark dies in a fight entered on foot (595 frames, player alive)
+  ok: ARRIVAL: and the player survives it (60.0 of 100.0 hp)
+  ok: ARRIVAL: kill_all is satisfied
+  NOTE: bulwark, from the arrival: walked 8.6 m in, then cleared after 9.9 s with 60 of 100 hp left. Tuning stays PROVISIONAL for human playtest.
+  -- drifter + diver: killable from the floor
+  ok: exactly one player is in the world (found 1)
+  ok: the player starts inside the declared room (at (0.000000, 0.000061, 1.200000), room [P: (-15.0, -1.0, 0.0), S: (30.0, 7.0, 28.0)])
+  ok: both flyers are placed
+DIAG c001/drifter#0 pivot (9.000000, 2.025433, 14.000000) body (9.000000, 4.575433, 14.000000) hover_y 2.600
+DIAG c001/diver#0 pivot (5.371644, 0.055786, 19.136572) body (5.371644, 1.955786, 19.136572) hover_y 0.000
+  ok: at least one is off the floor (1 of 2), so this is a height problem and not a walk-up
+  ok: and the room finishes from the ground (player alive) -- 243 frames, 0 left, 12 shots / 12 landed, range 5.2-15.9 m, walked 0.0 m, the ray hit @StaticBody3D@1376 (StaticBody3D) instead
+  ok: with the player alive — a room a grounded player cannot survive is a room that needs an air Echo to be solvable, and nothing declares that gate
+  -- beacon + melee: the support role is a target
+  ok: exactly one player is in the world (found 1)
+  ok: the player starts inside the declared room (at (0.000000, 0.000061, 1.200000), room [P: (-13.0, -1.0, 0.0), S: (26.0, 7.0, 24.0)])
+  ok: both are placed
+  ok: the pair is a threat: 136.0 hp for standing still -- player at (0.000000, 0.000061, 1.200000) (inside the room), aggro 18 m; beacon 4.4m AWAKE cd=0.0, melee 1.4m AWAKE cd=0.9
+  ok: and both die like anything else -- 199 frames, 0 left, 10 shots / 10 landed, range 0.9-4.4 m, walked 1.5 m, the ray hit @StaticBody3D@1671 (StaticBody3D) instead
+  -- kill_all: one survivor keeps the room open
+  ok: exactly one player is in the world (found 1)
+  ok: the player starts inside the declared room (at (0.000000, 0.000061, 1.200000), room [P: (-15.0, -1.0, 0.0), S: (30.0, 7.0, 28.0)])
+  ok: three scuttlers are placed, got 3
+  ok: one is left
+  ok: and the room is NOT satisfied with a body still standing
+  ok: the last one dies -- 23 frames, 0 left, 2 shots / 2 landed, range 22.1-22.9 m, walked 0.0 m, the ray hit @StaticBody3D@1982 (StaticBody3D) instead
+  ok: and only then is the room clear -- 23 frames, 0 left, 2 shots / 2 landed, range 22.1-22.9 m, walked 0.0 m, the ray hit @StaticBody3D@1982 (StaticBody3D) instead
+GODOT ENCOUNTER TESTS OK (51 checks, 2 notes)

@@ -1,0 +1,25 @@
+# the final suite on the unchanged runtime of 574714c.
+# Filtered: 721 lines of per-build 'p3a:' selection census and engine WARNING/backtrace lines (the offline bridge's dropped intents) removed.
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  -- EVERY ENEMY STANDS: clear of solids, over a floor
+  the footing pass moved 0 of 768 enemies, the farthest 0.0 m
+  ok: the census builds 23 Zones and reads 768 enemies
+FAIL: no enemy is built inside a solid (280 are): candidate_zone.json c002/artillery#2 at (-16.000000, 0.200000, 23.000000), inside Reward_89100076 (reward.gd under zone_controller.gd); candidate_zone.json c002/artillery#3 at (-14.700000, 0.200000, 20.100000), inside @StaticBody3D@260 (StaticBody3D under MeshInstance3D); candidate_zone.json c002/artillery#4 at (-11.300000, 0.200000, 18.900000), inside @StaticBody3D@260 (StaticBody3D under MeshInstance3D); candidate_zone.json c018/beacon#0 at (-5.900000, 0.200000, 42.200001), inside WarpStation_st_c018 (warp_station.gd under Node3D); candidate_zone.json c005/bulwark#0 at (-57.600002, 1.700000, 76.300003), inside DestructibleCover (destructible_cover.gd under Node3D); candidate_zone.json c005/bulwark#1 at (-59.200001, 1.700000, 79.900002), inside @StaticBody3D@1343 (StaticBody3D under MeshInstance3D)
+  ok: every enemy the pass moved stood inside something where it would have landed (0 did not): 
+  ok: every ground enemy has floor within 3 m under it (0 have none): 
+  -- NONE FALLS IDLE: the player far away, every enemy at its job
+FAIL: passing_zone.json, 3 builds of 4 s with nobody near: no enemy drops 2 m, no defeat is sent (6 drops, 3 defeats): c023/scuttler#1 build 0, c023/scuttler#1 build 0 (defeated), c023/scuttler#1 build 1, c023/scuttler#1 build 1 (defeated), c023/scuttler#1 build 2, c023/scuttler#1 build 2 (defeated)
+  ok: candidate_zone.json, 3 builds of 4 s with nobody near: no enemy drops 2 m, no defeat is sent (0 drops, 0 defeats): 
+  -- PATROL BEATS KEEP TO THE FLOOR: 24 draws per patroller
+    177 beats drawn from a previous beat
+  ok: candidate_zone.json: 8 patrollers, 192 beats drawn
+FAIL: candidate_zone.json: every beat's path from the post keeps to the floor (37 do not): c006/melee#0: beat (-79.599998, 1.500000, 108.200005) leaves the floor 0.50 m out; c006/melee#0: beat (-80.300003, 1.500000, 104.400002) leaves the floor 0.50 m out; c006/melee#0: beat (-74.500000, 1.500000, 101.300003) leaves the floor 0.50 m out; c006/melee#0: beat (-79.200005, 1.500000, 102.500000) leaves the floor 0.75 m out; c006/melee#0: beat (-73.200005, 1.500000, 102.000000) leaves the floor 0.75 m out
+    377 beats drawn from a previous beat
+  ok: passing_zone.json: 17 patrollers, 408 beats drawn
+FAIL: passing_zone.json: every beat's path from the post keeps to the floor (77 do not): c015/charger#0: beat (42.799999, 32.000000, 101.300003) leaves the floor 4.50 m out; c015/charger#0: beat (46.900002, 32.000000, 101.300003) leaves the floor 4.50 m out; c015/charger#0: from (48.100002, 32.000000, 100.300003), beat (46.900002, 32.000000, 101.300003) leaves the floor 0.50 m out; c015/charger#0: from (42.500000, 32.000000, 101.200005), beat (42.200001, 32.000000, 93.599998) leaves the floor 0.25 m out; c015/charger#0: from (46.600002, 32.000000, 101.400002), beat (49.200001, 32.000000, 98.099998) leaves the floor 0.50 m out
+  -- AN IDLE WALK STOPS AT A LEDGE
+FAIL: walking home to a post past the edge, it stops on the slab: furthest 6.64 m out (edge at 3.00), lowest -77.52 m relative
+FAIL: and takes up a post on the slab, not the one past the edge (returning false, post 8.00 m out)
+GODOT ENEMY FOOTING TESTS: 6 failures in 12 checks
+make: *** [Makefile:1416: godot-enemy-footing] Error 1

@@ -103,6 +103,7 @@ const DRIVERS := {
 	"--rail-zone": preload("res://tests/rail_zone_driver.gd"),
 	"--rail-gantry": preload("res://tests/rail_gantry_driver.gd"),
 	"--gantry-census": preload("res://tests/gantry_census_driver.gd"),
+	"--enemy-footing": preload("res://tests/enemy_footing_driver.gd"),
 	"--status-kinetic": preload("res://tests/status_kinetic_driver.gd"),
 	"--zone-state": preload("res://tests/zone_state_driver.gd"),
 	"--roster": preload("res://tests/roster_driver.gd"),
@@ -267,6 +268,13 @@ func _ready() -> void:
 		var resume_driver := ResumeLiveDriver.new()
 		resume_driver.main = self
 		add_child(resume_driver)
+	# O05-10.4: repeated lifecycles accrue nothing, beside `Main` because
+	# what outlives a Zone is `Main`'s. No bridge: the Zone record a
+	# bridge would serve is set on `BridgeClient.snapshot`.
+	if MachineLifeDriver.requested():
+		var life_driver := MachineLifeDriver.new()
+		life_driver.main = self
+		add_child(life_driver)
 
 ## Enter the curated Stage 3A showcase.
 ##

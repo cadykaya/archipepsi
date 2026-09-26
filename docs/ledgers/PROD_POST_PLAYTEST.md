@@ -3965,3 +3965,253 @@ takes its room choice from your numbers, not from a guess."
   - No log has a line starting `SCRIPT ERROR`. Every live suite passed,
     among them `godot-candidate-live` and both integrations.
   - These are local results; remote CI does not run (N-6).
+
+## 0.4 — ML-F1/F2 (found by H-MACHINE-LIFE): enemies that left the world with nobody fighting them — repaired
+
+- **How it was found.** H-MACHINE-LIFE's lifecycle run (next section)
+  visits the candidate and Passing Zones five times each and does
+  nothing in them but pull a lever and die twice. Its first run failed
+  because rounds did not read alike: now and then an `enemy_defeated`
+  was sent with nobody fighting.
+  - Named, the deaths were `c006/melee#0` (the candidate's transit hall)
+    and `c023/scuttler#1` (the passing Zone's last arena). Both ended at
+    the fall-kill plane, outside every room.
+  - CP1 had seen the first one (`PPT-02`, "observed, not investigated"),
+    while it chased the player. It needs no player.
+- **Why it matters.** A fall below `ENEMY_FALL_KILL_Y` counts as dead so
+  that a `kill_all` stays satisfiable. The death is sent as
+  `enemy_defeated`, D-06 keeps it, and the room's objective counts it.
+  - `c006` is a `kill_all` room with one melee: a fall is a room cleared
+    with nobody in it.
+  - That is the fabricated clear D-06 rules out, reached by another road.
+- **ML-F1: enemies built inside solids.**
+  - The new suite's census of 23 distinct Zone fixtures (768 enemies)
+    found 280 whose own collision box overlapped a static or rigid body
+    when the Zone was built.
+  - What they overlapped:
+    - the room's warp station, which an arena's first ring spawn shares;
+    - damageable crates;
+    - cover boxes;
+    - reward pedestals;
+    - a shell's convex piece.
+  - The physics pushes each out on its first step, which for most is a
+    shove. The passing Zone's arena scuttler starts inside a prop, and
+    down is the nearest way out, through its 0.5 m floor slab. It drops
+    1.3 m in its first frame and falls in 7 of 8 builds
+    (`ML-F_scuttler_frames.log`).
+  - The spawner never asks where the room's other builders put things,
+    and they never ask where the spawns are.
+- **ML-F2: patrol beats over drops.** OV04 P07's patrol draws a beat at
+  random anywhere within 4.5 m of the post, so a post near a drop draws
+  some beats over it.
+  - The transit hall's melee stands about a metre from the hall's drop.
+  - It fell a second after the Zone was built on some visits and not
+    others, depending on the draw.
+- **What changed:**
+  - **`EnemyFooting`** (new, `scripts/enemies/enemy_footing.gd`) says
+    where a body may stand and how far it may walk, from the physics the
+    room actually built.
+    - To stand, a body's own box must overlap no static or rigid body,
+      with floor within 3 m under it. The box is raised 0.15 m off the
+      feet and trimmed 0.05 m at the head and sides.
+    - A walk continues while every 0.5 m has floor within a stair's
+      height (0.6 m) of the last, and no wall at knee height.
+    - Its probes see through characters, since another enemy on a floor
+      is not the floor's end.
+  - **A footing pass at the end of `ZoneController.setup`,** after every
+    room is built and before any physics step.
+    - Each ground enemy is set down on the floor under it, where its
+      first step would have landed it, and judged there.
+    - One that does not stand is moved to the nearest spot that does, on
+      rings out to 6 m, on the same floor, inside its room.
+    - It moves 268 of the 768 fixture enemies, the farthest 6.0 m. Its
+      moves and refusals are kept on the controller
+      (`enemy_footing_moves`, `_refusals`).
+  - **Reward pedestals are placed before they enter the tree.** A body
+    moved after it enters is missing from that frame's physics queries.
+    Before this, the pass left 16 enemies inside pedestals it could not
+    see. The pedestal ends up in the same place either way.
+  - **A patrol beat stops where the floor does.**
+    - The direction is still drawn at random, so neighbours do not march
+      in lockstep.
+    - The beat is cut to the walkable reach from the post, and the walk
+      from where the enemy now stands must keep to the floor too.
+    - The draw goes round the compass. A beat under 1 m is none: the
+      enemy stands its post and draws again.
+  - **An idle walk stops at a ledge,** checked every 6 frames, on the
+    floor, a metre ahead.
+    - A patrol that meets one drops that beat.
+    - A walk home that meets one takes up its post where it stands: an
+      enemy that cannot walk back safely guards where it is.
+    - Flyers are exempt.
+  - **Unchanged: a chase.** An enemy the player lures off a ledge is the
+    player's doing (PPT-02), and a chase runs through other code.
+- **The suite, `godot-enemy-footing`** (new, in CI; 12 checks; about
+  70 s). It judges with its own probes, not with `EnemyFooting`:
+  - **every enemy stands:** 23 Zones and 768 enemies. None is inside a
+    solid once set down, and every ground enemy has floor within 3 m
+    under it;
+  - **every move had a reason:** each enemy the pass moved stood inside
+    something where it would have landed;
+  - **none falls idle:** the passing and candidate Zones built three
+    times each and watched for 4 s, with the player out of every enemy's
+    notice. No enemy drops 2 m, and no `enemy_defeated` is sent;
+  - **patrol beats keep to the floor.** 24 seeded draws per patroller
+    from the post, and 24 from the end of a previous beat: 192 + 170 in
+    the candidate, 408 + 363 in the passing Zone. None crosses a ledge
+    (no floor within 2 m below the last 0.25 m sample, or a climb of
+    more than 0.6 m). Stepping off a cover wedge's back (1.2 m at most)
+    is terrain; the product's own rule is stricter;
+  - **an idle walk stops at a ledge.** On a built 6 m slab, a melee
+    walking home to a post 5 m past the edge stops 2.08 m out and takes
+    up a post on the slab.
+- **Reproduced first:** the final suite on the unchanged runtime of
+  `574714c` (`ML-F_before.log`) fails 6 of 12:
+  - 280 enemies inside a solid;
+  - the passing scuttler drops in all 3 builds, sending a defeat each
+    time;
+  - 37 and 77 beats cross a ledge;
+  - the melee walks off the slab.
+  - **Probabilistic on the unchanged runtime:** the candidate's idle
+    check passed there. Its melee dropped in 1 of 3 builds in an earlier
+    run (`ML-F_before_first.log`) and 0 of 3 in this one, because the
+    fall depends on the patrol's draw. The seeded beat check is the
+    deterministic guard: it flags that melee's beats over the hall's
+    edge every time.
+- **Findings in my own suite, each measured before it was changed:**
+  - a census threshold I wrote from a census that counted duplicate
+    fixtures;
+  - a check that asked the re-posted melee to stay within 1 m of its new
+    post while it patrolled from it;
+  - a gap probe that read another enemy as missing floor, and a 0.6 m
+    step rule stricter than the danger. It flagged a cover wedge's back
+    edge (`ML-F_wedge_paths.log`);
+  - two ceiling grazes: a 1.40 m enemy under a 1.42 m balcony, and a
+    1.60 m one under 1.62 m (`ML-F_ceilings.log`). The pass moved them,
+    and the test called the moves needless. Both now trim the head by
+    5 cm.
+- **18 enemy-heavy suites on the repaired runtime, before the commit**
+  (`ML-F_regression_suites.tsv`). 17 passed first time, among them:
+  - `godot-combat-fairness`, `godot-counterfire-hosted`,
+    `godot-passing-hosted`, `godot-resume`, both integrations;
+  - the live `godot-resume-live` and `godot-candidate-live`.
+- **One failed, and the test was wrong: `godot-encounter`'s flyer
+  case.**
+  - It checked that at least one flyer was "off the floor" by its
+    pivot's height. PT-12 keeps a flyer's pivot on the floor and hangs
+    its body at hover height, so the pivot says nothing about reach.
+  - It had passed only because of ML-F1. The drifter was built inside
+    the room's warp station and held station on its roof: pivot 2.03 m
+    up, hover floor 2.6 m (`ML-F_encounter_flyers_before.log`). Stood
+    clear of the station, its pivot is on the floor.
+  - The check now reads the body above the floor under it, by its own
+    ray past actors: 2.61 m and 1.96 m. Both runtimes pass it: the
+    unchanged one's drifter is 1.98 m above the station roof. The rest
+    of the case, the room finished from the ground with the player
+    alive, is unchanged (`ML-F_encounter_after.log`, 51 checks).
+- **Sabotages** (`ML-F_sabotages.log`), each restored byte for byte:
+
+| # | Rule broken | Caught by |
+|---|---|---|
+| MLF-1 | the footing pass never runs | "no enemy is built inside a solid" (280), and the scuttler falls |
+| MLF-2 | the fit test does not see solids | "no enemy is built inside a solid" |
+| MLF-3 | a reward pedestal moved after it enters the tree | "no enemy is built inside a solid" (the pedestals) |
+| MLF-4 | judged where it was placed, not where it lands | "every enemy the pass moved stood inside something" |
+| MLF-9 | a head grazing a ceiling counted as inside | "every enemy the pass moved stood inside something" |
+| MLF-5 | a patrol beat drawn at random again | "every beat's path from the post keeps to the floor" |
+| MLF-6 | the walk from where it stands not checked | "every beat's path ... keeps to the floor" (a beat drawn from a previous one) |
+| MLF-7 | the ledge guard off | "it stops on the slab" |
+| MLF-8 | a walk home that meets a ledge keeps its old post | "takes up a post on the slab" |
+
+  9 of 9 (`ML-F_sabotage_runner.py.txt`). The first run caught 7 of 8
+  (`ML-F_sabotages_first.log`). MLF-4 was missed there because the
+  suite did not look for needless moves; that check was added, and
+  MLF-9 with it.
+
+- **What the owner will notice:**
+  - Enemies stay in their rooms until you fight them.
+  - A room's `kill_all` is cleared by you, not by gravity.
+  - Some enemies stand a few metres from where they used to, off a
+    station, crate or pedestal they had been built inside.
+
+## 0.4 — H-MACHINE-LIFE, slice 1: repeated lifecycles accrue nothing — measured
+
+`05_INHERITED` O05-10.4 is PARTIAL: "Two-arcade isolation done; repeated
+lifecycle counters remain." PROD_OV05 left it as: "counters or resources
+do not accrue repeated effects after several enter/leave/restart cycles
+has no dedicated measurement ... no counter is read across cycles."
+
+- **The measurement, `godot-machine-life`** (new, in CI; 41 checks;
+  2 min 45 s).
+  - **Through the real `Main`, beside it,** as the reload proof runs.
+    What outlives a Zone is `Main`'s:
+    - the HUD, the minimap, the map and journal faces;
+    - the rule runtime, the resource pool and the tones;
+    - the `BridgeClient` autoload.
+
+    So a cycle is `Main`'s own `_to_zone`, then the pause menu's return
+    to the Hub (`_on_return_to_hub`), with the Zone record a bridge would
+    serve set on `BridgeClient.snapshot`.
+  - **A round:** the Hub, then the played candidate Zone, then the
+    Passing Platforms Zone, then the Hub. Between them they hold every
+    occurrence this line has built:
+    - the reversible doorway;
+    - the carried power cell and its consumer;
+    - c009's latched route;
+    - the Unweighted Switch and the Counterfire Arcade;
+    - EX50-011's carriers.
+  - **The first round enters fresh.** The later four re-enter with what a
+    save carries: a state variable, and the arcade's and c009's latches.
+    That is the restore path a restart takes.
+  - **In each Zone:** every zone-state lever is pulled once, then the
+    player dies and comes back twice. The deaths are the in-Zone restart,
+    and the minors' death rules run on them.
+  - **Read at the same point every time,** at the Hub after each round and
+    in each Zone after its operations:
+    - the engine's counts of nodes, orphan nodes, objects and resources;
+    - every signal connection on `BridgeClient`, and in and out of each
+      of `Main`'s long-lived nodes;
+    - `Main`'s in-memory progress per Zone;
+    - group membership over the whole tree, and running tweens;
+    - the builders' static caches.
+
+    That is 50 counters at the Hub, 59 in the candidate and 58 in the
+    passing Zone.
+- **The result, on the repaired runtime** (`H-MACHINE-LIFE_after.log`):
+  - **Rounds 2–5 read what round 2 read, at the Hub and in both Zones.**
+    Nothing accrues across four restored lifecycles.
+  - The fresh round fills the caches, and they stay filled: theme
+    materials 4 → 10, packs 4 → 10, textures 0 → 2, enemy tones 0 → 1.
+    The Hub holds 578 nodes after every round.
+  - Every round, one lever pull sends one `zone_state_selected`, two
+    deaths make two respawns and two logged deaths, and a round sends
+    what round 2 sent (the candidate 4 intents, the passing Zone 7).
+  - **`objects` is the one counter read with slack (24).** The engine's
+    object count moves by up to 8 between identical rounds: short-lived
+    RefCounted objects such as query parameters and timers. The exact
+    counters are what catch a node, connection, orphan or group leak.
+- **Reproduced first: it failed, and not for an accrual**
+  (`H-MACHINE-LIFE_first.log`). Rounds did not read alike, because
+  `enemy_defeated` was sent now and then with nobody fighting.
+  - The suite's named-death diagnostic found two enemies that had fallen
+    out of the world: `c006/melee#0` and `c023/scuttler#1`
+    (`H-MACHINE-LIFE_named_deaths.log`).
+  - That is ML-F1/F2 (next section), repaired before this measurement
+    could land. It is also why the suite keeps naming every enemy death
+    and every enemy that leaves its room: a round that is not the same
+    for a reason outside the counters says so.
+- **Its own mistakes, before it counted:**
+  - a `Textures` class that is `ProcTextures`;
+  - a loop variable that shadowed `round()`;
+  - the `objects` slack, set at 12 from one run and raised to 24 when
+    the next run moved by 8.
+- **What stays open in H-MACHINE-LIFE:**
+  - power loss and restoration: no occurrence built so far has a power
+    source, a `HAZARD_CONTROLLER` or a `LIGHT_CONTROLLER`;
+  - O05-10.2's constrained assembly, and weld/assembly scope;
+  - occupied, reversing and reset on a powered machine.
+
+  All three need a real powered or constrained occurrence, and none
+  exists yet.
+- **What the owner will notice:** nothing. It is evidence that entering,
+  leaving and dying do not leave anything behind.

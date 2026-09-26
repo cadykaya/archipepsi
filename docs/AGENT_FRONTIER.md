@@ -448,9 +448,35 @@ owner's D-06/D-07 rulings and the seam table are in
       Dess's G1, D-6 1–2 and DESS-28), in two parts on one revision
       because the container restarted mid-run
       (`CK5_frontier_on_ccaac5c.tsv`). `make test`: 2,299 passed.
-    - **Next:** H-MACHINE-LIFE (O05-10.4's repeated lifecycle counters
-      first; then power loss and a constrained assembly, which need a
-      real powered occurrence), then H-RAIL-BREADTH (branching and
+    - **ML-F1/F2 repaired: enemies left the world with nobody fighting
+      them** (found by H-MACHINE-LIFE).
+      - 280 of 768 fixture enemies were built inside a solid: a station,
+        crate, cover box, pedestal or shell piece. One went through its
+        floor on its first step.
+      - Patrol beats were drawn at random over drops.
+      - Every such fall was saved as a defeat (D-06) that a `kill_all`
+        counts: a room cleared with nobody in it.
+      - The repair:
+        - a footing pass at the end of `ZoneController.setup` sets each
+          enemy down on its floor and moves one that does not stand
+          (268 moved);
+        - a patrol beat stops where the floor does;
+        - an idle walk stops at a ledge;
+        - a chase is unchanged (PPT-02).
+      - `godot-enemy-footing` (new, in CI, 12 checks). The unchanged
+        runtime fails 6 of 12. 9 of 9 sabotages.
+    - **H-MACHINE-LIFE slice 1: repeated lifecycles accrue nothing**
+      (O05-10.4's counters).
+      - `godot-machine-life` (new, in CI, 41 checks) runs through the
+        real `Main`: 5 rounds of the Hub, the candidate and the Passing
+        Zone, levers pulled and deaths taken.
+      - 50, 59 and 58 counters read the same in rounds 2–5: nodes,
+        orphans, connections on `BridgeClient` and `Main`'s long-lived
+        nodes, groups, caches, and `Main`'s per-Zone progress.
+      - Power loss, a constrained assembly and a powered machine's
+        occupied/reversing/reset stay open, for want of an occurrence
+        that has them.
+    - **Next:** H-RAIL-BREADTH (branching and
       switchable railways, accepted and unbuilt; DESS-01 lists what they
       need). H-STATUS continues after N-17 with O05-09.1's material rows
       (slippery, conductive, brittle) and O05-09.2's actor behaviour.
