@@ -48,6 +48,7 @@ import shutil
 import sys
 import tempfile
 
+import fontkit
 import glyphrun
 
 #: 6 x 8 cells. Small enough to be pixel art at panel scale, tall enough
@@ -147,7 +148,7 @@ def main():
     # --- the canvas, the palette, and frame 0 ---------------------------
     made = txn({"creates": ["asset", "palette", "variant"]}, [
         ("palette.create", {"entries": [
-            {"name": "ink", "value": {"r": 232, "g": 238, "b": 246, "a": 255}},
+            {"name": "ink", "value": dict(zip("rgba", fontkit.TEXT_INK + (255,)))},
         ]}),
         ("asset.create", {"name": "ui_numerals"}),
     ], "the interface family's ink")

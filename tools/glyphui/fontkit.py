@@ -19,6 +19,13 @@ import json
 import os
 
 
+#: The TEXT faces' ink: a cool off-white, kept for text (RULED 2026-09-26).
+#: The tintable symbols do NOT use it -- they ink in pure white so that an
+#: ordinary runtime modulate lands on the palette colour exactly; see
+#: `author_icons.py`. This is also what the symbols' "chrome ink" tint is.
+TEXT_INK = (232, 238, 246)
+
+
 def advance_of(rows):
     """The pen's travel: past the rightmost ink in ANY row.
 
@@ -69,7 +76,7 @@ def build_face(ses, work, face, variant_name, characters, glyphs,
 
     made = txn({"creates": ["asset", "palette", "variant"]}, [
         ("palette.create", {"entries": [
-            {"name": "ink", "value": {"r": 232, "g": 238, "b": 246, "a": 255}},
+            {"name": "ink", "value": dict(zip("rgba", TEXT_INK + (255,)))},
         ]}),
         ("asset.create", {"name": face}),
     ], "the interface family's ink")

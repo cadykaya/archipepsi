@@ -103,7 +103,8 @@ const MARGIN := 12
 const TOP := 34
 
 
-func _shoot(view: SubViewport, name: String, lines: Array) -> void:
+func _shoot(view: SubViewport, name: String, lines: Array,
+		banner := "PROPOSAL -- NOT OWNER-APPROVED") -> void:
 	await process_frame
 	await process_frame
 	var image := view.get_texture().get_image()
@@ -113,7 +114,7 @@ func _shoot(view: SubViewport, name: String, lines: Array) -> void:
 	image.resize(image.get_width() * SCALE, image.get_height() * SCALE,
 			Image.INTERPOLATE_NEAREST)
 	var room := int((image.get_width() - MARGIN * 2) / 8.0)
-	var all: Array = ["PROPOSAL -- NOT OWNER-APPROVED"] + lines
+	var all: Array = [banner] + lines
 	for line in all:
 		if String(line).length() > room:
 			push_error("[face] %s: a caption is %d characters and %d fit "
@@ -241,13 +242,10 @@ func _symbol(parent: Node, name: String, at: Vector2i, tint: Color) -> void:
 
 
 func _tint(family: String) -> Color:
-	## The recorded intent from icons.json, turned into a colour: the
-	## chrome ink unchanged, `dead` its second step (recessive on a well),
-	## `signal` its third (the step the selected outline uses).
-	if family == "chrome ink":
-		return Color.WHITE
-	var ramp: Array = _palette["universal"][family]["ramp"]
-	return Color(str(ramp[1] if family == "dead" else ramp[2]))
+	## The exact colour icons.json's `_tints` resolves the name to. The
+	## symbols ink in pure white, so `modulate` by this IS this colour --
+	## `run_ui_icons.sh` reads every pair back to prove it.
+	return Color(str(_icons["_tints"][family]["hex"]))
 
 
 func _prompts() -> void:
@@ -272,14 +270,14 @@ func _prompts() -> void:
 	_patch(view, "well", Vector2i(PAD * 2, y - 2), Vector2i(view.size.x
 			- PAD * 4, 16))
 	x = PAD * 2 + 3
-	_symbol(view, "arrow_left", Vector2i(x, y), Color.WHITE)
+	_symbol(view, "arrow_left", Vector2i(x, y), _tint("chrome ink"))
 	x += 14
 	x += _say(view, "PAGE 2/5", Vector2i(x, y + 2)) + 2
-	_symbol(view, "arrow_right", Vector2i(x, y), Color.WHITE)
+	_symbol(view, "arrow_right", Vector2i(x, y), _tint("chrome ink"))
 	x += 26
-	_symbol(view, "arrow_up", Vector2i(x, y), Color.WHITE)
+	_symbol(view, "arrow_up", Vector2i(x, y), _tint("chrome ink"))
 	x += 14
-	_symbol(view, "arrow_down", Vector2i(x, y), Color.WHITE)
+	_symbol(view, "arrow_down", Vector2i(x, y), _tint("chrome ink"))
 
 	y += 20
 	_patch(view, "well", Vector2i(PAD * 2, y - 2), Vector2i(view.size.x
@@ -295,5 +293,6 @@ func _prompts() -> void:
 			"keycaps: ui_text on the keycap nine-slice, 12 px tall",
 			"page arrows round a page count; scroll up and down",
 			"circuit on/off, control usable/not, exit open, blocked:",
-			"the tint icons.json RECORDS per state -- intent only"])
+			"white ink x the exact tint icons.json records"],
+			"OWNER-APPROVED 2026-09-26 -- KEYCAP SYMBOLS PAGE ARROWS")
 	view.queue_free()

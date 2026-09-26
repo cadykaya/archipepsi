@@ -25,10 +25,14 @@ cleanup; mkdir -p "$H"
   the contract rather than restating it" >&2; exit 2; }
 cp "$ICONS/icons.json" "$H/icons.json"
 cp "$ROOT/assets/art_palette.json" "$H/art_palette.json"
+# The text face's page: the gate reads "chrome ink" off it rather than
+# trusting the contract's copy of the colour.
+cp "$ICONS/ui_text.png" "$H/ui_text.png"
 python3 - "$ICONS/icons.json" <<'PY' | while read -r f; do
 import json, sys
-for entry in json.load(open(sys.argv[1])).values():
-    print(entry["file"])
+for key, entry in json.load(open(sys.argv[1])).items():
+    if not key.startswith("_"):
+        print(entry["file"])
 PY
   [ -f "$ICONS/$f" ] || { echo "icons.json names $f; it is not in $ICONS" >&2; exit 2; }
   cp "$ICONS/$f" "$H/"

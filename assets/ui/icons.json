@@ -1,4 +1,23 @@
 {
+  "_ink": "#ffffff",
+  "_tints": {
+    "chrome ink": {
+      "hex": "#e8eef6",
+      "is": "the text face's ink (fontkit.TEXT_INK)"
+    },
+    "dead": {
+      "family": "dead",
+      "hex": "#4a4f57",
+      "is": "universal.dead.ramp[1] -- recessive on a well, the keycap lip's step",
+      "step": 1
+    },
+    "signal": {
+      "family": "signal",
+      "hex": "#39d7c8",
+      "is": "universal.signal.ramp[2] -- the step the selected panel's outline uses",
+      "step": 2
+    }
+  },
   "arrow_down": {
     "file": "icon_arrow_down.png",
     "means": "scroll down",

@@ -50,8 +50,8 @@ colours would have made them two objects that have to be kept in step.
 
 ## Keycaps, symbols and page arrows — `PROMPTS_keycaps_and_symbols`
 
-Added 2026-09-25, the rest of Track A. **Candidates; nothing here is
-owner-approved.**
+Added 2026-09-25, the rest of Track A. **Owner-approved 2026-09-26** —
+see the end of this section.
 
 * **keycap** — the key a prompt names: `E`, `Q`, `TAB`. Twelve square,
   corners cut, and a two-pixel **front lip** along the bottom, because
@@ -74,10 +74,26 @@ row of the sheet shows that recorded intent: `circuit` powered and
 unpowered, `control` operable (`signal`, the only colour an interactable
 may be) and not, `exit` open, `blocked` in `dead`.
 
-**One thing for Production, not a decision:** the ink is the text face's
-off-white (`#e8eef6`), so tinting by `modulate` gives each family
-3–9% darker per channel than the palette's own value. Either tint by
-replacement or ask for white ink.
+**OWNER-APPROVED 2026-09-26:** the keycap, the four symbols and the page
+arrows. With one adjustment, now made: *"use pure-white source ink for
+tintable semantic symbols so ordinary runtime modulation produces the
+exact palette colour. Keep the text face's off-white ink for text."*
+
+The symbols first inked in the text face's `#e8eef6`, and `modulate`
+landed every tint 3–9% darker per channel than the palette (a `signal`
+symbol rendered `#34c9c1` against the palette's `#39d7c8`). They now ink
+in `#ffffff`, and `icons.json`'s `_tints` names the exact colour of each
+tint:
+
+| tint | colour | source |
+| --- | --- | --- |
+| chrome ink | `#e8eef6` | the text face's ink, so a neutral symbol matches the label beside it |
+| signal | `#39d7c8` | `universal.signal` step 2, as the selected panel's outline |
+| dead | `#4a4f57` | `universal.dead` step 1, as the keycap's lip |
+
+**Production multiplies; nothing else is needed.** `run_ui_icons.sh`
+renders every symbol with `modulate` set to every tint its states name
+and reads back the palette colour: 10 of 10 pairs, exact.
 
 Gates: `run_nine_slice.sh` (now four treatments, four margins each, and
 a sabotage that draws the keycap with its lip treated as stretchable)

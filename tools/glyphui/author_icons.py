@@ -18,6 +18,20 @@ state, so the intent is written down without being frozen into pixels:
 for interactables), `dead` when it is locked or unpowered, and the
 chrome's neutral ink otherwise.
 
+## White ink, so a tint lands exactly
+
+RULED 2026-09-26: *"use pure-white source ink for tintable semantic
+symbols so ordinary runtime modulation produces the exact palette
+colour. Keep the text face's off-white ink for text."* An interface
+tints by MULTIPLYING (`modulate`, `self_modulate`, a font colour), and
+white times a colour is that colour. The first ink here was the text
+face's `#e8eef6`, which lands every tint 3-9% darker per channel than the
+palette's value. So the symbols ink in `#ffffff`, and `icons.json`'s
+`_tints` names the EXACT colour each tint resolves to -- including the
+chrome ink, which is the text face's ink, so a neutral symbol and the
+label beside it still match. `run_ui_icons.sh` renders every symbol in
+every tint it names and reads the palette colour back.
+
 ## Why 12 px
 
 Two text lines are 16 px. A symbol that sits BESIDE a label wants to be
@@ -40,10 +54,13 @@ import shutil
 import sys
 import tempfile
 
+import fontkit
 import glyphrun
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(REPO, "tools", "blender"))
+import palette as art_palette  # noqa: E402  (after sys.path)
 OWNER = "act_owner_arty"
 ARTIST = "act_agent_arty"
 W = H = 12
@@ -156,6 +173,31 @@ MEANING = {
     "blocked": ("the same way out, closed", {"blocked": "dead"}),
 }
 
+#: Every tint a state names, and the exact colour it resolves to. An
+#: interface multiplies the white ink by this and gets this.
+TINT_SOURCES = {
+    "chrome ink": ("the text face's ink (fontkit.TEXT_INK)", None, None),
+    "signal": ("universal.signal.ramp[2] -- the step the selected "
+               "panel's outline uses", "signal", 2),
+    "dead": ("universal.dead.ramp[1] -- recessive on a well, the "
+             "keycap lip's step", "dead", 1),
+}
+
+
+def tints():
+    out = {}
+    universal = art_palette.palette()["universal"]
+    for name, (why, family, step) in TINT_SOURCES.items():
+        if family is None:
+            hexv = "#%02x%02x%02x" % fontkit.TEXT_INK
+        else:
+            hexv = universal[family]["ramp"][step]
+        out[name] = {"hex": hexv.lower(), "is": why}
+        if family is not None:
+            out[name].update({"family": family, "step": step})
+    return out
+
+
 NAMES = sorted(ICONS)
 ARTIFACTS = tuple("icon_%s.png" % n for n in NAMES)
 
@@ -210,7 +252,7 @@ def main():
 
     made = ses.txn({"creates": ["asset", "palette"]}, [
         ("palette.create", {"entries": [
-            {"name": "ink", "value": {"r": 232, "g": 238, "b": 246, "a": 255}},
+            {"name": "ink", "value": {"r": 255, "g": 255, "b": 255, "a": 255}},
         ]}),
         ("asset.create", {"name": "ui_icons"}),
     ], "the symbols' ink")
@@ -265,11 +307,18 @@ def main():
 
     for name in ARTIFACTS:
         shutil.copyfile(os.path.join(work, name), os.path.join(out_dir, name))
+    table = tints()
+    used = {t for n in NAMES for t in MEANING[n][1].values()}
+    if used - set(table):
+        raise SystemExit("[icons] a state names tint(s) %s with no colour"
+                         % sorted(used - set(table)))
+    record = {n: {"size": [W, H], "means": MEANING[n][0],
+                  "tint_by_state": MEANING[n][1],
+                  "file": "icon_%s.png" % n} for n in NAMES}
+    record["_ink"] = "#ffffff"
+    record["_tints"] = table
     with open(os.path.join(out_dir, "icons.json"), "w") as fh:
-        json.dump({n: {"size": [W, H], "means": MEANING[n][0],
-                       "tint_by_state": MEANING[n][1],
-                       "file": "icon_%s.png" % n} for n in NAMES},
-                  fh, indent=2, sort_keys=True)
+        json.dump(record, fh, indent=2, sort_keys=True)
         fh.write("\n")
     print("[icons] %d symbol(s) + icons.json -> %s" % (len(NAMES), out_dir))
     if not os.environ.get("GLYPH_KEEP_WORK"):
