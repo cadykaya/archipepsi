@@ -2931,7 +2931,14 @@ func _test_a_composed_room_carves_every_assigned_door() -> void:
 ##   same way;
 ## - the owner's candidate zone_011, whose exit room could not stand and
 ##   whose failure carried no wedge, so the bounded ladder never ran: one
-##   attempt, three compositions running, and a discard.
+##   attempt, three compositions running, and a discard;
+## - the owner's candidate zone_008, both compositions the campaign has
+##   made of it (`3e6768297297`, then `1e2f761b817e`), HB-F4a-3. `c011`
+##   carries eight rooms of branches; their routes kept its owed corridor
+##   clear and wrapped round just past its end, and the next spine room,
+##   `c016`, had nowhere to stand. The way on is owed the room it arrives
+##   at too. The second composition is the one that holds that rule: the
+##   first builds under both of the variants measured against it.
 ##
 ## Each must now build, and zone_011 must have got there by the ladder.
 func _test_a_junction_keeps_what_it_owes() -> void:
@@ -2939,7 +2946,9 @@ func _test_a_junction_keeps_what_it_owes() -> void:
 	for case: Array in [
 			["candidate zone_004", "res://tests/fixtures/router/candidate_zone_004.json"],
 			["sample zone_08", "res://tests/fixtures/sample/zone_08.json"],
-			["candidate zone_011", "res://tests/fixtures/router/candidate_zone_011.json"]]:
+			["candidate zone_011", "res://tests/fixtures/router/candidate_zone_011.json"],
+			["candidate zone_008", "res://tests/fixtures/router/candidate_zone_008.json"],
+			["candidate zone_008b", "res://tests/fixtures/router/candidate_zone_008b.json"]]:
 		var zone: Variant = JSON.parse_string(
 				FileAccess.get_file_as_string(str(case[1])))
 		if typeof(zone) != TYPE_DICTIONARY:

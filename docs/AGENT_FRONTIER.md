@@ -564,9 +564,19 @@ owner's D-06/D-07 rulings and the seam table are in
         - The owner's zone_006 lays out; the census accepts 38 of 39.
         - `godot-room-contract` lays it out and checks every door, every
           crossing and every owed box; 6 of 6 sabotages caught.
+      - HB-F4a-3, repaired (router): the way on is owed the room it
+        arrives at. The next spine room's envelope, straight ahead where
+        the owed corridor ends, joins what a junction's branch routes
+        keep clear; a preference, like the corridor.
+        - The owner's first twelve Zones all lay out; the census accepts
+          39 of 39. Two variants (a connector's size, or the corridor's
+          start) were measured and each loses a Zone.
+        - `godot-room-contract` lays out both zone_008 compositions;
+          3 of 3 sabotages caught. `godot-build-failure` now fails the
+          owner's zone_013, as it must.
       - Open, mine:
-        - HB-F4a-3: zone_008's `c016` (a 16-attempt ladder builds it at
-          5.5 s of the 6 s budget; not taken).
+        - HB-F4g: the owner's campaign, walked to 24 Zones, still fails
+          placement in zone_013, zone_019 and zone_022.
         - HB-F4f: two features resolved onto one stretch of wall
           (zone_012 `c001`: the rail's note hangs inside the powered
           door's alcove).
@@ -601,9 +611,9 @@ owner's D-06/D-07 rulings and the seam table are in
       overlays never silently eat gameplay input; a block that must
       stay says why. Cause: `Main._update_modal` counts `reveal.visible`
       as modal.
-    - **Next:** HB-F4a-3 (zone_008's `c016`), then HB-O1 as ruled, then
-      HB-F4f. PT-09 is met live, and a player reaches the Bomb Bag with
-      no Zone discarded on the way.
+    - **Next:** the CK9 frontier on the HB-F4a-3 revision, then HB-O1 as
+      ruled, then HB-F4g and HB-F4f. PT-09 is met live, and a player
+      reaches the Bomb Bag with no Zone discarded on the way.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

@@ -193,23 +193,24 @@ func _run() -> void:
 ## still in the tree.
 ##
 ## **The failure is real and is not injected.** The owner's candidate
-## zone_008 (HB-F4's composition `3e6768297297`), served under the id it
-## was composed under, is content the router genuinely cannot place:
-## room `c016` cannot stand clear of the sixty rooms before it (HB-F4a-3,
-## open). The owner's campaign discards it three compositions running,
-## and the HB-F4a census reports no manifest for it. Nothing here forces
-## a failure or fakes a return value; the router is asked the same
-## question and gives the same answer.
+## zone_013 (composition `74495995ef07`), served under the id it was
+## composed under, is content the router genuinely cannot place: room
+## `c013` cannot stand clear of the fifty-four rooms before it (HB-F4g,
+## open). The owner's campaign, walked to twenty-four Zones, discards it
+## three compositions running. Nothing here forces a failure or fakes a
+## return value; the router is asked the same question and gives the same
+## answer.
 ##
 ## **If this Zone ever starts routing, this gate fails LOUDLY** rather
 ## than passing on a build that succeeded. What it guards is the
 ## HANDOFF, not the routing, so the fixture has to be replaced with
 ## another engine-failure case -- not deleted, and not quietly satisfied
-## by a Zone that built. That has happened once: this was `zone_08` of
-## the declared sample until HB-F4a gave a branch the spine's way on and
-## the router placed it.
+## by a Zone that built. That has happened twice: this was `zone_08` of
+## the declared sample until HB-F4a gave a branch the spine's way on, and
+## then the owner's zone_008 (`3e6768297297`) until HB-F4a-3 owed the way
+## on the room it arrives at.
 func _build_failure() -> void:
-	const CASE := "res://tests/fixtures/router/candidate_zone_008.json"
+	const CASE := "res://tests/fixtures/router/candidate_zone_013.json"
 	if not FileAccess.file_exists(CASE):
 		_check(false, "the engine-failure fixture %s is missing" % CASE)
 		_finish(1)

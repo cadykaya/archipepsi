@@ -5553,3 +5553,90 @@ nothing and said nothing. I left it for the owner. The ruling, verbatim:
     the card still up, the wall closed, then Q. It passes only if the
     throw is authorised and counted.
 - **Order.** After HB-F4a-3 (zone_008), as agreed.
+
+## 0.4 — HB-F4a-3 (router): the way on is owed the room it arrives at — the owner's first twelve Zones all lay out
+
+HB-F4a left zone_008 open: the spine room after `c011`, `c016`, could not
+stand, and the bounded ladder ran out. **Measured, and now repaired.**
+
+- **The cause** (`HB-F4a_diag_zone_008_fix3.log`, the composition's own
+  graph).
+  - `c011` is a 10 m corridor that carries the largest subtree in the
+    Zone. Its branches `c012` and `c015` hold eight rooms between them:
+    `c013`, `c014`, `c017`, `c018`, `c020` and `c021`.
+  - Every one of them is routed round `c011` before the spine continues.
+  - HB-F4a keeps the spine's way on clear of those routes: the 10 m
+    corridor `c011` reserves for its exit. Their routes then wrapped round
+    just past its end, where `c016`, 13.2 m deep, had to stand.
+  - `c016`'s first pose overlaps a 5 m connector and two corners laid
+    there, and so does every pose the six-attempt ladder tried.
+- **The repair (engine only).** The way on is owed the room it arrives
+  at too.
+  - When a spine room has branches to route round it, the next spine
+    room's envelope, standing straight ahead where the owed corridor
+    ends, joins the corridor in what those routes keep clear
+    (`_owed_next_room`).
+  - On the same terms as the corridor: a preference the plain search can
+    drop, so no Zone that laid out before can stop laying out.
+  - The next room is built only to be measured and is freed at once, and
+    only for spine rooms that have branches.
+- **Why the room's own size, where the corridor ends: measured against
+  two variants** (`HB-F4a3_census_{connsize,atstart}.log`,
+  `HB-F4a3_walk24_{connsize,atstart}.log`, `HB-F4a3_variants.py`).
+  - Owed at a connector's size where the corridor ends (a third rung, in
+    effect): the census still accepts 39 of 39, but the owner's current
+    zone_008 (`1e2f761b817e`) fails again.
+  - Owed at the room's size where the corridor starts: the census loses
+    sample `zone_04`, which lays out today, and the owner's zone_008
+    still fails.
+  - The repair is the only one of the three that builds both of zone_008's
+    compositions and keeps every acceptance.
+  - A walk's later Zones are different compositions once a Zone fails
+    and returns its Checks, so only the first eight Zones of each walk
+    are compared.
+- **Evidence.**
+  - **Census** (`HB-F4a3_census.log`): 39 of 39 accepted, against 38 on
+    HB-F4c. Only zone_008 changes. The census took 234 s, against 225 s.
+  - **The owner's campaign, walked to 24 Zones** (`HB-F4a3_layout_walk.log`,
+    and again with the compositions dumped, `HB-F4a3_layout_walk_repeat.log`:
+    the same digests and verdicts).
+    - Its first twelve Zones all lay out. zone_008 is accepted in 352 ms.
+    - Of Zones 13 to 24, three still fail placement: zone_013 (`c013`),
+      zone_019 (`c016`) and zone_022 (`c013`). They are HB-F4g, below.
+  - **`godot-room-contract`:** `_test_a_junction_keeps_what_it_owes`
+    lays out both of the owner's zone_008 compositions
+    (`candidate_zone_008.json`, `3e6768297297`; `candidate_zone_008b.json`,
+    `1e2f761b817e`).
+    - Before the repair both fail to build
+      (`HB-F4a3_room_contract_before.log`).
+    - After, the suite passes (`HB-F4a3_room_contract_after.log`).
+    - The second composition was added after the first sabotage run.
+      There, the connector-size and corridor-start variants were NOT
+      caught, because the older composition builds under both
+      (`HB-F4a3_sabotages_first.log`). The walk showed the current one
+      does not, so it is the one that holds the rule in place.
+  - **`godot-build-failure`'s fixture moved again.** Its Zone was the
+    owner's zone_008, which now routes, and the gate would have failed
+    loudly, as it says it will.
+    - Its fixture is now the owner's zone_013, a real failure on this
+      tree.
+    - The gate passes on it (`HB-F4a3_build_failure_zone_013.log`), and
+      its note records both earlier fixtures.
+- **Sabotages: 3 of 3 caught**, each file restored byte for byte
+  (`HB-F4a3_sabotages.log`, `HB-F4a3_runner.py`).
+  - RA3-1, REPRO: the way on is not owed the room it arrives at. Both
+    zone_008 compositions fail to build.
+  - RA3-2: the room is owed at a connector's size. Caught by
+    "candidate zone_008b builds".
+  - RA3-3: the room is owed where the corridor starts. Caught the same
+    way.
+- **HB-F4g (router, mine, open): three more Zones of the owner's campaign
+  fail placement**, found by walking it further.
+  - zone_013 (`74495995ef07`, room `c013`), zone_019 (`e0b4b081a704`,
+    room `c016`) and zone_022 (`5d3385459fd6`, room `c013`). Each fails
+    three times with one composition and is discarded.
+  - The compositions are kept (`HB-F4g_zone_*.json`). zone_013 is the
+    build-failure gate's fixture until it routes.
+- **Regression:** the full frontier runs on the frozen revision holding
+  this before it is pushed (CK9, the next section).
+- **Next:** HB-O1, as the owner ruled; then HB-F4g and HB-F4f.
