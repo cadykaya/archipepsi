@@ -145,6 +145,7 @@ jobs:
           make godot-target-facing
           make godot-rail-zone
           make godot-rail-gantry
+          make godot-rail-network
           make godot-gantry-census
           make godot-enemy-footing
           make godot-machine-life

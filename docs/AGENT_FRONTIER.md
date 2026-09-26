@@ -479,12 +479,35 @@ owner's D-06/D-07 rulings and the seam table are in
     - **CK6 checkpoint: 88 of 88 on `d4fc7fe`** (ML-F1/F2 and
       H-MACHINE-LIFE slice 1), in one run on one revision
       (`CK6_frontier_on_d4fc7fe.tsv`). `make test`: 2,299 passed.
-    - **Next:** H-RAIL-BREADTH (branching and
-      switchable railways, accepted and unbuilt; DESS-01 lists what they
-      need). H-STATUS continues after N-17 with O05-09.1's material rows
-      (slippery, conductive, brittle) and O05-09.2's actor behaviour.
-      Dess's step 4, the composer, has the gantry and its room rule
-      (N-18).
+    - **H-RAIL-BREADTH slice 1: a railway with points in it -- landed,
+      runtime-only** (DESS-01 items 1-2, the engine half).
+      - `RailNetworkCarrier`: a tree of lines joined at points.
+        `RailCarrier` is unchanged, and on a chain the two carriers stop
+        at the same docks, offsets and frames.
+      - `RailPoints`: §21.6's own `RAIL_SWITCH`, whose tongue swings and
+        locks before a leg is live.
+      - Recall from any dock over commissioned track sets the points on
+        the way; holds, power and restore are covered.
+      - `godot-rail-network` (new, in CI): 70 checks, 24 s. 15 of 15
+        sabotages caught.
+      - Findings:
+        - RB-F1: §21.6 alone let a dispatched carrier meet a throw at
+          speed; answered by a route lock.
+        - RB-F2: a reset moved a rail switch under an actor.
+        - RB-F3: an unpowered ordered carrier drove on command.
+        - RB-F5: `RailPath` refused a flat rail whose length is a whole
+          number of steps.
+        - RB-F4 (open, slice 2): a declared railway builds no control a
+          player can command it with.
+      - No Zone declares a switch yet. The schema half is Dess's (N-19).
+    - **Next:** H-BOMBS (PT-09/V-15): the live half of a naturally
+      acquired consumable -- noticed, equipped, used, and absent, owned
+      and empty told apart. O05-11 proved the bridge half.
+      - H-RAIL-BREADTH slice 2 waits on N-19.
+      - H-STATUS continues after N-17 with O05-09.1's material rows
+        (slippery, conductive, brittle) and O05-09.2's actor behaviour.
+      - Dess's step 4, the composer, has the gantry and its room rule
+        (N-18).
 
 ## PROD LANE — Overnight 05 handed off: carry, delivery, reversible lever, all three minors in Zones, the twelve verbs and two Statuses in the engine — 2026-09-23
 

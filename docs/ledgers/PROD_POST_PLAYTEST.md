@@ -498,6 +498,53 @@ where the new rule would refuse a lever.
       fails the same way.
 
     The engine half is mine either way.
+- **N-19 (H-RAIL-BREADTH: the engine half of DESS-01 items 1–2 has
+  landed; items 3–5 are yours, and here is what the engine reads).**
+  - **What it builds** (`RailNetworkCarrier`, `RailPoints`,
+    `godot-rail-network`; the H-RAIL-BREADTH ledger entry has the
+    measurements):
+    - one tree of docks and spans;
+    - a switch at the dock where track divides:
+      `{switch_id, dock_id, legs: [dock_id, ...], leg}`. `legs` are the
+      neighbours reached through the points and `leg` is the initial
+      one. The dock's one other neighbour, if it has one, is the heel.
+  - **What it refuses, by name:**
+    - a loop or a detached dock;
+    - track dividing at a dock with no switch;
+    - a switch with one leg;
+    - a heel arriving from beyond the legs;
+    - **any dock within 10 m (`RAIL_SWITCH_CLEARANCE_M`) of the
+      points.**
+
+    The points stand 11 m beyond the fork dock, toward the legs. The
+    first four refusals need no geometry, so your validator can make
+    them. The last two are measured, like the gantry's: kept as engine
+    refusals, unless you want a census for a composer rule.
+  - **Item 5.** `_a_span_joins_docks_the_route_visits_in_turn` can accept
+    the spans from a declared switch dock to its legs and its heel. A
+    network with no switch lays out exactly as the ordered route: same
+    path, same dock offsets, same frames. The suite compares the two
+    carriers.
+  - **Item 3, the setting as Zone state. Your choice, two questions.**
+    - Is it a reversible `ZoneStateVariable` whose values are the leg
+      docks, set by the POINTS lever in the fork dock's room, or a field
+      of its own? `macro_state` holds 4 variables per Zone.
+    - Either way the engine restores a setting without reporting it
+      (`restore_points`) and reports a throw on `branch_changed`. I wire
+      both once the field exists.
+  - **Item 4.** A leg is operable wherever its points can be thrown from
+    a reachable place: the POINTS lever at the fork dock, base kit. Any
+    dock's CALL lever sets the points itself.
+  - **The carrier's rest (P17.4).** The engine rests it only at docks,
+    and today's policy restores it at the declared home. A saved dock
+    would need a row like the minors' `carrier_states`. Tell me whether
+    you want one.
+  - **RB-F4, which is both of ours.** A declared railway (D-4) builds
+    nothing a player can command: no receiver and no call lever.
+    - Nothing composes one into a played Zone today.
+    - The first composed one could not be ridden.
+    - My slice 2 builds CALL levers for every declared railway. The
+      network builder already does.
 
 ## Evidence rules (PROD_START)
 
@@ -4238,3 +4285,215 @@ has no dedicated measurement ... no counter is read across cycles."
     after step 41, while the run continued; nothing after step 22 reads
     them.
   - These are local results; remote CI does not run (N-6).
+
+## 0.4 — H-RAIL-BREADTH, slice 1: a railway with points in it — landed, runtime-only
+
+`13_WORK_QUEUE` H-RAIL-BREADTH, "Switchable rail network and safe recall":
+"Physical branch selection and occupied-switch/recall/restoration. Actual
+track changes; no teleport across uncommissioned link." `05_INHERITED`
+O05-16.2 was NOT STARTED. OV04 P17.2–P17.4 say what it has to do. DESS-01
+splits the work: items 1–2 are the engine (a carrier that runs a graph, a
+switch whose position selects the live track); items 3–5 are the bridge.
+This slice is the engine half, built and measured on declaration-shaped
+networks. **No Zone declares a switch yet**, so nothing here is a composed
+occurrence (P17.5), and nothing is promoted into generation.
+
+- **What landed.**
+  - **`RailNetworkCarrier`** (a subclass: `RailCarrier`, the ordered
+    route, is unchanged, and Blindside, EX50-011 and D-4 ride it as
+    before). The network is laid from its declaration: docks, spans, and
+    switches `{switch_id, dock_id, legs, leg}`.
+    - It is laid as **lines**: one `RailPath` each, the longest runs with
+      no turnout in them, meeting at **points**. The carrier changes line
+      only at the points, where the lines share a position and a
+      direction, so the change is not a jump.
+    - **The points stand 11 m beyond the fork dock, toward the legs.**
+      §21.6 queues a throw while the rail within 10 m is occupied. Points
+      at a dock would be held by every carrier parked there, and nobody
+      could choose a branch from the fork. The layout therefore refuses a
+      dock inside the clearance, by name.
+    - **Refused by name:** a loop or a detached dock; track dividing at a
+      dock with no switch; a switch with one leg; a heel arriving from
+      beyond the legs; a dock inside the points' clearance.
+    - **Commissioning stays with the link.** An edge's own stretch is
+      where its span stands. On a leg, that is beyond the points, so
+      aligning one leg never lays the other. A journey over missing track
+      is refused at the dock, naming the span, and nothing moves.
+  - **`RailPoints`: the switch is §21.6's own `RAIL_SWITCH` actuator.**
+    Its path is the tongue's pose for each leg, so a throw moves track.
+    The tongue swings for 2.0 s, and a leg joins the heel only once the
+    tongue has locked on it (`Actuator.settled_branch`).
+  - **Recall, `call_to(dock)`.** It plans the route over commissioned
+    track, sets each set of points it needs, and waits for them to lock.
+    It reverses at a dock where the route turns back through a turnout.
+    - Its state is always one of refused, queued, executing, completed
+      or cancelled (P15.3).
+    - A call while the carrier moves is refused, as EX50-011 §8 says: no
+      queued arrivals.
+    - A hand that throws the points while a call waits cancels the call.
+      The call does not fight a lever.
+  - **Levers:** a CALL lever at every dock and a POINTS lever at every
+    fork, worked by `interact` (`CallLever`, EX50-011's, reused).
+  - **Holds.**
+    - Power loss holds the carrier and keeps its journey, and the points
+      it is committed to stay locked through the outage.
+    - The fail-safe stop ends the journey. A carrier stranded by it can
+      still be commanded or called.
+  - **Restore.** `restore_points` puts each tongue on its saved leg, and
+    `park` puts the carrier at the declared home. Neither reports
+    anything. A restore is not a throw or a journey.
+- **Findings.** Three are defects in code that already existed. The
+  other two were found by building this.
+  - **RB-F1: §21.6's rule as written measures distance only.** A
+    carrier dispatched toward the points from farther than 10 m is not
+    "within" the clearance yet, so a throw at that moment applies, and
+    the carrier meets it at speed.
+    - **Reproduction:** the suite's control runs with the lock off. The
+      same throw applies at once, and the carrier stops dead on the
+      points, 0.20 m from them.
+    - Without the crossing check as well (sabotage RB-2), it carries on
+      along the leg it planned while the tongue is set for the other.
+      P17.2 names exactly that: the carrier following the old path.
+    - **Repair:** a route lock (`Actuator.lock_route`). A journey holds
+      each set of points it will pass from dispatch until it is 10 m
+      beyond them. A throw meanwhile is queued, never dropped.
+  - **RB-F2: an actuator reset moved a `RAIL_SWITCH` under whatever was
+    on it.** The reset row drove the tongue to `initial_t` regardless of
+    §21.6, and left `branch()` naming the leg the tongue had just left.
+    - **Reproduction:** sabotage RB-6 restores the reset as it was, and
+      the RB-F2 case fails.
+    - **Repair:** a switch's reset asks for its initial branch like any
+      other throw: applied at once when the rail is clear, queued when
+      it is not.
+    - Nothing resets a rail switch in play yet. These points are the
+      actuator's first real consumer.
+  - **RB-F3: the ordered carrier drove with no power.** `power(false)`
+    holds it and keeps its errand. A command during the outage fell
+    through to the stranded branch, set a new errand, and `advance`
+    drove the carrier until power returned and overwrote the errand.
+    - **Reproduction:** sabotage RB-7, the request as it was.
+    - **Repair:** an unpowered carrier refuses the command, saying why.
+      The network carrier does the same.
+    - No occurrence has a power source yet, so no player could have met
+      this.
+  - **RB-F4, open, for slice 2: a declared railway (D-4) builds nothing
+    a player can command it with.** `RailNetworks` builds the carrier,
+    the spans and their levers, but no receiver and no call lever.
+    `godot-rail-zone` says as much ("no Zone here is played").
+    - Nothing composes a railway into a played Zone today, so no player
+      has met it.
+    - The first composed one could not be ridden. Slice 2 builds CALL
+      levers for every declared railway, as the network builder already
+      does.
+  - **RB-F5: `RailPath` refused a flat rail as a 90-degree pitch.** The
+    baked length is a single-precision sum, so a straight 31 m rail
+    reads a hair over 31. `polyline()`'s `ceil` then took one step more
+    than there is, and the last two samples were both the end: a segment
+    of no length, which `violations()` reads as vertical.
+    - Found when the two-switch network's 31 m heel line was refused.
+    - It could refuse a D-4 linear railway the same way.
+    - **Reproduction:** sabotage RB-15, the sampler as it was, over 201
+      level rails from 30 to 32 m.
+    - **Repair:** a last step shorter than a thousandth of a step is
+      rounding, not track, and is not taken. Any longer last step is
+      kept, as before.
+  - **Two defects in the new code, found and fixed before the commit.**
+    - **The legs first left the points through a shared lead point.**
+      Uniform Catmull-Rom over a 2 m span beside a 19 m one overshoots:
+      the suite measured a 61-degree turn in a leg's first 0.2 m.
+      - Clamped end tangents then gave 3.5 degrees in 0.1 m, a 1.6 m
+        radius. Measured offline first, in a Python model of the curve
+        that reproduced Godot's figure.
+      - Now `RailPath.from_points` takes an optional end direction
+        (every existing rail passes none), and a leg leaves its points
+        along the heel with a handle a third of its span: 0.63 degrees
+        across the points.
+    - **Where two lines meet head to head at a set of points, their own
+      directions are opposite.** A line that is a leg at both ends, or
+      two heels, meet this way. A deck that faced its line would turn
+      half a circle in one frame there, and `sync_to_physics` would hand
+      that turn to its passengers.
+      - The deck's facing now carries across a change of line.
+      - The two-switch network holds it (sabotage RB-14).
+- **`godot-rail-network`** (new, in CI; 70 checks; 24 s). It is
+  hand-stepped, like `godot-rail-carrier`. Every journey is held to at
+  most 0.175 m moved in a frame (no teleport), and at most 3.0 degrees
+  of deck turn in a frame.
+  - **Branch selection.** A throw from the fork applies at once, and the
+    tongue swings 55 degrees and locks. Until it locks, FORWARD is
+    refused and nothing moves. Then the carrier runs to the new leg and
+    stands on its track.
+  - **Points set against.** A carrier on the leg the points are not set
+    for is refused ("set for A1, not for this track"). It is not routed
+    onto the other leg.
+  - **The route lock (§21.6 with RB-F1).**
+    - A committed throw is queued, and applies once the carrier is
+      clear.
+    - Past the points, distance alone holds them.
+    - The control with the lock off is stopped dead on the points.
+  - **Conflicts.** FORWARD and BACK at once do neither. A hand on the
+    lever cancels a waiting call.
+  - **An unavailable link.**
+    - Its leg is refused, naming the span, and so is a call beyond it.
+    - The other leg still runs.
+    - A span locking home through the junction commissions exactly that
+      edge and reports its latch once.
+  - **Recall on the Y.** Every dock calls the carrier from every other
+    dock: 20 of 20 arrive.
+    - From B1 to A2, on the other branch, the carrier stops only at S,
+      where the route turns back, and runs through A1 without stopping.
+    - The call reports its states in order: executing, queued,
+      executing, completed.
+  - **Two switches whose legs meet.** 42 of 42 calls arrive. T1 to T2
+    crosses both sets of points in one run, and the deck turns at most
+    1.72 degrees in a frame.
+  - **Holds and power.**
+    - Power lost 6 m short of the points: the carrier holds and the
+      points stay locked. A command is refused, and on power it carries
+      on to the leg it left for.
+    - A fail-safe stop past the points, then the points thrown behind
+      it: going back is refused until they are set back.
+    - A stranded carrier can still be called home.
+  - **RB-F2, RB-F3, RB-F5** each have a direct case.
+  - **Restore.** The points come back on their leg and the carrier at the
+    declared home, not dock 0, with nothing reported, and the restored
+    network runs.
+  - **The ordered route is a case of the network.** A four-dock chain on
+    both carriers stops at the same docks, at the same offsets (largest
+    difference 0.00000 m), in the same frames.
+  - **Levers.** Pulling a CALL lever calls the carrier, and pulling the
+    POINTS lever throws the points.
+- **15 of 15 sabotages caught,** each file restored byte for byte
+  (`H-RAIL-BREADTH_sabotages.log`). RB-6, RB-7 and RB-15 put the old code
+  back and are the reproductions of RB-F2, RB-F3 and RB-F5.
+  - RB-11, the points at the fork dock, also raised script errors: the
+    suite indexes the points of a layout that was refused. The named
+    check catches it first.
+- **Regression:** **all green on the landed runtime**
+  (`H-RAIL-BREADTH_regression_suites.tsv`): the suites that share what
+  changed.
+  - The actuator, the ordered carrier, the junction and `RailPath`:
+    `godot-actuator` (93), `godot-rail-carrier` (73),
+    `godot-rail-junction` (140, its re-park now through `park_at`),
+    `godot-rail-zone` (25) and `godot-rail-gantry` (41).
+  - EX50-011's carriers: `godot-passing-platforms` (70) and
+    `godot-passing-hosted` (24).
+  - `godot-movement` and `godot-affordance`, which read the rail sweep.
+  - `godot-signal-graph` (61), `godot-signal-verbs` (32),
+    `godot-constraints` (67) and `godot-counterfire` (59).
+  - `godot-gantry-census`: every count as at CK6; only its timing column
+    differs.
+  - `godot-machine-life` (41) and `godot-candidate-live`, every phase.
+  - `test_ci_coverage`, 3 passed.
+
+  No log has a line starting `SCRIPT ERROR`.
+- **What this does not do yet (slice 2, after Dess's half, N-19):**
+  - no Zone declares a switch, and `RailNetworks` does not build one;
+  - the setting and the carrier's dock are not saved through the bridge
+    (P17.4's engine API exists; the Zone-state field is Dess's item 3);
+  - reachability over switch position (item 4);
+  - the relaxed validator (item 5);
+  - RB-F4's call levers on declared railways;
+  - a composed, played junction occurrence (P17.5).
+- **What the owner will notice:** nothing yet. It is the machine a
+  switchable railway needs, waiting for a Zone that asks for one.

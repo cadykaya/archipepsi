@@ -181,6 +181,15 @@ func request(direction: int) -> bool:
 		refused.emit("held", "the carrier is holding under a fail-safe "
 				+ "stop and will not accept travel commands")
 		return false
+	# RB-F3: AN UNPOWERED CARRIER HOLDS. `power(false)` stops it and keeps
+	# its errand for when power returns, but a command during the outage
+	# used to fall through to the stranded branch below, set a new errand,
+	# and `advance` drove it -- with no power -- while the saved errand
+	# waited to overwrite it on restore. §21.1.1: it holds.
+	if _unpowered:
+		refused.emit("unpowered", "the carrier has no power and holds "
+				+ "where it stands")
+		return false
 
 	var here := at_dock()
 	if here >= 0:
@@ -269,6 +278,23 @@ func power(on: bool) -> void:
 	heading = _bearing
 	_errand = -1
 	_bearing = HOLD
+
+
+## Put the carrier at rest on dock `index`, clamped to a dock that exists.
+##
+## `RailJunction.park` is the POLICY -- which dock; this is the mechanism,
+## and it belongs to the carrier because only the carrier knows where its
+## docks are (a network carrier's are not all on one path).
+func park_at(index: int) -> void:
+	if dock_offsets.is_empty():
+		return
+	var where := clampi(index, 0, dock_offsets.size() - 1)
+	hold(false)
+	heading = HOLD
+	speed = 0.0
+	target_dock = -1
+	offset = dock_offsets[where]
+	_place()
 
 
 ## Which link the carrier is standing in: `_segment()` joins dock

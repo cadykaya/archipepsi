@@ -194,14 +194,8 @@ func restore_from(latched) -> int:
 func park(dock := -1) -> void:
 	if carrier == null or carrier.dock_offsets.is_empty():
 		return
-	var where := clampi(home_dock if dock < 0 else dock, 0,
-			carrier.dock_offsets.size() - 1)
-	carrier.hold(false)
-	carrier.heading = RailCarrier.HOLD
-	carrier.speed = 0.0
-	carrier.target_dock = -1
-	carrier.offset = carrier.dock_offsets[where]
-	carrier._place()
+	carrier.park_at(clampi(home_dock if dock < 0 else dock, 0,
+			carrier.dock_offsets.size() - 1))
 
 
 func _physics_process(_delta: float) -> void:

@@ -1,0 +1,8 @@
+# Output of H-RAIL-BREADTH_curve_model.py
+leg A (P, A1, A2)  k=0.50  direction 0.1 m in    3.29 deg  turn rate, first 6 m  34.61 deg/m, whole leg  34.61 deg/m
+leg B (P, B1)      k=0.50  direction 0.1 m in   -3.52 deg  turn rate, first 6 m  37.47 deg/m, whole leg  37.47 deg/m
+leg A (P, A1, A2)  k=1.00  direction 0.1 m in    0.78 deg  turn rate, first 6 m   9.73 deg/m, whole leg   9.73 deg/m
+leg B (P, B1)      k=1.00  direction 0.1 m in   -0.85 deg  turn rate, first 6 m   9.52 deg/m, whole leg  14.95 deg/m
+leg A (P, A1, A2)  k=1.50  direction 0.1 m in    0.37 deg  turn rate, first 6 m   7.44 deg/m, whole leg   7.44 deg/m
+leg B (P, B1)      k=1.50  direction 0.1 m in   -0.41 deg  turn rate, first 6 m   5.37 deg/m, whole leg  22.52 deg/m
+an ordered rail    k=0.50  direction 0.1 m in  -13.17 deg  turn rate, first 6 m   6.79 deg/m, whole leg   7.11 deg/m

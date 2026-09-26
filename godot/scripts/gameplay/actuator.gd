@@ -87,6 +87,9 @@ var obstruction: Area3D = null
 ## Actors whose distance from this junction decides §21.6's clearance.
 ## The carrier and the player, typically -- measured, not declared.
 var rail_actors: Array[Node3D] = []
+## RB-F1 (H-RAIL-BREADTH): THE ROUTE LOCK. Whoever is COMMITTED to
+## passing this junction, by instance id. See `lock_route`.
+var _route_locks := {}
 
 ## §21.10. The solver this actuator reaches into, and the one constraint
 ## in it that this actuator is about.
@@ -240,6 +243,56 @@ func queued_branch() -> int:
 	return _queued
 
 
+## RB-F1: an actor COMMITTED to passing this junction holds it, exactly
+## as one standing within the clearance does.
+##
+## §21.6 measures distance: "no actor is on the rail within 10.0 m of the
+## junction". A carrier DISPATCHED toward the junction from farther out
+## than that is not within it yet -- and a change applied in that moment
+## is one it then meets at speed: switched onto a branch nobody set for
+## it, or arriving while the tongue is still between branches. The rule
+## exists to stop exactly that ("a player being switched onto an invalid
+## route mid-ride"), so a committed route holds the points the way a
+## present actor does: the change is QUEUED, never dropped, and applies
+## once the last lock is released and the rail is clear.
+func lock_route(who: Object, on: bool) -> void:
+	if who == null:
+		return
+	if on:
+		_route_locks[who.get_instance_id()] = true
+	else:
+		_route_locks.erase(who.get_instance_id())
+
+
+func route_locked() -> bool:
+	return not _route_locks.is_empty()
+
+
+## The branch whose track the tongue physically joins now, or -1 while it
+## is between branches -- mid-throw, or held there by a power loss
+## (§21.1.1). A branch change that has been APPLIED but has not finished
+## moving joins nothing yet: `branch()` is where the points are going,
+## this is where they are.
+func settled_branch() -> int:
+	if kind != "RAIL_SWITCH" or path.size() < 2 or direction != 0:
+		return -1
+	var at_branch := float(_branch) / float(path.size() - 1)
+	return _branch if absf(t - at_branch) <= EPSILON else -1
+
+
+## A RESTORE IS NOT A THROW (the `RailSpan.restore` rule). Returning to a
+## Zone whose points were left set for a branch puts the tongue there at
+## once and emits nothing: the position is a fact the caller has just
+## been told, not a change to report back to it.
+func restore_branch(index: int) -> void:
+	_branch = clampi(index, 0, maxi(path.size() - 1, 0))
+	_queued = -1
+	_resetting = false
+	t = float(_branch) / float(maxi(path.size() - 1, 1))
+	direction = 0
+	_place()
+
+
 ## §21.1.1. The kind decides, and the decision is applied here rather
 ## than folded into `_goal` so that "power lost mid-motion" is one event
 ## with one visible consequence.
@@ -300,7 +353,19 @@ func power(on: bool) -> void:
 ## the next `set_input`, `select` or `switch_to` is what releases it,
 ## which is what happens when the package's sources are reset too
 ## (§23.4) and one of them re-commands this input.
+##
+## **A RAIL SWITCH'S RESET IS A BRANCH CHANGE, and §21.6 binds it (RB-F2).**
+## The reset row drove `t` straight to `initial_t` whatever the rail
+## held, and left `branch()` naming the branch the tongue had just left:
+## the points moved under anything on them, and a reader that trusted
+## `branch()` believed a route was set that no longer was. So a switch
+## asks for its initial branch the way any other request does -- now if
+## the rail is clear, QUEUED if it is not.
 func reset() -> void:
+	if kind == "RAIL_SWITCH" and path.size() > 1:
+		_want_branch(int(round(clampf(initial_t, 0.0, 1.0)
+				* float(path.size() - 1))))
+		return
 	_resetting = true
 
 
@@ -500,6 +565,8 @@ func _apply_queued_branch() -> void:
 
 
 func _rail_is_clear() -> bool:
+	if not _route_locks.is_empty():
+		return false
 	for who: Node3D in rail_actors:
 		if who == null or not is_instance_valid(who):
 			continue

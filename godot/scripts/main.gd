@@ -102,6 +102,7 @@ const DRIVERS := {
 	"--unweighted-test": preload("res://tests/unweighted_driver.gd"),
 	"--rail-zone": preload("res://tests/rail_zone_driver.gd"),
 	"--rail-gantry": preload("res://tests/rail_gantry_driver.gd"),
+	"--rail-network": preload("res://tests/rail_network_driver.gd"),
 	"--gantry-census": preload("res://tests/gantry_census_driver.gd"),
 	"--enemy-footing": preload("res://tests/enemy_footing_driver.gd"),
 	"--status-kinetic": preload("res://tests/status_kinetic_driver.gd"),
