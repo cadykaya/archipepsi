@@ -2089,3 +2089,45 @@ checks the property itself: every view is rendered twice, with the
 anchors shown and hidden, and the two silhouettes must be identical to
 the pixel.
 
+
+## A worst-angle table reports one failure per pair, not all of them
+
+Track B's readability table kept each pair's WORST yaw, which is the
+right headline and the wrong record. `melee`/`ranged` read 0.856 at 45
+degrees, and nobody could see from the table that it ALSO failed at 90
+(0.825). The Tier 2 before/after sheet computes every angle and showed
+it.
+
+The same thing happened one level up. Three yaws were a sample of the
+turn, not the turn: at every 15 degrees, `charger`/`drifter` peaks at
+0.803 at 15 degrees, where Track B had 0.776 at 0.
+
+> **When a table keeps only the worst case, keep the full matrix
+> beside it. The worst case says whether there is a problem; the matrix
+> says how big it is.**
+
+## A metric's crop is a decision about what it cannot see
+
+The outline metric crops every silhouette to its own box. That is what
+makes a small role and a big one comparable. It is also why the only
+pairs over the bar across the full turn are a floor role against a
+flyer (`charger` against `drifter` and `diver`). Cropped, a body hanging
+1.65 m off the floor is compared with one standing on it as if both
+were in the same place. In a frame at 18 m they never share a row.
+
+> **Before reading a high score as a problem, ask what the metric threw
+> away to be fair. A separation the crop removed is still there in the
+> game.**
+
+## Evidence goes stale when a SHARED input changes
+
+The A10 review frames and the A11 job frames are regenerated when their
+own subject changes. They were not regenerated when the value bands
+changed every enemy's skin (Tier 1), nor when an accepted ruling rebaked
+the job props (`236acf8`). So they showed a family that no longer
+existed. They surfaced only because Tier 2 regenerated them, and far
+more changed than the two re-cut roles.
+
+> **After a change to a shared input -- a palette, a skin, a baked
+> texture set -- regenerate every folder that renders it, then diff
+> what moved. The diff is how you learn which evidence was stale.**

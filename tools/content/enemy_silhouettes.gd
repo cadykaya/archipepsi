@@ -33,6 +33,11 @@ const ROLES := ["artillery", "beacon", "brute", "bulwark", "charger",
 ## player cannot tell apart -- and the first version of this harness
 ## rendered one view and would have called that family distinct.
 const YAWS := [0, 45, 90]
+## The motion review (2026-09-26) turns each role through the full circle,
+## because a turning or patrolling enemy is seen at every yaw, not three:
+## ENEMY_SIL_YAWS="0,15,30,..." replaces YAWS for one run. Unset, the run
+## is the Track B measurement, unchanged.
+var _yaws: Array = YAWS
 
 const SHOT := Vector2i(1920, 1080)
 
@@ -62,6 +67,11 @@ func _init() -> void:
 		return
 	_out = a[0]
 	_models = a[1]
+	var turn := OS.get_environment("ENEMY_SIL_YAWS")
+	if not turn.is_empty():
+		_yaws = []
+		for part in turn.split(","):
+			_yaws.append(int(part.strip_edges()))
 	var budgets: Variant = JSON.parse_string(
 			FileAccess.get_file_as_string(a[2]))
 	if typeof(budgets) != TYPE_DICTIONARY:
@@ -159,7 +169,7 @@ func _mask_box(image: Image) -> Rect2i:
 func _run() -> void:
 	for role in ROLES:
 		var best := {}
-		for yaw in YAWS:
+		for yaw in _yaws:
 			# --- the measurement pass ---------------------------------
 			var view := _viewport(true)
 			_camera(view)
@@ -286,15 +296,18 @@ func _run() -> void:
 		var worst_w := -99.0
 		var worst_h := -99.0
 		var worst_at := 0
-		for yaw in YAWS:
+		for yaw in _yaws:
 			var tag := "y%03d" % yaw
 			if not _rows[role].has(tag):
 				continue
 			var row: Dictionary = _rows[role][tag]
 			var bound := ew
-			if yaw == 90:
+			# Head-on and from behind the envelope is its width; in either
+			# profile, its depth; between them, its diagonal.
+			var side := posmod(yaw, 180)
+			if side == 90:
 				bound = ed
-			elif yaw != 0:
+			elif side != 0:
 				bound = sqrt(ew * ew + ed * ed)
 			var over_w := float(row["px_w"]) / per_metre - bound
 			var over_h := float(row["px_h"]) / per_metre - eh

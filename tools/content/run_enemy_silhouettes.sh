@@ -6,6 +6,9 @@
 # Renders each role at `enemy_review_distance_m` through the game's own
 # camera and writes its silhouette at NATIVE SIZE, then
 # `tools/content/enemy_readability.py` measures how far apart they are.
+#
+# ENEMY_SIL_YAWS="0,15,...,345" renders those yaws instead of 0/45/90: the
+# motion review's full turn (2026-09-26). Unset, Track B's run, unchanged.
 set -e
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 GODOT="${GODOT:-$ROOT/.tools/godot}"

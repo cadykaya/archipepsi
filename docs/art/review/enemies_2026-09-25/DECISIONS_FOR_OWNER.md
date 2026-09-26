@@ -514,6 +514,161 @@ they rule that the visible body moves, it is a small change on my side.
 
 ---
 
+## Motion review — 2026-09-26, for your review
+
+> **Directed 2026-09-26:** *"Then perform the motion-readability
+> review."* After this checkpoint the lane holds.
+
+The art lane's enemies are rigid meshes. Every motion they will have is
+a transform that Production gives them, so this review covers those
+transforms. They are read from Production's own source at `27363fe` and
+applied to the Tier-2 models (`tools/content/enemy_motion_review.py`).
+The evidence is in `motion/`.
+
+### 1. The turn — the outline at every yaw
+
+`Enemy._face` snaps every role except the bulwark to face the player, and
+a patrolling enemy faces the way it walks. So a player sees an enemy at
+every yaw, not at three. This pass re-measures every pair at every 15°.
+*Across yaws* sets role A at any yaw against role B at any other. That is
+the stricter test, because a player seeing one enemy once is asking
+exactly that.
+
+| pair | Track B's 3 yaws | full turn, worst | across yaws, worst |
+| --- | --- | --- | --- |
+| `melee` / `ranged` | 0.605 | 0.669 (150°) | 0.785 |
+| `brute` / `bulwark` | 0.701 | 0.734 (120°) | 0.766 |
+| `diver` / `scuttler` | 0.718 | 0.767 (30°) | 0.794 |
+| `charger` / `drifter` | 0.776 | **0.803** (15°) | **0.828** |
+| `charger` / `diver` | 0.618 | 0.670 (150°) | **0.847** |
+
+* **Tier 2 holds through the turn.** Neither re-cut pair reaches the bar
+  at any yaw, whether measured at the same yaw or across yaws.
+* **Three results reach the bar, and each is a floor role against a
+  flyer.** The `charger` stands 0–1.05 m tall. The `diver` hovers at
+  1.65–2.15 m and the `drifter` at 2.07–3.03 m. The outline metric crops
+  every silhouette to itself, so it cannot see that, at rest on one
+  floor, these never share a row of the frame. `charger`/`drifter` is 3A,
+  which you deferred. `charger`/`diver` is new but the same kind of
+  result. Nothing is proposed for either.
+
+### 2. What moves — Production's motion already separates both Tier-2 pairs
+
+| role | speed | stops at | turn | windup | job |
+| --- | --- | --- | --- | --- | --- |
+| `melee` | 4.0 m/s | 1.6 m | snaps | — | patrol |
+| `ranged` | **0** | — | snaps | aim 0.45 s | watch |
+| `brute` | 2.2 m/s | 2.0 m | snaps | slam 0.50 s | watch |
+| `bulwark` | 1.6 m/s | 1.9 m | **90°/s, none while committed** | — | watch |
+| `charger` | 3.0 m/s | 11.2 m, then rushes | snaps | charge 0.70 s | patrol |
+| `artillery` | **0** | — | snaps | shell 0.80 s | watch |
+| `beacon` | 1.2 m/s | 1.6 m | snaps | — | tend |
+| `scuttler` | 6.5 m/s | 1.4 m | snaps | — | patrol |
+| `diver` | 7.0 m/s, hovers 1.9 m | 5.5 m, then dives | snaps | dive 0.35 s | drift |
+| `drifter` | 2.4 m/s, hovers 2.55 m | 17.6 m | snaps | aim 0.45 s | drift |
+
+* **`melee` / `ranged`:** motion separates this pair more than any outline
+  could. The `melee` closes at 4 m/s. The `ranged` has speed 0 and never
+  walks; it plants and aims. One comes at you and the other never moves.
+* **`brute` / `bulwark`:** motion separates this pair only weakly. Both
+  close slowly. The bulwark's lagging turn shows only when the player
+  moves round it. The brute swells before it hits, and the bulwark gives
+  no windup.
+* **The other close outline pairs** are separated by movement or by height:
+  * the `artillery` never moves, while the `bulwark` and `brute` walk;
+  * the `charger` stops at 11 m and rushes, while the `drifter` hangs
+    2.55 m up and holds off near 18 m;
+  * the `diver` flies and dives, while the `scuttler` runs on the floor.
+
+**All ten roles are placeable at `27363fe`,** because `ENEMY_ARCHETYPES`
+lists all ten there. The art lane's own frames still print "not
+spawnable", because they read the art branch's older copy of the
+constants. So requirement 31 reads as resolved in Production. This is
+recorded only; nothing was changed.
+
+### 3. The windup and the flinch — on the art models, at 18 m
+
+Production's fallback telegraph scales `Visual` by 1 + 0.12 sin(…) over
+the windup: one full swell and shrink. A hit punches the scale to 0.88,
+and it springs back over 0.1 s. `SHEET_telegraph_swell.png` shows the
+effect on the art models at the review distance:
+
+| role | windup | top of the outline moves | pixels changed at the peak |
+| --- | --- | --- | --- |
+| `brute` | 0.50 s | 8.9 px | 947 |
+| `artillery` | 0.80 s | 5.5 px | 325 |
+| `ranged` | 0.45 s | 4.9 px | 171 |
+| `charger` | 0.70 s | 3.1 px | 173 |
+| `drifter` | 0.45 s | 1.4 px, about its middle | 189 |
+| `diver` | 0.35 s | 0.7 px, about its middle | 61 |
+
+For the two flyers and the charger, the swell moves the outline by 3 px
+or less.
+
+**The eye — a decision is needed.** Today's code-built enemies carry an
+emissive `Eye` in hard-coded red and orange, and it is the only emissive
+part of their bodies. Production drives it in three states:
+* dim while the enemy is idle;
+* brighter once it has noticed you;
+* **flaring at every windup** (`_begin_telegraph` → `EYE_FLARE`, 2.6×).
+
+The art models have no eye, and one built into the model would not work
+as things stand. `_set_eye` only reaches a `material_override`, and a
+glTF import does not set one. This is the same gap as the damage-tint
+blocker (A10 §1). So integrating the art models as they stand would
+remove the flare, which is the one windup cue made of light rather than
+shape, and would leave only the swell. It would also remove the only
+emissive thing on today's enemies, which matters for the openings below.
+
+An eye needs a colour, and you ruled out a new semantic enemy colour for
+now, so nothing is built. As the art lane sees it, the options are:
+* **Production keeps its eye.** It builds today's `Eye` onto the art
+  model at integration, in today's colours, so the art lane adds no
+  colour. Where the eye seats is Production's call. The art models have
+  no eye anchor yet; adding one would be a small art change, made on your
+  word.
+* **The art lane authors an eye** in a colour you approve. Production
+  would reach it through an override.
+* **Drop the eye,** and rely on the swell and on sound.
+
+### 4. The openings — motion cannot add value
+
+When a body moves, each pixel it enters or leaves changes by exactly
+body-minus-background, which is the static separation. Motion adds no
+value contrast; it only changes how fast pixels change.
+
+The case that matters is also the slowest: an enemy walking straight at
+you. From 18 m its outline grows by at most 0.17 px per frame (the
+`melee` at 60 fps). Crossing your view at the same speed, it would move
+2 px per frame. So the three rooms that fall below 0.10 at an opening
+stay below it in motion:
+* `neon_transit`: 0.033
+* `concrete_facility`: 0.059
+* `gothic_stone`: 0.070
+
+Per your ruling, the documented limitation stands and no cue is
+proposed. Two things matter for the integrated check you asked for:
+* Test an approach through an opening in `neon_transit` first. It is the
+  weakest cell.
+* Test it with the art models. Today's build carries the emissive eye,
+  and the art models would not.
+
+### What this review cannot see
+
+* **No player, and no integrated build.** Production does not load the
+  art models. This is those models under Production's motion rules,
+  reconstructed from its source.
+* **Outlines, not light.** The swell and flinch are drawn from outlines,
+  not rendered, and 60 fps is assumed.
+* **The eye is read from code.** It is taken from Production's source,
+  not rendered.
+* **One distance, and no pitch.**
+
+**Your call:** the eye, above. Everything else in this section is
+information. The checkpoint is reached, and the lane holds.
+
+---
+
 ## What none of this measures
 
 **Motion.** All of the above is ten static poses at three yaws. A pair
@@ -521,3 +676,6 @@ that shares an outline may be unmistakable the moment it moves. That is
 a reason for the next pass to be animated, not a reason to leave it —
 but it does mean Tier 2 could be smaller than it looks, and Tier 1
 could not.
+
+> **Reviewed 2026-09-26** as far as the art lane can reach, which is the
+> transforms Production gives rigid models. See "Motion review" above.

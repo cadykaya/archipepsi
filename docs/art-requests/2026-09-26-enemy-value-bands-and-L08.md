@@ -106,6 +106,17 @@ the shapes:
 Evidence: `docs/art/review/enemies_2026-09-25/tier2/`. Hold integration
 of these two shapes until the owner rules on them.
 
+**Integrating the art models as they stand drops the eye.** At
+`27363fe`, each of `enemy.gd`'s builders gives its enemy an emissive
+`Eye`, which `_set_eye` drives: dim at idle, brighter once it has
+noticed you, and flaring at every windup. The art models carry no eye.
+Even if they did, `_set_eye` reaches only a `material_override`, and a
+glTF import sets none; this is the damage-tint gap again. An eye needs a
+colour, and the owner has not ruled on one, so the art lane has built
+nothing. Integration needs an answer for the eye first. The options are
+in `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`, Motion
+review §3.
+
 **Held by the art lane's suite** (`tools/check_art_current.sh`):
 - `tools/content/check_enemy_bands.py` proves both sets are the same
   geometry and markings, byte for byte, and that the deep set is darker.

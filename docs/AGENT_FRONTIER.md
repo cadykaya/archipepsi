@@ -91,6 +91,37 @@ shipping enemies are built in code in the room's own accent and trim
 (`enemy.gd`), which L-08 forbids; art-lane value bands take effect only
 when its models are integrated. Tier 1 is back with the owner — §11.
 
+**2026-09-26 — the enemy checkpoint is reached, and the art lane HOLDS.**
+
+What the owner ruled, and what landed:
+* **Tier 1** is ruled as ART: 0.10 CIE L\* separation at 18 m, two value
+  bands, openings a documented limitation, and two measured exceptions.
+  It landed as two sets of the same enemies (`batch030/enemies/`,
+  `batch030/enemies_deep/`, mapped by `enemy_value_bands.json`). It is
+  not active in the shipping game.
+* **Track A's** symbols, keycap and page arrows are approved. The
+  tintable symbols now ship in pure white ink.
+* **Facing:** the art models used to face +Z and now face -Z, as
+  `enemy.gd`'s do.
+
+Done and waiting on the owner:
+* **Tier 2** re-cut `ranged` and `bulwark`. It is for owner review.
+* **The motion review** is done.
+
+Both are in `docs/art/review/enemies_2026-09-25/DECISIONS_FOR_OWNER.md`.
+
+Findings other lanes need:
+* Production's shipping enemy builders paint with the room's own accent
+  and trim, which breaks L-08.
+* Integrating the art models drops `enemy.gd`'s emissive eye, including
+  its windup flare. The models have no Eye node, and both `_set_eye` and
+  the damage tint need a `material_override` that a glTF import does not
+  set. The owner decides the eye.
+* At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
+
+**Hold:** no Track C or E unless their blockers clear or a new owner
+decision is needed (§11).
+
 Two things from it that other lanes need:
 
 * **Batch 045 delivers visual identities for the four 0.4 setpieces**

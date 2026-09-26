@@ -2458,10 +2458,70 @@ both ways: the pre-`d82a36e` source fails it, and so does the current
 source with only the refusal removed. PASS, 6 notes, evidence unchanged,
 and a clean rerun of the whole of `check_art_current.sh` then PASSED.
 
-### Next
+### Rulings, 2026-09-26 — Tier 1 landed; Tier 2 and the motion review done
 
-**Tier 1 waits on the owner** (four decisions above). **Tier 2 waits on
-Tier 1** being settled, then the motion review. Track A's remainder is
-authored and gated; its visual identity stays open. C stays blocked on
-the revised machinery/puzzle bounds; E stays reserve. Item and state
-art still waits on Production's slot vocabulary.
+**RULED:**
+* **Threshold.** 0.10 is the practical enemy-vs-environment threshold at
+  18 m. 0.18 is a reference, not a gate.
+* **Bands.** Two bands: standard at k 0.40 (`concrete_facility`,
+  `neon_transit`, `gothic_stone`, `temple_ruin`) and deep at k 0.10
+  (`rusted_industrial`, `void_glitch`). Identity and markings are kept.
+  This is approved as art, and is **not active in the shipping game**
+  until Production loads the models.
+* **Openings.** A documented limitation. No global void change and no
+  new semantic enemy colour yet. A non-value cue comes back only if
+  integrated gameplay still shows disappearance after Tier 2 and the
+  motion review.
+* **Two exceptions.** `void_glitch` floor at 0.0999 and
+  `rusted_industrial` dim at 0.093. If rusted stays unreadable in the
+  integrated build, that is a room-lighting issue for Production.
+* **Track A.** The keycap, symbols and arrows are approved. Tintable
+  symbols use pure-white source ink; text keeps its off-white ink.
+* **Order.** Tier 2 (ranged: a non-width tell; bulwark: a head-on shield
+  tell; envelopes kept), then the motion review, then HOLD.
+
+**Done** — the record is `enemies_2026-09-25/DECISIONS_FOR_OWNER.md`:
+* **Tier 1 landed** as two shipped sets plus the band map. The suite
+  holds it (`check_enemy_bands.py`), with the evidence bound to each
+  model's sha256. Production's shipping builders breaking L-08 is flagged
+  in `docs/art-requests/2026-09-26-enemy-value-bands-and-L08.md`.
+* **Facing.** The models faced +Z, away from their own anchors. They now
+  face -Z, with a per-role front-part assertion and a readiness gate
+  that checks which way each model faces. Every anchor sits inside a
+  part, and the silhouette harness proves that no anchor shows.
+* **Tier 2, for owner review.** `ranged` braces a long diagonal emitter
+  and stands with its legs apart. `bulwark` is a mantlet: two ears with a
+  sighting notch between them, on two runners. Worst-angle overlap:
+  melee/ranged 0.856 → 0.605 and brute/bulwark 0.825 → 0.701. No pair of
+  the 45 is at or above 0.80.
+* **The motion review** (`motion/`):
+  * **The full turn.** Tier 2 holds at every 15°. The only results at or
+    above the bar are floor role vs flyer: charger/drifter (3A, deferred)
+    at 0.803 same-yaw, and charger/diver and charger/drifter across yaws.
+    The outline metric crops away the height difference that separates
+    them.
+  * **Motion as a separator.** Production's motion separates melee from
+    ranged completely (4 m/s against 0), but brute from bulwark only
+    weakly.
+  * **The swell** is 3 px or less on the flyers and the charger at 18 m.
+  * **The eye.** Integrating the art models would drop Production's
+    emissive eye and its windup flare. That is a decision for the owner,
+    because an eye needs a colour.
+  * **Openings.** Motion adds no value contrast. An approach grows the
+    outline by at most 0.17 px per frame.
+* **Stale evidence regenerated.** The A10 frames (pre-band skin, anchor
+  bumps) and the A11 job frames (props from before 236acf8).
+
+### Next — HOLD (2026-09-26)
+
+The checkpoint the owner set is reached. **Hold.** Track C stays blocked
+on the revised machinery/puzzle bounds, and Track E stays reserve; open
+neither unless its blocker clears or a new owner decision is needed.
+
+Waiting on the owner:
+* the Tier 2 re-cuts, accept or reject;
+* the eye, one of three options;
+* anything that follows from integrated gameplay at openings.
+
+Item and state art still waits on Production's slot vocabulary.
+Heartbeat, watchers, subscriptions and scheduled check-ins stay off.
