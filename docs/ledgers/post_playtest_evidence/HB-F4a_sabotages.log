@@ -1,0 +1,19 @@
+RA-1 [zone_builder.gd] REPRO: the exit room's failure carries no wedge
+    CAUGHT by "candidate zone_011 builds" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: candidate zone_011 builds (1 attempt(s), nudged {  }): the exit room could not be placed clear of the 70 room(s) before it
+      FAIL: ...and zone_011 got there by backtracking its exit room, not on a first attempt (1)
+RA-2 [zone_builder.gd] the ladder does not know where the exit room joins
+    CAUGHT by "candidate zone_011 builds" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: candidate zone_011 builds (1 attempt(s), nudged {  }): the exit room could not be placed clear of the 70 room(s) before it
+      FAIL: ...and zone_011 got there by backtracking its exit room, not on a first attempt (1)
+RA-3 [zone_builder.gd] REPRO: a branch is not told the spine's way on
+    CAUGHT by "candidate zone_004 builds" -- exit 2, 2 failing check(s), 0 script error(s); restored byte for byte: True
+      FAIL: candidate zone_004 builds (7 attempt(s), nudged { "c017": 2, "c013": 2, "c009": 2 }): branch room 'c015' off 'c013' could not be placed clear of the 66 room(s) already standing
+      FAIL: sample zone_08 builds (7 attempt(s), nudged { "c006": 2, "c005": 2, "c004": 2 }): branch room 'c015' off 'c013' could not be placed clear of the 36 room(s) already standing
+RA-4 [zone_builder.gd] CONTROL: the spine's way on kept clear by direct branches only
+    CONTROL HOLDS -- exit 0, 0 failing check(s), 0 script error(s); restored byte for byte: True
+RA-5 [zone_builder.gd] CONTROL: no fallback; a branch that cannot keep the corridor is refused
+    CONTROL HOLDS -- exit 0, 0 failing check(s), 0 script error(s); restored byte for byte: True
+
+3 of 3 sabotages caught; 2 of 2 controls hold
+runner exit 0

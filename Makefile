@@ -1607,13 +1607,14 @@ godot-ordinary-live: godot-import
 # `ZoneController.setup` returns without creating a player when
 # `ZoneBuilder` cannot route the rooms, and `Main._to_zone` used to carry
 # on into `hud.bind_player(zone.player)` -- a null. This hands the real
-# `Main` a Zone the router genuinely cannot place (`zone_08` of the
-# declared sample, under the id it was dumped as) and checks what the
-# player is left with: no crash, no half-built level in the tree, a Hub
-# with a live player in it, and the failure reported to the bridge.
+# `Main` a Zone the router genuinely cannot place (the owner's candidate
+# zone_008, HB-F4a-3, under the id it was composed under) and checks what
+# the player is left with: no crash, no half-built level in the tree, a
+# Hub with a live player in it, and the failure reported to the bridge.
 #
-# The live half -- a real bridge, the bounded recovery and the parked
-# Zone -- is `make godot-named-case CASE=zone_08 AT=8`.
+# It was `zone_08` of the declared sample until HB-F4a made that Zone
+# route: its live half was `make godot-named-case CASE=zone_08 AT=8`, and
+# the HB-F4a census now lays that Zone out.
 godot-build-failure: godot-import
 	$(GODOT) --headless --path godot -- --reload-phase=build-failure \
 	  > /tmp/archipepsi-build-failure.log 2>&1; \

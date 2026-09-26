@@ -1,0 +1,87 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+  DIAG c019 off c018: mouth=(32.029984, 6.600000, -9.049996) yaw=-180 room=(8.000000, 50.959999, 37.630001)
+       placed=73 span=(-42.620010, -40.000000, -117.400002)..(138.829987, 16.900002, 25.299980)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=true
+       step 2 room_fits=false link_fits=true
+       step 3 room_fits=false link_fits=true
+       step 4 room_fits=false link_fits=true
+       step 5 room_fits=false link_fits=true
+       step 6 room_fits=false link_fits=true
+       step 7 room_fits=false link_fits=true
+       step 8 room_fits=false link_fits=true
+       step 9 room_fits=false link_fits=true
+       step 10 room_fits=false link_fits=true
+       step 11 room_fits=false link_fits=true
+  DIAG c019 off c018: mouth=(32.029984, 6.600000, -4.049996) yaw=-180 room=(8.000000, 50.959999, 37.630001)
+       placed=74 span=(-42.620010, -40.000000, -117.400002)..(138.829987, 16.900002, 25.299980)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=true
+       step 2 room_fits=false link_fits=true
+       step 3 room_fits=false link_fits=true
+       step 4 room_fits=false link_fits=true
+       step 5 room_fits=false link_fits=true
+       step 6 room_fits=false link_fits=true
+       step 7 room_fits=false link_fits=true
+       step 8 room_fits=false link_fits=true
+       step 9 room_fits=false link_fits=true
+       step 10 room_fits=false link_fits=true
+       step 11 room_fits=false link_fits=true
+  DIAG c019 off c018: mouth=(32.029984, 6.600000, 0.950004) yaw=-180 room=(8.000000, 50.959999, 37.630001)
+       placed=75 span=(-42.620010, -40.000000, -117.400002)..(138.829987, 16.900002, 26.050011)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=true
+       step 2 room_fits=false link_fits=true
+       step 3 room_fits=false link_fits=true
+       step 4 room_fits=false link_fits=true
+       step 5 room_fits=false link_fits=true
+       step 6 room_fits=false link_fits=true
+       step 7 room_fits=false link_fits=true
+       step 8 room_fits=false link_fits=true
+       step 9 room_fits=false link_fits=true
+       step 10 room_fits=false link_fits=true
+       step 11 room_fits=false link_fits=true
+  DIAG c014 off c013: mouth=(45.129986, 6.600000, -53.449997) yaw=-180 room=(23.200001, 6.500000, 19.600000)
+       placed=57 span=(-42.620010, -40.000000, -117.400002)..(138.829987, 16.239998, 25.299980)
+       step 0 room_fits=false link_fits=true
+       step 1 room_fits=false link_fits=true
+       step 2 room_fits=false link_fits=true
+       step 3 room_fits=false link_fits=true
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=false link_fits=false
+       step 6 room_fits=false link_fits=false
+       step 7 room_fits=false link_fits=true
+       step 8 room_fits=false link_fits=true
+       step 9 room_fits=false link_fits=false
+       step 10 room_fits=false link_fits=false
+       step 11 room_fits=false link_fits=false
+  DIAG spine c017: cursor=(35.079987, 6.600000, -44.899998) yaw=-90 room=(7.500000, 6.600000, 12.000000) entry=(0.000000, 0.000000, 0.000000)
+       budget=67 poses tested=3 corners entered=0
+       step 0 room_fits=false link_fits=false
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=false link_fits=false
+       step 6 room_fits=false link_fits=false
+       step 7 room_fits=false link_fits=false
+       step 8 room_fits=false link_fits=false
+       step 9 room_fits=true link_fits=true
+  DIAG spine c020: cursor=(94.179993, 6.600000, 12.000004) yaw=0 room=(17.000000, 7.400000, 19.700001) entry=(0.000000, 0.000000, 0.000000)
+       budget=69 poses tested=3 corners entered=0
+       step 0 room_fits=false link_fits=false
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=false link_fits=false
+       step 5 room_fits=true link_fits=true
+  DIAG c015 off c013: mouth=(56.529987, 6.600000, -29.949997) yaw=0 room=(8.000000, 50.299999, 33.459999)
+       placed=66 span=(-42.620010, -40.000000, -117.400002)..(138.829987, 16.239998, 25.299980)
+       step 0 room_fits=false link_fits=false
+       step 1 room_fits=false link_fits=false
+       step 2 room_fits=false link_fits=false
+       step 3 room_fits=false link_fits=false
+       step 4 room_fits=true link_fits=true
+godot exit 0
+RESULT: branch room 'c015' off 'c013' could not be placed clear of the 66 room(s) already standing

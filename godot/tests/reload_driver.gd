@@ -192,21 +192,24 @@ func _run() -> void:
 ## the Hub already torn down by `_clear_world` and the unbuildable Zone
 ## still in the tree.
 ##
-## **The failure is real and is not injected.** `zone_08` of the
-## declared sample, served under the id it was dumped as, is content the
-## router genuinely cannot place -- the offline census has reported no
-## manifest for it since it was dumped, and the live
-## `godot-named-case CASE=zone_08 AT=8` run reproduces it through a
-## bridge. Nothing here forces a failure or fakes a return value; the
-## router is asked the same question and gives the same answer.
+## **The failure is real and is not injected.** The owner's candidate
+## zone_008 (HB-F4's composition `3e6768297297`), served under the id it
+## was composed under, is content the router genuinely cannot place:
+## room `c016` cannot stand clear of the sixty rooms before it (HB-F4a-3,
+## open). The owner's campaign discards it three compositions running,
+## and the HB-F4a census reports no manifest for it. Nothing here forces
+## a failure or fakes a return value; the router is asked the same
+## question and gives the same answer.
 ##
 ## **If this Zone ever starts routing, this gate fails LOUDLY** rather
 ## than passing on a build that succeeded. What it guards is the
-## HANDOFF, not the routing, so the fixture would have to be replaced
-## with another engine-failure case -- not deleted, and not quietly
-## satisfied by a Zone that built.
+## HANDOFF, not the routing, so the fixture has to be replaced with
+## another engine-failure case -- not deleted, and not quietly satisfied
+## by a Zone that built. That has happened once: this was `zone_08` of
+## the declared sample until HB-F4a gave a branch the spine's way on and
+## the router placed it.
 func _build_failure() -> void:
-	const CASE := "res://tests/fixtures/sample/zone_08.json"
+	const CASE := "res://tests/fixtures/router/candidate_zone_008.json"
 	if not FileAccess.file_exists(CASE):
 		_check(false, "the engine-failure fixture %s is missing" % CASE)
 		_finish(1)

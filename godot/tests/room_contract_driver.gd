@@ -117,6 +117,7 @@ func _run() -> void:
 	await _test_a_composed_room_carves_every_assigned_door()
 	await _test_a_sealed_door_that_is_a_hole_is_caught()
 	await _test_no_prop_stands_in_an_assigned_side_doorway()
+	await _test_a_junction_keeps_what_it_owes()
 	await _test_the_layout_result_commits_the_whole_chain()
 	await _test_a_spent_budget_is_a_timeout_and_not_infeasibility()
 	await _test_a_return_plug_lands_somewhere_a_player_fits()
@@ -2912,6 +2913,50 @@ func _test_a_composed_room_carves_every_assigned_door() -> void:
 	rooms_checked += 1
 	(result["root"] as Node3D).queue_free()
 	await get_tree().process_frame
+
+## THE ROUTER KEEPS THE SPINE'S WAY ON CLEAR OF A ROOM'S BRANCHES, AND
+## BACKTRACKS THE EXIT ROOM LIKE ANY OTHER (HB-F4a).
+##
+## Three real compositions that did not build, laid out by the shipping
+## `ZoneBuilder.build` with the placement budget a played Zone gets:
+##
+## - the owner's candidate zone_004: `c013` reserves the corridor its exit
+##   will need, and its branches are placed before the spine goes on.
+##   Nothing told them about that corridor, and `c015` was left nowhere
+##   to stand ("branch room 'c015' off 'c013'");
+## - sample `zone_08`, the declared twenty-Zone sample, which failed the
+##   same way;
+## - the owner's candidate zone_011, whose exit room could not stand and
+##   whose failure carried no wedge, so the bounded ladder never ran: one
+##   attempt, three compositions running, and a discard.
+##
+## Each must now build, and zone_011 must have got there by the ladder.
+func _test_a_junction_keeps_what_it_owes() -> void:
+	print("  -- HB-F4a: the spine's way on, and the exit room's wedge")
+	for case: Array in [
+			["candidate zone_004", "res://tests/fixtures/router/candidate_zone_004.json"],
+			["sample zone_08", "res://tests/fixtures/sample/zone_08.json"],
+			["candidate zone_011", "res://tests/fixtures/router/candidate_zone_011.json"]]:
+		var zone: Variant = JSON.parse_string(
+				FileAccess.get_file_as_string(str(case[1])))
+		if typeof(zone) != TYPE_DICTIONARY:
+			_check(false, "%s: %s is not a Zone" % [case[0], case[1]])
+			continue
+		var built := ZoneBuilder.build(zone as Dictionary, "",
+				ZoneController.PLACEMENT_BUDGET_MS, {})
+		var attempts := int(built.get("placement_attempts", 1))
+		_check(not built.has("failed"),
+				"%s builds (%d attempt(s), nudged %s): %s" % [case[0],
+					attempts, str(built.get("placement_nudges", {})),
+					str(built.get("failed", "LAYOUT_OK"))])
+		if str(case[0]) == "candidate zone_011":
+			_check(attempts > 1,
+					"...and zone_011 got there by backtracking its exit "
+					+ "room, not on a first attempt (%d)" % attempts)
+		var root: Variant = built.get("root")
+		if root is Node:
+			(root as Node).free()
+		await get_tree().process_frame
 
 ## NO PROP STANDS IN A SIDE DOORWAY THE COMPOSER ASSIGNED (HB-F4).
 ##

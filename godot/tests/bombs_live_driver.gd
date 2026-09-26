@@ -17,10 +17,12 @@ extends "res://tests/candidate_live_driver.gd"
 ##
 ## **WHICH ZONE HOLDS IT IS FOUND, NOT ASSUMED.** Walked with a layout
 ## that always succeeds, the campaign reaches its first Bomb Bag in Zone
-## 6. Played by this client it does not: the engine cannot lay out its
-## fourth Zone (HB-F4a), a player's only way on is to discard it, and that
-## returns its Checks to the pool. With HB-F4b the first Bomb Bag is
-## zone_007's, and this finds it there rather than being told the Zone.
+## 6. Played by this client it long did not: the engine could not lay out
+## its fourth Zone, a player's only way on was to discard it, and that
+## returned its Checks to the pool, so with HB-F4b the first Bomb Bag was
+## zone_007's. HB-F4a lays zone_004 out, and it is zone_006's again with
+## no Zone discarded on the way. This finds it wherever it is rather than
+## being told the Zone.
 ##
 ## Three runs against one disposable save, each a new client beside a new
 ## bridge; only the save crosses:

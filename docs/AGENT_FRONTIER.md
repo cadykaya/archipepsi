@@ -535,9 +535,19 @@ owner's D-06/D-07 rulings and the seam table are in
           doors solid before (the owner's two among them), 0 after.
         - 4 of 4 sabotages caught; 17 regression suites green.
         - On the new path 10 of 12 Zones build.
+      - HB-F4a, repaired (router): the exit room backtracks like any
+        other room, and a branch keeps the spine's way on clear.
+        - zone_004 and zone_011 build. The census goes from 32 to 35
+          of 39.
+        - `godot-room-contract` lays the three Zones out: 3 of 3
+          sabotages caught, 2 of 2 controls hold.
+        - `godot-build-failure`'s Zone started routing, so its fixture
+          is now the owner's zone_008.
+        - On the new path 10 of 12 Zones build, and `godot-bombs-live`
+          reaches the first Bomb Bag, zone_006's, with no discard.
       - Open, mine:
-        - HB-F4a, router placement: zone_004 `c015`, zone_008 `c016`,
-          zone_011's exit room.
+        - HB-F4a-3: zone_008's `c016` (a 16-attempt ladder builds it at
+          5.5 s of the 6 s budget; not taken).
         - HB-F4c: a connector laid through zone_006's two doorways.
         - HB-F4e: the `c001_pd0` pressure-door certificate, whose latch
           does not fire in every run (zone_010, zone_012).
@@ -560,9 +570,9 @@ owner's D-06/D-07 rulings and the seam table are in
       - 5 of 5 sabotages caught. Where the Bomb Bags are is harness
         knowledge from the mock's own placement; the suite checks the
         client is not told.
-    - **Next:** HB-F4a (router placement), HB-F4c (the connector) and
-      HB-F4e (the pressure-door certificate). PT-09 is met live, but a
-      player still passes one or two unbuildable Zones on the way.
+    - **Next:** HB-F4e (the pressure-door certificate), then HB-F4c
+      (the connector) and HB-F4a-3. PT-09 is met live, and on HB-F4a a
+      player reaches the Bomb Bag with no Zone discarded on the way.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

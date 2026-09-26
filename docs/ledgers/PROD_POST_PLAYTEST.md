@@ -5055,3 +5055,172 @@ them live, as a player would, and on the fixed tree (HB-F4b, `7c0f9e3`).
     replayed from the same inputs, not their file.
   - A player who reaches the Bomb Bag still passes one or two unbuildable
     Zones on the way (HB-F4a).
+
+## 0.4 — HB-F4a (router placement): the exit room now backtracks, and a branch keeps the spine's way on clear — the owner's zone_004 and zone_011 now build; zone_008's deeper case open
+
+HB-F4 left three router failures in the owner's candidate campaign. All
+three were shaped "a room the bounded search cannot stand clear of the
+rooms before it". I measured them with the router's own `--router-diag`,
+now extended to name which rooms and which placed pieces a wedged room's
+first pose overlaps, and to report each branch's corridor attempt. They
+are two defects and one open case.
+
+- **HB-F4a-1: the exit room never backtracked.**
+  - Every spine or branch room that cannot stand returns a wedge.
+    `build()`'s bounded ladder then re-solves the Zone with an earlier
+    room nudged onto its next pose.
+  - The exit room returned `failed` alone, so the ladder never ran for
+    the one room every Zone has. zone_011 failed on its first and only
+    attempt, three compositions running.
+  - **Repair:** the exit room's failure is now a wedge naming the exit
+    room. `_wedged_after` starts its walk back at the spine's last room,
+    whose pose decides where the exit's mouth is.
+  - zone_011 builds in 3 attempts (`c019` nudged twice), in about 1 s.
+- **HB-F4a-2: a branch was never told the spine's way on.**
+  - When a spine room is placed it reserves the corridor its exit will
+    need. Then its branches are placed at once, before the chain goes
+    on, and nothing tells them about that corridor.
+  - zone_004 and the declared sample's `zone_08` failed on "branch room
+    'c015' off 'c013'".
+  - **Repair:** a branch's route is first planned around that corridor.
+    The corridor is owed by the whole subtree, because the chain
+    continues only after every branch below the room is placed. If
+    nothing fits that way, the plain search runs as before. That is the
+    router's own rule for every reservation (`_plan_route`): a
+    reservation that cannot be honoured must not turn a Zone that used to
+    lay out into one that does not.
+  - **Measured, not assumed, and one explanation withdrawn.** zone_004's
+    diagnostics show `c015`'s first pose overlapping its sibling `c014`,
+    and I first read that as "a branch must keep its siblings' doors
+    clear too". I built that rule and then took it apart with
+    sabotages:
+    - keeping the spine's corridor, but not the siblings' doors, still
+      builds all three compositions;
+    - keeping the siblings' doors, but not the spine's corridor, fails
+      zone_004 and `zone_08`.
+    So the sibling rule is not in this change
+    (`HB-F4a_sabotages_first_shape.log`). `c014` moves off `c015`'s
+    ground because it may no longer take the corridor.
+- **HB-F4a-3 (open): zone_008's `c016`.**
+  - The spine room after `c011` is blocked by route pieces: a 5 m
+    connector and two corners, just past the 10 m corridor `c011`
+    reserves for it.
+  - The ladder spends its six attempts (two per room) and fails.
+  - Measured and not taken:
+    - a 16-attempt ladder builds zone_008 at attempt 14, in 5.5 s of the
+      6 s placement budget. That is too close for a slower machine.
+    - three nudges per room builds zone_004 in 4 attempts, but it
+      reorders the ladder for every wedged Zone. HB-F4a-2 fixed zone_004
+      without it.
+- **Census** (`HB-F4a_census_{baseline,fix}.log`). It covers 39 distinct
+  compositions: the declared 20-Zone sample, plus every candidate
+  composition from the HB-F4 walks at head and on HB-F4b. Each is laid
+  out by the tree's own engine and judged by its own `layout.validate`.
+  - **32 accepted before, 35 after.** Candidate zone_004, candidate
+    zone_011 and sample `zone_08` go from failing to ACCEPTED, and no
+    acceptance is lost. The census ran in 221 s, against 249 s before.
+  - Across every ladder attempt in the census, 486 branch routes kept the
+    spine's corridor clear, and 20 fell back to the plain search
+    (`HB-F4a_owed_fallbacks.log`).
+  - Two variants were each run over the whole census: the fallback
+    removed, and the corridor owed by direct branches only. Both give
+    the same 35, composition for composition
+    (`HB-F4a_census_{nofallback,directonly}.log`). So neither part
+    changes an outcome here. Each is kept for the reason above, and each
+    stays under test as a control.
+  - The four that still fail: candidate zone_006 (HB-F4c), zone_008
+    (HB-F4a-3), and zone_010 and zone_012 (HB-F4e).
+- **The owner's campaign, replayed on the fix**
+  (`HB-F4a_layout_walk.log`): 10 of 12 Zones are accepted.
+  - zone_004 builds (1.4 s) and so does zone_011.
+  - zone_008 still fails three times with one composition (HB-F4a-3)
+    and is discarded.
+  - zone_012 is refused three times on the `c001_pd0` certificate
+    (HB-F4e, repaired in the next section) and is discarded.
+  - From zone_005 on the compositions differ from HB-F4b's walk,
+    because zone_004's Checks now stay with it. The first Bomb Bag is
+    zone_006's (Checks 89100140, 89100161, 89100308, 89100392,
+    89100413).
+  - Live, `godot-bombs-live` now reaches it with no Zone discarded on
+    the way. The claim and the three throws are unchanged, and entering
+    zone_007 refills the supply (`HB-F4a_bombs_live_*.log.gz`).
+- **Regression test:** `godot-room-contract` gains
+  `_test_a_junction_keeps_what_it_owes`.
+  - It lays out the owner's zone_004 and zone_011 (new router fixtures
+    in `godot/tests/fixtures/router/`) and sample `zone_08`, with the
+    shipping `build` and the played placement budget.
+  - Each must build, and zone_011 must get there by the ladder.
+  - Before the repair, all three fail, with 4 failing checks
+    (`HB-F4a_room_contract_before.log`).
+- **Sabotages: 3 of 3 caught, and 2 of 2 controls hold**, each file
+  restored byte for byte (`HB-F4a_sabotages.log`, `HB-F4a_runner.py`).
+  - RA-1, REPRO: the exit room's failure carries no wedge. Caught by
+    "candidate zone_011 builds": one attempt, and the exit room could
+    not be placed.
+  - RA-2: the ladder does not know where the exit room joins. Caught by
+    the same check.
+  - RA-3, REPRO: a branch is not told the spine's way on. Caught by
+    "candidate zone_004 builds".
+  - RA-4, control: the corridor kept clear by direct branches only. The
+    suite passes, as the census said it would.
+  - RA-5, control: no fallback. The suite passes, likewise.
+  - The first shape's run, with the sibling rule, is kept
+    (`HB-F4a_sabotages_first_shape.log`).
+- **A gate whose Zone now routes, and its fixture replaced.**
+  `godot-build-failure` hands `Main` a Zone the router cannot place, to
+  guard the handoff after a failed build. Its fixture was sample
+  `zone_08`, which HB-F4a places.
+  - The gate failed loudly, as it says it will: "this Zone must NOT
+    route; if it now does, replace the fixture with another
+    engine-failure case".
+  - Its fixture is now the owner's candidate zone_008 (HB-F4a-3,
+    `godot/tests/fixtures/router/candidate_zone_008.json`), which the
+    census and the owner's campaign both fail. The gate is unchanged
+    otherwise.
+  - The Makefile's note that `godot-named-case CASE=zone_08 AT=8` shows
+    a live build failure is corrected. The census now lays that Zone
+    out.
+- **My own mistake, recorded: my processes joined two live suites'
+  bridges.**
+  - While the regression ran I laid out Zones and ran HB-F4e's runner
+    beside it. Every run of this project starts `BridgeClient`, which
+    connects to the bridge's fixed port.
+  - So my processes joined the bridges of `godot-candidate-live` and
+    `godot-resume-live`. A zone_001 layout built without the candidate
+    minors reached each bridge, which refused it ("room 'c024' has no
+    placement in the layout").
+  - Each bridge log shows a client connecting 36 ms after the bridge
+    listened, before the suite's own client, which starts 2 s later.
+  - Both suites were run again with nothing else running (below). Live
+    suites get the machine to themselves from now on.
+- **A bound I added and took out again.** A run of mine never finished,
+  and I added a pose ceiling to the corridor search. The run had in fact
+  stopped on a parse error: a multi-line lambda inside an argument list.
+  I instrumented the ceiling over the whole census and it never
+  triggered, so it is not in this change.
+- **Regression** (`HB-F4a_regression_suites.tsv`, then
+  `HB-F4a_regression_rerun.tsv`): 30 suites on this tree.
+  - 27 passed the first time.
+  - `godot-build-failure` failed as described above
+    (`HB-F4a_build_failure_zone_08_routes.log`). On its new fixture it
+    passes: 6 checks, with the engine saying "room 'c016' could not be
+    placed clear of the 60 room(s) before it"
+    (`HB-F4a_build_failure_zone_008.log`).
+  - `godot-candidate-live` and `godot-resume-live` failed under my
+    interference, above (`HB-F4a_interference_*.log.gz`). Both pass on
+    a quiet machine.
+  - `godot-room-contract` and `godot-reload`, which shares the
+    build-failure driver, pass on the final tree
+    (`HB-F4a_room_contract_after.log`).
+  - On the re-run no suite printed a real `SCRIPT ERROR`. The first
+    run's only one was the candidate driver's own, after the
+    interference tore its Zone down.
+  - The full frontier runs once, with HB-F4e, at the end of the next
+    section.
+- **Measurements kept:** `HB-F4a_diag_zone_*.log` (`--router-diag`,
+  `HB-F4a_diag.sh`); the census's candidate compositions
+  (`HB-F4a_census_compositions.tar.gz`) and its script
+  (`HB-F4a_census.sh`). The declared sample's are
+  `godot/tests/fixtures/sample/`.
+- **Next:** HB-F4e, the pressure-door certificate, which now stands on
+  the new path as well. Then HB-F4c and HB-F4a-3.

@@ -1,0 +1,46 @@
+# census on /tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/wt-hbf4a at ce2852a (+ working tree changes: 1 file(s)), 07:39 UTC
+candidate_zone_001_e2dd51ae74e3.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_002_83cab638c71e.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_003_86832f692325.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_004_d2bf871d5f29.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_005_ed6d6b265524.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_006_3f7da9f7dcae.json: LAYOUT_REFUSED (controller 9b650b6f501d3ee7)
+    door 'c017/side_right' is USED and the engine measured it as solid; the declaration and the geometry disagree
+    door 'c021/entry' is USED and the engine measured it as solid; the declaration and the geometry disagree
+candidate_zone_006_8d06d02b2925.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_007_16d1c5f3ccc2.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_007_592c0a232235.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_008_1bcdec470f2d.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_008_3e6768297297.json: BUILD FAILED: room 'c016' could not be placed clear of the 60 room(s) before it
+candidate_zone_009_229f0fb0bfe7.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_009_ba9ae1a2ad50.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_010_64b65729399d.json: LAYOUT_REFUSED (controller 9b650b6f501d3ee7)
+    chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+candidate_zone_010_a864eb6e24ae.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_011_2431cc0dd8fc.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_011_7d750be066b5.json: ACCEPTED (controller 9b650b6f501d3ee7)
+candidate_zone_012_06041737245b.json: LAYOUT_REFUSED (controller 9b650b6f501d3ee7)
+    chain 'c001_pd0' in room 'c001': package 'c001_pd0' declares latch(es) ['plate_loaded'] that did not latch in every run; three runs each latching a different part is not three successes
+candidate_zone_012_ef6e612a5354.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_01.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_02.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_03.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_04.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_05.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_06.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_07.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_08.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_09.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_10.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_11.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_12.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_13.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_14.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_15.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_16.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_17.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_18.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_19.json: ACCEPTED (controller 9b650b6f501d3ee7)
+sample_zone_20.json: ACCEPTED (controller 9b650b6f501d3ee7)
+# 219 s
+RESTORED

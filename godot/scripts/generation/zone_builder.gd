@@ -1282,6 +1282,17 @@ static func _exit_reservation(build: Dictionary,
 		at += _rot(turn, shape["exit_offset"] as Vector3)
 	return out
 
+## THE CORRIDOR A PLACED SPINE ROOM'S EXIT STILL OWES, in the world
+## (HB-F4a): the boxes `_exit_reservation` promised when the room was
+## placed, fixed where it now stands, for its branches to keep clear of.
+static func _owed_exit(build: Dictionary, shape: Dictionary,
+		origin: Vector3, yaw: float) -> Array:
+	var out: Array = []
+	for rung: Variant in _exit_reservation(build, shape):
+		for raw: Variant in (rung as Array):
+			out.append(_world_aabb(raw as AABB, origin, yaw))
+	return out
+
 ## Two reservation ladders, rung by rung, into one.
 ##
 ## MEASURED AND REJECTED: A THIRD RUNG HOLDING THE BRANCH ROOM'S OWN
@@ -1734,6 +1745,10 @@ static func _wedged_after(zone: Dictionary, out: Dictionary,
 		if str(spine[i]) == stuck:
 			at = i - 1
 			break
+	# The exit room is appended after the spine, so its join is the
+	# spine's last room.
+	if stuck == EXIT_ROOM_ID:
+		at = spine.size() - 1
 	if at < 0 and not spine.has(stuck):
 		# UP THE BRANCH TREE, NOT ONE STEP OF IT.
 		#
@@ -2045,6 +2060,29 @@ static func _build_once(zone: Dictionary, theme_override := "",
 						% [int(routing_policy(placed,
 								policy_override)["clearance_budget"]),
 							poses, turns_taken])
+				var _first := _world_aabb(result["bounds"] as AABB,
+						origin_for(cursor, yaw, entry_at), yaw)
+				var _hits: Array = []
+				for _bc: Dictionary in built_chambers:
+					var _xf: Transform3D = _bc["xform"]
+					var _box := _world_aabb((_bc["build"] as Dictionary)[
+							"bounds"] as AABB, _xf.origin,
+							_xf.basis.get_euler().y)
+					if _box.intersects(_first):
+						_hits.append("%s(%s)" % [str((_bc["chamber"]
+								as Dictionary).get("id", "?")),
+								str((_bc["chamber"] as Dictionary).get(
+									"type", "?"))])
+				print("       first pose overlaps rooms: %s" % str(_hits))
+				for _k in placed.size():
+					var _p: AABB = placed[_k]
+					if _p.intersects(_first):
+						var _cut := _p.intersection(_first)
+						print("       overlaps placed[%d/%d] at %v size %v; shared %v"
+								% [_k, placed.size(), _p.position, _p.size,
+									_cut.size])
+				print("       first pose box %v size %v" % [_first.position,
+						_first.size])
 				var _seen: Array = _all_but_last(placed)
 				var _at := cursor
 				for _i in 14:
@@ -2181,6 +2219,11 @@ static func _build_once(zone: Dictionary, theme_override := "",
 				pending.append({"from": chamber, "at": origin,
 						"yaw": yaw, "build": result,
 						"branch": raw_branch})
+		# THE SPINE'S WAY ON, which every branch below this room owes
+		# (HB-F4a): the chain continues from this room's exit only after
+		# the whole subtree is placed, a branch's branch included.
+		var spine_owed := [] if replaying \
+				else _owed_exit(result, shape, origin, yaw)
 		while not pending.is_empty():
 			var job: Dictionary = pending.pop_front()
 			var parent: Dictionary = job["from"]
@@ -2248,14 +2291,40 @@ static func _build_once(zone: Dictionary, theme_override := "",
 						"yaw": b_yaw, "bounds": _world_aabb(
 								shape["bounds"] as AABB, mouth_at, b_yaw),
 						"entry": mouth_at, "exit": b_cursor})
-			var b_plan := {"ok": true} if b_replaying \
-					else _plan_route(shape, corners,
-							b_result["bounds"] as AABB, b_entry, b_cursor,
-							b_yaw, placed, 0,
-							_socket_reservations(b_result, b_chamber,
-									_declared_branch_sockets(
-											graph_branches, b_chamber),
-									shape))
+			# A BRANCH MUST NOT TAKE THE SPINE'S WAY ON (HB-F4a).
+			#
+			# A spine room reserves the corridor its exit will need when
+			# it is placed -- and then its branches are placed at once,
+			# before the chain continues, and nothing told them. Measured
+			# on the owner's candidate campaign and the declared sample:
+			# with the reservation withheld from the branches, zone_004
+			# and sample `zone_08` fail on "branch room 'c015' off
+			# 'c013'"; with it they build (and withholding the branches'
+			# SIBLING doors instead changes nothing, so that is not here).
+			# So a branch's route is planned around the corridor first,
+			# and only if nothing fits that way, as before, without it:
+			# the corridor is a preference, and a branch that routes
+			# today is never refused for it.
+			var b_reserve := _socket_reservations(b_result, b_chamber,
+					_declared_branch_sockets(graph_branches, b_chamber),
+					shape)
+			var b_plan := {"ok": false}
+			if b_replaying:
+				b_plan = {"ok": true}
+			elif not spine_owed.is_empty():
+				b_plan = _plan_route(shape, corners,
+						b_result["bounds"] as AABB, b_entry, b_cursor,
+						b_yaw, spine_owed + placed, 0, b_reserve)
+				if OS.get_cmdline_user_args().has("--router-diag"):
+					print("  OWED %s off %s via %s: %s after %d pose(s)"
+							% [str(b_chamber.get("id", "?")),
+								str(parent.get("id", "?")), socket_id,
+								"routed" if bool(b_plan["ok"]) else "fell back",
+								poses])
+			if not b_replaying and not bool(b_plan["ok"]):
+				b_plan = _plan_route(shape, corners,
+						b_result["bounds"] as AABB, b_entry, b_cursor,
+						b_yaw, placed, 0, b_reserve)
 			if not bool(b_plan["ok"]):
 				if OS.get_cmdline_user_args().has("--router-diag"):
 					var _span: AABB = placed[0]
@@ -2269,6 +2338,18 @@ static func _build_once(zone: Dictionary, theme_override := "",
 					print("       placed=%d span=%v..%v"
 							% [placed.size(), _span.position,
 								_span.position + _span.size])
+					var _bfirst := _world_aabb(b_result["bounds"] as AABB,
+							origin_for(b_cursor, b_yaw, b_entry), b_yaw)
+					for _bc: Dictionary in built_chambers:
+						var _xf: Transform3D = _bc["xform"]
+						var _box := _world_aabb((_bc["build"] as Dictionary)[
+								"bounds"] as AABB, _xf.origin,
+								_xf.basis.get_euler().y)
+						if _box.intersects(_bfirst):
+							print("       first pose overlaps room %s (%s)"
+									% [str((_bc["chamber"] as Dictionary).get(
+										"id", "?")), str((_bc["chamber"]
+										as Dictionary).get("type", "?"))])
 					var _seen: Array = _all_but_last(placed)
 					var _at := b_cursor
 					for _i in 12:
@@ -2501,7 +2582,19 @@ static func _build_once(zone: Dictionary, theme_override := "",
 	if not bool(exit_plan["ok"]):
 		(exit_room["root"] as Node3D).free()
 		root.free()
-		return {"failed": "the exit room could not be placed clear of "
+		# A WEDGE LIKE ANY OTHER ROOM'S (HB-F4a). This returned `failed`
+		# alone, so `build()`'s ladder -- which backtracks every spine and
+		# branch room that cannot stand -- never ran for the one room every
+		# Zone has. Measured on the owner's candidate campaign: zone_011
+		# failed here on its first and only attempt, three compositions
+		# running, and the player could only discard it. The room to move
+		# is the one the exit hangs off, the spine's last, and
+		# `_wedged_after` walks back from there.
+		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+				"policy": routing_policy(placed, policy_override),
+				"blocking_rooms": [EXIT_ROOM_ID], "blocking_pairs": [],
+				"wedge": true,
+				"failed": "the exit room could not be placed clear of "
 				+ "the %d room(s) before it" % placed.size()}
 	# THE EXIT ROOM IS A ROOM. Its approach was searched exactly like
 	# every other and was the one route never written down, so a
