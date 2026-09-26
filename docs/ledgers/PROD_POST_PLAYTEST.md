@@ -4895,3 +4895,163 @@ fallback provider, DEFAULT scale, `--candidate=all`) and the real client.
     holds those Zones.
   - H-BOMBS slice 2's live receipt runs on this fix, through zone_004's
     discard, to zone_007's Bomb Bag.
+
+## 0.4 — H-BOMBS, slice 2 (PT-09, V-15): the campaign's own Bomb Bag, claimed, carried, thrown and refilled live — and the card that could not say what it was (HB-F5), repaired
+
+`13_WORK_QUEUE` H-BOMBS asks for "normal acquisition/equip/use receipt".
+V-15 asks for a "natural candidate claim, not injected component".
+Slice 1 answered both on the engine's own snapshots. This slice answers
+them live, as a player would, and on the fixed tree (HB-F4b, `7c0f9e3`).
+
+- **`godot-bombs-live`, new and in CI.** It runs three phases. Each is a
+  new bridge beside a new client, and only the save crosses between them
+  (`H-BOMBS2_live.log`, the make output; the raw per-phase logs are
+  `H-BOMBS2_live_{reach,claim,refill}.log.gz`). The bridge is the
+  candidate launcher's: mock AP, the fallback provider, DEFAULT scale,
+  `--candidate=all`.
+  - **reach** (10 checks) plays the candidate campaign from nothing:
+    - Zones 1–3 are claimed and left by their exits.
+    - zone_004 fails three times with one composition (HB-F4a) and is
+      discarded at the Hub's console.
+    - Zones 5 and 6 are claimed.
+    - It stops at zone_007, the first Zone holding a Bomb Bag Check.
+    - Nothing consumable is owned at any point before that. The HUD row
+      reads `Q —` after every Zone.
+  - **claim** (28 checks). The game restarts and the player enters
+    zone_007, where Check 89100161's pedestal stands in `c008`:
+    - The player walks up and presses [E]. That sends one claim, and the
+      campaign creates the Bomb Bag (`act_l89100161`).
+    - The card names it and, with HB-F5 below, says what it does and
+      which slot it takes: "Thrown: bursts for 34 damage within 4.0 m
+      after 1.4 s | Hits leave stunned for 1.5 s | 3.0s cooldown | Slot:
+      CONSUMABLE". The row reads `— Bomb Bag owned, not carried`, and one
+      word names the key: "Bomb Bag is a consumable for Q. Put it on the
+      key from EQUIPMENT [Tab]."
+    - Q with nothing on it says why and asks the bridge for nothing.
+    - Tab opens the wall, where the Bomb Bag has a tile. Its card offers
+      EQUIP ON Q, which sends one `slot_action`. Escape closes the wall
+      and the world runs again.
+    - The key reads `Bomb Bag 3 / 3`, and the save holds it on the key.
+    - Three presses of Q follow. Each asks for authorisation first,
+      throws after the answer, and reports the use. Each is counted by
+      the save on disk and on the key: 2 / 3, 1 / 3, then
+      `0 / 3  EMPTY`.
+    - A press on the empty supply says "Empty. It stays on Q, and
+      entering a Zone refills it." It throws nothing and asks for
+      nothing.
+  - **refill** (7 checks). After another restart:
+    - The Bomb Bag is still owned, still on the key and still empty.
+    - The player goes back into zone_007, claims the rest, and leaves.
+    - zone_008 fails three times with one composition (HB-F4a) and is
+      discarded.
+    - Entering zone_009 refills the supply. The generation goes 7 → 9,
+      and the key reads `Bomb Bag Mk 3 3 / 3`: two more Bomb Bag Checks
+      in zone_007 upgraded it.
+    - One throw from the new supply is counted by the save.
+- **What is the harness's, and what is not.** The log notes every harness
+  step.
+  - Harness steps:
+    - the other Checks, claimed by intent;
+    - the arrival in a room;
+    - one platform room's goal: the player is stood on `c008`'s goal
+      landing, and the room's own goal area sees them arrive.
+  - **Harness knowledge.** The client is not told what an unclaimed Check
+    holds: `scouted` carries no item name until it is claimed. So the
+    suite is told where the mock multiworld put its Bomb Bags, from the
+    mock's own placement (`fixtures/mock_placements.py` in the bridge,
+    tested against the mock's scout table in `test_mock_placements.py`).
+    The reach phase checks the client is **not** told. The claim phase
+    checks that it is told once the Check is claimed.
+  - Not the harness's:
+    - the claim itself: the pedestal, [E], one `claim_check`;
+    - the equip: the wall's own buttons;
+    - every throw: Q;
+    - the refill: entering a Zone;
+    - every count, read off the HUD and off the save on disk.
+- **HB-F5 (card, mine, REPAIRED): live, the card for a newly made Echo
+  never said what it was.**
+  - **The cause.** The bridge sends a claim's card from inside the
+    confirmation (`transactions.finalize`) and broadcasts the snapshot
+    holding the new Echo after it. The card looked the Echo up once, when
+    it was drawn, found nothing, and showed the name and the flavour
+    without the summary: what it does and which slot it takes.
+  - **Why slice 1 missed it.** Slice 1's fixture suite delivered the
+    snapshot first, so it never met this order. The live claim did:
+    "EPSILON ECHO ACQUIRED | Bomb Bag | Three of them. Lob one, count,
+    regret nothing."
+  - **The repair (`reveal.gd`).** A card that names an Echo the client
+    does not hold yet remembers it. When the snapshot carrying that Echo
+    lands, the card fills in the summary, on the same card. Live, the
+    card above is the result.
+  - **Regression.** `godot-bombs` now also delivers the arrival in the
+    live order (`_the_arrival_in_the_live_order`) and passes 37 checks.
+    With `reveal.gd` put back, exactly that check fails, with the live
+    card's text (`HB-F5_bombs_before.log`).
+- **HB-O1 (observation for the owner; nothing changed): a card holds the
+  controls, including Q.**
+  - Cards pause with the world while a wall is open. So the Bomb Bag's
+    card is still up when EQUIPMENT closes, and a Q pressed under it does
+    nothing and says nothing.
+  - Harness claims queue one card each, so the refill phase met a card
+    too.
+  - The receipt waits cards out, as a player would, and says so each
+    time ("OBSERVED: a card was up when Q was due").
+  - Whether a card should hold Q, or say something when it swallows a
+    press, is a design question for the owner. I have not changed it
+    quietly.
+- **My own mistakes on the way, recorded rather than smoothed over.**
+  Each was fixed in the driver; the product changed only for HB-F5.
+  - The first bag lookup read the scout table's item names. The client
+    is not told those, so the driver walked past zone_007 and claimed
+    the Bomb Bag by intent (`H-BOMBS2_first_reach.log.gz`).
+  - An unrevealed Check's `item_name` is JSON `null`, and `str(null)` is
+    "<null>". The "not told" check read the client as told.
+  - The claim phase knew fights and not platform rooms, so `c008`'s
+    pedestal stayed locked.
+  - Q was pressed under a card, twice (HB-O1).
+- **Sabotages: 5 of 5 caught**, each file restored byte for byte
+  (`H-BOMBS2_sabotages.log`, `H-BOMBS2_runner.py`). Each row replays one
+  phase from the save the clean run of the phase before it left, and
+  breaks one link of the chain:
+  - SL-1: the arrival points at nothing (`main.gd`). Caught by "one word
+    points at the key".
+  - SL-2, REPRO of HB-F5: the card is drawn once, before the Echo is
+    known (`reveal.gd`). Caught by "the card shows the Bomb Bag and its
+    slot", with the live card's text.
+  - SL-3: Q asks the bridge for nothing (`player.gd`). Caught at the
+    throw, which sent nothing.
+  - SL-4: the bridge hears the request and grants nothing
+    (`campaign.py`). Caught at the throw: `authorize_consumable` was
+    sent, and no answer and no bomb came.
+  - SL-5: entering a new Zone refills nothing (`transitions.py`). Caught
+    by "entering it refilled the supply": the generation stayed at 7 and
+    the key read `0 / 3 EMPTY`.
+
+  Under SL-2, the on-screen count of the key word also failed, because a
+  toast lives 3.5 s and the card wait ran longer. The receipt now counts
+  what was said since the claim in a log of every toast, so the check is
+  no longer timed.
+- **Regression** (`H-BOMBS2_regression_suites.tsv`), all on this tree
+  after the final live run. No suite printed a `SCRIPT ERROR`.
+  - `godot-bombs`: 37 checks (`H-BOMBS2_bombs_fixture.log`).
+  - Client suites: `godot-boot`, `godot-hud`, `godot-consumable` (87),
+    `godot-archive` (23), `godot-equipment-face` (107),
+    `godot-menu-shell` (23), `godot-reload` (20).
+  - Integration: `godot-integration` and `godot-integration-quiet`.
+  - Live suites: `godot-consumable-live`, `godot-consumable-restart`,
+    `godot-candidate-live` (315 s) and `godot-resume-live`.
+  - `make test`: 2,304 passed, the three new placement tests among them.
+- **Where PT-09 stands.**
+  - V-15's cases are all met live, in the owner's own candidate
+    campaign:
+    - absent: nothing owned through six Zones;
+    - owned: the row, the card and the word about the key;
+    - equip: the wall;
+    - real authorised use: three throws, each authorised and counted by
+      the save;
+    - empty: `EMPTY`, and a press that says so;
+    - refill: entering the next Zone.
+  - The owner's own save has still not arrived. This is their campaign
+    replayed from the same inputs, not their file.
+  - A player who reaches the Bomb Bag still passes one or two unbuildable
+    Zones on the way (HB-F4a).

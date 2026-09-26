@@ -34,6 +34,7 @@ godot-path.txt
 .transport-saves/
 .reversible-saves/
 .candidate-saves/
+.bombs-saves/
 .resume-saves/
 .resume-saves-legacy/
 .latched-route-play/

@@ -199,6 +199,9 @@ jobs:
       - name: The whole candidate profile in one Zone, and a restart
         run: make godot-candidate-live
 
+      - name: The Bomb Bag the campaign gives, claimed, carried and thrown, live
+        run: make godot-bombs-live
+
       - name: An encounter resumed as it was left, through a real bridge and restarts
         run: make godot-resume-live
 

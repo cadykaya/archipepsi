@@ -282,6 +282,12 @@ func _ready() -> void:
 		var bombs_driver := BombsDriver.new()
 		bombs_driver.main = self
 		add_child(bombs_driver)
+	# H-BOMBS slice 2: the Bomb Bag the campaign gives, claimed, carried,
+	# thrown and refilled through a real bridge and two restarts.
+	if BombsLiveDriver.bombs_phase() != "":
+		var bombs_live_driver := BombsLiveDriver.new()
+		bombs_live_driver.main = self
+		add_child(bombs_live_driver)
 
 ## Enter the curated Stage 3A showcase.
 ##

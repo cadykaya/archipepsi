@@ -84,6 +84,7 @@ func _run() -> void:
 	await _the_key_on_the_hud()
 	await _pressing_the_key()
 	await _the_arrival()
+	await _the_arrival_in_the_live_order()
 	await _first_sight_is_not_news()
 	await _equipping_it()
 	await _a_refused_use()
@@ -291,6 +292,42 @@ func _the_arrival() -> void:
 		if text.contains("Bomb Bag"):
 			again += 1
 	_check(again == 0, "…and the next snapshot does not say it again")
+
+
+## THE SAME ARRIVAL IN THE ORDER A LIVE BRIDGE SENDS IT (HB-F5): the card
+## first, from inside the claim's confirmation, and the snapshot holding
+## the new Echo after it. `_the_arrival` delivers the snapshot first, which
+## is why it never saw a live card with no summary on it.
+func _the_arrival_in_the_live_order() -> void:
+	print("  -- THE ARRIVAL, LIVE ORDER: the card before the snapshot")
+	var gone := false
+	for _i in 600:
+		if not main.reveal.visible:
+			gone = true
+			break
+		await _frames(1)
+	_check(gone, "the earlier cards have been read")
+	await _deliver("none_owned")
+	await _frames(4)
+	for raw: Variant in _meta().get("notices", []) as Array:
+		BridgeClient._handle(JSON.stringify(raw))
+		await _frames(2)
+	var before: Dictionary = main.reveal.shown()
+	_check(bool(before.get("visible", false))
+			and str(before.get("echo", "")).contains("Bomb Bag")
+			and not str(before.get("echo", "")).contains("CONSUMABLE"),
+			"the card is up before the client holds the Echo, so it can "
+			+ "name the Bomb Bag and not yet say what it is (%s)"
+			% str(before.get("echo", "")).replace("\n", " | "))
+	await _deliver("acquired")
+	await _frames(2)
+	var after: Dictionary = main.reveal.shown()
+	_check(bool(after.get("visible", false))
+			and str(after.get("echo", "")).contains("CONSUMABLE"),
+			"the snapshot lands and the same card says what it is and "
+			+ "which key it goes on (%s)"
+			% str(after.get("echo", "")).replace("\n", " | "))
+	_clear_toasts()
 
 
 ## A CAMPAIGN FIRST MET ALREADY OWNING IT is a baseline, not news: its

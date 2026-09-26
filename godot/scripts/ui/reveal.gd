@@ -27,9 +27,20 @@ var _body: Label
 var _divider: ColorRect
 var _echo_body: Label
 var tones: Tones
+## THE ECHO THIS CARD NAMES AND THE CLIENT DOES NOT HOLD YET, or "".
+##
+## HB-F5: the bridge sends a claim's card from inside the confirmation
+## (`transactions.finalize`) and the snapshot carrying the new Echo after
+## it, so live, every card for a newly made Echo was drawn before the
+## client knew that Echo. It showed the name and the flavour and never the
+## summary -- what it does and which key it goes on. A fixture that
+## applied the snapshot first never saw it. The card now fills in when
+## that snapshot lands.
+var _awaiting_echo := ""
 
 func _ready() -> void:
 	layer = 10
+	BridgeClient.snapshot_received.connect(_on_snapshot)
 	visible = false
 
 	# Dims the world behind the card. Without it the card competes with a
@@ -132,11 +143,14 @@ func _show_next() -> void:
 	# For a reveal carrying an echo, append the shared effect summary so the
 	# card and the inventory describe it identically.
 	var echo_id: Variant = note.get("echo_id")
+	_awaiting_echo = ""
 	if echo_id != null:
 		var echo := BridgeClient.echo_by_id(str(echo_id))
 		if not echo.is_empty():
 			echo_lines.append("")
 			echo_lines.append_array(EffectSummary.lines(echo))
+		else:
+			_awaiting_echo = str(echo_id)
 	_body.text = "\n".join(sent_lines)
 	_echo_body.text = "\n".join(echo_lines)
 	# No Echo half means no rule to divide: a legacy campaign's own item
@@ -180,3 +194,19 @@ func _play_slam() -> void:
 	tween.tween_property(_backdrop, "color:a", 0.66, 0.12)
 	tween.tween_property(_panel, "modulate:a", 1.0, 0.10)
 	tween.tween_property(_flash, "color:a", 0.0, 0.24)
+
+## The snapshot that carries the card's Echo, arriving after the card: its
+## summary goes where it would have been had it come first.
+func _on_snapshot(_message: Dictionary) -> void:
+	if _awaiting_echo == "" or not visible:
+		return
+	var echo := BridgeClient.echo_by_id(_awaiting_echo)
+	if echo.is_empty():
+		return
+	_awaiting_echo = ""
+	var lines: Array = [_echo_body.text] if _echo_body.text != "" else []
+	lines.append("")
+	lines.append_array(EffectSummary.lines(echo))
+	_echo_body.text = "\n".join(lines)
+	_divider.visible = true
+	_echo_body.visible = true

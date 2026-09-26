@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-signal-verbs godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted godot-menu-shell menu-shell-shots godot-equipment-face equipment-face-shots equipment-fixture godot-minimap minimap-shots map-fixture godot-map-face map-face-shots godot-journal-face journal-face-shots journal-fixture lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-rail-gantry godot-rail-network godot-gantry-census godot-machine-life godot-bombs bomb-fixture godot-enemy-footing godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-status-kinetic godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures latched-route-fixture transport-fixture reversible-fixture candidate-fixture zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-consumable-live godot-consumable-restart godot-encounter godot-signal-graph godot-signal-verbs godot-latched-route godot-latched-route-live godot-lever-route-live godot-held-route godot-counterfire-hosted godot-passing-hosted godot-menu-shell menu-shell-shots godot-equipment-face equipment-face-shots equipment-fixture godot-minimap minimap-shots map-fixture godot-map-face map-face-shots godot-journal-face journal-face-shots journal-fixture lever-route-fixture held-route-fixture latched-route-play godot-theme-pack theme-pack-shots godot-carry godot-transport godot-transport-live godot-reversible godot-reversible-live godot-candidate-live godot-resume-live candidate-shots godot-integration godot-integration-quiet godot-integration-variant-live godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-rail-carrier godot-rail-junction godot-passing-platforms godot-counterfire godot-mass-class godot-unweighted godot-target-facing godot-rail-zone godot-rail-gantry godot-rail-network godot-gantry-census godot-machine-life godot-bombs godot-bombs-live bomb-fixture godot-enemy-footing godot-zone-state godot-roster godot-actuator godot-constraints godot-archive godot-test godot-traverse godot-verbs godot-verb-runtime godot-status-family godot-status-kinetic godot-combat-fairness godot-flyer-room godot-resume godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas railway-shots verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -1450,6 +1450,43 @@ godot-bombs: godot-import  # H-BOMBS (PT-09, V-15): a natural consumable, notice
 	  echo "-- a script error was raised"; exit 1; \
 	fi; \
 	exit $$status
+
+BOMBS_SAVES := $(CURDIR)/.bombs-saves
+# HARNESS KNOWLEDGE: the Checks the mock multiworld filled with a Bomb
+# Bag, from its own placement. The client is not told what an unclaimed
+# Check holds, so the suite is, and says so. Recursive (`=`): computed
+# only when a bombs phase runs.
+BOMB_BAG_IDS = $(shell cd bridge && $(PY) -m \
+  archipepsi_bridge.fixtures.mock_placements "Bomb Bag")
+# H-BOMBS slice 2: one phase of the Bomb Bag's live receipt. A new bridge
+# (the candidate launcher's: mock AP, fallback, DEFAULT scale,
+# --candidate=all) beside a new client; only the save crosses.
+define bombs_phase
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(BOMBS_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default --candidate=all & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start for $(1) (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --bombs-live=$(1) \
+	  --bombs-save-dir=$(BOMBS_SAVES) --bombs-bag-ids=$(BOMB_BAG_IDS) \
+	  > /tmp/archipepsi-bombs-$(1).log 2>&1; \
+	STATUS=$$?; kill $$BRIDGE_PID 2>/dev/null; wait $$BRIDGE_PID 2>/dev/null; \
+	grep -E "^(  ok|  NOTE|FAIL|reached|claimed|GODOT BOMBS LIVE)" \
+	  /tmp/archipepsi-bombs-$(1).log; \
+	if [ $$STATUS -ne 0 ]; then tail -20 /tmp/archipepsi-bombs-$(1).log; \
+	  exit $$STATUS; fi; \
+	if grep -qE "SCRIPT ERROR|String formatting error" \
+	  /tmp/archipepsi-bombs-$(1).log; then \
+	  echo "bombs phase $(1): runtime errors in the run"; exit 1; fi
+endef
+godot-bombs-live: godot-import  # H-BOMBS slice 2: the Bomb Bag claimed, carried, thrown and refilled, live
+	rm -rf $(BOMBS_SAVES)
+	$(call bombs_phase,reach)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call bombs_phase,claim)
+	@echo "-- restart: both processes new, only the save crosses --"
+	$(call bombs_phase,refill)
 
 godot-unweighted: godot-import  # EX50-033: the room the class change opens
 	@out=$$($(GODOT) --headless --path godot -- --unweighted-test 2>&1); \

@@ -542,11 +542,27 @@ owner's D-06/D-07 rulings and the seam table are in
         - HB-F4e: the `c001_pd0` pressure-door certificate, whose latch
           does not fire in every run (zone_010, zone_012).
       - Dess's: N-20, a retry composes the same Zone.
-    - **Next:** H-BOMBS slice 2, the live receipt. The real client claims
-      the Bomb Bag over a real socket in zone_007, reached through
-      zone_004's discard. It is equipped from the equipment wall, thrown,
-      counted by the save, emptied and refilled, with no
-      `give_consumable.py`. Then HB-F4a, HB-F4c and HB-F4e.
+    - **H-BOMBS slice 2 (PT-09/V-15): the campaign's own Bomb Bag,
+      live.** `godot-bombs-live` (new, in CI) runs three phases, each a
+      new bridge beside a new client:
+      - reach (10 checks): through zone_004's discard to zone_007, with
+        nothing owned;
+      - claim (28): the pedestal and [E], equip from the wall, three
+        throws each authorised and counted by the save, then EMPTY;
+      - refill (7): through zone_008's discard; entering zone_009
+        refills the supply.
+      - HB-F5, repaired: live, the card for a new Echo never said what
+        it was. The card came before the snapshot, and it now fills in
+        when the snapshot lands. `godot-bombs` delivers the live order
+        (37 checks).
+      - HB-O1, for the owner: a card holds the controls, Q included, and
+        outlasts the equipment wall.
+      - 5 of 5 sabotages caught. Where the Bomb Bags are is harness
+        knowledge from the mock's own placement; the suite checks the
+        client is not told.
+    - **Next:** HB-F4a (router placement), HB-F4c (the connector) and
+      HB-F4e (the pressure-door certificate). PT-09 is met live, but a
+      player still passes one or two unbuildable Zones on the way.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

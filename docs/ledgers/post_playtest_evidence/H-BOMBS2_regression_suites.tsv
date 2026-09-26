@@ -1,0 +1,16 @@
+# godot-boot godot-hud godot-consumable godot-archive godot-equipment-face godot-menu-shell godot-reload godot-integration godot-integration-quiet godot-consumable-live godot-consumable-restart godot-candidate-live godot-resume-live test on 7c0f9e3 (+ working tree changes), 05:41 UTC
+target	exit	seconds	result
+godot-boot	0	21	GODOT BOOT TESTS OK
+godot-hud	0	21	GODOT HUD TESTS OK
+godot-consumable	0	22	GODOT CONSUMABLE TESTS OK (87 checks)
+godot-archive	0	21	GODOT ARCHIVE OK (23 checks, 0 notes)
+godot-equipment-face	0	28	GODOT EQUIPMENT FACE OK (107 checks, 1 notes)
+godot-menu-shell	0	29	GODOT MENU SHELL OK (23 checks, 2 notes)
+godot-reload	0	60	GODOT RELOAD TESTS OK (20 checks)
+godot-integration	0	118	GODOT INTEGRATION OK
+godot-integration-quiet	0	117	GODOT INTEGRATION OK
+godot-consumable-live	0	44	GODOT CONSUMABLE LIVE TESTS OK (1 notes)
+godot-consumable-restart	0	41	GODOT CONSUMABLE LIVE TESTS OK (1 notes)
+godot-candidate-live	0	315	GODOT CANDIDATE LIVE NEXT_FINAL OK (8 checks, 1 notes)
+godot-resume-live	0	105	GODOT RESUME LIVE LEGACY OK (6 checks, 0 notes)
+test	0	232	2304 passed, 6 warnings, 627 subtests passed in 228.74s (0:03:48)
