@@ -5640,3 +5640,43 @@ stand, and the bounded ladder ran out. **Measured, and now repaired.**
 - **Regression:** the full frontier runs on the frozen revision holding
   this before it is pushed (CK9, the next section).
 - **Next:** HB-O1, as the owner ruled; then HB-F4g and HB-F4f.
+
+## CK9 checkpoint — the full frontier on `841041a` (HB-F4a-3): 91 of 92
+
+- **On `841041a` (the HB-F4a-3 head): 91 of 92 steps passed,** in one
+  run on that one revision, 13:40–15:11 UTC.
+  - The steps are CK8's 92, unchanged.
+  - It covers every commit since CK8's revision (`adfb76c`): the CK8
+    record and HB-F4a-3. Dess pushed nothing in between.
+  - `make test`: 2,304 passed.
+  - No log has a line starting `SCRIPT ERROR`. Eight logs contain the
+    words, all in the Makefile's own echoed recipe, none from the
+    engine.
+  - Every live suite passed, run one at a time with nothing else on the
+    machine.
+  - `godot-zone-audit` (step 22) rewrote the one placement fixture's
+    provenance stamp, as at every checkpoint. It was restored.
+  - These are local results; remote CI does not run (N-6).
+- **Step 65, `godot-flyer-room`, failed:** "c011 cleared with the Static
+  Pulse aimed at the divers' bodies: 1 of 5 killed" in 61 s
+  It had passed at CK5, CK6, CK7 and CK8.
+  - **Not HB-F4a-3's routing.** The Zone this suite plays builds the
+    same on both revisions, node for node. HB-F4a-3 only made the build
+    slower, and the divers' positions follow the wall clock. That
+    exposed a defect in the return plug. The measurements are in
+    CK9-F1, next.
+  - **So `841041a` is not pushed on this checkpoint.** It goes out with
+    the CK9-F1 repair, on the next full frontier.
+- **The run's raw logs were lost, and so was `841041a`.**
+  - Neither was pushed. The container was reclaimed at about 22:27 UTC
+    and took them, with the CK9-F1 and HB-O1 work.
+  - The figures above come from the session transcript. Every command
+    run against the frontier's output, and what it printed, is kept
+    verbatim in `CK9_transcript_extract.txt`: the step count, the one
+    red step, and the failing log's tail.
+  - `841041a` was rebuilt as `22fdbda` on `3b96bc4`, and it reproduces
+    the lost commit's recorded 24-Zone walk digest for digest.
+  - Holding four verified commits unpushed for one frontier was my
+    mistake. A green push waited on a checkpoint that a reclaimed
+    container can take with it; verified work now goes out as soon as
+    its own checks pass, with the frontier after.

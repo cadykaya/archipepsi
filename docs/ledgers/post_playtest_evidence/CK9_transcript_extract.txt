@@ -1,0 +1,349 @@
+# CK9 on 841041a: what the session transcript holds of the run.
+# The frontier's own TSV and 92 raw logs were lost unpushed when the
+# container was reclaimed (2026-09-26 ~22:27 UTC). Below, verbatim, each
+# command run against them during the session and what it printed.
+
+===== 2026-09-26T13:43:26.698Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; tail -3 $S/../tasks/bfpmvialz.output 2>/dev/null; echo ---; wc -l < $S/ck9_frontier/summary.tsv; tail -4 $S/ck9_frontier/summary.tsv; awk -F'\t' '$2!="0"' $S/ck9_frontier/summary.tsv | head
+----- output
+---
+11
+4	make export && git diff --exit-code -- bridge/archipepsi_bridge/schemas/generated godot/scripts/autoload/constants.gd apworld/archipepsi/constants.py	0	1	
+5	make godot-import	0	10	
+6	make doctor	0	3	
+7	make godot-boot	0	16	GODOT BOOT TESTS OK
+rev 841041acf78d9985e23205ce36a3e50b7016087c
+start 13:40:07
+tree_at_start 0
+first_step 1
+1	make test	0	169	2304 passed, 6 warnings, 627 subtests passed in 166.80s (0:0
+2	make smoke	0	0	SMOKE OK — bridge-only loop: connect, scout, allocate, gen
+3	python3 docs/design-packet-v0.8/check_packet.py	0	1	prose matches the models across 11 documents (1365 known ide
+4	make export && git diff --exit-code -- bridge/archipepsi_bridge/schemas/generated godot/scripts/autoload/constants.gd apworld/archipepsi/constants.py	0	1	
+5	make godot-import	0	10	
+6	make doctor	0	3
+
+===== 2026-09-26T13:57:02.537Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; date +%H:%M; tail -2 $S/ck9_frontier/summary.tsv | cut -c1-150; awk -F'\t' 'NF>3 && $2!="0"' $S/ck9_frontier/summary.tsv | cut -c1-200
+----- output
+13:57
+28	make godot-exit-reach	0	25	GODOT EXIT REACH OK (85 checks)
+29	make godot-passenger-carry	0	38	GODOT PASSENGER CARRY OK (4 checks)
+1	make test	0	169	2304 passed, 6 warnings, 627 subtests passed in 166.80s (0:0
+2	make smoke	0	0	SMOKE OK — bridge-only loop: connect, scout, allocate, gen
+3	python3 docs/design-packet-v0.8/check_packet.py	0	1	prose matches the models across 11 documents (1365 known ide
+4	make export && git diff --exit-code -- bridge/archipepsi_bridge/schemas/generated godot/scripts/autoload/constants.gd apworld/archipepsi/constants.py	0	1	
+5	make godot-import	0	10	
+6	make doctor	0	3	
+7	make godot-boot	0	16	GODOT BOOT TESTS OK
+8	make godot-test	0	22	GODOT CHAMBER TESTS OK
+9	make godot-hud	0	17	GODOT HUD TESTS OK
+10	make godot-rules	0	16	GODOT RULES TESTS OK
+11	make godot-stats	0	16	GODOT STATS TESTS OK
+12	make godot-lab	0	16	GODOT LAB TESTS OK
+13	make godot-affordance	0	17	GODOT AFFORDANCE TESTS OK
+14	make godot-verbs	0	16	GODOT VERBS TESTS OK
+15	make godot-blink	0	18	GODOT BLINK TESTS OK
+16	make godot-content	0	16	GODOT CONTENT TESTS OK
+17	make godot-activity	0	34	GODOT ACTIVITY TESTS OK
+18	make godot-room	0	16	GODOT ROOM TESTS OK
+19	make godot-room-contract	0	146	GODOT ROOM CONTRACT TESTS OK
+20	make godot-graphs	0	127	GODOT GRAPH TESTS OK
+21	make godot-movement	0	18	GODOT MOVEMENT TESTS OK
+22	make godot-zone-audit	0	19	GODOT ZONE AUDIT OK
+23	make godot-legible	0	16	GODOT LEGIBILITY TESTS OK
+24	make godot-physics	0	130	GODOT PHYSICS TESTS OK (68 checks)
+25	make godot-traverse	0	56	GODOT TRAVERSE TESTS OK (37 checks)
+26	make godot-return-placement	0	16	GODOT RETURN PLACEMENT OK
+27	make godot-build-failure	0	17	GODOT RELOAD TESTS OK (6 checks)
+28	make godot-exit-reach	0	25	GODOT EXIT REACH OK (85 checks)
+29	make godot-passenger-carry	0	38	GODOT PASSENGER CARRY OK (4 checks)
+
+===== 2026-09-26T14:02:16.621Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; date +%H:%M; tail -1 $S/ck9_frontier/summary.tsv | cut -c1-120; awk -F'\t' 'NF>3 && $3!="0"' $S/ck9_frontier/summary.tsv | cut -c1-200
+----- output
+14:02
+33	make godot-counterfire	0	78	GODOT COUNTERFIRE OK (59 checks, 2 notes)
+
+===== 2026-09-26T15:11:19.228Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; date +%H:%M; tail -5 $S/../tasks/bfpmvialz.output; echo ---; grep -c "" $S/ck9_frontier/summary.tsv; awk -F'\t' 'NF>=4 && $1 ~ /^[0-9]+$/ {n++; if ($3!="0") bad++} END {print "steps", n, "nonzero", bad+0}' $S/ck9_frontier/summary.tsv; head -4 $S/ck9_frontier/summary.tsv; tail -4 $S/ck9_frontier/summary.tsv | cut -c1-160
+----- output
+15:11
+
+[exited with code 0]
+---
+99
+steps 92 nonzero 1
+rev 841041acf78d9985e23205ce36a3e50b7016087c
+start 13:40:07
+tree_at_start 0
+first_step 1
+92	make journal-fixture && git diff --exit-code -- godot/tests/fixtures/journal_snapshot.json; rc=$?; git checkout -- godot/tests/fixtures/journal_snapshot.json
+end 15:11:11
+tree_at_end 
+DONE
+
+===== 2026-09-26T15:11:25.023Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; awk -F'\t' 'NF>=4 && $1 ~ /^[0-9]+$/ && $3!="0"' $S/ck9_frontier/summary.tsv | cut -c1-300; ls $S/ck9_frontier/logs | head -3; ls $S/ck9_frontier/logs | wc -l
+----- output
+65	make godot-flyer-room	2	96	
+01_make_test.log
+02_make_smoke.log
+03_python3_docs_design_packet_v0_8_check_packet_py.log
+92
+
+===== 2026-09-26T15:11:29.080Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; f=$(ls $S/ck9_frontier/logs/65_* ); echo $f; wc -l < $f; grep -n "FAIL\|SCRIPT ERROR\|Error\|error\|timed out\|OK" $f | head -30; tail -15 $f
+----- output
+/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad/ck9_frontier/logs/65_make_godot_flyer_room.log
+87
+85:FAIL: c011 cleared with the Static Pulse aimed at the divers' bodies: 1 of 5 killed, counted from enemy_died; kill_all satisfied: false
+87:make: *** [Makefile:645: godot-flyer-room] Error 1
+         [3] take_damage (res://scripts/enemies/enemy.gd:1535)
+         [4] hit (res://scripts/gameplay/damageable.gd:62)
+         [5] _fire_static_pulse (res://scripts/gameplay/player.gd:1015)
+         [6] _physics_process (res://scripts/gameplay/player.gd:948)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] _station_came_online (res://scripts/gameplay/zone_controller.gd:1955)
+         [2] _on_station_reached (res://scripts/gameplay/zone_controller.gd:1944)
+         [3] _on_pad_entered (res://scripts/gameplay/warp_station.gd:128)
+    [c011 / cleared] killed 1 of 5 in 61.0 s; player deaths 0
+   GDScript backtrace (most recent call first):
+FAIL: c011 cleared with the Static Pulse aimed at the divers' bodies: 1 of 5 killed, counted from enemy_died; kill_all satisfied: false
+GODOT FLYER ROOM: 1 failures in 7 checks
+make: *** [Makefile:645: godot-flyer-room] Error 1
+
+===== 2026-09-26T15:11:36.815Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; grep -v "^ *\[\|at: \|GDScript backtrace\|WARNING" $S/ck9_frontier/logs/65_make_godot_flyer_room.log | head -60
+----- output
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+p3a: room c001       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c002       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c018       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c020       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c021       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c025       shell=minor_counterfire_arcade mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c003       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c004       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c005       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c014       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c015       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c017       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c024       shell=minor_unweighted_switch mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c006       shell=shell_hall_transit   mode=none   declared=6 judged=5 accepted=5 selected=0 declined=0 built=0
+p3a: room c007       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c008       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c009       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c011       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c012       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c010       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c013       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c016       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+  ok: the played Zone's c011 declares its divers (5)
+  ok: the player stands in c011, at its arrival
+  ok: all 5 divers are alive when the player arrives
+  ok: c011, the player standing on the floor: the divers WAIT -- 0 dives, 0 impacts in 5 s
+  ok: c011, waiting reads as watching: 5 of 5 divers have noticed the player and hold their eye at the watching level
+  ok: c011, the player jumping: leaving the ground draws dives and they land (7 dives, 5 impacts, 60.0 damage)
+FAIL: c011 cleared with the Static Pulse aimed at the divers' bodies: 1 of 5 killed, counted from enemy_died; kill_all satisfied: false
+GODOT FLYER ROOM: 1 failures in 7 checks
+make: *** [Makefile:645: godot-flyer-room] Error 1
+
+===== 2026-09-26T15:12:44.618Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; grep -n "WARNING\|ERROR" $S/ck9_frontier/logs/65_make_godot_flyer_room.log | sed 's/^\([0-9]*:\).\{0,0\}/\1/' | cut -c1-220 | sort -t: -k2 | uniq -c -f1 | head -20; echo ----; grep -n "WARNING\|ERROR" $S/ck9_flyer/rerun1_841041a.log | cut -c1-220 | head -10
+----- output
+----
+
+===== 2026-09-26T15:12:48.297Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; sed -n 30,87p $S/ck9_frontier/logs/65_make_godot_flyer_room.log | cut -c1-200
+----- output
+p3a: room c019       shell=shell_corner_left    mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c022       shell=shell_corner_right   mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: room c023       shell=(procedural)         mode=none   declared=0 judged=0 accepted=0 selected=0 declined=0 built=0
+p3a: selection mode=none -- nothing selected
+p3a: zone zone_001 mode=none declared=6 judged=5 accepted=5 selected=0 built=0 declined=0 refused=0 (rooms judged before the first build: 25)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] _on_object_settled (res://scripts/gameplay/zone_controller.gd:1109)
+         [2] _watch_rest (res://scripts/gameplay/transported_objects.gd:373)
+         [3] _physics_process (res://scripts/gameplay/transported_objects.gd:350)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] send_layout_result (res://scripts/gameplay/zone_controller.gd:1899)
+         [2] _publish_layout (res://scripts/gameplay/zone_controller.gd:1713)
+         [3] _certify_physics (res://scripts/gameplay/zone_controller.gd:1821)
+         [4] of_build (res://scripts/gameplay/chain_certificate.gd:141)
+         [5] of_room (res://scripts/gameplay/chain_certificate.gd:81)
+         [6] certify (res://scripts/gameplay/chain_certificate.gd:228)
+         [7] replay (res://scripts/gameplay/replay_harness.gd:78)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] _await_verdict (res://scripts/gameplay/zone_controller.gd:1772)
+  ok: the played Zone's c011 declares its divers (5)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] _track_chamber (res://scripts/gameplay/zone_controller.gd:2228)
+         [2] _process (res://scripts/gameplay/zone_controller.gd:2237)
+  ok: the player stands in c011, at its arrival
+  ok: all 5 divers are alive when the player arrives
+    [c011 / grounded] telegraphs 0, dives 0, impacts 0, damage 0.0, watching 5 of 5
+  ok: c011, the player standing on the floor: the divers WAIT -- 0 dives, 0 impacts in 5 s
+  ok: c011, waiting reads as watching: 5 of 5 divers have noticed the player and hold their eye at the watching level
+    [c011 / jumping] impacts by source: { "diver": { "impacts": 5, "damage": 60.0 } }
+    [c011 / jumping] telegraphs 7, dives 7, impacts 5, damage 60.0
+  ok: c011, the player jumping: leaving the ground draws dives and they land (7 dives, 5 impacts, 60.0 damage)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] _on_enemy_died (res://scripts/gameplay/zone_controller.gd:2083)
+         [2] die (res://scripts/enemies/enemy.gd:1673)
+         [3] take_damage (res://scripts/enemies/enemy.gd:1535)
+         [4] hit (res://scripts/gameplay/damageable.gd:62)
+         [5] _fire_static_pulse (res://scripts/gameplay/player.gd:1015)
+         [6] _physics_process (res://scripts/gameplay/player.gd:948)
+     at: push_warning (core/variant/variant_utility.cpp:1034)
+     GDScript backtrace (most recent call first):
+         [0] send_intent (res://scripts/autoload/bridge_client.gd:148)
+         [1] _station_came_online (res://scripts/gameplay/zone_controller.gd:1955)
+         [2] _on_station_reached (res://scripts/gameplay/zone_controller.gd:1944)
+         [3] _on_pad_entered (res://scripts/gameplay/warp_station.gd:128)
+    [c011 / cleared] killed 1 of 5 in 61.0 s; player deaths 0
+   GDScript backtrace (most recent call first):
+FAIL: c011 cleared with the Static Pulse aimed at the divers' bodies: 1 of 5 killed, counted from enemy_died; kill_all satisfied: false
+GODOT FLYER ROOM: 1 failures in 7 checks
+make: *** [Makefile:645: godot-flyer-room] Error 1
+
+===== 2026-09-26T15:14:59.662Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; cd $S/ck9_frontier/logs && grep -l "^SCRIPT ERROR\|^ *SCRIPT ERROR:" *.log | head; echo "lines starting SCRIPT ERROR: $(grep -h '^SCRIPT ERROR' *.log | wc -l)"; echo "logs containing the words: $(grep -l 'SCRIPT ERROR' *.log | wc -l)"; grep -h "passed" 01_make_test.log | tail -1; grep -n "tree_at_end\|git status" $S/ck9_frontier.sh | head
+----- output
+lines starting SCRIPT ERROR: 0
+logs containing the words: 8
+2304 passed, 6 warnings, 627 subtests passed in 166.80s (0:02:46)
+10:echo "tree_at_start $(git status --porcelain | wc -l)" >> "$OUT/summary.tsv"
+26:echo "tree_at_end $(git status --porcelain | tr '\n' ' ')" >> "$OUT/summary.tsv"
+Shell cwd was reset to /home/user/archipepsi
+
+===== 2026-09-26T15:15:56.843Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; for f in $S/ck9_frontier/logs/65_make_godot_flyer_room.log $S/ck9_flyer/rerun1_841041a.log $S/ck9_flyer/repeat_*.log; do echo "$(basename $f): pad_entered=$(grep -c '_on_pad_entered' $f) died_sends=$(grep -c '_on_enemy_died' $f) $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $f)"; done; ls $S/../../ -d >/dev/null; grep -rn "CK5\|CK8" /dev/null; ls /home/user/archipepsi/docs/ledgers/post_playtest_evidence/ | grep -i "flyer" | head
+----- output
+65_make_godot_flyer_room.log: pad_entered=1 died_sends=1 killed 1 of 5 in 61.0 s
+rerun1_841041a.log: pad_entered=0 died_sends=5 killed 5 of 5 in 7.0 s
+repeat_1.log: pad_entered=0 died_sends=5 killed 5 of 5 in 8.0 s
+repeat_2.log: pad_entered=0 died_sends=0 
+H-FLYER-AI_c011_on_41d7a9a_runtime.log
+H-FLYER-AI_repro_on_41d7a9a.log
+H-FLYER-HIT_repro_on_6ebbc90.log
+ML-F_encounter_flyers_before.log
+
+===== 2026-09-26T15:22:31.106Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; awk -F'\t' 'NF>=4 && $1 ~ /^[0-9]+$/' $S/ck9_frontier/summary.tsv | awk -F'\t' '{print $2}' | grep -n "live" | head -20; grep "^start\|^end" $S/ck9_frontier/summary.tsv
+----- output
+69:make godot-consumable-live
+71:make godot-latched-route-live
+72:make godot-lever-route-live
+73:make godot-transport-live
+74:make godot-reversible-live
+75:make godot-candidate-live
+76:make godot-bombs-live
+77:make godot-resume-live
+78:make godot-ordinary-live
+81:make godot-integration-variant-live
+start 13:40:07
+end 15:11:11
+
+===== 2026-09-26T15:23:12.093Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; for f in $S/ck9_frontier/logs/65_make_godot_flyer_room.log $S/ck9_flyer/rerun1_841041a.log $S/ck9_flyer/repeat_*.log $S/ck9_flyer/ck8_repeats/run_*.log; do [ -s $f ] || continue; echo "$(basename $(dirname $f))/$(basename $f): $(grep -o 'jumping\] telegraphs [0-9]*, dives [0-9]*, impacts [0-9]*' $f) | $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $f)"; done
+----- output
+logs/65_make_godot_flyer_room.log: jumping] telegraphs 7, dives 7, impacts 5 | killed 1 of 5 in 61.0 s
+ck9_flyer/rerun1_841041a.log: jumping] telegraphs 5, dives 5, impacts 3 | killed 5 of 5 in 7.0 s
+ck9_flyer/repeat_1.log: jumping] telegraphs 8, dives 8, impacts 7 | killed 5 of 5 in 8.0 s
+ck9_flyer/repeat_2.log: jumping] telegraphs 9, dives 9, impacts 8 | killed 1 of 5 in 61.1 s
+ck9_flyer/repeat_3.log: jumping] telegraphs 10, dives 10, impacts 9 | killed 1 of 5 in 60.8 s
+ck9_flyer/repeat_4.log: jumping] telegraphs 9, dives 9, impacts 8 | killed 1 of 5 in 61.1 s
+ck9_flyer/repeat_5.log:  | 
+ck8_repeats/run_1.log: jumping] telegraphs 7, dives 7, impacts 6 | killed 5 of 5 in 12.0 s
+ck8_repeats/run_2.log: jumping] telegraphs 4, dives 4, impacts 3 | killed 5 of 5 in 12.0 s
+
+===== 2026-09-26T15:48:01.490Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; E=/home/user/archipepsi/docs/ledgers/post_playtest_evidence; cp $S/ck9_frontier/summary.tsv $E/CK9_frontier_on_841041a.tsv && cp $S/ck9_frontier/logs/01_make_test.log $E/CK9_make_test_on_841041a.log && cp $S/ck9_frontier/logs/65_make_godot_flyer_room.log $E/CK9_flyer_room_failure_on_841041a.log && cat >> /home/user/archipepsi/docs/ledgers/PROD_POST_PLAYTEST.md <<'EOF'
+
+## CK9 checkpoint — the full frontier on `841041a` (HB-F4a-3): 91 of 92
+
+- **On `841041a` (the HB-F4a-3 head): 91 of 92 steps passed,** in one
+  run on that one revision, 13:40–15:11 UTC
+  (`CK9_frontier_on_841041a.tsv`).
+  - The steps are CK8's 92, unchanged.
+  - It covers every commit since CK8's revision (`adfb76c`): the CK8
+    record and HB-F4a-3. Dess pushed nothing in between.
+  - `make test`: 2,304 passed (`CK9_make_test_on_841041a.log`).
+  - No log has a line starting `SCRIPT ERROR`. Eight logs contain the
+    words, all in the Makefile's own echoed recipe, none from the
+    engine.
+  - Every live suite passed, run one at a time with nothing else on the
+    machine.
+  - `godot-zone-audit` (step 22) rewrote the one placement fixture's
+    provenance stamp, as at every checkpoint. It was restored.
+  - These are local results; remote CI does not run (N-6).
+- **Step 65, `godot-flyer-room`, failed:** "c011 cleared with the Static
+  Pulse aimed at the divers' bodies: 1 of 5 killed" in 61 s
+  (`CK9_flyer_room_failure_on_841041a.log`). It had passed at CK5, CK6,
+  CK7 and CK8.
+  - **Not HB-F4a-3's routing.** The Zone this suite plays builds the
+    same on both revisions, node for node. HB-F4a-3 only made the build
+    slower, and the divers' positions follow the wall clock. That
+    exposed a defect in the return plug. The measurements are in
+    CK9-F1, next.
+  - **So `841041a` is not pushed on this checkpoint.** It goes out with
+    the CK9-F1 repair, on the next full frontier.
+EOF
+tail -5 /home/user/archipepsi/docs/ledgers/PROD_POST_PLAYTEST.md
+----- output
+    slower, and the divers' positions follow the wall clock. That
+    exposed a defect in the return plug. The measurements are in
+    CK9-F1, next.
+  - **So `841041a` is not pushed on this checkpoint.** It goes out with
+    the CK9-F1 repair, on the next full frontier.
+
+===== 2026-09-26T15:48:34.983Z
+$ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; V=$S/ck9f1/evidence; mkdir -p $V; cd $S/ck9_flyer && {
+echo "# godot-flyer-room, run alone on the machine, one line per run"; echo "# 841041a (HB-F4a-3): CK9 step 65, a re-run, then repeats 1-4 (repeats stopped after 4; 5 was cut short and is not counted)";
+for f in $S/ck9_frontier/logs/65_make_godot_flyer_room.log rerun1_841041a.log repeat_1.log repeat_2.log repeat_3.log repeat_4.log; do echo "841041a $(basename $f): $(grep -o 'jumping\] telegraphs [0-9]*, dives [0-9]*, impacts [0-9]*' $f) | $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $f)"; done;
+echo "# 3b96bc4 (CK8's revision, the code of adfb76c): 3 runs, stopped after 3"; for f in ck8_repeats/run_1.log ck8_repeats/run_2.log ck8_repeats/run_3.log; do echo "3b96bc4 $(basename $f): $(grep -o 'jumping\] telegraphs [0-9]*, dives [0-9]*, impacts [0-9]*' $f) | $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $f)"; done;
+echo "# ck9-f1 (841041a plus the repair): 6 runs"; for i in 1 2 3 4 5 6; do f=ck9f1_repeats/run_$i.log; echo "ck9-f1 run_$i.log: $(grep -o 'jumping\] telegraphs [0-9]*, dives [0-9]*, impacts [0-9]*' $f) | $(grep -o 'killed [0-9] of 5 in [0-9.]* s' $f)"; done; } > $V/CK9-F1_flyer_runs.txt; cat $V/CK9-F1_flyer_runs.txt; tar czf $V/CK9-F1_flyer_run_logs.tar.gz -C $S rerun1_841041a.log 2>/dev/null; tar czf $V/CK9-F1_flyer_run_logs.tar.gz -C $S/ck9_flyer rerun1_841041a.log repeat_1.log repeat_2.log repeat_3.log repeat_4.log ck8_repeats ck9f1_repeats && ls -la $V | awk '{print $5, $9}'
+----- output
+# godot-flyer-room, run alone on the machine, one line per run
+# 841041a (HB-F4a-3): CK9 step 65, a re-run, then repeats 1-4 (repeats stopped after 4; 5 was cut short and is not counted)
+841041a 65_make_godot_flyer_room.log: jumping] telegraphs 7, dives 7, impacts 5 | killed 1 of 5 in 61.0 s
+841041a rerun1_841041a.log: jumping] telegraphs 5, dives 5, impacts 3 | killed 5 of 5 in 7.0 s
+841041a repeat_1.log: jumping] telegraphs 8, dives 8, impacts 7 | killed 5 of 5 in 8.0 s
+841041a repeat_2.log: jumping] telegraphs 9, dives 9, impacts 8 | killed 1 of 5 in 61.1 s
+841041a repeat_3.log: jumping] telegraphs 10, dives 10, impacts 9 | killed 1 of 5 in 60.8 s
+841041a repeat_4.log: jumping] telegraphs 9, dives 9, impacts 8 | killed 1 of 5 in 61.1 s
+# 3b96bc4 (CK8's revision, the code of adfb76c): 3 runs, stopped after 3
+3b96bc4 run_1.log: jumping] telegraphs 7, dives 7, impacts 6 | killed 5 of 5 in 12.0 s
+3b96bc4 run_2.log: jumping] telegraphs 4, dives 4, impacts 3 | killed 5 of 5 in 12.0 s
+3b96bc4 run_3.log: jumping] telegraphs 7, dives 7, impacts 6 | killed 5 of 5 in 12.0 s
+# ck9-f1 (841041a plus the repair): 6 runs
+ck9-f1 run_1.log: jumping] telegraphs 7, dives 7, impacts 6 | killed 5 of 5 in 12.0 s
+ck9-f1 run_2.log: jumping] telegraphs 10, dives 10, impacts 9 | killed 5 of 5 in 7.9 s
+ck9-f1 run_3.log: jumping] telegraphs 7, dives 7, impacts 6 | killed 5 of 5 in 12.0 s
+ck9-f1 run_4.log: jumping] telegraphs 4, dives 4, impacts 4 | killed 5 of 5 in 7.4 s
+ck9-f1 run_5.log: jumping] telegraphs 8, dives 8, impacts 8 | killed 5 of 5 in 12.1 s
+ck9-f1 run_6.log: jumping] telegraphs 4, dives 4, impacts 3 | killed 5 of 5 in 8.0 s
+ 
+4096 .
+4096 ..
+3906 CK9-F1_flyer_run_logs.tar.gz
+1641 CK9-F1_flyer_runs.txt
+Shell cwd was reset to /home/user/archipepsi

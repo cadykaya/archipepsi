@@ -611,8 +611,15 @@ owner's D-06/D-07 rulings and the seam table are in
       overlays never silently eat gameplay input; a block that must
       stay says why. Cause: `Main._update_modal` counts `reveal.visible`
       as modal.
-    - **Next:** the CK9 frontier on the HB-F4a-3 revision, then HB-O1 as
-      ruled, then HB-F4g and HB-F4f. PT-09 is met live, and a player
+    - **CK9: 91 of 92 on `841041a`** (HB-F4a-3), one run on one
+      revision (raw logs lost; `CK9_transcript_extract.txt`). `godot-flyer-room`
+      failed: its player was carried out of `c011` mid-fight by the
+      room's return plug (CK9-F1). HB-F4a-3 builds the same Zone node for
+      node. It only moved the wall-clock phase of the divers' circling,
+      which exposed the plug. `841041a` waits for the repair, unpushed.
+    - **Next:** CK9-F1 (a fight holds a return plug's charge), then
+      HB-O1 as ruled, then one frontier on the combined head and one
+      push; then HB-F4g and HB-F4f. PT-09 is met live, and a player
       reaches the Bomb Bag with no Zone discarded on the way.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
