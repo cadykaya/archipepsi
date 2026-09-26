@@ -594,8 +594,9 @@ owner's D-06/D-07 rulings and the seam table are in
         it was. The card came before the snapshot, and it now fills in
         when the snapshot lands. `godot-bombs` delivers the live order
         (37 checks).
-      - HB-O1, for the owner: a card holds the controls, Q included, and
-        outlasts the equipment wall.
+      - HB-O1, found here and repaired as the owner ruled (below): a
+        card held the controls, Q included, and outlasted the equipment
+        wall.
       - 5 of 5 sabotages caught. Where the Bomb Bags are is harness
         knowledge from the mock's own placement; the suite checks the
         client is not told.
@@ -632,10 +633,22 @@ owner's D-06/D-07 rulings and the seam table are in
         passed 6 of 6. A phase sweep to reproduce it here is queued.
       - Recorded: plug placement is still the owner's open rule; CK9-F2,
         flyers circle on the wall clock.
-    - **Next:** HB-O1 as ruled (rebuilt, being verified), then one
-      frontier on the combined head (CK10); then HB-F4g and HB-F4f.
-      PT-09 is met live, and a player reaches the Bomb Bag with no Zone
-      discarded on the way.
+    - **HB-O1, repaired (interface), as the owner ruled.** A pickup card
+      holds nothing: it is off `Main._update_modal`'s list, reads `Input`
+      without consuming it, and fades in 0.25 s when a gameplay press
+      goes through it; the next queued card still follows in full. None
+      of its controls takes a mouse event, nor does the F3 readout's.
+      - A press stopped by a hold with nothing on screen to explain it
+        (the layout verdict's) says "Hold on: this Zone's layout is
+        still being checked.", once; a menu's own hold stays silent.
+        The Static Pulse blocked while carrying says so.
+      - `godot-bombs` drives the owner's sequence, Q under the claim's
+        card after EQUIPMENT closes: one Bomb Bag thrown, counted 2 / 3
+        (49 checks). `godot-carry` 33. 11 of 11 sabotages caught, the
+        control holds.
+    - **Next:** CK10, one frontier on the combined head; then HB-F4g and
+      HB-F4f. PT-09 is met live, and a player reaches the Bomb Bag with
+      no Zone discarded on the way.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

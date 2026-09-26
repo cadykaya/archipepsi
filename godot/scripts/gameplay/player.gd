@@ -45,6 +45,27 @@ signal consumable_refused(why: String)
 ## What the hand did or refused, for the HUD: "CARRYING · 18 kg",
 ## "TOO HEAVY TO CARRY · 61 kg (limit 60 kg)", "DROPPED", ...
 signal carry_feedback(text: String, ok: bool)
+## A GAMEPLAY PRESS A HOLD STOPPED, with the hold's name, so the HUD can
+## say why rather than lose the press (HB-O1). Never for `MODAL_HOLD`: a
+## menu, the shop or a station panel is open, and its open face is the
+## explanation.
+signal input_held(reason: String)
+
+#: The hold `Main._update_modal` takes while a menu, the shop or a
+#: station panel is open.
+const MODAL_HOLD := "modal"
+
+#: THE PRESSES THAT DO SOMETHING IN THE WORLD: the Static Pulse, every
+#: slot's key (`SLOT_ACTIONS`), interact and jump. A hold that stops one
+#: says so (`input_held`), and a pickup card that sees one makes way
+#: (`RevealLayer`).
+const ACTION_PRESSES: Array[String] = ["fire_pulse", "fire_echo",
+		"fire_echo_b", "fire_mobility", "fire_utility", "fire_consumable",
+		"interact", "jump"]
+#: Walking. A hold that stops it says so too, including for a key held
+#: down since before the hold began -- a player who walked into a Zone.
+const MOVE_ACTIONS: Array[String] = ["move_forward", "move_back",
+		"move_left", "move_right"]
 
 #: ECHOES §9's control grammar, one binding per slot. LMB is the Static
 #: Pulse and appears nowhere here: its identity is untouchable, so it is
@@ -131,6 +152,19 @@ func fought_within(seconds: float) -> bool:
 
 func _note_fight() -> void:
 	_since_fight = 0.0
+
+## THE HOLD A GAMEPLAY PRESS WOULD MEET WITH NOTHING ON SCREEN TO SAY
+## WHY, or "" (HB-O1). Every hold but a menu's: while `MODAL_HOLD`
+## stands, the open menu is what the player is looking at.
+func unexplained_hold() -> String:
+	if _holds.is_empty() or _holds.has(MODAL_HOLD):
+		return ""
+	return str(holds()[0])
+
+## The hold `input_held` last named, so a key held down through a hold is
+## told once rather than every frame. A fresh press is told every time;
+## the HUD says the same words once while they are on screen.
+var _told_hold := ""
 
 var gravity_mult := 1.0
 var speed_mult := 1.0
@@ -910,6 +944,10 @@ func _physics_process(delta: float) -> void:
 	for runtime: EchoRuntime in runtimes.values():
 		runtime.set_grounded(is_on_floor())
 
+	# A PRESS A HOLD STOPS IS SAID, NOT LOST (HB-O1). The owner's ruling,
+	# 2026-09-26: "If an input truly has to be blocked, the UI needs to
+	# say why rather than just losing the press."
+	_tell_why_held()
 	if not input_frozen:
 		if Input.is_action_just_pressed("jump"):
 			_jump_buffer = Constants.JUMP_BUFFER
@@ -960,9 +998,15 @@ func _physics_process(delta: float) -> void:
 		# are going. See `_shove_what_i_walked_into`.
 		_walk_intent = Vector3(direction.x * speed, 0.0, direction.z * speed)
 
-		# CARRYING BLOCKS THE WEAPON PRIMARY (Design 1 §10.2).
-		if Input.is_action_pressed("fire_pulse") and not carry.holding():
-			_fire_static_pulse()
+		# CARRYING BLOCKS THE WEAPON PRIMARY (Design 1 §10.2) -- and says
+		# so, as Mobility does below (HB-O1: "If an input truly has to be
+		# blocked, the UI needs to say why rather than just losing the
+		# press"). Once a press: the Pulse fires while the button is down.
+		if Input.is_action_pressed("fire_pulse"):
+			if not carry.holding():
+				_fire_static_pulse()
+			elif Input.is_action_just_pressed("fire_pulse"):
+				carry_feedback.emit("PULSE BLOCKED WHILE CARRYING", false)
 		# The Static Pulse keeps LMB and is never any of these. Each slot
 		# owns exactly one binding, so "which button was that" and "which
 		# Echo fired" are the same question.
@@ -1013,6 +1057,28 @@ func _physics_process(delta: float) -> void:
 
 	if global_position.y < Constants.FALL_KILL_Y:
 		take_damage(Constants.PLAYER_MAX_HP * 10.0)
+
+## A gameplay press this step, or a walk key held down through a hold not
+## yet told, while a hold with nothing on screen to explain it stands:
+## `input_held` names it.
+func _tell_why_held() -> void:
+	var reason := unexplained_hold()
+	if reason == "":
+		_told_hold = ""
+		return
+	var pressed := false
+	for action: String in ACTION_PRESSES + MOVE_ACTIONS:
+		if Input.is_action_just_pressed(action):
+			pressed = true
+			break
+	if not pressed and _told_hold != reason:
+		for action: String in MOVE_ACTIONS:
+			if Input.is_action_pressed(action):
+				pressed = true
+				break
+	if pressed:
+		_told_hold = reason
+		input_held.emit(reason)
 
 ## Static Pulse: hitscan, low damage, short cooldown, unlimited, reliable.
 func _fire_static_pulse() -> void:

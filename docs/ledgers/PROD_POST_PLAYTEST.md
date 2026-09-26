@@ -5845,3 +5845,111 @@ repaired** (`2643982`).
     - Moving `_drift` to the physics clock would make a run
       reproducible. It changes nothing a player sees, and is not done
       here.
+
+## 0.4 — HB-O1 (interface, as the owner ruled): a pickup card holds nothing, and a press that is held says why
+
+The owner's ruling is recorded verbatim above. What it asked for, and what
+now happens:
+
+- **The card holds nothing.** It is off `Main._update_modal`'s list, so
+  it puts no hold on the player. A Q pressed under it does what Q does:
+  the use is asked for, and the bomb is thrown when the engine answers.
+- **Q does not merely close it.** The card reads `Input` on the physics
+  step, as `Player` does, and consumes nothing. A gameplay press it sees
+  (`Player.ACTION_PRESSES`: the Pulse, the five slot keys, interact,
+  jump) cuts its hold short, and it fades in 0.25 s (`hurry`). The next
+  queued card then follows in full: one press cuts one card short, and
+  none of the rest is thrown away. Walking does not hurry a card.
+- **The card takes no mouse event.** Found while making it
+  non-modal, not reported by the owner. The card's panel and its rule
+  stop the mouse events over them by default. With the mouse captured,
+  the pointer sits at the centre of the screen, where the card is, so
+  the card would have eaten mouse look as soon as it stopped holding the
+  player. Every Control under it now lets events through
+  (`_let_input_through`).
+- **A press a hold stops says why** (`Player.input_held`, the HUD's
+  `_on_input_held`). The one hold the game takes outside a menu is the
+  layout verdict's, from the moment a Zone's body exists until the bridge
+  accepts its layout; it can last up to 10 s, and a press under it did
+  nothing and said nothing. Now it says "Hold on: this Zone's layout is
+  still being checked.", once while it is on screen. A walk key held down
+  since before the hold began, which is a player who walked into the
+  Zone, is told too.
+- **A menu's own hold stays silent.** EQUIPMENT and the other walls, the
+  shop and a station panel are things the player opened and is working;
+  the open menu is the explanation. They were not changed.
+
+**The audit: everything that can stop a press, measured.**
+
+| What | Before | Now |
+|---|---|---|
+| Pickup card | held the player; a press did nothing, said nothing | holds nothing; the press passes through; the card fades |
+| The card's own controls | would take mouse movement at the centre of the screen | take none |
+| F3 readout | its panel took mouse movement over it | takes none |
+| HUD, minimap, navigation schematic | take none | unchanged, measured |
+| Menus, shop, station panel (`MODAL_HOLD`) | hold; the open menu explains | unchanged |
+| Layout verdict (`ZoneController.LAYOUT_HOLD`) | held for up to 10 s, silent | held, and a press says why |
+| Static Pulse while carrying | blocked, silent (Mobility said why) | blocked, and says "PULSE BLOCKED WHILE CARRYING" |
+| Jump or walk while ANCHORED | blocked, silent | not changed: a player cannot be anchored today (`anchored` is not declared for the player), so there is nothing to reach. When it is declared, those presses should say why, as the anchored Echo refusal already does |
+| Death | the death overlay explains | unchanged |
+
+- **Evidence.** HB-O1 was rebuilt after the container loss from the
+  session transcript, and its first sabotage run was the one the loss
+  killed; every figure here is the rebuild's. Its two suites print, line
+  for line, what the lost run printed (the transcript's 16:08).
+  - `godot-bombs` (`HB-O1_bombs_after.log`): 49 checks, against 37 at
+    CK8.
+    - "A GRANTED USE" drives the owner's sequence through the real
+      input path. The claim's card ('SENT TO SAGE') is still up when
+      EQUIPMENT closes, as in the owner's run. It holds nothing, and it
+      takes no mouse movement anywhere on screen; nor do the F3 readout
+      and the navigation schematic open over it.
+    - Q under the card asks the bridge for a use, and nothing is thrown
+      before the answer. The card makes way beside it. The engine's
+      answer throws exactly one Bomb Bag, reported as one use, and the
+      key counts it: 2 / 3.
+    - The next card follows in full ('EPSILON ECHO ACQUIRED' after
+      'SENT TO SAGE').
+    - "A HELD PRESS" presses under the layout hold. Q asks for nothing
+      and says "Hold on: this Zone's layout is still being checked.",
+      once on screen however often it is pressed. A walk key held down
+      since before the hold is told too. Under a menu's hold a press
+      asks for nothing and adds nothing. With every hold gone, Q asks
+      for a use again.
+  - `godot-carry` (`HB-O1_carry_after.log`): 33 checks, against 32. The
+    Static Pulse does not fire while carrying, and says so once for a
+    press held down 40 frames: "PULSE BLOCKED WHILE CARRYING". Its one
+    note is the suite's standing one.
+  - The reproduction is RO-1, below: the card back on the modal list,
+    as it stood, fails the owner's own check, "Q under the card asks
+    the bridge for a use".
+- **Sabotages: 11 of 11 caught, and the control holds.** Each file was
+  restored byte for byte (`HB-O1_sabotages.log`, `HB-O1_runner.py`).
+  - RO-1, REPRO: the card modal again, as it stood, and blind to a
+    press. The owner's check fails: Q under the card is held by
+    "modal", sends nothing and throws nothing. Nine checks fail in
+    all; under a card's modal hold the layout hold's words go unsaid
+    too.
+  - RO-2: the card's controls keep their default mouse filters. They
+    take mouse movement at 145 sampled points of the screen.
+  - RO-3: Q merely closes the card: modal, and a press dismisses it.
+    Caught by the owner's check (6 fail).
+  - RO-4: a press cuts the card short and throws the queue away.
+    Caught by "the next card follows in full".
+  - RO-5: a press the layout hold stops is lost without a word (3
+    fail).
+  - RO-6: said on every press, a column of it. Caught by "once on
+    screen, however often it is pressed".
+  - RO-7: a walk key held down since before the hold is not told.
+  - RO-8: a menu's own hold is told too, over the open menu. Caught by
+    "the open menu is its explanation".
+  - RO-9: the F3 readout's panel keeps its default mouse filter.
+  - RO-10, REPRO: the Static Pulse blocked while carrying says nothing,
+    as it stood. Caught by `godot-carry`.
+  - RO-11: said on every frame the button is down. Caught the same way.
+  - RO-C1, CONTROL: a faster fade is still a card making way.
+    Everything holds.
+- **Regression:** `godot-bombs-live`, whose driver this changes (Q now
+  goes in under a card, and the log says so), runs next, alone on the
+  machine; then the full frontier on the combined head (CK10).
+- **Next:** HB-F4g, then HB-F4f.

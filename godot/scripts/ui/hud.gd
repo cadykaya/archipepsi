@@ -497,6 +497,7 @@ func bind_player(player: Player) -> void:
 	player.damaged_from.connect(_on_damaged_from)
 	player.hit_confirmed.connect(_on_hit_confirmed)
 	player.consumable_refused.connect(_on_consumable_refused)
+	player.input_held.connect(_on_input_held)
 	_hit_fade = 0.0
 	_hit_marker.visible = false
 	_reset_confirmation()
@@ -715,6 +716,22 @@ func _on_consumable_refused(_why: String) -> void:
 	if str(state.get("state", "")) == "owned_not_equipped":
 		text += " Open " + _where_to_carry()
 	say_once(text, Color(1.0, 0.75, 0.4))
+
+
+## A GAMEPLAY PRESS A HOLD STOPPED: say why, once while it is on screen
+## (HB-O1). The owner's ruling, 2026-09-26: "If an input truly has to be
+## blocked, the UI needs to say why rather than just losing the press."
+func _on_input_held(reason: String) -> void:
+	say_once(held_words(reason), Color(1.0, 0.85, 0.55), 2.5)
+
+
+## What a hold says to a press it stops. The layout verdict is the one
+## hold the game takes outside a menu (`ZoneController.LAYOUT_HOLD`); any
+## other is named rather than left silent.
+static func held_words(reason: String) -> String:
+	if reason == ZoneController.LAYOUT_HOLD:
+		return "Hold on: this Zone's layout is still being checked."
+	return "Hold on: the controls are held (%s)." % reason
 
 
 ## Where a consumable is put on its key, with the key that opens it.

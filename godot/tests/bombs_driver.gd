@@ -29,8 +29,11 @@ extends Node
 ##   - equipping it from the equipment wall: the compatible key offered,
 ##     one request, the engine's answer shown;
 ##   - a use the engine refused: said once, in the engine's words;
-##   - a use the engine granted: exactly one bomb, one report, the count;
-##   - the next Zone: the supply refilled on the key.
+##   - a use the engine granted: exactly one bomb, one report, the count
+##     -- pressed as the owner pressed it, under the claim's card, after
+##     EQUIPMENT closed (HB-O1);
+##   - the next Zone: the supply refilled on the key;
+##   - a press a hold stops: said, not lost (HB-O1).
 ##
 ## **ALL OF IT IN THE HUB**, where `Main` puts a player whose Campaign is
 ## loaded and where the Echo Lab is for trying a new thing. The press
@@ -70,6 +73,65 @@ func _frames(count: int) -> void:
 		await get_tree().physics_frame
 
 
+## A key, pressed and let go through the real input path: what
+## `Player._physics_process` reads, and what a hold stands in front of.
+## `press_slot` is downstream of every hold, which is how this suite
+## pressed Q under a card for as long as a card held the controls and
+## never saw it (HB-O1).
+func _press(action: String) -> void:
+	Input.action_press(action)
+	await _frames(2)
+	Input.action_release(action)
+	await _frames(1)
+
+
+## Every card already queued, read to the end.
+func _cards_read() -> bool:
+	for _i in 900:
+		if not main.reveal.visible:
+			return true
+		await _frames(1)
+	return false
+
+
+## WHERE THE GAME READS MOUSE LOOK, counted. `Player._unhandled_input`
+## turns the view only while the mouse is captured, which a headless run
+## cannot be; this reads the same events at the same place.
+class _MouseProbe extends Node:
+	var seen := 0
+
+	func _unhandled_input(event: InputEvent) -> void:
+		if event is InputEventMouseMotion:
+			seen += 1
+
+
+## Mouse movements pushed through the viewport at points across the whole
+## screen and at its centre, where a captured pointer sits. Returns the
+## points where an interface control took the movement before the game
+## could read it.
+func _mouse_taken_by_the_interface() -> Array:
+	var probe := _MouseProbe.new()
+	add_child(probe)
+	var size := get_viewport().get_visible_rect().size
+	var points: Array[Vector2] = [size / 2.0]
+	for i in 16:
+		for j in 9:
+			points.append(Vector2(size.x * (i + 0.5) / 16.0,
+					size.y * (j + 0.5) / 9.0))
+	var taken: Array = []
+	for at: Vector2 in points:
+		var move := InputEventMouseMotion.new()
+		move.position = at
+		move.global_position = at
+		move.relative = Vector2(3.0, 0.0)
+		var before := probe.seen
+		get_viewport().push_input(move, true)
+		if probe.seen == before:
+			taken.append(at)
+	probe.queue_free()
+	return taken
+
+
 func _run() -> void:
 	await _frames(30)
 	BridgeClient.assume_sent = true
@@ -90,6 +152,7 @@ func _run() -> void:
 	await _a_refused_use()
 	await _a_granted_use()
 	await _the_refill()
+	await _a_held_press_says_why()
 	print("")
 	if failures == 0:
 		print("GODOT BOMBS OK (%d checks)" % checks)
@@ -427,22 +490,72 @@ func _a_refused_use() -> void:
 
 
 ## A USE THE ENGINE GRANTED: the press, the answer, exactly one bomb.
+##
+## PRESSED THE WAY THE OWNER PRESSED IT (HB-O1): the claim's cards come
+## up, EQUIPMENT opens and closes while they wait -- a card's hold pauses
+## with the world, so the first card outlasts the wall -- and then Q,
+## through the real input path, under the card. The owner's ruling,
+## 2026-09-26: "Treat pickup cards as informational rather than
+## gameplay-modal. If Q is a valid gameplay action while the card is
+## visible, let it pass through and perform the action normally. [...]
+## Don't make Q merely close the card instead of doing what Q normally
+## does."
 func _a_granted_use() -> void:
-	print("  -- A GRANTED USE: the press, the engine's answer, the bomb")
+	print("  -- A GRANTED USE: Q under the claim's card, EQUIPMENT closed")
 	var cid := _cid()
 	var runtime: EchoRuntime = _player().runtimes["consumable"]
 	var effects := [0]
 	var count := func() -> void: effects[0] += 1
 	runtime.action_used.connect(count)
 	await _deliver("carried")
-	_clear_toasts()
-	await _frames(2)
-	var before := BridgeClient.sent_intents.size()
-	_player().press_slot("consumable")
+	var read := await _cards_read()
+	_check(read, "the earlier cards have been read")
+	for raw: Variant in _meta().get("notices", []) as Array:
+		BridgeClient._handle(JSON.stringify(raw))
+		await _frames(2)
+	var first := str(main.reveal.shown().get("title", ""))
+	main._open_menu("equipment")
+	await _frames(10)
+	main._close_menu()
 	await _frames(3)
+	_check(main.reveal.visible and not main.reveal.hurried()
+			and str(main.reveal.shown().get("title", "")) == first,
+			"the claim's card is still up when EQUIPMENT closes, as it was "
+			+ "in the owner's run ('%s')" % first)
+	_check(_player().holds().is_empty(),
+			"…and holds nothing: the card is not modal (held by %s)"
+			% str(_player().holds()))
+	var taken := _mouse_taken_by_the_interface()
+	_check(taken.is_empty(),
+			"…and takes no mouse movement anywhere on screen, so mouse look "
+			+ "under it reaches the game (%d point(s) taken: %s)"
+			% [taken.size(), str(taken.slice(0, 4))])
+	# THE OTHER OVERLAYS DRAWN OVER PLAY, opened on top of it: the F3
+	# readout and the navigation schematic (the HUD and the minimap are
+	# always there, so the check above already covered them).
+	main.debug.toggle()
+	main.nav.toggle()
+	await _frames(2)
+	taken = _mouse_taken_by_the_interface()
+	main.debug.toggle()
+	main.nav.toggle()
+	_check(taken.is_empty(),
+			"the F3 readout and the navigation schematic, open over it, take "
+			+ "none either (%d point(s) taken: %s)"
+			% [taken.size(), str(taken.slice(0, 4))])
+	_clear_toasts()
+	await _frames(1)
+	var before := BridgeClient.sent_intents.size()
+	await _press(str(Player.SLOT_ACTIONS["consumable"]))
 	_check(BridgeClient.awaiting_authorization(cid) == 1
 			and effects[0] == 0,
-			"the press asks, and nothing is thrown before the answer")
+			"Q under the card asks the bridge for a use, and nothing is "
+			+ "thrown before the answer (awaiting %d, thrown %d, held by %s)"
+			% [BridgeClient.awaiting_authorization(cid), effects[0],
+				str(_player().holds())])
+	_check(main.reveal.hurried(),
+			"…and the card makes way beside it: its hold is cut short, not "
+			+ "the press")
 	await _deliver("authorized")
 	await _frames(10)
 	var sent := _sent_since(before)
@@ -463,6 +576,12 @@ func _a_granted_use() -> void:
 			"the key counts it: 2 / 3 (%s)" % _key_row())
 	_check(_toasts().is_empty(),
 			"nothing is refused (heard %s)" % str(_toasts()))
+	await _frames(15)
+	var next := str(main.reveal.shown().get("title", ""))
+	_check(main.reveal.visible and not main.reveal.hurried()
+			and next != first and next != "",
+			"the next card follows in full: a press cuts one card short and "
+			+ "throws none of the rest away ('%s' after '%s')" % [next, first])
 	runtime.action_used.disconnect(count)
 
 
@@ -484,3 +603,74 @@ func _the_refill() -> void:
 			"spent reads EMPTY on the key, and entering Zone %s refills it "
 			% str(_meta().get("refilled_zone_id", "?"))
 			+ "('%s' -> '%s')" % [empty.strip_edges(), full.strip_edges()])
+
+
+## A PRESS A HOLD STOPS IS SAID, NOT LOST (HB-O1). The owner's ruling,
+## 2026-09-26: "If an input truly has to be blocked, the UI needs to say
+## why rather than just losing the press."
+##
+## The one hold the game takes outside a menu is the layout verdict's
+## (`ZoneController.LAYOUT_HOLD`): from the moment a Zone's body exists
+## until the bridge accepts its layout. It is taken here on the Hub's
+## player, where `Main` wires the same player signal to the same HUD.
+func _a_held_press_says_why() -> void:
+	print("  -- A HELD PRESS: said, not lost")
+	var cid := _cid()
+	var q := str(Player.SLOT_ACTIONS["consumable"])
+	var words := Hud.held_words(ZoneController.LAYOUT_HOLD)
+	var player := _player()
+	await _deliver("refilled")
+	_clear_toasts()
+	await _frames(2)
+	player.hold(ZoneController.LAYOUT_HOLD)
+	var sent := BridgeClient.sent_intents.size()
+	await _press(q)
+	_check(_heard(words) == 1
+			and not _types(_sent_since(sent)).has("authorize_consumable")
+			and BridgeClient.awaiting_authorization(cid) == 0,
+			"Q under the layout hold asks for nothing and says why: '%s' "
+			% words + "(heard %s)" % str(_toasts()))
+	for _i in 3:
+		await _press(q)
+	_check(_heard(words) == 1,
+			"…once on screen, however often it is pressed (%d)"
+			% _heard(words))
+	# A PLAYER WHO WALKED INTO THE ZONE: the key was down before the hold
+	# began, so it is never "just pressed" under it.
+	player.release(ZoneController.LAYOUT_HOLD)
+	_clear_toasts()
+	await _frames(2)
+	Input.action_press("move_forward")
+	await _frames(2)
+	player.hold(ZoneController.LAYOUT_HOLD)
+	await _frames(3)
+	Input.action_release("move_forward")
+	await _frames(1)
+	_check(_heard(words) == 1,
+			"a walk key held down since before the hold is told too "
+			+ "(heard %s)" % str(_toasts()))
+	player.release(ZoneController.LAYOUT_HOLD)
+	# A MENU'S OWN HOLD: the open menu is what the player is reading.
+	_clear_toasts()
+	await _frames(2)
+	player.hold(Player.MODAL_HOLD)
+	await _press(q)
+	_check(_toasts().is_empty()
+			and BridgeClient.awaiting_authorization(cid) == 0,
+			"under a menu's hold a press asks for nothing and adds nothing: "
+			+ "the open menu is its explanation (heard %s)" % str(_toasts()))
+	player.release(Player.MODAL_HOLD)
+	# The Bomb Bag thrown in `_a_granted_use` is still cooling down, and
+	# a press inside its cooldown asks for nothing either.
+	var runtime: EchoRuntime = player.runtimes["consumable"]
+	for _i in 240:
+		if runtime.cooldown_remaining <= 0.0:
+			break
+		await _frames(1)
+	await _press(q)
+	_check(BridgeClient.awaiting_authorization(cid) == 1,
+			"with every hold gone, Q asks for a use again (awaiting %d, "
+			% BridgeClient.awaiting_authorization(cid)
+			+ "cooldown %.2f)" % runtime.cooldown_remaining)
+	# Put the world back as it was: the request is never answered here.
+	BridgeClient.release_reservation(cid)

@@ -66,8 +66,9 @@ extends "res://tests/candidate_live_driver.gd"
 ##     goal landing and the room's own goal area sees them arrive.
 ##     From there it is the player's own input: the room's fight with the
 ##     Static Pulse, the walk, [E], Tab, the equipment wall's buttons, Q.
-##   - A card holds the controls, so Q waits for the cards to be read, as
-##     a player would, and the log says each time it had to (HB-O1).
+##   - Q is pressed whether or not a card is up. A card held the controls
+##     until the owner ruled it informational (HB-O1), and this waited
+##     the cards out; the log now says each time Q went in under one.
 
 const BOMBS_FLAG := "--bombs-live="
 const BOMBS_SAVE_FLAG := "--bombs-save-dir="
@@ -470,17 +471,18 @@ func _room_of(controller: ZoneController, node: Node3D) -> String:
 ## Q, pressed by the player, and the bomb it throws once the bridge has
 ## counted the charge.
 func _throw_one(player: Player) -> bool:
-	# A CARD HOLDS THE CONTROLS, and claims queue one card each. They
-	# pause with the world while a wall is open, so the claim's card is
-	# still up when EQUIPMENT closes; a Q pressed under it does nothing and
-	# says nothing. A player waits for the card; so does this, and says
-	# when it had to.
-	if main.reveal.visible:
-		_note("OBSERVED: a card was up when Q was due, holding the "
-				+ "controls (a press now would do nothing and say nothing); "
-				+ "waited out, as a player would")
-		await _await_live("the cards read",
-				func() -> bool: return not main.reveal.visible, 120.0)
+	# A CARD DOES NOT HOLD THE CONTROLS (HB-O1). The owner's ruling,
+	# 2026-09-26: "If Q is a valid gameplay action while the card is
+	# visible, let it pass through and perform the action normally."
+	# Claims queue one card each, and a card's hold pauses with the world
+	# while a wall is open, so the claim's card is still up when EQUIPMENT
+	# closes -- as it was in the owner's run. Q goes in under it, and the
+	# log says so; the check below is the same either way.
+	var under_card: bool = main.reveal.visible
+	if under_card:
+		_note("OBSERVED: a card was up when Q was due ('%s'); pressed "
+				% str(main.reveal.shown().get("title", "")) + "under it "
+				+ "(HB-O1)")
 	var runtime: EchoRuntime = player.runtimes["consumable"]
 	await _await_live("the Bomb Bag off cooldown",
 			func() -> bool: return runtime.cooldown_remaining <= 0.0, 10.0)
@@ -497,7 +499,8 @@ func _throw_one(player: Player) -> bool:
 			10.0)
 	_check(_sent_since(sent, "authorize_consumable").size() == 1
 			and thrown and reported and _thrown == before + 1,
-			"Q: one authorisation asked, one Bomb Bag thrown after the "
+			"Q%s: one authorisation asked, one Bomb Bag thrown after the " \
+			% (" under a card" if under_card else "")
 			+ "answer, one use reported (sent %s; at the press: %s; " \
 			% [str(BridgeClient.sent_intents.slice(sent).map(
 				func(i: Dictionary) -> String: return str(i.get("type", "")))),

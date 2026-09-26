@@ -194,12 +194,19 @@ func _a_legal_object_is_picked_up_and_follows_the_view() -> void:
 func _blocked_actions_while_carrying() -> void:
 	print("  -- what carrying blocks, and what it leaves")
 	_shots = 0
+	_feedback.clear()
 	Input.action_press("fire_pulse")
 	await _settle(40)
 	Input.action_release("fire_pulse")
 	_check(_player.carry.holding() and _shots == 0,
 			"the Static Pulse does not fire while carrying (%d shots)"
 			% _shots)
+	# HB-O1: "If an input truly has to be blocked, the UI needs to say why
+	# rather than just losing the press." Mobility always said; the Pulse
+	# said nothing.
+	_check(_feedback.count("PULSE BLOCKED WHILE CARRYING") == 1,
+			"…and says so, once for a press held down 40 frames: %s"
+			% [_feedback])
 	_feedback.clear()
 	await _press("fire_mobility")
 	_check(_feedback.has("MOBILITY BLOCKED WHILE CARRYING"),

@@ -417,8 +417,8 @@ func boot() -> void:
 
 	menu.connect_pressed.connect(_on_menu_connect)
 	menu.mock_pressed.connect(_on_menu_mock)
-	reveal.reveal_started.connect(_update_modal)
-	reveal.reveal_finished.connect(_update_modal)
+	# A pickup card is not modal (HB-O1), so its coming and going changes
+	# nothing `_update_modal` decides.
 	shop.closed.connect(_update_modal)
 	station_panel.closed.connect(_update_modal)
 	station_panel.warp_chosen.connect(_on_station_warp_chosen)
@@ -1183,9 +1183,19 @@ func _refresh_nav() -> void:
 			zone.zone.get("edges", []), zone.gates_not_yet_open(),
 			zone.stations_reached(), zone.current_room())
 
+## WHAT HOLDS THE PLAYER FOR THE INTERFACE: a menu, the shop, a station
+## panel -- things the player opened and is working.
+##
+## NOT A PICKUP CARD (HB-O1). It was on this list, so a card put the
+## player under this hold and a Q pressed under it did nothing and said
+## nothing; a card's hold pauses with the world, so the Bomb Bag's card
+## was still up when EQUIPMENT closed. The owner's ruling, 2026-09-26:
+## "Treat pickup cards as informational rather than gameplay-modal. [...]
+## More generally: transient informational overlays should never silently
+## consume unrelated gameplay inputs."
 func _update_modal() -> void:
 	var modal: bool = menu_shell.is_open() \
-			or shop.visible or reveal.visible or station_panel.visible
+			or shop.visible or station_panel.visible
 	var player: Player = null
 	if hub != null:
 		player = hub.player
@@ -1195,9 +1205,9 @@ func _update_modal() -> void:
 		# A NAMED CLAIM, not the boolean. `player.input_frozen = modal`
 		# cleared an acceptance hold every time the inventory closed.
 		if modal:
-			player.hold("modal")
+			player.hold(Player.MODAL_HOLD)
 		else:
-			player.release("modal")
+			player.release(Player.MODAL_HOLD)
 	hud.set_crosshair_visible(not modal)
 	if view == View.MENU or menu_shell.is_open() \
 			or shop.visible or station_panel.visible:
