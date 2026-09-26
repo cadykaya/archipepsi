@@ -2058,3 +2058,34 @@ Two smaller things from the same day, same shape:
   Exit 0 from a gate that said nothing proves nothing; the tag is fixed
   and the pass line is now visible.
 
+---
+
+## A check listed in a docstring is a check nobody made
+
+`enemy_readiness.gd` opens with eight numbered questions. Number 5 is
+*"Which way does it face. Godot's forward is -Z."* The file never asked
+it. Every art-lane enemy faced **+Z** -- the role builders draw their
+fronts at -y, which the glTF export turns into +Z -- while their
+anchors were placed for -Z, the way `enemy.gd`'s enemies face. The
+bulwark's weak-point anchor sat on its shield.
+
+Nothing else could have seen it. A silhouette is the same from the
+front and the back, so every silhouette measurement passed; the
+contrast harness happened to look at the geometry's front; the anchors
+passed "inside the body box". It surfaced only because the head-on
+shield tell had to be on the side the player faces, which meant asking
+where that side was.
+
+> **A numbered list of checks at the top of a harness is a promise. If
+> an item has no code under it, the harness is claiming coverage it does
+> not have -- and the claim is read by people deciding what they need
+> not check themselves.**
+
+The same review found the second half of the same kind of claim:
+"embedded inside the body" meant inside the body's BOUNDING BOX, which
+includes the air between the arms. Nine pixels of anchor stood proud
+across seven views before the turn, eight across six after. The fix
+checks the property itself: every view is rendered twice, with the
+anchors shown and hidden, and the two silhouettes must be identical to
+the pixel.
+

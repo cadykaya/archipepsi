@@ -96,7 +96,10 @@ func _place(view: SubViewport, role: String, yaw: int) -> Node3D:
 		_bad("could not load enemy_role_%s.glb" % role)
 		return null
 	view.add_child(model)
-	model.rotation = Vector3(0.0, deg_to_rad(float(yaw)), 0.0)
+	# Yaw 0 is the enemy FACING the camera: the models face -Z, as the
+	# game's enemies do, and the camera looks down -Z, so a model turned
+	# half round faces it -- the view the player gets.
+	model.rotation = Vector3(0.0, PI + deg_to_rad(float(yaw)), 0.0)
 	var box: AABB = _bench.call("aabb_of", model)
 	# Centred on screen and stood at the review distance. The model's own
 	# floor stays on the floor -- an enemy read from above is not the
@@ -167,6 +170,28 @@ func _run() -> void:
 			await process_frame
 			await process_frame
 			var shot := view.get_texture().get_image()
+			# The anchors are points to FETCH, embedded in the body; the
+			# same view with them hidden must be the same silhouette to
+			# the pixel, or one of them stands proud of the surface.
+			var anchors := model.find_children("anchor_*", "MeshInstance3D",
+					true, false)
+			for a in anchors:
+				(a as MeshInstance3D).visible = false
+			await process_frame
+			await process_frame
+			var bare := view.get_texture().get_image()
+			var proud := 0
+			for y in shot.get_height():
+				for x in shot.get_width():
+					if (shot.get_pixel(x, y).a > 0.5) \
+							!= (bare.get_pixel(x, y).a > 0.5):
+						proud += 1
+			if anchors.is_empty():
+				_bad("%s has no anchor_* nodes to hide" % role)
+			elif proud > 0:
+				_bad("%s yaw %d: %d pixel(s) of anchor stand proud of the "
+					 % [role, yaw, proud] + "body -- a marker meant to be "
+					 + "fetched, not seen")
 			var box := _mask_box(shot)
 			if box.size.y <= 0:
 				_bad("%s rendered nothing at %.1f m, yaw %d"
@@ -196,6 +221,7 @@ func _run() -> void:
 				  % [role, yaw, box.size.x, box.size.y,
 					 float(row["fill"]) * 100.0])
 			row["yaw"] = yaw
+			row["anchors_visible_px"] = proud
 			best["y%03d" % yaw] = row
 			view.queue_free()
 		if not best.is_empty():

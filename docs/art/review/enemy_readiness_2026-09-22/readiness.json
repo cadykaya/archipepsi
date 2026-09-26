@@ -13,6 +13,7 @@
       1.54999995231628418,
       1.25
     ],
+    "faces": "-Z",
     "floor_gap": 0.0,
     "flying": false,
     "hover_height": 0.0,
@@ -83,6 +84,7 @@
       2.59999990463256836,
       1.79999995231628418
     ],
+    "faces": "-Z",
     "floor_gap": 0.0,
     "flying": false,
     "hover_height": 0.0,
@@ -119,6 +121,7 @@
       2.04999995231628418,
       0.85000002384185791
     ],
+    "faces": "-Z",
     "floor_gap": 0.0,
     "flying": false,
     "hover_height": 0.0,
@@ -155,6 +158,7 @@
       1.04999995231628418,
       1.89999997615814209
     ],
+    "faces": "-Z",
     "floor_gap": 0.0,
     "flying": false,
     "hover_height": 0.0,
@@ -190,6 +194,7 @@
       0.5,
       1.20000004768371582
     ],
+    "faces": "-Z",
     "floor_gap": 0.0,
     "flying": true,
     "hover_height": 1.89999999999999991,
@@ -257,6 +262,7 @@
       1.60000002384185791,
       0.800000011920928955
     ],
+    "faces": "-Z",
     "floor_gap": 0.0,
     "flying": false,
     "hover_height": 0.0,
@@ -304,6 +310,7 @@
       1.39999997615814209,
       0.699999988079071045
     ],
+    "faces": "-Z",
     "floor_gap": 0.0,
     "flying": false,
     "hover_height": 0.0,
@@ -338,6 +345,7 @@
       0.620000004768371582,
       1.20000004768371582
     ],
+    "faces": "-Z",
     "floor_gap": 0.0,
     "flying": false,
     "hover_height": 0.0,

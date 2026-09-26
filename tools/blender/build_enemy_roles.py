@@ -94,6 +94,7 @@ thing you can use, is not Epsilon, and does not leave for the multiworld.
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 
@@ -184,6 +185,48 @@ ENVELOPES = {
 
 PLACEABLE = ("melee", "ranged", "brute")
 
+#: WHICH WAY AN ENEMY FACES. `enemy.gd` builds its own enemies facing -Z
+#: ("the eye on the nose (-z, the way it faces)") and `look_at` turns -Z
+#: onto the target; the ANCHORS were placed for exactly that (front = +y
+#: here, which the glTF export turns into -Z). The role builders draw
+#: their fronts at -y, so until 2026-09-26 every model faced +Z -- away
+#: from its own anchors: the bulwark's shield anchor sat behind the shield
+#: and the ranged muzzle anchor behind the emitter. A silhouette is the
+#: same from the front and the back, and the readiness harness listed a
+#: facing check it never made, so nothing noticed.
+#:
+#: `_face_forward` turns every part 180 degrees before anything is joined
+#: or measured, and refuses a role whose declared front part does not end
+#: up in front. None: a fixture and a deliberately faceless bell.
+FRONT = {
+    "melee": "arm_1", "ranged": "emitter", "brute": "fist_1",
+    "charger": "ram", "bulwark": "shield", "scuttler": "maw",
+    "artillery": "muzzle", "diver": "nose", "beacon": None, "drifter": None,
+}
+
+
+def _face_forward(role, parts):
+    from mathutils import Matrix
+    turn = Matrix.Rotation(math.pi, 4, "Z")
+    # Every part is drawn at absolute coordinates with its object at the
+    # world origin (see `brushkit.spin`), so this turns the whole role
+    # about its own vertical axis.
+    for obj, _ in parts:
+        obj.data.transform(turn)
+        obj.data.update()
+    front = FRONT[role]
+    if front is None:
+        return
+    named = [obj for obj, _ in parts if obj.name == front]
+    if len(named) != 1:
+        raise SystemExit("%s: FRONT names %r, and %d part(s) have that name"
+                         % (role, front, len(named)))
+    lo, hi = common.world_box(named[0])
+    if (lo[1] + hi[1]) * 0.5 <= 0.0:
+        raise SystemExit("%s: its front part %r is not in front (+y, which "
+                         "the export makes -Z) -- the model would face away "
+                         "from its anchors and from enemy.gd" % (role, front))
+
 
 def _tag(objs, role):
     return [(o, role) for o in (objs if isinstance(objs, list) else [objs])]
@@ -261,7 +304,59 @@ ANCHORS = {
 }
 
 
-def _anchors(role, body):
+def _part_planes(parts):
+    """Every part as (centre, face planes), in world space.
+
+    Every part here is CONVEX -- a block, a prism, a wedge -- so a point is
+    inside a part exactly when it is behind all of that part's planes, and
+    its vertex average is inside it. Snapshotted before the parts are
+    joined, because after that there is one mesh of overlapping solids and
+    "inside" stops being a local test.
+    """
+    from mathutils import Vector
+    out = []
+    for obj, _ in parts:
+        mw = obj.matrix_world
+        rot = mw.to_3x3()
+        planes = [(mw @ poly.center, (rot @ poly.normal).normalized())
+                  for poly in obj.data.polygons]
+        verts = [mw @ v.co for v in obj.data.vertices]
+        if planes and verts:
+            centre = sum(verts, Vector()) / len(verts)
+            out.append((centre, planes))
+    return out
+
+
+def _embed(at, parts_planes, depth):
+    """`at` if the marker fits inside a part there; otherwise the first
+    point that does, walking from `at` toward the centre of each part in
+    turn, nearest part first. None if no part can hold it.
+
+    Toward a PART, not toward the body's axis: the first cut walked to the
+    axis, and on `ranged` the axis sits in front of the head -- the emitter
+    stretches the box forward -- so the warn marker walked right past the
+    head and never went in.
+    """
+    from mathutils import Vector
+
+    def inside(p, planes):
+        return all((p - c).dot(n) <= -depth for c, n in planes)
+
+    start = Vector(at)
+    if any(inside(start, planes) for _, planes in parts_planes):
+        return start
+    for centre, planes in sorted(parts_planes,
+                                 key=lambda cp: (cp[0] - start).length):
+        toward = centre - start
+        steps = int(toward.length / 0.005) + 1
+        for i in range(1, steps + 1):
+            p = start + toward * (i / steps)
+            if inside(p, planes):
+                return p
+    return None
+
+
+def _anchors(role, body, parts_planes):
     """The role's named attachment points, as their own objects.
 
     **Placed off the BODY'S MEASURED BOX, not off the envelope**, and
@@ -276,6 +371,15 @@ def _anchors(role, body):
     has none; they exist to be FETCHED, not seen. The one anchor that
     stays envelope-derived is the telegraph seat, because its whole
     job is to agree with `ENEMY_ENVELOPES[role].centre_y`.
+
+    **And inside a PART, not just inside the box.** A body's box includes
+    the air between its arms and above its shoulders, and "inside the box"
+    let a marker stand proud of the actual surface -- which surfaced when
+    the models were turned to face -Z (2026-09-26) and the front anchors
+    landed on thinner parts: two to three pixels of bump at 18 m. So each
+    anchor is walked toward the body's axis until the whole marker is
+    inside some part (`_embed`), and a role where that fails does not
+    build.
     """
     lo, hi = common.world_box(body)
     span = [hi[i] - lo[i] for i in range(3)]
@@ -292,8 +396,15 @@ def _anchors(role, body):
             else:
                 value = (lo[i] + hi[i]) * 0.5 + span[i] * frac
             at.append(min(max(value, lo[i] + inset), hi[i] - inset))
+        # The marker is a prism of radius r and height 2r: its farthest
+        # point from its centre is r * sqrt(2).
+        placed = _embed(at, parts_planes, ANCHOR_RADIUS * 1.5)
+        if placed is None:
+            raise SystemExit("%s: %s cannot be placed inside any part of "
+                             "the body -- it would stand proud of the surface"
+                             % (role, name))
         out.append(brushkit.prism(name, ANCHOR_RADIUS,
-                                  ANCHOR_RADIUS * 2.0, 8, tuple(at)))
+                                  ANCHOR_RADIUS * 2.0, 8, tuple(placed)))
     return out
 
 
@@ -762,6 +873,8 @@ def _build_band(band, lightness, out_dir):
         parts = builder(w, h, d) + _surface(role, w, h, d)
         centre_z = hover if hover else h / 2.0
         parts += _seat(centre_z - (hover if hover else 0.0))
+        _face_forward(role, parts)
+        planes = _part_planes(parts)
         # THE ANCHORS STAY OUT OF THE BUCKETS, and are built AFTER the
         # body, because they are placed off its measured box. Everything
         # else is joined by material role and then joined again into one
@@ -800,11 +913,18 @@ def _build_band(band, lightness, out_dir):
             painted.append(obj)
 
         obj = common.join(painted, name)
+        # `set_origin` moves the VERTICES by the floor-centre offset; the
+        # part planes snapshotted above must move with them.
+        lo, hi = common.world_box(obj)
+        from mathutils import Vector
+        shift = Vector(((lo[0] + hi[0]) * 0.5, (lo[1] + hi[1]) * 0.5, lo[2]))
         common.set_origin(obj, "floor")
+        planes = [(centre - shift, [(c - shift, n) for c, n in part])
+                  for centre, part in planes]
         # The anchors are painted in the body material and moved with
         # the body's own origin shift, so they stay where the envelope
         # fractions put them.
-        anchors = _anchors(role, obj)
+        anchors = _anchors(role, obj, planes)
         anchor_names = [a.name for a in anchors]
         for anchor in anchors:
             if obj.data.materials:
@@ -846,6 +966,9 @@ def _build_band(band, lightness, out_dir):
                            "hitbox and no damage logic. Positions are "
                            "fractions of ENEMY_ENVELOPES, so an anchor "
                            "cannot drift from the collider it hangs off.",
+            "faces": "-Z, as enemy.gd's enemies do; the front part is "
+                     "checked at build time",
+            "front_part": FRONT[role],
             "value_band": band,
             "body_lightness": lightness,
             "value_band_rooms": sorted(r for r, b in ROOM_BAND.items()

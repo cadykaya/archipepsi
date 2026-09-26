@@ -132,6 +132,9 @@ func _load(root: Node3D, role: String, at: Vector3) -> void:
 	var sz: Array = e.get("size", [1.0, 1.0, 1.0])
 	var lift: float = 0.0 if hover == 0.0 else hover - float(sz[2]) * 0.5
 	node.position = at + Vector3(0, lift, 0)
+	# The models face -Z, as the game's do: turned half round to face the
+	# preview camera.
+	node.rotation.y = PI
 	root.add_child(node)
 
 func _lineup_sheet() -> void:

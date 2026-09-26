@@ -196,6 +196,9 @@ func _row(holder: Node3D, dir: String, flatten: bool) -> Dictionary:
 			_bad("could not load %s/enemy_role_%s.glb" % [dir, role])
 			continue
 		holder.add_child(model)
+		# Facing the camera, as an enemy that has noticed you does: the
+		# models face -Z and the camera looks down -Z.
+		model.rotation.y = PI
 		var box: AABB = _bench.call("aabb_of", model)
 		x += box.size.x * 0.5
 		model.position = Vector3(x - box.get_center().x,

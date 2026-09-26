@@ -227,6 +227,43 @@ func _check(role: String) -> void:
 					+ "point to fetch, not a fitting -- one that stands "
 					+ "proud is a bump on an enemy that has none.")
 
+	# 5. Which way it faces. The game's enemies face -Z (enemy.gd: "the
+	# eye on the nose (-z, the way it faces)"), so the anchor a role
+	# attacks or defends from must sit IN FRONT of its body centre and its
+	# weak point behind it. This item was listed at the top of this file
+	# and never checked until 2026-09-26 -- when it turned out every model
+	# faced +Z, away from its own anchors. A silhouette is the same from
+	# either side, so nothing else could have seen it. The geometry's half
+	# of the rule is asserted where it is drawn
+	# (`build_enemy_roles._face_forward`); a role the manifest gives no
+	# front (the fixture, the faceless bell) is exempt by its own design.
+	var front_part: Variant = _manifest["enemy_role_%s" % role].get(
+			"front_part", "missing")
+	if typeof(front_part) == TYPE_STRING and front_part == "missing":
+		_fail("%s's manifest says nothing about which way it faces" % role)
+	elif front_part != null:
+		var centre_z := body_box.get_center().z
+		var faced := 0
+		for want: String in ["anchor_strike", "anchor_muzzle",
+				"anchor_shield"]:
+			if not per.has(want):
+				continue
+			faced += 1
+			var z := (per[want] as AABB).get_center().z
+			if z >= centre_z:
+				_fail("%s: %s is at z %.3f, not in front of the body "
+						% [role, want, z] + "(centre %.3f). Godot's forward "
+						% centre_z + "is -Z; this enemy faces away.")
+		if per.has("anchor_weak"):
+			var z := (per["anchor_weak"] as AABB).get_center().z
+			if z <= centre_z:
+				_fail("%s: anchor_weak is at z %.3f, not behind the body "
+						% [role, z] + "(centre %.3f)" % centre_z)
+		if faced == 0:
+			_fail("%s declares a front but no strike, muzzle or shield "
+					% role + "anchor to hold it to")
+		entry["faces"] = "-Z"
+
 	# 8. The one that matters.
 	if tintable == 0:
 		_note("%s would take NO damage tint: "

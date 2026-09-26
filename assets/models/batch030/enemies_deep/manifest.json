@@ -16,6 +16,8 @@
       1.55,
       1.25
     ],
+    "faces": "-Z, as enemy.gd's enemies do; the front part is checked at build time",
+    "front_part": "muzzle",
     "hover_height_m": 0.0,
     "integration_ready": false,
     "invents_no_behaviour": true,
@@ -67,6 +69,8 @@
       2.2,
       0.62
     ],
+    "faces": "-Z, as enemy.gd's enemies do; the front part is checked at build time",
+    "front_part": null,
     "hover_height_m": 0.0,
     "integration_ready": false,
     "invents_no_behaviour": true,
@@ -118,6 +122,8 @@
       2.6,
       1.8
     ],
+    "faces": "-Z, as enemy.gd's enemies do; the front part is checked at build time",
+    "front_part": "fist_1",
     "hover_height_m": 0.0,
     "integration_ready": false,
     "invents_no_behaviour": true,
@@ -170,6 +176,8 @@
       2.05,
       0.85
     ],
+    "faces": "-Z, as enemy.gd's enemies do; the front part is checked at build time",
+    "front_part": "shield",
     "hover_height_m": 0.0,
     "integration_ready": false,
     "invents_no_behaviour": true,
@@ -222,6 +230,8 @@
       1.05,
       1.9
     ],
+    "faces": "-Z, as enemy.gd's enemies do; the front part is checked at build time",
+    "front_part": "ram",
     "hover_height_m": 0.0,
     "integration_ready": false,
     "invents_no_behaviour": true,
@@ -273,6 +283,8 @@
       0.5,
       1.2
     ],
+    "faces": "-Z, as enemy.gd's enemies do; the front part is checked at build time",
+    "front_part": "nose",
     "hover_height_m": 1.9,
     "integration_ready": false,
     "invents_no_behaviour": true,
@@ -322,6 +334,8 @@
       0.95,
       1.35
     ],
+    "faces": "-Z, as enemy.gd's enemies do; the front part is checked at build time",
+    "front_part": null,
     "hover_height_m": 2.55,
     "integration_ready": false,
     "invents_no_behaviour": true,
@@ -371,6 +385,8 @@
       1.6,
       0.8
     ],
+    "faces": "-Z, as enemy.gd's enemies do; the front part is checked at build time",
+    "front_part": "arm_1",
     "hover_height_m": 0.0,
     "integration_ready": false,
     "invents_no_behaviour": true,
@@ -421,6 +437,8 @@
       1.4,
       0.7
     ],
+    "faces": "-Z, as enemy.gd's enemies do; the front part is checked at build time",
+    "front_part": "emitter",
     "hover_height_m": 0.0,
     "integration_ready": false,
     "invents_no_behaviour": true,
@@ -471,6 +489,8 @@
       0.62,
       1.2
     ],
+    "faces": "-Z, as enemy.gd's enemies do; the front part is checked at build time",
+    "front_part": "maw",
     "hover_height_m": 0.0,
     "integration_ready": false,
     "invents_no_behaviour": true,

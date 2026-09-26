@@ -63,9 +63,9 @@
     "artillery",
     "brute"
    ],
-   "raw": 0.416,
-   "scaled": 0.682,
-   "stretched": 0.685,
+   "raw": 0.415,
+   "scaled": 0.68,
+   "stretched": 0.684,
    "yaw": 90
   },
   {
@@ -107,9 +107,9 @@
     "artillery",
     "bulwark"
    ],
-   "raw": 0.547,
-   "scaled": 0.639,
-   "stretched": 0.616,
+   "raw": 0.546,
+   "scaled": 0.637,
+   "stretched": 0.615,
    "yaw": 45
   },
   {
@@ -129,9 +129,9 @@
     "charger",
     "diver"
    ],
-   "raw": 0.297,
-   "scaled": 0.619,
-   "stretched": 0.684,
+   "raw": 0.298,
+   "scaled": 0.618,
+   "stretched": 0.683,
    "yaw": 45
   },
   {
@@ -162,9 +162,9 @@
     "charger",
     "scuttler"
    ],
-   "raw": 0.216,
-   "scaled": 0.584,
-   "stretched": 0.639,
+   "raw": 0.215,
+   "scaled": 0.586,
+   "stretched": 0.635,
    "yaw": 45
   },
   {
@@ -196,8 +196,8 @@
     "drifter"
    ],
    "raw": 0.355,
-   "scaled": 0.541,
-   "stretched": 0.716,
+   "scaled": 0.54,
+   "stretched": 0.715,
    "yaw": 45
   },
   {
@@ -223,15 +223,15 @@
    "yaw": 45
   },
   {
-   "aspect_ratio": 2.34,
+   "aspect_ratio": 2.21,
    "pair": [
     "drifter",
     "scuttler"
    ],
-   "raw": 0.348,
-   "scaled": 0.477,
+   "raw": 0.358,
+   "scaled": 0.478,
    "stretched": null,
-   "yaw": 0
+   "yaw": 90
   },
   {
    "aspect_ratio": 1.96,
@@ -322,6 +322,17 @@
    "yaw": 0
   },
   {
+   "aspect_ratio": 3.8,
+   "pair": [
+    "brute",
+    "scuttler"
+   ],
+   "raw": 0.06,
+   "scaled": 0.296,
+   "stretched": null,
+   "yaw": 45
+  },
+  {
    "aspect_ratio": 3.23,
    "pair": [
     "artillery",
@@ -331,17 +342,6 @@
    "scaled": 0.295,
    "stretched": null,
    "yaw": 0
-  },
-  {
-   "aspect_ratio": 3.8,
-   "pair": [
-    "brute",
-    "scuttler"
-   ],
-   "raw": 0.06,
-   "scaled": 0.295,
-   "stretched": null,
-   "yaw": 45
   },
   {
    "aspect_ratio": 2.9,
@@ -394,7 +394,7 @@
     "scuttler"
    ],
    "raw": 0.142,
-   "scaled": 0.263,
+   "scaled": 0.264,
    "stretched": null,
    "yaw": 45
   },
@@ -426,8 +426,8 @@
     "melee",
     "scuttler"
    ],
-   "raw": 0.206,
-   "scaled": 0.181,
+   "raw": 0.205,
+   "scaled": 0.182,
    "stretched": null,
    "yaw": 45
   },
@@ -448,8 +448,8 @@
     "ranged",
     "scuttler"
    ],
-   "raw": 0.228,
-   "scaled": 0.159,
+   "raw": 0.227,
+   "scaled": 0.16,
    "stretched": null,
    "yaw": 45
   },

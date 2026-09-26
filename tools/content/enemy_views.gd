@@ -71,6 +71,9 @@ func _shot(role: String, mode: String) -> void:
 	# the floor. Standing it at its hover height is what a player sees.
 	var hover := float(entry.get("hover_height_m", 0.0))
 	node.position = Vector3(0, hover, 0)
+	# The models face -Z, as the game's do; turned half round they face
+	# this camera the way they always have on these sheets.
+	node.rotation.y = PI
 
 	var ground := MeshInstance3D.new()
 	var plane := BoxMesh.new()

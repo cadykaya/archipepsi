@@ -1,5 +1,26 @@
 # A10 — the ten-role enemy roster: readiness, anchors, and one blocker
 
+> **CORRECTED 2026-09-26 — two claims below were not true of the shipped
+> models until today.**
+>
+> 1. **The models faced +Z.** Their anchors and `enemy.gd` both face -Z,
+>    so every shield, emitter and arm pointed away from its own anchors:
+>    the bulwark's `anchor_weak` sat on its SHIELD side, not behind it.
+>    A silhouette is the same from front and back, and item 5 of the
+>    readiness harness ("which way does it face") was listed but never
+>    implemented. Both are fixed: the geometry is turned to -Z at build
+>    time, with a per-role front-part assertion, and the readiness gate
+>    now refuses any front anchor that is not in front, or weak anchor that
+>    is not behind.
+> 2. **"Embedded inside the body" was inside the body's BOX.** Some markers
+>    stood 1–2 px proud of the surface at 18 m (9 pixels across 7 views
+>    before, 8 across 6 after the turn). Each is now walked into an actual
+>    part, and the silhouette harness renders every view with the anchors
+>    hidden and requires the same silhouette to the pixel.
+>
+> Nothing about the envelopes, the colliders or the anchor NAMES changed.
+> See `2026-09-26-enemy-value-bands-and-L08.md`.
+
 **Arty**
 
 **To:** Prod (integration)

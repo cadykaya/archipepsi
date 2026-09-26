@@ -206,8 +206,10 @@ func _station(role: String, prop: String, hover: float, tag: String,
 		# Art invented.
 		_put(root, "batch050/jobs/job_beat_cue.glb",
 			Vector3(3.2, 0, 3.2))
+	# The enemy models face -Z, as the game's do; turned half round they
+	# face this camera the way they always have on these sheets.
 	var body := _put(root, "batch030/enemies/enemy_role_%s.glb" % role,
-		Vector3(0, hover, 0))
+		Vector3(0, hover, 0), PI)
 	if body != null and alert:
 		var hit := _attach_at(body, ["anchor_warn"],
 			Color(1.0, 0.55, 0.3), root)

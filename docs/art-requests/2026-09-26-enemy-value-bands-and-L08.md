@@ -82,6 +82,15 @@ moves:
   asserted to fit;
 - the anchors are the same named nodes in both sets.
 
+**The models face -Z, as `enemy.gd`'s enemies do** — fixed 2026-09-26.
+Until then every art-lane enemy faced +Z, away from its own anchors (the
+bulwark's weak-point anchor sat on its shield side). `look_at` works on
+them as it does on the code-built enemies, and `anchor_strike` /
+`anchor_muzzle` / `anchor_shield` are on the front, `anchor_weak`
+behind. Every anchor is inside a real part of the body now, not merely
+inside its bounding box, and none shows at any angle. The A10 handoff
+carries a dated correction.
+
 **Held by the art lane's suite** (`tools/check_art_current.sh`):
 - `tools/content/check_enemy_bands.py` proves both sets are the same
   geometry and markings, byte for byte, and that the deep set is darker.
