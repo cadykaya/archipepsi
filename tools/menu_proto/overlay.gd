@@ -103,11 +103,22 @@ func setup(k: Kit) -> void:
 
 
 func _caption() -> void:
-	text(_root, "ARCHIPEPSI MENU -- ART-LANE REVIEW PROTOTYPE, NOT THE GAME'S MENU",
+	_cap1 = text(_root, "ARCHIPEPSI MENU -- ART-LANE REVIEW PROTOTYPE, NOT THE GAME'S MENU",
 			Vector2(24, 16), Color("#ffd84d"), 2)
-	text(_root, "SAMPLE DATA: PRODUCTION A2B9DF6 FIXTURES, + LAYOUT-STRESS "
+	_cap2 = text(_root, "SAMPLE DATA: PRODUCTION A2B9DF6 FIXTURES, + LAYOUT-STRESS "
 			+ "ECHOES TAGGED AUTHORED. EQUIPPING IS A LOCAL PREVIEW.",
 			Vector2(24, 38), INK_DIM, 2)
+
+
+var _cap1: Label
+var _cap2: Label
+
+
+## Another scene's own caption (the direction studies), in the same place
+## and the same review colour, so a study is never taken for the menu.
+func caption(first: String, second: String) -> void:
+	_cap1.text = kit.display(first)
+	_cap2.text = kit.display(second)
 
 
 func text(parent: Node, s: String, pos: Vector2, colour: Color,
