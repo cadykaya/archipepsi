@@ -29,11 +29,11 @@ production integration. I have stopped here.**
 | Real mouse and keyboard; controller included; tested kept apart from implemented | every control in RUN.md | Every binding the prompts name is **pressed by a scripted tape through the real input path**; `HANDOFF_STATE_TRANSITIONS.md` §7 lists which tape presses which, and the two that are never pressed. Hands-on: **not done**. |
 | Representative sample data, labelled; equipping a labelled local preview | sample from Production at CK9 `a2b9df6`; the 7 layout-stress Echoes tagged AUTHORED; PREVIEW… NOT SENT | scripted |
 | Rapid selection · an interrupted transition · details opened and closed · travel and return with context intact · reduced motion · long text and overflow | captures 01–06; `review/README.md` §2 maps each one to its checks | scripted: **195 checks** pass (58 + 94 + 43) |
-| A first deliberate visual pass: focal item, headings, controls, cross-face connection; no neon, rivets, clipped corners or extra panels | `review/README.md` §3; the stills | implemented; judged by eye, mine only |
+| A first deliberate visual pass: focal item, headings, controls, cross-face connection; no neon, rivets, clipped corners or extra panels | `review/README.md` §3; the sheets and the 1280×720 stills | implemented; judged by eye, mine only |
 | Settings/Pause in the four-face order, left open | the Settings wall, marked NOT DESIGNED IN THIS PASS | implemented |
 | Glyph: `; — → [ ]`, without changing a binding or a meaning | commit `48e6b76` | the font-import verifier; the tapes assert that no character is missing |
 | Glyph: device symbols with readable text fallbacks | 21 symbols plus `you`; PROMPTS: TEXT | scripted on both devices |
-| Glyph: focus, circuit and you told apart by shape and placement | frame, symbol on its gate, and figure with a tag | implemented; shown in the stills |
+| Glyph: focus, circuit and you told apart by shape and placement | frame, symbol on its gate, and figure with a tag | implemented; shown in the Map stills and captures |
 | Reduced motion covers secondary motion; the MapFace pulse finding | the pulse is held; `HANDOFF_STATE_TRANSITIONS.md` §6.1 | scripted (the pulse is exactly 1.0 at two times) |
 | Isolated, with no Production runtime edits | `tools/menu_proto`, its own Godot project | — |
 | Reconciled against the stable checkpoint, and recorded | CK9 `a2b9df6`; the menu, query and fixture files are byte-identical from CK8 to `152d777`; `SUPPORTED_GEAR_DOMAINS = ()` | recorded in `sample/SOURCE.json` and both handoffs |

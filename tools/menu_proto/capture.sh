@@ -6,9 +6,11 @@
 # Each capture tape drives the prototype through Godot's real input path
 # (Input.parse_input_event) under Movie Maker: a fixed 30 fps, 1920 x 1080,
 # the pointer drawn (--cursor), the scripted input captioned on screen.
-# The frames become <out>/captures/<cap>.mp4; each moment the tape MARKS
-# becomes a full-size still, <out>/stills/<cap>__<mark>.png, and the marks
-# of one capture a sheet, <out>/sheets/<cap>.png.
+# The frames become <out>/captures/<cap>.mp4 (1920 x 1080 -- every frame at
+# full size is there), and the moments the tape MARKS become one sheet per
+# capture, <out>/sheets/<cap>.png. The full-size marked frames are not kept
+# beside them: they repeat the video's own frames and would take a review
+# archive past its upload limit.
 #
 # This is SCRIPTED evidence. It is not hands-on use.
 set -euo pipefail
@@ -20,7 +22,7 @@ shift
 CAPS=("$@")
 [ ${#CAPS[@]} -eq 0 ] && CAPS=($(cd "$P/tapes" && ls cap_*.json | sed 's/\.json$//'))
 FF="${FFMPEG:-$(python3 -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())')}"
-mkdir -p "$OUT/captures" "$OUT/stills" "$OUT/sheets"
+mkdir -p "$OUT/captures" "$OUT/sheets"
 timeout 300 "$GODOT" --headless --path "$P" --import >/dev/null 2>&1 || true
 for cap in "${CAPS[@]}"; do
   frames="$(mktemp -d)"
@@ -47,9 +49,7 @@ shots = []
 for m in marks:
     i = min(max(int(m["frame"]), 0), len(have) - 1)
     src = os.path.join(frames, have[i])
-    dst = os.path.join(out, "stills", "%s__%s.png" % (cap, m["label"]))
-    Image.open(src).convert("RGB").save(dst, optimize=True)
-    shots.append((m["label"], dst))
+    shots.append((m["label"], src))
 # The sheet: the marked moments in order, at half size, labelled.
 cols = 2
 w, h = 960, 540
@@ -62,7 +62,7 @@ for k, (label, path) in enumerate(shots):
     sheet.paste(Image.open(path).resize((w, h), Image.LANCZOS), (x, y))
     d.text((x + 10, y + h + 6), "%d. %s" % (k + 1, label), fill="#e8eef6")
 sheet.save(os.path.join(out, "sheets", cap + ".png"), optimize=True)
-print("capture: %s -- %d frames, %d stills" % (cap, len(have), len(shots)))
+print("capture: %s -- %d frames, %d marked moments" % (cap, len(have), len(shots)))
 PY
   rm -rf "$frames"
 done

@@ -2723,7 +2723,7 @@ It does not open 0.5, Track C or Track E.
 integrated, and no Production-owned file was edited.
 - Report: `docs/art/reports/2026-09-27-a2-interactive-review-prototype.md`.
 - Review: `docs/art/review/menu_proto_2026-09-27/`, which holds the README,
-  8 captures, sheets, stills and `stills_720p/`.
+  8 captures, their sheets, and `stills_720p/`.
 - Handoff: `HANDOFF_STATE_TRANSITIONS.md` and `HANDOFF_GLYPH_ASSETS.md`.
 - The build is `tools/menu_proto` at `076cad7`, staged into the archive by
   `tools/menu_proto/stage_build.sh`. The captures are from the same commit.

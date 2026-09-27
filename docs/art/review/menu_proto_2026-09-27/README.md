@@ -60,7 +60,8 @@ and text prompts.
 | *Also:* the controller, and text fallbacks | `captures/cap_08_pad.mp4` | pad symbols on its first press; sticks, triggers, Y; PROMPTS: TEXT on both devices |
 
 - `sheets/` has one image per capture, showing its marked moments in order.
-- `stills/` has those moments at full 1920×1080.
+- The captures themselves are 1920×1080: pause one for any frame at full
+  size.
 - `stills_720p/` has each face at Production's window default, **1280×720**:
   the legibility check.
 
@@ -136,7 +137,7 @@ orbit, tilt and detail state tried.
      and the handoff §7 lists which tape presses which;
    - the staged build passes `test_core` on its own, outside the
      repository;
-   - the eight captures and the stills are scripted too. Each capture says
+   - the eight captures and the 1280×720 stills are scripted too. Each capture says
      so on screen, in yellow: `SCRIPTED INPUT -- …`.
 3. **Hands-on use: not done by me.** Nobody has used this build with a real
    keyboard, mouse or controller. That review is yours. The questions it
@@ -184,7 +185,7 @@ The commands, from the repository root:
 
 ```
 tools/menu_proto/test.sh                        # both tapes, headless
-tools/menu_proto/capture.sh <out>               # the eight captures, sheets, stills
+tools/menu_proto/capture.sh <out>               # the eight captures and their sheets
 tools/menu_proto/stills.sh <out> 1280x720       # gameplay-size stills
 tools/menu_proto/stage_build.sh <out> [rev]     # the build in this archive
 tools/menu_proto/extract_sample.sh a2b9df6      # the sample, from Production
