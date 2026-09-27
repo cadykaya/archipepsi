@@ -3196,7 +3196,7 @@ acceptance and NOT approval for Production integration.
   * `test_hybrid` (206) covers the ruling's list on the new layout.
   * The three pre-hybrid tapes (228) are ported by intent, and none was
     dropped. The README's table maps every changed check.
-  * The tour: `cap_10_tour` (32 s, with sound). Close-ups: the two
+  * The tour: `cap_10_tour` (33 s, with sound). Close-ups: the two
     fixes only.
   * **Hands-on: not done.**
 * **Kept safe.** Studies H and B re-render pixel-identical; the frozen

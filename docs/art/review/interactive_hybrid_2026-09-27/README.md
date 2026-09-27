@@ -14,7 +14,7 @@ approval for Production integration.** I have stopped here.
 **Start here:**
 1. **Run it:** `build/menu_proto/`. `RUN.md` there has the launch line and
    every control.
-2. **Watch the tour:** `tour/cap_10_tour.mp4`, 32 s across all four walls,
+2. **Watch the tour:** `tour/cap_10_tour.mp4`, 33 s across all four walls,
    with the menu's own sound. `tour/cap_10_tour.png` is its marked
    moments.
 3. **See the two fixes:** `closeups/fix_1_settings_feed.png` and

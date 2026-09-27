@@ -20,7 +20,7 @@ have stopped here.**
 | Item | What it is |
 |---|---|
 | `build/menu_proto/` | **Run this.** The standalone prototype for Godot 4.5.x. `RUN.md` has the launch line and every control. |
-| `review/tour/cap_10_tour.mp4` | **The one tour:** 32 s across all four walls, with the menu's own sound. `cap_10_tour.png` is its marked moments. |
+| `review/tour/cap_10_tour.mp4` | **The one tour:** 33 s across all four walls, with the menu's own sound. `cap_10_tour.png` is its marked moments. |
 | `review/closeups/fix_1_settings_feed.png` | Refinement 1: Epsilon's feed, before and after, at 1:1. |
 | `review/closeups/fix_2_readability.png` | Refinement 2: the quieter words, before and after, at 1:1, with their contrast. |
 | `review/README.md` | **The review:** what to try with your hands, what changed from the stills, the motion and sound as built, the evidence, and the limits. |
