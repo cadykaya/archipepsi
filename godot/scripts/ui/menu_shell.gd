@@ -195,6 +195,7 @@ func close() -> void:
 	kit.finish()
 	_held.clear()
 	_stick.clear()
+	_pad_held.clear()
 	_drag_button = 0
 	_was_turning = false
 	visible = false
@@ -359,8 +360,8 @@ func prompts_shown() -> Array:
 
 ## The words the next Escape (or B) says it will do on the front wall.
 func back_words() -> String:
-	var said := str(_call(PAGES[_front], "back_words", []))
-	return said if said != "" and said != "<null>" else "close"
+	var said: Variant = _call(PAGES[_front], "back_words", [])
+	return str(said) if said is String and str(said) != "" else "close"
 
 
 # ------------------------------------------------------------ input
@@ -410,6 +411,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	get_viewport().set_input_as_handled()
+	_track_pad_hold(event)
 	if is_turning():
 		_hold(event)
 		return
@@ -418,7 +420,7 @@ func _input(event: InputEvent) -> void:
 
 ## Back out of the front wall's deeper view. Whether there was one.
 func _back() -> bool:
-	var backed := bool(_call(PAGES[_front], "back", []))
+	var backed := _yes(_call(PAGES[_front], "back", []))
 	if backed:
 		_refresh_glass()
 	return backed
@@ -431,17 +433,18 @@ func _route(event: InputEvent) -> void:
 	var ctl: Node = _controllers.get(page)
 	if ctl == null:
 		return
-	if ctl.has_method("raw_input") and bool(ctl.call("raw_input", event)):
+	if ctl.has_method("raw_input") and _yes(ctl.call("raw_input", event)):
 		_refresh_glass()
 		return
+	var echo := event.is_echo()
 	if event.is_action_pressed("ui_up", true):
-		_call(page, "nav", [Vector2i(0, -1)])
+		_call(page, "nav", [Vector2i(0, -1), echo])
 	elif event.is_action_pressed("ui_down", true):
-		_call(page, "nav", [Vector2i(0, 1)])
+		_call(page, "nav", [Vector2i(0, 1), echo])
 	elif event.is_action_pressed("ui_left", true):
-		_call(page, "nav", [Vector2i(-1, 0)])
+		_call(page, "nav", [Vector2i(-1, 0), echo])
 	elif event.is_action_pressed("ui_right", true):
-		_call(page, "nav", [Vector2i(1, 0)])
+		_call(page, "nav", [Vector2i(1, 0), echo])
 	elif event.is_action_pressed("ui_accept"):
 		_call(page, "accept", [])
 	elif event.is_released() and ctl.has_method("released"):
@@ -507,7 +510,7 @@ func _on_stage_input(event: InputEvent) -> void:
 		var motion := event as InputEventMouseMotion
 		if _drag_button != 0:
 			if ctl != null and ctl.has_method("drag"):
-				ctl.call("drag", motion.relative, _drag_button)
+				ctl.call("drag", motion.relative, _drag_button, pick_at(mouse.position))
 			return
 		if not is_turning():
 			_hover(pick_at(mouse.position))
@@ -526,12 +529,13 @@ func _on_stage_input(event: InputEvent) -> void:
 		dropped_in_turn += 1
 		return
 	var hit := pick_at(mouse.position)
+	hit["double"] = button.double_click
 	last_pick = hit
 	match button.button_index:
 		MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT:
 			var used := false
 			if ctl != null and ctl.has_method("click"):
-				used = bool(ctl.call("click", hit, button.button_index))
+				used = _yes(ctl.call("click", hit, button.button_index))
 			if not used and ctl != null and ctl.has_method("drag"):
 				_drag_button = button.button_index
 			_refresh_glass()
@@ -540,6 +544,44 @@ func _on_stage_input(event: InputEvent) -> void:
 				ctl.call("wheel", hit,
 						-1 if button.button_index == MOUSE_BUTTON_WHEEL_UP else 1)
 				_refresh_glass()
+
+
+## A pad sends no repeats for a held d-pad, as a keyboard does for a held
+## key: the shell makes them, for the walls whose lists and pots want them
+## (`repeats`), after PAD_REPEAT_DELAY and every PAD_REPEAT_EVERY.
+const PAD_REPEAT_DELAY := 0.35
+const PAD_REPEAT_EVERY := 0.07
+const _PAD_DIRS := {JOY_BUTTON_DPAD_UP: Vector2i(0, -1),
+	JOY_BUTTON_DPAD_DOWN: Vector2i(0, 1), JOY_BUTTON_DPAD_LEFT: Vector2i(-1, 0),
+	JOY_BUTTON_DPAD_RIGHT: Vector2i(1, 0)}
+var _pad_held := {}                  # button -> seconds until its next repeat
+
+
+func _track_pad_hold(event: InputEvent) -> void:
+	if not (event is InputEventJoypadButton):
+		return
+	var b := (event as InputEventJoypadButton).button_index
+	if not _PAD_DIRS.has(b):
+		return
+	if event.is_pressed():
+		_pad_held.clear()               # one direction held at a time
+		_pad_held[b] = PAD_REPEAT_DELAY
+	else:
+		_pad_held.erase(b)
+
+
+func _pad_repeats(delta: float) -> void:
+	if _pad_held.is_empty() or is_turning():
+		return
+	var page := PAGES[_front]
+	if not _yes(_call(page, "repeats", [])):
+		return
+	for b: int in _pad_held.keys():
+		_pad_held[b] = float(_pad_held[b]) - delta
+		while float(_pad_held[b]) <= 0.0:
+			_pad_held[b] = float(_pad_held[b]) + PAD_REPEAT_EVERY
+			_call(page, "nav", [_PAD_DIRS[b], true])
+			_refresh_glass()
 
 
 func _hover(hit: Dictionary) -> void:
@@ -552,7 +594,7 @@ func _hover(hit: Dictionary) -> void:
 
 
 func _typing() -> bool:
-	return bool(_call(PAGES[_front], "typing_active", []))
+	return _yes(_call(PAGES[_front], "typing_active", []))
 
 
 func _note_device(event: InputEvent) -> void:
@@ -582,8 +624,15 @@ func _notification(what: int) -> void:
 		_drag_button = 0
 		_stick.clear()
 		_held.clear()
+		_pad_held.clear()
 		for page: String in _controllers:
 			_call(page, "focus_lost", [])
+
+
+## A wall's answer as a yes: `true` only when it said `true` (a wall
+## without the method says nothing).
+static func _yes(answer: Variant) -> bool:
+	return answer is bool and answer
 
 
 func _call(page: String, method: String, args: Array) -> Variant:
@@ -606,6 +655,7 @@ func _process(delta: float) -> void:
 	for page: String in _controllers:
 		_call(page, "tick", [delta])
 	_sticks(delta)
+	_pad_repeats(delta)
 
 
 ## The left stick moves focus with a repeat; a wall that reads the sticks

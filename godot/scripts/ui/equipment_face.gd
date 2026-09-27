@@ -1792,7 +1792,7 @@ func _refresh_after_request() -> void:
 
 # ============================================================ input
 
-func nav(dir: Vector2i) -> void:
+func nav(dir: Vector2i, _repeat := false) -> void:
 	note = ""
 	if zone == "keys":
 		if dir.y != 0:
@@ -2207,6 +2207,11 @@ func focus_lost() -> void:
 
 func tick(_delta: float) -> void:
 	pass
+
+
+## A held d-pad repeats here, as a held key does.
+func repeats() -> bool:
+	return true
 
 
 # ============================================================ signals

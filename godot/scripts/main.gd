@@ -387,27 +387,29 @@ func boot() -> void:
 	reveal = RevealLayer.new()
 	reveal.tones = tones
 	add_child(reveal)
+	# MENU-INT: the pause interface is the approved hybrid, a real 3D box.
+	# Each wall's controller is MOUNTED on it: it runs while the world is
+	# paused, builds its hardware in the box, and answers what the shell
+	# routes to it. Its cues are the game's own bank.
 	menu_shell = MenuShell.new()
 	add_child(menu_shell)
-	equipment = EquipmentFace.new()
-	menu_shell.page_root("equipment").add_child(equipment)
-	map_face = MapFace.new()
-	menu_shell.page_root("map").add_child(map_face)
-	journal = JournalFace.new()
-	menu_shell.page_root("journal").add_child(journal)
+	menu_shell.kit.cue_sink = tones.menu_cue
+	pause_menu = PauseMenu.new()
+	menu_shell.add_child(pause_menu)
 	settings_face = SettingsFace.new()
-	menu_shell.page_root("settings").add_child(settings_face)
+	settings_face.bind_pause(pause_menu)
+	menu_shell.mount("settings", settings_face)
+	equipment = EquipmentFace.new()
+	menu_shell.mount("equipment", equipment)
+	map_face = MapFace.new()
+	menu_shell.mount("map", map_face)
+	journal = JournalFace.new()
+	journal.bind_map(map_face)
+	menu_shell.mount("journal", journal)
 	# The saved volume, from the first sound on.
 	SettingsFace.apply_volume()
-	# The wall facing the player holds focus, or a keyboard or controller
-	# has nothing to move from.
-	menu_shell.page_changed.connect(func(page: String) -> void:
-		if page == "equipment":
-			equipment.take_focus())
 	shop = ShopUI.new()
 	add_child(shop)
-	pause_menu = PauseMenu.new()
-	menu_shell.page_viewport("settings").add_child(pause_menu)
 	station_panel = StationPanel.new()
 	add_child(station_panel)
 	debug = DebugOverlay.new()

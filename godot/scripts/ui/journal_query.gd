@@ -74,6 +74,15 @@ static func confirmed_of(snapshot: Dictionary, locations: Array) -> int:
 ## WHAT YOU DID HERE: the Zone's record, each line with what it opened.
 ## Empty in the Hub.
 static func done_here(snapshot: Dictionary) -> Array:
+	return _texts(done_here_rows(snapshot))
+
+
+## WHAT YOU DID HERE, each line with the IDENTITY of what it is about
+## (MENU-INT, the art lane's handoff §6.2): `{text, edges, circuits}`, the
+## same text `done_here` gives, and the circuit ids and connector edge ids
+## it names -- from the bridge's map, so a line is linked to a passage by
+## its id and never by the words shown. Either list may be empty.
+static func done_here_rows(snapshot: Dictionary) -> Array:
 	var zone := active_zone(snapshot)
 	if zone.is_empty():
 		return []
@@ -85,15 +94,16 @@ static func done_here(snapshot: Dictionary) -> Array:
 	var names := room_names(map)
 	var out: Array = []
 	for key: Variant in _sorted(progress.get("collected_keys", [])):
-		out.append("Picked up the %s key." % _key_words(declared, str(key)))
+		out.append(_row("Picked up the %s key." % _key_words(declared, str(key)),
+				map, ["key:" + str(key)]))
 	for lock: Variant in _sorted(progress.get("opened_locks", [])):
 		var parts := str(lock).split("/")
 		var room := parts[0] if parts.size() > 0 else ""
 		var key := _door_key(declared, room, parts[1] if parts.size() > 1
 				else "")
-		out.append("Unlocked the %s door%s." % [
+		out.append(_row("Unlocked the %s door%s." % [
 				_key_words(declared, key) if key != "" else "locked",
-				_in(names, room)])
+				_in(names, room)], map, ["key:" + key] if key != "" else []))
 	var initial := {}
 	for raw: Variant in declared.get("zone_state", []):
 		var v: Dictionary = raw
@@ -101,8 +111,12 @@ static func done_here(snapshot: Dictionary) -> Array:
 	for raw: Variant in _pairs(progress.get("consumed_objects", [])):
 		var pair: Array = raw
 		var room := _consumer_room(declared, str(pair[1]))
-		out.append("Installed the %s%s." % [_words(str(pair[0])),
-				_in(names, room)])
+		var holding: Array = []
+		for c: Variant in map.get("circuits", []):
+			if (c as Dictionary).get("objects", []).has(str(pair[0])):
+				holding.append(str((c as Dictionary).get("circuit_id", "")))
+		out.append(_row("Installed the %s%s." % [_words(str(pair[0])),
+				_in(names, room)], map, holding))
 	for raw: Variant in _pairs(progress.get("macro_state", [])):
 		var pair: Array = raw
 		var variable := str(pair[0])
@@ -118,31 +132,61 @@ static func done_here(snapshot: Dictionary) -> Array:
 				setters.append(names[str(rid)])
 		if not setters.is_empty():
 			line += ", set in %s" % ", ".join(setters)
-		out.append(line + "." + _opened_by(map, names, circuit))
+		out.append(_row(line + "." + _opened_by(map, names, circuit), map,
+				["state:" + variable] if not circuit.is_empty() else []))
 	for latch: Variant in _sorted(progress.get("latched", [])):
 		var package := str(latch).split("/")[0]
 		var room := package.trim_prefix("graph_")
 		var line := "A latch held%s." % _in(names, room)
+		var held: Array = []
 		for raw: Variant in map.get("circuits", []):
 			var circuit: Dictionary = raw
 			if str(circuit.get("circuit_id", "")).begins_with(
 					"machine:%s:" % room):
 				line += _opened_by(map, names, circuit)
-		out.append(line)
+				held.append(str(circuit.get("circuit_id", "")))
+		out.append(_row(line, map, held))
 	var defeated: Variant = progress.get("defeated")
 	if defeated is Array and not (defeated as Array).is_empty():
-		out.append("Defeated %d here." % (defeated as Array).size())
+		out.append({"text": "Defeated %d here." % (defeated as Array).size(),
+			"edges": [], "circuits": []})
 	var stations: Array = progress.get("reached_stations", [])
 	if not stations.is_empty():
-		out.append("Reached %d station%s." % [stations.size(),
-				"" if stations.size() == 1 else "s"])
+		out.append({"text": "Reached %d station%s." % [stations.size(),
+				"" if stations.size() == 1 else "s"], "edges": [], "circuits": []})
 	return out
+
+
+## A line and the identity it names: the circuits the map has, and their
+## connectors that the map lists (a connector it does not list is not
+## known, and is not named).
+static func _row(text: String, map: Dictionary, circuit_ids: Array) -> Dictionary:
+	var listed := {}
+	for raw: Variant in map.get("connectors", []):
+		listed[str((raw as Dictionary).get("edge_id", ""))] = true
+	var circuits: Array = []
+	var edges: Array = []
+	for cid: Variant in circuit_ids:
+		var circuit := _circuit(map, str(cid))
+		if circuit.is_empty():
+			continue
+		circuits.append(str(cid))
+		for eid: Variant in circuit.get("connectors", []):
+			if listed.has(str(eid)) and not edges.has(str(eid)):
+				edges.append(str(eid))
+	return {"text": text, "edges": edges, "circuits": circuits}
 
 
 ## STILL SHUT: every gate the bridge's map lists as blocked or unknown,
 ## with the bridge's reason. The reminder §8 allows: which door a found
 ## control affects, never where an unfound one is.
 static func still_shut(snapshot: Dictionary) -> Array:
+	return _texts(still_shut_rows(snapshot))
+
+
+## STILL SHUT, with each line's identity: `{text, edge_id, state,
+## circuits}` -- the connector the bridge's map lists it as.
+static func still_shut_rows(snapshot: Dictionary) -> Array:
 	var map := zone_map(snapshot)
 	var names := room_names(map)
 	var out: Array = []
@@ -152,21 +196,36 @@ static func still_shut(snapshot: Dictionary) -> Array:
 		if state == "open":
 			continue
 		var reason := str(row.get("reason", ""))
-		out.append("%s: %s" % [_way(names, str(row.get("room_a", "")),
+		out.append({"text": "%s: %s" % [_way(names, str(row.get("room_a", "")),
 				str(row.get("room_b", ""))),
 				reason if reason != "" else (
 					"shut; only the room can tell" if state == "unknown"
-					else "shut")])
+					else "shut")],
+			"edge_id": str(row.get("edge_id", "")), "state": state,
+			"circuits": (row.get("circuits", []) as Array).duplicate()})
 	return out
 
 
 ## THE PLACES FOUND, by the bridge's names, in the Zone's order.
 static func places(snapshot: Dictionary) -> Array:
+	return _texts(places_rows(snapshot))
+
+
+## THE PLACES FOUND, with each one's room id: `{text, room_id}`.
+static func places_rows(snapshot: Dictionary) -> Array:
 	var out: Array = []
 	for raw: Variant in zone_map(snapshot).get("rooms", []):
 		var row: Dictionary = raw
 		if bool(row.get("discovered", false)) and str(row.get("name", "")) != "":
-			out.append(str(row["name"]))
+			out.append({"text": str(row["name"]),
+				"room_id": str(row.get("room_id", ""))})
+	return out
+
+
+static func _texts(rows: Array) -> Array:
+	var out: Array = []
+	for row: Dictionary in rows:
+		out.append(str(row["text"]))
 	return out
 
 
