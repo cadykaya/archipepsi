@@ -1026,6 +1026,15 @@ func _shoot(dir: String) -> void:
 		var image := get_viewport().get_texture().get_image()
 		var path := dir.path_join("map_%s.png" % str(shot[2]))
 		image.save_png(path)
+		_save_words(path)
 		_check(image.get_width() > 64, "saved %s" % path.get_file())
 		shell.close()
 		await _frames(2)
+
+
+## What the words on the front wall are, and where, beside the render:
+## what `tools/menu_contrast.py` measures the render's contrast from.
+func _save_words(png: String) -> void:
+	var out := FileAccess.open(png.get_basename() + ".words.json", FileAccess.WRITE)
+	out.store_string(JSON.stringify(shell.words_on_screen()))
+	out.close()

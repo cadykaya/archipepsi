@@ -128,6 +128,7 @@ const DRIVERS := {
 	"--minimap": preload("res://tests/minimap_driver.gd"),
 	"--map-face": preload("res://tests/map_face_driver.gd"),
 	"--journal-face": preload("res://tests/journal_face_driver.gd"),
+	"--menu-tour": preload("res://tests/menu_tour_driver.gd"),
 	"--reversible": preload("res://tests/reversible_driver.gd"),
 	"--mass-class": preload("res://tests/mass_class_driver.gd"),
 	"--railway-shots": preload("res://tests/railway_shot_driver.gd"),

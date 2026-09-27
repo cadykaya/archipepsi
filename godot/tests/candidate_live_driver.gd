@@ -1292,12 +1292,26 @@ func _equip_while_paused() -> void:
 		_check(false, "the Equipment wall offers to equip %s ('%s')" % [cid,
 				label])
 		return
-	await _action_event("ui_accept")
-	# READ AT THE PRESS, not a frame later: a local bridge answers inside
-	# one frame, and the answer is read by the client's own `_process`.
-	# Nothing can resolve the request before that poll, so this is the
-	# state the player sees until then.
-	var pending := face.requests.is_pending(slot)
+	# ENTER, pressed through the engine's input pipeline -- and READ AT THE
+	# PRESS, not a frame later: a local bridge answers inside one frame,
+	# and the answer is read by the client's own `_process`. The first
+	# frame the request has left, nothing can have resolved it yet, so this
+	# is the state the player sees until the answer.
+	var sent_before := BridgeClient.sent_intents.size()
+	var down := InputEventAction.new()
+	down.action = "ui_accept"
+	down.pressed = true
+	Input.parse_input_event(down)
+	var pending := false
+	for _i in 10:
+		await get_tree().process_frame
+		if BridgeClient.sent_intents.size() > sent_before:
+			pending = face.requests.is_pending(slot)
+			break
+	var up := InputEventAction.new()
+	up.action = "ui_accept"
+	up.pressed = false
+	Input.parse_input_event(up)
 	var changed := func() -> bool: return BridgeClient.slots() != before
 	var answered := await _await_live("the equip's answer, the world paused",
 			changed, 10.0)

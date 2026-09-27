@@ -134,6 +134,7 @@ func _run() -> void:
 	await _motion_at_once()
 	await _epsilon_is_not_a_control()
 	_put_settings_back()
+	await _open_and_close_again()
 	_finish("GODOT JOURNAL FACE")
 
 
@@ -937,6 +938,49 @@ func _epsilon_is_not_a_control() -> void:
 	shell.close()
 
 
+## §12: "repeated open/close, and performance". Thirty opens and closes on
+## every wall, some closed in the middle of a turn: the box holds what it
+## held, no pause is left behind, and what an open costs is measured.
+func _open_and_close_again() -> void:
+	print("  -- opened and closed, again and again")
+	await _deliver("latched")
+	await _open("settings")
+	shell.close()
+	await _frames(4)
+	var nodes := _count(shell)
+	var worst := 0
+	var total := 0
+	for i in 30:
+		var t0 := Time.get_ticks_usec()
+		pause_menu.open(true)
+		shell.open(MenuShell.PAGES[i % MenuShell.PAGES.size()])
+		var took := Time.get_ticks_usec() - t0
+		worst = maxi(worst, took)
+		total += took
+		await _frames(2)
+		if i % 3 == 0:
+			shell.turn(1)
+			await _frames(2)
+		shell.close()
+		await _frames(2)
+	await _frames(4)
+	_check(_count(shell) == nodes and not PauseClaims.held_by(MenuShell.PAUSE_CLAIM)
+			and not get_tree().paused,
+			"thirty opens and closes, a third of them mid-turn: the box holds "
+			+ "the same %d nodes (%d now), and no pause is left held"
+			% [nodes, _count(shell)])
+	_note("an open took %.1f ms on average and %.1f ms at most, headless, "
+			% [total / 30000.0, worst / 1000.0] + "with every wall's rebuild")
+	_check(worst < 250000, "and no open takes a pathological time")
+
+
+func _count(root: Node) -> int:
+	var n := 1
+	for child: Node in root.get_children():
+		n += _count(child)
+	return n
+
+
 # ---------------------------------------------------------------------------
 # Screenshots (`make journal-face-shots`, under the game's renderer)
 # ---------------------------------------------------------------------------
@@ -953,6 +997,15 @@ func _shoot(dir: String) -> void:
 		var image := get_viewport().get_texture().get_image()
 		var path := dir.path_join("%s.png" % str(shot[2]))
 		image.save_png(path)
+		_save_words(path)
 		_check(image.get_width() > 64, "saved %s" % path.get_file())
 		shell.close()
 		await _frames(2)
+
+
+## What the words on the front wall are, and where, beside the render:
+## what `tools/menu_contrast.py` measures the render's contrast from.
+func _save_words(png: String) -> void:
+	var out := FileAccess.open(png.get_basename() + ".words.json", FileAccess.WRITE)
+	out.store_string(JSON.stringify(shell.words_on_screen()))
+	out.close()

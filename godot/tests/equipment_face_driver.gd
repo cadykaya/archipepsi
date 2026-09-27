@@ -1284,11 +1284,19 @@ func _long_lists_to_the_last_item() -> void:
 	_check(bool(_st()["card_inside"])
 			and _st()["unfolded"] == (_st()["order"] as Array)[count - 2],
 			"the keyboard brings the reading back into view")
-	# THE RIGHT STICK scrolls the same rows.
+	# THE RIGHT STICK scrolls the same rows by hand, while it is held.
 	var first := int(_st()["first"])
-	face.scroll_by(-EquipmentFace.ROW_PITCH * 2.0)
+	var reading: String = _st()["unfolded"]
+	await _stick(JOY_AXIS_RIGHT_Y, -1.0)
+	await get_tree().create_timer(0.08).timeout
+	await _stick(JOY_AXIS_RIGHT_Y, 0.0)
 	await _frames(2)
-	_check(int(_st()["first"]) == first - 2, "the right stick scrolls by rows too")
+	var moved := int(_st()["first"])
+	await get_tree().create_timer(0.15).timeout
+	_check(moved < first and int(_st()["first"]) == moved
+			and _st()["unfolded"] == reading,
+			"the right stick scrolls the rack by hand while held (first row %d -> "
+			% first + "%d), reads nothing new, and stops when let go" % moved)
 	# EMPTY: a key nothing fits.
 	await _key(KEY_LEFT)
 	await _to_key(1)
@@ -1437,6 +1445,14 @@ func _pad(button: JoyButton) -> void:
 		await get_tree().process_frame
 
 
+func _stick(axis: JoyAxis, value: float) -> void:
+	var event := InputEventJoypadMotion.new()
+	event.axis = axis
+	event.axis_value = value
+	Input.parse_input_event(event)
+	await get_tree().process_frame
+
+
 func _move(at: Vector2) -> void:
 	var move := InputEventMouseMotion.new()
 	move.position = at
@@ -1522,5 +1538,14 @@ func _shoot(dir: String) -> void:
 func _save(path: String) -> void:
 	var image := get_viewport().get_texture().get_image()
 	image.save_png(path)
+	_save_words(path)
 	_check(image.get_width() > 64, "saved %s (%dx%d)" % [path.get_file(),
 			image.get_width(), image.get_height()])
+
+
+## What the words on the front wall are, and where, beside the render:
+## what `tools/menu_contrast.py` measures the render's contrast from.
+func _save_words(png: String) -> void:
+	var out := FileAccess.open(png.get_basename() + ".words.json", FileAccess.WRITE)
+	out.store_string(JSON.stringify(shell.words_on_screen()))
+	out.close()

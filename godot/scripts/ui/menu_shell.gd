@@ -354,6 +354,28 @@ func screen_of_node(node: Node3D) -> Vector2:
 	return _camera.unproject_position(MenuKit.centre_of(node))
 
 
+## Every word drawn on the front wall and where it is on the screen:
+## [{text, rect: [x, y, w, h], ink: [r, g, b]}]. A render's contrast is
+## measured from these against what the eye sees there
+## (`tools/menu_contrast.py`).
+func words_on_screen() -> Array:
+	var out: Array = []
+	var face: Node3D = _faces[PAGES[_front]]
+	for n: Node in face.find_children("*", "Label3D", true, false):
+		var l := n as Label3D
+		if not l.is_visible_in_tree() or l.is_queued_for_deletion() \
+				or l.text.strip_edges() == "":
+			continue
+		var box := l.get_aabb()
+		var r := Rect2()
+		for i in 8:
+			var p := _camera.unproject_position(l.global_transform * box.get_endpoint(i))
+			r = Rect2(p, Vector2.ZERO) if i == 0 else r.expand(p)
+		out.append({"text": l.text, "rect": [r.position.x, r.position.y, r.size.x,
+			r.size.y], "ink": [l.modulate.r, l.modulate.g, l.modulate.b]})
+	return out
+
+
 ## The prompt line as drawn: [{action, shows, words}].
 func prompts_shown() -> Array:
 	return _prompts_shown.duplicate(true)

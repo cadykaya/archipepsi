@@ -725,14 +725,21 @@ func _claim() -> void:
 	_check(equipped and asked.size() == 1,
 			"one request, and the bridge put it on the consumable key (%s)"
 			% str(asked))
-	# Escape, which closes from any wall -- Tab closes only when the
-	# search box does not have the keyboard.
+	# Escape backs out, then closes (MENU-INT §9): from the rack, the first
+	# press goes back to the keys and says so; the next closes the wall.
+	var said: String = main.menu_shell.back_words()
+	await _tap("pause")
+	await _settle(2)
+	_check(said == "keys" and main.menu_shell.is_open() and face.zone == "keys"
+			and main.menu_shell.back_words() == "close",
+			"Escape in the rack backs out to the keys, as its prompt said "
+			+ "('%s'), and the next Escape's prompt says close" % said)
 	await _tap("pause")
 	_check(await _await_live("the wall closed",
 			func() -> bool:
 				return not main.menu_shell.is_open() \
 						and not get_tree().paused, 10.0),
-			"Escape closes the wall, and the world runs again")
+			"and it closes the wall: the world runs again")
 	await _settle(10)
 	var full := int(_bag().get("charges", 0))
 	_check(_key_row().contains("Bomb Bag  %d / %d" % [full, full])

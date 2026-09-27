@@ -1244,19 +1244,24 @@ godot-menu-shell: godot-import  # the 3D shell: box, order, turn, input
 	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
 	  echo "godot-menu-shell: script errors in the run"; exit 1; fi
 
+# The menu's shots render with the GAME'S renderer, Forward+ (MENU-INT):
+# on a machine with no GPU, through a software Vulkan such as Mesa's
+# lavapipe. GL Compatibility is not what a player sees.
 SHOTS_DIR ?= /tmp/archipepsi-menu-shell
 menu-shell-shots: godot-import
 	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
-	  --rendering-driver opengl3 -- --menu-shell --shots=$(SHOTS_DIR) 2>&1 \
+	  --rendering-driver vulkan --rendering-method forward_plus -- --menu-shell --shots=$(SHOTS_DIR) 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
-# H-INVENTORY (CP3): THE EQUIPMENT WALL, three regions on Dess's
-# `CampaignSnapshot.inventory`: the keys, a grid of owned items (items,
-# never Echo events), and the selected item's detail and comparison. An
-# equip is a request until a snapshot carries it; a refusal is shown on
-# the exact `about` key only; the consumable key names its five states;
-# mouse, keyboard and controller all reach it through the 3D shell.
-# `equipment-face-shots` renders it under xvfb at 1280x720 and 1920x1080.
+# H-INVENTORY, as integrated (MENU-INT): THE EQUIPMENT WALL, the approved
+# cabinet on Dess's `CampaignSnapshot.inventory` -- the selector's keys
+# and ALWAYS ON, the rack of modules (items, never Echo events), and the
+# inspection window's reading and comparison. An equip is a request until
+# a snapshot carries it; a refusal is shown on the exact `about` key only;
+# the consumable key names its six states; keys, pad and pointer (aimed at
+# the 3D hardware where it is drawn) all reach it, on the fixture and on
+# the owner's candidate campaign. `equipment-face-shots` renders it with
+# the game's renderer at 1280x720 and 1920x1080.
 godot-equipment-face: godot-import  # the equipment wall: regions, requests, input
 	@out=$$($(GODOT) --headless --path godot -- --equipment-face 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)" ; \
@@ -1302,7 +1307,7 @@ godot-map-face: godot-import  # the map wall: render-only, one projection
 MAP_FACE_SHOTS_DIR ?= /tmp/archipepsi-map-face
 map-face-shots: godot-import
 	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
-	  --rendering-driver opengl3 -- --map-face --shots=$(MAP_FACE_SHOTS_DIR) \
+	  --rendering-driver vulkan --rendering-method forward_plus -- --map-face --shots=$(MAP_FACE_SHOTS_DIR) \
 	  --shots-size=$(SHOTS_SIZE) 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
@@ -1321,14 +1326,32 @@ godot-journal-face: godot-import  # the journal and settings walls
 JOURNAL_SHOTS_DIR ?= /tmp/archipepsi-journal-face
 journal-face-shots: godot-import
 	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
-	  --rendering-driver opengl3 -- --journal-face --shots=$(JOURNAL_SHOTS_DIR) \
+	  --rendering-driver vulkan --rendering-method forward_plus -- --journal-face --shots=$(JOURNAL_SHOTS_DIR) \
 	  --shots-size=$(SHOTS_SIZE) 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# MENU-INT, M6: THE TOUR -- the integrated menu played through with keys on
+# the owner's own campaign (`tour_snapshot.json`), recorded by Godot's
+# Movie Maker with the game's renderer at a fixed 30 fps, then encoded.
+# `tour-fixture` plays the campaign again with the bridge's own engine.
+TOUR_DIR ?= /tmp/archipepsi-menu-tour
+tour-fixture:
+	$(PY) bridge/archipepsi_bridge/fixtures/make_tour_snapshot.py
+
+menu-tour: godot-import
+	@mkdir -p $(TOUR_DIR)
+	@xvfb-run -a -s "-screen 0 1280x720x24" $(GODOT) --path godot \
+	  --rendering-driver vulkan --rendering-method forward_plus \
+	  --write-movie $(TOUR_DIR)/tour.avi --fixed-fps 30 -- --menu-tour 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|     at:|GDScript backtrace|       \[|         \[)"
+	@ffmpeg -y -loglevel error -i $(TOUR_DIR)/tour.avi -c:v libx264 \
+	  -pix_fmt yuv420p -crf 20 -c:a aac -b:a 128k $(TOUR_DIR)/tour.mp4
+	@echo "tour: $(TOUR_DIR)/tour.mp4"
 
 EQUIPMENT_SHOTS_DIR ?= /tmp/archipepsi-equipment-face
 equipment-face-shots: godot-import
 	@xvfb-run -a -s "-screen 0 1920x1080x24" $(GODOT) --path godot \
-	  --rendering-driver opengl3 -- --equipment-face \
+	  --rendering-driver vulkan --rendering-method forward_plus -- --equipment-face \
 	  --shots=$(EQUIPMENT_SHOTS_DIR) 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
 
