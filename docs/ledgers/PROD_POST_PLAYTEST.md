@@ -5685,18 +5685,22 @@ stand, and the bounded ladder ran out. **Measured, and now repaired.**
   - **So `841041a` is not pushed on this checkpoint.** It goes out with
     the CK9-F1 repair, on the next full frontier.
 - **The run's raw logs were lost, and so was `841041a`.**
-  - Neither was pushed. The container was reclaimed at about 22:27 UTC
-    and took them, with the CK9-F1 and HB-O1 work.
+  - Neither was pushed. The container was lost at 16:12 UTC, in the
+    middle of HB-O1's sabotage run (its runner was killed, exit 137),
+    and took them, with the CK9-F1 and HB-O1 work. The session resumed
+    at 22:27 UTC in a new container; this note first gave 22:27 as the
+    time of the loss.
   - The figures above come from the session transcript. Every command
     run against the frontier's output, and what it printed, is kept
     verbatim in `CK9_transcript_extract.txt`: the step count, the one
     red step, and the failing log's tail.
   - `841041a` was rebuilt as `22fdbda` on `3b96bc4`, and it reproduces
     the lost commit's recorded 24-Zone walk digest for digest.
-  - Holding four verified commits unpushed for one frontier was my
-    mistake. A green push waited on a checkpoint that a reclaimed
-    container can take with it; verified work now goes out as soon as
-    its own checks pass, with the frontier after.
+  - Holding three finished commits unpushed for one frontier, with a
+    fourth in progress, was my mistake. A green push waited on a
+    checkpoint that a reclaimed container can take with it; verified
+    work now goes out as soon as its own checks pass, with the frontier
+    after.
 
 ## 0.4 — CK9-F1 (return plug): a fight holds the return — `godot-flyer-room`'s player was being sent home mid-fight
 

@@ -1,7 +1,8 @@
 # CK9 on 841041a: what the session transcript holds of the run.
 # The frontier's own TSV and 92 raw logs were lost unpushed when the
-# container was reclaimed (2026-09-26 ~22:27 UTC). Below, verbatim, each
-# command run against them during the session and what it printed.
+# container was lost (2026-09-26 16:12 UTC; the session resumed at 22:27
+# in a new one). Below, verbatim, each command run against them during
+# the session and what it printed.
 
 ===== 2026-09-26T13:43:26.698Z
 $ S=/tmp/claude-0/-home-user-archipepsi/4fcd533d-0ce3-52dc-bbf4-13b00ca2dbdd/scratchpad; tail -3 $S/../tasks/bfpmvialz.output 2>/dev/null; echo ---; wc -l < $S/ck9_frontier/summary.tsv; tail -4 $S/ck9_frontier/summary.tsv; awk -F'\t' '$2!="0"' $S/ck9_frontier/summary.tsv | head
