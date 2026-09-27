@@ -2982,6 +2982,30 @@ Also required:
 No Production runtime edits, no integration, no unrelated work. **After
 delivering the four directions, STOP for selection.**
 
+### Delivered, 2026-09-27 — the four direction studies. STOPPED for selection.
+
+* **Package:** `docs/art/review/echo_device_studies_2026-09-27/`. Start
+  with `00_compare_equipment.png` and `00_compare_overviews.png`.
+  `README.md` holds the note for each direction: what is distinct, how
+  selection and a page turn move, and the main usability risk.
+* **Report:** `docs/art/reports/2026-09-27-a2-four-direction-studies.md`.
+  The zip is `a2-four-direction-studies`, with 30 images and about 16 MB.
+* **The directions:**
+  * **A, Patchbay:** a triptych under an arched cord.
+  * **B, Harness:** one trunk round all four walls, with hung tags.
+  * **C, Relay cabinet:** an inspection window above a selector and a
+    rack; seated versus pulled.
+  * **D, Salvaged workbench:** overlapping boards, with the inspected
+    module lifted over its place.
+* **Source:** the isolated scene `tools/menu_proto/studies/`.
+  `stage.sh <review dir>` regenerates every image. The prototype is
+  unchanged apart from an additive `overlay.gd` caption hook, and its 225
+  checks pass.
+* **Evidence:** implemented as stills. No scripted input, because the
+  scene reads none. Hands-on is not done.
+* **Next:** the owner chooses a direction, or compatible elements from
+  several. Nothing else is started until then.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

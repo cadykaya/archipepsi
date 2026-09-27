@@ -88,6 +88,8 @@ func _ready() -> void:
 			% [key, str(direction.call("title"))],
 			"SAMPLE DATA: PRODUCTION A2B9DF6 FIXTURES, + LAYOUT-STRESS ECHOES "
 			+ "TAGGED AUTHORED. A STILL COMPOSITION: NOTHING HERE IS WIRED.")
+	# bare: the walls alone, for the four-wall overview -- no glass
+	overlay.visible = not args.has("bare")
 	for spec: String in str(args.get("shots", "")).split(";", false):
 		var kv := spec.split("=", true, 1)
 		_shots.append([kv[0], kv[1]])
@@ -125,7 +127,11 @@ func _context(sample: Dictionary, state: String) -> void:
 	for row: Dictionary in eq["items"]:
 		if not bool(row["slotted"]):
 			passives.append(str(row["id"]))
+	# normal: the fixture's own; next: one press of DOWN from it; stress: the
+	# longest name
 	var inspected := "act_bolt" if state == "normal" else "act_s_long"
+	if state == "next":
+		inspected = str(candidates[candidates.find("act_bolt") + 1])
 	var s: Dictionary = sample["saves"]["walked"]
 	var link := {"edge": "e:c002:c003"}
 	map = StudyMap.new()

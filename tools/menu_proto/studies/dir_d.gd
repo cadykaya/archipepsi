@@ -385,7 +385,7 @@ func _journal() -> void:
 	silk(f, "JOURNAL", Vector2(60, 60), 4, SILK)
 	silk(f, "04", Vector2(60 + kit.measure("JOURNAL", 4) + 18, 60), 4, SILK_FAINT)
 	var y := 120.0
-	silk(f, "OBJECTIVES", Vector2(56, y), 2, SILK_FAINT)
+	silk(f, "OBJECTIVES", Vector2(56, y), 2, SILK_DIM)
 	y += 26.0
 	for s: String in j["objectives"]:
 		for l in kit.wrap(s.to_upper(), 2, 470):
@@ -393,7 +393,7 @@ func _journal() -> void:
 			y += 20.0
 		y += 4.0
 	y += 16.0
-	silk(f, "NOTES", Vector2(56, y), 2, SILK_FAINT)
+	silk(f, "NOTES", Vector2(56, y), 2, SILK_DIM)
 	y += 26.0
 	for n: Dictionary in j["notes"]:
 		if y > 650.0:
@@ -406,7 +406,7 @@ func _journal() -> void:
 	# ribbon plugged into it
 	var x := 620.0
 	y = 110.0
-	silk(f, "STILL SHUT", Vector2(x, y), 2, SILK_FAINT)
+	silk(f, "STILL SHUT", Vector2(x, y), 2, SILK_DIM)
 	y += 44.0
 	var shut: Array = j["still_shut"]
 	for i in shut.size():
@@ -444,13 +444,13 @@ func _journal() -> void:
 						0.02), 1.7, grey, 8)
 		y += h + 26.0
 	y += 4.0
-	silk(f, "WHAT YOU DID HERE", Vector2(x, y), 2, SILK_FAINT)
+	silk(f, "WHAT YOU DID HERE", Vector2(x, y), 2, SILK_DIM)
 	y += 26.0
 	for s: String in j["done_here"]:
 		silk(f, s.to_upper(), Vector2(x, y), 2, SILK_DIM)
 		y += 20.0
 	y += 16.0
-	silk(f, "PLACES FOUND", Vector2(x, y), 2, SILK_FAINT)
+	silk(f, "PLACES FOUND", Vector2(x, y), 2, SILK_DIM)
 	y += 26.0
 	for s: String in j["places"]:
 		silk(f, s.to_upper(), Vector2(x, y), 2, SILK_DIM)
@@ -470,7 +470,7 @@ func _settings() -> void:
 	silk(f, "01", Vector2(60 + kit.measure("SETTINGS", 4) + 18, 60), 4, SILK_FAINT)
 	# PAUSED: tact switches; RESUME the big one
 	var y := 120.0
-	silk(f, "PAUSED", Vector2(56, y), 2, SILK_FAINT)
+	silk(f, "PAUSED", Vector2(56, y), 2, SILK_DIM)
 	y += 30.0
 	for i in (s["paused"] as Array).size():
 		var label: String = s["paused"][i]
@@ -485,7 +485,7 @@ func _settings() -> void:
 		y += sz + 18.0
 	# CAMPAIGN: printed on the board
 	y += 20.0
-	silk(f, "CAMPAIGN", Vector2(56, y), 2, SILK_FAINT)
+	silk(f, "CAMPAIGN", Vector2(56, y), 2, SILK_DIM)
 	y += 26.0
 	for line: String in s["campaign"]:
 		silk(f, kit.fit(line.to_upper(), 2, 320), Vector2(56, y), 2, SILK_DIM)
@@ -495,7 +495,7 @@ func _settings() -> void:
 	var x0 := 440.0
 	var x1 := 1216.0
 	y = 120.0
-	silk(f, "OPTIONS", Vector2(x0, y), 2, SILK_FAINT)
+	silk(f, "OPTIONS", Vector2(x0, y), 2, SILK_DIM)
 	y += 40.0
 	for sl: Array in s["sliders"]:
 		silk(f, str(sl[0]), Vector2(x0, y), 2, SILK)

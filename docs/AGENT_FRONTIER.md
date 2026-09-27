@@ -123,22 +123,20 @@ Findings other lanes need:
   set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Now: TRACK A2, four DIY Echo-electronics direction studies.** See
-ART_FRONTIER §11, "Ruling, 2026-09-27 (third)".
+**Now: TRACK A2 — the four DIY Echo-electronics direction studies are
+DELIVERED. The art lane is STOPPED for the owner's selection.** See
+ART_FRONTIER §11, "Delivered, 2026-09-27".
 
-* **Keep safe:** the inventory pass, build `66e18b2`, delivered at
-  `91e5d3f`. The studies are isolated scenes in `tools/menu_proto/studies/`
-  and do not change the prototype's faces.
-* **The directions:** A Patchbay; B Harness; C Relay cabinet; D Salvaged
-  workbench.
-* **Each shows:**
-  * Equipment, normal (ARC BOLT inspected against BRAIDED LASH on RMB);
-  * Equipment, stress (the long-name item against the same);
-  * the Map with a picked room and its detail;
-  * a four-face overview with the Journal → Map link;
-  * a note (what is distinct, the motion, the risk) and annotated motion
-    frames.
-* **Output:** 1280×720 screens, one modest zip. Then STOP for selection.
+* **The package:** `docs/art/review/echo_device_studies_2026-09-27/`
+  (README with the four notes). The report is
+  `docs/art/reports/2026-09-27-a2-four-direction-studies.md`.
+* **The directions:** A Patchbay, B Harness, C Relay cabinet, D Salvaged
+  workbench. They live in the isolated scene `tools/menu_proto/studies/`,
+  and `stage.sh` regenerates the images.
+* **Kept safe:** the inventory pass, build `66e18b2`, delivered at
+  `91e5d3f`. The prototype's faces are unchanged, and its 225 checks pass.
+* **Next:** wait for the owner to choose one direction, or compatible
+  elements. Start nothing else.
 
 Two things from it that other lanes need:
 

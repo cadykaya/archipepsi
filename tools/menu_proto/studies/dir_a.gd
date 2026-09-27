@@ -70,6 +70,12 @@ func _wall() -> Material:
 func panel(f: Node3D, r: Rect2, z0: float, z1: float, colour: Color,
 		rad := 10.0) -> void:
 	G.slab(f, G.rrect(r, rad), z0, z1, G.mat(colour, 0.15, 0.7))
+	# four panel screws: an instrument someone put together and can open
+	for c: Vector2 in [r.position + Vector2(9, 9), Vector2(r.end.x - 9, r.position.y + 9),
+			Vector2(r.position.x + 9, r.end.y - 9), r.end - Vector2(9, 9)]:
+		G.disc(f, c, 3.6, z1, z1 + 0.002, G.mat(NICKEL.darkened(0.25), 0.5, 0.4), 14)
+		G.block(f, Rect2(c.x - 2.6, c.y - 0.6, 5.2, 1.2), z1 + 0.002, z1 + 0.0024,
+				G.unlit(HOLE), false)
 
 
 ## A jack: a dark nut, a nickel collar, a dark hole -- set in a panel at `z`.
@@ -285,6 +291,15 @@ func _map() -> void:
 				2, AMBER if i > 1 else AMBER_DIM, 0.0352, 20.0) + 6.0
 	engrave(f, "MAPFACE'S OWN DETAIL", Vector2(r.position.x + 18, r.end.y + 10), 2, FAINT,
 			0.0)
+	# patched in: a short cord from the bezel's jack to the readout's own
+	var bj := Vector2(r.end.x - 40, win.position.y - 9)
+	var rj := Vector2(r.end.x - 40, r.position.y + 22)
+	jack(f, bj, 7, 0.014)
+	jack(f, rj, 6, 0.034)
+	plug(f, bj, 5, 0.014, CORD)
+	plug(f, rj, 4.5, 0.034, CORD)
+	cord(f, [G.P(bj, 0.05), G.P(bj + Vector2(3, 10), 0.062), G.P(rj + Vector2(3, -8), 0.074),
+			G.P(rj, 0.072)], CORD, 3.2)
 	# The Journal's cord comes round the corner and plugs in at the bezel;
 	# from there the menu's guide stroke goes in along its height, and down
 	# onto the passage.
