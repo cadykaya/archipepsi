@@ -123,23 +123,20 @@ Findings other lanes need:
   set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Now: TRACK A2 — ONE hybrid visual checkpoint.** It is original station
-hardware, kept alive by Epsilon. See ART_FRONTIER §11, "Ruling, 2026-09-27
-(fourth)".
+**Now: TRACK A2 — the hybrid visual checkpoint is DELIVERED. The art lane
+is STOPPED for the owner to confirm the composition.** See ART_FRONTIER
+§11, "Delivered, 2026-09-27 — the hybrid visual checkpoint".
 
-* **Keep safe:** the four studies (`8b13aa7`) and the working prototype
-  (build `66e18b2`). The hybrid is a fifth study script beside them in
-  `tools/menu_proto/studies/`. The existing four are not modified.
-* **Hierarchy:**
-  * B is the harness round the box, plus Journal → Map.
-  * C is Equipment's cabinet: the readout above, the key selector and the
-    rack below.
-  * D is Equipment's grafted rack, and Settings.
-  * A is retired.
-* **Show:** Equipment normal, Equipment long-name, Map, Journal and
-  Settings at 1280×720, plus a cross-wall overview (Journal → Map, and
-  Equipment → Settings) and a short note. Stills only.
-* **Then STOP** for the owner to confirm the composition.
+* **The package:** `docs/art/review/hybrid_checkpoint_2026-09-27/`. The
+  report is `docs/art/reports/2026-09-27-a2-hybrid-checkpoint.md`.
+* **The source:** `tools/menu_proto/studies/dir_h.gd`;
+  `stage_hybrid.sh` regenerates the images.
+* **Kept safe:** the four studies (`8b13aa7`) and the prototype (build
+  `66e18b2`).
+* **Flagged:** the salvaged boards are not green, because green is
+  reserved for Epsilon.
+* **Next:** wait for the owner's confirmation. Start no interactive
+  implementation before it.
 
 Two things from it that other lanes need:
 

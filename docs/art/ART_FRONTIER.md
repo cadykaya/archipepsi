@@ -3087,6 +3087,32 @@ Stills only: no video cycle, no alternative hybrids, no packaging marathon.
 No Production runtime edits, no integration, no unrelated work. **STOP
 after this checkpoint** for the owner to confirm the composition.
 
+### Delivered, 2026-09-27 — the hybrid visual checkpoint. STOPPED for confirmation.
+
+* **Package:** `docs/art/review/hybrid_checkpoint_2026-09-27/`. Start with
+  `H_0_overview.png`. The README is the note: how original and salvaged
+  parts relate, Epsilon's point, and the proposed motion.
+* **Report:** `docs/art/reports/2026-09-27-a2-hybrid-checkpoint.md`.
+* **Source:** `tools/menu_proto/studies/dir_h.gd`, beside the untouched
+  four studies. `stage_hybrid.sh <review dir>` regenerates every image.
+* **The hybrid:**
+  * B's laced trunk runs round every wall, with warm flags and tags, and the
+    ivory Journal → Map link.
+  * Equipment is C's cabinet: the inspection window, the formal key
+    selector, and the brass bus.
+  * D rebuilds the rack: an adapter plate in the cut-down old bay, and a
+    phenolic backplane wired back to the bus. Its ribbon runs round the
+    corner into Settings, which is three salvaged boards with repurposed
+    controls labelled by hand.
+* **A decision flagged for the owner:** the salvaged boards are not green,
+  because the Style Lock reserves green for Epsilon (ART_BIBLE §1a).
+  Epsilon's one restrained point, on Settings, is near-black plating
+  through a bolted grey plate, lit from inside, with one aperture. The
+  harness's drop runs through it.
+* **Evidence:** stills only. No scripted input; hands-on not done.
+* **Next:** the owner confirms the composition, or asks for changes. The
+  deeper interactive implementation starts only after that.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

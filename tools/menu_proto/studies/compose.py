@@ -42,13 +42,15 @@ TITLES = {
     "B": "ROUTED HARNESS / CABLE LOOM",
     "C": "RELAY CABINET / BREAKER LOGIC",
     "D": "SALVAGED ECHO WORKBENCH / PROTOTYPE BOARD",
+    "H": "THE HYBRID -- ORIGINAL STATION HARDWARE, KEPT ALIVE BY EPSILON",
 }
 
 # Where each direction's Journal link rounds the corner (page y), and what
 # one press of DOWN moves: the moving part's page point before and after, and
 # the part that re-reads in place (a page rect). From the directions' own
 # constants.
-LINK_Y = {"A": 176, "B": 36, "C": 70, "D": 42}
+LINK_Y = {"A": 176, "B": 36, "C": 70, "D": 42, "H": 16}
+RIBBON_Y = 650      # the hybrid: the rack's ribbon, Equipment -> Settings
 SELECT = {
     "A": {"from": (894, 169), "to": (894, 213), "side": -34,
           "reads": (308, 168, 540, 524),
@@ -274,11 +276,71 @@ def compare(render, out):
     stack.save(os.path.join(out, "00_compare_overviews.png"), optimize=True)
 
 
+def hybrid_overview(render, out):
+    """The hybrid's cross-wall overview: the four walls as one device, with
+    both joins marked -- the Journal's link into the Map, and the rack's
+    ribbon from Equipment into Settings -- and under it each join seen in
+    3D, half-way through its own turn."""
+    d = "H"
+    faces = [crop_page(Image.open(os.path.join(render, "_bare", f"{d}_{p}.png"))
+                       .convert("RGB")) for p in PAGES]
+    fw = 470
+    fh = round(faces[0].height * fw / faces[0].width)
+    post, side, top = 8, 18, 74
+    tw, th = 955, 537
+    W = side * 2 + fw * 4 + post * 3
+    H = top + fh + 44 + 30 + th + 64
+    sheet = Image.new("RGB", (W, H), BAND)
+    dr = ImageDraw.Draw(sheet)
+    dr.text((side, 14), f"{TITLES[d]} -- ACROSS THE WALLS", font=font(24, True), fill=INK)
+    dr.text((side, 46), "The four walls as one device, as the eye meets them turning right, "
+            "each cut to its page and butted at the corner post. Below, the two joins in 3D.",
+            font=font(16), fill=DIM)
+    xs = []
+    for i, (p, im) in enumerate(zip(PAGES, faces)):
+        x = side + i * (fw + post)
+        xs.append(x)
+        sheet.paste(im.resize((fw, fh), Image.LANCZOS), (x, top))
+        dr.text((x + 4, top + fh + 8), p.upper(), font=font(16, True), fill=INK)
+        if i < 3:
+            dr.rectangle([x + fw, top, x + fw + post - 1, top + fh], fill=(5, 6, 8))
+    k = fw / 1280
+    # 1: the Journal's link rounds the Journal | Map post
+    sx = xs[1] - post * 0.5
+    sy = top + LINK_Y[d] * k
+    dr.ellipse([sx - 30, sy - 16, sx + 30, sy + 22], outline=MARK, width=3)
+    marker(dr, (sx + 34, sy + 28), 1)
+    # 2: the rack's ribbon rounds the Equipment | Settings post
+    sx = xs[3] - post * 0.5
+    sy = top + RIBBON_Y * k
+    dr.ellipse([sx - 30, sy - 22, sx + 30, sy + 22], outline=MARK, width=3)
+    marker(dr, (sx + 34, sy - 28), 2)
+    y2 = top + fh + 44
+    turns = [("1 -- JOURNAL -> MAP, HALF-WAY: the harness and the Journal's ivory link "
+              "round the post", f"{d}/{d}_m1_turn_journal_map.png"),
+             ("2 -- EQUIPMENT -> SETTINGS, HALF-WAY: the rack's ribbon rounds the post "
+              "into Settings", f"{d}/{d}_m4_turn_equipment_settings.png")]
+    for i, (name, path) in enumerate(turns):
+        x = side + i * (tw + 20)
+        dr.text((x, y2), name, font=font(15, True), fill=INK)
+        im = Image.open(os.path.join(render, path)).convert("RGB").resize((tw, th),
+                                                                          Image.LANCZOS)
+        sheet.paste(im, (x, y2 + 26))
+    dr.text((side, y2 + 26 + th + 12), "Stills of an isolated art-lane study scene. The "
+            "magenta marks are review annotations, not part of the design.", font=font(15),
+            fill=DIM)
+    sheet.save(os.path.join(out, f"{d}_0_overview.png"), optimize=True)
+
+
 def main():
     render, out = sys.argv[1], sys.argv[2]
     dirs = sys.argv[3] if len(sys.argv) > 3 else "ABCD"
     os.makedirs(out, exist_ok=True)
     for d in dirs:
+        if d == "H":
+            hybrid_overview(render, out)
+            print(f"compose: H -> {out}/H_0_overview.png")
+            continue
         overview(render, d, out)
         motion(render, d, out)
         print(f"compose: {d} -> {out}/{d}_0_overview.png, {d}_6_motion.png")

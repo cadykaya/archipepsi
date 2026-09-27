@@ -37,7 +37,7 @@ run() {  # <dir> <state> <shots> [more study args]
 for d in $(echo "$DIRS" | grep -o .); do
   o="$OUT/$d"
   mkdir -p "$o"
-  run "$d" normal "equipment=$o/${d}_1_equipment_normal.png;map=$o/${d}_3_map_detail.png;journal=$o/${d}_4_journal.png;settings=$o/${d}_5_settings.png;turn:journal>map@0.5=$o/${d}_m1_turn_journal_map.png;turn:equipment>map@0.35=$o/${d}_m2_turn_equipment_map.png"
+  run "$d" normal "equipment=$o/${d}_1_equipment_normal.png;map=$o/${d}_3_map_detail.png;journal=$o/${d}_4_journal.png;settings=$o/${d}_5_settings.png;turn:journal>map@0.5=$o/${d}_m1_turn_journal_map.png;turn:equipment>map@0.35=$o/${d}_m2_turn_equipment_map.png;turn:equipment>settings@0.5=$o/${d}_m4_turn_equipment_settings.png"
   run "$d" stress "equipment=$o/${d}_2_equipment_stress.png"
   run "$d" next "equipment=$o/${d}_m3_select_next.png"
   # the walls alone, for the overview (compose.py) -- not a deliverable

@@ -22,7 +22,8 @@ extends Node3D
 
 const SAMPLE := "res://sample/sample.json"
 const DIRS := {"A": "res://studies/dir_a.gd", "B": "res://studies/dir_b.gd",
-	"C": "res://studies/dir_c.gd", "D": "res://studies/dir_d.gd"}
+	"C": "res://studies/dir_c.gd", "D": "res://studies/dir_d.gd",
+	"H": "res://studies/dir_h.gd"}
 const PROMPTS := {
 	"equipment": [["move", "items"], ["accept", "preview on rmb"], ["out", "keys"],
 		["wheel", "scroll"], ["turn_left", "turn left"], ["turn_right", "turn right"],
