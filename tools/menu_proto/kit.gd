@@ -390,6 +390,88 @@ func ribbon(parent: Node3D, points: Array, width: float,
 	return node
 
 
+# ------------------------------------------------------------ the route
+
+## THE ROUTE: the one stroke every relation in the menu is drawn with. It
+## runs straight between page-px `points`, and every turn is cut at 45
+## degrees, `corner` px back along both runs -- so it reads as one
+## deliberate line with designed corners, never as segments or a doubled
+## line.
+static func route_corners(points: Array, corner: float) -> Array:
+	var pts: Array = []
+	for p: Vector2 in points:
+		if pts.is_empty() or (pts[-1] as Vector2).distance_to(p) > 0.01:
+			pts.append(p)
+	if pts.size() < 3:
+		return pts
+	var out: Array = [pts[0]]
+	for i in range(1, pts.size() - 1):
+		var a: Vector2 = pts[i - 1]
+		var p: Vector2 = pts[i]
+		var b: Vector2 = pts[i + 1]
+		var d1 := (p - a).normalized()
+		var d2 := (b - p).normalized()
+		if absf(d1.cross(d2)) < 0.001 and d1.dot(d2) > 0.0:
+			continue                      # straight on: no corner here
+		var c := minf(corner, minf(a.distance_to(p), p.distance_to(b)) * 0.5)
+		out.append(p - d1 * c)
+		out.append(p + d2 * c)
+	out.append(pts[-1])
+	return out
+
+
+## The route's mesh: `width` page px wide and mitred at every join, `depth`
+## in front of the wall -- and placed by its projection (lifted), so it is
+## SEEN exactly on its page points, whatever it stands in front of.
+static func route_mesh(points: Array, width: float, depth: float) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	var n := points.size()
+	if n < 2:
+		return mesh
+	var sides: Array = []
+	for i in n:
+		var p: Vector2 = points[i]
+		var d_in := Vector2.ZERO
+		var d_out := Vector2.ZERO
+		if i > 0:
+			d_in = (p - (points[i - 1] as Vector2)).normalized()
+		if i < n - 1:
+			d_out = ((points[i + 1] as Vector2) - p).normalized()
+		var t := d_in + d_out
+		if t.length() < 0.001:
+			t = d_in if d_in != Vector2.ZERO else d_out
+		t = t.normalized()
+		var nrm := Vector2(-t.y, t.x)
+		var mitre := 1.0
+		if i > 0 and i < n - 1:
+			mitre = 1.0 / maxf(0.3, nrm.dot(Vector2(-d_in.y, d_in.x)))
+		var off := nrm * width * 0.5 * mitre
+		sides.append([p + off, p - off])
+	var verts := PackedVector3Array()
+	for i in n - 1:
+		var l0: Vector2 = sides[i][0]
+		var r0: Vector2 = sides[i][1]
+		var l1: Vector2 = sides[i + 1][0]
+		var r1: Vector2 = sides[i + 1][1]
+		for v: Vector2 in [l0, r0, r1, l0, r1, l1]:
+			verts.append(at(lifted(v, depth), depth))
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
+## A flat rect SEEN at `page` (top-left) and `size`, `depth` in front of the
+## wall: placed by its projection, like the route it belongs to.
+func lifted_card(parent: Node3D, page: Vector2, size: Vector2, depth: float,
+		material: Material) -> MeshInstance3D:
+	var k := lift_scale(depth)
+	var node := card(parent, lifted(page, depth), size * k, depth, material)
+	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return node
+
+
 static func strip(points: Array, width: float,
 		normal := Vector3(0, 0, 1)) -> ArrayMesh:
 	var st := SurfaceTool.new()

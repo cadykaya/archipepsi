@@ -15,9 +15,11 @@ builds ONE more save the way Production's own fixture is built:
   shows are Production's own answers.
 
 **The model's own limit is the stress.** `MAX_TEXT_LEN` is 160: no
-name or description the game can hold is longer. Two descriptions below
-sit at that ceiling and one name runs long, so the review shows the
-longest text the game can actually produce -- not text it would refuse.
+name or description the game can hold is longer. Three descriptions below
+sit near that ceiling and one name runs long -- and the long name carries
+one of the long descriptions, so a single item shows the worst of both.
+The review shows the longest text the game can actually produce, not
+text it would refuse.
 
 What is authored is the words and numbers of the Echoes in STRESS below
 -- names, descriptions and stats -- and nothing else: no key, slot,
@@ -106,16 +108,65 @@ STRESS = [
      [E._action("act_s_long",
                 "Undead Parish Longshot of the Corridor Where Nothing "
                 "Answers",
-                "Fires a long arrow straight down the sight line.",
+                "Fires a long arrow straight down the sight line. Slow to "
+                "draw and slower to loose again, and useless up close, but "
+                "down a long corridor nothing else reaches.",
                 "echo_a",
                 {"type": "hitscan_damage", "damage": 14.0, "pellets": 1,
                  "spread_degrees": 0.0, "range": 60.0}, 1.4)]),
+    # Added for the inventory visual pass (2026-09-27, second ruling). The
+    # drawer is a rail of stations now, and fits more; these keep "more
+    # candidates than fit" true of it. Silver Volley is raised to MK III by
+    # two upgrade Echoes, exactly as the fixture raises Braided Lash to
+    # MK II (an upgrade-only Echo of `damage`), so the review shows a Mk
+    # above II.
+    ("Silver Volley", "Silver Arrows", "A Link to the Past", "Link",
+     "Arrows that finish what they start.",
+     ["arrow", "silver", "volley"], "literal",
+     [E._action("act_s_volley", "Silver Volley",
+                "Looses a tight volley of silvered arrows.",
+                "echo_a",
+                {"type": "projectile_damage", "damage": 8.0,
+                 "speed": 32.0, "lifetime": 1.1}, 0.9)]),
+    ("Fire Arrows", "Fire Arrows", "Ocarina of Time", "Link",
+     "The volley catches.",
+     ["fire", "arrow"], "mechanical",
+     [E._upgrade("act_s_volley", "damage", 3.0)]),
+    ("Light Arrows", "Light Arrows", "Ocarina of Time", "Link",
+     "The volley bites harder.",
+     ["light", "arrow"], "literal",
+     [E._upgrade("act_s_volley", "damage", 3.0)]),
+    ("Bone Dart", "Throwing Knife", "Dark Souls", "Solaire",
+     "A quick, light throw.",
+     ["knife", "throw"], "literal",
+     [E._action("act_s_dart", "Bone Dart",
+                "A quick, light throw. It barely stops you.",
+                "echo_a",
+                {"type": "projectile_damage", "damage": 7.0,
+                 "speed": 40.0, "lifetime": 0.8}, 0.4)]),
+    ("Lantern Flare", "Lamp", "A Link to the Past", "Link",
+     "The lamp's flame, thrown.",
+     ["light", "fire", "reveal"], "conceptual",
+     [E._action("act_s_flare", "Lantern Flare",
+                "A slow ball of lamplight that burns what it touches.",
+                "echo_a",
+                {"type": "projectile_damage", "damage": 6.0,
+                 "speed": 14.0, "lifetime": 2.0}, 1.6)]),
+    ("Soul Mote", "Soul Arrow", "Dark Souls", "Solaire",
+     "A mote of soul that seeks.",
+     ["soul", "arrow", "seek"], "conceptual",
+     [E._action("act_s_mote", "Soul Mote",
+                "A mote of soul that drifts toward what you face.",
+                "echo_a",
+                {"type": "projectile_damage", "damage": 11.0,
+                 "speed": 26.0, "lifetime": 1.6}, 0.9)]),
 ]
 
 
 def main() -> None:
     longest = max(len(op["component"]["description"])
-                  for row in STRESS for op in row[7])
+                  for row in STRESS for op in row[7]
+                  if op.get("op") == "create")
     if longest > C.MAX_TEXT_LEN:
         raise SystemExit("an authored description is over the model's %d"
                          % C.MAX_TEXT_LEN)

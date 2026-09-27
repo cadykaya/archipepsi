@@ -104,7 +104,7 @@ func setup(k: Kit) -> void:
 func _caption() -> void:
 	text(_root, "ARCHIPEPSI MENU -- ART-LANE REVIEW PROTOTYPE, NOT THE GAME'S MENU",
 			Vector2(24, 16), Color("#ffd84d"), 2)
-	text(_root, "SAMPLE DATA: PRODUCTION A2B9DF6 FIXTURES, + 7 LAYOUT-STRESS "
+	text(_root, "SAMPLE DATA: PRODUCTION A2B9DF6 FIXTURES, + LAYOUT-STRESS "
 			+ "ECHOES TAGGED AUTHORED. EQUIPPING IS A LOCAL PREVIEW.",
 			Vector2(24, 38), INK_DIM, 2)
 

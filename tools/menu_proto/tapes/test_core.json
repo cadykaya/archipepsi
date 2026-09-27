@@ -13,7 +13,7 @@
   {"key": "Right"},
   {"after": 0.05, "check": {"path": "equipment.zone", "eq": "drawer", "why": "Right: into the drawer"}},
   {"key": "Down"}, {"after": 0.04, "key": "Down"}, {"after": 0.04, "key": "Down"},
-  {"after": 0.02, "check": {"path": "busy", "eq": "true", "why": "a fold/unfold is still travelling when the next press lands"}},
+  {"after": 0.02, "check": {"path": "busy", "eq": "true", "why": "the route and the echoes are still travelling when the next press lands"}},
   {"after": 0.5, "check": {"path": "equipment.unfolded", "eq": "act_s_arc", "why": "three rapid presses land on the third item"}},
 
   {"key": "Enter"},
@@ -25,14 +25,15 @@
   {"after": 0.3, "check": {"path": "equipment.preview.echo_a", "eq": "<null>", "why": "ENTER on the save's item goes back to the save"}},
 
   {"after": 0.1, "check": {"path": "equipment.strip_positions", "remember": "strips"}},
-  {"mouse_page": [700, 560]},
-  {"after": 0.1, "mouse_page": [700, 610]},
-  {"after": 0.3, "check": {"path": "equipment.strip_positions", "same_as": "strips", "why": "hover lights a strip and moves NOTHING"}},
-  {"check": {"path": "equipment.hover", "ne": "", "why": "hover did light a strip"}},
+  {"mouse_page": [420, 560]},
+  {"after": 0.1, "mouse_page": [420, 610]},
+  {"after": 0.3, "check": {"path": "equipment.strip_positions", "same_as": "strips", "why": "hover lights a station and moves NOTHING"}},
+  {"check": {"path": "equipment.hover", "ne": "", "why": "hover did light a station"}},
 
-  {"click_page": [700, 610]},
-  {"after": 0.05, "check": {"path": "equipment.zone", "eq": "drawer", "why": "a click selects in the drawer"}},
-  {"after": 0.5, "check": {"path": "equipment.unfolded", "ne": "act_lash", "why": "the clicked strip unfolds"}},
+  {"click_page": [420, 610]},
+  {"after": 0.05, "check": {"path": "equipment.zone", "eq": "drawer", "why": "a click selects on the rail"}},
+  {"check": {"path": "equipment.strip_positions", "same_as": "strips", "why": "and the rail does not move under the pointer"}},
+  {"after": 0.5, "check": {"path": "equipment.unfolded", "ne": "act_lash", "why": "the clicked station's item is composed"}},
 
   {"wheel_page": [700, 400, 1]},
   {"after": 0.2, "check": {"path": "equipment.scroll", "gt": 0, "why": "the wheel scrolls the drawer"}},
