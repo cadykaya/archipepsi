@@ -371,9 +371,13 @@ func nav(dir: Vector2i) -> void:
 	_layout()
 
 
+## "Show this on the map": the Map is one turn right, and it brings what
+## the entry names into view, keeping its own view for BACK TO YOUR VIEW.
+## Ordinary travel (E, the edge arrows) turns to the Map as it was left.
 func accept() -> void:
-	# Follow the thread: the Map is one turn right.
 	if not current_link().is_empty():
+		if map_face != null:
+			map_face.follow(current_link())
 		shell.turn(-1)
 
 
@@ -445,8 +449,9 @@ func _hit(p: Vector2) -> int:
 func prompts() -> Array:
 	var out := [["move", "entries"], ["move_h", "columns"], ["click", "pick"]]
 	if not current_link().is_empty():
-		out.append(["follow", "follow to the map"])
-	out += [["turn_left", "turn left"], ["close", "close"]]
+		out.append(["accept", "show on the map"])
+	out += [["turn_left", "turn left"], ["turn_right", "turn right"],
+		["close", "close"]]
 	return out
 
 

@@ -74,7 +74,8 @@
   {"after": 0.8, "check": {"path": "journal.thread.drawn", "near": 1.0, "tol": 0.001, "why": "rewound and recast"}},
 
   {"key": "E"},
-  {"after": 0.6, "check": {"path": "front", "eq": "map", "why": "E: follow to the Map"}},
+  {"after": 0.6, "check": {"path": "front", "eq": "map", "why": "E: ordinary travel to the Map"}},
+  {"check": {"path": "map.can_return", "eq": false, "why": "travel did not move the view: there is nothing to go back to"}},
   {"check": {"path": "map.picked", "eq": "c003", "why": "the Map kept its pick"}},
   {"check": {"path": "map.zoom", "same_as": "zoom_kept", "why": "and its zoom"}},
   {"check": {"path": "map.yaw", "same_as": "yaw_kept", "why": "and its turn"}},

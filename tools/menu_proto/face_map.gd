@@ -20,7 +20,16 @@ extends RefCounted
 ## * **Three marks, three shapes.** Focus is a frame round the room (signal).
 ##   A circuit is its own symbol on its gate (Production's colour). You are
 ##   the figure standing in your room (ink). None is told by hue alone.
-## * Leaving the wall keeps the lens and the pick exactly as they were.
+## * Leaving the wall keeps the lens and the pick exactly as they were --
+##   ordinary travel never moves the view.
+## * **Shown an entry, it brings it into view.** "Show this on the map" (a
+##   Journal entry, followed with ENTER / A) frames what the entry names,
+##   and keeps the view it had: BACK TO YOUR VIEW (Backspace / B, or the
+##   words on the glass) puts it back.
+## * **What you look away from stays findable.** Off the window, YOU and
+##   the place you picked stand at the window's edge with an arrow toward
+##   them (the thread has its own). They only ever point at what the save
+##   already knows -- never at a room not found, or at where to go.
 ## * Reduced motion: every lens move is a cut, and the gates hold still.
 
 const WINDOW := Rect2(Vector2(40, 90), Vector2(1200, 604))
@@ -58,6 +67,7 @@ var hovered := ""
 var expanded := false
 var floor_filter := -1
 var link := {}                       # the journal's link, when one is active
+var followed := {}                   # the link the Map was last shown, if any
 
 var _map: Node3D
 var _rooms := {}                     # id -> {row, centre, lo, hi, floor mat}
@@ -76,6 +86,11 @@ var _bounds: Array = [Vector3.ZERO, Vector3.ZERO]
 var _home := Vector3.ZERO
 var _framed := false
 var _pulse := 1.0
+var _return := {}                    # the view before it was shown an entry
+var _glass_back: Node3D              # BACK TO YOUR VIEW, on the glass
+var _back_rect := Rect2()
+var _press_used := false             # a press the glass took: its release picks nothing
+var _edge_marks := {}                # "you" / "picked" -> {node, arrow, label, ref}
 
 
 func setup(k: Kit, s: Shell) -> void:
@@ -166,6 +181,7 @@ func load_data(d: Dictionary, s: Dictionary) -> void:
 	_labels.name = "Glass"
 	face.add_child(_labels)
 	_tags.clear()
+	_edge_marks.clear()
 	_frame_focus = Node3D.new()
 	_frame_hover = Node3D.new()
 	_ring = Node3D.new()
@@ -307,12 +323,15 @@ func _tag(text: String, colour: Color, k: int, kind: String, ref: String) -> voi
 ## above it if there is room, else below or beside. A tag whose subject is
 ## outside the window is not shown.
 func _layout_tags() -> void:
+	_place_edge_marks()
 	if _tags.is_empty() or _map == null:
 		return
 	var usable := Rect2(WINDOW.position + Vector2(10, 10), WINDOW.size - Vector2(20, 20))
 	if expanded and picked != "":
 		usable.size.x -= PANEL_W
 	var taken: Array = []
+	if _back_rect.size != Vector2.ZERO:
+		taken.append(_back_rect.grow(6))
 	var head: Dictionary = {}
 	var summary: Dictionary = {}
 	var exits: Array = []
@@ -345,6 +364,11 @@ func _layout_tags() -> void:
 		_put(t, at)
 		taken.append(Rect2(at, size).grow(4))
 	if head.is_empty():
+		return
+	if not usable.grow(-6).has_point(room.get_center()):
+		# The picked place is off the window: its edge mark names it there.
+		_hide(head)
+		_hide(summary)
 		return
 	var hs: Vector2 = head["size"]
 	var ss: Vector2 = summary["size"]
@@ -744,6 +768,7 @@ func _place_labels() -> void:
 	for n: Node in _labels.get_children():
 		n.queue_free()
 	_tags.clear()
+	_edge_marks.clear()                 # rebuilt on demand, from the glass
 	if _you != null and _you.has_meta("room"):
 		_tag("YOU", Kit.INK, 2, "you", str(_you.get_meta("room")))
 	if picked == "":
@@ -820,6 +845,185 @@ func _build_panel() -> void:
 			2, Kit.INK_FAINT, 0.006)
 
 
+# ------------------------------------------------------------ shown an entry
+
+## "Show this on the map": bring what a Journal entry names into view -- a
+## place is picked; a passage is put at the window's centre -- at a zoom
+## that shows it with what is round it, every floor shown, the detail
+## closed. The view the Map had is kept (once, however many entries are
+## shown after it) for BACK TO YOUR VIEW. Ordinary travel never calls this.
+func follow(l: Dictionary) -> void:
+	var local := target_local(l)
+	if local == Vector3.INF:
+		return
+	if _return.is_empty():
+		_return = {"yaw": lens.yaw, "pitch": lens.pitch, "target": lens.target,
+			"zoom": lens.zoom, "shift": lens.shift, "picked": picked,
+			"expanded": expanded, "floor": floor_filter}
+	followed = l.duplicate()
+	expanded = false
+	floor_filter = -1
+	kit.go(lens, "shift", 0.0, 0.3)
+	if l.has("room") and not l.has("edge") and _rooms.has(str(l["room"])):
+		picked = str(l["room"])
+	_set_lens(lens.yaw, lens.pitch, local, maxf(lens.zoom, fit * PICK_ZOOM))
+	_refresh_marks()
+	_build_glass_back()
+
+
+## BACK TO YOUR VIEW: the view, the pick, the detail and the floor the Map
+## had before it was shown an entry.
+func return_view() -> bool:
+	if _return.is_empty():
+		return false
+	var v := _return
+	_return = {}
+	followed = {}
+	picked = str(v["picked"]) if _rooms.has(str(v["picked"])) else ""
+	expanded = bool(v["expanded"]) and picked != ""
+	floor_filter = int(v["floor"])
+	kit.go(lens, "shift", float(v["shift"]), 0.3)
+	_set_lens(float(v["yaw"]), float(v["pitch"]), v["target"], float(v["zoom"]))
+	_refresh_marks()
+	_build_glass_back()
+	return true
+
+
+## The way back, where the eye is: words on the glass at the window's top
+## left, with their key -- clickable too.
+func _build_glass_back() -> void:
+	if _glass_back != null:
+		_glass_back.queue_free()
+		_glass_back = null
+	_back_rect = Rect2()
+	if _return.is_empty():
+		return
+	_glass_back = Node3D.new()
+	face.add_child(_glass_back)
+	var at := WINDOW.position + Vector2(16, 14)
+	var words := "BACK TO YOUR VIEW"
+	var x := at.x
+	if kit.device == "pad":
+		kit.sprite(_glass_back, "pad_face_east", at + Vector2(13, 13), 2, Kit.INK,
+				0.014)
+		x += 34.0
+	else:
+		var w := kit.measure("BACKSPACE", 2) + 16.0
+		kit.plate(_glass_back, at, Vector2(w, 26), 0.012, kit.lit(Color("#c9d0db")),
+				0.004)
+		kit.label(_glass_back, "BACKSPACE", at + Vector2(8, 5), 2, Kit.SHADE, 0.0165)
+		x += w + 12.0
+	var ground := Rect2(at - Vector2(10, 8), Vector2(x - at.x + kit.measure(words, 2)
+			+ 22.0, 42))
+	kit.card(_glass_back, ground.position, ground.size, 0.011, kit.flat(Color("#0e1115"),
+			0.9))
+	kit.label(_glass_back, words, Vector2(x, at.y + 5), 2, Kit.INK, 0.0165)
+	_back_rect = ground
+
+
+## What you look away from stays findable: YOU, and the place you picked.
+## Each is something the save already knows; off the window it stands at
+## the window's edge, an arrow toward it and its name beside the arrow.
+func _place_edge_marks() -> void:
+	if _map == null or _labels == null:
+		return
+	var subjects := {}
+	if _you != null and _you.has_meta("room"):
+		subjects["you"] = str(_you.get_meta("room"))
+	if picked != "" and _rooms.has(picked):
+		subjects["picked"] = picked
+	var usable := Rect2(WINDOW.position + Vector2(10, 10), WINDOW.size - Vector2(20, 20))
+	if expanded and picked != "":
+		usable.size.x -= PANEL_W
+	var placed: Array = []
+	if not link.is_empty():
+		# The thread's arrow stands where its target clamps to the window
+		# (Thread3D): keep clear of it.
+		var t := target_local(link)
+		if t != Vector3.INF:
+			var tp := _page_of(t)
+			if not WINDOW.grow(-6).has_point(tp):
+				var win := WINDOW.grow(-14)
+				placed.append(Vector2(clampf(tp.x, win.position.x, win.end.x),
+						clampf(tp.y, win.position.y, win.end.y)))
+	for kind: String in ["you", "picked"]:
+		var mark: Dictionary = _edge_marks.get(kind, {})
+		var ref := str(subjects.get(kind, ""))
+		if ref == "" or (kind == "picked" and subjects.get("you", "") == ref):
+			if not mark.is_empty():
+				(mark["node"] as Node3D).visible = false
+			continue
+		if mark.is_empty() or str(mark["ref"]) != ref:
+			if not mark.is_empty():
+				(mark["node"] as Node3D).queue_free()
+			mark = _edge_mark(kind, ref)
+			_edge_marks[kind] = mark
+		var p := _page_of(_rooms[ref]["centre"])
+		var node: Node3D = mark["node"]
+		if usable.grow(-6).has_point(p):
+			node.visible = false
+			continue
+		var edge := usable.grow(-16)
+		var at := Vector2(clampf(p.x, edge.position.x, edge.end.x),
+				clampf(p.y, edge.position.y, edge.end.y))
+		if _back_rect.size != Vector2.ZERO and _back_rect.grow(24).has_point(at):
+			# Not under the way back: past it, along the edge it is on.
+			if absf(at.y - edge.position.y) < 1.0:
+				at.x = _back_rect.end.x + 30.0
+			else:
+				at.y = _back_rect.end.y + 30.0
+		for other: Vector2 in placed:
+			if other.distance_to(at) < 40.0:
+				# Step along the edge, not off it.
+				var along := Vector2(0, 1) if absf(at.x - edge.position.x) < 1.0 \
+						or absf(at.x - edge.end.x) < 1.0 else Vector2(1, 0)
+				if (edge.get_center() - at).dot(along) < 0.0:
+					along = -along
+				at += along * 40.0
+		placed.append(at)
+		var d := p - at
+		var icon := "arrow_right"
+		if absf(d.y) > absf(d.x):
+			icon = "arrow_down" if d.y > 0 else "arrow_up"
+		elif d.x < 0:
+			icon = "arrow_left"
+		var arrow: Sprite3D = mark["arrow"]
+		arrow.texture = kit.icons[icon]
+		arrow.position = Kit.at(at, 0.013)
+		# The name stands inward of the arrow, never past the window.
+		var size: Vector2 = mark["size"]
+		var into := (edge.get_center() - at).normalized()
+		var lp := at + Vector2(signf(into.x) * 16.0, -size.y * 0.5)
+		if into.x < 0:
+			lp.x -= size.x
+		if absf(d.y) > absf(d.x):
+			lp = at + Vector2(-size.x * 0.5, signf(into.y) * 16.0
+					- (size.y if into.y < 0 else 0.0))
+		lp.x = clampf(lp.x, usable.position.x, usable.end.x - size.x)
+		lp.y = clampf(lp.y, usable.position.y, usable.end.y - size.y)
+		(mark["label"] as Node3D).position = Kit.at(lp.round(), 0.012)
+		mark["at"] = at
+		node.visible = true
+
+
+func _edge_mark(kind: String, ref: String) -> Dictionary:
+	var node := Node3D.new()
+	_labels.add_child(node)
+	var colour := Kit.INK if kind == "you" else Kit.SIGNAL
+	var arrow := kit.sprite(node, "arrow_right", Vector2.ZERO, 2, colour, 0.013)
+	var text := "YOU" if kind == "you" else kit.fit(_room_name(ref), 2, 220)
+	var label := Node3D.new()
+	node.add_child(label)
+	for off: Vector2 in [Vector2(-1, 0), Vector2(1, 0), Vector2(0, -1),
+			Vector2(0, 1), Vector2(-1, -1), Vector2(1, 1), Vector2(-1, 1),
+			Vector2(1, -1)]:
+		kit.label(label, text, off * 2.0, 2, Color("#07090b"), 0.0, false, true)
+	kit.label(label, text, Vector2.ZERO, 2, colour, 0.0006, false, true)
+	node.visible = false
+	return {"node": node, "arrow": arrow, "label": label, "ref": ref, "kind": kind,
+		"size": Vector2(kit.measure(text, 2), 16.0)}
+
+
 ## The journal's link, if one is active: a ring of dots round what it names.
 func set_link(l: Dictionary) -> void:
 	link = l
@@ -893,6 +1097,8 @@ func back() -> bool:
 	if expanded:
 		toggle_detail()
 		return true
+	if return_view():
+		return true
 	if picked != "":
 		overview()
 		return true
@@ -935,6 +1141,8 @@ func raw_input(event: InputEvent) -> bool:
 				step_place(-1)
 			KEY_ENTER, KEY_KP_ENTER:
 				accept()
+			KEY_BACKSPACE:
+				back()
 			_:
 				return false
 		return true
@@ -998,8 +1206,14 @@ func pointer_ray(hit: Dictionary) -> void:
 
 func click(p: Vector2) -> bool:
 	_drag_moved = 0.0
+	_press_used = false
+	if _back_rect.has_point(p):
+		return_view()
+		_press_used = true
+		return true
 	if expanded and p.x > WINDOW.end.x - PANEL_W and WINDOW.has_point(p):
 		toggle_detail()
+		_press_used = true
 		return true
 	return false                      # a press on the map may be a drag
 
@@ -1016,6 +1230,9 @@ func drag(rel: Vector2, button: int) -> void:
 ## A press that did not drag is a pick, and the lens closes AROUND the
 ## pointer so the room clicked stays under it.
 func release(hit: Dictionary, button: int) -> void:
+	if _press_used:
+		_press_used = false
+		return
 	if button != MOUSE_BUTTON_LEFT or _drag_moved > 6.0:
 		return
 	var id := _ray_pick(hit)
@@ -1034,6 +1251,8 @@ func wheel(_p: Vector2, dir: int) -> bool:
 
 func prompts() -> Array:
 	var out := [["place", "places"], ["click", "pick"]]
+	if not _return.is_empty():
+		out.insert(0, ["back_view", "your view"])
 	if picked != "":
 		out.append(["detail", "less" if expanded else "more"])
 	out += [["overview", "overview"], ["zoom", "zoom"], ["orbit", "turn"],
@@ -1050,7 +1269,31 @@ func state() -> Dictionary:
 			snappedf(lens.target.z, 0.01)], "fit": snappedf(fit, 0.0001),
 		"link": link.duplicate(), "shift": lens.shift,
 		"gate_scale": _gate_scale(), "pulse": snappedf(_pulse, 0.0001),
-		"tags": _tag_state(), "tag_clashes": _tag_clashes()}
+		"tags": _tag_state(), "tag_clashes": _tag_clashes(),
+		"followed": followed.duplicate(), "can_return": not _return.is_empty(),
+		"edge_marks": _edge_mark_state(), "edge_marks_unknown": _edge_marks_unknown()}
+
+
+## The edge marks shown now: kind -> the room it points at.
+func _edge_mark_state() -> Dictionary:
+	var out := {}
+	for kind: String in _edge_marks:
+		var mark: Dictionary = _edge_marks[kind]
+		if (mark["node"] as Node3D).visible:
+			out[kind] = str(mark["ref"])
+	return out
+
+
+## How many shown edge marks point at anything the save does not know: the
+## marks must never reveal a room not found.
+func _edge_marks_unknown() -> int:
+	var n := 0
+	var known_ids := known()
+	for kind: String in _edge_marks:
+		var mark: Dictionary = _edge_marks[kind]
+		if (mark["node"] as Node3D).visible and not known_ids.has(str(mark["ref"])):
+			n += 1
+	return n
 
 
 func _tag_state() -> Array:
@@ -1085,6 +1328,7 @@ func _tag_clashes() -> int:
 func on_device() -> void:
 	if picked != "":
 		_refresh_marks()
+	_build_glass_back()
 
 
 func _gate_scale() -> float:

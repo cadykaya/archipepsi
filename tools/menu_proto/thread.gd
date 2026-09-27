@@ -166,9 +166,11 @@ func _route() -> Array:
 		elif d.x < 0:
 			icon = "arrow_left"
 		_arrow.texture = kit.icons[icon]
+		# At the thread's end, a size up from the wall's symbols: the arrow is
+		# the end of the line, pointing the rest of the way.
+		_arrow.pixel_size = Kit.px() * 3.0
 		_arrow.global_transform = Transform3D(mf.global_transform.basis,
-				mf.global_transform * Kit.at(end + d.normalized() * 14.0,
-				LIFT + 0.002))
+				mf.global_transform * Kit.at(end, LIFT + 0.002))
 		_arrow.visible = drawn >= 0.999
 	return pts
 
@@ -184,7 +186,12 @@ func tick(_delta: float) -> void:
 	# The stroke's corners are cut first, then it stops short of its end,
 	# then it is drawn as far as it has been cast.
 	var full := _corners(_path, CORNER_PX * Kit.px())
-	full = _trim_end(full, END_GAP_PX * Kit.px() * (full[-1] as Vector3).length())
+	var reaches := map_face != null and bool(map_face.target_world(link).get(
+			"inside", false))
+	# It stops just short of what it names, so that mark stays in sight; off
+	# the view it stops short of its arrow, at the window's edge.
+	full = _trim_end(full, (END_GAP_PX if reaches else 20.0) * Kit.px()
+			* (full[-1] as Vector3).length())
 	var total := 0.0
 	for i in full.size() - 1:
 		total += (full[i] as Vector3).distance_to(full[i + 1])
@@ -201,7 +208,7 @@ func tick(_delta: float) -> void:
 			pts.append(a.lerp(b, left / maxf(seg, 0.00001)))
 			break
 	_line.visible = true
-	_line.mesh = _stroke(pts, STROKE_PX, drawn >= 0.999)
+	_line.mesh = _stroke(pts, STROKE_PX, drawn >= 0.999 and reaches)
 	if _bead != null:
 		_bead.visible = true
 	_last = {"points": pts.size(), "drawn": drawn}

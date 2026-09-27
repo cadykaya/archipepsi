@@ -45,6 +45,7 @@ const CONTROLS := {
 	"detail": {"kbm": ["ENTER"], "pad": ["@pad_face_south"]},
 	"closer": {"kbm": ["ENTER"], "pad": ["@pad_face_east"]},
 	"follow": {"kbm": ["E"], "pad": ["@pad_rb"]},
+	"back_view": {"kbm": ["BACKSPACE"], "pad": ["@pad_face_east"]},
 	"change": {"kbm": ["#arrow_left", "#arrow_right"], "pad": ["@pad_dpad"]},
 }
 
