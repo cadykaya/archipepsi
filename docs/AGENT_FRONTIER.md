@@ -151,6 +151,18 @@ With it:
 Then return for review. Nothing is integrated. It does not open 0.5,
 Track C or Track E.
 
+**Progress:**
+* Done: the Glyph menu characters (`b2e94c4`, pushed).
+* Done: the inventory composition, ROUTE AND ECHO (`bd7c872`): a route
+  from the key to a name plate with one echo plate per Mk; the rail's
+  stations never move on selection; text never squashes (a tape proves
+  it). The sample gained 4 authored stress Echoes (one at MK III).
+  Tapes: 59 + 43 + 106 checks pass.
+* Next: the thread's stroke and corners (use `Kit.route_mesh`); then the
+  Map's follow-and-return and offscreen indicators; then the handoff
+  decisions, one resting sheet of the three states, ONE clip, the report
+  and a single zip.
+
 Two things from it that other lanes need:
 
 * **Batch 045 delivers visual identities for the four 0.4 setpieces**
