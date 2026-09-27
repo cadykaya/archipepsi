@@ -3206,6 +3206,59 @@ acceptance and NOT approval for Production integration.
   raw field name. The prototype prints it as `+40 MAX VALUE`.
 * **Next: nothing** until the owner's hands-on verdict.
 
+### Ruling, 2026-09-27 (sixth) — the interactive hybrid is the SELECTED menu design; hand off, then HOLD
+
+**Approved to carry forward:** the hybrid's visual direction and the
+interactions its tour shows. It is the selected menu design. There are
+no more alternative designs and no visual revision rounds for now. Two
+behaviours the build adds but the tour does not show stay proposals, not
+yet ruled on: held-key acceleration on the sliders, and MOTION applying
+at once (handoff §6.15, §6.16).
+
+**How it was reviewed — record the distinction:** a **video review of
+the tour, on a phone**. It was **not** a hands-on keyboard, mouse or
+controller test, and **hands-on usability remains OPEN** until the owner
+can try the build.
+
+**Asked, and done:**
+* **The existing Production handoff is brought up to date** with the
+  delivered build, in place:
+  `docs/art/review/menu_proto_2026-09-27/HANDOFF_STATE_TRANSITIONS.md`,
+  with the Glyph handoff beside it revised briefly. It says:
+  * what Production integrates (§A);
+  * which prototype previews and placeholders must connect to real data
+    and actions (§B);
+  * the integration decisions still open (§C);
+  * the untested behaviour (§D).
+* It is reconciled against Production's head `867f742` (CK10): every
+  file the prototype mirrors is byte-identical to CK9 `a2b9df6`.
+* No new documentation or capture package was made.
+* The delivered build (`5b03f6d`) and its evidence
+  (`docs/art/review/interactive_hybrid_2026-09-27/`) are untouched.
+
+**Found while handing off, recorded in the handoff (not changed in the
+build):**
+* **Production's pages are flat SubViewport textures; the hybrid is 3D
+  hardware.** How it mounts in MenuShell is decision §C.1.
+* **Renderer mismatch.** Production runs Forward+; the prototype runs
+  Compatibility. The pale-surface tone factors (Map 0.74, Journal 0.86)
+  compensate a Compatibility-only light leak and must be revisited (§C.2).
+* **Contrast.** Every ink measures at least 3:1 on screen under the
+  prototype's renderer; the faintest is TAG_FAINT, 3.4–4.5:1. Re-measure
+  under Forward+.
+* **Features without a place in the hybrid yet:**
+  * EquipmentFace's search, sort, NEW marks, link lines and history
+    toggle;
+  * the equip-request states;
+  * the consumable's six states;
+  * ABANDON's confirmation;
+  * the Hub layout of PAUSED.
+
+  All are listed in §B and §C.
+
+**Next: HOLD.** No Production-owned edits and no integration. The owner
+will give Production a separate, explicit integration assignment.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

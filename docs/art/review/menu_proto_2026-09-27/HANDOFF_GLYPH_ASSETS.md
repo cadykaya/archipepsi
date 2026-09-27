@@ -8,6 +8,19 @@ symbol set, what was added, and what Production's own on-screen strings
 still need. Every entry is cited to the source line that uses it, at the
 stable checkpoint CK9 `a2b9df6`.
 
+**Revised for the approved interactive hybrid (sixth ruling, 2026-09-27).**
+- **Nothing new is needed.** The hybrid uses the same text face (the
+  7 × 8 cell), numerals, keycap and symbols, and its tapes find no missing
+  character.
+- **One character met in the data** is the underscore, in Magic Meter's
+  history note `+40 max_value`, a raw field name. It is not a menu
+  character to add: the note should be written for players where it is
+  made. The prototype prints a space (state handoff §B).
+- **Production's tree does not have `assets/ui` yet**
+  (`claude/archipepsi-0-4-blindside` at `867f742`). Importing the kit is
+  part of the integration assignment.
+- §4–§6 below now describe the hybrid's marks.
+
 **Rules kept.**
 
 - No binding was changed. No string's meaning was altered to get round a
@@ -151,8 +164,9 @@ keys), `*` (only `find_children` patterns), `=`, `|`, `{ }`, `\` and `$`
 ## 4. Circuit symbols — provisional
 
 MapFace's blockers carry a `symbol` letter. The prototype maps each letter
-to an art-lane symbol, drawn on the gate in the circuit's own colour and
-repeated on the thread's bead:
+to an art-lane symbol. It is drawn on the gate in the circuit's own
+colour, and repeated at the end of the Journal entry that names the
+passage:
 
 | Letter | Symbol |
 |---|---|
@@ -166,10 +180,10 @@ These three symbols are **provisional art-lane candidates**, not approved.
 
 | Mark | Shape | Placement | Colour |
 |---|---|---|---|
-| Focus | a frame round the picked room; in lists, a bar down the focused item's left edge | on the thing focused | SIGNAL |
-| Circuit identity | the circuit's symbol | on its gate, and on the thread's bead | the circuit's (Production's) |
+| Focus | a frame round the picked room; a bar at the focused key, Settings row or Journal tag; the pulled module's tab | on the thing focused | SIGNAL |
+| Circuit identity | the circuit's symbol | on its gate, and at the end of its Journal entry | the circuit's (Production's) |
 | Player location | the standing figure, plus the YOU tag | in your room; the tag beside the figure | INK |
-| The Journal's link | a ring of 18 dots | round the linked gate or room | INK |
+| The Journal's link | a ring of 18 dots, and the link's ivory guide landing on it | round the linked gate or room | INK; the guide IVORY |
 
 **The one colour risk, flagged and not changed:** `span_alignment`
 `#4de6f2` is ΔE2000 **10.1** from SIGNAL `#39d7c8`, a near-twin. Shape keeps
@@ -179,8 +193,11 @@ to separate them by hue as well is Production's decision.
 ## 6. Reduced motion covers secondary motion
 
 In the prototype, `Kit.still()` holds every self-driven motion under
-reduced motion: the gate pulse, and the thread's cast. The scripted tapes
-check that the pulse stays at exactly 1.0 at two different times.
+reduced motion: the gate pulse, and the link's cast. Every other move
+becomes a cut: the selector's detent, a module's slide, a knob. The
+scripted tapes check that the pulse stays at exactly 1.0 at two different
+times, and that nothing travels in reduced motion. The sound cues are not
+motion, and stay.
 
 **Carried into the Production handoff:** MapFace's own `_pulse()` ignores
 reduced motion (`HANDOFF_STATE_TRANSITIONS.md` §6.1 has the finding and a

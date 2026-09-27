@@ -123,23 +123,26 @@ Findings other lanes need:
   set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Now: TRACK A2 — the interactive hybrid is DELIVERED. STOPPED for the
-owner's hands-on review.** See ART_FRONTIER §11, "Delivered, 2026-09-27 —
-the interactive hybrid".
+**Now: TRACK A2 — HOLD. The interactive hybrid is the SELECTED menu
+design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
 
-* **Built** in `tools/menu_proto` on the prototype's own logic and data.
-  Both refinements are in: the Settings feed is clear of every value, and
-  the quieter text is lifted.
-* **Verified by script:** 434 checks in 4 tapes, through the real input
-  path (`tools/menu_proto/test.sh`). **Hands-on: not done.**
-* **Delivered:**
-  * report: `docs/art/reports/2026-09-27-a2-interactive-hybrid.md`;
-  * review folder: `docs/art/review/interactive_hybrid_2026-09-27/`;
-  * build: `tools/menu_proto/stage_build.sh`.
-* **Kept safe:** `91e5d3f` (inventory pass), `8b13aa7` (studies) and
-  `94e219d` (hybrid stills).
-* **Wake-ups are no-ops** until the owner answers. Do not start
-  integration; it is not approved. No Production edits.
+* **Approved from a video review of the tour, on a phone. NOT hands-on.**
+  Hands-on usability (keyboard, mouse, controller) stays OPEN for the
+  owner.
+* **The Production handoff is up to date** with the delivered build:
+  `docs/art/review/menu_proto_2026-09-27/HANDOFF_STATE_TRANSITIONS.md`.
+  - §A: what to integrate.
+  - §B: which placeholders connect to which real data and actions.
+  - §C: the open decisions.
+  - §D: what is untested.
+
+  The Glyph handoff beside it is revised too.
+* **Build and evidence, kept safe:**
+  * `tools/menu_proto` at `5b03f6d`, staged by `stage_build.sh`;
+  * `docs/art/review/interactive_hybrid_2026-09-27/`;
+  * 434 scripted checks.
+* **Wake-ups are no-ops.** Integration waits for a SEPARATE, EXPLICIT
+  assignment to Production. No Production-owned edits.
 
 Two things from it that other lanes need:
 
