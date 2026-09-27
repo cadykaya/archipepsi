@@ -1,0 +1,6 @@
+RA3-2 [zone_builder.gd] the room is owed at a connector's size, not its own
+    NOT CAUGHT by "candidate zone_008 builds" -- exit 0, 0 failing check(s), 0 script error(s); restored byte for byte: True
+RA3-3 [zone_builder.gd] the room is owed where the corridor starts, not where it ends
+    NOT CAUGHT by "candidate zone_008 builds" -- exit 0, 0 failing check(s), 0 script error(s); restored byte for byte: True
+
+0 of 2 sabotages caught; 0 of 0 controls hold

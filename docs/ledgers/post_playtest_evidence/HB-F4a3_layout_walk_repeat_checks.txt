@@ -1,0 +1,10 @@
+# HB-F4a-3, the walk's repeat (HB-F4a3_layout_walk_repeat.log), checked against the
+# first walk (HB-F4a3_layout_walk.log) with the milliseconds set aside, and its
+# dumped compositions (HBF4_DUMP) compared byte for byte with the pushed files.
+walk repeat: exit 0; 24 compositions dumped
+walk repeat: same digests and verdicts as the first walk
+dump zone_008_1e2f761b817e.json = pushed godot/tests/fixtures/router/candidate_zone_008b.json
+dump zone_013_74495995ef07.json = pushed godot/tests/fixtures/router/candidate_zone_013.json
+dump zone_013_74495995ef07.json = pushed docs/ledgers/post_playtest_evidence/HB-F4g_zone_013_74495995ef07.json
+dump zone_019_e0b4b081a704.json = pushed docs/ledgers/post_playtest_evidence/HB-F4g_zone_019_e0b4b081a704.json
+dump zone_022_5d3385459fd6.json = pushed docs/ledgers/post_playtest_evidence/HB-F4g_zone_022_5d3385459fd6.json

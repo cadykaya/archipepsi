@@ -5643,10 +5643,17 @@ stand, and the bounded ladder ran out. **Measured, and now repaired.**
     suite before and after, the gate on zone_013, and 3 of 3 sabotages.
   - Only timings moved: the census took 248 s (234 s recorded), and
     zone_008 was accepted in 378 ms (352 ms recorded).
-  - Two runs follow in the next commit, queued behind HB-O1's
-    verification: the walk's repeat with its compositions dumped
-    (`HB-F4a3_layout_walk_repeat.log`), and the first sabotage run
-    (`HB-F4a3_sabotages_first.log`).
+  - The walk's repeat (`HB-F4a3_layout_walk_repeat.log`) gave the same
+    digests and verdicts, and dumped its compositions: zone_008's,
+    zone_013's, zone_019's and zone_022's are the pushed
+    `candidate_zone_008b.json`, `candidate_zone_013.json` and
+    `HB-F4g_zone_*.json` byte for byte
+    (`HB-F4a3_layout_walk_repeat_checks.txt`).
+  - The first sabotage run was repeated with the second composition
+    taken out of the junction test again, and a runner that names the
+    one check the test then had, "candidate zone_008 builds"
+    (`HB-F4a3_runner_first.py`). RA3-2 and RA3-3 go uncaught, as
+    recorded (`HB-F4a3_sabotages_first.log`).
 - **HB-F4g (router, mine, open): three more Zones of the owner's campaign
   fail placement**, found by walking it further.
   - zone_013 (`74495995ef07`, room `c013`), zone_019 (`e0b4b081a704`,
