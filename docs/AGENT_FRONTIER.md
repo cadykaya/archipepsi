@@ -123,45 +123,30 @@ Findings other lanes need:
   set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Now: TRACK A2, the focused INVENTORY visual pass** (ART_FRONTIER §11,
-"Ruling, 2026-09-27 (second)").
+**Now: TRACK A2 — the inventory visual pass is DELIVERED; waiting on the
+owner.** See ART_FRONTIER §11, "Track A2 — the inventory visual pass is
+DELIVERED FOR OWNER REVIEW".
 
-The combined prototype is the working INTERACTION foundation. It is not
-final visual approval, and not approval to integrate. Hands-on review is
-still pending. The functional checkpoint to keep safe is `f5dd9f7` (build
-`076cad7`).
+* Package: `docs/art/review/inventory_pass_2026-09-27/`.
+* Report: `docs/art/reports/2026-09-27-a2-inventory-visual-pass.md`.
+* The build, clip and stills are from `66e18b2`. The functional
+  checkpoint `f5dd9f7` is untouched in history.
+* Delivered:
+  * ROUTE AND ECHO, in three states, with one clip;
+  * the thread as one stroke;
+  * SHOW ON THE MAP, with BACK TO YOUR VIEW;
+  * edge marks that reveal nothing;
+  * the Glyph menu characters and the 7 × 8 text cell;
+  * the six handoff decisions, as proposed Production changes.
+* Tapes: 61 + 54 + 110 = 225 checks pass.
 
-The deliverable is one strongly art-directed inventory composition, with an
-original shape language (connections, transformation, Echoes,
-relationships). No gray-panel list and big rectangular card; the selected
-ability shapes the frame. It is shown in three states (normal selected,
-comparison, long name and description), as a resting screenshot and ONE
-short clip. Do not repeat the eight captures.
+**Heartbeat: a no-op until the owner replies.** The owner decides:
+* the visual direction, and whether to extend it to Map and Journal;
+* hands-on answers;
+* the new proposals.
 
-With it:
-* text never squashes during rapid selection;
-* the thread reads as one deliberate guide;
-* following a journal entry frames its target, with a way back, while
-  ordinary travel keeps the map view;
-* offscreen indicators stay useful and reveal nothing;
-* the approved Glyph characters and symbols the menu needs are added;
-* the owner's handoff decisions are carried in as proposed Production
-  changes.
-
-Then return for review. Nothing is integrated. It does not open 0.5,
-Track C or Track E.
-
-**Progress:**
-* Done: the Glyph menu characters (`b2e94c4`, pushed).
-* Done: the inventory composition, ROUTE AND ECHO (`bd7c872`): a route
-  from the key to a name plate with one echo plate per Mk; the rail's
-  stations never move on selection; text never squashes (a tape proves
-  it). The sample gained 4 authored stress Echoes (one at MK III).
-  Tapes: 59 + 43 + 106 checks pass.
-* Next: the thread's stroke and corners (use `Kit.route_mesh`); then the
-  Map's follow-and-return and offscreen indicators; then the handoff
-  decisions, one resting sheet of the three states, ONE clip, the report
-  and a single zip.
+Settings/Pause stays open. Nothing is integrated, and it does not open
+0.5, Track C or Track E.
 
 Two things from it that other lanes need:
 

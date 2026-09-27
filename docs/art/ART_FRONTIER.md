@@ -2844,6 +2844,46 @@ over.
 
 This does not open 0.5, Track C or Track E.
 
+### Track A2 — the inventory visual pass is DELIVERED FOR OWNER REVIEW (2026-09-27)
+
+Package: `docs/art/review/inventory_pass_2026-09-27/`.
+Report: `docs/art/reports/2026-09-27-a2-inventory-visual-pass.md`.
+The build, clip and stills are from `66e18b2`. Nothing is integrated, and
+nothing here is approved.
+
+**The direction, ROUTE AND ECHO** — a candidate for your choice:
+* **The route.** One 6 px stroke with 45° corners runs from the key,
+  through what is on it, to the selected ability's name plate. It carries
+  the motion; the words never scale.
+* **The plate.** The name is set at 6× on a plate of the keycaps'
+  material. Behind it stands one echo plate per Mk, stepping down toward
+  the wall.
+* **Square information.** The read, the history, the description and the
+  aligned comparison table are all level.
+* **The rail.** Its stations never move on selection.
+
+**Shown:** the three states as stills, and one 16 s clip.
+
+**The refinements:**
+* the thread is the same stroke;
+* SHOW ON THE MAP, with BACK TO YOUR VIEW, and travel keeps the view;
+* edge marks for YOU and the picked place, which never point at unknown
+  rooms.
+
+**Also in it:**
+* Glyph: the approved menu characters (`b2e94c4`), and the 7 × 8 text
+  cell (`5e05728`).
+* The six handoff decisions, recorded as proposed Production changes.
+* The sample: four more authored stress Echoes, one of them MK III.
+* Tapes: 225 checks pass.
+
+**Waiting on the owner:**
+* the visual direction;
+* hands-on use;
+* the new proposals.
+
+Settings/Pause stays open.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

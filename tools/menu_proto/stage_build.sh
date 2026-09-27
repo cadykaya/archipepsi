@@ -41,7 +41,7 @@ cat > "$OUT/menu_proto/RUN.md" <<EOF
 
 Built from \`claude/archipepsi-art\` at \`$SHA\`. An art-lane review
 prototype, **not the game's menu**. The sample data is Production's own,
-taken at CK9 \`a2b9df6\`, plus 7 layout-stress Echoes tagged AUTHORED.
+taken at CK9 \`a2b9df6\`, plus 11 layout-stress Echoes tagged AUTHORED.
 Equipping is a local preview; nothing is sent.
 
 **Needs Godot 4.5.x** (made with 4.5.1). Either open \`project.godot\` in
@@ -71,7 +71,15 @@ The Settings wall's REVIEW CONTROLS change the same things while it runs.
 | Open on Settings / close from any wall | Esc | Start |
 | Turn left / right | Q / E, or click the edge arrows | LB / RB |
 | Move, choose | arrows, Enter; click | d-pad, A |
-| Back out one step | ← (drawer) | B |
+| Back out one step | ← (the rail) | B |
+
+## Journal
+
+| Action | Keyboard and mouse | Pad |
+|---|---|---|
+| Entries, columns | arrows; click | d-pad |
+| SHOW ON THE MAP (frames the entry's passage or place, with a way back) | Enter | A |
+| Travel to the Map as it was left | E | RB |
 
 Each wall's prompt line shows its own controls, for the device you last
 used.
@@ -87,5 +95,6 @@ used.
 | Pan | WASD, right-drag | left stick |
 | Zoom | \`+\` \`-\`, wheel | triggers |
 | Floors | PgUp, PgDn | d-pad ↑ ↓ |
+| Back to your view (after SHOW ON THE MAP) | Backspace, or click the words on the glass | B |
 EOF
 echo "stage_build: $OUT/menu_proto (from $SHA, $(ls "$OUT/menu_proto/ui" | wc -l) Glyph files)"

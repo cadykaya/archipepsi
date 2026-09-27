@@ -1,9 +1,15 @@
 # A2 menu prototype — state and transition handoff
 
-*Arty, art lane — 2026-09-27*
+*Arty, art lane — 2026-09-27, revised after the second ruling of that day*
 
 **Status: for owner review, before any production integration.** Nothing
-here has been integrated. No Production-owned file was edited: the
+here has been integrated.
+
+**Revised for the inventory visual pass.** §2 (Equipment) is rewritten for
+the new composition, ROUTE AND ECHO. §3 and §4 add SHOW ON THE MAP, the
+way back, the edge marks and the thread's new stroke. §6 now carries the
+owner's decisions of 2026-09-27 as proposed Production changes. §7 has
+the new counts. No Production-owned file was edited: the
 prototype is its own Godot project (`tools/menu_proto`), and it reads
 Production only through its sample, which is extracted from Production's
 own code.
@@ -90,15 +96,18 @@ Production's five menu actions verbatim:
     so only the newest request ever runs.
 - **Reduced motion keeps the same information and the same actions.**
   - Every track becomes a cut, and every timer fires at once.
-  - Secondary motion holds still: the gate pulse, and the thread's cast.
+  - Secondary motion holds still: the gate pulse, the thread's cast, the
+    route's glide and the echoes' slide.
   - It is driven by Production's own option, Settings → MOTION
     ("Motion (view bob, menu turns)"). OFF is `motion_intensity` 0.
 - **The mouse never chases.**
-  - Hover only lights a strip, an entry or a room. It never moves, grows or
-    reorders anything.
+  - Hover only lights a station, an entry or a room. It never moves, grows
+    or reorders anything.
   - A click selects the thing under the pointer, where it is.
-  - In the drawer, the only thing that moves is the unfolding card, which
-    opens in place at the strip that was clicked.
+  - On the Equipment rail, selecting moves nothing at all: the stations
+    stand still, and the detail is composed beside them.
+- **Words never squash.** No text is ever scaled to animate. Movement is
+  carried by strokes, plates and positions; a word appears whole.
 - **Prompts follow the device last used.**
   - A key, a mouse button or mouse motion over 2 px selects keyboard and
     mouse. A pad button, or a stick past 0.4, selects the pad.
@@ -114,63 +123,84 @@ Production's five menu actions verbatim:
   | DEAD `#4a4f57` | 2.0 | 1.4 | marks only, never text |
   | SIGNAL `#39d7c8` | 9.2 | 6.6 | focus and "you can act on this", nothing else |
 
-## 2. Equipment — LEAF, refined around the selected module and its key
+## 2. Equipment — LEAF, art-directed as ROUTE AND ECHO
 
-**Composition.**
+**Composition.** One composition around the selected ability and its key.
+Its shape language comes from what an Archipepsi ability is: an item from
+another world, read into this one, and carried on a key.
 
-- The key column on the left: a raised keycap plate per key, then the slot
-  title, then what is on the key.
-- The key's drawer opens out of the key's socket. A line runs from the
-  socket to the drawer's spine.
-- The selected module unfolds in place as a card on a raised, lit plate
-  with a signal bar down its left edge.
-  - The left half says what the module is and does.
-  - The right half says what changes if it goes on that key: the comparison
-    against what is on the key now, named with the key's cap.
-- The action is at the card's foot.
+- **Relations run on the route.** One stroke, 6 px, every turn cut at 45
+  degrees (`Kit.route_corners`, `Kit.route_mesh`), runs from the focused
+  key's shelf, down the rail's spine to the selected station, along that
+  station's shelf, and up the gutter into the name plate. It is the
+  comparison made visible: from what is on the key to what you are looking
+  at. The Journal's thread is the same stroke (§4).
+- **An echo repeats.** The selected ability's name is printed large (6x;
+  a long name wraps, 4x at the least) on a plate of the keycaps' own
+  material, standing off the wall. Behind it stands one plate per item that
+  went into it (its Mk), each a step down the diagonal and nearer the wall,
+  fading to the wall's grey. Above MK III the steps close up.
+- **Information stays square.** Everything read is level and aligned:
+  - the kicker: the key's own keycap, where the item stands with it (ON
+    THIS KEY NOW, FITS THIS KEY, PREVIEW ON THIS KEY, NOT SENT, SAVED ON
+    THIS KEY), and its family and Mk;
+  - the read: the concepts of the Echo that made it (3x);
+  - where it came from: `history`, one line per item, "MK  note ← item
+    (game)" (the create's note is the name, shown once, above);
+  - the description, then DOES, HOW IT IS USED and COST;
+  - the comparison against what is on the key now, as a table: label,
+    what is on the key, the arrow, what this would make it, the values
+    aligned on the arrow. A change too long for a row (a kind of damage)
+    takes its label, then the old value, then "→ new", each on a line.
+- **The rail.** The focused key's candidates stand as stations on a spine,
+  in a fixed order. What is on the key has a solid node; the selected one,
+  while the rail has the focus, a signal square on the route.
+- **The action** is always in the same place, at the composition's foot.
 
 ### States
 
 | State | Meaning |
 |---|---|
-| `zone = keys` | Focus is on a key row. The drawer shows that key's candidates, with the saved occupant unfolded. |
-| `zone = drawer` | Focus is on a candidate, which is unfolded (the card). |
-| `preview[slot]` | A **local** preview, never sent. It is labelled "PREVIEW ON <KEY>, NOT SENT" on the card, and PREVIEW in the key column. |
+| `zone = keys` | Focus is on a key (a signal bar beside it). The rail shows that key's candidates, and the saved occupant is composed. |
+| `zone = drawer` | Focus is on a station (a signal square on the route). Its item is composed. |
+| nothing selected | A key with nothing on it, before the rail is entered: the key itself is composed ("ECHO B" on the plate, what is and could be on it). |
+| `preview[slot]` | A **local** preview, never sent: "PREVIEW, NOT SENT" on the station, PREVIEW in the key column, "PREVIEW ON THIS KEY, NOT SENT" in the kicker. |
 
 ### Transitions
 
 | Input (kbm / pad / mouse) | Effect | Motion (full) | Interrupted by | Reduced |
 |---|---|---|---|---|
-| ↑ ↓ / d-pad / click a key | the next key | focus bar 0.14 s, out-ease. The drawer rebuilds: strips slide from the socket in 0.22 s, staggered 18 ms per strip (at most 10), and scale in over 0.16 s. | any press, retargeted | cut |
-| → / d-pad → / click a strip | into the drawer | — | — | — |
-| ↑ ↓ in the drawer | the next candidate | The old card folds (scale-y, 0.10 s). The new one unfolds after 0.04 s (0.16 s). The strips re-place (0.18 s). The drawer scrolls so the **whole** card is in view. | the next press, from wherever things are | cut |
-| Enter / A / click the action | preview on the key; or, on the saved item, back to the save | — | — | — |
+| ↑ ↓ / d-pad / click a key | the next key | Focus bar 0.14 s. The route's key end glides to the new shelf (0.16 s, out-ease); the stations appear down the spine, each whole, 16 ms apart (at most 12). | any press, retargeted | cut |
+| → / d-pad → / click a station | into the rail | — | — | — |
+| ↑ ↓ on the rail | the next candidate | The composition is rebuilt **at once**, whole; the route glides to the new station (0.14 s) and its plate end retargets; the echo plates slide out from behind the plate (0.20 s, 30 ms apart). Nothing on the rail moves unless the keyboard or pad asks for a station out of view, which scrolls the rail (0.18 s). | the next press, from wherever things are | cut |
+| Enter / A / click the action | preview on the key; or, on the saved item, back to the save. The rail's order and scroll do not change. | — | — | — |
 | ← / B | back to the keys | — | — | — |
-| wheel / right stick | scroll by hand; the open card stays open (see "The drawer is a window" below) | — | — | — |
+| wheel / right stick | scroll the rail by hand; the selection stays selected and composed | 0.18 s | — | cut |
 
-### The drawer is a window
+**Rapid selection.** The words never squash and two compositions never
+overlap: the old composition is freed the moment the new one is built.
+`state().text_scale_min` (the smallest vertical scale of any word on the
+wall) is checked to be exactly 1 mid-flight in a run of eight presses, and
+`state().compositions` to be 1.
+
+### The rail is a window
 
 - Two patches of the wall itself (`kit.wall_patch`, grain aligned texel
-  for texel) lie just in front of the list, above and below the view.
-  Whatever scrolls past slides under them.
-- A strip is drawn wherever any of it shows.
-- The open card is cut **a line at a time**: every line of its words is
-  its own label with its span, and the plate, bar and shadows are cut to
-  the band the edges cover. So a card half-scrolled out is still drawn
-  where it shows, and never leaves a hole or spills past the wall.
-- The drawer's header and its "N MORE" counts sit above the edges.
-- Anything raised off the wall is seen magnified about the page's centre
-  (by D / (D − lift)). So the edges, and the words over them, are placed
-  by their projection (`Kit.lifted`, `Kit.lift_scale`), and are seen
-  exactly on their page rects.
-- `state().holes` is the largest empty stretch of the view with content
-  beyond it. The tapes assert it stays under one strip's height.
+  for texel) lie just in front of the rail, above and below its view.
+  A station partly scrolled out slides under them, and is drawn wherever
+  any of it shows. The spine is held to the view.
+- The rail's header and its "N MORE" counts stand over the edges, placed
+  by their projection (`Kit.lifted`, `Kit.lift_scale`).
+- A station scrolled out of view by hand stays selected and composed. The
+  route runs along the spine to the rail's edge and turns there
+  (`state().route_held`: "above" / "below").
+- `state().holes` is the largest empty stretch of the view with stations
+  beyond it; the tapes assert it stays under 19 px on every scroll.
 
 ### Ordering
 
-The drawer's order is **the saved occupant first, then fold order**. A
-preview never reorders it: the fix for the studies' displacement under the
-pointer.
+The rail's order is **the saved occupant first, then fold order**. A
+preview never reorders it, and selecting never moves it.
 
 ### Data bindings
 
@@ -180,11 +210,13 @@ All of the following are from `EquipmentQuery`, plus `SlotKeycaps.of`:
   `is_consumable`
 - `equipped_in`, `held_back`, `refusal`
 - `comparison(candidate, occupant)`
-- `does`, `use_lines`, `cost_lines`, `read_lines`, `history`
+- `does`, `use_lines`, `cost_lines`, `read_lines`, `history`, and the
+  Echo interpretations' `concepts`
 - `source_game`, `kind_of`, `family`, `name_of`
 
-Descriptions respect `MAX_TEXT_LEN` 160. The layout-stress set's longest is
-158, and it unfolds in full.
+Descriptions respect `MAX_TEXT_LEN` 160. The layout-stress set's longest
+is 158, and the longest name carries a 157-character description; both are
+set in full, clear of the action (`state().focus.clear`).
 
 ### Refusals
 
@@ -208,6 +240,7 @@ layout, and MapFace's own connector points.
 | PICKED | One room, framed in signal, with short answers on the glass. |
 | EXPANDED | MapFace's own `detail_text` for the room, docked at the window's right edge. The lens slides the miniature aside (−170 page px) rather than covering it. |
 | `floor` | −1 shows every floor. Otherwise it is an index into `MapFace.floors()`. |
+| SHOWN | The Map was shown a Journal entry (`followed`), and keeps the view it had for BACK TO YOUR VIEW (`can_return`). |
 
 ### Transitions
 
@@ -228,6 +261,18 @@ layout, and MapFace's own connector points.
   Reduced: a cut.
 - **Gate pulse:** 1.2 Hz, ±0.3. **Held still under reduced motion.**
   MapFace's own `_pulse()` does not do this; see §6.1.
+- **Ordinary travel** (E, Q, the edge arrows, Tab) turns to the Map
+  **exactly as it was left**: its lens, pick, detail and floor.
+- **SHOW ON THE MAP** (Enter or A on a linked Journal entry) turns to the
+  Map and brings what the entry names into view: a place is picked; a
+  passage is put at the window's centre, at a zoom that shows what is round
+  it (at least the pick zoom), every floor shown, the detail closed. The
+  lens glides 0.38 s; reduced, a cut. The view it had is kept once,
+  however many entries are shown after it.
+- **BACK TO YOUR VIEW**: Backspace, or B, or a click on the words at the
+  window's top left. It restores the kept lens, pick, detail and floor.
+  B still closes an open detail first; with nothing kept, B leaves the
+  pick for the overview, as before.
 
 ### Short answers — words on the glass
 
@@ -241,7 +286,23 @@ has projected what they name:
    never covers another exit's mark.
 3. The **name and summary block** ("N OPEN   N SHUT   ENTER/A: MORE") sits
    just outside the picked room: above it, else below, else beside.
-4. A tag whose subject leaves the window is hidden.
+4. A tag whose subject leaves the window is hidden. The picked place's
+   name block hides while its edge mark names it.
+
+### What you look away from stays findable
+
+When the player pans, orbits or zooms away, these stand at the window's
+edge with an arrow toward them, and nothing else does:
+
+- **YOU**, in ink;
+- **the picked place**, by name, in signal;
+- **the Journal's link**: the thread's own arrow, at the end of the thread.
+
+They keep clear of each other and of BACK TO YOUR VIEW. They only ever
+point at what the save already knows: `state().edge_marks_unknown` counts
+marks pointing at any room outside `known()`, and the tapes require 0. No
+mark points at a room not found, at where to go next, or at a way the
+player has not walked.
 
 `state().tag_clashes` counts:
 
@@ -258,7 +319,7 @@ latched save, orbited 45°, tilted, and with the detail open.
 |---|---|---|
 | **Focus** | a frame round the room | signal |
 | **Circuit** | its symbol on its gate | the circuit's colour, which is Production's and not redefined |
-| **You** | the standing figure, plus the YOU tag | ink |
+| **You** | the standing figure, plus the YOU tag; off the window, an edge mark | ink |
 | **The Journal's link** | a ring of 18 dots | — |
 
 None of them is told by hue alone.
@@ -293,7 +354,8 @@ All from `MapFace`:
 |---|---|
 | ↑ ↓, or the d-pad | entries, skipping headings. The focused entry is raised on a plate, with its explanation **in place**. |
 | ← →, or the d-pad | columns |
-| Enter, E or RB | **follow**: turn right to the Map. Following is optional; the explanation is complete on the entry. |
+| Enter or A | **SHOW ON THE MAP** (§3): turn right to the Map, and it frames what the entry names, with a way back. Following is optional; the explanation is complete on the entry. |
+| E or RB | ordinary travel: turn right to the Map as it was left. The thread still lands (or points) at the link. |
 | Click | pick |
 | Wheel | scroll |
 
@@ -303,21 +365,25 @@ All from `MapFace`:
 `{room: <room_id>}` for a place — never to a row number, and never to the
 text.
 
-**Route.** It leaves the entry's loose end and runs along the journal wall.
-It wraps the corner post's two inner faces, then runs the short way along
-the map wall to the window's edge. It goes in through the window and lands
-on the passage (or place) in the miniature. The last point follows the lens
-every frame.
+**Its path.** It leaves the entry's loose end and runs along the journal
+wall. It wraps the corner post's two inner faces, then runs down (or up)
+the map wall's margin beside the window, and goes in **level with what it
+names**, stopping just short of it with a terminus bar so the passage's
+own mark stays in sight. The last points follow the lens every frame.
 
-**Off the view.** When the target is off the view, the thread stops at the
-window's edge with an arrow toward it. The overview brings it back in.
+**Off the view.** When the target is off the view, the thread runs to the
+window's edge and ends in its arrow, a size up from the wall's symbols,
+pointing the rest of the way. The overview brings it back in.
 
-**Not a route.**
+**One deliberate guide.** It is the menu's one stroke, the same as the
+inventory's route: one solid line of ink, 6 px as seen from the eye
+wherever it runs (scaled by distance, mitred at every join), every turn
+cut at 45 degrees (12 px). No casing and no second line
+(`state().strokes` is 1).
 
-- The thread is ink, straight and 2 px wide, on a casing of the wall's own
-  colour.
-- It never follows a corridor's turns.
-- A route is a coloured band in the model; the thread is a line in the room.
+**Not a traversable route.** It is straight between its corners and never
+follows a corridor's turns. A route in the model is a coloured band; the
+thread is a line in the room.
 
 **Motion.**
 
@@ -369,12 +435,16 @@ titled NOT DESIGNED IN THIS PASS.
 
 Nothing here implies the studies settled this face.
 
-## 6. Proposed Production deltas
+## 6. Proposed Production changes — the owner's decisions of 2026-09-27
 
-These are recommendations only. Each one says what the prototype does.
+The owner decided these on 2026-09-27 (second ruling). They are
+**proposed Production integration changes**: nothing in Production is
+edited until that file ownership is explicitly handed over. Each says what
+the prototype does.
 
-1. **MapFace's pulse ignores reduced motion.**
-   - The prototype holds the pulse.
+1. **Reduced motion includes gate pulses and all other secondary motion.**
+   - The prototype holds the pulse, and every secondary motion (the
+     thread's cast, the route's glide, the echoes' slide) is a cut.
    - At `a2b9df6`, `map_face.gd` `_process` → `_pulse()` scales every
      blocker by `1 + PULSE_SWING·sin(t·2π·PULSE_HZ)` unconditionally.
      MenuShell already reads the setting:
@@ -389,53 +459,77 @@ These are recommendations only. Each one says what the prototype does.
          for eid: String in _blocker_nodes:
              (_blocker_nodes[eid] as Node3D).scale = Vector3.ONE * s
      ```
-2. **JournalQuery should return structured rows**, which is a contract
-   request.
+2. **Journal links consume explicit passage and room identifiers**, not
+   identity derived from the words shown. A contract request:
    - Today `still_shut`, `done_here` and `places` return strings. To bind a
      link to identity, the extraction re-derives each line and matches it
-     exactly. To do that it calls JournalQuery's **private** helpers
-     (`_sorted`, `_opened_by`, `_in`, `_circuit`), which is fragile.
+     exactly, calling JournalQuery's **private** helpers (`_sorted`,
+     `_opened_by`, `_in`, `_circuit`).
    - Request: sibling functions that keep the strings unchanged and add the
      identity:
      - `still_shut_rows(snapshot) -> [{text, edge_id, state, circuits}]`
      - `done_here_rows(snapshot) -> [{text, edges: [...], circuits: [...]}]`,
        where edges and circuits may be empty
      - `places_rows(snapshot) -> [{text, room_id}]`
-   - The rows must keep JournalQuery's existing boundaries: names only from
-     the bridge's map, and never an unfound room.
-3. **Esc and B back out of a detail before closing.** In Production, Esc
-   closes the whole menu at once.
-   - The prototype **keeps Production's rule**: Esc closes.
-   - B backs out one step: out of the drawer, and on the Map out of the
-     detail and then out of the pick. ← also backs out of the drawer, and
-     Enter toggles the Map's detail.
-   - The proposal: Esc and B leave an open detail first, and close the menu
-     second.
-4. **Input during a turn.** Production drops face input for the 0.42 s
-   turn, and the prototype keeps that.
-   - The proposal: send it to the face being turned *to*. A player who
-     turns and immediately presses ↓ loses the press today.
-5. **Legibility at Production's window default.**
-   - The default is 1280×720 with no stretch. There, 1 page px ≈ 0.86
-     screen px, so 2× body text has about 8.6 px caps.
-   - It is legible in the 720p stills (`stills_720p/`), but it is the floor.
-   - Recommend no body text below 2×, and a 720p check in Production's own
-     suite.
-6. **Floor filter.** When one floor is chosen, Production hides the other
-   floors; the LENS dims them to keep context. This is a design proposal,
-   and it does not change which room is on which floor.
+   - The rows keep JournalQuery's existing boundaries: names only from the
+     bridge's map, and never an unfound room.
+3. **Esc and B back out of an open detail first, then close the menu when
+   there is no deeper view. A clear direct resume action stays.**
+   - Deeper views, innermost first: the Map's detail; the Map's shown view
+     (BACK TO YOUR VIEW); the Map's pick; the Equipment rail (back to the
+     keys).
+   - The prototype does this for **B** already. It keeps Production's
+     **Esc** (closes at once), as the file is Production's; under the
+     decision, Esc follows B's order and closes only from the top.
+   - The direct resume stays clear. Proposed: RESUME on the Pause wall, as
+     now, and on the pad **Start** (Production's `pause` there) keeps
+     closing the menu at once, whatever is open, since B is the pad's back.
+     On the keyboard Esc becomes back-then-close; Tab (`inventory`) still
+     closes from Equipment. Which keyboard key, if any, should close at
+     once from any depth is Production's call to make with this change.
+4. **Navigation pressed during a turn does not silently disappear.**
+   Production and the prototype drop face input for the 0.42 s turn.
+   - Proposed: a direction or scroll pressed during a turn is delivered to
+     the face being turned *to*, once it faces the eye.
+   - **Never replayed:** an equip, a quit, or any other confirmation (Enter
+     / A, a click on an action) pressed during a turn is dropped. It is
+     never carried into a control the player has not yet seen.
+5. **720p text size is a concern to improve, not a guarantee.**
+   - At Production's default, 1280 × 720 with no stretch, 1 page px ≈ 0.86
+     screen px, so 2× body text has about 8.6 px caps. It is legible in the
+     720p stills; that is the floor, not a target.
+   - Important text is never shrunk to fit a composition. The inventory's
+     composition holds this: a long name wraps rather than going below 4×,
+     and a long description takes more lines.
+   - Recommend a 720p legibility check in Production's own suite.
+6. **Dimmed other floors are for overview; a genuine single-floor view is
+   kept.** The LENS dims the other floors on its first floor steps, for
+   orientation. Production's single-floor view (the others hidden) stays
+   available; the proposal is a dimmed overview step, not a replacement.
+
+**Also proposed by this pass** (the prototype does each):
+
+7. **SHOW ON THE MAP and BACK TO YOUR VIEW** (§3): following a Journal
+   entry frames its known target and keeps the previous view; ordinary
+   travel never moves the view. Backspace is a proposed new binding on the
+   Map; B and the words on the glass are the others.
+8. **Edge marks** for YOU and the picked place when they leave the window
+   (§3), pointing only at known rooms.
+9. **The text face's cell is 7 × 8** (Glyph handoff §1): a clear column on
+   both sides of every glyph. Nothing Production draws changes: the ink
+   and the advances are the same.
 
 ## 7. Evidence — three scopes, reported separately
 
 | Scope | What it covers |
 |---|---|
 | **Implemented** | everything in §§2–5 |
-| **Exercised by scripted input through the real input path** (`Input.parse_input_event`: keys, mouse buttons and motion, pad buttons and axes; points carried through the viewport's final transform) | `tapes/test_core.json`: **58** checks, `tapes/test_more.json`: **94**, and `tapes/test_inputs.json`: **43** — **195** in all, every one passing at `076cad7`. The eight captures (`captures/*.mp4`) are scripted as well. |
+| **Exercised by scripted input through the real input path** (`Input.parse_input_event`: keys, mouse buttons and motion, pad buttons and axes; points carried through the viewport's final transform) | `tapes/test_core.json`: **61** checks, `tapes/test_more.json`: **110**, and `tapes/test_inputs.json`: **54** — **225** in all, every one passing at the inventory pass's build. The first delivery's eight captures and this pass's clip are scripted as well. |
 | **Hands-on use** | **not done by me.** No person has used this build with a real keyboard, mouse or controller. That review is the owner's. |
 
 What the scripted checks cover:
 
-- rapid selection;
+- rapid selection, with no word squashed and no two compositions at once;
 - interrupted turns, unfolds, lens moves and thread casts;
 - stable mouse targets;
 - details opened and closed;
@@ -444,7 +538,11 @@ What the scripted checks cover:
 - overflow and the longest description, and no hole in the drawer when it
   is scrolled by hand;
 - floors, and place links;
-- the off-view arrow;
+- the off-view arrow, the edge marks, and that they point only at known
+  rooms;
+- SHOW ON THE MAP and BACK TO YOUR VIEW (key, pad and a click), and that
+  ordinary travel leaves nothing to go back to;
+- the thread drawn as one stroke;
 - save changes, including a vanished passage;
 - tag clashes;
 - the Settings rows;
@@ -462,19 +560,20 @@ checked.
 | Turn | Q, E (core); a click on an edge arrow (inputs) | LB, RB (core, more) |
 | Move | arrows (core, more) | d-pad ↑ ↓ ← → (core, inputs); left stick (inputs) |
 | Accept | Enter (core); Space (inputs) | A (inputs) |
-| Back out one step | ← in the drawer (inputs) | B (inputs) |
-| Equipment | click a key, click a strip, hover, wheel (core, inputs) | right stick scroll (more) |
+| Back out one step | ← in the drawer (inputs); Backspace on the Map (inputs) | B (inputs) |
+| Equipment | click a key, click a station, hover, wheel (core, inputs) | right stick scroll (more) |
 | Map: places | `]` (core), `[` (inputs); a still click (core) | d-pad → (captures), d-pad ← (inputs) |
-| Map: view | ← → orbit, `+` (core); `-`, W, Home (inputs); C (core); left-drag, right-drag, wheel (more) | right stick, left stick, RT, Y (more); LT (inputs) |
+| Map: view | ← → orbit, `+` (core); `-`, W, Home (inputs); D (more); C (core); left-drag, right-drag, wheel (more); a click on BACK TO YOUR VIEW (inputs) | right stick, left stick, RT, Y (more); LT (inputs) |
 | Map: floors and detail | PgUp (more), PgDn (inputs); Enter (core) | d-pad ↓ (more), d-pad ↑ (inputs) |
-| Journal | ↑ ↓ (core, more); ← →, Enter to follow, a click in either column, wheel (inputs) | right stick scroll (inputs); RB to follow (the same turn as E) |
+| Journal | ↑ ↓ (core, more); ← →, Enter to SHOW ON THE MAP, a click in either column, wheel (inputs); E to travel (core) | right stick scroll (inputs); RB to travel (the same turn as E) |
 | Settings | ↑ ↓ ← →, Enter (more); a click on a row (inputs) | — |
 
 Not exercised at all:
 
 - KP Enter, which is copied verbatim from Production's input map and never
   pressed;
-- A, S and D, which share W's code path, and only W is pressed;
+- A and S, which share W's and D's code path, and only W and D are pressed;
+- A on the pad for SHOW ON THE MAP (the same call as Enter);
 - physical controller hardware, and non-Xbox pad layouts;
 - window resizing and focus loss;
 - a long session.

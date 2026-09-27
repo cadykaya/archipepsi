@@ -40,6 +40,19 @@ The face is now **60 characters**. Two things check it:
 - The prototype reports any character a face asks for and lacks
   (`missing_where`). Both scripted tapes assert that nothing was missing.
 
+**Revised in the inventory pass: the cell is 7 × 8** (commit `5e05728`).
+Ink still starts at x = 1 and is at most five columns wide, so every glyph
+now has a clear column on its right as well as its left, and its quad
+never ends on ink. In the 6-wide cell, a five-wide glyph's ink reached the
+cell's edge: wherever the face is drawn at a scale that is not a whole
+number with multisampled edges (the prototype's 3D walls at 1920 × 1080),
+that edge came out as a grey half-pixel, and the next glyph on the sheet
+bled into the quad (grey slivers beside W on the inventory's name plate).
+Every glyph's ink, advance, offsets and height are unchanged, checked
+glyph by glyph; only the `.fnt` rect width (6 → 7) and the sheet layout
+move. Regeneration is byte-identical and the font-import verifier passes.
+The numerals face is unchanged.
+
 ## 2. Device symbols — added in this pass, each with a text fallback
 
 These are the controls the prototype actually uses. With PROMPTS: TEXT
