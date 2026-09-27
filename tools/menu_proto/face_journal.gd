@@ -22,14 +22,31 @@ extends RefCounted
 ##   walked" -- JournalQuery's and MapFace's words -- and the thread lands
 ##   on the passage, never beyond it.
 
-const LEFT_X := 48.0
-const LEFT_W := 560.0
-const RIGHT_X := 660.0
-const RIGHT_W := 540.0
-const TOP := 104.0
+## THE HYBRID (the owner's rulings of 2026-09-27, B's harness): each column
+## hangs from a run dropped off the trunk; its headings are flag labels on
+## the run; the focused entry is a warm tag clipped to it, with SIGNAL at
+## its edge, unfolded in place. A linked entry carries its connector's
+## symbol, and the focused one's ivory link leaves the tag's end, rises to
+## the trunk and runs round the corner into the Map (Thread3D).
+const LEFT_RUN := 46.0
+const LEFT_X := 74.0
+const LEFT_W := 470.0
+const LEFT_TAG_W := 500.0
+const RIGHT_RUN := 600.0
+const RIGHT_X := 634.0
+const RIGHT_W := 490.0
+const RIGHT_TAG_W := 578.0
+const BEAD_X := 1160.0               # a linked entry's symbol
+const TOP := 112.0
 const BOTTOM := 690.0
 const LINE := 20.0
-const LOOSE_END := 1206.0           # page x where a linked entry's loose end stops
+const HEAD_H := 30.0
+const SHADE := 0.86                  # the miniature's light, glancing: pale surfaces
+const TAG_Z := 0.026
+## Lifted for 1280 x 720 (the fifth ruling): quieter entries a step up from
+## the old DIM; the objectives stay the brightest.
+const ENTRY := Color("#b9bec2")
+const NOTE_INK := Color("#aeb3b8")
 
 var kit: Kit
 var shell: Shell
@@ -57,6 +74,12 @@ func setup(k: Kit, s: Shell) -> void:
 	thread = Thread3D.new()
 	shell.add_child(thread)
 	thread.setup(kit, shell)
+	# the fixed parts: the two runs off the trunk, and the enclosure's seam
+	var f := Node3D.new()
+	face.add_child(f)
+	Parts.seam(f, 574, 104, 700)
+	for x: float in [LEFT_RUN, RIGHT_RUN]:
+		Parts.wire(f, [Vector2(x, Parts.TRUNK_Y), Vector2(x, 692)], Parts.WIRE)
 
 
 func bind(m: FaceMap) -> void:
@@ -145,21 +168,23 @@ func _layout(at_once := false, by_hand := -1) -> void:
 			var e: Dictionary = list[i]
 			e["y"] = y
 			if e["head"]:
-				e["h"] = 30.0 if not bool(e["empty"]) else 50.0
-				y += e["h"] + 6.0
+				e["h"] = HEAD_H + (22.0 if bool(e["empty"]) else 0.0)
+				y += e["h"] + 14.0
 				continue
-			var lines := kit.wrap(str(e["text"]), 2, w - 40)
+			var lines := kit.wrap(str(e["text"]), 2, w)
 			e["lines"] = lines
-			var h := lines.size() * LINE + 10.0
+			var h := lines.size() * LINE
 			if col == column and i == _focused_index(col):
 				e["explain"] = _explanation(e)
-				h += e["explain"].size() * LINE + (16.0 if not e["explain"].is_empty() else 0.0)
+				h += e["explain"].size() * LINE + (8.0 if not e["explain"].is_empty() else 0.0)
 				if note != "":
 					h += LINE + 6.0
+				h += 24.0                  # the tag's margins
 			else:
 				e["explain"] = []
+				h += 4.0
 			e["h"] = h
-			y += h + 4.0
+			y += h + 8.0
 		var total := y
 		var view := BOTTOM - TOP
 		var f := _focused_index(col)
@@ -175,59 +200,87 @@ func _layout(at_once := false, by_hand := -1) -> void:
 		for i in list.size():
 			var e: Dictionary = list[i]
 			var top := TOP + float(e["y"]) - sc
+			e.erase("seen")
 			if top < TOP - 1.0 or top + float(e["h"]) > BOTTOM + 1.0:
 				continue
+			e["seen"] = Rect2(x - 12, top, w + 24, float(e["h"]))
 			_draw(holder, col, i, e, x, top, w)
+		var run := LEFT_RUN if col == 0 else RIGHT_RUN
 		if sc > 0.5:
-			kit.sprite(holder, "arrow_up", Vector2(x + w - 20, TOP - 14), 2,
-					Kit.INK_DIM)
+			Parts.sprite(kit, holder, "arrow_up", Vector2(run + 22, TOP - 6), 2, ENTRY, 0.004)
 		if total - sc > view + 0.5:
-			kit.sprite(holder, "arrow_down", Vector2(x + w - 20, BOTTOM + 10), 2,
-					Kit.INK_DIM)
+			Parts.sprite(kit, holder, "arrow_down", Vector2(run + 22, BOTTOM + 12), 2, ENTRY,
+					0.004)
 	_update_link()
 
 
 func _draw(holder: Node3D, col: int, i: int, e: Dictionary, x: float,
 		top: float, w: float) -> void:
+	var run := LEFT_RUN if col == 0 else RIGHT_RUN
 	if e["head"]:
-		var head := str(e["text"]) + ("  -- NONE" if bool(e["empty"]) else "")
-		kit.label(holder, head, Vector2(x, top + 8), 2, Kit.INK_FAINT)
+		Parts.vflag(kit, holder, run, top, str(e["text"]), SHADE)
+		if bool(e["empty"]):
+			Parts.text(kit, holder, "NONE", Vector2(x, top + HEAD_H + 6), 2, NOTE_INK, 0.003)
 		return
 	var focused := col == column and i == _focused_index(col)
 	var link: Dictionary = e["link"]
+	var h: float = e["h"]
+	var ty := top + (12.0 if focused else 0.0)       # where its words start
 	if focused:
-		kit.shadow(holder, Vector2(x - 10, top - 4), Vector2(w + 20, float(e["h"])),
-				0.6)
-		var plate := kit.plate(holder, Vector2(x - 10, top - 4),
-				Vector2(w + 20, float(e["h"])), 0.004, kit.lit(Kit.PLATE_HI))
-		plate.name = "focus_plate"
-		kit.card(holder, Vector2(x - 16, top - 4), Vector2(4, float(e["h"])),
-				0.012, kit.flat(Kit.SIGNAL))
+		var tw := LEFT_TAG_W if col == 0 else RIGHT_TAG_W
+		var r := Rect2(run + 16, top, tw, h)
+		Parts.tag(holder, r, TAG_Z, false, SHADE)
+		# clipped to the run
+		Parts.block(holder, Rect2(run - 2, top + 8, 20, 8), 0.012, 0.024,
+				Parts.mat(Parts.METAL, 0.6, 0.35))
+		Parts.block(holder, Rect2(run + 20, top + 8, 4, h - 16), TAG_Z, TAG_Z + 0.0006,
+				Parts.unlit(Kit.SIGNAL), false)
+		var node := holder.get_child(holder.get_child_count() - 1)
+		node.name = "focus_plate"
+		e["tag"] = r
 	elif hover == col * 1000 + i:
-		kit.card(holder, Vector2(x - 10, top - 4), Vector2(w + 20, float(e["h"])),
-				0.002, kit.flat(Kit.PLATE, 0.6))
-	var z := 0.013 if focused else 0.003
-	var colour := Kit.INK
-	if str(e["section"]) == "NOTES":
-		colour = Kit.INK_DIM
-	kit.label(holder, "\n".join(e["lines"]), Vector2(x + 8, top), 2, colour, z)
-	var y := top + (e["lines"] as PackedStringArray).size() * LINE + 4.0
+		var ground := Parts.own(Parts.CAB_HI.lightened(0.12))
+		ground.albedo_color.a = 0.9
+		Parts.block(holder, Rect2(x - 12, top - 4, w + 24, h), 0.0, 0.0012, ground, false)
+	var z := TAG_Z + 0.0012 if focused else 0.003
+	var colour := Parts.FLAG_INK if focused else ENTRY
+	if not focused and str(e["section"]) == "OBJECTIVES":
+		colour = Parts.INK
+	elif not focused and str(e["section"]) == "NOTES":
+		colour = NOTE_INK
+	var y := ty
+	for line: String in e["lines"]:
+		Parts.text(kit, holder, line, Vector2(x, y), 2, colour, z)
+		y += LINE
+	if not (e["explain"] as Array).is_empty():
+		y += 8.0
 	# The answer, on the entry itself.
 	for line: String in e["explain"]:
-		kit.label(holder, line, Vector2(x + 30, y + 4), 2, Kit.INK_DIM, z)
+		Parts.text(kit, holder, line, Vector2(x + 16, y), 2, Parts.TAG_DIM, z)
 		y += LINE
 	if focused and note != "":
-		kit.label(holder, note, Vector2(x + 30, y + 10), 2, Kit.INK, z)
-	# A loose end: this entry can be followed onto the Map.
+		Parts.text(kit, holder, note, Vector2(x + 16, y + 6), 2, Parts.FLAG_INK, z)
+	# A linked entry carries its connector's symbol; the focused one's link
+	# leaves the tag's end.
 	if not link.is_empty() and col == 1:
-		var ly := top + LINE * 0.5 + 1.0
-		var end_x := LOOSE_END
-		kit.card(holder, Vector2(x + w + 12, ly - 1), Vector2(end_x - x - w - 12, 2),
-				0.003, kit.flat(Kit.INK_FAINT if not focused else Kit.INK_DIM))
-		kit.card(holder, Vector2(end_x, ly - 3), Vector2(6, 6), 0.003,
-				kit.flat(Kit.INK_FAINT if not focused else Kit.INK_DIM))
-		e["anchor"] = Vector2(end_x + 6, ly)
-		e["anchor_top"] = top
+		var bead := _bead_of(link)
+		Parts.sprite(kit, holder, str(bead["icon"]), Vector2(BEAD_X, ty + 9), 2,
+				bead["colour"], TAG_Z + 0.0025 if focused else 0.004)
+		if focused:
+			e["anchor"] = Vector2(RIGHT_RUN + 16 + RIGHT_TAG_W, ty + 9)
+			e["anchor_top"] = top
+
+
+## A linked entry's symbol: its gate's (Production's colour), or a way out.
+func _bead_of(link: Dictionary) -> Dictionary:
+	if link.has("edge"):
+		var c := _connector(str(link["edge"]))
+		var circuits: Array = c.get("circuits", [])
+		if str(c.get("state", "")) != "open" and not circuits.is_empty():
+			return {"icon": FaceMap.SYMBOL_ICON.get(str(c.get("symbol", "")), "blocked"),
+				"colour": Color(str((map_rows["colours"] as Dictionary).get(
+					str(circuits[0]), "#9ba5b6")))}
+	return {"icon": "exit", "colour": Parts.INK}
 
 
 ## What the save says about the thing an entry names -- the useful answer,
@@ -342,15 +395,7 @@ func _update_link() -> void:
 	if i >= 0 and i < list.size() and not link.is_empty():
 		var e: Dictionary = list[i]
 		anchor = e.get("anchor", Vector2.INF)
-		if link.has("edge"):
-			var c := _connector(str(link["edge"]))
-			var circuits: Array = c.get("circuits", [])
-			if str(c.get("state", "")) != "open" and not circuits.is_empty():
-				bead = {"icon": FaceMap.SYMBOL_ICON.get(str(c.get("symbol", "")),
-						"blocked"), "colour": Color(str((map_rows["colours"]
-						as Dictionary).get(str(circuits[0]), "#9ba5b6")))}
-			else:
-				bead = {"icon": "exit", "colour": Kit.INK}
+		bead = _bead_of(link)
 	thread.bind_ends(anchor, link, bead, map_face)
 
 
@@ -358,8 +403,11 @@ func _update_link() -> void:
 
 func nav(dir: Vector2i) -> void:
 	note = ""
+	var moved := false
 	if dir.x != 0:
-		column = clampi(column + dir.x, 0, 1)
+		var to := clampi(column + dir.x, 0, 1)
+		moved = to != column
+		column = to
 	elif dir.y != 0:
 		var list: Array = _entries[column]
 		var i := _focused_index(column)
@@ -368,6 +416,8 @@ func nav(dir: Vector2i) -> void:
 			j += dir.y
 		if j >= 0 and j < list.size():
 			focus[column] = j
+			moved = true
+	kit.cue("tick" if moved else "edge")
 	_layout()
 
 
@@ -376,9 +426,12 @@ func nav(dir: Vector2i) -> void:
 ## Ordinary travel (E, the edge arrows) turns to the Map as it was left.
 func accept() -> void:
 	if not current_link().is_empty():
+		kit.cue("follow")
 		if map_face != null:
 			map_face.follow(current_link())
 		shell.turn(-1)
+	else:
+		kit.cue("edge")
 
 
 func back() -> bool:
@@ -406,6 +459,7 @@ func click(p: Vector2) -> bool:
 	var before := TOP + float(e["y"]) - float(scroll[col])
 	column = col
 	focus[col] = i
+	kit.cue("tick")
 	_layout()
 	var after := TOP + float(_entries[col][i]["y"]) - float(scroll[col])
 	if absf(after - before) > 0.5:
@@ -416,7 +470,7 @@ func click(p: Vector2) -> bool:
 
 ## Scrolling by hand moves the column and does not snap back to the focus.
 func wheel(p: Vector2, dir: int) -> bool:
-	var col := 0 if p.x < RIGHT_X - 20 else 1
+	var col := 0 if p.x < RIGHT_RUN - 12 else 1
 	scroll[col] = maxf(0.0, float(scroll[col]) + 60.0 * dir)
 	_layout(false, col)
 	return true
@@ -432,7 +486,7 @@ func _hit(p: Vector2) -> int:
 	for col: int in [0, 1]:
 		var x := LEFT_X if col == 0 else RIGHT_X
 		var w := LEFT_W if col == 0 else RIGHT_W
-		if p.x < x - 16 or p.x > x + w + 16:
+		if p.x < x - 16 or p.x > (x + w + 16 if col == 0 else BEAD_X + 24):
 			continue
 		var list: Array = _entries[col]
 		for i in list.size():
@@ -440,10 +494,35 @@ func _hit(p: Vector2) -> int:
 			if e["head"]:
 				continue
 			var top := TOP + float(e["y"]) - float(scroll[col])
-			if p.y >= top - 4 and p.y < top - 4 + float(e["h"]) and \
+			if p.y >= top - 4 and p.y < top + float(e["h"]) + 4 and \
 					top >= TOP - 1 and top + float(e["h"]) <= BOTTOM + 1:
 				return col * 1000 + i
 	return -1
+
+
+## Where a named thing is on this wall now, page px (for a tape):
+## "entry:<col>:<i>", "text:<words>" (the first shown entry that says
+## them), "col:<c>" (a point in a column). INF when not shown.
+func target_of(name: String) -> Vector2:
+	var p := name.split(":", true, 1)
+	match p[0]:
+		"entry":
+			var q := p[1].split(":")
+			var list: Array = _entries.get(int(q[0]), [])
+			var i := int(q[1])
+			if i >= 0 and i < list.size() and (list[i] as Dictionary).has("seen"):
+				var r: Rect2 = list[i]["seen"]
+				return Vector2(r.position.x + 60.0, r.position.y + 10.0)
+		"text":
+			for col: int in [1, 0]:
+				for e: Dictionary in _entries[col]:
+					if not e["head"] and e.has("seen") and str(e["text"]).to_upper().contains(
+							p[1].to_upper()):
+						var r: Rect2 = e["seen"]
+						return Vector2(r.position.x + 60.0, r.position.y + 10.0)
+		"col":
+			return Vector2(LEFT_X + 200.0 if p[1] == "0" else RIGHT_X + 200.0, 400.0)
+	return Vector2.INF
 
 
 func prompts() -> Array:

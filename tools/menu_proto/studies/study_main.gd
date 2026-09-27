@@ -68,6 +68,9 @@ func _ready() -> void:
 	kit.reduced = args.has("reduced")
 	shell = Shell.new()
 	add_child(shell)
+	# the studies are frozen checkpoints: the walls as they were, with no
+	# harness of the interactive hybrid's
+	shell.harness = false
 	shell.setup(kit)
 	# The walls' titles are the prototype's; each direction sets its own.
 	for page: String in Kit.PAGES:

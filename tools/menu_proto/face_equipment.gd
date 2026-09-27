@@ -1,91 +1,70 @@
 class_name FaceEquipment
 extends RefCounted
-## EQUIPMENT (the Inventory): LEAF, art-directed as ROUTE AND ECHO.
+## EQUIPMENT (the Inventory): LEAF, as the hybrid's CABINET -- the owner's
+## rulings of 2026-09-27: C's cabinet arrangement, with D's grafted rack.
 ##
-## The shape language is taken from what an Archipepsi ability IS: an item
-## from another world, read into this one, and carried on a key.
-##
-## * RELATIONS RUN ON THE ROUTE. One stroke, with 45-degree corners, runs
-##   from the key you press, down the drawer's rail to the selected item,
-##   and under that item's name at full size. It is the comparison made
-##   visible: from what is on the key to what you are looking at. It
-##   carries the movement; the words hold still.
-## * AN ECHO REPEATS. The selected item's name is set large, and behind it
-##   lie its echoes: one for every item that went into it (its Mk),
-##   stepped back along the diagonal toward the rail it came from.
-## * INFORMATION STAYS SQUARE. Everything you read is level, aligned and at
-##   the face's own sizes; only relations take the diagonal.
-##
-## Down the left, the LOADOUT: Production's five keys (SLOT_NAMES, with the
-## bindings SlotKeycaps names), each with what is seated on it, and ALWAYS
-## ON -- passives take no key. The focused key's candidates stand on the
-## RAIL in a fixed order (the save's occupant first). A preview never
-## reorders them and selecting never moves them, so a mouse target holds
-## still. The selected item's detail UNFOLDS FROM IT, along the route, into
-## the composition on the right: its name and echoes, how it was read and
-## where it came from, what it does, and the comparison with what is on its
-## key NOW (Production's own lines, EquipmentQuery.comparison), aligned.
+## * THE INSPECTION WINDOW (original station hardware): what the item being
+##   read IS, and what changes if it goes on the key. It swaps whole, in the
+##   frame the input arrives -- no shutter, nothing to wait for.
+## * THE KEY SELECTOR (original, the cabinet's oldest part): Production's
+##   five keys (SLOT_NAMES, with the bindings SlotKeycaps names) and ALWAYS
+##   ON -- passives take no key -- round one knob. Its pointer is the key
+##   being looked at; each key's backlit window says what is on it. It is
+##   driven by the ordinary selection inputs (UP / DOWN, a click, the wheel
+##   over it): there is nothing to drag round.
+## * THE RACK (salvaged, grafted into the cabinet's cut-down old bay): the
+##   focused key's items as one clean list of modules. The one ON the key
+##   is SEATED and its window says so; the one being READ is PULLED toward
+##   you; a PREVIEW says NOT SENT. The rack keeps a fixed order (the save's
+##   occupant first), and selecting never moves a row, so a click target
+##   holds still. It scrolls a whole row at a time.
+## * The joins: the brass bus -> its terminal -> a lead -> an adapter board
+##   -> a ribbon -> the backplane; and the backplane's own ribbon, on round
+##   the corner into Settings.
 ##
 ## Equipping is a LOCAL PREVIEW, labelled: it re-seats the key on this wall
 ## and nowhere else (no request, no save). Production's equip is a request
 ## with states; the preview says NOT SENT, which is one of them.
 
-# ---- the loadout
-const LOAD_X := 48.0
-const LOAD_W := 232.0
-const ROW_Y0 := 108.0
-const ROW_PITCH := 70.0
-const ALWAYS_Y := 468.0
-const KEY_SHELF := 56.0          # a key row's shelf, below its top
-# ---- the rail
-const RAIL_X := 314.0            # the spine
-const NAME_X := 334.0            # a station's words
-const NAME_W := 222.0
-const VIEW_TOP := 150.0
-const VIEW_BOTTOM := 684.0
-const STATION := 50.0            # the rail's pitch
-const SHELF := 42.0              # a station's shelf, below its top
-# ---- the composition
-const GUTTER_X := 590.0          # where the route rises, under the echoes
-const FOCUS_X := 612.0
-const FOCUS_W := 620.0
-const KICKER_Y := 88.0
-const NAME_TOP := 130.0
-const ACTION_Y := 636.0
-const COL_L_W := 262.0
-const COL_R := 900.0
-const COL_R_W := 332.0
+# ---- the cabinet
+const WIN := Rect2(40, 108, 1200, 280)     # the inspection window
+const MID_X := 640.0                       # its divider
+const BUS_Y := 414.0
+const BUS_END := 540.0
+const TERM := Rect2(536, 400, 44, 28)      # the bus's terminal block
+const ADAPTER := Rect2(542, 440, 38, 36)   # the adapter board under it
+# ---- the key selector
+const KNOB := Vector2(100, 572)
+const BEZEL := 62.0
+const ARC := Vector2(72, 110)              # the keys stand on this arc round it
+const KEY_PITCH := 42.0
+const KEY_WIN_X := 344.0                   # the keys' windows, one column
+const KEY_WIN_W := 184.0
+# ---- the rack
+const BAY := Rect2(596, 424, 656, 290)     # the cabinet's old bay, as rebuilt
+const OLD_BAY_END := 1004.0                # where the old bay's frame is cut
+const ROW_X := 640.0
+const ROW_END := 1180.0
+const ROW_Y0 := 456.0
+const ROW_PITCH := 28.0
+const ROW_H := 25.0
+const SHOWN := 9                           # rows the rack shows at once
+const PULL := 26.0                         # how far a pulled module comes out
+const BZ := 0.018                          # the backplane's face
+const SEAT_Z := BZ + 0.006
+const PULL_Z := BZ + 0.032
+const TRACK := Rect2(1188, ROW_Y0, 8, ROW_PITCH * SHOWN - 3)   # the scroll pot
+# ---- the readout
+const COL_L := 64.0
+const COL_L_W := 552.0
+const COL_R := 668.0
+const COL_R_W := 548.0
+const TOP := 130.0
+const BOTTOM := 380.0
+const ACT_H := 36.0
 const LINE := 20.0
-# ---- the route
-const STROKE := 6.0
-const CORNER := 10.0
-const ROUTE_LIFT := 0.05         # in front of the rail's edges, seen in place
-## THE NAME PLATE and its ECHOES. The name is printed on a plate of the
-## keycaps' own material -- the thing you put on a key -- standing off the
-## wall; behind it, one plate for every item that went into it (its Mk),
-## each a step further down the diagonal and nearer the wall, fading to
-## the wall's own grey. A frozen frame shows what the ability is, and how
-## many things made it.
-const PLATE_TONE := Color("#d3d9e2")
-const ECHO_TONES := [Color("#8f98a7"), Color("#606978"), Color("#434a57"),
-	Color("#323843")]
-const PLATE_Z := 0.1             # the plate's face, off the wall
-const ECHO_DZ := 0.011           # each echo that much nearer the wall
-const ECHO_STEP := 12.0          # ... and that far down the diagonal, page px
-const PLATE_T := 0.006           # a plate's thickness
-const MOUSE_SYMBOL := {"RMB": "mouse_right", "MMB": "mouse_middle",
-	"LMB": "mouse_left"}
-
-
-## The route's moving parts, page px. `go()` glides them; the mesh is
-## rebuilt from them whenever they change.
-class RouteState:
-	extends RefCounted
-	var key_y := 0.0             # the focused key's shelf
-	var sel_y := 0.0             # the selected station's shelf, held to the view
-	var name_y := 0.0            # the name's underline
-	var name_w := 0.0            # ... and its length
-
+const Z := 0.0022                          # the readout's words, in the window
+const MOUSE_SYMBOL := Parts.MOUSE_SYMBOL
 
 var kit: Kit
 var shell: Shell
@@ -94,41 +73,32 @@ var data: Dictionary          # sample.equipment[variant]
 var items := {}               # id -> row
 var preview := {}             # slot -> id (the local preview)
 var key_index := 0            # 0..4 the keys, 5 ALWAYS ON
-var zone := "keys"            # keys | drawer
+var zone := "keys"            # keys | drawer (the rack)
 var sel := {}                 # key -> selected id (each key remembers)
-var scroll := {}              # key -> scroll px (each key remembers)
-var hover := ""               # "key:<i>" or an item id
-var unfolded := ""
+var scroll := {}              # key -> first row shown (each key remembers)
+var hover := ""               # "key:<i>", "action", or an item id
+var unfolded := ""            # the item being read
 var note := ""                # a transient line (preview done)
 
-var _loadout: Node3D
-var _rows := []               # per key row: {ground, name, tag, y}
-var _focus_bar: MeshInstance3D
-var _drawer: Node3D
-var _list: Node3D
-var _strips := {}             # id -> {node, ground, y, h, name}
-var _order: Array = []        # ids on the rail, in order
-var _more_up: Node3D
-var _more_down: Node3D
-var _spine: MeshInstance3D
-var _scroll_px := 0.0
-var _focus: Node3D            # the composition for the selected item
-var _focus_info := {}         # what the composition drew (for state())
-var _echoes: Array = []       # the echo copies' nodes
-var _route: MeshInstance3D
-var _route_parts: Node3D      # its terminals and the focus mark
-var _rs := RouteState.new()
-var _route_sig := ""
+var _order: Array = []        # the rack's ids, in order
+var _first := 0               # the first row shown
+var _stick_px := 0.0          # the right stick's scroll, not yet a row
+var _keys: Array = []         # per key: {anchor, y, hit, bar, tick, plate}
+var _keys_node: Node3D
+var _pivot: Node3D            # the knob's pointer turns in this
+var _rows := {}               # id -> {node, face_mat, tab_mat, hit, slot}
+var _rack: Node3D
+var _knob: Node3D             # the scroll pot's knob
+var _readout: Node3D          # the composition for the selected item
+var _info := {}               # what the readout drew (for state())
 
 
 func setup(k: Kit, s: Shell) -> void:
 	kit = k
 	shell = s
 	face = shell.face_of("equipment")
-	_route = MeshInstance3D.new()
-	_route.material_override = kit.flat(Kit.INK)
-	_route.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	face.add_child(_route)
+	_build_cabinet()
+	_build_dial()
 
 
 func load_data(d: Dictionary) -> void:
@@ -139,8 +109,8 @@ func load_data(d: Dictionary) -> void:
 	for slot: String in preview.keys():
 		if not items.has(str(preview[slot])):
 			preview.erase(slot)
-	_build_loadout()
-	_open_drawer(true)
+	_build_keys()
+	_open_rack()
 
 
 # ------------------------------------------------------------ the data
@@ -172,8 +142,8 @@ func saved(slot: String) -> String:
 	return ""
 
 
-## The rail's items for a key: what the SAVE has on it first, then the rest
-## in the fold's own order. A preview never reorders the rail -- the item
+## The rack's items for a key: what the SAVE has on it first, then the rest
+## in the fold's own order. A preview never reorders the rack -- the item
 ## previewed stays where it is (and says so), so nothing moves out from
 ## under a pointer that just clicked it. ALWAYS ON: the passives.
 func candidates(index: int) -> Array:
@@ -218,623 +188,730 @@ func _cap() -> String:
 			else str(keys()[key_index]["keycap"]).to_upper()
 
 
-# ------------------------------------------------------------ the loadout
+func _charges(id: String) -> String:
+	var row: Dictionary = items[id]
+	if bool(row.get("consumable", false)) and row.get("charges_max") != null:
+		return "%d/%d" % [int(row["charges_left"]), int(row["charges_max"])]
+	return ""
 
-func _row_y(i: int) -> float:
-	return ROW_Y0 + ROW_PITCH * i if i < keys().size() else ALWAYS_Y
+
+## Where an item stands with the focused key, in words: the same words on
+## its module's window, in the readout's kicker, and in state().
+func _stands(id: String) -> String:
+	var slot := slot_of(key_index)
+	if slot == "":
+		return "ALWAYS ON · NO KEY"
+	if seated(slot) == id:
+		return "PREVIEW · NOT SENT" if preview.has(slot) else "ON " + _cap()
+	if preview.has(slot) and saved(slot) == id:
+		return "SAVED ON " + _cap()
+	return ""
 
 
-func _build_loadout() -> void:
-	if _loadout != null:
-		_loadout.queue_free()
-	_loadout = Node3D.new()
-	face.add_child(_loadout)
-	_rows.clear()
+# ============================================================ the cabinet
+
+## The fixed hardware: built once. What changes with the data is built by
+## _build_keys and _open_rack; what changes with the selection, by
+## _compose.
+func _build_cabinet() -> void:
+	var f := Node3D.new()
+	f.name = "Cabinet"
+	face.add_child(f)
+	# ---- the harness feeds the cabinet: a branch off the trunk into an
+	# original cable gland on the window's top
+	var gx := 1200.0
+	Parts.wire(f, [Vector2(gx, Parts.TRUNK_Y), Vector2(gx, WIN.position.y - 18)],
+			Parts.WIRE, 3.5)
+	Parts.sleeve(f, Vector2(gx, WIN.position.y - 30), true, 6.0, 14, Parts.WIRE_Z,
+			Parts.mat(Color("#202225"), 0.05, 0.7))
+	Parts.disc(f, Vector2(gx, WIN.position.y - 14), 11.0, 0.0, 0.016,
+			Parts.mat(Parts.RIVET, 0.6, 0.4), 6)
+	Parts.disc(f, Vector2(gx, WIN.position.y - 14), 6.5, 0.016, 0.022,
+			Parts.mat(Parts.CAB_HI, 0.4, 0.5), 16)
+	# ---- the inspection window and its divider
+	Parts.window(f, WIN)
+	Parts.block(f, Rect2(MID_X - 4, WIN.position.y, 8, WIN.size.y), 0.0, 0.012,
+			Parts.mat(Parts.CAB_HI, 0.35, 0.5))
+	# ---- the original bus, to its terminal block
+	var brass := Parts.mat(Parts.BRASS, 0.7, 0.35)
+	Parts.block(f, Rect2(40, BUS_Y - 5, BUS_END - 40, 10), 0.014, 0.022, brass)
+	for x: float in [62.0, 300.0]:
+		Parts.disc(f, Vector2(x, BUS_Y), 6.0, 0.0, 0.014, Parts.mat(Color("#1b1d1f"),
+				0.2, 0.6), 14)
+	Parts.slab(f, Parts.rrect(TERM, 3), 0.0, 0.02, Parts.mat(Parts.BAKELITE.lightened(
+			0.05), 0.1, 0.45))
+	for i in 2:
+		Parts.disc(f, Vector2(TERM.position.x + 12 + 20 * i, BUS_Y), 5.0, 0.02, 0.026,
+				brass, 12)
+	# the selector's strap up to the bus
+	Parts.block(f, Rect2(KNOB.x - 5, BUS_Y, 10, KNOB.y - BEZEL - BUS_Y + 4), 0.006,
+			0.012, brass)
+	_build_bay(f)
+
+
+## The rack's fixed parts: the old bay, the adapter plate, the backplane and
+## its connector, the scroll pot, and both joins.
+func _build_bay(f: Node3D) -> void:
+	# the cabinet's own bay: a recess only as wide as its old card cage was,
+	# its riveted frame kept on the top and the left -- and the top bar cut
+	# off where the rebuilt rack outgrew it: a bright cut face, and past it
+	# the empty holes of the rivets that went with the rest of the bar
+	var m := Parts.mat(Parts.CAB_HI, 0.35, 0.5)
+	var old := Rect2(BAY.position.x, BAY.position.y, OLD_BAY_END - BAY.position.x,
+			BAY.size.y)
+	Parts.block(f, old, 0.0, 0.0008, Parts.mat(Parts.RECESS, 0.0, 0.95), false)
+	Parts.block(f, Rect2(old.position.x - 12, old.position.y - 12, old.size.x + 12, 12),
+			0.0, 0.014, m)
+	Parts.block(f, Rect2(old.end.x, old.position.y - 12, 3, 12), 0.0, 0.014,
+			Parts.mat(Color("#c7cbce"), 0.7, 0.3))
+	Parts.block(f, Rect2(old.position.x - 12, old.position.y, 12, old.size.y), 0.0, 0.014, m)
+	for p: Vector2 in [Vector2(old.position.x - 6, old.position.y - 6),
+			Vector2(old.position.x + 200, old.position.y - 6),
+			Vector2(old.position.x - 6, old.end.y - 10)]:
+		Parts.rivet(f, p, 0.014)
+	for x: float in [old.end.x + 60.0, old.end.x + 164.0]:
+		Parts.disc(f, Vector2(x, old.position.y - 6), 3.0, 0.0, 0.0006,
+				Parts.unlit(Color("#08090a")), 10, false)
+	# the adapter plate: bare aluminium, bolted into the old bay
+	var plate := Rect2(old.position.x + 4, old.position.y + 2, old.size.x - 2,
+			old.size.y - 4)
+	Parts.block(f, plate, 0.0008, 0.003, Parts.mat(Parts.PLATE, 0.55, 0.45))
+	# the backplane: salvaged paper phenolic, past the bay to the wall's edge
+	var bp := PackedVector2Array([Vector2(BAY.position.x + 16, BAY.position.y + 2),
+		Vector2(1216, BAY.position.y + 2), Vector2(1216, 692), Vector2(1194, 714),
+		Vector2(BAY.position.x + 40, 714), Vector2(BAY.position.x + 16, 690)])
+	Parts.board(f, bp, Parts.PHENOLIC, BZ, [Vector2(BAY.position.x + 28, BAY.position.y
+			+ 14), Vector2(1204, BAY.position.y + 14), Vector2(BAY.position.x + 28, 700),
+			Vector2(1182, 702)])
+	# the edge connector every module plugs into
+	Parts.header(f, Rect2(ROW_X - 14, ROW_Y0 - 2, 12, ROW_PITCH * SHOWN - 1), BZ)
+	# the scroll: a repurposed slide pot; its knob is placed by _place_knob
+	Parts.block(f, TRACK, BZ, BZ + 0.004, Parts.mat(Color("#0b0b0b"), 0.1, 0.8))
+	_knob = Node3D.new()
+	f.add_child(_knob)
+	# ---- the join back into the cabinet: the bus's terminal, a short lead,
+	# an adapter board, and a ribbon into the backplane's own connector
+	Parts.board(f, Parts.rrect(ADAPTER, 3), Parts.BLACK_MASK, 0.018,
+			[ADAPTER.position + Vector2(9, 9)])
+	Parts.block(f, Rect2(ADAPTER.position.x + 20, ADAPTER.position.y + 5, 20, 10), 0.018,
+			0.028, Parts.mat(Parts.TERMINAL, 0.1, 0.5))
+	Parts.wire(f, [Vector2(TERM.position.x + 32, BUS_Y + 4), Vector2(TERM.position.x + 32,
+			ADAPTER.position.y + 10)], Parts.IVORY.darkened(0.25), 1.8, 0.024, 4.0)
+	Parts.header(f, Rect2(ADAPTER.end.x - 12, ADAPTER.position.y + 14, 8, 22), 0.018)
+	Parts.ribbon(f, [Vector2(ADAPTER.end.x - 8, ADAPTER.position.y + 25),
+			Vector2(ROW_X - 8, ADAPTER.position.y + 25)], 0.034)
+	# ---- and on round the corner into Settings: the backplane's ribbon
+	Parts.header(f, Rect2(1203, Parts.RIBBON_Y - 12, 10, 24), BZ)
+	Parts.ribbon(f, [Vector2(1208, Parts.RIBBON_Y), Vector2(Parts.RUN_END,
+			Parts.RIBBON_Y)], Parts.RIBBON_Z)
+	var grey := Parts.mat(Parts.RIBBON, 0.1, 0.6)
+	for kk in 6:
+		Parts.corner(shell, face, shell.face_of("settings"), Parts.RIBBON_Y
+				+ (float(kk) - 2.5) * 3.4, 1.7, grey, Parts.RIBBON_Z)
+
+
+# ============================================================ the selector
+
+## Where key `i` stands: on an arc round the knob, a detent apart.
+func _anchor(i: int) -> Vector2:
+	var dy := KEY_PITCH * (float(i) - 2.5)
+	var s := clampf(dy / ARC.y, -1.0, 1.0)
+	return KNOB + Vector2(ARC.x * sqrt(1.0 - s * s), dy)
+
+
+## The pointer's angle for key `i` (0 = right, down is +): at the key.
+func _angle(i: int) -> float:
+	var d := _anchor(i) - KNOB
+	return atan2(d.y, d.x)
+
+
+## The knob: bezel, detent marks, skirt, and the pointer -- which turns in
+## `_pivot`, about the knob's centre as the eye sees it.
+func _build_dial() -> void:
+	var f := Node3D.new()
+	f.name = "Selector"
+	face.add_child(f)
+	Parts.disc(f, KNOB, BEZEL, 0.0, 0.005, Parts.mat(Parts.CAB_HI, 0.3, 0.55), 40)
+	Parts.ring(f, KNOB, BEZEL - 4, BEZEL + 1, 0.005, Parts.mat(Parts.BRASS, 0.7, 0.35))
+	Parts.disc(f, KNOB, 40, 0.005, 0.02, Parts.mat(Parts.BAKELITE.lightened(0.08), 0.1,
+			0.45), 36)
+	Parts.disc(f, KNOB, 30, 0.02, 0.05, Parts.mat(Parts.BAKELITE, 0.1, 0.4), 32)
+	var z1 := 0.056
+	_pivot = Node3D.new()
+	_pivot.name = "Pointer"
+	f.add_child(_pivot)
+	var centre := Kit.at(Kit.lifted(KNOB, z1), 0.0)
+	_pivot.position = centre
+	var arm := Node3D.new()
+	_pivot.add_child(arm)
+	arm.position = -centre
+	Parts.pointer(arm, KNOB, 0.0, 6, 42, 5.0, 0.05, z1, Parts.mat(Color("#e9e4d6"), 0.1,
+			0.5))
+
+
+## Each key round the knob: its detent mark, its keycap and name, and its
+## backlit window -- what is on it now.
+func _build_keys() -> void:
+	if _keys_node != null:
+		_keys_node.queue_free()
+	_keys_node = Node3D.new()
+	face.add_child(_keys_node)
+	_keys.clear()
 	for i in key_count():
-		var y := _row_y(i)
-		var ground := kit.card(_loadout, Vector2(LOAD_X - 12, y - 10),
-				Vector2(LOAD_W + 24, KEY_SHELF + 16), 0.002, kit.own(Kit.PLATE, 0.0))
-		var row := {"ground": ground, "y": y}
+		var a := _anchor(i)
+		var y := a.y
+		var entry := {"anchor": a, "y": y}
+		var tick_mat := Parts.own(Parts.FAINT)
+		Parts.pointer(_keys_node, KNOB, _angle(i), 48, 58, 1.8, 0.005, 0.007, tick_mat)
+		entry["tick"] = tick_mat
+		var hit := Rect2(a.x - 4, y - 16, KEY_WIN_X + KEY_WIN_W - a.x + 8, 32)
+		entry["hit"] = hit
+		# the hover ground: light only, never movement
+		var ground := Parts.own(Parts.CAB_HI.lightened(0.12))
+		ground.albedo_color.a = 0.0
+		Parts.block(_keys_node, hit, 0.0, 0.0012, ground, false)
+		entry["ground"] = ground
+		# the keys' focus: a SIGNAL bar at the key, while the keys have it
+		var bar := Parts.own(Kit.SIGNAL)
+		Parts.block(_keys_node, Rect2(a.x, y - 11, 4, 22), 0.0012, 0.004, bar, false)
+		entry["bar"] = bar
+		var x := a.x + 10.0
 		if i < keys().size():
 			var key: Dictionary = keys()[i]
-			var w := _keycap(_loadout, str(key["keycap"]), Vector2(LOAD_X, y))
-			kit.label(_loadout, str(key["title"]), Vector2(LOAD_X + w + 12, y + 5),
-					2, Kit.INK_FAINT)
+			x += Parts.keycap(kit, _keys_node, str(key["keycap"]), Vector2(x, y - 13),
+					0.002) + 10.0
+			entry["title"] = Parts.text(kit, _keys_node, str(key["title"]), Vector2(x,
+					y - 8), 2, Parts.DIM, 0.003)
 		else:
-			kit.label(_loadout, "ALWAYS ON", Vector2(LOAD_X, y + 5), 2,
-					Kit.INK_FAINT)
-			kit.label(_loadout, "NOT A SWITCH", Vector2(LOAD_X + LOAD_W
-					- kit.measure("NOT A SWITCH", 2), y + 5), 2, Kit.INK_FAINT)
-		# Every key stands on a shelf; the focused one's is the route.
-		kit.card(_loadout, Vector2(LOAD_X, y + KEY_SHELF - 1), Vector2(LOAD_W, 2),
-				0.002, kit.flat(Kit.DEAD))
-		_rows.append(row)
-		_row_text(i)
-	_focus_bar = kit.card(_loadout, Vector2(LOAD_X - 20, 0), Vector2(5,
-			KEY_SHELF + 6), 0.004, kit.own(Kit.SIGNAL))
-	_place_focus_bar(true)
+			entry["title"] = Parts.text(kit, _keys_node, "ALWAYS ON", Vector2(x, y - 8), 2,
+					Parts.DIM, 0.003)
+		var words := _key_words(i)
+		var fw := Rect2(KEY_WIN_X, y - 11, KEY_WIN_W, 22)
+		var count := str(words[2])
+		var cw := kit.measure(count, 2) + 8.0 if count != "" else 0.0
+		var l := Parts.flag_window(kit, _keys_node, fw.grow_individual(0, 0, -cw, 0),
+				words[0], words[1], 0.004)
+		if count != "":
+			# a consumable's charges: always shown, never cut
+			Parts.block(_keys_node, Rect2(fw.end.x - cw - 3, fw.position.y, cw + 3, fw.size.y),
+					0.004, 0.0046, Parts.mat(Parts.RECESS, 0.0, 0.95), false)
+			Parts.text(kit, _keys_node, count, Vector2(fw.end.x - cw, fw.position.y + 3), 2,
+					words[1], 0.0058)
+		entry["words"] = (l.text + (" " + count if count != "" else "")).strip_edges()
+		_keys.append(entry)
+	_mark_keys(true)
 
 
-## The keycap as the Glyph kit draws one, set into the wall: the binding's
-## own name (SlotKeycaps), and for a mouse button its device symbol too.
-## Returns its width.
-func _keycap(parent: Node3D, cap: String, at: Vector2) -> float:
-	var up := cap.to_upper()
-	var w := maxf(40.0, kit.measure(up, 2) + 16.0)
-	if MOUSE_SYMBOL.has(up):
-		w = 66.0
-	kit.shadow(parent, at, Vector2(w, 26), 0.35)
-	kit.plate(parent, at, Vector2(w, 26), 0.001, kit.lit(Color("#c9d0db")),
-			0.004)
-	if MOUSE_SYMBOL.has(up):
-		kit.sprite(parent, MOUSE_SYMBOL[up], at + Vector2(14, 13), 2,
-				Kit.SHADE, 0.0065)
-		kit.label(parent, up, at + Vector2(28, 5), 2, Kit.SHADE, 0.0065)
-	else:
-		kit.label(parent, up, at + Vector2(8, 5), 2, Kit.SHADE, 0.0065)
-	return w
-
-
-func _row_text(i: int) -> void:
-	var row: Dictionary = _rows[i]
-	for key in ["name", "tag"]:
-		if row.has(key) and is_instance_valid(row[key]):
-			(row[key] as Node).queue_free()
-		row.erase(key)
-	var y: float = row["y"]
-	if i >= keys().size():
-		var names := []
-		for id: String in candidates(i):
-			names.append(_name(id))
-		row["name"] = kit.label(_loadout, kit.fit(", ".join(names), 2, LOAD_W),
-				Vector2(LOAD_X, y + 34), 2, Kit.INK_DIM)
-		return
+## A key's window: what is on it (a preview says so first), or EMPTY; and
+## a consumable's charges, apart.
+func _key_words(i: int) -> Array:
 	var slot := slot_of(i)
+	if slot == "":
+		return ["NO KEY · %d" % candidates(i).size(), Parts.LIT_DIM, ""]
 	var on := seated(slot)
 	if on == "":
-		row["name"] = kit.label(_loadout, "EMPTY", Vector2(LOAD_X, y + 34), 2,
-				Kit.INK_FAINT)
-	else:
-		row["name"] = kit.label(_loadout, kit.fit(_name(on), 2, LOAD_W),
-				Vector2(LOAD_X, y + 34), 2, Kit.INK)
-		if preview.has(slot):
-			row["tag"] = kit.label(_loadout, "PREVIEW",
-					Vector2(LOAD_X + LOAD_W - kit.measure("PREVIEW", 2), y + 5),
-					2, Kit.INK)
+		return ["EMPTY", Parts.LIT_FAINT, ""]
+	var words := _name(on)
+	if preview.has(slot):
+		words = "PREVIEW: " + words
+	return [words, Parts.LIT, _charges(on)]
 
 
-## The keys' focus: a SIGNAL bar beside the focused key while the keys have
-## the focus; in the rail, the focus is the mark on the selected station.
-func _place_focus_bar(at_once := false) -> void:
-	var y: float = _rows[key_index]["y"] - 6.0
-	var to := Kit.at(Vector2(LOAD_X - 20 + 2.5, y + (KEY_SHELF + 6) * 0.5), 0.004)
+## The selector's state on the wall: the pointer at the key being looked at
+## (a detent's turn), its mark lit, its words bright; the SIGNAL bar while
+## the keys have the focus; a faint ground under a hovered key.
+func _mark_keys(at_once := false) -> void:
+	var to := -_angle(key_index)
 	if at_once:
-		_focus_bar.position = to
+		_pivot.rotation.z = to
 	else:
-		kit.go(_focus_bar, "position", to, 0.14, "out")
-	kit.go(_focus_bar.material_override, "albedo_color",
-			Color(Kit.SIGNAL, 1.0 if zone == "keys" else 0.0), 0.1)
-	for i in _rows.size():
-		var ground: MeshInstance3D = _rows[i]["ground"]
-		var a := 0.55 if hover == "key:%d" % i and i != key_index else 0.0
-		kit.go(ground.material_override, "albedo_color", Color(Kit.PLATE, a), 0.12)
+		kit.go(_pivot, "rotation:z", to, 0.1, "out")
+	for i in _keys.size():
+		var e: Dictionary = _keys[i]
+		var here := i == key_index
+		(e["tick"] as StandardMaterial3D).albedo_color = Parts.INK if here else Parts.FAINT
+		(e["bar"] as StandardMaterial3D).albedo_color = Color(Kit.SIGNAL, 1.0
+				if here and zone == "keys" else 0.0)
+		(e["ground"] as StandardMaterial3D).albedo_color = Color(Parts.CAB_HI.lightened(
+				0.12), 0.9 if hover == "key:%d" % i and not here else 0.0)
+		(e["title"] as Label3D).modulate = Parts.INK if here else Parts.DIM
 
 
-# ------------------------------------------------------------ the rail
+# ============================================================ the rack
 
-## The focused key's rail: its stations appear down the spine from the
-## route's arrival, and the route re-runs to the new key.
-func _open_drawer(at_once := false) -> void:
-	if _drawer != null:
-		_drawer.queue_free()
-	_drawer = Node3D.new()
-	face.add_child(_drawer)
-	_strips.clear()
+## The focused key's rack: its modules, in order, from the row the key
+## remembers; what it holds is SEATED, what is being read is PULLED.
+func _open_rack() -> void:
 	_order = candidates(key_index)
 	var slot := slot_of(key_index)
-	var head := "WHAT GOES ON %s" % _cap() if slot != "" \
-			else "ALWAYS ON WHILE YOU OWN IT"
-	_over(kit.label(_drawer, head, Kit.lifted(Vector2(NAME_X, VIEW_TOP - 40),
-			ABOVE_CLIP), 2, Kit.INK_FAINT, ABOVE_CLIP))
-	var count := "%d" % _order.size()
-	_over(kit.label(_drawer, count, Kit.lifted(Vector2(NAME_X + NAME_W
-			- kit.measure(count, 2, true), VIEW_TOP - 40), ABOVE_CLIP), 2,
-			Kit.INK_FAINT, ABOVE_CLIP, true))
-	_list = Node3D.new()
-	_drawer.add_child(_list)
-	for i in _order.size():
-		_strip(_order[i], i)
-	# The spine: one thin line from the first station's shelf to the last,
-	# held to the rail's view (_update_spine, every frame, as the rail moves).
-	_spine = kit.card(_drawer, Vector2(RAIL_X - 1, VIEW_TOP), Vector2(2, 2), 0.0028,
-			kit.flat(Kit.DEAD))
-	_clip()
-	_more_up = _more(true)
-	_more_down = _more(false)
-	# Which item is selected: the key remembers its own; a key with
-	# something on it opens on that, the rest on nothing until entered.
 	var remembered: String = sel.get(key_index, "")
 	if remembered == "" or not _order.has(remembered):
 		remembered = seated(slot) if slot != "" else ""
 	unfolded = remembered
-	_scroll_px = float(scroll.get(key_index, 0.0))
-	_layout(true)
+	_first = int(scroll.get(key_index, 0))
+	_stick_px = 0.0
+	_keep_in_view()
+	_build_rows()
 	_compose()
-	var key_y: float = _rows[key_index]["y"] + KEY_SHELF
-	if at_once or kit.reduced:
-		_rs.key_y = key_y
-	else:
-		kit.go(_rs, "key_y", key_y, 0.16, "out")
-		# The stations come down the spine behind the route: each appears
-		# whole as the drawer reaches it -- nothing is scaled or squashed.
-		for i in _order.size():
-			var node: Node3D = _strips[_order[i]]["node"]
-			if node.visible:
-				node.visible = false
-				kit.later(0.02 + 0.016 * mini(i, 12), func() -> void:
-					if is_instance_valid(node):
-						node.visible = _strip_shows(_order.find(_id_of(node))))
-	_aim_route(at_once)
 
 
-func _id_of(node: Node3D) -> String:
-	return str(node.get_meta("id", ""))
+func _max_first() -> int:
+	return maxi(0, _order.size() - SHOWN)
 
 
-func _strip(id: String, i: int) -> void:
+## Keyboard and pad: the selected row is always shown (a hand scroll moves
+## only the rack).
+func _keep_in_view() -> void:
+	var at := _order.find(unfolded)
+	if at >= 0:
+		if at < _first:
+			_first = at
+		elif at >= _first + SHOWN:
+			_first = at - SHOWN + 1
+	_first = clampi(_first, 0, _max_first())
+	scroll[key_index] = _first
+
+
+func _row_y(i: int) -> float:
+	return ROW_Y0 + ROW_PITCH * float(i - _first)
+
+
+func _build_rows(at_once := true) -> void:
+	if _rack != null:
+		_rack.queue_free()
+	_rack = Node3D.new()
+	face.add_child(_rack)
+	_rows.clear()
+	var slot := slot_of(key_index)
+	var head := "FITS %s · %d" % [_cap(), _order.size()] if slot != "" \
+			else "ALWAYS ON · NO KEY · %d" % _order.size()
+	Parts.text(kit, _rack, head, Vector2(ROW_X, BAY.position.y + 10), 2, Parts.SILK, BZ
+			+ 0.0006)
+	var above := _first
+	var below := maxi(0, _order.size() - _first - SHOWN)
+	var mx := ROW_END
+	for pair: Array in [[below, "arrow_down", "%d MORE BELOW"], [above, "arrow_up",
+			"%d MORE ABOVE"]]:
+		if int(pair[0]) <= 0:
+			continue
+		var words := kit.display(str(pair[2]) % int(pair[0]))
+		var w := kit.measure(words, 2)
+		Parts.text(kit, _rack, words, Vector2(mx - w, BAY.position.y + 10), 2,
+				Parts.SILK_DIM, BZ + 0.0006)
+		Parts.sprite(kit, _rack, str(pair[1]), Vector2(mx - w - 12, BAY.position.y + 18),
+				2, Parts.SILK_DIM, BZ + 0.0008)
+		mx -= w + 34.0
+	_info_more = [above, below]
+	if _order.is_empty():
+		var words := "NOTHING YOU HOLD GOES ON %s" % _cap()
+		Parts.tape(kit, _rack, Vector2(ROW_X + 20, ROW_Y0 + 14), words, BZ)
+	for i in range(_first, mini(_first + SHOWN, _order.size())):
+		_module(_order[i], i)
+	_place_knob(at_once)
+	_mark_rows(true)
+
+
+var _info_more := [0, 0]
+
+
+## One module: its face on the backplane, its gold contacts in the
+## connector, its pull, its name and tags, and -- if it is on the key -- its
+## window, which says so.
+func _module(id: String, i: int) -> void:
+	var y := _row_y(i)
 	var node := Node3D.new()
 	node.set_meta("id", id)
-	_list.add_child(node)
-	var ground := kit.card(node, Vector2(10, -6), Vector2(NAME_X + NAME_W + 8
-			- RAIL_X - 10, SHELF + 4), 0.002, kit.own(Kit.PLATE, 0.0), true)
-	# The station: a tick across the spine at its shelf.
-	kit.card(node, Vector2(-7, SHELF - 1.5), Vector2(14, 3), 0.003,
-			kit.flat(Kit.DEAD), true)
-	var slot := slot_of(key_index)
-	var name := kit.label(node, kit.fit(_name(id), 2, NAME_W),
-			Vector2(NAME_X - RAIL_X, 0), 2, Kit.INK_DIM, 0.004, false, true)
-	# Its second line: the Mk, and what the review must say about it.
+	_rack.add_child(node)
+	var r := Rect2(ROW_X, y, ROW_END - ROW_X, ROW_H)
+	var face_mat := StandardMaterial3D.new()
+	face_mat.albedo_color = Parts.MODULE
+	face_mat.metallic = 0.15
+	face_mat.roughness = 0.55
+	face_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	Parts.slab(node, Parts.rrect(r, 2), BZ + 0.0005, SEAT_Z, face_mat)
+	Parts.block(node, Rect2(r.position.x - 8, y + 6, 10, ROW_H - 12), SEAT_Z - 0.003,
+			SEAT_Z - 0.0012, Parts.mat(Parts.GOLD, 0.8, 0.3), false)
+	var tab_mat := StandardMaterial3D.new()
+	tab_mat.albedo_color = Parts.BAKELITE
+	tab_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	Parts.block(node, Rect2(r.position.x + 6, y + 5, 10, ROW_H - 10), SEAT_Z, SEAT_Z + 0.014,
+			tab_mat)
+	var zt := SEAT_Z + 0.0008
+	var stands := _stands(id) if slot_of(key_index) != "" else ""
+	var right := r.end.x - 8.0
+	if stands != "":
+		var ww := kit.measure(stands, 2) + 16.0
+		var fw := Rect2(right - ww, y + 3, ww, ROW_H - 6)
+		Parts.block(node, fw, SEAT_Z, SEAT_Z + 0.0006, Parts.mat(Parts.RECESS, 0.0, 0.95),
+				false)
+		Parts.text(kit, node, stands, fw.position + Vector2(8, 2), 2, Parts.LIT if
+				stands.begins_with("ON") or stands.begins_with("PREVIEW")
+				else Parts.LIT_DIM, SEAT_Z + 0.0018)
+		right = fw.position.x - 10.0
 	var tags := [_mk(id)]
-	var bright := false
-	if slot != "" and seated(slot) == id:
-		tags.append("PREVIEW, NOT SENT" if preview.has(slot) else "ON " + _cap())
-		bright = true
-	elif slot != "" and preview.has(slot) and saved(slot) == id:
-		tags.append("SAVED ON " + _cap())
-	var row: Dictionary = items[id]
-	if bool(row.get("consumable", false)) and row.get("charges_max") != null:
-		tags.append("%d/%d" % [int(row["charges_left"]), int(row["charges_max"])])
+	if _charges(id) != "":
+		tags.append(_charges(id))
 	if _authored(id):
 		tags.append("AUTHORED")
-	kit.label(node, kit.fit(" · ".join(tags), 2, NAME_W), Vector2(NAME_X - RAIL_X,
-			20), 2, Kit.INK if bright else Kit.INK_FAINT, 0.004, false, true)
-	if bright:
-		# What is on the key now: a solid node on the spine.
-		kit.card(node, Vector2(-6, SHELF - 6), Vector2(12, 12), 0.0035,
-				kit.flat(Kit.INK), true)
-	_strips[id] = {"node": node, "ground": ground, "y": STATION * i,
-		"h": STATION, "name": name}
+	var t := " · ".join(tags)
+	var tw := kit.measure(t, 2)
+	var tag_l := Parts.text(kit, node, t, Vector2(right - tw, y + 5), 2, Parts.SILK_FAINT, zt)
+	var name_w := right - tw - 16.0 - (r.position.x + 26.0)
+	var name_l := Parts.text(kit, node, kit.fit(_name(id), 2, name_w), Vector2(r.position.x
+			+ 26, y + 5), 2, Parts.SILK_DIM, zt)
+	var c := r.get_center()
+	var out := Parts.P(c + Vector2(-PULL, 0), PULL_Z) - Parts.P(c, SEAT_Z)
+	_rows[id] = {"node": node, "face": face_mat, "tab": tab_mat, "name": name_l,
+		"tags": tag_l, "out": out, "hit": Rect2(r.position.x - PULL, y, r.size.x + PULL,
+		ROW_H), "index": i, "stands": stands, "words": "%s | %s" % [name_l.text,
+		tag_l.text]}
 
 
-## The rail's window edges: two patches of the wall laid just in front of the
-## rail, above VIEW_TOP and below VIEW_BOTTOM. A station partly scrolled out
-## of view slides UNDER them and stays drawn where it shows -- it never
-## vanishes whole and leaves a hole.
-const CLIP_LIFT := 0.045              # in front of everything on the rail
-const ABOVE_CLIP := 0.055             # the rail's own words, over the edges
-const CLIP_TOP := 50.0                # the top edge's height: a station and more
-
-
-func _clip() -> void:
-	var x0 := RAIL_X - 12.0
-	var x1 := NAME_X + NAME_W + 12.0
-	for r: Rect2 in [Rect2(Vector2(x0, VIEW_TOP - CLIP_TOP), Vector2(x1 - x0,
-				CLIP_TOP)), Rect2(Vector2(x0, VIEW_BOTTOM), Vector2(x1 - x0,
-				Kit.PAGE.y - VIEW_BOTTOM))]:
-		var k := Kit.lift_scale(CLIP_LIFT)
-		var edge := kit.card(_drawer, Kit.lifted(r.position, CLIP_LIFT), r.size * k,
-				CLIP_LIFT, kit.wall_patch(r))
-		edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-
-
-## One of the rail's own words, over its edges: shrunk by its lift so it is
-## seen at its page size, where it would be on the wall.
-func _over(node: Node3D) -> void:
-	node.scale = Vector3.ONE * Kit.lift_scale(ABOVE_CLIP)
-	node.set_meta("own_scale", Kit.lift_scale(ABOVE_CLIP))
-
-
-func _more(up: bool) -> Node3D:
-	var node := Node3D.new()
-	_drawer.add_child(node)
-	var y := VIEW_TOP - 18 if up else VIEW_BOTTOM + 12
-	var cx := NAME_X + NAME_W * 0.5
-	_over(kit.sprite(node, "arrow_up" if up else "arrow_down", Kit.lifted(
-			Vector2(cx - 40, y + 6), ABOVE_CLIP), 2, Kit.INK_DIM, ABOVE_CLIP))
-	var l := kit.label(node, "", Kit.lifted(Vector2(cx - 24, y - 2), ABOVE_CLIP),
-			2, Kit.INK_DIM, ABOVE_CLIP)
-	_over(l)
-	node.set_meta("label", l)
-	node.visible = false
-	return node
-
-
-## Where every station stands, and the scroll that keeps the selected one in
-## view (keyboard and pad; a hand scroll moves only the rail). Stations
-## never move when the selection moves -- only when the rail scrolls.
-func _layout(at_once := false, by_hand := false) -> void:
-	var total := STATION * _order.size()
-	var view := VIEW_BOTTOM - VIEW_TOP
-	if unfolded != "" and _strips.has(unfolded) and not by_hand:
-		var top: float = _strips[unfolded]["y"]
-		var bottom: float = top + STATION
-		if top < _scroll_px:
-			_scroll_px = top
-		elif bottom > _scroll_px + view:
-			_scroll_px = bottom - view
-	_scroll_px = clampf(_scroll_px, 0.0, maxf(0.0, total - view))
-	scroll[key_index] = _scroll_px
-	for i in _order.size():
-		var s: Dictionary = _strips[_order[i]]
-		var node: Node3D = s["node"]
-		var to := Kit.at(Vector2(RAIL_X, VIEW_TOP + float(s["y"]) - _scroll_px), 0.0)
+## The rack's state on the wall: the module being read pulled out (its tab
+## SIGNAL while the rack has the focus), every other one home; a hovered
+## one's face lit a little -- light only, never movement.
+func _mark_rows(at_once := false) -> void:
+	for id: String in _rows:
+		var r: Dictionary = _rows[id]
+		var node: Node3D = r["node"]
+		var pulled := id == unfolded
+		var to: Vector3 = r["out"] if pulled else Vector3.ZERO
 		if at_once:
 			node.position = to
 		else:
-			kit.go(node, "position", to, 0.18, "out")
-		node.visible = _strip_shows(i)
-	var above := 0
-	var below := 0
-	for id: String in _order:
-		var page_y: float = VIEW_TOP + float(_strips[id]["y"]) - _scroll_px
-		if page_y < VIEW_TOP - 1.0:
-			above += 1
-		elif page_y + STATION > VIEW_BOTTOM + 1.0:
-			below += 1
-	_set_more(_more_up, above)
-	_set_more(_more_down, below)
-	_mark_strips()
+			kit.go(node, "position", to, 0.1, "out")
+		(r["tab"] as StandardMaterial3D).albedo_color = Kit.SIGNAL if pulled \
+				and zone == "drawer" else (Parts.BAKELITE.lightened(0.25) if pulled
+				else Parts.BAKELITE)
+		var lit := pulled or id == hover
+		(r["face"] as StandardMaterial3D).albedo_color = Parts.MODULE.lightened(0.09
+				if lit else 0.0)
+		var bright := pulled or str(r["stands"]) != ""
+		(r["name"] as Label3D).modulate = Parts.SILK if bright else Parts.SILK_DIM
+		(r["tags"] as Label3D).modulate = Parts.SILK_DIM if pulled else Parts.SILK_FAINT
 
 
-## A station is drawn wherever any of it shows; the rail's edges cover the
-## rest -- so long as all of it stays within their reach.
-func _strip_shows(i: int) -> bool:
-	if i < 0 or i >= _order.size():
-		return false
-	var page_y: float = VIEW_TOP + float(_strips[_order[i]]["y"]) - _scroll_px
-	return page_y < VIEW_BOTTOM and page_y + STATION > VIEW_TOP \
-			and page_y >= VIEW_TOP - CLIP_TOP and page_y + STATION <= Kit.PAGE.y
+## The scroll pot's knob: its length the share of the rack shown, its
+## place the share scrolled past. Built at the top of its track; a scroll
+## slides it (at once when motion is reduced).
+var _knob_h := 0.0
 
 
-func _set_more(node: Node3D, n: int) -> void:
-	node.visible = n > 0
-	var l: Label3D = node.get_meta("label")
-	l.text = kit.display("%d MORE" % n)
+func _place_knob(at_once := false) -> void:
+	var n := maxi(_order.size(), 1)
+	var h := maxf(24.0, TRACK.size.y * minf(1.0, float(SHOWN) / float(n)))
+	var z := BZ + 0.012
+	if absf(h - _knob_h) > 0.01:
+		for c: Node in _knob.get_children():
+			c.queue_free()
+		Parts.block(_knob, Rect2(TRACK.position.x - 4, TRACK.position.y, 16, h),
+				BZ + 0.004, z, Parts.mat(Color("#cfd2cf"), 0.2, 0.5))
+		_knob_h = h
+		at_once = true
+	var dy := (TRACK.size.y - h) * float(_first) / float(_max_first()) \
+			if _max_first() > 0 else 0.0
+	var to := Parts.P(Vector2(TRACK.position.x, TRACK.position.y + dy), z) \
+			- Parts.P(Vector2(TRACK.position.x, TRACK.position.y), z)
+	if at_once:
+		_knob.position = to
+	else:
+		kit.go(_knob, "position", to, 0.08, "out")
 
 
-## Grounds: a hovered station gets a faint ground -- light only, never
-## movement. The selected one's name is lit; the route is under it.
-func _mark_strips() -> void:
-	for id: String in _order:
-		var s: Dictionary = _strips[id]
-		var ground: MeshInstance3D = s["ground"]
-		var a := 0.6 if id == hover and id != unfolded else 0.0
-		kit.go(ground.material_override, "albedo_color", Color(Kit.PLATE, a), 0.1)
-		(s["name"] as Label3D).modulate = Kit.INK if id == unfolded else Kit.INK_DIM
+# ============================================================ the readout
 
-
-# ------------------------------------------------------------ the route
-
-## Point the route at what is selected now: the station's shelf (held to the
-## rail's view -- past its edge the route turns at the edge), the name's
-## underline, and its length.
-func _aim_route(at_once := false) -> void:
-	var sy := VIEW_TOP - 8.0
-	if unfolded != "" and _strips.has(unfolded):
-		var page_y: float = VIEW_TOP + float(_strips[unfolded]["y"]) - _scroll_px
-		sy = clampf(page_y + SHELF, VIEW_TOP - 8.0, VIEW_BOTTOM + 6.0)
-	var ny: float = _focus_info.get("underline", NAME_TOP + 24.0)
-	var plate: Rect2 = _focus_info.get("plate", Rect2(FOCUS_X, NAME_TOP, 1, 1))
-	var nw: float = plate.position.x + 24.0     # into the plate, under it
-	if at_once or kit.reduced:
-		_rs.sel_y = sy
-		_rs.name_y = ny
-		_rs.name_w = nw
-		return
-	kit.go(_rs, "sel_y", sy, 0.14, "out")
-	kit.go(_rs, "name_y", ny, 0.14, "out")
-	kit.go(_rs, "name_w", nw, 0.18, "out")
-
-
-## The route's points, page px, before its corners are cut.
-func route_points() -> Array:
-	return [Vector2(LOAD_X, _rs.key_y), Vector2(RAIL_X, _rs.key_y),
-		Vector2(RAIL_X, _rs.sel_y), Vector2(GUTTER_X, _rs.sel_y),
-		Vector2(GUTTER_X, _rs.name_y), Vector2(_rs.name_w, _rs.name_y)]
-
-
-func _draw_route() -> void:
-	var sig := "%.2f/%.2f/%.2f/%.2f/%s" % [_rs.key_y, _rs.sel_y, _rs.name_y,
-		_rs.name_w, zone]
-	if sig == _route_sig:
-		return
-	_route_sig = sig
-	_route.mesh = Kit.route_mesh(Kit.route_corners(route_points(), CORNER),
-			STROKE, ROUTE_LIFT)
-	if _route_parts != null:
-		_route_parts.queue_free()
-	_route_parts = Node3D.new()
-	face.add_child(_route_parts)
-	# The rail's focus: the selected station's mark, on the route, while the
-	# rail has the focus.
-	if zone == "drawer" and unfolded != "":
-		kit.lifted_card(_route_parts, Vector2(RAIL_X - 8, _rs.sel_y - 8),
-				Vector2(16, 16), ROUTE_LIFT + 0.001, kit.flat(Kit.SIGNAL))
-
-
-# ------------------------------------------------------------ the composition
-
-## The selected item, composed: built whole and at once -- the words never
-## scale or slide; the route and the echoes carry the movement.
+## The item being read, composed: built whole and at once -- the words
+## never scale or slide; the rack and the selector carry the movement.
 func _compose() -> void:
-	if _focus != null:
-		_focus.queue_free()
-	_focus = Node3D.new()
-	_focus.set_meta("composition", true)
-	face.add_child(_focus)
-	_echoes.clear()
-	_focus_info = {}
+	if _readout != null:
+		_readout.queue_free()
+	_readout = Node3D.new()
+	_readout.set_meta("composition", true)
+	face.add_child(_readout)
+	_info = {}
 	if unfolded == "":
 		_compose_key()
 	else:
 		_compose_item(unfolded)
 
 
-## Nothing selected: the key itself, in the same composition.
+## Nothing selected: the key itself, in the same window.
 func _compose_key() -> void:
 	var slot := slot_of(key_index)
 	var title := str(keys()[key_index]["title"]) if slot != "" else "ALWAYS ON"
-	var fit := _name_fit(title)
-	var bottom := _big_name(fit, 0)
-	var y := bottom + 22.0
+	var x := COL_L
+	var y := TOP
+	if slot != "":
+		x += Parts.keycap(kit, _readout, str(keys()[key_index]["keycap"]),
+				Vector2(COL_L, y - 5), Z) + 12.0
+	Parts.text(kit, _readout, "A KEY" if slot != "" else "NO KEY", Vector2(x, y), 2,
+			Parts.LIT_DIM, Z)
+	y += 30.0
+	Parts.text(kit, _readout, title, Vector2(COL_L, y), 5, Parts.LIT, Z)
+	y += 58.0
 	var words := []
 	if slot != "":
 		var on := seated(slot)
 		words.append("NOTHING IS ON %s NOW." % _cap() if on == ""
 				else "%s IS ON %s NOW." % [_name(on), _cap()])
-	words.append("%d ITEMS GO HERE. MOVE INTO THE RAIL TO CHOOSE ONE." % _order.size()
-			if not _order.is_empty() else "NOTHING YOU HOLD GOES HERE.")
+	if _order.is_empty():
+		words.append("NOTHING YOU HOLD GOES HERE.")
+	else:
+		words.append("%d FIT. MOVE INTO THE RACK TO READ ONE." % _order.size())
 	for w: String in words:
-		for line in kit.wrap(w, 2, FOCUS_W):
-			kit.label(_focus, line, Vector2(FOCUS_X, y), 2, Kit.INK_DIM)
+		for line in kit.wrap(w, 2, COL_L_W):
+			Parts.text(kit, _readout, line, Vector2(COL_L, y), 2, Parts.LIT_DIM, Z)
 			y += LINE
-	_focus_info["bottom"] = y
-	_focus_info["clear"] = _clear(y)
+	_info["bottom"] = y
+	_info["fits"] = y <= BOTTOM
+	_info["id"] = ""
 
 
-## Whether the composition keeps to its place: everything above the action
-## row, the plate and its echoes inside the wall.
-func _clear(bottom: float) -> bool:
-	var plate: Rect2 = _focus_info.get("plate", Rect2())
-	var reach := minf(ECHO_STEP * float(_focus_info.get("echoes", 0)), 36.0)
-	var stack := plate.grow_individual(reach, 0, 0, reach)
-	return bottom <= ACTION_Y - 8.0 and stack.position.x > GUTTER_X - 40.0 \
-			and stack.end.x <= Kit.PAGE.x - 40.0 and stack.position.y > KICKER_Y + 16.0
-
-
-## The largest size the name can take in two lines (three, at the smallest):
-## a long name wraps rather than shrinking below 4x.
-func _name_fit(text: String) -> Array:
-	for k: int in [6, 5]:
-		var lines := kit.wrap(text, k, FOCUS_W)
-		if lines.size() <= 2:
-			return [k, lines]
-	for k: int in [4, 3]:
-		var lines := kit.wrap(text, k, FOCUS_W)
-		if lines.size() <= 3:
-			return [k, lines]
-	return [3, kit.wrap(text, 3, FOCUS_W)]
-
-
-## The name on its plate, and the plate's echoes behind it; returns the y
-## the composition goes on from. The route plugs into the plate's left edge.
-func _big_name(fit: Array, echoes: int) -> float:
-	var k: int = fit[0]
-	var lines: PackedStringArray = fit[1]
-	var pitch := 8.0 * k + 8.0
-	var widest := 0.0
-	for line in lines:
-		widest = maxf(widest, kit.measure(line, k))
-	var pad := Vector2(2.0 * k + 4.0, 2.0 * k)
-	var text_h := pitch * lines.size() - 8.0 - k   # the last line's descent
-	var rect := Rect2(Vector2(FOCUS_X, NAME_TOP) - pad, Vector2(widest, text_h)
-			+ pad * 2.0)
-	_plate(_focus, rect, PLATE_Z, PLATE_TONE)
-	for i in lines.size():
-		_lifted_label(_focus, lines[i], Vector2(FOCUS_X, NAME_TOP + pitch * i), k,
-				Kit.SHADE, PLATE_Z + 0.0008)
-	# The echoes: a plate each, stepped back down the diagonal toward the
-	# rail and toward the wall. Each is a node of its own, so it can slide
-	# out from behind the plate when the name arrives.
-	var n := mini(echoes, ECHO_TONES.size())
-	var step := minf(ECHO_STEP, 36.0 / maxf(1.0, float(n)))
-	for e in n:
-		var copy := Node3D.new()
-		_focus.add_child(copy)
-		var z := PLATE_Z - ECHO_DZ * (e + 1)
-		var off := Vector2(-step, step) * (e + 1)
-		_plate(copy, Rect2(rect.position + off, rect.size), z, ECHO_TONES[e])
-		# Behind the plate, where the echo was when it left: the slide.
-		copy.set_meta("rest", Vector3.ZERO)
-		copy.set_meta("from", -Kit.rel(off * Kit.lift_scale(z), 0.0))
-		_echoes.append(copy)
-	_focus_info["name_k"] = k
-	_focus_info["name_lines"] = lines.size()
-	_focus_info["name_w"] = widest
-	_focus_info["plate"] = rect
-	_focus_info["underline"] = rect.get_center().y
-	_focus_info["echoes"] = _echoes.size()
-	return rect.end.y + step * n
-
-
-## A plate SEEN at `rect` (page px), its face `z` off the wall: a lit box
-## that shades what is behind it.
-func _plate(parent: Node3D, rect: Rect2, z: float, colour: Color) -> MeshInstance3D:
-	var k := Kit.lift_scale(z)
-	var node := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(rect.size.x * Kit.px() * k, rect.size.y * Kit.px() * k,
-			PLATE_T)
-	node.mesh = box
-	node.material_override = kit.lit(colour)
-	node.position = Kit.at(Kit.lifted(rect.get_center(), z), z - PLATE_T * 0.5)
-	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	parent.add_child(node)
-	return node
-
-
-## Words SEEN at `page`, `z` off the wall (on a plate).
-func _lifted_label(parent: Node3D, text: String, page: Vector2, k: int,
-		colour: Color, z: float) -> Label3D:
-	var l := kit.label(parent, text, Kit.lifted(page, z), k, colour, z)
-	l.scale = Vector3.ONE * Kit.lift_scale(z)
-	l.set_meta("own_scale", Kit.lift_scale(z))
-	return l
-
-
+## The read item: on the left what it IS (where it stands with the key, its
+## name, what it does, what it is, how it is used and what it costs); on
+## the right what CHANGES if it goes on the key (Production's own lines,
+## EquipmentQuery.comparison, aligned) and where it came from; at the foot
+## on the right, the one action. Every block is placed, never dropped: if a
+## column would overflow, its sizes step down (the name first, never below
+## 3x; then what it does, never below 2x), and the history goes wherever
+## there is room.
 func _compose_item(id: String) -> void:
 	var row: Dictionary = items[id]
 	var slot := slot_of(key_index)
 	var on := seated(slot) if slot != "" else ""
-	# The kicker: the key itself, as the Glyph kit draws it, and where this
-	# item stands with it; and what kind of thing it is.
-	var stands := "ALWAYS ON · NO KEY"
-	var bright := false
-	var sx := FOCUS_X
-	if slot != "":
-		sx += _keycap(_focus, str(keys()[key_index]["keycap"]), Vector2(FOCUS_X,
-				KICKER_Y - 5)) + 12.0
-		if on == id:
-			stands = "PREVIEW ON THIS KEY, NOT SENT" if preview.has(slot) \
-					else "ON THIS KEY NOW"
-			bright = true
-		elif preview.has(slot) and saved(slot) == id:
-			stands = "SAVED ON THIS KEY"
-		else:
-			stands = "FITS THIS KEY"
-	kit.label(_focus, stands, Vector2(sx, KICKER_Y), 2,
-			Kit.INK if bright else Kit.INK_DIM)
-	var kind := "%s · %s" % [str(row.get("family", "")), _mk(id)]
-	kit.label(_focus, kind, Vector2(FOCUS_X + FOCUS_W - kit.measure(kind, 2),
-			KICKER_Y), 2, Kit.INK_DIM)
-	var y := _big_name(_name_fit(_name(id)), int(row["mk"])) + 18.0
-	# How it was read: the concepts of the Echo that made it.
-	var echoes: Array = row.get("echoes", [])
-	if not echoes.is_empty():
-		var concepts: Array = (echoes[0] as Dictionary).get("concepts", [])
-		var said := " / ".join(PackedStringArray(concepts))
-		for line in kit.wrap(said, 3, FOCUS_W):
-			kit.label(_focus, line, Vector2(FOCUS_X, y), 3, Kit.INK_DIM)
-			y += 30.0
-		y += 4.0
-	# Where it came from: every item that went into it, one line each --
-	# Production's history, "Mk  note ← item (game)"; the create's note is
-	# the name above, so it is not said twice.
-	var history: Array = row.get("history", [])
-	for link: Dictionary in history:
-		var what := "← %s (%s)" % [str(link["item"]), str(link["game"])]
-		if str(link.get("operation", "")) != "create":
-			what = "%s %s" % [str(link["note"]), what]
-		kit.label(_focus, str(link["mark"]), Vector2(FOCUS_X, y), 2, Kit.INK_FAINT)
-		for line in kit.wrap(what, 2, FOCUS_W - 72):
-			kit.label(_focus, line, Vector2(FOCUS_X + 72, y), 2, Kit.INK_DIM)
-			y += LINE
-	y += 14.0
-	# What it is.
-	var desc := kit.wrap(str(row.get("description", "")), 2, FOCUS_W)
-	for line in desc:
-		kit.label(_focus, line, Vector2(FOCUS_X, y), 2, Kit.INK)
-		y += LINE
-	_focus_info["desc_lines"] = desc.size()
-	y += 18.0
-	# Two columns: what it does, and what changes on the key.
-	var ly := _block("DOES", row["does"], FOCUS_X, y, COL_L_W, Kit.INK)
-	ly = _block("HOW IT IS USED", row["use"], FOCUS_X, ly + 10, COL_L_W, Kit.INK_DIM)
-	ly = _block("COST", row["cost"], FOCUS_X, ly + 10, COL_L_W, Kit.INK_DIM)
-	var ry := y
+	# ---- the right column's blocks, measured
+	var right: Array = []           # [kind, payload] in order
+	var head := ""
+	var compare: Array = []
 	if slot == "":
-		ry = _block("NO KEY", ["Always on while you own it. There is nothing "
-				+ "to equip or turn off."], COL_R, ry, COL_R_W, Kit.INK_DIM)
+		head = "NO KEY · NOTHING TO COMPARE"
 	elif on == id:
+		head = "ON THE KEY"
 		var words := "It is on %s now." % str(keys()[key_index]["keycap"])
 		if preview.has(slot):
 			words = "Previewed on %s. Not sent: the save still has %s." % [
 					str(keys()[key_index]["keycap"]),
 					_name(saved(slot)) if saved(slot) != "" else "nothing"]
-		ry = _block("ON THE KEY", [words], COL_R, ry, COL_R_W, Kit.INK_DIM)
+		right.append(["words", [words]])
 	elif on == "":
-		ry = _block("NOTHING ON %s TO COMPARE" % _cap(), [], COL_R, ry, COL_R_W,
-				Kit.INK_DIM)
+		head = "NOTHING ON %s TO COMPARE" % _cap()
 	else:
-		var lines: Array = ((data["comparisons"] as Dictionary).get(slot, {})
-				as Dictionary).get(id, {}).get(on, [])
-		kit.label(_focus, "AGAINST", Vector2(COL_R, ry), 2, Kit.INK_FAINT)
-		var against := kit.fit(_name(on), 2, COL_R_W - 110)
-		kit.label(_focus, against, Vector2(COL_R + 96, ry), 2, Kit.INK)
-		ry += LINE
-		kit.label(_focus, "ON %s NOW" % _cap(), Vector2(COL_R + 96, ry), 2,
-				Kit.INK_FAINT)
-		ry = _table(lines, COL_R, ry + 30, COL_R_W)
-		_focus_info["compared"] = on
-	_focus_info["bottom"] = maxf(ly, ry)
-	_focus_info["clear"] = _clear(maxf(ly, ry))
-	# The action: always in the same place, the foot of the composition.
+		head = "IF ON %s, IN PLACE OF %s" % [_cap(), _name(on)]
+		compare = ((data["comparisons"] as Dictionary).get(slot, {}) as Dictionary).get(id,
+				{}).get(on, [])
+		_info["compared"] = on
 	var act := _action(id)
-	if act != "":
-		var colour := Kit.SIGNAL if _can_preview(id) else Kit.INK_DIM
-		var ax := FOCUS_X
-		if _can_preview(id):
-			_prompt_cap(_focus, "ENTER", Vector2(FOCUS_X, ACTION_Y))
-			ax += 86
-		var words := kit.wrap(act, 2, FOCUS_W - (ax - FOCUS_X))
-		for i in words.size():
-			kit.label(_focus, words[i], Vector2(ax, ACTION_Y + 5 + LINE * i), 2, colour)
-		_focus_info["action"] = Rect2(Vector2(FOCUS_X - 6, ACTION_Y - 6),
-				Vector2(ax - FOCUS_X + kit.measure(words[0], 2) + 24, 38))
-	if note != "":
-		kit.label(_focus, note, Vector2(COL_R, ACTION_Y + 5), 2, Kit.INK)
+	var can := act != "" and _can_preview(id)
+	# the foot: a button for an action that can be taken; a refusal's own
+	# words, whole, for one that cannot
+	var refusal: PackedStringArray = kit.wrap(act, 2, COL_R_W - 150.0) \
+			if act != "" and not can else PackedStringArray()
+	var foot := BOTTOM
+	if can or note != "":
+		foot = BOTTOM - ACT_H - 6.0
+	elif not refusal.is_empty():
+		foot = BOTTOM - LINE * refusal.size() - 6.0
+	var hist := _history(id)
+	var r_h := LINE * kit.wrap(head, 2, COL_R_W).size() + 8.0
+	for b: Array in right:
+		for w: String in b[1]:
+			r_h += LINE * kit.wrap(w, 2, COL_R_W).size()
+	var t_pitch := LINE
+	var t_h := _table_h(compare, COL_R_W, t_pitch)
+	var h_h := LINE * hist.size()
+	# ---- the left column, at the largest sizes that fit
+	var plan := {}
+	var left_room := BOTTOM - TOP
+	for option: Array in [[5, 3], [4, 3], [5, 2], [4, 2], [3, 2]]:
+		plan = _left_plan(id, int(option[0]), int(option[1]))
+		if float(plan["h"]) <= left_room:
+			break
+	# the history on the right under the comparison if it fits there; else
+	# under the left column if it fits there; else the comparison closes up
+	var hist_left := false
+	var h_gap := 10.0 if h_h > 0.0 else 0.0
+	if TOP + r_h + t_h + h_gap + h_h > foot:
+		if float(plan["h"]) + 12.0 + h_h <= left_room:
+			hist_left = true
+		else:
+			t_pitch = 18.0
+			if TOP + r_h + _table_h(compare, COL_R_W, t_pitch) + h_gap + h_h > foot:
+				hist_left = float(plan["h"]) + 12.0 + h_h <= left_room
+	# ---- the left column, drawn
+	var y := _draw_left(id, plan)
+	if hist_left:
+		y += 12.0
+		y = _draw_history(hist, COL_L, y, COL_L_W)
+	_info["left_bottom"] = y
+	# ---- the right column, drawn
+	var ry := TOP
+	for line in kit.wrap(head, 2, COL_R_W):
+		Parts.text(kit, _readout, line, Vector2(COL_R, ry), 2, Parts.LIT_DIM, Z)
+		ry += LINE
+	ry += 8.0
+	for b: Array in right:
+		for w: String in b[1]:
+			for line in kit.wrap(w, 2, COL_R_W):
+				Parts.text(kit, _readout, line, Vector2(COL_R, ry), 2, Parts.LIT, Z)
+				ry += LINE
+	if not compare.is_empty():
+		ry = _table(compare, COL_R, ry, COL_R_W, t_pitch)
+	if not hist_left and not hist.is_empty():
+		ry = _draw_history(hist, COL_R, ry + 10.0, COL_R_W)
+	_info["right_bottom"] = ry
+	# ---- the foot: the one action, always in the same place
+	var ay := BOTTOM - ACT_H
+	if can:
+		var words := kit.fit(act, 2, COL_R_W - 104.0)
+		var rect := Rect2(COL_R - 4, ay, kit.measure(words, 2) + 110.0, ACT_H)
+		Parts.slab(_readout, Parts.rrect(rect, 6), 0.0, 0.01, Parts.mat(Parts.ACT, 0.1,
+				0.6))
+		_prompt_cap(Vector2(COL_R + 6, ay + 5), 0.01)
+		Parts.text(kit, _readout, words, Vector2(COL_R + 94, ay + 10), 2, Kit.SIGNAL,
+				0.0112)
+		_info["action"] = rect
+		_info["action_words"] = words
+	elif not refusal.is_empty():
+		var fy := BOTTOM - LINE * refusal.size()
+		for line in refusal:
+			Parts.text(kit, _readout, line, Vector2(COL_R, fy), 2, Parts.LIT_DIM, Z)
+			fy += LINE
+		_info["action_words"] = " ".join(refusal)
+	elif note != "":
+		Parts.text(kit, _readout, note, Vector2(COL_R, ay + 10), 2, Parts.LIT, Z)
+		_info["note"] = note
 	if _authored(id):
-		# The sample label: its own line at the foot, clear of everything.
-		var tag := "AUTHORED FOR LAYOUT STRESS, NOT GAME CONTENT"
-		kit.label(_focus, tag, Vector2(FOCUS_X + FOCUS_W - kit.measure(tag, 2),
-				ACTION_Y + 38), 2, Kit.INK_DIM)
-	_focus_info["bottom"] = maxf(float(_focus_info["bottom"]), ACTION_Y + 54)
-	_focus_info["id"] = id
+		var tag := "AUTHORED SAMPLE"
+		Parts.text(kit, _readout, tag, Vector2(WIN.end.x - 24 - kit.measure(tag, 2), ay + 10),
+				2, Parts.LIT_FAINT, Z)
+	_info["id"] = id
+	_info["name_k"] = plan["name_k"]
+	_info["name_lines"] = (plan["name"] as PackedStringArray).size()
+	_info["does_k"] = plan["does_k"]
+	_info["table_pitch"] = t_pitch
+	_info["history_left"] = hist_left
+	_info["bottom"] = maxf(float(_info["left_bottom"]), ry)
+	_info["foot"] = foot
+	# nothing crosses the foot or the window's edge, and nothing was dropped
+	_info["fits"] = float(_info["left_bottom"]) <= BOTTOM + 0.5 and ry <= foot + 0.5
+	_info["stands"] = _stands(id)
 
 
-func _block(head: String, lines: Array, x: float, y: float, width: float,
-		colour: Color) -> float:
-	if head != "":
-		kit.label(_focus, head, Vector2(x, y), 2, Kit.INK_FAINT)
-		y += 24.0
-	for raw: Variant in lines:
-		for line: String in kit.wrap(str(raw), 2, width):
-			kit.label(_focus, line, Vector2(x, y), 2, colour)
+## The left column's plan at name size `nk` and DOES size `dk`: its lines
+## and its height.
+func _left_plan(id: String, nk: int, dk: int) -> Dictionary:
+	var row: Dictionary = items[id]
+	var name := kit.wrap(_name(id), nk, COL_L_W)
+	if name.size() > 2 and nk > 3:
+		return {"h": INF, "name": name, "name_k": nk, "does_k": dk}
+	var h := 30.0                                   # the kicker
+	h += (8.0 * nk + 6.0) * name.size() + 6.0
+	var does: Array = []
+	for line: Variant in row.get("does", []):
+		for l in kit.wrap(str(line), dk, COL_L_W - 64.0):
+			does.append(l)
+	h += (8.0 * dk + 6.0) * does.size() + 4.0
+	var desc := kit.wrap(str(row.get("description", "")), 2, COL_L_W)
+	h += LINE * desc.size() + 6.0
+	var uses: Array = []
+	for line: Variant in row.get("use", []):
+		for l in kit.wrap(str(line), 2, COL_L_W - 64.0):
+			uses.append(l)
+	var costs: Array = []
+	for line: Variant in row.get("cost", []):
+		for l in kit.wrap(str(line), 2, COL_L_W - 64.0):
+			costs.append(l)
+	h += LINE * (uses.size() + costs.size())
+	return {"h": h, "name": name, "name_k": nk, "does_k": dk, "does": does,
+		"desc": desc, "use": uses, "cost": costs}
+
+
+func _draw_left(id: String, plan: Dictionary) -> float:
+	var row: Dictionary = items[id]
+	var slot := slot_of(key_index)
+	var x := COL_L
+	var y := TOP
+	# the kicker: the key, where this stands with it, and what kind of thing
+	var stands := _stands(id)
+	var kick := "FITS THIS KEY" if slot != "" else "ALWAYS ON · NO KEY"
+	if stands.begins_with("ON "):
+		kick = "ON THIS KEY NOW"
+	elif stands.begins_with("PREVIEW"):
+		kick = "PREVIEW ON THIS KEY · NOT SENT"
+	elif stands.begins_with("SAVED"):
+		kick = "SAVED ON THIS KEY"
+	if slot != "":
+		x += Parts.keycap(kit, _readout, str(keys()[key_index]["keycap"]), Vector2(COL_L,
+				y - 5), Z) + 12.0
+	Parts.text(kit, _readout, kick, Vector2(x, y), 2, Parts.LIT if stands != ""
+			else Parts.LIT_DIM, Z)
+	var kind := "%s · %s" % [str(row.get("family", "")), _mk(id)]
+	Parts.text(kit, _readout, kind, Vector2(MID_X - 24 - kit.measure(kind, 2), y), 2,
+			Parts.LIT_DIM, Z)
+	y += 30.0
+	var nk: int = plan["name_k"]
+	for line: String in plan["name"]:
+		Parts.text(kit, _readout, line, Vector2(COL_L, y), nk, Parts.LIT, Z)
+		y += 8.0 * nk + 6.0
+	y += 6.0
+	var dk: int = plan["does_k"]
+	Parts.text(kit, _readout, "DOES", Vector2(COL_L, y + (4.0 if dk == 3 else 0.0)), 2,
+			Parts.LIT_FAINT, Z)
+	for line: String in plan["does"]:
+		Parts.text(kit, _readout, line, Vector2(COL_L + 64, y), dk, Parts.LIT, Z)
+		y += 8.0 * dk + 6.0
+	y += 4.0
+	for line: String in plan["desc"]:
+		Parts.text(kit, _readout, line, Vector2(COL_L, y), 2, Parts.LIT_DIM, Z)
+		y += LINE
+	_info["desc_lines"] = (plan["desc"] as PackedStringArray).size()
+	y += 6.0
+	for block: Array in [["USE", plan["use"]], ["COST", plan["cost"]]]:
+		var lines: Array = block[1]
+		if lines.is_empty():
+			continue
+		Parts.text(kit, _readout, block[0], Vector2(COL_L, y), 2, Parts.LIT_FAINT, Z)
+		for line: String in lines:
+			Parts.text(kit, _readout, line, Vector2(COL_L + 64, y), 2, Parts.LIT_DIM, Z)
 			y += LINE
+	return y
+
+
+## Where it came from: every item that went into it, one line each --
+## Production's history, "Mk  note ← item (game)"; the create's note is the
+## name above, so it is not said twice.
+func _history(id: String) -> Array:
+	var out := []
+	for link: Dictionary in items[id].get("history", []):
+		var what := "← %s (%s)" % [str(link["item"]), str(link["game"])]
+		if str(link.get("operation", "")) != "create":
+			# Production's note can carry a raw field name ("+40 max_value"):
+			# the face has no underscore, so it is printed as a space (and
+			# reported in the handoff, not hidden)
+			what = "%s %s" % [str(link["note"]).replace("_", " "), what]
+		out.append([str(link["mark"]), what])
+	return out
+
+
+func _draw_history(hist: Array, x: float, y: float, width: float) -> float:
+	for h: Array in hist:
+		Parts.text(kit, _readout, str(h[0]), Vector2(x, y), 2, Parts.LIT_FAINT, Z)
+		Parts.text(kit, _readout, kit.fit(str(h[1]), 2, width - 64.0), Vector2(x + 64, y), 2,
+				Parts.LIT_FAINT, Z)
+		y += LINE
 	return y
 
 
 ## Production's comparison lines set as a table: the label, what is on the
 ## key now, the arrow, what this would make it -- values aligned on the
-## arrow. A change too long for a row (a kind of damage, say) gets its
-## label on one line and the change under it; a line that is not a change
-## at all is printed whole. The words are Production's; only the setting
-## is ours.
-func _table(lines: Array, x: float, y: float, width: float) -> float:
+## arrow. A change too long for a row gets its label and old value on one
+## line and the arrow and the new value under it; a line that is not a
+## change at all is printed whole. The words are Production's; only the
+## setting is ours.
+func _table(lines: Array, x: float, y: float, width: float, pitch: float) -> float:
 	var rows := []
 	var lw := 0.0
 	var ow := 0.0
-	var nw := 0.0
 	for raw: Variant in lines:
 		var r := _change(str(raw))
 		if not r.is_empty() and kit.measure(r["old"], 2) <= 96.0 \
@@ -842,7 +919,6 @@ func _table(lines: Array, x: float, y: float, width: float) -> float:
 			r["row"] = true
 			lw = maxf(lw, kit.measure(r["label"], 2))
 			ow = maxf(ow, kit.measure(r["old"], 2))
-			nw = maxf(nw, kit.measure(r["new"], 2))
 		rows.append(r)
 	var old_right := x + lw + 16.0 + ow
 	var arrow_x := old_right + 10.0
@@ -851,29 +927,48 @@ func _table(lines: Array, x: float, y: float, width: float) -> float:
 		var r: Dictionary = rows[i]
 		if r.is_empty():
 			for line in kit.wrap(str(lines[i]), 2, width):
-				kit.label(_focus, line, Vector2(x, y), 2, Kit.INK)
-				y += LINE
+				Parts.text(kit, _readout, line, Vector2(x, y), 2, Parts.LIT, Z)
+				y += pitch
 			continue
 		if not r.get("row", false):
-			# Too long for a row: the label, then what is on the key now, then
-			# the arrow and what this would make it, each on its own line.
-			kit.label(_focus, r["label"], Vector2(x, y), 2, Kit.INK_DIM)
-			y += LINE
-			for line in kit.wrap(r["old"], 2, width - 24):
-				kit.label(_focus, line, Vector2(x + 24, y), 2, Kit.INK_DIM)
-				y += LINE
-			for line in kit.wrap("→ " + str(r["new"]), 2, width - 24):
-				kit.label(_focus, line, Vector2(x + 24, y), 2, Kit.INK)
-				y += LINE
-			y += 4.0
+			var lw2 := kit.measure(r["label"], 2) + 16.0
+			Parts.text(kit, _readout, r["label"], Vector2(x, y), 2, Parts.LIT_FAINT, Z)
+			if lw2 + kit.measure(r["old"], 2) <= width:
+				Parts.text(kit, _readout, r["old"], Vector2(x + lw2, y), 2, Parts.LIT_DIM, Z)
+				y += pitch
+			else:
+				y += pitch
+				Parts.text(kit, _readout, kit.fit(r["old"], 2, width - 24), Vector2(x + 24,
+						y), 2, Parts.LIT_DIM, Z)
+				y += pitch
+				lw2 = 24.0
+			Parts.text(kit, _readout, kit.fit("→ " + str(r["new"]), 2, width - lw2),
+					Vector2(x + lw2, y), 2, Parts.LIT, Z)
+			y += pitch + 2.0
 			continue
-		kit.label(_focus, r["label"], Vector2(x, y), 2, Kit.INK_DIM)
-		kit.label(_focus, r["old"], Vector2(old_right - kit.measure(r["old"], 2), y),
-				2, Kit.INK_DIM)
-		kit.label(_focus, "→", Vector2(arrow_x, y), 2, Kit.INK_FAINT)
-		kit.label(_focus, r["new"], Vector2(new_x, y), 2, Kit.INK)
-		y += LINE
+		Parts.text(kit, _readout, r["label"], Vector2(x, y), 2, Parts.LIT_FAINT, Z)
+		Parts.text(kit, _readout, r["old"], Vector2(old_right - kit.measure(r["old"], 2), y),
+				2, Parts.LIT_DIM, Z)
+		Parts.text(kit, _readout, "→", Vector2(arrow_x, y), 2, Parts.LIT_FAINT, Z)
+		Parts.text(kit, _readout, r["new"], Vector2(new_x, y), 2, Parts.LIT, Z)
+		y += pitch
 	return y
+
+
+## How tall `_table` will set these lines, without setting them.
+func _table_h(lines: Array, width: float, pitch: float) -> float:
+	var h := 0.0
+	for raw: Variant in lines:
+		var r := _change(str(raw))
+		if r.is_empty():
+			h += pitch * kit.wrap(str(raw), 2, width).size()
+		elif kit.measure(r["old"], 2) <= 96.0 and kit.measure(r["new"], 2) <= 96.0:
+			h += pitch
+		elif kit.measure(r["label"], 2) + 16.0 + kit.measure(r["old"], 2) <= width:
+			h += pitch * 2.0 + 2.0
+		else:
+			h += pitch * 3.0 + 2.0
+	return h
 
 
 ## "Label: a → b", or "Mk 2 → Mk 1" (the shared word is the label).
@@ -894,29 +989,15 @@ static func _change(line: String) -> Dictionary:
 	return {}
 
 
-## The composition's own control, for the device in hand: ENTER, or the
-## pad's south face button.
-func _prompt_cap(parent: Node3D, cap: String, at: Vector2) -> void:
+## The readout's own control, for the device in hand: ENTER, or the pad's
+## south face button.
+func _prompt_cap(at: Vector2, z: float) -> void:
+	_info["cap"] = "pad_face_south" if kit.device == "pad" else "ENTER"
 	if kit.device == "pad":
-		kit.sprite(parent, "pad_face_south", at + Vector2(20, 13), 2, Kit.INK,
-				0.006)
+		Parts.sprite(kit, _readout, "pad_face_south", at + Vector2(20, 13), 2, Parts.INK,
+				z + 0.002)
 		return
-	var w := kit.measure(cap, 2) + 16.0
-	kit.plate(parent, at, Vector2(w, 26), 0.001, kit.lit(Color("#c9d0db")), 0.004)
-	kit.label(parent, cap, at + Vector2(8, 5), 2, Kit.SHADE, 0.0065)
-
-
-## The echoes arrive: each slides out from under the name to its place,
-## the nearest first. At once when motion is reduced.
-func _echo_in() -> void:
-	for e in _echoes.size():
-		var copy: Node3D = _echoes[e]
-		var rest: Vector3 = copy.get_meta("rest")
-		if kit.reduced:
-			copy.position = rest
-			continue
-		copy.position = copy.get_meta("from")
-		kit.go(copy, "position", rest, 0.2, "out", 0.03 * e)
+	Parts.keycap(kit, _readout, "ENTER", at, z)
 
 
 func _can_preview(id: String) -> bool:
@@ -933,7 +1014,7 @@ func _can_preview(id: String) -> bool:
 	return str((row["refusal"] as Dictionary).get(slot, "")) == ""
 
 
-## The one action the composition offers, in words.
+## The one action the readout offers, in words.
 func _action(id: String) -> String:
 	var slot := slot_of(key_index)
 	if slot == "":
@@ -951,82 +1032,111 @@ func _action(id: String) -> String:
 	return "PREVIEW ON %s" % _cap()
 
 
-# ------------------------------------------------------------ actions
+# ============================================================ actions
 
 func nav(dir: Vector2i) -> void:
 	note = ""
 	if zone == "keys":
 		if dir.y != 0:
-			_focus_key(clampi(key_index + dir.y, 0, key_count() - 1))
-		elif dir.x > 0 and not _order.is_empty():
-			zone = "drawer"
-			if unfolded == "":
-				_select(_order[0])
-			_place_focus_bar()
-			_route_sig = ""
+			var to := clampi(key_index + dir.y, 0, key_count() - 1)
+			if to == key_index:
+				kit.cue("edge")
+				return
+			_focus_key(to)
+		elif dir.x > 0:
+			_enter_rack()
 		return
 	if dir.x < 0:
 		zone = "keys"
-		_place_focus_bar()
-		_route_sig = ""
+		kit.cue("tick", 0.75)
+		_mark_keys()
+		_mark_rows()
 		return
 	if dir.y != 0 and not _order.is_empty():
 		var at := _order.find(unfolded)
-		_select(_order[clampi(at + dir.y, 0, _order.size() - 1)])
+		var to := clampi(at + dir.y, 0, _order.size() - 1)
+		if to == at:
+			kit.cue("edge")
+			return
+		_select(_order[to])
 
 
+func _enter_rack() -> void:
+	if _order.is_empty():
+		kit.cue("edge")
+		return
+	zone = "drawer"
+	kit.cue("tick", 0.85)
+	if unfolded == "":
+		_select(_order[0])
+	_mark_keys()
+	_mark_rows()
+
+
+## Look at another key: the pointer turns one detent (or several, at once
+## when motion is reduced), and the rack swaps to that key's modules.
 func _focus_key(i: int, pointer := false) -> void:
 	if i == key_index:
 		return
 	sel[key_index] = unfolded
+	scroll[key_index] = _first
 	key_index = i
 	zone = "keys" if not pointer else zone
-	_place_focus_bar()
-	_open_drawer(false)
-	_echo_in()
+	kit.cue("detent", 1.0 + 0.05 * float(i))
+	_open_rack()
+	_mark_keys()
 
 
-## Select an item on the rail. Nothing on the rail moves (unless the
-## keyboard or pad asks for one out of view); the composition is rebuilt
-## whole, and the route and the echoes move to it.
+## Select a module. Nothing in the rack moves but the module itself (and
+## the rack scrolls a row only if the keyboard or pad asks for one out of
+## view); the readout is rebuilt whole.
 func _select(id: String, by_pointer := false) -> void:
 	if id == unfolded:
 		return
 	unfolded = id
 	sel[key_index] = id
-	_layout(false, by_pointer)
+	kit.cue("tick")
+	var was := _first
+	if not by_pointer:
+		_keep_in_view()
+	if _first != was:
+		_build_rows()
+	else:
+		_mark_rows()
 	_compose()
-	_echo_in()
-	_aim_route()
 
 
 func accept() -> void:
 	if zone == "keys":
-		nav(Vector2i(1, 0))
+		_enter_rack()
 		return
-	if unfolded == "" or not _can_preview(unfolded):
+	if unfolded == "":
+		return
+	if not _can_preview(unfolded):
+		kit.cue("refuse")
 		return
 	var slot := slot_of(key_index)
 	if preview.has(slot) and saved(slot) == unfolded:
 		preview.erase(slot)
 		note = "BACK TO THE SAVE."
+		kit.cue("restore")
 	else:
 		preview[slot] = unfolded
 		note = "PREVIEWED. NOT SENT."
-	_row_text(key_index)
-	# The rail's tags change; its order and its scroll do not.
-	var keep := unfolded
-	var keep_scroll := _scroll_px
-	scroll[key_index] = keep_scroll
-	sel[key_index] = keep
-	_open_drawer(true)
+		kit.cue("preview")
+	# The windows change; the rack's order, its scroll and its selection do
+	# not.
+	_build_keys()
+	_build_rows()
+	_compose()
 
 
 func back() -> bool:
 	if zone == "drawer":
 		zone = "keys"
-		_place_focus_bar()
-		_route_sig = ""
+		kit.cue("tick", 0.75)
+		_mark_keys()
+		_mark_rows()
 		return true
 	return false
 
@@ -1038,8 +1148,8 @@ func hover_at(p: Vector2) -> void:
 	if hover == "action":
 		hover = ""
 	if hover != was:
-		_place_focus_bar()
-		_mark_strips()
+		_mark_keys()
+		_mark_rows()
 
 
 func click(p: Vector2) -> bool:
@@ -1047,9 +1157,10 @@ func click(p: Vector2) -> bool:
 	if hit.begins_with("key:"):
 		var i := int(hit.trim_prefix("key:"))
 		zone = "keys"
+		if i == key_index:
+			_mark_keys()
+			_mark_rows()
 		_focus_key(i, true)
-		_place_focus_bar()
-		_route_sig = ""
 		return true
 	if hit == "action":
 		accept()
@@ -1057,55 +1168,101 @@ func click(p: Vector2) -> bool:
 	if hit != "":
 		zone = "drawer"
 		_select(hit, true)
-		_place_focus_bar()
-		_route_sig = ""
+		_mark_keys()
+		_mark_rows()
 		return true
 	return false
 
 
+## The wheel: over the rack it scrolls a row a notch; over the selector it
+## turns it a detent -- the ordinary selection, not a drag.
 func wheel(p: Vector2, dir: int) -> bool:
-	if p.x < RAIL_X - 20.0:
-		return false
-	_hand_scroll(60.0 * dir)
-	return true
+	if p.x >= ROW_X - PULL - 20.0 and p.y >= BAY.position.y - 12.0:
+		_hand_scroll(dir)
+		return true
+	if p.x < KEY_WIN_X + KEY_WIN_W + 10.0 and p.y >= BAY.position.y - 12.0:
+		var to := clampi(key_index + dir, 0, key_count() - 1)
+		if to == key_index:
+			kit.cue("edge")
+		else:
+			_focus_key(to, true)
+		return true
+	return false
 
 
-## The right stick: the same hand scroll as the wheel, continuous.
+## The right stick: the same hand scroll as the wheel, a row at a time as
+## the stick's travel adds up.
 func scroll_by(px: float) -> void:
 	if zone != "drawer":
 		return
-	_hand_scroll(px)
+	_stick_px += px
+	while absf(_stick_px) >= ROW_PITCH:
+		var dir := signi(int(signf(_stick_px)))
+		_stick_px -= ROW_PITCH * float(dir)
+		if not _hand_scroll(dir):
+			_stick_px = 0.0
+			break
 
 
-## Scrolling by hand moves the rail under its edges; the selection stays
-## selected, and the route follows its station to the edge and turns there.
-func _hand_scroll(delta: float) -> void:
-	_scroll_px += delta
-	_layout(false, true)
-	_aim_route()
+## Scrolling by hand moves the rack a whole row under its window; the
+## selection stays selected, pulled, and read -- even out of view.
+func _hand_scroll(dir: int) -> bool:
+	var to := clampi(_first + dir, 0, _max_first())
+	if to == _first:
+		kit.cue("edge")
+		return false
+	_first = to
+	scroll[key_index] = _first
+	kit.cue("scroll")
+	_build_rows(false)
+	return true
 
 
 func _hit(p: Vector2) -> String:
-	for i in _rows.size():
-		var y: float = _rows[i]["y"]
-		if Rect2(Vector2(LOAD_X - 12, y - 10), Vector2(LOAD_W + 24,
-				KEY_SHELF + 16)).has_point(p):
+	for i in _keys.size():
+		if (_keys[i]["hit"] as Rect2).has_point(p):
 			return "key:%d" % i
-	if _focus_info.has("action") and (_focus_info["action"] as Rect2).has_point(p):
+	if _info.has("action") and (_info["action"] as Rect2).has_point(p):
 		return "action"
-	if p.x < RAIL_X - 12 or p.x > NAME_X + NAME_W + 8 or p.y < VIEW_TOP \
-			or p.y > VIEW_BOTTOM:
-		return ""
-	for id: String in _order:
-		var top: float = VIEW_TOP + float(_strips[id]["y"]) - _scroll_px
-		if p.y >= top - 6 and p.y < top + STATION - 6:
+	for id: String in _rows:
+		if (_rows[id]["hit"] as Rect2).has_point(p):
 			return id
 	return ""
 
 
+## Where a named thing is on this wall now, page px (for a tape): "key:<i>"
+## (its window), "row:<id>" (if shown), "action", "rack", "dial",
+## "readout". INF when it is not on the wall.
+func target_of(name: String) -> Vector2:
+	var p := name.split(":", true, 1)
+	match p[0]:
+		"key":
+			var i := int(p[1])
+			if i >= 0 and i < _keys.size():
+				return Vector2(KEY_WIN_X + KEY_WIN_W * 0.5, float(_keys[i]["y"]))
+		"keycap":
+			var i := int(p[1])
+			if i >= 0 and i < _keys.size():
+				return (_keys[i]["anchor"] as Vector2) + Vector2(40, 0)
+		"row":
+			if _rows.has(p[1]):
+				var h: Rect2 = _rows[p[1]]["hit"]
+				return Vector2(h.position.x + 200.0, h.get_center().y)
+		"action":
+			if _info.has("action"):
+				return (_info["action"] as Rect2).get_center()
+		"rack":
+			return Vector2(900, ROW_Y0 + ROW_PITCH * 4.5)
+		"dial":
+			return KNOB
+		"readout":
+			return Vector2(COL_L + 200, TOP + 60)
+	return Vector2.INF
+
+
 func prompts() -> Array:
 	if zone == "keys":
-		return [["move", "keys"], ["into", "what fits"], ["click", "pick"],
+		return [["move", "keys"], ["into", "the rack"], ["click", "pick"],
 			["turn_left", "turn left"], ["turn_right", "turn right"],
 			["close", "close"]]
 	var out := [["move", "items"]]
@@ -1116,53 +1273,72 @@ func prompts() -> Array:
 	return out
 
 
+# ============================================================ state
+
 func state() -> Dictionary:
 	var rects := {}
-	for id: String in _order:
-		var s: Dictionary = _strips[id]
-		rects[id] = [VIEW_TOP + float(s["y"]) - _scroll_px, float(s["h"])]
-	var inside := false
-	if unfolded != "" and rects.has(unfolded):
-		var r: Array = rects[unfolded]
-		inside = float(r[0]) >= VIEW_TOP - 1.0 and float(r[0]) + float(r[1]) \
-				<= VIEW_BOTTOM + 1.0
-	var route := route_points()
+	for i in _order.size():
+		rects[_order[i]] = [_row_y(i), ROW_H]
+	var at := _order.find(unfolded)
+	var inside := at >= _first and at < _first + SHOWN
+	var shown_ids := []
+	var hits := {}
+	var words := {}
+	for id: String in _rows:
+		shown_ids.append(id)
+		words[id] = _rows[id]["words"]
+		var h: Rect2 = _rows[id]["hit"]
+		hits[id] = [h.position.x, h.position.y, h.size.x, h.size.y]
+	var windows := []
+	var key_hits := []
+	for e: Dictionary in _keys:
+		windows.append(str(e["words"]))
+		var h: Rect2 = e["hit"]
+		key_hits.append([h.position.x, h.position.y, h.size.x, h.size.y])
+	# the module drawn out: the selected one, when its row is shown
+	var pulled := unfolded if _rows.has(unfolded) else ""
+	var out := []
+	for id: String in _rows:
+		if (_rows[id]["node"] as Node3D).position.length() > 0.0001:
+			out.append(id)
+	var seated_rows := {}
+	if slot_of(key_index) != "":
+		for id: String in _order:
+			if _stands(id) != "":
+				seated_rows[id] = _stands(id)
+	var act: Rect2 = _info.get("action", Rect2())
 	return {"key": key_index, "slot": slot_of(key_index), "zone": zone,
 		"unfolded": unfolded, "order": _order, "count": _order.size(),
-		"scroll": _scroll_px, "preview": preview.duplicate(), "hover": hover,
-		"rects": rects, "strip_positions": _positions(),
-		# the selected station is wholly inside the rail's view
+		"first": _first, "scroll": _first * ROW_PITCH, "shown": shown_ids,
+		"preview": preview.duplicate(), "hover": hover, "note": note,
+		"rects": rects, "row_hits": hits, "key_hits": key_hits,
+		"windows": windows, "stands": seated_rows, "pulled": pulled, "out": out,
+		"row_words": words,
+		"pointer_to": snappedf(-_angle(key_index), 0.0001),
+		"pointer_at": snappedf(_pivot.rotation.z, 0.0001),
+		"pointer_moving": kit.moving(_pivot, "rotation:z"),
+		"rack_moving": _rack_moving(),
+		# the selected module's row is inside the rack's window
 		"card_inside": inside,
-		# the selected item's composition is on the wall
-		"card_shown": _focus != null and str(_focus_info.get("id", "")) == unfolded
+		# the selected item's readout is on the wall
+		"card_shown": _readout != null and str(_info.get("id", "")) == unfolded
 			and unfolded != "",
 		"holes": _holes(),
-		"focus": _focus_info.duplicate(),
-		"echo_copies": _echoes.size(),
-		"route": {"key_y": snappedf(_rs.key_y, 0.1), "sel_y": snappedf(_rs.sel_y,
-			0.1), "name_y": snappedf(_rs.name_y, 0.1), "end_x": snappedf(
-			(route[-1] as Vector2).x, 0.1)},
-		"route_moving": kit.moving(_rs, "sel_y") or kit.moving(_rs, "key_y")
-			or kit.moving(_rs, "name_w"),
-		"route_held": _held(),
+		"focus": _info.duplicate(),
+		"action": [act.position.x, act.position.y, act.size.x, act.size.y]
+			if act.size.x > 0.0 else [],
 		"text_scale_min": _text_scale_min(),
 		"compositions": _live_compositions(),
-		"more": [(_more_up.get_meta("label") as Label3D).text if _more_up.visible
-			else "", (_more_down.get_meta("label") as Label3D).text
-			if _more_down.visible else ""]}
+		"more": ["%d MORE ABOVE" % int(_info_more[0]) if int(_info_more[0]) > 0 else "",
+			"%d MORE BELOW" % int(_info_more[1]) if int(_info_more[1]) > 0 else ""],
+		"knob": snappedf(_knob.position.y, 0.0001)}
 
 
-## Where the selected station is, if the route cannot reach it on the rail:
-## "above" or "below" the view (the route turns at that edge), else "".
-func _held() -> String:
-	if unfolded == "" or not _strips.has(unfolded):
-		return ""
-	var shelf: float = VIEW_TOP + float(_strips[unfolded]["y"]) - _scroll_px + SHELF
-	if shelf < VIEW_TOP:
-		return "above"
-	if shelf > VIEW_BOTTOM:
-		return "below"
-	return ""
+func _rack_moving() -> bool:
+	for id: String in _rows:
+		if kit.moving(_rows[id]["node"], "position"):
+			return true
+	return kit.moving(_knob, "position")
 
 
 ## The smallest vertical scale any word on this wall is drawn at, relative to
@@ -1179,19 +1355,20 @@ func _text_scale_min() -> float:
 	return snappedf(least, 0.001)
 
 
-## A word lifted over the rail's edges is shrunk ON PURPOSE, to be seen at
-## its page size (_over); that is its own scale, not a squash.
+## A word placed to be SEEN at its page size is scaled ON PURPOSE (Parts
+## .text); that is its own scale, not a squash.
 static func _own_scale(n: Node3D) -> float:
 	var s := 1.0
 	var at: Node = n
 	while at != null:
-		s *= float(at.get_meta("own_scale", 1.0))
+		if at is Node3D:
+			s *= float(at.get_meta("own_scale", 1.0))
 		at = at.get_parent()
 	return s
 
 
-## How many compositions are on the wall right now: one, or the old and the
-## new are overlapping.
+## How many readouts are on the wall right now: one, or the old and the new
+## are overlapping.
 func _live_compositions() -> int:
 	var n := 0
 	for c: Node in face.get_children():
@@ -1201,74 +1378,24 @@ func _live_compositions() -> int:
 	return n
 
 
-## The largest empty stretch of the rail's view that has stations beyond it:
-## between two drawn stations, or between a drawn station and the view's
-## edge when more lies past that edge.
+## Rows the rack shows that leave a gap: the rack is always filled from its
+## top, a row to every place, as far as its items go.
 func _holes() -> float:
-	var spans: Array = []
-	var any_above := false
-	var any_below := false
-	for id: String in _order:
-		var st: Dictionary = _strips[id]
-		var top: float = VIEW_TOP + float(st["y"]) - _scroll_px
-		var bottom: float = top + float(st["h"])
-		if (st["node"] as Node3D).visible:
-			spans.append([maxf(top, VIEW_TOP), minf(bottom, VIEW_BOTTOM)])
-		elif bottom <= VIEW_TOP + 0.5:
-			any_above = true
-		elif top >= VIEW_BOTTOM - 0.5:
-			any_below = true
-		else:
-			if top < VIEW_TOP:
-				any_above = true
-			else:
-				any_below = true
-	if spans.is_empty():
-		return VIEW_BOTTOM - VIEW_TOP if (any_above or any_below) else 0.0
-	spans.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	var want := mini(SHOWN, _order.size() - _first)
 	var worst := 0.0
-	for i in range(1, spans.size()):
-		worst = maxf(worst, float(spans[i][0]) - float(spans[i - 1][1]))
-	if any_above:
-		worst = maxf(worst, float(spans[0][0]) - VIEW_TOP)
-	if any_below:
-		worst = maxf(worst, VIEW_BOTTOM - float(spans[-1][1]))
-	return snappedf(worst, 0.1)
+	var seen := {}
+	for id: String in _rows:
+		seen[int(_rows[id]["index"]) - _first] = true
+	for j in want:
+		if not seen.has(j):
+			worst += ROW_PITCH
+	return worst
 
 
-func _positions() -> Dictionary:
-	var out := {}
-	for id: String in _order:
-		var node: Node3D = _strips[id]["node"]
-		out[id] = [snappedf(node.position.x, 0.0001), snappedf(node.position.y, 0.0001)]
-	return out
-
-
-## The device changed: the composition's control is redrawn for it.
+## The device changed: the readout's control is redrawn for it.
 func on_device() -> void:
 	_compose()
 
 
 func tick(_delta: float) -> void:
-	_update_spine()
-	_draw_route()
-
-
-## The spine, from the first station's shelf to the last, where the rail
-## is seen: it never runs past the rail's view or off the wall.
-func _update_spine() -> void:
-	if _spine == null or not is_instance_valid(_spine):
-		return
-	if _order.size() < 2:
-		_spine.visible = false
-		return
-	var first: Node3D = _strips[_order[0]]["node"]
-	var last: Node3D = _strips[_order[-1]]["node"]
-	var top := maxf(Kit.PAGE.y * 0.5 - first.position.y / Kit.px() + SHELF, VIEW_TOP)
-	var bottom := minf(Kit.PAGE.y * 0.5 - last.position.y / Kit.px() + SHELF,
-			VIEW_BOTTOM)
-	_spine.visible = bottom > top
-	if not _spine.visible:
-		return
-	(_spine.mesh as QuadMesh).size = Vector2(2, bottom - top) * Kit.px()
-	_spine.position = Kit.at(Vector2(RAIL_X, (top + bottom) * 0.5), 0.0028)
+	pass

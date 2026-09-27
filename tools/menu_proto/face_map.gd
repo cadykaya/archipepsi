@@ -91,6 +91,9 @@ var _glass_back: Node3D              # BACK TO YOUR VIEW, on the glass
 var _back_rect := Rect2()
 var _press_used := false             # a press the glass took: its release picks nothing
 var _edge_marks := {}                # "you" / "picked" -> {node, arrow, label, ref}
+## The hybrid's riveted port round the window. The direction studies
+## (frozen checkpoints) draw their own surround, and set this false.
+var port := true
 
 
 func setup(k: Kit, s: Shell) -> void:
@@ -142,6 +145,19 @@ func _window() -> void:
 	back.material_override = kit.flat(Color("#07090b"))
 	back.position = Vector3(0, 0, -6.0)
 	face.add_child(back)
+	# THE PORT (the hybrid): original station hardware, the enclosure's
+	# heaviest frame, riveted, round the opening
+	var m := Parts.mat(Parts.CAB_HI, 0.35, 0.5)
+	for b: Rect2 in [] if not port else [Rect2(WINDOW.position.x - 14, WINDOW.position.y - 14,
+				WINDOW.size.x + 28, 14),
+			Rect2(WINDOW.position.x - 14, WINDOW.end.y, WINDOW.size.x + 28, 14),
+			Rect2(WINDOW.position.x - 14, WINDOW.position.y, 14, WINDOW.size.y),
+			Rect2(WINDOW.end.x, WINDOW.position.y, 14, WINDOW.size.y)]:
+		Parts.block(face, b, 0.0, 0.016, m)
+	for p: Vector2 in [] if not port else [Vector2(WINDOW.end.x + 7,
+			WINDOW.position.y - 7), Vector2(WINDOW.position.x - 7, WINDOW.end.y + 7),
+			WINDOW.end + Vector2(7, 7)]:
+		Parts.rivet(face, p, 0.016)
 	var light := DirectionalLight3D.new()
 	light.rotation = Vector3(deg_to_rad(-62), deg_to_rad(28), 0)
 	light.light_energy = 0.9
@@ -586,6 +602,7 @@ func _target_keeping(local: Vector3, zoom: float) -> Vector3:
 func pick(id: String, keep_screen := false) -> void:
 	if not _rooms.has(id):
 		return
+	kit.cue("tick")
 	picked = id
 	var c: Vector3 = _rooms[id]["centre"]
 	var zoom := maxf(lens.zoom, fit * PICK_ZOOM)
@@ -615,6 +632,7 @@ func known() -> Array:
 
 ## MapFace.recentre: nothing picked, and (in LENS) the whole known Zone.
 func overview() -> void:
+	kit.cue("tick", 0.8)
 	picked = ""
 	expanded = false
 	floor_filter = -1
@@ -627,6 +645,7 @@ func toggle_detail() -> void:
 	if picked == "":
 		return
 	expanded = not expanded
+	kit.cue("tick", 1.1 if expanded else 0.9)
 	# The lens slides the place clear of the panel; nothing is covered.
 	kit.go(lens, "shift", -PANEL_W * 0.5 if expanded else 0.0, 0.3)
 	_refresh_marks()
@@ -827,28 +846,47 @@ func _build_panel() -> void:
 		return
 	_panel = Node3D.new()
 	face.add_child(_panel)
-	var x := WINDOW.end.x - PANEL_W
-	var y := WINDOW.position.y
-	kit.card(_panel, Vector2(x, y), Vector2(PANEL_W, WINDOW.size.y), 0.004,
-			kit.flat(Color("#0e1115"), 0.94))
-	kit.card(_panel, Vector2(x, y), Vector2(3, WINDOW.size.y), 0.005,
-			kit.flat(Kit.SIGNAL))
+	# MapFace's own detail, on a warm tag hung from the harness over the
+	# port's side the lens keeps clear (the hybrid's, B's): the long answer,
+	# asked for. Its words hold still; the tag is as tall as they need.
+	var shade := 0.74                  # the miniature's light falls here too
+	var x := WINDOW.end.x - PANEL_W + 8.0
+	var w := PANEL_W - 22.0
+	var z := 0.03
 	var text: String = data["details"].get(picked, "")
-	var yy := y + 18.0
 	var lines := text.split("\n")
+	var rows: Array = []
+	var h := 34.0
 	for i in lines.size():
 		var k := 3 if i == 0 else 2
-		var wrapped := kit.wrap(lines[i], k, PANEL_W - 40)
-		kit.label(_panel, "\n".join(wrapped), Vector2(x + 22, yy), k,
-				Kit.INK if i == 0 else Kit.INK_DIM, 0.006)
-		yy += (30.0 if k == 3 else 20.0) * wrapped.size() + (10.0 if i == 0 else 4.0)
+		var wrapped := kit.wrap(lines[i], k, w - 44)
+		rows.append([k, wrapped, i])
+		h += (30.0 if k == 3 else 20.0) * wrapped.size() + (10.0 if i == 0 else 6.0)
 	var floors: Array = data["floors"]
+	var floor_line := ""
 	if floors.size() > 1:
 		var f := int((_rooms[picked] as Dictionary)["floor_y"] > float(floors[0]) + 0.5)
-		kit.label(_panel, "FLOOR %d OF %d" % [f + 1, floors.size()],
-				Vector2(x + 22, yy + 12), 2, Kit.INK_FAINT, 0.006)
-	kit.label(_panel, "MAPFACE'S OWN DETAIL", Vector2(x + 22, WINDOW.end.y - 34),
-			2, Kit.INK_FAINT, 0.006)
+		floor_line = "FLOOR %d OF %d" % [f + 1, floors.size()]
+		h += 28.0
+	h += 44.0
+	var r := Rect2(x, WINDOW.position.y + 22.0, w, minf(h, WINDOW.size.y - 40.0))
+	Parts.tag(_panel, r, z, true, shade)
+	Parts.block(_panel, Rect2(r.position.x + 8, r.position.y + 30, 4, r.size.y - 44), z,
+			z + 0.0006, Parts.unlit(Kit.SIGNAL), false)
+	var yy := r.position.y + 34.0
+	for row: Array in rows:
+		var k: int = row[0]
+		for line: String in row[1]:
+			Parts.text(kit, _panel, line, Vector2(r.position.x + 22, yy), k,
+					Parts.FLAG_INK if int(row[2]) != 1 else Parts.TAG_DIM, z + 0.0012)
+			yy += 30.0 if k == 3 else 20.0
+		yy += 10.0 if k == 3 else 6.0
+	if floor_line != "":
+		Parts.text(kit, _panel, floor_line, Vector2(r.position.x + 22, yy + 6), 2,
+				Parts.TAG_DIM, z + 0.0012)
+	Parts.text(kit, _panel, "MAPFACE'S OWN DETAIL", Vector2(r.position.x + 22,
+			r.end.y - 30), 2, Parts.TAG_FAINT, z + 0.0012)
+	_panel.set_meta("rect", r)
 
 
 # ------------------------------------------------------------ shown an entry
@@ -882,6 +920,7 @@ func follow(l: Dictionary) -> void:
 func return_view() -> bool:
 	if _return.is_empty():
 		return false
+	kit.cue("return")
 	var v := _return
 	_return = {}
 	followed = {}
@@ -1082,7 +1121,15 @@ func target_world(l: Dictionary) -> Dictionary:
 	var s := Kit.px()
 	var page := Vector2(hit.x / s + Kit.PAGE.x * 0.5, Kit.PAGE.y * 0.5 - hit.y / s)
 	return {"world": world, "page": page,
-		"inside": WINDOW.grow(-6).has_point(page)}
+		"inside": view_rect().grow(-6).has_point(page)}
+
+
+## The part of the window the miniature is seen through: all of it, or --
+## with the detail open -- all but the tag's side.
+func view_rect() -> Rect2:
+	if expanded and picked != "":
+		return Rect2(WINDOW.position, WINDOW.size - Vector2(PANEL_W, 0))
+	return WINDOW
 
 
 # ------------------------------------------------------------ input
@@ -1253,6 +1300,18 @@ func release(hit: Dictionary, button: int) -> void:
 func wheel(_p: Vector2, dir: int) -> bool:
 	zoom_view(ZOOM_STEP if dir > 0 else 1.0 / ZOOM_STEP)
 	return true
+
+
+## Where a named thing is on this wall now, page px (for a tape):
+## "back" (BACK TO YOUR VIEW, on the glass), "window" (the port's middle).
+func target_of(name: String) -> Vector2:
+	match name:
+		"back":
+			if _back_rect.size.x > 0.0:
+				return _back_rect.get_center()
+		"window":
+			return view_rect().get_center()
+	return Vector2.INF
 
 
 func prompts() -> Array:

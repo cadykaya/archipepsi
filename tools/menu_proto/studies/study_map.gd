@@ -15,6 +15,7 @@ var frames: Array[MeshInstance3D] = []
 ## and the miniature's light -- with the wall's pieces kept, so the
 ## direction's own wall can dress them.
 func _window() -> void:
+	port = false
 	super._window()
 	for c: Node in face.get_children():
 		if c is MeshInstance3D and (c as MeshInstance3D).material_override == kit.wall_material():

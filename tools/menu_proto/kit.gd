@@ -27,7 +27,7 @@ const TITLES := {"settings": "SETTINGS", "equipment": "EQUIPMENT",
 # ---- palette. Text and marks are unshaded so they land on these exactly;
 # walls and plates are lit, so the box has a light in it.
 const BG := Color("#0b0d10")
-const WALL := Color("#1b1f25")
+const WALL := Color("#2b2e31")        # the enclosure's graphite enamel (the hybrid)
 const POST := Color("#0e1013")
 const SLAB := Color("#15181c")
 const PLATE := Color("#262b33")
@@ -50,6 +50,7 @@ var num_font: FontFile
 var icons := {}                      # name -> Texture2D
 var icon_text := {}                  # name -> readable fallback
 var keycap: Texture2D                # the Glyph keycap nine-slice (2/2/1/3)
+var cue_sink := Callable()           # the cue bank (Cues.play), set by main
 var missing := {}                    # characters asked for that the face lacks
 var missing_where := {}              # ... and the first text that asked
 
@@ -492,6 +493,12 @@ static func strip(points: Array, width: float,
 ## Animate `obj`'s property to `to` over `seconds`, from wherever it is NOW.
 ## A second call on the same property replaces the first mid-flight: that
 ## is what makes every transition interruptible. Reduced motion: at once.
+## A sound cue (Cues): information, so NOT motion -- reduced motion keeps it.
+func cue(kind: String, pitch := 1.0) -> void:
+	if cue_sink.is_valid():
+		cue_sink.call(kind, pitch)
+
+
 func go(obj: Object, prop: String, to: Variant, seconds: float,
 		ease := "cubic", delay := 0.0) -> void:
 	for i in range(_tracks.size() - 1, -1, -1):

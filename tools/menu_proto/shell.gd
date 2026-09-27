@@ -13,6 +13,12 @@ extends Node3D
 ## Unlike MenuShell, the walls are LIT: a light near the ceiling gives each
 ## wall a fall-off from top to bottom, and a raised plate shades the wall
 ## behind it. That is the depth the focus uses, instead of a glow.
+##
+## THE HYBRID (the owner's rulings of 2026-09-27): the walls are the old
+## station enclosure's graphite enamel, and one laced HARNESS runs round
+## all four of them and every corner, held by the same saddle clamps
+## everywhere. Every wall's title is a warm flag label on it. What a wall
+## hangs from the harness is that wall's own.
 
 signal turned(page: String)
 
@@ -23,6 +29,9 @@ var walls := {}          # page -> MeshInstance3D
 var heading := 0         # quarter turns, unwrapped
 var front := 0
 var light: OmniLight3D
+## The hybrid's harness round the walls. The direction studies (frozen
+## checkpoints) draw their own, and set this false before setup.
+var harness := true
 
 
 func setup(k: Kit) -> void:
@@ -51,7 +60,10 @@ func setup(k: Kit) -> void:
 		wall.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		face.add_child(wall)
 		walls[page] = wall
-		_title(page, i)
+		if harness:
+			_harness(page, i)
+		else:
+			_title(page, i)
 	var span := Kit.DISTANCE * 2.0
 	for y: float in [-size.y * 0.5 - 0.02, size.y * 0.5 + 0.02]:
 		_block(Vector3(span, 0.02, span), Vector3(0, y, 0), Kit.SLAB)
@@ -72,6 +84,8 @@ func setup(k: Kit) -> void:
 	light.shadow_bias = 0.02
 	light.shadow_normal_bias = 0.5
 	add_child(light)
+	if harness:
+		_corners()
 
 
 func _block(size: Vector3, pos: Vector3, colour: Color) -> void:
@@ -84,19 +98,51 @@ func _block(size: Vector3, pos: Vector3, colour: Color) -> void:
 	add_child(node)
 
 
-## Every wall's heading: Production's name for it, and its NUMBER painted
-## large on the wall like a facility's room sign -- where you are in the
-## box, the one thing a turn changes, and the thing that sweeps past while
-## the eye turns.
-const SIGN := Color("#2a3039")
+## THE HARNESS on each wall: the trunk's run, its clamps, and the wall's
+## title as a flag label on it -- Production's name and the wall's number,
+## where you are in the box. Lacing keeps off the spans a wall hangs
+## something from (`clear`).
+const HARNESS := {
+	"settings": {"clamps": [560.0, 1000.0], "clear": [Vector2(1166, 1214)]},
+	"equipment": {"clamps": [520.0, 1110.0], "clear": [Vector2(1186, 1214)]},
+	"map": {"clamps": [640.0, 800.0], "clear": [Vector2(932, 960), Vector2(1174, 1202)]},
+	"journal": {"clamps": [880.0], "clear": [Vector2(32, 60), Vector2(586, 614),
+		Vector2(1190, 1230)]},
+}
+## The miniature's light also falls on the Map's wall and, glancing, the
+## Journal's (the renderer ignores a light's cull mask): a PALE surface on
+## them is toned by this much, so one flag reads the same on every wall.
+const SHADE := {"map": 0.74, "journal": 0.86}
+var title_flags := {}    # page -> the flag's page rect
 
 
+func _harness(page: String, index: int) -> void:
+	var face: Node3D = faces[page]
+	var shade: float = SHADE.get(page, 1.0)
+	var r := Parts.flag(kit, face, 40, Kit.TITLES[page], 4, "0%d" % (index + 1), shade)
+	title_flags[page] = r
+	var clear: Array = (HARNESS[page]["clear"] as Array).duplicate()
+	clear.append(Vector2(r.position.x, r.end.x))
+	Parts.trunk(face, HARNESS[page]["clamps"], clear)
+
+
+## The pre-hybrid title (the direction studies remove it and set their own).
 func _title(page: String, index: int) -> void:
 	var face: Node3D = faces[page]
 	kit.label(face, Kit.TITLES[page], Vector2(48, 30), 4, Kit.INK, 0.003)
 	var num := "0%d" % (index + 1)
 	var w := kit.measure(num, 9, true)
-	kit.label(face, num, Vector2(Kit.PAGE.x - 44 - w, 8), 9, SIGN, 0.0015, true)
+	kit.label(face, num, Vector2(Kit.PAGE.x - 44 - w, 8), 9, Color("#2a3039"), 0.0015, true)
+
+
+## The trunk round the four corner posts: one harness, not four.
+func _corners() -> void:
+	var loom := Parts.mat(Parts.LOOM, 0.1, 0.45)
+	for i in Kit.PAGES.size():
+		var left: String = Kit.PAGES[i]
+		var right: String = Kit.PAGES[posmod(i - 1, Kit.PAGES.size())]
+		Parts.corner(self, faces[left], faces[right], Parts.TRUNK_Y, Parts.TRUNK_R,
+				loom, Parts.TRUNK_Z)
 
 
 func face_of(page: String) -> Node3D:
@@ -124,6 +170,7 @@ func turn(step: int) -> void:
 	heading += signi(step)
 	front = posmod(heading, Kit.PAGES.size())
 	kit.go(camera, "rotation:y", Kit.yaw_of(heading), Kit.TURN_SECONDS)
+	kit.cue("page", 1.0 if step > 0 else 0.9)
 	turned.emit(front_page())
 
 
@@ -137,6 +184,7 @@ func show_page(page: String) -> void:
 	heading += step
 	front = index
 	kit.go(camera, "rotation:y", Kit.yaw_of(heading), Kit.TURN_SECONDS)
+	kit.cue("page")
 	turned.emit(page)
 
 

@@ -25,6 +25,7 @@ const SAMPLE := "res://sample/sample.json"
 var kit: Kit
 var shell: Shell
 var overlay: Overlay
+var cues: Cues
 var faces := {}
 var sample: Dictionary
 var open := true
@@ -61,6 +62,9 @@ func _ready() -> void:
 	add_child(env)
 	kit = Kit.new(_asset_dir())
 	kit.reduced = args.has("reduced")
+	cues = Cues.new()
+	add_child(cues)
+	kit.cue_sink = cues.play
 	shell = Shell.new()
 	add_child(shell)
 	shell.setup(kit)
@@ -128,6 +132,7 @@ func set_equipment(variant: String) -> void:
 
 func set_reduced(on: bool) -> void:
 	kit.reduced = on
+	(faces["settings"] as FaceSettings).sync_reduced()
 	_refresh()
 
 
@@ -273,12 +278,14 @@ func _refresh_prompts() -> void:
 func _open(page: String) -> void:
 	open = true
 	shell.face(page)
+	kit.cue("open")
 	_refresh()
 
 
 func _close() -> void:
 	open = false
 	_drag_button = 0
+	kit.cue("close")
 	_refresh()
 
 
@@ -344,7 +351,7 @@ func snapshot() -> Dictionary:
 		"equipment_variant": equipment_variant,
 		"missing_glyphs": kit.missing.duplicate(),
 		"missing_where": kit.missing_where.duplicate(), "busy": kit.busy(),
-		"prompts": overlay.shown.duplicate(true)}
+		"prompts": overlay.shown.duplicate(true), "cues": cues.state()}
 	for page: String in faces:
 		out[page] = faces[page].state()
 	return out
@@ -425,6 +432,34 @@ func _do(step: Dictionary) -> void:
 		_move(at)
 		_button(at, MOUSE_BUTTON_LEFT, true)
 		_button(at, MOUSE_BUTTON_LEFT, false)
+	# Named targets: the tape says WHAT it points at ("equipment:row:act_bolt",
+	# "settings:pot:master_volume:0.5"), the face says where that is on its
+	# page now, and the box says where that is on the screen.
+	if step.has("mouse_on"):
+		_move(_target_screen(str(step["mouse_on"])))
+	if step.has("glide_on"):
+		_glides.append({"from": pointer if pointer.x >= 0 else Vector2(960, 900),
+			"to": _target_screen(str(step["glide_on"])), "t0": _tape_t,
+			"dur": float(step.get("dur", 0.3)), "button": 0})
+	if step.has("click_on"):
+		var at := _target_screen(str(step["click_on"]))
+		_move(at)
+		_button(at, MOUSE_BUTTON_LEFT, true)
+		_button(at, MOUSE_BUTTON_LEFT, false)
+	if step.has("wheel_on"):
+		var w: Array = step["wheel_on"]
+		var at := _target_screen(str(w[0]))
+		_move(at)
+		var b := MOUSE_BUTTON_WHEEL_DOWN if int(w[1]) > 0 else MOUSE_BUTTON_WHEEL_UP
+		_button(at, b, true)
+		_button(at, b, false)
+	if step.has("drag_on"):
+		var d: Array = step["drag_on"]
+		var from := _target_screen(str(d[0]))
+		_move(from)
+		_button(from, MOUSE_BUTTON_LEFT, true)
+		_glides.append({"from": from, "to": _target_screen(str(d[1])), "t0": _tape_t,
+			"dur": float(step.get("dur", 0.4)), "button": MOUSE_BUTTON_LEFT})
 	if step.has("wheel_page"):
 		var at := _page_screen(step["wheel_page"])
 		_move(at)
@@ -489,6 +524,19 @@ func _glide_step(g: Dictionary) -> void:
 
 func _page_screen(v: Array) -> Vector2:
 	return shell.screen_of(shell.front_page(), Vector2(float(v[0]), float(v[1])))
+
+
+## A face's named target, on the screen now ("<page>:<name>").
+func _target_screen(name: String) -> Vector2:
+	var parts := name.split(":", true, 1)
+	var f: Object = faces.get(parts[0])
+	var at: Vector2 = f.call("target_of", parts[1]) if f != null \
+			and f.has_method("target_of") else Vector2.INF
+	if at == Vector2.INF:
+		push_warning("proto: no target %s" % name)
+		print("[tape] no target %s" % name)
+		return Vector2(-100, -100)
+	return shell.screen_of(parts[0], at)
 
 
 func _room_screen(id: String) -> Vector2:
@@ -565,6 +613,14 @@ func _check(c: Dictionary) -> void:
 		return
 	var ok := true
 	var want: Variant = null
+	var numeric := c.has("gt") or c.has("lt") or c.has("near")
+	if numeric and not (value is int or value is float):
+		# a missing or non-number value fails the check -- it never crashes it
+		want = c.get("gt", c.get("lt", c.get("near")))
+		_failures.append(str(c.get("why", c["path"])))
+		print("[test] FAIL %s: got %s, wanted a number vs %s" % [str(c.get("why",
+				c["path"])), str(value), str(want)])
+		return
 	if c.has("eq"):
 		want = c["eq"]
 		if (value is int or value is float) and (want is int or want is float):
@@ -586,8 +642,9 @@ func _check(c: Dictionary) -> void:
 		ok = float(value) < float(want)
 	elif c.has("empty"):
 		want = "empty"
-		var n := (value as Dictionary).size() if value is Dictionary else (
-				(value as Array).size() if value is Array else str(value).length())
+		# nothing there at all is empty -- "<null>" is not a value
+		var n := 0 if value == null else ((value as Dictionary).size() if value is Dictionary
+				else ((value as Array).size() if value is Array else str(value).length()))
 		ok = (n == 0) == bool(c["empty"])
 	elif c.has("near"):
 		want = c["near"]
