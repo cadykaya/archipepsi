@@ -123,35 +123,33 @@ Findings other lanes need:
   set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Now: TRACK A2, phase 2 — the combined interactive review prototype**
-(§11, "Ruling, 2026-09-27"). The studies were ACCEPTED, and
-principles were selected:
-* **LENS** for the Map face.
-* **THREAD** for meaningful cross-face links, starting with Journal →
-  Map.
-* **LEAF**'s in-place unfolding and slot-tied comparison for
-  Inventory, in a revised composition.
+**Now: TRACK A2, phase 2 — DELIVERED FOR OWNER REVIEW; STOPPED before
+production integration** (§11, "Track A2, phase 2").
 
-These are principles, not the gray-box layouts, and not one effect on
-every face.
+The interactive review prototype is built, for Inventory (LEAF, recomposed
+around the module and its key), Map (LENS) and Journal → Map (THREAD).
+Settings/Pause is reachable but undesigned.
 
-The build is one INTERACTIVE art-lane prototype (Inventory, Map and
-Journal, with Settings/Pause reachable but undesigned).
-* It takes real mouse and keyboard input, and controller input is
-  implemented. Report tested and merely implemented separately.
-* It makes a first deliberate visual pass.
+| | |
+|---|---|
+| Build | `tools/menu_proto` @ `15e5d3d` |
+| Review | `docs/art/review/menu_proto_2026-09-27/` |
+| Report | `docs/art/reports/2026-09-27-a2-interactive-review-prototype.md` |
+| Handoff | `HANDOFF_STATE_TRANSITIONS.md` and `HANDOFF_GLYPH_ASSETS.md`, in the review folder |
+| Reconciled against | CK9 `a2b9df6` |
 
-Alongside it:
-* the Glyph additions `; — → [ ]`, and device symbols with text
-  fallbacks;
-* focus, circuit and player location told apart by shape and placement
-  as well as colour;
-* reduced motion that covers secondary motion.
+Evidence:
+* scripted: 188 checks through the real input path (58 + 87 + 43, with
+  every binding pressed), plus 8 captures;
+* hands-on: NOT done.
 
-Reconcile against the current stable Production checkpoint, and record
-the revision. Deliver the Glyph requirements and the state/transition
-handoff with the build. There are no Production runtime edits, and it
-does not open 0.5, Track C or Track E.
+**Waiting on the owner:**
+* the hands-on review;
+* the Glyph characters still needed;
+* the six proposed Production deltas;
+* whether the visual pass carries forward.
+
+Nothing is integrated. It does not open 0.5, Track C or Track E.
 
 Two things from it that other lanes need:
 

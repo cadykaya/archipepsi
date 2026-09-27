@@ -48,7 +48,9 @@ for pair in "$@"; do
   name="${pair##*:}"
   [ -d "$src" ] || { echo "no directory at $src" >&2; exit 2; }
   mkdir -p "$STAGE/$name"
-  cp "$src"/* "$STAGE/$name/" 2>/dev/null || true
+  # The whole folder, sub-folders included: an interactive build is a
+  # project tree, and a flat copy would ship it without its scenes' parts.
+  cp -r "$src"/. "$STAGE/$name/"
 done
 
 ( cd "$OUT" && zip -qr "$SLUG.zip" "$SLUG" )

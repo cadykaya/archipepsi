@@ -2717,6 +2717,53 @@ prototype** for Inventory, Map and Journal.
 
 It does not open 0.5, Track C or Track E.
 
+### Track A2, phase 2 — the interactive review prototype is DELIVERED FOR OWNER REVIEW (2026-09-27)
+
+**Delivered, and STOPPED before production integration.** Nothing is
+integrated, and no Production-owned file was edited.
+- Report: `docs/art/reports/2026-09-27-a2-interactive-review-prototype.md`.
+- Review: `docs/art/review/menu_proto_2026-09-27/`, which holds the README,
+  8 captures, sheets, stills and `stills_720p/`.
+- Handoff: `HANDOFF_STATE_TRANSITIONS.md` and `HANDOFF_GLYPH_ASSETS.md`.
+- The build is `tools/menu_proto` at `15e5d3d`, staged into the archive by
+  `tools/menu_proto/stage_build.sh`.
+
+**Reconciled against CK9 `a2b9df6`** (code `22fdbda`):
+- The menu, query, contract, binding and fixture files are byte-identical
+  from CK8 `3b96bc4` to `152d777`.
+- `SUPPORTED_GEAR_DOMAINS = ()`.
+- The sample is regenerated from CK9. This pass added
+  `MapFace.band_of_room` and `player_floor` to it.
+
+**Evidence, in separate scopes:**
+- Implemented: everything in the handoff.
+- Scripted through the real input path: `test_core` has 58 checks,
+  `test_more` 87 and `test_inputs` 43 (every binding pressed), 188 in all,
+  every one passing. The staged build passes `test_core` on its own. The
+  8 captures and 6 gameplay-size stills are scripted.
+- Hands-on: **not done**. That is the owner's review.
+
+**For Production** (`HANDOFF_STATE_TRANSITIONS.md` §6). These are
+recommendations; none is implemented there.
+- MapFace's `_pulse()` ignores reduced motion.
+- JournalQuery should return structured rows with identity.
+- Esc and B could back out of a detail before closing.
+- Face input is dropped during a turn.
+- The legibility floor at 1280×720 with no stretch.
+- One floor at a time: the LENS dims the other floors where Production
+  hides them.
+
+**Open, and the owner's:**
+- the hands-on review;
+- the Glyph characters Production still needs (`HANDOFF_GLYPH_ASSETS.md`
+  §3), which are NOT added because they go beyond the four requested;
+- the six Production deltas;
+- whether the visual pass is the character to carry forward;
+- Settings/Pause, which stays open.
+
+**Next, only on the owner's word:** production integration, or another
+visual pass.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

@@ -2174,3 +2174,52 @@ But it fixed nothing that was visible.)
 > **Before explaining a difference, look at where it is. A number says
 > how much; only a mask of the pixels says what. The assembler now
 > writes that mask beside every settled frame that differs.**
+
+## A word inside a scaled miniature inherits the miniature's scale
+
+The Map's labels were fixed-size, billboarded Label3Ds, children of the
+miniature. The miniature is scaled down about a hundredfold to fit the
+window, and a Label3D keeps its parent's scale even when it is fixed-size
+and billboarded. So every label was drawn as a speck. The only trace in a
+render was a few stray dots, and a room-name check never failed, because
+the labels "existed". They became words on the window's glass instead:
+built once, and placed every frame from where the lens projects the
+thing they name, clear of one another.
+
+> **A label that names something in a scaled scene belongs to the screen
+> (the glass), not to the scene. Place it from the projection every
+> frame, and test that it is on screen and clear, not merely that it
+> exists.**
+
+## Look at the gameplay window size before you record anything
+
+Five faults were visible only in 1280×720 stills: a long name colliding
+with the sample tag, an overflow count under an open card, a printed
+arrow casting a shadow blob, an exit tag touching its own gate, and a
+1.4:1 sample label. Eight captures had already been recorded. Every one
+of those faults would have gone to the owner baked into video, and the
+captures had to be recorded again.
+
+> **Render every face at the size the game ships (here Production's
+> 1280×720) and look at it BEFORE recording. A capture fixes whatever
+> is on screen, including the faults.**
+
+## A prompt is a promise; test the action behind it
+
+On the pad, the drawer's prompt line said R-STICK: SCROLL, and nothing
+read the right stick. The table of prompts and the input handling were
+written apart, and no check tied one to the other.
+
+> **For every control a prompt names, a scripted check performs that
+> control and asserts its effect.**
+
+## `pkill -f` / `pgrep -f` match the shell that runs them
+
+`pkill -f "write-movie"` killed its own bash, because the pattern is in
+that shell's own command line, so the rest of the command never ran.
+Twice.
+
+> **Bracket one character (`pgrep -f "[w]rite-movie"`) so the pattern
+> cannot match its own command line.** Also: Godot resolves a relative
+> `--shot` path against `--path` (the project), not the shell's working
+> directory. Pass absolute paths.

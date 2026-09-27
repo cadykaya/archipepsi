@@ -412,7 +412,7 @@ These are recommendations only. Each one says what the prototype does.
 | Scope | What it covers |
 |---|---|
 | **Implemented** | everything in §§2–5 |
-| **Exercised by scripted input through the real input path** (`Input.parse_input_event`: keys, mouse buttons and motion, pad buttons and axes; points carried through the viewport's final transform) | `tapes/test_core.json`: **58** checks, and `tapes/test_more.json`: **87** checks, all passing. The eight captures (`captures/*.mp4`) are scripted as well. |
+| **Exercised by scripted input through the real input path** (`Input.parse_input_event`: keys, mouse buttons and motion, pad buttons and axes; points carried through the viewport's final transform) | `tapes/test_core.json`: **58** checks, `tapes/test_more.json`: **87**, and `tapes/test_inputs.json`: **43** — **188** in all, every one passing. The eight captures (`captures/*.mp4`) are scripted as well. |
 | **Hands-on use** | **not done by me.** No person has used this build with a real keyboard, mouse or controller. That review is the owner's. |
 
 What the scripted checks cover:
@@ -433,8 +433,29 @@ What the scripted checks cover:
 - mouse drag, pan and wheel on the Map;
 - the sticks and triggers, including right-stick scroll in the drawer.
 
+**Every binding, and the tape that presses it.** Each binding below is
+pressed at least once through the real input path, and its effect is
+checked.
+
+| Action | Keyboard and mouse | Pad |
+|---|---|---|
+| Open / close (MenuShell) | Tab, Esc (core) | Back, Start (inputs) |
+| Turn | Q, E (core); a click on an edge arrow (inputs) | LB, RB (core, more) |
+| Move | arrows (core, more) | d-pad ↑ ↓ ← → (core, inputs); left stick (inputs) |
+| Accept | Enter (core); Space (inputs) | A (inputs) |
+| Back out one step | ← in the drawer (inputs) | B (inputs) |
+| Equipment | click a key, click a strip, hover, wheel (core, inputs) | right stick scroll (more) |
+| Map: places | `]` (core), `[` (inputs); a still click (core) | d-pad → (captures), d-pad ← (inputs) |
+| Map: view | ← → orbit, `+` (core); `-`, W, Home (inputs); C (core); left-drag, right-drag, wheel (more) | right stick, left stick, RT, Y (more); LT (inputs) |
+| Map: floors and detail | PgUp (more), PgDn (inputs); Enter (core) | d-pad ↓ (more), d-pad ↑ (inputs) |
+| Journal | ↑ ↓ (core, more); ← →, Enter to follow, a click in either column, wheel (inputs) | right stick scroll (inputs); RB to follow (the same turn as E) |
+| Settings | ↑ ↓ ← →, Enter (more); a click on a row (inputs) | — |
+
 Not exercised at all:
 
+- KP Enter, which is copied verbatim from Production's input map and never
+  pressed;
+- A, S and D, which share W's code path, and only W is pressed;
 - physical controller hardware, and non-Xbox pad layouts;
 - window resizing and focus loss;
 - a long session.
