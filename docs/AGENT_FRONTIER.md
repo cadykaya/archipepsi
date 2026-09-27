@@ -123,29 +123,23 @@ Findings other lanes need:
   set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Now: TRACK A2 — the INTERACTIVE hybrid in the isolated menu prototype.**
-See ART_FRONTIER §11, "Ruling, 2026-09-27 (fifth)".
+**Now: TRACK A2 — the interactive hybrid is DELIVERED. STOPPED for the
+owner's hands-on review.** See ART_FRONTIER §11, "Delivered, 2026-09-27 —
+the interactive hybrid".
 
-* **Build it** in `tools/menu_proto` on its existing behaviour and data,
-  with no parallel logic. Two refinements first:
-  * move the Settings feed off the "100%";
-  * a modest readability lift for the comparison and Journal text.
-* **Verify the new layout** through the real input path:
-  * long content;
-  * scrolling to the last items;
-  * empty keys;
-  * consumable counts;
-  * rapid selection;
-  * page turns;
-  * device switching.
-* **Deliver:**
-  * a runnable standalone build;
-  * launch instructions;
-  * one short all-face tour;
-  * only the close-ups a specific issue needs.
-* **Keep safe:** the checkpoints (`91e5d3f` inventory pass, `8b13aa7`
-  studies, `94e219d` hybrid stills). No Production edits.
-* **Then STOP** for hands-on review.
+* **Built** in `tools/menu_proto` on the prototype's own logic and data.
+  Both refinements are in: the Settings feed is clear of every value, and
+  the quieter text is lifted.
+* **Verified by script:** 434 checks in 4 tapes, through the real input
+  path (`tools/menu_proto/test.sh`). **Hands-on: not done.**
+* **Delivered:**
+  * report: `docs/art/reports/2026-09-27-a2-interactive-hybrid.md`;
+  * review folder: `docs/art/review/interactive_hybrid_2026-09-27/`;
+  * build: `tools/menu_proto/stage_build.sh`.
+* **Kept safe:** `91e5d3f` (inventory pass), `8b13aa7` (studies) and
+  `94e219d` (hybrid stills).
+* **Wake-ups are no-ops** until the owner answers. Do not start
+  integration; it is not approved. No Production edits.
 
 Two things from it that other lanes need:
 

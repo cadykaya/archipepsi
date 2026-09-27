@@ -3167,6 +3167,45 @@ Keep the previous checkpoints safe, and preserve completed pieces durably
 as you go. No Production-owned runtime edits and no game integration.
 **STOP** after delivering the interactive hybrid for hands-on review.
 
+### Delivered, 2026-09-27 — the interactive hybrid. STOPPED for hands-on review.
+
+The approved hybrid is built into `tools/menu_proto`, over the
+prototype's own behaviour and data. Report:
+`docs/art/reports/2026-09-27-a2-interactive-hybrid.md`; review folder:
+`docs/art/review/interactive_hybrid_2026-09-27/`. It is NOT final hands-on
+acceptance and NOT approval for Production integration.
+
+* **Built:**
+  * `parts.gd` — the hardware, placed seen-at-page so clicks land on what
+    the eye sees;
+  * `cues.gd` — procedural cues, untouched by reduced motion, set by
+    MASTER VOLUME;
+  * the shell's harness, round every wall and corner;
+  * Equipment — C's cabinet with D's grafted rack: a six-position
+    selector, whole-row scrolling, an adaptive readout;
+  * Settings — D's boards at Production's own ranges and words, with the
+    review plate apart;
+  * the Journal's runs and tags; the ivory link into the Map's port; the
+    Map's detail tag.
+* **Both refinements are in.** Epsilon's feed runs down the board margin
+  into its empty foot, clear of every value (checked on the layout). The
+  quieter comparison and Journal words were lifted (colours only; the
+  close-up gives the contrast).
+* **Verified by script only**, through the real input path: 434 checks in
+  4 tapes.
+  * `test_hybrid` (206) covers the ruling's list on the new layout.
+  * The three pre-hybrid tapes (228) are ported by intent, and none was
+    dropped. The README's table maps every changed check.
+  * The tour: `cap_10_tour` (32 s, with sound). Close-ups: the two
+    fixes only.
+  * **Hands-on: not done.**
+* **Kept safe.** Studies H and B re-render pixel-identical; the frozen
+  scenes don't take the harness. The pre-hybrid capture tapes moved to
+  `tapes/pre_hybrid/`.
+* **For Production:** Magic Meter's history note `+40 max_value` carries a
+  raw field name. The prototype prints it as `+40 MAX VALUE`.
+* **Next: nothing** until the owner's hands-on verdict.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

@@ -1,0 +1,8 @@
+{
+ "about": "Close-up evidence, fix 2: the Journal at rest -- its quieter entries lifted. Scripted, a still.",
+ "steps": [
+  {"at": 0.3, "key": "Q"},
+  {"after": 0.7, "key": "Q"},
+  {"after": 1.2, "mark": "journal at rest"}
+ ]
+}

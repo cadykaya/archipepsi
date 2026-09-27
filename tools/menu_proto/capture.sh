@@ -7,7 +7,8 @@
 # (Input.parse_input_event) under Movie Maker: a fixed 30 fps, 1920 x 1080,
 # the pointer drawn (--cursor), the scripted input captioned on screen.
 # The frames become <out>/captures/<cap>.mp4 (1920 x 1080 -- every frame at
-# full size is there), and the moments the tape MARKS become one sheet per
+# full size is there -- with the menu's own sound, when it made any), and
+# the moments the tape MARKS become one sheet per
 # capture, <out>/sheets/<cap>.png. The full-size marked frames are not kept
 # beside them: they repeat the video's own frames and would take a review
 # archive past its upload limit.
@@ -35,7 +36,10 @@ for cap in "${CAPS[@]}"; do
     echo "capture: $cap did not finish -- log $frames/log" >&2
     exit 1
   fi
-  "$FF" -y -loglevel error -framerate 30 -i "$frames/f%08d.png" \
+  # Movie Maker writes the mixed sound beside the frames: the cues go in too.
+  audio=()
+  [ -f "$frames/f.wav" ] && audio=(-i "$frames/f.wav" -c:a aac -b:a 128k -shortest)
+  "$FF" -y -loglevel error -framerate 30 -i "$frames/f%08d.png" "${audio[@]}" \
     -c:v libx264 -pix_fmt yuv420p -crf 18 -preset slow -movflags +faststart \
     "$OUT/captures/$cap.mp4"
   python3 - "$frames" "$OUT" "$cap" "$P/tapes/$cap.json" <<'PY'

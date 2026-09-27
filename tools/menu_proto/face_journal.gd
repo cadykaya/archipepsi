@@ -540,8 +540,15 @@ func state() -> Dictionary:
 	var text := ""
 	if i >= 0 and i < list.size():
 		text = str(list[i]["text"])
+	var last := -1
+	for j in list.size():
+		if not list[j]["head"]:
+			last = j
 	return {"column": column, "index": i, "text": text, "link": current_link(),
 		"note": note, "scroll": [scroll[0], scroll[1]], "save": save,
+		"last_index": last,
+		# the focused entry is wholly on the wall
+		"focused_seen": i >= 0 and i < list.size() and (list[i] as Dictionary).has("seen"),
 		"thread": thread.state()}
 
 

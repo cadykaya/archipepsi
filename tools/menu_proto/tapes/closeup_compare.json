@@ -1,0 +1,8 @@
+{
+ "about": "Close-up evidence, fix 2: Equipment, ARC BOLT read against what is on RMB -- the comparison's quieter words lifted. Scripted, a still.",
+ "steps": [
+  {"at": 0.3, "key": "Right"},
+  {"after": 0.2, "key": "Down"},
+  {"after": 0.8, "mark": "arc bolt compared"}
+ ]
+}
