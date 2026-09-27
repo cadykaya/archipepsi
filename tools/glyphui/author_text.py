@@ -48,7 +48,15 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(
 OWNER = "act_owner_arty"
 ARTIST = "act_agent_arty"
 
-W, H = 6, 8
+#: The cell is one column wider than any glyph's ink (x = 1..5), so every
+#: glyph has a clear column on BOTH sides and its quad never ends on ink.
+#: In a 6-wide cell a five-wide glyph's ink reached the cell's right
+#: edge, and wherever the face is drawn at a scale that is not a whole
+#: number with multisampled edges (the review prototype's 3D walls), that
+#: edge came out as a grey half-pixel, and the next glyph on the sheet
+#: bled into the quad's other side. The ink and the advances are
+#: unchanged: the advance table, not the cell, carries the spacing.
+W, H = 7, 8
 BASELINE = 6
 #: The space has no ink to measure, so its pen travel is declared.
 BLANK_ADVANCE = 3
