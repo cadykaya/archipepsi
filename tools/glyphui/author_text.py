@@ -111,6 +111,25 @@ GLYPHS = {
     "Y": ["#...#", ".#.#.", "..#..", "..#..", "..#.."],
     "Z": ["####", "...#", ".##.", "#...", "####"],
     "x": ["#..#", ".##.", "#..#"],
+    # ---- 2026-09-27: the characters Production's own strings use and the
+    # face lacked (A2 ruling, 2026-09-27). The first five are the owner's
+    # list; `°` and `×` were found by scanning what EquipmentQuery really
+    # writes into the prototype's sample ("Spread: 12° → 0°", "5 pellets ×
+    # 3 damage"). A stand-in would change what those lines mean.
+    ";": ["..", ".#", "..", "##", ".#"],
+    "[": ["##", "#.", "#.", "#.", "##"],
+    "]": ["##", ".#", ".#", ".#", "##"],
+    # One column longer than `-`, on the same row: the em dash Production
+    # writes for "none" ("Range: — → 40 m"). At 6x8 a dash can only grow by
+    # a column; the spaces Production puts round it do the rest.
+    "\u2014": [".....", ".....", "#####", ".....", "....."],   # em dash
+    "\u2192": ["..#..", "...#.", "#####", "...#.", "..#.."],   # right arrow
+    # Raised, a 3x3 diamond: at 2x it reads as the small ring it is, and it
+    # cannot be taken for `o` (there is no lowercase) or `0` (full height).
+    "\u00b0": [".#.", "#.#", ".#.", "...", "..."],   # degree
+    # `+` turned: three columns, centred, so it never reads as the letter
+    # X (five, full height) or the face's `x` (four, on the baseline).
+    "\u00d7": ["...", "#.#", ".#.", "#.#", "..."],   # multiplication
 }
 
 #: Frame order, and therefore the order on the sheet. Sorted so that

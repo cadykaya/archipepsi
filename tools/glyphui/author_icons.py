@@ -142,6 +142,190 @@ ICONS = {
     ],
 }
 
+#: DEVICE SYMBOLS (A2 ruling, 2026-09-27): one for every control the
+#: interactive prototype actually uses, each with a readable text fallback
+#: (`TEXT` below) for wherever the symbol is not shown. Drawn so that the
+#: sets a player must tell apart differ by WHERE the ink is -- which face
+#: button, which arm of the pad, which half of the mouse -- not by a
+#: letter a 12 px cell cannot hold. Where a side is the whole difference
+#: (shoulders, triggers, sticks) the side's letter is drawn, as every
+#: controller glyph set does.
+_MOUSE = [
+    "............",
+    "...#######..",
+    "..#...#...#.",
+    "..#...#...#.",
+    "..#########.",
+    "..#.......#.",
+    "..#.......#.",
+    "..#.......#.",
+    "..#.......#.",
+    "...#.....#..",
+    "....#####...",
+    "............",
+]
+
+
+def _rows(base, edits):
+    """`base` with whole rows replaced: {row: string}."""
+    out = list(base)
+    for r, row in edits.items():
+        out[r] = row
+    return out
+
+
+ICONS["mouse_left"] = _rows(_MOUSE, {2: "..#####...#.", 3: "..#####...#."})
+ICONS["mouse_right"] = _rows(_MOUSE, {2: "..#...#####.", 3: "..#...#####."})
+ICONS["mouse_middle"] = _rows(_MOUSE, {2: "..#..###..#.", 3: "..#..###..#."})
+ICONS["mouse_wheel"] = _rows(_MOUSE, {
+    2: "..#..###..#.", 3: "..#..###..#.",
+    5: "..#...#...#.", 6: "..#..###..#.",
+    7: "..#..###..#.", 8: "..#...#...#."})
+
+_DPAD = [
+    "............",
+    "....###.....",
+    "....#.#.....",
+    "....#.#.....",
+    ".####.####..",
+    ".#.......#..",
+    ".####.####..",
+    "....#.#.....",
+    "....#.#.....",
+    "....###.....",
+    "............",
+    "............",
+]
+ICONS["pad_dpad"] = list(_DPAD)
+ICONS["pad_dpad_up"] = _rows(_DPAD, {2: "....###.....", 3: "....###....."})
+ICONS["pad_dpad_down"] = _rows(_DPAD, {7: "....###.....", 8: "....###....."})
+ICONS["pad_dpad_left"] = _rows(_DPAD, {5: ".###.....#.."})
+ICONS["pad_dpad_right"] = _rows(_DPAD, {5: ".#.....###.."})
+
+#: The four face buttons as a diamond of rings, the one meant FILLED:
+#: south, east, west, north -- position, so it reads the same on every pad
+#: whatever the pad prints on its buttons.
+_RING = {"n": (1, 4), "w": (4, 1), "e": (4, 7), "s": (7, 4)}
+
+
+def _face(filled):
+    """The meant button SOLID (3x3, nine pixels) among three rings (four):
+    a centre pixel alone was the first drawing's whole difference, and at
+    2x it did not read."""
+    grid = [["."] * 12 for _ in range(12)]
+    for side, (r0, c0) in _RING.items():
+        cells = [(0, 1), (1, 0), (1, 2), (2, 1)]
+        if side == filled:
+            cells = [(r, c) for r in range(3) for c in range(3)]
+        for dr, dc in cells:
+            grid[r0 + dr][c0 + dc] = "#"
+    return ["".join(row) for row in grid]
+
+
+ICONS["pad_face_south"] = _face("s")
+ICONS["pad_face_east"] = _face("e")
+ICONS["pad_face_west"] = _face("w")
+ICONS["pad_face_north"] = _face("n")
+
+#: A 3x5 L and R, the text face's own shapes cut to three columns.
+_L = ["#..", "#..", "#..", "#..", "###"]
+_R = ["##.", "#.#", "##.", "#.#", "#.#"]
+
+
+def _with_letter(top, letter, row0=5, col0=5):
+    grid = [list(r) for r in top]
+    for dr, bits in enumerate(letter):
+        for dc, ch in enumerate(bits):
+            if ch == "#":
+                grid[row0 + dr][col0 + dc] = "#"
+    return ["".join(row) for row in grid]
+
+
+_BUMPER = [
+    "............",
+    "............",
+    "...######...",
+    "..########..",
+    "............",
+] + ["............"] * 7
+_TRIGGER = [
+    "............",
+    "....###.....",
+    "...#...#....",
+    "...#####....",
+    "............",
+] + ["............"] * 7
+#: A stick is a RING round its letter -- the one shape of the three that
+#: is round all the way, so it is not taken for a trigger's cap.
+_STICK = [
+    "............",
+    "...#####....",
+    "..#.....#...",
+    ".#.......#..",
+    ".#.......#..",
+    ".#.......#..",
+    ".#.......#..",
+    ".#.......#..",
+    "..#.....#...",
+    "...#####....",
+    "............",
+    "............",
+]
+ICONS["pad_lb"] = _with_letter(_BUMPER, _L)
+ICONS["pad_rb"] = _with_letter(_BUMPER, _R)
+ICONS["pad_lt"] = _with_letter(_TRIGGER, _L)
+ICONS["pad_rt"] = _with_letter(_TRIGGER, _R)
+ICONS["pad_lstick"] = _with_letter(_STICK, _L, row0=3, col0=4)
+ICONS["pad_rstick"] = _with_letter(_STICK, _R, row0=3, col0=4)
+ICONS["pad_start"] = [
+    "............",
+    "............",
+    "...######...",
+    "..#......#..",
+    "..#.####.#..",
+    "..#......#..",
+    "..#.####.#..",
+    "..#......#..",
+    "..#.####.#..",
+    "..#......#..",
+    "...######...",
+    "............",
+]
+ICONS["pad_back"] = [
+    "............",
+    "............",
+    "...######...",
+    "..#......#..",
+    "..#....#.#..",
+    "..#...##.#..",
+    "..#..###.#..",
+    "..#...##.#..",
+    "..#....#.#..",
+    "..#......#..",
+    "...######...",
+    "............",
+]
+
+#: WHERE YOU ARE: a figure, not a dot. The map's three marks that could
+#: share a hue -- focus, a circuit's gate, the player -- are told apart
+#: by shape and place first (A2 ruling): focus is the interface's bar and
+#: bracket, a circuit is its own symbol on its gate, and the player is
+#: this figure, standing in the room.
+ICONS["you"] = [
+    "............",
+    ".....##.....",
+    ".....##.....",
+    "............",
+    "....####....",
+    "...#.##.#...",
+    "...#.##.#...",
+    ".....##.....",
+    "....#..#....",
+    "....#..#....",
+    "....#..#....",
+    "............",
+]
+
 #: Derived rather than drawn: a mirrored or rotated arrow that was drawn
 #: by hand is an arrow that is one pixel off from its partner.
 def _mirror(rows):
@@ -171,6 +355,42 @@ MEANING = {
                 {"operable": "signal", "not operable": "dead"}),
     "exit": ("a way out of the room", {"open": "chrome ink"}),
     "blocked": ("the same way out, closed", {"blocked": "dead"}),
+    "mouse_left": ("the left mouse button", {"any": "chrome ink"}),
+    "mouse_right": ("the right mouse button", {"any": "chrome ink"}),
+    "mouse_middle": ("the middle mouse button", {"any": "chrome ink"}),
+    "mouse_wheel": ("the mouse wheel, turned", {"any": "chrome ink"}),
+    "pad_dpad": ("the pad's direction pad", {"any": "chrome ink"}),
+    "pad_dpad_up": ("the direction pad, up", {"any": "chrome ink"}),
+    "pad_dpad_down": ("the direction pad, down", {"any": "chrome ink"}),
+    "pad_dpad_left": ("the direction pad, left", {"any": "chrome ink"}),
+    "pad_dpad_right": ("the direction pad, right", {"any": "chrome ink"}),
+    "pad_face_south": ("the face button nearest you", {"any": "chrome ink"}),
+    "pad_face_east": ("the right face button", {"any": "chrome ink"}),
+    "pad_face_west": ("the left face button", {"any": "chrome ink"}),
+    "pad_face_north": ("the far face button", {"any": "chrome ink"}),
+    "pad_lb": ("the left shoulder button", {"any": "chrome ink"}),
+    "pad_rb": ("the right shoulder button", {"any": "chrome ink"}),
+    "pad_lt": ("the left trigger", {"any": "chrome ink"}),
+    "pad_rt": ("the right trigger", {"any": "chrome ink"}),
+    "pad_lstick": ("the left stick", {"any": "chrome ink"}),
+    "pad_rstick": ("the right stick", {"any": "chrome ink"}),
+    "pad_start": ("the pad's start / menu button", {"any": "chrome ink"}),
+    "pad_back": ("the pad's back / view button", {"any": "chrome ink"}),
+    "you": ("where the player is, on a map", {"any": "chrome ink"}),
+}
+
+#: The READABLE FALLBACK for every device symbol: what a prompt shows where
+#: the symbol is not (and what a screen reader would say). The face-button
+#: letters are Godot's names for the positions (JOY_BUTTON_A is south).
+TEXT = {
+    "mouse_left": "LMB", "mouse_right": "RMB", "mouse_middle": "MMB",
+    "mouse_wheel": "WHEEL", "pad_dpad": "D-PAD",
+    "pad_dpad_up": "D-PAD UP", "pad_dpad_down": "D-PAD DOWN",
+    "pad_dpad_left": "D-PAD LEFT", "pad_dpad_right": "D-PAD RIGHT",
+    "pad_face_south": "A", "pad_face_east": "B", "pad_face_west": "X",
+    "pad_face_north": "Y", "pad_lb": "LB", "pad_rb": "RB", "pad_lt": "LT",
+    "pad_rt": "RT", "pad_lstick": "L-STICK", "pad_rstick": "R-STICK",
+    "pad_start": "START", "pad_back": "BACK", "you": "YOU",
 }
 
 #: Every tint a state names, and the exact colour it resolves to. An
@@ -315,6 +535,8 @@ def main():
     record = {n: {"size": [W, H], "means": MEANING[n][0],
                   "tint_by_state": MEANING[n][1],
                   "file": "icon_%s.png" % n} for n in NAMES}
+    for n, text in TEXT.items():
+        record[n]["text"] = text
     record["_ink"] = "#ffffff"
     record["_tints"] = table
     with open(os.path.join(out_dir, "icons.json"), "w") as fh:
