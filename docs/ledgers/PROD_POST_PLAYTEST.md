@@ -6206,9 +6206,12 @@ CK9-F1 phase sweep were stopped before they started.
   - "Update Archipepsi (Windows).bat" in the existing clone brings the
     head (code = `97a4e70`), and keeps saves, settings and the import
     cache.
-  - Alternatively, the source archive of `97a4e70` can be unpacked
-    into a new folder. It runs, but has its own `bridge/saves`, and the
-    updater does not work in it.
+  - Alternatively, `archipepsi-0.4-CK10-97a4e70.zip`, the source of
+    `97a4e70` without docs, art sources or tools, can be unpacked into
+    a new folder. It was checked from a clean unpack: import,
+    `godot-boot`, the launcher's `--dry-run`. It keeps its own saves
+    (the candidate slot in `.diagnostic-candidate/`), and the updater
+    does not work in it.
 - **Fresh or resume:**
   - "Diagnostic Campaign - Candidate (Windows).bat" resumes the
     candidate slot, and `--list` names the slots and their folder.
