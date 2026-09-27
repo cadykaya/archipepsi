@@ -2,9 +2,9 @@
 # Track A2 -- stills of the prototype at a given window size (gameplay
 # size by default: Production's window default, 1280 x 720).
 #
-#   tools/menu_proto/stills.sh <out dir> [WxH]
+#   tools/menu_proto/stills.sh <out dir> [WxH] [glob]   (glob: still_*)
 #
-# Each tapes/still_*.json runs to its end and the frame is saved as
+# Each tapes/<glob>.json runs to its end and the frame is saved as
 # <out>/<still>.png, one Godot at a time. Scripted, not hands-on.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -12,9 +12,10 @@ GODOT="${GODOT:-$ROOT/.tools/godot}"
 P="$ROOT/tools/menu_proto"
 OUT="${1:?usage: stills.sh <out dir> [WxH]}"
 RES="${2:-1280x720}"
+GLOB="${3:-still_*}"
 mkdir -p "$OUT"
 OUT="$(cd "$OUT" && pwd)"      # Godot resolves a relative path from --path
-for tape in $(cd "$P/tapes" && ls still_*.json); do
+for tape in $(cd "$P/tapes" && ls $GLOB.json); do
   name="${tape%.json}"
   end=$(python3 -c "import json,sys; t=0.0
 for s in json.load(open(sys.argv[1]))['steps']:

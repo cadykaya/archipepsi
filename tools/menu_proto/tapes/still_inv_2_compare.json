@@ -1,0 +1,49 @@
+{
+ "about": "Inventory, resting: a MK III candidate compared with what is on RMB. Scripted input, a still.",
+ "steps": [
+  {
+   "at": 0.3,
+   "key": "Right"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 0.12,
+   "key": "Down"
+  },
+  {
+   "after": 1.2,
+   "quit": true
+  }
+ ]
+}

@@ -110,6 +110,7 @@ var _strips := {}             # id -> {node, ground, y, h, name}
 var _order: Array = []        # ids on the rail, in order
 var _more_up: Node3D
 var _more_down: Node3D
+var _spine: MeshInstance3D
 var _scroll_px := 0.0
 var _focus: Node3D            # the composition for the selected item
 var _focus_info := {}         # what the composition drew (for state())
@@ -343,8 +344,10 @@ func _open_drawer(at_once := false) -> void:
 	_drawer.add_child(_list)
 	for i in _order.size():
 		_strip(_order[i], i)
-	# The spine: one thin line through every station's shelf, scrolling with
-	# them (a piece of each station, so the edges cut it like the rest).
+	# The spine: one thin line from the first station's shelf to the last,
+	# held to the rail's view (_update_spine, every frame, as the rail moves).
+	_spine = kit.card(_drawer, Vector2(RAIL_X - 1, VIEW_TOP), Vector2(2, 2), 0.0028,
+			kit.flat(Kit.DEAD))
 	_clip()
 	_more_up = _more(true)
 	_more_down = _more(false)
@@ -384,13 +387,9 @@ func _strip(id: String, i: int) -> void:
 	_list.add_child(node)
 	var ground := kit.card(node, Vector2(10, -6), Vector2(NAME_X + NAME_W + 8
 			- RAIL_X - 10, SHELF + 4), 0.002, kit.own(Kit.PLATE, 0.0), true)
-	# The station: a tick across the spine at its shelf, and the spine's
-	# piece from here to the next station's shelf.
+	# The station: a tick across the spine at its shelf.
 	kit.card(node, Vector2(-7, SHELF - 1.5), Vector2(14, 3), 0.003,
 			kit.flat(Kit.DEAD), true)
-	if i < _order.size() - 1:
-		kit.card(node, Vector2(-1, SHELF), Vector2(2, STATION), 0.0028,
-				kit.flat(Kit.DEAD), true)
 	var slot := slot_of(key_index)
 	var name := kit.label(node, kit.fit(_name(id), 2, NAME_W),
 			Vector2(NAME_X - RAIL_X, 0), 2, Kit.INK_DIM, 0.004, false, true)
@@ -617,8 +616,8 @@ func _compose_key() -> void:
 ## row, the plate and its echoes inside the wall.
 func _clear(bottom: float) -> bool:
 	var plate: Rect2 = _focus_info.get("plate", Rect2())
-	var stack := plate.grow_individual(ECHO_STEP * float(_focus_info.get("echoes",
-			0)), 0, 0, ECHO_STEP * float(_focus_info.get("echoes", 0)))
+	var reach := minf(ECHO_STEP * float(_focus_info.get("echoes", 0)), 36.0)
+	var stack := plate.grow_individual(reach, 0, 0, reach)
 	return bottom <= ACTION_Y - 8.0 and stack.position.x > GUTTER_X - 40.0 \
 			and stack.end.x <= Kit.PAGE.x - 40.0 and stack.position.y > KICKER_Y + 16.0
 
@@ -657,11 +656,13 @@ func _big_name(fit: Array, echoes: int) -> float:
 	# The echoes: a plate each, stepped back down the diagonal toward the
 	# rail and toward the wall. Each is a node of its own, so it can slide
 	# out from behind the plate when the name arrives.
-	for e in mini(echoes, ECHO_TONES.size()):
+	var n := mini(echoes, ECHO_TONES.size())
+	var step := minf(ECHO_STEP, 36.0 / maxf(1.0, float(n)))
+	for e in n:
 		var copy := Node3D.new()
 		_focus.add_child(copy)
 		var z := PLATE_Z - ECHO_DZ * (e + 1)
-		var off := Vector2(-ECHO_STEP, ECHO_STEP) * (e + 1)
+		var off := Vector2(-step, step) * (e + 1)
 		_plate(copy, Rect2(rect.position + off, rect.size), z, ECHO_TONES[e])
 		# Behind the plate, where the echo was when it left: the slide.
 		copy.set_meta("rest", Vector3.ZERO)
@@ -673,7 +674,7 @@ func _big_name(fit: Array, echoes: int) -> float:
 	_focus_info["plate"] = rect
 	_focus_info["underline"] = rect.get_center().y
 	_focus_info["echoes"] = _echoes.size()
-	return rect.end.y + ECHO_STEP * mini(echoes, ECHO_TONES.size())
+	return rect.end.y + step * n
 
 
 ## A plate SEEN at `rect` (page px), its face `z` off the wall: a lit box
@@ -1249,4 +1250,25 @@ func on_device() -> void:
 
 
 func tick(_delta: float) -> void:
+	_update_spine()
 	_draw_route()
+
+
+## The spine, from the first station's shelf to the last, where the rail
+## is seen: it never runs past the rail's view or off the wall.
+func _update_spine() -> void:
+	if _spine == null or not is_instance_valid(_spine):
+		return
+	if _order.size() < 2:
+		_spine.visible = false
+		return
+	var first: Node3D = _strips[_order[0]]["node"]
+	var last: Node3D = _strips[_order[-1]]["node"]
+	var top := maxf(Kit.PAGE.y * 0.5 - first.position.y / Kit.px() + SHELF, VIEW_TOP)
+	var bottom := minf(Kit.PAGE.y * 0.5 - last.position.y / Kit.px() + SHELF,
+			VIEW_BOTTOM)
+	_spine.visible = bottom > top
+	if not _spine.visible:
+		return
+	(_spine.mesh as QuadMesh).size = Vector2(2, bottom - top) * Kit.px()
+	_spine.position = Kit.at(Vector2(RAIL_X, (top + bottom) * 0.5), 0.0028)

@@ -1,0 +1,77 @@
+{
+ "about": "Panned away on purpose: YOU and the picked place at the window's edge; the thread's arrow. Scripted input, a still.",
+ "steps": [
+  {
+   "at": 0.2,
+   "key": "Q"
+  },
+  {
+   "after": 0.7,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.5,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.5,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.5,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.5,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.5,
+   "key": "Equal"
+  },
+  {
+   "after": 0.2,
+   "key": "Equal"
+  },
+  {
+   "after": 0.2,
+   "key": "Equal"
+  },
+  {
+   "after": 0.5,
+   "key": "D"
+  },
+  {
+   "after": 0.05,
+   "key": "D"
+  },
+  {
+   "after": 0.05,
+   "key": "D"
+  },
+  {
+   "after": 0.05,
+   "key": "D"
+  },
+  {
+   "after": 0.05,
+   "key": "D"
+  },
+  {
+   "after": 0.05,
+   "key": "D"
+  },
+  {
+   "after": 0.05,
+   "key": "D"
+  },
+  {
+   "after": 0.05,
+   "key": "D"
+  },
+  {
+   "after": 1.0,
+   "quit": true
+  }
+ ]
+}

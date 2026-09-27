@@ -1,0 +1,21 @@
+{
+ "about": "The thread at rest on the Map: round the corner, down the margin, in level with its passage. Scripted input, a still.",
+ "steps": [
+  {
+   "at": 0.2,
+   "key": "Q"
+  },
+  {
+   "after": 0.7,
+   "key": "Q"
+  },
+  {
+   "after": 1.0,
+   "key": "E"
+  },
+  {
+   "after": 1.2,
+   "quit": true
+  }
+ ]
+}
