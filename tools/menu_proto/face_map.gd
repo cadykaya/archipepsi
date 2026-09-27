@@ -115,6 +115,12 @@ func _window() -> void:
 		# The frame's grain must line up with the other walls' page.
 		var q := frame.mesh as QuadMesh
 		q.size = r.size * Kit.px()
+	# The wall's top and bottom edges stop a centimetre short of the slabs.
+	# Shut that gap here too, or a zoomed miniature shows through above the
+	# wall (a picked room's frame, far off the window, did).
+	for r: Rect2 in [Rect2(Vector2(0, -60), Vector2(w.x, 60)),
+			Rect2(Vector2(0, w.y), Vector2(w.x, 60))]:
+		kit.card(face, r.position, r.size, 0.0, kit.lit(Kit.POST))
 	var depth := 0.05
 	var s := Kit.px()
 	for side: Array in [
