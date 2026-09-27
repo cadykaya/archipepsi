@@ -123,33 +123,33 @@ Findings other lanes need:
   set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Now: TRACK A2, phase 2 — DELIVERED FOR OWNER REVIEW; STOPPED before
-production integration** (§11, "Track A2, phase 2").
+**Now: TRACK A2, the focused INVENTORY visual pass** (ART_FRONTIER §11,
+"Ruling, 2026-09-27 (second)").
 
-The interactive review prototype is built, for Inventory (LEAF, recomposed
-around the module and its key), Map (LENS) and Journal → Map (THREAD).
-Settings/Pause is reachable but undesigned.
+The combined prototype is the working INTERACTION foundation. It is not
+final visual approval, and not approval to integrate. Hands-on review is
+still pending. The functional checkpoint to keep safe is `f5dd9f7` (build
+`076cad7`).
 
-| | |
-|---|---|
-| Build | `tools/menu_proto` @ `076cad7` (the captures too) |
-| Review | `docs/art/review/menu_proto_2026-09-27/` |
-| Report | `docs/art/reports/2026-09-27-a2-interactive-review-prototype.md` |
-| Handoff | `HANDOFF_STATE_TRANSITIONS.md` and `HANDOFF_GLYPH_ASSETS.md`, in the review folder |
-| Reconciled against | CK9 `a2b9df6` |
+The deliverable is one strongly art-directed inventory composition, with an
+original shape language (connections, transformation, Echoes,
+relationships). No gray-panel list and big rectangular card; the selected
+ability shapes the frame. It is shown in three states (normal selected,
+comparison, long name and description), as a resting screenshot and ONE
+short clip. Do not repeat the eight captures.
 
-Evidence:
-* scripted: 195 checks through the real input path (58 + 94 + 43, with
-  every binding pressed), plus 8 captures;
-* hands-on: NOT done.
+With it:
+* text never squashes during rapid selection;
+* the thread reads as one deliberate guide;
+* following a journal entry frames its target, with a way back, while
+  ordinary travel keeps the map view;
+* offscreen indicators stay useful and reveal nothing;
+* the approved Glyph characters and symbols the menu needs are added;
+* the owner's handoff decisions are carried in as proposed Production
+  changes.
 
-**Waiting on the owner:**
-* the hands-on review;
-* the Glyph characters still needed;
-* the six proposed Production deltas;
-* whether the visual pass carries forward.
-
-Nothing is integrated. It does not open 0.5, Track C or Track E.
+Then return for review. Nothing is integrated. It does not open 0.5,
+Track C or Track E.
 
 Two things from it that other lanes need:
 

@@ -2764,6 +2764,86 @@ recommendations; none is implemented there.
 **Next, only on the owner's word:** production integration, or another
 visual pass.
 
+### Ruling, 2026-09-27 (second) — the combined prototype is the working interaction foundation
+
+**Received.** It is the working INTERACTION foundation. It is **not** final
+visual approval, and not approval for Production integration. Hands-on
+review is still pending: the recordings are evidence, not a substitute.
+**The functional checkpoint is `f5dd9f7`** (its build is `076cad7`). Keep it
+safe while the visuals change.
+
+**Keep, and do not restart:**
+- Inventory: the relationship between keys, equipped abilities and
+  candidates; the comparisons; stable mouse targets; scrolling;
+  interruptible selection; reduced motion.
+- LENS: the coherent miniature, short contextual labels, and the full
+  explanation on request.
+- THREAD: the cross-face relationship, bound to the same passage as its
+  state changes.
+
+**The main visual feedback:**
+- The inventory is much more readable, and that is accepted as progress.
+  The gray-panel composition, rectangular lists and a large rectangular
+  card are **not** the intended identity.
+- "Dynamic" includes the composition at REST: a frozen frame should
+  already feel expressive, memorable and recognizably Archipepsi.
+- Persona 5 is a reference for how shape, typography, contrast, overlap
+  and motion work together. Do not copy its colours, collage style or
+  screens.
+- Develop an ORIGINAL shape language from Archipepsi's own ideas:
+  connections, spatial transformation, Echoes, and relationships between
+  objects.
+- Not allowed as substitutes: circles, hexagons or clipped corners in
+  place of rectangles; neon, rivets, tiny technical labels or decorative
+  clutter.
+- The selected ability helps SHAPE the composition. Give its name, and a
+  meaningful graphic treatment, more presence. Reusable Glyph pieces are
+  fine; unique art per item is not required.
+- Body text stays readable, important values aligned, and interaction
+  targets stable. Rectangles are allowed where useful. Real map geometry
+  stays truthful.
+
+**Next visual deliverable: the inventory face first, in the existing
+prototype.** One coherent, strongly art-directed version, shown in three
+states: a normal selected item, a comparison, and a long name with a long
+description. Deliver a clear resting screenshot and ONE short interaction
+clip. Do not repeat all eight captures. Once the treatment is chosen, its
+language extends to the other faces. Settings/Pause remains an explicit
+unfinished design item.
+
+**Specific refinements:**
+- Rapid inventory selection must not squash or overlap the text cards. The
+  graphic framing carries the movement, and the text stays clean.
+- The thread's stroke and corners should read as one deliberate guide, not
+  a thin doubled or debug line.
+- Ordinary page travel keeps the saved map view. Explicitly following a
+  journal entry ("show this on the map") brings the known target into
+  view, with a way back to the previous view.
+- Offscreen indicators stay useful when the player pans away. They never
+  reveal undiscovered rooms or solutions.
+
+**Glyph:** the listed missing characters and symbols needed by existing
+on-screen content are APPROVED. The menu's actual needs come first. This
+commissions no HUD redesign and no new behaviour.
+
+**Carried into the handoff, as proposed Production integration changes.**
+No Production-owned runtime file is edited until file ownership is handed
+over.
+- Reduced motion includes gate pulses and all other secondary motion.
+- Journal links consume explicit passage and room identifiers. They never
+  derive identity from the displayed wording.
+- Esc/B back out of an open detail first, and close the menu only when
+  there is no deeper view. A clear direct resume action stays.
+- Navigation pressed during a turn does not silently disappear. An equip,
+  a quit or any other confirmation is never replayed into a control the
+  player has not yet seen.
+- The 720p text size is a concern to improve, not a readability
+  guarantee. Important text is never shrunk to fit a composition.
+- Dimmed other floors are for overview. A genuine single-floor view is
+  kept for clarity.
+
+This does not open 0.5, Track C or Track E.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.
