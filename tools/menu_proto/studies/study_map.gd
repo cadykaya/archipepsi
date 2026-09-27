@@ -7,21 +7,24 @@ extends FaceMap
 ## the window is restyled, rearranged or recoloured.
 
 
-## Only what makes the window work: the dark ground far behind the
-## miniature, and the miniature's own light. The direction draws the rest.
+var frames: Array[MeshInstance3D] = []
+
+
+## The prototype's own opening -- the wall round the window, its reveal, the
+## strips that shut the gap above and below the wall, the dark far behind
+## and the miniature's light -- with the wall's pieces kept, so the
+## direction's own wall can dress them.
 func _window() -> void:
-	var back := MeshInstance3D.new()
-	var quad := QuadMesh.new()
-	quad.size = Vector2(14, 9)
-	back.mesh = quad
-	back.material_override = kit.flat(Color("#07090b"))
-	back.position = Vector3(0, 0, -6.0)
-	face.add_child(back)
-	var light := DirectionalLight3D.new()
-	light.rotation = Vector3(deg_to_rad(-62), deg_to_rad(28), 0)
-	light.light_energy = 0.9
-	light.light_cull_mask = 2
-	face.add_child(light)
+	super._window()
+	for c: Node in face.get_children():
+		if c is MeshInstance3D and (c as MeshInstance3D).material_override == kit.wall_material():
+			frames.append(c)
+
+
+## Dress the wall round the window in the direction's own wall.
+func dress(m: Material) -> void:
+	for n: MeshInstance3D in frames:
+		n.material_override = m
 
 
 ## The detail is the direction's: its own panel, from MapFace's own text.

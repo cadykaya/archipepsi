@@ -99,6 +99,23 @@ func charges(id: String) -> String:
 
 # ------------------------------------------------------------ drawing
 
+## The miniature's own light is meant for the miniature alone, but the
+## renderer these stills use ignores a light's cull mask, so it also falls
+## on the Map's wall (and, glancing, the Journal's). A PALE surface there is
+## toned by this much, so one card reads the same on every wall; nothing
+## dark needs it.
+func stray(f: Node3D) -> float:
+	if f == face("map"):
+		return 0.74
+	if f == face("journal"):
+		return 0.86
+	return 1.0
+
+
+func toned(colour: Color, f: Node3D) -> Color:
+	var k := stray(f)
+	return Color(colour.r * k, colour.g * k, colour.b * k)
+
 ## Words on a face, `z` off the wall.
 func text(f: Node3D, s: String, at: Vector2, k: int, colour: Color, z := 0.003,
 		numerals := false) -> Label3D:
@@ -229,22 +246,36 @@ func name_fit(s: String, width: float, big: int, least: int, lines := 2) -> Arra
 	return [least, kit.wrap(s, least, width)]
 
 
-## The Journal -> Map link where it rounds the corner post: a tube in the
-## box's own space, from the journal wall at page x 1262 to the map wall at
-## page x 18, at page height `y`, round the post's two inner faces (the
-## prototype's thread takes the same corner). A direction's own journal and
-## map pieces end and begin at those two points.
+## Where a face's own run ends at its right edge and begins at its left:
+## the corner piece carries it round the post between them.
+const RUN_START := 40.0
+const RUN_END := 1240.0
+
+
+## A run round the corner post between page `left` and the page a right
+## turn faces from it, at page height `y`, `lift` off the walls (up to
+## 0.03): along the left wall from page x RUN_END, round the post's two
+## inner faces, and along the right wall to page x RUN_START. A face's own
+## run meets it there, at the same height and depth.
+func corner(left: String, y: float, r_px: float, material: Material, lift := 0.03) -> void:
+	var right: String = Kit.PAGES[posmod(Kit.PAGES.find(left) - 1, 4)]
+	var tl: Transform3D = face(left).global_transform
+	var post := 0.8727
+	var wy := Kit.at(Vector2(0, y), lift).y
+	var pts := [tl * Kit.at(Vector2(RUN_END, y), lift),
+		tl * Vector3(post - lift, wy, -1.0 + lift),
+		tl * Vector3(post - lift, wy, -post + lift),
+		tl * Vector3(1.0 - lift, wy, -post + lift),
+		face(right).global_transform * Kit.at(Vector2(RUN_START, y), lift)]
+	G.tube(ctx["shell"], G.routed3(pts, 0.011, 6), r_px, material, 12)
+
+
+## The Journal -> Map link where it rounds the corner post (the prototype's
+## thread takes the same corner).
 func corner_link(y: float, colour: Color, r_px: float, lift := 0.03,
 		material: Material = null) -> void:
-	var shell: Shell = ctx["shell"]
-	var a: Vector3 = face("journal").global_transform * Kit.at(Vector2(1262, y), lift)
-	var b: Vector3 = face("map").global_transform * Kit.at(Vector2(18, y), lift)
-	var post := 0.8727
-	var wy := a.y
-	var pts := [a, Vector3(1.0 - lift, wy, post - lift * 1.2),
-		Vector3(post - lift, wy, post - lift), Vector3(post - lift * 1.2, wy, 1.0 - lift), b]
-	G.tube(shell, G.smooth3(pts, 6), r_px, material if material != null
-			else G.mat(colour, 0.05, 0.6), 12)
+	corner("journal", y, r_px, material if material != null
+			else G.mat(colour, 0.05, 0.6), lift)
 
 
 ## The menu's guide stroke inside the Map's window, from where the link
@@ -257,6 +288,8 @@ func guide(f: Node3D, from: Vector2, target: Vector2, colour: Color, z := 0.02,
 	if down == 0.0:
 		down = 1.0
 	var pts := [from, Vector2(target.x, from.y), Vector2(target.x, target.y - down * 22.0)]
+	if absf(from.x - target.x) < 1.0:
+		pts = [Vector2(target.x, from.y), pts[-1]]
 	var node := MeshInstance3D.new()
 	node.mesh = Kit.route_mesh(Kit.route_corners(pts, 12.0), width, z)
 	node.material_override = kit.flat(colour)
@@ -265,6 +298,17 @@ func guide(f: Node3D, from: Vector2, target: Vector2, colour: Color, z := 0.02,
 	# its end: a bar across it, just short of the passage's mark
 	var end: Vector2 = pts[-1]
 	kit.lifted_card(f, end - Vector2(9, 2.5), Vector2(18, 5), z, kit.flat(colour))
+
+
+## The comparison's head and the readout's kicker, in the prototype's own
+## terms, the same in every direction ("what changes if it is on the key").
+func against_head() -> String:
+	return "IF ON %s, IN PLACE OF %s" % [cap_of(ctx["slot"]), name_of(ctx["equipped"])]
+
+
+func kicker(id: String) -> String:
+	return "FITS %s · %s · %s" % [cap_of(ctx["slot"]), str(item(id).get("family", "")),
+			mk(id)]
 
 
 ## The inspected item's action, in Production's words: the preview the

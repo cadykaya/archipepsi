@@ -72,6 +72,23 @@ static func disc(parent: Node3D, centre: Vector2, r_px: float, z0: float, z1: fl
 	return n
 
 
+## A short cylinder round a cable (a band, a sleeve, a lacing tie): along
+## the page's y when `vertical`, else along its x.
+static func sleeve(parent: Node3D, centre: Vector2, vertical: bool, r_px: float,
+		len_px: float, z: float, material: Material, sides := 16) -> MeshInstance3D:
+	var c := CylinderMesh.new()
+	c.top_radius = r_px * Kit.px()
+	c.bottom_radius = r_px * Kit.px()
+	c.height = len_px * Kit.px()
+	c.radial_segments = sides
+	c.rings = 1
+	var n := _node(parent, c, material)
+	if not vertical:
+		n.rotation = Vector3(0, 0, PI * 0.5)
+	n.position = P(centre, z)
+	return n
+
+
 ## A ring facing the eye (a jack's collar, a lamp's bezel).
 static func ring(parent: Node3D, centre: Vector2, r_in: float, r_out: float,
 		z: float, material: Material, shadow := true) -> MeshInstance3D:
@@ -245,6 +262,24 @@ static func routed(page: Array, radius: float, z: float, per := 7) -> Array:
 			var q := s.lerp(p, t).lerp(p.lerp(e, t), t)
 			out.append(P(q, z))
 	out.append(P(page[-1], z))
+	return out
+
+
+## `routed` for face-local (or world) points: every corner a round bend of
+## `radius` (world units).
+static func routed3(pts: Array, radius: float, per := 6) -> Array:
+	var out: Array = [pts[0]]
+	for i in range(1, pts.size() - 1):
+		var a: Vector3 = pts[i - 1]
+		var p: Vector3 = pts[i]
+		var b: Vector3 = pts[i + 1]
+		var r := minf(radius, minf(a.distance_to(p), p.distance_to(b)) * 0.5)
+		var s := p - (p - a).normalized() * r
+		var e := p + (b - p).normalized() * r
+		for k in per + 1:
+			var t := float(k) / float(per)
+			out.append(s.lerp(p, t).lerp(p.lerp(e, t), t))
+	out.append(pts[-1])
 	return out
 
 

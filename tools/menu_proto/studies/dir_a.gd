@@ -138,7 +138,7 @@ func _equipment() -> void:
 	# ALWAYS ON: hardwired, not patched -- no jacks, no cords.
 	var ay := 578.0
 	engrave(f, "ALWAYS ON", Vector2(56, ay), 2, DIM, z)
-	engrave(f, "NOT A SWITCH", Vector2(56, ay + 20), 2, FAINT, z)
+	engrave(f, "NO KEY", Vector2(56, ay + 20), 2, FAINT, z)
 	var py := ay + 46.0
 	var copper := G.mat(Color("#b87333"), 0.5, 0.45)
 	G.block(f, Rect2(236, py - 4, 6, 3 * 22.0), z, z + 0.004, copper)
@@ -169,7 +169,7 @@ func _equipment() -> void:
 				CREAM if id == ctx["inspected"] else DIM, zt)
 		var tags := [mk(id)]
 		if id == ctx["equipped"]:
-			tags.append("PATCHED TO " + cap)
+			tags.append("ON " + cap)
 		if authored(id):
 			tags.append("AUTHORED")
 		engrave(f, " · ".join(tags), Vector2(914, y + 19), 2,
@@ -209,14 +209,11 @@ func _equipment() -> void:
 ## and quiet.
 func _readout(f: Node3D) -> void:
 	var id: String = ctx["inspected"]
-	var slot: String = ctx["slot"]
-	var cap := cap_of(slot)
 	var z := 0.024
 	var x := BENCH.position.x + 22.0
 	var w := BENCH.size.x - 44.0
 	var y := BENCH.position.y + 16.0
-	var kind := "FITS %s · %s · %s" % [cap, str(item(id).get("family", "")), mk(id)]
-	engrave(f, kind, Vector2(x, y), 2, DIM, z)
+	engrave(f, kicker(id), Vector2(x, y), 2, DIM, z)
 	y += 26.0
 	var fit := name_fit(name_of(id), w, 5, 4, 3)
 	for line: String in fit[1]:
@@ -230,8 +227,7 @@ func _readout(f: Node3D) -> void:
 	# What changes if patched: the readout's window, in readout ink.
 	y += 8.0
 	var lines: Array = ctx["comparison"]
-	var head := "IF PATCHED TO %s, IN PLACE OF %s" % [cap, name_of(ctx["equipped"])]
-	var head_lines := kit.wrap(head, 2, w - 8)
+	var head_lines := kit.wrap(against_head(), 2, w - 8)
 	var box := Rect2(x - 8, y, w + 16, 16.0 + 20.0 * head_lines.size() + 6.0
 			+ table_height(lines, w - 16) + 8.0)
 	window(f, box, z)
@@ -264,12 +260,7 @@ func _readout(f: Node3D) -> void:
 func _map() -> void:
 	var f := face("map")
 	var win := FaceMap.WINDOW
-	# The bench wall round the instrument, and the instrument's bezel.
-	var bw := G.mat(Color("#2a2521"), 0.0, 1.0)
-	for r: Rect2 in [Rect2(0, 0, 1280, win.position.y - 18), Rect2(0, win.end.y + 18,
-			1280, 720 - win.end.y - 18), Rect2(0, 0, win.position.x - 18, 720),
-			Rect2(win.end.x + 18, 0, 1280 - win.end.x - 18, 720)]:
-		G.block(f, r, -0.001, 0.0, bw, false)
+	# The instrument's bezel, on the bench wall round the window.
 	var bez := G.mat(PANEL, 0.15, 0.7)
 	for r: Rect2 in [Rect2(win.position.x - 18, win.position.y - 18, win.size.x + 36, 18),
 			Rect2(win.position.x - 18, win.end.y, win.size.x + 36, 18),
@@ -298,8 +289,8 @@ func _map() -> void:
 	# from there the menu's guide stroke goes in along its height, and down
 	# onto the passage.
 	var j := Vector2(win.position.x - 9, LINK_Y)
-	cord(f, G.smooth([Vector2(18, LINK_Y), Vector2(26, LINK_Y + 4), j + Vector2(-2, 0)],
-			0.03, 6) + [G.P(j, 0.05)], CORD, 5.0)
+	cord(f, [G.P(Vector2(RUN_START, LINK_Y), 0.03), G.P(Vector2(RUN_START - 3, LINK_Y + 1),
+			0.04), G.P(j, 0.052)], CORD, 5.0)
 	jack(f, j, 8, 0.014)
 	plug(f, j, 6, 0.014, CORD)
 	guide(f, Vector2(win.position.x + 4, LINK_Y), ctx["link_page"], CREAM)
@@ -352,8 +343,8 @@ func _journal() -> void:
 		kit.sprite(f, bead["icon"], Vector2(1140, y + 9), 2, bead["colour"], z + 0.004)
 		if focused:
 			plug(f, jc, 6, z, CORD)
-			cord(f, [G.P(jc, 0.046)] + G.smooth([jc + Vector2(12, 4), Vector2(1224,
-					LINK_Y), Vector2(1262, LINK_Y)], 0.03, 10), CORD, 5.0)
+			cord(f, [G.P(jc, 0.046)] + G.smooth([jc + Vector2(12, 4), Vector2(1212,
+					LINK_Y + 6), Vector2(RUN_END, LINK_Y)], 0.03, 10), CORD, 5.0)
 		y += h + 18.0
 	y += 8.0
 	engrave(f, "WHAT YOU DID HERE", Vector2(x, y), 2, FAINT, z)

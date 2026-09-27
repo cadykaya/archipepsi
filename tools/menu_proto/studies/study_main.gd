@@ -81,6 +81,9 @@ func _ready() -> void:
 	var sample: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SAMPLE))
 	_context(sample, str(args.get("state", "normal")))
 	direction.call("build", ctx)
+	var wall: Material = (shell.walls["map"] as MeshInstance3D).material_override
+	if wall != null:
+		map.dress(wall)
 	overlay.caption("DIRECTION STUDY %s -- %s -- AN ART-LANE STUDY, NOT THE GAME'S MENU"
 			% [key, str(direction.call("title"))],
 			"SAMPLE DATA: PRODUCTION A2B9DF6 FIXTURES, + LAYOUT-STRESS ECHOES "
