@@ -1,0 +1,6 @@
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+apworld/tests/test_packaging.py::test_48_apworld_package_and_manifest PASSED [100%]
+
+============================== 1 passed in 0.01s ===============================

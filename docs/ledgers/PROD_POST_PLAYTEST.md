@@ -5965,3 +5965,284 @@ now happens:
     by nothing. One Bomb Bag was authorised, thrown and counted.
   - Then the full frontier on the combined head (CK10).
 - **Next:** HB-F4g, then HB-F4f.
+
+## CK10 checkpoint — the full frontier on `97a4e70`: 91 of 92 (step 68 red on a lost scratch input)
+
+- **Tested revision: `97a4e70`,** one run, 00:17–01:53 UTC 2026-09-27, in
+  the main tree, clean at start (`CK10_frontier_on_97a4e70.tsv`). The
+  steps are CK8's 92, rebuilt after the container loss from
+  `CK8_frontier_on_adfb76c.tsv`, with the runner rebuilt too.
+  - It covers everything since CK8 (`adfb76c`): HB-F4a-3 (`22fdbda`),
+    CK9-F1 (`2643982`), HB-O1 (`b58114d`) and their records. Dess pushed
+    nothing in between.
+  - The published head then was `152d777`, which differs from `97a4e70`
+    only in documentation: the ledger, the frontier, and one evidence
+    log.
+- **91 of 92 steps passed. Step 68, `godot-passing-hosted`, failed.** Its
+  first check: "the Zone to play is at '…/scratchpad/passing_zone_capture2
+  .json' (see N-10)".
+  - Since CK5 the frontier has fed this suite a scratch capture, and
+    that file was lost with the old container. The suite never ran a
+    room.
+  - **Supplemental, same revision:** `make godot-passing-hosted` on its
+    default input, Dess's committed N-10 fixture
+    (`tests/fixtures/passing_zone.json`, landed at `60170f9`), passes
+    with 24 checks and 4 notes. Those are CK8's figures on the capture
+    (`CK10_passing_hosted_on_committed_fixture.log`;
+    the failing log is `CK10_passing_hosted_missing_capture.log`).
+  - Not a product failure, but not a green step either.
+  - The next frontier's list (`CK11_frontier_steps.txt`) names the
+    committed fixture. The as-run list and runner are
+    `CK10_frontier_steps_as_run.txt` and `CK10_frontier_runner.sh`.
+  - The suite's CI exemption (`test_ci_coverage.py`, "until
+    `passing_zone.json` lands") is stale, and is Prod's to close.
+- **Every other step reads exactly as at CK8,** summary for summary,
+  except where this revision added checks: `godot-bombs` 37 → 49 and
+  `godot-carry` 32 → 33 (HB-O1).
+  - No log has a line starting `SCRIPT ERROR`. Eight contain the words,
+    in the Makefile's echoed recipes only.
+  - Every live suite passed, one at a time, with nothing else on the
+    machine. `godot-flyer-room` (CK9's red step) passed.
+- **`make test`: 2,299 passed, 2 skipped (`CK10_make_test_on_97a4e70.log`)
+  — 5 fewer than CK8's 2,304, all of them environmental.**
+  - `bridge/tests/test_claude_provider.py` (4 tests) skips as a module:
+    the new container lacks the bridge's optional `[claude]` extra
+    (`anthropic`). The tests stub the SDK, and no key or network is
+    involved.
+  - `apworld/tests/test_packaging.py` (1 test) skips: `make apworld`
+    had not been run in this container.
+  - **Supplemental, same revision:** with `anthropic` 1.8.0 installed
+    and `make apworld` run, the four pass
+    (`CK10_claude_provider.log`), the one passes
+    (`CK10_apworld_packaging.log`), and `make test` passes 2,304
+    (`CK10_make_test_parity.log`).
+- **`godot-zone-audit` (step 22) restamped the placement captures.**
+  - At earlier checkpoints only `captures.json`'s `source_commit` moved,
+    and it was restored.
+  - This time `controller_digest` moved in all five files as well. It
+    hashes `player.gd`, which CK9-F1 and HB-O1 changed.
+  - Every payload is byte-identical. The restamp is committed
+    (`f2d433b`), and `test_placement_contract` passes on it (the parity
+    `make test` ran on that tree).
+- **Environment:**
+  - a new container: Python 3.11.15, pydantic 2.13.5, websockets 13.1;
+  - Godot 4.5.1.stable.official.f62fdbde1, the same build as before;
+  - Linux only: nothing here ran on Windows;
+  - local results only, since remote CI does not run (N-6).
+- **Three kinds of evidence, kept apart.**
+  - **Original raw evidence**, pushed before the loss: CK8 and
+    everything earlier.
+  - **Transcript-only history**, whose logs were lost:
+    - `CK9_transcript_extract.txt` (the CK9 frontier on `841041a`);
+    - `CK9-F1_transcript_extract.txt` (the first machine's diagnosis
+      and checks);
+    - `HB-O1_transcript_extract.txt` (the lost HB-O1 commit's
+      bombs/carry run, and the sabotage run the loss killed).
+  - **Regenerated in the new container:** every other `HB-F4a3_*`,
+    `CK9-F1_*`, `HB-O1_*` and `CK10_*` file.
+
+## Checkpoint handoff at CK10 — owner review stop (2026-09-27)
+
+The owner asked for a review stop at the next safe boundary after CK10.
+This is not the end of the inherited 0.4 obligations, and 0.5 is not
+begun. Nothing is queued or scheduled. The HB-F4g measurements and the
+CK9-F1 phase sweep were stopped before they started.
+
+- **Playable build:**
+  - `97a4e70`, the tested revision;
+  - the pushed head, whose code is identical: it adds documentation and
+    the placement-fixture stamps.
+  - Details are under "For the owner's playtest", below.
+- **Recovery branch:** `recovery/0.4-blindside-wip` (draft PR #13, "do
+  not merge"). It is authorised for backups and is not an integration
+  checkpoint. Its `recovery/README.md` gives each item's status.
+  - The HB-F4g and HB-F4f candidates: never built or run.
+  - The HB-F4g router diagnosis on `97a4e70`: real runs.
+  - The tools.
+
+### The queue
+
+- **Completed and verified (CK10, `97a4e70`):**
+  - HB-F4a-3;
+  - CK9-F1, whose flyer failure on this machine is the one CK8
+    failure run with the same signature (see its section);
+  - HB-O1, including `godot-bombs-live` with Q pressed under a card,
+    live;
+  - the placement restamp (`f2d433b`, by `make test`);
+  - all earlier CP1–CP4 and inherited work, as their checkpoints
+    recorded.
+- **Implemented, awaiting verification:**
+  - the HB-F4g candidate (`OWED_WAY_ON_ROOMS := 2`);
+  - the HB-F4f candidate (move a feature off another's floor);
+  - the CK9-F1 phase sweep (a diagnostic, not product code).
+
+  All three are on the recovery branch, and none has run.
+- **Known product defects (Prod's, open):**
+  - **HB-F4g.** The owner's campaign, walked to 24 Zones, still fails
+    placement in zone_013, zone_019 and zone_022. It stays open until
+    its own work is verified: the census's 39 of 39 does not close the
+    longer walk.
+    - The router diagnosis supports the second spine room after a hub
+      with two four-room branches.
+    - zone_022 fails one room further in two of seven attempts.
+  - **HB-F4f.** zone_012 `c001`'s rail note hangs inside the powered
+    door's alcove. It stays open. Predicted and unmeasured: zone_010
+    `c001` has three features in 12 m, with no clear stretch for the
+    third.
+  - **CK9-F2.** Flyers circle on the wall clock, so the same revision
+    fights differently on another machine.
+  - **RB-F4.** A declared railway builds no control a player can
+    command it with. It waits on N-19.
+  - **D01-F3.** `make dual-real` cannot claim (pre-existing).
+  - **Menus.** No rebinding screen, no "new campaign" in the menus, and
+    captions are stored but read by nothing. The art is provisional.
+  - **H-MACHINE-LIFE residuals.** Power loss, constrained assembly and a
+    powered machine's occupied/reversing/reset are untested, for want
+    of an occurrence.
+  - **Small Prod follow-ups.** `godot-passing-hosted` is not in CI (a
+    stale exemption).
+- **Owed integration, Prod's:** D-8, Gear. Nothing in `godot/` reads
+  `gear`, `gear_effects` or `gear_action` at the head. Dess's gate
+  opens after it.
+- **Cross-lane dependencies.**
+  - **Dess, reconciled against the head.** The bridge lane's "Waiting on
+    Prod" list is out of date:
+    - D-2 (`room_entered`) landed in CP4 (H-MINIMAP);
+    - reading `inventory` landed in CP3 (H-INVENTORY);
+    - reading `zone_map` landed in CP4 (H-MINIMAP, H-3D-MAP, H-JOURNAL);
+    - D-7.2 and D-7.3 landed in CP2 (`godot-lever-route-live`, the
+      fixture targets);
+    - D-10 is answered (`ccaac5c`, `godot-gantry-census`).
+
+    Only D-8 is still Prod's. Waiting on Dess: N-17 (status targets),
+    N-18 (a refused gantry is silent), N-19 (the switch schema), N-20 /
+    HB-F4d (a retry composes the same Zone), and D-6 step 4 (the
+    composer). The plug-placement rule lives in shared `topology.py`.
+    Dess is on the owner's hold of 2026-09-25.
+  - **Arty, reconciled against the head.**
+    - The art lane's last commits are of 2026-09-20.
+    - `docs/art/ART_FRONTIER.md` is of 2026-09-12, before the
+      post-playtest packet, and does not list its three art items:
+      H-GLYPH-KIT, H-CIRCUITS and H-MACHINE-ART. None has started in
+      the repository.
+    - The menus, minimap and machinery run on provisional art until
+      they land.
+    - The menu implementation is ready for Arty's read-only studies
+      (below).
+- **Owner decisions:**
+  - D-05 and D-08, open by the owner's choice;
+  - the plug-placement rule ("only at the end of a long branch, with a
+    warping effect");
+  - the retreat question below;
+  - CK9-F1's one quiet second and its label's wording, which are mine
+    to be overruled;
+  - CI billing (N-6).
+
+### The menu, for Arty's studies (read-only)
+
+- **Revision:** read at `97a4e70`. Every menu file there equals the
+  head. The files last changed at:
+  - `a2115b6` (CP4): `menu_shell.gd`, `settings_face.gd`,
+    `journal_face.gd`, `journal_query.gd`;
+  - `5f44b5c`: `equipment_face.gd`;
+  - `34d0aad` (H-BOMBS, the key's states): `equipment_query.gd`;
+  - `c5db77a`: `map_face.gd`;
+  - `8a4d5ed`: `minimap.gd`, `minimap_model.gd`.
+
+  HB-O1 touched only `Main._update_modal`: a pickup card is no longer
+  modal.
+- **Control contract** (`MenuShell`, `godot/scripts/ui/menu_shell.gd`):
+  - Four walls of a box in its own `World3D`: `PAGES` settings →
+    equipment → map → journal, turning left.
+  - Each page is a live 1280×720 Control tree in a SubViewport, shown
+    on its wall. The pointer reaches it by ray and plane geometry, with
+    no physics.
+  - `open(page)`, `close()`, `turn(step)`, `show_page(page)`;
+    `page_root(page)` is where `Main` mounts a face (`main.gd`
+    ~392–410). Signals `opened`, `closed`, `page_changed`.
+  - Open, it holds the `PauseClaims` claim "menu", so the world stops
+    behind it.
+  - Q/E, the bumpers and the arrows turn it; Esc closes it; Tab opens
+    Equipment. Reduced motion (`motion_intensity` 0) is a cut.
+- **Data contracts.** The faces decide nothing; the bridge's snapshot
+  schemas are Dess's.
+  - `EquipmentFace` reads `EquipmentQuery`: `CampaignSnapshot.inventory`
+    joined to `mechanics.owned`.
+    - `EquipRequests`: PENDING, REFUSED (only on the exact `about`
+      key), NOT SENT or LOST.
+    - `EquipmentSeen`: NEW until inspected.
+  - `MapFace` and the minimap read `MinimapModel`, one projection of the
+    bridge's `zone_map` (H-MAP-DATA) over the built envelopes.
+  - `JournalFace` reads `JournalQuery` over the snapshots.
+  - `SettingsFace` applies and saves its options at once.
+- **Fixtures, real snapshots from the bridge's models:**
+  - `equipment_snapshot.json` (`make equipment-fixture`,
+    `test_equipment_fixture.py`);
+  - `map_snapshot.json` (`make map-fixture`, `test_map_fixture.py`);
+  - `journal_snapshot.json` (`make journal-fixture`,
+    `test_journal_fixture.py`).
+- **Suites:** `godot-menu-shell` (18), `godot-equipment-face` (107),
+  `godot-map-face` (52), `godot-journal-face` (36), `godot-minimap`
+  (30). Renders come from `make menu-shell-shots`,
+  `equipment-face-shots`, `map-face-shots`, `journal-face-shots` and
+  `minimap-shots`.
+- **Production-owned files:**
+  - in `godot/scripts/ui/`: `menu_shell`, `settings_face`,
+    `equipment_face`, `equipment_query`, `equip_requests`,
+    `equipment_seen`, `map_face`, `minimap_model`, `minimap`,
+    `journal_face`, `journal_query`, `pause_menu` (`.gd`);
+  - `godot/scripts/main.gd` (the mounting), and
+    `godot/scripts/gameplay/pause_claims.gd`;
+  - the five drivers in `godot/tests/`, the three fixtures, and their
+    Makefile targets.
+
+  Arty's studies stay outside these files. The Glyph kit
+  (H-GLYPH-KIT, packet `04_3D_MENU_MAP_AND_GLYPH.md` §9) replaces the
+  provisional art through Prod.
+
+### For the owner's playtest
+
+- **Getting it:**
+  - "Update Archipepsi (Windows).bat" in the existing clone brings the
+    head (code = `97a4e70`), and keeps saves, settings and the import
+    cache.
+  - Alternatively, the source archive of `97a4e70` can be unpacked
+    into a new folder. It runs, but has its own `bridge/saves`, and the
+    updater does not work in it.
+- **Fresh or resume:**
+  - "Diagnostic Campaign - Candidate (Windows).bat" resumes the
+    candidate slot, and `--list` names the slots and their folder.
+  - `--new` begins a fresh candidate slot for this revision, and never
+    replaces an old one.
+  - Then start Godot as usual and leave the bridge window open.
+  - These launchers were not run on Windows in this session.
+- **Pickup card and Q (HB-O1):**
+  - A card no longer holds anything. Q, or any gameplay key, pressed
+    while a card is up does what it does, and the card fades in a
+    quarter second. Walking does not hurry it, and the next queued card
+    still shows in full. Mouse look works under it.
+  - To try it: claim a Bomb Bag, open EQUIPMENT with its card still up,
+    equip it, close, and press Q at once. The bomb should throw and the
+    key count down (for example 2 / 3).
+  - A press during a Zone's layout check says "Hold on: this Zone's
+    layout is still being checked." once. The Pulse pressed while
+    carrying says "PULSE BLOCKED WHILE CARRYING".
+- **Return plugs (CK9-F1):**
+  - A plug still returns you after two seconds standing in it.
+  - Firing the Pulse, using an Action, or taking damage resets its
+    charge to zero and keeps it from charging for one second. The label
+    reads "RETURN · NOT WHILE FIGHTING".
+  - A deliberate return is therefore about three seconds after your
+    last shot or hit: one quiet second, then the two-second hold.
+  - **Question for you: intentional retreat.** Under fire, a plug will
+    not take you home until you break contact for a second. Is that
+    right, or should a deliberate retreat work while you are being hit
+    (damage not counting, a longer hold, or an explicit press to
+    return)?
+- **Known in this build:**
+  - later candidate Zones can fail placement and be offered for discard
+    (HB-F4g, zones 13, 19 and 22 of the offline walk);
+  - zone_012 `c001`'s rail note sits in the powered door's alcove
+    (HB-F4f);
+  - flyers' circling varies with the machine (CK9-F2);
+  - the menus are on provisional art.

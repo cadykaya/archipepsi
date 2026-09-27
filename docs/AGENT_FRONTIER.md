@@ -647,9 +647,26 @@ owner's D-06/D-07 rulings and the seam table are in
         (49 checks). `godot-carry` 33. 11 of 11 sabotages caught, the
         control holds. `godot-bombs-live` passes, and in its refill
         phase Q went in under the claim's card, live.
-    - **Next:** CK10, one frontier on the combined head; then HB-F4g and
-      HB-F4f. PT-09 is met live, and a player reaches the Bomb Bag with
-      no Zone discarded on the way.
+    - **CK10: 91 of 92 on `97a4e70`** (HB-F4a-3 + CK9-F1 + HB-O1), one
+      run on one revision (`CK10_frontier_on_97a4e70.tsv`).
+      - Step 68, `godot-passing-hosted`, failed: its input was a scratch
+        capture lost with the old container. On Dess's committed N-10
+        fixture, the same suite passes 24 checks.
+      - `make test` was 2,299 + 2 skipped. The 5 are the container's:
+        the `[claude]` extra and `make apworld` were missing. Restored,
+        it passes 2,304.
+      - The placement captures were restamped (`f2d433b`).
+    - **REVIEW STOP (owner, 2026-09-27).** The checkpoint handoff is in
+      the ledger ("Checkpoint handoff at CK10"): the queue reconciled,
+      the menu for Arty's studies, and playtest notes. Hold for the
+      owner's review; nothing is queued, and 0.5 is not begun.
+      - Unverified WIP is on `recovery/0.4-blindside-wip` (draft PR
+        #13, not for merging): the HB-F4g and HB-F4f candidates, never
+        run.
+      - Open, mine: HB-F4g, HB-F4f, CK9-F2, RB-F4, D01-F3, D-8 (Gear),
+        and `godot-passing-hosted` into CI.
+    - **Next, after the review:** HB-F4g's measurement (variants 1, 2,
+      3 and junction; census; a 30-Zone walk), then HB-F4f, then CK11.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

@@ -1,0 +1,12 @@
+cachedir: .pytest_cache
+rootdir: /home/user/archipepsi/bridge
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+bridge/tests/test_claude_provider.py::test_valid_zone_passes_pipeline_without_fallback PASSED [ 25%]
+bridge/tests/test_claude_provider.py::test_refusal_uses_deterministic_fallback PASSED [ 50%]
+bridge/tests/test_claude_provider.py::test_repair_turn_carries_previous_output_and_errors PASSED [ 75%]
+bridge/tests/test_claude_provider.py::test_schema_rejection_degrades_to_prompt_json PASSED [100%]
+
+============================== 4 passed in 1.28s ===============================
