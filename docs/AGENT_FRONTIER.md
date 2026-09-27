@@ -645,7 +645,8 @@ owner's D-06/D-07 rulings and the seam table are in
       - `godot-bombs` drives the owner's sequence, Q under the claim's
         card after EQUIPMENT closes: one Bomb Bag thrown, counted 2 / 3
         (49 checks). `godot-carry` 33. 11 of 11 sabotages caught, the
-        control holds.
+        control holds. `godot-bombs-live` passes, and in its refill
+        phase Q went in under the claim's card, live.
     - **Next:** CK10, one frontier on the combined head; then HB-F4g and
       HB-F4f. PT-09 is met live, and a player reaches the Bomb Bag with
       no Zone discarded on the way.

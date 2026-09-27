@@ -5957,6 +5957,11 @@ now happens:
   - RO-C1, CONTROL: a faster fade is still a card making way.
     Everything holds.
 - **Regression:** `godot-bombs-live`, whose driver this changes (Q now
-  goes in under a card, and the log says so), runs next, alone on the
-  machine; then the full frontier on the combined head (CK10).
+  goes in under a card, and the log says so), passed all three phases
+  alone on the machine on `b58114d` (`HB-O1_bombs_live.log`): reach 9
+  checks, claim 26, refill 6.
+  - In the refill phase the owner's case came up live. The claim's card
+    ('SENT TO SAGE') was up when Q was due, and Q went in under it, held
+    by nothing. One Bomb Bag was authorised, thrown and counted.
+  - Then the full frontier on the combined head (CK10).
 - **Next:** HB-F4g, then HB-F4f.
