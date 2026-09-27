@@ -12,8 +12,9 @@ approval for Production integration.** I have stopped here.
 - The previous checkpoints are safe (see [Kept safe](#kept-safe)).
 
 **Start here:**
-1. **Run it:** `build/menu_proto/`. `RUN.md` there has the launch line and
-   every control.
+1. **Run it:** the archive's `build/menu_proto/`. `RUN.md` there has the
+   launch line and every control. From the repository, stage the same
+   build with `tools/menu_proto/stage_build.sh <dir>`.
 2. **Watch the tour:** `tour/cap_10_tour.mp4`, 33 s across all four walls,
    with the menu's own sound. `tour/cap_10_tour.png` is its marked
    moments.
