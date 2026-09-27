@@ -1,0 +1,6358 @@
+{
+ "_source": {
+  "note": "SAMPLE DATA. Production's own queries (EquipmentQuery, MapFace, JournalQuery, ZoneController) over Production's own fixtures, plus ONE authored layout-stress Echo log folded by Production's own model (stress_equipment.py).",
+  "production_rev": "a2b9df6"
+ },
+ "equipment": {
+  "base": {
+   "comparisons": {
+    "consumable": {
+     "act_cinder": {
+      "act_flask": [
+       "Damage: 18 → 30",
+       "Radius: 4 m → 3 m",
+       "Fuse: 1 s → 1.5 s",
+       "Throw strength: 11 → 12",
+       "Uses per supply: 2 → 3",
+       "Adds: Hits leave burning for 3.0 s",
+       "Loses: Hits leave slowed for 4.0 s"
+      ]
+     },
+     "act_flask": {
+      "act_cinder": [
+       "Damage: 30 → 18",
+       "Radius: 3 m → 4 m",
+       "Fuse: 1.5 s → 1 s",
+       "Throw strength: 12 → 11",
+       "Uses per supply: 3 → 2",
+       "Adds: Hits leave slowed for 4.0 s",
+       "Loses: Hits leave burning for 3.0 s"
+      ]
+     }
+    },
+    "echo_a": {
+     "act_bolt": {
+      "act_lash": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 18 → 9",
+       "Range: — → 40 m",
+       "Cooldown: 1.2 s → 0.8 s",
+       "Mk 2 → Mk 1"
+      ]
+     },
+     "act_lash": {
+      "act_bolt": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 9 → 18",
+       "Range: 40 m → —",
+       "Cooldown: 0.8 s → 1.2 s",
+       "Mk 1 → Mk 2"
+      ]
+     }
+    },
+    "echo_b": {
+
+    },
+    "mobility": {
+     "act_dash": {
+
+     }
+    },
+    "utility": {
+     "act_lens": {
+
+     }
+    }
+   },
+   "items": [
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 1.2 s."
+     ],
+     "description": "Throws a weighted cord that bites what it hits.",
+     "does": [
+      "18 damage projectile"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "lash",
+        "reach",
+        "grip"
+       ],
+       "description": "A cord that bites, and the grip to hold it.",
+       "mode": "mechanical",
+       "name": "Braided Lash"
+      },
+      {
+       "concepts": [
+        "grip"
+       ],
+       "description": "A longer cord for the lash you already carry.",
+       "mode": "literal",
+       "name": "Leather Grip"
+      }
+     ],
+     "equipped_in": "echo_a",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Hookshot",
+       "location": 89100001,
+       "mark": "Mk I",
+       "note": "Braided Lash",
+       "operation": "create",
+       "recipient": "Link"
+      },
+      {
+       "game": "Ocarina of Time",
+       "item": "Longshot",
+       "location": 89100002,
+       "mark": "Mk II",
+       "note": "+4 damage",
+       "operation": "upgrade",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_lash",
+     "kind": "action",
+     "mk": 2,
+     "name": "Braided Lash",
+     "newest_seq": 1,
+     "read": [
+      "read mechanical: lash / reach / grip  (Braided Lash)",
+      "read literal: grip  (Leather Grip)"
+     ],
+     "refusal": {
+      "consumable": "Braided Lash goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "Braided Lash is already on RMB.",
+      "echo_b": "Braided Lash goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Braided Lash goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Braided Lash goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [
+      "trait_grip"
+     ],
+     "slotted": true,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use."
+     ]
+    },
+    {
+     "activation": "always_on",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "No cost: it is simply on."
+     ],
+     "description": "Your footing is surer.",
+     "does": [
+      "110% move speed"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "lash",
+        "reach",
+        "grip"
+       ],
+       "description": "A cord that bites, and the grip to hold it.",
+       "mode": "mechanical",
+       "name": "Braided Lash"
+      }
+     ],
+     "equipped_in": "",
+     "family": "TRAIT",
+     "fits": [],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Hookshot",
+       "location": 89100001,
+       "mark": "Mk I",
+       "note": "Sure Grip",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "",
+     "id": "trait_grip",
+     "kind": "trait",
+     "mk": 1,
+     "name": "Sure Grip",
+     "newest_seq": 0,
+     "read": [
+      "read mechanical: lash / reach / grip  (Braided Lash)"
+     ],
+     "refusal": {
+      "consumable": "Sure Grip is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_a": "Sure Grip is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_b": "Sure Grip is always on while you own it. It takes no key, and it is not a switch.",
+      "mobility": "Sure Grip is always on while you own it. It takes no key, and it is not a switch.",
+      "utility": "Sure Grip is always on while you own it. It takes no key, and it is not a switch."
+     },
+     "siblings": [
+      "act_lash"
+     ],
+     "slotted": false,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "Always on while you own it. Not a switch: there is nothing to equip or turn off."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 2 s."
+     ],
+     "description": "Dashes forward.",
+     "does": [
+      "Dash burst (12 m/s)"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "speed",
+        "boots"
+       ],
+       "description": "A burst of speed along the ground.",
+       "mode": "literal",
+       "name": "Sprint Coil"
+      }
+     ],
+     "equipped_in": "mobility",
+     "family": "MOVE",
+     "fits": [
+      "mobility"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "A Link to the Past",
+       "item": "Pegasus Boots",
+       "location": 89100003,
+       "mark": "Mk I",
+       "note": "Sprint Coil",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "mobility",
+     "id": "act_dash",
+     "kind": "action",
+     "mk": 1,
+     "name": "Sprint Coil",
+     "newest_seq": 2,
+     "read": [
+      "read literal: speed / boots  (Sprint Coil)"
+     ],
+     "refusal": {
+      "consumable": "Sprint Coil goes on Shift (MOBILITY), not on Q (CONSUMABLE).",
+      "echo_a": "Sprint Coil goes on Shift (MOBILITY), not on RMB (ECHO A).",
+      "echo_b": "Sprint Coil goes on Shift (MOBILITY), not on MMB (ECHO B).",
+      "mobility": "Sprint Coil is already on Shift.",
+      "utility": "Sprint Coil goes on Shift (MOBILITY), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "A Link to the Past",
+     "use": [
+      "On a key: Shift (MOBILITY). Press it to use."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 0.8 s."
+     ],
+     "description": "Fires a bolt straight down the sight line.",
+     "does": [
+      "9 damage hitscan"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "bolt",
+        "range"
+       ],
+       "description": "A bolt that flies straight and far.",
+       "mode": "literal",
+       "name": "Arc Bolt"
+      }
+     ],
+     "equipped_in": "",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Dark Souls",
+       "item": "Crossbow",
+       "location": 89100004,
+       "mark": "Mk I",
+       "note": "Arc Bolt",
+       "operation": "create",
+       "recipient": "Solaire"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_bolt",
+     "kind": "action",
+     "mk": 1,
+     "name": "Arc Bolt",
+     "newest_seq": 3,
+     "read": [
+      "read literal: bolt / range  (Arc Bolt)"
+     ],
+     "refusal": {
+      "consumable": "Arc Bolt goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "",
+      "echo_b": "Arc Bolt goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Arc Bolt goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Arc Bolt goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Dark Souls",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use.",
+      "Reaches 40 m."
+     ]
+    },
+    {
+     "activation": "always_on",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "No cost: it is simply on."
+     ],
+     "description": "Green power, held.",
+     "does": [
+      "Magic Meter, max 100"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "magic",
+        "green",
+        "capacity"
+       ],
+       "description": "A reserve of green power.",
+       "mode": "literal",
+       "name": "Magic Meter"
+      },
+      {
+       "concepts": [
+        "capacity",
+        "shard"
+       ],
+       "description": "The meter holds more.",
+       "mode": "mechanical",
+       "name": "Estus Shard"
+      }
+     ],
+     "equipped_in": "",
+     "family": "POOL",
+     "fits": [],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Magic Upgrade",
+       "location": 89100005,
+       "mark": "Mk I",
+       "note": "Magic Meter",
+       "operation": "create",
+       "recipient": "Link"
+      },
+      {
+       "game": "Dark Souls",
+       "item": "Estus Shard",
+       "location": 89100006,
+       "mark": "Mk II",
+       "note": "+40 max_value",
+       "operation": "upgrade",
+       "recipient": "Solaire"
+      }
+     ],
+     "home_slot": "",
+     "id": "res_magic",
+     "kind": "resource",
+     "mk": 2,
+     "name": "Magic Meter",
+     "newest_seq": 5,
+     "read": [
+      "read literal: magic / green / capacity  (Magic Meter)",
+      "read mechanical: capacity / shard  (Estus Shard)"
+     ],
+     "refusal": {
+      "consumable": "Magic Meter is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_a": "Magic Meter is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_b": "Magic Meter is always on while you own it. It takes no key, and it is not a switch.",
+      "mobility": "Magic Meter is always on while you own it. It takes no key, and it is not a switch.",
+      "utility": "Magic Meter is always on while you own it. It takes no key, and it is not a switch."
+     },
+     "siblings": [],
+     "slotted": false,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "Always on while you own it. Not a switch: there is nothing to equip or turn off."
+     ]
+    },
+    {
+     "activation": "always_on",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "No cost: it is simply on."
+     ],
+     "description": "Knocked about less while Arc Bolt is equipped.",
+     "does": [
+      "150% knockback resist"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "ward",
+        "mirror"
+       ],
+       "description": "Steadier hands while the bolt is on your key.",
+       "mode": "conceptual",
+       "name": "Warding Loop"
+      }
+     ],
+     "equipped_in": "",
+     "family": "TRAIT",
+     "fits": [],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Mirror Shield",
+       "location": 89100007,
+       "mark": "Mk I",
+       "note": "Warding Loop",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "",
+     "id": "trait_ward",
+     "kind": "trait",
+     "mk": 1,
+     "name": "Warding Loop",
+     "newest_seq": 6,
+     "read": [
+      "read conceptual: ward / mirror  (Warding Loop)"
+     ],
+     "refusal": {
+      "consumable": "Warding Loop is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_a": "Warding Loop is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_b": "Warding Loop is always on while you own it. It takes no key, and it is not a switch.",
+      "mobility": "Warding Loop is always on while you own it. It takes no key, and it is not a switch.",
+      "utility": "Warding Loop is always on while you own it. It takes no key, and it is not a switch."
+     },
+     "siblings": [],
+     "slotted": false,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "Always on while you own it. Not a switch: there is nothing to equip or turn off.",
+      "Only while Arc Bolt is on a key. It is not, so this does nothing right now."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 6 s."
+     ],
+     "description": "Marks enemies in view.",
+     "does": [
+      "Marks enemies within 30 m for 8 s"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "sight",
+        "truth"
+       ],
+       "description": "Marks what hides.",
+       "mode": "literal",
+       "name": "Scan Lens"
+      }
+     ],
+     "equipped_in": "",
+     "family": "TOOL",
+     "fits": [
+      "utility"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Lens of Truth",
+       "location": 89100008,
+       "mark": "Mk I",
+       "note": "Scan Lens",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "utility",
+     "id": "act_lens",
+     "kind": "action",
+     "mk": 1,
+     "name": "Scan Lens",
+     "newest_seq": 7,
+     "read": [
+      "read literal: sight / truth  (Scan Lens)"
+     ],
+     "refusal": {
+      "consumable": "Scan Lens goes on C (UTILITY), not on Q (CONSUMABLE).",
+      "echo_a": "Scan Lens goes on C (UTILITY), not on RMB (ECHO A).",
+      "echo_b": "Scan Lens goes on C (UTILITY), not on MMB (ECHO B).",
+      "mobility": "Scan Lens goes on C (UTILITY), not on Shift (MOBILITY).",
+      "utility": ""
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "On a key: C (UTILITY). Press it to use.",
+      "Reaches 30 m."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": 2.0,
+     "charges_max": 3.0,
+     "consumable": true,
+     "cost": [
+      "Cooldown 1 s.",
+      "3 uses per supply. Entering a Zone refills it."
+     ],
+     "description": "A lobbed charge that bursts and sets things alight.",
+     "does": [
+      "Thrown: bursts for 30 damage within 3.0 m after 1.5 s",
+      "Hits leave burning for 3.0 s"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "bomb",
+        "fuse"
+       ],
+       "description": "A fused charge you throw.",
+       "mode": "literal",
+       "name": "Cinder Charge"
+      }
+     ],
+     "equipped_in": "consumable",
+     "family": "THROWN",
+     "fits": [
+      "consumable"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Bomb Bag",
+       "location": 89100009,
+       "mark": "Mk I",
+       "note": "Cinder Charge",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "consumable",
+     "id": "act_cinder",
+     "kind": "action",
+     "mk": 1,
+     "name": "Cinder Charge",
+     "newest_seq": 8,
+     "read": [
+      "read literal: bomb / fuse  (Cinder Charge)"
+     ],
+     "refusal": {
+      "consumable": "Cinder Charge is already on Q.",
+      "echo_a": "Cinder Charge goes on Q (CONSUMABLE), not on RMB (ECHO A).",
+      "echo_b": "Cinder Charge goes on Q (CONSUMABLE), not on MMB (ECHO B).",
+      "mobility": "Cinder Charge goes on Q (CONSUMABLE), not on Shift (MOBILITY).",
+      "utility": "Cinder Charge goes on Q (CONSUMABLE), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "On a key: Q (CONSUMABLE). Press it to use.",
+      "The status lands on enemies it hits."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": 2.0,
+     "charges_max": 2.0,
+     "consumable": true,
+     "cost": [
+      "Cooldown 1 s.",
+      "2 uses per supply. Entering a Zone refills it."
+     ],
+     "description": "A lobbed flask that bursts and slows.",
+     "does": [
+      "Thrown: bursts for 18 damage within 4.0 m after 1.0 s",
+      "Hits leave slowed for 4.0 s"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "ice",
+        "flask"
+       ],
+       "description": "A flask that bursts cold.",
+       "mode": "literal",
+       "name": "Frost Flask"
+      }
+     ],
+     "equipped_in": "",
+     "family": "THROWN",
+     "fits": [
+      "consumable"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "A Link to the Past",
+       "item": "Ice Trap",
+       "location": 89100010,
+       "mark": "Mk I",
+       "note": "Frost Flask",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "consumable",
+     "id": "act_flask",
+     "kind": "action",
+     "mk": 1,
+     "name": "Frost Flask",
+     "newest_seq": 9,
+     "read": [
+      "read literal: ice / flask  (Frost Flask)"
+     ],
+     "refusal": {
+      "consumable": "",
+      "echo_a": "Frost Flask goes on Q (CONSUMABLE), not on RMB (ECHO A).",
+      "echo_b": "Frost Flask goes on Q (CONSUMABLE), not on MMB (ECHO B).",
+      "mobility": "Frost Flask goes on Q (CONSUMABLE), not on Shift (MOBILITY).",
+      "utility": "Frost Flask goes on Q (CONSUMABLE), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "A Link to the Past",
+     "use": [
+      "On a key: Q (CONSUMABLE). Press it to use.",
+      "The status lands on enemies it hits."
+     ]
+    }
+   ],
+   "keys": [
+    {
+     "keycap": "RMB",
+     "slot": "echo_a",
+     "title": "ECHO A",
+     "view": {
+      "accepts": [
+       "act_lash",
+       "act_bolt"
+      ],
+      "holds": "act_lash",
+      "slot": "echo_a"
+     }
+    },
+    {
+     "keycap": "MMB",
+     "slot": "echo_b",
+     "title": "ECHO B",
+     "view": {
+      "accepts": [],
+      "holds": null,
+      "slot": "echo_b"
+     }
+    },
+    {
+     "keycap": "Shift",
+     "slot": "mobility",
+     "title": "MOBILITY",
+     "view": {
+      "accepts": [
+       "act_dash"
+      ],
+      "holds": "act_dash",
+      "slot": "mobility"
+     }
+    },
+    {
+     "keycap": "C",
+     "slot": "utility",
+     "title": "UTILITY",
+     "view": {
+      "accepts": [
+       "act_lens"
+      ],
+      "holds": null,
+      "slot": "utility"
+     }
+    },
+    {
+     "keycap": "Q",
+     "slot": "consumable",
+     "title": "CONSUMABLE",
+     "view": {
+      "accepts": [
+       "act_cinder",
+       "act_flask"
+      ],
+      "holds": "act_cinder",
+      "slot": "consumable"
+     }
+    }
+   ],
+   "sort_labels": [
+    "Newest first",
+    "Name A-Z",
+    "Source game"
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
+    }
+   ]
+  },
+  "slots": [
+   "echo_a",
+   "echo_b",
+   "mobility",
+   "utility",
+   "consumable"
+  ],
+  "stress": {
+   "comparisons": {
+    "consumable": {
+     "act_cinder": {
+      "act_flask": [
+       "Damage: 18 → 30",
+       "Radius: 4 m → 3 m",
+       "Fuse: 1 s → 1.5 s",
+       "Throw strength: 11 → 12",
+       "Uses per supply: 2 → 3",
+       "Adds: Hits leave burning for 3.0 s",
+       "Loses: Hits leave slowed for 4.0 s"
+      ]
+     },
+     "act_flask": {
+      "act_cinder": [
+       "Damage: 30 → 18",
+       "Radius: 3 m → 4 m",
+       "Fuse: 1.5 s → 1 s",
+       "Throw strength: 12 → 11",
+       "Uses per supply: 3 → 2",
+       "Adds: Hits leave slowed for 4.0 s",
+       "Loses: Hits leave burning for 3.0 s"
+      ]
+     }
+    },
+    "echo_a": {
+     "act_bolt": {
+      "act_lash": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 18 → 9",
+       "Range: — → 40 m",
+       "Cooldown: 1.2 s → 0.8 s",
+       "Mk 2 → Mk 1"
+      ],
+      "act_s_arc": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 8 → 9",
+       "Range: — → 40 m",
+       "Cooldown: 0.7 s → 0.8 s"
+      ],
+      "act_s_draw": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 16 → 9",
+       "Range: — → 40 m",
+       "Cooldown: 1 s → 0.8 s"
+      ],
+      "act_s_lance": [
+       "Damage: 22 → 9",
+       "Range: 25 m → 40 m",
+       "Cooldown: 2.4 s → 0.8 s"
+      ],
+      "act_s_long": [
+       "Damage: 14 → 9",
+       "Range: 60 m → 40 m",
+       "Cooldown: 1.4 s → 0.8 s"
+      ],
+      "act_s_palm": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 20 → 9",
+       "Range: — → 40 m",
+       "Cooldown: 1.6 s → 0.8 s"
+      ],
+      "act_s_rod": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 12 → 9",
+       "Range: — → 40 m",
+       "Cooldown: 1.1 s → 0.8 s"
+      ],
+      "act_s_spray": [
+       "Damage: 3 → 9",
+       "Pellets: 5 → 1",
+       "Range: 18 m → 40 m",
+       "Spread: 12° → 0°",
+       "Cooldown: 0.6 s → 0.8 s"
+      ]
+     },
+     "act_lash": {
+      "act_bolt": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 9 → 18",
+       "Range: 40 m → —",
+       "Cooldown: 0.8 s → 1.2 s",
+       "Mk 1 → Mk 2"
+      ],
+      "act_s_arc": [
+       "Damage: 8 → 18",
+       "Speed: 22 m/s → 30 m/s",
+       "Flight time: 1.8 s → 1.5 s",
+       "Cooldown: 0.7 s → 1.2 s",
+       "Mk 1 → Mk 2"
+      ],
+      "act_s_draw": [
+       "Damage: 16 → 18",
+       "Speed: 36 m/s → 30 m/s",
+       "Flight time: 1.2 s → 1.5 s",
+       "Cooldown: 1 s → 1.2 s",
+       "Mk 1 → Mk 2"
+      ],
+      "act_s_lance": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 22 → 18",
+       "Range: 25 m → —",
+       "Cooldown: 2.4 s → 1.2 s",
+       "Mk 1 → Mk 2"
+      ],
+      "act_s_long": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 14 → 18",
+       "Range: 60 m → —",
+       "Cooldown: 1.4 s → 1.2 s",
+       "Mk 1 → Mk 2"
+      ],
+      "act_s_palm": [
+       "Damage: 20 → 18",
+       "Speed: 14 m/s → 30 m/s",
+       "Flight time: 0.9 s → 1.5 s",
+       "Cooldown: 1.6 s → 1.2 s",
+       "Mk 1 → Mk 2"
+      ],
+      "act_s_rod": [
+       "Damage: 12 → 18",
+       "Speed: 18 m/s → 30 m/s",
+       "Flight time: 1.4 s → 1.5 s",
+       "Cooldown: 1.1 s → 1.2 s",
+       "Mk 1 → Mk 2"
+      ],
+      "act_s_spray": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 3 → 18",
+       "Range: 18 m → —",
+       "Cooldown: 0.6 s → 1.2 s",
+       "Mk 1 → Mk 2"
+      ]
+     },
+     "act_s_arc": {
+      "act_bolt": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 9 → 8",
+       "Range: 40 m → —",
+       "Cooldown: 0.8 s → 0.7 s"
+      ],
+      "act_lash": [
+       "Damage: 18 → 8",
+       "Speed: 30 m/s → 22 m/s",
+       "Flight time: 1.5 s → 1.8 s",
+       "Cooldown: 1.2 s → 0.7 s",
+       "Mk 2 → Mk 1"
+      ],
+      "act_s_draw": [
+       "Damage: 16 → 8",
+       "Speed: 36 m/s → 22 m/s",
+       "Flight time: 1.2 s → 1.8 s",
+       "Cooldown: 1 s → 0.7 s"
+      ],
+      "act_s_lance": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 22 → 8",
+       "Range: 25 m → —",
+       "Cooldown: 2.4 s → 0.7 s"
+      ],
+      "act_s_long": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 14 → 8",
+       "Range: 60 m → —",
+       "Cooldown: 1.4 s → 0.7 s"
+      ],
+      "act_s_palm": [
+       "Damage: 20 → 8",
+       "Speed: 14 m/s → 22 m/s",
+       "Flight time: 0.9 s → 1.8 s",
+       "Cooldown: 1.6 s → 0.7 s"
+      ],
+      "act_s_rod": [
+       "Damage: 12 → 8",
+       "Speed: 18 m/s → 22 m/s",
+       "Flight time: 1.4 s → 1.8 s",
+       "Cooldown: 1.1 s → 0.7 s"
+      ],
+      "act_s_spray": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 3 → 8",
+       "Range: 18 m → —",
+       "Cooldown: 0.6 s → 0.7 s"
+      ]
+     },
+     "act_s_draw": {
+      "act_bolt": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 9 → 16",
+       "Range: 40 m → —",
+       "Cooldown: 0.8 s → 1 s"
+      ],
+      "act_lash": [
+       "Damage: 18 → 16",
+       "Speed: 30 m/s → 36 m/s",
+       "Flight time: 1.5 s → 1.2 s",
+       "Cooldown: 1.2 s → 1 s",
+       "Mk 2 → Mk 1"
+      ],
+      "act_s_arc": [
+       "Damage: 8 → 16",
+       "Speed: 22 m/s → 36 m/s",
+       "Flight time: 1.8 s → 1.2 s",
+       "Cooldown: 0.7 s → 1 s"
+      ],
+      "act_s_lance": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 22 → 16",
+       "Range: 25 m → —",
+       "Cooldown: 2.4 s → 1 s"
+      ],
+      "act_s_long": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 14 → 16",
+       "Range: 60 m → —",
+       "Cooldown: 1.4 s → 1 s"
+      ],
+      "act_s_palm": [
+       "Damage: 20 → 16",
+       "Speed: 14 m/s → 36 m/s",
+       "Flight time: 0.9 s → 1.2 s",
+       "Cooldown: 1.6 s → 1 s"
+      ],
+      "act_s_rod": [
+       "Damage: 12 → 16",
+       "Speed: 18 m/s → 36 m/s",
+       "Flight time: 1.4 s → 1.2 s",
+       "Cooldown: 1.1 s → 1 s"
+      ],
+      "act_s_spray": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 3 → 16",
+       "Range: 18 m → —",
+       "Cooldown: 0.6 s → 1 s"
+      ]
+     },
+     "act_s_lance": {
+      "act_bolt": [
+       "Damage: 9 → 22",
+       "Range: 40 m → 25 m",
+       "Cooldown: 0.8 s → 2.4 s"
+      ],
+      "act_lash": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 18 → 22",
+       "Range: — → 25 m",
+       "Cooldown: 1.2 s → 2.4 s",
+       "Mk 2 → Mk 1"
+      ],
+      "act_s_arc": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 8 → 22",
+       "Range: — → 25 m",
+       "Cooldown: 0.7 s → 2.4 s"
+      ],
+      "act_s_draw": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 16 → 22",
+       "Range: — → 25 m",
+       "Cooldown: 1 s → 2.4 s"
+      ],
+      "act_s_long": [
+       "Damage: 14 → 22",
+       "Range: 60 m → 25 m",
+       "Cooldown: 1.4 s → 2.4 s"
+      ],
+      "act_s_palm": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 20 → 22",
+       "Range: — → 25 m",
+       "Cooldown: 1.6 s → 2.4 s"
+      ],
+      "act_s_rod": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 12 → 22",
+       "Range: — → 25 m",
+       "Cooldown: 1.1 s → 2.4 s"
+      ],
+      "act_s_spray": [
+       "Damage: 3 → 22",
+       "Pellets: 5 → 1",
+       "Range: 18 m → 25 m",
+       "Spread: 12° → 0°",
+       "Cooldown: 0.6 s → 2.4 s"
+      ]
+     },
+     "act_s_long": {
+      "act_bolt": [
+       "Damage: 9 → 14",
+       "Range: 40 m → 60 m",
+       "Cooldown: 0.8 s → 1.4 s"
+      ],
+      "act_lash": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 18 → 14",
+       "Range: — → 60 m",
+       "Cooldown: 1.2 s → 1.4 s",
+       "Mk 2 → Mk 1"
+      ],
+      "act_s_arc": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 8 → 14",
+       "Range: — → 60 m",
+       "Cooldown: 0.7 s → 1.4 s"
+      ],
+      "act_s_draw": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 16 → 14",
+       "Range: — → 60 m",
+       "Cooldown: 1 s → 1.4 s"
+      ],
+      "act_s_lance": [
+       "Damage: 22 → 14",
+       "Range: 25 m → 60 m",
+       "Cooldown: 2.4 s → 1.4 s"
+      ],
+      "act_s_palm": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 20 → 14",
+       "Range: — → 60 m",
+       "Cooldown: 1.6 s → 1.4 s"
+      ],
+      "act_s_rod": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 12 → 14",
+       "Range: — → 60 m",
+       "Cooldown: 1.1 s → 1.4 s"
+      ],
+      "act_s_spray": [
+       "Damage: 3 → 14",
+       "Pellets: 5 → 1",
+       "Range: 18 m → 60 m",
+       "Spread: 12° → 0°",
+       "Cooldown: 0.6 s → 1.4 s"
+      ]
+     },
+     "act_s_palm": {
+      "act_bolt": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 9 → 20",
+       "Range: 40 m → —",
+       "Cooldown: 0.8 s → 1.6 s"
+      ],
+      "act_lash": [
+       "Damage: 18 → 20",
+       "Speed: 30 m/s → 14 m/s",
+       "Flight time: 1.5 s → 0.9 s",
+       "Cooldown: 1.2 s → 1.6 s",
+       "Mk 2 → Mk 1"
+      ],
+      "act_s_arc": [
+       "Damage: 8 → 20",
+       "Speed: 22 m/s → 14 m/s",
+       "Flight time: 1.8 s → 0.9 s",
+       "Cooldown: 0.7 s → 1.6 s"
+      ],
+      "act_s_draw": [
+       "Damage: 16 → 20",
+       "Speed: 36 m/s → 14 m/s",
+       "Flight time: 1.2 s → 0.9 s",
+       "Cooldown: 1 s → 1.6 s"
+      ],
+      "act_s_lance": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 22 → 20",
+       "Range: 25 m → —",
+       "Cooldown: 2.4 s → 1.6 s"
+      ],
+      "act_s_long": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 14 → 20",
+       "Range: 60 m → —",
+       "Cooldown: 1.4 s → 1.6 s"
+      ],
+      "act_s_rod": [
+       "Damage: 12 → 20",
+       "Speed: 18 m/s → 14 m/s",
+       "Flight time: 1.4 s → 0.9 s",
+       "Cooldown: 1.1 s → 1.6 s"
+      ],
+      "act_s_spray": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 3 → 20",
+       "Range: 18 m → —",
+       "Cooldown: 0.6 s → 1.6 s"
+      ]
+     },
+     "act_s_rod": {
+      "act_bolt": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 9 → 12",
+       "Range: 40 m → —",
+       "Cooldown: 0.8 s → 1.1 s"
+      ],
+      "act_lash": [
+       "Damage: 18 → 12",
+       "Speed: 30 m/s → 18 m/s",
+       "Flight time: 1.5 s → 1.4 s",
+       "Cooldown: 1.2 s → 1.1 s",
+       "Mk 2 → Mk 1"
+      ],
+      "act_s_arc": [
+       "Damage: 8 → 12",
+       "Speed: 22 m/s → 18 m/s",
+       "Flight time: 1.8 s → 1.4 s",
+       "Cooldown: 0.7 s → 1.1 s"
+      ],
+      "act_s_draw": [
+       "Damage: 16 → 12",
+       "Speed: 36 m/s → 18 m/s",
+       "Flight time: 1.2 s → 1.4 s",
+       "Cooldown: 1 s → 1.1 s"
+      ],
+      "act_s_lance": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 22 → 12",
+       "Range: 25 m → —",
+       "Cooldown: 2.4 s → 1.1 s"
+      ],
+      "act_s_long": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 14 → 12",
+       "Range: 60 m → —",
+       "Cooldown: 1.4 s → 1.1 s"
+      ],
+      "act_s_palm": [
+       "Damage: 20 → 12",
+       "Speed: 14 m/s → 18 m/s",
+       "Flight time: 0.9 s → 1.4 s",
+       "Cooldown: 1.6 s → 1.1 s"
+      ],
+      "act_s_spray": [
+       "Kind: hitscan damage → projectile damage",
+       "Damage: 3 → 12",
+       "Range: 18 m → —",
+       "Cooldown: 0.6 s → 1.1 s"
+      ]
+     },
+     "act_s_spray": {
+      "act_bolt": [
+       "Damage: 9 → 3",
+       "Pellets: 1 → 5",
+       "Range: 40 m → 18 m",
+       "Spread: 0° → 12°",
+       "Cooldown: 0.8 s → 0.6 s"
+      ],
+      "act_lash": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 18 → 3",
+       "Range: — → 18 m",
+       "Cooldown: 1.2 s → 0.6 s",
+       "Mk 2 → Mk 1"
+      ],
+      "act_s_arc": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 8 → 3",
+       "Range: — → 18 m",
+       "Cooldown: 0.7 s → 0.6 s"
+      ],
+      "act_s_draw": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 16 → 3",
+       "Range: — → 18 m",
+       "Cooldown: 1 s → 0.6 s"
+      ],
+      "act_s_lance": [
+       "Damage: 22 → 3",
+       "Pellets: 1 → 5",
+       "Range: 25 m → 18 m",
+       "Spread: 0° → 12°",
+       "Cooldown: 2.4 s → 0.6 s"
+      ],
+      "act_s_long": [
+       "Damage: 14 → 3",
+       "Pellets: 1 → 5",
+       "Range: 60 m → 18 m",
+       "Spread: 0° → 12°",
+       "Cooldown: 1.4 s → 0.6 s"
+      ],
+      "act_s_palm": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 20 → 3",
+       "Range: — → 18 m",
+       "Cooldown: 1.6 s → 0.6 s"
+      ],
+      "act_s_rod": [
+       "Kind: projectile damage → hitscan damage",
+       "Damage: 12 → 3",
+       "Range: — → 18 m",
+       "Cooldown: 1.1 s → 0.6 s"
+      ]
+     }
+    },
+    "echo_b": {
+
+    },
+    "mobility": {
+     "act_dash": {
+
+     }
+    },
+    "utility": {
+     "act_lens": {
+
+     }
+    }
+   },
+   "items": [
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 1.2 s."
+     ],
+     "description": "Throws a weighted cord that bites what it hits.",
+     "does": [
+      "18 damage projectile"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "lash",
+        "reach",
+        "grip"
+       ],
+       "description": "A cord that bites, and the grip to hold it.",
+       "mode": "mechanical",
+       "name": "Braided Lash"
+      },
+      {
+       "concepts": [
+        "grip"
+       ],
+       "description": "A longer cord for the lash you already carry.",
+       "mode": "literal",
+       "name": "Leather Grip"
+      }
+     ],
+     "equipped_in": "echo_a",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Hookshot",
+       "location": 89100001,
+       "mark": "Mk I",
+       "note": "Braided Lash",
+       "operation": "create",
+       "recipient": "Link"
+      },
+      {
+       "game": "Ocarina of Time",
+       "item": "Longshot",
+       "location": 89100002,
+       "mark": "Mk II",
+       "note": "+4 damage",
+       "operation": "upgrade",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_lash",
+     "kind": "action",
+     "mk": 2,
+     "name": "Braided Lash",
+     "newest_seq": 1,
+     "read": [
+      "read mechanical: lash / reach / grip  (Braided Lash)",
+      "read literal: grip  (Leather Grip)"
+     ],
+     "refusal": {
+      "consumable": "Braided Lash goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "Braided Lash is already on RMB.",
+      "echo_b": "Braided Lash goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Braided Lash goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Braided Lash goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [
+      "trait_grip"
+     ],
+     "slotted": true,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use."
+     ]
+    },
+    {
+     "activation": "always_on",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "No cost: it is simply on."
+     ],
+     "description": "Your footing is surer.",
+     "does": [
+      "110% move speed"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "lash",
+        "reach",
+        "grip"
+       ],
+       "description": "A cord that bites, and the grip to hold it.",
+       "mode": "mechanical",
+       "name": "Braided Lash"
+      }
+     ],
+     "equipped_in": "",
+     "family": "TRAIT",
+     "fits": [],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Hookshot",
+       "location": 89100001,
+       "mark": "Mk I",
+       "note": "Sure Grip",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "",
+     "id": "trait_grip",
+     "kind": "trait",
+     "mk": 1,
+     "name": "Sure Grip",
+     "newest_seq": 0,
+     "read": [
+      "read mechanical: lash / reach / grip  (Braided Lash)"
+     ],
+     "refusal": {
+      "consumable": "Sure Grip is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_a": "Sure Grip is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_b": "Sure Grip is always on while you own it. It takes no key, and it is not a switch.",
+      "mobility": "Sure Grip is always on while you own it. It takes no key, and it is not a switch.",
+      "utility": "Sure Grip is always on while you own it. It takes no key, and it is not a switch."
+     },
+     "siblings": [
+      "act_lash"
+     ],
+     "slotted": false,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "Always on while you own it. Not a switch: there is nothing to equip or turn off."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 2 s."
+     ],
+     "description": "Dashes forward.",
+     "does": [
+      "Dash burst (12 m/s)"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "speed",
+        "boots"
+       ],
+       "description": "A burst of speed along the ground.",
+       "mode": "literal",
+       "name": "Sprint Coil"
+      }
+     ],
+     "equipped_in": "mobility",
+     "family": "MOVE",
+     "fits": [
+      "mobility"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "A Link to the Past",
+       "item": "Pegasus Boots",
+       "location": 89100003,
+       "mark": "Mk I",
+       "note": "Sprint Coil",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "mobility",
+     "id": "act_dash",
+     "kind": "action",
+     "mk": 1,
+     "name": "Sprint Coil",
+     "newest_seq": 2,
+     "read": [
+      "read literal: speed / boots  (Sprint Coil)"
+     ],
+     "refusal": {
+      "consumable": "Sprint Coil goes on Shift (MOBILITY), not on Q (CONSUMABLE).",
+      "echo_a": "Sprint Coil goes on Shift (MOBILITY), not on RMB (ECHO A).",
+      "echo_b": "Sprint Coil goes on Shift (MOBILITY), not on MMB (ECHO B).",
+      "mobility": "Sprint Coil is already on Shift.",
+      "utility": "Sprint Coil goes on Shift (MOBILITY), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "A Link to the Past",
+     "use": [
+      "On a key: Shift (MOBILITY). Press it to use."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 0.8 s."
+     ],
+     "description": "Fires a bolt straight down the sight line.",
+     "does": [
+      "9 damage hitscan"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "bolt",
+        "range"
+       ],
+       "description": "A bolt that flies straight and far.",
+       "mode": "literal",
+       "name": "Arc Bolt"
+      }
+     ],
+     "equipped_in": "",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Dark Souls",
+       "item": "Crossbow",
+       "location": 89100004,
+       "mark": "Mk I",
+       "note": "Arc Bolt",
+       "operation": "create",
+       "recipient": "Solaire"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_bolt",
+     "kind": "action",
+     "mk": 1,
+     "name": "Arc Bolt",
+     "newest_seq": 3,
+     "read": [
+      "read literal: bolt / range  (Arc Bolt)"
+     ],
+     "refusal": {
+      "consumable": "Arc Bolt goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "",
+      "echo_b": "Arc Bolt goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Arc Bolt goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Arc Bolt goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Dark Souls",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use.",
+      "Reaches 40 m."
+     ]
+    },
+    {
+     "activation": "always_on",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "No cost: it is simply on."
+     ],
+     "description": "Green power, held.",
+     "does": [
+      "Magic Meter, max 100"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "magic",
+        "green",
+        "capacity"
+       ],
+       "description": "A reserve of green power.",
+       "mode": "literal",
+       "name": "Magic Meter"
+      },
+      {
+       "concepts": [
+        "capacity",
+        "shard"
+       ],
+       "description": "The meter holds more.",
+       "mode": "mechanical",
+       "name": "Estus Shard"
+      }
+     ],
+     "equipped_in": "",
+     "family": "POOL",
+     "fits": [],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Magic Upgrade",
+       "location": 89100005,
+       "mark": "Mk I",
+       "note": "Magic Meter",
+       "operation": "create",
+       "recipient": "Link"
+      },
+      {
+       "game": "Dark Souls",
+       "item": "Estus Shard",
+       "location": 89100006,
+       "mark": "Mk II",
+       "note": "+40 max_value",
+       "operation": "upgrade",
+       "recipient": "Solaire"
+      }
+     ],
+     "home_slot": "",
+     "id": "res_magic",
+     "kind": "resource",
+     "mk": 2,
+     "name": "Magic Meter",
+     "newest_seq": 5,
+     "read": [
+      "read literal: magic / green / capacity  (Magic Meter)",
+      "read mechanical: capacity / shard  (Estus Shard)"
+     ],
+     "refusal": {
+      "consumable": "Magic Meter is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_a": "Magic Meter is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_b": "Magic Meter is always on while you own it. It takes no key, and it is not a switch.",
+      "mobility": "Magic Meter is always on while you own it. It takes no key, and it is not a switch.",
+      "utility": "Magic Meter is always on while you own it. It takes no key, and it is not a switch."
+     },
+     "siblings": [],
+     "slotted": false,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "Always on while you own it. Not a switch: there is nothing to equip or turn off."
+     ]
+    },
+    {
+     "activation": "always_on",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "No cost: it is simply on."
+     ],
+     "description": "Knocked about less while Arc Bolt is equipped.",
+     "does": [
+      "150% knockback resist"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "ward",
+        "mirror"
+       ],
+       "description": "Steadier hands while the bolt is on your key.",
+       "mode": "conceptual",
+       "name": "Warding Loop"
+      }
+     ],
+     "equipped_in": "",
+     "family": "TRAIT",
+     "fits": [],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Mirror Shield",
+       "location": 89100007,
+       "mark": "Mk I",
+       "note": "Warding Loop",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "",
+     "id": "trait_ward",
+     "kind": "trait",
+     "mk": 1,
+     "name": "Warding Loop",
+     "newest_seq": 6,
+     "read": [
+      "read conceptual: ward / mirror  (Warding Loop)"
+     ],
+     "refusal": {
+      "consumable": "Warding Loop is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_a": "Warding Loop is always on while you own it. It takes no key, and it is not a switch.",
+      "echo_b": "Warding Loop is always on while you own it. It takes no key, and it is not a switch.",
+      "mobility": "Warding Loop is always on while you own it. It takes no key, and it is not a switch.",
+      "utility": "Warding Loop is always on while you own it. It takes no key, and it is not a switch."
+     },
+     "siblings": [],
+     "slotted": false,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "Always on while you own it. Not a switch: there is nothing to equip or turn off.",
+      "Only while Arc Bolt is on a key. It is not, so this does nothing right now."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 6 s."
+     ],
+     "description": "Marks enemies in view.",
+     "does": [
+      "Marks enemies within 30 m for 8 s"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "sight",
+        "truth"
+       ],
+       "description": "Marks what hides.",
+       "mode": "literal",
+       "name": "Scan Lens"
+      }
+     ],
+     "equipped_in": "",
+     "family": "TOOL",
+     "fits": [
+      "utility"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Lens of Truth",
+       "location": 89100008,
+       "mark": "Mk I",
+       "note": "Scan Lens",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "utility",
+     "id": "act_lens",
+     "kind": "action",
+     "mk": 1,
+     "name": "Scan Lens",
+     "newest_seq": 7,
+     "read": [
+      "read literal: sight / truth  (Scan Lens)"
+     ],
+     "refusal": {
+      "consumable": "Scan Lens goes on C (UTILITY), not on Q (CONSUMABLE).",
+      "echo_a": "Scan Lens goes on C (UTILITY), not on RMB (ECHO A).",
+      "echo_b": "Scan Lens goes on C (UTILITY), not on MMB (ECHO B).",
+      "mobility": "Scan Lens goes on C (UTILITY), not on Shift (MOBILITY).",
+      "utility": ""
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "On a key: C (UTILITY). Press it to use.",
+      "Reaches 30 m."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": 2.0,
+     "charges_max": 3.0,
+     "consumable": true,
+     "cost": [
+      "Cooldown 1 s.",
+      "3 uses per supply. Entering a Zone refills it."
+     ],
+     "description": "A lobbed charge that bursts and sets things alight.",
+     "does": [
+      "Thrown: bursts for 30 damage within 3.0 m after 1.5 s",
+      "Hits leave burning for 3.0 s"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "bomb",
+        "fuse"
+       ],
+       "description": "A fused charge you throw.",
+       "mode": "literal",
+       "name": "Cinder Charge"
+      }
+     ],
+     "equipped_in": "consumable",
+     "family": "THROWN",
+     "fits": [
+      "consumable"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Bomb Bag",
+       "location": 89100009,
+       "mark": "Mk I",
+       "note": "Cinder Charge",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "consumable",
+     "id": "act_cinder",
+     "kind": "action",
+     "mk": 1,
+     "name": "Cinder Charge",
+     "newest_seq": 8,
+     "read": [
+      "read literal: bomb / fuse  (Cinder Charge)"
+     ],
+     "refusal": {
+      "consumable": "Cinder Charge is already on Q.",
+      "echo_a": "Cinder Charge goes on Q (CONSUMABLE), not on RMB (ECHO A).",
+      "echo_b": "Cinder Charge goes on Q (CONSUMABLE), not on MMB (ECHO B).",
+      "mobility": "Cinder Charge goes on Q (CONSUMABLE), not on Shift (MOBILITY).",
+      "utility": "Cinder Charge goes on Q (CONSUMABLE), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "On a key: Q (CONSUMABLE). Press it to use.",
+      "The status lands on enemies it hits."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": false,
+     "charges_left": 2.0,
+     "charges_max": 2.0,
+     "consumable": true,
+     "cost": [
+      "Cooldown 1 s.",
+      "2 uses per supply. Entering a Zone refills it."
+     ],
+     "description": "A lobbed flask that bursts and slows.",
+     "does": [
+      "Thrown: bursts for 18 damage within 4.0 m after 1.0 s",
+      "Hits leave slowed for 4.0 s"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "ice",
+        "flask"
+       ],
+       "description": "A flask that bursts cold.",
+       "mode": "literal",
+       "name": "Frost Flask"
+      }
+     ],
+     "equipped_in": "",
+     "family": "THROWN",
+     "fits": [
+      "consumable"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "A Link to the Past",
+       "item": "Ice Trap",
+       "location": 89100010,
+       "mark": "Mk I",
+       "note": "Frost Flask",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "consumable",
+     "id": "act_flask",
+     "kind": "action",
+     "mk": 1,
+     "name": "Frost Flask",
+     "newest_seq": 9,
+     "read": [
+      "read literal: ice / flask  (Frost Flask)"
+     ],
+     "refusal": {
+      "consumable": "",
+      "echo_a": "Frost Flask goes on Q (CONSUMABLE), not on RMB (ECHO A).",
+      "echo_b": "Frost Flask goes on Q (CONSUMABLE), not on MMB (ECHO B).",
+      "mobility": "Frost Flask goes on Q (CONSUMABLE), not on Shift (MOBILITY).",
+      "utility": "Frost Flask goes on Q (CONSUMABLE), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "A Link to the Past",
+     "use": [
+      "On a key: Q (CONSUMABLE). Press it to use.",
+      "The status lands on enemies it hits."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": true,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 1 s."
+     ],
+     "description": "A drawn shot that flies true while you hold your nerve. Slower back to the hand than a lash, and you stand still for the draw, but nothing else hits this far.",
+     "does": [
+      "16 damage projectile"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "bow",
+        "draw",
+        "patience"
+       ],
+       "description": "A drawn shot that flies true for as long as you hold your nerve.",
+       "mode": "literal",
+       "name": "Hunter's Draw"
+      }
+     ],
+     "equipped_in": "",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Fairy Bow",
+       "location": 89100011,
+       "mark": "Mk I",
+       "note": "Hunter's Draw",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_s_draw",
+     "kind": "action",
+     "mk": 1,
+     "name": "Hunter's Draw",
+     "newest_seq": 10,
+     "read": [
+      "read literal: bow / draw / patience  (Hunter's Draw)"
+     ],
+     "refusal": {
+      "consumable": "Hunter's Draw goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "",
+      "echo_b": "Hunter's Draw goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Hunter's Draw goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Hunter's Draw goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": true,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 0.7 s."
+     ],
+     "description": "A thrown blade that comes back to the hand.",
+     "does": [
+      "8 damage projectile"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "boomerang",
+        "return"
+       ],
+       "description": "It comes back, whatever it met on the way.",
+       "mode": "mechanical",
+       "name": "Return Arc"
+      }
+     ],
+     "equipped_in": "",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "A Link to the Past",
+       "item": "Magic Boomerang",
+       "location": 89100012,
+       "mark": "Mk I",
+       "note": "Return Arc",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_s_arc",
+     "kind": "action",
+     "mk": 1,
+     "name": "Return Arc",
+     "newest_seq": 11,
+     "read": [
+      "read mechanical: boomerang / return  (Return Arc)"
+     ],
+     "refusal": {
+      "consumable": "Return Arc goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "",
+      "echo_b": "Return Arc goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Return Arc goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Return Arc goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "A Link to the Past",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": true,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 2.4 s."
+     ],
+     "description": "A spear of light thrown down the sight line. It strikes the first thing it meets, hard; until the charge comes back there is nothing on this key but waiting.",
+     "does": [
+      "22 damage hitscan"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "lightning",
+        "spear",
+        "sun"
+       ],
+       "description": "Sunlight, thrown.",
+       "mode": "conceptual",
+       "name": "Storm Lance"
+      }
+     ],
+     "equipped_in": "",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Dark Souls",
+       "item": "Lightning Spear",
+       "location": 89100013,
+       "mark": "Mk I",
+       "note": "Storm Lance",
+       "operation": "create",
+       "recipient": "Solaire"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_s_lance",
+     "kind": "action",
+     "mk": 1,
+     "name": "Storm Lance",
+     "newest_seq": 12,
+     "read": [
+      "read conceptual: lightning / spear / sun  (Storm Lance)"
+     ],
+     "refusal": {
+      "consumable": "Storm Lance goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "",
+      "echo_b": "Storm Lance goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Storm Lance goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Storm Lance goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Dark Souls",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use.",
+      "Reaches 25 m."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": true,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 0.6 s."
+     ],
+     "description": "Scatters stones in a short cone.",
+     "does": [
+      "5 pellets × 3 damage"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "stone",
+        "spread"
+       ],
+       "description": "A fistful of stones, not one.",
+       "mode": "literal",
+       "name": "Pebble Spray"
+      }
+     ],
+     "equipped_in": "",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Ocarina of Time",
+       "item": "Slingshot",
+       "location": 89100014,
+       "mark": "Mk I",
+       "note": "Pebble Spray",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_s_spray",
+     "kind": "action",
+     "mk": 1,
+     "name": "Pebble Spray",
+     "newest_seq": 13,
+     "read": [
+      "read literal: stone / spread  (Pebble Spray)"
+     ],
+     "refusal": {
+      "consumable": "Pebble Spray goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "",
+      "echo_b": "Pebble Spray goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Pebble Spray goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Pebble Spray goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Ocarina of Time",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use.",
+      "Reaches 18 m."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": true,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 1.6 s."
+     ],
+     "description": "Throws a slow, heavy ball of fire.",
+     "does": [
+      "20 damage projectile"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "fire",
+        "palm"
+       ],
+       "description": "A fire held in the hand, let go.",
+       "mode": "conceptual",
+       "name": "Ember Palm"
+      }
+     ],
+     "equipped_in": "",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Dark Souls",
+       "item": "Pyromancy Flame",
+       "location": 89100015,
+       "mark": "Mk I",
+       "note": "Ember Palm",
+       "operation": "create",
+       "recipient": "Solaire"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_s_palm",
+     "kind": "action",
+     "mk": 1,
+     "name": "Ember Palm",
+     "newest_seq": 14,
+     "read": [
+      "read conceptual: fire / palm  (Ember Palm)"
+     ],
+     "refusal": {
+      "consumable": "Ember Palm goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "",
+      "echo_b": "Ember Palm goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Ember Palm goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Ember Palm goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Dark Souls",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": true,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 1.1 s."
+     ],
+     "description": "Fires a bolt of heat.",
+     "does": [
+      "12 damage projectile"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "fire",
+        "rod"
+       ],
+       "description": "A rod that remembers the kiln.",
+       "mode": "literal",
+       "name": "Kiln Rod"
+      }
+     ],
+     "equipped_in": "",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "A Link to the Past",
+       "item": "Fire Rod",
+       "location": 89100016,
+       "mark": "Mk I",
+       "note": "Kiln Rod",
+       "operation": "create",
+       "recipient": "Link"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_s_rod",
+     "kind": "action",
+     "mk": 1,
+     "name": "Kiln Rod",
+     "newest_seq": 15,
+     "read": [
+      "read literal: fire / rod  (Kiln Rod)"
+     ],
+     "refusal": {
+      "consumable": "Kiln Rod goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "",
+      "echo_b": "Kiln Rod goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Kiln Rod goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Kiln Rod goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "A Link to the Past",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use."
+     ]
+    },
+    {
+     "activation": "slotted",
+     "authored": true,
+     "charges_left": null,
+     "charges_max": null,
+     "consumable": false,
+     "cost": [
+      "Cooldown 1.4 s."
+     ],
+     "description": "Fires a long arrow straight down the sight line.",
+     "does": [
+      "14 damage hitscan"
+     ],
+     "echoes": [
+      {
+       "concepts": [
+        "bow",
+        "range",
+        "corridor"
+       ],
+       "description": "A bow for a long corridor.",
+       "mode": "literal",
+       "name": "Undead Parish Longshot of the Corridor Where Nothing Answers"
+      }
+     ],
+     "equipped_in": "",
+     "family": "RANGED",
+     "fits": [
+      "echo_a"
+     ],
+     "held_back": "",
+     "history": [
+      {
+       "game": "Dark Souls",
+       "item": "Longbow",
+       "location": 89100017,
+       "mark": "Mk I",
+       "note": "Undead Parish Longshot of the Corridor Where Nothing Answers",
+       "operation": "create",
+       "recipient": "Solaire"
+      }
+     ],
+     "home_slot": "echo_a",
+     "id": "act_s_long",
+     "kind": "action",
+     "mk": 1,
+     "name": "Undead Parish Longshot of the Corridor Where Nothing Answers",
+     "newest_seq": 16,
+     "read": [
+      "read literal: bow / range / corridor  (Undead Parish Longshot of the Corridor Where Nothing Answers)"
+     ],
+     "refusal": {
+      "consumable": "Undead Parish Longshot of the Corridor Where Nothing Answers goes on RMB (ECHO A), not on Q (CONSUMABLE).",
+      "echo_a": "",
+      "echo_b": "Undead Parish Longshot of the Corridor Where Nothing Answers goes on RMB (ECHO A), not on MMB (ECHO B).",
+      "mobility": "Undead Parish Longshot of the Corridor Where Nothing Answers goes on RMB (ECHO A), not on Shift (MOBILITY).",
+      "utility": "Undead Parish Longshot of the Corridor Where Nothing Answers goes on RMB (ECHO A), not on C (UTILITY)."
+     },
+     "siblings": [],
+     "slotted": true,
+     "source_game": "Dark Souls",
+     "use": [
+      "On a key: RMB (ECHO A). Press it to use.",
+      "Reaches 60 m."
+     ]
+    }
+   ],
+   "keys": [
+    {
+     "keycap": "RMB",
+     "slot": "echo_a",
+     "title": "ECHO A",
+     "view": {
+      "accepts": [
+       "act_lash",
+       "act_bolt",
+       "act_s_draw",
+       "act_s_arc",
+       "act_s_lance",
+       "act_s_spray",
+       "act_s_palm",
+       "act_s_rod",
+       "act_s_long"
+      ],
+      "holds": "act_lash",
+      "slot": "echo_a"
+     }
+    },
+    {
+     "keycap": "MMB",
+     "slot": "echo_b",
+     "title": "ECHO B",
+     "view": {
+      "accepts": [],
+      "holds": null,
+      "slot": "echo_b"
+     }
+    },
+    {
+     "keycap": "Shift",
+     "slot": "mobility",
+     "title": "MOBILITY",
+     "view": {
+      "accepts": [
+       "act_dash"
+      ],
+      "holds": "act_dash",
+      "slot": "mobility"
+     }
+    },
+    {
+     "keycap": "C",
+     "slot": "utility",
+     "title": "UTILITY",
+     "view": {
+      "accepts": [
+       "act_lens"
+      ],
+      "holds": null,
+      "slot": "utility"
+     }
+    },
+    {
+     "keycap": "Q",
+     "slot": "consumable",
+     "title": "CONSUMABLE",
+     "view": {
+      "accepts": [
+       "act_cinder",
+       "act_flask"
+      ],
+      "holds": "act_cinder",
+      "slot": "consumable"
+     }
+    }
+   ],
+   "sort_labels": [
+    "Newest first",
+    "Name A-Z",
+    "Source game"
+   ],
+   "territories": [
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "HEAD"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "TORSO"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "ARMS"
+    },
+    {
+     "accepts": [],
+     "holds": null,
+     "territory": "LEGS"
+    }
+   ]
+  }
+ },
+ "save_order": [
+  "walked",
+  "progressed",
+  "latched"
+ ],
+ "saves": {
+  "latched": {
+   "journal": {
+    "campaign": [
+     "Seed: JOURNALFIXTURE",
+     "Player: Pepsi",
+     "Archipelago: mock, connected",
+     "Epsilon: fallback",
+     "Checks confirmed: 8 of 21",
+     "Zones completed: 2",
+     "Link to the bridge: up"
+    ],
+    "done_here": [
+     "Picked up the blue key.",
+     "Picked up the red key.",
+     "Unlocked the blue door in Arena 2.",
+     "Installed the power cell in Arena 2.",
+     "Cell power: powered, set in Arena 2. Open now: Arena 2 to Arena 3.",
+     "Span alignment: lowered, set in Arena 1. Open now: Arena 1 to Platform Path 1.",
+     "A latch held in Arena 4. Open now: Arena 4 to a way not yet walked."
+    ],
+    "links": {
+     "done_here": [
+      {
+       "circuits": [
+        "state:cell_power"
+       ],
+       "edges": [
+        "e:c005:c006"
+       ],
+       "index": 4,
+       "text": "Cell power: powered, set in Arena 2. Open now: Arena 2 to Arena 3."
+      },
+      {
+       "circuits": [
+        "state:span_alignment"
+       ],
+       "edges": [
+        "e:c002:c003"
+       ],
+       "index": 5,
+       "text": "Span alignment: lowered, set in Arena 1. Open now: Arena 1 to Platform Path 1."
+      },
+      {
+       "circuits": [
+        "key:blue"
+       ],
+       "edges": [
+        "e:c005:c014"
+       ],
+       "index": 2,
+       "text": "Unlocked the blue door in Arena 2."
+      },
+      {
+       "circuits": [
+        "machine:c009:route_shutter"
+       ],
+       "edges": [
+        "e:c009:c010"
+       ],
+       "index": 6,
+       "text": "A latch held in Arena 4. Open now: Arena 4 to a way not yet walked."
+      }
+     ],
+     "places": [
+      {
+       "index": 0,
+       "room_id": "c001",
+       "text": "Corridor 1"
+      },
+      {
+       "index": 1,
+       "room_id": "c002",
+       "text": "Arena 1"
+      },
+      {
+       "index": 2,
+       "room_id": "c003",
+       "text": "Platform Path 1"
+      },
+      {
+       "index": 3,
+       "room_id": "c004",
+       "text": "Corridor 2"
+      },
+      {
+       "index": 4,
+       "room_id": "c005",
+       "text": "Arena 2"
+      },
+      {
+       "index": 5,
+       "room_id": "c006",
+       "text": "Arena 3"
+      },
+      {
+       "index": 6,
+       "room_id": "c007",
+       "text": "Corridor 3"
+      },
+      {
+       "index": 7,
+       "room_id": "c008",
+       "text": "Platform Path 2"
+      },
+      {
+       "index": 8,
+       "room_id": "c009",
+       "text": "Arena 4"
+      }
+     ],
+     "still_shut": []
+    },
+    "notes": [
+     {
+      "source": "from Ice Trap (A Link to the Past)",
+      "text": "A flask that bursts cold.",
+      "title": "Frost Flask"
+     },
+     {
+      "source": "from Bomb Bag (Ocarina of Time)",
+      "text": "A fused charge you throw.",
+      "title": "Cinder Charge"
+     },
+     {
+      "source": "from Lens of Truth (Ocarina of Time)",
+      "text": "Marks what hides.",
+      "title": "Scan Lens"
+     },
+     {
+      "source": "from Mirror Shield (Ocarina of Time)",
+      "text": "Steadier hands while the bolt is on your key.",
+      "title": "Warding Loop"
+     },
+     {
+      "source": "from Estus Shard (Dark Souls)",
+      "text": "The meter holds more.",
+      "title": "Estus Shard"
+     },
+     {
+      "source": "from Magic Upgrade (Ocarina of Time)",
+      "text": "A reserve of green power.",
+      "title": "Magic Meter"
+     },
+     {
+      "source": "from Crossbow (Dark Souls)",
+      "text": "A bolt that flies straight and far.",
+      "title": "Arc Bolt"
+     },
+     {
+      "source": "from Pegasus Boots (A Link to the Past)",
+      "text": "A burst of speed along the ground.",
+      "title": "Sprint Coil"
+     },
+     {
+      "source": "from Longshot (Ocarina of Time)",
+      "text": "A longer cord for the lash you already carry.",
+      "title": "Leather Grip"
+     },
+     {
+      "source": "from Hookshot (Ocarina of Time)",
+      "text": "A cord that bites, and the grip to hold it.",
+      "title": "Braided Lash"
+     }
+    ],
+    "objectives": [
+     "In Relay 001: Bomb Rush Cyberfunk",
+     "Checks here: 2 of 15 confirmed",
+     "Toward the finale: 10 of 24 Checks"
+    ],
+    "places": [
+     "Corridor 1",
+     "Arena 1",
+     "Platform Path 1",
+     "Corridor 2",
+     "Arena 2",
+     "Arena 3",
+     "Corridor 3",
+     "Platform Path 2",
+     "Arena 4"
+    ],
+    "still_shut": []
+   },
+   "map": {
+    "blockers": [],
+    "colours": {
+     "key:blue": "#598cff",
+     "key:gold": "#ffd140",
+     "key:green": "#59e673",
+     "key:red": "#f24d47",
+     "machine:c009:route_shutter": "#f266bf",
+     "state:cell_power": "#ff8c26",
+     "state:span_alignment": "#4de6f2"
+    },
+    "connectors": [
+     {
+      "circuits": [],
+      "edge_id": "e:c001:c002",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       0.0,
+       19.767
+      ],
+      "path": [
+       [
+        0.0,
+        15.0
+       ],
+       [
+        0.0,
+        20.0
+       ],
+       [
+        -3.4,
+        23.0
+       ],
+       [
+        -3.4,
+        23.0
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c001",
+      "room_b": "c002",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     {
+      "circuits": [
+       "state:span_alignment"
+      ],
+      "edge_id": "e:c002:c003",
+      "gates": [
+       "zone_state"
+      ],
+      "mark_at": [
+       -21.7,
+       23.0
+      ],
+      "path": [
+       [
+        -19.2,
+        23.0
+       ],
+       [
+        -24.2,
+        23.0
+       ],
+       [
+        -24.2,
+        23.0
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c002",
+      "room_b": "c003",
+      "state": "open",
+      "symbol": "P",
+      "ys": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c003:c004",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -51.44,
+       23.0
+      ],
+      "path": [
+       [
+        -48.94,
+        23.0
+       ],
+       [
+        -53.94,
+        23.0
+       ],
+       [
+        -53.94,
+        23.0
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c003",
+      "room_b": "c004",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c004:c005",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -63.34,
+       45.766
+      ],
+      "path": [
+       [
+        -56.94,
+        26.4
+       ],
+       [
+        -56.94,
+        31.4
+       ],
+       [
+        -60.34,
+        34.4
+       ],
+       [
+        -63.34,
+        37.8
+       ],
+       [
+        -63.34,
+        42.8
+       ],
+       [
+        -63.34,
+        47.8
+       ],
+       [
+        -63.34,
+        52.8
+       ],
+       [
+        -63.34,
+        57.8
+       ],
+       [
+        -63.34,
+        62.8
+       ],
+       [
+        -63.34,
+        67.8
+       ],
+       [
+        -63.34,
+        67.8
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c004",
+      "room_b": "c005",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [
+       "state:cell_power"
+      ],
+      "edge_id": "e:c005:c006",
+      "gates": [
+       "zone_state"
+      ],
+      "mark_at": [
+       -61.815,
+       91.146
+      ],
+      "path": [
+       [
+        -63.34,
+        84.8
+       ],
+       [
+        -63.34,
+        89.8
+       ],
+       [
+        -59.94,
+        92.8
+       ],
+       [
+        -56.94,
+        96.2
+       ],
+       [
+        -56.94,
+        96.2
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c005",
+      "room_b": "c006",
+      "state": "open",
+      "symbol": "P",
+      "ys": [
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c006:c007",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -56.94,
+       158.7
+      ],
+      "path": [
+       [
+        -56.94,
+        156.2
+       ],
+       [
+        -56.94,
+        161.2
+       ],
+       [
+        -56.94,
+        161.2
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c006",
+      "room_b": "c007",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       29.53,
+       29.53,
+       29.53
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c007:c008",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -51.04,
+       164.2
+      ],
+      "path": [
+       [
+        -53.54,
+        164.2
+       ],
+       [
+        -48.54,
+        164.2
+       ],
+       [
+        -48.54,
+        164.2
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c007",
+      "room_b": "c008",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       29.53,
+       29.53,
+       29.53
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c008:c009",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -17.64,
+       164.2
+      ],
+      "path": [
+       [
+        -20.14,
+        164.2
+       ],
+       [
+        -15.14,
+        164.2
+       ],
+       [
+        -15.14,
+        164.2
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c008",
+      "room_b": "c009",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       31.57,
+       31.57,
+       31.57
+      ]
+     },
+     {
+      "circuits": [
+       "machine:c009:route_shutter"
+      ],
+      "edge_id": "e:c009:c010",
+      "gates": [
+       "machine"
+      ],
+      "mark_at": [
+       7.76,
+       164.2
+      ],
+      "path": [
+       [
+        5.26,
+        164.2
+       ],
+       [
+        10.26,
+        164.2
+       ],
+       [
+        10.26,
+        164.2
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c009",
+      "room_b": "c010",
+      "state": "open",
+      "symbol": "M",
+      "ys": [
+       31.57,
+       31.57,
+       31.57
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c009:c011",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -4.94,
+       153.9
+      ],
+      "path": [
+       [
+        -4.94,
+        156.4
+       ],
+       [
+        -4.94,
+        151.4
+       ],
+       [
+        -4.94,
+        151.4
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c009",
+      "room_b": "c011",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       31.57,
+       31.57,
+       31.57
+      ]
+     },
+     {
+      "circuits": [
+       "key:blue"
+      ],
+      "edge_id": "e:c005:c014",
+      "gates": [
+       "key"
+      ],
+      "mark_at": [
+       -36.19,
+       76.3
+      ],
+      "path": [
+       [
+        -53.69,
+        76.3
+       ],
+       [
+        -48.69,
+        76.3
+       ],
+       [
+        -43.69,
+        76.3
+       ],
+       [
+        -38.69,
+        76.3
+       ],
+       [
+        -33.69,
+        76.3
+       ],
+       [
+        -28.69,
+        76.3
+       ],
+       [
+        -23.69,
+        76.3
+       ],
+       [
+        -18.69,
+        76.3
+       ],
+       [
+        -18.69,
+        76.3
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c005",
+      "room_b": "c014",
+      "state": "open",
+      "symbol": "K",
+      "ys": [
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c002:c018",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -11.3,
+       32.4
+      ],
+      "path": [
+       [
+        -11.3,
+        29.9
+       ],
+       [
+        -11.3,
+        34.9
+       ],
+       [
+        -11.3,
+        34.9
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c002",
+      "room_b": "c018",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    ],
+    "details": {
+     "c001": "CORRIDOR 1\nYour floor\n- to Arena 1: open",
+     "c002": "ARENA 1\nYour floor\n- to Corridor 1: open\n- to Platform Path 1: open\n- a way on, not yet walked: open",
+     "c003": "PLATFORM PATH 1\nYour floor\n- to Arena 1: open\n- to Corridor 2: open",
+     "c004": "CORRIDOR 2\n1 floor up\n- to Platform Path 1: open\n- to Arena 2: open",
+     "c005": "ARENA 2\nYour floor\n- to Corridor 2: open\n- to Arena 3: open\n- a way on, not yet walked: open",
+     "c006": "ARENA 3\n1 floor up\n- to Arena 2: open\n- to Corridor 3: open",
+     "c007": "CORRIDOR 3\n2 floors up\n- to Arena 3: open\n- to Platform Path 2: open",
+     "c008": "PLATFORM PATH 2\n2 floors up\n- to Corridor 3: open\n- to Arena 4: open",
+     "c009": "ARENA 4\n2 floors up\n- to Platform Path 2: open\n- a way on, not yet walked: open\n- a way on, not yet walked: open"
+    },
+    "floors": [
+     0.0,
+     2.53,
+     29.53
+    ],
+    "points": {
+     "e:c001:c002": [
+      [
+       0.0,
+       0.0,
+       15.0
+      ],
+      [
+       0.0,
+       0.0,
+       20.0
+      ],
+      [
+       -3.4,
+       0.0,
+       23.0
+      ],
+      [
+       -3.4,
+       0.0,
+       23.0
+      ]
+     ],
+     "e:c002:c003": [
+      [
+       -19.2,
+       0.0,
+       23.0
+      ],
+      [
+       -24.2,
+       0.0,
+       23.0
+      ],
+      [
+       -24.2,
+       0.0,
+       23.0
+      ]
+     ],
+     "e:c002:c018": [
+      [
+       -11.3,
+       0.0,
+       29.9
+      ],
+      [
+       -11.3,
+       0.0,
+       34.9
+      ],
+      [
+       -11.3,
+       0.0,
+       34.9
+      ]
+     ],
+     "e:c003:c004": [
+      [
+       -48.94,
+       1.53,
+       23.0
+      ],
+      [
+       -53.94,
+       1.53,
+       23.0
+      ],
+      [
+       -53.94,
+       1.53,
+       23.0
+      ]
+     ],
+     "e:c004:c005": [
+      [
+       -56.94,
+       1.53,
+       26.4
+      ],
+      [
+       -56.94,
+       1.53,
+       31.4
+      ],
+      [
+       -60.34,
+       1.53,
+       34.4
+      ],
+      [
+       -63.34,
+       1.53,
+       37.8
+      ],
+      [
+       -63.34,
+       1.53,
+       42.8
+      ],
+      [
+       -63.34,
+       1.53,
+       47.8
+      ],
+      [
+       -63.34,
+       1.53,
+       52.8
+      ],
+      [
+       -63.34,
+       1.53,
+       57.8
+      ],
+      [
+       -63.34,
+       1.53,
+       62.8
+      ],
+      [
+       -63.34,
+       1.53,
+       67.8
+      ],
+      [
+       -63.34,
+       1.53,
+       67.8
+      ]
+     ],
+     "e:c005:c006": [
+      [
+       -63.34,
+       1.53,
+       84.8
+      ],
+      [
+       -63.34,
+       1.53,
+       89.8
+      ],
+      [
+       -59.94,
+       1.53,
+       92.8
+      ],
+      [
+       -56.94,
+       1.53,
+       96.2
+      ],
+      [
+       -56.94,
+       1.53,
+       96.2
+      ]
+     ],
+     "e:c005:c014": [
+      [
+       -53.69,
+       1.53,
+       76.3
+      ],
+      [
+       -48.69,
+       1.53,
+       76.3
+      ],
+      [
+       -43.69,
+       1.53,
+       76.3
+      ],
+      [
+       -38.69,
+       1.53,
+       76.3
+      ],
+      [
+       -33.69,
+       1.53,
+       76.3
+      ],
+      [
+       -28.69,
+       1.53,
+       76.3
+      ],
+      [
+       -23.69,
+       1.53,
+       76.3
+      ],
+      [
+       -18.69,
+       1.53,
+       76.3
+      ],
+      [
+       -18.69,
+       1.53,
+       76.3
+      ]
+     ],
+     "e:c006:c007": [
+      [
+       -56.94,
+       29.53,
+       156.2
+      ],
+      [
+       -56.94,
+       29.53,
+       161.2
+      ],
+      [
+       -56.94,
+       29.53,
+       161.2
+      ]
+     ],
+     "e:c007:c008": [
+      [
+       -53.54,
+       29.53,
+       164.2
+      ],
+      [
+       -48.54,
+       29.53,
+       164.2
+      ],
+      [
+       -48.54,
+       29.53,
+       164.2
+      ]
+     ],
+     "e:c008:c009": [
+      [
+       -20.14,
+       31.57,
+       164.2
+      ],
+      [
+       -15.14,
+       31.57,
+       164.2
+      ],
+      [
+       -15.14,
+       31.57,
+       164.2
+      ]
+     ],
+     "e:c009:c010": [
+      [
+       5.26,
+       31.57,
+       164.2
+      ],
+      [
+       10.26,
+       31.57,
+       164.2
+      ],
+      [
+       10.26,
+       31.57,
+       164.2
+      ]
+     ],
+     "e:c009:c011": [
+      [
+       -4.94,
+       31.57,
+       156.4
+      ],
+      [
+       -4.94,
+       31.57,
+       151.4
+      ],
+      [
+       -4.94,
+       31.57,
+       151.4
+      ]
+     ]
+    },
+    "pulse_hz": 1.2,
+    "pulse_swing": 0.3,
+    "rooms": [
+     {
+      "floor_y": 0.0,
+      "here": true,
+      "id": "c001",
+      "name": "Corridor 1",
+      "rect": {
+       "position": [
+        -3.95,
+        0.0
+       ],
+       "size": [
+        7.9,
+        15.0
+       ]
+      },
+      "type": "corridor"
+     },
+     {
+      "floor_y": 0.0,
+      "here": false,
+      "id": "c002",
+      "name": "Arena 1",
+      "rect": {
+       "position": [
+        -19.2,
+        16.1
+       ],
+       "size": [
+        15.8,
+        13.8
+       ]
+      },
+      "type": "arena"
+     },
+     {
+      "floor_y": 0.0,
+      "here": false,
+      "id": "c003",
+      "name": "Platform Path 1",
+      "rect": {
+       "position": [
+        -48.94,
+        19.0
+       ],
+       "size": [
+        24.74,
+        8.0
+       ]
+      },
+      "type": "platform_path"
+     },
+     {
+      "floor_y": 2.53,
+      "here": false,
+      "id": "c004",
+      "name": "Corridor 2",
+      "rect": {
+       "position": [
+        -60.74,
+        19.6
+       ],
+       "size": [
+        6.8,
+        6.8
+       ]
+      },
+      "type": "corridor"
+     },
+     {
+      "floor_y": 1.53,
+      "here": false,
+      "id": "c005",
+      "name": "Arena 2",
+      "rect": {
+       "position": [
+        -72.99,
+        67.8
+       ],
+       "size": [
+        19.3,
+        17.0
+       ]
+      },
+      "type": "arena"
+     },
+     {
+      "floor_y": 2.53,
+      "here": false,
+      "id": "c006",
+      "name": "Arena 3",
+      "rect": {
+       "position": [
+        -77.54,
+        96.2
+       ],
+       "size": [
+        41.2,
+        60.0
+       ]
+      },
+      "type": "arena"
+     },
+     {
+      "floor_y": 30.53,
+      "here": false,
+      "id": "c007",
+      "name": "Corridor 3",
+      "rect": {
+       "position": [
+        -60.34,
+        161.2
+       ],
+       "size": [
+        6.8,
+        6.8
+       ]
+      },
+      "type": "corridor"
+     },
+     {
+      "floor_y": 29.53,
+      "here": false,
+      "id": "c008",
+      "name": "Platform Path 2",
+      "rect": {
+       "position": [
+        -48.54,
+        160.2
+       ],
+       "size": [
+        28.4,
+        8.0
+       ]
+      },
+      "type": "platform_path"
+     },
+     {
+      "floor_y": 31.57,
+      "here": false,
+      "id": "c009",
+      "name": "Arena 4",
+      "rect": {
+       "position": [
+        -15.14,
+        156.4
+       ],
+       "size": [
+        20.4,
+        15.6
+       ]
+      },
+      "type": "arena"
+     }
+    ],
+    "zone_map": {
+     "circuits": [
+      {
+       "circuit_id": "key:blue",
+       "connectors": [
+        "e:c005:c014"
+       ],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c003",
+        "c005"
+       ]
+      },
+      {
+       "circuit_id": "key:gold",
+       "connectors": [],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c002"
+       ]
+      },
+      {
+       "circuit_id": "key:green",
+       "connectors": [],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c004"
+       ]
+      },
+      {
+       "circuit_id": "key:red",
+       "connectors": [],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c002"
+       ]
+      },
+      {
+       "circuit_id": "machine:c009:route_shutter",
+       "connectors": [
+        "e:c009:c010"
+       ],
+       "kind": "machine",
+       "objects": [],
+       "rooms": [
+        "c009"
+       ]
+      },
+      {
+       "circuit_id": "state:cell_power",
+       "connectors": [
+        "e:c005:c006"
+       ],
+       "kind": "setting",
+       "objects": [
+        "power_cell"
+       ],
+       "rooms": [
+        "c005"
+       ]
+      },
+      {
+       "circuit_id": "state:span_alignment",
+       "connectors": [
+        "e:c002:c003"
+       ],
+       "kind": "setting",
+       "objects": [],
+       "rooms": [
+        "c002"
+       ]
+      }
+     ],
+     "connectors": [
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c001:c002",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c001",
+       "room_b": "c002",
+       "state": "open"
+      },
+      {
+       "circuits": [
+        "state:span_alignment"
+       ],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c002:c003",
+       "gates": [
+        "zone_state"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c002",
+       "room_b": "c003",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c003:c004",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c003",
+       "room_b": "c004",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c004:c005",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c004",
+       "room_b": "c005",
+       "state": "open"
+      },
+      {
+       "circuits": [
+        "state:cell_power"
+       ],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c005:c006",
+       "gates": [
+        "zone_state"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c005",
+       "room_b": "c006",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c006:c007",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c006",
+       "room_b": "c007",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c007:c008",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c007",
+       "room_b": "c008",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c008:c009",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c008",
+       "room_b": "c009",
+       "state": "open"
+      },
+      {
+       "circuits": [
+        "machine:c009:route_shutter"
+       ],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c009:c010",
+       "gates": [
+        "machine"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c009",
+       "room_b": "c010",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c009:c011",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c009",
+       "room_b": "c011",
+       "state": "open"
+      },
+      {
+       "circuits": [
+        "key:blue"
+       ],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c005:c014",
+       "gates": [
+        "key"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c005",
+       "room_b": "c014",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c002:c018",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c002",
+       "room_b": "c018",
+       "state": "open"
+      }
+     ],
+     "rooms": [
+      {
+       "discovered": true,
+       "name": "Corridor 1",
+       "room_id": "c001",
+       "type": "corridor"
+      },
+      {
+       "discovered": true,
+       "name": "Arena 1",
+       "room_id": "c002",
+       "type": "arena"
+      },
+      {
+       "discovered": true,
+       "name": "Platform Path 1",
+       "room_id": "c003",
+       "type": "platform_path"
+      },
+      {
+       "discovered": true,
+       "name": "Corridor 2",
+       "room_id": "c004",
+       "type": "corridor"
+      },
+      {
+       "discovered": true,
+       "name": "Arena 2",
+       "room_id": "c005",
+       "type": "arena"
+      },
+      {
+       "discovered": true,
+       "name": "Arena 3",
+       "room_id": "c006",
+       "type": "arena"
+      },
+      {
+       "discovered": true,
+       "name": "Corridor 3",
+       "room_id": "c007",
+       "type": "corridor"
+      },
+      {
+       "discovered": true,
+       "name": "Platform Path 2",
+       "room_id": "c008",
+       "type": "platform_path"
+      },
+      {
+       "discovered": true,
+       "name": "Arena 4",
+       "room_id": "c009",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c010",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c011",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c012",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c013",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c014",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c015",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c016",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c017",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c018",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c019",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c020",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c021",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c022",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c023",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c024",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c025",
+       "type": "arena"
+      }
+     ],
+     "zone_id": "zone_001"
+    }
+   }
+  },
+  "progressed": {
+   "journal": {
+    "campaign": [
+     "Seed: JOURNALFIXTURE",
+     "Player: Pepsi",
+     "Archipelago: mock, connected",
+     "Epsilon: fallback",
+     "Checks confirmed: 8 of 21",
+     "Zones completed: 2",
+     "Link to the bridge: up"
+    ],
+    "done_here": [
+     "Picked up the blue key.",
+     "Picked up the red key.",
+     "Unlocked the blue door in Arena 2.",
+     "Installed the power cell in Arena 2.",
+     "Cell power: powered, set in Arena 2. Open now: Arena 2 to a way not yet walked.",
+     "Span alignment: lowered, set in Arena 1. Open now: Arena 1 to Platform Path 1."
+    ],
+    "links": {
+     "done_here": [
+      {
+       "circuits": [
+        "state:cell_power"
+       ],
+       "edges": [
+        "e:c005:c006"
+       ],
+       "index": 4,
+       "text": "Cell power: powered, set in Arena 2. Open now: Arena 2 to a way not yet walked."
+      },
+      {
+       "circuits": [
+        "state:span_alignment"
+       ],
+       "edges": [
+        "e:c002:c003"
+       ],
+       "index": 5,
+       "text": "Span alignment: lowered, set in Arena 1. Open now: Arena 1 to Platform Path 1."
+      },
+      {
+       "circuits": [
+        "key:blue"
+       ],
+       "edges": [
+        "e:c005:c014"
+       ],
+       "index": 2,
+       "text": "Unlocked the blue door in Arena 2."
+      }
+     ],
+     "places": [
+      {
+       "index": 0,
+       "room_id": "c001",
+       "text": "Corridor 1"
+      },
+      {
+       "index": 1,
+       "room_id": "c002",
+       "text": "Arena 1"
+      },
+      {
+       "index": 2,
+       "room_id": "c003",
+       "text": "Platform Path 1"
+      },
+      {
+       "index": 3,
+       "room_id": "c004",
+       "text": "Corridor 2"
+      },
+      {
+       "index": 4,
+       "room_id": "c005",
+       "text": "Arena 2"
+      }
+     ],
+     "still_shut": []
+    },
+    "notes": [
+     {
+      "source": "from Ice Trap (A Link to the Past)",
+      "text": "A flask that bursts cold.",
+      "title": "Frost Flask"
+     },
+     {
+      "source": "from Bomb Bag (Ocarina of Time)",
+      "text": "A fused charge you throw.",
+      "title": "Cinder Charge"
+     },
+     {
+      "source": "from Lens of Truth (Ocarina of Time)",
+      "text": "Marks what hides.",
+      "title": "Scan Lens"
+     },
+     {
+      "source": "from Mirror Shield (Ocarina of Time)",
+      "text": "Steadier hands while the bolt is on your key.",
+      "title": "Warding Loop"
+     },
+     {
+      "source": "from Estus Shard (Dark Souls)",
+      "text": "The meter holds more.",
+      "title": "Estus Shard"
+     },
+     {
+      "source": "from Magic Upgrade (Ocarina of Time)",
+      "text": "A reserve of green power.",
+      "title": "Magic Meter"
+     },
+     {
+      "source": "from Crossbow (Dark Souls)",
+      "text": "A bolt that flies straight and far.",
+      "title": "Arc Bolt"
+     },
+     {
+      "source": "from Pegasus Boots (A Link to the Past)",
+      "text": "A burst of speed along the ground.",
+      "title": "Sprint Coil"
+     },
+     {
+      "source": "from Longshot (Ocarina of Time)",
+      "text": "A longer cord for the lash you already carry.",
+      "title": "Leather Grip"
+     },
+     {
+      "source": "from Hookshot (Ocarina of Time)",
+      "text": "A cord that bites, and the grip to hold it.",
+      "title": "Braided Lash"
+     }
+    ],
+    "objectives": [
+     "In Relay 001: Bomb Rush Cyberfunk",
+     "Checks here: 2 of 15 confirmed",
+     "Toward the finale: 10 of 24 Checks"
+    ],
+    "places": [
+     "Corridor 1",
+     "Arena 1",
+     "Platform Path 1",
+     "Corridor 2",
+     "Arena 2"
+    ],
+    "still_shut": []
+   },
+   "map": {
+    "blockers": [],
+    "colours": {
+     "key:blue": "#598cff",
+     "key:gold": "#ffd140",
+     "key:green": "#59e673",
+     "key:red": "#f24d47",
+     "machine:c009:route_shutter": "#f266bf",
+     "state:cell_power": "#ff8c26",
+     "state:span_alignment": "#4de6f2"
+    },
+    "connectors": [
+     {
+      "circuits": [],
+      "edge_id": "e:c001:c002",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       0.0,
+       19.767
+      ],
+      "path": [
+       [
+        0.0,
+        15.0
+       ],
+       [
+        0.0,
+        20.0
+       ],
+       [
+        -3.4,
+        23.0
+       ],
+       [
+        -3.4,
+        23.0
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c001",
+      "room_b": "c002",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     {
+      "circuits": [
+       "state:span_alignment"
+      ],
+      "edge_id": "e:c002:c003",
+      "gates": [
+       "zone_state"
+      ],
+      "mark_at": [
+       -21.7,
+       23.0
+      ],
+      "path": [
+       [
+        -19.2,
+        23.0
+       ],
+       [
+        -24.2,
+        23.0
+       ],
+       [
+        -24.2,
+        23.0
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c002",
+      "room_b": "c003",
+      "state": "open",
+      "symbol": "P",
+      "ys": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c003:c004",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -51.44,
+       23.0
+      ],
+      "path": [
+       [
+        -48.94,
+        23.0
+       ],
+       [
+        -53.94,
+        23.0
+       ],
+       [
+        -53.94,
+        23.0
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c003",
+      "room_b": "c004",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c004:c005",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -63.34,
+       45.766
+      ],
+      "path": [
+       [
+        -56.94,
+        26.4
+       ],
+       [
+        -56.94,
+        31.4
+       ],
+       [
+        -60.34,
+        34.4
+       ],
+       [
+        -63.34,
+        37.8
+       ],
+       [
+        -63.34,
+        42.8
+       ],
+       [
+        -63.34,
+        47.8
+       ],
+       [
+        -63.34,
+        52.8
+       ],
+       [
+        -63.34,
+        57.8
+       ],
+       [
+        -63.34,
+        62.8
+       ],
+       [
+        -63.34,
+        67.8
+       ],
+       [
+        -63.34,
+        67.8
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c004",
+      "room_b": "c005",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [
+       "state:cell_power"
+      ],
+      "edge_id": "e:c005:c006",
+      "gates": [
+       "zone_state"
+      ],
+      "mark_at": [
+       -61.815,
+       91.146
+      ],
+      "path": [
+       [
+        -63.34,
+        84.8
+       ],
+       [
+        -63.34,
+        89.8
+       ],
+       [
+        -59.94,
+        92.8
+       ],
+       [
+        -56.94,
+        96.2
+       ],
+       [
+        -56.94,
+        96.2
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c005",
+      "room_b": "c006",
+      "state": "open",
+      "symbol": "P",
+      "ys": [
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [
+       "key:blue"
+      ],
+      "edge_id": "e:c005:c014",
+      "gates": [
+       "key"
+      ],
+      "mark_at": [
+       -36.19,
+       76.3
+      ],
+      "path": [
+       [
+        -53.69,
+        76.3
+       ],
+       [
+        -48.69,
+        76.3
+       ],
+       [
+        -43.69,
+        76.3
+       ],
+       [
+        -38.69,
+        76.3
+       ],
+       [
+        -33.69,
+        76.3
+       ],
+       [
+        -28.69,
+        76.3
+       ],
+       [
+        -23.69,
+        76.3
+       ],
+       [
+        -18.69,
+        76.3
+       ],
+       [
+        -18.69,
+        76.3
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c005",
+      "room_b": "c014",
+      "state": "open",
+      "symbol": "K",
+      "ys": [
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c002:c018",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -11.3,
+       32.4
+      ],
+      "path": [
+       [
+        -11.3,
+        29.9
+       ],
+       [
+        -11.3,
+        34.9
+       ],
+       [
+        -11.3,
+        34.9
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c002",
+      "room_b": "c018",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    ],
+    "details": {
+     "c001": "CORRIDOR 1\nYour floor\n- to Arena 1: open",
+     "c002": "ARENA 1\nYour floor\n- to Corridor 1: open\n- to Platform Path 1: open\n- a way on, not yet walked: open",
+     "c003": "PLATFORM PATH 1\nYour floor\n- to Arena 1: open\n- to Corridor 2: open",
+     "c004": "CORRIDOR 2\n1 floor up\n- to Platform Path 1: open\n- to Arena 2: open",
+     "c005": "ARENA 2\nYour floor\n- to Corridor 2: open\n- a way on, not yet walked: open\n- a way on, not yet walked: open"
+    },
+    "floors": [
+     0.0,
+     2.53
+    ],
+    "points": {
+     "e:c001:c002": [
+      [
+       0.0,
+       0.0,
+       15.0
+      ],
+      [
+       0.0,
+       0.0,
+       20.0
+      ],
+      [
+       -3.4,
+       0.0,
+       23.0
+      ],
+      [
+       -3.4,
+       0.0,
+       23.0
+      ]
+     ],
+     "e:c002:c003": [
+      [
+       -19.2,
+       0.0,
+       23.0
+      ],
+      [
+       -24.2,
+       0.0,
+       23.0
+      ],
+      [
+       -24.2,
+       0.0,
+       23.0
+      ]
+     ],
+     "e:c002:c018": [
+      [
+       -11.3,
+       0.0,
+       29.9
+      ],
+      [
+       -11.3,
+       0.0,
+       34.9
+      ],
+      [
+       -11.3,
+       0.0,
+       34.9
+      ]
+     ],
+     "e:c003:c004": [
+      [
+       -48.94,
+       1.53,
+       23.0
+      ],
+      [
+       -53.94,
+       1.53,
+       23.0
+      ],
+      [
+       -53.94,
+       1.53,
+       23.0
+      ]
+     ],
+     "e:c004:c005": [
+      [
+       -56.94,
+       1.53,
+       26.4
+      ],
+      [
+       -56.94,
+       1.53,
+       31.4
+      ],
+      [
+       -60.34,
+       1.53,
+       34.4
+      ],
+      [
+       -63.34,
+       1.53,
+       37.8
+      ],
+      [
+       -63.34,
+       1.53,
+       42.8
+      ],
+      [
+       -63.34,
+       1.53,
+       47.8
+      ],
+      [
+       -63.34,
+       1.53,
+       52.8
+      ],
+      [
+       -63.34,
+       1.53,
+       57.8
+      ],
+      [
+       -63.34,
+       1.53,
+       62.8
+      ],
+      [
+       -63.34,
+       1.53,
+       67.8
+      ],
+      [
+       -63.34,
+       1.53,
+       67.8
+      ]
+     ],
+     "e:c005:c006": [
+      [
+       -63.34,
+       1.53,
+       84.8
+      ],
+      [
+       -63.34,
+       1.53,
+       89.8
+      ],
+      [
+       -59.94,
+       1.53,
+       92.8
+      ],
+      [
+       -56.94,
+       1.53,
+       96.2
+      ],
+      [
+       -56.94,
+       1.53,
+       96.2
+      ]
+     ],
+     "e:c005:c014": [
+      [
+       -53.69,
+       1.53,
+       76.3
+      ],
+      [
+       -48.69,
+       1.53,
+       76.3
+      ],
+      [
+       -43.69,
+       1.53,
+       76.3
+      ],
+      [
+       -38.69,
+       1.53,
+       76.3
+      ],
+      [
+       -33.69,
+       1.53,
+       76.3
+      ],
+      [
+       -28.69,
+       1.53,
+       76.3
+      ],
+      [
+       -23.69,
+       1.53,
+       76.3
+      ],
+      [
+       -18.69,
+       1.53,
+       76.3
+      ],
+      [
+       -18.69,
+       1.53,
+       76.3
+      ]
+     ]
+    },
+    "pulse_hz": 1.2,
+    "pulse_swing": 0.3,
+    "rooms": [
+     {
+      "floor_y": 0.0,
+      "here": true,
+      "id": "c001",
+      "name": "Corridor 1",
+      "rect": {
+       "position": [
+        -3.95,
+        0.0
+       ],
+       "size": [
+        7.9,
+        15.0
+       ]
+      },
+      "type": "corridor"
+     },
+     {
+      "floor_y": 0.0,
+      "here": false,
+      "id": "c002",
+      "name": "Arena 1",
+      "rect": {
+       "position": [
+        -19.2,
+        16.1
+       ],
+       "size": [
+        15.8,
+        13.8
+       ]
+      },
+      "type": "arena"
+     },
+     {
+      "floor_y": 0.0,
+      "here": false,
+      "id": "c003",
+      "name": "Platform Path 1",
+      "rect": {
+       "position": [
+        -48.94,
+        19.0
+       ],
+       "size": [
+        24.74,
+        8.0
+       ]
+      },
+      "type": "platform_path"
+     },
+     {
+      "floor_y": 2.53,
+      "here": false,
+      "id": "c004",
+      "name": "Corridor 2",
+      "rect": {
+       "position": [
+        -60.74,
+        19.6
+       ],
+       "size": [
+        6.8,
+        6.8
+       ]
+      },
+      "type": "corridor"
+     },
+     {
+      "floor_y": 1.53,
+      "here": false,
+      "id": "c005",
+      "name": "Arena 2",
+      "rect": {
+       "position": [
+        -72.99,
+        67.8
+       ],
+       "size": [
+        19.3,
+        17.0
+       ]
+      },
+      "type": "arena"
+     }
+    ],
+    "zone_map": {
+     "circuits": [
+      {
+       "circuit_id": "key:blue",
+       "connectors": [
+        "e:c005:c014"
+       ],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c003",
+        "c005"
+       ]
+      },
+      {
+       "circuit_id": "key:gold",
+       "connectors": [],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c002"
+       ]
+      },
+      {
+       "circuit_id": "key:green",
+       "connectors": [],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c004"
+       ]
+      },
+      {
+       "circuit_id": "key:red",
+       "connectors": [],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c002"
+       ]
+      },
+      {
+       "circuit_id": "state:cell_power",
+       "connectors": [
+        "e:c005:c006"
+       ],
+       "kind": "setting",
+       "objects": [
+        "power_cell"
+       ],
+       "rooms": [
+        "c005"
+       ]
+      },
+      {
+       "circuit_id": "state:span_alignment",
+       "connectors": [
+        "e:c002:c003"
+       ],
+       "kind": "setting",
+       "objects": [],
+       "rooms": [
+        "c002"
+       ]
+      }
+     ],
+     "connectors": [
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c001:c002",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c001",
+       "room_b": "c002",
+       "state": "open"
+      },
+      {
+       "circuits": [
+        "state:span_alignment"
+       ],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c002:c003",
+       "gates": [
+        "zone_state"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c002",
+       "room_b": "c003",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c003:c004",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c003",
+       "room_b": "c004",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c004:c005",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c004",
+       "room_b": "c005",
+       "state": "open"
+      },
+      {
+       "circuits": [
+        "state:cell_power"
+       ],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c005:c006",
+       "gates": [
+        "zone_state"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c005",
+       "room_b": "c006",
+       "state": "open"
+      },
+      {
+       "circuits": [
+        "key:blue"
+       ],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c005:c014",
+       "gates": [
+        "key"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c005",
+       "room_b": "c014",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c002:c018",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c002",
+       "room_b": "c018",
+       "state": "open"
+      }
+     ],
+     "rooms": [
+      {
+       "discovered": true,
+       "name": "Corridor 1",
+       "room_id": "c001",
+       "type": "corridor"
+      },
+      {
+       "discovered": true,
+       "name": "Arena 1",
+       "room_id": "c002",
+       "type": "arena"
+      },
+      {
+       "discovered": true,
+       "name": "Platform Path 1",
+       "room_id": "c003",
+       "type": "platform_path"
+      },
+      {
+       "discovered": true,
+       "name": "Corridor 2",
+       "room_id": "c004",
+       "type": "corridor"
+      },
+      {
+       "discovered": true,
+       "name": "Arena 2",
+       "room_id": "c005",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c006",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c007",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c008",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c009",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c010",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c011",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c012",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c013",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c014",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c015",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c016",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c017",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c018",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c019",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c020",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c021",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c022",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c023",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c024",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c025",
+       "type": "arena"
+      }
+     ],
+     "zone_id": "zone_001"
+    }
+   }
+  },
+  "walked": {
+   "journal": {
+    "campaign": [
+     "Seed: JOURNALFIXTURE",
+     "Player: Pepsi",
+     "Archipelago: mock, connected",
+     "Epsilon: fallback",
+     "Checks confirmed: 6 of 21",
+     "Zones completed: 2",
+     "Link to the bridge: up"
+    ],
+    "done_here": [
+     "Picked up the blue key.",
+     "Picked up the red key."
+    ],
+    "links": {
+     "done_here": [],
+     "places": [
+      {
+       "index": 0,
+       "room_id": "c001",
+       "text": "Corridor 1"
+      },
+      {
+       "index": 1,
+       "room_id": "c002",
+       "text": "Arena 1"
+      },
+      {
+       "index": 2,
+       "room_id": "c003",
+       "text": "Platform Path 1"
+      },
+      {
+       "index": 3,
+       "room_id": "c004",
+       "text": "Corridor 2"
+      },
+      {
+       "index": 4,
+       "room_id": "c005",
+       "text": "Arena 2"
+      }
+     ],
+     "still_shut": [
+      {
+       "circuits": [
+        "state:span_alignment"
+       ],
+       "edge_id": "e:c002:c003",
+       "index": 0,
+       "state": "blocked",
+       "text": "Arena 1 to Platform Path 1: set by a control in Arena 1"
+      },
+      {
+       "circuits": [
+        "state:cell_power"
+       ],
+       "edge_id": "e:c005:c006",
+       "index": 1,
+       "state": "blocked",
+       "text": "Arena 2 to a way not yet walked: set by a control in Arena 2"
+      },
+      {
+       "circuits": [
+        "key:blue"
+       ],
+       "edge_id": "e:c005:c014",
+       "index": 2,
+       "state": "blocked",
+       "text": "Arena 2 to a way not yet walked: locked -- blue key; you hold it"
+      }
+     ]
+    },
+    "notes": [
+     {
+      "source": "from Ice Trap (A Link to the Past)",
+      "text": "A flask that bursts cold.",
+      "title": "Frost Flask"
+     },
+     {
+      "source": "from Bomb Bag (Ocarina of Time)",
+      "text": "A fused charge you throw.",
+      "title": "Cinder Charge"
+     },
+     {
+      "source": "from Lens of Truth (Ocarina of Time)",
+      "text": "Marks what hides.",
+      "title": "Scan Lens"
+     },
+     {
+      "source": "from Mirror Shield (Ocarina of Time)",
+      "text": "Steadier hands while the bolt is on your key.",
+      "title": "Warding Loop"
+     },
+     {
+      "source": "from Estus Shard (Dark Souls)",
+      "text": "The meter holds more.",
+      "title": "Estus Shard"
+     },
+     {
+      "source": "from Magic Upgrade (Ocarina of Time)",
+      "text": "A reserve of green power.",
+      "title": "Magic Meter"
+     },
+     {
+      "source": "from Crossbow (Dark Souls)",
+      "text": "A bolt that flies straight and far.",
+      "title": "Arc Bolt"
+     },
+     {
+      "source": "from Pegasus Boots (A Link to the Past)",
+      "text": "A burst of speed along the ground.",
+      "title": "Sprint Coil"
+     },
+     {
+      "source": "from Longshot (Ocarina of Time)",
+      "text": "A longer cord for the lash you already carry.",
+      "title": "Leather Grip"
+     },
+     {
+      "source": "from Hookshot (Ocarina of Time)",
+      "text": "A cord that bites, and the grip to hold it.",
+      "title": "Braided Lash"
+     }
+    ],
+    "objectives": [
+     "In Relay 001: Bomb Rush Cyberfunk",
+     "Checks here: 0 of 15 confirmed",
+     "Toward the finale: 10 of 24 Checks"
+    ],
+    "places": [
+     "Corridor 1",
+     "Arena 1",
+     "Platform Path 1",
+     "Corridor 2",
+     "Arena 2"
+    ],
+    "still_shut": [
+     "Arena 1 to Platform Path 1: set by a control in Arena 1",
+     "Arena 2 to a way not yet walked: set by a control in Arena 2",
+     "Arena 2 to a way not yet walked: locked -- blue key; you hold it"
+    ]
+   },
+   "map": {
+    "blockers": [
+     {
+      "at": [
+       -21.7,
+       0.0,
+       23.0
+      ],
+      "colour": "#4de6f2",
+      "edge_id": "e:c002:c003",
+      "state": "blocked",
+      "symbol": "P",
+      "visible": true
+     },
+     {
+      "at": [
+       -61.815,
+       1.53,
+       91.146
+      ],
+      "colour": "#ff8c26",
+      "edge_id": "e:c005:c006",
+      "state": "blocked",
+      "symbol": "P",
+      "visible": true
+     },
+     {
+      "at": [
+       -36.19,
+       1.53,
+       76.3
+      ],
+      "colour": "#598cff",
+      "edge_id": "e:c005:c014",
+      "state": "blocked",
+      "symbol": "K",
+      "visible": true
+     }
+    ],
+    "colours": {
+     "key:blue": "#598cff",
+     "key:gold": "#ffd140",
+     "key:green": "#59e673",
+     "key:red": "#f24d47",
+     "machine:c009:route_shutter": "#f266bf",
+     "state:cell_power": "#ff8c26",
+     "state:span_alignment": "#4de6f2"
+    },
+    "connectors": [
+     {
+      "circuits": [],
+      "edge_id": "e:c001:c002",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       0.0,
+       19.767
+      ],
+      "path": [
+       [
+        0.0,
+        15.0
+       ],
+       [
+        0.0,
+        20.0
+       ],
+       [
+        -3.4,
+        23.0
+       ],
+       [
+        -3.4,
+        23.0
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c001",
+      "room_b": "c002",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     {
+      "circuits": [
+       "state:span_alignment"
+      ],
+      "edge_id": "e:c002:c003",
+      "gates": [
+       "zone_state"
+      ],
+      "mark_at": [
+       -21.7,
+       23.0
+      ],
+      "path": [
+       [
+        -19.2,
+        23.0
+       ],
+       [
+        -24.2,
+        23.0
+       ],
+       [
+        -24.2,
+        23.0
+       ]
+      ],
+      "realization": "joined",
+      "reason": "set by a control in Arena 1",
+      "room_a": "c002",
+      "room_b": "c003",
+      "state": "blocked",
+      "symbol": "P",
+      "ys": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c003:c004",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -51.44,
+       23.0
+      ],
+      "path": [
+       [
+        -48.94,
+        23.0
+       ],
+       [
+        -53.94,
+        23.0
+       ],
+       [
+        -53.94,
+        23.0
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c003",
+      "room_b": "c004",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c004:c005",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -63.34,
+       45.766
+      ],
+      "path": [
+       [
+        -56.94,
+        26.4
+       ],
+       [
+        -56.94,
+        31.4
+       ],
+       [
+        -60.34,
+        34.4
+       ],
+       [
+        -63.34,
+        37.8
+       ],
+       [
+        -63.34,
+        42.8
+       ],
+       [
+        -63.34,
+        47.8
+       ],
+       [
+        -63.34,
+        52.8
+       ],
+       [
+        -63.34,
+        57.8
+       ],
+       [
+        -63.34,
+        62.8
+       ],
+       [
+        -63.34,
+        67.8
+       ],
+       [
+        -63.34,
+        67.8
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c004",
+      "room_b": "c005",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [
+       "state:cell_power"
+      ],
+      "edge_id": "e:c005:c006",
+      "gates": [
+       "zone_state"
+      ],
+      "mark_at": [
+       -61.815,
+       91.146
+      ],
+      "path": [
+       [
+        -63.34,
+        84.8
+       ],
+       [
+        -63.34,
+        89.8
+       ],
+       [
+        -59.94,
+        92.8
+       ],
+       [
+        -56.94,
+        96.2
+       ],
+       [
+        -56.94,
+        96.2
+       ]
+      ],
+      "realization": "joined",
+      "reason": "set by a control in Arena 2",
+      "room_a": "c005",
+      "room_b": "c006",
+      "state": "blocked",
+      "symbol": "P",
+      "ys": [
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [
+       "key:blue"
+      ],
+      "edge_id": "e:c005:c014",
+      "gates": [
+       "key"
+      ],
+      "mark_at": [
+       -36.19,
+       76.3
+      ],
+      "path": [
+       [
+        -53.69,
+        76.3
+       ],
+       [
+        -48.69,
+        76.3
+       ],
+       [
+        -43.69,
+        76.3
+       ],
+       [
+        -38.69,
+        76.3
+       ],
+       [
+        -33.69,
+        76.3
+       ],
+       [
+        -28.69,
+        76.3
+       ],
+       [
+        -23.69,
+        76.3
+       ],
+       [
+        -18.69,
+        76.3
+       ],
+       [
+        -18.69,
+        76.3
+       ]
+      ],
+      "realization": "joined",
+      "reason": "locked -- blue key; you hold it",
+      "room_a": "c005",
+      "room_b": "c014",
+      "state": "blocked",
+      "symbol": "K",
+      "ys": [
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53,
+       1.53
+      ]
+     },
+     {
+      "circuits": [],
+      "edge_id": "e:c002:c018",
+      "gates": [
+       "none"
+      ],
+      "mark_at": [
+       -11.3,
+       32.4
+      ],
+      "path": [
+       [
+        -11.3,
+        29.9
+       ],
+       [
+        -11.3,
+        34.9
+       ],
+       [
+        -11.3,
+        34.9
+       ]
+      ],
+      "realization": "joined",
+      "reason": "",
+      "room_a": "c002",
+      "room_b": "c018",
+      "state": "open",
+      "symbol": "",
+      "ys": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    ],
+    "details": {
+     "c001": "CORRIDOR 1\nYour floor\n- to Arena 1: open",
+     "c002": "ARENA 1\nYour floor\n- to Corridor 1: open\n- to Platform Path 1: blocked: set by a control in Arena 1\n- a way on, not yet walked: open",
+     "c003": "PLATFORM PATH 1\nYour floor\n- to Arena 1: blocked: set by a control in Arena 1\n- to Corridor 2: open",
+     "c004": "CORRIDOR 2\n1 floor up\n- to Platform Path 1: open\n- to Arena 2: open",
+     "c005": "ARENA 2\nYour floor\n- to Corridor 2: open\n- a way on, not yet walked: blocked: set by a control in Arena 2\n- a way on, not yet walked: blocked: locked -- blue key; you hold it"
+    },
+    "floors": [
+     0.0,
+     2.53
+    ],
+    "points": {
+     "e:c001:c002": [
+      [
+       0.0,
+       0.0,
+       15.0
+      ],
+      [
+       0.0,
+       0.0,
+       20.0
+      ],
+      [
+       -3.4,
+       0.0,
+       23.0
+      ],
+      [
+       -3.4,
+       0.0,
+       23.0
+      ]
+     ],
+     "e:c002:c003": [
+      [
+       -19.2,
+       0.0,
+       23.0
+      ],
+      [
+       -24.2,
+       0.0,
+       23.0
+      ],
+      [
+       -24.2,
+       0.0,
+       23.0
+      ]
+     ],
+     "e:c002:c018": [
+      [
+       -11.3,
+       0.0,
+       29.9
+      ],
+      [
+       -11.3,
+       0.0,
+       34.9
+      ],
+      [
+       -11.3,
+       0.0,
+       34.9
+      ]
+     ],
+     "e:c003:c004": [
+      [
+       -48.94,
+       1.53,
+       23.0
+      ],
+      [
+       -53.94,
+       1.53,
+       23.0
+      ],
+      [
+       -53.94,
+       1.53,
+       23.0
+      ]
+     ],
+     "e:c004:c005": [
+      [
+       -56.94,
+       1.53,
+       26.4
+      ],
+      [
+       -56.94,
+       1.53,
+       31.4
+      ],
+      [
+       -60.34,
+       1.53,
+       34.4
+      ],
+      [
+       -63.34,
+       1.53,
+       37.8
+      ],
+      [
+       -63.34,
+       1.53,
+       42.8
+      ],
+      [
+       -63.34,
+       1.53,
+       47.8
+      ],
+      [
+       -63.34,
+       1.53,
+       52.8
+      ],
+      [
+       -63.34,
+       1.53,
+       57.8
+      ],
+      [
+       -63.34,
+       1.53,
+       62.8
+      ],
+      [
+       -63.34,
+       1.53,
+       67.8
+      ],
+      [
+       -63.34,
+       1.53,
+       67.8
+      ]
+     ],
+     "e:c005:c006": [
+      [
+       -63.34,
+       1.53,
+       84.8
+      ],
+      [
+       -63.34,
+       1.53,
+       89.8
+      ],
+      [
+       -59.94,
+       1.53,
+       92.8
+      ],
+      [
+       -56.94,
+       1.53,
+       96.2
+      ],
+      [
+       -56.94,
+       1.53,
+       96.2
+      ]
+     ],
+     "e:c005:c014": [
+      [
+       -53.69,
+       1.53,
+       76.3
+      ],
+      [
+       -48.69,
+       1.53,
+       76.3
+      ],
+      [
+       -43.69,
+       1.53,
+       76.3
+      ],
+      [
+       -38.69,
+       1.53,
+       76.3
+      ],
+      [
+       -33.69,
+       1.53,
+       76.3
+      ],
+      [
+       -28.69,
+       1.53,
+       76.3
+      ],
+      [
+       -23.69,
+       1.53,
+       76.3
+      ],
+      [
+       -18.69,
+       1.53,
+       76.3
+      ],
+      [
+       -18.69,
+       1.53,
+       76.3
+      ]
+     ]
+    },
+    "pulse_hz": 1.2,
+    "pulse_swing": 0.3,
+    "rooms": [
+     {
+      "floor_y": 0.0,
+      "here": true,
+      "id": "c001",
+      "name": "Corridor 1",
+      "rect": {
+       "position": [
+        -3.95,
+        0.0
+       ],
+       "size": [
+        7.9,
+        15.0
+       ]
+      },
+      "type": "corridor"
+     },
+     {
+      "floor_y": 0.0,
+      "here": false,
+      "id": "c002",
+      "name": "Arena 1",
+      "rect": {
+       "position": [
+        -19.2,
+        16.1
+       ],
+       "size": [
+        15.8,
+        13.8
+       ]
+      },
+      "type": "arena"
+     },
+     {
+      "floor_y": 0.0,
+      "here": false,
+      "id": "c003",
+      "name": "Platform Path 1",
+      "rect": {
+       "position": [
+        -48.94,
+        19.0
+       ],
+       "size": [
+        24.74,
+        8.0
+       ]
+      },
+      "type": "platform_path"
+     },
+     {
+      "floor_y": 2.53,
+      "here": false,
+      "id": "c004",
+      "name": "Corridor 2",
+      "rect": {
+       "position": [
+        -60.74,
+        19.6
+       ],
+       "size": [
+        6.8,
+        6.8
+       ]
+      },
+      "type": "corridor"
+     },
+     {
+      "floor_y": 1.53,
+      "here": false,
+      "id": "c005",
+      "name": "Arena 2",
+      "rect": {
+       "position": [
+        -72.99,
+        67.8
+       ],
+       "size": [
+        19.3,
+        17.0
+       ]
+      },
+      "type": "arena"
+     }
+    ],
+    "zone_map": {
+     "circuits": [
+      {
+       "circuit_id": "key:blue",
+       "connectors": [
+        "e:c005:c014"
+       ],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c003",
+        "c005"
+       ]
+      },
+      {
+       "circuit_id": "key:gold",
+       "connectors": [],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c002"
+       ]
+      },
+      {
+       "circuit_id": "key:green",
+       "connectors": [],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c004"
+       ]
+      },
+      {
+       "circuit_id": "key:red",
+       "connectors": [],
+       "kind": "key",
+       "objects": [],
+       "rooms": [
+        "c002"
+       ]
+      },
+      {
+       "circuit_id": "state:cell_power",
+       "connectors": [
+        "e:c005:c006"
+       ],
+       "kind": "setting",
+       "objects": [
+        "power_cell"
+       ],
+       "rooms": [
+        "c005"
+       ]
+      },
+      {
+       "circuit_id": "state:span_alignment",
+       "connectors": [
+        "e:c002:c003"
+       ],
+       "kind": "setting",
+       "objects": [],
+       "rooms": [
+        "c002"
+       ]
+      }
+     ],
+     "connectors": [
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c001:c002",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c001",
+       "room_b": "c002",
+       "state": "open"
+      },
+      {
+       "circuits": [
+        "state:span_alignment"
+       ],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c002:c003",
+       "gates": [
+        "zone_state"
+       ],
+       "realization": "joined",
+       "reason": "set by a control in Arena 1",
+       "room_a": "c002",
+       "room_b": "c003",
+       "state": "blocked"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c003:c004",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c003",
+       "room_b": "c004",
+       "state": "open"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c004:c005",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c004",
+       "room_b": "c005",
+       "state": "open"
+      },
+      {
+       "circuits": [
+        "state:cell_power"
+       ],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c005:c006",
+       "gates": [
+        "zone_state"
+       ],
+       "realization": "joined",
+       "reason": "set by a control in Arena 2",
+       "room_a": "c005",
+       "room_b": "c006",
+       "state": "blocked"
+      },
+      {
+       "circuits": [
+        "key:blue"
+       ],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c005:c014",
+       "gates": [
+        "key"
+       ],
+       "realization": "joined",
+       "reason": "locked -- blue key; you hold it",
+       "room_a": "c005",
+       "room_b": "c014",
+       "state": "blocked"
+      },
+      {
+       "circuits": [],
+       "direction": "BIDIRECTIONAL",
+       "edge_id": "e:c002:c018",
+       "gates": [
+        "none"
+       ],
+       "realization": "joined",
+       "reason": "",
+       "room_a": "c002",
+       "room_b": "c018",
+       "state": "open"
+      }
+     ],
+     "rooms": [
+      {
+       "discovered": true,
+       "name": "Corridor 1",
+       "room_id": "c001",
+       "type": "corridor"
+      },
+      {
+       "discovered": true,
+       "name": "Arena 1",
+       "room_id": "c002",
+       "type": "arena"
+      },
+      {
+       "discovered": true,
+       "name": "Platform Path 1",
+       "room_id": "c003",
+       "type": "platform_path"
+      },
+      {
+       "discovered": true,
+       "name": "Corridor 2",
+       "room_id": "c004",
+       "type": "corridor"
+      },
+      {
+       "discovered": true,
+       "name": "Arena 2",
+       "room_id": "c005",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c006",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c007",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c008",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c009",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c010",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c011",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c012",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c013",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c014",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c015",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c016",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c017",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c018",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c019",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c020",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c021",
+       "type": "platform_path"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c022",
+       "type": "corridor"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c023",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c024",
+       "type": "arena"
+      },
+      {
+       "discovered": false,
+       "name": null,
+       "room_id": "c025",
+       "type": "arena"
+      }
+     ],
+     "zone_id": "zone_001"
+    }
+   }
+  }
+ }
+}
