@@ -60,6 +60,7 @@ const HEAD := Color("#8a94a3")
 const SHADE := Color("#0b0d10")
 ## The no-break space (see `display`).
 const NBSP := 0xA0
+const UNDERSCORE := 0x5F
 
 ## Production's `motion_intensity <= 0`. Set through `set_reduced`, so a
 ## change reaches what is already moving.
@@ -294,13 +295,16 @@ func label(parent: Node3D, text: String, page: Vector2, k: int,
 ## lacks. A NO-BREAK SPACE is kept: it is how a number keeps its unit on
 ## its line (Production's `_keep_units`, "1.5 s"), so `wrap`, which breaks
 ## only at ordinary spaces, never parts them. It is drawn and measured as
-## a space.
+## a space. The kit's font has no underscore: one in an identifier the
+## bridge quotes (a refusal naming a component) reads as a space.
 func display(text: String) -> String:
 	var up := text.to_upper()
 	var out := ""
 	for i in up.length():
 		var c := up.unicode_at(i)
-		if c == 10 or c == 32 or c == NBSP \
+		if c == UNDERSCORE and text_font != null and not text_font.has_char(c):
+			out += " "
+		elif c == 10 or c == 32 or c == NBSP \
 				or (text_font != null and text_font.has_char(c)):
 			out += up[i]
 		else:

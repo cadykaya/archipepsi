@@ -687,28 +687,36 @@ func _claim() -> void:
 			"Q with nothing on it says why and asks the bridge for nothing "
 			+ "(heard %s)" % str(_toasts()))
 
-	# EQUIPPED: Tab, the Bomb Bag's tile, EQUIP ON Q.
+	# EQUIPPED: Tab, the selector to the consumable key, into its rack to
+	# the Bomb Bag's module, and ENTER on EQUIP ON Q -- the keys a player
+	# presses.
 	await _tap("inventory")
 	var face: EquipmentFace = main.equipment
 	var opened := await _await_live("the equipment wall",
 			func() -> bool:
 				return main.menu_shell.is_open() and face.is_open(), 10.0)
 	_check(opened, "Tab opens the equipment wall")
-	var tile: Variant = face.tiles().get(cid)
-	_check(tile is Button, "the Bomb Bag has a tile on it")
-	if tile is Button:
-		(tile as Button).pressed.emit()
+	await _tap("ui_left")
+	for i in face.key_count():
+		await _tap("ui_up")
+	for i in Constants.SLOT_NAMES.find("consumable"):
+		await _tap("ui_down")
+	await _tap("ui_right")
+	for i in 12:
+		if face.selected() == cid:
+			break
+		await _tap("ui_down")
 	await _settle(4)
-	var put := face.detail_root().find_child("Equip", true, false) as Button
-	var key := SlotKeycaps.of("consumable")
-	_check(face.selected() == cid and put != null and not put.disabled
-			and put.text == "EQUIP ON %s" % key,
-			"its card offers EQUIP ON %s (%s)" % [key,
-				"none" if put == null else "'%s'" % put.text])
-	if put == null:
+	var key := SlotKeycaps.of("consumable").to_upper()
+	var focus: Dictionary = face.state()["focus"]
+	var words := str(focus.get("action_words", ""))
+	_check(face.selected() == cid and face.focused_slot() == "consumable"
+			and words == "EQUIP ON %s" % key,
+			"the Bomb Bag's module, read, offers EQUIP ON %s ('%s')" % [key, words])
+	if words != "EQUIP ON %s" % key:
 		return
 	sent = BridgeClient.sent_intents.size()
-	put.pressed.emit()
+	await _tap("ui_accept")
 	var equipped := await _await_live("the bag on %s" % key,
 			func() -> bool:
 				return str(BridgeClient.slots().get("consumable", "")) == cid,

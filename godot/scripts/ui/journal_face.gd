@@ -59,6 +59,9 @@ var note := ""                       # what changed, after a save change
 var link_wire: MenuLink
 ## How many times the wall has been filled: a snapshot refills it.
 var fills := 0
+## The state of the focused passage as this wall last showed it: what a
+## change is said against ("NOW OPEN.").
+var _shown_state := ""
 
 var _entries := {0: [], 1: []}       # column -> [{head, section, text, link, ...}]
 var _root: Node3D
@@ -116,7 +119,11 @@ func fill() -> void:
 	if kit == null:
 		return
 	var was := current_link()
-	var was_state := _edge_state(was) if not was.is_empty() else ""
+	var was_state := _shown_state
+	# The Map's rows next: every link and explanation here is read from
+	# them, and a snapshot may have reached this wall before that one.
+	if map_face != null:
+		map_face.fresh()
 	_build()
 	note = ""
 	if not was.is_empty():
@@ -138,6 +145,8 @@ func fill() -> void:
 ## Every line on the wall, in order: for the suite, and for anything that
 ## has to ask what the journal says.
 func lines() -> Array:
+	if _dirty:
+		fill()
 	var out: Array = []
 	for col: int in [0, 1]:
 		for e: Dictionary in _entries[col]:
@@ -148,9 +157,13 @@ func lines() -> Array:
 ## The lines of one section, by its heading (its empty-section words when
 ## it has none).
 func section(heading: String) -> Array:
+	if _dirty:
+		fill()
 	var out: Array = []
 	for col: int in [0, 1]:
 		for e: Dictionary in _entries[col]:
+			if bool(e["head"]) and str(e["section"]) == heading and bool(e["empty"]):
+				return [str(e["empty_words"])]
 			if not bool(e["head"]) and str(e["section"]) == heading:
 				out.append(str(e["text"]))
 	return out
@@ -464,6 +477,7 @@ func current_link() -> Dictionary:
 ## it does not know links to nothing.
 func _update_link() -> void:
 	var link := current_link()
+	_shown_state = _edge_state(link)
 	if map_face != null and not link.is_empty() \
 			and map_face.target_local(link) == Vector3.INF:
 		link = {}

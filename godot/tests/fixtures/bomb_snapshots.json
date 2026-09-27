@@ -4137,7 +4137,7 @@
       },
       {
        "interpretation_seq": 17,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -4213,7 +4213,7 @@
       },
       {
        "interpretation_seq": 21,
-       "note": "+3.75 pull_force",
+       "note": "+3.75 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -4222,7 +4222,7 @@
       },
       {
        "interpretation_seq": 25,
-       "note": "+4.69 pull_force",
+       "note": "+4.69 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -4350,7 +4350,7 @@
       },
       {
        "interpretation_seq": 23,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -4450,7 +4450,7 @@
       },
       {
        "interpretation_seq": 28,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -5467,7 +5467,7 @@
       },
       {
        "interpretation_seq": 58,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Borderlands 2",
        "source_item_name": "Ice Beam",
@@ -10193,7 +10193,7 @@
       },
       {
        "interpretation_seq": 17,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -10269,7 +10269,7 @@
       },
       {
        "interpretation_seq": 21,
-       "note": "+3.75 pull_force",
+       "note": "+3.75 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -10278,7 +10278,7 @@
       },
       {
        "interpretation_seq": 25,
-       "note": "+4.69 pull_force",
+       "note": "+4.69 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -10406,7 +10406,7 @@
       },
       {
        "interpretation_seq": 23,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -10506,7 +10506,7 @@
       },
       {
        "interpretation_seq": 28,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -11523,7 +11523,7 @@
       },
       {
        "interpretation_seq": 58,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Borderlands 2",
        "source_item_name": "Ice Beam",
@@ -16244,7 +16244,7 @@
       },
       {
        "interpretation_seq": 17,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -16320,7 +16320,7 @@
       },
       {
        "interpretation_seq": 21,
-       "note": "+3.75 pull_force",
+       "note": "+3.75 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -16329,7 +16329,7 @@
       },
       {
        "interpretation_seq": 25,
-       "note": "+4.69 pull_force",
+       "note": "+4.69 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -16457,7 +16457,7 @@
       },
       {
        "interpretation_seq": 23,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -16557,7 +16557,7 @@
       },
       {
        "interpretation_seq": 28,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -17574,7 +17574,7 @@
       },
       {
        "interpretation_seq": 58,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Borderlands 2",
        "source_item_name": "Ice Beam",
@@ -22284,7 +22284,7 @@
       },
       {
        "interpretation_seq": 17,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -22360,7 +22360,7 @@
       },
       {
        "interpretation_seq": 21,
-       "note": "+3.75 pull_force",
+       "note": "+3.75 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -22369,7 +22369,7 @@
       },
       {
        "interpretation_seq": 25,
-       "note": "+4.69 pull_force",
+       "note": "+4.69 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -22497,7 +22497,7 @@
       },
       {
        "interpretation_seq": 23,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -22597,7 +22597,7 @@
       },
       {
        "interpretation_seq": 28,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -23614,7 +23614,7 @@
       },
       {
        "interpretation_seq": 58,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Borderlands 2",
        "source_item_name": "Ice Beam",
@@ -28758,7 +28758,7 @@
       },
       {
        "interpretation_seq": 17,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -28834,7 +28834,7 @@
       },
       {
        "interpretation_seq": 21,
-       "note": "+3.75 pull_force",
+       "note": "+3.75 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -28843,7 +28843,7 @@
       },
       {
        "interpretation_seq": 25,
-       "note": "+4.69 pull_force",
+       "note": "+4.69 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -28971,7 +28971,7 @@
       },
       {
        "interpretation_seq": 23,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -29071,7 +29071,7 @@
       },
       {
        "interpretation_seq": 28,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -30088,7 +30088,7 @@
       },
       {
        "interpretation_seq": 58,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Borderlands 2",
        "source_item_name": "Ice Beam",
@@ -35038,7 +35038,7 @@
       },
       {
        "interpretation_seq": 17,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -35114,7 +35114,7 @@
       },
       {
        "interpretation_seq": 21,
-       "note": "+3.75 pull_force",
+       "note": "+3.75 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -35123,7 +35123,7 @@
       },
       {
        "interpretation_seq": 25,
-       "note": "+4.69 pull_force",
+       "note": "+4.69 pull force",
        "operation": "upgrade",
        "source_game": "Dark Souls III",
        "source_item_name": "Hookshot Chain",
@@ -35251,7 +35251,7 @@
       },
       {
        "interpretation_seq": 23,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -35351,7 +35351,7 @@
       },
       {
        "interpretation_seq": 28,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Dark Souls III",
        "source_item_name": "Ember",
@@ -36368,7 +36368,7 @@
       },
       {
        "interpretation_seq": 58,
-       "note": "apply_status_on_hit",
+       "note": "a status on hit",
        "operation": "modify",
        "source_game": "Borderlands 2",
        "source_item_name": "Ice Beam",

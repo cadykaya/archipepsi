@@ -576,6 +576,39 @@ where the new rule would refuse a lever.
     attempt is a second Zone. My router work stands either way, since a
     first composition that lays out is the better outcome. This is the
     net under it.
+- **N-21 (MENU-INT: a provenance note says its field in words; one change
+  made in your file, under the owner's instruction).**
+  - **What the player saw.** The equipment wall's HISTORY prints each
+    Mk's note: "Mk II +40 max_value ← Estus Shard". The raw field name
+    reached the player, and the menu's font has no underscore, so it drew
+    "MAX?VALUE". A modify note did the same ("apply_status_on_hit").
+  - **The owner's MENU-INT brief says to fix raw field names at their
+    source.** The source is your fold, so I made the change there and am
+    telling you rather than asking first. Reshape it or take it back as
+    you see fit.
+    - `mechanics.note_words(name)`: a short map for the names a plain
+      reading gets wrong (`max_value` → "maximum", `regen_per_second` →
+      "refill a second", `pip_count` → "pips", `apply_status_on_hit` → "a
+      status on hit", `knockback_target` → "knockback", `recoil_self` →
+      "recoil"). Every other name reads with its underscores as spaces.
+    - It is applied to the upgrade note and to all three modify notes.
+    - `bridge/tests/test_provenance_words.py`: every upgradable field and
+      modifier type says itself in words, and a real fold writes "+40
+      maximum" and "knockback".
+  - **What it touches.** Only the note's words. Notes are derived by the
+    fold on every load and never persisted, so saves are unaffected. No
+    bridge test read the old text.
+    - The equipment, journal and bomb fixtures were regenerated from
+      source.
+    - The verbs fixture's regeneration also brought in unrelated drift (a
+      `"charges": null` per action). That is not mine to fold in, so it
+      is left as it was.
+  - **Still raw, and yours if you want them:**
+    - A refused `slot_action`'s message quotes the component id
+      ("'act_bolt' is not owned"). The wall shows the bridge's words as
+      they are, and draws an underscore as a space.
+    - The HUD's Echo feed ("Upgrades res_magic (+40 max_value)") is
+      outside this assignment, and is untouched.
 
 ## Evidence rules (PROD_START)
 
@@ -6320,3 +6353,38 @@ game as a **real 3D device**. No other repair, room redesign, Gear or
 - a renderer switch;
 - dropping an existing Equipment function;
 - a contract that crosses another lane.
+
+**Progress** (WIP branch `wip/0.4-menu-integration`; each commit states
+its validation):
+- **M1** (`6cc9d74`), done: the Glyph kit, byte for byte. Font and icon
+  verifiers pass, and `test_ui_kit_identity.py` passes 4 of 4.
+- **M2 and M3** (`5bd451b`, `6eb3a3c`), ported: the box and all four
+  walls on live data.
+- **M4 checkpoint:** the four menu suites are rewritten by their
+  guarantees and green, headless, through `Main`:
+
+  | Suite | Result |
+  |---|---|
+  | shell | 44 checks |
+  | equipment | 151 checks |
+  | map | 69 checks |
+  | journal and settings | 74 checks |
+
+  - **What the new checks found, and what was fixed:**
+    - A reading that overran its window on real campaign data (the Bomb
+      Bag). USE and COST now move to the right column's free space
+      before anything is cut, and HISTORY holds them whole.
+    - The typing caret drawn as "?" (the font has no underscore). It is
+      now a bar of ink.
+    - The consumable key's state (a use waiting, offline, empty) was
+      missing from its occupant's reading. It now shows in the key's own
+      sentence and colour.
+    - A rule's cost named its resource by id. The resource is now named.
+    - Map zoom and turn presses in quick succession did not add up. Each
+      step now starts from where the lens is going.
+    - The Journal read the Map's rows before the Map had seen the same
+      snapshot. It now refreshes the Map first, and says a change
+      against what it last showed.
+    - N-21, the fold's raw field names.
+  - **Next:** the live drivers' menu steps, then M5 renders, the
+    serial live suites and CK11, then M6.

@@ -137,6 +137,7 @@ var _stick_px := 0.0          # the right stick's scroll, not yet a row
 var _keys: Array = []         # per key: {anchor, y, ...materials}
 var _keys_node: Node3D
 var _tools: Node3D
+var _caret: Node3D             # the typing mark on the FIND tape, while typing
 var _notice: Node3D
 var _pivot: Node3D            # the knob's pointer turns in this
 var _rows_drawn := {}         # id -> {node, face, tab, name, tags, ...}
@@ -568,16 +569,26 @@ func _build_tools() -> void:
 			MenuParts.mat(MenuParts.TAPE if typing or search != ""
 				else MenuParts.TAPE.darkened(0.25), 0.1, 0.45))
 	kit.pickable("equipment", tape, "find")
-	var room := FIND.size.x - 16.0 - (22.0 if search != "" else 0.0)
-	var words := search.to_upper() + ("_" if typing else "")
-	if words == "":
+	# While typing, the caret is a bar of ink after the words (the font has
+	# no underscore to draw one with).
+	var room := FIND.size.x - 16.0 - (22.0 if search != "" else 0.0) \
+			- (6.0 if typing else 0.0)
+	var words := search.to_upper()
+	if words == "" and not typing:
 		words = "FIND"
 	var shown := words
 	while shown.length() > 1 and kit.measure(shown, 2) > room:
 		shown = shown.substr(1)         # the end being typed stays in view
-	MenuParts.text(kit, holder, shown, FIND.position + Vector2(8, 4), 2,
-			MenuParts.TAPE_INK if (typing or search != "") else MenuParts.TAG_DIM,
-			0.0064)
+	if shown != "":
+		MenuParts.text(kit, holder, shown, FIND.position + Vector2(8, 4), 2,
+				MenuParts.TAPE_INK if (typing or search != "") else MenuParts.TAG_DIM,
+				0.0064)
+	_caret = null
+	if typing:
+		var cx := FIND.position.x + 8.0 + (kit.measure(shown, 2) + 2.0 if shown != ""
+				else 0.0)
+		_caret = MenuParts.block(holder, Rect2(cx, FIND.position.y + 4, 4, 16), 0.0052,
+				0.0058, MenuParts.mat(MenuParts.TAPE_INK, 0.0, 0.6), false)
 	if search != "":
 		var x := Rect2(FIND.end.x - 22, FIND.position.y + 3, 18, 18)
 		var clear := MenuParts.block(holder, x, 0.0052, 0.0072,
@@ -788,9 +799,19 @@ func _key_words(i: int) -> Array:
 	if slot == "consumable":
 		var st := _consumable_state()
 		tail = str(st["count"]).replace(" ", "")
-		if str(st["state"]) in ["equipped_empty", "disconnected"]:
-			tail_c = WARN_C
+		tail_c = _consumable_colour(str(st["state"]), MenuParts.LIT)
 	return [_name(on), MenuParts.LIT, tail, mark, tail_c, mark_c]
+
+
+## A consumable state's colour, the same wherever it is said: a use on its
+## way in the SENT colour; empty or offline in the warning's.
+func _consumable_colour(state: String, otherwise := MenuParts.LIT_DIM) -> Color:
+	match state:
+		"pending":
+			return SENT_C
+		"equipped_empty", "disconnected":
+			return WARN_C
+	return otherwise
 
 
 func _count_always_on() -> int:
@@ -1116,8 +1137,7 @@ func _compose_key() -> void:
 			if str(st["count"]) != "":
 				words.append(["%s USES LEFT." % str(st["count"]), MenuParts.LIT])
 			if str(st["text"]) != "":
-				words.append([str(st["text"]), WARN_C if str(st["state"]) in [
-						"equipped_empty", "disconnected"] else MenuParts.LIT_DIM])
+				words.append([str(st["text"]), _consumable_colour(str(st["state"]))])
 	else:
 		words.append(["WHAT YOU OWN THAT IS ALWAYS ON: IT TAKES NO KEY, AND IS NOT "
 				+ "A SWITCH.", MenuParts.LIT_DIM])
@@ -1254,10 +1274,30 @@ func _compose_item(id: String) -> void:
 		plan = _left_plan(id, int(option[0]), int(option[1]))
 		if float(plan["h"]) <= left_room:
 			break
+	# Still too tall at the smallest sizes: what the left column cannot
+	# hold goes to the right, where there is room above the foot -- COST
+	# (with the key's state), then USE -- before anything is cut.
+	var moved: Array = []                   # [label, lines] drawn on the right
+	var moved_h := 0.0
+	for block: String in ["cost", "use"]:
+		if float(plan["h"]) <= left_room:
+			break
+		var lines := _block_lines(id, block, COL_R_W - 64.0)
+		var bh := LINE * lines.size() + 10.0
+		if lines.is_empty() or TOP + r_h + t_h + moved_h + bh > foot:
+			break
+		moved.push_front(["USE" if block == "use" else "COST", lines])
+		moved_h += bh
+		var left_lines := (plan[block] as Array).size()
+		if block == "cost":
+			left_lines += (plan["state"] as Array).size()
+			plan["state"] = []
+		plan[block] = []
+		plan["h"] = float(plan["h"]) - LINE * left_lines
 	var cut := false
 	if float(plan["h"]) > left_room:
-		# Still too tall at the smallest sizes: the description is cut where
-		# it must be, and said so -- the whole of it is in HISTORY.
+		# Still too tall: the description is cut where it must be, and said
+		# so -- the whole of it is in HISTORY.
 		plan = _cut_plan(plan, left_room)
 		cut = true
 	# the history on the right under the comparison if it fits there; else
@@ -1265,15 +1305,16 @@ func _compose_item(id: String) -> void:
 	# else it is in HISTORY only
 	var hist_place := "right"
 	var h_gap := 10.0 if h_h > 0.0 else 0.0
-	if TOP + r_h + t_h + h_gap + h_h > foot:
+	if TOP + r_h + t_h + moved_h + h_gap + h_h > foot:
 		if float(plan["h"]) + 12.0 + h_h <= left_room:
 			hist_place = "left"
 		else:
 			t_pitch = 18.0
-			if TOP + r_h + _table_h(compare, COL_R_W, t_pitch) + h_gap + h_h > foot:
+			if TOP + r_h + _table_h(compare, COL_R_W, t_pitch) + moved_h + h_gap + h_h \
+					> foot:
 				hist_place = "left" if float(plan["h"]) + 12.0 + h_h <= left_room \
 						else "none"
-	if TOP + r_h + _table_h(compare, COL_R_W, t_pitch) > foot:
+	if TOP + r_h + _table_h(compare, COL_R_W, t_pitch) + moved_h > foot:
 		t_pitch = 18.0
 	# ---- the left column, drawn
 	var y := _draw_left(id, plan)
@@ -1293,9 +1334,18 @@ func _compose_item(id: String) -> void:
 			ry += LINE
 	if not compare.is_empty():
 		ry = _table(compare, COL_R, ry, COL_R_W, t_pitch)
+	for block: Array in moved:
+		ry += 10.0
+		MenuParts.text(kit, _readout, block[0], Vector2(COL_R, ry), 2, MenuParts.LIT_FAINT,
+				Z)
+		for line: Array in block[1]:
+			MenuParts.text(kit, _readout, str(line[0]), Vector2(COL_R + 64, ry), 2, line[1],
+					Z)
+			ry += LINE
 	if hist_place == "right" and not hist.is_empty():
 		ry = _draw_history(hist, COL_R, ry + 10.0, COL_R_W)
 	_info["right_bottom"] = ry
+	_info["moved"] = moved.map(func(b: Array) -> String: return str(b[0]))
 	# ---- the foot: the request's state, then the one action, always in the
 	# same place
 	var sy := foot + 6.0
@@ -1389,6 +1439,20 @@ func _compose_more(id: String) -> void:
 		left.append(["WHAT IT IS", MenuParts.LIT_DIM, 0.0])
 		for line in kit.wrap(desc, 2, COL_L_W):
 			left.append([line, MenuParts.LIT, 0.0])
+	# What the window may have had to cut, whole: how it is used, and what
+	# it costs.
+	var plan := _left_plan(id, 3, 2)
+	for block: Array in [["HOW IT IS USED", EquipmentQuery.use_lines(row, _rows)],
+			["WHAT IT COSTS", _cost_lines(id)]]:
+		if (block[1] as Array).is_empty():
+			continue
+		left.append(["", MenuParts.LIT, 0.0])
+		left.append([block[0], MenuParts.LIT_DIM, 0.0])
+		for raw: String in block[1]:
+			for line in kit.wrap(_units(raw), 2, COL_L_W):
+				left.append([line, MenuParts.LIT, 0.0])
+	for line: String in plan.get("state", []):
+		left.append([line, plan["state_c"], 0.0])
 	var reads := EquipmentQuery.read_lines(row)
 	if not reads.is_empty():
 		left.append(["", MenuParts.LIT, 0.0])
@@ -1481,15 +1545,48 @@ func _left_plan(id: String, nk: int, dk: int) -> Dictionary:
 		for l in kit.wrap(_units(line), 2, COL_L_W - 64.0):
 			uses.append(l)
 	var costs: Array = []
-	var cost_src: Array = EquipmentQuery.cost_lines(row)
-	if EquipmentQuery.is_consumable(row):
-		cost_src.push_front("%s uses left." % _charges(id).replace("/", " of "))
-	for line: String in cost_src:
+	for line: String in _cost_lines(id):
 		for l in kit.wrap(_units(line), 2, COL_L_W - 64.0):
 			costs.append(l)
-	h += LINE * (uses.size() + costs.size())
+	# What is ON the consumable key says the key's state in the key's own
+	# sentence (a use waiting, offline, empty), where its count is read.
+	var state: Array = []
+	var state_c := MenuParts.LIT_DIM
+	if EquipmentQuery.is_consumable(row) and confirmed("consumable") == id:
+		var st := _consumable_state()
+		for l in kit.wrap(str(st["text"]), 2, COL_L_W - 64.0):
+			state.append(l)
+		state_c = _consumable_colour(str(st["state"]))
+	h += LINE * (uses.size() + costs.size() + state.size())
 	return {"h": h, "name": name, "name_k": nk, "does_k": dk, "does": does,
-		"desc": desc, "use": uses, "cost": costs}
+		"desc": desc, "use": uses, "cost": costs, "state": state, "state_c": state_c}
+
+
+## A left-column block's lines at `width`, each [line, colour]: USE, or
+## COST with the consumable key's state after it.
+func _block_lines(id: String, block: String, width: float) -> Array:
+	var row: Dictionary = _by_id[id]
+	var out: Array = []
+	var src: Array = EquipmentQuery.use_lines(row, _rows) if block == "use" \
+			else _cost_lines(id)
+	for raw: String in src:
+		for l in kit.wrap(_units(raw), 2, width):
+			out.append([l, MenuParts.LIT_DIM])
+	if block == "cost" and EquipmentQuery.is_consumable(row) \
+			and confirmed("consumable") == id:
+		var st := _consumable_state()
+		for l in kit.wrap(str(st["text"]), 2, width):
+			out.append([l, _consumable_colour(str(st["state"]))])
+	return out
+
+
+## What an item costs, in Production's lines; a consumable's count first.
+func _cost_lines(id: String) -> Array:
+	var row: Dictionary = _by_id[id]
+	var out: Array = EquipmentQuery.cost_lines(row, _rows)
+	if EquipmentQuery.is_consumable(row):
+		out.push_front("%s uses left." % _charges(id).replace("/", " of "))
+	return out
 
 
 ## The smallest plan, its description cut to what fits, with "..." --
@@ -1509,6 +1606,19 @@ func _cut_plan(plan: Dictionary, room: float) -> Dictionary:
 		cut.append("... (THE REST IS IN HISTORY)")
 	out["desc"] = cut
 	out["h"] = float(plan["h"]) - LINE * (desc.size() - cut.size())
+	# Still too tall with the description gone: the last lines of COST, then
+	# of USE, go too -- never a block's first line, never the consumable
+	# key's state. HISTORY has every one of them whole.
+	var cost: Array = (out["cost"] as Array).duplicate()
+	var use: Array = (out["use"] as Array).duplicate()
+	while float(out["h"]) > room and (cost.size() > 1 or use.size() > 1):
+		if cost.size() > 1:
+			cost.pop_back()
+		else:
+			use.pop_back()
+		out["h"] = float(out["h"]) - LINE
+	out["cost"] = cost
+	out["use"] = use
 	return out
 
 
@@ -1577,6 +1687,9 @@ func _draw_left(id: String, plan: Dictionary) -> float:
 			MenuParts.text(kit, _readout, line, Vector2(COL_L + 64, y), 2, MenuParts.LIT_DIM,
 					Z)
 			y += LINE
+	for line: String in plan.get("state", []):
+		MenuParts.text(kit, _readout, line, Vector2(COL_L + 64, y), 2, plan["state_c"], Z)
+		y += LINE
 	return y
 
 

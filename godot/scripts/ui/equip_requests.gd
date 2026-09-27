@@ -22,12 +22,11 @@ extends RefCounted
 ##
 ## **The key is domain-derived** -- `slot_action:<slot>:<component id>`,
 ## empty after the last colon for "clear it" -- the house rule for echoed
-## identity. The bridge does not attach it to a `slot_action` refusal yet:
-## `_about` in `server.py` is Dess's, and the ask is recorded (N-11). Until
-## it does, a refused equip has no answer that names it. An `error` with an
-## empty `about` means UNCHECKED, never "yours" (the `proposal_id` rule),
-## so it resolves nothing here; the face shows it as the bridge's latest
-## refusal, unattributed, beside the request still waiting.
+## identity. The bridge attaches it to a `slot_action` refusal (`_about` in
+## `server.py`, Dess's, answering N-11). An `error` with an empty `about`
+## means UNCHECKED, never "yours" (the `proposal_id` rule), so it resolves
+## nothing here; the face shows it as the bridge's latest refusal,
+## unattributed, beside the request still waiting.
 
 const PENDING := "PENDING"
 const ACCEPTED := "ACCEPTED"

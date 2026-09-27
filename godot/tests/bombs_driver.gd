@@ -417,46 +417,58 @@ func _first_sight_is_not_news() -> void:
 
 
 ## EQUIPPING IT FROM THE EQUIPMENT WALL: the one control a player has
-## for putting a consumable on its key.
+## for putting a consumable on its key -- the reading's one action, taken
+## with ENTER through the shell, as a player takes it.
 func _equipping_it() -> void:
 	print("  -- EQUIPPING IT from the equipment wall")
 	var cid := _cid()
-	var key := SlotKeycaps.of("consumable")
+	var key := SlotKeycaps.of("consumable").to_upper()
 	await _deliver("acquired")
 	main._open_menu("equipment")
 	await _frames(10)
 	main.equipment.select(cid)
 	await _frames(5)
-	var put := main.equipment.detail_root().find_child(
-			"Equip", true, false) as Button
-	_check(put != null and not put.disabled
-			and put.text == "EQUIP ON %s" % key,
-			"the Bomb Bag's card offers EQUIP ON %s (%s)" % [key,
-				"none" if put == null else "'%s'%s" % [put.text,
-					" disabled" if put.disabled else ""]])
+	var st: Dictionary = main.equipment.state()
+	var focus: Dictionary = st["focus"]
+	var words := str(focus.get("action_words", ""))
+	_check(str(st["unfolded"]) == cid and str(st["slot"]) == "consumable"
+			and words == "EQUIP ON %s" % key and bool(focus.get("action_armed",
+				false)),
+			"the Bomb Bag's reading offers EQUIP ON %s ('%s')" % [key, words])
 	var before := BridgeClient.sent_intents.size()
-	if put != null:
-		put.pressed.emit()
+	await _action_event("ui_accept")
 	await _frames(3)
 	var asked := _sent_since(before)
 	_check(asked.size() == 1
 			and str((asked[0] as Dictionary).get("type", "")) == "slot_action"
 			and str((asked[0] as Dictionary).get("slot", "")) == "consumable"
 			and str((asked[0] as Dictionary).get("component_id", "")) == cid,
-			"pressing it asks the bridge to put it on the consumable key, "
-			+ "once (%s)" % str(asked))
+			"ENTER asks the bridge to put it on the consumable key, once (%s)"
+			% str(asked))
 	# The engine's answer to exactly that request.
 	await _deliver("carried")
 	await _frames(5)
-	var off := main.equipment.detail_root().find_child(
-			"Unequip", true, false) as Button
-	_check(off != null and off.text == "TAKE OFF %s" % key,
-			"the engine's answer shows it on %s (%s)" % [key,
-				"none" if off == null else "'%s'" % off.text])
+	words = str((main.equipment.state()["focus"] as Dictionary).get(
+			"action_words", ""))
+	_check(words == "TAKE OFF %s" % key,
+			"the engine's answer shows it on %s ('%s')" % [key, words])
 	main._close_menu()
 	await _frames(10)
 	_check(_key_row().contains("Bomb Bag  3 / 3"),
 			"…and the HUD key counts it (%s)" % _key_row())
+
+
+## An action as a device delivers it: an event through the engine's
+## input pipeline, so the menu's `_input` sees it (`_press` only sets what
+## polling reads).
+func _action_event(action: String) -> void:
+	for down: bool in [true, false]:
+		var event := InputEventAction.new()
+		event.action = action
+		event.pressed = down
+		Input.parse_input_event(event)
+		await get_tree().process_frame
+	await get_tree().process_frame
 
 
 ## A USE THE ENGINE REFUSED -- a press that crossed a refill, refused by

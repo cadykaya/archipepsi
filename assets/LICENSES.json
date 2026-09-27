@@ -19,14 +19,16 @@
     "paths": [
       "assets/models/",
       "assets/textures/",
+      "assets/ui/",
       "docs/art/review/",
       "docs/evidence/",
-  "docs/ledgers/post_playtest_evidence/",
+      "docs/ledgers/post_playtest_evidence/",
       "godot/content/fixtures/",
       "godot/content/projectiles/",
       "godot/content/shells/",
-   "godot/content/theme/",
       "godot/content/test_fixtures/",
+      "godot/content/theme/",
+      "godot/content/ui/",
       "tools/artpreview/"
     ]
   },

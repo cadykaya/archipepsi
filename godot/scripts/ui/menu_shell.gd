@@ -170,6 +170,7 @@ func _ready() -> void:
 
 func open(page := "settings") -> void:
 	sync_motion()
+	_read_keycaps()
 	var index := PAGES.find(page)
 	_front = index if index >= 0 else 0
 	_heading = _front
@@ -888,17 +889,33 @@ func _build_glass() -> void:
 	_refresh_glass()
 
 
+## The keys the shell's own actions are bound to, by name, as the player
+## has them (`SlotKeycaps`, the real binding) -- read on open, so a
+## rebinding shows from the next time the menu opens.
+var _keycaps := {}
+
+
+func _read_keycaps() -> void:
+	_keycaps = {"menu_page_left": SlotKeycaps.of_action("menu_page_left", "Q"),
+		"menu_page_right": SlotKeycaps.of_action("menu_page_right", "E"),
+		"inventory": SlotKeycaps.of_action("inventory", "TAB")}
+	for key: String in _keycaps:
+		_keycaps[key] = str(_keycaps[key]).to_upper()
+
+
 ## What each control is, per device. A token is "@icon" (a bare device
 ## symbol), "#icon" (a symbol in a keycap) or "WORD" (a keycap). The
 ## keyboard's are Production's own bindings, read through SlotKeycaps
 ## where they are actions.
 func _controls(action: String) -> Array:
+	if _keycaps.is_empty():
+		_read_keycaps()
 	var kbm := {
-		"turn_left": [SlotKeycaps.of_action("menu_page_left", "Q")],
-		"turn_right": [SlotKeycaps.of_action("menu_page_right", "E")],
+		"turn_left": [_keycaps["menu_page_left"]],
+		"turn_right": [_keycaps["menu_page_right"]],
 		"back": ["ESC"],
 		"close": ["ESC"],
-		"equipment": [SlotKeycaps.of_action("inventory", "TAB")],
+		"equipment": [_keycaps["inventory"]],
 		"move": ["#arrow_up", "#arrow_down"],
 		"move_h": ["#arrow_left", "#arrow_right"],
 		"into": ["#arrow_right"],

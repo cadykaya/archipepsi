@@ -149,6 +149,7 @@ var _glass_back: Node3D              # BACK TO YOUR VIEW, on the glass
 var _back_rect := Rect2()
 var _press_used := false             # a press the glass took: its release picks nothing
 var _edge_marks := {}                # "you" / "picked" -> {node, arrow, label, ref}
+var _goal := {}                      # where the lens is gliding to
 
 
 func _ready() -> void:
@@ -305,6 +306,13 @@ func refresh() -> void:
 	builds += 1
 
 
+## Rebuilt now if a snapshot or a step has changed what it shows -- for a
+## wall that reads this one's rows (the Journal) before its next frame.
+func fresh() -> void:
+	if _dirty:
+		refresh()
+
+
 ## The overview (the old wall's "back to you"): nothing picked, the whole
 ## known Zone in the window, you in it.
 func recentre() -> void:
@@ -439,23 +447,34 @@ func pick(id: String, keep_screen := false) -> void:
 
 
 func turn_view(yaw_step: float, pitch_step: float) -> void:
-	_set_lens(lens.yaw + yaw_step, lens.pitch + pitch_step, lens.target, lens.zoom)
+	_set_lens(_heading("yaw") + yaw_step, _heading("pitch") + pitch_step,
+			_heading("target"), _heading("zoom"))
 
 
 ## `factor` < 1 zooms in (the old wall's distance factor, inverted: the
 ## lens's zoom is a magnification).
 func zoom_view(factor: float) -> void:
-	_set_lens(lens.yaw, lens.pitch, lens.target, lens.zoom / factor)
+	_set_lens(_heading("yaw"), _heading("pitch"), _heading("target"),
+			_heading("zoom") / factor)
 
 
 ## Pan in the ground plane, as seen through the lens: +x right, +y ahead.
 func pan_view(right: float, ahead: float) -> void:
-	var y := deg_to_rad(lens.yaw)
+	var y := deg_to_rad(_heading("yaw"))
 	var side := Vector3(cos(y), 0, -sin(y))
 	var fwd := Vector3(-sin(y), 0, -cos(y))
-	var step := 18.0 / lens.zoom * 0.02
-	_set_lens(lens.yaw, lens.pitch, lens.target + (side * right + fwd * ahead)
-			* step * 40.0, lens.zoom)
+	var step := 18.0 / float(_heading("zoom")) * 0.02
+	_set_lens(_heading("yaw"), _heading("pitch"), _heading("target")
+			+ (side * right + fwd * ahead) * step * 40.0, _heading("zoom"))
+
+
+## Where the lens is headed -- or is, when still. A step is taken from
+## there, so presses in quick succession (a held key's repeats) add up
+## instead of each starting again from wherever the glide had got to.
+func _heading(prop: String) -> Variant:
+	if kit.moving(lens, prop) and _goal.has(prop):
+		return _goal[prop]
+	return lens.get(prop)
 
 
 ## The lens's zoom limits, as magnifications.
@@ -922,10 +941,10 @@ func _set_lens(to_yaw: float, to_pitch: float, to_target: Vector3, to_zoom: floa
 		at_once := false) -> void:
 	var t := 0.0 if at_once else 0.38
 	var limits := zoom_limits()
-	kit.go(lens, "yaw", to_yaw, t)
-	kit.go(lens, "pitch", clampf(to_pitch, MIN_PITCH, MAX_PITCH), t)
-	kit.go(lens, "target", to_target, t)
-	kit.go(lens, "zoom", clampf(to_zoom, limits.x, limits.y), t)
+	_goal = {"yaw": to_yaw, "pitch": clampf(to_pitch, MIN_PITCH, MAX_PITCH),
+		"target": to_target, "zoom": clampf(to_zoom, limits.x, limits.y)}
+	for prop: String in _goal:
+		kit.go(lens, prop, _goal[prop], t)
 
 
 ## The one transform: the miniature, turned and tilted about the lens's

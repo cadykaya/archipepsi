@@ -2729,7 +2729,7 @@
       },
       {
        "interpretation_seq": 5,
-       "note": "+40 max_value",
+       "note": "+40 maximum",
        "operation": "upgrade",
        "source_game": "Dark Souls",
        "source_item_name": "Estus Shard",
@@ -3846,7 +3846,7 @@
       },
       {
        "interpretation_seq": 5,
-       "note": "+40 max_value",
+       "note": "+40 maximum",
        "operation": "upgrade",
        "source_game": "Dark Souls",
        "source_item_name": "Estus Shard",
@@ -6797,7 +6797,7 @@
       },
       {
        "interpretation_seq": 5,
-       "note": "+40 max_value",
+       "note": "+40 maximum",
        "operation": "upgrade",
        "source_game": "Dark Souls",
        "source_item_name": "Estus Shard",
@@ -10136,7 +10136,7 @@
       },
       {
        "interpretation_seq": 5,
-       "note": "+40 max_value",
+       "note": "+40 maximum",
        "operation": "upgrade",
        "source_game": "Dark Souls",
        "source_item_name": "Estus Shard",
@@ -13397,7 +13397,7 @@
       },
       {
        "interpretation_seq": 5,
-       "note": "+40 max_value",
+       "note": "+40 maximum",
        "operation": "upgrade",
        "source_game": "Dark Souls",
        "source_item_name": "Estus Shard",
@@ -16635,7 +16635,7 @@
       },
       {
        "interpretation_seq": 5,
-       "note": "+40 max_value",
+       "note": "+40 maximum",
        "operation": "upgrade",
        "source_game": "Dark Souls",
        "source_item_name": "Estus Shard",

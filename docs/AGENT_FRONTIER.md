@@ -674,6 +674,14 @@ owner's D-06/D-07 rulings and the seam table are in
       - The work is on `wip/0.4-menu-integration`.
       - It is checked under the game's Forward+, with Mesa's lavapipe
         installed in the container.
+      - **Where it is:** M1 done (`6cc9d74`, the Glyph kit). The device
+        and all four walls are on live data. The four menu suites are
+        rewritten by their guarantees and green through `Main` (M4
+        checkpoint; the counts are in the ledger). N-21 is filed for Dess.
+        **Next:** the live drivers' menu steps (candidate_live, bombs_live,
+        consumable_live, boot, machine_life), then M5 (renders at 720p and
+        1080p, contrast, performance, live suites serially, CK11), then
+        M6. Draft PR #14 is the WIP branch's; it is not subscribed.
     - **After MENU-INT:** HB-F4g's measurement (variants 1, 2, 3 and
       junction; census; a 30-Zone walk), then HB-F4f, then CK11. They
       are held until the owner resumes them.

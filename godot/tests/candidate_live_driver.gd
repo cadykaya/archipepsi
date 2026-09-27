@@ -1212,31 +1212,35 @@ func _abandon_from_the_pause_menu(zone_id: String) -> bool:
 	var menu: PauseMenu = main.pause_menu
 	var player: Player = main.zone.player if main.zone != null else null
 	await _action_event("pause")
+	var board: Array = main.settings_face.state()["switches"]
 	_check(shell.is_open() and shell.front() == "settings" and menu.visible
-			and menu.get_viewport() == shell.page_viewport("settings")
+			and shell.controller("settings") == main.settings_face
+			and board == menu.switches() and board.has(PauseMenu.ABANDON)
 			and player != null and player.held_by("modal"),
 			"Escape opens the pause interface on its Settings wall, the "
-			+ "pause menu drawn there, and the player is held")
+			+ "pause menu's switches on its PAUSED board (%s), and the player "
+			% [board] + "is held")
 	_check(get_tree().paused and PauseClaims.owners() == ["menu"]
 			and BridgeClient.online,
 			"and the world is paused behind it, by the menu's claim alone, "
 			+ "with the bridge still connected (H-PAUSE)")
 	await _action_event("inventory")
 	await _shell_at_rest(shell)
-	_check(shell.front() == "equipment" and main.equipment.visible
-			and main.equipment.get_viewport()
-				== shell.page_viewport("equipment"),
-			"Tab turns it to the Equipment wall, the equipment face drawn "
+	_check(shell.front() == "equipment" and main.equipment.is_open()
+			and main.equipment.face == shell.face_node("equipment"),
+			"Tab turns it to the Equipment wall, the equipment cabinet built "
 			+ "there")
 	await _equip_while_paused()
 	await _action_event("menu_page_right")
 	await _shell_at_rest(shell)
 	var armed := shell.front() == "settings" \
-			and _press_button(menu, "ABANDON ZONE")
-	await get_tree().process_frame
-	var confirmed := armed and _press_button(menu, "CONFIRM ABANDON")
+			and await _settings_press(PauseMenu.ABANDON) and menu.is_arming()
+	# A decision, not a reflex: CONFIRM is taken once the arming has stood
+	# for PauseMenu.ARM_GUARD (a press straight after is refused).
+	await get_tree().create_timer(PauseMenu.ARM_GUARD + 0.1).timeout
+	var confirmed := armed and await _settings_press(PauseMenu.CONFIRM)
 	_check(armed and confirmed, "the pause menu's ABANDON ZONE, then "
-			+ "CONFIRM ABANDON, pressed")
+			+ "CONFIRM ABANDON, pressed on the PAUSED board")
 	if not confirmed:
 		return false
 	await get_tree().process_frame
@@ -1281,13 +1285,14 @@ func _equip_while_paused() -> void:
 	face.select(cid)
 	await get_tree().process_frame
 	await get_tree().process_frame
-	var equip := face.detail_root().find_child("Equip", true, false) as Button
-	if equip == null or equip.disabled:
-		_check(false, "the Equipment wall offers to equip %s (%s)" % [cid,
-				"missing" if equip == null else "disabled"])
+	var focus: Dictionary = face.state()["focus"]
+	var label := str(focus.get("action_words", ""))
+	if not bool(focus.get("action_armed", false)) or not (label.begins_with("EQUIP")
+			or label.begins_with("REPLACE")):
+		_check(false, "the Equipment wall offers to equip %s ('%s')" % [cid,
+				label])
 		return
-	var label := equip.text
-	equip.pressed.emit()
+	await _action_event("ui_accept")
 	# READ AT THE PRESS, not a frame later: a local bridge answers inside
 	# one frame, and the answer is read by the client's own `_process`.
 	# Nothing can resolve the request before that poll, so this is the
@@ -1425,14 +1430,23 @@ func _shell_at_rest(shell: MenuShell) -> void:
 	await get_tree().process_frame
 
 
-func _press_button(root: Node, prefix: String) -> bool:
-	for node: Node in root.find_children("*", "Button", true, false):
-		var button := node as Button
-		if button != null and not button.is_queued_for_deletion() \
-				and button.text.begins_with(prefix):
-			button.pressed.emit()
-			return true
-	return false
+## Press one of the PAUSED board's switches as a player does: the focus
+## moved to it with the arrows, then ENTER. Whether the board had it.
+func _settings_press(words: String) -> bool:
+	var face: SettingsFace = main.settings_face
+	var rows: Array = face.state()["rows"]
+	var to := rows.find(words)
+	if to < 0:
+		return false
+	for i in 12:
+		if int(face.state()["focus"]) == to:
+			break
+		await _action_event("ui_down" if to > int(face.state()["focus"])
+				else "ui_up")
+	if int(face.state()["focus"]) != to:
+		return false
+	await _action_event("ui_accept")
+	return true
 
 
 ## The portal, worked in ZONE_AVAILABLE: it designs the next Zone.

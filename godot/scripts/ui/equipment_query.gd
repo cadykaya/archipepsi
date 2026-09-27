@@ -432,8 +432,9 @@ static func use_lines(row: Dictionary, rows: Array) -> Array[String]:
 	return out
 
 
-## WHAT IT COSTS: cooldown, supply, drain.
-static func cost_lines(row: Dictionary) -> Array[String]:
+## WHAT IT COSTS: cooldown, supply, drain. A resource is named as the
+## player knows it (its item's name, from `rows`), never by its id.
+static func cost_lines(row: Dictionary, rows: Array = []) -> Array[String]:
 	var out: Array[String] = []
 	var component: Dictionary = row.get("component", {})
 	match kind_of(row):
@@ -452,9 +453,11 @@ static func cost_lines(row: Dictionary) -> Array[String]:
 					float(component.get("cooldown", 0.0))))
 			for cost: Variant in component.get("costs", []):
 				var c: Dictionary = cost
+				var resource := item_by_id(rows, str(c.get("resource_id", "")))
 				out.append("Costs %s %s." % [
 						_number(float(c.get("amount", 0.0))),
-						str(c.get("resource_id", "?"))])
+						name_of(resource) if not resource.is_empty()
+						else "of a resource you do not hold"])
 		_:
 			out.append("No cost: it is simply on.")
 	return out
