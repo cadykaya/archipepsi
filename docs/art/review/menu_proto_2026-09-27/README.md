@@ -55,7 +55,7 @@ and text prompts.
 | Inspecting and closing details | `captures/cap_03_map_details.mp4` | the Map's detail opens and closes; tags stay clear of it; the lens slides aside instead of covering the rooms |
 | Leaving a face and returning with its context intact | `captures/cap_04_travel.mp4` | the Map keeps its pick, zoom and turn across Journal travel; Equipment keeps its key across a close |
 | Reduced motion | `captures/cap_05_reduced.mp4` | a cut on every face (turn, unfold, lens, thread); the gate pulse holds at exactly 1.0 |
-| Long descriptions, and more candidates than fit | `captures/cap_06_long.mp4` · `stills_720p/still_equipment_long.png` | 9 candidates with "3 MORE"; the whole card kept in view; the longest description (158 of `MAX_TEXT_LEN` 160) in full; wheel and right-stick scroll |
+| Long descriptions, and more candidates than fit | `captures/cap_06_long.mp4` · `stills_720p/still_equipment_long.png` | 9 candidates with "3 MORE"; the whole card kept in view; the longest description (158 of `MAX_TEXT_LEN` 160) in full; wheel and right-stick scroll, with the drawer's edges clipping and no hole |
 | *Also:* a passage changes state under the thread | `captures/cap_07_state.mp4` | the focus follows the same passage; `NOW OPEN.`; a vanished passage is said, and not re-pointed |
 | *Also:* the controller, and text fallbacks | `captures/cap_08_pad.mp4` | pad symbols on its first press; sticks, triggers, Y; PROMPTS: TEXT on both devices |
 
@@ -73,6 +73,9 @@ and text prompts.
   its edge.
 - A line runs from the key's socket to the drawer, so the card visibly
   belongs to its key.
+- The drawer is a window: whatever you scroll past slides under its top and
+  bottom edges, which are the wall itself. The open card is cut a line at a
+  time, and is never hidden whole.
 - The comparison is named against the key's own cap, for example "AGAINST
   BRAIDED LASH, ON RMB NOW".
 - The action sits at the card's foot, where the eye already is.
@@ -126,8 +129,9 @@ orbit, tilt and detail state tried.
    - `Input.parse_input_event` carries keys, mouse buttons and motion, pad
      buttons and axes, with points carried through the viewport's
      transform;
-   - `tapes/test_core.json` has **58** checks, `tapes/test_more.json` **87**
-     and `tapes/test_inputs.json` **43**: **188**, all passing;
+   - `tapes/test_core.json` has **58** checks, `tapes/test_more.json` **94**
+     and `tapes/test_inputs.json` **43**: **195**, all passing at the build's
+     commit, `5738865`;
    - `test_inputs` presses every binding the prompts name at least once,
      and the handoff §7 lists which tape presses which;
    - the staged build passes `test_core` on its own, outside the

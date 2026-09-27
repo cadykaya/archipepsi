@@ -2725,8 +2725,8 @@ integrated, and no Production-owned file was edited.
 - Review: `docs/art/review/menu_proto_2026-09-27/`, which holds the README,
   8 captures, sheets, stills and `stills_720p/`.
 - Handoff: `HANDOFF_STATE_TRANSITIONS.md` and `HANDOFF_GLYPH_ASSETS.md`.
-- The build is `tools/menu_proto` at `15e5d3d`, staged into the archive by
-  `tools/menu_proto/stage_build.sh`.
+- The build is `tools/menu_proto` at `5738865`, staged into the archive by
+  `tools/menu_proto/stage_build.sh`. The captures are from the same commit.
 
 **Reconciled against CK9 `a2b9df6`** (code `22fdbda`):
 - The menu, query, contract, binding and fixture files are byte-identical
@@ -2738,7 +2738,7 @@ integrated, and no Production-owned file was edited.
 **Evidence, in separate scopes:**
 - Implemented: everything in the handoff.
 - Scripted through the real input path: `test_core` has 58 checks,
-  `test_more` 87 and `test_inputs` 43 (every binding pressed), 188 in all,
+  `test_more` 94 and `test_inputs` 43 (every binding pressed), 195 in all,
   every one passing. The staged build passes `test_core` on its own. The
   8 captures and 6 gameplay-size stills are scripted.
 - Hands-on: **not done**. That is the owner's review.

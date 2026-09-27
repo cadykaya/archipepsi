@@ -146,7 +146,21 @@ Production's five menu actions verbatim:
 | ↑ ↓ in the drawer | the next candidate | The old card folds (scale-y, 0.10 s). The new one unfolds after 0.04 s (0.16 s). The strips re-place (0.18 s). The drawer scrolls so the **whole** card is in view. | the next press, from wherever things are | cut |
 | Enter / A / click the action | preview on the key; or, on the saved item, back to the save | — | — | — |
 | ← / B | back to the keys | — | — | — |
-| wheel / right stick | scroll by hand; the open card stays open | — | — | — |
+| wheel / right stick | scroll by hand; the open card stays open (see "The drawer is a window" below) | — | — | — |
+
+### The drawer is a window
+
+- Two patches of the wall itself (`kit.wall_patch`, grain aligned texel
+  for texel) lie just in front of the list, above and below the view.
+  Whatever scrolls past slides under them.
+- A strip is drawn wherever any of it shows.
+- The open card is cut **a line at a time**: every line of its words is
+  its own label with its span, and the plate, bar and shadows are cut to
+  the band the edges cover. So a card half-scrolled out is still drawn
+  where it shows, and never leaves a hole or spills past the wall.
+- The drawer's header and its "N MORE" counts sit above the edges.
+- `state().holes` is the largest empty stretch of the view with content
+  beyond it. The tapes assert it stays under one strip's height.
 
 ### Ordering
 
@@ -412,7 +426,7 @@ These are recommendations only. Each one says what the prototype does.
 | Scope | What it covers |
 |---|---|
 | **Implemented** | everything in §§2–5 |
-| **Exercised by scripted input through the real input path** (`Input.parse_input_event`: keys, mouse buttons and motion, pad buttons and axes; points carried through the viewport's final transform) | `tapes/test_core.json`: **58** checks, `tapes/test_more.json`: **87**, and `tapes/test_inputs.json`: **43** — **188** in all, every one passing. The eight captures (`captures/*.mp4`) are scripted as well. |
+| **Exercised by scripted input through the real input path** (`Input.parse_input_event`: keys, mouse buttons and motion, pad buttons and axes; points carried through the viewport's final transform) | `tapes/test_core.json`: **58** checks, `tapes/test_more.json`: **94**, and `tapes/test_inputs.json`: **43** — **195** in all, every one passing at `5738865`. The eight captures (`captures/*.mp4`) are scripted as well. |
 | **Hands-on use** | **not done by me.** No person has used this build with a real keyboard, mouse or controller. That review is the owner's. |
 
 What the scripted checks cover:
@@ -423,7 +437,8 @@ What the scripted checks cover:
 - details opened and closed;
 - face travel with its context kept;
 - reduced motion on every face;
-- overflow and the longest description;
+- overflow and the longest description, and no hole in the drawer when it
+  is scrolled by hand;
 - floors, and place links;
 - the off-view arrow;
 - save changes, including a vanished passage;

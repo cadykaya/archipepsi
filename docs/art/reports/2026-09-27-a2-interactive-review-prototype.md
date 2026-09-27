@@ -28,7 +28,7 @@ production integration. I have stopped here.**
 | One interactive prototype: Inventory, Map, Journal | `build/menu_proto` | implemented; scripted |
 | Real mouse and keyboard; controller included; tested kept apart from implemented | every control in RUN.md | Every binding the prompts name is **pressed by a scripted tape through the real input path**; `HANDOFF_STATE_TRANSITIONS.md` §7 lists which tape presses which, and the two that are never pressed. Hands-on: **not done**. |
 | Representative sample data, labelled; equipping a labelled local preview | sample from Production at CK9 `a2b9df6`; the 7 layout-stress Echoes tagged AUTHORED; PREVIEW… NOT SENT | scripted |
-| Rapid selection · an interrupted transition · details opened and closed · travel and return with context intact · reduced motion · long text and overflow | captures 01–06; `review/README.md` §2 maps each one to its checks | scripted: **188 checks** pass (58 + 87 + 43) |
+| Rapid selection · an interrupted transition · details opened and closed · travel and return with context intact · reduced motion · long text and overflow | captures 01–06; `review/README.md` §2 maps each one to its checks | scripted: **195 checks** pass (58 + 94 + 43) |
 | A first deliberate visual pass: focal item, headings, controls, cross-face connection; no neon, rivets, clipped corners or extra panels | `review/README.md` §3; the stills | implemented; judged by eye, mine only |
 | Settings/Pause in the four-face order, left open | the Settings wall, marked NOT DESIGNED IN THIS PASS | implemented |
 | Glyph: `; — → [ ]`, without changing a binding or a meaning | commit `48e6b76` | the font-import verifier; the tapes assert that no character is missing |
@@ -94,6 +94,17 @@ Every one of these was the prototype's own fault; none is in Production.
    - the layout-stress tag sat at 1.4:1 contrast.
 
    Each is fixed, and **no text is now below 3:1 against its ground.**
+6. **The first full capture run showed a hole in the drawer.** Wheel the
+   drawer up by hand with the long card open at its foot, and the card,
+   now only partly in view, was hidden whole, leaving an empty stretch of
+   drawer.
+   - The drawer is now a window. Patches of the wall itself lie just in
+     front of the list at its top and bottom edges, with the grain aligned
+     texel for texel, and whatever scrolls past slides under them.
+   - The open card is cut a line at a time, so it is never half-hidden as a
+     hole and never spills past the wall.
+   - A new measure, `holes`, is checked to be zero on every scroll.
+   - All eight captures were then recorded again.
 
 ## For Production — recommendations only, none implemented there
 
@@ -140,8 +151,8 @@ These are in `HANDOFF_STATE_TRANSITIONS.md` §6.
 1. **Implemented:** everything above.
 2. **Exercised by scripted input through the real input path**
    (`Input.parse_input_event`, with keys, mouse and pad):
-   - `test_core` has **58** checks, `test_more` **87** and `test_inputs`
-     **43** (every binding pressed): **188**, all passing;
+   - `test_core` has **58** checks, `test_more` **94** and `test_inputs`
+     **43** (every binding pressed): **195**, all passing;
    - the staged build passes `test_core` on its own;
    - the 8 captures and 6 gameplay-size stills are scripted too.
 3. **Hands-on:** **not done by me.**
@@ -156,4 +167,6 @@ These are in `HANDOFF_STATE_TRANSITIONS.md` §6.
 | `b36bc03` | the first working build |
 | `a6149c6` | the visual pass |
 | `fbfa5c6` | the remaining demonstrations under test, and two fixes |
-| `15e5d3d` | the capture pipeline, the gameplay-size stills and the handoff drafts. **The captures and the build in this archive are from this commit.** |
+| `15e5d3d` | the capture pipeline, the gameplay-size stills and the handoff drafts |
+| `ee052a9` | every binding under test; the review README, this report and the frontiers |
+| `5738865` | the drawer clips at its edges; two caption fixes. **The captures and the build in this archive are from this commit.** |

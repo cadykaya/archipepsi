@@ -2223,3 +2223,15 @@ Twice.
 > cannot match its own command line.** Also: Godot resolves a relative
 > `--shot` path against `--path` (the project), not the shell's working
 > directory. Pass absolute paths.
+
+## A list whose items can be taller than a scroll step needs edges, not visibility
+
+The drawer hid any item that was not wholly in view. With 46 px strips
+that was invisible. With a 416 px card, one wheel notch hid the whole card
+and left a hole in the list as tall as the card. Snapping the card "wholly
+in or wholly out" fails differently: near the end of a short list no
+whole position exists, and the wheel stops dead.
+
+> **A scrolling list needs a window: edges that cover what passes under
+> them, and items cut at those edges (here a line at a time). Test for
+> holes, not for "is the item drawn".**

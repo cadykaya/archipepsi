@@ -132,14 +132,14 @@ Settings/Pause is reachable but undesigned.
 
 | | |
 |---|---|
-| Build | `tools/menu_proto` @ `15e5d3d` |
+| Build | `tools/menu_proto` @ `5738865` (the captures too) |
 | Review | `docs/art/review/menu_proto_2026-09-27/` |
 | Report | `docs/art/reports/2026-09-27-a2-interactive-review-prototype.md` |
 | Handoff | `HANDOFF_STATE_TRANSITIONS.md` and `HANDOFF_GLYPH_ASSETS.md`, in the review folder |
 | Reconciled against | CK9 `a2b9df6` |
 
 Evidence:
-* scripted: 188 checks through the real input path (58 + 87 + 43, with
+* scripted: 195 checks through the real input path (58 + 94 + 43, with
   every binding pressed), plus 8 captures;
 * hands-on: NOT done.
 
