@@ -134,6 +134,44 @@ GLYPHS = {
     # PauseMenu's "ABANDON ZONE\u2026". Three of the face's own full stops,
     # so the one character draws what "..." already draws.
     "\u2026": [".....", ".....", ".....", ".....", "#.#.#"],   # ellipsis
+
+    # --- The menu's own marks: approved by the owner 2026-09-27 ("the
+    # listed missing characters and symbols needed by existing on-screen
+    # content"; the menu first, no HUD redesign). Each is a character
+    # because Production prints it INSIDE a string -- "\u2713 %s: the
+    # bridge confirmed it", "HISTORY \u25be" -- so the face drawing it
+    # is all it takes; nothing has to change to show it.
+    # EquipmentFace's separators (" \u00b7 ", "  \u00b7  "): one pixel
+    # at mid-height, where a full stop sits on the line.
+    "\u00b7": [".", ".", "#", ".", "."],   # middle dot
+    # "Nothing matches \u201c%s\u201d.", "EPSILON: \u201c%s\u201d": two
+    # of the face's comma turned for the opening mark, two raised commas
+    # for the closing one -- so which is which reads from the weight.
+    "\u201c": ["#..#.", "##.##", ".....", ".....", "....."],   # left double quote
+    "\u201d": ["##.##", ".#..#", ".....", ".....", "....."],   # right double quote
+    # The history line's "\u2190" and SlotKeycaps' "WHEEL\u2191/\u2193":
+    # the face's \u2192, turned.
+    "\u2190": ["..#..", ".#...", "#####", ".#...", "..#.."],   # left arrow
+    "\u2191": ["..#..", ".###.", "#.#.#", "..#..", "..#.."],   # up arrow
+    "\u2193": ["..#..", "..#..", "#.#.#", ".###.", "..#.."],   # down arrow
+    # MainMenu's "start it with `make bridge`".
+    "`": ["#.", ".#", "..", "..", ".."],
+    # The bridge's answers: confirmed, refused. The check is its own
+    # shape; the ballot cross is heavier and smaller than the letter X
+    # (five, thin) so "\u2717 REFUSED" never reads as "X REFUSED".
+    "\u2713": [".....", "....#", "...#.", "#.#..", ".#..."],   # check mark
+    "\u2717": ["....", "#..#", ".##.", ".##.", "#..#"],   # ballot x
+    # The drop button and the HUD's confirm mark: the small cross that
+    # \u00d7 already draws.
+    "\u2715": ["...", "#.#", ".#.", "#.#", "..."],   # multiplication x (close)
+    # The history toggle, "HISTORY \u25b8" / "\u25be", and the HUD's
+    # highlighted slot: solid, so never taken for the outline > of the face.
+    "\u25b8": ["#..", "##.", "###", "##.", "#.."],   # right-pointing small triangle
+    "\u25be": [".....", "#####", ".###.", "..#..", "....."],   # down-pointing small triangle
+    # The wheel favourite, "\u2605 WHEEL" / "\u2606 WHEEL": filled and
+    # open, the same five points.
+    "\u2605": ["..#..", "#####", ".###.", ".#.#.", "#...#"],   # black star
+    "\u2606": ["..#..", "##.##", ".#.#.", ".#.#.", "#...#"],   # white star
 }
 
 #: Frame order, and therefore the order on the sheet. Sorted so that

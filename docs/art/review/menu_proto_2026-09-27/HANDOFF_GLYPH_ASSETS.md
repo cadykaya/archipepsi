@@ -76,15 +76,25 @@ The fallbacks live in `icons.json` (`text`), which is written by
 what Production's bindings use (`joy A` for `ui_accept`). Other pad
 layouts are not covered.
 
-## 3. Still required — Production's on-screen characters the face lacks
+## 3. Added after the second ruling — the menu's own characters
 
-These were **not added**. They go beyond the four characters requested, so
-they are listed for a decision. They come from a scan of every string
-literal under `godot/scripts` at `a2b9df6`, narrowed by reading each line to
-the strings that reach the screen. Identifiers, `find_children` patterns,
-regexes and debug overlays are excluded.
+The owner approved these on 2026-09-27 (second ruling): the characters
+Production's existing screens print and the face lacked, **the menu's needs
+first**. They are in the **text face**, not the symbol set, because
+Production prints every one of them inline inside ordinary strings; in the
+face, those strings render as written, with no code change, no binding
+change and no new behaviour. The fallbacks below are kept for a text-only
+prompt mode, and are not needed to show them.
 
-### Punctuation and arrows (recommendation: add to the text face)
+They come from a scan of every string literal under `godot/scripts` at
+`a2b9df6`, narrowed by reading each line to the strings that reach the
+screen. Identifiers, `find_children` patterns, regexes and debug overlays
+are excluded.
+
+The face is now **74 characters**. The font-import verifier passes, and a
+regeneration from source is byte-identical.
+
+### Punctuation and arrows
 
 | Char | Where |
 |---|---|
@@ -94,9 +104,12 @@ regexes and debug overlays are excluded.
 | `↑` `↓` U+2191/3 | `slot_keycaps.gd:20–21` ("WHEEL↑", "WHEEL↓", keycaps for wheel bindings) |
 | `` ` `` backtick | `main_menu.gd:98` ("BRIDGE OFFLINE — start it with `make bridge`"). The line itself is also a candidate for rewording, which is Production's call. |
 
-### Status marks (recommendation: symbols in the Glyph set, with fallbacks)
+### Status marks
 
-| Char | Where | Suggested fallback |
+Each is drawn to be told from its near-twin at a glance: `✗` from `X` and
+`×`, `✕` from `×`, `▸` from `>`, `▾` from `V`.
+
+| Char | Where | Fallback, text-only mode |
 |---|---|---|
 | `✓` U+2713 | `equipment_face.gd:495` (the bridge confirmed it) | OK |
 | `✗` U+2717 | `equipment_face.gd:498,501` (refused, not sent) | NO |
@@ -104,7 +117,11 @@ regexes and debug overlays are excluded.
 | `▸` `▾` U+25B8/BE | `equipment_face.gd:712` (HISTORY ▸/▾); `hud.gd:588` (highlighted slot) | MORE / LESS, `>` |
 | `★` `☆` | `equipment_face.gd:782` ("★ WHEEL", favourite) | SET / UNSET |
 
-### HUD geometry (recommendation: sprites, not text)
+### HUD geometry — approved as a need, deferred: the menu comes first
+
+These are also on screen today, but they belong to the HUD, and the ruling
+put the menu first and commissions no HUD redesign. They are **not added**.
+The recommendation stands: sprites, not text.
 
 | Char | Where |
 |---|---|
