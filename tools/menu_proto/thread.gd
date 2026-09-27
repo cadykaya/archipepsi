@@ -10,10 +10,14 @@ extends Node3D
 ## lens every frame: pan, zoom or orbit the map and the thread stays on
 ## its passage.
 ##
-## * **Not a route.** Ink, straight, 2 px, on a casing of the wall's own
-##   colour that cuts a gap through whatever it crosses; it never follows a
-##   corridor's turns. A route is a coloured band in the model; this is a
-##   line in the room.
+## * **One deliberate guide.** The menu's own stroke -- the inventory's
+##   route: one solid line of ink, 6 px as seen from the eye wherever it
+##   runs, every turn cut at 45 degrees, mitred, and a terminus bar where it
+##   stops, just short of what it names so that mark stays in sight. No
+##   casing, no second line.
+## * **Not a traversable route.** It is straight between its corners and
+##   never follows a corridor's turns. A route in the model is a coloured
+##   band; this is a line in the room.
 ## * **Off the view**, it stops at the window's edge with an arrow toward
 ##   the place (overview -- C / Y -- brings it into the window).
 ## * Casting is an even pace (the visible run is a readable cast, not a
@@ -21,7 +25,9 @@ extends Node3D
 ##   it is simply there.
 
 const LIFT := 0.010
-const WIDTH := 2.0 * 0.00137935
+const STROKE_PX := 6.0               # FaceEquipment.STROKE: one stroke language
+const CORNER_PX := 12.0              # the 45-degree corners, as seen
+const END_GAP_PX := 16.0             # it stops this short of what it names
 const POST := 0.8727                 # the post's inner faces (world)
 const MARGIN := 0.006
 
@@ -33,7 +39,6 @@ var link := {}
 var bead_spec := {}
 var drawn := 0.0                     # 0..1, animated
 var _line: MeshInstance3D
-var _casing: MeshInstance3D
 var _bead: Node3D
 var _arrow: Sprite3D
 var _path: Array = []
@@ -43,9 +48,6 @@ var _last := {}
 func setup(k: Kit, s: Shell) -> void:
 	kit = k
 	shell = s
-	_casing = MeshInstance3D.new()
-	_casing.material_override = _mat(Kit.WALL, 3)
-	add_child(_casing)
 	_line = MeshInstance3D.new()
 	_line.material_override = _mat(Kit.INK, 4)
 	add_child(_line)
@@ -139,23 +141,25 @@ func _route() -> Array:
 		Vector3(POST - MARGIN, y, 1.0 - LIFT)]
 	var page_y := Kit.PAGE.y * 0.5 - y / Kit.px()
 	var win := FaceMap.WINDOW
-	var edge := Vector2(win.position.x, clampf(page_y, win.position.y + 8,
-			win.end.y - 8))
-	pts.append(mf.global_transform * Kit.at(Vector2(win.position.x, page_y), LIFT))
-	pts.append(mf.global_transform * Kit.at(edge, LIFT))
+	# Round the post and onto the map wall, then down (or up) the margin
+	# beside the window, and in at the height of what it names -- straight
+	# runs and 45-degree corners, like every route in the menu.
+	var margin_x := win.position.x - 14.0
+	pts.append(mf.global_transform * Kit.at(Vector2(margin_x, page_y), LIFT))
 	var t := map_face.target_world(link) if map_face != null else {}
 	_arrow.visible = false
 	if t.is_empty():
 		return pts
-	if bool(t["inside"]):
-		pts.append(t["world"])
-	else:
-		# Off the view: stop at the window's edge, pointing at it.
-		var p: Vector2 = t["page"]
-		var clamped := Vector2(clampf(p.x, win.position.x + 14, win.end.x - 14),
-				clampf(p.y, win.position.y + 14, win.end.y - 14))
-		pts.append(mf.global_transform * Kit.at(clamped, LIFT))
-		var d := p - clamped
+	var p: Vector2 = t["page"]
+	var inside := bool(t["inside"])
+	var end := p if inside else Vector2(
+			clampf(p.x, win.position.x + 14, win.end.x - 14),
+			clampf(p.y, win.position.y + 14, win.end.y - 14))
+	pts.append(mf.global_transform * Kit.at(Vector2(margin_x, end.y), LIFT))
+	pts.append(mf.global_transform * Kit.at(end, LIFT))
+	if not inside:
+		# Off the view: it stops inside the window's edge, pointing at it.
+		var d := p - end
 		var icon := "arrow_right"
 		if absf(d.y) > absf(d.x):
 			icon = "arrow_down" if d.y > 0 else "arrow_up"
@@ -163,7 +167,7 @@ func _route() -> Array:
 			icon = "arrow_left"
 		_arrow.texture = kit.icons[icon]
 		_arrow.global_transform = Transform3D(mf.global_transform.basis,
-				mf.global_transform * Kit.at(clamped + d.normalized() * 14.0,
+				mf.global_transform * Kit.at(end + d.normalized() * 14.0,
 				LIFT + 0.002))
 		_arrow.visible = drawn >= 0.999
 	return pts
@@ -172,20 +176,23 @@ func _route() -> Array:
 func tick(_delta: float) -> void:
 	if link.is_empty() or anchor == Vector2.INF or drawn <= 0.001:
 		_line.visible = false
-		_casing.visible = false
 		_arrow.visible = false
 		if _bead != null:
 			_bead.visible = false
 		return
 	_path = _route()
+	# The stroke's corners are cut first, then it stops short of its end,
+	# then it is drawn as far as it has been cast.
+	var full := _corners(_path, CORNER_PX * Kit.px())
+	full = _trim_end(full, END_GAP_PX * Kit.px() * (full[-1] as Vector3).length())
 	var total := 0.0
-	for i in _path.size() - 1:
-		total += (_path[i] as Vector3).distance_to(_path[i + 1])
+	for i in full.size() - 1:
+		total += (full[i] as Vector3).distance_to(full[i + 1])
 	var left := total * drawn
-	var pts: Array = [_path[0]]
-	for i in _path.size() - 1:
-		var a: Vector3 = _path[i]
-		var b: Vector3 = _path[i + 1]
+	var pts: Array = [full[0]]
+	for i in full.size() - 1:
+		var a: Vector3 = full[i]
+		var b: Vector3 = full[i + 1]
 		var seg := a.distance_to(b)
 		if left >= seg:
 			pts.append(b)
@@ -194,35 +201,115 @@ func tick(_delta: float) -> void:
 			pts.append(a.lerp(b, left / maxf(seg, 0.00001)))
 			break
 	_line.visible = true
-	_casing.visible = true
-	_line.mesh = _strip(pts, WIDTH, 1.0)
-	_casing.mesh = _strip(pts, WIDTH * 4.0, 1.003)
+	_line.mesh = _stroke(pts, STROKE_PX, drawn >= 0.999)
 	if _bead != null:
 		_bead.visible = true
 	_last = {"points": pts.size(), "drawn": drawn}
 
 
-## A strip facing the eye (at the origin); `push` > 1 slides it straight
-## away from the eye -- the same outline on screen, just behind.
-static func _strip(pts: Array, width: float, push: float) -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in pts.size() - 1:
-		var a: Vector3 = (pts[i] as Vector3) * push
-		var b: Vector3 = (pts[i + 1] as Vector3) * push
-		if a.distance_to(b) < 0.00001:
+## Every turn cut at 45 degrees: `c` back along both runs (world units).
+static func _corners(path: Array, c: float) -> Array:
+	var pts: Array = []
+	for p: Vector3 in path:
+		if pts.is_empty() or (pts[-1] as Vector3).distance_to(p) > 0.00001:
+			pts.append(p)
+	if pts.size() < 3:
+		return pts
+	var out: Array = [pts[0]]
+	for i in range(1, pts.size() - 1):
+		var a: Vector3 = pts[i - 1]
+		var p: Vector3 = pts[i]
+		var b: Vector3 = pts[i + 1]
+		var d1 := (p - a).normalized()
+		var d2 := (b - p).normalized()
+		if d1.dot(d2) > 0.9999:
 			continue
-		var side := (b - a).cross(-(a + b) * 0.5).normalized() * width * 0.5
-		st.add_vertex(a - side); st.add_vertex(a + side); st.add_vertex(b + side)
-		st.add_vertex(a - side); st.add_vertex(b + side); st.add_vertex(b - side)
-	return st.commit()
+		var cut := minf(c * p.length(), minf(a.distance_to(p), p.distance_to(b)) * 0.5)
+		out.append(p - d1 * cut)
+		out.append(p + d2 * cut)
+	out.append(pts[-1])
+	return out
+
+
+## The path, less its last `gap` (world units): the stroke stops short.
+static func _trim_end(pts: Array, gap: float) -> Array:
+	var out := pts.duplicate()
+	while out.size() >= 2 and gap > 0.0:
+		var a: Vector3 = out[-2]
+		var b: Vector3 = out[-1]
+		var seg := a.distance_to(b)
+		if seg > gap:
+			out[-1] = b.lerp(a, gap / seg)
+			return out
+		gap -= seg
+		out.pop_back()
+	return out
+
+
+## The stroke: a strip facing the eye (at the origin), mitred at every join
+## and scaled by distance, so it is `px` page px wide AS SEEN wherever it
+## runs -- on a wall, round the post, or into the miniature. `cap`: the
+## terminus bar across its end.
+static func _stroke(pts: Array, px: float, cap: bool) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	var n := pts.size()
+	if n < 2:
+		return mesh
+	var half := px * Kit.px() * 0.5 / Kit.DISTANCE
+	var sides: Array = []
+	for i in n:
+		var p: Vector3 = pts[i]
+		var view := -p.normalized()
+		var s_in := Vector3.ZERO
+		var s_out := Vector3.ZERO
+		if i > 0:
+			s_in = (p - (pts[i - 1] as Vector3)).cross(view).normalized()
+		if i < n - 1:
+			s_out = ((pts[i + 1] as Vector3) - p).cross(view).normalized()
+		var m := s_in + s_out
+		if m.length() < 0.001:
+			m = s_in if s_in != Vector3.ZERO else s_out
+		m = m.normalized()
+		var ref := s_in if s_in != Vector3.ZERO else s_out
+		var k := 1.0 / maxf(0.3, m.dot(ref))
+		var off := m * half * p.length() * k
+		sides.append([p - off, p + off])
+	var verts := PackedVector3Array()
+	for i in n - 1:
+		var l0: Vector3 = sides[i][0]
+		var r0: Vector3 = sides[i][1]
+		var l1: Vector3 = sides[i + 1][0]
+		var r1: Vector3 = sides[i + 1][1]
+		for v: Vector3 in [l0, r0, r1, l0, r1, l1]:
+			verts.append(v)
+	if cap:
+		# The terminus: a bar across the end, three strokes long.
+		var e: Vector3 = pts[-1]
+		var d := (e - (pts[-2] as Vector3)).normalized()
+		var across := d.cross(-e.normalized()).normalized() * half * e.length() * 3.0
+		var along := d * half * e.length()
+		var q := [e - across - along, e + across - along, e + across + along,
+			e - across + along]
+		for v: Vector3 in [q[0], q[1], q[2], q[0], q[2], q[3]]:
+			verts.append(v)
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
 
 
 func state() -> Dictionary:
 	var t := map_face.target_world(link) if map_face != null and not link.is_empty() \
 			else {}
+	var strokes := 0
+	for c: Node in get_children():
+		if c is MeshInstance3D and (c as MeshInstance3D).visible:
+			strokes += 1
 	return {"link": link.duplicate(), "drawn": snappedf(drawn, 0.001),
 		"arrow": _arrow.visible,
+		# how many lines are drawn for it: one stroke, no casing
+		"strokes": strokes,
 		"inside": bool(t.get("inside", false)) if not t.is_empty() else false,
 		"end": [snappedf((_path[-1] as Vector3).x, 0.0001),
 			snappedf((_path[-1] as Vector3).y, 0.0001),

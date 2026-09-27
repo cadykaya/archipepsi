@@ -68,6 +68,7 @@
   {"after": 0.6, "check": {"path": "front", "eq": "journal", "why": "Q: Map -> Journal"}},
   {"check": {"path": "journal.link.edge", "eq": "e:c002:c003", "why": "the first shut way is focused, bound to ITS connector"}},
   {"after": 0.6, "check": {"path": "journal.thread.drawn", "near": 1.0, "tol": 0.001, "why": "the thread is cast"}},
+  {"check": {"path": "journal.thread.strokes", "eq": 1, "why": "as ONE stroke: no casing, no second line"}},
   {"key": "Down"},
   {"after": 0.1, "check": {"path": "journal.link.edge", "eq": "e:c005:c006", "why": "Down: the next shut way, the next connector"}},
   {"after": 0.8, "check": {"path": "journal.thread.drawn", "near": 1.0, "tol": 0.001, "why": "rewound and recast"}},
