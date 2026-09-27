@@ -55,7 +55,7 @@ func _ready() -> void:
 	e.background_color = Kit.BG
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	e.ambient_light_color = Color("#5c6570")
-	e.ambient_light_energy = 0.55
+	e.ambient_light_energy = 0.38
 	e.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	env.environment = e
 	add_child(env)
@@ -259,6 +259,9 @@ func _note_device(event: InputEvent) -> void:
 		if (event as InputEventMouseMotion).relative.length() > 2.0:
 			overlay.device = "kbm"
 	if overlay.device != was:
+		kit.device = overlay.device
+		for page: String in faces:
+			faces[page].call("on_device")
 		_refresh()
 
 

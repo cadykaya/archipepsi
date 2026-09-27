@@ -46,7 +46,7 @@ func setup(k: Kit) -> void:
 		var quad := QuadMesh.new()
 		quad.size = size
 		wall.mesh = quad
-		wall.material_override = kit.lit(Kit.WALL)
+		wall.material_override = kit.wall_material()
 		wall.position = Vector3(0, 0, -Kit.DISTANCE)
 		wall.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		face.add_child(wall)
@@ -64,9 +64,9 @@ func setup(k: Kit) -> void:
 	# middle and falls away to its corners and its foot.
 	light = OmniLight3D.new()
 	light.position = Vector3(0, size.y * 0.42, 0)
-	light.omni_range = 2.6
-	light.omni_attenuation = 0.9
-	light.light_energy = 1.35
+	light.omni_range = 2.9
+	light.omni_attenuation = 1.1
+	light.light_energy = 1.9
 	light.light_color = Color("#f1ece4")
 	light.shadow_enabled = true
 	light.shadow_bias = 0.02
@@ -84,14 +84,19 @@ func _block(size: Vector3, pos: Vector3, colour: Color) -> void:
 	add_child(node)
 
 
-## Every wall's heading: its number and Production's name for it. The
-## number is where you are in the box -- the one thing a turn changes.
+## Every wall's heading: Production's name for it, and its NUMBER painted
+## large on the wall like a facility's room sign -- where you are in the
+## box, the one thing a turn changes, and the thing that sweeps past while
+## the eye turns.
+const SIGN := Color("#2a3039")
+
+
 func _title(page: String, index: int) -> void:
 	var face: Node3D = faces[page]
+	kit.label(face, Kit.TITLES[page], Vector2(48, 30), 4, Kit.INK, 0.003)
 	var num := "0%d" % (index + 1)
-	kit.label(face, num, Vector2(48, 30), 4, Kit.INK_FAINT, 0.003, true)
-	var x := 48.0 + kit.measure(num, 4, true) + 18.0
-	kit.label(face, Kit.TITLES[page], Vector2(x, 30), 4, Kit.INK, 0.003)
+	var w := kit.measure(num, 9, true)
+	kit.label(face, num, Vector2(Kit.PAGE.x - 44 - w, 8), 9, SIGN, 0.0015, true)
 
 
 func face_of(page: String) -> Node3D:

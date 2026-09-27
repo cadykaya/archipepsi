@@ -183,7 +183,7 @@ func _build_loadout() -> void:
 			kit.label(_loadout, "ALWAYS ON", Vector2(LOAD_X, y + 1), 2,
 					Kit.INK_FAINT)
 			kit.label(_loadout, "NOT A SWITCH", Vector2(LOAD_X + 138, y + 1),
-					2, Kit.DEAD)
+					2, Kit.INK_FAINT)
 		_rows.append(row)
 		_row_text(i)
 	_focus_bar = kit.card(_loadout, Vector2(LOAD_X - 16, 0), Vector2(4, 62),
@@ -198,6 +198,7 @@ func _keycap(parent: Node3D, cap: String, at: Vector2) -> void:
 	var w := maxf(40.0, kit.measure(up, 2) + 16.0)
 	if MOUSE_SYMBOL.has(up):
 		w = 66.0
+	kit.shadow(parent, at, Vector2(w, 26), 0.35)
 	kit.plate(parent, at, Vector2(w, 26), 0.001, kit.lit(Color("#c9d0db")),
 			0.004)
 	if MOUSE_SYMBOL.has(up):
@@ -225,7 +226,7 @@ func _row_text(i: int) -> void:
 	var on := seated(slot)
 	if on == "":
 		row["name"] = kit.label(_loadout, "EMPTY", Vector2(LOAD_X, y + 30), 2,
-				Kit.DEAD)
+				Kit.INK_FAINT)
 	else:
 		row["name"] = kit.label(_loadout, kit.fit(_name(on), 2, LOAD_W - 8),
 				Vector2(LOAD_X, y + 30), 2, Kit.INK)
@@ -277,7 +278,7 @@ func _open_drawer(at_once := false) -> void:
 	if slot != "" and seated(slot) == "":
 		kit.label(_drawer, "NOTHING IS ON %s NOW" % str(keys()[key_index][
 				"keycap"]).to_upper(), Vector2(LIST_X + 300, VIEW_TOP - 36),
-				2, Kit.DEAD)
+				2, Kit.INK_FAINT)
 	_list = Node3D.new()
 	_drawer.add_child(_list)
 	for id: String in _order:
@@ -308,7 +309,7 @@ func _strip(id: String) -> void:
 	var right := LIST_W - 16
 	if _authored(id):
 		right -= kit.measure("AUTHORED", 2)
-		kit.label(node, "AUTHORED", Vector2(right, 14), 2, Kit.DEAD, 0.004,
+		kit.label(node, "AUTHORED", Vector2(right, 14), 2, Kit.INK_FAINT, 0.004,
 				false, true)
 		right -= 24
 	if bool(row.get("consumable", false)) and row.get("charges_max") != null:
@@ -456,8 +457,14 @@ func _card(id: String, parent: Node3D) -> Node3D:
 		kit.label(content, "AUTHORED FOR LAYOUT STRESS, NOT GAME CONTENT",
 				Vector2(LIST_W - 16 - kit.measure(
 				"AUTHORED FOR LAYOUT STRESS, NOT GAME CONTENT", 2), 20), 2,
-				Kit.DEAD, 0.03, false, true)
+				Kit.INK_DIM, 0.03, false, true)
 	var y := 54.0
+	if kit.measure(_name(id), 3) > 640:
+		# A long name is cut in the header and written out here in full.
+		var full := kit.wrap(_name(id), 2, 800)
+		kit.label(content, "\n".join(full), Vector2(COL_L, y - 4), 2,
+				Kit.INK_DIM, 0.03, false, true)
+		y += LINE * full.size() + 6.0
 	var ly := y
 	ly = _block(content, "", [str(row.get("description", ""))], COL_L, ly,
 			COL_L_W, Kit.INK)
@@ -496,7 +503,7 @@ func _card(id: String, parent: Node3D) -> Node3D:
 				str(h["game"])])
 	ry = _block(content, "FROM", from, COL_R, ry + 8, COL_R_W, Kit.INK_DIM)
 	ry = _block(content, "READ", row.get("read", []), COL_R, ry + 8, COL_R_W,
-			Kit.INK_FAINT)
+			Kit.HEAD)
 	var h := maxf(ly, ry) + 16.0
 	# The action, where the eye already is: the foot of the card.
 	var act := _action(id)
@@ -525,6 +532,7 @@ func _card(id: String, parent: Node3D) -> Node3D:
 	plate.position = Kit.rel(Vector2(LIST_W, h) * 0.5, 0.018)
 	plate.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	card.add_child(plate)
+	kit.shadow(card, Vector2.ZERO, Vector2(LIST_W, h), 1.0, true)
 	# Focus: a signal bar down its left edge -- a shape, not a glow.
 	kit.card(card, Vector2(-8, 0), Vector2(5, h), 0.03, kit.flat(Kit.SIGNAL),
 			true)
@@ -537,7 +545,7 @@ func _card(id: String, parent: Node3D) -> Node3D:
 func _block(parent: Node3D, head: String, lines: Array, x: float, y: float,
 		width: float, colour: Color) -> float:
 	if head != "":
-		kit.label(parent, head, Vector2(x, y), 2, Kit.INK_FAINT, 0.03, false,
+		kit.label(parent, head, Vector2(x, y), 2, Kit.HEAD, 0.03, false,
 				true)
 		y += 24.0
 	for raw: Variant in lines:
@@ -550,7 +558,13 @@ func _block(parent: Node3D, head: String, lines: Array, x: float, y: float,
 	return y
 
 
+## The card's own control, for the device in hand: ENTER, or the pad's
+## south face button.
 func _prompt_cap(parent: Node3D, cap: String, at: Vector2) -> void:
+	if kit.device == "pad":
+		kit.sprite(parent, "pad_face_south", at + Vector2(20, 13), 2, Kit.INK,
+				0.034, true)
+		return
 	var w := kit.measure(cap, 2) + 16.0
 	var p := MeshInstance3D.new()
 	var box := BoxMesh.new()
@@ -762,6 +776,19 @@ func _positions() -> Dictionary:
 		var node: Node3D = _strips[id]["node"]
 		out[id] = [snappedf(node.position.x, 0.0001), snappedf(node.position.y, 0.0001)]
 	return out
+
+
+## The device changed: the open card's control is redrawn for it.
+func on_device() -> void:
+	if unfolded != "" and _strips.has(unfolded):
+		var s: Dictionary = _strips[unfolded]
+		if s["card"] != null and is_instance_valid(s["card"]):
+			(s["card"] as Node3D).queue_free()
+		s["card"] = null
+		var keep_reduced := kit.reduced
+		kit.reduced = true
+		_layout(true)
+		kit.reduced = keep_reduced
 
 
 func tick(_delta: float) -> void:

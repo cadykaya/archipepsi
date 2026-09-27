@@ -63,7 +63,8 @@ var _map: Node3D
 var _rooms := {}                     # id -> {row, centre, lo, hi, floor mat}
 var _edges := {}                     # edge -> {row, mat, colour, mark}
 var _gates := {}                     # edge -> Sprite3D
-var _labels: Node3D
+var _labels: Node3D                  # the glass: tags, placed every frame
+var _tags: Array = []                # {node, size, kind, ref, text, rect}
 var _panel: Node3D
 var _frame_focus: Node3D
 var _frame_hover: Node3D
@@ -95,7 +96,10 @@ func _window() -> void:
 				WINDOW.size.y)),
 			Rect2(Vector2(WINDOW.end.x, WINDOW.position.y),
 				Vector2(w.x - WINDOW.end.x, WINDOW.size.y))]:
-		kit.card(face, r.position, r.size, 0.0, kit.lit(Kit.WALL))
+		var frame := kit.card(face, r.position, r.size, 0.0, kit.wall_material())
+		# The frame's grain must line up with the other walls' page.
+		var q := frame.mesh as QuadMesh
+		q.size = r.size * Kit.px()
 	var depth := 0.05
 	var s := Kit.px()
 	for side: Array in [
@@ -156,8 +160,12 @@ func load_data(d: Dictionary, s: Dictionary) -> void:
 	for b: Dictionary in data["blockers"]:
 		_gate(b)
 	_you = _you_mark()
+	if _labels != null:
+		_labels.queue_free()
 	_labels = Node3D.new()
-	_map.add_child(_labels)
+	_labels.name = "Glass"
+	face.add_child(_labels)
+	_tags.clear()
 	_frame_focus = Node3D.new()
 	_frame_hover = Node3D.new()
 	_ring = Node3D.new()
@@ -260,9 +268,6 @@ func _you_mark() -> Node3D:
 		s.modulate = Kit.INK
 		s.position = (r["centre"] as Vector3) + Vector3(0, 2.6, 0)
 		node.add_child(s)
-		var l := _tag("YOU", (r["centre"] as Vector3) + Vector3(3.2, 4.2, 0),
-				Kit.INK, node, false)
-		l.name = "you_label"
 		node.set_meta("room", id)
 	return node
 
@@ -281,37 +286,155 @@ func _box(size: Vector3, pos: Vector3, mat: Material) -> void:
 ## A short label standing in the miniature, always facing you and always
 ## the same size (the wall's 2x), with a dark edge so it reads over any
 ## floor: four offset copies behind it -- a bitmap face has no outline.
-func _tag(text: String, at: Vector3, colour: Color, parent: Node3D,
-		backed := true) -> Node3D:
+func _tag(text: String, colour: Color, k: int, kind: String, ref: String) -> void:
 	var node := Node3D.new()
-	node.position = at
-	parent.add_child(node)
-	var shown := kit.display(text)
-	var offsets: Array = [Vector2.ZERO]
-	if backed:
-		offsets = [Vector2(-1, 0), Vector2(1, 0), Vector2(0, -1), Vector2(0, 1),
-			Vector2(-1, -1), Vector2(1, 1), Vector2(-1, 1), Vector2(1, -1),
-			Vector2.ZERO]
-	for off: Vector2 in offsets:
-		var l := Label3D.new()
-		l.font = kit.text_font
-		l.font_size = 8
-		l.text = shown
-		l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		l.fixed_size = true
-		l.pixel_size = Kit.px() * 2.0
-		l.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-		l.shaded = false
-		l.no_depth_test = true
-		l.outline_size = 0
-		l.offset = off
-		var front := off == Vector2.ZERO
-		l.render_priority = 6 if front else 5
-		l.modulate = colour if front else Color("#07090b")
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		l.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-		node.add_child(l)
-	return node
+	_labels.add_child(node)
+	# Bitmap text has no outline: a dark copy one glyph-pixel out on every
+	# side keeps the word legible over a lit floor or a coloured band.
+	for off: Vector2 in [Vector2(-1, 0), Vector2(1, 0), Vector2(0, -1),
+			Vector2(0, 1), Vector2(-1, -1), Vector2(1, 1), Vector2(-1, 1),
+			Vector2(1, -1)]:
+		kit.label(node, text, off * float(k), k, Color("#07090b"), 0.0, false, true)
+	kit.label(node, text, Vector2.ZERO, k, colour, 0.0006, false, true)
+	_tags.append({"node": node, "size": Vector2(kit.measure(text, k),
+			8.0 * k), "kind": kind, "ref": ref, "text": kit.display(text),
+			"rect": Rect2()})
+
+
+## Where each tag goes this frame. YOU beside the figure; each exit tag
+## beside its gate or doorway, on whichever side is free, never over another
+## exit; then the head block (name + summary) just outside the picked room --
+## above it if there is room, else below or beside. A tag whose subject is
+## outside the window is not shown.
+func _layout_tags() -> void:
+	if _tags.is_empty() or _map == null:
+		return
+	var usable := Rect2(WINDOW.position + Vector2(10, 10), WINDOW.size - Vector2(20, 20))
+	if expanded and picked != "":
+		usable.size.x -= PANEL_W
+	var taken: Array = []
+	var head: Dictionary = {}
+	var summary: Dictionary = {}
+	var exits: Array = []
+	for t: Dictionary in _tags:
+		match str(t["kind"]):
+			"head": head = t
+			"summary": summary = t
+			"exit": exits.append(t)
+			"you": _place_you(t, usable, taken)
+	var room := Rect2()
+	if picked != "" and _rooms.has(picked):
+		room = _room_rect(picked)
+		taken.append(room.grow(6))
+	var anchors := {}
+	for t: Dictionary in exits:
+		var a := Rect2(_page_of(_edges[str(t["ref"])]["mark"]), Vector2.ZERO).grow(10)
+		anchors[t] = a
+		if usable.has_point(a.get_center()):
+			taken.append(a)
+	for t: Dictionary in exits:
+		var a: Rect2 = anchors[t]
+		if not usable.has_point(a.get_center()):
+			_hide(t)
+			continue
+		var size: Vector2 = t["size"]
+		var places: Array = []
+		for gap: float in [4.0, 28.0, 56.0]:
+			places.append_array(_around(a, size, gap))
+		var at := _choose(places, size, usable, taken)
+		_put(t, at)
+		taken.append(Rect2(at, size).grow(4))
+	if head.is_empty():
+		return
+	var hs: Vector2 = head["size"]
+	var ss: Vector2 = summary["size"]
+	var block := Vector2(maxf(hs.x, ss.x), hs.y + 6.0 + ss.y)
+	var places: Array = []
+	for gap: float in [12.0, 40.0, 80.0]:
+		places.append_array([
+			Vector2(room.position.x, room.position.y - gap - block.y),
+			Vector2(room.position.x, room.end.y + gap),
+			Vector2(room.end.x + gap, room.get_center().y - block.y * 0.5),
+			Vector2(room.position.x - gap - block.x,
+				room.get_center().y - block.y * 0.5)])
+	var at := _choose(places, block, usable, taken)
+	_put(head, at)
+	_put(summary, at + Vector2(0, hs.y + 6.0))
+
+
+## YOU goes beside the figure, and only has to keep off the figure itself.
+func _place_you(t: Dictionary, usable: Rect2, taken: Array) -> void:
+	var id := str(t["ref"])
+	if not _rooms.has(id):
+		_hide(t)
+		return
+	var c: Vector3 = _rooms[id]["centre"]
+	var fig := _projected(c + Vector3(-2.2, 0.0, -2.2), c + Vector3(2.2, 6.0, 2.2))
+	if not usable.has_point(fig.get_center()):
+		_hide(t)
+		return
+	var size: Vector2 = t["size"]
+	var at := _choose(_around(fig, size, 4.0), size, usable, [fig])
+	_put(t, at)
+	taken.append(fig)
+	taken.append(Rect2(at, size).grow(4))
+
+
+## Right, above, below, left of `a`, `gap` page px out.
+static func _around(a: Rect2, size: Vector2, gap: float) -> Array:
+	var c := a.get_center()
+	return [Vector2(a.end.x + gap, c.y - size.y * 0.5),
+		Vector2(c.x - size.x * 0.5, a.position.y - gap - size.y),
+		Vector2(c.x - size.x * 0.5, a.end.y + gap),
+		Vector2(a.position.x - gap - size.x, c.y - size.y * 0.5)]
+
+
+func _hide(t: Dictionary) -> void:
+	(t["node"] as Node3D).visible = false
+	t["rect"] = Rect2()
+
+
+## The first place that is inside the window and covers nothing already
+## placed; failing that, the one that covers least.
+func _choose(places: Array, size: Vector2, usable: Rect2, taken: Array) -> Vector2:
+	var best := Vector2.ZERO
+	var least := INF
+	for raw: Vector2 in places:
+		var p := Vector2(clampf(raw.x, usable.position.x, usable.end.x - size.x),
+				clampf(raw.y, usable.position.y, usable.end.y - size.y))
+		var r := Rect2(p, size)
+		var cover := 0.0
+		for other: Rect2 in taken:
+			cover += r.intersection(other).get_area() if r.intersects(other) else 0.0
+		if cover <= 0.0:
+			return p
+		if cover < least:
+			least = cover
+			best = p
+	return best
+
+
+func _put(t: Dictionary, at: Vector2) -> void:
+	var node: Node3D = t["node"]
+	node.visible = true
+	node.position = Kit.at(at.round(), 0.012)
+	t["rect"] = Rect2(at.round(), t["size"])
+
+
+## A room's outline on the page, as the lens has it now.
+func _room_rect(id: String) -> Rect2:
+	var r: Dictionary = _rooms[id]
+	var c: Vector3 = r["centre"]
+	var hw := float(r["w"]) * 0.5
+	var hd := float(r["d"]) * 0.5
+	return _projected(c + Vector3(-hw, 0, -hd), c + Vector3(hw, WALL_H, hd))
+
+
+## A point in the miniature, on the page (projected from the eye).
+func _page_of(local: Vector3) -> Vector2:
+	var p := _map.transform * local
+	var w := p * (Kit.DISTANCE / maxf(-p.z, 0.001))
+	return Vector2(w.x / Kit.px() + Kit.PAGE.x * 0.5, Kit.PAGE.y * 0.5 - w.y / Kit.px())
 
 
 # ------------------------------------------------------------ the lens
@@ -393,6 +516,7 @@ func _apply() -> void:
 	var centre := Kit.at(WINDOW.get_center() + Vector2(lens.shift, 0), 0.0)
 	centre.z = DEPTH
 	_map.transform = Transform3D(basis, centre - basis * lens.target)
+	_layout_tags()
 
 
 func face_pos(local: Vector3) -> Vector3:
@@ -559,12 +683,9 @@ func _refresh_marks() -> void:
 			lift = (r["floor_c"] as Color).lightened(0.35)
 		kit.go(r["floor"], "albedo_color", lift.darkened(k), 0.2)
 		kit.go(r["wall"], "albedo_color", (r["wall_c"] as Color).darkened(k), 0.2)
-	for n: Node in _labels.get_children():
-		n.queue_free()
 	_frame(_frame_focus, picked, Kit.SIGNAL, 0.9)
 	_frame(_frame_hover, hovered if hovered != picked else "", Kit.INK_DIM, 0.45)
-	if picked != "":
-		_place_labels()
+	_place_labels()
 	_build_panel()
 	_link_ring()
 
@@ -589,11 +710,24 @@ func _frame(holder: Node3D, id: String, colour: Color, width: float) -> void:
 	holder.add_child(node)
 
 
+## The short answers, as words on the window's glass -- not things in the
+## miniature. Built when the pick changes; PLACED every frame from where the
+## lens has put what they name (_layout_tags), so they never cover each
+## other, the picked room, or you.
 func _place_labels() -> void:
+	for n: Node in _labels.get_children():
+		n.queue_free()
+	_tags.clear()
+	if _you != null and _you.has_meta("room"):
+		_tag("YOU", Kit.INK, 2, "you", str(_you.get_meta("room")))
+	if picked == "":
+		_layout_tags()
+		return
 	var r: Dictionary = _rooms[picked]
 	var row: Dictionary = r["row"]
 	var open_n := 0
 	var shut_n := 0
+	var exits: Array = []
 	for eid: String in _edges:
 		var e: Dictionary = _edges[eid]
 		var c: Dictionary = e["row"]
@@ -611,14 +745,14 @@ func _place_labels() -> void:
 			shut_n += 1
 			words = "SHUT" + (" -- TO " + name if name != "" else "")
 			colour = e["colour"]
-		_tag(words, (e["mark"] as Vector3) + Vector3(0, 5.5, 0), colour, _labels)
-	var head := str(row.get("name", ""))
-	var summary := "%d OPEN   %d SHUT" % [open_n, shut_n]
-	var top := (r["centre"] as Vector3) + Vector3(-float(r["w"]) * 0.5,
-			WALL_H + 3.0, -float(r["d"]) * 0.5)
-	_tag(head, top + Vector3(0, 3.2, 0), Kit.INK, _labels)
-	_tag(summary + ("   ENTER: MORE" if not expanded else ""), top, Kit.INK_DIM,
-			_labels)
+		exits.append([words, colour, eid])
+	var more := "   %s: MORE" % ("A" if kit.device == "pad" else "ENTER")
+	_tag(str(row.get("name", "")), Kit.INK, 3, "head", picked)
+	_tag("%d OPEN   %d SHUT" % [open_n, shut_n] + (more if not expanded else ""),
+			Kit.INK_DIM, 2, "summary", picked)
+	for x: Array in exits:
+		_tag(str(x[0]), x[1], 2, "exit", str(x[2]))
+	_layout_tags()
 
 
 func _room_name(id: String) -> String:
@@ -889,7 +1023,42 @@ func state() -> Dictionary:
 		"target": [snappedf(lens.target.x, 0.01), snappedf(lens.target.y, 0.01),
 			snappedf(lens.target.z, 0.01)], "fit": snappedf(fit, 0.0001),
 		"link": link.duplicate(), "shift": lens.shift,
-		"gate_scale": _gate_scale(), "pulse": snappedf(_pulse, 0.0001)}
+		"gate_scale": _gate_scale(), "pulse": snappedf(_pulse, 0.0001),
+		"tags": _tag_state(), "tag_clashes": _tag_clashes()}
+
+
+func _tag_state() -> Array:
+	var out := []
+	for t: Dictionary in _tags:
+		if (t["node"] as Node3D).visible and (t["rect"] as Rect2).size != Vector2.ZERO:
+			out.append(str(t["text"]))
+	return out
+
+
+## Tags that cover another tag, the picked room, or leave the window.
+func _tag_clashes() -> int:
+	var shown: Array = []
+	for t: Dictionary in _tags:
+		if (t["node"] as Node3D).visible and (t["rect"] as Rect2).size != Vector2.ZERO:
+			shown.append(t)
+	var n := 0
+	var room := _room_rect(picked) if picked != "" and _rooms.has(picked) else Rect2()
+	for i in shown.size():
+		var a: Rect2 = shown[i]["rect"]
+		if not WINDOW.encloses(a):
+			n += 1
+		if room.size != Vector2.ZERO and a.intersects(room) \
+				and str(shown[i]["kind"]) != "you":
+			n += 1
+		for j in range(i + 1, shown.size()):
+			if a.intersects(shown[j]["rect"] as Rect2):
+				n += 1
+	return n
+
+
+func on_device() -> void:
+	if picked != "":
+		_refresh_marks()
 
 
 func _gate_scale() -> float:

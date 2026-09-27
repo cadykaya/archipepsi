@@ -179,6 +179,10 @@ func prompts(pairs: Array) -> void:
 		_prompt_row.remove_child(child)
 		child.queue_free()
 	for pair: Array in pairs:
+		# The turns are at the screen's edges already, with their walls'
+		# names; the line keeps to what THIS wall does.
+		if str(pair[0]) in ["turn_left", "turn_right"]:
+			continue
 		var tokens: Array = (CONTROLS.get(str(pair[0]), {}) as Dictionary).get(
 				device, [])
 		if tokens.is_empty():

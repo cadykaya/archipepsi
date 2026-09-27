@@ -76,14 +76,14 @@ func _build() -> void:
 	_root = Node3D.new()
 	face.add_child(_root)
 	kit.label(_root, "NOT DESIGNED IN THIS PASS -- ITS TREATMENT IS AN OPEN "
-			+ "DESIGN ITEM", Vector2(48, 92), 2, Kit.DEAD)
+			+ "DESIGN ITEM", Vector2(48, 92), 2, Kit.INK_DIM)
 	var y := TOP
 	kit.label(_root, "PAUSED", Vector2(COL[0], y), 2, Kit.INK_FAINT)
 	for item: String in ["RESUME", "RETURN TO HUB", "ABANDON ZONE…", "QUIT GAME"]:
 		y += LINE
 		kit.label(_root, item, Vector2(COL[0], y), 2, Kit.INK_DIM)
 	kit.label(_root, "(PAUSEMENU'S ACTIONS -- NOT WIRED HERE)", Vector2(COL[0],
-			y + LINE + 6), 2, Kit.DEAD)
+			y + LINE + 6), 2, Kit.INK_FAINT)
 	y = TOP
 	kit.label(_root, "CAMPAIGN", Vector2(COL[1], y), 2, Kit.INK_FAINT)
 	var journal: Dictionary = (proto.get("sample")["saves"] as Dictionary)[
@@ -97,7 +97,7 @@ func _build() -> void:
 	for item: String in ["MOUSE SENSITIVITY", "FIELD OF VIEW",
 			"MASTER VOLUME", "INVERT LOOK UP AND DOWN"]:
 		y += LINE
-		kit.label(_root, item, Vector2(COL[2], y), 2, Kit.DEAD)
+		kit.label(_root, item, Vector2(COL[2], y), 2, Kit.INK_FAINT)
 	var ry := 470.0
 	kit.label(_root, "REVIEW CONTROLS -- THE PROTOTYPE'S, NOT THE GAME'S",
 			Vector2(COL[0], ry - 34), 2, Kit.INK_FAINT)
@@ -107,8 +107,9 @@ func _build() -> void:
 				else Vector2(COL[0] + (i - 1) % 2 * 600.0, ry + (i - 1) / 2 * 46.0)
 		var focused := i == focus
 		if focused:
-			kit.plate(_root, at - Vector2(12, 8), Vector2(560 if not row.get(
-					"game", false) else 360, 36), 0.004, kit.lit(Kit.PLATE_HI))
+			var size := Vector2(560 if not row.get("game", false) else 360, 36)
+			kit.shadow(_root, at - Vector2(12, 8), size, 0.5)
+			kit.plate(_root, at - Vector2(12, 8), size, 0.004, kit.lit(Kit.PLATE_HI))
 			kit.card(_root, at - Vector2(18, 8), Vector2(4, 36), 0.012,
 					kit.flat(Kit.SIGNAL))
 		kit.label(_root, str(row["label"]), at, 2, Kit.INK, 0.013)
@@ -180,6 +181,10 @@ func prompts() -> Array:
 
 func state() -> Dictionary:
 	return {"focus": focus}
+
+
+func on_device() -> void:
+	pass
 
 
 func tick(_delta: float) -> void:

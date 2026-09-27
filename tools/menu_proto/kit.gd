@@ -36,10 +36,15 @@ const INK := Color("#e8eef6")        # the text face's ink
 const INK_DIM := Color("#9ba5b6")
 const INK_FAINT := Color("#6f7885")
 const SIGNAL := Color("#39d7c8")     # focus and "you can act on this" -- nothing else
-const DEAD := Color("#4a4f57")
+const DEAD := Color("#4a4f57")        # marks only, never text: 2:1 on the wall
+## Headings on a RAISED PLATE: the plate is lighter than the wall, so the
+## wall's faint ink (3.7:1 there) drops to 2.6:1 on it; a heading steps up
+## to this and keeps ~3.8:1. Text never goes below 3:1 on its ground.
+const HEAD := Color("#8a94a3")
 const SHADE := Color("#0b0d10")
 
 var reduced := false                 # Production's motion_intensity <= 0
+var device := "kbm"                  # the device last used: kbm | pad
 var text_font: FontFile
 var num_font: FontFile
 var icons := {}                      # name -> Texture2D
@@ -136,6 +141,37 @@ func own(colour: Color, alpha := 1.0) -> StandardMaterial3D:
 	return m
 
 
+## A painted surface, not a screen: structureless grain, +/- 4 %, fixed
+## seed. No seams, no panels, no bolts -- the facility texture has all
+## three, which is why it is not used here.
+var _grain: ImageTexture
+
+
+func grain() -> ImageTexture:
+	if _grain == null:
+		var img := Image.create(256, 256, false, Image.FORMAT_RGB8)
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 20260927
+		for y in 256:
+			for x in 256:
+				var v := 1.0 + rng.randf_range(-0.04, 0.04)
+				img.set_pixel(x, y, Color(v * 0.96, v * 0.96, v * 0.96))
+		_grain = ImageTexture.create_from_image(img)
+	return _grain
+
+
+func wall_material() -> StandardMaterial3D:
+	var key := "wall"
+	if _materials.has(key):
+		return _materials[key]
+	var m := lit(WALL, true)
+	m.albedo_texture = grain()
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	m.uv1_scale = Vector3(5.0, 3.0, 1.0)
+	_materials[key] = m
+	return m
+
+
 ## Lit: walls, plates and the miniature. The box has a light in it, and a
 ## raised plate shades the wall behind it -- that is where the focus's
 ## depth comes from, not from a glow.
@@ -193,6 +229,19 @@ func plate(parent: Node3D, page: Vector2, size: Vector2, depth: float,
 	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	parent.add_child(node)
 	return node
+
+
+## The shadow a raised plate throws on the wall: two soft dark layers, down
+## and to the right of it, ON the wall. The lift is read from this -- the
+## focus is a thing standing off the wall, not a thing glowing on it.
+func shadow(parent: Node3D, page: Vector2, size: Vector2, lift := 1.0,
+		relative := false) -> void:
+	for layer: Array in [[Vector2(12, 18), 14.0, 0.30], [Vector2(6, 9), 5.0, 0.45]]:
+		var off: Vector2 = layer[0] * lift
+		var grow: float = layer[1] * lift
+		card(parent, page + off - Vector2(grow, grow) * 0.5,
+				size + Vector2(grow, grow), 0.0006, flat(SHADE, layer[2]),
+				relative)
 
 
 ## Glyph text, its top-left at `page`, at an integer multiple `k` of the

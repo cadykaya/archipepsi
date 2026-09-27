@@ -196,6 +196,8 @@ func _draw(holder: Node3D, col: int, i: int, e: Dictionary, x: float,
 	var focused := col == column and i == _focused_index(col)
 	var link: Dictionary = e["link"]
 	if focused:
+		kit.shadow(holder, Vector2(x - 10, top - 4), Vector2(w + 20, float(e["h"])),
+				0.6)
 		var plate := kit.plate(holder, Vector2(x - 10, top - 4),
 				Vector2(w + 20, float(e["h"])), 0.004, kit.lit(Kit.PLATE_HI))
 		plate.name = "focus_plate"
@@ -205,7 +207,7 @@ func _draw(holder: Node3D, col: int, i: int, e: Dictionary, x: float,
 		kit.card(holder, Vector2(x - 10, top - 4), Vector2(w + 20, float(e["h"])),
 				0.002, kit.flat(Kit.PLATE, 0.6))
 	var z := 0.013 if focused else 0.003
-	var colour := Kit.INK if link.is_empty() or focused else Kit.INK
+	var colour := Kit.INK
 	if str(e["section"]) == "NOTES":
 		colour = Kit.INK_DIM
 	kit.label(holder, "\n".join(e["lines"]), Vector2(x + 8, top), 2, colour, z)
@@ -245,13 +247,13 @@ func _explanation(e: Dictionary) -> Array:
 		if not circuits.is_empty():
 			out.append("HELD BY: %s" % _circuit_words(str(circuits[0])))
 		out.append("NOW: %s" % str(c["state"]).to_upper())
-		out.append("ON THE MAP, ROUND THE CORNER (E)")
+		out.append("ON THE MAP, ROUND THE CORNER (%s)" % _turn_key())
 	elif link.has("room"):
 		var detail := str((map_rows["details"] as Dictionary).get(str(link["room"]), ""))
 		var lines := detail.split("\n")
 		for i in range(1, lines.size()):
 			out.append(lines[i])
-		out.append("ON THE MAP, ROUND THE CORNER (E)")
+		out.append("ON THE MAP, ROUND THE CORNER (%s)" % _turn_key())
 	return out
 
 
@@ -451,6 +453,17 @@ func state() -> Dictionary:
 	return {"column": column, "index": i, "text": text, "link": current_link(),
 		"note": note, "scroll": [scroll[0], scroll[1]], "save": save,
 		"thread": thread.state()}
+
+
+func on_device() -> void:
+	_build()
+	_layout(true)
+	_update_link()
+
+
+## The key that turns toward the Map (right): E, or RB on the pad.
+func _turn_key() -> String:
+	return "RB" if kit.device == "pad" else "E"
 
 
 func tick(delta: float) -> void:
