@@ -123,20 +123,29 @@ Findings other lanes need:
   set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Now: TRACK A2 — the hybrid visual checkpoint is DELIVERED. The art lane
-is STOPPED for the owner to confirm the composition.** See ART_FRONTIER
-§11, "Delivered, 2026-09-27 — the hybrid visual checkpoint".
+**Now: TRACK A2 — the INTERACTIVE hybrid in the isolated menu prototype.**
+See ART_FRONTIER §11, "Ruling, 2026-09-27 (fifth)".
 
-* **The package:** `docs/art/review/hybrid_checkpoint_2026-09-27/`. The
-  report is `docs/art/reports/2026-09-27-a2-hybrid-checkpoint.md`.
-* **The source:** `tools/menu_proto/studies/dir_h.gd`;
-  `stage_hybrid.sh` regenerates the images.
-* **Kept safe:** the four studies (`8b13aa7`) and the prototype (build
-  `66e18b2`).
-* **Flagged:** the salvaged boards are not green, because green is
-  reserved for Epsilon.
-* **Next:** wait for the owner's confirmation. Start no interactive
-  implementation before it.
+* **Build it** in `tools/menu_proto` on its existing behaviour and data,
+  with no parallel logic. Two refinements first:
+  * move the Settings feed off the "100%";
+  * a modest readability lift for the comparison and Journal text.
+* **Verify the new layout** through the real input path:
+  * long content;
+  * scrolling to the last items;
+  * empty keys;
+  * consumable counts;
+  * rapid selection;
+  * page turns;
+  * device switching.
+* **Deliver:**
+  * a runnable standalone build;
+  * launch instructions;
+  * one short all-face tour;
+  * only the close-ups a specific issue needs.
+* **Keep safe:** the checkpoints (`91e5d3f` inventory pass, `8b13aa7`
+  studies, `94e219d` hybrid stills). No Production edits.
+* **Then STOP** for hands-on review.
 
 Two things from it that other lanes need:
 

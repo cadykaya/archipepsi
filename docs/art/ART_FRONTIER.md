@@ -3113,6 +3113,60 @@ after this checkpoint** for the owner to confirm the composition.
 * **Next:** the owner confirms the composition, or asks for changes. The
   deeper interactive implementation starts only after that.
 
+### Ruling, 2026-09-27 (fifth) — the hybrid is APPROVED for the interactive art-lane prototype
+
+**Carry forward:** B's shared harness and Journal → Map; C's Equipment
+cabinet arrangement; D's grafted rack and salvaged Settings boards. The
+Equipment → Settings ribbon and the matching board stock are especially
+successful: keep the visible relationship between the older cabinet and its
+later extensions. **Keep the brown, black and pale boards. Do NOT restore
+D's green.** Epsilon's reserved green reads more clearly this way.
+
+**Two refinements** (no new concept round):
+1. **Settings:** the connection below Epsilon overlaps the mouse-sensitivity
+   percentage. Move the feed and terminal into unused board space, so they
+   cover no value or control and "100%" cannot read as an Epsilon reading.
+2. **Readability:** give the quieter Equipment comparison text and the
+   Journal entries a modest lift at 1280×720. Keep the hierarchy: shrink
+   nothing, and do not make everything equally prominent.
+
+**Next: the interactive hybrid, in the isolated menu prototype.** This is
+not final hands-on acceptance or approval for Production integration.
+Reuse the existing working behaviour and data, with no parallel menu logic.
+
+Keep:
+* equipped, inspected and previewed clearly distinct;
+* immediate, readable information when the selection changes;
+* ordinary keyboard, mouse and controller navigation;
+* stable click targets and fully usable list scrolling;
+* map travel that keeps the view;
+* a journal follow that frames the known destination, with a way back;
+* reduced motion with the same information and actions.
+
+Further rules:
+* **The dial** works through ordinary selection inputs: no circular
+  dragging, no physical-operation minigame.
+* **Motion** may express the device, but it never delays input, withholds
+  descriptions, squashes text or frustrates rapid browsing.
+* **Audio feedback** stays useful, independent of reduced visual motion.
+* **Epsilon's component** stays his recognizable presence: not a slot, a
+  meter or a setting, and no transfer mechanic or new lore.
+
+**Verification:** the NEW layout, through the real input path. That covers
+long content, scrolling to the last items, empty keys, consumable counts,
+rapid selection, page turns and device switching. The old tests passing
+is not evidence for the hybrid.
+
+**Delivery:**
+* a runnable standalone prototype, with clear launch instructions;
+* ONE short all-face interaction tour;
+* only the close-up evidence a specific issue or fix needs.
+
+Not included: the four-direction studies again, or the eight-video package.
+Keep the previous checkpoints safe, and preserve completed pieces durably
+as you go. No Production-owned runtime edits and no game integration.
+**STOP** after delivering the interactive hybrid for hands-on review.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.
