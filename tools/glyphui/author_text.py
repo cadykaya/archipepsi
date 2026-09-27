@@ -113,9 +113,10 @@ GLYPHS = {
     "x": ["#..#", ".##.", "#..#"],
     # ---- 2026-09-27: the characters Production's own strings use and the
     # face lacked (A2 ruling, 2026-09-27). The first five are the owner's
-    # list; `°` and `×` were found by scanning what EquipmentQuery really
-    # writes into the prototype's sample ("Spread: 12° → 0°", "5 pellets ×
-    # 3 damage"). A stand-in would change what those lines mean.
+    # list; `°`, `×` and `…` were found by scanning what the prototype
+    # really shows: EquipmentQuery's lines ("Spread: 12° → 0°", "5 pellets
+    # × 3 damage") and PauseMenu's "ABANDON ZONE…". A stand-in would
+    # change what those lines say.
     ";": ["..", ".#", "..", "##", ".#"],
     "[": ["##", "#.", "#.", "#.", "##"],
     "]": ["##", ".#", ".#", ".#", "##"],
@@ -130,6 +131,9 @@ GLYPHS = {
     # `+` turned: three columns, centred, so it never reads as the letter
     # X (five, full height) or the face's `x` (four, on the baseline).
     "\u00d7": ["...", "#.#", ".#.", "#.#", "..."],   # multiplication
+    # PauseMenu's "ABANDON ZONE\u2026". Three of the face's own full stops,
+    # so the one character draws what "..." already draws.
+    "\u2026": [".....", ".....", ".....", ".....", "#.#.#"],   # ellipsis
 }
 
 #: Frame order, and therefore the order on the sheet. Sorted so that

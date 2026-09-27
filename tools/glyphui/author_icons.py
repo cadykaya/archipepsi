@@ -379,10 +379,13 @@ MEANING = {
     "you": ("where the player is, on a map", {"any": "chrome ink"}),
 }
 
-#: The READABLE FALLBACK for every device symbol: what a prompt shows where
-#: the symbol is not (and what a screen reader would say). The face-button
+#: The READABLE FALLBACK for every symbol: what a prompt shows where the
+#: symbol is not (and what a screen reader would say). The face-button
 #: letters are Godot's names for the positions (JOY_BUTTON_A is south).
 TEXT = {
+    "arrow_left": "LEFT", "arrow_right": "RIGHT", "arrow_up": "UP",
+    "arrow_down": "DOWN", "blocked": "SHUT", "circuit": "CIRCUIT",
+    "control": "CONTROL", "exit": "WAY OUT",
     "mouse_left": "LMB", "mouse_right": "RMB", "mouse_middle": "MMB",
     "mouse_wheel": "WHEEL", "pad_dpad": "D-PAD",
     "pad_dpad_up": "D-PAD UP", "pad_dpad_down": "D-PAD DOWN",
