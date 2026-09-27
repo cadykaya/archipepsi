@@ -665,8 +665,18 @@ owner's D-06/D-07 rulings and the seam table are in
         run.
       - Open, mine: HB-F4g, HB-F4f, CK9-F2, RB-F4, D01-F3, D-8 (Gear),
         and `godot-passing-hosted` into CI.
-    - **Next, after the review:** HB-F4g's measurement (variants 1, 2,
-      3 and junction; census; a 30-Zone walk), then HB-F4f, then CK11.
+    - **MENU-INT (owner assignment, 2026-09-27): integrate Arty's
+      approved hybrid menu as a real 3D device** (prototype `5b03f6d`,
+      handoff `94b8318`). A bounded assignment; its plan and checkpoints
+      (M1–M6) are in the ledger.
+      - CK10 (`867f742`) stays the playable checkpoint until the
+        integration is verified.
+      - The work is on `wip/0.4-menu-integration`.
+      - It is checked under the game's Forward+, with Mesa's lavapipe
+        installed in the container.
+    - **After MENU-INT:** HB-F4g's measurement (variants 1, 2, 3 and
+      junction; census; a 30-Zone walk), then HB-F4f, then CK11. They
+      are held until the owner resumes them.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

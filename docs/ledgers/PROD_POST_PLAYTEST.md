@@ -6249,3 +6249,74 @@ CK9-F1 phase sweep were stopped before they started.
     (HB-F4f);
   - flyers' circling varies with the machine (CK9-F2);
   - the menus are on provisional art.
+
+## MENU-INT — integrating Arty's approved hybrid menu: plan and checkpoints (owner assignment, 2026-09-27)
+
+A bounded assignment: integrate the selected interactive hybrid into the
+game as a **real 3D device**. No other repair, room redesign, Gear or
+0.5 work.
+
+**Baselines, checked against the working heads before any edit.**
+- **Playable checkpoint, kept safe:** CK10, `867f742` (code `97a4e70`).
+  The menu work does not land on `claude/archipepsi-0-4-blindside`
+  until it is verified. Until then, it lives on
+  `wip/0.4-menu-integration`, and each commit there states its
+  validation status.
+- **Arty's handoff:** `94b8318` is the head of `claude/archipepsi-art`,
+  and it changes only documents over `5b03f6d`, the approved prototype
+  (`tools/menu_proto`).
+  - Every Production file the prototype mirrors is byte-identical from
+    `a2b9df6` to `867f742`, as Arty reconciled.
+  - The one related change since is HB-O1's `Main._update_modal`, which
+    the menu does not depend on.
+- **The renderer:**
+  - The game runs Forward+ at 1280×720, with no stretch and no MSAA
+    set.
+  - The prototype ran GL Compatibility at 1080p, with 2× MSAA.
+  - This container had no Vulkan: the existing shot targets used
+    `--rendering-driver opengl3`, which is GL Compatibility, not the
+    game's renderer.
+  - Mesa's lavapipe (a software Vulkan) is now installed, and Forward+
+    renders the current menu through it. The integration is checked
+    under Forward+, not the prototype's renderer.
+
+**Checkpoints, each pushed to the WIP branch with its status:**
+1. **M1, assets and renderer.**
+   - The Glyph kit is imported under `godot/assets/ui`, byte-identical
+     with its art-branch source, and imported by Godot's own importers.
+   - The menu's box keeps the game's renderer. Its own viewport takes
+     MSAA.
+   - The prototype's light-mask compensation (`SHADE`) and its contrast
+     figures are re-measured under Forward+.
+2. **M2, the device.** MenuShell's four SubViewport pages give way to
+   the hybrid's 3D hardware, in the box's own world:
+   - the enclosure, the harness, the corner posts, the boards, the rack
+     and the moving parts;
+   - MenuShell's lifecycle, pause claim and turns, unchanged;
+   - picking that lands on what is visibly under the pointer, raised
+     parts included.
+3. **M3, the faces on live data.**
+   - Equipment on `EquipmentQuery` and `EquipRequests`.
+   - Settings and Pause on `PlayerSettings` and PauseMenu's actions,
+     with Hub and Zone layouts and Abandon's confirmation.
+   - The Map on MapFace's live model.
+   - The Journal on identity rows in `JournalQuery` (Production's file).
+   - Epsilon static.
+   - The raw history note fixed at its source.
+4. **M4, the input rules.** Esc/B back out, then close; Start is a
+   direct close; input pressed during a turn reaches the destination;
+   confirmations are never replayed; sliders accelerate; Motion applies
+   at once; one cue bank.
+5. **M5, verification.**
+   - The menu suites adapted by their guarantees, and new coverage.
+   - Forward+ renders at 720p and 1080p.
+   - The live suites, run serially.
+   - The full frontier (CK11) on the final revision.
+6. **M6, delivery.** A pinned build, a short tour on real campaign
+   data, and a plain report. Then stop.
+
+**Stops for a decision** (not decided silently):
+- any material compromise of the 3D device;
+- a renderer switch;
+- dropping an existing Equipment function;
+- a contract that crosses another lane.
