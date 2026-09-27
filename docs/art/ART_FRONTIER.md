@@ -2884,6 +2884,104 @@ nothing here is approved.
 
 Settings/Pause stays open.
 
+### Ruling, 2026-09-27 (third) — keep the inventory pass; four DIY Echo-electronics studies
+
+**The checkpoint is received. Keep it safe:** the inventory pass, build
+`66e18b2`, delivered at `91e5d3f`.
+
+**It is the functional foundation. Preserve:**
+* the clearer item names;
+* the key-to-item relationship;
+* the comparisons;
+* clean text during selection;
+* the Map's follow and return.
+
+**The core idea: DIY ECHO ELECTRONICS.** The four-wall menu is ONE
+hand-built Echo device, which Epsilon assembled and through which Echo
+weapons and suit functions are configured.
+* It is assembled, patched, routed and maintained. DIY means deliberate
+  ingenuity, not unreadable mess.
+* Not a corporate hologram, not a generic dashboard, and not cables and
+  screws sprinkled over an unchanged interface.
+* "Echo weapon" and "Echo suit" are working descriptions only. Rename
+  nothing, invent no slot, and show no unavailable Gear as functional.
+
+**The assignment: four visual-direction studies.** Each has its own
+organizing idea and overall silhouette. They are composition studies, not
+four interactive implementations, and there is no new eight-video cycle.
+* **A — Patchbay / signal bench.** Connecting a control to an Echo
+  module. Ports, connection points and selected modules organize the
+  page; labels belong to their things; the selected connection draws the
+  eye. It is not a grid of identical socket panels, nor a tile per item
+  with a wire attached.
+* **B — Routed harness / cable loom.** A shared signal run around the box
+  that branches where needed: a few trunks, splits and returns that
+  organize space, headings and selection. Journal → Map continues round
+  the corner. No spaghetti, no wires across body text, no cable per line.
+* **C — Relay cabinet / breaker logic.** Real states readable at once:
+  tabs, levers, shutters, cutouts, status windows, bus rails. It shows
+  assigned versus inspected. There is no default grid of breakers.
+  **Every physical indicator is real interface data:** no invented power,
+  faults, locks or progression.
+* **D — Salvaged Echo workbench / prototype board.** An evolving device
+  built from compatible pieces: board sections, daughterboards, bridges,
+  reusable modules, test points and a few repair marks, with irregular
+  outer forms and overlapping layers. The Map and Journal stay usable
+  instruments. No breadboard wallpaper and no fake technical labels.
+
+**Fixed across all four:**
+* the same sample items, selected states, comparison data, map location
+  and journal link;
+* the same functional meaning, information priorities and controls.
+
+**Not frozen:** the columns, panel boundaries and title plates.
+
+**Kept:**
+* the key / equipped / inspected relationships;
+* truthful, labelled previews;
+* the comparisons;
+* stable mouse targets;
+* readable text;
+* the map's overview and selection context;
+* following an entry versus ordinary travel;
+* reduced-motion access.
+
+"What it does" and "what changes if equipped" come first; source and
+history stay available without overwhelming them.
+
+**Circuitry must not change meaning:**
+* no wiring minigame and no cable dragging;
+* the Map stays the truthful 3D miniature, never a circuit-board layout;
+* signal lines and journal pointers stay distinct from routes, circuit
+  identities, the player and gates;
+* semantic colours are kept, and gates are never recoloured;
+* no invented sockets, capacity or mechanics.
+
+**Shape and motion:** every shape is allowed; the composition must be
+memorable at rest; text never bends, wobbles, shrinks or squashes.
+Persona's integration of type, shape, hierarchy and motion, and the
+grounded physicality of Half-Life, Portal and Metroid Prime, are
+references, not copies.
+
+**Deliverable, for EACH direction:**
+1. Equipment in a normal selected-item state.
+2. Equipment in the same long-name/comparison stress state.
+3. The Map in the same selected-room/detail state.
+4. A compact four-face overview in which the Journal → Map connection is
+   understandable. Journal and Settings may be rougher.
+
+Also required:
+* individual screens at gameplay size;
+* a short note per direction: what is distinct, how selection and a page
+  turn move, and the main usability risk;
+* a few annotated motion frames, and no videos;
+* comparable finish across all four;
+* one modest zip with clearly named loose images.
+
+**Scope:** existing Glyph work and isolated art-lane review scenes only.
+No Production runtime edits, no integration, no unrelated work. **After
+delivering the four directions, STOP for selection.**
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.
