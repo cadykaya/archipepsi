@@ -114,6 +114,20 @@ static func at(page: Vector2, depth := 0.0) -> Vector3:
 			-DISTANCE + depth)
 
 
+## Seen from the eye, a thing `depth` in front of the wall is magnified about
+## the page's centre by DISTANCE / (DISTANCE - depth): at the wall's edges a
+## few centimetres of lift move it tens of pixels outward. To SEE it at page
+## point `page`, place it at lifted(page, depth) and scale it by
+## lift_scale(depth) -- for things that must line up with the wall (a patch
+## of the wall itself, a heading over a list).
+static func lifted(page: Vector2, depth: float) -> Vector2:
+	return PAGE * 0.5 + (page - PAGE * 0.5) * lift_scale(depth)
+
+
+static func lift_scale(depth: float) -> float:
+	return (DISTANCE - depth) / DISTANCE
+
+
 ## Page pixels as an offset inside something already placed.
 static func rel(v: Vector2, depth := 0.0) -> Vector3:
 	var s := px()

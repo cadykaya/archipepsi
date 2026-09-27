@@ -271,15 +271,16 @@ func _open_drawer(at_once := false) -> void:
 			2.0 * Kit.px(), kit.flat(Kit.INK_FAINT))
 	var head := "WHAT GOES ON %s" % str(keys()[key_index]["keycap"]).to_upper() \
 			if slot != "" else "ALWAYS ON WHILE YOU OWN IT"
-	kit.label(_drawer, head, Vector2(LIST_X, VIEW_TOP - 36), 2, Kit.INK_FAINT,
-			ABOVE_CLIP)
+	_over(kit.label(_drawer, head, Kit.lifted(Vector2(LIST_X, VIEW_TOP - 36),
+			ABOVE_CLIP), 2, Kit.INK_FAINT, ABOVE_CLIP))
 	var count := "%d" % _order.size()
-	kit.label(_drawer, count, Vector2(LIST_X + LIST_W - kit.measure(count, 2,
-			true), VIEW_TOP - 36), 2, Kit.INK_FAINT, ABOVE_CLIP, true)
+	_over(kit.label(_drawer, count, Kit.lifted(Vector2(LIST_X + LIST_W
+			- kit.measure(count, 2, true), VIEW_TOP - 36), ABOVE_CLIP), 2,
+			Kit.INK_FAINT, ABOVE_CLIP, true))
 	if slot != "" and seated(slot) == "":
-		kit.label(_drawer, "NOTHING IS ON %s NOW" % str(keys()[key_index][
-				"keycap"]).to_upper(), Vector2(LIST_X + 300, VIEW_TOP - 36),
-				2, Kit.INK_FAINT, ABOVE_CLIP)
+		_over(kit.label(_drawer, "NOTHING IS ON %s NOW" % str(keys()[key_index][
+				"keycap"]).to_upper(), Kit.lifted(Vector2(LIST_X + 300,
+				VIEW_TOP - 36), ABOVE_CLIP), 2, Kit.INK_FAINT, ABOVE_CLIP))
 	_list = Node3D.new()
 	_drawer.add_child(_list)
 	for id: String in _order:
@@ -336,15 +337,27 @@ func _strip(id: String) -> void:
 const CLIP_LIFT := 0.045              # in front of everything in the list
 const ABOVE_CLIP := 0.055             # the drawer's own words, over the edges
 const CLIP_TOP := 50.0                # the top edge's height: one strip and more
+const CARD_MARGIN := 14.0             # the card's lines stay this far inside it
 
 
 func _clip() -> void:
-	for r: Rect2 in [Rect2(Vector2(LIST_X - 16, VIEW_TOP - CLIP_TOP),
-				Vector2(LIST_W + 56, CLIP_TOP)),
-			Rect2(Vector2(LIST_X - 16, VIEW_BOTTOM), Vector2(LIST_W + 56,
-				Kit.PAGE.y - VIEW_BOTTOM))]:
-		var edge := kit.card(_drawer, r.position, r.size, CLIP_LIFT, kit.wall_patch(r))
+	# The rects as SEEN on the wall: from just right of the drawer's spine to
+	# just inside the wall's edge -- everything the list can put there,
+	# magnified by its own lift, falls inside them.
+	for r: Rect2 in [Rect2(Vector2(DRAWER_X + 3, VIEW_TOP - CLIP_TOP),
+				Vector2(Kit.PAGE.x - 18 - DRAWER_X - 3, CLIP_TOP)),
+			Rect2(Vector2(DRAWER_X + 3, VIEW_BOTTOM), Vector2(Kit.PAGE.x - 18
+				- DRAWER_X - 3, Kit.PAGE.y - VIEW_BOTTOM))]:
+		var k := Kit.lift_scale(CLIP_LIFT)
+		var edge := kit.card(_drawer, Kit.lifted(r.position, CLIP_LIFT), r.size * k,
+				CLIP_LIFT, kit.wall_patch(r))
 		edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## One of the drawer's own words, over its edges: shrunk by its lift so it
+## is seen at its page size, where it would be on the wall.
+func _over(node: Node3D) -> void:
+	node.scale = Vector3.ONE * Kit.lift_scale(ABOVE_CLIP)
 
 
 func _more(up: bool) -> Node3D:
@@ -353,10 +366,12 @@ func _more(up: bool) -> Node3D:
 	# Clear of the view, and in front of anything raised in it: an open
 	# card at the foot of the drawer (and its shadow) never covers the count.
 	var y := VIEW_TOP - 14 if up else VIEW_BOTTOM + 10
-	kit.sprite(node, "arrow_up" if up else "arrow_down",
-			Vector2(LIST_X + LIST_W * 0.5 - 40, y + 6), 2, Kit.INK_DIM, ABOVE_CLIP)
-	var l := kit.label(node, "", Vector2(LIST_X + LIST_W * 0.5 - 24, y - 2), 2,
-			Kit.INK_DIM, ABOVE_CLIP)
+	_over(kit.sprite(node, "arrow_up" if up else "arrow_down", Kit.lifted(
+			Vector2(LIST_X + LIST_W * 0.5 - 40, y + 6), ABOVE_CLIP), 2, Kit.INK_DIM,
+			ABOVE_CLIP))
+	var l := kit.label(node, "", Kit.lifted(Vector2(LIST_X + LIST_W * 0.5 - 24,
+			y - 2), ABOVE_CLIP), 2, Kit.INK_DIM, ABOVE_CLIP)
+	_over(l)
 	node.set_meta("label", l)
 	node.visible = false
 	return node
@@ -618,8 +633,10 @@ static func _rect_of(mi: MeshInstance3D) -> Rect2:
 ## are cut to the band. So a card half-scrolled out never shows a hole, and
 ## never spills past the wall.
 func _clip_card(card: Node3D, page_y: float) -> void:
-	var lo := VIEW_TOP - CLIP_TOP - page_y
-	var hi := Kit.PAGE.y - page_y
+	# CARD_MARGIN: the card's words stand ~0.03 off the wall and are seen
+	# that much further from the page's centre; keep them inside the edges.
+	var lo := VIEW_TOP - CLIP_TOP + CARD_MARGIN - page_y
+	var hi := Kit.PAGE.y - CARD_MARGIN - page_y
 	for part: Node in card.get_children():
 		if not (part is MeshInstance3D and part.has_meta("full")):
 			continue
