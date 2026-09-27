@@ -163,6 +163,10 @@ These are in `HANDOFF_STATE_TRANSITIONS.md` §6.
    - the 8 captures and 6 gameplay-size stills are scripted too.
 3. **Hands-on:** **not done by me.**
 
+The art suite, `tools/check_art_current.sh`, passes: every generated asset
+matches its source, the Glyph assets included. It ran at `7d9ef15`, and the
+assets have not changed since.
+
 ## Commits
 
 | Commit | What |
