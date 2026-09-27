@@ -764,10 +764,20 @@ func state() -> Dictionary:
 	for id: String in _order:
 		var s: Dictionary = _strips[id]
 		rects[id] = [VIEW_TOP + float(s["y"]) - _scroll_px, float(s["h"])]
+	var inside := false
+	if unfolded != "" and rects.has(unfolded):
+		var r: Array = rects[unfolded]
+		inside = float(r[0]) >= VIEW_TOP - 1.0 and float(r[0]) + float(r[1]) \
+				<= VIEW_BOTTOM + 1.0
 	return {"key": key_index, "slot": slot_of(key_index), "zone": zone,
-		"unfolded": unfolded, "order": _order, "scroll": _scroll_px,
-		"preview": preview.duplicate(), "hover": hover, "rects": rects,
-		"strip_positions": _positions()}
+		"unfolded": unfolded, "order": _order, "count": _order.size(),
+		"scroll": _scroll_px, "preview": preview.duplicate(), "hover": hover,
+		"rects": rects, "strip_positions": _positions(),
+		"card_inside": inside,
+		"card_height": float(rects[unfolded][1]) if rects.has(unfolded) else 0.0,
+		"more": [(_more_up.get_meta("label") as Label3D).text if _more_up.visible
+			else "", (_more_down.get_meta("label") as Label3D).text
+			if _more_down.visible else ""]}
 
 
 func _positions() -> Dictionary:

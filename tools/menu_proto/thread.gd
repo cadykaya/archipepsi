@@ -76,9 +76,14 @@ func _mat(colour: Color, priority: int) -> StandardMaterial3D:
 func bind_ends(at: Vector2, l: Dictionary, bead: Dictionary, m: FaceMap) -> void:
 	map_face = m
 	if l == link and bead == bead_spec:
+		# Back to the link already drawn (or being rewound): cancel any
+		# recast queued for a link since left, and finish this one.
+		_serial += 1
 		if at != anchor:
 			anchor = at
 			_build_bead()
+		if drawn < 1.0 and not link.is_empty() and anchor != Vector2.INF:
+			kit.go(self, "drawn", 1.0, 0.42 * (1.0 - drawn), "linear")
 		return
 	_serial += 1
 	var mine := _serial
@@ -217,6 +222,7 @@ func state() -> Dictionary:
 	var t := map_face.target_world(link) if map_face != null and not link.is_empty() \
 			else {}
 	return {"link": link.duplicate(), "drawn": snappedf(drawn, 0.001),
+		"arrow": _arrow.visible,
 		"inside": bool(t.get("inside", false)) if not t.is_empty() else false,
 		"end": [snappedf((_path[-1] as Vector3).x, 0.0001),
 			snappedf((_path[-1] as Vector3).y, 0.0001),

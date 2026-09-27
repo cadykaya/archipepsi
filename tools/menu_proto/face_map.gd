@@ -586,7 +586,7 @@ func step_floor(step: int) -> void:
 	if floors.size() < 2:
 		return
 	if floor_filter == -1:
-		floor_filter = 0
+		floor_filter = maxi(int(data.get("player_floor", 0)), 0)   # yours first
 	else:
 		floor_filter += step
 		if floor_filter < 0 or floor_filter >= floors.size():
@@ -652,11 +652,16 @@ static func _ray_box(o: Vector3, d: Vector3, lo: Vector3, hi: Vector3) -> float:
 	return t0 if t1 >= maxf(t0, 0.0) else -1.0
 
 
+## MapFace.band_of_room: Production bands every room found onto a floor
+## once (MinimapModel.FLOOR_STEP), so a room between two floors' heights is
+## still on exactly one of them. The prototype reads that answer, it does
+## not re-derive it.
 func _on_floor(r: Dictionary) -> bool:
 	var floors: Array = data["floors"]
 	if floor_filter < 0 or floor_filter >= floors.size():
 		return true
-	return absf(float(r["floor_y"]) - float(floors[floor_filter])) < 0.5
+	var id := str((r["row"] as Dictionary).get("id", ""))
+	return int((data.get("bands", {}) as Dictionary).get(id, -1)) == floor_filter
 
 
 # ------------------------------------------------------------ marks

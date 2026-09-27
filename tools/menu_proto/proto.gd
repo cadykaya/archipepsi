@@ -339,7 +339,8 @@ func snapshot() -> Dictionary:
 		"device": overlay.device, "save": save,
 		"equipment_variant": equipment_variant,
 		"missing_glyphs": kit.missing.duplicate(),
-		"missing_where": kit.missing_where.duplicate(), "busy": kit.busy()}
+		"missing_where": kit.missing_where.duplicate(), "busy": kit.busy(),
+		"prompts": overlay.shown.duplicate(true)}
 	for page: String in faces:
 		out[page] = faces[page].state()
 	return out
@@ -590,6 +591,16 @@ func _check(c: Dictionary) -> void:
 	elif c.has("differs_from"):
 		want = _remembered.get(str(c["differs_from"]))
 		ok = str(value) != str(want)
+	elif c.has("contains"):
+		want = c["contains"]
+		ok = JSON.stringify(value).contains(str(want))
+	elif c.has("lacks"):
+		want = c["lacks"]
+		ok = not JSON.stringify(value).contains(str(want))
+	elif c.has("print"):
+		_checks -= 1
+		print("[tape] %s = %s" % [c["path"], JSON.stringify(value)])
+		return
 	var why := str(c.get("why", c["path"]))
 	if ok:
 		print("[test] ok   %s" % why)

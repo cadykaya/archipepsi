@@ -164,13 +164,17 @@ func _save(J: GDScript, zone: Node, snap: Dictionary) -> Dictionary:
 		var eid := str(row.get("edge_id", ""))
 		points[eid] = face.call("connector_points", eid)
 	var details := {}
+	var bands := {}
 	for row: Dictionary in rooms:
 		var rid := str(row.get("id", ""))
 		face.call("pick", rid)
 		details[rid] = face.call("detail_text")
+		bands[rid] = face.call("band_of_room", rid)
 	var map := {"zone_map": snap["zone_map"], "rooms": rooms,
 		"connectors": connectors, "points": points,
-		"floors": face.call("floors"), "blockers": face.call("blockers_shown"),
+		"floors": face.call("floors"), "bands": bands,
+		"player_floor": face.call("player_floor"),
+		"blockers": face.call("blockers_shown"),
 		"colours": face.get("colours"), "details": details,
 		"pulse_hz": face.get("PULSE_HZ"),
 		"pulse_swing": face.get("PULSE_SWING")}

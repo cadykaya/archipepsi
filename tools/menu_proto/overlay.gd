@@ -62,6 +62,7 @@ var _closed: Control
 var _cursor: TextureRect
 var _ring: TextureRect
 var _last_prompts: Array = []
+var shown: Array = []       # the prompt line as drawn: [{action, shows, words}]
 
 
 func setup(k: Kit) -> void:
@@ -134,6 +135,10 @@ func control(parent: Node, token: String) -> Control:
 		token = str(kit.icon_text.get(icon, icon.to_upper()))
 		bare = false
 		icon = ""
+	# What this control shows, for the tapes: a bare symbol, a symbol in a
+	# keycap, or text in a keycap.
+	box.set_meta("shows", ("sym:" if bare else "cap:") + icon if icon != ""
+			else "key:" + token)
 	if bare:
 		var t := TextureRect.new()
 		t.texture = kit.icons.get(icon)
@@ -175,6 +180,7 @@ func control(parent: Node, token: String) -> Control:
 ## The prompt line: [[action, words], ...] for the front face's state.
 func prompts(pairs: Array) -> void:
 	_last_prompts = pairs
+	shown = []
 	for child in _prompt_row.get_children():
 		_prompt_row.remove_child(child)
 		child.queue_free()
@@ -190,8 +196,11 @@ func prompts(pairs: Array) -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var shows := []
 		for token: String in tokens:
-			control(row, token)
+			shows.append(str(control(row, token).get_meta("shows")))
+		shown.append({"action": str(pair[0]), "shows": shows,
+			"words": str(pair[1])})
 		var words := Control.new()
 		words.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var l := text(words, str(pair[1]), Vector2(4, 2 * SCALE), INK_DIM)
