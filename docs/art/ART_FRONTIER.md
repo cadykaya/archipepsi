@@ -3006,6 +3006,87 @@ delivering the four directions, STOP for selection.**
 * **Next:** the owner chooses a direction, or compatible elements from
   several. Nothing else is started until then.
 
+### Ruling, 2026-09-27 (fourth) — ONE hybrid: original station hardware, kept alive by Epsilon
+
+**Keep safe:** the four studies (delivered at `8b13aa7`) and the working
+prototype (build `66e18b2`). The hybrid is developed beside them. It is not
+another round of competing directions, and not an equal mixture.
+
+**The device.** The box is equipment with a history. Some subsystems are
+original station hardware: formal, sturdy and organized. Others have been
+repaired, extended or grafted on from salvaged electronics. A shared cable
+harness connects the whole assembly. The working premise is that Epsilon
+kept it alive and adapted it through the station's dormancy. The history
+is suggested by the construction, with no new lore or capabilities. It is
+a convincing Frankenstein machine, not a pristine device with decorative
+damage.
+
+**The hierarchy:**
+* **B:** the shared infrastructure, and Journal → Map. Keep the overhead
+  harness and its continuity round the corners, the warm labels and
+  readouts, and a finding connected to its actual map destination. The
+  harness runs through Equipment and Settings without imposing B's layout
+  or its hanging card there.
+* **C:** Equipment's main composition: the broad inspection readout above,
+  and the key selector and item rack below. The key side can read as the
+  older, formal station subsystem. Values stay readable, controls stay
+  clear, and equipped stays distinct from inspected.
+* **D:** Equipment's right-hand item rack, grafted on or substantially
+  rebuilt. It has board edges, contacts, an adapter or join, replacement
+  pieces, and a purposeful connection back into the original cabinet. It
+  still behaves as a clean, stable list, with no dragging and no wiring.
+  C's composition stays, and there is no second large inspection panel.
+* **D, dominant:** Settings, the maintenance and calibration side. It has
+  exposed or replacement boards, repurposed controls, clear labels and
+  visible connections. It looks salvaged, not broken: no chores, no fake
+  faults, no puzzles. Equipment's salvaged right-hand section anticipates
+  it, through a shared component edge, a mounting treatment or a routed
+  connection.
+* **A:** retired as a visual direction. Only the equipped-versus-inspected
+  distinction is kept.
+
+**Unification.** The subsystems are not averaged into one generic
+industrial style. They are unified by compatible scale, typography,
+interaction states, recurring mounting details and the continuous
+harness. Joins are few and convincing: this board meets that rack through
+this adapter or cable.
+
+**Epsilon (new owner direction).** In a Crossing, Epsilon lives in the
+Echo suit, and on the station he lives in his computer at the station
+terminal. He is one continuing character, not copies. The menu is an
+interface to equipment he shares with us, maintained and personalized by
+him. A restrained, recognizable Epsilon component or connection point is
+welcome in this pass. It is not a slot, a setting, or an implementation of
+his transfer. "Crossing" is a working in-world term; no source rename is
+requested. "Echo suit" and "Echo weapon" authorize no new Gear.
+
+**Keep the prototype's behaviour:**
+* clear key / equipped / inspected relationships;
+* practical descriptions and comparisons;
+* clean text during rapid selection;
+* stable targets and usable scrolling;
+* truthful previews;
+* travel that keeps the view, and a follow that frames the entry's
+  destination, with a way back;
+* readable reduced-motion states.
+
+Physical presentation must never slow browsing: no shutter over every
+description, no swinging text, no waiting for a plug. "What does this do?"
+and "what changes if I equip it?" stay strongest.
+
+**Deliverable: ONE hybrid visual checkpoint.**
+* Equipment (normal), Equipment (long name), Map, Journal and Settings,
+  as readable gameplay-size stills.
+* A compact cross-wall overview, showing the Journal → Map harness and the
+  Equipment → Settings transition.
+* The same sample data as the four studies.
+* A short note on the original-versus-salvaged relationships and the
+  proposed motion.
+
+Stills only: no video cycle, no alternative hybrids, no packaging marathon.
+No Production runtime edits, no integration, no unrelated work. **STOP
+after this checkpoint** for the owner to confirm the composition.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.
