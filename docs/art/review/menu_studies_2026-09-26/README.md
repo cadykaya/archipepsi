@@ -2,6 +2,18 @@
 
 *Arty*
 
+> **RULED 2026-09-27. The study checkpoint is ACCEPTED.** Selected as
+> interaction PRINCIPLES:
+> * **LENS** for the Map face;
+> * **THREAD** for cross-face links, starting with Journal → Map;
+> * **LEAF**'s in-place unfolding and slot-tied comparison for
+>   Inventory, in a revised composition.
+>
+> The gray-box layouts below are NOT approved as final menu art, and the
+> same effect is not to be applied to every face. The next step is one
+> combined interactive prototype: `docs/art/ART_FRONTIER.md` §11,
+> "Ruling, 2026-09-27".
+
 **CANDIDATES, for your selection. Nothing here is approved, and nothing
 in Production changed.** These are three low-detail spatial-interaction
 studies. Each one is captured in motion and in reduced motion, from a

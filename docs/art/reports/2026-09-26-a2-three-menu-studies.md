@@ -2,6 +2,18 @@
 
 *Arty*
 
+> **RULED 2026-09-27. The study checkpoint is ACCEPTED.** Selected as
+> interaction PRINCIPLES:
+> * **LENS** for the Map face;
+> * **THREAD** for cross-face links, starting with Journal → Map;
+> * **LEAF**'s in-place unfolding and slot-tied comparison for
+>   Inventory, in a revised composition.
+>
+> The gray-box layouts below are NOT approved as final menu art, and the
+> same effect is not to be applied to every face. The next step is one
+> combined interactive prototype: `docs/art/ART_FRONTIER.md` §11,
+> "Ruling, 2026-09-27".
+
 **Branch `claude/archipepsi-art`, PR #5. Three studies, for your
 selection. Nothing is approved, and I have stopped here.** No
 production-menu redesign has started, and neither have the Glyph

@@ -2582,7 +2582,7 @@ Usability rules:
 requirements and a state/transition handoff. It opens neither 0.5 nor
 Track C or E.
 
-### Track A2 — the three studies are DELIVERED; STOPPED for selection
+### Track A2 — the three studies are DELIVERED (accepted 2026-09-27, below)
 
 **2026-09-26.** Package: `docs/art/review/menu_studies_2026-09-26/`.
 Report: `docs/art/reports/2026-09-26-a2-three-menu-studies.md`. All of
@@ -2624,6 +2624,98 @@ How they were made:
 * a state/transition handoff for Production.
 
 Not before, and there is no production-menu redesign until then.
+
+### Ruling, 2026-09-27 — the A2 studies accepted; principles selected
+
+**The study checkpoint is ACCEPTED.** Selected for further development,
+as INTERACTION PRINCIPLES:
+* **LENS** for the Map face.
+* **THREAD** for meaningful links between faces, starting with Journal
+  → Map.
+* **LEAF**'s local unfolding and slot-tied comparison for Inventory,
+  with a revised composition.
+
+This selection does not approve the gray-box layouts as final menu
+art, and it does not mean applying the same effect to every face.
+
+**THREAD:**
+* It keeps running round the physical corner and landing on the
+  passage it names.
+* It lands on the LENS map. There is no second, flat map
+  implementation.
+* Following it is optional. The useful explanation stays on the
+  journal entry itself; the map adds spatial context.
+* It stays visually distinct from traversable routes.
+* For Production, links bind to a stable passage/connector identity,
+  not to a row number among the blocked entries.
+* It keeps the unknown/discovered boundaries, and it handles a
+  referenced passage that changes state.
+
+**LENS:**
+* It stays geometrically coherent: the view or the miniature moves as a
+  whole, and no room is rearranged.
+* Selection and view state survive leaving and returning.
+* The detail presentation is refined, because the big card hid the
+  neighbours and exits being inspected. Short contextual labels give
+  the immediate answer, and longer detail is explicitly expandable.
+* It keeps a reliable overview/reset, and enough surrounding context to
+  stay oriented.
+
+**LEAF:**
+* Detail unfolds from the selected item, and the comparison is tied to
+  its real slot.
+* The wide-row table and the big text sheet are not the final
+  composition. Develop ONE stronger composition around the selected
+  module and its key/slot. This is a refinement, not a new concept
+  round.
+* Use the real equipment vocabulary, with no invented slots, gear
+  availability or states.
+* Mouse targets stay stable: the keyboard/pad row displacement is never
+  copied into hover.
+
+**NEXT DELIVERABLE — one combined, interactive art-lane review
+prototype** for Inventory, Map and Journal.
+* **Input.** Real mouse and keyboard, plus controller input. Report
+  what was TESTED separately from what was only IMPLEMENTED.
+* **Data.** Representative sample data, labelled. Equipping is a
+  labelled LOCAL PREVIEW, with no second inventory/save system.
+* **It demonstrates:**
+  * rapid selection changes;
+  * an interrupted transition;
+  * details inspected and closed;
+  * face-to-face travel that returns with context intact;
+  * reduced motion;
+  * long descriptions, and more candidates than fit.
+* **A first deliberate visual pass** on the focal item, headings,
+  controls and the cross-face connection: the intended character, not
+  more gray box. No neon, rivets, clipped corners or extra panels.
+* **Settings/Pause** stays reachable in the four-face order. Its final
+  treatment is an explicit OPEN design item.
+
+**Glyph work:**
+* Add `; — → [ ]` to the text face. Change no binding and no meaning.
+* Add device symbols for the controls the prototype uses, with readable
+  text fallbacks.
+* Tell focus, circuit identity and player location apart by shape and
+  placement as well as colour. Production's circuit colours are not
+  redefined.
+* Reduced motion covers secondary motion, gate pulses included. The
+  MapFace pulse finding goes into the handoff.
+
+**Ownership and handoff:**
+* The prototype stays isolated in the art lane, with no Production
+  runtime edits.
+* Reconcile the sample and contracts against the stable Production
+  checkpoint current at the start, and record it. The old Gear sample
+  is not assumed current.
+* Deliver the Glyph asset requirements and the state/transition handoff
+  (on Production's own queries and semantics) alongside the prototype.
+* A scripted capture is not hands-on verification, and the scopes are
+  reported separately.
+* Return the build, short captures and the handoff for owner review
+  BEFORE production integration.
+
+It does not open 0.5, Track C or Track E.
 
 ### Standing notes
 

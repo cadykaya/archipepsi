@@ -123,14 +123,35 @@ Findings other lanes need:
   set. RULED: Production preserves its eye.
 * At Production `27363fe`, all ten roles are in `ENEMY_ARCHETYPES`.
 
-**Now: TRACK A2 — STOPPED for owner selection** (§11). The three
-studies are delivered in `docs/art/review/menu_studies_2026-09-26/`:
-LEAF (Inventory), LENS (Map) and THREAD (Journal → Map). Each is in
-motion and in reduced motion, from the isolated prototype in
-`tools/menu_studies/`. Wait for the owner's choice. Only after it
-comes do the Glyph asset requirements and the state/transition handoff
-for Production follow. There is no production-menu redesign before
-then. It opens neither 0.5 nor Track C or E.
+**Now: TRACK A2, phase 2 — the combined interactive review prototype**
+(§11, "Ruling, 2026-09-27"). The studies were ACCEPTED, and
+principles were selected:
+* **LENS** for the Map face.
+* **THREAD** for meaningful cross-face links, starting with Journal →
+  Map.
+* **LEAF**'s in-place unfolding and slot-tied comparison for
+  Inventory, in a revised composition.
+
+These are principles, not the gray-box layouts, and not one effect on
+every face.
+
+The build is one INTERACTIVE art-lane prototype (Inventory, Map and
+Journal, with Settings/Pause reachable but undesigned).
+* It takes real mouse and keyboard input, and controller input is
+  implemented. Report tested and merely implemented separately.
+* It makes a first deliberate visual pass.
+
+Alongside it:
+* the Glyph additions `; — → [ ]`, and device symbols with text
+  fallbacks;
+* focus, circuit and player location told apart by shape and placement
+  as well as colour;
+* reduced motion that covers secondary motion.
+
+Reconcile against the current stable Production checkpoint, and record
+the revision. Deliver the Glyph requirements and the state/transition
+handoff with the build. There are no Production runtime edits, and it
+does not open 0.5, Track C or Track E.
 
 Two things from it that other lanes need:
 
