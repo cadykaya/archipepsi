@@ -271,18 +271,20 @@ func _open_drawer(at_once := false) -> void:
 			2.0 * Kit.px(), kit.flat(Kit.INK_FAINT))
 	var head := "WHAT GOES ON %s" % str(keys()[key_index]["keycap"]).to_upper() \
 			if slot != "" else "ALWAYS ON WHILE YOU OWN IT"
-	kit.label(_drawer, head, Vector2(LIST_X, VIEW_TOP - 36), 2, Kit.INK_FAINT)
+	kit.label(_drawer, head, Vector2(LIST_X, VIEW_TOP - 36), 2, Kit.INK_FAINT,
+			ABOVE_CLIP)
 	var count := "%d" % _order.size()
 	kit.label(_drawer, count, Vector2(LIST_X + LIST_W - kit.measure(count, 2,
-			true), VIEW_TOP - 36), 2, Kit.INK_FAINT, 0.003, true)
+			true), VIEW_TOP - 36), 2, Kit.INK_FAINT, ABOVE_CLIP, true)
 	if slot != "" and seated(slot) == "":
 		kit.label(_drawer, "NOTHING IS ON %s NOW" % str(keys()[key_index][
 				"keycap"]).to_upper(), Vector2(LIST_X + 300, VIEW_TOP - 36),
-				2, Kit.INK_FAINT)
+				2, Kit.INK_FAINT, ABOVE_CLIP)
 	_list = Node3D.new()
 	_drawer.add_child(_list)
 	for id: String in _order:
 		_strip(id)
+	_clip()
 	_more_up = _more(true)
 	_more_down = _more(false)
 	# Which item is unfolded: the key remembers its own; a key with
@@ -327,6 +329,24 @@ func _strip(id: String) -> void:
 		"card": null}
 
 
+## The list's window edges: two patches of the wall laid just in front of
+## the list, above VIEW_TOP and below VIEW_BOTTOM. A strip or a card that
+## is partly scrolled out of view slides UNDER them and stays drawn where it
+## shows -- it never vanishes whole and leaves a hole in the list.
+const CLIP_LIFT := 0.045              # in front of everything in the list
+const ABOVE_CLIP := 0.055             # the drawer's own words, over the edges
+const CLIP_TOP := 50.0                # the top edge's height: one strip and more
+
+
+func _clip() -> void:
+	for r: Rect2 in [Rect2(Vector2(LIST_X - 16, VIEW_TOP - CLIP_TOP),
+				Vector2(LIST_W + 56, CLIP_TOP)),
+			Rect2(Vector2(LIST_X - 16, VIEW_BOTTOM), Vector2(LIST_W + 56,
+				Kit.PAGE.y - VIEW_BOTTOM))]:
+		var edge := kit.card(_drawer, r.position, r.size, CLIP_LIFT, kit.wall_patch(r))
+		edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
 func _more(up: bool) -> Node3D:
 	var node := Node3D.new()
 	_drawer.add_child(node)
@@ -334,9 +354,9 @@ func _more(up: bool) -> Node3D:
 	# card at the foot of the drawer (and its shadow) never covers the count.
 	var y := VIEW_TOP - 14 if up else VIEW_BOTTOM + 10
 	kit.sprite(node, "arrow_up" if up else "arrow_down",
-			Vector2(LIST_X + LIST_W * 0.5 - 40, y + 6), 2, Kit.INK_DIM, 0.03)
+			Vector2(LIST_X + LIST_W * 0.5 - 40, y + 6), 2, Kit.INK_DIM, ABOVE_CLIP)
 	var l := kit.label(node, "", Vector2(LIST_X + LIST_W * 0.5 - 24, y - 2), 2,
-			Kit.INK_DIM, 0.03)
+			Kit.INK_DIM, ABOVE_CLIP)
 	node.set_meta("label", l)
 	node.visible = false
 	return node
@@ -394,9 +414,22 @@ func _layout(at_once := false, from_y := -1.0, by_hand := false) -> void:
 		else:
 			kit.go(node, "position", to, 0.18, "out")
 			node.scale = Vector3.ONE
-		var inside := page_y >= VIEW_TOP - 1.0 and \
-				page_y + float(s["h"]) <= VIEW_BOTTOM + 1.0
-		node.visible = inside
+		var h := float(s["h"])
+		var card: Variant = s["card"]
+		var open := id == unfolded and card != null and is_instance_valid(card)
+		# The strip's own words are under the card while it is open.
+		for part: Node in node.get_children():
+			if part != card:
+				(part as Node3D).visible = not open
+		if open:
+			# Drawn wherever any of it shows, cut to what the edges cover.
+			node.visible = page_y < VIEW_BOTTOM and page_y + h > VIEW_TOP
+			_clip_card(card as Node3D, page_y)
+		else:
+			# A strip is drawn wherever any of it shows; the drawer's edges
+			# cover the rest -- so long as all of it stays within their reach.
+			node.visible = page_y < VIEW_BOTTOM and page_y + h > VIEW_TOP \
+					and page_y >= VIEW_TOP - CLIP_TOP and page_y + h <= Kit.PAGE.y
 	var above := 0
 	var below := 0
 	for id: String in _order:
@@ -449,18 +482,17 @@ func _card(id: String, parent: Node3D) -> Node3D:
 	parent.add_child(card)
 	var content := Node3D.new()
 	card.add_child(content)
+	card.set_meta("content", content)
 	# Header: the name at 3x, the Mk, where it came from.
-	kit.label(content, kit.fit(_name(id), 3, 640), Vector2(COL_L, 12), 3,
-			Kit.INK, 0.03, false, true)
+	_ln(content, kit.fit(_name(id), 3, 640), Vector2(COL_L, 12), 3, Kit.INK)
 	var mk_x := COL_L + minf(kit.measure(_name(id), 3), 640) + 16
-	kit.label(content, _mk(id), Vector2(mk_x, 20), 2, Kit.INK_DIM, 0.03,
-			false, true)
+	_ln(content, _mk(id), Vector2(mk_x, 20), 2, Kit.INK_DIM)
 	var y := 54.0
 	if kit.measure(_name(id), 3) > 640:
 		# A long name is cut in the header and written out here in full.
 		var full := kit.wrap(_name(id), 2, 800)
-		kit.label(content, "\n".join(full), Vector2(COL_L, y - 4), 2,
-				Kit.INK_DIM, 0.03, false, true)
+		for i in full.size():
+			_ln(content, full[i], Vector2(COL_L, y - 4 + LINE * i), 2, Kit.INK_DIM)
 		y += LINE * full.size() + 6.0
 	var ly := y
 	ly = _block(content, "", [str(row.get("description", ""))], COL_L, ly,
@@ -508,23 +540,20 @@ func _card(id: String, parent: Node3D) -> Node3D:
 		var colour := Kit.SIGNAL if _can_preview(id) else Kit.INK_DIM
 		if _can_preview(id):
 			_prompt_cap(content, "ENTER", Vector2(COL_L, h))
-			kit.label(content, act, Vector2(COL_L + 86, h + 5), 2, colour,
-					0.03, false, true)
+			_ln(content, act, Vector2(COL_L + 86, h + 5), 2, colour)
 		else:
-			kit.label(content, act, Vector2(COL_L, h + 5), 2, colour, 0.03,
-					false, true)
+			_ln(content, act, Vector2(COL_L, h + 5), 2, colour)
 		card.set_meta("action", Rect2(Vector2(COL_L - 6, h - 6),
 				Vector2(kit.measure(act, 2) + 110, 38)))
 		h += 42.0
 	if note != "":
-		kit.label(content, note, Vector2(COL_R, h - 36), 2, Kit.INK, 0.03,
-				false, true)
+		_ln(content, note, Vector2(COL_R, h - 36), 2, Kit.INK)
 	if _authored(id):
 		# The sample label, at the foot where it cannot collide with a long
 		# name or the comparison: its own line, right-aligned.
 		var tag := "AUTHORED FOR LAYOUT STRESS, NOT GAME CONTENT"
-		kit.label(content, tag, Vector2(LIST_W - 16 - kit.measure(tag, 2), h + 2),
-				2, Kit.INK_DIM, 0.03, false, true)
+		_ln(content, tag, Vector2(LIST_W - 16 - kit.measure(tag, 2), h + 2), 2,
+				Kit.INK_DIM)
 		h += 26.0
 	h += 10.0
 	# The plate it all sits on: raised off the wall, lit, shading it.
@@ -540,6 +569,10 @@ func _card(id: String, parent: Node3D) -> Node3D:
 	# Focus: a signal bar down its left edge -- a shape, not a glow.
 	kit.card(card, Vector2(-8, 0), Vector2(5, h), 0.03, kit.flat(Kit.SIGNAL),
 			true)
+	# Every part of the frame remembers its whole rect, for _clip_card.
+	for part: Node in card.get_children():
+		if part is MeshInstance3D:
+			part.set_meta("full", _rect_of(part as MeshInstance3D))
 	card.set_meta("height", h)
 	card.scale = Vector3(1, 0.001, 1)
 	kit.go(card, "scale:y", 1.0, 0.16, "out", 0.04)
@@ -549,25 +582,74 @@ func _card(id: String, parent: Node3D) -> Node3D:
 func _block(parent: Node3D, head: String, lines: Array, x: float, y: float,
 		width: float, colour: Color) -> float:
 	if head != "":
-		kit.label(parent, head, Vector2(x, y), 2, Kit.HEAD, 0.03, false,
-				true)
+		_ln(parent, head, Vector2(x, y), 2, Kit.HEAD)
 		y += 24.0
 	for raw: Variant in lines:
-		var wrapped := kit.wrap(str(raw), 2, width)
-		if wrapped.is_empty():
-			continue
-		kit.label(parent, "\n".join(wrapped), Vector2(x, y), 2, colour, 0.03,
-				false, true)
-		y += LINE * wrapped.size()
+		for line: String in kit.wrap(str(raw), 2, width):
+			_ln(parent, line, Vector2(x, y), 2, colour)
+			y += LINE
 	return y
+
+
+## One line of the card's words, knowing its own span (card px) so the
+## drawer's edges can cut the card a line at a time.
+func _ln(parent: Node3D, text: String, at: Vector2, k: int, colour: Color) -> Label3D:
+	var l := kit.label(parent, text, at, k, colour, 0.03, false, true)
+	l.set_meta("span", Vector2(at.y, at.y + 8.0 * k))
+	return l
+
+
+## A frame part's rect in the card's own px (its quad or box, centred on it).
+static func _rect_of(mi: MeshInstance3D) -> Rect2:
+	var size := Vector2.ZERO
+	if mi.mesh is QuadMesh:
+		size = (mi.mesh as QuadMesh).size / Kit.px()
+	elif mi.mesh is BoxMesh:
+		var b := (mi.mesh as BoxMesh).size
+		size = Vector2(b.x, b.y) / Kit.px()
+	var c := Vector2(mi.position.x, -mi.position.y) / Kit.px()
+	return Rect2(c - size * 0.5, size)
+
+
+## The open card, cut to what the drawer's edges can cover: the band from
+## CLIP_TOP above the view to the foot of the wall. A line wholly inside the
+## band is drawn (the edges cover whatever of it leaves the view); a line
+## that would reach past the band is not; the plate, the bar and the shadows
+## are cut to the band. So a card half-scrolled out never shows a hole, and
+## never spills past the wall.
+func _clip_card(card: Node3D, page_y: float) -> void:
+	var lo := VIEW_TOP - CLIP_TOP - page_y
+	var hi := Kit.PAGE.y - page_y
+	for part: Node in card.get_children():
+		if not (part is MeshInstance3D and part.has_meta("full")):
+			continue
+		var mi := part as MeshInstance3D
+		var full: Rect2 = mi.get_meta("full")
+		var top := maxf(full.position.y, lo)
+		var bottom := minf(full.end.y, hi)
+		mi.visible = bottom > top
+		if not mi.visible:
+			continue
+		var r := Rect2(Vector2(full.position.x, top), Vector2(full.size.x, bottom - top))
+		if mi.mesh is QuadMesh:
+			(mi.mesh as QuadMesh).size = r.size * Kit.px()
+		elif mi.mesh is BoxMesh:
+			var b := mi.mesh as BoxMesh
+			b.size = Vector3(r.size.x * Kit.px(), r.size.y * Kit.px(), b.size.z)
+		mi.position = Kit.rel(r.get_center(), mi.position.z)
+	var content: Node3D = card.get_meta("content")
+	for part: Node in content.get_children():
+		var span: Vector2 = part.get_meta("span", Vector2(lo, lo))
+		(part as Node3D).visible = span.x >= lo and span.y <= hi
 
 
 ## The card's own control, for the device in hand: ENTER, or the pad's
 ## south face button.
 func _prompt_cap(parent: Node3D, cap: String, at: Vector2) -> void:
 	if kit.device == "pad":
-		kit.sprite(parent, "pad_face_south", at + Vector2(20, 13), 2, Kit.INK,
-				0.034, true)
+		var sym := kit.sprite(parent, "pad_face_south", at + Vector2(20, 13), 2,
+				Kit.INK, 0.034, true)
+		sym.set_meta("span", Vector2(at.y, at.y + 26.0))
 		return
 	var w := kit.measure(cap, 2) + 16.0
 	var p := MeshInstance3D.new()
@@ -576,8 +658,11 @@ func _prompt_cap(parent: Node3D, cap: String, at: Vector2) -> void:
 	p.mesh = box
 	p.material_override = kit.lit(Color("#c9d0db"))
 	p.position = Kit.rel(at + Vector2(w, 26) * 0.5, 0.03)
+	p.set_meta("span", Vector2(at.y, at.y + 26.0))
 	parent.add_child(p)
-	kit.label(parent, cap, at + Vector2(8, 5), 2, Kit.SHADE, 0.034, false, true)
+	var l := kit.label(parent, cap, at + Vector2(8, 5), 2, Kit.SHADE, 0.034, false,
+			true)
+	l.set_meta("span", Vector2(at.y, at.y + 26.0))
 
 
 func _can_preview(id: String) -> bool:
@@ -718,8 +803,7 @@ func click(p: Vector2) -> bool:
 func wheel(p: Vector2, dir: int) -> bool:
 	if p.x < DRAWER_X:
 		return false
-	_scroll_px += 60.0 * dir
-	_layout_scroll_only()
+	_hand_scroll(60.0 * dir)
 	return true
 
 
@@ -727,8 +811,14 @@ func wheel(p: Vector2, dir: int) -> bool:
 func scroll_by(px: float) -> void:
 	if zone != "drawer":
 		return
-	_scroll_px += px
-	_layout_scroll_only()
+	_hand_scroll(px)
+
+
+## Scrolling by hand: everything slides under the drawer's edges, the open
+## card included (it is cut to what the edges cover, _clip_card).
+func _hand_scroll(delta: float) -> void:
+	_scroll_px += delta
+	_layout(false, -1.0, true)
 
 
 ## Scrolling by hand moves the drawer and does not pull the card back
@@ -786,10 +876,49 @@ func state() -> Dictionary:
 		"scroll": _scroll_px, "preview": preview.duplicate(), "hover": hover,
 		"rects": rects, "strip_positions": _positions(),
 		"card_inside": inside,
+		"card_shown": (_strips[unfolded]["node"] as Node3D).visible
+			if _strips.has(unfolded) else false,
+		"holes": _holes(),
 		"card_height": float(rects[unfolded][1]) if rects.has(unfolded) else 0.0,
 		"more": [(_more_up.get_meta("label") as Label3D).text if _more_up.visible
 			else "", (_more_down.get_meta("label") as Label3D).text
 			if _more_down.visible else ""]}
+
+
+## The largest empty stretch of the drawer's view that has list content
+## beyond it: between two drawn items, or between a drawn item and the view's
+## edge when more lies past that edge. A hidden half-card shows up here.
+func _holes() -> float:
+	var spans: Array = []
+	var any_above := false
+	var any_below := false
+	for id: String in _order:
+		var st: Dictionary = _strips[id]
+		var top: float = VIEW_TOP + float(st["y"]) - _scroll_px
+		var bottom: float = top + float(st["h"])
+		if (st["node"] as Node3D).visible:
+			spans.append([maxf(top, VIEW_TOP), minf(bottom, VIEW_BOTTOM)])
+		elif bottom <= VIEW_TOP + 0.5:
+			any_above = true
+		elif top >= VIEW_BOTTOM - 0.5:
+			any_below = true
+		else:
+			# Hidden but reaching into the view: what it leaves empty counts.
+			if top < VIEW_TOP:
+				any_above = true
+			else:
+				any_below = true
+	if spans.is_empty():
+		return VIEW_BOTTOM - VIEW_TOP if (any_above or any_below) else 0.0
+	spans.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	var worst := 0.0
+	for i in range(1, spans.size()):
+		worst = maxf(worst, float(spans[i][0]) - float(spans[i - 1][1]))
+	if any_above:
+		worst = maxf(worst, float(spans[0][0]) - VIEW_TOP)
+	if any_below:
+		worst = maxf(worst, VIEW_BOTTOM - float(spans[-1][1]))
+	return snappedf(worst, 0.1)
 
 
 func _positions() -> Dictionary:

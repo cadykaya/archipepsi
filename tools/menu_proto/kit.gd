@@ -172,6 +172,18 @@ func wall_material() -> StandardMaterial3D:
 	return m
 
 
+## A patch of the wall itself, for `page` (page px): the wall's material with
+## its grain scaled and offset so the patch lines up texel for texel with
+## the wall behind it. Laid a little in front of a list, it is the list's
+## window edge: what scrolls past it goes under the wall.
+func wall_patch(page: Rect2) -> StandardMaterial3D:
+	var m := wall_material().duplicate() as StandardMaterial3D
+	m.uv1_scale = Vector3(5.0 * page.size.x / PAGE.x, 3.0 * page.size.y / PAGE.y, 1.0)
+	m.uv1_offset = Vector3(5.0 * page.position.x / PAGE.x,
+			3.0 * page.position.y / PAGE.y, 0.0)
+	return m
+
+
 ## Lit: walls, plates and the miniature. The box has a light in it, and a
 ## raised plate shades the wall behind it -- that is where the focus's
 ## depth comes from, not from a glow.
