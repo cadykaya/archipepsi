@@ -1,0 +1,21 @@
+{
+ "about": "A still at gameplay size. Scripted input.",
+ "steps": [
+  {
+   "at": 0.2,
+   "key": "Q"
+  },
+  {
+   "after": 0.7,
+   "key": "BracketRight"
+  },
+  {
+   "after": 0.1,
+   "key": "BracketRight"
+  },
+  {
+   "after": 1.0,
+   "quit": true
+  }
+ ]
+}

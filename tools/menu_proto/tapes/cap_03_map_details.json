@@ -1,0 +1,99 @@
+{
+ "about": "Map: short answers on the glass, the long answer on request, and the mouse. Scripted input for a capture, not hands-on.",
+ "steps": [
+  {
+   "at": 0.0,
+   "say": "Q -- THE MAP. ] ] -- THE NEXT PLACES: A SHORT ANSWER ON THE GLASS"
+  },
+  {
+   "at": 0.6,
+   "key": "Q"
+  },
+  {
+   "at": 1.6,
+   "key": "BracketRight"
+  },
+  {
+   "at": 2.6,
+   "key": "BracketRight"
+  },
+  {
+   "at": 3.8,
+   "mark": "short_answer"
+  },
+  {
+   "at": 4.0,
+   "say": "ENTER -- THE LONG ANSWER DOCKS AT THE EDGE; THE MINIATURE SLIDES ASIDE, NOT UNDER IT"
+  },
+  {
+   "at": 4.6,
+   "key": "Enter"
+  },
+  {
+   "at": 6.6,
+   "mark": "long_answer"
+  },
+  {
+   "at": 6.8,
+   "say": "ENTER -- CLOSED AGAIN"
+  },
+  {
+   "at": 7.2,
+   "key": "Enter"
+  },
+  {
+   "at": 8.2,
+   "say": "MOUSE -- A STILL CLICK PICKS; A DRAG ORBITS THE WHOLE MINIATURE; THE WHEEL ZOOMS"
+  },
+  {
+   "at": 8.6,
+   "click_room": "c003"
+  },
+  {
+   "at": 9.8,
+   "drag": [
+    860,
+    640,
+    1060,
+    620
+   ],
+   "dur": 0.8
+  },
+  {
+   "at": 11.2,
+   "wheel_page": [
+    640,
+    392,
+    -1
+   ]
+  },
+  {
+   "at": 11.5,
+   "wheel_page": [
+    640,
+    392,
+    -1
+   ]
+  },
+  {
+   "at": 12.6,
+   "mark": "mouse"
+  },
+  {
+   "at": 12.8,
+   "say": "C -- THE OVERVIEW: EVERYTHING KNOWN, NOTHING PICKED"
+  },
+  {
+   "at": 13.2,
+   "key": "C"
+  },
+  {
+   "at": 14.6,
+   "mark": "overview"
+  },
+  {
+   "at": 15.0,
+   "quit": true
+  }
+ ]
+}

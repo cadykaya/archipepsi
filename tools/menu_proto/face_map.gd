@@ -328,7 +328,7 @@ func _layout_tags() -> void:
 		taken.append(room.grow(6))
 	var anchors := {}
 	for t: Dictionary in exits:
-		var a := Rect2(_page_of(_edges[str(t["ref"])]["mark"]), Vector2.ZERO).grow(10)
+		var a := _exit_rect(str(t["ref"]))
 		anchors[t] = a
 		if usable.has_point(a.get_center()):
 			taken.append(a)
@@ -360,6 +360,27 @@ func _layout_tags() -> void:
 	var at := _choose(places, block, usable, taken)
 	_put(head, at)
 	_put(summary, at + Vector2(0, hs.y + 6.0))
+
+
+## What an exit tag keeps clear of: the exit's mark, its gate symbol at its
+## largest (linked x1.4, pulse +30%), and the Journal's ring when the ring
+## is on it -- so no word ever sits on the symbol it names.
+func _exit_rect(eid: String) -> Rect2:
+	var mark: Vector3 = _edges[eid]["mark"]
+	var r := Rect2(_page_of(mark), Vector2.ZERO).grow(10)
+	if _gates.has(eid):
+		var s: Sprite3D = _gates[eid]
+		var half := float(s.texture.get_width()) * s.pixel_size * 0.5 * 1.4 * 1.3
+		var c := _page_of(s.position)
+		var rad := 0.0
+		for axis: Vector3 in [Vector3.RIGHT, Vector3.UP, Vector3.BACK]:
+			rad = maxf(rad, _page_of(s.position + axis * half).distance_to(c))
+		r = r.merge(Rect2(c, Vector2.ZERO).grow(rad + 4.0))
+	if str(link.get("edge", "")) == eid:
+		for k in 8:
+			var a := TAU * float(k) / 8.0
+			r = r.expand(_page_of(mark + Vector3(cos(a) * 4.9, 0.3, sin(a) * 4.9)))
+	return r
 
 
 ## YOU goes beside the figure, and only has to keep off the figure itself.

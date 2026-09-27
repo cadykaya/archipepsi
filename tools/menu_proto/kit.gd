@@ -264,6 +264,7 @@ func label(parent: Node3D, text: String, page: Vector2, k: int,
 	l.outline_size = 0
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	l.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	l.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	l.line_spacing = 2.0
 	l.text = text if numerals else display(text)
 	l.position = rel(page, depth) if relative else at(page, depth)
@@ -345,6 +346,8 @@ func sprite(parent: Node3D, icon: String, page: Vector2, k: int,
 	s.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 	s.modulate = colour
 	s.centered = true
+	# A symbol is printed on its surface: it casts no shadow of its own.
+	s.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	s.position = rel(page, depth) if relative else at(page, depth)
 	parent.add_child(s)
 	return s

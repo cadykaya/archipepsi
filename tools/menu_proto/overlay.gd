@@ -62,6 +62,7 @@ var _closed: Control
 var _cursor: TextureRect
 var _ring: TextureRect
 var _last_prompts: Array = []
+var _say: Label
 var shown: Array = []       # the prompt line as drawn: [{action, shows, words}]
 
 
@@ -244,6 +245,14 @@ func edges(left_name: String, right_name: String) -> void:
 			cap.position.x = w - cap.custom_minimum_size.x
 		edge_rects[side] = Rect2(box.position - Vector2(8, 8),
 				Vector2(w + 16, 140))
+
+
+## A capture's caption: what scripted input is being made, in the review's
+## own colour so it is never mistaken for the interface.
+func say(line: String) -> void:
+	if _say == null:
+		_say = text(_root, "", Vector2(24, 60), Color("#ffd84d"), 2)
+	_say.text = kit.display(line)
 
 
 func status(line: String) -> void:

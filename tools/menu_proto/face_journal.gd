@@ -418,6 +418,12 @@ func wheel(p: Vector2, dir: int) -> bool:
 	return true
 
 
+## The right stick scrolls the focused column by hand.
+func scroll_by(px: float) -> void:
+	scroll[column] = maxf(0.0, float(scroll[column]) + px)
+	_layout(false, column)
+
+
 func _hit(p: Vector2) -> int:
 	for col: int in [0, 1]:
 		var x := LEFT_X if col == 0 else RIGHT_X

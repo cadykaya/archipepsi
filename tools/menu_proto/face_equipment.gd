@@ -330,11 +330,13 @@ func _strip(id: String) -> void:
 func _more(up: bool) -> Node3D:
 	var node := Node3D.new()
 	_drawer.add_child(node)
-	var y := VIEW_TOP - 14 if up else VIEW_BOTTOM + 2
+	# Clear of the view, and in front of anything raised in it: an open
+	# card at the foot of the drawer (and its shadow) never covers the count.
+	var y := VIEW_TOP - 14 if up else VIEW_BOTTOM + 10
 	kit.sprite(node, "arrow_up" if up else "arrow_down",
-			Vector2(LIST_X + LIST_W * 0.5 - 40, y + 6), 2, Kit.INK_DIM, 0.004)
+			Vector2(LIST_X + LIST_W * 0.5 - 40, y + 6), 2, Kit.INK_DIM, 0.03)
 	var l := kit.label(node, "", Vector2(LIST_X + LIST_W * 0.5 - 24, y - 2), 2,
-			Kit.INK_DIM)
+			Kit.INK_DIM, 0.03)
 	node.set_meta("label", l)
 	node.visible = false
 	return node
@@ -453,11 +455,6 @@ func _card(id: String, parent: Node3D) -> Node3D:
 	var mk_x := COL_L + minf(kit.measure(_name(id), 3), 640) + 16
 	kit.label(content, _mk(id), Vector2(mk_x, 20), 2, Kit.INK_DIM, 0.03,
 			false, true)
-	if _authored(id):
-		kit.label(content, "AUTHORED FOR LAYOUT STRESS, NOT GAME CONTENT",
-				Vector2(LIST_W - 16 - kit.measure(
-				"AUTHORED FOR LAYOUT STRESS, NOT GAME CONTENT", 2), 20), 2,
-				Kit.INK_DIM, 0.03, false, true)
 	var y := 54.0
 	if kit.measure(_name(id), 3) > 640:
 		# A long name is cut in the header and written out here in full.
@@ -522,6 +519,13 @@ func _card(id: String, parent: Node3D) -> Node3D:
 	if note != "":
 		kit.label(content, note, Vector2(COL_R, h - 36), 2, Kit.INK, 0.03,
 				false, true)
+	if _authored(id):
+		# The sample label, at the foot where it cannot collide with a long
+		# name or the comparison: its own line, right-aligned.
+		var tag := "AUTHORED FOR LAYOUT STRESS, NOT GAME CONTENT"
+		kit.label(content, tag, Vector2(LIST_W - 16 - kit.measure(tag, 2), h + 2),
+				2, Kit.INK_DIM, 0.03, false, true)
+		h += 26.0
 	h += 10.0
 	# The plate it all sits on: raised off the wall, lit, shading it.
 	var plate := MeshInstance3D.new()
@@ -717,6 +721,14 @@ func wheel(p: Vector2, dir: int) -> bool:
 	_scroll_px += 60.0 * dir
 	_layout_scroll_only()
 	return true
+
+
+## The right stick: the same hand scroll as the wheel, continuous.
+func scroll_by(px: float) -> void:
+	if zone != "drawer":
+		return
+	_scroll_px += px
+	_layout_scroll_only()
 
 
 ## Scrolling by hand moves the drawer and does not pull the card back

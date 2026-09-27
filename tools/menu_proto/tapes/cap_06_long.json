@@ -1,0 +1,97 @@
+{
+ "about": "Long descriptions, and more candidates than fit. Scripted input for a capture, not hands-on.",
+ "steps": [
+  {
+   "at": 0.0,
+   "say": "ECHO A HOLDS 9 CANDIDATES; 3 WAIT BELOW THE VIEW"
+  },
+  {
+   "at": 0.9,
+   "key": "Right"
+  },
+  {
+   "at": 1.7,
+   "say": "DOWN x8 -- THE DRAWER KEEPS THE WHOLE OPEN CARD IN VIEW, AND COUNTS WHAT IS ABOVE AND BELOW"
+  },
+  {
+   "at": 2.1,
+   "key": "Down"
+  },
+  {
+   "after": 0.35,
+   "key": "Down"
+  },
+  {
+   "after": 0.35,
+   "key": "Down"
+  },
+  {
+   "after": 0.35,
+   "key": "Down"
+  },
+  {
+   "after": 0.35,
+   "key": "Down"
+  },
+  {
+   "after": 0.35,
+   "key": "Down"
+  },
+  {
+   "after": 0.35,
+   "key": "Down"
+  },
+  {
+   "after": 0.35,
+   "key": "Down"
+  },
+  {
+   "at": 5.6,
+   "mark": "last"
+  },
+  {
+   "at": 5.8,
+   "say": "THE LONGEST AUTHORED DESCRIPTION -- 158 OF PRODUCTION'S 160 CHARACTERS -- UNFOLDS IN FULL"
+  },
+  {
+   "at": 7.8,
+   "mark": "long"
+  },
+  {
+   "at": 8.0,
+   "say": "MOUSE WHEEL -- SCROLLS BY HAND; THE OPEN CARD STAYS OPEN"
+  },
+  {
+   "at": 8.4,
+   "wheel_page": [
+    900,
+    400,
+    -1
+   ]
+  },
+  {
+   "at": 8.7,
+   "wheel_page": [
+    900,
+    400,
+    -1
+   ]
+  },
+  {
+   "at": 9.0,
+   "wheel_page": [
+    900,
+    400,
+    -1
+   ]
+  },
+  {
+   "at": 10.2,
+   "mark": "wheel"
+  },
+  {
+   "at": 10.6,
+   "quit": true
+  }
+ ]
+}

@@ -313,6 +313,10 @@ func _sticks(delta: float) -> void:
 	if f.has_method("sticks"):
 		f.call("sticks", _stick, delta)
 		return
+	# The right stick scrolls by hand, where the prompt offers it.
+	var ry := float(_stick.get(JOY_AXIS_RIGHT_Y, 0.0))
+	if absf(ry) > 0.3 and f.has_method("scroll_by"):
+		f.call("scroll_by", ry * 900.0 * delta)
 	var y := float(_stick.get(JOY_AXIS_LEFT_Y, 0.0))
 	var x := float(_stick.get(JOY_AXIS_LEFT_X, 0.0))
 	if absf(y) < 0.5 and absf(x) < 0.5:
@@ -460,6 +464,9 @@ func _do(step: Dictionary) -> void:
 		if s.has("text_prompts"):
 			overlay.text_prompts = bool(s["text_prompts"])
 			_refresh()
+	if step.has("say"):
+		overlay.say(("SCRIPTED INPUT -- " + str(step["say"])) if str(step["say"]) != ""
+				else "")
 	if step.has("mark"):
 		_marks.append({"label": str(step["mark"]), "frame": _frame,
 			"t": _tape_t})

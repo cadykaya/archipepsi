@@ -1,0 +1,109 @@
+{
+ "about": "Controller: the pad's own symbols, then their text fallbacks. Scripted input for a capture, not hands-on.",
+ "steps": [
+  {
+   "at": 0.0,
+   "say": "CONTROLLER -- THE PROMPTS SWITCH TO THE PAD'S SYMBOLS ON ITS FIRST PRESS"
+  },
+  {
+   "at": 0.7,
+   "pad": "right"
+  },
+  {
+   "at": 1.5,
+   "pad": "down"
+  },
+  {
+   "at": 1.9,
+   "pad": "down"
+  },
+  {
+   "at": 2.8,
+   "mark": "pad_drawer"
+  },
+  {
+   "at": 3.0,
+   "say": "A -- PREVIEW ON RMB (LOCAL). LB -- TURN LEFT, TO THE MAP"
+  },
+  {
+   "at": 3.4,
+   "pad": "a"
+  },
+  {
+   "at": 4.4,
+   "pad": "lb"
+  },
+  {
+   "at": 5.4,
+   "say": "D-PAD RIGHT -- THE NEXT PLACE. RIGHT STICK -- ORBIT. RIGHT TRIGGER -- ZOOM"
+  },
+  {
+   "at": 5.8,
+   "pad": "right"
+  },
+  {
+   "at": 6.8,
+   "pad_axis": [
+    2,
+    0.8
+   ]
+  },
+  {
+   "at": 7.6,
+   "pad_axis": [
+    2,
+    0.0
+   ]
+  },
+  {
+   "at": 7.8,
+   "pad_axis": [
+    5,
+    0.9
+   ]
+  },
+  {
+   "at": 8.3,
+   "pad_axis": [
+    5,
+    0.0
+   ]
+  },
+  {
+   "at": 9.0,
+   "mark": "pad_map"
+  },
+  {
+   "at": 9.2,
+   "say": "Y -- MAPFACE'S RECENTRE: THE OVERVIEW"
+  },
+  {
+   "at": 9.6,
+   "pad": "y"
+  },
+  {
+   "at": 10.8,
+   "say": "REVIEW CONTROL -- PROMPTS: TEXT. EVERY SYMBOL HAS A READABLE FALLBACK"
+  },
+  {
+   "at": 11.2,
+   "set": {
+    "text_prompts": true
+   }
+  },
+  {
+   "at": 12.6,
+   "mark": "pad_text"
+  },
+  {
+   "at": 12.8,
+   "set": {
+    "text_prompts": false
+   }
+  },
+  {
+   "at": 13.2,
+   "quit": true
+  }
+ ]
+}
