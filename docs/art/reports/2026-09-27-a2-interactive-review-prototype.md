@@ -104,6 +104,12 @@ Every one of these was the prototype's own fault; none is in Production.
    - The open card is cut a line at a time, so it is never half-hidden as a
      hole and never spills past the wall.
    - A new measure, `holes`, is checked to be zero on every scroll.
+   - Brightened, the next capture showed the edge patch poking past the
+     wall onto the corner post. A thing a few centimetres off the wall is
+     seen magnified about the page's centre. The edges, and the drawer's
+     heading and counts, are now placed by their projection from the eye
+     (`Kit.lifted`), so they are seen exactly where they would be on the
+     wall.
    - All eight captures were then recorded again.
 
 ## For Production — recommendations only, none implemented there
@@ -169,4 +175,6 @@ These are in `HANDOFF_STATE_TRANSITIONS.md` §6.
 | `fbfa5c6` | the remaining demonstrations under test, and two fixes |
 | `15e5d3d` | the capture pipeline, the gameplay-size stills and the handoff drafts |
 | `ee052a9` | every binding under test; the review README, this report and the frontiers |
-| `5738865` | the drawer clips at its edges; two caption fixes. **The captures and the build in this archive are from this commit.** |
+| `5738865` | the drawer clips at its edges; two caption fixes |
+| `35e11a8` | the documents follow |
+| `076cad7` | the drawer's edges are placed as the eye sees them. **The captures and the build in this archive are from this commit.** |

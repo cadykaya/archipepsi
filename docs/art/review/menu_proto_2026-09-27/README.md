@@ -131,7 +131,7 @@ orbit, tilt and detail state tried.
      transform;
    - `tapes/test_core.json` has **58** checks, `tapes/test_more.json` **94**
      and `tapes/test_inputs.json` **43**: **195**, all passing at the build's
-     commit, `5738865`;
+     commit, `076cad7`;
    - `test_inputs` presses every binding the prompts name at least once,
      and the handoff §7 lists which tape presses which;
    - the staged build passes `test_core` on its own, outside the

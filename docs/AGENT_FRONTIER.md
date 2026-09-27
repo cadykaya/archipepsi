@@ -132,7 +132,7 @@ Settings/Pause is reachable but undesigned.
 
 | | |
 |---|---|
-| Build | `tools/menu_proto` @ `5738865` (the captures too) |
+| Build | `tools/menu_proto` @ `076cad7` (the captures too) |
 | Review | `docs/art/review/menu_proto_2026-09-27/` |
 | Report | `docs/art/reports/2026-09-27-a2-interactive-review-prototype.md` |
 | Handoff | `HANDOFF_STATE_TRANSITIONS.md` and `HANDOFF_GLYPH_ASSETS.md`, in the review folder |

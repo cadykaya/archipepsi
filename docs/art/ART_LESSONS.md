@@ -2235,3 +2235,17 @@ whole position exists, and the wheel stops dead.
 > **A scrolling list needs a window: edges that cover what passes under
 > them, and items cut at those edges (here a line at a time). Test for
 > holes, not for "is the item drawn".**
+
+## Lift is magnification
+
+Everything in the menu box is seen from one eye, and a thing raised off the
+wall is seen magnified about the page's centre, by D / (D − lift). At the
+wall's edge, 4.5 cm of lift moved a patch 30 px outward. It poked past
+the wall onto the corner post, and a heading that should have aligned with
+the list's edge sat 50 px beyond it. Neither showed until the frame was
+brightened.
+
+> **When a raised thing must line up with the wall (a patch of the wall,
+> a heading over a list), place it by its projection: position it at
+> `lifted(page, lift)` and scale it by `lift_scale(lift)`. Check alignment
+> in a brightened crop, because dark UI hides a 30 px error.**

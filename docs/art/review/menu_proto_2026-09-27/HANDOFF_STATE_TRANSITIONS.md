@@ -159,6 +159,10 @@ Production's five menu actions verbatim:
   the band the edges cover. So a card half-scrolled out is still drawn
   where it shows, and never leaves a hole or spills past the wall.
 - The drawer's header and its "N MORE" counts sit above the edges.
+- Anything raised off the wall is seen magnified about the page's centre
+  (by D / (D − lift)). So the edges, and the words over them, are placed
+  by their projection (`Kit.lifted`, `Kit.lift_scale`), and are seen
+  exactly on their page rects.
 - `state().holes` is the largest empty stretch of the view with content
   beyond it. The tapes assert it stays under one strip's height.
 
@@ -426,7 +430,7 @@ These are recommendations only. Each one says what the prototype does.
 | Scope | What it covers |
 |---|---|
 | **Implemented** | everything in §§2–5 |
-| **Exercised by scripted input through the real input path** (`Input.parse_input_event`: keys, mouse buttons and motion, pad buttons and axes; points carried through the viewport's final transform) | `tapes/test_core.json`: **58** checks, `tapes/test_more.json`: **94**, and `tapes/test_inputs.json`: **43** — **195** in all, every one passing at `5738865`. The eight captures (`captures/*.mp4`) are scripted as well. |
+| **Exercised by scripted input through the real input path** (`Input.parse_input_event`: keys, mouse buttons and motion, pad buttons and axes; points carried through the viewport's final transform) | `tapes/test_core.json`: **58** checks, `tapes/test_more.json`: **94**, and `tapes/test_inputs.json`: **43** — **195** in all, every one passing at `076cad7`. The eight captures (`captures/*.mp4`) are scripted as well. |
 | **Hands-on use** | **not done by me.** No person has used this build with a real keyboard, mouse or controller. That review is the owner's. |
 
 What the scripted checks cover:
