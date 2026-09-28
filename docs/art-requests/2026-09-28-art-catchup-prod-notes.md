@@ -58,3 +58,20 @@ untracked files outside what it generates alone.
   counter-height version?), not a texture swap, so they wait for that
   decision.
 - `hub_lab_doorway.glb` was refreshed as source only; it is not placed.
+
+## 4. One glyph for the Glyph text face: `ε` (owner request, 2026-09-28)
+
+`ui_text.fnt` has no `ε` (U+03B5), and one of Epsilon's transit signs
+reads "PLATFORM ε" (`ChamberBuilders.TRANSIT_SIGNS`). The owner asked for
+the character through the font-authoring pipeline. Production will not
+hand-edit the font.
+
+- **Until then:** that one glyph is drawn from the engine's fallback font,
+  through a `FontVariation` wrapper (`ChamberBuilders._letter_sign`). The
+  menu's shared face is not touched. Review frames that show it are
+  labelled "temporary ε fallback".
+- **When the addition is pinned:** Production imports the regenerated
+  `ui_text.fnt` and `ui_text.png` byte for byte. It drops the fallback
+  and re-checks the line as Glyph only. The face's 8 px design size, and
+  a width in keeping with the other capitals, keep the one lettering size
+  every sign shares.
