@@ -120,6 +120,10 @@ are excluded.
 The face is now **74 characters**. The font-import verifier passes, and a
 regeneration from source is byte-identical.
 
+*2026-09-28: it is 75, with `ε` (U+03B5) added for Production's sign
+"PLATFORM ε". No other character changed; see
+`docs/art/review/glyph_epsilon_2026-09-28/README.md`.*
+
 ### Punctuation and arrows
 
 | Char | Where |
