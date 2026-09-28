@@ -17,6 +17,11 @@ extends RefCounted
 ## the player farm kill events in the Hub, which would make the Lab alter
 ## the economy it exists to inspect. So it clamps at 1 hp and reports the
 ## damage instead.
+## The approved Batch 004 models (PASS 28 Aug), or null when not shipped.
+static func art(model: String) -> Mesh:
+	return ArtModels.mesh("res://content/lab/lab_%s.glb" % model)
+
+
 class LabDummy extends StaticBody3D:
 	signal damage_taken(amount: float)
 
@@ -52,6 +57,13 @@ class LabDummy extends StaticBody3D:
 		_core.position = Vector3(0, 0.95, 0)
 		_core.material_override = ThemeMaterials.glow_material(
 				Color(0.75, 0.7, 0.6), 0.5)
+		var authored := LabFixtures.art("dummy")
+		if authored != null:
+			# The facility's painted post, floor-anchored. The collider
+			# stays the capsule the Lab has always measured against.
+			_core.mesh = authored
+			_core.position = Vector3.ZERO
+			_core.material_override = null
 		add_child(_core)
 		_label = Label3D.new()
 		_label.font_size = 26
@@ -94,6 +106,8 @@ class LabDummy extends StaticBody3D:
 			_core.material_override = ThemeMaterials.glow_material(
 					Color(0.75, 0.7, 0.6).lerp(Color(1.0, 0.5, 0.4), _flash),
 					0.5 + _flash)
+			if _flash == 0.0 and LabFixtures.art("dummy") != null:
+				_core.material_override = null
 
 	func _refresh() -> void:
 		if _label == null:
@@ -203,6 +217,10 @@ class LabHazard extends StaticBody3D:
 		mesh.size = Vector3(1.4, 1.6, 1.4)
 		_core.mesh = mesh
 		_core.position = Vector3(0, 0.8, 0)
+		var authored := LabFixtures.art("hazard")
+		if authored != null:
+			_core.mesh = authored
+			_core.position = Vector3.ZERO
 		add_child(_core)
 		_label = Label3D.new()
 		_label.font_size = 24
@@ -230,9 +248,20 @@ class LabHazard extends StaticBody3D:
 				(node as Player).take_damage(DAMAGE, global_position)
 
 	func _refresh() -> void:
-		_core.material_override = ThemeMaterials.glow_material(
+		var state := ThemeMaterials.glow_material(
 				Color(1.0, 0.35, 0.3) if armed else Color(0.3, 0.3, 0.35),
 				1.6 if armed else 0.4)
+		# On the authored crate only its emitter changes: the striped body
+		# is the permanent telegraph, the lit part says armed or safe.
+		var lit := ArtModels.surface(_core.mesh, "_lit") \
+				if LabFixtures.art("hazard") != null else -1
+		if lit >= 0:
+			if armed:
+				_core.set_surface_override_material(lit, null)
+			else:
+				_core.set_surface_override_material(lit, state)
+		else:
+			_core.material_override = state
 		_label.text = "HAZARD  %s" % ("ARMED" if armed else "SAFE")
 
 	func interact_prompt() -> String:

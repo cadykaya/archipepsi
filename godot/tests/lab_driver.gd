@@ -49,6 +49,7 @@ func _run() -> void:
 	player.global_position = lab.global_position + Vector3(0, 1, 4)
 
 	_fixtures_exist(lab)
+	_the_measures_say_the_engines_numbers(lab)
 	_dummy_takes_real_damage(lab, player)
 	_dummy_cannot_be_farmed(lab)
 	_statuses_apply_and_clear(lab)
@@ -117,6 +118,41 @@ func _fixtures_exist(lab: EchoLab) -> void:
 		_check(lab.fixture(fixture_name) != null, "the Lab has a %s" % fixture_name)
 	_check(lab.get_node_or_null("GapRecovery") != null,
 			"the gap has a recovery trigger")
+
+## ART-CATCHUP: the approved graduated fixtures (batch 004) are MEASURING
+## instruments, so their called-out marks must sit on the engine's own
+## numbers, not near them: the runway's reach mark at JUMP_FLAT_REACH from
+## the start line, the height strip's callouts at MAX_VERTICAL_STEP and
+## JUMP_APEX_HEIGHT. Checked only where the art is shipped.
+func _lit_extent(lab: EchoLab, path: String, axis: int) -> PackedFloat32Array:
+	var node := lab.get_node_or_null(path) as MeshInstance3D
+	var out := PackedFloat32Array()
+	if node == null:
+		return out
+	var lit := ArtModels.surface(node.mesh, "_lit")
+	if lit < 0:
+		return out
+	var to_lab := lab.global_transform.affine_inverse() * node.global_transform
+	for v: Vector3 in node.mesh.surface_get_arrays(lit)[Mesh.ARRAY_VERTEX]:
+		out.append((to_lab * v)[axis])
+	return out
+
+func _the_measures_say_the_engines_numbers(lab: EchoLab) -> void:
+	var zs := _lit_extent(lab, "RunwayMeasure1", 2)
+	if not zs.is_empty():
+		var mid: float = 0.5 * (float(Array(zs).min()) + float(Array(zs).max()))
+		_check(absf(mid - Constants.JUMP_FLAT_REACH) < 0.02,
+				"the runway's reach mark is at %.3f m, the jump reaches %.3f m"
+				% [mid, Constants.JUMP_FLAT_REACH])
+	var ys := _lit_extent(lab, "TallWall/HeightMarkers", 1)
+	for want: float in [Constants.MAX_VERTICAL_STEP, Constants.JUMP_APEX_HEIGHT]:
+		if ys.is_empty():
+			break
+		var near := false
+		for y in ys:
+			if absf(y - want) < 0.05:
+				near = true
+		_check(near, "the height strip has no callout at %.3f m" % want)
 
 ## The dummy answers `Enemy`'s own signature, so the production attack
 ## paths reach it unchanged. Damage is applied through that, never by
