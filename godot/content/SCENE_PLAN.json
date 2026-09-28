@@ -74,6 +74,78 @@
    "markers": []
   },
   {
+   "content_id": "shell_concourse_pier",
+   "kind": "shells",
+   "asset": "shell_concourse_pier",
+   "glb": "res://content/shells/shell_concourse_pier.glb",
+   "markers": [
+    {
+     "name": "entry_to_exit_start",
+     "position": [
+      0.0,
+      0.0,
+      1.0
+     ]
+    },
+    {
+     "name": "entry_to_exit_end",
+     "position": [
+      4.8,
+      0.0,
+      21.0
+     ]
+    },
+    {
+     "name": "floor_to_gallery_start",
+     "position": [
+      -6.8,
+      0.0,
+      12.7
+     ]
+    },
+    {
+     "name": "floor_to_gallery_end",
+     "position": [
+      -6.8,
+      3.5,
+      2.0
+     ]
+    },
+    {
+     "name": "gallery_to_pier_start",
+     "position": [
+      1.2,
+      3.5,
+      2.0
+     ]
+    },
+    {
+     "name": "gallery_to_pier_end",
+     "position": [
+      0.8,
+      3.5,
+      10.5
+     ]
+    },
+    {
+     "name": "pier_to_exit_start",
+     "position": [
+      2.4,
+      3.5,
+      10.5
+     ]
+    },
+    {
+     "name": "pier_to_exit_end",
+     "position": [
+      4.8,
+      0.0,
+      21.0
+     ]
+    }
+   ]
+  },
+  {
    "content_id": "shell_corner_left",
    "kind": "shells",
    "asset": "shell_corner_left",
@@ -1514,6 +1586,31 @@
    "runtime_substitution": "pending",
    "runtime_reverted_reason": "silhouette and tint regressed against the engine's own ProjectileSilhouette in the A/B",
    "triangles": 104
+  },
+  {
+   "content_id": "shell_concourse_pier",
+   "source_asset": "batch062/shells/shell_concourse_pier",
+   "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "p1_contract": {
+    "surfaces": 4,
+    "traversal": 4,
+    "volumes": 5,
+    "sockets": 2,
+    "exit_yaw": 0.0,
+    "size_class": "medium",
+    "size_class_source": "owner brief 2026-09-28: one ORDINARY room for the next playable test, not a large showcase; NOT derived from geometry",
+    "fits_floors": [],
+    "chamber_type": "arena",
+    "shape_tags": [
+     "concourse",
+     "gallery"
+    ],
+    "collision": 38,
+    "offers": [],
+    "surface_probe": []
+   },
+   "triangles": 540
   },
   {
    "content_id": "shell_corner_left",

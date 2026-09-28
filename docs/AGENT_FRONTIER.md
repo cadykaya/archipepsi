@@ -147,6 +147,12 @@ design** (sixth ruling, 2026-09-27); ART_FRONTIER §11 has the record.
   library is DELIVERED; HOLD for decisions.**
   `docs/art/review/owner_review_2026-09-28/START_HERE.md`. Production was
   read at pin `c12a72f` only; nothing was promoted, bound or repaired.
+* **2026-09-28: one ordinary room for the next playtest is DELIVERED;
+  STOP.** `shell_concourse_pier`, review `pending`, on
+  `claude/archipepsi-art-room-2026-09-28`. Handoff:
+  `docs/art/reports/2026-09-28-ordinary-room.md`. Walked with no jumps by
+  Production's own `Player` at `17b76098`; Prod adds the lightly
+  populated comparison and packages the playtest.
 * **2026-09-28: a read-only audit of what art is in the game** (asked by
   the owner): `docs/art/reports/2026-09-28-art-vs-game.md`.
   * The game loads only `godot/content`: 6 fixtures, 12 shells, the

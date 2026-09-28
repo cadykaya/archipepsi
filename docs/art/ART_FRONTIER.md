@@ -3311,6 +3311,18 @@ separately.
 **Next: HOLD** for the owner's decisions. New approvals arrive as a
 separate owner message.
 
+### Delivered, 2026-09-28 — one ordinary room for the next playtest. STOPPED.
+
+`shell_concourse_pier` (Batch 062), on `claude/archipepsi-art-room-2026-09-28`,
+review `pending`. Handoff: `docs/art/reports/2026-09-28-ordinary-room.md`.
+Built through the shell pipeline, walked with no jumps by Production's own
+`Player` at `17b76098`, and built and audited clean by Production's own
+census.
+
+**Next: STOP.** Prod adds the lightly populated comparison and packages
+the playtest. This was one room, not the room programme; nothing further
+starts without a new brief.
+
 ### Standing notes
 
 Heartbeat, watchers, subscriptions and scheduled check-ins stay off.

@@ -1,0 +1,48 @@
+# sh tools/content/run_room_walk.sh <out-dir>   at room commit 697fd8af, PROD_REF=17b76098
+# the [room], [walk] and [census] lines of the run that made the two pictures;
+# the census's list of every shell's crossings is cut to this room's two
+[room] import ok
+[walk]   control              in through the entrance            at (-0.00, 0.00, 1.29)  standing at 0.00
+[walk]   control              under the bridge                   at (0.74, 0.00, 5.66)  standing at 0.00
+[walk]   control              into the pier (must be refused)    stopped at (0.78, 0.00, 7.60), touching cp_pier
+[walk] ok   control            3 legs, 9.9 m in 2.0 s, longest airborne spell 0 frame(s); eye 1.60 m above the feet, fov 90
+[walk]   floor                in through the entrance            at (-0.00, 0.00, 1.29)  standing at 0.00
+[walk]   floor                out from under the gallery         at (5.56, 0.00, 5.81)  standing at 0.00
+[walk]   floor                down the exit-side lane past the pier at (5.80, 0.00, 15.66)  standing at 0.00
+[walk]   floor                to the exit                        at (4.86, 0.00, 20.71)  standing at 0.00
+[walk]   floor                out through the exit               at (4.80, 0.00, 23.74)  standing at 0.00
+[walk] ok   floor              5 legs, 28.4 m in 4.2 s, longest airborne spell 0 frame(s); eye 1.63 m above the feet, fov 90
+[walk]   upper loop           in through the entrance            at (-0.00, 0.00, 1.29)  standing at 0.00
+[walk]   upper loop           into the stair-side lane           at (-3.63, 0.00, 5.80)  standing at 0.00
+[walk]   upper loop           behind the pier                    at (-3.80, 0.00, 13.00)  standing at 0.00
+[walk]   upper loop           to the foot of stair A             at (-6.54, 0.00, 13.29)  standing at 0.00
+[walk]   upper loop           up stair A onto the gallery        at (-6.80, 3.50, 2.51)  standing at 3.50
+[walk]   upper loop           along the gallery to the bridge    at (0.96, 3.50, 2.20)  standing at 3.50
+[walk]   upper loop           over the bridge onto the pier      at (1.20, 3.50, 9.73)  standing at 3.50
+[walk]   upper loop           to the head of stair B             at (2.28, 3.50, 12.16)  standing at 3.50
+[walk]   upper loop           down stair B                       at (2.40, 0.00, 21.02)  standing at 0.00
+[walk]   upper loop           to the exit                        at (4.56, 0.00, 21.29)  standing at 0.00
+[walk]   upper loop           out through the exit               at (4.79, 0.00, 23.69)  standing at 0.00
+[walk] ok   upper loop         11 legs, 64.9 m in 9.0 s, longest airborne spell 3 frame(s); eye 1.61 m above the feet, fov 90
+[walk]   drop from the pier   in through the entrance            at (-0.00, 0.00, 1.29)  standing at 0.00
+[walk]   drop from the pier   into the stair-side lane           at (-3.63, 0.00, 5.80)  standing at 0.00
+[walk]   drop from the pier   behind the pier                    at (-3.80, 0.00, 13.00)  standing at 0.00
+[walk]   drop from the pier   to the foot of stair A             at (-6.54, 0.00, 13.29)  standing at 0.00
+[walk]   drop from the pier   up stair A onto the gallery        at (-6.80, 3.50, 2.51)  standing at 3.50
+[walk]   drop from the pier   along the gallery to the bridge    at (0.96, 3.50, 2.20)  standing at 3.50
+[walk]   drop from the pier   over the bridge onto the pier      at (1.20, 3.50, 9.73)  standing at 3.50
+[walk]   drop from the pier   off the pier's stair-side edge     at (-5.70, 0.70, 10.73)  standing at 0.70
+[walk]   drop from the pier   back down to the floor             at (-3.92, 0.00, 14.28)  standing at 0.00
+[walk] ok   drop from the pier 9 legs, 56.8 m in 8.3 s, longest airborne spell 12 frame(s); eye 1.58 m above the feet, fov 90
+[walk] PASS -- the real player walked every route, no jumps
+[room] walk ok
+[room] census ok
+[census]   shell_concourse_pier     PASS     surf=4  trav=4  sock=7  doors=2 mesh=1  hull=38 structural=0 measured=0
+[census]     crossed (this room): shell_concourse_pier/entry (3.10 m past, 0.08 m of dip), shell_concourse_pier/exit (3.11 m past, 0.08 m of dip)
+[room] census: shell_concourse_pier built and audited clean
+[room] census: a real body crossed shell_concourse_pier/entry onto its stub
+[room] census: a real body crossed shell_concourse_pier/exit onto its stub
+[walk] shot <out-dir>/room_entry_eye.png  eye at (0.00, 1.60, 1.20)  looking (0.00, -0.00, 1.00)
+[walk] shot <out-dir>/room_pier_eye.png  eye at (1.20, 5.10, 11.60)  looking (-0.00, -0.21, -0.98)
+[room] shots ok
+[room] PASS at Production 17b76098
