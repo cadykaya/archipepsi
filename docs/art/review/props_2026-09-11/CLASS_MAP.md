@@ -138,6 +138,8 @@ is bare and everything else is cast. That is the sentence the class needs:
 `room/PROPS_fixed_vs_movable_bright.png` and `_dark.png` put it beside a
 320 kg `BALLAST` — four attach pads, skids, and meant to move.
 
+*(Corrected 2026-09-28: overstated. `manipulation.json` gives the ballast `push: no`. A device moves it by its four pads; a hand does not push it.)*
+
 ## Coordinate spaces, and the origin shift
 
 Blender authors **Z-up**; glTF is **Y-up by definition** and the exporter

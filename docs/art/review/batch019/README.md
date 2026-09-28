@@ -48,4 +48,6 @@ was the name rather than the camera.
 
 Status: **PENDING**. Not self-marked.
 
+*(Corrected 2026-09-28: this batch has since been reviewed: **PASS**. The verdict is in `docs/art/ART_REVIEW.md`.)*
+
 **Tier 7 is complete**: 19 shells across six families.

@@ -96,3 +96,23 @@ rebuilt:
 
 Both were failures of the same kind: an object whose verb was present in the
 design and absent in the silhouette.
+
+
+## Corrected 2026-09-28 — the numbers after 035-R
+
+The table above is from before 035-R revised this kit in place, and its
+sheets were never re-rendered. These are the numbers in the batch's own
+manifest (`assets/models/batch028/interaction/manifest.json`) today. The
+old table is left standing as the record of what was reviewed.
+
+| asset | tris | size (m) |
+|---|---|---|
+| `int_carryable` | 252 | 0.64 × 0.48 × 0.66 |
+| `int_weight_button` | 144 | 0.96 × 1.05 × 0.23 |
+| `int_wall_switch` | 152 | 0.39 × 0.55 × 1.54 |
+| `int_door_mechanism` | 228 | 1.20 × 0.55 × 2.30 |
+| `int_logic_indicator` | 192 | 0.30 × 0.23 × 1.73 |
+| `int_launcher` | 188 | 0.90 × 0.96 × 0.62 |
+| `int_breakable` | 252 | 1.14 × 0.24 × 1.90 |
+| `int_key_receiver` | 168 | 0.48 × 0.34 × 1.56 |
+| `int_machinery` | 244 | 1.16 × 0.78 × 1.25 |

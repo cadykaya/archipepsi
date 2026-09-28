@@ -38,6 +38,8 @@ git diff --stat 7ea95e2 HEAD -- assets/models/batch043 \
                                 assets/textures/batch043     # empty
 ```
 
+> **Corrected 2026-09-28: no longer empty.** Batch 053 (22 Sept) changed the physics props after `7ea95e2`. It added `lightened_panel_*` to the eleven manipulable props and renamed the cart's `grip_bar` to `push_bar`. The 2026-09-28 repair then gave those panels their own material. This document still describes `7ea95e2`; where it differs, the manifests at the current head are authoritative.
+
 One thing outside Batch 043 did move after `7ea95e2`, and it is named here
 rather than left for someone to find in a diff. Revision 3 taught the
 exporter to annotate its `size` field with the axes it is in; only Batch
@@ -131,7 +133,7 @@ unit `normal` in runtime axes, and what it proposes. Twenty-one in total:
 | `phys_drum` | `attach_hub_0/1` — end hubs on the rolling axis, `n = (±1, 0, 0)` |
 | `phys_girder` | `attach_end_a/b` — end plates, `n = (±1, 0, 0)` |
 | `phys_weighted` | `attach_push_0/1` — opposite push faces, `n = (0, 0, ±1)` |
-| `phys_cart` | `grip_bar` — a push bar at one end only, `n = (−1, 0, 0)` |
+| `phys_cart` | `grip_bar` — a push bar at one end only, `n = (−1, 0, 0)` *(Corrected 2026-09-28: named `push_bar` since Batch 053.)* |
 | `phys_movable_cover` | `attach_push_0/1` — push faces on both sides, `n = (0, 0, ±1)` |
 | `phys_ballast` | `attach_pad_0…3` — four pads, `n` on ±X and ±Z |
 | `phys_anchor_block` | `attach_eye` — the tether eye, `n = (0, 1, 0)`. The **only** fitting on the class |

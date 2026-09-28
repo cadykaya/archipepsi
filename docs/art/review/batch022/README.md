@@ -1,6 +1,8 @@
 # Batch 022 — PROPOSAL: the navigation language
 
 **Status: PENDING.** Art does not mark its own work. Nothing here is
+
+*(Corrected 2026-09-28: this batch has since been reviewed: **PASS**. The verdict is in `docs/art/ART_REVIEW.md`.)*
 approved, and 020 and 021 remain PENDING alongside it.
 
 ## The finding that shrank this batch

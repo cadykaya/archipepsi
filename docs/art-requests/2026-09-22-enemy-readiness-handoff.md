@@ -193,6 +193,8 @@ melee/ranged/brute`**, which is requirement 31 and is unchanged. An
 unsupported role can be art-ready without being spawnable, and Art has
 deliberately not routed around it.
 
+*(Corrected 2026-09-28: no longer true. At Production's `c12a72f` all ten roles are in `ENEMY_ARCHETYPES` and spawn, so req 31 is resolved in Production's code. The frames' stamps are left as the record of 22 September.)*
+
 ---
 
 ## 5 · What is NOT done, precisely

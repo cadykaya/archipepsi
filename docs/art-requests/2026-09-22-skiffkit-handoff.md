@@ -46,6 +46,8 @@ loaded frame of this batch showed, and why the variant exists.
 The lamps are state nodes rather than guard, so `lamp_fore` and
 `lamp_aft` survive on the bare hull at deck level.
 
+*(Corrected 2026-09-28: `lamp_fore` was the TRAILING lamp. RailCarrier's FORWARD is the node's +Z (`rail_carrier.gd:420` at `c12a72f`). The repair branch renames both ends so that every `*_fore` part is at +Z. See `docs/art/review/repairs_2026-09-28/`.)*
+
 ---
 
 ## 2 · The cover height is not Art's to change

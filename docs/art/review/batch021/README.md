@@ -42,3 +42,5 @@ the seven affordances it mounts are approved, so it has a contract and just
 was not in scope here. `arch_vista_socket` has no contract at all.
 
 Status: **PENDING**. Not self-marked.
+
+*(Corrected 2026-09-28: this batch has since been reviewed: **PARTIAL PASS, then fully PASS with 021-R**. The verdict is in `docs/art/ART_REVIEW.md`.)*

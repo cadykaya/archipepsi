@@ -42,3 +42,5 @@ with the navigation language. A socket's size and shape prejudge what plugs
 into it, so building them now would decide that language sideways.
 
 Status: **PENDING**. Not self-marked.
+
+*(Corrected 2026-09-28: this batch has since been reviewed: **PASS**. The verdict is in `docs/art/ART_REVIEW.md`.)*
