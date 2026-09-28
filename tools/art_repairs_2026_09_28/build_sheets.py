@@ -187,43 +187,51 @@ def s_danger(frames, out):
                  top + r + lane[1] * ppm], fill=art_col)
     d.ellipse([cx - 6, top + r - 6, cx + 6, top + r + 6], fill=(255, 216, 77))
     d.text((cx - 130, top + L + 2 * r + 12),
-           "CHARGER · hit within %.1f m of\na %.1f m rush: %.1f × %.1f m\n"
-           "art lane %.1f × %.1f m" % (radius, travel, 2 * radius,
-                                       travel + 2 * radius, lane[0], lane[1]),
+           "CHARGER · code reading: hit within\n%.1f m of a %.1f m rush: "
+           "%.1f × %.1f m\nart lane %.1f × %.1f m" % (
+               radius, travel, 2 * radius, travel + 2 * radius, lane[0],
+               lane[1]),
            fill=ink, font=f)
     # 2. The artillery: the blast and the art ring.
-    ax, ay = 470, 250
+    ax, ay = 470, 190
     d.ellipse([ax - blast * ppm, ay - blast * ppm, ax + blast * ppm,
                ay + blast * ppm], outline=true_col, width=3)
     d.ellipse([ax - warned * ppm, ay - warned * ppm, ax + warned * ppm,
                ay + warned * ppm], fill=art_col)
     d.text((ax - 150, ay + blast * ppm + 16),
-           "ARTILLERY · blast r %.1f m\n(the runtime already draws this disc)"
-           "\nart ring r %.1f m" % (blast, warned), fill=ink, font=f)
+           "ARTILLERY · code reading: blast r %.1f m\n(the runtime already "
+           "draws this disc);\nit can burst early, where the arc meets\n"
+           "something\n"
+           "art ring r %.1f m" % (blast, warned), fill=ink, font=f)
     # 3. The beacon: an ally aura, not player damage.
     bx, by = 1010, 270
     dashed_circle(bx, by, aura * ppm)
     d.ellipse([bx - ring * ppm, by - ring * ppm, bx + ring * ppm,
                by + ring * ppm], fill=art_col)
     d.text((bx - 185, by + aura * ppm + 14),
-           "BEACON · r %.0f m: ENEMIES inside hit\nharder. Not damage to "
-           "the player.\nart ring r %.1f m" % (aura, ring), fill=ink, font=f)
-    d.text((24, H - 34), "1 m = %d px. White: the runtime's reach at "
-           "c12a72f. Blue: the candidate art mark. Yellow dot: the "
-           "charger at the start of its rush." % ppm, fill=ink, font=f)
+           "BEACON · code reading: r %.0f m support\naura. ENEMIES inside "
+           "hit harder.\nNot damage to the player.\nart ring r %.1f m"
+           % (aura, ring), fill=ink, font=f)
+    d.text((24, H - 56), "1 m = %d px. White: the reach read from "
+           "Production's code at c12a72f, not tested in play.\nBlue: the "
+           "candidate art mark. Yellow: the charger at the start of its "
+           "rush." % ppm, fill=ink, font=f)
     plan = os.path.join(frames, "danger_plan.png")
     img.save(plan)
 
     s = Sheet("Danger marks · the runtime's real reach, to scale",
-              "The geometry a boundary mark would have to match, read from "
-              "Production at c12a72f. No presentation is chosen here, and "
-              "no mark was rebuilt.")
+              "The geometry a boundary mark would have to match, as read "
+              "from Production's code at c12a72f. These are code readings, "
+              "not tested in play and not an approved presentation. No "
+              "presentation is chosen here, and no mark was rebuilt.")
     s.statuses(visual=("pending", "PENDING. Presentation is the owner's "
                                   "call."),
                compat=("no", "Undersized for a boundary; the charger lane "
                              "is also too narrow."),
-               binding=("none", "None; the seam would be telegraph_started "
-                                "and telegraph_finished."),
+               binding=("none", "None. For the charger and artillery the "
+                                "seam would be telegraph_started and "
+                                "telegraph_finished. The beacon has no "
+                                "telegraph."),
                play=("no", "No. The runtime draws its own blast disc."))
     s.row([Panel(plan, "", tag="SCALE")])
     s.text("A warning or a boundary",
@@ -233,6 +241,12 @@ def s_danger(frames, out):
            "At their current sizes all three marks are warnings. Used as "
            "boundaries they would promise safety that does not exist. "
            "Details: DANGER_MARKS.md.")
+    s.text("Code readings, not tests",
+           "Every reach on this sheet comes from reading Production's code "
+           "at c12a72f. That includes the charger's footprint, the "
+           "artillery's early burst where its arc meets something, and "
+           "the beacon's 12 m support radius. None was tested in play, and "
+           "none is an approved presentation.")
     s.text("Correction to my own review",
            "D2 drew the charger's reach as the 0.9 m art lane stretched to "
            "14.3 m. The runtime hits anywhere within %.1f m of the "
@@ -240,14 +254,19 @@ def s_danger(frames, out):
            "2026-09-28.)" % (radius, 2 * radius))
     s.footer("Plan drawn from Production's constants at c12a72f, read with "
              "git show, and from the marks' own manifest; no number is "
-             "typed. Arty, 2026-09-28.")
+             "typed. Corrected 2026-09-28, follow-up: the binding line had "
+             "named the seam for all three marks, but the beacon has none; "
+             "code-reading labels added. Arty, 2026-09-28.")
     return s.save(os.path.join(out, "4_danger_marks_to_scale.jpg"))
 
 
 def main():
+    """<frames> <out-dir> [sheet function ...]: all sheets, or just those."""
     frames, out = sys.argv[1], sys.argv[2]
     os.makedirs(out, exist_ok=True)
-    for build in (s049, s_skiff, s_panels, s_danger):
+    every = (s049, s_skiff, s_panels, s_danger)
+    only = sys.argv[3:]
+    for build in (b for b in every if not only or b.__name__ in only):
         path = build(frames, out)
         print("%s  %.0f KB" % (path, os.path.getsize(path) / 1024.0))
 
