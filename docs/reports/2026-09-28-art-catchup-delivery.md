@@ -52,7 +52,8 @@ Here is what is new in normal play.
 - Each theme's dressing is the approved prop:
   - gothic: sconces with their flame;
   - rusted: drums (stacked sometimes) or valves;
-  - neon: transit signs, whose text is on the lit face;
+  - neon: transit signs, whose text is on the lit face, in the
+    menu's Glyph lettering, centred, with no outline;
   - temple: roots and stumps;
   - concrete: the warning plate.
 - Concrete and neon rooms carry the course-ruled walls and ceilings.
@@ -179,8 +180,19 @@ These are only the questions integration raised:
 
   The new checks were proven with sabotage runs: a shared tint, a moved
   runway, a shared panel glow, and a changed drum collider.
-- **The combined build:** CK13, the full frontier, on the art head.
-  Result: *(to be filled from the run)*.
+- **The combined build.** Each run is its own record:
+  - **CK13** (full frontier, art head `ac7c206f`): **91 of 92**. Step 1
+    (`make test`) failed on a real defect of this catch-up: the props
+    licence entry let the licence gate's own intruder pass. It was fixed
+    in `59d47250`, and `make test` then passed (2313).
+  - **Follow-ups, verified one at a time after CK13:**
+    - the licence fix;
+    - the lab's shipped-art check;
+    - the owner's transit-sign correction (`86015a7b`), and Arty's
+      Glyph ε (`bba44ffb`, imported in `8113fa08`, fallback removed);
+    - Arty's `verify_content_pack.sh` fix: her preservation test from
+      this tree, with nothing deleted, overwritten or added.
+  - **CK14** (full frontier on the delivery head): see the ledger.
 - **Visual:** the before/after frames in `images/`, from the same camera
   and state. They are renders, not play.
 - **Not done:** nobody has played this build. There is no performance
