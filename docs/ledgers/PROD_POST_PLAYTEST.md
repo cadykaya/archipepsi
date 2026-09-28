@@ -6729,3 +6729,43 @@ verified separately, each on the tree named.
   size on the same face.
 - The comparison frames are labelled as an isolated preview. The game
   is unchanged pending the owner's ruling.
+
+### Arty's Glyph ε imported (follow-up, after CK13)
+
+- **Source:** Arty's glyph-only commit `94f6e82a`, cherry-picked as
+  `bba44ffb`. It carries `ui_text.fnt`, `ui_text.png` and
+  `author_text.py`. The repair branch was not merged.
+- **Import:** `tools/import_ui_kit.sh` copied the pair together, byte
+  for byte. The sidecars are unchanged, and `test_ui_kit_identity`
+  passes.
+- **The sign (`8113fa08`):** the temporary fallback is removed.
+  - The sign letters in the Glyph face alone. "PLATFORM ε" is set as
+    written (U+03B5, never upper-cased), and its line height now matches
+    the other five.
+  - The sign check requires every character from Glyph itself. A
+    sabotage run with the old face fails it.
+- **The 15 characters the atlas moved** (—“”…←↑→↓▸▾★☆✓✕✗): identical
+  pixels and metrics at their new positions. ε is the only new
+  character. An in-engine proof renders them all.
+- **Green:** affordance, legible, content, zone-audit, menu-shell,
+  equipment-face, map-face, journal-face.
+- **Renders** (Forward+, FOV 90, eye height): the normal approach and a
+  close, angled view, for "PLATFORM ε" and for the longest line.
+
+### CK14 — the full frontier on the delivery head `17b76098`: 92 of 92
+
+Run alone, in an isolated worktree, from a fresh import, with the same
+92 steps. It covers everything above: the licence fix, the shipped-art
+check, the sign correction, the Glyph ε, and Arty's verifier fix. Evidence:
+`post_playtest_evidence/CK14_frontier_on_17b76098.tsv`. The tree's only
+change is the zone audit's `source_commit` stamp.
+
+**The pinned build:** `archipepsi-0.4-ART-CATCHUP-17b76098.zip` (1503
+files), the same path list as the CK10 and MENU-INT builds, plus
+`ART-CATCHUP_BUILD_NOTE.txt`.
+- Checked from a clean unpack (Linux): the Godot import, `godot-boot`
+  OK, and the candidate launcher's `--dry-run` (saves kept inside the
+  unpack).
+- A hash of every shipped file before and after the checks: none
+  changed.
+- Not run on Windows, and not played by anyone yet.

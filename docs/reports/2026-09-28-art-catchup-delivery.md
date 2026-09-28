@@ -4,8 +4,9 @@
 reconciled against the work that already existed.*
 
 **The delivery:**
-- **The build:** `archipepsi-0.4-ART-CATCHUP-<rev>.zip`, pinned. The
-  revision is in `ART-CATCHUP_BUILD_NOTE.txt` inside it.
+- **The build:** `archipepsi-0.4-ART-CATCHUP-17b76098.zip`, pinned to
+  the revision CK14 passed 92 of 92. How to run it is in
+  `ART-CATCHUP_BUILD_NOTE.txt` inside it.
 - **This report,** with the before/after gallery (`images/`), in one
   archive.
 - **The table:** every family, integrated or not, with its evidence and
@@ -192,7 +193,10 @@ These are only the questions integration raised:
       Glyph ε (`bba44ffb`, imported in `8113fa08`, fallback removed);
     - Arty's `verify_content_pack.sh` fix: her preservation test from
       this tree, with nothing deleted, overwritten or added.
-  - **CK14** (full frontier on the delivery head): see the ledger.
+  - **CK14** (full frontier on the delivery head `17b76098`, which the
+    build pins): **92 of 92**. The build was checked from a clean
+    unpack: the import, `godot-boot` and the launcher's dry run, with no
+    shipped file changed.
 - **Visual:** the before/after frames in `images/`, from the same camera
   and state. They are renders, not play.
 - **Not done:** nobody has played this build. There is no performance

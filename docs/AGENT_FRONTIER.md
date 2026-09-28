@@ -708,10 +708,15 @@ owner's D-06/D-07 rulings and the seam table are in
           `docs/reports/2026-09-28-art-catchup-reconciliation.md`.
         - The owner decisions: in
           `docs/reports/2026-09-28-art-catchup-delivery.md`.
-        - The combined build's full frontier: CK13 on the art head. See
-          the ledger's ART-CATCHUP section.
+        - The combined build's full frontier: CK13 on `ac7c206f` was 91
+          of 92, with a real licence defect, fixed. CK14 on the delivery
+          head `17b76098`: **92 of 92**. The pinned build is
+          `archipepsi-0.4-ART-CATCHUP-17b76098.zip`.
+        - The transit sign's owner correction is done: Glyph lettering
+          (with Arty's ε), face-centred. Arty's safe `verify_content_pack.sh`
+          (`3c2f3711`) is taken and verified on this tree.
         - Arty's notes: `docs/art-requests/2026-09-28-art-catchup-prod-notes.md`.
-          Do not run her `verify_content_pack.sh` in a Production tree.
+          Her other art runners are still not safe in a Production tree.
     - **After that, still held until the owner resumes them:** HB-F4g's
       measurement (variants 1, 2, 3 and junction; census; a 30-Zone
       walk), then HB-F4f, then a full frontier.
