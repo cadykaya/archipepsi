@@ -20,9 +20,9 @@
     "nodes": 4,
     "parts": [
       "breaker_case",
-      "breaker_handle",
       "breaker_window",
-      "breaker_bus"
+      "breaker_bus",
+      "breaker_handle"
     ],
     "size": [
       0.440000000000000002,
@@ -35,8 +35,8 @@
     "parts": [
       "flag_post",
       "flag_pivot",
-      "flag_blade",
-      "flag_base"
+      "flag_base",
+      "flag_blade"
     ],
     "size": [
       0.260000000000000009,
@@ -49,8 +49,8 @@
     "parts": [
       "gauge_case",
       "gauge_face",
-      "gauge_needle",
-      "gauge_bezel"
+      "gauge_bezel",
+      "gauge_needle"
     ],
     "size": [
       0.299999999999999989,
@@ -62,10 +62,10 @@
     "nodes": 5,
     "parts": [
       "paddle_mount",
-      "paddle_arm",
-      "paddle_grip",
       "paddle_spring",
-      "paddle_stop"
+      "paddle_stop",
+      "paddle_arm",
+      "paddle_grip"
     ],
     "size": [
       0.260000000000000009,

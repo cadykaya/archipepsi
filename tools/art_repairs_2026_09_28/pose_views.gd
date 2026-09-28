@@ -86,6 +86,27 @@ func _slab(root: Node3D, size: Vector3, at: Vector3) -> void:
 	node.position = at
 
 
+## The model's box through every node above each mesh. The bench's
+## `aabb_of` reads only a mesh's own transform, which misplaces a part that
+## hangs under a translated hinge -- the very thing these frames show.
+func _box(node: Node, frame := Transform3D.IDENTITY) -> AABB:
+	var box := AABB()
+	var seen := false
+	for child in node.get_children():
+		var here := frame
+		if child is Node3D:
+			here = frame * (child as Node3D).transform
+		if child is MeshInstance3D and (child as MeshInstance3D).mesh != null:
+			var a: AABB = here * (child as MeshInstance3D).mesh.get_aabb()
+			box = a if not seen else box.merge(a)
+			seen = true
+		var sub := _box(child, here)
+		if sub.size != Vector3.ZERO:
+			box = sub if not seen else box.merge(sub)
+			seen = true
+	return box
+
+
 func _tint(node: Node3D) -> void:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.86, 0.36, 0.78)
@@ -107,7 +128,7 @@ func _frame(path: String, shot: Array, mode: int, name: String) -> void:
 		return
 	root.add_child(model)
 	_bench.call("force_nearest", model)
-	var box: AABB = _bench.call("aabb_of", model)
+	var box := _box(model)
 	_slab(root, Vector3(4, 0.1, 4), Vector3(0, -0.05, 0))
 	if bool(shot[8]):
 		# The wall a wall-mounted control stands on, flush with its back.

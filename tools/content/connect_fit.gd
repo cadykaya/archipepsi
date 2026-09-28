@@ -53,13 +53,22 @@ func _load(path: String) -> Node3D:
 	return doc.generate_scene(state)
 
 
-func _walk(node: Node, out: Dictionary) -> void:
+## Every box is measured in the MODEL'S frame, through every node above it.
+## Until 2026-09-28 this read only a mesh's own `transform`, which was the
+## same thing while every part sat at the root. The repair that gave the
+## moving parts real hinges put them under a translated hinge node, and the
+## local reading then measured the paddle 9 cm below its own mount.
+func _walk(node: Node, out: Dictionary,
+		frame := Transform3D.IDENTITY) -> void:
 	for child in node.get_children():
+		var here := frame
+		if child is Node3D:
+			here = frame * (child as Node3D).transform
 		if child is MeshInstance3D:
 			var mi := child as MeshInstance3D
 			(out["names"] as Array).append(str(mi.name))
 			if mi.mesh != null:
-				var a: AABB = (mi.transform * mi.mesh.get_aabb()) as AABB
+				var a: AABB = (here * mi.mesh.get_aabb()) as AABB
 				(out["per_part"] as Dictionary)[str(mi.name)] = a
 				if bool(out["seen"]):
 					out["box"] = (out["box"] as AABB).merge(a)
@@ -76,7 +85,7 @@ func _walk(node: Node, out: Dictionary) -> void:
 		if child.get_script() != null:
 			(out["forbidden"] as Array).append(
 				"%s carries a script" % child.name)
-		_walk(child, out)
+		_walk(child, out, here)
 
 
 func _check(id: String) -> void:
