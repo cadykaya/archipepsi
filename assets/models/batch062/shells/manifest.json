@@ -1,0 +1,257 @@
+{
+  "shell_concourse_pier": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -8.0,
+        -1.0,
+        0.0
+      ],
+      [
+        16.0,
+        8.0,
+        22.0
+      ]
+    ],
+    "check_anchor": null,
+    "colliders": 38,
+    "enemy_anchors": [],
+    "exit_offset": [
+      4.8,
+      0.0,
+      22.0
+    ],
+    "exit_yaw": 0.0,
+    "interior": [
+      16.0,
+      7.0,
+      22.0
+    ],
+    "path": "batch062/shells/shell_concourse_pier.glb",
+    "size": [
+      16.8,
+      22.8,
+      7.9
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_godot": [
+      16.8,
+      7.9,
+      22.8
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "exit",
+        "position": [
+          4.8,
+          0.0,
+          22.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 0.0
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          0.0,
+          0.0,
+          11.0
+        ],
+        "extent": [
+          16.0,
+          22.0
+        ],
+        "name": "floor"
+      },
+      {
+        "center": [
+          0.0,
+          3.5,
+          2.0
+        ],
+        "extent": [
+          16.0,
+          4.0
+        ],
+        "name": "gallery"
+      },
+      {
+        "center": [
+          0.8,
+          3.5,
+          10.5
+        ],
+        "extent": [
+          5.6,
+          5.0
+        ],
+        "name": "pier"
+      },
+      {
+        "center": [
+          1.2,
+          3.5,
+          6.0
+        ],
+        "extent": [
+          2.0,
+          4.0
+        ],
+        "name": "bridge"
+      }
+    ],
+    "texel_density": 32.0,
+    "traversal": [
+      {
+        "end": [
+          4.8,
+          0.0,
+          21.0
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "entry_to_exit",
+        "start": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "end": [
+          -6.8,
+          3.5,
+          2.0
+        ],
+        "kind": "walk",
+        "mandatory": false,
+        "name": "floor_to_gallery",
+        "start": [
+          -6.8,
+          0.0,
+          12.7
+        ]
+      },
+      {
+        "end": [
+          0.8,
+          3.5,
+          10.5
+        ],
+        "kind": "walk",
+        "mandatory": false,
+        "name": "gallery_to_pier",
+        "start": [
+          1.2,
+          3.5,
+          2.0
+        ]
+      },
+      {
+        "end": [
+          4.8,
+          0.0,
+          21.0
+        ],
+        "kind": "walk",
+        "mandatory": false,
+        "name": "pier_to_exit",
+        "start": [
+          2.4,
+          3.5,
+          10.5
+        ]
+      }
+    ],
+    "triangles": 540,
+    "volumes": [
+      {
+        "center": [
+          0.8,
+          1.75,
+          10.5
+        ],
+        "kind": "no_build",
+        "name": "pier",
+        "size": [
+          5.6,
+          3.5,
+          5.0
+        ]
+      },
+      {
+        "center": [
+          -6.8,
+          1.75,
+          7.95
+        ],
+        "kind": "no_build",
+        "name": "stair_a",
+        "size": [
+          2.4,
+          3.5,
+          7.9
+        ]
+      },
+      {
+        "center": [
+          2.4,
+          1.75,
+          16.45
+        ],
+        "kind": "no_build",
+        "name": "stair_b",
+        "size": [
+          2.4,
+          3.5,
+          6.9
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          1.0,
+          1.6
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.0
+        ]
+      },
+      {
+        "center": [
+          -0.6,
+          4.5,
+          10.5
+        ],
+        "kind": "objective",
+        "name": "reward",
+        "size": [
+          2.4,
+          2.0,
+          2.4
+        ]
+      }
+    ]
+  }
+}

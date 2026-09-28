@@ -169,6 +169,239 @@
    ]
   },
   {
+   "id": "shell_concourse_pier",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "concourse pier",
+   "scene": "res://content/shells/shell_concourse_pier.tscn",
+   "review": "pending",
+   "fallback": "shell_arena_proc",
+   "semantic_tags": [
+    "arena",
+    "concourse",
+    "gallery"
+   ],
+   "size": [
+    16.8,
+    7.9,
+    22.8
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      11.0
+     ],
+     "extent": [
+      16.0,
+      22.0
+     ],
+     "name": "floor"
+    },
+    {
+     "center": [
+      0.0,
+      3.5,
+      2.0
+     ],
+     "extent": [
+      16.0,
+      4.0
+     ],
+     "name": "gallery"
+    },
+    {
+     "center": [
+      0.8,
+      3.5,
+      10.5
+     ],
+     "extent": [
+      5.6,
+      5.0
+     ],
+     "name": "pier"
+    },
+    {
+     "center": [
+      1.2,
+      3.5,
+      6.0
+     ],
+     "extent": [
+      2.0,
+      4.0
+     ],
+     "name": "bridge"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      4.8,
+      0.0,
+      22.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 0.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.8,
+      1.75,
+      10.5
+     ],
+     "kind": "no_build",
+     "name": "pier",
+     "size": [
+      5.6,
+      3.5,
+      5.0
+     ]
+    },
+    {
+     "center": [
+      -6.8,
+      1.75,
+      7.95
+     ],
+     "kind": "no_build",
+     "name": "stair_a",
+     "size": [
+      2.4,
+      3.5,
+      7.9
+     ]
+    },
+    {
+     "center": [
+      2.4,
+      1.75,
+      16.45
+     ],
+     "kind": "no_build",
+     "name": "stair_b",
+     "size": [
+      2.4,
+      3.5,
+      6.9
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    },
+    {
+     "center": [
+      -0.6,
+      4.5,
+      10.5
+     ],
+     "kind": "objective",
+     "name": "reward",
+     "size": [
+      2.4,
+      2.0,
+      2.4
+     ]
+    }
+   ],
+   "traversal": [
+    {
+     "end": [
+      4.8,
+      0.0,
+      21.0
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "entry_to_exit",
+     "start": [
+      0.0,
+      0.0,
+      1.0
+     ]
+    },
+    {
+     "end": [
+      -6.8,
+      3.5,
+      2.0
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "floor_to_gallery",
+     "start": [
+      -6.8,
+      0.0,
+      12.7
+     ]
+    },
+    {
+     "end": [
+      0.8,
+      3.5,
+      10.5
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "gallery_to_pier",
+     "start": [
+      1.2,
+      3.5,
+      2.0
+     ]
+    },
+    {
+     "end": [
+      4.8,
+      0.0,
+      21.0
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "pier_to_exit",
+     "start": [
+      2.4,
+      3.5,
+      10.5
+     ]
+    }
+   ],
+   "size_class": "medium",
+   "exit_yaw": 0.0
+  },
+  {
    "id": "shell_corner_left",
    "level": 3,
    "category": "room_shell",

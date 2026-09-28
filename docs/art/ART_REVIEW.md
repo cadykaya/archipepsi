@@ -5118,6 +5118,20 @@ Evidence: `docs/art/review/lothric_2026-09-22/`.
 **Still not complete:** no material treatment, no runtime selection, not
 imported, no owner review.
 
+## Batch 062 — one ordinary room for the next playable test (2026-09-28)
+
+*Arty — 2026-09-28*
+
+**PENDING review.** Exported, not in Production's pack, not owner-passed.
+
+| asset | metrics | levels | what the room does before anything is in it |
+|---|---|---|---|
+| `shell_concourse_pier` | 540 tris · 16.80 × 22.80 × 7.90 m · 32.0 texels/m | floor 0, gallery / bridge / pier 3.5 | you come in low under a gallery; a pier hides the offset exit; a stair, the gallery, a bridge and the pier make an upper loop that comes back down beside the exit |
+
+Walked by Production's own `Player` at `17b76098`, no jumps
+(`tools/content/run_room_walk.sh`). Handoff:
+`docs/art/reports/2026-09-28-ordinary-room.md`.
+
 ## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
 
 **All four large shells are `review: "pass"`.** Three authorities had to

@@ -84,6 +84,8 @@ PROJECTILE_REVIEW = "pending"
 #: second look covered by the first.
 _EDA = "owner design assignment applied at Production eda4fd9; NOT derived from geometry"
 _P3 = "owner P3/LARGE-library direction; NOT derived from geometry"
+_ORD = ("owner brief 2026-09-28: one ORDINARY room for the next playable "
+        "test, not a large showcase; NOT derived from geometry")
 
 _SHELL_FALLBACK = {
     "tower": "shell_tower_proc",
@@ -123,6 +125,7 @@ _SIZE_CLASS = {
     "shell_treasure_vault":  ("small", _EDA),
     "shell_treasure_cache":  ("small", _EDA),
     "shell_treasure_coffer": ("small", _EDA),
+    "shell_concourse_pier":  ("medium", _ORD),
     "shell_corner_left":     ("small", _EDA),
     "shell_corner_right":    ("small", _EDA),
     "shell_hall_transit":    ("large", _P3),
@@ -191,6 +194,10 @@ SHELLS = {
     # beside it without claiming to be types.
     "shell_hall_transit":    ("batch039/shells", "arena",
                               ("transit", "vertical")),
+    # 2026-09-28. An ORDINARY arena: a covered entry, a pier that hides
+    # the way on, and an upper loop that rejoins the floor at the exit.
+    "shell_concourse_pier":  ("batch062/shells", "arena",
+                              ("concourse", "gallery")),
     # Wave 1 of the LARGE room library. Three deliberately different
     # proportions: a 1:3.6 shaft, an 84 m wide yard and a 90 m span.
     "shell_plenum_helix":    ("batch040/shells", "tower",
@@ -276,6 +283,10 @@ SHELL_REVIEW = {
     "shell_plenum_helix":    "pass",
     "shell_yard_gantry":     "pass",
     "shell_span_basin":      "pass",
+    # 2026-09-28: one ordinary room for the next playtest. PENDING until
+    # the owner passes it; `is_shippable` keeps a pending entry out of
+    # real zones until then.
+    "shell_concourse_pier":  "pending",
 }
 
 #: silhouette -> asset id. `ProjectileSilhouette.content_id()` is
