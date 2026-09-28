@@ -988,7 +988,7 @@ def derive_mechanics(log) -> Mechanics:
                     components[cid], op.field, op.delta, seq
                 )
                 mk[cid] += 1
-                record(cid, "upgrade", f"{op.delta:+g} {op.field}")
+                record(cid, "upgrade", f"{op.delta:+g} {note_words(op.field)}")
 
             elif op.op == "modify":
                 cid = live(op.target, "modify", seq)
@@ -1133,6 +1133,29 @@ def _apply_upgrade(component, field: str, delta: float, seq: int):
         ) from exc
 
 
+#: A provenance note is read by the player -- the equipment wall's HISTORY
+#: prints it after the Mk -- so a field or a type is said in words, never
+#: as its identifier: "+40 maximum", not "+40 max_value", whose underscore
+#: the wall's font does not have. Only the names a plain reading gets wrong
+#: are listed; every other reads with its underscores as spaces.
+#: (Prod's N-21, made under the owner's MENU-INT instruction to fix raw
+#: field names at their source.)
+_NOTE_WORDS = {
+    "max_value": "maximum",
+    "regen_per_second": "refill a second",
+    "regen_delay": "refill delay",
+    "pip_count": "pips",
+    "apply_status_on_hit": "a status on hit",
+    "knockback_target": "knockback",
+    "recoil_self": "recoil",
+}
+
+
+def note_words(name: str) -> str:
+    """A field or type name as a provenance note says it."""
+    return _NOTE_WORDS.get(name, name.replace("_", " "))
+
+
 def _apply_modify(component, op, seq: int):
     """Add one capability to an existing component."""
     data = component.model_dump()
@@ -1145,7 +1168,7 @@ def _apply_modify(component, op, seq: int):
         data["modifiers"] = list(data["modifiers"]) + [
             op.add_modifier.model_dump()
         ]
-        note = op.add_modifier.type
+        note = note_words(op.add_modifier.type)
     elif op.add_effect is not None:
         if component.kind != "rule":
             raise FoldError(
@@ -1153,7 +1176,7 @@ def _apply_modify(component, op, seq: int):
                 f"rule, not a '{component.kind}'"
             )
         data["effects"] = list(data["effects"]) + [op.add_effect.model_dump()]
-        note = op.add_effect.type
+        note = note_words(op.add_effect.type)
     else:
         if component.kind != "rule":
             raise FoldError(
@@ -1163,7 +1186,7 @@ def _apply_modify(component, op, seq: int):
         data["conditions"] = list(data["conditions"]) + [
             op.add_condition.model_dump()
         ]
-        note = op.add_condition.type
+        note = note_words(op.add_condition.type)
     try:
         return type(component).model_validate(data), note
     except Exception as exc:

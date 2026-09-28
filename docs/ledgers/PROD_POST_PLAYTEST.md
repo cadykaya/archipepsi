@@ -598,6 +598,11 @@ where the new rule would refuse a lever.
   - **What it touches.** Only the note's words. Notes are derived by the
     fold on every load and never persisted, so saves are unaffected. No
     bridge test read the old text.
+  - **The packet's copy too** (found by CK11's `check_packet.py`). The
+    packet's `design-packet-v0.8/schemas/mechanics.py` was byte-identical
+    to the bridge's before N-21, so it now takes the same change, as your
+    own schema commits do. The contract and the code say the same
+    words.
     - The equipment, journal and bomb fixtures were regenerated from
       source.
     - The verbs fixture's regeneration also brought in unrelated drift (a
