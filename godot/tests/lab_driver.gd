@@ -355,7 +355,7 @@ func _the_hub_resolves_every_anchor_its_logic_needs() -> void:
 			"these Hub anchors are outside the room: %s"
 			% str(anchors.outside_room()))
 
-	## Art requirement 4. Epsilon's installation is 8.80 x 2.61 x 3.55 --
+	## Art requirement 4. Epsilon's installation (now 9.02 x 3.55 x 3.48) is --
 	## roughly a third of one 22 m Hub wall -- and the owner ruled it
 	## keeps that prominent back-wall presence. So the bay is reserved
 	## and everything else moves around it, which is a thing that has to
@@ -366,14 +366,22 @@ func _the_hub_resolves_every_anchor_its_logic_needs() -> void:
 			"these Hub stations stand inside Epsilon's reserved bay: %s"
 			% str(anchors.intruders()))
 
-	## ...and the bay is genuinely the size art declared, not a number
-	## quietly trimmed until the room was easier to lay out.
+	## ...and the bay is genuinely the size of the installation art
+	## shipped, measured from the model itself rather than from a number
+	## that could be quietly trimmed until the room was easier to lay out.
+	## (The art brief's 8.80 x 3.55 x 2.61 was superseded by the locked
+	## model, which measures 9.02 x 3.55 x 3.48.)
 	var bay := anchors.epsilon_bay()
-	_check(is_equal_approx(bay.size.x, 8.8)
-			and is_equal_approx(bay.size.z, 2.61)
-			and is_equal_approx(bay.size.y, 3.55),
-			"Epsilon's bay is %.2v, the installation is 8.80 x 3.55 x 2.61"
-			% bay.size)
+	var model := HubController.fixture("epsilon_installation")
+	_check(model != null, "the Epsilon installation model is not shipped")
+	if model != null:
+		var size := HubController.fixture_box(model).size
+		model.free()
+		_check(absf(bay.size.x - size.x) < 0.01
+				and absf(bay.size.z - size.z) < 0.01
+				and absf(bay.size.y - size.y) < 0.01,
+				"Epsilon's bay is %.2v, the installation model is %.2v"
+				% [bay.size, size])
 
 	## The abandon console is the only exit from GENERATING and
 	## ZONE_READY, so "moved out of the bay" must not have meant "moved

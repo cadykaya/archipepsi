@@ -70,8 +70,14 @@ const LAB_DOOR_HEIGHT := 3.2
 ##
 ## Authoring order is [width, depth, height]; the room is Y-up, so depth
 ## is the z extent and height the y one.
-const EPSILON_BAY_WIDTH := 8.8
-const EPSILON_BAY_DEPTH := 2.61
+##
+## ART-CATCHUP (2026-09-28): the shipped installation
+## (`content/hub/epsilon_installation.glb`, batch 002 at art a1584c8) is
+## declared and measured 9.02 x 3.482 x 3.55 -- its conduits and the figure
+## standing proud of the 28 Aug 8.80 x 2.61 box. The bay grows to it; the
+## lab suite measures the model against the bay, so it cannot drift again.
+const EPSILON_BAY_WIDTH := 9.02
+const EPSILON_BAY_DEPTH := 3.482
 const EPSILON_BAY_HEIGHT := 3.55
 
 ## `name -> Transform3D`, in Hub-local space. Rotation is the yaw a thing
