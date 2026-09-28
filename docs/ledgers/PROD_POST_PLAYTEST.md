@@ -6683,3 +6683,49 @@ projectiles) are in `docs/reports/2026-09-28-art-catchup-delivery.md`.
   the fixed port and read its snapshot: five false failures.
 - From then on, no engine or bridge test ran beside a frontier run.
 - CK13 was run alone.
+
+### CK13 — the full frontier on the art head `ac7c206f`: 91 of 92
+
+Run alone, in an isolated worktree, from a fresh import, with the same
+92 steps as CK11 and CK12. Evidence:
+`post_playtest_evidence/CK13_frontier_on_ac7c206f.tsv`.
+
+- **Step 1 (`make test`) RED, a real defect of this catch-up.**
+  - Cause: registering `godot/content/props/` as first-party made the
+    licence gate's own intruder, `godot/content/props/somebody_elses_barrel.glb`,
+    count as ours (`test_the_gate_still_refuses_an_unregistered_asset`).
+  - Not a flake. It was missed because `make test` was not run during
+    the family work.
+- **The other 91 steps: green.**
+- The tree's only change at the end is the zone audit's own
+  `source_commit` stamp.
+
+This result is CK13's as run, and it stands. The follow-ups below are
+verified separately, each on the tree named.
+
+### Follow-up verifications after CK13 (each on its own, never beside another run)
+
+| What | Commit | Check | Result |
+|---|---|---|---|
+| Licence entry narrowed to `godot/content/props/prop_` | `59d47250` | `make test` on the branch head | 2313 passed |
+| The transit sign's line in Glyph on its lit face (owner correction) | `86015a7b` + the facing fix below | `godot-affordance` (a new check on 58 signs: mount, Glyph face, no outline, centre, padding, facing; a sabotage placing the line at the face's top edge fails it), `godot-legible`, `godot-zone-audit`, `godot-lab`, `godot-content` | green |
+| The sign check's facing test | this commit | the chamber is built outside the tree, where `global_basis` ignores the housing's turn, so the turn is now composed by hand | green |
+| Arty's `verify_content_pack.sh` (cherry-picked `3c2f3711`) | `ff92c7c0` | her `test_verify_content_pack_safety.sh HEAD`, from this integration tree (PROD_REF = HEAD, disposable worktrees) | PASS: on a passing and a failing run, deleted 0, overwritten 0, added 0 under `godot/`; no private copy left |
+| The shipped-art check (Hub, portal, Lab) | `e6683ef3` | `godot-lab` | green |
+
+**The sign's evidence scope:**
+- Renders are Forward+ at FOV 90 (the game's default), 1280×720, from
+  eye height.
+- "PLATFORM ε" frames use the **temporary ε fallback**. The Glyph ε is
+  requested from Arty; notes item 4.
+
+**The sign's lettering size (owner question):**
+- One size for the family, set by the longest line ("TRANSFER:
+  EVERYWHERE", 1.34 m on a 1.34 m padded face), gives a cap height of
+  about 0.083 m.
+- On screen, that is about 3.7 px at 8 m, 6 px at 5 m and 10 px at 3 m.
+- So signs read from about 5 m in. At the normal 8 m approach, the short
+  signs are unnecessarily hard to read: "EXIT →" could be twice the
+  size on the same face.
+- The comparison frames are labelled as an isolated preview. The game
+  is unchanged pending the owner's ruling.

@@ -352,8 +352,11 @@ func _the_sign_is_lettered_on_its_face() -> void:
 				bad.append("%s: %.2f x %.2f m on a %.2f x %.2f face" % [
 						line.text, size.x, size.y, face.size.x, face.size.y])
 			# Its readable side (+Z) must point back at the player (-Z).
-			if line.global_basis.z.z > -0.99:
-				bad.append("%s: faces %s" % [line.text, line.global_basis.z])
+			# Composed by hand: the chamber is built outside the tree, where
+			# `global_basis` would ignore the housing's turn.
+			var facing := (board.basis * line.basis).z
+			if facing.z > -0.99:
+				bad.append("%s: faces %s" % [line.text, facing])
 		root.free()
 	_check(signs > 0 and bad.is_empty(), "every transit sign (%d) is "
 			% signs + "lettered in Glyph on its lit face, centred and inside "
