@@ -57,7 +57,7 @@ TAGS = {
     "PLACEHOLDER": ((52, 92, 140), "CURRENT GAME PLACEHOLDER · Production c12a72f"),
     "POSED": ((150, 104, 28), "POSED REFERENCE STATE · not a live test"),
     "RENDER": ((92, 96, 104), "ART RENDER · review scene, not gameplay"),
-    "PLAN": ((92, 96, 104), "PLAN / SECTION · from the manifest"),
+    "PLAN": ((92, 96, 104), "PLAN · the model's own geometry; marks from its manifest"),
     "SCALE": ((92, 96, 104), "TO-SCALE PLAN · from the pinned constants"),
     "NEW": ((118, 72, 146), "NEW REVIEW RENDER · 2026-09-28, review scene"),
 }
