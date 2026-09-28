@@ -18,9 +18,19 @@ and in that Zone:
 
   before   the snapshot on arriving: what the wall is met with first, so
            what is claimed after it is new
-  after    the Zone's freely reachable rooms walked (`room_entered`,
-           through the real server's `dispatch`) and two of its Checks
-           claimed: the map knows those rooms, the journal what was done
+  after    a player's first walk from the entrance (`_explore`), sent as
+           Godot sends it, through the real server's `dispatch`: each
+           room entered, each key in it taken, a control set where it
+           opens the way on, a lock opened with a key held -- and two
+           Checks claimed in rooms walked. The map knows those rooms, the
+           journal what was done.
+
+THE WALK IS ONE A PLAYER CAN MAKE. A way is walked only in the direction
+it goes (a way back is a one-way device: it lands you at the entrance,
+it does not take you from there), and never past a gate this does not
+open: a capability the player does not hold, or an opener it does not
+work. What it does open, it opens the way the game does, by the intent
+the game sends.
 
 Both are the engine's own `snapshot()` as the wire carries it, with the
 scout table left out (`meta.omitted`: nothing on the menu reads it). The
@@ -28,8 +38,10 @@ Zone's document travels inside the snapshot (`active_zone.zone`), which
 is what the tour builds the Zone from.
 
 Deterministic: the mock's placements are a function of its config and
-seed, and nothing else here is random. Run with `make tour-fixture`
-(about a minute: it plays several Zones). The JSON is not to be edited.
+seed, and nothing else here is random. Run with `make tour-fixture` (it
+plays several Zones, in seconds). The JSON is not to be edited;
+`tests/test_tour_fixture.py` holds it to its generator and its walk to
+the bridge's own map.
 """
 
 from __future__ import annotations
@@ -92,30 +104,111 @@ async def _loadout(engine) -> list[str]:
     return put
 
 
-def _walkable(zone, limit: int) -> list[str]:
-    """The entrance and the rooms reachable from it through ways that
-    need nothing (no capability, no opener, no state), in the order a
-    player would first come to them."""
-    chambers = [c.id for c in zone.chambers]
-    if not chambers:
-        return []
-    free: dict[str, list[str]] = {c: [] for c in chambers}
-    for edge in zone.edges:
-        if getattr(edge, "capability", None) or getattr(edge, "opened_by", None) \
-                or getattr(edge, "requires_state", None):
-            continue
-        a, b = str(edge.room_a), str(edge.room_b)
-        if a in free and b in free:
-            free[a].append(b)
-            free[b].append(a)
-    order = [chambers[0]]
+def _explore(zone, zone_id: str, held: set[str], limit: int):
+    """A player's first walk from the entrance: the rooms in the order
+    they are first come to, and the intents that walk sends, in order."""
+    chambers = {c.id: c for c in zone.chambers}
+    order = [zone.chambers[0].id] if zone.chambers else []
+    intents: list[dict] = []
+    keys: set[str] = set()
+    states = {v.variable_id: v.initial for v in (zone.zone_state or ())}
+    setters = {v.variable_id: v.setter for v in (zone.zone_state or ())}
+    used: list = []                      # the ways walked
+
+    def arrive(room: str) -> None:
+        order.append(room)
+        intents.append({"type": "room_entered", "zone_id": zone_id,
+                        "room_id": room})
+        take(room)
+
+    def take(room: str) -> None:
+        for key in chambers[room].keys:
+            if key.key_id not in keys:
+                keys.add(key.key_id)
+                intents.append({"type": "key_collected", "zone_id": zone_id,
+                                "key_id": key.key_id})
+
+    def lock_of(edge):
+        for room in (edge.room_a, edge.room_b):
+            for door in chambers[room].doors:
+                if door.edge_id == edge.edge_id and door.usage == "LOCKED":
+                    return room, door
+        return None
+
+    def opens(edge) -> list[dict] | None:
+        """The intents that open this way, [] if it is open, or None."""
+        if edge.capability and edge.capability not in held:
+            return None
+        if edge.opened_by:
+            return None                  # an opener this does not work
+        out: list[dict] = []
+        for need in edge.requires_state or ():
+            want = need.variable_id, need.state
+            if states.get(want[0]) == want[1]:
+                continue
+            setter = setters.get(want[0])
+            if setter is None or setter.room_id not in order \
+                    or (setter.capability and setter.capability not in held) \
+                    or want[1] not in setter.selects \
+                    or any(n.variable_id == want[0] and n.state != want[1]
+                           for u in used for n in (u.requires_state or ())):
+                return None
+            out.append({"type": "zone_state_selected", "zone_id": zone_id,
+                        "variable_id": want[0], "state": want[1]})
+        lock = lock_of(edge)
+        if lock is not None:
+            room, door = lock
+            if door.key_id not in keys:
+                return None
+            out.append({"type": "lock_opened", "zone_id": zone_id,
+                        "room_id": room, "socket_id": door.socket_id})
+        return out
+
+    if order:
+        intents.append({"type": "room_entered", "zone_id": zone_id,
+                        "room_id": order[0]})
+        take(order[0])
     at = 0
     while at < len(order) and len(order) < limit:
-        for nxt in free[order[at]]:
-            if nxt not in order and len(order) < limit:
-                order.append(nxt)
+        here = order[at]
+        for edge in zone.edges:
+            if len(order) >= limit:
+                break
+            if edge.room_a == here and edge.direction in ("BIDIRECTIONAL",
+                                                          "A_TO_B"):
+                there = edge.room_b
+            elif edge.room_b == here and edge.direction in ("BIDIRECTIONAL",
+                                                            "B_TO_A"):
+                there = edge.room_a
+            else:
+                continue
+            if there in order:
+                continue
+            doing = opens(edge)
+            if doing is None:
+                continue
+            for intent in doing:
+                if intent["type"] == "zone_state_selected":
+                    states[intent["variable_id"]] = intent["state"]
+            intents.extend(doing)
+            used.append(edge)
+            arrive(there)
         at += 1
-    return order
+    return order, intents
+
+
+def _checks_in(zone, rooms: list[str], allocated, count: int) -> list[int]:
+    """The first Checks of the rooms walked, in the order they were."""
+    chambers = {c.id: c for c in zone.chambers}
+    out: list[int] = []
+    for room in rooms:
+        c = chambers[room]
+        for loc in [c.reward_location_id, *(c.additional_reward_location_ids
+                                            or ())]:
+            if loc is not None and loc in allocated and loc not in out \
+                    and len(out) < count:
+                out.append(loc)
+    return out
 
 
 async def build() -> dict:
@@ -168,17 +261,16 @@ async def build() -> dict:
             here = engine.save.active_zone
             before = _wire(engine)
             server = BridgeServer(engine)
-            walked = _walkable(here.zone, ROOMS)
-            for room in walked:
-                await server.dispatch(_Socket(), json.dumps({
-                    "type": "room_entered", "zone_id": here.zone_id,
-                    "room_id": room}))
+            held = set(engine.snapshot().available_capabilities)
+            walked, intents = _explore(here.zone, here.zone_id, held, ROOMS)
+            for intent in intents:
+                await server.dispatch(_Socket(), json.dumps(intent))
                 await drain()
-            claimed = []
-            for loc in sorted(here.allocated_location_ids)[:CLAIMS]:
+            claimed = _checks_in(here.zone, walked,
+                                 set(here.allocated_location_ids), CLAIMS)
+            for loc in claimed:
                 await TX.claim_check(engine, here.zone_id, loc)
                 await drain()
-                claimed.append(loc)
             after = _wire(engine)
             return {
                 "meta": {
@@ -189,6 +281,9 @@ async def build() -> dict:
                     "consumable": consumable,
                     "loadout": loadout,
                     "walked": walked,
+                    "did": [" ".join([i["type"]] + [
+                        str(v) for k, v in i.items()
+                        if k not in ("type", "zone_id")]) for i in intents],
                     "claimed": claimed,
                     "omitted": list(OMITTED),
                 },

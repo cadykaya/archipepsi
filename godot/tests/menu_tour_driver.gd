@@ -9,8 +9,10 @@ extends Node
 ##
 ## THE DATA IS REAL: `tour_snapshot.json` (`make tour-fixture`) is the
 ## owner's candidate campaign played again by the bridge's own engine into
-## its seventh Zone -- 60 items, the Bomb Bag on its key -- where six rooms
-## are walked and two Checks claimed. The Zone is built by the real
+## its seventh Zone -- 60 items, the Bomb Bag on its key -- and there a
+## first walk from the entrance a player can make: six rooms, their keys
+## taken, a control set and a lock opened on the way, and two Checks
+## claimed in rooms walked (`meta.did`). The Zone is built by the real
 ## `ZoneController` from the document the snapshot carries. The walls are
 ## mounted exactly as `Main` mounts them, with the game's cue bank.
 ##

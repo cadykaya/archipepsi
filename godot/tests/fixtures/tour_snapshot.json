@@ -2223,23 +2223,35 @@
    },
    "progress": {
     "carrier_states": [],
-    "collected_keys": [],
+    "collected_keys": [
+     "blue",
+     "gold",
+     "green",
+     "red"
+    ],
     "consumed_objects": [],
     "defeated": null,
     "latched": [],
-    "macro_state": [],
+    "macro_state": [
+     [
+      "span_alignment",
+      "lowered"
+     ]
+    ],
     "object_poses": [],
     "object_rooms": [],
-    "opened_locks": [],
+    "opened_locks": [
+     "c005/side_left"
+    ],
     "reached_stations": [],
     "resume_anchor": null,
     "visited_rooms": [
      "c001",
      "c002",
-     "c011",
-     "c012",
-     "c014",
-     "c015"
+     "c003",
+     "c004",
+     "c005",
+     "c017"
     ]
    },
    "state": "ACTIVE",
@@ -4184,18 +4196,17 @@
    89100022,
    89100025,
    89100027,
-   89100030,
    89100031,
    89100032,
    89100041,
    89100042,
-   89100047,
    89100051,
    89100054,
    89100055,
    89100064,
    89100065,
    89100068,
+   89100072,
    89100076,
    89100087,
    89100089,
@@ -4256,6 +4267,7 @@
    89100415,
    89100416,
    89100427,
+   89100446,
    89100447
   ],
   "coins_available": 29,
@@ -7738,52 +7750,13 @@
    },
    {
     "concepts": [
-     "clarity",
-     "draught"
-    ],
-    "description": "Whatever it was, now it makes you faster briefly.",
-    "display_name": "Clarity Draught",
-    "echo_id": "echo_89100030",
-    "interpretation_seq": 79,
-    "mode": "literal",
-    "operations": [
-     {
-      "component": {
-       "charges": null,
-       "component_id": "act_l89100030",
-       "cooldown": 2.5,
-       "description": "Whatever it was, now it makes you faster briefly.",
-       "display_name": "Clarity Draught",
-       "kind": "action",
-       "modifiers": [],
-       "primitive": {
-        "force": 10.0,
-        "type": "dash"
-       },
-       "slot": "mobility"
-      },
-      "op": "create"
-     }
-    ],
-    "schema_version": 8,
-    "source_game": "Bomb Rush Cyberfunk",
-    "source_item_name": "Clarity Draught",
-    "source_location_id": 89100030,
-    "source_recipient_name": "Faux",
-    "tags": [
-     "dash",
-     "mobility"
-    ]
-   },
-   {
-    "concepts": [
      "reach",
      "puncture"
     ],
     "description": "The same Spear of Justice, quicker. Mk 5.",
     "display_name": "Spear of Justice",
-    "echo_id": "echo_89100047",
-    "interpretation_seq": 80,
+    "echo_id": "echo_89100446",
+    "interpretation_seq": 79,
     "mode": "mechanical",
     "operations": [
      {
@@ -7796,13 +7769,54 @@
     "schema_version": 8,
     "source_game": "Bomb Rush Cyberfunk",
     "source_item_name": "Spear of Justice",
-    "source_location_id": 89100047,
+    "source_location_id": 89100446,
     "source_recipient_name": "Faux",
     "tags": [
      "melee",
      "weapon",
      "status",
      "evolution"
+    ]
+   },
+   {
+    "concepts": [
+     "clarity",
+     "draught"
+    ],
+    "description": "Epsilon squints at the name and hands you a gun.",
+    "display_name": "Clarity Draught",
+    "echo_id": "echo_89100072",
+    "interpretation_seq": 80,
+    "mode": "literal",
+    "operations": [
+     {
+      "component": {
+       "charges": null,
+       "component_id": "act_l89100072",
+       "cooldown": 0.8,
+       "description": "Epsilon squints at the name and hands you a gun.",
+       "display_name": "Clarity Draught",
+       "kind": "action",
+       "modifiers": [],
+       "primitive": {
+        "damage": 12.0,
+        "pellets": 3,
+        "range": 30.0,
+        "spread_degrees": 6.0,
+        "type": "hitscan_damage"
+       },
+       "slot": "echo_a"
+      },
+      "op": "create"
+     }
+    ],
+    "schema_version": 8,
+    "source_game": "Bomb Rush Cyberfunk",
+    "source_item_name": "Clarity Draught",
+    "source_location_id": 89100072,
+    "source_recipient_name": "Faux",
+    "tags": [
+     "weapon"
     ]
    }
   ],
@@ -8551,9 +8565,9 @@
      "charges_left": null,
      "charges_max": null,
      "compatible_slots": [
-      "mobility"
+      "echo_a"
      ],
-     "component_id": "act_l89100030",
+     "component_id": "act_l89100072",
      "equipped_in": null,
      "gear": null,
      "siblings": []
@@ -8572,7 +8586,8 @@
       "act_l89100020",
       "act_l89100031",
       "act_l89100193",
-      "act_l89100388"
+      "act_l89100388",
+      "act_l89100072"
      ],
      "holds": "act_l89100025",
      "slot": "echo_a"
@@ -8602,8 +8617,7 @@
       "act_l89100134",
       "act_l89100199",
       "act_l89100260",
-      "act_l89100323",
-      "act_l89100030"
+      "act_l89100323"
      ],
      "holds": "act_l89100005",
      "slot": "mobility"
@@ -8891,12 +8905,12 @@
        "source_recipient_name": "Faux"
       },
       {
-       "interpretation_seq": 80,
+       "interpretation_seq": 79,
        "note": "-0.2 cooldown",
        "operation": "upgrade",
        "source_game": "Bomb Rush Cyberfunk",
        "source_item_name": "Spear of Justice",
-       "source_location_id": 89100047,
+       "source_location_id": 89100446,
        "source_recipient_name": "Faux"
       }
      ]
@@ -11031,27 +11045,30 @@
     {
      "component": {
       "charges": null,
-      "component_id": "act_l89100030",
-      "cooldown": 2.5,
-      "description": "Whatever it was, now it makes you faster briefly.",
+      "component_id": "act_l89100072",
+      "cooldown": 0.8,
+      "description": "Epsilon squints at the name and hands you a gun.",
       "display_name": "Clarity Draught",
       "kind": "action",
       "modifiers": [],
       "primitive": {
-       "force": 10.0,
-       "type": "dash"
+       "damage": 12.0,
+       "pellets": 3,
+       "range": 30.0,
+       "spread_degrees": 6.0,
+       "type": "hitscan_damage"
       },
-      "slot": "mobility"
+      "slot": "echo_a"
      },
      "mk": 1,
      "provenance": [
       {
-       "interpretation_seq": 79,
+       "interpretation_seq": 80,
        "note": "Clarity Draught",
        "operation": "create",
        "source_game": "Bomb Rush Cyberfunk",
        "source_item_name": "Clarity Draught",
-       "source_location_id": 89100030,
+       "source_location_id": 89100072,
        "source_recipient_name": "Faux"
       }
      ]
@@ -11080,6 +11097,7 @@
    89100026,
    89100028,
    89100029,
+   89100030,
    89100033,
    89100034,
    89100035,
@@ -11092,6 +11110,7 @@
    89100044,
    89100045,
    89100046,
+   89100047,
    89100048,
    89100049,
    89100050,
@@ -11110,7 +11129,6 @@
    89100069,
    89100070,
    89100071,
-   89100072,
    89100073,
    89100074,
    89100075,
@@ -11424,7 +11442,6 @@
    89100443,
    89100444,
    89100445,
-   89100446,
    89100448,
    89100449,
    89100450
@@ -11470,14 +11487,53 @@
   "zone_map": {
    "circuits": [
     {
-     "circuit_id": "key:red",
+     "circuit_id": "key:blue",
      "connectors": [
-      "e:c006:c015"
+      "e:c005:c017"
      ],
      "kind": "key",
      "objects": [],
      "rooms": [
+      "c003",
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "key:gold",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c005"
+     ]
+    },
+    {
+     "circuit_id": "key:green",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
+      "c004"
+     ]
+    },
+    {
+     "circuit_id": "key:red",
+     "connectors": [],
+     "kind": "key",
+     "objects": [],
+     "rooms": [
       "c002"
+     ]
+    },
+    {
+     "circuit_id": "machine:c005:route_shutter",
+     "connectors": [
+      "e:c005:c006"
+     ],
+     "kind": "machine",
+     "objects": [],
+     "rooms": [
+      "c005"
      ]
     },
     {
@@ -11516,141 +11572,78 @@
       "zone_state"
      ],
      "realization": "joined",
-     "reason": "set by a control in Arena 1",
+     "reason": "",
      "room_a": "c002",
      "room_b": "c003",
-     "state": "blocked"
-    },
-    {
-     "circuits": [],
-     "direction": "BIDIRECTIONAL",
-     "edge_id": "e:c009:c011",
-     "gates": [
-      "none"
-     ],
-     "realization": "joined",
-     "reason": "",
-     "room_a": "c009",
-     "room_b": "c011",
-     "state": "open"
-    },
-    {
-     "circuits": [],
-     "direction": "A_TO_B",
-     "edge_id": "p:c011:start",
-     "gates": [
-      "none"
-     ],
-     "realization": "traversal_only",
-     "reason": "",
-     "room_a": "c011",
-     "room_b": "c001",
      "state": "open"
     },
     {
      "circuits": [],
      "direction": "BIDIRECTIONAL",
-     "edge_id": "e:c011:c012",
+     "edge_id": "e:c003:c004",
      "gates": [
       "none"
      ],
      "realization": "joined",
      "reason": "",
-     "room_a": "c011",
-     "room_b": "c012",
-     "state": "open"
-    },
-    {
-     "circuits": [],
-     "direction": "A_TO_B",
-     "edge_id": "p:c012:start",
-     "gates": [
-      "none"
-     ],
-     "realization": "traversal_only",
-     "reason": "",
-     "room_a": "c012",
-     "room_b": "c001",
+     "room_a": "c003",
+     "room_b": "c004",
      "state": "open"
     },
     {
      "circuits": [],
      "direction": "BIDIRECTIONAL",
-     "edge_id": "e:c011:c014",
+     "edge_id": "e:c004:c005",
      "gates": [
       "none"
      ],
      "realization": "joined",
      "reason": "",
-     "room_a": "c011",
-     "room_b": "c014",
-     "state": "open"
-    },
-    {
-     "circuits": [],
-     "direction": "A_TO_B",
-     "edge_id": "p:c014:start",
-     "gates": [
-      "none"
-     ],
-     "realization": "traversal_only",
-     "reason": "",
-     "room_a": "c014",
-     "room_b": "c001",
+     "room_a": "c004",
+     "room_b": "c005",
      "state": "open"
     },
     {
      "circuits": [
-      "key:red"
+      "machine:c005:route_shutter"
      ],
      "direction": "BIDIRECTIONAL",
-     "edge_id": "e:c006:c015",
+     "edge_id": "e:c005:c006",
+     "gates": [
+      "machine"
+     ],
+     "realization": "joined",
+     "reason": "worked by a control in Arena 2",
+     "room_a": "c005",
+     "room_b": "c006",
+     "state": "blocked"
+    },
+    {
+     "circuits": [
+      "key:blue"
+     ],
+     "direction": "BIDIRECTIONAL",
+     "edge_id": "e:c005:c017",
      "gates": [
       "key"
      ],
      "realization": "joined",
-     "reason": "locked -- red key",
-     "room_a": "c006",
-     "room_b": "c015",
-     "state": "blocked"
+     "reason": "",
+     "room_a": "c005",
+     "room_b": "c017",
+     "state": "open"
     },
     {
      "circuits": [],
      "direction": "A_TO_B",
-     "edge_id": "p:c015:start",
+     "edge_id": "p:c017:start",
      "gates": [
       "none"
      ],
      "realization": "traversal_only",
      "reason": "",
-     "room_a": "c015",
+     "room_a": "c017",
      "room_b": "c001",
-     "state": "open"
-    },
-    {
-     "circuits": [],
-     "direction": "BIDIRECTIONAL",
-     "edge_id": "e:c014:c024",
-     "gates": [
-      "none"
-     ],
-     "realization": "joined",
-     "reason": "",
-     "room_a": "c014",
-     "room_b": "c024",
-     "state": "open"
-    },
-    {
-     "circuits": [],
-     "direction": "BIDIRECTIONAL",
-     "edge_id": "e:c015:c025",
-     "gates": [
-      "none"
-     ],
-     "realization": "joined",
-     "reason": "",
-     "room_a": "c015",
-     "room_b": "c025",
      "state": "open"
     }
    ],
@@ -11668,20 +11661,20 @@
      "type": "arena"
     },
     {
-     "discovered": false,
-     "name": null,
+     "discovered": true,
+     "name": "Platform Path 1",
      "room_id": "c003",
      "type": "platform_path"
     },
     {
-     "discovered": false,
-     "name": null,
+     "discovered": true,
+     "name": "Corridor 2",
      "room_id": "c004",
      "type": "corridor"
     },
     {
-     "discovered": false,
-     "name": null,
+     "discovered": true,
+     "name": "Arena 2",
      "room_id": "c005",
      "type": "arena"
     },
@@ -11716,14 +11709,14 @@
      "type": "corridor"
     },
     {
-     "discovered": true,
-     "name": "Arena 5",
+     "discovered": false,
+     "name": null,
      "room_id": "c011",
      "type": "arena"
     },
     {
-     "discovered": true,
-     "name": "Platform Path 3",
+     "discovered": false,
+     "name": null,
      "room_id": "c012",
      "type": "platform_path"
     },
@@ -11734,14 +11727,14 @@
      "type": "corridor"
     },
     {
-     "discovered": true,
-     "name": "Arena 6",
+     "discovered": false,
+     "name": null,
      "room_id": "c014",
      "type": "arena"
     },
     {
-     "discovered": true,
-     "name": "Arena 7",
+     "discovered": false,
+     "name": null,
      "room_id": "c015",
      "type": "arena"
     },
@@ -11752,8 +11745,8 @@
      "type": "corridor"
     },
     {
-     "discovered": false,
-     "name": null,
+     "discovered": true,
+     "name": "Platform Path 4",
      "room_id": "c017",
      "type": "platform_path"
     },
@@ -23325,10 +23318,24 @@
  },
  "meta": {
   "claimed": [
-   89100030,
-   89100047
+   89100446,
+   89100072
   ],
   "consumable": "act_l89100140",
+  "did": [
+   "room_entered c001",
+   "room_entered c002",
+   "key_collected red",
+   "zone_state_selected span_alignment lowered",
+   "room_entered c003",
+   "key_collected blue",
+   "room_entered c004",
+   "key_collected green",
+   "room_entered c005",
+   "key_collected gold",
+   "lock_opened c005 side_left",
+   "room_entered c017"
+  ],
   "loadout": [
    "echo_a=act_l89100025",
    "mobility=act_l89100005",
@@ -23342,10 +23349,10 @@
   "walked": [
    "c001",
    "c002",
-   "c011",
-   "c012",
-   "c014",
-   "c015"
+   "c003",
+   "c004",
+   "c005",
+   "c017"
   ],
   "zone_id": "zone_007",
   "zone_index": 7
