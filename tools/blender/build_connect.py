@@ -692,8 +692,11 @@ def _positions(asset, named, body, parts, spec):
             out["detent_%d" % i] = round(a - 180.0, 3)
         return out
     if asset == "conn_hold_paddle":
-        # HELD is as far as the paddle goes down before it bears on
-        # something it does not touch when released -- its own spring.
+        # LEVEL is the arm as built. DOWN is as far as it turns down before
+        # it bears on something it does not touch when level: its own
+        # spring. The names say where the part is and nothing else. They
+        # are not an input and not a rule, and they do not settle whether
+        # this control is momentary or permanent (owner review A1, open).
         moving = [named[n] for n in spec["moving"]]
         fixed = [body] + [p for p in parts if p.name not in spec["moving"]]
         rest = _touched(moving, fixed, spec["pivot"], spec["axis"], 0.0)
@@ -701,10 +704,10 @@ def _positions(asset, named, body, parts, spec):
             new = _touched(moving, fixed, spec["pivot"], spec["axis"],
                            float(deg)) - rest
             if new:
-                return {"released": 0.0, "held": float(deg - 1),
+                return {"level": 0.0, "down": float(deg - 1),
                         "_meets": sorted(new)}
         raise SystemExit("conn_hold_paddle: the paddle meets nothing in "
-                         "90 degrees, so HELD has nothing to rest on")
+                         "90 degrees, so DOWN has nothing to rest on")
     raise SystemExit("%s has no positions" % asset)
 
 
@@ -807,6 +810,16 @@ def _to_runtime(v):
             round(-v[1], 5) + 0.0]
 
 
+#: What every hinge's position names are, said in the manifest so a
+#: consumer does not read a mechanic into a word.
+POSITIONS_ARE = ("mechanical poses: where the carried parts can sit, named "
+                 "for where they are. A name is not an input, a state or a "
+                 "rule.")
+_OPEN = {"conn_hold_paddle": " Whether this control is momentary or "
+                             "permanent is the owner's open decision (A1); "
+                             "these poses do not settle it."}
+
+
 def hinge_entry(asset, spec):
     """What the manifest tells a runtime about one hinge."""
     positions = {k: v for k, v in spec["positions"].items()
@@ -827,9 +840,10 @@ def hinge_entry(asset, spec):
                  % (spec["hinge"], spec["axis"].upper()),
         "derived": "declared by art: %s" % asset
                    if asset in _DECLARED else "measured from the geometry",
+        "positions_are": POSITIONS_ARE + _OPEN.get(asset, ""),
     }
     if "_meets" in spec["positions"]:
-        entry["held_rests_on"] = spec["positions"]["_meets"]
+        entry["down_meets"] = spec["positions"]["_meets"]
     if "hides" in spec:
         entry["hides"] = spec["hides"]
     return entry

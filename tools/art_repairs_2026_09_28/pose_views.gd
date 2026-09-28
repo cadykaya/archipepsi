@@ -20,7 +20,7 @@ extends SceneTree
 const SHOTS := [
 	# id, old moving nodes, hinge, axis, degrees, position, look, eye, wall
 	["conn_hold_paddle", ["paddle_arm", "paddle_grip"], "hinge_paddle",
-		Vector3.RIGHT, 22.0, "held", Vector3(0, 0.6, 0.05),
+		Vector3.RIGHT, 22.0, "down", Vector3(0, 0.6, 0.05),
 		Vector3(1.25, 0.95, 0.75), true, []],
 	["conn_repair_seal", ["seal_lever"], "hinge_seal_lever", Vector3.RIGHT,
 		90.0, "thrown", Vector3(0, 0.17, 0.08), Vector3(0.9, 0.55, 0.85),

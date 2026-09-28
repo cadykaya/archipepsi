@@ -18,6 +18,7 @@
         0.38,
         0.0
       ],
+      "positions_are": "mechanical poses: where the carried parts can sit, named for where they are. A name is not an input, a state or a rule.",
       "positions_degrees": {
         "closed": 0.0,
         "thrown": 30.0
@@ -68,6 +69,7 @@
         0.62,
         -0.055
       ],
+      "positions_are": "mechanical poses: where the carried parts can sit, named for where they are. A name is not an input, a state or a rule.",
       "positions_degrees": {
         "down": 0.0,
         "up": 90.0
@@ -118,6 +120,7 @@
         0.15,
         0.02
       ],
+      "positions_are": "mechanical poses: where the carried parts can sit, named for where they are. A name is not an input, a state or a rule.",
       "positions_degrees": {
         "empty": 90.0,
         "full": -90.0,
@@ -157,26 +160,27 @@
     "commitment": "held input -- returns when released",
     "extends": "batch043/machinery -- same 0.50 m run face, same state_band convention",
     "hinge": {
-      "as_built": "released",
+      "as_built": "level",
       "axis": "x",
       "carries": [
         "paddle_arm",
         "paddle_grip"
       ],
       "derived": "measured from the geometry",
-      "drive": "rotate the `hinge_paddle` NODE about its own local X axis to a declared angle. It is an empty at the pin and the parts it carries are its children at identity, so its origin is the attachment point and cannot move. Positive angles follow the right-hand rule about the runtime axis. Do not rotate the carried parts themselves.",
-      "held_rests_on": [
+      "down_meets": [
         "paddle_spring"
       ],
+      "drive": "rotate the `hinge_paddle` NODE about its own local X axis to a declared angle. It is an empty at the pin and the parts it carries are its children at identity, so its origin is the attachment point and cannot move. Positive angles follow the right-hand rule about the runtime axis. Do not rotate the carried parts themselves.",
       "node": "hinge_paddle",
       "pivot_runtime": [
         0.0,
         0.72,
         0.0
       ],
+      "positions_are": "mechanical poses: where the carried parts can sit, named for where they are. A name is not an input, a state or a rule. Whether this control is momentary or permanent is the owner's open decision (A1); these poses do not settle it.",
       "positions_degrees": {
-        "held": 22.0,
-        "released": 0.0
+        "down": 22.0,
+        "level": 0.0
       }
     },
     "kind": "connection_visual",
@@ -362,6 +366,7 @@
         0.12,
         0.04
       ],
+      "positions_are": "mechanical poses: where the carried parts can sit, named for where they are. A name is not an input, a state or a rule.",
       "positions_degrees": {
         "intact": 0.0,
         "thrown": 90.0
@@ -512,6 +517,7 @@
         0.17,
         0.035
       ],
+      "positions_are": "mechanical poses: where the carried parts can sit, named for where they are. A name is not an input, a state or a rule.",
       "positions_degrees": {
         "detent_0": -90.0,
         "detent_1": -45.0,
