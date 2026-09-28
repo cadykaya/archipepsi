@@ -299,7 +299,65 @@ func _the_theme_dressing_is_the_approved_dressing() -> void:
 			bad.append("%s: a prop's collision changed" % theme)
 	_check(bad.is_empty(), "every theme prop is the approved dressing, "
 			+ "colliders as they were: %s" % [bad])
+	_the_sign_is_lettered_on_its_face()
 	await get_tree().process_frame
+
+
+## The owner's correction (2026-09-28): the transit sign's line is in the
+## Glyph text face, with no outline, MOUNTED on the housing's lit face (a
+## child of the housing, so it follows it), centred on that face -- not on
+## the model's bounds, which include the frame and hangers -- and every
+## line fits inside it with the padding clear. It faces the player, who
+## walks in along +Z.
+func _the_sign_is_lettered_on_its_face() -> void:
+	var housing := ChamberBuilders._prop_art("prop_transit_sign")
+	if housing == null:
+		_check(false, "the sign housing is not shipped")
+		return
+	var face := ChamberBuilders.sign_face(housing)
+	var bad: Array = []
+	var signs := 0
+	for seed in 24:
+		var chamber := {"id": "c%d" % seed, "zone_id": "zone_001",
+				"type": "corridor", "length": 22.0, "width": 8.0,
+				"features": []}
+		var built: Dictionary = ChamberBuilders.build(chamber, "neon_transit")
+		var root: Node3D = built["root"]
+		for n: Node in root.find_children("SignLine", "Label3D", true, false):
+			signs += 1
+			var line := n as Label3D
+			var board := line.get_parent() as MeshInstance3D
+			if board == null or board.mesh != housing:
+				bad.append("a line not mounted on its housing")
+				continue
+			var font := line.font as FontVariation
+			if font == null or font.base_font == null \
+					or font.base_font.resource_path != ChamberBuilders.SIGN_FONT:
+				bad.append("%s: not the Glyph text face" % line.text)
+			if line.outline_size != 0:
+				bad.append("%s: outlined" % line.text)
+			var at := line.position
+			if absf(at.x - face.get_center().x) > 0.001 \
+					or absf(at.y - face.get_center().y) > 0.001:
+				bad.append("%s: off the face's centre (%s, face %s)" % [
+						line.text, at, face.get_center()])
+			if at.z <= face.end.z or at.z > face.end.z + 0.02:
+				bad.append("%s: not just in front of the face (z %.3f, "
+						% [line.text, at.z] + "face %.3f)" % face.end.z)
+			var size := line.font.get_string_size(line.text,
+					HORIZONTAL_ALIGNMENT_LEFT, -1, line.font_size) \
+					* line.pixel_size
+			if size.x > face.size.x - 2.0 * ChamberBuilders.SIGN_PAD + 0.001 \
+					or size.y > face.size.y - 2.0 * ChamberBuilders.SIGN_PAD + 0.001:
+				bad.append("%s: %.2f x %.2f m on a %.2f x %.2f face" % [
+						line.text, size.x, size.y, face.size.x, face.size.y])
+			# Its readable side (+Z) must point back at the player (-Z).
+			if line.global_basis.z.z > -0.99:
+				bad.append("%s: faces %s" % [line.text, line.global_basis.z])
+		root.free()
+	_check(signs > 0 and bad.is_empty(), "every transit sign (%d) is "
+			% signs + "lettered in Glyph on its lit face, centred and inside "
+			+ "the padding: %s" % [bad])
 
 
 func _chamber_with(tags: Array) -> Dictionary:

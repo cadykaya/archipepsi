@@ -1070,6 +1070,70 @@ static func _graffiti(root: Node3D, at: Vector3, theme: String,
 ## station a station. Wall-adjacent or ceiling-mounted; only floor pieces
 ## that hug walls may collide. `span_x` is the room width, `span_z` its
 ## depth/length; positions stay inside [1.2, span_z - 1.2].
+## The transit signs' lines. Epsilon's, and not to be reworded.
+const TRANSIT_SIGNS := ["PLATFORM ε", "EXIT →", "← EXIT", "NO SIGNAL",
+		"MIND THE STATIC", "TRANSFER: EVERYWHERE"]
+## The Glyph text face the menu uses (8 px bitmap capitals).
+const SIGN_FONT := "res://content/ui/ui_text.fnt"
+## Clear margin inside the lit face, each side.
+const SIGN_PAD := 0.05
+## How far the letters stand off the face: enough never to fight its depth.
+const SIGN_STANDOFF := 0.006
+
+## The lit face of an approved sign housing, in the housing's own space:
+## the surface whose material is `*_face` -- NOT the model's bounds, which
+## take in the frame and hangers.
+static func sign_face(housing: Mesh) -> AABB:
+	var i := ArtModels.surface(housing, "_face")
+	if i < 0:
+		return AABB()
+	var box := AABB()
+	var first := true
+	for v: Vector3 in housing.surface_get_arrays(i)[Mesh.ARRAY_VERTEX]:
+		box = AABB(v, Vector3.ZERO) if first else box.expand(v)
+		first = false
+	return box
+
+## The sign's line, in the Glyph text face, mounted ON the lit face as a
+## child of the housing (so it moves with it), centred on the face both
+## ways with `SIGN_PAD` clear all round. Every sign letters at ONE size --
+## the size the longest line fits -- so a corridor of signs reads as a set.
+static func _letter_sign(board: MeshInstance3D, housing: Mesh,
+		line: String) -> Label3D:
+	var face := sign_face(housing)
+	# The Glyph face has no `ε` ("PLATFORM ε"): that one glyph comes from
+	# the engine's fallback font rather than printing as a box. Wrapped, so
+	# the menu's shared face is not changed.
+	var font := FontVariation.new()
+	font.base_font = load(SIGN_FONT) as Font
+	font.fallbacks = [ThemeDB.fallback_font]
+	var widest := 1.0
+	for each: String in TRANSIT_SIGNS:
+		widest = maxf(widest, font.get_string_size(each,
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x)
+	var tall := font.get_height(8)
+	var letters := Label3D.new()
+	letters.name = "SignLine"
+	letters.font = font
+	letters.font_size = 8
+	letters.pixel_size = minf((face.size.x - 2.0 * SIGN_PAD) / widest,
+			(face.size.y - 2.0 * SIGN_PAD) / tall)
+	letters.outline_size = 0
+	letters.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	letters.shaded = false
+	letters.double_sided = false
+	letters.alpha_cut = Label3D.ALPHA_CUT_DISCARD
+	letters.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	letters.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	letters.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	letters.modulate = Color(0.08, 0.09, 0.12)
+	letters.text = line
+	# On the face's front (+Z, the housing's lit side), at its centre.
+	letters.position = Vector3(face.get_center().x, face.get_center().y,
+			face.end.z + SIGN_STANDOFF)
+	board.add_child(letters)
+	return letters
+
 ## ART-CATCHUP: the approved theme dressing (batches 010 and 013, PASS),
 ## or null when it is not shipped -- each prop keeps its code shape then.
 static func _prop_art(model: String) -> Mesh:
@@ -1184,8 +1248,7 @@ static func _theme_props(root: Node3D, theme: String,
 							ThemeMaterials.trim_mat(theme), false)
 			"neon_transit":
 				# Hanging signage with authored transit nonsense.
-				var signs := ["PLATFORM ε", "EXIT →", "← EXIT", "NO SIGNAL",
-						"MIND THE STATIC", "TRANSFER: EVERYWHERE"]
+				var signs := TRANSIT_SIGNS
 				# ONE x for the plate and its text. This drew
 				# `randf_range` twice, so the sign hung in one place and
 				# its words in another -- the text was never on its own
@@ -1194,28 +1257,26 @@ static func _theme_props(root: Node3D, theme: String,
 				# glance, and the second is a different number.
 				var sign_x := rng.randf_range(-wall_x * 0.4, wall_x * 0.4)
 				var housing := _prop_art("prop_transit_sign")
-				var label_y := height - 0.7
-				var label_z := z - 0.05
 				if housing != null:
 					# The approved housing hangs from its top edge with its
 					# lit face on +Z; turned to face the player, who walks
-					# in along +Z. The line stays a Label3D, on that face
-					# (0.30 m below the top, 0.07 m proud of the centre).
-					_dress(root, housing, Vector3(sign_x, height - 0.45, z), PI)
-					label_y = height - 0.45 - 0.30
-					label_z = z - 0.08
-				else:
-					_box(root, Vector3(1.6, 0.5, 0.08),
-							Vector3(sign_x, height - 0.7, z),
-							ThemeMaterials.glow_material(
-								Color(ThemeMaterials.spec(theme)["accent_color"]),
-								1.3), false)
+					# in along +Z. The line is lettered ON that face.
+					var board := _dress(root, housing,
+							Vector3(sign_x, height - 0.45, z), PI)
+					_letter_sign(board, housing,
+							signs[rng.randi_range(0, signs.size() - 1)])
+					continue
+				_box(root, Vector3(1.6, 0.5, 0.08),
+						Vector3(sign_x, height - 0.7, z),
+						ThemeMaterials.glow_material(
+							Color(ThemeMaterials.spec(theme)["accent_color"]),
+							1.3), false)
 				var sign_label := Label3D.new()
 				sign_label.text = signs[rng.randi_range(0, signs.size() - 1)]
 				sign_label.font_size = 34
 				sign_label.pixel_size = 0.004
 				sign_label.modulate = Color(0.08, 0.09, 0.12)
-				sign_label.position = Vector3(sign_x, label_y, label_z)
+				sign_label.position = Vector3(sign_x, height - 0.7, z - 0.05)
 				# `face_label` takes a vector pointing TOWARD THE VIEWER
 				# -- that is how the Hub calls it. A chamber is entered at
 				# z = 0 and walked toward +z, so the viewer is always on
