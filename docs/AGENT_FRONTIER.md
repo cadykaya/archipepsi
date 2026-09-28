@@ -683,16 +683,38 @@ owner's D-06/D-07 rulings and the seam table are in
           the tour (`make menu-tour`, on the owner's campaign), and the
           report `docs/reports/2026-09-28-menu-int-delivery.md`. The
           details are in the ledger's MENU-INT section.
-        - Open for the owner: merging onto the 0.4 branch; the Journal's
-          ink contrast (a change to the approved look); the hitches on
-          open and on a snapshot while open, reported and not optimised.
+        - **Finishing pass and merge (owner review, 2026-09-28):** the
+          Map legend fits at 1280×720 on both input devices, and the
+          quieter Journal ink is modestly brighter (`e708c5fa`). CK12, the
+          full frontier on `e708c5fa`: **92 of 92**. The 0.4 head
+          `claude/archipepsi-0-4-blindside` was fast-forwarded to
+          `e0421aaa`. `ce6ea3bd` stays the menu-only recovery point. Still
+          recorded, not fixed: the hitches, the small four-floor overview,
+          the missing controller favourite binding, and the remote CI
+          timeout.
         - N-21 (and the packet's copy of it) is recorded for Dess. Draft
           PR #14 is the WIP branch's; it is not subscribed. Nothing is
           scheduled.
-    - **After MENU-INT:** HB-F4g's measurement (variants 1, 2, 3 and
-      junction; census; a 30-Zone walk), then HB-F4f, then a full
-      frontier (CK12; CK11 was MENU-INT's). They are held until the owner
-      resumes them.
+    - **ART-CATCHUP (owner brief, 2026-09-28; kept verbatim in
+      `docs/ledgers/assignments/`): integrate the approved, compatible
+      art that is still missing.** Frozen art source `a1584c8`. Work is
+      on `wip/0.4-art-catchup`, one commit per family.
+      - **Where it is: DELIVERED, STOP at the brief's boundary.**
+        - In play: the theme textures and shells, the enemy family and
+          value bands, the Epsilon installation and Hub boards, the exit
+          portal, the Echo Lab fixtures, three affordances, and the theme
+          dressing.
+        - Blocked, each with a reason: in
+          `docs/reports/2026-09-28-art-catchup-reconciliation.md`.
+        - The owner decisions: in
+          `docs/reports/2026-09-28-art-catchup-delivery.md`.
+        - The combined build's full frontier: CK13 on the art head. See
+          the ledger's ART-CATCHUP section.
+        - Arty's notes: `docs/art-requests/2026-09-28-art-catchup-prod-notes.md`.
+          Do not run her `verify_content_pack.sh` in a Production tree.
+    - **After that, still held until the owner resumes them:** HB-F4g's
+      measurement (variants 1, 2, 3 and junction; census; a 30-Zone
+      walk), then HB-F4f, then a full frontier.
       - H-RAIL-BREADTH slice 2 waits on N-19.
       - H-STATUS continues after N-17 with O05-09.1's material rows
         (slippery, conductive, brittle) and O05-09.2's actor behaviour.

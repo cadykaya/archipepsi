@@ -6605,3 +6605,81 @@ recovery point (`review/menu-int-ck11-ce6ea3b`).
 
 After CK12 the 0.4 development head `claude/archipepsi-0-4-blindside`
 was fast-forwarded from `c12a72f` to this branch (no merge, no rewrite).
+
+## ART-CATCHUP — the approved art that was still missing (owner brief, 2026-09-28)
+
+**The brief** arrived after the work began, as a missing attachment. It
+is kept verbatim at `docs/ledgers/assignments/PROD_ART_CATCHUP_ASSIGNMENT.txt`
+(sha256 in that folder's README). Its CK11 chronology is superseded by the
+later owner messages; the menu work it asked to finish first was already
+delivered (`ce6ea3bd`) and finished (`e708c5fa`, CK12 92/92).
+
+**Source:** the frozen art commit `a1584c8`, plus `3e73a2ca`'s pack-free
+theme descriptor. Arty's head is not followed, and her art branch is not
+merged.
+
+**Base:** the finished menu. `wip/0.4-art-catchup` carries the 0.4 head
+`e0421aaa` merged in, so the combined build has the menu and today's
+gameplay code.
+
+### What landed, one commit per family
+
+| Commit | Family | Verified by |
+|---|---|---|
+| `d6e52502` | 8 course-ruled theme textures, 11 re-baked shells | theme-pack, content |
+| `314cf7b0` | the enemy family, 10 roles × 2 value bands | `godot-enemy-art` (new; in CI) |
+| `04e78375` | the Epsilon installation and the two Hub boards | lab (the bay now measures the model), hub suites |
+| `f4e7547b` | Production's notes back to the art lane | — |
+| `84d453a4` | the exit portal frame and cores; the Echo Lab's dummy, hazard crate, height strip and runway measure | lab, integration, exit-reach, chamber |
+| `e0a5aaba` | enemy checks: a wound is one enemy's; art muzzles are inside colliders | enemy-art, sabotage-proven |
+| `ea49da82` | affordances: the breakable panel, bounce pad and wind rings | affordance, sabotage-proven |
+| `ac7c206f` | the theme dressing (010, 013) in `_theme_props` | affordance, legible, zone-audit and more, sabotage-proven |
+
+Later, a check that the Hub, portal and Lab art is what loads rather
+than the code fallback, and the reports.
+
+### Rules kept
+
+- **Collision, movement, reach, damage, timing and spawns are
+  unchanged.** Every model dresses its existing body.
+- The `_theme_props` rng stream is untouched, so a room builds the same
+  props in the same places.
+- Nothing is promoted:
+  - `THEME_PACK_STATUS` is still empty;
+  - the projectile registry is still `pending`;
+  - no candidate is wired, including `fx_bulwark_face`, the skiff and
+    the room kits.
+- **Passing and Unweighted keep their repaired gameplay.**
+
+### Found on the way (presentation only, fixed in the family's commit)
+
+- **Enemy materials were shared.** Imported glTF materials are shared by
+  every instance, so the tint unshares them per enemy. A sabotage run
+  proves it.
+- **The breakable panel's cracks.** The top one floated 0.7 m above the
+  panel. They now sit on its face.
+- **Wall dressing was inside the wall.** The side walls' inner face is
+  0.2 m in from `wall_x`, and the code plate, valve and sconce were drawn
+  inside it. The approved props sit on the face and are newly visible
+  (owner decision 7).
+- **The transit sign faced away.** Its lit face is on +Z, and the player
+  walks in along +Z.
+- **The runway module's zero** is its 2.5 cm lip; the reach mark is
+  checked on the engine's number.
+- **The import scripts minted fresh uids** on every re-run (churning
+  sidecars). They now keep the sidecars.
+
+### Blocked, and the decisions
+
+The reconciliation table is at
+`docs/reports/2026-09-28-art-catchup-reconciliation.md`. The owner
+decisions (the Check, the door lining, the Hub stations, the wall-light
+housings, the melee device, the keys, the visible dressing, and the
+projectiles) are in `docs/reports/2026-09-28-art-catchup-delivery.md`.
+
+### Concurrency
+
+- A side run of `godot-lab` during CK12 connected to CK12's bridge on
+  the fixed port and read its snapshot: five false failures.
+- From then on, no engine or bridge test ran beside a frontier run.
+- CK13 was run alone.
