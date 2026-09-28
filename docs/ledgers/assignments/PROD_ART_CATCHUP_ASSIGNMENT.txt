@@ -1,0 +1,213 @@
+Hey Prod :) Once the current menu checkpoint is finished, you have a new substantial assignment: reconcile Arty's older deliveries against the actual game, then integrate the approved, compatible work that is still missing.
+
+This is an AUDIT-AND-IMPLEMENT assignment, not a plan-only assignment. I am going to sleep, so do not stop after writing an inventory or after the first successful asset family. Continue through the eligible work without waiting for another routine go-ahead.
+
+It is not blanket approval of every asset in the art branch. Preserve previous rejections, holds, and approval boundaries.
+
+1. FINISH AND PRESERVE THE MENU FIRST
+
+Let CK11 finish without changing the tree it is testing. Finish the existing menu assignment, handle its failures honestly, and preserve/deliver its menu-only build and report before adding older art.
+
+A read-only inventory can happen while CK11 runs, but no concurrent engine/bridge workloads that contend with it, no variant swaps in its tree, and no edits to the tested revision.
+
+Once the menu checkpoint is complete, this message authorizes moving beyond the earlier menu-only stop into the bounded work below. Preserve CK10 and the menu checkpoint as separate recovery points.
+
+The real 3D menu requirement remains absolute. Do not flatten, redesign, or roll back the approved menu to make this work easier.
+
+2. ESTABLISH THE ACTUAL ART BACKLOG
+
+Start from Arty's claude/archipepsi-art at 94b8318 and your completed menu revision. Fetch and record full commit IDs; inspect subsequent relevant changes before choosing a newer baseline. Freeze the source set for this assignment rather than chasing moving heads.
+
+Read the actual assets, exporters, registry, acceptance records and consumers—not just the first table in ART_FRONTIER or an old PR description. Those documents contain history and superseding corrections.
+
+Start with:
+- docs/art/ART_FRONTIER.md and ART_REVIEW.md;
+- docs/art/ART_BIBLE.md and the asset/catalogue records;
+- docs/art/reports/ and docs/art-requests/;
+- tools/export_content_pack.py and its export/import path;
+- assets/models/, assets/textures/, assets/ui/;
+- godot/content/, its registry, and the runtime code that loads or builds each kind.
+
+Create one current reconciliation table. Per asset family, split rows where verdicts differ, and record:
+- latest relevant source version;
+- art approval and runtime-substitution approval separately, with evidence;
+- current export/registry status;
+- actual loader/call site, including generated IDs or aliases;
+- where ordinary gameplay can encounter it;
+- current technical compatibility and what has been tested;
+- next action, blocker and responsible lane.
+
+Distinguish: already integrated; present but unused; eligible to integrate; compatibility repair needed; awaiting owner review; intentionally held/rejected; superseded; no current gameplay consumer; unavailable evidence.
+
+A file existing in Production is not proof it is loaded. A registry entry is not proof the generator selects it. A showcase is not normal gameplay. A missing literal filename in one search is not proof nothing loads it.
+
+Do not claim Prod never received an asset merely because it is unused. Reconcile implementation, not blame.
+
+3. WHAT YOU MAY DO WITHOUT WAITING
+
+Integrate existing, explicitly approved assets into their current gameplay roles. Write the necessary minimal loading, attachment, material and state-feedback code in your owned runtime surfaces; a missing loader is work to do, not automatically a reason to stop.
+
+Use existing pipelines and contracts. Fix integration defects and stale exports where the correct source/approval is established. Preserve gameplay truth.
+
+Do not promote a candidate, reverse a rejected substitution, invent an owner ruling, or treat approval of one variant as approval of every later revision. A stale 'pending' label also is not a veto when a later owner ruling clearly supersedes it—resolve the history.
+
+When a unit needs a genuine new design/ownership decision, record the exact question and continue with independent eligible units. Do not park the entire assignment behind one blocked item.
+
+4. PRIORITIZED WORKLIST
+
+These are discovery seeds, not a declaration that every item is absent or approved. Cover the older catalogue as well as recent deliveries.
+
+A. ENEMY MODELS AND THEIR APPROVED READABILITY TREATMENT — FIRST PRIORITY
+
+Read:
+- docs/art-requests/2026-09-26-enemy-value-bands-and-L08.md
+- docs/art/reports/2026-09-26-enemy-checkpoint-tier2-and-motion.md
+- docs/art-requests/2026-09-22-enemy-readiness-handoff.md, including later corrections
+- assets/models/batch030/enemies/
+- assets/models/batch030/enemies_deep/
+- assets/models/batch030/enemy_value_bands.json
+
+Use the latest approved models for each existing role, including the accepted ranged/bulwark re-cuts, instead of continuing to construct their placeholder bodies.
+
+Consume the band mapping as data. Preserve the existing red/orange eye and its idle/alert/windup behavior. Keep flinch, damage tint, facing, weak-side feedback and all existing role behavior.
+
+Handle imported surface materials correctly and independently per enemy; damaging one enemy must not tint every instance. Use named anchors and their actual transforms for attachments. Reconcile the visible muzzle with the shot origin without distorting the art; test near-wall firing and obstruction afterward.
+
+Keep collision envelopes, movement, reach, damage, timing and spawn composition unchanged. If the model and gameplay contract conflict, demonstrate the conflict rather than silently resizing one to hide it.
+
+Carry forward the accepted contrast exceptions and limitations. Report per-role results as well as aggregates. Do not claim the eye solves dark-opening visibility without evidence, or add a new glow/palette as a workaround.
+
+If an eye attachment needs an art-side anchor change outside your ownership, record that narrow dependency and continue other roles/families where possible.
+
+B. CHECKS, DOORS, PORTALS, NAVIGATION AND MOVEMENT FIXTURES
+
+Reconcile the older Check states (005/005-R), portal and standard door (006), navigation family (022), and movement-affordance fixtures (009).
+
+Connect approved replacements to existing objects and real states. Claimed/available Checks, open/locked doors and active controls must not display a misleading state.
+
+Keep doorway clearance, hit targets, interaction ranges and traversal geometry intact. Navigation art must describe known/actual routes; it is not permission to reveal secrets or invent objective markers that were struck from scope.
+
+C. STATION/HUB, LAB AND THE LOCKED EPSILON INSTALLATION
+
+Reconcile the approved Hub fixtures/modules (003), Lab fixtures/modules (004), and locked Epsilon installation against the current station and Lab scenes.
+
+Integrate missing approved pieces into their established roles without rebuilding the station layout, adding new rooms, or reopening the character's visual identity.
+
+Preserve the owner's suit/station residence direction. This is not an Epsilon transfer-system, dialogue, or story rewrite assignment. Do not reinterpret earlier conceptual presentation states as approved mechanics.
+
+D. LIGHT HOUSINGS, HOUSE MATERIALS AND STALE EXPORTS
+
+Check batches 012–014 and 041 and the current six-family theme descriptor/export, including approved wall-light variants as well as ceiling housings.
+
+Identify which approved source revisions are actually shipped and sampled. Repair missing or stale exports and binding where justified. Reuse the existing theme/material system rather than introducing a second loader.
+
+Light housings do not get to create extra lights or silently change exposure. Use existing compatible placements; where none exists, report a placement decision rather than adding lights everywhere.
+
+Do not repaint protected materials or re-tint universal hazards, Epsilon or circuit identity. Do not adopt a withdrawn material/course experiment because it is newer on disk.
+
+E. CONTROLS, CIRCUITS, MACHINERY AND MANIPULATION OBJECTS
+
+Reconcile Batch 043 and its later extensions, especially 049's connection/commitment vocabulary and 053's manipulation refinements. Read the relevant handoffs and later rulings; 043's original delivery was a proposal, not blanket shipping approval.
+
+For approved units with existing consumers, replace placeholders and drive named visual parts from authoritative state: held input, latched configuration, permanent repair, insertion, release, and currently supported handling states.
+
+Preserve the distinction between hand pickup and qualified manipulation. Do not change mass, carriability, force, friction or collision merely to fit an older asset brief.
+
+Confirm origin conventions, Y-up transforms, socket alignment and part ownership. No double-added collision and no glowing 'success' before the actual gameplay result.
+
+F. RAILWAY AND SPECIAL-ROOM KITS
+
+Reconcile 045 setpieces, 046 yardkit, 047 skiffkit and 048 roomkits against today's Blindside, Passing, Counterfire and Unweighted implementations.
+
+Their dated delivery records describe candidates. Find later specific acceptance before enabling them in the playable build.
+
+For eligible units, build the bounded visual attachment paths and use actual runtime dimensions, motion and states. Keep deck-top versus deck-centre origins correct. Check moving-part sweeps, passenger space, doorway/shutter clearance and mounted controls.
+
+Do not reintroduce puzzle bypasses or obstruct returns with railings and fittings. Do not assume fitting the September 22 scene proves fitting today's repaired scene.
+
+Pending units get a clear review item, not silent promotion. Leave their current functional placeholders in place.
+
+G. STATUS, ATTACK AND IMPACT VISUALS
+
+Reconcile 043/052 status kits and 051 combat-feedback assets, plus the older projectile family.
+
+Only attach approved presentation to status/target pairs and signals the runtime actually supports. Expiry, cleanse, removal and scene teardown must remove the presentation correctly.
+
+Player-only effects need a usable player-facing display; placing a marker inside the camera is not integration. Do not invent a new HUD design to resolve an absent presentation contract—flag it and continue.
+
+Preserve hostile/friendly distinctions, attack warnings, cancel-versus-complete and blocked-versus-damaging feedback.
+
+Important: the exporter records projectile artwork approved as art but its runtime substitution reverted/pending because it regressed readability. Do NOT flip that gate just to clear the backlog. A genuine later owner ruling must authorize it.
+
+H. ENEMY-JOB PRESENTATION AND EVERYDAY PROPS
+
+Reconcile 050's job-related props and the older universal-prop/navigation/architecture families against real patrol/watch/drift/tend consumers.
+
+Use approved pieces only where they communicate an existing job or replace an existing object appropriately. Do not add an object merely because the asset library contains it.
+
+Our ordinary rooms already feel cluttered. No increased prop counts, decorative obstacle piles, added movement blockages, or replacement of clear combat space with 'finished art.'
+
+I. ROOM SHELLS, BRANCHING ROOMS AND GAME-SPECIFIC PACKS
+
+Account for all delivered shells, including the older 015–019 vocabulary, approved large-room libraries, and 044 branching-room candidates. Record where each is eligible, selected, blocked or unused.
+
+Do not confuse art approval with approval to change room selection, pacing or topology. Repair presentation/export issues on already-selected approved rooms only when their gameplay geometry/contracts remain intact.
+
+Do not increase authored-area budgets, room counts or selection frequency, promote branching candidates, redesign ordinary rooms, or implement the proposed small/standard/large programme in this assignment.
+
+For game-specific packs, reconcile T01/T05 and the other existing candidates against the actual selection/promotion records. The initial pair's authoring was not itself permission to select it in a Zone. Do not promote all seven packs, expand the game catalogue, or invent game-to-pack mappings.
+
+Record reusable assets that could help the upcoming ordinary-room work so we do not commission duplicates later.
+
+J. EVERYTHING ELSE IN THE DELIVERED CATALOGUE
+
+Close the accounting gaps for the remaining older batches, landmarks, presentation proposals, architecture and fixtures. Group routine variants sensibly, but keep different approval outcomes separate.
+
+Keep rejected and superseded alternatives preserved, not active. The selected real 3D menu supersedes earlier menu experiments; importing those again is not art catch-up.
+
+5. INTEGRATION STANDARDS
+
+Prefer one authoritative source and a small visual seam per existing consumer. Do not introduce parallel gameplay logic or a universal asset system far beyond this task.
+
+Regenerate generated files through their source pipelines. Do not hand-edit exported manifests/models or overwrite Production's registry blindly with the art branch's version. Preserve both sides' current legitimate entries and gates.
+
+Preserve saves, identity, claims, progression, equipment, room dimensions, collision and encounter balance. Necessary binding fixes are in scope; unrelated gameplay redesign is not.
+
+Verify that the asset reaches the real consumer and is visible in the intended state. Where a fallback remains, make the reason diagnosable; a green build that silently falls back everywhere is not success.
+
+Read current ownership rules before touching shared files. Use established repository notes for narrow dependencies. Do not silently take over another lane, message agents to expand their work, or re-arm watchers/subscriptions/schedules.
+
+6. WORK IN COHERENT CHECKPOINTS
+
+Make the reconciliation usable quickly, then implement. Do not spend the entire session polishing a catalogue while approved work remains untouched.
+
+Group checks sensibly: import/contract tests and focused live coverage per family, then affected-suite coverage per meaningful checkpoint. Do not run the entire 92-step frontier after every individual model; do run the full relevant regression set before claiming the combined build verified.
+
+For enemies, inspect every current role in representative real lighting and relevant attack states. For moving machinery, test the actual movement and clearance. For interactive objects, test the actual state transitions, including return/reload where persistence matters.
+
+Use representative before/after frames from the same camera/state. Record source identity, runtime identity and test/build revision. Keep scripted, visual and human-play evidence distinct.
+
+Preserve the menu-only build. Push recoverable progress with honest WIP/test status, not a claim that every intermediate commit is a release. Keep deliberately broken test variants and half-written captures out of the deliverable branch.
+
+No new recurring jobs, watchers or scheduled wake-ups. Work only in the active session; checkpoints should make a later resume straightforward.
+
+7. DELIVER AND STOP
+
+Continue through all ready, approved units in this frozen catalogue, skipping genuinely blocked units with reasons rather than silently dropping them. Ordinary implementation choices do not require waking me.
+
+Finish with:
+- one current reconciliation table covering the delivered catalogue;
+- one pinned playable build containing the integrated menu and completed art work, with safe launch/update instructions;
+- a compact before/after gallery or short in-game tour showing what actually changed;
+- a plain-language summary of what I will see, what was already integrated, and what remains;
+- a short owner-decision list, each with the asset, evidence, exact question and recommendation.
+
+Do not claim a catalogue, copied asset folder or isolated preview is completed integration. Conversely, do not recreate work that is already correct and live.
+
+If a candidate still needs visual approval, link its existing review evidence or provide the smallest useful isolated preview—not another huge concept package. Do not change its normal-game selection status.
+
+If a hard environment limit or genuine blocker stops implementation, preserve and report partial results honestly. There is no requirement to claim everything is done by morning.
+
+This authorizes the art-integration backlog only. It does not authorize new Gear systems, remaining Status mechanics, new enemy behaviors, unfinished Blindside gameplay, room-generation repairs, ordinary-room redesign, whole-game palette changes, or 0.5.
+
+Stop after this integrated checkpoint and report, or after all remaining units genuinely require a decision outside this authority.
